@@ -124,14 +124,8 @@ Skills activate automatically based on user intent. Examples:
 
 Built by AlterLab Creative Technologies Laboratory.
 
-Core pipeline skills adapted from [academic-research-skills](https://github.com/Imbad0202/academic-research-skills) by Cheng-I Wu (CC-BY-NC 4.0).
-Scientific skills adapted from [claude-scientific-skills](https://github.com/K-Dense-AI/claude-scientific-skills) by K-Dense AI.
-
 ---
 
 ## License
 
-This project combines works under different licenses:
-- Core pipeline skills: CC-BY-NC 4.0
-- Scientific skills: See individual skill files for licensing
-- AlterLab additions: MIT
+MIT
