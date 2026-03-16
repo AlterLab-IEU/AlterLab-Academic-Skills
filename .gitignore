@@ -1,0 +1,15 @@
+# Source repos (keep as local reference, don't push)
+academic-research-skills/
+claude-scientific-skills/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+
+# Node
+node_modules/
