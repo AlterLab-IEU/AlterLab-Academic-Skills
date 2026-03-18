@@ -1,0 +1,689 @@
+---
+name: alterlab-research-ethics
+description: "Part of the AlterLab Academic Skills suite for faculty and researchers. Comprehensive research ethics and compliance assistant. Supports IRB/ethics board applications, informed consent drafting, data management plans, Belmont Report principles, GDPR compliance for research, HIPAA considerations, vulnerable populations protocols, deception research, confidentiality and anonymity, research integrity (fabrication/falsification/plagiarism), conflict of interest disclosure, and dual-use research oversight. Triggers on: research ethics, IRB, ethics board, informed consent, data management plan, Belmont Report, GDPR research, HIPAA research, vulnerable populations, research integrity, plagiarism, conflict of interest, ethics application, ethical review, human subjects, animal ethics."
+license: MIT
+metadata:
+  skill-author: AlterLab
+  version: "1.0.0"
+  last_updated: "2026-03-18"
+---
+
+# Research Ethics — Ethics, Compliance & Integrity Agent
+
+A comprehensive research ethics tool for faculty and researchers navigating the complex landscape of research compliance. Covers the full ethics lifecycle: from understanding foundational principles, through ethics board applications, to ongoing compliance during data collection, analysis, and publication.
+
+## Overview
+
+Research ethics is the application of moral principles to the design, conduct, and reporting of research involving human participants, animal subjects, sensitive data, and dual-use technologies. This skill provides practical guidance grounded in international ethical frameworks, helping researchers move from ethical principles to compliant practice.
+
+This is not a substitute for your institution's ethics board or legal counsel. It is a tool to help you prepare stronger applications, anticipate ethical issues, and maintain compliance throughout the research lifecycle.
+
+## When to Use This Skill
+
+This skill should be used when:
+- Preparing an IRB/ethics committee application
+- Drafting informed consent forms and information sheets
+- Writing data management plans for grant applications
+- Assessing whether a study requires ethical review
+- Working with vulnerable populations
+- Designing research involving deception
+- Ensuring GDPR or HIPAA compliance in research
+- Addressing research integrity concerns (plagiarism, fabrication, falsification)
+- Disclosing conflicts of interest
+- Planning research with dual-use potential
+- Teaching research ethics courses
+- Responding to ethics board revision requests
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Legal advice on data protection | Consult institutional legal counsel |
+| Survey instrument design | `alterlab-survey-design` |
+| Qualitative methodology | `alterlab-qualitative-methods` |
+| Clinical trial design | Clinical research skills |
+
+---
+
+## Core Capabilities
+
+### 1. Foundational Ethical Principles
+
+#### The Belmont Report (1979) — Three Core Principles
+
+The Belmont Report remains the foundational document for research ethics in the United States and has influenced ethics frameworks worldwide.
+
+| Principle | Definition | Application |
+|-----------|-----------|-------------|
+| **Respect for Persons** | Individuals should be treated as autonomous agents; persons with diminished autonomy are entitled to protection | Informed consent; right to withdraw; privacy protections; special protections for vulnerable populations |
+| **Beneficence** | Obligation to maximize benefits and minimize harms; do no harm | Risk-benefit analysis; safety protocols; monitoring for adverse events; data security |
+| **Justice** | Fair distribution of research benefits and burdens; equitable participant selection | Inclusion/exclusion criteria justified; not targeting vulnerable groups for convenience; sharing research benefits |
+
+#### Declaration of Helsinki (WMA, 2013 revision)
+
+Key principles extending beyond the Belmont Report:
+- Research involving human subjects must conform to generally accepted scientific principles
+- The well-being of the individual research subject must take precedence over all other interests
+- Every research study involving human subjects must be registered in a publicly accessible database before recruitment begins
+- Negative and inconclusive results must be published or otherwise made publicly available
+- Post-study provisions: participants who benefit from the research should have access to the intervention
+
+#### Singapore Statement on Research Integrity (2010)
+
+Four principles:
+1. **Honesty** in all aspects of research
+2. **Accountability** in the conduct of research
+3. **Professional courtesy and fairness** in working with others
+4. **Good stewardship** of research on behalf of others
+
+### 2. Ethics Board Applications
+
+#### Does Your Study Require Ethical Review?
+
+```
+Does your study involve...
+│
+├── Human participants (interviews, surveys, experiments, observations)?
+│   └── YES → Full or expedited review required
+│
+├── Human data (medical records, educational records, social media data)?
+│   └── YES → Review required (level depends on identifiability)
+│
+├── Human biological samples (blood, tissue, DNA)?
+│   └── YES → Full review required
+│
+├── Animal subjects?
+│   └── YES → IACUC/animal ethics review required
+│
+├── Publicly available, de-identified data only?
+│   └── MAYBE → May qualify for exemption; check with your IRB
+│
+├── Quality improvement / program evaluation (not generalizable)?
+│   └── MAYBE → Some institutions exempt; consult your IRB
+│
+└── None of the above?
+    └── NO ethical review likely required
+
+WHEN IN DOUBT: Submit to your ethics board for a determination.
+Always apply BEFORE collecting data.
+```
+
+#### IRB Application Template
+
+```markdown
+## Section 1: Study Overview
+
+### 1.1 Study Title
+[Full title]
+
+### 1.2 Principal Investigator
+Name, title, department, contact information, human subjects training completion date
+
+### 1.3 Co-Investigators
+[List all with roles and training dates]
+
+### 1.4 Study Duration
+Start date: [Date]
+End date: [Date]
+
+### 1.5 Funding Source
+[Funding agency, grant number, or "unfunded"]
+
+### 1.6 Study Type
+[ ] New study
+[ ] Continuation/renewal
+[ ] Modification to approved study (Protocol #: ___)
+
+---
+
+## Section 2: Purpose and Background
+
+### 2.1 Research Questions
+1. [Primary research question]
+2. [Secondary research questions]
+
+### 2.2 Background and Rationale
+[Brief literature review establishing the need for this study — 300-500 words]
+
+### 2.3 Study Design
+[Describe the research design: experimental, quasi-experimental, observational,
+qualitative, mixed methods, etc.]
+
+---
+
+## Section 3: Participants
+
+### 3.1 Target Population
+[Who will be recruited? Age range, characteristics]
+
+### 3.2 Sample Size and Justification
+[Expected N and how determined — power analysis, saturation rationale, etc.]
+
+### 3.3 Inclusion Criteria
+1. [Criterion 1]
+2. [Criterion 2]
+
+### 3.4 Exclusion Criteria
+1. [Criterion 1]
+2. [Criterion 2]
+
+### 3.5 Vulnerable Populations
+[ ] Children/Minors (under 18)
+[ ] Pregnant women
+[ ] Prisoners
+[ ] Cognitively impaired individuals
+[ ] Economically/educationally disadvantaged
+[ ] Students of the researcher (power differential)
+[ ] Employees of the researcher (power differential)
+[ ] Indigenous communities
+[ ] None of the above
+
+If checked, describe additional protections: [...]
+
+### 3.6 Recruitment Methods
+[How participants will be identified, contacted, and recruited]
+[Attach recruitment materials: flyers, emails, social media posts]
+
+### 3.7 Compensation
+[Amount, type, timing, and justification that it is not coercive]
+
+---
+
+## Section 4: Procedures
+
+### 4.1 Study Procedures
+[Step-by-step description of what participants will experience]
+
+### 4.2 Duration of Participation
+[Total time commitment for each participant]
+
+### 4.3 Location
+[Where data collection will occur]
+
+### 4.4 Data Collection Methods
+[ ] Surveys/Questionnaires
+[ ] Interviews (individual)
+[ ] Focus groups
+[ ] Observations
+[ ] Physiological measures
+[ ] Existing records/data
+[ ] Other: ___
+
+### 4.5 Audio/Video Recording
+[ ] No recording
+[ ] Audio recording only
+[ ] Video recording
+[ ] Screen recording
+Justification: [Why recording is necessary]
+Storage and destruction plan: [...]
+
+---
+
+## Section 5: Risks and Benefits
+
+### 5.1 Potential Risks
+[List all risks, including psychological, social, economic, legal, physical]
+
+| Risk | Likelihood | Severity | Mitigation |
+|------|-----------|----------|------------|
+| [Risk 1] | Low/Medium/High | Minimal/Moderate/Serious | [How you will minimize this risk] |
+| [Risk 2] | | | |
+
+### 5.2 Potential Benefits
+- To participants: [Direct benefits, if any — do not overstate]
+- To society/science: [Knowledge contribution]
+
+### 5.3 Risk-Benefit Ratio Justification
+[Explain why the benefits justify the risks]
+
+---
+
+## Section 6: Informed Consent
+
+### 6.1 Consent Process
+[How consent will be obtained — written, verbal, online click-through]
+[Who will obtain consent? In what setting?]
+
+### 6.2 Waiver of Documentation of Consent
+[ ] Not requested
+[ ] Requested because: [justification — e.g., signature is only identifying link]
+
+### 6.3 Waiver of Consent
+[ ] Not requested
+[ ] Requested because: [justification — meets all four criteria under 45 CFR 46.116(f)]
+
+### 6.4 Assent for Minors
+[ ] Not applicable
+[ ] Assent process described: [...]
+
+---
+
+## Section 7: Data Management
+
+### 7.1 Data Types
+[What data will be collected — transcripts, survey responses, physiological measures, etc.]
+
+### 7.2 Identifiability
+[ ] Anonymous (no identifying information collected at any point)
+[ ] Confidential (identifying information collected but stored separately)
+[ ] Identified (identifying information linked to data)
+
+### 7.3 Data Storage
+[Where data will be stored — encrypted drive, institutional server, cloud service]
+[Security measures — encryption, access controls, physical security]
+
+### 7.4 Data Access
+[Who will have access to identifiable data?]
+
+### 7.5 Data Retention and Destruction
+[How long data will be retained — follow funder and institutional requirements]
+[How data will be destroyed after retention period]
+
+### 7.6 Data Sharing
+[Will de-identified data be shared? With whom? Via what repository?]
+```
+
+### 3. Informed Consent Drafting
+
+**Essential Elements of Informed Consent (45 CFR 46.116):**
+
+```markdown
+## INFORMED CONSENT FORM
+
+### Study Title: [Full Title]
+### Principal Investigator: [Name, Department, Institution]
+### Contact: [Phone, Email]
+
+---
+
+### INVITATION TO PARTICIPATE
+You are being invited to take part in a research study. This form explains
+the study so you can make an informed decision about whether to participate.
+Please read it carefully and ask questions about anything you do not understand.
+
+### PURPOSE OF THE STUDY
+[Plain language — 6th-8th grade reading level]
+[Why this research is being done and what it hopes to learn]
+
+### WHAT WILL HAPPEN IF YOU TAKE PART
+[Step-by-step description of procedures in chronological order]
+[Time commitment for each activity and total]
+
+### RISKS AND DISCOMFORTS
+[All foreseeable risks in plain language]
+[What you will do if a participant experiences harm]
+[Resources available — counseling services, etc.]
+
+### BENEFITS
+[Direct benefits to participants, if any — be honest if there are none]
+[Benefits to science/society]
+"You may not directly benefit from participating in this study."
+
+### COMPENSATION
+[What, when, and how — include partial compensation for withdrawal]
+"You will receive [amount/type] for your participation."
+"If you withdraw early, you will still receive [partial compensation details]."
+
+### CONFIDENTIALITY
+[How data will be protected]
+[Who will have access]
+[How results will be reported — aggregate, pseudonyms]
+[Limits of confidentiality — mandatory reporting, legal requirements]
+
+### VOLUNTARY PARTICIPATION AND WITHDRAWAL
+"Your participation is entirely voluntary. You may refuse to answer any
+question or stop participating at any time without penalty or loss of
+benefits to which you are otherwise entitled."
+[Specific instructions for how to withdraw]
+[What happens to their data if they withdraw]
+
+### QUESTIONS AND CONCERNS
+"If you have questions about this study, contact [PI name] at [contact info]."
+"If you have questions about your rights as a research participant, contact
+[IRB office name] at [contact info]."
+
+### CONSENT
+[ ] I have read this form and understand the study.
+[ ] I have had the opportunity to ask questions.
+[ ] I voluntarily agree to participate.
+[ ] I agree to be audio/video recorded. (if applicable)
+
+Participant Signature: _________________ Date: _________
+Printed Name: _________________________
+
+Researcher Signature: _________________ Date: _________
+Printed Name: _________________________
+```
+
+**Consent for Online Research:**
+
+```markdown
+## Online Consent Considerations
+
+1. Cannot verify participant identity — consider age verification methods
+2. No physical signature — use click-to-consent with checkboxes
+3. Provide downloadable/printable copy of consent form
+4. Include a "contact researcher" option before consent
+5. Consider progressive consent — brief overview first, full details on next page
+6. Ensure consent page cannot be skipped (no "I agree" auto-checked)
+7. Record timestamp, IP address (or not, depending on anonymity needs),
+   and browser info for consent documentation
+8. For surveys: remind participants of voluntary nature at key points
+9. Provide clear instructions for withdrawal after submission
+   (e.g., email PI with unique ID to request data deletion)
+```
+
+### 4. Data Management Plans
+
+**DMP Template (aligned with funder requirements):**
+
+```markdown
+## Data Management Plan
+
+### 1. Data Description
+- Types of data: [surveys, interviews, observations, measurements, images, code]
+- Formats: [.csv, .xlsx, .mp3, .pdf, .txt, .json]
+- Estimated volume: [number of files, total size in GB]
+- Relationship between data files: [how linked, database schema]
+
+### 2. Data Collection Standards
+- Instruments: [validated scales, custom instruments, equipment]
+- Quality control: [double entry, range checks, inter-rater reliability]
+- Metadata standards: [DDI, Dublin Core, discipline-specific]
+- Documentation: [codebook, data dictionary, README files]
+
+### 3. Ethics and Legal Compliance
+- Ethical approval: [IRB protocol number, approval date]
+- Consent covers: [ ] Data archiving [ ] Secondary analysis [ ] Data sharing
+- Sensitive data: [ ] Personal identifiers [ ] Health data [ ] Financial data
+- Legal framework: [ ] GDPR [ ] HIPAA [ ] FERPA [ ] Other: ___
+- Anonymization/pseudonymization strategy: [describe]
+
+### 4. Storage and Security (During Research)
+- Primary storage: [institutional server, encrypted laptop, cloud service]
+- Backup: [frequency, location, method]
+- Access control: [who has access, authentication method]
+- Encryption: [at rest, in transit — specify standard, e.g., AES-256]
+- Physical security: [locked office, restricted server room]
+
+### 5. Data Preservation and Sharing (After Research)
+- Repository: [institutional repository, discipline-specific, generalist]
+- Embargo period: [if any, with justification]
+- License: [CC-BY, CC-BY-NC, restricted access]
+- De-identification: [methods, verification]
+- Persistent identifier: [DOI via repository]
+- Retention period: [minimum per funder/institution, typically 5-10 years]
+
+### 6. Roles and Responsibilities
+- Data collection: [who]
+- Data cleaning: [who]
+- Data documentation: [who]
+- Data archiving: [who]
+- Long-term curation: [who/what institution]
+```
+
+### 5. GDPR Compliance for Research
+
+The General Data Protection Regulation applies to research involving personal data of individuals in the EU/EEA.
+
+**GDPR Lawful Bases for Research:**
+
+| Lawful Basis | When to Use | Key Requirement |
+|-------------|-------------|-----------------|
+| Consent (Art. 6(1)(a)) | Most common for research | Freely given, specific, informed, unambiguous; can be withdrawn |
+| Legitimate interest (Art. 6(1)(f)) | Secondary analysis, non-sensitive data | Balancing test required; document assessment |
+| Public interest (Art. 6(1)(e) + Art. 89) | Publicly funded research in public interest | Must implement appropriate safeguards |
+
+**Key GDPR Requirements for Researchers:**
+
+```markdown
+## GDPR Compliance Checklist for Research
+
+### Before Data Collection
+- [ ] Identify lawful basis for processing
+- [ ] Conduct Data Protection Impact Assessment (DPIA) if high-risk processing
+- [ ] Prepare privacy notice / information sheet (Art. 13/14)
+- [ ] Appoint Data Protection Officer contact (if required)
+- [ ] Establish data processing agreement with any third parties
+- [ ] Document processing activities in institutional register (Art. 30)
+
+### Privacy Notice Must Include
+- [ ] Identity and contact details of the controller
+- [ ] Contact details of the Data Protection Officer
+- [ ] Purposes and lawful basis for processing
+- [ ] Categories of personal data collected
+- [ ] Recipients or categories of recipients
+- [ ] Data transfers outside EU/EEA (and safeguards)
+- [ ] Retention period or criteria for determining it
+- [ ] Data subject rights (access, rectification, erasure, portability, objection)
+- [ ] Right to withdraw consent (if consent is the lawful basis)
+- [ ] Right to lodge a complaint with a supervisory authority
+- [ ] Whether provision of data is statutory, contractual, or voluntary
+- [ ] Existence of automated decision-making (if applicable)
+
+### Data Subject Rights (with research exemptions under Art. 89)
+- Right of access (Art. 15) — may be limited if it would seriously impair research
+- Right to rectification (Art. 16) — applies
+- Right to erasure (Art. 17) — may be limited under Art. 17(3)(d)
+- Right to data portability (Art. 20) — applies if consent-based
+- Right to object (Art. 21) — may be limited for public interest research
+
+### Data Minimization
+- [ ] Collect only data necessary for research purposes
+- [ ] Pseudonymize as early as possible
+- [ ] Anonymize when identifiability is no longer needed
+- [ ] Destroy linking keys when no longer required
+```
+
+### 6. HIPAA Considerations for Research
+
+```markdown
+## HIPAA Research Checklist
+
+### Does HIPAA Apply?
+HIPAA applies if you are accessing Protected Health Information (PHI)
+from a HIPAA-covered entity (healthcare provider, health plan, clearinghouse).
+
+### PHI Includes Any of the 18 Identifiers:
+1. Names
+2. Geographic data smaller than state
+3. Dates (except year) related to an individual
+4. Phone numbers
+5. Fax numbers
+6. Email addresses
+7. Social Security numbers
+8. Medical record numbers
+9. Health plan beneficiary numbers
+10. Account numbers
+11. Certificate/license numbers
+12. Vehicle identifiers and serial numbers
+13. Device identifiers and serial numbers
+14. Web URLs
+15. IP addresses
+16. Biometric identifiers
+17. Full-face photos and comparable images
+18. Any other unique identifying number or code
+
+### Accessing PHI for Research — Three Pathways
+1. **Individual Authorization** — Patient signs HIPAA authorization form
+2. **IRB/Privacy Board Waiver** — Meets criteria for waiver of authorization
+3. **De-identified Data** — All 18 identifiers removed (Safe Harbor method)
+   or expert determination that re-identification risk is very small
+
+### Limited Data Set
+- Removes direct identifiers but may retain dates, zip codes, ages
+- Requires a Data Use Agreement (DUA) between covered entity and researcher
+- Still considered PHI — must be protected
+```
+
+### 7. Research with Vulnerable Populations
+
+**Vulnerability Categories and Additional Protections:**
+
+| Population | Source of Vulnerability | Additional Protections Required |
+|-----------|----------------------|-------------------------------|
+| Children (under 18) | Diminished autonomy, developmental capacity | Parental permission + child assent; age-appropriate assent forms; minimal risk unless prospect of direct benefit |
+| Pregnant women | Potential harm to fetus | Research must minimize risk to fetus; father's consent for fetal research where applicable |
+| Prisoners | Coercive environment, limited autonomy | Minimal risk only (generally); prisoner representative on IRB; no undue inducement |
+| Cognitively impaired | Diminished capacity to consent | Legally authorized representative consent + participant assent; ongoing capacity assessment |
+| Students/employees of researcher | Power differential, perceived coercion | Recruitment by third party; opt-out without penalty; extra confidentiality protections |
+| Economically disadvantaged | Susceptibility to undue inducement | Compensation must be fair but not coercive; equitable selection |
+| Indigenous communities | Historical exploitation, cultural concerns | Community consultation/consent; culturally appropriate methods; benefit sharing; data sovereignty |
+| Refugees/asylum seekers | Legal precarity, trauma, language barriers | Trauma-informed consent; interpreter services; no impact on legal status |
+
+### 8. Research Integrity
+
+**The FFP Framework (Fabrication, Falsification, Plagiarism):**
+
+```
+FABRICATION
+│   Making up data or results and recording or reporting them
+│   Examples:
+│   - Inventing data points to fill gaps
+│   - Creating fake participants or responses
+│   - Reporting experiments that were never conducted
+│
+FALSIFICATION
+│   Manipulating research materials, equipment, or processes, or
+│   changing or omitting data/results such that the research is
+│   not accurately represented
+│   Examples:
+│   - Selectively excluding data points without justification
+│   - Manipulating images (e.g., Western blots) beyond standard adjustments
+│   - Changing statistical methods post-hoc to achieve significance
+│   - Omitting inconvenient results
+│
+PLAGIARISM
+    Appropriating another person's ideas, processes, results, or words
+    without giving appropriate credit
+    Examples:
+    - Copying text without quotation marks and citation
+    - Paraphrasing without attribution
+    - Self-plagiarism (republishing your own work without disclosure)
+    - Using another's methodology without citation
+```
+
+**Responsible Conduct of Research (RCR) Domains:**
+
+| Domain | Key Issues | Best Practices |
+|--------|-----------|---------------|
+| Data management | Integrity, security, sharing | Maintain lab notebooks; document analysis decisions; share data per funder policy |
+| Authorship | Ghost/gift authorship, CRediT roles | Follow ICMJE criteria; discuss authorship early; document contributions |
+| Peer review | Confidentiality, bias, conflicts | Decline reviews with conflicts; provide constructive feedback; maintain confidentiality |
+| Mentoring | Power dynamics, exploitation | Establish expectations in writing; regular meetings; support career development |
+| Collaborative research | IP, data ownership, authorship across institutions | Written collaboration agreements; MOU before data sharing |
+| Publication practices | Duplicate publication, salami-slicing, selective reporting | Pre-register studies; report all outcomes; follow CONSORT/STROBE/PRISMA guidelines |
+| Conflict of interest | Financial, intellectual, personal | Disclose all relevant interests; follow institutional COI policy; recuse when necessary |
+
+### 9. Conflict of Interest Disclosure
+
+```markdown
+## Conflict of Interest Self-Assessment
+
+### Financial Interests
+- [ ] I (or my immediate family) hold equity in a company whose products
+      are related to this research
+- [ ] I receive consulting fees, honoraria, or speaker fees from an entity
+      related to this research (>$5,000/year or per institutional threshold)
+- [ ] I hold patents or receive royalties related to this research
+- [ ] I receive research funding from a company whose products are being studied
+- [ ] I serve on a board of directors or advisory board of a related entity
+
+### Non-Financial Interests
+- [ ] I have personal relationships with individuals involved in this research
+- [ ] I have intellectual commitments that could bias my interpretation
+- [ ] I hold leadership positions in organizations related to this research
+- [ ] I have previously published strong positions on the topic under study
+
+### For Each Identified Conflict
+- Nature of the conflict: [describe]
+- Potential impact on research: [how could it bias design, analysis, or reporting?]
+- Management plan: [recusal, independent oversight, disclosure in publications,
+  blinded analysis, etc.]
+```
+
+### 10. Dual-Use Research of Concern (DURC)
+
+Research that could be directly misapplied to pose a significant threat to public health, agriculture, plants, animals, the environment, or national security.
+
+**DURC Screening Questions:**
+
+```markdown
+Does your research involve any of these agents or toxins?
+- Avian influenza virus (highly pathogenic)
+- Bacillus anthracis, Botulinum neurotoxin
+- Burkholderia mallei, Burkholderia pseudomallei
+- Ebola virus, Foot-and-mouth disease virus
+- Francisella tularensis, Marburg virus
+- Reconstructed 1918 influenza virus
+- Rinderpest virus, Toxin-producing strains of Clostridium botulinum
+- Variola major virus, Variola minor virus
+- Yersinia pestis
+
+Does your research involve any of these experimental effects?
+1. Enhance harmful consequences of the agent
+2. Disrupt immunity or vaccine effectiveness
+3. Confer resistance to clinically/agriculturally useful interventions
+4. Increase stability, transmissibility, or ability to disseminate
+5. Alter host range or tropism
+6. Enhance susceptibility of a host population
+7. Generate or reconstitute an eradicated or extinct agent
+
+If YES to both an agent AND an effect → Institutional DURC review required
+```
+
+---
+
+## Best Practices
+
+1. **Apply for ethics approval before collecting data.** Retroactive approval is rarely possible and always problematic. Plan ethics into your project timeline from the start.
+
+2. **Write consent forms in plain language.** Target a 6th-8th grade reading level. Avoid jargon. Use short sentences. Test readability with the Flesch-Kincaid score.
+
+3. **Anticipate risks realistically.** Do not minimize risks in your application. Reviewers respect honest risk assessment with thoughtful mitigation plans.
+
+4. **Document everything.** Maintain an ethics audit trail: consent forms, protocol amendments, adverse event reports, data management logs. This protects you and your participants.
+
+5. **Treat ethics as ongoing, not one-time.** Ethics compliance does not end when the IRB letter arrives. Monitor for new risks, report adverse events promptly, and submit amendments for protocol changes.
+
+6. **Protect identifiability at every stage.** De-identify data as early as possible. Store identifiers separately from data. Encrypt everything. Delete what you no longer need.
+
+7. **Respect autonomy genuinely.** Voluntary participation means truly voluntary — no pressure, no penalty for withdrawal, no coercive incentives. Pay attention to power dynamics.
+
+8. **Consult early and often.** Talk to your IRB office before submitting. They can help you identify issues early, which saves time and revision cycles.
+
+9. **Stay current with regulations.** GDPR, HIPAA, and institutional policies evolve. Bookmark your institutional research compliance website and check it annually.
+
+10. **Model integrity.** Research ethics is not just compliance with rules. It is a commitment to honesty, transparency, and respect for the people and communities your research touches.
+
+---
+
+## Common Pitfalls
+
+| Pitfall | Why It Happens | How to Avoid |
+|---------|---------------|--------------|
+| Collecting data before approval | Eagerness to start; underestimating review timelines | Build 2-3 months for review into your project timeline |
+| Consent form too complex | Copy-pasting legal language | Write at 6th-8th grade level; have a non-expert read it |
+| Inadequate risk assessment | Researcher normalizes risks in their discipline | Consult with someone outside your field; think from the participant's perspective |
+| Failing to report protocol changes | Viewing amendments as administrative burden | Any change to recruitment, procedures, or risks requires an amendment before implementation |
+| Data stored insecurely | Convenience over security | Use institutional systems; encrypt portable devices; never email identifiable data |
+| Gift or ghost authorship | Social pressure, power dynamics | Discuss authorship using CRediT taxonomy at project start; revisit periodically |
+| Self-plagiarism | Reusing own text without disclosure | Cite your prior work; use quotation marks; disclose to editors |
+| Ignoring cultural context | Applying Western ethics frameworks universally | Consult community leaders; hire cultural liaisons; adapt consent processes |
+| Insufficient anonymization | Assuming removal of names is sufficient | Consider indirect identifiers (job title + institution + age can re-identify); use k-anonymity checks |
+| No data management plan | Viewed as bureaucratic requirement | Treat DMP as a living document; it protects you during and after the research |
+
+---
+
+## References
+
+- Beauchamp, T. L., & Childress, J. F. (2019). *Principles of biomedical ethics* (8th ed.). Oxford University Press.
+- European Commission. (2018). *Ethics in social science and humanities*. https://ec.europa.eu/info/funding-tenders/opportunities/docs/2021-2027/horizon/guidance/ethics-in-social-science-and-humanities_he_en.pdf
+- Israel, M., & Hay, I. (2006). *Research ethics for social scientists*. Sage.
+- National Commission for the Protection of Human Subjects. (1979). *The Belmont Report*. https://www.hhs.gov/ohrp/regulations-and-policy/belmont-report/
+- Office for Human Research Protections (OHRP). (2018). *45 CFR 46 (Common Rule)*. https://www.hhs.gov/ohrp/regulations-and-policy/regulations/45-cfr-46/
+- Resnik, D. B. (2020). *The ethics of research with human subjects: Protecting people, advancing science, promoting trust*. Springer.
+- Steneck, N. H. (2007). *ORI introduction to the responsible conduct of research*. Government Printing Office.
+- World Medical Association. (2013). *Declaration of Helsinki*. https://www.wma.net/policies-post/wma-declaration-of-helsinki/
+
+See also: `references/ethics-guidelines.md` for expanded regulatory details.

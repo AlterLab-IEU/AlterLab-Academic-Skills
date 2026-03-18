@@ -4,7 +4,8 @@ description: Part of the AlterLab Academic Skills suite. This skill should be us
 license: Apache-2.0 license
 compatibility: Some features require an Huggingface token
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # Transformers

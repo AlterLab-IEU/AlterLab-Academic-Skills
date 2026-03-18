@@ -1,9 +1,10 @@
 ---
 name: alterlab-deeptools
 description: NGS analysis toolkit. BAM to bigWig conversion, QC (correlation, PCA, fingerprints), heatmaps/profiles (TSS, peaks), for ChIP-seq, RNA-seq, ATAC-seq visualization. Part of the AlterLab Academic Skills suite.
-license: BSD license
+license: MIT
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # deepTools: NGS Data Analysis Toolkit

@@ -3,7 +3,8 @@ name: alterlab-bioservices
 description: Unified Python interface to 40+ bioinformatics services. Use when querying multiple databases (UniProt, KEGG, ChEMBL, Reactome) in a single workflow with consistent API. Best for cross-database analysis, ID mapping across services. For quick single-database lookups use gget; for sequence/file manipulation use biopython. Part of the AlterLab Academic Skills suite.
 license: GPLv3 license
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # BioServices

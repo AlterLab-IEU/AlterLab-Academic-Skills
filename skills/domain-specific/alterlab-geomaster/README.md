@@ -97,9 +97,9 @@ MIT License
 
 ## Author
 
-K-Dense Inc.
+AlterLab
 
 ## Contributing
 
-This skill is part of the K-Dense-AI/claude-scientific-skills repository.
+This skill is part of the AlterLab Academic Skills suite.
 For contributions, see the main repository guidelines.

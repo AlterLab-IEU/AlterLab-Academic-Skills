@@ -1,9 +1,10 @@
 ---
 name: alterlab-clinpgx
 description: Access ClinPGx pharmacogenomics data (successor to PharmGKB). Query gene-drug interactions, CPIC guidelines, allele functions, for precision medicine and genotype-guided dosing decisions. Part of the AlterLab Academic Skills suite.
-license: Unknown
+license: MIT
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # ClinPGx Database

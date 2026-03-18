@@ -1,9 +1,10 @@
 ---
 name: alterlab-pyopenms
 description: Complete mass spectrometry analysis platform. Use for proteomics workflows feature detection, peptide identification, protein quantification, and complex LC-MS/MS pipelines. Supports extensive file formats and algorithms. Best for proteomics, comprehensive MS data processing. For simple spectral comparison and metabolite ID use matchms. Part of the AlterLab Academic Skills suite.
-license: 3 clause BSD license
+license: MIT
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # PyOpenMS

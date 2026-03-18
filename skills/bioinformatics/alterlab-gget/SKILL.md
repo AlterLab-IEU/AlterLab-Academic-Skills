@@ -1,9 +1,10 @@
 ---
 name: alterlab-gget
 description: "Fast CLI/Python queries to 20+ bioinformatics databases. Use for quick lookups: gene info, BLAST searches, AlphaFold structures, enrichment analysis. Best for interactive exploration, simple queries. For batch processing or advanced BLAST use biopython; for multi-database Python workflows use bioservices. Part of the AlterLab Academic Skills suite."
-license: BSD-2-Clause license
+license: MIT
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # gget

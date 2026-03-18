@@ -1,9 +1,10 @@
 ---
 name: alterlab-rdkit
 description: Cheminformatics toolkit for fine-grained molecular control. SMILES/SDF parsing, descriptors (MW, LogP, TPSA), fingerprints, substructure search, 2D/3D generation, similarity, reactions. For standard workflows with simpler interface, use datamol (wrapper around RDKit). Use rdkit for advanced control, custom sanitization, specialized algorithms. Part of the AlterLab Academic Skills suite.
-license: BSD-3-Clause license
+license: MIT
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # RDKit Cheminformatics Toolkit

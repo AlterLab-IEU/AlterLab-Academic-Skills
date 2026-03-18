@@ -4,7 +4,8 @@ description: Part of the AlterLab Academic Skills suite. Generate or edit images
 license: MIT license
 compatibility: Requires an OpenRouter API key
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # Generate Image

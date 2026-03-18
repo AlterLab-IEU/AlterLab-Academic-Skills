@@ -4,7 +4,8 @@ description: Part of the AlterLab Academic Skills suite. Perform AI-powered web 
 license: MIT license
 compatibility: An OpenRouter API key is required to use Perplexity search
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # Perplexity Search

@@ -3,7 +3,8 @@ name: alterlab-zarr
 description: Part of the AlterLab Academic Skills suite. Chunked N-D arrays for cloud storage. Compressed arrays, parallel I/O, S3/GCS integration, NumPy/Dask/Xarray compatible, for large-scale scientific computing pipelines.
 license: MIT license
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # Zarr Python

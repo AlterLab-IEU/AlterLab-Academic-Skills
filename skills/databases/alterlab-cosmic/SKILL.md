@@ -1,9 +1,9 @@
 ---
 name: alterlab-cosmic
 description: Access COSMIC cancer mutation database. Query somatic mutations, Cancer Gene Census, mutational signatures, gene fusions, for cancer research and precision oncology. Requires authentication. Part of the AlterLab Academic Skills suite.
-license: Unknown
+license: MIT
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
 ---
 
 # COSMIC Database

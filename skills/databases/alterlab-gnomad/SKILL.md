@@ -3,7 +3,8 @@ name: alterlab-gnomad
 description: Query gnomAD (Genome Aggregation Database) for population allele frequencies, variant constraint scores (pLI, LOEUF), and loss-of-function intolerance. Essential for variant pathogenicity interpretation, rare disease genetics, and identifying loss-of-function intolerant genes. Part of the AlterLab Academic Skills suite.
 license: CC0-1.0
 metadata:
-    skill-author: Kuan-lin Huang
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # gnomAD Database

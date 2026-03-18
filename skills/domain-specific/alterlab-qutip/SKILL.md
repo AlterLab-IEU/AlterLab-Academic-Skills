@@ -1,9 +1,10 @@
 ---
 name: alterlab-qutip
 description: Part of the AlterLab Academic Skills suite. Quantum physics simulation library for open quantum systems. Use when studying master equations, Lindblad dynamics, decoherence, quantum optics, or cavity QED. Best for physics research, open system dynamics, and educational simulations. NOT for circuit-based quantum computing—use qiskit, cirq, or pennylane for quantum algorithms and hardware execution.
-license: BSD-3-Clause license
+license: MIT
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # QuTiP: Quantum Toolbox in Python

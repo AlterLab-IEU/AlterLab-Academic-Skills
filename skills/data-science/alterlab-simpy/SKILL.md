@@ -3,7 +3,8 @@ name: alterlab-simpy
 description: Part of the AlterLab Academic Skills suite. Process-based discrete-event simulation framework in Python. Use this skill when building simulations of systems with processes, queues, resources, and time-based events such as manufacturing systems, service operations, network traffic, logistics, or any system where entities interact with shared resources over time.
 license: MIT license
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # SimPy - Discrete-Event Simulation

@@ -1,9 +1,10 @@
 ---
 name: alterlab-labarchive
 description: Part of the AlterLab Academic Skills suite. Electronic lab notebook API integration. Access notebooks, manage entries/attachments, backup notebooks, integrate with Protocols.io/Jupyter/REDCap, for programmatic ELN workflows.
-license: Unknown
+license: MIT
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # LabArchives Integration

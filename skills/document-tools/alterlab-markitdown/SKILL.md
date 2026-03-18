@@ -4,7 +4,8 @@ description: Part of the AlterLab Academic Skills suite. Convert files and offic
 allowed-tools: Read Write Edit Bash
 license: MIT license
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # MarkItDown - File to Markdown Conversion

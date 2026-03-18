@@ -1,9 +1,9 @@
 ---
 name: alterlab-string-db
 description: Query STRING API for protein-protein interactions (59M proteins, 20B interactions). Network analysis, GO/KEGG enrichment, interaction discovery, 5000+ species, for systems biology. Part of the AlterLab Academic Skills suite.
-license: Unknown
+license: MIT
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
 ---
 
 # STRING Database

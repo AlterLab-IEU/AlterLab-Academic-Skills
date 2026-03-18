@@ -1,9 +1,10 @@
 ---
 name: alterlab-pdb
 description: Access RCSB PDB for 3D protein/nucleic acid structures. Search by text/sequence/structure, download coordinates (PDB/mmCIF), retrieve metadata, for structural biology and drug discovery. Part of the AlterLab Academic Skills suite.
-license: Unknown
+license: MIT
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # PDB Database

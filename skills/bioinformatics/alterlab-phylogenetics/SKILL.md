@@ -1,9 +1,10 @@
 ---
 name: alterlab-phylogenetics
 description: Build and analyze phylogenetic trees using MAFFT (multiple alignment), IQ-TREE 2 (maximum likelihood), and FastTree (fast NJ/ML). Visualize with ETE3 or FigTree. For evolutionary analysis, microbial genomics, viral phylodynamics, protein family analysis, and molecular clock studies. Part of the AlterLab Academic Skills suite.
-license: Unknown
+license: MIT
 metadata:
-    skill-author: Kuan-lin Huang
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # Phylogenetics

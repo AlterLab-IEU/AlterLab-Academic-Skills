@@ -4,16 +4,16 @@ description: Part of the AlterLab Academic Skills suite. Comprehensive markdown 
 allowed-tools: Read Write Edit Bash
 license: Apache-2.0
 metadata:
-  skill-author: Clayton Young / Superior Byte Works, LLC (@borealBytes)
+  skill-author: AlterLab
   skill-source: https://github.com/SuperiorByteWorks-LLC/agent-project
   skill-version: "1.0.0"
   skill-contributors:
     - name: Clayton Young
       org: Superior Byte Works, LLC / @borealBytes
       role: Author and originator
-    - name: K-Dense Team
-      org: K-Dense Inc.
-      role: Integration target and community feedback
+    - name: AlterLab Team
+      org: AlterLab
+      role: Integration and community feedback
 ---
 
 # Markdown and Mermaid Writing
@@ -35,7 +35,7 @@ converted to a polished image later — but the text version remains the source 
 > describe relationships < tokens). Additionally mermaid can render along with markdown for
 > easy use almost anywhere by humans or AI."
 >
-> — Clayton Young (@borealBytes), K-Dense Discord, 2026-02-19
+> — Clayton Young (@borealBytes), 2026-02-19
 
 ## When to Use This Skill
 

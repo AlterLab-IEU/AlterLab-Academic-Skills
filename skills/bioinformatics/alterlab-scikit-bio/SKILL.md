@@ -1,9 +1,10 @@
 ---
 name: alterlab-scikit-bio
 description: Biological data toolkit. Sequence analysis, alignments, phylogenetic trees, diversity metrics (alpha/beta, UniFrac), ordination (PCoA), PERMANOVA, FASTA/Newick I/O, for microbiome analysis. Part of the AlterLab Academic Skills suite.
-license: BSD-3-Clause license
+license: MIT
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # scikit-bio

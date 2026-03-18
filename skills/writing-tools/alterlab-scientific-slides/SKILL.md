@@ -4,7 +4,8 @@ description: Part of the AlterLab Academic Skills suite. Build slide decks and p
 allowed-tools: Read Write Edit Bash
 license: MIT license
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # Scientific Slides
@@ -95,7 +96,7 @@ To ensure unified formatting across all slides in a presentation:
    - Creates visual continuity throughout the deck
    - Ensures consistent colors, fonts, and design language
 
-3. **Default author is "K-Dense"** unless another name is specified
+3. **Default author is "AlterLab"** unless another name is specified
 
 4. **Include citations directly in the prompt** for slides that reference research:
    - Add citations in the prompt text so they appear on the generated slide
@@ -123,7 +124,7 @@ To ensure unified formatting across all slides in a presentation:
 
 ```bash
 # Title slide (first slide - establishes the style)
-python scripts/generate_slide_image.py "Title slide for presentation: 'Machine Learning: From Theory to Practice'. Subtitle: 'AI Conference 2025'. Speaker: K-Dense. FORMATTING GOAL: Dark blue background (#1a237e), white text, gold accents (#ffc107), minimal design, sans-serif fonts, generous margins, no decorative elements." -o slides/01_title.png
+python scripts/generate_slide_image.py "Title slide for presentation: 'Machine Learning: From Theory to Practice'. Subtitle: 'AI Conference 2025'. Speaker: AlterLab. FORMATTING GOAL: Dark blue background (#1a237e), white text, gold accents (#ffc107), minimal design, sans-serif fonts, generous margins, no decorative elements." -o slides/01_title.png
 
 # Content slide with citations (attach previous slide for consistency)
 python scripts/generate_slide_image.py "Presentation slide titled 'Why Machine Learning Matters'. Three key points with simple icons: 1) Industry adoption, 2) Breakthrough applications, 3) Future potential. CITATIONS: Include at bottom in small text: (LeCun et al., 2015; Goodfellow et al., 2016). FORMATTING GOAL: Match attached slide style - dark blue background, white text, gold accents, minimal professional design, no visual clutter." -o slides/02_intro.png --attach slides/01_title.png
@@ -1089,8 +1090,8 @@ Comprehensive guides for specific aspects:
    **Important: Use consistent formatting, attach previous slides, and include citations!**
    
    ```bash
-   # Title slide (establishes style - default author: K-Dense)
-   python scripts/generate_slide_image.py "Title slide: 'Your Research Title'. Conference name, K-Dense. FORMATTING GOAL: [your color scheme], minimal professional design, no decorative elements, clean and corporate." -o slides/01_title.png
+   # Title slide (establishes style - default author: AlterLab)
+   python scripts/generate_slide_image.py "Title slide: 'Your Research Title'. Conference name, AlterLab. FORMATTING GOAL: [your color scheme], minimal professional design, no decorative elements, clean and corporate." -o slides/01_title.png
    
    # Introduction slide with citations (attach previous for consistency)
    python scripts/generate_slide_image.py "Slide titled 'Why This Matters'. Three key points with simple icons. CITATIONS: Include at bottom: (Smith et al., 2023; Jones et al., 2024). FORMATTING GOAL: Match attached slide style exactly." -o slides/02_intro.png --attach slides/01_title.png

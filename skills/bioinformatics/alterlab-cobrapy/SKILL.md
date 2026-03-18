@@ -3,7 +3,8 @@ name: alterlab-cobrapy
 description: Constraint-based metabolic modeling (COBRA). FBA, FVA, gene knockouts, flux sampling, SBML models, for systems biology and metabolic engineering analysis. Part of the AlterLab Academic Skills suite.
 license: GPL-2.0 license
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # COBRApy - Constraint-Based Reconstruction and Analysis

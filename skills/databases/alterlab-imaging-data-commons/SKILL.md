@@ -4,7 +4,7 @@ description: Query and download public cancer imaging data from NCI Imaging Data
 license: This skill is provided under the MIT License. IDC data itself has individual licensing (mostly CC-BY, some CC-NC) that must be respected when using the data.
 metadata:
     version: 1.4.0
-    skill-author: Andrey Fedorov, @fedorov
+    skill-author: AlterLab
     idc-index: "0.11.10"
     idc-data-version: "v23"
     repository: https://github.com/ImagingDataCommons/idc-claude-skill

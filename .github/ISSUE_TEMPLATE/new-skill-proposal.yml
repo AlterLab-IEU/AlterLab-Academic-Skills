@@ -1,0 +1,44 @@
+name: New Skill Proposal
+description: Propose a new academic skill to add to the collection
+labels: [enhancement]
+body:
+  - type: input
+    id: skill-name
+    attributes:
+      label: Skill Name
+      description: What should this skill be called?
+      placeholder: e.g., systems-thinking
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: Which category does this skill belong to?
+      options:
+        - Cognitive Skills
+        - Research Skills
+        - Communication Skills
+        - Technical Skills
+        - Interpersonal Skills
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: Describe how this skill would be used and why it is valuable.
+    validations:
+      required: true
+
+  - type: textarea
+    id: target-audience
+    attributes:
+      label: Target Audience
+      description: Who would benefit most from this skill?
+      placeholder: e.g., undergraduate students, graduate researchers, faculty
+    validations:
+      required: true

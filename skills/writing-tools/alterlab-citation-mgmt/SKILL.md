@@ -4,7 +4,8 @@ description: Part of the AlterLab Academic Skills suite. Comprehensive citation 
 allowed-tools: Read Write Edit Bash
 license: MIT License
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # Citation Management

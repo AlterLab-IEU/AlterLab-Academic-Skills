@@ -3,7 +3,7 @@ name: alterlab-molfeat
 description: Molecular featurization for ML (100+ featurizers). ECFP, MACCS, descriptors, pretrained models (ChemBERTa), convert SMILES to features, for QSAR and molecular ML. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0 license
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
 ---
 
 # Molfeat - Molecular Featurization Hub

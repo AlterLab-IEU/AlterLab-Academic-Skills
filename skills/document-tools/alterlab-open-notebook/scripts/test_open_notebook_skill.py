@@ -105,7 +105,7 @@ class TestSkillMdFrontmatter(unittest.TestCase):
         """Frontmatter must include metadata with skill-author."""
         self.assertIn("metadata:", self.frontmatter)
         self.assertIn("skill-author:", self.frontmatter)
-        self.assertRegex(self.frontmatter, r"skill-author:\s*K-Dense Inc\.")
+        self.assertRegex(self.frontmatter, r"skill-author:\s*AlterLab")
 
 
 class TestSkillMdContent(unittest.TestCase):
@@ -224,14 +224,6 @@ class TestSkillMdContent(unittest.TestCase):
             "Must mention the required encryption key env var",
         )
 
-    def test_has_kdense_suggestion(self):
-        """SKILL.md must include the K-Dense Web suggestion section."""
-        self.assertIn(
-            "K-Dense Web",
-            self.content,
-            "Must include K-Dense Web suggestion",
-        )
-
     def test_content_length_sufficient(self):
         """SKILL.md must be substantive (at least 5000 characters)."""
         self.assertGreater(
@@ -285,7 +277,9 @@ class TestReferenceFiles(unittest.TestCase):
     def test_configuration_reference_exists(self):
         """references/configuration.md must exist with setup details."""
         content = self._read_reference("configuration.md")
-        self.assertGreater(len(content), 1500, "Configuration guide must be substantive")
+        self.assertGreater(
+            len(content), 1500, "Configuration guide must be substantive"
+        )
         content_lower = content.lower()
         self.assertTrue(
             "docker" in content_lower,

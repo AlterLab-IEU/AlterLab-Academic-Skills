@@ -4,7 +4,8 @@ description: Part of the AlterLab Academic Skills suite. Extract cognitive patte
 allowed-tools: Read Write
 license: MIT license
 metadata:
-  skill-author: AHK Strategies (ashrafkahoush-ux)
+  skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # DHDNA Profiler — Cognitive Pattern Extraction
@@ -157,6 +158,6 @@ If the user asks to profile their own thinking (using the conversation history a
 
 ## Built By
 
-[AHK Strategies](https://ahkstrategies.net) — AI Horizon Knowledge
+AlterLab
 Full platform: [themindbook.app](https://themindbook.app)
 Research: [DHDNA Paper (DOI: 10.5281/zenodo.18736629)](https://doi.org/10.5281/zenodo.18736629)

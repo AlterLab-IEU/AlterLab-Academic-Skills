@@ -1,9 +1,10 @@
 ---
 name: alterlab-primekg
 description: Query the Precision Medicine Knowledge Graph (PrimeKG) for multiscale biological data including genes, drugs, diseases, phenotypes, and more. Part of the AlterLab Academic Skills suite.
-license: Unknown
+license: MIT
 metadata:
-    skill-author: K-Dense Inc. (PrimeKG original from Harvard MIMS)
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # PrimeKG Knowledge Graph Skill
@@ -18,7 +19,7 @@ PrimeKG is a precision medicine knowledge graph that integrates over 20 primary 
 - Analyze local disease context (related genes, drugs, phenotypes)
 - Identify drug-disease paths (potential repurposing opportunities)
 
-**Data access:** Programmatic access via `query_primekg.py`. Data is stored at `C:\Users\eamon\Documents\Data\PrimeKG\kg.csv`.
+**Data access:** Programmatic access via `query_primekg.py`. Data is stored at `<path-to-primekg>/kg.csv`.
 
 ## When to Use This Skill
 
@@ -91,7 +92,7 @@ The graph contains several key relationship types including:
 - `scripts/query_primekg.py`: Core functions for searching and querying the knowledge graph.
 
 ### Data Path
-- Data: `/mnt/c/Users/eamon/Documents/Data/PrimeKG/kg.csv`
+- Data: `<path-to-primekg>/kg.csv`
 - Total nodes: ~129,000
 - Total edges: ~4,000,000
 - Database: CSV-based, optimized for pandas querying.

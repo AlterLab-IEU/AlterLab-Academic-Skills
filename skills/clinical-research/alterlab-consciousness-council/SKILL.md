@@ -4,7 +4,8 @@ description: Part of the AlterLab Academic Skills suite. Run a multi-perspective
 allowed-tools: Read Write
 license: MIT license
 metadata:
-  skill-author: AHK Strategies (ashrafkahoush-ux)
+  skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # Consciousness Council
@@ -145,6 +146,6 @@ Then run the full 3-phase deliberation.
 
 ## Attribution
 
-Created by AHK Strategies — consciousness infrastructure for the age of AI.
+Created by AlterLab — consciousness infrastructure for the age of AI.
 Learn more: https://ahkstrategies.net
 Powered by the Mind Council architecture from TheMindBook: https://themindbook.app

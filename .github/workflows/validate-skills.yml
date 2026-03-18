@@ -1,0 +1,70 @@
+name: Validate Skills
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "skills/**"
+
+jobs:
+  validate-frontmatter:
+    name: Validate SKILL.md Frontmatter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate SKILL.md files
+        run: |
+          ERRORS=0
+          TOTAL=0
+
+          while IFS= read -r file; do
+            TOTAL=$((TOTAL + 1))
+            echo "Checking: $file"
+
+            # Extract YAML frontmatter between --- delimiters
+            frontmatter=$(sed -n '/^---$/,/^---$/p' "$file" | sed '1d;$d')
+
+            if [ -z "$frontmatter" ]; then
+              echo "::error file=$file::Missing YAML frontmatter"
+              ERRORS=$((ERRORS + 1))
+              continue
+            fi
+
+            # Check for required 'name' field
+            if ! echo "$frontmatter" | grep -qE '^name:'; then
+              echo "::error file=$file::Missing required field: name"
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            # Check for required 'description' field
+            if ! echo "$frontmatter" | grep -qE '^description:'; then
+              echo "::error file=$file::Missing required field: description"
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            # Check for required 'metadata.skill-author' field
+            if ! echo "$frontmatter" | grep -qE '^\s*skill-author:'; then
+              echo "::error file=$file::Missing required field: metadata.skill-author"
+              ERRORS=$((ERRORS + 1))
+            fi
+
+          done < <(find skills -name "SKILL.md" -type f 2>/dev/null)
+
+          echo ""
+          echo "=== Validation Summary ==="
+          echo "Total skills found: $TOTAL"
+          echo "Errors: $ERRORS"
+
+          if [ "$TOTAL" -eq 0 ]; then
+            echo "::warning::No SKILL.md files found under skills/"
+          fi
+
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "::error::$ERRORS validation error(s) found"
+            exit 1
+          fi
+
+          echo "All $TOTAL skill(s) passed validation."

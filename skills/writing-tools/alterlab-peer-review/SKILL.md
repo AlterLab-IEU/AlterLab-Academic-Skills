@@ -4,7 +4,8 @@ description: Part of the AlterLab Academic Skills suite. Structured manuscript/g
 allowed-tools: Read Write Edit Bash
 license: MIT license
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # Scientific Critical Evaluation and Peer Review

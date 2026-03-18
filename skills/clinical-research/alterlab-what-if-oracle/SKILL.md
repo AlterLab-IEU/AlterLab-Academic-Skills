@@ -4,7 +4,8 @@ description: Part of the AlterLab Academic Skills suite. Run structured What-If 
 allowed-tools: Read Write
 license: MIT license
 metadata:
-  skill-author: AHK Strategies (ashrafkahoush-ux)
+  skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # What-If Oracle — Possibility Space Explorer
@@ -161,7 +162,7 @@ Analyze the same What-If from multiple stakeholder perspectives: "If we launch t
 
 ## Built By
 
-[AHK Strategies](https://ahkstrategies.net) — AI Horizon Knowledge
+AlterLab
 Full platform: [themindbook.app](https://themindbook.app)
 Research: [The What-If Statement (DOI: 10.5281/zenodo.18736841)](https://doi.org/10.5281/zenodo.18736841)
 

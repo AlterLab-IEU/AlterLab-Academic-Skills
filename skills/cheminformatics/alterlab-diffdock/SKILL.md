@@ -3,7 +3,8 @@ name: alterlab-diffdock
 description: Diffusion-based molecular docking. Predict protein-ligand binding poses from PDB/SMILES, confidence scores, virtual screening, for structure-based drug design. Not for affinity prediction. Part of the AlterLab Academic Skills suite.
 license: MIT license
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # DiffDock: Molecular Docking with Diffusion Models

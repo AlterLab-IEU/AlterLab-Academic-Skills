@@ -5,7 +5,8 @@ allowed-tools: Read Write Edit Bash
 license: MIT license
 compatibility: PARALLEL_API_KEY required
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # Parallel Web Systems API

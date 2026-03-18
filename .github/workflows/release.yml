@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Count total skills
+        id: count
+        run: |
+          SKILL_COUNT=$(find skills -name "SKILL.md" -type f 2>/dev/null | wc -l)
+          echo "total=$SKILL_COUNT" >> "$GITHUB_OUTPUT"
+          echo "Total skills: $SKILL_COUNT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body: |
+            ## AlterLab Academic Skills ${{ github.ref_name }}
+
+            This release includes **${{ steps.count.outputs.total }}** academic skills.
+
+            See the auto-generated changelog below for details.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

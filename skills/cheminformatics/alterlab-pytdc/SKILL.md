@@ -3,7 +3,7 @@ name: alterlab-pytdc
 description: Therapeutics Data Commons. AI-ready drug discovery datasets (ADME, toxicity, DTI), benchmarks, scaffold splits, molecular oracles, for therapeutic ML and pharmacological prediction. Part of the AlterLab Academic Skills suite.
 license: MIT license
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
 ---
 
 # PyTDC (Therapeutics Data Commons)

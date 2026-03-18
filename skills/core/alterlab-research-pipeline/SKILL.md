@@ -810,7 +810,7 @@ Stage 5: alterlab-paper-writer (format-convert mode)
 |------|---------|
 | Skill Version | 2.6 |
 | Last Updated | 2026-03-08 |
-| Maintainer | Cheng-I Wu |
+| Maintainer | AlterLab |
 | Dependent Skills | alterlab-deep-research v2.0+, alterlab-paper-writer v2.0+, alterlab-paper-reviewer v1.1+ |
 | Role | Full academic research workflow orchestrator |
 

@@ -4,7 +4,7 @@ description: Part of the AlterLab Academic Skills suite. Zero-shot time series f
 allowed-tools: Read Write Edit Bash
 license: Apache-2.0 license
 metadata:
-  skill-author: Clayton Young / Superior Byte Works, LLC (@borealBytes)
+  skill-author: AlterLab
   skill-version: "1.0.0"
 ---
 

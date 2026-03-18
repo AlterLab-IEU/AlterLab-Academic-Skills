@@ -1,6 +1,10 @@
 ---
 name: alterlab-latex-posters
 description: "Part of the AlterLab Academic Skills suite. Create professional research posters in LaTeX using beamerposter, tikzposter, or baposter. Support for conference presentations, academic posters, and scientific communication. Includes layout design, color schemes, multi-column formats, figure integration, and poster-specific best practices for visual communication."
+license: MIT
+metadata:
+    skill-author: AlterLab
+    version: "1.0.0"
 allowed-tools: Read Write Edit Bash
 ---
 

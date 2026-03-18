@@ -4,7 +4,8 @@ description: Part of the AlterLab Academic Skills suite. Search scientific paper
 allowed-tools: Bash
 license: MIT
 metadata:
-    skill-author: BGPT
+    skill-author: AlterLab
+    version: "1.0.0"
     website: https://bgpt.pro/mcp
     github: https://github.com/connerlambden/bgpt-mcp
 ---

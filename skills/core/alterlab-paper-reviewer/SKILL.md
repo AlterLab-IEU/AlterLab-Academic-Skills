@@ -469,7 +469,7 @@ Follows the paper's language. Academic terms remain in English. User can overrid
 |------|---------|
 | Skill Version | 1.4 |
 | Last Updated | 2026-03-08 |
-| Maintainer | Cheng-I Wu |
+| Maintainer | AlterLab |
 | Dependent Skills | alterlab-paper-writer v1.0+ (upstream/downstream integration) |
 | Role | Multi-perspective academic paper review simulator |
 

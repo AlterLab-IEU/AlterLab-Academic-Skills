@@ -3,7 +3,8 @@ name: alterlab-pymatgen
 description: Part of the AlterLab Academic Skills suite. Materials science toolkit. Crystal structures (CIF, POSCAR), phase diagrams, band structure, DOS, Materials Project integration, format conversion, for computational materials science.
 license: MIT license
 metadata:
-    skill-author: K-Dense Inc.
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # Pymatgen - Python Materials Genomics

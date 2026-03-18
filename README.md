@@ -1,27 +1,27 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Skills-180+-blueviolet?style=for-the-badge" alt="180+ Skills" />
-  <img src="https://img.shields.io/badge/Domains-13-blue?style=for-the-badge" alt="13 Domains" />
+  <img src="https://img.shields.io/badge/Skills-186+-blueviolet?style=for-the-badge" alt="186+ Skills" />
+  <img src="https://img.shields.io/badge/Domains-14-blue?style=for-the-badge" alt="14 Domains" />
   <img src="https://img.shields.io/badge/Claude-AI%20Powered-orange?style=for-the-badge" alt="Claude AI" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="MIT License" />
   <img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge" alt="PRs Welcome" />
 </p>
 
-<h1 align="center">🔬 AlterLab Academic Skills</h1>
+<h1 align="center">AlterLab Academic Skills</h1>
 
 <p align="center">
-  <strong>180+ Claude AI skills for faculty members and academic researchers</strong><br />
-  Research Pipeline · Scientific Databases · Bioinformatics · Data Science · Visualization · and more
+  <strong>186+ Claude AI skills for faculty members and academic researchers</strong><br />
+  Research Pipeline | Scientific Databases | Bioinformatics | Data Science | Social Sciences | Visualization | and more
 </p>
 
 <p align="center">
-  Built by <a href="https://github.com/AlterLab-IEU">AlterLab</a> — Creative Technologies Laboratory, İzmir University of Economics
+  Built by <a href="https://github.com/AlterLab-IEU">AlterLab Creative Technologies Laboratory</a>
 </p>
 
 ---
 
 ## What Is This?
 
-A comprehensive suite of **180+ purpose-built Claude AI skills** for faculty members, academicians, and researchers — organized into **13 domain categories** spanning the full academic research lifecycle.
+A comprehensive suite of **186+ purpose-built Claude AI skills** for faculty members, academicians, and researchers — organized into **14 domain categories** spanning the full academic research lifecycle.
 
 Each skill transforms Claude into a **domain-specific expert assistant** tailored to academic research, scientific computing, and scholarly publishing workflows.
 
@@ -35,8 +35,8 @@ Each skill transforms Claude into a **domain-specific expert assistant** tailore
 
 - [Domain Overview](#domain-overview)
 - [Quick Start](#quick-start)
-- [Core Pipeline](#-core-pipeline--4-skills)
-- [All 180+ Skills](#all-180-skills)
+- [Core Pipeline](#core-pipeline--4-skills)
+- [All 186+ Skills](#all-186-skills)
 - [Project Structure](#project-structure)
 - [How Skills Work](#how-skills-work)
 - [Contributing](#contributing)
@@ -49,28 +49,29 @@ Each skill transforms Claude into a **domain-specific expert assistant** tailore
 
 | Domain | Skills | Focus Areas |
 |:-------|:------:|:------------|
-| 🧪 **Core Pipeline** | 4 | Multi-agent research → write → review → publish pipeline |
-| 🗄️ **Databases** | 39 | Connectors to 250+ scientific databases — PubMed, ChEMBL, UniProt, ClinicalTrials.gov, COSMIC, and more |
-| 🧬 **Bioinformatics** | 25 | Genomics, proteomics, molecular biology — Scanpy, BioPython, ESM, single-cell analysis |
-| ⚗️ **Cheminformatics** | 12 | Chemistry and drug discovery — RDKit, molecular dynamics, docking, ADMET |
-| 🏥 **Clinical Research** | 10 | Clinical decision support, treatment planning, medical imaging, regulatory |
-| 📊 **Data Science** | 22 | ML/statistics — scikit-learn, PyTorch Lightning, SHAP, transformers |
-| 📈 **Visualization** | 8 | Scientific plotting — Matplotlib, Seaborn, Plotly, schematics, infographics |
-| ✍️ **Writing Tools** | 12 | Scientific writing, citations, grants, posters, peer review |
-| 🔬 **Lab Integrations** | 9 | Laboratory platforms — Benchling, DNAnexus, Opentrons, Protocols.io |
-| 🌐 **Domain-Specific** | 15 | Quantum computing, geospatial, materials science, astrophysics |
-| 📄 **Document Tools** | 6 | File format handling — DOCX, PDF, PPTX, XLSX, Markdown |
-| 🔍 **Research Tools** | 7 | Search, discovery, Zotero, scientific brainstorming |
-| 💰 **Finance & Economics** | 7 | FRED, Alpha Vantage, SEC EDGAR, market research |
+| **Core Pipeline** | 6 | Multi-agent research -> write -> review -> publish pipeline + teaching + thesis |
+| **Databases** | 39 | Connectors to 250+ scientific databases — PubMed, ChEMBL, UniProt, ClinicalTrials.gov, COSMIC, and more |
+| **Bioinformatics** | 25 | Genomics, proteomics, molecular biology — Scanpy, BioPython, ESM, single-cell analysis |
+| **Cheminformatics** | 12 | Chemistry and drug discovery — RDKit, molecular dynamics, docking, ADMET |
+| **Clinical Research** | 10 | Clinical decision support, treatment planning, medical imaging, regulatory |
+| **Data Science** | 22 | ML/statistics — scikit-learn, PyTorch Lightning, SHAP, transformers |
+| **Visualization** | 8 | Scientific plotting — Matplotlib, Seaborn, Plotly, schematics, infographics |
+| **Writing Tools** | 13 | Scientific writing, citations, grants, posters, academic career |
+| **Lab Integrations** | 9 | Laboratory platforms — Benchling, DNAnexus, Opentrons, Protocols.io |
+| **Domain-Specific** | 17 | Quantum computing, geospatial, materials science, social science methods, digital humanities |
+| **Document Tools** | 6 | File format handling — DOCX, PDF, PPTX, XLSX, Markdown |
+| **Research Tools** | 12 | Search, discovery, Zotero, qualitative methods, ethics, surveys, open science |
+| **Finance & Economics** | 7 | FRED, Alpha Vantage, SEC EDGAR, market research |
+| **Social Sciences & Humanities** | 10 | Teaching design, thesis supervision, mixed methods, digital humanities |
 
 ---
 
 ## Quick Start
 
-### Option 1 — Claude Projects ⭐ Recommended
+### Option 1 — Claude Projects (Recommended)
 
 ```
-1. Go to claude.ai → Projects → Create Project
+1. Go to claude.ai -> Projects -> Create Project
 2. Upload SKILL.md files from your domain folder into the project's Knowledge section
 3. Start chatting — Claude now has your skills loaded
 ```
@@ -89,30 +90,32 @@ Browse the [`skills/`](./skills) folder and download only the ones you need. Eve
 
 ---
 
-## 🧪 Core Pipeline — 4 Skills
+## Core Pipeline — 6 Skills
 
-The heart of the system — a **multi-agent research-to-publication pipeline** with 39 specialized agents working together.
+The heart of the system — a **multi-agent research-to-publication pipeline** with 39 specialized agents, plus teaching and thesis supervision tools.
 
 | # | Skill | Agents | What It Does |
 |:-:|:------|:------:|:-------------|
 | 1 | [Deep Research](./skills/core/alterlab-deep-research) | 13 | Multi-mode research with systematic review, Socratic dialogue, fact-checking |
 | 2 | [Paper Writer](./skills/core/alterlab-paper-writer) | 12 | Academic paper authoring with LaTeX, bilingual support, 9 writing modes |
-| 3 | [Paper Reviewer](./skills/core/alterlab-paper-reviewer) | 7 | Multi-perspective peer review with Devil's Advocate, 0–100 quality rubrics |
+| 3 | [Paper Reviewer](./skills/core/alterlab-paper-reviewer) | 7 | Multi-perspective peer review with Devil's Advocate, 0-100 quality rubrics |
 | 4 | [Research Pipeline](./skills/core/alterlab-research-pipeline) | 7 | 10-stage orchestrator with integrity verification and material passports |
+| 5 | [Teaching Design](./skills/core/alterlab-teaching-design) | — | Course design, syllabi, rubrics, Bloom's taxonomy, backward design |
+| 6 | [Thesis Supervisor](./skills/core/alterlab-thesis-supervisor) | — | Dissertation guidance, defense prep, committee management |
 
 ---
 
-## All 180+ Skills
+## All 186+ Skills
 
 <details>
-<summary>🗄️ <strong>Databases</strong> — Connectors to 250+ Scientific Databases (39 Skills)</summary>
+<summary><strong>Databases</strong> — Connectors to 250+ Scientific Databases (39 Skills)</summary>
 <br />
 
 | # | Skill | What It Does |
 |:-:|:------|:-------------|
 | 1 | [AlphaFold DB](./skills/databases/alterlab-alphafold-db) | Protein structure predictions from AlphaFold |
 | 2 | [arXiv](./skills/databases/alterlab-arxiv) | Preprint search and discovery |
-| 3 | [BindingDB](./skills/databases/alterlab-bindingdb) | Binding affinity data for drug–target interactions |
+| 3 | [BindingDB](./skills/databases/alterlab-bindingdb) | Binding affinity data for drug-target interactions |
 | 4 | [bioRxiv](./skills/databases/alterlab-biorxiv) | Biology preprint search and monitoring |
 | 5 | [BRENDA](./skills/databases/alterlab-brenda) | Enzyme functional data |
 | 6 | [cBioPortal](./skills/databases/alterlab-cbioportal) | Cancer genomics data exploration |
@@ -138,14 +141,14 @@ The heart of the system — a **multi-agent research-to-publication pipeline** w
 | 26 | [JASPAR](./skills/databases/alterlab-jaspar) | Transcription factor binding profiles |
 | 27 | [KEGG](./skills/databases/alterlab-kegg) | Biological pathways and networks |
 | 28 | [Metabolomics Workbench](./skills/databases/alterlab-metabolomics-wb) | Metabolomics data repository |
-| 29 | [Monarch Initiative](./skills/databases/alterlab-monarch) | Disease–gene associations |
+| 29 | [Monarch Initiative](./skills/databases/alterlab-monarch) | Disease-gene associations |
 | 30 | [OpenAlex](./skills/databases/alterlab-openalex) | Open scholarly metadata |
 | 31 | [Open Targets](./skills/databases/alterlab-opentargets) | Drug target identification |
 | 32 | [PDB](./skills/databases/alterlab-pdb) | Protein 3D structure database |
 | 33 | [PubChem](./skills/databases/alterlab-pubchem) | Chemical information database |
 | 34 | [PubMed](./skills/databases/alterlab-pubmed) | Biomedical literature search |
 | 35 | [Reactome](./skills/databases/alterlab-reactome) | Biological pathway database |
-| 36 | [STRING](./skills/databases/alterlab-string-db) | Protein–protein interaction networks |
+| 36 | [STRING](./skills/databases/alterlab-string-db) | Protein-protein interaction networks |
 | 37 | [UniProt](./skills/databases/alterlab-uniprot) | Protein sequence and function |
 | 38 | [USPTO](./skills/databases/alterlab-uspto) | Patent search and analysis |
 | 39 | [ZINC](./skills/databases/alterlab-zinc-db) | Commercially-available compounds for docking |
@@ -153,7 +156,7 @@ The heart of the system — a **multi-agent research-to-publication pipeline** w
 </details>
 
 <details>
-<summary>🧬 <strong>Bioinformatics</strong> — Genomics, Proteomics & Molecular Biology (25 Skills)</summary>
+<summary><strong>Bioinformatics</strong> — Genomics, Proteomics & Molecular Biology (25 Skills)</summary>
 <br />
 
 | # | Skill | What It Does |
@@ -187,7 +190,7 @@ The heart of the system — a **multi-agent research-to-publication pipeline** w
 </details>
 
 <details>
-<summary>⚗️ <strong>Cheminformatics</strong> — Chemistry & Drug Discovery (12 Skills)</summary>
+<summary><strong>Cheminformatics</strong> — Chemistry & Drug Discovery (12 Skills)</summary>
 <br />
 
 | # | Skill | What It Does |
@@ -208,7 +211,7 @@ The heart of the system — a **multi-agent research-to-publication pipeline** w
 </details>
 
 <details>
-<summary>🏥 <strong>Clinical Research</strong> — Clinical Decision Support & Medical Tools (10 Skills)</summary>
+<summary><strong>Clinical Research</strong> — Clinical Decision Support & Medical Tools (10 Skills)</summary>
 <br />
 
 | # | Skill | What It Does |
@@ -227,7 +230,7 @@ The heart of the system — a **multi-agent research-to-publication pipeline** w
 </details>
 
 <details>
-<summary>📊 <strong>Data Science</strong> — ML, Statistics & Data Analysis (22 Skills)</summary>
+<summary><strong>Data Science</strong> — ML, Statistics & Data Analysis (22 Skills)</summary>
 <br />
 
 | # | Skill | What It Does |
@@ -258,7 +261,7 @@ The heart of the system — a **multi-agent research-to-publication pipeline** w
 </details>
 
 <details>
-<summary>📈 <strong>Visualization</strong> — Scientific Plotting & Graphics (8 Skills)</summary>
+<summary><strong>Visualization</strong> — Scientific Plotting & Graphics (8 Skills)</summary>
 <br />
 
 | # | Skill | What It Does |
@@ -275,28 +278,29 @@ The heart of the system — a **multi-agent research-to-publication pipeline** w
 </details>
 
 <details>
-<summary>✍️ <strong>Writing Tools</strong> — Scientific Writing, Citations & Publishing (12 Skills)</summary>
+<summary><strong>Writing Tools</strong> — Scientific Writing, Citations & Publishing (13 Skills)</summary>
 <br />
 
 | # | Skill | What It Does |
 |:-:|:------|:-------------|
-| 1 | [Citation Management](./skills/writing-tools/alterlab-citation-mgmt) | Reference formatting and management |
-| 2 | [Hypothesis Generator](./skills/writing-tools/alterlab-hypothesis-gen) | Research hypothesis development |
-| 3 | [LaTeX Posters](./skills/writing-tools/alterlab-latex-posters) | Conference poster design in LaTeX |
-| 4 | [Literature Review](./skills/writing-tools/alterlab-literature-review) | Systematic literature review assistance |
-| 5 | [Paper-to-Web](./skills/writing-tools/alterlab-paper-2-web) | Convert papers to web-friendly formats |
-| 6 | [Peer Review](./skills/writing-tools/alterlab-peer-review) | Peer review writing assistance |
-| 7 | [PPTX Posters](./skills/writing-tools/alterlab-pptx-posters) | Conference posters in PowerPoint |
-| 8 | [Research Grants](./skills/writing-tools/alterlab-research-grants) | Grant proposal writing |
-| 9 | [Scholar Eval](./skills/writing-tools/alterlab-scholar-eval) | Academic output evaluation |
-| 10 | [Scientific Slides](./skills/writing-tools/alterlab-scientific-slides) | Research presentation creation |
-| 11 | [Scientific Writing](./skills/writing-tools/alterlab-scientific-writing) | Academic writing style and structure |
-| 12 | [Venue Templates](./skills/writing-tools/alterlab-venue-templates) | Journal/conference formatting templates |
+| 1 | [Academic Career](./skills/writing-tools/alterlab-academic-career) | Academic CV, research statements, tenure dossier |
+| 2 | [Citation Management](./skills/writing-tools/alterlab-citation-mgmt) | Reference formatting and management |
+| 3 | [Hypothesis Generator](./skills/writing-tools/alterlab-hypothesis-gen) | Research hypothesis development |
+| 4 | [LaTeX Posters](./skills/writing-tools/alterlab-latex-posters) | Conference poster design in LaTeX |
+| 5 | [Literature Review](./skills/writing-tools/alterlab-literature-review) | Systematic literature review assistance |
+| 6 | [Paper-to-Web](./skills/writing-tools/alterlab-paper-2-web) | Convert papers to web-friendly formats |
+| 7 | [Peer Review](./skills/writing-tools/alterlab-peer-review) | Peer review writing assistance |
+| 8 | [PPTX Posters](./skills/writing-tools/alterlab-pptx-posters) | Conference posters in PowerPoint |
+| 9 | [Research Grants](./skills/writing-tools/alterlab-research-grants) | Grant proposal writing |
+| 10 | [Scholar Eval](./skills/writing-tools/alterlab-scholar-eval) | Academic output evaluation |
+| 11 | [Scientific Slides](./skills/writing-tools/alterlab-scientific-slides) | Research presentation creation |
+| 12 | [Scientific Writing](./skills/writing-tools/alterlab-scientific-writing) | Academic writing style and structure |
+| 13 | [Venue Templates](./skills/writing-tools/alterlab-venue-templates) | Journal/conference formatting templates |
 
 </details>
 
 <details>
-<summary>🔬 <strong>Lab Integrations</strong> — Laboratory Platform Connectors (9 Skills)</summary>
+<summary><strong>Lab Integrations</strong> — Laboratory Platform Connectors (9 Skills)</summary>
 <br />
 
 | # | Skill | What It Does |
@@ -314,7 +318,7 @@ The heart of the system — a **multi-agent research-to-publication pipeline** w
 </details>
 
 <details>
-<summary>🌐 <strong>Domain-Specific</strong> — Quantum, Geospatial, Materials & More (15 Skills)</summary>
+<summary><strong>Domain-Specific</strong> — Quantum, Geospatial, Materials, Social Science & More (17 Skills)</summary>
 <br />
 
 | # | Skill | What It Does |
@@ -334,11 +338,13 @@ The heart of the system — a **multi-agent research-to-publication pipeline** w
 | 13 | [Pymatgen](./skills/domain-specific/alterlab-pymatgen) | Materials science analysis |
 | 14 | [Qiskit](./skills/domain-specific/alterlab-qiskit) | Quantum computing (IBM) |
 | 15 | [QuTiP](./skills/domain-specific/alterlab-qutip) | Quantum dynamics simulation |
+| 16 | [Social Science Methods](./skills/domain-specific/alterlab-social-science-methods) | Discourse analysis, QCA, Delphi, process tracing |
+| 17 | [Digital Humanities](./skills/domain-specific/alterlab-digital-humanities) | Text mining, corpus linguistics, stylometry, OCR |
 
 </details>
 
 <details>
-<summary>📄 <strong>Document Tools</strong> — File Format Handling (6 Skills)</summary>
+<summary><strong>Document Tools</strong> — File Format Handling (6 Skills)</summary>
 <br />
 
 | # | Skill | What It Does |
@@ -353,23 +359,28 @@ The heart of the system — a **multi-agent research-to-publication pipeline** w
 </details>
 
 <details>
-<summary>🔍 <strong>Research Tools</strong> — Search, Discovery & Reference Management (7 Skills)</summary>
+<summary><strong>Research Tools</strong> — Search, Discovery, Methods & Reference Management (12 Skills)</summary>
 <br />
 
 | # | Skill | What It Does |
 |:-:|:------|:-------------|
 | 1 | [BGPT Search](./skills/research-tools/alterlab-bgpt-search) | AI-powered research search |
-| 2 | [Parallel Web](./skills/research-tools/alterlab-parallel-web) | Multi-source parallel web search |
-| 3 | [Perplexity](./skills/research-tools/alterlab-perplexity) | Perplexity-powered research queries |
-| 4 | [PyZotero](./skills/research-tools/alterlab-pyzotero) | Zotero reference manager integration |
-| 5 | [Research Lookup](./skills/research-tools/alterlab-research-lookup) | Quick research paper discovery |
-| 6 | [Scientific Brainstorm](./skills/research-tools/alterlab-scientific-brainstorm) | Structured research ideation |
-| 7 | [Scientific Thinking](./skills/research-tools/alterlab-scientific-thinking) | Critical scientific reasoning frameworks |
+| 2 | [Mixed Methods](./skills/research-tools/alterlab-mixed-methods) | Mixed-methods research design and integration |
+| 3 | [Open Science](./skills/research-tools/alterlab-open-science) | Preregistration, FAIR data, open access publishing |
+| 4 | [Parallel Web](./skills/research-tools/alterlab-parallel-web) | Multi-source parallel web search |
+| 5 | [Perplexity](./skills/research-tools/alterlab-perplexity) | Perplexity-powered research queries |
+| 6 | [PyZotero](./skills/research-tools/alterlab-pyzotero) | Zotero reference manager integration |
+| 7 | [Qualitative Methods](./skills/research-tools/alterlab-qualitative-methods) | Thematic analysis, grounded theory, IPA, coding |
+| 8 | [Research Ethics](./skills/research-tools/alterlab-research-ethics) | IRB applications, informed consent, GDPR |
+| 9 | [Research Lookup](./skills/research-tools/alterlab-research-lookup) | Quick research paper discovery |
+| 10 | [Scientific Brainstorm](./skills/research-tools/alterlab-scientific-brainstorm) | Structured research ideation |
+| 11 | [Scientific Thinking](./skills/research-tools/alterlab-scientific-thinking) | Critical scientific reasoning frameworks |
+| 12 | [Survey Design](./skills/research-tools/alterlab-survey-design) | Questionnaire construction and validation |
 
 </details>
 
 <details>
-<summary>💰 <strong>Finance & Economics</strong> — Financial Data & Analysis (7 Skills)</summary>
+<summary><strong>Finance & Economics</strong> — Financial Data & Analysis (7 Skills)</summary>
 <br />
 
 | # | Skill | What It Does |
@@ -384,6 +395,25 @@ The heart of the system — a **multi-agent research-to-publication pipeline** w
 
 </details>
 
+<details>
+<summary><strong>Social Sciences & Humanities</strong> — Teaching, Methods & Ethics (10 Skills)</summary>
+<br />
+
+| # | Skill | What It Does |
+|:-:|:------|:-------------|
+| 1 | [Teaching Design](./skills/core/alterlab-teaching-design) | Curriculum and course design for higher education |
+| 2 | [Qualitative Methods](./skills/research-tools/alterlab-qualitative-methods) | Qualitative research methodology and analysis |
+| 3 | [Research Ethics](./skills/research-tools/alterlab-research-ethics) | IRB, ethics review, and responsible research conduct |
+| 4 | [Survey Design](./skills/research-tools/alterlab-survey-design) | Survey instrument design and validation |
+| 5 | [Thesis Supervisor](./skills/core/alterlab-thesis-supervisor) | Graduate thesis and dissertation supervision |
+| 6 | [Mixed Methods](./skills/research-tools/alterlab-mixed-methods) | Mixed-methods research design and integration |
+| 7 | [Academic Career](./skills/writing-tools/alterlab-academic-career) | Academic career development, tenure, and promotion |
+| 8 | [Open Science](./skills/research-tools/alterlab-open-science) | Open access, preregistration, and reproducibility |
+| 9 | [Social Science Methods](./skills/domain-specific/alterlab-social-science-methods) | Social science research methodology |
+| 10 | [Digital Humanities](./skills/domain-specific/alterlab-digital-humanities) | Computational approaches to humanities research |
+
+</details>
+
 ---
 
 ## Project Structure
@@ -391,21 +421,25 @@ The heart of the system — a **multi-agent research-to-publication pipeline** w
 ```
 AlterLab-Academic-Skills/
 ├── skills/
-│   ├── core/                  # 4 pipeline skills + shared schemas
+│   ├── core/                  # 6 pipeline + teaching + thesis skills
 │   ├── databases/             # 39 database connectors
 │   ├── bioinformatics/        # 25 bio/genomics tools
 │   ├── cheminformatics/       # 12 chemistry/drug discovery
 │   ├── clinical-research/     # 10 clinical/medical tools
 │   ├── data-science/          # 22 ML/statistics tools
 │   ├── visualization/         # 8 plotting/charting tools
-│   ├── writing-tools/         # 12 scientific writing tools
+│   ├── writing-tools/         # 13 scientific writing & career tools
 │   ├── lab-integrations/      # 9 lab platform connectors
-│   ├── domain-specific/       # 15 specialized field tools
+│   ├── domain-specific/       # 17 specialized field tools
 │   ├── document-tools/        # 6 file format tools
-│   ├── research-tools/        # 7 search/discovery tools
+│   ├── research-tools/        # 12 search, methods & ethics tools
 │   └── finance-economics/     # 7 financial/economic tools
+├── .claude/
+│   └── CLAUDE.md              # Project-level Claude config
 ├── README.md                  # This file
-└── CLAUDE.md                  # Project instructions
+├── CLAUDE.md                  # Project instructions
+├── CONTRIBUTING.md            # Contribution guidelines
+└── LICENSE                    # MIT License
 ```
 
 ---
@@ -446,8 +480,10 @@ Skills activate automatically based on user intent:
 | "Search PubMed for recent studies on Alzheimer's biomarkers" | `alterlab-pubmed` |
 | "Analyze my RNA-seq data" | `alterlab-scanpy` + `alterlab-pydeseq2` |
 | "Create a scientific poster for my conference" | `alterlab-latex-posters` |
-| "Run molecular docking on this compound" | `alterlab-diffdock` |
+| "Design a survey for my social science study" | `alterlab-survey-design` |
+| "Help me with my IRB ethics application" | `alterlab-research-ethics` |
 | "Build a Bayesian model for my clinical trial data" | `alterlab-pymc` |
+| "Guide my PhD student's thesis writing" | `alterlab-thesis-supervisor` |
 
 ---
 
@@ -457,23 +493,31 @@ We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guideline
 
 **Quick ways to contribute:**
 
-- 📝 Improve an existing skill with better frameworks or templates
-- 🆕 Create a new skill following the structure above
-- 🐛 Report issues or suggest improvements
-- 📚 Add examples or use cases to documentation
+- Improve an existing skill with better frameworks or templates
+- Create a new skill following the structure above
+- Report issues or suggest improvements
+- Add examples or use cases to documentation
 
 ---
 
 ## License
 
-This project is licensed under the [MIT License](./LICENSE).
+MIT License
+
+Copyright (c) 2026 AlterLab Creative Technologies Laboratory
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ---
 
 ## Credits
 
-Created by **Cem İpek** at [AlterLab Creative Technologies Laboratory](https://github.com/AlterLab-IEU), İzmir University of Economics.
+Built by **AlterLab Creative Technologies Laboratory**.
 
-> *180+ skills. 13 domains. 1 prompt away from expert-level research.*
+> *186+ skills. 14 domains. 1 prompt away from expert-level research.*
 >
-> **[⭐ Star this repo](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills)** if you find it useful!
+> **[Star this repo](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills)** if you find it useful!
