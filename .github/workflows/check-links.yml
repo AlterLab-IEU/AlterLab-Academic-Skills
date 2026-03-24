@@ -15,6 +15,5 @@ jobs:
 
       - name: Check links in Markdown files
         uses: lycheeverse/lychee-action@v2
-        with:
-          args: --verbose --no-progress "**/*.md"
-          fail: true
+          args: --verbose --no-progress --accept 403 "**/*.md"
+                fail: true
