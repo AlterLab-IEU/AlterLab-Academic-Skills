@@ -4,7 +4,7 @@
 
 If you discover a security vulnerability in AlterLab Academic Skills, please report it responsibly.
 
-**Email:** Alterlab.ieu@gmail.com or alterlab@izmirekonomi.edu.tr
+**Report via:** [Open a GitHub issue](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/issues) on this repository (use the "Security" label for sensitive reports).
 
 Please include:
 
@@ -41,4 +41,4 @@ All pull requests that modify skills are scanned for potential security issues. 
 
 | Version | Supported |
 |---------|-----------|
-| Latest  | Yes       |
+| v1.0.0 (Latest)  | Yes       |

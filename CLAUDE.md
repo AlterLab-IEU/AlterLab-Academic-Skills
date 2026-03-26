@@ -7,7 +7,7 @@
 
 ## Project Overview
 
-This project provides **186+ professional Claude AI skills** organized into 14 domain categories for faculty members, academicians, and researchers. Each skill transforms Claude into a domain-specific expert assistant tailored to academic research, scientific computing, and scholarly publishing workflows.
+This project provides **186+ professional Claude AI skills** organized into 13 domain categories for faculty members, academicians, and researchers. Each skill transforms Claude into a domain-specific expert assistant tailored to academic research, scientific computing, and scholarly publishing workflows.
 
 ### Audience
 - Faculty members and academic researchers
@@ -37,9 +37,8 @@ This project provides **186+ professional Claude AI skills** organized into 14 d
 | Document Tools | `skills/document-tools/` | 6 | DOCX, PDF, PPTX, XLSX handling |
 | Research Tools | `skills/research-tools/` | 7 | Search, discovery, reference management |
 | Finance & Economics | `skills/finance-economics/` | 7 | Financial data and analysis |
-| Social Sciences & Humanities | `skills/social-sciences/` | 10 | Teaching, qualitative methods, ethics, digital humanities |
 
-**Total: 186 skills across 14 categories**
+**Total: 186 skills across 13 categories**
 
 ---
 

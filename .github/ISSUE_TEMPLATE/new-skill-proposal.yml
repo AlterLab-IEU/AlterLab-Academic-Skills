@@ -17,11 +17,19 @@ body:
       label: Category
       description: Which category does this skill belong to?
       options:
-        - Cognitive Skills
-        - Research Skills
-        - Communication Skills
-        - Technical Skills
-        - Interpersonal Skills
+        - Bioinformatics
+        - Cheminformatics
+        - Clinical Research
+        - Core
+        - Data Science
+        - Databases
+        - Document Tools
+        - Domain-Specific
+        - Finance & Economics
+        - Lab Integrations
+        - Research Tools
+        - Visualization
+        - Writing Tools
         - Other
     validations:
       required: true

@@ -3,7 +3,7 @@
 <br>
 
 <a href="skills/"><img src="https://img.shields.io/badge/Skills-186+-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Skills"></a>
-<a href="skills/"><img src="https://img.shields.io/badge/Domains-14-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Domains"></a>
+<a href="skills/"><img src="https://img.shields.io/badge/Domains-13-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Domains"></a>
 <a href="https://www.anthropic.com"><img src="https://img.shields.io/badge/Claude-AI%20Powered-F97316?style=for-the-badge&logo=anthropic&logoColor=white" alt="Claude AI"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-10B981?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="MIT License"></a>
 
@@ -17,7 +17,7 @@
 <br><br>
 
 <h3>🧬 186+ purpose-built Claude AI skills for faculty, researchers & academicians</h3>
-<p><em>Organized across 14 research domains — from bioinformatics to digital humanities</em></p>
+<p><em>Organized across 13 research domains — from bioinformatics to digital humanities</em></p>
 
 <p>
 <b>Research Pipeline</b> · <b>Scientific Databases</b> · <b>Bioinformatics</b> · <b>Data Science</b> · <b>Visualization</b> · <b>Clinical Research</b> · <b>and more</b>
@@ -101,7 +101,7 @@
 
 ## 🎯 What Is This?
 
-A comprehensive suite of **186+ purpose-built Claude AI skills** for faculty members, academicians, and researchers — organized into **14 domain categories** spanning the full academic research lifecycle.
+A comprehensive suite of **186+ purpose-built Claude AI skills** for faculty members, academicians, and researchers — organized into **13 domain categories** spanning the full academic research lifecycle.
 
 Each skill transforms Claude into a **domain-specific expert assistant** tailored to academic research, scientific computing, and scholarly publishing workflows.
 
@@ -116,7 +116,7 @@ Each skill transforms Claude into a **domain-specific expert assistant** tailore
 |:---:|:---|:---|
 | 🔬 | **Research-Ready** | Skills built on real scientific methods, databases, and professional frameworks used by working researchers |
 | 🤖 | **Multi-Agent Pipelines** | Core skills chain together: Research → Write → Review → Publish in a seamless workflow |
-| 📊 | **250+ Database Connectors** | Instant access to PubMed, ChEMBL, UniProt, ClinicalTrials.gov, COSMIC, and hundreds more |
+| 📊 | **39 Database Integration Skills** | Instant access to PubMed, ChEMBL, UniProt, ClinicalTrials.gov, COSMIC, and more |
 | 🧬 | **Deep Domain Coverage** | From single-cell RNA-seq analysis to quantum computing, from clinical trials to digital humanities |
 | 📝 | **Publication-Quality Output** | LaTeX papers, conference posters, grant proposals, scientific visualizations — all formatted to professional standards |
 | 🔄 | **Mix & Match** | Combine multiple skills in one Claude Project for a multi-expert research team |
@@ -128,7 +128,7 @@ Each skill transforms Claude into a **domain-specific expert assistant** tailore
 | | Domain | Skills | Focus Areas |
 |:---:|:---|:---:|:---|
 | 🔄 | **Core Pipeline** | **6** | Multi-agent research → write → review → publish pipeline + teaching + thesis |
-| 🗄️ | **Databases** | **39** | Connectors to 250+ scientific databases — PubMed, ChEMBL, UniProt, ClinicalTrials.gov, COSMIC, and more |
+| 🗄️ | **Databases** | **39** | Connectors to scientific databases — PubMed, ChEMBL, UniProt, ClinicalTrials.gov, COSMIC, and more |
 | 🧬 | **Bioinformatics** | **25** | Genomics, proteomics, molecular biology — Scanpy, BioPython, ESM, single-cell analysis |
 | ⚗️ | **Cheminformatics** | **12** | Chemistry and drug discovery — RDKit, molecular dynamics, docking, ADMET |
 | 🏥 | **Clinical Research** | **10** | Clinical decision support, treatment planning, medical imaging, regulatory |
@@ -140,8 +140,6 @@ Each skill transforms Claude into a **domain-specific expert assistant** tailore
 | 📄 | **Document Tools** | **6** | File format handling — DOCX, PDF, PPTX, XLSX, Markdown |
 | 🔍 | **Research Tools** | **12** | Search, discovery, Zotero, qualitative methods, ethics, surveys, open science |
 | 💰 | **Finance & Economics** | **7** | FRED, Alpha Vantage, SEC EDGAR, market research |
-| 📖 | **Social Sciences** | **10** | Teaching design, thesis supervision, mixed methods, digital humanities |
-
 <br>
 
 ## 🚀 Quick Start
@@ -189,7 +187,7 @@ claude "help me research the latest findings on CRISPR gene editing"
 
 ## 📚 All 186+ Skills
 
-### 🗄️ Databases — Connectors to 250+ Scientific Databases (39 Skills)
+### 🗄️ Databases — Scientific Database Connectors (39 Skills)
 
 <details>
 <summary><b>Click to expand full database skills list</b></summary>
@@ -501,27 +499,6 @@ claude "help me research the latest findings on CRISPR gene editing"
 
 </details>
 
-### 📖 Social Sciences & Humanities — Teaching, Methods & Ethics (10 Skills)
-
-<details>
-<summary><b>Click to expand full social sciences & humanities skills list</b></summary>
-<br>
-
-| # | Skill | What It Does |
-|:---:|:---|:---|
-| 1 | **Teaching Design** | Curriculum and course design for higher education |
-| 2 | **Qualitative Methods** | Qualitative research methodology and analysis |
-| 3 | **Research Ethics** | IRB, ethics review, and responsible research conduct |
-| 4 | **Survey Design** | Survey instrument design and validation |
-| 5 | **Thesis Supervisor** | Graduate thesis and dissertation supervision |
-| 6 | **Mixed Methods** | Mixed-methods research design and integration |
-| 7 | **Academic Career** | Academic career development, tenure, and promotion |
-| 8 | **Open Science** | Open access, preregistration, and reproducibility |
-| 9 | **Social Science Methods** | Social science research methodology |
-| 10 | **Digital Humanities** | Computational approaches to humanities research |
-
-</details>
-
 <br>
 
 ---
@@ -631,7 +608,7 @@ MIT License — Copyright (c) 2026 AlterLab Creative Technologies Laboratory
 
 <br><br>
 
-<b>186+ skills · 14 domains · 1 prompt away from expert-level research</b>
+<b>186+ skills · 13 domains · 1 prompt away from expert-level research</b>
 
 <br><br>
 

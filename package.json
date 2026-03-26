@@ -1,29 +1,29 @@
 {
-    "name": "alterlab-academic-skills",
-    "private": false,
-    "version": "1.0.0",
-    "description": "186+ Claude AI skills for faculty members and academic researchers — organized by research domain",
-    "author": "Cem Ipek <cem.ipek@ieu.edu.tr>",
-    "license": "MIT",
-    "repository": {
-          "type": "git",
-          "url": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills.git"
-    },
-    "keywords": [
-          "claude-ai",
-          "skills",
-          "academic-research",
-          "bioinformatics",
-          "data-science",
-          "scientific-computing",
-          "scientific-writing",
-          "research-tools",
-          "prompt-engineering",
-          "anthropic",
-          "alterlab",
-          "cheminformatics",
-          "clinical-research",
-          "visualization",
-          "lab-integrations"
-    ]
+  "name": "alterlab-academic-skills",
+  "private": false,
+  "version": "1.0.0",
+  "description": "186+ Claude AI skills for faculty members and academic researchers — organized by research domain",
+  "author": "Cem Ipek (https://github.com/AlterLab-IEU)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills.git"
+  },
+  "keywords": [
+    "claude-ai",
+    "skills",
+    "academic-research",
+    "bioinformatics",
+    "data-science",
+    "scientific-computing",
+    "scientific-writing",
+    "research-tools",
+    "prompt-engineering",
+    "anthropic",
+    "alterlab",
+    "cheminformatics",
+    "clinical-research",
+    "visualization",
+    "lab-integrations"
+  ]
 }
