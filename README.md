@@ -13,6 +13,11 @@
 <a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/network/members"><img src="https://img.shields.io/github/forks/AlterLab-IEU/AlterLab-Academic-Skills?style=for-the-badge&logo=git&color=6366F1&logoColor=white" alt="Forks"></a>
 <a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/issues"><img src="https://img.shields.io/github/issues/AlterLab-IEU/AlterLab-Academic-Skills?style=for-the-badge&logo=github&color=EF4444&logoColor=white" alt="Issues"></a>
 <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-Welcome-22C55E?style=for-the-badge&logo=githubactions&logoColor=white" alt="PRs Welcome"></a>
+<a href="https://github.com/BehiSecc/awesome-claude-skills"><img src="https://awesome.re/badge.svg" alt="Awesome"></a>
+
+<br>
+
+> 📢 **Featured in** [awesome-claude-skills](https://github.com/BehiSecc/awesome-claude-skills) (5.7k ⭐)
 
 <br><br>
 
@@ -576,6 +581,11 @@ Skills activate automatically based on user intent:
 <br>
 
 ---
+
+## 🔗 Sister Projects
+
+- [AlterLab-FC-Skills](https://github.com/AlterLab-IEU/AlterLab-FC-Skills) — 72 agentic skills for communication students
+- [AlterLab_GameForge](https://github.com/AlterLab-IEU/AlterLab_GameForge) — 34 game dev skills from concept to launch
 
 ## 🤝 Contributing
 
