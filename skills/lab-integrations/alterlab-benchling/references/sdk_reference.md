@@ -768,7 +768,7 @@ sequences = benchling.dna_sequences.list()  # New generator
 
 ## References
 
-- **SDK Source:** https://github.com/benchling/benchling-sdk
+- **SDK Source:** https://pypi.org/project/benchling-sdk/
 - **SDK Docs:** https://benchling.com/sdk-docs/
 - **API Reference:** https://benchling.com/api/reference
 - **Common Examples:** https://docs.benchling.com/docs/common-sdk-interactions-and-examples

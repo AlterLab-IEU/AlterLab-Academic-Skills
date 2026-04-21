@@ -41,11 +41,6 @@
 ^https?://doi\.org/10\.1038/nrd\.2023\.001$
 ^https?://doi\.org/10\.1101/2024\.01\.001$
 
-# benchling/benchling-sdk repository is gone. The obvious substitute
-# benchling-api-client also returns 404 on the GitHub API — leaving dead
-# is safer than guessing a replacement.
-^https?://github\.com/benchling/benchling-sdk.*
-
 # Post-dispatch residuals (audit Tier 5). The first scheduled-run probe
 # after the audit surfaced additional noise that wasn't captured in
 # the static analysis. Categorised and excluded below.
