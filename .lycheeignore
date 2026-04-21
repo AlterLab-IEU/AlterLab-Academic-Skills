@@ -97,3 +97,7 @@
 # Google Cloud marketplace URLs trip lychee's HTTP/2 handshake
 # (substituted during Tier 3 as the alphafold dataset landing page).
 ^https?://console\.cloud\.google\.com/marketplace/.*
+
+# ATCC dropped the cell-line-authentication page without a redirect.
+# Kept as a text-only reference in the mermaid example-research-report.
+^https?://www\.atcc\.org/resources/cell-line-authentication-testing-service$

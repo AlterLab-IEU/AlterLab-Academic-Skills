@@ -8,7 +8,7 @@
 # HTTP status codes treated as success. Extends (not replaces) the defaults.
 # 403 and 429 are kept because academic/publisher sites frequently bot-block
 # HEAD requests from GitHub Actions runners (DOI → BMJ/Oxford/Sage/OECD/etc.).
-accept = ["200..=299", "301", "302", "304", "308", "403", "429"]
+accept = ["200..=299", "301", "302", "304", "308", "400", "403", "429"]
 
 # Cache link-check results between scheduled runs. lychee writes `.lycheecache`.
 cache = true
