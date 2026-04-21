@@ -485,5 +485,5 @@ dest_plate = deck.get_resource("dest")
 
 - Resource Documentation: https://docs.pylabrobot.org/resources/introduction.html
 - Custom Resources Guide: https://docs.pylabrobot.org/resources/introduction.html
-- API Reference: https://docs.pylabrobot.org/user_guide/index.htmlpylabrobot.resources.html
+- API Reference: https://docs.pylabrobot.org/user_guide/index.html
 - Deck Layouts: https://github.com/PyLabRobot/pylabrobot/tree/main/pylabrobot/resources

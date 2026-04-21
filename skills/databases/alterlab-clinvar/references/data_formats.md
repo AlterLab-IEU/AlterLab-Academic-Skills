@@ -352,7 +352,7 @@ wget ${FTP_BASE}/tab_delimited/var_citations.txt.gz
 
 ## Additional Resources
 
-- ClinVar FTP Primer: https://www.ncbi.nlm.nih.gov/clinvar/docs/help/ftp_primer/
-- XML Schema Documentation: https://www.ncbi.nlm.nih.gov/clinvar/docs/help/xsd_public/
+- ClinVar FTP Primer: https://www.ncbi.nlm.nih.gov/clinvar/docs/ftp_primer/
+- XML Schema Documentation: https://www.ncbi.nlm.nih.gov/clinvar/docs/xsd_public/
 - VCF Specification: https://samtools.github.io/hts-specs/VCFv4.3.pdf
 - Release Notes: https://ftp.ncbi.nlm.nih.gov/pub/clinvar/

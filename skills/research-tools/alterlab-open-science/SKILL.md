@@ -567,4 +567,4 @@ license: MIT
 - Stodden, V., Leisch, F., & Peng, R. D. (Eds.). (2014). *Implementing Reproducible Research*. CRC Press.
 - Center for Open Science. (2026). *TOP Guidelines*. https://www.cos.io/initiatives/top-guidelines
 - Creative Commons. (2026). *About CC Licenses*. https://creativecommons.org/licenses/
-- FOSTER Open Science. (2026). *Open Science Training Handbook*. https://book.fosteropenscience.eu
+- FOSTER Open Science. (2026). *Open Science Training Handbook*. https://web.archive.org/web/2019/https://book.fosteropenscience.eu

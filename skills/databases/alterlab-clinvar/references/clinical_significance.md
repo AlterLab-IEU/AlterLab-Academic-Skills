@@ -214,5 +214,5 @@ Variants may be reclassified due to:
 
 - ACMG/AMP Variant Interpretation Guidelines: Richards et al., 2015
 - ClinGen Sequence Variant Interpretation Working Group: https://clinicalgenome.org/
-- ClinVar Clinical Significance Documentation: https://www.ncbi.nlm.nih.gov/clinvar/docs/help/clinsig/
-- Review Status Documentation: https://www.ncbi.nlm.nih.gov/clinvar/docs/help/review_status/
+- ClinVar Clinical Significance Documentation: https://www.ncbi.nlm.nih.gov/clinvar/docs/clinsig/
+- Review Status Documentation: https://www.ncbi.nlm.nih.gov/clinvar/docs/review_status/
