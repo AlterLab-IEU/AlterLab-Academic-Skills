@@ -239,7 +239,7 @@ Variant classifications may change over time as new evidence emerges.
 Organizations can submit variant interpretations to ClinVar.
 
 **Submission methods:**
-- Web submission portal: https://submit.ncbi.nlm.nih.gov/subs/clinvar/
+- Web submission portal: https://submit.ncbi.nlm.nih.gov/clinvar/
 - API submission (requires service account): See `references/api_reference.md`
 - Batch submission via Excel templates
 
@@ -350,7 +350,7 @@ This skill includes comprehensive reference documentation:
 ### External Resources
 
 - ClinVar home: https://www.ncbi.nlm.nih.gov/clinvar/
-- ClinVar documentation: https://www.ncbi.nlm.nih.gov/clinvar/docs/
+- ClinVar documentation: https://www.ncbi.nlm.nih.gov/clinvar/docs/help/
 - E-utilities documentation: https://www.ncbi.nlm.nih.gov/books/NBK25501/
 - ACMG variant interpretation guidelines: Richards et al., 2015 (PMID: 25741868)
 - ClinGen expert panels: https://clinicalgenome.org/

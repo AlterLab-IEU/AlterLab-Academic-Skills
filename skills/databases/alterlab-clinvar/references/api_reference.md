@@ -223,5 +223,5 @@ summaries = get_summaries(variant_ids)
 ## Additional Resources
 
 - NCBI E-utilities documentation: https://www.ncbi.nlm.nih.gov/books/NBK25501/
-- ClinVar web services: https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/
+- ClinVar web services: https://www.ncbi.nlm.nih.gov/clinvar/docs/help/maintenance_use/
 - Entrez Direct cookbook: https://www.ncbi.nlm.nih.gov/books/NBK179288/

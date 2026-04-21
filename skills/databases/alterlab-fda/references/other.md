@@ -465,7 +465,7 @@ The FDA Unique Ingredient Identifier (UNII) system provides:
 
 ## Additional Resources
 
-- FDA Substance Registration System: https://fdasis.nlm.nih.gov/srs/
+- FDA Substance Registration System: https://precision.fda.gov/uniisearch
 - UNII Search: https://precision.fda.gov/uniisearch
 - OpenFDA Other APIs: https://open.fda.gov/apis/other/
 - API Basics: See `api_basics.md` in this references directory

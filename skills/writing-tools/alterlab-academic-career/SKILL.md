@@ -606,6 +606,6 @@ Networking for Introverts:
 - Lang, J. M. (2010). Writing a statement of teaching philosophy. *The Chronicle of Higher Education*.
 - Matthew, P. A. (Ed.). (2016). *Written/Unwritten: Diversity and the Hidden Truths of Tenure*. UNC Press.
 - San Francisco Declaration on Research Assessment (DORA). https://sfdora.org/
-- National Center for Faculty Development & Diversity (NCFDD). https://www.facultydiversity.org/
+- National Center for Faculty Development & Diversity (NCFDD). https://www.ncfdd.org/
 
 See also: `references/career-templates.md`

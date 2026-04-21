@@ -352,7 +352,7 @@ Combine trademark data with other sources:
 ## Resources
 
 - **TSDR API**: https://developer.uspto.gov/api-catalog/tsdr-data-api
-- **Assignment API**: https://developer.uspto.gov/api-catalog/trademark-assignment-search-data-api
+- **Assignment API**: https://developer.uspto.gov/api-catalog/trademark-assignment-search-data
 - **API Key Registration**: https://account.uspto.gov/api-manager/
 - **Trademark Search**: https://tmsearch.uspto.gov/
 - **Swagger Documentation**: https://developer.uspto.gov/swagger/tsdr-api-v1

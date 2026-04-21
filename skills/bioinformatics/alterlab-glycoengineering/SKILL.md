@@ -243,7 +243,7 @@ glycoshield \
 
 ### 3. GlycoWorkbench (Glycan Structure Drawing/Analysis)
 
-- **URL**: https://www.eurocarbdb.org/project/glycoworkbench
+- **URL**: https://github.com/glycoinfo/eurocarbdb
 - **Use**: Draw glycan structures, calculate masses, annotate MS spectra
 - **Format**: GlycoCT, IUPAC condensed glycan notation
 

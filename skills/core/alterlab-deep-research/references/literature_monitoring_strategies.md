@@ -126,7 +126,7 @@ RSS (Really Simple Syndication) allows you to subscribe to content updates from 
 
 - **Coverage**: Physics, mathematics, computer science, statistics, quantitative biology, economics
 - **Monitoring**: Subscribe to RSS feeds by category and cross-list
-- **Alert service**: [arxiv-sanity](http://arxiv-sanity-lite.com/) for AI-curated recommendations
+- **Alert service**: [arxiv-sanity](https://www.semanticscholar.org/) for AI-curated recommendations
 - **Update frequency**: Daily (new submissions posted ~8 PM ET)
 
 ### SSRN

@@ -249,7 +249,7 @@ Comprehensive formatting requirements and submission guidelines for major academ
 
 **LaTeX Template**: `assets/journals/emnlp_article.tex`
 
-**Website**: https://www.emnlp.org/
+**Website**: https://2024.emnlp.org/
 
 ---
 
@@ -287,7 +287,7 @@ Comprehensive formatting requirements and submission guidelines for major academ
 
 **LaTeX Template**: `assets/journals/usenix_article.tex`
 
-**Website**: https://www.usenix.org/conference/usenixsecurity
+**Website**: https://www.usenix.org/conferences/byname/108
 
 ---
 
@@ -330,7 +330,7 @@ Comprehensive formatting requirements and submission guidelines for major academ
 
 **LaTeX Template**: `assets/journals/ismb_article.tex`
 
-**Website**: https://www.iscb.org/ismb
+**Website**: https://www.iscb.org/ismb2026
 
 ---
 

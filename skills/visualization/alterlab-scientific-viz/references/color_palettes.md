@@ -342,7 +342,7 @@ fig.savefig('figure.png', dpi=300)
 ## Resources
 
 - **ColorBrewer**: http://colorbrewer2.org/ - Choose palettes by colorblind-safe option
-- **Paul Tol's palettes**: https://personal.sron.nl/~pault/
+- **Paul Tol's palettes**: https://sronpersonalpages.nl/~pault/
 - **Okabe-Ito palette origin**: "Color Universal Design" (Okabe & Ito, 2008)
 - **Matplotlib colormaps**: https://matplotlib.org/stable/tutorials/colors/colormaps.html
 - **Seaborn palettes**: https://seaborn.pydata.org/tutorial/color_palettes.html

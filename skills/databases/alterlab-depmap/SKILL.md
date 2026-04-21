@@ -298,4 +298,4 @@ Download all files from: https://depmap.org/portal/download/all/
 - **DepMap paper**: Behan FM et al. (2019) Nature. PMID: 30971826
 - **Chronos paper**: Dempster JM et al. (2021) Nature Methods. PMID: 34349281
 - **GitHub**: https://github.com/broadinstitute/depmap-portal
-- **Figshare**: https://figshare.com/articles/dataset/DepMap_24Q4_Public/27993966
+- **Figshare**: https://plus.figshare.com/articles/dataset/DepMap_24Q4_Public/27993248

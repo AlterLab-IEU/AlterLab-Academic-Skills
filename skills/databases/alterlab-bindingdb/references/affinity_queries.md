@@ -41,7 +41,7 @@ def query_by_uniprot(uniprot_id, affinity_type="Ki"):
     """
     REST API query for BindingDB affinities by UniProt target ID.
     """
-    url = "https://www.bindingdb.org/axis2/services/BDBService/getLigandsByUniprotID"
+    url = "https://www.bindingdb.org/rwd/bind/BindingDBRESTfulAPI.jsp/getLigandsByUniprotID"
     params = {
         "uniprot_id": uniprot_id,
         "cutoff": "10000",  # nM threshold
@@ -71,7 +71,7 @@ COMMON_TARGETS = {
 ```python
 def query_by_pubchem_cid(pubchem_cid):
     """Get all binding data for a specific compound by PubChem CID."""
-    url = "https://www.bindingdb.org/axis2/services/BDBService/getAffinitiesByCID"
+    url = "https://www.bindingdb.org/rwd/bind/BindingDBRESTfulAPI.jsp/getAffinitiesByCID"
     params = {"cid": pubchem_cid, "response": "json"}
     response = requests.get(url, params=params)
     return response.json()
@@ -85,7 +85,7 @@ imatinib_data = query_by_pubchem_cid(5291)
 ```python
 def query_by_target_name(target_name, affinity_cutoff=100):
     """Query BindingDB by target name."""
-    url = "https://www.bindingdb.org/axis2/services/BDBService/getAffinitiesByTarget"
+    url = "https://www.bindingdb.org/rwd/bind/BindingDBRESTfulAPI.jsp/getAffinitiesByTarget"
     params = {
         "target_name": target_name,
         "cutoff": affinity_cutoff,

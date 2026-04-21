@@ -531,7 +531,7 @@ Load these files for comprehensive information on specific topics:
 **Publication Standards**
 - Nature Figure Guidelines: https://www.nature.com/nature/for-authors/final-submission
 - Science Figure Guidelines: https://www.science.org/content/page/instructions-preparing-initial-manuscript
-- CONSORT Diagram: http://www.consort-statement.org/consort-statement/flow-diagram
+- CONSORT Diagram: https://www.consort-spirit.org/
 
 ## Integration with Other Skills
 

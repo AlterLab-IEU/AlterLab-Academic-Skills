@@ -739,4 +739,4 @@ subset = features_mmap[1000:2000]  # Only loads requested rows
 - **h5py:** https://docs.h5py.org/
 - **DVC (Data Version Control):** https://dvc.org/
 - **Dask:** https://docs.dask.org/
-- **PathML Data Management API:** https://pathml.readthedocs.io/en/latest/api_data_reference.html
+- **PathML Data Management API:** https://pathml.readthedocs.io/en/latest/api_datasets_reference.html

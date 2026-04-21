@@ -460,5 +460,5 @@ results = await kinetic_reading(num_reads=20, interval=30)
 
 - Plate Reading Documentation: https://docs.pylabrobot.org/user_guide/02_analytical/
 - BMG CLARIOstar Guide: https://docs.pylabrobot.org/user_guide/02_analytical/plate-reading/bmg-clariostar.html
-- API Reference: https://docs.pylabrobot.org/api/pylabrobot.plate_reading.html
+- API Reference: https://docs.pylabrobot.org/user_guide/index.htmlpylabrobot.plate_reading.html
 - Supported Equipment: https://docs.pylabrobot.org/user_guide/machines.html

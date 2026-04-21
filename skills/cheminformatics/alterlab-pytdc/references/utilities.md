@@ -680,5 +680,5 @@ evaluator = Evaluator(name='RMSE')
 
 - TDC Documentation: https://tdc.readthedocs.io
 - Data Functions: https://tdcommons.ai/fct_overview/
-- Evaluation Metrics: https://tdcommons.ai/functions/model_eval/
+- Evaluation Metrics: https://tdcommons.ai/functions/data_evaluation/
 - Data Splits: https://tdcommons.ai/functions/data_split/

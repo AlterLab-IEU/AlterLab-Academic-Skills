@@ -495,5 +495,5 @@ f(np.array([1, 2, 3]))
 - Official Documentation: https://docs.sympy.org/
 - Tutorial: https://docs.sympy.org/latest/tutorials/intro-tutorial/index.html
 - API Reference: https://docs.sympy.org/latest/reference/index.html
-- Examples: https://github.com/sympy/sympy/tree/master/examples
+- Examples: https://github.com/sympy/sympy/tree/master/doc/src/modules
 

@@ -8,16 +8,16 @@ Comprehensive catalog of satellite imagery, vector data, and APIs for geospatial
 
 | Platform | Resolution | Coverage | Access |
 |----------|------------|----------|--------|
-| **Sentinel-2** | 10-60m | Global | https://scihub.copernicus.eu/ |
-| **Sentinel-1** | 5-40m (SAR) | Global | https://scihub.copernicus.eu/ |
-| **Sentinel-3** | 300m-1km | Global | https://scihub.copernicus.eu/ |
-| **Sentinel-5P** | Various | Global | https://scihub.copernicus.eu/ |
+| **Sentinel-2** | 10-60m | Global | https://dataspace.copernicus.eu/ |
+| **Sentinel-1** | 5-40m (SAR) | Global | https://dataspace.copernicus.eu/ |
+| **Sentinel-3** | 300m-1km | Global | https://dataspace.copernicus.eu/ |
+| **Sentinel-5P** | Various | Global | https://dataspace.copernicus.eu/ |
 
 ```python
 # Access via Sentinelsat
 from sentinelsat import SentinelAPI, read_geojson, geojson_to_wkt
 
-api = SentinelAPI('user', 'password', 'https://scihub.copernicus.eu/dhus')
+api = SentinelAPI('user', 'password', 'https://dataspace.copernicus.eu/dhus')
 
 # Search
 products = api.query(geojson_to_wkt(aoi_geojson),
@@ -72,7 +72,7 @@ elevation.clean('srtm.tif', 'srtm_filled.tif')
 
 | Dataset | Resolution | Classes | Source |
 |---------|------------|---------|--------|
-| **ESA WorldCover** | 10m | 11 classes | https://worldcover2021.esa.int/ |
+| **ESA WorldCover** | 10m | 11 classes | https://esa-worldcover.org/en/data-access |
 | **ESRI Land Cover** | 10m | 10 classes | https://www.esri.com/ |
 | **Copernicus Global** | 100m | 23 classes | https://land.copernicus.eu/ |
 | **MODIS MCD12Q1** | 500m | 17 classes | https://lpdaac.usgs.gov/ |
@@ -86,7 +86,7 @@ elevation.clean('srtm.tif', 'srtm_filled.tif')
 |---------|------------|----------|--------|
 | **ERA5** | 31km | Hourly (1979+) | https://cds.climate.copernicus.eu/ |
 | **MERRA-2** | 50km | Hourly (1980+) | https://gmao.gsfc.nasa.gov/ |
-| **JRA-55** | 55km | 3-hourly (1958+) | https://jra.kishou.go.jp/ |
+| **JRA-55** | 55km | 3-hourly (1958+) | https://jra.kishou.go.jp/JRA-55/index_en.html |
 
 ```python
 # Download ERA5 via CDS API
@@ -162,7 +162,7 @@ ports = gpd.read_file('https://naturalearth.s3.amazonaws.com/10m_cultural/ne_10m
 | **HydroSHEDS** | Rivers, basins | https://www.hydrosheds.org/ |
 | **Global Power Plant** | Power plants | https://datasets.wri.org/ |
 | **WorldPop** | Population | https://www.worldpop.org/ |
-| **GPW** | Population | https://sedac.ciesin.columbia.edu/ |
+| **GPW** | Population | https://www.earthdata.nasa.gov/centers/sedac-daac |
 | **HDX** | Humanitarian data | https://data.humdata.org/ |
 
 ## APIs
@@ -264,7 +264,7 @@ def download_and_process_sentinel2(aoi, date_range, output_dir):
     Download and process Sentinel-2 imagery.
     """
     # Initialize API
-    api = SentinelAPI('user', 'password', 'https://scihub.copernicus.eu/dhus')
+    api = SentinelAPI('user', 'password', 'https://dataspace.copernicus.eu/dhus')
 
     # Search
     products = api.query(
