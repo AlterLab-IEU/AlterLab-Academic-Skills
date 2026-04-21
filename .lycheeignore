@@ -101,3 +101,13 @@
 # ATCC dropped the cell-line-authentication page without a redirect.
 # Kept as a text-only reference in the mermaid example-research-report.
 ^https?://www\.atcc\.org/resources/cell-line-authentication-testing-service$
+
+# charmm-gui.org times out from both desktop (20s) and CI runners — the
+# infrastructure is genuinely slow/unresponsive. Tool is still cited in
+# docs as a community resource.
+^https?://(www\.)?charmm-gui\.org/?.*
+
+# na-mic.org SSL certificate has OCSP revocation-check failure
+# (schannel + curl both hit CRYPT_E_REVOCATION_OFFLINE on this host);
+# wiki pages link valid historical DTI documentation.
+^https?://(www\.)?na-mic\.org/.*

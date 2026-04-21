@@ -20,7 +20,7 @@ timeout = 30
 retry_wait_time = 5
 
 # Retry transient failures (5xx, network errors, 429) up to this many times.
-max_retries = 3
+max_retries = 5
 
 # Follow redirect chains common to DOIs and archive.org links (3-5 hops).
 max_redirects = 10
