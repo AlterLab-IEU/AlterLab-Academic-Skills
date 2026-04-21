@@ -15,9 +15,9 @@ BindingDB (https://www.bindingdb.org/) is the primary public database of measure
 
 **Key resources:**
 - BindingDB website: https://www.bindingdb.org/
-- REST API: https://www.bindingdb.org/axis2/services/BDBService
-- Downloads: https://www.bindingdb.org/bind/chemsearch/marvin/Download.jsp
-- GitHub: https://github.com/drugilsberg/bindingdb
+- REST API: https://www.bindingdb.org/rwd/bind/BindingDBRESTfulAPI.jsp
+- Downloads: https://www.bindingdb.org/rwd/bind/chemsearch/marvin/SDFdownload.jsp?all_download=yes
+- GitHub: https://github.com/dhimmel/bindingdb
 
 ## When to Use This Skill
 
@@ -35,12 +35,12 @@ Use BindingDB when:
 
 ### 1. BindingDB REST API
 
-Base URL: `https://www.bindingdb.org/axis2/services/BDBService`
+Base URL: `https://www.bindingdb.org/rwd/bind/BindingDBRESTfulAPI.jsp`
 
 ```python
 import requests
 
-BASE_URL = "https://www.bindingdb.org/axis2/services/BDBService"
+BASE_URL = "https://www.bindingdb.org/rwd/bind/BindingDBRESTfulAPI.jsp"
 
 def bindingdb_query(method, params):
     """Query the BindingDB REST API."""
@@ -117,7 +117,7 @@ import pandas as pd
 def load_bindingdb(filepath="BindingDB_All.tsv"):
     """
     Load BindingDB TSV file.
-    Download from: https://www.bindingdb.org/bind/chemsearch/marvin/Download.jsp
+    Download from: https://www.bindingdb.org/rwd/bind/chemsearch/marvin/SDFdownload.jsp?all_download=yes
     """
     # Key columns
     usecols = [
@@ -327,7 +327,7 @@ def prepare_ml_dataset(df, uniprot_ids, affinity_col="IC50 (nM)",
 ## Additional Resources
 
 - **BindingDB website**: https://www.bindingdb.org/
-- **Data downloads**: https://www.bindingdb.org/bind/chemsearch/marvin/Download.jsp
-- **API documentation**: https://www.bindingdb.org/bind/BindingDBRESTfulAPI.jsp
+- **Data downloads**: https://www.bindingdb.org/rwd/bind/chemsearch/marvin/SDFdownload.jsp?all_download=yes
+- **API documentation**: https://www.bindingdb.org/rwd/bind/BindingDBRESTfulAPI.jsp
 - **Citation**: Gilson MK et al. (2016) Nucleic Acids Research. PMID: 26481362
 - **Related resources**: ChEMBL (https://www.ebi.ac.uk/chembl/), PubChem BioAssay

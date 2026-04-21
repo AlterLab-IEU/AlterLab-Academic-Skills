@@ -582,7 +582,7 @@ Concrete examples are available in `assets/examples/`:
 **Journal Author Guidelines**:
 - Nature: https://www.nature.com/nature/for-authors
 - Science: https://www.science.org/content/page/instructions-authors
-- PLOS: https://plos.org/resources/for-authors/
+- PLOS: https://plos.org/resources/
 - Cell Press: https://www.cell.com/author-guidelines
 
 **Conference Formatting**:

@@ -5,7 +5,7 @@ allowed-tools: Read Write
 license: MIT license
 metadata:
   skill-author: AlterLab
-    version: "1.0.0"
+  version: "1.0.0"
 ---
 
 # Consciousness Council

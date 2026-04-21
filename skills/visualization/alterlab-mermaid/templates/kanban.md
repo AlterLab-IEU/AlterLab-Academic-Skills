@@ -2,7 +2,7 @@
 
 # Kanban Board Documentation Template
 
-> **Back to [Markdown Style Guide](../markdown_style_guide.md)** — Read the style guide first for formatting, citation, and emoji rules.
+> **Back to [Markdown Style Guide](../references/markdown_style_guide.md)** — Read the style guide first for formatting, citation, and emoji rules.
 
 **Use this template for:** Tracking work items, sprint boards, project task management, release planning, or any scenario where you need a persistent, markdown-based view of work status. This board IS the tracking system — a file in your repo that evolves with your codebase.
 
@@ -12,7 +12,7 @@
 
 A kanban board's job is to make work visible. This template serves two purposes: (1) a living board that gets updated as work progresses, and (2) a historical snapshot when archived. The Mermaid diagram gives the instant visual overview; the tables give the detail. Together they answer: What's being worked on? What's blocked? What's done? What's next?
 
-When archived, the board becomes the historical record of what was worked on, what was blocked, and what was completed — all in git history, with full attribution and timestamps. This is the [Everything is Code](../markdown_style_guide.md#-everything-is-code) philosophy: project management data lives in the repo, versioned and portable.
+When archived, the board becomes the historical record of what was worked on, what was blocked, and what was completed — all in git history, with full attribution and timestamps. This is the [Everything is Code](../references/markdown_style_guide.md#-everything-is-code) philosophy: project management data lives in the repo, versioned and portable.
 
 ---
 
@@ -124,7 +124,7 @@ _Items awaiting or in code review. Include at least one placeholder item if empt
 
 | Item        | Author   | Reviewer | PR                                                                                   | Days in review | Aging | Status                                           |
 | ----------- | -------- | -------- | ------------------------------------------------------------------------------------ | -------------- | ----- | ------------------------------------------------ |
-| [Work item] | [Person] | [Person] | [#NNN](../../docs/project/pr/pr-00000001-agentic-docs-and-monorepo-modernization.md) | [N]            | 🟢    | [Awaiting review / Changes requested / Approved] |
+| [Work item] | [Person] | [Person] | #NNN — `../../docs/project/pr/pr-00000001-agentic-docs-and-monorepo-modernization.md` | [N]            | 🟢    | [Awaiting review / Changes requested / Approved] |
 |             |          |          |                                                                                      |                |       | _[No items yet]_                                 |
 
 ---
@@ -135,7 +135,7 @@ _Completed this period. Include at least one placeholder item if empty._
 
 | Item        | Assignee | Completed | Cycle time | PR                                                                                   |
 | ----------- | -------- | --------- | ---------- | ------------------------------------------------------------------------------------ |
-| [Work item] | [Person] | [Date]    | [N days]   | [#NNN](../../docs/project/pr/pr-00000001-agentic-docs-and-monorepo-modernization.md) |
+| [Work item] | [Person] | [Date]    | [N days]   | #NNN — `../../docs/project/pr/pr-00000001-agentic-docs-and-monorepo-modernization.md` |
 |             |          |           |            | _[No items completed this period]_                                                   |
 
 ---
@@ -214,9 +214,9 @@ _Explicitly out of scope for this board period. Capture rationale so these decis
 
 ## 🔗 References
 
-- [Live project board](../../docs/project/kanban/sprint-2026-w08-crewai-review-hardening-and-memory.md) — Real-time tracking
-- [Previous board](../../docs/project/kanban/sprint-2026-w07-agentic-template-modernization.md) — Last period's snapshot
-- [Status report](../../docs/project/pr/pr-00000001-agentic-docs-and-monorepo-modernization.md) — Executive summary of this period
+- Live project board — `../../docs/project/kanban/sprint-2026-w08-crewai-review-hardening-and-memory.md` — Real-time tracking
+- Previous board — `../../docs/project/kanban/sprint-2026-w07-agentic-template-modernization.md` — Last period's snapshot
+- Status report — `../../docs/project/pr/pr-00000001-agentic-docs-and-monorepo-modernization.md` — Executive summary of this period
 
 ---
 

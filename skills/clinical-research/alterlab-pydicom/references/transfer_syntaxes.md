@@ -348,5 +348,5 @@ for handler in handlers:
 ## References
 
 - DICOM Standard Part 5 (Data Structures and Encoding): https://dicom.nema.org/medical/dicom/current/output/chtml/part05/PS3.5.html
-- Pydicom Transfer Syntax Documentation: https://pydicom.github.io/pydicom/stable/guides/user/transfer_syntaxes.html
-- Pydicom Compression Guide: https://pydicom.github.io/pydicom/stable/old/image_data_compression.html
+- Pydicom Transfer Syntax Documentation: https://pydicom.github.io/pydicom/stable/guides/user/image_data_handlers.html
+- Pydicom Compression Guide: https://pydicom.github.io/pydicom/stable/guides/user/image_data_compression.html

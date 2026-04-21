@@ -2,7 +2,7 @@
 
 # Status Report / Executive Briefing Template
 
-> **Back to [Markdown Style Guide](../markdown_style_guide.md)** — Read the style guide first for formatting, citation, and emoji rules.
+> **Back to [Markdown Style Guide](../references/markdown_style_guide.md)** — Read the style guide first for formatting, citation, and emoji rules.
 
 **Use this template for:** Weekly/monthly status updates, executive briefings, project health reports, quarterly reviews, sprint retrospectives, or any document that updates stakeholders on progress, risks, and decisions needed. Designed to be read in under 5 minutes by someone with decision-making authority.
 
@@ -18,7 +18,7 @@
 2. Name it by date: `status-2026-02-14.md` or `status-week-07.md`
 3. **Fill in the TL;DR first** — if you can't summarize it, you don't understand it yet
 4. Be honest about health status — green means green, not "green because I'm optimistic"
-5. Add [Mermaid diagrams](../mermaid_style_guide.md) for progress timelines, architecture changes, or risk impact flows
+5. Add [Mermaid diagrams](../references/mermaid_style_guide.md) for progress timelines, architecture changes, or risk impact flows
 
 ---
 
@@ -177,8 +177,8 @@ _[Author] · [Date]_
 ## 🔗 References
 
 - [Project board / Jira / Linear](https://example.com) — Live work tracking
-- [Previous status report](../../docs/project/kanban/sprint-2026-w07-agentic-template-modernization.md) — For context on trends
-- [Relevant decision record](../adr/ADR-001-agent-optimized-documentation-system.md) — Background on recent changes
+- Previous status report — `../../docs/project/kanban/sprint-2026-w07-agentic-template-modernization.md` — For context on trends
+- Relevant decision record — `../adr/ADR-001-agent-optimized-documentation-system.md` — Background on recent changes
 
 ---
 

@@ -14,8 +14,8 @@ STRING (Search Tool for the Retrieval of Interacting Genes/Proteins) is a compre
 
 ## API Base URLs
 
-- **Current version**: https://string-db.org/api
-- **Version-specific**: https://version-12-0.string-db.org/api (for reproducibility)
+- **Current version**: https://string-db.org/help/api/
+- **Version-specific**: https://string-db.org/help/api/ (for reproducibility)
 - **API documentation**: https://string-db.org/help/api/
 
 ## Best Practices
@@ -384,7 +384,7 @@ For differential expression/proteomics data:
 **requests** (recommended):
 ```python
 import requests
-url = "https://string-db.org/api/tsv/network"
+url = "https://string-db.org/help/api//tsv/network"
 params = {"identifiers": "TP53", "species": 9606}
 response = requests.get(url, params=params)
 ```
@@ -392,7 +392,7 @@ response = requests.get(url, params=params)
 **urllib** (standard library):
 ```python
 import urllib.request
-url = "https://string-db.org/api/tsv/network?identifiers=TP53&species=9606"
+url = "https://string-db.org/help/api//tsv/network?identifiers=TP53&species=9606"
 response = urllib.request.urlopen(url)
 ```
 

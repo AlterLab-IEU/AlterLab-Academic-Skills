@@ -89,7 +89,7 @@ def get_glycan_compositions(glyconnect_protein_id: int) -> list:
 - Common for bottom-up glycoproteomics
 
 ### GlycoWorkbench
-- **URL**: https://www.eurocarbdb.org/project/glycoworkbench
+- **URL**: https://github.com/glycoinfo/eurocarbdb
 - Glycan structure drawing and mass calculation
 - Annotation of MS/MS spectra with glycan fragment ions
 

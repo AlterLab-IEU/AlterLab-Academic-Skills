@@ -526,7 +526,7 @@ plate = Cos_96_DW_1mL(name="plate")
 
 ## Additional Resources
 
-- Visualizer Documentation: https://docs.pylabrobot.org/user_guide/using-the-visualizer.html (if available)
-- Simulation Guide: https://docs.pylabrobot.org/user_guide/simulation.html (if available)
-- API Reference: https://docs.pylabrobot.org/api/pylabrobot.visualizer.html
+- Visualizer Documentation: https://docs.pylabrobot.org/user_guide/visualizer.html (if available)
+- Simulation Guide: https://docs.pylabrobot.org/user_guide/simulator.html (if available)
+- API Reference: https://docs.pylabrobot.org/user_guide/index.html
 - GitHub Examples: https://github.com/PyLabRobot/pylabrobot/tree/main/examples

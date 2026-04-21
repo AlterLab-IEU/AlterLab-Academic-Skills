@@ -678,9 +678,9 @@ def export_to_seurat(adata, output_file):
 
 ## Additional Resources
 
-- **PathML Multiparametric API:** https://pathml.readthedocs.io/en/latest/api_multiparametric_reference.html
+- **PathML Multiparametric API:** https://pathml.readthedocs.io/en/latest/api_preprocessing_reference.html
 - **CODEX:** https://www.akoyabio.com/codex/
-- **Vectra:** https://www.akoyabio.com/vectra/
+- **Vectra:** https://www.akoyabio.com/phenoimager/instruments/vectra-3-0/
 - **DeepCell Mesmer:** https://www.deepcell.org/
 - **Scanpy:** https://scanpy.readthedocs.io/ (single-cell analysis)
 - **Squidpy:** https://squidpy.readthedocs.io/ (spatial omics analysis)

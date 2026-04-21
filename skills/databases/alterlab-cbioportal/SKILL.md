@@ -15,7 +15,7 @@ cBioPortal for Cancer Genomics (https://www.cbioportal.org/) is an open-access r
 
 **Key resources:**
 - cBioPortal website: https://www.cbioportal.org/
-- REST API: https://www.cbioportal.org/api/
+- REST API: https://www.cbioportal.org/api/swagger-ui/index.html
 - API docs (Swagger): https://www.cbioportal.org/api/swagger-ui/index.html
 - Python client: `bravado` or `requests`
 - GitHub: https://github.com/cBioPortal/cbioportal
@@ -363,6 +363,6 @@ wget https://cbioportal-datahub.s3.amazonaws.com/brca_tcga.tar.gz
 - **API Swagger UI**: https://www.cbioportal.org/api/swagger-ui/index.html
 - **Documentation**: https://docs.cbioportal.org/
 - **GitHub**: https://github.com/cBioPortal/cbioportal
-- **Data hub**: https://datahub.cbioportal.org/
+- **Data hub**: https://www.cbioportal.org/datasets
 - **Citation**: Cerami E et al. (2012) Cancer Discovery. PMID: 22588877
 - **API clients**: https://docs.cbioportal.org/web-api-and-clients/

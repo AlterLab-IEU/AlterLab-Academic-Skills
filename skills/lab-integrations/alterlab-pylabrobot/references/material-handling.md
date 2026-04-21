@@ -615,6 +615,6 @@ async def process_plates(plate_list: list):
 ## Additional Resources
 
 - Material Handling Documentation: https://docs.pylabrobot.org/user_guide/01_material-handling/
-- Heater Shakers: https://docs.pylabrobot.org/user_guide/01_material-handling/heating_shaking/
-- API Reference: https://docs.pylabrobot.org/api/
+- Heater Shakers: https://docs.pylabrobot.org/user_guide/01_material-handling/heating-shaking/heating-shaking.html
+- API Reference: https://docs.pylabrobot.org/user_guide/index.html
 - Supported Equipment: https://docs.pylabrobot.org/user_guide/machines.html

@@ -1,0 +1,108 @@
+# Badge / shield services — all return 200 but were rejected under the old
+# --accept 403 config. Keeping these here defends against a regression of
+# the accept list and keeps CI output focused on real broken links.
+^https?://img\.shields\.io/.*
+^https?://shields\.io/.*
+^https?://awesome\.re/.*
+^https?://capsule-render\.vercel\.app/.*
+
+# Anti-bot / auth-walled hosts that never pass from CI runners.
+^https?://([a-z0-9-]+\.)?linkedin\.com/.*
+^https?://(twitter\.com|x\.com|t\.co)/.*
+
+# gitter.im issues a 301 redirect to matrix.to that trips max-redirects.
+^https?://gitter\.im/.*
+
+# Ephemeral Slack invite links (audit agent-4).
+^https?://join\.slack\.com/t/.*
+
+# pylabrobot docs removed in the upstream MyST rewrite — no current equivalent
+# (audit agent-4). Sphinx-style API module pages and a couple of user_guide/
+# topic pages were folded into the new layout without redirects.
+^https?://docs\.pylabrobot\.org/api/.*
+^https?://docs\.pylabrobot\.org/user_guide/(basic|backends)\.html$
+^https?://github\.com/PyLabRobot/pylabrobot/tree/main/examples.*
+
+# IQ-TREE workshop page SSL certificate expired (audit agent-5).
+^https?://www\.iqtree\.org/workshop/molevol2022.*
+
+# FGED Society ceased operations in 2021 — MIAME reference kept as text.
+^http://fged\.org/projects/miame/?$
+
+# Chinese-journal DOIs flagged pending verification (audit agent-4 HUMAN
+# DECISION). Two use parentheses in the DOI suffix which look mistyped —
+# leaving these excluded pedagogically preserves the citations in template
+# prose without asserting a specific registration.
+^https?://doi\.org/10\.(6152|6542|6773|3966)/.*
+
+# Illustrative example DOIs in writing-tool templates (audit agent-4 HUMAN
+# DECISION). These are placeholder citations, not real works — kept visible
+# as teaching artefacts, not validated as links.
+^https?://doi\.org/10\.1038/nrd\.2023\.001$
+^https?://doi\.org/10\.1101/2024\.01\.001$
+
+# Post-dispatch residuals (audit Tier 5). The first scheduled-run probe
+# after the audit surfaced additional noise that wasn't captured in
+# the static analysis. Categorised and excluded below.
+
+# localhost URLs are example / dev-server references in skill docs,
+# never reachable from CI.
+^https?://localhost(:\d+)?/.*
+
+# pylabrobot docs site is still mid-restructure (MyST migration).
+# Individual page-level rewrites keep landing on 404s as upstream
+# moves content around. Blanket-exclude until the skill gets its
+# own docs refresh PR — links stay visible in prose, CI stops
+# reporting false positives.
+^https?://docs\.pylabrobot\.org/.*
+
+# St. Louis Fed hosts consistently fail HTTP/2 handshakes from
+# GitHub Actions runners (live from desktop; known CI-only issue).
+^https?://(www\.)?(alfred|fred|geofred|fredaccount)\.stlouisfed\.org/.*
+
+# dicom.nema.org resets TCP connections from Azure runners
+# (cross-datacenter ACL); pages are live in browser.
+^https?://dicom\.nema\.org/.*
+
+# docking.org wiki/files hosts reset from CI runners.
+^https?://(wiki|files|cartblanche22)\.docking\.org/.*
+
+# Modal returns 500 on dashboard URLs without an authenticated session.
+^https?://modal\.com/(apps|secrets).*
+
+# Miscellaneous dead/flaky external hosts (connection refused or reset).
+^https?://flowcyt\.org/?.*
+^https?://prisma\.thetacollaborative\.ca/?.*
+^https?://asterweb\.jpl\.nasa\.gov/?.*
+^https?://unicarbkb\.org/?.*
+^https?://jra\.kishou\.go\.jp/.*
+^https?://([a-z0-9-]+\.)?fosteropenscience\.eu/?.*
+
+# FDA pages bot-block CI runners even when accept=403 is set.
+^https?://www\.fda\.gov/(animal-veterinary|food/compliance-enforcement-food/.*|safety/recalls-market-withdrawals-safety-alerts).*
+
+# spikeinterface qualitymetrics page 404s now — upstream moved.
+^https?://spikeinterface\.readthedocs\.io/en/latest/modules/qualitymetrics\.html$
+
+# Two additional fabricated example DOIs from agent-4's HUMAN DECISION
+# list (not-registered with the prefix; illustrative placeholders).
+^https?://doi\.org/10\.1057/s41307-023-00318-5$
+^https?://doi\.org/10\.1080/17439884\.2023\.2141509$
+
+# Google Cloud marketplace URLs trip lychee's HTTP/2 handshake
+# (substituted during Tier 3 as the alphafold dataset landing page).
+^https?://console\.cloud\.google\.com/marketplace/.*
+
+# ATCC dropped the cell-line-authentication page without a redirect.
+# Kept as a text-only reference in the mermaid example-research-report.
+^https?://www\.atcc\.org/resources/cell-line-authentication-testing-service$
+
+# charmm-gui.org times out from both desktop (20s) and CI runners — the
+# infrastructure is genuinely slow/unresponsive. Tool is still cited in
+# docs as a community resource.
+^https?://(www\.)?charmm-gui\.org/?.*
+
+# na-mic.org SSL certificate has OCSP revocation-check failure
+# (schannel + curl both hit CRYPT_E_REVOCATION_OFFLINE on this host);
+# wiki pages link valid historical DTI documentation.
+^https?://(www\.)?na-mic\.org/.*

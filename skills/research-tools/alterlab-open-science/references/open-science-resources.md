@@ -288,7 +288,7 @@ my-research-project/
 - UKRI Open Access Policy: https://www.ukri.org/publications/ukri-open-access-policy/
 
 ### Training Resources
-- FOSTER Open Science Training: https://www.fosteropenscience.eu/
+- FOSTER Open Science Training: https://web.archive.org/web/2019/https://www.fosteropenscience.eu/
 - The Turing Way: https://the-turing-way.netlify.app/
 - Software Carpentry: https://software-carpentry.org/
 - Library Carpentry: https://librarycarpentry.org/

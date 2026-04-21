@@ -110,7 +110,7 @@ def omim_to_mondo(omim_id):
     """Convert OMIM ID to MONDO ID via Monarch API."""
     search_id = f"OMIM:{omim_id}" if not omim_id.startswith("OMIM:") else omim_id
     data = requests.get(
-        f"https://api-v3.monarchinitiative.org/v3/entity/{search_id}"
+        f"https://api-v3.monarchinitiative.org/v3/docsentity/{search_id}"
     ).json()
     # Check for same_as/equivalent_id links to MONDO
     return data
@@ -149,7 +149,7 @@ import requests
 def compute_disease_similarity(disease_ids_1, disease_ids_2, metric="ancestor_information_content"):
     """Compute semantic similarity between two sets of disease phenotypes."""
     # Get phenotype sets for each disease
-    url = "https://api-v3.monarchinitiative.org/v3/semsim/compare"
+    url = "https://api-v3.monarchinitiative.org/v3/docssemsim/compare"
     params = {
         "subjects": disease_ids_1,
         "objects": disease_ids_2,

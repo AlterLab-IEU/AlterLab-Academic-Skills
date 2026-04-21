@@ -21,7 +21,7 @@ Monarch enables:
 
 **Key resources:**
 - Monarch portal: https://monarchinitiative.org/
-- Monarch API v3: https://api-v3.monarchinitiative.org/v3/
+- Monarch API v3: https://api-v3.monarchinitiative.org/v3/docs
 - API docs: https://api-v3.monarchinitiative.org/v3/docs
 - HPO browser: https://hpo.jax.org/
 
@@ -41,7 +41,7 @@ Use Monarch when:
 
 ### 1. Monarch API v3
 
-Base URL: `https://api-v3.monarchinitiative.org/v3/`
+Base URL: `https://api-v3.monarchinitiative.org/v3/docs`
 
 ```python
 import requests
@@ -370,4 +370,4 @@ print(candidates[["gene_name", "matching_phenotypes", "phenotype_overlap"]].to_s
 - **HPO browser**: https://hpo.jax.org/
 - **MONDO ontology**: https://mondo.monarchinitiative.org/
 - **Citation**: Shefchek KA et al. (2020) Nucleic Acids Research. PMID: 31701156
-- **Phenomizer** (HPO-based diagnosis): https://compbio.charite.de/phenomizer/
+- **Phenomizer** (HPO-based diagnosis): https://hpo.jax.org/
