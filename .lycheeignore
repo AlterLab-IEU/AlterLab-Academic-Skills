@@ -12,3 +12,36 @@
 
 # gitter.im issues a 301 redirect to matrix.to that trips max-redirects.
 ^https?://gitter\.im/.*
+
+# Ephemeral Slack invite links (audit agent-4).
+^https?://join\.slack\.com/t/.*
+
+# pylabrobot docs removed in the upstream MyST rewrite — no current equivalent
+# (audit agent-4). Sphinx-style API module pages and a couple of user_guide/
+# topic pages were folded into the new layout without redirects.
+^https?://docs\.pylabrobot\.org/api/.*
+^https?://docs\.pylabrobot\.org/user_guide/(basic|backends)\.html$
+^https?://github\.com/PyLabRobot/pylabrobot/tree/main/examples.*
+
+# IQ-TREE workshop page SSL certificate expired (audit agent-5).
+^https?://www\.iqtree\.org/workshop/molevol2022.*
+
+# FGED Society ceased operations in 2021 — MIAME reference kept as text.
+^http://fged\.org/projects/miame/?$
+
+# Chinese-journal DOIs flagged pending verification (audit agent-4 HUMAN
+# DECISION). Two use parentheses in the DOI suffix which look mistyped —
+# leaving these excluded pedagogically preserves the citations in template
+# prose without asserting a specific registration.
+^https?://doi\.org/10\.(6152|6542|6773|3966)/.*
+
+# Illustrative example DOIs in writing-tool templates (audit agent-4 HUMAN
+# DECISION). These are placeholder citations, not real works — kept visible
+# as teaching artefacts, not validated as links.
+^https?://doi\.org/10\.1038/nrd\.2023\.001$
+^https?://doi\.org/10\.1101/2024\.01\.001$
+
+# benchling/benchling-sdk repository is gone. The obvious substitute
+# benchling-api-client also returns 404 on the GitHub API — leaving dead
+# is safer than guessing a replacement.
+^https?://github\.com/benchling/benchling-sdk.*
