@@ -2,7 +2,7 @@
 
 # Research Paper / Technical Analysis Template
 
-> **Back to [Markdown Style Guide](../markdown_style_guide.md)** — Read the style guide first for formatting, citation, and emoji rules.
+> **Back to [Markdown Style Guide](../references/markdown_style_guide.md)** — Read the style guide first for formatting, citation, and emoji rules.
 
 **Use this template for:** Research papers, technical analyses, literature reviews, data-driven reports, competitive analyses, market research, or any document built around evidence and methodology. Designed for heavy citation, structured argumentation, and reproducible findings.
 
@@ -18,7 +18,7 @@
 2. Replace all `[bracketed placeholders]` with your content
 3. Adjust sections — not every paper needs every section, but the core flow (Abstract → Introduction → Methodology → Findings → Conclusion) should stay intact
 4. **Cite aggressively** — every claim, every statistic, every external methodology reference gets a `[^N]` footnote
-5. Add [Mermaid diagrams](../mermaid_style_guide.md) for any process, architecture, data flow, or comparison
+5. Add [Mermaid diagrams](../references/mermaid_style_guide.md) for any process, architecture, data flow, or comparison
 
 ---
 

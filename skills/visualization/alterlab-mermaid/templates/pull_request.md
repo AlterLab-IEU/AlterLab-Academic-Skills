@@ -2,7 +2,7 @@
 
 # Pull Request Documentation Template
 
-> **Back to [Markdown Style Guide](../markdown_style_guide.md)** — Read the style guide first for formatting, citation, and emoji rules.
+> **Back to [Markdown Style Guide](../references/markdown_style_guide.md)** — Read the style guide first for formatting, citation, and emoji rules.
 
 **Use this template for:** Documenting pull requests as persistent, searchable markdown records. This file IS the PR — not a companion document. It captures everything: what changed, why, how to verify, security impact, deployment strategy, and what was learned.
 
@@ -12,7 +12,7 @@
 
 When someone asks "what was PR #123 about?" six months from now, they `grep docs/project/pr/`, not the GitHub API. When you migrate from GitHub to GitLab, every PR record comes with you. When an AI agent needs to understand the history of a module, it reads these files locally — no tokens, no rate limits, no platform dependency.
 
-This is the [Everything is Code](../markdown_style_guide.md#-everything-is-code) philosophy: project management data lives in the repo, versioned and portable. Don't capture information in GitHub's UI that should be captured in this file. Invest the 10 minutes. A great PR file eliminates the "what was this PR about?" Slack message and the "can someone check the GitHub PR?" context switch — the answer is already in the repo.
+This is the [Everything is Code](../references/markdown_style_guide.md#-everything-is-code) philosophy: project management data lives in the repo, versioned and portable. Don't capture information in GitHub's UI that should be captured in this file. Invest the 10 minutes. A great PR file eliminates the "what was this PR about?" Slack message and the "can someone check the GitHub PR?" context switch — the answer is already in the repo.
 
 ---
 
@@ -46,7 +46,7 @@ Everything below the line is the template. Copy from here:
 | **Date**            | [YYYY-MM-DD]                                                                                                                                                                                  |
 | **Status**          | [Open / Merged / Closed]                                                                                                                                                                      |
 | **Branch**          | `[feature/branch-name]` → `main`                                                                                                                                                              |
-| **Related issues**  | [#ISSUE](../../docs/project/issues/issue-00000001-agentic-documentation-system.md), [#ISSUE2](../../docs/project/issues/issue-00000002-provider-priority-fail-fast-review-cost-visibility.md) |
+| **Related issues**  | #ISSUE — `../../docs/project/issues/issue-00000001-agentic-documentation-system.md`, #ISSUE2 — `../../docs/project/issues/issue-00000002-provider-priority-fail-fast-review-cost-visibility.md` |
 | **Deploy strategy** | [Standard / Canary / Blue-green / Feature flag]                                                                                                                                               |
 
 ---
@@ -303,15 +303,15 @@ git revert [commit-sha]
 
 ### Follow-up items
 
-- [ ] [Task that should happen after merge but isn't blocking](../../docs/project/issues/issue-00000003-local-review-context-pack-and-resilience.md)
-- [ ] [Technical debt to address later](../../docs/project/issues/issue-00000004-memory-backend-self-hosted-and-sql-seed.md)
+- [ ] Task that should happen after merge but isn't blocking — `../../docs/project/issues/issue-00000003-local-review-context-pack-and-resilience.md`
+- [ ] Technical debt to address later — `../../docs/project/issues/issue-00000004-memory-backend-self-hosted-and-sql-seed.md`
 
 ---
 
 ## 🔗 References
 
-- [Design document or ADR](../adr/ADR-001-agent-optimized-documentation-system.md)
-- [Related issue](../../docs/project/issues/issue-00000001-agentic-documentation-system.md)
+- Design document or ADR — `../adr/ADR-001-agent-optimized-documentation-system.md`
+- Related issue — `../../docs/project/issues/issue-00000001-agentic-documentation-system.md`
 - [Relevant documentation](https://example.com)
 
 ---

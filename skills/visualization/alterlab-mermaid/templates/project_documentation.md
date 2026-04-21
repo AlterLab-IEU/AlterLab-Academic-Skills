@@ -2,7 +2,7 @@
 
 # Project Documentation Template
 
-> **Back to [Markdown Style Guide](../markdown_style_guide.md)** — Read the style guide first for formatting, citation, and emoji rules.
+> **Back to [Markdown Style Guide](../references/markdown_style_guide.md)** — Read the style guide first for formatting, citation, and emoji rules.
 
 **Use this template for:** Software projects, open-source libraries, internal tools, APIs, platforms, or any product that needs documentation for users and contributors. Designed to take someone from "what is this?" to "I'm contributing" in a single read.
 
@@ -17,7 +17,7 @@
 1. Copy this file as your project's main `README.md` or `docs/index.md`
 2. Replace all `[bracketed placeholders]` with your content
 3. Delete sections that don't apply (a CLI tool might skip API reference; a library might skip deployment)
-4. Add [Mermaid diagrams](../mermaid_style_guide.md) — especially for architecture, data flow, and request lifecycle
+4. Add [Mermaid diagrams](../references/mermaid_style_guide.md) — especially for architecture, data flow, and request lifecycle
 5. Keep the Quick Start brutally simple — if setup takes more than 5 commands, simplify it
 
 ---
@@ -405,7 +405,7 @@ git clone https://github.com/[your-fork]/[repo].git
 
 - [Official framework docs](https://example.com) — [What version and which sections are most relevant]
 - [API specification](https://example.com) — [OpenAPI/Swagger link if applicable]
-- [Architecture Decision Records](../adr/) — [Why key decisions were made]
+- Architecture Decision Records — `../adr/` — [Why key decisions were made]
 
 ---
 
