@@ -1,0 +1,42 @@
+# lychee.toml — auto-discovered at repo root by lychee-action.
+# Introduced to fix a CI-breaking regression: the previous workflow passed
+# `--accept 403` on the CLI, which REPLACES lychee's default accept-set
+# rather than extending it — so every 200 OK was reclassified as an error.
+# Moving the config here makes the accepted-status list explicit, reviewable,
+# and locally reproducible (`lychee --config .lychee.toml "**/*.md"`).
+
+# HTTP status codes treated as success. Extends (not replaces) the defaults.
+# 403 and 429 are kept because academic/publisher sites frequently bot-block
+# HEAD requests from GitHub Actions runners (DOI → BMJ/Oxford/Sage/OECD/etc.).
+accept = ["200..=299", "301", "302", "304", "308", "403", "429"]
+
+# Cache link-check results between scheduled runs. lychee writes `.lycheecache`.
+cache = true
+
+# Per-request timeout (seconds). 30s gives slow academic mirrors a fair chance.
+timeout = 30
+
+# Back-off before retrying a failed request.
+retry_wait_time = 5
+
+# Retry transient failures (5xx, network errors, 429) up to this many times.
+max_retries = 3
+
+# Follow redirect chains common to DOIs and archive.org links (3-5 hops).
+max_redirects = 10
+
+# Paths to skip entirely. Keeps CI focused on user-facing content.
+exclude_path = ["node_modules", ".git", ".github/ISSUE_TEMPLATE"]
+
+# Placeholder / example DOIs deliberately included in template files as
+# illustrative filler (e.g. doi.org/xxxxx, doi.org/10.xxxx). These are
+# pedagogical artefacts, not resolvable citations.
+exclude = [
+  "^https?://doi\\.org/x+$",
+  "^https?://doi\\.org/10\\.x+",
+  "^https?://doi\\.org/xx\\.",
+  "^https?://doi\\.org/10\\.xxx/yyy",
+  "^https?://doi\\.org/10\\.xxxx/yyyy",
+  "^https?://doi\\.org/xx\\.xxx/yyyy",
+  "^https?://your-tenant\\.benchling\\.com/.*",
+]

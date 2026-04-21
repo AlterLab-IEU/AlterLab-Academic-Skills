@@ -5,16 +5,29 @@ on:
     - cron: "0 9 * * 1"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   check-links:
     name: Check for Dead Links
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
+      - name: Restore lychee cache
+        uses: actions/cache@v4
+        with:
+          path: .lycheecache
+          key: cache-lychee-${{ github.sha }}
+          restore-keys: cache-lychee-
 
       - name: Check links in Markdown files
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --verbose --no-progress --accept 403 "**/*.md"
+          args: --config .lychee.toml --no-progress "**/*.md"
+          output: .lycheecache
           fail: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,14 @@
+# Badge / shield services — all return 200 but were rejected under the old
+# --accept 403 config. Keeping these here defends against a regression of
+# the accept list and keeps CI output focused on real broken links.
+^https?://img\.shields\.io/.*
+^https?://shields\.io/.*
+^https?://awesome\.re/.*
+^https?://capsule-render\.vercel\.app/.*
+
+# Anti-bot / auth-walled hosts that never pass from CI runners.
+^https?://([a-z0-9-]+\.)?linkedin\.com/.*
+^https?://(twitter\.com|x\.com|t\.co)/.*
+
+# gitter.im issues a 301 redirect to matrix.to that trips max-redirects.
+^https?://gitter\.im/.*
