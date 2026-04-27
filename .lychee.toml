@@ -13,6 +13,10 @@ accept = ["200..=299", "301", "302", "304", "308", "400", "403", "429"]
 # Cache link-check results between scheduled runs. lychee writes `.lycheecache`.
 cache = true
 
+# Invalidate cached results older than 1 day so transient outages don't get
+# pinned as long-lived "OK" or "ERROR" results across weekly runs.
+max_cache_age = "1d"
+
 # Per-request timeout (seconds). 30s gives slow academic mirrors a fair chance.
 timeout = 30
 

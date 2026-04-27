@@ -61,8 +61,8 @@ Three options per placeholder:
 
 | Option | Result | When |
 |--------|--------|------|
-| **A. Backtick-wrap** | `[Label](../adr/foo.md)` → `Label — \`../adr/foo.md\`` — inline code span. Lychee skips it; pedagogical value preserved. | **Default**. Preserves the filename example as visible code. |
-| **B. Strip the link** | `[Related ADR](../adr/foo.md)` → `Related ADR` | When the path adds no teaching value. |
+| **A. Backtick-wrap** | ``[Label](../adr/foo.md)`` → ``Label — `../adr/foo.md` `` — inline code span. Lychee skips it; pedagogical value preserved. | **Default**. Preserves the filename example as visible code. |
+| **B. Strip the link** | ``[Related ADR](../adr/foo.md)`` → `Related ADR` | When the path adds no teaching value. |
 | **C. Create stub file** | Author a minimal `adr/ADR-001-<slug>.md` | When the referenced file is part of the skill's own promised content. |
 
 **Default to A.** Option C should only be picked when the surrounding prose treats the file as skill-internal authoritative content, not an example for downstream consumers.

@@ -584,7 +584,7 @@ def comprehensive_patent_analysis(patent_number, api_key):
 ## Resources
 
 ### API Documentation
-- **PatentSearch API**: https://search.patentsview.org/docs/
+- **PatentSearch API (ODP transition guidance)**: https://data.uspto.gov/support/transition-guidance/patentsview — the legacy `search.patentsview.org/docs/` host is being retired as part of the USPTO Open Data Portal (ODP) consolidation; consult this page for the migration path and current endpoint references.
 - **USPTO Developer Portal**: https://developer.uspto.gov/
 - **USPTO Open Data Portal**: https://data.uspto.gov/
 - **API Key Registration**: https://account.uspto.gov/api-manager/
