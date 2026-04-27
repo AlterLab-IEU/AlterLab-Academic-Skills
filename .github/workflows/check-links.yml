@@ -25,11 +25,12 @@ jobs:
           key: cache-lychee-${{ github.sha }}
           restore-keys: cache-lychee-
 
+      # Non-blocking: external link rot is a content signal, not a build failure.
       - name: Check links in Markdown files
         uses: lycheeverse/lychee-action@v2
         with:
           args: --config .lychee.toml --no-progress "**/*.md"
           output: .lycheecache
-          fail: true
+          fail: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

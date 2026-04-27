@@ -43,4 +43,8 @@ exclude = [
   "^https?://doi\\.org/10\\.xxxx/yyyy",
   "^https?://doi\\.org/xx\\.xxx/yyyy",
   "^https?://your-tenant\\.benchling\\.com/.*",
+  # Ensembl bot-blocks HEAD requests from CI runners with persistent 504 even
+  # after 5 lychee retries. Bare homepage only — deeper paths
+  # (rest.ensembl.org/..., www.ensembl.org/<species>/...) stay checked.
+  "^https?://(www\\.)?ensembl\\.org/?$",
 ]
