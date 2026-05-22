@@ -2,6 +2,7 @@
 name: alterlab-research-ethics
 description: "Part of the AlterLab Academic Skills suite for faculty and researchers. Comprehensive research ethics and compliance assistant. Supports IRB/ethics board applications, informed consent drafting, data management plans, Belmont Report principles, GDPR compliance for research, HIPAA considerations, vulnerable populations protocols, deception research, confidentiality and anonymity, research integrity (fabrication/falsification/plagiarism), conflict of interest disclosure, and dual-use research oversight. Triggers on: research ethics, IRB, ethics board, informed consent, data management plan, Belmont Report, GDPR research, HIPAA research, vulnerable populations, research integrity, plagiarism, conflict of interest, ethics application, ethical review, human subjects, animal ethics."
 license: MIT
+allowed-tools: Read WebFetch WebSearch Bash(python:*)
 metadata:
   skill-author: AlterLab
   version: "1.0.0"

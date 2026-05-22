@@ -2,7 +2,7 @@
 name: alterlab-scientific-slides
 description: Part of the AlterLab Academic Skills suite. Build slide decks and presentations for research talks. Use this for making PowerPoint slides, conference presentations, seminar talks, research presentations, thesis defense slides, or any scientific talk. Provides slide structure, design templates, timing guidance, and visual validation. Works with PowerPoint and LaTeX Beamer.
 allowed-tools: Read Write Edit Bash
-license: MIT license
+license: MIT
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

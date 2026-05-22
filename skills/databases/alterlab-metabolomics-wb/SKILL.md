@@ -2,6 +2,7 @@
 name: alterlab-metabolomics-wb
 description: Access NIH Metabolomics Workbench via REST API (4,200+ studies). Query metabolites, RefMet nomenclature, MS/NMR data, m/z searches, study metadata, for metabolomics and biomarker discovery. Part of the AlterLab Academic Skills suite.
 license: MIT
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

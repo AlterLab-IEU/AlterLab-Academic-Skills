@@ -2,6 +2,7 @@
 name: alterlab-arboreto
 description: Infer gene regulatory networks (GRNs) from gene expression data using scalable algorithms (GRNBoost2, GENIE3). Use when analyzing transcriptomics data (bulk RNA-seq, single-cell RNA-seq) to identify transcription factor-target gene relationships and regulatory interactions. Supports distributed computation for large-scale datasets. Part of the AlterLab Academic Skills suite.
 license: MIT
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

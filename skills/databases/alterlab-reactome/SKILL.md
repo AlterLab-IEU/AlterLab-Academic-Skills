@@ -2,6 +2,7 @@
 name: alterlab-reactome
 description: Query Reactome REST API for pathway analysis, enrichment, gene-pathway mapping, disease pathways, molecular interactions, expression analysis, for systems biology studies. Part of the AlterLab Academic Skills suite.
 license: MIT
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:
     skill-author: AlterLab
 ---

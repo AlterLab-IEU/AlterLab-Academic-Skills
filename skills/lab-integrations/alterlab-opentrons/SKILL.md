@@ -2,6 +2,7 @@
 name: alterlab-opentrons
 description: Part of the AlterLab Academic Skills suite. Official Opentrons Protocol API for OT-2 and Flex robots. Use when writing protocols specifically for Opentrons hardware with full access to Protocol API v2 features. Best for production Opentrons protocols, official API compatibility. For multi-vendor automation or broader equipment control use pylabrobot.
 license: MIT
+allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

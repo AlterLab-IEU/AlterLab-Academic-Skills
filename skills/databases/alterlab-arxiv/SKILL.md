@@ -2,6 +2,7 @@
 name: alterlab-arxiv
 description: Search and retrieve preprints from arXiv via the Atom API. Use this skill when searching for papers in physics, mathematics, computer science, quantitative biology, quantitative finance, statistics, electrical engineering, or economics by keywords, authors, arXiv IDs, date ranges, or categories. Part of the AlterLab Academic Skills suite.
 license: MIT
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

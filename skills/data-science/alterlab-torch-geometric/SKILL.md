@@ -1,7 +1,8 @@
 ---
 name: alterlab-torch-geometric
 description: Part of the AlterLab Academic Skills suite. Graph Neural Networks (PyG). Node/graph classification, link prediction, GCN, GAT, GraphSAGE, heterogeneous graphs, molecular property prediction, for geometric deep learning.
-license: MIT license
+license: MIT
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

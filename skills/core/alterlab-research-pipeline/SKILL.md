@@ -1,6 +1,8 @@
 ---
 name: alterlab-research-pipeline
 description: "Part of the AlterLab Academic Skills suite for faculty and researchers. Orchestrator for the full academic research pipeline: research -> write -> integrity check -> review -> revise -> re-review -> re-revise -> final integrity check -> finalize. Coordinates alterlab-deep-research, alterlab-paper-writer, and alterlab-paper-reviewer into a seamless 9-stage workflow with mandatory integrity verification, two-stage peer review, and reproducible quality gates. Triggers on: academic pipeline, research to paper, full paper workflow, paper pipeline, end-to-end paper, research-to-publication, complete paper workflow."
+license: MIT
+allowed-tools: Read Write Edit Bash WebFetch WebSearch
 metadata:
   skill-author: AlterLab
   version: "2.6"

@@ -2,6 +2,7 @@
 name: alterlab-digital-humanities
 description: "Text mining, corpus linguistics, digital archives, GIS for history, network analysis, stylometry, OCR, and data visualization for humanities research. Part of the AlterLab Academic Skills suite."
 license: MIT
+allowed-tools: Read Write Edit Bash(python:*)
 metadata:
   skill-author: AlterLab
   version: "1.0.0"

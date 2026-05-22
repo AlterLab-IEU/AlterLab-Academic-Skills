@@ -1,7 +1,8 @@
 ---
 name: alterlab-pydeseq2
 description: Differential gene expression analysis (Python DESeq2). Identify DE genes from bulk RNA-seq counts, Wald tests, FDR correction, volcano/MA plots, for RNA-seq analysis. Part of the AlterLab Academic Skills suite.
-license: MIT license
+license: MIT
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

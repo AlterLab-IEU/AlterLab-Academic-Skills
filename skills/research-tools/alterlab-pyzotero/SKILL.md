@@ -2,7 +2,7 @@
 name: alterlab-pyzotero
 description: Part of the AlterLab Academic Skills suite. Interact with Zotero reference management libraries using the pyzotero Python client. Retrieve, create, update, and delete items, collections, tags, and attachments via the Zotero Web API v3. Use this skill when working with Zotero libraries programmatically, managing bibliographic references, exporting citations, searching library contents, uploading PDF attachments, or building research automation workflows that integrate with Zotero.
 allowed-tools: Read Write Edit Bash
-license: MIT License
+license: MIT
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

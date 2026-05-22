@@ -2,6 +2,7 @@
 name: alterlab-omero
 description: Part of the AlterLab Academic Skills suite. Microscopy data management platform. Access images via Python, retrieve datasets, analyze pixels, manage ROIs/annotations, batch processing, for high-content screening and microscopy workflows.
 license: MIT
+allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

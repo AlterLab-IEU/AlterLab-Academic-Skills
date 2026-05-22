@@ -1,7 +1,8 @@
 ---
 name: alterlab-tiledbvcf
 description: Efficient storage and retrieval of genomic variant data using TileDB. Scalable VCF/BCF ingestion, incremental sample addition, compressed storage, parallel queries, and export capabilities for population genomics. Part of the AlterLab Academic Skills suite.
-license: MIT license
+license: MIT
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

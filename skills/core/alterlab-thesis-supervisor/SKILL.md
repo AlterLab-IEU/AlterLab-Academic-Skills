@@ -2,6 +2,7 @@
 name: alterlab-thesis-supervisor
 description: "Part of the AlterLab Academic Skills suite for faculty and researchers. Comprehensive thesis and dissertation supervision assistant. Supports dissertation structure guidance (proposal through defense), chapter-by-chapter writing support (introduction, literature review, methodology, results, discussion), supervision strategies, committee management, defense preparation, timeline planning, feedback integration, formatting requirements (APA 7, Chicago, university styles), viva voce preparation, and examiner expectations. Triggers on: thesis, dissertation, supervision, defense preparation, viva, proposal defense, thesis structure, thesis chapter, literature review chapter, methodology chapter, results chapter, discussion chapter, thesis timeline, committee, thesis formatting, dissertation proposal."
 license: MIT
+allowed-tools: Read Write Edit Bash WebFetch WebSearch
 metadata:
   skill-author: AlterLab
   version: "1.0.0"

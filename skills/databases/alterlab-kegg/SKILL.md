@@ -1,7 +1,8 @@
 ---
 name: alterlab-kegg
 description: Direct REST API access to KEGG (academic use only). Pathway analysis, gene-pathway mapping, metabolic pathways, drug interactions, ID conversion. For Python workflows with multiple databases, prefer bioservices. Use this for direct HTTP/REST work or KEGG-specific control. Part of the AlterLab Academic Skills suite.
-license: Non-academic use of KEGG requires a commercial license
+license: Proprietary
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

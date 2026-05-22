@@ -2,6 +2,7 @@
 name: alterlab-academic-career
 description: "Academic career document preparation and professional development for faculty and researchers. Use when drafting academic CVs, research statements, teaching philosophies, diversity statements, cover letters for faculty positions, tenure dossiers, promotion narratives, or academic portfolios. Also covers conference networking strategies, building academic web presence, understanding impact metrics, ORCID profiles, and writing mentorship statements. Part of the AlterLab Academic Skills suite."
 license: MIT
+allowed-tools: Read Write Edit
 metadata:
   skill-author: AlterLab
   version: "1.0.0"

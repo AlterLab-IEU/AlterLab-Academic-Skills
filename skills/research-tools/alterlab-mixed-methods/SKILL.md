@@ -2,6 +2,7 @@
 name: alterlab-mixed-methods
 description: "Mixed methods research design and integration strategies for combining qualitative and quantitative approaches. Use when planning convergent, explanatory sequential, exploratory sequential, embedded, transformative, or multiphase designs; when integrating diverse data sources through merging, connecting, or embedding; when constructing joint displays or meta-inferences; or when evaluating quality criteria specific to mixed methods research. Covers Creswell & Plano Clark frameworks, notation systems, and software tools for integration. Part of the AlterLab Academic Skills suite."
 license: MIT
+allowed-tools: Read WebFetch WebSearch Bash(python:*)
 metadata:
   skill-author: AlterLab
   version: "1.0.0"

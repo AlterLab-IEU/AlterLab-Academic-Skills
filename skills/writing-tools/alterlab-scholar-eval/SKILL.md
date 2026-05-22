@@ -1,7 +1,8 @@
 ---
 name: alterlab-scholar-eval
 description: Part of the AlterLab Academic Skills suite. Systematically evaluate scholarly work using the ScholarEval framework, providing structured assessment across research quality dimensions including problem formulation, methodology, analysis, and writing with quantitative scoring and actionable feedback.
-license: MIT license
+license: MIT
+allowed-tools: Read Write Edit
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

@@ -2,7 +2,7 @@
 name: alterlab-research-lookup
 description: Part of the AlterLab Academic Skills suite. Look up current research information using the Parallel Chat API (primary) or Perplexity sonar-pro-search (academic paper searches). Automatically routes queries to the best backend. Use for finding papers, gathering research data, and verifying scientific information.
 allowed-tools: Read Write Edit Bash
-license: MIT license
+license: MIT
 compatibility: PARALLEL_API_KEY and OPENROUTER_API_KEY required
 metadata:
     skill-author: AlterLab

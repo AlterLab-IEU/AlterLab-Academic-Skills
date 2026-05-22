@@ -1,7 +1,8 @@
 ---
 name: alterlab-plotly
 description: Part of the AlterLab Academic Skills suite. Interactive visualization library. Use when you need hover info, zoom, pan, or web-embeddable charts. Best for dashboards, exploratory analysis, and presentations. For static publication figures use matplotlib or scientific-visualization.
-license: MIT license
+license: MIT
+allowed-tools: Read Write Edit Bash(python:*)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

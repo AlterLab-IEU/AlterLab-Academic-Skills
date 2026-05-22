@@ -2,6 +2,7 @@
 name: alterlab-dnanexus
 description: Part of the AlterLab Academic Skills suite. DNAnexus cloud genomics platform. Build apps/applets, manage data (upload/download), dxpy Python SDK, run workflows, FASTQ/BAM/VCF, for genomics pipeline development and execution.
 license: MIT
+allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
 compatibility: Requires a DNAnexus account
 metadata:
     skill-author: AlterLab

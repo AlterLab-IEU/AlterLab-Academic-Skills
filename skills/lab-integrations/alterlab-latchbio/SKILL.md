@@ -2,6 +2,7 @@
 name: alterlab-latchbio
 description: Part of the AlterLab Academic Skills suite. Latch platform for bioinformatics workflows. Build pipelines with Latch SDK, @workflow/@task decorators, deploy serverless workflows, LatchFile/LatchDir, Nextflow/Snakemake integration.
 license: MIT
+allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

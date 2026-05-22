@@ -2,7 +2,7 @@
 name: alterlab-treatment-plans
 description: Part of the AlterLab Academic Skills suite. Generate concise (3-4 page), focused medical treatment plans in LaTeX/PDF format for all clinical specialties. Supports general medical treatment, rehabilitation therapy, mental health care, chronic disease management, perioperative care, and pain management. Includes SMART goal frameworks, evidence-based interventions with minimal text citations, regulatory compliance (HIPAA), and professional formatting. Prioritizes brevity and clinical actionability.
 allowed-tools: Read Write Edit Bash
-license: MIT license
+license: MIT
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

@@ -2,6 +2,7 @@
 name: alterlab-open-science
 description: "Guidance for open science practices -- preregistration, open data, reproducible analysis, open access publishing, and FAIR principles. Part of the AlterLab Academic Skills suite."
 license: MIT
+allowed-tools: Read WebFetch WebSearch Bash(python:*)
 metadata:
   skill-author: AlterLab
   version: "1.0.0"

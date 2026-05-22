@@ -1,7 +1,8 @@
 ---
 name: alterlab-pymc
 description: Part of the AlterLab Academic Skills suite. Bayesian modeling with PyMC. Build hierarchical models, MCMC (NUTS), variational inference, LOO/WAIC comparison, posterior checks, for probabilistic programming and inference.
-license: Apache License, Version 2.0
+license: Apache-2.0
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

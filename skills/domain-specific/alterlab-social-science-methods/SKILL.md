@@ -2,6 +2,7 @@
 name: alterlab-social-science-methods
 description: "Advanced social science research methods -- discourse analysis, comparative methods, process tracing, participatory research, social network analysis, bibliometrics, and program evaluation. Part of the AlterLab Academic Skills suite."
 license: MIT
+allowed-tools: Read Write Edit Bash(python:*)
 metadata:
   skill-author: AlterLab
   version: "1.0.0"
