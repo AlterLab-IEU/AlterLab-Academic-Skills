@@ -1,0 +1,14 @@
+[project]
+name = "alterlab-academic-skills"
+version = "1.0.0"
+description = "186+ Claude AI skills for faculty and academic researchers"
+requires-python = ">=3.12"
+license = "MIT"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra --strict-markers --tb=short"
+markers = [
+    "slow: marks tests that touch the network or take >1s",
+]

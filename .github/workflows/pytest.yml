@@ -1,0 +1,29 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "skills/**"
+      - "scripts/**"
+      - "tests/**"
+      - "pyproject.toml"
+      - ".github/workflows/pytest.yml"
+
+jobs:
+  pytest:
+    name: pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pytest
+        run: pip install pytest
+
+      - name: Run schema tests
+        run: pytest tests/ -ra --tb=short
