@@ -19,6 +19,10 @@
 
 > 📢 **Featured in** [awesome-claude-skills](https://github.com/BehiSecc/awesome-claude-skills) (5.7k ⭐)
 
+<br>
+
+**Read in:** [English](README.md) · [Türkçe](README.tr-TR.md)
+
 <br><br>
 
 <h3>🧬 186+ purpose-built Claude AI skills for faculty, researchers & academicians</h3>
