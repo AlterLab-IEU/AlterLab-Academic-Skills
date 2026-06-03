@@ -6,6 +6,8 @@
 <a href="skills/"><img src="https://img.shields.io/badge/Domains-13-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Domains"></a>
 <a href="https://www.anthropic.com"><img src="https://img.shields.io/badge/Claude-AI%20Powered-F97316?style=for-the-badge&logo=anthropic&logoColor=white" alt="Claude AI"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-10B981?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="MIT License"></a>
+<a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases"><img src="https://img.shields.io/github/v/release/AlterLab-IEU/AlterLab-Academic-Skills?style=for-the-badge&logo=github&color=8B5CF6&logoColor=white&label=Release" alt="Release"></a>
+<a href="https://agentskills.io"><img src="https://img.shields.io/badge/Agent%20Skills-Open%20Standard-0EA5E9?style=for-the-badge&logo=anthropic&logoColor=white" alt="Agent Skills — open standard"></a>
 
 <br>
 
@@ -13,6 +15,7 @@
 <a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/network/members"><img src="https://img.shields.io/github/forks/AlterLab-IEU/AlterLab-Academic-Skills?style=for-the-badge&logo=git&color=6366F1&logoColor=white" alt="Forks"></a>
 <a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/issues"><img src="https://img.shields.io/github/issues/AlterLab-IEU/AlterLab-Academic-Skills?style=for-the-badge&logo=github&color=EF4444&logoColor=white" alt="Issues"></a>
 <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-Welcome-22C55E?style=for-the-badge&logo=githubactions&logoColor=white" alt="PRs Welcome"></a>
+<a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/actions/workflows/pytest.yml"><img src="https://img.shields.io/github/actions/workflow/status/AlterLab-IEU/AlterLab-Academic-Skills/pytest.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=tests" alt="Tests"></a>
 <a href="https://github.com/BehiSecc/awesome-claude-skills"><img src="https://awesome.re/badge.svg" alt="Awesome"></a>
 
 <br>
