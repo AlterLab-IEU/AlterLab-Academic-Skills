@@ -1,6 +1,6 @@
 ---
 name: alterlab-teaching-design
-description: "Part of the AlterLab Academic Skills suite for faculty and researchers. Comprehensive course and teaching design assistant. Supports backward design (Wiggins & McTighe), constructive alignment (Biggs), Bloom's taxonomy alignment, rubric generation, assessment design (formative/summative), syllabus drafting, lesson planning, inclusive pedagogy, and online/hybrid course architecture. Triggers on: course design, syllabus, learning outcomes, rubric, assessment design, lesson plan, backward design, constructive alignment, Bloom's taxonomy, curriculum mapping, course redesign, inclusive pedagogy, hybrid course, online course design."
+description: "Designs courses and teaching materials using backward design (Wiggins & McTighe), constructive alignment (Biggs), and Bloom's taxonomy alignment, generating rubrics, formative and summative assessments, syllabi, lesson plans, inclusive-pedagogy guidance, and online/hybrid course architecture. Use when the request mentions course design, syllabus, learning outcomes, rubric, assessment design, lesson plan, backward design, constructive alignment, Bloom's taxonomy, curriculum mapping, course redesign, inclusive pedagogy, hybrid course, or online course design. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash WebFetch WebSearch
 metadata:

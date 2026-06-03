@@ -1,6 +1,6 @@
 ---
 name: alterlab-pylabrobot
-description: Part of the AlterLab Academic Skills suite. Vendor-agnostic lab automation framework. Use when controlling multiple equipment types (Hamilton, Tecan, Opentrons, plate readers, pumps) or needing unified programming across different vendors. Best for complex workflows, multi-vendor setups, simulation. For Opentrons-only protocols with official API, opentrons-integration may be simpler.
+description: Programs lab automation with PyLabRobot, a vendor-agnostic Python framework that unifies control across Hamilton, Tecan, Opentrons, plate readers, and pumps, with simulation support. Use when controlling multiple equipment types or needing unified cross-vendor programming for complex, multi-vendor liquid-handling workflows. For Opentrons-only protocols with the official API, alterlab-opentrons may be simpler. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
 metadata:

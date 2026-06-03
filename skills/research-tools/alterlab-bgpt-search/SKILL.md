@@ -1,6 +1,6 @@
 ---
 name: alterlab-bgpt-search
-description: Part of the AlterLab Academic Skills suite. Search scientific papers and retrieve structured experimental data extracted from full-text studies via the BGPT MCP server. Returns 25+ fields per paper including methods, results, sample sizes, quality scores, and conclusions. Use for literature reviews, evidence synthesis, and finding experimental details not available in abstracts alone.
+description: Search scientific papers and retrieve structured experimental data extracted from full-text studies via the BGPT MCP server, returning 25+ fields per paper (methods, results, sample sizes, quality scores, conclusions). Use when running a literature review or evidence synthesis, or when needing experimental details (sample sizes, effect sizes, methods, quality scores) that abstracts alone do not provide. Part of the AlterLab Academic Skills suite.
 allowed-tools: Bash
 license: MIT
 metadata:

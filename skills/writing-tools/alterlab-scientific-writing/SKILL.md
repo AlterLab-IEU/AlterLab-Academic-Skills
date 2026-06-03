@@ -1,6 +1,6 @@
 ---
 name: alterlab-scientific-writing
-description: Part of the AlterLab Academic Skills suite. Core skill for the deep research and writing tool. Write scientific manuscripts in full paragraphs (never bullet points). Use two-stage process with (1) section outlines with key points using research-lookup then (2) convert to flowing prose. IMRAD structure, citations (APA/AMA/Vancouver), figures/tables, reporting guidelines (CONSORT/STROBE/PRISMA), for research papers and journal submissions.
+description: Writes scientific manuscripts in full flowing paragraphs (never bullet points) via a two-stage process — section outlines with key points using research-lookup, then conversion to prose — applying IMRAD structure, citations (APA/AMA/Vancouver), figures/tables, and reporting guidelines (CONSORT/STROBE/PRISMA). Use when drafting research papers or journal submissions and writing manuscript sections (introduction, methods, results, discussion). Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 metadata:

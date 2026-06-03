@@ -1,0 +1,53 @@
+{
+  "skill": "alterlab-paper-writer",
+  "evals": [
+    {
+      "id": "full-paper-imrad",
+      "query": "Write a full IMRaD journal paper on the impact of AI-assisted feedback on student essay revision, APA 7.0, with a bilingual zh-TW and English abstract, and give me LaTeX output.",
+      "expected_behavior": "Invokes alterlab-paper-writer in full mode: runs the configuration interview (paper type, citation format, output), then the 8-phase pipeline (literature, architecture/outline, argumentation, drafting, parallel citation compliance + bilingual abstract, simulated 5-dimension peer review, and formatting), producing a complete IMRaD draft with a bilingual abstract, APA 7.0 citations, AI-disclosure statement, and hardened apa7 LaTeX output.",
+      "should_trigger": true
+    },
+    {
+      "id": "plan-mode-guided",
+      "query": "I have my data and results but I've never written a paper before and don't know how to structure it. Can you walk me through planning each chapter?",
+      "expected_behavior": "Invokes alterlab-paper-writer in plan mode: the socratic_mentor_agent runs a research-readiness check then guides chapter-by-chapter Socratic planning (thesis crystallization, per-chapter negotiation, argument stress test), extracting INSIGHT markers and producing a Chapter Plan rather than immediately writing the full paper.",
+      "should_trigger": true
+    },
+    {
+      "id": "revision-coach-reviews",
+      "query": "I just got reviewer comments back from the journal. Can you parse them into a revision roadmap and help me prioritize what to fix?",
+      "expected_behavior": "Invokes alterlab-paper-writer in revision-coach mode: the revision_coach_agent parses the unstructured reviewer comments into a structured Revision Roadmap (classify, map to sections, prioritize), optionally producing a tracking template and a response-letter skeleton, and works standalone without prior pipeline execution.",
+      "should_trigger": true
+    },
+    {
+      "id": "format-convert-citations",
+      "query": "Convert the citations in my manuscript from APA 7 to IEEE format.",
+      "expected_behavior": "Invokes alterlab-paper-writer in format-convert mode: the formatter_agent performs late-stage citation format conversion from APA 7 to IEEE across in-text citations and the reference list, without re-running the drafting or research phases.",
+      "should_trigger": true
+    },
+    {
+      "id": "abstract-only-bilingual",
+      "query": "Write a structured bilingual abstract (Traditional Chinese and English) plus keywords for my completed paper on competency-based assessment.",
+      "expected_behavior": "Invokes alterlab-paper-writer in abstract-only mode: the abstract_bilingual_agent independently composes a structured English abstract (150-300 words) and a Traditional Chinese abstract (300-500 characters) that are not mechanical translations, plus 5-7 keywords per language.",
+      "should_trigger": true
+    },
+    {
+      "id": "near-miss-deep-research",
+      "query": "I don't have any sources yet. Research the evidence on whether open-book exams improve learning outcomes and give me a cited report.",
+      "expected_behavior": "defers to alterlab-deep-research / does not invoke this skill (the user wants original evidence synthesis and a research report, not a publishable paper draft from existing materials)",
+      "should_trigger": false
+    },
+    {
+      "id": "near-miss-paper-reviewer",
+      "query": "Act as a journal reviewer for this submitted manuscript and give me a formal review with scores and a recommendation.",
+      "expected_behavior": "defers to alterlab-paper-reviewer / does not invoke this skill (the user wants a structured external peer review of a paper, not to write, plan, or revise one of their own)",
+      "should_trigger": false
+    },
+    {
+      "id": "near-miss-research-pipeline",
+      "query": "Take this topic from scratch all the way through research and into a finished publishable paper as one end-to-end workflow.",
+      "expected_behavior": "defers to alterlab-research-pipeline / does not invoke this skill alone (the request is for the full research-to-publication pipeline orchestrating both research and writing, not the paper-writing stage in isolation)",
+      "should_trigger": false
+    }
+  ]
+}

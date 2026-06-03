@@ -1,6 +1,6 @@
 ---
 name: alterlab-pytorch-lightning
-description: Part of the AlterLab Academic Skills suite. Deep learning framework (PyTorch Lightning). Organize PyTorch code into LightningModules, configure Trainers for multi-GPU/TPU, implement data pipelines, callbacks, logging (W&B, TensorBoard), distributed training (DDP, FSDP, DeepSpeed), for scalable neural network training.
+description: Scalable deep-learning training with PyTorch Lightning — organize PyTorch code into LightningModules, configure Trainers for multi-GPU/TPU, build data pipelines and callbacks, log to W&B or TensorBoard, and run distributed training (DDP, FSDP, DeepSpeed). Use when structuring PyTorch training loops, scaling neural-network training across GPUs/TPUs, or adding checkpointing, logging, and distributed strategies. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

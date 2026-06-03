@@ -1,6 +1,6 @@
 ---
 name: alterlab-pubmed
-description: Direct REST API access to PubMed. Advanced Boolean/MeSH queries, E-utilities API, batch processing, citation management. For Python workflows, prefer biopython (Bio.Entrez). Use this for direct HTTP/REST work or custom API implementations. Part of the AlterLab Academic Skills suite.
+description: Provide direct REST API access to PubMed via the NCBI E-utilities API, supporting advanced Boolean/MeSH queries, batch processing, and citation management. Use when searching biomedical literature by MeSH terms, retrieving abstracts or PMIDs in bulk, or scripting custom PubMed queries over raw HTTP/REST — for Python workflows prefer biopython (Bio.Entrez) instead, use this for direct REST work or custom API implementations. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:

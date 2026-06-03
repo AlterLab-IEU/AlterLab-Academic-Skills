@@ -1,6 +1,6 @@
 ---
 name: alterlab-digital-humanities
-description: "Text mining, corpus linguistics, digital archives, GIS for history, network analysis, stylometry, OCR, and data visualization for humanities research. Part of the AlterLab Academic Skills suite."
+description: "Applies computational methods to humanities research — text mining and NLP (LDA/BERTopic topic modeling, sentiment, named entity recognition with spaCy/NLTK), corpus linguistics (concordance, collocation, keyness), digital archives (Dublin Core, TEI XML), GIS for history, network analysis, stylometry and authorship attribution, OCR (Tesseract, Kraken, Transkribus), and data visualization (Gephi, Palladio). Use when distant-reading a literary corpus, mapping historical events or trade networks, attributing disputed authorship, digitizing historical documents, or building digital scholarly editions. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 metadata:

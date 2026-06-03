@@ -1,13 +1,19 @@
 {
   "name": "alterlab-academic-skills",
   "private": false,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "180 Claude AI skills for faculty members and academic researchers — organized by research domain",
   "author": "Cem Ipek (https://github.com/AlterLab-IEU)",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills.git"
+  },
+  "scripts": {
+    "validate": "python3 scripts/audit_skills.py && python3 scripts/gen_marketplace.py --check && uv run --frozen pytest tests/ -q",
+    "validate:json": "python3 scripts/gen_marketplace.py --check",
+    "marketplace": "python3 scripts/gen_marketplace.py",
+    "test": "uv run --frozen pytest tests/ -q"
   },
   "keywords": [
     "claude-ai",

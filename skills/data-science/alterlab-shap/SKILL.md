@@ -1,6 +1,6 @@
 ---
 name: alterlab-shap
-description: Part of the AlterLab Academic Skills suite. Model interpretability and explainability using SHAP (SHapley Additive exPlanations). Use this skill when explaining machine learning model predictions, computing feature importance, generating SHAP plots (waterfall, beeswarm, bar, scatter, force, heatmap), debugging models, analyzing model bias or fairness, comparing models, or implementing explainable AI. Works with tree-based models (XGBoost, LightGBM, Random Forest), deep learning (TensorFlow, PyTorch), linear models, and any black-box model.
+description: Model interpretability and explainability with SHAP (SHapley Additive exPlanations) — feature importance and plots (waterfall, beeswarm, bar, scatter, force, heatmap). Use when explaining ML model predictions, computing feature importance, debugging models, analyzing bias or fairness, comparing models, or implementing explainable AI across tree-based models (XGBoost, LightGBM, Random Forest), deep learning (TensorFlow, PyTorch), linear models, and any black-box model. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

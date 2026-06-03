@@ -1,6 +1,6 @@
 ---
 name: alterlab-etetoolkit
-description: Phylogenetic tree toolkit (ETE). Tree manipulation (Newick/NHX), evolutionary event detection, orthology/paralogy, NCBI taxonomy, visualization (PDF/SVG), for phylogenomics. Part of the AlterLab Academic Skills suite.
+description: Manipulate, annotate, and render phylogenetic trees programmatically with the ETE Toolkit (ete3) — parse and edit Newick/NHX, detect duplication/speciation events, infer orthology and paralogy, query NCBI taxonomy, and export PDF/SVG figures. Use when traversing or reformatting tree files, doing phylogenomic comparative analysis, or producing publication tree graphics in Python. Part of the AlterLab Academic Skills suite.
 license: GPL-3.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

@@ -1,6 +1,6 @@
 ---
 name: alterlab-cellxgene
-description: Query the CELLxGENE Census (61M+ cells) programmatically. Use when you need expression data across tissues, diseases, or cell types from the largest curated single-cell atlas. Best for population-scale queries, reference atlas comparisons. For analyzing your own data use scanpy or scvi-tools. Part of the AlterLab Academic Skills suite.
+description: Query the CZ CELLxGENE Census (61M+ cells) programmatically via cellxgene-census and TileDB-SOMA, slicing expression by tissue, disease, or cell type and returning AnnData. Use when pulling reference single-cell RNA-seq data from the largest curated public atlas, running population-scale queries, or benchmarking your data against a reference — for analyzing your own dataset use scanpy or scvi-tools. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

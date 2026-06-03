@@ -1,6 +1,6 @@
 ---
 name: alterlab-pubchem
-description: Query PubChem via PUG-REST API/PubChemPy (110M+ compounds). Search by name/CID/SMILES, retrieve properties, similarity/substructure searches, bioactivity, for cheminformatics. Part of the AlterLab Academic Skills suite.
+description: Query PubChem via the PUG-REST API and PubChemPy across 110M+ compounds, searching by name, CID, or SMILES and retrieving molecular properties, bioactivity, and similarity/substructure matches. Use when looking up a chemical compound, converting names/SMILES to CIDs, fetching physicochemical properties, or running cheminformatics structure searches. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:

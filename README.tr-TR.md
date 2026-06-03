@@ -53,7 +53,18 @@ Her beceri tek bir `.md` dosyasıdır. Claude Code veya Claude Projects içine b
 
 ## 🚀 Hızlı Başlangıç
 
-### Seçenek 1 — Claude Projects *(Önerilen)*
+### 🌍 Seçenek 1 — Agent Skills (açık standart) *(Önerilen)*
+
+```bash
+npx skills add AlterLab-IEU/AlterLab-Academic-Skills
+```
+
+Bunlar [agentskills.io](https://agentskills.io) açık standardını izleyen taşınabilir **Agent Skills** becerileridir — yalnızca Claude'da değil, **Cursor, Codex, Gemini CLI ve Copilot** ile de çalışır.
+
+> [!NOTE]
+> **Standart: Agent Skills.** Bu koleksiyon açık Agent Skills standardına uygundur. Şartname ve destekleyen ajanların listesi için [agentskills.io](https://agentskills.io) adresine bakın.
+
+### Seçenek 2 — Claude Projects
 
 ```
 1. claude.ai → Projeler → Yeni Proje Oluştur
@@ -61,22 +72,30 @@ Her beceri tek bir `.md` dosyasıdır. Claude Code veya Claude Projects içine b
 3. Sohbete başlayın — Claude artık o alanın uzmanı
 ```
 
-### Seçenek 2 — Claude Code Eklenti Pazarı *(Önerilen)*
+### Seçenek 3 — Claude Code Eklenti Pazarı
 
 Depo, `alterlab-academic-skills` adlı bir Claude Code eklenti pazarı olarak yayınlanır ve 13 alan eklentisi içerir (`alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, … `alterlab-finance-economics`).
 
 ```bash
 # Claude Code içinde:
 /plugin marketplace add AlterLab-IEU/AlterLab-Academic-Skills
+# SSH anahtarınız yoksa HTTPS pazar yolunu kullanın:
+/plugin marketplace add https://github.com/AlterLab-IEU/AlterLab-Academic-Skills.git
 /plugin install alterlab-core@alterlab-academic-skills
 # ihtiyacınız olan diğer alanlar için tekrarlayın, ör.:
 /plugin install alterlab-bioinformatics@alterlab-academic-skills
 ```
 
+Yerel geliştirme için bir klonu doğrudan Claude Code'a tanıtabilirsiniz:
+
+```bash
+claude --plugin-dir /path/to/AlterLab-Academic-Skills
+```
+
 > [!NOTE]
 > Becerilerin Claude tarafından otomatik tetiklenmesi için ilgili `SKILL.md` dosyaları `~/.claude/skills/` dizinine kopyalanmalıdır.
 
-### Seçenek 3 — Tekil Beceri Kullanımı
+### Seçenek 4 — Tekil Beceri Kullanımı
 
 Her beceri bağımsız bir `.md` dosyasıdır. `skills/` klasörüne göz atın ve ihtiyacınız olanları indirin.
 

@@ -1,6 +1,6 @@
 ---
 name: alterlab-iso13485
-description: Part of the AlterLab Academic Skills suite. Comprehensive toolkit for preparing ISO 13485 certification documentation for medical device Quality Management Systems. Use when users need help with ISO 13485 QMS documentation, including (1) conducting gap analysis of existing documentation, (2) creating Quality Manuals, (3) developing required procedures and work instructions, (4) preparing Medical Device Files, (5) understanding ISO 13485 requirements, or (6) identifying missing documentation for medical device certification. Also use when users mention medical device regulations, QMS certification, FDA QMSR, EU MDR, or need help with quality system documentation.
+description: Prepares ISO 13485 certification documentation for medical device Quality Management Systems (QMS) — gap analysis of existing documentation, Quality Manuals, required procedures and work instructions, and Medical Device Files. Use for ISO 13485 QMS documentation, conducting a documentation gap analysis, drafting a Quality Manual or SOP/work instruction, assembling a Medical Device File, identifying missing documentation for medical device certification, or when medical device regulations, QMS certification, FDA QMSR, or EU MDR are mentioned. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 metadata:

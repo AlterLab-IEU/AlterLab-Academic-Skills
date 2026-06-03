@@ -1,6 +1,6 @@
 ---
 name: alterlab-statistical-analysis
-description: Part of the AlterLab Academic Skills suite. Guided statistical analysis with test selection and reporting. Use when you need help choosing appropriate tests for your data, assumption checking, power analysis, and APA-formatted results. Best for academic research reporting, test selection guidance. For implementing specific models programmatically use statsmodels.
+description: Guided statistical analysis with hypothesis-test selection, assumption checking, power analysis, and APA-formatted reporting. Use when choosing the appropriate statistical test for data, verifying test assumptions, computing power/sample size, or producing APA-style results for academic research. For implementing specific models programmatically prefer statsmodels. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

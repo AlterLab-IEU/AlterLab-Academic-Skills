@@ -1,6 +1,6 @@
 ---
 name: alterlab-gene-db
-description: Query NCBI Gene via E-utilities/Datasets API. Search by symbol/ID, retrieve gene info (RefSeqs, GO, locations, phenotypes), batch lookups, for gene annotation and functional analysis. Part of the AlterLab Academic Skills suite.
+description: Query NCBI Gene via the E-utilities and Datasets APIs, searching by gene symbol or Gene ID and retrieving gene information (RefSeqs, GO terms, genomic locations, associated phenotypes) including batch lookups. Use when resolving gene symbols to IDs, annotating gene lists, or pulling functional and positional gene metadata for downstream analysis. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:

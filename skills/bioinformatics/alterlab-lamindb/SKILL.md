@@ -1,6 +1,6 @@
 ---
 name: alterlab-lamindb
-description: This skill should be used when working with LaminDB, an open-source data framework for biology that makes data queryable, traceable, reproducible, and FAIR. Use when managing biological datasets (scRNA-seq, spatial, flow cytometry, etc.), tracking computational workflows, curating and validating data with biological ontologies, building data lakehouses, or ensuring data lineage and reproducibility in biological research. Covers data management, annotation, ontologies (genes, cell types, diseases, tissues), schema validation, integrations with workflow managers (Nextflow, Snakemake) and MLOps platforms (W&B, MLflow), and deployment strategies. Part of the AlterLab Academic Skills suite.
+description: Manage, annotate, and trace biological data with LaminDB, an open-source FAIR data framework that makes datasets queryable, versioned, and reproducible. Use when registering or querying biological datasets (scRNA-seq, spatial, flow cytometry), validating and curating data against ontologies (genes, cell types, diseases, tissues), tracking data lineage and computational workflows, building data lakehouses, or wiring integrations with Nextflow, Snakemake, W&B, or MLflow. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

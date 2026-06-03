@@ -1,6 +1,6 @@
 ---
 name: alterlab-deepchem
-description: Molecular ML with diverse featurizers and pre-built datasets. Use for property prediction (ADMET, toxicity) with traditional ML or GNNs when you want extensive featurization options and MoleculeNet benchmarks. Best for quick experiments with pre-trained models, diverse molecular representations. For graph-first PyTorch workflows use torchdrug; for benchmark datasets use pytdc. Part of the AlterLab Academic Skills suite.
+description: Runs molecular machine learning with DeepChem — diverse featurizers, pre-built MoleculeNet datasets, and pre-trained models for property prediction (ADMET, toxicity) via traditional ML or GNNs. Use when running quick molecular ML experiments needing extensive featurization options, MoleculeNet benchmarks, or pre-trained models; for graph-first PyTorch workflows use torchdrug, for benchmark datasets use pytdc. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

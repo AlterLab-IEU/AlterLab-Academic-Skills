@@ -7,14 +7,28 @@
   },
   "metadata": {
     "description": "180 Claude skills for academic research, organized by domain",
-    "version": "1.1.0"
+    "version": "1.2.0"
   },
   "plugins": [
     {
       "name": "alterlab-bioinformatics",
       "source": "./",
       "description": "Genomics, proteomics, and single-cell analysis (Scanpy, BioPython, pysam, ESM) (25 skills)",
+      "version": "1.2.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
       "license": "MIT",
+      "category": "science",
+      "keywords": [
+        "genomics",
+        "proteomics",
+        "single-cell",
+        "scanpy",
+        "biopython"
+      ],
       "strict": false,
       "skills": [
         "./skills/bioinformatics/alterlab-anndata",
@@ -48,7 +62,21 @@
       "name": "alterlab-cheminformatics",
       "source": "./",
       "description": "Chemistry and drug discovery (RDKit, docking, ADMET, mass spec) (12 skills)",
+      "version": "1.2.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
       "license": "MIT",
+      "category": "science",
+      "keywords": [
+        "chemistry",
+        "drug-discovery",
+        "rdkit",
+        "docking",
+        "admet"
+      ],
       "strict": false,
       "skills": [
         "./skills/cheminformatics/alterlab-datamol",
@@ -69,7 +97,20 @@
       "name": "alterlab-clinical-research",
       "source": "./",
       "description": "Clinical decision support, medical imaging, and regulatory workflows (7 skills)",
+      "version": "1.2.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
       "license": "MIT",
+      "category": "science",
+      "keywords": [
+        "clinical",
+        "medical-imaging",
+        "dicom",
+        "regulatory"
+      ],
       "strict": false,
       "skills": [
         "./skills/clinical-research/alterlab-clinical-decision",
@@ -85,7 +126,21 @@
       "name": "alterlab-core",
       "source": "./",
       "description": "Core research-to-publication pipeline plus teaching and thesis tools (7 skills)",
+      "version": "1.2.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
       "license": "MIT",
+      "category": "research",
+      "keywords": [
+        "research",
+        "writing",
+        "peer-review",
+        "pipeline",
+        "academic"
+      ],
       "strict": false,
       "skills": [
         "./skills/core/alterlab-deep-research",
@@ -101,7 +156,21 @@
       "name": "alterlab-data-science",
       "source": "./",
       "description": "Machine learning and statistics (scikit-learn, PyTorch, transformers, SHAP) (22 skills)",
+      "version": "1.2.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
       "license": "MIT",
+      "category": "data",
+      "keywords": [
+        "machine-learning",
+        "statistics",
+        "pytorch",
+        "scikit-learn",
+        "transformers"
+      ],
       "strict": false,
       "skills": [
         "./skills/data-science/alterlab-dask",
@@ -132,7 +201,22 @@
       "name": "alterlab-databases",
       "source": "./",
       "description": "Connectors to scientific databases (PubMed, ChEMBL, UniProt, GEO, and more) (39 skills)",
+      "version": "1.2.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
       "license": "MIT",
+      "category": "data",
+      "keywords": [
+        "database",
+        "api",
+        "pubmed",
+        "uniprot",
+        "chembl",
+        "bioinformatics"
+      ],
       "strict": false,
       "skills": [
         "./skills/databases/alterlab-alphafold-db",
@@ -180,7 +264,19 @@
       "name": "alterlab-document-tools",
       "source": "./",
       "description": "Document and Markdown conversion (MarkItDown, Open Notebook) (2 skills)",
+      "version": "1.2.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
       "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "markdown",
+        "document-conversion",
+        "markitdown"
+      ],
       "strict": false,
       "skills": [
         "./skills/document-tools/alterlab-markitdown",
@@ -191,7 +287,21 @@
       "name": "alterlab-domain-specific",
       "source": "./",
       "description": "Quantum computing, geospatial, materials, astronomy, and digital humanities (17 skills)",
+      "version": "1.2.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
       "license": "MIT",
+      "category": "science",
+      "keywords": [
+        "quantum",
+        "geospatial",
+        "materials",
+        "astronomy",
+        "digital-humanities"
+      ],
       "strict": false,
       "skills": [
         "./skills/domain-specific/alterlab-adaptyv",
@@ -217,7 +327,21 @@
       "name": "alterlab-finance-economics",
       "source": "./",
       "description": "Economic and financial data (FRED, Alpha Vantage, SEC EDGAR, market research) (7 skills)",
+      "version": "1.2.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
       "license": "MIT",
+      "category": "data",
+      "keywords": [
+        "finance",
+        "economics",
+        "fred",
+        "sec-edgar",
+        "market-research"
+      ],
       "strict": false,
       "skills": [
         "./skills/finance-economics/alterlab-alpha-vantage",
@@ -233,7 +357,20 @@
       "name": "alterlab-lab-integrations",
       "source": "./",
       "description": "Laboratory platforms (Benchling, DNAnexus, Opentrons, Protocols.io) (9 skills)",
+      "version": "1.2.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
       "license": "MIT",
+      "category": "science",
+      "keywords": [
+        "lab-automation",
+        "benchling",
+        "opentrons",
+        "dnanexus"
+      ],
       "strict": false,
       "skills": [
         "./skills/lab-integrations/alterlab-benchling",
@@ -251,7 +388,21 @@
       "name": "alterlab-research-tools",
       "source": "./",
       "description": "Search, discovery, Zotero, qualitative methods, ethics, and open science (12 skills)",
+      "version": "1.2.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
       "license": "MIT",
+      "category": "research",
+      "keywords": [
+        "literature-search",
+        "zotero",
+        "qualitative",
+        "ethics",
+        "open-science"
+      ],
       "strict": false,
       "skills": [
         "./skills/research-tools/alterlab-bgpt-search",
@@ -272,7 +423,21 @@
       "name": "alterlab-visualization",
       "source": "./",
       "description": "Publication-quality plotting and schematics (Matplotlib, Seaborn, Plotly) (8 skills)",
+      "version": "1.2.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
       "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "plotting",
+        "matplotlib",
+        "seaborn",
+        "plotly",
+        "figures"
+      ],
       "strict": false,
       "skills": [
         "./skills/visualization/alterlab-generate-image",
@@ -289,7 +454,21 @@
       "name": "alterlab-writing-tools",
       "source": "./",
       "description": "Scientific writing, citations, grants, posters, and academic career (13 skills)",
+      "version": "1.2.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
       "license": "MIT",
+      "category": "writing",
+      "keywords": [
+        "scientific-writing",
+        "citations",
+        "grants",
+        "posters",
+        "latex"
+      ],
       "strict": false,
       "skills": [
         "./skills/writing-tools/alterlab-academic-career",

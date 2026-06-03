@@ -1,0 +1,53 @@
+{
+  "skill": "alterlab-teaching-design",
+  "evals": [
+    {
+      "id": "td-backward-design-syllabus",
+      "query": "I'm building a new undergraduate course on interactive media for next semester. Help me write measurable learning outcomes using backward design and draft a syllabus with an aligned assessment schedule.",
+      "expected_behavior": "Invokes alterlab-teaching-design: applies Wiggins & McTighe backward design (desired results -> evidence -> learning experiences), writes Bloom-aligned measurable outcomes using the ABCD framework, and produces a syllabus with an assessment-to-CLO alignment table.",
+      "should_trigger": true
+    },
+    {
+      "id": "td-analytic-rubric",
+      "query": "Can you create an analytic rubric for grading my students' final research projects with criteria for argument, evidence use, analysis, and writing quality at four performance levels?",
+      "expected_behavior": "Invokes alterlab-teaching-design: produces an analytic rubric with weighted criteria and Exemplary/Proficient/Developing/Beginning performance-level descriptors as in the rubric design templates.",
+      "should_trigger": true
+    },
+    {
+      "id": "td-constructive-alignment-audit",
+      "query": "My course outcome says students should be able to 'create' a design, but my only assessment is a multiple-choice exam. Can you check whether my activities and assessments are aligned and suggest fixes?",
+      "expected_behavior": "Invokes alterlab-teaching-design: runs a constructive-alignment (Biggs & Tang) audit, flags the create-vs-MCQ misalignment, and recommends a project-based assessment aligned to the cognitive level of the outcome.",
+      "should_trigger": true
+    },
+    {
+      "id": "td-hybrid-online-module",
+      "query": "I'm converting my face-to-face graduate seminar into a hybrid course. How should I structure the online modules and build student presence using the Community of Inquiry framework?",
+      "expected_behavior": "Invokes alterlab-teaching-design: provides hybrid/online module architecture, applies the Community of Inquiry framework (social, cognitive, teaching presence), and uses the online module design and accessibility checklist.",
+      "should_trigger": true
+    },
+    {
+      "id": "td-udl-inclusive-assessment",
+      "query": "How can I make my assessments more inclusive for students with diverse prior knowledge and disabilities using Universal Design for Learning?",
+      "expected_behavior": "Invokes alterlab-teaching-design: applies UDL's three principles (engagement, representation, action/expression), recommends inclusive assessment strategies such as assessment menus and exemplars, and addresses diverse prior knowledge.",
+      "should_trigger": true
+    },
+    {
+      "id": "td-not-thesis-chapter",
+      "query": "Help me structure the methodology chapter of my PhD student's dissertation and prepare them for the proposal defense.",
+      "expected_behavior": "defers to alterlab-thesis-supervisor / does not invoke this skill",
+      "should_trigger": false
+    },
+    {
+      "id": "td-not-paper-writing",
+      "query": "I need to write the IMRaD draft and abstract for a conference paper on virtual production and format it in LaTeX with APA 7 citations.",
+      "expected_behavior": "defers to alterlab-paper-writer / does not invoke this skill",
+      "should_trigger": false
+    },
+    {
+      "id": "td-not-conference-slides",
+      "query": "Can you build me a polished slide deck for my keynote presentation at the media studies conference?",
+      "expected_behavior": "defers to alterlab-pptx-posters / does not invoke this skill (course/lesson design is not requested)",
+      "should_trigger": false
+    }
+  ]
+}

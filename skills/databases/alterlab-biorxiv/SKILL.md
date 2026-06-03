@@ -1,6 +1,6 @@
 ---
 name: alterlab-biorxiv
-description: Efficient database search tool for bioRxiv preprint server. Use this skill when searching for life sciences preprints by keywords, authors, date ranges, or categories, retrieving paper metadata, downloading PDFs, or conducting literature reviews. Part of the AlterLab Academic Skills suite.
+description: Search the bioRxiv preprint server and retrieve paper metadata or download PDFs via its API. Use when finding life sciences preprints by keywords, authors, DOI, date ranges, or categories, or when conducting a biology literature review of not-yet-peer-reviewed work. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:

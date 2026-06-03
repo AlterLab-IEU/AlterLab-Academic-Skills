@@ -1,6 +1,6 @@
 ---
 name: alterlab-medchem
-description: Medicinal chemistry filters. Apply drug-likeness rules (Lipinski, Veber), PAINS filters, structural alerts, complexity metrics, for compound prioritization and library filtering. Part of the AlterLab Academic Skills suite.
+description: Applies medicinal-chemistry filters with the medchem library — drug-likeness rules (Lipinski, Veber), PAINS filters, structural alerts, and molecular complexity metrics for compound prioritization and library cleanup. Use when filtering or triaging a compound library, flagging PAINS or reactive groups, or assessing drug-likeness of candidate molecules. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

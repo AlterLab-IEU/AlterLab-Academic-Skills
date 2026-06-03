@@ -1,6 +1,6 @@
 ---
 name: alterlab-peer-review
-description: Part of the AlterLab Academic Skills suite. Structured manuscript/grant review with checklist-based evaluation. Use when writing formal peer reviews with specific criteria methodology assessment, statistical validity, reporting standards compliance (CONSORT/STROBE), and constructive feedback. Best for actual review writing, manuscript revision. For evaluating claims/evidence quality use scientific-critical-thinking; for quantitative scoring frameworks use scholar-evaluation.
+description: Writes structured, checklist-based manuscript and grant peer reviews — assesses methodology, statistical validity, reporting-standards compliance (CONSORT/STROBE), and gives constructive feedback. Use when writing a formal peer review or revising a manuscript against review criteria. For evaluating claims/evidence quality prefer scientific-critical-thinking; for quantitative scoring frameworks use scholar-evaluation. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 metadata:

@@ -1,6 +1,6 @@
 ---
 name: alterlab-hedgefund-monitor
-description: Part of the AlterLab Academic Skills suite. Query the OFR (Office of Financial Research) Hedge Fund Monitor API for hedge fund data including SEC Form PF aggregated statistics, CFTC Traders in Financial Futures, FICC Sponsored Repo volumes, and FRB SCOOS dealer financing terms. Access time series data on hedge fund size, leverage, counterparties, liquidity, complexity, and risk management. No API key or registration required. Use when working with hedge fund data, systemic risk monitoring, financial stability research, hedge fund leverage or leverage ratios, counterparty concentration, Form PF statistics, repo market data, or OFR financial research data.
+description: Queries the OFR (Office of Financial Research) Hedge Fund Monitor API for time series on hedge fund size, leverage, counterparties, liquidity, complexity, and risk management, including SEC Form PF aggregated statistics, CFTC Traders in Financial Futures, FICC Sponsored Repo volumes, and FRB SCOOS dealer financing terms (no API key or registration required). Use when working with hedge fund data, systemic risk monitoring, financial stability research, hedge fund leverage or leverage ratios, counterparty concentration, Form PF statistics, repo market data, or OFR financial research data. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:

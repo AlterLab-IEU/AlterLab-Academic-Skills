@@ -1,6 +1,6 @@
 ---
 name: alterlab-hypogenic
-description: Part of the AlterLab Academic Skills suite. Automated LLM-driven hypothesis generation and testing on tabular datasets. Use when you want to systematically explore hypotheses about patterns in empirical data (e.g., deception detection, content analysis). Combines literature insights with data-driven hypothesis testing. For manual hypothesis formulation use hypothesis-generation; for creative ideation use scientific-brainstorming.
+description: Runs automated LLM-driven hypothesis generation and testing on tabular datasets with HypoGeniC, combining literature insights with data-driven testing. Use when systematically exploring hypotheses about patterns in empirical data (for example deception detection or content analysis). For manual hypothesis formulation use hypothesis-generation; for creative ideation use scientific-brainstorming. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 metadata:

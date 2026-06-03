@@ -1,6 +1,6 @@
 ---
 name: alterlab-pufferlib
-description: Part of the AlterLab Academic Skills suite. High-performance reinforcement learning framework optimized for speed and scale. Use when you need fast parallel training, vectorized environments, multi-agent systems, or integration with game environments (Atari, Procgen, NetHack). Achieves 2-10x speedups over standard implementations. For quick prototyping or standard algorithm implementations with extensive documentation, use stable-baselines3 instead.
+description: High-performance reinforcement learning with PufferLib — fast parallel training, vectorized environments, and multi-agent systems achieving 2-10x speedups over standard implementations. Use when scaling RL training, running vectorized or multi-agent setups, or integrating game environments (Atari, Procgen, NetHack). For quick prototyping or standard, well-documented algorithm implementations prefer stable-baselines3. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

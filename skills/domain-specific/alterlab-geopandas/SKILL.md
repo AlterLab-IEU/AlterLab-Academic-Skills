@@ -1,6 +1,6 @@
 ---
 name: alterlab-geopandas
-description: Part of the AlterLab Academic Skills suite. Python library for working with geospatial vector data including shapefiles, GeoJSON, and GeoPackage files. Use when working with geographic data for spatial analysis, geometric operations, coordinate transformations, spatial joins, overlay operations, choropleth mapping, or any task involving reading/writing/analyzing vector geographic data. Supports PostGIS databases, interactive maps, and integration with matplotlib/folium/cartopy. Use for tasks like buffer analysis, spatial joins between datasets, dissolving boundaries, clipping data, calculating areas/distances, reprojecting coordinate systems, creating maps, or converting between spatial file formats.
+description: Reads, writes, and analyzes geospatial vector data with the GeoPandas Python library (shapefiles, GeoJSON, GeoPackage), with PostGIS support and integration with matplotlib, folium, and cartopy. Use for spatial analysis and geometric operations — buffer analysis, spatial joins and overlays between datasets, dissolving boundaries, clipping, calculating areas and distances, reprojecting coordinate systems, choropleth mapping, or converting between vector file formats. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 metadata:

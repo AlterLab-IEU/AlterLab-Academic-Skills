@@ -1,6 +1,6 @@
 ---
 name: alterlab-citation-mgmt
-description: Part of the AlterLab Academic Skills suite. Comprehensive citation management for academic research. Search Google Scholar and PubMed for papers, extract accurate metadata, validate citations, and generate properly formatted BibTeX entries. This skill should be used when you need to find papers, verify citation information, convert DOIs to BibTeX, or ensure reference accuracy in scientific writing.
+description: Manages citations for academic research — searches Google Scholar and PubMed for papers, extracts accurate metadata, validates citations, and generates properly formatted BibTeX entries. Use when finding papers, verifying citation information, converting DOIs to BibTeX, checking reference accuracy in scientific writing, or building a bibliography. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 metadata:

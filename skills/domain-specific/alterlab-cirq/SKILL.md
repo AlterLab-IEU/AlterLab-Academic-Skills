@@ -1,6 +1,6 @@
 ---
 name: alterlab-cirq
-description: Part of the AlterLab Academic Skills suite. Google quantum computing framework. Use when targeting Google Quantum AI hardware, designing noise-aware circuits, or running quantum characterization experiments. Best for Google hardware, noise modeling, and low-level circuit design. For IBM hardware use qiskit; for quantum ML with autodiff use pennylane; for physics simulations use qutip.
+description: Builds and runs quantum circuits with Cirq, Google's quantum computing framework, for Google Quantum AI hardware, noise-aware circuit design, and noise modeling. Use when targeting Google Quantum AI hardware, designing noise-aware or low-level circuits, or running quantum characterization experiments. For IBM hardware use qiskit; for quantum ML with autodiff use pennylane; for open-system physics simulations use qutip. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*)
 metadata:

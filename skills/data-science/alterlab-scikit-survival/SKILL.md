@@ -1,6 +1,6 @@
 ---
 name: alterlab-scikit-survival
-description: Part of the AlterLab Academic Skills suite. Comprehensive toolkit for survival analysis and time-to-event modeling in Python using scikit-survival. Use this skill when working with censored survival data, performing time-to-event analysis, fitting Cox models, Random Survival Forests, Gradient Boosting models, or Survival SVMs, evaluating survival predictions with concordance index or Brier score, handling competing risks, or implementing any survival analysis workflow with the scikit-survival library.
+description: Survival analysis and time-to-event modeling in Python with scikit-survival. Use when working with censored survival data, fitting Cox models, Random Survival Forests, Gradient Boosting models, or Survival SVMs, evaluating predictions with concordance index or Brier score, handling competing risks, or implementing any time-to-event workflow. Part of the AlterLab Academic Skills suite.
 license: GPL-3.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

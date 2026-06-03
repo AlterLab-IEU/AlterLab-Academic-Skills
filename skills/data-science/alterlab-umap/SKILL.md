@@ -1,6 +1,6 @@
 ---
 name: alterlab-umap
-description: Part of the AlterLab Academic Skills suite. UMAP dimensionality reduction. Fast nonlinear manifold learning for 2D/3D visualization, clustering preprocessing (HDBSCAN), supervised/parametric UMAP, for high-dimensional data.
+description: Nonlinear dimensionality reduction with UMAP — fast manifold learning for 2D/3D visualization, clustering preprocessing (e.g., HDBSCAN), and supervised or parametric UMAP. Use when projecting high-dimensional data to low dimensions for visualization, embedding generation, or as a preprocessing step before clustering. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

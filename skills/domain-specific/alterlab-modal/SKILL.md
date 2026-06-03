@@ -1,6 +1,6 @@
 ---
 name: alterlab-modal
-description: Part of the AlterLab Academic Skills suite. Run Python code in the cloud with serverless containers, GPUs, and autoscaling. Use when deploying ML models, running batch processing jobs, scheduling compute-intensive tasks, or serving APIs that require GPU acceleration or dynamic scaling.
+description: Runs Python code in the cloud with Modal — serverless containers, on-demand GPUs, and autoscaling. Use when deploying ML models, running batch processing jobs, scheduling compute-intensive tasks, or serving APIs that need GPU acceleration or dynamic scaling. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*)
 metadata:

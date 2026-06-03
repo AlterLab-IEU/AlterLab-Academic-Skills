@@ -1,6 +1,6 @@
 ---
 name: alterlab-clinpgx
-description: Access ClinPGx pharmacogenomics data (successor to PharmGKB). Query gene-drug interactions, CPIC guidelines, allele functions, for precision medicine and genotype-guided dosing decisions. Part of the AlterLab Academic Skills suite.
+description: Access ClinPGx pharmacogenomics data (the successor to PharmGKB) to query gene-drug interactions, CPIC dosing guidelines, and star-allele functions. Use when interpreting pharmacogenes (CYP2D6, CYP2C19, TPMT), looking up genotype-guided drug dosing, or supporting precision medicine and clinical pharmacogenomics decisions. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:

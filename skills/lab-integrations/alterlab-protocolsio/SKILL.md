@@ -1,6 +1,6 @@
 ---
 name: alterlab-protocolsio
-description: Part of the AlterLab Academic Skills suite. Integration with protocols.io API for managing scientific protocols. This skill should be used when working with protocols.io to search, create, update, or publish protocols; manage protocol steps and materials; handle discussions and comments; organize workspaces; upload and manage files; or integrate protocols.io functionality into workflows. Applicable for protocol discovery, collaborative protocol development, experiment tracking, lab protocol management, and scientific documentation.
+description: Manages scientific protocols through the protocols.io API — search, create, update, and publish protocols, manage steps and materials, handle discussions and comments, organize workspaces, and upload/manage files. Use when discovering, developing, or publishing protocols.io protocols, collaborating on protocol steps/materials, tracking experiments, or integrating protocols.io into lab documentation workflows. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
 metadata:

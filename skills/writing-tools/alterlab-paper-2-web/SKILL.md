@@ -1,6 +1,6 @@
 ---
 name: alterlab-paper-2-web
-description: Part of the AlterLab Academic Skills suite. This skill should be used when converting academic papers into promotional and presentation formats including interactive websites (Paper2Web), presentation videos (Paper2Video), and conference posters (Paper2Poster). Use this skill for tasks involving paper dissemination, conference preparation, creating explorable academic homepages, generating video abstracts, or producing print-ready posters from LaTeX or PDF sources.
+description: Converts academic papers into promotional and presentation formats — interactive websites (Paper2Web), presentation videos (Paper2Video), and conference posters (Paper2Poster) from LaTeX or PDF sources. Use when disseminating a paper, preparing for a conference, building an explorable academic homepage, generating a video abstract, or producing a print-ready poster from a paper. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 metadata:

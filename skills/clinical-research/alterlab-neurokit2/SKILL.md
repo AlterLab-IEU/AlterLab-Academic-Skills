@@ -1,6 +1,6 @@
 ---
 name: alterlab-neurokit2
-description: Part of the AlterLab Academic Skills suite. Comprehensive biosignal processing toolkit for analyzing physiological data including ECG, EEG, EDA, RSP, PPG, EMG, and EOG signals. Use this skill when processing cardiovascular signals, brain activity, electrodermal responses, respiratory patterns, muscle activity, or eye movements. Applicable for heart rate variability analysis, event-related potentials, complexity measures, autonomic nervous system assessment, psychophysiology research, and multi-modal physiological signal integration.
+description: Processes and analyzes physiological biosignals with the NeuroKit2 Python toolkit — ECG, EEG, EDA, RSP, PPG, EMG, and EOG signals. Use when processing cardiovascular signals, brain activity, electrodermal responses, respiratory patterns, muscle activity, or eye movements, or when computing heart rate variability (HRV), event-related potentials, complexity measures, autonomic nervous system assessment, or multi-modal physiological signal integration for psychophysiology research. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 metadata:

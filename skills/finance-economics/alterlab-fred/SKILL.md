@@ -1,6 +1,6 @@
 ---
 name: alterlab-fred
-description: Part of the AlterLab Academic Skills suite. Query FRED (Federal Reserve Economic Data) API for 800,000+ economic time series from 100+ sources. Access GDP, unemployment, inflation, interest rates, exchange rates, housing, and regional data. Use for macroeconomic analysis, financial research, policy studies, economic forecasting, and academic research requiring U.S. and international economic indicators.
+description: Queries the FRED (Federal Reserve Economic Data) API for 800,000+ economic time series from 100+ sources, covering GDP, unemployment, inflation, interest rates, exchange rates, housing, and regional data. Use for macroeconomic analysis, financial research, policy studies, economic forecasting, fetching U.S. or international economic indicators by FRED series ID, and academic research requiring historical economic time series. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:

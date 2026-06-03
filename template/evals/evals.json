@@ -1,0 +1,35 @@
+{
+  "skill": "alterlab-skill-name",
+  "evals": [
+    {
+      "id": "trigger-1",
+      "query": "<a realistic user request that SHOULD invoke this skill>",
+      "expected_behavior": "<what a correct response must do or contain>",
+      "should_trigger": true
+    },
+    {
+      "id": "trigger-2",
+      "query": "<a second, distinct realistic request>",
+      "expected_behavior": "<expected behavior>",
+      "should_trigger": true
+    },
+    {
+      "id": "trigger-3",
+      "query": "<a third distinct realistic request>",
+      "expected_behavior": "<expected behavior>",
+      "should_trigger": true
+    },
+    {
+      "id": "negative-1",
+      "query": "<a near-miss request that should NOT invoke this skill>",
+      "expected_behavior": "defers to alterlab-other-skill / does not invoke this skill",
+      "should_trigger": false
+    },
+    {
+      "id": "negative-2",
+      "query": "<a second near-miss>",
+      "expected_behavior": "does not invoke this skill",
+      "should_trigger": false
+    }
+  ]
+}

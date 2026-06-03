@@ -1,6 +1,6 @@
 ---
 name: alterlab-aeon
-description: Part of the AlterLab Academic Skills suite. This skill should be used for time series machine learning tasks including classification, regression, clustering, forecasting, anomaly detection, segmentation, and similarity search. Use when working with temporal data, sequential patterns, or time-indexed observations requiring specialized algorithms beyond standard ML approaches. Particularly suited for univariate and multivariate time series analysis with scikit-learn compatible APIs.
+description: Runs time series machine learning with the aeon library — classification, regression, clustering, forecasting, anomaly detection, segmentation, and similarity search via scikit-learn compatible APIs. Use when working with temporal data, sequential patterns, or time-indexed observations (univariate or multivariate) that need specialized algorithms beyond standard ML approaches. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 metadata:

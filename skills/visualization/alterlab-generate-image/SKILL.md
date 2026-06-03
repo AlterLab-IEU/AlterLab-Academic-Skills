@@ -1,6 +1,6 @@
 ---
 name: alterlab-generate-image
-description: Part of the AlterLab Academic Skills suite. Generate or edit images using AI models (FLUX, Nano Banana 2). Use for general-purpose image generation including photos, illustrations, artwork, visual assets, concept art, and any image that is not a technical diagram or schematic. For flowcharts, circuits, pathways, and technical diagrams, use the scientific-schematics skill instead.
+description: Generates or edits images via AI models (FLUX, Nano Banana 2) through an OpenRouter API key. Use when the request is for general-purpose image generation or editing — photos, illustrations, artwork, visual assets, concept art, posters, or any picture that is not a technical diagram. For flowcharts, circuits, pathways, neural-net architectures, and technical diagrams use the scientific-schematics skill instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 compatibility: Requires an OpenRouter API key

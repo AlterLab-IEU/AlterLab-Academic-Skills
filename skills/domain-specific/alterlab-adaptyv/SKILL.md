@@ -1,6 +1,6 @@
 ---
 name: alterlab-adaptyv
-description: Part of the AlterLab Academic Skills suite. Cloud laboratory platform for automated protein testing and validation. Use when designing proteins and needing experimental validation including binding assays, expression testing, thermostability measurements, enzyme activity assays, or protein sequence optimization. Also use for submitting experiments via API, tracking experiment status, downloading results, optimizing protein sequences for better expression using computational tools (NetSolP, SoluProt, SolubleMPNN, ESM), or managing protein design workflows with wet-lab validation.
+description: Submits and tracks experiments on the Adaptyv cloud laboratory platform for automated protein testing and wet-lab validation, and optimizes protein sequences for expression using computational tools (NetSolP, SoluProt, SolubleMPNN, ESM). Use when designing proteins that need experimental validation such as binding assays, expression testing, thermostability measurements, or enzyme activity assays, when submitting experiments via API, tracking experiment status, downloading results, or managing protein design workflows with wet-lab validation. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 metadata:

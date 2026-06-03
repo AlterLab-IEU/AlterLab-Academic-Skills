@@ -1,6 +1,6 @@
 ---
 name: alterlab-scientific-brainstorm
-description: Part of the AlterLab Academic Skills suite. Creative research ideation and exploration. Use for open-ended brainstorming sessions, exploring interdisciplinary connections, challenging assumptions, or identifying research gaps. Best for early-stage research planning when you do not have specific observations yet. For formulating testable hypotheses from data use hypothesis-generation.
+description: Creative research ideation and exploration for open-ended brainstorming, surfacing interdisciplinary connections, challenging assumptions, and identifying research gaps. Use when starting early-stage research planning with no specific observations yet — for open-ended brainstorming sessions, exploring cross-disciplinary connections, or finding gaps. For formulating testable hypotheses from data use hypothesis-generation. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch WebSearch Bash(python:*)
 metadata:

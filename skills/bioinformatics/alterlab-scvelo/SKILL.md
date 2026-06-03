@@ -1,6 +1,6 @@
 ---
 name: alterlab-scvelo
-description: RNA velocity analysis with scVelo. Estimate cell state transitions from unspliced/spliced mRNA dynamics, infer trajectory directions, compute latent time, and identify driver genes in single-cell RNA-seq data. Complements Scanpy/scVI-tools for trajectory inference. Part of the AlterLab Academic Skills suite.
+description: Run RNA velocity analysis with scVelo on single-cell RNA-seq data — estimate cell-state transitions from spliced/unspliced mRNA dynamics, infer trajectory direction, compute latent time, and identify driver genes. Use when adding directionality to trajectory inference or studying differentiation dynamics from spliced/unspliced counts; complements scanpy and scvi-tools. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

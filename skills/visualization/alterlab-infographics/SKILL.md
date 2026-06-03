@@ -1,6 +1,6 @@
 ---
 name: alterlab-infographics
-description: "Part of the AlterLab Academic Skills suite. Create professional infographics using Nano Banana Pro AI with smart iterative refinement. Uses Gemini 3 Pro for quality review. Integrates research-lookup and web search for accurate data. Supports 10 infographic types, 8 industry styles, and colorblind-safe palettes."
+description: "Creates professional infographics with Nano Banana Pro AI and smart iterative refinement, using Gemini 3 Pro for quality review and integrating research-lookup plus web search for accurate data — supports 10 infographic types, 8 industry styles, and colorblind-safe palettes. Use when the request is for an infographic, data-story graphic, statistical poster, comparison chart, timeline, or process visual that pairs designed layout with sourced figures. Part of the AlterLab Academic Skills suite."
 license: MIT
 metadata:
     skill-author: AlterLab

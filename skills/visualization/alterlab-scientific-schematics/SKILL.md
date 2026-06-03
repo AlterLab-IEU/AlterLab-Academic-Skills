@@ -1,6 +1,6 @@
 ---
 name: alterlab-scientific-schematics
-description: Part of the AlterLab Academic Skills suite. Create publication-quality scientific diagrams using Nano Banana 2 AI with smart iterative refinement. Uses Gemini 3.1 Pro Preview for quality review. Only regenerates if quality is below threshold for your document type. Specialized in neural network architectures, system diagrams, flowcharts, biological pathways, and complex scientific visualizations.
+description: Creates publication-quality scientific diagrams with Nano Banana 2 AI and smart iterative refinement, using Gemini 3.1 Pro Preview for quality review and regenerating only when quality falls below the document-type threshold. Use when the request is for a technical or scientific diagram — neural-network architectures, system/block diagrams, flowcharts, biological pathways, circuits, or other complex scientific visuals. For general photos, illustrations, or artwork use generate-image, for text-based Mermaid diagrams use mermaid. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 metadata:

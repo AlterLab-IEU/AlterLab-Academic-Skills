@@ -1,0 +1,53 @@
+{
+  "skill": "alterlab-thesis-supervisor",
+  "evals": [
+    {
+      "id": "ts-methodology-chapter",
+      "query": "My doctoral student is drafting Chapter 3 of her dissertation. Can you help structure the methodology chapter so it covers research design, sampling, instrumentation, and trustworthiness in enough detail to be replicable?",
+      "expected_behavior": "Invokes alterlab-thesis-supervisor: walks through the Chapter 3 methodology template (design and rationale, population/sample, instrumentation, data collection, analysis per RQ, trustworthiness/validity, ethics, limitations) with replication-level detail.",
+      "should_trigger": true
+    },
+    {
+      "id": "ts-viva-defense-prep",
+      "query": "I defend my dissertation in five weeks. Help me prepare for the viva — what questions should I anticipate and how should I structure my preparation?",
+      "expected_behavior": "Invokes alterlab-thesis-supervisor: provides the multi-week viva voce preparation protocol, anticipates common defense questions by category (opening, theoretical, methodology, findings, broader, closing), and recommends a mock defense.",
+      "should_trigger": true
+    },
+    {
+      "id": "ts-thesis-timeline",
+      "query": "Can you build a realistic timeline and milestone tracker for my master's thesis, from topic approval through the final defense and submission to the graduate school?",
+      "expected_behavior": "Invokes alterlab-thesis-supervisor: produces a master's thesis timeline with phased milestones and the thesis milestone tracker table (target/actual dates, status), including buffer time for delays.",
+      "should_trigger": true
+    },
+    {
+      "id": "ts-supervision-feedback",
+      "query": "One of my advisees keeps missing deadlines and the latest first draft is very rough. How should I give feedback at this stage and handle the conversation about lack of progress?",
+      "expected_behavior": "Invokes alterlab-thesis-supervisor: applies stage-appropriate feedback strategy (first draft = argument/structure, not line-editing), uses the difficult-supervision-conversation approach for stalled progress, and references the supervisory meeting structure.",
+      "should_trigger": true
+    },
+    {
+      "id": "ts-proposal-structure",
+      "query": "I'm writing my dissertation proposal and I'm stuck on the problem statement and research questions in Chapter 1. Can you help me frame them so my committee approves the proposal?",
+      "expected_behavior": "Invokes alterlab-thesis-supervisor: guides the Chapter 1 introduction sections, applies the problem-statement formula and purpose/RQ alignment, and references proposal defense examiner expectations.",
+      "should_trigger": true
+    },
+    {
+      "id": "ts-not-journal-article",
+      "query": "Help me turn my completed dissertation into a journal article — draft the IMRaD manuscript and format the references in IEEE for submission.",
+      "expected_behavior": "defers to alterlab-paper-writer / does not invoke this skill",
+      "should_trigger": false
+    },
+    {
+      "id": "ts-not-literature-search",
+      "query": "I need a systematic literature search strategy with PRISMA screening to find all studies on AI in virtual production for my thesis lit review.",
+      "expected_behavior": "defers to alterlab-deep-research / does not invoke this skill",
+      "should_trigger": false
+    },
+    {
+      "id": "ts-not-course-design",
+      "query": "I'm running a thesis-writing seminar for incoming grad students — help me design the course with learning outcomes, a rubric for their seminar deliverables, and a weekly lesson plan.",
+      "expected_behavior": "defers to alterlab-teaching-design / does not invoke this skill (course/curriculum design, not supervising an individual thesis)",
+      "should_trigger": false
+    }
+  ]
+}

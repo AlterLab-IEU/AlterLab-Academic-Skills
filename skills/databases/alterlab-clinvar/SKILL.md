@@ -1,6 +1,6 @@
 ---
 name: alterlab-clinvar
-description: Query NCBI ClinVar for variant clinical significance. Search by gene/position, interpret pathogenicity classifications, access via E-utilities API or FTP, annotate VCFs, for genomic medicine. Part of the AlterLab Academic Skills suite.
+description: Query NCBI ClinVar via the E-utilities API or FTP for the clinical significance of genetic variants, searching by gene, variant, or genomic position and interpreting pathogenicity classifications. Use when assessing whether a variant is pathogenic or benign, annotating VCFs with clinical interpretations, or supporting genomic and clinical-genetics medicine. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:

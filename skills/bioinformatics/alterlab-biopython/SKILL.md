@@ -1,6 +1,6 @@
 ---
 name: alterlab-biopython
-description: Comprehensive molecular biology toolkit. Use for sequence manipulation, file parsing (FASTA/GenBank/PDB), phylogenetics, and programmatic NCBI/PubMed access (Bio.Entrez). Best for batch processing, custom bioinformatics pipelines, BLAST automation. For quick lookups use gget; for multi-service integration use bioservices. Part of the AlterLab Academic Skills suite.
+description: Manipulate biological sequences, parse FASTA/GenBank/PDB files, run phylogenetics, and access NCBI/PubMed programmatically via Biopython (Bio.SeqIO, Bio.Entrez, Bio.PDB, Bio.Blast). Use when scripting custom bioinformatics pipelines, batch-processing sequence files, automating BLAST, or fetching records from Entrez — for quick one-off database lookups use gget, for unified multi-service integration use bioservices. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

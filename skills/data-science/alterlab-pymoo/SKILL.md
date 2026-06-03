@@ -1,6 +1,6 @@
 ---
 name: alterlab-pymoo
-description: Part of the AlterLab Academic Skills suite. Multi-objective optimization framework. NSGA-II, NSGA-III, MOEA/D, Pareto fronts, constraint handling, benchmarks (ZDT, DTLZ), for engineering design and optimization problems.
+description: Multi-objective optimization with pymoo — NSGA-II, NSGA-III, MOEA/D, Pareto-front computation, constraint handling, and standard benchmarks (ZDT, DTLZ). Use when solving multi-objective or constrained optimization problems, computing Pareto-optimal trade-offs, or tackling engineering design problems with competing objectives. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

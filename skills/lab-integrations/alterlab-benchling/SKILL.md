@@ -1,6 +1,6 @@
 ---
 name: alterlab-benchling
-description: Part of the AlterLab Academic Skills suite. Benchling R&D platform integration. Access registry (DNA, proteins), inventory, ELN entries, workflows via API, build Benchling Apps, query Data Warehouse, for lab data management automation.
+description: Integrates the Benchling R&D platform via its REST API and SDK — access the registry (DNA, proteins), inventory, ELN entries and workflows, build Benchling Apps, and query the Benchling Data Warehouse. Use when automating Benchling lab data management, syncing sample registry or inventory records, scripting ELN entries/workflows, or running SQL against the Benchling Data Warehouse. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
 compatibility: Requires a Benchling account and API key

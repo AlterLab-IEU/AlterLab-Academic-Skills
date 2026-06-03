@@ -1,6 +1,6 @@
 ---
 name: alterlab-opentargets
-description: Query Open Targets Platform for target-disease associations, drug target discovery, tractability/safety data, genetics/omics evidence, known drugs, for therapeutic target identification. Part of the AlterLab Academic Skills suite.
+description: Query the Open Targets Platform GraphQL API for target-disease associations, tractability and safety data, genetics/omics evidence, and known drugs. Use when identifying or prioritizing therapeutic drug targets, assessing target druggability/safety, or gathering target-disease evidence for drug discovery. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:

@@ -1,6 +1,6 @@
 ---
 name: alterlab-imaging-data-commons
-description: Query and download public cancer imaging data from NCI Imaging Data Commons using idc-index. Use for accessing large-scale radiology (CT, MR, PET) and pathology datasets for AI training or research. No authentication required. Query by metadata, visualize in browser, check licenses. Part of the AlterLab Academic Skills suite.
+description: Query and download public cancer imaging data from the NCI Imaging Data Commons (IDC) using the idc-index Python package, filtering by metadata, visualizing in-browser, and checking licenses, with no authentication required. Use when obtaining large-scale radiology (CT, MR, PET) or digital pathology DICOM datasets for AI/ML training or cancer imaging research. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:

@@ -43,6 +43,28 @@ CATEGORY_BLURB = {
 }
 
 
+VERSION = "1.2.0"
+HOMEPAGE = "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills"
+AUTHOR = {"name": "AlterLab @ Izmir University of Economics", "url": "https://github.com/AlterLab-IEU"}
+
+# `category` powers the `/plugin > Discover` filter UI; keywords aid search.
+CATEGORY_TAGS = {
+    "core": ("research", ["research", "writing", "peer-review", "pipeline", "academic"]),
+    "databases": ("data", ["database", "api", "pubmed", "uniprot", "chembl", "bioinformatics"]),
+    "bioinformatics": ("science", ["genomics", "proteomics", "single-cell", "scanpy", "biopython"]),
+    "cheminformatics": ("science", ["chemistry", "drug-discovery", "rdkit", "docking", "admet"]),
+    "clinical-research": ("science", ["clinical", "medical-imaging", "dicom", "regulatory"]),
+    "data-science": ("data", ["machine-learning", "statistics", "pytorch", "scikit-learn", "transformers"]),
+    "visualization": ("productivity", ["plotting", "matplotlib", "seaborn", "plotly", "figures"]),
+    "writing-tools": ("writing", ["scientific-writing", "citations", "grants", "posters", "latex"]),
+    "lab-integrations": ("science", ["lab-automation", "benchling", "opentrons", "dnanexus"]),
+    "domain-specific": ("science", ["quantum", "geospatial", "materials", "astronomy", "digital-humanities"]),
+    "document-tools": ("productivity", ["markdown", "document-conversion", "markitdown"]),
+    "research-tools": ("research", ["literature-search", "zotero", "qualitative", "ethics", "open-science"]),
+    "finance-economics": ("data", ["finance", "economics", "fred", "sec-edgar", "market-research"]),
+}
+
+
 def build() -> dict:
     plugins = []
     for cat_dir in sorted(p for p in SKILLS.iterdir() if p.is_dir()):
@@ -52,12 +74,18 @@ def build() -> dict:
         if not skill_dirs:
             continue
         cat = cat_dir.name
+        category, keywords = CATEGORY_TAGS.get(cat, ("research", [cat]))
         plugins.append(
             {
                 "name": f"alterlab-{cat}",
                 "source": "./",
                 "description": f"{CATEGORY_BLURB.get(cat, cat)} ({len(skill_dirs)} skills)",
+                "version": VERSION,
+                "author": AUTHOR,
+                "homepage": HOMEPAGE,
                 "license": "MIT",
+                "category": category,
+                "keywords": keywords,
                 "strict": False,
                 "skills": [f"./skills/{cat}/{d.name}" for d in skill_dirs],
             }
@@ -72,7 +100,7 @@ def build() -> dict:
         },
         "metadata": {
             "description": f"{total} Claude skills for academic research, organized by domain",
-            "version": "1.1.0",
+            "version": VERSION,
         },
         "plugins": plugins,
     }

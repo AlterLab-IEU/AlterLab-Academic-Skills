@@ -1,0 +1,47 @@
+{
+  "skill": "alterlab-research-pipeline",
+  "evals": [
+    {
+      "id": "full-end-to-end",
+      "query": "I want to take a research paper on the impact of AI on higher education quality assurance all the way from research to submission - the complete workflow.",
+      "expected_behavior": "Invokes alterlab-research-pipeline as orchestrator: detects no materials so enters Stage 1 (RESEARCH), recommends per-stage modes, dispatches alterlab-deep-research / alterlab-paper-writer / alterlab-paper-reviewer in sequence, enforces mandatory Stage 2.5 and 4.5 integrity checks, and prompts user confirmation at each checkpoint.",
+      "should_trigger": true
+    },
+    {
+      "id": "mid-entry-existing-paper",
+      "query": "I already have a finished paper draft. Run it through the whole end-to-end paper workflow - integrity check, review, revision, everything.",
+      "expected_behavior": "Invokes alterlab-research-pipeline in mid-entry mode: detects an existing draft, enters at Stage 2.5 (INTEGRITY) which cannot be skipped, then proceeds through Stage 3 review, Stage 4 revision, Stage 3' re-review, Stage 4.5 final integrity, and Stage 5 finalize, with checkpoints between stages.",
+      "should_trigger": true
+    },
+    {
+      "id": "external-reviewer-feedback",
+      "query": "I submitted to a journal and got a revise-and-resubmit with reviewer comments. Take me through the resubmission process end to end.",
+      "expected_behavior": "Invokes alterlab-research-pipeline External Review Protocol: parses unstructured journal reviewer comments into a structured External Review Summary, runs strategic revision coaching (accept/partially-accept/reject per Major comment, not default accept-all), produces a revised draft plus Response to Reviewers, then runs completeness self-verification and Stage 4.5 final integrity check.",
+      "should_trigger": true
+    },
+    {
+      "id": "pipeline-status",
+      "query": "Where are we in the paper workflow right now - show me the pipeline status dashboard with which stages are done.",
+      "expected_behavior": "Invokes alterlab-research-pipeline state tracking: renders the Progress Dashboard listing all 10 stages with completion markers, integrity verification results (pre-review and final), and the review history (per-round decisions).",
+      "should_trigger": true
+    },
+    {
+      "id": "no-trigger-research-only",
+      "query": "Just do a literature review for me on virtual production in film education - I only need the sources and a synthesis, nothing else.",
+      "expected_behavior": "defers to alterlab-deep-research / does not invoke alterlab-research-pipeline (a single-function research request, the pipeline is unnecessary when only one stage is needed)",
+      "should_trigger": false
+    },
+    {
+      "id": "no-trigger-review-only",
+      "query": "Can you just peer review my manuscript and give me an editorial decision? I don't need any of the other steps.",
+      "expected_behavior": "defers to alterlab-paper-reviewer / does not invoke alterlab-research-pipeline (a single-function review request that should trigger the reviewer skill directly, not the orchestrator)",
+      "should_trigger": false
+    },
+    {
+      "id": "no-trigger-format-convert",
+      "query": "My paper is final - just convert it to APA 7.0 formatting and give me a DOCX and LaTeX PDF.",
+      "expected_behavior": "defers to alterlab-paper-writer (format-convert mode) / does not invoke alterlab-research-pipeline (only formatting is requested, a single downstream function rather than the full workflow)",
+      "should_trigger": false
+    }
+  ]
+}

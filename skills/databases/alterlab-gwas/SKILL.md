@@ -1,6 +1,6 @@
 ---
 name: alterlab-gwas
-description: Query NHGRI-EBI GWAS Catalog for SNP-trait associations. Search variants by rs ID, disease/trait, gene, retrieve p-values and summary statistics, for genetic epidemiology and polygenic risk scores. Part of the AlterLab Academic Skills suite.
+description: Query the NHGRI-EBI GWAS Catalog REST API for SNP-trait associations, retrieving variants by rs ID, disease/trait, or gene along with p-values and summary statistics. Use when investigating genome-wide association study hits, mapping a SNP or rsID to traits, building polygenic risk scores, or doing genetic epidemiology lookups. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:

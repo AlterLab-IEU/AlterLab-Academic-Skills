@@ -1,6 +1,6 @@
 ---
 name: alterlab-alphafold-db
-description: Access AlphaFold 200M+ AI-predicted protein structures. Retrieve structures by UniProt ID, download PDB/mmCIF files, analyze confidence metrics (pLDDT, PAE), for drug discovery and structural biology. Part of the AlterLab Academic Skills suite.
+description: Access the AlphaFold DB of 200M+ AI-predicted protein structures — retrieve models by UniProt accession, download PDB/mmCIF files, and analyze confidence metrics (pLDDT, PAE). Use when a UniProt ID needs a 3D structure prediction, when no experimental PDB structure exists, or for structural biology, homology modeling, and structure-based drug discovery. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:

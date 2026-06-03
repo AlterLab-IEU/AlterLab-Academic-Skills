@@ -1,6 +1,6 @@
 ---
 name: alterlab-clinical-decision
-description: Part of the AlterLab Academic Skills suite. Generate professional clinical decision support (CDS) documents for pharmaceutical and clinical research settings, including patient cohort analyses (biomarker-stratified with outcomes) and treatment recommendation reports (evidence-based guidelines with decision algorithms). Supports GRADE evidence grading, statistical analysis (hazard ratios, survival curves, waterfall plots), biomarker integration, and regulatory compliance. Outputs publication-ready LaTeX/PDF format optimized for drug development, clinical research, and evidence synthesis.
+description: Generates professional clinical decision support (CDS) documents for pharmaceutical and clinical research settings — biomarker-stratified patient cohort analyses with outcomes and evidence-based treatment recommendation reports with decision algorithms, supporting GRADE evidence grading, statistical analysis (hazard ratios, survival curves, waterfall plots), biomarker integration, and regulatory compliance, output as publication-ready LaTeX/PDF. Use when building a CDS document, cohort analysis, or treatment recommendation report for drug development, clinical research, or evidence synthesis, or when GRADE grading, hazard ratios, survival/waterfall plots, or biomarker stratification are requested. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 metadata:

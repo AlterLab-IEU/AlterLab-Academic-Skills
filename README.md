@@ -153,19 +153,38 @@ Each skill transforms Claude into a **domain-specific expert assistant** tailore
 
 ## 🚀 Quick Start
 
-### ⚡ Option 1 — Claude Code Plugin *(Recommended)*
+### 🌍 Option 1 — Agent Skills (open standard) *(Recommended)*
+
+```bash
+npx skills add AlterLab-IEU/AlterLab-Academic-Skills
+```
+
+These are portable **Agent Skills** following the [agentskills.io](https://agentskills.io) open standard — they also work in **Cursor, Codex, Gemini CLI, and Copilot**, not Claude only.
+
+> [!NOTE]
+> **Standard: Agent Skills.** This collection conforms to the open Agent Skills standard. See [agentskills.io](https://agentskills.io) for the spec and the list of supporting agents.
+
+### ⚡ Option 2 — Claude Code Plugin
 
 Add the marketplace once, then install only the domains you need:
 
 ```bash
 /plugin marketplace add AlterLab-IEU/AlterLab-Academic-Skills
+# No SSH key? Use the HTTPS marketplace path instead:
+/plugin marketplace add https://github.com/AlterLab-IEU/AlterLab-Academic-Skills.git
 /plugin install alterlab-bioinformatics@alterlab-academic-skills
 /reload-plugins
 ```
 
+For local development against a clone, point Claude Code at the directory directly:
+
+```bash
+claude --plugin-dir /path/to/AlterLab-Academic-Skills
+```
+
 Available domain plugins: `alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`.
 
-### 📁 Option 2 — Personal or Project Install (manual)
+### 📁 Option 3 — Personal or Project Install (manual)
 
 ```bash
 git clone https://github.com/AlterLab-IEU/AlterLab-Academic-Skills.git
@@ -177,7 +196,7 @@ cp -R AlterLab-Academic-Skills/skills/bioinformatics/alterlab-scanpy .claude/ski
 
 Then restart Claude Code. A skill must live at `~/.claude/skills/<name>/SKILL.md` or `.claude/skills/<name>/SKILL.md` — a bare `git clone` alone does **not** register anything.
 
-### 🌐 Option 3 — Claude.ai
+### 🌐 Option 4 — Claude.ai
 
 Zip a skill directory and upload it under **Settings → Capabilities** (requires a plan with code execution). Skills do not sync between claude.ai and Claude Code.
 

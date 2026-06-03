@@ -1,6 +1,6 @@
 ---
 name: alterlab-market-research
-description: Part of the AlterLab Academic Skills suite. Generate comprehensive market research reports (50+ pages) in the style of top consulting firms (McKinsey, BCG, Gartner). Features professional LaTeX formatting, extensive visual generation with scientific-schematics and generate-image, deep integration with research-lookup for data gathering, and multi-framework strategic analysis including Porter Five Forces, PESTLE, SWOT, TAM/SAM/SOM, and BCG Matrix.
+description: Generates comprehensive market research reports (50+ pages) in the style of top consulting firms (McKinsey, BCG, Gartner), with professional LaTeX formatting, extensive visuals via scientific-schematics and generate-image, data gathering through research-lookup, and multi-framework strategic analysis (Porter Five Forces, PESTLE, SWOT, TAM/SAM/SOM, BCG Matrix). Use when producing a market analysis, competitive landscape, industry report, market-sizing study, or consulting-style strategic deliverable. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 metadata:

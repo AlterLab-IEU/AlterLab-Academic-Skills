@@ -1,6 +1,6 @@
 ---
 name: alterlab-transformers
-description: Part of the AlterLab Academic Skills suite. This skill should be used when working with pre-trained transformer models for natural language processing, computer vision, audio, or multimodal tasks. Use for text generation, classification, question answering, translation, summarization, image classification, object detection, speech recognition, and fine-tuning models on custom datasets.
+description: Pre-trained transformer models with Hugging Face Transformers for NLP, computer vision, audio, and multimodal tasks. Use for text generation, classification, question answering, translation, summarization, image classification, object detection, speech recognition, or fine-tuning transformer models on custom datasets. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: Some features require an Huggingface token

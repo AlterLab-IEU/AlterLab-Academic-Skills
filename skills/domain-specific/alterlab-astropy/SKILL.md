@@ -1,6 +1,6 @@
 ---
 name: alterlab-astropy
-description: Part of the AlterLab Academic Skills suite. Comprehensive Python library for astronomy and astrophysics. This skill should be used when working with astronomical data including celestial coordinates, physical units, FITS files, cosmological calculations, time systems, tables, world coordinate systems (WCS), and astronomical data analysis. Use when tasks involve coordinate transformations, unit conversions, FITS file manipulation, cosmological distance calculations, time scale conversions, or astronomical data processing.
+description: Processes astronomy and astrophysics data with the Astropy Python library — celestial coordinates, physical units, FITS files, cosmological calculations, time systems, tables, and world coordinate systems (WCS). Use when tasks involve coordinate transformations, unit conversions, FITS file manipulation, cosmological distance calculations, time scale conversions, or general astronomical data analysis. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 metadata:

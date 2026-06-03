@@ -1,6 +1,6 @@
 ---
 name: alterlab-mermaid
-description: Part of the AlterLab Academic Skills suite. Comprehensive markdown and Mermaid diagram writing skill. Use when creating any scientific document, report, analysis, or visualization. Establishes text-based diagrams as the default documentation standard with full style guides (markdown + mermaid), 24 diagram type references, and 9 document templates.
+description: Writes Markdown documents and text-based Mermaid diagrams (flowcharts, sequence, class, ER, gantt, state, and more) with full style guides, 24 diagram-type references, and 9 document templates. Use when authoring a scientific document, report, analysis, or README, or when a diagram should be expressed as version-controllable Mermaid/Markdown text rather than a rendered image. For AI-rendered publication schematics use scientific-schematics instead. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: Apache-2.0
 metadata:

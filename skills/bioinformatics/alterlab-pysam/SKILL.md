@@ -1,6 +1,6 @@
 ---
 name: alterlab-pysam
-description: Genomic file toolkit. Read/write SAM/BAM/CRAM alignments, VCF/BCF variants, FASTA/FASTQ sequences, extract regions, calculate coverage, for NGS data processing pipelines. Part of the AlterLab Academic Skills suite.
+description: Read and write genomic alignment and variant files in Python with pysam (htslib bindings) — SAM/BAM/CRAM alignments, VCF/BCF variants, and FASTA/FASTQ sequences, plus region extraction and per-base coverage/pileup. Use when scripting NGS data-processing pipelines that parse, filter, index, or compute coverage over BAM/CRAM/VCF files. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

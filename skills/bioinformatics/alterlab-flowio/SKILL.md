@@ -1,6 +1,6 @@
 ---
 name: alterlab-flowio
-description: Parse FCS (Flow Cytometry Standard) files v2.0-3.1. Extract events as NumPy arrays, read metadata/channels, convert to CSV/DataFrame, for flow cytometry data preprocessing. Part of the AlterLab Academic Skills suite.
+description: Parse and write FCS (Flow Cytometry Standard) files v2.0-3.1 with FlowIO — extract event data as NumPy arrays, read $-keyword metadata and channel/parameter definitions, and convert events to CSV or pandas DataFrame. Use when loading raw .fcs flow-cytometry files, inspecting channels and metadata, or preprocessing cytometry data for downstream gating and analysis. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

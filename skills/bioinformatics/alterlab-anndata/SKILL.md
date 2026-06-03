@@ -1,6 +1,6 @@
 ---
 name: alterlab-anndata
-description: Data structure for annotated matrices in single-cell analysis. Use when working with .h5ad files or integrating with the scverse ecosystem. This is the data format skill—for analysis workflows use scanpy; for probabilistic models use scvi-tools; for population-scale queries use cellxgene-census. Part of the AlterLab Academic Skills suite.
+description: Build, slice, concatenate, read, and write AnnData annotated data matrices (obs, var, X, layers, obsm, uns) for single-cell analysis in the scverse ecosystem. Use when handling .h5ad files, managing cell and gene annotations, or wrangling single-cell matrices — this is the data-format skill, for analysis workflows use scanpy, for probabilistic models use scvi-tools, for population-scale queries use cellxgene-census. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

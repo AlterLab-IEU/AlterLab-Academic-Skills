@@ -1,6 +1,6 @@
 ---
 name: alterlab-denario
-description: Part of the AlterLab Academic Skills suite. Multiagent AI system for scientific research assistance that automates research workflows from data analysis to publication. This skill should be used when generating research ideas from datasets, developing research methodologies, executing computational experiments, performing literature searches, or generating publication-ready papers in LaTeX format. Supports end-to-end research pipelines with customizable agent orchestration.
+description: Runs Denario, a multiagent AI system for scientific research assistance that automates end-to-end research workflows from data analysis to publication with customizable agent orchestration. Use when generating research ideas from datasets, developing research methodologies, executing computational experiments, performing literature searches, or generating publication-ready papers in LaTeX format. Part of the AlterLab Academic Skills suite.
 license: GPL-3.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:

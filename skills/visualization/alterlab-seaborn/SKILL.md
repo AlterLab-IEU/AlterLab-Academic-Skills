@@ -1,6 +1,6 @@
 ---
 name: alterlab-seaborn
-description: Part of the AlterLab Academic Skills suite. Statistical visualization with pandas integration. Use for quick exploration of distributions, relationships, and categorical comparisons with attractive defaults. Best for box plots, violin plots, pair plots, heatmaps. Built on matplotlib. For interactive plots use plotly; for publication styling use scientific-visualization.
+description: Builds statistical plots with the seaborn Python library and pandas DataFrame integration, on attractive matplotlib-based defaults. Use for quick exploration of distributions, relationships, and categorical comparisons — box plots, violin plots, pair plots, heatmaps. For interactive charts use plotly, for journal publication styling use scientific-visualization, for low-level custom plotting use matplotlib. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 metadata:

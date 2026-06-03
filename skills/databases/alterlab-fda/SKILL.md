@@ -1,6 +1,6 @@
 ---
 name: alterlab-fda
-description: Query openFDA API for drugs, devices, adverse events, recalls, regulatory submissions (510k, PMA), substance identification (UNII), for FDA regulatory data analysis and safety research. Part of the AlterLab Academic Skills suite.
+description: Query the openFDA API for drugs, medical devices, adverse event reports, recalls, regulatory submissions (510k, PMA), and substance identification (UNII). Use when searching FDA safety data, pharmacovigilance and adverse-event signals, device clearances, drug labels, or recall records for regulatory data analysis and safety research. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:

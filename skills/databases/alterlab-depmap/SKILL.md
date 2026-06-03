@@ -1,6 +1,6 @@
 ---
 name: alterlab-depmap
-description: Query the Cancer Dependency Map (DepMap) for cancer cell line gene dependency scores (CRISPR Chronos), drug sensitivity data, and gene effect profiles. Use for identifying cancer-specific vulnerabilities, synthetic lethal interactions, and validating oncology drug targets. Part of the AlterLab Academic Skills suite.
+description: Query the Cancer Dependency Map (DepMap) for cancer cell line gene dependency scores (CRISPR Chronos), drug sensitivity data, and gene effect profiles. Use when identifying cancer-specific genetic vulnerabilities, finding synthetic lethal interactions, checking whether a gene is essential in given cell lines, or validating oncology drug targets. Part of the AlterLab Academic Skills suite.
 license: CC-BY-4.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:

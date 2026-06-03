@@ -1,6 +1,6 @@
 ---
 name: alterlab-vaex
-description: Part of the AlterLab Academic Skills suite. Use this skill for processing and analyzing large tabular datasets (billions of rows) that exceed available RAM. Vaex excels at out-of-core DataFrame operations, lazy evaluation, fast aggregations, efficient visualization of big data, and machine learning on large datasets. Apply when users need to work with large CSV/HDF5/Arrow/Parquet files, perform fast statistics on massive datasets, create visualizations of big data, or build ML pipelines that do not fit in memory.
+description: Out-of-core tabular analytics with Vaex for billion-row datasets that exceed RAM — lazy evaluation, fast aggregations, big-data visualization, and ML on a single machine. Use when working with large CSV/HDF5/Arrow/Parquet files, computing fast statistics on massive datasets, visualizing big data, or building ML pipelines that do not fit in memory. For distributed clusters prefer dask; for in-memory speed prefer polars. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

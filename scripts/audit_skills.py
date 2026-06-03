@@ -6,7 +6,9 @@ Checks performed:
   - `name` matches parent directory, lowercase regex, 1-64 chars
   - `description` present, 1-1024 chars
   - `license` present and from the controlled vocabulary (see LICENSE_VOCAB)
-  - `allowed-tools` present (warning only — experimental field)
+  - `allowed-tools` present (warning only — optional, space-separated per the spec)
+  - `name` free of reserved words ('claude'/'anthropic')
+  - `description` leads with triggers (not the suite boilerplate), has a 'Use when' clause, third person
   - `metadata.skill-author` present (AlterLab convention)
   - Suite-label footer present in body (AlterLab convention)
   - All `references/*.md` paths cited in the body actually exist on disk
@@ -36,7 +38,11 @@ SKILLS_DIR = REPO_ROOT / "skills"
 # Spec constraints (https://agentskills.io/specification)
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 NAME_MAX = 64
-DESCRIPTION_MAX = 1024
+DESCRIPTION_MAX = 1536  # current Claude Code listing truncation (description + when-to-use)
+# Heuristics for description-quality lints
+TRIGGER_PHRASES = ("use when", "use this", "use for", "use whenever", "when the user", "triggers on", "use to ")
+FIRST_SECOND_PERSON = re.compile(r"\b(I can|I will|I'll|you can|you should|use me to|let me|we will|we'll)\b", re.IGNORECASE)
+RESERVED_NAME_WORDS = ("claude", "anthropic")
 BODY_LINES_SOFT_LIMIT = 500  # spec recommends < 500 lines
 BODY_LINES_HARD_LIMIT = 1500  # error past this — definitely belongs in references/
 
@@ -218,13 +224,24 @@ def audit_skill(skill_md: Path) -> SkillReport:
             report.findings.append(Finding(str(rel), "error", "name-mismatch", f"`name` ({name}) does not match parent directory ({parent_dir})"))
         if not name.startswith(ALTERLAB_PREFIX) and "shared" not in parent_dir:
             report.findings.append(Finding(str(rel), "warning", "name-no-prefix", f"`name` does not start with '{ALTERLAB_PREFIX}'"))
+        if any(w in name.lower() for w in RESERVED_NAME_WORDS):
+            report.findings.append(Finding(str(rel), "error", "name-reserved-word", f"`name` contains a reserved word ('claude'/'anthropic'): {name}"))
 
-    # description field
+    # description field — the single most important field for skill triggering.
     desc = fm.get("description", "").strip().strip('"')
     if not desc:
         report.findings.append(Finding(str(rel), "error", "description-missing", "Missing `description` field"))
-    elif len(desc) > DESCRIPTION_MAX:
-        report.findings.append(Finding(str(rel), "error", "description-too-long", f"`description` exceeds {DESCRIPTION_MAX} chars ({len(desc)})"))
+    else:
+        if len(desc) > DESCRIPTION_MAX:
+            report.findings.append(Finding(str(rel), "error", "description-too-long", f"`description` exceeds {DESCRIPTION_MAX} chars ({len(desc)})"))
+        # The suite label belongs anywhere EXCEPT the front — leading boilerplate wastes
+        # the highest-signal trigger tokens (Anthropic: the description decides selection).
+        if desc.lstrip('"').startswith(SUITE_LABEL_LOOSE) or desc.lstrip('"').startswith(SUITE_LABEL):
+            report.findings.append(Finding(str(rel), "error", "description-leading-boilerplate", "`description` starts with the AlterLab suite label — move it to the END so triggers lead"))
+        if not any(p in desc.lower() for p in TRIGGER_PHRASES):
+            report.findings.append(Finding(str(rel), "warning", "description-no-trigger", "`description` has no explicit 'Use when ...' trigger clause"))
+        if FIRST_SECOND_PERSON.search(desc):
+            report.findings.append(Finding(str(rel), "warning", "description-not-third-person", "`description` uses first/second person — Anthropic requires third person"))
 
     # license field
     raw_license = fm.get("license", "").strip()

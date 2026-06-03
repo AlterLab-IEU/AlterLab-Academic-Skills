@@ -1,6 +1,6 @@
 ---
 name: alterlab-deeptools
-description: NGS analysis toolkit. BAM to bigWig conversion, QC (correlation, PCA, fingerprints), heatmaps/profiles (TSS, peaks), for ChIP-seq, RNA-seq, ATAC-seq visualization. Part of the AlterLab Academic Skills suite.
+description: Process and visualize deep-sequencing coverage with the deepTools CLI — convert BAM to bigWig (bamCoverage), run QC (multiBamSummary correlation, PCA, plotFingerprint), and build TSS/peak heatmaps and profiles (computeMatrix, plotHeatmap, plotProfile). Use when generating coverage tracks or signal heatmaps and profiles for ChIP-seq, ATAC-seq, or RNA-seq data. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

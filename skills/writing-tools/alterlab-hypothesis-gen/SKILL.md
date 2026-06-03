@@ -1,6 +1,6 @@
 ---
 name: alterlab-hypothesis-gen
-description: Part of the AlterLab Academic Skills suite. Structured hypothesis formulation from observations. Use when you have experimental observations or data and need to formulate testable hypotheses with predictions, propose mechanisms, and design experiments to test them. Follows scientific method framework. For open-ended ideation use scientific-brainstorming; for automated LLM-driven hypothesis testing on datasets use hypogenic.
+description: Formulates structured, testable hypotheses from experimental observations using a scientific-method framework — derives predictions, proposes mechanisms, and designs experiments to test them. Use when turning observations or data into falsifiable hypotheses, predictions, or experimental designs. For open-ended ideation prefer scientific-brainstorming; for automated LLM-driven hypothesis testing on datasets use hypogenic. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 metadata:

@@ -1,6 +1,6 @@
 ---
 name: alterlab-neuropixels
-description: Neuropixels neural recording analysis. Load SpikeGLX/OpenEphys data, preprocess, motion correction, Kilosort4 spike sorting, quality metrics, Allen/IBL curation, AI-assisted visual analysis, for Neuropixels 1.0/2.0 extracellular electrophysiology. Use when working with neural recordings, spike sorting, extracellular electrophysiology, or when the user mentions Neuropixels, SpikeGLX, Open Ephys, Kilosort, quality metrics, or unit curation. Part of the AlterLab Academic Skills suite.
+description: Analyze Neuropixels 1.0/2.0 extracellular electrophysiology with SpikeInterface — load SpikeGLX/Open Ephys recordings, preprocess and motion-correct, run Kilosort4 spike sorting, compute quality metrics, apply Allen/IBL curation, and do AI-assisted visual inspection. Use when working with neural recordings, spike sorting, or extracellular electrophysiology, or when the user mentions Neuropixels, SpikeGLX, Open Ephys, Kilosort, quality metrics, or unit curation. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

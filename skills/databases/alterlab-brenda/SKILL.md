@@ -1,6 +1,6 @@
 ---
 name: alterlab-brenda
-description: Access BRENDA enzyme database via SOAP API. Retrieve kinetic parameters (Km, kcat), reaction equations, organism data, and substrate-specific enzyme information for biochemical research and metabolic pathway analysis. Part of the AlterLab Academic Skills suite.
+description: Access the BRENDA enzyme database via its SOAP API to retrieve kinetic parameters (Km, kcat, Ki), reaction equations, organism data, and substrate-specific enzyme information indexed by EC number. Use when looking up enzyme kinetics, turnover numbers, or substrate specificity for biochemical research and metabolic pathway analysis. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:

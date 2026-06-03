@@ -1,6 +1,6 @@
 ---
 name: alterlab-sympy
-description: Part of the AlterLab Academic Skills suite. Use this skill when working with symbolic mathematics in Python. This skill should be used for symbolic computation tasks including solving equations algebraically, performing calculus operations (derivatives, integrals, limits), manipulating algebraic expressions, working with matrices symbolically, physics calculations, number theory problems, geometry computations, and generating executable code from mathematical expressions. Apply this skill when the user needs exact symbolic results rather than numerical approximations, or when working with mathematical formulas that contain variables and parameters.
+description: Symbolic mathematics in Python with SymPy — solve equations algebraically, perform calculus (derivatives, integrals, limits), manipulate algebraic expressions, work with symbolic matrices, and generate executable code from formulas. Use when exact symbolic results are needed rather than numerical approximations, or for physics, number-theory, and geometry computations involving variables and parameters. Part of the AlterLab Academic Skills suite.
 license: BSD-3-Clause
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 metadata:

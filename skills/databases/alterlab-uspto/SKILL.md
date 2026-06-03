@@ -1,6 +1,6 @@
 ---
 name: alterlab-uspto
-description: Access USPTO APIs for patent/trademark searches, examination history (PEDS), assignments, citations, office actions, TSDR, for IP analysis and prior art searches. Part of the AlterLab Academic Skills suite.
+description: Access USPTO APIs for patent and trademark searches, examination history (PEDS), assignments, citations, office actions, and trademark status (TSDR). Use when searching patents or trademarks, conducting prior art searches, retrieving patent examination or assignment records, or doing intellectual property (IP) analysis. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:

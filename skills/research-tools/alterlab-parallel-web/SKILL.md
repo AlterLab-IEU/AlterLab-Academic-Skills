@@ -1,6 +1,6 @@
 ---
 name: alterlab-parallel-web
-description: Part of the AlterLab Academic Skills suite. Search the web, extract URL content, and run deep research using the Parallel Chat API and Extract API. Use for ALL web searches, research queries, and general information gathering. Provides synthesized summaries with citations.
+description: Search the web, extract URL content, and run deep research using the Parallel Web Systems Chat API and Extract API, returning synthesized summaries with citations. Use for general web searches, research queries, fetching and extracting page content, or broad information gathering (requires PARALLEL_API_KEY). Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 compatibility: PARALLEL_API_KEY required

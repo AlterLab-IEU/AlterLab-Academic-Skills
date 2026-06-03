@@ -132,6 +132,20 @@ New skills must pass both with **no `known_failures` entry**. Beyond the automat
 - If the change is a breaking modification to the skill's behavior, note it in the PR description
 - If you move or rename a skill, re-run `python scripts/gen_marketplace.py` and commit the updated `.claude-plugin/marketplace.json`
 
+## Skill Quality Standards
+
+Every skill must clear this bar (enforced by `python scripts/audit_skills.py` + `uv run pytest tests/`):
+
+- **`name`** equals the parent directory, lowercase-hyphen, ≤ 64 chars, and contains no reserved word (`claude`/`anthropic`).
+- **`description`** (the field that decides whether Claude triggers the skill) is **third person**, leads with *what* the skill does, includes an explicit **"Use when …"** trigger clause packed with keywords a user's request would contain, and ends with `Part of the AlterLab Academic Skills suite.` — never leads with it. ≤ 1536 chars, no changelog/version noise.
+- **Disambiguate** against overlapping siblings ("For X prefer Y") so the right skill loads.
+- **Body** under ~500 lines; move long detail into `references/*.md` (loaded on demand). Cited `references/` and `scripts/` paths must exist.
+- **No fabrication**: real APIs, real citations/DOIs, no unsourced vendor benchmarks; if a script sends data to a third-party API, say so.
+- **`allowed-tools`** scoped to what the skill needs (space-separated).
+- Add **`evals/evals.json`** (≥ 3 `should_trigger` + ≥ 1 near-miss `should_not_trigger`); validate with `python scripts/run_evals.py`.
+
+A copy-paste scaffold lives in [`template/`](template/).
+
 ## Reporting Issues
 
 Open a GitHub issue with:

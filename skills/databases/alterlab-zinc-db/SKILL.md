@@ -1,6 +1,6 @@
 ---
 name: alterlab-zinc-db
-description: Access ZINC (230M+ purchasable compounds). Search by ZINC ID/SMILES, similarity searches, 3D-ready structures for docking, analog discovery, for virtual screening and drug discovery. Part of the AlterLab Academic Skills suite.
+description: Access the ZINC database of 230M+ commercially available (purchasable) compounds, searching by ZINC ID or SMILES, running similarity searches, and downloading 3D-ready structures. Use when assembling a compound library for virtual screening, finding purchasable analogs, or obtaining docking-ready 3D structures for drug discovery. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:
