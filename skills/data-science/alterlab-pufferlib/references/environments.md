@@ -18,56 +18,57 @@ PufferEnv is designed for performance through in-place operations:
 
 ```python
 import numpy as np
+import gymnasium
 import pufferlib
 from pufferlib import PufferEnv
 
 class MyEnvironment(PufferEnv):
     def __init__(self, buf=None):
+        # Define observation and action spaces BEFORE super().__init__(buf)
+        self.single_observation_space = gymnasium.spaces.Dict({
+            'image': gymnasium.spaces.Box(
+                low=0, high=255, shape=(84, 84, 3), dtype=np.uint8),
+            'vector': gymnasium.spaces.Box(
+                low=-np.inf, high=np.inf, shape=(10,), dtype=np.float32),
+        })
+        self.single_action_space = gymnasium.spaces.Discrete(4)  # 4 discrete actions
+        self.num_agents = 1
+
         super().__init__(buf)
 
-        # Define observation and action spaces
-        self.observation_space = self.make_space({
-            'image': (84, 84, 3),
-            'vector': (10,)
-        })
-
-        self.action_space = self.make_discrete(4)  # 4 discrete actions
-
-        # Initialize state
-        self.reset()
-
-    def reset(self):
-        """Reset environment to initial state."""
+    def reset(self, seed=None):
+        """Reset environment to initial state. Returns (obs, info-list)."""
         # Reset internal state
         self.agent_pos = np.array([0, 0])
         self.step_count = 0
 
-        # Return initial observation
+        # Return initial observation and an (empty) info list
         obs = {
             'image': np.zeros((84, 84, 3), dtype=np.uint8),
             'vector': np.zeros(10, dtype=np.float32)
         }
 
-        return obs
+        return obs, []
 
     def step(self, action):
-        """Execute one environment step."""
+        """Execute one environment step. Returns 5 values."""
         # Update state based on action
         self.step_count += 1
 
         # Calculate reward
-        reward = self._compute_reward()
+        rewards = self._compute_reward()
 
-        # Check if episode is done
-        done = self.step_count >= 1000
+        # Check termination vs. truncation
+        terminals = self._is_done()
+        truncations = self.step_count >= 1000
 
         # Generate observation
         obs = self._get_observation()
 
-        # Additional info
-        info = {'episode': {'r': reward, 'l': self.step_count}} if done else {}
+        # Additional info (list of dicts, one per agent)
+        info = [{'episode': {'r': rewards, 'l': self.step_count}}] if truncations else []
 
-        return obs, reward, done, info
+        return obs, rewards, terminals, truncations, info
 
     def _compute_reward(self):
         """Compute reward for current state."""
@@ -83,48 +84,65 @@ class MyEnvironment(PufferEnv):
 
 ### Observation Spaces
 
+Define spaces directly with `gymnasium.spaces` and assign them to
+`self.single_observation_space` / `self.single_action_space` before calling
+`super().__init__(buf)`.
+
 #### Discrete Spaces
 
 ```python
+import gymnasium
+
 # Single discrete value
-self.observation_space = self.make_discrete(10)  # Values 0-9
+self.single_observation_space = gymnasium.spaces.Discrete(10)  # Values 0-9
 
 # Dict with discrete values
-self.observation_space = self.make_space({
-    'position': (1,),  # Continuous
-    'type': self.make_discrete(5)  # Discrete
+self.single_observation_space = gymnasium.spaces.Dict({
+    'position': gymnasium.spaces.Box(
+        low=-np.inf, high=np.inf, shape=(1,), dtype=np.float32),  # Continuous
+    'type': gymnasium.spaces.Discrete(5),  # Discrete
 })
 ```
 
 #### Continuous Spaces
 
 ```python
-# Box space (continuous)
-self.observation_space = self.make_space({
-    'image': (84, 84, 3),      # Image
-    'vector': (10,),            # Vector
-    'scalar': (1,)              # Single value
+import gymnasium
+
+# Box spaces (continuous)
+self.single_observation_space = gymnasium.spaces.Dict({
+    'image': gymnasium.spaces.Box(
+        low=0, high=255, shape=(84, 84, 3), dtype=np.uint8),       # Image
+    'vector': gymnasium.spaces.Box(
+        low=-np.inf, high=np.inf, shape=(10,), dtype=np.float32),  # Vector
+    'scalar': gymnasium.spaces.Box(
+        low=-np.inf, high=np.inf, shape=(1,), dtype=np.float32),   # Single value
 })
 ```
 
 #### Multi-Discrete Spaces
 
 ```python
+import gymnasium
+
 # Multiple discrete values
-self.observation_space = self.make_multi_discrete([3, 5, 2])  # 3 values, 5 values, 2 values
+self.single_observation_space = gymnasium.spaces.MultiDiscrete([3, 5, 2])  # 3 values, 5 values, 2 values
 ```
 
 ### Action Spaces
 
 ```python
+import gymnasium
+
 # Discrete actions
-self.action_space = self.make_discrete(4)  # 4 actions: 0, 1, 2, 3
+self.single_action_space = gymnasium.spaces.Discrete(4)  # 4 actions: 0, 1, 2, 3
 
 # Continuous actions
-self.action_space = self.make_space((3,))  # 3D continuous action
+self.single_action_space = gymnasium.spaces.Box(
+    low=-1.0, high=1.0, shape=(3,), dtype=np.float32)  # 3D continuous action
 
 # Multi-discrete actions
-self.action_space = self.make_multi_discrete([3, 3])  # Two 3-way discrete choices
+self.single_action_space = gymnasium.spaces.MultiDiscrete([3, 3])  # Two 3-way discrete choices
 ```
 
 ## Multi-Agent Environments
@@ -134,23 +152,27 @@ PufferLib has native multi-agent support, treating single-agent and multi-agent 
 ### Multi-Agent PufferEnv
 
 ```python
+import gymnasium
+
 class MultiAgentEnv(PufferEnv):
     def __init__(self, num_agents=4, buf=None):
-        super().__init__(buf)
-
+        # Define spaces and num_agents BEFORE super().__init__(buf)
         self.num_agents = num_agents
 
         # Per-agent observation space
-        self.single_observation_space = self.make_space({
-            'position': (2,),
-            'velocity': (2,),
-            'global': (10,)
+        self.single_observation_space = gymnasium.spaces.Dict({
+            'position': gymnasium.spaces.Box(
+                low=-np.inf, high=np.inf, shape=(2,), dtype=np.float32),
+            'velocity': gymnasium.spaces.Box(
+                low=-np.inf, high=np.inf, shape=(2,), dtype=np.float32),
+            'global': gymnasium.spaces.Box(
+                low=-np.inf, high=np.inf, shape=(10,), dtype=np.float32),
         })
 
         # Per-agent action space
-        self.single_action_space = self.make_discrete(5)
+        self.single_action_space = gymnasium.spaces.Discrete(5)
 
-        self.reset()
+        super().__init__(buf)
 
     def reset(self):
         """Reset all agents."""
@@ -218,21 +240,20 @@ PufferLib provides the Ocean suite with 20+ pre-built environments:
 ### Using Ocean Environments
 
 ```python
-import pufferlib
+import functools
+import pufferlib.vector
 
-# Make environment
-env = pufferlib.make('procgen-coinrun', num_envs=256)
+# Vectorize an env-constructor callable
+env = pufferlib.vector.make(make_coinrun_env, num_envs=256)
 
-# With custom configuration
-env = pufferlib.make(
-    'atari-pong',
+# With custom configuration (bind constructor kwargs via functools.partial)
+env = pufferlib.vector.make(
+    functools.partial(make_pong_env, frameskip=4, framestack=4),
     num_envs=128,
-    frameskip=4,
-    framestack=4
 )
 
 # Multi-agent environment
-env = pufferlib.make('pettingzoo-knights-archers-zombies', num_agents=4)
+env = pufferlib.vector.make(make_knights_archers_zombies_env, num_envs=4)
 ```
 
 ## Custom Environment Development
@@ -330,28 +351,30 @@ PyMODINIT_FUNC PyInit_my_env_c(void) {
 
 ```python
 import gymnasium as gym
-import pufferlib
+import pufferlib.emulation
+import pufferlib.vector
 
-# Wrap Gymnasium environment
-gym_env = gym.make('CartPole-v1')
-puffer_env = pufferlib.emulate(gym_env, num_envs=256)
+# Wrap a Gymnasium env in a GymnasiumPufferEnv, then vectorize
+def env_creator():
+    return pufferlib.emulation.GymnasiumPufferEnv(
+        env_creator=lambda: gym.make('CartPole-v1'))
 
-# Or use make directly
-env = pufferlib.make('gym-CartPole-v1', num_envs=256)
+env = pufferlib.vector.make(env_creator, num_envs=256)
 ```
 
 ### PettingZoo Environments
 
 ```python
 from pettingzoo.butterfly import pistonball_v6
-import pufferlib
+import pufferlib.emulation
+import pufferlib.vector
 
-# Wrap PettingZoo environment
-pz_env = pistonball_v6.env()
-puffer_env = pufferlib.emulate(pz_env, num_envs=128)
+# Wrap a PettingZoo env in a PettingZooPufferEnv, then vectorize
+def env_creator():
+    return pufferlib.emulation.PettingZooPufferEnv(
+        env_creator=lambda: pistonball_v6.parallel_env())
 
-# Or use make directly
-env = pufferlib.make('pettingzoo-pistonball', num_envs=128)
+env = pufferlib.vector.make(env_creator, num_envs=128)
 ```
 
 ### Custom Wrappers

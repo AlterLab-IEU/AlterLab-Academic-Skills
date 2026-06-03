@@ -432,25 +432,17 @@ Use `research-lookup` to find:
 
 **Step 2: Conduct Deep Research**
 
-Use `research-lookup` extensively to gather market data:
+Use the companion `research-lookup` skill extensively to gather market data. Run focused
+queries across each dimension of the analysis, for example:
 
-```bash
-# Market size and growth data
-python skills/research-lookup/scripts/research_lookup.py \
-  "What is the current market size and projected growth rate for [MARKET] industry? Include TAM, SAM, SOM estimates and CAGR projections"
-
-# Competitive landscape
-python skills/research-lookup/scripts/research_lookup.py \
-  "Who are the top 10 competitors in the [MARKET] market? What is their market share and competitive positioning?"
-
-# Industry trends
-python skills/research-lookup/scripts/research_lookup.py \
-  "What are the major trends and growth drivers in the [MARKET] industry for 2024-2030?"
-
-# Regulatory environment
-python skills/research-lookup/scripts/research_lookup.py \
-  "What are the key regulations and policy changes affecting the [MARKET] industry?"
-```
+- **Market size and growth**: "What is the current market size and projected growth rate
+  for [MARKET] industry? Include TAM, SAM, SOM estimates and CAGR projections"
+- **Competitive landscape**: "Who are the top 10 competitors in the [MARKET] market? What
+  is their market share and competitive positioning?"
+- **Industry trends**: "What are the major trends and growth drivers in the [MARKET]
+  industry for 2024-2030?"
+- **Regulatory environment**: "What are the key regulations and policy changes affecting
+  the [MARKET] industry?"
 
 **Step 3: Data Organization**
 - Create `sources/` folder with research notes

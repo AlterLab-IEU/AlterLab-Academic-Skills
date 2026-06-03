@@ -922,11 +922,13 @@ Load these references as needed when working on specific aspects of grant writin
 - `assets/budget_justification_template.md`: Budget justification structure
 - `assets/biosketch_templates/`: Agency-specific biosketch formats
 
-## Scripts and Tools
+## Tasks and Tools
 
-- `scripts/compliance_checker.py`: Verify formatting requirements
-- `scripts/budget_calculator.py`: Calculate budgets with inflation and fringe
-- `scripts/deadline_tracker.py`: Track submission deadlines and milestones
+This skill ships no helper scripts; handle these tasks directly:
+
+- **Compliance checking**: Verify formatting requirements (page limits, margins, fonts, required sections) against the relevant agency guide in `references/` (e.g. `references/nsf_guidelines.md`, `references/nih_guidelines.md`).
+- **Budget calculation**: Build budgets with inflation escalation and fringe rates following `references/budget_preparation.md` and the `assets/budget_justification_template.md` structure.
+- **Deadline tracking**: Track submission deadlines and milestones using the timeline/Gantt guidance in `references/timeline_planning.md`.
 
 ---
 

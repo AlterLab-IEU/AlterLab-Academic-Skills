@@ -10,14 +10,27 @@ PufferLib provides an emulation layer that enables seamless integration with pop
 
 ```python
 import gymnasium as gym
-import pufferlib
+import pufferlib.emulation
+import pufferlib.vector
 
-# Method 1: Direct wrapping
-gym_env = gym.make('CartPole-v1')
-puffer_env = pufferlib.emulate(gym_env, num_envs=256)
+# PufferLib has no string registry -- pass an environment constructor
+# (callable) to `pufferlib.vector.make`. There is no top-level
+# `pufferlib.emulate`/`pufferlib.make`; wrap Gymnasium envs with
+# `pufferlib.emulation.GymnasiumPufferEnv`, then vectorize.
 
-# Method 2: Using make
-env = pufferlib.make('gym-CartPole-v1', num_envs=256)
+# Method 1: Wrap a single Gymnasium env, then vectorize
+def cartpole_creator():
+    return pufferlib.emulation.GymnasiumPufferEnv(
+        env_creator=lambda: gym.make('CartPole-v1'))
+
+env = pufferlib.vector.make(cartpole_creator, num_envs=256)
+
+# Method 2: Same pattern with an inline creator
+env = pufferlib.vector.make(
+    lambda: pufferlib.emulation.GymnasiumPufferEnv(
+        env_creator=lambda: gym.make('CartPole-v1')),
+    num_envs=256,
+)
 
 # Method 3: Custom Gymnasium environment
 class MyGymEnv(gym.Env):
@@ -37,37 +50,49 @@ class MyGymEnv(gym.Env):
         info = {}
         return obs, reward, terminated, truncated, info
 
-# Wrap custom environment
-puffer_env = pufferlib.emulate(MyGymEnv, num_envs=128)
+# Wrap custom environment (MyGymEnv is a gym.Env, so emulate it)
+env = pufferlib.vector.make(
+    lambda: pufferlib.emulation.GymnasiumPufferEnv(env_creator=MyGymEnv),
+    num_envs=128,
+)
 ```
 
 ### Atari Environments
 
 ```python
+import functools
 import gymnasium as gym
 from gymnasium.wrappers import AtariPreprocessing, FrameStack
-import pufferlib
+import pufferlib.emulation
+import pufferlib.vector
 
-# Standard Atari setup
+# Standard Atari setup -- a plain Gymnasium creator
 def make_atari_env(env_name='ALE/Pong-v5'):
     env = gym.make(env_name)
     env = AtariPreprocessing(env, frame_skip=4)
     env = FrameStack(env, num_stack=4)
     return env
 
-# Vectorize with PufferLib
-env = pufferlib.emulate(make_atari_env, num_envs=256)
+# Wrap in a GymnasiumPufferEnv, then vectorize
+def atari_creator():
+    return pufferlib.emulation.GymnasiumPufferEnv(env_creator=make_atari_env)
 
-# Or use built-in
-env = pufferlib.make('atari-pong', num_envs=256, frameskip=4, framestack=4)
+env = pufferlib.vector.make(atari_creator, num_envs=256)
+
+# Bind a specific game via functools.partial on the Gymnasium creator
+pong_creator = lambda: pufferlib.emulation.GymnasiumPufferEnv(
+    env_creator=functools.partial(make_atari_env, env_name='ALE/Pong-v5'))
+env = pufferlib.vector.make(pong_creator, num_envs=256)
 ```
 
 ### Complex Observation Spaces
 
 ```python
+import numpy as np
 import gymnasium as gym
 from gymnasium.spaces import Dict, Box, Discrete
-import pufferlib
+import pufferlib.emulation
+import pufferlib.vector
 
 class ComplexObsEnv(gym.Env):
     def __init__(self):
@@ -95,7 +120,10 @@ class ComplexObsEnv(gym.Env):
         return obs, 1.0, False, False, {}
 
 # PufferLib automatically flattens and unflattens complex spaces
-env = pufferlib.emulate(ComplexObsEnv, num_envs=128)
+env = pufferlib.vector.make(
+    lambda: pufferlib.emulation.GymnasiumPufferEnv(env_creator=ComplexObsEnv),
+    num_envs=128,
+)
 ```
 
 ## PettingZoo Integration
@@ -104,38 +132,47 @@ env = pufferlib.emulate(ComplexObsEnv, num_envs=128)
 
 ```python
 from pettingzoo.butterfly import pistonball_v6
-import pufferlib
+import pufferlib.emulation
+import pufferlib.vector
 
-# Wrap PettingZoo parallel environment
-pz_env = pistonball_v6.parallel_env()
-puffer_env = pufferlib.emulate(pz_env, num_envs=128)
+# Multi-agent envs are wrapped with PettingZooPufferEnv, then vectorized.
+# PufferLib has no string registry -- pass the constructor (callable).
+def pistonball_creator():
+    return pufferlib.emulation.PettingZooPufferEnv(
+        env_creator=lambda: pistonball_v6.parallel_env())
 
-# Or use make directly
-env = pufferlib.make('pettingzoo-pistonball', num_envs=128)
+env = pufferlib.vector.make(pistonball_creator, num_envs=128)
 ```
 
 ### AEC (Agent Environment Cycle) Environments
 
 ```python
 from pettingzoo.classic import chess_v5
-import pufferlib
+from pettingzoo.utils import aec_to_parallel
+import pufferlib.emulation
+import pufferlib.vector
 
-# Wrap AEC environment (PufferLib handles conversion to parallel)
-aec_env = chess_v5.env()
-puffer_env = pufferlib.emulate(aec_env, num_envs=64)
+# Convert AEC to a parallel env, wrap with PettingZooPufferEnv, then vectorize.
+# PufferLib has no string registry -- pass the constructor (callable).
+def chess_creator():
+    return pufferlib.emulation.PettingZooPufferEnv(
+        env_creator=lambda: aec_to_parallel(chess_v5.env()))
 
-# Works with any PettingZoo AEC environment
-env = pufferlib.make('pettingzoo-chess', num_envs=64)
+env = pufferlib.vector.make(chess_creator, num_envs=64)
 ```
 
 ### Multi-Agent Training
 
 ```python
-import pufferlib
-from pufferlib import PuffeRL
+import pufferlib.emulation
+import pufferlib.vector
+from pufferlib.pufferl import PuffeRL
 
-# Create multi-agent environment
-env = pufferlib.make('pettingzoo-knights-archers-zombies', num_envs=128)
+# Create multi-agent environment.
+# PufferLib has no string registry -- pass an environment constructor
+# (callable). `kaz_creator` is a placeholder that wraps a PettingZoo env
+# (e.g. knights_archers_zombies) with PettingZooPufferEnv.
+env = pufferlib.vector.make(kaz_creator, num_envs=128)
 
 # Shared policy for all agents
 policy = create_policy(env.observation_space, env.action_space)
@@ -157,103 +194,129 @@ for iteration in range(num_iterations):
 ### Procgen
 
 ```python
-import pufferlib
+import functools
+import pufferlib.vector
 
-# Procgen environments
-env = pufferlib.make('procgen-coinrun', num_envs=256, distribution_mode='easy')
+# PufferLib has no string registry -- pass an environment constructor
+# (callable). `make_coinrun` is a placeholder for the Procgen env creator you
+# provide (e.g. wrapping the third-party Procgen env); bind kwargs with
+# functools.partial.
+env = pufferlib.vector.make(
+    functools.partial(make_coinrun, distribution_mode='easy'),
+    num_envs=256,
+)
 
 # Custom configuration
-env = pufferlib.make(
-    'procgen-coinrun',
+env = pufferlib.vector.make(
+    functools.partial(
+        make_coinrun,
+        num_levels=200,  # Number of unique levels
+        start_level=0,   # Starting level seed
+        distribution_mode='hard',
+    ),
     num_envs=256,
-    num_levels=200,  # Number of unique levels
-    start_level=0,   # Starting level seed
-    distribution_mode='hard'
 )
 ```
 
 ### NetHack
 
 ```python
-import pufferlib
+import pufferlib.vector
+
+# Pass a constructor callable -- there is no string registry.
+# make_nethack / make_minihack_* are placeholders for the env creators you
+# provide (functions that build the corresponding env).
 
 # NetHack Learning Environment
-env = pufferlib.make('nethack', num_envs=128)
+env = pufferlib.vector.make(make_nethack, num_envs=128)
 
 # MiniHack variants
-env = pufferlib.make('minihack-corridor', num_envs=128)
-env = pufferlib.make('minihack-room', num_envs=128)
+env = pufferlib.vector.make(make_minihack_corridor, num_envs=128)
+env = pufferlib.vector.make(make_minihack_room, num_envs=128)
 ```
 
 ### Minigrid
 
 ```python
-import pufferlib
+import pufferlib.vector
 
-# Minigrid environments
-env = pufferlib.make('minigrid-empty-8x8', num_envs=256)
-env = pufferlib.make('minigrid-doorkey-8x8', num_envs=256)
-env = pufferlib.make('minigrid-multiroom', num_envs=256)
+# Pass a constructor callable -- there is no string registry.
+# make_minigrid_* are placeholders for the env creators you provide.
+env = pufferlib.vector.make(make_minigrid_empty_8x8, num_envs=256)
+env = pufferlib.vector.make(make_minigrid_doorkey_8x8, num_envs=256)
+env = pufferlib.vector.make(make_minigrid_multiroom, num_envs=256)
 ```
 
 ### Neural MMO
 
 ```python
-import pufferlib
+import functools
+import pufferlib.vector
 
-# Large-scale multi-agent environment
-env = pufferlib.make(
-    'neuralmmo',
+# Large-scale multi-agent environment.
+# Pass a constructor callable -- there is no string registry. `make_neuralmmo`
+# is a placeholder for the env creator you provide; bind kwargs with partial.
+env = pufferlib.vector.make(
+    functools.partial(
+        make_neuralmmo,
+        num_agents=128,  # Agents per environment
+        map_size=128,
+    ),
     num_envs=64,
-    num_agents=128,  # Agents per environment
-    map_size=128
 )
 ```
 
 ### Crafter
 
 ```python
-import pufferlib
+import pufferlib.vector
 
-# Open-ended crafting environment
-env = pufferlib.make('crafter', num_envs=128)
+# Open-ended crafting environment.
+# Pass a constructor callable -- there is no string registry. `make_crafter`
+# is a placeholder for the env creator you provide.
+env = pufferlib.vector.make(make_crafter, num_envs=128)
 ```
 
 ### GPUDrive
 
 ```python
-import pufferlib
+import functools
+import pufferlib.vector
 
-# GPU-accelerated driving simulator
-env = pufferlib.make(
-    'gpudrive',
+# GPU-accelerated driving simulator.
+# Pass a constructor callable -- there is no string registry. `make_gpudrive`
+# is a placeholder for the env creator you provide; bind kwargs with partial.
+env = pufferlib.vector.make(
+    functools.partial(make_gpudrive, num_vehicles=8),
     num_envs=1024,  # Can handle many environments on GPU
-    num_vehicles=8
 )
 ```
 
 ### MicroRTS
 
 ```python
-import pufferlib
+import functools
+import pufferlib.vector
 
-# Real-time strategy game
-env = pufferlib.make(
-    'microrts',
+# Real-time strategy game.
+# Pass a constructor callable -- there is no string registry. `make_microrts`
+# is a placeholder for the env creator you provide; bind kwargs with partial.
+env = pufferlib.vector.make(
+    functools.partial(make_microrts, map_size=16, max_steps=2000),
     num_envs=128,
-    map_size=16,
-    max_steps=2000
 )
 ```
 
 ### Griddly
 
 ```python
-import pufferlib
+import pufferlib.vector
 
-# Grid-based games
-env = pufferlib.make('griddly-clusters', num_envs=256)
-env = pufferlib.make('griddly-sokoban', num_envs=256)
+# Grid-based games.
+# Pass a constructor callable -- there is no string registry. make_griddly_*
+# are placeholders for the env creators you provide.
+env = pufferlib.vector.make(make_griddly_clusters, num_envs=256)
+env = pufferlib.vector.make(make_griddly_sokoban, num_envs=256)
 ```
 
 ## Custom Wrappers
@@ -319,7 +382,9 @@ def proximity_shaping(obs, action):
     distance = np.linalg.norm(goal_pos - agent_pos)
     return -0.1 * distance
 
-env = pufferlib.make('myenv', num_envs=128)
+# Pass a constructor callable -- there is no string registry. `make_env`
+# is a placeholder for your env creator.
+env = pufferlib.vector.make(make_env, num_envs=128)
 env = RewardShaping(env, proximity_shaping)
 ```
 
@@ -428,38 +493,40 @@ class PolicyWithUnflatten(nn.Module):
         # ...
 ```
 
-## Environment Registration
+## Environment Lookup
 
-### Registering Custom Environments
+### Mapping Names to Constructors
+
+PufferLib has no string registry and no `pufferlib.register`/`pufferlib.make`.
+If you want name-based lookup, keep your own mapping of names to environment
+constructors (callables) and pass the resolved constructor to
+`pufferlib.vector.make`:
 
 ```python
-import pufferlib
+import functools
+import pufferlib.vector
+from my_package.envs import MyEnvironment
 
-# Register environment for easy access
-pufferlib.register(
-    id='my-custom-env',
-    entry_point='my_package.envs:MyEnvironment',
-    kwargs={'param1': 'value1'}
-)
+# Your own registry: name -> constructor (callable)
+ENV_REGISTRY = {
+    'my-custom-env': functools.partial(MyEnvironment, param1='value1'),
+}
 
-# Now can use with make
-env = pufferlib.make('my-custom-env', num_envs=256)
+# Resolve the name to a constructor, then vectorize
+env_creator = ENV_REGISTRY['my-custom-env']
+env = pufferlib.vector.make(env_creator, num_envs=256)
 ```
 
-### Registering in Ocean Suite
+### Sharing Constructors
 
-To add your environment to Ocean:
+To make an environment easy for others to use, simply expose its constructor
+(a `PufferEnv` subclass, or a function/`functools.partial` that returns one)
+from your package and document the kwargs:
 
 ```python
-# In ocean/environment.py
-OCEAN_REGISTRY = {
-    'my-env': {
-        'entry_point': 'my_package.envs:MyEnvironment',
-        'kwargs': {
-            'default_param': 'default_value'
-        }
-    }
-}
+# In my_package/envs.py
+def make_my_env(default_param='default_value'):
+    return MyEnvironment(param1=default_param)
 ```
 
 ## Compatibility Patterns
@@ -468,7 +535,8 @@ OCEAN_REGISTRY = {
 
 ```python
 import gymnasium as gym
-import pufferlib
+import pufferlib.emulation
+import pufferlib.vector
 
 # Standard Gymnasium environment
 class GymEnv(gym.Env):
@@ -478,15 +546,19 @@ class GymEnv(gym.Env):
     def step(self, action):
         return observation, reward, terminated, truncated, info
 
-# Convert to PufferEnv
-puffer_env = pufferlib.emulate(GymEnv, num_envs=128)
+# Wrap with GymnasiumPufferEnv, then vectorize (pass a constructor callable)
+env = pufferlib.vector.make(
+    lambda: pufferlib.emulation.GymnasiumPufferEnv(env_creator=GymEnv),
+    num_envs=128,
+)
 ```
 
 ### PettingZoo to PufferLib
 
 ```python
 from pettingzoo import ParallelEnv
-import pufferlib
+import pufferlib.emulation
+import pufferlib.vector
 
 # PettingZoo parallel environment
 class PZEnv(ParallelEnv):
@@ -496,15 +568,19 @@ class PZEnv(ParallelEnv):
     def step(self, actions):
         return observations, rewards, terminations, truncations, infos
 
-# Convert to PufferEnv
-puffer_env = pufferlib.emulate(PZEnv, num_envs=128)
+# Wrap with PettingZooPufferEnv, then vectorize (pass a constructor callable)
+env = pufferlib.vector.make(
+    lambda: pufferlib.emulation.PettingZooPufferEnv(env_creator=PZEnv),
+    num_envs=128,
+)
 ```
 
 ### Legacy Gym (v0.21) to PufferLib
 
 ```python
 import gym  # Old gym
-import pufferlib
+import pufferlib.emulation
+import pufferlib.vector
 
 # Legacy gym environment (returns done instead of terminated/truncated)
 class LegacyEnv(gym.Env):
@@ -514,8 +590,11 @@ class LegacyEnv(gym.Env):
     def step(self, action):
         return observation, reward, done, info
 
-# PufferLib handles legacy format automatically
-puffer_env = pufferlib.emulate(LegacyEnv, num_envs=128)
+# Wrap with GymnasiumPufferEnv, then vectorize (pass a constructor callable)
+env = pufferlib.vector.make(
+    lambda: pufferlib.emulation.GymnasiumPufferEnv(env_creator=LegacyEnv),
+    num_envs=128,
+)
 ```
 
 ## Performance Considerations
@@ -523,31 +602,46 @@ puffer_env = pufferlib.emulate(LegacyEnv, num_envs=128)
 ### Efficient Integration
 
 ```python
-# Fast: Use built-in integrations when available
-env = pufferlib.make('procgen-coinrun', num_envs=256)
-
-# Slower: Generic wrapper (still fast, but overhead)
 import gymnasium as gym
-gym_env = gym.make('CartPole-v1')
-env = pufferlib.emulate(gym_env, num_envs=256)
+import pufferlib.emulation
+import pufferlib.vector
+
+# Fast: a native PufferEnv constructor (no emulation layer).
+# `make_coinrun` is a placeholder for your PufferEnv creator.
+env = pufferlib.vector.make(make_coinrun, num_envs=256)
+
+# Slower: Generic Gymnasium wrapper (still fast, but emulation overhead)
+env = pufferlib.vector.make(
+    lambda: pufferlib.emulation.GymnasiumPufferEnv(
+        env_creator=lambda: gym.make('CartPole-v1')),
+    num_envs=256,
+)
 
 # Slowest: Nested wrappers add overhead
-import gymnasium as gym
-gym_env = gym.make('CartPole-v1')
-gym_env = SomeWrapper(gym_env)
-gym_env = AnotherWrapper(gym_env)
-env = pufferlib.emulate(gym_env, num_envs=256)
+def nested_creator():
+    gym_env = gym.make('CartPole-v1')
+    gym_env = SomeWrapper(gym_env)
+    gym_env = AnotherWrapper(gym_env)
+    return pufferlib.emulation.GymnasiumPufferEnv(env_creator=lambda: gym_env)
+
+env = pufferlib.vector.make(nested_creator, num_envs=256)
 ```
 
 ### Minimize Wrapper Overhead
 
 ```python
+import pufferlib.emulation
+import pufferlib.vector
+
 # BAD: Too many wrappers
-env = gym.make('CartPole-v1')
-env = Wrapper1(env)
-env = Wrapper2(env)
-env = Wrapper3(env)
-puffer_env = pufferlib.emulate(env, num_envs=256)
+def bad_creator():
+    env = gym.make('CartPole-v1')
+    env = Wrapper1(env)
+    env = Wrapper2(env)
+    env = Wrapper3(env)
+    return pufferlib.emulation.GymnasiumPufferEnv(env_creator=lambda: env)
+
+env = pufferlib.vector.make(bad_creator, num_envs=256)
 
 # GOOD: Combine wrapper logic
 class CombinedWrapper(gym.Wrapper):
@@ -558,9 +652,11 @@ class CombinedWrapper(gym.Wrapper):
         reward = self._transform_reward(reward)
         return obs, reward, done, truncated, info
 
-env = gym.make('CartPole-v1')
-env = CombinedWrapper(env)
-puffer_env = pufferlib.emulate(env, num_envs=256)
+def good_creator():
+    env = CombinedWrapper(gym.make('CartPole-v1'))
+    return pufferlib.emulation.GymnasiumPufferEnv(env_creator=lambda: env)
+
+env = pufferlib.vector.make(good_creator, num_envs=256)
 ```
 
 ## Debugging Integration
@@ -598,11 +694,16 @@ test_environment(MyEnvironment())
 ```python
 # Verify PufferLib emulation matches original
 import gymnasium as gym
-import pufferlib
+import pufferlib.emulation
+import pufferlib.vector
 import numpy as np
 
 gym_env = gym.make('CartPole-v1')
-puffer_env = pufferlib.emulate(lambda: gym.make('CartPole-v1'), num_envs=1)
+puffer_env = pufferlib.vector.make(
+    lambda: pufferlib.emulation.GymnasiumPufferEnv(
+        env_creator=lambda: gym.make('CartPole-v1')),
+    num_envs=1,
+)
 
 # Test with same seed
 gym_env.reset(seed=42)

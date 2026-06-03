@@ -7,6 +7,7 @@ Customize the observation space, action space, and environment logic for your ta
 """
 
 import numpy as np
+import gymnasium
 import pufferlib
 from pufferlib import PufferEnv
 
@@ -27,56 +28,65 @@ class MyEnvironment(PufferEnv):
             grid_size: Size of the grid world
             max_steps: Maximum steps per episode
         """
-        super().__init__(buf)
-
         self.grid_size = grid_size
         self.max_steps = max_steps
 
+        # Define spaces and num_agents BEFORE calling super().__init__(buf)
+
         # Define observation space
         # Option 1: Flat vector observation
-        self.observation_space = self.make_space((4,))  # [x, y, goal_x, goal_y]
+        self.single_observation_space = gymnasium.spaces.Box(
+            low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)  # [x, y, goal_x, goal_y]
 
         # Option 2: Dict observation with multiple components
-        # self.observation_space = self.make_space({
-        #     'position': (2,),
-        #     'goal': (2,),
-        #     'grid': (grid_size, grid_size)
+        # self.single_observation_space = gymnasium.spaces.Dict({
+        #     'position': gymnasium.spaces.Box(
+        #         low=-np.inf, high=np.inf, shape=(2,), dtype=np.float32),
+        #     'goal': gymnasium.spaces.Box(
+        #         low=-np.inf, high=np.inf, shape=(2,), dtype=np.float32),
+        #     'grid': gymnasium.spaces.Box(
+        #         low=0, high=1, shape=(grid_size, grid_size), dtype=np.float32),
         # })
 
         # Option 3: Image observation
-        # self.observation_space = self.make_space((grid_size, grid_size, 3))
+        # self.single_observation_space = gymnasium.spaces.Box(
+        #     low=0, high=255, shape=(grid_size, grid_size, 3), dtype=np.uint8)
 
         # Define action space
         # Option 1: Discrete actions
-        self.action_space = self.make_discrete(4)  # 0: up, 1: right, 2: down, 3: left
+        self.single_action_space = gymnasium.spaces.Discrete(4)  # 0: up, 1: right, 2: down, 3: left
 
         # Option 2: Continuous actions
-        # self.action_space = self.make_space((2,))  # [dx, dy]
+        # self.single_action_space = gymnasium.spaces.Box(
+        #     low=-1.0, high=1.0, shape=(2,), dtype=np.float32)  # [dx, dy]
 
         # Option 3: Multi-discrete actions
-        # self.action_space = self.make_multi_discrete([3, 3])  # Two 3-way choices
+        # self.single_action_space = gymnasium.spaces.MultiDiscrete([3, 3])  # Two 3-way choices
+
+        self.num_agents = 1
 
         # Initialize state
         self.agent_pos = None
         self.goal_pos = None
         self.step_count = 0
 
-        self.reset()
+        super().__init__(buf)
 
-    def reset(self):
+    def reset(self, seed=None):
         """
         Reset environment to initial state.
 
         Returns:
             observation: Initial observation
+            info: List of info dicts (one per agent); empty list here
         """
         # Reset state
         self.agent_pos = np.array([0, 0], dtype=np.float32)
         self.goal_pos = np.array([self.grid_size - 1, self.grid_size - 1], dtype=np.float32)
         self.step_count = 0
 
-        # Return initial observation
-        return self._get_observation()
+        # Return initial observation and an (empty) info list
+        return self._get_observation(), []
 
     def step(self, action):
         """
@@ -88,8 +98,9 @@ class MyEnvironment(PufferEnv):
         Returns:
             observation: New observation
             reward: Reward for this step
-            done: Whether episode is complete
-            info: Additional information
+            terminal: Whether episode terminated (goal/failure)
+            truncation: Whether episode was truncated (time limit)
+            info: List of info dicts (one per agent)
         """
         self.step_count += 1
 
@@ -99,22 +110,23 @@ class MyEnvironment(PufferEnv):
         # Compute reward
         reward = self._compute_reward()
 
-        # Check if episode is done
-        done = self._is_done()
+        # Episode terminates on goal; truncates on the step limit
+        terminal = self._is_terminated()
+        truncation = self.step_count >= self.max_steps
 
         # Get new observation
         observation = self._get_observation()
 
-        # Additional info
-        info = {}
-        if done:
+        # Additional info (list of dicts, one per agent)
+        info = []
+        if terminal or truncation:
             # Include episode statistics when episode ends
-            info['episode'] = {
+            info.append({'episode': {
                 'r': reward,
                 'l': self.step_count
-            }
+            }})
 
-        return observation, reward, done, info
+        return observation, reward, terminal, truncation, info
 
     def _apply_action(self, action):
         """Apply action to update environment state."""
@@ -142,14 +154,12 @@ class MyEnvironment(PufferEnv):
 
         return reward
 
-    def _is_done(self):
-        """Check if episode is complete."""
-        # Episode ends if goal reached or max steps exceeded
+    def _is_terminated(self):
+        """Check if episode terminated (goal reached). Timeout is a truncation, handled in step()."""
         distance = np.linalg.norm(self.agent_pos - self.goal_pos)
         goal_reached = distance < 0.5
-        timeout = self.step_count >= self.max_steps
 
-        return goal_reached or timeout
+        return goal_reached
 
     def _get_observation(self):
         """Generate observation from current state."""
@@ -170,28 +180,31 @@ class MultiAgentEnvironment(PufferEnv):
     """
 
     def __init__(self, buf=None, num_agents=4, grid_size=10, max_steps=1000):
-        super().__init__(buf)
-
+        # Define spaces and num_agents BEFORE calling super().__init__(buf)
         self.num_agents = num_agents
         self.grid_size = grid_size
         self.max_steps = max_steps
 
         # Per-agent observation space
-        self.single_observation_space = self.make_space({
-            'position': (2,),
-            'goal': (2,),
-            'others': (2 * (num_agents - 1),)  # Positions of other agents
+        self.single_observation_space = gymnasium.spaces.Dict({
+            'position': gymnasium.spaces.Box(
+                low=-np.inf, high=np.inf, shape=(2,), dtype=np.float32),
+            'goal': gymnasium.spaces.Box(
+                low=-np.inf, high=np.inf, shape=(2,), dtype=np.float32),
+            'others': gymnasium.spaces.Box(
+                low=-np.inf, high=np.inf,
+                shape=(2 * (num_agents - 1),), dtype=np.float32),  # Positions of other agents
         })
 
         # Per-agent action space
-        self.single_action_space = self.make_discrete(5)  # 4 directions + stay
+        self.single_action_space = gymnasium.spaces.Discrete(5)  # 4 directions + stay
 
         # Initialize state
         self.agent_positions = None
         self.goal_positions = None
         self.step_count = 0
 
-        self.reset()
+        super().__init__(buf)
 
     def reset(self):
         """Reset all agents."""
@@ -301,17 +314,17 @@ def test_environment():
     print("Testing single-agent environment...")
     env = MyEnvironment()
 
-    obs = env.reset()
+    obs, info = env.reset()
     print(f"Initial observation shape: {obs.shape}")
 
     for step in range(10):
-        action = env.action_space.sample()
-        obs, reward, done, info = env.step(action)
+        action = env.single_action_space.sample()
+        obs, reward, terminal, truncation, info = env.step(action)
 
-        print(f"Step {step}: reward={reward:.3f}, done={done}")
+        print(f"Step {step}: reward={reward:.3f}, terminal={terminal}, truncation={truncation}")
 
-        if done:
-            obs = env.reset()
+        if terminal or truncation:
+            obs, info = env.reset()
             print("Episode finished, resetting...")
 
     print("\nTesting multi-agent environment...")

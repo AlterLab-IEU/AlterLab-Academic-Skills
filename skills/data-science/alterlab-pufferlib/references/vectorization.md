@@ -26,14 +26,19 @@ PufferLib's vectorization system enables high-performance parallel environment s
 ### Basic Vectorization
 
 ```python
-import pufferlib
+import pufferlib.vector
+
+# PufferLib has no string registry -- pass an environment constructor
+# (callable) to `pufferlib.vector.make`. `env_creator` is a placeholder for
+# the callable that builds your env (a PufferEnv class, or a function /
+# functools.partial that returns one).
 
 # Automatic vectorization
-env = pufferlib.make('environment_name', num_envs=256)
+env = pufferlib.vector.make(env_creator, num_envs=256)
 
 # With explicit configuration
-env = pufferlib.make(
-    'environment_name',
+env = pufferlib.vector.make(
+    env_creator,
     num_envs=256,
     num_workers=8,
     envs_per_worker=32
@@ -199,14 +204,20 @@ PufferLib uses shared memory for zero-copy observation passing:
 
 ```python
 import numpy as np
+import gymnasium
 from multiprocessing import shared_memory
 
 class OptimizedEnv(PufferEnv):
     def __init__(self, buf=None):
-        super().__init__(buf)
+        # Define spaces and num_agents BEFORE super().__init__(buf)
+        self.single_observation_space = gymnasium.spaces.Dict({
+            'obs': gymnasium.spaces.Box(
+                low=0, high=255, shape=(84, 84, 3), dtype=np.uint8),
+        })
+        self.single_action_space = gymnasium.spaces.Discrete(4)
+        self.num_agents = 1
 
-        # Environment will use provided shared buffer
-        self.observation_space = self.make_space({'obs': (84, 84, 3)})
+        super().__init__(buf)
 
         # Observations written directly to shared memory
         self._obs_buffer = None
@@ -324,11 +335,18 @@ outer_vec_env = Multiprocessing(
 PufferLib treats multi-agent environments as first-class citizens:
 
 ```python
-# Multi-agent environment automatically vectorized
-env = pufferlib.make(
-    'pettingzoo-knights-archers-zombies',
+import functools
+import pufferlib.vector
+
+# Multi-agent environment automatically vectorized.
+# PufferLib has no string registry -- pass an environment constructor
+# (callable). For PettingZoo envs, wrap them with
+# pufferlib.emulation.PettingZooPufferEnv inside the creator. `MultiAgentEnv`
+# here is your own multi-agent PufferEnv class / creator callable; bind
+# constructor kwargs with functools.partial.
+env = pufferlib.vector.make(
+    functools.partial(MultiAgentEnv, num_agents=4),
     num_envs=128,
-    num_agents=4
 )
 
 # Observations: {agent_id: [batch_obs]} for each agent

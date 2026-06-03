@@ -554,10 +554,9 @@ Implement iterative improvement through visual inspection. For complete workflow
 ```bash
 # Using the pdf_to_images script
 python scripts/pdf_to_images.py presentation.pdf review/slide --dpi 150
-
-# Or use pptx skill's thumbnail tool
-python ../document-skills/pptx/scripts/thumbnail.py presentation.pptx review/thumb
 ```
+
+For PowerPoint decks, export to PDF first, then run the same `scripts/pdf_to_images.py` conversion.
 
 **Step 3: Systematic Inspection**
 
@@ -780,11 +779,8 @@ and discussion (slides 13-14) BEFORE creating slides.
 
 **Generate Images**:
 ```bash
-# Convert PDF to images
+# Convert PDF to images (export PowerPoint to PDF first)
 python scripts/pdf_to_images.py presentation.pdf review/slides
-
-# Or create thumbnail grid
-python ../document-skills/pptx/scripts/thumbnail.py presentation.pptx review/grid
 ```
 
 **Systematic Review**:
@@ -1020,14 +1016,6 @@ python scripts/pdf_to_images.py presentation.pdf output/slide --dpi 150
 # Adjustable DPI
 # Page range selection
 ```
-
-### PPTX Skill Scripts
-
-From `document-skills/pptx/scripts/`:
-- `thumbnail.py`: Create thumbnail grids
-- `rearrange.py`: Duplicate and reorder slides
-- `inventory.py`: Extract text content
-- `replace.py`: Update text programmatically
 
 ### External Tools
 

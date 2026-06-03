@@ -41,10 +41,15 @@ puffer train environment_name \
 
 ```python
 import pufferlib
-from pufferlib import PuffeRL
+import pufferlib.vector
+from pufferlib.pufferl import PuffeRL
 
-# Initialize environment
-env = pufferlib.make('environment_name', num_envs=256)
+# Initialize environment.
+# PufferLib has no string registry -- pass an environment constructor
+# (callable) to `pufferlib.vector.make`. `env_creator` is a placeholder for
+# the callable that builds your env (a PufferEnv class, or a function /
+# functools.partial that returns one).
+env = pufferlib.vector.make(env_creator, num_envs=256)
 
 # Create trainer
 trainer = PuffeRL(
@@ -289,11 +294,17 @@ best_config = protein.optimize()
 ### Curriculum Learning
 
 ```python
-# Start with easy tasks, gradually increase difficulty
+import functools
+import pufferlib.vector
+
+# Start with easy tasks, gradually increase difficulty.
+# Bind constructor kwargs with functools.partial -- there is no string
+# registry, so `MyEnv` here is your own PufferEnv class / creator callable.
 difficulty_levels = [0.1, 0.3, 0.5, 0.7, 1.0]
 
 for difficulty in difficulty_levels:
-    env = pufferlib.make('environment_name', difficulty=difficulty)
+    env = pufferlib.vector.make(
+        functools.partial(MyEnv, difficulty=difficulty), num_envs=256)
     trainer = PuffeRL(env, policy)
 
     for iteration in range(iterations_per_level):

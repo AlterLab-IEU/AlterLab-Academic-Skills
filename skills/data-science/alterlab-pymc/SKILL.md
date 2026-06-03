@@ -86,7 +86,7 @@ with pm.Model(coords=coords) as model:
 
 ```python
 with model:
-    prior_pred = pm.sample_prior_predictive(samples=1000, random_seed=42)
+    prior_pred = pm.sample_prior_predictive(draws=1000, random_seed=42)
 
 # Visualize
 az.plot_ppc(prior_pred, group='prior')

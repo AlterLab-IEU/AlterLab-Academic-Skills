@@ -268,7 +268,7 @@ pl.concat([df1, df2], how="diagonal")
 Reshape data:
 ```python
 # Pivot (wide format)
-df.pivot(values="sales", index="date", columns="product")
+df.pivot("product", index="date", values="sales")
 
 # Unpivot (long format)
 df.unpivot(index="id", on=["col1", "col2"])

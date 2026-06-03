@@ -133,7 +133,7 @@ G = nx.watts_strogatz_graph(n=100, k=6, p=0.1, seed=42)
 G = nx.grid_2d_graph(m=5, n=7)
 
 # Random tree
-G = nx.random_tree(n=100, seed=42)
+G = nx.random_labeled_tree(n=100, seed=42)
 ```
 
 **Reference**: See `references/generators.md` for comprehensive coverage of all graph generators including classic, random, lattice, bipartite, and specialized network models with detailed parameters and use cases.

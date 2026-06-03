@@ -43,10 +43,11 @@ torchrun --nproc_per_node=4 train.py
 **Python training loop:**
 ```python
 import pufferlib
-from pufferlib import PuffeRL
+import pufferlib.vector
+from pufferlib.pufferl import PuffeRL
 
-# Create vectorized environment
-env = pufferlib.make('procgen-coinrun', num_envs=256)
+# Create vectorized environment (vector.make takes an env-constructor callable)
+env = pufferlib.vector.make(make_coinrun_env, num_envs=256)
 
 # Create trainer
 trainer = PuffeRL(
@@ -80,30 +81,33 @@ Create custom high-performance environments with the PufferEnv API.
 **Basic environment structure:**
 ```python
 import numpy as np
+import gymnasium
 from pufferlib import PufferEnv
 
 class MyEnvironment(PufferEnv):
     def __init__(self, buf=None):
+        # Define spaces BEFORE calling super().__init__(buf)
+        self.single_observation_space = gymnasium.spaces.Box(
+            low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
+        self.single_action_space = gymnasium.spaces.Discrete(4)
+        self.num_agents = 1
+
         super().__init__(buf)
 
-        # Define spaces
-        self.observation_space = self.make_space((4,))
-        self.action_space = self.make_discrete(4)
-
-        self.reset()
-
-    def reset(self):
-        # Reset state and return initial observation
-        return np.zeros(4, dtype=np.float32)
+    def reset(self, seed=None):
+        # Reset state and return (observation, info-list)
+        obs = self._get_observation()
+        return obs, []
 
     def step(self, action):
-        # Execute action, compute reward, check done
+        # Execute action, compute reward, check termination/truncation
         obs = self._get_observation()
-        reward = self._compute_reward()
-        done = self._is_done()
-        info = {}
+        rewards = self._compute_reward()
+        terminals = self._is_done()
+        truncations = self._is_truncated()
+        info = []
 
-        return obs, reward, done, info
+        return obs, rewards, terminals, truncations, info
 ```
 
 **Use the template script:** `scripts/env_template.py` provides complete single-agent and multi-agent environment templates with examples of:
@@ -127,10 +131,10 @@ Achieve maximum throughput with optimized parallel simulation.
 
 **Vectorization setup:**
 ```python
-import pufferlib
+import pufferlib.vector
 
-# Automatic vectorization
-env = pufferlib.make('environment_name', num_envs=256, num_workers=8)
+# Automatic vectorization (pass an env-constructor callable)
+env = pufferlib.vector.make(env_creator, num_envs=256, num_workers=8)
 
 # Performance benchmarks:
 # - Pure Python envs: 100k-500k SPS
@@ -200,20 +204,29 @@ Seamlessly integrate environments from popular RL frameworks.
 **Gymnasium integration:**
 ```python
 import gymnasium as gym
-import pufferlib
+import pufferlib.emulation
+import pufferlib.vector
 
-# Wrap Gymnasium environment
-gym_env = gym.make('CartPole-v1')
-env = pufferlib.emulate(gym_env, num_envs=256)
+# Wrap a Gymnasium env in a GymnasiumPufferEnv, then vectorize
+def env_creator():
+    return pufferlib.emulation.GymnasiumPufferEnv(
+        env_creator=lambda: gym.make('CartPole-v1'))
 
-# Or use make directly
-env = pufferlib.make('gym-CartPole-v1', num_envs=256)
+env = pufferlib.vector.make(env_creator, num_envs=256)
 ```
 
 **PettingZoo multi-agent:**
 ```python
-# Multi-agent environment
-env = pufferlib.make('pettingzoo-knights-archers-zombies', num_envs=128)
+import pufferlib.emulation
+import pufferlib.vector
+from pettingzoo.butterfly import knights_archers_zombies_v10
+
+# Wrap a PettingZoo env in a PettingZooPufferEnv, then vectorize
+def env_creator():
+    return pufferlib.emulation.PettingZooPufferEnv(
+        env_creator=lambda: knights_archers_zombies_v10.parallel_env())
+
+env = pufferlib.vector.make(env_creator, num_envs=128)
 ```
 
 **Supported frameworks:**
@@ -256,7 +269,7 @@ env = pufferlib.make('pettingzoo-knights-archers-zombies', num_envs=128)
 2. Define observation and action spaces
 3. Implement `reset()` and `step()` methods
 4. Test environment locally
-5. Vectorize with `pufferlib.emulate()` or `make()`
+5. Wrap with `pufferlib.emulation.GymnasiumPufferEnv` and vectorize with `pufferlib.vector.make()`
 6. Refer to `references/environments.md` for advanced patterns
 7. Optimize with `references/vectorization.md` if needed
 
@@ -380,45 +393,53 @@ env = pufferlib.make('pettingzoo-knights-archers-zombies', num_envs=128)
 
 ### Training on Standard Benchmarks
 ```python
-# Atari
-env = pufferlib.make('atari-pong', num_envs=256)
+import pufferlib.vector
+
+# Atari (pass an env-constructor callable)
+env = pufferlib.vector.make(make_pong_env, num_envs=256)
 
 # Procgen
-env = pufferlib.make('procgen-coinrun', num_envs=256)
+env = pufferlib.vector.make(make_coinrun_env, num_envs=256)
 
 # Minigrid
-env = pufferlib.make('minigrid-empty-8x8', num_envs=256)
+env = pufferlib.vector.make(make_minigrid_env, num_envs=256)
 ```
 
 ### Multi-Agent Learning
 ```python
-# PettingZoo
-env = pufferlib.make('pettingzoo-pistonball', num_envs=128)
+import pufferlib.vector
+
+# PettingZoo (pass an env-constructor callable)
+env = pufferlib.vector.make(make_pistonball_env, num_envs=128)
 
 # Shared policy for all agents
-policy = create_policy(env.observation_space, env.action_space)
+policy = create_policy(env.single_observation_space, env.single_action_space)
 trainer = PuffeRL(env=env, policy=policy)
 ```
 
 ### Custom Task Development
 ```python
-# Create custom environment
+import pufferlib.vector
+
+# Create custom environment (a native PufferEnv subclass)
 class MyTask(PufferEnv):
     # ... implement environment ...
 
-# Vectorize and train
-env = pufferlib.emulate(MyTask, num_envs=256)
+# Vectorize (pass the env class/constructor callable) and train
+env = pufferlib.vector.make(MyTask, num_envs=256)
 trainer = PuffeRL(env=env, policy=my_policy)
 ```
 
 ### High-Performance Optimization
 ```python
-# Maximize throughput
-env = pufferlib.make(
-    'my-env',
+import pufferlib.vector
+
+# Maximize throughput (pass an env-constructor callable)
+env = pufferlib.vector.make(
+    my_env_creator,     # env constructor callable
     num_envs=1024,      # Large batch
     num_workers=16,     # Many workers
-    envs_per_worker=64  # Optimize per worker
+    backend=pufferlib.vector.Multiprocessing,
 )
 ```
 

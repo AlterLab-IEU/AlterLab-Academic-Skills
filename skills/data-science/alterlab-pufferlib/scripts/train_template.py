@@ -8,10 +8,12 @@ as needed for your use case.
 """
 
 import argparse
+import functools
 import torch
 import torch.nn as nn
 import pufferlib
-from pufferlib import PuffeRL
+import pufferlib.vector
+from pufferlib.pufferl import PuffeRL
 from pufferlib.pytorch import layer_init
 
 
@@ -46,17 +48,44 @@ class Policy(nn.Module):
         return logits, value
 
 
+def resolve_env_creator(env_name):
+    """Map a CLI env name to an environment constructor (callable).
+
+    PufferLib has no string registry, so you maintain this mapping yourself.
+    Replace the body with your own lookup, e.g.:
+
+        from pufferlib.ocean import Breakout, Snake
+        registry = {
+            'breakout': Breakout,
+            'snake': functools.partial(Snake, num_agents=4),
+        }
+        return registry[env_name]
+    """
+    raise NotImplementedError(
+        f"Define a constructor for {env_name!r} (see resolve_env_creator).")
+
+
 def make_env():
-    """Create environment. Customize this for your task."""
-    # Option 1: Use Ocean environment
-    return pufferlib.make('procgen-coinrun', num_envs=256)
+    """Create vectorized environment. Customize this for your task.
 
-    # Option 2: Use Gymnasium environment
-    # return pufferlib.make('gym-CartPole-v1', num_envs=256)
+    PufferLib has no string registry -- pass an environment constructor
+    (callable) to `pufferlib.vector.make`.
+    """
+    # Option 1: A PufferEnv constructor (e.g. an Ocean environment).
+    #   `env_creator` is a placeholder: replace it with the callable that
+    #   constructs your environment, e.g. `from pufferlib.ocean import ...`.
+    return pufferlib.vector.make(env_creator, num_envs=256)
 
-    # Option 3: Use custom environment
+    # Option 2: A Gymnasium environment wrapped for PufferLib.
+    # import gymnasium as gym
+    # import pufferlib.emulation
+    # gym_creator = lambda: pufferlib.emulation.GymnasiumPufferEnv(
+    #     env_creator=lambda: gym.make('CartPole-v1'))
+    # return pufferlib.vector.make(gym_creator, num_envs=256)
+
+    # Option 3: A custom PufferEnv.
     # from my_envs import MyEnvironment
-    # return pufferlib.emulate(MyEnvironment, num_envs=256)
+    # return pufferlib.vector.make(MyEnvironment, num_envs=256)
 
 
 def create_policy(env):
@@ -73,10 +102,15 @@ def train(args):
     # Set random seeds
     torch.manual_seed(args.seed)
 
-    # Create environment
+    # Create environment.
+    # PufferLib has no string registry -- pass an environment constructor
+    # (callable) to `pufferlib.vector.make`. Resolve the CLI name to a
+    # constructor here; `resolve_env_creator` is a placeholder you implement
+    # (e.g. a dict mapping names to PufferEnv classes / functools.partial).
     print(f"Creating environment with {args.num_envs} parallel environments...")
-    env = pufferlib.make(
-        args.env_name,
+    env_creator = resolve_env_creator(args.env_name)
+    env = pufferlib.vector.make(
+        env_creator,
         num_envs=args.num_envs,
         num_workers=args.num_workers
     )
@@ -167,8 +201,9 @@ def main():
     parser = argparse.ArgumentParser(description='PufferLib Training')
 
     # Environment
-    parser.add_argument('--env-name', type=str, default='procgen-coinrun',
-                        help='Environment name')
+    parser.add_argument('--env-name', type=str, default='my-env',
+                        help='Env key resolved to a constructor by '
+                             'resolve_env_creator (PufferLib has no string registry)')
     parser.add_argument('--num-envs', type=int, default=256,
                         help='Number of parallel environments')
     parser.add_argument('--num-workers', type=int, default=8,
