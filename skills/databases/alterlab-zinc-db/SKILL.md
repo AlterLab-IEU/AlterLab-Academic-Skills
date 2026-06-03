@@ -388,7 +388,7 @@ ZINC explicitly states: **"We do not guarantee the quality of any molecule for a
 - **ZINC Wiki**: https://wiki.docking.org/
 - **File Repository**: https://files.docking.org/zinc22/
 - **GitHub**: https://github.com/docking-org/
-- **Primary Publication**: Irwin et al., J. Chem. Inf. Model 2020 (ZINC15)
+- **Primary Publication**: Sterling & Irwin, J. Chem. Inf. Model 2015 (ZINC15); Irwin et al., J. Chem. Inf. Model 2020 (ZINC20)
 - **ZINC22 Publication**: Irwin et al., J. Chem. Inf. Model 2023
 
 ## Citations
@@ -398,6 +398,9 @@ When using ZINC in publications, cite the appropriate version:
 **ZINC22**:
 Irwin, J. J., et al. "ZINC22—A Free Multi-Billion-Scale Database of Tangible Compounds for Ligand Discovery." *Journal of Chemical Information and Modeling* 2023.
 
+**ZINC20**:
+Irwin, J. J.; Tang, K. G.; Young, J.; et al. "ZINC20—A Free Ultralarge-Scale Chemical Database for Ligand Discovery." *Journal of Chemical Information and Modeling* 2020, 60(12), 6065–6073. DOI: 10.1021/acs.jcim.0c00675.
+
 **ZINC15**:
-Irwin, J. J., et al. "ZINC15 – Ligand Discovery for Everyone." *Journal of Chemical Information and Modeling* 2020, 60, 6065–6073.
+Sterling, T.; Irwin, J. J. "ZINC 15 – Ligand Discovery for Everyone." *Journal of Chemical Information and Modeling* 2015, 55, 2324–2337. DOI: 10.1021/acs.jcim.5b00559.
 

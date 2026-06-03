@@ -126,7 +126,7 @@ hsolver = heom.HEOMSolver(H_sys, [bath1, bath2], max_depth=5)
 
 ```python
 # Common in condensed matter physics
-from qutip.nonmarkov.heom import DrudeLorentzBath
+from qutip.solver.heom import DrudeLorentzBath
 
 lam = 0.1  # Reorganization energy
 gamma = 0.5  # Bath cutoff frequency

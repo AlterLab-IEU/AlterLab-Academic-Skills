@@ -225,11 +225,11 @@ See `references/secrets.md` for secret management and authentication patterns.
 
 ### 8. Deploy Web Endpoints
 
-Serve HTTP endpoints, APIs, and webhooks with `@modal.web_endpoint()`.
+Serve HTTP endpoints, APIs, and webhooks with `@modal.fastapi_endpoint()`.
 
 ```python
 @app.function()
-@modal.web_endpoint(method="POST")
+@modal.fastapi_endpoint(method="POST")
 def predict(data: dict):
     # Process request
     result = model.predict(data["input"])

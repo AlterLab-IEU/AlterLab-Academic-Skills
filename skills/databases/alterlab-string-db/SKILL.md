@@ -169,7 +169,7 @@ Perform enrichment analysis across Gene Ontology, KEGG pathways, Pfam domains, a
 
 **Usage**:
 ```python
-from scripts.string_enrichment import string_enrichment
+from scripts.string_api import string_enrichment
 
 # Enrichment for a protein list
 proteins = ['TP53', 'MDM2', 'ATM', 'CHEK2', 'BRCA1', 'ATR', 'TP73']

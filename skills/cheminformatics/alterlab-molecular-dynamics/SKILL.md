@@ -455,5 +455,5 @@ def parameterize_ligand(smiles, ff_name="openff-2.0.0.offxml"):
 - **NAMD** (alternative): https://www.ks.uiuc.edu/Research/namd/
 - **CHARMM-GUI** (web-based system builder): https://charmm-gui.org/
 - **AmberTools** (free Amber tools): https://ambermd.org/AmberTools.php
-- **OpenMM paper**: Eastman P et al. (2017) PLOS Computational Biology. PMID: 28278240
+- **OpenMM paper**: Eastman P et al. (2017) PLOS Computational Biology 13(7):e1005659. PMID: 28746339 (DOI: 10.1371/journal.pcbi.1005659)
 - **MDAnalysis paper**: Michaud-Agrawal N et al. (2011) J Computational Chemistry. PMID: 21500218

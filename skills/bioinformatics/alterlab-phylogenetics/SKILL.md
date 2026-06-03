@@ -66,8 +66,8 @@ def run_mafft(input_fasta: str, output_fasta: str, method: str = "auto",
         "auto": ["mafft", "--auto"],
         "einsi": ["mafft", "--genafpair", "--maxiterate", "1000"],
         "linsi": ["mafft", "--localpair", "--maxiterate", "1000"],
-        "fftnsi": ["mafft", "--fftnsi"],
-        "fftns": ["mafft", "--fftns"],
+        "fftnsi": ["mafft", "--retree", "2", "--maxiterate", "2"],
+        "fftns": ["mafft", "--retree", "2", "--maxiterate", "0"],
         "retree2": ["mafft", "--retree", "2"],
     }
 

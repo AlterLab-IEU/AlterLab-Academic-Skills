@@ -5,8 +5,10 @@ Complete reference documentation for the ClinPGx REST API.
 ## Base URL
 
 ```
-https://api.clinpgx.org/v1/
+https://api.clinpgx.org/v1/data/
 ```
+
+**Resource addressing**: ClinPGx objects are addressed by ClinPGx accession IDs in the path (e.g. gene CYP2D6 = `PA128`, CYP2C9 = `PA126`), not by gene symbols or rsIDs. Resolve a symbol or rsID by querying the collection endpoint with parameters (e.g. `GET /v1/data/gene?symbol=CYP2D6`, `GET /v1/data/variant?symbol=rs4244285`) and reading the accession ID from the response. Query parameter names below should be confirmed against the live OpenAPI spec.
 
 ## Rate Limiting
 
@@ -39,24 +41,24 @@ All successful responses return JSON with appropriate HTTP status codes:
 
 Retrieve pharmacogene information including function, variants, and clinical significance.
 
-#### Get Gene by Symbol
+#### Get Gene by Accession ID
 
 ```http
-GET /v1/gene/{gene_symbol}
+GET /v1/data/gene/{gene_id}
 ```
 
 **Parameters:**
-- `gene_symbol` (path, required): Gene symbol (e.g., CYP2D6, TPMT, DPYD)
+- `gene_id` (path, required): ClinPGx gene accession ID (e.g., PA128 for CYP2D6, PA126 for CYP2C9)
 
 **Example Request:**
 ```bash
-curl "https://api.clinpgx.org/v1/gene/CYP2D6"
+curl "https://api.clinpgx.org/v1/data/gene/PA128"
 ```
 
 **Example Response:**
 ```json
 {
-  "id": "PA126",
+  "id": "PA128",
   "symbol": "CYP2D6",
   "name": "cytochrome P450 family 2 subfamily D member 6",
   "chromosome": "22",
@@ -68,18 +70,18 @@ curl "https://api.clinpgx.org/v1/gene/CYP2D6"
 }
 ```
 
-#### Search Genes
+#### Resolve / Search Genes by Symbol
 
 ```http
-GET /v1/gene?q={search_term}
+GET /v1/data/gene?symbol={gene_symbol}
 ```
 
 **Parameters:**
-- `q` (query, optional): Search term for gene name or symbol
+- `symbol` (query): Gene symbol to resolve to its accession ID (e.g., CYP2D6)
 
 **Example:**
 ```bash
-curl "https://api.clinpgx.org/v1/gene?q=CYP"
+curl "https://api.clinpgx.org/v1/data/gene?symbol=CYP2D6"
 ```
 
 ### 2. Chemical/Drug Endpoint
@@ -89,21 +91,21 @@ Access drug and chemical compound information including pharmacogenomic annotati
 #### Get Drug by ID
 
 ```http
-GET /v1/chemical/{drug_id}
+GET /v1/data/chemical/{drug_id}
 ```
 
 **Parameters:**
-- `drug_id` (path, required): ClinPGx drug identifier (e.g., PA448515)
+- `drug_id` (path, required): ClinPGx drug accession ID (e.g., PA448515)
 
 **Example Request:**
 ```bash
-curl "https://api.clinpgx.org/v1/chemical/PA448515"
+curl "https://api.clinpgx.org/v1/data/chemical/PA448515"
 ```
 
 #### Search Drugs by Name
 
 ```http
-GET /v1/chemical?name={drug_name}
+GET /v1/data/chemical?name={drug_name}
 ```
 
 **Parameters:**
@@ -111,7 +113,7 @@ GET /v1/chemical?name={drug_name}
 
 **Example:**
 ```bash
-curl "https://api.clinpgx.org/v1/chemical?name=warfarin"
+curl "https://api.clinpgx.org/v1/data/chemical?name=warfarin"
 ```
 
 **Example Response:**
@@ -129,82 +131,75 @@ curl "https://api.clinpgx.org/v1/chemical?name=warfarin"
 ]
 ```
 
-### 3. Gene-Drug Pair Endpoint
+### 3. Gene-Drug Relationships (no single pair endpoint)
 
-Query curated gene-drug interaction relationships with clinical annotations.
+The public ClinPGx API does **not** provide a `geneDrugPair` endpoint. Gene-drug relationships are derived from guideline annotations, or fetched via the pair report endpoint when both object accession IDs are known.
 
-#### Get Gene-Drug Pairs
+#### Derive from Guideline Annotations
 
 ```http
-GET /v1/geneDrugPair?gene={gene}&drug={drug}
+GET /v1/data/guidelineAnnotation?relatedGenes.symbol={gene}
+GET /v1/data/guidelineAnnotation?relatedChemicals.symbol={drug}
 ```
-
-**Parameters:**
-- `gene` (query, optional): Gene symbol
-- `drug` (query, optional): Drug name
-- `cpicLevel` (query, optional): Filter by CPIC recommendation level (A, B, C, D)
 
 **Example Requests:**
 ```bash
-# Get all pairs for a gene
-curl "https://api.clinpgx.org/v1/geneDrugPair?gene=CYP2D6"
+# Guideline annotations related to a gene
+curl "https://api.clinpgx.org/v1/data/guidelineAnnotation?relatedGenes.symbol=CYP2D6"
 
-# Get specific gene-drug pair
-curl "https://api.clinpgx.org/v1/geneDrugPair?gene=CYP2D6&drug=codeine"
-
-# Get all CPIC Level A pairs
-curl "https://api.clinpgx.org/v1/geneDrugPair?cpicLevel=A"
+# Guideline annotations related to a drug
+curl "https://api.clinpgx.org/v1/data/guidelineAnnotation?relatedChemicals.symbol=codeine"
 ```
 
-**Example Response:**
-```json
-[
-  {
-    "gene": "CYP2D6",
-    "drug": "codeine",
-    "sources": ["CPIC", "FDA", "DPWG"],
-    "cpicLevel": "A",
-    "evidenceLevel": "1A",
-    "clinicalAnnotationCount": 45,
-    "hasGuideline": true,
-    "guidelineUrl": "https://www.clinpgx.org/guideline/..."
-  }
-]
-```
-
-### 4. Guideline Endpoint
-
-Access clinical practice guidelines from CPIC, DPWG, and other sources.
-
-#### Get Guidelines
+#### Pair Report Endpoint
 
 ```http
-GET /v1/guideline?source={source}&gene={gene}&drug={drug}
+GET /report/pair/{firstObjId}/{secondObjId}/{resultType}
+```
+
+**Parameters:**
+- `firstObjId` (path): Accession ID of the first object (e.g., gene PA128)
+- `secondObjId` (path): Accession ID of the second object (e.g., chemical PA449088)
+- `resultType` (path): Report type (e.g., `guidelineAnnotation`)
+
+**Example:**
+```bash
+curl "https://api.clinpgx.org/v1/report/pair/PA128/PA449088/guidelineAnnotation"
+```
+
+### 4. Guideline Annotation Endpoint
+
+Access clinical practice guideline annotations from CPIC, DPWG, and other sources.
+
+#### Get Guideline Annotations
+
+```http
+GET /v1/data/guidelineAnnotation?source={source}&relatedGenes.symbol={gene}&relatedChemicals.symbol={drug}
 ```
 
 **Parameters:**
 - `source` (query, optional): Guideline source (CPIC, DPWG, FDA)
-- `gene` (query, optional): Gene symbol
-- `drug` (query, optional): Drug name
+- `relatedGenes.symbol` (query, optional): Gene symbol
+- `relatedChemicals.symbol` (query, optional): Drug name/symbol
 
 **Example Requests:**
 ```bash
-# Get all CPIC guidelines
-curl "https://api.clinpgx.org/v1/guideline?source=CPIC"
+# Get all CPIC guideline annotations
+curl "https://api.clinpgx.org/v1/data/guidelineAnnotation?source=CPIC"
 
-# Get guideline for specific gene-drug
-curl "https://api.clinpgx.org/v1/guideline?gene=CYP2C19&drug=clopidogrel"
+# Get guideline annotations for a specific gene
+curl "https://api.clinpgx.org/v1/data/guidelineAnnotation?relatedGenes.symbol=CYP2C19"
 ```
 
-#### Get Guideline by ID
+#### Get Guideline Annotation by ID
 
 ```http
-GET /v1/guideline/{guideline_id}
+GET /v1/data/guidelineAnnotation/{guideline_id}
 ```
 
 **Example:**
 ```bash
-curl "https://api.clinpgx.org/v1/guideline/PA166104939"
+curl "https://api.clinpgx.org/v1/data/guidelineAnnotation/PA166104939"
 ```
 
 **Example Response:**
@@ -224,151 +219,76 @@ curl "https://api.clinpgx.org/v1/guideline/PA166104939"
 }
 ```
 
-### 5. Allele Endpoint
+### 5. Alleles (no /allele resource in the public API)
 
-Query allele definitions, functions, and population frequencies.
+The public ClinPGx API does **not** expose an `/allele` resource. Canonical star-allele definitions, functional status, activity scores, and population frequencies are maintained by **PharmVar** (https://www.pharmvar.org/), which provides its own gene pages, downloads, and API. Allele-level clinical implications are surfaced through ClinPGx guideline annotations.
 
-#### Get All Alleles for a Gene
-
-```http
-GET /v1/allele?gene={gene_symbol}
-```
-
-**Parameters:**
-- `gene` (query, required): Gene symbol
-
-**Example Request:**
+**For star-allele data**, use PharmVar:
 ```bash
-curl "https://api.clinpgx.org/v1/allele?gene=CYP2D6"
+# e.g. CYP2D6 star-allele definitions and frequencies
+# https://www.pharmvar.org/gene/CYP2D6
 ```
 
-**Example Response:**
-```json
-[
-  {
-    "name": "CYP2D6*1",
-    "gene": "CYP2D6",
-    "function": "Normal function",
-    "activityScore": 1.0,
-    "frequencies": {
-      "European": 0.42,
-      "African": 0.37,
-      "East Asian": 0.50,
-      "Latino": 0.44
-    },
-    "definingVariants": ["Reference allele"],
-    "pharmVarId": "PV00001"
-  },
-  {
-    "name": "CYP2D6*4",
-    "gene": "CYP2D6",
-    "function": "No function",
-    "activityScore": 0.0,
-    "frequencies": {
-      "European": 0.20,
-      "African": 0.05,
-      "East Asian": 0.01,
-      "Latino": 0.10
-    },
-    "definingVariants": ["rs3892097"],
-    "pharmVarId": "PV00004"
-  }
-]
-```
-
-#### Get Specific Allele
-
-```http
-GET /v1/allele/{allele_name}
-```
-
-**Parameters:**
-- `allele_name` (path, required): Allele name with star nomenclature (e.g., CYP2D6*4)
-
-**Example:**
+**For allele-related clinical guidance**, use the guideline annotation endpoint:
 ```bash
-curl "https://api.clinpgx.org/v1/allele/CYP2D6*4"
+curl "https://api.clinpgx.org/v1/data/guidelineAnnotation?relatedGenes.symbol=CYP2D6"
 ```
 
 ### 6. Variant Endpoint
 
 Search for genetic variants and their pharmacogenomic annotations.
 
-#### Get Variant by rsID
+#### Resolve Variant by rsID
+
+The path form `/variant/{id}` expects a ClinPGx accession ID, so resolve an rsID via the collection endpoint and read the accession ID from the response.
 
 ```http
-GET /v1/variant/{rsid}
+GET /v1/data/variant?symbol={rsid}
 ```
 
 **Parameters:**
-- `rsid` (path, required): dbSNP reference SNP ID
+- `symbol` (query): dbSNP reference SNP ID (e.g., rs4244285)
 
 **Example Request:**
 ```bash
-curl "https://api.clinpgx.org/v1/variant/rs4244285"
+curl "https://api.clinpgx.org/v1/data/variant?symbol=rs4244285"
 ```
 
-**Example Response:**
-```json
-{
-  "rsid": "rs4244285",
-  "chromosome": "10",
-  "position": 94781859,
-  "gene": "CYP2C19",
-  "alleles": ["CYP2C19*2"],
-  "consequence": "Splice site variant",
-  "clinicalSignificance": "Pathogenic - reduced enzyme activity",
-  "frequencies": {
-    "European": 0.15,
-    "African": 0.18,
-    "East Asian": 0.29,
-    "Latino": 0.12
-  },
-  "references": [...]
-}
-```
-
-#### Search Variants by Position
+#### Get Variant by Accession ID
 
 ```http
-GET /v1/variant?chromosome={chr}&position={pos}
+GET /v1/data/variant/{variant_id}
 ```
 
 **Parameters:**
-- `chromosome` (query, optional): Chromosome number (1-22, X, Y)
-- `position` (query, optional): Genomic position (GRCh38)
+- `variant_id` (path, required): ClinPGx variant accession ID
 
 **Example:**
 ```bash
-curl "https://api.clinpgx.org/v1/variant?chromosome=10&position=94781859"
+curl "https://api.clinpgx.org/v1/data/variant/{variant_id}"
 ```
 
-### 7. Clinical Annotation Endpoint
+### 7. Annotation Endpoints
 
-Access curated literature annotations for gene-drug-phenotype relationships.
+Access curated literature annotations for gene-drug-phenotype relationships. ClinPGx serves these through the `summaryAnnotation`, `variantAnnotation`, and `dataAnnotation` collections depending on annotation type. Query parameter names (including any level-of-evidence filter) should be confirmed against the live OpenAPI spec.
 
-#### Get Clinical Annotations
+#### Get Summary Annotations
 
 ```http
-GET /v1/clinicalAnnotation?gene={gene}&drug={drug}&evidenceLevel={level}
+GET /v1/data/summaryAnnotation?relatedGenes.symbol={gene}&relatedChemicals.symbol={drug}
 ```
 
 **Parameters:**
-- `gene` (query, optional): Gene symbol
-- `drug` (query, optional): Drug name
-- `evidenceLevel` (query, optional): Evidence level (1A, 1B, 2A, 2B, 3, 4)
-- `phenotype` (query, optional): Phenotype or outcome
+- `relatedGenes.symbol` (query, optional): Gene symbol
+- `relatedChemicals.symbol` (query, optional): Drug name/symbol
 
 **Example Requests:**
 ```bash
-# Get all annotations for a gene
-curl "https://api.clinpgx.org/v1/clinicalAnnotation?gene=CYP2D6"
+# Summary annotations related to a gene
+curl "https://api.clinpgx.org/v1/data/summaryAnnotation?relatedGenes.symbol=CYP2D6"
 
-# Get high-quality evidence only
-curl "https://api.clinpgx.org/v1/clinicalAnnotation?evidenceLevel=1A"
-
-# Get annotations for specific gene-drug pair
-curl "https://api.clinpgx.org/v1/clinicalAnnotation?gene=TPMT&drug=azathioprine"
+# Variant-level annotations related to a gene
+curl "https://api.clinpgx.org/v1/data/variantAnnotation?relatedGenes.symbol=TPMT"
 ```
 
 **Example Response:**
@@ -397,27 +317,27 @@ curl "https://api.clinpgx.org/v1/clinicalAnnotation?gene=TPMT&drug=azathioprine"
 - **3**: Limited or conflicting evidence
 - **4**: Case reports or weak evidence
 
-### 8. Drug Label Endpoint
+### 8. Label Endpoint
 
 Retrieve regulatory drug label information with pharmacogenomic content.
 
-#### Get Drug Labels
+#### Get Labels
 
 ```http
-GET /v1/drugLabel?drug={drug_name}&source={source}
+GET /v1/data/label?relatedChemicals.symbol={drug_name}&source={source}
 ```
 
 **Parameters:**
-- `drug` (query, required): Drug name
+- `relatedChemicals.symbol` (query): Drug name/symbol
 - `source` (query, optional): Regulatory source (FDA, EMA, PMDA, Health Canada)
 
 **Example Requests:**
 ```bash
 # Get all labels for warfarin
-curl "https://api.clinpgx.org/v1/drugLabel?drug=warfarin"
+curl "https://api.clinpgx.org/v1/data/label?relatedChemicals.symbol=warfarin"
 
 # Get only FDA labels
-curl "https://api.clinpgx.org/v1/drugLabel?drug=warfarin&source=FDA"
+curl "https://api.clinpgx.org/v1/data/label?relatedChemicals.symbol=warfarin&source=FDA"
 ```
 
 **Example Response:**
@@ -447,30 +367,30 @@ Access pharmacokinetic and pharmacodynamic pathway diagrams and information.
 #### Get Pathway by ID
 
 ```http
-GET /v1/pathway/{pathway_id}
+GET /v1/data/pathway/{pathway_id}
 ```
 
 **Parameters:**
-- `pathway_id` (path, required): ClinPGx pathway identifier
+- `pathway_id` (path, required): ClinPGx pathway accession ID
 
 **Example:**
 ```bash
-curl "https://api.clinpgx.org/v1/pathway/PA146123006"
+curl "https://api.clinpgx.org/v1/data/pathway/PA146123006"
 ```
 
 #### Search Pathways
 
 ```http
-GET /v1/pathway?drug={drug_name}&gene={gene}
+GET /v1/data/pathway?relatedChemicals.symbol={drug_name}&relatedGenes.symbol={gene}
 ```
 
 **Parameters:**
-- `drug` (query, optional): Drug name
-- `gene` (query, optional): Gene symbol
+- `relatedChemicals.symbol` (query, optional): Drug name/symbol
+- `relatedGenes.symbol` (query, optional): Gene symbol
 
 **Example:**
 ```bash
-curl "https://api.clinpgx.org/v1/pathway?drug=warfarin"
+curl "https://api.clinpgx.org/v1/data/pathway?relatedChemicals.symbol=warfarin"
 ```
 
 **Example Response:**
@@ -508,7 +428,7 @@ curl "https://api.clinpgx.org/v1/pathway?drug=warfarin"
 
 #### 1. Patient Medication Review
 
-Query all gene-drug pairs for a patient's medications:
+Find guideline annotations for a patient's medications:
 
 ```python
 import requests
@@ -517,39 +437,40 @@ patient_meds = ["clopidogrel", "simvastatin", "codeine"]
 patient_genes = {"CYP2C19": "*1/*2", "CYP2D6": "*1/*1", "SLCO1B1": "*1/*5"}
 
 for med in patient_meds:
-    for gene in patient_genes:
-        response = requests.get(
-            "https://api.clinpgx.org/v1/geneDrugPair",
-            params={"gene": gene, "drug": med}
-        )
-        pairs = response.json()
-        # Check for interactions
+    response = requests.get(
+        "https://api.clinpgx.org/v1/data/guidelineAnnotation",
+        params={"relatedChemicals.symbol": med}
+    )
+    guideline_annotations = response.json()
+    # Cross-reference returned annotations against patient_genes
 ```
 
 #### 2. Actionable Gene Panel
 
-Find all genes with CPIC Level A recommendations:
+Find genes with CPIC guideline annotations:
 
 ```python
 response = requests.get(
-    "https://api.clinpgx.org/v1/geneDrugPair",
-    params={"cpicLevel": "A"}
+    "https://api.clinpgx.org/v1/data/guidelineAnnotation",
+    params={"source": "CPIC"}
 )
-actionable_pairs = response.json()
+guideline_annotations = response.json()
 
-genes = set(pair['gene'] for pair in actionable_pairs)
+# Enumerate genes from each annotation's relatedGenes
+genes = set()
+for ann in guideline_annotations:
+    for g in ann.get("relatedGenes", []):
+        genes.add(g.get("symbol"))
 print(f"Panel should include: {sorted(genes)}")
 ```
 
 #### 3. Population Frequency Analysis
 
-Compare allele frequencies across populations:
+Compare allele frequencies across populations. The ClinPGx API has no `/allele` resource; obtain star-allele definitions and frequencies from **PharmVar** (https://www.pharmvar.org/):
 
 ```python
-alleles = requests.get(
-    "https://api.clinpgx.org/v1/allele",
-    params={"gene": "CYP2D6"}
-).json()
+# Populate from PharmVar gene data, e.g. https://www.pharmvar.org/gene/CYP2D6
+alleles = []  # list of allele records from PharmVar
 
 # Calculate phenotype frequencies
 pm_freq = {}  # Poor metabolizer frequencies
@@ -561,18 +482,16 @@ for allele in alleles:
 
 #### 4. Drug Safety Screen
 
-Check for high-risk gene-drug associations:
+Check for high-risk gene-drug associations via guideline annotations:
 
 ```python
-# Screen for HLA-B*57:01 before abacavir
+# Screen for HLA-B*57:01 guidance before abacavir
 response = requests.get(
-    "https://api.clinpgx.org/v1/geneDrugPair",
-    params={"gene": "HLA-B", "drug": "abacavir"}
+    "https://api.clinpgx.org/v1/data/guidelineAnnotation",
+    params={"relatedChemicals.symbol": "abacavir"}
 )
-pair = response.json()[0]
-
-if pair['cpicLevel'] == 'A':
-    print("CRITICAL: Do not use if HLA-B*57:01 positive")
+guideline_annotations = response.json()
+# CPIC: Do not use if HLA-B*57:01 positive
 ```
 
 ## Error Handling
@@ -663,7 +582,10 @@ import time
 def batch_gene_query(genes, delay=0.5):
     results = {}
     for gene in genes:
-        response = requests.get(f"https://api.clinpgx.org/v1/gene/{gene}")
+        # Resolve each symbol via the collection endpoint (path takes an accession ID)
+        response = requests.get(
+            "https://api.clinpgx.org/v1/data/gene", params={"symbol": gene}
+        )
         if response.status_code == 200:
             results[gene] = response.json()
         time.sleep(delay)
@@ -697,31 +619,19 @@ def batch_gene_query(genes, delay=0.5):
 }
 ```
 
-### Gene-Drug Pair Object
-```typescript
-{
-  gene: string;            // Gene symbol
-  drug: string;            // Drug name
-  sources: string[];       // CPIC, FDA, DPWG, etc.
-  cpicLevel: string;       // A, B, C, D
-  evidenceLevel: string;   // 1A, 1B, 2A, 2B, 3, 4
-  hasGuideline: boolean;   // Has clinical guideline
-}
-```
+### Gene-Drug Relationship (derived, not a single endpoint object)
 
-### Allele Object
-```typescript
-{
-  name: string;            // Allele name (e.g., CYP2D6*4)
-  gene: string;            // Gene symbol
-  function: string;        // Normal/decreased/no/increased/uncertain
-  activityScore: number;   // 0.0 to 2.0+
-  frequencies: {           // Population frequencies
-    [population: string]: number;
-  };
-  definingVariants: string[];  // rsIDs or descriptions
-}
-```
+There is no `geneDrugPair` resource. Relationships are derived from guideline
+annotations; inspect each annotation's `relatedGenes` and `relatedChemicals`
+fields together with its source and level-of-evidence fields (confirm exact
+field names against the live OpenAPI spec).
+
+### Allele Object (PharmVar, not the ClinPGx API)
+
+Star-allele records are served by PharmVar (https://www.pharmvar.org/), not by
+the ClinPGx API. Refer to the PharmVar schema for the authoritative shape of
+allele name, function, activity score, population frequencies, and defining
+variants.
 
 ## API Stability and Versioning
 

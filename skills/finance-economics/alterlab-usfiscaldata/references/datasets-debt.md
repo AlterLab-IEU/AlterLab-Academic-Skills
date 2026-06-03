@@ -40,7 +40,7 @@ df["tot_pub_debt_out_amt"] = df["tot_pub_debt_out_amt"].astype(float)
 
 ## Historical Debt Outstanding
 
-**Endpoint:** `/v2/accounting/od/historical_debt_outstanding`  
+**Endpoint:** `/v2/accounting/od/debt_outstanding`  
 **Frequency:** Annual  
 **Date Range:** 1790 to present
 
@@ -55,7 +55,7 @@ Annual record of U.S. national debt going back to the founding of the republic.
 ```python
 # Full historical debt series
 resp = requests.get(
-    "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/historical_debt_outstanding",
+    "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_outstanding",
     params={"sort": "-record_date", "page[size]": 10000}
 )
 df = pd.DataFrame(resp.json()["data"])

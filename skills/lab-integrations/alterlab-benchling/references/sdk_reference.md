@@ -559,11 +559,11 @@ Customize retry behavior:
 ```python
 from benchling_sdk.benchling import Benchling
 from benchling_sdk.auth.api_key_auth import ApiKeyAuth
-from benchling_sdk.retry import RetryStrategy
+from benchling_sdk.helpers.retry_helpers import RetryStrategy
 
 # Custom retry configuration
 retry_strategy = RetryStrategy(
-    max_retries=3,
+    max_tries=3,
     backoff_factor=0.5,
     status_codes_to_retry=[429, 502, 503, 504]
 )

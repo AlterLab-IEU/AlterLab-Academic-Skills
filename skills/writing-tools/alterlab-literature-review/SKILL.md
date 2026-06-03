@@ -61,8 +61,8 @@ Literature reviews follow a structured, multi-phase workflow:
    Select databases appropriate for the domain:
 
    **Biomedical & Life Sciences:**
-   - Use `gget` skill: `gget search pubmed "search terms"` for PubMed/PMC
-   - Use `gget` skill: `gget search biorxiv "search terms"` for preprints
+   - Search PubMed/PMC via NCBI E-utilities (Entrez esearch/efetch) — see scripts/search_databases.py / direct Entrez API
+   - Search bioRxiv/medRxiv via the bioRxiv API (api.biorxiv.org) or Europe PMC
    - Use `bioservices` skill for ChEMBL, KEGG, UniProt, etc.
 
    **General Scientific Literature:**
@@ -265,14 +265,18 @@ Literature reviews follow a structured, multi-phase workflow:
 
 ### PubMed / PubMed Central
 
-Access via `gget` skill:
-```bash
-# Search PubMed
-gget search pubmed "CRISPR gene editing" -l 100
+Access via NCBI E-utilities (Entrez esearch/efetch). Use Biopython's `Bio.Entrez`
+or query the eutils.ncbi.nlm.nih.gov endpoints directly:
+```python
+# Search PubMed via Entrez (Biopython)
+from Bio import Entrez
+Entrez.email = "you@example.com"  # required by NCBI
+handle = Entrez.esearch(db="pubmed", term="CRISPR gene editing", retmax=100)
+ids = Entrez.read(handle)["IdList"]
+records = Entrez.efetch(db="pubmed", id=ids, rettype="medline", retmode="text")
 
-# Search with filters
-# Use PubMed Advanced Search Builder to construct complex queries
-# Then execute via gget or direct Entrez API
+# Build complex queries with the PubMed Advanced Search Builder,
+# then pass the resulting query string as the `term` argument above.
 ```
 
 **Search tips**:
@@ -284,9 +288,13 @@ gget search pubmed "CRISPR gene editing" -l 100
 
 ### bioRxiv / medRxiv
 
-Access via `gget` skill:
+Access via the bioRxiv API (api.biorxiv.org) or Europe PMC:
 ```bash
-gget search biorxiv "CRISPR sickle cell" -l 50
+# bioRxiv/medRxiv content API (returns metadata for a date/DOI range)
+curl "https://api.biorxiv.org/details/biorxiv/2024-01-01/2024-12-31/0"
+
+# Or keyword-search preprints via Europe PMC (covers bioRxiv + medRxiv)
+curl "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=CRISPR%20sickle%20cell%20AND%20SRC:PPR&format=json"
 ```
 
 **Important considerations**:
@@ -462,8 +470,9 @@ Complete workflow for a biomedical literature review:
 # 1. Create review document from template
 cp assets/review_template.md crispr_sickle_cell_review.md
 
-# 2. Search multiple databases using appropriate skills
-# - Use gget skill for PubMed, bioRxiv
+# 2. Search multiple databases using appropriate APIs
+# - Use NCBI E-utilities (Entrez) for PubMed/PMC
+# - Use the bioRxiv API (api.biorxiv.org) or Europe PMC for preprints
 # - Use direct API access for arXiv, Semantic Scholar
 # - Export results in JSON format
 
@@ -511,7 +520,9 @@ python scripts/generate_pdf.py crispr_sickle_cell_review.md \
 This skill works seamlessly with other scientific skills:
 
 ### Database Access Skills
-- **gget**: PubMed, bioRxiv, COSMIC, AlphaFold, Ensembl, UniProt
+- **NCBI E-utilities (Entrez)**: PubMed/PMC search and retrieval
+- **bioRxiv API / Europe PMC**: bioRxiv and medRxiv preprints
+- **gget**: COSMIC, AlphaFold, Ensembl, UniProt
 - **bioservices**: ChEMBL, KEGG, Reactome, UniProt, PubChem
 - **datacommons-client**: Demographics, economics, health statistics
 

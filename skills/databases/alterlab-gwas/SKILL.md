@@ -578,7 +578,7 @@ The GWAS Catalog team provides workshop materials:
 
 ### Citation Requirements
 When using GWAS Catalog data, cite:
-- Sollis E, et al. (2023) The NHGRI-EBI GWAS Catalog: knowledgebase and deposition resource. Nucleic Acids Research. PMID: 37953337
+- Sollis E, et al. (2023) The NHGRI-EBI GWAS Catalog: knowledgebase and deposition resource. Nucleic Acids Research 51:D977-D985. PMID: 36350656. DOI: 10.1093/nar/gkac1010
 - Include access date and version when available
 - Cite original studies when discussing specific findings
 

@@ -37,16 +37,29 @@
 ```python
 import requests
 
-def query_by_uniprot(uniprot_id, affinity_type="Ki"):
+def query_by_uniprot(uniprot_id, cutoff=10000):
     """
     REST API query for BindingDB affinities by UniProt target ID.
+    The 'uniprot' param is formatted as '<accession>;<cutoff in nM>'.
     """
-    url = "https://www.bindingdb.org/rwd/bind/BindingDBRESTfulAPI.jsp/getLigandsByUniprotID"
+    url = "https://bindingdb.org/rest/getLigandsByUniprot"
     params = {
-        "uniprot_id": uniprot_id,
-        "cutoff": "10000",  # nM threshold
-        "affinity_type": affinity_type,
-        "response": "json"
+        "uniprot": f"{uniprot_id};{cutoff}",  # e.g. 'P00519;10000'
+        "response": "application/json"
+    }
+    response = requests.get(url, params=params)
+    return response.json()
+
+def query_by_uniprots(uniprot_ids, cutoff=10000):
+    """
+    Query multiple targets at once. 'uniprot' is a comma-separated list of
+    accessions; 'cutoff' is the nM threshold passed separately.
+    """
+    url = "https://bindingdb.org/rest/getLigandsByUniprots"
+    params = {
+        "uniprot": ",".join(uniprot_ids),
+        "cutoff": cutoff,
+        "response": "application/json"
     }
     response = requests.get(url, params=params)
     return response.json()
@@ -66,30 +79,47 @@ COMMON_TARGETS = {
 }
 ```
 
-### By PubChem CID (REST API)
+### By Compound (REST API)
+
+BindingDB has no by-CID endpoint. To query by compound, use `getTargetByCompound`
+with a SMILES string (a structural-similarity search). If your input is a PubChem
+CID, first convert it to SMILES via PubChem PUG-REST.
 
 ```python
-def query_by_pubchem_cid(pubchem_cid):
-    """Get all binding data for a specific compound by PubChem CID."""
-    url = "https://www.bindingdb.org/rwd/bind/BindingDBRESTfulAPI.jsp/getAffinitiesByCID"
-    params = {"cid": pubchem_cid, "response": "json"}
+def query_by_compound(smiles, cutoff=0.85):
+    """Find targets for a compound by SMILES (structural-similarity search)."""
+    url = "https://bindingdb.org/rest/getTargetByCompound"
+    params = {
+        "smiles": smiles,
+        "cutoff": cutoff,        # Tanimoto similarity threshold (0.0-1.0)
+        "response": "application/json"
+    }
     response = requests.get(url, params=params)
     return response.json()
 
+def cid_to_smiles(cid):
+    """Convert a PubChem CID to a canonical SMILES via PUG-REST."""
+    url = (f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}"
+           "/property/CanonicalSMILES/TXT")
+    return requests.get(url).text.strip()
+
 # Example: Imatinib PubChem CID = 5291
-imatinib_data = query_by_pubchem_cid(5291)
+imatinib_data = query_by_compound(cid_to_smiles(5291))
 ```
 
-### By Target Name
+### By PDB ID (REST API)
+
+There is no by-target-name endpoint. Query by UniProt ID (see above) or by PDB ID.
 
 ```python
-def query_by_target_name(target_name, affinity_cutoff=100):
-    """Query BindingDB by target name."""
-    url = "https://www.bindingdb.org/rwd/bind/BindingDBRESTfulAPI.jsp/getAffinitiesByTarget"
+def query_by_pdb(pdb_ids, cutoff=100, identity=92):
+    """Query BindingDB by PDB ID(s) (comma-separated)."""
+    url = "https://bindingdb.org/rest/getLigandsByPDBs"
     params = {
-        "target_name": target_name,
-        "cutoff": affinity_cutoff,
-        "response": "json"
+        "pdb": ",".join(pdb_ids),   # e.g. '1Q0L,3ANM'
+        "cutoff": cutoff,           # nM threshold
+        "identity": identity,       # sequence-identity threshold (%)
+        "response": "application/json"
     }
     response = requests.get(url, params=params)
     return response.json()

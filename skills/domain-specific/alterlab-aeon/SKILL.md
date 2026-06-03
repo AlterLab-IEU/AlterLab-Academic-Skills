@@ -152,9 +152,9 @@ Transform time series for feature engineering. See `references/transformations.m
 
 **ROCKET Features:**
 ```python
-from aeon.transformations.collection.convolution_based import RocketTransformer
+from aeon.transformations.collection.convolution_based import Rocket
 
-rocket = RocketTransformer()
+rocket = Rocket()
 X_features = rocket.fit_transform(X_train)
 
 # Use features with any sklearn classifier
@@ -270,11 +270,11 @@ accuracy = pipeline.score(X_test, y_test)
 ### Feature Extraction + Traditional ML
 
 ```python
-from aeon.transformations.collection import RocketTransformer
+from aeon.transformations.collection.convolution_based import Rocket
 from sklearn.ensemble import GradientBoostingClassifier
 
 # Extract features
-rocket = RocketTransformer()
+rocket = Rocket()
 X_train_features = rocket.fit_transform(X_train)
 X_test_features = rocket.transform(X_test)
 

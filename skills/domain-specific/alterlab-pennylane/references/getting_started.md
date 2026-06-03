@@ -145,8 +145,8 @@ def circuit_simulator(x):
     qml.RX(x, wires=0)
     return qml.expval(qml.PauliZ(0))
 
-# Switch to hardware (if available)
-@qml.qnode(qml.device('qiskit.ibmq', wires=2))
+# Switch to hardware (if available; backend is a concrete object from QiskitRuntimeService)
+@qml.qnode(qml.device('qiskit.remote', wires=2, backend=backend))
 def circuit_hardware(x):
     qml.RX(x, wires=0)
     return qml.expval(qml.PauliZ(0))

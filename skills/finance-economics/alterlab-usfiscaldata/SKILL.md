@@ -71,7 +71,7 @@ None required. The API is fully open and free.
 | Dataset | Endpoint | Frequency |
 |---------|----------|-----------|
 | Debt to the Penny | `/v2/accounting/od/debt_to_penny` | Daily |
-| Historical Debt Outstanding | `/v2/accounting/od/historical_debt_outstanding` | Annual |
+| Historical Debt Outstanding | `/v2/accounting/od/debt_outstanding` | Annual |
 | Schedules of Federal Debt | `/v1/accounting/od/schedules_fed_debt` | Monthly |
 
 ### Daily & Monthly Statements
@@ -102,8 +102,8 @@ None required. The API is fully open and free.
 
 | Dataset | Endpoint | Frequency |
 |---------|----------|-----------|
-| I Bonds Interest Rates | `/v2/accounting/od/i_bond_interest_rates` | Semi-Annual |
-| U.S. Treasury Savings Bonds: Issues, Redemptions & Maturities | `/v1/accounting/od/sb_issues_redemptions` | Monthly |
+| I Bonds Interest Rates | `/v1/accounting/od/i_bonds_interest_rates` | Semi-Annual |
+| U.S. Treasury Savings Bonds: Issues, Redemptions & Maturities | `/v1/accounting/od/savings_bonds_report` | Monthly |
 
 ## Response Structure
 

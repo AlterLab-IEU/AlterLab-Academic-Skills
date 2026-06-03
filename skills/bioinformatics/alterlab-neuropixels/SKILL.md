@@ -47,7 +47,12 @@ This skill should be used when:
 
 ```python
 import spikeinterface.full as si
-import neuropixels_analysis as npa
+
+# Bundled helper functions live in scripts/neuropixels_pipeline.py
+from scripts.neuropixels_pipeline import (
+    load_recording, preprocess, check_drift, correct_motion,
+    run_spike_sorting, postprocess, curate_units, export_results, run_pipeline,
+)
 
 # Configure parallel processing
 job_kwargs = dict(n_jobs=-1, chunk_duration='1s', progress_bar=True)
@@ -73,18 +78,29 @@ recording = recording.frame_slice(0, int(60 * recording.get_sampling_frequency()
 ### Complete Pipeline (One Command)
 
 ```python
-# Run full analysis pipeline
-results = npa.run_pipeline(
-    recording,
-    output_dir='output/',
+# Run full analysis pipeline (writes all outputs under output_path/)
+from scripts.neuropixels_pipeline import run_pipeline
+
+run_pipeline(
+    data_path='/path/to/data',
+    output_path='output/',
     sorter='kilosort4',
+    stream_name='imec0.ap',
+    apply_motion_correction=True,
     curation_method='allen',
 )
 
-# Access results
-sorting = results['sorting']
-metrics = results['metrics']
-labels = results['labels']
+# Results are written to disk:
+#   output/sorting_output/    spike sorter output
+#   output/analyzer/          SortingAnalyzer (waveforms, metrics)
+#   output/quality_metrics.csv
+#   output/curation_labels.json
+```
+
+Or run it from the command line:
+
+```bash
+python scripts/neuropixels_pipeline.py /path/to/data output/ --sorter kilosort4 --curation allen
 ```
 
 ## Standard Analysis Workflow
@@ -99,20 +115,24 @@ bad_ids, _ = si.detect_bad_channels(rec)
 rec = rec.remove_channels(bad_ids)
 rec = si.common_reference(rec, operator='median')
 
-# Or use our wrapper
-rec = npa.preprocess(recording)
+# Or use the bundled wrapper (returns the preprocessed recording + bad channel ids)
+from scripts.neuropixels_pipeline import preprocess
+rec, bad_channels = preprocess(recording)
 ```
 
 ### 2. Check and Correct Drift
 
 ```python
-# Check for drift (always do this!)
-motion_info = npa.estimate_motion(rec, preset='kilosort_like')
-npa.plot_drift(rec, motion_info, output='drift_map.png')
+from scripts.neuropixels_pipeline import check_drift, correct_motion
+
+# Check for drift (always do this!) — detects/localizes peaks and saves
+# a drift plot to <output_folder>/drift_check.png, returns a dict with
+# 'drift_estimate' (μm range).
+drift_info = check_drift(rec, output_folder='output/')
 
 # Apply correction if needed
-if motion_info['motion'].max() > 10:  # microns
-    rec = npa.correct_motion(rec, preset='nonrigid_accurate')
+if drift_info['drift_estimate'] > 20:  # microns
+    rec = correct_motion(rec, output_folder='output/', preset='nonrigid_fast_and_accurate')
 ```
 
 ### 3. Spike Sorting
@@ -157,40 +177,44 @@ good_units = metrics.query("""
     amplitude_cutoff < 0.1
 """).index.tolist()
 
-# Or use automated curation
-labels = npa.curate(metrics, method='allen')  # 'allen', 'ibl', 'strict'
+# Or use automated curation (returns {unit_id: 'good'|'mua'|'noise'})
+from scripts.neuropixels_pipeline import curate_units
+labels = curate_units(metrics, method='allen')  # 'allen', 'ibl', 'strict'
 ```
 
 ### 6. AI-Assisted Curation (For Uncertain Units)
 
-When using this skill with Claude Code, Claude can directly analyze waveform plots and provide expert curation decisions. For programmatic API access:
+When using this skill with Claude Code, Claude can directly analyze waveform plots and provide expert curation decisions. The recommended workflow is to render per-unit summary plots with SpikeInterface and let Claude inspect them:
 
 ```python
-from anthropic import Anthropic
+import spikeinterface.widgets as sw
+import matplotlib.pyplot as plt
 
-# Setup API client
-client = Anthropic()
-
-# Analyze uncertain units visually
+# Find borderline units worth a visual look
 uncertain = metrics.query('snr > 3 and snr < 8').index.tolist()
 
+# Render a summary figure per uncertain unit (waveform + correlogram + amplitudes)
 for unit_id in uncertain:
-    result = npa.analyze_unit_visually(analyzer, unit_id, api_client=client)
-    print(f"Unit {unit_id}: {result['classification']}")
-    print(f"  Reasoning: {result['reasoning'][:100]}...")
+    sw.plot_unit_summary(analyzer, unit_id=unit_id)
+    plt.savefig(f'ai_curation/unit_{unit_id}_summary.png', dpi=150, bbox_inches='tight')
+    plt.close()
 ```
 
-**Claude Code Integration**: When running within Claude Code, ask Claude to examine waveform/correlogram plots directly - no API setup required.
+**Claude Code Integration**: When running within Claude Code, ask Claude to examine the saved waveform/correlogram plots directly - no API setup required.
 
 ### 7. Generate Analysis Report
 
 ```python
-# Generate comprehensive HTML report with visualizations
-report_dir = npa.generate_analysis_report(results, 'output/')
-# Opens report.html with summary stats, figures, and unit table
+# The bundled run_pipeline writes a machine-readable summary.json
+# (sampling rate, duration, channel count, unit counts) into output_path/.
+import json
+with open('output/summary.json') as f:
+    summary = json.load(f)
+print(summary)
 
-# Print formatted summary to console
-npa.print_analysis_summary(results)
+# For a browsable HTML report of waveforms/metrics, use SpikeInterface's exporter:
+si.export_report(analyzer, output_folder='output/report/')
+# Open output/report/index.html for figures and the per-unit table
 ```
 
 ### 8. Export Results
@@ -200,9 +224,11 @@ npa.print_analysis_summary(results)
 si.export_to_phy(analyzer, output_folder='phy_export/',
                  compute_pc_features=True, compute_amplitudes=True)
 
-# Export to NWB
-from spikeinterface.exporters import export_to_nwb
-export_to_nwb(rec, sorting, 'output.nwb')
+# Export to NWB (via NeuroConv — SpikeInterface has no native NWB exporter)
+# pip install neuroconv
+from neuroconv.tools.spikeinterface import write_sorting, write_recording
+write_recording(recording=rec, nwbfile_path='output.nwb', overwrite=True)
+write_sorting(sorting=sorting, nwbfile_path='output.nwb')
 
 # Save quality metrics
 metrics.to_csv('quality_metrics.csv')
@@ -307,8 +333,8 @@ pip install kilosort          # Kilosort4 (GPU required)
 pip install spykingcircus     # SpykingCircus2 (CPU)
 pip install mountainsort5     # Mountainsort5 (CPU)
 
-# Our toolkit
-pip install neuropixels-analysis
+# Our toolkit ships as local scripts (scripts/) — no pip install needed;
+# run them directly or import from scripts.neuropixels_pipeline
 
 # Optional: AI curation
 pip install anthropic

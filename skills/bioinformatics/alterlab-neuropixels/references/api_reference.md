@@ -1,6 +1,6 @@
 # API Reference
 
-Quick reference for neuropixels_analysis functions organized by module.
+Quick reference for the bundled helper functions in `scripts/neuropixels_pipeline.py`, organized by module. These ship as local scripts (there is no installable `neuropixels_analysis` package); import them with `from scripts.neuropixels_pipeline import ...`. Note: the actually-bundled functions are `load_recording`, `preprocess`, `check_drift`, `correct_motion`, `run_spike_sorting`, `postprocess`, `curate_units`, `export_results`, and `run_pipeline`. Any function listed below that is not in that set is illustrative only and not provided by the bundled scripts — use the equivalent SpikeInterface call instead.
 
 ## Core Module
 
@@ -384,15 +384,15 @@ Plot comprehensive unit summary.
 
 ## SpikeInterface Integration
 
-All neuropixels_analysis functions work with SpikeInterface objects:
+All bundled helper functions work with SpikeInterface objects:
 
 ```python
 import spikeinterface.full as si
-import neuropixels_analysis as npa
+from scripts.neuropixels_pipeline import preprocess
 
-# SpikeInterface recording works with npa functions
+# SpikeInterface recording works with the bundled helpers
 recording = si.read_spikeglx('/path/')
-rec = npa.preprocess(recording)
+rec, bad_channels = preprocess(recording)
 
 # Access SpikeInterface directly for advanced usage
 rec_filtered = si.bandpass_filter(recording, freq_min=300, freq_max=6000)

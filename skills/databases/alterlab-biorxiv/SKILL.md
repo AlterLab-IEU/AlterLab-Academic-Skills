@@ -413,62 +413,6 @@ recent = df[df['date'] >= '2024-06-01']
 recent.to_csv('recent_papers.csv', index=False)
 ```
 
-## Testing the Skill
-
-To verify that the bioRxiv database skill is working correctly, run the comprehensive test suite.
-
-**Prerequisites:**
-```bash
-uv pip install requests
-```
-
-**Run tests:**
-```bash
-python tests/test_biorxiv_search.py
-```
-
-The test suite validates:
-- **Initialization**: BioRxivSearcher class instantiation
-- **Date Range Search**: Retrieving papers within specific date ranges
-- **Category Filtering**: Filtering papers by bioRxiv categories
-- **Keyword Search**: Finding papers containing specific keywords
-- **DOI Lookup**: Retrieving specific papers by DOI
-- **Result Formatting**: Proper formatting of paper metadata
-- **Interval Search**: Fetching recent papers by time intervals
-
-**Expected Output:**
-```
-🧬 bioRxiv Database Search Skill Test Suite
-======================================================================
-
-🧪 Test 1: Initialization
-✅ BioRxivSearcher initialized successfully
-
-🧪 Test 2: Date Range Search
-✅ Found 150 papers between 2024-01-01 and 2024-01-07
-   First paper: Novel CRISPR-based approach for genome editing...
-
-[... additional tests ...]
-
-======================================================================
-📊 Test Summary
-======================================================================
-✅ PASS: Initialization
-✅ PASS: Date Range Search
-✅ PASS: Category Filtering
-✅ PASS: Keyword Search
-✅ PASS: DOI Lookup
-✅ PASS: Result Formatting
-✅ PASS: Interval Search
-======================================================================
-Results: 7/7 tests passed (100%)
-======================================================================
-
-🎉 All tests passed! The bioRxiv database skill is working correctly.
-```
-
-**Note:** Some tests may show warnings if no papers are found in specific date ranges or categories. This is normal and does not indicate a failure.
-
 ## Reference Documentation
 
 For detailed API specifications, endpoint documentation, and response schemas, refer to:

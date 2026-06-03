@@ -35,7 +35,7 @@ Access comprehensive kinetic data for enzymes:
 
 **Get Km Values by EC Number**:
 ```python
-from brenda_client import get_km_values
+from scripts.brenda_client import get_km_values
 
 # Get Km values for all organisms
 km_data = get_km_values("1.1.1.1")  # Alcohol dehydrogenase
@@ -74,7 +74,7 @@ Retrieve reaction equations and details:
 
 **Get Reactions by EC Number**:
 ```python
-from brenda_client import get_reactions
+from scripts.brenda_client import get_reactions
 
 # Get all reactions for EC number
 reactions = get_reactions("1.1.1.1")
@@ -424,7 +424,7 @@ tree = build_retrosynthetic_tree("lactate", depth=2)
 
 **Error Handling**:
 ```python
-from brenda_client import get_km_values, get_reactions
+from scripts.brenda_client import get_km_values, get_reactions
 from zeep.exceptions import Fault, TransportError
 
 try:
@@ -446,7 +446,7 @@ except Exception as e:
 Find suitable enzymes for a specific substrate:
 
 ```python
-from brenda_client import get_km_values
+from scripts.brenda_client import get_km_values
 from scripts.brenda_queries import search_enzymes_by_substrate, compare_substrate_affinity
 
 # Search for enzymes that act on substrate
@@ -557,7 +557,7 @@ print(f"Potential issues: {feasibility['warnings']}")
 Comprehensive kinetic analysis for enzyme selection:
 
 ```python
-from brenda_client import get_km_values
+from scripts.brenda_client import get_km_values
 from scripts.brenda_queries import parse_km_entry, get_modeling_parameters
 from scripts.brenda_visualization import plot_kinetic_parameters
 

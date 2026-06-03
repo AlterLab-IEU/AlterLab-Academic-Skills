@@ -328,17 +328,22 @@ mol = data.Molecule.from_molecule(rdkit_mol)
 
 Use predicted structures:
 ```python
-from torchdrug import data
+from torchdrug import data, layers
+from torchdrug.layers import geometry
 
 # Load AlphaFold predicted structure
 protein = data.Protein.from_pdb("AF-P12345-F1-model_v4.pdb")
 
-# Build graph with spatial edges
-graph = protein.residue_graph(
-    node_position="ca",
-    edge_types=["sequential", "radius"],
-    radius_cutoff=10.0
+# Build a residue-level graph with sequential + spatial edges
+graph_construction_model = layers.GraphConstruction(
+    node_layers=[geometry.AlphaCarbonNode()],
+    edge_layers=[
+        geometry.SpatialEdge(radius=10.0, min_distance=5),
+        geometry.SequentialEdge(max_distance=2),
+    ],
+    edge_feature="gearnet",
 )
+graph = graph_construction_model(protein)
 ```
 
 ### With PyTorch Lightning

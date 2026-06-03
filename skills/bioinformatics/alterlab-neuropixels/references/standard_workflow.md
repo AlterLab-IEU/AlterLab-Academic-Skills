@@ -17,7 +17,11 @@ Postprocessing → Quality Metrics → Curation → Export
 
 ```python
 import spikeinterface.full as si
-import neuropixels_analysis as npa
+# Bundled helpers (local scripts — no installable package):
+from scripts.neuropixels_pipeline import (
+    load_recording, preprocess, check_drift, correct_motion,
+    run_spike_sorting, postprocess, curate_units, export_results, run_pipeline,
+)
 
 # SpikeGLX (most common)
 recording = si.read_spikeglx('/path/to/run/', stream_id='imec0.ap')
@@ -350,25 +354,28 @@ npa.plot_quality_metrics(analyzer, metrics, output='quality_summary.png')
 ## Full Pipeline Example
 
 ```python
-import neuropixels_analysis as npa
+from scripts.neuropixels_pipeline import (
+    load_recording, preprocess, correct_motion,
+    run_spike_sorting, postprocess, curate_units,
+)
 
-# Load
-recording = npa.load_recording('/data/experiment/', format='spikeglx')
+# Load (format is auto-detected from the directory contents)
+recording = load_recording('/data/experiment/', stream_id='imec0.ap')
 
-# Preprocess
-rec = npa.preprocess(recording)
+# Preprocess (returns the recording and the detected bad-channel ids)
+rec, bad_channels = preprocess(recording)
 
-# Motion correction
-rec = npa.correct_motion(rec)
+# Motion correction (writes motion info under output_folder)
+rec = correct_motion(rec, output_folder='output/')
 
 # Sort
-sorting = npa.run_sorting(rec, sorter='kilosort4')
+sorting = run_spike_sorting(rec, output_folder='output/', sorter='kilosort4')
 
-# Postprocess
-analyzer, metrics = npa.postprocess(sorting, rec)
+# Postprocess (returns analyzer and the quality-metrics DataFrame)
+analyzer, metrics = postprocess(sorting, rec, output_folder='output/')
 
-# Curate
-labels = npa.curate(metrics, method='allen')
+# Curate (returns {unit_id: 'good'|'mua'|'noise'})
+labels = curate_units(metrics, method='allen')
 
 # Export good units
 good_units = [uid for uid, label in labels.items() if label == 'good']

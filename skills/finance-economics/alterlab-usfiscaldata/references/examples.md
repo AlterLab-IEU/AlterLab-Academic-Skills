@@ -151,10 +151,10 @@ pivot = df.pivot_table(index="date", columns="security_desc", values="rate")
 print(pivot.tail(5))
 
 # I Bond rates history
-result = fetch("/v2/accounting/od/i_bond_interest_rates",
+result = fetch("/v1/accounting/od/i_bonds_interest_rates",
                sort="-effective_date", **{"page[size]": 20})
 df = pd.DataFrame(result["data"])
-df["total_rate"] = df["earnings_rate_i_bonds"].astype(float)
+df["total_rate"] = df["combined_rate"].astype(float)
 df["fixed_rate"] = df["fixed_rate"].astype(float)
 print("I Bond rate history:")
 print(df[["effective_date", "fixed_rate", "total_rate"]].head(10))

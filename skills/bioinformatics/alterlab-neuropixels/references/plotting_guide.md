@@ -9,7 +9,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import spikeinterface.full as si
 import spikeinterface.widgets as sw
-import neuropixels_analysis as npa
+# NOTE: the `npa.*` plot helpers shown below are illustrative convenience wrappers,
+# not part of the bundled scripts. Prefer the SpikeInterface widgets (sw.*) directly,
+# e.g. sw.plot_unit_summary, sw.plot_quality_metrics, sw.plot_motion.
 
 # High-quality settings
 plt.rcParams['figure.dpi'] = 150

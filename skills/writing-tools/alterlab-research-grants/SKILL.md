@@ -918,9 +918,8 @@ Load these references as needed when working on specific aspects of grant writin
 
 - `assets/nsf_project_summary_template.md`: NSF project summary structure
 - `assets/nih_specific_aims_template.md`: NIH specific aims page template
-- `assets/timeline_gantt_template.md`: Timeline and Gantt chart examples
 - `assets/budget_justification_template.md`: Budget justification structure
-- `assets/biosketch_templates/`: Agency-specific biosketch formats
+- Agency-specific biosketch formats: see the per-agency guides in `references/` (`nsf_guidelines.md`, `nih_guidelines.md`, `doe_guidelines.md`, `darpa_guidelines.md`, `nstc_guidelines.md`) and `references/team_building.md`.
 
 ## Tasks and Tools
 

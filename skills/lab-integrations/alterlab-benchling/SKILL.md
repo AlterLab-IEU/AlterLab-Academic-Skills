@@ -81,6 +81,7 @@ Registry entities include DNA sequences, RNA sequences, AA sequences, custom ent
 **Creating DNA Sequences:**
 ```python
 from benchling_sdk.models import DnaSequenceCreate
+from benchling_sdk.helpers.serialization_helpers import fields
 
 sequence = benchling.dna_sequences.create(
     DnaSequenceCreate(
@@ -89,7 +90,7 @@ sequence = benchling.dna_sequences.create(
         is_circular=True,
         folder_id="fld_abc123",
         schema_id="ts_abc123",  # optional
-        fields=benchling.models.fields({"gene_name": "GFP"})
+        fields=fields({"gene_name": {"value": "GFP"}})
     )
 )
 ```
@@ -115,12 +116,13 @@ sequence = benchling.dna_sequences.create(
 **Updating Entities:**
 ```python
 from benchling_sdk.models import DnaSequenceUpdate
+from benchling_sdk.helpers.serialization_helpers import fields
 
 updated = benchling.dna_sequences.update(
-    sequence_id="seq_abc123",
+    dna_sequence_id="seq_abc123",
     dna_sequence=DnaSequenceUpdate(
         name="Updated Plasmid Name",
-        fields=benchling.models.fields({"gene_name": "mCherry"})
+        fields=fields({"gene_name": {"value": "mCherry"}})
     )
 )
 ```
@@ -156,13 +158,14 @@ Manage physical samples, containers, boxes, and locations within the Benchling i
 **Creating Containers:**
 ```python
 from benchling_sdk.models import ContainerCreate
+from benchling_sdk.helpers.serialization_helpers import fields
 
 container = benchling.containers.create(
     ContainerCreate(
         name="Sample Tube 001",
         schema_id="cont_schema_abc123",
         parent_storage_id="box_abc123",  # optional
-        fields=benchling.models.fields({"concentration": "100 ng/μL"})
+        fields=fields({"concentration": {"value": "100 ng/μL"}})
     )
 )
 ```
@@ -203,25 +206,37 @@ Interact with electronic lab notebook (ELN) entries, protocols, and templates.
 **Creating Notebook Entries:**
 ```python
 from benchling_sdk.models import EntryCreate
+from benchling_sdk.helpers.serialization_helpers import fields
 
-entry = benchling.entries.create(
+entry = benchling.entries.create_entry(
     EntryCreate(
         name="Experiment 2025-10-20",
         folder_id="fld_abc123",
         schema_id="entry_schema_abc123",
-        fields=benchling.models.fields({"objective": "Test gene expression"})
+        fields=fields({"objective": {"value": "Test gene expression"}})
     )
 )
 ```
 
 **Linking Entities to Entries:**
+
+There is no `entry_links` service. Entities are linked into an ELN entry through
+the entry's content/notes — by inserting an inline entity reference (an
+@-mention link to the entity, e.g. `id="seq_xyz789"`) into a note block of the
+entry body, then updating the entry with that content:
 ```python
-# Add references to entities in an entry
-entry_link = benchling.entry_links.create(
+from benchling_sdk.models import EntryUpdate
+
+# Build entry content (days/notes) containing an inline link to the entity,
+# then persist it via update_entry.
+benchling.entries.update_entry(
     entry_id="entry_abc123",
-    entity_id="seq_xyz789"
+    entry=EntryUpdate(days=[...])  # notes containing the inline entity link
 )
 ```
+Confirm the exact note/link model classes (for the inline link block) against
+your installed `benchling-sdk` version, since linking is expressed within entry
+content rather than via a standalone service.
 
 **Key Notebook Operations:**
 - Create and update lab notebook entries
@@ -236,13 +251,14 @@ Automate laboratory processes using Benchling's workflow system.
 **Creating Workflow Tasks:**
 ```python
 from benchling_sdk.models import WorkflowTaskCreate
+from benchling_sdk.helpers.serialization_helpers import fields
 
 task = benchling.workflow_tasks.create(
     WorkflowTaskCreate(
         name="PCR Amplification",
         workflow_id="wf_abc123",
         assignee_id="user_abc123",
-        fields=benchling.models.fields({"template": "seq_abc123"})
+        fields=fields({"template": {"value": "seq_abc123"}})
     )
 )
 ```
@@ -332,12 +348,12 @@ The SDK automatically retries failed requests:
 # Automatic retry for 429, 502, 503, 504 status codes
 # Up to 5 retries with exponential backoff
 # Customize retry behavior if needed
-from benchling_sdk.retry import RetryStrategy
+from benchling_sdk.helpers.retry_helpers import RetryStrategy
 
 benchling = Benchling(
     url="https://your-tenant.benchling.com",
     auth_method=ApiKeyAuth("your_api_key"),
-    retry_strategy=RetryStrategy(max_retries=3)
+    retry_strategy=RetryStrategy(max_tries=3)
 )
 ```
 
@@ -359,10 +375,12 @@ total = benchling.dna_sequences.list().estimated_count()
 Use the `fields()` helper for custom schema fields:
 ```python
 # Convert dict to Fields object
-custom_fields = benchling.models.fields({
-    "concentration": "100 ng/μL",
-    "date_prepared": "2025-10-20",
-    "notes": "High quality prep"
+from benchling_sdk.helpers.serialization_helpers import fields
+
+custom_fields = fields({
+    "concentration": {"value": "100 ng/μL"},
+    "date_prepared": {"value": "2025-10-20"},
+    "notes": {"value": "High quality prep"}
 })
 ```
 

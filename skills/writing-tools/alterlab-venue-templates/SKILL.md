@@ -31,7 +31,7 @@ This skill should be used when:
 
 ### 1. Journal Article Templates
 
-Access LaTeX templates and formatting guidelines for 50+ major scientific journals across disciplines:
+Bundled LaTeX templates cover representative high-impact journals (Nature, NeurIPS-style, PLOS ONE); formatting guidelines in references/ cover many more venues across disciplines:
 
 **Nature Portfolio**:
 - Nature, Nature Methods, Nature Biotechnology, Nature Machine Intelligence
@@ -318,12 +318,14 @@ This skill works seamlessly with other scientific skills:
 
 ### By Document Type
 
-| Category | Template Count | Common Venues |
+| Category | Bundled Templates | Common Venues |
 |----------|---------------|---------------|
-| **Journal Articles** | 30+ | Nature, Science, PLOS, IEEE, ACM, Cell Press |
-| **Conference Papers** | 20+ | NeurIPS, ICML, CVPR, CHI, ISMB |
-| **Research Posters** | 10+ | A0, A1, 36×48, various packages |
-| **Grant Proposals** | 15+ | NSF, NIH, DOE, DARPA, foundations |
+| **Journal Articles** | 3 (Nature, NeurIPS, PLOS ONE) | Nature, Science, PLOS, IEEE, ACM, Cell Press |
+| **Conference Papers** | 1 (NeurIPS, in `assets/journals/`) | NeurIPS, ICML, CVPR, CHI, ISMB |
+| **Research Posters** | 1 (beamerposter) | A0, A1, 36×48, various packages |
+| **Grant Proposals** | 2 (NSF, NIH) | NSF, NIH, DOE, DARPA, foundations |
+
+> Only 6 ready-to-use LaTeX templates are bundled (counts above). The "Common Venues" column lists venues covered by the formatting guidelines in `references/`, not bundled templates.
 
 ### By Discipline
 
@@ -623,7 +625,6 @@ ISMB poster specifications:
 - Include: QR code for paper/supplementary materials
 Available templates:
 - assets/posters/beamerposter_academic.tex
-- assets/posters/tikzposter_research.tex
 ```
 
 ## Updates and Maintenance
@@ -643,7 +644,7 @@ Available templates:
 
 The venue-templates skill provides comprehensive access to:
 
-1. **50+ publication venue templates** across disciplines
+1. **6 ready-to-use LaTeX templates** (3 journal, 1 poster, 2 grant) plus formatting and writing-style guidelines for many additional venues
 2. **Detailed formatting requirements** for journals, conferences, posters, grants
 3. **Helper scripts** for template discovery, customization, and validation
 4. **Integration** with other scientific writing skills

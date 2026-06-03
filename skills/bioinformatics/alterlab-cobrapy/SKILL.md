@@ -26,7 +26,7 @@ from cobra.io import load_model
 
 # Load bundled test models
 model = load_model("textbook")  # E. coli core model
-model = load_model("ecoli")     # Full E. coli model
+model = load_model("iJO1366")   # Full E. coli genome-scale model (BiGG)
 model = load_model("salmonella")
 
 # Load from files
@@ -226,20 +226,27 @@ plt.show()
 
 Add reactions to make models feasible:
 ```python
+import cobra
 from cobra.flux_analysis import gapfill
 
-# Prepare universal model with candidate reactions
-universal = load_model("universal")
+# Build a universal model of candidate reactions to draw from.
+# In practice, load a curated reaction database (e.g. the BiGG
+# universal reactions JSON via load_json_model) or assemble reactions
+# into an empty cobra.Model — there is no load_model("universal").
+universal = cobra.Model("universal_reactions")
+# ...populate `universal` with candidate cobra.Reaction objects...
 
-# Perform gapfilling
 with model:
-    # Remove reactions to create gaps for demonstration
+    # Create a gap for demonstration
     model.remove_reactions([model.reactions.PGI])
 
-    # Find reactions needed
-    solution = gapfill(model, universal)
-    print(f"Reactions to add: {solution}")
+    # Find the minimal set of reactions from `universal` to restore feasibility
+    solution = gapfill(model, universal, demand_reactions=False)
+    for reaction in solution[0]:
+        print(reaction.id)
 ```
+
+> **Note**: `gapfill` returns a list of reaction lists (one per iteration when `iterations > 1`), so iterate `solution[0]` rather than printing `solution` directly.
 
 ### 10. Model Building
 
@@ -294,7 +301,7 @@ model.objective = "ATPASE"
 from cobra.io import load_model
 
 # Load model
-model = load_model("ecoli")
+model = load_model("iJO1366")
 
 # Run FBA
 solution = model.optimize()
@@ -311,7 +318,7 @@ from cobra.io import load_model
 from cobra.flux_analysis import single_gene_deletion
 
 # Load model
-model = load_model("ecoli")
+model = load_model("iJO1366")
 
 # Perform single gene deletions
 results = single_gene_deletion(model)
@@ -331,7 +338,7 @@ from cobra.io import load_model
 from cobra.medium import minimal_medium
 
 # Load model
-model = load_model("ecoli")
+model = load_model("iJO1366")
 
 # Calculate minimal medium for 50% of max growth
 target_growth = model.slim_optimize() * 0.5
@@ -353,7 +360,7 @@ from cobra.flux_analysis import flux_variability_analysis
 from cobra.sampling import sample
 
 # Load model
-model = load_model("ecoli")
+model = load_model("iJO1366")
 
 # First check flux ranges at optimality
 fva = flux_variability_analysis(model, fraction_of_optimum=1.0)

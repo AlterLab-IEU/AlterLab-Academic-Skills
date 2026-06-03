@@ -235,12 +235,12 @@ See `references/api_reference.md` for complete dataset list.
 Leverage pretrained models for improved performance, especially on small datasets:
 
 ```python
-# ChemBERTa (BERT pretrained on 77M molecules)
-model = dc.models.HuggingFaceModel(
-    model='seyonec/ChemBERTa-zinc-base-v1',
+# ChemBERTa (RoBERTa pretrained on SMILES) — use DeepChem's Chemberta wrapper
+model = dc.models.Chemberta(
     task='classification',
+    tokenizer_path='seyonec/PubChem10M_SMILES_BPE_60k',
     n_tasks=1,
-    learning_rate=2e-5  # Lower LR for fine-tuning
+    learning_rate=2e-5  # passed via **kwargs to TorchModel
 )
 model.fit(train, nb_epoch=10)
 
@@ -388,11 +388,10 @@ splitter = dc.splits.ScaffoldSplitter()
 train, test = splitter.train_test_split(dataset)
 
 # 3. Load pretrained model
-model = dc.models.HuggingFaceModel(
-    model='seyonec/ChemBERTa-zinc-base-v1',
+model = dc.models.Chemberta(
     task='classification',
-    n_tasks=1,
-    learning_rate=2e-5
+    tokenizer_path='seyonec/PubChem10M_SMILES_BPE_60k',
+    n_tasks=1
 )
 
 # 4. Fine-tune

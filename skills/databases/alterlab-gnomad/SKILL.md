@@ -393,5 +393,5 @@ def query_gnomad_sv(gene_symbol):
 - **Downloads**: https://gnomad.broadinstitute.org/downloads
 - **API explorer**: https://gnomad.broadinstitute.org/api (interactive GraphiQL)
 - **Constraint documentation**: https://gnomad.broadinstitute.org/help/constraint
-- **Citation**: Karczewski KJ et al. (2020) Nature. PMID: 32461654; Chen S et al. (2024) Nature. PMID: 38conservation
+- **Citation**: Karczewski KJ et al. (2020) Nature. PMID: 32461654; Chen S et al. (2024) Nature. PMID: 38057664
 - **GitHub**: https://github.com/broadinstitute/gnomad-browser

@@ -89,7 +89,7 @@ Data on Treasury's secondary market buyback (repurchase) operations. Active sinc
 
 ## I Bonds Interest Rates
 
-**Endpoint:** `/v2/accounting/od/i_bond_interest_rates`  
+**Endpoint:** `/v1/accounting/od/i_bonds_interest_rates`  
 **Frequency:** Semi-Annual (May and November)  
 **Date Range:** September 1998 to present
 
@@ -102,24 +102,24 @@ Composite interest rates for Series I Savings Bonds, including fixed rate and in
 | `announcement_date` | DATE | Announcement date |
 | `fixed_rate` | PERCENTAGE | Fixed rate component |
 | `semiannual_inflation_rate` | PERCENTAGE | Semi-annual CPI-U inflation rate |
-| `earnings_rate_i_bonds` | PERCENTAGE | Combined composite rate |
+| `combined_rate` | PERCENTAGE | Combined composite rate |
 
 ```python
 # Current I Bond rates
 resp = requests.get(
-    "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/i_bond_interest_rates",
+    "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/i_bonds_interest_rates",
     params={"sort": "-effective_date", "page[size]": 5}
 )
 df = pd.DataFrame(resp.json()["data"])
 latest = df.iloc[0]
-print(f"Current I Bond rate: {latest['earnings_rate_i_bonds']}%")
+print(f"Current I Bond rate: {latest['combined_rate']}%")
 print(f"  Fixed rate: {latest['fixed_rate']}%")
 print(f"  Inflation component: {latest['semiannual_inflation_rate']}%")
 ```
 
 ## U.S. Treasury Savings Bonds: Issues, Redemptions & Maturities
 
-**Endpoint:** `/v1/accounting/od/sb_issues_redemptions`  (3 tables)  
+**Endpoint:** `/v1/accounting/od/savings_bonds_report`  (3 tables)  
 **Frequency:** Monthly  
 **Date Range:** September 1998 to present
 

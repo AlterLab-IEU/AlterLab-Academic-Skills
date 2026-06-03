@@ -42,10 +42,17 @@ Claude can assess:
 ### Generate Unit Report
 
 ```python
-import neuropixels_analysis as npa
+# NOTE: the `npa.*` AI-curation helpers shown throughout this file are illustrative
+# only — they are NOT part of the bundled scripts. In practice, render per-unit
+# summary figures with SpikeInterface and have Claude Code inspect them directly
+# (no API client or extra package required):
+import spikeinterface.widgets as sw
+import matplotlib.pyplot as plt
 
-# Create visual report for a unit
-report = npa.generate_unit_report(analyzer, unit_id=0, output_dir='reports/')
+# Create a visual summary figure for a unit
+sw.plot_unit_summary(analyzer, unit_id=0)
+plt.savefig('reports/unit_0_summary.png', dpi=150, bbox_inches='tight')
+plt.close()
 
 # Report includes:
 # - Waveforms, templates, autocorrelogram
@@ -164,13 +171,13 @@ result = npa.analyze_unit_visually(analyzer, uid, task='drift_assessment')
 Create custom analysis prompts:
 
 ```python
-from neuropixels_analysis.ai_curation import create_curation_prompt
-
-# Get base prompt
-prompt = create_curation_prompt(
-    task='quality_assessment',
-    additional_context='Focus on waveform amplitude consistency'
-)
+# There is no bundled prompt-builder; just write the instruction text you want
+# Claude to follow when it inspects the unit's summary figure. For example:
+prompt = """
+Assess this unit's quality from its waveform, correlogram, and amplitude plots.
+Focus on waveform amplitude consistency.
+Classify as: GOOD, MUA, or NOISE.
+"""
 
 # Or fully custom
 custom_prompt = """

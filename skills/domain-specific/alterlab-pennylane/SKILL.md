@@ -186,8 +186,12 @@ circuit_def = lambda dev: qml.qnode(dev)(circuit_function)
 dev_sim = qml.device('default.qubit', wires=4)
 result_sim = circuit_def(dev_sim)(params)
 
-# Run on quantum hardware
-dev_hw = qml.device('qiskit.ibmq', wires=4, backend='ibmq_manila')
+# Run on quantum hardware (IBM, via Qiskit Runtime)
+from qiskit_ibm_runtime import QiskitRuntimeService
+
+service = QiskitRuntimeService(channel='ibm_quantum_platform')  # requires saved IBM Cloud credentials
+backend = service.least_busy(operational=True, simulator=False)
+dev_hw = qml.device('qiskit.remote', wires=4, backend=backend)
 result_hw = circuit_def(dev_hw)(params)
 ```
 

@@ -306,7 +306,7 @@ Reactions use standard biochemical notation:
 
 **Get all Km values for an enzyme:**
 ```python
-from brenda_client import get_km_values
+from scripts.brenda_client import get_km_values
 
 # Get all alcohol dehydrogenase Km values
 km_data = get_km_values("1.1.1.1")
@@ -358,7 +358,7 @@ glucose_km = get_km_values("1.1.1.1",
 
 **Get all reactions for an enzyme:**
 ```python
-from brenda_client import get_reactions
+from scripts.brenda_client import get_reactions
 
 reactions = get_reactions("1.1.1.1")
 ```

@@ -346,7 +346,7 @@ for h in sorted(all_hits, key=lambda x: -x["score"])[:5]:
 
 - **JASPAR portal**: https://jaspar.elixir.no/
 - **API documentation**: https://jaspar.elixir.no/api/v1/docs/
-- **JASPAR 2024 paper**: Castro-Mondragon et al. (2022) Nucleic Acids Research. PMID: 34875674
+- **JASPAR 2024 paper**: Rauluseviciute I, et al. (2024) JASPAR 2024: 20th anniversary of the open-access database of transcription factor binding profiles. Nucleic Acids Research 52(D1):D174-D182. DOI: 10.1093/nar/gkad1059. PMID: 37962376
 - **Biopython motifs**: https://biopython.org/docs/latest/Tutorial/chapter_motifs.html
 - **FIMO tool** (for large-scale scanning): https://meme-suite.org/meme/tools/fimo
 - **HOMER** (motif enrichment): http://homer.ucsd.edu/homer/

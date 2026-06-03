@@ -18,7 +18,7 @@ OpenAlex is a comprehensive open catalog of 240M+ scholarly works, authors, inst
 
 ### Basic Setup
 
-Always initialize the client with an email address to access the polite pool (10x rate limit boost):
+Always initialize the client with an email address to access the polite pool (more consistent response times):
 
 ```python
 from scripts.openalex_client import OpenAlexClient
@@ -280,7 +280,7 @@ with open('papers.csv', 'w', newline='', encoding='utf-8') as f:
 ## Critical Best Practices
 
 ### Always Use Email for Polite Pool
-Add email to get 10x rate limit (1 req/sec → 10 req/sec):
+Add an email to join the polite pool, which gives more consistent response times (the rate limit is the same for all users):
 ```python
 client = OpenAlexClient(email="your-email@example.edu")
 ```
@@ -479,8 +479,8 @@ For large queries:
 
 ## Rate Limits
 
-- **Default**: 1 request/second, 100k requests/day
-- **Polite pool (with email)**: 10 requests/second, 100k requests/day
+- **Rate limit (all users)**: 10 requests/second, 100,000 requests/day
+- **Polite pool (add `mailto` email)**: same rate limit, but more consistent response times. Always include an email for production workflows.
 
 Always use polite pool for production workflows by providing email to client.
 

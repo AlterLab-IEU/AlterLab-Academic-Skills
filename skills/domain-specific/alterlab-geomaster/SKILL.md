@@ -16,10 +16,10 @@ Comprehensive geospatial science skill covering GIS, remote sensing, spatial ana
 
 ```bash
 # Core Python stack (conda recommended)
-conda install -c conda-forge gdal rasterio fiona shapely pyproj geopandas
+conda install -c conda-forge gdal rasterio fiona shapely pyproj geopandas rsgislib
 
 # Remote sensing & ML
-uv pip install rsgislib torchgeo earthengine-api
+uv pip install torchgeo earthengine-api
 uv pip install scikit-learn xgboost torch-geometric
 
 # Network & visualization
@@ -320,9 +320,11 @@ with rasterio.open('large.tif') as src:
     for i, window in src.block_windows(1):
         block = src.read(1, window=window)
 
-# 3. Dask for big data
-import dask.array as da
-dask_array = da.from_rasterio('large.tif', chunks=(1, 1024, 1024))
+# 3. Dask for big data (lazy, chunked, dask-backed DataArray)
+import rioxarray
+da_raster = rioxarray.open_rasterio('large.tif', chunks=(1, 1024, 1024))
+# .data is the underlying dask.array if you need the raw chunked array:
+# dask_array = da_raster.data
 
 # 4. Use Arrow for I/O
 gdf.to_file('output.gpkg', use_arrow=True)

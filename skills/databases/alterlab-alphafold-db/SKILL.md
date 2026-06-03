@@ -73,23 +73,35 @@ print(f"AlphaFold ID: {alphafold_id}")
 Search UniProt to find protein accessions first:
 
 ```python
-import urllib.parse, urllib.request
+import requests, time
 
-def get_uniprot_ids(query, query_type='PDB_ID'):
-    """Query UniProt to get accession IDs"""
-    url = 'https://www.uniprot.org/uploadlists/'
-    params = {
-        'from': query_type,
-        'to': 'ACC',
-        'format': 'txt',
-        'query': query
-    }
-    data = urllib.parse.urlencode(params).encode('ascii')
-    with urllib.request.urlopen(urllib.request.Request(url, data)) as response:
-        return response.read().decode('utf-8').splitlines()
+def get_uniprot_ids(query, from_db='PDB', to_db='UniProtKB'):
+    """Map IDs to UniProt accessions via the current REST API.
 
-# Example: Find UniProt IDs for a protein name
-protein_ids = get_uniprot_ids("hemoglobin", query_type="GENE_NAME")
+    from_db/to_db must be current DB names, e.g. 'PDB', 'Gene_Name',
+    'UniProtKB_AC-ID', 'UniProtKB'.
+    Valid values: https://rest.uniprot.org/configure/idmapping/fields
+    """
+    base = 'https://rest.uniprot.org'
+    # 1) submit job
+    r = requests.post(f'{base}/idmapping/run',
+                      data={'from': from_db, 'to': to_db, 'ids': query})
+    r.raise_for_status()
+    job_id = r.json()['jobId']
+    # 2) poll status
+    while True:
+        s = requests.get(f'{base}/idmapping/status/{job_id}').json()
+        if s.get('jobStatus') in (None, 'FINISHED') or 'results' in s:
+            break
+        if s.get('jobStatus') in ('ERROR',):
+            raise RuntimeError(s)
+        time.sleep(1)
+    # 3) fetch results
+    res = requests.get(f'{base}/idmapping/results/{job_id}').json()
+    return [m['to'] for m in res.get('results', [])]
+
+# Example: Find UniProt accessions for a gene name
+protein_ids = get_uniprot_ids("HBB", from_db="Gene_Name", to_db="UniProtKB")
 ```
 
 ### 2. Downloading Structure Files
@@ -178,7 +190,9 @@ pae_url = f"https://alphafold.ebi.ac.uk/files/{alphafold_id}-predicted_aligned_e
 pae = requests.get(pae_url).json()
 
 # Visualize PAE matrix
-pae_matrix = np.array(pae['distance'])
+# The AlphaFold PAE endpoint returns a single-element JSON array, so index [0]
+# before the key. (If a future response returns a bare object, drop the [0].)
+pae_matrix = np.array(pae[0]['predicted_aligned_error'])
 plt.figure(figsize=(10, 8))
 plt.imshow(pae_matrix, cmap='viridis_r', vmin=0, vmax=30)
 plt.colorbar(label='PAE (Å)')

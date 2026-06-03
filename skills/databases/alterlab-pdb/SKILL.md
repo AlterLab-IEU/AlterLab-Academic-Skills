@@ -40,25 +40,30 @@ print(f"Found {len(results)} structures")
 **Attribute Search:** Query specific properties (organism, resolution, method, etc.)
 ```python
 from rcsbapi.search import AttributeQuery
-from rcsbapi.search.attrs import rcsb_entity_source_organism
+from rcsbapi.search import search_attributes as attrs
 
-# Find human protein structures
+# Find human protein structures (idiomatic form — recommended)
+query = attrs.rcsb_entity_source_organism.scientific_name == "Homo sapiens"
+results = list(query())
+
+# OR explicit AttributeQuery with a dotted-path STRING (not the Attr object):
 query = AttributeQuery(
-    attribute=rcsb_entity_source_organism.scientific_name,
+    attribute="rcsb_entity_source_organism.scientific_name",
     operator="exact_match",
-    value="Homo sapiens"
+    value="Homo sapiens",
 )
 results = list(query())
 ```
 
 **Sequence Similarity:** Find structures similar to a given sequence
 ```python
-from rcsbapi.search import SequenceQuery
+from rcsbapi.search import SeqSimilarityQuery
 
-query = SequenceQuery(
+query = SeqSimilarityQuery(
     value="MTEYKLVVVGAGGVGKSALTIQLIQNHFVDEYDPTIEDSYRKQVVIDGETCLLDILDTAGQEEYSAMRDQYMRTGEGFLCVFAINNTKSFEDIHHYREQIKRVKDSEDVPMVLVGNKCDLPSRTVDTKQAQDLARSYGIPFIETSAKTRQGVDDAFYTLVREIRKHKEKMSKDGKKKKKKSKTKCVIM",
     evalue_cutoff=0.1,
-    identity_cutoff=0.9
+    identity_cutoff=0.9,
+    sequence_type="protein"
 )
 results = list(query())
 ```
@@ -76,20 +81,11 @@ results = list(query())
 
 **Combining Queries:** Use logical operators to build complex searches
 ```python
-from rcsbapi.search import TextQuery, AttributeQuery
-from rcsbapi.search.attrs import rcsb_entry_info
+from rcsbapi.search import search_attributes as attrs
 
 # High-resolution human proteins
-query1 = AttributeQuery(
-    attribute=rcsb_entity_source_organism.scientific_name,
-    operator="exact_match",
-    value="Homo sapiens"
-)
-query2 = AttributeQuery(
-    attribute=rcsb_entry_info.resolution_combined,
-    operator="less",
-    value=2.0
-)
+query1 = attrs.rcsb_entity_source_organism.scientific_name == "Homo sapiens"
+query2 = attrs.rcsb_entry_info.resolution_combined < 2.0
 combined_query = query1 & query2  # AND operation
 results = list(combined_query())
 ```
@@ -100,43 +96,54 @@ Access detailed information about specific PDB entries:
 
 **Basic Entry Information:**
 ```python
-from rcsbapi.data import Schema, fetch
+from rcsbapi.data import DataQuery
 
 # Get entry-level data
-entry_data = fetch("4HHB", schema=Schema.ENTRY)
-print(entry_data["struct"]["title"])
-print(entry_data["exptl"][0]["method"])
+query = DataQuery(
+    input_type="entries",
+    input_ids=["4HHB"],
+    return_data_list=["struct.title", "exptl.method"],
+)
+data = query.exec()  # in Python 3.14+/Jupyter: await query.exec()
+entry = data["data"]["entries"][0]
+print(entry["struct"]["title"])
+print(entry["exptl"][0]["method"])
 ```
 
 **Polymer Entity Information:**
 ```python
+from rcsbapi.data import DataQuery
+
 # Get protein/nucleic acid information
-entity_data = fetch("4HHB_1", schema=Schema.POLYMER_ENTITY)
-print(entity_data["entity_poly"]["pdbx_seq_one_letter_code"])
+query = DataQuery(
+    input_type="polymer_entities",
+    input_ids=["4HHB_1"],
+    return_data_list=["entity_poly.pdbx_seq_one_letter_code"],
+)
+data = query.exec()
+entity = data["data"]["polymer_entities"][0]
+print(entity["entity_poly"]["pdbx_seq_one_letter_code"])
 ```
 
-**Using GraphQL for Flexible Queries:**
+**Building Queries (GraphQL under the hood):**
 ```python
-from rcsbapi.data import fetch
+from rcsbapi.data import DataQuery
 
-# Custom GraphQL query
-query = """
-{
-  entry(entry_id: "4HHB") {
-    struct {
-      title
-    }
-    exptl {
-      method
-    }
-    rcsb_entry_info {
-      resolution_combined
-      deposited_atom_count
-    }
-  }
-}
-"""
-data = fetch(query_type="graphql", query=query)
+# DataQuery builds the GraphQL query for you from input_type/input_ids/return_data_list;
+# there is no separate fetch(query_type="graphql", ...) entry point.
+query = DataQuery(
+    input_type="entries",
+    input_ids=["4HHB"],
+    return_data_list=[
+        "struct.title",
+        "exptl.method",
+        "rcsb_entry_info.resolution_combined",
+        "rcsb_entry_info.deposited_atom_count",
+    ],
+)
+# Inspect the auto-generated GraphQL / open it in the editor:
+print(query.get_editor_link())
+data = query.exec()
 ```
 
 ### 3. Downloading Structure Files
@@ -190,10 +197,19 @@ for model in structure:
 
 **Extract Metadata:**
 ```python
-from rcsbapi.data import fetch, Schema
+from rcsbapi.data import DataQuery
 
 # Get experimental details
-data = fetch("4HHB", schema=Schema.ENTRY)
+query = DataQuery(
+    input_type="entries",
+    input_ids=["4HHB"],
+    return_data_list=[
+        "rcsb_entry_info.resolution_combined",
+        "exptl.method",
+        "rcsb_accession_info.deposit_date",
+    ],
+)
+data = query.exec()["data"]["entries"][0]
 
 resolution = data.get("rcsb_entry_info", {}).get("resolution_combined")
 method = data.get("exptl", [{}])[0].get("method")
@@ -209,21 +225,30 @@ print(f"Deposited: {deposition_date}")
 Process multiple structures efficiently:
 
 ```python
-from rcsbapi.data import fetch, Schema
+from rcsbapi.data import DataQuery
 
 pdb_ids = ["4HHB", "1MBN", "1GZX"]  # Hemoglobin, myoglobin, etc.
 
+# A single DataQuery can fetch all entries at once
+query = DataQuery(
+    input_type="entries",
+    input_ids=pdb_ids,
+    return_data_list=[
+        "rcsb_id",
+        "struct.title",
+        "rcsb_entry_info.resolution_combined",
+        "rcsb_entity_source_organism.scientific_name",
+    ],
+)
+
 results = {}
-for pdb_id in pdb_ids:
-    try:
-        data = fetch(pdb_id, schema=Schema.ENTRY)
-        results[pdb_id] = {
-            "title": data["struct"]["title"],
-            "resolution": data.get("rcsb_entry_info", {}).get("resolution_combined"),
-            "organism": data.get("rcsb_entity_source_organism", [{}])[0].get("scientific_name")
-        }
-    except Exception as e:
-        print(f"Error fetching {pdb_id}: {e}")
+for data in query.exec()["data"]["entries"]:
+    pdb_id = data["rcsb_id"]
+    results[pdb_id] = {
+        "title": data["struct"]["title"],
+        "resolution": data.get("rcsb_entry_info", {}).get("resolution_combined"),
+        "organism": data.get("rcsb_entity_source_organism", [{}])[0].get("scientific_name")
+    }
 
 # Display results
 for pdb_id, info in results.items():

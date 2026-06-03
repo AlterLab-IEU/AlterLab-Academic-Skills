@@ -17,7 +17,10 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 
 # API Configuration
-BASE_URL = "https://api.clinpgx.org/v1/"
+# ClinPGx resources are addressed by ClinPGx accession IDs in the path
+# (e.g. gene CYP2D6 = PA128, CYP2C9 = PA126), not by symbols/rsIDs. Resolve a
+# symbol or rsID via the collection endpoints with params (e.g. ?symbol=CYP2D6).
+BASE_URL = "https://api.clinpgx.org/v1/data/"
 RATE_LIMIT_DELAY = 0.5  # 500ms delay = 2 requests/second
 
 
@@ -111,21 +114,38 @@ def cached_query(cache_file: str, query_func, *args, **kwargs) -> Any:
 
 # Core Query Functions
 
-def get_gene_info(gene_symbol: str) -> Optional[Dict]:
+def get_gene_info(gene_symbol: str) -> Optional[List[Dict]]:
     """
-    Retrieve detailed information about a pharmacogene.
+    Resolve a pharmacogene symbol to its ClinPGx record(s).
+
+    The path form /gene/{id} expects a ClinPGx accession ID (e.g. CYP2D6 = PA128),
+    so to look up by symbol we query the collection endpoint with ?symbol=.
 
     Args:
         gene_symbol: Gene symbol (e.g., "CYP2D6", "TPMT")
 
     Returns:
-        Gene information dictionary
+        List of matching gene records (read the accession ID from result['id'])
 
     Example:
-        >>> gene_data = get_gene_info("CYP2D6")
-        >>> print(gene_data['symbol'], gene_data['name'])
+        >>> genes = get_gene_info("CYP2D6")
+        >>> print(genes[0]['symbol'], genes[0]['id'])
     """
-    url = f"{BASE_URL}gene/{gene_symbol}"
+    url = f"{BASE_URL}gene"
+    return safe_api_call(url, {"symbol": gene_symbol})
+
+
+def get_gene_by_id(gene_id: str) -> Optional[Dict]:
+    """
+    Retrieve a gene record directly by its ClinPGx accession ID.
+
+    Args:
+        gene_id: ClinPGx gene accession ID (e.g., "PA128" for CYP2D6)
+
+    Returns:
+        Gene information dictionary
+    """
+    url = f"{BASE_URL}gene/{gene_id}"
     return safe_api_call(url)
 
 
@@ -151,30 +171,53 @@ def get_drug_info(drug_name: str) -> Optional[List[Dict]]:
 
 def get_gene_drug_pairs(gene: Optional[str] = None, drug: Optional[str] = None) -> Optional[List[Dict]]:
     """
-    Query gene-drug interaction pairs.
+    Derive gene-drug relationships from guideline annotations.
+
+    The public ClinPGx API has no single gene-drug-pair endpoint; pairs are
+    derived from guideline annotations (or the /report/pair report endpoint when
+    both object accession IDs are known).
 
     Args:
         gene: Gene symbol (optional)
-        drug: Drug name (optional)
+        drug: Drug name / symbol (optional)
 
     Returns:
-        List of gene-drug pairs with clinical annotations
+        List of guideline annotations matching the gene and/or drug
 
     Example:
-        >>> # Get all pairs for CYP2D6
-        >>> pairs = get_gene_drug_pairs(gene="CYP2D6")
+        >>> # Guideline annotations related to CYP2D6
+        >>> anns = get_gene_drug_pairs(gene="CYP2D6")
         >>>
-        >>> # Get specific gene-drug pair
-        >>> pair = get_gene_drug_pairs(gene="CYP2D6", drug="codeine")
+        >>> # Guideline annotations related to codeine
+        >>> anns = get_gene_drug_pairs(drug="codeine")
     """
-    url = f"{BASE_URL}geneDrugPair"
+    url = f"{BASE_URL}guidelineAnnotation"
     params = {}
     if gene:
-        params["gene"] = gene
+        params["relatedGenes.symbol"] = gene
     if drug:
-        params["drug"] = drug
+        params["relatedChemicals.symbol"] = drug
 
     return safe_api_call(url, params)
+
+
+def get_pair_report(first_obj_id: str, second_obj_id: str,
+                    result_type: str = "guidelineAnnotation") -> Optional[Any]:
+    """
+    Fetch a pair report for two ClinPGx objects via the report endpoint.
+
+    Endpoint: /report/pair/{firstObjId}/{secondObjId}/{resultType}
+
+    Args:
+        first_obj_id: Accession ID of the first object (e.g. gene "PA128")
+        second_obj_id: Accession ID of the second object (e.g. chemical "PA449088")
+        result_type: Report result type (e.g. "guidelineAnnotation")
+
+    Returns:
+        Pair report data
+    """
+    url = f"https://api.clinpgx.org/v1/report/pair/{first_obj_id}/{second_obj_id}/{result_type}"
+    return safe_api_call(url)
 
 
 def get_cpic_guidelines(gene: Optional[str] = None, drug: Optional[str] = None) -> Optional[List[Dict]]:
@@ -195,52 +238,39 @@ def get_cpic_guidelines(gene: Optional[str] = None, drug: Optional[str] = None) 
         >>> # Get guideline for specific gene-drug
         >>> guideline = get_cpic_guidelines(gene="CYP2C19", drug="clopidogrel")
     """
-    url = f"{BASE_URL}guideline"
+    url = f"{BASE_URL}guidelineAnnotation"
     params = {"source": "CPIC"}
     if gene:
-        params["gene"] = gene
+        params["relatedGenes.symbol"] = gene
     if drug:
-        params["drug"] = drug
+        params["relatedChemicals.symbol"] = drug
 
     return safe_api_call(url, params)
 
 
 def get_alleles(gene: str) -> Optional[List[Dict]]:
     """
-    Get all alleles for a pharmacogene including function and frequency.
+    Star-allele definitions, functions, and population frequencies.
+
+    NOTE: The public ClinPGx API does NOT expose an /allele resource. Canonical
+    star-allele definitions and frequencies are maintained by PharmVar
+    (https://www.pharmvar.org/). Allele-level clinical implications are surfaced
+    through guideline annotations; this helper returns the guideline annotations
+    related to the gene so callers do not rely on a non-existent endpoint.
 
     Args:
         gene: Gene symbol (e.g., "CYP2D6")
 
     Returns:
-        List of alleles with functional annotations and population frequencies
+        List of guideline annotations related to the gene
 
     Example:
-        >>> alleles = get_alleles("CYP2D6")
-        >>> for allele in alleles:
-        >>>     print(f"{allele['name']}: {allele['function']}")
+        >>> # For canonical allele data use PharmVar: https://www.pharmvar.org/gene/CYP2D6
+        >>> anns = get_alleles("CYP2D6")
     """
-    url = f"{BASE_URL}allele"
-    params = {"gene": gene}
+    url = f"{BASE_URL}guidelineAnnotation"
+    params = {"relatedGenes.symbol": gene}
     return safe_api_call(url, params)
-
-
-def get_allele_info(allele_name: str) -> Optional[Dict]:
-    """
-    Get detailed information about a specific allele.
-
-    Args:
-        allele_name: Allele name (e.g., "CYP2D6*4")
-
-    Returns:
-        Allele information dictionary
-
-    Example:
-        >>> allele = get_allele_info("CYP2D6*4")
-        >>> print(allele['function'], allele['frequencies'])
-    """
-    url = f"{BASE_URL}allele/{allele_name}"
-    return safe_api_call(url)
 
 
 def get_clinical_annotations(
@@ -251,29 +281,31 @@ def get_clinical_annotations(
     """
     Retrieve curated literature annotations for gene-drug interactions.
 
+    Served by the summaryAnnotation collection (use variantAnnotation /
+    dataAnnotation for variant- or data-level annotations). The level-of-evidence
+    filter field is unverified against the OpenAPI spec; confirm before relying
+    on it.
+
     Args:
         gene: Gene symbol (optional)
-        drug: Drug name (optional)
-        evidence_level: Filter by evidence level (1A, 1B, 2A, 2B, 3, 4)
+        drug: Drug name / symbol (optional)
+        evidence_level: Filter by level of evidence (1A, 1B, 2A, 2B, 3, 4)
 
     Returns:
-        List of clinical annotations
+        List of summary annotations
 
     Example:
-        >>> # Get all annotations for CYP2D6
+        >>> # Get summary annotations related to CYP2D6
         >>> annotations = get_clinical_annotations(gene="CYP2D6")
-        >>>
-        >>> # Get high-quality evidence only
-        >>> high_quality = get_clinical_annotations(evidence_level="1A")
     """
-    url = f"{BASE_URL}clinicalAnnotation"
+    url = f"{BASE_URL}summaryAnnotation"
     params = {}
     if gene:
-        params["gene"] = gene
+        params["relatedGenes.symbol"] = gene
     if drug:
-        params["drug"] = drug
+        params["relatedChemicals.symbol"] = drug
     if evidence_level:
-        params["evidenceLevel"] = evidence_level
+        params["levelOfEvidence"] = evidence_level
 
     return safe_api_call(url, params)
 
@@ -296,47 +328,48 @@ def get_drug_labels(drug: str, source: Optional[str] = None) -> Optional[List[Di
         >>> # Get only FDA labels
         >>> fda_labels = get_drug_labels("warfarin", source="FDA")
     """
-    url = f"{BASE_URL}drugLabel"
-    params = {"drug": drug}
+    url = f"{BASE_URL}label"
+    params = {"relatedChemicals.symbol": drug}
     if source:
         params["source"] = source
 
     return safe_api_call(url, params)
 
 
-def search_variants(rsid: Optional[str] = None, chromosome: Optional[str] = None,
-                   position: Optional[str] = None) -> Optional[List[Dict]]:
+def search_variants(rsid: Optional[str] = None) -> Optional[List[Dict]]:
     """
-    Search for genetic variants by rsID or genomic position.
+    Resolve a genetic variant by rsID.
+
+    The path form /variant/{id} expects a ClinPGx accession ID, so to look up by
+    rsID we query the collection endpoint with ?symbol=. Read the accession ID
+    from result['id'] to fetch the full record directly.
 
     Args:
         rsid: dbSNP rsID (e.g., "rs4244285")
-        chromosome: Chromosome number
-        position: Genomic position
 
     Returns:
-        List of matching variants
+        List of matching variant records
 
     Example:
-        >>> # Search by rsID
-        >>> variant = search_variants(rsid="rs4244285")
-        >>>
-        >>> # Search by position
-        >>> variants = search_variants(chromosome="10", position="94781859")
+        >>> variants = search_variants(rsid="rs4244285")
+        >>> # full record: get_variant_by_id(variants[0]['id'])
     """
     url = f"{BASE_URL}variant"
+    return safe_api_call(url, {"symbol": rsid})
 
-    if rsid:
-        url = f"{BASE_URL}variant/{rsid}"
-        return safe_api_call(url)
 
-    params = {}
-    if chromosome:
-        params["chromosome"] = chromosome
-    if position:
-        params["position"] = position
+def get_variant_by_id(variant_id: str) -> Optional[Dict]:
+    """
+    Retrieve a variant record directly by its ClinPGx accession ID.
 
-    return safe_api_call(url, params)
+    Args:
+        variant_id: ClinPGx variant accession ID
+
+    Returns:
+        Variant information dictionary
+    """
+    url = f"{BASE_URL}variant/{variant_id}"
+    return safe_api_call(url)
 
 
 def get_pathway_info(pathway_id: Optional[str] = None, drug: Optional[str] = None) -> Optional[Any]:
@@ -364,7 +397,7 @@ def get_pathway_info(pathway_id: Optional[str] = None, drug: Optional[str] = Non
     url = f"{BASE_URL}pathway"
     params = {}
     if drug:
-        params["drug"] = drug
+        params["relatedChemicals.symbol"] = drug
 
     return safe_api_call(url, params)
 
@@ -402,22 +435,22 @@ def export_to_dataframe(data: List[Dict], output_file: Optional[str] = None):
     return df
 
 
-def batch_gene_query(gene_list: List[str], delay: float = 0.5) -> Dict[str, Dict]:
+def batch_gene_query(gene_list: List[str], delay: float = 0.5) -> Dict[str, List[Dict]]:
     """
-    Query multiple genes in batch with rate limiting.
+    Resolve multiple gene symbols in batch with rate limiting.
 
     Args:
         gene_list: List of gene symbols
         delay: Delay between requests (default 0.5s)
 
     Returns:
-        Dictionary mapping gene symbols to gene data
+        Dictionary mapping each gene symbol to its list of matching records
 
     Example:
         >>> genes = ["CYP2D6", "CYP2C19", "CYP2C9", "TPMT"]
         >>> results = batch_gene_query(genes)
-        >>> for gene, data in results.items():
-        >>>     print(f"{gene}: {data['name']}")
+        >>> for gene, recs in results.items():
+        >>>     print(f"{gene}: {recs[0]['id'] if recs else 'not found'}")
     """
     results = {}
 
@@ -434,24 +467,27 @@ def batch_gene_query(gene_list: List[str], delay: float = 0.5) -> Dict[str, Dict
     return results
 
 
-def find_actionable_gene_drug_pairs(cpic_level: str = "A") -> Optional[List[Dict]]:
+def find_actionable_gene_drug_pairs(source: str = "CPIC") -> Optional[List[Dict]]:
     """
-    Find all clinically actionable gene-drug pairs with CPIC guidelines.
+    Find clinically actionable gene-drug relationships via guideline annotations.
+
+    There is no geneDrugPair endpoint (and no cpicLevel parameter) in the public
+    API. Actionable pairs are derived from guideline annotations; inspect each
+    returned annotation's relatedGenes / relatedChemicals to enumerate pairs.
 
     Args:
-        cpic_level: CPIC recommendation level (A, B, C, D)
+        source: Guideline source to filter on (e.g. "CPIC", "DPWG")
 
     Returns:
-        List of actionable gene-drug pairs
+        List of guideline annotations from the requested source
 
     Example:
-        >>> # Get all Level A recommendations
-        >>> actionable = find_actionable_gene_drug_pairs(cpic_level="A")
-        >>> for pair in actionable:
-        >>>     print(f"{pair['gene']} - {pair['drug']}")
+        >>> actionable = find_actionable_gene_drug_pairs(source="CPIC")
+        >>> for ann in actionable:
+        >>>     print(ann.get("name"))
     """
-    url = f"{BASE_URL}geneDrugPair"
-    params = {"cpicLevel": cpic_level}
+    url = f"{BASE_URL}guidelineAnnotation"
+    params = {"source": source}
     return safe_api_call(url, params)
 
 
@@ -465,8 +501,10 @@ if __name__ == "__main__":
     print("=" * 60)
     cyp2d6 = get_gene_info("CYP2D6")
     if cyp2d6:
-        print(f"Gene: {cyp2d6.get('symbol')}")
-        print(f"Name: {cyp2d6.get('name')}")
+        rec = cyp2d6[0]
+        print(f"Gene: {rec.get('symbol')}")
+        print(f"ID: {rec.get('id')}")
+        print(f"Name: {rec.get('name')}")
         print()
 
     # Example 2: Search for a drug
@@ -480,15 +518,15 @@ if __name__ == "__main__":
             print(f"ID: {drug.get('id')}")
         print()
 
-    # Example 3: Get gene-drug pairs
+    # Example 3: Derive gene-drug relationship from guideline annotations
     print("=" * 60)
-    print("Example 3: Get CYP2C19-clopidogrel pair")
+    print("Example 3: Guideline annotations for CYP2C19 + clopidogrel")
     print("=" * 60)
     pair = get_gene_drug_pairs(gene="CYP2C19", drug="clopidogrel")
     if pair:
-        print(f"Found {len(pair)} gene-drug pair(s)")
+        print(f"Found {len(pair)} guideline annotation(s)")
         if len(pair) > 0:
-            print(f"Annotations: {pair[0].get('sources', [])}")
+            print(f"First: {pair[0].get('name')}")
         print()
 
     # Example 4: Get CPIC guidelines
@@ -502,15 +540,16 @@ if __name__ == "__main__":
             print(f"  - {g.get('name')}")
         print()
 
-    # Example 5: Get alleles for a gene
+    # Example 5: Allele-related guideline annotations for a gene
+    # (canonical allele definitions/frequencies: https://www.pharmvar.org/gene/CYP2D6)
     print("=" * 60)
-    print("Example 5: Get CYP2D6 alleles")
+    print("Example 5: CYP2D6 allele-related guideline annotations")
     print("=" * 60)
     alleles = get_alleles("CYP2D6")
     if alleles:
-        print(f"Found {len(alleles)} allele(s)")
-        for allele in alleles[:3]:  # Show first 3
-            print(f"  - {allele.get('name')}: {allele.get('function')}")
+        print(f"Found {len(alleles)} guideline annotation(s)")
+        for ann in alleles[:3]:  # Show first 3
+            print(f"  - {ann.get('name')}")
         print()
 
     print("=" * 60)

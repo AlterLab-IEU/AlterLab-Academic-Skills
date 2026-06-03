@@ -73,7 +73,7 @@ response = client.observation.fetch(
 )
 
 # Convert to DataFrame
-df = response.to_observations_as_records()
+df = pd.DataFrame(response.to_observation_records())
 
 # Plot
 df = df.sort_values('date')
@@ -101,7 +101,7 @@ response = client.observation.fetch(
 )
 
 # Convert to DataFrame and sort
-df = response.to_observations_as_records()
+df = pd.DataFrame(response.to_observation_records())
 
 # Get county names
 county_dcids = df['entity'].unique().tolist()
@@ -153,7 +153,7 @@ response = client.observation.fetch(
 )
 
 # Convert to DataFrame
-df = response.to_observations_as_records()
+df = pd.DataFrame(response.to_observation_records())
 
 # Add readable names
 df['state'] = df['entity'].map(name_map)
@@ -205,7 +205,7 @@ response = client.observation.fetch(
 )
 
 # Display results
-df = response.to_observations_as_records()
+df = pd.DataFrame(response.to_observation_records())
 print("\nStatistics:")
 for _, row in df.iterrows():
     print(f"{row['variable']}: {row['value']}")
@@ -226,7 +226,7 @@ response = client.observation.fetch(
     filter_facet_domains=["census.gov"]  # Only US Census data
 )
 
-df = response.to_observations_as_records()
+df = pd.DataFrame(response.to_observation_records())
 print(f"Found {len(df)} observations from census.gov")
 
 # Compare with all sources
@@ -236,7 +236,7 @@ response_all = client.observation.fetch(
     date="all"
 )
 
-df_all = response_all.to_observations_as_records()
+df_all = pd.DataFrame(response_all.to_observation_records())
 print(f"Found {len(df_all)} observations from all sources")
 ```
 
@@ -338,7 +338,7 @@ response = client.observation.fetch(
 )
 
 # Process into a comparison table
-df = response.to_observations_as_records()
+df = pd.DataFrame(response.to_observation_records())
 df['city'] = df['entity'].map(dcid_to_name)
 
 # Create comparison table

@@ -108,7 +108,7 @@ All response objects support:
 - `to_json()`: Format as JSON string
 - `to_dict()`: Return as dictionary
 - `get_data_by_entity()`: Reorganize by entity instead of variable
-- `to_observations_as_records()`: Flatten into individual records
+- `to_observation_records()`: Flatten into individual records
 
 ## Common Use Cases
 
@@ -173,7 +173,7 @@ response = client.observation.fetch(
 )
 
 # Convert to DataFrame
-df = response.to_observations_as_records()
+df = response.to_observation_records()
 # Returns DataFrame with columns: date, entity, variable, value
 ```
 

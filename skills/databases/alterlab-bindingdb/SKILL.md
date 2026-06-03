@@ -16,7 +16,7 @@ BindingDB (https://www.bindingdb.org/) is the primary public database of measure
 
 **Key resources:**
 - BindingDB website: https://www.bindingdb.org/
-- REST API: https://www.bindingdb.org/rwd/bind/BindingDBRESTfulAPI.jsp
+- REST API base: https://bindingdb.org/rest/
 - Downloads: https://www.bindingdb.org/rwd/bind/chemsearch/marvin/SDFdownload.jsp?all_download=yes
 - GitHub: https://github.com/dhimmel/bindingdb
 
@@ -36,12 +36,12 @@ Use BindingDB when:
 
 ### 1. BindingDB REST API
 
-Base URL: `https://www.bindingdb.org/rwd/bind/BindingDBRESTfulAPI.jsp`
+Base URL: `https://bindingdb.org/rest`
 
 ```python
 import requests
 
-BASE_URL = "https://www.bindingdb.org/rwd/bind/BindingDBRESTfulAPI.jsp"
+BASE_URL = "https://bindingdb.org/rest"
 
 def bindingdb_query(method, params):
     """Query the BindingDB REST API."""
@@ -53,60 +53,53 @@ def bindingdb_query(method, params):
 
 ### 2. Query by Target (UniProt ID)
 
+The `getLigandsByUniprot` endpoint takes a single `uniprot` parameter formatted as
+`<UniProt accession>;<cutoff in nM>`, e.g. `P00519;10000`.
+
 ```python
-def get_ligands_for_target(uniprot_id, affinity_type="Ki", cutoff=10000, unit="nM"):
+def get_ligands_for_target(uniprot_id, cutoff=10000):
     """
     Get all ligands with measured affinity for a UniProt target.
 
     Args:
         uniprot_id: UniProt accession (e.g., "P00519" for ABL1)
-        affinity_type: "Ki", "Kd", "IC50", "EC50"
         cutoff: Maximum affinity value to return (in nM)
-        unit: "nM" or "uM"
     """
     params = {
-        "uniprot_id": uniprot_id,
-        "affinity_type": affinity_type,
-        "affinity_cutoff": cutoff,
-        "response": "json"
+        "uniprot": f"{uniprot_id};{cutoff}",
+        "response": "application/json",
     }
-    return bindingdb_query("getLigandsByUniprotID", params)
+    return bindingdb_query("getLigandsByUniprot", params)
 
-# Example: Get all compounds binding ABL1 (imatinib target)
-ligands = get_ligands_for_target("P00519", affinity_type="Ki", cutoff=100)
+# Example: Get all compounds binding ABL1 (imatinib target) at <=100 nM
+ligands = get_ligands_for_target("P00519", cutoff=100)
 ```
 
-### 3. Query by Compound Name or SMILES
+### 3. Query by SMILES (structural similarity)
 
 ```python
-def search_by_name(compound_name, limit=100):
-    """Search BindingDB for compounds by name."""
-    params = {
-        "compound_name": compound_name,
-        "response": "json",
-        "max_results": limit
-    }
-    return bindingdb_query("getAffinitiesByCompoundName", params)
-
-def search_by_smiles(smiles, similarity=100, limit=50):
+def search_by_smiles(smiles, cutoff=0.85):
     """
-    Search BindingDB by SMILES string.
+    Search BindingDB by SMILES string (structural-similarity search).
 
     Args:
         smiles: SMILES string of the compound
-        similarity: Tanimoto similarity threshold (1-100, 100 = exact)
+        cutoff: Tanimoto similarity threshold (0.0-1.0; e.g. 0.85)
     """
     params = {
-        "SMILES": smiles,
-        "similarity": similarity,
-        "response": "json",
-        "max_results": limit
+        "smiles": smiles,
+        "cutoff": cutoff,
+        "response": "application/json",
     }
-    return bindingdb_query("getAffinitiesByBEI", params)
+    return bindingdb_query("getTargetByCompound", params)
 
-# Example: Search for imatinib binding data
-result = search_by_name("imatinib")
+# Example: structural-similarity search for imatinib's binding targets
+result = search_by_smiles("Cc1ccc(NC(=O)c2ccc(CN3CCN(C)CC3)cc2)cc1Nc1nccc(-c2cccnc2)n1")
 ```
+
+To query by a PubChem CID, first convert the CID to a SMILES string via PubChem
+PUG-REST, then pass it to `search_by_smiles`. There is no by-name or by-CID
+BindingDB REST endpoint.
 
 ### 4. Download-Based Analysis (Recommended for Large Queries)
 
@@ -329,6 +322,6 @@ def prepare_ml_dataset(df, uniprot_ids, affinity_col="IC50 (nM)",
 
 - **BindingDB website**: https://www.bindingdb.org/
 - **Data downloads**: https://www.bindingdb.org/rwd/bind/chemsearch/marvin/SDFdownload.jsp?all_download=yes
-- **API documentation**: https://www.bindingdb.org/rwd/bind/BindingDBRESTfulAPI.jsp
+- **API documentation**: https://www.bindingdb.org/rwd/bind/info.jsp (REST base: https://bindingdb.org/rest)
 - **Citation**: Gilson MK et al. (2016) Nucleic Acids Research. PMID: 26481362
 - **Related resources**: ChEMBL (https://www.ebi.ac.uk/chembl/), PubChem BioAssay

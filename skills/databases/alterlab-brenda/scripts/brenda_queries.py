@@ -28,7 +28,6 @@ import time
 import json
 import csv
 from typing import List, Dict, Any, Optional, Tuple
-from pathlib import Path
 
 try:
     from zeep import Client, Settings
@@ -52,16 +51,17 @@ except ImportError:
     print("Warning: pandas not installed. Install with: uv pip install pandas")
     PANDAS_AVAILABLE = False
 
-# Import the brenda_client from the project root
-import sys
-sys.path.append(str(Path(__file__).parent.parent.parent.parent))
-
+# Import the brenda_client shipped alongside this module.
 try:
-    from brenda_client import get_km_values, get_reactions, call_brenda
+    from scripts.brenda_client import get_km_values, get_reactions, call_brenda
     BRENDA_CLIENT_AVAILABLE = True
 except ImportError:
-    print("Warning: brenda_client not available")
-    BRENDA_CLIENT_AVAILABLE = False
+    try:
+        from brenda_client import get_km_values, get_reactions, call_brenda
+        BRENDA_CLIENT_AVAILABLE = True
+    except ImportError:
+        print("Warning: brenda_client not available")
+        BRENDA_CLIENT_AVAILABLE = False
 
 
 def validate_dependencies():
@@ -556,7 +556,7 @@ def get_activators(ec_number: str) -> List[Dict[str, Any]]:
                         activators.append({
                             'name': activator,
                             'type': 'metal ion' if '+' in activator else 'reducing agent' if 'dtt' in activator.lower() or 'mercapto' in activator.lower() else 'other',
-                            'mechanism': 'allosteric' if 'allosteric' in commentary else 'cofactor' else 'unknown',
+                            'mechanism': 'allosteric' if 'allosteric' in commentary else 'cofactor' if 'cofactor' in commentary else 'unknown',
                             'organism': parsed.get('organism', ''),
                             'ec_number': ec_number,
                             'commentary': parsed.get('commentary', '')

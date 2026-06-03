@@ -336,5 +336,5 @@ Neu5Ac-Gal-GlcNAc-Man/
 - **CFG Functional Glycomics**: http://www.functionalglycomics.org/
 - **DTU Health Tech servers** (NetNGlyc, NetOGlyc): https://services.healthtech.dtu.dk/
 - **GlycoWorkbench**: https://glycoworkbench.software.informer.com/
-- **Review**: Apweiler R et al. (1999) Biochim Biophys Acta. PMID: 10564035
-- **Therapeutic glycoengineering review**: Jefferis R (2009) Nature Reviews Drug Discovery. PMID: 19448661
+- **Review**: Apweiler R et al. (1999) Biochim Biophys Acta. PMID: 10580125
+- **Therapeutic glycoengineering review**: Jefferis R (2009) Nature Reviews Drug Discovery. PMID: 19247305

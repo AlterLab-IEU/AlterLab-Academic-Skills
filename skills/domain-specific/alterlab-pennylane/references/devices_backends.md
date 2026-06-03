@@ -118,20 +118,25 @@ import pennylane as qml
 # Use IBM simulator
 dev = qml.device('qiskit.aer', wires=2)
 
-# Use IBM quantum hardware
+# Use IBM quantum hardware (via Qiskit Runtime)
+from qiskit_ibm_runtime import QiskitRuntimeService
+
+service = QiskitRuntimeService(channel='ibm_quantum_platform')  # requires saved IBM Cloud credentials
+backend = service.least_busy(operational=True, simulator=False)
 dev = qml.device(
-    'qiskit.ibmq',
+    'qiskit.remote',
     wires=2,
-    backend='ibmq_manila',  # Specify backend
+    backend=backend,  # pass a concrete backend object
     shots=1024
 )
 
-# With API token
+# With explicit token (instead of saved credentials)
+service = QiskitRuntimeService(channel='ibm_quantum_platform', token='YOUR_API_TOKEN')
+backend = service.backend('the_backend_name')
 dev = qml.device(
-    'qiskit.ibmq',
+    'qiskit.remote',
     wires=2,
-    backend='ibmq_manila',
-    ibmqx_token='YOUR_API_TOKEN'
+    backend=backend,
 )
 
 @qml.qnode(dev)
@@ -272,7 +277,7 @@ dev = qml.device(
 ### Choosing the Right Device
 
 ```python
-def select_device(n_qubits, use_hardware=False, noise_model=None):
+def select_device(n_qubits, use_hardware=False, noise_model=None, ibm_backend=None):
     """Select appropriate device based on requirements."""
 
     if use_hardware:
@@ -280,7 +285,8 @@ def select_device(n_qubits, use_hardware=False, noise_model=None):
         if n_qubits <= 11:
             return qml.device('ionq.qpu', wires=n_qubits, shots=1000)
         elif n_qubits <= 127:
-            return qml.device('qiskit.ibmq', wires=n_qubits, shots=1024)
+            # ibm_backend is a concrete backend obtained from QiskitRuntimeService
+            return qml.device('qiskit.remote', wires=n_qubits, backend=ibm_backend, shots=1024)
         else:
             raise ValueError(f"No hardware available for {n_qubits} qubits")
 

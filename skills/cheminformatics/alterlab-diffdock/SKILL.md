@@ -464,8 +464,8 @@ When using DiffDock, cite the appropriate papers:
 
 **DiffDock-L (current default model):**
 ```
-Stärk et al. (2024) "DiffDock-L: Improving Molecular Docking with Diffusion Models"
-arXiv:2402.18396
+Corso et al. (2024) "Deep Confident Steps to New Pockets: Strategies for Docking Generalization"
+ICLR 2024, arXiv:2402.18396
 ```
 
 **Original DiffDock:**

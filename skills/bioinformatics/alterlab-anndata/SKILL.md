@@ -61,6 +61,8 @@ adata = ad.AnnData(X=X, obs=obs, var=var)
 
 ### Reading data
 ```python
+import scanpy as sc  # 10x readers live in scanpy, not anndata
+
 # Read h5ad file
 adata = ad.read_h5ad('data.h5ad')
 
@@ -70,8 +72,10 @@ adata = ad.read_h5ad('large_data.h5ad', backed='r')
 # Read other formats
 adata = ad.read_csv('data.csv')
 adata = ad.read_loom('data.loom')
-adata = ad.read_10x_h5('filtered_feature_bc_matrix.h5')
+adata = sc.read_10x_h5('filtered_feature_bc_matrix.h5')
 ```
+
+> **Note**: The 10x Genomics readers (`read_10x_h5`, `read_10x_mtx`) live in **scanpy** (`sc.read_10x_h5`), not anndata. This skill covers data formats and defers analysis-specific I/O to scanpy.
 
 ### Writing data
 ```python
@@ -132,8 +136,9 @@ Common commands:
 adata = ad.read_h5ad('data.h5ad', backed='r')
 adata.write_h5ad('output.h5ad', compression='gzip')
 
-# Read 10X data
-adata = ad.read_10x_h5('filtered_feature_bc_matrix.h5')
+# Read 10X data (10x readers live in scanpy, not anndata)
+import scanpy as sc
+adata = sc.read_10x_h5('filtered_feature_bc_matrix.h5')
 
 # Read MTX format
 adata = ad.read_mtx('matrix.mtx').T
@@ -290,7 +295,7 @@ import anndata as ad
 import scanpy as sc
 
 # 1. Load data
-adata = ad.read_10x_h5('filtered_feature_bc_matrix.h5')
+adata = sc.read_10x_h5('filtered_feature_bc_matrix.h5')
 
 # 2. Quality control
 adata.obs['n_genes'] = (adata.X > 0).sum(axis=1)

@@ -99,7 +99,7 @@ Reference: `references/workflow_patterns.md` for complete pathway analysis workf
 Search and cross-reference compounds across multiple databases:
 
 ```python
-from bioservices import KEGG, UniChem
+from bioservices import KEGG
 
 k = KEGG()
 
@@ -109,16 +109,16 @@ results = k.find("compound", "Geldanamycin")  # Returns cpd:C11222
 # Get compound information with database links
 compound_info = k.get("cpd:C11222")  # Includes ChEBI links
 
-# Cross-reference KEGG → ChEMBL using UniChem
-u = UniChem()
-chembl_id = u.get_compound_id_from_kegg("C11222")  # Returns CHEMBL278315
+# Cross-reference KEGG compound → ChEBI (KEGG→ChEMBL has no direct API)
+mapping = k.conv("chebi", "compound")
+mapping["cpd:C11222"]   # -> 'chebi:5292'  (Geldanamycin)
 ```
 
 **Common workflow:**
 1. Search compound by name in KEGG
 2. Extract KEGG compound ID
-3. Use UniChem for KEGG → ChEMBL mapping
-4. ChEBI IDs are often provided in KEGG entries
+3. Use `KEGG.conv` for KEGG → ChEBI mapping (ChEBI IDs are also embedded in KEGG entries)
+4. If a ChEMBL ID is required, obtain it via a separate route (the ChEMBL web service / `chembl_webresource_client`, or the live UniChem REST API directly) — there is no bioservices `UniChem` convenience method for KEGG → ChEMBL
 
 Reference: `references/identifier_mapping.md` for complete cross-database mapping guide.
 
@@ -165,10 +165,13 @@ results = u.mapping(
 # KEGG gene ID → UniProt
 kegg_to_uniprot = u.mapping(fr="KEGG", to="UniProtKB_AC-ID", query="hsa:7535")
 
-# For compounds, use UniChem
-from bioservices import UniChem
-u = UniChem()
-chembl_from_kegg = u.get_compound_id_from_kegg("C11222")
+# For compounds, map KEGG → ChEBI via KEGG.conv
+# (KEGG → ChEMBL has no direct API; obtain ChEMBL IDs separately
+#  via the ChEMBL web service / chembl_webresource_client or the
+#  live UniChem REST API directly)
+k = KEGG()
+kegg_to_chebi = k.conv("chebi", "compound")
+chebi_from_kegg = kegg_to_chebi["cpd:C11222"]  # -> 'chebi:5292'
 ```
 
 **Supported mappings (UniProt):**

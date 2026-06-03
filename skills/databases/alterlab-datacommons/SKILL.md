@@ -166,7 +166,7 @@ Most Data Commons queries follow this pattern:
    data = response.to_dict()
 
    # As Pandas DataFrame
-   df = response.to_observations_as_records()
+   df = pd.DataFrame(response.to_observation_records())
    ```
 
 ## Finding Statistical Variables
@@ -204,7 +204,7 @@ response = client.observation.fetch(
 )
 
 # Convert to DataFrame
-df = response.to_observations_as_records()
+df = pd.DataFrame(response.to_observation_records())
 # Columns: date, entity, variable, value
 
 # Reshape for analysis
