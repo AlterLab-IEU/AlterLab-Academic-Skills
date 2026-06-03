@@ -50,7 +50,7 @@ Topic modeling uses unsupervised machine learning to discover latent thematic st
 
 **Latent Dirichlet Allocation (LDA):**
 
-LDA (Blei, Pritchard, & Ng, 2003) models each document as a mixture of topics, and each topic as a distribution over words. It is a bag-of-words model -- word order does not matter.
+LDA (Blei, Ng, & Jordan, 2003) models each document as a mixture of topics, and each topic as a distribution over words. It is a bag-of-words model -- word order does not matter.
 
 **LDA workflow:**
 

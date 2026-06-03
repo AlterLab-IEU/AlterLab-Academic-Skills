@@ -6,22 +6,22 @@ Complete prompts and guidance for generating visualizations in market research r
 
 ## Overview
 
-Market research reports should start with **5-6 essential visuals** to establish the analytical framework. Additional visuals can be generated as needed when writing specific sections. This guide provides ready-to-use prompts for the `scientific-schematics` and `generate-image` skills.
+This guide provides ready-to-use prompts for visuals that can strengthen a market research report. Figures are optional — choose the ones that genuinely clarify market structure, scale, competition, or risk. Hand the relevant prompt to the **alterlab-scientific-schematics** skill (charts, diagrams, matrices, timelines) or the **alterlab-generate-image** skill (infographics, conceptual illustrations).
 
-### Core Visuals (Generate First - Priority 1-6)
+### Foundational Visuals
 
-Start every market report by generating these 5-6 core visuals:
+These often anchor a report's analytical framework:
 
 1. **Market Growth Trajectory Chart** - Shows market size trends
 2. **TAM/SAM/SOM Diagram** - Market opportunity breakdown
 3. **Porter's Five Forces** - Competitive dynamics framework
 4. **Competitive Positioning Matrix** - Strategic positioning
 5. **Risk Heatmap** - Risk assessment visualization
-6. **Executive Summary Infographic** (optional) - Report overview
+6. **Executive Summary Infographic** - Report overview
 
-### Extended Visuals (Generate as Needed - Priority 7+)
+### Additional Visuals
 
-Additional visuals can be generated during writing when specific sections require visual support:
+These can help when specific sections call for visual support:
 - Regional breakdown charts
 - Segment analysis
 - Customer journey maps
@@ -45,18 +45,18 @@ Additional visuals can be generated during writing when specific sections requir
 
 ## Visual Naming Convention
 
-### Core Visuals (Generate First)
+### Foundational Visuals
 ```
 figures/
-├── 01_market_growth_trajectory.png      # PRIORITY 1
-├── 02_tam_sam_som.png                   # PRIORITY 2
-├── 03_porters_five_forces.png           # PRIORITY 3
-├── 04_competitive_positioning.png       # PRIORITY 4
-├── 05_risk_heatmap.png                  # PRIORITY 5
-└── 06_exec_summary_infographic.png      # PRIORITY 6 (optional)
+├── 01_market_growth_trajectory.png
+├── 02_tam_sam_som.png
+├── 03_porters_five_forces.png
+├── 04_competitive_positioning.png
+├── 05_risk_heatmap.png
+└── 06_exec_summary_infographic.png
 ```
 
-### Extended Visuals (Generate as Needed)
+### Additional Visuals
 ```
 figures/
 ├── 07_industry_ecosystem.png
@@ -84,101 +84,89 @@ figures/
 
 ---
 
-## CORE VISUALS (Priority 1-6) - Generate These First
+## Foundational Visuals
 
-### Priority 1: Market Growth Trajectory Chart
+### Market Growth Trajectory Chart
 
 **Tool:** scientific-schematics
 
 **Purpose:** Foundation visual showing historical and projected market size
 
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Bar chart market growth 2020 to 2034. Historical bars 2020-2024 in dark blue, projected bars 2025-2034 in light blue. Y-axis billions USD, X-axis years. CAGR annotation. Data labels on each bar. Vertical dashed line between 2024 and 2025. Title: Market Growth Trajectory. Professional white background" \
-  -o figures/01_market_growth_trajectory.png --doc-type report
+**Prompt:**
+```
+Bar chart market growth 2020 to 2034. Historical bars 2020-2024 in dark blue, projected bars 2025-2034 in light blue. Y-axis billions USD, X-axis years. CAGR annotation. Data labels on each bar. Vertical dashed line between 2024 and 2025. Title: Market Growth Trajectory. Professional white background
 ```
 
 ---
 
-### Priority 2: TAM/SAM/SOM Diagram
+### TAM/SAM/SOM Diagram
 
 **Tool:** scientific-schematics
 
 **Purpose:** Market opportunity sizing visualization
 
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "TAM SAM SOM concentric circles. Outer circle TAM Total Addressable Market. Middle circle SAM Serviceable Addressable Market. Inner circle SOM Serviceable Obtainable Market. Each labeled with acronym, full name, placeholder for dollar value. Arrows pointing to each with descriptions. Blue gradient darkest outer to lightest inner. White background professional appearance" \
-  -o figures/02_tam_sam_som.png --doc-type report
+**Prompt:**
+```
+TAM SAM SOM concentric circles. Outer circle TAM Total Addressable Market. Middle circle SAM Serviceable Addressable Market. Inner circle SOM Serviceable Obtainable Market. Each labeled with acronym, full name, placeholder for dollar value. Arrows pointing to each with descriptions. Blue gradient darkest outer to lightest inner. White background professional appearance
 ```
 
 ---
 
-### Priority 3: Porter's Five Forces Diagram
+### Porter's Five Forces Diagram
 
 **Tool:** scientific-schematics
 
 **Purpose:** Competitive dynamics framework
 
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Porter's Five Forces diagram. Center box Competitive Rivalry with rating. Four surrounding boxes with arrows to center: Top Threat of New Entrants, Left Bargaining Power Suppliers, Right Bargaining Power Buyers, Bottom Threat of Substitutes. Color code HIGH red, MEDIUM yellow, LOW green. Include 2-3 key factors per box. Professional appearance" \
-  -o figures/03_porters_five_forces.png --doc-type report
+**Prompt:**
+```
+Porter's Five Forces diagram. Center box Competitive Rivalry with rating. Four surrounding boxes with arrows to center: Top Threat of New Entrants, Left Bargaining Power Suppliers, Right Bargaining Power Buyers, Bottom Threat of Substitutes. Color code HIGH red, MEDIUM yellow, LOW green. Include 2-3 key factors per box. Professional appearance
 ```
 
 ---
 
-### Priority 4: Competitive Positioning Matrix
+### Competitive Positioning Matrix
 
 **Tool:** scientific-schematics
 
 **Purpose:** Strategic positioning of key market players
 
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "2x2 competitive positioning matrix. X-axis Market Focus Niche to Broad. Y-axis Solution Approach Product to Platform. Quadrants: Upper-right Platform Leaders, Upper-left Niche Platforms, Lower-right Product Leaders, Lower-left Specialists. Plot 8-10 company circles with names. Circle size = market share. Legend for sizes. Professional appearance" \
-  -o figures/04_competitive_positioning.png --doc-type report
+**Prompt:**
+```
+2x2 competitive positioning matrix. X-axis Market Focus Niche to Broad. Y-axis Solution Approach Product to Platform. Quadrants: Upper-right Platform Leaders, Upper-left Niche Platforms, Lower-right Product Leaders, Lower-left Specialists. Plot 8-10 company circles with names. Circle size = market share. Legend for sizes. Professional appearance
 ```
 
 ---
 
-### Priority 5: Risk Heatmap
+### Risk Heatmap
 
 **Tool:** scientific-schematics
 
 **Purpose:** Visual risk assessment matrix
 
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Risk heatmap matrix. X-axis Impact Low Medium High Critical. Y-axis Probability Unlikely Possible Likely Very Likely. Cell colors: Green low risk, Yellow medium, Orange high, Red critical. Plot 10-12 numbered risks R1 R2 etc as labeled points. Legend with risk names. Professional clear" \
-  -o figures/05_risk_heatmap.png --doc-type report
+**Prompt:**
+```
+Risk heatmap matrix. X-axis Impact Low Medium High Critical. Y-axis Probability Unlikely Possible Likely Very Likely. Cell colors: Green low risk, Yellow medium, Orange high, Red critical. Plot 10-12 numbered risks R1 R2 etc as labeled points. Legend with risk names. Professional clear
 ```
 
 ---
 
-### Priority 6: Executive Summary Infographic (Optional)
+### Executive Summary Infographic (Optional)
 
 **Tool:** generate-image
 
 **Purpose:** High-level visual synthesis for cover or executive summary
 
-**Command:**
-```bash
-python skills/generate-image/scripts/generate_image.py \
-  "Executive summary infographic for market research, one page layout, central large metric showing market size, four quadrants showing growth rate key players top segments regional leaders, modern flat design, professional blue and green color scheme, clean white background, corporate business aesthetic" \
-  --output figures/06_exec_summary_infographic.png
+**Prompt:**
+```
+Executive summary infographic for market research, one page layout, central large metric showing market size, four quadrants showing growth rate key players top segments regional leaders, modern flat design, professional blue and green color scheme, clean white background, corporate business aesthetic
 ```
 
 ---
 
-## EXTENDED VISUALS - Generate During Writing as Needed
+## Additional Visuals
 
-The following visuals can be generated when writing specific chapters that require them.
+The following visuals can help when writing specific chapters that call for them.
 
 ---
 
@@ -197,14 +185,6 @@ Clean minimalist design with icons.
 High resolution, publication quality.
 No text overlays, image only.
 ```
-
-**Command:**
-```bash
-python skills/generate-image/scripts/generate_image.py \
-  "Professional executive summary infographic for [MARKET] market research report, modern data visualization style, key metrics display, blue and green corporate color scheme, clean minimalist design with icons, high resolution publication quality" \
-  --output figures/01_cover_image.png
-```
-
 ### 2. Executive Summary Infographic
 
 **Tool:** generate-image
@@ -219,14 +199,6 @@ One-page executive summary infographic showing:
 - Clean white background
 - Business/corporate aesthetic
 ```
-
-**Command:**
-```bash
-python skills/generate-image/scripts/generate_image.py \
-  "Executive summary infographic for market research, one page layout, central large metric showing market size, four quadrants showing growth rate key players top segments regional leaders, modern flat design, professional blue and green color scheme, clean white background, corporate business aesthetic" \
-  --output figures/02_exec_summary_infographic.png
-```
-
 ---
 
 ## Chapter 1: Market Overview Visuals
@@ -247,14 +219,6 @@ Professional blue color scheme.
 Clean white background.
 All text clearly readable.
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Industry ecosystem value chain diagram. Horizontal flow left to right: Suppliers box → Manufacturers box → Distributors box → End Users box. Below each main box show 3-4 smaller boxes with example player types. Solid arrows for product flow, dashed arrows for money flow. Regulatory oversight layer above. Professional blue color scheme, white background, clear labels" \
-  -o figures/03_industry_ecosystem.png --doc-type report
-```
-
 ### 4. Market Structure Diagram
 
 **Tool:** scientific-schematics
@@ -271,14 +235,6 @@ Use different shades of blue for each layer.
 Include small icons or labels for key elements.
 Professional appearance.
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Market structure diagram with concentric rectangles. Center: Core Market [MARKET NAME]. Second layer: Adjacent Markets with 4-5 labels. Third layer: Enabling Technologies with key tech labels. Outer layer: Regulatory Framework. Different blue shades for each layer, professional appearance, clear labels" \
-  -o figures/03b_market_structure.png --doc-type report
-```
-
 ---
 
 ## Chapter 2: Market Size & Growth Visuals
@@ -300,14 +256,6 @@ Vertical dashed line separating historical from projected
 Title: "[MARKET NAME] Market Growth Trajectory"
 Professional appearance, white background
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Bar chart market growth 2020 to 2034. Historical bars 2020-2024 in dark blue, projected bars 2025-2034 in light blue. Y-axis billions USD, X-axis years. CAGR annotation XX.X% (2024-2034). Data labels on each bar. Vertical dashed line between 2024 and 2025. Title: Market Growth Trajectory. Professional white background" \
-  -o figures/04_market_growth_trajectory.png --doc-type report
-```
-
 ### 6. TAM/SAM/SOM Diagram
 
 **Tool:** scientific-schematics
@@ -329,14 +277,6 @@ Use blue color gradient (darkest for TAM, lightest for SOM)
 Professional appearance
 White background
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "TAM SAM SOM concentric circles. Outer circle TAM Total Addressable Market [VALUE]B. Middle circle SAM Serviceable Addressable Market [VALUE]B. Inner circle SOM Serviceable Obtainable Market [VALUE]B. Each labeled with acronym, full name, dollar value. Arrows pointing to each with descriptions. Blue gradient darkest outer to lightest inner. White background professional" \
-  -o figures/05_tam_sam_som.png --doc-type report
-```
-
 ### 7. Regional Market Breakdown
 
 **Tool:** scientific-schematics
@@ -355,14 +295,6 @@ Legend on right side
 Title: "Market Size by Region (2024)"
 Professional appearance
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Pie chart regional market breakdown. North America XX% dark blue, Europe XX% medium blue, Asia-Pacific XX% teal, Latin America XX% light blue, Middle East Africa XX% gray blue. Show percentage and dollar value for each slice. Legend on right. Title: Market Size by Region 2024. Professional appearance" \
-  -o figures/06_regional_breakdown.png --doc-type report
-```
-
 ### 8. Segment Growth Comparison
 
 **Tool:** scientific-schematics
@@ -378,14 +310,6 @@ Horizontal bar chart comparing segment growth rates:
 - Title: "Segment Growth Rate Comparison (CAGR 2024-2034)"
 - Include average line or marker
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Horizontal bar chart segment growth comparison. Y-axis 5-7 segment names, X-axis CAGR percentage 0-30%. Bars colored green highest to blue lowest. Data labels with exact percentages. Sorted highest to lowest. Title: Segment Growth Rate Comparison CAGR 2024-2034. Include market average line" \
-  -o figures/07_segment_growth.png --doc-type report
-```
-
 ---
 
 ## Chapter 3: Industry Drivers & Trends Visuals
@@ -411,14 +335,6 @@ Plot 8-10 drivers as labeled circles:
 Include legend for circle sizes
 Professional appearance with clear labels
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "2x2 matrix driver impact assessment. X-axis Impact Low to High, Y-axis Probability Low to High. Quadrants: Upper-right CRITICAL DRIVERS red, Upper-left MONITOR yellow, Lower-right WATCH CAREFULLY yellow, Lower-left LOWER PRIORITY green. Plot 8-10 labeled driver circles at appropriate positions. Circle size indicates current impact. Professional clear labels" \
-  -o figures/08_driver_impact_matrix.png --doc-type report
-```
-
 ### 10. PESTLE Analysis Diagram
 
 **Tool:** scientific-schematics
@@ -440,14 +356,6 @@ Connecting lines between center and outer hexagons
 Professional appearance
 Clear, readable text in each hexagon
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "PESTLE hexagonal diagram. Center hexagon labeled MARKET. Six surrounding hexagons: Political red, Economic blue, Social green, Technological orange, Legal purple, Environmental teal. Each outer hexagon has 2-3 bullet points of key factors. Lines connecting center to each. Professional appearance clear readable text" \
-  -o figures/09_pestle_analysis.png --doc-type report
-```
-
 ### 11. Industry Trends Timeline
 
 **Tool:** scientific-schematics
@@ -470,14 +378,6 @@ Color-code by trend category:
 Include "Current" marker at 2024
 Professional appearance with clear labels
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Horizontal timeline 2024 to 2030. Plot 6-8 emerging trends at different years. Each trend with icon, name, brief description. Color code: Technology trends blue, Market trends green, Regulatory trends orange. Current marker at 2024. Professional clear labels" \
-  -o figures/10_trends_timeline.png --doc-type report
-```
-
 ---
 
 ## Chapter 4: Competitive Landscape Visuals
@@ -507,14 +407,6 @@ Arrows pointing toward center
 Include key factors as bullet points in each box
 Professional appearance
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Porter's Five Forces diagram. Center box Competitive Rivalry [RATING]. Four surrounding boxes with arrows to center: Top Threat of New Entrants [RATING], Left Bargaining Power Suppliers [RATING], Right Bargaining Power Buyers [RATING], Bottom Threat of Substitutes [RATING]. Color code HIGH red, MEDIUM yellow, LOW green. Include 2-3 key factors per box. Professional appearance" \
-  -o figures/11_porters_five_forces.png --doc-type report
-```
-
 ### 13. Market Share Chart
 
 **Tool:** scientific-schematics
@@ -537,14 +429,6 @@ Include:
 Professional appearance
 Colorblind-friendly palette
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Pie chart market share top 10 companies. Company A XX% dark blue, Company B XX% medium blue, [list companies and shares], Others XX% gray. Percentage labels on slices. Legend with company names. Total market size annotation. Title: Market Share by Company 2024. Colorblind-friendly colors professional" \
-  -o figures/12_market_share.png --doc-type report
-```
-
 ### 14. Competitive Positioning Matrix
 
 **Tool:** scientific-schematics
@@ -569,14 +453,6 @@ Include legend for circle sizes
 Company name labels
 Professional appearance
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "2x2 competitive positioning matrix. X-axis Market Focus Niche to Broad. Y-axis Solution Approach Product to Platform. Quadrants: Upper-right Platform Leaders, Upper-left Niche Platforms, Lower-right Product Leaders, Lower-left Specialists. Plot 8-10 company circles with names. Circle size = market share. Legend for sizes. Professional" \
-  -o figures/13_competitive_positioning.png --doc-type report
-```
-
 ### 15. Strategic Group Map
 
 **Tool:** scientific-schematics
@@ -601,14 +477,6 @@ Label each strategic group:
 Professional appearance
 Clear company name labels
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Strategic group map. X-axis Geographic Scope Regional to Global. Y-axis Product Breadth Narrow to Broad. Draw 4-5 oval bubbles for strategic groups. Each bubble contains 2-4 company names. Bubble size = collective market share. Label groups: Global Generalists, Regional Specialists, Focused Innovators etc. Different colors per group. Professional clear labels" \
-  -o figures/14_strategic_groups.png --doc-type report
-```
-
 ---
 
 ## Chapter 5: Customer Analysis Visuals
@@ -634,14 +502,6 @@ Include for each segment:
 Title: "Customer Segmentation by Market Share"
 Professional appearance
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Treemap customer segmentation. Large Enterprise XX% dark blue, Mid-Market XX% medium blue, SMB XX% light blue, Consumer XX% teal. Each segment shows name percentage dollar value. Title: Customer Segmentation by Market Share. Professional appearance" \
-  -o figures/15_customer_segments.png --doc-type report
-```
-
 ### 17. Segment Attractiveness Matrix
 
 **Tool:** scientific-schematics
@@ -663,14 +523,6 @@ Circle size represents profitability
 Different colors for each segment
 Professional appearance
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "2x2 segment attractiveness matrix. X-axis Segment Size Small to Large. Y-axis Growth Rate Low to High. Quadrants: Upper-right PRIORITY Invest Heavily, Upper-left INVEST TO GROW, Lower-right HARVEST, Lower-left DEPRIORITIZE. Plot customer segments as circles. Circle size = profitability. Different colors. Professional" \
-  -o figures/16_segment_attractiveness.png --doc-type report
-```
-
 ### 18. Customer Journey Map
 
 **Tool:** scientific-schematics
@@ -690,14 +542,6 @@ Color gradient from light to dark as journey progresses
 Professional appearance
 Clear labels
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Customer journey horizontal flowchart. 5 stages left to right: Awareness, Consideration, Decision, Implementation, Usage, Advocacy. Each stage shows Key Activities, Pain Points, Touchpoints in rows below. Icons for each stage. Color gradient light to dark. Professional clear labels" \
-  -o figures/17_customer_journey.png --doc-type report
-```
-
 ---
 
 ## Chapter 6: Technology Landscape Visuals
@@ -720,14 +564,6 @@ Timeline markers for each year
 Technology names labeled at introduction points
 Professional appearance
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Technology roadmap 2024 to 2030. Three parallel horizontal tracks: Core Technology blue, Emerging Technology green, Enabling Technology orange. Milestones and tech introductions marked on each track. Vertical lines connect related tech. Year markers. Technology names labeled. Professional appearance" \
-  -o figures/18_technology_roadmap.png --doc-type report
-```
-
 ### 20. Innovation/Adoption Curve
 
 **Tool:** scientific-schematics
@@ -748,14 +584,6 @@ Color-code by technology category
 Professional appearance
 Clear axis labels
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Gartner Hype Cycle curve. Five phases: Innovation Trigger rising, Peak of Inflated Expectations at top, Trough of Disillusionment at bottom, Slope of Enlightenment rising, Plateau of Productivity stable. Plot 6-8 technologies on curve with labels. Color by category. Professional clear labels" \
-  -o figures/19_innovation_curve.png --doc-type report
-```
-
 ---
 
 ## Chapter 7: Regulatory Environment Visuals
@@ -782,14 +610,6 @@ Vertical "NOW" line at current year (2024)
 Group by region if multiple jurisdictions
 Professional appearance
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Regulatory timeline 2020 to 2028. Past regulations dark blue solid markers, current green marker, upcoming light blue dashed. Each shows regulation name, date, brief description. Vertical NOW line at 2024. Professional appearance clear labels" \
-  -o figures/20_regulatory_timeline.png --doc-type report
-```
-
 ---
 
 ## Chapter 8: Risk Analysis Visuals
@@ -816,14 +636,6 @@ Include risk numbers (R1, R2, etc.)
 Legend linking numbers to risk names
 Professional appearance
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Risk heatmap matrix. X-axis Impact Low Medium High Critical. Y-axis Probability Unlikely Possible Likely Very Likely. Cell colors: Green low risk, Yellow medium, Orange high, Red critical. Plot 10-12 numbered risks R1 R2 etc as labeled points. Legend with risk names. Professional clear" \
-  -o figures/21_risk_heatmap.png --doc-type report
-```
-
 ### 23. Risk Mitigation Framework
 
 **Tool:** scientific-schematics
@@ -842,14 +654,6 @@ Risk severity indicated by box color intensity
 Professional appearance
 Clear labels
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Risk mitigation diagram. Left column risks in orange/red boxes. Right column mitigation strategies in green/blue boxes. Arrows connecting risks to mitigations. Group by category. Risk severity by color intensity. Include prevention and response. Professional clear labels" \
-  -o figures/22_risk_mitigation.png --doc-type report
-```
-
 ---
 
 ## Chapter 9: Strategic Recommendations Visuals
@@ -875,14 +679,6 @@ Circle size represents opportunity size ($)
 Include opportunity names
 Professional appearance
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "2x2 opportunity matrix. X-axis Market Attractiveness Low to High. Y-axis Ability to Win Low to High. Quadrants: Upper-right PURSUE AGGRESSIVELY green, Upper-left BUILD CAPABILITIES yellow, Lower-right SELECTIVE INVESTMENT yellow, Lower-left AVOID red. Plot 6-8 opportunity circles with labels. Size = opportunity value. Professional" \
-  -o figures/23_opportunity_matrix.png --doc-type report
-```
-
 ### 25. Recommendation Priority Matrix
 
 **Tool:** scientific-schematics
@@ -903,14 +699,6 @@ Plot 6-8 recommendations as labeled points
 Number recommendations by priority
 Professional appearance
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "2x2 priority matrix. X-axis Effort Low to High. Y-axis Impact Low to High. Quadrants: Upper-left QUICK WINS green Do First, Upper-right MAJOR PROJECTS blue Plan Carefully, Lower-left FILL-INS gray Do If Time, Lower-right THANKLESS TASKS red Avoid. Plot 6-8 numbered recommendations. Professional" \
-  -o figures/24_recommendation_priority.png --doc-type report
-```
-
 ---
 
 ## Chapter 10: Implementation Roadmap Visuals
@@ -934,14 +722,6 @@ Month markers on X-axis
 Phase names on Y-axis
 Professional appearance
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Gantt chart implementation 24 months. Phase 1 Foundation months 1-6 dark blue. Phase 2 Build months 4-12 medium blue. Phase 3 Scale months 10-18 teal. Phase 4 Optimize months 16-24 light blue. Overlapping bars. Key milestones as diamonds. Month markers X-axis. Professional" \
-  -o figures/25_implementation_timeline.png --doc-type report
-```
-
 ### 27. Milestone Tracker
 
 **Tool:** scientific-schematics
@@ -962,14 +742,6 @@ Connect milestones with timeline line
 Include phase labels above timeline
 Professional appearance
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Milestone tracker horizontal timeline 8-10 milestones. Each shows date, name, status: Completed green check, In Progress yellow circle, Upcoming gray circle. Group by phase. Phase labels above. Connected timeline line. Professional" \
-  -o figures/26_milestone_tracker.png --doc-type report
-```
-
 ---
 
 ## Chapter 11: Investment Thesis Visuals
@@ -995,14 +767,6 @@ Legend for scenarios and growth line
 Title: "Financial Projections (5-Year)"
 Professional appearance
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Combined bar and line chart 5-year projections. Bar chart revenue primary Y-axis dollars. Line chart growth rate secondary Y-axis percent. Three scenarios: Conservative gray, Base Case blue, Optimistic green. X-axis Year 1-5. Data labels. Legend. Title Financial Projections 5-Year. Professional" \
-  -o figures/27_financial_projections.png --doc-type report
-```
-
 ### 29. Scenario Analysis Comparison
 
 **Tool:** scientific-schematics
@@ -1024,40 +788,11 @@ Title: "Scenario Analysis Comparison"
 Professional appearance
 Clear metric labels
 ```
-
-**Command:**
-```bash
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Grouped bar chart scenario comparison. X-axis metrics: Revenue Y5, EBITDA Y5, Market Share, ROI. Three bars per metric: Conservative gray, Base Case blue, Optimistic green. Data labels. Legend. Title Scenario Analysis Comparison. Professional clear labels" \
-  -o figures/28_scenario_analysis.png --doc-type report
-```
-
 ---
 
-## Batch Generation Script
+## Generating the Visuals
 
-For convenience, use the `generate_market_visuals.py` script to batch generate visuals:
-
-```bash
-# Generate core 5-6 visuals only (recommended for starting reports)
-python skills/market-research-reports/scripts/generate_market_visuals.py \
-  --topic "Electric Vehicle Charging Infrastructure" \
-  --output-dir figures/
-
-# Generate all 27 visuals (core + extended, for comprehensive coverage)
-python skills/market-research-reports/scripts/generate_market_visuals.py \
-  --topic "Electric Vehicle Charging Infrastructure" \
-  --output-dir figures/ \
-  --all
-
-# Skip already generated files
-python skills/market-research-reports/scripts/generate_market_visuals.py \
-  --topic "Your Market" \
-  --output-dir figures/ \
-  --skip-existing
-```
-
-**Default behavior**: Generates only the 5-6 core priority visuals. Use `--all` flag if you need comprehensive visual coverage for all sections.
+To produce any of the figures above, hand the relevant prompt to the appropriate skill: invoke the **alterlab-scientific-schematics** skill for charts, diagrams, matrices, and timelines, or the **alterlab-generate-image** skill for infographics and conceptual illustrations. Figures are optional — generate only the ones that genuinely strengthen the report.
 
 ---
 

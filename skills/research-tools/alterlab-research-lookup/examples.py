@@ -10,6 +10,10 @@ This script demonstrates:
 """
 
 import os
+import sys
+
+# Import the main research lookup class from scripts/
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scripts'))
 from research_lookup import ResearchLookup
 
 

@@ -2,10 +2,10 @@
 
 # AlterLab Akademik Beceriler
 
-**Türk akademisyenler ve araştırmacılar için 186+ Claude AI becerisi**
+**Her yerdeki akademisyenler ve araştırmacılar için 180 Claude AI becerisi**
 *13 araştırma alanına göre düzenlenmiş — Claude'u kendi alanınızın uzmanına dönüştürün.*
 
-[![Skills](https://img.shields.io/badge/Beceri-186+-7C3AED?style=for-the-badge)](skills/)
+[![Skills](https://img.shields.io/badge/Beceri-180-7C3AED?style=for-the-badge)](skills/)
 [![Domains](https://img.shields.io/badge/Alan-13-2563EB?style=for-the-badge)](skills/)
 [![License](https://img.shields.io/badge/Lisans-MIT-10B981?style=for-the-badge)](LICENSE)
 
@@ -17,9 +17,12 @@
 
 ## Bu Proje Nedir?
 
-**AlterLab Akademik Beceriler**, fakülte üyeleri, akademisyenler ve araştırmacılar için tasarlanmış 186 adet uzmanlaşmış Claude AI becerisinden oluşan bir kütüphanedir. Her beceri, Claude'u belirli bir akademik alanda uzman bir asistana dönüştürür — bilimsel veritabanları, biyoinformatik araçlar, klinik araştırma protokolleri, akademik yazım, hibe başvuruları ve daha fazlası.
+**AlterLab Akademik Beceriler**, fakülte üyeleri, akademisyenler ve araştırmacılar için tasarlanmış 180 adet uzmanlaşmış Claude AI becerisinden oluşan bir kütüphanedir. Her beceri, Claude'u belirli bir akademik alanda uzman bir asistana dönüştürür — bilimsel veritabanları, biyoinformatik araçlar, klinik araştırma protokolleri, akademik yazım, hibe başvuruları ve daha fazlası.
 
 Her beceri tek bir `.md` dosyasıdır. Claude Code veya Claude Projects içine bırakırsınız, Claude o alanın bilgisiyle donanmış olarak çalışmaya başlar.
+
+> [!NOTE]
+> Bu Türkçe dosya bir özet çeviridir. Becerilerin tam ve güncel listesi için [İngilizce README](README.md) dosyasına bakın.
 
 > [!TIP]
 > **Hedef kitle:** Fakülte üyeleri, doktora sonrası araştırmacılar, doktora öğrencileri. Lisans seviyesi iletişim öğrencileri için [AlterLab FC Skills](https://github.com/AlterLab-IEU/AlterLab-FC-Skills) projesine bakabilirsiniz.
@@ -30,21 +33,21 @@ Her beceri tek bir `.md` dosyasıdır. Claude Code veya Claude Projects içine b
 
 | Alan | Beceri Sayısı | Kapsam |
 |---|:---:|---|
-| **Çekirdek Pipeline** | 6 | Araştırma → yazım → hakemlik → revizyon — tam akademik üretim hattı |
+| **Çekirdek Pipeline** | 7 | Araştırma → yazım → hakemlik → revizyon — tam akademik üretim hattı |
 | **Bilimsel Veritabanları** | 39 | PubMed, ChEMBL, UniProt, ClinicalTrials.gov, COSMIC, AlphaFold ve daha fazlası |
 | **Biyoinformatik** | 25 | Genomik, proteomik, tek hücre RNA analizi — Scanpy, BioPython, ESM, scvi-tools |
 | **Kemoinformatik** | 12 | İlaç keşfi, moleküler dinamik, RDKit, docking, ADMET |
-| **Klinik Araştırma** | 10 | Klinik karar desteği, tedavi planlaması, tıbbi görüntüleme, regülasyon |
+| **Klinik Araştırma** | 7 | Klinik karar desteği, tedavi planlaması, tıbbi görüntüleme, regülasyon |
 | **Veri Bilimi** | 22 | scikit-learn, PyTorch Lightning, SHAP, transformerlar |
 | **Görselleştirme** | 8 | Matplotlib, Seaborn, Plotly, bilimsel şematikler |
 | **Akademik Yazım** | 13 | Bilimsel yazım, atıf yönetimi, hibe önerileri, posterler, akademik kariyer |
 | **Laboratuvar Entegrasyonları** | 9 | Benchling, DNAnexus, Opentrons, Protocols.io |
 | **Alan-Spesifik** | 17 | Kuantum hesaplama, jeo-uzamsal, malzeme bilimi, sosyal bilim metodolojisi, dijital beşeri bilimler |
-| **Doküman Araçları** | 6 | DOCX, PDF, PPTX, XLSX, Markdown |
+| **Doküman Araçları** | 2 | MarkItDown belge dönüştürme, Open Notebook |
 | **Araştırma Araçları** | 12 | Arama, keşif, Zotero, nitel yöntemler, etik, anketler, açık bilim |
 | **Finans & Ekonomi** | 7 | FRED, Alpha Vantage, SEC EDGAR, piyasa araştırması |
 
-**Toplam: 186 beceri, 13 alan.**
+**Toplam: 180 beceri, 13 alan.**
 
 ---
 
@@ -58,13 +61,20 @@ Her beceri tek bir `.md` dosyasıdır. Claude Code veya Claude Projects içine b
 3. Sohbete başlayın — Claude artık o alanın uzmanı
 ```
 
-### Seçenek 2 — Claude Code CLI
+### Seçenek 2 — Claude Code Eklenti Pazarı *(Önerilen)*
+
+Depo, `alterlab-academic-skills` adlı bir Claude Code eklenti pazarı olarak yayınlanır ve 13 alan eklentisi içerir (`alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, … `alterlab-finance-economics`).
 
 ```bash
-git clone https://github.com/AlterLab-IEU/AlterLab-Academic-Skills.git
-cd AlterLab-Academic-Skills
-claude "CRISPR gen düzenleme üzerine güncel bulguları araştır"
+# Claude Code içinde:
+/plugin marketplace add AlterLab-IEU/AlterLab-Academic-Skills
+/plugin install alterlab-core@alterlab-academic-skills
+# ihtiyacınız olan diğer alanlar için tekrarlayın, ör.:
+/plugin install alterlab-bioinformatics@alterlab-academic-skills
 ```
+
+> [!NOTE]
+> Becerilerin Claude tarafından otomatik tetiklenmesi için ilgili `SKILL.md` dosyaları `~/.claude/skills/` dizinine kopyalanmalıdır.
 
 ### Seçenek 3 — Tekil Beceri Kullanımı
 
@@ -72,7 +82,7 @@ Her beceri bağımsız bir `.md` dosyasıdır. `skills/` klasörüne göz atın 
 
 ---
 
-## ⚡ Çekirdek Pipeline — 6 Beceri
+## ⚡ Çekirdek Pipeline — 7 Beceri
 
 > *Sistemin kalbi: araştırmadan yayına çok-ajanlı bir üretim hattı.*
 
@@ -116,11 +126,11 @@ Claude (alterlab-deep-research): [Türkçe RQ Brief + İngilizce kaynak listesi 
 ```
 AlterLab-Academic-Skills/
 ├── skills/
-│   ├── core/                  # 6 çekirdek pipeline becerisi
+│   ├── core/                  # 7 çekirdek pipeline becerisi
+│   │   └── shared/            # Paylaşılan referans dokümanları
 │   ├── databases/             # 39 bilimsel veritabanı bağlayıcısı
 │   ├── bioinformatics/        # 25 biyoinformatik beceri
-│   ├── ...                    # ve 10 diğer alan
-│   └── shared/                # Paylaşılan referans dokümanları
+│   └── ...                    # ve 10 diğer alan
 ├── scripts/
 │   ├── audit_skills.py        # SKILL.md şema denetleyicisi
 │   └── normalize_skills.py    # Otomatik şema düzeltici
@@ -146,7 +156,7 @@ alterlab-{ad}/
 3. **Referanslar** — Görev gerektirdikçe, `references/*.md` dosyaları talep üzerine yüklenir.
 4. **MCP Tercihi** — MCP araçları (PubMed, Scholar Gateway, Clinical Trials, Hugging Face) mevcutsa, beceriler eğitim verisi yerine canlı veriyi tercih eder ve kaynağı + erişim tarihini gösterir.
 
-Bu kademeli yükleme yaklaşımı sayesinde 186 beceri aynı projede yüklenebilir; Claude yalnızca ihtiyaç duyduğunu hafızaya çeker.
+Bu kademeli yükleme yaklaşımı sayesinde 180 beceri aynı projede yüklenebilir; Claude yalnızca ihtiyaç duyduğunu hafızaya çeker.
 
 ---
 

@@ -142,9 +142,54 @@ def normalize_license(value: str) -> str | None:
     return None
 
 
-def referenced_paths(body: str) -> set[str]:
-    """Find references/*.md paths cited in the body."""
-    return set(re.findall(r"references/[A-Za-z0-9_.\-/]+\.md", body))
+_SKILL_INDEX: dict[str, Path] | None = None
+
+
+def skill_index() -> dict[str, Path]:
+    """Map every skill `name` (== leaf dir name) to its directory, for resolving
+    cross-skill `references/*.md` citations (e.g. one skill pointing at another's refs)."""
+    global _SKILL_INDEX
+    if _SKILL_INDEX is None:
+        _SKILL_INDEX = {
+            sk.name: sk
+            for sk in SKILLS_DIR.glob("*/*")
+            if sk.is_dir() and (sk / "SKILL.md").exists()
+        }
+    return _SKILL_INDEX
+
+
+_REF_RE = re.compile(r"(?:(alterlab-[a-z0-9-]+)/)?(references/[A-Za-z0-9_.\-/]+\.md)")
+_SKILL_NAME_RE = re.compile(r"alterlab-[a-z0-9-]+")
+
+
+def missing_references(body: str, skill_dir: Path) -> list[str]:
+    """Return cited references/*.md paths that resolve to no file on disk.
+
+    A citation resolves if the file exists in (a) this skill, (b) a skill named as
+    an explicit path prefix (`alterlab-foo/references/x.md`), or (c) any other
+    `alterlab-*` skill mentioned on the same line ("the alterlab-seaborn skill's
+    `references/examples.md`"). Cross-skill references are legitimate, not errors."""
+    index = skill_index()
+    missing: list[str] = []
+    seen: set[str] = set()
+    for line in body.splitlines():
+        line_skills = set(_SKILL_NAME_RE.findall(line))
+        for prefix, relref in _REF_RE.findall(line):
+            cited = (f"{prefix}/" if prefix else "") + relref
+            if cited in seen:
+                continue
+            seen.add(cited)
+            if prefix:  # explicit cross-skill path
+                d = index.get(prefix)
+                if not (d and (d / relref).exists()):
+                    missing.append(cited)
+                continue
+            if (skill_dir / relref).exists():  # self reference
+                continue
+            if any((index.get(sn) and (index[sn] / relref).exists()) for sn in line_skills):
+                continue  # resolved against a sibling skill named on this line
+            missing.append(cited)
+    return missing
 
 
 def audit_skill(skill_md: Path) -> SkillReport:
@@ -205,10 +250,9 @@ def audit_skill(skill_md: Path) -> SkillReport:
     if SUITE_LABEL_LOOSE not in desc and SUITE_LABEL_LOOSE not in body:
         report.findings.append(Finding(str(rel), "warning", "suite-label-missing", f"Suite mention not found (looking for {SUITE_LABEL_LOOSE!r})"))
 
-    # Reference path existence
-    for ref in referenced_paths(body):
-        if not (skill_md.parent / ref).exists():
-            report.findings.append(Finding(str(rel), "error", "reference-missing", f"Cited reference file does not exist: {ref}"))
+    # Reference path existence (self + cross-skill)
+    for ref in missing_references(body, skill_md.parent):
+        report.findings.append(Finding(str(rel), "error", "reference-missing", f"Cited reference file does not exist: {ref}"))
 
     # Body length
     body_lines = body.count("\n") + 1

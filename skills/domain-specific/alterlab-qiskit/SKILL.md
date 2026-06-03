@@ -12,11 +12,11 @@ metadata:
 
 ## Overview
 
-Qiskit is the world's most popular open-source quantum computing framework with 13M+ downloads. Build quantum circuits, optimize for hardware, execute on simulators or real quantum computers, and analyze results. Supports IBM Quantum (100+ qubit systems), IonQ, Amazon Braket, and other providers.
+Qiskit is an open-source quantum computing framework. Build quantum circuits, optimize for hardware, execute on simulators or real quantum computers, and analyze results. Supports IBM Quantum (100+ qubit systems), IonQ, Amazon Braket, and other providers.
 
 **Key Features:**
-- 83x faster transpilation than competitors
-- 29% fewer two-qubit gates in optimized circuits
+- Configurable transpilation with multiple optimization levels
+- Circuit optimization that reduces two-qubit gate counts
 - Backend-agnostic execution (local simulators or cloud hardware)
 - Comprehensive algorithm libraries for optimization, chemistry, and ML
 

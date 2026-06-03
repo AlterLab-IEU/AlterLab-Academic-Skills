@@ -30,41 +30,19 @@ This skill should be used when:
 - Writing preliminary data or feasibility sections
 - Preparing biosketches, CVs, or facilities descriptions
 
-## Visual Enhancement with Scientific Schematics
+## Visual Communication in Proposals
 
-**⚠️ MANDATORY: Every research grant proposal MUST include at least 1-2 AI-generated figures using the scientific-schematics skill.**
+Well-chosen figures strengthen a proposal: a Gantt chart clarifies the timeline, a conceptual framework orients reviewers, and a workflow diagram makes methodology legible at a glance. Figures are optional — add them only where they genuinely improve clarity, and never pad a proposal with decorative graphics.
 
-This is not optional. Grant proposals without visual elements are incomplete and less competitive. Before finalizing any document:
-1. Generate at minimum ONE schematic or diagram (e.g., project timeline, methodology flowchart, or conceptual framework)
-2. Prefer 2-3 figures for comprehensive proposals (research workflow, Gantt chart, preliminary data visualization)
+If a diagram or figure would aid comprehension, invoke the **alterlab-scientific-schematics** skill (diagrams/schematics) or the **alterlab-generate-image** skill (images). Figures are optional — add them only where they improve clarity.
 
-**How to generate figures:**
-- Use the **scientific-schematics** skill to generate AI-powered publication-quality diagrams
-- Simply describe your desired diagram in natural language
-- Nano Banana Pro will automatically generate, review, and refine the schematic
-
-**How to generate schematics:**
-```bash
-python scripts/generate_schematic.py "your diagram description" -o figures/output.png
-```
-
-The AI will automatically:
-- Create publication-quality images with proper formatting
-- Review and refine through multiple iterations
-- Ensure accessibility (colorblind-friendly, high contrast)
-- Save outputs in the figures/ directory
-
-**When to add schematics:**
+**Where figures typically earn their space in a proposal:**
 - Research methodology and workflow diagrams
 - Project timeline Gantt charts
 - Conceptual framework illustrations
 - System architecture diagrams (for technical proposals)
 - Experimental design flowcharts
-- Broader impacts activity diagrams
-- Collaboration network diagrams
-- Any complex concept that benefits from visualization
-
-For detailed guidance on creating schematics, refer to the scientific-schematics skill documentation.
+- Preliminary data visualizations
 
 ---
 
@@ -596,6 +574,11 @@ Varies by program office, but generally includes:
 - Potential contribution to DARPA mission
 - Realism of proposed costs and availability of funds
 
+DARPA reviewers think in terms of the Heilmeier Catechism — be ready to answer:
+- **What if you succeed?** (Impact if the research works)
+- **What if you're right?** (Implications of your hypothesis)
+- **Who cares?** (Why it matters for national security)
+
 ### NSTC Review Criteria
 
 **Core Evaluation Dimensions**:
@@ -604,12 +587,7 @@ Varies by program office, but generally includes:
 3. **PI Capability (主持人能力)**: Track record and expertise.
 4. **Value (價值)**: Academic contribution and societal/industrial impact.
 
-For detailed review criteria by agency, refer to `references/review_criteria.md` and `references/nstc_guidelines.md`.
-- **What if you succeed?** (Impact if the research works)
-- **What if you're right?** (Implications of your hypothesis)
-- **Who cares?** (Why it matters for national security)
-
-For detailed review criteria by agency, refer to `references/review_criteria.md`.
+For detailed, agency-specific review criteria refer to the agency guideline files: `references/nsf_guidelines.md`, `references/nih_guidelines.md`, `references/doe_guidelines.md`, `references/darpa_guidelines.md`, and `references/nstc_guidelines.md`.
 
 ## Writing Principles for Competitive Proposals
 
@@ -743,7 +721,7 @@ For detailed review criteria by agency, refer to `references/review_criteria.md`
 - **Young Faculty Award (YFA)**: Early career researchers, up to $500K
 - **Director's Fellowship**: High-risk, paradigm-shifting research
 
-For detailed program guidance, refer to `references/funding_mechanisms.md`.
+For detailed program and mechanism guidance, refer to the agency guideline files: `references/nsf_guidelines.md`, `references/nih_guidelines.md`, `references/doe_guidelines.md`, and `references/darpa_guidelines.md`.
 
 ## Resubmission Strategies
 
@@ -921,14 +899,15 @@ This skill works effectively with:
 
 This skill includes comprehensive reference files covering specific aspects of grant writing:
 
-- `references/nsf_guidelines.md`: NSF-specific requirements, formatting, and strategies
+- `references/nsf_guidelines.md`: NSF-specific requirements, formatting, review criteria, and strategies
 - `references/nih_guidelines.md`: NIH mechanisms, review criteria, and submission requirements
-- `references/doe_guidelines.md`: DOE programs, emphasis areas, and application procedures
-- `references/darpa_guidelines.md`: DARPA BAAs, program offices, and proposal strategies
+- `references/doe_guidelines.md`: DOE programs, emphasis areas, review criteria, and application procedures
+- `references/darpa_guidelines.md`: DARPA BAAs, program offices, review criteria, and proposal strategies
+- `references/nstc_guidelines.md`: Taiwan NSTC CM03 format, review criteria, and bilingual requirements
 - `references/broader_impacts.md`: Strategies for compelling broader impacts statements
 - `references/specific_aims_guide.md`: Writing effective specific aims pages
+- `references/research_methods.md`: Methodology guidance for experimental, computational, and clinical research
 - `references/budget_preparation.md`: Budget development and justification
-- `references/review_criteria.md`: Detailed review criteria by agency
 - `references/timeline_planning.md`: Creating realistic timelines and milestones
 - `references/team_building.md`: Assembling and presenting effective teams
 - `references/resubmission_strategies.md`: Responding to reviews and revising proposals

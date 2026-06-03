@@ -20,7 +20,7 @@ Skills must belong to one of the following categories:
 | Cheminformatics | `skills/cheminformatics/` | Chemistry, drug discovery |
 | Clinical Research | `skills/clinical-research/` | Clinical decision support, medical tools |
 | Data Science | `skills/data-science/` | ML, statistics, data analysis |
-| Document Tools | `skills/document-tools/` | DOCX, PDF, PPTX, XLSX handling |
+| Document Tools | `skills/document-tools/` | Markdown conversion and notebook tooling |
 | Domain-Specific | `skills/domain-specific/` | Quantum, geospatial, materials science |
 | Finance & Economics | `skills/finance-economics/` | Financial data and analysis |
 | Lab Integrations | `skills/lab-integrations/` | Laboratory platform connectors |
@@ -40,49 +40,44 @@ If your skill does not fit any existing category, open an issue to discuss addin
 ```
 skills/{category}/alterlab-{name}/
   SKILL.md        # The skill definition (required)
-  README.md       # Usage documentation (optional)
-  examples/       # Example prompts and outputs (optional)
+  references/     # Long-form detail, linked from SKILL.md (optional)
 ```
+
+Keep `SKILL.md` lean. The body is the router: it explains what the skill does and links out to deeper material. Long detail (API tables, templates, style guides, worked examples) lives in `references/*.md` and is **cited from the body by relative path** (e.g. `references/api_patterns.md`). Every `references/*.md` path you mention in the body must exist on disk — CI fails the skill otherwise.
 
 ### 4. SKILL.md Template
 
-Every skill must have a `SKILL.md` file with YAML frontmatter followed by the skill prompt content:
+Every skill must have a `SKILL.md` file with YAML frontmatter followed by the skill prompt content. The frontmatter follows the [Agent Skills spec](https://code.claude.com/docs/en/skills) and is **CI-enforced** — copy this template exactly:
 
 ```markdown
 ---
-name: "alterlab-{name}"
-description: "One-line description of what the skill does."
-version: "1.0"
-license: "MIT"
+name: alterlab-{name}            # lowercase-hyphen, <=64 chars, MUST equal the parent directory name; no 'claude'/'anthropic'
+description: <what it does AND when to use it, third person, <=1024 chars>. Part of the AlterLab Academic Skills suite.
+license: MIT
+allowed-tools: Read Write Edit Bash(python:*)   # SPACE-separated (open-standard)
 metadata:
-  skill-author: "AlterLab"
-  category: "{category}"
-  tags:
-    - tag1
-    - tag2
+    skill-author: AlterLab
+    version: "1.0.0"
 ---
 
-# alterlab-{name}
+# {Skill Name}
+
+Describe what the skill does and when to use it, then give the full
+instructions. Link long-form detail out to `references/*.md`.
 
 Part of the AlterLab Academic Skills suite.
-
-## Purpose
-
-Describe what the skill does and who it is for.
-
-## Instructions
-
-The full system prompt / instructions for the skill go here.
 ```
 
 **Required frontmatter fields:**
 
-- `name` -- must match `alterlab-{name}` pattern
-- `description` -- concise, one-line summary
-- `version` -- semver format
-- `license` -- must be `MIT`
+- `name` -- lowercase-hyphen, `<=64` chars, **must equal the parent directory name** (`alterlab-{name}`); must not contain `claude` or `anthropic`
+- `description` -- third person, covers **what it does AND when to use it**, `<=1024` chars; include the suite label `Part of the AlterLab Academic Skills suite.`
+- `license` -- `MIT` (must come from the controlled license vocabulary)
+- `allowed-tools` -- **space-separated** open-standard list, e.g. `Read Write Edit Bash(python:*)`
 - `metadata.skill-author` -- must be `AlterLab`
-- `metadata.category` -- must match the parent folder name
+- `metadata.version` -- quoted semver string, e.g. `"1.0.0"`
+
+> There is **no** top-level `version:` field, and **no** `metadata.tags` or `metadata.category`. Category is derived from the folder path, not the frontmatter.
 
 ## Pull Request Process
 
@@ -93,11 +88,18 @@ The full system prompt / instructions for the skill go here.
    - Which category it belongs to
    - Any external APIs or services it depends on
 4. **One skill per PR** unless the skills are closely related.
-5. **Test your skill** before submitting:
-   - Verify the YAML frontmatter parses correctly
-   - Confirm the skill works as intended with Claude
-   - Check for prompt injection vulnerabilities in any user-facing input handling
-6. **Wait for review** -- a maintainer will review your PR and may request changes.
+5. **Validate before submitting** (the validators are the source of truth, see below):
+   ```bash
+   python scripts/audit_skills.py     # frontmatter / references / convention audit
+   pytest tests/                      # per-skill schema + body-length + references tests
+   ```
+   A new skill must pass cleanly with **no `known_failures` entry** — that table tracks pre-existing content debt only and is off-limits for new work.
+6. **Regenerate the marketplace** if you added, removed, moved, or renamed a skill:
+   ```bash
+   python scripts/gen_marketplace.py  # rewrites .claude-plugin/marketplace.json
+   ```
+   Commit the regenerated `marketplace.json` alongside your skill.
+7. **Wait for review** -- a maintainer will review your PR and may request changes.
 
 ## Commit Convention
 
@@ -111,7 +113,13 @@ Follow the project commit convention:
 
 ## Testing Guidelines
 
-- Validate YAML frontmatter syntax (no tabs, proper quoting)
+The **source of truth for validation** is the repo's own tooling — if it passes there, it passes in CI:
+
+- `python scripts/audit_skills.py` -- audits every `SKILL.md` for frontmatter shape, naming/`name`-matches-folder, license vocabulary, the suite label, and that all cited `references/*.md` paths exist.
+- `pytest tests/` -- per-skill schema, body-length, and reference-existence tests.
+
+New skills must pass both with **no `known_failures` entry**. Beyond the automated checks, also:
+
 - Test the skill prompt with Claude to verify it produces expected behavior
 - Check that the skill does not request or expose sensitive information (API keys, credentials)
 - Verify the skill handles edge cases gracefully (empty input, malformed data)
@@ -119,9 +127,10 @@ Follow the project commit convention:
 
 ## Modifying Existing Skills
 
-- Bump the `version` field in the frontmatter
+- Bump the `metadata.version` field in the frontmatter (quoted semver string)
 - Describe the change in your commit message using the `improve:` prefix
 - If the change is a breaking modification to the skill's behavior, note it in the PR description
+- If you move or rename a skill, re-run `python scripts/gen_marketplace.py` and commit the updated `.claude-plugin/marketplace.json`
 
 ## Reporting Issues
 

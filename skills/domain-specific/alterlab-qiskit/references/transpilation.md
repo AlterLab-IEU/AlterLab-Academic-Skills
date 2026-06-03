@@ -46,7 +46,7 @@ qc_2 = transpile(qc, backend=backend, optimization_level=2)
 qc_3 = transpile(qc, backend=backend, optimization_level=3)
 ```
 
-**Qiskit SDK v2.2** provides **83x faster transpilation** compared to competitors.
+Recent Qiskit SDK releases have continued to improve transpilation performance; benchmark on your own circuits and backend to gauge the effect.
 
 ## Transpilation Stages
 
@@ -187,7 +187,7 @@ two_qubit_gates = qc_transpiled.count_ops().get('cx', 0)
 print(f"Two-qubit gates: {two_qubit_gates}")
 ```
 
-**Qiskit produces circuits with 29% fewer two-qubit gates** than leading alternatives, significantly reducing errors.
+Higher optimization levels aim to reduce two-qubit gate counts, which are a major error source on current hardware; measure the gate count before and after to confirm the reduction for your circuit.
 
 ## Multiple Circuit Transpilation
 
@@ -268,7 +268,7 @@ Transpilation depends on specific device (Rigetti, IonQ, etc.)
 
 1. **Cache transpiled circuits** - Transpilation is expensive, reuse when possible
 2. **Use appropriate optimization level** - Level 3 is slow but best for production
-3. **Leverage v2.2 speed improvements** - Update to latest Qiskit for 83x speedup
+3. **Stay on a recent Qiskit release** - Newer versions include transpiler performance improvements
 4. **Parallelize transpilation** - Qiskit automatically parallelizes when transpiling multiple circuits
 
 ## Common Issues and Solutions
@@ -280,7 +280,7 @@ Transpilation depends on specific device (Rigetti, IonQ, etc.)
 **Solution**: Adjust initial_layout to better match qubit topology
 
 ### Issue: Transpilation takes too long
-**Solution**: Reduce optimization level or update to Qiskit v2.2+ for speed improvements
+**Solution**: Reduce optimization level or update to a recent Qiskit release for transpiler performance improvements
 
 ### Issue: Unexpected gate decompositions
 **Solution**: Check basis_gates and consider specifying custom decomposition rules

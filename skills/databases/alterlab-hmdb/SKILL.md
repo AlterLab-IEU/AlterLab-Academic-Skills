@@ -1,7 +1,7 @@
 ---
 name: alterlab-hmdb
 description: Access Human Metabolome Database (220K+ metabolites). Search by name/ID/structure, retrieve chemical properties, biomarker data, NMR/MS spectra, pathways, for metabolomics and identification. Part of the AlterLab Academic Skills suite.
-license: Proprietary
+license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 metadata:
     skill-author: AlterLab

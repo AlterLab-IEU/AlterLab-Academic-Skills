@@ -58,6 +58,10 @@ This generates/edits an image and saves it as `generated_image.png` in the curre
 
 The script will automatically detect the `.env` file and provide clear error messages if the API key is missing.
 
+## Data & Privacy
+
+This skill sends your prompts and any input image to a third-party API (OpenRouter) for processing. Avoid sending confidential, clinical, or unpublished material. The OpenRouter API key is read from the environment (`OPENROUTER_API_KEY`).
+
 ## Model Selection
 
 **Default model**: `google/gemini-3.1-flash-image-preview` (high quality, recommended)

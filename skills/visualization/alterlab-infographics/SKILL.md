@@ -471,6 +471,10 @@ export OPENROUTER_API_KEY='your_api_key_here'
 
 Get an API key at: https://openrouter.ai/keys
 
+### Data & Privacy
+
+This skill sends your prompts and research/infographic content to a third-party API (OpenRouter) for generation and quality review. Avoid sending confidential, clinical, or unpublished material. The OpenRouter API key is read from the environment (`OPENROUTER_API_KEY`).
+
 ---
 
 ## Prompt Engineering Tips

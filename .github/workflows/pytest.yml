@@ -9,6 +9,7 @@ on:
       - "scripts/**"
       - "tests/**"
       - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/pytest.yml"
 
 jobs:
@@ -18,12 +19,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.12"
-
-      - name: Install pytest
-        run: pip install pytest
+          enable-cache: true
 
       - name: Run schema tests
-        run: pytest tests/ -ra --tb=short
+        run: uv run --frozen pytest tests/ -ra --tb=short

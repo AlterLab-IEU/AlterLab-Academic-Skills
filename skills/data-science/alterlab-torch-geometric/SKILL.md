@@ -644,7 +644,7 @@ When choosing layers, consider these capabilities:
 - **Bipartite**: Works with bipartite graphs (different source/target dimensions)
 - **Lazy**: Enables initialization without specifying input dimensions
 
-See the GNN cheatsheet at `references/layer_capabilities.md`.
+See the GNN cheatsheet at `references/layers_reference.md`.
 
 ## Resources
 
@@ -655,7 +655,6 @@ This skill includes detailed reference documentation:
 - **`references/layers_reference.md`**: Complete listing of all 40+ GNN layers with descriptions and capabilities
 - **`references/datasets_reference.md`**: Comprehensive dataset catalog organized by category
 - **`references/transforms_reference.md`**: All available transforms and their use cases
-- **`references/api_patterns.md`**: Common API patterns and coding examples
 
 ### Scripts
 

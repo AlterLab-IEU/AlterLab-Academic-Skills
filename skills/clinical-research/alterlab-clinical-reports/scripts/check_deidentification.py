@@ -2,6 +2,11 @@
 """
 Check clinical reports for HIPAA identifiers that need removal.
 
+WARNING: This is a pure-regex scan with known, substantial false negatives. It is a
+rough first-pass screen ONLY -- NOT a substitute for manual review or a validated
+de-identification tool (e.g. Presidio/Philter), and must NOT be relied on as a HIPAA
+compliance guarantee. Always perform line-by-line manual review before any disclosure.
+
 Scans text for 18 HIPAA identifiers and flags potential privacy violations.
 
 Usage:

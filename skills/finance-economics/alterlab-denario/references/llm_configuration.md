@@ -132,12 +132,25 @@ docker run -p 8501:8501 \
 ### Step-by-Step Configuration
 
 1. **Install Google Cloud SDK (if not using Docker)**
+
+   Follow the official instructions at https://cloud.google.com/sdk/docs/install
+   and prefer a package manager or the versioned installer archive over piping a
+   remote script to your shell:
+
    ```bash
-   # Linux/macOS
-   curl https://sdk.cloud.google.com | bash
-   exec -l $SHELL
+   # macOS (Homebrew)
+   brew install --cask google-cloud-sdk
+
+   # Debian/Ubuntu (APT repository) — see the install page for the full steps
+   sudo apt-get install google-cloud-cli
+
+   # Then initialize
    gcloud init
    ```
+
+   > **Caution:** Avoid `curl https://sdk.cloud.google.com | bash` — piping a
+   > remote script straight into a shell executes unreviewed code. Use a package
+   > manager or the downloaded installer so you can verify what runs.
 
 2. **Authenticate gcloud**
    ```bash

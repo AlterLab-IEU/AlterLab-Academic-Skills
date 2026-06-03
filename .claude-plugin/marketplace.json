@@ -1,0 +1,311 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "alterlab-academic-skills",
+  "owner": {
+    "name": "AlterLab @ Izmir University of Economics",
+    "email": "alterlab.ieu@gmail.com"
+  },
+  "metadata": {
+    "description": "180 Claude skills for academic research, organized by domain",
+    "version": "1.1.0"
+  },
+  "plugins": [
+    {
+      "name": "alterlab-bioinformatics",
+      "source": "./",
+      "description": "Genomics, proteomics, and single-cell analysis (Scanpy, BioPython, pysam, ESM) (25 skills)",
+      "license": "MIT",
+      "strict": false,
+      "skills": [
+        "./skills/bioinformatics/alterlab-anndata",
+        "./skills/bioinformatics/alterlab-arboreto",
+        "./skills/bioinformatics/alterlab-biopython",
+        "./skills/bioinformatics/alterlab-bioservices",
+        "./skills/bioinformatics/alterlab-cellxgene",
+        "./skills/bioinformatics/alterlab-cobrapy",
+        "./skills/bioinformatics/alterlab-deeptools",
+        "./skills/bioinformatics/alterlab-esm",
+        "./skills/bioinformatics/alterlab-etetoolkit",
+        "./skills/bioinformatics/alterlab-flowio",
+        "./skills/bioinformatics/alterlab-gget",
+        "./skills/bioinformatics/alterlab-glycoengineering",
+        "./skills/bioinformatics/alterlab-histolab",
+        "./skills/bioinformatics/alterlab-lamindb",
+        "./skills/bioinformatics/alterlab-neuropixels",
+        "./skills/bioinformatics/alterlab-pathml",
+        "./skills/bioinformatics/alterlab-phylogenetics",
+        "./skills/bioinformatics/alterlab-pydeseq2",
+        "./skills/bioinformatics/alterlab-pyopenms",
+        "./skills/bioinformatics/alterlab-pysam",
+        "./skills/bioinformatics/alterlab-scanpy",
+        "./skills/bioinformatics/alterlab-scikit-bio",
+        "./skills/bioinformatics/alterlab-scvelo",
+        "./skills/bioinformatics/alterlab-scvi-tools",
+        "./skills/bioinformatics/alterlab-tiledbvcf"
+      ]
+    },
+    {
+      "name": "alterlab-cheminformatics",
+      "source": "./",
+      "description": "Chemistry and drug discovery (RDKit, docking, ADMET, mass spec) (12 skills)",
+      "license": "MIT",
+      "strict": false,
+      "skills": [
+        "./skills/cheminformatics/alterlab-datamol",
+        "./skills/cheminformatics/alterlab-deepchem",
+        "./skills/cheminformatics/alterlab-diffdock",
+        "./skills/cheminformatics/alterlab-matchms",
+        "./skills/cheminformatics/alterlab-medchem",
+        "./skills/cheminformatics/alterlab-molecular-dynamics",
+        "./skills/cheminformatics/alterlab-molfeat",
+        "./skills/cheminformatics/alterlab-primekg",
+        "./skills/cheminformatics/alterlab-pytdc",
+        "./skills/cheminformatics/alterlab-rdkit",
+        "./skills/cheminformatics/alterlab-rowan",
+        "./skills/cheminformatics/alterlab-torchdrug"
+      ]
+    },
+    {
+      "name": "alterlab-clinical-research",
+      "source": "./",
+      "description": "Clinical decision support, medical imaging, and regulatory workflows (7 skills)",
+      "license": "MIT",
+      "strict": false,
+      "skills": [
+        "./skills/clinical-research/alterlab-clinical-decision",
+        "./skills/clinical-research/alterlab-clinical-reports",
+        "./skills/clinical-research/alterlab-iso13485",
+        "./skills/clinical-research/alterlab-neurokit2",
+        "./skills/clinical-research/alterlab-pydicom",
+        "./skills/clinical-research/alterlab-pyhealth",
+        "./skills/clinical-research/alterlab-treatment-plans"
+      ]
+    },
+    {
+      "name": "alterlab-core",
+      "source": "./",
+      "description": "Core research-to-publication pipeline plus teaching and thesis tools (7 skills)",
+      "license": "MIT",
+      "strict": false,
+      "skills": [
+        "./skills/core/alterlab-deep-research",
+        "./skills/core/alterlab-link-health",
+        "./skills/core/alterlab-paper-reviewer",
+        "./skills/core/alterlab-paper-writer",
+        "./skills/core/alterlab-research-pipeline",
+        "./skills/core/alterlab-teaching-design",
+        "./skills/core/alterlab-thesis-supervisor"
+      ]
+    },
+    {
+      "name": "alterlab-data-science",
+      "source": "./",
+      "description": "Machine learning and statistics (scikit-learn, PyTorch, transformers, SHAP) (22 skills)",
+      "license": "MIT",
+      "strict": false,
+      "skills": [
+        "./skills/data-science/alterlab-dask",
+        "./skills/data-science/alterlab-eda",
+        "./skills/data-science/alterlab-networkx",
+        "./skills/data-science/alterlab-polars",
+        "./skills/data-science/alterlab-pufferlib",
+        "./skills/data-science/alterlab-pymc",
+        "./skills/data-science/alterlab-pymoo",
+        "./skills/data-science/alterlab-pytorch-lightning",
+        "./skills/data-science/alterlab-scikit-learn",
+        "./skills/data-science/alterlab-scikit-survival",
+        "./skills/data-science/alterlab-shap",
+        "./skills/data-science/alterlab-simpy",
+        "./skills/data-science/alterlab-stable-baselines3",
+        "./skills/data-science/alterlab-statistical-analysis",
+        "./skills/data-science/alterlab-statsmodels",
+        "./skills/data-science/alterlab-sympy",
+        "./skills/data-science/alterlab-timesfm",
+        "./skills/data-science/alterlab-torch-geometric",
+        "./skills/data-science/alterlab-transformers",
+        "./skills/data-science/alterlab-umap",
+        "./skills/data-science/alterlab-vaex",
+        "./skills/data-science/alterlab-zarr"
+      ]
+    },
+    {
+      "name": "alterlab-databases",
+      "source": "./",
+      "description": "Connectors to scientific databases (PubMed, ChEMBL, UniProt, GEO, and more) (39 skills)",
+      "license": "MIT",
+      "strict": false,
+      "skills": [
+        "./skills/databases/alterlab-alphafold-db",
+        "./skills/databases/alterlab-arxiv",
+        "./skills/databases/alterlab-bindingdb",
+        "./skills/databases/alterlab-biorxiv",
+        "./skills/databases/alterlab-brenda",
+        "./skills/databases/alterlab-cbioportal",
+        "./skills/databases/alterlab-chembl",
+        "./skills/databases/alterlab-clinicaltrials",
+        "./skills/databases/alterlab-clinpgx",
+        "./skills/databases/alterlab-clinvar",
+        "./skills/databases/alterlab-cosmic",
+        "./skills/databases/alterlab-datacommons",
+        "./skills/databases/alterlab-depmap",
+        "./skills/databases/alterlab-drugbank",
+        "./skills/databases/alterlab-ena",
+        "./skills/databases/alterlab-ensembl",
+        "./skills/databases/alterlab-fda",
+        "./skills/databases/alterlab-gene-db",
+        "./skills/databases/alterlab-geo",
+        "./skills/databases/alterlab-gnomad",
+        "./skills/databases/alterlab-gtex",
+        "./skills/databases/alterlab-gwas",
+        "./skills/databases/alterlab-hmdb",
+        "./skills/databases/alterlab-imaging-data-commons",
+        "./skills/databases/alterlab-interpro",
+        "./skills/databases/alterlab-jaspar",
+        "./skills/databases/alterlab-kegg",
+        "./skills/databases/alterlab-metabolomics-wb",
+        "./skills/databases/alterlab-monarch",
+        "./skills/databases/alterlab-openalex",
+        "./skills/databases/alterlab-opentargets",
+        "./skills/databases/alterlab-pdb",
+        "./skills/databases/alterlab-pubchem",
+        "./skills/databases/alterlab-pubmed",
+        "./skills/databases/alterlab-reactome",
+        "./skills/databases/alterlab-string-db",
+        "./skills/databases/alterlab-uniprot",
+        "./skills/databases/alterlab-uspto",
+        "./skills/databases/alterlab-zinc-db"
+      ]
+    },
+    {
+      "name": "alterlab-document-tools",
+      "source": "./",
+      "description": "Document and Markdown conversion (MarkItDown, Open Notebook) (2 skills)",
+      "license": "MIT",
+      "strict": false,
+      "skills": [
+        "./skills/document-tools/alterlab-markitdown",
+        "./skills/document-tools/alterlab-open-notebook"
+      ]
+    },
+    {
+      "name": "alterlab-domain-specific",
+      "source": "./",
+      "description": "Quantum computing, geospatial, materials, astronomy, and digital humanities (17 skills)",
+      "license": "MIT",
+      "strict": false,
+      "skills": [
+        "./skills/domain-specific/alterlab-adaptyv",
+        "./skills/domain-specific/alterlab-aeon",
+        "./skills/domain-specific/alterlab-astropy",
+        "./skills/domain-specific/alterlab-cirq",
+        "./skills/domain-specific/alterlab-digital-humanities",
+        "./skills/domain-specific/alterlab-fluidsim",
+        "./skills/domain-specific/alterlab-geniml",
+        "./skills/domain-specific/alterlab-geomaster",
+        "./skills/domain-specific/alterlab-geopandas",
+        "./skills/domain-specific/alterlab-gtars",
+        "./skills/domain-specific/alterlab-hypogenic",
+        "./skills/domain-specific/alterlab-modal",
+        "./skills/domain-specific/alterlab-pennylane",
+        "./skills/domain-specific/alterlab-pymatgen",
+        "./skills/domain-specific/alterlab-qiskit",
+        "./skills/domain-specific/alterlab-qutip",
+        "./skills/domain-specific/alterlab-social-science-methods"
+      ]
+    },
+    {
+      "name": "alterlab-finance-economics",
+      "source": "./",
+      "description": "Economic and financial data (FRED, Alpha Vantage, SEC EDGAR, market research) (7 skills)",
+      "license": "MIT",
+      "strict": false,
+      "skills": [
+        "./skills/finance-economics/alterlab-alpha-vantage",
+        "./skills/finance-economics/alterlab-denario",
+        "./skills/finance-economics/alterlab-edgartools",
+        "./skills/finance-economics/alterlab-fred",
+        "./skills/finance-economics/alterlab-hedgefund-monitor",
+        "./skills/finance-economics/alterlab-market-research",
+        "./skills/finance-economics/alterlab-usfiscaldata"
+      ]
+    },
+    {
+      "name": "alterlab-lab-integrations",
+      "source": "./",
+      "description": "Laboratory platforms (Benchling, DNAnexus, Opentrons, Protocols.io) (9 skills)",
+      "license": "MIT",
+      "strict": false,
+      "skills": [
+        "./skills/lab-integrations/alterlab-benchling",
+        "./skills/lab-integrations/alterlab-dnanexus",
+        "./skills/lab-integrations/alterlab-ginkgo-cloud",
+        "./skills/lab-integrations/alterlab-labarchive",
+        "./skills/lab-integrations/alterlab-latchbio",
+        "./skills/lab-integrations/alterlab-omero",
+        "./skills/lab-integrations/alterlab-opentrons",
+        "./skills/lab-integrations/alterlab-protocolsio",
+        "./skills/lab-integrations/alterlab-pylabrobot"
+      ]
+    },
+    {
+      "name": "alterlab-research-tools",
+      "source": "./",
+      "description": "Search, discovery, Zotero, qualitative methods, ethics, and open science (12 skills)",
+      "license": "MIT",
+      "strict": false,
+      "skills": [
+        "./skills/research-tools/alterlab-bgpt-search",
+        "./skills/research-tools/alterlab-mixed-methods",
+        "./skills/research-tools/alterlab-open-science",
+        "./skills/research-tools/alterlab-parallel-web",
+        "./skills/research-tools/alterlab-perplexity",
+        "./skills/research-tools/alterlab-pyzotero",
+        "./skills/research-tools/alterlab-qualitative-methods",
+        "./skills/research-tools/alterlab-research-ethics",
+        "./skills/research-tools/alterlab-research-lookup",
+        "./skills/research-tools/alterlab-scientific-brainstorm",
+        "./skills/research-tools/alterlab-scientific-thinking",
+        "./skills/research-tools/alterlab-survey-design"
+      ]
+    },
+    {
+      "name": "alterlab-visualization",
+      "source": "./",
+      "description": "Publication-quality plotting and schematics (Matplotlib, Seaborn, Plotly) (8 skills)",
+      "license": "MIT",
+      "strict": false,
+      "skills": [
+        "./skills/visualization/alterlab-generate-image",
+        "./skills/visualization/alterlab-infographics",
+        "./skills/visualization/alterlab-matplotlib",
+        "./skills/visualization/alterlab-mermaid",
+        "./skills/visualization/alterlab-plotly",
+        "./skills/visualization/alterlab-scientific-schematics",
+        "./skills/visualization/alterlab-scientific-viz",
+        "./skills/visualization/alterlab-seaborn"
+      ]
+    },
+    {
+      "name": "alterlab-writing-tools",
+      "source": "./",
+      "description": "Scientific writing, citations, grants, posters, and academic career (13 skills)",
+      "license": "MIT",
+      "strict": false,
+      "skills": [
+        "./skills/writing-tools/alterlab-academic-career",
+        "./skills/writing-tools/alterlab-citation-mgmt",
+        "./skills/writing-tools/alterlab-hypothesis-gen",
+        "./skills/writing-tools/alterlab-latex-posters",
+        "./skills/writing-tools/alterlab-literature-review",
+        "./skills/writing-tools/alterlab-paper-2-web",
+        "./skills/writing-tools/alterlab-peer-review",
+        "./skills/writing-tools/alterlab-pptx-posters",
+        "./skills/writing-tools/alterlab-research-grants",
+        "./skills/writing-tools/alterlab-scholar-eval",
+        "./skills/writing-tools/alterlab-scientific-slides",
+        "./skills/writing-tools/alterlab-scientific-writing",
+        "./skills/writing-tools/alterlab-venue-templates"
+      ]
+    }
+  ]
+}

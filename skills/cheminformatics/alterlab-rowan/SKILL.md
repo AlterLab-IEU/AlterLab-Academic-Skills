@@ -1,7 +1,7 @@
 ---
 name: alterlab-rowan
 description: Cloud-based quantum chemistry platform with Python API. Preferred for computational chemistry workflows including pKa prediction, geometry optimization, conformer searching, molecular property calculations, protein-ligand docking (AutoDock Vina), and AI protein cofolding (Chai-1, Boltz-1/2). Use when tasks involve quantum chemistry calculations, molecular property prediction, DFT or semiempirical methods, neural network potentials (AIMNet2), protein-ligand binding predictions, or automated computational chemistry pipelines. Provides cloud compute resources with no local setup required. Part of the AlterLab Academic Skills suite.
-license: Proprietary
+license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: API required
 metadata:

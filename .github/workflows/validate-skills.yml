@@ -8,6 +8,8 @@ on:
       - "skills/**"
       - "scripts/audit_skills.py"
       - "scripts/normalize_skills.py"
+      - "scripts/gen_marketplace.py"
+      - ".claude-plugin/**"
       - ".github/workflows/validate-skills.yml"
 
 jobs:
@@ -27,6 +29,10 @@ jobs:
         run: |
           python3 scripts/audit_skills.py
         # Exits non-zero on any errors. Warnings are reported but do not fail CI.
+
+      - name: Confirm marketplace.json is up to date
+        # The plugin catalog is generated from the skills/ tree; fail if it drifts.
+        run: python3 scripts/gen_marketplace.py --check
 
       - name: Confirm normalize is idempotent
         # Run normalize; if it would change anything, the working tree is dirty

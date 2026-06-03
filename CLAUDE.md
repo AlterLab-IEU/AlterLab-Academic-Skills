@@ -1,13 +1,15 @@
 # AlterLab Academic Skills — by AlterLab Creative Technologies Laboratory
 
-> **Project**: AlterLab Academic Skills — 186+ Claude AI skills for faculty and researchers
+> **Project**: AlterLab Academic Skills — 180 Claude AI skills for faculty and researchers
 > **Owner**: AlterLab Creative Technologies Laboratory
 
 ---
 
 ## Project Overview
 
-This project provides **186+ professional Claude AI skills** organized into 13 domain categories for faculty members, academicians, and researchers. Each skill transforms Claude into a domain-specific expert assistant tailored to academic research, scientific computing, and scholarly publishing workflows.
+This project provides **180 professional Claude AI skills** organized into 13 domain categories for faculty members, academicians, and researchers. Each skill transforms Claude into a domain-specific expert assistant tailored to academic research, scientific computing, and scholarly publishing workflows.
+
+The repo is installable as a Claude Code plugin marketplace named `alterlab-academic-skills`, with 13 domain plugins (`alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`).
 
 ### Audience
 - Faculty members and academic researchers
@@ -24,27 +26,27 @@ This project provides **186+ professional Claude AI skills** organized into 13 d
 
 | Category | Path | Count | Description |
 |----------|------|-------|-------------|
-| Core Pipeline | `skills/core/` | 4 | Research -> Write -> Review -> Publish pipeline |
+| Core Pipeline | `skills/core/` | 7 | Research -> Write -> Review -> Publish pipeline + link-health |
 | Databases | `skills/databases/` | 39 | Scientific database connectors |
 | Bioinformatics | `skills/bioinformatics/` | 25 | Genomics, proteomics, molecular biology |
 | Cheminformatics | `skills/cheminformatics/` | 12 | Chemistry, drug discovery |
-| Clinical Research | `skills/clinical-research/` | 10 | Clinical decision support, medical tools |
+| Clinical Research | `skills/clinical-research/` | 7 | Clinical decision support, medical tools |
 | Data Science | `skills/data-science/` | 22 | ML, statistics, data analysis |
 | Visualization | `skills/visualization/` | 8 | Scientific plotting and graphics |
-| Writing Tools | `skills/writing-tools/` | 12 | Scientific writing, citations, posters |
+| Writing Tools | `skills/writing-tools/` | 13 | Scientific writing, citations, posters |
 | Lab Integrations | `skills/lab-integrations/` | 9 | Laboratory platform connectors |
-| Domain-Specific | `skills/domain-specific/` | 15 | Quantum, geospatial, materials science |
-| Document Tools | `skills/document-tools/` | 6 | DOCX, PDF, PPTX, XLSX handling |
-| Research Tools | `skills/research-tools/` | 7 | Search, discovery, reference management |
+| Domain-Specific | `skills/domain-specific/` | 17 | Quantum, geospatial, materials science |
+| Document Tools | `skills/document-tools/` | 2 | Markdown conversion, notebook handling |
+| Research Tools | `skills/research-tools/` | 12 | Search, discovery, reference management |
 | Finance & Economics | `skills/finance-economics/` | 7 | Financial data and analysis |
 
-**Total: 186 skills across 13 categories**
+**Total: 180 skills across 13 categories**
 
 ---
 
 ## Core Pipeline Routing Rules
 
-The 4 core pipeline skills coordinate as a multi-agent research-to-publication system:
+The core category holds 7 skills: 6 pipeline skills (`alterlab-research-pipeline`, `alterlab-deep-research`, `alterlab-paper-writer`, `alterlab-paper-reviewer`, `alterlab-teaching-design`, `alterlab-thesis-supervisor`) plus `alterlab-link-health`. The pipeline skills coordinate as a multi-agent research-to-publication system:
 
 ### Skill Routing
 
@@ -105,6 +107,16 @@ When MCP tools are available, skills should prefer them over simulated responses
 - Contradictions disclosed with evidence quality comparison
 - AI disclosure in all reports
 - Default output language matches user input
+
+---
+
+## Build & Validation
+
+| Command | Purpose |
+|---------|---------|
+| `python scripts/audit_skills.py` | Audit skills (frontmatter, naming, counts) |
+| `pytest tests/` | Run the validation test suite |
+| `python scripts/gen_marketplace.py` | Regenerate the `alterlab-academic-skills` marketplace + 13 domain plugins |
 
 ---
 

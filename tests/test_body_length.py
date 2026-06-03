@@ -30,9 +30,6 @@ def test_body_below_hard_limit(skill_md: Path, repo_root: Path) -> None:
     )
 
 
-@pytest.mark.xfail(reason="Pre-existing skills are being incrementally migrated below the 500-line soft cap.", strict=False)
-def test_body_below_soft_limit(skill_md: Path) -> None:
-    n = _body_lines(skill_md)
-    assert n <= audit_skills.BODY_LINES_SOFT_LIMIT, (
-        f"body is {n} lines (soft limit {audit_skills.BODY_LINES_SOFT_LIMIT})."
-    )
+# The 500-line soft cap is advisory: audit_skills.py reports it as a warning
+# (finding "body-long"). It is intentionally not a pytest assertion — gating on it
+# produced only xfail/XPASS noise without enforcing anything.

@@ -29,3 +29,10 @@ yarn-error.log*
 dist/
 build/
 *.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/

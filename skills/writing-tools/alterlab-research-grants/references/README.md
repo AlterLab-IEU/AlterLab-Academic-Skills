@@ -111,13 +111,18 @@ For in-depth help on specific components:
 - `references/nih_guidelines.md` - NIH mechanisms and review criteria
 - `references/doe_guidelines.md` - DOE offices and programs
 - `references/darpa_guidelines.md` - DARPA structure and strategy
+- `references/nstc_guidelines.md` - Taiwan NSTC CM03 format and review criteria
+
+Agency-specific review criteria live within each agency guideline file above.
 
 ### Specialized Guides
 - `references/broader_impacts.md` - NSF broader impacts strategies
 - `references/specific_aims_guide.md` - NIH Specific Aims page mastery
-- `references/budget_preparation.md` - Budget development (coming soon)
-- `references/review_criteria.md` - Comparative review criteria (coming soon)
-- `references/timeline_planning.md` - Project management (coming soon)
+- `references/research_methods.md` - Methodology and rigor by research type
+- `references/budget_preparation.md` - Budget development and justification
+- `references/timeline_planning.md` - Timelines, milestones, and project management
+- `references/team_building.md` - Assembling and presenting effective teams
+- `references/resubmission_strategies.md` - Responding to reviews and revising
 
 ### Templates
 - `assets/nsf_project_summary_template.md`

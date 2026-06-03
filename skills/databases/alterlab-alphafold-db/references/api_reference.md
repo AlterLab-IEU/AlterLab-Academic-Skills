@@ -299,10 +299,23 @@ gs://public-datasets-deepmind-alphafold-v4/
 ```bash
 # Using pip
 pip install gsutil
-
-# Or install Google Cloud SDK
-curl https://sdk.cloud.google.com | bash
 ```
+
+Or install the Google Cloud SDK (which bundles `gsutil`) by following the
+official instructions at https://cloud.google.com/sdk/docs/install. Prefer a
+package manager or the versioned installer archive, for example:
+
+```bash
+# macOS (Homebrew)
+brew install --cask google-cloud-sdk
+
+# Debian/Ubuntu (APT repository) — see the install page for the full steps
+sudo apt-get install google-cloud-cli
+```
+
+> **Caution:** Avoid `curl https://sdk.cloud.google.com | bash` — piping a
+> remote script straight into a shell executes unreviewed code. Download the
+> installer or use a package manager so you can verify what runs.
 
 ### Downloading Proteomes
 

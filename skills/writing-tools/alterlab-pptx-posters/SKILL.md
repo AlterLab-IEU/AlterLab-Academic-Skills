@@ -36,58 +36,48 @@ This skill creates research posters using HTML/CSS, which can then be exported t
 - User asks for "research poster" or "conference poster" → Use latex-posters
 - User mentions LaTeX, tikzposter, beamerposter, or baposter → Use latex-posters
 
-## AI-Powered Visual Element Generation
+## Visual Element Generation
 
-**STANDARD WORKFLOW: Generate ALL major visual elements using AI before creating the HTML poster.**
+If a diagram or figure would aid comprehension, invoke the **alterlab-scientific-schematics** skill (diagrams/schematics) or the **alterlab-generate-image** skill (images). Figures are optional — add them only where they improve clarity.
 
-This is the recommended approach for creating visually compelling posters:
-1. Plan all visual elements needed (hero image, intro, methods, results, conclusions)
-2. Generate each element using scientific-schematics or Nano Banana Pro
-3. Assemble generated images in the HTML template
+A practical workflow for a visual poster:
+1. Plan the visual elements that would help (hero image, intro, methods, results, conclusions)
+2. Generate any needed figures via the skills above
+3. Assemble the figures in the HTML template
 4. Add text content around the visuals
 
-**Target: 60-70% of poster area should be AI-generated visuals, 30-40% text.**
+Posters generally read best when visuals carry much of the message and text stays concise.
 
 ---
 
-### CRITICAL: Poster-Size Font Requirements
+### Poster-Size Font Requirements
 
-**⚠️ ALL text within AI-generated visualizations MUST be poster-readable.**
-
-When generating graphics for posters, you MUST include font size specifications in EVERY prompt. Poster graphics are viewed from 4-6 feet away, so text must be LARGE.
-
-**MANDATORY prompt requirements for EVERY poster graphic:**
+Text within poster visualizations needs to be poster-readable. Poster graphics are viewed from 4-6 feet away, so text must be large. When generating a figure, describe these readability constraints in the prompt:
 
 ```
-POSTER FORMAT REQUIREMENTS (STRICTLY ENFORCE):
-- ABSOLUTE MAXIMUM 3-4 elements per graphic (3 is ideal)
-- ABSOLUTE MAXIMUM 10 words total in the entire graphic
-- NO complex workflows with 5+ steps (split into 2-3 simple graphics instead)
-- NO multi-level nested diagrams (flatten to single level)
-- NO case studies with multiple sub-sections (one key point per case)
-- ALL text GIANT BOLD (80pt+ for labels, 120pt+ for key numbers)
-- High contrast ONLY (dark on white OR white on dark, NO gradients with text)
-- MANDATORY 50% white space minimum (half the graphic should be empty)
-- Thick lines only (5px+ minimum), large icons (200px+ minimum)
-- ONE SINGLE MESSAGE per graphic (not 3 related messages)
+POSTER FORMAT GUIDELINES:
+- Keep to 3-4 elements per graphic (3 is ideal)
+- Around 10 words total in the entire graphic
+- Avoid complex workflows with 5+ steps (split into 2-3 simple graphics instead)
+- Avoid multi-level nested diagrams (flatten to a single level)
+- One key point per case study (not multiple sub-sections)
+- Large bold text (80pt+ for labels, 120pt+ for key numbers)
+- High contrast (dark on white OR white on dark; avoid gradients behind text)
+- Generous white space (around 50%)
+- Thick lines (5px+), large icons (200px+)
+- One single message per graphic
 ```
 
-**⚠️ BEFORE GENERATING: Review your prompt and count elements**
-- If your description has 5+ items → STOP. Split into multiple graphics
-- If your workflow has 5+ stages → STOP. Show only 3-4 high-level steps
-- If your comparison has 4+ methods → STOP. Show only top 3 or Our vs Best Baseline
+**Before generating, review the prompt and count elements:**
+- If the description has 5+ items, split into multiple graphics
+- If the workflow has 5+ stages, show only 3-4 high-level steps
+- If the comparison has 4+ methods, show only the top 3 or Ours vs Best Baseline
 
-**Example - WRONG (7-stage workflow):**
-```bash
-# ❌ Creates tiny unreadable text
-python scripts/generate_schematic.py "Drug discovery workflow: Stage 1 Target ID, Stage 2 Synthesis, Stage 3 Screening, Stage 4 Lead Opt, Stage 5 Validation, Stage 6 Clinical Trial, Stage 7 FDA Approval with metrics." -o figures/workflow.png
-```
+**Example — too dense (7-stage workflow):** "Drug discovery workflow: Target ID, Synthesis, Screening, Lead Opt, Validation, Clinical Trial, FDA Approval with metrics" — this crams in too many stages and renders as tiny, unreadable text.
 
-**Example - CORRECT (3 mega-stages):**
-```bash
-# ✅ Same content, simplified to readable poster format
-python scripts/generate_schematic.py "POSTER FORMAT for A0. ULTRA-SIMPLE 3-box workflow: 'DISCOVER' → 'VALIDATE' → 'APPROVE'. Each word in GIANT bold (120pt+). Thick arrows (10px). 60% white space. ONLY these 3 words. NO substeps. Readable from 12 feet." -o figures/workflow_simple.png
-```
+**Example — readable (3 mega-stages):** "POSTER FORMAT for A0. Ultra-simple 3-box workflow: 'DISCOVER' → 'VALIDATE' → 'APPROVE'. Each word in giant bold (120pt+). Thick arrows (10px). 60% white space. Only these 3 words, no substeps. Readable from 12 feet." — same content, simplified to a readable poster format.
+
+If a diagram or figure would aid comprehension, invoke the **alterlab-scientific-schematics** skill (diagrams/schematics) or the **alterlab-generate-image** skill (images). Figures are optional — add them only where they improve clarity.
 
 ---
 
@@ -168,27 +158,15 @@ Each section should prominently feature AI-generated visuals:
 
 ### 4. Generating Visual Elements
 
-**Before creating the HTML, generate all visual elements:**
+If a diagram or figure would aid comprehension, invoke the **alterlab-scientific-schematics** skill (diagrams/schematics) or the **alterlab-generate-image** skill (images). Figures are optional — add them only where they improve clarity.
 
-```bash
-# Create figures directory
-mkdir -p figures
+Example prompts that keep poster graphics simple and readable (save into a `figures/` directory):
 
-# Hero image - SIMPLE, impactful
-python scripts/generate_schematic.py "POSTER FORMAT for A0. Hero banner: '[TOPIC]' in HUGE text (120pt+). Dark blue gradient background. ONE iconic visual. Minimal text. Readable from 15 feet." -o figures/hero.png
-
-# Introduction visual - ONLY 3 elements
-python scripts/generate_schematic.py "POSTER FORMAT for A0. SIMPLE visual with ONLY 3 icons: [icon1] → [icon2] → [icon3]. ONE word labels (80pt+). 50% white space. Readable from 8 feet." -o figures/intro.png
-
-# Methods flowchart - ONLY 4 steps
-python scripts/generate_schematic.py "POSTER FORMAT for A0. SIMPLE flowchart with ONLY 4 boxes: STEP1 → STEP2 → STEP3 → STEP4. GIANT labels (100pt+). Thick arrows. 50% white space. NO sub-steps." -o figures/workflow.png
-
-# Results visualization - ONLY 3 bars
-python scripts/generate_schematic.py "POSTER FORMAT for A0. SIMPLE bar chart with ONLY 3 bars: BASELINE (70%), EXISTING (85%), OURS (95%). GIANT percentages ON bars (120pt+). NO axis, NO legend. 50% white space." -o figures/results.png
-
-# Conclusions - EXACTLY 3 key findings
-python scripts/generate_schematic.py "POSTER FORMAT for A0. EXACTLY 3 cards: '95%' (150pt) 'ACCURACY' (60pt), '2X' (150pt) 'FASTER' (60pt), checkmark 'READY' (60pt). 50% white space. NO other text." -o figures/conclusions.png
-```
+- **Hero image** — "POSTER FORMAT for A0. Hero banner: '[TOPIC]' in huge text (120pt+). Dark blue gradient background. One iconic visual. Minimal text. Readable from 15 feet."
+- **Introduction visual** — "POSTER FORMAT for A0. Simple visual with only 3 icons: [icon1] → [icon2] → [icon3]. One-word labels (80pt+). 50% white space. Readable from 8 feet."
+- **Methods flowchart** — "POSTER FORMAT for A0. Simple flowchart with only 4 boxes: STEP1 → STEP2 → STEP3 → STEP4. Giant labels (100pt+). Thick arrows. 50% white space. No sub-steps."
+- **Results visualization** — "POSTER FORMAT for A0. Simple bar chart with only 3 bars: BASELINE (70%), EXISTING (85%), OURS (95%). Giant percentages on bars (120pt+). No axis, no legend. 50% white space."
+- **Conclusions** — "POSTER FORMAT for A0. Exactly 3 cards: '95%' (150pt) 'ACCURACY' (60pt), '2X' (150pt) 'FASTER' (60pt), checkmark 'READY' (60pt). 50% white space. No other text."
 
 ---
 
@@ -325,7 +303,7 @@ body {
 
 ## Quality Checklist
 
-### Step 0: Pre-Generation Review (MANDATORY)
+### Step 0: Pre-Generation Review
 
 **For EACH planned graphic, verify:**
 - [ ] Can describe in 3-4 items or less? (NOT 5+)
@@ -339,7 +317,7 @@ body {
 - ❌ "Timeline 2015-2024 annual" → "ONLY 3 key years"
 - ❌ "Compare 6 methods" → "ONLY 2: ours vs best"
 
-### Step 2b: Post-Generation Review (MANDATORY)
+### Step 2b: Post-Generation Review
 
 **For EACH generated figure at 25% zoom:**
 

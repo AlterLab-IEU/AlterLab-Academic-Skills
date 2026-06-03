@@ -150,7 +150,7 @@ Top 5 actionable recommendations, each with:
 - Evolution of competitive dynamics
 - How customer needs have changed
 
-**Required Visuals (2 total):**
+**Suggested Visuals:**
 1. Industry ecosystem diagram
 2. Market structure or industry lifecycle diagram
 
@@ -239,7 +239,7 @@ Segment analysis table showing:
 
 **Required Visual:** Segment growth comparison chart
 
-**Required Visuals (4 total):**
+**Suggested Visuals:**
 1. Market growth trajectory chart
 2. TAM/SAM/SOM diagram
 3. Regional breakdown chart
@@ -331,7 +331,7 @@ Comprehensive analysis of external factors:
 - Competitive pressures
 - Regulatory hurdles
 
-**Required Visuals (3 total):**
+**Suggested Visuals:**
 1. Driver impact matrix
 2. PESTLE analysis diagram
 3. Trends timeline
@@ -439,7 +439,7 @@ Top 10 companies showing:
 - Economies of scale
 - Switching costs
 
-**Required Visuals (4 total):**
+**Suggested Visuals:**
 1. Porter's Five Forces diagram
 2. Market share chart
 3. Competitive positioning matrix
@@ -518,7 +518,7 @@ Top 10 companies showing:
 5. Usage
 6. Advocacy/Renewal
 
-**Required Visuals (3 total):**
+**Suggested Visuals:**
 1. Customer segmentation breakdown
 2. Segment attractiveness matrix
 3. Customer journey map
@@ -585,7 +585,7 @@ Top 10 companies showing:
 - Security/privacy concerns
 - Change management challenges
 
-**Required Visuals (2 total):**
+**Suggested Visuals:**
 1. Technology roadmap diagram
 2. Innovation/adoption curve
 
@@ -640,7 +640,7 @@ Top 10 companies showing:
 - Key differences to navigate
 - Best practices for compliance
 
-**Required Visuals (1 total):**
+**Suggested Visuals:**
 1. Regulatory timeline
 
 ---
@@ -706,7 +706,7 @@ Provide detailed analysis of top 5-10 risks, including:
 - Recovery approaches
 - Contingency plans
 
-**Required Visuals (2 total):**
+**Suggested Visuals:**
 1. Risk heatmap
 2. Risk mitigation matrix
 
@@ -788,7 +788,7 @@ For each top opportunity, provide:
 - External dependencies
 - Timing considerations
 
-**Required Visuals (3 total):**
+**Suggested Visuals:**
 1. Opportunity matrix
 2. Strategic options framework
 3. Recommendation priority matrix
@@ -856,7 +856,7 @@ Milestone table showing:
 - Escalation paths
 - Change management process
 
-**Required Visuals (2 total):**
+**Suggested Visuals:**
 1. Implementation timeline/Gantt
 2. Milestone tracker
 
@@ -932,7 +932,7 @@ Milestone table showing:
 - NPV analysis
 - Multiple analysis (if applicable)
 
-**Required Visuals (2 total):**
+**Suggested Visuals:**
 1. Financial projections chart
 2. Scenario comparison chart
 

@@ -79,6 +79,10 @@ export OPENROUTER_API_KEY='your_api_key_here'
 
 Get an API key at: https://openrouter.ai/keys
 
+### Data & privacy
+
+This skill's generation scripts (`scripts/generate_schematic_ai.py`) send your diagram description / prompt to a **third-party API (OpenRouter)** over the network for image generation and quality review. Your text prompts — and any details you include in them — leave your machine and are processed by an external provider. **Do not include confidential, clinical, patient-identifying, or unpublished proprietary content** in figure descriptions. Describe figures generically and add sensitive labels locally afterward if needed.
+
 ### AI Generation Best Practices
 
 **Effective Prompts for Scientific Diagrams:**

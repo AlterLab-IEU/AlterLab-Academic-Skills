@@ -45,7 +45,7 @@ This skill should be used when:
 | Writing an academic paper | `alterlab-paper-writer` |
 | Reviewing a research paper | `alterlab-paper-reviewer` |
 | Statistical analysis of student data | `alterlab-data-science` skills |
-| Creating presentation slides | `alterlab-pptx-builder` |
+| Creating presentation slides | `alterlab-pptx-posters` |
 
 ---
 

@@ -1,8 +1,8 @@
 {
   "name": "alterlab-academic-skills",
   "private": false,
-  "version": "1.0.0",
-  "description": "186+ Claude AI skills for faculty members and academic researchers — organized by research domain",
+  "version": "1.1.0",
+  "description": "180 Claude AI skills for faculty members and academic researchers — organized by research domain",
   "author": "Cem Ipek (https://github.com/AlterLab-IEU)",
   "license": "MIT",
   "repository": {

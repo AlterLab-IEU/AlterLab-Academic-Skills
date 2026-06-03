@@ -32,20 +32,6 @@ Use this skill when you need:
 - **Market/Industry Data**: Current statistics, trends, competitive intelligence
 - **Recent Developments**: Emerging trends, breakthroughs, announcements
 
-## Visual Enhancement with Scientific Schematics
-
-**When creating documents with this skill, always consider adding scientific diagrams and schematics to enhance visual communication.**
-
-If your document does not already contain schematics or diagrams:
-- Use the **scientific-schematics** skill to generate AI-powered publication-quality diagrams
-- Simply describe your desired diagram in natural language
-
-```bash
-python scripts/generate_schematic.py "your diagram description" -o figures/output.png
-```
-
----
-
 ## Automatic Backend Selection
 
 The skill automatically routes queries to the best backend based on content:
@@ -90,10 +76,10 @@ You can force a specific backend:
 
 ```bash
 # Force Parallel Deep Research
-python research_lookup.py "your query" --force-backend parallel
+python scripts/research_lookup.py "your query" --force-backend parallel
 
 # Force Perplexity academic search
-python research_lookup.py "your query" --force-backend perplexity
+python scripts/research_lookup.py "your query" --force-backend perplexity
 ```
 
 ---
@@ -224,17 +210,17 @@ export OPENROUTER_API_KEY="your_openrouter_api_key"
 
 ```bash
 # Auto-routed research (recommended) — ALWAYS save to sources/
-python research_lookup.py "your query" -o sources/research_YYYYMMDD_HHMMSS_<topic>.md
+python scripts/research_lookup.py "your query" -o sources/research_YYYYMMDD_HHMMSS_<topic>.md
 
 # Force specific backend — ALWAYS save to sources/
-python research_lookup.py "your query" --force-backend parallel -o sources/research_<topic>.md
-python research_lookup.py "your query" --force-backend perplexity -o sources/papers_<topic>.md
+python scripts/research_lookup.py "your query" --force-backend parallel -o sources/research_<topic>.md
+python scripts/research_lookup.py "your query" --force-backend perplexity -o sources/papers_<topic>.md
 
 # JSON output — ALWAYS save to sources/
-python research_lookup.py "your query" --json -o sources/research_<topic>.json
+python scripts/research_lookup.py "your query" --json -o sources/research_<topic>.json
 
 # Batch queries — ALWAYS save to sources/
-python research_lookup.py --batch "query 1" "query 2" "query 3" -o sources/batch_research_<topic>.md
+python scripts/research_lookup.py --batch "query 1" "query 2" "query 3" -o sources/batch_research_<topic>.md
 ```
 
 ---
@@ -261,23 +247,23 @@ This is non-negotiable. Research results are expensive to obtain and critical fo
 
 ```bash
 # General research — save to sources/ (includes Sources + Additional References sections)
-python research_lookup.py "Recent advances in CRISPR gene editing 2025" \
+python scripts/research_lookup.py "Recent advances in CRISPR gene editing 2025" \
   -o sources/research_20250217_143000_crispr_advances.md
 
 # Academic paper search — save to sources/ (includes paper citations with DOIs)
-python research_lookup.py "Find papers on transformer attention mechanisms in NeurIPS 2024" \
+python scripts/research_lookup.py "Find papers on transformer attention mechanisms in NeurIPS 2024" \
   -o sources/papers_20250217_143500_transformer_attention.md
 
 # JSON format for maximum citation metadata (full citation objects with URLs, DOIs, snippets)
-python research_lookup.py "CRISPR clinical trials" --json \
+python scripts/research_lookup.py "CRISPR clinical trials" --json \
   -o sources/research_20250217_143000_crispr_trials.json
 
 # Forced backend — save to sources/
-python research_lookup.py "AI regulation landscape" --force-backend parallel \
+python scripts/research_lookup.py "AI regulation landscape" --force-backend parallel \
   -o sources/research_20250217_144000_ai_regulation.md
 
 # Batch queries — save to sources/
-python research_lookup.py --batch "mRNA vaccines efficacy" "mRNA vaccines safety" \
+python scripts/research_lookup.py --batch "mRNA vaccines efficacy" "mRNA vaccines safety" \
   -o sources/batch_research_20250217_144500_mrna_vaccines.md
 ```
 

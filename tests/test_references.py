@@ -16,10 +16,9 @@ def test_cited_references_exist(skill_md: Path, repo_root: Path) -> None:
         pytest.xfail(f"known content debt: {REFERENCES_MISSING[rel]}")
     text = skill_md.read_text(encoding="utf-8")
     _, body = audit_skills.parse_frontmatter(text)
-    missing = [
-        ref for ref in audit_skills.referenced_paths(body)
-        if not (skill_md.parent / ref).exists()
-    ]
+    # Cross-skill aware: a citation resolves if the file exists in this skill or in
+    # a sibling skill named on the same line (see audit_skills.missing_references).
+    missing = audit_skills.missing_references(body, skill_md.parent)
     assert not missing, (
         f"{skill_md.name} cites reference files that do not exist on disk: "
         f"{missing}. Either create the files or fix the citation."

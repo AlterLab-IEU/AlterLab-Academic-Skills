@@ -2,7 +2,7 @@
 <img src=".github/header-banner.svg" width="100%" alt="AlterLab Academic Skills">
 <br>
 
-<a href="skills/"><img src="https://img.shields.io/badge/Skills-186+-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Skills"></a>
+<a href="skills/"><img src="https://img.shields.io/badge/Skills-180-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Skills"></a>
 <a href="skills/"><img src="https://img.shields.io/badge/Domains-13-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Domains"></a>
 <a href="https://www.anthropic.com"><img src="https://img.shields.io/badge/Claude-AI%20Powered-F97316?style=for-the-badge&logo=anthropic&logoColor=white" alt="Claude AI"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-10B981?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="MIT License"></a>
@@ -25,7 +25,7 @@
 
 <br><br>
 
-<h3>🧬 186+ purpose-built Claude AI skills for faculty, researchers & academicians</h3>
+<h3>🧬 180 purpose-built Claude AI skills for faculty, researchers & academicians</h3>
 <p><em>Organized across 13 research domains — from bioinformatics to digital humanities</em></p>
 
 <p>
@@ -95,8 +95,8 @@
 - [✨ Key Features](#-key-features)
 - [🗂️ Domain Overview](#%EF%B8%8F-domain-overview)
 - [🚀 Quick Start](#-quick-start)
-- [⚡ Core Pipeline — 6 Skills](#-core-pipeline--6-skills)
-- [📚 All 186+ Skills](#-all-186-skills)
+- [⚡ Core Pipeline — 7 Skills](#-core-pipeline--7-skills)
+- [📚 All 180 Skills](#-all-180-skills)
 - [🏗️ Project Structure](#%EF%B8%8F-project-structure)
 - [⚙️ How Skills Work](#%EF%B8%8F-how-skills-work)
 - [💡 Usage Examples](#-usage-examples)
@@ -110,12 +110,12 @@
 
 ## 🎯 What Is This?
 
-A comprehensive suite of **186+ purpose-built Claude AI skills** for faculty members, academicians, and researchers — organized into **13 domain categories** spanning the full academic research lifecycle.
+A comprehensive suite of **180 purpose-built Claude AI skills** for faculty members, academicians, and researchers — organized into **13 domain categories** spanning the full academic research lifecycle.
 
 Each skill transforms Claude into a **domain-specific expert assistant** tailored to academic research, scientific computing, and scholarly publishing workflows.
 
 > [!TIP]
-> **How it works:** Each skill is a structured `.md` prompt file. Drop it into a Claude Project or Claude Code, and Claude instantly becomes your research expert — with real scientific frameworks, professional output templates, and deep domain knowledge.
+> **How it works:** Each skill is a structured `SKILL.md` file. Install the collection as a Claude Code plugin, or copy a skill directory into `~/.claude/skills/` (or a project's `.claude/skills/`) — and Claude becomes your research expert, with real scientific frameworks, professional output templates, and deep domain knowledge. A loose `.md` file does **not** auto-load.
 
 <br>
 
@@ -136,48 +136,56 @@ Each skill transforms Claude into a **domain-specific expert assistant** tailore
 
 | | Domain | Skills | Focus Areas |
 |:---:|:---|:---:|:---|
-| 🔄 | **Core Pipeline** | **6** | Multi-agent research → write → review → publish pipeline + teaching + thesis |
+| 🔄 | **Core Pipeline** | **7** | Multi-agent research → write → review → publish pipeline + teaching + thesis |
 | 🗄️ | **Databases** | **39** | Connectors to scientific databases — PubMed, ChEMBL, UniProt, ClinicalTrials.gov, COSMIC, and more |
 | 🧬 | **Bioinformatics** | **25** | Genomics, proteomics, molecular biology — Scanpy, BioPython, ESM, single-cell analysis |
 | ⚗️ | **Cheminformatics** | **12** | Chemistry and drug discovery — RDKit, molecular dynamics, docking, ADMET |
-| 🏥 | **Clinical Research** | **10** | Clinical decision support, treatment planning, medical imaging, regulatory |
+| 🏥 | **Clinical Research** | **7** | Clinical decision support, treatment planning, medical imaging, regulatory |
 | 📊 | **Data Science** | **22** | ML/statistics — scikit-learn, PyTorch Lightning, SHAP, transformers |
 | 📈 | **Visualization** | **8** | Scientific plotting — Matplotlib, Seaborn, Plotly, schematics, infographics |
 | ✍️ | **Writing Tools** | **13** | Scientific writing, citations, grants, posters, academic career |
 | 🔧 | **Lab Integrations** | **9** | Laboratory platforms — Benchling, DNAnexus, Opentrons, Protocols.io |
 | 🌍 | **Domain-Specific** | **17** | Quantum computing, geospatial, materials science, social science methods, digital humanities |
-| 📄 | **Document Tools** | **6** | File format handling — DOCX, PDF, PPTX, XLSX, Markdown |
+| 📄 | **Document Tools** | **2** | Markdown & document conversion — MarkItDown, Open Notebook |
 | 🔍 | **Research Tools** | **12** | Search, discovery, Zotero, qualitative methods, ethics, surveys, open science |
 | 💰 | **Finance & Economics** | **7** | FRED, Alpha Vantage, SEC EDGAR, market research |
 <br>
 
 ## 🚀 Quick Start
 
-### Option 1 — Claude Projects *(Recommended)*
+### ⚡ Option 1 — Claude Code Plugin *(Recommended)*
 
-```
-1. Go to claude.ai → Projects → Create Project
-2. Upload SKILL.md files from your domain folder into the project's Knowledge section
-3. Start chatting — Claude now has your skills loaded
+Add the marketplace once, then install only the domains you need:
+
+```bash
+/plugin marketplace add AlterLab-IEU/AlterLab-Academic-Skills
+/plugin install alterlab-bioinformatics@alterlab-academic-skills
+/reload-plugins
 ```
 
-### Option 2 — Claude Code CLI
+Available domain plugins: `alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`.
+
+### 📁 Option 2 — Personal or Project Install (manual)
 
 ```bash
 git clone https://github.com/AlterLab-IEU/AlterLab-Academic-Skills.git
-cd AlterLab-Academic-Skills
-claude "help me research the latest findings on CRISPR gene editing"
+# Personal — available in every project:
+cp -R AlterLab-Academic-Skills/skills/bioinformatics/alterlab-scanpy ~/.claude/skills/
+# Project-scoped — only in the current repo:
+cp -R AlterLab-Academic-Skills/skills/bioinformatics/alterlab-scanpy .claude/skills/
 ```
 
-### Option 3 — Pick Individual Skills
+Then restart Claude Code. A skill must live at `~/.claude/skills/<name>/SKILL.md` or `.claude/skills/<name>/SKILL.md` — a bare `git clone` alone does **not** register anything.
 
-> Browse the [`skills/`](skills/) folder and download only the ones you need. Every skill is a standalone `.md` file.
+### 🌐 Option 3 — Claude.ai
+
+Zip a skill directory and upload it under **Settings → Capabilities** (requires a plan with code execution). Skills do not sync between claude.ai and Claude Code.
 
 <br>
 
 ---
 
-## ⚡ Core Pipeline — 6 Skills
+## ⚡ Core Pipeline — 7 Skills
 
 > *The heart of the system — a multi-agent research-to-publication pipeline with 39 specialized agents, plus teaching and thesis supervision tools.*
 
@@ -189,12 +197,13 @@ claude "help me research the latest findings on CRISPR gene editing"
 | 4 | **🔄 Research Pipeline** | 7 | 10-stage orchestrator with integrity verification and material passports |
 | 5 | **🎓 Teaching Design** | — | Course design, syllabi, rubrics, Bloom's taxonomy, backward design |
 | 6 | **📋 Thesis Supervisor** | — | Dissertation guidance, defense prep, committee management |
+| 7 | **🔗 Link Health** | — | Repo link-health audit meta-skill |
 
 <br>
 
 ---
 
-## 📚 All 186+ Skills
+## 📚 All 180 Skills
 
 ### 🗄️ Databases — Scientific Database Connectors (39 Skills)
 
@@ -305,7 +314,7 @@ claude "help me research the latest findings on CRISPR gene editing"
 
 </details>
 
-### 🏥 Clinical Research — Clinical Decision Support & Medical Tools (10 Skills)
+### 🏥 Clinical Research — Clinical Decision Support & Medical Tools (7 Skills)
 
 <details>
 <summary><b>Click to expand full clinical research skills list</b></summary>
@@ -315,14 +324,11 @@ claude "help me research the latest findings on CRISPR gene editing"
 |:---:|:---|:---|
 | 1 | **Clinical Decision** | Evidence-based clinical decision support |
 | 2 | **Clinical Reports** | Structured clinical report generation |
-| 3 | **Consciousness Council** | Multi-perspective medical ethics deliberation |
-| 4 | **DHDNA Profiler** | Digital health DNA profiling |
-| 5 | **ISO 13485** | Medical device quality management |
-| 6 | **NeuroKit2** | Neurophysiological signal processing |
-| 7 | **PyDicom** | DICOM medical image handling |
-| 8 | **PyHealth** | Healthcare ML pipelines |
-| 9 | **Treatment Plans** | Treatment planning and protocol design |
-| 10 | **What-If Oracle** | Counterfactual clinical reasoning |
+| 3 | **ISO 13485** | Medical device quality management |
+| 4 | **NeuroKit2** | Neurophysiological signal processing |
+| 5 | **PyDicom** | DICOM medical image handling |
+| 6 | **PyHealth** | Healthcare ML pipelines |
+| 7 | **Treatment Plans** | Treatment planning and protocol design |
 
 </details>
 
@@ -450,7 +456,7 @@ claude "help me research the latest findings on CRISPR gene editing"
 
 </details>
 
-### 📄 Document Tools — File Format Handling (6 Skills)
+### 📄 Document Tools — Markdown & Document Conversion (2 Skills)
 
 <details>
 <summary><b>Click to expand full document tools skills list</b></summary>
@@ -458,12 +464,8 @@ claude "help me research the latest findings on CRISPR gene editing"
 
 | # | Skill | What It Does |
 |:---:|:---|:---|
-| 1 | **DOCX** | Word document generation and manipulation |
-| 2 | **MarkItDown** | Convert documents to Markdown |
-| 3 | **Open Notebook** | Open-format research notebooks |
-| 4 | **PDF** | PDF generation and processing |
-| 5 | **PPTX** | PowerPoint presentation creation |
-| 6 | **XLSX** | Excel spreadsheet handling |
+| 1 | **MarkItDown** | Convert documents to Markdown |
+| 2 | **Open Notebook** | Open-format research notebooks |
 
 </details>
 
@@ -622,7 +624,7 @@ MIT License — Copyright (c) 2026 AlterLab Creative Technologies Laboratory
 
 <br><br>
 
-<b>186+ skills · 13 domains · 1 prompt away from expert-level research</b>
+<b>180 skills · 13 domains · 1 prompt away from expert-level research</b>
 
 <br><br>
 

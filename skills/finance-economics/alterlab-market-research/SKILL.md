@@ -38,15 +38,15 @@ This skill should be used when:
 - Analyzing regulatory and policy impacts on markets
 - Building business cases for new product launches
 
-## Visual Enhancement Requirements
+## Visual Enhancement
 
-**CRITICAL: Market research reports should include key visual content.**
-
-Every report should generate **6 essential visuals** at the start, with additional visuals added as needed during writing. Start with the most critical visualizations to establish the report framework.
+Well-chosen visuals make a market research report far easier to navigate. Add figures where they clarify market structure, scale, competition, or risk — not as a quota. A handful of strong, accurate visuals beats a wall of decorative ones.
 
 ### Visual Generation Tools
 
-**Use `scientific-schematics` for:**
+If a diagram or figure would aid comprehension, invoke the **alterlab-scientific-schematics** skill (diagrams/schematics) or the **alterlab-generate-image** skill (images). Figures are optional — add them only where they improve clarity.
+
+**Diagrams/schematics work well for:**
 - Market growth trajectory charts
 - TAM/SAM/SOM breakdown diagrams (concentric circles)
 - Porter's Five Forces diagrams
@@ -60,44 +60,23 @@ Every report should generate **6 essential visuals** at the start, with addition
 - SWOT analysis diagrams
 - BCG Growth-Share matrices
 
-```bash
-# Example: Generate a TAM/SAM/SOM diagram
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "TAM SAM SOM concentric circle diagram showing Total Addressable Market $50B outer circle, Serviceable Addressable Market $15B middle circle, Serviceable Obtainable Market $3B inner circle, with labels and arrows pointing to each segment" \
-  -o figures/tam_sam_som.png --doc-type report
-
-# Example: Generate Porter's Five Forces
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Porter's Five Forces diagram with center box 'Competitive Rivalry' connected to four surrounding boxes: 'Threat of New Entrants' (top), 'Bargaining Power of Suppliers' (left), 'Bargaining Power of Buyers' (right), 'Threat of Substitutes' (bottom). Each box should show High/Medium/Low rating" \
-  -o figures/porters_five_forces.png --doc-type report
-```
-
-**Use `generate-image` for:**
+**Generated images work well for:**
 - Executive summary hero infographics
 - Industry/sector conceptual illustrations
 - Abstract technology visualizations
 - Cover page imagery
 
-```bash
-# Example: Generate executive summary infographic
-python skills/generate-image/scripts/generate_image.py \
-  "Professional executive summary infographic for market research report, showing key metrics in modern data visualization style, blue and green color scheme, clean minimalist design with icons representing market size, growth rate, and competitive landscape" \
-  --output figures/executive_summary.png
-```
+### Suggested Visuals by Section
 
-### Recommended Visuals by Section (Generate as Needed)
-
-| Section | Priority Visuals | Optional Visuals |
-|---------|-----------------|------------------|
-| Executive Summary | Executive infographic (START) | - |
-| Market Size & Growth | Growth trajectory (START), TAM/SAM/SOM (START) | Regional breakdown, segment growth |
-| Competitive Landscape | Porter's Five Forces (START), Positioning matrix (START) | Market share chart, strategic groups |
-| Risk Analysis | Risk heatmap (START) | Mitigation matrix |
-| Strategic Recommendations | Opportunity matrix | Priority framework |
-| Implementation Roadmap | Timeline/Gantt | Milestone tracker |
-| Investment Thesis | Financial projections | Scenario analysis |
-
-**Start with 6 priority visuals** (marked as START above), then generate additional visuals as specific sections are written and require visual support.
+| Section | Visuals that often help |
+|---------|-------------------------|
+| Executive Summary | Executive infographic |
+| Market Size & Growth | Growth trajectory, TAM/SAM/SOM, regional breakdown, segment growth |
+| Competitive Landscape | Porter's Five Forces, positioning matrix, market share chart, strategic groups |
+| Risk Analysis | Risk heatmap, mitigation matrix |
+| Strategic Recommendations | Opportunity matrix, priority framework |
+| Implementation Roadmap | Timeline/Gantt, milestone tracker |
+| Investment Thesis | Financial projections, scenario analysis |
 
 ---
 
@@ -136,7 +115,7 @@ python skills/generate-image/scripts/generate_image.py \
 - Market boundaries and adjacencies
 - Historical context and evolution
 
-**Required Visuals (2):**
+**Suggested Visuals:**
 1. Market ecosystem/value chain diagram
 2. Industry structure diagram
 
@@ -160,7 +139,7 @@ python skills/generate-image/scripts/generate_image.py \
 - Regional market breakdown
 - Segment-level analysis
 
-**Required Visuals (4):**
+**Suggested Visuals:**
 1. Market growth trajectory chart (historical + projected)
 2. TAM/SAM/SOM concentric circles diagram
 3. Regional market breakdown (pie chart or treemap)
@@ -197,7 +176,7 @@ Use `research-lookup` to find:
 - **PESTLE Analysis**: Political, Economic, Social, Technological, Legal, Environmental
 - **Trend Impact Assessment**: Likelihood vs Impact matrix
 
-**Required Visuals (3):**
+**Suggested Visuals:**
 1. Industry trends timeline or radar chart
 2. Driver impact matrix
 3. PESTLE analysis diagram
@@ -224,7 +203,7 @@ Use `research-lookup` to find:
 - **Competitive Positioning Matrix**: 2x2 matrix on key dimensions
 - **Strategic Group Mapping**: Cluster competitors by strategy
 
-**Required Visuals (4):**
+**Suggested Visuals:**
 1. Porter's Five Forces diagram
 2. Market share pie chart or bar chart
 3. Competitive positioning matrix (2x2)
@@ -253,7 +232,7 @@ Use `research-lookup` to find:
 - **Value Proposition Canvas**: Jobs, Pains, Gains
 - **Customer Journey Mapping**: Awareness to Advocacy
 
-**Required Visuals (3):**
+**Suggested Visuals:**
 1. Customer segmentation breakdown (pie/treemap)
 2. Segment attractiveness matrix
 3. Customer journey or value proposition diagram
@@ -281,7 +260,7 @@ Use `research-lookup` to find:
 - **Hype Cycle Positioning**: Where technologies sit
 - **Technology Roadmap**: Evolution over time
 
-**Required Visuals (2):**
+**Suggested Visuals:**
 1. Technology roadmap diagram
 2. Innovation/adoption curve or hype cycle
 
@@ -303,7 +282,7 @@ Use `research-lookup` to find:
 - Policy trends
 - Impact assessment
 
-**Required Visuals (1):**
+**Suggested Visuals:**
 1. Regulatory timeline or framework diagram
 
 **Key Data Points:**
@@ -330,7 +309,7 @@ Use `research-lookup` to find:
 - **Risk Register**: Comprehensive risk inventory
 - **Mitigation Matrix**: Risk vs Mitigation strategy
 
-**Required Visuals (2):**
+**Suggested Visuals:**
 1. Risk heatmap (probability vs impact)
 2. Risk mitigation matrix
 
@@ -359,7 +338,7 @@ Use `research-lookup` to find:
 - **Strategic Options Framework**: Build, Buy, Partner, Ignore
 - **Priority Matrix**: Impact vs Effort
 
-**Required Visuals (3):**
+**Suggested Visuals:**
 1. Opportunity matrix
 2. Strategic options framework
 3. Priority/recommendation matrix
@@ -382,7 +361,7 @@ Use `research-lookup` to find:
 - Dependencies and critical path
 - Governance structure
 
-**Required Visuals (2):**
+**Suggested Visuals:**
 1. Implementation timeline/Gantt chart
 2. Milestone tracker or phase diagram
 
@@ -404,7 +383,7 @@ Use `research-lookup` to find:
 - Key assumptions
 - Sensitivity analysis
 
-**Required Visuals (2):**
+**Suggested Visuals:**
 1. Financial projection chart (revenue, growth)
 2. Scenario analysis comparison
 
@@ -497,52 +476,20 @@ For each framework, conduct structured analysis:
 - Develop recommendations
 - Prioritize opportunities
 
-### Phase 3: Visual Generation
+### Phase 3: Visuals
 
-**Step 6: Generate All Visuals**
+**Step 6: Plan and Generate Visuals**
 
-Generate visuals BEFORE writing the report. Use the batch generation script:
+Decide which figures genuinely aid the report, then generate them. Useful candidates and the kind of content each conveys:
 
-```bash
-# Generate all standard market report visuals
-python skills/market-research-reports/scripts/generate_market_visuals.py \
-  --topic "[MARKET NAME]" \
-  --output-dir figures/
-```
+- **Market growth trajectory** — bar chart of market size 2020–2034, historical vs. projected bars, with a CAGR annotation.
+- **TAM/SAM/SOM breakdown** — concentric circles for Total / Serviceable Addressable / Serviceable Obtainable Market, each labeled.
+- **Porter's Five Forces** — center "Competitive Rivalry" box with the four surrounding forces, color-coded by rating.
+- **Competitive positioning matrix** — 2x2 with axes such as Market Focus (Niche↔Broad) and Solution Approach (Product↔Platform), competitors plotted as sized circles.
+- **Risk heatmap** — Impact vs. Probability grid with risks plotted and color-graded.
+- **Executive summary infographic** — a hero image synthesizing the report's headline metrics.
 
-Or generate individually:
-
-```bash
-# 1. Market growth trajectory
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Bar chart showing market growth from 2020 to 2034, with historical bars in dark blue (2020-2024) and projected bars in light blue (2025-2034). Y-axis shows market size in billions USD. Include CAGR annotation" \
-  -o figures/01_market_growth.png --doc-type report
-
-# 2. TAM/SAM/SOM breakdown
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "TAM SAM SOM concentric circles diagram. Outer circle TAM Total Addressable Market, middle circle SAM Serviceable Addressable Market, inner circle SOM Serviceable Obtainable Market. Each labeled with acronym and description. Blue gradient" \
-  -o figures/02_tam_sam_som.png --doc-type report
-
-# 3. Porter's Five Forces
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Porter's Five Forces diagram with center box 'Competitive Rivalry' connected to four surrounding boxes: Threat of New Entrants (top), Bargaining Power of Suppliers (left), Bargaining Power of Buyers (right), Threat of Substitutes (bottom). Color code by rating: High=red, Medium=yellow, Low=green" \
-  -o figures/03_porters_five_forces.png --doc-type report
-
-# 4. Competitive positioning matrix
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "2x2 competitive positioning matrix with X-axis 'Market Focus (Niche to Broad)' and Y-axis 'Solution Approach (Product to Platform)'. Plot 8-10 competitors as labeled circles of varying sizes. Include quadrant labels" \
-  -o figures/04_competitive_positioning.png --doc-type report
-
-# 5. Risk heatmap
-python skills/scientific-schematics/scripts/generate_schematic.py \
-  "Risk heatmap matrix. X-axis Impact (Low to Critical), Y-axis Probability (Unlikely to Very Likely). Color gradient: Green (low risk) to Red (critical risk). Plot 10-12 risks as labeled points" \
-  -o figures/05_risk_heatmap.png --doc-type report
-
-# 6. (Optional) Executive summary infographic
-python skills/generate-image/scripts/generate_image.py \
-  "Professional executive summary infographic for market research report, modern data visualization style, blue and green color scheme, clean minimalist design" \
-  --output figures/06_exec_summary.png
-```
+If a diagram or figure would aid comprehension, invoke the **alterlab-scientific-schematics** skill (diagrams/schematics) or the **alterlab-generate-image** skill (images). Figures are optional — add them only where they improve clarity.
 
 ### Phase 4: Report Writing
 
@@ -598,7 +545,7 @@ xelatex v1_market_report.tex
 Verify the report meets quality standards:
 
 - [ ] Total page count is 50+ pages
-- [ ] All essential visuals (5-6 core + any additional) are included and render correctly
+- [ ] Any included visuals are relevant, accurate, and render correctly
 - [ ] Executive summary captures key findings
 - [ ] All data points have sources cited
 - [ ] Analysis frameworks are properly applied
@@ -874,10 +821,6 @@ Load these files for detailed guidance:
 - **`assets/market_research.sty`**: LaTeX style package
 - **`assets/market_report_template.tex`**: Complete LaTeX template
 - **`assets/FORMATTING_GUIDE.md`**: Quick reference for box environments and styling
-
-### Scripts
-
-- **`scripts/generate_market_visuals.py`**: Batch generate all report visuals
 
 ---
 
