@@ -34,11 +34,4 @@ SCRIPTS_COMPILE_FAILURES: dict[str, str] = {}
 # These two are owned by a concurrent workstream (integrity_verification and
 # bibliography); their frontmatter backfill lands separately. Remove each entry
 # once that work merges — the test will flip XPASS → hard failure if regressed.
-PLUGIN_AGENTS_MISSING_FRONTMATTER: dict[str, str] = {
-    "skills/core/alterlab-research-pipeline/agents/integrity_verification_agent.md": (
-        "frontmatter backfill owned by the integrity-verification workstream"
-    ),
-    "skills/core/alterlab-deep-research/agents/bibliography_agent.md": (
-        "frontmatter backfill owned by the bibliography workstream"
-    ),
-}
+PLUGIN_AGENTS_MISSING_FRONTMATTER: dict[str, str] = {}

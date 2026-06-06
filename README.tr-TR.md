@@ -104,6 +104,7 @@
 - [🏗️ Proje Yapısı](#%EF%B8%8F-proje-yapısı)
 - [⚙️ Beceriler Nasıl Çalışır?](#%EF%B8%8F-beceriler-nasıl-çalışır)
 - [💡 Kullanım Örnekleri](#-kullanım-örnekleri)
+- [📖 Bu Depoyu Atıfla](#-bu-depoyu-atıfla)
 - [🤝 Katkıda Bulunma](#-katkıda-bulunma)
 - [📜 Lisans](#-lisans)
 - [🙏 Teşekkürler](#-teşekkürler)
@@ -151,6 +152,20 @@ Sürüm 2.0, koleksiyonu bir beceri listesinden **denetlenmiş, doğrulanmış v
 
 > [!NOTE]
 > Eval kapsamı dışında kalan 7 beceri: `primekg`, `rdkit`, `link-health`, `shap`, `open-science`, `scientific-viz`, `peer-review`. Tam değişiklik geçmişi için [CHANGELOG.md](CHANGELOG.md) dosyasına bakın.
+
+### 🚀 v2.0'deki ek yenilikler
+
+Yukarıdaki tabloyu tamamlayan, v2.0 ile gelen başlıca sayfa eklentileri:
+
+| | Yenilik | Ayrıntı |
+|:---:|:---|:---|
+| 🌐 | **Canlı Katalog** | 183 becerinin tamamı, gözatılabilir bir web kataloğunda yayımlanır: [alterlab-ieu.github.io/AlterLab-Academic-Skills](https://alterlab-ieu.github.io/AlterLab-Academic-Skills/) — kurulum yapmadan tüm koleksiyonu inceleyin |
+| 🤖 | **Kayıtlı Alt-Ajanlar** | Çekirdek hat, `core` eklentisiyle birlikte kaydedilen özelleşmiş alt-ajanlar olarak gelir; eğik çizgi komutları (`/research-pipeline`, `/lit-review`, `/review-paper`, `/cite-check`) ve birlikte paketlenen akademik MCP (PubMed / OpenAlex / Crossref / Zotero) ile sürülür |
+| 🗂️ | **Üretilen Katalog** | Makine okunabilir [`skills.json`](skills.json), beceri frontmatter'ından otomatik üretilir; bir CI kapısı bu README'deki her sayımı doğrular ve dürüst tutar |
+| 📜 | **Dürüst Köken** | Bu depo, MIT lisanslı [K-Dense `scientific-agent-skills`](https://github.com/K-Dense-AI/scientific-agent-skills) projesinden içerik çatallamasıdır; köken [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md), [`PROVENANCE.md`](PROVENANCE.md) ve [`CITATION.cff`](CITATION.cff) dosyalarında açıkça belgelenir |
+
+> [!TIP]
+> **Kataloğa göz atın:** Becerileri kurmadan önce tarayıcınızdan keşfedin — alana göre filtreleyin, açıklamaları okuyun ve hangi becerinin ne zaman tetiklendiğini görün: **[alterlab-ieu.github.io/AlterLab-Academic-Skills](https://alterlab-ieu.github.io/AlterLab-Academic-Skills/)**
 
 <br>
 
@@ -672,6 +687,24 @@ Beceriler kullanıcı niyetine göre otomatik etkinleşir:
 
 - [AlterLab-FC-Skills](https://github.com/AlterLab-IEU/AlterLab-FC-Skills) — iletişim öğrencileri için 72 ajansal beceri
 - [AlterLab_GameForge](https://github.com/AlterLab-IEU/AlterLab_GameForge) — konseptten yayına 34 oyun geliştirme becerisi
+
+## 📖 Bu Depoyu Atıfla
+
+AlterLab Akademik Beceriler'i araştırmanızda veya öğretiminizde kullandıysanız lütfen atıfta bulunun. Yapılandırılmış üst veri, makine okunabilir [`CITATION.cff`](CITATION.cff) dosyasında tutulur; GitHub bunu otomatik olarak APA ve BibTeX biçimlerine dönüştürür ("Cite this repository" düğmesi).
+
+```bibtex
+@software{alterlab_academic_skills_2026,
+  title        = {AlterLab Academic Skills},
+  author       = {{AlterLab Creative Technologies Laboratory, Izmir University of Economics (IEU)}},
+  year         = {2026},
+  version      = {2.0.0},
+  license      = {MIT},
+  url          = {https://github.com/AlterLab-IEU/AlterLab-Academic-Skills}
+}
+```
+
+> [!NOTE]
+> Bu depo, MIT lisanslı [K-Dense `scientific-agent-skills`](https://github.com/K-Dense-AI/scientific-agent-skills) projesinin içerik çatallamasıdır. Akademik dürüstlük gereği, türetilmiş çalışmalarda hem bu depoya hem de özgün kaynağa atıfta bulunmanızı öneririz; tam köken zinciri [`CITATION.cff`](CITATION.cff) dosyasının `references` bölümünde yer alır.
 
 ## 🤝 Katkıda Bulunma
 

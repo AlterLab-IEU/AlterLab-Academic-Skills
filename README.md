@@ -90,23 +90,38 @@
 
 <br>
 
+## 🚀 What's New in v2.0
+
+- ✅ **183 / 183 skills ship executable evals, CI-gated** on every PR — coverage isn't a claim, it's enforced. → [`docs/evals.md`](docs/evals.md)
+- 🔎 **Deterministic citation-existence verifier** that catches hallucinated references against Crossref / OpenAlex / Semantic Scholar / arXiv — no LLM guesswork in the gate. → [Headline feature](#-headline-feature--alterlab-citation-verifier)
+- 📦 **Per-domain `claude.ai` bundles on every Release** — each `dist/<domain>.zip` clears the 200-file / 30 MB caps. → [Releases](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases)
+- 🌐 **Live searchable catalog** to browse all 183 skills in the browser. → [Browse the Catalog](#-browse-the-catalog)
+- 🤖 **35 registered subagents + slash commands + a bundled academic MCP** wiring PubMed / OpenAlex / Crossref / Zotero. → [MCP & Slash Commands](#-mcp--slash-commands)
+- 📜 **Honest provenance** — upstream K-Dense fork credited in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) and a machine-readable [`CITATION.cff`](CITATION.cff). → [Cite This Repository](#-cite-this-repository)
+
+<br>
+
 ## 📋 Table of Contents
 
 <details open>
 <summary><b>Click to expand / collapse</b></summary>
 <br>
 
+- [🚀 What's New in v2.0](#-whats-new-in-v20)
 - [🎯 What Is This?](#-what-is-this)
-- [🆕 What's New in v2.0](#-whats-new-in-v20)
+- [🆕 v2.0 Highlights](#-v20-highlights)
 - [✨ Key Features](#-key-features)
 - [🗂️ Domain Overview](#%EF%B8%8F-domain-overview)
+- [🔎 Browse the Catalog](#-browse-the-catalog)
 - [🚀 Quick Start](#-quick-start)
 - [⚡ Core Pipeline — 8 Skills](#-core-pipeline--8-skills)
 - [📚 All 183 Skills](#-all-183-skills)
 - [🏗️ Project Structure](#%EF%B8%8F-project-structure)
 - [⚙️ How Skills Work](#%EF%B8%8F-how-skills-work)
 - [💡 Usage Examples](#-usage-examples)
+- [⚖️ How It Compares](#%EF%B8%8F-how-it-compares)
 - [🤝 Contributing](#-contributing)
+- [📖 Cite This Repository](#-cite-this-repository)
 - [📜 License](#-license)
 - [🙏 Credits](#-credits)
 
@@ -125,7 +140,7 @@ Each skill transforms Claude into a **domain-specific expert assistant** tailore
 
 <br>
 
-## 🆕 What's New in v2.0
+## 🆕 v2.0 Highlights
 
 > *v2.0 is the "Trust & Reach" release — it turns the loudest objection to academic skills ("just prompts, no evals") into the headline differentiator.*
 
@@ -182,6 +197,18 @@ and degrades gracefully to plain `requests` / WebSearch when no MCP or network i
 | 📄 | **Document Tools** | **2** | Markdown & document conversion — MarkItDown, Open Notebook |
 | 🔍 | **Research Tools** | **14** | Search, discovery, Zotero, citation graphs, PDF evidence tables, qualitative methods, ethics, surveys, open science |
 | 💰 | **Finance & Economics** | **7** | FRED, Alpha Vantage, SEC EDGAR, market research |
+<br>
+
+## 🔎 Browse the Catalog
+
+<div align="center">
+
+<a href="https://alterlab-ieu.github.io/AlterLab-Academic-Skills/"><img src="https://img.shields.io/badge/Browse%20the%20Catalog-Live%20%26%20Searchable-7C3AED?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Browse the live searchable catalog"></a>
+
+<em>Search all 183 skills by name, domain, or keyword — no install required.</em>
+
+</div>
+
 <br>
 
 ## 🚀 Quick Start
@@ -686,6 +713,26 @@ Skills activate automatically based on user intent:
 
 ---
 
+## ⚖️ How It Compares
+
+<div align="center">
+
+*Respectfully, factually — both peers are excellent MIT-licensed projects. This table is about fit, not ranking.*
+
+| | **AlterLab Academic Skills** | **K-Dense scientific-agent-skills** | **anthropics/skills** |
+|:---|:---:|:---:|:---:|
+| **Skills** | 183 | 138 *(self-reported)* | General-purpose examples |
+| **Executable evals** | 183 / 183, CI-gated | Not shipped as an eval harness | Not the project's focus |
+| **License** | MIT | MIT | MIT |
+| **Academic focus** | Built for the research lifecycle | Scientific tooling | General / reference |
+| **Bundles / marketplace** | Per-domain `claude.ai` bundles + Claude Code marketplace | — | — |
+
+</div>
+
+> Counts verified against [`skills.json`](skills.json); K-Dense figure is the upstream project's own self-reported count. `anthropics/skills` is Anthropic's official example collection, scoped to general-purpose demonstrations rather than a fixed academic catalog.
+
+<br>
+
 ## 🔗 Sister Projects
 
 - [AlterLab-FC-Skills](https://github.com/AlterLab-IEU/AlterLab-FC-Skills) — 72 agentic skills for communication students
@@ -701,6 +748,43 @@ We welcome contributions! See **[CONTRIBUTING.md](CONTRIBUTING.md)** for guideli
 - ✨ Create a new skill following the structure above
 - 🐛 Report issues or suggest improvements
 - 📚 Add examples or use cases to documentation
+
+<br>
+
+## 📖 Cite This Repository
+
+If AlterLab Academic Skills supports your research or teaching, please cite it. A machine-readable [`CITATION.cff`](CITATION.cff) ships in the repo, so GitHub's *"Cite this repository"* button and most reference managers can import it automatically. The suite is a content fork of K-Dense's `scientific-agent-skills` (MIT) — see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) and [`PROVENANCE.md`](PROVENANCE.md) for full provenance.
+
+```bibtex
+@software{alterlab_academic_skills_2026,
+  title   = {AlterLab Academic Skills},
+  author  = {{AlterLab Creative Technologies Laboratory, Izmir University of Economics (IEU)}},
+  year    = {2026},
+  version = {2.0.0},
+  license = {MIT},
+  url     = {https://github.com/AlterLab-IEU/AlterLab-Academic-Skills}
+}
+```
+
+<details>
+<summary><b>Prefer CFF? Click to expand the <code>CITATION.cff</code> core</b></summary>
+
+```yaml
+cff-version: 1.2.0
+title: "AlterLab Academic Skills"
+type: software
+version: 2.0.0
+date-released: "2026-06-06"
+license: MIT
+repository-code: "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills"
+authors:
+  - name: "AlterLab Creative Technologies Laboratory, Izmir University of Economics (IEU)"
+    website: "https://github.com/AlterLab-IEU"
+    city: "Izmir"
+    country: "TR"
+```
+
+</details>
 
 <br>
 
@@ -733,6 +817,18 @@ MIT License — Copyright (c) 2026 AlterLab Creative Technologies Laboratory
 <br>
 
 <a href="#">⬆ Back to Top</a>
+
+</div>
+
+<br>
+
+<div align="center">
+
+### 🌟 Star History
+
+<a href="https://star-history.com/#AlterLab-IEU/AlterLab-Academic-Skills&Date">
+<img src="https://api.star-history.com/svg?repos=AlterLab-IEU/AlterLab-Academic-Skills&type=Date" width="70%" alt="Star History Chart">
+</a>
 
 </div>
 
