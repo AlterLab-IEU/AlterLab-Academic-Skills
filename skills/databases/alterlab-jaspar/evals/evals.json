@@ -1,0 +1,62 @@
+{
+  "skill": "alterlab-jaspar",
+  "evals": [
+    {
+      "id": "scan-promoter-for-tfbs",
+      "prompt": "Scan this promoter sequence for CTCF binding sites: AGCCCGCGAGGTGGCAGTTGCCTGGAGCAGGATCAGCAGATC. Use an 80% score threshold and check both strands.",
+      "expected_output": "Triggers the JASPAR skill. Fetches the CTCF matrix (e.g. MA0139.1) from the JASPAR REST API, converts the PFM to a log-odds PWM, and scans the given sequence on both strands at the requested relative-score threshold, reporting hit positions, scores, and matched subsequences.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "PWM" },
+        { "type": "behavior", "value": "Fetches a TF PFM, converts to PWM, and scans a DNA sequence on both strands for binding sites." }
+      ]
+    },
+    {
+      "id": "regulatory-variant-impact",
+      "prompt": "I have a non-coding GWAS SNP. Does the alternate allele disrupt or create a transcription factor binding site? Here are the ref and alt sequences with ±20 bp flanking context.",
+      "expected_output": "Triggers the JASPAR skill. Builds ref and alt sequences centered on the variant, scans both with the relevant TF PWMs (variant_tfbs_impact), and reports which TF motifs are gained or disrupted by comparing max ref vs alt scores. Provides flanking context of at least motif_length-1 bp.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Compares ref vs alt sequence PWM scores to determine whether a variant disrupts or creates a TF binding motif." }
+      ]
+    },
+    {
+      "id": "search-tf-profiles",
+      "prompt": "Find all the human homeobox transcription factor binding profiles in the JASPAR CORE collection.",
+      "expected_output": "Triggers the JASPAR skill. Calls the JASPAR REST API matrix search with tf_class='Homeodomain', species='9606', collection='CORE', returning the matching profiles (matrix_id, name, class/family). Uses the CORE collection per best practice.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "CORE" },
+        { "type": "behavior", "value": "Searches JASPAR for TF profiles by class and species within the CORE collection." }
+      ]
+    },
+    {
+      "id": "fetch-matrix-pfm",
+      "prompt": "Get me the JASPAR matrix MA0139.1 — I want the PFM and the consensus sequence.",
+      "expected_output": "Triggers the JASPAR skill. Calls get_matrix('MA0139.1') against the REST API and returns the PFM (A/C/G/T counts), consensus, length, and metadata (name, class, family, species). Treats MA0139.1 as a JASPAR matrix ID.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "MA0139.1" },
+        { "type": "behavior", "value": "Fetches a specific JASPAR matrix by ID and returns its PFM and consensus." }
+      ]
+    },
+    {
+      "id": "near-miss-string-db",
+      "prompt": "Build me a protein-protein interaction network for the transcription factors CTCF, YY1, and SP1 and show the confidence scores for each edge.",
+      "expected_output": "Should NOT trigger the JASPAR skill. JASPAR provides DNA-binding motif profiles, not protein-protein interaction networks. Building a PPI network with confidence-scored edges is STRING's domain, so it should defer to the string database skill (alterlab-string-db).",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "string" }
+      ]
+    },
+    {
+      "id": "near-miss-gnomad",
+      "prompt": "What's the population allele frequency of the SNP rs3819773, and is it constrained in the general population?",
+      "expected_output": "Should NOT trigger the JASPAR skill. Population allele frequency and constraint for a SNP come from gnomAD, not from a motif database. Even though the variant could be in a regulatory region, the frequency/constraint question should defer to the gnomad database skill (alterlab-gnomad).",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "gnomad" }
+      ]
+    }
+  ]
+}

@@ -16,7 +16,7 @@ from pathlib import Path
 
 try:
     from rdkit import Chem
-    from rdkit.Chem import AllChem, MACCSkeys, rdFingerprintGenerator
+    from rdkit.Chem import MACCSkeys, rdFingerprintGenerator
     from rdkit import DataStructs
 except ImportError:
     print("Error: RDKit not installed. Install with: conda install -c conda-forge rdkit")

@@ -3,6 +3,7 @@ name: alterlab-omero
 description: Manages microscopy image data on an OMERO server via the OMERO Python API (BlitzGateway) — access images, retrieve datasets, read pixel data, manage ROIs and annotations, and batch-process. Use when connecting to an OMERO server, pulling microscopy images or datasets, analyzing pixels, managing ROIs/annotations, or running high-content screening and microscopy workflows. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
+compatibility: Requires a reachable OMERO server (host, port, credentials) and the omero-py client (pip install omero-py) for BlitzGateway access
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

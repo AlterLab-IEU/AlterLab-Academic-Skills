@@ -1,0 +1,68 @@
+{
+  "skill": "alterlab-monarch",
+  "evals": [
+    {
+      "id": "phenotype-to-gene",
+      "prompt": "I have a patient with seizures (HP:0001250), short stature (HP:0004322), and global developmental delay (HP:0001263). Use Monarch to find candidate genes that match this phenotype profile, ranked by overlap.",
+      "expected_output": "Invokes alterlab-monarch: queries the Monarch API v3 association endpoint for each HPO term, counts matching phenotypes per gene (the rare_disease_gene_finder workflow), and returns candidate genes ranked by phenotype overlap.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "HP:0001250" }
+      ]
+    },
+    {
+      "id": "disease-to-gene",
+      "prompt": "What genes are associated with Huntington disease (MONDO:0007739) according to the Monarch knowledge graph?",
+      "expected_output": "Invokes alterlab-monarch: uses the Monarch API v3 association/all endpoint with the MONDO disease ID to return causally linked genes, preferring MONDO identifiers for cross-ontology coverage.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "MONDO" }
+      ]
+    },
+    {
+      "id": "cross-species-model",
+      "prompt": "Are there mouse or zebrafish models for the gene SCN1A so I can find an animal model that recapitulates the human disease phenotype?",
+      "expected_output": "Invokes alterlab-monarch: queries cross-species orthologs (biolink:orthologous_to) via the Monarch API and surfaces model-organism (MGI mouse, ZFIN zebrafish) orthologs and their phenotype associations for disease-model discovery.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Uses Monarch ortholog and model-organism phenotype data to identify mouse/zebrafish models, not just a human gene record." }
+      ]
+    },
+    {
+      "id": "hpo-term-lookup",
+      "prompt": "Look up the HPO term HP:0001250 and search for related epilepsy phenotype terms with their definitions.",
+      "expected_output": "Invokes alterlab-monarch: uses get_hpo_term(\"HP:0001250\") for the term name/definition and search_hpo_terms(\"epilepsy\") against the Monarch search endpoint to list related HPO phenotype terms.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "HPO" }
+      ]
+    },
+    {
+      "id": "disease-similarity",
+      "prompt": "How phenotypically similar are Dravet syndrome and CDKL5-deficiency disorder? Give me a semantic similarity score based on their HPO profiles.",
+      "expected_output": "Invokes alterlab-monarch: uses the semsim/compare endpoint with the two MONDO disease IDs and an information-content metric over the HPO hierarchy to return a phenotype-profile similarity score.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Computes phenotype semantic similarity between two diseases using the Monarch semsim endpoint and the HPO hierarchy." }
+      ]
+    },
+    {
+      "id": "near-miss-clinvar",
+      "prompt": "Is the specific variant SCN1A c.2792T>C classified as pathogenic, and what is its star review status?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-clinvar. The user wants a single variant's clinical-significance classification and review status, not gene-disease-phenotype association mapping across species, which is Monarch's domain.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-clinvar" }
+      ]
+    },
+    {
+      "id": "near-miss-opentargets",
+      "prompt": "Give me the overall target-disease association score and tractability assessment for SCN1A as a drug target in epilepsy.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-opentargets. The user wants prioritized target-disease association scoring and druggability/tractability evidence, not phenotype-driven gene discovery from the Monarch knowledge graph.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-opentargets" }
+      ]
+    }
+  ]
+}

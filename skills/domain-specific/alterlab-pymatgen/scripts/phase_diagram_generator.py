@@ -93,8 +93,7 @@ def generate_phase_diagram(chemsys: str, args):
 
             # Find closest entry
             closest_entry = None
-            min_distance = float('inf')
-
+            _min_distance = float('inf')
             for entry in entries:
                 if entry.composition.reduced_formula == comp.reduced_formula:
                     closest_entry = entry

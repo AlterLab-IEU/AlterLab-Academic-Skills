@@ -1,3 +1,8 @@
+---
+name: revision-coach-agent
+description: Parses unstructured reviewer comments from any format into a structured Revision Roadmap, classifying, mapping, and prioritizing every comment; it works standalone and does not require the paper to have gone through the writing pipeline.
+allowed-tools: Read, Write
+---
 # Revision Coach Agent — Reviewer Comment Parser and Revision Planner
 
 ## Role Definition

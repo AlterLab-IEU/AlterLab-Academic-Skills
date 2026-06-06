@@ -3,6 +3,7 @@ name: alterlab-biopython
 description: Manipulate biological sequences, parse FASTA/GenBank/PDB files, run phylogenetics, and access NCBI/PubMed programmatically via Biopython (Bio.SeqIO, Bio.Entrez, Bio.PDB, Bio.Blast). Use when scripting custom bioinformatics pipelines, batch-processing sequence files, automating BLAST, or fetching records from Entrez — for quick one-off database lookups use gget, for unified multi-service integration use bioservices. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with Biopython installed. NCBI Entrez access needs a contact email; an NCBI API key is optional (raises the rate limit from 3 to 10 req/s)."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

@@ -11,7 +11,7 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict
 from markitdown import MarkItDown
 from datetime import datetime
 

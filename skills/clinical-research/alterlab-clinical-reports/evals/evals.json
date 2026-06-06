@@ -1,0 +1,63 @@
+{
+  "skill": "alterlab-clinical-reports",
+  "evals": [
+    {
+      "id": "care-case-report",
+      "prompt": "Help me write a clinical case report for journal submission about an unusual presentation of acute myocardial infarction in a 28-year-old. I need it to follow the CARE guidelines with the full structure and an informed-consent statement.",
+      "expected_output": "Invokes alterlab-clinical-reports in case-report mode. Follows the CARE (CAse REport) guidelines structure: title containing 'case report', MeSH keywords, structured abstract, introduction, de-identified patient information (18 HIPAA identifiers removed), clinical findings, timeline, diagnostic assessment, therapeutic interventions, follow-up/outcomes, discussion, and an informed-consent statement for publication.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "CARE" },
+        { "type": "behavior", "value": "Structures the report per CARE guidelines with a timeline, de-identification, and an informed-consent-for-publication statement." }
+      ]
+    },
+    {
+      "id": "ich-e3-csr",
+      "prompt": "I need to prepare an ICH-E3 clinical study report for our completed Phase 3 trial, including the efficacy summary and serious adverse event narratives for our regulatory submission.",
+      "expected_output": "Invokes alterlab-clinical-reports in clinical-trial-report mode. Structures an ICH-E3 compliant Clinical Study Report (CSR) with efficacy and safety summaries, writes serious adverse event (SAE) narratives, and ensures ICH-GCP and FDA regulatory compliance for the submission.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "ICH-E3" },
+        { "type": "behavior", "value": "Produces an ICH-E3 CSR with SAE narratives and references ICH-GCP/regulatory compliance." }
+      ]
+    },
+    {
+      "id": "radiology-diagnostic-report",
+      "prompt": "Write up a structured radiology diagnostic report for a chest CT showing a suspicious pulmonary nodule — I want the standard sections (technique, findings, impression) with proper clinical terminology.",
+      "expected_output": "Invokes alterlab-clinical-reports in diagnostic-report mode. Produces a structured radiology report with standard sections (clinical history/indication, technique, findings, impression), uses precise clinical terminology, and follows diagnostic reporting standards.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "impression" },
+        { "type": "behavior", "value": "Generates a structured radiology diagnostic report with technique/findings/impression sections." }
+      ]
+    },
+    {
+      "id": "soap-discharge-documentation",
+      "prompt": "I need a SOAP progress note and a discharge summary for a patient admitted with community-acquired pneumonia. Make sure they're properly de-identified and HIPAA compliant.",
+      "expected_output": "Invokes alterlab-clinical-reports in patient-documentation mode. Produces a SOAP note (Subjective, Objective, Assessment, Plan) and a discharge summary, ensuring HIPAA-compliant de-identification and meeting clinical record documentation standards.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "SOAP" },
+        { "type": "behavior", "value": "Produces SOAP and discharge documentation with HIPAA-compliant de-identification." }
+      ]
+    },
+    {
+      "id": "near-miss-treatment-plans",
+      "prompt": "Create a forward-looking treatment plan for a 55-year-old with newly diagnosed type 2 diabetes, with SMART goals, evidence-based interventions, and a structured follow-up schedule.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-treatment-plans. The ask is a prospective, SMART-goal-based patient care plan, not documentation of past clinical events (case report, diagnostic report, SOAP/discharge note). Clinical-reports documents what happened; treatment-plans plans future care.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-treatment-plans" }
+      ]
+    },
+    {
+      "id": "near-miss-clinical-decision",
+      "prompt": "Analyze a cohort of 60 HER2-positive breast cancer patients stratified by hormone receptor status with hazard ratios, Kaplan-Meier survival curves, and GRADE-graded treatment recommendations.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-clinical-decision. The ask is a population-level biomarker-stratified cohort analysis with survival statistics and GRADE evidence grading, not an individual clinical report (case/diagnostic/trial/patient documentation). Clinical-reports handles single-report documentation, not cohort evidence synthesis.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-clinical-decision" }
+      ]
+    }
+  ]
+}

@@ -4,6 +4,81 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] — 2026-06-06
+
+### ⚠️ Breaking — action required for 1.x installs
+
+- **Marketplace plugins are now per-domain scoped.** Through 1.2.0 every one of the
+  13 domain plugins declared `source: "./"`, so installing *any* single plugin pulled in
+  **all 183 skills** (a string `source` resolves the plugin root to the repo root, and the
+  marketplace `skills` array is *additive* to default `skills/` auto-discovery — see
+  [`docs/design/scoping-spike.md`](docs/design/scoping-spike.md)). Each plugin now points at
+  its own folder (`source: "./skills/<domain>"`), so **installing a domain plugin loads only
+  that domain's skills**. If you installed `alterlab-core` at 1.x and relied on it bringing in
+  the whole suite, that no longer happens: **install each domain plugin you actually use**
+  (`alterlab-databases`, `alterlab-writing-tools`, …) from the same marketplace. The
+  `install.sh` path lets you cherry-pick whole domains and/or individual skills directly.
+
+### Added
+
+- **Behavioral evals across the corpus**: `evals/evals.json` backfilled so **183 / 183 skills**
+  ship executable evals on the canonical [agentskills.io](https://agentskills.io) schema,
+  run in CI on every PR via `scripts/run_evals.py --strict` (plus a weekly `--behavioral` lane).
+- **Three new skills**: `alterlab-citation-verifier` (core), `alterlab-pdf-extract` and
+  `alterlab-citation-graph` (research-tools) — bringing the corpus from 180 to **183 skills**.
+- **Core pipeline wiring registered in the marketplace**: slash commands (`/cite-check`,
+  `/lit-review`, `/review-paper`, `/research-pipeline`), the deep-research and paper-reviewer
+  **agents**, a `figure-stamp` hook (`skills/core/hooks/hooks.json`), and an **academic MCP
+  bundle** (`skills/core/.mcp.json`, `skills/databases/.mcp.json`) with setup notes in
+  `references/mcp_setup.md`.
+- **A `claim-faithfulness` integrity gate** wired into the research pipeline (Stage 2.5 / 4.5).
+- **Per-domain bundles**: `scripts/build_bundles.py` emits `dist/<domain>.zip` (13 bundles,
+  each vendoring `shared/`) for upload to agents that take zipped skills.
+- **Catalog + docs site**: `skills.json` machine-readable catalog (`scripts/gen_catalog.py`)
+  and a static site (`docs/site/index.html`, published via `.github/workflows/gh-pages.yml`).
+- **Provenance & governance**: `CITATION.cff`, `PROVENANCE.md`, `ROADMAP.md`, `V2_PLAN.md`,
+  K-Dense provenance notes, GitHub issue templates, and `scripts/install.sh` (resolves
+  `~/.claude/skills/` vs the cross-tool `~/.agents/skills/`, idempotent, `--project` support).
+
+### Fixed
+
+- **Verified bug batch (6 classes, 14 skill/reference/script files)**: doubled `uv uv pip`
+  invocation; an Opentrons pipette-mount error; hardcoded model IDs in MarkItDown/TimesFM/
+  schematic + infographic AI scripts; a wrong RDKit API call; a scrambled contact email; and
+  bad pandas quantile dict keys in the EDA skill. Spanned cheminformatics, data-science,
+  databases, document-tools, lab-integrations, and visualization.
+
+### Changed
+
+- **Eval schema migrated to the canonical agentskills.io shape** (`scripts/migrate_eval_schema.py`,
+  validated against `docs/evals.schema.json`): legacy `query → prompt`,
+  `expected_behavior → expected_output`, and `should_trigger` survives as an `assertions`
+  entry (`should_trigger` / `should_not_trigger`), so behavioral coverage does not regress.
+- **Single version source-of-truth: 2.0.0.** `pyproject.toml`, `package.json`, and
+  `.claude-plugin/marketplace.json` (top-level + all 13 plugins) now agree; the hardcoded
+  version in `gen_marketplace.py` is gone and `tests/test_versioning.py` asserts the three
+  stay in sync plus a per-skill `metadata.version` presence check.
+- **CI caps gated**: byte-compile (`compileall skills/`), `ruff check`, strict evals, and the
+  body-length **ratchet** now run on every PR. The SKILL.md description cap dropped
+  **1536 → 1024** (zero trims: largest real description is 886 chars); the 500-line body soft
+  cap is a *down-only ratchet* over a frozen 21-skill backlog (hard cap 1500); bundles enforce
+  a 30 MB hard ceiling with a 5 MB / 200-file warn.
+- **`shared/` promoted to versioned JSON Schemas** under `skills/core/shared/schemas/`
+  (bibliography, rq_brief, review_report, paper_draft, integrity_report, material_passport,
+  synthesis, revision_roadmap, response_to_reviewers) with worked examples.
+- **Mermaid references flattened** one level (`alterlab-mermaid/references/diagrams/*.md` →
+  `references/`) to satisfy the one-level-deep spec rule, with citations re-pointed atomically.
+- **`compatibility` and `metadata.version` backfilled across all 183 skills** (compatibility
+  was on 8; version was missing on 10).
+- **Turkish README regenerated** (`README.tr-TR.md`) with an EN/TR parity gate; spec-conformance
+  workflow (`scripts/check_spec.py`, `.github/workflows/spec-conformance.yml`) added.
+
+### Deprecated
+
+- Installing a single domain plugin as a proxy for "install everything." The 1.x whole-suite
+  side effect is gone; compose the suite by installing the domain plugins (or `install.sh`
+  targets) you need.
+
 ## [1.2.0] — 2026-06-03
 
 ### Added
@@ -55,6 +130,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 - Initial public release of the AlterLab Academic Skills collection.
 
+[2.0.0]: https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases/tag/v2.0.0
 [1.2.0]: https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases/tag/v1.2.0
 [1.1.0]: https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases/tag/v1.1.0
 [1.0.0]: https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases/tag/v1.0.0

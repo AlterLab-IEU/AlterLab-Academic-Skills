@@ -1,0 +1,44 @@
+{
+  "skill": "alterlab-scientific-viz",
+  "evals": [
+    {
+      "id": "multi-panel-journal-figure",
+      "prompt": "Build me a multi-panel figure for a Nature submission: four panels with shared styling, error bars, and significance stars, exported at the journal's required resolution.",
+      "expected_output": "Invokes alterlab-scientific-viz: orchestrates matplotlib/seaborn with a publication style preset, lays out a multi-panel figure with consistent styling, adds error bars and statistical significance annotations, and exports at journal-required DPI/format (PDF/EPS/TIFF) per Nature specs.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "panel" },
+        { "type": "behavior", "value": "Produces a journal-formatted multi-panel figure with error bars, significance markers, and correct export settings." }
+      ]
+    },
+    {
+      "id": "colorblind-safe-palette",
+      "prompt": "Make my manuscript figures colorblind-safe and ensure they still read correctly in grayscale for the print version.",
+      "expected_output": "Invokes alterlab-scientific-viz: applies a colorblind-safe palette and redundant encodings (markers/linestyles) so figures remain legible in grayscale, using the publication style presets.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "colorblind" },
+        { "type": "behavior", "value": "Applies colorblind-safe palettes and grayscale-robust encodings for publication figures." }
+      ]
+    },
+    {
+      "id": "journal-format-export",
+      "prompt": "Reformat this existing plot to meet Cell's figure guidelines and export it at the correct size and resolution for submission.",
+      "expected_output": "Invokes alterlab-scientific-viz: applies the Cell-specific style preset (font sizes, column width, line weights), then exports via figure_export.py at the required resolution and format for journal submission.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Reformats a figure to a specific journal's guidelines and exports at submission-ready resolution." }
+      ]
+    },
+    {
+      "id": "near-miss-seaborn-exploration",
+      "prompt": "Just give me a quick seaborn pairplot to eyeball the correlations in this dataframe during exploratory analysis.",
+      "expected_output": "Does NOT invoke alterlab-scientific-viz; defers to seaborn directly. The ask is quick exploratory statistical plotting to eyeball data, not producing a journal-submission-ready, multi-panel, format-compliant figure. Scientific-viz is for publication finishing; quick exploration is seaborn's lane.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "seaborn" },
+        { "type": "behavior", "value": "Recognizes quick exploratory plotting as seaborn's job, not publication-grade figure orchestration, and defers." }
+      ]
+    }
+  ]
+}

@@ -17,7 +17,6 @@ Usage:
 """
 
 from typing import Dict, List, Optional, Any
-import xml.etree.ElementTree as ET
 
 
 class DrugBankHelper:

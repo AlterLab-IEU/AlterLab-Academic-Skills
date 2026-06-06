@@ -137,7 +137,7 @@ def run_fasttree(aligned_fasta: str, output_tree: str, seq_type: str = "nt") -> 
 def visualize_tree(tree_file: str, output_png: str, outgroup: str = None) -> None:
     """Visualize the phylogenetic tree with ETE3."""
     try:
-        from ete3 import Tree, TreeStyle, NodeStyle
+        from ete3 import Tree, TreeStyle
     except ImportError:
         print("ETE3 not installed. Skipping visualization.")
         print("  Install: pip install ete3")

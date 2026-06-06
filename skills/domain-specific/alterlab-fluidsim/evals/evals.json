@@ -1,0 +1,61 @@
+{
+  "skill": "alterlab-fluidsim",
+  "evals": [
+    {
+      "id": "ns2d-turbulence-run",
+      "prompt": "I want to study 2D turbulence on a periodic 512x512 box with viscosity 1e-4, run to t=50 with adaptive time stepping, and look at the energy cascade. Can you set up and run the simulation?",
+      "expected_output": "Invokes alterlab-fluidsim for a 2D Navier-Stokes run. Imports Simul from fluidsim.solvers.ns2d.solver, builds params via create_default_params(), sets params.oper.nx=params.oper.ny=512, params.nu_2=1e-4, params.time_stepping.t_end=50.0 with USE_CFL=True, init_fields.type='noise', runs sim.time_stepping.start(), then analyzes via sim.output.spectra.plot1d to inspect the energy cascade.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "ns2d" },
+        { "type": "behavior", "value": "Uses fluidsim's Simul/create_default_params workflow with pseudospectral params (oper.nx, nu_2, time_stepping) rather than hand-rolling a finite-difference solver." }
+      ]
+    },
+    {
+      "id": "stratified-flow-solver",
+      "prompt": "I'm modeling a stably stratified flow with a Brunt-Vaisala frequency around N=2 and want to drop a buoyant blob and watch the buoyancy field evolve. Which solver and parameters?",
+      "expected_output": "Invokes alterlab-fluidsim for a stratified-flow simulation. Selects the stratified solver (Simul from fluidsim.solvers.ns2d.strat.solver), sets params.N=2.0 for stratification, uses init_fields.type='in_script' to seed the buoyancy variable 'b' via sim.state.state_phys.get_var('b') and statephys_from_statespect(), runs, then plots sim.output.phys_fields.plot('b').",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "strat" },
+        { "type": "behavior", "value": "Chooses the stratified solver and sets the Brunt-Vaisala frequency params.N rather than a plain ns2d run." }
+      ]
+    },
+    {
+      "id": "mpi-3d-highres",
+      "prompt": "I need a high-resolution 3D Navier-Stokes run at 512 cubed and it has to run across many cores on our cluster. How do I configure and launch it in parallel?",
+      "expected_output": "Invokes alterlab-fluidsim for a 3D run with MPI. Uses Simul from fluidsim.solvers.ns3d.solver, sets oper.nx=ny=nz=512 and a small nu_2, and launches in parallel via mpirun -np N python script.py (noting the fluidsim[fft,mpi] install and MPI parallelization).",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "mpirun" }
+      ]
+    },
+    {
+      "id": "taylor-green-validation",
+      "prompt": "I want to validate my setup against the Taylor-Green vortex by seeding the analytic velocity field and checking that the energy decays correctly over time.",
+      "expected_output": "Invokes alterlab-fluidsim for a validation run. Uses the ns2d solver with init_fields.type='in_script', seeds vx=sin(X)cos(Y), vy=-cos(X)sin(Y) via sim.oper.get_XY_loc() and state_phys.get_var, calls statephys_from_statespect(), runs, and loads sim.output.spatial_means to compare energy decay against the analytical Taylor-Green solution.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Seeds the analytic Taylor-Green field via in_script initial conditions and validates energy decay using spatial_means output." }
+      ]
+    },
+    {
+      "id": "near-miss-aeon",
+      "prompt": "I already have a recorded velocity time series from a probe in a wind tunnel and I want to automatically detect anomalous bursts and cluster the recurring patterns in it.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-aeon. The user is not running a CFD simulation; they have an existing recorded 1D time series and want anomaly detection and pattern clustering, which is time series machine learning (aeon's STOMP / TimeSeriesKMeans), not pseudospectral Navier-Stokes solving.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-aeon" }
+      ]
+    },
+    {
+      "id": "near-miss-geomaster",
+      "prompt": "I have a stack of Sentinel-1 SAR scenes of an ocean eddy and want to derive sea-surface currents from the satellite imagery and map them.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-geomaster. Although the subject is geophysical flow, the task is remote-sensing processing of satellite imagery to retrieve currents, not running a numerical Navier-Stokes / shallow-water simulation, so it belongs to the geospatial / earth-observation skill.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-geomaster" }
+      ]
+    }
+  ]
+}

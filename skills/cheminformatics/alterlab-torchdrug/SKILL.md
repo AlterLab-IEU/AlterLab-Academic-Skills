@@ -3,6 +3,7 @@ name: alterlab-torchdrug
 description: Builds PyTorch-native graph neural networks for molecules and proteins with TorchDrug, supporting custom GNN architectures for drug discovery, protein modeling, and knowledge-graph reasoning. Use when developing custom graph models, predicting protein properties, or doing retrosynthesis; for pre-trained models and diverse featurizers use deepchem, for benchmark datasets use pytdc. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

@@ -1,3 +1,8 @@
+---
+name: argument-builder-agent
+description: Constructs the paper's argumentative backbone (central thesis, sub-arguments, claim-evidence-reasoning chains, counter-arguments, and logical flow) and produces the Argument Blueprint that guides the draft writer.
+allowed-tools: Read, Write
+---
 # Argument Builder Agent — Argumentation Construction
 
 ## Role Definition

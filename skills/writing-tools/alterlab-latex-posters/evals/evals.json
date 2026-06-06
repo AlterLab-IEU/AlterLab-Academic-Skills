@@ -1,0 +1,59 @@
+{
+  "skill": "alterlab-latex-posters",
+  "evals": [
+    {
+      "id": "beamerposter-a0",
+      "prompt": "I need to build an A0 portrait conference poster in LaTeX with beamerposter, three columns, our university branding colors, and space for four result figures. Can you set it up?",
+      "expected_output": "Invokes alterlab-latex-posters: starts from the beamerposter starter template in assets/, sets the A0 portrait geometry, configures a three-column grid with institutional-color branding, allocates roughly title ~10-15% / content ~70-80% / footer, sizes figures with width relative to linewidth, and references the beamerposter and layout reference files. Reminds to confirm the conference size and run the overfull/overflow check after compiling.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "beamerposter" }
+      ]
+    },
+    {
+      "id": "tikzposter-modern",
+      "prompt": "Convert my paper into a colorful modern tikzposter for a 36x48 inch poster session, using a colorblind-safe palette and clean block layout.",
+      "expected_output": "Invokes alterlab-latex-posters with tikzposter: uses the tikzposter template and a built-in color theme, sets the 36x48 inch size, applies a colorblind-safe palette (Viridis / ColorBrewer / IBM Color Blind Safe, avoiding red-green), organizes content into columns and blocks with typographic hierarchy readable from 4-6 feet, and keeps total text in the 300-800 word range.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "tikzposter" }
+      ]
+    },
+    {
+      "id": "overflow-compile-debug",
+      "prompt": "My LaTeX poster compiles but text and a figure are getting cut off at the right edge of the page. How do I find and fix the overflow before I send it to print?",
+      "expected_output": "Invokes alterlab-latex-posters compilation/QC guidance: directs grepping the log for overfull/overflow warnings (grep -i 'overfull' poster.log), inspecting all four page edges at 100% zoom, resizing figures (e.g. width=0.85\\linewidth) and trimming text, points to the review_poster.sh helper script and compilation_and_qc reference, and advises a 25%-scale print test before final output.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "overfull" }
+      ]
+    },
+    {
+      "id": "baposter-multicolumn",
+      "prompt": "Help me lay out a structured multi-column research poster using baposter with header boxes for each section and automatic spacing.",
+      "expected_output": "Invokes alterlab-latex-posters with baposter: uses the baposter template, sets up box-based header sections with automatic spacing in a structured multi-column layout, and references the baposter template/page-boundary debugging guidance. Confirms size/orientation and reminds about the post-compile overflow check.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "baposter" }
+      ]
+    },
+    {
+      "id": "near-miss-pptx-posters",
+      "prompt": "Can you make me a conference poster as an editable PowerPoint file? I want a .pptx I can tweak in PowerPoint, not LaTeX.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-pptx-posters. The user explicitly wants editable PowerPoint/PPTX poster output rather than a LaTeX-compiled poster, which is the pptx-posters skill's territory.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "pptx-posters" }
+      ]
+    },
+    {
+      "id": "near-miss-scientific-schematics",
+      "prompt": "I just need a clean methods-pipeline schematic diagram of my experimental workflow that I can drop into a figure — boxes, arrows, the data flow. No poster.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-scientific-schematics. The user wants a standalone schematic/diagram of a workflow, not a poster layout; this poster skill calls out scientific-schematics for generating such diagrams.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "scientific-schematics" }
+      ]
+    }
+  ]
+}

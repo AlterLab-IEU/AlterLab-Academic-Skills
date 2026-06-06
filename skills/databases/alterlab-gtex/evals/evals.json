@@ -1,0 +1,59 @@
+{
+  "skill": "alterlab-gtex",
+  "evals": [
+    {
+      "id": "tissue-expression-atlas",
+      "prompt": "Which human tissues express APOE the most? I'd like the median TPM for APOE across all GTEx tissues, sorted from highest.",
+      "expected_output": "Invokes alterlab-gtex. Calls the /expression/medianGeneExpression endpoint (gtex_v10) with the APOE GENCODE ID, returning median TPM per tissue sorted descending so the primary expression sites are clear.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Returns median TPM expression per tissue, sorted to show the highest-expressing tissues." }
+      ]
+    },
+    {
+      "id": "eqtl-for-gene",
+      "prompt": "Find all significant eQTLs for PCSK9 in GTEx, and tell me which tissues and variants drive its expression.",
+      "expected_output": "Invokes alterlab-gtex. Calls /association/singleTissueEqtl with the PCSK9 GENCODE ID (gtex_v10), paginating through results, and returns the significant variant-tissue associations (snpId, tissue, slope, pval) ranked by p-value. Notes FDR < 0.05 significance.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "eQTL" }
+      ]
+    },
+    {
+      "id": "interpret-gwas-variant",
+      "prompt": "I have a non-coding GWAS hit at chr1:154453788 (A>T). Which genes does it regulate, and in which tissues, according to GTEx eQTL data?",
+      "expected_output": "Invokes alterlab-gtex to interpret a GWAS locus. Converts the variant to GTEx ID format (chr1_154453788_A_T_b38), queries singleTissueEqtl by variantId across tissues, and returns the genes regulated by the variant with effect direction (slope) and tissue. May mention checking effect-allele concordance and colocalization.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Converts the variant to GTEx b38 ID format and returns regulated genes per tissue from eQTL data." }
+      ]
+    },
+    {
+      "id": "sqtl-splicing",
+      "prompt": "Are there any splicing QTLs in GTEx that affect how a gene of mine is spliced in skeletal muscle? I want the sQTL associations.",
+      "expected_output": "Invokes alterlab-gtex. Calls /association/singleTissueSqtl with the gene's GENCODE ID filtered by the Muscle_Skeletal tissueSiteDetailId, returning significant sQTL associations affecting splicing ratios.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "sQTL" }
+      ]
+    },
+    {
+      "id": "near-miss-alterlab-gwas",
+      "prompt": "What trait associations have been reported for rs7412 in the GWAS Catalog? Give me the reported traits, p-values, and the studies they came from.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-gwas. The user wants curated trait-variant association records from the GWAS Catalog (reported traits, study provenance, p-values), not GTEx's tissue-specific expression/eQTL regulatory data.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-gwas" }
+      ]
+    },
+    {
+      "id": "near-miss-alterlab-gnomad",
+      "prompt": "What is the population allele frequency of rs7412 across gnomAD populations, and is it a loss-of-function variant?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-gnomad. The user wants population allele frequencies and variant consequence/constraint from gnomAD, not GTEx's tissue expression or eQTL regulatory effects.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-gnomad" }
+      ]
+    }
+  ]
+}

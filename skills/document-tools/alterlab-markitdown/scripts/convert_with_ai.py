@@ -14,6 +14,17 @@ from markitdown import MarkItDown
 from openai import OpenAI
 
 
+# AlterLab model convention — default reviewed 2026-06-06; override via ALTERLAB_MODEL.
+# See skills/core/shared/model_env.md before changing the default. OpenRouter requires a
+# "provider/model" slug, so the dated Anthropic default carries its "anthropic/" prefix here.
+DEFAULT_MODEL = "anthropic/claude-opus-4-8"
+
+
+def alterlab_model() -> str:
+    """Return the model ID to use: $ALTERLAB_MODEL if set/non-empty, else the dated default."""
+    return os.environ.get("ALTERLAB_MODEL") or DEFAULT_MODEL
+
+
 # Predefined prompts for different use cases
 PROMPTS = {
     'scientific': """
@@ -71,7 +82,7 @@ def convert_with_ai(
     input_file: Path,
     output_file: Path,
     api_key: str,
-    model: str = "anthropic/claude-opus-4.5",
+    model: str = None,
     prompt_type: str = "general",
     custom_prompt: str = None
 ) -> bool:
@@ -82,13 +93,15 @@ def convert_with_ai(
         input_file: Path to input file
         output_file: Path to output Markdown file
         api_key: OpenRouter API key
-        model: Model name (default: anthropic/claude-opus-4.5)
+        model: Model name (default: $ALTERLAB_MODEL or the dated DEFAULT_MODEL constant)
         prompt_type: Type of prompt to use
         custom_prompt: Custom prompt (overrides prompt_type)
-        
+
     Returns:
         True if successful, False otherwise
     """
+    if not model:
+        model = alterlab_model()
     try:
         # Initialize OpenRouter client (OpenAI-compatible)
         client = OpenAI(
@@ -154,21 +167,22 @@ Examples:
   python convert_with_ai.py paper.pdf output.md --prompt-type scientific
   
   # Convert a presentation with custom model
-  python convert_with_ai.py slides.pptx slides.md --model anthropic/claude-opus-4.5 --prompt-type presentation
-  
+  python convert_with_ai.py slides.pptx slides.md --model anthropic/claude-opus-4-8 --prompt-type presentation
+
   # Use custom prompt with advanced vision model
-  python convert_with_ai.py diagram.png diagram.md --model anthropic/claude-opus-4.5 --custom-prompt "Describe this technical diagram"
-  
+  python convert_with_ai.py diagram.png diagram.md --model anthropic/claude-opus-4-8 --custom-prompt "Describe this technical diagram"
+
   # Set API key via environment variable
   export OPENROUTER_API_KEY="sk-or-v1-..."
   python convert_with_ai.py image.jpg image.md
 
 Environment Variables:
   OPENROUTER_API_KEY    OpenRouter API key (required if not passed via --api-key)
+  ALTERLAB_MODEL        Override the default model ID (see skills/core/shared/model_env.md)
 
 Popular Models (use with --model):
-  anthropic/claude-opus-4.5 - Recommended for scientific vision
-  google/gemini-3-pro-preview   - Gemini Pro Vision
+  anthropic/claude-opus-4-8 - Recommended for scientific vision (dated default)
+  Any OpenRouter vision slug (e.g. a current Google Gemini Pro Vision model) also works.
         """
     )
     
@@ -180,8 +194,8 @@ Popular Models (use with --model):
     )
     parser.add_argument(
         '--model', '-m',
-        default='anthropic/claude-opus-4.5',
-        help='Model to use via OpenRouter (default: anthropic/claude-opus-4.5)'
+        default=alterlab_model(),
+        help='Model to use via OpenRouter (default: $ALTERLAB_MODEL or the dated DEFAULT_MODEL)'
     )
     parser.add_argument(
         '--prompt-type', '-t',

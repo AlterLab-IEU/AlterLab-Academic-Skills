@@ -1,0 +1,61 @@
+{
+  "skill": "alterlab-interpro",
+  "evals": [
+    {
+      "id": "domain-architecture",
+      "prompt": "What is the full domain architecture of EGFR (UniProt P00533)? I want each InterPro domain and where it sits on the sequence.",
+      "expected_output": "Invokes alterlab-interpro. Calls the InterPro REST API (protein/UniProt/P00533/) to retrieve all matching entries with their entry_protein_locations, and reports the ordered domain architecture with start-end coordinates on the sequence.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "InterPro" },
+        { "type": "behavior", "value": "Returns the ordered domain architecture with sequence positions from the InterPro protein endpoint." }
+      ]
+    },
+    {
+      "id": "function-go-mapping",
+      "prompt": "I have an uncharacterized protein mapped to UniProt Q9Y6I9. Predict its likely function by pulling its InterPro family/domain annotations and the associated GO terms.",
+      "expected_output": "Invokes alterlab-interpro. Retrieves InterPro entries for the protein (grouping families, domains, homologous superfamilies) and extracts the associated GO terms (identifier, name, category) embedded in the entry metadata, using them to infer likely molecular function.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "GO" },
+        { "type": "behavior", "value": "Maps the protein's InterPro signatures to GO terms and uses families/domains to infer function." }
+      ]
+    },
+    {
+      "id": "members-of-family",
+      "prompt": "Find every UniProt protein annotated with the protein kinase domain InterPro entry IPR000719 — I want the count and the members.",
+      "expected_output": "Invokes alterlab-interpro. Queries entry/InterPro/IPR000719/protein/UniProt/ to list proteins carrying that entry, reporting the total count and members (with pagination for large result sets).",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Uses the InterPro entry-to-protein endpoint to enumerate members of the family/domain and reports the count." }
+      ]
+    },
+    {
+      "id": "pfam-entry-lookup",
+      "prompt": "Look up the Pfam WW domain entry PF00397 and the InterPro entry it maps to (IPR001202), and tell me what type of signature it is.",
+      "expected_output": "Invokes alterlab-interpro. Fetches the entry via entry/Pfam/PF00397/ and entry/InterPro/IPR001202/, reporting the entry name and type (e.g. domain), noting Pfam is one of InterPro's member databases.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Resolves a Pfam member-database accession through the InterPro API and reports the entry type/name." }
+      ]
+    },
+    {
+      "id": "near-miss-uniprot",
+      "prompt": "Just give me the reviewed Swiss-Prot FASTA sequence and the organism for UniProt P00533 — only the entry record, no domain analysis.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-uniprot. The user wants the raw protein entry/FASTA from UniProt, not InterPro family/domain classification or signature annotations.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-uniprot" }
+      ]
+    },
+    {
+      "id": "near-miss-alphafold-db",
+      "prompt": "Download the AlphaFold predicted 3D structure and pLDDT confidence for P00533 so I can inspect the folded domains in 3D.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-alphafold-db. The user wants a 3D structural model with confidence metrics, not sequence-based InterPro domain/family signature annotation.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-alphafold-db" }
+      ]
+    }
+  ]
+}

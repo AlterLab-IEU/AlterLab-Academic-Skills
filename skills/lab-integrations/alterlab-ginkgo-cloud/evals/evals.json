@@ -1,0 +1,50 @@
+{
+  "skill": "alterlab-ginkgo-cloud",
+  "evals": [
+    {
+      "id": "cfps-validation-order",
+      "prompt": "I have a 1.2 kb gene in a FASTA file and want a quick go/no-go on whether it expresses. How do I order a cell-free protein expression validation on Ginkgo Cloud Lab and what will it cost?",
+      "expected_output": "Invokes alterlab-ginkgo-cloud. Routes to the Cell Free Protein Expression Validation protocol on cloud.ginkgo.bio: submit the FASTA (up to 1800 bp), expect expression confirmation, baseline titer (mg/L), and virtual gel images at $39/sample with a 5-10 day turnaround, walking through the ordering workflow.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "cell free" }
+      ]
+    },
+    {
+      "id": "cfps-optimization-difficult-protein",
+      "prompt": "My membrane protein won't express well. Can Ginkgo Cloud Lab screen multiple conditions to optimize expression?",
+      "expected_output": "Invokes alterlab-ginkgo-cloud. Routes to Cell Free Protein Expression Optimization: DoE-based screening across up to 24 conditions per protein (lysates, temperatures, chaperones, disulfide enhancers, cofactors), designed for difficult-to-express and membrane proteins, at $199/sample, 6-11 day turnaround.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Recommends the optimization protocol with its DoE multi-condition screening for membrane/difficult proteins." }
+      ]
+    },
+    {
+      "id": "fluorescent-pixel-art",
+      "prompt": "I want to turn a 64x64 pixel-art PNG of our lab logo into living fluorescent bacterial art. Is that something Ginkgo Cloud Lab can do?",
+      "expected_output": "Invokes alterlab-ginkgo-cloud. Routes to Fluorescent Pixel Art Generation: accepts a 48x48 to 96x96 px PNG/SVG, prints with up to 11 E. coli strains via acoustic dispensing, delivered as high-res UV photographs at $25/plate (Beta), and walks through uploading the image and ordering.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "pixel art" }
+      ]
+    },
+    {
+      "id": "estimate-custom-protocol",
+      "prompt": "My workflow isn't one of the listed Ginkgo protocols. How do I get a feasibility assessment and price for a custom protocol on the cloud lab?",
+      "expected_output": "Invokes alterlab-ginkgo-cloud. Directs the user to the EstiMate AI agent, which accepts a plain-language protocol description and returns a compatibility/feasibility assessment and pricing for custom workflows beyond the listed protocols.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "EstiMate" }
+      ]
+    },
+    {
+      "id": "near-miss-opentrons",
+      "prompt": "Write me an Opentrons Flex protocol that does a serial dilution across a 96-well plate on our own robot in the lab.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-opentrons. The user is programming their own Opentrons hardware with the Protocol API, not submitting a protocol to Ginkgo's remote autonomous cloud lab (RACs).",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-opentrons" }
+      ]
+    }
+  ]
+}

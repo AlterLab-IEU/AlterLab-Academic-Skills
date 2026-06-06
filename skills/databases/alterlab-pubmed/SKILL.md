@@ -3,6 +3,7 @@ name: alterlab-pubmed
 description: Provide direct REST API access to PubMed via the NCBI E-utilities API, supporting advanced Boolean/MeSH queries, batch processing, and citation management. Use when searching biomedical literature by MeSH terms, retrieving abstracts or PMIDs in bulk, or scripting custom PubMed queries over raw HTTP/REST — for Python workflows prefer biopython (Bio.Entrez) instead, use this for direct REST work or custom API implementations. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless NCBI E-utilities REST API; optional NCBI API key raises rate limits
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -13,6 +14,16 @@ metadata:
 ## Overview
 
 PubMed is the U.S. National Library of Medicine's comprehensive database providing free access to MEDLINE and life sciences literature. Construct advanced queries with Boolean operators, MeSH terms, and field tags, access data programmatically via E-utilities API for systematic reviews and literature analysis.
+
+## Scripts
+
+`scripts/query_pubmed.py` — NCBI E-utilities (ESearch/ESummary/EFetch; stdlib only, JSON to stdout):
+
+```bash
+python scripts/query_pubmed.py search "crispr[tiab] AND 2024[dp]" --retmax 20   # PMIDs
+python scripts/query_pubmed.py summary 39726939 39492484    # metadata for PMIDs
+python scripts/query_pubmed.py fetch 39726939               # abstracts (use --api-key for 10 req/s)
+```
 
 ## When to Use This Skill
 
@@ -455,6 +466,6 @@ Load reference files into context as needed based on the specific task. For brie
 - **PubMed Help**: https://pubmed.ncbi.nlm.nih.gov/help/
 - **E-utilities Documentation**: https://www.ncbi.nlm.nih.gov/books/NBK25501/
 - **NLM Help Desk**: 1-888-FIND-NLM (1-888-346-3656)
-- **Technical Support**: vog.hin.mln.ibcn@seitilitue
+- **Technical Support**: eutilities@ncbi.nlm.nih.gov
 - **Mailing List**: utilities-announce@ncbi.nlm.nih.gov
 

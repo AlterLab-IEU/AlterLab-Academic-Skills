@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/skills/core/shared/schemas/rq_brief.schema.json",
+  "title": "RQ Brief",
+  "description": "Handoff Schema 1. Producer: alterlab-deep-research/research_question_agent | socratic_mentor_agent. Consumer: alterlab-deep-research/research_architect_agent | alterlab-paper-writer/intake_agent.",
+  "type": "object",
+  "required": [
+    "research_question",
+    "sub_questions",
+    "finer_scores",
+    "scope",
+    "methodology_type",
+    "theoretical_framework",
+    "keywords"
+  ],
+  "properties": {
+    "research_question": {
+      "type": "string",
+      "description": "The finalized research question (single sentence, interrogative form)."
+    },
+    "sub_questions": {
+      "type": "array",
+      "description": "2-5 decomposed sub-questions.",
+      "items": { "type": "string" },
+      "minItems": 2,
+      "maxItems": 5
+    },
+    "finer_scores": {
+      "type": "object",
+      "required": ["feasible", "interesting", "novel", "ethical", "relevant"],
+      "properties": {
+        "feasible": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "interesting": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "novel": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "ethical": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "relevant": { "type": "integer", "minimum": 1, "maximum": 10 }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "required": ["in_scope", "out_of_scope", "domain", "timeframe", "geography", "population"],
+      "properties": {
+        "in_scope": { "type": "array", "items": { "type": "string" } },
+        "out_of_scope": { "type": "array", "items": { "type": "string" } },
+        "domain": { "type": "string" },
+        "timeframe": { "type": "string" },
+        "geography": { "type": "string" },
+        "population": { "type": "string" }
+      }
+    },
+    "methodology_type": {
+      "type": "string",
+      "enum": ["qualitative", "quantitative", "mixed"]
+    },
+    "theoretical_framework": {
+      "type": "string",
+      "description": "Name of the selected or emergent theoretical framework."
+    },
+    "keywords": {
+      "type": "array",
+      "description": "5-10 search terms for literature search.",
+      "items": { "type": "string" },
+      "minItems": 5,
+      "maxItems": 10
+    },
+    "socratic_insights": {
+      "type": "array",
+      "description": "Key insights from Socratic dialogue (if socratic mode).",
+      "items": { "type": "string" }
+    },
+    "hypothesis": { "type": "string", "description": "Preliminary hypothesis (if applicable)." },
+    "exclusion_criteria": {
+      "type": "array",
+      "description": "What is explicitly out of scope.",
+      "items": { "type": "string" }
+    },
+    "stakeholders": {
+      "type": "array",
+      "description": "Key stakeholders affected by the research.",
+      "items": { "type": "string" }
+    },
+    "ethical_flags": {
+      "type": "array",
+      "description": "Preliminary ethical considerations.",
+      "items": { "type": "string" }
+    }
+  }
+}

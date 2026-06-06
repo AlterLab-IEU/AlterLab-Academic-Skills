@@ -7,7 +7,7 @@ Format, clean, sort, and deduplicate BibTeX files.
 import sys
 import re
 import argparse
-from typing import List, Dict, Tuple
+from typing import List, Dict
 from collections import OrderedDict
 
 class BibTeXFormatter:

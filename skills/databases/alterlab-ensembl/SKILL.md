@@ -3,6 +3,7 @@ name: alterlab-ensembl
 description: Query the Ensembl genome database REST API across 250+ species for gene lookups, sequence retrieval, variant analysis, comparative genomics, orthologs, and Variant Effect Predictor (VEP) annotations. Use when mapping gene IDs or coordinates, fetching genomic sequence, finding orthologs across species, or predicting variant consequences for genomic research. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless Ensembl REST API (no authentication required)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

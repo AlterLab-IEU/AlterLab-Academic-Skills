@@ -3,6 +3,7 @@ name: alterlab-stable-baselines3
 description: Production-ready reinforcement learning with Stable-Baselines3 — PPO, SAC, DQN, TD3, DDPG, and A2C behind a scikit-learn-like API. Use for standard single-agent RL experiments, quick prototyping, and well-documented algorithm implementations with Gymnasium environments. For high-performance parallel training, multi-agent systems, or custom vectorized environments prefer pufferlib. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: No API key required. Runs locally via `uv run python`; requires the stable-baselines3 and gymnasium Python packages.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

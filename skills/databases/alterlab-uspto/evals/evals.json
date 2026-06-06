@@ -1,0 +1,62 @@
+{
+  "skill": "alterlab-uspto",
+  "evals": [
+    {
+      "id": "patent-search-by-assignee-cpc",
+      "prompt": "Find me machine learning patents assigned to Google from 2023-2024 in the G06N classification — I want patent numbers, titles, and dates.",
+      "expected_output": "Triggers the USPTO skill. Uses the PatentSearch API (search.patentsview.org/api/v1/patent) via the PatentSearchClient with _text_* operators on the abstract, an assignee_organization filter for Google, a patent_date range, and a cpc_subclass_id of G06N, returning patent_number, patent_title, and patent_date.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "PatentSearch" },
+        { "type": "behavior", "value": "Searches granted patents by assignee, date range, and CPC classification via the PatentSearch API." }
+      ]
+    },
+    {
+      "id": "examination-history-peds",
+      "prompt": "Pull the prosecution history for application 16123456 — how many non-final and final rejections, and what's the current status and pendency?",
+      "expected_output": "Triggers the USPTO skill. Uses PEDS (PEDSHelper via uspto-opendata-python) to call analyze_prosecution and get_status_summary on the application number, reporting counts of CTNF (non-final) and CTFR (final) rejections, current status, filing date, and pendency in days.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "PEDS" },
+        { "type": "behavior", "value": "Retrieves patent examination/prosecution history from PEDS including rejection counts and pendency." }
+      ]
+    },
+    {
+      "id": "trademark-status-tsdr",
+      "prompt": "Check the status of trademark serial number 87654321 — is it registered, and does it need any attention?",
+      "expected_output": "Triggers the USPTO skill. Uses the TSDR API via TrademarkClient (get_trademark_status / check_trademark_health) on serial number 87654321, reporting mark text, status (e.g. REGISTERED, PENDING), filing/registration dates, and any alerts. Treats 87654321 as a trademark serial number.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "TSDR" },
+        { "type": "behavior", "value": "Looks up a trademark by serial number via TSDR and reports its status and any alerts." }
+      ]
+    },
+    {
+      "id": "patent-assignment-history",
+      "prompt": "Track the ownership/assignment history for patent 11234567 — who assigned it to whom and when?",
+      "expected_output": "Triggers the USPTO skill. Calls the Patent Assignment Search API (assignment-api.uspto.gov/patent/v1.4/assignment/patent/{number}), parses the returned XML for recordedDate, assignor, assignee, and conveyanceText, and reports the chain of ownership transfers.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Retrieves and parses patent assignment/ownership transfer records from the USPTO Assignment API." }
+      ]
+    },
+    {
+      "id": "near-miss-openalex",
+      "prompt": "Find me peer-reviewed academic papers on neural network pruning and their citation counts.",
+      "expected_output": "Should NOT trigger the USPTO skill. The user wants peer-reviewed scholarly papers and citation counts, which is scholarly-literature territory, not patent/trademark data. It should defer to the openalex database skill (alterlab-openalex) for academic papers and citations.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "openalex" }
+      ]
+    },
+    {
+      "id": "near-miss-pubchem",
+      "prompt": "Look up the chemical structure, SMILES, and molecular weight for the compound named in this patent — give me the PubChem CID.",
+      "expected_output": "Should NOT trigger the USPTO skill. Resolving a compound to its chemical structure, SMILES, molecular weight, and PubChem CID is chemical-database territory, not patent metadata. It should defer to the pubchem database skill (alterlab-pubchem).",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "pubchem" }
+      ]
+    }
+  ]
+}

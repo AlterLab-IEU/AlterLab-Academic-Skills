@@ -3,6 +3,7 @@ name: alterlab-markitdown
 description: Convert files and Office documents to clean, LLM-friendly Markdown with Microsoft MarkItDown (markitdown CLI/Python), supporting PDF, DOCX, PPTX, XLSX, images (EXIF + OCR), audio (transcription), HTML, CSV, JSON, XML, ZIP archives, EPUB e-books, and YouTube transcript URLs, with optional AI image descriptions. Use when converting a document, PDF, slide deck, spreadsheet, scanned image, audio file, web page, or e-book into Markdown text for ingestion or LLM processing, extracting text via OCR, transcribing audio, or batch-converting mixed file formats to token-efficient Markdown. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
+compatibility: markitdown CLI/library required (uv pip install 'markitdown[all]'); format extras gate support (pdf, docx, pptx, audio, etc.); optional AI image descriptions need an LLM API key (OPENAI_API_KEY or OPENROUTER_API_KEY)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -94,8 +95,14 @@ with open("document.pdf", "rb") as f:
 Use LLMs via OpenRouter to generate detailed image descriptions (for PPTX and image files):
 
 ```python
+import os
 from markitdown import MarkItDown
 from openai import OpenAI
+
+# Model ID follows the ALTERLAB_MODEL convention (skills/core/shared/model_env.md):
+# read $ALTERLAB_MODEL, else the dated default (reviewed 2026-06-06). OpenRouter needs
+# the "provider/" prefix, so the default is the dated Anthropic ID with that prefix.
+model = os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8"
 
 # Initialize OpenRouter client (OpenAI-compatible API)
 client = OpenAI(
@@ -105,7 +112,7 @@ client = OpenAI(
 
 md = MarkItDown(
     llm_client=client,
-    llm_model="anthropic/claude-opus-4.5",  # recommended for scientific vision
+    llm_model=model,  # recommended for scientific vision
     llm_prompt="Describe this image in detail for scientific documentation"
 )
 
@@ -217,8 +224,13 @@ for pdf_file in pdf_dir.glob("*.pdf"):
 ### 4. Convert PowerPoint with AI Descriptions
 
 ```python
+import os
 from markitdown import MarkItDown
 from openai import OpenAI
+
+# Model ID via the ALTERLAB_MODEL convention (skills/core/shared/model_env.md):
+# $ALTERLAB_MODEL, else the dated default (reviewed 2026-06-06), with OpenRouter prefix.
+model = os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8"
 
 # Use OpenRouter for access to multiple AI models
 client = OpenAI(
@@ -228,7 +240,7 @@ client = OpenAI(
 
 md = MarkItDown(
     llm_client=client,
-    llm_model="anthropic/claude-opus-4.5",  # recommended for presentations
+    llm_model=model,  # recommended for presentations
     llm_prompt="Describe this slide image in detail, focusing on key visual elements and data"
 )
 
@@ -376,7 +388,11 @@ for paper in papers_dir.glob("*.pdf"):
     output_file.write_text(content)
 
 # For AI-enhanced conversion with figures
+import os
 from openai import OpenAI
+
+# Model ID via the ALTERLAB_MODEL convention (skills/core/shared/model_env.md).
+model = os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8"
 
 client = OpenAI(
     api_key="your-openrouter-api-key",
@@ -385,7 +401,7 @@ client = OpenAI(
 
 md_ai = MarkItDown(
     llm_client=client,
-    llm_model="anthropic/claude-opus-4.5",
+    llm_model=model,
     llm_prompt="Describe scientific figures with technical precision"
 )
 ```

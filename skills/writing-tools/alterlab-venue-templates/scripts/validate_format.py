@@ -12,7 +12,6 @@ Usage:
 import argparse
 import subprocess
 from pathlib import Path
-import re
 
 # Venue requirements database
 VENUE_REQUIREMENTS = {

@@ -20,13 +20,13 @@ import os
 import sys
 import json
 import argparse
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 
 
 def check_dependencies():
     """Check if required packages are installed."""
     try:
-        import litellm
+        import litellm  # noqa: F401  # availability probe; real import is `from litellm import completion` below
         return True
     except ImportError:
         print("Error: LiteLLM is not installed.", file=sys.stderr)

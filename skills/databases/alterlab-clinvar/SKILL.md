@@ -3,6 +3,7 @@ name: alterlab-clinvar
 description: Query NCBI ClinVar via the E-utilities API or FTP for the clinical significance of genetic variants, searching by gene, variant, or genomic position and interpreting pathogenicity classifications. Use when assessing whether a variant is pathogenic or benign, annotating VCFs with clinical interpretations, or supporting genomic and clinical-genetics medicine. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless NCBI E-utilities REST API; optional NCBI API key raises rate limits
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -359,4 +360,13 @@ This skill includes comprehensive reference documentation:
 ### Contact
 
 For questions about ClinVar or data submission: clinvar@ncbi.nlm.nih.gov
+
+## Scripts
+
+`scripts/query_clinvar.py` — runnable helper for ClinVar via NCBI E-utilities (no key; `NCBI_API_KEY` lifts the rate limit):
+
+```bash
+python scripts/query_clinvar.py search "BRCA1[gene] AND pathogenic[CLNSIG]" --retmax 5
+python scripts/query_clinvar.py summary 12345,12346
+```
 

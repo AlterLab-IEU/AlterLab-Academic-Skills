@@ -8,7 +8,6 @@ import re
 import requests
 import json
 from typing import Dict, List, Tuple
-from urllib.parse import urlparse
 import time
 
 class CitationVerifier:
@@ -102,7 +101,7 @@ class CitationVerifier:
             response = self.session.head(url, timeout=10, allow_redirects=True)
             is_accessible = response.status_code < 400
             return is_accessible, response.status_code
-        except Exception as e:
+        except Exception:
             return False, 0
 
     def verify_citations_in_file(self, filepath: str) -> Dict:

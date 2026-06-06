@@ -3,6 +3,7 @@ name: alterlab-bioservices
 description: Query 40+ bioinformatics web services through one consistent Python API with bioservices (UniProt, KEGG, ChEMBL, Reactome, Ensembl, NCBI and more). Use when a workflow must hit multiple databases together, map identifiers across services, or run cross-database analyses — for quick single-database lookups use gget, for sequence and file manipulation use biopython. Part of the AlterLab Academic Skills suite.
 license: GPL-3.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

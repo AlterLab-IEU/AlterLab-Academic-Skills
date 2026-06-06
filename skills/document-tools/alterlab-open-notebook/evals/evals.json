@@ -1,0 +1,54 @@
+{
+  "skill": "alterlab-open-notebook",
+  "evals": [
+    {
+      "id": "self-hosted-notebooklm-setup",
+      "prompt": "I want a self-hosted, private alternative to Google NotebookLM that I run on my own machine and can drive programmatically. How do I stand it up and organize my research into notebooks?",
+      "expected_output": "Triggers alterlab-open-notebook. Recommends Open Notebook, the self-hosted open-source NotebookLM alternative with a full REST API. Describes Docker Compose deployment (setting OPEN_NOTEBOOK_ENCRYPTION_KEY, docker-compose up), the UI at localhost:8502 and REST API at localhost:5055, and creating a notebook via POST /api/notebooks.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Open Notebook" },
+        { "type": "behavior", "value": "Mentions self-hosted deployment (Docker Compose / encryption key) and creating a notebook via the REST API." }
+      ]
+    },
+    {
+      "id": "ingest-and-chat-sources",
+      "prompt": "I've collected a bunch of arXiv links and PDFs for my tumor mutational burden review. I want to load them all into one workspace and then ask an AI questions that cite the actual sources. What's the workflow?",
+      "expected_output": "Triggers alterlab-open-notebook. Explains ingesting sources via POST /api/sources (URLs and uploaded PDF files, with vector + full-text indexing), then context-aware chat via /api/chat/sessions and /api/chat/execute with context including sources so answers cite them. May mention search (/api/search vector or full-text).",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "sources" },
+        { "type": "behavior", "value": "Describes ingesting sources into a notebook and using context-aware chat (or search) that cites those sources." }
+      ]
+    },
+    {
+      "id": "multi-speaker-podcast",
+      "prompt": "Can I turn my collected research materials into a podcast episode with three different speakers discussing the findings, all generated locally?",
+      "expected_output": "Triggers alterlab-open-notebook. Explains Open Notebook's multi-speaker podcast generation (1-4 customizable speakers, beyond NotebookLM's 2-speaker limit) via POST /api/podcasts/generate with an episode profile and speaker profile IDs, polling the job status, and downloading the episode audio.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "podcast" },
+        { "type": "behavior", "value": "Describes generating a multi-speaker podcast from research materials via the /api/podcasts generate-and-poll workflow." }
+      ]
+    },
+    {
+      "id": "local-ollama-private-provider",
+      "prompt": "I need my document-analysis notebook to stay fully private with no API costs — can I run it against a local Ollama model instead of a cloud provider, and configure that through the API?",
+      "expected_output": "Triggers alterlab-open-notebook. Confirms Open Notebook supports 16+ AI providers including Ollama for free local inference and full data sovereignty via self-hosting. Describes configuring a provider/credential (POST /api/credentials), discovering and registering models, and that data stays in local Docker volumes.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Ollama" },
+        { "type": "behavior", "value": "Confirms local/private inference via Ollama and configuring the provider through credentials/models in the REST API." }
+      ]
+    },
+    {
+      "id": "near-miss-markitdown",
+      "prompt": "I just need this one PowerPoint deck converted to clean Markdown text so I can paste it into a prompt — nothing fancy, no database or chat, just the file as Markdown.",
+      "expected_output": "Should NOT trigger alterlab-open-notebook — there's no notebook, ingestion, chat, search, or podcast involved. A one-shot PPTX-to-Markdown conversion is alterlab-markitdown's job (Microsoft MarkItDown CLI/Python). Defer to alterlab-markitdown.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-markitdown" }
+      ]
+    }
+  ]
+}

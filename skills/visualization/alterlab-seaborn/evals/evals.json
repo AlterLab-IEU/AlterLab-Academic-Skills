@@ -1,0 +1,58 @@
+{
+  "skill": "alterlab-seaborn",
+  "evals": [
+    {
+      "id": "correlation-heatmap",
+      "prompt": "I have a pandas DataFrame of assay measurements. Plot a correlation heatmap with the coefficients annotated in each cell and a diverging colormap centered at zero.",
+      "expected_output": "Invokes alterlab-seaborn: uses sns.heatmap on df.corr() with annot=True, fmt='.2f', a diverging cmap (e.g. coolwarm or vlag) and center=0, square cells, leveraging seaborn's matrix-plot interface and DataFrame integration.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "heatmap" }
+      ]
+    },
+    {
+      "id": "categorical-violin-comparison",
+      "prompt": "Compare the distribution of total_bill across days of the week, split by sex, from my tips DataFrame — I want to see the full distribution shape, not just means.",
+      "expected_output": "Invokes alterlab-seaborn: uses a categorical distribution plot such as sns.violinplot (or boxplot/swarmplot) with x='day', y='total_bill', hue='sex' and split=True to compare distribution shapes across categories, taking the DataFrame directly via the data= argument.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Chooses a distribution-revealing categorical plot (violin/box/swarm) rather than a bar plot of means, using hue to split by the second category." }
+      ]
+    },
+    {
+      "id": "pairplot-eda",
+      "prompt": "Give me a quick exploratory pair plot of all the numeric variables in my dataset, colored by species, to scan the pairwise relationships.",
+      "expected_output": "Invokes alterlab-seaborn: uses the figure-level sns.pairplot with hue='species' (optionally corner=True) to produce a matrix of pairwise scatter and marginal distribution panels for fast exploratory data analysis.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "pairplot" }
+      ]
+    },
+    {
+      "id": "faceted-regression",
+      "prompt": "Plot tip against total_bill with a regression line, faceted into separate panels by time of day, from my DataFrame.",
+      "expected_output": "Invokes alterlab-seaborn: uses the figure-level sns.lmplot (or regplot per axes) with x='total_bill', y='tip', col='time' to draw scatter-plus-fit regression panels with confidence intervals, faceting via the col parameter.",
+      "assertions": [
+        { "type": "should_trigger", "value": true }
+      ]
+    },
+    {
+      "id": "near-miss-plotly",
+      "prompt": "Build me an interactive scatter plot where I can hover over each point to see its label and zoom into regions, for an HTML dashboard.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-plotly. The user needs interactivity (hover tooltips, zoom) in an HTML dashboard, which is plotly's territory — seaborn produces static matplotlib-based figures, so the skill's description routes interactive charts to alterlab-plotly.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-plotly" }
+      ]
+    },
+    {
+      "id": "near-miss-scientific-viz",
+      "prompt": "I need this figure styled to Nature's exact journal specifications — correct column width, 7pt fonts, CMYK, and submission-ready vector export for my manuscript.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-scientific-viz. The ask is about journal publication styling and submission-ready specs, which the skill's description routes to scientific-visualization rather than seaborn's quick-exploration statistical plotting.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-scientific-viz" }
+      ]
+    }
+  ]
+}

@@ -3,6 +3,7 @@ name: alterlab-cbioportal
 description: Query cBioPortal via its REST API for cancer genomics data including somatic mutations, copy number alterations, gene expression, and survival data across hundreds of cancer studies (TCGA and others). Use when validating cancer targets, profiling oncogenes or tumor suppressors across tumor types, or pulling patient-level mutation and clinical outcome data. Part of the AlterLab Academic Skills suite.
 license: LGPL-3.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless cBioPortal REST API for public data (no authentication required)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -367,3 +368,13 @@ wget https://cbioportal-datahub.s3.amazonaws.com/brca_tcga.tar.gz
 - **Data hub**: https://www.cbioportal.org/datasets
 - **Citation**: Cerami E et al. (2012) Cancer Discovery. PMID: 22588877
 - **API clients**: https://docs.cbioportal.org/web-api-and-clients/
+
+## Scripts
+
+`scripts/query_cbioportal.py` — runnable helper for the cBioPortal REST API (public, no key):
+
+```bash
+python scripts/query_cbioportal.py studies --filter tcga
+python scripts/query_cbioportal.py profiles brca_tcga
+python scripts/query_cbioportal.py mutations brca_tcga_mutations --genes 7157,672
+```

@@ -3,6 +3,7 @@ name: alterlab-pylabrobot
 description: Programs lab automation with PyLabRobot, a vendor-agnostic Python framework that unifies control across Hamilton, Tecan, Opentrons, plate readers, and pumps, with simulation support. Use when controlling multiple equipment types or needing unified cross-vendor programming for complex, multi-vendor liquid-handling workflows. For Opentrons-only protocols with the official API, alterlab-opentrons may be simpler. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
+compatibility: Requires the pylabrobot Python package (pip install pylabrobot); runs against the built-in simulator without hardware, real runs need supported devices (Hamilton, Tecan, Opentrons, plate readers, pumps)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

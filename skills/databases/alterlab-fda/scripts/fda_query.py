@@ -18,8 +18,8 @@ import json
 import hashlib
 from pathlib import Path
 from datetime import datetime, timedelta
-from collections import deque, Counter
-from typing import Dict, List, Optional, Any
+from collections import deque
+from typing import Dict, List, Optional
 
 
 class RateLimiter:

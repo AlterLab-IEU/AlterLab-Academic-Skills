@@ -11,7 +11,6 @@ Usage:
 import argparse
 import json
 import re
-from pathlib import Path
 
 
 ICH_E3_SECTIONS = {

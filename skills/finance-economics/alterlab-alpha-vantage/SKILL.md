@@ -3,6 +3,7 @@ name: alterlab-alpha-vantage
 description: Accesses real-time and historical stock market data, forex rates, cryptocurrency prices, commodities, economic indicators, and 50+ technical indicators via the Alpha Vantage API (requires a free API key from alphavantage.co). Use when fetching stock prices (OHLCV), company fundamentals (income statement, balance sheet, cash flow), earnings, options data, market news/sentiment, insider transactions, GDP, CPI, treasury yields, gold/silver/oil prices, Bitcoin/crypto prices, forex exchange rates, or calculating technical indicators (SMA, EMA, MACD, RSI, Bollinger Bands). Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Requires a free ALPHAVANTAGE_API_KEY from alphavantage.co and network access. Free tier is rate-limited; premium plans raise limits.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

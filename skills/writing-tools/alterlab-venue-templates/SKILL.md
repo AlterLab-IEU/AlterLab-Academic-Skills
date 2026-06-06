@@ -3,6 +3,7 @@ name: alterlab-venue-templates
 description: Provides LaTeX templates, formatting requirements, and submission guidelines for major scientific venues (Nature, Science, PLOS, IEEE, ACM), conferences (NeurIPS, ICML, CVPR, CHI), research posters, and grant proposals (NSF, NIH, DOE, DARPA). Use when preparing a manuscript for journal submission, a conference paper, a research poster, or a grant proposal and venue-specific formatting requirements or templates are needed. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
+compatibility: Requires a LaTeX distribution (pdflatex) to compile the bundled venue templates; helper scripts (query/customize/validate) are stdlib Python
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

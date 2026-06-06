@@ -25,7 +25,7 @@ def format_value(value):
     if isinstance(value, bytes):
         try:
             return value.decode('utf-8', errors='ignore')
-        except:
+        except Exception:
             return str(value)
     elif isinstance(value, pydicom.multival.MultiValue):
         return ', '.join(str(v) for v in value)

@@ -3,6 +3,7 @@ name: alterlab-scvi-tools
 description: Train deep generative models for single-cell omics with scvi-tools — probabilistic batch correction and integration (scVI), reference-mapping transfer learning (scArches), differential expression with uncertainty, and multimodal models (totalVI for CITE-seq, MultiVI for multiome). Use when correcting batch effects, integrating multimodal data, or doing advanced probabilistic single-cell modeling — for standard analysis pipelines use scanpy. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

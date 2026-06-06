@@ -3,51 +3,91 @@
   "evals": [
     {
       "id": "full-research",
-      "query": "Research the impact of generative AI tutoring tools on undergraduate writing quality in higher education, and give me a full cited report.",
-      "expected_behavior": "Invokes alterlab-deep-research in full mode: runs the 6-phase pipeline (scoping with a FINER-scored research question and methodology blueprint, systematic literature search with source verification, cross-source synthesis with devil's-advocate checkpoints, editorial and ethics review), and compiles a full APA 7.0 report with citations, limitations, and an AI-disclosure statement.",
-      "should_trigger": true
+      "prompt": "Research the impact of generative AI tutoring tools on undergraduate writing quality in higher education, and give me a full cited report.",
+      "expected_output": "Invokes alterlab-deep-research in full mode: runs the 6-phase pipeline (scoping with a FINER-scored research question and methodology blueprint, systematic literature search with source verification, cross-source synthesis with devil's-advocate checkpoints, editorial and ethics review), and compiles a full APA 7.0 report with citations, limitations, and an AI-disclosure statement.",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        }
+      ]
     },
     {
       "id": "socratic-guided",
-      "query": "I'm interested in how declining birth rates affect private universities but I'm not sure what my actual research question should be. Can you guide my thinking?",
-      "expected_behavior": "Invokes alterlab-deep-research in socratic mode: the socratic_mentor_agent guides the user through layered questioning (problem framing, methodology reflection, evidence design) without giving direct answers, extracting INSIGHT markers and converging toward a refined research question rather than producing a finished report.",
-      "should_trigger": true
+      "prompt": "I'm interested in how declining birth rates affect private universities but I'm not sure what my actual research question should be. Can you guide my thinking?",
+      "expected_output": "Invokes alterlab-deep-research in socratic mode: the socratic_mentor_agent guides the user through layered questioning (problem framing, methodology reflection, evidence design) without giving direct answers, extracting INSIGHT markers and converging toward a refined research question rather than producing a finished report.",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        }
+      ]
     },
     {
       "id": "systematic-review-meta",
-      "query": "I need a PRISMA-compliant systematic review with a meta-analysis on the effectiveness of flipped-classroom interventions on student exam performance.",
-      "expected_behavior": "Invokes alterlab-deep-research in systematic-review mode: produces a PICOS-formatted question and PRISMA-P protocol, documents a multi-database search with a PRISMA 2020 flow diagram, runs risk-of-bias assessment (RoB 2 / ROBINS-I), performs meta-analysis (effect sizes, heterogeneity, GRADE) or narrative synthesis, and outputs a full PRISMA report.",
-      "should_trigger": true
+      "prompt": "I need a PRISMA-compliant systematic review with a meta-analysis on the effectiveness of flipped-classroom interventions on student exam performance.",
+      "expected_output": "Invokes alterlab-deep-research in systematic-review mode: produces a PICOS-formatted question and PRISMA-P protocol, documents a multi-database search with a PRISMA 2020 flow diagram, runs risk-of-bias assessment (RoB 2 / ROBINS-I), performs meta-analysis (effect sizes, heterogeneity, GRADE) or narrative synthesis, and outputs a full PRISMA report.",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        }
+      ]
     },
     {
       "id": "fact-check-claims",
-      "query": "Can you fact-check these three claims about international student enrollment trends before I cite them in a policy memo?",
-      "expected_behavior": "Invokes alterlab-deep-research in fact-check mode: the source_verification_agent verifies each claim against at least 3 sources per claim, grades evidence quality, screens for predatory sources, and returns a per-claim verification report with verdicts.",
-      "should_trigger": true
+      "prompt": "Can you fact-check these three claims about international student enrollment trends before I cite them in a policy memo?",
+      "expected_output": "Invokes alterlab-deep-research in fact-check mode: the source_verification_agent verifies each claim against at least 3 sources per claim, grades evidence quality, screens for predatory sources, and returns a per-claim verification report with verdicts.",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        }
+      ]
     },
     {
       "id": "lit-review-synthesis",
-      "query": "Do a literature review on micro-credentials in vocational education and synthesize the main themes and research gaps.",
-      "expected_behavior": "Invokes alterlab-deep-research in lit-review mode: bibliography_agent runs a systematic search and builds an annotated bibliography (APA 7.0), source_verification_agent grades sources, and synthesis_agent produces a thematic synthesis with convergence/divergence mapping and a gap analysis.",
-      "should_trigger": true
+      "prompt": "Do a literature review on micro-credentials in vocational education and synthesize the main themes and research gaps.",
+      "expected_output": "Invokes alterlab-deep-research in lit-review mode: bibliography_agent runs a systematic search and builds an annotated bibliography (APA 7.0), source_verification_agent grades sources, and synthesis_agent produces a thematic synthesis with convergence/divergence mapping and a gap analysis.",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        }
+      ]
     },
     {
       "id": "near-miss-paper-writer",
-      "query": "I already have my research synthesis and bibliography ready. Now write me the full journal paper in IMRaD with a bilingual abstract and LaTeX output.",
-      "expected_behavior": "defers to alterlab-paper-writer / does not invoke this skill (the user wants a publishable paper draft with multi-format and bilingual output, not a research report)",
-      "should_trigger": false
+      "prompt": "I already have my research synthesis and bibliography ready. Now write me the full journal paper in IMRaD with a bilingual abstract and LaTeX output.",
+      "expected_output": "defers to alterlab-paper-writer / does not invoke this skill (the user wants a publishable paper draft with multi-format and bilingual output, not a research report)",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        }
+      ]
     },
     {
       "id": "near-miss-paper-reviewer",
-      "query": "Here is a colleague's finished manuscript. Give me a structured peer review with section-by-section comments and an accept/revise/reject verdict.",
-      "expected_behavior": "defers to alterlab-paper-reviewer / does not invoke this skill (the user wants a structured review of an existing paper, not original research or evidence synthesis)",
-      "should_trigger": false
+      "prompt": "Here is a colleague's finished manuscript. Give me a structured peer review with section-by-section comments and an accept/revise/reject verdict.",
+      "expected_output": "defers to alterlab-paper-reviewer / does not invoke this skill (the user wants a structured review of an existing paper, not original research or evidence synthesis)",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        }
+      ]
     },
     {
       "id": "near-miss-thesis-supervisor",
-      "query": "I'm a master's student and I need ongoing supervision on my thesis chapters and a meeting plan with my advisor over the next semester.",
-      "expected_behavior": "defers to alterlab-thesis-supervisor / does not invoke this skill (this is longitudinal thesis supervision and advising, not a one-off research report or guided research dialogue)",
-      "should_trigger": false
+      "prompt": "I'm a master's student and I need ongoing supervision on my thesis chapters and a meeting plan with my advisor over the next semester.",
+      "expected_output": "defers to alterlab-thesis-supervisor / does not invoke this skill (this is longitudinal thesis supervision and advising, not a one-off research report or guided research dialogue)",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        }
+      ]
     }
   ]
 }

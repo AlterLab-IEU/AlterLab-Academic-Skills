@@ -9,6 +9,10 @@ on:
       - "scripts/audit_skills.py"
       - "scripts/normalize_skills.py"
       - "scripts/gen_marketplace.py"
+      - "scripts/gen_catalog.py"
+      - "skills.json"
+      - "README.md"
+      - "README.tr-TR.md"
       - ".claude-plugin/**"
       - ".github/workflows/validate-skills.yml"
 
@@ -33,6 +37,12 @@ jobs:
       - name: Confirm marketplace.json is up to date
         # The plugin catalog is generated from the skills/ tree; fail if it drifts.
         run: python3 scripts/gen_marketplace.py --check
+
+      - name: Confirm skills.json catalog is up to date + README counts match
+        # skills.json is generated from the skills/ tree. --check also tolerantly
+        # verifies the headline skill count in README.md and README.tr-TR.md
+        # equals the catalog total, so the docs cannot silently drift from reality.
+        run: python3 scripts/gen_catalog.py --check
 
       - name: Confirm normalize is idempotent
         # Run normalize; if it would change anything, the working tree is dirty

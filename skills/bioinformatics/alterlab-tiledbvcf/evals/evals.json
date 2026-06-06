@@ -1,0 +1,63 @@
+{
+  "skill": "alterlab-tiledbvcf",
+  "evals": [
+    {
+      "id": "ingest-and-create-dataset",
+      "prompt": "I have 200 single-sample bgzipped VCFs from a cohort and I want to load them into one scalable, compressed store I can query later, and be able to add more samples next month without rebuilding everything.",
+      "expected_output": "Invokes alterlab-tiledbvcf: creates a Dataset in mode='w', ingests with ds.ingest_samples([...]), notes the requirement that VCFs be single-sample and have .tbi/.csi indexes, and highlights incremental sample addition without re-merging existing data.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "ingest_samples" },
+        { "type": "behavior", "value": "Creates a write-mode Dataset, ingests single-sample indexed VCFs, and emphasizes incremental sample addition without re-processing." }
+      ]
+    },
+    {
+      "id": "region-sample-query",
+      "prompt": "From my TileDB-VCF store I need the genotypes for three specific samples across two genomic regions on chr1 and chr2, returned as a dataframe with sample name, position, and alleles.",
+      "expected_output": "Invokes alterlab-tiledbvcf: opens the Dataset in mode='r' and calls ds.read with attrs (sample_name, pos_start, pos_end, alleles, fmt_GT), a regions list, and a samples list to get the filtered dataframe. Region/sample parallel query.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "regions" },
+        { "type": "behavior", "value": "Uses ds.read with attrs, a regions list, and a samples list to retrieve the filtered genotype dataframe." }
+      ]
+    },
+    {
+      "id": "export-subset-to-vcf",
+      "prompt": "I want to pull just two samples (HG00101 and HG00097) over a single region on chr21 back out of my TileDB-VCF dataset as a standard VCF file to hand off to a collaborator's pipeline.",
+      "expected_output": "Invokes alterlab-tiledbvcf: uses ds.export with regions, samples, output_format='v', and output_dir to write a standard VCF subset for interoperability. Export/interoperability capability.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "export" },
+        { "type": "behavior", "value": "Uses ds.export with regions/samples and output_format='v' to produce a standard VCF subset." }
+      ]
+    },
+    {
+      "id": "coordinate-system-clarification",
+      "prompt": "When I query region chr1:1000-2000 in TileDB-VCF, exactly which positions does that include? I keep getting confused about whether it's 0-based or 1-based.",
+      "expected_output": "Invokes alterlab-tiledbvcf: clarifies that TileDB-VCF uses 1-based, inclusive coordinates following the VCF standard, so chr1:1000-2000 covers positions 1000 through 2000 (1001 bases), unlike 0-based half-open BED conventions.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "1-based" },
+        { "type": "behavior", "value": "Explains TileDB-VCF's 1-based inclusive coordinate system and that chr1:1000-2000 spans 1001 bases." }
+      ]
+    },
+    {
+      "id": "near-miss-pysam",
+      "prompt": "I just have a single multi-sample VCF file and I want to iterate over its records one at a time, pull the genotype and DP for each sample at each variant, and write a filtered VCF keeping only PASS sites.",
+      "expected_output": "Should NOT trigger alterlab-tiledbvcf. Streaming/iterating a single VCF/BAM file record-by-record (VariantFile, per-record FORMAT access, filtered writing) is alterlab-pysam territory. TileDB-VCF is for scalable array-backed stores of many single-sample VCFs, not direct iteration over one flat multi-sample VCF.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "pysam" }
+      ]
+    },
+    {
+      "id": "near-miss-pydeseq2",
+      "prompt": "I have a gene-level RNA-seq count matrix and a sample condition table. Run differential expression between treated and control and give me log2 fold changes and adjusted p-values.",
+      "expected_output": "Should NOT trigger alterlab-tiledbvcf. Bulk RNA-seq differential expression (count matrix, design, DESeq2-style log2FC and padj) is alterlab-pydeseq2 territory and has nothing to do with variant-call storage. TileDB-VCF stores and queries genomic variants, not expression counts.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "pydeseq2" }
+      ]
+    }
+  ]
+}

@@ -23,7 +23,6 @@ import argparse
 import base64
 import json
 import os
-import re
 import sys
 import time
 from pathlib import Path
@@ -356,10 +355,14 @@ IMPORTANT - NO META CONTENT:
         self.verbose = verbose
         self._last_error = None
         self.base_url = "https://openrouter.ai/api/v1"
+        # Model IDs follow the ALTERLAB_MODEL convention (skills/core/shared/model_env.md):
+        # read an env var, else a dated default constant (reviewed 2026-06-06). These slots
+        # need Google image/vision models, so they use dedicated vars rather than the Claude
+        # text default ALTERLAB_MODEL. Override via ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL.
         # Nano Banana Pro for image generation
-        self.image_model = "google/gemini-3-pro-image-preview"
-        # Gemini 3 Pro for quality review
-        self.review_model = "google/gemini-3-pro"
+        self.image_model = os.environ.get("ALTERLAB_IMAGE_MODEL") or "google/gemini-3.1-pro-image-preview"
+        # Gemini 3.1 Pro for quality review
+        self.review_model = os.environ.get("ALTERLAB_REVIEW_MODEL") or "google/gemini-3.1-pro-preview"
         
     def _log(self, message: str):
         """Log message if verbose mode is enabled."""

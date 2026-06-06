@@ -3,6 +3,7 @@ name: alterlab-geomaster
 description: Covers geospatial science across remote sensing, GIS, spatial analysis, and machine learning for earth observation — satellite imagery processing (Sentinel, Landsat, MODIS, SAR, hyperspectral), vector and raster operations, spatial statistics, point cloud processing, network analysis, and cloud-native workflows (STAC, COG, Planetary Computer), with examples across Python, R, Julia, JavaScript, C++, Java, Go, and Rust. Use for remote sensing workflows, GIS analysis, spatial ML, earth observation data processing, terrain analysis, hydrological modeling, marine spatial analysis, atmospheric science, or any geospatial computation task. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
+compatibility: No API key required for local geospatial work. Runs via `uv run python`; cloud-native STAC/Planetary Computer workflows need network access (and provider credentials where applicable).
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

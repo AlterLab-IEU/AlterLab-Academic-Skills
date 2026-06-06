@@ -3,6 +3,7 @@ name: alterlab-gnomad
 description: Query gnomAD (Genome Aggregation Database) for population allele frequencies and gene constraint scores (pLI, LOEUF) reflecting loss-of-function intolerance. Use when checking how common a variant is across populations, filtering rare-disease candidate variants, assessing variant pathogenicity, or identifying loss-of-function intolerant genes. Part of the AlterLab Academic Skills suite.
 license: CC0-1.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless gnomAD GraphQL API (no authentication required)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -395,3 +396,12 @@ def query_gnomad_sv(gene_symbol):
 - **Constraint documentation**: https://gnomad.broadinstitute.org/help/constraint
 - **Citation**: Karczewski KJ et al. (2020) Nature. PMID: 32461654; Chen S et al. (2024) Nature. PMID: 38057664
 - **GitHub**: https://github.com/broadinstitute/gnomad-browser
+
+## Scripts
+
+`scripts/query_gnomad.py` — runnable helper for the gnomAD GraphQL API (no key):
+
+```bash
+python scripts/query_gnomad.py variant 17-43094692-G-A --dataset gnomad_r4
+python scripts/query_gnomad.py constraint BRCA1 --genome GRCh38
+```

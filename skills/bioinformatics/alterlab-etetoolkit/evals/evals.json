@@ -1,0 +1,63 @@
+{
+  "skill": "alterlab-etetoolkit",
+  "evals": [
+    {
+      "id": "detect-duplication-speciation-events",
+      "prompt": "I have a gene tree in Newick (gene_tree.nw) plus its alignment, and gene names are formatted like 'species_geneid'. I want to detect which internal nodes are duplications versus speciations and then pull out the orthologs of species1_gene1.",
+      "expected_output": "Invokes alterlab-etetoolkit: loads a PhyloTree with the alignment, sets a species naming function splitting on '_', calls get_descendant_evol_events(), inspects node.evoltype 'D'/'S' (Species Overlap), and extracts orthologs/paralogs from the events for the query gene.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "PhyloTree" },
+        { "type": "behavior", "value": "Uses get_descendant_evol_events and evoltype D/S to distinguish duplication from speciation and derive orthologs." }
+      ]
+    },
+    {
+      "id": "robinson-foulds-comparison",
+      "prompt": "I built two trees of the same taxa with different methods and I want to quantify how different their topologies are, including a normalized score and which bipartitions are unique to each.",
+      "expected_output": "Invokes alterlab-etetoolkit: loads both trees and calls tree1.robinson_foulds(tree2), reports rf/max_rf and the normalized RF, and uses the returned parts_t1/parts_t2 sets to find partitions unique to each tree.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "robinson_foulds" },
+        { "type": "behavior", "value": "Computes Robinson-Foulds distance, reports a normalized RF, and diffs the bipartition sets." }
+      ]
+    },
+    {
+      "id": "prune-reroot-publication-figure",
+      "prompt": "Take my tree.nw, midpoint-root it, prune it down to about 12 focal species keeping the branch lengths, color the leaves by clade, show bootstrap support, and render a vector PDF I can edit for a figure.",
+      "expected_output": "Invokes alterlab-etetoolkit: uses get_midpoint_outgroup/set_outgroup to root, prune(taxa, preserve_branch_length=True), builds a TreeStyle with show_branch_support and a layout/NodeStyle for clade colors, then tree.render('figure.pdf') for an editable vector figure.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "render" },
+        { "type": "behavior", "value": "Prunes with preserve_branch_length=True, midpoint-roots, and renders a vector PDF/SVG via TreeStyle for publication." }
+      ]
+    },
+    {
+      "id": "ncbi-taxonomy-topology",
+      "prompt": "Given a list of species names like Homo sapiens, Pan troglodytes, and Mus musculus, build the minimal NCBI taxonomy tree connecting them and annotate each node with its rank and taxid.",
+      "expected_output": "Invokes alterlab-etetoolkit: uses NCBITaxa, get_name_translator to map names to taxids, get_topology(taxids) to build the connecting tree, and reads node.sci_name/rank/taxid for annotation (noting the one-time ~300MB taxa.sqlite download).",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "NCBITaxa" },
+        { "type": "behavior", "value": "Uses NCBITaxa.get_topology with translated taxids and annotates nodes with rank/taxid." }
+      ]
+    },
+    {
+      "id": "near-miss-phylogenetics",
+      "prompt": "I have a FASTA of 80 unaligned 16S rRNA sequences. Align them, pick the best substitution model, build a maximum-likelihood tree with bootstrap support, and give me the Newick file.",
+      "expected_output": "Should NOT trigger alterlab-etetoolkit. Building a tree from raw sequences (MAFFT alignment, IQ-TREE 2 model selection and ML inference with ultrafast bootstraps) is alterlab-phylogenetics territory. ete3/etetoolkit operates on existing trees and defers de-novo tree reconstruction to the phylogenetics pipeline.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "phylogenetics" }
+      ]
+    },
+    {
+      "id": "near-miss-scikit-bio",
+      "prompt": "I have a multiple sequence alignment and I want to compute a pairwise distance matrix between the sequences using a substitution model, as a plain numerical matrix.",
+      "expected_output": "Should NOT trigger alterlab-etetoolkit. Computing a sequence distance matrix from an alignment is core sequence/diversity work for alterlab-scikit-bio, not tree manipulation. etetoolkit works on tree objects, not raw alignment distance computation.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "scikit-bio" }
+      ]
+    }
+  ]
+}

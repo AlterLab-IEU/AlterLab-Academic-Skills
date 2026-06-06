@@ -3,6 +3,7 @@ name: alterlab-paper-reviewer
 description: "Conducts multi-perspective academic paper review by simulating 5 independent reviewers (Editor-in-Chief plus 3 peer reviewers plus a Devil's Advocate) with field-specific expertise, supporting full review, re-review (verification), quick assessment, methodology-focus, and Socratic guided modes. Use when the request mentions review paper, peer review, manuscript review, referee report, review my paper, critique paper, simulate review, or editorial review. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash WebFetch WebSearch
+compatibility: Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required
 metadata:
   skill-author: AlterLab
   version: "1.4"

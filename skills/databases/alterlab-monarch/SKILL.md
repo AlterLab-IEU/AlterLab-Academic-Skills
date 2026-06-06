@@ -3,6 +3,7 @@ name: alterlab-monarch
 description: Query the Monarch Initiative knowledge graph for disease-gene-phenotype associations across species, integrating OMIM, ORPHANET, HPO, ClinVar, and model organism databases. Use when discovering rare disease genes, mapping phenotypes to genes, modeling disease across species, or looking up HPO terms. Part of the AlterLab Academic Skills suite.
 license: CC0-1.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless Monarch Initiative REST API (no authentication required)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -25,6 +26,16 @@ Monarch enables:
 - Monarch API v3: https://api-v3.monarchinitiative.org/v3/docs
 - API docs: https://api-v3.monarchinitiative.org/v3/docs
 - HPO browser: https://hpo.jax.org/
+
+## Scripts
+
+`scripts/query_monarch.py` — query the Monarch Initiative API v3 (stdlib only, JSON to stdout):
+
+```bash
+python scripts/query_monarch.py entity HP:0001250        # look up an entity (gene/disease/HPO)
+python scripts/query_monarch.py search epilepsy          # text search the knowledge graph
+python scripts/query_monarch.py associations HGNC:1100   # associations for an entity
+```
 
 ## When to Use This Skill
 

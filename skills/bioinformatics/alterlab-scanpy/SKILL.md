@@ -3,6 +3,7 @@ name: alterlab-scanpy
 description: Run the standard single-cell RNA-seq analysis pipeline with Scanpy on AnnData — QC filtering, normalization, dimensionality reduction (PCA, UMAP, t-SNE), Leiden/Louvain clustering, marker/differential expression, and plotting. Use for exploratory scRNA-seq analysis with established workflows — for deep generative models use scvi-tools, for data-format and .h5ad questions use anndata. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

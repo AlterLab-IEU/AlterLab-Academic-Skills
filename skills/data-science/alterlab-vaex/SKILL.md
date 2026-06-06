@@ -3,6 +3,7 @@ name: alterlab-vaex
 description: Out-of-core tabular analytics with Vaex for billion-row datasets that exceed RAM — lazy evaluation, fast aggregations, big-data visualization, and ML on a single machine. Use when working with large CSV/HDF5/Arrow/Parquet files, computing fast statistics on massive datasets, visualizing big data, or building ML pipelines that do not fit in memory. For distributed clusters prefer dask; for in-memory speed prefer polars. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: No API key required. Runs locally via `uv run python`; requires the vaex Python package.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

@@ -1,0 +1,35 @@
+{
+  "research_question": "How does adaptive feedback in virtual production pipelines affect cinematographer decision latency?",
+  "sub_questions": [
+    "Which feedback modalities reduce decision latency the most?",
+    "Does prior experience moderate the feedback effect?",
+    "What is the trade-off between feedback richness and cognitive load?"
+  ],
+  "finer_scores": {
+    "feasible": 8,
+    "interesting": 9,
+    "novel": 7,
+    "ethical": 9,
+    "relevant": 8
+  },
+  "scope": {
+    "in_scope": ["real-time LED-wall virtual production", "professional cinematographers"],
+    "out_of_scope": ["post-production color grading", "amateur hobbyist workflows"],
+    "domain": "virtual production / interactive media",
+    "timeframe": "2019-2025",
+    "geography": "global, English-language studios",
+    "population": "professional cinematographers and virtual-art-department leads"
+  },
+  "methodology_type": "mixed",
+  "theoretical_framework": "Cognitive Load Theory",
+  "keywords": [
+    "virtual production",
+    "adaptive feedback",
+    "decision latency",
+    "cognitive load",
+    "LED wall",
+    "cinematography"
+  ],
+  "hypothesis": "Multimodal adaptive feedback reduces decision latency relative to static dashboards.",
+  "ethical_flags": ["informed consent for on-set observation"]
+}

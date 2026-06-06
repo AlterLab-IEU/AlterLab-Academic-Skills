@@ -1,0 +1,72 @@
+{
+  "skill": "alterlab-cobrapy",
+  "evals": [
+    {
+      "id": "fba-growth-prediction",
+      "prompt": "I have the E. coli iJO1366 genome-scale model as an SBML file. I want to run flux balance analysis to predict the growth rate and see which pathways carry flux at the optimum.",
+      "expected_output": "Invokes alterlab-cobrapy. Loads the model with read_sbml_model (or load_model('iJO1366')), calls model.optimize(), reports solution.objective_value as the growth rate and solution.status, and inspects the active fluxes (e.g. solution.fluxes where abs > 1e-6).",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "optimize" },
+        { "type": "behavior", "value": "Runs FBA via model.optimize() and reports the objective value as growth rate." }
+      ]
+    },
+    {
+      "id": "single-gene-deletion-essential",
+      "prompt": "Using my SBML metabolic model, I want to do a single gene knockout screen to find the essential genes whose deletion abolishes growth.",
+      "expected_output": "Invokes alterlab-cobrapy. Uses single_gene_deletion from cobra.flux_analysis, filters the results where growth falls below a threshold (e.g. < 0.01) to identify essential genes, and may mention the context-manager knock_out() pattern for individual genes.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "single_gene_deletion" },
+        { "type": "behavior", "value": "Identifies essential genes by thresholding growth from a deletion screen." }
+      ]
+    },
+    {
+      "id": "fva-flux-variability",
+      "prompt": "I want to know the feasible flux ranges for my reactions at 90% of optimal growth, and I need to eliminate thermodynamically infeasible loops from the result.",
+      "expected_output": "Invokes alterlab-cobrapy. Runs flux_variability_analysis from cobra.flux_analysis with fraction_of_optimum=0.9 and loopless=True to get minimum/maximum flux per reaction without infeasible cycles.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "flux_variability_analysis" },
+        { "type": "behavior", "value": "Uses fraction_of_optimum and loopless to bound flux ranges." }
+      ]
+    },
+    {
+      "id": "minimal-media-anaerobic",
+      "prompt": "I need to compute the minimal medium that still supports growth for my model, and then re-run the simulation under anaerobic conditions by shutting off oxygen uptake.",
+      "expected_output": "Invokes alterlab-cobrapy. Uses minimal_medium from cobra.medium to find the minimal component set, and modifies model.medium (reassigning the whole dict) to set EX_o2_e to 0 for anaerobic conditions before re-optimizing.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "minimal_medium" },
+        { "type": "behavior", "value": "Computes minimal medium and edits model.medium to model anaerobic growth." }
+      ]
+    },
+    {
+      "id": "flux-sampling-distribution",
+      "prompt": "I want to sample 1000 points from the feasible flux space of my model to understand the flux distribution through PFK, using parallel processing.",
+      "expected_output": "Invokes alterlab-cobrapy. Uses sample from cobra.sampling (OptGP method with processes for parallelism) to draw samples, then inspects the distribution for the target reaction (e.g. a histogram of samples['PFK']).",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Uses cobra.sampling.sample (OptGP/ACHR) to characterize the flux distribution." }
+      ]
+    },
+    {
+      "id": "near-miss-pydeseq2",
+      "prompt": "I have a counts matrix from a bulk RNA-seq experiment and want to find genes that are differentially expressed between knockout and wild-type samples.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-pydeseq2. The user wants statistical differential gene expression on RNA-seq counts, not constraint-based metabolic flux simulation on a genome-scale model.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-pydeseq2" }
+      ]
+    },
+    {
+      "id": "near-miss-arboreto",
+      "prompt": "From my expression matrix I want to infer the gene regulatory network linking transcription factors to their target genes.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-arboreto. The user wants TF-target regulatory network inference (GRNBoost2/GENIE3) from expression data, not stoichiometric flux analysis of a metabolic network.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-arboreto" }
+      ]
+    }
+  ]
+}

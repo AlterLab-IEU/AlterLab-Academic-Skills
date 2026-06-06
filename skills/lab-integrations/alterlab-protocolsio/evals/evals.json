@@ -1,0 +1,60 @@
+{
+  "skill": "alterlab-protocolsio",
+  "evals": [
+    {
+      "id": "search-protocols-by-keyword",
+      "prompt": "Search protocols.io for public CRISPR protocols and pull back the title and DOI for the top 10 results.",
+      "expected_output": "Invokes alterlab-protocolsio. Uses the protocols.io API v3 GET /protocols with filter=public, a key/keyword, and page_size=10, sending the Bearer access token, and prints title and doi for each item.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "protocols.io" },
+        { "type": "behavior", "value": "Calls GET /protocols on the v3 API with a Bearer token and a keyword filter." }
+      ]
+    },
+    {
+      "id": "create-and-publish-with-doi",
+      "prompt": "Create a new protocol on protocols.io titled 'CRISPR-Cas9 Gene Editing Protocol', add its steps and materials, then publish it to get a DOI.",
+      "expected_output": "Invokes alterlab-protocolsio. Uses POST /protocols to create, POST /protocols/{id}/steps to add steps and materials, then POST /protocols/{id}/publish to issue a DOI, following the create-and-publish workflow.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "DOI" }
+      ]
+    },
+    {
+      "id": "step-comments-collaboration",
+      "prompt": "Review the step-level comments on protocol 12345 on protocols.io and post a threaded reply answering a reviewer's question.",
+      "expected_output": "Invokes alterlab-protocolsio. Routes to discussions/collaboration: GET the protocol comments, then create a threaded reply via the comments API, handling the discussion workflow.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "comment" }
+      ]
+    },
+    {
+      "id": "workspace-file-upload",
+      "prompt": "Upload my experimental results CSV into our protocols.io team workspace with tags so collaborators can find it.",
+      "expected_output": "Invokes alterlab-protocolsio. Uses the File Manager API (POST /workspaces/{id}/files/upload) with multipart/form-data, folder_id, description, and tags, sending the Bearer token.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Uploads the file via the protocols.io workspace File Manager endpoint with tags." }
+      ]
+    },
+    {
+      "id": "near-miss-benchling",
+      "prompt": "Create a Benchling ELN entry for today's run and link the DNA sequence entity I registered earlier into the entry notes.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-benchling. The user is working in Benchling's ELN/registry (entries.create_entry, inline entity links via the benchling-sdk), not authoring or publishing a protocols.io protocol.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-benchling" }
+      ]
+    },
+    {
+      "id": "near-miss-labarchive",
+      "prompt": "Back up my LabArchives notebook with all attachments and upload a PDF to one of its entries via the LabArchives REST API.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-labarchive. The platform is the LabArchives ELN (notebook backup, entry attachments), not protocols.io protocol management.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-labarchive" }
+      ]
+    }
+  ]
+}

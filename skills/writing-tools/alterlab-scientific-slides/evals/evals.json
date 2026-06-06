@@ -1,0 +1,60 @@
+{
+  "skill": "alterlab-scientific-slides",
+  "evals": [
+    {
+      "id": "conference-talk-deck",
+      "prompt": "I have a 15-minute conference talk next month on our machine-learning results. Can you build me the slide deck?",
+      "expected_output": "Invokes alterlab-scientific-slides: plans a ~15-18 slide deck following the story arc (hook, context, gap, approach, results, implications, closure), allocates 40-50% of time to results, generates slides with generate_slide_image.py (attaching the previous slide for formatting consistency) and combines them via slides_to_pdf.py, applying visual-first, minimal-text design.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "behavior", "value": "Plans a talk-appropriate slide count and narrative arc for the stated duration and uses the Nano Banana Pro generate/combine workflow (generate_slide_image.py + slides_to_pdf.py) with visual-first, minimal-text slides."}
+      ]
+    },
+    {
+      "id": "thesis-defense-slides",
+      "prompt": "I'm defending my dissertation in two weeks and need a 60-minute defense presentation covering all my studies.",
+      "expected_output": "Invokes alterlab-scientific-slides in defense mode: structures a comprehensive 45-60 minute deck covering all studies, prepares for examiner questions, and can use the LaTeX Beamer defense template (beamer_template_defense.tex) or the PDF/Nano Banana Pro workflow, with timing/pacing guidance.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "behavior", "value": "Tailors structure and timing to a thesis-defense context (comprehensive coverage of all studies, Q&A prep) rather than a short conference format."}
+      ]
+    },
+    {
+      "id": "beamer-math-talk",
+      "prompt": "Make me a LaTeX Beamer deck for a seminar talk that's heavy on equations and algorithm pseudocode.",
+      "expected_output": "Invokes alterlab-scientific-slides via the LaTeX Beamer path: selects the seminar template (beamer_template_seminar.tex), writes native LaTeX for equations and algorithms, compiles to PDF, and converts to images for visual validation.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "beamer"},
+        {"type": "behavior", "value": "Chooses the LaTeX Beamer implementation for math/algorithm-heavy content and uses the seminar template plus compile-and-validate workflow."}
+      ]
+    },
+    {
+      "id": "validate-slide-overflow",
+      "prompt": "Here's my finished talk PDF — check each slide for text overflow, overlapping elements, and fonts that are too small before I present.",
+      "expected_output": "Invokes alterlab-scientific-slides visual-review workflow: converts the PDF to images with pdf_to_images.py, inspects each slide for overflow/overlap/small-font/contrast issues, and runs validate_presentation.py for slide count and font-size checks, producing an issue log.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "behavior", "value": "Runs the slide validation/visual-review pass (pdf_to_images.py + validate_presentation.py) to flag overflow, overlap, and small fonts rather than re-authoring the deck."}
+      ]
+    },
+    {
+      "id": "near-miss-pptx-posters",
+      "prompt": "I need a PowerPoint poster for the conference poster session.",
+      "expected_output": "Defers to alterlab-pptx-posters and does NOT invoke alterlab-scientific-slides: a poster (single large-format page) is not a slide deck. scientific-slides builds multi-slide presentations for oral talks, not posters.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-pptx-posters"}
+      ]
+    },
+    {
+      "id": "near-miss-scientific-writing",
+      "prompt": "Turn my talk's key findings into the Results section of my journal manuscript, written as full prose paragraphs.",
+      "expected_output": "Defers to alterlab-scientific-writing and does NOT invoke alterlab-scientific-slides: writing a manuscript's Results section in flowing prose is a paper-writing task, not building a presentation deck.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-scientific-writing"}
+      ]
+    }
+  ]
+}

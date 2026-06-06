@@ -1,0 +1,59 @@
+{
+  "skill": "alterlab-perplexity",
+  "evals": [
+    {
+      "id": "recent-literature-grounded",
+      "prompt": "What does recent research from 2024-2025 say about the role of the gut microbiome in Parkinson's disease? I want grounded answers with source citations, focused on peer-reviewed studies.",
+      "expected_output": "Invokes alterlab-perplexity and runs perplexity_search.py with a Perplexity Sonar model (e.g. sonar-pro) via LiteLLM/OpenRouter to get a real-time, web-grounded answer with source citations on recent peer-reviewed literature, information beyond the model's training cutoff.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Uses the Perplexity Sonar model via OpenRouter to return a current, web-grounded answer with source citations." }
+      ]
+    },
+    {
+      "id": "current-developments-cutoff",
+      "prompt": "I need the latest developments in large language model efficiency from the past six months, beyond what you already know. Can you search the web for current results?",
+      "expected_output": "Invokes alterlab-perplexity because the user explicitly needs current information beyond the model's knowledge cutoff. Runs a web-grounded Perplexity Sonar search and returns cited, real-time results.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Recognizes the need to go beyond the training cutoff and performs a real-time web-grounded Perplexity search." }
+      ]
+    },
+    {
+      "id": "model-selection-agentic",
+      "prompt": "I want a thorough multi-step comparison of PyTorch vs TensorFlow for transformer training, pulling in recent benchmarks. Use the most advanced agentic Perplexity search for this.",
+      "expected_output": "Invokes alterlab-perplexity and selects the sonar-pro-search model (the most advanced agentic, multi-step search) via the --model flag for this complex comparative query, returning a cited, web-grounded comparison.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "sonar-pro-search" }
+      ]
+    },
+    {
+      "id": "verify-claims-citations",
+      "prompt": "Before I cite it, can you verify with current sources whether intermittent fasting improves HbA1c in adults with type 2 diabetes, focusing on randomized controlled trials?",
+      "expected_output": "Invokes alterlab-perplexity to fact-verify a claim against current web sources, running a Perplexity Sonar search and returning grounded findings with source citations (e.g. RCT evidence on HbA1c outcomes), since verification of current evidence with citations is a primary use case.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Returns a web-grounded answer with citations that the user can verify before citing." }
+      ]
+    },
+    {
+      "id": "near-miss-research-lookup",
+      "prompt": "I'm not sure which search backend is best — just find me current research on CRISPR off-target effects and automatically route it to whichever backend (Parallel or Perplexity) is most appropriate.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-research-lookup. The user explicitly wants automatic backend routing between the Parallel Chat API and Perplexity, which is the research-lookup skill's job. This skill is the direct single-backend Perplexity search, not the auto-router.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-research-lookup" }
+      ]
+    },
+    {
+      "id": "near-miss-bgpt-search",
+      "prompt": "I need the extracted sample sizes, methods, effect sizes, and quality scores from the full text of papers on mindfulness for anxiety so I can build an evidence table.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-bgpt-search. The user needs structured experimental data (25+ fields including sample sizes and quality scores) extracted from full-text studies, which is BGPT's specialty. Perplexity returns web-grounded prose answers, not per-paper structured experimental data fields.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-bgpt-search" }
+      ]
+    }
+  ]
+}

@@ -3,6 +3,7 @@ name: alterlab-pydicom
 description: Reads, writes, and manipulates DICOM (Digital Imaging and Communications in Medicine) medical imaging files with the pydicom Python library. Use when reading/writing/modifying DICOM data, extracting pixel data from CT, MRI, X-ray, or ultrasound images, anonymizing DICOM files, working with DICOM metadata and tags, converting DICOM to other formats, handling compressed DICOM, or processing medical imaging datasets for PACS systems, radiology workflows, and healthcare imaging applications. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

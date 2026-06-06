@@ -1,0 +1,79 @@
+{
+  "skill": "alterlab-alpha-vantage",
+  "evals": [
+    {
+      "id": "daily-ohlcv-and-rsi",
+      "prompt": "I'm building a momentum study. Pull the daily OHLCV for AAPL over the last 20+ years and compute the 14-day RSI on the close. What endpoints do I hit?",
+      "expected_output": "Triggers Alpha Vantage. Uses the TIME_SERIES_DAILY function with outputsize=full (compact only returns the last 100 points) for two decades of OHLCV, and the RSI technical-indicator endpoint with interval=daily, time_period=14, series_type=close. Reads the 'Time Series (Daily)' object from the JSON and reminds the user to set ALPHAVANTAGE_API_KEY.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "TIME_SERIES_DAILY"},
+        {"type": "output_contains", "value": "RSI"},
+        {"type": "behavior", "value": "Specifies outputsize=full for the 20+ year request and parameterizes RSI with time_period=14 and series_type=close."}
+      ]
+    },
+    {
+      "id": "company-fundamentals",
+      "prompt": "For a corporate-finance teaching case I need Microsoft's P/E ratio and market cap plus its three most recent annual income statements. How do I grab those from Alpha Vantage?",
+      "expected_output": "Triggers Alpha Vantage. Uses the OVERVIEW function for PERatio and MarketCapitalization, and the INCOME_STATEMENT function reading annualReports for the income statements. References the av_get helper hitting https://www.alphavantage.co/query and the ALPHAVANTAGE_API_KEY env var.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "OVERVIEW"},
+        {"type": "output_contains", "value": "INCOME_STATEMENT"},
+        {"type": "behavior", "value": "Maps P/E to PERatio and market cap to MarketCapitalization from OVERVIEW, and reads annualReports from INCOME_STATEMENT."}
+      ]
+    },
+    {
+      "id": "crypto-and-forex",
+      "prompt": "I want the daily Bitcoin price in USD and the current EUR/USD exchange rate for a cross-asset volatility note. Which Alpha Vantage functions and how do I handle the free-tier limits?",
+      "expected_output": "Triggers Alpha Vantage. Uses DIGITAL_CURRENCY_DAILY with symbol=BTC, market=USD for the crypto series and CURRENCY_EXCHANGE_RATE (from_currency/to_currency) for spot EUR/USD. Warns about the 25 requests/day free-tier limit, the HTTP 429 / 'Note' rate-limit response, and adding a time.sleep delay between calls.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "DIGITAL_CURRENCY_DAILY"},
+        {"type": "output_contains", "value": "CURRENCY_EXCHANGE_RATE"},
+        {"type": "behavior", "value": "Mentions the free-tier rate limit (25 requests/day) and recommends spacing requests or handling the 429/Note response."}
+      ]
+    },
+    {
+      "id": "commodities-and-macro",
+      "prompt": "Get me WTI crude oil prices and the U.S. CPI series so I can regress headline inflation against energy prices. What are the Alpha Vantage calls?",
+      "expected_output": "Triggers Alpha Vantage. Uses the WTI commodity function for crude oil and the CPI economic-indicator function. Notes interval options (e.g. monthly) and that both come back as JSON from the same /query base URL.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "WTI"},
+        {"type": "output_contains", "value": "CPI"},
+        {"type": "behavior", "value": "Identifies WTI as the commodities endpoint and CPI as the economic-indicator endpoint, both via the /query base URL."}
+      ]
+    },
+    {
+      "id": "news-sentiment",
+      "prompt": "I'm studying market reaction to headlines. Can I pull recent news articles with sentiment scores for TSLA from Alpha Vantage?",
+      "expected_output": "Triggers Alpha Vantage. Uses the NEWS_SENTIMENT function (Alpha Intelligence category) with a tickers parameter to retrieve articles tagged with sentiment scores for TSLA.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "NEWS_SENTIMENT"},
+        {"type": "behavior", "value": "Points to the NEWS_SENTIMENT endpoint and filters by ticker (TSLA)."}
+      ]
+    },
+    {
+      "id": "near-miss-fred",
+      "prompt": "I need the long-run U.S. unemployment rate (UNRATE) and real GDP (GDPC1) time series straight from the Federal Reserve's FRED database for a macro panel, with year-over-year percent-change transformations applied at the source.",
+      "expected_output": "Should NOT trigger Alpha Vantage. Although Alpha Vantage exposes some macro indicators, this asks specifically for FRED series IDs (UNRATE, GDPC1) and FRED's server-side units transformations (pc1). Defer to the alterlab-fred skill, which queries the FRED API and supports the pc1 transformation directly.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-fred"},
+        {"type": "behavior", "value": "Recognizes the request names FRED series IDs and FRED-native transformations, and routes to the FRED skill rather than Alpha Vantage."}
+      ]
+    },
+    {
+      "id": "near-miss-edgartools",
+      "prompt": "Pull the actual 10-K filing text and the XBRL-tagged balance sheet for Apple straight from SEC EDGAR so I can verify the exact reported line items against the filing.",
+      "expected_output": "Should NOT trigger Alpha Vantage. The request wants the primary-source SEC filing document (10-K) and XBRL facts from EDGAR, not aggregated fundamentals. Defer to the alterlab-edgartools skill, which retrieves filings and parses XBRL directly from EDGAR.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-edgartools"},
+        {"type": "behavior", "value": "Distinguishes raw SEC filing/XBRL retrieval from Alpha Vantage's pre-computed fundamentals and defers to edgartools."}
+      ]
+    }
+  ]
+}

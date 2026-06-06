@@ -14,7 +14,6 @@ import sys
 import os
 import re
 from typing import List, Dict, Optional
-from urllib.parse import quote
 
 
 class ArxivSearcher:

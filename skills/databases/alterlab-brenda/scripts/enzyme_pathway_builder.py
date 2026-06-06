@@ -24,10 +24,8 @@ Usage:
 """
 
 import re
-import json
 import time
-from typing import List, Dict, Any, Optional, Set, Tuple
-from pathlib import Path
+from typing import List, Dict, Any
 
 try:
     import networkx as nx
@@ -37,7 +35,7 @@ except ImportError:
     NETWORKX_AVAILABLE = False
 
 try:
-    import pandas as pd
+    import pandas as pd  # noqa: F401  # availability probe for PANDAS_AVAILABLE
     PANDAS_AVAILABLE = True
 except ImportError:
     print("Warning: pandas not installed. Install with: uv pip install pandas")
@@ -54,7 +52,7 @@ try:
     from brenda_queries import (
         search_enzymes_by_product, search_enzymes_by_substrate,
         get_environmental_parameters, compare_across_organisms,
-        get_substrate_specificity, get_cofactor_requirements,
+        search_by_pattern, get_cofactor_requirements,
         find_thermophilic_homologs, find_ph_stable_variants
     )
     BRENDA_QUERIES_AVAILABLE = True

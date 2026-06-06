@@ -1,0 +1,77 @@
+{
+  "skill": "alterlab-fred",
+  "evals": [
+    {
+      "id": "gdp-growth-transformation",
+      "prompt": "I'm building a macro panel. Pull U.S. real GDP and apply year-over-year percent change at the source, plus the monthly unemployment rate. Which FRED series and parameters?",
+      "expected_output": "Triggers FRED. Uses GDPC1 (Real GDP) with units=pc1 (percent change from a year ago) via get_observations, and UNRATE for the unemployment rate. Uses the FREDQuery class or the series/observations endpoint, and reminds the user to set FRED_API_KEY.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "GDPC1"},
+        {"type": "output_contains", "value": "pc1"},
+        {"type": "behavior", "value": "Applies the server-side pc1 transformation for year-over-year percent change and identifies UNRATE for unemployment."}
+      ]
+    },
+    {
+      "id": "series-search-discovery",
+      "prompt": "I don't know the exact series ID. How do I search FRED for monthly consumer price index series and list the matching IDs and titles?",
+      "expected_output": "Triggers FRED. Uses search_series (the fred/series/search endpoint) with the query 'consumer price index' and a filter_variable=frequency / filter_value=Monthly, iterating the returned 'seriess' to print id and title.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "search"},
+        {"type": "behavior", "value": "Uses the series/search endpoint with a frequency filter and reads id/title from the seriess result, rather than guessing a series ID."}
+      ]
+    },
+    {
+      "id": "vintage-alfred",
+      "prompt": "For a real-time forecasting study I need GDP exactly as it was first reported on a given date, not the latest revised value. Can FRED give me vintage data?",
+      "expected_output": "Triggers FRED. Explains ALFRED vintage access via realtime_start/realtime_end on get_observations, and get_vintage_dates to list all revision vintages for the series. Notes this avoids look-ahead bias from later revisions.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "ALFRED"},
+        {"type": "behavior", "value": "Uses realtime_start/realtime_end (or get_vintage_dates) to retrieve the originally-reported vintage rather than the revised series."}
+      ]
+    },
+    {
+      "id": "frequency-aggregation",
+      "prompt": "I have the daily 10-year Treasury yield from FRED but I want it as a monthly average. How do I aggregate it server-side?",
+      "expected_output": "Triggers FRED. Uses get_observations on DGS10 with frequency=m and aggregation_method=avg to convert the daily series to a monthly average. Notes the FRED_API_KEY requirement.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "DGS10"},
+        {"type": "output_contains", "value": "aggregation_method"},
+        {"type": "behavior", "value": "Applies frequency=m with aggregation_method=avg on DGS10 to produce a monthly average."}
+      ]
+    },
+    {
+      "id": "regional-geofred",
+      "prompt": "I want unemployment rate by U.S. state for a choropleth map, plus the state boundary shapes. Can FRED provide regional data and GeoJSON?",
+      "expected_output": "Triggers FRED. Uses GeoFRED: get_regional_data(series_group=\"1220\", region_type=\"state\", ...) for the per-state unemployment values and get_shapes(\"state\") for the GeoJSON boundaries.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "GeoFRED"},
+        {"type": "behavior", "value": "Uses get_regional_data with region_type=state and get_shapes for the mapping geometry."}
+      ]
+    },
+    {
+      "id": "near-miss-alpha-vantage",
+      "prompt": "Pull the daily OHLCV price history and the 14-day RSI for the SPY ETF so I can backtest a momentum strategy.",
+      "expected_output": "Should NOT trigger FRED. FRED carries economic time series, not per-instrument OHLCV bars or computed technical indicators like RSI. Defer to the alterlab-alpha-vantage skill, which provides TIME_SERIES_DAILY and the RSI indicator endpoint.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-alpha-vantage"},
+        {"type": "behavior", "value": "Recognizes OHLCV bars and RSI are market-data/technical-indicator requests and routes to Alpha Vantage, not FRED."}
+      ]
+    },
+    {
+      "id": "near-miss-usfiscaldata",
+      "prompt": "I need the exact current U.S. national debt to the penny and the Daily Treasury Statement operating cash balance, straight from the Treasury's Fiscal Data API.",
+      "expected_output": "Should NOT trigger FRED. Debt to the Penny and the Daily Treasury Statement are Treasury Fiscal Data datasets, not FRED series, and the user explicitly wants the Treasury API. Defer to the alterlab-usfiscaldata skill.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-usfiscaldata"},
+        {"type": "behavior", "value": "Identifies Debt to the Penny and the Daily Treasury Statement as Treasury Fiscal Data endpoints and defers to the usfiscaldata skill."}
+      ]
+    }
+  ]
+}

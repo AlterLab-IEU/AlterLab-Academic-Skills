@@ -3,6 +3,7 @@ name: alterlab-paper-2-web
 description: Converts academic papers into promotional and presentation formats — interactive websites (Paper2Web), presentation videos (Paper2Video), and conference posters (Paper2Poster) from LaTeX or PDF sources. Use when disseminating a paper, preparing for a conference, building an explorable academic homepage, generating a video abstract, or producing a print-ready poster from a paper. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
+compatibility: Requires an OPENAI_API_KEY (set in a .env file) for the generation pipelines; optional talking-head video needs an NVIDIA GPU (A6000 48GB)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

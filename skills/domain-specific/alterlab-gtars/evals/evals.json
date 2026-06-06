@@ -1,0 +1,61 @@
+{
+  "skill": "alterlab-gtars",
+  "evals": [
+    {
+      "id": "overlap-igd-query",
+      "prompt": "I have a big BED file of regulatory regions and I need to quickly find everything that overlaps a query interval on chr1, and also intersect my ChIP-seq peaks with a promoter BED. What's the fast way?",
+      "expected_output": "Invokes alterlab-gtars for overlap detection. Builds an IGD index (gtars.igd.build_index) and queries by region (igd.query('chr1', start, end)), or loads RegionSet.from_bed for both files and uses peaks.filter_overlapping(promoters), exporting results with to_bed. Emphasizes the native-Rust speed for large interval sets.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "overlap" },
+        { "type": "behavior", "value": "Uses gtars IGD indexing or RegionSet.filter_overlapping for interval overlap, not a brute-force pandas merge." }
+      ]
+    },
+    {
+      "id": "coverage-bigwig",
+      "prompt": "I have an ATAC-seq fragments BED and want a BigWig coverage track at 10 bp resolution to load into a genome browser. How do I generate it?",
+      "expected_output": "Invokes alterlab-gtars for coverage track generation. Uses the uniwig module via the CLI: gtars uniwig generate --input fragments.bed --output coverage.bw --format bigwig (with --resolution 10), producing a BigWig track for genome-browser visualization.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "uniwig" }
+      ]
+    },
+    {
+      "id": "tokenize-regions",
+      "prompt": "I'm preprocessing genomic peaks into discrete tokens to feed a transformer model. How do I build a tokenizer from my training BED and tokenize new regions?",
+      "expected_output": "Invokes alterlab-gtars for genomic tokenization. Uses TreeTokenizer.from_bed_file('training_regions.bed') from gtars.tokenizers, then tokenizer.tokenize(chrom, start, end) per region to produce discrete tokens for the ML model (noting integration with geniml for downstream training).",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "tokeniz" },
+        { "type": "behavior", "value": "Builds a gtars TreeTokenizer from a BED file and tokenizes regions, rather than training an embedding model." }
+      ]
+    },
+    {
+      "id": "fragsplit-single-cell",
+      "prompt": "I have a single-cell ATAC fragments TSV with barcodes and a cluster assignment file, and I want to split the fragments into one file per cluster. Best tool?",
+      "expected_output": "Invokes alterlab-gtars for fragment processing. Uses the fragsplit module via the CLI: gtars fragsplit cluster-split --input fragments.tsv --clusters clusters.txt --output-dir ./by_cluster/, splitting the single-cell fragment file by cluster assignment.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "fragsplit" }
+      ]
+    },
+    {
+      "id": "near-miss-geniml",
+      "prompt": "I have a collection of BED files and I want to train Region2Vec embeddings of the genomic regions and then cluster them to find functionally similar peaks.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-geniml. The task is training ML embeddings (Region2Vec) and downstream clustering of regions, which is geniml's domain. gtars only provides the underlying interval operations and tokenization preprocessing, not the embedding-model training itself.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-geniml" }
+      ]
+    },
+    {
+      "id": "near-miss-geopandas",
+      "prompt": "I have a shapefile of city districts and a GeoJSON of bus stops, and I want to find which stops fall inside each district and plot the result on a map.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-geopandas. Although this is also an overlap / spatial-join task, it operates on geographic vector geometries (shapefile, GeoJSON) rather than genomic intervals in BED format, so it belongs to the geospatial GeoPandas skill, not the genomic interval toolkit.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-geopandas" }
+      ]
+    }
+  ]
+}

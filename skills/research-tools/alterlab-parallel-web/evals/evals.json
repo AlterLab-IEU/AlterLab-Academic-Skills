@@ -1,0 +1,56 @@
+{
+  "skill": "alterlab-parallel-web",
+  "evals": [
+    {
+      "id": "web-search-current-events",
+      "prompt": "Search the web for the latest advances in quantum computing in 2025 and give me a synthesized summary with citations.",
+      "expected_output": "Uses the Parallel Web Systems Chat API search capability via scripts/parallel_web.py search with the base model, returns a synthesized summary organized by themes with inline citations and a sources list, and saves the result to the sources/ folder with the -o flag following the search_YYYYMMDD_HHMMSS_<topic>.md pattern.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "parallel_web.py search"},
+        {"type": "behavior", "value": "Runs a Parallel search, returns a cited synthesized summary, and saves output to sources/ via the -o flag."}
+      ]
+    },
+    {
+      "id": "deep-research-market-report",
+      "prompt": "I need a comprehensive deep research report on the global EV battery market — competitive landscape, market size, and growth projections.",
+      "expected_output": "Uses the Parallel Chat API research command (core model) via scripts/parallel_web.py research to produce a detailed multi-source intelligence report with citations, and saves it to sources/ with -o using the research_YYYYMMDD_HHMMSS_<topic>.md pattern. Should note the core model is the default for deep research.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "parallel_web.py research"},
+        {"type": "output_contains", "value": "core"},
+        {"type": "behavior", "value": "Selects the research command with the core model for a comprehensive report and saves the result to sources/."}
+      ]
+    },
+    {
+      "id": "extract-citation-verification",
+      "prompt": "I have a specific URL for a paper and I need to verify what it actually says about its methodology before I cite it. Can you pull the content from that page?",
+      "expected_output": "Recognizes this as citation verification, the only sanctioned use of the Extract API, and uses scripts/parallel_web.py extract with the --objective flag (e.g., 'methodology') against the known URL, saving to sources/ with the extract_YYYYMMDD_HHMMSS_<source>.md pattern. Should note extract is for verification/special cases, not general research.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "parallel_web.py extract"},
+        {"type": "behavior", "value": "Uses the Extract API for URL/citation verification with an objective and saves to sources/."}
+      ]
+    },
+    {
+      "id": "check-sources-before-query",
+      "prompt": "Before you burn another API call, can you find me current statistics on renewable energy storage capacity in Europe?",
+      "expected_output": "Checks the sources/ folder first for an existing relevant result to avoid duplicate API calls, then runs a Parallel search or research query if nothing exists, returning cited findings and saving to sources/ with -o. Should reflect the cost-efficiency and reuse rules of always saving and checking sources first.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "sources/"},
+        {"type": "behavior", "value": "Checks sources/ for an existing result before querying and saves any new result back to sources/."}
+      ]
+    },
+    {
+      "id": "near-miss-research-lookup",
+      "prompt": "Find me peer-reviewed academic papers on transformer attention mechanisms from the scholarly literature — I want proper journal articles to cite, not web pages.",
+      "expected_output": "This is a purely academic/scholarly paper search, which the skill explicitly excludes. Defers to the research-lookup skill (alterlab-research-lookup, which routes academic queries to Perplexity sonar-pro-search) or alterlab-perplexity for scholarly paper retrieval rather than using the Parallel general web search/research commands.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "research-lookup"},
+        {"type": "behavior", "value": "Recognizes this as academic-paper search territory and defers to research-lookup/Perplexity rather than Parallel web search."}
+      ]
+    }
+  ]
+}

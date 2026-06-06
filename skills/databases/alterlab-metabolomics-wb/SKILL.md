@@ -3,6 +3,7 @@ name: alterlab-metabolomics-wb
 description: Access the NIH Metabolomics Workbench via its REST API (4,200+ studies), querying metabolites, RefMet standardized nomenclature, MS/NMR data, m/z mass searches, and study metadata. Use when retrieving public metabolomics study data, standardizing metabolite names with RefMet, running m/z lookups, or doing biomarker discovery. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless Metabolomics Workbench REST API (no authentication required)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -13,6 +14,16 @@ metadata:
 ## Overview
 
 The Metabolomics Workbench is a comprehensive NIH Common Fund-sponsored platform hosted at UCSD that serves as the primary repository for metabolomics research data. It provides programmatic access to over 4,200 processed studies (3,790+ publicly available), standardized metabolite nomenclature through RefMet, and powerful search capabilities across multiple analytical platforms (GC-MS, LC-MS, NMR).
+
+## Scripts
+
+`scripts/query_metabolomics_wb.py` — query the Metabolomics Workbench REST API (stdlib only, JSON to stdout):
+
+```bash
+python scripts/query_metabolomics_wb.py refmet citrate          # standardize a name (RefMet)
+python scripts/query_metabolomics_wb.py study ST000001          # study summary
+python scripts/query_metabolomics_wb.py moverz 635.52 --adduct M+H   # m/z search
+```
 
 ## When to Use This Skill
 

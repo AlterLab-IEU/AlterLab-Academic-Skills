@@ -3,6 +3,7 @@ name: alterlab-open-science
 description: "Guidance for open science practices — preregistration (OSF Registries, AsPredicted, PROSPERO, ClinicalTrials.gov), open data and FAIR principles, repository choice (Zenodo, Dryad, Figshare), open access routes (Green/Gold/Diamond), Creative Commons licensing, reproducible computational workflows (Docker, Binder, Code Ocean), registered reports, open peer review, and TOP Guidelines. Use when preregistering a study, writing a data management plan for a grant (NSF, NIH, ERC, UKRI), choosing a data repository, navigating open access, or building reproducible analyses. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read WebFetch WebSearch Bash(python:*)
+compatibility: No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.
 metadata:
   skill-author: AlterLab
   version: "1.0.0"

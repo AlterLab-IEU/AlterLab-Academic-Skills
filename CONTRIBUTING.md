@@ -88,18 +88,19 @@ Part of the AlterLab Academic Skills suite.
    - Which category it belongs to
    - Any external APIs or services it depends on
 4. **One skill per PR** unless the skills are closely related.
-5. **Validate before submitting** (the validators are the source of truth, see below):
+5. **v2 authoring checklist — every new skill ships `evals/evals.json`** with **≥ 3 trigger cases (`should_trigger`) + ≥ 1 negative case (`should_not_trigger`)**; validate with `python scripts/run_evals.py`. A skill without evals will not be accepted.
+6. **Validate before submitting** (the validators are the source of truth, see below):
    ```bash
    python scripts/audit_skills.py     # frontmatter / references / convention audit
    pytest tests/                      # per-skill schema + body-length + references tests
    ```
    A new skill must pass cleanly with **no `known_failures` entry** — that table tracks pre-existing content debt only and is off-limits for new work.
-6. **Regenerate the marketplace** if you added, removed, moved, or renamed a skill:
+7. **Regenerate the marketplace** if you added, removed, moved, or renamed a skill:
    ```bash
    python scripts/gen_marketplace.py  # rewrites .claude-plugin/marketplace.json
    ```
    Commit the regenerated `marketplace.json` alongside your skill.
-7. **Wait for review** -- a maintainer will review your PR and may request changes.
+8. **Wait for review** -- a maintainer will review your PR and may request changes.
 
 ## Commit Convention
 
@@ -137,7 +138,7 @@ New skills must pass both with **no `known_failures` entry**. Beyond the automat
 Every skill must clear this bar (enforced by `python scripts/audit_skills.py` + `uv run pytest tests/`):
 
 - **`name`** equals the parent directory, lowercase-hyphen, ≤ 64 chars, and contains no reserved word (`claude`/`anthropic`).
-- **`description`** (the field that decides whether Claude triggers the skill) is **third person**, leads with *what* the skill does, includes an explicit **"Use when …"** trigger clause packed with keywords a user's request would contain, and ends with `Part of the AlterLab Academic Skills suite.` — never leads with it. ≤ 1536 chars, no changelog/version noise.
+- **`description`** (the field that decides whether Claude triggers the skill) is **third person**, leads with *what* the skill does, includes an explicit **"Use when …"** trigger clause packed with keywords a user's request would contain, and ends with `Part of the AlterLab Academic Skills suite.` — never leads with it. ≤ 1024 chars, no changelog/version noise.
 - **Disambiguate** against overlapping siblings ("For X prefer Y") so the right skill loads.
 - **Body** under ~500 lines; move long detail into `references/*.md` (loaded on demand). Cited `references/` and `scripts/` paths must exist.
 - **No fabrication**: real APIs, real citations/DOIs, no unsourced vendor benchmarks; if a script sends data to a third-party API, say so.

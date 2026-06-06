@@ -3,6 +3,7 @@ name: alterlab-pyopenms
 description: Build complete mass-spectrometry workflows with pyOpenMS — feature detection, peptide identification, protein quantification, and full LC-MS/MS pipelines across many MS file formats (mzML, mzXML) and algorithms. Use for comprehensive proteomics and MS data processing — for simple spectral comparison and metabolite identification use matchms. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

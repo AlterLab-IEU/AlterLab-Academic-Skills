@@ -13,7 +13,6 @@ import time
 import urllib.parse
 import urllib.request
 from typing import Optional, Dict, List, Any
-from xml.etree import ElementTree as ET
 
 
 BASE_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"

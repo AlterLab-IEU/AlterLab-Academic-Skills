@@ -3,6 +3,7 @@ name: alterlab-jaspar
 description: Query JASPAR for transcription factor binding site (TFBS) profiles (PWMs/PFMs), searching by TF name, species, or class, scanning DNA sequences for binding sites, and comparing matrices. Use when doing motif analysis, regulatory genomics, transcription factor binding prediction, or interpreting regulatory/non-coding GWAS variants. Part of the AlterLab Academic Skills suite.
 license: CC0-1.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless JASPAR REST API (no authentication required)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -19,6 +20,15 @@ JASPAR (https://jaspar.elixir.no/) is the gold-standard open-access database of 
 - REST API: https://jaspar.elixir.no/api/v1/
 - API docs: https://jaspar.elixir.no/api/v1/docs/
 - Python package: `jaspar` (via Biopython) or direct API
+
+## Scripts
+
+`scripts/query_jaspar.py` — query the JASPAR REST API (stdlib only, JSON to stdout):
+
+```bash
+python scripts/query_jaspar.py search --name CTCF --species 9606   # search profiles
+python scripts/query_jaspar.py matrix MA0139.1                     # fetch a matrix (PFM)
+```
 
 ## When to Use This Skill
 

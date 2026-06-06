@@ -17,7 +17,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import argparse
-import os
 
 
 # Predefined style presets
@@ -395,8 +394,7 @@ Examples:
 
     if args.preview or args.interactive:
         print("Creating style preview...")
-        fig = create_style_preview(style_dict if style_dict else None)
-
+        _fig = create_style_preview(style_dict if style_dict else None)
         if args.output:
             preview_filename = args.output.replace('.mplstyle', '_preview.png')
             plt.savefig(preview_filename, dpi=150, bbox_inches='tight')

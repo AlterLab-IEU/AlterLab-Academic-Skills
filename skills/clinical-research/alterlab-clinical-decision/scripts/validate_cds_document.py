@@ -16,7 +16,6 @@ Dependencies: None (pure Python)
 import re
 import argparse
 from pathlib import Path
-from collections import defaultdict
 
 
 class CDSValidator:
@@ -309,8 +308,7 @@ def main():
     
     # Validate
     validator = CDSValidator(args.input_file)
-    passed = validator.validate_all()
-    
+    _passed = validator.validate_all()    
     # Save report if requested
     if args.output:
         validator.save_report(args.output)

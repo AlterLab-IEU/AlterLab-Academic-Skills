@@ -1,0 +1,69 @@
+{
+  "skill": "alterlab-citation-graph",
+  "evals": [
+    {
+      "id": "seed-doi-map",
+      "prompt": "I have one key paper, DOI 10.1038/nphys1170. Map the literature around it for me — I want to see what it cites and what cites it, as a network I can open in Gephi.",
+      "expected_output": "Invokes alterlab-citation-graph: runs build_graph.py with the seed DOI against the free OpenAlex API (polite mailto, no key), walks both directions of the citation network (the seed's referenced_works and its cited_by set), and exports a GraphML file (plus JSON) the user can open in Gephi.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "OpenAlex" },
+        { "type": "behavior", "value": "Builds the graph from the seed DOI via OpenAlex with no API key and exports GraphML for Gephi." }
+      ]
+    },
+    {
+      "id": "cocitation-seminal",
+      "prompt": "Starting from this seed paper, which papers are the most co-cited / central in this area? I want the seminal works in the field around my DOI, ranked.",
+      "expected_output": "Invokes alterlab-citation-graph: builds the citation neighbourhood from the seed via OpenAlex and returns the co-citation ranking table (scored by shared references, shared citers, and direct seed links, tie-broken by global cited_by_count) to surface the most central / seminal works, like ResearchRabbit's similarity panel.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Ranks neighbourhood papers by co-citation strength rather than just listing references." }
+      ]
+    },
+    {
+      "id": "multi-seed-landscape",
+      "prompt": "Here are three foundational papers in my topic (two DOIs and an arXiv id, arXiv:1706.03762). Build me a combined citation map across all three so I can see how the subfield connects.",
+      "expected_output": "Invokes alterlab-citation-graph with multiple --seed values (DOI and arXiv forms both normalized to OpenAlex selectors), assembles one merged citation/co-citation graph across all seeds, ranks the shared neighbourhood by co-citation, and exports GraphML + JSON.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Accepts several seeds (DOI and arXiv) and merges them into a single combined graph." }
+      ]
+    },
+    {
+      "id": "snowball-reference-network",
+      "prompt": "I'm starting a review and want to snowball the reference network from one starting paper — chase its citations forward and backward a couple of hops and give me the network as a file.",
+      "expected_output": "Invokes alterlab-citation-graph: runs the forward+backward citation walk from the seed with increased --depth to snowball the reference network a couple of hops, exporting the resulting graph as GraphML and JSON for the review.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "GraphML" }
+      ]
+    },
+    {
+      "id": "no-key-researchrabbit",
+      "prompt": "Is there a free way to do what ResearchRabbit does — build a citation graph around a paper without paying or making an account? I just have a DOI.",
+      "expected_output": "Invokes alterlab-citation-graph, positioning itself as the free, account-free, key-less ResearchRabbit analog built on the open OpenAlex API, and builds the citation/co-citation graph from the user's DOI, exporting GraphML + JSON.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Frames itself as the free, no-account, no-key ResearchRabbit alternative and proceeds to build the graph from the DOI." }
+      ]
+    },
+    {
+      "id": "near-miss-citation-verifier",
+      "prompt": "I have a reference list in my draft and I'm worried some DOIs are wrong or the citations are hallucinated. Can you check each citation's metadata against the real record and flag the bad ones?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-citation-verifier. The user wants per-citation metadata verification and hallucination/bad-DOI detection against authoritative records, not a citation network or co-citation graph. citation-graph maps how papers connect; verifying that individual citations are correct is the verifier's job.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-citation-verifier" }
+      ]
+    },
+    {
+      "id": "near-miss-research-lookup",
+      "prompt": "Look up current research on diffusion models for video generation and give me a cited report — I don't have a starting paper, just route my question to whatever search backend is best.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-research-lookup. The user has a free-text research question with no seed DOI and wants a routed, cited research report, not a citation graph. citation-graph needs a seed work to walk OpenAlex edges from; open-ended query routing belongs to research-lookup.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-research-lookup" }
+      ]
+    }
+  ]
+}

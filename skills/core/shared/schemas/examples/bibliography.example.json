@@ -1,0 +1,44 @@
+{
+  "sources": [
+    {
+      "id": "[S01]",
+      "title": "Real-time virtual production: a systematic review",
+      "authors": "Ipek, C., & Demir, A.",
+      "year": 2024,
+      "doi": "10.1000/vp.2024.001",
+      "citation": "Ipek, C., & Demir, A. (2024). Real-time virtual production: a systematic review. Journal of Interactive Media, 12(3), 201-228.",
+      "type": "journal_article",
+      "evidence_tier": 1,
+      "quality_tier": "tier_1",
+      "relevance": "core",
+      "relevance_score": 9,
+      "annotation": "Systematic review of LED-wall virtual production techniques. Maps feedback modalities to on-set decision workflows; directly informs the present research question.",
+      "verified": true,
+      "retraction_check": true
+    },
+    {
+      "id": "[S02]",
+      "title": "Cognitive load in high-tempo creative work",
+      "authors": "Nguyen, T.",
+      "year": 2021,
+      "citation": "Nguyen, T. (2021). Cognitive load in high-tempo creative work. Cognition & Practice, 8(1), 44-67.",
+      "type": "journal_article",
+      "evidence_tier": 3,
+      "quality_tier": "tier_2",
+      "relevance": "supporting",
+      "relevance_score": 6,
+      "annotation": "Establishes the cognitive-load framing used to interpret decision latency under varied feedback richness.",
+      "verified": true,
+      "retraction_check": false
+    }
+  ],
+  "search_strategy": {
+    "databases": ["Scopus", "ACM Digital Library", "IEEE Xplore"],
+    "keywords": ["virtual production", "adaptive feedback", "decision latency", "cognitive load"],
+    "inclusion_criteria": ["peer-reviewed", "2019-2025", "professional context"],
+    "exclusion_criteria": ["non-English", "amateur workflows"],
+    "date_range": "2019-2025"
+  },
+  "coverage_assessment": "Quick-mode coverage: 2 core/supporting sources identified for the example; production runs target >= 15.",
+  "minimum_sources": 5
+}

@@ -1,0 +1,54 @@
+{
+  "skill": "alterlab-pdf-extract",
+  "evals": [
+    {
+      "id": "evidence-table-inline-columns",
+      "prompt": "I have a folder of 12 PDFs from my screening round. Build me a table where each row is one paper and the columns are sample size, study design, main finding, and limitations.",
+      "expected_output": "Invokes alterlab-pdf-extract: routes each PDF through MarkItDown to Markdown, then builds a per-paper evidence table with one row per document and the four user-defined columns (sample size, study design, main finding, limitations), plus a leading Source column. Runs extract_to_table.py with --columns and emits a Markdown table (or CSV).",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "column" },
+        { "type": "behavior", "value": "Produces one row per paper and one column per requested attribute, converting via MarkItDown first." }
+      ]
+    },
+    {
+      "id": "explicit-question-columns",
+      "prompt": "Across these 8 trial PDFs, pull out how many participants were enrolled and what the main reported effect size was for each one, side by side.",
+      "expected_output": "Invokes alterlab-pdf-extract with explicit per-column extraction questions (e.g. --column 'n:how many participants were enrolled', --column 'effect:what was the main reported effect size'). Builds a comparison table across the 8 PDFs, one row each, two question-driven columns, converting each via MarkItDown.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Maps each natural-language question to a column and extracts that field per paper into a side-by-side table." }
+      ]
+    },
+    {
+      "id": "csv-export-spreadsheet",
+      "prompt": "Turn this stack of PDFs into a CSV I can open in Excel — one column per paper attribute (population, intervention, outcome) and one paper per row.",
+      "expected_output": "Invokes alterlab-pdf-extract with --format csv: ingests the PDFs through MarkItDown, extracts the population/intervention/outcome columns, and writes a CSV (one row per paper, Source plus the three columns) suitable for opening in a spreadsheet.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "csv" },
+        { "type": "behavior", "value": "Outputs a CSV with one row per paper and the user-defined attribute columns." }
+      ]
+    },
+    {
+      "id": "llm-backend-precise",
+      "prompt": "I want precise structured answers, not keyword snippets — use an LLM to read each of these papers and fill in the methods and key result columns for a clean extraction table.",
+      "expected_output": "Invokes alterlab-pdf-extract with --backend llm: after MarkItDown conversion, sends the Markdown plus the methods/key-result column questions to an OpenAI-compatible endpoint for a concise per-column answer (N/A when silent), using the ALTERLAB_MODEL convention for the model ID. Returns the structured table.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "llm" },
+        { "type": "behavior", "value": "Selects the LLM backend for precise per-column answers and references the ALTERLAB_MODEL / OPENROUTER_API_KEY convention." }
+      ]
+    },
+    {
+      "id": "near-miss-literature-review",
+      "prompt": "Search PubMed and Semantic Scholar for the recent literature on CRISPR base editing and write me a synthesized, thematically organized literature review with verified citations.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-literature-review. The user wants to discover papers in external databases and produce a synthesized prose review with citations — not extract a structured table from PDFs already in hand. alterlab-pdf-extract operates on documents you already have and produces a table, not a narrative synthesis.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "literature-review" },
+        { "type": "behavior", "value": "Recognizes that database discovery plus prose synthesis is the literature-review skill's job, not a per-PDF table extraction." }
+      ]
+    }
+  ]
+}

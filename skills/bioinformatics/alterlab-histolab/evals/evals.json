@@ -1,0 +1,63 @@
+{
+  "skill": "alterlab-histolab",
+  "evals": [
+    {
+      "id": "random-tiles-from-svs",
+      "prompt": "I have a whole-slide image slide.svs and I want to extract 100 random 512x512 tiles at full resolution, but only from actual tissue (skip background), and I need it reproducible. Preview where they'll land first.",
+      "expected_output": "Invokes alterlab-histolab: loads Slide(...), configures RandomTiler(tile_size=(512,512), n_tiles=100, level=0, seed=..., check_tissue=True, tissue_percent=...), calls locate_tiles to preview on the thumbnail, then tiler.extract(slide).",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "RandomTiler" },
+        { "type": "behavior", "value": "Uses RandomTiler with a seed and check_tissue, and previews with locate_tiles before extracting." }
+      ]
+    },
+    {
+      "id": "grid-tiles-full-coverage",
+      "prompt": "I need complete, non-overlapping coverage of all the tissue on my slide for downstream whole-slide analysis - every tile in a grid, filtered to tissue regions, ideally at a lower pyramid level so it's faster.",
+      "expected_output": "Invokes alterlab-histolab: uses a TissueMask for all sections and a GridTiler(tile_size=..., level=1, pixel_overlap=0, check_tissue=True), previews the grid with locate_tiles, then extracts with the extraction_mask. Comprehensive grid-coverage strategy.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "GridTiler" },
+        { "type": "behavior", "value": "Chooses GridTiler with pixel_overlap=0 for full coverage and a TissueMask, extracting at a lower level for speed." }
+      ]
+    },
+    {
+      "id": "score-tiler-nuclei-rich",
+      "prompt": "For my ML training set I only want the most informative, cell-dense regions of each slide - the top 50 tiles ranked by nuclei content - and a CSV of their scores so I can inspect the distribution.",
+      "expected_output": "Invokes alterlab-histolab: uses ScoreTiler with a NucleiScorer, n_tiles=50, and extract(slide, report_path='...csv') to write per-tile scores, suggesting inspection of the score distribution. Quality-driven tile selection.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "ScoreTiler" },
+        { "type": "behavior", "value": "Uses ScoreTiler with NucleiScorer and a report_path CSV to rank tiles by nuclei density." }
+      ]
+    },
+    {
+      "id": "custom-tissue-mask-artifacts",
+      "prompt": "My slides have a lot of pen marks and small debris that keep getting picked up as tissue. How can I build a stricter tissue mask that removes those artifacts before I extract tiles?",
+      "expected_output": "Invokes alterlab-histolab: builds a Compose filter pipeline (RgbToGrayscale, OtsuThreshold, BinaryDilation, RemoveSmallHoles, RemoveSmallObjects with larger thresholds), passes it as TissueMask(filters=...), visualizes with locate_mask, then extracts with that extraction_mask.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "TissueMask" },
+        { "type": "behavior", "value": "Composes morphological filters (RemoveSmallObjects/Holes) into a custom TissueMask to drop artifacts, and previews with locate_mask." }
+      ]
+    },
+    {
+      "id": "near-miss-pathml",
+      "prompt": "I have a multiplexed immunofluorescence whole-slide image with a dozen protein channels and I want to run a full deep-learning pathology pipeline - cell segmentation, marker quantification, and spatial proteomics analysis.",
+      "expected_output": "Should NOT trigger alterlab-histolab. Multiplexed imaging, cell segmentation, and full deep-learning / spatial-proteomics pathology pipelines are alterlab-pathml territory. histolab is the lightweight tile-extraction/tissue-detection skill and defers advanced multiplexed and DL pipelines to pathml.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "pathml" }
+      ]
+    },
+    {
+      "id": "near-miss-scanpy",
+      "prompt": "I have an .h5ad of single-cell RNA-seq counts. Run QC filtering, normalize, cluster with Leiden, and find marker genes per cluster.",
+      "expected_output": "Should NOT trigger alterlab-histolab. This is single-cell RNA-seq analysis (QC, normalization, Leiden clustering, markers) which is alterlab-scanpy territory and has nothing to do with whole-slide histopathology images. histolab handles WSI tiles, not transcriptomic matrices.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "scanpy" }
+      ]
+    }
+  ]
+}

@@ -3,6 +3,7 @@ name: alterlab-lamindb
 description: Manage, annotate, and trace biological data with LaminDB, an open-source FAIR data framework that makes datasets queryable, versioned, and reproducible. Use when registering or querying biological datasets (scRNA-seq, spatial, flow cytometry), validating and curating data against ontologies (genes, cell types, diseases, tissues), tracking data lineage and computational workflows, building data lakehouses, or wiring integrations with Nextflow, Snakemake, W&B, or MLflow. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

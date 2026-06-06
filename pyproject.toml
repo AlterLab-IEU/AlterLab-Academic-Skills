@@ -1,12 +1,51 @@
 [project]
 name = "alterlab-academic-skills"
-version = "1.1.0"
+version = "2.0.0"
 description = "180 Claude AI skills for faculty and academic researchers"
 requires-python = ">=3.12"
 license = "MIT"
 
 [dependency-groups]
-dev = ["pytest>=8"]
+dev = ["pytest>=8", "ruff>=0.8"]
+
+# [project].version above is the single source of truth for the package version.
+# scripts/gen_marketplace.py reads it from here and propagates it to both
+# .claude-plugin/marketplace.json and package.json. Do not hand-edit those.
+[tool.ruff]
+# Lint scope: the Python that ships inside skills, the maintenance scripts, and
+# the tests. Skill scripts are teaching artifacts (verbose, self-documenting),
+# so the rule set is intentionally pragmatic rather than exhaustive.
+target-version = "py312"
+line-length = 100
+extend-exclude = [
+    ".venv",
+    "template",
+    "**/__pycache__",
+]
+
+[tool.ruff.lint]
+# E/W = pycodestyle, F = pyflakes (real bugs: undefined names, unused imports).
+select = ["E", "F", "W"]
+# E501 (line too long) is waived globally: both the skill scripts and the
+# maintenance scripts in this repo deliberately keep long inline prompts, URLs,
+# and example payloads on one line for didactic readability. Every other E/W/F
+# rule stays on so genuine defects (undefined names, unused imports, bare except)
+# still fail CI.
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# Skill scripts are runnable teaching examples, not production modules. The
+# following are stylistic noise in that context and are waived ONLY under
+# skills/ (they remain enforced for scripts/ and tests/):
+#   W291/W292/W293 - trailing / missing-final / blank-line whitespace
+#   F541           - f-strings without placeholders (used for formatting parity)
+#   E402           - imports after a docstring/example preamble
+# Substantive codes (F401 unused import, F841 unused var, F821 undefined name,
+# E722 bare except) are intentionally NOT waived so real bugs surface.
+"skills/**" = ["W291", "W292", "W293", "F541", "E402"]
+
+[tool.ruff.format]
+quote-style = "double"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

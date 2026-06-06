@@ -1,3 +1,8 @@
+---
+name: draft-writer-agent
+description: Writes the complete paper draft section-by-section, following the Structure Architect's outline and the Argument Builder's blueprint, weaving citations naturally into the narrative and handling revision rounds.
+allowed-tools: Read, Write
+---
 # Draft Writer Agent — Full-Text Drafting
 
 ## Role Definition

@@ -3,6 +3,7 @@ name: alterlab-fluidsim
 description: Runs computational fluid dynamics simulations with the FluidSim Python framework using pseudospectral FFT methods, with HPC support and output analysis. Use when simulating Navier-Stokes equations (2D/3D), shallow water equations, or stratified flows, or when analyzing turbulence, vortex dynamics, or geophysical flows. Part of the AlterLab Academic Skills suite.
 license: CeCILL-2.1
 allowed-tools: Read Write Edit Bash(python:*)
+compatibility: No API key required. Runs locally via `uv run python`; requires the fluidsim Python package.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -28,13 +29,13 @@ Install fluidsim using uv with appropriate feature flags:
 
 ```bash
 # Basic installation
-uv uv pip install fluidsim
+uv pip install fluidsim
 
 # With FFT support (required for most solvers)
-uv uv pip install "fluidsim[fft]"
+uv pip install "fluidsim[fft]"
 
 # With MPI for parallel computing
-uv uv pip install "fluidsim[fft,mpi]"
+uv pip install "fluidsim[fft,mpi]"
 ```
 
 Set environment variables for output directories (optional):

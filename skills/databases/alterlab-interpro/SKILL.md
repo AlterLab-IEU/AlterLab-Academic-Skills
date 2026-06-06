@@ -3,6 +3,7 @@ name: alterlab-interpro
 description: Query InterPro for protein family, domain, and functional site annotations, integrating Pfam, PANTHER, PRINTS, SMART, SUPERFAMILY, and 11 other member databases. Use when predicting protein function, analyzing domain architecture, classifying proteins by family or evolution, or mapping signatures to GO terms. Part of the AlterLab Academic Skills suite.
 license: CC0-1.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless InterPro REST API (no authentication required)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -26,6 +27,16 @@ InterPro classifies proteins into:
 - REST API: https://www.ebi.ac.uk/interpro/api/
 - API documentation: https://github.com/ProteinsWebTeam/interpro7-api/blob/master/docs/
 - Python client: via `requests`
+
+## Scripts
+
+`scripts/query_interpro.py` — query the InterPro REST API (stdlib only, JSON to stdout):
+
+```bash
+python scripts/query_interpro.py protein P04637          # InterPro entries for a UniProt protein
+python scripts/query_interpro.py entry IPR000719         # entry details
+python scripts/query_interpro.py entry-proteins IPR000719 --page-size 25   # proteins with an entry
+```
 
 ## When to Use This Skill
 

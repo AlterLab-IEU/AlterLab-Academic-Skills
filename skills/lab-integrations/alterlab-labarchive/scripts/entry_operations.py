@@ -8,9 +8,7 @@ Utilities for creating entries, uploading attachments, and managing notebook con
 import argparse
 import sys
 import yaml
-import os
 from pathlib import Path
-from datetime import datetime
 
 
 def load_config(config_path='config.yaml'):
@@ -101,7 +99,7 @@ def create_entry(client, uid, nbid, title, content=None, date=None):
                 if entry_id is not None:
                     print(f"   Entry ID: {entry_id.text}")
                     return entry_id.text
-            except:
+            except Exception:
                 pass
 
             return True

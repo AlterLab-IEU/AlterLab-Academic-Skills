@@ -3,6 +3,7 @@ name: alterlab-tiledbvcf
 description: Store and query genomic variant data at scale with TileDB-VCF — ingest VCF/BCF into compressed TileDB arrays, add samples incrementally, run fast parallel region/sample queries, and export back to VCF. Use when managing population-genomics variant datasets that are too large for flat VCF, building joint variant stores, or querying thousands of samples by region. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Runs under `uv run python` with tiledbvcf-py (conda-forge/bioconda); local VCF stores work offline. TileDB Cloud features require a TileDB Cloud account and TILEDB_REST_TOKEN."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

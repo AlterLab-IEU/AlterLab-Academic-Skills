@@ -308,8 +308,8 @@ def export_results(
     print("Exporting results...")
 
     # Get good units
-    good_ids = [u for u, l in labels.items() if l == 'good']
-    sorting_good = sorting.select_units(good_ids)
+    good_ids = [u for u, label in labels.items() if label == 'good']
+    _sorting_good = sorting.select_units(good_ids)
 
     # Export to Phy
     phy_folder = f'{output_folder}/phy_export'

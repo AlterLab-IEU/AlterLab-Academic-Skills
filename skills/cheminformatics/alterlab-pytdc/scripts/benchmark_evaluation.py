@@ -123,7 +123,7 @@ def multiple_datasets_evaluation(group):
 
         # Train and predict for each seed
         for seed in [1, 2, 3, 4, 5]:
-            train = benchmark[seed]['train']
+            _train = benchmark[seed]['train']
             test = benchmark[seed]['test']
 
             # TODO: Replace with your model

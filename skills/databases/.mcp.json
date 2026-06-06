@@ -1,0 +1,35 @@
+{
+  "mcpServers": {
+    "pubmed": {
+      "command": "uvx",
+      "args": ["mcp-simple-pubmed"],
+      "env": {
+        "PUBMED_EMAIL": "${user_config.ncbi_email}",
+        "PUBMED_API_KEY": "${user_config.ncbi_api_key}"
+      }
+    },
+    "openalex": {
+      "command": "npx",
+      "args": ["-y", "openalex-mcp"],
+      "env": {
+        "OPENALEX_MAILTO": "${user_config.ncbi_email}"
+      }
+    },
+    "crossref": {
+      "command": "npx",
+      "args": ["-y", "@botanicastudios/crossref-mcp"],
+      "env": {
+        "CROSSREF_MAILTO": "${user_config.ncbi_email}"
+      }
+    },
+    "zotero": {
+      "command": "uvx",
+      "args": ["zotero-mcp"],
+      "env": {
+        "ZOTERO_LIBRARY_ID": "${user_config.zotero_library_id}",
+        "ZOTERO_LIBRARY_TYPE": "${user_config.zotero_library_type}",
+        "ZOTERO_API_KEY": "${user_config.zotero_api_key}"
+      }
+    }
+  }
+}

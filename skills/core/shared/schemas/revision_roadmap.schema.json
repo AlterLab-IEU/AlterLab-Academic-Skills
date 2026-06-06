@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/skills/core/shared/schemas/revision_roadmap.schema.json",
+  "title": "Revision Roadmap",
+  "description": "Handoff Schema 7. Producer: alterlab-paper-reviewer/editorial_synthesizer_agent. Consumer: alterlab-paper-writer/draft_writer_agent | alterlab-research-pipeline/pipeline_orchestrator_agent.",
+  "type": "object",
+  "required": [
+    "items",
+    "total_items",
+    "must_fix_count",
+    "editorial_decision",
+    "consensus_summary",
+    "dissenting_opinions"
+  ],
+  "properties": {
+    "items": {
+      "type": "array",
+      "description": "Ordered list of revision items.",
+      "items": { "$ref": "#/$defs/roadmap_item" }
+    },
+    "total_items": { "type": "integer", "minimum": 0 },
+    "must_fix_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of must_fix priority items."
+    },
+    "editorial_decision": {
+      "type": "string",
+      "enum": ["Accept", "Minor Revision", "Major Revision", "Reject"]
+    },
+    "consensus_summary": { "type": "string", "description": "Summary of reviewer consensus." },
+    "dissenting_opinions": {
+      "type": "array",
+      "description": "Notable disagreements among reviewers.",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "roadmap_item": {
+      "type": "object",
+      "required": [
+        "id",
+        "description",
+        "reviewer",
+        "type",
+        "priority",
+        "target_section",
+        "suggested_action",
+        "consensus_level",
+        "verification_criteria"
+      ],
+      "properties": {
+        "id": { "type": "string", "description": "Unique revision ID (e.g., REV-001)." },
+        "description": { "type": "string", "description": "What needs to change." },
+        "reviewer": {
+          "type": "string",
+          "description": "Which reviewer(s) raised this (e.g., R1, R3)."
+        },
+        "type": { "type": "string", "enum": ["Major", "Minor", "Editorial"] },
+        "priority": { "type": "string", "enum": ["must_fix", "should_fix", "consider"] },
+        "target_section": { "type": "string", "description": "Section of the paper to modify." },
+        "suggested_action": { "type": "string", "description": "How to address the item." },
+        "consensus_level": {
+          "type": "string",
+          "enum": ["CONSENSUS-4", "CONSENSUS-3", "SPLIT", "DA-CRITICAL"]
+        },
+        "verification_criteria": {
+          "type": "string",
+          "description": "How to confirm the fix is adequate."
+        },
+        "deadline_suggestion": {
+          "type": "string",
+          "description": "Optional. Suggested timeline for completion."
+        }
+      }
+    }
+  }
+}

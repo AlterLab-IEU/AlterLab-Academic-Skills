@@ -1,0 +1,68 @@
+{
+  "skill": "alterlab-brenda",
+  "evals": [
+    {
+      "id": "km-values-by-ec",
+      "prompt": "I'm building a kinetic model of alcohol dehydrogenase (EC 1.1.1.1). Pull the Km values for ethanol across organisms from BRENDA so I can compare turnover.",
+      "expected_output": "Invokes alterlab-brenda: authenticates against the BRENDA SOAP API and calls get_km_values(\"1.1.1.1\", substrate=\"ethanol\"), then parses the returned organism*/substrate*/kmValue* entries (parse_km_entry) into per-organism Km values with pH/temperature commentary.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Uses the EC number 1.1.1.1 and retrieves Km kinetic values via the BRENDA SOAP API rather than a generic web search." }
+      ]
+    },
+    {
+      "id": "cross-organism-comparison",
+      "prompt": "Compare the kinetic properties and optimal pH/temperature of glutamine synthetase across E. coli, S. cerevisiae, and Thermus thermophilus for an enzyme-engineering project.",
+      "expected_output": "Invokes alterlab-brenda: uses compare_across_organisms with the relevant EC number plus get_environmental_parameters to report average Km, optimal pH, and temperature range per organism, drawing all data from BRENDA.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Compares the same enzyme across multiple named organisms using BRENDA organism-specific kinetic and environmental data." }
+      ]
+    },
+    {
+      "id": "inhibitor-lookup",
+      "prompt": "What inhibitors and Ki values are reported for lactate dehydrogenase in BRENDA? I need the regulation data for a drug-target writeup.",
+      "expected_output": "Invokes alterlab-brenda: calls get_inhibitors on the EC number for lactate dehydrogenase and returns inhibitor names, inhibition type, Ki and IC50 values from BRENDA's enzyme regulation data.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Ki" }
+      ]
+    },
+    {
+      "id": "thermophilic-homologs",
+      "prompt": "I need a heat-stable version of an enzyme acting on ethanol for an industrial process. Find thermophilic homologs of EC 1.1.1.1 with optimal temperatures above 60 C.",
+      "expected_output": "Invokes alterlab-brenda: uses find_thermophilic_homologs(\"1.1.1.1\", min_temp=60) and reports candidate organisms with their optimal temperatures and Km values for industrial enzyme selection.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Filters BRENDA enzyme variants by optimal temperature to surface thermostable candidates." }
+      ]
+    },
+    {
+      "id": "enzyme-by-substrate-discovery",
+      "prompt": "Which enzymes can act on 2-phenylethanol as a substrate? I want EC numbers and reaction equations to plan a biosynthetic route.",
+      "expected_output": "Invokes alterlab-brenda: uses search_enzymes_by_substrate(\"2-phenylethanol\") to return EC numbers, enzyme names, and reaction equations from BRENDA for the candidate enzymes.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "EC" }
+      ]
+    },
+    {
+      "id": "near-miss-kegg",
+      "prompt": "Map out the full glycolysis pathway with its reaction steps and how the metabolites connect, so I can see the whole metabolic map.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-kegg. The user wants a curated metabolic pathway map and reaction network, not enzyme kinetic parameters (Km/kcat/Ki) for a specific EC number, which is BRENDA's domain.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-kegg" }
+      ]
+    },
+    {
+      "id": "near-miss-uniprot",
+      "prompt": "Give me the amino acid sequence and domain architecture of human alcohol dehydrogenase ADH1B.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-uniprot. The user wants protein sequence and domain annotation, not enzyme kinetic measurements, which is what BRENDA provides.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-uniprot" }
+      ]
+    }
+  ]
+}

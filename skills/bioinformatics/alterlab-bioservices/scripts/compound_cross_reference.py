@@ -347,14 +347,13 @@ Examples:
     chembl_id = get_chembl_id(kegg_id)
 
     # Step 4: Get ChEBI details
-    chebi_info = None
+    _chebi_info = None
     if kegg_info and kegg_info['chebi_id']:
-        chebi_info = get_chebi_info(kegg_info['chebi_id'])
-
+        _chebi_info = get_chebi_info(kegg_info['chebi_id'])
     # Step 5: Get ChEMBL details
-    chembl_info = None
+    _chembl_info = None
     if chembl_id:
-        chembl_info = get_chembl_info(chembl_id)
+        _chembl_info = get_chembl_info(chembl_id)
 
     # Summary
     print(f"\n{'='*70}")

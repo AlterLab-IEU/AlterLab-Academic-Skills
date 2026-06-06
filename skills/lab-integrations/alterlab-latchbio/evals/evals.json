@@ -1,0 +1,51 @@
+{
+  "skill": "alterlab-latchbio",
+  "evals": [
+    {
+      "id": "author-rnaseq-workflow",
+      "prompt": "Build me a Latch workflow for RNA-seq: a FastQC task, a STAR alignment task, and a featureCounts quantification task, with LatchFile inputs and outputs.",
+      "expected_output": "Invokes alterlab-latchbio. Authors a Latch SDK workflow using @workflow and @task (e.g. @small_task/@large_task) decorators, typed LatchFile/LatchDir parameters and docstrings, chaining the tasks, and notes registration via latch register.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "LatchFile" },
+        { "type": "behavior", "value": "Uses @workflow/@task decorators with LatchFile typing and chains the three tasks." }
+      ]
+    },
+    {
+      "id": "port-nextflow-pipeline",
+      "prompt": "I have an existing Nextflow pipeline. How do I port it onto LatchBio and register it so it gets a no-code UI?",
+      "expected_output": "Invokes alterlab-latchbio. Explains wrapping the Nextflow pipeline with the Latch SDK, latch init / latch register, Docker containerization, and the auto-generated no-code interface for the workflow.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Describes wrapping Nextflow with the Latch SDK and registering it with latch register." }
+      ]
+    },
+    {
+      "id": "gpu-task-config",
+      "prompt": "My AlphaFold step on Latch keeps running out of memory and needs a GPU. How do I configure the task resources?",
+      "expected_output": "Invokes alterlab-latchbio. Routes to resource configuration: use a GPU task decorator (@small_gpu_task/@large_gpu_task) or @custom_task with explicit CPU/memory/GPU (K80/V100/A100) specs to right-size the AlphaFold step.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "gpu_task" }
+      ]
+    },
+    {
+      "id": "registry-integrated-workflow",
+      "prompt": "I want my Latch workflow to pull a sample by sample_id from a Registry table, process it, and write the result and status back to that record.",
+      "expected_output": "Invokes alterlab-latchbio. Uses the Latch Registry API (Table.get, Record.list with a filter, record.update with values) inside a task to read the sample and write status/result back, integrating Registry with the workflow.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Registry" }
+      ]
+    },
+    {
+      "id": "near-miss-dnanexus",
+      "prompt": "Build a DNAnexus applet with dxpy, define its dxapp.json, and run it on a FASTQ with dx build and applet.run.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-dnanexus. The platform is DNAnexus (dxpy SDK, dx CLI, dxapp.json, applets), not LatchBio's Latch SDK workflows.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-dnanexus" }
+      ]
+    }
+  ]
+}

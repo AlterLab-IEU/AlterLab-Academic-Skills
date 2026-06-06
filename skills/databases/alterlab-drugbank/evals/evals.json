@@ -1,0 +1,60 @@
+{
+  "skill": "alterlab-drugbank",
+  "evals": [
+    {
+      "id": "drug-drug-interactions",
+      "prompt": "My patient is on warfarin, amiodarone, and simvastatin. Check all the pairwise drug-drug interactions and tell me the severity for this polypharmacy regimen.",
+      "expected_output": "Triggers the DrugBank skill. Uses the interactions reference (references/interactions.md) to extract DDIs for each drug, check the pairwise interactions across the regimen, classify by severity/mechanism, and compute an overall interaction risk score for the polypharmacy combination.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Extracts and classifies pairwise drug-drug interactions across a multi-drug regimen with severity assessment." }
+      ]
+    },
+    {
+      "id": "drug-targets-and-pathways",
+      "prompt": "What proteins does imatinib target, what's the action on each, and which CYP450 enzymes metabolize it? I'm mapping its mechanism.",
+      "expected_output": "Triggers the DrugBank skill. Uses references/targets-pathways.md to extract drug targets with their actions (inhibitor/agonist/antagonist), identify metabolizing CYP450 enzymes, and optionally map to SMPDB pathways. Cross-references UniProt for the protein records.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Extracts drug targets with their actions and the CYP450 metabolizing enzymes for mechanism mapping." }
+      ]
+    },
+    {
+      "id": "chemical-similarity-repurposing",
+      "prompt": "Find me drugs structurally similar to celecoxib by Tanimoto similarity and check whether they pass Lipinski's Rule of Five — I'm scoping repurposing candidates.",
+      "expected_output": "Triggers the DrugBank skill. Uses references/chemical-analysis.md to pull SMILES, generate Morgan/MACCS fingerprints, compute Tanimoto similarity to find structurally similar drugs, and apply Lipinski's Rule of Five for drug-likeness, in support of a repurposing scope.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Tanimoto" },
+        { "type": "behavior", "value": "Computes molecular fingerprint similarity and applies drug-likeness rules to find repurposing candidates." }
+      ]
+    },
+    {
+      "id": "drug-pharmacology-query",
+      "prompt": "Pull the indication, mechanism of action, and chemical identifiers (SMILES, InChI, molecular formula) for metformin from DrugBank.",
+      "expected_output": "Triggers the DrugBank skill. Uses references/drug-queries.md to search by drug name and extract basic info (indication, description), pharmacology (mechanism of action, pharmacodynamics, ADME), and chemical identifiers (SMILES, InChI, molecular formula) plus external cross-references.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Queries DrugBank by drug name and extracts indication, mechanism, and chemical identifiers." }
+      ]
+    },
+    {
+      "id": "near-miss-clinicaltrials",
+      "prompt": "Find me the recruiting clinical trials testing metformin for cancer prevention and their eligibility criteria.",
+      "expected_output": "Should NOT trigger the DrugBank skill. The user wants clinical trial records (recruiting status, eligibility criteria), not drug property or interaction data. This should defer to the clinicaltrials database skill (alterlab-clinicaltrials).",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "clinicaltrials" }
+      ]
+    },
+    {
+      "id": "near-miss-chembl",
+      "prompt": "Give me the measured IC50 and Ki bioactivity values for compounds tested against EGFR kinase across published assays.",
+      "expected_output": "Should NOT trigger the DrugBank skill. Quantitative bioassay measurements (IC50, Ki) across compounds and targets are ChEMBL's domain, not DrugBank's curated drug records. This should defer to the chembl database skill (alterlab-chembl).",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "chembl" }
+      ]
+    }
+  ]
+}

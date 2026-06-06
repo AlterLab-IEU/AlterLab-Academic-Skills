@@ -21,3 +21,17 @@ BODY_TOO_LONG: dict[str, str] = {}
 # (Empty — all dangling citations fixed in v1.1.0; legitimate cross-skill references
 # are now resolved by audit_skills.missing_references rather than whitelisted here.)
 REFERENCES_MISSING: dict[str, str] = {}
+
+# skills/**/scripts/*.py files that do not byte-compile (genuine SyntaxError).
+# Keys are repo-relative paths; values are the reason. The compile test is
+# syntax-only (py_compile, no import) so missing deps never land here.
+# Fix path: repair the SyntaxError, then remove the entry.
+# (Empty — all 161 script files compile cleanly as of v1.1.0.)
+SCRIPTS_COMPILE_FAILURES: dict[str, str] = {}
+
+# Core plugin agent .md files under skills/core/**/agents/ that still lack
+# registerable `name`/`description` frontmatter. Keys are repo-relative paths.
+# These two are owned by a concurrent workstream (integrity_verification and
+# bibliography); their frontmatter backfill lands separately. Remove each entry
+# once that work merges — the test will flip XPASS → hard failure if regressed.
+PLUGIN_AGENTS_MISSING_FRONTMATTER: dict[str, str] = {}

@@ -3,8 +3,10 @@ name: alterlab-molfeat
 description: Featurizes molecules for machine learning with molfeat (100+ featurizers) — ECFP and MACCS fingerprints, physicochemical descriptors, and pretrained model embeddings (ChemBERTa), converting SMILES into feature vectors. Use when turning molecules into ML-ready features for QSAR or molecular modeling, or comparing fingerprint and descriptor representations. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # Molfeat - Molecular Featurization Hub

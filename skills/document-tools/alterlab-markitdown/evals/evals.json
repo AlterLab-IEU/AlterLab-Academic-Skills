@@ -1,0 +1,54 @@
+{
+  "skill": "alterlab-markitdown",
+  "evals": [
+    {
+      "id": "pdf-paper-to-markdown",
+      "prompt": "I downloaded a research paper as a PDF (smith_2023_tmb.pdf) and I want it as clean Markdown so I can paste it into an LLM prompt without wasting tokens on layout junk. How do I do that?",
+      "expected_output": "Triggers alterlab-markitdown. Recommends Microsoft MarkItDown to convert the PDF to token-efficient Markdown, e.g. the markitdown CLI (`markitdown smith_2023_tmb.pdf -o smith_2023_tmb.md`) or the Python API (`from markitdown import MarkItDown; MarkItDown().convert(...)`, reading `result.text_content`). May note pip install 'markitdown[pdf]' for PDF support.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "markitdown" },
+        { "type": "behavior", "value": "Mentions converting the PDF to Markdown via the markitdown CLI or the MarkItDown Python API." }
+      ]
+    },
+    {
+      "id": "batch-convert-mixed-formats",
+      "prompt": "I have a folder of mixed files for a literature review — a bunch of PDFs, some DOCX, a couple of PPTX decks and an XLSX of extracted data. Can I batch-convert all of them to Markdown in one pass?",
+      "expected_output": "Triggers alterlab-markitdown. Explains that MarkItDown handles all these formats (PDF, DOCX, PPTX, XLSX) and shows a batch loop (e.g. iterating files with pathlib glob and calling MarkItDown().convert on each, writing one .md per file). May mention installing 'markitdown[all]' for full format support.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "MarkItDown" },
+        { "type": "behavior", "value": "Describes batch-converting multiple document formats (DOCX/PPTX/XLSX/PDF) to Markdown, ideally with a loop over the files." }
+      ]
+    },
+    {
+      "id": "scanned-image-ocr",
+      "prompt": "I have a scanned figure saved as a PNG with embedded text labels, plus a JPEG of a handwritten-ish chart. I need the text pulled out of these images into Markdown — does this tool do OCR?",
+      "expected_output": "Triggers alterlab-markitdown. Confirms MarkItDown extracts text from images (JPEG/PNG) via OCR and also reads EXIF metadata, converting to Markdown. May note that OCR requires tesseract installed (e.g. `brew install tesseract`) and that AI-enhanced image descriptions are optionally available via an LLM client.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "OCR" },
+        { "type": "behavior", "value": "Confirms image OCR text extraction to Markdown and mentions a dependency such as tesseract." }
+      ]
+    },
+    {
+      "id": "youtube-transcript-to-markdown",
+      "prompt": "There's a conference talk on YouTube I want the transcript of as Markdown text so I can quote it in my notes. Can I just hand the video URL to a converter?",
+      "expected_output": "Triggers alterlab-markitdown. Explains MarkItDown can fetch a YouTube video's transcript directly from the URL (e.g. MarkItDown().convert('https://www.youtube.com/watch?v=...')) and return it as Markdown. May mention the [youtube-transcription] optional dependency.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "transcript" },
+        { "type": "behavior", "value": "Describes passing the YouTube URL to MarkItDown to obtain the transcript as Markdown." }
+      ]
+    },
+    {
+      "id": "near-miss-open-notebook",
+      "prompt": "I want to ingest a stack of PDFs into a self-hosted NotebookLM-style workspace, then chat with them and generate a multi-speaker podcast from my sources. How do I set that up?",
+      "expected_output": "Should NOT trigger alterlab-markitdown — this is not a one-shot file-to-Markdown conversion task. Ingesting sources into a self-hosted research notebook with context-aware chat and podcast generation is alterlab-open-notebook's territory (Open Notebook REST API, /sources, /chat, /podcasts). Defer to alterlab-open-notebook.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-open-notebook" }
+      ]
+    }
+  ]
+}

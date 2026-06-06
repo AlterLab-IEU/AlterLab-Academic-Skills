@@ -1,0 +1,66 @@
+{
+  "skill": "alterlab-denario",
+  "evals": [
+    {
+      "id": "end-to-end-pipeline",
+      "prompt": "I have a time-series dataset and want an AI system to take it all the way from generating a research idea through running the analysis to producing a LaTeX paper. Can you set up that automated pipeline?",
+      "expected_output": "Triggers Denario. Initializes a Denario(project_dir=...) project, calls set_data_description, then the four-stage pipeline get_idea() -> get_method() -> get_results() -> get_paper(journal=Journal.APS). Notes Denario is a multiagent system built on AG2/LangGraph and that LLM API keys (e.g. Vertex AI or OpenAI) must be configured.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "Denario"},
+        {"type": "behavior", "value": "Walks through the four-stage pipeline (get_idea, get_method, get_results, get_paper) and names it a multiagent system on AG2/LangGraph."}
+      ]
+    },
+    {
+      "id": "idea-generation-from-data",
+      "prompt": "Here's a description of my experimental dataset. I want an agent to read it and propose a novel research hypothesis I haven't thought of. How do I do that with Denario?",
+      "expected_output": "Triggers Denario. Uses set_data_description() to define the research context, then den.get_idea() to auto-generate a hypothesis from the data. Mentions set_idea() as the alternative for supplying a custom hypothesis.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "get_idea"},
+        {"type": "behavior", "value": "Maps hypothesis generation to set_data_description followed by get_idea(), and notes set_idea() for custom hypotheses."}
+      ]
+    },
+    {
+      "id": "paper-generation-aps",
+      "prompt": "I've already got my methodology and results written up in markdown. I just want Denario to turn them into a publication-ready APS-formatted LaTeX manuscript.",
+      "expected_output": "Triggers Denario. Uses set_method() and set_results() to inject the pre-computed markdown, then get_paper(journal=Journal.APS) to produce the APS-formatted LaTeX paper with integrated figures. Imports Journal from denario.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "get_paper"},
+        {"type": "output_contains", "value": "Journal.APS"},
+        {"type": "behavior", "value": "Uses set_method/set_results to supply existing content and get_paper(journal=Journal.APS) for the LaTeX output, rather than regenerating from scratch."}
+      ]
+    },
+    {
+      "id": "hybrid-custom-idea",
+      "prompt": "I want to give the agent my own research question about the correlation between X and Y, then have it automatically develop the methodology and run the experiments. Can I mix manual and automated stages in Denario?",
+      "expected_output": "Triggers Denario. Describes the hybrid workflow: set_idea() with the custom hypothesis, then auto-generate with get_method() and get_results(). Emphasizes that each pipeline stage accepts either manual input (set_*) or automated generation (get_*).",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "set_idea"},
+        {"type": "behavior", "value": "Explains the hybrid pattern of set_idea() followed by automated get_method()/get_results(), highlighting the manual-vs-automated flexibility per stage."}
+      ]
+    },
+    {
+      "id": "near-miss-deep-research",
+      "prompt": "I just need a thorough, fact-checked literature review on the current state of graph neural networks for molecular property prediction, with citations to primary sources. No data analysis, no paper writing — just the research report.",
+      "expected_output": "Should NOT trigger Denario. This is a standalone web-research and source-synthesis task, not an end-to-end data-to-paper pipeline driven by a dataset. Defer to the alterlab-deep-research skill, which fans out web searches and synthesizes a cited report.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-deep-research"},
+        {"type": "behavior", "value": "Recognizes there is no dataset or computational pipeline to automate, only literature synthesis, and routes to the deep-research skill."}
+      ]
+    },
+    {
+      "id": "near-miss-market-research",
+      "prompt": "Build me a 50-page McKinsey-style market research report on the electric-vehicle charging industry, with Porter's Five Forces, TAM/SAM/SOM sizing, and professional LaTeX formatting.",
+      "expected_output": "Should NOT trigger Denario. This is a consulting-style market analysis deliverable, not an automated scientific research pipeline running idea/method/results stages over a dataset. Defer to the alterlab-market-research skill, which produces multi-framework strategic reports.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-market-research"},
+        {"type": "behavior", "value": "Distinguishes a strategic market-research deliverable from Denario's scientific data-to-paper pipeline and defers to the market-research skill."}
+      ]
+    }
+  ]
+}

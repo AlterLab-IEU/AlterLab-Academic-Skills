@@ -3,6 +3,7 @@ name: alterlab-glycoengineering
 description: Analyze and engineer protein glycosylation — scan sequences for N-glycosylation sequons (N-X-S/T), predict O-glycosylation hotspots, and reach curated glycoengineering tools (NetOGlyc, GlycoShield, GlycoWorkbench). Use when identifying or designing glycosylation sites, optimizing therapeutic-antibody or biologic glycoforms, or doing glycoprotein engineering and vaccine-design work. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

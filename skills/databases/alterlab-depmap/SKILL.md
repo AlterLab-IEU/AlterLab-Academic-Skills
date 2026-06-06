@@ -3,6 +3,7 @@ name: alterlab-depmap
 description: Query the Cancer Dependency Map (DepMap) for cancer cell line gene dependency scores (CRISPR Chronos), drug sensitivity data, and gene effect profiles. Use when identifying cancer-specific genetic vulnerabilities, finding synthetic lethal interactions, checking whether a gene is essential in given cell lines, or validating oncology drug targets. Part of the AlterLab Academic Skills suite.
 license: CC-BY-4.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless DepMap public data downloads/API (no authentication required)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -300,3 +301,12 @@ Download all files from: https://depmap.org/portal/download/all/
 - **Chronos paper**: Dempster JM et al. (2021) Genome Biology 22(1):343. PMID: 34930405. DOI: 10.1186/s13059-021-02540-7
 - **GitHub**: https://github.com/broadinstitute/depmap-portal
 - **Figshare**: https://plus.figshare.com/articles/dataset/DepMap_24Q4_Public/27993248
+
+## Scripts
+
+`scripts/query_depmap.py` — runnable helper for the DepMap portal API (no key; for matrix-scale work download the release files):
+
+```bash
+python scripts/query_depmap.py gene KRAS --dataset Chronos_Combined
+python scripts/query_depmap.py slice KRAS --dataset-name CRISPRGeneEffect
+```

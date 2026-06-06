@@ -18,7 +18,7 @@ import argparse
 import json
 import re
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict
 
 
 # 18 HIPAA Identifiers patterns

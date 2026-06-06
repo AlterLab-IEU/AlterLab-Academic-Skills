@@ -3,6 +3,7 @@ name: alterlab-bindingdb
 description: Query BindingDB for measured drug-target binding affinities (Ki, Kd, IC50, EC50), searching by target (UniProt ID), compound (SMILES or name), or pathogen. Use when looking up experimental binding constants, profiling inhibitors of a protein target, doing lead optimization, polypharmacology analysis, or structure-activity relationship (SAR) studies. Part of the AlterLab Academic Skills suite.
 license: CC-BY-3.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless public BindingDB web services (no authentication required)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -325,3 +326,13 @@ def prepare_ml_dataset(df, uniprot_ids, affinity_col="IC50 (nM)",
 - **API documentation**: https://www.bindingdb.org/rwd/bind/info.jsp (REST base: https://bindingdb.org/rest)
 - **Citation**: Gilson MK et al. (2016) Nucleic Acids Research. PMID: 26481362
 - **Related resources**: ChEMBL (https://www.ebi.ac.uk/chembl/), PubChem BioAssay
+
+## Scripts
+
+`scripts/query_bindingdb.py` — runnable helper for the BindingDB REST API (no key):
+
+```bash
+python scripts/query_bindingdb.py uniprot P00519 --cutoff 10000
+python scripts/query_bindingdb.py pdb 1Q0L,3ANM --cutoff 100 --identity 92
+python scripts/query_bindingdb.py compound "<SMILES>" --cutoff 0.85
+```

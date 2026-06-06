@@ -3,9 +3,10 @@ name: alterlab-timesfm
 description: Zero-shot univariate time-series forecasting with Google's TimesFM foundation model, producing point forecasts and prediction intervals from CSV/DataFrame/array inputs, with a preflight system checker for RAM/GPU. Use to forecast any univariate series (sales, sensors, energy, vitals, weather) without training a custom model. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: Apache-2.0
+compatibility: No API key required. Runs locally via `uv run python`; requires the timesfm Python package (downloads the TimesFM model weights on first use; GPU optional).
 metadata:
   skill-author: AlterLab
-  skill-version: "1.0.0"
+  version: "1.0.0"
 ---
 
 # TimesFM Forecasting
@@ -44,7 +45,7 @@ Do **not** use this skill when:
 - Your data is tabular (not temporal) → use `scikit-learn`
 
 > **Note on Anomaly Detection**: TimesFM does not have built-in anomaly detection, but you can
-> use the **quantile forecasts as prediction intervals** — values outside the 90% CI (q10–q90)
+> use the **quantile forecasts as prediction intervals** — values outside the 80% CI (q10–q90)
 > are statistically unusual. See the `examples/anomaly-detection/` directory for a full example.
 
 ## ⚠️ Mandatory Preflight: System Requirements Check
@@ -238,393 +239,48 @@ prediction intervals** that can detect anomalies:
 ```python
 point, q = model.forecast(horizon=H, inputs=[values])
 
-# 90% prediction interval
-lower_90 = q[0, :, 1]  # 10th percentile
-upper_90 = q[0, :, 9]  # 90th percentile
+# 80% prediction interval
+lower_80 = q[0, :, 1]  # 10th percentile
+upper_80 = q[0, :, 9]  # 90th percentile
 
-# Detect anomalies: values outside the 90% CI
+# Detect anomalies: values outside the 80% CI
 actual = test_values  # your holdout data
-anomalies = (actual < lower_90) | (actual > upper_90)
+anomalies = (actual < lower_80) | (actual > upper_80)
 
 # Severity levels
-is_warning = (actual < q[0, :, 2]) | (actual > q[0, :, 8])  # outside 80% CI
-is_critical = anomalies  # outside 90% CI
+is_warning = (actual < q[0, :, 2]) | (actual > q[0, :, 8])  # outside 60% CI
+is_critical = anomalies  # outside 80% CI
 ```
 
 | Severity | Condition | Interpretation |
 | -------- | --------- | -------------- |
-| **Normal** | Inside 80% CI | Expected behavior |
-| **Warning** | Outside 80% CI | Unusual but possible |
-| **Critical** | Outside 90% CI | Statistically rare (< 10% probability) |
+| **Normal** | Inside 60% CI | Expected behavior |
+| **Warning** | Outside 60% CI | Unusual but possible |
+| **Critical** | Outside 80% CI | Statistically rare (< 20% probability) |
 
 > See `examples/anomaly-detection/` for a complete example with visualization.
 
-```python
-# Requires: uv pip install timesfm[xreg]
-point, quantiles = model.forecast_with_covariates(
-    inputs=inputs,
-    dynamic_numerical_covariates={"temperature": temp_arrays},
-    dynamic_categorical_covariates={"day_of_week": dow_arrays},
-    static_categorical_covariates={"region": region_labels},
-    xreg_mode="xreg + timesfm",  # or "timesfm + xreg"
-)
-```
+## 📊 Output, Config & Workflows
 
-## 📊 Understanding the Output
+The output structure and full `ForecastConfig` reference are in
+**[`references/output_and_config.md`](references/output_and_config.md)**.
 
-### Quantile Forecast Structure
+> **Critical:** `quantile_forecast` has shape `(batch, horizon, 10)`. Index 0 is the **mean**;
+> q10 = index 1, q50 (median) = index 5, q90 = index 9. The 80% PI is `q[:,:,1]`–`q[:,:,9]`.
 
-TimesFM returns `(point_forecast, quantile_forecast)`:
+Copy-paste workflows (single-series, batch, accuracy evaluation), GPU/memory performance
+tuning, and integration with `statsmodels` / `matplotlib` / EDA are in
+**[`references/workflows.md`](references/workflows.md)**.
 
-- **`point_forecast`**: shape `(batch, horizon)` — the median (0.5 quantile)
-- **`quantile_forecast`**: shape `(batch, horizon, 10)` — ten slices:
 
-| Index | Quantile | Use |
-| ----- | -------- | --- |
-| 0 | Mean | Average prediction |
-| 1 | 0.1 | Lower bound of 80% PI |
-| 2 | 0.2 | Lower bound of 60% PI |
-| 3 | 0.3 | — |
-| 4 | 0.4 | — |
-| **5** | **0.5** | **Median (= `point_forecast`)** |
-| 6 | 0.6 | — |
-| 7 | 0.7 | — |
-| 8 | 0.8 | Upper bound of 60% PI |
-| 9 | 0.9 | Upper bound of 80% PI |
+## 📚 Scripts
 
-### Extracting Prediction Intervals
-
-```python
-point, q = model.forecast(horizon=H, inputs=data)
-
-# 80% prediction interval (most common)
-lower_80 = q[:, :, 1]  # 10th percentile
-upper_80 = q[:, :, 9]  # 90th percentile
-
-# 60% prediction interval (tighter)
-lower_60 = q[:, :, 2]  # 20th percentile
-upper_60 = q[:, :, 8]  # 80th percentile
-
-# Median (same as point forecast)
-median = q[:, :, 5]
-```
-
-```mermaid
-flowchart LR
-    accTitle: Quantile Forecast Anatomy
-    accDescr: Diagram showing how the 10-element quantile vector maps to prediction intervals.
-
-    input["📈 Input Series<br/>1-D array"] --> model["🤖 TimesFM<br/>compile + forecast"]
-    model --> point["📍 Point Forecast<br/>(batch, horizon)"]
-    model --> quant["📊 Quantile Forecast<br/>(batch, horizon, 10)"]
-    quant --> pi80["80% PI<br/>q[:,:,1] – q[:,:,9]"]
-    quant --> pi60["60% PI<br/>q[:,:,2] – q[:,:,8]"]
-    quant --> median["Median<br/>q[:,:,5]"]
-
-    classDef data fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
-    classDef model fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#581c87
-    classDef output fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
-
-    class input data
-    class model model
-    class point,quant,pi80,pi60,median output
-```
-
-## 🔧 ForecastConfig Reference
-
-All forecasting behavior is controlled by `timesfm.ForecastConfig`:
-
-```python
-timesfm.ForecastConfig(
-    max_context=1024,                    # Max context window (truncates longer series)
-    max_horizon=256,                     # Max forecast horizon
-    normalize_inputs=True,               # Normalize inputs (RECOMMENDED for stability)
-    per_core_batch_size=32,              # Batch size per device (tune for memory)
-    use_continuous_quantile_head=True,   # Better quantile accuracy for long horizons
-    force_flip_invariance=True,          # Ensures f(-x) = -f(x) (mathematical consistency)
-    infer_is_positive=True,              # Clamp forecasts ≥ 0 when all inputs > 0
-    fix_quantile_crossing=True,          # Ensure q10 ≤ q20 ≤ ... ≤ q90
-    return_backcast=False,               # Return backcast (for covariate workflows)
-)
-```
-
-| Parameter | Default | When to Change |
-| --------- | ------- | -------------- |
-| `max_context` | 0 | Set to match your longest historical window (e.g., 512, 1024, 4096) |
-| `max_horizon` | 0 | Set to your maximum forecast length |
-| `normalize_inputs` | False | **Always set True** — prevents scale-dependent instability |
-| `per_core_batch_size` | 1 | Increase for throughput; decrease if OOM |
-| `use_continuous_quantile_head` | False | **Set True** for calibrated prediction intervals |
-| `force_flip_invariance` | True | Keep True unless profiling shows it hurts |
-| `infer_is_positive` | True | Set False for series that can be negative (temperature, returns) |
-| `fix_quantile_crossing` | False | **Set True** to guarantee monotonic quantiles |
-
-## 📋 Common Workflows
-
-### Workflow 1: Single Series Forecast
-
-```mermaid
-flowchart TD
-    accTitle: Single Series Forecast Workflow
-    accDescr: Step-by-step workflow for forecasting a single time series with system checking.
-
-    check["1. Run check_system.py"] --> load["2. Load model<br/>from_pretrained()"]
-    load --> compile["3. Compile with ForecastConfig"]
-    compile --> prep["4. Prepare data<br/>pd.read_csv → np.array"]
-    prep --> forecast["5. model.forecast()<br/>horizon=N"]
-    forecast --> extract["6. Extract point + PI"]
-    extract --> plot["7. Plot or export results"]
-
-    classDef step fill:#f3f4f6,stroke:#6b7280,stroke-width:2px,color:#1f2937
-    class check,load,compile,prep,forecast,extract,plot step
-```
-
-```python
-import torch, numpy as np, pandas as pd, timesfm
-
-# 1. System check (run once)
-# python scripts/check_system.py
-
-# 2-3. Load and compile
-torch.set_float32_matmul_precision("high")
-model = timesfm.TimesFM_2p5_200M_torch.from_pretrained(
-    "google/timesfm-2.5-200m-pytorch"
-)
-model.compile(timesfm.ForecastConfig(
-    max_context=512, max_horizon=52, normalize_inputs=True,
-    use_continuous_quantile_head=True, fix_quantile_crossing=True,
-))
-
-# 4. Prepare data
-df = pd.read_csv("weekly_demand.csv", parse_dates=["week"])
-values = df["demand"].values.astype(np.float32)
-
-# 5. Forecast
-point, quantiles = model.forecast(horizon=52, inputs=[values])
-
-# 6. Extract prediction intervals
-forecast_df = pd.DataFrame({
-    "forecast": point[0],
-    "lower_80": quantiles[0, :, 1],
-    "upper_80": quantiles[0, :, 9],
-})
-
-# 7. Plot
-import matplotlib.pyplot as plt
-fig, ax = plt.subplots(figsize=(12, 5))
-ax.plot(values[-104:], label="Historical")
-x_fc = range(len(values[-104:]), len(values[-104:]) + 52)
-ax.plot(x_fc, forecast_df["forecast"], label="Forecast", color="tab:orange")
-ax.fill_between(x_fc, forecast_df["lower_80"], forecast_df["upper_80"],
-                alpha=0.2, color="tab:orange", label="80% PI")
-ax.legend()
-ax.set_title("52-Week Demand Forecast")
-plt.tight_layout()
-plt.savefig("forecast.png", dpi=150)
-print("Saved forecast.png")
-```
-
-### Workflow 2: Batch Forecasting (Many Series)
-
-```python
-import pandas as pd, numpy as np
-
-# Load wide-format CSV (one column per series)
-df = pd.read_csv("all_stores.csv", parse_dates=["date"], index_col="date")
-inputs = [df[col].dropna().values.astype(np.float32) for col in df.columns]
-
-# Forecast all series at once (batched internally)
-point, quantiles = model.forecast(horizon=30, inputs=inputs)
-
-# Collect results
-results = {}
-for i, col in enumerate(df.columns):
-    results[col] = {
-        "forecast": point[i].tolist(),
-        "lower_80": quantiles[i, :, 1].tolist(),
-        "upper_80": quantiles[i, :, 9].tolist(),
-    }
-
-# Export
-import json
-with open("batch_forecasts.json", "w") as f:
-    json.dump(results, f, indent=2)
-print(f"Forecasted {len(results)} series → batch_forecasts.json")
-```
-
-### Workflow 3: Evaluate Forecast Accuracy
-
-```python
-import numpy as np
-
-# Hold out the last H points for evaluation
-H = 24
-train = values[:-H]
-actual = values[-H:]
-
-point, quantiles = model.forecast(horizon=H, inputs=[train])
-pred = point[0]
-
-# Metrics
-mae = np.mean(np.abs(actual - pred))
-rmse = np.sqrt(np.mean((actual - pred) ** 2))
-mape = np.mean(np.abs((actual - pred) / actual)) * 100
-
-# Prediction interval coverage
-lower = quantiles[0, :, 1]
-upper = quantiles[0, :, 9]
-coverage = np.mean((actual >= lower) & (actual <= upper)) * 100
-
-print(f"MAE:  {mae:.2f}")
-print(f"RMSE: {rmse:.2f}")
-print(f"MAPE: {mape:.1f}%")
-print(f"80% PI Coverage: {coverage:.1f}% (target: 80%)")
-```
-
-## ⚙️ Performance Tuning
-
-### GPU Acceleration
-
-```python
-import torch
-
-# Check GPU availability
-if torch.cuda.is_available():
-    print(f"GPU: {torch.cuda.get_device_name(0)}")
-    print(f"VRAM: {torch.cuda.get_device_properties(0).total_mem / 1e9:.1f} GB")
-elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-    print("Apple Silicon MPS available")
-else:
-    print("CPU only — inference will be slower but still works")
-
-# Always set this for Ampere+ GPUs (A100, RTX 3090, etc.)
-torch.set_float32_matmul_precision("high")
-```
-
-### Batch Size Tuning
-
-```python
-# Start conservative, increase until OOM
-# GPU with 8 GB VRAM:  per_core_batch_size=64
-# GPU with 16 GB VRAM: per_core_batch_size=128
-# GPU with 24 GB VRAM: per_core_batch_size=256
-# CPU with 8 GB RAM:   per_core_batch_size=8
-# CPU with 16 GB RAM:  per_core_batch_size=32
-# CPU with 32 GB RAM:  per_core_batch_size=64
-
-model.compile(timesfm.ForecastConfig(
-    max_context=1024,
-    max_horizon=256,
-    per_core_batch_size=32,  # <-- tune this
-    normalize_inputs=True,
-    use_continuous_quantile_head=True,
-    fix_quantile_crossing=True,
-))
-```
-
-### Memory-Constrained Environments
-
-```python
-import gc, torch
-
-# Force garbage collection before loading
-gc.collect()
-if torch.cuda.is_available():
-    torch.cuda.empty_cache()
-
-# Load model
-model = timesfm.TimesFM_2p5_200M_torch.from_pretrained(
-    "google/timesfm-2.5-200m-pytorch"
-)
-
-# Use small batch size on low-memory machines
-model.compile(timesfm.ForecastConfig(
-    max_context=512,        # Reduce context if needed
-    max_horizon=128,        # Reduce horizon if needed
-    per_core_batch_size=4,  # Small batches
-    normalize_inputs=True,
-    use_continuous_quantile_head=True,
-    fix_quantile_crossing=True,
-))
-
-# Process series in chunks to avoid OOM
-CHUNK = 50
-all_results = []
-for i in range(0, len(inputs), CHUNK):
-    chunk = inputs[i:i+CHUNK]
-    p, q = model.forecast(horizon=H, inputs=chunk)
-    all_results.append((p, q))
-    gc.collect()  # Clean up between chunks
-```
-
-## 🔗 Integration with Other Skills
-
-### With `statsmodels`
-
-Use `statsmodels` for classical models (ARIMA, SARIMAX) as a **comparison baseline**:
-
-```python
-# TimesFM forecast
-tfm_point, tfm_q = model.forecast(horizon=H, inputs=[values])
-
-# statsmodels ARIMA forecast
-from statsmodels.tsa.arima.model import ARIMA
-arima = ARIMA(values, order=(1,1,1)).fit()
-arima_forecast = arima.forecast(steps=H)
-
-# Compare
-print(f"TimesFM MAE: {np.mean(np.abs(actual - tfm_point[0])):.2f}")
-print(f"ARIMA MAE:   {np.mean(np.abs(actual - arima_forecast)):.2f}")
-```
-
-### With `matplotlib` / `scientific-visualization`
-
-Plot forecasts with prediction intervals as publication-quality figures.
-
-### With `exploratory-data-analysis`
-
-Run EDA on the time series before forecasting to understand trends, seasonality, and stationarity.
-
-
-
-
-
-## 📚 Available Scripts
-
-### `scripts/check_system.py`
-
-**Mandatory preflight checker.** Run before first model load.
-
-```bash
-python scripts/check_system.py
-```
-
-Output example:
-```
-=== TimesFM System Requirements Check ===
-
-[RAM]       Total: 32.0 GB | Available: 24.3 GB  ✅ PASS
-[GPU]       NVIDIA RTX 4090 | VRAM: 24.0 GB      ✅ PASS
-[Disk]      Free: 142.5 GB                        ✅ PASS
-[Python]    3.12.1                                 ✅ PASS
-[timesfm]   Installed (2.5.0)                      ✅ PASS
-[torch]     Installed (2.4.1+cu121)                ✅ PASS
-
-VERDICT: ✅ System is ready for TimesFM 2.5 (GPU mode)
-Recommended: per_core_batch_size=128
-```
-
-### `scripts/forecast_csv.py`
-
-End-to-end CSV forecasting with automatic system check.
-
-```bash
-python scripts/forecast_csv.py input.csv \
-    --horizon 24 \
-    --date-col date \
-    --value-cols sales,revenue \
-    --output forecasts.csv
-```
+- **`scripts/check_system.py`** — mandatory preflight checker; run before first model load. Reports RAM/GPU/disk/Python/install status and a recommended `per_core_batch_size`.
+- **`scripts/forecast_csv.py`** — end-to-end CSV forecasting with automatic system check:
+  ```bash
+  python scripts/forecast_csv.py input.csv --horizon 24 \
+      --date-col date --value-cols sales,revenue --output forecasts.csv
+  ```
 
 ## 📖 Reference Documentation
 
@@ -632,22 +288,16 @@ Detailed guides in `references/`:
 
 | File | Contents |
 | ---- | -------- |
-| `references/system_requirements.md` | Hardware tiers, GPU/CPU selection, memory estimation formulas |
-| `references/api_reference.md` | Full `ForecastConfig` docs, `from_pretrained` options, output shapes |
-| `references/data_preparation.md` | Input formats, NaN handling, CSV loading, covariate setup |
+| [`references/output_and_config.md`](references/output_and_config.md) | Output shapes, quantile index map, full `ForecastConfig` parameter reference |
+| [`references/workflows.md`](references/workflows.md) | Single/batch/eval workflows, GPU & memory tuning, statsmodels/matplotlib/EDA integration |
+| [`references/pitfalls_and_validation.md`](references/pitfalls_and_validation.md) | Common pitfalls, quality checklist, known mistakes, regression-baseline validation |
+| [`references/system_requirements.md`](references/system_requirements.md) | Hardware tiers, GPU/CPU selection, memory estimation formulas |
+| [`references/api_reference.md`](references/api_reference.md) | Full `from_pretrained` options, API surface, output shapes |
+| [`references/data_preparation.md`](references/data_preparation.md) | Input formats, NaN handling, CSV loading, covariate setup |
 
-## Common Pitfalls
-
-1. **Not running system check** → model load crashes on low-RAM machines. Always run `check_system.py` first.
-2. **Forgetting `model.compile()`** → `RuntimeError: Model is not compiled`. Must call `compile()` before `forecast()`.
-3. **Not setting `normalize_inputs=True`** → unstable forecasts for series with large values.
-4. **Using v1/v2 on machines with < 32 GB RAM** → use TimesFM 2.5 (200M params) instead.
-5. **Not setting `fix_quantile_crossing=True`** → quantiles may not be monotonic (q10 > q50).
-6. **Huge `per_core_batch_size` on small GPU** → CUDA OOM. Start small, increase.
-7. **Passing 2-D arrays** → TimesFM expects a **list of 1-D arrays**, not a 2-D matrix.
-8. **Forgetting `torch.set_float32_matmul_precision("high")`** → slower inference on Ampere+ GPUs.
-9. **Not handling NaN in output** → edge cases with very short series. Always check `np.isnan(point).any()`.
-10. **Using `infer_is_positive=True` for series that can be negative** → clamps forecasts at zero. Set False for temperature, returns, etc.
+> **Before declaring any task done**, run the quality checklist and review the common
+> pitfalls/mistakes in [`references/pitfalls_and_validation.md`](references/pitfalls_and_validation.md)
+> — especially the quantile index off-by-one and `infer_is_positive` for negative series.
 
 ## Model Versions
 
@@ -715,71 +365,10 @@ cd examples/covariates-forecasting && python demo_covariates.py
 | anomaly-detection | `output/anomaly_detection.json`, `output/anomaly_detection.png` | Sep 2023 flagged CRITICAL (z >= 3.0); >= 2 forecast CRITICAL from injected anomalies |
 | covariates-forecasting | `output/sales_with_covariates.csv`, `output/covariates_data.png` | CSV has 108 rows (3 stores x 36 weeks); stores have **distinct** price arrays |
 
-## Quality Checklist
+## Quality, Mistakes & Validation
 
-Run this checklist after every TimesFM task before declaring success:
-
-- [ ] **Output shape correct** -- `point_fc` shape is `(n_series, horizon)`, `quant_fc` is `(n_series, horizon, 10)`
-- [ ] **Quantile indices** -- index 0 = mean, 1 = q10, 2 = q20 ... 9 = q90. **NOT** 0 = q0, 1 = q10.
-- [ ] **Frequency flag** -- TimesFM 1.0/2.0: pass `freq=[0]` for monthly data. TimesFM 2.5: no freq flag.
-- [ ] **Series length** -- context must be >= 32 data points (model minimum). Warn if shorter.
-- [ ] **No NaN** -- `np.isnan(point_fc).any()` should be False. Check input series for gaps first.
-- [ ] **Visualization axes** -- if multiple panels share data, use `sharex=True`. All time axes must cover the same span.
-- [ ] **Binary outputs in Git LFS** -- PNG and GIF files must be tracked via `.gitattributes` (repo root already configured).
-- [ ] **No large datasets committed** -- any real dataset > 1 MB should be downloaded to `tempfile.mkdtemp()` and annotated in code.
-- [ ] **`matplotlib.use('Agg')`** -- must appear before any pyplot import when running headless.
-- [ ] **`infer_is_positive`** -- set `False` for temperature anomalies, financial returns, or any series that can be negative.
-
-## Common Mistakes
-
-These bugs have appeared in this skill's examples. Learn from them:
-
-1. **Quantile index off-by-one** -- The most common mistake. `quant_fc[..., 0]` is the **mean**, not q0. q10 = index 1, q90 = index 9. Always define named constants: `IDX_Q10, IDX_Q20, IDX_Q80, IDX_Q90 = 1, 2, 8, 9`.
-
-2. **Variable shadowing in comprehensions** -- If you build per-series covariate dicts inside a loop, do NOT use the loop variable as the comprehension variable. Accumulate into separate `dict[str, ndarray]` outside the loop, then assign.
-   ```python
-   # WRONG -- outer `store_id` gets shadowed:
-   covariates = {store_id: arr[store_id] for store_id in stores}  # inside outer loop over store_id
-   # CORRECT -- use a different name or accumulate beforehand:
-   prices_by_store: dict[str, np.ndarray] = {}
-   for store_id, config in stores.items():
-       prices_by_store[store_id] = compute_price(config)
-   ```
-
-3. **Wrong CSV column name** -- The global-temperature CSV uses `anomaly_c`, not `anomaly`. Always `print(df.columns)` before accessing.
-
-4. **`tight_layout()` warning with `sharex=True`** -- Harmless; suppress with `plt.tight_layout(rect=[0, 0, 1, 0.97])` or ignore.
-
-5. **TimesFM 2.5 required for `forecast_with_covariates()`** -- TimesFM 1.0 does NOT have this method. Install `pip install timesfm[xreg]` and use checkpoint `google/timesfm-2.5-200m-pytorch`.
-
-6. **Future covariates must span the full horizon** -- Dynamic covariates (price, promotions, holidays) must have values for BOTH the context AND the forecast horizon. You cannot pass context-only arrays.
-
-7. **Anomaly thresholds must be defined once** -- Define `CRITICAL_Z = 3.0`, `WARNING_Z = 2.0` as module-level constants. Never hardcode `3` or `2` inline.
-
-8. **Context anomaly detection uses residuals, not raw values** -- Always detrend first (`np.polyfit` linear, or seasonal decomposition), then Z-score the residuals. Raw-value Z-scores are misleading on trending data.
-
-## Validation & Verification
-
-Use the example outputs as regression baselines. If you change forecasting logic, verify:
-
-```bash
-# Anomaly detection regression check:
-python -c "
-import json
-d = json.load(open('examples/anomaly-detection/output/anomaly_detection.json'))
-ctx = d['context_summary']
-assert ctx['critical'] >= 1, 'Sep 2023 must be CRITICAL'
-assert any(r['date'] == '2023-09' and r['severity'] == 'CRITICAL'
-           for r in d['context_detections']), 'Sep 2023 not found'
-print('Anomaly detection regression: PASS')"
-
-# Covariates regression check:
-python -c "
-import pandas as pd
-df = pd.read_csv('examples/covariates-forecasting/output/sales_with_covariates.csv')
-assert len(df) == 108, f'Expected 108 rows, got {len(df)}'
-prices = df.groupby('store_id')['price'].mean()
-assert prices['store_A'] > prices['store_B'] > prices['store_C'], 'Store price ordering wrong'
-print('Covariates regression: PASS')"
-```
+Before declaring any task done, run the post-task **quality checklist**, review the
+**known mistakes** (quantile off-by-one, covariate-horizon coverage, residual-based anomaly
+detection, etc.), and run the **regression-baseline verification** snippets — all in
+**[`references/pitfalls_and_validation.md`](references/pitfalls_and_validation.md)**.
 

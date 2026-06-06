@@ -3,6 +3,7 @@ name: alterlab-usfiscaldata
 description: Queries the U.S. Treasury Fiscal Data API across 54 datasets and 182 data tables (no API key required) for federal financial data on national debt, government spending, revenue, interest rates, exchange rates, and savings bonds. Use when working with U.S. federal fiscal data, national debt tracking (Debt to the Penny), Daily Treasury Statements, Monthly Treasury Statements, Treasury securities auctions, interest rates on Treasury securities, foreign exchange rates, savings bonds, or any U.S. government financial statistics. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: No API key or registration required. Queries the open U.S. Treasury Fiscal Data REST API; needs network access.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

@@ -1,0 +1,63 @@
+{
+  "skill": "alterlab-clinical-decision",
+  "evals": [
+    {
+      "id": "nsclc-biomarker-cohort",
+      "prompt": "Analyze a cohort of 45 NSCLC patients stratified by PD-L1 expression (<1%, 1-49%, >=50%) receiving pembrolizumab. Include ORR, median PFS, median OS with hazard ratios comparing PD-L1 >=50% vs <50%, and generate Kaplan-Meier curves and a waterfall plot.",
+      "expected_output": "Invokes alterlab-clinical-decision in Patient Cohort Analysis mode. Stratifies by PD-L1 biomarker subgroups, reports ORR/PFS/OS with hazard ratios and 95% CIs, generates Kaplan-Meier survival curves (with log-rank tests and number-at-risk tables) and a waterfall plot, and outputs a publication-ready LaTeX/PDF document with a full-page page-1 executive summary of colored tcolorbox key-findings. May use generate_survival_analysis.py.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "hazard ratio" },
+        { "type": "behavior", "value": "Produces a biomarker-stratified cohort analysis with Kaplan-Meier curves, hazard ratios, and a waterfall plot as a LaTeX/PDF document." }
+      ]
+    },
+    {
+      "id": "her2-treatment-recommendations-grade",
+      "prompt": "Create evidence-based treatment recommendations for HER2-positive metastatic breast cancer with biomarker-guided therapy selection. Use the GRADE system to grade first-line, second-line, and third-line options, and include a decision algorithm flowchart based on brain metastases and hormone receptor status.",
+      "expected_output": "Invokes alterlab-clinical-decision in Treatment Recommendation Report mode. Grades recommendations with the GRADE system (1A/1B/2A/2B/2C), sequences therapy by line based on biomarkers, builds a TikZ decision-algorithm flowchart, cites supporting trials, and outputs a publication-ready LaTeX/PDF with the mandatory page-1 executive summary. May use build_decision_tree.py.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "GRADE" },
+        { "type": "behavior", "value": "Produces GRADE-graded line-of-therapy recommendations with a TikZ decision algorithm flowchart in a LaTeX/PDF document." }
+      ]
+    },
+    {
+      "id": "gbm-molecular-subtype-comparison",
+      "prompt": "Generate a cohort analysis for 30 glioblastoma patients classified into Cluster 1 (Mesenchymal-Immune-Active) and Cluster 2 (Proneural) molecular subtypes. Compare median OS, 6-month PFS rate, and response to TMZ+bevacizumab, with a biomarker profile table and statistical comparison.",
+      "expected_output": "Invokes alterlab-clinical-decision in Patient Cohort Analysis mode. Classifies patients by molecular subtype, compares survival outcomes between the two clusters with log-rank tests and hazard ratios, builds biomarker frequency and outcomes tables, and produces a LaTeX/PDF document with the page-1 executive summary. May use biomarker_classifier.py and create_cohort_tables.py.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "molecular subtype" },
+        { "type": "behavior", "value": "Compares molecular-subtype subgroups with survival statistics and tables at the cohort/population level (not an individual patient)." }
+      ]
+    },
+    {
+      "id": "rwe-comparative-effectiveness",
+      "prompt": "I have real-world EMR data on two treatment regimens for advanced melanoma. Produce a comparative effectiveness analysis with forest plots of subgroup treatment effects and Cox regression hazard ratios, formatted for a medical-affairs advisory board.",
+      "expected_output": "Invokes alterlab-clinical-decision for real-world evidence comparative effectiveness. Performs head-to-head subgroup comparisons with Cox regression hazard ratios and 95% CIs, generates forest plots of treatment effects across subgroups, and outputs a pharmaceutical-grade LaTeX/PDF document (page-1 executive summary, HIPAA de-identification, confidentiality header) suitable for medical affairs.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "forest plot" },
+        { "type": "behavior", "value": "Performs population-level comparative effectiveness with forest plots and Cox hazard ratios for a pharma/medical-affairs audience." }
+      ]
+    },
+    {
+      "id": "near-miss-treatment-plans",
+      "prompt": "Create a treatment plan for a single 62-year-old patient with newly diagnosed HER2-positive breast cancer, with SMART goals, specific drug doses, and a follow-up monitoring schedule for her chart.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-treatment-plans. The ask is an individual, bedside patient care plan (one patient, SMART goals, specific dosing, monitoring for the chart), not a population-level biomarker-stratified cohort analysis or guideline. Clinical-decision is for group-level evidence synthesis, not individual patient plans.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-treatment-plans" }
+      ]
+    },
+    {
+      "id": "near-miss-clinical-reports",
+      "prompt": "Help me write a CARE-guideline case report for journal submission about an unusual presentation of myocarditis in a single young patient, including the clinical timeline and diagnostic assessment.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-clinical-reports. The ask is a single-patient case report following CARE guidelines for journal publication, not a multi-patient biomarker-stratified cohort analysis or GRADE-graded treatment recommendation. Clinical-decision handles group-level analyses and evidence grading, not individual case reports.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-clinical-reports" }
+      ]
+    }
+  ]
+}

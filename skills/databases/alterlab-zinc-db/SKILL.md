@@ -3,8 +3,10 @@ name: alterlab-zinc-db
 description: Access the ZINC database of 230M+ commercially available (purchasable) compounds, searching by ZINC ID or SMILES, running similarity searches, and downloading 3D-ready structures. Use when assembling a compound library for virtual screening, finding purchasable analogs, or obtaining docking-ready 3D structures for drug discovery. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless public ZINC database (no authentication required)
 metadata:
     skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # ZINC Database
@@ -12,6 +14,16 @@ metadata:
 ## Overview
 
 ZINC is a freely accessible repository of 230M+ purchasable compounds maintained by UCSF. Search by ZINC ID or SMILES, perform similarity searches, download 3D-ready structures for docking, discover analogs for virtual screening and drug discovery.
+
+## Scripts
+
+`scripts/query_zinc.py` — query the ZINC22 CartBlanche API via POST (stdlib only, JSON to stdout):
+
+```bash
+python scripts/query_zinc.py id ZINC000019632618          # synchronous ZINC-ID lookup
+python scripts/query_zinc.py smiles "c1ccccc1" --dist 3   # SMILES search (returns async task handle)
+python scripts/query_zinc.py random --count 100 --subset lead-like   # random sample (async task handle)
+```
 
 ## When to Use This Skill
 

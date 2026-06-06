@@ -3,6 +3,7 @@ name: alterlab-sympy
 description: Symbolic mathematics in Python with SymPy — solve equations algebraically, perform calculus (derivatives, integrals, limits), manipulate algebraic expressions, work with symbolic matrices, and generate executable code from formulas. Use when exact symbolic results are needed rather than numerical approximations, or for physics, number-theory, and geometry computations involving variables and parameters. Part of the AlterLab Academic Skills suite.
 license: BSD-3-Clause
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: No API key required. Runs locally via `uv run python`; requires the sympy Python package.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

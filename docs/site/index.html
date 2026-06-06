@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AlterLab Academic Skills — Catalog</title>
+<meta name="description" content="Searchable catalog of the AlterLab Academic Skills suite — academic research skills across 13 domains with executable evals." />
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-elev: #161b22;
+    --bg-card: #11161d;
+    --border: #232c38;
+    --border-soft: #1b222c;
+    --fg: #e6edf3;
+    --fg-muted: #9aa7b4;
+    --fg-dim: #6b7785;
+    --accent: #7aa2f7;
+    --accent-2: #9d7cd8;
+    --good: #3fb950;
+    --good-bg: rgba(63, 185, 80, 0.12);
+    --warn: #d29922;
+    --warn-bg: rgba(210, 153, 34, 0.12);
+    --chip: #1c2430;
+    --radius: 12px;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(157, 124, 216, 0.10), transparent 60%),
+      radial-gradient(1000px 500px at 0% 0%, rgba(122, 162, 247, 0.08), transparent 55%),
+      var(--bg);
+    color: var(--fg);
+    font-family: var(--sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  header.site {
+    border-bottom: 1px solid var(--border-soft);
+    padding: 48px 0 28px;
+    background: linear-gradient(180deg, rgba(22,27,34,0.55), transparent);
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+    margin: 0 0 10px;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(28px, 4vw, 44px);
+    line-height: 1.1;
+    margin: 0 0 12px;
+    letter-spacing: -0.01em;
+  }
+  h1 .grad {
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .lede { color: var(--fg-muted); max-width: 70ch; margin: 0; font-size: 16px; }
+  .lede a { color: var(--fg); border-bottom: 1px solid var(--border); }
+
+  /* Stats / coverage */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+    margin: 28px 0 8px;
+  }
+  .stat {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .stat .num {
+    font-family: var(--serif);
+    font-size: 30px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .stat .label {
+    color: var(--fg-dim);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+  .coverage { margin-top: 22px; }
+  .coverage .crow {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--fg-muted);
+  }
+  .coverage .crow strong { color: var(--fg); }
+  .bar {
+    height: 12px;
+    border-radius: 999px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .bar > span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, var(--good), #56d364);
+    transition: width 900ms cubic-bezier(.22,.61,.36,1);
+  }
+
+  /* Controls */
+  .controls {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(13, 17, 23, 0.82);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-soft);
+    padding: 16px 0;
+    margin-top: 30px;
+  }
+  .controls .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .search {
+    flex: 1 1 280px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 13px;
+  }
+  .search:focus-within { border-color: var(--accent); }
+  .search input {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    color: var(--fg);
+    font-size: 15px;
+    font-family: var(--sans);
+  }
+  .search svg { flex: none; color: var(--fg-dim); }
+  .count-pill {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fg-dim);
+    white-space: nowrap;
+  }
+  .domains {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .chip {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fg-muted);
+    background: var(--chip);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 5px 12px;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 120ms, color 120ms, background 120ms;
+  }
+  .chip:hover { color: var(--fg); border-color: var(--fg-dim); }
+  .chip[aria-pressed="true"] {
+    color: #0d1117;
+    background: var(--accent);
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  .chip .c { opacity: 0.7; margin-left: 6px; }
+
+  /* Cards */
+  main { padding: 26px 0 70px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    transition: border-color 140ms, transform 140ms;
+  }
+  .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .card .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .card h3 {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--fg);
+    word-break: break-word;
+  }
+  .badges { display: flex; gap: 6px; flex: none; flex-wrap: wrap; justify-content: flex-end; }
+  .badge {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.02em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--fg-muted);
+    white-space: nowrap;
+  }
+  .badge.ev-yes { color: var(--good); background: var(--good-bg); border-color: transparent; }
+  .badge.ev-no { color: var(--warn); background: var(--warn-bg); border-color: transparent; }
+  .badge.ver { color: var(--accent); }
+  .card .domain {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent-2);
+    margin-bottom: 8px;
+    letter-spacing: 0.03em;
+  }
+  .card p.desc {
+    margin: 0 0 12px;
+    color: var(--fg-muted);
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+  .card .meta {
+    margin-top: auto;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--fg-dim);
+  }
+  .card .meta .tag {
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    padding: 1px 7px;
+  }
+
+  .empty, .error {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--fg-muted);
+  }
+  .error { color: var(--warn); font-family: var(--mono); font-size: 14px; }
+  .empty code, .error code { color: var(--fg); }
+
+  footer.site {
+    border-top: 1px solid var(--border-soft);
+    padding: 26px 0 50px;
+    color: var(--fg-dim);
+    font-size: 13px;
+  }
+  footer.site .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+
+  @media (max-width: 560px) {
+    header.site { padding: 32px 0 22px; }
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header class="site">
+  <div class="wrap">
+    <p class="eyebrow">AlterLab Creative Technologies Laboratory · IEU</p>
+    <h1><span class="grad">AlterLab Academic Skills</span><br />Catalog</h1>
+    <p class="lede">
+      Purpose-built skills that turn an AI agent into a domain-specific academic
+      research expert — literature review, paper writing &amp; review,
+      citation/integrity verification, bioinformatics, cheminformatics, data science, and more.
+      Browse the full suite below, or read the
+      <a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills">source on GitHub</a>.
+    </p>
+
+    <div class="stats" id="stats"><!-- filled by JS --></div>
+
+    <div class="coverage" id="coverage" hidden>
+      <div class="crow">
+        <span>Eval coverage — skills shipping executable evals</span>
+        <span><strong id="cov-pct">0%</strong> <span id="cov-frac"></span></span>
+      </div>
+      <div class="bar"><span id="cov-bar"></span></div>
+    </div>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="wrap">
+    <div class="row">
+      <label class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="q" type="search" placeholder="Search skills by name or description…" autocomplete="off" spellcheck="false" />
+      </label>
+      <span class="count-pill" id="resultCount"></span>
+    </div>
+    <div class="domains" id="domains"><!-- filled by JS --></div>
+  </div>
+</div>
+
+<main>
+  <div class="wrap">
+    <div id="grid" class="grid" aria-live="polite"></div>
+    <div id="status" class="empty">Loading catalog…</div>
+  </div>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>AlterLab Academic Skills · MIT License · <span id="foot-total"></span></span>
+    <span>Generated from <code>skills.json</code></span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  // The catalog (skills.json) lives at the repo root. Depending on how this page
+  // is served, the relative path differs:
+  //   - gh-pages deploy: skills.json is copied next to index.html  -> "skills.json"
+  //   - served from repo root (python -m http.server): page is at
+  //     /docs/site/index.html, catalog at /skills.json            -> "../../skills.json"
+  // Try each candidate until one loads.
+  var CANDIDATES = ["skills.json", "../../skills.json", "./skills.json", "/skills.json"];
+
+  var state = { all: [], domains: [], activeDomain: null, query: "" };
+
+  var el = {
+    grid: document.getElementById("grid"),
+    status: document.getElementById("status"),
+    stats: document.getElementById("stats"),
+    coverage: document.getElementById("coverage"),
+    covPct: document.getElementById("cov-pct"),
+    covFrac: document.getElementById("cov-frac"),
+    covBar: document.getElementById("cov-bar"),
+    domains: document.getElementById("domains"),
+    q: document.getElementById("q"),
+    resultCount: document.getElementById("resultCount"),
+    footTotal: document.getElementById("foot-total")
+  };
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function fetchCatalog(i) {
+    i = i || 0;
+    if (i >= CANDIDATES.length) {
+      return Promise.reject(new Error("skills.json not found (tried: " + CANDIDATES.join(", ") + ")"));
+    }
+    return fetch(CANDIDATES[i], { cache: "no-store" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .catch(function () { return fetchCatalog(i + 1); });
+  }
+
+  function renderStats(summary) {
+    var total = summary.total;
+    var domainCount = Object.keys(summary.per_domain || {}).length;
+    var ev = summary.eval_coverage || {};
+    el.stats.innerHTML =
+      stat(total, "Skills") +
+      stat(domainCount, "Domains") +
+      stat(ev.with_evals != null ? ev.with_evals : "—", "With evals") +
+      stat("MIT", "License");
+    el.footTotal.textContent = total + " skills · " + domainCount + " domains";
+
+    if (ev.fraction != null) {
+      var pct = Math.round(ev.fraction * 1000) / 10;
+      el.coverage.hidden = false;
+      el.covPct.textContent = pct + "%";
+      el.covFrac.textContent = "(" + ev.with_evals + " / " + ev.total + ")";
+      requestAnimationFrame(function () { el.covBar.style.width = pct + "%"; });
+    }
+  }
+
+  function stat(num, label) {
+    return '<div class="stat"><div class="num">' + esc(num) +
+      '</div><div class="label">' + esc(label) + "</div></div>";
+  }
+
+  function renderDomains() {
+    var html = chip(null, "All", state.all.length);
+    state.domains.forEach(function (d) {
+      html += chip(d.name, d.name, d.count);
+    });
+    el.domains.innerHTML = html;
+    el.domains.querySelectorAll(".chip").forEach(function (c) {
+      c.addEventListener("click", function () {
+        var dom = c.getAttribute("data-domain") || null;
+        state.activeDomain = state.activeDomain === dom ? null : dom;
+        if (dom === null) state.activeDomain = null;
+        render();
+      });
+    });
+  }
+
+  function chip(domain, label, count) {
+    var pressed = (domain === null && state.activeDomain === null) ||
+      (domain !== null && state.activeDomain === domain);
+    return '<button class="chip" type="button" data-domain="' + esc(domain || "") +
+      '" aria-pressed="' + (pressed ? "true" : "false") + '">' +
+      esc(label) + '<span class="c">' + count + "</span></button>";
+  }
+
+  function filtered() {
+    var q = state.query.trim().toLowerCase();
+    return state.all.filter(function (s) {
+      if (state.activeDomain && s.domain !== state.activeDomain) return false;
+      if (!q) return true;
+      return (s.name && s.name.toLowerCase().indexOf(q) !== -1) ||
+        (s.description && s.description.toLowerCase().indexOf(q) !== -1) ||
+        (s.domain && s.domain.toLowerCase().indexOf(q) !== -1);
+    });
+  }
+
+  function card(s) {
+    var evClass = s.has_evals ? "ev-yes" : "ev-no";
+    var evLabel = s.has_evals ? "evals" : "no evals";
+    var badges = '<span class="badge ' + evClass + '">' + evLabel + "</span>";
+    if (s.version) badges += '<span class="badge ver">v' + esc(s.version) + "</span>";
+
+    var meta = "";
+    if (s.has_scripts) meta += '<span class="tag">scripts</span>';
+    if (s.references && s.references.length) meta += '<span class="tag">' + s.references.length + " refs</span>";
+    if (s.license) meta += '<span class="tag">' + esc(s.license) + "</span>";
+    if (s.body_lines) meta += '<span class="tag">' + s.body_lines + " lines</span>";
+
+    return '<article class="card">' +
+      '<div class="top"><h3>' + esc(s.name) + '</h3><div class="badges">' + badges + "</div></div>" +
+      '<div class="domain">' + esc(s.domain) + "</div>" +
+      '<p class="desc">' + esc(s.description) + "</p>" +
+      '<div class="meta">' + meta + "</div>" +
+      "</article>";
+  }
+
+  function render() {
+    el.domains.querySelectorAll(".chip").forEach(function (c) {
+      var dom = c.getAttribute("data-domain") || null;
+      var pressed = (dom === null && state.activeDomain === null) ||
+        (dom !== null && state.activeDomain === dom);
+      c.setAttribute("aria-pressed", pressed ? "true" : "false");
+    });
+
+    var rows = filtered();
+    el.resultCount.textContent = rows.length + " of " + state.all.length;
+    if (!rows.length) {
+      el.grid.innerHTML = "";
+      el.status.className = "empty";
+      el.status.hidden = false;
+      el.status.innerHTML = "No skills match <code>" + esc(state.query) + "</code>" +
+        (state.activeDomain ? " in <code>" + esc(state.activeDomain) + "</code>" : "") + ".";
+      return;
+    }
+    el.status.hidden = true;
+    el.grid.innerHTML = rows.map(card).join("");
+  }
+
+  function init(data) {
+    var skills = (data && data.skills) || [];
+    var summary = (data && data.summary) || {};
+    state.all = skills.slice().sort(function (a, b) {
+      return (a.name || "").localeCompare(b.name || "");
+    });
+
+    var byDomain = {};
+    var perDomain = summary.per_domain || {};
+    Object.keys(perDomain).forEach(function (k) { byDomain[k] = perDomain[k]; });
+    state.all.forEach(function (s) {
+      if (byDomain[s.domain] == null) byDomain[s.domain] = (byDomain[s.domain] || 0) + 1;
+    });
+    state.domains = Object.keys(byDomain).sort().map(function (name) {
+      return { name: name, count: byDomain[name] };
+    });
+
+    if (summary.total == null) summary.total = state.all.length;
+    renderStats(summary);
+    renderDomains();
+
+    var t;
+    el.q.addEventListener("input", function () {
+      clearTimeout(t);
+      t = setTimeout(function () { state.query = el.q.value; render(); }, 80);
+    });
+
+    render();
+  }
+
+  fetchCatalog()
+    .then(init)
+    .catch(function (err) {
+      el.status.className = "error";
+      el.status.innerHTML = "Failed to load catalog: " + esc(err.message) +
+        "<br>Serve the repo over HTTP (e.g. <code>python -m http.server</code>) so " +
+        "<code>skills.json</code> is reachable.";
+    });
+})();
+</script>
+</body>
+</html>

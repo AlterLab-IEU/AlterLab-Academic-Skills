@@ -3,6 +3,7 @@ name: alterlab-pptx-posters
 description: Creates research posters in HTML/CSS with responsive layouts and easy visual integration, exportable to PDF or PPTX. Use ONLY when the user explicitly requests PowerPoint/PPTX poster format or web-based poster design. For standard research posters use latex-posters instead. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
+compatibility: Authors HTML/CSS posters with no external service; exporting to PDF or PPTX requires a headless Chrome browser (and python-pptx for PPTX)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

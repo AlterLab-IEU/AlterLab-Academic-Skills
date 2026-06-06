@@ -11,7 +11,6 @@ Usage:
 
 import argparse
 import scanpy as sc
-import matplotlib.pyplot as plt
 
 
 def calculate_qc_metrics(adata, mt_threshold=5, min_genes=200, min_cells=3):

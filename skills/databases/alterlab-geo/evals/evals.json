@@ -1,0 +1,61 @@
+{
+  "skill": "alterlab-geo",
+  "evals": [
+    {
+      "id": "search-datasets",
+      "prompt": "Find public GEO datasets of human breast cancer RNA-seq experiments — I need candidate GSE series to analyze.",
+      "expected_output": "Invokes alterlab-geo. Searches the GEO DataSets database (db='gds') via Entrez/E-utilities with a query combining the condition, organism (Homo sapiens[Organism]), and dataset type, and returns candidate GSE accessions with titles and sample counts.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "GSE" },
+        { "type": "behavior", "value": "Uses Entrez esearch on the gds database with organism and dataset-type qualifiers to surface candidate GEO series." }
+      ]
+    },
+    {
+      "id": "download-series-matrix",
+      "prompt": "Download GSE123456 and give me the processed expression matrix with the sample metadata so I can start analysis.",
+      "expected_output": "Invokes alterlab-geo. Uses GEOparse.get_GEO to download and parse GSE123456, extracts the expression matrix via pivot_samples('VALUE') (or the series matrix file), and surfaces per-sample metadata (titles, source, characteristics) from the GSM records.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "GEOparse" },
+        { "type": "behavior", "value": "Retrieves the GEO series with GEOparse and produces a genes-by-samples expression matrix plus sample metadata." }
+      ]
+    },
+    {
+      "id": "differential-expression",
+      "prompt": "From GSE123456, I've labeled which samples are control and which are treatment. Run differential expression between the two groups and give me the significant genes.",
+      "expected_output": "Invokes alterlab-geo. Loads the GSE123456 expression matrix via GEOparse, computes per-gene log2 fold changes and t-test p-values between control and treatment groups, applies Benjamini-Hochberg FDR correction, and returns genes passing q<0.05 and |log2FC|>1.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Computes fold changes and p-values between the two sample groups and applies multiple-testing (FDR/Benjamini-Hochberg) correction." }
+      ]
+    },
+    {
+      "id": "ftp-soft-file",
+      "prompt": "Just fetch the SOFT family file for series GSE100001 directly via FTP so I can parse the full metadata offline.",
+      "expected_output": "Invokes alterlab-geo. Constructs the NCBI FTP path for the series (geo/series/GSE100nnn/GSE100001/soft/) and downloads GSE100001_family.soft.gz via FTP (or wget/curl), suitable for offline parsing.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Builds the correct GEO FTP directory path for the accession and downloads the SOFT family file." }
+      ]
+    },
+    {
+      "id": "near-miss-ena",
+      "prompt": "I have SRA run accession SRR1234567 — download the raw FASTQ sequencing reads from the ENA so I can realign them.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-ena. The user wants raw FASTQ reads by SRA run accession from the European Nucleotide Archive, not processed expression matrices or curated study metadata from GEO.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-ena" }
+      ]
+    },
+    {
+      "id": "near-miss-geo-profiles-vs-cbioportal",
+      "prompt": "Show me TP53 mutation status and copy-number alterations across the TCGA pan-cancer cohort in cBioPortal.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-cbioportal. The user wants somatic mutation and copy-number data across a clinical tumor cohort, not gene expression datasets from GEO.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-cbioportal" }
+      ]
+    }
+  ]
+}

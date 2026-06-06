@@ -10,11 +10,10 @@ Validates scientific presentations for common issues:
 """
 
 import sys
-import os
 import argparse
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, Optional
 
 # Try to import PyPDF2 for PDF analysis
 try:

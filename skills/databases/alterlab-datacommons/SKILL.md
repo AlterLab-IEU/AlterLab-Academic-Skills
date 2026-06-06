@@ -3,6 +3,7 @@ name: alterlab-datacommons
 description: Query Google Data Commons for public statistical data aggregated from global sources, resolving geographic entities and pulling time-series statistics. Use when working with demographic data, economic indicators, health statistics, or environmental data — population counts, GDP figures, unemployment rates, disease prevalence — or when resolving places to DCIDs and exploring relationships between statistical entities. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Requires a Data Commons API key
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -252,4 +253,13 @@ Comprehensive documentation for each endpoint is available in the `references/` 
 5. **Cache resolutions**: If querying the same entities repeatedly, store name→DCID mappings
 6. **Filter by facet for consistency**: Use `filter_facet_domains` to ensure data from the same source
 7. **Read reference docs**: Each endpoint has extensive documentation in the `references/` directory
+
+## Scripts
+
+`scripts/query_datacommons.py` — runnable helper for the Data Commons REST v2 API (needs a free key in `DC_API_KEY`):
+
+```bash
+python scripts/query_datacommons.py resolve "California" --type State
+python scripts/query_datacommons.py observe Count_Person geoId/06 --date latest
+```
 

@@ -1,0 +1,87 @@
+{
+  "skill": "alterlab-generate-image",
+  "evals": [
+    {
+      "id": "gi-concept-illustration",
+      "prompt": "I need a conceptual illustration for my immunotherapy paper — a microscopic view of cancer cells being attacked by immunotherapy agents, in a clean scientific illustration style. Can you generate it for figures/?",
+      "expected_output": "Invokes alterlab-generate-image: uses scripts/generate_image.py with the descriptive prompt and a figures/ output path, defaulting to google/gemini-3.1-flash-image-preview, and checks for the OPENROUTER_API_KEY in a .env file before running.",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Treats this as general-purpose image generation (an illustration, not a technical diagram) and routes it through generate_image.py."
+        }
+      ]
+    },
+    {
+      "id": "gi-presentation-background",
+      "prompt": "Make me an abstract blue and white background with subtle molecular patterns for a title slide, professional presentation style. Save it as slides/background.png.",
+      "expected_output": "Invokes alterlab-generate-image: runs generate_image.py with the prompt and --output slides/background.png to produce a photoreal/abstract visual asset for slides.",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "gi-edit-existing-photo",
+      "prompt": "I have a portrait headshot (portrait.png) for my lab website. Can you edit it to add sunglasses to the person and save the result as cleaned.png?",
+      "expected_output": "Invokes alterlab-generate-image in edit mode: runs generate_image.py with --input portrait.png and --output cleaned.png, choosing a model that supports editing (gemini-3.1-flash-image-preview or flux.2-pro).",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Recognizes this is an image-editing request and passes the input image via --input rather than generating from scratch."
+        }
+      ]
+    },
+    {
+      "id": "gi-poster-hero-photorealistic",
+      "prompt": "For my conference poster I want a photorealistic hero image of a modern, well-lit laboratory with current equipment. Output it to poster/hero.png.",
+      "expected_output": "Invokes alterlab-generate-image: generates a photorealistic image via generate_image.py to poster/hero.png, noting that photoreal artwork is this skill's territory.",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "near-miss-scientific-schematics",
+      "prompt": "I need a CONSORT participant flow diagram for my RCT — 500 screened, 150 excluded, 350 randomized into two arms — for a journal submission. Can you make it?",
+      "expected_output": "Does NOT invoke alterlab-generate-image. A CONSORT flowchart is a technical/methodology diagram, so this defers to scientific-schematics, which generates publication-quality diagrams against document-type quality thresholds.",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "scientific-schematics"
+        }
+      ]
+    },
+    {
+      "id": "near-miss-matplotlib",
+      "prompt": "I have a CSV of reaction temperature vs. yield. Plot it as a scatter with a trend line and save a 300 DPI PNG for my paper.",
+      "expected_output": "Does NOT invoke alterlab-generate-image. Plotting numeric data from a file is a data-visualization task, so this defers to matplotlib (or another charting skill), not AI image generation.",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "matplotlib"
+        }
+      ]
+    }
+  ]
+}

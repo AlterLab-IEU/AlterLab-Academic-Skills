@@ -3,6 +3,7 @@ name: alterlab-shap
 description: Model interpretability and explainability with SHAP (SHapley Additive exPlanations) — feature importance and plots (waterfall, beeswarm, bar, scatter, force, heatmap). Use when explaining ML model predictions, computing feature importance, debugging models, analyzing bias or fairness, comparing models, or implementing explainable AI across tree-based models (XGBoost, LightGBM, Random Forest), deep learning (TensorFlow, PyTorch), linear models, and any black-box model. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: No API key required. Runs locally via `uv run python`; requires the shap Python package.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

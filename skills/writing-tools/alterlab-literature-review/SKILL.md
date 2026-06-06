@@ -1,8 +1,9 @@
 ---
 name: alterlab-literature-review
-description: Conducts comprehensive, systematic literature reviews across multiple academic databases (PubMed, arXiv, bioRxiv, Semantic Scholar), producing professionally formatted markdown documents and PDFs with verified citations in multiple styles (APA, Nature, Vancouver). Use when running a systematic literature review, meta-analysis, research synthesis, or broad literature search across biomedical, scientific, and technical domains. Part of the AlterLab Academic Skills suite.
+description: Conducts comprehensive, systematic literature reviews across multiple academic databases (PubMed, arXiv, bioRxiv, Semantic Scholar), with PRISMA flow tracking, study screening (title/abstract and full-text), evidence-table extraction, and risk-of-bias assessment, producing professionally formatted markdown documents and PDFs with verified citations in multiple styles (APA, Nature, Vancouver). Use when running a systematic literature review, meta-analysis, research synthesis, or broad literature search, building a PRISMA flow diagram, screening studies, extracting an evidence table, or assessing risk-of-bias across biomedical, scientific, and technical domains. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
+compatibility: Needs network access to PubMed, arXiv, bioRxiv, and Semantic Scholar (biopython/arxiv clients); PDF output requires pandoc and xelatex (check with --check-deps)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -263,338 +264,47 @@ Literature reviews follow a structured, multi-phase workflow:
 
 ## Database-Specific Search Guidance
 
-### PubMed / PubMed Central
+Access patterns and search tips for each source — PubMed/PMC via **NCBI E-utilities (Entrez)** (with the Biopython snippet), bioRxiv/medRxiv via the **bioRxiv API / Europe PMC**, arXiv, Semantic Scholar, specialized biomedical databases, and forward/backward citation chaining — are in `references/database_search_guidance.md`. Broader cross-database strategy is in `references/database_strategies.md`.
 
-Access via NCBI E-utilities (Entrez esearch/efetch). Use Biopython's `Bio.Entrez`
-or query the eutils.ncbi.nlm.nih.gov endpoints directly:
-```python
-# Search PubMed via Entrez (Biopython)
-from Bio import Entrez
-Entrez.email = "you@example.com"  # required by NCBI
-handle = Entrez.esearch(db="pubmed", term="CRISPR gene editing", retmax=100)
-ids = Entrez.read(handle)["IdList"]
-records = Entrez.efetch(db="pubmed", id=ids, rettype="medline", retmode="text")
+## Citation Style and Source Quality
 
-# Build complex queries with the PubMed Advanced Search Builder,
-# then pass the resulting query string as the `term` argument above.
-```
+- **Citation style quick reference** (APA, Nature, Vancouver) and the rule to **prioritize high-impact papers** (citation-count thresholds, venue tiers, author reputation, identifying seminal work) → `references/source_quality_prioritization.md`.
+- **Full formatting rules** (APA, Nature, Vancouver, Chicago, IEEE) → `references/citation_styles.md`.
 
-**Search tips**:
-- Use MeSH terms: `"sickle cell disease"[MeSH]`
-- Field tags: `[Title]`, `[Title/Abstract]`, `[Author]`
-- Date filters: `2020:2024[Publication Date]`
-- Boolean operators: AND, OR, NOT
-- See MeSH browser: https://meshb.nlm.nih.gov/search
+**Always verify citations** with `scripts/verify_citations.py` before finalizing.
 
-### bioRxiv / medRxiv
+## Best Practices and Pitfalls
 
-Access via the bioRxiv API (api.biorxiv.org) or Europe PMC:
-```bash
-# bioRxiv/medRxiv content API (returns metadata for a date/DOI range)
-curl "https://api.biorxiv.org/details/biorxiv/2024-01-01/2024-12-31/0"
+Best practices for search strategy, screening/selection, synthesis, reproducibility, and writing — plus the 10 common pitfalls to avoid — are in `references/example_workflow_and_practices.md`. Core rules: search ≥3 databases, document every search, organize thematically (not study-by-study), and verify all citations.
 
-# Or keyword-search preprints via Europe PMC (covers bioRxiv + medRxiv)
-curl "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=CRISPR%20sickle%20cell%20AND%20SRC:PPR&format=json"
-```
+## Example Workflow, Integration, and Dependencies
 
-**Important considerations**:
-- Preprints are not peer-reviewed
-- Verify findings with caution
-- Check if preprint has been published (CrossRef)
-- Note preprint version and date
+- A complete end-to-end biomedical-review command sequence (template → search → aggregate → screen → write → verify → PDF) is in `references/example_workflow_and_practices.md`.
+- That file also covers integration with database/analysis/visualization/writing skills and the Python-package + system-tool dependencies (pandoc, xelatex).
 
-### arXiv
+## Routing Guidance
 
-Access via direct API or WebFetch:
-```python
-# Example search categories:
-# q-bio.QM (Quantitative Methods)
-# q-bio.GN (Genomics)
-# q-bio.MN (Molecular Networks)
-# cs.LG (Machine Learning)
-# stat.ML (Machine Learning Statistics)
+- **Run the full review** → follow Core Workflow Phases 1-7 in order.
+- **Pick/query a database** → `references/database_search_guidance.md` (+ `references/database_strategies.md`).
+- **Format or prioritize citations** → `references/source_quality_prioritization.md` and `references/citation_styles.md`.
+- **Best practices, the worked example, integrations, dependencies** → `references/example_workflow_and_practices.md`.
 
-# Search format: category AND terms
-search_query = "cat:q-bio.QM AND ti:\"single cell sequencing\""
-```
-
-### Semantic Scholar
-
-Access via direct API (requires API key, or use free tier):
-- 200M+ papers across all fields
-- Excellent for cross-disciplinary searches
-- Provides citation graphs and paper recommendations
-- Use for finding highly influential papers
-
-### Specialized Biomedical Databases
-
-Use appropriate skills:
-- **ChEMBL**: `bioservices` skill for chemical bioactivity
-- **UniProt**: `gget` or `bioservices` skill for protein information
-- **KEGG**: `bioservices` skill for pathways and genes
-- **COSMIC**: `gget` skill for cancer mutations
-- **AlphaFold**: `gget alphafold` for protein structures
-- **PDB**: `gget` or direct API for experimental structures
-
-### Citation Chaining
-
-Expand search via citation networks:
-
-1. **Forward citations** (papers citing key papers):
-   - Use Google Scholar "Cited by"
-   - Use Semantic Scholar or OpenAlex APIs
-   - Identifies newer research building on seminal work
-
-2. **Backward citations** (references from key papers):
-   - Extract references from included papers
-   - Identify highly cited foundational work
-   - Find papers cited by multiple included studies
-
-## Citation Style Guide
-
-Detailed formatting guidelines are in `references/citation_styles.md`. Quick reference:
-
-### APA (7th Edition)
-- In-text: (Smith et al., 2023)
-- Reference: Smith, J. D., Johnson, M. L., & Williams, K. R. (2023). Title. *Journal*, *22*(4), 301-318. https://doi.org/10.xxx/yyy
-
-### Nature
-- In-text: Superscript numbers^1,2^
-- Reference: Smith, J. D., Johnson, M. L. & Williams, K. R. Title. *Nat. Rev. Drug Discov.* **22**, 301-318 (2023).
-
-### Vancouver
-- In-text: Superscript numbers^1,2^
-- Reference: Smith JD, Johnson ML, Williams KR. Title. Nat Rev Drug Discov. 2023;22(4):301-18.
-
-**Always verify citations** with verify_citations.py before finalizing.
-
-### Prioritizing High-Impact Papers (CRITICAL)
-
-**Always prioritize influential, highly-cited papers from reputable authors and top venues.** Quality matters more than quantity in literature reviews.
-
-#### Citation Count Thresholds
-
-Use citation counts to identify the most impactful papers:
-
-| Paper Age | Citation Threshold | Classification |
-|-----------|-------------------|----------------|
-| 0-3 years | 20+ citations | Noteworthy |
-| 0-3 years | 100+ citations | Highly Influential |
-| 3-7 years | 100+ citations | Significant |
-| 3-7 years | 500+ citations | Landmark Paper |
-| 7+ years | 500+ citations | Seminal Work |
-| 7+ years | 1000+ citations | Foundational |
-
-#### Journal and Venue Tiers
-
-Prioritize papers from higher-tier venues:
-
-- **Tier 1 (Always Prefer):** Nature, Science, Cell, NEJM, Lancet, JAMA, PNAS, Nature Medicine, Nature Biotechnology
-- **Tier 2 (Strong Preference):** High-impact specialized journals (IF>10), top conferences (NeurIPS, ICML for ML/AI)
-- **Tier 3 (Include When Relevant):** Respected specialized journals (IF 5-10)
-- **Tier 4 (Use Sparingly):** Lower-impact peer-reviewed venues
-
-#### Author Reputation Assessment
-
-Prefer papers from:
-- **Senior researchers** with high h-index (>40 in established fields)
-- **Leading research groups** at recognized institutions (Harvard, Stanford, MIT, Oxford, etc.)
-- **Authors with multiple Tier-1 publications** in the relevant field
-- **Researchers with recognized expertise** (awards, editorial positions, society fellows)
-
-#### Identifying Seminal Papers
-
-For any topic, identify foundational work by:
-1. **High citation count** (typically 500+ for papers 5+ years old)
-2. **Frequently cited by other included studies** (appears in many reference lists)
-3. **Published in Tier-1 venues** (Nature, Science, Cell family)
-4. **Written by field pioneers** (often cited as establishing concepts)
-
-## Best Practices
-
-### Search Strategy
-1. **Use multiple databases** (minimum 3): Ensures comprehensive coverage
-2. **Include preprint servers**: Captures latest unpublished findings
-3. **Document everything**: Search strings, dates, result counts for reproducibility
-4. **Test and refine**: Run pilot searches, review results, adjust search terms
-5. **Sort by citations**: When available, sort search results by citation count to surface influential work first
-
-### Screening and Selection
-1. **Use multiple databases** (minimum 3): Ensures comprehensive coverage
-2. **Include preprint servers**: Captures latest unpublished findings
-3. **Document everything**: Search strings, dates, result counts for reproducibility
-4. **Test and refine**: Run pilot searches, review results, adjust search terms
-
-### Screening and Selection
-1. **Use clear criteria**: Document inclusion/exclusion criteria before screening
-2. **Screen systematically**: Title → Abstract → Full text
-3. **Document exclusions**: Record reasons for excluding studies
-4. **Consider dual screening**: For systematic reviews, have two reviewers screen independently
-
-### Synthesis
-1. **Organize thematically**: Group by themes, NOT by individual studies
-2. **Synthesize across studies**: Compare, contrast, identify patterns
-3. **Be critical**: Evaluate quality and consistency of evidence
-4. **Identify gaps**: Note what's missing or understudied
-
-### Quality and Reproducibility
-1. **Assess study quality**: Use appropriate quality assessment tools
-2. **Verify all citations**: Run verify_citations.py script
-3. **Document methodology**: Provide enough detail for others to reproduce
-4. **Follow guidelines**: Use PRISMA for systematic reviews
-
-### Writing
-1. **Be objective**: Present evidence fairly, acknowledge limitations
-2. **Be systematic**: Follow structured template
-3. **Be specific**: Include numbers, statistics, effect sizes where available
-4. **Be clear**: Use clear headings, logical flow, thematic organization
-
-## Common Pitfalls to Avoid
-
-1. **Single database search**: Misses relevant papers; always search multiple databases
-2. **No search documentation**: Makes review irreproducible; document all searches
-3. **Study-by-study summary**: Lacks synthesis; organize thematically instead
-4. **Unverified citations**: Leads to errors; always run verify_citations.py
-5. **Too broad search**: Yields thousands of irrelevant results; refine with specific terms
-6. **Too narrow search**: Misses relevant papers; include synonyms and related terms
-7. **Ignoring preprints**: Misses latest findings; include bioRxiv, medRxiv, arXiv
-8. **No quality assessment**: Treats all evidence equally; assess and report quality
-9. **Publication bias**: Only positive results published; note potential bias
-10. **Outdated search**: Field evolves rapidly; clearly state search date
-
-## Example Workflow
-
-Complete workflow for a biomedical literature review:
-
-```bash
-# 1. Create review document from template
-cp assets/review_template.md crispr_sickle_cell_review.md
-
-# 2. Search multiple databases using appropriate APIs
-# - Use NCBI E-utilities (Entrez) for PubMed/PMC
-# - Use the bioRxiv API (api.biorxiv.org) or Europe PMC for preprints
-# - Use direct API access for arXiv, Semantic Scholar
-# - Export results in JSON format
-
-# 3. Aggregate and process results
-python scripts/search_databases.py combined_results.json \
-  --deduplicate \
-  --rank citations \
-  --year-start 2015 \
-  --year-end 2024 \
-  --format markdown \
-  --output search_results.md \
-  --summary
-
-# 4. Screen results and extract data
-# - Manually screen titles, abstracts, full texts
-# - Extract key data into the review document
-# - Organize by themes
-
-# 5. Write the review following template structure
-# - Introduction with clear objectives
-# - Detailed methodology section
-# - Results organized thematically
-# - Critical discussion
-# - Clear conclusions
-
-# 6. Verify all citations
-python scripts/verify_citations.py crispr_sickle_cell_review.md
-
-# Review the citation report
-cat crispr_sickle_cell_review_citation_report.json
-
-# Fix any failed citations and re-verify
-python scripts/verify_citations.py crispr_sickle_cell_review.md
-
-# 7. Generate professional PDF
-python scripts/generate_pdf.py crispr_sickle_cell_review.md \
-  --citation-style nature \
-  --output crispr_sickle_cell_review.pdf
-
-# 8. Review final PDF and markdown outputs
-```
-
-## Integration with Other Skills
-
-This skill works seamlessly with other scientific skills:
-
-### Database Access Skills
-- **NCBI E-utilities (Entrez)**: PubMed/PMC search and retrieval
-- **bioRxiv API / Europe PMC**: bioRxiv and medRxiv preprints
-- **gget**: COSMIC, AlphaFold, Ensembl, UniProt
-- **bioservices**: ChEMBL, KEGG, Reactome, UniProt, PubChem
-- **datacommons-client**: Demographics, economics, health statistics
-
-### Analysis Skills
-- **pydeseq2**: RNA-seq differential expression (for methods sections)
-- **scanpy**: Single-cell analysis (for methods sections)
-- **anndata**: Single-cell data (for methods sections)
-- **biopython**: Sequence analysis (for background sections)
-
-### Visualization Skills
-- **matplotlib**: Generate figures and plots for review
-- **seaborn**: Statistical visualizations
-
-### Writing Skills
-- **brand-guidelines**: Apply institutional branding to PDF
-- **internal-comms**: Adapt review for different audiences
-
-## Resources
-
-### Bundled Resources
+## References Index
 
 **Scripts:**
-- `scripts/verify_citations.py`: Verify DOIs and generate formatted citations
-- `scripts/generate_pdf.py`: Convert markdown to professional PDF
-- `scripts/search_databases.py`: Process, deduplicate, and format search results
+- `scripts/verify_citations.py` — verify DOIs and generate formatted citations.
+- `scripts/generate_pdf.py` — convert markdown to a professional PDF.
+- `scripts/search_databases.py` — process, deduplicate, rank, and format search results.
 
 **References:**
-- `references/citation_styles.md`: Detailed citation formatting guide (APA, Nature, Vancouver, Chicago, IEEE)
-- `references/database_strategies.md`: Comprehensive database search strategies
+- `references/database_search_guidance.md` — per-database access patterns (Entrez/PubMed, bioRxiv API, arXiv, Semantic Scholar), search tips, citation chaining.
+- `references/database_strategies.md` — comprehensive cross-database search strategies.
+- `references/source_quality_prioritization.md` — citation-style quick reference plus high-impact prioritization (thresholds, venue tiers, seminal-paper identification).
+- `references/citation_styles.md` — detailed citation formatting (APA, Nature, Vancouver, Chicago, IEEE).
+- `references/example_workflow_and_practices.md` — end-to-end worked example, best practices, common pitfalls, skill integration, dependencies, external resources.
 
 **Assets:**
-- `assets/review_template.md`: Complete literature review template with all sections
-
-### External Resources
-
-**Guidelines:**
-- PRISMA (Systematic Reviews): http://www.prisma-statement.org/
-- Cochrane Handbook: https://training.cochrane.org/handbook
-- AMSTAR 2 (Review Quality): https://amstar.ca/
-
-**Tools:**
-- MeSH Browser: https://meshb.nlm.nih.gov/search
-- PubMed Advanced Search: https://pubmed.ncbi.nlm.nih.gov/advanced/
-- Boolean Search Guide: https://www.ncbi.nlm.nih.gov/books/NBK3827/
-
-**Citation Styles:**
-- APA Style: https://apastyle.apa.org/
-- Nature Portfolio: https://www.nature.com/nature-portfolio/editorial-policies/reporting-standards
-- NLM/Vancouver: https://www.nlm.nih.gov/bsd/uniform_requirements.html
-
-## Dependencies
-
-### Required Python Packages
-```bash
-pip install requests  # For citation verification
-```
-
-### Required System Tools
-```bash
-# For PDF generation
-brew install pandoc  # macOS
-apt-get install pandoc  # Linux
-
-# For LaTeX (PDF generation)
-brew install --cask mactex  # macOS
-apt-get install texlive-xetex  # Linux
-```
-
-Check dependencies:
-```bash
-python scripts/generate_pdf.py --check-deps
-```
+- `assets/review_template.md` — complete literature review template with all sections.
 
 ## Summary
 

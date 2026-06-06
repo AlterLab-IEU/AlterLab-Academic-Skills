@@ -3,6 +3,7 @@ name: alterlab-hypothesis-gen
 description: Formulates structured, testable hypotheses from experimental observations using a scientific-method framework — derives predictions, proposes mechanisms, and designs experiments to test them. Use when turning observations or data into falsifiable hypotheses, predictions, or experimental designs. For open-ended ideation prefer scientific-brainstorming; for automated LLM-driven hypothesis testing on datasets use hypogenic. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
+compatibility: No external tools, API keys, or services required — reasons over provided observations using the Read/Write/Edit/Bash tools alone
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

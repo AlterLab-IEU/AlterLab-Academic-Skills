@@ -1,0 +1,60 @@
+{
+  "skill": "alterlab-adaptyv",
+  "evals": [
+    {
+      "id": "submit-binding-experiment",
+      "prompt": "I have 24 designed mini-binder sequences and I want to send them to Adaptyv to measure binding affinity against my target by biolayer interferometry. Can you set up the experiment submission?",
+      "expected_output": "Invokes alterlab-adaptyv: builds the API submission (POST to the experiments endpoint with Bearer ADAPTYV_API_KEY), sets experiment_type to binding, formats the sequences as FASTA in the request body, and returns the experiment_id for tracking. Notes the ~21-day turnaround and that binding is measured via biolayer interferometry.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "binding" },
+        { "type": "behavior", "value": "Constructs an authenticated API POST to the Adaptyv experiments endpoint and returns/tracks an experiment_id." }
+      ]
+    },
+    {
+      "id": "optimize-sequence-expression",
+      "prompt": "Before I spend money sending these proteins to the wet lab, I want to filter and redesign them for better solubility and expression. Several have unpaired cysteines and look aggregation-prone.",
+      "expected_output": "Invokes alterlab-adaptyv's protein sequence optimization workflow: flags unpaired cysteines and excessive hydrophobic regions, runs initial solubility filtering with NetSolP/SoluProt, redesigns sequences for solubility with SolubleMPNN, scores likelihood with ESM, and quantifies hydrophobic exposure (pSAE) before any submission.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Recommends solubility/expression optimization tools (NetSolP, SoluProt, SolubleMPNN, ESM) and addresses unpaired cysteines / hydrophobic aggregation before wet-lab submission." }
+      ]
+    },
+    {
+      "id": "track-and-download-results",
+      "prompt": "I submitted an experiment to Adaptyv three weeks ago and have the experiment ID. How do I check whether it's done and pull the thermostability results?",
+      "expected_output": "Invokes alterlab-adaptyv: queries the Adaptyv API by experiment_id to check status, and once complete downloads/retrieves the result payload. Handles the thermostability assay type and reminds that results land in roughly 21 days.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "experiment" }
+      ]
+    },
+    {
+      "id": "batch-enzyme-activity",
+      "prompt": "I have a library of enzyme variants and need to submit them in batch for activity assays through the Adaptyv platform, then webhook me when each finishes.",
+      "expected_output": "Invokes alterlab-adaptyv: batches the variant library into experiment submissions with experiment_type enzyme activity, sets the webhook_url for completion callbacks, and tracks the returned experiment IDs. References the batch-processing examples and API auth.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Submits a batch of sequences for enzyme activity assays and configures a webhook callback for completion." }
+      ]
+    },
+    {
+      "id": "near-miss-pymatgen",
+      "prompt": "I'm computing the formation energy and band structure of a candidate inorganic catalyst material from its crystal structure. Can you help me set up the calculation?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-pymatgen. The request is about inorganic crystalline materials properties (formation energy, band structure), not protein design, sequence optimization, or wet-lab experiment submission on the Adaptyv platform.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-pymatgen" }
+      ]
+    },
+    {
+      "id": "near-miss-modal",
+      "prompt": "I just want to run my ESMFold protein-structure-prediction script on a serverless A100 GPU in the cloud, scaled out over a few thousand sequences. How do I deploy it?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-modal. The ask is about serverless GPU compute deployment for a prediction job, not submitting sequences to the Adaptyv wet-lab platform or optimizing them for expression. Adaptyv is a physical-assay service, not a GPU compute backend.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-modal" }
+      ]
+    }
+  ]
+}

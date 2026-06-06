@@ -5,6 +5,55 @@ This repository (AlterLab Academic Skills) is licensed under the **MIT License**
 docs, and helper scripts authored by AlterLab — is original work under the license
 declared in each skill's frontmatter `license:` field.
 
+## Provenance / Upstream
+
+AlterLab Academic Skills began as a **content fork** of
+[**K-Dense-AI/scientific-agent-skills**](https://github.com/K-Dense-AI/scientific-agent-skills)
+(formerly published as `claude-scientific-skills`), the scientific Agent Skills library by
+**K-Dense Inc.** We gratefully acknowledge K-Dense's work as the seed of this collection.
+
+**License compatibility.** The upstream repository is released under the **MIT License,
+Copyright (c) 2025 K-Dense Inc.** (verified against the upstream
+[`LICENSE.md`](https://github.com/K-Dense-AI/scientific-agent-skills/blob/main/LICENSE.md)
+and the GitHub-reported license metadata). MIT's permission grant explicitly allows use,
+copying, modification, and **sublicensing** of the Software, provided the original copyright
+notice and permission notice are retained. Distributing our derivative work under our own MIT
+license (Copyright (c) 2026 AlterLab Creative Technologies Laboratory) is therefore permitted;
+this is a **relicensing of a derivative within the MIT family**, not a license change of the
+upstream work. The upstream MIT copyright notice for K-Dense Inc. is preserved below.
+
+```
+MIT License
+
+Copyright (c) 2025 K-Dense Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+**Scope of the derivative.** At fork time, **42 skill bodies were byte-identical** to their
+K-Dense counterparts; the remainder were already diverging and the collection has since been
+substantially restructured, audited, corrected, and extended into the 180-skill AlterLab suite
+(13 research domains). The systematic deltas — added executable evals, license/citation audits,
+script-correctness fixes, progressive-disclosure refactors, the academic-faculty framing, and
+the bilingual (EN/TR) documentation — are narrated in [`PROVENANCE.md`](PROVENANCE.md). This is
+a derivative of an MIT-licensed work, not a verbatim redistribution.
+
 ## Tools, libraries, and databases the skills describe
 
 These skills are **instructional wrappers**: they teach Claude how to use third-party

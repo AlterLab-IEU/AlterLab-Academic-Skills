@@ -1,6 +1,5 @@
 import pandas as pd
 import os
-import json
 from typing import List, Dict, Optional, Union
 
 # Default data path
@@ -131,8 +130,8 @@ def find_paths(
 
     if max_depth >= 2:
         # Find neighbors of start
-        n1_x = kg[kg["x_id"].astype(str) == start_node_id]
-        n1_y = kg[kg["y_id"].astype(str) == start_node_id]
+        _n1_x = kg[kg["x_id"].astype(str) == start_node_id]
+        _n1_y = kg[kg["y_id"].astype(str) == start_node_id]
 
         # This is computationally expensive in pure pandas for a large KG.
         # Implementation skipped for brevity in this MVP, but suggested for full version.

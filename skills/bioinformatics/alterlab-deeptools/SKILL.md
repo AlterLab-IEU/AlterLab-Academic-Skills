@@ -3,6 +3,7 @@ name: alterlab-deeptools
 description: Process and visualize deep-sequencing coverage with the deepTools CLI — convert BAM to bigWig (bamCoverage), run QC (multiBamSummary correlation, PCA, plotFingerprint), and build TSS/peak heatmaps and profiles (computeMatrix, plotHeatmap, plotProfile). Use when generating coverage tracks or signal heatmaps and profiles for ChIP-seq, ATAC-seq, or RNA-seq data. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -140,66 +141,17 @@ Full workflow in `references/workflows.md` → "ATAC-seq Workflow"
 
 ## Tool Categories and Common Tasks
 
-### BAM/bigWig Processing
+deepTools commands group into three categories. Quick command examples for each
+live in `references/usage_playbook.md` → "Inline Command Examples by Category";
+full parameter documentation is in `references/tools_reference.md`.
 
-**Convert BAM to normalized coverage:**
-```bash
-bamCoverage --bam input.bam --outFileName output.bw \
-    --normalizeUsing RPGC --effectiveGenomeSize 2913022398 \
-    --binSize 10 --numberOfProcessors 8
-```
-
-**Compare two samples (log2 ratio):**
-```bash
-bamCompare -b1 treatment.bam -b2 control.bam -o ratio.bw \
-    --operation log2 --scaleFactorsMethod readCount
-```
-
-**Key tools:** bamCoverage, bamCompare, multiBamSummary, multiBigwigSummary, correctGCBias, alignmentSieve
-
-Complete reference: `references/tools_reference.md` → "BAM and bigWig File Processing Tools"
-
-### Quality Control
-
-**Check ChIP enrichment:**
-```bash
-plotFingerprint -b input.bam chip.bam -o fingerprint.png \
-    --extendReads 200 --ignoreDuplicates
-```
-
-**Sample correlation:**
-```bash
-multiBamSummary bins --bamfiles *.bam -o counts.npz
-plotCorrelation -in counts.npz --corMethod pearson \
-    --whatToShow heatmap -o correlation.png
-```
-
-**Key tools:** plotFingerprint, plotCoverage, plotCorrelation, plotPCA, bamPEFragmentSize
-
-Complete reference: `references/tools_reference.md` → "Quality Control Tools"
-
-### Visualization
-
-**Create heatmap around TSS:**
-```bash
-# Compute matrix
-computeMatrix reference-point -S signal.bw -R genes.bed \
-    -b 3000 -a 3000 --referencePoint TSS -o matrix.gz
-
-# Generate heatmap
-plotHeatmap -m matrix.gz -o heatmap.png \
-    --colorMap RdBu --kmeans 3
-```
-
-**Create profile plot:**
-```bash
-plotProfile -m matrix.gz -o profile.png \
-    --plotType lines --colors blue red
-```
-
-**Key tools:** computeMatrix, plotHeatmap, plotProfile, plotEnrichment
-
-Complete reference: `references/tools_reference.md` → "Visualization Tools"
+- **BAM/bigWig processing** — bamCoverage, bamCompare, multiBamSummary,
+  multiBigwigSummary, correctGCBias, alignmentSieve
+  (`tools_reference.md` → "BAM and bigWig File Processing Tools")
+- **Quality control** — plotFingerprint, plotCoverage, plotCorrelation, plotPCA,
+  bamPEFragmentSize (`tools_reference.md` → "Quality Control Tools")
+- **Visualization** — computeMatrix, plotHeatmap, plotProfile, plotEnrichment
+  (`tools_reference.md` → "Visualization Tools")
 
 ## Normalization Methods
 
@@ -330,55 +282,15 @@ Common errors and solutions explained in script output.
 
 ## Reference Documentation
 
-This skill includes comprehensive reference documentation:
+Load the matching reference on demand:
 
-### references/tools_reference.md
-Complete documentation of all deepTools commands organized by category:
-- BAM and bigWig processing tools (9 tools)
-- Quality control tools (6 tools)
-- Visualization tools (3 tools)
-- Miscellaneous tools (2 tools)
-
-Each tool includes:
-- Purpose and overview
-- Key parameters with explanations
-- Usage examples
-- Important notes and best practices
-
-**Use this reference when:** Users ask about specific tools, parameters, or detailed usage.
-
-### references/workflows.md
-Complete workflow examples for common analyses:
-- ChIP-seq quality control workflow
-- ChIP-seq complete analysis workflow
-- RNA-seq coverage workflow
-- ATAC-seq analysis workflow
-- Multi-sample comparison workflow
-- Peak region analysis workflow
-- Troubleshooting and performance tips
-
-**Use this reference when:** Users need complete analysis pipelines or workflow examples.
-
-### references/normalization_methods.md
-Comprehensive guide to normalization methods:
-- Detailed explanation of each method (RPGC, CPM, RPKM, BPM, etc.)
-- When to use each method
-- Formulas and interpretation
-- Selection guide by experiment type
-- Common pitfalls and solutions
-- Quick reference table
-
-**Use this reference when:** Users ask about normalization, comparing samples, or which method to use.
-
-### references/effective_genome_sizes.md
-Effective genome size values and usage:
-- Common organism values (human, mouse, fly, worm, zebrafish)
-- Read-length-specific values
-- Calculation methods
-- When and how to use in commands
-- Custom genome calculation instructions
-
-**Use this reference when:** Users need genome size for RPGC normalization or GC bias correction.
+| Reference | Load when |
+|-----------|-----------|
+| `references/tools_reference.md` | User asks about a specific tool, parameter, or detailed usage. All commands by category (BAM/bigWig 9, QC 6, visualization 3, misc 2) with parameters, examples, and notes. |
+| `references/workflows.md` | User needs a complete analysis pipeline. ChIP-seq QC, ChIP-seq analysis, RNA-seq coverage, ATAC-seq, multi-sample comparison, peak region analysis, performance tips. |
+| `references/normalization_methods.md` | User asks about normalization, comparing samples, or which method to use. Per-method detail (RPGC/CPM/RPKM/BPM…), formulas, selection guide, pitfalls. |
+| `references/effective_genome_sizes.md` | User needs a genome size for RPGC normalization or GC-bias correction. Per-organism and read-length-specific values, custom-genome calculation. |
+| `references/usage_playbook.md` | Driving the skill: per-request playbooks, example interactions, quick command examples by category, and grep recipes for searching the references above. |
 
 ## Helper Scripts
 
@@ -431,92 +343,12 @@ Quick reference card with most common commands, effective genome sizes, and typi
 
 ## Handling User Requests
 
-### For New Users
-
-1. Start with installation verification
-2. Validate input files using `scripts/validate_files.py`
-3. Recommend appropriate workflow based on experiment type
-4. Generate workflow template using `scripts/workflow_generator.py`
-5. Guide through customization and execution
-
-### For Experienced Users
-
-1. Provide specific tool commands for requested operations
-2. Reference appropriate sections in `references/tools_reference.md`
-3. Suggest optimizations and best practices
-4. Offer troubleshooting for issues
-
-### For Specific Tasks
-
-**"Convert BAM to bigWig":**
-- Use bamCoverage with appropriate normalization
-- Recommend RPGC or CPM based on use case
-- Provide effective genome size for organism
-- Suggest relevant parameters (extendReads, ignoreDuplicates, binSize)
-
-**"Check ChIP quality":**
-- Run full QC workflow or use plotFingerprint specifically
-- Explain interpretation of results
-- Suggest follow-up actions based on results
-
-**"Create heatmap":**
-- Guide through two-step process: computeMatrix → plotHeatmap
-- Help choose appropriate matrix mode (reference-point vs scale-regions)
-- Suggest visualization parameters and clustering options
-
-**"Compare samples":**
-- Recommend bamCompare for two-sample comparison
-- Suggest multiBamSummary + plotCorrelation for multiple samples
-- Guide normalization method selection
-
-### Referencing Documentation
-
-When users need detailed information:
-- **Tool details**: Direct to specific sections in `references/tools_reference.md`
-- **Workflows**: Use `references/workflows.md` for complete analysis pipelines
-- **Normalization**: Consult `references/normalization_methods.md` for method selection
-- **Genome sizes**: Reference `references/effective_genome_sizes.md`
-
-Search references using grep patterns:
-```bash
-# Find tool documentation
-grep -A 20 "^### toolname" references/tools_reference.md
-
-# Find workflow
-grep -A 50 "^## Workflow Name" references/workflows.md
-
-# Find normalization method
-grep -A 15 "^### Method Name" references/normalization_methods.md
-```
-
-## Example Interactions
-
-**User: "I need to analyze my ChIP-seq data"**
-
-Response approach:
-1. Ask about files available (BAM files, peaks, genes)
-2. Validate files using validation script
-3. Generate chipseq_analysis workflow template
-4. Customize for their specific files and organism
-5. Explain each step as script runs
-
-**User: "Which normalization should I use?"**
-
-Response approach:
-1. Ask about experiment type (ChIP-seq, RNA-seq, etc.)
-2. Ask about comparison goal (within-sample or between-sample)
-3. Consult `references/normalization_methods.md` selection guide
-4. Recommend appropriate method with justification
-5. Provide command example with parameters
-
-**User: "Create a heatmap around TSS"**
-
-Response approach:
-1. Verify bigWig and gene BED files available
-2. Use computeMatrix with reference-point mode at TSS
-3. Generate plotHeatmap with appropriate visualization parameters
-4. Suggest clustering if dataset is large
-5. Offer profile plot as complement
+Per-request playbooks (new vs experienced users, task-specific responses for
+"convert BAM to bigWig" / "check ChIP quality" / "create heatmap" /
+"compare samples"), example interactions, and grep recipes for searching the
+references all live in `references/usage_playbook.md`. The common thread:
+validate files first → pick the right workflow/normalization → generate or run
+the command → explain the result.
 
 ## Key Reminders
 

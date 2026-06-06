@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/skills/core/shared/schemas/response_to_reviewers.schema.json",
+  "title": "Response to Reviewers",
+  "description": "Handoff Schema 8. Producer: alterlab-paper-writer/draft_writer_agent (revision mode). Consumer: alterlab-paper-reviewer/editorial_synthesizer_agent (re-review).",
+  "type": "object",
+  "required": [
+    "revision_round",
+    "items",
+    "summary",
+    "word_count_delta",
+    "new_references_added",
+    "summary_of_changes",
+    "new_content_highlight"
+  ],
+  "properties": {
+    "revision_round": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Which revision round (1, 2, ...)."
+    },
+    "items": {
+      "type": "array",
+      "description": "Response to each revision roadmap item.",
+      "items": { "$ref": "#/$defs/response_item" }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["resolved", "limitations", "unresolvable", "disagreed"],
+      "properties": {
+        "resolved": { "type": "integer", "minimum": 0 },
+        "limitations": { "type": "integer", "minimum": 0 },
+        "unresolvable": { "type": "integer", "minimum": 0 },
+        "disagreed": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "word_count_delta": {
+      "type": "integer",
+      "description": "Net word count change (positive = added, negative = removed)."
+    },
+    "new_references_added": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Count of new references added during revision."
+    },
+    "summary_of_changes": {
+      "type": "string",
+      "description": "High-level summary of all modifications."
+    },
+    "new_content_highlight": {
+      "type": "array",
+      "description": "Sections with substantial new content.",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "response_item": {
+      "type": "object",
+      "required": [
+        "roadmap_item_id",
+        "reviewer_comment",
+        "author_response",
+        "change_location",
+        "status"
+      ],
+      "properties": {
+        "roadmap_item_id": {
+          "type": "string",
+          "description": "Corresponds to RoadmapItem.id (e.g., REV-001)."
+        },
+        "reviewer_comment": {
+          "type": "string",
+          "description": "Original reviewer comment (quoted)."
+        },
+        "author_response": {
+          "type": "string",
+          "description": "Detailed response to the reviewer."
+        },
+        "change_location": {
+          "type": "string",
+          "description": "Where in the paper the change was made (section + paragraph)."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["RESOLVED", "DELIBERATE_LIMITATION", "UNRESOLVABLE", "REVIEWER_DISAGREE"]
+        },
+        "decline_justification": {
+          "type": "string",
+          "description": "Required if status is DELIBERATE_LIMITATION, UNRESOLVABLE, or REVIEWER_DISAGREE; must cite evidence."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": ["DELIBERATE_LIMITATION", "UNRESOLVABLE", "REVIEWER_DISAGREE"]
+              }
+            }
+          },
+          "then": {
+            "required": ["decline_justification"]
+          }
+        }
+      ]
+    }
+  }
+}

@@ -3,6 +3,7 @@ name: alterlab-hmdb
 description: Access the Human Metabolome Database (HMDB, 220K+ metabolites), searching by name, HMDB ID, or structure to retrieve chemical properties, biomarker data, NMR/MS reference spectra, and associated pathways. Use when identifying a human metabolite, looking up its biomarker or disease associations, matching NMR/MS spectra, or running metabolomics annotation. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: No public REST API; uses keyless web scraping plus bulk XML/SDF downloads (no authentication required)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -13,6 +14,17 @@ metadata:
 ## Overview
 
 The Human Metabolome Database (HMDB) is a comprehensive, freely available resource containing detailed information about small molecule metabolites found in the human body.
+
+## Scripts
+
+`scripts/query_hmdb.py` — fetch and parse an HMDB metabolite XML record by accession (stdlib only, JSON to stdout):
+
+```bash
+python scripts/query_hmdb.py HMDB0000001    # full accession
+python scripts/query_hmdb.py 1              # bare number (zero-padded automatically)
+```
+
+Note: HMDB serves no public REST API and may rate-limit/block automated fetches; for bulk work download the XML/SDF dumps from https://www.hmdb.ca/downloads.
 
 ## When to Use This Skill
 

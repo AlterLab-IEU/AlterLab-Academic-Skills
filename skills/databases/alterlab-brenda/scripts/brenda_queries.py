@@ -26,19 +26,18 @@ Usage:
 import re
 import time
 import json
-import csv
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any
 
 try:
-    from zeep import Client, Settings
-    from zeep.exceptions import Fault, TransportError
+    from zeep import Client, Settings  # noqa: F401  # availability probe for ZEEP_AVAILABLE
+    from zeep.exceptions import Fault, TransportError  # noqa: F401  # availability probe
     ZEEP_AVAILABLE = True
 except ImportError:
     print("Warning: zeep not installed. Install with: uv pip install zeep")
     ZEEP_AVAILABLE = False
 
 try:
-    import requests
+    import requests  # noqa: F401  # availability probe for REQUESTS_AVAILABLE
     REQUESTS_AVAILABLE = True
 except ImportError:
     print("Warning: requests not installed. Install with: uv pip install requests")
@@ -57,7 +56,7 @@ try:
     BRENDA_CLIENT_AVAILABLE = True
 except ImportError:
     try:
-        from brenda_client import get_km_values, get_reactions, call_brenda
+        from brenda_client import get_km_values, get_reactions, call_brenda  # noqa: F401  # module-path fallback for the package-path import above
         BRENDA_CLIENT_AVAILABLE = True
     except ImportError:
         print("Warning: brenda_client not available")

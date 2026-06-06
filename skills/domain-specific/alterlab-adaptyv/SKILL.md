@@ -3,6 +3,7 @@ name: alterlab-adaptyv
 description: Submits and tracks experiments on the Adaptyv cloud laboratory platform for automated protein testing and wet-lab validation, and optimizes protein sequences for expression using computational tools (NetSolP, SoluProt, SolubleMPNN, ESM). Use when designing proteins that need experimental validation such as binding assays, expression testing, thermostability measurements, or enzyme activity assays, when submitting experiments via API, tracking experiment status, downloading results, or managing protein design workflows with wet-lab validation. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
+compatibility: Requires an Adaptyv account and ADAPTYV_API_KEY for experiment submission; local protein-optimization tools (ESM, NetSolP, SoluProt) run via `uv run python` without a key.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

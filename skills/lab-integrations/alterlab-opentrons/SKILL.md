@@ -3,6 +3,7 @@ name: alterlab-opentrons
 description: Writes liquid-handling protocols for Opentrons OT-2 and Flex robots using the official Opentrons Protocol API v2, with full access to v2 features for production-grade, officially compatible protocols. Use when authoring or running protocols specifically for Opentrons hardware. For multi-vendor automation or broader equipment control use pylabrobot instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
+compatibility: Requires the opentrons Python package (pip install opentrons); protocols simulate locally via opentrons_simulate, execution needs an Opentrons OT-2 or Flex robot
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -454,7 +455,7 @@ def run(protocol: protocol_api.ProtocolContext):
     plate = protocol.load_labware('corning_96_wellplate_360ul_flat', 'D3')
 
     # Load pipette
-    p300 = protocol.load_instrument('p300_single_flex', 'left', tip_racks=[tips])
+    p300 = protocol.load_instrument('flex_1channel_1000', 'left', tip_racks=[tips])
 
     # Add diluent to all wells except first
     p300.transfer(100, reservoir['A1'], plate.rows()[0][1:])
@@ -503,7 +504,7 @@ def run(protocol: protocol_api.ProtocolContext):
     reagents = protocol.load_labware('opentrons_24_tuberack_nest_1.5ml_snapcap', 'D1')
 
     # Load pipette
-    p300 = protocol.load_instrument('p300_single_flex', 'left', tip_racks=[tips])
+    p300 = protocol.load_instrument('flex_1channel_1000', 'left', tip_racks=[tips])
 
     # Open thermocycler lid
     tc_mod.open_lid()

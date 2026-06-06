@@ -1,0 +1,51 @@
+{
+  "skill": "alterlab-dnanexus",
+  "evals": [
+    {
+      "id": "build-applet",
+      "prompt": "I need to build a DNAnexus applet that takes a FASTQ input, runs a quality filter, and returns the filtered reads. Scaffold the app and the dxapp.json.",
+      "expected_output": "Invokes alterlab-dnanexus. Uses dx-app-wizard / the app structure with a Python entry point (@dxpy.entry_point('main'), dxpy.run()), handles input/output dxlinks, and writes a dxapp.json with the input/output specs and runSpec; deploys with dx build.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "dxapp.json" },
+        { "type": "behavior", "value": "Uses dxpy entry-point decorators and a dxapp.json input/output specification." }
+      ]
+    },
+    {
+      "id": "upload-run-download",
+      "prompt": "Upload sample.fastq to my DNAnexus project, run applet-xxxx on it, wait for it to finish, and download the aligned BAM.",
+      "expected_output": "Invokes alterlab-dnanexus. Uses dxpy.upload_local_file, dxpy.DXApplet(...).run with dxpy.dxlink inputs, job.wait_on_done(), then dxpy.download_dxfile to retrieve the output BAM via the $dnanexus_link.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Uses dxpy.upload_local_file, applet.run with dxlink, wait_on_done, and dxpy.download_dxfile." }
+      ]
+    },
+    {
+      "id": "batch-find-data-objects",
+      "prompt": "Find every BAM file from experiment exp001 in my DNAnexus project and launch the variant-calling applet on each one in parallel.",
+      "expected_output": "Invokes alterlab-dnanexus. Uses dxpy.find_data_objects (classname='file', name pattern, properties={'experiment': 'exp001'}) to discover files and launches parallel jobs via applet.run, collecting jobs and waiting on each.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Discovers files with dxpy.find_data_objects and launches parallel jobs rather than a single serial run." }
+      ]
+    },
+    {
+      "id": "multi-step-pipeline-chaining",
+      "prompt": "Chain a three-step DNAnexus pipeline on DNAnexus: QC, then STAR-style alignment using the QC output, then variant calling on the alignment output.",
+      "expected_output": "Invokes alterlab-dnanexus. Builds a multi-step pipeline by chaining jobs with output references (get_output_ref), passing each job's output as the next job's input on the platform.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "get_output_ref" }
+      ]
+    },
+    {
+      "id": "near-miss-latchbio",
+      "prompt": "Port my Nextflow RNA-seq pipeline onto Latch using @workflow and @task decorators with LatchFile inputs and a GPU task for the heavy step.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-latchbio. The target platform is LatchBio (Latch SDK decorators, LatchFile/LatchDir, latch register), not DNAnexus dxpy/dx CLI.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-latchbio" }
+      ]
+    }
+  ]
+}
