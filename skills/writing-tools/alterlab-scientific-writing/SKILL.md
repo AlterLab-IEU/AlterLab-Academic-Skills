@@ -177,227 +177,20 @@ Apply fundamental scientific writing principles. For detailed guidance, refer to
 
 ### 7. Writing Process: From Outline to Full Paragraphs
 
-**CRITICAL: Always write in full paragraphs, never submit bullet points in scientific papers.**
+**CRITICAL: Always write in full paragraphs, never submit bullet points in scientific papers.** Use a two-stage process for every section:
 
-Scientific papers must be written in complete, flowing prose. Use this two-stage approach for effective writing:
+1. **Outline (planning only)** — use research-lookup to gather literature, then jot bullet points marking the main arguments, key studies to cite, and data to include. These are scaffolding, not the manuscript.
+2. **Convert to prose** — expand each bullet into complete sentences with natural transitions and citations integrated into the text, varying sentence structure and ensuring logical flow.
 
-**Stage 1: Create Section Outlines with Key Points**
+Lists are acceptable only in Methods (inclusion/exclusion criteria, materials) and supplementary materials — never in the Abstract, Introduction, Results, Discussion, or Conclusions. Abstracts are flowing paragraphs, not labeled sections, unless the journal explicitly requires structured format.
 
-When starting a new section:
-1. Use the research-lookup skill to gather relevant literature and data
-2. Create a structured outline with bullet points marking:
-   - Main arguments or findings to present
-   - Key studies to cite
-   - Data points and statistics to include
-   - Logical flow and organization
-3. These bullet points serve as scaffolding—they are NOT the final manuscript
-
-**Example outline (Introduction section):**
-```
-- Background: AI in drug discovery gaining traction
-  * Cite recent reviews (Smith 2023, Jones 2024)
-  * Traditional methods are slow and expensive
-- Gap: Limited application to rare diseases
-  * Only 2 prior studies (Lee 2022, Chen 2023)
-  * Small datasets remain a challenge
-- Our approach: Transfer learning from common diseases
-  * Novel architecture combining X and Y
-- Study objectives: Validate on 3 rare disease datasets
-```
-
-**Stage 2: Convert Key Points to Full Paragraphs**
-
-Once the outline is complete, expand each bullet point into proper prose:
-
-1. **Transform bullet points into complete sentences** with subjects, verbs, and objects
-2. **Add transitions** between sentences and ideas (however, moreover, in contrast, subsequently)
-3. **Integrate citations naturally** within sentences, not as lists
-4. **Expand with context and explanation** that bullet points omit
-5. **Ensure logical flow** from one sentence to the next within each paragraph
-6. **Vary sentence structure** to maintain reader engagement
-
-**Example conversion to prose:**
-
-```
-Artificial intelligence approaches have gained significant traction in drug discovery 
-pipelines over the past decade (Smith, 2023; Jones, 2024). While these computational 
-methods show promise for accelerating the identification of therapeutic candidates, 
-traditional experimental approaches remain slow and resource-intensive, often requiring 
-years of laboratory work and substantial financial investment. However, the application 
-of AI to rare diseases has been limited, with only two prior studies demonstrating 
-proof-of-concept results (Lee, 2022; Chen, 2023). The primary obstacle has been the 
-scarcity of training data for conditions affecting small patient populations. 
-
-To address this challenge, we developed a transfer learning approach that leverages 
-knowledge from well-characterized common diseases to predict therapeutic targets for 
-rare conditions. Our novel neural architecture combines convolutional layers for 
-molecular feature extraction with attention mechanisms for protein-ligand interaction 
-modeling. The objective of this study was to validate our approach across three 
-independent rare disease datasets, assessing both predictive accuracy and biological 
-interpretability of the results.
-```
-
-**Key Differences Between Outlines and Final Text:**
-
-| Outline (Planning Stage) | Final Manuscript |
-|--------------------------|------------------|
-| Bullet points and fragments | Complete sentences and paragraphs |
-| Telegraphic notes | Full explanations with context |
-| List of citations | Citations integrated into prose |
-| Abbreviated ideas | Developed arguments with transitions |
-| For your eyes only | For publication and peer review |
-
-**Common Mistakes to Avoid:**
-
-- ❌ **Never** leave bullet points in the final manuscript
-- ❌ **Never** submit lists where paragraphs should be
-- ❌ **Don't** use numbered or bulleted lists in Results or Discussion sections (except for specific cases like study hypotheses or inclusion criteria)
-- ❌ **Don't** write sentence fragments or incomplete thoughts
-- ✅ **Do** use occasional lists only in Methods (e.g., inclusion/exclusion criteria, materials lists)
-- ✅ **Do** ensure every section flows as connected prose
-- ✅ **Do** read paragraphs aloud to check for natural flow
-
-**When Lists ARE Acceptable (Limited Cases):**
-
-Lists may appear in scientific papers only in specific contexts:
-- **Methods**: Inclusion/exclusion criteria, materials and reagents, participant characteristics
-- **Supplementary Materials**: Extended protocols, equipment lists, detailed parameters
-- **Never in**: Abstract, Introduction, Results, Discussion, Conclusions
-
-**Abstract Format Rule:**
-- ❌ **NEVER** use labeled sections (Background:, Methods:, Results:, Conclusions:)
-- ✅ **ALWAYS** write as flowing paragraph(s) with natural transitions
-- Exception: Only use structured format if journal explicitly requires it in author guidelines
-
-**Integration with Research Lookup:**
-
-The research-lookup skill is essential for Stage 1 (creating outlines):
-1. Search for relevant papers using research-lookup
-2. Extract key findings, methods, and data
-3. Organize findings as bullet points in your outline
-4. Then convert the outline to full paragraphs in Stage 2
-
-This two-stage process ensures you:
-- Gather and organize information systematically
-- Create logical structure before writing
-- Produce polished, publication-ready prose
-- Maintain focus on the narrative flow
+For the full worked example (outline → prose), the outline-vs-final comparison table, the complete mistakes-to-avoid list, and research-lookup integration, see `references/outline_to_prose.md`.
 
 ### 8. Professional Report Formatting (Non-Journal Documents)
 
-For research reports, technical reports, white papers, and other professional documents that are NOT journal manuscripts, use the `scientific_report.sty` LaTeX style package for a polished, professional appearance.
+For research reports, technical reports, white papers, grant/progress reports, and other professional documents that are NOT journal manuscripts, use the `scientific_report.sty` LaTeX style package (Helvetica typography, colored box environments, professional tables, and scientific-notation commands for p-values/effect sizes/CIs). Journal manuscripts and conference papers should instead use the **venue-templates** skill; theses use institutional templates.
 
-**When to Use Professional Report Formatting:**
-- Research reports and technical reports
-- White papers and policy briefs
-- Grant reports and progress reports
-- Industry reports and technical documentation
-- Internal research summaries
-- Feasibility studies and project deliverables
-
-**When NOT to Use (Use Venue-Specific Formatting Instead):**
-- Journal manuscripts → Use `venue-templates` skill
-- Conference papers → Use `venue-templates` skill
-- Academic theses → Use institutional templates
-
-**The `scientific_report.sty` Style Package Provides:**
-
-| Feature | Description |
-|---------|-------------|
-| Typography | Helvetica font family for modern, professional appearance |
-| Color Scheme | Professional blues, greens, and accent colors |
-| Box Environments | Colored boxes for key findings, methods, recommendations, limitations |
-| Tables | Alternating row colors, professional headers |
-| Figures | Consistent caption formatting |
-| Scientific Commands | Shortcuts for p-values, effect sizes, confidence intervals |
-
-**Box Environments for Content Organization:**
-
-```latex
-% Key findings (blue) - for major discoveries
-\begin{keyfindings}[Title]
-Content with key findings and statistics.
-\end{keyfindings}
-
-% Methodology (green) - for methods highlights
-\begin{methodology}[Study Design]
-Description of methods and procedures.
-\end{methodology}
-
-% Recommendations (purple) - for action items
-\begin{recommendations}[Clinical Implications]
-\begin{enumerate}
-    \item Specific recommendation 1
-    \item Specific recommendation 2
-\end{enumerate}
-\end{recommendations}
-
-% Limitations (orange) - for caveats and cautions
-\begin{limitations}[Study Limitations]
-Description of limitations and their implications.
-\end{limitations}
-```
-
-**Professional Table Formatting:**
-
-```latex
-\begin{table}[htbp]
-\centering
-\caption{Results Summary}
-\begin{tabular}{@{}lccc@{}}
-\toprule
-\textbf{Variable} & \textbf{Treatment} & \textbf{Control} & \textbf{p} \\
-\midrule
-Outcome 1 & \meansd{42.5}{8.3} & \meansd{35.2}{7.9} & <.001\sigthree \\
-\rowcolor{tablealt} Outcome 2 & \meansd{3.8}{1.2} & \meansd{3.1}{1.1} & .012\sigone \\
-Outcome 3 & \meansd{18.2}{4.5} & \meansd{17.8}{4.2} & .58\signs \\
-\bottomrule
-\end{tabular}
-
-{\small \siglegend}
-\end{table}
-```
-
-**Scientific Notation Commands:**
-
-| Command | Output | Purpose |
-|---------|--------|---------|
-| `\pvalue{0.023}` | *p* = 0.023 | P-values |
-| `\psig{< 0.001}` | ***p* = < 0.001** | Significant p-values (bold) |
-| `\CI{0.45}{0.72}` | 95% CI [0.45, 0.72] | Confidence intervals |
-| `\effectsize{d}{0.75}` | d = 0.75 | Effect sizes |
-| `\samplesize{250}` | *n* = 250 | Sample sizes |
-| `\meansd{42.5}{8.3}` | 42.5 ± 8.3 | Mean with SD |
-| `\sigone`, `\sigtwo`, `\sigthree` | *, **, *** | Significance stars |
-
-**Getting Started:**
-
-```latex
-\documentclass[11pt,letterpaper]{report}
-\usepackage{scientific_report}
-
-\begin{document}
-\makereporttitle
-    {Report Title}
-    {Subtitle}
-    {Author Name}
-    {Institution}
-    {Date}
-
-% Your content with professional formatting
-\end{document}
-```
-
-**Compilation**: Use XeLaTeX or LuaLaTeX for proper Helvetica font rendering:
-```bash
-xelatex report.tex
-```
-
-For complete documentation, refer to:
-- `assets/scientific_report.sty`: The style package
-- `assets/scientific_report_template.tex`: Complete template example
-- `assets/REPORT_FORMATTING_GUIDE.md`: Quick reference guide
-- `references/professional_report_formatting.md`: Comprehensive formatting guide
+Box environments, table formatting, notation commands, the getting-started preamble, and XeLaTeX/LuaLaTeX compilation are documented in `references/professional_report_quickref.md`, with the full guide in `references/professional_report_formatting.md` and the package itself plus template in `assets/`.
 
 ### 9. Journal-Specific Formatting
 
@@ -411,93 +204,11 @@ Adapt manuscripts to journal requirements:
 
 ### 10. Field-Specific Language and Terminology
 
-Adapt language, terminology, and conventions to match the specific scientific discipline. Each field has established vocabulary, preferred phrasings, and domain-specific conventions that signal expertise and ensure clarity for the target audience.
+Adapt language, terminology, and conventions to match the specific scientific discipline. Each field has established vocabulary, preferred phrasings, and domain-specific conventions that signal expertise and ensure clarity for the target audience. Identify conventions by reviewing recent high-impact papers in the target journal, noting field-specific abbreviations, units, notation, and preferred terms (e.g., "participants" vs. "subjects").
 
-**Identify Field-Specific Linguistic Conventions:**
-- Review terminology used in recent high-impact papers in the target journal
-- Note field-specific abbreviations, units, and notation systems
-- Identify preferred terms (e.g., "participants" vs. "subjects," "compound" vs. "drug," "specimens" vs. "samples")
-- Observe how methods, organisms, or techniques are typically described
+General principles apply across fields: match terminology to audience expertise (define more for broad-impact journals like *Nature*/*Science*); define abbreviations at first use; maintain consistent terms and nomenclature throughout; avoid field-mixing errors (don't call mice "patients"); and verify usage against field style guides, ontologies (Gene Ontology, MeSH), and recent papers.
 
-**Biomedical and Clinical Sciences:**
-- Use precise anatomical and clinical terminology (e.g., "myocardial infarction" not "heart attack" in formal writing)
-- Follow standardized disease nomenclature (ICD, DSM, SNOMED-CT)
-- Specify drug names using generic names first, brand names in parentheses if needed
-- Use "patients" for clinical studies, "participants" for community-based research
-- Follow Human Genome Variation Society (HGVS) nomenclature for genetic variants
-- Report lab values with standard units (SI units in most international journals)
-
-**Molecular Biology and Genetics:**
-- Use italics for gene symbols (e.g., *TP53*), regular font for proteins (e.g., p53)
-- Follow species-specific gene nomenclature (uppercase for human: *BRCA1*; sentence case for mouse: *Brca1*)
-- Specify organism names in full at first mention, then use accepted abbreviations (e.g., *Escherichia coli*, then *E. coli*)
-- Use standard genetic notation (e.g., +/+, +/-, -/- for genotypes)
-- Employ established terminology for molecular techniques (e.g., "quantitative PCR" or "qPCR," not "real-time PCR")
-
-**Chemistry and Pharmaceutical Sciences:**
-- Follow IUPAC nomenclature for chemical compounds
-- Use systematic names for novel compounds, common names for well-known substances
-- Specify chemical structures using standard notation (e.g., SMILES, InChI for databases)
-- Report concentrations with appropriate units (mM, μM, nM, or % w/v, v/v)
-- Describe synthesis routes using accepted reaction nomenclature
-- Use terms like "bioavailability," "pharmacokinetics," "IC50" consistently with field definitions
-
-**Ecology and Environmental Sciences:**
-- Use binomial nomenclature for species (italicized: *Homo sapiens*)
-- Specify taxonomic authorities at first species mention when relevant
-- Employ standardized habitat and ecosystem classifications
-- Use consistent terminology for ecological metrics (e.g., "species richness," "Shannon diversity index")
-- Describe sampling methods with field-standard terms (e.g., "transect," "quadrat," "mark-recapture")
-
-**Physics and Engineering:**
-- Follow SI units consistently unless field conventions dictate otherwise
-- Use standard notation for physical quantities (scalars vs. vectors, tensors)
-- Employ established terminology for phenomena (e.g., "quantum entanglement," "laminar flow")
-- Specify equipment with model numbers and manufacturers when relevant
-- Use mathematical notation consistent with field standards (e.g., ℏ for reduced Planck constant)
-
-**Neuroscience:**
-- Use standardized brain region nomenclature (e.g., refer to atlases like Allen Brain Atlas)
-- Specify coordinates for brain regions using established stereotaxic systems
-- Follow conventions for neural terminology (e.g., "action potential" not "spike" in formal writing)
-- Use "neural activity," "neuronal firing," "brain activation" appropriately based on measurement method
-- Describe recording techniques with proper specificity (e.g., "whole-cell patch clamp," "extracellular recording")
-
-**Social and Behavioral Sciences:**
-- Use person-first language when appropriate (e.g., "people with schizophrenia" not "schizophrenics")
-- Employ standardized psychological constructs and validated assessment names
-- Follow APA guidelines for reducing bias in language
-- Specify theoretical frameworks using established terminology
-- Use "participants" rather than "subjects" for human research
-
-**General Principles:**
-
-**Match Audience Expertise:**
-- For specialized journals: Use field-specific terminology freely, define only highly specialized or novel terms
-- For broad-impact journals (e.g., *Nature*, *Science*): Define more technical terms, provide context for specialized concepts
-- For interdisciplinary audiences: Balance precision with accessibility, define terms at first use
-
-**Define Technical Terms Strategically:**
-- Define abbreviations at first use: "messenger RNA (mRNA)"
-- Provide brief explanations for specialized techniques when writing for broader audiences
-- Avoid over-defining terms well-known to the target audience (signals unfamiliarity with field)
-- Create a glossary if numerous specialized terms are unavoidable
-
-**Maintain Consistency:**
-- Use the same term for the same concept throughout (don't alternate between "medication," "drug," and "pharmaceutical")
-- Follow a consistent system for abbreviations (decide on "PCR" or "polymerase chain reaction" after first definition)
-- Apply the same nomenclature system throughout (especially for genes, species, chemicals)
-
-**Avoid Field Mixing Errors:**
-- Don't use clinical terminology for basic science (e.g., don't call mice "patients")
-- Avoid colloquialisms or overly general terms in place of precise field terminology
-- Don't import terminology from adjacent fields without ensuring proper usage
-
-**Verify Terminology Usage:**
-- Consult field-specific style guides and nomenclature resources
-- Check how terms are used in recent papers from the target journal
-- Use domain-specific databases and ontologies (e.g., Gene Ontology, MeSH terms)
-- When uncertain, cite a key reference that establishes terminology
+For per-discipline conventions (biomedical/clinical, molecular biology and genetics, chemistry, ecology, physics/engineering, neuroscience, social and behavioral sciences) and the full set of general principles, see `references/field_terminology.md`.
 
 ### 11. Common Pitfalls to Avoid
 
@@ -607,7 +318,10 @@ This skill includes comprehensive reference files covering specific aspects of s
 - `references/figures_tables.md`: Best practices for creating effective data visualizations
 - `references/reporting_guidelines.md`: Study-specific reporting standards and checklists
 - `references/writing_principles.md`: Core principles of effective scientific communication
-- `references/professional_report_formatting.md`: Guide to professional report styling with `scientific_report.sty`
+- `references/outline_to_prose.md`: Two-stage outline-to-paragraph process with full worked example and mistakes to avoid
+- `references/field_terminology.md`: Per-discipline language conventions and general terminology principles
+- `references/professional_report_quickref.md`: `scientific_report.sty` box environments, table formatting, notation commands, and getting-started preamble
+- `references/professional_report_formatting.md`: Comprehensive guide to professional report styling with `scientific_report.sty`
 
 ## Assets
 

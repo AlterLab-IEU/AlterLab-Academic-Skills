@@ -43,73 +43,9 @@ Use the scikit-learn skill when:
 
 ## Quick Start
 
-### Classification Example
+Minimal classification flow: stratified `train_test_split` → `StandardScaler` (fit on train only) → fit estimator → `classification_report`. For mixed numeric/categorical data, wrap preprocessing in a `ColumnTransformer` inside a `Pipeline` so it cross-validates without leakage.
 
-```python
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
-
-# Split data
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, stratify=y, random_state=42
-)
-
-# Preprocess
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
-
-# Train model
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-model.fit(X_train_scaled, y_train)
-
-# Evaluate
-y_pred = model.predict(X_test_scaled)
-print(classification_report(y_test, y_pred))
-```
-
-### Complete Pipeline with Mixed Data
-
-```python
-from sklearn.pipeline import Pipeline
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.impute import SimpleImputer
-from sklearn.ensemble import GradientBoostingClassifier
-
-# Define feature types
-numeric_features = ['age', 'income']
-categorical_features = ['gender', 'occupation']
-
-# Create preprocessing pipelines
-numeric_transformer = Pipeline([
-    ('imputer', SimpleImputer(strategy='median')),
-    ('scaler', StandardScaler())
-])
-
-categorical_transformer = Pipeline([
-    ('imputer', SimpleImputer(strategy='most_frequent')),
-    ('onehot', OneHotEncoder(handle_unknown='ignore'))
-])
-
-# Combine transformers
-preprocessor = ColumnTransformer([
-    ('num', numeric_transformer, numeric_features),
-    ('cat', categorical_transformer, categorical_features)
-])
-
-# Full pipeline
-model = Pipeline([
-    ('preprocessor', preprocessor),
-    ('classifier', GradientBoostingClassifier(random_state=42))
-])
-
-# Fit and predict
-model.fit(X_train, y_train)
-y_pred = model.predict(X_test)
-```
+**See `references/worked_examples.md`** for full copy-paste classification and mixed-data pipeline examples.
 
 ## Core Capabilities
 
@@ -240,34 +176,14 @@ Build reproducible, production-ready ML workflows.
 
 ## Example Scripts
 
-### Classification Pipeline
-
-Run a complete classification workflow with preprocessing, model comparison, hyperparameter tuning, and evaluation:
+Two runnable end-to-end scripts ship with this skill:
 
 ```bash
-python scripts/classification_pipeline.py
+python scripts/classification_pipeline.py   # mixed-data preprocessing, model comparison, GridSearchCV, evaluation, feature importance
+python scripts/clustering_analysis.py        # optimal-k search, K-Means/DBSCAN/Agglomerative/GMM comparison, PCA visualization
 ```
 
-This script demonstrates:
-- Handling mixed data types (numeric and categorical)
-- Model comparison using cross-validation
-- Hyperparameter tuning with GridSearchCV
-- Comprehensive evaluation with multiple metrics
-- Feature importance analysis
-
-### Clustering Analysis
-
-Perform clustering analysis with algorithm comparison and visualization:
-
-```bash
-python scripts/clustering_analysis.py
-```
-
-This script demonstrates:
-- Finding optimal number of clusters (elbow method, silhouette analysis)
-- Comparing multiple clustering algorithms (K-Means, DBSCAN, Agglomerative, Gaussian Mixture)
-- Evaluating clustering quality without ground truth
-- Visualizing results with PCA projection
+**See `references/worked_examples.md`** for what each script demonstrates and standalone copy-paste versions.
 
 ## Reference Documentation
 
@@ -321,196 +237,34 @@ This skill includes comprehensive reference files for deep dives into specific t
 - Complete end-to-end examples
 - Best practices
 
+### Worked Examples
+**File:** `references/worked_examples.md`
+- Quick-start classification and mixed-data pipeline snippets
+- Step-by-step classification model workflow
+- Step-by-step clustering analysis workflow
+- What each bundled example script demonstrates
+
+### Best Practices & Troubleshooting
+**File:** `references/best_practices_and_troubleshooting.md`
+- Pipeline / leakage discipline, fit-on-train-only, stratified splitting
+- Random-state reproducibility, metric selection, when to scale features
+- Fixes for ConvergenceWarning, overfitting, and large-dataset memory errors
+
 ## Common Workflows
 
-### Building a Classification Model
+- **Classification model:** load data → stratified `train_test_split` → `ColumnTransformer` preprocessing inside a `Pipeline` → `GridSearchCV` tuning → `classification_report` on the held-out test set.
+- **Clustering analysis:** `StandardScaler` → silhouette sweep over `k` to pick `optimal_k` → fit `KMeans` → `PCA(n_components=2)` projection for visualization.
 
-1. **Load and explore data**
-   ```python
-   import pandas as pd
-   df = pd.read_csv('data.csv')
-   X = df.drop('target', axis=1)
-   y = df['target']
-   ```
+**See `references/worked_examples.md`** for the numbered, copy-paste version of each workflow.
 
-2. **Split data with stratification**
-   ```python
-   from sklearn.model_selection import train_test_split
-   X_train, X_test, y_train, y_test = train_test_split(
-       X, y, test_size=0.2, stratify=y, random_state=42
-   )
-   ```
+## Best Practices (essentials)
 
-3. **Create preprocessing pipeline**
-   ```python
-   from sklearn.pipeline import Pipeline
-   from sklearn.preprocessing import StandardScaler
-   from sklearn.compose import ColumnTransformer
+- Always preprocess inside a `Pipeline` (prevents leakage); fit on train only, `transform` test.
+- Use `stratify=y` for classification splits; set `random_state` everywhere for reproducibility.
+- Scale features for SVM/KNN/NN/PCA/regularized-linear/K-Means; tree models and Naive Bayes do not need it.
+- Pick metrics for the problem: F1/accuracy on balanced data; precision/recall/ROC AUC/balanced accuracy on imbalanced data.
 
-   # Handle numeric and categorical features separately
-   preprocessor = ColumnTransformer([
-       ('num', StandardScaler(), numeric_features),
-       ('cat', OneHotEncoder(), categorical_features)
-   ])
-   ```
-
-4. **Build complete pipeline**
-   ```python
-   model = Pipeline([
-       ('preprocessor', preprocessor),
-       ('classifier', RandomForestClassifier(random_state=42))
-   ])
-   ```
-
-5. **Tune hyperparameters**
-   ```python
-   from sklearn.model_selection import GridSearchCV
-
-   param_grid = {
-       'classifier__n_estimators': [100, 200],
-       'classifier__max_depth': [10, 20, None]
-   }
-
-   grid_search = GridSearchCV(model, param_grid, cv=5)
-   grid_search.fit(X_train, y_train)
-   ```
-
-6. **Evaluate on test set**
-   ```python
-   from sklearn.metrics import classification_report
-
-   best_model = grid_search.best_estimator_
-   y_pred = best_model.predict(X_test)
-   print(classification_report(y_test, y_pred))
-   ```
-
-### Performing Clustering Analysis
-
-1. **Preprocess data**
-   ```python
-   from sklearn.preprocessing import StandardScaler
-
-   scaler = StandardScaler()
-   X_scaled = scaler.fit_transform(X)
-   ```
-
-2. **Find optimal number of clusters**
-   ```python
-   from sklearn.cluster import KMeans
-   from sklearn.metrics import silhouette_score
-
-   scores = []
-   for k in range(2, 11):
-       kmeans = KMeans(n_clusters=k, random_state=42)
-       labels = kmeans.fit_predict(X_scaled)
-       scores.append(silhouette_score(X_scaled, labels))
-
-   optimal_k = range(2, 11)[np.argmax(scores)]
-   ```
-
-3. **Apply clustering**
-   ```python
-   model = KMeans(n_clusters=optimal_k, random_state=42)
-   labels = model.fit_predict(X_scaled)
-   ```
-
-4. **Visualize with dimensionality reduction**
-   ```python
-   from sklearn.decomposition import PCA
-
-   pca = PCA(n_components=2)
-   X_2d = pca.fit_transform(X_scaled)
-
-   plt.scatter(X_2d[:, 0], X_2d[:, 1], c=labels, cmap='viridis')
-   ```
-
-## Best Practices
-
-### Always Use Pipelines
-Pipelines prevent data leakage and ensure consistency:
-```python
-# Good: Preprocessing in pipeline
-pipeline = Pipeline([
-    ('scaler', StandardScaler()),
-    ('model', LogisticRegression())
-])
-
-# Bad: Preprocessing outside (can leak information)
-X_scaled = StandardScaler().fit_transform(X)
-```
-
-### Fit on Training Data Only
-Never fit on test data:
-```python
-# Good
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)  # Only transform
-
-# Bad
-scaler = StandardScaler()
-X_all_scaled = scaler.fit_transform(np.vstack([X_train, X_test]))
-```
-
-### Use Stratified Splitting for Classification
-Preserve class distribution:
-```python
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, stratify=y, random_state=42
-)
-```
-
-### Set Random State for Reproducibility
-```python
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-```
-
-### Choose Appropriate Metrics
-- Balanced data: Accuracy, F1-score
-- Imbalanced data: Precision, Recall, ROC AUC, Balanced Accuracy
-- Cost-sensitive: Define custom scorer
-
-### Scale Features When Required
-Algorithms requiring feature scaling:
-- SVM, KNN, Neural Networks
-- PCA, Linear/Logistic Regression with regularization
-- K-Means clustering
-
-Algorithms not requiring scaling:
-- Tree-based models (Decision Trees, Random Forest, Gradient Boosting)
-- Naive Bayes
-
-## Troubleshooting Common Issues
-
-### ConvergenceWarning
-**Issue:** Model didn't converge
-**Solution:** Increase `max_iter` or scale features
-```python
-model = LogisticRegression(max_iter=1000)
-```
-
-### Poor Performance on Test Set
-**Issue:** Overfitting
-**Solution:** Use regularization, cross-validation, or simpler model
-```python
-# Add regularization
-model = Ridge(alpha=1.0)
-
-# Use cross-validation
-scores = cross_val_score(model, X, y, cv=5)
-```
-
-### Memory Error with Large Datasets
-**Solution:** Use algorithms designed for large data
-```python
-# Use SGD for large datasets
-from sklearn.linear_model import SGDClassifier
-model = SGDClassifier()
-
-# Or MiniBatchKMeans for clustering
-from sklearn.cluster import MiniBatchKMeans
-model = MiniBatchKMeans(n_clusters=8, batch_size=100)
-```
+**See `references/best_practices_and_troubleshooting.md`** for code examples and fixes for `ConvergenceWarning`, overfitting, and large-dataset memory errors.
 
 ## Additional Resources
 

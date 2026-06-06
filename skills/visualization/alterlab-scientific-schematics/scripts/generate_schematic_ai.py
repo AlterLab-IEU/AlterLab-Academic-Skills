@@ -171,11 +171,14 @@ IMPORTANT - NO FIGURE NUMBERS:
         self.verbose = verbose
         self._last_error = None  # Track last error for better reporting
         self.base_url = "https://openrouter.ai/api/v1"
+        # Model IDs follow the ALTERLAB_MODEL convention (skills/core/shared/model_env.md):
+        # read an env var, else a dated default constant (reviewed 2026-06-06). These slots
+        # need Google image/vision models, so they use dedicated vars rather than the Claude
+        # text default ALTERLAB_MODEL. Override via ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL.
         # Nano Banana 2 - Google's advanced image generation model
-        # https://openrouter.ai/google/gemini-3-pro-image-preview
-        self.image_model = "google/gemini-3.1-flash-image-preview"
+        self.image_model = os.environ.get("ALTERLAB_IMAGE_MODEL") or "google/gemini-3.1-flash-image-preview"
         # Gemini 3.1 Pro Preview for quality review - excellent vision and reasoning
-        self.review_model = "google/gemini-3.1-pro-preview"
+        self.review_model = os.environ.get("ALTERLAB_REVIEW_MODEL") or "google/gemini-3.1-pro-preview"
         
     def _log(self, message: str):
         """Log message if verbose mode is enabled."""

@@ -29,7 +29,7 @@ Use this skill when working with:
 Install gtars Python bindings:
 
 ```bash
-uv uv pip install gtars
+uv pip install gtars
 ```
 
 ### CLI Installation

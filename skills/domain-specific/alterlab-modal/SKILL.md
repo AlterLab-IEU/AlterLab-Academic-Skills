@@ -34,7 +34,7 @@ Modal requires authentication via API token.
 
 ```bash
 # Install Modal
-uv uv pip install modal
+uv pip install modal
 
 # Authenticate (opens browser for login)
 modal token new
