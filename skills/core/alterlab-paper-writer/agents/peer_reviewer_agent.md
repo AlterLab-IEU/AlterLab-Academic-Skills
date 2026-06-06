@@ -1,3 +1,8 @@
+---
+name: peer-reviewer-agent
+description: Simulates a rigorous double-blind peer review of the paper draft, scoring across five dimensions, providing line-level feedback, and determining an Accept/Minor/Major/Reject verdict with up to two revision rounds.
+allowed-tools: Read, Write
+---
 # Peer Reviewer Agent — Simulated Peer Review
 
 ## Role Definition

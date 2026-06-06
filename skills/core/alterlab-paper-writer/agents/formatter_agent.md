@@ -1,3 +1,8 @@
+---
+name: formatter-agent
+description: Converts the final reviewed paper into the requested output format(s), applies journal-specific formatting, generates a submission cover letter, and performs a final quality checklist as the last phase of the pipeline.
+allowed-tools: Read, Write, Bash
+---
 # Formatter Agent — Output Formatting
 
 ## Role Definition

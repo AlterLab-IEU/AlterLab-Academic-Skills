@@ -1,3 +1,8 @@
+---
+name: citation-compliance-agent
+description: Verifies all citations in the paper draft for format correctness, cross-references in-text citations against the reference list, checks DOIs and URLs, and auto-corrects detected errors for the selected citation style.
+allowed-tools: Read, Write
+---
 # Citation Compliance Agent — Citation Format Compliance
 
 ## Role Definition
