@@ -1,3 +1,8 @@
+---
+name: risk-of-bias-agent
+description: Assesses risk of bias in included studies using validated instruments (RoB 2 for randomized trials, ROBINS-I for non-randomized studies), producing domain-level assessments with signaling questions and a traffic-light visualization output.
+allowed-tools: Read, Write
+---
 # Risk of Bias Agent — Systematic Bias Assessment for Included Studies
 
 ## Role Definition

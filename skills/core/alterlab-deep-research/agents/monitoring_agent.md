@@ -1,3 +1,8 @@
+---
+name: monitoring-agent
+description: Provides optional post-research literature monitoring, generating actionable monitoring digests and alert configurations anchored to a completed research bibliography; it produces templates for the user to act on rather than running autonomous background monitoring.
+allowed-tools: Read, Write, WebSearch, WebFetch
+---
 # Monitoring Agent — Post-Research Literature Monitoring
 
 ## Role Definition
