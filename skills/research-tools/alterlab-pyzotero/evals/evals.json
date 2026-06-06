@@ -1,0 +1,55 @@
+{
+  "skill": "alterlab-pyzotero",
+  "evals": [
+    {
+      "id": "retrieve-and-search-items",
+      "prompt": "Connect to my Zotero library programmatically and pull the top-level items, then search the library for everything tagged or matching 'machine learning'.",
+      "expected_output": "Uses the pyzotero Python client: instantiates Zotero(library_id, library_type, api_key), calls zot.top() for top-level items and zot.items(q='machine learning') for the keyword search, and notes that pyzotero returns 100 items by default and zot.everything(zot.items()) retrieves all results. Should reference credentials from ZOTERO_LIBRARY_ID / ZOTERO_API_KEY.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "pyzotero"},
+        {"type": "behavior", "value": "Uses the Zotero client with zot.top()/zot.items() and references the Web API v3 client correctly."}
+      ]
+    },
+    {
+      "id": "create-item-from-template",
+      "prompt": "I need to add a new journal article reference to my Zotero library via the API — title 'My Paper' with author Jane Doe. How do I do that with pyzotero?",
+      "expected_output": "Uses zot.item_template('journalArticle') to get a template, populates title and the creators list with creatorType 'author', firstName/lastName, then calls zot.create_items([template]). Should mention write methods return True on success or raise a ZoteroError.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "item_template"},
+        {"type": "behavior", "value": "Builds an item from a journalArticle template and creates it with create_items, handling write success/ZoteroError."}
+      ]
+    },
+    {
+      "id": "export-bibtex",
+      "prompt": "Export the first 50 references from my Zotero library as BibTeX so I can drop them into my LaTeX paper.",
+      "expected_output": "Uses zot.add_parameters(format='bibtex') then retrieves items (e.g., zot.top(limit=50)), returning a bibtexparser BibDatabase object whose entries can be written out. Should reference the exports capability of pyzotero for BibTeX/CSL-JSON.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "bibtex"},
+        {"type": "behavior", "value": "Sets the bibtex format parameter and exports library items as BibTeX via pyzotero."}
+      ]
+    },
+    {
+      "id": "local-read-only-mode",
+      "prompt": "I don't want to set up an API key right now — can I read my local Zotero library with pyzotero without one?",
+      "expected_output": "Explains pyzotero local mode: Zotero(library_id, library_type, local=True) provides read-only access to the local Zotero instance without an API key, and then zot.items() works as usual. Should note it is read-only.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "local=True"},
+        {"type": "behavior", "value": "Describes pyzotero local read-only mode that needs no API key."}
+      ]
+    },
+    {
+      "id": "near-miss-research-lookup",
+      "prompt": "Search Google Scholar and PubMed for recent papers on CRISPR off-target effects so I can find new references to add to my library later.",
+      "expected_output": "This is discovering new scholarly literature in external databases (Google Scholar, PubMed), not programmatically managing an existing Zotero library. Pyzotero operates on the Zotero Web API only. Defers to the academic search skill (alterlab-research-lookup / alterlab-perplexity) for finding papers; pyzotero would be used afterward to store the chosen references.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "research-lookup"},
+        {"type": "behavior", "value": "Recognizes that searching external scholarly databases is not a Zotero-API task and defers to a literature-search skill."}
+      ]
+    }
+  ]
+}

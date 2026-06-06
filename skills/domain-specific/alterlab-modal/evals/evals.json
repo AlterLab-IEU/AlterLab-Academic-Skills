@@ -1,0 +1,54 @@
+{
+  "skill": "alterlab-modal",
+  "evals": [
+    {
+      "id": "gpu-llm-inference-endpoint",
+      "prompt": "I want to deploy a Hugging Face transformer for inference on a GPU in the cloud and expose it as an HTTP POST endpoint that autoscales. Can you set this up with Modal?",
+      "expected_output": "Activates the Modal skill and defines a modal.App with a modal.Image (.uv_pip_install for torch/transformers), an @app.cls with gpu=... loading the model in @modal.enter(), and a @modal.fastapi_endpoint(method=\"POST\") that returns predictions. Mentions deploying with `modal deploy` and configuring autoscaling (min/max containers).",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "modal"},
+        {"type": "behavior", "value": "Builds a Modal app with a GPU-backed function/class and a fastapi_endpoint, deployed via modal deploy, for serverless GPU inference."}
+      ]
+    },
+    {
+      "id": "parallel-batch-map",
+      "prompt": "I have thousands of CSV files to process and want them fanned out across many cloud containers in parallel instead of a sequential loop. How do I do that with Modal?",
+      "expected_output": "Activates the Modal skill and defines an @app.function() that processes one file, then uses .map() over the list of files from an @app.local_entrypoint() so Modal autoscales across containers. Explains that .map() parallelizes automatically and is preferred over a sequential loop.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": ".map("},
+        {"type": "behavior", "value": "Uses an @app.function with .map() to fan a batch workload across autoscaling Modal containers in parallel."}
+      ]
+    },
+    {
+      "id": "scheduled-gpu-training",
+      "prompt": "I need a model retraining job to run automatically every night at 2 AM on an A100 in the cloud, with a one-hour timeout. Can you write the Modal function for that?",
+      "expected_output": "Activates the Modal skill and defines an @app.function with schedule=modal.Cron(\"0 2 * * *\"), gpu=\"A100\", and timeout=3600. Explains that scheduled functions run without manual invocation and notes deploying so the schedule is registered.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "Cron"},
+        {"type": "behavior", "value": "Defines a Modal function with a Cron schedule plus GPU and timeout settings for a recurring cloud training job."}
+      ]
+    },
+    {
+      "id": "volume-and-secret-model-cache",
+      "prompt": "I want to cache downloaded model weights between Modal runs in persistent storage and pull a private model from Hugging Face using a stored token. How do I wire up a Volume and a Secret?",
+      "expected_output": "Activates the Modal skill and creates a modal.Volume.from_name(create_if_missing=True) mounted via volumes={...}, calling volume.commit() after writes, and attaches secrets=[modal.Secret.from_name(\"huggingface\")] so the HF token is read from os.environ inside the function. Explains volumes persist across invocations.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "Volume"},
+        {"type": "behavior", "value": "Uses a Modal Volume for persistent model-weight caching and a Modal Secret for the Hugging Face token."}
+      ]
+    },
+    {
+      "id": "near-miss-local-torch",
+      "prompt": "On my own Mac Studio I just want to train a small PyTorch model locally with the data already on disk, set the random seed, and pin my dependencies in a uv environment for reproducibility. No cloud, no deployment.",
+      "expected_output": "Should NOT activate the Modal skill. This is local-only PyTorch training with no cloud deployment, GPU provisioning, autoscaling, or serverless endpoint, so it belongs to the python-research reproducibility workflow rather than Modal. The response should not push the work to Modal's cloud.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "behavior", "value": "Recognizes a purely local, on-disk PyTorch training and reproducibility task with no cloud/GPU-provisioning need, and does not route it to Modal."}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "skill": "alterlab-transformers",
+  "evals": [
+    {
+      "id": "pipeline-quick-inference",
+      "prompt": "I have a list of customer review strings and just want sentiment labels quickly without setting up any training. What's the fastest way to do this with Hugging Face?",
+      "expected_output": "Invokes alterlab-transformers and uses the Pipeline API for quick inference: pipeline('text-classification') (or sentiment-analysis) applied over the list of reviews, with no manual model/tokenizer wiring. Notes that pipelines are the fast path for simple inference and can take a model='model-id' argument to pin a specific checkpoint.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "pipeline" },
+        { "type": "behavior", "value": "Uses the transformers pipeline() API for quick text-classification inference without manual configuration or training." }
+      ]
+    },
+    {
+      "id": "fine-tune-trainer",
+      "prompt": "I want to fine-tune a pre-trained BERT model on my own labeled text dataset for a domain-specific classification task. How do I set up the training loop?",
+      "expected_output": "Invokes alterlab-transformers for fine-tuning with the Trainer API: load the model with AutoModelForSequenceClassification.from_pretrained, tokenize the dataset, define TrainingArguments (output_dir, num_train_epochs, per_device_train_batch_size), construct a Trainer with model/args/train_dataset, and call trainer.train(). May mention the datasets, evaluate, and accelerate packages and automatic mixed precision.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Trainer" },
+        { "type": "behavior", "value": "Sets up fine-tuning via TrainingArguments + Trainer on a custom dataset and calls trainer.train()." }
+      ]
+    },
+    {
+      "id": "generation-decoding-strategy",
+      "prompt": "I'm loading a causal language model with AutoModelForCausalLM and want to generate longer, more diverse completions. How do I control the decoding with temperature, top-k and top-p instead of greedy output?",
+      "expected_output": "Invokes alterlab-transformers for text generation: load with AutoModelForCausalLM.from_pretrained and AutoTokenizer, tokenize with return_tensors='pt', and call model.generate(**inputs, max_new_tokens=..., do_sample=True, temperature=..., top_k=..., top_p=...) to control sampling vs greedy/beam decoding, then tokenizer.decode the output. Explains the decoding-strategy parameters.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "generate" },
+        { "type": "behavior", "value": "Uses AutoModelForCausalLM + model.generate with sampling parameters (temperature/top-k/top-p) to control decoding strategy." }
+      ]
+    },
+    {
+      "id": "image-classification-vision",
+      "prompt": "I have a folder of product photos and want to run a pre-trained vision transformer to classify what each image contains. Which Hugging Face setup do I need?",
+      "expected_output": "Invokes alterlab-transformers for a computer-vision task: uses pipeline('image-classification') (or loads an AutoModelForImageClassification with its image processor) on the photos, and notes the extra vision dependencies (timm, pillow). Confirms transformers supports CV tasks beyond NLP, including image classification and object detection.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "image-classification" },
+        { "type": "behavior", "value": "Handles the vision task with an image-classification pipeline/model and notes timm/pillow vision dependencies." }
+      ]
+    },
+    {
+      "id": "near-miss-scikit-learn",
+      "prompt": "I have a tabular CSV of numeric and categorical features and want to train a RandomForest classifier with a preprocessing pipeline and cross-validated hyperparameter tuning. How do I build that?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-scikit-learn. The task is classical machine learning on tabular features (RandomForest, ColumnTransformer preprocessing, GridSearchCV), which has nothing to do with pre-trained transformer models. The response should point to alterlab-scikit-learn for the tabular ML pipeline.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-scikit-learn" }
+      ]
+    },
+    {
+      "id": "near-miss-pytorch-lightning",
+      "prompt": "I'm writing a custom convolutional neural network from scratch and want to structure the training loop, multi-GPU strategy, and checkpointing cleanly with a LightningModule and Trainer. How should I organize it?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-pytorch-lightning. The user is building a custom-architecture CNN and wants Lightning's LightningModule/Trainer training-loop organization, not loading or fine-tuning a pre-trained Hugging Face transformer via the transformers Trainer. The response should point to alterlab-pytorch-lightning.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-pytorch-lightning" }
+      ]
+    }
+  ]
+}

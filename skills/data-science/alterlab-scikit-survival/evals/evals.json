@@ -1,0 +1,63 @@
+{
+  "skill": "alterlab-scikit-survival",
+  "evals": [
+    {
+      "id": "cox-ph-model-fit-evaluate",
+      "prompt": "I have right-censored patient survival data with a handful of clinical covariates and I want an interpretable model where I can read off the effect of each covariate, then evaluate how well it discriminates.",
+      "expected_output": "Invokes alterlab-scikit-survival: builds the structured outcome with Surv.from_arrays / Surv.from_dataframe, standardizes features, fits CoxPHSurvivalAnalysis for interpretable coefficients, predicts risk scores, and evaluates discrimination with the concordance index (concordance_index_ipcw passing y_train), noting the proportional hazards assumption should be checked.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "CoxPHSurvivalAnalysis" },
+        { "type": "behavior", "value": "Fits an interpretable Cox proportional hazards model on censored data and evaluates with the concordance index." }
+      ]
+    },
+    {
+      "id": "high-dimensional-penalized-cox-feature-selection",
+      "prompt": "My survival dataset has way more genomic features than patients (p much greater than n) and I want a sparse model that automatically selects the important features. How do I do this?",
+      "expected_output": "Invokes alterlab-scikit-survival: uses CoxnetSurvivalAnalysis (penalized Cox with elastic net, e.g. l1_ratio near 0.9 for lasso-like sparsity) for high-dimensional p>n data, tunes the regularization path with GridSearchCV using as_concordance_index_ipcw_scorer, and reads off the non-zero coefficients as the selected features.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "CoxnetSurvivalAnalysis" },
+        { "type": "behavior", "value": "Selects a penalized elastic-net Cox model for p>n data and identifies selected features from non-zero coefficients." }
+      ]
+    },
+    {
+      "id": "rsf-high-censoring-uno-cindex",
+      "prompt": "I want maximum predictive performance on my time-to-event data which has complex non-linear effects, and my dataset has about 55% censoring. Which model should I use and how do I evaluate it correctly given the heavy censoring?",
+      "expected_output": "Invokes alterlab-scikit-survival: recommends a non-parametric ensemble such as RandomSurvivalForest (or GradientBoostingSurvivalAnalysis) for complex non-linear relationships, and because censoring exceeds 40% evaluates with Uno's concordance_index_ipcw rather than Harrell's concordance_index_censored, plus integrated_brier_score; notes permutation importance (not built-in importance) for RSF feature importance.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "concordance_index_ipcw" },
+        { "type": "behavior", "value": "Chooses a non-parametric ensemble (RSF/Gradient Boosting) and uses Uno's C-index given >40% censoring instead of Harrell's." }
+      ]
+    },
+    {
+      "id": "competing-risks-cumulative-incidence",
+      "prompt": "In my cohort patients can die from the disease or from other causes, and these are mutually exclusive. I keep being told not to just treat the other-cause deaths as censored. How do I estimate the probability of the disease-specific event over time?",
+      "expected_output": "Invokes alterlab-scikit-survival: frames this as competing risks, warns against treating competing events as censored, and uses cumulative_incidence_competing_risks from sksurv.nonparametric to estimate cause-specific cumulative incidence functions for each event type, mentioning cause-specific hazard models for covariate effects.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "competing risks" },
+        { "type": "behavior", "value": "Treats the problem as competing risks and estimates cumulative incidence functions instead of censoring the competing event." }
+      ]
+    },
+    {
+      "id": "near-miss-alterlab-statsmodels",
+      "prompt": "Fit a logistic regression to predict whether a patient was readmitted within 30 days (a yes/no outcome) and give me the odds ratios with confidence intervals and p-values.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-statsmodels. The outcome is a binary yes/no event with a fixed follow-up window and no censoring or time-to-event component, so this is classical logistic regression in statsmodels rather than survival analysis.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-statsmodels" }
+      ]
+    },
+    {
+      "id": "near-miss-alterlab-scikit-learn",
+      "prompt": "I want to predict a continuous lab value from patient features using a regression model and tune it with cross-validation, plus train a random forest classifier for a separate diagnosis label. No survival or censoring involved.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-scikit-learn. The tasks are standard continuous regression and classification with no censored time-to-event outcome, which is scikit-learn's territory rather than scikit-survival's.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-scikit-learn" }
+      ]
+    }
+  ]
+}

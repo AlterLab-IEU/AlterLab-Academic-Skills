@@ -1,0 +1,67 @@
+{
+  "skill": "alterlab-market-research",
+  "evals": [
+    {
+      "id": "full-industry-report",
+      "prompt": "I need a comprehensive 50+ page McKinsey-style market research report on the electric-vehicle charging infrastructure industry, with TAM/SAM/SOM sizing, Porter's Five Forces, a competitive landscape, and professional LaTeX formatting.",
+      "expected_output": "Triggers market-research. Produces a consulting-grade 50+ page LaTeX report using the market_report_template.tex and market_research.sty style package, structured into the front matter, ~11 core chapters, and back matter. Applies TAM/SAM/SOM, Porter's Five Forces, PESTLE, and SWOT frameworks, gathers data via research-lookup, and generates visuals via scientific-schematics / generate-image.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "Porter"},
+        {"type": "output_contains", "value": "TAM"},
+        {"type": "behavior", "value": "Plans a 50+ page LaTeX deliverable with the standard chapter structure, multi-framework analysis (Porter/PESTLE/SWOT/TAM-SAM-SOM), and research-lookup-driven data with generated visuals."}
+      ]
+    },
+    {
+      "id": "competitive-landscape-section",
+      "prompt": "Write the competitive landscape chapter for a cloud-computing market report: Porter's Five Forces with High/Medium/Low ratings, the top 10 competitors with market share, a competitive positioning matrix, and barriers to entry.",
+      "expected_output": "Triggers market-research. Writes the Competitive Landscape chapter applying Porter's Five Forces (rating each force High/Medium/Low), profiling top players with market share, and producing a 2x2 competitive positioning matrix and strategic group map via scientific-schematics. Uses research-lookup for competitor data.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "Five Forces"},
+        {"type": "behavior", "value": "Rates each of Porter's Five Forces High/Medium/Low and produces a positioning matrix plus market-share analysis for the chapter."}
+      ]
+    },
+    {
+      "id": "market-sizing",
+      "prompt": "I'm evaluating a market-entry opportunity in renewable energy storage. Build me the market-size-and-growth analysis with TAM, SAM, SOM, historical CAGR, and a growth trajectory chart.",
+      "expected_output": "Triggers market-research. Produces the Market Size & Growth chapter computing TAM -> SAM -> SOM with stated assumptions, historical and projected CAGR, and a market growth trajectory chart plus a TAM/SAM/SOM concentric-circles diagram. Sources figures via research-lookup and cites them.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "SAM"},
+        {"type": "output_contains", "value": "CAGR"},
+        {"type": "behavior", "value": "Works TAM->SAM->SOM with explicit assumptions, computes CAGR, and specifies a growth-trajectory and TAM/SAM/SOM visual."}
+      ]
+    },
+    {
+      "id": "strategic-recommendations",
+      "prompt": "Develop the strategic recommendations section for a market-entry study: 5-7 prioritized recommendations with opportunity sizing, an opportunity attractiveness matrix, and an implementation roadmap.",
+      "expected_output": "Triggers market-research. Writes the Strategic Opportunities & Recommendations and Implementation Roadmap chapters with 5-7 prioritized, actionable recommendations, an Opportunity Attractiveness (vs Ability to Win) matrix and a Priority (Impact vs Effort) matrix, plus a Gantt/timeline roadmap. Uses recommendationbox LaTeX environments and generates the matrices as visuals.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "recommendation"},
+        {"type": "behavior", "value": "Delivers prioritized recommendations with an opportunity/priority matrix and an implementation roadmap, in the report's structured consulting style."}
+      ]
+    },
+    {
+      "id": "near-miss-deep-research",
+      "prompt": "Give me a focused, fact-checked research brief answering one question: what is the current adoption rate of solid-state batteries in EVs, with citations to primary sources? I don't need a formatted report or strategic frameworks.",
+      "expected_output": "Should NOT trigger market-research. This is a single-question, source-verified research brief, not a 50+ page multi-framework consulting deliverable. Defer to the alterlab-deep-research skill, which fans out web searches and synthesizes a cited report.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-deep-research"},
+        {"type": "behavior", "value": "Recognizes the ask is a focused cited brief, not a full strategic market report, and defers to the deep-research skill."}
+      ]
+    },
+    {
+      "id": "near-miss-alpha-vantage",
+      "prompt": "Just pull me the raw quarterly revenue and market cap numbers for the top 5 EV companies from a financial data API so I can drop them into my own spreadsheet.",
+      "expected_output": "Should NOT trigger market-research. The user wants raw financial data points fetched from an API, not a written strategic report with frameworks and visuals. Defer to the alterlab-alpha-vantage skill (OVERVIEW for market cap, INCOME_STATEMENT for revenue) for the underlying fundamentals.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-alpha-vantage"},
+        {"type": "behavior", "value": "Distinguishes a raw financial-data pull from a strategic report deliverable and routes to the Alpha Vantage fundamentals skill."}
+      ]
+    }
+  ]
+}

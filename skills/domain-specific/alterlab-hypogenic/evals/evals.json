@@ -1,0 +1,65 @@
+{
+  "skill": "alterlab-hypogenic",
+  "evals": [
+    {
+      "id": "hypogenic-data-driven-ai-content",
+      "prompt": "I have a labeled dataset of human-written vs AI-generated text (train/val/test JSON). I want to automatically generate about 20 testable hypotheses purely from the data and then test their accuracy on the test set. No literature, just the data.",
+      "expected_output": "Triggers the hypogenic skill. Uses the HypoGeniC (data-driven) method: prepare the dataset in the required text_features/label format, write a config.yaml, run hypogenic_generation --method hypogenic --num_hypotheses 20, then hypogenic_inference on the test set. Should reference HypoGeniC and the generation/inference CLI or BaseTask API.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "HypoGeniC"},
+        {"type": "output_contains", "value": "config.yaml"},
+        {"type": "behavior", "value": "Selects the data-driven HypoGeniC method (not literature-integrated), sets num_hypotheses, and runs both generation and inference over the labeled dataset."}
+      ]
+    },
+    {
+      "id": "hyporefine-literature-plus-data",
+      "prompt": "I'm doing deception detection on hotel reviews. I have ~10 papers on linguistic deception cues as PDFs plus a labeled review dataset. I want hypotheses that combine the literature with the data patterns, generated automatically. How do I set this up with hypogenic?",
+      "expected_output": "Triggers the hypogenic skill. Uses HypoRefine: set up GROBID, preprocess the PDFs (pdf_preprocess.py), then run generation with method=hyporefine over both literature and data, producing the HypoRefine, literature-only, and union hypothesis banks. Should reference HypoRefine and the GROBID/PDF literature processing step.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "HypoRefine"},
+        {"type": "output_contains", "value": "GROBID"},
+        {"type": "behavior", "value": "Routes to HypoRefine for synergistic literature+data hypothesis generation and includes the PDF/GROBID literature-preprocessing step."}
+      ]
+    },
+    {
+      "id": "union-method-diversity",
+      "prompt": "For a mental stress detection task I already have a set of literature-derived hypotheses and a social-media post dataset. I want to mechanistically combine my literature hypotheses with data-driven ones while removing redundancy to maximize diversity. Which hypogenic method?",
+      "expected_output": "Triggers the hypogenic skill. Recommends a Union method (Literature ∪ HypoGeniC or Literature ∪ HypoRefine) to combine the existing literature hypotheses with framework-generated ones and deduplicate, e.g. hypogenic_generation --method union --literature_hypotheses. Should reference the Union method and diversity/deduplication.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "Union"},
+        {"type": "behavior", "value": "Selects the Union method to mechanistically combine pre-existing literature hypotheses with framework outputs while removing redundancy."}
+      ]
+    },
+    {
+      "id": "extract-label-config-setup",
+      "prompt": "My hypogenic inference accuracy is always near zero. My LLM outputs end with 'Final prediction: <label>' but my dataset labels look different. What's wrong and how do I fix the label parsing?",
+      "expected_output": "Triggers the hypogenic skill. Diagnoses an extract_label mismatch: the custom extract_label() function must parse the 'Final prediction:' format and return labels in the same format as the dataset's label field for accuracy to compute correctly. Should reference the extract_label function and label-format matching.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "extract_label"},
+        {"type": "behavior", "value": "Identifies the extract_label parsing/format-mismatch as the cause of near-zero accuracy and shows how to align extracted labels with the dataset label format."}
+      ]
+    },
+    {
+      "id": "near-miss-hypothesis-gen-manual",
+      "prompt": "I observed that students who used our new tutoring tool scored higher on the final. Help me turn this single observation into a formal, falsifiable hypothesis with a proposed mechanism and an experiment to test it.",
+      "expected_output": "Should NOT trigger the hypogenic skill. This is manual, single-observation hypothesis formulation with a mechanism and experimental design and no dataset to run automated LLM-driven testing over. It belongs to the hypothesis-generation skill, which hypogenic's own description points to for manual formulation. Defer to hypothesis-generation.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "hypothesis-generation"}
+      ]
+    },
+    {
+      "id": "near-miss-scientific-brainstorm-ideation",
+      "prompt": "I'm at the very start of a project on misinformation and I have no data or observations yet. I just want to freely brainstorm interesting research directions and find cross-disciplinary angles and gaps.",
+      "expected_output": "Should NOT trigger the hypogenic skill. This is open-ended early-stage ideation with no dataset and no observations to test, which is the territory of the scientific-brainstorming skill, not automated data-driven hypothesis testing. Defer to scientific-brainstorming.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "scientific-brainstorming"}
+      ]
+    }
+  ]
+}

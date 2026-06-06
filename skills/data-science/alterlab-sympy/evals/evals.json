@@ -1,0 +1,63 @@
+{
+  "skill": "alterlab-sympy",
+  "evals": [
+    {
+      "id": "symbolic-integral-exact",
+      "prompt": "I need the exact closed-form value of the integral of x*exp(-x^2) from 0 to infinity, not a decimal approximation. Can you compute it symbolically and show the antiderivative too?",
+      "expected_output": "Invokes alterlab-sympy to compute the integral exactly: defines x with symbols, uses integrate(x*exp(-x**2), (x, 0, oo)) with oo for the improper bound, returns the exact result 1/2, and can show the indefinite antiderivative. Keeps everything symbolic (exact arithmetic) rather than a floating-point approximation.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "integrate" },
+        { "type": "behavior", "value": "Computes the definite integral symbolically with SymPy (using oo for infinity) and returns an exact result, not a numerical approximation." }
+      ]
+    },
+    {
+      "id": "solve-equation-symbolic-roots",
+      "prompt": "Solve x^2 - 5x + 6 = 0 algebraically and give me the exact roots, and also solve the nonlinear system x^2 + y = 2, x + y^2 = 3 for me.",
+      "expected_output": "Invokes alterlab-sympy for symbolic equation solving: uses solveset/solve on the quadratic to get the exact roots {2, 3}, and nonlinsolve for the nonlinear system. Defines symbols first and returns exact symbolic solutions, optionally verifying by substitution.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "nonlinsolve" },
+        { "type": "behavior", "value": "Uses SymPy solvers (solve/solveset for the quadratic, nonlinsolve for the system) and returns exact algebraic solutions." }
+      ]
+    },
+    {
+      "id": "matrix-eigenvalues-symbolic",
+      "prompt": "Given the 2x2 matrix [[1, 2], [2, 1]], find its eigenvalues and eigenvectors symbolically and diagonalize it as P*D*P^-1.",
+      "expected_output": "Invokes alterlab-sympy for symbolic linear algebra: builds a Matrix, calls .eigenvals() and .eigenvects() to get exact eigenvalues/eigenvectors, and uses .diagonalize() to return P and D such that M = P*D*P**-1. Results are exact symbolic values, not floating-point.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "eigenvals" },
+        { "type": "behavior", "value": "Uses SymPy Matrix methods (eigenvals/eigenvects/diagonalize) to produce exact eigenvalues, eigenvectors, and the diagonalization." }
+      ]
+    },
+    {
+      "id": "lambdify-symbolic-to-numpy",
+      "prompt": "I derived a messy symbolic expression for a derivative and now I need to evaluate it fast over an array of 10000 x-values for plotting. How do I turn the SymPy expression into a fast numerical function?",
+      "expected_output": "Invokes alterlab-sympy for code generation: uses lambdify(x, expr, 'numpy') to compile the symbolic expression into a vectorized NumPy callable, then evaluates over np.linspace/arrays — explicitly avoiding slow per-value subs()/evalf() loops. May mention codegen or latex output as adjacent options.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "lambdify" },
+        { "type": "behavior", "value": "Converts the symbolic expression to a fast numerical function with lambdify('numpy') instead of looping subs/evalf." }
+      ]
+    },
+    {
+      "id": "near-miss-scikit-learn",
+      "prompt": "I have 5000 noisy (x, y) data points and I want to fit a regression model that predicts y from x and report the test R-squared. There's no exact formula, just data.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-scikit-learn. The user wants to fit a statistical/ML model to noisy empirical data and evaluate predictive accuracy, which is numerical machine learning, not exact symbolic computation, so scikit-learn handles it rather than SymPy.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-scikit-learn" }
+      ]
+    },
+    {
+      "id": "near-miss-statistical-analysis",
+      "prompt": "I ran a two-group experiment and want to test whether the means differ significantly, with a t-test, effect size, and a confidence interval on the difference.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-statistical-analysis. The user wants applied inferential statistics on data (hypothesis testing, effect sizes, confidence intervals), not symbolic algebra or calculus, so the statistical-analysis skill is the correct owner rather than SymPy.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-statistical-analysis" }
+      ]
+    }
+  ]
+}

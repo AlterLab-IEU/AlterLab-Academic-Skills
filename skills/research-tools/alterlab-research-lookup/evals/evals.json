@@ -1,0 +1,59 @@
+{
+  "skill": "alterlab-research-lookup",
+  "evals": [
+    {
+      "id": "auto-route-general",
+      "prompt": "Look up current research on AI adoption in the healthcare industry — statistics, adoption rates, and recent developments. I'm not sure which search tool is best, just get me a solid cited report.",
+      "expected_output": "Invokes alterlab-research-lookup, which auto-routes this general/market research query to the Parallel Chat API (core model) via research_lookup.py, returning a multi-source markdown report with inline citations, and saves the result to the project's sources/ folder per the mandatory save rule.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Auto-routes a non-academic query to the Parallel Chat API (core model) and saves the result to sources/." }
+      ]
+    },
+    {
+      "id": "auto-route-academic",
+      "prompt": "Find peer-reviewed papers on CRISPR off-target effects in clinical trials, with DOIs and citation counts. Route it to whatever backend is best for scholarly search.",
+      "expected_output": "Invokes alterlab-research-lookup, which detects academic keywords (papers, peer-reviewed, DOI) and auto-routes to Perplexity sonar-pro-search in academic mode via research_lookup.py, returning 5-8 high-quality citations with DOIs and venue/citation indicators, saved to sources/ as a papers_ file.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "sonar-pro-search" }
+      ]
+    },
+    {
+      "id": "force-backend",
+      "prompt": "Use the Parallel deep research backend (not Perplexity) to give me a comprehensive report on the global renewable energy market trends and projections.",
+      "expected_output": "Invokes alterlab-research-lookup with a manual backend override (--force-backend parallel) to run the query against the Parallel Chat API regardless of routing heuristics, returning a comprehensive cited markdown report and saving it to sources/.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Honors the manual --force-backend parallel override and routes to the Parallel Chat API rather than Perplexity." }
+      ]
+    },
+    {
+      "id": "verify-fact-current",
+      "prompt": "I need to verify a statistic for a paper: what is the current prevalence of diabetes in the US population? Get me a sourced, up-to-date number.",
+      "expected_output": "Invokes alterlab-research-lookup to verify a current statistic, auto-routing the general statistical query to the Parallel Chat API (core model), returning a cited figure with source URLs, and saving the result to sources/ for reproducibility and audit-trail purposes.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Returns a sourced current statistic and saves the lookup to the sources/ folder." }
+      ]
+    },
+    {
+      "id": "near-miss-perplexity",
+      "prompt": "Run a Perplexity sonar-pro search directly on the latest mRNA vaccine developments — I specifically want to use Perplexity, not an auto-router.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-perplexity. The user explicitly wants to call Perplexity directly via the single-backend Perplexity skill, not the dual-backend auto-routing wrapper. research-lookup is the router; direct Perplexity-only search belongs to the perplexity skill.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-perplexity" }
+      ]
+    },
+    {
+      "id": "near-miss-pyzotero",
+      "prompt": "I have a list of DOIs from my last search. Can you fetch their BibTeX, add them to my Zotero library, and organize them into a collection?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-pyzotero (citation/reference management). The user wants to convert DOIs to BibTeX and manage a Zotero library, not look up or route a research query, so it belongs to the citation-management skill.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-pyzotero" }
+      ]
+    }
+  ]
+}
