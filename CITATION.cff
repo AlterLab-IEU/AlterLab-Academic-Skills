@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: "If you use AlterLab Academic Skills in your research or teaching, please cite it as below."
+title: "AlterLab Academic Skills"
+abstract: >-
+  A suite of 180 Agent Skills across 13 research domains that turn an AI agent into a
+  domain-specific academic research assistant, with executable evals, citation and integrity
+  audits, and bilingual (English/Turkish) documentation. A content fork of K-Dense-AI's
+  scientific-agent-skills, re-aimed at the academic faculty and research-lifecycle audience.
+type: software
+version: 2.0.0
+date-released: "2026-06-06"
+license: MIT
+repository-code: "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills"
+url: "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills"
+keywords:
+  - agent-skills
+  - academic-research
+  - claude
+  - research-assistant
+  - reproducibility
+  - scientific-computing
+  - bioinformatics
+  - literature-review
+authors:
+  - name: "AlterLab Creative Technologies Laboratory, Izmir University of Economics (IEU)"
+    website: "https://github.com/AlterLab-IEU"
+    city: "Izmir"
+    country: "TR"
+references:
+  - type: software
+    title: "scientific-agent-skills"
+    notes: "Upstream source from which AlterLab Academic Skills was content-forked; MIT-licensed."
+    authors:
+      - name: "K-Dense Inc."
+    license: MIT
+    repository-code: "https://github.com/K-Dense-AI/scientific-agent-skills"
+    url: "https://github.com/K-Dense-AI/scientific-agent-skills"
