@@ -294,5 +294,5 @@ Plain text format, useful for abstracts and simple data retrieval.
 
 - **API Documentation**: https://www.ncbi.nlm.nih.gov/books/NBK25501/
 - **Mailing List**: utilities-announce@ncbi.nlm.nih.gov
-- **Support**: vog.hin.mln.ibcn@seitilitue
+- **Support**: eutilities@ncbi.nlm.nih.gov
 - **NLM Help Desk**: 1-888-FIND-NLM (1-888-346-3656)

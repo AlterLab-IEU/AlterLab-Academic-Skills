@@ -455,6 +455,6 @@ Load reference files into context as needed based on the specific task. For brie
 - **PubMed Help**: https://pubmed.ncbi.nlm.nih.gov/help/
 - **E-utilities Documentation**: https://www.ncbi.nlm.nih.gov/books/NBK25501/
 - **NLM Help Desk**: 1-888-FIND-NLM (1-888-346-3656)
-- **Technical Support**: vog.hin.mln.ibcn@seitilitue
+- **Technical Support**: eutilities@ncbi.nlm.nih.gov
 - **Mailing List**: utilities-announce@ncbi.nlm.nih.gov
 

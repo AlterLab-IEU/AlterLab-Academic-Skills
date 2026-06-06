@@ -36,7 +36,7 @@ def run(protocol: protocol_api.ProtocolContext):
     plate = protocol.load_labware('corning_96_wellplate_360ul_flat', 'D3', label='Dilution Plate')
 
     # Load pipette
-    p300 = protocol.load_instrument('p300_single_flex', 'left', tip_racks=[tips])
+    p300 = protocol.load_instrument('flex_1channel_1000', 'left', tip_racks=[tips])
 
     # Define liquids (optional, for visualization)
     diluent = protocol.define_liquid(

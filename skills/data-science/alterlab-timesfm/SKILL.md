@@ -44,7 +44,7 @@ Do **not** use this skill when:
 - Your data is tabular (not temporal) → use `scikit-learn`
 
 > **Note on Anomaly Detection**: TimesFM does not have built-in anomaly detection, but you can
-> use the **quantile forecasts as prediction intervals** — values outside the 90% CI (q10–q90)
+> use the **quantile forecasts as prediction intervals** — values outside the 80% CI (q10–q90)
 > are statistically unusual. See the `examples/anomaly-detection/` directory for a full example.
 
 ## ⚠️ Mandatory Preflight: System Requirements Check
@@ -238,24 +238,24 @@ prediction intervals** that can detect anomalies:
 ```python
 point, q = model.forecast(horizon=H, inputs=[values])
 
-# 90% prediction interval
-lower_90 = q[0, :, 1]  # 10th percentile
-upper_90 = q[0, :, 9]  # 90th percentile
+# 80% prediction interval
+lower_80 = q[0, :, 1]  # 10th percentile
+upper_80 = q[0, :, 9]  # 90th percentile
 
-# Detect anomalies: values outside the 90% CI
+# Detect anomalies: values outside the 80% CI
 actual = test_values  # your holdout data
-anomalies = (actual < lower_90) | (actual > upper_90)
+anomalies = (actual < lower_80) | (actual > upper_80)
 
 # Severity levels
-is_warning = (actual < q[0, :, 2]) | (actual > q[0, :, 8])  # outside 80% CI
-is_critical = anomalies  # outside 90% CI
+is_warning = (actual < q[0, :, 2]) | (actual > q[0, :, 8])  # outside 60% CI
+is_critical = anomalies  # outside 80% CI
 ```
 
 | Severity | Condition | Interpretation |
 | -------- | --------- | -------------- |
-| **Normal** | Inside 80% CI | Expected behavior |
-| **Warning** | Outside 80% CI | Unusual but possible |
-| **Critical** | Outside 90% CI | Statistically rare (< 10% probability) |
+| **Normal** | Inside 60% CI | Expected behavior |
+| **Warning** | Outside 60% CI | Unusual but possible |
+| **Critical** | Outside 80% CI | Statistically rare (< 20% probability) |
 
 > See `examples/anomaly-detection/` for a complete example with visualization.
 

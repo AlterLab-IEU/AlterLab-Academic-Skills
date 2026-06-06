@@ -45,7 +45,7 @@ def run(protocol: protocol_api.ProtocolContext):
 
     # Load pipettes
     p20 = protocol.load_instrument('p50_single_flex', 'left', tip_racks=[tips_20])
-    p300 = protocol.load_instrument('p300_single_flex', 'right', tip_racks=[tips_200])
+    p300 = protocol.load_instrument('flex_1channel_1000', 'right', tip_racks=[tips_200])
 
     # Define liquids
     master_mix = protocol.define_liquid(

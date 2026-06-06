@@ -48,7 +48,7 @@ def run(protocol: protocol_api.ProtocolContext):
 
     # Load pipette
     pipette = protocol.load_instrument(
-        'p300_single_flex',
+        'flex_1channel_1000',
         'left',
         tip_racks=[tips_200]
     )

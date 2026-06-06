@@ -508,10 +508,14 @@ mol  # Shows molecule image
 ```python
 # Show what molecular features a fingerprint bit represents
 from rdkit.Chem import Draw
+from rdkit.Chem import rdFingerprintGenerator
 
-# For Morgan fingerprints
-bit_info = {}
-fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius=2, bitInfo=bit_info)
+# For Morgan fingerprints: capture bit provenance via AdditionalOutput
+morgan_gen = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=2048)
+ao = rdFingerprintGenerator.AdditionalOutput()
+ao.AllocateBitInfoMap()
+fp = morgan_gen.GetFingerprint(mol, additionalOutput=ao)
+bit_info = ao.GetBitInfoMap()
 
 # Draw environment for specific bit
 img = Draw.DrawMorganBit(mol, bit_id, bit_info)
@@ -644,18 +648,19 @@ def analyze_druglikeness(smiles):
 
 ```python
 from rdkit import Chem
-from rdkit.Chem import AllChem
+from rdkit.Chem import rdFingerprintGenerator
 from rdkit import DataStructs
 
 def similarity_screen(query_smiles, database_smiles, threshold=0.7):
+    mfpgen = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=2048)
     query_mol = Chem.MolFromSmiles(query_smiles)
-    query_fp = AllChem.GetMorganFingerprintAsBitVect(query_mol, 2)
+    query_fp = mfpgen.GetFingerprint(query_mol)
 
     hits = []
     for idx, smiles in enumerate(database_smiles):
         mol = Chem.MolFromSmiles(smiles)
         if mol:
-            fp = AllChem.GetMorganFingerprintAsBitVect(mol, 2)
+            fp = mfpgen.GetFingerprint(mol)
             sim = DataStructs.TanimotoSimilarity(query_fp, fp)
             if sim >= threshold:
                 hits.append((idx, smiles, sim))
@@ -713,7 +718,8 @@ with open('molecules.pkl', 'rb') as f:
 
 ```python
 # Calculate fingerprints for all molecules at once
-fps = [AllChem.GetMorganFingerprintAsBitVect(mol, 2) for mol in mols]
+mfpgen = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=2048)
+fps = [mfpgen.GetFingerprint(mol) for mol in mols]
 
 # Use bulk similarity calculations
 similarities = DataStructs.BulkTanimotoSimilarity(fps[0], fps[1:])

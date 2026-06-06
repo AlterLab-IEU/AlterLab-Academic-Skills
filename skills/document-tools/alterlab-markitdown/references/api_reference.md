@@ -23,7 +23,7 @@ md = MarkItDown(
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `llm_client` | OpenAI client | `None` | OpenAI-compatible client for AI image descriptions |
-| `llm_model` | str | `None` | Model name (e.g., "anthropic/claude-opus-4.5") for image descriptions |
+| `llm_model` | str | `None` | Model name for image descriptions; use the `ALTERLAB_MODEL` convention (dated default `anthropic/claude-opus-4-8`, see skills/core/shared/model_env.md) |
 | `llm_prompt` | str | `None` | Custom prompt for image description |
 | `docintel_endpoint` | str | `None` | Azure Document Intelligence endpoint |
 | `enable_plugins` | bool | `False` | Enable 3rd-party plugins |
@@ -226,6 +226,11 @@ class MyConverter(DocumentConverter):
 from markitdown import MarkItDown
 from openai import OpenAI
 
+# Model ID via the ALTERLAB_MODEL convention (skills/core/shared/model_env.md):
+# $ALTERLAB_MODEL, else the dated default (reviewed 2026-06-06), with OpenRouter prefix.
+import os
+model = os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8"
+
 # Initialize OpenRouter client (OpenAI-compatible API)
 client = OpenAI(
     api_key="your-openrouter-api-key",
@@ -235,7 +240,7 @@ client = OpenAI(
 # Create MarkItDown with AI support
 md = MarkItDown(
     llm_client=client,
-    llm_model="anthropic/claude-opus-4.5",  # recommended for scientific vision
+    llm_model=model,  # recommended for scientific vision
     llm_prompt="Describe this image in detail for scientific documentation"
 )
 
@@ -246,10 +251,11 @@ result = md.convert("presentation.pptx")
 ### Available Models via OpenRouter
 
 Popular models with vision support:
-- `anthropic/claude-opus-4.5` - **Recommended for scientific vision**
-- `google/gemini-3-pro-preview` - Gemini Pro Vision
+- `anthropic/claude-opus-4-8` - **Recommended for scientific vision** (the dated default behind `ALTERLAB_MODEL`)
+- A current Google Gemini Pro Vision model - alternative vision backend
 
-See https://openrouter.ai/models for the complete list.
+Prefer the `ALTERLAB_MODEL` env-var convention (skills/core/shared/model_env.md) over
+hardcoding any of these. See https://openrouter.ai/models for the complete list.
 
 ### Custom Prompts
 
@@ -266,7 +272,7 @@ Be precise and technical.
 
 md = MarkItDown(
     llm_client=client,
-    llm_model="anthropic/claude-opus-4.5",
+    llm_model=os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8",
     llm_prompt=scientific_prompt
 )
 ```
