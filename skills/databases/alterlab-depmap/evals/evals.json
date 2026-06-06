@@ -1,0 +1,60 @@
+{
+  "skill": "alterlab-depmap",
+  "evals": [
+    {
+      "id": "gene-essentiality-cancer-type",
+      "prompt": "Is KRAS a genetic dependency in lung cancer cell lines? Pull the DepMap CRISPR Chronos gene effect scores and tell me which lung lines are selectively dependent.",
+      "expected_output": "Invokes alterlab-depmap. Uses CRISPR Chronos gene effect data (CRISPRGeneEffect.csv) joined with sample_info.csv, filters cell lines whose primary_disease is lung, and reports lines with KRAS gene effect below the dependency threshold (Chronos <= -0.5, strongly <= -1), distinguishing selective from pan-essential dependency.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Chronos" },
+        { "type": "behavior", "value": "Applies the Chronos dependency thresholds and separates cancer-selective dependency from pan-essentiality." }
+      ]
+    },
+    {
+      "id": "synthetic-lethality",
+      "prompt": "I want to find synthetic lethal partners of BRCA1 — genes that become essential specifically in BRCA1-mutant cell lines using DepMap.",
+      "expected_output": "Invokes alterlab-depmap. Splits cell lines by BRCA1 mutation status (OmicsSomaticMutationsMatrixDamaging), compares CRISPR gene effect between mutant and wild-type lines (e.g. Mann-Whitney), and identifies genes significantly more essential in the mutant group as synthetic lethal candidates, with FDR correction for genome-wide testing.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Stratifies cell lines by mutation status and tests for genes selectively essential in the mutant background (synthetic lethality)." }
+      ]
+    },
+    {
+      "id": "pan-essential-check",
+      "prompt": "Before I commit to a target, check in DepMap whether MYC is broadly essential across all cancer cell lines or only selectively essential — I don't want a pan-essential gene as a drug target.",
+      "expected_output": "Invokes alterlab-depmap. Examines the distribution of MYC CRISPR gene effect across all lines, flags low-variance/broadly-essential genes as poor (pan-essential) targets versus cancer-selective dependencies, and applies the best practice that pan-essential genes make poor drug targets.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Distinguishes pan-essential (broadly essential, poor target) from cancer-selective dependency across the cell line panel." }
+      ]
+    },
+    {
+      "id": "co-essentiality",
+      "prompt": "Which genes have dependency profiles most correlated with WRN across DepMap cell lines? I'm looking for co-essential partners that might share a pathway or complex.",
+      "expected_output": "Invokes alterlab-depmap. Correlates the WRN CRISPR gene effect profile against all other genes' profiles across cell lines and returns the top co-essential partners (highest correlation), noting co-essential genes often share complexes or pathways.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Computes correlation of dependency profiles across cell lines to surface co-essential partners." }
+      ]
+    },
+    {
+      "id": "near-miss-cbioportal",
+      "prompt": "What is the mutation frequency and overall survival impact of TP53 across TCGA patient tumor samples in cBioPortal?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-cbioportal. The user wants patient tumor genomics and clinical/survival data from TCGA via cBioPortal, not CRISPR gene dependency scores from cancer cell lines.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-cbioportal" }
+      ]
+    },
+    {
+      "id": "near-miss-chembl",
+      "prompt": "Find small-molecule inhibitors of KRAS with IC50 under 50 nM and their SMILES from ChEMBL.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-chembl. The user wants medicinal-chemistry bioactivity (IC50, compound structures) for a target, not CRISPR gene dependency / cell line essentiality data from DepMap.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-chembl" }
+      ]
+    }
+  ]
+}

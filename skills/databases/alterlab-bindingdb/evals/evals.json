@@ -1,0 +1,58 @@
+{
+  "skill": "alterlab-bindingdb",
+  "evals": [
+    {
+      "id": "ligands-by-target",
+      "prompt": "I need every compound in BindingDB that binds ABL1 (UniProt P00519) with an affinity tighter than 100 nM, with their measured Ki/IC50 values. Can you pull that?",
+      "expected_output": "Invokes alterlab-bindingdb. Uses the getLigandsByUniprot REST endpoint with the uniprot;cutoff parameter format (P00519;100), returning ligands and their measured binding constants (Ki, IC50, Kd) for the target. Explains the affinity cutoff is in nM.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "P00519" }
+      ]
+    },
+    {
+      "id": "sar-potency-ranking",
+      "prompt": "For an EGFR (P00533) inhibitor series I'm working on, retrieve all the experimental IC50 data from BindingDB and rank the analogs by potency so I can do an SAR analysis.",
+      "expected_output": "Invokes alterlab-bindingdb for structure-activity relationship analysis. Loads BindingDB records for the target, filters by IC50, computes pIC50 / pAffinity, and ranks compounds from most to least potent. May note the difference between Ki and IC50 and Cheng-Prusoff context-dependency.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Ranks compounds by measured potency and references SAR or pIC50/pAffinity." }
+      ]
+    },
+    {
+      "id": "polypharmacology-profile",
+      "prompt": "Here's a kinase inhibitor SMILES. I want to know all the protein targets it has measured binding data against in BindingDB and at what affinities, to assess its polypharmacology.",
+      "expected_output": "Invokes alterlab-bindingdb. Runs a structural-similarity search by SMILES (getTargetByCompound) or matches the ligand to find every target it binds, returning measured Ki/Kd/IC50 across targets to build a polypharmacology / selectivity profile.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Returns multiple protein targets with measured affinities for the queried compound (polypharmacology)." }
+      ]
+    },
+    {
+      "id": "ml-dataset-prep",
+      "prompt": "I want to train a binding-affinity prediction model. Can you assemble a curated set of protein-ligand IC50 measurements from BindingDB across several kinase targets, with SMILES and normalized pAffinity values?",
+      "expected_output": "Invokes alterlab-bindingdb. Builds an ML-ready dataset of SMILES, target UniProt IDs, and normalized pAffinity values across the requested targets, filtering by affinity cutoff and minimum count per target as in the download-based BindingDB workflow.",
+      "assertions": [
+        { "type": "should_trigger", "value": true }
+      ]
+    },
+    {
+      "id": "near-miss-alterlab-chembl",
+      "prompt": "I want the full curated medicinal-chemistry activity record for a compound series, including assay descriptions, ADMET annotations, and the ChEMBL activity comments and confidence scores.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-chembl. The user wants ChEMBL's curated medicinal-chemistry activity data with assay-level annotations and confidence scoring, not BindingDB's raw measured binding constants. BindingDB best-practice notes even recommend cross-referencing ChEMBL for curated medicinal-chemistry data.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-chembl" }
+      ]
+    },
+    {
+      "id": "near-miss-alterlab-pubchem",
+      "prompt": "Convert this compound name to a CID and give me its molecular weight, XLogP, TPSA, and hydrogen-bond donor/acceptor counts.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-pubchem. The user wants physicochemical property lookup and name-to-CID conversion, which is PubChem's PUG-REST territory, not BindingDB's measured protein-ligand affinities.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-pubchem" }
+      ]
+    }
+  ]
+}

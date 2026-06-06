@@ -1,0 +1,59 @@
+{
+  "skill": "alterlab-cosmic",
+  "evals": [
+    {
+      "id": "cancer-gene-census",
+      "prompt": "I want the expert-curated Cancer Gene Census from COSMIC so I can filter my variant list down to known cancer genes and split them into oncogenes vs tumor suppressors.",
+      "expected_output": "Invokes alterlab-cosmic: downloads cancer_gene_census.csv via download_cosmic_file (authenticated), then uses the 'Role in Cancer' field to separate oncogenes from TSGs from the ~700+ curated cancer genes.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Cancer Gene Census" }
+      ]
+    },
+    {
+      "id": "somatic-mutations-by-gene",
+      "prompt": "Download the COSMIC coding mutations file (GRCh38) and pull all the recurrent somatic TP53 mutations for my cancer cohort analysis.",
+      "expected_output": "Invokes alterlab-cosmic: downloads CosmicMutantExport.tsv.gz for GRCh38 via download_cosmic_file, reads it with pandas, and filters by Gene name == 'TP53' to extract somatic mutations.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Retrieves somatic coding mutations from a downloaded COSMIC export (GRCh38) and filters to the named gene, with authentication." }
+      ]
+    },
+    {
+      "id": "mutational-signatures",
+      "prompt": "I need the COSMIC SBS mutational signature definitions to run signature decomposition on my whole-genome tumor samples.",
+      "expected_output": "Invokes alterlab-cosmic: downloads the mutational signature profiles (SBS/DBS/ID definitions) from COSMIC's signatures path, suitable for feeding into signature-analysis tools like SigProfiler or deconstructSigs.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "signature" }
+      ]
+    },
+    {
+      "id": "resistance-mutations",
+      "prompt": "Get me COSMIC's drug resistance mutation data so I can annotate which variants in my samples confer known resistance.",
+      "expected_output": "Invokes alterlab-cosmic: downloads CosmicResistanceMutations.tsv.gz via the resistance_mutations shortcut and surfaces the clinically annotated drug-resistance variants.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Downloads the COSMIC resistance mutations file specifically, not generic mutation data." }
+      ]
+    },
+    {
+      "id": "near-miss-clinvar",
+      "prompt": "Is the germline BRCA1 c.68_69delAG variant classified as pathogenic? I need the clinical significance and review status.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-clinvar. The user wants germline variant clinical-significance classification, whereas COSMIC catalogues somatic mutations in cancer, not germline pathogenicity calls.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-clinvar" }
+      ]
+    },
+    {
+      "id": "near-miss-cbioportal",
+      "prompt": "Show me the mutation frequency of EGFR across the TCGA lung adenocarcinoma study with an OncoPrint and survival breakdown.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-cbioportal. The user wants interactive cohort-level visualization (OncoPrint, survival) from cBioPortal study data, not raw COSMIC catalogue file downloads.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-cbioportal" }
+      ]
+    }
+  ]
+}

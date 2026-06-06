@@ -1,0 +1,59 @@
+{
+  "skill": "alterlab-pubmed",
+  "evals": [
+    {
+      "id": "mesh-boolean-query",
+      "prompt": "Build me a PubMed query for systematic reviews on type 2 diabetes drug therapy published in 2023-2024, using MeSH terms and the right field tags, and run it via E-utilities.",
+      "expected_output": "Invokes alterlab-pubmed to construct a Boolean/MeSH query (e.g. diabetes mellitus, type 2[mh]/drug therapy AND systematic review[pt] AND 2023:2024[dp]) and execute it through the E-utilities ESearch endpoint, returning PMIDs and explaining the field tags used.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "MeSH" }
+      ]
+    },
+    {
+      "id": "batch-efetch-abstracts",
+      "prompt": "Search PubMed for diabetes papers from 2024 and pull back the abstracts for the top 100 hits in bulk via the API.",
+      "expected_output": "Invokes alterlab-pubmed to run the ESearch then EFetch E-utilities workflow over raw REST (esearch.fcgi to get PMIDs, efetch.fcgi with rettype=abstract), recommending an API key and history server for large sets and respecting the 3/10 req-sec rate limits.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "E-utilities" }
+      ]
+    },
+    {
+      "id": "pico-systematic-review-search",
+      "prompt": "Help me write a comprehensive PICO-structured PubMed search strategy for a systematic review on metformin versus lifestyle modification for glycemic control in type 2 diabetes, limited to RCTs.",
+      "expected_output": "Invokes alterlab-pubmed to translate a PICO question into a comprehensive search with MeSH terms, synonyms, [tiab] free-text, and a randomized controlled trial[pt] filter, advising documentation of the search strategy and date for reproducibility.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "PICO" }
+      ]
+    },
+    {
+      "id": "citation-match-by-identifier",
+      "prompt": "I have a DOI 10.1056/NEJMoa123456. Find the matching PubMed PMID for it and pull the citation in MEDLINE format.",
+      "expected_output": "Invokes alterlab-pubmed to resolve the identifier (e.g. a [doi] field search or ECitMatch) to the corresponding PMID, then EFetch the record in MEDLINE/.nbib format for citation management.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Resolves the DOI to a PMID and retrieves the citation record (e.g. MEDLINE format) via E-utilities." }
+      ]
+    },
+    {
+      "id": "near-miss-biorxiv",
+      "prompt": "Find me the latest not-yet-peer-reviewed preprints on single-cell RNA-seq methods posted to bioRxiv in the genomics category this year.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-biorxiv. PubMed indexes peer-reviewed/MEDLINE literature, whereas the user explicitly wants bioRxiv life-sciences preprints filtered by bioRxiv category.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-biorxiv" }
+      ]
+    },
+    {
+      "id": "near-miss-clinicaltrials",
+      "prompt": "Find all currently recruiting interventional clinical trials for metformin in type 2 diabetes, with their NCT numbers, phases, and enrollment status.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-clinicaltrials. The user wants trial registry records (NCT IDs, recruitment status, phase) from ClinicalTrials.gov, not published biomedical literature citations from PubMed.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-clinicaltrials" }
+      ]
+    }
+  ]
+}

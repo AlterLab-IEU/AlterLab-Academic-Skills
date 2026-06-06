@@ -1,0 +1,68 @@
+{
+  "skill": "alterlab-fda",
+  "evals": [
+    {
+      "id": "drug-adverse-events",
+      "prompt": "Pull the most common adverse reactions reported for metformin from the FDA adverse event reports, and tell me how many of them were serious.",
+      "expected_output": "Invokes alterlab-fda: uses the openFDA drug/event endpoint via FDAQuery (query_drug_events plus count_by_field on patient.reaction.reactionmeddrapt) and counts serious:1 events for metformin, returning ranked reactions and a serious-event total.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Queries the openFDA drug adverse-event (FAERS) endpoint and aggregates reaction terms for the named drug rather than searching the web." }
+      ]
+    },
+    {
+      "id": "device-510k-clearances",
+      "prompt": "Find the 510(k) clearances submitted by Medtronic in the FDA device database, and also check whether any of their pacemakers have recent adverse event reports.",
+      "expected_output": "Invokes alterlab-fda: uses query_device_510k(applicant=\"Medtronic\") on the openFDA device 510(k) endpoint and query_device_events for pacemaker adverse events, combining device clearance and surveillance data.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "510(k)" }
+      ]
+    },
+    {
+      "id": "food-recall-allergen",
+      "prompt": "Search the FDA enforcement reports for Class I food recalls due to undeclared peanut so I can build an allergen-recall timeline.",
+      "expected_output": "Invokes alterlab-fda: uses query_food_recalls(reason=\"undeclared peanut\", classification=\"I\") against the openFDA food enforcement endpoint and returns the matching Class I recall records.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "recall" }
+      ]
+    },
+    {
+      "id": "substance-unii-lookup",
+      "prompt": "I have the UNII code R16CO5Y76E. Look it up in the FDA substance database and give me the substance name and CAS number.",
+      "expected_output": "Invokes alterlab-fda: uses query_substance_by_unii(\"R16CO5Y76E\") against the openFDA other/substance endpoint to return the UNII-to-name and CAS mapping with chemical structure info.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "UNII" }
+      ]
+    },
+    {
+      "id": "comparative-safety",
+      "prompt": "Compare the adverse-event and serious-event rates of three NSAIDs (ibuprofen, naproxen, celecoxib) using FDA data so I can flag the riskiest one.",
+      "expected_output": "Invokes alterlab-fda: iterates the openFDA drug/event endpoint per drug to get total and serious counts, computes a serious-rate per drug (the compare_drugs pattern), and ranks them.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Builds a side-by-side adverse-event comparison across the named drugs using openFDA counts." }
+      ]
+    },
+    {
+      "id": "near-miss-drugbank",
+      "prompt": "What is metformin's mechanism of action, its drug targets, and known drug-drug interactions at the pharmacology level?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-drugbank. The user wants curated pharmacology (mechanism, targets, interactions), not FDA regulatory/safety surveillance data like adverse events or recalls.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-drugbank" }
+      ]
+    },
+    {
+      "id": "near-miss-clinicaltrials",
+      "prompt": "Find all currently recruiting Phase 3 clinical trials testing pembrolizumab in non-small-cell lung cancer.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-clinicaltrials. The user wants trial registry records (recruitment status, phase, eligibility), not FDA post-market safety, labeling, or approval data.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-clinicaltrials" }
+      ]
+    }
+  ]
+}

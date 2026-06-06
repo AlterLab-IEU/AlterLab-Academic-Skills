@@ -1,0 +1,59 @@
+{
+  "skill": "alterlab-diffdock",
+  "evals": [
+    {
+      "id": "single-pose-prediction",
+      "prompt": "Dock aspirin (CC(=O)Oc1ccccc1C(=O)O) into my protein.pdb and give me the top binding poses. Where does it sit?",
+      "expected_output": "Invokes alterlab-diffdock: runs python -m inference with default_inference_args.yaml, --protein_path protein.pdb and the aspirin --ligand SMILES, writing ranked poses (rank_1.sdf ...) plus confidence scores to an out_dir, and interprets the predicted binding pose / confidence.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Runs DiffDock inference to produce ranked 3D poses and a confidence score, and clarifies that the output is a pose, not a binding affinity." }
+      ]
+    },
+    {
+      "id": "virtual-screening-batch",
+      "prompt": "I have 300 candidate SMILES and one kinase PDB. Set up a batch virtual screening run and pre-compute the protein embeddings so it's faster.",
+      "expected_output": "Invokes alterlab-diffdock: builds/validates a batch CSV via prepare_batch_csv.py (complex_name, protein_path, ligand_description, protein_sequence), pre-computes ESM embeddings with datasets/esm_embedding_preparation.py, then runs inference with --protein_ligand_csv and --esm_embeddings_path, and analyzes ranked confidence scores across complexes.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Uses a batch CSV plus pre-computed ESM embeddings for the >100-compound screen rather than 300 separate single runs." }
+      ]
+    },
+    {
+      "id": "confidence-interpretation",
+      "prompt": "All my DiffDock poses came back with confidence scores around -2. Are these any good, and what should I change?",
+      "expected_output": "Invokes alterlab-diffdock: interprets the score bands (>0 high, -1.5 to 0 moderate, <-1.5 low), explains that -2 is low/uncertain, and recommends remedies such as increasing samples_per_complex (20-40), ensemble docking, checking protein preparation, while reminding that confidence is structural certainty, not affinity.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "confidence" }
+      ]
+    },
+    {
+      "id": "sequence-input-no-pdb",
+      "prompt": "I only have the amino-acid sequence for my target, no crystal structure. Can I still dock a ligand SDF to it?",
+      "expected_output": "Invokes alterlab-diffdock: runs inference with --protein_sequence (ESMFold-based) instead of --protein_path, takes the ligand from the SDF file, and produces ranked poses with confidence scores.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Uses the protein-sequence input path (ESMFold) rather than requiring a PDB file." }
+      ]
+    },
+    {
+      "id": "near-miss-rowan-affinity",
+      "prompt": "I already have a docked pose. Now I need an actual binding free energy / docking score for this protein-ligand complex on a cloud platform with AutoDock Vina, not just a pose.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-rowan (or a scoring function like GNINA/MM-GBSA). DiffDock predicts poses and confidence, not binding affinity; the user wants a quantitative affinity/docking score, which Rowan's AutoDock Vina docking workflow provides.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-rowan" }
+      ]
+    },
+    {
+      "id": "near-miss-molecular-dynamics",
+      "prompt": "Take my protein-ligand complex and run a 100 ns explicit-solvent MD simulation to check whether the pose is stable and compute RMSD over the trajectory.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-molecular-dynamics. The user wants a molecular dynamics trajectory and stability/RMSD analysis of an existing complex, not pose prediction, which is outside DiffDock's scope.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-molecular-dynamics" }
+      ]
+    }
+  ]
+}

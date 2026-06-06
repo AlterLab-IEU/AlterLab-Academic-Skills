@@ -1,0 +1,53 @@
+{
+  "skill": "alterlab-rowan",
+  "evals": [
+    {
+      "id": "pka-prediction",
+      "prompt": "Can you predict the pKa of phenol for me on Rowan? I don't have a local compute cluster, just give me the strongest acid pKa.",
+      "expected_output": "Invokes alterlab-rowan. Builds the molecule (stjames.Molecule.from_smiles('c1ccccc1O') or RDKit), submits a pKa workflow via rowan.submit_pka_workflow (or rowan.run_pka), waits for the cloud result, and reads workflow.data['strongest_acid']. Emphasizes no local setup is needed.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Rowan" },
+        { "type": "behavior", "value": "Submits a Rowan pKa workflow (submit_pka_workflow / run_pka) and returns the strongest-acid pKa from cloud compute." }
+      ]
+    },
+    {
+      "id": "conformer-search-geometry",
+      "prompt": "I need a conformer search and geometry optimization for a small drug molecule, ideally with a fast neural network potential like AIMNet2 rather than full DFT. Can Rowan do that in the cloud?",
+      "expected_output": "Invokes alterlab-rowan. Submits a conformer search (rowan.submit_conformer_search_workflow) and a geometry optimization (submit_basic_calculation_workflow with workflow_type='optimization'), reading back the conformer ensemble energies and final_molecule. Notes Rowan exposes AIMNet2 (neural network potential) as a fast level of theory alongside semiempirical xTB and DFT.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "AIMNet2" },
+        { "type": "behavior", "value": "Submits conformer search and geometry optimization workflows and mentions selectable methods (NNP/xTB/DFT)." }
+      ]
+    },
+    {
+      "id": "docking-vina",
+      "prompt": "Dock this candidate inhibitor into the EGFR kinase (PDB 1M17) binding pocket on Rowan with AutoDock Vina and return the docking score. I want it cloud-side, no local install.",
+      "expected_output": "Invokes alterlab-rowan. Creates the protein (rowan.create_protein_from_pdb_id code='1M17'), defines the pocket center/size, submits rowan.submit_docking_workflow with the ligand SMILES, and reads workflow.data['docking_score']. Frames it as cloud AutoDock Vina docking with automatic resource allocation.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "docking" },
+        { "type": "behavior", "value": "Uses submit_docking_workflow against a Rowan-hosted protein with a defined pocket and returns a docking score." }
+      ]
+    },
+    {
+      "id": "protein-cofolding",
+      "prompt": "I have a kinase sequence and a ligand SMILES and want an AI-predicted protein-ligand complex structure using Chai-1, with the pTM and interface pTM confidence scores.",
+      "expected_output": "Invokes alterlab-rowan. Submits rowan.submit_protein_cofolding_workflow with initial_protein_sequences and initial_smiles_list, model='chai_1r' (or boltz_1x/boltz_2), and reads workflow.data['ptm_score'] and ['interface_ptm']. Frames it as AI cofolding structure prediction on the Rowan cloud.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "cofolding" }
+      ]
+    },
+    {
+      "id": "near-miss-molecular-dynamics",
+      "prompt": "I want to run a 50 ns explicit-solvent molecular dynamics trajectory of this protein-ligand complex with OpenMM and then analyze the RMSD and binding-pose stability over time.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-molecular-dynamics. The user wants a time-resolved explicit-solvent MD trajectory (OpenMM) with RMSD/stability analysis, which is the molecular-dynamics skill's job. Rowan does quantum-chemistry, docking, and cofolding workflows, not running and analyzing MD trajectories.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-molecular-dynamics" }
+      ]
+    }
+  ]
+}

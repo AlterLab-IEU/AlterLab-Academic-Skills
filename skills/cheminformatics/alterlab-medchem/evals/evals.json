@@ -1,0 +1,59 @@
+{
+  "skill": "alterlab-medchem",
+  "evals": [
+    {
+      "id": "library-triage-rules",
+      "prompt": "Triage my 5000-compound library: keep only molecules that pass Rule of Five and Veber, and drop anything with a known structural alert. Give me back the clean set.",
+      "expected_output": "Invokes alterlab-medchem: builds mc.rules.RuleFilters(rule_list=['rule_of_five','rule_of_veber']) and applies it with n_jobs=-1/progress=True, then runs mc.structural.CommonAlertsFilters to flag alerts, and combines pass-rules AND not-has-alerts into a filtered DataFrame for the clean set.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Applies medchem rule filters (Ro5, Veber) and structural alerts with parallel n_jobs, then intersects the pass conditions." }
+      ]
+    },
+    {
+      "id": "pains-flagging",
+      "prompt": "Before I trust these screening hits, flag any PAINS or reactive Michael-acceptor groups so I don't chase assay artifacts.",
+      "expected_output": "Invokes alterlab-medchem: applies PAINS filtering (via rules / common alerts) and uses mc.groups.ChemicalGroup to detect Michael acceptors / reactive groups, returning per-molecule flags so the user can deprioritize likely assay-interference artifacts.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "PAINS" }
+      ]
+    },
+    {
+      "id": "lilly-nibr-lead-opt",
+      "prompt": "For lead optimization, run the NIBR filter set and Lilly demerits on my candidate list and tell me which ones exceed 100 demerits.",
+      "expected_output": "Invokes alterlab-medchem: applies mc.structural.NIBRFilters and mc.structural.LillyDemeritsFilters with n_jobs=-1, reporting per-molecule demerit scores and flagging those rejected at >100 demerits, for stricter lead-optimization triage.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Uses NIBRFilters and LillyDemeritsFilters and identifies molecules above the 100-demerit rejection threshold." }
+      ]
+    },
+    {
+      "id": "complexity-and-constraints",
+      "prompt": "Filter my set to molecular weight 200-500, logP between -2 and 5, TPSA under 140, and also drop anything with Bertz complexity above 500.",
+      "expected_output": "Invokes alterlab-medchem: applies mc.constraints.Constraints (mw_range, logp_range, tpsa_max, rotatable bounds) and mc.complexity.ComplexityFilter(max_complexity=500) to enforce the property windows and complexity ceiling, returning the molecules that satisfy all constraints.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Uses medchem constraints plus a complexity filter to enforce the MW/logP/TPSA windows and the Bertz complexity ceiling." }
+      ]
+    },
+    {
+      "id": "near-miss-datamol",
+      "prompt": "I just need to compute MW, logP, HBD, HBA and TPSA descriptors in bulk for my SDF and standardize the structures first. No filtering decisions, just the numbers.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-datamol. The user only wants descriptor computation and standardization, not medicinal-chemistry filtering / alert flagging, so datamol's batch descriptor and standardization utilities are the right tool.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-datamol" }
+      ]
+    },
+    {
+      "id": "near-miss-pytdc",
+      "prompt": "I want a labeled hERG cardiotoxicity dataset with a proper scaffold train/test split to train a toxicity classifier.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-pytdc. The user wants a curated, AI-ready benchmark dataset (Tox hERG) with scaffold splits for model training, not rule-based filtering of their own compounds, which is Therapeutics Data Commons territory.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-pytdc" }
+      ]
+    }
+  ]
+}

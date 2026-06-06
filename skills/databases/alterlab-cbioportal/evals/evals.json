@@ -1,0 +1,63 @@
+{
+  "skill": "alterlab-cbioportal",
+  "evals": [
+    {
+      "id": "mutation-frequency-tcga",
+      "prompt": "What fraction of TCGA breast cancer samples carry a TP53 mutation? I want the percentage and a breakdown of the mutation types (missense, nonsense, frameshift).",
+      "expected_output": "Triggers the cBioPortal skill. Resolves TP53 to its Entrez ID (7157) via POST /genes/fetch, then fetches mutations from the brca_tcga_mutations molecular profile (POST molecular-profiles/{id}/mutations/fetch) against the study's all-cases sample list, computes the mutated-patient fraction over total samples, and tabulates mutationType counts (Missense_Mutation, Nonsense_Mutation, Frame_Shift_Del, etc.). Uses the public REST API at https://www.cbioportal.org/api with no API key.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "cbioportal" },
+        { "type": "behavior", "value": "Resolves the gene symbol to an Entrez ID via /genes/fetch and queries a study mutation molecular profile rather than guessing a frequency." },
+        { "type": "behavior", "value": "Computes alteration frequency as mutated patients over total samples in the study's all-cases sample list." }
+      ]
+    },
+    {
+      "id": "copy-number-amplification",
+      "prompt": "Is EGFR amplified in glioblastoma? Pull the GISTIC copy-number calls from the TCGA GBM study and tell me how many samples show high-level amplification versus deep deletion.",
+      "expected_output": "Triggers cBioPortal. Uses the discrete copy-number endpoint (POST molecular-profiles/{profileId}/discrete-copy-number/fetch) on the gbm_tcga GISTIC profile for EGFR (Entrez 1956), interprets GISTIC values where 2 = high-level amplification and -2 = deep deletion, and counts samples in each category. Recognizes EGFR amplification as a hallmark GBM event.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "GISTIC" },
+        { "type": "behavior", "value": "Uses the discrete-copy-number fetch endpoint and correctly maps GISTIC value 2 to amplification and -2 to deep deletion." }
+      ]
+    },
+    {
+      "id": "pan-cancer-alteration",
+      "prompt": "Show me the mutation frequency of PIK3CA across multiple cancer types in cBioPortal so I can see which tumors are most dependent on it.",
+      "expected_output": "Triggers cBioPortal. Iterates across multiple studies (e.g. via GET /studies, filtering TCGA studies), computes per-study PIK3CA mutation frequency, and returns a ranked pan-cancer table sorted by mutation percentage. Notes that the API uses Entrez IDs and that frequencies are patient-level over each study's sample list.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Loops over multiple cancer studies and returns a ranked pan-cancer mutation-frequency comparison rather than a single study result." }
+      ]
+    },
+    {
+      "id": "survival-by-mutation",
+      "prompt": "In TCGA lung adenocarcinoma, do KEAP1-mutant patients have worse overall survival than KEAP1 wild-type? Get me the OS_MONTHS and OS_STATUS split by mutation status.",
+      "expected_output": "Triggers cBioPortal. Fetches KEAP1 mutations for luad_tcga to define the mutant patient set, pulls clinical data (GET /clinical-data/fetch) for OS_MONTHS and OS_STATUS, joins on patientId, and returns survival data split by mutation status ready for Kaplan-Meier analysis. Notes that the skill provides the data extraction and downstream KM/log-rank is performed separately.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "OS_STATUS" },
+        { "type": "behavior", "value": "Joins clinical survival attributes to the mutated-patient set by patientId to enable a survival comparison." }
+      ]
+    },
+    {
+      "id": "near-miss-clinvar",
+      "prompt": "Is the BRCA1 c.5266dupC variant classified as pathogenic for hereditary breast cancer? I need the germline clinical significance and review status for this specific variant.",
+      "expected_output": "Should NOT trigger cBioPortal. This asks for germline variant clinical-significance interpretation (pathogenic/benign classification, review status) for a specific reported variant, which is ClinVar's territory, not cancer somatic genomics aggregation. cBioPortal reports somatic mutation frequencies and patient-level alterations across tumor cohorts, not curated germline pathogenicity calls. Defers to alterlab-clinvar.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "clinvar" }
+      ]
+    },
+    {
+      "id": "near-miss-cosmic",
+      "prompt": "I want the COSMIC mutational signatures (SBS catalogue) contributing to a melanoma sample's mutation spectrum. Which signatures dominate?",
+      "expected_output": "Should NOT trigger cBioPortal. Mutational signature decomposition against the COSMIC SBS catalogue is COSMIC's domain. cBioPortal serves per-gene somatic mutations, CNAs, and clinical outcomes across studies, not signature catalogues or SBS contribution analysis. Defers to alterlab-cosmic.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "cosmic" }
+      ]
+    }
+  ]
+}

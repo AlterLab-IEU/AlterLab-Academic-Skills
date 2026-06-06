@@ -1,0 +1,64 @@
+{
+  "skill": "alterlab-datacommons",
+  "evals": [
+    {
+      "id": "population-timeseries",
+      "prompt": "Pull the full population time series for California and Texas from Data Commons so I can plot how they've grown since 2000.",
+      "expected_output": "Triggers the Data Commons skill. Resolves the place names to DCIDs (geoId/06 for California, geoId/48 for Texas) via client.resolve.fetch_dcids_by_name, then queries client.observation.fetch with variable_dcids=['Count_Person'] and date='all', and converts the response to a Pandas DataFrame (to_observation_records / pivot on date) for plotting. Uses the datacommons-client Python API v2.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Count_Person" },
+        { "type": "behavior", "value": "Resolves place names to DCIDs before querying observations rather than querying by raw name." },
+        { "type": "behavior", "value": "Uses the observation endpoint with date='all' to retrieve the full time series." }
+      ]
+    },
+    {
+      "id": "county-hierarchy-income",
+      "prompt": "I need median household income for every county in California in 2020 from Data Commons. Get them all in one go rather than county by county.",
+      "expected_output": "Triggers Data Commons. Uses a containedInPlace relation expression (entity_expression='geoId/06<-containedInPlace+{typeOf:County}') in client.observation.fetch with the appropriate income statistical variable (e.g. Median_Income_Household / MedianIncome_Household) for date='2020', returning all counties in a single hierarchy query. Reflects the best practice of querying all children at once.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "containedInPlace" },
+        { "type": "behavior", "value": "Uses an entity relation expression to fetch all counties of the state in one hierarchy query rather than looping per county." }
+      ]
+    },
+    {
+      "id": "resolve-coordinates",
+      "prompt": "I have a GPS coordinate (37.7749, -122.4194) and a couple of Wikidata IDs (Q30, Q99). What Data Commons entities do they map to?",
+      "expected_output": "Triggers Data Commons. Uses the resolve endpoint: client.resolve.fetch_dcid_by_coordinates(latitude=37.7749, longitude=-122.4194) for the GPS point and client.resolve.fetch_dcids_by_wikidata_id(wikidata_ids=['Q30','Q99']) for the Wikidata IDs, returning the corresponding DCIDs. Demonstrates entity identification rather than statistical retrieval.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "DCID" },
+        { "type": "behavior", "value": "Uses the resolve endpoint's coordinate and Wikidata-ID resolution methods to map external identifiers to DCIDs." }
+      ]
+    },
+    {
+      "id": "unemployment-rate",
+      "prompt": "What is the latest unemployment rate for the United States according to Data Commons, and can you also check what statistical variables are even available for the country?",
+      "expected_output": "Triggers Data Commons. Resolves country/USA, calls client.observation.fetch with variable_dcids=['UnemploymentRate_Person'] and date='latest', and uses client.observation.fetch_available_statistical_variables(entity_dcids=['country/USA']) to enumerate queryable variables. Notes that datacommons.org requires a DC_API_KEY env var.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "UnemploymentRate_Person" },
+        { "type": "behavior", "value": "Checks available statistical variables for the entity and queries the latest observation for the unemployment rate." }
+      ]
+    },
+    {
+      "id": "near-miss-clinicaltrials",
+      "prompt": "Find me all actively recruiting Phase 3 clinical trials for type 2 diabetes in the United States, with their NCT IDs and enrollment targets.",
+      "expected_output": "Should NOT trigger Data Commons. This requests individual interventional clinical-trial records (NCT IDs, recruitment status, phase, enrollment) from the ClinicalTrials.gov registry, not aggregated public statistics. Data Commons serves statistical observations (population, GDP, disease prevalence counts) over geographic entities, not a trial registry. Defers to alterlab-clinicaltrials.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "clinicaltrials" }
+      ]
+    },
+    {
+      "id": "near-miss-openalex",
+      "prompt": "How many papers on climate adaptation were published per year over the last decade, and what's the citation trend? I want a bibliometric breakdown.",
+      "expected_output": "Should NOT trigger Data Commons. Counts of scholarly publications and citation trends over time are bibliometric data served by OpenAlex, not statistical observations over geographic/demographic entities. Data Commons aggregates census, economic, health, and environmental statistics, not literature metadata. Defers to alterlab-openalex.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "openalex" }
+      ]
+    }
+  ]
+}

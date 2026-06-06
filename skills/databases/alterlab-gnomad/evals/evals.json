@@ -1,0 +1,52 @@
+{
+  "skill": "alterlab-gnomad",
+  "evals": [
+    {
+      "id": "variant-population-frequency",
+      "prompt": "What's the population allele frequency of variant 17-43094692-G-A across ancestries? Is it rare enough to be a candidate pathogenic variant?",
+      "expected_output": "Triggers the gnomAD skill. Queries the GraphQL API (gnomad_r4) for the specific variant ID, reporting genome and exome AF plus per-population frequencies (afr, amr, asj, eas, fin, nfe, sas, etc.), and reasons about rarity (MAF thresholds) for pathogenicity candidacy. Notes that a variant rare overall may be common in one ancestry.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "allele frequency" },
+        { "type": "behavior", "value": "Queries gnomAD for a specific variant's allele frequency including per-population breakdown." }
+      ]
+    },
+    {
+      "id": "gene-constraint-scores",
+      "prompt": "Is KCNQ2 loss-of-function intolerant? Give me its pLI and LOEUF from gnomAD.",
+      "expected_output": "Triggers the gnomAD skill. Calls the constraint query (gnomad_constraint) for the gene, reporting pLI (>0.9 = LoF intolerant) and LOEUF/oe_lof_upper (<0.35 = constrained), and interprets whether the gene tolerates protein-truncating variants. Prefers LOEUF over pLI per best practice.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "LOEUF" },
+        { "type": "behavior", "value": "Retrieves gnomAD pLI and LOEUF constraint scores and interprets loss-of-function intolerance." }
+      ]
+    },
+    {
+      "id": "rare-variant-filtering",
+      "prompt": "I have a list of candidate variants in BRCA1 from a rare-disease exome. Help me filter out the common benign ones using gnomAD frequencies and flag the rare PTVs.",
+      "expected_output": "Triggers the gnomAD skill. Queries variants in the gene via the GraphQL API, filters by allele frequency (e.g. AF < 0.1% for dominant), and flags rare protein-truncating variants using the lof field (HC/LC) and consequence (stop_gained, frameshift_variant). May reference ACMG codes BA1/BS1/PM2 for classification.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Filters candidate variants by gnomAD population frequency to remove common benign variants and flag rare PTVs." }
+      ]
+    },
+    {
+      "id": "near-miss-clinvar",
+      "prompt": "What is the clinical significance classification of BRCA1 c.68_69del — is it reported as Pathogenic or Benign, and by how many submitters?",
+      "expected_output": "Should NOT trigger the gnomAD skill. gnomAD provides population frequency and constraint, not curated clinical significance classifications or submitter assertions. The Pathogenic/Benign classification with submitter counts is ClinVar's domain, so it should defer to the clinvar database skill (alterlab-clinvar).",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "clinvar" }
+      ]
+    },
+    {
+      "id": "near-miss-gwas",
+      "prompt": "Which SNPs have been associated with type 2 diabetes in genome-wide association studies, and what were the reported p-values and effect sizes?",
+      "expected_output": "Should NOT trigger the gnomAD skill. GWAS trait-association results (associated SNPs, p-values, effect sizes) come from the GWAS Catalog, not gnomAD, which reports population frequencies and constraint rather than trait associations. This should defer to the gwas database skill (alterlab-gwas).",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "gwas" }
+      ]
+    }
+  ]
+}

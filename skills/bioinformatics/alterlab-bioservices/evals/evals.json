@@ -1,0 +1,60 @@
+{
+  "skill": "alterlab-bioservices",
+  "evals": [
+    {
+      "id": "uniprot-to-kegg-mapping",
+      "prompt": "I have the UniProt accession P43403 (ZAP70). I want to map it to its KEGG gene ID and then pull every KEGG pathway that gene participates in. Can you script this?",
+      "expected_output": "Invokes alterlab-bioservices. Uses the UniProt service mapping() (fr='UniProtKB_AC-ID', to='KEGG', query='P43403') to convert the accession, then uses the KEGG service (get_pathway_by_gene / lookfor_pathway) to enumerate pathways for the gene. This is a cross-database workflow spanning UniProt and KEGG, which is bioservices' core strength.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "mapping" },
+        { "type": "behavior", "value": "Chains UniProt identifier mapping into KEGG pathway lookup rather than treating it as a single-database call." }
+      ]
+    },
+    {
+      "id": "compound-cross-reference",
+      "prompt": "Find the KEGG compound ID for Geldanamycin and cross-reference it to its ChEBI identifier so I can pull the chemical structure later.",
+      "expected_output": "Invokes alterlab-bioservices. Uses KEGG.find('compound', 'Geldanamycin') to get cpd:C11222, then KEGG.conv('chebi', 'compound') to map KEGG -> ChEBI. Notes that there is no direct bioservices KEGG -> ChEMBL convenience method and that a ChEMBL ID would require a separate route. Multi-database compound cross-referencing is in scope.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "ChEBI" }
+      ]
+    },
+    {
+      "id": "ppi-psicquic-query",
+      "prompt": "I want all reported protein-protein interactions for ZAP70 in human from the MINT database. How do I query that programmatically?",
+      "expected_output": "Invokes alterlab-bioservices. Uses the PSICQUIC service: PSICQUIC().query('mint', 'ZAP70 AND species:9606') and references activeDBs to list available interaction databases. Querying PSICQUIC-federated interaction databases (MINT, IntAct, BioGRID) is a documented bioservices capability.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "PSICQUIC" }
+      ]
+    },
+    {
+      "id": "go-term-annotation",
+      "prompt": "Pull the GO term definition for GO:0003824 and the GO annotations for UniProt P43403 in one go using QuickGO.",
+      "expected_output": "Invokes alterlab-bioservices. Uses the QuickGO service: g.Term('GO:0003824', frmt='obo') for the term definition and g.Annotation(protein='P43403', format='tsv') for annotations. Gene Ontology queries via QuickGO are an in-scope bioservices service.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "QuickGO" }
+      ]
+    },
+    {
+      "id": "near-miss-gget",
+      "prompt": "I just need a quick one-off lookup of the human BRCA1 gene record from Ensembl — nothing fancy, no cross-database mapping.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-gget. The ask is a single quick single-database lookup with no multi-service integration or identifier mapping, which the lightweight gget tool handles. bioservices is reserved for workflows that hit multiple databases together or map identifiers across services.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-gget" }
+      ]
+    },
+    {
+      "id": "near-miss-biopython",
+      "prompt": "I already downloaded a FASTA file of protein sequences. Parse it, translate the ORFs, and write out a multi-record GenBank file.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-biopython. The ask is local sequence parsing, translation, and file-format conversion with no web-service or database query, which is biopython's domain. bioservices is for hitting remote bioinformatics web services.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-biopython" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "skill": "alterlab-pathml",
+  "evals": [
+    {
+      "id": "he-preprocessing-pipeline",
+      "prompt": "I have an Aperio SVS whole-slide image of H&E tissue. Build me a PathML preprocessing pipeline that does tissue detection and Macenko stain normalization, then iterate the processed tiles.",
+      "expected_output": "Invokes alterlab-pathml. Loads the slide with SlideData.from_slide(...), builds a Pipeline([TissueDetectionHE(), StainNormalizationHE(stain_estimation_method='macenko')]), runs it, and iterates wsi.tiles accessing tile.image and tile.masks. Composable WSI preprocessing with stain normalization is a core PathML capability.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "StainNormalizationHE" }
+      ]
+    },
+    {
+      "id": "nucleus-segmentation-hovernet",
+      "prompt": "I want to run simultaneous nucleus segmentation and classification on my pathology tiles using a pretrained model. Which PathML model do I use and how do I set up the workflow?",
+      "expected_output": "Invokes alterlab-pathml. Recommends HoVer-Net for simultaneous nucleus segmentation and classification, using PathML's PyTorch integration and DataLoaders, with optional ONNX export for inference. Deep-learning nucleus detection/segmentation is an in-scope PathML ML workflow.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "HoVer-Net" }
+      ]
+    },
+    {
+      "id": "codex-multiplex-quantification",
+      "prompt": "I have a multiplexed CODEX run. I need to collapse the channel data, segment cells, quantify marker expression, and export everything to an AnnData object for single-cell analysis.",
+      "expected_output": "Invokes alterlab-pathml. Loads the CODEXSlide, collapses multi-run channel data, segments cells with the Mesmer model, quantifies per-cell marker expression, and exports to AnnData. Multiparametric/spatial-proteomics imaging (CODEX, Vectra, MERFISH) is a documented PathML capability.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "CODEX" }
+      ]
+    },
+    {
+      "id": "tissue-graph-construction",
+      "prompt": "After segmenting cells on my H&E slides I want to build a spatial cell graph with extracted node features so I can train a graph neural network like HACTNet.",
+      "expected_output": "Invokes alterlab-pathml. Constructs cell/tissue graphs from segmented objects, extracts node features, and prepares graph representations suitable for graph neural networks (e.g. HACTNet). Spatial graph construction for GNNs is an in-scope PathML capability.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "graph" }
+      ]
+    },
+    {
+      "id": "near-miss-histolab",
+      "prompt": "I just need to extract a grid of H&E tiles from a single SVS slide at 20x and save them as PNGs — no segmentation, no normalization, no ML.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-histolab. The ask is simple H&E tile extraction with no deep-learning pipeline, multiplexed imaging, or graph construction. PathML is the heavier framework; for plain tiling histolab is the lighter tool, as the description states.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-histolab" }
+      ]
+    },
+    {
+      "id": "near-miss-scanpy",
+      "prompt": "I already have a cells-by-genes AnnData matrix from my CODEX quantification. Cluster the cells with Leiden, run UMAP, and find marker genes per cluster.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-scanpy. The ask is downstream single-cell clustering/embedding/marker analysis on an existing AnnData matrix, not slide loading, segmentation, or image preprocessing. PathML produces the AnnData; scanpy analyzes it.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-scanpy" }
+      ]
+    }
+  ]
+}
