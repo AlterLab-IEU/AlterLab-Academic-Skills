@@ -21,7 +21,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ### Added
 
-- **Behavioral evals across the corpus**: `evals/evals.json` backfilled so **176 / 183 skills**
+- **Behavioral evals across the corpus**: `evals/evals.json` backfilled so **183 / 183 skills**
   ship executable evals on the canonical [agentskills.io](https://agentskills.io) schema,
   run in CI on every PR via `scripts/run_evals.py --strict` (plus a weekly `--behavioral` lane).
 - **Three new skills**: `alterlab-citation-verifier` (core), `alterlab-pdf-extract` and

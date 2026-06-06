@@ -142,7 +142,7 @@ Sürüm 2.0, koleksiyonu bir beceri listesinden **denetlenmiş, doğrulanmış v
 
 | | Özellik | Açıklama |
 |:---:|:---|:---|
-| ✅ | **Davranışsal Eval Kapsamı** | 183 becerinin **176'sı** (%96,2) Anthropic'in tetikleme/tetiklememe biçimini izleyen `evals/evals.json` dosyalarıyla gelir; `scripts/run_evals.py` ile çalıştırılır |
+| ✅ | **Davranışsal Eval Kapsamı** | 183 becerinin **tamamı** (%100) Anthropic'in tetikleme/tetiklememe biçimini izleyen `evals/evals.json` dosyalarıyla gelir; `scripts/run_evals.py` ile çalıştırılır |
 | 🔎 | **Atıf Doğrulayıcı** | Yeni `alterlab-citation-verifier` becerisi, bir kaynakçadaki her girdinin **gerçekten var olduğunu** dört anahtarsız bilimsel API (Crossref, OpenAlex, Semantic Scholar, arXiv) üzerinden çapraz kontrol ederek doğrular |
 | 📦 | **Alan Paketleri (Domain Packs)** | 13 alan, bağımsız olarak kurulabilen 13 Claude Code eklentisi olarak paketlenir — yalnızca ihtiyacınız olanı kurun, tüm depoyu değil |
 | 🔌 | **MCP Öncelikli Veri** | Beceriler, ilgili MCP araçları (PubMed, Scholar Gateway, Clinical Trials, Hugging Face) mevcut olduğunda eğitim verisi yerine **canlı veriyi** tercih eder ve kaynağı + erişim tarihini gösterir |

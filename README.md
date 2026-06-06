@@ -4,7 +4,7 @@
 
 <a href="skills/"><img src="https://img.shields.io/badge/Skills-183-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Skills"></a>
 <a href="skills/"><img src="https://img.shields.io/badge/Domains-13-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Domains"></a>
-<a href="docs/evals.md"><img src="https://img.shields.io/badge/Evals-176%2F183-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Eval coverage"></a>
+<a href="docs/evals.md"><img src="https://img.shields.io/badge/Evals-183%2F183-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Eval coverage"></a>
 <a href="https://www.anthropic.com"><img src="https://img.shields.io/badge/Claude-AI%20Powered-F97316?style=for-the-badge&logo=anthropic&logoColor=white" alt="Claude AI"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-10B981?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="MIT License"></a>
 <a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases"><img src="https://img.shields.io/github/v/release/AlterLab-IEU/AlterLab-Academic-Skills?style=for-the-badge&logo=github&color=8B5CF6&logoColor=white&label=Release" alt="Release"></a>
@@ -31,7 +31,7 @@
 
 <h3>🧬 183 purpose-built Claude AI skills for faculty, researchers & academicians</h3>
 <p><em>Organized across 13 research domains — from bioinformatics to digital humanities</em></p>
-<p><em>176/183 ship executable evals · deterministic citation-existence verifier · per-domain bundles for claude.ai</em></p>
+<p><em>183/183 ship executable evals · deterministic citation-existence verifier · per-domain bundles for claude.ai</em></p>
 
 <p>
 <b>Research Pipeline</b> · <b>Scientific Databases</b> · <b>Bioinformatics</b> · <b>Data Science</b> · <b>Visualization</b> · <b>Clinical Research</b> · <b>and more</b>
@@ -131,7 +131,7 @@ Each skill transforms Claude into a **domain-specific expert assistant** tailore
 
 | | What | Detail |
 |:---:|:---|:---|
-| ✅ | **Executable evals across the corpus** | **176 / 183** skills ship `evals/evals.json` on the canonical [agentskills.io](https://agentskills.io) schema, validated in CI. See [`docs/evals.md`](docs/evals.md). |
+| ✅ | **Executable evals across the corpus** | **183 / 183** skills ship `evals/evals.json` on the canonical [agentskills.io](https://agentskills.io) schema, validated in CI. See [`docs/evals.md`](docs/evals.md). |
 | 🔎 | **Citation-existence verifier** | New core skill `alterlab-citation-verifier` — a **deterministic** gate that checks every reference actually exists against four keyless scholarly APIs (Crossref, OpenAlex, Semantic Scholar, arXiv), flags retractions, and maps claim-faithfulness verdicts. See below. |
 | 📦 | **Per-domain bundles for claude.ai** | `dist/<domain>.zip` bundles (one per domain) attached to each [Release](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases) — each clears claude.ai's 200-file / 30 MB caps and vendors the shared handoff contracts. |
 | 🔌 | **Bundled academic MCP** | The `core` and `databases` plugins ship a `.mcp.json` wiring PubMed / OpenAlex / Crossref / Zotero, with a documented `requests/` fallback when no MCP is available. |
@@ -271,7 +271,7 @@ Installing the `core` plugin also registers these slash commands:
 <br>
 
 > [!NOTE]
-> **176 / 183 skills ship executable evals** on the canonical [agentskills.io](https://agentskills.io) schema, run in CI on every PR. See [`docs/evals.md`](docs/evals.md) for how coverage is measured and how to run `scripts/run_evals.py` locally.
+> **183 / 183 skills ship executable evals** on the canonical [agentskills.io](https://agentskills.io) schema, run in CI on every PR. See [`docs/evals.md`](docs/evals.md) for how coverage is measured and how to run `scripts/run_evals.py` locally.
 
 <br>
 
@@ -722,7 +722,7 @@ MIT License — Copyright (c) 2026 AlterLab Creative Technologies Laboratory
 
 <br><br>
 
-<b>183 skills · 13 domains · 176 with executable evals · 1 prompt away from expert-level research</b>
+<b>183 skills · 13 domains · 183 with executable evals · 1 prompt away from expert-level research</b>
 
 <br><br>
 
