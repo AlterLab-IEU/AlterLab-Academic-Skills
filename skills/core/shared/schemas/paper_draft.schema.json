@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/skills/core/shared/schemas/paper_draft.schema.json",
+  "title": "Paper Draft",
+  "description": "Handoff Schema 4. Producer: alterlab-paper-writer/draft_writer_agent. Consumer: alterlab-research-pipeline/integrity_verification_agent | alterlab-paper-reviewer/*.",
+  "type": "object",
+  "required": [
+    "title",
+    "abstract",
+    "authors",
+    "keywords",
+    "sections",
+    "references",
+    "total_word_count",
+    "citation_format",
+    "structure_type"
+  ],
+  "properties": {
+    "title": { "type": "string", "description": "Paper title." },
+    "abstract": {
+      "type": "object",
+      "required": ["english"],
+      "properties": {
+        "english": { "type": "string" },
+        "chinese": { "type": "string", "description": "Required only if bilingual." }
+      }
+    },
+    "authors": {
+      "type": "array",
+      "description": "Author information with CRediT roles.",
+      "items": { "$ref": "#/$defs/author" }
+    },
+    "keywords": {
+      "type": "object",
+      "description": "Bilingual keywords (3-6 each).",
+      "required": ["en", "zh_tw"],
+      "properties": {
+        "en": { "type": "array", "items": { "type": "string" }, "minItems": 3, "maxItems": 6 },
+        "zh_tw": { "type": "array", "items": { "type": "string" }, "minItems": 3, "maxItems": 6 }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "description": "Ordered paper sections.",
+      "items": { "$ref": "#/$defs/section" }
+    },
+    "references": {
+      "type": "array",
+      "description": "Full reference list with cross-referencing.",
+      "items": { "$ref": "#/$defs/reference" }
+    },
+    "total_word_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total word count (excluding references)."
+    },
+    "citation_format": {
+      "type": "string",
+      "enum": ["APA7", "Chicago", "MLA", "IEEE", "Vancouver"]
+    },
+    "structure_type": {
+      "type": "string",
+      "enum": ["IMRaD", "literature_review", "theoretical", "case_study", "policy_brief", "conference"]
+    }
+  },
+  "$defs": {
+    "section": {
+      "type": "object",
+      "required": ["heading", "level", "content", "word_count", "citation_count", "argument_strength"],
+      "properties": {
+        "heading": { "type": "string" },
+        "level": { "type": "integer", "minimum": 1, "maximum": 4 },
+        "content": { "type": "string" },
+        "word_count": { "type": "integer", "minimum": 0 },
+        "citation_count": { "type": "integer", "minimum": 0 },
+        "argument_strength": {
+          "type": "string",
+          "enum": ["compelling", "strong", "adequate", "weak"]
+        }
+      }
+    },
+    "reference": {
+      "type": "object",
+      "required": ["id", "full_citation", "cited_in_sections"],
+      "properties": {
+        "id": { "type": "string", "description": "Unique reference ID (e.g., [R01])." },
+        "full_citation": { "type": "string" },
+        "doi": { "type": "string" },
+        "cited_in_sections": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Section headings where this reference is cited."
+        }
+      }
+    },
+    "author": {
+      "type": "object",
+      "required": ["name", "affiliation", "credit_roles", "corresponding"],
+      "properties": {
+        "name": { "type": "string" },
+        "affiliation": { "type": "string" },
+        "email": { "type": "string", "description": "Contact email (corresponding author only)." },
+        "credit_roles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "CRediT taxonomy roles."
+        },
+        "corresponding": { "type": "boolean" }
+      }
+    }
+  }
+}

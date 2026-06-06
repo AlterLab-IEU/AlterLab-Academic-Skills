@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/skills/core/shared/schemas/bibliography.schema.json",
+  "title": "Bibliography",
+  "description": "Handoff Schema 2. Producer: alterlab-deep-research/bibliography_agent. Consumer: alterlab-deep-research/synthesis_agent | source_verification_agent | alterlab-paper-writer/literature_strategist_agent.",
+  "type": "object",
+  "required": ["sources", "search_strategy", "coverage_assessment", "minimum_sources"],
+  "properties": {
+    "sources": {
+      "type": "array",
+      "description": "All identified sources (minimum 15 for full mode, 5 for quick mode).",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/source" }
+    },
+    "search_strategy": {
+      "type": "object",
+      "required": ["databases", "keywords", "inclusion_criteria", "exclusion_criteria", "date_range"],
+      "properties": {
+        "databases": { "type": "array", "items": { "type": "string" } },
+        "keywords": { "type": "array", "items": { "type": "string" } },
+        "inclusion_criteria": { "type": "array", "items": { "type": "string" } },
+        "exclusion_criteria": { "type": "array", "items": { "type": "string" } },
+        "date_range": { "type": "string" }
+      }
+    },
+    "coverage_assessment": {
+      "type": "string",
+      "description": "Self-assessment of literature coverage completeness."
+    },
+    "minimum_sources": {
+      "type": "integer",
+      "description": "15 (full mode), 5 (quick mode)."
+    },
+    "prisma_counts": {
+      "type": "object",
+      "description": "Optional; present if systematic review.",
+      "required": ["identified", "screened", "eligible", "included"],
+      "properties": {
+        "identified": { "type": "integer", "minimum": 0 },
+        "screened": { "type": "integer", "minimum": 0 },
+        "eligible": { "type": "integer", "minimum": 0 },
+        "included": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": [
+        "id", "title", "authors", "year", "citation", "type",
+        "evidence_tier", "quality_tier", "relevance", "relevance_score", "annotation"
+      ],
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier (e.g., [S01])." },
+        "title": { "type": "string" },
+        "authors": { "type": "string" },
+        "year": { "type": "integer" },
+        "doi": { "type": "string", "description": "DOI if available; required for journal articles." },
+        "citation": { "type": "string", "description": "Full APA 7 citation." },
+        "type": {
+          "type": "string",
+          "enum": ["journal_article", "book", "chapter", "conference", "report", "thesis", "preprint", "web"]
+        },
+        "evidence_tier": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 7,
+          "description": "1 = systematic review/meta-analysis, 7 = expert opinion."
+        },
+        "quality_tier": {
+          "type": "string",
+          "enum": ["tier_1", "tier_2", "tier_3", "tier_4"]
+        },
+        "relevance": {
+          "type": "string",
+          "enum": ["core", "supporting", "peripheral"]
+        },
+        "relevance_score": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "annotation": {
+          "type": "string",
+          "description": "2-3 sentence summary of key findings and relevance."
+        },
+        "verified": { "type": "boolean", "description": "Whether DOI/existence has been verified." },
+        "retraction_check": { "type": "boolean", "description": "Whether checked against Retraction Watch." }
+      }
+    }
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/skills/core/shared/schemas/synthesis.schema.json",
+  "title": "Synthesis Report",
+  "description": "Handoff Schema 3. Producer: alterlab-deep-research/synthesis_agent. Consumer: alterlab-deep-research/report_compiler_agent | alterlab-paper-writer/argument_builder_agent.",
+  "type": "object",
+  "required": [
+    "themes",
+    "research_gaps",
+    "key_debates",
+    "methodology_recommendations",
+    "theoretical_implications",
+    "consensus_areas"
+  ],
+  "properties": {
+    "themes": {
+      "type": "array",
+      "description": "3-7 synthesized themes (NOT per-source summaries).",
+      "minItems": 3,
+      "maxItems": 7,
+      "items": { "$ref": "#/$defs/theme" }
+    },
+    "research_gaps": {
+      "type": "array",
+      "description": "What the literature does NOT address.",
+      "items": { "type": "string" }
+    },
+    "key_debates": {
+      "type": "array",
+      "description": "Where sources disagree, with analysis.",
+      "items": { "$ref": "#/$defs/debate" }
+    },
+    "methodology_recommendations": {
+      "type": "array",
+      "description": "Recommended methodological approaches based on gaps.",
+      "items": { "type": "string" }
+    },
+    "theoretical_implications": {
+      "type": "array",
+      "description": "How the synthesis informs theoretical understanding.",
+      "items": { "type": "string" }
+    },
+    "consensus_areas": {
+      "type": "array",
+      "description": "Where sources agree.",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "theme": {
+      "type": "object",
+      "required": ["name", "description", "supporting_sources", "strength"],
+      "properties": {
+        "name": { "type": "string", "description": "Theme label." },
+        "description": {
+          "type": "string",
+          "description": "3-5 sentence synthesis across multiple sources."
+        },
+        "supporting_sources": {
+          "type": "array",
+          "description": "Source IDs that contribute to this theme.",
+          "items": { "type": "string" }
+        },
+        "contradicting_sources": {
+          "type": "array",
+          "description": "Source IDs that challenge this theme (if any).",
+          "items": { "type": "string" }
+        },
+        "strength": {
+          "type": "string",
+          "enum": ["strong", "moderate", "emerging"],
+          "description": "strong (5+ sources) / moderate (3-4) / emerging (1-2)."
+        }
+      }
+    },
+    "debate": {
+      "type": "object",
+      "required": ["position_a", "position_b", "sources_a", "sources_b", "evidence_balance"],
+      "properties": {
+        "position_a": { "type": "string", "description": "First position." },
+        "position_b": { "type": "string", "description": "Opposing position." },
+        "sources_a": {
+          "type": "array",
+          "description": "Source IDs supporting position A.",
+          "items": { "type": "string" }
+        },
+        "sources_b": {
+          "type": "array",
+          "description": "Source IDs supporting position B.",
+          "items": { "type": "string" }
+        },
+        "evidence_balance": {
+          "type": "string",
+          "description": "Analysis of which position has stronger evidence and why."
+        }
+      }
+    }
+  }
+}

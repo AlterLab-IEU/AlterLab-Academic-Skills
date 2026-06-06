@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/skills/core/shared/schemas/material_passport.schema.json",
+  "title": "Material Passport",
+  "description": "Handoff Schema 9 (cross-stage metadata). Accompanies every artifact as it passes between stages, providing provenance and verification tracking.",
+  "type": "object",
+  "required": [
+    "origin_skill",
+    "origin_mode",
+    "origin_date",
+    "verification_status",
+    "version_label"
+  ],
+  "properties": {
+    "origin_skill": {
+      "type": "string",
+      "description": "Which skill produced this artifact (e.g., alterlab-deep-research, alterlab-paper-writer)."
+    },
+    "origin_mode": {
+      "type": "string",
+      "description": "Which mode was used (e.g., full, socratic, pre-review)."
+    },
+    "origin_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of production."
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": ["VERIFIED", "UNVERIFIED", "STALE"]
+    },
+    "version_label": {
+      "type": "string",
+      "description": "Version identifier (e.g., v1.0, v1.1-revised, paper_draft_v2)."
+    },
+    "integrity_pass_date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional. ISO 8601 timestamp of last integrity verification pass (if applicable)."
+    },
+    "content_hash": {
+      "type": "string",
+      "description": "Optional. SHA-256 hash of the content (for change detection)."
+    },
+    "upstream_dependencies": {
+      "type": "array",
+      "description": "Optional. Version labels of artifacts this one depends on.",
+      "items": { "type": "string" }
+    }
+  }
+}

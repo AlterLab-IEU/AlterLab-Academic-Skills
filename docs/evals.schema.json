@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/docs/evals.schema.json",
+  "title": "AlterLab Skill Eval File",
+  "description": "Canonical schema for per-skill eval files at skills/<domain>/<skill>/evals/evals.json. One file per skill. Each eval is a realistic researcher ask plus the behavior we expect, encoded as machine-checkable assertions. Validated per-PR by scripts/run_evals.py --strict; behavioral grading (run_evals.py --behavioral) shells to the claude CLI and LLM-judges expected_output.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["skill", "evals"],
+  "properties": {
+    "skill": {
+      "type": "string",
+      "description": "The skill name this eval file targets. MUST match the skill's frontmatter `name` and its directory name (e.g. alterlab-deep-research).",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "minLength": 1
+    },
+    "evals": {
+      "type": "array",
+      "description": "All eval cases for this skill. Convention: >=3 should_trigger cases and >=1 near-miss should_not_trigger case (an adjacent skill's territory).",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/eval" }
+    }
+  },
+  "$defs": {
+    "eval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "prompt", "expected_output"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable, unique-within-file identifier in kebab-case (e.g. full-research, near-miss-paper-writer).",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "minLength": 1
+        },
+        "prompt": {
+          "type": "string",
+          "description": "The realistic researcher ask sent to the model, verbatim. Phrase it the way a faculty member or grad student would actually type it.",
+          "minLength": 1
+        },
+        "expected_output": {
+          "type": "string",
+          "description": "Prose description of the correct behavior/output. Used as the rubric for the behavioral LLM judge. For near-miss negatives, describe the deferral (which adjacent skill should handle it and why this one should not).",
+          "minLength": 1
+        },
+        "files": {
+          "type": "array",
+          "description": "Optional input fixtures the eval supplies to the model (paths relative to the skill's evals/ dir, or inline content). Use when the ask requires an attached manuscript, dataset, bibliography, etc.",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Path to a fixture file, relative to the eval file's directory."
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["name", "content"],
+                "properties": {
+                  "name": { "type": "string", "minLength": 1 },
+                  "content": { "type": "string" }
+                }
+              }
+            ]
+          }
+        },
+        "assertions": {
+          "type": "array",
+          "description": "Machine-checkable expectations. At minimum every eval carries one should_trigger / should_not_trigger assertion declaring whether this skill should fire on the prompt.",
+          "items": { "$ref": "#/$defs/assertion" }
+        }
+      }
+    },
+    "assertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "value"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "should_trigger / should_not_trigger gate skill activation (value is boolean true). output_contains checks the response includes a substring/phrase (value is the string, case-insensitive by convention). behavior is a free-text rubric clause the LLM judge grades (value is the prose criterion).",
+          "enum": ["should_trigger", "should_not_trigger", "output_contains", "behavior"]
+        },
+        "value": {
+          "description": "Boolean true for should_trigger/should_not_trigger; a string for output_contains (the required substring) and behavior (the rubric clause).",
+          "type": ["string", "boolean"]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "enum": ["should_trigger", "should_not_trigger"] } }
+          },
+          "then": {
+            "properties": { "value": { "const": true } }
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "enum": ["output_contains", "behavior"] } }
+          },
+          "then": {
+            "properties": { "value": { "type": "string", "minLength": 1 } }
+          }
+        }
+      ]
+    }
+  }
+}

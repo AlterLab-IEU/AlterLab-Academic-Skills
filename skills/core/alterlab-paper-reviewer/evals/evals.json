@@ -3,51 +3,91 @@
   "evals": [
     {
       "id": "full-review-manuscript",
-      "query": "Here is my manuscript on declining birth rates and management strategies of private universities in Turkey. Can you do a full peer review of it before I submit?",
-      "expected_behavior": "Invokes alterlab-paper-reviewer in full mode: runs Phase 0 field analysis, presents a 5-reviewer configuration card (EIC + 3 peer reviewers + Devil's Advocate) for confirmation, then produces 5 independent review reports plus an Editorial Decision Letter and prioritized Revision Roadmap.",
-      "should_trigger": true
+      "prompt": "Here is my manuscript on declining birth rates and management strategies of private universities in Turkey. Can you do a full peer review of it before I submit?",
+      "expected_output": "Invokes alterlab-paper-reviewer in full mode: runs Phase 0 field analysis, presents a 5-reviewer configuration card (EIC + 3 peer reviewers + Devil's Advocate) for confirmation, then produces 5 independent review reports plus an Editorial Decision Letter and prioritized Revision Roadmap.",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        }
+      ]
     },
     {
       "id": "methodology-focus",
-      "query": "I don't need a whole review, just help me check the methodology and statistical validity of this study's sampling and analysis.",
-      "expected_behavior": "Invokes alterlab-paper-reviewer in methodology-focus mode: activates field_analyst plus methodology_reviewer only, producing an in-depth methodology review covering research design, sampling strategy, statistical validity, effect sizes, and reproducibility.",
-      "should_trigger": true
+      "prompt": "I don't need a whole review, just help me check the methodology and statistical validity of this study's sampling and analysis.",
+      "expected_output": "Invokes alterlab-paper-reviewer in methodology-focus mode: activates field_analyst plus methodology_reviewer only, producing an in-depth methodology review covering research design, sampling strategy, statistical validity, effect sizes, and reproducibility.",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        }
+      ]
     },
     {
       "id": "re-review-verification",
-      "query": "I revised my paper based on the previous round's comments and attached my response-to-reviewers. Can you do a verification review to confirm the revisions actually addressed each comment?",
-      "expected_behavior": "Invokes alterlab-paper-reviewer in re-review mode: builds a checklist from the original Revision Roadmap, EIC checks each item with FULLY_ADDRESSED / PARTIALLY_ADDRESSED / NOT_ADDRESSED / MADE_WORSE status, scans for new issues introduced during revision, and issues a new Decision.",
-      "should_trigger": true
+      "prompt": "I revised my paper based on the previous round's comments and attached my response-to-reviewers. Can you do a verification review to confirm the revisions actually addressed each comment?",
+      "expected_output": "Invokes alterlab-paper-reviewer in re-review mode: builds a checklist from the original Revision Roadmap, EIC checks each item with FULLY_ADDRESSED / PARTIALLY_ADDRESSED / NOT_ADDRESSED / MADE_WORSE status, scans for new issues introduced during revision, and issues a new Decision.",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        }
+      ]
     },
     {
       "id": "devils-advocate-critique",
-      "query": "Critique this paper hard - I want someone to attack the core argument, find the logical fallacies, and tell me the strongest counter-argument against my thesis.",
-      "expected_behavior": "Invokes alterlab-paper-reviewer (full review including the Devil's Advocate reviewer): surfaces the strongest counter-argument, detects cherry-picking, confirmation bias, overgeneralization, and logic-chain gaps, and flags any CRITICAL findings that block an Accept decision.",
-      "should_trigger": true
+      "prompt": "Critique this paper hard - I want someone to attack the core argument, find the logical fallacies, and tell me the strongest counter-argument against my thesis.",
+      "expected_output": "Invokes alterlab-paper-reviewer (full review including the Devil's Advocate reviewer): surfaces the strongest counter-argument, detects cherry-picking, confirmation bias, overgeneralization, and logic-chain gaps, and flags any CRITICAL findings that block an Accept decision.",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        }
+      ]
     },
     {
       "id": "guided-socratic-review",
-      "query": "Walk me through the problems in my paper using a guided approach so I understand them myself rather than just getting a list of fixes.",
-      "expected_behavior": "Invokes alterlab-paper-reviewer in guided mode: runs the reviews internally then enters Socratic dialogue, opening with strengths, progressively revealing methodology, domain, perspective, and Devil's Advocate issues through questions, and ending with a structured Revision Roadmap.",
-      "should_trigger": true
+      "prompt": "Walk me through the problems in my paper using a guided approach so I understand them myself rather than just getting a list of fixes.",
+      "expected_output": "Invokes alterlab-paper-reviewer in guided mode: runs the reviews internally then enters Socratic dialogue, opening with strengths, progressively revealing methodology, domain, perspective, and Devil's Advocate issues through questions, and ending with a structured Revision Roadmap.",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        }
+      ]
     },
     {
       "id": "no-trigger-write-paper",
-      "query": "Help me draft the introduction and literature review sections for a new paper on AI in higher education quality assurance.",
-      "expected_behavior": "defers to alterlab-paper-writer / does not invoke alterlab-paper-reviewer (this is paper writing, not reviewing an existing manuscript)",
-      "should_trigger": false
+      "prompt": "Help me draft the introduction and literature review sections for a new paper on AI in higher education quality assurance.",
+      "expected_output": "defers to alterlab-paper-writer / does not invoke alterlab-paper-reviewer (this is paper writing, not reviewing an existing manuscript)",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        }
+      ]
     },
     {
       "id": "no-trigger-deep-research",
-      "query": "Before I write anything, do a deep literature investigation on how machine learning has been used to predict university closure risk.",
-      "expected_behavior": "defers to alterlab-deep-research / does not invoke alterlab-paper-reviewer (this is upstream topic investigation, not peer review of a manuscript)",
-      "should_trigger": false
+      "prompt": "Before I write anything, do a deep literature investigation on how machine learning has been used to predict university closure risk.",
+      "expected_output": "defers to alterlab-deep-research / does not invoke alterlab-paper-reviewer (this is upstream topic investigation, not peer review of a manuscript)",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        }
+      ]
     },
     {
       "id": "no-trigger-revise-from-comments",
-      "query": "I already have the reviewer comments and the revision roadmap - now just make the actual edits to my manuscript for me.",
-      "expected_behavior": "defers to alterlab-paper-writer (revision mode) / does not invoke alterlab-paper-reviewer (the user wants the revisions executed, not the paper reviewed again)",
-      "should_trigger": false
+      "prompt": "I already have the reviewer comments and the revision roadmap - now just make the actual edits to my manuscript for me.",
+      "expected_output": "defers to alterlab-paper-writer (revision mode) / does not invoke alterlab-paper-reviewer (the user wants the revisions executed, not the paper reviewed again)",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        }
+      ]
     }
   ]
 }

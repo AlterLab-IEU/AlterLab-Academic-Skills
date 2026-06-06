@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/skills/core/shared/schemas/review_report.schema.json",
+  "title": "Review Report",
+  "description": "Handoff Schema 6. Producer: alterlab-paper-reviewer/editorial_synthesizer_agent. Consumer: alterlab-research-pipeline/pipeline_orchestrator_agent | alterlab-paper-writer/draft_writer_agent.",
+  "type": "object",
+  "required": [
+    "editorial_decision",
+    "reviewer_reports",
+    "consensus",
+    "revision_roadmap",
+    "confidence_score"
+  ],
+  "properties": {
+    "editorial_decision": {
+      "type": "string",
+      "enum": ["Accept", "Minor Revision", "Major Revision", "Reject"]
+    },
+    "reviewer_reports": {
+      "type": "array",
+      "description": "Individual review reports.",
+      "items": { "$ref": "#/$defs/reviewer_report" }
+    },
+    "consensus": {
+      "type": "string",
+      "enum": ["CONSENSUS-4", "CONSENSUS-3", "SPLIT", "DA-CRITICAL"]
+    },
+    "revision_roadmap": {
+      "type": "array",
+      "description": "Prioritized list of required changes (RoadmapItem objects; see revision_roadmap.schema.json).",
+      "items": { "type": "object" }
+    },
+    "confidence_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Editorial confidence."
+    }
+  },
+  "$defs": {
+    "reviewer_report": {
+      "type": "object",
+      "required": ["reviewer_id", "role", "dimension_scores", "strengths", "weaknesses", "questions"],
+      "properties": {
+        "reviewer_id": {
+          "type": "string",
+          "description": "Reviewer identifier (e.g., EIC, R1, R2, R3, DA)."
+        },
+        "role": { "type": "string", "description": "Reviewer role description." },
+        "dimension_scores": {
+          "type": "object",
+          "description": "Per-dimension scores (skill-specific)."
+        },
+        "strengths": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "weaknesses": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/weakness" }
+        },
+        "questions": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "weakness": {
+      "type": "object",
+      "required": ["description", "severity", "type"],
+      "properties": {
+        "description": { "type": "string" },
+        "severity": { "type": "string", "enum": ["critical", "major", "minor"] },
+        "type": {
+          "type": "string",
+          "enum": ["methodology", "theory", "evidence", "writing", "structure", "ethics"]
+        }
+      }
+    }
+  }
+}
