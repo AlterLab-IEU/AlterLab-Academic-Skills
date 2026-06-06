@@ -14,6 +14,16 @@ metadata:
 
 PubMed is the U.S. National Library of Medicine's comprehensive database providing free access to MEDLINE and life sciences literature. Construct advanced queries with Boolean operators, MeSH terms, and field tags, access data programmatically via E-utilities API for systematic reviews and literature analysis.
 
+## Scripts
+
+`scripts/query_pubmed.py` — NCBI E-utilities (ESearch/ESummary/EFetch; stdlib only, JSON to stdout):
+
+```bash
+python scripts/query_pubmed.py search "crispr[tiab] AND 2024[dp]" --retmax 20   # PMIDs
+python scripts/query_pubmed.py summary 39726939 39492484    # metadata for PMIDs
+python scripts/query_pubmed.py fetch 39726939               # abstracts (use --api-key for 10 req/s)
+```
+
 ## When to Use This Skill
 
 This skill should be used when:

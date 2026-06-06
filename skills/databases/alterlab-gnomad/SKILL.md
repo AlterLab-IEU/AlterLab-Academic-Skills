@@ -395,3 +395,12 @@ def query_gnomad_sv(gene_symbol):
 - **Constraint documentation**: https://gnomad.broadinstitute.org/help/constraint
 - **Citation**: Karczewski KJ et al. (2020) Nature. PMID: 32461654; Chen S et al. (2024) Nature. PMID: 38057664
 - **GitHub**: https://github.com/broadinstitute/gnomad-browser
+
+## Scripts
+
+`scripts/query_gnomad.py` — runnable helper for the gnomAD GraphQL API (no key):
+
+```bash
+python scripts/query_gnomad.py variant 17-43094692-G-A --dataset gnomad_r4
+python scripts/query_gnomad.py constraint BRCA1 --genome GRCh38
+```

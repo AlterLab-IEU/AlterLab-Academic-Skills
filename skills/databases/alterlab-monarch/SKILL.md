@@ -26,6 +26,16 @@ Monarch enables:
 - API docs: https://api-v3.monarchinitiative.org/v3/docs
 - HPO browser: https://hpo.jax.org/
 
+## Scripts
+
+`scripts/query_monarch.py` — query the Monarch Initiative API v3 (stdlib only, JSON to stdout):
+
+```bash
+python scripts/query_monarch.py entity HP:0001250        # look up an entity (gene/disease/HPO)
+python scripts/query_monarch.py search epilepsy          # text search the knowledge graph
+python scripts/query_monarch.py associations HGNC:1100   # associations for an entity
+```
+
 ## When to Use This Skill
 
 Use Monarch when:

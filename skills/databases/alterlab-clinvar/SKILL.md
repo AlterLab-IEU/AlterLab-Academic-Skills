@@ -360,3 +360,12 @@ This skill includes comprehensive reference documentation:
 
 For questions about ClinVar or data submission: clinvar@ncbi.nlm.nih.gov
 
+## Scripts
+
+`scripts/query_clinvar.py` — runnable helper for ClinVar via NCBI E-utilities (no key; `NCBI_API_KEY` lifts the rate limit):
+
+```bash
+python scripts/query_clinvar.py search "BRCA1[gene] AND pathogenic[CLNSIG]" --retmax 5
+python scripts/query_clinvar.py summary 12345,12346
+```
+

@@ -20,6 +20,15 @@ JASPAR (https://jaspar.elixir.no/) is the gold-standard open-access database of 
 - API docs: https://jaspar.elixir.no/api/v1/docs/
 - Python package: `jaspar` (via Biopython) or direct API
 
+## Scripts
+
+`scripts/query_jaspar.py` — query the JASPAR REST API (stdlib only, JSON to stdout):
+
+```bash
+python scripts/query_jaspar.py search --name CTCF --species 9606   # search profiles
+python scripts/query_jaspar.py matrix MA0139.1                     # fetch a matrix (PFM)
+```
+
 ## When to Use This Skill
 
 Use JASPAR when:

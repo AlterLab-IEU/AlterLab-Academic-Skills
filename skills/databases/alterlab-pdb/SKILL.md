@@ -14,6 +14,16 @@ metadata:
 
 RCSB PDB is the worldwide repository for 3D structural data of biological macromolecules. Search for structures, retrieve coordinates and metadata, perform sequence and structure similarity searches across 200,000+ experimentally determined structures and computed models.
 
+## Scripts
+
+`scripts/query_pdb.py` — RCSB Search + Data + file APIs (stdlib only, JSON to stdout):
+
+```bash
+python scripts/query_pdb.py search hemoglobin --rows 25     # full-text search (entry IDs)
+python scripts/query_pdb.py entry 4HHB                      # entry metadata
+python scripts/query_pdb.py download 4HHB --format cif      # download coordinates
+```
+
 ## When to Use This Skill
 
 This skill should be used when:

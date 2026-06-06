@@ -14,6 +14,16 @@ metadata:
 
 The Metabolomics Workbench is a comprehensive NIH Common Fund-sponsored platform hosted at UCSD that serves as the primary repository for metabolomics research data. It provides programmatic access to over 4,200 processed studies (3,790+ publicly available), standardized metabolite nomenclature through RefMet, and powerful search capabilities across multiple analytical platforms (GC-MS, LC-MS, NMR).
 
+## Scripts
+
+`scripts/query_metabolomics_wb.py` — query the Metabolomics Workbench REST API (stdlib only, JSON to stdout):
+
+```bash
+python scripts/query_metabolomics_wb.py refmet citrate          # standardize a name (RefMet)
+python scripts/query_metabolomics_wb.py study ST000001          # study summary
+python scripts/query_metabolomics_wb.py moverz 635.52 --adduct M+H   # m/z search
+```
+
 ## When to Use This Skill
 
 This skill should be used when querying metabolite structures, accessing study data, standardizing nomenclature, performing mass spectrometry searches, or retrieving gene/protein-metabolite associations through the Metabolomics Workbench REST API.

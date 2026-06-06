@@ -14,6 +14,17 @@ metadata:
 
 The Human Metabolome Database (HMDB) is a comprehensive, freely available resource containing detailed information about small molecule metabolites found in the human body.
 
+## Scripts
+
+`scripts/query_hmdb.py` — fetch and parse an HMDB metabolite XML record by accession (stdlib only, JSON to stdout):
+
+```bash
+python scripts/query_hmdb.py HMDB0000001    # full accession
+python scripts/query_hmdb.py 1              # bare number (zero-padded automatically)
+```
+
+Note: HMDB serves no public REST API and may rate-limit/block automated fetches; for bulk work download the XML/SDF dumps from https://www.hmdb.ca/downloads.
+
 ## When to Use This Skill
 
 This skill should be used when performing metabolomics research, clinical chemistry, biomarker discovery, or metabolite identification tasks.

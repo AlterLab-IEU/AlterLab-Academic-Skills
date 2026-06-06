@@ -367,3 +367,13 @@ wget https://cbioportal-datahub.s3.amazonaws.com/brca_tcga.tar.gz
 - **Data hub**: https://www.cbioportal.org/datasets
 - **Citation**: Cerami E et al. (2012) Cancer Discovery. PMID: 22588877
 - **API clients**: https://docs.cbioportal.org/web-api-and-clients/
+
+## Scripts
+
+`scripts/query_cbioportal.py` — runnable helper for the cBioPortal REST API (public, no key):
+
+```bash
+python scripts/query_cbioportal.py studies --filter tcga
+python scripts/query_cbioportal.py profiles brca_tcga
+python scripts/query_cbioportal.py mutations brca_tcga_mutations --genes 7157,672
+```

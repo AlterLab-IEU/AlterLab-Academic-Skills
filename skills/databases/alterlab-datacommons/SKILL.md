@@ -253,3 +253,12 @@ Comprehensive documentation for each endpoint is available in the `references/` 
 6. **Filter by facet for consistency**: Use `filter_facet_domains` to ensure data from the same source
 7. **Read reference docs**: Each endpoint has extensive documentation in the `references/` directory
 
+## Scripts
+
+`scripts/query_datacommons.py` — runnable helper for the Data Commons REST v2 API (needs a free key in `DC_API_KEY`):
+
+```bash
+python scripts/query_datacommons.py resolve "California" --type State
+python scripts/query_datacommons.py observe Count_Person geoId/06 --date latest
+```
+

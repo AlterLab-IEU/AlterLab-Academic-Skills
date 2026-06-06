@@ -315,3 +315,13 @@ wget https://storage.googleapis.com/adult-gtex/bulk-gex/v10/rna-seq/GTEx_Analysi
 - **Data downloads**: https://gtexportal.org/home/downloads/adult-gtex/
 - **GitHub**: https://github.com/broadinstitute/gtex-pipeline
 - **Citation**: GTEx Consortium (2020) Science. PMID: 32913098
+
+## Scripts
+
+`scripts/query_gtex.py` — runnable helper for the GTEx Portal API v2 (no key):
+
+```bash
+python scripts/query_gtex.py expression ENSG00000130203.10
+python scripts/query_gtex.py eqtl ENSG00000169174.14 --tissue Liver
+python scripts/query_gtex.py tissues
+```

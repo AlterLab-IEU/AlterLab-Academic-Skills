@@ -300,3 +300,12 @@ Download all files from: https://depmap.org/portal/download/all/
 - **Chronos paper**: Dempster JM et al. (2021) Genome Biology 22(1):343. PMID: 34930405. DOI: 10.1186/s13059-021-02540-7
 - **GitHub**: https://github.com/broadinstitute/depmap-portal
 - **Figshare**: https://plus.figshare.com/articles/dataset/DepMap_24Q4_Public/27993248
+
+## Scripts
+
+`scripts/query_depmap.py` — runnable helper for the DepMap portal API (no key; for matrix-scale work download the release files):
+
+```bash
+python scripts/query_depmap.py gene KRAS --dataset Chronos_Combined
+python scripts/query_depmap.py slice KRAS --dataset-name CRISPRGeneEffect
+```

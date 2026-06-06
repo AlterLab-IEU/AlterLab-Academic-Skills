@@ -27,6 +27,16 @@ InterPro classifies proteins into:
 - API documentation: https://github.com/ProteinsWebTeam/interpro7-api/blob/master/docs/
 - Python client: via `requests`
 
+## Scripts
+
+`scripts/query_interpro.py` — query the InterPro REST API (stdlib only, JSON to stdout):
+
+```bash
+python scripts/query_interpro.py protein P04637          # InterPro entries for a UniProt protein
+python scripts/query_interpro.py entry IPR000719         # entry details
+python scripts/query_interpro.py entry-proteins IPR000719 --page-size 25   # proteins with an entry
+```
+
 ## When to Use This Skill
 
 Use InterPro when:

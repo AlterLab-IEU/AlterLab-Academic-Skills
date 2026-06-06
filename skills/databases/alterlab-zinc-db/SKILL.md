@@ -13,6 +13,16 @@ metadata:
 
 ZINC is a freely accessible repository of 230M+ purchasable compounds maintained by UCSF. Search by ZINC ID or SMILES, perform similarity searches, download 3D-ready structures for docking, discover analogs for virtual screening and drug discovery.
 
+## Scripts
+
+`scripts/query_zinc.py` — query the ZINC22 CartBlanche API via POST (stdlib only, JSON to stdout):
+
+```bash
+python scripts/query_zinc.py id ZINC000019632618          # synchronous ZINC-ID lookup
+python scripts/query_zinc.py smiles "c1ccccc1" --dist 3   # SMILES search (returns async task handle)
+python scripts/query_zinc.py random --count 100 --subset lead-like   # random sample (async task handle)
+```
+
 ## When to Use This Skill
 
 This skill should be used when:

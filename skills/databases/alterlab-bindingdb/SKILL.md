@@ -325,3 +325,13 @@ def prepare_ml_dataset(df, uniprot_ids, affinity_col="IC50 (nM)",
 - **API documentation**: https://www.bindingdb.org/rwd/bind/info.jsp (REST base: https://bindingdb.org/rest)
 - **Citation**: Gilson MK et al. (2016) Nucleic Acids Research. PMID: 26481362
 - **Related resources**: ChEMBL (https://www.ebi.ac.uk/chembl/), PubChem BioAssay
+
+## Scripts
+
+`scripts/query_bindingdb.py` — runnable helper for the BindingDB REST API (no key):
+
+```bash
+python scripts/query_bindingdb.py uniprot P00519 --cutoff 10000
+python scripts/query_bindingdb.py pdb 1Q0L,3ANM --cutoff 100 --identity 92
+python scripts/query_bindingdb.py compound "<SMILES>" --cutoff 0.85
+```

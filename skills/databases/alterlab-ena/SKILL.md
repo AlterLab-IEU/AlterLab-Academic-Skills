@@ -202,3 +202,13 @@ This skill includes detailed reference documentation for working with ENA:
 
 Load this reference when constructing complex API queries, debugging API responses, or needing specific parameter details.
 
+## Scripts
+
+`scripts/query_ena.py` — runnable helper for the ENA Portal API (no key):
+
+```bash
+python scripts/query_ena.py search --result read_run \
+    --query 'study_accession="PRJEB1787"' --fields run_accession,fastq_ftp --limit 5
+python scripts/query_ena.py filereport ERR164407
+```
+
