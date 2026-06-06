@@ -3,6 +3,7 @@ name: alterlab-research-grants
 description: Writes competitive research grant proposals for NSF, NIH, DOE, DARPA, and Taiwan NSTC — applies agency-specific formatting and review criteria, prepares budgets, and drafts broader-impacts, significance statements, and innovation narratives that comply with submission requirements. Use when drafting or revising a grant proposal, aligning a proposal to a funding agency's review criteria, or preparing grant budgets and compliance sections. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
+compatibility: No external tools, API keys, or services required — ships no helper scripts and works from the Read/Write/Edit/Bash tools alone
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

@@ -3,6 +3,7 @@ name: alterlab-qualitative-methods
 description: "Comprehensive qualitative research methods assistant supporting thematic analysis (Braun & Clarke), grounded theory (Strauss & Corbin; Charmaz), interpretative phenomenological analysis (IPA), content analysis, narrative inquiry, ethnography, case study methodology (Yin), coding techniques (open/axial/selective), NVivo-style workflows with Python alternatives, trustworthiness criteria (Lincoln & Guba), reflexivity, and member checking. Use when designing or analyzing qualitative research — thematic analysis, grounded theory, coding data, phenomenology, IPA, ethnography, case study, narrative inquiry, content analysis, qualitative coding, NVivo, trustworthiness, member checking, reflexivity, interview analysis, or focus group analysis. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read WebFetch WebSearch Bash(python:*)
+compatibility: No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.
 metadata:
   skill-author: AlterLab
   version: "1.0.0"

@@ -3,6 +3,7 @@ name: alterlab-gtex
 description: Query the GTEx (Genotype-Tissue Expression) portal for tissue-specific gene expression, expression quantitative trait loci (eQTLs), and splicing QTLs (sQTLs). Use when checking which tissues express a gene, linking GWAS or non-coding variants to gene regulation, or interpreting the regulatory effects of variants across human tissues. Part of the AlterLab Academic Skills suite.
 license: CC-BY-4.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless GTEx portal REST API (no authentication required)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

@@ -3,6 +3,7 @@ name: alterlab-drugbank
 description: Access and analyze drug information from the DrugBank database — drug properties, interactions, targets, pathways, chemical structures, and pharmacology data. Use when working with pharmaceutical data, drug discovery research, drug-drug interaction analysis, target identification, chemical similarity searches, ADMET predictions, or any task needing detailed drug and drug-target records from DrugBank. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Requires a licensed DrugBank account and credentials for data access
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

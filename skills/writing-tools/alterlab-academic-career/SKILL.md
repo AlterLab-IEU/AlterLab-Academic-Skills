@@ -3,6 +3,7 @@ name: alterlab-academic-career
 description: "Prepares academic career documents and professional-development materials for faculty and researchers. Use when drafting academic CVs, research statements, teaching philosophies, diversity statements, faculty-position cover letters, tenure dossiers, promotion narratives, academic portfolios, or mentorship statements, and when planning conference-networking strategy, building academic web presence, setting up ORCID profiles, or understanding impact metrics. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit
+compatibility: No external tools, API keys, or services required — produces documents from the Read/Write/Edit tools alone
 metadata:
   skill-author: AlterLab
   version: "1.0.0"

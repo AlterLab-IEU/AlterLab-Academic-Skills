@@ -3,6 +3,7 @@ name: alterlab-datamol
 description: Wraps RDKit in a Pythonic datamol interface with sensible defaults for standard drug discovery — SMILES parsing, molecule standardization, descriptors, fingerprints, clustering, 3D conformer generation, and parallel processing, returning native rdkit.Chem.Mol objects. Use when running everyday cheminformatics on molecules with minimal boilerplate; for advanced control or custom parameters, use rdkit directly. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

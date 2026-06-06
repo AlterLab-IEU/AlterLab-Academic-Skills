@@ -1,0 +1,10 @@
+{
+  "origin_skill": "alterlab-deep-research",
+  "origin_mode": "full",
+  "origin_date": "2026-06-06T09:30:00Z",
+  "verification_status": "VERIFIED",
+  "version_label": "rq_brief_v1.0",
+  "integrity_pass_date": "2026-06-06T10:15:00Z",
+  "content_hash": "3a7bd3e2360a3d29eea436fcfb7e44c735d117c42d1c1835420b6b9942dd4f1b",
+  "upstream_dependencies": []
+}

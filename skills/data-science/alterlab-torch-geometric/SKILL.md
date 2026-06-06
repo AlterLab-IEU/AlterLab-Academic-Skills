@@ -3,6 +3,7 @@ name: alterlab-torch-geometric
 description: Graph Neural Networks with PyTorch Geometric (PyG) — node and graph classification, link prediction, GCN, GAT, and GraphSAGE layers, heterogeneous graphs, and molecular property prediction. Use when building or training GNNs for geometric deep learning on graph-structured data. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: No API key required. Runs locally via `uv run python`; requires the torch and torch-geometric Python packages (GPU optional).
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

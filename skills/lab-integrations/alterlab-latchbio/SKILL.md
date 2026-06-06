@@ -3,6 +3,7 @@ name: alterlab-latchbio
 description: Builds and deploys bioinformatics pipelines on the LatchBio platform using the Latch SDK — author workflows with @workflow/@task decorators, handle LatchFile/LatchDir I/O, deploy serverless workflows, and wrap Nextflow/Snakemake pipelines. Use when developing or deploying a Latch SDK workflow, registering tasks, or porting a Nextflow/Snakemake bioinformatics pipeline onto LatchBio. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
+compatibility: Requires a LatchBio account and workspace plus the Latch SDK (pip install latch); deploying workflows needs `latch login`
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

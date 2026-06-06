@@ -3,6 +3,7 @@ name: alterlab-edgartools
 description: Accesses, analyzes, and extracts data from SEC EDGAR filings using the edgartools Python library. Use when working with SEC filings, financial statements (income statement, balance sheet, cash flow), XBRL financial data, insider trading (Form 4), institutional holdings (13F), company financials, annual/quarterly reports (10-K, 10-Q), proxy statements (DEF 14A), 8-K current events, company screening by ticker/CIK/industry, multi-period financial analysis, or any SEC regulatory filings. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: No API key required, but the SEC requires an identity string (email) set before requests. Runs via `uv run python`; needs network access to SEC EDGAR.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

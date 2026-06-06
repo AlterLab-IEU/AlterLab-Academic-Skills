@@ -3,6 +3,7 @@ name: alterlab-polars
 description: Fast in-memory DataFrame analytics with Polars — lazy evaluation, parallel execution, and an Apache Arrow backend for datasets that fit in RAM. Use when pandas is too slow but data still fits in memory, for 1-100GB datasets, ETL pipelines, or a faster pandas replacement. For larger-than-RAM data prefer dask or vaex. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: No API key required. Runs locally via `uv run python`; requires the polars Python package.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

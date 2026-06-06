@@ -3,6 +3,7 @@ name: alterlab-protocolsio
 description: Manages scientific protocols through the protocols.io API — search, create, update, and publish protocols, manage steps and materials, handle discussions and comments, organize workspaces, and upload/manage files. Use when discovering, developing, or publishing protocols.io protocols, collaborating on protocol steps/materials, tracking experiments, or integrating protocols.io into lab documentation workflows. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
+compatibility: Requires a protocols.io access token — a personal CLIENT_ACCESS_TOKEN for personal content or an OAUTH_ACCESS_TOKEN via the OAuth flow
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

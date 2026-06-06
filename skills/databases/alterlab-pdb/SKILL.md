@@ -3,6 +3,7 @@ name: alterlab-pdb
 description: Access the RCSB Protein Data Bank (PDB) for experimental 3D protein and nucleic acid structures, searching by text, sequence, or structure and downloading coordinates in PDB/mmCIF format with metadata. Use when retrieving a protein structure by PDB ID, running sequence or structure similarity searches, or obtaining coordinates for structural biology and drug discovery. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless RCSB PDB REST API (no authentication required)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

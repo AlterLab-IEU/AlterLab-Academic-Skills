@@ -3,8 +3,10 @@ name: alterlab-cosmic
 description: Access the COSMIC catalogue of somatic mutations in cancer to query somatic mutations, the Cancer Gene Census, mutational signatures, and gene fusions (authentication required). Use when curating known cancer driver genes, looking up recurrent somatic mutations in a gene, or interpreting mutational signatures for cancer research and precision oncology. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Requires a free COSMIC account (registration) for data downloads
 metadata:
     skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # COSMIC Database

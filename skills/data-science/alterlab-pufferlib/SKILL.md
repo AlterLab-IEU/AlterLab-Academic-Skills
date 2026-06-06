@@ -3,6 +3,7 @@ name: alterlab-pufferlib
 description: High-performance reinforcement learning with PufferLib — fast parallel training, vectorized environments, and multi-agent systems achieving 2-10x speedups over standard implementations. Use when scaling RL training, running vectorized or multi-agent setups, or integrating game environments (Atari, Procgen, NetHack). For quick prototyping or standard, well-documented algorithm implementations prefer stable-baselines3. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: No API key required. Runs locally via `uv run python`; requires the pufferlib Python package (GPU optional for faster training).
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

@@ -3,9 +3,10 @@ name: alterlab-timesfm
 description: Zero-shot univariate time-series forecasting with Google's TimesFM foundation model, producing point forecasts and prediction intervals from CSV/DataFrame/array inputs, with a preflight system checker for RAM/GPU. Use to forecast any univariate series (sales, sensors, energy, vitals, weather) without training a custom model. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: Apache-2.0
+compatibility: No API key required. Runs locally via `uv run python`; requires the timesfm Python package (downloads the TimesFM model weights on first use; GPU optional).
 metadata:
   skill-author: AlterLab
-  skill-version: "1.0.0"
+  version: "1.0.0"
 ---
 
 # TimesFM Forecasting

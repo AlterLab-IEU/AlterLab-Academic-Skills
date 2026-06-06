@@ -3,6 +3,7 @@ name: alterlab-deep-research
 description: "Runs a 13-agent deep research pipeline for rigorous academic work on any topic across 7 modes (full research, quick brief, paper review, lit-review, fact-check, Socratic guided research dialogue, and systematic review with optional meta-analysis), covering research-question formulation, Socratic mentoring, methodology design, systematic literature search, source verification, cross-source synthesis, risk-of-bias assessment, meta-analysis, APA 7.0 report compilation, editorial and devil's-advocate review, ethics review, and post-research literature monitoring. Use when the request mentions research, deep research, literature review, systematic review, meta-analysis, PRISMA, evidence synthesis, fact-check, guide my research, help me think through, or 研究, 深度研究, 文獻回顧, 文獻探討, 系統性回顧, 後設分析, 事實查核, 引導我的研究, 幫我釐清, 幫我想想, 我不確定要研究什麼, 研究方向, 研究主題. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash WebFetch WebSearch
+compatibility: Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required
 metadata:
   skill-author: AlterLab
   version: "2.3"

@@ -3,6 +3,7 @@ name: alterlab-pymatgen
 description: Analyzes and manipulates materials with the pymatgen toolkit — crystal structures and molecules, phase diagrams and thermodynamic stability, electronic structure (band structures, DOS), surfaces and interfaces, and Materials Project database access. Use when working with crystal structures in materials science, converting between structure formats (CIF, POSCAR, XYZ), analyzing symmetry or space groups, computing phase diagrams, querying the Materials Project API, or handling VASP, Gaussian, or Quantum ESPRESSO output. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
+compatibility: Runs locally via `uv run python`; requires the pymatgen Python package. Materials Project database queries need a free MP_API_KEY.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

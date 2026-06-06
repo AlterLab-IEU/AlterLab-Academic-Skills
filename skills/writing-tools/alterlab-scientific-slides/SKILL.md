@@ -3,6 +3,7 @@ name: alterlab-scientific-slides
 description: Builds slide decks for research talks in PowerPoint and LaTeX Beamer, providing slide structure, design templates, timing guidance, and visual validation. Use when making conference presentations, seminar talks, research presentations, thesis-defense slides, or any scientific talk deck. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
+compatibility: PowerPoint output uses python-pptx; LaTeX Beamer output needs a LaTeX distribution (pdflatex); slide-to-image validation helpers convert decks to PDF/PNG
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

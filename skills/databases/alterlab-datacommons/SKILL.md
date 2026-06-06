@@ -3,6 +3,7 @@ name: alterlab-datacommons
 description: Query Google Data Commons for public statistical data aggregated from global sources, resolving geographic entities and pulling time-series statistics. Use when working with demographic data, economic indicators, health statistics, or environmental data — population counts, GDP figures, unemployment rates, disease prevalence — or when resolving places to DCIDs and exploring relationships between statistical entities. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Requires a Data Commons API key
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

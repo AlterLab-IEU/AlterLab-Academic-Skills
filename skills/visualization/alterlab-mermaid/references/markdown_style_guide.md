@@ -490,28 +490,28 @@ One emoji per H2 heading, at the start. Use sparingly in body text for callouts 
 
 | Your content describes...                            | Add a...                 | Type file                                           |
 | ---------------------------------------------------- | ------------------------ | --------------------------------------------------- |
-| Steps in a process, workflow, decision logic         | **Flowchart**            | [flowchart.md](diagrams/flowchart.md)       |
-| Who talks to whom and when (API calls, messages)     | **Sequence diagram**     | [sequence.md](diagrams/sequence.md)         |
-| Class hierarchy, type relationships, interfaces      | **Class diagram**        | [class.md](diagrams/class.md)               |
-| Status transitions, entity lifecycle, state machine  | **State diagram**        | [state.md](diagrams/state.md)               |
-| Database schema, data model, entity relationships    | **ER diagram**           | [er.md](diagrams/er.md)                     |
-| Project timeline, roadmap, task dependencies         | **Gantt chart**          | [gantt.md](diagrams/gantt.md)               |
-| Parts of a whole, proportions, distribution          | **Pie chart**            | [pie.md](diagrams/pie.md)                   |
-| Git branching strategy, merge/release flow           | **Git Graph**            | [git_graph.md](diagrams/git_graph.md)       |
-| Concept hierarchy, brainstorm, topic map             | **Mindmap**              | [mindmap.md](diagrams/mindmap.md)           |
-| Chronological events, milestones, history            | **Timeline**             | [timeline.md](diagrams/timeline.md)         |
-| User experience, satisfaction scores, journey        | **User Journey**         | [user_journey.md](diagrams/user_journey.md) |
-| Two-axis comparison, prioritization matrix           | **Quadrant chart**       | [quadrant.md](diagrams/quadrant.md)         |
-| Requirements traceability, compliance mapping        | **Requirement diagram**  | [requirement.md](diagrams/requirement.md)   |
-| System architecture at varying zoom levels           | **C4 diagram**           | [c4.md](diagrams/c4.md)                     |
-| Flow magnitude, resource distribution, budgets       | **Sankey diagram**       | [sankey.md](diagrams/sankey.md)             |
-| Numeric trends, bar charts, line charts              | **XY Chart**             | [xy_chart.md](diagrams/xy_chart.md)         |
-| Component layout, spatial arrangement, layers        | **Block diagram**        | [block.md](diagrams/block.md)               |
-| Work item tracking, status board, task columns       | **Kanban board**         | [kanban.md](diagrams/kanban.md)             |
-| Binary protocol layout, data packet format           | **Packet diagram**       | [packet.md](diagrams/packet.md)             |
-| Cloud infrastructure, service topology, networking   | **Architecture diagram** | [architecture.md](diagrams/architecture.md) |
-| Multi-dimensional comparison, skills, radar analysis | **Radar chart**          | [radar.md](diagrams/radar.md)               |
-| Hierarchical proportions, budget breakdown           | **Treemap**              | [treemap.md](diagrams/treemap.md)           |
+| Steps in a process, workflow, decision logic         | **Flowchart**            | [flowchart.md](diagrams_flowchart.md)       |
+| Who talks to whom and when (API calls, messages)     | **Sequence diagram**     | [sequence.md](diagrams_sequence.md)         |
+| Class hierarchy, type relationships, interfaces      | **Class diagram**        | [class.md](diagrams_class.md)               |
+| Status transitions, entity lifecycle, state machine  | **State diagram**        | [state.md](diagrams_state.md)               |
+| Database schema, data model, entity relationships    | **ER diagram**           | [er.md](diagrams_er.md)                     |
+| Project timeline, roadmap, task dependencies         | **Gantt chart**          | [gantt.md](diagrams_gantt.md)               |
+| Parts of a whole, proportions, distribution          | **Pie chart**            | [pie.md](diagrams_pie.md)                   |
+| Git branching strategy, merge/release flow           | **Git Graph**            | [git_graph.md](diagrams_git_graph.md)       |
+| Concept hierarchy, brainstorm, topic map             | **Mindmap**              | [mindmap.md](diagrams_mindmap.md)           |
+| Chronological events, milestones, history            | **Timeline**             | [timeline.md](diagrams_timeline.md)         |
+| User experience, satisfaction scores, journey        | **User Journey**         | [user_journey.md](diagrams_user_journey.md) |
+| Two-axis comparison, prioritization matrix           | **Quadrant chart**       | [quadrant.md](diagrams_quadrant.md)         |
+| Requirements traceability, compliance mapping        | **Requirement diagram**  | [requirement.md](diagrams_requirement.md)   |
+| System architecture at varying zoom levels           | **C4 diagram**           | [c4.md](diagrams_c4.md)                     |
+| Flow magnitude, resource distribution, budgets       | **Sankey diagram**       | [sankey.md](diagrams_sankey.md)             |
+| Numeric trends, bar charts, line charts              | **XY Chart**             | [xy_chart.md](diagrams_xy_chart.md)         |
+| Component layout, spatial arrangement, layers        | **Block diagram**        | [block.md](diagrams_block.md)               |
+| Work item tracking, status board, task columns       | **Kanban board**         | [kanban.md](diagrams_kanban.md)             |
+| Binary protocol layout, data packet format           | **Packet diagram**       | [packet.md](diagrams_packet.md)             |
+| Cloud infrastructure, service topology, networking   | **Architecture diagram** | [architecture.md](diagrams_architecture.md) |
+| Multi-dimensional comparison, skills, radar analysis | **Radar chart**          | [radar.md](diagrams_radar.md)               |
+| Hierarchical proportions, budget breakdown           | **Treemap**              | [treemap.md](diagrams_treemap.md)           |
 
 > 💡 **Pick the right type, not the easy type.** Don't default to flowcharts for everything — a timeline is better than a flowchart for chronological events, a sequence diagram is better for service interactions, an ER diagram is better for data models. Scan the table above and match your content to the most specific type. **If you catch yourself writing a paragraph that describes a visual concept, stop and diagram it.**
 

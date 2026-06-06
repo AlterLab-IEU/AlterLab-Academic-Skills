@@ -3,6 +3,7 @@ name: alterlab-eda
 description: Performs comprehensive exploratory data analysis (EDA) on scientific data files across 88 formats, auto-detecting file type and generating detailed markdown reports with format-specific analysis, quality metrics, and downstream-analysis recommendations. Use when analyzing any scientific data file to understand its structure, content, quality, and characteristics, including chemistry, bioinformatics, microscopy, spectroscopy, proteomics, and metabolomics formats. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: No API key required. Runs locally via `uv run python`; bundled scripts/ auto-install format-specific Python parsers on demand.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

@@ -3,6 +3,7 @@ name: alterlab-deepchem
 description: Runs molecular machine learning with DeepChem — diverse featurizers, pre-built MoleculeNet datasets, and pre-trained models for property prediction (ADMET, toxicity) via traditional ML or GNNs. Use when running quick molecular ML experiments needing extensive featurization options, MoleculeNet benchmarks, or pre-trained models; for graph-first PyTorch workflows use torchdrug, for benchmark datasets use pytdc. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

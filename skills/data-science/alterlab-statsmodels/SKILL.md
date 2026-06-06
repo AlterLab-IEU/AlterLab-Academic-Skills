@@ -3,6 +3,7 @@ name: alterlab-statsmodels
 description: Statistical modeling in Python with statsmodels — OLS, GLM, mixed models, and ARIMA with detailed diagnostics, residuals, and inference. Use when fitting specific model classes for econometrics, time series, or rigorous inference with coefficient tables and confidence intervals. For guided statistical test selection with APA reporting prefer statistical-analysis. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: No API key required. Runs locally via `uv run python`; requires the statsmodels Python package.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

@@ -3,6 +3,7 @@ name: alterlab-cirq
 description: Builds and runs quantum circuits with Cirq, Google's quantum computing framework, for Google Quantum AI hardware, noise-aware circuit design, and noise modeling. Use when targeting Google Quantum AI hardware, designing noise-aware or low-level circuits, or running quantum characterization experiments. For IBM hardware use qiskit; for quantum ML with autodiff use pennylane; for open-system physics simulations use qutip. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*)
+compatibility: No API key required for local simulation. Runs via `uv run python`; requires the cirq Python package. Google Quantum AI hardware access needs separate credentials.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

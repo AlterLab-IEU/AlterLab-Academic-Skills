@@ -3,6 +3,7 @@ name: alterlab-clinical-reports
 description: Writes comprehensive clinical reports — case reports (CARE guidelines), diagnostic reports (radiology, pathology, lab), clinical trial reports (ICH-E3, SAE, CSR), and patient documentation (SOAP notes, H&P, discharge summaries) — with templates, regulatory compliance (HIPAA, FDA, ICH-GCP), and validation tools. Use when drafting a case report for journal publication, a radiology/pathology/lab diagnostic report, an ICH-E3 clinical study report (CSR) or SAE narrative, or SOAP/H&P/discharge patient records needing regulatory-compliant formatting. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
+compatibility: "Runs with Read/Write/Edit/Bash; producing PDF/report output requires a local LaTeX toolchain. No API key required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

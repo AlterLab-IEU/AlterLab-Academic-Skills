@@ -3,6 +3,7 @@ name: alterlab-scientific-thinking
 description: Evaluate scientific claims and evidence quality using evidence grading frameworks (GRADE, Cochrane Risk of Bias), assessing experimental design validity and identifying biases and confounders. Use when judging evidence quality, spotting design flaws, identifying biases or confounders, or teaching critical analysis. For formal peer review writing use peer-review. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
+compatibility: No API key required. Guidance-focused skill; optional Python helpers run via `uv run python`.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

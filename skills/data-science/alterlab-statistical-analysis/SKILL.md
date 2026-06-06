@@ -3,6 +3,7 @@ name: alterlab-statistical-analysis
 description: Guided statistical analysis with hypothesis-test selection, assumption checking, power analysis, and APA-formatted reporting. Use when choosing the appropriate statistical test for data, verifying test assumptions, computing power/sample size, or producing APA-style results for academic research. For implementing specific models programmatically prefer statsmodels. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: No API key required. Runs locally via `uv run python`; requires the scipy and statsmodels Python packages.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

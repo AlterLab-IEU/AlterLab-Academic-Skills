@@ -3,6 +3,7 @@ name: alterlab-diffdock
 description: Predicts protein-ligand binding poses with DiffDock diffusion-based molecular docking from PDB structures and SMILES, producing pose confidence scores for virtual screening and structure-based drug design. Use when docking ligands into a protein, generating binding poses, or screening compounds against a target; not for binding affinity prediction. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

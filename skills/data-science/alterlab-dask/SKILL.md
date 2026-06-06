@@ -3,6 +3,7 @@ name: alterlab-dask
 description: Scales pandas/NumPy workflows beyond memory with Dask distributed computing — parallel DataFrames, arrays, delayed task graphs, and cluster execution. Use when existing pandas/NumPy code must run on larger-than-RAM data or across clusters, for parallel file processing, distributed ML, or integration with existing pandas code. For out-of-core analytics on a single machine prefer vaex; for in-memory speed prefer polars. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: No API key required. Runs locally via `uv run python`; requires the dask Python package (optional distributed scheduler for cluster execution).
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

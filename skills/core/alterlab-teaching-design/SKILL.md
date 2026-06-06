@@ -3,6 +3,7 @@ name: alterlab-teaching-design
 description: "Designs courses and teaching materials using backward design (Wiggins & McTighe), constructive alignment (Biggs), and Bloom's taxonomy alignment, generating rubrics, formative and summative assessments, syllabi, lesson plans, inclusive-pedagogy guidance, and online/hybrid course architecture. Use when the request mentions course design, syllabus, learning outcomes, rubric, assessment design, lesson plan, backward design, constructive alignment, Bloom's taxonomy, curriculum mapping, course redesign, inclusive pedagogy, hybrid course, or online course design. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash WebFetch WebSearch
+compatibility: Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required
 metadata:
   skill-author: AlterLab
   version: "1.0.0"

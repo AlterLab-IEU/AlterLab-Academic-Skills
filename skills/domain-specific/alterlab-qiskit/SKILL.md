@@ -3,6 +3,7 @@ name: alterlab-qiskit
 description: Builds and runs quantum circuits with Qiskit, IBM's quantum computing framework, including Qiskit Runtime for production workloads and quantum error mitigation. Use when targeting IBM Quantum hardware, running production workloads via Qiskit Runtime, applying error mitigation, or using IBM optimization tools. For Google hardware use cirq; for gradient-based quantum ML use pennylane; for open quantum system simulations use qutip. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*)
+compatibility: No API key required for local simulation. Runs via `uv run python`; requires the qiskit Python package. IBM Quantum hardware/Runtime needs an IBM Quantum account and API token.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

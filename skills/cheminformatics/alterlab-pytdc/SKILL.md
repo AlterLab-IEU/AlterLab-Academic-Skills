@@ -3,8 +3,10 @@ name: alterlab-pytdc
 description: Loads Therapeutics Data Commons (TDC, PyTDC) AI-ready drug-discovery datasets and benchmarks — ADME, toxicity, drug-target interaction (DTI), scaffold splits, and molecular oracles for therapeutic ML and pharmacological prediction. Use when fetching a standardized benchmark dataset, applying scaffold or cold-split evaluation, or sourcing labeled molecules for ADMET, toxicity, or DTI modeling. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
+    version: "1.0.0"
 ---
 
 # PyTDC (Therapeutics Data Commons)

@@ -3,6 +3,7 @@ name: alterlab-networkx
 description: Creates, analyzes, and visualizes complex networks and graphs in Python with NetworkX. Use when working with network/graph data structures, analyzing relationships between entities, computing graph algorithms (shortest paths, centrality, clustering), detecting communities, generating synthetic networks, or visualizing topologies — applicable to social, biological, transportation, citation, and any pairwise-relationship networks. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: No API key required. Runs locally via `uv run python`; requires the networkx Python package.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

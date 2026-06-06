@@ -3,6 +3,7 @@ name: alterlab-monarch
 description: Query the Monarch Initiative knowledge graph for disease-gene-phenotype associations across species, integrating OMIM, ORPHANET, HPO, ClinVar, and model organism databases. Use when discovering rare disease genes, mapping phenotypes to genes, modeling disease across species, or looking up HPO terms. Part of the AlterLab Academic Skills suite.
 license: CC0-1.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless Monarch Initiative REST API (no authentication required)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

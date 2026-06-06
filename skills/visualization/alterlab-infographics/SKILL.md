@@ -6,6 +6,7 @@ metadata:
     skill-author: AlterLab
     version: "1.0.0"
 allowed-tools: Read Write Edit Bash
+compatibility: Requires an OpenRouter API key (OPENROUTER_API_KEY) for Nano Banana Pro generation and Gemini 3 Pro quality review
 ---
 
 # Infographics

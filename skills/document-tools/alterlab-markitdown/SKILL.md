@@ -3,6 +3,7 @@ name: alterlab-markitdown
 description: Convert files and Office documents to clean, LLM-friendly Markdown with Microsoft MarkItDown (markitdown CLI/Python), supporting PDF, DOCX, PPTX, XLSX, images (EXIF + OCR), audio (transcription), HTML, CSV, JSON, XML, ZIP archives, EPUB e-books, and YouTube transcript URLs, with optional AI image descriptions. Use when converting a document, PDF, slide deck, spreadsheet, scanned image, audio file, web page, or e-book into Markdown text for ingestion or LLM processing, extracting text via OCR, transcribing audio, or batch-converting mixed file formats to token-efficient Markdown. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
+compatibility: markitdown CLI/library required (uv pip install 'markitdown[all]'); format extras gate support (pdf, docx, pptx, audio, etc.); optional AI image descriptions need an LLM API key (OPENAI_API_KEY or OPENROUTER_API_KEY)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

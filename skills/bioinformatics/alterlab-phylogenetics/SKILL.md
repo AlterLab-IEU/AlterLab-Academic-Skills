@@ -3,6 +3,7 @@ name: alterlab-phylogenetics
 description: Build and analyze phylogenetic trees end-to-end using MAFFT for multiple sequence alignment, IQ-TREE 2 for maximum-likelihood inference, and FastTree for fast NJ/ML, then visualize with ETE3 or FigTree. Use when reconstructing trees from sequences for evolutionary analysis, microbial genomics, viral phylodynamics, protein-family studies, or molecular-clock estimation. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

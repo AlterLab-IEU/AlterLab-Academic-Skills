@@ -3,6 +3,7 @@ name: alterlab-plotly
 description: Builds interactive charts with the Plotly Python library — hover tooltips, zoom, pan, and HTML/web-embeddable output. Use when a visualization needs interactivity, when building dashboards, exploratory data analysis, or presentation/web-embedded charts. For static publication figures use matplotlib or scientific-visualization. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
+compatibility: Requires the plotly Python library (pip install plotly); static image export (PNG/PDF/SVG) additionally needs kaleido
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

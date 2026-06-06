@@ -3,6 +3,7 @@ name: alterlab-deeptools
 description: Process and visualize deep-sequencing coverage with the deepTools CLI — convert BAM to bigWig (bamCoverage), run QC (multiBamSummary correlation, PCA, plotFingerprint), and build TSS/peak heatmaps and profiles (computeMatrix, plotHeatmap, plotProfile). Use when generating coverage tracks or signal heatmaps and profiles for ChIP-seq, ATAC-seq, or RNA-seq data. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

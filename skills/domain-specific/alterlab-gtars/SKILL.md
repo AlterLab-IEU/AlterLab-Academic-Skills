@@ -3,6 +3,7 @@ name: alterlab-gtars
 description: Runs high-performance genomic interval analysis with gtars, a Rust toolkit with Python bindings. Use when working with genomic regions or BED files, computing coverage tracks, detecting overlaps, tokenizing regions for ML models, or doing fragment analysis in computational genomics and machine learning. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
+compatibility: No API key required. Runs locally via `uv run python`; requires the gtars Python package.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

@@ -3,6 +3,7 @@ name: alterlab-pymc
 description: Bayesian modeling and probabilistic programming with PyMC — hierarchical models, MCMC (NUTS) sampling, variational inference, LOO/WAIC model comparison, and posterior predictive checks. Use when fitting Bayesian or hierarchical models, estimating posteriors and credible intervals, running probabilistic inference, or comparing models with LOO/WAIC. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: No API key required. Runs locally via `uv run python`; requires the pymc Python package.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

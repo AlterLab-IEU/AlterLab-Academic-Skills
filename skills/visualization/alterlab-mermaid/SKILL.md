@@ -3,10 +3,11 @@ name: alterlab-mermaid
 description: Writes Markdown documents and text-based Mermaid diagrams (flowcharts, sequence, class, ER, gantt, state, and more) with full style guides, 24 diagram-type references, and 9 document templates. Use when authoring a scientific document, report, analysis, or README, or when a diagram should be expressed as version-controllable Mermaid/Markdown text rather than a rendered image. For AI-rendered publication schematics use scientific-schematics instead. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: Apache-2.0
+compatibility: No API key, network, or runtime dependencies. Authoring is pure Markdown/Mermaid text; diagrams render natively on GitHub, GitLab, Notion, VS Code, and any Mermaid-aware viewer.
 metadata:
   skill-author: AlterLab
   skill-source: https://github.com/SuperiorByteWorks-LLC/agent-project
-  skill-version: "1.0.0"
+  version: "1.0.0"
   skill-contributors:
     - name: Clayton Young
       org: Superior Byte Works, LLC / @borealBytes
@@ -101,30 +102,30 @@ Mermaid covers 24 diagram types. Almost every scientific relationship fits one:
 
 | Use case | Diagram type | File |
 | -------------------------------------------- | ---------------- | ---------------------------------------------------- |
-| Experimental workflow / decision logic | Flowchart | `references/diagrams/flowchart.md` |
-| Service interactions / API calls / messaging | Sequence | `references/diagrams/sequence.md` |
-| Data model / schema | ER diagram | `references/diagrams/er.md` |
-| State machine / lifecycle | State | `references/diagrams/state.md` |
-| Project timeline / roadmap | Gantt | `references/diagrams/gantt.md` |
-| Proportions / composition | Pie | `references/diagrams/pie.md` |
-| System architecture (zoom levels) | C4 | `references/diagrams/c4.md` |
-| Concept hierarchy / brainstorm | Mindmap | `references/diagrams/mindmap.md` |
-| Chronological events / history | Timeline | `references/diagrams/timeline.md` |
-| Class hierarchy / type relationships | Class | `references/diagrams/class.md` |
-| User journey / satisfaction map | User Journey | `references/diagrams/user_journey.md` |
-| Two-axis comparison / prioritization | Quadrant | `references/diagrams/quadrant.md` |
-| Requirements traceability | Requirement | `references/diagrams/requirement.md` |
-| Flow magnitude / resource distribution | Sankey | `references/diagrams/sankey.md` |
-| Numeric trends / bar + line charts | XY Chart | `references/diagrams/xy_chart.md` |
-| Component layout / spatial arrangement | Block | `references/diagrams/block.md` |
-| Work item status / task columns | Kanban | `references/diagrams/kanban.md` |
-| Cloud infrastructure / service topology | Architecture | `references/diagrams/architecture.md` |
-| Multi-dimensional comparison / skills radar | Radar | `references/diagrams/radar.md` |
-| Hierarchical proportions / budget | Treemap | `references/diagrams/treemap.md` |
-| Binary protocol / data format | Packet | `references/diagrams/packet.md` |
-| Git branching / merge strategy | Git Graph | `references/diagrams/git_graph.md` |
-| Code-style sequence (programming syntax) | ZenUML | `references/diagrams/zenuml.md` |
-| Multi-diagram composition patterns | Complex Examples | `references/diagrams/complex_examples.md` |
+| Experimental workflow / decision logic | Flowchart | `references/diagrams_flowchart.md` |
+| Service interactions / API calls / messaging | Sequence | `references/diagrams_sequence.md` |
+| Data model / schema | ER diagram | `references/diagrams_er.md` |
+| State machine / lifecycle | State | `references/diagrams_state.md` |
+| Project timeline / roadmap | Gantt | `references/diagrams_gantt.md` |
+| Proportions / composition | Pie | `references/diagrams_pie.md` |
+| System architecture (zoom levels) | C4 | `references/diagrams_c4.md` |
+| Concept hierarchy / brainstorm | Mindmap | `references/diagrams_mindmap.md` |
+| Chronological events / history | Timeline | `references/diagrams_timeline.md` |
+| Class hierarchy / type relationships | Class | `references/diagrams_class.md` |
+| User journey / satisfaction map | User Journey | `references/diagrams_user_journey.md` |
+| Two-axis comparison / prioritization | Quadrant | `references/diagrams_quadrant.md` |
+| Requirements traceability | Requirement | `references/diagrams_requirement.md` |
+| Flow magnitude / resource distribution | Sankey | `references/diagrams_sankey.md` |
+| Numeric trends / bar + line charts | XY Chart | `references/diagrams_xy_chart.md` |
+| Component layout / spatial arrangement | Block | `references/diagrams_block.md` |
+| Work item status / task columns | Kanban | `references/diagrams_kanban.md` |
+| Cloud infrastructure / service topology | Architecture | `references/diagrams_architecture.md` |
+| Multi-dimensional comparison / skills radar | Radar | `references/diagrams_radar.md` |
+| Hierarchical proportions / budget | Treemap | `references/diagrams_treemap.md` |
+| Binary protocol / data format | Packet | `references/diagrams_packet.md` |
+| Git branching / merge strategy | Git Graph | `references/diagrams_git_graph.md` |
+| Code-style sequence (programming syntax) | ZenUML | `references/diagrams_zenuml.md` |
+| Multi-diagram composition patterns | Complex Examples | `references/diagrams_complex_examples.md` |
 
 > 💡 **Pick the right type, not the easy one.** Don't default to flowcharts for everything.
 > A timeline beats a flowchart for chronological events. A sequence beats a flowchart for
@@ -168,7 +169,7 @@ Key rules to internalize:
 
 Before creating any Mermaid diagram: read `references/mermaid_style_guide.md`.
 
-Then open the specific type file (e.g., `references/diagrams/flowchart.md`) for the exemplar, tips, and copy-paste template.
+Then open the specific type file (e.g., `references/diagrams_flowchart.md`) for the exemplar, tips, and copy-paste template.
 
 Mandatory rules for every diagram:
 
@@ -298,7 +299,7 @@ Before finalizing any document from any skill, apply this skill's checklist:
 
 Each file contains: production-quality exemplar, tips specific to that type, and a copy-paste template.
 
-`references/diagrams/` — architecture, block, c4, class, complex\_examples, er, flowchart, gantt, git\_graph, kanban, mindmap, packet, pie, quadrant, radar, requirement, sankey, sequence, state, timeline, treemap, user\_journey, xy\_chart, zenuml
+`references/diagrams_` — architecture, block, c4, class, complex\_examples, er, flowchart, gantt, git\_graph, kanban, mindmap, packet, pie, quadrant, radar, requirement, sankey, sequence, state, timeline, treemap, user\_journey, xy\_chart, zenuml
 
 ### Document templates (9 types)
 

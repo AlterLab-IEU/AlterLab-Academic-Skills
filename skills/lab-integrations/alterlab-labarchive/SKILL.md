@@ -3,6 +3,7 @@ name: alterlab-labarchive
 description: Integrates the LabArchives electronic lab notebook (ELN) via its REST API — access notebooks, manage entries and attachments, back up notebooks, and bridge to Protocols.io, Jupyter, and REDCap. Use when automating LabArchives ELN workflows, programmatically reading/writing notebook entries or attachments, backing up a LabArchives notebook, or syncing it with Protocols.io, Jupyter, or REDCap. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
+compatibility: Requires a LabArchives account plus API credentials (access key ID and password) and the labarchivespy client
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

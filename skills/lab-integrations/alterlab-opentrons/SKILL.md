@@ -3,6 +3,7 @@ name: alterlab-opentrons
 description: Writes liquid-handling protocols for Opentrons OT-2 and Flex robots using the official Opentrons Protocol API v2, with full access to v2 features for production-grade, officially compatible protocols. Use when authoring or running protocols specifically for Opentrons hardware. For multi-vendor automation or broader equipment control use pylabrobot instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
+compatibility: Requires the opentrons Python package (pip install opentrons); protocols simulate locally via opentrons_simulate, execution needs an Opentrons OT-2 or Flex robot
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

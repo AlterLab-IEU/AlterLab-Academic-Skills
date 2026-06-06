@@ -3,6 +3,7 @@ name: alterlab-peer-review
 description: Writes structured, checklist-based manuscript and grant peer reviews — assesses methodology, statistical validity, reporting-standards compliance (CONSORT/STROBE), and gives constructive feedback. Use when writing a formal peer review or revising a manuscript against review criteria. For evaluating claims/evidence quality prefer scientific-critical-thinking; for quantitative scoring frameworks use scholar-evaluation. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
+compatibility: No external tools, API keys, or services required — produces reviews from the Read/Write/Edit/Bash tools alone
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

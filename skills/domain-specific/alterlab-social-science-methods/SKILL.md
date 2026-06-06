@@ -3,6 +3,7 @@ name: alterlab-social-science-methods
 description: "Guides advanced social science research methods — discourse analysis (Fairclough CDA, Gee), conversation analysis, quantitative content analysis, Qualitative Comparative Analysis (QCA), process tracing, archival research, participatory/community-based research (PAR, CBPR), Delphi and Q methodology, social network analysis (SNA), bibliometrics and scientometrics, systematic mapping reviews, and program/policy evaluation. Use when designing or conducting any of these studies — choosing a specialized method, building a coding scheme, establishing causal mechanisms in case studies, mapping relational or subjective data, or applying an evaluation framework. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
+compatibility: No API key required. Guidance-focused skill; optional Python helpers run via `uv run python`.
 metadata:
   skill-author: AlterLab
   version: "1.0.0"

@@ -3,6 +3,7 @@ name: alterlab-molecular-dynamics
 description: Runs and analyzes molecular dynamics simulations with OpenMM and MDAnalysis — setting up protein and small-molecule systems, assigning force fields, running energy minimization and production MD, and analyzing trajectories (RMSD, RMSF, contact maps, free energy surfaces). Use when simulating protein or ligand dynamics, equilibrating a system, or computing trajectory metrics for structural biology, drug binding, or biophysics. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

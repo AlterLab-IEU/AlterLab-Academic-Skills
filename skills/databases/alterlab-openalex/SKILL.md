@@ -3,6 +3,7 @@ name: alterlab-openalex
 description: Query and analyze scholarly literature using the OpenAlex API across 240M+ works, retrieving papers, authors, institutions, citations, and open access status. Use when searching academic papers, tracking citations, finding works by author or institution, analyzing research trends, discovering open access publications, or running bibliometric analysis. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless OpenAlex REST API; polite-pool mailto recommended (no authentication required)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

@@ -3,6 +3,7 @@ name: alterlab-ginkgo-cloud
 description: Submits and manages protocols on Ginkgo Bioworks Cloud Lab (cloud.ginkgo.bio), a web-based interface for autonomous lab execution on Reconfigurable Automation Carts (RACs), covering protocol selection, input preparation, pricing, and ordering workflows. Use when running cell-free protein expression (validation or optimization), generating fluorescent pixel art, or interacting with Ginkgo Cloud Lab services. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
+compatibility: Requires a Ginkgo Cloud Lab account (cloud.ginkgo.bio); account creation or institutional access may be needed to submit and order protocols
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

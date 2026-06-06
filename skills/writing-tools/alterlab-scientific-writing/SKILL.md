@@ -3,6 +3,7 @@ name: alterlab-scientific-writing
 description: Writes scientific manuscripts in full flowing paragraphs (never bullet points) via a two-stage process — section outlines with key points using research-lookup, then conversion to prose — applying IMRAD structure, citations (APA/AMA/Vancouver), figures/tables, and reporting guidelines (CONSORT/STROBE/PRISMA). Use when drafting research papers or journal submissions and writing manuscript sections (introduction, methods, results, discussion). Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
+compatibility: No API key or external service required for drafting; optional professional-report formatting with scientific_report.sty needs a LaTeX distribution (XeLaTeX/LuaLaTeX)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

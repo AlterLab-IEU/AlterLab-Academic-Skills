@@ -3,6 +3,7 @@ name: alterlab-gget
 description: "Run fast one-liner queries to 20+ bioinformatics databases from the gget CLI or Python — gene info (Ensembl), BLAST, AlphaFold structures, Enrichr enrichment, and more. Use for quick interactive lookups of genes, sequences, structures, or pathways — for batch processing or advanced BLAST use biopython, for multi-database Python workflows use bioservices. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

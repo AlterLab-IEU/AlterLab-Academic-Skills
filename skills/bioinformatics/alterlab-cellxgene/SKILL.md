@@ -3,6 +3,7 @@ name: alterlab-cellxgene
 description: Query the CZ CELLxGENE Census (61M+ cells) programmatically via cellxgene-census and TileDB-SOMA, slicing expression by tissue, disease, or cell type and returning AnnData. Use when pulling reference single-cell RNA-seq data from the largest curated public atlas, running population-scale queries, or benchmarking your data against a reference — for analyzing your own dataset use scanpy or scvi-tools. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

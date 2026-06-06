@@ -3,6 +3,7 @@ name: alterlab-esm
 description: Run ESM protein language models — ESM3 for generative multimodal protein design across sequence, structure, and function, and ESM C for efficient embeddings and representations — locally or via the cloud Forge API. Use when working with protein sequences, structures, or function prediction, designing novel proteins, generating protein embeddings, performing inverse folding, or doing protein-engineering tasks. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Runs under `uv run python` with the `esm` package. Models run locally; the cloud Forge API path requires an EvolutionaryScale Forge token (ESM3ForgeInferenceClient)."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

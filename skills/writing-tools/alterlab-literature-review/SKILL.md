@@ -3,6 +3,7 @@ name: alterlab-literature-review
 description: Conducts comprehensive, systematic literature reviews across multiple academic databases (PubMed, arXiv, bioRxiv, Semantic Scholar), with PRISMA flow tracking, study screening (title/abstract and full-text), evidence-table extraction, and risk-of-bias assessment, producing professionally formatted markdown documents and PDFs with verified citations in multiple styles (APA, Nature, Vancouver). Use when running a systematic literature review, meta-analysis, research synthesis, or broad literature search, building a PRISMA flow diagram, screening studies, extracting an evidence table, or assessing risk-of-bias across biomedical, scientific, and technical domains. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
+compatibility: Needs network access to PubMed, arXiv, bioRxiv, and Semantic Scholar (biopython/arxiv clients); PDF output requires pandoc and xelatex (check with --check-deps)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

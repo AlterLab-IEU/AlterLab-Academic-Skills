@@ -3,6 +3,7 @@ name: alterlab-matchms
 description: Computes mass-spectral similarity and identifies compounds for metabolomics with matchms — comparing mass spectra, scoring similarity (cosine, modified cosine), and searching spectral libraries to annotate unknowns. Use when matching MS/MS spectra, identifying metabolites, or library searching; for full LC-MS/MS proteomics pipelines use pyopenms. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

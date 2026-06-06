@@ -3,6 +3,7 @@ name: alterlab-link-health
 description: "Audits and repairs Markdown link health across a skills repo via a four-tier pipeline (config hardening, intra-repo file-ref fixes, external URL substitutions, residual exclusions) and enforces a Tier 3 substitution guardrail that prevents regressions of previously-passing links; designed for lychee-based GitHub Actions link checkers but generalizes to markdown-link-check and similar tools. Use when the request mentions link audit, dead links, link health, lychee, broken links, link checker, markdown link audit, link-health audit, 404 audit, check-links failing, CI link-check, or 連結健檢, 死鏈, 失效連結, 斷鏈檢查. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash WebFetch WebSearch
+compatibility: Targets lychee-based GitHub Actions link checkers (generalizes to markdown-link-check); no external API key or account required
 metadata:
   skill-author: AlterLab
   version: "1.0"

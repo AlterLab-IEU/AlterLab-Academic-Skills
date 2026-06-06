@@ -3,6 +3,7 @@ name: alterlab-interpro
 description: Query InterPro for protein family, domain, and functional site annotations, integrating Pfam, PANTHER, PRINTS, SMART, SUPERFAMILY, and 11 other member databases. Use when predicting protein function, analyzing domain architecture, classifying proteins by family or evolution, or mapping signatures to GO terms. Part of the AlterLab Academic Skills suite.
 license: CC0-1.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless InterPro REST API (no authentication required)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

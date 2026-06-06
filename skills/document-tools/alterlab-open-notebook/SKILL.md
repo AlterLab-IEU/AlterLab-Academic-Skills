@@ -3,6 +3,7 @@ name: alterlab-open-notebook
 description: Run Open Notebook, a self-hosted open-source alternative to Google NotebookLM with a full REST API, for AI-powered research and document analysis. Use when organizing research materials into notebooks, ingesting diverse content sources (PDFs, videos, audio, web pages, Office documents), generating AI-powered notes and summaries, creating multi-speaker podcasts from research, chatting with documents using context-aware AI, searching across materials with full-text and vector search, or running custom content transformations. Supports 16+ AI providers including OpenAI, Anthropic, Google, Ollama, Groq, and Mistral with complete data privacy through self-hosting. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
+compatibility: Requires a self-hosted Open Notebook instance (Docker Compose) plus an AI provider API key (OpenAI/Anthropic/Google/Groq/Mistral) or a local Ollama; set OPEN_NOTEBOOK_ENCRYPTION_KEY and OPEN_NOTEBOOK_PASSWORD
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

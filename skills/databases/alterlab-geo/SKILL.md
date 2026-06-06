@@ -3,6 +3,7 @@ name: alterlab-geo
 description: Access NCBI GEO (Gene Expression Omnibus) for gene expression and functional genomics data — search and download microarray and RNA-seq datasets by GSE, GSM, or GPL accession and retrieve SOFT and series matrix files. Use when locating public expression datasets, fetching processed expression matrices, or sourcing transcriptomics data for differential-expression analysis. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless NCBI E-utilities REST API (email required by NCBI); optional NCBI API key raises rate limits
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

@@ -3,6 +3,7 @@ name: alterlab-zarr
 description: Chunked, compressed N-dimensional arrays for cloud storage with Zarr — parallel I/O, S3/GCS integration, and NumPy/Dask/Xarray compatibility. Use when storing or reading large N-D scientific arrays, streaming chunked data to/from cloud object stores, or building large-scale scientific computing pipelines. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: No API key required. Runs locally via `uv run python`; requires the zarr Python package (cloud credentials only needed for S3/GCS object stores).
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

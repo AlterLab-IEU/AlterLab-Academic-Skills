@@ -3,6 +3,7 @@ name: alterlab-pydeseq2
 description: Run differential gene expression analysis on bulk RNA-seq count matrices with PyDESeq2, the Python port of DESeq2 — size-factor normalization, dispersion estimation, Wald tests, FDR (Benjamini-Hochberg) correction, and volcano/MA plots. Use when identifying differentially expressed genes between conditions from raw bulk RNA-seq counts. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

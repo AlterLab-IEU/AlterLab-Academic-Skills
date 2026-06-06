@@ -3,6 +3,7 @@ name: alterlab-ena
 description: Access the European Nucleotide Archive (ENA) via its API and FTP to retrieve DNA/RNA sequences, raw sequencing reads (FASTQ), and genome assemblies by accession, with support for multiple formats. Use when downloading reads or sequences for a study, run, or sample accession, or when sourcing nucleotide data for genomics and bioinformatics pipelines. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+compatibility: Keyless ENA API and FTP for data retrieval (no authentication required)
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

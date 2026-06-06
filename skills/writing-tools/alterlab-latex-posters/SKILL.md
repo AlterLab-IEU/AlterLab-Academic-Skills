@@ -6,6 +6,7 @@ metadata:
     skill-author: AlterLab
     version: "1.0.0"
 allowed-tools: Read Write Edit Bash
+compatibility: Requires a LaTeX distribution (pdflatex/xelatex/lualatex) with the beamerposter, tikzposter, or baposter packages installed to compile posters
 ---
 
 # LaTeX Research Posters

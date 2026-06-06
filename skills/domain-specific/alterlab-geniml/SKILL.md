@@ -3,6 +3,7 @@ name: alterlab-geniml
 description: Performs machine learning on genomic interval data (BED files) with geniml — training region embeddings (Region2Vec, BEDspace), single-cell ATAC-seq analysis (scEmbed), and building consensus peaks (universes). Use when working with BED file collections, scATAC-seq data, chromatin accessibility datasets, or any ML-based analysis and feature learning over genomic regions. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
+compatibility: No API key required. Runs locally via `uv run python`; requires the geniml Python package.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

@@ -3,6 +3,7 @@ name: alterlab-citation-mgmt
 description: Manages citations for academic research — searches Google Scholar and PubMed for papers, extracts accurate metadata, validates citations, and generates properly formatted BibTeX entries. Use when finding papers, verifying citation information, converting DOIs to BibTeX, checking reference accuracy in scientific writing, or building a bibliography. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
+compatibility: No API key required. Needs network access to Google Scholar and PubMed; helper scripts use the scholarly, biopython, bibtexparser, crossref-commons, and pylatexenc Python packages
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

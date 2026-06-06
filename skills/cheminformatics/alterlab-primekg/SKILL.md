@@ -3,6 +3,7 @@ name: alterlab-primekg
 description: Queries the Precision Medicine Knowledge Graph (PrimeKG) for multiscale biomedical relationships across genes, drugs, diseases, phenotypes, pathways, and biological processes. Use when exploring drug-disease or gene-disease links, building disease-centric knowledge subgraphs, or sourcing relations for drug repurposing and precision-medicine analyses. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

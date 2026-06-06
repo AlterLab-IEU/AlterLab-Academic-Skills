@@ -3,6 +3,7 @@ name: alterlab-matplotlib
 description: Builds plots with the matplotlib Python library for full low-level customization, exporting to PNG/PDF/SVG for publication. Use when fine-grained control over every plot element is needed, when creating novel or non-standard plot types, or when integrating plotting into a specific scientific Python workflow. For quick statistical plots use seaborn, for interactive charts use plotly, for publication-ready multi-panel figures with journal styling use scientific-visualization. Part of the AlterLab Academic Skills suite.
 license: BSD-3-Clause
 allowed-tools: Read Write Edit Bash(python:*)
+compatibility: Requires the matplotlib Python library (pip install matplotlib); no API key or external service needed
 metadata:
     skill-author: AlterLab
     version: "1.0.0"

@@ -3,6 +3,7 @@ name: alterlab-scikit-learn
 description: Classical machine learning in Python with scikit-learn — algorithms, preprocessing, pipelines, and best-practice reference documentation. Use when working with supervised learning (classification, regression), unsupervised learning (clustering, dimensionality reduction), model evaluation, hyperparameter tuning, feature preprocessing, or building ML pipelines. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: No API key required. Runs locally via `uv run python`; requires the scikit-learn Python package.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
