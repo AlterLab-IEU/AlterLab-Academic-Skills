@@ -1,0 +1,57 @@
+{
+  "skill": "alterlab-scientific-schematics",
+  "evals": [
+    {
+      "id": "consort-flowchart-journal",
+      "prompt": "I need a CONSORT participant flow diagram for my RCT going to a journal: 500 assessed for eligibility, 150 excluded, 350 randomized into a treatment arm (n=175) and control arm (n=175), with lost-to-follow-up and final analyzed counts.",
+      "expected_output": "Invokes alterlab-scientific-schematics: generates the CONSORT flowchart with Nano Banana 2 from the detailed quantitative prompt, with Gemini 3.1 Pro Preview reviewing scientific accuracy, clarity, labels, layout, and professional appearance against the journal document-type threshold (8.5/10) and smart iteration (max 2) that stops early once met. Outputs a versioned PNG in figures/ plus a JSON review log.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Builds the diagram via Nano Banana 2 and applies the journal-tier quality threshold (8.5/10) reviewed by Gemini 3.1 Pro Preview, not a hand-drawn or text diagram." }
+      ]
+    },
+    {
+      "id": "transformer-architecture",
+      "prompt": "Create a transformer encoder-decoder architecture diagram for my conference paper, showing the encoder stack on the left, decoder stack on the right, multi-head self-attention, masked attention, and the cross-attention connection between them.",
+      "expected_output": "Invokes alterlab-scientific-schematics: generates a neural-network architecture schematic with Nano Banana 2 using a layout-specific prompt (encoder left, decoder right, cross-attention link), reviewed by Gemini 3.1 Pro Preview against the conference threshold (8.0/10) with smart iteration up to 2. Output is a versioned PNG and review log.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "architecture" }
+      ]
+    },
+    {
+      "id": "biological-pathway-poster",
+      "prompt": "Draw the MAPK signaling pathway from the EGFR receptor through RAS, RAF, MEK, ERK to nuclear gene transcription, with each arrow labeled as phosphorylation or activation, for an academic poster.",
+      "expected_output": "Invokes alterlab-scientific-schematics: generates a biological pathway diagram with Nano Banana 2 from the cascade description with labeled activation/phosphorylation arrows, reviewed by Gemini 3.1 Pro Preview against the poster threshold (7.0/10) with early stopping when met, output as a versioned PNG plus review log.",
+      "assertions": [
+        { "type": "should_trigger", "value": true }
+      ]
+    },
+    {
+      "id": "iot-block-diagram",
+      "prompt": "I want a block diagram of an IoT system: sensors feeding a microcontroller, then a WiFi module to a cloud server and a mobile app, with the connections labeled by protocol (I2C, UART, WiFi, HTTPS).",
+      "expected_output": "Invokes alterlab-scientific-schematics: generates a system/block architecture diagram with Nano Banana 2 showing the layered data flow and protocol-labeled connections, reviewed by Gemini 3.1 Pro Preview against the document-type threshold with smart iteration. Output is a versioned PNG and review log.",
+      "assertions": [
+        { "type": "should_trigger", "value": true }
+      ]
+    },
+    {
+      "id": "near-miss-mermaid",
+      "prompt": "Add a flowchart of our experiment decision logic to the README as version-controllable text that renders on GitHub and diffs cleanly in git.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-mermaid. The user explicitly wants a text-based, git-diffable diagram that renders on GitHub, not an AI-rendered PNG — the skill's own description routes text-based Mermaid diagrams to alterlab-mermaid.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-mermaid" }
+      ]
+    },
+    {
+      "id": "near-miss-generate-image",
+      "prompt": "Make me a photorealistic cover illustration of a futuristic neuroscience lab with glowing brain scans for my talk's title slide.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-generate-image. This is a general photo/illustration/artwork request, not a technical or scientific diagram of concepts and relationships — the skill's description routes general photos, illustrations, or artwork to alterlab-generate-image.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-generate-image" }
+      ]
+    }
+  ]
+}

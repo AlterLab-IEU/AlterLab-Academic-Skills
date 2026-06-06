@@ -1,0 +1,59 @@
+{
+  "skill": "alterlab-labarchive",
+  "evals": [
+    {
+      "id": "backup-all-notebooks",
+      "prompt": "I need to back up every one of my LabArchives notebooks, with attachments, as archives for our records. How do I script that?",
+      "expected_output": "Invokes alterlab-labarchive. Authenticates via the REST API (users/user_access_info to get the UID), lists notebooks, and uses scripts/notebook_operations.py backup (7z archive with attachments by default), or the backup-all path, against the correct regional api_url.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Obtains the UID via user_access_info and uses the notebook backup operation, defaulting to a 7z archive with attachments." }
+      ]
+    },
+    {
+      "id": "upload-attachment-to-entry",
+      "prompt": "Automate uploading a PDF results file as an attachment to a specific LabArchives notebook entry, with a comment timestamping the upload.",
+      "expected_output": "Invokes alterlab-labarchive. Uses scripts/entry_operations.py upload (uid, nbid, entry-id, file) to attach the PDF and adds a comment to the entry, following the entry/attachment management capability.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Uploads the attachment to a LabArchives entry and adds a timestamping comment via the REST API." }
+      ]
+    },
+    {
+      "id": "jupyter-integration-sync",
+      "prompt": "After I run a Jupyter notebook I want to push its HTML export into LabArchives as a new entry automatically. Walk me through wiring that up.",
+      "expected_output": "Invokes alterlab-labarchive. Routes to the third-party Jupyter integration: export the Jupyter notebook to HTML/PDF, upload it to a LabArchives notebook as an entry via entry_operations.py, and add a comment with execution timestamp and environment info.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Jupyter" }
+      ]
+    },
+    {
+      "id": "site-usage-report",
+      "prompt": "As the LabArchives admin I want a detailed usage report of user activity across our institution for this year.",
+      "expected_output": "Invokes alterlab-labarchive. Uses the site_reports API (e.g. detailed_usage_report with start_date/end_date) to generate the institutional usage/activity report, noting it is an Enterprise feature.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "usage report" }
+      ]
+    },
+    {
+      "id": "near-miss-benchling",
+      "prompt": "I need to register 30 DNA sequences in our Benchling registry and create matching inventory containers via the Benchling SDK.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-benchling. The platform is Benchling (registry entities, inventory containers, benchling-sdk), not the LabArchives ELN REST API.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-benchling" }
+      ]
+    },
+    {
+      "id": "near-miss-protocolsio",
+      "prompt": "Help me publish a protocol on protocols.io with a DOI and manage its step-level comments from reviewers.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-protocolsio. The user is managing and publishing protocols on protocols.io (DOI, step comments via the v3 API), not automating a LabArchives notebook.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-protocolsio" }
+      ]
+    }
+  ]
+}

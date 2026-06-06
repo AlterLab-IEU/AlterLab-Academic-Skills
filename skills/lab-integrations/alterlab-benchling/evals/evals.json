@@ -1,0 +1,60 @@
+{
+  "skill": "alterlab-benchling",
+  "evals": [
+    {
+      "id": "register-dna-sequences-sdk",
+      "prompt": "I have a FASTA file of 40 plasmid constructs I need to load into our Benchling registry. Write a script that creates each as a circular DNA sequence in folder fld_abc123 and registers it.",
+      "expected_output": "Invokes alterlab-benchling. Uses the benchling-sdk Python client (Benchling + ApiKeyAuth) and benchling.dna_sequences.create with DnaSequenceCreate (bases, is_circular=True, folder_id), parsing the FASTA with Bio.SeqIO, and registers entities via entity_registry_id or naming_strategy (noting you use one or the other, never both).",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "benchling" },
+        { "type": "behavior", "value": "Uses the benchling-sdk dna_sequences.create call and notes entity_registry_id and naming_strategy are mutually exclusive." }
+      ]
+    },
+    {
+      "id": "inventory-container-audit",
+      "prompt": "Can you script an audit of every container in box box_abc123 in our Benchling inventory, printing each container's name and barcode?",
+      "expected_output": "Invokes alterlab-benchling. Uses benchling.containers.list(parent_storage_id=...) and iterates the paginated generator (for page in ...: for container in page) printing container.name and container.barcode, following the inventory-management capability.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Iterates the Benchling containers list generator page-by-page rather than assuming a flat list." }
+      ]
+    },
+    {
+      "id": "data-warehouse-sql-analytics",
+      "prompt": "I want to run a SQL query against our Benchling Data Warehouse to aggregate experimental results by schema and pull them into a Jupyter notebook for analysis.",
+      "expected_output": "Invokes alterlab-benchling. Routes to the Data Warehouse & Analytics capability: connect to the Benchling Data Warehouse via a standard SQL client with provided credentials, run the aggregation query, and load results into Jupyter for analysis.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Data Warehouse" }
+      ]
+    },
+    {
+      "id": "eln-entry-and-workflow-task",
+      "prompt": "Automate creating a Benchling ELN entry for today's experiment and open a PCR Amplification workflow task assigned to a teammate.",
+      "expected_output": "Invokes alterlab-benchling. Uses benchling.entries.create_entry with EntryCreate and benchling.workflow_tasks.create with WorkflowTaskCreate (workflow_id, assignee_id, fields), covering the notebook and workflow capabilities.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Creates an ELN entry and a workflow task via the benchling-sdk entries and workflow_tasks services." }
+      ]
+    },
+    {
+      "id": "near-miss-labarchive",
+      "prompt": "I need to programmatically back up my LabArchives notebook as a 7z archive with all attachments and then push a Jupyter export into it as a new entry.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-labarchive. The platform is LabArchives (notebook_backup, entry_operations, Jupyter integration), not Benchling, so the LabArchives ELN skill is correct.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-labarchive" }
+      ]
+    },
+    {
+      "id": "near-miss-protocolsio",
+      "prompt": "Help me search protocols.io for a CRISPR-Cas9 protocol, create my own version with steps and materials, and publish it with a DOI.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-protocolsio. The user is managing protocols on protocols.io (search, steps/materials, DOI publishing via the protocols.io API v3), not Benchling registry/inventory/ELN data.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-protocolsio" }
+      ]
+    }
+  ]
+}

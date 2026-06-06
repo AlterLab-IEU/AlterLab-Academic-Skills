@@ -1,0 +1,63 @@
+{
+  "skill": "alterlab-treatment-plans",
+  "evals": [
+    {
+      "id": "t2dm-care-plan-smart",
+      "prompt": "Create a treatment plan for a 55-year-old patient newly diagnosed with type 2 diabetes. I want SMART goals, evidence-based interventions, a monitoring schedule, and expected outcomes, as a concise PDF for the chart.",
+      "expected_output": "Invokes alterlab-treatment-plans. Produces a concise (3-4 page or one-page) individualized LaTeX/PDF care plan with SMART goals, specific evidence-based interventions (minimal citations), defined timelines, monitoring parameters, and expected outcomes, opening with the mandatory Foundation-Medicine-style first-page executive summary (patient info box, ICD-10 code) and HIPAA-compliant de-identification.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "SMART" },
+        { "type": "behavior", "value": "Produces a concise individualized LaTeX/PDF treatment plan with SMART goals, interventions, monitoring, and a first-page executive summary." }
+      ]
+    },
+    {
+      "id": "rehab-program-plan",
+      "prompt": "I need a rehabilitation treatment plan for a patient recovering from a total knee replacement — physical therapy goals, a progressive exercise progression, and milestones over 12 weeks.",
+      "expected_output": "Invokes alterlab-treatment-plans for a rehabilitation/physical-therapy plan. Sets SMART functional goals, a progressive intervention schedule with milestones and timelines, monitoring parameters, and expected outcomes in a concise LaTeX/PDF with the first-page executive summary.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "goal" },
+        { "type": "behavior", "value": "Produces an individualized rehabilitation plan with measurable SMART functional goals and a milestone-based progression." }
+      ]
+    },
+    {
+      "id": "mental-health-plan",
+      "prompt": "Draft a mental health treatment plan for a 30-year-old patient with major depressive disorder, including therapeutic interventions, measurable goals, and a follow-up schedule.",
+      "expected_output": "Invokes alterlab-treatment-plans for a psychiatric/mental-health care plan. Documents SMART measurable goals, evidence-based therapeutic interventions (pharmacologic and/or psychotherapeutic), monitoring/follow-up schedule, and expected outcomes in a concise HIPAA-compliant LaTeX/PDF with the required first-page executive summary.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "intervention" },
+        { "type": "behavior", "value": "Produces an individualized mental-health treatment plan with measurable goals, interventions, and follow-up." }
+      ]
+    },
+    {
+      "id": "pain-management-protocol",
+      "prompt": "Set up a pain management plan for a patient with chronic lower back pain — a multimodal protocol with measurable goals, monitoring parameters, and a follow-up timeline.",
+      "expected_output": "Invokes alterlab-treatment-plans for a pain-management care plan. Builds a multimodal individualized protocol with SMART goals, specific interventions, monitoring parameters, and a follow-up timeline, presented concisely in LaTeX/PDF with the first-page executive summary and HIPAA compliance.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "monitoring" },
+        { "type": "behavior", "value": "Produces a concise individualized multimodal pain-management plan with SMART goals and monitoring parameters." }
+      ]
+    },
+    {
+      "id": "near-miss-clinical-decision",
+      "prompt": "Analyze a cohort of 45 NSCLC patients stratified by PD-L1 expression with ORR, median PFS and OS, hazard ratios, Kaplan-Meier curves, and a waterfall plot for a pharmaceutical research document.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-clinical-decision. The ask is a population-level biomarker-stratified cohort analysis with survival statistics and figures for pharmaceutical research, not an individual patient care plan. Treatment-plans handles single-patient bedside plans, not group-level cohort analyses.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-clinical-decision" }
+      ]
+    },
+    {
+      "id": "near-miss-clinical-reports",
+      "prompt": "Write a discharge summary documenting this patient's hospital stay for pneumonia — the admission course, treatments given, and condition at discharge, HIPAA compliant.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-clinical-reports. The ask is retrospective documentation of a completed hospital stay (a discharge summary recording what happened), not a forward-looking SMART-goal care plan. Treatment-plans plans future care; clinical-reports documents past events like discharge summaries.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-clinical-reports" }
+      ]
+    }
+  ]
+}

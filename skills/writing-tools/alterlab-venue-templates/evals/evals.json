@@ -1,0 +1,59 @@
+{
+  "skill": "alterlab-venue-templates",
+  "evals": [
+    {
+      "id": "nature-template-requirements",
+      "prompt": "I'm preparing a manuscript for Nature. Can you give me the LaTeX template and the key formatting requirements — page/word limits, citation style, and figure specs?",
+      "expected_output": "Invokes alterlab-venue-templates: retrieves the Nature article LaTeX template (assets/journals/nature_article.tex) and the formatting requirements from references/journals_formatting.md — roughly 3000 words / ~5 pages, single column, numbered superscript Nature-style citations, 300+ dpi figures in RGB/CMYK — and offers to customize the template (customize_template.py) and validate compliance (validate_format.py).",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "nature_article.tex" }
+      ]
+    },
+    {
+      "id": "neurips-conference-format",
+      "prompt": "What are the formatting requirements and the official style file for a NeurIPS submission, and is anonymization required?",
+      "expected_output": "Invokes alterlab-venue-templates for conference formatting: from references/conferences_formatting.md gives the NeurIPS spec — 8 pages main text plus unlimited references/appendix, two-column 10pt, the official neurips style file, numbered bracket citations, colorblind-safe figures — and confirms anonymization is required for the initial double-blind submission.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "anonymization" }
+      ]
+    },
+    {
+      "id": "nsf-grant-template",
+      "prompt": "Help me format an NSF proposal — I need the page limits for the project description and project summary, plus the template and biosketch limits.",
+      "expected_output": "Invokes alterlab-venue-templates for grants: from references/grants_requirements.md and assets/grants/nsf_proposal_template.tex provides NSF specs — 15-page Project Description, 1-page Project Summary (Overview, Intellectual Merit, Broader Impacts), biographical sketch page limit, 1-inch margins, minimum 10pt font — and offers the NSF template and format validation.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Broader Impacts" }
+      ]
+    },
+    {
+      "id": "venue-writing-style",
+      "prompt": "How should the same results be written differently for Nature versus a NeurIPS submission? I want guidance on tone, abstract format, and what reviewers at each venue prioritize.",
+      "expected_output": "Invokes alterlab-venue-templates writing-style guidance: loads the relevant style guides (nature_science_style.md, ml_conference_style.md, reviewer_expectations.md) and contrasts the venues — Nature/Science accessible, story-driven, broad-significance flowing-paragraph abstract, versus NeurIPS contribution bullets, ablation/reproducibility focus — and summarizes what reviewers at each prioritize.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Contrasts the writing conventions of the two venues (tone, abstract format, reviewer priorities) rather than only giving formatting/page limits." }
+      ]
+    },
+    {
+      "id": "near-miss-scientific-writing",
+      "prompt": "My intro and discussion are wordy and the argument doesn't flow. Help me actually write and tighten the prose into a clear IMRaD narrative — I'm not worried about venue formatting yet.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-scientific-writing. The user wants substantive content/prose development and IMRaD clarity, not venue-specific templates or formatting requirements; this skill explicitly hands content guidance to scientific-writing.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "scientific-writing" }
+      ]
+    },
+    {
+      "id": "near-miss-research-grants",
+      "prompt": "I have the NSF template already. What I actually need is help making my Intellectual Merit and Broader Impacts arguments compelling and shaping the overall funding strategy for the proposal.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-research-grants. The user wants grant content strategy and persuasive argumentation (Intellectual Merit / Broader Impacts substance), not the agency template or formatting requirements that venue-templates supplies.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-research-grants" }
+      ]
+    }
+  ]
+}

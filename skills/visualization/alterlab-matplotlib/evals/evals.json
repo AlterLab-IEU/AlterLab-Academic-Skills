@@ -1,0 +1,87 @@
+{
+  "skill": "alterlab-matplotlib",
+  "evals": [
+    {
+      "id": "mpl-multipanel-gridspec",
+      "prompt": "I need a custom multi-panel figure for my paper: one wide line plot spanning the top row, and below it two panels — a scatter and a histogram — laid out with GridSpec. Export it as a 300 DPI PNG.",
+      "expected_output": "Invokes alterlab-matplotlib: uses the object-oriented API with GridSpec for the non-standard panel layout, builds the three axes, and saves with plt.savefig(dpi=300, bbox_inches='tight').",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Reaches for matplotlib's fine-grained layout control (GridSpec or subplot_mosaic) rather than a high-level wrapper, because the panel arrangement is non-standard."
+        }
+      ]
+    },
+    {
+      "id": "mpl-3d-surface",
+      "prompt": "Can you make a 3D surface plot of my Z = f(X, Y) grid with a viridis colormap and labeled X/Y/Z axes? I want full control over the figure.",
+      "expected_output": "Invokes alterlab-matplotlib: creates a 3D axes via fig.add_subplot(projection='3d'), calls plot_surface with cmap='viridis', and sets the axis labels.",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "mpl-publication-export-pdf",
+      "prompt": "I have a sine and cosine line plot. I want publication-ready output: explicit fig/ax, labeled axes and legend, a faint grid, and exported to both PDF (vector) and 300 DPI PNG with tight bounding boxes.",
+      "expected_output": "Invokes alterlab-matplotlib: uses fig, ax = plt.subplots(), plots both series with a legend and grid(alpha), then saves to PDF (vector) and PNG at dpi=300 with bbox_inches='tight'.",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "savefig"
+        }
+      ]
+    },
+    {
+      "id": "mpl-custom-rcparams-style",
+      "prompt": "Set up a reusable matplotlib style for all my figures — bump the default font sizes for axis labels, ticks, and the title via rcParams, and apply a clean style sheet. Then draw a sample bar chart with it.",
+      "expected_output": "Invokes alterlab-matplotlib: configures plt.rcParams (font.size, axes.labelsize, etc.) and/or plt.style.use(...), then demonstrates with a bar chart using the object-oriented interface.",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "near-miss-plotly",
+      "prompt": "I want an interactive scatter chart with hover tooltips and zoom that I can embed as standalone HTML in my lab's web dashboard.",
+      "expected_output": "Does NOT invoke alterlab-matplotlib. Interactivity, hover tooltips, and HTML/web-embeddable output are plotly's territory, so this defers to plotly rather than building a static matplotlib figure.",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "plotly"
+        }
+      ]
+    },
+    {
+      "id": "near-miss-seaborn",
+      "prompt": "Quick exploratory plot: give me a statistical violin plot split by treatment group straight from my pandas DataFrame with sensible defaults — I don't want to fiddle with low-level styling.",
+      "expected_output": "Does NOT invoke alterlab-matplotlib. A quick statistical plot with sensible defaults from a DataFrame is seaborn's territory; defers to seaborn rather than hand-building it with matplotlib's low-level API.",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "seaborn"
+        }
+      ]
+    }
+  ]
+}
