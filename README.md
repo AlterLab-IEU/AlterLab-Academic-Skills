@@ -2,8 +2,9 @@
 <img src=".github/header-banner.svg" width="100%" alt="AlterLab Academic Skills">
 <br>
 
-<a href="skills/"><img src="https://img.shields.io/badge/Skills-180-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Skills"></a>
+<a href="skills/"><img src="https://img.shields.io/badge/Skills-183-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Skills"></a>
 <a href="skills/"><img src="https://img.shields.io/badge/Domains-13-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Domains"></a>
+<a href="docs/evals.md"><img src="https://img.shields.io/badge/Evals-176%2F183-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Eval coverage"></a>
 <a href="https://www.anthropic.com"><img src="https://img.shields.io/badge/Claude-AI%20Powered-F97316?style=for-the-badge&logo=anthropic&logoColor=white" alt="Claude AI"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-10B981?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="MIT License"></a>
 <a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases"><img src="https://img.shields.io/github/v/release/AlterLab-IEU/AlterLab-Academic-Skills?style=for-the-badge&logo=github&color=8B5CF6&logoColor=white&label=Release" alt="Release"></a>
@@ -28,8 +29,9 @@
 
 <br><br>
 
-<h3>🧬 180 purpose-built Claude AI skills for faculty, researchers & academicians</h3>
+<h3>🧬 183 purpose-built Claude AI skills for faculty, researchers & academicians</h3>
 <p><em>Organized across 13 research domains — from bioinformatics to digital humanities</em></p>
+<p><em>176/183 ship executable evals · deterministic citation-existence verifier · per-domain bundles for claude.ai</em></p>
 
 <p>
 <b>Research Pipeline</b> · <b>Scientific Databases</b> · <b>Bioinformatics</b> · <b>Data Science</b> · <b>Visualization</b> · <b>Clinical Research</b> · <b>and more</b>
@@ -95,11 +97,12 @@
 <br>
 
 - [🎯 What Is This?](#-what-is-this)
+- [🆕 What's New in v2.0](#-whats-new-in-v20)
 - [✨ Key Features](#-key-features)
 - [🗂️ Domain Overview](#%EF%B8%8F-domain-overview)
 - [🚀 Quick Start](#-quick-start)
-- [⚡ Core Pipeline — 7 Skills](#-core-pipeline--7-skills)
-- [📚 All 180 Skills](#-all-180-skills)
+- [⚡ Core Pipeline — 8 Skills](#-core-pipeline--8-skills)
+- [📚 All 183 Skills](#-all-183-skills)
 - [🏗️ Project Structure](#%EF%B8%8F-project-structure)
 - [⚙️ How Skills Work](#%EF%B8%8F-how-skills-work)
 - [💡 Usage Examples](#-usage-examples)
@@ -113,12 +116,39 @@
 
 ## 🎯 What Is This?
 
-A comprehensive suite of **180 purpose-built Claude AI skills** for faculty members, academicians, and researchers — organized into **13 domain categories** spanning the full academic research lifecycle.
+A comprehensive suite of **183 purpose-built Claude AI skills** for faculty members, academicians, and researchers — organized into **13 domain categories** spanning the full academic research lifecycle.
 
 Each skill transforms Claude into a **domain-specific expert assistant** tailored to academic research, scientific computing, and scholarly publishing workflows.
 
 > [!TIP]
 > **How it works:** Each skill is a structured `SKILL.md` file. Install the collection as a Claude Code plugin, or copy a skill directory into `~/.claude/skills/` (or a project's `.claude/skills/`) — and Claude becomes your research expert, with real scientific frameworks, professional output templates, and deep domain knowledge. A loose `.md` file does **not** auto-load.
+
+<br>
+
+## 🆕 What's New in v2.0
+
+> *v2.0 is the "Trust & Reach" release — it turns the loudest objection to academic skills ("just prompts, no evals") into the headline differentiator.*
+
+| | What | Detail |
+|:---:|:---|:---|
+| ✅ | **Executable evals across the corpus** | **176 / 183** skills ship `evals/evals.json` on the canonical [agentskills.io](https://agentskills.io) schema, validated in CI. See [`docs/evals.md`](docs/evals.md). |
+| 🔎 | **Citation-existence verifier** | New core skill `alterlab-citation-verifier` — a **deterministic** gate that checks every reference actually exists against four keyless scholarly APIs (Crossref, OpenAlex, Semantic Scholar, arXiv), flags retractions, and maps claim-faithfulness verdicts. See below. |
+| 📦 | **Per-domain bundles for claude.ai** | `dist/<domain>.zip` bundles (one per domain) attached to each [Release](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases) — each clears claude.ai's 200-file / 30 MB caps and vendors the shared handoff contracts. |
+| 🔌 | **Bundled academic MCP** | The `core` and `databases` plugins ship a `.mcp.json` wiring PubMed / OpenAlex / Crossref / Zotero, with a documented `requests/` fallback when no MCP is available. |
+| ⌨️ | **Slash commands** | `/lit-review`, `/review-paper`, `/cite-check`, `/research-pipeline` — drive the core pipeline directly. |
+| 🗂️ | **Generated catalog** | A machine-readable [`skills.json`](skills.json) is generated from skill frontmatter; a CI gate keeps every count in this README honest. |
+| 📜 | **Honest provenance** | Upstream K-Dense fork credited in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) + [`PROVENANCE.md`](PROVENANCE.md) / [`CITATION.cff`](CITATION.cff). |
+
+### 🔎 Headline feature — `alterlab-citation-verifier`
+
+Around **147 k** hallucinated citations surfaced in published work in 2025. Prompt-only "fact-checking" misses roughly a third of them. `alterlab-citation-verifier` is a **deterministic** core capability that, for every entry in a bibliography:
+
+- cross-checks existence against **Crossref + OpenAlex + Semantic Scholar + arXiv** (all keyless),
+- resolves DOIs / arXiv IDs and matches title + author with a Levenshtein threshold,
+- flags **Retraction Watch** entries,
+- maps each verdict to the suite's TF / PAC / IH / PH / SH faithfulness taxonomy,
+
+and degrades gracefully to plain `requests` / WebSearch when no MCP or network is present. It rewires the pipeline's bibliography and integrity agents to call it instead of generic web search.
 
 <br>
 
@@ -139,7 +169,7 @@ Each skill transforms Claude into a **domain-specific expert assistant** tailore
 
 | | Domain | Skills | Focus Areas |
 |:---:|:---|:---:|:---|
-| 🔄 | **Core Pipeline** | **7** | Multi-agent research → write → review → publish pipeline + teaching + thesis |
+| 🔄 | **Core Pipeline** | **8** | Multi-agent research → write → review → publish pipeline + citation verifier + teaching + thesis |
 | 🗄️ | **Databases** | **39** | Connectors to scientific databases — PubMed, ChEMBL, UniProt, ClinicalTrials.gov, COSMIC, and more |
 | 🧬 | **Bioinformatics** | **25** | Genomics, proteomics, molecular biology — Scanpy, BioPython, ESM, single-cell analysis |
 | ⚗️ | **Cheminformatics** | **12** | Chemistry and drug discovery — RDKit, molecular dynamics, docking, ADMET |
@@ -150,7 +180,7 @@ Each skill transforms Claude into a **domain-specific expert assistant** tailore
 | 🔧 | **Lab Integrations** | **9** | Laboratory platforms — Benchling, DNAnexus, Opentrons, Protocols.io |
 | 🌍 | **Domain-Specific** | **17** | Quantum computing, geospatial, materials science, social science methods, digital humanities |
 | 📄 | **Document Tools** | **2** | Markdown & document conversion — MarkItDown, Open Notebook |
-| 🔍 | **Research Tools** | **12** | Search, discovery, Zotero, qualitative methods, ethics, surveys, open science |
+| 🔍 | **Research Tools** | **14** | Search, discovery, Zotero, citation graphs, PDF evidence tables, qualitative methods, ethics, surveys, open science |
 | 💰 | **Finance & Economics** | **7** | FRED, Alpha Vantage, SEC EDGAR, market research |
 <br>
 
@@ -199,15 +229,55 @@ cp -R AlterLab-Academic-Skills/skills/bioinformatics/alterlab-scanpy .claude/ski
 
 Then restart Claude Code. A skill must live at `~/.claude/skills/<name>/SKILL.md` or `.claude/skills/<name>/SKILL.md` — a bare `git clone` alone does **not** register anything.
 
-### 🌐 Option 4 — Claude.ai
+### 🌐 Option 4 — Claude.ai (per-domain bundles)
 
-Zip a skill directory and upload it under **Settings → Capabilities** (requires a plan with code execution). Skills do not sync between claude.ai and Claude Code.
+Every Release ships pre-built **`dist/<domain>.zip`** bundles. Each is spec-conformant and clears claude.ai's 200-file / 30 MB caps, and vendors the shared handoff contracts so cross-skill references resolve.
+
+1. Download the domain bundle you need from the [Releases page](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases) — e.g. `bioinformatics.zip`, `databases.zip`, `core.zip`.
+2. Upload it under **Settings → Capabilities** (requires a plan with code execution).
+
+Skills do not sync between claude.ai and Claude Code. To zip a single skill yourself instead, archive its directory (`zip -r alterlab-scanpy.zip skills/bioinformatics/alterlab-scanpy`).
+
+### 🛠️ Option 5 — `install.sh` (scriptable local install)
+
+The bundled installer copies whole domains and/or individual skills into the right local directory (`~/.claude/skills/` or the cross-tool `~/.agents/skills/`), idempotently:
+
+```bash
+git clone https://github.com/AlterLab-IEU/AlterLab-Academic-Skills.git
+cd AlterLab-Academic-Skills
+
+scripts/install.sh --list                         # show every domain / skill
+scripts/install.sh bioinformatics                 # whole domain
+scripts/install.sh databases/alterlab-pubmed      # one skill
+scripts/install.sh --project core                 # into ./.claude/skills
+scripts/install.sh                                 # install everything
+```
+
+Then restart your agent to load them.
+
+### 🔌 MCP & Slash Commands
+
+The `core` and `databases` plugins ship a `.mcp.json` that wires the **PubMed / OpenAlex / Crossref / Zotero** academic MCP servers, with a documented `requests/` fallback when no MCP host is available — so the citation verifier and database skills work online or offline. Install either plugin (Option 2) to pick the MCP up automatically.
+
+Installing the `core` plugin also registers these slash commands:
+
+| Command | Drives |
+|:---|:---|
+| `/lit-review` | `alterlab-deep-research` — systematic literature review |
+| `/review-paper` | `alterlab-paper-reviewer` — multi-perspective peer review |
+| `/cite-check` | `alterlab-citation-verifier` — deterministic citation-existence gate |
+| `/research-pipeline` | `alterlab-research-pipeline` — full research → publish orchestrator |
+
+<br>
+
+> [!NOTE]
+> **176 / 183 skills ship executable evals** on the canonical [agentskills.io](https://agentskills.io) schema, run in CI on every PR. See [`docs/evals.md`](docs/evals.md) for how coverage is measured and how to run `scripts/run_evals.py` locally.
 
 <br>
 
 ---
 
-## ⚡ Core Pipeline — 7 Skills
+## ⚡ Core Pipeline — 8 Skills
 
 > *The heart of the system — a multi-agent research-to-publication pipeline with 39 specialized agents, plus teaching and thesis supervision tools.*
 
@@ -217,15 +287,16 @@ Zip a skill directory and upload it under **Settings → Capabilities** (require
 | 2 | **📝 Paper Writer** | 12 | Academic paper authoring with LaTeX, bilingual support, 9 writing modes |
 | 3 | **🔍 Paper Reviewer** | 7 | Multi-perspective peer review with Devil's Advocate, 0–100 quality rubrics |
 | 4 | **🔄 Research Pipeline** | 7 | 10-stage orchestrator with integrity verification and material passports |
-| 5 | **🎓 Teaching Design** | — | Course design, syllabi, rubrics, Bloom's taxonomy, backward design |
-| 6 | **📋 Thesis Supervisor** | — | Dissertation guidance, defense prep, committee management |
-| 7 | **🔗 Link Health** | — | Repo link-health audit meta-skill |
+| 5 | **🔎 Citation Verifier** | — | Deterministic citation-existence gate over Crossref / OpenAlex / Semantic Scholar / arXiv |
+| 6 | **🎓 Teaching Design** | — | Course design, syllabi, rubrics, Bloom's taxonomy, backward design |
+| 7 | **📋 Thesis Supervisor** | — | Dissertation guidance, defense prep, committee management |
+| 8 | **🔗 Link Health** | — | Repo link-health audit meta-skill |
 
 <br>
 
 ---
 
-## 📚 All 180 Skills
+## 📚 All 183 Skills
 
 ### 🗄️ Databases — Scientific Database Connectors (39 Skills)
 
@@ -491,7 +562,7 @@ Zip a skill directory and upload it under **Settings → Capabilities** (require
 
 </details>
 
-### 🔍 Research Tools — Search, Discovery, Methods & Reference Management (12 Skills)
+### 🔍 Research Tools — Search, Discovery, Methods & Reference Management (14 Skills)
 
 <details>
 <summary><b>Click to expand full research tools skills list</b></summary>
@@ -500,17 +571,19 @@ Zip a skill directory and upload it under **Settings → Capabilities** (require
 | # | Skill | What It Does |
 |:---:|:---|:---|
 | 1 | **BGPT Search** | AI-powered research search |
-| 2 | **Mixed Methods** | Mixed-methods research design and integration |
-| 3 | **Open Science** | Preregistration, FAIR data, open access publishing |
-| 4 | **Parallel Web** | Multi-source parallel web search |
-| 5 | **Perplexity** | Perplexity-powered research queries |
-| 6 | **PyZotero** | Zotero reference manager integration |
-| 7 | **Qualitative Methods** | Thematic analysis, grounded theory, IPA, coding |
-| 8 | **Research Ethics** | IRB applications, informed consent, GDPR |
-| 9 | **Research Lookup** | Quick research paper discovery |
-| 10 | **Scientific Brainstorm** | Structured research ideation |
-| 11 | **Scientific Thinking** | Critical scientific reasoning frameworks |
-| 12 | **Survey Design** | Questionnaire construction and validation |
+| 2 | **Citation Graph** | Keyless ResearchRabbit analog — citation & co-citation graphs over OpenAlex |
+| 3 | **Mixed Methods** | Mixed-methods research design and integration |
+| 4 | **Open Science** | Preregistration, FAIR data, open access publishing |
+| 5 | **Parallel Web** | Multi-source parallel web search |
+| 6 | **PDF Extract** | Elicit-columns analog — per-paper evidence tables from PDFs |
+| 7 | **Perplexity** | Perplexity-powered research queries |
+| 8 | **PyZotero** | Zotero reference manager integration |
+| 9 | **Qualitative Methods** | Thematic analysis, grounded theory, IPA, coding |
+| 10 | **Research Ethics** | IRB applications, informed consent, GDPR |
+| 11 | **Research Lookup** | Quick research paper discovery |
+| 12 | **Scientific Brainstorm** | Structured research ideation |
+| 13 | **Scientific Thinking** | Critical scientific reasoning frameworks |
+| 14 | **Survey Design** | Questionnaire construction and validation |
 
 </details>
 
@@ -540,26 +613,29 @@ Zip a skill directory and upload it under **Settings → Capabilities** (require
 
 ```
 AlterLab-Academic-Skills/
-├── 📁 skills/
-│   ├── 🔄 core/                # 6 pipeline + teaching + thesis skills
+├── 📁 skills/                       # 183 skills across 13 domains
+│   ├── 🔄 core/                # 8 pipeline + citation-verifier + teaching + thesis skills
 │   ├── 🗄️ databases/           # 39 database connectors
 │   ├── 🧬 bioinformatics/      # 25 bio/genomics tools
 │   ├── ⚗️ cheminformatics/     # 12 chemistry/drug discovery
-│   ├── 🏥 clinical-research/   # 10 clinical/medical tools
+│   ├── 🏥 clinical-research/   # 7 clinical/medical tools
 │   ├── 📊 data-science/        # 22 ML/statistics tools
 │   ├── 📈 visualization/       # 8 plotting/charting tools
 │   ├── ✍️ writing-tools/       # 13 scientific writing & career tools
 │   ├── 🔧 lab-integrations/    # 9 lab platform connectors
 │   ├── 🌍 domain-specific/     # 17 specialized field tools
-│   ├── 📄 document-tools/      # 6 file format tools
-│   ├── 🔍 research-tools/      # 12 search, methods & ethics tools
+│   ├── 📄 document-tools/      # 2 file format tools
+│   ├── 🔍 research-tools/      # 14 search, methods & ethics tools
 │   └── 💰 finance-economics/   # 7 financial/economic tools
-├── 📁 .claude/
-│   └── CLAUDE.md               # Project-level Claude config
-├── 📄 README.md                # This file
-├── 📄 CLAUDE.md                # Project instructions
-├── 📄 CONTRIBUTING.md          # Contribution guidelines
-└── 📄 LICENSE                  # MIT License
+├── 📁 dist/                          # per-domain .zip bundles for claude.ai (built on release)
+├── 📁 scripts/                       # install.sh, gen_catalog.py, run_evals.py, audit_skills.py …
+├── 📁 docs/                          # evals, integrity & design docs
+├── 📄 skills.json                    # generated machine-readable catalog
+├── 📄 README.md                      # This file
+├── 📄 CLAUDE.md                      # Project instructions
+├── 📄 CONTRIBUTING.md                # Contribution guidelines
+├── 📄 THIRD_PARTY_NOTICES.md         # Upstream / K-Dense provenance
+└── 📄 LICENSE                        # MIT License
 ```
 
 <br>
@@ -646,7 +722,7 @@ MIT License — Copyright (c) 2026 AlterLab Creative Technologies Laboratory
 
 <br><br>
 
-<b>180 skills · 13 domains · 1 prompt away from expert-level research</b>
+<b>183 skills · 13 domains · 176 with executable evals · 1 prompt away from expert-level research</b>
 
 <br><br>
 
