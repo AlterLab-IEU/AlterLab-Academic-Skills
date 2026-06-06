@@ -213,7 +213,7 @@ def create_diagnostic_report(idata, var_names=None, output_dir='diagnostics/', s
         plt.close()
 
     # 2. Rank plots (check mixing)
-    fig = plt.figure(figsize=(12, 8))
+    _fig = plt.figure(figsize=(12, 8))
     az.plot_rank(idata, var_names=var_names)
     plt.tight_layout()
     plt.savefig(output_path / 'rank_plots.png', dpi=300, bbox_inches='tight')
@@ -224,7 +224,7 @@ def create_diagnostic_report(idata, var_names=None, output_dir='diagnostics/', s
         plt.close()
 
     # 3. Autocorrelation plots
-    fig = plt.figure(figsize=(12, 8))
+    _fig = plt.figure(figsize=(12, 8))
     az.plot_autocorr(idata, var_names=var_names, combined=True)
     plt.tight_layout()
     plt.savefig(output_path / 'autocorr_plots.png', dpi=300, bbox_inches='tight')
@@ -236,7 +236,7 @@ def create_diagnostic_report(idata, var_names=None, output_dir='diagnostics/', s
 
     # 4. Energy plot (if available)
     if hasattr(idata.sample_stats, 'energy'):
-        fig = plt.figure(figsize=(10, 6))
+        _fig = plt.figure(figsize=(10, 6))
         az.plot_energy(idata)
         plt.tight_layout()
         plt.savefig(output_path / 'energy_plot.png', dpi=300, bbox_inches='tight')
@@ -247,7 +247,7 @@ def create_diagnostic_report(idata, var_names=None, output_dir='diagnostics/', s
             plt.close()
 
     # 5. ESS plot
-    fig = plt.figure(figsize=(10, 6))
+    _fig = plt.figure(figsize=(10, 6))
     az.plot_ess(idata, var_names=var_names, kind='evolution')
     plt.tight_layout()
     plt.savefig(output_path / 'ess_evolution.png', dpi=300, bbox_inches='tight')

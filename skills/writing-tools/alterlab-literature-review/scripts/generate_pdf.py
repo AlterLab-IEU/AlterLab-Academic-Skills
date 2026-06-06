@@ -88,7 +88,7 @@ def generate_pdf(
     try:
         print(f"Generating PDF: {output_pdf}")
         print(f"Command: {' '.join(cmd)}")
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        _result = subprocess.run(cmd, capture_output=True, text=True, check=True)
         print(f"✓ PDF generated successfully: {output_pdf}")
         return True
     except subprocess.CalledProcessError as e:

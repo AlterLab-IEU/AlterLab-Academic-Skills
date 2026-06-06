@@ -11,7 +11,7 @@ Checks performed:
   - `description` leads with triggers (not the suite boilerplate), has a 'Use when' clause, third person
   - `metadata.skill-author` present (AlterLab convention)
   - `metadata.version` present (AlterLab convention — ERROR)
-  - `metadata.compatibility` present (AlterLab convention — WARNING)
+  - `compatibility` present, top-level or under `metadata` (AlterLab convention — WARNING)
   - Suite-label footer present in body (AlterLab convention)
   - Every relative-path citation in the body resolves on disk: `references/*.md`,
     `shared/*.md`, `shared/schemas/*.schema.json`, and skill-local `scripts/*.py`
@@ -325,9 +325,11 @@ def audit_skill(skill_md: Path) -> SkillReport:
     if "metadata.version" not in fm:
         report.findings.append(Finding(str(rel), "error", "metadata-version-missing", "Missing `metadata.version` field (quoted semver string, e.g. \"1.0.0\")"))
 
-    # metadata.compatibility (AlterLab convention) — WARNING: declare the target runtime.
-    if "metadata.compatibility" not in fm:
-        report.findings.append(Finding(str(rel), "warning", "compatibility-missing", "Missing `metadata.compatibility` field (declare the target runtime/spec)"))
+    # compatibility (AlterLab convention) — WARNING: declare the target runtime.
+    # Accept it either as a top-level `compatibility:` field (the convention used across the
+    # corpus and read by gen_catalog) OR nested under `metadata.compatibility`.
+    if "compatibility" not in fm and "metadata.compatibility" not in fm:
+        report.findings.append(Finding(str(rel), "warning", "compatibility-missing", "Missing `compatibility` field (top-level or under metadata; declare the target runtime/spec)"))
 
     # Suite-label — convention is the description mentions the AlterLab suite.
     # Accept any phrasing containing the loose label.

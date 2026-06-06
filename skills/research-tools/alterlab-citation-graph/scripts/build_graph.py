@@ -53,7 +53,7 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 OPENALEX_BASE = "https://api.openalex.org/works"
 USER_AGENT = "alterlab-citation-graph/1.0 (https://github.com/AlterLab-IEU)"

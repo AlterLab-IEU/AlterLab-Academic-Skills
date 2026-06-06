@@ -17,10 +17,10 @@
       "writing-tools": 13
     },
     "eval_coverage": {
-      "with_evals": 176,
-      "without_evals": 7,
+      "with_evals": 183,
+      "without_evals": 0,
       "total": 183,
-      "fraction": 0.9617
+      "fraction": 1.0
     }
   },
   "skills": [
@@ -805,7 +805,7 @@
         "Bash(uv:*)"
       ],
       "has_scripts": true,
-      "has_evals": false,
+      "has_evals": true,
       "body_lines": 91,
       "references": []
     },
@@ -847,7 +847,7 @@
         "Bash(uv:*)"
       ],
       "has_scripts": true,
-      "has_evals": false,
+      "has_evals": true,
       "body_lines": 778,
       "references": [
         "api_reference.md",
@@ -1104,10 +1104,10 @@
     {
       "name": "alterlab-citation-verifier",
       "domain": "core",
-      "description": "Verifies that every entry in a bibliography ACTUALLY EXISTS by cross-checking it against four keyless public scholarly APIs (Crossref, OpenAlex, Semantic Scholar, arXiv) with a polite mailto identifier, resolving DOI/arXiv IDs, fuzzy-matching title and authors (difflib Levenshtein ratio >=0.70), flagging Crossref-marked retractions, and emitting per-entry JSON verdicts mapped to the AlterLab citation-hallucination taxonomy (TF Total Fabrication / PAC Partial Attribute Corruption / IH Identifier Hijacking / PH Placeholder Hallucination / SH Semantic Hallucination). Accepts BibTeX, a DOI/arXiv ID list, or free-form references; degrades gracefully offline by emitting 'unverified' verdicts with manual-check instructions and never silently passing. Use when the request mentions verify citations, check references, citation verifier, fabricated citations, hallucinated references, fake DOI, retraction check, bibliography audit, does this paper exist, check my bibliography, reference existence check, AI hallucinated citations, or 驗證引用, 檢查參考文獻, 引用查核, 假引用, 偽造引用, 撤稿檢查. Part of the AlterLab Academic Skills suite.",
+      "description": "Verifies that every entry in a bibliography ACTUALLY EXISTS by cross-checking it against four keyless public scholarly APIs (Crossref, OpenAlex, Semantic Scholar, arXiv) with a polite mailto identifier, resolving DOI/arXiv IDs, fuzzy-matching title and authors (difflib ratio >=0.70), flagging Crossref-marked retractions, and emitting per-entry JSON verdicts mapped to the AlterLab citation-hallucination taxonomy (TF/PAC/IH/PH/SH). Accepts BibTeX, a DOI/arXiv ID list, or free-form references; degrades gracefully offline by emitting 'unverified' verdicts and never silently passing. Use when the request mentions verify citations, check references, citation verifier, fabricated citations, hallucinated references, fake DOI, retraction check, bibliography audit, does this paper exist, reference existence check, AI hallucinated citations, or 驗證引用, 檢查參考文獻, 引用查核, 假引用, 偽造引用, 撤稿檢查. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
       "version": "1.0.0",
-      "compatibility": null,
+      "compatibility": "No API key required — cross-checks four keyless public scholarly APIs (Crossref, OpenAlex, Semantic Scholar, arXiv) via WebFetch and `uv run python`; degrades gracefully offline to 'unverified' verdicts",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1173,7 +1173,7 @@
         "WebSearch"
       ],
       "has_scripts": false,
-      "has_evals": false,
+      "has_evals": true,
       "body_lines": 146,
       "references": [
         "known-debt-template.md",
@@ -1592,7 +1592,7 @@
         "Bash(uv:*)"
       ],
       "has_scripts": false,
-      "has_evals": false,
+      "has_evals": true,
       "body_lines": 558,
       "references": [
         "explainers.md",
@@ -3657,7 +3657,7 @@
         "Bash(python:*)"
       ],
       "has_scripts": false,
-      "has_evals": false,
+      "has_evals": true,
       "body_lines": 562,
       "references": [
         "open-science-resources.md"
@@ -4057,7 +4057,7 @@
         "Bash(python:*)"
       ],
       "has_scripts": true,
-      "has_evals": false,
+      "has_evals": true,
       "body_lines": 347,
       "references": [
         "color_palettes.md",
@@ -4252,7 +4252,7 @@
         "Bash"
       ],
       "has_scripts": false,
-      "has_evals": false,
+      "has_evals": true,
       "body_lines": 390,
       "references": [
         "common_issues.md",

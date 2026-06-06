@@ -10,7 +10,6 @@ from pymoo.problems import get_problem
 from pymoo.optimize import minimize
 from pymoo.util.ref_dirs import get_reference_directions
 from pymoo.visualization.pcp import PCP
-import numpy as np
 
 
 def run_many_objective_optimization():

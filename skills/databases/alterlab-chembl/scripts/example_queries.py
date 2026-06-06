@@ -173,7 +173,7 @@ def get_drug_info(molecule_chembl_id):
 
     try:
         drug_info = drug.get(molecule_chembl_id)
-    except:
+    except Exception:
         drug_info = None
 
     mechanisms = list(mechanism.filter(molecule_chembl_id=molecule_chembl_id))

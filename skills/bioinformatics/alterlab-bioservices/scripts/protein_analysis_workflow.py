@@ -44,7 +44,7 @@ def search_protein(query):
                 uniprot_id = query
                 print(f"✓ Found UniProt entry: {uniprot_id}")
                 return u, uniprot_id
-        except:
+        except Exception:
             pass
 
     # Otherwise search
@@ -230,7 +230,7 @@ def discover_pathways(uniprot, kegg, uniprot_id):
                 pathway_info.append((pathway_id, pathway_name))
                 print(f"  • {pathway_id}: {pathway_name}")
 
-            except Exception as e:
+            except Exception:
                 print(f"  • {pathway_id}: [Error retrieving name]")
 
         return pathway_info
@@ -378,8 +378,7 @@ Examples:
 
     # Step 3: BLAST search
     if sequence:
-        blast_results = run_blast(sequence, args.email, args.skip_blast)
-
+        _blast_results = run_blast(sequence, args.email, args.skip_blast)
     # Step 4: Pathway discovery
     kegg = KEGG()
     pathways = discover_pathways(uniprot, kegg, uniprot_id)

@@ -14,8 +14,7 @@ STRING provides protein-protein interaction data from over 40 sources covering
 import urllib.request
 import urllib.parse
 import urllib.error
-import json
-from typing import Optional, List, Union, Dict
+from typing import List, Union
 
 
 STRING_BASE_URL = "https://string-db.org/api"

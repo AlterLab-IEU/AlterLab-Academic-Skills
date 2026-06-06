@@ -11,7 +11,6 @@ Usage:
 import argparse
 import csv
 from collections import defaultdict
-from pathlib import Path
 
 
 def format_ae_summary_table(data: list) -> str:

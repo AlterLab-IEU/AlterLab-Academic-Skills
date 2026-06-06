@@ -14,9 +14,7 @@ Usage:
 import argparse
 import os
 import sys
-import json
 from pathlib import Path
-from collections import defaultdict
 import re
 
 

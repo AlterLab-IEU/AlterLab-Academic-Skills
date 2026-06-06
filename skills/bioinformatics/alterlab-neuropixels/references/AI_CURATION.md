@@ -64,6 +64,7 @@ plt.close()
 ### AI Visual Analysis
 
 ```python
+import os
 from anthropic import Anthropic
 
 # Setup API client
@@ -74,7 +75,9 @@ result = npa.analyze_unit_visually(
     analyzer,
     unit_id=0,
     api_client=client,
-    model='claude-opus-4.5',
+    # Per the ALTERLAB_MODEL convention (skills/core/shared/model_env.md), never hardcode a
+    # bare model ID: read it from the environment with a dated default.
+    model=os.environ.get("ALTERLAB_MODEL", "claude-opus-4-8"),  # default reviewed 2026-06-06
     task='quality_assessment'
 )
 
@@ -294,7 +297,7 @@ Currently supported APIs:
 
 | Provider | Client | Model Examples |
 |----------|--------|----------------|
-| Anthropic | `anthropic.Anthropic()` | claude-opus-4.5 |
+| Anthropic | `anthropic.Anthropic()` | via `ALTERLAB_MODEL` (default `claude-opus-4-8`, reviewed 2026-06-06) |
 | OpenAI | `openai.OpenAI()` | gpt-4-vision-preview |
 | Google | `google.generativeai` | gemini-pro-vision |
 

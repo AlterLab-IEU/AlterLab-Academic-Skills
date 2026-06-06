@@ -66,7 +66,7 @@ def analyze_pathway(kegg, pathway_id):
                 if line.startswith("NAME"):
                     pathway_name = line.replace("NAME", "").strip()
                     break
-        except:
+        except Exception:
             pathway_name = "Unknown"
 
         result = {
@@ -153,8 +153,7 @@ def save_interactions_sif(results, output_file):
 
     with open(output_file, 'w') as f:
         for result in results:
-            pathway_id = result['pathway_id']
-
+            _pathway_id = result['pathway_id']
             for rel in result['relations']:
                 entry1 = rel.get('entry1', '')
                 entry2 = rel.get('entry2', '')

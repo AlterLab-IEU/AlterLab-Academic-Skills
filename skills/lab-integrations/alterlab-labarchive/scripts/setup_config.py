@@ -8,7 +8,6 @@ for LabArchives API access.
 
 import yaml
 import os
-from pathlib import Path
 
 
 def get_regional_endpoint():

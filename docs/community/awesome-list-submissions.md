@@ -9,8 +9,8 @@ Canonical facts to cite (keep these in sync with the repo):
 
 - **Name:** AlterLab Academic Skills
 - **Repo:** https://github.com/AlterLab-IEU/AlterLab-Academic-Skills
-- **Count:** **180 skills across 13 research domains**
-- **One-liner:** Turn an AI agent into a domain-specific academic research expert — 180 skills with
+- **Count:** **183 skills across 13 research domains**
+- **One-liner:** Turn an AI agent into a domain-specific academic research expert — 183 skills with
   executable evals, citation/integrity audits, and bilingual (EN/TR) docs; installable as a Claude
   Code plugin and via the open Agent Skills standard.
 - **License:** MIT
@@ -28,7 +28,7 @@ Canonical facts to cite (keep these in sync with the repo):
 **Entry to add:**
 
 ```markdown
-- [AlterLab Academic Skills](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills) - 180 skills across 13 research domains that turn an AI agent into a domain-specific academic research expert (literature review, paper writing/review, citation & integrity verification, bioinformatics, cheminformatics, data science, and more). Ships executable evals per skill, license/citation audits, per-domain installable bundles, and bilingual EN/TR docs. MIT.
+- [AlterLab Academic Skills](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills) - 183 skills across 13 research domains that turn an AI agent into a domain-specific academic research expert (literature review, paper writing/review, citation & integrity verification, bioinformatics, cheminformatics, data science, and more). Ships executable evals per skill, license/citation audits, per-domain installable bundles, and bilingual EN/TR docs. MIT.
 ```
 
 ---
@@ -50,7 +50,7 @@ Canonical facts to cite (keep these in sync with the repo):
 | Author Name | AlterLab Creative Technologies Laboratory (IEU) |
 | Author Link | https://github.com/AlterLab-IEU |
 | License | MIT |
-| Description | 180 academic research skills across 13 domains for Claude Code and the open Agent Skills standard, with executable evals, citation/integrity audits, per-domain bundles, and bilingual EN/TR docs. |
+| Description | 183 academic research skills across 13 domains for Claude Code and the open Agent Skills standard, with executable evals, citation/integrity audits, per-domain bundles, and bilingual EN/TR docs. |
 
 ---
 
@@ -61,13 +61,13 @@ Canonical facts to cite (keep these in sync with the repo):
   category.
 - **Status:** not listed. **Caveat:** this list is subagent-centric. AlterLab's relevance here is
   the **35 core research agents** registered in the plugin surface (e.g. bibliography, integrity
-  verification, source verification, socratic mentor) rather than the full 180-skill catalog —
+  verification, source verification, socratic mentor) rather than the full 183-skill catalog —
   frame the submission around the agents, not the skills, so it fits the list's scope.
 
 **Entry to add (under a Research/Academic section):**
 
 ```markdown
-- [AlterLab Academic research agents](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills) - A set of academic research subagents bundled in the AlterLab Academic Skills plugin: literature search, bibliography building, citation-existence & claim-faithfulness verification, peer-review, and Socratic research mentoring. Part of a 180-skill, 13-domain suite. MIT.
+- [AlterLab Academic research agents](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills) - A set of academic research subagents bundled in the AlterLab Academic Skills plugin: literature search, bibliography building, citation-existence & claim-faithfulness verification, peer-review, and Socratic research mentoring. Part of a 183-skill, 13-domain suite. MIT.
 ```
 
 ---
@@ -85,7 +85,7 @@ Canonical facts to cite (keep these in sync with the repo):
 **Entry to add:**
 
 ```markdown
-- [AlterLab Academic Skills](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills) - 180 Agent Skills across 13 research domains, re-aimed at the academic faculty / research-lifecycle audience. Content fork of scientific-agent-skills, extended with executable evals on every skill, deterministic citation-existence & integrity gates, script-correctness CI, per-domain installable bundles, and bilingual EN/TR docs. MIT.
+- [AlterLab Academic Skills](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills) - 183 Agent Skills across 13 research domains, re-aimed at the academic faculty / research-lifecycle audience. Content fork of scientific-agent-skills, extended with executable evals on every skill, deterministic citation-existence & integrity gates, script-correctness CI, per-domain installable bundles, and bilingual EN/TR docs. MIT.
 ```
 
 ---
@@ -95,14 +95,14 @@ Canonical facts to cite (keep these in sync with the repo):
 - **Repo:** https://github.com/BehiSecc/awesome-claude-skills
 - **Status:** AlterLab is **already featured** here (the repo README's "Featured in" badge points
   to this list). The listing, however, advertises an inflated skill count of **"186+"**.
-- **Correction needed:** the accurate, CI-verified count is **180 skills** (180 `SKILL.md` files;
+- **Correction needed:** the accurate, CI-verified count is **183 skills** (183 `SKILL.md` files;
   the marketplace and READMEs are gated to this number). Open a PR or issue on BehiSecc's list
-  updating the AlterLab entry from "186+" to **"180 skills across 13 domains"**.
+  updating the AlterLab entry from "186+" to **"183 skills across 13 domains"**.
 
 **Suggested corrected entry text:**
 
 ```markdown
-- [AlterLab Academic Skills](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills) - 180 academic research skills across 13 domains, with executable evals, citation/integrity audits, and bilingual EN/TR docs. MIT.
+- [AlterLab Academic Skills](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills) - 183 academic research skills across 13 domains, with executable evals, citation/integrity audits, and bilingual EN/TR docs. MIT.
 ```
 
 > Also worth flagging in the same PR: confirm the star/recency metadata if the list tracks it — the
@@ -116,7 +116,7 @@ Canonical facts to cite (keep these in sync with the repo):
 - [ ] hesreallyhim — resource PR opened (CSV/template flow)
 - [ ] VoltAgent — PR opened (agents framing)
 - [ ] InternScience — PR opened (provenance disclosed)
-- [ ] BehiSecc — correction PR/issue opened ("186+" → 180)
+- [ ] BehiSecc — correction PR/issue opened ("186+" → 183)
 
 When a submission lands, link the merged PR next to its checkbox and, if a list shows a badge,
 ensure the README "Featured in" row reflects it.

@@ -23,9 +23,8 @@ Usage:
     plot_michaelis_menten("1.1.1.1", substrate="ethanol")
 """
 
-import math
 import numpy as np
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
@@ -39,10 +38,9 @@ except ImportError:
 
 try:
     from brenda_queries import (
-        get_km_values, get_reactions, parse_km_entry, parse_reaction_entry,
-        compare_across_organisms, get_environmental_parameters,
+        get_km_values, parse_km_entry,
+        compare_across_organisms,
         get_substrate_specificity, get_modeling_parameters,
-        search_enzymes_by_substrate, search_by_pattern
     )
     BRENDA_QUERIES_AVAILABLE = True
 except ImportError:
@@ -267,7 +265,7 @@ def plot_pH_profiles(ec_number: str, save_path: str = None, show_plot: bool = Tr
         km_values = [item[1] for item in ph_kms]
 
         # Plot 1: pH vs Km scatter plot
-        scatter = ax1.scatter(ph_values, km_values, alpha=0.6, s=50)
+        _scatter = ax1.scatter(ph_values, km_values, alpha=0.6, s=50)
         ax1.set_xlabel('pH')
         ax1.set_ylabel('Km (mM)')
         ax1.set_title('pH vs Km Values')
@@ -343,7 +341,7 @@ def plot_temperature_profiles(ec_number: str, save_path: str = None, show_plot: 
         km_values = [item[1] for item in temp_kms]
 
         # Plot 1: Temperature vs Km scatter plot
-        scatter = ax1.scatter(temp_values, km_values, alpha=0.6, s=50)
+        _scatter = ax1.scatter(temp_values, km_values, alpha=0.6, s=50)
         ax1.set_xlabel('Temperature (°C)')
         ax1.set_ylabel('Km (mM)')
         ax1.set_title('Temperature vs Km Values')

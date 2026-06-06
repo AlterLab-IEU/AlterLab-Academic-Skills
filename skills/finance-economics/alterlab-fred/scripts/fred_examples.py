@@ -6,7 +6,6 @@ Run with: uv run python scripts/fred_examples.py
 """
 
 import os
-import json
 from datetime import datetime, timedelta
 
 # Import the FREDQuery class

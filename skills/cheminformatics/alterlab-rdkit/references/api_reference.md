@@ -168,10 +168,10 @@ Extended chemistry functionality.
 
 - `AllChem.GetErGFingerprint(mol)` - ErG fingerprint
 
-> **Deprecated:** The legacy `AllChem.GetMorganFingerprint*` helpers
-> (`GetMorganFingerprintAsBitVect`, `GetHashedMorganFingerprint`, etc.) are
-> superseded by the `rdFingerprintGenerator` API below. Use
-> `GetMorganGenerator(...).GetFingerprint(mol)` for new code.
+> **Deprecated:** The legacy `AllChem.GetMorganFingerprint*` bit-vector / hashed
+> helpers are superseded by the `rdFingerprintGenerator` API below. Use
+> `rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=2048).GetFingerprint(mol)`
+> for new code instead of the old `AllChem` Morgan helpers.
 
 ## rdkit.Chem.Descriptors
 

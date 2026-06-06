@@ -26,7 +26,6 @@ import sys
 import time
 import json
 from typing import List, Dict, Optional, Generator
-from urllib.parse import urlencode
 
 BASE_URL = "https://rest.uniprot.org"
 POLLING_INTERVAL = 3  # seconds

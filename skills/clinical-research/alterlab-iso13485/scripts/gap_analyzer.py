@@ -9,12 +9,11 @@ Usage:
     python gap_analyzer.py --docs-dir <path> [--output <path>]
 """
 
-import os
 import sys
 import argparse
 import json
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Tuple
 from datetime import datetime
 
 
@@ -223,7 +222,7 @@ class GapAnalyzer:
     def _search_for_procedure(self, documents: List[Tuple[Path, str]],
                              clause_id: str, proc_info: Dict):
         """Search documents for a specific procedure."""
-        title = proc_info['title']
+        _title = proc_info['title']
         keywords = proc_info['keywords']
 
         matches = []

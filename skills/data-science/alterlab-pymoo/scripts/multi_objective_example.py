@@ -9,7 +9,6 @@ from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.problems import get_problem
 from pymoo.optimize import minimize
 from pymoo.visualization.scatter import Scatter
-import matplotlib.pyplot as plt
 
 
 def run_multi_objective_optimization():

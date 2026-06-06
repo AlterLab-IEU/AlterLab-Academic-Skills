@@ -43,7 +43,7 @@ import json
 import re
 import sys
 import time
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from difflib import SequenceMatcher
 from typing import Any, Optional

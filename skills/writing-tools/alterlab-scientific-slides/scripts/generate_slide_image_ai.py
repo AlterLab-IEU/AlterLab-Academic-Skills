@@ -596,7 +596,7 @@ Generate an improved version that addresses all the critique points."""
         output_dir = output_path.parent
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        base_name = output_path.stem
+        _base_name = output_path.stem
         extension = output_path.suffix or ".png"
 
         mode = "visual_only" if visual_only else "full_slide"

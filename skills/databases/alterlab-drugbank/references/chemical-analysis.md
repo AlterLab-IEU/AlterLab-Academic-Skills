@@ -183,7 +183,7 @@ def check_veber_rules(drugbank_id):
 ### Structure-Based Similarity with RDKit
 ```python
 from rdkit import Chem
-from rdkit.Chem import AllChem, DataStructs
+from rdkit.Chem import DataStructs, rdFingerprintGenerator
 
 def calculate_tanimoto_similarity(smiles1, smiles2):
     """Calculate Tanimoto similarity between two molecules"""
@@ -193,9 +193,10 @@ def calculate_tanimoto_similarity(smiles1, smiles2):
     if mol1 is None or mol2 is None:
         return None
 
-    # Generate Morgan fingerprints (ECFP4)
-    fp1 = AllChem.GetMorganFingerprintAsBitVect(mol1, 2, nBits=2048)
-    fp2 = AllChem.GetMorganFingerprintAsBitVect(mol2, 2, nBits=2048)
+    # Generate Morgan fingerprints (ECFP4) via the modern rdFingerprintGenerator API
+    morgan_gen = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=2048)
+    fp1 = morgan_gen.GetFingerprint(mol1)
+    fp2 = morgan_gen.GetFingerprint(mol2)
 
     # Calculate Tanimoto similarity
     similarity = DataStructs.TanimotoSimilarity(fp1, fp2)
@@ -305,7 +306,7 @@ sim_matrix = create_similarity_matrix(drug_list)
 
 ### Generate Different Fingerprint Types
 ```python
-from rdkit.Chem import MACCSkeys
+from rdkit.Chem import MACCSkeys, rdFingerprintGenerator
 from rdkit.Chem.AtomPairs import Pairs
 from rdkit.Chem.Fingerprints import FingerprintMols
 
@@ -315,8 +316,9 @@ def generate_fingerprints(smiles):
     if mol is None:
         return None
 
+    morgan_gen = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=2048)
     fingerprints = {
-        'morgan_fp': AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=2048),
+        'morgan_fp': morgan_gen.GetFingerprint(mol),
         'maccs_keys': MACCSkeys.GenMACCSKeys(mol),
         'topological_fp': FingerprintMols.FingerprintMol(mol),
         'atom_pairs': Pairs.GetAtomPairFingerprint(mol)

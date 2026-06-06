@@ -8,7 +8,6 @@ as needed for your use case.
 """
 
 import argparse
-import functools
 import torch
 import torch.nn as nn
 import pufferlib
@@ -74,6 +73,7 @@ def make_env():
     # Option 1: A PufferEnv constructor (e.g. an Ocean environment).
     #   `env_creator` is a placeholder: replace it with the callable that
     #   constructs your environment, e.g. `from pufferlib.ocean import ...`.
+    env_creator = None  # TODO: replace with your environment constructor (callable)
     return pufferlib.vector.make(env_creator, num_envs=256)
 
     # Option 2: A Gymnasium environment wrapped for PufferLib.
@@ -170,8 +170,7 @@ def train(args):
         rollout_data = trainer.evaluate()
 
         # Train on batch
-        train_metrics = trainer.train()
-
+        _train_metrics = trainer.train()
         # Log results
         trainer.mean_and_log()
 

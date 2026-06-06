@@ -14,8 +14,7 @@ Usage:
 import argparse
 import sys
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
-import json
+from typing import List, Dict, Tuple
 
 try:
     import pandas as pd

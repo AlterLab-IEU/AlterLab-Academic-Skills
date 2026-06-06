@@ -52,19 +52,10 @@ import run_evals  # noqa: E402  (path injected above)
 # Snapshot of skills whose eval files are still being authored as of 2026-06-06. This is a
 # *ratchet*: it only ever shrinks. Entries drain automatically as valid files land (the test
 # reads the live filesystem); ws-14 removes the remainder, leaving frozenset().
-EVAL_KNOWN_FAILURES: frozenset[str] = frozenset(
-    {
-        "alterlab-link-health",
-        "alterlab-open-science",
-        "alterlab-pdf-extract",
-        "alterlab-peer-review",
-        "alterlab-primekg",
-        "alterlab-pylabrobot",
-        "alterlab-rdkit",
-        "alterlab-scientific-viz",
-        "alterlab-shap",
-    }
-)
+# ws-14: every skill now ships a committed, schema-valid eval file, so the ratchet is
+# drained to empty. Any invalid eval file anywhere is now a hard failure. Do NOT add new
+# entries here for new skills — new work must pass the full schema + convention immediately.
+EVAL_KNOWN_FAILURES: frozenset[str] = frozenset()
 
 
 def _skill_dirs() -> list[Path]:

@@ -39,7 +39,7 @@ def preprocess_recording(
         # Try auto-detection
         try:
             recording = si.read_spikeglx(input_path, stream_id=stream_id or 'imec0.ap')
-        except:
+        except Exception:
             recording = si.load_extractor(input_path)
 
     print(f"Recording: {recording.get_num_channels()} channels, {recording.get_total_duration():.1f}s")

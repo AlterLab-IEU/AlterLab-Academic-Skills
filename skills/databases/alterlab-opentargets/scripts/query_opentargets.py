@@ -10,7 +10,6 @@ Dependencies: requests (pip install requests)
 """
 
 import requests
-import json
 from typing import Dict, List, Optional, Any
 
 

@@ -10,7 +10,6 @@ Customize the sections marked with # TODO
 import pymc as pm
 import arviz as az
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 
 # =============================================================================

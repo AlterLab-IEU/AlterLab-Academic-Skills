@@ -128,7 +128,7 @@ def generate_kaplan_meier_plot(data, time_col='time', event_col='event',
         )
         
         p_value = results.p_value
-        test_statistic = results.test_statistic
+        _test_statistic = results.test_statistic
         
         # Add log-rank test result to plot
         ax.text(0.02, 0.15, f'Log-rank test:\np = {p_value:.4f}',
@@ -139,8 +139,7 @@ def generate_kaplan_meier_plot(data, time_col='time', event_col='event',
         # Multivariate log-rank for >2 groups
         results = multivariate_logrank_test(data[time_col], data[group_col], data[event_col])
         p_value = results.p_value
-        test_statistic = results.test_statistic
-        
+        _test_statistic = results.test_statistic        
         ax.text(0.02, 0.15, f'Log-rank test:\np = {p_value:.4f}\n({len(groups)} groups)',
                transform=ax.transAxes, fontsize=10,
                verticalalignment='top',
@@ -296,7 +295,7 @@ def generate_report(data, output_dir, prefix='survival'):
             try:
                 surv_12m = kmf.survival_function_at_times(12).values[0]
                 surv_24m = kmf.survival_function_at_times(24).values[0] if data['time'].max() >= 24 else None
-            except:
+            except Exception:
                 surv_12m = None
                 surv_24m = None
             
@@ -356,7 +355,7 @@ def generate_report(data, output_dir, prefix='survival'):
             try:
                 surv_12m = kmf.survival_function_at_times(12).values[0]
                 f.write(f"{surv_12m*100:.0f}\\% & ")
-            except:
+            except Exception:
                 f.write("-- & ")
         f.write("-- & -- \\\\\n")
         

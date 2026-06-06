@@ -8,7 +8,6 @@ queue lengths, utilization, wait times, and generating reports.
 """
 
 import simpy
-from collections import defaultdict
 from typing import List, Tuple, Dict, Any
 
 

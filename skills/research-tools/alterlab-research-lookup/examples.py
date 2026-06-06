@@ -104,8 +104,7 @@ def example_scientific_writing_workflow():
     print("=" * 80)
     print()
     
-    research = ResearchLookup()
-    
+    _research = ResearchLookup()    
     # Literature review phase - use Pro for breadth
     print("PHASE 1: Literature Review (Breadth)")
     lit_queries = [

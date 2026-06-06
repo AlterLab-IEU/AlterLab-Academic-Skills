@@ -20,7 +20,7 @@ import argparse
 import matplotlib.pyplot as plt
 import networkx as nx
 import torch
-from typing import Optional, Union
+from typing import Optional
 import numpy as np
 
 
@@ -150,8 +150,7 @@ def visualize_data(
 def is_undirected(edge_index):
     """Check if graph is undirected."""
     row, col = edge_index
-    num_edges = edge_index.size(1)
-
+    _num_edges = edge_index.size(1)
     # Create a set of edges and reverse edges
     edges = set(zip(row.tolist(), col.tolist()))
     reverse_edges = set(zip(col.tolist(), row.tolist()))
@@ -275,7 +274,7 @@ def main():
         from torch_geometric.datasets import Planetoid
         dataset = Planetoid(root=f'/tmp/{args.dataset}', name=args.dataset)
         data = dataset[0]
-    except:
+    except Exception:
         try:
             # Try TUDataset
             from torch_geometric.datasets import TUDataset

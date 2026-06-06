@@ -10,8 +10,6 @@ from lightning.pytorch.callbacks import (
     ModelCheckpoint,
     EarlyStopping,
     LearningRateMonitor,
-    DeviceStatsMonitor,
-    RichProgressBar,
 )
 from lightning.pytorch import loggers as pl_loggers
 from lightning.pytorch.strategies import DDPStrategy, FSDPStrategy

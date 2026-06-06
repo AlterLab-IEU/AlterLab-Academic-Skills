@@ -11,10 +11,9 @@ import requests
 import json
 import argparse
 from datetime import datetime, timedelta
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional
 import time
 import sys
-from urllib.parse import quote
 
 
 class BioRxivSearcher:

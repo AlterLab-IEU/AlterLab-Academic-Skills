@@ -294,8 +294,7 @@ def generate_safety_table(data, ae_columns, group_col='group', output_file='tabl
     table_rows = []
     
     # Header
-    header = {
-        'Adverse Event': 'Adverse Event',
+    _header = {        'Adverse Event': 'Adverse Event',
         **{f'{group}_any': f'Any Grade' for group in groups},
         **{f'{group}_g34': f'Grade 3-4' for group in groups}
     }

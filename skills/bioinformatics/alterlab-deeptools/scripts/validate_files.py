@@ -9,7 +9,6 @@ Checks for file existence, proper indexing, and basic format requirements.
 import os
 import sys
 import argparse
-from pathlib import Path
 
 
 def check_file_exists(filepath):
