@@ -10,8 +10,12 @@ Checks performed:
   - `name` free of reserved words ('claude'/'anthropic')
   - `description` leads with triggers (not the suite boilerplate), has a 'Use when' clause, third person
   - `metadata.skill-author` present (AlterLab convention)
+  - `metadata.version` present (AlterLab convention — ERROR)
+  - `metadata.compatibility` present (AlterLab convention — WARNING)
   - Suite-label footer present in body (AlterLab convention)
-  - All `references/*.md` paths cited in the body actually exist on disk
+  - Every relative-path citation in the body resolves on disk: `references/*.md`,
+    `shared/*.md`, `shared/schemas/*.schema.json`, and skill-local `scripts/*.py`
+  - `references/*.md` citations stay one level deep (WARNING)
   - Body length warning over 500 lines (spec recommendation)
 
 Run modes:
@@ -38,7 +42,9 @@ SKILLS_DIR = REPO_ROOT / "skills"
 # Spec constraints (https://agentskills.io/specification)
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 NAME_MAX = 64
-DESCRIPTION_MAX = 1536  # current Claude Code listing truncation (description + when-to-use)
+DESCRIPTION_MAX = 1024  # Claude Code listing truncation (description + when-to-use).
+# Verified zero-risk: the longest real description in the corpus is well under this.
+REFERENCES_MAX_DEPTH = 1  # references/ citations may be at most one level deep
 # Heuristics for description-quality lints
 TRIGGER_PHRASES = ("use when", "use this", "use for", "use whenever", "when the user", "triggers on", "use to ")
 FIRST_SECOND_PERSON = re.compile(r"\b(I can|I will|I'll|you can|you should|use me to|let me|we will|we'll)\b", re.IGNORECASE)
@@ -164,17 +170,54 @@ def skill_index() -> dict[str, Path]:
     return _SKILL_INDEX
 
 
-_REF_RE = re.compile(r"(?:(alterlab-[a-z0-9-]+)/)?(references/[A-Za-z0-9_.\-/]+\.md)")
+# Relative-path citations the audit resolves. Beyond a skill's own `references/*.md`,
+# bodies legitimately cite `shared/*.md`, `shared/schemas/*.schema.json` (the cross-skill
+# handoff contracts that live under skills/core/shared/) and skill-local `scripts/*.py`.
+# Optional `alterlab-foo/` prefix scopes the citation to a named sibling skill.
+_REF_DIRS = r"references|shared|schemas|scripts"
+_REF_RE = re.compile(
+    rf"(?:(alterlab-[a-z0-9-]+)/)?"
+    rf"((?:{_REF_DIRS})/[A-Za-z0-9_.\-/]+\.(?:md|schema\.json|json|py))"
+)
 _SKILL_NAME_RE = re.compile(r"alterlab-[a-z0-9-]+")
+# `skills/core/` is where the shared handoff material (shared/, shared/schemas/) lives,
+# so a bare `shared/...` citation from any skill resolves against this root too.
+_SHARED_ROOT = SKILLS_DIR / "core"
+
+
+def _ref_depth(relref: str) -> int:
+    """Number of directory hops below the leading category dir (references/, shared/, …).
+
+    `references/api.md` -> 1, `references/sub/api.md` -> 2, `shared/schemas/x.json` -> 2.
+    Used by the one-level-deep guard (REFERENCES_MAX_DEPTH) on `references/` citations."""
+    return relref.count("/")
+
+
+def _resolves(relref: str, skill_dir: Path, line_skills: set[str], index: dict[str, Path]) -> bool:
+    """True if a relative citation resolves to a real file under any legitimate root:
+    the skill itself, a sibling skill named on the same line, the repo root (for full
+    `skills/core/shared/...` paths), or `skills/core/` (for bare `shared/...` citations)."""
+    if (skill_dir / relref).exists():  # self reference (references/, scripts/, …)
+        return True
+    if any((index.get(sn) and (index[sn] / relref).exists()) for sn in line_skills):
+        return True  # sibling skill named on this line
+    if (REPO_ROOT / relref).exists():  # full repo-relative path
+        return True
+    if relref.startswith(("shared/", "schemas/")) and (_SHARED_ROOT / relref).exists():
+        return True  # bare shared/... or schemas/... resolved under skills/core/
+    return False
 
 
 def missing_references(body: str, skill_dir: Path) -> list[str]:
-    """Return cited references/*.md paths that resolve to no file on disk.
+    """Return cited relative paths that resolve to no file on disk.
 
-    A citation resolves if the file exists in (a) this skill, (b) a skill named as
-    an explicit path prefix (`alterlab-foo/references/x.md`), or (c) any other
-    `alterlab-*` skill mentioned on the same line ("the alterlab-seaborn skill's
-    `references/examples.md`"). Cross-skill references are legitimate, not errors."""
+    Resolves ANY relative-path citation — `references/*.md`, `shared/*.md`,
+    `shared/schemas/*.schema.json`, and skill-local `scripts/*.py` — not just
+    references. A citation resolves if the file exists in (a) this skill, (b) a skill
+    named as an explicit path prefix (`alterlab-foo/references/x.md`), (c) any other
+    `alterlab-*` skill mentioned on the same line, (d) the repo root (full
+    `skills/core/shared/...` paths), or (e) `skills/core/` (bare `shared/...`).
+    Cross-skill and shared references are legitimate, not errors."""
     index = skill_index()
     missing: list[str] = []
     seen: set[str] = set()
@@ -190,12 +233,28 @@ def missing_references(body: str, skill_dir: Path) -> list[str]:
                 if not (d and (d / relref).exists()):
                     missing.append(cited)
                 continue
-            if (skill_dir / relref).exists():  # self reference
-                continue
-            if any((index.get(sn) and (index[sn] / relref).exists()) for sn in line_skills):
-                continue  # resolved against a sibling skill named on this line
-            missing.append(cited)
+            if not _resolves(relref, skill_dir, line_skills, index):
+                missing.append(cited)
     return missing
+
+
+def deep_references(body: str) -> list[str]:
+    """Return `references/*.md` citations nested more than REFERENCES_MAX_DEPTH deep.
+
+    The convention keeps references flat (`references/api.md`, not
+    `references/v2/api.md`) so the router stays legible and loadable on demand."""
+    deep: list[str] = []
+    seen: set[str] = set()
+    for line in body.splitlines():
+        for _prefix, relref in _REF_RE.findall(line):
+            if not relref.startswith("references/"):
+                continue
+            if relref in seen:
+                continue
+            seen.add(relref)
+            if _ref_depth(relref) > REFERENCES_MAX_DEPTH:
+                deep.append(relref)
+    return deep
 
 
 def audit_skill(skill_md: Path) -> SkillReport:
@@ -262,14 +321,26 @@ def audit_skill(skill_md: Path) -> SkillReport:
     if "metadata.skill-author" not in fm:
         report.findings.append(Finding(str(rel), "warning", "skill-author-missing", "Missing `metadata.skill-author` field"))
 
+    # metadata.version (AlterLab convention) — ERROR: every skill must carry a semver.
+    if "metadata.version" not in fm:
+        report.findings.append(Finding(str(rel), "error", "metadata-version-missing", "Missing `metadata.version` field (quoted semver string, e.g. \"1.0.0\")"))
+
+    # metadata.compatibility (AlterLab convention) — WARNING: declare the target runtime.
+    if "metadata.compatibility" not in fm:
+        report.findings.append(Finding(str(rel), "warning", "compatibility-missing", "Missing `metadata.compatibility` field (declare the target runtime/spec)"))
+
     # Suite-label — convention is the description mentions the AlterLab suite.
     # Accept any phrasing containing the loose label.
     if SUITE_LABEL_LOOSE not in desc and SUITE_LABEL_LOOSE not in body:
         report.findings.append(Finding(str(rel), "warning", "suite-label-missing", f"Suite mention not found (looking for {SUITE_LABEL_LOOSE!r})"))
 
-    # Reference path existence (self + cross-skill)
+    # Reference path existence (self + cross-skill + shared/ + scripts/)
     for ref in missing_references(body, skill_md.parent):
         report.findings.append(Finding(str(rel), "error", "reference-missing", f"Cited reference file does not exist: {ref}"))
+
+    # references/ must stay flat (one level deep) — convention keeps the router legible.
+    for ref in deep_references(body):
+        report.findings.append(Finding(str(rel), "warning", "references-one-level-deep", f"Cited reference is nested >{REFERENCES_MAX_DEPTH} level deep: {ref}"))
 
     # Body length
     body_lines = body.count("\n") + 1
@@ -323,7 +394,7 @@ def main() -> int:
             for code, n in sorted(by_code.items(), key=lambda x: -x[1]):
                 print(f"  {n:4}  {code}")
         print()
-        print(f"=== Audit summary ===")
+        print("=== Audit summary ===")
         print(f"Total skills: {len(reports)}")
         print(f"Errors:       {len(errors)}")
         print(f"Warnings:     {len(warnings)}")
