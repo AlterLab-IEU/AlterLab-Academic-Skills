@@ -18,6 +18,22 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Gate — tag must match pyproject version
+        # The git tag (e.g. v2.0.0) must equal [project].version in pyproject.toml,
+        # which is the single source of truth propagated to marketplace.json and
+        # package.json. Refuse to release a mismatched tag.
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PYPROJECT_VERSION=$(
+            grep -m1 -E '^version\s*=' pyproject.toml | sed -E 's/.*"([^"]+)".*/\1/'
+          )
+          echo "tag version:       $TAG"
+          echo "pyproject version: $PYPROJECT_VERSION"
+          if [ "$TAG" != "$PYPROJECT_VERSION" ]; then
+            echo "::error::tag '$GITHUB_REF_NAME' does not match pyproject version '$PYPROJECT_VERSION'"
+            exit 1
+          fi
+
       - name: Count total skills
         id: count
         run: |
@@ -25,15 +41,34 @@ jobs:
           echo "total=$SKILL_COUNT" >> "$GITHUB_OUTPUT"
           echo "Total skills: $SKILL_COUNT"
 
+      - name: Build distributable bundles
+        # One zip per domain plugin plus a full-collection zip, written to dist/.
+        run: |
+          mkdir -p dist
+          VERSION="${GITHUB_REF_NAME#v}"
+          # Per-domain plugin bundles.
+          for dom in skills/*/; do
+            [ -d "$dom" ] || continue
+            name=$(basename "$dom")
+            ( cd skills && zip -rq "../dist/alterlab-${name}-${VERSION}.zip" "$name" )
+          done
+          # Full collection bundle (skills + marketplace manifest).
+          zip -rq "dist/alterlab-academic-skills-${VERSION}.zip" \
+            skills .claude-plugin/marketplace.json README.md LICENSE
+          echo "Built bundles:"
+          ls -1 dist/
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+          files: dist/*.zip
           body: |
             ## AlterLab Academic Skills ${{ github.ref_name }}
 
             This release includes **${{ steps.count.outputs.total }}** academic skills.
 
+            Attached bundles: one zip per domain plugin plus the full collection.
             See the auto-generated changelog below for details.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

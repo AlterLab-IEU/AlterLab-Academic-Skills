@@ -1,0 +1,33 @@
+name: Spec Conformance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "skills/**"
+      - "scripts/check_spec.py"
+      - ".github/workflows/spec-conformance.yml"
+
+jobs:
+  conformance:
+    name: Agent Skills spec check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Node (for the pinned skills-ref validator)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run spec conformance (pinned skills-ref + native rules)
+        # check_spec.py runs every skill through the PINNED skills-ref reference
+        # validator and enforces the agentskills.io rules natively (name regex,
+        # description <= 1024 chars, references depth, dir layout).
+        run: uv run python scripts/check_spec.py
