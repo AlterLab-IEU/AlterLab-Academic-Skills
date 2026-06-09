@@ -2,40 +2,40 @@
 
 ## Exception Types
 
-Pyzotero raises `ZoteroError` subclasses for API errors. Import from `pyzotero.zotero_errors`:
+Pyzotero raises subclasses of `PyZoteroError` (the base class) for API errors. Import from `pyzotero.errors`:
 
 ```python
-from pyzotero import zotero_errors
+from pyzotero import errors
 ```
 
-Common exceptions:
+All exception class names end in `Error` (verified against pyzotero 1.13). Common exceptions:
 
 | Exception | Cause |
 |-----------|-------|
-| `UserNotAuthorised` | Invalid or missing API key |
+| `UserNotAuthorisedError` | Invalid or missing API key |
 | `HTTPError` | Generic HTTP error |
-| `ParamNotPassed` | Required parameter missing |
-| `CallDoesNotExist` | Invalid API method for library type |
-| `ResourceNotFound` | Item/collection key not found |
-| `Conflict` | Version conflict (optimistic locking) |
-| `PreConditionFailed` | `If-Unmodified-Since-Version` check failed |
-| `TooManyItems` | Batch exceeds 50-item limit |
-| `TooManyRequests` | API rate limit exceeded |
-| `InvalidItemFields` | Item dict contains unknown fields |
+| `ParamNotPassedError` | Required parameter missing |
+| `CallDoesNotExistError` | Invalid API method for library type |
+| `ResourceNotFoundError` | Item/collection key not found |
+| `ConflictError` | Version conflict (optimistic locking) |
+| `PreConditionFailedError` | `If-Unmodified-Since-Version` check failed |
+| `TooManyItemsError` | Batch exceeds 50-item limit |
+| `TooManyRequestsError` | API rate limit exceeded |
+| `InvalidItemFieldsError` | Item dict contains unknown fields |
 
 ## Basic Error Handling
 
 ```python
 from pyzotero import Zotero
-from pyzotero import zotero_errors
+from pyzotero import errors
 
 zot = Zotero('123456', 'user', 'APIKEY')
 
 try:
     item = zot.item('BADKEY')
-except zotero_errors.ResourceNotFound:
+except errors.ResourceNotFoundError:
     print('Item not found')
-except zotero_errors.UserNotAuthorised:
+except errors.UserNotAuthorisedError:
     print('Invalid API key')
 except Exception as e:
     print(f'Unexpected error: {e}')
@@ -48,7 +48,7 @@ except Exception as e:
 ```python
 try:
     zot.update_item(item)
-except zotero_errors.PreConditionFailed:
+except errors.PreConditionFailedError:
     # Item was modified since you retrieved it — re-fetch and retry
     fresh_item = zot.item(item['data']['key'])
     fresh_item['data']['title'] = new_title
@@ -58,32 +58,32 @@ except zotero_errors.PreConditionFailed:
 ## Checking for Invalid Fields
 
 ```python
-from pyzotero import zotero_errors
+from pyzotero import errors
 
 template = zot.item_template('journalArticle')
 template['badField'] = 'bad value'
 
 try:
     zot.check_items([template])
-except zotero_errors.InvalidItemFields as e:
+except errors.InvalidItemFieldsError as e:
     print(f'Invalid fields: {e}')
     # Fix fields before calling create_items
 ```
 
 ## Rate Limiting
 
-The Zotero API rate-limits requests. If you receive `TooManyRequests`:
+The Zotero API rate-limits requests. If you receive `TooManyRequestsError`:
 
 ```python
 import time
-from pyzotero import zotero_errors
+from pyzotero import errors
 
 def safe_request(func, *args, **kwargs):
     retries = 3
     for attempt in range(retries):
         try:
             return func(*args, **kwargs)
-        except zotero_errors.TooManyRequests:
+        except errors.TooManyRequestsError:
             wait = 2 ** attempt
             print(f'Rate limited, waiting {wait}s...')
             time.sleep(wait)

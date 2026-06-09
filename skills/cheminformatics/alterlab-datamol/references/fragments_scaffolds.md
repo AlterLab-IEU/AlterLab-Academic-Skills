@@ -16,7 +16,8 @@ Extract Bemis-Murcko scaffold (molecular framework).
   mol = dm.to_mol("c1ccc(cc1)CCN")  # Phenethylamine
   scaffold = dm.to_scaffold_murcko(mol)
   scaffold_smiles = dm.to_smiles(scaffold)
-  # Returns: 'c1ccccc1CC' (benzene ring + ethyl linker)
+  # Returns: 'c1ccccc1' — the ethylamine chain is a side chain (not a linker
+  # between two ring systems), so it is stripped, leaving only the ring.
   ```
 
 **Workflow for scaffold analysis**:

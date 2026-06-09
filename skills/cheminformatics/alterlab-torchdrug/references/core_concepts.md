@@ -156,16 +156,22 @@ Specialized graph for proteins.
 
 **Example:**
 ```python
-from torchdrug import data
+from torchdrug import data, layers
+from torchdrug.layers import geometry
 
 # Load protein
 protein = data.Protein.from_pdb("1a3x.pdb")
 
-# Build graph with multiple edge types
-graph = protein.residue_graph(
-    node_position="ca",  # Use Cα positions
-    edge_types=["sequential", "radius"]  # Sequential + spatial edges
+# Build a residue-level graph with layers.GraphConstruction (the real API).
+# There is no protein.residue_graph() helper — edges are added via edge_layers.
+graph_construction = layers.GraphConstruction(
+    node_layers=[geometry.AlphaCarbonNode()],          # Cα-based residue nodes
+    edge_layers=[
+        geometry.SequentialEdge(max_distance=2),       # sequence neighbors
+        geometry.SpatialEdge(radius=10.0, min_distance=5),  # spatial contacts
+    ],
 )
+graph = graph_construction(data.Protein.pack([protein]))
 ```
 
 ### PackedGraph
@@ -312,16 +318,18 @@ task = tasks.PropertyPrediction(
 
 ```python
 import torch
-from torch.utils.data import DataLoader
-from torchdrug import core, models, tasks, datasets
+from torchdrug import core, data, models, tasks, datasets
 
 # 1. Load dataset
 dataset = datasets.BBBP("~/datasets/")
 train_set, valid_set, test_set = dataset.split()
 
-# 2. Create data loaders
-train_loader = DataLoader(train_set, batch_size=32, shuffle=True)
-valid_loader = DataLoader(valid_set, batch_size=32)
+# 2. Create data loaders.
+#    Use torchdrug.data.DataLoader — its default graph_collate packs
+#    data.Graph objects. torch.utils.data.DataLoader's default collate
+#    cannot batch TorchDrug graphs and will raise.
+train_loader = data.DataLoader(train_set, batch_size=32, shuffle=True)
+valid_loader = data.DataLoader(valid_set, batch_size=32)
 
 # 3. Define model and task
 model = models.GIN(input_dim=dataset.node_feature_dim,
@@ -337,7 +345,7 @@ for epoch in range(100):
     # Train
     task.train()
     for batch in train_loader:
-        loss = task(batch)
+        loss, metric = task(batch)  # forward returns (loss, metric)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -370,17 +378,21 @@ class LightningWrapper(pl.LightningModule):
         self.task = task
 
     def training_step(self, batch, batch_idx):
-        loss = self.task(batch)
+        loss, metric = self.task(batch)  # forward returns (loss, metric)
         return loss
 
     def validation_step(self, batch, batch_idx):
         pred = self.task.predict(batch)
         target = self.task.target(batch)
-        return {"pred": pred, "target": target}
+        self._val_outputs.append({"pred": pred, "target": target})
 
-    def validation_epoch_end(self, outputs):
-        preds = torch.cat([o["pred"] for o in outputs])
-        targets = torch.cat([o["target"] for o in outputs])
+    # Lightning >=2.0: validation_epoch_end was removed; use this hook + a buffer.
+    def on_validation_epoch_start(self):
+        self._val_outputs = []
+
+    def on_validation_epoch_end(self):
+        preds = torch.cat([o["pred"] for o in self._val_outputs])
+        targets = torch.cat([o["target"] for o in self._val_outputs])
         metrics = self.task.evaluate(preds, targets)
         self.log_dict(metrics)
 

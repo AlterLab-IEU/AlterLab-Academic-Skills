@@ -1,8 +1,9 @@
-# Research Poster Quality Checklist
+# Research Poster Quality Checklist (HTML / PDF / PPTX)
 
-Use this comprehensive checklist before printing or presenting your research poster.
+Use this checklist before exporting, printing, or presenting an HTML-based research poster.
+For LaTeX posters, use the **alterlab-latex-posters** skill's own checklist instead.
 
-## Pre-Compilation Checks
+## Pre-Export Checks
 
 ### Content Completeness
 - [ ] Title is concise and descriptive (10-15 words)
@@ -12,69 +13,53 @@ Use this comprehensive checklist before printing or presenting your research pos
 - [ ] All sections present: Introduction, Methods, Results, Conclusions
 - [ ] References cited (5-10 key citations)
 - [ ] Acknowledgments included (funding, collaborators)
-- [ ] No placeholder text remaining (TODO, Lorem ipsum, etc.)
+- [ ] No placeholder text remaining (TODO, Lorem ipsum, "Your Research Title Here", etc.)
+- [ ] Total word count 300-800 (hard cap 1000)
 
 ### Visual Content
-- [ ] All figures prepared and high resolution (300+ DPI)
-- [ ] Figure captions written and descriptive
+- [ ] All figures generated and saved under `figures/`
+- [ ] Image paths in the HTML resolve (no broken `<img>` placeholders)
+- [ ] Figures high resolution (300+ DPI for print)
+- [ ] Figure text readable from distance (poster-format prompts used)
 - [ ] Logos available (university, funding agencies)
-- [ ] QR codes generated and tested
-- [ ] Icons/graphics sourced (if used)
+- [ ] QR codes generated and tested (if used)
 
-### LaTeX Configuration
-- [ ] Correct paper size specified (A0, A1, 36×48", etc.)
+### HTML/CSS Configuration
+- [ ] `@page { size: ...; margin: 0 }` matches the intended poster size
+- [ ] `body` width/height (in pt) matches that size (e.g. 36in = 2592pt)
 - [ ] Correct orientation (portrait/landscape)
-- [ ] Minimal margins configured (5-15mm)
 - [ ] Font sizes appropriate (title 72pt+, body 24pt+)
-- [ ] Color scheme defined
-- [ ] All packages installed and working
+- [ ] Color scheme defined and consistent
+- [ ] `print-color-adjust: exact` set so backgrounds/gradients survive export
 
-## Compilation Checks
+## Browser Preview Checks
 
-### Successful Compilation
-- [ ] PDF compiles without errors
-- [ ] No critical warnings in .log file
-- [ ] All citations resolved (no [?] marks)
-- [ ] All cross-references working
-- [ ] Bibliography generated correctly (if using BibTeX)
+Open `poster.html` in Chrome and inspect before exporting.
 
-### Warning Review
-Run in terminal: `grep -i "warning\|overfull\|underfull" poster.log`
+- [ ] No content overflows the poster bounds (no horizontal scrollbar at 100%)
+- [ ] No text or images clipped at the four edges
+- [ ] Columns balanced; no single column dramatically longer
+- [ ] All images load (check the console / network tab for 404s)
+- [ ] Layout matches intent at 25% zoom (readability sanity check)
 
-- [ ] No overfull hbox warnings (text too wide)
-- [ ] No underfull hbox warnings (excessive spacing)
-- [ ] No missing figure warnings
-- [ ] No missing font warnings
-- [ ] No undefined reference warnings
+## Exported PDF Quality Checks
 
-## PDF Quality Checks
-
-### Automated Checks
-
-Run: `./scripts/review_poster.sh poster.pdf` or manually verify:
+After print-to-PDF or `chrome --headless=new --print-to-pdf`:
 
 #### Page Specifications
 ```bash
 pdfinfo poster.pdf | grep "Page size"
 ```
-- [ ] Page size matches requirements exactly
-- [ ] Single page document (not multi-page)
+- [ ] Page size matches the poster dimensions exactly (e.g. 2592 x 3456 pt)
+- [ ] Single page document (not split across multiple pages)
 - [ ] Correct orientation
-
-#### Font Embedding
-```bash
-pdffonts poster.pdf
-```
-- [ ] All fonts show "yes" in "emb" column
-- [ ] No bitmap fonts (should be Type 1 or TrueType)
 
 #### Image Quality
 ```bash
 pdfimages -list poster.pdf
 ```
-- [ ] All images at least 300 DPI
-- [ ] No JPEG artifacts in figures
-- [ ] Vector graphics used where possible
+- [ ] Embedded images at least 300 DPI at final size
+- [ ] No visible JPEG artifacts in figures
 
 #### File Size
 ```bash
@@ -82,7 +67,7 @@ ls -lh poster.pdf
 ```
 - [ ] Reasonable size (2-50 MB typical)
 - [ ] Not too large for email (<50 MB) if sharing digitally
-- [ ] Not suspiciously small (<1 MB - may indicate low quality)
+- [ ] Not suspiciously small (<1 MB - backgrounds may have been dropped; re-enable "Background graphics")
 
 ## Visual Inspection (100% Zoom)
 
@@ -246,8 +231,7 @@ Ask colleague to read poster (5 minutes), then ask:
 ### Technical Specifications
 - [ ] PDF size exactly matches conference requirements
 - [ ] Orientation correct (portrait vs landscape)
-- [ ] All fonts embedded (verified with pdffonts)
-- [ ] Color space correct (RGB for screen, CMYK if printer requires)
+- [ ] Color space correct (RGB for screen; ask printer if CMYK required)
 - [ ] Resolution adequate (300+ DPI for all images)
 - [ ] Bleed area added if required (typically 3-5mm)
 - [ ] Crop marks visible if required
@@ -263,7 +247,7 @@ Ask colleague to read poster (5 minutes), then ask:
 
 ### Backup and Storage
 - [ ] PDF saved with clear filename: `LastName_Conference_Poster.pdf`
-- [ ] Source .tex file backed up
+- [ ] Source `poster.html` (and any CSS) backed up
 - [ ] All figure files backed up
 - [ ] Copy saved to cloud storage
 - [ ] Copy saved on USB drive for conference
@@ -344,15 +328,16 @@ _________________________________________________________
 
 | Issue | Quick Fix |
 |-------|-----------|
-| Large white margins | Reduce margin in documentclass: `margin=5mm` |
-| Text too small | Increase scale: `scale=1.5` in beamerposter |
-| Blurry figures | Use vector graphics (PDF) or higher resolution (600+ DPI) |
-| Colors wrong | Check RGB vs CMYK, test print before final |
-| Fonts not embedded | Compile with: `pdflatex -dEmbedAllFonts=true` |
-| Content cut off | Check total width: columns + spacing + margins = pagewidth |
+| PDF exported at Letter/A4, poster cropped | Add/fix `@page { size: 36in 48in; margin: 0 }` to match the body |
+| Backgrounds/gradients missing in PDF | Enable "Background graphics" in print dialog; ensure `print-color-adjust: exact` |
+| Header/footer (date, URL) on the PDF | Add `--no-pdf-header-footer` (headless) or uncheck "Headers and footers" in dialog |
+| Text too small | Bump the `font-size` values in the template `<style>` |
+| Blurry figures | Regenerate at higher resolution (300+ DPI at final size) |
+| Content cut off at edges | Reduce sections/word count; check for overflow in the browser at 100% |
+| Colors wrong on print | Screen is RGB; ask the print shop whether CMYK conversion is needed |
 | QR codes don't scan | Increase size (min 2×2cm), ensure high contrast |
-| File too large | Compress: `gs -sDEVICE=pdfwrite -dPDFSETTINGS=/printer ...` |
+| File too large | Re-export figures as compressed PNG/WebP; downscale oversized images |
 
 ## Checklist Version
-Version 1.0 - For use with LaTeX poster packages (beamerposter, tikzposter, baposter)
+Version 2.0 - For HTML/CSS posters exported to PDF or converted to PPTX
 

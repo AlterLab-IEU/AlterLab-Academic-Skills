@@ -3,7 +3,7 @@
   "evals": [
     {
       "id": "variant-population-frequency",
-      "prompt": "What's the population allele frequency of variant 17-43094692-G-A across ancestries? Is it rare enough to be a candidate pathogenic variant?",
+      "prompt": "What's the population allele frequency of variant 17-43094692-G-C across ancestries? Is it rare enough to be a candidate pathogenic variant?",
       "expected_output": "Triggers the gnomAD skill. Queries the GraphQL API (gnomad_r4) for the specific variant ID, reporting genome and exome AF plus per-population frequencies (afr, amr, asj, eas, fin, nfe, sas, etc.), and reasons about rarity (MAF thresholds) for pathogenicity candidacy. Notes that a variant rare overall may be common in one ancestry.",
       "assertions": [
         { "type": "should_trigger", "value": true },

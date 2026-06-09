@@ -60,16 +60,17 @@ print(odds_ci)
 
 **Marginal effects:**
 ```python
-# Average marginal effects (AME)
-marginal_effects = results.get_margeff(at='mean')
+# Average marginal effects (AME) - at='overall' is the default, averages
+# the per-observation marginal effects across the sample
+marginal_effects = results.get_margeff(at='overall')
 print(marginal_effects.summary())
 
-# Marginal effects at means (MEM)
-marginal_effects_mem = results.get_margeff(at='mean', method='dydx')
+# Marginal effects at the means (MEM) - evaluated at the mean of each regressor
+marginal_effects_mem = results.get_margeff(at='mean')
 
 # Marginal effects at representative values
 marginal_effects_custom = results.get_margeff(at='mean',
-                                              atexog={'x1': 1, 'x2': 5})
+                                              atexog={1: 1, 2: 5})
 ```
 
 **Predictions:**
@@ -226,7 +227,7 @@ Standard model for count data.
 **Model**: P(Y=k|X) = exp(-λ) λᵏ / k!, where log(λ) = Xβ
 
 ```python
-from statsmodels.discrete.count_model import Poisson
+from statsmodels.discrete.discrete_model import Poisson
 
 model = Poisson(y_counts, X)
 results = model.fit()
@@ -248,9 +249,6 @@ print("Rate ratios:", rate_ratios)
 # Mean and variance should be similar for Poisson
 print(f"Mean: {y_counts.mean():.2f}")
 print(f"Variance: {y_counts.var():.2f}")
-
-# Formal test
-from statsmodels.stats.stattools import durbin_watson
 
 # Overdispersion if variance >> mean
 # Rule of thumb: variance/mean > 1.5 suggests overdispersion
@@ -282,13 +280,15 @@ For overdispersed count data (variance > mean).
 **Model**: Adds dispersion parameter α to account for overdispersion
 
 ```python
-from statsmodels.discrete.count_model import NegativeBinomial
+from statsmodels.discrete.discrete_model import NegativeBinomial
 
 model = NegativeBinomial(y_counts, X)
 results = model.fit()
 
 print(results.summary())
-print(f"Dispersion parameter alpha: {results.params['alpha']:.4f}")
+# alpha is the last estimated parameter; index by position so this works
+# whether params is a numpy array (array exog) or a labelled Series (formula API)
+print(f"Dispersion parameter alpha: {results.params[-1]:.4f}")
 ```
 
 **Compare with Poisson:**
@@ -361,7 +361,7 @@ Two-stage model: whether any counts, then how many.
 - Zeros structurally different from positive values
 
 ```python
-from statsmodels.discrete.count_model import HurdleCountModel
+from statsmodels.discrete.truncated_model import HurdleCountModel
 
 # Specify count distribution and zero inflation
 model = HurdleCountModel(y_counts, X,

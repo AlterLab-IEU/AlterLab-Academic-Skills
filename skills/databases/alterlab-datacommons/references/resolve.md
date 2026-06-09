@@ -201,7 +201,7 @@ dcid = client.resolve.fetch_dcid_by_coordinates(
 
 # Now query data for that place
 response = client.observation.fetch(
-    variable_dcids=["Count_Person", "MedianIncome_Household"],
+    variable_dcids=["Count_Person", "Median_Income_Household"],
     entity_dcids=[dcid],
     date="latest"
 )

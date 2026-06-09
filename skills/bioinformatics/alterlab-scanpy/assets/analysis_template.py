@@ -157,8 +157,9 @@ print("\n" + "=" * 80)
 print("CLUSTERING")
 print("=" * 80)
 
-# Leiden clustering
-sc.tl.leiden(adata, resolution=LEIDEN_RESOLUTION)
+# Leiden clustering. flavor='igraph' is the future default and far faster;
+# the bare call emits a FutureWarning recommending it.
+sc.tl.leiden(adata, resolution=LEIDEN_RESOLUTION, flavor='igraph', n_iterations=2)
 
 # Visualize
 sc.pl.umap(adata, color='leiden', legend_loc='on data', save='_leiden')

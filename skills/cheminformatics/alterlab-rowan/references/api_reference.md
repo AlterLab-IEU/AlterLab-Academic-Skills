@@ -20,250 +20,204 @@ The `Workflow` class represents a submitted computational job.
 |-----------|------|-------------|
 | `uuid` | str | Unique identifier |
 | `name` | str | User-assigned name |
-| `status` | str | Current status: "pending", "running", "completed", "failed" |
+| `status` | `stjames.Status` | Int enum: `QUEUED=0, RUNNING=1, COMPLETED_OK=2, FAILED=3, STOPPED=4, AWAITING_QUEUE=5, DRAFT=6, PREEMPTED=7` |
 | `created_at` | datetime | Submission timestamp |
+| `started_at` | datetime | Execution start (None if not started) |
 | `completed_at` | datetime | Completion timestamp (None if not finished) |
+| `elapsed` | float | Wall-clock seconds |
 | `credits_charged` | float | Credits consumed |
-| `data` | dict | Workflow results (lazy-loaded) |
+| `data` | dict | Raw workflow results (lazy-loaded; prefer `.result()`) |
 | `workflow_type` | str | Type of calculation |
-| `folder_uuid` | str | Parent folder UUID |
+| `parent_uuid` | str | Parent folder UUID |
+| `logfile` | str | Log text (useful for diagnosing failures) |
 
-**Note:** Workflow data is not loaded by default to avoid unnecessary downloads. Call `fetch_latest()` to load results.
+**Note:** `data` is not loaded by default. Use `workflow.result()` for typed access; it fetches for you.
+
+### The result pattern (preferred)
+
+```python
+# Block until done, fetch, and return a typed WorkflowResult.
+# Raises rowan.WorkflowError if the workflow FAILED or was STOPPED.
+result = workflow.result(wait=True, poll_interval=5)
+
+# Non-blocking: return whatever is currently available
+partial = workflow.result(wait=False)
+```
+
+The returned object is a typed `WorkflowResult` subclass (e.g. `pKaResult`, `DockingResult`) with attribute/property access — see `results_interpretation.md`.
 
 ### Methods
 
-#### Status Management
+#### Status
 
 ```python
-# Get current status
-status = workflow.get_status()
-
-# Check if finished
-if workflow.is_finished():
+status = workflow.get_status()       # -> stjames.Status (int enum), re-fetches from API
+if workflow.done():                  # non-blocking finished check (also: is_finished())
     print("Done!")
 
-# Block until completion
-workflow.wait_for_result(timeout=3600)  # Optional timeout in seconds
+# Deprecated: wait_for_result(poll_interval=5) just blocks and returns self.
+# Prefer workflow.result(). (There is no `timeout` argument.)
 
-# Refresh from API
-workflow.fetch_latest(in_place=True)
+workflow.fetch_latest(in_place=True)  # refresh fields from API in place
 ```
 
 #### Data Operations
 
 ```python
-# Update metadata
-workflow.update(
-    name="New name",
-    notes="Additional notes",
-    starred=True
-)
+# Update metadata (only these fields)
+workflow.update(name="New name", notes="Additional notes", starred=True)
 
-# Delete workflow
-workflow.delete()
+workflow.delete()        # delete workflow
+workflow.delete_data()   # delete only results data, keep metadata
 
-# Delete only results data (keep metadata)
-workflow.delete_data()
-
-# Download trajectory files (for MD workflows)
-workflow.download_dcd_files(output_dir="trajectories/")
-
-# Download SDF file
-workflow.download_sdf_file(output_path="molecule.sdf")
+# Downloads (availability depends on workflow type)
+workflow.download_dcd_files(output_dir="trajectories/")  # MD trajectories
+workflow.download_msa_files(output_dir="msa/")           # MSA / cofolding
 ```
+
+> There is no `workflow.download_sdf_file` and no `workflow.error_message`. To get poses as structures, use the typed `DockingResult` (`result.best_pose`, `result.get_poses()`); for failure details read `workflow.logfile`.
 
 #### Execution Control
 
 ```python
-# Stop a running workflow
-workflow.stop()
+workflow.stop()          # stop a running workflow
+workflow.submit_draft()  # start a workflow submitted with is_draft=True
 ```
 
 ---
 
 ## Workflow Submission Functions
 
+### Molecule input
+
+Anywhere a function takes `initial_molecule`, you may pass a SMILES `str`, an `stjames.Molecule`, or an RDKit `Chem.Mol`/`RWMol` — the library converts for you. (Some functions, e.g. `submit_macropka_workflow`, take `initial_smiles` instead.)
+
 ### Generic Submission
 
 ```python
 rowan.submit_workflow(
-    name: str,                      # Workflow name
-    initial_molecule: Molecule,     # stjames.Molecule object
-    workflow_type: str,             # e.g., "pka", "optimization", "conformer_search"
-    workflow_data: dict = {},       # Workflow-specific parameters
-    folder_uuid: str = None,        # Optional folder
-    max_credits: float = None       # Credit limit
+    workflow_type: str,             # one of the supported types, e.g. "pka", "docking", "conformer_search"
+    workflow_data: dict | None = None,  # workflow-specific parameters
+    initial_molecule: MoleculeInput | None = None,  # SMILES / stjames.Molecule / RDKit Mol
+    initial_smiles: str | None = None,
+    name: str | None = None,
+    folder_uuid: str | Folder | None = None,
+    max_credits: int | None = None,
+    webhook_url: str | None = None,
+    is_draft: bool = False,
 ) -> Workflow
 ```
 
 ### Specialized Submission Functions
 
-All functions return a `Workflow` object.
+All functions return a `Workflow` object. All accept `initial_molecule` as SMILES/stjames/RDKit, plus the common `name`, `folder_uuid`/`folder`, `max_credits` (int), `webhook_url`, and `is_draft` parameters (omitted below for brevity).
 
 #### Property Prediction
 
 ```python
-# pKa calculation
+# pKa calculation (micro-pKa)
 rowan.submit_pka_workflow(
-    initial_molecule: Molecule,
-    name: str = None,
-    folder_uuid: str = None,
-    max_credits: float = None
+    initial_molecule,                # SMILES / stjames / RDKit
+    pka_range: tuple = (2, 12),
+    method: str = "aimnet2_wagen2024",   # also: "gxtb_wagen2026", "chemprop_nevolianis2025", "starling"
+    solvent: str | None = "water",
 )
 
-# Redox potential
-rowan.submit_redox_potential_workflow(
-    initial_molecule: Molecule,
-    name: str = None,
-    folder_uuid: str = None,
-    max_credits: float = None
+# Macroscopic pKa (microstates, pI, logD/solubility vs pH)
+rowan.submit_macropka_workflow(
+    initial_smiles,                  # NOTE: takes initial_smiles
+    min_pH: int = 0, max_pH: int = 14,
+    min_charge: int = -2, max_charge: int = 2,
+    compute_aqueous_solubility: bool = True,
 )
 
-# Solubility prediction
-rowan.submit_solubility_workflow(
-    initial_molecule: Molecule,
-    name: str = None,
-    folder_uuid: str = None,
-    max_credits: float = None
-)
-
-# Fukui indices (reactivity)
-rowan.submit_fukui_workflow(
-    initial_molecule: Molecule,
-    name: str = None,
-    folder_uuid: str = None,
-    max_credits: float = None
-)
+rowan.submit_redox_potential_workflow(initial_molecule, ...)
+rowan.submit_solubility_workflow(initial_molecule, ...)
+rowan.submit_fukui_workflow(initial_molecule, ...)
 
 # Bond dissociation energy
-rowan.submit_bde_workflow(
-    initial_molecule: Molecule,
-    bond_indices: tuple,  # (atom1_idx, atom2_idx)
-    name: str = None,
-    folder_uuid: str = None,
-    max_credits: float = None
-)
+rowan.submit_bde_workflow(initial_molecule, ...)  # see workflow_types.md for bond-selection params
 ```
 
 #### Molecular Modeling
 
 ```python
-# Geometry optimization
+# Basic calculation: task-driven (NOT a workflow_type string)
 rowan.submit_basic_calculation_workflow(
-    initial_molecule: Molecule,
-    workflow_type: str = "optimization",  # or "single_point", "frequency"
-    name: str = None,
-    folder_uuid: str = None,
-    max_credits: float = None
+    initial_molecule,
+    tasks: list[str],                # e.g. ["optimize"], ["energy"], ["optimize", "frequencies"]
+    method: str | None = None,       # e.g. "aimnet2_wb97md3", "gfn2_xtb"
+    basis_set: str | None = None,    # for DFT
+    preset: str | None = None,       # "general_nnp" | "organic_nnp" | "rapid_semiempirical" | "routine_dft" | "careful_dft"
 )
 
-# Conformer search
 rowan.submit_conformer_search_workflow(
-    initial_molecule: Molecule,
-    name: str = None,
-    folder_uuid: str = None,
-    max_credits: float = None
+    initial_molecule,
+    final_method: str = "aimnet2_wb97md3",
+    transition_state: bool = False,
 )
 
-# Tautomer search
-rowan.submit_tautomer_search_workflow(
-    initial_molecule: Molecule,
-    name: str = None,
-    folder_uuid: str = None,
-    max_credits: float = None
-)
+rowan.submit_tautomer_search_workflow(initial_molecule, ...)
 
-# Dihedral scan
-rowan.submit_dihedral_scan_workflow(
-    initial_molecule: Molecule,
-    dihedral_indices: tuple,  # (a1, a2, a3, a4)
-    name: str = None,
-    folder_uuid: str = None,
-    max_credits: float = None
-)
+# Coordinate / dihedral scan
+rowan.submit_scan_workflow(initial_molecule, ...)  # scan settings in workflow_data; see workflow_types.md
 
-# Transition state search
-rowan.submit_ts_search_workflow(
-    initial_molecule: Molecule,  # Starting guess
-    name: str = None,
-    folder_uuid: str = None,
-    max_credits: float = None
-)
+# Transition-state search (double-ended / FSM)
+rowan.submit_double_ended_ts_search_workflow(initial_molecule, ...)
+# Intrinsic reaction coordinate
+rowan.submit_irc_workflow(initial_molecule, ...)
 ```
+
+> There is no `submit_ts_search_workflow` or `submit_dihedral_scan_workflow` in v3 — use `submit_double_ended_ts_search_workflow` and `submit_scan_workflow`.
 
 #### Protein-Ligand Workflows
 
 ```python
-# Docking
+# Docking — pocket is [[center], [size]], a list of two 3-vectors (Å)
 rowan.submit_docking_workflow(
-    protein: str,                   # Protein UUID
-    pocket: dict,                   # {"center": [x,y,z], "size": [dx,dy,dz]}
-    initial_molecule: Molecule,
-    executable: str = "vina",       # "vina" or "qvina2"
-    scoring_function: str = "vinardo",
-    exhaustiveness: int = 8,
-    do_csearch: bool = True,
-    do_optimization: bool = True,
+    protein: str | Protein,          # UUID or Protein object
+    pocket: list[list[float]],       # [[cx, cy, cz], [sx, sy, sz]]
+    initial_molecule,
+    executable: str = "vina",        # "vina" or "qvina2"
+    scoring_function: str = "vinardo",  # "vina" or "vinardo"
+    exhaustiveness: float = 8,
+    do_csearch: bool = False,
+    do_optimization: bool = False,
     do_pose_refinement: bool = True,
-    name: str = None,
-    folder_uuid: str = None,
-    max_credits: float = None
 )
 
-# Batch docking
+# Batch docking — note argument order: smiles_list, protein, pocket
 rowan.submit_batch_docking_workflow(
-    protein: str,
-    pocket: dict,
-    smiles_list: list,              # List of SMILES strings
+    smiles_list: list[str],
+    protein: str | Protein,
+    pocket: list[list[float]],
     executable: str = "qvina2",
     scoring_function: str = "vina",
-    name: str = None,
-    folder_uuid: str = None,
-    max_credits: float = None
+    exhaustiveness: float = 8,
 )
 
 # Protein cofolding
 rowan.submit_protein_cofolding_workflow(
-    initial_protein_sequences: list,  # List of amino acid sequences
-    initial_smiles_list: list = None, # Optional ligand SMILES
-    ligand_binding_affinity_index: int = None,
-    use_msa_server: bool = False,
-    use_potentials: bool = True,
+    initial_protein_sequences: list[str] | None = None,
+    initial_dna_sequences: list[str] | None = None,
+    initial_rna_sequences: list[str] | None = None,
+    initial_smiles_list: list[str] | None = None,
+    ligand_binding_affinity_index: int | None = None,
+    use_msa_server: bool = True,
+    use_potentials: bool = False,
+    num_samples: int | None = None,
     compute_strain: bool = False,
     do_pose_refinement: bool = False,
-    model: str = "boltz_2",         # "boltz_1x", "boltz_2", "chai_1r"
-    name: str = None,
-    folder_uuid: str = None,
-    max_credits: float = None
+    model: str = "boltz_2",          # "chai_1r" | "boltz_1" | "boltz_2" | "openfold_3"
 )
 ```
 
 #### Spectroscopy & Analysis
 
 ```python
-# NMR prediction
-rowan.submit_nmr_workflow(
-    initial_molecule: Molecule,
-    name: str = None,
-    folder_uuid: str = None,
-    max_credits: float = None
-)
-
-# Ion mobility (collision cross-section)
-rowan.submit_ion_mobility_workflow(
-    initial_molecule: Molecule,
-    name: str = None,
-    folder_uuid: str = None,
-    max_credits: float = None
-)
-
-# Molecular descriptors
-rowan.submit_descriptors_workflow(
-    initial_molecule: Molecule,
-    name: str = None,
-    folder_uuid: str = None,
-    max_credits: float = None
-)
+rowan.submit_nmr_workflow(initial_molecule, ...)            # NMR shifts
+rowan.submit_ion_mobility_workflow(initial_molecule, ...)   # collision cross-section
+rowan.submit_descriptors_workflow(initial_molecule, ...)    # molecular descriptors
 ```
 
 ---
@@ -279,13 +233,14 @@ workflows = rowan.retrieve_workflows(uuids: list) -> list[Workflow]
 
 # List workflows with filtering
 workflows = rowan.list_workflows(
-    name: str = None,           # Filter by name (partial match)
-    status: str = None,         # "pending", "running", "completed", "failed"
+    parent_uuid: str = None,    # Filter by folder
+    name_contains: str = None,  # Filter by name (substring)
+    status: int = None,         # stjames.Status int value (e.g. 2 == COMPLETED_OK)
     workflow_type: str = None,  # e.g., "pka", "docking"
-    starred: bool = None,       # Filter by starred status
-    folder_uuid: str = None,    # Filter by folder
-    page: int = 1,              # Pagination
-    size: int = 20              # Results per page
+    starred: bool = None,
+    public: bool = None,
+    page: int = 0,              # 0-indexed pagination
+    size: int = 10              # Results per page
 ) -> list[Workflow]
 ```
 
@@ -294,19 +249,21 @@ workflows = rowan.list_workflows(
 ## Batch Operations
 
 ```python
-# Submit multiple workflows at once
+# Submit multiple workflows of one type at once
 workflows = rowan.batch_submit_workflow(
-    molecules: list,            # List of stjames.Molecule objects
-    workflow_type: str,         # Workflow type for all
-    workflow_data: dict = {},
-    folder_uuid: str = None,
-    max_credits: float = None
+    workflow_type: str,                 # workflow type for all
+    workflow_data: dict | None = None,
+    initial_molecules: list | None = None,   # stjames.Molecule / RDKit / SMILES
+    initial_smileses: list[str] | None = None,
+    names: list[str] | None = None,
+    folder_uuid: str | Folder | None = None,
+    max_credits: int | None = None,
 ) -> list[Workflow]
 
-# Poll status of multiple workflows
+# Poll status of multiple workflows (non-blocking)
 statuses = rowan.batch_poll_status(
     uuids: list                 # List of workflow UUIDs
-) -> dict                       # {uuid: status}
+) -> list[dict]                 # one dict per workflow (includes uuid + status)
 ```
 
 ---
@@ -324,13 +281,12 @@ mol = rowan.smiles_to_stjames(smiles: str) -> Molecule
 # Get API key from environment
 api_key = rowan.get_api_key() -> str
 
-# Low-level API client
-client = rowan.api_client() -> httpx.Client
-
-# Molecule name lookup
-smiles = rowan.molecule_lookup(name: str) -> str
-# e.g., rowan.molecule_lookup("aspirin") -> "CC(=O)Oc1ccccc1C(=O)O"
+# Low-level API client (context manager wrapping httpx)
+with rowan.api_client() as client:
+    ...
 ```
+
+> There is no `rowan.molecule_lookup` (name -> SMILES) in v3. Resolve names to SMILES with an external tool (e.g. RDKit, PubChem) before submitting.
 
 ---
 
@@ -355,17 +311,20 @@ Returned by `rowan.whoami()`.
 
 ## Error Handling
 
+The library raises `rowan.WorkflowError` when you request the result of a failed/stopped workflow, and `requests.HTTPError` on transport/auth/validation failures from the API. (There are no `RowanAPIError` / `AuthenticationError` / `RateLimitError` classes.)
+
 ```python
 import rowan
+import requests
 
 try:
-    workflow = rowan.submit_pka_workflow(mol, name="test")
-except rowan.RowanAPIError as e:
-    print(f"API error: {e}")
-except rowan.AuthenticationError as e:
-    print(f"Authentication failed: {e}")
-except rowan.RateLimitError as e:
-    print(f"Rate limited, retry after: {e.retry_after}")
+    workflow = rowan.submit_pka_workflow("c1ccccc1O", name="test")
+    result = workflow.result()        # raises WorkflowError if it failed/stopped
+    print(result.strongest_acid)
+except rowan.WorkflowError as e:
+    print(f"Workflow failed: {e}")    # inspect workflow.logfile for details
+except requests.HTTPError as e:
+    print(f"API error: {e}")          # bad key, invalid input, etc.
 ```
 
 ---
@@ -378,20 +337,18 @@ except rowan.RateLimitError as e:
 import rowan
 import time
 
-workflows = [rowan.submit_pka_workflow(mol) for mol in molecules]
+workflows = [rowan.submit_pka_workflow(smi) for smi in smiles_list]
 
-# Poll until all complete
-while True:
-    statuses = rowan.batch_poll_status([wf.uuid for wf in workflows])
-    if all(s in ["completed", "failed"] for s in statuses.values()):
-        break
+# Poll until all finished (non-blocking)
+while not all(wf.done() for wf in workflows):
     time.sleep(10)
 
-# Fetch results
+# Collect results
 for wf in workflows:
-    wf.fetch_latest(in_place=True)
-    if wf.status == "completed":
-        print(wf.data)
+    try:
+        print(wf.result(wait=False).strongest_acid)
+    except rowan.WorkflowError as e:
+        print(f"{wf.name}: {e}")
 ```
 
 ### Organizing Workflows in Folders
@@ -399,15 +356,16 @@ for wf in workflows:
 ```python
 import rowan
 
-# Create project structure
-project = rowan.create_project("Drug Discovery")
-lead_folder = rowan.create_folder("Lead Compounds", project_uuid=project.uuid)
-backup_folder = rowan.create_folder("Backup Series", project_uuid=project.uuid)
+# Top-level folder + subfolder
+project = rowan.create_folder("Drug Discovery")
+lead_folder = rowan.create_folder("Lead Compounds", parent_uuid=project.uuid)
 
-# Submit to specific folder
+# Submit to a specific folder
 workflow = rowan.submit_pka_workflow(
-    mol,
+    "c1ccccc1O",
     name="Lead 1 pKa",
-    folder_uuid=lead_folder.uuid
+    folder=lead_folder,          # or folder_uuid=lead_folder.uuid
 )
 ```
+
+> `rowan.create_project(name)` exists for top-level projects, but `create_folder` does not accept a `project_uuid` argument — nest folders with `parent_uuid`.

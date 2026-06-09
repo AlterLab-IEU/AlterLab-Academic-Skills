@@ -54,6 +54,9 @@ def run_velocity_analysis(
 
     # ── Settings ──────────────────────────────────────────────────────────────
     scv.settings.verbosity = 2
+    # NOTE: scVelo prepends settings.figdir (and a plot-type prefix) to whatever
+    # you pass in save=. So pass BARE filenames to save= below — do NOT prefix
+    # them with output_dir again, or you get a doubly-nested path.
     scv.settings.figdir = output_dir
 
     # ── Step 1: Check layers ───────────────────────────────────────────────────
@@ -99,7 +102,7 @@ def run_velocity_analysis(
         basis="umap",
         color=groupby,
         title="RNA Velocity",
-        save=f"{output_dir}/velocity_stream.png",
+        save="velocity_stream.png",
     )
 
     # Arrow plot
@@ -109,7 +112,7 @@ def run_velocity_analysis(
         arrow_size=2,
         color=groupby,
         basis="umap",
-        save=f"{output_dir}/velocity_arrows.png",
+        save="velocity_arrows.png",
     )
 
     # Pseudotime
@@ -118,7 +121,7 @@ def run_velocity_analysis(
         color="velocity_pseudotime",
         cmap="gnuplot",
         title="Velocity Pseudotime",
-        save=f"{output_dir}/pseudotime.png",
+        save="pseudotime.png",
     )
 
     if mode == "dynamical" and "latent_time" in adata.obs:
@@ -127,7 +130,7 @@ def run_velocity_analysis(
             color="latent_time",
             color_map="gnuplot",
             title="Latent Time",
-            save=f"{output_dir}/latent_time.png",
+            save="latent_time.png",
         )
 
     # Speed and coherence
@@ -136,7 +139,7 @@ def run_velocity_analysis(
         c=["velocity_length", "velocity_confidence"],
         cmap="coolwarm",
         perc=[5, 95],
-        save=f"{output_dir}/velocity_quality.png",
+        save="velocity_quality.png",
     )
 
     # Top driver genes heatmap (dynamical only)
@@ -148,7 +151,7 @@ def run_velocity_analysis(
             sortby="latent_time",
             col_color=groupby,
             n_convolve=50,
-            save=f"{output_dir}/driver_gene_heatmap.png",
+            save="driver_gene_heatmap.png",
         )
 
     # ── Step 6: Save results ───────────────────────────────────────────────────

@@ -37,69 +37,54 @@ adata = anndata.AnnData(X=matrix.T, obs=barcodes, var=peaks)
 adata.write('scatac_data.h5ad')
 ```
 
-### Step 2: Pre-tokenization
+### Step 2: Build the model with a universe tokenizer
 
-Convert genomic regions into tokens using gtars utilities. This creates a parquet file with tokenized cells for faster training:
+scEmbed tokenizes against a universe using a `gtars` `Tokenizer`. There is no `geniml.io.tokenize_cells` function — pass the tokenizer (or universe path) directly to `ScEmbed`. Pre-tokenized cells are supplied to training as a `Region2VecDataset` over a parquet of `.gtok` tokens:
 
 ```python
-from geniml.io import tokenize_cells
+from geniml.scembed.main import ScEmbed
+from geniml.region2vec.utils import Region2VecDataset
+from gtars.tokenizers import Tokenizer
 
-tokenize_cells(
-    adata='scatac_data.h5ad',
-    universe_file='universe.bed',
-    output='tokenized_cells.parquet'
-)
+# Bind the model to a universe tokenizer
+model = ScEmbed(tokenizer=Tokenizer('universe.bed'))
 ```
 
-**Benefits of pre-tokenization:**
-- Faster training iterations
-- Reduced memory requirements
-- Reusable tokenized data for multiple training runs
+**Why pre-tokenize:** faster iterations, lower memory, and reusable token data across runs.
 
 ### Step 3: Model Training
 
-Train the scEmbed model using tokenized data:
+Train on the tokenized dataset. Note the **verified** `train` signature — there is no `batch_size`, `learning_rate`, or `negative_samples` argument; gensim hyper-parameters (including embedding size via `vector_size` and `negative`) are passed through `gensim_params`:
 
 ```python
-from geniml.scembed import ScEmbed
-from geniml.region2vec import Region2VecDataset
-
-# Load tokenized dataset
-dataset = Region2VecDataset('tokenized_cells.parquet')
-
-# Initialize and train model
-model = ScEmbed(
-    embedding_dim=100,
-    window_size=5,
-    negative_samples=5
-)
+# train(dataset, window_size=5, epochs=10, min_count=10, num_cpus=1,
+#       seed=42, save_checkpoint_path=None, gensim_params={}, load_from_checkpoint=None)
+dataset = Region2VecDataset('tokenized_cells.parquet', convert_to_str=True)
 
 model.train(
-    dataset=dataset,
+    dataset,
     epochs=100,
-    batch_size=256,
-    learning_rate=0.025
+    window_size=5,
+    min_count=1,
+    gensim_params={'vector_size': 100, 'negative': 5},
 )
 
-# Save model
-model.save('scembed_model/')
+# Save / export the trained model (writes checkpoint.pt, config.yaml, universe.bed)
+model.export('scembed_model/')
 ```
 
 ### Step 4: Generate Cell Embeddings
 
-Use the trained model to generate embeddings for cells:
+Use the trained model to generate embeddings. `from_pretrained` reads an exported folder; the positional `ScEmbed("<hf-repo>")` form loads a Hugging Face model:
 
 ```python
-from geniml.scembed import ScEmbed
+from geniml.scembed.main import ScEmbed
 
-# Load trained model
+# From a local export folder
 model = ScEmbed.from_pretrained('scembed_model/')
 
-# Generate embeddings for AnnData object
-embeddings = model.encode(adata)
-
-# Add to AnnData for downstream analysis
-adata.obsm['scembed_X'] = embeddings
+# encode(regions, pooling=None) -> np.ndarray; pooling is 'mean' or 'max'
+adata.obsm['scembed_X'] = model.encode(adata, pooling='mean')
 ```
 
 ### Step 5: Downstream Analysis
@@ -126,32 +111,32 @@ sc.pl.umap(adata, color='leiden')
 
 ### Training Parameters
 
-| Parameter | Description | Typical Range |
-|-----------|-------------|---------------|
-| `embedding_dim` | Dimension of cell embeddings | 50 - 200 |
-| `window_size` | Context window for training | 3 - 10 |
-| `negative_samples` | Number of negative samples | 5 - 20 |
-| `epochs` | Training epochs | 50 - 200 |
-| `batch_size` | Training batch size | 128 - 512 |
-| `learning_rate` | Initial learning rate | 0.01 - 0.05 |
+`ScEmbed.train` accepts these directly: `window_size`, `epochs`, `min_count`, `num_cpus`, `seed`. Word2vec hyper-parameters go through `gensim_params` (e.g. `vector_size` for embedding dimension, `negative` for negative samples).
 
-### Tokenization Parameters
+| Parameter | Where | Description | Typical Range |
+|-----------|-------|-------------|---------------|
+| `epochs` | `train(...)` | Training epochs | 50 - 200 |
+| `window_size` | `train(...)` | Context window | 3 - 10 |
+| `min_count` | `train(...)` | Min token frequency to keep | 1 - 10 |
+| `vector_size` | `gensim_params` | Cell embedding dimension | 50 - 200 |
+| `negative` | `gensim_params` | Negative samples | 5 - 20 |
 
-- **Universe file**: Reference BED file defining the genomic vocabulary
-- **Overlap threshold**: Minimum overlap for peak-universe matching (typically 1e-9)
+### Tokenization
+
+- **Universe file**: reference BED defining the genomic vocabulary; passed as the `gtars` `Tokenizer` the model is built with.
 
 ## Pre-trained Models
 
-Pre-trained scEmbed models are available on Hugging Face for common reference datasets. Load them using:
+Pre-trained region2vec/scEmbed models are published on Hugging Face under the `databio` organization. Pass the repo id positionally to load it from the Hub (this sets `model_path` and marks the model trained):
 
 ```python
-from geniml.scembed import ScEmbed
+from geniml.scembed.main import ScEmbed
 
-# Load pre-trained model
-model = ScEmbed.from_pretrained('databio/scembed-pbmc-10k')
+# Positional arg = Hugging Face repo id (browse the `databio` org for the right one
+# for your assembly/reference, e.g. an hg38 ChIP-atlas region2vec model)
+model = ScEmbed('databio/r2v-ChIP-atlas-hg38-v2')
 
-# Generate embeddings
-embeddings = model.encode(adata)
+embeddings = model.encode(adata, pooling='mean')
 ```
 
 ## Best Practices
@@ -172,21 +157,7 @@ The 10x Genomics PBMC 10k dataset (10,000 peripheral blood mononuclear cells) se
 
 ## Cell-Type Annotation
 
-After clustering, annotate cell types using k-nearest neighbors (KNN) with reference datasets:
-
-```python
-from geniml.scembed import annotate_celltypes
-
-# Annotate using reference
-annotations = annotate_celltypes(
-    query_adata=adata,
-    reference_adata=reference,
-    embedding_key='scembed_X',
-    k=10
-)
-
-adata.obs['cell_type'] = annotations
-```
+After clustering, annotate cell types by transferring labels in the embedding space — e.g. a standard scikit-learn KNN classifier trained on a reference's `adata.obsm['scembed_X']` and applied to the query's embeddings, or scanpy's `sc.tl.ingest`. (geniml ships annotation helpers under `geniml.scembed.annotation`; check that module's current API before relying on a specific function name.)
 
 ## Output
 

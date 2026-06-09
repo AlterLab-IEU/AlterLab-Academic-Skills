@@ -30,7 +30,7 @@ Median TPM expression for a gene across tissues.
 
 **Parameters:** `gencodeId`, `datasetId`, `itemsPerPage`
 
-**Response fields:**
+**Response fields** (no display-name column — only `tissueSiteDetailId`):
 ```json
 {
   "data": [
@@ -38,8 +38,7 @@ Median TPM expression for a gene across tissues.
       "gencodeId": "ENSG00000130203.10",
       "geneSymbol": "APOE",
       "tissueSiteDetailId": "Liver",
-      "tissueSiteDetail": "Liver",
-      "median": 2847.9,
+      "median": 3687.51,
       "unit": "TPM",
       "datasetId": "gtex_v10"
     }
@@ -64,21 +63,20 @@ Significant single-tissue cis-eQTLs.
 
 **Parameters:** `gencodeId` OR `variantId`, `tissueSiteDetailId` (optional), `datasetId`
 
-**Response fields:**
+**Response fields** (verified against gtex_v10):
 ```json
 {
   "data": [
     {
-      "gencodeId": "ENSG00000169174.14",
+      "gencodeId": "ENSG00000169174.11",
       "geneSymbol": "PCSK9",
-      "variantId": "chr1_55516888_G_GA_b38",
-      "snpId": "rs72646508",
-      "tissueSiteDetailId": "Liver",
-      "slope": -0.342,
-      "slopeStandardError": 0.051,
-      "pval": 3.2e-11,
-      "qval": 2.1e-8,
-      "maf": 0.089,
+      "variantId": "chr1_55057688_A_G_b38",
+      "snpId": "rs533375",
+      "pos": 55057688,
+      "chromosome": "chr1",
+      "tissueSiteDetailId": "Esophagus_Muscularis",
+      "nes": 0.227,
+      "pValue": 6.1e-05,
       "datasetId": "gtex_v10"
     }
   ]
@@ -86,16 +84,15 @@ Significant single-tissue cis-eQTLs.
 ```
 
 **Key fields:**
-- `slope`: effect of alt allele on expression (log2 scale after rank normalization)
-- `pval`: nominal p-value
-- `qval`: FDR-adjusted q-value
-- `maf`: minor allele frequency in the GTEx cohort
+- `nes`: normalized effect size of the alt allele (positive = higher expression with alt); this replaces the older `slope` field name
+- `pValue`: nominal p-value (camelCase — not `pval`)
+- The single-tissue endpoint returns only pairs already significant at FDR < 0.05; it does **not** carry per-row `qval`, `maf`, or `slopeStandardError`. For the gene-level q-value use `/association/egene` (`qValue`).
 
 #### `GET /association/singleTissueSqtl`
 
 Significant single-tissue sQTLs (splicing).
 
-**Parameters:** Same as eQTL endpoint
+**Parameters:** Same as eQTL endpoint. **Response** mirrors the eQTL fields (`nes`, `pValue`, `variantId`, `snpId`) and adds `phenotypeId` — the splice cluster/intron the variant affects (e.g. `chr1:55040044:55043843:clu_3551_+:ENSG00000169174.11`).
 
 #### `GET /association/egene`
 
@@ -103,7 +100,7 @@ All eGenes (genes with ≥1 significant eQTL) in a tissue.
 
 **Parameters:** `tissueSiteDetailId`, `datasetId`
 
-**Response fields:** gene ID, gene symbol, best eQTL variant, p-value, q-value
+**Response fields:** `gencodeId`, `geneSymbol`, `pValue`, `qValue`, `pValueThreshold`, `empiricalPValue`, `log2AllelicFoldChange` (per-gene gene-level statistics; this is where the FDR `qValue` lives).
 
 ### Dataset/Metadata Endpoints
 
@@ -121,9 +118,16 @@ List of all available tissues.
 
 #### `GET /reference/gene`
 
-Gene metadata from GENCODE.
+Gene metadata from GENCODE. Use this to resolve a symbol to the correct versioned `gencodeId` **for a given dataset** (the suffix differs per GENCODE release).
 
-**Parameters:** `geneSymbol` OR `gencodeId`, `referenceGenomeId` (GRCh38)
+**Parameters:** `geneId` (symbol or Ensembl ID), `gencodeVersion` (`v39` for gtex_v10, `v26` for gtex_v8), `genomeBuild` (`GRCh38/hg38`)
+
+```
+GET /reference/gene?geneId=PCSK9&gencodeVersion=v39&genomeBuild=GRCh38/hg38
+  -> gencodeId "ENSG00000169174.11" (v10);  v26 yields ".10" (v8)
+```
+
+**Key response fields:** `gencodeId`, `gencodeVersion`, `geneSymbol`, `chromosome`, `start`, `end`, `strand`, `tss`, `entrezGeneId`, `geneType`
 
 ### Variant Endpoints
 

@@ -22,7 +22,7 @@
     {
       "id": "esmc-embeddings-batch",
       "prompt": "I need fixed-length representation embeddings for a few thousand protein sequences to feed into a downstream classifier. What's the efficient way to do this with ESM?",
-      "expected_output": "Invokes alterlab-esm. Recommends the ESM C model family (e.g. ESMC.from_pretrained('esmc-300m')) for efficient embeddings, encoding each ESMProtein and running model.forward to extract representations, with batch processing and caching for throughput. Generating protein embeddings for downstream ML is an explicit ESM C use case.",
+      "expected_output": "Invokes alterlab-esm. Recommends the ESM C model family (e.g. ESMC.from_pretrained('esmc_300m')) for efficient embeddings, encoding each ESMProtein and extracting representations via model.logits(tensor, LogitsConfig(return_embeddings=True)).embeddings (NOT model.forward), with batch looping and caching for throughput. Generating protein embeddings for downstream ML is an explicit ESM C use case.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "ESM C" }

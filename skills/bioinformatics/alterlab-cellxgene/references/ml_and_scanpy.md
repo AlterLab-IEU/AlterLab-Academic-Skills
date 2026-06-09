@@ -4,56 +4,54 @@ Code patterns for training PyTorch models on Census data, integrating with scanp
 
 ## Machine Learning with PyTorch
 
-For training models, use the experimental PyTorch integration:
+The PyTorch integration now lives in the standalone **`tiledbsoma_ml`** package
+(`pip install tiledbsoma-ml`), NOT in `cellxgene_census.experimental.ml` — that
+prototype API has been superseded. Build an `ExperimentDataset` from an
+`axis_query`, then wrap it with `experiment_dataloader`:
 
 ```python
-from cellxgene_census.experimental.ml import experiment_dataloader
+import torch
+import tiledbsoma as soma
+from tiledbsoma_ml import ExperimentDataset, experiment_dataloader
 
-with cellxgene_census.open_soma() as census:
-    # Create dataloader
-    dataloader = experiment_dataloader(
-        census["census_data"]["homo_sapiens"],
+with cellxgene_census.open_soma(census_version="2023-07-25") as census:
+    experiment = census["census_data"]["homo_sapiens"]
+    with experiment.axis_query(
         measurement_name="RNA",
-        X_name="raw",
-        obs_value_filter="tissue_general == 'liver' and is_primary_data == True",
-        obs_column_names=["cell_type"],
-        batch_size=128,
-        shuffle=True,
-    )
+        obs_query=soma.AxisQuery(
+            value_filter="tissue_general == 'liver' and is_primary_data == True"
+        ),
+    ) as query:
+        dataset = ExperimentDataset(
+            query,
+            layer_name="raw",
+            obs_column_names=["cell_type"],
+            batch_size=128,
+            shuffle=True,
+            seed=42,
+        )
+        dataloader = experiment_dataloader(dataset)
 
-    # Training loop
-    for epoch in range(num_epochs):
-        for batch in dataloader:
-            X = batch["X"]  # Gene expression tensor
-            labels = batch["obs"]["cell_type"]  # Cell type labels
+        # Each batch is a (X, obs) tuple: X is a NumPy array, obs a pandas DataFrame.
+        for epoch in range(num_epochs):
+            for X_batch, obs_batch in dataloader:
+                X = torch.from_numpy(X_batch).float()
+                labels = label_encoder.transform(obs_batch["cell_type"])
 
-            # Forward pass
-            outputs = model(X)
-            loss = criterion(outputs, labels)
+                outputs = model(X)
+                loss = criterion(outputs, torch.from_numpy(labels))
 
-            # Backward pass
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 ```
 
-**Train/test splitting:**
+**Train/test splitting** — call `random_split` on the dataset (positional
+fractions, not `split=[...]`), then wrap each split:
 ```python
-from cellxgene_census.experimental.ml import ExperimentDataset
-
-# Create dataset from experiment
-dataset = ExperimentDataset(
-    experiment_axis_query,
-    layer_name="raw",
-    obs_column_names=["cell_type"],
-    batch_size=128,
-)
-
-# Split into train and test
-train_dataset, test_dataset = dataset.random_split(
-    split=[0.8, 0.2],
-    seed=42
-)
+train_dataset, test_dataset = dataset.random_split(0.8, 0.2, seed=42)
+train_loader = experiment_dataloader(train_dataset)
+test_loader = experiment_dataloader(test_dataset)
 ```
 
 ## Integration with Scanpy
@@ -86,26 +84,29 @@ sc.pl.umap(adata, color=["cell_type", "tissue", "disease"])
 
 ## Multi-Dataset Integration
 
-Query and integrate multiple datasets:
+Prefer a single query with an `in` filter (Strategy 2) — it pulls a consistent
+gene set in one pass. Only query separately and concatenate when you need to tag
+or transform each slice differently:
 
 ```python
-# Strategy 1: Query multiple tissues separately
+import anndata as ad
+
+# Strategy 1: Query multiple tissues separately, then concatenate
 tissues = ["lung", "liver", "kidney"]
 adatas = []
-
 for tissue in tissues:
-    adata = cellxgene_census.get_anndata(
+    a = cellxgene_census.get_anndata(
         census=census,
         organism="Homo sapiens",
         obs_value_filter=f"tissue_general == '{tissue}' and is_primary_data == True",
     )
-    adata.obs["tissue"] = tissue
-    adatas.append(adata)
+    adatas.append(a)
 
-# Concatenate
-combined = adatas[0].concatenate(adatas[1:])
+# Use anndata.concat (adata.concatenate() is deprecated). Inner join keeps
+# only genes shared across all slices.
+combined = ad.concat(adatas, join="inner", label="tissue", keys=tissues)
 
-# Strategy 2: Query multiple datasets directly
+# Strategy 2 (preferred): one query, multiple tissues
 adata = cellxgene_census.get_anndata(
     census=census,
     organism="Homo sapiens",
@@ -139,24 +140,24 @@ with cellxgene_census.open_soma() as census:
 
 ### Use Case 3: Train Cell Type Classifier
 ```python
-from cellxgene_census.experimental.ml import experiment_dataloader
+import tiledbsoma as soma
+from tiledbsoma_ml import ExperimentDataset, experiment_dataloader
 
-with cellxgene_census.open_soma() as census:
-    dataloader = experiment_dataloader(
-        census["census_data"]["homo_sapiens"],
+with cellxgene_census.open_soma(census_version="2023-07-25") as census:
+    experiment = census["census_data"]["homo_sapiens"]
+    with experiment.axis_query(
         measurement_name="RNA",
-        X_name="raw",
-        obs_value_filter="is_primary_data == True",
-        obs_column_names=["cell_type"],
-        batch_size=128,
-        shuffle=True,
-    )
-
-    # Train model
-    for epoch in range(epochs):
-        for batch in dataloader:
-            # Training logic
-            pass
+        obs_query=soma.AxisQuery(
+            value_filter="tissue_general == 'blood' and is_primary_data == True"
+        ),
+    ) as query:
+        dataset = ExperimentDataset(
+            query, layer_name="raw", obs_column_names=["cell_type"],
+            batch_size=128, shuffle=True, seed=42,
+        )
+        dataloader = experiment_dataloader(dataset)
+        for X_batch, obs_batch in dataloader:
+            ...  # Training logic
 ```
 
 ### Use Case 4: Cross-Tissue Analysis

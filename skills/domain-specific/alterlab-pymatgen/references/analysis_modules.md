@@ -377,13 +377,15 @@ results = runner.get_results()
 ```python
 from pymatgen.analysis.diffraction.xrd import XRDCalculator
 
-xrd = XRDCalculator()
+xrd = XRDCalculator(wavelength="CuKa")
 
 pattern = xrd.get_pattern(struct, two_theta_range=(0, 90))
 
-# Get peak data
-for peak in pattern.hkls:
-    print(f"2θ = {peak['2theta']:.2f}°, hkl = {peak['hkl']}, I = {peak['intensity']:.1f}")
+# Peak data lives in parallel attributes: pattern.x (2θ deg), pattern.y (intensity),
+# pattern.hkls[i] (list of hkl dicts for peak i), pattern.d_hkls (d-spacings).
+for two_theta, intensity, hkl_info in zip(pattern.x, pattern.y, pattern.hkls):
+    hkls = ", ".join(str(h["hkl"]) for h in hkl_info)
+    print(f"2θ = {two_theta:.2f}°, I = {intensity:.1f}, hkl = {hkls}")
 
 # Plot pattern
 pattern.plot()

@@ -1,211 +1,158 @@
 # Python API Reference
 
-Comprehensive reference for gtars Python bindings.
+Reference for the `gtars` Python bindings, verified against **v0.8**.
+
+> The public API lives in submodules, not flat on `gtars`:
+> `gtars.models` (intervals), `gtars.tokenizers`, `gtars.refget`, `gtars.utils`.
+> Method names below were confirmed by introspection on v0.8; confirm against your
+> installed version with `dir(...)` if a call is missing.
 
 ## Installation
 
 ```bash
-# Install gtars Python package
-uv pip install gtars
-
-# Or with pip
-pip install gtars
+uv pip install gtars        # or: uv add gtars
 ```
 
-## Core Classes
+## RegionSet
 
-### RegionSet
-
-Manage collections of genomic intervals:
+`RegionSet` (in `gtars.models`) holds a collection of genomic intervals. Construct it from a path to a BED file, or from parallel vectors / a list of `Region` objects.
 
 ```python
-import gtars
+from gtars.models import RegionSet, Region
 
-# Create from BED file
-regions = gtars.RegionSet.from_bed("regions.bed")
+# From a BED file (positional path argument)
+regions = RegionSet("regions.bed")
 
-# Create from coordinates
-regions = gtars.RegionSet([
-    ("chr1", 1000, 2000),
-    ("chr1", 3000, 4000),
-    ("chr2", 5000, 6000)
-])
+# From parallel vectors (starts/ends are 0-based, half-open)
+regions = RegionSet.from_vectors(
+    ["chr1", "chr1", "chr2"],
+    [1000, 3000, 5000],
+    [2000, 4000, 6000],
+)
 
-# Access regions
-for region in regions:
-    print(f"{region.chromosome}:{region.start}-{region.end}")
+# From a list of Region objects (Region signature: chr, start, end, rest)
+regions = RegionSet.from_regions(
+    [Region("chr1", 1000, 2000, None), Region("chr2", 5000, 6000, None)]
+)
 
-# Get region count
-num_regions = len(regions)
+# Length, iteration, identity
+n = len(regions)
+for r in regions:
+    print(r.chr, r.start, r.end, r.rest)
 
-# Get total coverage
-total_coverage = regions.total_coverage()
+print(regions.path)         # source path, if loaded from a file
+print(regions.identifier()) # content-based identifier (BEDbase-style digest)
+print(regions.is_empty())
 ```
 
-### Region Operations
+### Region
 
-Perform operations on region sets:
+A single interval. The constructor takes four positional args; the fourth (`rest`) holds any extra BED columns and may be `None`.
 
 ```python
-# Sort regions
-sorted_regions = regions.sort()
-
-# Merge overlapping regions
-merged = regions.merge()
-
-# Filter by size
-large_regions = regions.filter_by_size(min_size=1000)
-
-# Filter by chromosome
-chr1_regions = regions.filter_by_chromosome("chr1")
+r = Region("chr1", 1000, 2000, None)
+r.chr, r.start, r.end, r.rest
 ```
 
-### Set Operations
-
-Perform set operations on genomic regions:
+## Region operations
 
 ```python
-# Load two region sets
-set_a = gtars.RegionSet.from_bed("set_a.bed")
-set_b = gtars.RegionSet.from_bed("set_b.bed")
+regions.sort()                        # sorts IN PLACE, returns None
+merged = regions.reduce()             # new RegionSet: merge overlapping/adjacent
+disjoint = regions.disjoin()          # new RegionSet: split into non-overlapping pieces
+trimmed = regions.trim(chrom_sizes)   # clamp to chromosome bounds (needs chrom sizes)
 
-# Union
+widths = regions.widths()             # list of per-region widths
+mean_w = regions.mean_region_width()
+total_bp = regions.get_nucleotide_length()   # total covered base pairs
+stats = regions.chromosome_statistics()
+```
+
+> `sort()` mutates the set in place and returns `None` — do not write
+> `x = regions.sort()`.
+
+## Set operations
+
+All operate between two `RegionSet`s and return a new `RegionSet`.
+
+```python
+set_a = RegionSet("set_a.bed")
+set_b = RegionSet("set_b.bed")
+
 union = set_a.union(set_b)
-
-# Intersection
-intersection = set_a.intersect(set_b)
-
-# Difference
-difference = set_a.subtract(set_b)
-
-# Symmetric difference
-sym_diff = set_a.symmetric_difference(set_b)
+intersection = set_a.intersect_all(set_b)   # intersection of the two sets
+difference = set_a.subtract(set_b)          # A minus B (per-base)
+only_a = set_a.setdiff(set_b)               # regions of A with no B overlap
 ```
 
-## Data Export
-
-### Writing BED Files
-
-Export regions to BED format:
+## Overlap detection
 
 ```python
-# Write to BED file
-regions.to_bed("output.bed")
+set_a = RegionSet("regions_a.bed")
+set_b = RegionSet("regions_b.bed")
 
-# Write with scores
-regions.to_bed("output.bed", scores=score_array)
+# Per-region results, aligned to set_a's order:
+set_a.any_overlaps(set_b)     # -> [True, False, ...]
+set_a.count_overlaps(set_b)   # -> [1, 0, ...] overlap count per region
+set_a.find_overlaps(set_b)    # -> [[idx,...], [], ...] indices into set_b
 
-# Write with names
-regions.to_bed("output.bed", names=name_list)
+# Keep only regions of A that overlap B (the "filter overlapping" operation):
+overlapping_a = set_a.subset_by_overlaps(set_b)
+
+# Per-region intersection geometry:
+clipped = set_a.pintersect(set_b)
 ```
 
-### Format Conversion
-
-Convert between formats:
+## Similarity metrics
 
 ```python
-# BED to JSON
-regions = gtars.RegionSet.from_bed("input.bed")
-regions.to_json("output.json")
+set_a.jaccard(set_b)             # Jaccard index of the two interval sets
+set_a.overlap_coefficient(set_b) # overlap coefficient
+set_a.coverage(set_b)            # coverage fraction of set_a covered by set_b
 
-# JSON to BED
-regions = gtars.RegionSet.from_json("input.json")
-regions.to_bed("output.bed")
+# Total covered base pairs of a single set:
+set_a.get_nucleotide_length()
 ```
 
-## NumPy Integration
-
-Seamless integration with NumPy arrays:
+## Nearest-neighbour / distance
 
 ```python
-import numpy as np
-
-# Export to NumPy arrays
-starts = regions.starts_array()  # NumPy array of start positions
-ends = regions.ends_array()      # NumPy array of end positions
-sizes = regions.sizes_array()    # NumPy array of region sizes
-
-# Create from NumPy arrays
-chromosomes = ["chr1"] * len(starts)
-regions = gtars.RegionSet.from_arrays(chromosomes, starts, ends)
+set_a.closest(set_b)            # nearest region in B for each region in A
+set_a.nearest_neighbors(set_b)
+set_a.neighbor_distances(set_b)
 ```
 
-## Parallel Processing
-
-Leverage parallel processing for large datasets:
+## Export
 
 ```python
-# Enable parallel processing
-regions = gtars.RegionSet.from_bed("large_file.bed", parallel=True)
-
-# Parallel operations
-result = regions.parallel_apply(custom_function)
+regions.to_bed("output.bed")          # write BED
+regions.to_bed_gz("output.bed.gz")    # gzipped BED
+regions.to_bigbed("output.bb", "chrom.sizes")  # BigBed (needs chrom sizes)
 ```
 
-## Memory Management
+`RegionSet` also exposes `header()`, `strands()`, `region_widths()`,
+`get_max_end_per_chr()`, `promoters()`, `cluster()`, and `distribution()`.
+Use `dir(RegionSet)` to enumerate the full set for your version.
 
-Efficient memory usage for large datasets:
+## Working with many region sets
+
+`RegionSetList` (also in `gtars.models`) holds multiple `RegionSet`s for batch
+operations; `concat` joins region sets. See `dir(RegionSet)` / `dir(RegionSetList)`.
+
+## Tokens on disk
+
+`gtars.utils` reads/writes the `.gtok` binary token format used by the tokenizers:
 
 ```python
-# Stream large BED files
-for chunk in gtars.RegionSet.stream_bed("large_file.bed", chunk_size=10000):
-    process_chunk(chunk)
+from gtars.utils import write_tokens_to_gtok, read_tokens_from_gtok
 
-# Memory-mapped mode
-regions = gtars.RegionSet.from_bed("large_file.bed", mmap=True)
+write_tokens_to_gtok("regions.gtok", [0, 2, 5])
+ids = read_tokens_from_gtok("regions.gtok")
 ```
 
-## Error Handling
+## Performance tips
 
-Handle common errors:
-
-```python
-try:
-    regions = gtars.RegionSet.from_bed("file.bed")
-except gtars.FileNotFoundError:
-    print("File not found")
-except gtars.InvalidFormatError as e:
-    print(f"Invalid BED format: {e}")
-except gtars.ParseError as e:
-    print(f"Parse error at line {e.line}: {e.message}")
-```
-
-## Configuration
-
-Configure gtars behavior:
-
-```python
-# Set global options
-gtars.set_option("parallel.threads", 4)
-gtars.set_option("memory.limit", "4GB")
-gtars.set_option("warnings.strict", True)
-
-# Context manager for temporary options
-with gtars.option_context("parallel.threads", 8):
-    # Use 8 threads for this block
-    regions = gtars.RegionSet.from_bed("large_file.bed", parallel=True)
-```
-
-## Logging
-
-Enable logging for debugging:
-
-```python
-import logging
-
-# Enable gtars logging
-gtars.set_log_level("DEBUG")
-
-# Or use Python logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger("gtars")
-```
-
-## Performance Tips
-
-- Use parallel processing for large datasets
-- Enable memory-mapped mode for very large files
-- Stream data when possible to reduce memory usage
-- Pre-sort regions before operations when applicable
-- Use NumPy arrays for numerical computations
-- Cache frequently accessed data
+- Sort/`reduce` region sets before repeated overlap queries.
+- For repeated overlap queries against a large fixed database, build an IGD index
+  with the CLI (`gtars igd create`) rather than reloading BED files.
+- Coordinates are 0-based, half-open `[start, end)` throughout.

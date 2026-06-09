@@ -10,7 +10,7 @@ Comprehensive guide to chart types organized by category.
 import plotly.express as px
 fig = px.scatter(df, x='x', y='y', color='category', size='size')
 
-# With trendlines
+# With trendlines ('ols' and 'lowess' require statsmodels installed)
 fig = px.scatter(df, x='x', y='y', trendline='ols')
 ```
 
@@ -250,15 +250,16 @@ fig.update_xaxes(
 ### Scatter Maps
 
 ```python
-# Geographic projection
+# Geographic projection (globe/projection-based)
 fig = px.scatter_geo(df, lat='lat', lon='lon', color='value', size='size')
 
-# Mapbox (requires token for some styles)
-fig = px.scatter_mapbox(
+# Tile map (MapLibre). NOTE: the *_mapbox functions are deprecated since
+# Plotly 5.24 — use scatter_map / density_map / choropleth_map and map_style.
+fig = px.scatter_map(
     df, lat='lat', lon='lon',
     color='value',
     zoom=10,
-    mapbox_style='open-street-map'  # or 'carto-positron', 'carto-darkmatter'
+    map_style='open-street-map'  # or 'carto-positron', 'carto-darkmatter'
 )
 ```
 
@@ -287,11 +288,11 @@ fig = px.choropleth(
 ### Density Maps
 
 ```python
-fig = px.density_mapbox(
+fig = px.density_map(
     df, lat='lat', lon='lon', z='value',
     radius=10,
     zoom=10,
-    mapbox_style='open-street-map'
+    map_style='open-street-map'
 )
 ```
 
@@ -334,7 +335,7 @@ fig = go.Figure(data=[go.Mesh3d(
     k=k_indices,
     intensity=intensity_values,
     colorscale='Viridis'
-)]
+)])
 ```
 
 ### 3D Cone (Vector Field)
@@ -475,6 +476,7 @@ fig = create_annotated_heatmap(z_matrix, x=x_labels, y=y_labels)
 
 ```python
 # Typically built with scatter plot
+import numpy as np
 fig = px.scatter(
     df,
     x='log2_fold_change',

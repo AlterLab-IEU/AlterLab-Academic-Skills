@@ -28,6 +28,7 @@ def search_studies(
     sort: str = "LastUpdatePostDate:desc",
     page_size: int = 10,
     page_token: Optional[str] = None,
+    count_total: bool = True,
     format: str = "json"
 ) -> Dict:
     """
@@ -44,11 +45,15 @@ def search_studies(
         nct_ids: List of NCT IDs to filter by
         sort: Sort order (e.g., "LastUpdatePostDate:desc", "EnrollmentCount:desc")
         page_size: Number of results per page (default: 10, max: 1000)
-        page_token: Token for pagination (returned from previous query)
+        page_token: Token for pagination (use 'nextPageToken' from a prior response)
+        count_total: Request totalCount in the response (API omits it unless
+                     countTotal=true). Ignored for CSV format.
         format: Response format ("json" or "csv")
 
     Returns:
-        Dictionary containing search results with studies and metadata
+        Dictionary containing search results with studies and metadata.
+        When count_total is True, the JSON response includes 'totalCount'.
+        The pagination token, when present, is returned as 'nextPageToken'.
     """
     params = {}
 
@@ -78,6 +83,10 @@ def search_studies(
     params['pageSize'] = page_size
     if page_token:
         params['pageToken'] = page_token
+
+    # totalCount is omitted unless explicitly requested (JSON only)
+    if count_total and format == "json":
+        params['countTotal'] = 'true'
 
     # Set format
     params['format'] = format
@@ -148,7 +157,8 @@ def search_with_all_results(
             sponsor=sponsor,
             status=status,
             page_size=1000,  # Use max page size for efficiency
-            page_token=page_token
+            page_token=page_token,
+            count_total=False  # Not needed while paging; saves work server-side
         )
 
         studies = result.get('studies', [])
@@ -158,7 +168,7 @@ def search_with_all_results(
         if max_results and len(all_studies) >= max_results:
             return all_studies[:max_results]
 
-        # Check for next page
+        # Check for next page (the API returns 'nextPageToken', not 'pageToken')
         page_token = result.get('nextPageToken')
         if not page_token:
             break

@@ -34,14 +34,14 @@ This document provides guidance on calculating, interpreting, and reporting effe
 - In psychology: d = 0.40 is considered meaningful
 - In medicine: Small effect sizes can be clinically important
 
-**Python calculation**:
+**Python calculation** (pingouin >= 0.6 column names):
 ```python
 import pingouin as pg
 import numpy as np
 
 # Independent t-test with effect size
 result = pg.ttest(group1, group2, correction=False)
-cohens_d = result['cohen-d'].values[0]
+cohens_d = result['cohen_d'].values[0]
 
 # Manual calculation
 mean_diff = np.mean(group1) - np.mean(group2)
@@ -50,14 +50,16 @@ cohens_d = mean_diff / pooled_std
 
 # Paired t-test
 result = pg.ttest(pre, post, paired=True)
-cohens_d = result['cohen-d'].values[0]
+cohens_d = result['cohen_d'].values[0]
 ```
 
 **Confidence intervals for d**:
 ```python
-from pingouin import compute_effsize_from_t
+# From the effect size + group sizes (returns [lo, hi])
+ci = pg.compute_esci(stat=cohens_d, nx=n1, ny=n2, eftype='cohen')
 
-d, ci = compute_effsize_from_t(t_statistic, nx=n1, ny=n2, eftype='cohen')
+# Or derive d from a t-statistic (scalar in pingouin >= 0.6)
+d = pg.compute_effsize_from_t(t_statistic, nx=n1, ny=n2, eftype='cohen')
 ```
 
 ---
@@ -70,8 +72,9 @@ d, ci = compute_effsize_from_t(t_statistic, nx=n1, ny=n2, eftype='cohen')
 
 **Python calculation**:
 ```python
-result = pg.ttest(group1, group2, correction=False)
-hedges_g = result['hedges'].values[0]
+# pingouin >= 0.6 does not return a 'hedges' column from pg.ttest;
+# compute it directly with compute_effsize
+hedges_g = pg.compute_effsize(group1, group2, eftype='hedges')
 ```
 
 **Use Hedges' g when**:
@@ -111,13 +114,13 @@ hedges_g = result['hedges'].values[0]
 ```python
 import pingouin as pg
 
-# One-way ANOVA
-aov = pg.anova(dv='value', between='group', data=df)
+# One-way ANOVA (detailed=True is required for the SS columns)
+aov = pg.anova(dv='value', between='group', data=df, detailed=True)
 eta_squared = aov['SS'][0] / aov['SS'].sum()
 
-# Or use pingouin directly
-aov = pg.anova(dv='value', between='group', data=df, detailed=True)
-eta_squared = aov['np2'][0]  # Note: pingouin reports partial eta-squared
+# pingouin also reports partial eta-squared directly as 'np2'
+# (identical to eta-squared for a one-way design)
+partial_eta_squared = aov['np2'][0]
 ```
 
 ---
@@ -204,10 +207,10 @@ cohens_f = np.sqrt(eta_squared / (1 - eta_squared))
 ```python
 import pingouin as pg
 
-# Pearson correlation with CI
+# Pearson correlation with CI (pingouin >= 0.6: column is 'CI95', not 'CI95%')
 result = pg.corr(x, y, method='pearson')
 r = result['r'].values[0]
-ci = [result['CI95%'][0][0], result['CI95%'][0][1]]
+ci = result['CI95'].values[0]  # array([lo, hi])
 
 # Spearman correlation
 result = pg.corr(x, y, method='spearman')
@@ -285,7 +288,7 @@ beta = model.params
 
 **What it measures**: Effect size for individual predictors or model comparison
 
-**Formula**: f² = R²_AB - R²_A / (1 - R²_AB)
+**Formula**: f² = (R²_AB - R²_A) / (1 - R²_AB)
 
 Where:
 - R²_AB = R² for full model with predictor

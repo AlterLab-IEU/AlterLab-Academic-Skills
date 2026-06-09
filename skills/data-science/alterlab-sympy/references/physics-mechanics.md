@@ -217,16 +217,15 @@ anti.doit()
 ### Quantum Harmonic Oscillator
 
 ```python
-from sympy.physics.quantum.qho_1d import RaisingOp, LoweringOp, NumberOp
+from sympy.physics.quantum.sho1d import RaisingOp, LoweringOp, NumberOp, SHOKet
 
 # Creation and annihilation operators
 a_dag = RaisingOp('a')  # Creation operator
 a = LoweringOp('a')      # Annihilation operator
 N = NumberOp('N')        # Number operator
 
-# Number states
-from sympy.physics.quantum.qho_1d import Ket as QHOKet
-n = QHOKet('n')
+# Number state |n>
+n = SHOKet('n')
 ```
 
 ### Spin Systems

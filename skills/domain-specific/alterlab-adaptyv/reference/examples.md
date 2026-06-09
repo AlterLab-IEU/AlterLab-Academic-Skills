@@ -1,5 +1,10 @@
 # Code Examples
 
+> Prefer the official SDK (`github.com/adaptyvbio/adaptyv-sdk`, decorator-based
+> `@lab.experiment(target=...)`) when it fits. The raw-`requests` recipes below are for when
+> you need explicit control over the draft → quote → submit lifecycle. Response field names
+> shown here are illustrative — confirm against the live API / OpenAPI doc.
+
 ## Setup and Authentication
 
 ### Basic Setup
@@ -14,7 +19,7 @@ load_dotenv()
 
 # Configuration
 API_KEY = os.getenv("ADAPTYV_API_KEY")
-BASE_URL = "https://kq5jp7qj7wdqklhsxmovkzn4l40obksv.lambda-url.eu-central-1.on.aws"
+BASE_URL = "https://foundry-api-public.adaptyvbio.com/api/v1"
 
 # Standard headers
 HEADERS = {
@@ -23,12 +28,11 @@ HEADERS = {
 }
 
 def check_api_connection():
-    """Verify API connection and credentials"""
+    """Verify API connection and credentials by listing experiments."""
     try:
-        response = requests.get(f"{BASE_URL}/organization/credits", headers=HEADERS)
+        response = requests.get(f"{BASE_URL}/experiments", headers=HEADERS)
         response.raise_for_status()
         print("✓ API connection successful")
-        print(f"  Credits remaining: {response.json()['balance']}")
         return True
     except requests.exceptions.HTTPError as e:
         print(f"✗ API authentication failed: {e}")
@@ -49,157 +53,97 @@ uv pip install requests python-dotenv
 
 ## Experiment Submission
 
-### Submit Single Sequence
+Submission is two steps: create a **draft**, then **submit** it (after reviewing the cost
+quote). `sequences` is a `{label: amino_acid_string}` map; multi-chain constructs join chains
+with a colon (`"HEAVY:LIGHT"`).
+
+### Create a Draft Experiment
 
 ```python
-def submit_single_experiment(sequence, experiment_type="binding", target_id=None):
+def create_experiment(name, sequences_dict, experiment_type="affinity",
+                      method="bli", target_id=None, webhook_url=None):
     """
-    Submit a single protein sequence for testing
+    Create a DRAFT experiment (does not submit / charge).
 
     Args:
-        sequence: Amino acid sequence string
-        experiment_type: Type of experiment (binding, expression, thermostability, enzyme_activity)
-        target_id: Optional target identifier for binding assays
+        name: Human-readable experiment name.
+        sequences_dict: {label: amino_acid_string}. Multi-chain uses "HEAVY:LIGHT".
+        experiment_type: screening | affinity | thermostability | fluorescence | expression
+        method: bli | spr (binding-type assays only).
+        target_id: Target UUID from GET /targets (required for screening/affinity).
+        webhook_url: Optional callback URL for progress notifications.
 
     Returns:
-        Experiment ID and status
+        Created experiment dict (status == "draft").
     """
 
-    # Format as FASTA
-    fasta_content = f">protein_sequence\n{sequence}\n"
-
-    payload = {
-        "sequences": fasta_content,
-        "experiment_type": experiment_type
+    spec = {
+        "experiment_type": experiment_type,
+        "sequences": sequences_dict,
     }
+    if experiment_type in ("screening", "affinity"):
+        spec["method"] = method
+        spec["target_id"] = target_id
 
-    if target_id:
-        payload["target_id"] = target_id
+    payload = {"name": name, "experiment_spec": spec}
+    if webhook_url:
+        payload["webhook_url"] = webhook_url
 
-    response = requests.post(
-        f"{BASE_URL}/experiments",
-        headers=HEADERS,
-        json=payload
-    )
-
+    response = requests.post(f"{BASE_URL}/experiments", headers=HEADERS, json=payload)
     response.raise_for_status()
     result = response.json()
 
-    print(f"✓ Experiment submitted")
+    print("✓ Draft experiment created")
     print(f"  Experiment ID: {result['experiment_id']}")
-    print(f"  Status: {result['status']}")
-    print(f"  Estimated completion: {result['estimated_completion']}")
-
+    print(f"  Status: {result['status']}")  # 'draft'
     return result
 
-# Example usage
-sequence = "MKVLWAALLGLLGAAAAFPAVTSAVKPYKAAVSAAVSKPYKAAVSAAVSKPYK"
-experiment = submit_single_experiment(sequence, experiment_type="expression")
-```
 
-### Submit Multiple Sequences (Batch)
-
-```python
-def submit_batch_experiment(sequences_dict, experiment_type="binding", metadata=None):
-    """
-    Submit multiple protein sequences in a single batch
-
-    Args:
-        sequences_dict: Dictionary of {name: sequence}
-        experiment_type: Type of experiment
-        metadata: Optional dictionary of additional information
-
-    Returns:
-        Experiment details
-    """
-
-    # Format all sequences as FASTA
-    fasta_content = ""
-    for name, sequence in sequences_dict.items():
-        fasta_content += f">{name}\n{sequence}\n"
-
-    payload = {
-        "sequences": fasta_content,
-        "experiment_type": experiment_type
-    }
-
-    if metadata:
-        payload["metadata"] = metadata
-
+def submit_experiment(experiment_id):
+    """Submit a draft experiment to the lab (after reviewing its quote)."""
     response = requests.post(
-        f"{BASE_URL}/experiments",
-        headers=HEADERS,
-        json=payload
+        f"{BASE_URL}/experiments/{experiment_id}/submit", headers=HEADERS
     )
-
     response.raise_for_status()
-    result = response.json()
+    print(f"✓ Experiment {experiment_id} submitted")
+    return response.json()
 
-    print(f"✓ Batch experiment submitted")
-    print(f"  Experiment ID: {result['experiment_id']}")
-    print(f"  Sequences: {len(sequences_dict)}")
-    print(f"  Status: {result['status']}")
 
-    return result
-
-# Example usage
+# Example: a small affinity screen against a catalog target
 sequences = {
     "variant_1": "MKVLWAALLGLLGAAA...",
     "variant_2": "MKVLSAALLGLLGAAA...",
-    "variant_3": "MKVLAAALLGLLGAAA...",
-    "wildtype": "MKVLWAALLGLLGAAA..."
+    "wildtype":  "MKVLWAALLGLLGAAA...",
 }
-
-metadata = {
-    "project": "antibody_optimization",
-    "round": 3,
-    "notes": "Testing solubility-optimized variants"
-}
-
-experiment = submit_batch_experiment(sequences, "expression", metadata)
+draft = create_experiment(
+    name="affinity round 3",
+    sequences_dict=sequences,
+    experiment_type="affinity",
+    method="bli",
+    target_id="<uuid from GET /targets>",
+    webhook_url="https://your-server.com/adaptyv-webhook",
+)
+# review draft['costs'] / GET /experiments/{id}/quote, then:
+submit_experiment(draft["experiment_id"])
 ```
 
-### Submit with Webhook Notification
+### Cost Estimate Before Committing
 
 ```python
-def submit_with_webhook(sequences_dict, experiment_type, webhook_url):
-    """
-    Submit experiment with webhook for completion notification
-
-    Args:
-        sequences_dict: Dictionary of {name: sequence}
-        experiment_type: Type of experiment
-        webhook_url: URL to receive notification when complete
-    """
-
-    fasta_content = ""
-    for name, sequence in sequences_dict.items():
-        fasta_content += f">{name}\n{sequence}\n"
-
-    payload = {
-        "sequences": fasta_content,
-        "experiment_type": experiment_type,
-        "webhook_url": webhook_url
-    }
+def cost_estimate(sequences_dict, experiment_type, method=None, target_id=None):
+    """Get an estimated price for a spec without creating an experiment."""
+    spec = {"experiment_type": experiment_type, "sequences": sequences_dict}
+    if experiment_type in ("screening", "affinity"):
+        spec["method"] = method
+        spec["target_id"] = target_id
 
     response = requests.post(
-        f"{BASE_URL}/experiments",
+        f"{BASE_URL}/experiments/cost-estimate",
         headers=HEADERS,
-        json=payload
+        json={"experiment_spec": spec},
     )
-
     response.raise_for_status()
-    result = response.json()
-
-    print(f"✓ Experiment submitted with webhook")
-    print(f"  Experiment ID: {result['experiment_id']}")
-    print(f"  Webhook: {webhook_url}")
-
-    return result
-
-# Example
-webhook_url = "https://your-server.com/adaptyv-webhook"
-experiment = submit_with_webhook(sequences, "binding", webhook_url)
+    return response.json()  # USD cents, typically split into assay + material costs
 ```
 
 ## Tracking Experiments
@@ -227,18 +171,15 @@ def check_experiment_status(experiment_id):
     status = response.json()
 
     print(f"Experiment: {experiment_id}")
+    # Lifecycle state, e.g. Draft / InQueue / InProduction / DataAnalysis / Done
     print(f"  Status: {status['status']}")
-    print(f"  Created: {status['created_at']}")
-    print(f"  Updated: {status['updated_at']}")
-
-    if 'progress' in status:
-        print(f"  Progress: {status['progress']['percentage']}%")
-        print(f"  Current stage: {status['progress']['stage']}")
+    # How much result data is ready: none | partial | all
+    print(f"  Results: {status.get('results_status')}")
 
     return status
 
 # Example
-status = check_experiment_status("exp_abc123xyz")
+status = check_experiment_status("<experiment uuid>")
 ```
 
 ### List All Experiments
@@ -301,18 +242,15 @@ def wait_for_completion(experiment_id, check_interval=3600):
     while True:
         status = check_experiment_status(experiment_id)
 
-        if status['status'] == 'completed':
-            print("✓ Experiment completed!")
-            return status
-        elif status['status'] == 'failed':
-            print("✗ Experiment failed")
+        if status['status'] == 'Done':
+            print("✓ Experiment done!")
             return status
 
         print(f"  Status: {status['status']} - checking again in {check_interval}s")
         time.sleep(check_interval)
 
-# Example (not recommended - use webhooks instead!)
-# status = wait_for_completion("exp_abc123xyz", check_interval=3600)
+# Example (not recommended - use a webhook_url instead!)
+# status = wait_for_completion("<experiment uuid>", check_interval=3600)
 ```
 
 ## Retrieving Results
@@ -454,171 +392,89 @@ expression_df = parse_expression_results(results)
 
 ## Target Catalog
 
-### Search for Targets
+### Browse Targets
 
 ```python
-def search_targets(query, species=None, category=None):
+def search_targets(query=None):
     """
-    Search the antigen catalog
+    Browse the target antigen catalog (GET /targets).
 
-    Args:
-        query: Search term (protein name, UniProt ID, etc.)
-        species: Optional species filter
-        category: Optional category filter
-
-    Returns:
-        List of matching targets
+    Exact filter parameters and response field names vary - confirm against the
+    OpenAPI doc. Each target carries a target_id to use when creating a
+    screening/affinity experiment.
     """
+    params = {}
+    if query:
+        params["name"] = query  # filter by name; vendor / self-service filters also exist
 
-    params = {"search": query}
-    if species:
-        params["species"] = species
-    if category:
-        params["category"] = category
-
-    response = requests.get(
-        f"{BASE_URL}/targets",
-        headers=HEADERS,
-        params=params
-    )
-
+    response = requests.get(f"{BASE_URL}/targets", headers=HEADERS, params=params)
     response.raise_for_status()
-    targets = response.json()['targets']
-
-    print(f"Found {len(targets)} targets matching '{query}':")
-    for target in targets:
-        print(f"  {target['target_id']}: {target['name']}")
-        print(f"    Species: {target['species']}")
-        print(f"    Availability: {target['availability']}")
-        print(f"    Price: ${target['price_usd']}")
-
-    return targets
+    return response.json()
 
 # Example
-targets = search_targets("PD-L1", species="Homo sapiens")
+targets = search_targets("PD-L1")
 ```
 
-### Request Custom Target
-
-```python
-def request_custom_target(target_name, uniprot_id=None, species=None, notes=None):
-    """
-    Request a custom antigen not in the standard catalog
-
-    Args:
-        target_name: Name of the target protein
-        uniprot_id: Optional UniProt identifier
-        species: Species name
-        notes: Additional requirements or notes
-
-    Returns:
-        Request confirmation
-    """
-
-    payload = {
-        "target_name": target_name,
-        "species": species
-    }
-
-    if uniprot_id:
-        payload["uniprot_id"] = uniprot_id
-    if notes:
-        payload["notes"] = notes
-
-    response = requests.post(
-        f"{BASE_URL}/targets/request",
-        headers=HEADERS,
-        json=payload
-    )
-
-    response.raise_for_status()
-    result = response.json()
-
-    print(f"✓ Custom target request submitted")
-    print(f"  Request ID: {result['request_id']}")
-    print(f"  Status: {result['status']}")
-
-    return result
-
-# Example
-request = request_custom_target(
-    target_name="Novel receptor XYZ",
-    uniprot_id="P12345",
-    species="Mus musculus",
-    notes="Need high purity for structural studies"
-)
-```
+> Need an antigen that isn't in the catalog? Reach out via support@adaptyvbio.com — there is
+> no verified public "custom target request" endpoint; don't assume one.
 
 ## Complete Workflows
 
-### End-to-End Binding Assay
+### End-to-End Affinity Assay
 
 ```python
-def complete_binding_workflow(sequences_dict, target_id, project_name):
+def complete_affinity_workflow(sequences_dict, target_id, name):
     """
-    Complete workflow: submit sequences, track, and retrieve binding results
+    Create a draft affinity experiment and submit it. Results arrive later
+    (poll status or use a webhook), then download + parse.
 
     Args:
-        sequences_dict: Dictionary of {name: sequence}
-        target_id: Target identifier from catalog
-        project_name: Project name for metadata
-
-    Returns:
-        DataFrame with binding results
+        sequences_dict: {label: sequence}
+        target_id: Target UUID from the catalog
+        name: Experiment name
     """
 
-    print("=== Starting Binding Assay Workflow ===")
+    print("=== Starting Affinity Assay Workflow ===")
 
-    # Step 1: Submit experiment
-    print("\n1. Submitting experiment...")
-    metadata = {
-        "project": project_name,
-        "target": target_id
-    }
-
-    experiment = submit_batch_experiment(
-        sequences_dict,
-        experiment_type="binding",
-        metadata=metadata
+    # Step 1: Create the draft experiment
+    print("\n1. Creating draft experiment...")
+    experiment = create_experiment(
+        name=name,
+        sequences_dict=sequences_dict,
+        experiment_type="affinity",
+        method="bli",
+        target_id=target_id,
     )
 
     experiment_id = experiment['experiment_id']
 
-    # Step 2: Save experiment info
+    # Step 2: Save experiment info + review the quote, then submit
     print("\n2. Saving experiment details...")
     with open(f"{experiment_id}_info.json", 'w') as f:
         json.dump(experiment, f, indent=2)
 
-    print(f"✓ Experiment {experiment_id} submitted")
-    print("  Results will be available in ~21 days")
-    print("  Use webhook or poll status for updates")
+    # Inspect experiment['costs'] / GET /experiments/{id}/quote before this:
+    submit_experiment(experiment_id)
+    print("  Results arrive in weeks - poll status or use a webhook")
 
-    # Note: In practice, wait for completion before this step
-    # print("\n3. Waiting for completion...")
-    # status = wait_for_completion(experiment_id)
-
-    # print("\n4. Downloading results...")
+    # Later, once status == 'Done':
     # results = download_results(experiment_id)
-
-    # print("\n5. Parsing results...")
     # df = parse_binding_results(results)
-
     # return df
 
     return experiment_id
 
 # Example
 antibody_variants = {
-    "variant_1": "EVQLVESGGGLVQPGG...",
+    "variant_1": "EVQLVESGGGLVQPGG...",   # single-chain example; a Fab uses "HEAVY:LIGHT"
     "variant_2": "EVQLVESGGGLVQPGS...",
-    "variant_3": "EVQLVESGGGLVQPGA...",
-    "wildtype": "EVQLVESGGGLVQPGG..."
+    "wildtype":  "EVQLVESGGGLVQPGG...",
 }
 
-experiment_id = complete_binding_workflow(
+experiment_id = complete_affinity_workflow(
     antibody_variants,
-    target_id="tgt_pdl1_human",
-    project_name="antibody_affinity_maturation"
+    target_id="<PD-L1 target uuid from GET /targets>",
+    name="antibody_affinity_maturation",
 )
 ```
 
@@ -661,18 +517,13 @@ def optimization_and_testing_pipeline(initial_sequences, experiment_type="expres
     }
 
     # Step 3: Submit for experimental validation
-    print("\n3. Submitting to Adaptyv...")
-    metadata = {
-        "optimization_method": "computational_pipeline",
-        "initial_library_size": len(initial_sequences),
-        "computational_scores": [s['combined'] for s in top_candidates]
-    }
-
-    experiment = submit_batch_experiment(
-        sequences_to_test,
-        experiment_type=experiment_type,
-        metadata=metadata
+    print("\n3. Submitting to Adaptyv Foundry...")
+    experiment = create_experiment(
+        name="optimized library (computational prescreen)",
+        sequences_dict=sequences_to_test,
+        experiment_type=experiment_type,  # e.g. "expression" (no target needed)
     )
+    submit_experiment(experiment['experiment_id'])  # after reviewing the quote
 
     print(f"✓ Pipeline complete")
     print(f"  Experiment ID: {experiment['experiment_id']}")
@@ -716,7 +567,7 @@ def analyze_multiple_experiments(experiment_ids):
         # Parse based on experiment type
         exp_type = results.get('experiment_type', 'unknown')
 
-        if exp_type == 'binding':
+        if exp_type in ('screening', 'affinity'):
             df = parse_binding_results(results)
             df['experiment_id'] = exp_id
             all_results.append(df)
@@ -815,99 +666,57 @@ response = api_request_with_retry(
     "POST",
     f"{BASE_URL}/experiments",
     headers=HEADERS,
-    json={"sequences": fasta_content, "experiment_type": "binding"}
+    json={
+        "name": "retry demo",
+        "experiment_spec": {
+            "experiment_type": "expression",
+            "sequences": {"design_a": "MKVLWALLGLLGAA..."},
+        },
+    },
 )
 ```
 
 ## Utility Functions
 
-### Validate FASTA Format
+### Validate a Sequence Map Before Submission
+
+The API expects `sequences` as a `{label: amino_acid_string}` map; multi-chain constructs join
+chains with a colon (`"HEAVY:LIGHT"`). Validate locally to catch typos before paying to test.
 
 ```python
-def validate_fasta(fasta_string):
-    """
-    Validate FASTA format and sequences
+VALID_AA = set("ACDEFGHIKLMNPQRSTVWY")
 
-    Args:
-        fasta_string: FASTA-formatted string
-
-    Returns:
-        Tuple of (is_valid, error_message)
-    """
-
-    lines = fasta_string.strip().split('\n')
-
-    if not lines:
-        return False, "Empty FASTA content"
-
-    if not lines[0].startswith('>'):
-        return False, "FASTA must start with header line (>)"
-
-    valid_amino_acids = set("ACDEFGHIKLMNPQRSTVWY")
-    current_header = None
-
-    for i, line in enumerate(lines):
-        if line.startswith('>'):
-            if not line[1:].strip():
-                return False, f"Line {i+1}: Empty header"
-            current_header = line[1:].strip()
-
-        else:
-            if current_header is None:
-                return False, f"Line {i+1}: Sequence before header"
-
-            sequence = line.strip().upper()
-            invalid = set(sequence) - valid_amino_acids
-
-            if invalid:
-                return False, f"Line {i+1}: Invalid amino acids: {invalid}"
-
+def validate_sequence(seq):
+    """Validate one entry. Splits multi-chain constructs on ':'. Returns (ok, error)."""
+    if not seq:
+        return False, "Empty sequence"
+    for chain in seq.upper().split(":"):
+        if not chain:
+            return False, "Empty chain (check ':' placement)"
+        invalid = set(chain) - VALID_AA
+        if invalid:
+            return False, f"Invalid amino acids: {sorted(invalid)}"
     return True, None
 
-# Example
-fasta = ">protein1\nMKVLWAALLG\n>protein2\nMATGVLWALG"
-is_valid, error = validate_fasta(fasta)
-
-if is_valid:
-    print("✓ FASTA format valid")
-else:
-    print(f"✗ FASTA validation failed: {error}")
-```
-
-### Format Sequences to FASTA
-
-```python
-def sequences_to_fasta(sequences_dict):
+def clean_sequence_map(sequences_dict):
     """
-    Convert dictionary of sequences to FASTA format
-
-    Args:
-        sequences_dict: Dictionary of {name: sequence}
-
-    Returns:
-        FASTA-formatted string
+    Normalise a {label: sequence} map (strip whitespace, uppercase) and validate
+    every entry. Raises ValueError on the first bad sequence. Returns the cleaned map
+    ready to drop into experiment_spec['sequences'].
     """
-
-    fasta_content = ""
-    for name, sequence in sequences_dict.items():
-        # Clean sequence (remove whitespace, ensure uppercase)
-        clean_seq = ''.join(sequence.split()).upper()
-
-        # Validate
-        is_valid, error = validate_fasta(f">{name}\n{clean_seq}")
-        if not is_valid:
-            raise ValueError(f"Invalid sequence '{name}': {error}")
-
-        fasta_content += f">{name}\n{clean_seq}\n"
-
-    return fasta_content
+    cleaned = {}
+    for label, seq in sequences_dict.items():
+        clean = "".join(seq.split()).upper()  # preserves ':' chain separators
+        ok, error = validate_sequence(clean)
+        if not ok:
+            raise ValueError(f"Invalid sequence '{label}': {error}")
+        cleaned[label] = clean
+    return cleaned
 
 # Example
 sequences = {
     "var1": "MKVLWAALLG",
-    "var2": "MATGVLWALG"
+    "fab1": "EVQLVESGG:DIQMTQSPS",  # heavy:light
 }
-
-fasta = sequences_to_fasta(sequences)
-print(fasta)
+print(clean_sequence_map(sequences))
 ```

@@ -14,7 +14,7 @@ The ChEMBL database contains:
 ## Python Client Installation
 
 ```bash
-pip install chembl_webresource_client
+uv pip install chembl_webresource_client
 ```
 
 ## Key Resources and Endpoints
@@ -85,8 +85,9 @@ Search for compounds containing a specific substructure using SMILES:
 
 ```python
 from chembl_webresource_client.new_client import new_client
-similarity = new_client.similarity
-results = similarity.filter(smiles='CC(=O)Oc1ccccc1C(=O)O', similarity=70)
+substructure = new_client.substructure
+# Substructure search takes a SMILES/SMARTS pattern, NOT a similarity threshold
+results = substructure.filter(smiles='c1ccccc1')
 ```
 
 ### Similarity Search

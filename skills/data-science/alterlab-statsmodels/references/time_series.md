@@ -300,9 +300,10 @@ from statsmodels.tsa.stattools import grangercausalitytests
 # Requires 2D array [series2, series1]
 test_data = df_multivariate[['series2', 'series1']]
 
-# Test up to max_lag
+# Test up to max_lag (the verbose= argument is deprecated; read the
+# returned dict instead of relying on printed output)
 max_lag = 5
-results = grangercausalitytests(test_data, max_lag, verbose=True)
+results = grangercausalitytests(test_data, max_lag)
 
 # P-values for each lag
 for lag in range(1, max_lag + 1):
@@ -609,8 +610,8 @@ for t in range(len(y_test)):
     model = ARIMA(y_current, order=(1, 1, 1))
     fit = model.fit()
 
-    # One-step forecast
-    fc = fit.forecast(steps=1)[0]
+    # One-step forecast (forecast() returns a pandas Series; use .iloc)
+    fc = fit.forecast(steps=1).iloc[0]
     forecasts.append(fc)
 
 forecasts = np.array(forecasts)

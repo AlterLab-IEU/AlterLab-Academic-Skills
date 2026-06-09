@@ -2,102 +2,56 @@
 
 ## Overview
 
-Denario requires API credentials from supported LLM providers to power its multiagent research system. The system is built on AG2 and LangGraph, which support multiple LLM backends.
+On init, `Denario` constructs a `KeyManager` and calls `get_keys_from_env()`, which reads provider keys straight from environment variables. There is **no** model/config argument on the `Denario` constructor — keys come from the environment, and per-stage model choices are passed as method arguments (see `research_pipeline.md`).
 
-## Supported LLM Providers
+## Environment variables (what KeyManager actually reads)
 
-### Google Vertex AI
-- Full integration with Google's Vertex AI platform
-- Supports Gemini and PaLM models
-- Requires Google Cloud project setup
+| Variable | Provider | Status |
+| --- | --- | --- |
+| `OPENAI_API_KEY` | OpenAI | **Required** — the analysis/results module needs it; OpenAI models are the cmbagent-mode defaults |
+| `GOOGLE_API_KEY` | Gemini (Google AI Studio key) | Optional — default LLM for the `mode="fast"` path |
+| `ANTHROPIC_API_KEY` | Anthropic Claude | Optional |
+| `PERPLEXITY_API_KEY` | Perplexity | Optional — only for citation search |
+| `SEMANTIC_SCHOLAR_KEY` | Semantic Scholar | Optional — only for fast Semantic Scholar lookups |
 
-### OpenAI
-- GPT-4, GPT-3.5, and other OpenAI models
-- Direct API integration
+> `GOOGLE_API_KEY` is a plain **Gemini** API key from Google AI Studio — not a Vertex AI service-account JSON. Use Vertex AI only via the dedicated backend setup below.
 
-### Other Providers
-- Any LLM compatible with AG2/LangGraph frameworks
-- Anthropic Claude (via compatible interfaces)
-- Azure OpenAI
-- Custom model endpoints
+## Obtaining keys
 
-## Obtaining API Keys
+- **OpenAI**: create a key at [platform.openai.com](https://platform.openai.com/) → API Keys → "Create new secret key".
+- **Gemini**: create a key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
+- **Anthropic**: create a key in the [Anthropic Console](https://console.anthropic.com/).
 
-### Google Vertex AI
+## Storing keys
 
-1. **Create Google Cloud Project**
-   - Navigate to [Google Cloud Console](https://console.cloud.google.com/)
-   - Create a new project or select existing
-
-2. **Enable Vertex AI API**
-   - Go to "APIs & Services" → "Library"
-   - Search for "Vertex AI API"
-   - Click "Enable"
-
-3. **Create Service Account**
-   - Navigate to "IAM & Admin" → "Service Accounts"
-   - Create service account with Vertex AI permissions
-   - Download JSON key file
-
-4. **Set up authentication**
-   ```bash
-   export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
-   ```
-
-### OpenAI
-
-1. **Create OpenAI Account**
-   - Visit [platform.openai.com](https://platform.openai.com/)
-   - Sign up or log in
-
-2. **Generate API Key**
-   - Navigate to API Keys section
-   - Click "Create new secret key"
-   - Copy and store securely
-
-3. **Set environment variable**
-   ```bash
-   export OPENAI_API_KEY="sk-..."
-   ```
-
-## Storing API Keys
-
-### Method 1: Environment Variables (Recommended)
+### Method 1: Environment variables
 
 **Linux/macOS:**
 ```bash
-export OPENAI_API_KEY="your-key-here"
-export GOOGLE_APPLICATION_CREDENTIALS="/path/to/credentials.json"
+export OPENAI_API_KEY="sk-..."
+export GOOGLE_API_KEY="..."       # optional, Gemini
+export ANTHROPIC_API_KEY="..."    # optional, Claude
 ```
 
-Add to `~/.bashrc`, `~/.zshrc`, or `~/.bash_profile` for persistence.
+Add to `~/.zshrc` (or your shell profile) for persistence.
 
-**Windows:**
-```bash
-set OPENAI_API_KEY=your-key-here
+**Windows (PowerShell):**
+```powershell
+setx OPENAI_API_KEY "sk-..."
 ```
 
-Or use System Properties → Environment Variables for persistence.
+### Method 2: .env file
 
-### Method 2: .env Files
-
-Create a `.env` file in your project directory:
+Create a `.env` in your project directory:
 
 ```env
-# OpenAI Configuration
 OPENAI_API_KEY=sk-your-openai-key-here
-OPENAI_MODEL=gpt-4
-
-# Google Vertex AI Configuration
-GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
-GOOGLE_CLOUD_PROJECT=your-project-id
-
-# Optional: Model preferences
-DEFAULT_MODEL=gpt-4
-TEMPERATURE=0.7
+GOOGLE_API_KEY=your-gemini-key-here
+ANTHROPIC_API_KEY=your-anthropic-key-here
+PERPLEXITY_API_KEY=your-perplexity-key-here   # only if using citation search
 ```
 
-Load the environment file in Python:
+Load it before importing `denario` (so the env is populated when `KeyManager` runs):
 
 ```python
 from dotenv import load_dotenv
@@ -118,12 +72,13 @@ docker run -p 8501:8501 --env-file .env --rm pablovd/denario:latest
 # Using -e flag for individual variables
 docker run -p 8501:8501 \
   -e OPENAI_API_KEY=sk-... \
-  -e GOOGLE_APPLICATION_CREDENTIALS=/credentials.json \
-  -v /local/path/to/creds.json:/credentials.json \
+  -e GOOGLE_API_KEY=... \
   --rm pablovd/denario:latest
 ```
 
-## Vertex AI Detailed Setup
+## Vertex AI Detailed Setup (alternative Google backend)
+
+Use this only if you want to route Gemini through Google Cloud Vertex AI instead of a plain `GOOGLE_API_KEY`. It requires a Google Cloud project and service account.
 
 ### Prerequisites
 - Google Cloud account with billing enabled
@@ -193,20 +148,31 @@ docker run -p 8501:8501 \
 
 ## Model Selection
 
-Configure which models denario uses for different tasks:
+Models are chosen **per stage**, as method arguments — not on the `Denario` constructor. Each `get_*` method exposes per-agent model parameters (model names are strings/`LLM` objects from `denario`'s model registry). Verified defaults from the source:
 
 ```python
-# In your code
-from denario import Denario
+# Fast path uses a single LLM (defaults to gemini-2.0-flash):
+den.get_idea(mode="fast", llm="gemini-2.0-flash")
 
-# Example configuration (if supported by denario API)
-den = Denario(
-    project_dir="./project",
-    # Model configuration may vary based on denario version
+# cmbagent path configures each agent (defaults shown):
+den.get_idea(
+    mode="cmbagent",
+    idea_maker_model="gpt-4o",
+    idea_hater_model="o3-mini",
+    planner_model="gpt-4o",
+    plan_reviewer_model="o3-mini",
+    orchestration_model="gpt-4.1",
+    formatter_model="o3-mini",
+)
+
+# Results stage agents:
+den.get_results(
+    engineer_model="gpt-4.1",
+    researcher_model="o3-mini",
 )
 ```
 
-Check denario's documentation for specific model selection APIs.
+Available model names depend on the installed `denario` version; consult `denario.llm.models` for the current registry.
 
 ## Cost Management
 
@@ -219,8 +185,8 @@ Check denario's documentation for specific model selection APIs.
 ### Cost Optimization Tips
 
 1. **Use appropriate model tiers**
-   - GPT-3.5 for simpler tasks
-   - GPT-4 for complex reasoning
+   - The faster `mode="fast"` path (default LLM `gemini-2.0-flash`) is cheaper for idea/method generation
+   - Reserve the heavier cmbagent defaults (`gpt-4o`, `gpt-4.1`, `o3-mini`) for the runs that need reliability
 
 2. **Batch operations**
    - Process multiple research tasks in single sessions

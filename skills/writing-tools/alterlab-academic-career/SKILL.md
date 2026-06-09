@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit
 compatibility: No external tools, API keys, or services required — produces documents from the Read/Write/Edit tools alone
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-03-18"
+  version: "1.0.1"
+  last_updated: "2026-06-09"
 ---
 
 # Academic Career Documents and Professional Development
@@ -18,22 +18,7 @@ Academic career advancement depends on a portfolio of carefully crafted document
 
 The academic job market operates on distinct norms: CVs can be 20+ pages, statements are read by committees with diverse disciplinary expertise, and evaluation criteria vary dramatically across institution types (R1, SLAC, community college, professional school). Mastering these documents is not about self-promotion but about clearly communicating the significance, trajectory, and potential of your scholarly work.
 
-## When to Use This Skill
-
-Use this skill when:
-- Preparing an academic curriculum vitae (CV) for faculty positions
-- Drafting a research statement or research agenda for a job application
-- Writing a teaching philosophy statement
-- Composing a diversity, equity, and inclusion (DEI) statement
-- Crafting a cover letter for an academic position
-- Assembling a tenure or promotion dossier
-- Writing a promotion narrative or personal statement for review
-- Building an academic portfolio (physical or digital)
-- Preparing for conference networking and professional visibility
-- Creating or optimizing an academic website or online presence
-- Understanding and contextualizing bibliometric indicators (h-index, impact factor)
-- Setting up or optimizing an ORCID profile
-- Writing a mentorship statement for grant applications or reviews
+This skill covers *personal career documents* — the narratives a scholar writes about themselves. For adjacent tasks, defer to the right sibling: substantive grant content (Specific Aims, significance/innovation/approach) → `alterlab-research-grants`; venue LaTeX classes and page-limit/formatting rules → `alterlab-venue-templates`; full manuscript drafting → `alterlab-scientific-writing`.
 
 ## Core Capabilities
 
@@ -275,6 +260,8 @@ For each principle:
 ```
 
 ### 4. Diversity Statement
+
+**Check whether the document is requested first.** Required DEI/diversity statements in faculty hiring have been rolled back or banned at many U.S. institutions since 2024-2025 (driven by state legislation and federal pressure). Some institutions still request them, some have dropped them, and some have replaced them with a "contributions to a diverse community" or pedagogy/mentoring prompt. Read the job ad: write the statement only if asked, and address whatever framing the ad actually specifies rather than assuming a standalone DEI statement. The structure below applies wherever such a statement is requested.
 
 ```markdown
 ## Diversity, Equity, and Inclusion Statement (1-2 pages)

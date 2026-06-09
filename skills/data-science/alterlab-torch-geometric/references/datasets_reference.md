@@ -257,14 +257,15 @@ dataset = OGB_MAG(root='/tmp/OGB_MAG')
 
 ### MovieLens
 **Usage**: Recommendation systems, link prediction
-**Versions**: 100K, 1M, 10M, 20M
-**Description**: User-movie rating networks
+**Description**: User-movie rating network (MovieLens). `model_name` is the
+sentence-transformers model used to embed movie titles, not a dataset version.
+Separate `MovieLens100K` and `MovieLens1M` classes exist for those specific sizes.
 - Node types: user, movie
 - Edge types: rates
 
 ```python
 from torch_geometric.datasets import MovieLens
-dataset = MovieLens(root='/tmp/MovieLens', model_name='100k')
+dataset = MovieLens(root='/tmp/MovieLens', model_name='all-MiniLM-L6-v2')
 ```
 
 ### IMDB
@@ -460,10 +461,11 @@ PyG integrates seamlessly with OGB datasets:
 - **ogbg-code2**: Code abstract syntax trees
 
 ```python
-from torch_geometric.datasets import OGB_MAG, OGB_PPA
-# or
+# OGB datasets are provided by the separate `ogb` package, not torch_geometric.datasets.
+# Install: uv pip install ogb
 from ogb.nodeproppred import PygNodePropPredDataset
 dataset = PygNodePropPredDataset(name='ogbn-arxiv')
+# (PyG also ships a convenience torch_geometric.datasets.OGB_MAG wrapper.)
 ```
 
 ## Synthetic Datasets
@@ -488,11 +490,18 @@ dataset = StochasticBlockModelDataset(root='/tmp/SBM', num_graphs=1000)
 
 ### ExplainerDataset
 **Usage**: Testing explainability methods
-**Description**: Synthetic graphs with known explanation ground truth
+**Description**: Synthetic graphs with known explanation ground truth. Requires a
+`graph_generator`, a `motif_generator`, and `num_motifs` (it plants motifs into a base graph).
 
 ```python
 from torch_geometric.datasets import ExplainerDataset
-dataset = ExplainerDataset(num_graphs=1000)
+from torch_geometric.datasets.graph_generator import BAGraph
+dataset = ExplainerDataset(
+    graph_generator=BAGraph(num_nodes=300, num_edges=5),
+    motif_generator='house',
+    num_motifs=80,
+    num_graphs=1000,
+)
 ```
 
 ## Materials Science
@@ -543,14 +552,15 @@ dataset = Planetoid(root='/tmp/Cora', name='Cora',
 
 ### Train/Val/Test Splits
 ```python
-# For datasets with pre-defined splits
+# Node classification: a single graph carries boolean node masks. Don't slice the
+# Data object with them — apply the mask to the model output in the loss instead:
 data = dataset[0]
-train_data = data[data.train_mask]
-val_data = data[data.val_mask]
-test_data = data[data.test_mask]
+loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])
+acc_nodes = data.val_mask  # evaluate on out[data.val_mask], out[data.test_mask]
 
-# For graph classification
+# Graph classification: split the dataset of graphs, then batch with DataLoader.
 from torch_geometric.loader import DataLoader
+dataset = dataset.shuffle()
 train_dataset = dataset[:int(len(dataset) * 0.8)]
 test_dataset = dataset[int(len(dataset) * 0.8):]
 train_loader = DataLoader(train_dataset, batch_size=32)

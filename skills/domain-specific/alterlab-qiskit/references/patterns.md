@@ -185,6 +185,10 @@ counts = result[0].data.meas.get_counts()
 
 ### Using Estimator
 
+> **ISA gotcha:** with V2 primitives the observable must match the *transpiled* qubit layout.
+> After transpiling, remap it with `observable.apply_layout(qc_isa.layout)` before running,
+> or the qubits won't line up.
+
 ```python
 from qiskit_ibm_runtime import EstimatorV2 as Estimator
 from qiskit.quantum_info import SparsePauliOp
@@ -195,8 +199,9 @@ backend = service.backend("ibm_brisbane")
 # Transpile
 qc_isa = transpile(qc, backend=backend, optimization_level=3)
 
-# Define observable
+# Define observable, then map it onto the transpiled layout
 observable = SparsePauliOp(["ZZZZ", "XXXX"])
+observable = observable.apply_layout(qc_isa.layout)
 
 # Execute
 estimator = Estimator(backend)
@@ -246,14 +251,14 @@ with Batch(backend=backend) as batch:
 
 ### Error Mitigation
 
+The `Options` class was removed; configure V2 primitives via a dict or `primitive.options`.
+`resilience_level` applies to the **Estimator** only.
+
 ```python
-from qiskit_ibm_runtime import Options
+from qiskit_ibm_runtime import EstimatorV2 as Estimator
 
-options = Options()
-options.resilience_level = 2  # 0=none, 1=light, 2=moderate, 3=heavy
-options.optimization_level = 3
-
-sampler = Sampler(backend, options=options)
+# resilience_level: 0=none, 1=minimal, 2=moderate (Estimator only)
+estimator = Estimator(backend, options={"resilience_level": 2})
 ```
 
 ## Step 4: Post-process
@@ -371,12 +376,14 @@ from scipy.optimize import minimize
 import numpy as np
 
 # 1. MAP: Create parameterized circuit
+from qiskit.circuit import Parameter
+
 def create_ansatz(num_qubits):
     qc = QuantumCircuit(num_qubits)
     params = []
 
     for i in range(num_qubits):
-        theta = f'θ_{i}'
+        theta = Parameter(f'θ_{i}')   # must be a Parameter, not a str
         params.append(theta)
         qc.ry(theta, i)
 

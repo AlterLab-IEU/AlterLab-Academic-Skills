@@ -11,7 +11,7 @@ Retrieve Ensembl reference genome FTPs and metadata.
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
 | `species` | str | Species in Genus_species format or shortcuts ('human', 'mouse') | Required |
-| `-w/--which` | str | File types to return: gtf, cdna, dna, cds, cdrna, pep | All |
+| `-w/--which` | str | File types to return: gtf, cdna, dna, cds, cdrna, pep. CLI: comma-separated (`gtf,cdna`); Python: list (`["gtf","cdna"]`) | All |
 | `-r/--release` | int | Ensembl release number | Latest |
 | `-od/--out_dir` | str | Output directory path | None |
 | `-o/--out` | str | JSON file path for results | None |
@@ -146,9 +146,9 @@ Fast local protein/translated DNA alignment.
 | Parameter | Type | Description | Default |
 |-----------|------|-------------|---------|
 | `query` | str/list | Query sequences or FASTA file | Required |
-| `--reference` | str/list | Reference sequences or FASTA file | Required |
-| `--sensitivity` | str | fast, mid-sensitive, sensitive, more-sensitive, very-sensitive, ultra-sensitive | very-sensitive |
-| `--threads` | int | CPU threads | 1 |
+| `-ref/--reference` | str/list | Reference sequences or FASTA file | Required |
+| `-s/--sensitivity` | str | fast, mid-sensitive, sensitive, more-sensitive, very-sensitive, ultra-sensitive | very-sensitive |
+| `-t/--threads` | int | CPU threads | 1 |
 | `--diamond_binary` | str | Path to DIAMOND installation | Auto-detect |
 | `--diamond_db` | str | Save database for reuse | None |
 | `--translated` | flag | Enable nucleotide-to-amino acid alignment | False |

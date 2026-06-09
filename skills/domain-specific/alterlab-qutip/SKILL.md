@@ -6,7 +6,7 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No API key required. Runs locally via `uv run python`; requires the qutip Python package.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
 ---
 
 # QuTiP: Quantum Toolbox in Python
@@ -20,6 +20,8 @@ QuTiP provides comprehensive tools for simulating and analyzing quantum mechanic
 ```bash
 uv pip install qutip
 ```
+
+This skill targets **QuTiP 5.x** (verified against 5.3.0). Key v5 API changes from v4: solver options are a plain `dict` (the old `Options`/`solver.Options` class is gone), stochastic solvers use `heterodyne=True/False` instead of a `noise` code, and `progress_bar` takes a string (`'text'`/`'tqdm'`/`''`) rather than `True`.
 
 Optional packages for additional functionality:
 
@@ -166,11 +168,13 @@ result = fmmesolve(H, psi0, tlist, c_ops, T=T, args=args)
 
 # HEOM (non-Markovian, strong coupling)
 from qutip.solver.heom import HEOMSolver, BosonicBath
-bath = BosonicBath(Q, ck_real, vk_real)
+# Bath correlation as a sum of exponentials: ck_real, vk_real, ck_imag, vk_imag
+bath = BosonicBath(Q, ck_real, vk_real, ck_imag, vk_imag)
 hsolver = HEOMSolver(H_sys, [bath], max_depth=5)
 result = hsolver.run(rho0, tlist)
 
 # Permutational invariance (identical particles)
+from qutip.piqs.piqs import dicke, jspin  # not exported at qutip.piqs top level
 psi = dicke(N, j, m)  # Dicke states
 Jz = jspin(N, 'z')  # Collective operators
 ```
@@ -220,15 +224,12 @@ c_ops = [
 ]
 
 # Track entanglement
-def compute_concurrence(t, psi):
-    rho = ket2dm(psi) if psi.isket else psi
-    return concurrence(rho)
-
 tlist = np.linspace(0, 10, 100)
 result = mesolve(qeye([2, 2]), psi0, tlist, c_ops)
 
-# Compute concurrence for each state
-C_t = [concurrence(state.proj()) for state in result.states]
+# With collapse operators, result.states are density matrices (type 'oper'),
+# so pass them straight to concurrence() — do NOT call .proj() on them.
+C_t = [concurrence(state) for state in result.states]
 
 plt.plot(tlist, C_t)
 plt.xlabel('Time')
@@ -286,7 +287,7 @@ plt.show()
 2. **Choose appropriate solver**: `sesolve` for pure states is faster than `mesolve`
 3. **Time-dependent terms**: String format (e.g., `'cos(w*t)'`) is fastest
 4. **Store only needed data**: Use `e_ops` instead of storing all states
-5. **Adjust tolerances**: Balance accuracy with computation time via `Options`
+5. **Adjust tolerances**: Balance accuracy with computation time via the `options` dict (`atol`/`rtol`/`nsteps`)
 6. **Parallel trajectories**: `mcsolve` automatically uses multiple CPUs
 7. **Check convergence**: Vary `ntraj`, Hilbert space size, and tolerances
 

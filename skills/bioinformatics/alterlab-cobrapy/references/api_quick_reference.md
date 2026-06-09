@@ -9,10 +9,12 @@ This document provides quick reference for common COBRApy functions, signatures,
 ```python
 from cobra.io import load_model, read_sbml_model, load_json_model, load_yaml_model, load_matlab_model
 
-# Bundled test models
-model = load_model("textbook")   # E. coli core metabolism
-model = load_model("ecoli")      # Full E. coli iJO1366
+# Bundled test models (only these three aliases are bundled)
+model = load_model("textbook")   # E. coli core metabolism (e_coli_core)
+model = load_model("iJO1366")    # Full E. coli genome-scale model
 model = load_model("salmonella") # Salmonella LT2
+# NOTE: any other id (e.g. "ecoli") is NOT bundled and falls through to a
+# remote BiGG/BioModels lookup (needs network access).
 
 # From files
 model = read_sbml_model(filename, f_replace={}, **kwargs)
@@ -294,14 +296,15 @@ solution = gapfill(
     iterations=1
 )
 
-# Returns list of Reaction objects to add
+# Returns a LIST OF LISTS: one inner list of cobra.Reaction objects per
+# iteration. Iterate solution[0] for the first solution set.
+for reaction in solution[0]:
+    print(reaction.id)
 
-# Multiple solutions
-solutions = []
-for i in range(5):
-    sol = gapfill(model, universal, iterations=1)
-    solutions.append(sol)
-    # Prevent finding same solution by increasing penalties
+# Multiple alternative solutions in one call
+solutions = gapfill(model, universal, iterations=5)
+for i, reaction_set in enumerate(solutions):
+    print(f"Solution {i}: {[r.id for r in reaction_set]}")
 ```
 
 ### Other Analysis Methods
@@ -350,16 +353,17 @@ with model:
 ```python
 from cobra.medium import minimal_medium
 
+# Parameter order matters if you call positionally:
 min_medium = minimal_medium(
     model,
-    min_objective_value=0.1,  # Minimum growth rate
-    minimize_components=False, # If True, uses MILP (slower)
+    min_objective_value=0.1,   # Minimum objective (growth) value
+    exports=False,             # Allow secretion fluxes in the result
+    minimize_components=False, # If True/int, minimize component COUNT via MILP (slower)
     open_exchanges=False,      # Open all exchanges before optimization
-    exports=False,             # Allow metabolite export
-    penalties=None             # Dict of exchange: penalty
 )
 
-# Returns Series of exchange reactions with fluxes
+# Returns a pandas.Series of required import fluxes (or a DataFrame when
+# minimize_components is an int requesting multiple solutions; None if infeasible)
 ```
 
 ### Boundary Reactions
@@ -387,9 +391,9 @@ boundaries = model.boundary    # All boundary reactions
 ### Adding Components
 
 ```python
-# Add reactions
+# Add reactions (always plural; pass a list even for one reaction)
 model.add_reactions([reaction1, reaction2, ...])
-model.add_reaction(reaction)
+model.add_reactions([reaction])
 
 # Add metabolites
 reaction.add_metabolites({
@@ -400,8 +404,10 @@ reaction.add_metabolites({
 # Add metabolites to model
 model.add_metabolites([metabolite1, metabolite2, ...])
 
-# Add genes (usually automatic via gene_reaction_rule)
-model.genes += [gene1, gene2, ...]
+# Genes are created automatically when you set a reaction's
+# gene_reaction_rule, so there is rarely a need to add Gene objects
+# directly. To register genes explicitly, set the GPR:
+reaction.gene_reaction_rule = "gene1 and gene2"  # creates Gene objects in model.genes
 ```
 
 ### Removing Components

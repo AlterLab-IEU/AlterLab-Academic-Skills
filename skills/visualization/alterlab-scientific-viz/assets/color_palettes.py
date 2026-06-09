@@ -68,9 +68,10 @@ DIVERGING_COLORMAPS_SAFE = [
     'PiYG',      # Pink-Yellow-Green (use with caution)
 ]
 
-# Diverging colormaps to AVOID (red-green combinations)
+# Diverging colormaps to AVOID (red-green combinations problematic for CVD).
+# Note: there is no built-in 'RdGn' in matplotlib; 'RdYlGn' is the real
+# red-green diverging map to steer clear of.
 DIVERGING_COLORMAPS_AVOID = [
-    'RdGn',      # Red-Green (problematic!)
     'RdYlGn',    # Red-Yellow-Green (problematic!)
 ]
 

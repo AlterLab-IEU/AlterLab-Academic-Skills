@@ -306,14 +306,16 @@ def color_by_length(clade):
 ```python
 from Bio.Phylo.TreeConstruction import DistanceTreeConstructor, DistanceMatrix
 
-# Create distance matrix
+# Create distance matrix. The matrix must be lower-triangular *including the
+# diagonal* -- row i has i+1 entries and ends in 0.0 (the self-distance).
+# Omitting the diagonal zeros raises "'matrix' should be in lower triangle format".
 dm = DistanceMatrix(
     names=["Alpha", "Beta", "Gamma", "Delta"],
     matrix=[
-        [],
-        [0.23],
-        [0.45, 0.34],
-        [0.67, 0.58, 0.29]
+        [0.0],
+        [0.23, 0.0],
+        [0.45, 0.34, 0.0],
+        [0.67, 0.58, 0.29, 0.0]
     ]
 )
 

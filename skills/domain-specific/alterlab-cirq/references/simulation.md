@@ -231,17 +231,15 @@ QVM simulates realistic quantum hardware with device-specific constraints and no
 # Use a virtual Google device
 import cirq_google
 
-# Get virtual device
+# Get virtual device (a cirq.GridDevice)
 device = cirq_google.Sycamore
 
-# Create circuit on device
-qubits = device.metadata.qubit_set
-circuit = cirq.Circuit(device=device)
+# Build a circuit on device qubits. Note: the `device=` argument to cirq.Circuit
+# was removed in Cirq 1.0 — circuits are device-agnostic and validated separately.
+qubits = sorted(device.metadata.qubit_set)
+circuit = cirq.Circuit(cirq.CZ(qubits[0], qubits[1]))
 
-# Add operations respecting device constraints
-circuit.append(cirq.CZ(qubits[0], qubits[1]))
-
-# Validate circuit against device
+# Validate the circuit against device constraints
 device.validate_circuit(circuit)
 ```
 

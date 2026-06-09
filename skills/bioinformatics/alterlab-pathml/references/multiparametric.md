@@ -38,17 +38,10 @@ CODEX data is typically organized in multi-channel image stacks from multiple ac
 ```python
 from pathml.core import CODEXSlide
 
-# Load CODEX dataset
-codex_slide = CODEXSlide(
-    path='path/to/codex_directory',
-    stain='IF',  # Immunofluorescence
-    backend='bioformats'
-)
+# Load CODEX dataset (uses the Bio-Formats backend internally)
+codex_slide = CODEXSlide("path/to/codex_directory", stain="IF")
 
-# Inspect channels and cycles
-print(f"Number of channels: {codex_slide.num_channels}")
-print(f"Channel names: {codex_slide.channel_names}")
-print(f"Number of cycles: {codex_slide.num_cycles}")
+# Inspect dimensions
 print(f"Image shape: {codex_slide.shape}")
 ```
 
@@ -73,39 +66,27 @@ from pathml.preprocessing import Pipeline, CollapseRunsCODEX, SegmentMIF, Quanti
 
 # Create CODEX-specific pipeline
 codex_pipeline = Pipeline([
-    # 1. Collapse multi-cycle data
-    CollapseRunsCODEX(
-        z_slice=2,  # Select focal plane from z-stack
-        run_order=None,  # Automatic cycle ordering, or specify [0, 1, 2, ...]
-        method='max'  # 'max', 'mean', or 'median' across cycles
-    ),
+    # 1. Collapse the z-stack to a single multi-channel image
+    CollapseRunsCODEX(z=0),
 
-    # 2. Cell segmentation using Mesmer
+    # 2. Cell segmentation using Mesmer (integer channel indices)
     SegmentMIF(
-        nuclear_channel='DAPI',
-        cytoplasm_channel='CD45',  # Or other membrane/cytoplasm marker
-        model='mesmer',
-        image_resolution=0.377,  # Microns per pixel
-        compartment='whole-cell'  # 'nuclear', 'cytoplasm', or 'whole-cell'
+        model="mesmer",
+        nuclear_channel=0,        # e.g. DAPI index
+        cytoplasm_channel=29,     # e.g. membrane/cytoplasm marker index
+        image_resolution=0.377,   # microns per pixel
     ),
 
-    # 3. Quantify marker expression per cell
-    QuantifyMIF(
-        segmentation_mask_name='cell_segmentation',
-        markers=[
-            'DAPI', 'CD3', 'CD4', 'CD8', 'CD20', 'CD45',
-            'CD68', 'PD1', 'PDL1', 'Ki67', 'panCK'
-        ],
-        output_format='anndata'
-    )
+    # 3. Quantify per-cell marker expression across all channels
+    QuantifyMIF(segmentation_mask="cell_segmentation"),
 ])
 
-# Run pipeline
-codex_pipeline.run(codex_slide)
+# Run pipeline on the slide
+codex_slide.run(codex_pipeline)
 
 # Access results
-segmentation_mask = codex_slide.masks['cell_segmentation']
-cell_data = codex_slide.cell_data  # AnnData object
+segmentation_mask = codex_slide.masks["cell_segmentation"]
+cell_data = codex_slide.counts  # AnnData object (cells x markers)
 ```
 
 ### CollapseRunsCODEX
@@ -115,22 +96,13 @@ Consolidates multi-cycle CODEX acquisitions into a single multi-channel image:
 ```python
 from pathml.preprocessing import CollapseRunsCODEX
 
-transform = CollapseRunsCODEX(
-    z_slice=2,  # Select which z-plane (0-indexed)
-    run_order=[0, 1, 2, 3],  # Order of acquisition cycles
-    method='max',  # Aggregation method across cycles
-    background_subtract=True,  # Subtract background fluorescence
-    channel_mapping=None  # Optional: remap channel order
-)
+transform = CollapseRunsCODEX(z=0)  # select the focal plane (0-indexed)
 ```
 
 **Parameters:**
-- `z_slice`: Which focal plane to extract from z-stacks (typically middle slice)
-- `run_order`: Order of cycles; None for automatic detection
-- `method`: How to combine channels from multiple cycles ('max', 'mean', 'median')
-- `background_subtract`: Whether to subtract background fluorescence
+- `z`: which z-plane to extract from the CODEX z-stack (0-indexed)
 
-**Output:** Single multi-channel image with all markers (H, W, C)
+**Output:** Single multi-channel image with all markers stacked along the channel axis.
 
 ### Cell Segmentation with Mesmer
 
@@ -140,40 +112,31 @@ DeepCell Mesmer provides accurate cell segmentation for multiparametric imaging:
 from pathml.preprocessing import SegmentMIF
 
 transform = SegmentMIF(
-    nuclear_channel='DAPI',  # Nuclear marker (required)
-    cytoplasm_channel='CD45',  # Cytoplasm/membrane marker (required)
-    model='mesmer',  # DeepCell Mesmer model
-    image_resolution=0.377,  # Microns per pixel (important for accuracy)
-    compartment='whole-cell',  # Segmentation output
-    min_cell_size=50,  # Minimum cell size in pixels
-    max_cell_size=1000  # Maximum cell size in pixels
+    model="mesmer",            # DeepCell Mesmer model
+    nuclear_channel=0,         # integer index of the nuclear marker (e.g. DAPI)
+    cytoplasm_channel=29,      # integer index of a membrane/cytoplasm marker
+    image_resolution=0.377,    # microns per pixel (important for accuracy)
 )
 ```
 
-**Choosing cytoplasm channel:**
-- **CD45**: Pan-leukocyte marker (good for immune-rich tissues)
-- **panCK**: Pan-cytokeratin (good for epithelial tissues)
-- **CD298/b2m**: Universal membrane marker
-- **Combination**: Average multiple membrane markers
+`SegmentMIF` produces both `nuclear_segmentation` and `cell_segmentation` (whole-cell) masks. Tune behavior via `preprocess_kwargs`, `postprocess_kwargs_nuclear`, and `postprocess_kwargs_whole_cell`; there is no `compartment`/`min_cell_size`/`max_cell_size` argument.
 
-**Compartment options:**
-- `'whole-cell'`: Full cell segmentation (nucleus + cytoplasm)
-- `'nuclear'`: Nuclear segmentation only
-- `'cytoplasm'`: Cytoplasmic compartment only
+**Choosing the cytoplasm channel** (pick the index of a marker that outlines cells):
+- A pan-leukocyte marker (e.g. CD45) for immune-rich tissues
+- A pan-cytokeratin marker (e.g. panCK) for epithelial tissues
+- A universal membrane marker, or an averaged membrane channel
 
 ### Remote Segmentation
 
-Use DeepCell cloud API for segmentation without local GPU:
+Use the DeepCell service for segmentation without a local GPU:
 
 ```python
 from pathml.preprocessing import SegmentMIFRemote
 
 transform = SegmentMIFRemote(
-    nuclear_channel='DAPI',
-    cytoplasm_channel='CD45',
-    model='mesmer',
-    api_url='https://deepcell.org/api/predict',
-    timeout=300  # Timeout in seconds
+    model="mesmer",
+    nuclear_channel=0,
+    cytoplasm_channel=29,
 )
 ```
 
@@ -184,50 +147,43 @@ Extract single-cell marker expression from segmented images:
 ```python
 from pathml.preprocessing import QuantifyMIF
 
-transform = QuantifyMIF(
-    segmentation_mask_name='cell_segmentation',
-    markers=['DAPI', 'CD3', 'CD4', 'CD8', 'CD20', 'CD68', 'panCK'],
-    output_format='anndata',  # or 'dataframe'
-    statistics=['mean', 'median', 'std', 'total'],  # Aggregation methods
-    compartments=['whole-cell', 'nuclear', 'cytoplasm']  # If multiple masks
-)
+# Quantify per-cell expression across all channels of the segmented mask.
+transform = QuantifyMIF(segmentation_mask="cell_segmentation")
 ```
 
-**Output:** AnnData object with:
-- `adata.X`: Marker expression matrix (cells × markers)
-- `adata.obs`: Cell metadata (cell ID, coordinates, area, etc.)
-- `adata.var`: Marker metadata
-- `adata.obsm['spatial']`: Cell centroid coordinates
+**Output:** an AnnData object written to `slide.counts`:
+- `adata.X`: marker expression matrix (cells x channels)
+- `adata.obs`: per-cell metadata (coordinates, area, etc.)
+- `adata.var`: channel/marker metadata
+- `adata.obsm["spatial"]`: cell centroid coordinates
 
 ### Integration with AnnData
 
 Process multiple CODEX slides into unified AnnData object:
 
 ```python
-from pathml.core import SlideDataset
+from pathml.core import CODEXSlide, SlideDataset
+from dask.distributed import Client
 import anndata as ad
 
 # Process multiple slides
-slide_paths = ['slide1', 'slide2', 'slide3']
-dataset = SlideDataset(
-    [CODEXSlide(p, stain='IF') for p in slide_paths]
+slide_paths = ["slide1", "slide2", "slide3"]
+dataset = SlideDataset([CODEXSlide(p, stain="IF") for p in slide_paths])
+
+client = Client(n_workers=8, threads_per_worker=2)
+dataset.run(codex_pipeline, client=client)
+
+# Concatenate the per-slide AnnData objects (each lives on slide.counts)
+combined_adata = ad.concat(
+    [s.counts for s in dataset.slides],
+    join="outer",
+    label="Region",
+    keys=slide_paths,
+    index_unique="_",
 )
 
-# Run pipeline on all slides
-dataset.run(codex_pipeline, distributed=True, n_workers=8)
-
-# Combine into single AnnData
-adatas = []
-for slide in dataset:
-    adata = slide.cell_data
-    adata.obs['slide_id'] = slide.name
-    adatas.append(adata)
-
-# Concatenate
-combined_adata = ad.concat(adatas, join='outer', label='batch', keys=slide_paths)
-
 # Save for downstream analysis
-combined_adata.write('codex_dataset.h5ad')
+combined_adata.write("codex_dataset.h5ad")
 ```
 
 ## Vectra Workflows
@@ -237,16 +193,12 @@ combined_adata.write('codex_dataset.h5ad')
 Vectra stores data in proprietary `.qptiff` format:
 
 ```python
-from pathml.core import SlideData, SlideType
+from pathml.core import VectraSlide
 
-# Load Vectra slide
-vectra_slide = SlideData.from_slide(
-    'path/to/slide.qptiff',
-    backend=SlideType.VectraQPTIFF
-)
+# Load Vectra slide (.qptiff); VectraSlide uses the Bio-Formats backend
+vectra_slide = VectraSlide("path/to/slide.qptiff")
 
-# Access spectral channels
-print(f"Channels: {vectra_slide.channel_names}")
+print(f"Shape: {vectra_slide.shape}")
 ```
 
 ### Vectra Preprocessing
@@ -255,30 +207,22 @@ print(f"Channels: {vectra_slide.channel_names}")
 from pathml.preprocessing import Pipeline, CollapseRunsVectra, SegmentMIF, QuantifyMIF
 
 vectra_pipeline = Pipeline([
-    # 1. Process Vectra multi-channel data
-    CollapseRunsVectra(
-        wavelengths=[520, 540, 570, 620, 670, 780],  # Emission wavelengths
-        unmix=True,  # Apply spectral unmixing
-        autofluorescence_correction=True
-    ),
+    # 1. Collapse the Vectra multi-channel data into a single image
+    CollapseRunsVectra(),
 
-    # 2. Cell segmentation
+    # 2. Cell segmentation (integer channel indices)
     SegmentMIF(
-        nuclear_channel='DAPI',
-        cytoplasm_channel='FITC',
-        model='mesmer',
-        image_resolution=0.5
+        model="mesmer",
+        nuclear_channel=0,
+        cytoplasm_channel=4,
+        image_resolution=0.5,
     ),
 
-    # 3. Quantification
-    QuantifyMIF(
-        segmentation_mask_name='cell_segmentation',
-        markers=['DAPI', 'CD3', 'CD8', 'PD1', 'PDL1', 'panCK'],
-        output_format='anndata'
-    )
+    # 3. Quantification -> AnnData on slide.counts
+    QuantifyMIF(segmentation_mask="cell_segmentation"),
 ])
 
-vectra_pipeline.run(vectra_slide)
+vectra_slide.run(vectra_pipeline)
 ```
 
 ## Downstream Analysis
@@ -463,77 +407,37 @@ results = adata.uns['moranI']
 print(results.head())
 ```
 
-## MERFISH Workflows
+## MERFISH and Other Platforms
 
-### Loading MERFISH Data
+PathML's most fully supported multiparametric workflows are CODEX and Vectra. MERFISH and related spatial-transcriptomics platforms do not have dedicated decoding/transcript-assignment transforms in the core `pathml.preprocessing` API at the time of writing, so do NOT assume classes like `MERFISHSlide`, `DecodeMERFISH`, or `AssignTranscripts` exist — verify against your installed version's API docs first.
 
-```python
-from pathml.core import MERFISHSlide
-
-# Load MERFISH dataset
-merfish_slide = MERFISHSlide(
-    path='path/to/merfish_data',
-    fov_size=2048,  # Field of view size
-    microns_per_pixel=0.108
-)
-```
-
-### MERFISH Processing
-
-```python
-from pathml.preprocessing import Pipeline, DecodeMERFISH, SegmentMIF
-
-merfish_pipeline = Pipeline([
-    # 1. Decode barcodes to genes
-    DecodeMERFISH(
-        codebook='path/to/codebook.csv',
-        error_correction=True,
-        distance_threshold=0.5
-    ),
-
-    # 2. Cell segmentation
-    SegmentMIF(
-        nuclear_channel='DAPI',
-        cytoplasm_channel='polyT',  # poly(T) stain for cell boundaries
-        model='mesmer'
-    ),
-
-    # 3. Assign transcripts to cells
-    AssignTranscripts(
-        segmentation_mask_name='cell_segmentation',
-        transcript_coords='decoded_spots'
-    )
-])
-
-merfish_pipeline.run(merfish_slide)
-
-# Output: AnnData with gene counts per cell
-gene_expression = merfish_slide.cell_data
-```
+A practical pattern for MERFISH-style data:
+- Load the multi-channel image as a `MultiparametricSlide` (Bio-Formats backend).
+- Segment cells with `SegmentMIF` (Mesmer) on the nuclear + a boundary channel (e.g. poly(T)).
+- For barcode decoding and transcript-to-cell assignment, use a dedicated spatial-transcriptomics toolkit (e.g. a vendor pipeline or `squidpy`/`starfish`) and bring the resulting cell-by-gene matrix back into AnnData for downstream analysis.
 
 ## Quality Control
 
 ### Segmentation Quality
 
+Inspect the instance segmentation mask directly with scikit-image (no PathML-specific QC helper is needed):
+
 ```python
-from pathml.utils import assess_segmentation_quality
-
-# Check segmentation quality metrics
-qc_metrics = assess_segmentation_quality(
-    segmentation_mask,
-    image,
-    metrics=['cell_count', 'mean_cell_size', 'size_distribution']
-)
-
-print(f"Total cells: {qc_metrics['cell_count']}")
-print(f"Mean cell size: {qc_metrics['mean_cell_size']:.1f} pixels")
-
-# Visualize
+import numpy as np
 import matplotlib.pyplot as plt
-plt.hist(qc_metrics['cell_sizes'], bins=50)
-plt.xlabel('Cell Size (pixels)')
-plt.ylabel('Frequency')
-plt.title('Cell Size Distribution')
+from skimage.measure import regionprops
+
+# segmentation_mask: integer label image (each cell a unique id)
+props = regionprops(segmentation_mask)
+cell_sizes = np.array([p.area for p in props])
+
+print(f"Total cells: {len(cell_sizes)}")
+print(f"Mean cell size: {cell_sizes.mean():.1f} pixels")
+
+plt.hist(cell_sizes, bins=50)
+plt.xlabel("Cell Size (pixels)")
+plt.ylabel("Frequency")
+plt.title("Cell Size Distribution")
 plt.show()
 ```
 
@@ -577,17 +481,12 @@ slide_dirs = glob.glob('data/codex_slides/*/')
 codex_slides = [CODEXSlide(d, stain='IF') for d in slide_dirs]
 dataset = SlideDataset(codex_slides)
 
-# Run pipeline in parallel
-dataset.run(
-    codex_pipeline,
-    distributed=True,
-    client=client,
-    scheduler='distributed'
-)
+# Run pipeline in parallel (pass the Dask client to run())
+dataset.run(codex_pipeline, client=client)
 
-# Save processed data
-for i, slide in enumerate(dataset):
-    slide.cell_data.write(f'processed/slide_{i}.h5ad')
+# Save the per-slide AnnData (each on slide.counts)
+for i, slide in enumerate(dataset.slides):
+    slide.counts.write(f"processed/slide_{i}.h5ad")
 
 client.close()
 ```

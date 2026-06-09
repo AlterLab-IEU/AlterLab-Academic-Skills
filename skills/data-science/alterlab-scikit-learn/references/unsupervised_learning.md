@@ -276,15 +276,15 @@ X_reduced = pca.fit_transform(X)
 - Key parameters:
   - `n_components`: Usually 2 or 3
   - `perplexity`: Balance between local and global structure (5-50)
-  - `learning_rate`: Usually 10-1000
-  - `n_iter`: Number of iterations (min 250)
+  - `learning_rate`: Usually 10-1000 (or 'auto')
+  - `max_iter`: Number of iterations (min 250). Renamed from `n_iter`, which was removed in sklearn 1.7
 - Use when: Visualizing high-dimensional data
 - Note: Slow on large datasets, no transform() method
 - Example:
 ```python
 from sklearn.manifold import TSNE
 
-tsne = TSNE(n_components=2, perplexity=30, learning_rate=200, n_iter=1000, random_state=42)
+tsne = TSNE(n_components=2, perplexity=30, learning_rate='auto', max_iter=1000, random_state=42)
 X_embedded = tsne.fit_transform(X)
 
 # Visualize

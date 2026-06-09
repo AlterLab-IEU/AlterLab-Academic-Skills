@@ -28,11 +28,16 @@ gget ref homo_sapiens
 
 # Download only GTF annotation for mouse
 gget ref -w gtf -d mouse
+
+# Multiple file types: comma-separated, no spaces (GTF + cDNA)
+gget ref -w gtf,cdna -d mouse
 ```
 
 ```python
 gget.ref("homo_sapiens")
 gget.ref("mus_musculus", which="gtf", download=True)
+# In Python, multiple types are passed as a list
+gget.ref("mus_musculus", which=["gtf", "cdna"], download=True)
 ```
 
 ### gget search — Gene Search

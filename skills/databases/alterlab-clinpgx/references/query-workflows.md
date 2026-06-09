@@ -3,6 +3,13 @@
 End-to-end workflows and common use cases for ClinPGx. All queries respect the
 2 req/sec rate limit — see `rate-limiting-and-error-handling.md`.
 
+**Verified API conventions used throughout**: responses are wrapped as
+`{"status", "data"}` (read results from `response.json()["data"]`, never a bare
+list); filter genes with `relatedGenes.symbol` and drugs with
+`relatedChemicals.name` (`relatedChemicals.symbol` returns `status: "fail"`). The
+snippets below show `response.json()` for brevity — unwrap `["data"]` in real
+use, or call the helpers in `scripts/query_clinpgx.py`, which unwrap it for you.
+
 ## Workflow 1: Clinical Decision Support for Drug Prescription
 
 1. **Identify patient genotype** for relevant pharmacogenes:
@@ -15,7 +22,7 @@ End-to-end workflows and common use cases for ClinPGx. All queries respect the
 2. **Find guideline annotations** for the medication of interest:
    ```python
    response = requests.get("https://api.clinpgx.org/v1/data/guidelineAnnotation",
-                          params={"relatedChemicals.symbol": "clopidogrel"})
+                          params={"relatedChemicals.name": "clopidogrel"})
    guideline_annotations = response.json()
    # Recommendation: Alternative antiplatelet therapy for IM/PM
    ```
@@ -23,7 +30,7 @@ End-to-end workflows and common use cases for ClinPGx. All queries respect the
 3. **Check drug label** for regulatory guidance:
    ```python
    response = requests.get("https://api.clinpgx.org/v1/data/label",
-                          params={"relatedChemicals.symbol": "clopidogrel"})
+                          params={"relatedChemicals.name": "clopidogrel"})
    label = response.json()
    ```
 
@@ -58,13 +65,13 @@ End-to-end workflows and common use cases for ClinPGx. All queries respect the
    ```python
    response = requests.get("https://api.clinpgx.org/v1/data/chemical",
                           params={"name": "abacavir"})
-   drug_id = response.json()[0]['id']
+   drug_id = response.json()["data"][0]['id']
    ```
 
 2. **Get summary annotations**:
    ```python
    response = requests.get("https://api.clinpgx.org/v1/data/summaryAnnotation",
-                          params={"relatedChemicals.symbol": "abacavir"})
+                          params={"relatedChemicals.name": "abacavir"})
    annotations = response.json()
    ```
 
@@ -161,7 +168,7 @@ medications = ["clopidogrel", "simvastatin", "escitalopram"]
 
 for med in medications:
     response = requests.get("https://api.clinpgx.org/v1/data/guidelineAnnotation",
-                           params={"relatedChemicals.symbol": med})
+                           params={"relatedChemicals.name": med})
     guideline_annotations = response.json()
     # Cross-reference returned annotations against patient_genes for dosing guidance
 ```
@@ -173,7 +180,7 @@ Screen for pharmacogenomic contraindications:
 ```python
 # Check for HLA-B*57:01 guidance before abacavir trial
 response = requests.get("https://api.clinpgx.org/v1/data/guidelineAnnotation",
-                       params={"relatedChemicals.symbol": "abacavir"})
+                       params={"relatedChemicals.name": "abacavir"})
 guideline_annotations = response.json()
 # CPIC: Do not use if HLA-B*57:01 positive
 ```

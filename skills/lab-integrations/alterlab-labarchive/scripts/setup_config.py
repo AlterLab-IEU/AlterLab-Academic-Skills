@@ -54,9 +54,9 @@ def get_credentials():
     print("\nUser Credentials:")
     user_email = input("  Your LabArchives email: ").strip()
 
-    print("\nExternal Applications Password:")
-    print("(Set this in your LabArchives Account Settings → Security & Privacy)")
-    user_password = input("  External Applications Password: ").strip()
+    print("\nLA App authentication token:")
+    print("(In LabArchives: click your name, top-right -> 'LA App authentication')")
+    user_password = input("  LA App authentication token: ").strip()
 
     return {
         'access_key_id': access_key_id,
@@ -151,7 +151,7 @@ def test_authentication(config_path='config.yaml'):
 
     except ImportError:
         print("\n⚠️  labarchives-py package not installed")
-        print("   Install with: pip install git+https://github.com/mcmero/labarchives-py")
+        print('   Install with: uv pip install "git+https://github.com/mcmero/labarchives-py"')
 
     except Exception as e:
         print(f"\n❌ Connection test failed: {e}")

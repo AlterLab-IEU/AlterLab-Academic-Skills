@@ -25,7 +25,7 @@ GeoMaster is a comprehensive geospatial science skill covering:
 9. **industry-applications.md** - Urban planning, disaster management, utilities, transportation
 10. **specialized-topics.md** - Geostatistics, optimization, ethics, best practices
 11. **data-sources.md** - Satellite data catalogs, open data repositories, API access
-12. **code-examples.md** - 500+ code examples across 7 programming languages
+12. **code-examples.md** - 500+ code examples across 8 programming languages
 
 ## Key Topics Covered
 
@@ -53,7 +53,8 @@ GeoMaster is a comprehensive geospatial science skill covering:
 - **JavaScript** - Turf.js, Leaflet
 - **C++** - GDAL C++ API
 - **Java** - GeoTools
-- **Go** - Simple Features Go
+- **Go** - go-geom / orb
+- **Rust** - GeoRust (geo, gdal)
 
 ## Installation
 
@@ -61,12 +62,15 @@ See [SKILL.md](SKILL.md) for detailed installation instructions.
 
 ### Core Python Stack
 ```bash
-conda install -c conda-forge gdal rasterio fiona shapely pyproj geopandas
+# rasterio/fiona/pyproj/shapely wheels bundle GDAL/GEOS/PROJ — don't also
+# conda-install GDAL in the same env (ABI mismatch). Standalone `gdal`
+# bindings / PDAL / rsgislib need conda; see SKILL.md.
+uv pip install rasterio fiona shapely pyproj geopandas
 ```
 
 ### Remote Sensing
 ```bash
-pip install rsgislib torchgeo earthengine-api
+uv pip install torchgeo earthengine-api   # rsgislib: conda-forge only
 ```
 
 ## Quick Examples
@@ -77,8 +81,8 @@ import rasterio
 import numpy as np
 
 with rasterio.open('sentinel2.tif') as src:
-    red = src.read(4)
-    nir = src.read(8)
+    red = src.read(4).astype(float)   # cast: integer bands -> float division
+    nir = src.read(8).astype(float)
     ndvi = (nir - red) / (nir + red + 1e-8)
 ```
 

@@ -292,7 +292,7 @@ cited_by_url = work['cited_by_api_url']
 
 # Extract just the query part and use it
 import requests
-response = requests.get(cited_by_url, params={'mailto': client.email})
+response = requests.get(cited_by_url, params=client.auth_params())
 citing_works = response.json()
 
 print(f"{work['title']}")

@@ -13,13 +13,12 @@ metadata:
 
 ## Overview
 
-BindingDB (https://www.bindingdb.org/) is the primary public database of measured drug-protein binding affinities. It contains over 3 million binding data records for ~1.4 million compounds tested against ~9,200 protein targets, curated from scientific literature and patent literature. BindingDB stores quantitative binding measurements (Ki, Kd, IC50, EC50) essential for drug discovery, pharmacology, and computational chemistry research.
+BindingDB (https://www.bindingdb.org/) is the primary public database of measured drug-protein binding affinities. It contains roughly 3.2 million binding data records for ~1.4 million compounds tested against ~11,400 protein targets, curated from scientific literature and patent literature. BindingDB stores quantitative binding measurements (Ki, Kd, IC50, EC50) essential for drug discovery, pharmacology, and computational chemistry research.
 
 **Key resources:**
 - BindingDB website: https://www.bindingdb.org/
-- REST API base: https://bindingdb.org/rest/
-- Downloads: https://www.bindingdb.org/rwd/bind/chemsearch/marvin/SDFdownload.jsp?all_download=yes
-- GitHub: https://github.com/dhimmel/bindingdb
+- REST API base: https://bindingdb.org/rest/ (no key; default response is XML, append `response=application/json`)
+- Downloads page: https://www.bindingdb.org/rwd/bind/chemsearch/marvin/Download.jsp (the full TSV is the dated `BindingDB_All_<YYYYMM>_tsv.zip`, ~560 MB zipped, refreshed monthly)
 
 ## When to Use This Skill
 
@@ -111,8 +110,9 @@ import pandas as pd
 
 def load_bindingdb(filepath="BindingDB_All.tsv"):
     """
-    Load BindingDB TSV file.
-    Download from: https://www.bindingdb.org/rwd/bind/chemsearch/marvin/SDFdownload.jsp?all_download=yes
+    Load BindingDB TSV file (the unzipped BindingDB_All_<YYYYMM>.tsv).
+    Download the dated BindingDB_All_<YYYYMM>_tsv.zip from:
+    https://www.bindingdb.org/rwd/bind/chemsearch/marvin/Download.jsp
     """
     # Key columns
     usecols = [
@@ -140,7 +140,11 @@ def load_bindingdb(filepath="BindingDB_All.tsv"):
         "DrugBank ID of Ligand",
     ]
 
-    df = pd.read_csv(filepath, sep="\t", usecols=[c for c in usecols if c],
+    # Exact TSV headers drift between monthly releases (some contain double
+    # spaces), so intersect with the actual header rather than hard-failing.
+    header = pd.read_csv(filepath, sep="\t", nrows=0).columns
+    keep = [c for c in usecols if c in header]
+    df = pd.read_csv(filepath, sep="\t", usecols=keep,
                      low_memory=False, on_bad_lines='skip')
 
     # Convert affinity columns to numeric
@@ -203,13 +207,14 @@ def sar_analysis(df, target_uniprot, affinity_col="IC50 (nM)"):
 ### 6. Polypharmacology Profile
 
 ```python
-def polypharmacology_profile(df, ligand_smiles_or_name, affinity_cutoff_nM=1000):
+def polypharmacology_profile(df, ligand_smiles, affinity_cutoff_nM=1000):
     """
-    Find all targets a compound binds to.
-    Uses PubChem CID or SMILES for matching.
+    Find all targets a compound binds to, by exact SMILES match.
+    For tolerance to tautomers/salts/charge states, match on the InChIKey
+    skeleton (first 14 chars of "Ligand InChI Key") instead of raw SMILES.
     """
-    # Search by ligand SMILES (exact match)
-    mask = df["Ligand SMILES"] == ligand_smiles_or_name
+    # Search by ligand SMILES (exact string match)
+    mask = df["Ligand SMILES"] == ligand_smiles
 
     ligand_data = df[mask].copy()
 
@@ -224,7 +229,9 @@ def polypharmacology_profile(df, ligand_smiles_or_name, affinity_cutoff_nM=1000)
         ["Target Name", "UniProt (SwissProt) Primary ID of Target Chain"] + aff_cols
     ].dropna(how='all')
 
-    return result.sort_values("Ki (nM)")
+    # Rank by the tightest measured constant per row (NaNs ignored)
+    result = result.assign(best_nM=result[aff_cols].min(axis=1))
+    return result.sort_values("best_nM")
 ```
 
 ## Query Workflows
@@ -314,6 +321,7 @@ def prepare_ml_dataset(df, uniprot_ids, affinity_col="IC50 (nM)",
 
 - **Use Ki for direct binding**: Ki reflects true binding affinity independent of enzymatic mechanism
 - **IC50 context-dependency**: IC50 values depend on substrate concentration (Cheng-Prusoff equation)
+- **Watch for qualifier prefixes**: TSV affinity cells often carry `>`, `<`, or `>=` prefixes (e.g. `>10000`) for censored measurements. `pd.to_numeric(errors='coerce')` silently turns these into NaN — strip the prefix first (e.g. `df[col].astype(str).str.lstrip("<>= ")`) and decide explicitly whether to keep, drop, or treat censored values as inequalities before modeling
 - **Normalize units**: BindingDB reports in nM; verify units when comparing across studies
 - **Filter by target organism**: Use `Target Source Organism` to ensure human protein data
 - **Handle missing values**: Not all compounds have all measurement types
@@ -322,9 +330,9 @@ def prepare_ml_dataset(df, uniprot_ids, affinity_col="IC50 (nM)",
 ## Additional Resources
 
 - **BindingDB website**: https://www.bindingdb.org/
-- **Data downloads**: https://www.bindingdb.org/rwd/bind/chemsearch/marvin/SDFdownload.jsp?all_download=yes
-- **API documentation**: https://www.bindingdb.org/rwd/bind/info.jsp (REST base: https://bindingdb.org/rest)
-- **Citation**: Gilson MK et al. (2016) Nucleic Acids Research. PMID: 26481362
+- **Data downloads**: https://www.bindingdb.org/rwd/bind/chemsearch/marvin/Download.jsp
+- **REST API documentation**: https://www.bindingdb.org/rwd/bind/BindingDBRESTfulAPI.jsp (REST base: https://bindingdb.org/rest)
+- **Citation**: Gilson MK et al. "BindingDB in 2015." Nucleic Acids Research 2016;44(D1):D1045-53. PMID: 26481362, doi:10.1093/nar/gkv1072
 - **Related resources**: ChEMBL (https://www.ebi.ac.uk/chembl/), PubChem BioAssay
 
 ## Scripts

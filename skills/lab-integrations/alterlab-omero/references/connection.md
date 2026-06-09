@@ -204,6 +204,7 @@ for admin in conn.getAdministrators():
 Always close connections to free server resources:
 
 ```python
+conn = None  # bind first so the finally block is safe if the constructor raises
 try:
     conn = BlitzGateway(username, password, host=host, port=4064)
     conn.connect()

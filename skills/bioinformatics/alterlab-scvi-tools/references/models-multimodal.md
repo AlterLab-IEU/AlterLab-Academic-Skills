@@ -44,19 +44,14 @@ model.train()
 # Get joint latent representation
 latent = model.get_latent_representation()
 
-# Get normalized values for both modalities
-rna_normalized = model.get_normalized_expression()
-protein_normalized = model.get_normalized_expression(
-    transform_batch="batch1",
-    protein_expression=True
-)
+# get_normalized_expression returns a (rna, protein) TUPLE for totalVI
+rna_normalized, protein_normalized = model.get_normalized_expression(n_samples=25)
 
-# Differential expression (works for both RNA and protein)
-rna_de = model.differential_expression(groupby="cell_type")
-protein_de = model.differential_expression(
-    groupby="cell_type",
-    protein_expression=True
-)
+# Differential expression returns ONE DataFrame covering both modalities:
+# genes and proteins both appear as rows (split by name afterwards).
+de = model.differential_expression(groupby="cell_type", group1="T cells", group2="B cells")
+is_protein = de.index.isin(adata.uns["protein_names"])
+rna_de, protein_de = de[~is_protein], de[is_protein]
 ```
 
 **Key Parameters**:
@@ -68,25 +63,13 @@ protein_de = model.differential_expression(
 
 **Advanced Features**:
 
-**Protein Imputation**:
+**Protein Imputation / Denoising**:
 ```python
-# Impute missing proteins for RNA-only cells
-# (useful for mapping RNA-seq to CITE-seq reference)
-protein_foreground = model.get_protein_foreground_probability()
-imputed_proteins = model.get_normalized_expression(
-    protein_expression=True,
-    n_samples=25
-)
-```
+# Foreground (real signal) vs ambient background for proteins
+protein_foreground = model.get_protein_foreground_probability(n_samples=25)
 
-**Denoising**:
-```python
-# Get denoised counts for both modalities
-denoised_rna = model.get_normalized_expression(n_samples=25)
-denoised_protein = model.get_normalized_expression(
-    protein_expression=True,
-    n_samples=25
-)
+# Denoised values for both modalities come back as a (rna, protein) tuple
+denoised_rna, denoised_protein = model.get_normalized_expression(n_samples=25)
 ```
 
 **Best Practices**:
@@ -114,90 +97,49 @@ denoised_protein = model.get_normalized_expression(
 - Cross-modality imputation tasks
 
 **Data Requirements**:
-- AnnData with multiple modalities
-- Modality indicators (which measurements each cell has)
-- Can handle:
-  - All cells with both modalities (fully paired)
-  - Mix of paired and unpaired cells
-  - Completely unpaired datasets
+- A `MuData` object with one modality per `.mod` entry (e.g. `mdata.mod["rna"]`,
+  `mdata.mod["atac"]`, optionally `mdata.mod["protein"]`).
+- Handles fully paired (10x Multiome), partially paired, and fully unpaired
+  cells. For unpaired/mixed data, concatenate paired cells first, then RNA-only,
+  then ATAC-only cells — MultiVI infers which modalities each cell has from the
+  per-modality observations.
 
-**Basic Usage**:
+**Basic Usage** (current MuData API):
 ```python
-# Prepare data with modality information
-# adata.X should contain all features (genes + peaks)
-# adata.var["modality"] indicates "Gene" or "Peak"
-# adata.obs["modality"] indicates which modality each cell has
+import scvi
+from mudata import MuData
 
-scvi.model.MULTIVI.setup_anndata(
-    adata,
+# mdata.mod["rna"] = RNA AnnData (raw counts), mdata.mod["atac"] = ATAC AnnData
+scvi.model.MULTIVI.setup_mudata(
+    mdata,
     batch_key="batch",
-    modality_key="modality"  # Column indicating cell modality
+    modalities={"rna_layer": "rna", "atac_layer": "atac"},
 )
 
-model = scvi.model.MULTIVI(adata)
+model = scvi.model.MULTIVI(
+    mdata,
+    n_genes=mdata.mod["rna"].n_vars,
+    n_regions=mdata.mod["atac"].n_vars,
+)
 model.train()
 
-# Get joint latent representation
+# Joint latent representation
 latent = model.get_latent_representation()
 
-# Impute missing modalities
-# E.g., predict ATAC for RNA-only cells
-imputed_accessibility = model.get_accessibility_estimates(
-    indices=rna_only_indices
-)
-
-# Get normalized expression/accessibility
+# Modality-specific outputs (and cross-modality imputation: predict the
+# missing modality for cells that only measured the other one)
 rna_normalized = model.get_normalized_expression()
 atac_normalized = model.get_accessibility_estimates()
 ```
 
+> Older code uses a single concatenated AnnData built with
+> `scvi.data.organize_multiome_anndatas(...)` plus `MULTIVI.setup_anndata`.
+> New work should prefer the `MuData` + `setup_mudata` path shown above.
+
 **Key Parameters**:
-- `n_genes`: Number of gene features
-- `n_regions`: Number of accessibility regions
+- `n_genes`: Number of gene features (`mdata.mod["rna"].n_vars`)
+- `n_regions`: Number of accessibility regions (`mdata.mod["atac"].n_vars`)
 - `n_latent`: Latent dimensionality (default: 20)
-
-**Integration Scenarios**:
-
-**Scenario 1: Fully Paired (10x Multiome)**:
-```python
-# All cells have both RNA and ATAC
-# Single modality key: "paired"
-adata.obs["modality"] = "paired"
-```
-
-**Scenario 2: Partially Paired**:
-```python
-# Some cells have both, some RNA-only, some ATAC-only
-adata.obs["modality"] = ["RNA+ATAC", "RNA", "ATAC", ...]
-```
-
-**Scenario 3: Completely Unpaired**:
-```python
-# Separate RNA and ATAC experiments
-adata.obs["modality"] = ["RNA"] * n_rna + ["ATAC"] * n_atac
-```
-
-**Advanced Use Cases**:
-
-**Cross-Modality Prediction**:
-```python
-# Predict peaks from gene expression
-accessibility_from_rna = model.get_accessibility_estimates(
-    indices=rna_only_cells
-)
-
-# Predict genes from accessibility
-expression_from_atac = model.get_normalized_expression(
-    indices=atac_only_cells
-)
-```
-
-**Modality-Specific Analysis**:
-```python
-# Separate analysis per modality
-rna_subset = adata[adata.obs["modality"].str.contains("RNA")]
-atac_subset = adata[adata.obs["modality"].str.contains("ATAC")]
-```
 
 ## MrVI (Multi-resolution Variational Inference)
 
@@ -218,50 +160,50 @@ atac_subset = adata[adata.obs["modality"].str.contains("ATAC")]
 - Understanding inter-sample heterogeneity
 - Multi-donor studies
 
-**Basic Usage**:
+**Basic Usage** (note: MrVI lives in `scvi.external`, not `scvi.model`):
 ```python
-scvi.model.MRVI.setup_anndata(
+from scvi.external import MRVI
+
+MRVI.setup_anndata(
     adata,
     layer="counts",
     batch_key="batch",
-    sample_key="sample"  # Critical: defines biological samples
+    sample_key="sample",  # Critical: defines biological samples
 )
 
-model = scvi.model.MRVI(adata, n_latent=10, n_latent_sample=5)
+model = MRVI(adata, n_latent=10, n_latent_sample=5)
 model.train()
 
-# Get representations
-shared_latent = model.get_latent_representation()  # Shared across samples
-sample_specific = model.get_sample_specific_representation()
+# u = sample-invariant latent; z = sample-aware ("local") latent
+u_latent = model.get_latent_representation(give_z=False)  # sample-corrected
+z_latent = model.get_latent_representation(give_z=True)   # sample-aware
 
-# Sample distance matrix
-sample_distances = model.get_sample_distances()
+# Per-cell, per-sample representation and pairwise sample distances
+local_repr = model.get_local_sample_representation()
+sample_distances = model.get_local_sample_distances()
 ```
 
 **Key Parameters**:
-- `n_latent`: Dimensionality of shared latent space
-- `n_latent_sample`: Dimensionality of sample-specific space
+- `n_latent`: Dimensionality of the (shared) `z` latent space
+- `n_latent_sample`: Dimensionality of the sample-specific latent space
 - `sample_key`: Column defining biological samples
 
 **Analysis Workflow**:
 ```python
-# 1. Identify shared cell types across samples
-sc.pp.neighbors(adata, use_rep="X_MrVI_shared")
+# 1. Cluster on the sample-invariant u space
+adata.obsm["X_mrvi_u"] = model.get_latent_representation(give_z=False)
+sc.pp.neighbors(adata, use_rep="X_mrvi_u")
 sc.tl.umap(adata)
 sc.tl.leiden(adata, key_added="shared_clusters")
 
-# 2. Analyze sample-specific variation
-sample_repr = model.get_sample_specific_representation()
+# 2. Per-cell sample distance matrices (how samples differ at each cell state)
+distances = model.get_local_sample_distances()
 
-# 3. Compare samples
-distances = model.get_sample_distances()
-
-# 4. Find sample-enriched genes
-de_results = model.differential_expression(
-    groupby="sample",
-    group1="Disease",
-    group2="Healthy"
-)
+# 3. MrVI's differential analyses are driven by SAMPLE-LEVEL covariates
+#    (e.g. condition/donor), not a cell-level group1/group2 comparison like
+#    scVI. Use model.differential_abundance(...) and
+#    model.differential_expression(...) with the sample covariate(s) of
+#    interest — check the current API for the exact keyword.
 ```
 
 **Use Cases**:
@@ -328,10 +270,13 @@ protein_counts = adata.obsm["protein_expression"]
 # Remove low-quality proteins
 
 # 3. Setup totalVI
+# protein_names_uns_key registers the protein names so DE rows are labelled
+# (and adata.uns["protein_names"] is available to split RNA vs protein results).
 scvi.model.TOTALVI.setup_anndata(
     adata,
     layer="counts",
     protein_expression_obsm_key="protein_expression",
+    protein_names_uns_key="protein_names",
     batch_key="batch"
 )
 
@@ -348,19 +293,10 @@ sc.pp.neighbors(adata, use_rep="X_totalVI")
 sc.tl.umap(adata)
 sc.tl.leiden(adata, resolution=0.5)
 
-# 7. Differential expression for both modalities
-rna_de = model.differential_expression(
-    groupby="leiden",
-    group1="0",
-    group2="1"
-)
-
-protein_de = model.differential_expression(
-    groupby="leiden",
-    group1="0",
-    group2="1",
-    protein_expression=True
-)
+# 7. Differential expression — one DataFrame covers genes AND proteins
+de = model.differential_expression(groupby="leiden", group1="0", group2="1")
+is_protein = de.index.isin(adata.uns["protein_names"])
+rna_de, protein_de = de[~is_protein], de[is_protein]
 
 # 8. Save model
 model.save("totalvi_model")

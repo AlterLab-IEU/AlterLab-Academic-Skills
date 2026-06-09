@@ -54,8 +54,8 @@ GET /rest/pug/compound/inchi/{inchi}/property/{properties}/JSON
 Common molecular properties that can be retrieved:
 - `MolecularFormula`
 - `MolecularWeight`
-- `CanonicalSMILES`
-- `IsomericSMILES`
+- `SMILES` (full SMILES with stereo/isotope info; replaces the deprecated `IsomericSMILES`)
+- `ConnectivitySMILES` (connectivity only, no stereo/isotope; replaces the deprecated `CanonicalSMILES`)
 - `InChI`
 - `InChIKey`
 - `IUPACName`
@@ -81,8 +81,12 @@ Common molecular properties that can be retrieved:
 
 To retrieve multiple properties, separate them with commas:
 ```
-/property/MolecularFormula,MolecularWeight,CanonicalSMILES/JSON
+/property/MolecularFormula,MolecularWeight,SMILES/JSON
 ```
+
+> **SMILES property change (2025):** PubChem deprecated `CanonicalSMILES` and `IsomericSMILES`.
+> Requesting them still returns data for now, but use `ConnectivitySMILES` (was `CanonicalSMILES`)
+> and `SMILES` (was `IsomericSMILES`) in new code.
 
 #### 3. Structure Search Operations
 
@@ -204,8 +208,8 @@ compound = pcp.Compound.from_cid(2244)
 compound.molecular_formula  # 'C9H8O4'
 compound.molecular_weight   # 180.16
 compound.iupac_name        # '2-acetyloxybenzoic acid'
-compound.canonical_smiles   # 'CC(=O)OC1=CC=CC=C1C(=O)O'
-compound.isomeric_smiles    # Same as canonical for non-stereoisomers
+compound.smiles            # 'CC(=O)OC1=CC=CC=C1C(=O)O' (stereo/isotope-aware; was isomeric_smiles)
+compound.connectivity_smiles  # connectivity only (was canonical_smiles)
 compound.inchi             # InChI string
 compound.inchikey          # InChI Key
 compound.xlogp             # Partition coefficient
@@ -255,7 +259,7 @@ results = pcp.get_compounds('c1ccccc1', 'smiles',
 Get specific properties for multiple compounds:
 ```python
 properties = pcp.get_properties(
-    ['MolecularFormula', 'MolecularWeight', 'CanonicalSMILES'],
+    ['MolecularFormula', 'MolecularWeight', 'SMILES'],
     'aspirin',
     'name'
 )
@@ -340,7 +344,7 @@ Convert from name to SMILES to InChI:
 import pubchempy as pcp
 
 compound = pcp.get_compounds('caffeine', 'name')[0]
-smiles = compound.canonical_smiles
+smiles = compound.smiles
 inchi = compound.inchi
 inchikey = compound.inchikey
 cid = compound.cid
@@ -371,7 +375,7 @@ Find structurally similar compounds to a query:
 ```python
 # Start with a known compound
 query_compound = pcp.get_compounds('gefitinib', 'name')[0]
-query_smiles = query_compound.canonical_smiles
+query_smiles = query_compound.smiles
 
 # Perform similarity search
 similar = pcp.get_compounds(

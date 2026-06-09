@@ -44,21 +44,33 @@ class ReactomeClient:
         return response.json()
 
     def get_pathway_entities(self, pathway_id: str) -> List[Dict]:
-        """Get participating entities in a pathway"""
+        """Get participating physical entities in a pathway.
+
+        Uses /data/participants/{id}/... — the older /data/event/{id}/...
+        form returns 404 on the current Content Service.
+        """
         response = requests.get(
-            f"{self.CONTENT_BASE}/data/event/{pathway_id}/participatingPhysicalEntities"
+            f"{self.CONTENT_BASE}/data/participants/{pathway_id}/participatingPhysicalEntities"
         )
         response.raise_for_status()
         return response.json()
 
     def search_pathways(self, term: str) -> List[Dict]:
-        """Search for pathways by name"""
+        """Search for entities by name via the /search/query endpoint.
+
+        Returns a flattened list of result entries. /search lives outside
+        /data; the legacy /data/query?name=... form returns 404.
+        """
         response = requests.get(
-            f"{self.CONTENT_BASE}/data/query",
-            params={"name": term}
+            f"{self.CONTENT_BASE}/search/query",
+            params={"query": term, "types": "Pathway"},
         )
         response.raise_for_status()
-        return response.json()
+        payload = response.json()
+        entries: List[Dict] = []
+        for cluster in payload.get("results", []):
+            entries.extend(cluster.get("entries", []))
+        return entries
 
     def analyze_genes(self, gene_list: List[str]) -> Dict:
         """Perform pathway enrichment analysis on gene list"""
@@ -150,6 +162,12 @@ def command_entities(pathway_id: str):
         sys.exit(1)
 
 
+def _strip_highlight(text: str) -> str:
+    """Remove the <span class="highlighting"> markup the search API adds."""
+    import re
+    return re.sub(r"</?span[^>]*>", "", text or "")
+
+
 def command_search(term: str):
     """Search for pathways by term"""
     client = ReactomeClient()
@@ -157,12 +175,17 @@ def command_search(term: str):
         results = client.search_pathways(term)
         print(f"Search results for '{term}': {len(results)} found\n")
 
+        # Search entries use id/stId, name, exactType, species (list of names).
         for result in results[:20]:  # Show first 20
-            print(f"{result['stId']}: {result['displayName']}")
-            if 'species' in result and result['species']:
-                species = result['species'][0]['displayName']
-                print(f"  Species: {species}")
-            print(f"  Type: {result['schemaClass']}")
+            st_id = result.get("stId") or result.get("id", "")
+            name = _strip_highlight(result.get("name", ""))
+            print(f"{st_id}: {name}")
+            species = result.get("species")
+            if species:
+                first = species[0]
+                # species entries are plain strings in search results
+                print(f"  Species: {first if isinstance(first, str) else first.get('displayName', '')}")
+            print(f"  Type: {result.get('exactType') or result.get('type', '')}")
             print()
 
         if len(results) > 20:

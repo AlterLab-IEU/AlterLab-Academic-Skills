@@ -50,6 +50,11 @@ coords = {
 }
 
 with pm.Model(coords=coords) as linear_model:
+    # Wrap predictors in pm.Data so they can be swapped out for predictions
+    # later via pm.set_data(). The obs_id dim is mutable so out-of-sample
+    # data can have a different number of rows.
+    X_data = pm.Data('X_data', X_scaled, dims=('obs_id', 'predictors'))
+
     # Priors
     # TODO: Adjust prior parameters based on your domain knowledge
     alpha = pm.Normal('alpha', mu=0, sigma=1)
@@ -57,7 +62,7 @@ with pm.Model(coords=coords) as linear_model:
     sigma = pm.HalfNormal('sigma', sigma=1)
 
     # Linear predictor
-    mu = alpha + pm.math.dot(X_scaled, beta)
+    mu = alpha + pm.math.dot(X_data, beta)
 
     # Likelihood
     y_obs = pm.Normal('y_obs', mu=mu, sigma=sigma, observed=y, dims='obs_id')
@@ -68,7 +73,7 @@ with pm.Model(coords=coords) as linear_model:
 
 print("Running prior predictive check...")
 with linear_model:
-    prior_pred = pm.sample_prior_predictive(samples=1000, random_seed=42)
+    prior_pred = pm.sample_prior_predictive(draws=1000, random_seed=42)
 
 # Visualize prior predictions
 fig, ax = plt.subplots(figsize=(10, 6))
@@ -200,20 +205,26 @@ for i, name in enumerate(predictor_names):
 X_new = np.random.randn(10, n_predictors)
 X_new_scaled = (X_new - X_mean) / X_std
 
-# Update model data and predict
+# Update model data and predict. Swap the X_data container and supply new
+# coords for the mutable obs_id dim so it matches the new row count.
 with linear_model:
-    pm.set_data({'X_scaled': X_new_scaled, 'obs_id': np.arange(len(X_new))})
-
-    post_pred = pm.sample_posterior_predictive(
-        idata.posterior,
-        var_names=['y_obs'],
-        random_seed=42
+    pm.set_data(
+        {'X_data': X_new_scaled},
+        coords={'obs_id': np.arange(len(X_new))},
     )
 
-# Extract predictions
-y_pred_samples = post_pred.posterior_predictive['y_obs']
+    post_pred = pm.sample_posterior_predictive(
+        idata,
+        var_names=['y_obs'],
+        predictions=True,
+        extend_inferencedata=True,
+        random_seed=42,
+    )
+
+# Extract predictions (predictions=True stores results in idata.predictions)
+y_pred_samples = idata.predictions['y_obs']
 y_pred_mean = y_pred_samples.mean(dim=['chain', 'draw']).values
-y_pred_hdi = az.hdi(y_pred_samples, hdi_prob=0.95).values
+y_pred_hdi = az.hdi(y_pred_samples, hdi_prob=0.95)['y_obs'].values
 
 print("\n" + "="*60)
 print("PREDICTIONS FOR NEW DATA")

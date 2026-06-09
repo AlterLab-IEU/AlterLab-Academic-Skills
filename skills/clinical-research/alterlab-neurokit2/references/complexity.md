@@ -11,7 +11,8 @@ Complexity measures quantify the irregularity, unpredictability, and multiscale 
 Compute multiple complexity metrics simultaneously for exploratory analysis.
 
 ```python
-complexity_indices = nk.complexity(signal, sampling_rate=1000, show=False)
+# Returns a (DataFrame, info_dict) tuple; complexity() takes no sampling_rate argument.
+complexity_indices, info = nk.complexity(signal, which="makowski2022")
 ```
 
 **Returns:**
@@ -181,7 +182,7 @@ mse = nk.entropy_multiscale(signal, scale=20, dimension=2, tolerance='sd',
 Fuzzy Entropy - uses fuzzy membership functions.
 
 ```python
-fuzzen = nk.entropy_fuzzy(signal, delay=1, dimension=2, tolerance='sd', r=0.2)
+fuzzen = nk.entropy_fuzzy(signal, delay=1, dimension=2, tolerance='sd')
 ```
 
 **Advantages:**

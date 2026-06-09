@@ -7,7 +7,8 @@
       "expected_output": "Invokes alterlab-pymoo: defines the bi-objective problem as an ElementwiseProblem (or selects a benchmark), runs NSGA-II via minimize() with a fixed seed and ('n_gen', N) termination, extracts result.F as the Pareto front, and visualizes the trade-off with a Scatter plot.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "Pareto" }
+        { "type": "output_contains", "value": "NSGA2" },
+        { "type": "behavior", "value": "Uses NSGA-II via minimize() with a fixed seed, reads result.F as the Pareto front, and plots the two-objective trade-off with a Scatter plot." }
       ]
     },
     {

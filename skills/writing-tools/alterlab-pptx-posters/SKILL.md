@@ -1,6 +1,6 @@
 ---
 name: alterlab-pptx-posters
-description: Creates research posters in HTML/CSS with responsive layouts and easy visual integration, exportable to PDF or PPTX. Use ONLY when the user explicitly requests PowerPoint/PPTX poster format or web-based poster design. For standard research posters use latex-posters instead. Part of the AlterLab Academic Skills suite.
+description: Creates research posters in HTML/CSS with responsive layouts and easy visual integration, exportable to PDF or PPTX. Use ONLY when the user explicitly requests a PowerPoint/PPTX/PPT poster, an HTML/web-based poster, or a poster they will edit in PowerPoint, or when LaTeX is unavailable. For a standard/conference research poster with no format named, use alterlab-latex-posters instead; for a slide deck/oral-talk presentation, use alterlab-scientific-slides. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 compatibility: Authors HTML/CSS posters with no external service; exporting to PDF or PPTX requires a headless Chrome browser (and python-pptx for PPTX)
@@ -77,8 +77,6 @@ POSTER FORMAT GUIDELINES:
 **Example — too dense (7-stage workflow):** "Drug discovery workflow: Target ID, Synthesis, Screening, Lead Opt, Validation, Clinical Trial, FDA Approval with metrics" — this crams in too many stages and renders as tiny, unreadable text.
 
 **Example — readable (3 mega-stages):** "POSTER FORMAT for A0. Ultra-simple 3-box workflow: 'DISCOVER' → 'VALIDATE' → 'APPROVE'. Each word in giant bold (120pt+). Thick arrows (10px). 60% white space. Only these 3 words, no substeps. Readable from 12 feet." — same content, simplified to a readable poster format.
-
-If a diagram or figure would aid comprehension, invoke the **alterlab-scientific-schematics** skill (diagrams/schematics) or the **alterlab-generate-image** skill (images). Figures are optional — add them only where they improve clarity.
 
 ---
 
@@ -159,9 +157,7 @@ Each section should prominently feature AI-generated visuals:
 
 ### 4. Generating Visual Elements
 
-If a diagram or figure would aid comprehension, invoke the **alterlab-scientific-schematics** skill (diagrams/schematics) or the **alterlab-generate-image** skill (images). Figures are optional — add them only where they improve clarity.
-
-Example prompts that keep poster graphics simple and readable (save into a `figures/` directory):
+Generate figures via **alterlab-scientific-schematics** (diagrams) or **alterlab-generate-image** (images), as noted above. Example prompts that keep poster graphics simple and readable (save into a `figures/` directory):
 
 - **Hero image** — "POSTER FORMAT for A0. Hero banner: '[TOPIC]' in huge text (120pt+). Dark blue gradient background. One iconic visual. Minimal text. Readable from 15 feet."
 - **Introduction visual** — "POSTER FORMAT for A0. Simple visual with only 3 icons: [icon1] → [icon2] → [icon3]. One-word labels (80pt+). 50% white space. Readable from 8 feet."
@@ -197,9 +193,9 @@ mkdir -p figures
 
 ### Stage 3: Create HTML Poster
 
-1. **Copy the template:**
+1. **Copy the template** from this skill's `assets/` directory:
    ```bash
-   cp skills/pptx-posters/assets/poster_html_template.html poster.html
+   cp assets/poster_html_template.html poster.html
    ```
 
 2. **Update content:**
@@ -217,50 +213,59 @@ mkdir -p figures
 
 ### Stage 4: Export to PDF
 
+The template's `@page` rule (added in the template `<style>`) fixes the PDF page to the poster size, so exports come out at full dimensions instead of being cropped to Letter/A4.
+
 **Browser Print Method:**
-1. Open poster.html in Chrome or Firefox
+1. Open poster.html in Chrome
 2. Print (Cmd/Ctrl + P)
 3. Select "Save as PDF"
-4. Set paper size to match poster dimensions
-5. Remove margins
-6. Enable "Background graphics"
+4. Paper size: leave on the size the `@page` rule sets, or pick a custom size matching the poster
+5. Margins: None
+6. Enable "Background graphics" (otherwise the gradients and block backgrounds are dropped)
 
-**Command Line (if Chrome available):**
+**Command Line (Chrome headless):**
 ```bash
-# Chrome headless PDF export
-google-chrome --headless --print-to-pdf=poster.pdf \
-  --print-to-pdf-no-header \
-  --no-margins \
-  poster.html
+# Use the new headless mode (Chrome 132+ ships old --headless only as the
+# separate chrome-headless-shell binary). On macOS the binary lives at:
+#   /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+  --headless=new \
+  --no-pdf-header-footer \
+  --print-to-pdf=poster.pdf \
+  "file://$PWD/poster.html"
 ```
+`--no-pdf-header-footer` replaces the older `--print-to-pdf-no-header`; on Chrome versions before ~118 fall back to the old flag name. Page size and zero margin come from the template's `@page` rule, not a CLI flag.
 
 ### Stage 5: Convert to PPTX (If Required)
 
-**Option 1: PDF to PPTX conversion**
-```bash
-# Using LibreOffice
-libreoffice --headless --convert-to pptx poster.pdf
+**Pick the path based on what "PPTX" needs to be:**
 
-# Or use online converters for simple cases
+**Option 1 — Single-image slide (fast, NOT editable).** Convert the exported PDF page (or a rasterized PNG of it) into one full-bleed picture on a poster-sized slide. This is the right choice when the user just wants a `.pptx` *container* to project or submit. LibreOffice's PDF import treats the PDF as a drawing, so the slide content is effectively a flattened image — text is **not** editable in PowerPoint.
+```bash
+# Rasterize the PDF to a PNG, then place it as one slide (see python-pptx below).
+# A direct `libreoffice --convert-to pptx poster.pdf` produces a non-editable,
+# image-like slide and often misplaces content — prefer the python-pptx path.
+magick -density 150 poster.pdf poster.png
 ```
 
-**Option 2: Direct PPTX creation with python-pptx**
+**Option 2 — Native PPTX with python-pptx (editable).** Use this when the user actually wants to *edit the poster in PowerPoint*. Build the slide from the same `figures/` and text so each element is a real, movable PowerPoint object. Match the slide size to the poster orientation — the template is **portrait 36in wide × 48in tall**:
 ```python
 from pptx import Presentation
 from pptx.util import Inches, Pt
 
 prs = Presentation()
-prs.slide_width = Inches(48)
-prs.slide_height = Inches(36)
+prs.slide_width = Inches(36)   # portrait: width < height (match the template)
+prs.slide_height = Inches(48)
 
 slide = prs.slides.add_slide(prs.slide_layouts[6])  # Blank
 
-# Add images from figures/
-slide.shapes.add_picture("figures/hero.png", Inches(0), Inches(0), width=Inches(48))
-# ... add other elements
+# Add images from figures/ (positions in inches from top-left)
+slide.shapes.add_picture("figures/hero.png", Inches(0), Inches(0), width=Inches(36))
+# ... add text boxes and other images for each section
 
 prs.save("poster.pptx")
 ```
+Install with `uv pip install python-pptx` (or `uvx`); `magick` is ImageMagick.
 
 ---
 
@@ -371,9 +376,9 @@ body {
 ## Integration with Other Skills
 
 This skill works with:
-- **Scientific Schematics**: Generate all poster diagrams and flowcharts
-- **Generate Image / Nano Banana Pro**: Create stylized graphics and hero images
-- **LaTeX Posters**: DEFAULT skill for poster creation (use this instead unless PPTX explicitly requested)
+- **alterlab-scientific-schematics**: poster diagrams and flowcharts
+- **alterlab-generate-image**: hero images and stylized graphics
+- **alterlab-latex-posters**: DEFAULT skill for poster creation (use it instead unless PPTX/PowerPoint or HTML is explicitly requested)
 
 ---
 

@@ -63,7 +63,7 @@ ENA provides multiple REST APIs for data access. Consult `references/api_referen
 **ENA Browser API** - Direct retrieval of records and metadata
 - Documentation: https://www.ebi.ac.uk/ena/browser/api/doc
 - Use for downloading specific records by accession
-- Returns data in XML format
+- Returns XML (metadata), or FASTA / EMBL flat-file (sequences) depending on endpoint
 
 **ENA Taxonomy REST API** - Query taxonomic information
 - Access lineage, rank, and related taxonomic data
@@ -130,9 +130,13 @@ samples = response.json()
 
 **Retrieve raw sequencing reads by accession:**
 ```python
-# Download run files using Browser API
+# Get FASTQ download URLs via the Portal filereport endpoint
+# (the Browser API xml/{accession} returns run METADATA, not file URLs).
 accession = "ERR123456"
-url = f"https://www.ebi.ac.uk/ena/browser/api/xml/{accession}"
+url = ("https://www.ebi.ac.uk/ena/portal/api/filereport"
+       f"?accession={accession}&result=read_run"
+       "&fields=run_accession,fastq_ftp,fastq_md5&format=tsv")
+# Then fetch each ;-separated fastq_ftp URL over FTP/HTTPS.
 ```
 
 **Search for all samples in a study:**

@@ -1,28 +1,36 @@
 # Worked Code Examples
 
 Copy-paste Python for the common analyses, extracted from the skill body. Primary
-libraries: `scipy.stats`, `statsmodels`, `pingouin`, `pymc`, `arviz`.
+libraries: `scipy.stats`, `statsmodels`, `pingouin>=0.6`, `pymc`, `arviz`.
+
+> **pingouin 0.6 column names**: output columns were renamed from hyphenated to clean
+> snake_case — `p-val`→`p_val`, `p-unc`→`p_unc`, `cohen-d`→`cohen_d`, `CI95%`→`CI95`,
+> `p-tukey`→`p_tukey`. The examples below use the 0.6 names. Also note `pg.ttest`'s
+> `CI95` is the CI on the **mean difference**, not on Cohen's d — get the effect-size CI
+> from `pg.compute_esci`.
 
 ## T-Test with Complete Reporting
 
 ```python
 import pingouin as pg
-import numpy as np
 
-# Run independent t-test
+# Run independent t-test (correction='auto' applies Welch's if variances differ)
 result = pg.ttest(group_a, group_b, correction='auto')
 
-# Extract results
+# Extract results (pingouin >= 0.6 column names)
 t_stat = result['T'].values[0]
 df = result['dof'].values[0]
-p_value = result['p-val'].values[0]
-cohens_d = result['cohen-d'].values[0]
-ci_lower = result['CI95%'].values[0][0]
-ci_upper = result['CI95%'].values[0][1]
+p_value = result['p_val'].values[0]
+cohens_d = result['cohen_d'].values[0]
+md_lo, md_hi = result['CI95'].values[0]  # CI on the MEAN DIFFERENCE
+
+# CI on Cohen's d (separate call)
+d_lo, d_hi = pg.compute_esci(stat=cohens_d, nx=len(group_a), ny=len(group_b),
+                             eftype='cohen')
 
 # Report
 print(f"t({df:.0f}) = {t_stat:.2f}, p = {p_value:.3f}")
-print(f"Cohen's d = {cohens_d:.2f}, 95% CI [{ci_lower:.2f}, {ci_upper:.2f}]")
+print(f"Cohen's d = {cohens_d:.2f}, 95% CI [{d_lo:.2f}, {d_hi:.2f}]")
 ```
 
 ## ANOVA with Post-Hoc Tests
@@ -35,9 +43,9 @@ aov = pg.anova(dv='score', between='group', data=df, detailed=True)
 print(aov)
 
 # If significant, conduct post-hoc tests
-if aov['p-unc'].values[0] < 0.05:
+if aov['p_unc'].values[0] < 0.05:
     posthoc = pg.pairwise_tukey(dv='score', between='group', data=df)
-    print(posthoc)
+    print(posthoc)  # adjusted p-values are in the 'p_tukey' column
 
 # Effect size
 eta_squared = aov['np2'].values[0]  # Partial eta-squared
@@ -140,10 +148,10 @@ Most effect sizes are automatically computed by pingouin:
 ```python
 # T-test returns Cohen's d
 result = pg.ttest(x, y)
-d = result['cohen-d'].values[0]
+d = result['cohen_d'].values[0]
 
 # ANOVA returns partial eta-squared
-aov = pg.anova(dv='score', between='group', data=df)
+aov = pg.anova(dv='score', between='group', data=df, detailed=True)
 eta_p2 = aov['np2'].values[0]
 
 # Correlation: r is already an effect size
@@ -154,16 +162,15 @@ r = corr['r'].values[0]
 Confidence intervals for effect sizes (always report to show precision):
 
 ```python
-from pingouin import compute_effsize_from_t
+import pingouin as pg
 
-# For t-test
-d, ci = compute_effsize_from_t(
-    t_statistic,
-    nx=len(group1),
-    ny=len(group2),
-    eftype='cohen'
-)
+# CI for Cohen's d from the effect size and group sizes
+ci = pg.compute_esci(stat=d, nx=len(group1), ny=len(group2), eftype='cohen')
 print(f"d = {d:.2f}, 95% CI [{ci[0]:.2f}, {ci[1]:.2f}]")
+
+# Or derive d directly from a t-statistic (returns a scalar in pingouin >= 0.6)
+d_from_t = pg.compute_effsize_from_t(t_statistic, nx=len(group1), ny=len(group2),
+                                     eftype='cohen')
 ```
 
 ## Power Analysis

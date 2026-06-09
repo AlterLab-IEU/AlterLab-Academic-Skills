@@ -24,6 +24,23 @@ The Open Targets Platform provides multiple access methods:
 
 No authentication is required for the GraphQL API. All data is freely accessible.
 
+## Schema Versioning
+
+The GraphQL schema changes between quarterly releases — field and argument names
+move. The queries below were verified against data version **26.03**. Confirm the
+running version and introspect when a field errors:
+
+```graphql
+query { meta { name apiVersion { x y z } dataVersion { year month iteration } } }
+```
+
+Notable recent changes reflected below: `Pagination` requires both `index` and
+`size`; disease/target `knownDrugs` was replaced by `drugAndClinicalCandidates`;
+`datatypeScores`/`ScoredComponent` uses `id` (not `componentId`); the `evidences`
+query filters by `datasourceIds` (not `datatypes`); `Drug.maximumClinicalTrialPhase`
+became `maximumClinicalStage` (enum string), and `Drug.indications`/`mechanismsOfAction`
+are now paginated (`rows`).
+
 ## Rate Limits
 
 For systematic queries involving multiple targets or diseases, use dataset downloads or BigQuery instead of repeated API calls. The API is optimized for single-entity and exploratory queries.
@@ -81,19 +98,19 @@ Retrieve gene annotations, tractability assessments, and disease associations.
 - `tractability` - Druggability assessment
 - `safetyLiabilities` - Safety information
 - `expressions` - Baseline expression data
-- `knownDrugs` - Approved/clinical drugs
+- `drugAndClinicalCandidates` - Approved/clinical drugs (replaces the former `knownDrugs`)
 - `associatedDiseases` - Disease associations with evidence
 
 ### /disease
 Retrieve disease/phenotype data, known drugs, and clinical information.
 
 **Common fields:**
-- `id` - EFO disease identifier
+- `id` - Disease identifier (EFO, MONDO, HP, Orphanet)
 - `name` - Disease name
 - `description` - Disease description
 - `therapeuticAreas` - High-level disease categories
 - `synonyms` - Alternative names
-- `knownDrugs` - Drugs indicated for disease
+- `drugAndClinicalCandidates` - Drugs indicated for disease (replaces the former `knownDrugs`)
 - `associatedTargets` - Target associations with evidence
 
 ### /drug
@@ -103,9 +120,10 @@ Retrieve compound details, mechanisms of action, and pharmacovigilance data.
 - `id` - ChEMBL identifier
 - `name` - Drug name
 - `drugType` - Small molecule, antibody, etc.
-- `maximumClinicalTrialPhase` - Development stage
-- `indications` - Disease indications
-- `mechanismsOfAction` - Target mechanisms
+- `maximumClinicalStage` - Development stage (enum string, e.g. "APPROVAL", "PHASE_3")
+- `indications` - Disease indications (paginated: `indications { rows { ... } }`)
+- `mechanismsOfAction` - Target mechanisms (paginated: `mechanismsOfAction { rows { ... } }`)
+- `drugWarnings` - Withdrawal/toxicity warnings
 - `adverseEvents` - Pharmacovigilance data
 
 ### /search
@@ -116,12 +134,14 @@ Search across all entities (targets, diseases, drugs).
 - `entityNames` - Filter by entity type(s)
 - `page` - Pagination
 
-### /associationDiseaseIndirect
-Retrieve target-disease associations including indirect evidence from disease descendants in ontology.
+### Indirect associations
+There is no separate endpoint for indirect associations. To include evidence
+propagated from disease descendants in the ontology, pass `enableIndirect: true`
+to `associatedTargets`, `associatedDiseases`, or `evidences`, e.g.
+`associatedTargets(enableIndirect: true, page: {index: 0, size: 50})`.
 
-**Key fields:**
-- `rows` - Association records with scores
-- `aggregations` - Aggregated statistics
+Other root query fields include `targets`/`diseases`/`drugs` (batch by ID list),
+`facets`, `mapIds`, and `variant`/`study`/`credibleSet` (genetics).
 
 ## Example Queries
 
@@ -138,14 +158,14 @@ query = """
         modality
         value
       }
-      associatedDiseases(page: {size: 10}) {
+      associatedDiseases(page: {index: 0, size: 10}) {
         rows {
           disease {
             name
           }
           score
           datatypeScores {
-            componentId
+            id
             score
           }
         }
@@ -161,7 +181,7 @@ variables = {"ensemblId": "ENSG00000157764"}
 ```python
 query = """
   query searchDiseases($queryString: String!) {
-    search(queryString: $queryString, entityNames: ["disease"]) {
+    search(queryString: $queryString, entityNames: ["disease"], page: {index: 0, size: 10}) {
       hits {
         id
         entity
@@ -172,6 +192,7 @@ query = """
   }
 """
 variables = {"queryString": "alzheimer"}
+# Returns e.g. {"id": "MONDO_0004975", "name": "Alzheimer disease", ...}
 ```
 
 ### Query 3: Get evidence for target-disease pair
@@ -192,33 +213,41 @@ query = """
     }
   }
 """
-variables = {"ensemblId": "ENSG00000157764", "efoId": "EFO_0000249"}
+# To narrow at the API, add `datasourceIds: ["gwas_catalog", ...]` (filters by
+# data source, not data type). Otherwise filter rows client-side on datatypeId.
+variables = {"ensemblId": "ENSG00000157764", "efoId": "MONDO_0004975"}
 ```
 
-### Query 4: Get known drugs for a disease
+### Query 4: Get known drugs / clinical candidates for a disease
 
 ```python
 query = """
-  query knownDrugs($efoId: String!) {
+  query drugCandidates($efoId: String!) {
     disease(efoId: $efoId) {
-      knownDrugs {
-        uniqueDrugs
+      drugAndClinicalCandidates {
+        count
         rows {
+          maxClinicalStage
           drug {
-            name
             id
+            name
+            mechanismsOfAction {
+              rows {
+                mechanismOfAction
+                targets { approvedSymbol }
+              }
+            }
           }
-          targets {
-            approvedSymbol
+          clinicalReports {
+            trialPhase
+            trialOverallStatus
           }
-          phase
-          status
         }
       }
     }
   }
 """
-variables = {"efoId": "EFO_0000249"}
+variables = {"efoId": "MONDO_0004975"}
 ```
 
 ## Error Handling

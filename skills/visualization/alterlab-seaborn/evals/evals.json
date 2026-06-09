@@ -33,7 +33,8 @@
       "prompt": "Plot tip against total_bill with a regression line, faceted into separate panels by time of day, from my DataFrame.",
       "expected_output": "Invokes alterlab-seaborn: uses the figure-level sns.lmplot (or regplot per axes) with x='total_bill', y='tip', col='time' to draw scatter-plus-fit regression panels with confidence intervals, faceting via the col parameter.",
       "assertions": [
-        { "type": "should_trigger", "value": true }
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Uses a figure-level regression function (lmplot) with col='time' for faceting rather than manually splitting the DataFrame and building subplots by hand." }
       ]
     },
     {

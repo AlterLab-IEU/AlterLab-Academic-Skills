@@ -93,6 +93,7 @@ Vectorized environments run multiple environment instances in parallel, accelera
 **Quick Setup:**
 ```python
 from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.vec_env import SubprocVecEnv
 
 # Create 4 parallel environments
 env = make_vec_env("CartPole-v1", n_envs=4, vec_env_cls=SubprocVecEnv)
@@ -100,6 +101,7 @@ env = make_vec_env("CartPole-v1", n_envs=4, vec_env_cls=SubprocVecEnv)
 model = PPO("MlpPolicy", env, verbose=1)
 model.learn(total_timesteps=25000)
 ```
+With `SubprocVecEnv`, wrap the call site in `if __name__ == "__main__":` (required on macOS/Windows spawn).
 
 **Off-Policy Optimization:**
 When using multiple environments with off-policy algorithms (SAC, TD3, DQN), set `gradient_steps=-1` to perform one gradient update per environment step, balancing wall-clock time and sample efficiency.
@@ -273,7 +275,7 @@ model.learn(total_timesteps=10000)
 - **Memory errors**: Reduce `buffer_size` for off-policy algorithms or use fewer parallel environments
 - **Slow training**: Consider SubprocVecEnv for parallel environments
 - **Unstable training**: Try different algorithms, tune hyperparameters, or check reward scaling
-- **Import errors**: Ensure `stable_baselines3` is installed: `uv pip install stable-baselines3[extra]`
+- **Import errors**: Ensure `stable_baselines3` is installed: `uv pip install "stable-baselines3[extra]"`
 
 ## Resources
 
@@ -290,11 +292,13 @@ model.learn(total_timesteps=10000)
 
 ## Installation
 
+Requires Python 3.10+ and PyTorch >= 2.3. The `[extra]` option pulls in Tensorboard, OpenCV, `ale-py` (Atari), pandas, and matplotlib.
+
 ```bash
 # Basic installation
 uv pip install stable-baselines3
 
-# With extra dependencies (Tensorboard, etc.)
-uv pip install stable-baselines3[extra]
+# With extra dependencies (Tensorboard, Atari, etc.)
+uv pip install "stable-baselines3[extra]"
 ```
 

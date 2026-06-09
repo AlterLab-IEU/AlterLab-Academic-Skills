@@ -6,7 +6,7 @@ The File Manager API enables file operations within protocols.io workspaces, inc
 
 ## Base URL
 
-All file manager endpoints use the base URL: `https://protocols.io/api/v3`
+All file manager endpoints use the base URL: `https://www.protocols.io/api/v3`
 
 ## Search and Browse
 
@@ -39,7 +39,7 @@ Search for files and folders within a workspace.
 **Example Request:**
 ```bash
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  "https://protocols.io/api/v3/workspaces/12345/files/search?query=microscopy&type=file"
+  "https://www.protocols.io/api/v3/workspaces/12345/files/search?query=microscopy&type=file"
 ```
 
 ### List Folder Contents
@@ -61,7 +61,7 @@ Browse files and folders within a specific folder.
 **Example Request:**
 ```bash
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  "https://protocols.io/api/v3/workspaces/12345/folders/root?order_by=modified&order_dir=desc"
+  "https://www.protocols.io/api/v3/workspaces/12345/folders/root?order_by=modified&order_dir=desc"
 ```
 
 ## File Upload
@@ -89,7 +89,7 @@ curl -X POST \
   -F "folder_id=67890" \
   -F "description=Experimental results from trial #3" \
   -F "tags=experiment,data,2025" \
-  "https://protocols.io/api/v3/workspaces/12345/files/upload"
+  "https://www.protocols.io/api/v3/workspaces/12345/files/upload"
 ```
 
 ### Upload Verification
@@ -121,7 +121,7 @@ Download a file from the workspace.
 ```bash
 curl -H "Authorization: Bearer YOUR_TOKEN" \
   -o "downloaded_file.xlsx" \
-  "https://protocols.io/api/v3/workspaces/12345/files/67890/download"
+  "https://www.protocols.io/api/v3/workspaces/12345/files/67890/download"
 ```
 
 ### Get File Metadata
@@ -159,7 +159,7 @@ curl -X PATCH \
     "description": "Experimental results from trial #3 - REVISED",
     "tags": "experiment,data,2025,revised"
   }' \
-  "https://protocols.io/api/v3/workspaces/12345/files/67890"
+  "https://www.protocols.io/api/v3/workspaces/12345/files/67890"
 ```
 
 ### Delete File
@@ -199,7 +199,7 @@ curl -X POST \
     "parent_folder_id": "root",
     "description": "All experimental data from 2025"
   }' \
-  "https://protocols.io/api/v3/workspaces/12345/folders"
+  "https://www.protocols.io/api/v3/workspaces/12345/folders"
 ```
 
 ### Rename Folder
@@ -239,7 +239,7 @@ curl -X POST \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -F "file=@results.csv" \
   -F "description=Results from protocol execution" \
-  "https://protocols.io/api/v3/workspaces/12345/files/upload"
+  "https://www.protocols.io/api/v3/workspaces/12345/files/upload"
 
 # Note the file_id from response, then reference in protocol
 ```

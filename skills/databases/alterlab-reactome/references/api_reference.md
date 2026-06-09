@@ -24,7 +24,7 @@ GET /data/database/version
 ```python
 import requests
 response = requests.get("https://reactome.org/ContentService/data/database/version")
-print(response.text)  # e.g., "94"
+print(response.text)  # e.g., "96"
 ```
 
 #### Get Database Name
@@ -81,7 +81,7 @@ name = response.text
 
 #### Get Pathway Entities
 ```
-GET /data/event/{id}/participatingPhysicalEntities
+GET /data/participants/{id}/participatingPhysicalEntities
 ```
 
 **Parameters:**
@@ -89,10 +89,15 @@ GET /data/event/{id}/participatingPhysicalEntities
 
 **Response:** JSON array of physical entities (proteins, complexes, small molecules) participating in the pathway
 
+**Note:** The path is under `/data/participants/`. The older
+`/data/event/{id}/participatingPhysicalEntities` form returns `404` on the
+current Content Service. Related paths: `/data/participants/{id}` (participant
+sets) and `/data/participants/{id}/referenceEntities`.
+
 **Example:**
 ```python
 response = requests.get(
-    "https://reactome.org/ContentService/data/event/R-HSA-69278/participatingPhysicalEntities"
+    "https://reactome.org/ContentService/data/participants/R-HSA-69278/participatingPhysicalEntities"
 )
 entities = response.json()
 for entity in entities:
@@ -109,25 +114,62 @@ GET /data/pathway/{id}/containedEvents
 
 **Response:** JSON array of events (reactions, subpathways) contained within the pathway
 
-### Search Queries
+### Identifier-to-Pathway Mapping
 
-#### Search by Name
+#### Map an Identifier to Pathways
 ```
-GET /data/query?name={query}
+GET /data/mapping/{resource}/{id}/pathways?species={taxId}
 ```
 
 **Parameters:**
-- `name` (query): Search term
+- `resource` (path): Identifier resource, e.g. `UniProt`, `Ensembl`
+- `id` (path): Accession in that resource, e.g. `P04637`
+- `species` (query): NCBI taxId, e.g. `9606` for Homo sapiens
 
-**Response:** JSON array of matching entities
+**Response:** JSON array of pathway objects (`stId`, `displayName`, ...) that
+contain the entity.
 
 **Example:**
 ```python
 response = requests.get(
-    "https://reactome.org/ContentService/data/query",
-    params={"name": "glycolysis"}
+    "https://reactome.org/ContentService/data/mapping/UniProt/P04637/pathways",
+    params={"species": "9606"}
 )
-results = response.json()
+pathways = response.json()
+```
+
+To map from a gene symbol (e.g. `TP53`) rather than a UniProt/Ensembl ID,
+either resolve the symbol first or submit it to the Analysis Service
+`/identifiers/` endpoint, which auto-detects symbols. A sibling
+`/data/mapping/{resource}/{id}/reactions` endpoint returns reactions instead of
+pathways.
+
+### Search Queries
+
+#### Search by Name
+```
+GET /search/query?query={term}
+```
+
+**Parameters:**
+- `query` (query): Search term (required)
+- `species` (query, optional): e.g. `Homo sapiens`
+- `types` (query, optional): Entity type filter, e.g. `Pathway`, `Reaction`
+
+**Note:** Search lives under `/search`, not `/data`. The earlier
+`/data/query?name=...` form returns `404`.
+
+**Response:** JSON object whose `results` field is an array of grouped result
+clusters; each cluster's `entries` array holds the matching entities (`stId`,
+`name`, `type`, `species`).
+
+**Example:**
+```python
+response = requests.get(
+    "https://reactome.org/ContentService/search/query",
+    params={"query": "glycolysis", "species": "Homo sapiens", "types": "Pathway"}
+)
+results = response.json()["results"]
 ```
 
 ## Analysis Service API

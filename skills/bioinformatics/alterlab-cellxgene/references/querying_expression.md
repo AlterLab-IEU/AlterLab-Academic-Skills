@@ -11,11 +11,11 @@ import cellxgene_census
 
 # Open latest stable version
 with cellxgene_census.open_soma() as census:
-    # Work with census data
+    summary = census["census_info"]["summary"].read().concat().to_pandas()
 
-# Open specific version for reproducibility
+# Open a specific version for reproducibility (preferred for published work)
 with cellxgene_census.open_soma(census_version="2023-07-25") as census:
-    # Work with census data
+    summary = census["census_info"]["summary"].read().concat().to_pandas()
 ```
 
 **Key points:**

@@ -1,6 +1,6 @@
 # Ensembl REST API Endpoints Reference
 
-Comprehensive documentation of all 17 API endpoint categories available in the Ensembl REST API (Release 115, September 2025).
+Comprehensive documentation of all 17 API endpoint categories available in the Ensembl REST API (Release 116, April 2026 — the final release served by `rest.ensembl.org`; see SKILL.md migration note).
 
 **Base URLs:**
 - Current assemblies: `https://rest.ensembl.org`

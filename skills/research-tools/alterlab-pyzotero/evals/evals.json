@@ -14,11 +14,11 @@
     {
       "id": "create-item-from-template",
       "prompt": "I need to add a new journal article reference to my Zotero library via the API — title 'My Paper' with author Jane Doe. How do I do that with pyzotero?",
-      "expected_output": "Uses zot.item_template('journalArticle') to get a template, populates title and the creators list with creatorType 'author', firstName/lastName, then calls zot.create_items([template]). Should mention write methods return True on success or raise a ZoteroError.",
+      "expected_output": "Uses zot.item_template('journalArticle') to get a template, populates title and the creators list with creatorType 'author', firstName/lastName, then calls zot.create_items([template]). Should note create_items returns a response dict with 'success'/'failed'/'unchanged' keys, and that errors surface as PyZoteroError subclasses (from pyzotero.errors).",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "item_template"},
-        {"type": "behavior", "value": "Builds an item from a journalArticle template and creates it with create_items, handling write success/ZoteroError."}
+        {"type": "behavior", "value": "Builds an item from a journalArticle template and creates it with create_items([template]), reading the new key from the response dict's 'success' map."}
       ]
     },
     {

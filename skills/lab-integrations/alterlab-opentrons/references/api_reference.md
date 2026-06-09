@@ -336,7 +336,15 @@ Common exceptions:
 
 ## Simulation and Debugging
 
-Check simulation status:
+Simulate a protocol locally before running on hardware (catches labware/volume/deck errors):
+```bash
+opentrons_simulate my_protocol.py        # prints the command run-log
+opentrons_simulate -e my_protocol.py     # also estimate run duration
+```
+The `opentrons_simulate` CLI ships with the `opentrons` package. A protocol that imports
+cleanly is not enough — simulation executes `run()` and surfaces runtime errors.
+
+Check simulation status from inside the protocol:
 ```python
 if protocol.is_simulating():
     protocol.comment('Running in simulation')
@@ -351,16 +359,18 @@ with open(data_file) as f:
 
 ## Version Compatibility
 
-API Level compatibility:
+API Level compatibility (selected feature-introduction levels; not exhaustive):
 
-| API Level | Features |
-|-----------|----------|
-| 2.19 | Latest features, Flex support |
-| 2.18 | Absorbance plate reader |
-| 2.17 | Liquid tracking improvements |
-| 2.16 | Flex 8-channel partial tip pickup |
-| 2.15 | Heater-Shaker Gen1 |
-| 2.13 | Temperature Module Gen2 |
+| API Level | Feature introduced |
+|-----------|--------------------|
+| 2.18 | Absorbance Plate Reader (`absorbanceReaderV1`) |
+| 2.16 | Flex partial tip pickup; `trashBin`/`wasteChute` load helpers |
+| 2.15 | Flex support (minimum `apiLevel` for Flex protocols) |
+| 2.13 | Temperature Module GEN2 |
 | 2.0-2.12 | Core OT-2 functionality |
 
-Always use the latest stable API version for new protocols.
+The API level minor version increases whenever new functionality is added. The maximum
+level your robot accepts is tied to its installed app/robot-server version (current docs
+ship examples around 2.2x). Pin the level your hardware actually supports; do not assume a
+number higher than the robot's firmware accepts. Run `opentrons_simulate <protocol>.py` to
+confirm the level is accepted before committing to it.

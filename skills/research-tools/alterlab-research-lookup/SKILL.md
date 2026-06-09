@@ -196,8 +196,8 @@ export OPENROUTER_API_KEY="your_openrouter_api_key"
 - Endpoint: `https://api.parallel.ai` (OpenAI SDK compatible)
 - Model: `core` (60s-5min latency, complex multi-source synthesis)
 - Output: Markdown text with inline citations
-- Citations: Research basis with URLs, reasoning, and confidence levels
-- Rate limits: 300 req/min
+- Citations: Research basis with source URLs and excerpts
+- Rate limits: subject to your Parallel account tier (check the dashboard)
 - Python package: `openai`
 
 **Perplexity sonar-pro-search:**
@@ -326,16 +326,15 @@ This skill enhances scientific writing by providing:
 
 ## Complementary Tools
 
-| Task | Tool |
+| Task | Skill |
 |------|------|
-| General web search | `parallel-web` skill (`parallel_web.py search`) |
-| Citation verification | `parallel-web` skill (`parallel_web.py extract`) |
-| Deep research (any topic) | `research-lookup` or `parallel-web` skill |
-| Academic paper search | `research-lookup` (auto-routes to Perplexity) |
-| Google Scholar search | `citation-management` skill |
-| PubMed search | `citation-management` skill |
-| DOI to BibTeX | `citation-management` skill |
-| Metadata verification | `parallel-web` skill (`parallel_web.py search` or `extract`) |
+| General web search / URL content extraction | `alterlab-parallel-web` |
+| Direct single-backend Perplexity search | `alterlab-perplexity` |
+| Academic paper search (auto-routed) | `alterlab-research-lookup` (this skill) |
+| Scholarly index search (OpenAlex) | `alterlab-openalex` |
+| PubMed search | `alterlab-pubmed` |
+| Zotero library / DOI-to-BibTeX management | `alterlab-pyzotero` |
+| Per-paper experimental-data extraction | `alterlab-bgpt-search` |
 
 ---
 

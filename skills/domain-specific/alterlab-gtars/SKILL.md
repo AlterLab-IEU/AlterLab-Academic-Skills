@@ -1,226 +1,225 @@
 ---
 name: alterlab-gtars
-description: Runs high-performance genomic interval analysis with gtars, a Rust toolkit with Python bindings. Use when working with genomic regions or BED files, computing coverage tracks, detecting overlaps, tokenizing regions for ML models, or doing fragment analysis in computational genomics and machine learning. Part of the AlterLab Academic Skills suite.
+description: Runs high-performance genomic interval analysis with gtars (databio), a Rust toolkit with Python bindings — the performance-critical backend for the geniml ML library. Use when computing overlaps/jaccard/coverage between BED region sets, indexing intervals with IGD, generating uniwig accumulation/coverage tracks, tokenizing genomic regions for ML, splitting single-cell fragments into pseudobulks, or computing GA4GH refget sequence digests. NOT for training region embeddings (use alterlab-geniml) or non-genomic spatial joins (use alterlab-geopandas). Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the gtars Python package.
+allowed-tools: Read, Write, Edit, Bash
+compatibility: No API key required. Python API runs locally via `uv run python` with the `gtars` package (PyPI, v0.8). The CLI is a separate Rust binary (`gtars-cli`, install via cargo).
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
 ---
 
 # Gtars: Genomic Tools and Algorithms in Rust
 
 ## Overview
 
-Gtars is a high-performance Rust toolkit for manipulating, analyzing, and processing genomic interval data. It provides specialized tools for overlap detection, coverage analysis, tokenization for machine learning, and reference sequence management.
+Gtars (from databio, the lab behind `geniml`) is a high-performance Rust toolkit for manipulating, analyzing, and processing genomic interval data. Its primary purpose is to be the performance-critical backend for `geniml`, a Python library for machine learning on genomic intervals. It provides overlap/set operations, IGD overlap indexing, coverage (uniwig) tracks, region tokenization for ML, single-cell fragment pseudobulking, and GA4GH refget sequence-collection management.
 
 Use this skill when working with:
-- Genomic interval files (BED format)
-- Overlap detection between genomic regions
-- Coverage track generation (WIG, BigWig)
-- Genomic ML preprocessing and tokenization
-- Fragment analysis in single-cell genomics
-- Reference sequence retrieval and validation
+- Genomic interval files (BED) — overlaps, jaccard, set ops, coverage
+- IGD indexing for fast overlap queries over large interval databases
+- Coverage / accumulation tracks via uniwig
+- Genomic ML preprocessing and region tokenization
+- Single-cell fragment files (split into pseudobulks by cluster)
+- Reference sequence digests and retrieval (refget)
+
+> Version note: examples are verified against the **`gtars` Python package v0.8** (PyPI). The Python API is exposed through submodules — `gtars.models`, `gtars.tokenizers`, `gtars.refget`, `gtars.utils` — NOT as flat top-level functions. There is no `gtars.igd` or `gtars.uniwig` Python submodule; IGD building and uniwig track generation are CLI-only.
 
 ## Installation
 
-### Python Installation
-
-Install gtars Python bindings:
+### Python package
 
 ```bash
-uv pip install gtars
+uv pip install gtars   # or: uv add gtars
 ```
 
-### CLI Installation
+Import surface (verified, v0.8):
 
-Install command-line tools (requires Rust/Cargo):
+```python
+from gtars.models import RegionSet, Region, RegionSetList
+from gtars.tokenizers import Tokenizer, tokenize_fragment_file
+from gtars import refget          # RefgetStore, digest_fasta, sha512t24u_digest, ...
+from gtars import utils           # read/write .gtok token files
+```
+
+### CLI (separate Rust binary)
+
+The CLI ships as the `gtars-cli` crate (binary name `gtars`) and is installed with Cargo. Most subcommands are behind feature flags:
 
 ```bash
-# Install with all features
-cargo install gtars-cli --features "uniwig overlaprs igd bbcache scoring fragsplit"
+# All commonly used commands
+cargo install gtars-cli --features "uniwig overlaprs igd bbcache scoring fragsplit genomicdist"
 
-# Or install specific features only
-cargo install gtars-cli --features "uniwig overlaprs"
+# Or a subset
+cargo install gtars-cli --features "uniwig igd"
 ```
 
-### Rust Library
-
-Add to Cargo.toml for Rust projects:
-
-```toml
-[dependencies]
-gtars = { version = "0.1", features = ["tokenizers", "overlaprs"] }
-```
+Available CLI subcommands: `igd`, `overlaprs`, `uniwig`, `bbcache`, `pb` (fragment pseudobulking), `scoring`, `genomicdist`, `ranges`, `consensus`, `prep`. Flag sets differ per subcommand and evolve across versions — always confirm with `gtars <command> --help`.
 
 ## Core Capabilities
 
 Gtars is organized into specialized modules, each focused on specific genomic analysis tasks:
 
-### 1. Overlap Detection and IGD Indexing
+### 1. Overlap Detection and Set Operations
 
-Efficiently detect overlaps between genomic intervals using the Integrated Genome Database (IGD) data structure.
+Detect overlaps and compute set operations / similarity between region sets with `RegionSet` (Python), or index a large interval database with IGD (CLI).
 
 **When to use:**
-- Finding overlapping regulatory elements
-- Variant annotation
-- Comparing ChIP-seq peaks
-- Identifying shared genomic features
+- Finding overlapping regulatory elements, comparing ChIP-seq peaks
+- Variant annotation; identifying shared genomic features
+- Jaccard / overlap-coefficient similarity between BED files
 
-**Quick example:**
+**Quick example (Python):**
 ```python
-import gtars
+from gtars.models import RegionSet
 
-# Build IGD index and query overlaps
-igd = gtars.igd.build_index("regions.bed")
-overlaps = igd.query("chr1", 1000, 2000)
+peaks = RegionSet("chip_peaks.bed")
+promoters = RegionSet("promoters.bed")
+
+# Regions in peaks that overlap a promoter (the real method is subset_by_overlaps)
+in_promoters = peaks.subset_by_overlaps(promoters)
+in_promoters.to_bed("peaks_in_promoters.bed")
+
+print(peaks.count_overlaps(promoters))  # per-region overlap counts
+print(peaks.jaccard(promoters))         # similarity score
 ```
 
-See `references/overlap.md` for comprehensive overlap detection documentation.
+For querying a large reference database many times, build an IGD index once via the CLI (`gtars igd create ...`) and search it (`gtars igd search ...`). See `references/overlap.md`.
 
-### 2. Coverage Track Generation
+### 2. Coverage / Accumulation Tracks (uniwig, CLI)
 
-Generate coverage tracks from sequencing data with the uniwig module.
+Generate coverage / accumulation tracks from a BED or BAM file with the uniwig CLI subcommand.
 
 **When to use:**
-- ATAC-seq accessibility profiles
-- ChIP-seq coverage visualization
-- RNA-seq read coverage
-- Differential coverage analysis
+- ATAC-seq accessibility profiles, ChIP-seq coverage, RNA-seq read coverage
 
-**Quick example:**
+**Quick example (CLI):**
 ```bash
-# Generate BigWig coverage track
-gtars uniwig generate --input fragments.bed --output coverage.bw --format bigwig
+# uniwig reads a sorted BED/BAM and writes accumulation tracks.
+# Flags differ by version; confirm with `gtars uniwig --help`.
+gtars uniwig --file fragments.bed --filetype bed \
+             --fileheader coverage --outputtype bw
 ```
 
-See `references/coverage.md` for detailed coverage analysis workflows.
+See `references/coverage.md` for verified flags and `RegionSet.coverage()` for an in-memory alternative.
 
 ### 3. Genomic Tokenization
 
-Convert genomic regions into discrete tokens for machine learning applications, particularly for deep learning models on genomic data.
+Convert genomic regions into discrete tokens for ML (the preprocessing layer `geniml` builds on).
 
 **When to use:**
-- Preprocessing for genomic ML models
-- Integration with geniml library
-- Creating position encodings
-- Training transformer models on genomic sequences
+- Preprocessing peaks/regions into a fixed vocabulary for genomic ML models
+- Feeding token IDs to geniml or custom transformer models
 
-**Quick example:**
+**Quick example (Python):**
 ```python
-from gtars.tokenizers import TreeTokenizer
+from gtars.tokenizers import Tokenizer
+from gtars.models import Region
 
-tokenizer = TreeTokenizer.from_bed_file("training_regions.bed")
-token = tokenizer.tokenize("chr1", 1000, 2000)
+tokenizer = Tokenizer.from_bed("universe.bed")   # vocab = the universe BED
+tokens = tokenizer.tokenize([Region("chr1", 1000, 2000, None)])  # -> ['chr1:1000-2000']
+ids = tokenizer.convert_tokens_to_ids(tokens)                     # -> [<int>]
 ```
 
-See `references/tokenizers.md` for tokenization documentation.
+See `references/tokenizers.md`. Note: the class is `Tokenizer` (there is no `TreeTokenizer`).
 
-### 4. Reference Sequence Management
+### 4. Reference Sequence Management (refget)
 
-Handle reference genome sequences and compute digests following the GA4GH refget protocol.
+Compute GA4GH refget digests and manage/retrieve reference sequences.
 
 **When to use:**
-- Validating reference genome integrity
-- Extracting specific genomic sequences
-- Computing sequence digests
-- Cross-reference comparisons
+- Validating reference genome integrity via sequence digests
+- Building a local sequence-collection store and extracting subsequences
 
-**Quick example:**
+**Quick example (Python):**
 ```python
-# Load reference and extract sequences
-store = gtars.RefgetStore.from_fasta("hg38.fa")
-sequence = store.get_subsequence("chr1", 1000, 2000)
+from gtars import refget
+
+# Digest a FASTA into a GA4GH SequenceCollection (no sequence data loaded)
+collection = refget.digest_fasta("hg38.fa")
+
+# Or a one-off sequence digest
+d = refget.sha512t24u_digest("ACGTACGT")   # 'GS_...'-style truncated SHA-512/24
 ```
 
-See `references/refget.md` for reference sequence operations.
+See `references/refget.md` for `RefgetStore` (load, store, and `get_substring`).
 
-### 5. Fragment Processing
+### 5. Fragment Pseudobulking (pb, CLI)
 
-Split and analyze fragment files, particularly useful for single-cell genomics data.
+Split a single-cell fragment file into pseudobulks based on a cluster/cell-group mapping.
 
 **When to use:**
-- Processing single-cell ATAC-seq data
-- Splitting fragments by cell barcodes
-- Cluster-based fragment analysis
-- Fragment quality control
+- Processing single-cell ATAC-seq; cluster-based fragment aggregation
 
-**Quick example:**
+**Quick example (CLI):**
 ```bash
-# Split fragments by clusters
-gtars fragsplit cluster-split --input fragments.tsv --clusters clusters.txt --output-dir ./by_cluster/
+# The fragsplit feature exposes the `pb` (pseudobulk) subcommand.
+gtars pb --fragments fragments.bed.gz --mapping cluster_mapping.tsv
 ```
 
-See `references/cli.md` for fragment processing commands.
+The Python side also offers `gtars.tokenizers.tokenize_fragment_file(...)` for tokenizing fragments directly. See `references/cli.md`.
 
-### 6. Fragment Scoring
+### 6. Fragment / Region Scoring
 
-Score fragment overlaps against reference datasets.
+Score region/fragment files against reference datasets with the `scoring` CLI subcommand.
 
 **When to use:**
-- Evaluating fragment enrichment
-- Comparing experimental data to references
-- Quality metrics computation
-- Batch scoring across samples
+- Evaluating enrichment of regions against a reference universe
+- Batch quality-metric computation across samples
 
-**Quick example:**
 ```bash
-# Score fragments against reference
-gtars scoring score --fragments fragments.bed --reference reference.bed --output scores.txt
+gtars scoring --help   # confirm subcommands and flags for your installed version
 ```
 
 ## Common Workflows
 
 ### Workflow 1: Peak Overlap Analysis
 
-Identify overlapping genomic features:
+Identify peaks overlapping promoters (Python):
 
 ```python
-import gtars
+from gtars.models import RegionSet
 
-# Load two region sets
-peaks = gtars.RegionSet.from_bed("chip_peaks.bed")
-promoters = gtars.RegionSet.from_bed("promoters.bed")
+peaks = RegionSet("chip_peaks.bed")
+promoters = RegionSet("promoters.bed")
 
-# Find overlaps
-overlapping_peaks = peaks.filter_overlapping(promoters)
-
-# Export results
+overlapping_peaks = peaks.subset_by_overlaps(promoters)
 overlapping_peaks.to_bed("peaks_in_promoters.bed")
+
+# Iterate results (regions expose .chr/.start/.end)
+for r in overlapping_peaks:
+    print(r.chr, r.start, r.end)
 ```
 
-### Workflow 2: Coverage Track Pipeline
+### Workflow 2: IGD index + repeated overlap queries (CLI)
 
-Generate coverage tracks for visualization:
+Index a large reference database once, then search it many times:
 
 ```bash
-# Step 1: Generate coverage
-gtars uniwig generate --input atac_fragments.bed --output coverage.wig --resolution 10
+# Build the IGD database from a directory or list of BED files
+gtars igd create --help     # confirm the exact input/output flags for your version
 
-# Step 2: Convert to BigWig for genome browsers
-gtars uniwig generate --input atac_fragments.bed --output coverage.bw --format bigwig
+# Search the database with query regions
+gtars igd search --help
 ```
 
-### Workflow 3: ML Preprocessing
+### Workflow 3: ML Preprocessing (tokenization)
 
-Prepare genomic data for machine learning:
+Prepare genomic regions for an ML model:
 
 ```python
-from gtars.tokenizers import TreeTokenizer
-import gtars
+from gtars.tokenizers import Tokenizer
+from gtars.models import RegionSet
 
-# Step 1: Load training regions
-regions = gtars.RegionSet.from_bed("training_peaks.bed")
+# Step 1: Build a tokenizer from the universe BED (defines the vocabulary)
+tokenizer = Tokenizer.from_bed("universe.bed")
 
-# Step 2: Create tokenizer
-tokenizer = TreeTokenizer.from_bed_file("training_peaks.bed")
+# Step 2: Tokenize a region set (tokenize accepts a RegionSet or a list of Region)
+regions = RegionSet("training_peaks.bed")
+tokens = tokenizer.tokenize(regions)                      # list of 'chr:start-end' strings
+ids = tokenizer.convert_tokens_to_ids(tokens)             # integer IDs for the model
 
-# Step 3: Tokenize regions
-tokens = [tokenizer.tokenize(r.chromosome, r.start, r.end) for r in regions]
-
-# Step 4: Use tokens in ML pipeline
-# (integrate with geniml or custom models)
+# Step 3: feed `ids` to geniml or a custom model (see alterlab-geniml for training)
 ```
 
 ## Python vs CLI Usage
@@ -239,48 +238,30 @@ tokens = [tokenizer.tokenize(r.chromosome, r.start, r.end) for r in regions]
 
 ## Reference Documentation
 
-Comprehensive module documentation:
+- **`references/python-api.md`** — `RegionSet` / `Region` operations, set ops, overlaps, export
+- **`references/overlap.md`** — overlap detection and IGD indexing
+- **`references/coverage.md`** — uniwig coverage tracks
+- **`references/tokenizers.md`** — region tokenization for ML
+- **`references/refget.md`** — refget digests and `RefgetStore`
+- **`references/cli.md`** — CLI subcommand overview
 
-- **`references/python-api.md`** - Complete Python API reference with RegionSet operations, NumPy integration, and data export
-- **`references/overlap.md`** - IGD indexing, overlap detection, and set operations
-- **`references/coverage.md`** - Coverage track generation with uniwig
-- **`references/tokenizers.md`** - Genomic tokenization for ML applications
-- **`references/refget.md`** - Reference sequence management and digests
-- **`references/cli.md`** - Command-line interface complete reference
+## Relationship to geniml
 
-## Integration with geniml
-
-Gtars serves as the foundation for the geniml Python package, providing core genomic interval operations for machine learning workflows. When working on geniml-related tasks, use gtars for data preprocessing and tokenization.
-
-## Performance Characteristics
-
-- **Native Rust performance**: Fast execution with low memory overhead
-- **Parallel processing**: Multi-threaded operations for large datasets
-- **Memory efficiency**: Streaming and memory-mapped file support
-- **Zero-copy operations**: NumPy integration with minimal data copying
+gtars is the Rust performance backend for `geniml` (databio's ML-on-genomic-intervals library). Use gtars for the heavy interval ops and tokenization; use `geniml` (skill `alterlab-geniml`) for embedding/model training built on top of those tokens.
 
 ## Data Formats
 
-Gtars works with standard genomic formats:
+- **BED**: genomic intervals (3-column or extended) — the core input
+- **BigWig / WIG**: coverage / accumulation tracks (uniwig output)
+- **FASTA**: reference sequences (refget)
+- **Fragment files**: single-cell fragments (often `.bed.gz`), with a separate cluster-mapping file for `pb`
 
-- **BED**: Genomic intervals (3-column or extended)
-- **WIG/BigWig**: Coverage tracks
-- **FASTA**: Reference sequences
-- **Fragment TSV**: Single-cell fragment files with barcodes
+## Verifying the API
 
-## Error Handling and Debugging
-
-Enable verbose logging for troubleshooting:
-
-```python
-import gtars
-
-# Enable debug logging
-gtars.set_log_level("DEBUG")
-```
+This package's surface differs between releases and the Python and CLI APIs are NOT mirror images. Before relying on an unfamiliar method or flag, confirm against the installed version:
 
 ```bash
-# CLI verbose mode
-gtars --verbose <command>
+uv run python -c "from gtars import models, tokenizers, refget; print(dir(models), dir(tokenizers), dir(refget))"
+gtars <command> --help
 ```
 

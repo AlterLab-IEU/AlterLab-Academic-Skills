@@ -32,14 +32,15 @@ This skill should be used when working with clinical trial data in scenarios suc
 
 ### Basic Search Query
 
-Search for clinical trials using the helper script:
+Run the helper script (from this skill's `scripts/` directory):
 
 ```bash
-cd scientific-databases/clinicaltrials-database/scripts
-python3 query_clinicaltrials.py
+python3 scripts/query_clinicaltrials.py
 ```
 
-Or use Python directly with the `requests` library:
+Or use Python directly with the `requests` library. Note: the API omits
+`totalCount` unless you pass `countTotal=true`, and the pagination token is
+returned as `nextPageToken`.
 
 ```python
 import requests
@@ -48,7 +49,8 @@ url = "https://clinicaltrials.gov/api/v2/studies"
 params = {
     "query.cond": "breast cancer",
     "filter.overallStatus": "RECRUITING",
-    "pageSize": 10
+    "pageSize": 10,
+    "countTotal": "true",  # required for data['totalCount'] to exist
 }
 
 response = requests.get(url, params=params)
@@ -127,6 +129,13 @@ phase3_trials = [
     if 'PHASE3' in study['protocolSection'].get('designModule', {}).get('phases', [])
 ]
 ```
+
+> **Phase filtering note:** There is no `filter.phase` query parameter — passing
+> one returns HTTP 400. To filter server-side, use `aggFilters=phase:N` where N is
+> 0–4 (values within a facet are space-separated, e.g. `aggFilters=phase:2 3` for
+> Phase 2 or 3), or `filter.advanced=AREA[Phase](PHASE2 OR PHASE3)` with Essie
+> syntax. Post-filtering on `designModule.phases` (as above) is the simplest
+> approach when you already need the full records.
 
 **Common use cases:**
 - Drug development tracking
@@ -305,8 +314,9 @@ for page in range(max_pages):
 
     all_studies.extend(results['studies'])
 
-    # Check for next page
-    page_token = results.get('pageToken')
+    # Check for next page. The API returns the cursor as 'nextPageToken';
+    # you pass it back in as the 'pageToken' request parameter.
+    page_token = results.get('nextPageToken')
     if not page_token:
         break
 

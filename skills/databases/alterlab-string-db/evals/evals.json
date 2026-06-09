@@ -7,6 +7,7 @@
       "expected_output": "Triggers the STRING skill. Maps the gene names to STRING IDs with string_map_ids(species=9606), then retrieves the network with string_network(gene_list, species=9606, required_score=700) for high confidence, returning interaction pairs with combined and per-channel evidence scores. Notes mapping identifiers first and that 700 corresponds to the high-confidence threshold.",
       "assertions": [
         { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "required_score=700" },
         { "type": "behavior", "value": "Maps gene names to STRING IDs first, then calls string_network with required_score=700 for the human (9606) network." },
         { "type": "behavior", "value": "Returns interaction pairs with confidence/evidence-channel scores." }
       ]

@@ -1,6 +1,6 @@
 ---
 name: alterlab-paper-reviewer
-description: "Conducts multi-perspective academic paper review by simulating 5 independent reviewers (Editor-in-Chief plus 3 peer reviewers plus a Devil's Advocate) with field-specific expertise, supporting full review, re-review (verification), quick assessment, methodology-focus, and Socratic guided modes. Use when the request mentions review paper, peer review, manuscript review, referee report, review my paper, critique paper, simulate review, or editorial review. Part of the AlterLab Academic Skills suite."
+description: "Simulates a full multi-reviewer journal review PANEL — 5 personas (Editor-in-Chief + 3 peer reviewers + a Devil's Advocate) debate a manuscript and produce a consensus Editorial Decision (accept/minor/major/reject) plus a prioritized Revision Roadmap. Modes: full, re-review (verify revisions addressed prior comments), quick, methodology-focus, Socratic guided. Use for: simulate peer review, mock review panel, editorial review before submission, multiple reviewer perspectives, re-review of a revised manuscript, or 'critique my paper hard'. For a single-reviewer referee report use alterlab-peer-review; for rubric/grade scoring use alterlab-scholar-eval; to write/revise the paper use alterlab-paper-writer."
 license: MIT
 allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required
@@ -14,20 +14,11 @@ metadata:
 
 Simulates a complete international journal peer review process: automatically identifies the paper's field, dynamically configures 5 reviewers (Editor-in-Chief + 3 peer reviewers + Devil's Advocate) who review from four non-overlapping perspectives — methodology, domain expertise, cross-disciplinary viewpoints, and core argument challenges — ultimately producing a structured Editorial Decision and Revision Roadmap.
 
-**v1.1 Improvements**:
-1. Added Devil's Advocate Reviewer — specifically challenges core arguments, detects logical fallacies, and identifies the strongest counter-arguments
-2. Added `re-review` mode — verification review, focused on checking whether revisions address the review comments
-3. Expanded review team from 4 to 5 members
-
 ---
 
 ## Quick Start
 
 **Simplest command:**
-```
-Review this paper: [paste paper or provide file]
-```
-
 ```
 Review this paper: [paste paper or provide file]
 ```
@@ -53,6 +44,8 @@ Review this paper: [paste paper or provide file]
 | Need to write a paper (not review) | `alterlab-paper-writer` |
 | Need in-depth investigation of a research topic | `alterlab-deep-research` |
 | Need to revise a paper (already have review comments) | `alterlab-paper-writer` (revision mode) |
+| Want a single structured referee report (one reviewer, checklist-based) | `alterlab-peer-review` |
+| Want a rubric/grade-style numeric score of a paper or thesis | `alterlab-scholar-eval` |
 
 ### Quick Mode Selection Guide
 
@@ -476,15 +469,3 @@ Follows the paper's language. Academic terms remain in English. User can overrid
 | Maintainer | AlterLab |
 | Dependent Skills | alterlab-paper-writer v1.0+ (upstream/downstream integration) |
 | Role | Multi-perspective academic paper review simulator |
-
----
-
-## Changelog
-
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.4 | 2026-03-08 | Quality rubrics reference (0-100 scoring with 5 descriptors per dimension, weighted aggregation formula, decision mapping); Quick Mode Selection Guide; Dimension Scores upgraded from optional 1-5 to required 0-100 with rubric descriptors |
-| 1.3 | 2025-03-05 | DA vs R3 role boundaries with explicit responsibility tables; CRITICAL finding criteria with concrete examples; Consensus classification (CONSENSUS-4/3/SPLIT/DA-CRITICAL); Confidence Score weighting rules; Asian & Regional Journals reference (TSSCI + Asia-Pacific + OA options) |
-| 1.2 | 2026-03 | Added statistical reporting standards reference; enhanced methodology_reviewer_agent with statistical reporting adequacy sub-step |
-| 1.1 | 2026-02 | Added Devil's Advocate Reviewer (7th agent), added re-review mode, expanded review team from 4 to 5 |
-| 1.0 | 2026-02 | Initial version: 6 agents, 4 modes, 3-phase workflow |

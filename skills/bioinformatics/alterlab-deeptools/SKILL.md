@@ -1,6 +1,6 @@
 ---
 name: alterlab-deeptools
-description: Process and visualize deep-sequencing coverage with the deepTools CLI — convert BAM to bigWig (bamCoverage), run QC (multiBamSummary correlation, PCA, plotFingerprint), and build TSS/peak heatmaps and profiles (computeMatrix, plotHeatmap, plotProfile). Use when generating coverage tracks or signal heatmaps and profiles for ChIP-seq, ATAC-seq, or RNA-seq data. Part of the AlterLab Academic Skills suite.
+description: Process and visualize deep-sequencing coverage with the deepTools CLI — convert BAM to bigWig (bamCoverage), build log2 ratio tracks (bamCompare), run QC (multiBamSummary correlation, PCA, plotFingerprint), apply the ATAC-seq Tn5 shift (alignmentSieve --ATACshift), and make TSS/peak heatmaps and profiles (computeMatrix, plotHeatmap, plotProfile). Use for coverage tracks, signal heatmaps/profiles, normalization (RPGC/CPM/RPKM), and effective-genome-size lookups for ChIP-seq, ATAC-seq, MNase-seq, or RNA-seq. NOT for per-read/CIGAR/MAPQ BAM record access — that is pysam. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
@@ -352,12 +352,8 @@ the command → explain the result.
 
 ## Key Reminders
 
-- **File validation first**: Always validate input files before analysis
-- **Normalization matters**: Choose appropriate method for comparison type
-- **Extend reads carefully**: YES for ChIP-seq, NO for RNA-seq
-- **Use all cores**: Set `--numberOfProcessors` to available cores
-- **Test on regions**: Use `--region` for parameter testing
-- **Check QC first**: Run quality control before detailed analysis
-- **Document everything**: Save commands for reproducibility
-- **Reference documentation**: Use comprehensive references for detailed guidance
+- **Extend reads carefully**: `--extendReads` YES for ChIP-seq, NO for RNA-seq (would span splice junctions)
+- **Normalization is mutually exclusive in bamCompare**: RPGC is a `--normalizeUsing` value; `--scaleFactorsMethod` only takes readCount/SES/None
+- **RPGC requires `--effectiveGenomeSize`**; verify the assembly matches your BAM/BED genome build
+- **Check QC first** (plotFingerprint, correlation) before detailed analysis; test parameters on a `--region`
 

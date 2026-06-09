@@ -13,6 +13,11 @@ from datetime import datetime
 
 # Template types and descriptions
 TEMPLATES = {
+    'one_page': {
+        'name': 'One-Page Treatment Plan',
+        'file': 'one_page_treatment_plan.tex',
+        'description': 'PREFERRED for most cases - concise, dense, scannable quick-reference card'
+    },
     'general_medical': {
         'name': 'General Medical Treatment Plan',
         'file': 'general_medical_treatment_plan.tex',
@@ -48,7 +53,7 @@ TEMPLATES = {
 
 def get_templates_dir():
     """Get the path to the templates directory."""
-    # Assume script is in .claude/skills/treatment-plans/scripts/
+    # Templates live in ../assets relative to this script
     script_dir = Path(__file__).parent
     templates_dir = script_dir.parent / 'assets'
     return templates_dir
@@ -75,7 +80,7 @@ def interactive_selection():
     
     while True:
         try:
-            choice = input("\nSelect template number (1-6) or 'q' to quit: ").strip().lower()
+            choice = input(f"\nSelect template number (1-{len(TEMPLATES)}) or 'q' to quit: ").strip().lower()
             
             if choice == 'q':
                 print("Exiting...")
@@ -177,8 +182,8 @@ Examples:
   python generate_template.py --list
 
 Available template types:
-  general_medical, rehabilitation, mental_health, chronic_disease,
-  perioperative, pain_management
+  one_page (PREFERRED), general_medical, rehabilitation, mental_health,
+  chronic_disease, perioperative, pain_management
         """
     )
     

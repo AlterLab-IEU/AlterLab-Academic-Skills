@@ -217,7 +217,7 @@ transformer.to_state_yaml_file("ecfp_config.yml")
 transformer = MoleculeTransformer.from_state_yaml_file("ecfp_config.yml")
 ```
 
-**Performance:** Testing on 642 molecules showed 3.4x speedup using 4 parallel jobs versus single-threaded processing.
+**Performance:** Set `n_jobs=-1` for near-linear speedup on multi-core CPUs; the win grows with batch size and per-molecule cost (largest for descriptor sets like Mordred, negligible for tiny inputs where process spawn overhead dominates).
 
 ### FeatConcat
 
@@ -233,7 +233,7 @@ concat = FeatConcat([
     FPCalculator("ecfp")         # 2048 dimensions
 ])
 
-# Result: 2167-dimensional features
+# Result: 2215-dimensional features (167 + 2048)
 transformer = MoleculeTransformer(concat, n_jobs=-1)
 features = transformer(smiles)
 ```

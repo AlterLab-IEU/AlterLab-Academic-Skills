@@ -32,7 +32,7 @@ Examples
 
     # Several seeds (mix DOI / OpenAlex / arXiv), deeper walk, more neighbours:
     uv run python build_graph.py \
-        --seed 10.1038/nphys1170 --seed W2741809807 --seed arXiv:1706.03762 \
+        --seed 10.1038/nphys1170 --seed W2741809807 --seed arXiv:2310.06825 \
         --depth 2 --per-seed 50 --top 40 --mailto alterlab.ieu@gmail.com \
         --out graph/transformer
 
@@ -87,10 +87,14 @@ def normalize_seed(raw: str) -> str:
     if _OPENALEX_ID_RE.match(s):
         return s.upper()
 
-    # arXiv -> OpenAlex resolves arxiv ids via the doi-style namespace.
+    # arXiv -> OpenAlex indexes arXiv preprints under their DataCite DOI
+    # (10.48550/arXiv.<id>), so resolve via the DOI namespace. The bare
+    # https://arxiv.org/abs/<id> URL is NOT an OpenAlex selector and 404s.
+    # Coverage caveat: if a preprint was later merged into a published-version
+    # record, OpenAlex may carry only the publisher DOI; pass that DOI instead.
     m = _ARXIV_RE.match(s)
     if m:
-        return f"https://arxiv.org/abs/{m.group(2)}"
+        return f"https://doi.org/10.48550/arXiv.{m.group(2)}"
 
     # DOI URL or bare DOI.
     doi = s
@@ -522,7 +526,7 @@ def _self_test() -> int:
     assert normalize_seed("W2741809807") == "W2741809807"
     assert normalize_seed("10.1038/nphys1170") == "https://doi.org/10.1038/nphys1170"
     assert normalize_seed("https://doi.org/10.1038/x") == "https://doi.org/10.1038/x"
-    assert normalize_seed("arXiv:1706.03762") == "https://arxiv.org/abs/1706.03762"
+    assert normalize_seed("arXiv:1706.03762") == "https://doi.org/10.48550/arXiv.1706.03762"
     try:
         normalize_seed("not-an-id")
     except ValueError:

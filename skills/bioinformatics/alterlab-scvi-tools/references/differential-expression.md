@@ -61,7 +61,7 @@ de_results = model.differential_expression(
 
 # View top DE genes
 top_genes = de_results.sort_values("lfc_mean", ascending=False).head(20)
-print(top_genes[["lfc_mean", "lfc_std", "bayes_factor", "is_de_fdr_0.05"]])
+print(top_genes[["lfc_mean", "lfc_std", "bayes_factor", "proba_de"]])
 ```
 
 ### One vs. Rest Comparison
@@ -70,7 +70,8 @@ print(top_genes[["lfc_mean", "lfc_std", "bayes_factor", "is_de_fdr_0.05"]])
 # Compare one group against all others
 de_results = model.differential_expression(
     groupby="cell_type",
-    group1="T cells"  # No group2 = compare to rest
+    group1="T cells",
+    group2=None,  # group2=None (or omitted) = compare to all other cells
 )
 ```
 
@@ -153,18 +154,6 @@ de = model.differential_expression(
 )
 ```
 
-### `fdr_target`
-False discovery rate threshold (default: 0.05)
-
-```python
-# More stringent FDR control
-de = model.differential_expression(
-    groupby="cell_type",
-    group1="T cells",
-    fdr_target=0.01
-)
-```
-
 ### `batch_correction`
 Whether to perform batch correction during DE testing (default: True)
 
@@ -206,11 +195,16 @@ The results DataFrame contains several important columns:
 - `lfc_max`: Upper bound of effect size
 
 **Statistical Significance**:
-- `bayes_factor`: Bayes factor for differential expression
-  - Higher values = stronger evidence
-  - >3 often considered meaningful
-- `is_de_fdr_0.05`: Boolean indicating if gene is DE at FDR 0.05
-- `is_de_fdr_0.1`: Boolean indicating if gene is DE at FDR 0.1
+- `proba_de`: Posterior probability that the gene is DE. In `"change"` mode
+  this is P(|LFC| > delta); in `"vanilla"` mode it is P(LFC != 0). This is the
+  primary significance column — filter on it (e.g. `proba_de > 0.95`).
+- `proba_not_de`: `1 - proba_de`.
+- `bayes_factor`: log Bayes factor, `log(proba_de / proba_not_de)`. Higher =
+  stronger evidence; |BF| > 3 is often treated as substantial.
+- `is_de_fdr_<target>`: Boolean DE call at the FDR controlled during the run.
+  The column name carries the actual threshold used (default `is_de_fdr_0.05`);
+  it is NOT guaranteed to be present for every model/mode, so prefer filtering
+  on `proba_de` directly.
 
 **Expression Levels**:
 - `mean1`: Mean expression in group 1
@@ -229,7 +223,7 @@ de_results = model.differential_expression(
 
 # Find significantly upregulated genes in T cells
 upreg_tcells = de_results[
-    (de_results["is_de_fdr_0.05"]) &
+    (de_results["proba_de"] > 0.95) &
     (de_results["lfc_mean"] > 0)
 ].sort_values("lfc_mean", ascending=False)
 
@@ -238,8 +232,8 @@ print(upreg_tcells.head(10))
 
 # Find genes with large effect sizes
 large_effect = de_results[
-    (de_results["is_de_fdr_0.05"]) &
-    (abs(de_results["lfc_mean"]) > 1)  # 2-fold change
+    (de_results["proba_de"] > 0.95) &
+    (de_results["lfc_mean"].abs() > 1)  # 2-fold change on log2 scale
 ]
 ```
 
@@ -248,12 +242,13 @@ large_effect = de_results[
 ### DE Within Specific Cells
 
 ```python
-# Test DE only within a subset of cells
+# Test DE only within a subset of cells.
+# NOTE: wrap each comparison in parentheses — `&` binds tighter than `==`.
 subset_indices = adata.obs["tissue"] == "lung"
 
 de = model.differential_expression(
-    idx1=adata.obs["cell_type"] == "T cells" & subset_indices,
-    idx2=adata.obs["cell_type"] == "B cells" & subset_indices
+    idx1=(adata.obs["cell_type"] == "T cells") & subset_indices,
+    idx2=(adata.obs["cell_type"] == "B cells") & subset_indices,
 )
 ```
 
@@ -301,17 +296,18 @@ de = model.differential_expression(
     group2="control"
 )
 
-# Volcano plot
+# Volcano-style plot. There is no p-value; use proba_de on the y-axis
+# (clipped to avoid log(0) for genes with proba_de == 1).
 plt.figure(figsize=(10, 6))
 plt.scatter(
     de["lfc_mean"],
-    -np.log10(1 / (de["bayes_factor"] + 1)),
-    c=de["is_de_fdr_0.05"],
+    -np.log10(1 - de["proba_de"].clip(upper=1 - 1e-6)),
+    c=(de["proba_de"] > 0.95),
     cmap="coolwarm",
     alpha=0.5
 )
 plt.xlabel("Log Fold Change")
-plt.ylabel("-log10(1/Bayes Factor)")
+plt.ylabel("-log10(1 - proba_de)")
 plt.title("Volcano Plot: Treated vs Control")
 plt.axvline(x=0, color='k', linestyle='--', linewidth=0.5)
 plt.show()
@@ -397,31 +393,33 @@ wilcox_results = sc.get.rank_genes_groups_df(adata, group="T cells", key="wilcox
 
 ## Multi-Modal DE
 
-### Protein DE (totalVI)
+### RNA + Protein DE (totalVI)
+
+totalVI's `differential_expression` returns a SINGLE DataFrame in which both
+genes and proteins appear as rows (protein names are appended to the feature
+space). There is no `protein_expression=` toggle — split the result by feature
+name afterwards.
 
 ```python
 # Train totalVI on CITE-seq data
 totalvi_model = scvi.model.TOTALVI(adata)
 totalvi_model.train()
 
-# RNA differential expression
-rna_de = totalvi_model.differential_expression(
+de = totalvi_model.differential_expression(
     groupby="cell_type",
     group1="T cells",
     group2="B cells",
-    protein_expression=False  # Default
 )
 
-# Protein differential expression
-protein_de = totalvi_model.differential_expression(
-    groupby="cell_type",
-    group1="T cells",
-    group2="B cells",
-    protein_expression=True
-)
+# Proteins are indexed by their protein names; everything else is a gene.
+protein_names = adata.uns["protein_names"]  # set via setup_anndata
+is_protein = de.index.isin(protein_names)
 
-print(f"DE genes: {rna_de['is_de_fdr_0.05'].sum()}")
-print(f"DE proteins: {protein_de['is_de_fdr_0.05'].sum()}")
+rna_de = de[~is_protein]
+protein_de = de[is_protein]
+
+print(f"DE genes: {(rna_de['proba_de'] > 0.95).sum()}")
+print(f"DE proteins: {(protein_de['proba_de'] > 0.95).sum()}")
 ```
 
 ### Differential Accessibility (PeakVI)
@@ -472,18 +470,11 @@ de = model.differential_expression(
 
 ### Multiple Testing Correction
 
-```python
-# Already included via FDP control
-# But can apply additional corrections
-
-from statsmodels.stats.multitest import multipletests
-
-# Bonferroni correction (very conservative)
-_, pvals_corrected, _, _ = multipletests(
-    1 / (de["bayes_factor"] + 1),
-    method="bonferroni"
-)
-```
+scvi-tools controls the posterior expected FDP internally (it picks the
+discovery set so E[FDP] <= the FDR target), so there is no frequentist p-value
+to feed into `statsmodels.multipletests`. Do NOT manufacture a pseudo p-value
+from the Bayes factor. To be more or less stringent, adjust the `proba_de`
+cutoff (e.g. 0.90 looser, 0.99 stricter) or tighten `delta` in "change" mode.
 
 ## Performance Considerations
 
@@ -547,11 +538,10 @@ de_results = model.differential_expression(
     group2="Healthy_T_cells",
     mode="change",
     delta=0.5,
-    fdr_target=0.05
 )
 
 # 3. Filter and analyze
-sig_genes = de_results[de_results["is_de_fdr_0.05"]]
+sig_genes = de_results[de_results["proba_de"] > 0.95]
 upreg = sig_genes[sig_genes["lfc_mean"] > 0].sort_values("lfc_mean", ascending=False)
 downreg = sig_genes[sig_genes["lfc_mean"] < 0].sort_values("lfc_mean")
 

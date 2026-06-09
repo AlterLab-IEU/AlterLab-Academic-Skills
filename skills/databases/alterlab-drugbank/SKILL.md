@@ -13,7 +13,7 @@ metadata:
 
 ## Overview
 
-DrugBank is a comprehensive bioinformatics and cheminformatics database containing detailed information on drugs and drug targets. This skill enables programmatic access to DrugBank data including ~9,591 drug entries (2,037 FDA-approved small molecules, 241 biotech drugs, 96 nutraceuticals, and 6,000+ experimental compounds) with 200+ data fields per entry.
+DrugBank is a comprehensive bioinformatics and cheminformatics database containing detailed information on drugs and drug targets. This skill enables programmatic access to DrugBank data: thousands of drug entries (FDA-approved small molecules, biotech/biologic drugs, nutraceuticals, and experimental compounds) with 200+ data fields per entry. Exact counts grow with each release — derive them from the version you download rather than quoting a fixed number (the 5.0-era figure was ~9,591 entries).
 
 ## Core Capabilities
 

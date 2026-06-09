@@ -51,10 +51,10 @@ fig.show()
 - `px.ecdf()` - Empirical cumulative distribution
 
 ### Maps
-- `px.scatter_geo()` - Geographic scatter plots
+- `px.scatter_geo()` - Geographic (projection-based) scatter plots
 - `px.choropleth()` - Choropleth maps
-- `px.scatter_mapbox()` - Mapbox scatter plots
-- `px.density_mapbox()` - Density heatmaps on maps
+- `px.scatter_map()` - Tile-map scatter (MapLibre; replaces deprecated `scatter_mapbox`)
+- `px.density_map()` - Density heatmaps on tile maps (replaces deprecated `density_mapbox`)
 
 ### Specialized
 - `px.sunburst()` - Hierarchical sunburst charts
@@ -123,7 +123,8 @@ fig = px.bar(df_wide, x='fruit', y=['A', 'B'])
 
 ## Trendlines
 
-Add statistical trendlines to scatter plots:
+Add statistical trendlines to scatter plots. Requires `statsmodels`
+(`uv pip install statsmodels`) for all trendline types:
 
 ```python
 fig = px.scatter(

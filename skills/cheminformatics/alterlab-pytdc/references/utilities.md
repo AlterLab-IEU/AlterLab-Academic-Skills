@@ -70,42 +70,36 @@ split = data.get_split(method='scaffold', seed=1)
 4. Ensures test molecules have unseen scaffolds
 
 #### Cold Splits (DTI/DDI Tasks)
-For multi-instance prediction, cold splits ensure test set contains unseen drugs, targets, or both.
+For multi-instance prediction, cold splits ensure the test set contains unseen entities. There is a single `method='cold_split'`; the `column_name` parameter selects which entity (or entities) to hold out.
 
 **Cold Drug Split:**
 ```python
 from tdc.multi_pred import DTI
 data = DTI(name='BindingDB_Kd')
-split = data.get_split(method='cold_drug', seed=1)
+split = data.get_split(method='cold_split', column_name='Drug', seed=1)
 ```
 - Test set contains drugs not seen during training
 - Evaluates generalization to new compounds
 
 **Cold Target Split:**
 ```python
-split = data.get_split(method='cold_target', seed=1)
+split = data.get_split(method='cold_split', column_name='Target', seed=1)
 ```
 - Test set contains targets not seen during training
 - Evaluates generalization to new proteins
 
-**Cold Drug-Target Split:**
+**Cold Drug+Target Split:**
 ```python
-split = data.get_split(method='cold_drug_target', seed=1)
+split = data.get_split(method='cold_split', column_name=['Drug', 'Target'], seed=1)
 ```
-- Test set contains novel drug-target pairs
-- Most challenging evaluation scenario
+- Holds out both entities; most challenging evaluation scenario
 
-#### Temporal Split
-For datasets with temporal information - ensures test data is from later time points.
+#### Combination Split
+For drug-combination datasets:
 
 ```python
-split = data.get_split(method='temporal', seed=1)
+split = data.get_split(method='combination')
 ```
-
-**When to use:**
-- Datasets with time stamps
-- Simulating prospective prediction
-- Clinical trial outcome prediction
 
 ### Custom Split Fractions
 
@@ -116,16 +110,6 @@ split = data.get_split(method='scaffold', frac=[0.8, 0.1, 0.1])
 # 70% train, 15% valid, 15% test
 split = data.get_split(method='scaffold', frac=[0.7, 0.15, 0.15])
 ```
-
-### Stratified Splits
-
-For classification tasks with imbalanced labels:
-
-```python
-split = data.get_split(method='scaffold', stratified=True)
-```
-
-Maintains label distribution across train/valid/test sets.
 
 ## 2. Model Evaluation
 
@@ -307,18 +291,23 @@ For benchmark groups, evaluation requires multiple seeds:
 from tdc.benchmark_group import admet_group
 
 group = admet_group(path='data/')
-benchmark = group.get('Caco2_Wang')
 
-# Predictions must be dict with seeds as keys
-predictions = {}
+predictions_list = []
 for seed in [1, 2, 3, 4, 5]:
-    # Train model and predict
-    predictions[seed] = model_predictions
+    benchmark = group.get('Caco2_Wang')          # {'name', 'train_val', 'test'}
+    name = benchmark['name']
+    train, valid = group.get_train_valid_split(
+        benchmark=name, split_type='default', seed=seed
+    )
+    # Train model on train/valid, predict on benchmark['test'] (fixed across seeds)
+    predictions_list.append({name: model_predictions})  # dict keyed by benchmark name
 
-# Evaluate with mean and std across seeds
-results = group.evaluate(predictions)
-print(results)  # {'Caco2_Wang': [mean_score, std_score]}
+# Aggregate mean/std across the 5 seeds
+results = group.evaluate_many(predictions_list)
+print(results)  # {'caco2_wang': [mean_score, std_score]}
 ```
+
+`group.get(name)` returns one dict per call (`name`, `train_val`, `test`) — it is NOT indexed by seed. The per-seed train/valid partition comes from `get_train_valid_split`; the `test` set is held fixed. Collect one predictions dict per seed and pass the list to `evaluate_many`.
 
 ## 3. Data Processing
 
@@ -363,22 +352,15 @@ Remove non-drug-like molecules using curated chemical rules.
 ```python
 from tdc.chem_utils import MolFilter
 
-# Initialize filter with rules
-mol_filter = MolFilter(
-    rules=['PAINS', 'BMS'],  # Chemical filter rules
-    property_filters_dict={
-        'MW': (150, 500),      # Molecular weight range
-        'LogP': (-0.4, 5.6),   # Lipophilicity range
-        'HBD': (0, 5),         # H-bond donors
-        'HBA': (0, 10)         # H-bond acceptors
-    }
-)
+# `filters` selects the rule set(s); property bounds are passed as direct kwargs
+# (each a [min, max] list), e.g. HBD, HBA, MW, LogP.
+mol_filter = MolFilter(filters=['PAINS'], HBD=[0, 6])
 
-# Filter molecules
+# Filter a list of SMILES (returns the SMILES that pass)
 filtered_smiles = mol_filter(smiles_list)
 ```
 
-**Available filter rules:**
+**Available filter rule sets (`filters=`):**
 - `PAINS` - Pan-Assay Interference Compounds
 - `BMS` - Bristol-Myers Squibb HTS deck filters
 - `Glaxo` - GlaxoSmithKline filters
@@ -398,47 +380,34 @@ data.print_stats()
 
 Displays histogram and computes mean, median, std for continuous labels.
 
+These transformations are **methods on the dataset object** (they mutate or return the dataset in place), not standalone imports.
+
 ### Label Binarization
 
-Convert continuous labels to binary using threshold.
+Convert continuous labels to binary using a threshold.
 
 ```python
-from tdc.utils import binarize
-
-# Binarize with threshold
-binary_labels = binarize(y_continuous, threshold=5.0, order='ascending')
-# order='ascending': values >= threshold become 1
-# order='descending': values <= threshold become 1
+data = DTI(name='DAVIS')
+data.binarize(threshold=30, order='descending')
+# order='descending': values <= threshold become 1; 'ascending': values >= threshold become 1
 ```
 
-### Label Units Conversion
-
-Transform between measurement units.
+### Label Units / Log Conversion
 
 ```python
-from tdc.chem_utils import label_transform
-
-# Convert nM to pKd
-y_pkd = label_transform(y_nM, from_unit='nM', to_unit='p')
-
-# Convert μM to nM
-y_nM = label_transform(y_uM, from_unit='uM', to_unit='nM')
+data = DTI(name='DAVIS')
+data.convert_to_log(form='binding')    # e.g. Kd -> pKd; form='standard' for other tasks
+data.convert_from_log(form='binding')  # reverse
 ```
-
-**Available conversions:**
-- Binding affinity: nM, μM, pKd, pKi, pIC50
-- Log transformations
-- Natural log conversions
 
 ### Label Meaning
 
-Get interpretable descriptions for labels.
+Get interpretable descriptions for multi-class labels.
 
 ```python
-# Get label mapping
-label_map = data.get_label_map(name='DrugBank')
-print(label_map)
-# {0: 'No interaction', 1: 'Increased effect', 2: 'Decreased effect', ...}
+from tdc.utils import get_label_map
+label_map = get_label_map(name='DrugBank', task='DDI')
+# {0: 'No interaction', 1: 'Increased effect', ...}
 ```
 
 ### Data Balancing
@@ -446,49 +415,22 @@ print(label_map)
 Handle class imbalance via over/under-sampling.
 
 ```python
-from tdc.utils import balance
-
-# Oversample minority class
-X_balanced, y_balanced = balance(X, y, method='oversample')
-
-# Undersample majority class
-X_balanced, y_balanced = balance(X, y, method='undersample')
-```
-
-### Graph Transformation for Pair Data
-
-Convert paired data to graph representations.
-
-```python
-from tdc.utils import create_graph_from_pairs
-
-# Create graph from drug-drug pairs
-graph = create_graph_from_pairs(
-    pairs=ddi_pairs,  # [(drug1, drug2, label), ...]
-    format='edge_list'  # or 'PyG', 'DGL'
-)
+data = HTS(name='SARSCoV2_3CLPro_Diamond')
+data.balanced(oversample=True, seed=42)   # oversample=False undersamples the majority class
 ```
 
 ### Negative Sampling
 
-Generate negative samples for binary tasks.
+Generate negative samples for pair tasks (DTI/DDI/PPI).
 
 ```python
-from tdc.utils import negative_sample
-
-# Generate negative samples for DTI
-negative_pairs = negative_sample(
-    positive_pairs=known_interactions,
-    all_drugs=drug_list,
-    all_targets=target_list,
-    ratio=1.0  # Negative:positive ratio
-)
+data = PPI(name='HuRI')
+data = data.neg_sample(frac=1)   # frac = negative:positive ratio
 ```
 
 **Use cases:**
-- Drug-target interaction prediction
-- Drug-drug interaction tasks
-- Creating balanced datasets
+- Drug-target / drug-drug / protein-protein interaction prediction
+- Creating balanced positive/negative pair datasets
 
 ### Entity Retrieval
 
@@ -563,20 +505,17 @@ dp_format = data.get_data(format='DeepPurpose')
 graphs = data.get_data(format='PyG')
 ```
 
-### Data Loader Utilities
+### Multi-Seed / Repeated Splits
+
+TDC has no public k-fold helper; the idiomatic pattern is to repeat `get_split` over several seeds (this is also exactly what benchmark groups expect — see the 5-seed protocol above).
 
 ```python
-from tdc.utils import create_fold
+data = ADME(name='Caco2_Wang')
 
-# Create cross-validation folds
-folds = create_fold(data, fold=5, seed=42)
-# Returns list of (train_idx, test_idx) tuples
-
-# Iterate through folds
-for i, (train_idx, test_idx) in enumerate(folds):
-    train_data = data.iloc[train_idx]
-    test_data = data.iloc[test_idx]
-    # Train and evaluate
+for seed in [1, 2, 3, 4, 5]:
+    split = data.get_split(method='scaffold', seed=seed)
+    train, valid, test = split['train'], split['valid'], split['test']
+    # Train and evaluate this fold; aggregate mean/std across seeds
 ```
 
 ## Common Workflows
@@ -591,12 +530,10 @@ from tdc.chem_utils import MolConvert, MolFilter
 # 1. Load data
 data = ADME(name='Caco2_Wang')
 
-# 2. Filter molecules
-mol_filter = MolFilter(rules=['PAINS'])
-filtered_data = data.get_data()
-filtered_data = filtered_data[
-    filtered_data['Drug'].apply(lambda x: mol_filter([x]))
-]
+# 2. Filter molecules (MolFilter returns the subset of SMILES that pass)
+mol_filter = MolFilter(filters=['PAINS'])
+all_smiles = data.get_data()['Drug'].tolist()
+kept = set(mol_filter(all_smiles))
 
 # 3. Split data
 split = data.get_split(method='scaffold', seed=42)
@@ -646,7 +583,7 @@ from tdc import Evaluator
 data = DTI(name='BindingDB_Kd')
 
 # Cold drug split
-split = data.get_split(method='cold_drug', seed=42)
+split = data.get_split(method='cold_split', column_name='Drug', seed=42)
 train, test = split['train'], split['test']
 
 # Verify no drug overlap

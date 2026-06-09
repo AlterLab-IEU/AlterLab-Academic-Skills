@@ -212,26 +212,36 @@ gene_tree.set_species_naming_function(lambda x: x.split("_")[0])
 # Detect evolutionary events
 events = gene_tree.get_descendant_evol_events()
 
-# Find all orthologs to a query gene
-query_gene = gene_tree & "species1_gene1"
+# Find orthologs/paralogs of a query gene.
+# NOTE: EvolEvent.in_seqs / out_seqs are sets of leaf-NAME strings (not nodes),
+# event.etype is "S" (speciation) or "D" (duplication), and the relationship
+# is symmetric — the query can appear on either side, so check both.
+query = "species1_gene1"
 
-orthologs = []
-paralogs = []
+orthologs = set()
+paralogs = set()
 
 for event in events:
-    if query_gene in event.in_seqs:
-        if event.etype == "S":  # Speciation
-            orthologs.extend([s for s in event.out_seqs if s != query_gene])
-        elif event.etype == "D":  # Duplication
-            paralogs.extend([s for s in event.out_seqs if s != query_gene])
+    in_seqs = set(event.in_seqs)
+    out_seqs = set(event.out_seqs)
+    if query in in_seqs:
+        partners = out_seqs
+    elif query in out_seqs:
+        partners = in_seqs
+    else:
+        continue
+    if event.etype == "S":      # Speciation -> orthologs
+        orthologs.update(partners)
+    elif event.etype == "D":    # Duplication -> paralogs
+        paralogs.update(partners)
 
-print(f"Orthologs of {query_gene.name}:")
-for ortholog in set(orthologs):
-    print(f"  {ortholog.name}")
+print(f"Orthologs of {query}:")
+for name in sorted(orthologs):
+    print(f"  {name}")
 
-print(f"\nParalogs of {query_gene.name}:")
-for paralog in set(paralogs):
-    print(f"  {paralog.name}")
+print(f"\nParalogs of {query}:")
+for name in sorted(paralogs):
+    print(f"  {name}")
 ```
 
 ### Splitting Gene Families by Duplication Events
@@ -317,8 +327,9 @@ from ete3 import Tree
 tree1 = Tree("tree1.nw")
 tree2 = Tree("tree2.nw")
 
-# Compute RF distance
-rf, max_rf, common_leaves, parts_t1, parts_t2 = tree1.robinson_foulds(tree2)
+# Compute RF distance. Current ete3 returns more than 5 values
+# (the trailing two are discarded-edge sets), so slice the first 5.
+rf, max_rf, common_leaves, parts_t1, parts_t2 = tree1.robinson_foulds(tree2)[:5]
 
 print(f"Robinson-Foulds distance: {rf}")
 print(f"Maximum RF distance: {max_rf}")
@@ -349,7 +360,7 @@ dist_matrix = np.zeros((n, n))
 
 for i in range(n):
     for j in range(i+1, n):
-        rf, max_rf, _, _, _ = trees[i].robinson_foulds(trees[j])
+        rf, max_rf = trees[i].robinson_foulds(trees[j])[:2]
         norm_rf = rf / max_rf if max_rf > 0 else 0
         dist_matrix[i, j] = norm_rf
         dist_matrix[j, i] = norm_rf
@@ -386,7 +397,7 @@ ref_tree = bootstrap_trees[0].copy()
 bipartition_counts = {}
 
 for tree in bootstrap_trees:
-    rf, max_rf, common, parts_ref, parts_tree = ref_tree.robinson_foulds(tree)
+    rf, max_rf, common, parts_ref, parts_tree = ref_tree.robinson_foulds(tree)[:5]
     for partition in parts_tree:
         bipartition_counts[partition] = bipartition_counts.get(partition, 0) + 1
 

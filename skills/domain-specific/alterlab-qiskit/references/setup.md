@@ -2,10 +2,10 @@
 
 ## Installation
 
-Install Qiskit using uv:
+Install Qiskit using uv (pin the major version — examples here target Qiskit 2.x):
 
 ```bash
-uv pip install qiskit
+uv pip install "qiskit>=2,<3"
 ```
 
 For visualization capabilities:
@@ -30,7 +30,7 @@ python -m venv .venv
 
 ## Supported Python Versions
 
-Check the [Qiskit PyPI page](https://pypi.org/project/qiskit/) for currently supported Python versions. As of 2025, Qiskit typically supports Python 3.8+.
+Check the [Qiskit PyPI page](https://pypi.org/project/qiskit/) for currently supported Python versions. Qiskit SDK 2.x requires Python 3.10+ (3.9 reached end of life). Prefer `uv` envs over the `python -m venv` flow shown above on this machine.
 
 ## IBM Quantum Account Setup
 
@@ -50,8 +50,9 @@ Save your IBM Quantum credentials:
 from qiskit_ibm_runtime import QiskitRuntimeService
 
 # Save credentials (first time only)
+# The legacy channel="ibm_quantum" was removed; use "ibm_quantum_platform".
 QiskitRuntimeService.save_account(
-    channel="ibm_quantum",
+    channel="ibm_quantum_platform",
     token="YOUR_IBM_QUANTUM_TOKEN"
 )
 

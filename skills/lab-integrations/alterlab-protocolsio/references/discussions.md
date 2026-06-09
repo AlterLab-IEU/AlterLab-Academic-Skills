@@ -6,7 +6,7 @@ The Discussions API enables collaborative commenting on protocols. Comments can 
 
 ## Base URL
 
-All discussion endpoints use the base URL: `https://protocols.io/api/v3`
+All discussion endpoints use the base URL: `https://www.protocols.io/api/v3`
 
 ## Protocol-Level Comments
 
@@ -47,7 +47,7 @@ curl -X POST \
   -d '{
     "body": "This protocol worked excellently for our CRISPR experiments. We achieved 85% editing efficiency."
   }' \
-  "https://protocols.io/api/v3/protocols/12345/comments"
+  "https://www.protocols.io/api/v3/protocols/12345/comments"
 ```
 
 ### Create Threaded Reply
@@ -62,7 +62,7 @@ curl -X POST \
     "body": "What cell type did you use?",
     "parent_comment_id": 67890
   }' \
-  "https://protocols.io/api/v3/protocols/12345/comments"
+  "https://www.protocols.io/api/v3/protocols/12345/comments"
 ```
 
 ### Update Comment
@@ -120,7 +120,7 @@ curl -X POST \
   -d '{
     "body": "At this step, we found that increasing the incubation time to 2 hours improved results significantly."
   }' \
-  "https://protocols.io/api/v3/protocols/12345/steps/67890/comments"
+  "https://www.protocols.io/api/v3/protocols/12345/steps/67890/comments"
 ```
 
 ### Update Step Comment

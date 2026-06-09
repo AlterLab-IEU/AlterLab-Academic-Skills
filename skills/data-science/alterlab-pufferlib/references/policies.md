@@ -2,7 +2,12 @@
 
 ## Overview
 
-PufferLib policies are standard PyTorch modules with optional utilities for observation processing and LSTM integration. The framework provides default architectures and tools while allowing full flexibility in policy design.
+PufferLib policies are standard PyTorch modules — the library does not enforce a base class. There are two requirements for use with the PuffeRL trainer (3.0.x):
+
+1. PuffeRL calls `policy.forward_eval(observations, state)` during rollouts and expects it to return `(logits, value)`. Provide `forward_eval` (and usually an identical `forward`).
+2. Structure the network as `encode_observations(obs, state)` + `decode_actions(hidden)` so it can be wrapped by `pufferlib.models.LSTMWrapper` without rewrites. `pufferlib.models.Default` is the canonical reference implementation.
+
+The example policies below show the network bodies; in practice wrap each one in this `encode_observations` / `decode_actions` / `forward_eval` interface (as `pufferlib.models.Default` does).
 
 ## Policy Architecture
 
@@ -152,10 +157,10 @@ class EfficientCNN(nn.Module):
 
 ## Recurrent Policies (LSTM)
 
-PufferLib provides optimized LSTM integration with automatic recurrence handling:
+PufferLib provides optimized LSTM integration via `pufferlib.models.LSTMWrapper` (note: it lives in `pufferlib.models`, not `pufferlib.pytorch`). Wrap a policy that exposes `encode_observations` / `decode_actions` and a `hidden_size` attribute, and set `use_rnn=True` in the trainer config:
 
 ```python
-from pufferlib.pytorch import LSTMWrapper
+from pufferlib.models import LSTMWrapper
 
 class RecurrentPolicy(nn.Module):
     def __init__(self, observation_space, action_space, hidden_size=256):
@@ -369,38 +374,35 @@ class ContinuousPolicy(nn.Module):
             return torch.tanh(action), value  # Bound actions to [-1, 1]
 ```
 
-## Observation Processing
+## Observation Processing (dict / structured observations)
 
-PufferLib provides utilities for unflattening observations:
+When an emulated env exposes a Dict observation space, PufferLib flattens it to a
+byte tensor. Recover the structured tensors with `pufferlib.pytorch.nativize_dtype`
+(once, from `env.emulated`) plus `pufferlib.pytorch.nativize_tensor` per batch —
+there is no `unflatten_observations` helper.
 
 ```python
-from pufferlib.pytorch import unflatten_observations
+import pufferlib.pytorch
 
-class PolicyWithUnflatten(nn.Module):
-    def __init__(self, observation_space, action_space):
+class PolicyWithDictObs(nn.Module):
+    def __init__(self, env):
         super().__init__()
 
-        self.observation_space = observation_space
+        # Build the native dtype description once from the emulated env.
+        self.dtype = pufferlib.pytorch.nativize_dtype(env.emulated)
 
-        # Define encoders for each observation component
         self.encoders = nn.ModuleDict({
             'image': self._make_image_encoder(),
-            'vector': self._make_vector_encoder()
+            'vector': self._make_vector_encoder(),
         })
+        # ... actor / critic heads ...
 
-        # ... rest of policy ...
+    def encode_observations(self, flat_observations, state=None):
+        # Recover the structured observation dict from the flat byte tensor.
+        obs = pufferlib.pytorch.nativize_tensor(flat_observations, self.dtype)
 
-    def forward(self, flat_observations):
-        # Unflatten observations into structured format
-        observations = unflatten_observations(
-            flat_observations,
-            self.observation_space
-        )
-
-        # Process each component
-        image_features = self.encoders['image'](observations['image'])
-        vector_features = self.encoders['vector'](observations['vector'])
-
+        image_features = self.encoders['image'](obs['image'].float() / 255.0)
+        vector_features = self.encoders['vector'](obs['vector'])
         # Combine and continue...
 ```
 
@@ -588,25 +590,20 @@ class NormalizedPolicy(nn.Module):
 ### Gradient Clipping
 
 ```python
-# PufferLib trainer handles gradient clipping automatically
-trainer = PuffeRL(
-    env=env,
-    policy=policy,
-    max_grad_norm=0.5  # Clip gradients to this norm
-)
+# The trainer clips gradients for you; set the norm via the config dict
+# (not a PuffeRL kwarg). PuffeRL(config, vecenv, policy) reads config['max_grad_norm'].
+config['max_grad_norm'] = 1.5  # default in pufferlib/config/default.ini
+trainer = PuffeRL(config, vecenv, policy)
 ```
 
 ### Model Compilation
 
 ```python
-# Enable torch.compile for faster training (PyTorch 2.0+)
-policy = MyPolicy(observation_space, action_space)
-
-# Compile the model
-policy = torch.compile(policy, mode='reduce-overhead')
-
-# Use with trainer
-trainer = PuffeRL(env=env, policy=policy, compile=True)
+# torch.compile is also config-driven: set config['compile'] = True (and
+# optionally config['compile_mode']). The trainer compiles the policy internally,
+# so you do not call torch.compile yourself.
+config['compile'] = True
+trainer = PuffeRL(config, vecenv, policy)
 ```
 
 ## Debugging Policies

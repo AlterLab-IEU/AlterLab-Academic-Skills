@@ -5,8 +5,7 @@
 COSMIC (Catalogue of Somatic Mutations in Cancer) is the world's largest and most comprehensive resource for exploring the impact of somatic mutations in human cancer. Maintained by the Wellcome Sanger Institute, it catalogs millions of mutations across thousands of cancer types.
 
 **Website**: https://cancer.sanger.ac.uk/cosmic
-**Release Schedule**: Quarterly updates
-**Current Version**: v102 (May 2025), use "latest" in API calls for most recent
+**Releases**: Roughly one to two releases per year; use "latest" in file paths for the most recent, or check the [release notes](https://cancer.sanger.ac.uk/cosmic/release_notes) for the current version number
 
 ## Data Access
 
@@ -209,8 +208,8 @@ COSMIC is updated quarterly with new releases. Each release includes:
 
 ## Citation
 
-When using COSMIC data, cite:
-Tate JG, Bamford S, Jubb HC, et al. COSMIC: the Catalogue Of Somatic Mutations In Cancer. Nucleic Acids Research. 2019;47(D1):D941-D947.
+When using COSMIC data, cite the current database paper:
+Sondka Z, Dhir NB, Carvalho-Silva D, et al. COSMIC: a curated database of somatic variants and clinical data for cancer. Nucleic Acids Research. 2024;52(D1):D1210-D1217. doi:10.1093/nar/gkad986
 
 ## Additional Resources
 

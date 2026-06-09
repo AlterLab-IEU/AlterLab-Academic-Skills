@@ -20,9 +20,9 @@ The GWAS Catalog is a curated repository of published genome-wide association st
 `scripts/query_gwas.py` — query the GWAS Catalog REST API (stdlib only, JSON to stdout):
 
 ```bash
-python scripts/query_gwas.py variant rs7903146          # associations for a SNP
-python scripts/query_gwas.py trait EFO_0001360 --size 100   # associations for an EFO trait
-python scripts/query_gwas.py study GCST001795           # study metadata
+python scripts/query_gwas.py variant rs7903146           # associations for a SNP
+python scripts/query_gwas.py trait MONDO_0005148 --size 100  # associations for a trait
+python scripts/query_gwas.py study GCST001795            # study metadata
 ```
 
 ## When to Use This Skill
@@ -44,7 +44,9 @@ Four core entities, each with a canonical identifier:
 - **Studies** → `GCST` accessions (e.g., GCST001234)
 - **Associations** → SNP-trait links with p-values (genome-wide significant: p ≤ 5×10⁻⁸)
 - **Variants** → `rs` numbers (e.g., rs7903146)
-- **Traits** → EFO terms (e.g., EFO_0001360 = type 2 diabetes); genes use HGNC symbols (e.g., TCF7L2)
+- **Traits** → trait ontology short-forms (e.g., MONDO_0005148 = type 2 diabetes on the main REST API); genes use HGNC symbols (e.g., TCF7L2)
+
+> **Trait-ID gotcha (verified):** the two APIs disagree on trait IDs. The main REST API has migrated many traits to MONDO / current EFO short-forms, so `efoTraits/MONDO_0005148` works but the legacy `efoTraits/EFO_0001360` now 404s. The Summary Statistics API still uses the legacy ID: `traits/EFO_0001360` works there but `traits/MONDO_0005148` 404s. If a trait path 404s, look up the current short-form with `/efoTraits/search/findByTrait?trait=...` (main API) before assuming the trait is absent.
 
 ## APIs
 

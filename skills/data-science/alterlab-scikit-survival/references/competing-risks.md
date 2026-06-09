@@ -43,27 +43,34 @@ This differs from the Kaplan-Meier estimator, which would overestimate event pro
 
 Estimates the cumulative incidence function for each event type.
 
+**API**: `cumulative_incidence_competing_risks(event, time)` takes two SEPARATE
+arrays — `event` is **integer-coded** status (0 = censored, 1, 2, ... = event
+types), `time` is the observed time. It returns `(times, cif_estimates)` where
+`cif_estimates` is a 2D array: row 0 is the total/any-event risk and rows 1..k are
+the per-cause CIFs. Do NOT collapse `event` to a boolean — that destroys the cause
+information. Pass `conf_type="log-log"` to also get confidence intervals (then the
+return becomes `times, cif_estimates, conf_int`).
+
 ```python
-from sksurv.nonparametric import cumulative_incidence_competing_risks
-from sksurv.datasets import load_leukemia
-
-# Load data with competing risks
-X, y = load_leukemia()
-# y has event types: 0=censored, 1=relapse, 2=death
-
-# Compute cumulative incidence for each event type
-# Returns: time points, CIF for event 1, CIF for event 2, ...
-time_points, cif_1, cif_2 = cumulative_incidence_competing_risks(y)
-
-# Plot cumulative incidence functions
 import matplotlib.pyplot as plt
+from sksurv.nonparametric import cumulative_incidence_competing_risks
+from sksurv.datasets import load_bmt
+
+# BMT competing-risks dataset: status 0=censored, 1=transplant-related mortality, 2=relapse
+bmt_features, bmt_outcome = load_bmt()
+status = bmt_outcome["status"]   # integer-coded event type
+ftime = bmt_outcome["ftime"]     # observed time
+status_labels = {1: "Transplant related mortality", 2: "Relapse"}
+
+times, cif = cumulative_incidence_competing_risks(status, ftime)
 
 plt.figure(figsize=(10, 6))
-plt.step(time_points, cif_1, where='post', label='Relapse', linewidth=2)
-plt.step(time_points, cif_2, where='post', label='Death in remission', linewidth=2)
-plt.xlabel('Time (weeks)')
+plt.step(times, cif[0], where='post', label='Total risk (any event)', linewidth=2)
+for k, label in status_labels.items():
+    plt.step(times, cif[k], where='post', label=label, linewidth=2)
+plt.xlabel('Time')
 plt.ylabel('Cumulative Incidence')
-plt.title('Competing Risks: Relapse vs Death')
+plt.title('Competing Risks: per-cause CIF')
 plt.legend()
 plt.grid(True, alpha=0.3)
 plt.show()
@@ -77,46 +84,33 @@ plt.show()
 
 ## Data Format for Competing Risks
 
-### Creating Structured Array with Event Types
+For CIF estimation you keep the **integer-coded** status and pass it directly to
+`cumulative_incidence_competing_risks` — do not build a boolean `Surv` array (that
+loses the cause). You only collapse to a boolean `Surv` outcome when fitting a
+*cause-specific Cox model* for one event (see below), where the other causes are
+treated as censored.
 
 ```python
 import numpy as np
-from sksurv.util import Surv
 
-# Event types: 0 = censored, 1 = event type 1, 2 = event type 2
+# Integer-coded status: 0 = censored, 1 = event type 1, 2 = event type 2
 event_types = np.array([0, 1, 2, 1, 0, 2, 1])
 times = np.array([10.2, 5.3, 8.1, 3.7, 12.5, 6.8, 4.2])
 
-# Create survival array
-# For competing risks: event=True if any event occurred
-# Store event type separately or encode in the event field
-y = Surv.from_arrays(
-    event=(event_types > 0),  # True if any event
-    time=times
-)
-
-# Keep event_types for distinguishing between event types
+# Directly usable for CIF estimation:
+ts, cif = cumulative_incidence_competing_risks(event_types, times)
 ```
 
-### Converting Data with Event Types
+### From a DataFrame
 
 ```python
 import pandas as pd
-from sksurv.util import Surv
 
-# Assume data has: time, event_type columns
-# event_type: 0=censored, 1=type1, 2=type2, etc.
-
+# Columns: time, event_type (0=censored, 1=type1, 2=type2, ...)
 df = pd.read_csv('competing_risks_data.csv')
-
-# Create survival outcome
-y = Surv.from_arrays(
-    event=(df['event_type'] > 0),
-    time=df['time']
+ts, cif = cumulative_incidence_competing_risks(
+    df['event_type'].to_numpy(), df['time'].to_numpy()
 )
-
-# Store event types
-event_types = df['event_type'].values
 ```
 
 ## Comparing Cumulative Incidence Between Groups
@@ -124,40 +118,26 @@ event_types = df['event_type'].values
 ### Stratified Analysis
 
 ```python
-from sksurv.nonparametric import cumulative_incidence_competing_risks
 import matplotlib.pyplot as plt
+from sksurv.nonparametric import cumulative_incidence_competing_risks
 
-# Split by treatment group
-mask_treatment = X['treatment'] == 'A'
-mask_control = X['treatment'] == 'B'
+# Split by treatment group (status/ftime are the integer-coded arrays)
+mask_trt = treatment == 'A'
+mask_ctl = treatment == 'B'
 
-y_treatment = y[mask_treatment]
-y_control = y[mask_control]
+# Compute CIF per group; cif[k] is the CIF for event type k (cif[0] = total)
+t_trt, cif_trt = cumulative_incidence_competing_risks(status[mask_trt], ftime[mask_trt])
+t_ctl, cif_ctl = cumulative_incidence_competing_risks(status[mask_ctl], ftime[mask_ctl])
 
-# Compute CIF for each group
-time_trt, cif1_trt, cif2_trt = cumulative_incidence_competing_risks(y_treatment)
-time_ctl, cif1_ctl, cif2_ctl = cumulative_incidence_competing_risks(y_control)
-
-# Plot comparison
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
-
-# Event type 1
-ax1.step(time_trt, cif1_trt, where='post', label='Treatment', linewidth=2)
-ax1.step(time_ctl, cif1_ctl, where='post', label='Control', linewidth=2)
-ax1.set_xlabel('Time')
-ax1.set_ylabel('Cumulative Incidence')
-ax1.set_title('Event Type 1')
-ax1.legend()
-ax1.grid(True, alpha=0.3)
-
-# Event type 2
-ax2.step(time_trt, cif2_trt, where='post', label='Treatment', linewidth=2)
-ax2.step(time_ctl, cif2_ctl, where='post', label='Control', linewidth=2)
-ax2.set_xlabel('Time')
-ax2.set_ylabel('Cumulative Incidence')
-ax2.set_title('Event Type 2')
-ax2.legend()
-ax2.grid(True, alpha=0.3)
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+for k, ax in zip((1, 2), axes):
+    ax.step(t_trt, cif_trt[k], where='post', label='Treatment', linewidth=2)
+    ax.step(t_ctl, cif_ctl[k], where='post', label='Control', linewidth=2)
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Cumulative Incidence')
+    ax.set_title(f'Event Type {k}')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.show()
@@ -281,8 +261,12 @@ print("=" * 60)
 print("OVERALL CUMULATIVE INCIDENCE")
 print("=" * 60)
 
-y_all = Surv.from_arrays(event=(df['event_type'] > 0), time=df['time'])
-time_points, cif_relapse, cif_death = cumulative_incidence_competing_risks(y_all)
+# Pass integer-coded status (1=relapse, 2=death) and time directly.
+# cif[0] = total risk; cif[1] = relapse CIF; cif[2] = death CIF.
+time_points, cif = cumulative_incidence_competing_risks(
+    df['event_type'].to_numpy(), df['time'].to_numpy()
+)
+cif_relapse, cif_death = cif[1], cif[2]
 
 plt.figure(figsize=(10, 6))
 plt.step(time_points, cif_relapse, where='post', label='Relapse', linewidth=2)
@@ -294,8 +278,8 @@ plt.legend()
 plt.grid(True, alpha=0.3)
 plt.show()
 
-print(f"5-year relapse incidence: {cif_relapse[-1]:.2%}")
-print(f"5-year death incidence: {cif_death[-1]:.2%}")
+print(f"Final relapse incidence: {cif_relapse[-1]:.2%}")
+print(f"Final death incidence: {cif_death[-1]:.2%}")
 
 # 2. STRATIFIED BY TREATMENT
 print("\n" + "=" * 60)
@@ -303,15 +287,13 @@ print("CUMULATIVE INCIDENCE BY TREATMENT")
 print("=" * 60)
 
 for trt in ['A', 'B']:
-    mask = df['treatment'] == trt
-    y_trt = Surv.from_arrays(
-        event=(df.loc[mask, 'event_type'] > 0),
-        time=df.loc[mask, 'time']
+    mask = (df['treatment'] == trt).to_numpy()
+    t_trt, cif_trt = cumulative_incidence_competing_risks(
+        df['event_type'].to_numpy()[mask], df['time'].to_numpy()[mask]
     )
-    time_trt, cif1_trt, cif2_trt = cumulative_incidence_competing_risks(y_trt)
     print(f"\nTreatment {trt}:")
-    print(f"  5-year relapse: {cif1_trt[-1]:.2%}")
-    print(f"  5-year death: {cif2_trt[-1]:.2%}")
+    print(f"  Final relapse: {cif_trt[1][-1]:.2%}")
+    print(f"  Final death: {cif_trt[2][-1]:.2%}")
 
 # 3. CAUSE-SPECIFIC MODELS
 print("\n" + "=" * 60)

@@ -8,7 +8,27 @@ Complete reference documentation for the ClinPGx REST API.
 https://api.clinpgx.org/v1/data/
 ```
 
-**Resource addressing**: ClinPGx objects are addressed by ClinPGx accession IDs in the path (e.g. gene CYP2D6 = `PA128`, CYP2C9 = `PA126`), not by gene symbols or rsIDs. Resolve a symbol or rsID by querying the collection endpoint with parameters (e.g. `GET /v1/data/gene?symbol=CYP2D6`, `GET /v1/data/variant?symbol=rs4244285`) and reading the accession ID from the response. Query parameter names below should be confirmed against the live OpenAPI spec.
+**Resource addressing**: ClinPGx objects are addressed by ClinPGx accession IDs in the path (e.g. gene CYP2D6 = `PA128`, CYP2C9 = `PA126`), not by gene symbols or rsIDs. Resolve a symbol or rsID by querying the collection endpoint with parameters (e.g. `GET /v1/data/gene?symbol=CYP2D6`, `GET /v1/data/variant?symbol=rs4244285`) and reading the accession ID from the response.
+
+## Response Envelope (verified)
+
+Every response is a JSON object, never a bare array:
+
+```json
+{ "status": "success", "data": [ /* ...records... */ ] }
+```
+
+Read results from `response.json()["data"]`. On failure the envelope is
+`{"status": "fail", "data": {"errors": [{"message": "No results matching criteria."}]}}`.
+A single-object GET (e.g. `/gene/PA128`) returns the object inside `data` as well.
+
+## Filter-Parameter Convention (verified)
+
+- **Genes** filter on `relatedGenes.symbol` (e.g. `CYP2C19`). The `relatedGenes.name` form fails.
+- **Chemicals/drugs** filter on `relatedChemicals.name` (e.g. `clopidogrel`). The `relatedChemicals.symbol` form returns `status: "fail"` ("No results matching criteria") — do **not** use it.
+- Collection lookups: `gene?symbol=`, `chemical?name=`, `variant?symbol=` or `variant?name=`.
+
+The illustrative `Example Response` blocks below predate this verification and are schematic — trust the envelope/param rules above and the live OpenAPI spec (`https://api.clinpgx.org/`) over the exact field names shown.
 
 ## Rate Limiting
 
@@ -95,11 +115,11 @@ GET /v1/data/chemical/{drug_id}
 ```
 
 **Parameters:**
-- `drug_id` (path, required): ClinPGx drug accession ID (e.g., PA448515)
+- `drug_id` (path, required): ClinPGx drug accession ID (e.g., PA451906 for warfarin)
 
 **Example Request:**
 ```bash
-curl "https://api.clinpgx.org/v1/data/chemical/PA448515"
+curl "https://api.clinpgx.org/v1/data/chemical/PA451906"
 ```
 
 #### Search Drugs by Name
@@ -120,7 +140,7 @@ curl "https://api.clinpgx.org/v1/data/chemical?name=warfarin"
 ```json
 [
   {
-    "id": "PA448515",
+    "id": "PA451906",
     "name": "warfarin",
     "genericNames": ["warfarin sodium"],
     "tradeNames": ["Coumadin", "Jantoven"],
@@ -139,7 +159,7 @@ The public ClinPGx API does **not** provide a `geneDrugPair` endpoint. Gene-drug
 
 ```http
 GET /v1/data/guidelineAnnotation?relatedGenes.symbol={gene}
-GET /v1/data/guidelineAnnotation?relatedChemicals.symbol={drug}
+GET /v1/data/guidelineAnnotation?relatedChemicals.name={drug}
 ```
 
 **Example Requests:**
@@ -148,7 +168,7 @@ GET /v1/data/guidelineAnnotation?relatedChemicals.symbol={drug}
 curl "https://api.clinpgx.org/v1/data/guidelineAnnotation?relatedGenes.symbol=CYP2D6"
 
 # Guideline annotations related to a drug
-curl "https://api.clinpgx.org/v1/data/guidelineAnnotation?relatedChemicals.symbol=codeine"
+curl "https://api.clinpgx.org/v1/data/guidelineAnnotation?relatedChemicals.name=codeine"
 ```
 
 #### Pair Report Endpoint
@@ -174,13 +194,13 @@ Access clinical practice guideline annotations from CPIC, DPWG, and other source
 #### Get Guideline Annotations
 
 ```http
-GET /v1/data/guidelineAnnotation?source={source}&relatedGenes.symbol={gene}&relatedChemicals.symbol={drug}
+GET /v1/data/guidelineAnnotation?source={source}&relatedGenes.symbol={gene}&relatedChemicals.name={drug}
 ```
 
 **Parameters:**
 - `source` (query, optional): Guideline source (CPIC, DPWG, FDA)
 - `relatedGenes.symbol` (query, optional): Gene symbol
-- `relatedChemicals.symbol` (query, optional): Drug name/symbol
+- `relatedChemicals.name` (query, optional): Drug name/symbol
 
 **Example Requests:**
 ```bash
@@ -275,12 +295,12 @@ Access curated literature annotations for gene-drug-phenotype relationships. Cli
 #### Get Summary Annotations
 
 ```http
-GET /v1/data/summaryAnnotation?relatedGenes.symbol={gene}&relatedChemicals.symbol={drug}
+GET /v1/data/summaryAnnotation?relatedGenes.symbol={gene}&relatedChemicals.name={drug}
 ```
 
 **Parameters:**
 - `relatedGenes.symbol` (query, optional): Gene symbol
-- `relatedChemicals.symbol` (query, optional): Drug name/symbol
+- `relatedChemicals.name` (query, optional): Drug name/symbol
 
 **Example Requests:**
 ```bash
@@ -324,20 +344,20 @@ Retrieve regulatory drug label information with pharmacogenomic content.
 #### Get Labels
 
 ```http
-GET /v1/data/label?relatedChemicals.symbol={drug_name}&source={source}
+GET /v1/data/label?relatedChemicals.name={drug_name}&source={source}
 ```
 
 **Parameters:**
-- `relatedChemicals.symbol` (query): Drug name/symbol
+- `relatedChemicals.name` (query): Drug name/symbol
 - `source` (query, optional): Regulatory source (FDA, EMA, PMDA, Health Canada)
 
 **Example Requests:**
 ```bash
 # Get all labels for warfarin
-curl "https://api.clinpgx.org/v1/data/label?relatedChemicals.symbol=warfarin"
+curl "https://api.clinpgx.org/v1/data/label?relatedChemicals.name=warfarin"
 
 # Get only FDA labels
-curl "https://api.clinpgx.org/v1/data/label?relatedChemicals.symbol=warfarin&source=FDA"
+curl "https://api.clinpgx.org/v1/data/label?relatedChemicals.name=warfarin&source=FDA"
 ```
 
 **Example Response:**
@@ -381,16 +401,16 @@ curl "https://api.clinpgx.org/v1/data/pathway/PA146123006"
 #### Search Pathways
 
 ```http
-GET /v1/data/pathway?relatedChemicals.symbol={drug_name}&relatedGenes.symbol={gene}
+GET /v1/data/pathway?relatedChemicals.name={drug_name}&relatedGenes.symbol={gene}
 ```
 
 **Parameters:**
-- `relatedChemicals.symbol` (query, optional): Drug name/symbol
+- `relatedChemicals.name` (query, optional): Drug name/symbol
 - `relatedGenes.symbol` (query, optional): Gene symbol
 
 **Example:**
 ```bash
-curl "https://api.clinpgx.org/v1/data/pathway?relatedChemicals.symbol=warfarin"
+curl "https://api.clinpgx.org/v1/data/pathway?relatedChemicals.name=warfarin"
 ```
 
 **Example Response:**
@@ -439,7 +459,7 @@ patient_genes = {"CYP2C19": "*1/*2", "CYP2D6": "*1/*1", "SLCO1B1": "*1/*5"}
 for med in patient_meds:
     response = requests.get(
         "https://api.clinpgx.org/v1/data/guidelineAnnotation",
-        params={"relatedChemicals.symbol": med}
+        params={"relatedChemicals.name": med}
     )
     guideline_annotations = response.json()
     # Cross-reference returned annotations against patient_genes
@@ -488,7 +508,7 @@ Check for high-risk gene-drug associations via guideline annotations:
 # Screen for HLA-B*57:01 guidance before abacavir
 response = requests.get(
     "https://api.clinpgx.org/v1/data/guidelineAnnotation",
-    params={"relatedChemicals.symbol": "abacavir"}
+    params={"relatedChemicals.name": "abacavir"}
 )
 guideline_annotations = response.json()
 # CPIC: Do not use if HLA-B*57:01 positive

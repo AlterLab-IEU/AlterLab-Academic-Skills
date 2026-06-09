@@ -13,7 +13,9 @@ metadata:
 
 ## Overview
 
-Access and query the Ensembl genome database, a comprehensive resource for vertebrate genomic data maintained by EMBL-EBI. The database provides gene annotations, sequences, variants, regulatory information, and comparative genomics data for over 250 species. Current release is 115 (September 2025).
+Access and query the Ensembl genome database, a comprehensive resource for vertebrate genomic data maintained by EMBL-EBI. The database provides gene annotations, sequences, variants, regulatory information, and comparative genomics data for over 250 species. Current release is 116 (April 2026).
+
+**Heads-up (verified June 2026):** Release 116 is the final release served by the classic REST API at `https://rest.ensembl.org`. The endpoint stays online with no announced sunset date but receives no further data updates; Ensembl's new platform replaces it with GraphQL and GA4GH refget for sequence access. For current research the REST API documented here still works; plan migration for long-lived pipelines.
 
 ## When to Use This Skill
 
@@ -52,9 +54,9 @@ gene_data = client.symbol_lookup(
     symbol='BRCA2'
 )
 
-# Get detailed gene information
-gene_info = client.lookup_id(
-    id='ENSG00000139618',  # BRCA2 Ensembl ID
+# Get detailed gene information (method is lookup, NOT lookup_id)
+gene_info = client.lookup(
+    'ENSG00000139618',  # BRCA2 Ensembl ID
     expand=True
 )
 ```
@@ -110,8 +112,8 @@ Query genetic variation data and predict variant consequences using the Variant 
 
 **VEP example:**
 ```python
-# Predict variant consequences
-vep_result = client.vep_hgvs(
+# Predict variant consequences (GET variant is vep_hgvs_get; POST batch is vep_hgvs_post)
+vep_result = client.vep_hgvs_get(
     species='human',
     hgvs_notation='ENST00000380152.7:c.803C>T'
 )
@@ -178,14 +180,18 @@ Convert coordinates between different genome assemblies (e.g., GRCh37 to GRCh38)
 ```python
 from ensembl_rest import AssemblyMapper
 
-# Map coordinates from GRCh37 to GRCh38
+# Map coordinates from GRCh37 to GRCh38.
+# AssemblyMapper prefetches the whole-assembly mapping on init (slow once,
+# then fast for repeated point lookups). map() takes a single position.
 mapper = AssemblyMapper(
-    species='human',
-    asm_from='GRCh37',
-    asm_to='GRCh38'
+    from_assembly='GRCh37',
+    to_assembly='GRCh38',
+    species='human'
 )
 
-mapped = mapper.map(chrom='7', start=140453136, end=140453136)
+mapped_pos = mapper.map(chrom='7', pos=140453136)
+# For one-off lookups, the direct REST endpoint is simpler:
+#   GET /map/human/GRCh37/7:140453136..140453136/GRCh38
 ```
 
 ## API Best Practices
@@ -232,13 +238,27 @@ def query_ensembl(endpoint, params=None, max_retries=3):
 
 ## Installation
 
-### Python Package (Recommended)
+### Python Package (optional convenience)
 
 ```bash
-uv pip install ensembl_rest
+uv pip install 'ensembl_rest==0.3.4'   # latest release: Oct 2023
 ```
 
-The `ensembl_rest` package provides a Pythonic interface to all Ensembl REST API endpoints.
+The `ensembl_rest` package (Ad115/EnsemblRest) wraps the REST endpoints, but it is a thin, unmaintained-since-2023 wrapper. The bundled `scripts/ensembl_query.py` uses plain `requests` instead and is the recommended path — it adds rate limiting and retry handling the package lacks.
+
+**Method-naming gotcha:** the package auto-generates each method name from the *last segment* of the endpoint's documentation URL, which is often reversed from the REST path. This trips people up:
+
+| REST endpoint | `EnsemblClient` method |
+|---|---|
+| `GET /lookup/symbol/...` | `symbol_lookup` |
+| `GET /lookup/id/...` | `lookup` (NOT `lookup_id`) |
+| `GET /info/assembly/...` | `assembly_info` (NOT `info_assembly`) |
+| `GET /info/species` | `species` |
+| `GET /vep/:species/hgvs/...` | `vep_hgvs_get` (POST batch: `vep_hgvs_post`) |
+| `GET /sequence/id/...` | `sequence_id` |
+| `GET /homology/id/...` | `homology_ensemblgene` |
+
+When unsure, prefer the direct REST call — the path is unambiguous.
 
 ### Direct REST API
 
@@ -289,11 +309,11 @@ uv pip install requests
 To query available species and assemblies:
 
 ```python
-# List all available species
-species_list = client.info_species()
+# List all available species (method is species, for GET /info/species)
+species_list = client.species()
 
-# Get assembly information for a species
-assembly_info = client.info_assembly(species='human')
+# Get assembly information for a species (method is assembly_info, for GET /info/assembly/:species)
+assembly_info = client.assembly_info(species='human')
 ```
 
 Common species identifiers:

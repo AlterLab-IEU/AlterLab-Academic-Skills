@@ -1,8 +1,10 @@
 # PufferLib Training Guide
 
+> Targets PufferLib **3.0.x**. The trainer is config-driven: `PuffeRL.__init__(self, config, vecenv, policy, logger=None)` where `config` is a **dict** (typically `args['train']` from `load_config`), not flat keyword args. The dev `4.0` branch differs.
+
 ## Overview
 
-PuffeRL is PufferLib's high-performance training algorithm based on CleanRL's PPO with LSTMs, enhanced with proprietary research improvements. It achieves training at millions of steps per second through optimized vectorization and efficient implementation.
+PuffeRL is PufferLib's high-performance training algorithm based on CleanRL's PPO with optional LSTMs, enhanced with research improvements. It achieves high training throughput through optimized vectorization and an efficient implementation.
 
 ## Training Workflow
 
@@ -23,86 +25,90 @@ trainer.mean_and_log()
 
 ### CLI Training
 
-Quick start training via command line:
+Quick start via the `puffer` CLI. `env_name` resolves to a config section in `pufferlib/config/*.ini` plus its registered Ocean env. Config keys are overridden with `--<section>.<key>`:
 
 ```bash
-# Basic training
-puffer train environment_name --train.device cuda --train.learning-rate 0.001
+# Basic training (Ocean Breakout)
+puffer train puffer_breakout --train.device cuda
 
-# Custom configuration
-puffer train environment_name \
+# Override config keys (note real key names: learning-rate, total-timesteps)
+puffer train puffer_breakout \
     --train.device cuda \
-    --train.batch-size 32768 \
-    --train.learning-rate 0.0003 \
-    --train.num-iterations 10000
+    --train.learning-rate 0.015 \
+    --train.total-timesteps 10_000_000 \
+    --vec.num-envs 256
 ```
 
 ### Python Training Script
 
+The supported high-level entry point is `pufferl.train(env_name, ...)`, which builds the vecenv, policy, logger, and config for you:
+
 ```python
-import pufferlib
+import pufferlib.pufferl as pufferl
+
+pufferl.train('puffer_breakout')                  # all defaults from config/*.ini
+pufferl.train('puffer_breakout', vecenv=my_vec, policy=my_policy)  # override pieces
+```
+
+To drive the trainer manually, build the config dict yourself:
+
+```python
 import pufferlib.vector
-from pufferlib.pufferl import PuffeRL
+from pufferlib.pufferl import PuffeRL, load_config
 
-# Initialize environment.
-# PufferLib has no string registry -- pass an environment constructor
-# (callable) to `pufferlib.vector.make`. `env_creator` is a placeholder for
-# the callable that builds your env (a PufferEnv class, or a function /
-# functools.partial that returns one).
-env = pufferlib.vector.make(env_creator, num_envs=256)
+# Native PufferEnv -> default backend=PufferEnv. Wrapped (Gymnasium/PettingZoo)
+# envs require backend=pufferlib.vector.Multiprocessing (or Serial).
+vecenv = pufferlib.vector.make(env_creator, num_envs=256)
 
-# Create trainer
-trainer = PuffeRL(
-    env=env,
-    policy=my_policy,
-    device='cuda',
-    learning_rate=3e-4,
-    batch_size=32768,
-    n_epochs=4,
-    gamma=0.99,
-    gae_lambda=0.95,
-    clip_coef=0.2,
-    ent_coef=0.01,
-    vf_coef=0.5,
-    max_grad_norm=0.5
-)
+# load_config returns a nested args dict; PuffeRL takes the 'train' section (a dict).
+args = load_config('puffer_breakout')
+config = {**args['train'], 'env': 'puffer_breakout'}
+config['device'] = 'cuda'
 
-# Training loop
-for iteration in range(num_iterations):
-    # Collect rollouts
-    rollout_data = trainer.evaluate()
+trainer = PuffeRL(config, vecenv, my_policy)  # (config, vecenv, policy, logger=None)
 
-    # Train on batch
-    train_metrics = trainer.train()
-
-    # Log results
-    trainer.mean_and_log()
+# Training loop is driven by global_step, not a fixed iteration count.
+while trainer.global_step < config['total_timesteps']:
+    trainer.evaluate()      # Collect rollouts
+    trainer.train()         # Train on batch
+    trainer.mean_and_log()  # Aggregate + log
 ```
 
 ## Key Training Parameters
 
-### Core Hyperparameters
+Keys and defaults below are from `pufferlib/config/default.ini` (3.0.x); per-env `.ini` files override them. Use the exact key names — they differ from generic CleanRL/PPO conventions (e.g. `update_epochs`, not `n_epochs`; `minibatch_size`/`bptt_horizon`, not a single `num_steps`).
 
-- **learning_rate**: Learning rate for optimizer (default: 3e-4)
-- **batch_size**: Number of timesteps per training batch (default: 32768)
-- **n_epochs**: Number of training epochs per batch (default: 4)
-- **num_envs**: Number of parallel environments (default: 256)
-- **num_steps**: Steps per environment per rollout (default: 128)
+### Core Hyperparameters (`[train]`)
 
-### PPO Parameters
+- **learning_rate**: Optimizer LR (default: `0.015`; note PufferLib's default `optimizer = muon`)
+- **batch_size**: Timesteps per training batch (default: `auto`, derived from `bptt_horizon` x agents)
+- **minibatch_size**: Minibatch size (default: `8192`)
+- **max_minibatch_size**: Gradient accumulation above this size (default: `32768`)
+- **bptt_horizon**: BPTT / rollout horizon per segment (default: `64`)
+- **update_epochs**: Training epochs per batch (default: `1`)
+- **total_timesteps**: Total env steps to train for (default: `10_000_000`)
 
-- **gamma**: Discount factor (default: 0.99)
-- **gae_lambda**: Lambda for GAE calculation (default: 0.95)
-- **clip_coef**: PPO clipping coefficient (default: 0.2)
-- **ent_coef**: Entropy coefficient for exploration (default: 0.01)
-- **vf_coef**: Value function loss coefficient (default: 0.5)
-- **max_grad_norm**: Maximum gradient norm for clipping (default: 0.5)
+### Vectorization (`[vec]`)
 
-### Performance Parameters
+- **num_envs**: Parallel environments (default: `2`)
+- **num_workers**: Vectorization workers (default: `auto`)
+- **backend**: `Multiprocessing` (CLI default) / `Serial` / `Ray` / `PufferEnv` (native)
 
-- **device**: Computing device ('cuda' or 'cpu')
-- **compile**: Use torch.compile for faster training (default: True)
-- **num_workers**: Number of vectorization workers (default: auto)
+### PPO Parameters (`[train]`)
+
+- **gamma**: Discount factor (default: `0.995`)
+- **gae_lambda**: GAE lambda (default: `0.90`)
+- **clip_coef**: PPO clipping coefficient (default: `0.2`)
+- **ent_coef**: Entropy coefficient (default: `0.001`)
+- **vf_coef**: Value loss coefficient (default: `2.0`)
+- **vf_clip_coef**: Value clipping coefficient (default: `0.2`)
+- **max_grad_norm**: Max gradient norm (default: `1.5`)
+
+### Performance Parameters (`[train]`)
+
+- **device**: Computing device (`cuda` / `cpu`, default `cuda`)
+- **compile**: Use torch.compile (default: `False`; `compile_mode = max-autotune-no-cudagraphs`)
+- **cpu_offload**: Keep observations on CPU to save GPU memory (default: `False`)
 
 ## Distributed Training
 
@@ -142,43 +148,27 @@ torchrun --nproc_per_node=8 \
 
 ### Logger Integration
 
-PufferLib supports multiple logging backends:
+Loggers live in `pufferlib.pufferl` (`WandbLogger`, `NeptuneLogger`, `NoLogger`), **not** the top-level package. Each takes the nested `args` config dict and reads keys from it (it does not take `project=`/`name=` kwargs).
 
-#### Weights & Biases
+The intended path is to let `pufferl.train` pick the logger from config flags:
 
-```python
-from pufferlib import WandbLogger
+```bash
+# Weights & Biases: set --wandb plus the wandb_project / wandb_group keys
+puffer train puffer_breakout --train.wandb True --train.wandb-project my_project
 
-logger = WandbLogger(
-    project='my_project',
-    entity='my_team',
-    name='experiment_name',
-    config=trainer_config
-)
-
-trainer = PuffeRL(env, policy, logger=logger)
+# Neptune: set --neptune plus neptune_name / neptune_project
+puffer train puffer_breakout --train.neptune True --train.neptune-project my_project
 ```
 
-#### Neptune
+To construct one manually, pass the `args` dict (with the relevant keys populated):
 
 ```python
-from pufferlib import NeptuneLogger
+from pufferlib.pufferl import WandbLogger, NeptuneLogger, NoLogger
 
-logger = NeptuneLogger(
-    project='my_team/my_project',
-    name='experiment_name',
-    api_token='YOUR_TOKEN'
-)
-
-trainer = PuffeRL(env, policy, logger=logger)
-```
-
-#### No Logger
-
-```python
-from pufferlib import NoLogger
-
-trainer = PuffeRL(env, policy, logger=NoLogger())
+# args is the nested dict from load_config(); WandbLogger reads
+# args['wandb_project'], args['wandb_group'], args['tag'], args['no_model_upload'].
+logger = WandbLogger(args)          # or NeptuneLogger(args), or NoLogger(args)
+trainer = PuffeRL(config, vecenv, policy, logger=logger)
 ```
 
 ### Key Metrics
@@ -215,56 +205,57 @@ PufferLib provides a real-time terminal dashboard showing:
 
 ## Checkpointing
 
-### Saving Checkpoints
+Checkpointing is **auto-managed**: PuffeRL calls `save_checkpoint()` every `config['checkpoint_interval']` epochs and on completion. The method takes **no path argument** — it writes `model_*.pt` and `trainer_state.pt` under `config['data_dir']/<env>_<run_id>/`.
 
 ```python
-# Save checkpoint
-trainer.save_checkpoint('checkpoint.pt')
-
-# Save with additional metadata
-trainer.save_checkpoint(
-    'checkpoint.pt',
-    metadata={'iteration': iteration, 'best_reward': best_reward}
-)
+# Manual save (no path arg). Returns the model path written.
+model_path = trainer.save_checkpoint()
 ```
 
-### Loading Checkpoints
+### Resuming / loading
 
-```python
-# Load checkpoint
-trainer.load_checkpoint('checkpoint.pt')
+There is no `trainer.load_checkpoint(path)`. Loading happens at policy-build time via config keys, then training resumes from the loaded weights:
 
-# Resume training
-for iteration in range(resume_iteration, num_iterations):
-    trainer.evaluate()
-    trainer.train()
-    trainer.mean_and_log()
+```bash
+# Resume from the most recent local checkpoint
+puffer train puffer_breakout --train.load-model-path latest
+
+# Or load a specific file / a logged W&B/Neptune run id
+puffer train puffer_breakout --train.load-model-path experiments/puffer_breakout_000400.pt
 ```
 
 ## Hyperparameter Tuning with Protein
 
-The Protein system enables automatic hyperparameter and reward tuning:
+Protein is PufferLib's Pareto-genetic / GP sweep method (`pufferlib.sweep.Protein`). You do **not** instantiate it directly with a `search_space=` kwarg — sweeps are config-driven via the `[sweep]` section and run with `pufferl.sweep()`. Sweeps **require** a wandb or neptune logger.
+
+In the config (`.ini`), `[sweep]` selects the method and metric, and `[sweep.<section>.<key>]` blocks declare the search space:
+
+```ini
+[sweep]
+method = Protein
+metric = score
+goal = maximize
+
+[sweep.train.learning_rate]
+distribution = log_normal
+min = 1e-4
+max = 1e-2
+
+[sweep.vec.num_envs]
+distribution = uniform_pow2
+min = 1
+max = 16
+```
+
+Run it:
+
+```bash
+puffer sweep puffer_breakout --train.wandb True --train.wandb-project my_sweep
+```
 
 ```python
-from pufferlib import Protein
-
-# Define search space
-search_space = {
-    'learning_rate': [1e-4, 3e-4, 1e-3],
-    'batch_size': [16384, 32768, 65536],
-    'ent_coef': [0.001, 0.01, 0.1],
-    'clip_coef': [0.1, 0.2, 0.3]
-}
-
-# Run hyperparameter search
-protein = Protein(
-    env_name='environment_name',
-    search_space=search_space,
-    num_trials=100,
-    metric='mean_reward'
-)
-
-best_config = protein.optimize()
+import pufferlib.pufferl as pufferl
+pufferl.sweep(env_name='puffer_breakout')   # args must enable wandb or neptune
 ```
 
 ## Performance Optimization Tips
@@ -305,9 +296,9 @@ difficulty_levels = [0.1, 0.3, 0.5, 0.7, 1.0]
 for difficulty in difficulty_levels:
     env = pufferlib.vector.make(
         functools.partial(MyEnv, difficulty=difficulty), num_envs=256)
-    trainer = PuffeRL(env, policy)
+    trainer = PuffeRL(config, env, policy)  # (config dict, vecenv, policy)
 
-    for iteration in range(iterations_per_level):
+    while trainer.global_step < steps_per_level:
         trainer.evaluate()
         trainer.train()
         trainer.mean_and_log()
@@ -316,30 +307,35 @@ for difficulty in difficulty_levels:
 ### Reward Shaping
 
 ```python
-# Wrap environment with custom reward shaping
+# A PufferEnv step returns a 5-tuple (obs, rewards, terminals, truncations, info).
 class RewardShapedEnv(pufferlib.PufferEnv):
     def step(self, actions):
-        obs, rewards, dones, infos = super().step(actions)
+        obs, rewards, terminals, truncations, info = super().step(actions)
 
         # Add shaped rewards
-        shaped_rewards = rewards + 0.1 * proximity_bonus
+        rewards = rewards + 0.1 * proximity_bonus
 
-        return obs, shaped_rewards, dones, infos
+        return obs, rewards, terminals, truncations, info
 ```
 
 ### Multi-Stage Training
 
+`config` is the dict passed at construction; PuffeRL reads most values once at
+init, so change a stage's learning rate by rebuilding the trainer with an
+updated config (or use the built-in `anneal_lr` / `min_lr_ratio` config keys).
+
 ```python
-# Train in multiple stages with different configurations
 stages = [
-    {'learning_rate': 1e-3, 'iterations': 1000},   # Exploration
-    {'learning_rate': 3e-4, 'iterations': 5000},   # Main training
-    {'learning_rate': 1e-4, 'iterations': 2000}    # Fine-tuning
+    {'learning_rate': 1e-3, 'steps': 1_000_000},   # Exploration
+    {'learning_rate': 3e-4, 'steps': 5_000_000},   # Main training
+    {'learning_rate': 1e-4, 'steps': 2_000_000},   # Fine-tuning
 ]
 
 for stage in stages:
-    trainer.learning_rate = stage['learning_rate']
-    for iteration in range(stage['iterations']):
+    config = {**config, 'learning_rate': stage['learning_rate']}
+    trainer = PuffeRL(config, vecenv, policy)
+    target = trainer.global_step + stage['steps']
+    while trainer.global_step < target:
         trainer.evaluate()
         trainer.train()
         trainer.mean_and_log()

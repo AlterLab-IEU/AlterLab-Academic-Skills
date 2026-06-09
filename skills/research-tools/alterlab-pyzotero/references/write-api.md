@@ -19,7 +19,7 @@ template['creators'] = [
     {'creatorType': 'author', 'firstName': 'John', 'lastName': 'Smith'},
 ]
 
-# Validate fields before creating (raises InvalidItemFields if invalid)
+# Validate fields before creating (raises InvalidItemFieldsError if invalid)
 zot.check_items([template])
 
 # Create the item

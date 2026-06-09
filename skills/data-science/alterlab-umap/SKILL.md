@@ -20,7 +20,7 @@ UMAP (Uniform Manifold Approximation and Projection) is a dimensionality reducti
 ### Installation
 
 ```bash
-uv pip install umap-learn
+uv pip install "umap-learn>=0.5,<0.6"   # examples target the 0.5.x API
 ```
 
 ### Basic Usage
@@ -341,8 +341,9 @@ Parametric UMAP replaces direct embedding optimization with a learned neural net
 
 **Installation:**
 ```bash
-uv pip install umap-learn[parametric_umap]
-# Requires TensorFlow 2.x
+uv pip install "umap-learn[parametric_umap]"
+# Requires TensorFlow 2.x; import as `from umap.parametric_umap import ParametricUMAP`
+# (also re-exported as `umap.ParametricUMAP`)
 ```
 
 **Basic usage:**
@@ -441,13 +442,13 @@ aligned_embeddings = mapper.embeddings_  # List of embeddings
 
 ## Reproducibility
 
-To ensure reproducible results, always set the `random_state` parameter:
+UMAP uses stochastic optimization, so results vary between runs unless you fix the random state:
 
 ```python
 reducer = umap.UMAP(random_state=42)
 ```
 
-UMAP uses stochastic optimization, so results will vary slightly between runs without a fixed random state.
+**Gotcha (verified, umap-learn 0.5.x):** setting `random_state` forces the run to a single thread — UMAP overrides `n_jobs` to 1 and emits `"n_jobs value ... overridden to 1 by setting random_state. Use no seed for parallelism."` So there is a real tradeoff: a fixed seed gives exact reproducibility but loses the default multi-core parallelism (`n_jobs=-1`). On large datasets, leave `random_state=None` while exploring (fast, parallel) and only set the seed for the final, archived run. For full reproducibility also record the `umap-learn` version, since embeddings are not guaranteed stable across versions.
 
 ## Common Issues and Solutions
 

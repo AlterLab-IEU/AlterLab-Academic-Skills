@@ -129,15 +129,23 @@ def query_by_pdb(pdb_ids, cutoff=100, identity=92):
 
 ### Available Files
 
-| File | Size | Contents |
+Files on the [downloads page](https://www.bindingdb.org/rwd/bind/chemsearch/marvin/Download.jsp)
+are dated (`<YYYYMM>`) and refreshed roughly monthly. Sizes below are for the
+2026-06 release; they grow slowly over time.
+
+| File | Size (zipped) | Contents |
 |------|------|---------|
-| `BindingDB_All.tsv.zip` | ~3.5 GB | All data: ~2.9M records |
-| `BindingDB_All.sdf.zip` | ~7 GB | All data with 3D structures |
-| `BindingDB_IC50.tsv` | ~1.5 GB | IC50 data only |
-| `BindingDB_Ki.tsv` | ~0.8 GB | Ki data only |
-| `BindingDB_Kd.tsv` | ~0.2 GB | Kd data only |
-| `BindingDB_EC50.tsv` | ~0.5 GB | EC50 data only |
-| `tdc_bindingdb_*` | Various | TDC-formatted subsets |
+| `BindingDB_All_<YYYYMM>_tsv.zip` | ~560 MB | All data (~3.2M records), one TSV |
+| `BindingDB_All_2D_<YYYYMM>_sdf.zip` | ~1.5 GB | All data, 2D structures (SDF) |
+| `BindingDB_All_3D_<YYYYMM>_sdf.zip` | ~3 GB | All data, 3D structures (SDF) |
+| `BindingDB_Assays_<YYYYMM>_tsv.zip` | ~9 MB | Assay-level metadata |
+
+There is **no** split by affinity type. Source-specific subsets are offered
+instead (ChEMBL, Patents, PubChem, PDSP Ki, CSAR, ITC, ...), each as 2D/3D SDF
+and TSV. The full TSV contains all of Ki/IC50/Kd/EC50 in separate columns, so
+filter in pandas rather than looking for `BindingDB_Ki.tsv`-style files.
+For ML-ready, pre-split BindingDB subsets, see Therapeutics Data Commons (TDC),
+which repackages BindingDB separately (covered by the alterlab-pytdc skill).
 
 ### Efficient Loading
 

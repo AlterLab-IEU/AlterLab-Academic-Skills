@@ -106,7 +106,8 @@ Manages cross-system mappings between different coding standards.
 ```python
 from pyhealth.medcode import CrossMap
 ndc_to_atc = CrossMap.load("NDC", "ATC")
-atc_codes = ndc_to_atc.map("00074-3799-13", level=3)  # Get ATC level 3
+# Pass target-system options via target_kwargs (NOT a bare level= arg)
+atc_codes = ndc_to_atc.map("50580049698", target_kwargs={"level": 3})  # ATC level 3
 ```
 
 ## Common Operations
@@ -156,13 +157,12 @@ ccs_codes = icd_to_ccs.map("82101")  # Coronary atherosclerosis
 
 **2. Hierarchical Drug Mapping**
 ```python
-# NDC to ATC at different levels
+# NDC to ATC at different levels (level goes in target_kwargs)
 ndc_to_atc = CrossMap.load("NDC", "ATC")
 
-# Get specific ATC level
-atc_level_1 = ndc_to_atc.map("00074-3799-13", level=1)  # Anatomical group
-atc_level_3 = ndc_to_atc.map("00074-3799-13", level=3)  # Pharmacological
-atc_level_5 = ndc_to_atc.map("00074-3799-13", level=5)  # Chemical substance
+atc_level_1 = ndc_to_atc.map("50580049698", target_kwargs={"level": 1})  # Anatomical group
+atc_level_3 = ndc_to_atc.map("50580049698", target_kwargs={"level": 3})  # Pharmacological
+atc_level_5 = ndc_to_atc.map("50580049698", target_kwargs={"level": 5})  # Chemical substance
 ```
 
 **3. Bidirectional Mapping**
@@ -204,7 +204,7 @@ patient_drugs = ["00074-3799-13", "00074-7286-01", "00456-0765-01"]
 # Get therapeutic subgroups (ATC level 2)
 drug_classes = []
 for ndc in patient_drugs:
-    atc_codes = ndc_to_atc.map(ndc, level=2)
+    atc_codes = ndc_to_atc.map(ndc, target_kwargs={"level": 2})
     if atc_codes:
         drug_classes.append(atc_codes[0])
 
@@ -232,12 +232,17 @@ for icd10_code in icd10_codes:
 
 Medical code translation integrates seamlessly with PyHealth datasets:
 
+The `medcode` maps are independent of the dataset classes — load them directly and apply them to codes you pull from a dataset (event-traversal attributes vary by dataset/version; confirm against your loaded tables).
+
 ```python
 from pyhealth.datasets import MIMIC4Dataset
 from pyhealth.medcode import CrossMap
 
-# Load dataset
-dataset = MIMIC4Dataset(root="/path/to/data")
+# Load dataset (declare the tables you need)
+dataset = MIMIC4Dataset(
+    root="/path/to/data",
+    tables=["diagnoses_icd"],
+)
 
 # Load code mapping
 icd_to_ccs = CrossMap.load("ICD10CM", "CCSCM")

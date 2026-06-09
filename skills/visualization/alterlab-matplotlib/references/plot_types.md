@@ -167,8 +167,10 @@ plt.colorbar(h[3], ax=ax, label='Counts')
 
 ### Box Plot
 ```python
+# 'tick_labels' replaced the 'labels' kwarg in matplotlib 3.9
+# (old name deprecated, removed in 3.11). Requires matplotlib >= 3.9.
 ax.boxplot([data1, data2, data3],
-           labels=['Group A', 'Group B', 'Group C'],
+           tick_labels=['Group A', 'Group B', 'Group C'],
            showmeans=True, meanline=True)
 ax.set_ylabel('Values')
 ```
@@ -176,7 +178,7 @@ ax.set_ylabel('Values')
 ### Horizontal Box Plot
 ```python
 ax.boxplot([data1, data2, data3], vert=False,
-           labels=['Group A', 'Group B', 'Group C'])
+           tick_labels=['Group A', 'Group B', 'Group C'])
 ax.set_xlabel('Values')
 ```
 

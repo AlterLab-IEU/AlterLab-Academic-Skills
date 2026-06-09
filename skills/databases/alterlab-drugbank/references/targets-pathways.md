@@ -90,12 +90,18 @@ def get_drug_targets(drugbank_id):
     return []
 
 def extract_target_details(target, ns):
-    """Extract detailed target information"""
+    """Extract detailed target details.
+
+    Works for <target>, <enzyme>, <transporter>, and <carrier> elements
+    (they share this sub-structure). Use get_text_safe throughout because
+    organism / known-action are frequently absent and would otherwise raise
+    AttributeError on a None .text access.
+    """
     target_data = {
-        'id': target.find('db:id', ns).text,
-        'name': target.find('db:name', ns).text,
-        'organism': target.find('db:organism', ns).text,
-        'known_action': target.find('db:known-action', ns).text,
+        'id': get_text_safe(target.find('db:id', ns)),
+        'name': get_text_safe(target.find('db:name', ns)),
+        'organism': get_text_safe(target.find('db:organism', ns)),
+        'known_action': get_text_safe(target.find('db:known-action', ns)),
     }
 
     # Extract actions

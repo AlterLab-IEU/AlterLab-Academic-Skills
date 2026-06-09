@@ -6,14 +6,16 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
 ---
 
 # Medchem
 
 ## Overview
 
-Medchem is a Python library for molecular filtering and prioritization in drug discovery workflows. Apply hundreds of well-established and novel molecular filters, structural alerts, and medicinal chemistry rules to efficiently triage and prioritize compound libraries at scale. Rules and filters are context-specific—use as guidelines combined with domain expertise.
+Medchem (`datamol-io/medchem`) is a Python library for molecular filtering and prioritization in drug-discovery workflows: medicinal-chemistry rules, structural alerts (ChEMBL/NIBR/PAINS), chemical-group detection, complexity metrics, and a query DSL. Rules and filters are context-specific guidelines, not hard truth — combine with domain expertise.
+
+**Verified against `medchem==2.0.5` (RDKit 2026.3.x, Python 3.12).** API names below are checked against this version; earlier docs/blog posts described a different surface.
 
 ## When to Use This Skill
 
@@ -28,344 +30,207 @@ This skill should be used when:
 ## Installation
 
 ```bash
-uv pip install medchem
+uv pip install medchem    # PyPI; pulls rdkit + datamol
 ```
+
+Two features need extra native deps that PyPI cannot provide:
+- **Lilly demerits** (`lilly_demerit_filter`) shells out to compiled binaries — install via conda: `mamba install -c conda-forge lilly-medchem-rules`. Without them, the call raises `ImportError`.
+- The ChemAxon rule (`rule_of_chemaxon_druglikeness`) needs a licensed ChemAxon install.
+
+Everything else (RuleFilters, CommonAlerts, NIBR, complexity, groups, query) works from the PyPI wheel alone.
 
 ## Core Capabilities
 
-### 1. Medicinal Chemistry Rules
+> **Conventions that hold across medchem.** Filters take `mols` (a sequence of SMILES strings or RDKit mols), default to `n_jobs=-1` (all cores), and accept `progress=True`. The `medchem.structural` / `medchem.rules` filter *classes* return a **pandas DataFrame** (one row per input mol); the `medchem.functional.*` helpers return a **NumPy boolean array** where `True` = the molecule passes / is kept. Get the canonical rule and alert names from `mc.rules.RuleFilters.list_available_rules()` and `mc.structural.CommonAlertsFilters.list_default_available_alerts()` rather than guessing.
 
-Apply established drug-likeness rules to molecules using the `medchem.rules` module.
+### 1. Medicinal Chemistry Rules — `medchem.rules`
 
-**Available Rules:**
-- Rule of Five (Lipinski)
-- Rule of Oprea
-- Rule of CNS
-- Rule of leadlike (soft and strict)
-- Rule of three
-- Rule of Reos
-- Rule of drug
-- Rule of Veber
-- Golden triangle
-- PAINS filters
-
-**Single Rule Application:**
+**Single rule** — `medchem.rules.basic_rules.*` functions take one mol (SMILES or RDKit) and return a plain `bool`:
 
 ```python
 import medchem as mc
 
-# Apply Rule of Five to a SMILES string
-smiles = "CC(=O)OC1=CC=CC=C1C(=O)O"  # Aspirin
-passes = mc.rules.basic_rules.rule_of_five(smiles)
-# Returns: True
-
-# Check specific rules
-passes_oprea = mc.rules.basic_rules.rule_of_oprea(smiles)
-passes_cns = mc.rules.basic_rules.rule_of_cns(smiles)
+smi = "CC(=O)OC1=CC=CC=C1C(=O)O"  # aspirin
+mc.rules.basic_rules.rule_of_five(smi)   # -> True
+mc.rules.basic_rules.rule_of_veber(smi)  # -> True
+mc.rules.basic_rules.rule_of_cns(smi)
 ```
 
-**Multiple Rules with RuleFilters:**
+Available rules (subset; full list via `mc.rules.RuleFilters.list_available_rules()`): `rule_of_five`, `rule_of_five_beyond`, `rule_of_four`, `rule_of_three`, `rule_of_three_extended`, `rule_of_two`, `rule_of_ghose`, `rule_of_veber`, `rule_of_reos`, `rule_of_egan`, `rule_of_pfizer_3_75`, `rule_of_gsk_4_400`, `rule_of_oprea`, `rule_of_xu`, `rule_of_cns`, `rule_of_respiratory`, `rule_of_zinc`, `rule_of_leadlike_soft`, `rule_of_druglike_soft`, `rule_of_generative_design`, `rule_of_chemaxon_druglikeness` (needs ChemAxon).
+
+> There is **no** `rule_of_drug`, `rule_of_leadlike_strict`, `golden_triangle`, or `pains_filter` function in 2.0.5. PAINS lives in the alert system (`HASALERT("pains")` or `CommonAlertsFilters(alerts_set=["PAINS"])`). For lead-likeness use `rule_of_leadlike_soft` or `rule_of_oprea`.
+
+**Multiple rules** — `RuleFilters` returns a DataFrame with columns `mol`, `pass_all`, `pass_any`, and one boolean column per rule:
 
 ```python
 import datamol as dm
 import medchem as mc
 
-# Load molecules
-mols = [dm.to_mol(smiles) for smiles in smiles_list]
-
-# Create filter with multiple rules
-rfilter = mc.rules.RuleFilters(
-    rule_list=[
-        "rule_of_five",
-        "rule_of_oprea",
-        "rule_of_cns",
-        "rule_of_leadlike_soft"
-    ]
-)
-
-# Apply filters with parallelization
-results = rfilter(
-    mols=mols,
-    n_jobs=-1,  # Use all CPU cores
-    progress=True
-)
+mols = [dm.to_mol(s) for s in smiles_list]
+rfilter = mc.rules.RuleFilters(rule_list=["rule_of_five", "rule_of_veber", "rule_of_cns"])
+df = rfilter(mols=mols, n_jobs=-1, progress=True)
+# df["pass_all"] -> bool per molecule; df["rule_of_five"] -> per-rule bool
+clean = [m for m, ok in zip(mols, df["pass_all"]) if ok]
 ```
 
-**Result Format:**
-Results are returned as dictionaries with pass/fail status and detailed information for each rule.
+**Property windows** — there is no all-in-one "Constraints(mw_range=...)" object (see note in section 7). Build custom property cutoffs with `mc.rules.in_range` over descriptor names from `mc.rules.list_descriptors()` (`mw`, `clogp`, `tpsa`, `n_lipinski_hbd`, `n_lipinski_hba`, `n_rotatable_bonds`, `n_rings`, ...), or use the query DSL (`HASPROP`, section 8).
 
-### 2. Structural Alert Filters
+### 2. Structural Alert Filters — `medchem.structural`
 
-Detect potentially problematic structural patterns using the `medchem.structural` module.
+Two filter classes ship in `medchem.structural`: `CommonAlertsFilters` and `NIBRFilters`. (Lilly demerits is reached through `medchem.functional`, see section 3 — its class lives under `medchem.structural.lilly_demerits` and needs external binaries.)
 
-**Available Filters:**
-
-1. **Common Alerts** - General structural alerts derived from ChEMBL curation and literature
-2. **NIBR Filters** - Novartis Institutes for BioMedical Research filter set
-3. **Lilly Demerits** - Eli Lilly's demerit-based system (275 rules, molecules rejected at >100 demerits)
-
-**Common Alerts:**
+**Common alerts** — curated alert sets from ChEMBL (Glaxo, Dundee, BMS, **PAINS**, SureChEMBL, ...). Returns a DataFrame with `mol`, `pass_filter` (bool), `status` (`ok`/`exclude`), `reasons` (matched alert names, `;`-joined):
 
 ```python
 import medchem as mc
 
-# Create filter
-alert_filter = mc.structural.CommonAlertsFilters()
-
-# Check single molecule
-mol = dm.to_mol("c1ccccc1")
-has_alerts, details = alert_filter.check_mol(mol)
-
-# Batch filtering with parallelization
-results = alert_filter(
-    mols=mol_list,
-    n_jobs=-1,
-    progress=True
-)
+caf = mc.structural.CommonAlertsFilters()                 # all default sets
+caf_pains = mc.structural.CommonAlertsFilters(alerts_set=["PAINS"])  # PAINS only
+df = caf(mols=mol_list, n_jobs=-1, progress=True)
+clean = df[df["pass_filter"]]
+# discover sets: mc.structural.CommonAlertsFilters.list_default_available_alerts()
 ```
 
-**NIBR Filters:**
+**NIBR filters** — Novartis filter set. Returns a DataFrame including `mol`, `pass_filter`, `severity`, `status`, `reasons`:
+
+```python
+nibr = mc.structural.NIBRFilters()
+df = nibr(mols=mol_list, n_jobs=-1)
+```
+
+### 3. Functional API — `medchem.functional`
+
+One-call helpers that return a NumPy boolean array (`True` = keep). Pass `return_idx=True` to get indices of passing mols instead:
 
 ```python
 import medchem as mc
 
-# Apply NIBR filters
-nibr_filter = mc.structural.NIBRFilters()
-results = nibr_filter(mols=mol_list, n_jobs=-1)
+mc.functional.rules_filter(mol_list, rules=["rule_of_five", "rule_of_veber"], n_jobs=-1)
+mc.functional.alert_filter(mol_list, alerts=["pains"], n_jobs=-1)   # alert names are lowercase here
+mc.functional.nibr_filter(mol_list, max_severity=10, n_jobs=-1)
+mc.functional.complexity_filter(mol_list, complexity_metric="bertz", limit="99", n_jobs=-1)
+mc.functional.chemical_group_filter(mol_list, chemical_group=mc.groups.ChemicalGroup(groups=["hinge_binders"]))
 ```
 
-**Lilly Demerits:**
+**Lilly demerits** — requires the external Lilly binaries (see Installation); raises `ImportError` if missing. Molecules above `max_demerits` (default 160) are rejected:
+
+```python
+keep = mc.functional.lilly_demerit_filter(mol_list, max_demerits=160, n_jobs=-1)  # NumPy bool array
+```
+
+### 4. Chemical Groups Detection — `medchem.groups`
+
+`ChemicalGroup` matches curated group catalogs. List valid catalog names with `mc.groups.list_default_chemical_groups()` (e.g. `hinge_binders`, `electrophilic_warheads_for_kinases`, `common_warhead_covalent_inhibitors`, `privileged_kinase_inhibitor_scaffolds`, `aggregator`). Per-mol functional-group names (for the query DSL `HASGROUP`) come from `mc.groups.list_functional_group_names()`.
 
 ```python
 import medchem as mc
 
-# Calculate Lilly demerits
-lilly = mc.structural.LillyDemeritsFilters()
-results = lilly(mols=mol_list, n_jobs=-1)
-
-# Each result includes demerit score and whether it passes (≤100 demerits)
-```
-
-### 3. Functional API for High-Level Operations
-
-The `medchem.functional` module provides convenient functions for common workflows.
-
-**Quick Filtering:**
-
-```python
-import medchem as mc
-
-# Apply NIBR filters to a list
-filter_ok = mc.functional.nibr_filter(
-    mols=mol_list,
-    n_jobs=-1
-)
-
-# Apply common alerts
-alert_results = mc.functional.common_alerts_filter(
-    mols=mol_list,
-    n_jobs=-1
-)
-```
-
-### 4. Chemical Groups Detection
-
-Identify specific chemical groups and functional groups using `medchem.groups`.
-
-**Available Groups:**
-- Hinge binders
-- Phosphate binders
-- Michael acceptors
-- Reactive groups
-- Custom SMARTS patterns
-
-**Usage:**
-
-```python
-import medchem as mc
-
-# Create group detector
 group = mc.groups.ChemicalGroup(groups=["hinge_binders"])
-
-# Check for matches
-has_matches = group.has_match(mol_list)
-
-# Get detailed match information
-matches = group.get_matches(mol)
+group.has_match(mol)        # bool for one mol
+group.get_matches(mol)      # detailed matches
+# batch: mc.functional.chemical_group_filter(mols, chemical_group=group)
 ```
 
-### 5. Named Catalogs
+> `phosphate_binders`, `michael_acceptors`, and `reactive_groups` are **not** default catalog names. For reactive/electrophilic motifs use `electrophilic_warheads_for_kinases` / `common_warhead_covalent_inhibitors`, the alert filters (section 2), or a custom SMARTS catalog (`mc.catalogs.catalog_from_smarts`).
 
-Access curated collections of chemical structures through `medchem.catalogs`.
-
-**Available Catalogs:**
-- Functional groups
-- Protecting groups
-- Common reagents
-- Standard fragments
-
-**Usage:**
+### 5. Named Catalogs — `medchem.catalogs`
 
 ```python
 import medchem as mc
 
-# Access named catalogs
-catalogs = mc.catalogs.NamedCatalogs
-
-# Use catalog for matching
-catalog = catalogs.get("functional_groups")
-matches = catalog.get_matches(mol)
+mc.catalogs.list_named_catalogs()      # available catalog names
+cat = mc.catalogs.NamedCatalogs.pains()  # e.g. a PAINS RDKit FilterCatalog
+mc.catalogs.catalog_from_smarts(...)   # build a catalog from custom SMARTS
 ```
 
-### 6. Molecular Complexity
+### 6. Molecular Complexity — `medchem.complexity`
 
-Calculate complexity metrics that approximate synthetic accessibility using `medchem.complexity`.
-
-**Common Metrics:**
-- Bertz complexity
-- Whitlock complexity
-- Barone complexity
-
-**Usage:**
+`ComplexityFilter` flags molecules whose complexity exceeds a percentile threshold derived from a reference set (default ZINC). It is **called per molecule** and returns a bool (`True` = within limit / keep). Metrics: `bertz`, `whitlock` (`WhitlockCT`), `barone` (`BaroneCT`), `smcm` (`SMCM`), `twc` (`TWC`).
 
 ```python
 import medchem as mc
 
-# Calculate complexity
-complexity_score = mc.complexity.calculate_complexity(mol)
-
-# Filter by complexity threshold
-complex_filter = mc.complexity.ComplexityFilter(max_complexity=500)
-results = complex_filter(mols=mol_list)
+cflt = mc.complexity.ComplexityFilter(limit="99", complexity_metric="bertz")
+keep = [cflt(m) for m in mol_list]
+# or batch: mc.functional.complexity_filter(mol_list, complexity_metric="bertz", limit="99")
 ```
 
-### 7. Constraints Filtering
+> There is no `mc.complexity.calculate_complexity(...)` and `ComplexityFilter` takes `limit`/`complexity_metric`/`threshold_stats_file`, **not** `max_complexity`. For a raw score use the metric classes directly (`mc.complexity.TWC`, etc.).
 
-Apply custom property-based constraints using `medchem.constraints`.
+### 7. Substructure Constraints — `medchem.constraints`
 
-**Example Constraints:**
-- Molecular weight ranges
-- LogP bounds
-- TPSA limits
-- Rotatable bond counts
+`mc.constraints.Constraints(core, constraint_fns, prop_name="query")` enforces **substructure / R-group** constraints around a query core (via `has_match` / `validate`) — it is **not** a physchem property-window filter. For MW/logP/TPSA windows, use `RuleFilters` + `in_range` (section 1) or the query DSL `HASPROP` (section 8).
 
-**Usage:**
+### 8. Query DSL — `medchem.query`
+
+`QueryFilter` evaluates a boolean expression over rules, properties, alerts, and groups. Operators: `AND`, `OR`, `NOT`, comparisons `< > <= >= == !=`. Primitives: `MATCHRULE("...")`, `HASPROP("<descriptor>" < value)`, `HASALERT("<lowercase set>")`, `HASGROUP("...")`, `HASSUBSTRUCTURE`/`HASSUPERSTRUCTURE`, `LIKE`.
 
 ```python
 import medchem as mc
 
-# Define constraints
-constraints = mc.constraints.Constraints(
-    mw_range=(200, 500),
-    logp_range=(-2, 5),
-    tpsa_max=140,
-    rotatable_bonds_max=10
-)
-
-# Apply constraints
-results = constraints(mols=mol_list, n_jobs=-1)
+qf = mc.query.QueryFilter('MATCHRULE("rule_of_five") AND HASPROP("mw" < 500) AND NOT HASALERT("pains")')
+keep = qf(mol_list, n_jobs=-1)   # NumPy bool array
 ```
 
-### 8. Medchem Query Language
-
-Use a specialized query language for complex filtering criteria.
-
-**Query Examples:**
-```
-# Molecules passing Ro5 AND not having common alerts
-"rule_of_five AND NOT common_alerts"
-
-# CNS-like molecules with low complexity
-"rule_of_cns AND complexity < 400"
-
-# Leadlike molecules without Lilly demerits
-"rule_of_leadlike AND lilly_demerits == 0"
-```
-
-**Usage:**
-
-```python
-import medchem as mc
-
-# Parse and apply query
-query = mc.query.parse("rule_of_five AND NOT common_alerts")
-results = query.apply(mols=mol_list, n_jobs=-1)
-```
+> The syntax is the structured DSL above — **not** free-form text like `"rule_of_five AND NOT common_alerts"`. There is no `mc.query.parse()`; construct `mc.query.QueryFilter(query_string)` and call it on the mols. Alert names inside `HASALERT` are lowercase (`pains`, `tox`, `nih`, ...).
 
 ## Workflow Patterns
 
 ### Pattern 1: Initial Triage of Compound Library
 
-Filter a large compound collection to identify drug-like candidates.
+Filter a large collection to drug-like candidates, dropping anything with structural alerts.
 
 ```python
 import datamol as dm
 import medchem as mc
 import pandas as pd
 
-# Load compound library
 df = pd.read_csv("compounds.csv")
 mols = [dm.to_mol(smi) for smi in df["smiles"]]
 
-# Apply primary filters
-rule_filter = mc.rules.RuleFilters(rule_list=["rule_of_five", "rule_of_veber"])
-rule_results = rule_filter(mols=mols, n_jobs=-1, progress=True)
+# Rule filter -> DataFrame with pass_all + per-rule columns
+rule_df = mc.rules.RuleFilters(rule_list=["rule_of_five", "rule_of_veber"])(
+    mols=mols, n_jobs=-1, progress=True
+)
 
-# Apply structural alerts
-alert_filter = mc.structural.CommonAlertsFilters()
-alert_results = alert_filter(mols=mols, n_jobs=-1, progress=True)
+# Structural alerts -> DataFrame with pass_filter (True = clean)
+alert_df = mc.structural.CommonAlertsFilters()(mols=mols, n_jobs=-1, progress=True)
 
-# Combine results
-df["passes_rules"] = rule_results["pass"]
-df["has_alerts"] = alert_results["has_alerts"]
-df["drug_like"] = df["passes_rules"] & ~df["has_alerts"]
+df["passes_rules"] = rule_df["pass_all"].to_numpy()
+df["no_alerts"] = alert_df["pass_filter"].to_numpy()
+df["drug_like"] = df["passes_rules"] & df["no_alerts"]
 
-# Save filtered compounds
-filtered_df = df[df["drug_like"]]
-filtered_df.to_csv("filtered_compounds.csv", index=False)
+df[df["drug_like"]].to_csv("filtered_compounds.csv", index=False)
 ```
 
 ### Pattern 2: Lead Optimization Filtering
 
-Apply stricter criteria during lead optimization.
+Stack stricter filters and keep only molecules passing every stage. The `functional.*` helpers all return aligned NumPy bool arrays, so intersecting them is straightforward.
 
 ```python
+import numpy as np
 import medchem as mc
 
-# Create comprehensive filter
-filters = {
-    "rules": mc.rules.RuleFilters(rule_list=["rule_of_leadlike_strict"]),
-    "alerts": mc.structural.NIBRFilters(),
-    "lilly": mc.structural.LillyDemeritsFilters(),
-    "complexity": mc.complexity.ComplexityFilter(max_complexity=400)
-}
-
-# Apply all filters
-results = {}
-for name, filt in filters.items():
-    results[name] = filt(mols=candidate_mols, n_jobs=-1)
-
-# Identify compounds passing all filters
-passes_all = all(r["pass"] for r in results.values())
+f = mc.functional
+keep = (
+    f.rules_filter(candidate_mols, rules=["rule_of_oprea"], n_jobs=-1)
+    & f.nibr_filter(candidate_mols, n_jobs=-1)
+    & f.complexity_filter(candidate_mols, complexity_metric="bertz", limit="99", n_jobs=-1)
+)
+# Add lilly_demerit_filter(...) too if the Lilly binaries are installed.
+survivors = [m for m, ok in zip(candidate_mols, keep) if ok]
 ```
 
 ### Pattern 3: Identify Specific Chemical Groups
 
-Find molecules containing specific functional groups or scaffolds.
+Flag molecules containing a target scaffold/motif (validate names with `mc.groups.list_default_chemical_groups()`).
 
 ```python
 import medchem as mc
 
-# Create group detector for multiple groups
-group_detector = mc.groups.ChemicalGroup(
-    groups=["hinge_binders", "phosphate_binders"]
-)
-
-# Screen library
-matches = group_detector.get_all_matches(mol_list)
-
-# Filter molecules with desired groups
-mol_with_groups = [mol for mol, match in zip(mol_list, matches) if match]
+group = mc.groups.ChemicalGroup(groups=["hinge_binders"])
+keep = mc.functional.chemical_group_filter(mol_list, chemical_group=group)
+with_group = [m for m, ok in zip(mol_list, keep) if ok]
 ```
 
 ## Best Practices
@@ -393,12 +258,14 @@ Comprehensive API reference covering all medchem modules with detailed function 
 Complete catalog of available rules, filters, and alerts with descriptions, thresholds, and literature references.
 
 ### scripts/filter_molecules.py
-Production-ready script for batch filtering workflows. Supports multiple input formats (CSV, SDF, SMILES), configurable filter combinations, and detailed reporting.
+Batch filtering CLI. Supports CSV/TSV, SDF, and plain-SMILES `.txt` input, configurable filter combinations, and a summary report.
 
 **Usage:**
 ```bash
-python scripts/filter_molecules.py input.csv --rules rule_of_five,rule_of_cns --alerts nibr --output filtered.csv
+uv run python scripts/filter_molecules.py input.csv \
+    --rules rule_of_five,rule_of_cns --nibr --output filtered.csv
 ```
+Flags are individual switches (`--nibr`, `--common-alerts`, `--lilly`, `--pains`), not `--alerts <name>`. `--lilly` needs the external Lilly binaries.
 
 ## Documentation
 

@@ -1,9 +1,9 @@
 ---
 name: alterlab-hypothesis-gen
-description: Formulates structured, testable hypotheses from experimental observations using a scientific-method framework — derives predictions, proposes mechanisms, and designs experiments to test them. Use when turning observations or data into falsifiable hypotheses, predictions, or experimental designs. For open-ended ideation prefer scientific-brainstorming; for automated LLM-driven hypothesis testing on datasets use hypogenic. Part of the AlterLab Academic Skills suite.
-allowed-tools: Read Write Edit Bash
+description: Formulates structured, testable hypotheses from experimental observations using a scientific-method framework — derives predictions, proposes mechanisms, and designs experiments to test them, then renders a LaTeX report. Use when turning observations or data into falsifiable, mechanistic hypotheses, competing-explanation sets, testable predictions, or experimental designs. For a standalone systematic literature review or evidence synthesis (not a means to hypotheses) use alterlab-literature-review; to evaluate an existing manuscript use alterlab-peer-review. Part of the AlterLab Academic Skills suite.
+allowed-tools: Read Write Edit Bash WebSearch WebFetch
 license: MIT
-compatibility: No external tools, API keys, or services required — reasons over provided observations using the Read/Write/Edit/Bash tools alone
+compatibility: Hypothesis reasoning runs with the Read/Write/Edit/Bash tools alone; the literature-grounding step uses WebSearch/WebFetch (skip it if offline). Rendering the LaTeX report requires a local XeLaTeX/LuaLaTeX install (e.g. TeX Live) — optional, the analysis stands without it.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -255,8 +255,7 @@ Ensure all generated hypotheses meet these standards:
 
 ### Related Skills
 
-When preparing hypothesis-driven research for publication, consult the **venue-templates** skill for writing style guidance:
-- `venue_writing_styles.md` - Master guide comparing styles across venues
-- Venue-specific guides for Nature/Science, Cell Press, medical journals, and ML/CS conferences
-- `reviewer_expectations.md` - What reviewers look for when evaluating research hypotheses
+- **alterlab-literature-review** — for a standalone systematic review / PRISMA synthesis when the deliverable is the review itself rather than a focused search to ground hypotheses.
+- **alterlab-venue-templates** — for venue-specific LaTeX templates and submission formatting when turning a hypothesis report into a manuscript.
+- **alterlab-scientific-writing** — for drafting the resulting manuscript in flowing IMRAD prose.
 

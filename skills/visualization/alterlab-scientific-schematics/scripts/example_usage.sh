@@ -41,7 +41,7 @@ python scripts/generate_schematic.py \
 
 echo ""
 echo "✓ Generated: figures/consort_example.png"
-echo "  - Also created: consort_example_v1.png, v2.png, v3.png"
+echo "  - Also created: consort_example_v1.png (and v2.png if a 2nd iteration ran)"
 echo "  - Review log: consort_example_review_log.json"
 echo ""
 

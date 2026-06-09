@@ -3,7 +3,7 @@ name: alterlab-anndata
 description: Build, slice, concatenate, read, and write AnnData annotated data matrices (obs, var, X, layers, obsm, uns) for single-cell analysis in the scverse ecosystem. Use when handling .h5ad files, managing cell and gene annotations, or wrangling single-cell matrices — this is the data-format skill, for analysis workflows use scanpy, for probabilistic models use scvi-tools, for population-scale queries use cellxgene-census. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Runs under `uv run python` with `anndata` (>=0.11) installed in the project env; no API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -29,10 +29,10 @@ Use this skill when:
 ## Installation
 
 ```bash
-uv pip install anndata
+uv pip install anndata          # 0.11+ (the API namespaces below assume >= 0.11)
 
-# With optional dependencies
-uv pip install anndata[dev,test,doc]
+# Optional extra for Dask-backed lazy reads (ad.experimental.read_lazy)
+uv pip install 'anndata[dask]'
 ```
 
 ## Quick Start
@@ -70,13 +70,20 @@ adata = ad.read_h5ad('data.h5ad')
 # Read with backed mode (for large files)
 adata = ad.read_h5ad('large_data.h5ad', backed='r')
 
-# Read other formats
-adata = ad.read_csv('data.csv')
-adata = ad.read_loom('data.loom')
+# Read other formats (these live under ad.io as of anndata 0.11)
+adata = ad.io.read_csv('data.csv')
+adata = ad.io.read_loom('data.loom')
 adata = sc.read_10x_h5('filtered_feature_bc_matrix.h5')
 ```
 
-> **Note**: The 10x Genomics readers (`read_10x_h5`, `read_10x_mtx`) live in **scanpy** (`sc.read_10x_h5`), not anndata. This skill covers data formats and defers analysis-specific I/O to scanpy.
+> **API namespaces (anndata >= 0.11)**: all format readers/writers moved to the
+> `anndata.io` module (`ad.io.read_csv`, `ad.io.read_mtx`, `ad.io.read_loom`,
+> `ad.io.read_elem`, ...). The top-level `ad.read_csv`-style aliases still work
+> but emit a `DeprecationWarning`. **Exceptions**: `ad.read_h5ad`, `ad.read_zarr`,
+> `adata.write_h5ad`, and `adata.write_zarr` stay top-level with no warning.
+>
+> **10x readers** (`read_10x_h5`, `read_10x_mtx`) live in **scanpy**
+> (`sc.read_10x_h5`), not anndata — this skill defers analysis-specific I/O to scanpy.
 
 ### Writing data
 ```python
@@ -141,8 +148,8 @@ adata.write_h5ad('output.h5ad', compression='gzip')
 import scanpy as sc
 adata = sc.read_10x_h5('filtered_feature_bc_matrix.h5')
 
-# Read MTX format
-adata = ad.read_mtx('matrix.mtx').T
+# Read MTX format (.mtx is variables x observations; transpose so cells are rows)
+adata = ad.io.read_mtx('matrix.mtx').T
 ```
 
 ### 3. Concatenation
@@ -249,23 +256,16 @@ adata = adata[:, adata.var['highly_variable']]
 AnnData serves as the foundational data structure for the scverse ecosystem:
 
 ### Scanpy (Single-cell analysis)
+AnnData is scanpy's native object — once built/loaded, pass it straight in.
+Preprocessing, dimensionality reduction, clustering, and plotting
+(`sc.pp.normalize_total`, `sc.pp.highly_variable_genes`, `sc.pp.pca`,
+`sc.pp.neighbors`, `sc.tl.umap`, `sc.tl.leiden`, `sc.pl.*`) are **scanpy's
+job, not anndata's** — defer the analysis workflow there.
 ```python
 import scanpy as sc
 
-# Preprocessing
-sc.pp.filter_cells(adata, min_genes=200)
-sc.pp.normalize_total(adata, target_sum=1e4)
-sc.pp.log1p(adata)
-sc.pp.highly_variable_genes(adata, n_top_genes=2000)
-
-# Dimensionality reduction
-sc.pp.pca(adata, n_comps=50)
-sc.pp.neighbors(adata, n_neighbors=15)
-sc.tl.umap(adata)
-sc.tl.leiden(adata)
-
-# Visualization
-sc.pl.umap(adata, color=['cell_type', 'leiden'])
+sc.pp.filter_cells(adata, min_genes=200)  # scanpy mutates the AnnData in place
+# ... continue the analysis pipeline in scanpy
 ```
 
 ### Muon (Multimodal data)
@@ -280,66 +280,56 @@ mdata = mu.MuData({'rna': adata_rna, 'protein': adata_protein})
 ```python
 from anndata.experimental import AnnLoader
 
-# Create DataLoader for deep learning
+# Create DataLoader for deep learning (also accepts an AnnCollection)
 dataloader = AnnLoader(adata, batch_size=128, shuffle=True)
 
 for batch in dataloader:
-    X = batch.X
+    X = batch["X"]      # dict-style access; tensors, not attributes
+    labels = batch["obs"]["cell_type"]
     # Train model
 ```
 
 ## Common Workflows
 
-### Single-cell RNA-seq analysis
+### Single-cell data lifecycle (the anndata-owned parts)
+Load, compute simple QC metrics on `obs`/`var`, snapshot `raw`, subset, and write.
+The normalize/log1p/HVG/cluster steps belong to scanpy — hand off there.
 ```python
 import anndata as ad
 import scanpy as sc
 
-# 1. Load data
+# 1. Load (10x readers live in scanpy)
 adata = sc.read_10x_h5('filtered_feature_bc_matrix.h5')
 
-# 2. Quality control
+# 2. Quick QC metrics on obs/var, then mask-subset (pure anndata wrangling)
 adata.obs['n_genes'] = (adata.X > 0).sum(axis=1)
 adata.obs['n_counts'] = adata.X.sum(axis=1)
-adata = adata[adata.obs['n_genes'] > 200]
-adata = adata[adata.obs['n_counts'] < 50000]
+adata = adata[(adata.obs['n_genes'] > 200) & (adata.obs['n_counts'] < 50000)].copy()
 
-# 3. Store raw
+# 3. Snapshot raw before any gene filtering
 adata.raw = adata.copy()
 
-# 4. Normalize and filter
-sc.pp.normalize_total(adata, target_sum=1e4)
-sc.pp.log1p(adata)
-sc.pp.highly_variable_genes(adata, n_top_genes=2000)
-adata = adata[:, adata.var['highly_variable']]
+# 4. Hand off normalization / HVG / clustering to scanpy, then come back:
+#    sc.pp.normalize_total / sc.pp.log1p / sc.pp.highly_variable_genes / ...
+adata = adata[:, adata.var['highly_variable']].copy()  # subset is anndata's job
 
 # 5. Save processed data
-adata.write_h5ad('processed.h5ad')
+adata.write_h5ad('processed.h5ad', compression='gzip')
 ```
 
-### Batch integration
+### Batch integration (concatenate, then defer correction)
 ```python
-# Load multiple batches
-adata1 = ad.read_h5ad('batch1.h5ad')
-adata2 = ad.read_h5ad('batch2.h5ad')
-adata3 = ad.read_h5ad('batch3.h5ad')
-
-# Concatenate with batch labels
+# Load and concatenate batches with source labels — this is anndata's job
+adatas = [ad.read_h5ad(p) for p in ['batch1.h5ad', 'batch2.h5ad', 'batch3.h5ad']]
 adata = ad.concat(
-    [adata1, adata2, adata3],
+    adatas,
     label='batch',
     keys=['batch1', 'batch2', 'batch3'],
-    join='inner'
+    join='inner',
 )
 
-# Apply batch correction
-import scanpy as sc
-sc.pp.combat(adata, key='batch')
-
-# Continue analysis
-sc.pp.pca(adata)
-sc.pp.neighbors(adata)
-sc.tl.umap(adata)
+# Batch correction and downstream analysis (combat / pca / neighbors / umap)
+# are scanpy territory — pass `adata` to scanpy from here.
 ```
 
 ### Working with large datasets

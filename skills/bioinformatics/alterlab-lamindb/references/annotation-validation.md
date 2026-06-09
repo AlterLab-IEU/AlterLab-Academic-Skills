@@ -325,21 +325,23 @@ ln.Feature(name="is_treated", dtype=bool).save()
 ln.Feature(name="collection_date", dtype="date").save()
 
 # Coerce types during validation
-ln.Feature(name="age_str", dtype=int, coerce_dtype=True).save()  # Auto-convert strings to int
+ln.Feature(name="age_str", dtype=int, coerce=True).save()  # Auto-convert strings to int
 ```
 
 ### Value Validation
 
 ```python
-# Validate against allowed values
-cell_type_feature = ln.Feature(name="cell_type", dtype=str).save()
+# Validate against a controlled vocabulary by pointing the feature's dtype
+# at an ontology registry instead of a plain `str`:
+ln.Feature(name="cell_type", dtype=bt.CellType).save()
 
-# Link to registry for controlled vocabulary
-cell_type_feature.link_to_registry(bt.CellType)
+# You can also validate against a specific field of a registry:
+ln.Feature(name="disease", dtype=bt.Disease.ontology_id).save()
+ln.Feature(name="knockout_gene", dtype=bt.Gene.ensembl_gene_id).save()
 
-# Now validation checks against CellType registry
+# Now validation checks values against the linked registry
 curator = ln.curators.DataFrameCurator(df, schema)
-curator.validate()  # Errors if cell_type values not in registry
+curator.validate()  # Errors if cell_type values not in CellType registry
 ```
 
 ## Standardization Strategies
@@ -415,7 +417,7 @@ df["column"] = df["column"].astype(int)
 
 # Solution 2: Enable coercion in feature
 feature = ln.Feature.get(name="column")
-feature.coerce_dtype = True
+feature.coerce = True
 feature.save()
 ```
 

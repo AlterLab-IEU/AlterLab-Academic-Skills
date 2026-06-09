@@ -6,17 +6,25 @@ Tile extraction is the process of cropping smaller, manageable regions from larg
 
 ## Common Parameters
 
-All tiler classes accept these parameters:
+Constructor parameters shared by the tiler classes:
 
 ```python
 tile_size: tuple = (512, 512)           # Tile dimensions in pixels (width, height)
 level: int = 0                          # Pyramid level for extraction (0=highest resolution)
 check_tissue: bool = True               # Filter tiles by tissue content
 tissue_percent: float = 80.0            # Minimum tissue coverage (0-100)
-pixel_overlap: int = 0                  # Overlap between adjacent tiles (GridTiler only)
+pixel_overlap: int = 0                  # Overlap between adjacent tiles (GridTiler/ScoreTiler)
 prefix: str = ""                        # Prefix for saved tile filenames
 suffix: str = ".png"                    # File extension for saved tiles
-extraction_mask: BinaryMask = BiggestTissueBoxMask()  # Mask defining extraction region
+mpp: float = None                       # Fetch by microns/pixel instead of level
+```
+
+`extraction_mask` is **not** a constructor parameter. It is an argument of
+`extract()` and `locate_tiles()` (default `BiggestTissueBoxMask()`):
+
+```python
+tiler.extract(slide, extraction_mask=TissueMask())
+tiler.locate_tiles(slide, extraction_mask=TissueMask())
 ```
 
 ## RandomTiler
@@ -229,11 +237,13 @@ score_tiler = ScoreTiler(
 Preview tile locations before extraction to validate tiler configuration:
 
 ```python
-# Preview random tile locations
+# Preview tile locations. locate_tiles() does NOT take n_tiles — the number of
+# tiles is fixed by the tiler's constructor (n_tiles for Random/Score tilers).
 random_tiler.locate_tiles(
-    slide=slide,
-    extraction_mask=TissueMask(),
-    n_tiles=20  # Number of tiles to preview (for RandomTiler)
+    slide,
+    extraction_mask=TissueMask(),  # optional; defaults to BiggestTissueBoxMask
+    scale_factor=32,               # optional thumbnail scaling
+    outline="red",                 # optional box color
 )
 ```
 
@@ -289,16 +299,20 @@ score_tiler = ScoreTiler(
 # Extract and save report
 score_tiler.extract(slide, report_path="tiles_report.csv")
 
-# Report contains: tile name, coordinates, score, tissue percentage
+# Report contains the filename, raw score, and the 0-1 scaled score per tile.
 ```
 
-Report format:
+Report format (histolab 0.7.0 — columns are exactly these three):
 ```csv
-tile_name,x_coord,y_coord,level,score,tissue_percent
-tile_001.png,10240,5120,0,0.89,95.2
-tile_002.png,15360,7680,0,0.85,91.7
+filename,score,scaled_score
+tile_0_level0_10240-5120-10752-5632.png,0.89,1.0
+tile_1_level0_15360-7680-15872-8192.png,0.85,0.93
 ...
 ```
+
+The tile filename encodes the level and the level-0 bounding box coordinates
+(`{prefix}tile_{i}_level{level}_{x_ul}-{y_ul}-{x_br}-{y_br}{suffix}`), so
+positions are recoverable from the filename rather than separate CSV columns.
 
 ## Advanced Extraction Patterns
 
@@ -351,6 +365,7 @@ random_tiler_l1.extract(slide)
 Apply additional filtering after extraction:
 
 ```python
+import cv2
 from PIL import Image
 import numpy as np
 from pathlib import Path

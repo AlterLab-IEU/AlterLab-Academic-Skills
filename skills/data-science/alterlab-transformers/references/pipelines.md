@@ -180,8 +180,9 @@ pipe = pipeline("task", model="large-model", device_map="auto")
 **dtype**: Model precision (reduces memory)
 ```python
 import torch
-pipe = pipeline("task", torch_dtype=torch.float16)
+pipe = pipeline("task", dtype=torch.float16)
 ```
+Note: the old `torch_dtype=` keyword is deprecated; use `dtype=` (accepts a `torch.dtype` or `"auto"`).
 
 **batch_size**: Process multiple inputs at once
 ```python
@@ -231,7 +232,7 @@ pipe = pipeline("task", device=0)
 Use float16 for 2x speedup on supported GPUs:
 ```python
 import torch
-pipe = pipeline("task", torch_dtype=torch.float16, device=0)
+pipe = pipeline("task", dtype=torch.float16, device=0)
 ```
 
 ### Batching Guidelines
@@ -254,8 +255,10 @@ For text generation, stream tokens as they're generated:
 ```python
 from transformers import TextStreamer
 
-generator = pipeline("text-generation", model="gpt2", streamer=TextStreamer())
-generator("The future of AI", max_length=100)
+generator = pipeline("text-generation", model="gpt2")
+streamer = TextStreamer(generator.tokenizer)
+# Pass the streamer at call time, not to the pipeline constructor
+generator("The future of AI", max_new_tokens=100, streamer=streamer)
 ```
 
 ## Custom Pipeline Configuration

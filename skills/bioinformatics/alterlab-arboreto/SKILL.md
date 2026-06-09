@@ -140,9 +140,10 @@ if __name__ == '__main__':
     # Infer cell-type-specific regulatory network
     network = grnboost2(expression_data=sc_data, seed=42)
 
-    # Filter high-confidence links
-    high_confidence = network[network['importance'] > 0.5]
-    high_confidence.to_csv('grn_high_confidence.tsv', sep='\t', index=False)
+    # importance is unbounded (not a 0-1 probability); keep the top links
+    # per target rather than applying an absolute threshold.
+    top_links = network.sort_values('importance', ascending=False).groupby('target').head(10)
+    top_links.to_csv('grn_top_links.tsv', sep='\t', index=False)
 ```
 
 ### Bulk RNA-seq with TF Filtering
@@ -189,10 +190,10 @@ Arboreto returns a DataFrame with regulatory links:
 | `target` | Target gene |
 | `importance` | Regulatory importance score (higher = stronger) |
 
-**Filtering strategy**:
+**Filtering strategy**: `importance` is an unbounded relative score (derived from tree feature importances), not a probability or correlation — do not apply absolute cutoffs like `> 0.5`. Prefer:
 - Top N links per target gene
-- Importance threshold (e.g., > 0.5)
-- Statistical significance testing (permutation tests)
+- A quantile cutoff computed from the run's own distribution
+- In a SCENIC workflow, keep all links and let downstream cisTarget motif pruning do the filtering
 
 ## Integration with pySCENIC
 
@@ -214,22 +215,30 @@ Always set a seed for reproducible results:
 network = grnboost2(expression_data=matrix, seed=777)
 ```
 
-Run multiple seeds for robustness analysis:
+GRNBoost2 is stochastic, so a single seed pins one run but does not establish
+robustness. For a consensus network, run several seeds and keep links that
+recur, averaging their importance:
 ```python
+import pandas as pd
 from distributed import LocalCluster, Client
+from arboreto.algo import grnboost2
 
 if __name__ == '__main__':
     client = Client(LocalCluster())
 
     seeds = [42, 123, 777]
-    networks = []
+    networks = [
+        grnboost2(expression_data=matrix, client_or_address=client, seed=s)
+        for s in seeds
+    ]
+    client.close()
 
-    for seed in seeds:
-        net = grnboost2(expression_data=matrix, client_or_address=client, seed=seed)
-        networks.append(net)
-
-    # Combine networks and filter consensus links
-    consensus = analyze_consensus(networks)
+    # Consensus: keep edges present in every run, average their importance
+    combined = pd.concat(networks)
+    consensus = (combined.groupby(['TF', 'target'])
+                 .agg(importance=('importance', 'mean'), n_runs=('importance', 'size'))
+                 .reset_index())
+    consensus = consensus[consensus['n_runs'] == len(seeds)]
 ```
 
 ## Troubleshooting

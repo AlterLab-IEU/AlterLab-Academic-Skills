@@ -22,7 +22,7 @@
     {
       "id": "pathway-detail-query",
       "prompt": "Get me the details and participating molecules for the Reactome pathway R-HSA-69278 from the Content Service.",
-      "expected_output": "Invokes alterlab-reactome: queries the ContentService /data/query/{id} and /data/event/{id}/participatingPhysicalEntities endpoints for R-HSA-69278 and returns pathway metadata plus its participating physical entities.",
+      "expected_output": "Invokes alterlab-reactome: queries the ContentService /data/query/{id} and /data/participants/{id}/participatingPhysicalEntities endpoints for R-HSA-69278 and returns pathway metadata plus its participating physical entities.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "R-HSA-69278" }

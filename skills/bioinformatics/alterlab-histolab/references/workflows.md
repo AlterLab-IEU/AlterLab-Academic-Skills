@@ -1,6 +1,16 @@
 # Histolab Worked Workflows
 
-End-to-end, copy-pasteable pipelines. Each is self-contained.
+End-to-end, copy-pasteable pipelines for histolab 0.7.0. Each is self-contained.
+
+API reminders used throughout (verified against histolab 0.7.0):
+- `n_tiles`, `seed`, `level`, `tile_size`, `check_tissue`, `tissue_percent` are
+  **constructor** args. `locate_tiles()`/`extract()` take only `slide`, an
+  optional `extraction_mask`, and logging/styling kwargs — no `n_tiles`.
+- `Compose` lives in `histolab.filters.image_filters`, not `.compositions`.
+- `TissueMask`/`BiggestTissueBoxMask` take custom filters as positional varargs,
+  e.g. `TissueMask(RgbToGrayscale(), OtsuThreshold(), ...)` — not `filters=`.
+- There is no `slide.save_thumbnail()`; use `slide.thumbnail.save(path)`.
+- The `ScoreTiler` report CSV has columns `filename, score, scaled_score`.
 
 ## Quick Start
 
@@ -22,7 +32,7 @@ tiler = RandomTiler(
 )
 
 # Preview tile locations
-tiler.locate_tiles(slide, n_tiles=20)
+tiler.locate_tiles(slide)
 
 # Extract tiles
 tiler.extract(slide)
@@ -34,19 +44,20 @@ tiler.extract(slide)
 from histolab.slide import Slide
 from histolab.data import prostate_tissue
 
-# Load sample data
+# Load sample data (returns an OpenSlide object and a path)
 prostate_svs, prostate_path = prostate_tissue()
 
 # Initialize slide
 slide = Slide(prostate_path, processed_path="output/")
 
 # Inspect properties
-print(f"Dimensions: {slide.dimensions}")
-print(f"Levels: {slide.levels}")
+print(f"Dimensions: {slide.dimensions}")          # (width, height) at level 0
+print(f"Levels: {slide.levels}")                  # list of available levels
+print(f"Microns/pixel: {slide.base_mpp}")
 print(f"Magnification: {slide.properties.get('openslide.objective-power')}")
 
-# Save thumbnail
-slide.save_thumbnail()
+# Save thumbnail (thumbnail is a PIL image; there is no save_thumbnail method)
+slide.thumbnail.save("output/thumbnail.png")
 ```
 
 ## Tissue mask example
@@ -111,33 +122,39 @@ score_tiler.extract(slide, report_path="tiles_report.csv")
 Always preview before extracting:
 
 ```python
-# Preview tile locations on thumbnail
-tiler.locate_tiles(slide, n_tiles=20)
+# Preview tile locations on thumbnail (no n_tiles arg — set it on the tiler)
+tiler.locate_tiles(slide)
 ```
 
 ## Filters / preprocessing example
 
 ```python
-from histolab.filters.compositions import Compose
-from histolab.filters.image_filters import RgbToGrayscale, OtsuThreshold
+from histolab.filters.image_filters import RgbToGrayscale, OtsuThreshold, Compose
 from histolab.filters.morphological_filters import (
     BinaryDilation, RemoveSmallHoles, RemoveSmallObjects
 )
 
-# Standard tissue detection pipeline
+# Standard tissue detection pipeline (Compose takes a list of filters)
 tissue_detection = Compose([
     RgbToGrayscale(),
     OtsuThreshold(),
     BinaryDilation(disk_size=5),
     RemoveSmallHoles(area_threshold=1000),
-    RemoveSmallObjects(area_threshold=500)
+    RemoveSmallObjects(min_size=500)
 ])
 
-# Use with custom mask
+# Use as a custom mask: TissueMask takes individual filters as *args, not a
+# Compose object and not a filters= kwarg.
 from histolab.masks import TissueMask
-custom_mask = TissueMask(filters=tissue_detection)
+custom_mask = TissueMask(
+    RgbToGrayscale(),
+    OtsuThreshold(),
+    BinaryDilation(disk_size=5),
+    RemoveSmallHoles(area_threshold=1000),
+    RemoveSmallObjects(min_size=500),
+)
 
-# Apply filters to tile
+# Apply a composed filter to a tile
 from histolab.tile import Tile
 filtered_tile = tile.apply_filters(tissue_detection)
 ```
@@ -159,9 +176,9 @@ plt.show()
 tissue_mask = TissueMask()
 slide.locate_mask(tissue_mask)
 
-# Preview tile locations
+# Preview tile locations (n_tiles is set on the tiler, not on locate_tiles)
 tiler = RandomTiler(tile_size=(512, 512), n_tiles=50)
-tiler.locate_tiles(slide, n_tiles=20)
+tiler.locate_tiles(slide)
 
 # Display extracted tiles in grid
 from pathlib import Path
@@ -199,7 +216,7 @@ slide = Slide("slide.svs", processed_path="output/random_tiles/")
 # Inspect slide
 print(f"Dimensions: {slide.dimensions}")
 print(f"Levels: {slide.levels}")
-slide.save_thumbnail()
+slide.thumbnail.save("output/random_tiles/thumbnail.png")
 
 # Configure random tiler
 random_tiler = RandomTiler(
@@ -212,7 +229,7 @@ random_tiler = RandomTiler(
 )
 
 # Preview locations
-random_tiler.locate_tiles(slide, n_tiles=20)
+random_tiler.locate_tiles(slide)
 
 # Extract tiles
 random_tiler.extract(slide)
@@ -274,9 +291,9 @@ score_tiler = ScoreTiler(
 )
 
 # Preview top tiles
-score_tiler.locate_tiles(slide, n_tiles=15)
+score_tiler.locate_tiles(slide)
 
-# Extract with report
+# Extract with report (CSV columns: filename, score, scaled_score)
 score_tiler.extract(slide, report_path="tiles_report.csv")
 
 # Analyze scores
@@ -324,7 +341,7 @@ for slide_path in slide_dir.glob("*.svs"):
     slide = Slide(slide_path, processed_path=output_dir)
 
     # Save thumbnail for review
-    slide.save_thumbnail()
+    slide.thumbnail.save(output_dir / "thumbnail.png")
 
     # Extract tiles
     tiler.extract(slide)
@@ -340,29 +357,26 @@ Handle slides with artifacts, annotations, or unusual staining.
 from histolab.slide import Slide
 from histolab.masks import TissueMask
 from histolab.tiler import RandomTiler
-from histolab.filters.compositions import Compose
 from histolab.filters.image_filters import RgbToGrayscale, OtsuThreshold
 from histolab.filters.morphological_filters import (
     BinaryDilation, RemoveSmallObjects, RemoveSmallHoles
 )
 
-# Define custom filter pipeline for aggressive artifact removal
-aggressive_filters = Compose([
+# Aggressive artifact removal: pass the individual filters as positional args.
+# TissueMask(*filters) overrides the default tissue-detection chain.
+custom_mask = TissueMask(
     RgbToGrayscale(),
     OtsuThreshold(),
     BinaryDilation(disk_size=10),
     RemoveSmallHoles(area_threshold=5000),
-    RemoveSmallObjects(area_threshold=3000)  # Remove larger artifacts
-])
-
-# Create custom mask
-custom_mask = TissueMask(filters=aggressive_filters)
+    RemoveSmallObjects(min_size=3000),  # Remove larger artifacts
+)
 
 # Load slide and visualize mask
 slide = Slide("slide.svs", processed_path="output/")
 slide.locate_mask(custom_mask)
 
-# Extract with custom mask
-tiler = RandomTiler(tile_size=(512, 512), n_tiles=100)
+# Extract with custom mask (extraction_mask is an extract() arg, not a constructor arg)
+tiler = RandomTiler(tile_size=(512, 512), n_tiles=100, seed=42)
 tiler.extract(slide, extraction_mask=custom_mask)
 ```

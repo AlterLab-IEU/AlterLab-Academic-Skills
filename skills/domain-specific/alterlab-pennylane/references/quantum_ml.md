@@ -61,54 +61,43 @@ def hybrid_model(x, quantum_weights, classical_weights):
 
 ### PyTorch Integration
 
+Use `qml.qnn.TorchLayer` to wrap a QNode as a standard `nn.Module`. The QNode's
+first argument must be named `inputs`; remaining trainable args are declared via
+`weight_shapes`. TorchLayer handles batching, so it drops into `nn.Sequential`.
+
 ```python
 import torch
 import pennylane as qml
 
-dev = qml.device('default.qubit', wires=2)
+n_qubits = 2
+dev = qml.device('default.qubit', wires=n_qubits)
 
 @qml.qnode(dev, interface='torch')
-def quantum_circuit(inputs, weights):
-    qml.RY(inputs[0], wires=0)
-    qml.RY(inputs[1], wires=1)
-    qml.RX(weights[0], wires=0)
-    qml.RX(weights[1], wires=1)
-    qml.CNOT(wires=[0, 1])
-    return qml.expval(qml.PauliZ(0))
+def qnode(inputs, weights):
+    qml.AngleEmbedding(inputs, wires=range(n_qubits))
+    qml.BasicEntanglerLayers(weights, wires=range(n_qubits))
+    return [qml.expval(qml.PauliZ(i)) for i in range(n_qubits)]
 
-# Create PyTorch layer
-class QuantumLayer(torch.nn.Module):
-    def __init__(self, n_qubits):
-        super().__init__()
-        self.n_qubits = n_qubits
-        self.weights = torch.nn.Parameter(torch.randn(n_qubits))
+n_layers = 2
+weight_shapes = {"weights": (n_layers, n_qubits)}
+qlayer = qml.qnn.TorchLayer(qnode, weight_shapes)
 
-    def forward(self, x):
-        return torch.stack([quantum_circuit(xi, self.weights) for xi in x])
+# Hybrid quantum-classical model: classical -> quantum -> classical
+model = torch.nn.Sequential(
+    torch.nn.Linear(4, n_qubits),
+    qlayer,
+    torch.nn.Linear(n_qubits, 2),
+)
 
-# Use in PyTorch model
-class HybridModel(torch.nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.classical_1 = torch.nn.Linear(10, 2)
-        self.quantum = QuantumLayer(2)
-        self.classical_2 = torch.nn.Linear(1, 2)
-
-    def forward(self, x):
-        x = torch.relu(self.classical_1(x))
-        x = self.quantum(x)
-        x = self.classical_2(x.unsqueeze(1))
-        return x
-
-# Training loop
-model = HybridModel()
+# End-to-end training with backprop (works on simulators).
+# On real hardware, set diff_method='parameter-shift' on the QNode instead.
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 criterion = torch.nn.CrossEntropyLoss()
 
 for epoch in range(100):
     optimizer.zero_grad()
-    outputs = model(inputs)
-    loss = criterion(outputs, labels)
+    outputs = model(X_train)            # X_train: (batch, 4) float tensor
+    loss = criterion(outputs, y_train)  # y_train: (batch,) long tensor
     loss.backward()
     optimizer.step()
 ```

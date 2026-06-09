@@ -14,7 +14,7 @@ This document provides detailed information about each file format supported by 
 
 **Dependencies**:
 ```bash
-pip install 'markitdown[pdf]'
+uv pip install 'markitdown[pdf]'
 ```
 
 **Best For**:
@@ -56,7 +56,7 @@ result = md.convert("complex_layout.pdf")
 
 **Dependencies**:
 ```bash
-pip install 'markitdown[docx]'
+uv pip install 'markitdown[docx]'
 ```
 
 **Best For**:
@@ -89,7 +89,7 @@ result = md.convert("manuscript.docx")
 
 **Dependencies**:
 ```bash
-pip install 'markitdown[pptx]'
+uv pip install 'markitdown[pptx]'
 ```
 
 **Best For**:
@@ -112,12 +112,13 @@ Content from slide 1...
 ...
 ```
 
-**With AI Image Descriptions**:
+**With AI Image Descriptions** (via OpenRouter; model follows the `ALTERLAB_MODEL` convention, see skills/core/shared/model_env.md):
 ```python
+import os
 from openai import OpenAI
 
-client = OpenAI()
-md = MarkItDown(llm_client=client, llm_model="gpt-4o")
+client = OpenAI(api_key=os.environ["OPENROUTER_API_KEY"], base_url="https://openrouter.ai/api/v1")
+md = MarkItDown(llm_client=client, llm_model=os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8")
 result = md.convert("presentation.pptx")
 ```
 
@@ -133,8 +134,8 @@ result = md.convert("presentation.pptx")
 
 **Dependencies**:
 ```bash
-pip install 'markitdown[xlsx]'  # Modern Excel
-pip install 'markitdown[xls]'   # Legacy Excel
+uv pip install 'markitdown[xlsx]'  # Modern Excel
+uv pip install 'markitdown[xls]'   # Legacy Excel
 ```
 
 **Best For**:
@@ -171,7 +172,7 @@ result = md.convert("experimental_data.xlsx")
 
 **Dependencies**:
 ```bash
-pip install 'markitdown[all]'  # Includes image support
+uv pip install 'markitdown[all]'  # Includes image support
 ```
 
 **Best For**:
@@ -190,14 +191,15 @@ pip install 'markitdown[all]'  # Includes image support
 - Resolution: 4000x3000
 ```
 
-**Output With AI**:
+**Output With AI** (via OpenRouter; model follows the `ALTERLAB_MODEL` convention):
 ```python
+import os
 from openai import OpenAI
 
-client = OpenAI()
+client = OpenAI(api_key=os.environ["OPENROUTER_API_KEY"], base_url="https://openrouter.ai/api/v1")
 md = MarkItDown(
     llm_client=client,
-    llm_model="gpt-4o",
+    llm_model=os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8",
     llm_prompt="Describe this scientific diagram in detail"
 )
 result = md.convert("graph.png")
@@ -226,7 +228,7 @@ sudo apt-get install tesseract-ocr
 
 **Dependencies**:
 ```bash
-pip install 'markitdown[audio-transcription]'
+uv pip install 'markitdown[audio-transcription]'
 ```
 
 **Best For**:
@@ -289,7 +291,7 @@ result = md.convert("webpage.html")
 
 **Dependencies**:
 ```bash
-pip install 'markitdown[youtube-transcription]'
+uv pip install 'markitdown[youtube-transcription]'
 ```
 
 **Best For**:
@@ -436,7 +438,7 @@ result = md.convert("book.epub")
 
 **Dependencies**:
 ```bash
-pip install 'markitdown[outlook]'
+uv pip install 'markitdown[outlook]'
 ```
 
 **Best For**:
@@ -468,9 +470,9 @@ result = md.convert("message.msg")
 
 ### PowerPoint Best Practices
 
-1. **Use AI for visual content**:
+1. **Use AI for visual content** (model via the `ALTERLAB_MODEL` convention):
    ```python
-   md = MarkItDown(llm_client=client, llm_model="gpt-4o")
+   md = MarkItDown(llm_client=client, llm_model=os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8")
    ```
 
 2. **Check speaker notes** - they're included in output
@@ -489,11 +491,11 @@ result = md.convert("message.msg")
 
 ### Image Best Practices
 
-1. **Use AI for meaningful descriptions**:
+1. **Use AI for meaningful descriptions** (model via the `ALTERLAB_MODEL` convention):
    ```python
    md = MarkItDown(
        llm_client=client,
-       llm_model="gpt-4o",
+       llm_model=os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8",
        llm_prompt="Describe this scientific figure in detail"
    )
    ```

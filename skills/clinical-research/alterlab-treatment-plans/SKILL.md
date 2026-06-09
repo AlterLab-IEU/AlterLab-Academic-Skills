@@ -63,8 +63,13 @@ Per-specialty required component breakdowns (assessments, goals, interventions, 
 # Interactive template selection
 python scripts/generate_template.py
 
-# Or specify type directly
+# Or specify type directly. Default to one_page (the preferred quick-reference
+# format) for most cases; pick a specialty template when complexity demands it.
+python scripts/generate_template.py --type one_page --output diabetes_plan.tex
 python scripts/generate_template.py --type mental_health --output depression_treatment_plan.tex
+
+# Type choices: one_page, general_medical, rehabilitation, mental_health,
+#               chronic_disease, perioperative, pain_management
 
 # Validate, then compile
 python scripts/check_completeness.py plan.tex

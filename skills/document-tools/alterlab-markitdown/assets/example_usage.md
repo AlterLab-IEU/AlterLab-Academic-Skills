@@ -94,14 +94,20 @@ with open("data_tables.md", "w") as f:
 ### Process Presentation Slides
 
 ```python
+import os
 from markitdown import MarkItDown
 from openai import OpenAI
 
-# With AI descriptions for images
-client = OpenAI()
+# AI descriptions for images via OpenRouter; model follows the ALTERLAB_MODEL
+# convention (see skills/core/shared/model_env.md). The "anthropic/" prefix is
+# the OpenRouter slug for the dated default.
+client = OpenAI(
+    api_key=os.environ["OPENROUTER_API_KEY"],
+    base_url="https://openrouter.ai/api/v1",
+)
 md = MarkItDown(
     llm_client=client,
-    llm_model="anthropic/claude-sonnet-4.5",
+    llm_model=os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8",
     llm_prompt="Describe this scientific slide, focusing on data and key findings"
 )
 
@@ -122,12 +128,13 @@ with open("talk_notes.md", "w") as f:
 ### Detailed Image Descriptions
 
 ```python
+import os
 from markitdown import MarkItDown
 from openai import OpenAI
 
 # Initialize OpenRouter client
 client = OpenAI(
-    api_key="your-openrouter-api-key",
+    api_key=os.environ["OPENROUTER_API_KEY"],
     base_url="https://openrouter.ai/api/v1"
 )
 
@@ -141,9 +148,10 @@ Analyze this scientific figure. Describe:
 Be technical and precise.
 """
 
+# Model via the ALTERLAB_MODEL convention (skills/core/shared/model_env.md).
 md = MarkItDown(
     llm_client=client,
-    llm_model="anthropic/claude-sonnet-4.5",  # recommended for scientific vision
+    llm_model=os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8",
     llm_prompt=scientific_prompt
 )
 
@@ -155,26 +163,30 @@ print(result.text_content)
 ### Different Prompts for Different Files
 
 ```python
+import os
 from markitdown import MarkItDown
 from openai import OpenAI
 
 # Initialize OpenRouter client
 client = OpenAI(
-    api_key="your-openrouter-api-key",
+    api_key=os.environ["OPENROUTER_API_KEY"],
     base_url="https://openrouter.ai/api/v1"
 )
 
-# Scientific papers - use Claude for technical analysis
+# Same model (ALTERLAB_MODEL convention), different prompts per file type.
+model = os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8"
+
+# Scientific papers - prompt for technical figure analysis
 scientific_md = MarkItDown(
     llm_client=client,
-    llm_model="anthropic/claude-sonnet-4.5",
+    llm_model=model,
     llm_prompt="Describe scientific figures with technical precision"
 )
 
-# Presentations - use GPT-4o for visual understanding
+# Presentations - prompt for slide/visual summaries
 presentation_md = MarkItDown(
     llm_client=client,
-    llm_model="anthropic/claude-sonnet-4.5",
+    llm_model=model,
     llm_prompt="Summarize slide content and key visual elements"
 )
 

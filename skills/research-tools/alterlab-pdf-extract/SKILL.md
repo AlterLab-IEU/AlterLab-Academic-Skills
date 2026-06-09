@@ -41,9 +41,13 @@ prose. Use it *after* you have the papers.
 ```bash
 SCRIPT=skills/research-tools/alterlab-pdf-extract/scripts/extract_to_table.py
 
-# Inline columns, offline heuristic backend, Markdown table to stdout:
+# Heuristic backend: use 'label:question' so the question carries the words the
+# papers actually use — overlap is lexical, so a bare label like "Sample size"
+# rarely matches "we enrolled 240 participants" (see Backends below).
 uv run python "$SCRIPT" papers/*.pdf \
-    --columns "Sample size" "Method" "Main finding" "Limitations" --format md
+    --column "Sample size:how many participants were enrolled" \
+    --column "Main finding:primary result reported" \
+    --column "Limitations:study limitations weaknesses" --format md
 
 # Columns with explicit extraction questions, CSV to a file:
 uv run python "$SCRIPT" a.pdf b.pdf \
@@ -51,7 +55,8 @@ uv run python "$SCRIPT" a.pdf b.pdf \
     --column "effect:what was the main reported effect size" \
     --format csv -o evidence.csv
 
-# Precise LLM-backed extraction (needs OPENROUTER_API_KEY):
+# Precise LLM-backed extraction (needs OPENROUTER_API_KEY) — label-only columns
+# are fine here, since the model reads the paper rather than matching keywords:
 uv run python "$SCRIPT" lit/*.pdf \
     --columns "Population" "Intervention" "Outcome" --backend llm
 ```
@@ -71,9 +76,16 @@ specs that need an explicit question. Both combine; duplicate labels are rejecte
 ## Backends
 
 - **heuristic** (default, offline, free): for each column, scores Markdown sentences by
-  keyword overlap with the column spec and emits the best evidence snippet. Deterministic
-  — good for a first pass, screening, and reproducible runs. Returns an empty cell when no
-  sentence matches.
+  **literal keyword overlap** with the column spec and emits the best evidence snippet.
+  Deterministic — good for a first pass, screening, and reproducible runs. Returns an empty
+  cell when no sentence shares a keyword.
+  **Gotcha:** matching is lexical, not semantic. A generic label like `"Sample size"`
+  tokenizes to `sample`, `size` — which never appears in "we enrolled 240 participants", so
+  the cell comes back empty. For the heuristic backend, phrase columns as `Label:question`
+  where the question uses the **words the papers actually use** (`participants`, `enrolled`,
+  `cohort`, `n=`). Quantitative questions also get a small ranking bonus for sentences
+  containing digits when the question itself contains a digit or `%`. When you only have
+  generic labels, use the `llm` backend instead.
 - **llm** (optional, precise): sends the converted Markdown plus all column questions to an
   OpenAI-compatible endpoint (OpenRouter by default) for a concise per-column answer
   (`N/A` when the paper is silent). The model ID follows the **ALTERLAB_MODEL** convention

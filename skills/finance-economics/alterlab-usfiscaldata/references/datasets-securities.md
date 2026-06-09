@@ -8,20 +8,27 @@
 
 Historical data on Treasury securities auctions including bills, notes, bonds, TIPS, and FRNs.
 
-**Key fields:**
+**Key fields** (this is a wide table — 100+ columns; field names below are verified against the live API):
 | Field | Type | Description |
 |-------|------|-------------|
 | `record_date` | DATE | Auction date |
 | `security_type` | STRING | Bill, Note, Bond, TIPS, FRN |
-| `security_term` | STRING | e.g., "4-Week", "2-Year", "10-Year" |
+| `security_term` | STRING | e.g., "13-Week", "2-Year", "10-Year" |
 | `cusip` | STRING | CUSIP identifier |
 | `offering_amt` | CURRENCY | Amount offered |
-| `accepted_comp_bid_rate_amt` | PERCENTAGE | High accepted competitive bid rate |
+| `high_yield` | NUMBER | High accepted yield (notes/bonds/TIPS) |
+| `high_discnt_rate` | NUMBER | High discount rate (bills) |
+| `high_investment_rate` | NUMBER | High investment rate (bills) |
 | `bid_to_cover_ratio` | NUMBER | Bid-to-cover ratio |
-| `total_accepted_amt` | CURRENCY | Total accepted amount |
-| `indirect_bid_pct_accepted` | PERCENTAGE | Indirect bidder percentage |
+| `total_accepted` | NUMBER | Total accepted amount |
+| `total_tendered` | NUMBER | Total tendered amount |
+| `indirect_bidder_accepted` | NUMBER | Indirect bidder amount accepted |
+| `direct_bidder_accepted` | NUMBER | Direct bidder amount accepted |
+| `primary_dealer_accepted` | NUMBER | Primary dealer amount accepted |
 | `issue_date` | DATE | Issue/settlement date |
 | `maturity_date` | DATE | Maturity date |
+
+Notes vs. bills carry the rate in different fields: notes/bonds/TIPS populate `high_yield`, while bills populate `high_discnt_rate` / `high_investment_rate` (and leave `high_yield` as `"null"`). There is no single "accepted bid rate" or "indirect percentage" column — bidder figures are dollar amounts, so compute shares yourself (e.g. `indirect_bidder_accepted / total_accepted`).
 
 ```python
 # Get recent 10-year Treasury note auctions
@@ -29,6 +36,7 @@ resp = requests.get(
     "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/auctions_query",
     params={
         "filter": "security_type:eq:Note,security_term:eq:10-Year",
+        "fields": "record_date,security_term,high_yield,bid_to_cover_ratio,indirect_bidder_accepted,total_accepted",
         "sort": "-record_date",
         "page[size]": 10
     }
@@ -95,26 +103,30 @@ Data on Treasury's secondary market buyback (repurchase) operations. Active sinc
 
 Composite interest rates for Series I Savings Bonds, including fixed rate and inflation rate components.
 
-**Key fields:**
+**Key fields** (verified against the live API):
 | Field | Type | Description |
 |-------|------|-------------|
-| `effective_date` | DATE | Rate effective date |
-| `announcement_date` | DATE | Announcement date |
+| `earning_period` | STRING | Earning period (`YYYY-MM`) |
+| `earning_period_start` | DATE | Start of earning period |
+| `earning_period_end` | DATE | End of earning period |
+| `issue_year_month` | STRING | Issue cohort (`YYYY-MM`) |
 | `fixed_rate` | PERCENTAGE | Fixed rate component |
-| `semiannual_inflation_rate` | PERCENTAGE | Semi-annual CPI-U inflation rate |
+| `semi_annual_inflation_rate` | PERCENTAGE | Semi-annual CPI-U inflation rate |
 | `combined_rate` | PERCENTAGE | Combined composite rate |
+
+There is no `effective_date` / `announcement_date` field — sort and filter on `earning_period_start` (or `earning_period`) instead.
 
 ```python
 # Current I Bond rates
 resp = requests.get(
     "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/i_bonds_interest_rates",
-    params={"sort": "-effective_date", "page[size]": 5}
+    params={"sort": "-earning_period_start", "page[size]": 5}
 )
 df = pd.DataFrame(resp.json()["data"])
 latest = df.iloc[0]
 print(f"Current I Bond rate: {latest['combined_rate']}%")
 print(f"  Fixed rate: {latest['fixed_rate']}%")
-print(f"  Inflation component: {latest['semiannual_inflation_rate']}%")
+print(f"  Inflation component: {latest['semi_annual_inflation_rate']}%")
 ```
 
 ## U.S. Treasury Savings Bonds: Issues, Redemptions & Maturities

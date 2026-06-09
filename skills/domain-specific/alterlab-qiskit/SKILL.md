@@ -15,6 +15,8 @@ metadata:
 
 Qiskit is an open-source quantum computing framework. Build quantum circuits, optimize for hardware, execute on simulators or real quantum computers, and analyze results. Supports IBM Quantum (100+ qubit systems), IonQ, Amazon Braket, and other providers.
 
+**Version note:** Examples target Qiskit SDK 2.x (`qiskit>=2,<3`, Python 3.10+) and `qiskit-ibm-runtime` 0.30+. Two breaking changes drive the patterns below: Qiskit 2.0 removed `qiskit.pulse` and Qiskit 1.0 removed `qiskit.tools.jupyter`, and the legacy `qiskit_ibm_runtime.Options` class plus the `channel="ibm_quantum"` value are both gone (use V2 options + `channel="ibm_quantum_platform"`).
+
 **Key Features:**
 - Configurable transpilation with multiple optimization levels
 - Circuit optimization that reduces two-qubit gate counts
@@ -26,8 +28,9 @@ Qiskit is an open-source quantum computing framework. Build quantum circuits, op
 ### Installation
 
 ```bash
-uv pip install qiskit
-uv pip install "qiskit[visualization]" matplotlib
+uv pip install "qiskit>=2,<3"
+uv pip install "qiskit[visualization]" matplotlib   # circuit/result plotting
+uv pip install qiskit-ibm-runtime                   # IBM hardware + Runtime primitives
 ```
 
 ### First Circuit
@@ -212,7 +215,7 @@ Topics covered:
 - Check backend status before submitting
 - Use least_busy() for testing
 - Save job IDs for later retrieval
-- Apply error mitigation (resilience_level)
+- Apply error mitigation — `resilience_level` on the **Estimator** (Sampler has no `resilience_level`; use `twirling` / `dynamical_decoupling`)
 - Start with fewer shots, increase for final runs
 
 ## Common Patterns

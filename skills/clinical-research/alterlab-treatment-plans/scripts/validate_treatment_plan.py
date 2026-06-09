@@ -46,7 +46,7 @@ VALIDATION_CHECKS = {
     'medication': {
         'name': 'Medication Documentation',
         'patterns': [
-            (r'\\d+\s*mg|\\d+\s*mcg|dose|dosage', 'Specific doses'),
+            (r'\d+\s*mg|\d+\s*mcg|dose|dosage', 'Specific doses'),
             (r'daily|BID|TID|QID|once|twice', 'Frequency specified'),
             (r'rationale|indication|because|for', 'Rationale provided')
         ]

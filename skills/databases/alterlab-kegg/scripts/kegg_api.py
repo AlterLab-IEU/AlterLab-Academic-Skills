@@ -19,6 +19,21 @@ from typing import Optional, List, Union
 KEGG_BASE_URL = "https://rest.kegg.jp"
 
 
+def _fetch(url: str) -> str:
+    """Fetch a KEGG REST URL and return the decoded body.
+
+    Returns an 'Error: ...' string on HTTP errors (e.g. 400 bad request,
+    404 not found) and on network/URL errors so callers always get text.
+    """
+    try:
+        with urllib.request.urlopen(url) as response:
+            return response.read().decode("utf-8")
+    except urllib.error.HTTPError as e:
+        return f"Error: {e.code} - {e.reason}"
+    except urllib.error.URLError as e:
+        return f"Error: network failure - {e.reason}"
+
+
 def kegg_info(database: str) -> str:
     """
     Get database metadata and statistics.
@@ -33,11 +48,7 @@ def kegg_info(database: str) -> str:
         info = kegg_info('pathway')
     """
     url = f"{KEGG_BASE_URL}/info/{database}"
-    try:
-        with urllib.request.urlopen(url) as response:
-            return response.read().decode('utf-8')
-    except urllib.error.HTTPError as e:
-        return f"Error: {e.code} - {e.reason}"
+    return _fetch(url)
 
 
 def kegg_list(database: str, org: Optional[str] = None) -> str:
@@ -61,11 +72,7 @@ def kegg_list(database: str, org: Optional[str] = None) -> str:
     else:
         url = f"{KEGG_BASE_URL}/list/{database}"
 
-    try:
-        with urllib.request.urlopen(url) as response:
-            return response.read().decode('utf-8')
-    except urllib.error.HTTPError as e:
-        return f"Error: {e.code} - {e.reason}"
+    return _fetch(url)
 
 
 def kegg_find(database: str, query: str, option: Optional[str] = None) -> str:
@@ -76,7 +83,8 @@ def kegg_find(database: str, query: str, option: Optional[str] = None) -> str:
         database: Database to search ('genes', 'compound', 'drug', etc.)
         query: Search term or molecular property
         option: Optional parameter for molecular searches:
-                'formula' - exact match to chemical formula
+                'formula' - partial match to chemical formula (finds formulae
+                            containing the query; atom order is ignored)
                 'exact_mass' - range search by exact mass (e.g., '174.05-174.15')
                 'mol_weight' - range search by molecular weight
 
@@ -100,11 +108,7 @@ def kegg_find(database: str, query: str, option: Optional[str] = None) -> str:
     else:
         url = f"{KEGG_BASE_URL}/find/{database}/{query_encoded}"
 
-    try:
-        with urllib.request.urlopen(url) as response:
-            return response.read().decode('utf-8')
-    except urllib.error.HTTPError as e:
-        return f"Error: {e.code} - {e.reason}"
+    return _fetch(url)
 
 
 def kegg_get(entries: Union[str, List[str]], option: Optional[str] = None) -> str:
@@ -114,12 +118,18 @@ def kegg_get(entries: Union[str, List[str]], option: Optional[str] = None) -> st
     Args:
         entries: Single entry ID or list of entry IDs (max 10)
         option: Optional output format:
-                'aaseq' or 'ntseq' - FASTA sequence
-                'mol' - MOL format (for compounds)
-                'kcf' - KCF format (for compounds)
-                'image' - PNG image (pathway maps, single entry only)
-                'kgml' - KGML format (pathway XML, single entry only)
-                'json' - JSON format (pathway only, single entry only)
+                'aaseq' or 'ntseq' - FASTA sequence (genes; up to 10 entries)
+                'mol' - MOL format (compound/glycan/drug)
+                'kcf' - KCF format (compound/glycan/drug)
+                'image' - PNG image (pathway maps and compound/glycan/drug; single entry only)
+                'image2x' - doubled-size PNG (reference 'map#####' pathways only; single entry)
+                'kgml' - KGML XML (pathway structure; single entry only)
+                'conf' - pathway map coordinate config (single entry)
+                'json' - JSON (BRITE hierarchies only, e.g. 'br:br08301'; NOT pathways)
+
+    Note:
+        'json' on a pathway (e.g. 'hsa05130') returns HTTP 400 - it is a BRITE-only
+        format. Use 'kgml' to retrieve pathway structure as machine-readable XML.
 
     Returns:
         str: Entry data in requested format
@@ -134,8 +144,8 @@ def kegg_get(entries: Union[str, List[str]], option: Optional[str] = None) -> st
         # Get sequence
         sequence = kegg_get('hsa:10458', 'aaseq')
 
-        # Get pathway as JSON
-        pathway_json = kegg_get('hsa05130', 'json')
+        # Get pathway structure as KGML
+        pathway_kgml = kegg_get('hsa05130', 'kgml')
     """
     if isinstance(entries, list):
         entries_str = '+'.join(entries[:10])  # Max 10 entries
@@ -147,11 +157,7 @@ def kegg_get(entries: Union[str, List[str]], option: Optional[str] = None) -> st
     else:
         url = f"{KEGG_BASE_URL}/get/{entries_str}"
 
-    try:
-        with urllib.request.urlopen(url) as response:
-            return response.read().decode('utf-8')
-    except urllib.error.HTTPError as e:
-        return f"Error: {e.code} - {e.reason}"
+    return _fetch(url)
 
 
 def kegg_conv(target_db: str, source_db: str) -> str:
@@ -176,11 +182,7 @@ def kegg_conv(target_db: str, source_db: str) -> str:
         pubchem = kegg_conv('pubchem', 'compound')
     """
     url = f"{KEGG_BASE_URL}/conv/{target_db}/{source_db}"
-    try:
-        with urllib.request.urlopen(url) as response:
-            return response.read().decode('utf-8')
-    except urllib.error.HTTPError as e:
-        return f"Error: {e.code} - {e.reason}"
+    return _fetch(url)
 
 
 def kegg_link(target_db: str, source_db: str) -> str:
@@ -205,11 +207,7 @@ def kegg_link(target_db: str, source_db: str) -> str:
         pathways = kegg_link('pathway', 'hsa:10458')
     """
     url = f"{KEGG_BASE_URL}/link/{target_db}/{source_db}"
-    try:
-        with urllib.request.urlopen(url) as response:
-            return response.read().decode('utf-8')
-    except urllib.error.HTTPError as e:
-        return f"Error: {e.code} - {e.reason}"
+    return _fetch(url)
 
 
 def kegg_ddi(drug_entries: Union[str, List[str]]) -> str:
@@ -231,11 +229,7 @@ def kegg_ddi(drug_entries: Union[str, List[str]]) -> str:
         entries_str = drug_entries
 
     url = f"{KEGG_BASE_URL}/ddi/{entries_str}"
-    try:
-        with urllib.request.urlopen(url) as response:
-            return response.read().decode('utf-8')
-    except urllib.error.HTTPError as e:
-        return f"Error: {e.code} - {e.reason}"
+    return _fetch(url)
 
 
 if __name__ == "__main__":

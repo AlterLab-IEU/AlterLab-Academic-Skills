@@ -340,15 +340,16 @@ fig, ax = qml.draw_mpl(circuit)(params)
 ### Analyzing Circuit Structure
 
 ```python
-# Get circuit specs
+# Get circuit specs (PennyLane 0.45: returns a CircuitSpecs object).
+# Top-level keys: 'device_name', 'num_device_wires', 'shots', 'level', 'resources'.
+# Gate counts/depth/types/sizes live under the 'resources' entry.
 specs = qml.specs(circuit)(params)
-print(f"Gates: {specs['gate_sizes']}")
-print(f"Depth: {specs['depth']}")
-print(f"Parameters: {specs['num_trainable_params']}")
-
-# Resource estimation
-resources = qml.resource.resource_estimation(circuit)(params)
-print(f"Total gates: {resources['num_gates']}")
+print(f"Device wires: {specs['num_device_wires']}")
+res = specs["resources"]
+print(f"Total gates: {res.num_gates}")
+print(f"Depth: {res.depth}")
+print(f"Gate types: {dict(res.gate_types)}")     # e.g. {'RY': 6, 'CNOT': 1}
+print(f"Gate sizes: {dict(res.gate_sizes)}")     # e.g. {1: 6, 2: 1}
 ```
 
 ### Tape Inspection
@@ -368,15 +369,22 @@ print("Wires used:", tape.wires)
 
 ### Circuit Transformations
 
+Transforms are best applied as decorators on a QNode. Applied to a tape they
+return a `(tapes, post_processing_fn)` tuple, not a single tape.
+
 ```python
-# Expand composite operations
-expanded = qml.transforms.expand_tape(tape)
+# As QNode decorators (recommended)
+@qml.transforms.cancel_inverses      # cancel adjacent inverse gates
+@qml.transforms.merge_rotations      # fuse consecutive same-axis rotations
+@qml.qnode(dev)
+def optimized_circuit(params):
+    qml.Hadamard(wires=0)
+    qml.Hadamard(wires=0)             # cancels
+    qml.RX(params[0], wires=1)
+    return qml.expval(qml.PauliZ(0))
 
-# Cancel adjacent operations
-optimized = qml.transforms.cancel_inverses(tape)
-
-# Commute measurements to end
-commuted = qml.transforms.commute_controlled(tape)
+# Applied to a tape directly:
+tapes, fn = qml.transforms.cancel_inverses(tape)  # tapes[0] is the rewritten tape
 ```
 
 ## Best Practices

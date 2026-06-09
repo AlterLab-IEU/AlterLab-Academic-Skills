@@ -18,17 +18,19 @@ cp -r figures/ input/neurips2025_paper/
 cp -r tables/ input/neurips2025_paper/
 cp bibliography.bib input/neurips2025_paper/
 
-# Step 2: Generate all components
+# Step 2a: Generate website + poster + PR materials (omit --model-choice for all modules)
 python pipeline_all.py \
   --input-dir input/neurips2025_paper \
   --output-dir output/ \
-  --model-choice 1 \
-  --generate-website \
-  --generate-poster \
-  --generate-video \
   --poster-width-inches 48 \
-  --poster-height-inches 36 \
-  --enable-logo-search
+  --poster-height-inches 36
+
+# Step 2b: Generate the video in the separate p2v environment
+python pipeline_light.py \
+  --model_name_t gpt-4.1 \
+  --model_name_v gpt-4.1 \
+  --result_dir output/neurips2025_paper/video \
+  --paper_latex_root input/neurips2025_paper
 
 # Step 3: Review outputs
 ls -R output/neurips2025_paper/
@@ -58,8 +60,7 @@ ls -R output/neurips2025_paper/
 python pipeline_all.py \
   --input-dir papers/genomics_preprint/ \
   --output-dir output/genomics_web/ \
-  --model-choice 1 \
-  --generate-website
+  --model-choice 1
 
 # Deploy to GitHub Pages or personal server
 cd output/genomics_web/website/
@@ -89,12 +90,10 @@ python pipeline_light.py \
   --model_name_t gpt-4.1 \
   --model_name_v gpt-4.1 \
   --result_dir output/video_abstract/ \
-  --paper_latex_root papers/nature_comms/ \
-  --video-duration 300 \
-  --slides-per-minute 3
+  --paper_latex_root papers/nature_comms/
 
-# Optional: Add custom intro/outro slides
-# Optional: Include talking-head for introduction
+# To target ~5 minutes, trim the paper content / generated script.
+# For a talking-head intro, switch to pipeline.py with --ref_img / --ref_audio.
 ```
 
 **Output**:
@@ -119,13 +118,11 @@ mkdir -p batch_input/
 # Create subdirectories: paper1/, paper2/, paper3/, paper4/, paper5/
 # Each with their LaTeX sources
 
-# Batch process
+# Batch process (website only; --input-dir accepts multiple paper subdirectories)
 python pipeline_all.py \
   --input-dir batch_input/ \
   --output-dir batch_output/ \
-  --model-choice 1 \
-  --generate-website \
-  --enable-logo-search
+  --model-choice 1
 
 # Creates:
 # batch_output/paper1/website/
@@ -152,17 +149,15 @@ python pipeline_all.py \
 **Workflow**:
 
 ```bash
-# Generate poster with QR codes and links
+# Generate the poster (--model-choice 2 = poster component)
 python pipeline_all.py \
   --input-dir papers/ismb_submission/ \
   --output-dir output/ismb_poster/ \
-  --model-choice 1 \
-  --generate-poster \
+  --model-choice 2 \
   --poster-width-inches 48 \
-  --poster-height-inches 36 \
-  --enable-qr-codes
+  --poster-height-inches 36
 
-# Manually add QR codes to:
+# QR codes are not a documented pipeline flag — add them manually for:
 # - GitHub repository
 # - Interactive results dashboard
 # - Supplementary data
@@ -185,14 +180,12 @@ python pipeline_all.py \
 **Workflow**:
 
 ```bash
-# Generate short, engaging video
+# Generate short, engaging video, then trim to a clip
 python pipeline_light.py \
   --model_name_t gpt-4.1 \
   --model_name_v gpt-4.1 \
   --result_dir output/promo_video/ \
-  --paper_latex_root papers/cell_paper/ \
-  --video-duration 120 \
-  --presentation-style public
+  --paper_latex_root papers/cell_paper/
 
 # Post-process:
 # - Extract key 30-second clip for Twitter
@@ -213,18 +206,20 @@ python pipeline_light.py \
 ### Pattern 1: LaTeX Paper → Full Package
 
 **Input**: LaTeX source with all assets
-**Output**: Website + Poster + Video
+**Output**: Website + Poster + PR materials, then Video separately
 **Time**: 45-90 minutes
 **Best for**: Major publications, conference presentations
 
 ```bash
+# Website + poster + PR materials (all pipeline_all modules)
 python pipeline_all.py \
   --input-dir [latex_dir] \
-  --output-dir [output_dir] \
-  --model-choice 1 \
-  --generate-website \
-  --generate-poster \
-  --generate-video
+  --output-dir [output_dir]
+
+# Video (separate p2v environment)
+python pipeline_light.py \
+  --model_name_t gpt-4.1 --model_name_v gpt-4.1 \
+  --result_dir [output_dir]/video --paper_latex_root [latex_dir]
 ```
 
 ---
@@ -240,8 +235,7 @@ python pipeline_all.py \
 python pipeline_all.py \
   --input-dir [pdf_dir] \
   --output-dir [output_dir] \
-  --model-choice 1 \
-  --generate-website
+  --model-choice 1
 ```
 
 ---
@@ -257,8 +251,7 @@ python pipeline_all.py \
 python pipeline_all.py \
   --input-dir [latex_dir] \
   --output-dir [output_dir] \
-  --model-choice 1 \
-  --generate-poster \
+  --model-choice 2 \
   --poster-width-inches [width] \
   --poster-height-inches [height]
 ```
@@ -357,7 +350,7 @@ mkdir -p input/xhs_genomics/
 **Solution**:
 - Provide custom section guidance in paper metadata
 - Review generated structure and adjust
-- Use more powerful model (GPT-4.1) for better adaptation
+- Use a more powerful model (e.g. gpt-4.1) for better adaptation
 - Consider manual section annotation in LaTeX comments
 
 ---
@@ -367,16 +360,14 @@ mkdir -p input/xhs_genomics/
 **Challenge**: Reducing costs while maintaining quality
 **Solution**:
 ```bash
-# Use GPT-3.5-turbo for simple papers
+# Cost is driven by the LLM in .env, not by --model-choice. Point OPENAI_API_BASE
+# at a cheaper model/provider for simple papers, then generate only what you need:
 python pipeline_all.py \
   --input-dir [paper_dir] \
   --output-dir [output_dir] \
-  --model-choice 3
+  --model-choice 1   # website only (1=website, 2=poster, 3=PR materials)
 
-# Generate only needed components
-# Website-only (cheapest)
-# Poster-only (moderate)
-# Video without talking-head (moderate)
+# Skip the GPU-heavy talking-head video to save the most.
 ```
 
 ---
@@ -387,13 +378,13 @@ python pipeline_all.py \
 **Solution**:
 ```bash
 # Parallel processing if multiple papers
-# Use faster models (GPT-3.5-turbo)
-# Generate only essential component first
+# Use a faster/cheaper model
+# Generate only the essential component first
 # Skip optional features (logo search, talking-head)
 
 python pipeline_light.py \
-  --model_name_t gpt-3.5-turbo \
-  --model_name_v gpt-3.5-turbo \
+  --model_name_t [fast-model] \
+  --model_name_v [fast-model] \
   --result_dir [output_dir] \
   --paper_latex_root [latex_dir]
 ```
@@ -430,7 +421,7 @@ python pipeline_light.py \
 
 ### For Best Overall Results
 1. Start with clean, well-organized LaTeX source
-2. Use GPT-4 or GPT-4.1 for highest quality
+2. Use a strong model (e.g. gpt-4.1) for highest quality
 3. Review all outputs before finalizing
 4. Iterate on any component that needs adjustment
 5. Combine components for cohesive presentation package

@@ -46,13 +46,16 @@ MarkItDown is a Python tool developed by Microsoft for converting various file f
 ### Installation
 
 ```bash
-# Install with all features
-pip install 'markitdown[all]'
+# Install with all features (uv-first; uv pip works inside an active venv)
+uv pip install 'markitdown[all]'
+
+# Or run the CLI ad hoc without installing into the project env
+uvx --from 'markitdown[all]' markitdown document.pdf -o output.md
 
 # Or from source
 git clone https://github.com/microsoft/markitdown.git
 cd markitdown
-pip install -e 'packages/markitdown[all]'
+uv pip install -e 'packages/markitdown[all]'
 ```
 
 ### Command-Line Usage
@@ -106,7 +109,7 @@ model = os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8"
 
 # Initialize OpenRouter client (OpenAI-compatible API)
 client = OpenAI(
-    api_key="your-openrouter-api-key",
+    api_key=os.environ["OPENROUTER_API_KEY"],
     base_url="https://openrouter.ai/api/v1"
 )
 
@@ -157,8 +160,8 @@ Find plugins on GitHub with hashtag: `#markitdown-plugin`
 Control which file formats you support:
 
 ```bash
-# Install specific formats
-pip install 'markitdown[pdf, docx, pptx]'
+# Install specific formats (no spaces inside the bracket — pip parses 'pdf, docx' as bad names)
+uv pip install 'markitdown[pdf,docx,pptx]'
 
 # All available options:
 # [all]                  - All optional dependencies
@@ -234,7 +237,7 @@ model = os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8"
 
 # Use OpenRouter for access to multiple AI models
 client = OpenAI(
-    api_key="your-openrouter-api-key",
+    api_key=os.environ["OPENROUTER_API_KEY"],
     base_url="https://openrouter.ai/api/v1"
 )
 
@@ -395,7 +398,7 @@ from openai import OpenAI
 model = os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8"
 
 client = OpenAI(
-    api_key="your-openrouter-api-key",
+    api_key=os.environ["OPENROUTER_API_KEY"],
     base_url="https://openrouter.ai/api/v1"
 )
 
@@ -425,7 +428,7 @@ print(result.text_content)
 
 1. **Missing dependencies**: Install feature-specific packages
    ```bash
-   pip install 'markitdown[pdf]'  # For PDF support
+   uv pip install 'markitdown[pdf]'  # For PDF support
    ```
 
 2. **Binary file errors**: Ensure files are opened in binary mode

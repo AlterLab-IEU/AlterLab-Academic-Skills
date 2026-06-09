@@ -5,6 +5,15 @@ Matplotlib Plot Template
 Comprehensive template demonstrating various plot types and best practices.
 Use this as a starting point for creating publication-quality visualizations.
 
+Run it directly to generate a figure, or import the create_* helpers and pass
+your own Axes to compose multi-panel layouts.
+
+Requirements:
+    matplotlib >= 3.9  (the box-plot helper uses the 'tick_labels' kwarg,
+                        which replaced 'labels' in 3.9)
+    numpy
+    scipy              (only for the histogram normal-fit overlay)
+
 Usage:
     python plot_template.py [--plot-type TYPE] [--style STYLE] [--output FILE]
 
@@ -62,7 +71,12 @@ def generate_sample_data():
 
 
 def create_line_plot(data, ax=None):
-    """Create line plot with best practices."""
+    """Create line plot with best practices.
+
+    Returns the standalone Figure when called without an ``ax``; otherwise
+    draws into the supplied ``ax`` and returns it (used by the composite figure).
+    """
+    fig = None
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
 
@@ -80,13 +94,12 @@ def create_line_plot(data, ax=None):
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
 
-    if ax is None:
-        return fig
-    return ax
+    return fig if fig is not None else ax
 
 
 def create_scatter_plot(data, ax=None):
     """Create scatter plot with color and size variations."""
+    fig = None
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
 
@@ -107,13 +120,12 @@ def create_scatter_plot(data, ax=None):
     cbar = plt.colorbar(scatter, ax=ax)
     cbar.set_label('Distance from origin')
 
-    if ax is None:
-        return fig
-    return ax
+    return fig if fig is not None else ax
 
 
 def create_bar_chart(data, ax=None):
     """Create bar chart with error bars and styling."""
+    fig = None
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
 
@@ -140,13 +152,12 @@ def create_bar_chart(data, ax=None):
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
 
-    if ax is None:
-        return fig
-    return ax
+    return fig if fig is not None else ax
 
 
 def create_histogram(data, ax=None):
     """Create histogram with density overlay."""
+    fig = None
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
 
@@ -166,13 +177,12 @@ def create_histogram(data, ax=None):
     ax.legend()
     ax.grid(True, axis='y', alpha=0.3, linestyle='--')
 
-    if ax is None:
-        return fig
-    return ax
+    return fig if fig is not None else ax
 
 
 def create_heatmap(data, ax=None):
     """Create heatmap with colorbar and annotations."""
+    fig = None
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 8), constrained_layout=True)
 
@@ -193,13 +203,12 @@ def create_heatmap(data, ax=None):
     ax.set_ylabel('Y Index')
     ax.set_title('Heatmap Example')
 
-    if ax is None:
-        return fig
-    return ax
+    return fig if fig is not None else ax
 
 
 def create_contour_plot(data, ax=None):
     """Create contour plot with filled contours and labels."""
+    fig = None
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 8), constrained_layout=True)
 
@@ -223,36 +232,38 @@ def create_contour_plot(data, ax=None):
     ax.set_title('Contour Plot Example')
     ax.set_aspect('equal')
 
-    if ax is None:
-        return fig
-    return ax
+    return fig if fig is not None else ax
 
 
 def create_box_plot(data, ax=None):
     """Create box plot comparing distributions."""
+    fig = None
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
 
     # Generate multiple distributions
     box_data = [np.random.normal(0, std, 100) for std in range(1, 5)]
 
-    _bp = ax.boxplot(box_data, labels=['Group 1', 'Group 2', 'Group 3', 'Group 4'],                    patch_artist=True, showmeans=True,
-                    boxprops=dict(facecolor='lightblue', edgecolor='black'),
-                    medianprops=dict(color='red', linewidth=2),
-                    meanprops=dict(marker='D', markerfacecolor='green', markersize=8))
+    # NOTE: 'tick_labels' replaced the old 'labels' kwarg in matplotlib 3.9
+    # (the old name is deprecated and removed in 3.11). Requires matplotlib >= 3.9.
+    _bp = ax.boxplot(box_data,
+                     tick_labels=['Group 1', 'Group 2', 'Group 3', 'Group 4'],
+                     patch_artist=True, showmeans=True,
+                     boxprops=dict(facecolor='lightblue', edgecolor='black'),
+                     medianprops=dict(color='red', linewidth=2),
+                     meanprops=dict(marker='D', markerfacecolor='green', markersize=8))
 
     ax.set_xlabel('Groups')
     ax.set_ylabel('Values')
     ax.set_title('Box Plot Example')
     ax.grid(True, axis='y', alpha=0.3, linestyle='--')
 
-    if ax is None:
-        return fig
-    return ax
+    return fig if fig is not None else ax
 
 
 def create_violin_plot(data, ax=None):
     """Create violin plot showing distribution shapes."""
+    fig = None
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
 
@@ -275,9 +286,7 @@ def create_violin_plot(data, ax=None):
     ax.set_xticklabels(['Group 1', 'Group 2', 'Group 3', 'Group 4'])
     ax.grid(True, axis='y', alpha=0.3, linestyle='--')
 
-    if ax is None:
-        return fig
-    return ax
+    return fig if fig is not None else ax
 
 
 def create_3d_plot():

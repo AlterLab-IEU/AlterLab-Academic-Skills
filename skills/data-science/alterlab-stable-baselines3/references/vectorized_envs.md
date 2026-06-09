@@ -264,7 +264,8 @@ env = make_vec_env("PongNoFrameskip-v4", n_envs=8)
 # Stack 4 frames
 env = VecFrameStack(env, n_stack=4)
 
-# Now observations have shape: (n_envs, n_stack, height, width)
+# Stacking is along the channel axis, not a new dimension:
+# a single env's (1, H, W) obs becomes (4, H, W); (C, H, W) becomes (C*4, H, W)
 model = PPO("CnnPolicy", env)
 model.learn(total_timesteps=1000000)
 ```

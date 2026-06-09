@@ -80,7 +80,7 @@ Compare spectra using various similarity metrics:
 
 ```python
 from matchms import calculate_scores
-from matchms.similarity import CosineGreedy, ModifiedCosine, CosineHungarian
+from matchms.similarity import CosineGreedy, ModifiedCosineGreedy, CosineHungarian
 
 # Calculate cosine similarity (fast, greedy algorithm)
 scores = calculate_scores(references=library_spectra,
@@ -90,15 +90,20 @@ scores = calculate_scores(references=library_spectra,
 # Calculate modified cosine (accounts for precursor m/z differences)
 scores = calculate_scores(references=library_spectra,
                          queries=query_spectra,
-                         similarity_function=ModifiedCosine(tolerance=0.1))
+                         similarity_function=ModifiedCosineGreedy(tolerance=0.1))
 
-# Get best matches
-best_matches = scores.scores_by_query(query_spectra[0], sort=True)[:10]
+# Get best matches. The cosine functions return a structured score
+# (score + matched-peak count), so to SORT you must name the field to
+# sort by — `sort=True` alone raises IndexError. The field is
+# "<FunctionName>_score", e.g. "ModifiedCosineGreedy_score" / "CosineGreedy_score".
+best_matches = scores.scores_by_query(query_spectra[0],
+                                      name="ModifiedCosineGreedy_score",
+                                      sort=True)[:10]
 ```
 
 **Available similarity functions:**
 - **CosineGreedy/CosineHungarian**: Peak-based cosine similarity with different matching algorithms
-- **ModifiedCosine**: Cosine similarity accounting for precursor mass differences
+- **ModifiedCosineGreedy** (also `ModifiedCosineHungarian`): cosine similarity accounting for precursor mass differences. Note the rename — the class is no longer called `ModifiedCosine`.
 - **NeutralLossesCosine**: Similarity based on neutral loss patterns
 - **FingerprintSimilarity**: Molecular structure similarity using fingerprints
 - **MetadataMatch**: Compare user-defined metadata fields
@@ -115,16 +120,22 @@ from matchms import SpectrumProcessor
 from matchms.filtering import default_filters, normalize_intensities
 from matchms.filtering import select_by_relative_intensity, remove_peaks_around_precursor_mz
 
-# Define a processing pipeline
+# Define a processing pipeline. Each step is a callable, a registered filter
+# name (str), or a ("filter_name", {kwargs}) tuple (introspectable via
+# processor.processing_steps). NOTE: default_filters is a composite, so pass it
+# as the callable — the string "default_filters" is not a registered name.
 processor = SpectrumProcessor([
     default_filters,
-    normalize_intensities,
-    lambda s: select_by_relative_intensity(s, intensity_from=0.01),
-    lambda s: remove_peaks_around_precursor_mz(s, mz_tolerance=17)
+    "normalize_intensities",
+    ("select_by_relative_intensity", {"intensity_from": 0.01}),
+    ("remove_peaks_around_precursor_mz", {"mz_tolerance": 17}),
 ])
 
-# Apply to all spectra
-processed_spectra = [processor(s) for s in spectra]
+# A SpectrumProcessor is NOT callable. Use .process_spectrum() for one
+# spectrum, or .process_spectra() for a list (returns a (spectra, report)
+# tuple — unpack it, don't treat the result as the spectra list).
+processed_spectra, report = processor.process_spectra(spectra)
+# single spectrum: processed = processor.process_spectrum(spectrum)
 ```
 
 ### 5. Working with Spectrum Objects
@@ -167,7 +178,9 @@ from matchms.filtering import add_fingerprint
 
 spectrum = derive_inchi_from_smiles(spectrum)
 spectrum = derive_inchikey_from_inchi(spectrum)
-spectrum = add_fingerprint(spectrum, fingerprint_type="morgan", nbits=2048)
+# fingerprint_type must be one of: "daylight", "morgan1", "morgan2", "morgan3"
+# (the digit is the Morgan radius). Plain "morgan" is NOT valid.
+spectrum = add_fingerprint(spectrum, fingerprint_type="morgan2", nbits=2048)
 ```
 
 ## Common Workflows
@@ -187,10 +200,28 @@ Consult `references/workflows.md` for detailed examples.
 uv pip install matchms
 ```
 
-For molecular structure processing (SMILES, InChI):
-```bash
-uv pip install matchms[chemistry]
-```
+Molecular-structure processing (SMILES/InChI/fingerprints) needs rdkit, which
+ships in the base matchms install on current versions — there is no separate
+`[chemistry]` extra. If `import rdkit` fails, `uv pip install rdkit` explicitly.
+
+API notes below were verified against **matchms 0.33.x**.
+
+## Version gotchas (verified, matchms 0.33.x)
+
+These trip people up and the code examples here account for them:
+
+- **`SpectrumProcessor` instances are not callable.** Use
+  `processor.process_spectrum(spectrum)` for one spectrum or
+  `processor.process_spectra(spectra)` for a list — the latter returns a
+  `(processed_spectra, report)` tuple, not a bare list.
+- **`scores_by_query(query, sort=True)` raises `IndexError`** for cosine-family
+  scores. You must pass `name="<FunctionName>_score"` (e.g.
+  `"CosineGreedy_score"`) so the structured score knows which field to sort on.
+- **`scores.scores[i, j]` is a structured element**, not a float — it carries
+  both `..._score` and `..._matches` fields. For plain float matrices use
+  `scores.to_array("CosineGreedy_score")`; there is no `to_dataframe`/`to_list`.
+- **`add_fingerprint(fingerprint_type=...)`** accepts only `"daylight"`,
+  `"morgan1"`, `"morgan2"`, `"morgan3"` (no `"morgan"`, no `radius=` argument).
 
 ## Reference Documentation
 

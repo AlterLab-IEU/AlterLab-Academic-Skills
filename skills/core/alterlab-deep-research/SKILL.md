@@ -414,7 +414,7 @@ User: "Systematic review of [topic]" / "Meta-analysis of [topic]"
 
 | Mode | Agents Active | Output | Word Count |
 |------|---------------|--------|------------|
-| `full` (default) | All 9 core (excluding socratic_mentor, RoB, meta-analysis) | Full APA 7.0 report | 3,000-8,000 |
+| `full` (default) | All 9 core (excluding socratic_mentor, risk_of_bias, meta_analysis, monitoring) | Full APA 7.0 report | 3,000-8,000 |
 | `quick` | RQ + Biblio + Verification + Report | Research brief | 500-1,500 |
 | `review` | Editor + Devil's Advocate + Ethics | Reviewer report on provided text | N/A |
 | `lit-review` | Biblio + Verification + Synthesis | Annotated bibliography + synthesis | 1,500-4,000 |
@@ -596,25 +596,22 @@ Unified definitions to prevent inconsistency across agents:
 
 ## Integration with Other Skills
 
-This skill is domain-agnostic but can be combined with domain-specific skills:
+This skill is domain-agnostic but composes with other AlterLab skills:
 
 ```
-alterlab-deep-research + tw-hei-intelligence     -> Evidence-based HEI policy research
-alterlab-deep-research + report-to-website       -> Interactive research report
-alterlab-deep-research + podcast-script-generator -> Research podcast
-alterlab-deep-research + alterlab-paper-writer          -> Full research-to-publication pipeline
-alterlab-deep-research (socratic) + alterlab-paper-writer (plan) -> Guided research + paper planning
+alterlab-deep-research + alterlab-paper-2-web                     -> Disseminate research as a website / video / poster
+alterlab-deep-research + alterlab-paper-writer                    -> Full research-to-publication pipeline
+alterlab-deep-research (socratic) + alterlab-paper-writer (plan)  -> Guided research + paper planning
 alterlab-deep-research (systematic-review) + alterlab-paper-writer -> PRISMA systematic review paper
+alterlab-deep-research -> alterlab-research-pipeline              -> End-to-end research → review → finalize workflow
 ```
 
 ---
 
 ## Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 2.3 | 2026-03-08 | Added systematic-review mode (7th mode): PRISMA 2020 compliant pipeline with risk_of_bias_agent (RoB 2 + ROBINS-I), meta_analysis_agent (effect sizes, heterogeneity, GRADE, narrative synthesis), 2 new templates (PRISMA protocol + report), systematic_review_toolkit reference. Added monitoring_agent (post-pipeline literature monitoring with digests, retraction alerts, author tracking) + literature_monitoring_strategies reference. Enhanced socratic_mentor_agent with 4 convergence signals, 4-type question taxonomy, and auto-end triggers. Added Quick Mode Selection Guide to SKILL.md |
-| 2.2 | 2025-03-05 | Added synthesis anti-patterns, Socratic quantified thresholds & auto-end conditions, reference existence verification (DOI + WebSearch), enhanced ethics reference integrity check (50% + Retraction Watch), mode transition matrix, cross-agent quality alignment definitions |
-| 2.1 | 2026-03 | Added IRB decision tree, EQUATOR reporting guidelines, preregistration guide + template; enhanced ethics_review_agent with human subjects dimension; enhanced research_architect_agent with ethics/EQUATOR/preregistration integration; enhanced methodology_patterns with EQUATOR cross-references |
-| 2.0 | 2026-02 | Added socratic mode (10th agent), failure paths, mode selection guide, handoff protocol, 2 new examples, 3 new references |
-| 1.0 | 2026-02 | Initial release: 9 agents, 5 modes, 6-phase pipeline |
+Current: **v2.3** (see frontmatter `metadata.version`). Latest change: added the
+`systematic-review` mode (PRISMA 2020 pipeline with `risk_of_bias_agent` and
+`meta_analysis_agent`, PRISMA protocol/report templates, `systematic_review_toolkit`
+reference) and the optional post-pipeline `monitoring_agent`, bringing the team to
+13 agents and 7 modes.

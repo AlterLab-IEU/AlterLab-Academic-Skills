@@ -107,12 +107,12 @@ MONDO integrates disease classifications from multiple sources:
 import requests
 
 def omim_to_mondo(omim_id):
-    """Convert OMIM ID to MONDO ID via Monarch API."""
-    search_id = f"OMIM:{omim_id}" if not omim_id.startswith("OMIM:") else omim_id
+    """Look up an OMIM entity via the Monarch API (endpoints live under /v3/api)."""
+    search_id = f"OMIM:{omim_id}" if not str(omim_id).startswith("OMIM:") else omim_id
     data = requests.get(
-        f"https://api-v3.monarchinitiative.org/v3/docsentity/{search_id}"
+        f"https://api-v3.monarchinitiative.org/v3/api/entity/{search_id}"
     ).json()
-    # Check for same_as/equivalent_id links to MONDO
+    # Inspect the entity's cross-references for the equivalent MONDO id.
     return data
 ```
 
@@ -134,27 +134,32 @@ Higher-quality evidence: IDA > TAS > IMP > IEA
 
 ## Semantic Similarity Metrics
 
-Monarch supports multiple similarity metrics:
+The `semsim/compare` `metric` field accepts exactly these values (from the API
+schema; `ancestor_information_content` is the default):
 
 | Metric | Description | Use case |
 |--------|-------------|---------|
 | `ancestor_information_content` | IC of most informative common ancestor (MICA) | Disease similarity |
-| `jaccard_similarity` | Overlap coefficient | Simple set comparison |
-| `cosine` | Cosine similarity of IC vectors | Large-scale comparisons |
-| `phenodigm` | Combined MICA + Jaccard | Model organism matching |
+| `jaccard_similarity` | Overlap coefficient of term sets | Simple set comparison |
+| `phenodigm_score` | Combined MICA + Jaccard | Model organism matching |
+
+`semsim/compare` is a **POST** endpoint with a JSON body; `subjects`/`objects`
+are HPO term sets (not disease CURIEs). The response includes `average_score`
+and `best_score`.
 
 ```python
 import requests
 
-def compute_disease_similarity(disease_ids_1, disease_ids_2, metric="ancestor_information_content"):
-    """Compute semantic similarity between two sets of disease phenotypes."""
-    # Get phenotype sets for each disease
-    url = "https://api-v3.monarchinitiative.org/v3/docssemsim/compare"
-    params = {
-        "subjects": disease_ids_1,
-        "objects": disease_ids_2,
-        "metric": metric
+def compute_phenotype_similarity(subject_hpo_ids, object_hpo_ids,
+                                 metric="ancestor_information_content"):
+    """Compute semantic similarity between two HPO term sets."""
+    url = "https://api-v3.monarchinitiative.org/v3/api/semsim/compare"
+    body = {
+        "subjects": subject_hpo_ids,
+        "objects": object_hpo_ids,
+        "metric": metric,
     }
-    response = requests.get(url, params=params)
+    response = requests.post(url, json=body)
+    response.raise_for_status()
     return response.json()
 ```

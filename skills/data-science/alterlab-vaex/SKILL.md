@@ -133,7 +133,7 @@ The reference files contain detailed information about each capability area. Loa
 3. **Batch operations** using `delay=True` when performing multiple calculations
 4. **Export to efficient formats** rather than keeping data in CSV
 5. **Use expressions** for complex calculations without intermediate storage
-6. **Profile with `df.stat()`** to understand memory usage and optimize operations
+6. **Check memory with `df.byte_size()`** and inspect data with `df.describe()` before optimizing
 
 ## Common Patterns
 
@@ -153,13 +153,14 @@ df = vaex.open('large_file.hdf5')
 
 ### Pattern: Efficient Aggregations
 ```python
-# Use delay=True to batch multiple operations
-mean_x = df.x.mean(delay=True)
-std_y = df.y.std(delay=True)
-sum_z = df.z.sum(delay=True)
+# Use delay=True to batch multiple operations into ONE pass over the data.
+# Each delayed call returns a promise; df.execute() runs them together.
+mean_x = df.mean(df.x, delay=True)
+std_y = df.std(df.y, delay=True)
+sum_z = df.sum(df.z, delay=True)
 
-# Execute all at once
-results = vaex.execute([mean_x, std_y, sum_z])
+df.execute()              # single pass triggers all pending delayed ops
+print(mean_x.get(), std_y.get(), sum_z.get())  # retrieve each result
 ```
 
 ### Pattern: Virtual Columns for Feature Engineering

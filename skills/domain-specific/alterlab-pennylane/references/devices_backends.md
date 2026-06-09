@@ -50,19 +50,19 @@ def noisy_circuit():
     return qml.expval(qml.PauliZ(0))
 ```
 
-### default.qubit.torch, default.qubit.tf, default.qubit.jax
+### ML framework integration
 
-Framework-specific simulators with better integration:
+The separate `default.qubit.torch` / `.tf` / `.jax` devices were removed.
+Use a single `default.qubit` device; the interface is auto-detected from the
+input types, or set it explicitly on the QNode:
 
 ```python
-# PyTorch
-dev = qml.device('default.qubit.torch', wires=4)
+dev = qml.device('default.qubit', wires=4)
 
-# TensorFlow
-dev = qml.device('default.qubit.tf', wires=4)
-
-# JAX
-dev = qml.device('default.qubit.jax', wires=4)
+@qml.qnode(dev, interface='torch')   # or 'tf', 'jax', 'autograd' (default), 'auto'
+def circuit(params):
+    qml.RX(params[0], wires=0)
+    return qml.expval(qml.PauliZ(0))
 ```
 
 ### lightning.qubit

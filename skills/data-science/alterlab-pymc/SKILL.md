@@ -91,12 +91,8 @@ Code and decision rules: `references/model_comparison.md`. Detailed sampling-alg
 3. **Compare multiple models** when appropriate
 4. **Report uncertainty** (HDI intervals, not just point estimates)
 
-### Workflow
-
-1. Start simple, add complexity gradually
-2. Prior predictive check → Fit → Diagnostics → Posterior predictive check
-3. Iterate on model specification based on checks
-4. Document assumptions and prior choices
+Start simple and add complexity gradually, iterating on the model based on each
+predictive check (see the 8-step workflow above).
 
 ## Resources
 
@@ -110,7 +106,7 @@ This skill includes:
 - **`model_comparison.md`**: LOO/WAIC comparison, diagnostic scripts, and troubleshooting (divergences, ESS, R-hat, slow sampling).
 - **`distributions.md`**: Comprehensive catalog of PyMC distributions organized by category (continuous, discrete, multivariate, mixture, time series). Use when selecting priors or likelihoods.
 - **`sampling_inference.md`**: Detailed guide to sampling algorithms (NUTS, Metropolis, SMC), variational inference (ADVI, SVGD), and handling sampling issues. Use when encountering convergence problems or choosing inference methods.
-- **`workflows.md`**: Complete workflow examples and code patterns for common model types, data preparation, prior selection, and model validation. Use as a cookbook for standard Bayesian analyses.
+- **`workflows.md`**: A single end-to-end runnable script (data prep → save) plus extra cookbook recipes not in `workflow_examples.md` — missing-data imputation, QR reparameterization, mixture models, and a model-averaging helper.
 
 ### Scripts (`scripts/`)
 
@@ -154,16 +150,22 @@ compare_models({'m1': idata1, 'm2': idata2}, ic='loo')
 
 ### Predictions
 ```python
+# X must have been wrapped at build time: pm.Data('X', X, dims=('obs', 'predictors'))
 with model:
-    pm.set_data({'X': X_new})
-    pred = pm.sample_posterior_predictive(idata.posterior)
+    pm.set_data({'X': X_new}, coords={'obs': range(len(X_new))})
+    pm.sample_posterior_predictive(idata, predictions=True, extend_inferencedata=True)
+# predictions land in idata.predictions
 ```
 
 ## Additional Notes
 
 - PyMC integrates with ArviZ for visualization and diagnostics
 - Use `pm.model_to_graphviz(model)` to visualize model structure
-- Save results with `idata.to_netcdf('results.nc')`
-- Load with `az.from_netcdf('results.nc')`
+- Save results with `idata.to_netcdf('results.nc')`; load with `az.from_netcdf('results.nc')`
 - For very large models, consider minibatch ADVI or data subsampling
+
+**Common gotchas (PyMC 5.x / ArviZ):**
+- To predict on new data, the predictors must be wrapped in `pm.Data('X', X, dims=...)` at build time — only then can `pm.set_data({'X': X_new}, coords={...})` swap them. A plain NumPy array baked into the graph cannot be replaced.
+- `pm.sample_prior_predictive` takes `draws=` (the old `samples=` keyword was removed).
+- For out-of-sample predictions call `pm.sample_posterior_predictive(idata, predictions=True, extend_inferencedata=True, ...)`; results then live in `idata.predictions`, not `idata.posterior_predictive`.
 

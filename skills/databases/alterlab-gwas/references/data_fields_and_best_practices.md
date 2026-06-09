@@ -19,17 +19,28 @@ The GWAS Catalog is organized around four core entities:
 
 ## Response Formats and Data Fields
 
-**Key Fields in Association Records:**
-- `rsId`: Variant identifier (rs number)
-- `strongestAllele`: Risk allele for the association
-- `pvalue`: Association p-value
-- `pvalueText`: P-value as text (may include inequality)
-- `orPerCopyNum`: Odds ratio or beta coefficient
-- `betaNum`: Effect size (for quantitative traits)
-- `betaUnit`: Unit of measurement for beta
-- `range`: Confidence interval
-- `efoTrait`: Associated trait name
-- `mappedLabel`: EFO-mapped trait term
+**Key Fields in Association Records (verified against the live v2 API):**
+
+The rsID, allele, and trait are **nested**, not top-level — a frequent extraction bug. On an association object:
+- `pvalue`: Association p-value (top-level, present)
+- `pvalueMantissa` / `pvalueExponent`: p-value split form (top-level)
+- `orPerCopyNum`: Odds ratio per allele copy (top-level; `null` for quantitative traits)
+- `betaNum`: Effect size for quantitative traits (top-level; `null` for case-control)
+- `betaUnit`, `betaDirection`: Unit / direction of beta
+- `range`, `standardError`: Confidence interval and SE
+- `riskFrequency`: Reported risk-allele frequency
+- `snps[]`: array; the rsID is `snps[i].rsId` (there is **no** top-level `rsId`)
+- `loci[].strongestRiskAlleles[].riskAlleleName`: the risk allele, e.g. `rs7903146-T` (there is **no** top-level `strongestAllele`)
+- `efoTraits[]`: array of `{trait, uri, shortForm}`; the trait name is `efoTraits[i].trait` (there is **no** top-level `efoTrait` or `mappedLabel`)
+- `_links.study.href`: follow this for the study/accession and PubMed ID — these are **not** inline on the association
+
+To list rsID/trait/p-value for an association `a`:
+```python
+rs   = (a.get("snps") or [{}])[0].get("rsId")
+trait = (a.get("efoTraits") or [{}])[0].get("trait")
+allele = ((a.get("loci") or [{}])[0].get("strongestRiskAlleles") or [{}])[0].get("riskAlleleName")
+pval = a.get("pvalue")
+```
 
 **Study Metadata Fields:**
 - `accessionId`: GCST study identifier

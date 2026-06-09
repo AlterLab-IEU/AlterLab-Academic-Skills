@@ -2,7 +2,7 @@
 Test-Driven Development tests for the Open-Notebook skill.
 
 These tests validate the structure, content completeness, and correctness
-of the open-notebook skill implementation for the claude-scientific-skills repository.
+of the alterlab-open-notebook skill implementation for the AlterLab Academic Skills repository.
 
 Run with: python -m pytest test_open_notebook_skill.py -v
 Or:       python -m unittest test_open_notebook_skill.py -v
@@ -13,10 +13,12 @@ import os
 import re
 import unittest
 
-# Resolve paths relative to this test file
+# Resolve paths relative to this test file.
+# Layout: <repo>/skills/<category>/alterlab-open-notebook/scripts/<this file>
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = os.path.dirname(SCRIPT_DIR)
-REPO_ROOT = os.path.dirname(os.path.dirname(SKILL_DIR))
+CATEGORY_DIR = os.path.dirname(SKILL_DIR)
+REPO_ROOT = os.path.dirname(os.path.dirname(CATEGORY_DIR))
 REFERENCES_DIR = os.path.join(SKILL_DIR, "references")
 SCRIPTS_DIR = SCRIPT_DIR
 SKILL_MD = os.path.join(SKILL_DIR, "SKILL.md")
@@ -79,9 +81,9 @@ class TestSkillMdFrontmatter(unittest.TestCase):
         )
 
     def test_frontmatter_has_name(self):
-        """Frontmatter must include a 'name' field set to 'open-notebook'."""
+        """Frontmatter must include a 'name' field set to 'alterlab-open-notebook'."""
         self.assertIn("name:", self.frontmatter)
-        self.assertRegex(self.frontmatter, r"name:\s*open-notebook")
+        self.assertRegex(self.frontmatter, r"name:\s*alterlab-open-notebook")
 
     def test_frontmatter_has_description(self):
         """Frontmatter must include a 'description' field."""
@@ -347,13 +349,17 @@ class TestMarketplaceJson(unittest.TestCase):
             cls.marketplace = json.load(f)
 
     def test_marketplace_has_open_notebook_skill(self):
-        """marketplace.json must list the open-notebook skill."""
-        skills = self.marketplace["plugins"][0]["skills"]
-        skill_path = "./scientific-skills/open-notebook"
+        """marketplace.json must list the alterlab-open-notebook skill in some plugin."""
+        skill_path = "./alterlab-open-notebook"
+        all_skills = [
+            s
+            for plugin in self.marketplace["plugins"]
+            for s in plugin.get("skills", [])
+        ]
         self.assertIn(
             skill_path,
-            skills,
-            f"marketplace.json must include '{skill_path}' in the skills list",
+            all_skills,
+            f"marketplace.json must include '{skill_path}' in some plugin's skills list",
         )
 
     def test_marketplace_valid_json(self):

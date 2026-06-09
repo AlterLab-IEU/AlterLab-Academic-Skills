@@ -75,74 +75,67 @@ def gpu_training():
 - Protein structure prediction (AlphaFold)
 - Large-scale GPU computations
 
-### Custom Task Configuration
+### Custom Task Configuration (CPU/memory only)
 
-For precise control, use the `@custom_task` decorator:
+For precise control over CPU, memory, and storage, use the `@custom_task` decorator:
 
 ```python
 from latch import custom_task
-from latch.resources.tasks import TaskResources
 
 @custom_task(
     cpu=8,
-    memory=32,  # GB
-    storage_gib=100,
-    timeout=3600,  # seconds
+    memory=32,        # Gibibytes of RAM
+    storage_gib=100,  # ephemeral storage in GiB (default 500)
 )
 def custom_processing():
-    """Task with custom resource specifications"""
+    """Task with custom CPU/memory/storage specifications"""
     pass
 ```
 
 #### Custom Task Parameters
 
-- **cpu**: Number of CPU cores (integer)
-- **memory**: Memory in GB (integer)
-- **storage_gib**: Ephemeral storage in GiB (integer)
-- **timeout**: Maximum execution time in seconds (integer)
-- **gpu**: Number of GPUs (integer, 0 for CPU-only)
-- **gpu_type**: Specific GPU model (string, e.g., "nvidia-tesla-v100")
+`custom_task(cpu, memory, *, storage_gib=500, timeout=0)`:
 
-### Advanced Custom Configuration
+- **cpu**: Number of CPU cores, int (up to 126). May also be a callable for dynamic sizing.
+- **memory**: RAM in GiB, int (up to ~975 GiB). May also be a callable.
+- **storage_gib**: Ephemeral storage in GiB, int (default 500, up to ~4949 GiB).
+- **timeout**: Maximum execution time, a `datetime.timedelta` or int seconds (default `0` = no timeout).
 
-```python
-from latch.resources.tasks import TaskResources
-
-@custom_task(
-    cpu=16,
-    memory=64,
-    storage_gib=500,
-    timeout=7200,
-    gpu=1,
-    gpu_type="nvidia-tesla-a100"
-)
-def alphafold_prediction():
-    """AlphaFold with A100 GPU and high memory"""
-    pass
-```
+> `@custom_task` does **not** take `gpu`/`gpu_type` parameters. For GPUs, use the dedicated GPU task decorators below.
 
 ## GPU Configuration
 
-### GPU Types
+GPUs are requested via dedicated, pre-configured task decorators — not by passing a GPU flag to `@custom_task`.
 
-Available GPU options:
-- **nvidia-tesla-k80**: Basic GPU for testing
-- **nvidia-tesla-v100**: High-performance for training
-- **nvidia-tesla-a100**: Latest generation for maximum performance
+### Available GPU decorators
+
+- `@small_gpu_task` — 1 GPU, modest CPU/memory (g4dn.2xlarge class)
+- `@large_gpu_task` — 1 GPU, larger CPU/memory (g5.16xlarge class)
+- `@v100_x1_task`, `@v100_x4_task`, `@v100_x8_task` — 1/4/8 NVIDIA V100 GPUs
+- `@g6e_xlarge_task` … `@g6e_48xlarge_task` — NVIDIA L40S GPUs, increasing CPU/RAM/GPU counts
+
+```python
+from latch import small_gpu_task, large_gpu_task, v100_x1_task
+
+@small_gpu_task
+def gpu_inference():
+    """Single-GPU inference on modest resources"""
+    pass
+
+@large_gpu_task
+def alphafold_prediction():
+    """AlphaFold structure prediction on a large GPU node"""
+    pass
+```
 
 ### Multi-GPU Tasks
 
 ```python
-from latch import custom_task
+from latch import v100_x4_task
 
-@custom_task(
-    cpu=32,
-    memory=128,
-    gpu=4,
-    gpu_type="nvidia-tesla-v100"
-)
+@v100_x4_task
 def multi_gpu_training():
-    """Distributed training across multiple GPUs"""
+    """Distributed training across 4 V100 GPUs"""
     pass
 ```
 
@@ -404,11 +397,11 @@ def process_large(file: LatchFile) -> LatchFile:
 
 ### Available Resources
 
-Latch platform provides:
-- CPU instances: Up to 96 cores
-- Memory: Up to 768 GB
-- GPUs: K80, V100, A100 variants
-- Storage: Configurable ephemeral storage
+Latch platform provides (verify current limits in the docs/SDK, as instance types change):
+- CPU: up to ~126 cores per task (`custom_task` cpu cap)
+- Memory: up to ~975 GiB per task
+- GPUs: via the dedicated decorators above — V100 (`v100_x{1,4,8}_task`) and L40S (`g6e_*_task`), plus the generic `small_gpu_task`/`large_gpu_task`
+- Storage: ephemeral storage up to ~4949 GiB (`storage_gib`)
 
 ### Resource Limits
 

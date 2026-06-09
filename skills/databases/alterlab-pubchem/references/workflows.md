@@ -17,7 +17,7 @@ compound = pcp.get_compounds('caffeine', 'name')[0]
 identifiers = {
     'CID': compound.cid,
     'Name': compound.iupac_name,
-    'SMILES': compound.canonical_smiles,
+    'SMILES': compound.smiles,  # was canonical_smiles (deprecated in 2025)
     'InChI': compound.inchi,
     'InChIKey': compound.inchikey,
     'Formula': compound.molecular_formula
@@ -58,7 +58,7 @@ import pubchempy as pcp
 
 # Start with known drug
 reference_drug = pcp.get_compounds('imatinib', 'name')[0]
-reference_smiles = reference_drug.canonical_smiles
+reference_smiles = reference_drug.smiles
 
 # Find similar compounds
 similar = pcp.get_compounds(

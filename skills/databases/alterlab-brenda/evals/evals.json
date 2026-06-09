@@ -40,7 +40,7 @@
     {
       "id": "enzyme-by-substrate-discovery",
       "prompt": "Which enzymes can act on 2-phenylethanol as a substrate? I want EC numbers and reaction equations to plan a biosynthetic route.",
-      "expected_output": "Invokes alterlab-brenda: uses search_enzymes_by_substrate(\"2-phenylethanol\") to return EC numbers, enzyme names, and reaction equations from BRENDA for the candidate enzymes.",
+      "expected_output": "Invokes alterlab-brenda: discovers candidate enzymes for 2-phenylethanol via BRENDA reaction data (search_by_pattern / get_reactions), whose entries carry ecNumber, and returns EC numbers and reaction equations. (Km-based search_enzymes_by_substrate alone cannot supply EC numbers, since getKmValue responses omit ecNumber.)",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "EC" }

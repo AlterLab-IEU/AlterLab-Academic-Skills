@@ -6,7 +6,7 @@ This document provides comprehensive information about converting identifiers be
 
 1. [Overview](#overview)
 2. [UniProt Mapping Service](#uniprot-mapping-service)
-3. [UniChem Compound Mapping](#unichem-compound-mapping)
+3. [Compound Identifier Mapping](#compound-identifier-mapping)
 4. [KEGG Identifier Conversions](#kegg-identifier-conversions)
 5. [Common Mapping Patterns](#common-mapping-patterns)
 6. [Troubleshooting](#troubleshooting)
@@ -17,10 +17,14 @@ This document provides comprehensive information about converting identifiers be
 
 Biological databases use different identifier systems. Cross-referencing requires mapping between these systems. BioServices provides multiple approaches:
 
-1. **UniProt Mapping**: Comprehensive protein/gene ID conversion
-2. **UniChem**: Chemical compound ID mapping
-3. **KEGG**: Built-in cross-references in entries
-4. **PICR**: Protein identifier cross-reference service
+1. **UniProt Mapping**: Comprehensive protein/gene ID conversion (`UniProt.mapping`)
+2. **KEGG**: `KEGG.conv` conversions plus cross-references embedded in entries
+3. **Compounds**: KEGG -> ChEBI via `KEGG.conv`; KEGG/ChEBI -> ChEMBL needs an
+   external route (see [Compound Identifier Mapping](#compound-identifier-mapping))
+
+Note: the old `bioservices.UniChem` compound-mapping helpers were dropped in 2022,
+and the EBI PICR service was retired years ago — neither is usable through
+bioservices today.
 
 ---
 
@@ -236,86 +240,49 @@ if len(lines) > 1:
 
 ---
 
-## UniChem Compound Mapping
+## Compound Identifier Mapping
 
-UniChem specializes in mapping chemical compound identifiers across databases.
+> **Heads-up:** bioservices used to expose UniChem compound-mapping helpers
+> (`UniChem.get_compound_id_from_kegg`, `get_src_compound_ids`,
+> `get_all_compound_ids`). **These were dropped from bioservices in 2022 and no
+> longer exist.** There is also no KEGG -> ChEMBL route in the KEGG Web Service.
+> The patterns below use what actually works today.
 
-### Source Database IDs
-
-| Source ID | Database |
-|-----------|----------|
-| 1 | ChEMBL |
-| 2 | DrugBank |
-| 3 | PDB |
-| 4 | IUPHAR/BPS Guide to Pharmacology |
-| 5 | PubChem |
-| 6 | KEGG |
-| 7 | ChEBI |
-| 8 | NIH Clinical Collection |
-| 14 | FDA/SRS |
-| 22 | PubChem |
-
-### Basic Usage
+### KEGG -> ChEBI (supported via bioservices)
 
 ```python
-from bioservices import UniChem
+from bioservices import KEGG
 
-u = UniChem()
+k = KEGG()
 
-# Get ChEMBL ID from KEGG compound ID
-chembl_id = u.get_compound_id_from_kegg("C11222")
-print(chembl_id)  # CHEMBL278315
+# conv returns a dict keyed by the source IDs, e.g. {'cpd:C11222': 'chebi:5292', ...}
+conv = k.conv("chebi", "compound")
+chebi_id = conv.get("cpd:C11222")  # -> 'chebi:5292' (Geldanamycin)
+
+# ChEBI IDs are also embedded in the KEGG compound entry text:
+entry = k.get("cpd:C11222")
+for line in entry.split("\n"):
+    if "ChEBI:" in line:
+        chebi_id = line.split("ChEBI:")[1].strip().split()[0]  # '5292'
+        break
 ```
 
-### All Compound IDs
+### KEGG / ChEBI -> ChEMBL (needs an external route)
 
-```python
-# Get all identifiers for a compound
-# src_compound_id: compound ID, src_id: source database ID
-all_ids = u.get_all_compound_ids("CHEMBL278315", src_id=1)  # 1 = ChEMBL
+bioservices cannot do this mapping. Obtain the ChEMBL ID with a separate tool:
 
-for mapping in all_ids:
-    src_name = mapping['src_name']
-    src_compound_id = mapping['src_compound_id']
-    print(f"{src_name}: {src_compound_id}")
-```
+- **ChEMBL web service / `chembl_webresource_client`** (the official ChEMBL client), or
+- the **live UniChem REST API** at `https://www.ebi.ac.uk/unichem/` queried directly
+  (e.g. via `requests`).
 
-### Specific Database Conversion
+UniChem source-database IDs (for direct REST calls; verify against current UniChem
+docs as the set evolves): ChEMBL=1, DrugBank=2, PDB=3, KEGG=6, ChEBI=7, PubChem=22.
 
-```python
-# Convert between specific databases
-# from_src_id=6 (KEGG), to_src_id=1 (ChEMBL)
-result = u.get_src_compound_ids("C11222", from_src_id=6, to_src_id=1)
-print(result)
-```
-
-### Common Compound Mappings
-
-#### KEGG → ChEMBL
-
-```python
-u = UniChem()
-chembl_id = u.get_compound_id_from_kegg("C00031")  # D-Glucose
-print(f"ChEMBL: {chembl_id}")
-```
-
-#### ChEMBL → PubChem
-
-```python
-result = u.get_src_compound_ids("CHEMBL278315", from_src_id=1, to_src_id=22)
-if result:
-    pubchem_id = result[0]['src_compound_id']
-    print(f"PubChem: {pubchem_id}")
-```
-
-#### ChEBI → DrugBank
-
-```python
-result = u.get_src_compound_ids("5292", from_src_id=7, to_src_id=2)
-if result:
-    drugbank_id = result[0]['src_compound_id']
-    print(f"DrugBank: {drugbank_id}")
-```
+The live UniChem REST API ( `https://www.ebi.ac.uk/unichem/` ) returns all source
+IDs for a given compound from one request; consult its current OpenAPI docs for the
+exact endpoint and parameter shape before wiring it up, since the schema has changed
+over time. The `chembl_webresource_client` package (installed separately from
+bioservices) is the other supported route into ChEMBL.
 
 ---
 
@@ -434,13 +401,17 @@ ids = gene_symbol_to_ids("ZAP70")
 print(ids)
 ```
 
-### Pattern 2: Compound Name → All Database IDs
+### Pattern 2: Compound Name → KEGG + ChEBI IDs
 
 ```python
-from bioservices import KEGG, UniChem, ChEBI
+from bioservices import KEGG
 
 def compound_name_to_ids(compound_name):
-    """Search compound and get all database IDs."""
+    """Search a compound by name and return its KEGG and ChEBI IDs.
+
+    Note: KEGG -> ChEMBL has no bioservices route; obtain a ChEMBL ID
+    separately via chembl_webresource_client or the live UniChem REST API.
+    """
     k = KEGG()
 
     # Search KEGG
@@ -451,27 +422,19 @@ def compound_name_to_ids(compound_name):
     # Extract KEGG ID
     kegg_id = results.strip().split("\n")[0].split("\t")[0].replace("cpd:", "")
 
-    # Get KEGG entry for ChEBI
-    entry = k.get(f"cpd:{kegg_id}")
-    chebi_id = None
-    for line in entry.split("\n"):
-        if "ChEBI:" in line:
-            parts = line.split("ChEBI:")
-            if len(parts) > 1:
-                chebi_id = parts[1].strip().split()[0]
+    # KEGG -> ChEBI via conv (supported), with entry-parse fallback
+    chebi_id = k.conv("chebi", "compound").get(f"cpd:{kegg_id}")
+    if not chebi_id:
+        entry = k.get(f"cpd:{kegg_id}")
+        for line in entry.split("\n"):
+            if "ChEBI:" in line:
+                chebi_id = line.split("ChEBI:")[1].strip().split()[0]
                 break
-
-    # Get ChEMBL from UniChem
-    u = UniChem()
-    try:
-        chembl_id = u.get_compound_id_from_kegg(kegg_id)
-    except:
-        chembl_id = None
 
     return {
         'kegg': kegg_id,
         'chebi': chebi_id,
-        'chembl': chembl_id
+        'chembl': None,  # not resolvable via bioservices; see note above
     }
 
 # Usage

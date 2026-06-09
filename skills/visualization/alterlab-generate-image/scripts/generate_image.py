@@ -2,11 +2,11 @@
 """
 Generate and edit images using OpenRouter API with various image generation models.
 
-Supports models like:
-- google/gemini-3.1-flash-image-preview (generation and editing)
-- black-forest-labs/flux.2-pro (generation and editing)
-- black-forest-labs/flux.2-flex (generation)
-- And more image generation models available on OpenRouter
+Supports OpenRouter image models that accept the chat-completions
+`modalities: ["image", "text"]` interface, e.g.:
+- google/gemini-3.1-flash-image-preview ("Nano Banana 2", generation + editing)
+- black-forest-labs/flux.2-pro (generation + editing)
+- black-forest-labs/flux.2-flex (generation + editing)
 
 For image editing, provide an input image along with an editing prompt.
 """
@@ -227,10 +227,10 @@ Examples:
   # Edit with a specific model
   python generate_image.py "Add a hat to the person" --input portrait.png -m "black-forest-labs/flux.2-pro"
 
-Popular image models:
-  - google/gemini-3.1-flash-image-preview (default, high quality, generation + editing)
-  - black-forest-labs/flux.2-pro (fast, high quality, generation + editing)
-  - black-forest-labs/flux.2-flex (development version)
+Popular image models (all support generation + editing):
+  - google/gemini-3.1-flash-image-preview (default, "Nano Banana 2", high quality)
+  - black-forest-labs/flux.2-pro (frontier quality)
+  - black-forest-labs/flux.2-flex (cheaper, strong text/typography)
         """
     )
 

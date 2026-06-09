@@ -9,33 +9,38 @@ The `Slide` class is the primary interface for working with whole slide images (
 ```python
 from histolab.slide import Slide
 
-# Initialize a slide with a WSI file and output directory
-slide = Slide(processed_path="path/to/processed/output",
-              slide_path="path/to/slide.svs")
+# Initialize a slide with a WSI file and output directory.
+# The first positional/keyword arg is `path` (not `slide_path`).
+slide = Slide(path="path/to/slide.svs",
+              processed_path="path/to/processed/output")
 ```
 
 **Parameters:**
-- `slide_path`: Path to the whole slide image file (supports multiple formats: SVS, TIFF, NDPI, etc.)
-- `processed_path`: Directory where processed outputs (tiles, thumbnails, etc.) will be saved
+- `path`: Path to the whole slide image file (supports multiple formats: SVS, TIFF, NDPI, etc.)
+- `processed_path`: Directory where processed outputs (tiles, thumbnails, etc.) will be saved (required — cannot be `None`)
+- `use_largeimage` (default `False`): use the `large_image` backend instead of OpenSlide, enabling exact microns-per-pixel tile fetching
 
 ## Loading Sample Data
 
 Histolab provides built-in sample datasets from TCGA for testing and demonstration:
 
 ```python
-from histolab.data import prostate_tissue, ovarian_tissue, breast_tissue, heart_tissue, kidney_tissue
+from histolab.data import prostate_tissue, ovarian_tissue, breast_tissue, heart_tissue
 
-# Load prostate tissue sample
+# Each loader returns (OpenSlide object, path); pass the path to Slide.
 prostate_svs, prostate_path = prostate_tissue()
 slide = Slide(prostate_path, processed_path="output/")
 ```
 
-Available sample datasets:
-- `prostate_tissue()`: Prostate tissue sample
-- `ovarian_tissue()`: Ovarian tissue sample
-- `breast_tissue()`: Breast tissue sample
-- `heart_tissue()`: Heart tissue sample
-- `kidney_tissue()`: Kidney tissue sample
+Available sample datasets (histolab 0.7.0):
+- `prostate_tissue()`, `ovarian_tissue()`, `breast_tissue()`, `heart_tissue()`,
+  `aorta_tissue()`: H&E tissue samples
+- `breast_tissue_diagnostic_green_pen()` / `_red_pen()` / `_black_pen()`: slides
+  with pen-mark artifacts (handy for testing artifact-removal masks)
+- `ihc_breast()`, `ihc_kidney()`: IHC-stained samples
+- `cmu_small_region()`: tiny region for quick smoke tests
+
+> There is no `kidney_tissue()`; the kidney sample is `ihc_kidney()`.
 
 ## Key Properties
 
@@ -44,18 +49,18 @@ Available sample datasets:
 # Get slide dimensions at level 0 (highest resolution)
 width, height = slide.dimensions
 
-# Get dimensions at specific pyramid level
-level_dimensions = slide.level_dimensions
-# Returns tuple of (width, height) for each level
+# level_dimensions is a METHOD that takes a level and returns (width, height)
+w1, h1 = slide.level_dimensions(level=1)
 ```
 
 ### Magnification Information
 ```python
-# Get base magnification (e.g., 40x, 20x)
-base_mag = slide.base_mpp  # Microns per pixel at level 0
+# Microns per pixel at level 0 (resolution, not objective magnification)
+mpp = slide.base_mpp
 
-# Get all available levels
-num_levels = slide.levels  # Number of pyramid levels
+# `levels` is a LIST of available pyramid levels (e.g. [0, 1, 2]), not a count.
+available_levels = slide.levels
+num_levels = len(slide.levels)
 ```
 
 ### Slide Properties
@@ -73,14 +78,14 @@ properties = slide.properties
 ## Thumbnail Generation
 
 ```python
-# Get thumbnail at specific size
+# `thumbnail` is a property returning a PIL.Image
 thumbnail = slide.thumbnail
 
-# Save thumbnail to disk
-slide.save_thumbnail()  # Saves to processed_path
+# There is no save_thumbnail() method — save the PIL image directly
+slide.thumbnail.save("output/thumbnail.png")
 
-# Get scaled thumbnail
-scaled_thumbnail = slide.scaled_image(scale_factor=32)
+# scaled_image(scale_factor) is a method returning a downscaled PIL.Image
+scaled = slide.scaled_image(scale_factor=32)
 ```
 
 ## Slide Visualization
@@ -96,14 +101,17 @@ plt.axis('off')
 plt.show()
 ```
 
-## Extracting Regions
+## Extracting a Single Tile
 
 ```python
-# Extract region at specific coordinates and level
-region = slide.extract_region(
-    location=(x, y),  # Top-left coordinates at level 0
-    size=(width, height),  # Region size
-    level=0  # Pyramid level
+from histolab.types import CoordinatePair
+
+# Extract one tile at given level-0 coordinates. The method is extract_tile()
+# (there is no extract_region). coords is a CoordinatePair(x_ul, y_ul, x_br, y_br).
+tile = slide.extract_tile(
+    coords=CoordinatePair(x_ul=0, y_ul=0, x_br=512, y_br=512),
+    tile_size=(512, 512),
+    level=0,
 )
 ```
 
@@ -114,21 +122,17 @@ WSI files use a pyramidal structure with multiple resolution levels:
 - Level 1+: Progressively lower resolutions for faster access
 
 ```python
-# Check available levels
-for level in range(slide.levels):
-    dims = slide.level_dimensions[level]
-    downsample = slide.level_downsamples[level]
-    print(f"Level {level}: {dims}, downsample: {downsample}x")
+# `levels` is a list, so iterate it directly (don't wrap it in range()).
+for level in slide.levels:
+    dims = slide.level_dimensions(level=level)  # method call, not subscript
+    print(f"Level {level}: {dims}")
 ```
 
-## Slide Name and Path
+## Slide Name
 
 ```python
 # Get slide filename without extension
 slide_name = slide.name
-
-# Get full path to slide file
-slide_path = slide.scaled_image
 ```
 
 ## Best Practices
@@ -154,7 +158,7 @@ print(f"Levels: {slide.levels}")
 print(f"Magnification: {slide.properties.get('openslide.objective-power', 'N/A')}")
 
 # Save thumbnail for review
-slide.save_thumbnail()
+slide.thumbnail.save("output/thumbnail.png")
 ```
 
 ### Multi-Slide Processing

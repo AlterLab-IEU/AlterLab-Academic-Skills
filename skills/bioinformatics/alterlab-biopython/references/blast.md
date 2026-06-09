@@ -4,6 +4,8 @@
 
 Bio.Blast provides tools for running BLAST searches (both locally and via NCBI web services) and parsing BLAST results in various formats. The module handles the complexity of submitting queries and parsing outputs.
 
+> **Two APIs (both shipped in 1.87):** The examples below use the long-standing `Bio.Blast.NCBIWWW.qblast` + `Bio.Blast.NCBIXML` parser, which still works. Biopython also ships a newer top-level API — `Bio.Blast.qblast(...)` plus `Bio.Blast.read`/`Bio.Blast.parse` returning `Record`/`Records` objects. For new code either is fine; the NCBIWWW/NCBIXML examples here are the most battle-tested.
+
 ## Running BLAST via NCBI Web Services
 
 ### Bio.Blast.NCBIWWW
@@ -166,49 +168,49 @@ Local BLAST requires:
 1. BLAST+ command-line tools installed
 2. BLAST databases downloaded locally
 
-### Using Command-Line Wrappers
+> **Removed API:** The `Bio.Blast.Applications` wrappers (`NcbiblastnCommandline`, `NcbiblastpCommandline`, `NcbimakeblastdbCommandline`, etc.) were deprecated in Biopython 1.78 and **removed** — they no longer import. Call the BLAST+ executables directly with `subprocess` and parse the XML output with `Bio.Blast`.
+
+### Running BLAST+ via subprocess
 
 ```python
-from Bio.Blast.Applications import NcbiblastnCommandline
+import subprocess
+from Bio.Blast import NCBIXML
 
-# Setup BLAST command
-blastn_cline = NcbiblastnCommandline(
-    query="input.fasta",
-    db="local_database",
-    evalue=0.001,
-    outfmt=5,                    # XML format
-    out="results.xml"
+# Run blastn against a local database, XML output (outfmt 5)
+subprocess.run(
+    [
+        "blastn",
+        "-query", "input.fasta",
+        "-db", "local_database",
+        "-evalue", "0.001",
+        "-outfmt", "5",
+        "-out", "results.xml",
+    ],
+    check=True,
 )
 
-# Run BLAST
-stdout, stderr = blastn_cline()
-
 # Parse results
-from Bio.Blast import NCBIXML
 with open("results.xml") as result_handle:
     blast_record = NCBIXML.read(result_handle)
 ```
 
-### Available Command-Line Wrappers
-
-- `NcbiblastnCommandline` - BLASTN wrapper
-- `NcbiblastpCommandline` - BLASTP wrapper
-- `NcbiblastxCommandline` - BLASTX wrapper
-- `NcbitblastnCommandline` - TBLASTN wrapper
-- `NcbitblastxCommandline` - TBLASTX wrapper
+Swap the executable name for `blastp`, `blastx`, `tblastn`, or `tblastx` as needed; the flags are the same.
 
 ### Creating BLAST Databases
 
 ```python
-from Bio.Blast.Applications import NcbimakeblastdbCommandline
+import subprocess
 
-# Create nucleotide database
-makedb_cline = NcbimakeblastdbCommandline(
-    input_file="sequences.fasta",
-    dbtype="nucl",
-    out="my_database"
+# Create a nucleotide database from a FASTA file
+subprocess.run(
+    [
+        "makeblastdb",
+        "-in", "sequences.fasta",
+        "-dbtype", "nucl",       # "prot" for protein
+        "-out", "my_database",
+    ],
+    check=True,
 )
-stdout, stderr = makedb_cline()
 ```
 
 ## Analyzing BLAST Results
@@ -288,12 +290,13 @@ def fetch_hit_sequences(blast_record, num_sequences=5):
 ### Tab-Delimited Output (outfmt 6/7)
 
 ```python
+import subprocess
+
 # Run BLAST with tabular output
-blastn_cline = NcbiblastnCommandline(
-    query="input.fasta",
-    db="database",
-    outfmt=6,
-    out="results.txt"
+subprocess.run(
+    ["blastn", "-query", "input.fasta", "-db", "database",
+     "-outfmt", "6", "-out", "results.txt"],
+    check=True,
 )
 
 # Parse tabular results
@@ -313,12 +316,15 @@ with open("results.txt") as f:
 ### Custom Output Formats
 
 ```python
-# Specify custom columns (outfmt 6 with custom fields)
-blastn_cline = NcbiblastnCommandline(
-    query="input.fasta",
-    db="database",
-    outfmt="6 qseqid sseqid pident length evalue bitscore qseq sseq",
-    out="results.txt"
+import subprocess
+
+# Specify custom columns (outfmt 6 with custom fields) -- pass the whole
+# format spec as one argument
+subprocess.run(
+    ["blastn", "-query", "input.fasta", "-db", "database",
+     "-outfmt", "6 qseqid sseqid pident length evalue bitscore qseq sseq",
+     "-out", "results.txt"],
+    check=True,
 )
 ```
 

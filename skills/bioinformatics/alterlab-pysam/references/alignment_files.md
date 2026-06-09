@@ -93,11 +93,14 @@ Without `multiple_iterators=True`, a new fetch() call repositions the file point
 ### count() - Count Reads in Region
 
 ```python
-# Count all reads
+# Count all reads overlapping the region
 num_reads = samfile.count("chr1", 1000, 2000)
 
-# Count with quality filter
-num_quality_reads = samfile.count("chr1", 1000, 2000, quality=20)
+# Count with a filter (count() has no `quality=` arg — use read_callback)
+num_quality_reads = samfile.count(
+    "chr1", 1000, 2000,
+    read_callback=lambda r: r.mapping_quality >= 20,
+)
 ```
 
 ### count_coverage() - Per-Base Coverage
@@ -108,6 +111,10 @@ Returns four arrays (A, C, G, T) with per-base coverage:
 coverage = samfile.count_coverage("chr1", 1000, 2000)
 a_counts, c_counts, g_counts, t_counts = coverage
 ```
+
+**Gotcha:** `count_coverage()` defaults to `quality_threshold=15`, so bases with
+base quality below 15 are silently dropped from the counts. Pass
+`quality_threshold=0` to count every base regardless of quality.
 
 ## AlignedSegment Objects
 
@@ -217,8 +224,9 @@ outfile.close()
 The `pileup()` method provides **column-wise** (position-by-position) analysis across a region:
 
 ```python
-for pileupcolumn in samfile.pileup("chr1", 1000, 2000):
-    print(f"Position {pileupcolumn.pos}: coverage = {pileupcolumn.nsegments}")
+# truncate=True restricts output to the requested region (see note below)
+for pileupcolumn in samfile.pileup("chr1", 1000, 2000, truncate=True):
+    print(f"Position {pileupcolumn.reference_pos}: coverage = {pileupcolumn.nsegments}")
 
     for pileupread in pileupcolumn.pileups:
         if not pileupread.is_del and not pileupread.is_refskip:
@@ -227,8 +235,15 @@ for pileupcolumn in samfile.pileup("chr1", 1000, 2000):
             print(f"  {pileupread.alignment.query_name}: {base}")
 ```
 
+**Important:** Without `truncate=True`, `pileup()` returns columns for **every**
+position spanned by any read overlapping the region — including columns outside
+`start`/`stop`. Pass `truncate=True` to get exactly the requested window instead
+of manually filtering on the position. Note `nsegments` counts all reads at the
+column (including those failing default quality filters); it is not strictly
+equal to `count_coverage()`.
+
 **Key attributes:**
-- `pileupcolumn.pos` - 0-based reference position
+- `pileupcolumn.reference_pos` - 0-based reference position (`.pos` is a deprecated alias)
 - `pileupcolumn.nsegments` - Number of reads covering position
 - `pileupread.alignment` - The AlignedSegment object
 - `pileupread.query_position` - Position in the read (None for deletions)

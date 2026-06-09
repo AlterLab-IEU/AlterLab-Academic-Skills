@@ -1,12 +1,12 @@
 ---
 name: alterlab-geniml
-description: Performs machine learning on genomic interval data (BED files) with geniml — training region embeddings (Region2Vec, BEDspace), single-cell ATAC-seq analysis (scEmbed), and building consensus peaks (universes). Use when working with BED file collections, scATAC-seq data, chromatin accessibility datasets, or any ML-based analysis and feature learning over genomic regions. Part of the AlterLab Academic Skills suite.
+description: Machine learning on genomic interval data (BED files) with the geniml Python package — region embeddings (Region2Vec), joint region+metadata embeddings (BEDspace/StarSpace), single-cell ATAC-seq embeddings (scEmbed), consensus peak sets / universes (build-universe), tokenization, BEDshift randomization, and BBClient/BEDbase caching. Use when training or using region/cell embeddings, clustering scATAC-seq, building a tokenization universe from BED collections, or any ML/feature-learning task over genomic regions. NOT for plain interval arithmetic (overlap/intersect/merge counts) — that is gtars, not geniml. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the geniml Python package.
+allowed-tools: Read Write Edit Bash(uv:*) Bash(python:*) Bash(geniml:*)
+compatibility: No API key required. Runs locally via `uv run python` / the `geniml` CLI; requires the geniml Python package (verified against geniml 0.8.4). Tokenization and universe building also need the external `bedtools` and `uniwig` binaries; BEDspace needs StarSpace.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
 ---
 
 # Geniml: Genomic Interval Machine Learning
@@ -17,23 +17,30 @@ Geniml is a Python package for building machine learning models on genomic inter
 
 ## Installation
 
-Install geniml using uv:
+Verified against **geniml 0.8.4**. Install with uv (prefer `uv run --with` for one-off runs so nothing leaks into the project env):
 
 ```bash
-uv pip install geniml
+uv pip install 'geniml[ml]'        # [ml] pulls torch/gensim; needed for region2vec/scembed
 ```
 
-For ML dependencies (PyTorch, etc.):
+scEmbed and scATAC-seq examples also need scanpy: `uv pip install scanpy`. Universe building (`build-universe`) and hard tokenization shell out to external binaries — `uniwig` (coverage tracks) and `bedtools` — so install those separately.
 
-```bash
-uv pip install 'geniml[ml]'
-```
+Development version: `uv pip install git+https://github.com/databio/geniml.git`
 
-Development version from GitHub:
+### Import paths (IMPORTANT — verified gotcha)
 
-```bash
-uv pip install git+https://github.com/databio/geniml.git
-```
+geniml's subpackage `__init__.py` files do **not** re-export their internals, so the obvious short imports fail with `ImportError`. Import from the concrete module instead:
+
+| Want | Wrong (fails) | Correct (verified) |
+|------|---------------|--------------------|
+| Hard tokenization | `from geniml.tokenization import hard_tokenization` | `from geniml.tokenization.main import hard_tokenization_main` |
+| Region2Vec (legacy fn) | `from geniml.region2vec import region2vec` | `from geniml.region2vec.main_legacy import region2vec` |
+| Region2Vec (model class) | — | `from geniml.region2vec.main import Region2VecExModel` |
+| scEmbed | `from geniml.scembed import ScEmbed` | `from geniml.scembed.main import ScEmbed` |
+| Token dataset | `from geniml.io import tokenize_cells` (does not exist) | `from geniml.region2vec.utils import Region2VecDataset` |
+| Tokenizer | — | `from gtars.tokenizers import Tokenizer` |
+
+Tokenizing cells is handled internally by `ScEmbed` via a `gtars` `Tokenizer`; there is no `geniml.io.tokenize_cells` function.
 
 ## Core Capabilities
 
@@ -118,30 +125,26 @@ Additional tools for caching, randomization, evaluation, and search.
 ### Basic Region Embedding Pipeline
 
 ```python
-from geniml.tokenization import hard_tokenization
-from geniml.region2vec import region2vec
-from geniml.evaluation import evaluate_embeddings
+from geniml.tokenization.main import hard_tokenization_main
+from geniml.region2vec.main_legacy import region2vec
 
-# Step 1: Tokenize BED files
-hard_tokenization(
+# Step 1: Tokenize BED files against a universe.
+# `fraction` (default 1e-9) is the minimum overlap fraction for a hit — NOT a p-value.
+# Requires the `bedtools` binary on PATH.
+hard_tokenization_main(
     src_folder='bed_files/',
     dst_folder='tokens/',
     universe_file='universe.bed',
-    p_value_threshold=1e-9
+    fraction=1e-9,
 )
 
-# Step 2: Train Region2Vec
+# Step 2: Train Region2Vec (word2vec-style over the token "sentences")
 region2vec(
     token_folder='tokens/',
     save_dir='model/',
-    num_shufflings=1000,
-    embedding_dim=100
-)
-
-# Step 3: Evaluate
-metrics = evaluate_embeddings(
-    embeddings_file='model/embeddings.npy',
-    labels_file='metadata.csv'
+    num_shufflings=1000,   # this is also the number of training epochs
+    embedding_dim=100,
+    context_win_size=5,    # half-window; CLI flag is --context-len
 )
 ```
 
@@ -149,26 +152,24 @@ metrics = evaluate_embeddings(
 
 ```python
 import scanpy as sc
-from geniml.scembed import ScEmbed
-from geniml.io import tokenize_cells
+from geniml.scembed.main import ScEmbed
+from geniml.region2vec.utils import Region2VecDataset
+from gtars.tokenizers import Tokenizer
 
-# Step 1: Load data
+# Step 1: Load AnnData. Peaks must live in adata.var with chr/start/end.
 adata = sc.read_h5ad('scatac_data.h5ad')
 
-# Step 2: Tokenize cells
-tokenize_cells(
-    adata='scatac_data.h5ad',
-    universe_file='universe.bed',
-    output='tokens.parquet'
-)
+# Step 2: Build a model bound to a universe tokenizer (gtars).
+model = ScEmbed(tokenizer=Tokenizer('universe.bed'))
 
-# Step 3: Train scEmbed
-model = ScEmbed(embedding_dim=100)
-model.train(dataset='tokens.parquet', epochs=100)
+# Step 3: Train on pre-tokenized cells (a parquet of .gtok tokens).
+# Embedding size / negative samples are passed via gensim_params, e.g.
+# gensim_params={'vector_size': 100, 'negative': 5}
+dataset = Region2VecDataset('tokens.parquet', convert_to_str=True)
+model.train(dataset, epochs=100, min_count=1)
 
-# Step 4: Generate embeddings
-embeddings = model.encode(adata)
-adata.obsm['scembed_X'] = embeddings
+# Step 4: Generate cell embeddings and store them.
+adata.obsm['scembed_X'] = model.encode(adata, pooling='mean')
 
 # Step 5: Cluster with scanpy
 sc.pp.neighbors(adata, use_rep='scembed_X')
@@ -183,19 +184,16 @@ sc.tl.umap(adata)
 cat bed_files/*.bed > combined.bed
 uniwig -m 25 combined.bed chrom.sizes coverage/
 
-# Build universe with coverage cutoff
-geniml universe build cc \
+# Build universe with coverage cutoff (top-level command is `build-universe`)
+geniml build-universe cc \
   --coverage-folder coverage/ \
   --output-file universe.bed \
   --cutoff 5 \
   --merge 100 \
   --filter-size 50
 
-# Evaluate universe quality
-geniml universe evaluate \
-  --universe universe.bed \
-  --coverage-folder coverage/ \
-  --bed-folder bed_files/
+# Assess universe quality (command is `assess-universe`)
+geniml assess-universe --help   # see flags; varies by metric
 ```
 
 ## CLI Reference
@@ -203,56 +201,36 @@ geniml universe evaluate \
 Geniml provides command-line interfaces for major operations:
 
 ```bash
-# Region2Vec training
-geniml region2vec --token-folder tokens/ --save-dir model/ --num-shuffle 1000
+# Region2Vec training (--context-len is the half-window; there is no --window-size)
+geniml region2vec --token-folder tokens/ --save-dir model/ --num-shuffle 1000 --embed-dim 100
 
 # BEDspace preprocessing
-geniml bedspace preprocess --input regions/ --metadata labels.csv --universe universe.bed
+geniml bedspace preprocess --input regions/ --metadata labels.csv --universe universe.bed --output preprocessed/
 
-# BEDspace training
+# BEDspace training (StarSpace must be installed separately)
 geniml bedspace train --input preprocessed.txt --output model/ --dim 100
 
-# BEDspace search
-geniml bedspace search -t r2l -d distances.pkl -q query.bed -n 10
+# BEDspace search — the query is POSITIONAL (last arg), not a -q flag
+geniml bedspace search -t r2l -d distances.pkl -n 10 query.bed
 
-# Universe building
-geniml universe build cc --coverage-folder coverage/ --output universe.bed --cutoff 5
+# Universe building (top-level command is `build-universe`; --output-file, not --output)
+geniml build-universe cc --coverage-folder coverage/ --output-file universe.bed --cutoff 5
 
-# BEDshift randomization
-geniml bedshift --input peaks.bed --genome hg38 --preserve-chrom --iterations 100
+# BEDshift randomization (-b bedfile, -g refgenie genome OR -l chrom sizes; perturbations
+# are rates: -d drop, -a add, -s shift, -c cut, -m merge; -r repeat, -o output)
+geniml bedshift -b peaks.bed -g hg38 -s 0.3 -r 100 -o randomized.bed
 ```
 
 ## When to Use Which Tool
 
-**Use Region2Vec when:**
-- Working with bulk genomic data (ChIP-seq, ATAC-seq, etc.)
-- Need unsupervised embeddings without metadata
-- Comparing region sets across experiments
-- Building features for downstream supervised learning
-
-**Use BEDspace when:**
-- Metadata labels available (cell types, tissues, conditions)
-- Need to query regions by metadata or vice versa
-- Want joint embedding space for regions and labels
-- Building searchable genomic databases
-
-**Use scEmbed when:**
-- Analyzing single-cell ATAC-seq data
-- Clustering cells by chromatin accessibility
-- Annotating cell types from scATAC-seq
-- Integration with scanpy is desired
-
-**Use Universe Building when:**
-- Need reference peak sets for tokenization
-- Combining multiple experiments into consensus
-- Want statistically rigorous region definitions
-- Building standard references for a project
-
-**Use Utilities when:**
-- Need to cache remote BED files (BBClient)
-- Generating null models for statistics (BEDshift)
-- Evaluating embedding quality (Evaluation)
-- Building search interfaces (Text2BedNN)
+| You have / want | Tool |
+|-----------------|------|
+| Bulk region sets (ChIP/ATAC-seq), unsupervised embeddings, no metadata | **Region2Vec** |
+| Region sets **plus** metadata labels; cross-modal label↔region search | **BEDspace** |
+| scATAC-seq cells to cluster/annotate (scanpy integration) | **scEmbed** |
+| A consensus peak set / tokenization reference from many BEDs | **build-universe** |
+| Cache remote BEDs, null models, embedding metrics | **Utilities** (BBClient/BEDshift/eval) |
+| Plain interval overlap/intersection/merge **counts**, no ML | **gtars** — not geniml |
 
 ## Best Practices
 
@@ -289,31 +267,32 @@ Geniml is part of the BEDbase ecosystem:
 
 ## Additional Resources
 
-- **Documentation**: https://docs.bedbase.org/geniml/
+- **Documentation**: https://docs.bedbase.org/geniml/ (also reachable at https://geniml.databio.org)
 - **GitHub**: https://github.com/databio/geniml
 - **Pre-trained models**: Available on Hugging Face (databio organization)
-- **Publications**: Cited in documentation for methodological details
 
 ## Troubleshooting
 
+**`ImportError` on `from geniml.X import ...`:** the subpackage `__init__` doesn't re-export it — import from the concrete module (see the Import paths table above).
+
 **"Tokenization coverage too low":**
 - Check universe quality and completeness
-- Adjust p-value threshold (try 1e-6 instead of 1e-9)
-- Ensure universe matches genome assembly
+- Loosen the overlap `fraction` (e.g. 1e-6 instead of 1e-9) — note this is an overlap fraction, not a p-value
+- Ensure universe matches the genome assembly
 
 **"Training not converging":**
-- Adjust learning rate (try 0.01-0.05 range)
-- Increase training epochs
+- Adjust learning rate (`init_lr` / gensim params, ~0.01-0.05)
+- Increase epochs (`num_shufflings` for region2vec; `epochs` for scEmbed)
 - Check data quality and preprocessing
 
 **"Out of memory errors":**
-- Reduce batch size for scEmbed
-- Process data in chunks
-- Use pre-tokenization for single-cell data
+- Pre-tokenize cells so training streams tokens rather than the full matrix
+- Process data in chunks or downsample
+- Reduce `embedding_dim`
 
 **"StarSpace not found" (BEDspace):**
-- Install StarSpace separately: https://github.com/facebookresearch/StarSpace
-- Set `--path-to-starspace` parameter correctly
+- Install/build StarSpace separately: https://github.com/facebookresearch/StarSpace
+- Point `bedspace train`/`distances` at it with `-s` / `--path-to-starsapce` (note: the geniml CLI flag is literally misspelled "starsapce")
 
 For detailed troubleshooting and method-specific issues, consult the appropriate reference file.
 

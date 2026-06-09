@@ -298,8 +298,8 @@ Currently supported APIs:
 | Provider | Client | Model Examples |
 |----------|--------|----------------|
 | Anthropic | `anthropic.Anthropic()` | via `ALTERLAB_MODEL` (default `claude-opus-4-8`, reviewed 2026-06-06) |
-| OpenAI | `openai.OpenAI()` | gpt-4-vision-preview |
-| Google | `google.generativeai` | gemini-pro-vision |
+| OpenAI | `openai.OpenAI()` | gpt-4o (gpt-4-vision-preview is deprecated) |
+| Google | `google.genai` | gemini-2.x vision models |
 
 ### Anthropic Example
 
@@ -319,7 +319,7 @@ client = OpenAI(api_key="your-api-key")
 result = npa.analyze_unit_visually(
     analyzer, uid,
     api_client=client,
-    model='gpt-4-vision-preview'
+    model='gpt-4o'  # gpt-4-vision-preview is deprecated; gpt-4o is its vision-capable successor
 )
 ```
 

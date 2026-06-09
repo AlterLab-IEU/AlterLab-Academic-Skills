@@ -21,9 +21,13 @@ def check_file_exists(filepath):
 
 
 def check_bam_index(bam_file):
-    """Check if BAM file has an index (.bai or .bam.bai)."""
+    """Check if BAM file has an index (.bam.bai or .bai)."""
     bai_file1 = bam_file + ".bai"
-    bai_file2 = bam_file.replace(".bam", ".bai")
+    # Replace only the trailing .bam extension, not every ".bam" in the path.
+    if bam_file.endswith(".bam"):
+        bai_file2 = bam_file[:-len(".bam")] + ".bai"
+    else:
+        bai_file2 = bam_file + ".bai"
 
     if os.path.exists(bai_file1):
         return True, f"✓ BAM index found: {bai_file1}"

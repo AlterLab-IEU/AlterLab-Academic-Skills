@@ -13,27 +13,37 @@ This template defines the output format for the Progress Dashboard. Switch betwe
 | Topic: {topic}                          |
 +-----------------------------------------+
 
-  Stage 1 RESEARCH    [{status_icon}] {status_text}
+  Stage 1   RESEARCH        [{status_icon}] {status_text}
     {mode_line}
     {outputs_line}
 
-  Stage 2 WRITE       [{status_icon}] {status_text}
+  Stage 2   WRITE           [{status_icon}] {status_text}
     {mode_line}
     {outputs_line}
 
-  Stage 3 REVIEW      [{status_icon}] {status_text}
+  Stage 2.5 INTEGRITY       [{status_icon}] {status_text}
+    {verdict_line}
+
+  Stage 3   REVIEW          [{status_icon}] {status_text}
     {mode_line}
     {decision_line}
 
-  Stage 4 REVISE      [{status_icon}] {status_text}
+  Stage 4   REVISE          [{status_icon}] {status_text}
     {revision_round_line}
     {addressed_line}
 
-  Stage 3' RE-REVIEW  [{status_icon}] {status_text}
+  Stage 3'  RE-REVIEW       [{status_icon}] {status_text}
     {loop_count_line}
 
-  Stage 5 FINALIZE    [{status_icon}] {status_text}
+  Stage 4'  RE-REVISE       [{status_icon}] {status_text}
+
+  Stage 4.5 FINAL INTEGRITY [{status_icon}] {status_text}
+    {verdict_line}
+
+  Stage 5   FINALIZE        [{status_icon}] {status_text}
     {format_line}
+
+  Stage 6   PROCESS SUMMARY [{status_icon}] {status_text}
 
 +-----------------------------------------+
 | Materials:                              |
@@ -42,10 +52,12 @@ This template defines the output format for the Progress Dashboard. Switch betwe
 |   [{icon}] Bibliography                 |
 |   [{icon}] Synthesis Report             |
 |   [{icon}] Paper Draft                  |
+|   [{icon}] Integrity Report (Pre)       |
 |   [{icon}] Review Reports               |
 |   [{icon}] Revision Roadmap             |
 |   [{icon}] Revised Draft                |
 |   [{icon}] Response to Reviewers        |
+|   [{icon}] Integrity Report (Final)     |
 |   [{icon}] Final Paper                  |
 +-----------------------------------------+
 | Revision History:                       |
@@ -106,8 +118,14 @@ Format: `Addressed: {count}/{total} required revisions`
 
 ### loop_count_line
 
-Format: `Loop: {count}/2`
+Format: `Loop: {count}/1`
 - Only displayed for Stage 3'
+- Max is 1 RE-REVISE round (pipeline rule; see SKILL.md "Revision Loop Management")
+
+### verdict_line
+
+Format: `Verdict: {PASS / PASS WITH NOTES / FAIL} ({refs_verified}/{refs_total} refs)`
+- Only displayed for Stage 2.5 and Stage 4.5 when completed or in_progress
 
 ### material icon
 
@@ -132,7 +150,7 @@ Auto-generated suggestion based on current state:
 - Stage 1 completed: "Recommend proceeding to Stage 2 (WRITE) using {recommended_mode} mode"
 - Stage 3 completed (Major): "Need to enter Stage 4 (REVISE), {N} required items"
 - Stage 4 completed: "Recommend proceeding to Stage 3' (RE-REVIEW) to confirm revision quality"
-- Stage 3' completed (Accept): "Congratulations! Proceed to Stage 5 (FINALIZE) to produce final version"
+- Stage 3' completed (Accept): "Proceed to Stage 4.5 (FINAL INTEGRITY) — the mandatory final integrity check — before Stage 5 (FINALIZE)"
 - Pipeline completed: "Pipeline complete! Final paper is ready."
 
 ---
@@ -142,5 +160,5 @@ Auto-generated suggestion based on current state:
 One-line progress bar:
 
 ```
-Pipeline: [v]RESEARCH -> [v]WRITE -> [..]REVIEW -> [ ]REVISE -> [ ]FINALIZE
+Pipeline: [v]RES -> [v]WRT -> [v]INT -> [v]REV -> [..]REVISE -> [ ]RE-REV -> [ ]RE-REV' -> [ ]F-INT -> [ ]FIN -> [ ]SUMMARY
 ```

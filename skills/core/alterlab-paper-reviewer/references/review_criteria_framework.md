@@ -6,77 +6,77 @@ This document defines universal criteria for academic paper review and type-spec
 
 ## 1. Universal Review Dimensions
 
-Seven core dimensions applicable to all paper types:
+Seven core dimensions applicable to all paper types. **Numeric scoring (0-100), per-dimension weights, the aggregation formula, and the score-to-decision mapping are defined in `references/quality_rubrics.md` — that is the single source of truth.** The tables below give qualitative descriptor anchors to help reviewers articulate *why* a dimension lands where it does; map the chosen level to a 0-100 band via the rubric.
 
-### Dimension 1: Originality — Weight 15%
+### Dimension 1: Originality
 
-| Level | Score | Description |
-|-------|-------|-------------|
-| Outstanding | 5 | Proposes entirely new theory/method/evidence that could change the field's direction |
-| Strong | 4 | Has clear new insights or novel combinations, fills a specific research gap |
-| Adequate | 3 | Incremental contribution, reasonable extension of existing knowledge |
-| Weak | 2 | Highly overlapping with existing literature, new contribution unclear |
-| None | 1 | Essentially repeats what is already known |
+| Level | Description |
+|-------|-------------|
+| Outstanding | Proposes entirely new theory/method/evidence that could change the field's direction |
+| Strong | Has clear new insights or novel combinations, fills a specific research gap |
+| Adequate | Incremental contribution, reasonable extension of existing knowledge |
+| Weak | Highly overlapping with existing literature, new contribution unclear |
+| None | Essentially repeats what is already known |
 
-### Dimension 2: Methodological Rigor — Weight 25%
+### Dimension 2: Methodological Rigor
 
-| Level | Score | Description |
-|-------|-------|-------------|
-| Outstanding | 5 | Impeccable research design, innovative methods executed flawlessly |
-| Strong | 4 | Sound design, appropriate methods, minor room for improvement in execution |
-| Adequate | 3 | Methods basically acceptable, but with some design or execution limitations |
-| Weak | 2 | Methods have significant flaws affecting the credibility of conclusions |
-| Unacceptable | 1 | Methods fundamentally unsuitable for answering the research question, or contain serious errors |
+| Level | Description |
+|-------|-------------|
+| Outstanding | Impeccable research design, innovative methods executed flawlessly |
+| Strong | Sound design, appropriate methods, minor room for improvement in execution |
+| Adequate | Methods basically acceptable, but with some design or execution limitations |
+| Weak | Methods have significant flaws affecting the credibility of conclusions |
+| Unacceptable | Methods fundamentally unsuitable for answering the research question, or contain serious errors |
 
-### Dimension 3: Evidence Sufficiency — Weight 20%
+### Dimension 3: Evidence Sufficiency
 
-| Level | Score | Description |
-|-------|-------|-------------|
-| Outstanding | 5 | Rich, diverse, and persuasive evidence that exceeds expectations |
-| Strong | 4 | Evidence sufficiently supports all major arguments |
-| Adequate | 3 | Most arguments supported by evidence, a few need supplementation |
-| Weak | 2 | Key arguments lack sufficient evidence |
-| Unacceptable | 1 | Serious disconnect between arguments and evidence |
+| Level | Description |
+|-------|-------------|
+| Outstanding | Rich, diverse, and persuasive evidence that exceeds expectations |
+| Strong | Evidence sufficiently supports all major arguments |
+| Adequate | Most arguments supported by evidence, a few need supplementation |
+| Weak | Key arguments lack sufficient evidence |
+| Unacceptable | Serious disconnect between arguments and evidence |
 
-### Dimension 4: Argument Coherence — Weight 15%
+### Dimension 4: Argument Coherence
 
-| Level | Score | Description |
-|-------|-------|-------------|
-| Outstanding | 5 | Clear arguments, rigorous logic, elegant structure |
-| Strong | 4 | Smooth argumentation, occasional minor logical leaps |
-| Adequate | 3 | Basically coherent, but some inter-paragraph connections are unclear |
-| Weak | 2 | Multiple logical breaks, readers have difficulty following the argument |
-| Unacceptable | 1 | Confused argumentation, core claims cannot be identified |
+| Level | Description |
+|-------|-------------|
+| Outstanding | Clear arguments, rigorous logic, elegant structure |
+| Strong | Smooth argumentation, occasional minor logical leaps |
+| Adequate | Basically coherent, but some inter-paragraph connections are unclear |
+| Weak | Multiple logical breaks, readers have difficulty following the argument |
+| Unacceptable | Confused argumentation, core claims cannot be identified |
 
-### Dimension 5: Writing Quality — Weight 10%
+### Dimension 5: Writing Quality
 
-| Level | Score | Description |
-|-------|-------|-------------|
-| Outstanding | 5 | Precise and fluent academic English/Chinese, a model of scholarly writing |
-| Strong | 4 | Clear language, occasional minor imperfections that don't affect understanding |
-| Adequate | 3 | Generally readable, with some grammar or word choice issues |
-| Weak | 2 | Frequent language issues that affect understanding |
-| Unacceptable | 1 | Language quality does not meet reviewable standards |
+| Level | Description |
+|-------|-------------|
+| Outstanding | Precise and fluent academic prose, a model of scholarly writing |
+| Strong | Clear language, occasional minor imperfections that don't affect understanding |
+| Adequate | Generally readable, with some grammar or word choice issues |
+| Weak | Frequent language issues that affect understanding |
+| Unacceptable | Language quality does not meet reviewable standards |
 
-### Dimension 6: Literature Integration — Weight 10%
+### Dimension 6: Literature Integration (R2 Domain focus)
 
-| Level | Score | Description |
-|-------|-------|-------------|
-| Outstanding | 5 | Comprehensive, contemporary, critically integrated literature with a compelling research gap argument |
-| Strong | 4 | Covers major literature, with good integration and positioning |
-| Adequate | 3 | Basic coverage, but with omissions or insufficient integration |
-| Weak | 2 | Literature is outdated, incomplete, or merely enumerated |
-| Unacceptable | 1 | Seriously insufficient literature review or irrelevant to the topic |
+| Level | Description |
+|-------|-------------|
+| Outstanding | Comprehensive, contemporary, critically integrated literature with a compelling research gap argument |
+| Strong | Covers major literature, with good integration and positioning |
+| Adequate | Basic coverage, but with omissions or insufficient integration |
+| Weak | Literature is outdated, incomplete, or merely enumerated |
+| Unacceptable | Seriously insufficient literature review or irrelevant to the topic |
 
-### Dimension 7: Significance & Impact — Weight 5%
+### Dimension 7: Significance & Impact (R3 Perspective focus)
 
-| Level | Score | Description |
-|-------|-------|-------------|
-| Outstanding | 5 | Could change policy, practice, or theoretical direction |
-| Strong | 4 | Clear impact on a specific field or practice |
-| Adequate | 3 | Has some academic or practical value |
-| Weak | 2 | Limited scope of impact, mainly academic interest |
-| Marginal | 1 | Difficult to see the significance of the research |
+| Level | Description |
+|-------|-------------|
+| Outstanding | Could change policy, practice, or theoretical direction |
+| Strong | Clear impact on a specific field or practice |
+| Adequate | Has some academic or practical value |
+| Weak | Limited scope of impact, mainly academic interest |
+| Marginal | Difficult to see the significance of the research |
 
 ---
 
@@ -167,30 +167,9 @@ Beyond universal dimensions, specifically focus on:
 
 ## 4. Scoring Aggregation
 
-### Weighted Total Score Calculation
+The 0-100 scale, per-dimension weights, weighted aggregation formula, and score-to-decision mapping (>= 80 Accept / 65-79 Minor / 50-64 Major / < 50 Reject) live in `references/quality_rubrics.md`. Use that file to compute the numeric score and decision; do not maintain a parallel scale here.
 
-```
-Total Score =
-  Originality (15%) +
-  Methodological Rigor (25%) +
-  Evidence Sufficiency (20%) +
-  Argument Coherence (15%) +
-  Writing Quality (10%) +
-  Literature Integration (10%) +
-  Significance (5%)
-```
-
-### Score-to-Decision Mapping
-
-| Weighted Total | Recommended Decision | Note |
-|---------------|---------------------|------|
-| 4.5-5.0 | Accept | Very few papers reach this level |
-| 3.5-4.4 | Minor Revision | Overall quality is good, minor revisions needed |
-| 2.5-3.4 | Major Revision | Has potential but needs substantial revision |
-| 1.5-2.4 | Reject (Resubmit) | Fundamental issues need rework, but topic has value |
-| 1.0-1.4 | Reject | Not suitable for this journal or quality below standard |
-
-**Important reminder**: Scores are only reference. The final decision also needs to consider:
-- Whether any single dimension is particularly low (e.g., methodology score of 1), which may lead to Reject even if the overall score is passable
+**Important reminder**: Scores are only a reference. The final decision also needs to consider:
+- Whether any single dimension is particularly low (e.g., a methodology score in the Insufficient band), which may justify Reject even if the weighted average is passable
 - Specific content of reviewer comments is more important than numbers
 - Special considerations of the journal (special issue, field development needs, etc.)

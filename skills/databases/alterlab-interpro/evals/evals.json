@@ -13,12 +13,12 @@
     },
     {
       "id": "function-go-mapping",
-      "prompt": "I have an uncharacterized protein mapped to UniProt Q9Y6I9. Predict its likely function by pulling its InterPro family/domain annotations and the associated GO terms.",
-      "expected_output": "Invokes alterlab-interpro. Retrieves InterPro entries for the protein (grouping families, domains, homologous superfamilies) and extracts the associated GO terms (identifier, name, category) embedded in the entry metadata, using them to infer likely molecular function.",
+      "prompt": "I have a poorly characterized protein mapped to UniProt Q9Y4K3. Predict its likely function by pulling its InterPro family/domain annotations and the associated GO terms.",
+      "expected_output": "Invokes alterlab-interpro. Retrieves the protein's InterPro entries (grouping families, domains, homologous superfamilies) and reads the associated GO terms (identifier, name, category code F/P/C) from metadata.go_terms, using them to infer likely function (e.g. ubiquitin-protein transferase activity, GO:0004842).",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "GO" },
-        { "type": "behavior", "value": "Maps the protein's InterPro signatures to GO terms and uses families/domains to infer function." }
+        { "type": "output_contains", "value": "GO:" },
+        { "type": "behavior", "value": "Reads GO terms from the InterPro protein/entry metadata (not a separate GO database) and uses the protein's families/domains to infer molecular function." }
       ]
     },
     {

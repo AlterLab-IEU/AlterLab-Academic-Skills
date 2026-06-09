@@ -2,7 +2,7 @@
 """
 Transfer Learning Script for DeepChem
 
-Use pretrained models (ChemBERTa, GROVER, MolFormer) for molecular property prediction
+Use pretrained models (ChemBERTa, GROVER) for molecular property prediction
 with transfer learning. Particularly useful for small datasets.
 
 Usage:
@@ -18,18 +18,14 @@ import sys
 PRETRAINED_MODELS = {
     'chemberta': {
         'name': 'ChemBERTa',
-        'description': 'BERT pretrained on 77M molecules from ZINC15',
-        'model_id': 'seyonec/ChemBERTa-zinc-base-v1'
+        'description': 'RoBERTa pretrained on SMILES (ChemBERTa)',
+        # Pretrained tokenizer/vocab used by dc.models.Chemberta
+        'tokenizer_path': 'seyonec/PubChem10M_SMILES_BPE_60k'
     },
     'grover': {
         'name': 'GROVER',
-        'description': 'Graph transformer pretrained on 10M molecules',
-        'model_id': None  # GROVER uses its own loading mechanism
-    },
-    'molformer': {
-        'name': 'MolFormer',
-        'description': 'Transformer pretrained on molecular structures',
-        'model_id': 'ibm/MoLFormer-XL-both-10pct'
+        'description': 'Graph transformer pretrained on ~10M molecules',
+        'tokenizer_path': None  # GROVER uses its own loading mechanism
     }
 }
 
@@ -52,14 +48,17 @@ def train_chemberta(train_dataset, valid_dataset, test_dataset, task_type='class
     print("=" * 70)
     print("Fine-tuning ChemBERTa")
     print("=" * 70)
-    print("\nChemBERTa is a BERT model pretrained on 77M molecules from ZINC15.")
-    print("It uses SMILES strings as input and has learned rich molecular")
-    print("representations that transfer well to downstream tasks.")
+    print("\nChemBERTa is a RoBERTa model pretrained on SMILES strings.")
+    print("It has learned rich molecular representations that transfer")
+    print("well to downstream property-prediction tasks.")
 
     print(f"\nLoading pretrained ChemBERTa model...")
-    model = dc.models.HuggingFaceModel(
-        model=PRETRAINED_MODELS['chemberta']['model_id'],
+    # dc.models.Chemberta subclasses HuggingFaceModel and pulls the
+    # pretrained tokenizer/vocab from tokenizer_path. Extra kwargs
+    # (batch_size, learning_rate, ...) are forwarded to TorchModel.
+    model = dc.models.Chemberta(
         task=task_type,
+        tokenizer_path=PRETRAINED_MODELS['chemberta']['tokenizer_path'],
         n_tasks=n_tasks,
         batch_size=32,
         learning_rate=2e-5  # Lower LR for fine-tuning
@@ -181,8 +180,8 @@ def load_molnet_dataset(dataset_name, model_type):
     if dataset_name not in molnet_datasets:
         raise ValueError(f"Unknown dataset: {dataset_name}")
 
-    # ChemBERTa and MolFormer use raw SMILES
-    if model_type in ['chemberta', 'molformer']:
+    # ChemBERTa tokenizes raw SMILES itself
+    if model_type == 'chemberta':
         featurizer = 'Raw'
     # GROVER needs graph features
     elif model_type == 'grover':
@@ -216,8 +215,8 @@ def load_custom_dataset(data_path, target_cols, smiles_col, model_type):
     print(f"\nLoading custom data from {data_path}...")
 
     # Choose featurizer based on model
-    if model_type in ['chemberta', 'molformer']:
-        featurizer = dc.feat.DummyFeaturizer()  # Models handle featurization
+    if model_type == 'chemberta':
+        featurizer = dc.feat.DummyFeaturizer()  # ChemBERTa tokenizes SMILES itself
     elif model_type == 'grover':
         featurizer = dc.feat.MolGraphConvFeaturizer()
     else:

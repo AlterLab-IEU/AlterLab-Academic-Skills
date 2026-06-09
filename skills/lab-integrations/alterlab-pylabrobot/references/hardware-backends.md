@@ -4,6 +4,8 @@
 
 PyLabRobot uses a backend abstraction system that allows the same protocol code to run on different liquid handling robots and platforms. Backends handle device-specific communication while the `LiquidHandler` frontend provides a unified interface.
 
+**Current backend class names** (all from `pylabrobot.liquid_handling.backends`): `STARBackend`, `VantageBackend`, `OpentronsOT2Backend`, `EVOBackend` (Tecan EVO), and `LiquidHandlerChatterboxBackend` (no-hardware simulation). Bare `STAR`/`Vantage`/`EVO` remain as legacy aliases; prefer the `*Backend` names. Some examples below still show the short names — substitute the `*Backend` form.
+
 ## Backend Architecture
 
 ### How Backends Work
@@ -15,8 +17,8 @@ PyLabRobot uses a backend abstraction system that allows the same protocol code 
 ```python
 # Same protocol code
 await lh.pick_up_tips(tip_rack["A1"])
-await lh.aspirate(plate["A1"], vols=100)
-await lh.dispense(plate["A2"], vols=100)
+await lh.aspirate(plate["A1"], vols=[100])
+await lh.dispense(plate["A2"], vols=[100])
 await lh.drop_tips()
 
 # Works with any backend (STAR, Opentrons, simulation, etc.)
@@ -39,11 +41,11 @@ The Hamilton STAR and STARlet liquid handling robots have full PyLabRobot suppor
 
 ```python
 from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.liquid_handling.backends import STAR
+from pylabrobot.liquid_handling.backends import STARBackend
 from pylabrobot.resources import STARLetDeck
 
 # Create STAR backend
-backend = STAR()
+backend = STARBackend()
 
 # Initialize liquid handler
 lh = LiquidHandler(backend=backend, deck=STARLetDeck())
@@ -83,24 +85,28 @@ deck = STARDeck()
 
 ```python
 from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.liquid_handling.backends import STAR
-from pylabrobot.resources import STARLetDeck, TIP_CAR_480_A00, Cos_96_DW_1mL
+from pylabrobot.liquid_handling.backends import STARBackend
+from pylabrobot.resources import (
+    STARLetDeck, TIP_CAR_480_A00, PLT_CAR_L5AC_A00,
+    hamilton_96_tiprack_1000uL_filter, Cor_96_wellplate_360ul_Fb,
+)
 
 # Initialize
-lh = LiquidHandler(backend=STAR(), deck=STARLetDeck())
+lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
 await lh.setup()
 
-# Define resources
-tip_rack = TIP_CAR_480_A00(name="tips")
-plate = Cos_96_DW_1mL(name="plate")
+# Define carriers + labware (rack/plate -> carrier site -> deck rail)
+tip_car = TIP_CAR_480_A00(name="tip_carrier")
+tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips")
+lh.deck.assign_child_resource(tip_car, rails=1)
 
-# Assign to rails
-lh.deck.assign_child_resource(tip_rack, rails=1)
-lh.deck.assign_child_resource(plate, rails=10)
+plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
+plt_car[0] = plate = Cor_96_wellplate_360ul_Fb(name="plate")
+lh.deck.assign_child_resource(plt_car, rails=10)
 
 # Execute protocol
 await lh.pick_up_tips(tip_rack["A1"])
-await lh.transfer(plate["A1"], plate["A2"], vols=100)
+await lh.transfer(plate["A1"], plate["A2"], source_vol=100)
 await lh.drop_tips()
 
 await lh.stop()
@@ -114,11 +120,11 @@ The Opentrons OT-2 is supported through the Opentrons HTTP API.
 
 ```python
 from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.liquid_handling.backends import OpentronsBackend
+from pylabrobot.liquid_handling.backends import OpentronsOT2Backend
 from pylabrobot.resources import OTDeck
 
 # Create Opentrons backend (requires robot IP address)
-backend = OpentronsBackend(host="192.168.1.100")  # Replace with your robot's IP
+backend = OpentronsOT2Backend(host="192.168.1.100")  # Replace with your robot's IP
 
 # Initialize liquid handler
 lh = LiquidHandler(backend=backend, deck=OTDeck())
@@ -147,12 +153,12 @@ await lh.setup()
 
 ```python
 from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.liquid_handling.backends import OpentronsBackend
-from pylabrobot.resources import OTDeck
+from pylabrobot.liquid_handling.backends import OpentronsOT2Backend
+from pylabrobot.resources import OTDeck, Deck
 
 # Initialize with robot IP
 lh = LiquidHandler(
-    backend=OpentronsBackend(host="192.168.1.100"),
+    backend=OpentronsOT2Backend(host="192.168.1.100"),
     deck=OTDeck()
 )
 await lh.setup()
@@ -162,43 +168,38 @@ lh.deck = Deck.load_from_json_file("opentrons_layout.json")
 
 # Execute protocol
 await lh.pick_up_tips(tip_rack["A1"])
-await lh.transfer(plate["A1"], plate["A2"], vols=100)
+await lh.transfer(plate["A1"], plate["A2"], source_vol=100)
 await lh.drop_tips()
 
 await lh.stop()
 ```
 
-### Tecan EVO (Work in Progress)
+### Tecan EVO
 
-Support for Tecan EVO liquid handling robots is under development.
-
-**Current Status:**
-- Work-in-progress
-- Basic commands may be available
-- Check documentation for current feature support
-
-**Setup (when available):**
-
-```python
-from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.liquid_handling.backends import TecanBackend
-from pylabrobot.resources import TecanDeck
-
-backend = TecanBackend()
-lh = LiquidHandler(backend=backend, deck=TecanDeck())
-```
-
-### Hamilton Vantage (Mostly Supported)
-
-Hamilton Vantage has "mostly" complete support.
+Support for Tecan EVO liquid handling robots is partial; check the docs for current feature coverage.
 
 **Setup:**
 
 ```python
-from pylabrobot.liquid_handling.backends import Vantage
+from pylabrobot.liquid_handling import LiquidHandler
+from pylabrobot.liquid_handling.backends import EVOBackend
+from pylabrobot.resources import TecanDeck  # or EVO100Deck()/EVO150Deck()/EVO200Deck()
+
+backend = EVOBackend()
+lh = LiquidHandler(backend=backend, deck=TecanDeck())
+```
+
+### Hamilton Vantage
+
+Hamilton Vantage has near-complete support.
+
+**Setup:**
+
+```python
+from pylabrobot.liquid_handling.backends import VantageBackend
 from pylabrobot.resources import VantageDeck
 
-lh = LiquidHandler(backend=Vantage(), deck=VantageDeck())
+lh = LiquidHandler(backend=VantageBackend(), deck=VantageDeck())
 ```
 
 **Features:**
@@ -207,19 +208,19 @@ lh = LiquidHandler(backend=Vantage(), deck=VantageDeck())
 
 ## Simulation Backend
 
-### ChatterboxBackend (Simulation)
+### LiquidHandlerChatterboxBackend (Simulation)
 
-Test protocols without physical hardware using the simulation backend.
+Test protocols without physical hardware using the simulation backend. It logs every operation and tracks tips/volumes; pair it with the `Visualizer` for live deck state.
 
 **Setup:**
 
 ```python
 from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.liquid_handling.backends.simulation import ChatterboxBackend
+from pylabrobot.liquid_handling.backends import LiquidHandlerChatterboxBackend
 from pylabrobot.resources import STARLetDeck
 
 # Create simulation backend
-backend = ChatterboxBackend(num_channels=8)
+backend = LiquidHandlerChatterboxBackend(num_channels=8)
 
 # Initialize liquid handler
 lh = LiquidHandler(backend=backend, deck=STARLetDeck())
@@ -243,9 +244,12 @@ await lh.setup()
 
 ```python
 from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.liquid_handling.backends.simulation import ChatterboxBackend
-from pylabrobot.resources import STARLetDeck, TIP_CAR_480_A00, Cos_96_DW_1mL
-from pylabrobot.resources import set_tip_tracking, set_volume_tracking
+from pylabrobot.liquid_handling.backends import LiquidHandlerChatterboxBackend
+from pylabrobot.resources import (
+    STARLetDeck, TIP_CAR_480_A00, PLT_CAR_L5AC_A00,
+    hamilton_96_tiprack_1000uL_filter, Cor_96_wellplate_360ul_Fb,
+    set_tip_tracking, set_volume_tracking,
+)
 
 # Enable tracking for simulation
 set_tip_tracking(True)
@@ -253,30 +257,33 @@ set_volume_tracking(True)
 
 # Initialize with simulation backend
 lh = LiquidHandler(
-    backend=ChatterboxBackend(num_channels=8),
+    backend=LiquidHandlerChatterboxBackend(num_channels=8),
     deck=STARLetDeck()
 )
 await lh.setup()
 
-# Define resources
-tip_rack = TIP_CAR_480_A00(name="tips")
-plate = Cos_96_DW_1mL(name="plate")
+# Carriers + labware (rack/plate -> carrier site -> deck rail)
+tip_car = TIP_CAR_480_A00(name="tip_carrier")
+tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips_01")
+lh.deck.assign_child_resource(tip_car, rails=1)
 
-lh.deck.assign_child_resource(tip_rack, rails=1)
-lh.deck.assign_child_resource(plate, rails=10)
+plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
+plt_car[0] = plate = Cor_96_wellplate_360ul_Fb(name="plate")
+lh.deck.assign_child_resource(plt_car, rails=10)
 
 # Set initial volumes
 for well in plate.children:
     well.tracker.set_liquids([(None, 200)])
 
-# Run simulated protocol
+# Run simulated protocol (parallel 8-channel move)
 await lh.pick_up_tips(tip_rack["A1:H1"])
-await lh.transfer(plate["A1:H1"], plate["A2:H2"], vols=100)
+await lh.aspirate(plate["A1:H1"], vols=[100] * 8)
+await lh.dispense(plate["A2:H2"], vols=[100] * 8)
 await lh.drop_tips()
 
 # Check results
-print(f"A1 volume: {plate['A1'].tracker.get_volume()} µL")  # 100 µL
-print(f"A2 volume: {plate['A2'].tracker.get_volume()} µL")  # 100 µL
+print(f"A1 volume: {plate['A1'].tracker.get_volume()} uL")  # 100 uL
+print(f"A2 volume: {plate['A2'].tracker.get_volume()} uL")  # 100 uL
 
 await lh.stop()
 ```
@@ -291,14 +298,14 @@ Write protocols that work with any backend:
 def get_backend(robot_type: str):
     """Factory function to create appropriate backend"""
     if robot_type == "star":
-        from pylabrobot.liquid_handling.backends import STAR
-        return STAR()
+        from pylabrobot.liquid_handling.backends import STARBackend
+        return STARBackend()
     elif robot_type == "opentrons":
-        from pylabrobot.liquid_handling.backends import OpentronsBackend
-        return OpentronsBackend(host="192.168.1.100")
+        from pylabrobot.liquid_handling.backends import OpentronsOT2Backend
+        return OpentronsOT2Backend(host="192.168.1.100")
     elif robot_type == "simulation":
-        from pylabrobot.liquid_handling.backends.simulation import ChatterboxBackend
-        return ChatterboxBackend()
+        from pylabrobot.liquid_handling.backends import LiquidHandlerChatterboxBackend
+        return LiquidHandlerChatterboxBackend()
     else:
         raise ValueError(f"Unknown robot type: {robot_type}")
 
@@ -326,7 +333,7 @@ await lh.setup()
 
 # Protocol code works with any backend
 await lh.pick_up_tips(tip_rack["A1"])
-await lh.transfer(plate["A1"], plate["A2"], vols=100)
+await lh.transfer(plate["A1"], plate["A2"], source_vol=100)
 await lh.drop_tips()
 ```
 
@@ -339,12 +346,12 @@ await lh.drop_tips()
 
 ```python
 # Development
-lh = LiquidHandler(backend=ChatterboxBackend(), deck=STARLetDeck())
+lh = LiquidHandler(backend=LiquidHandlerChatterboxBackend(), deck=STARLetDeck())
 
 # ... develop protocol ...
 
 # Production (just change backend)
-lh = LiquidHandler(backend=STAR(), deck=STARLetDeck())
+lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
 ```
 
 ## Backend Configuration
@@ -355,13 +362,13 @@ Some backends accept configuration parameters:
 
 ```python
 # Opentrons with custom parameters
-backend = OpentronsBackend(
+backend = OpentronsOT2Backend(
     host="192.168.1.100",
     port=31950  # Default Opentrons API port
 )
 
-# ChatterboxBackend with custom channels
-backend = ChatterboxBackend(
+# Simulation backend with custom channels
+backend = LiquidHandlerChatterboxBackend(
     num_channels=8  # 8-channel simulation
 )
 ```
@@ -436,16 +443,16 @@ async def run_protocol(
 
     # Create backend
     if robot_type == "star":
-        from pylabrobot.liquid_handling.backends import STAR
-        backend = STAR()
+        from pylabrobot.liquid_handling.backends import STARBackend
+        backend = STARBackend()
         deck = STARLetDeck()
     elif robot_type == "opentrons":
-        from pylabrobot.liquid_handling.backends import OpentronsBackend
-        backend = OpentronsBackend(host="192.168.1.100")
+        from pylabrobot.liquid_handling.backends import OpentronsOT2Backend
+        backend = OpentronsOT2Backend(host="192.168.1.100")
         deck = OTDeck()
     elif robot_type == "simulation":
-        from pylabrobot.liquid_handling.backends.simulation import ChatterboxBackend
-        backend = ChatterboxBackend()
+        from pylabrobot.liquid_handling.backends import LiquidHandlerChatterboxBackend
+        backend = LiquidHandlerChatterboxBackend()
         deck = STARLetDeck()
 
     # Initialize
@@ -458,7 +465,7 @@ async def run_protocol(
 
         # Execute protocol (backend-agnostic)
         await lh.pick_up_tips(tip_rack["A1"])
-        await lh.transfer(plate["A1"], plate["A2"], vols=100)
+        await lh.transfer(plate["A1"], plate["A2"], source_vol=100)
         await lh.drop_tips()
 
         print("Protocol completed successfully!")

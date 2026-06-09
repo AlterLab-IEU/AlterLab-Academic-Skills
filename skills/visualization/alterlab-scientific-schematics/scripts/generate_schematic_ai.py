@@ -530,7 +530,8 @@ If score < {threshold}, mark as NEEDS_IMPROVEMENT with specific suggestions."""
             # Extract text response
             choices = response.get("choices", [])
             if not choices:
-                return "Image generated successfully", 8.0
+                # No review content; assume acceptable so generation isn't blocked.
+                return "Image generated successfully (no review content)", 8.0, False
             
             message = choices[0].get("message", {})
             content = message.get("content", "")

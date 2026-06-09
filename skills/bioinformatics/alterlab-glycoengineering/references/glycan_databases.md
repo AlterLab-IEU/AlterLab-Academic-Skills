@@ -134,7 +134,9 @@ Standard colored symbols for publications:
 ## Batch Analysis Example
 
 ```python
-from glycoengineering_tools import find_n_glycosylation_sequons, predict_o_glycosylation_hotspots
+# find_n_glycosylation_sequons and predict_o_glycosylation_hotspots are the
+# functions defined inline in SKILL.md — paste them in alongside this snippet
+# (there is no installable glycoengineering_tools package).
 import pandas as pd
 
 def analyze_glycosylation_landscape(sequences_dict: dict) -> pd.DataFrame:

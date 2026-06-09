@@ -35,16 +35,17 @@ https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi
 **Example Query:**
 ```bash
 # Search for BRCA1 pathogenic variants
-curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=clinvar&term=BRCA1[gene]+AND+pathogenic[CLNSIG]&retmode=json&retmax=100"
+curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=clinvar&term=BRCA1[gene]+AND+clinsig_pathogenic[Properties]&retmode=json&retmax=100"
 ```
 
-**Common Search Fields:**
+**Common Search Fields** (names come from the `einfo` field list; run `efilter -help` or `einfo -db clinvar` to see the full set). NCBI silently rewrites any unrecognized `[...]` tag to `[All Fields]`, so always confirm the `querytranslation` in the response:
 - `[gene]` - Gene symbol
-- `[CLNSIG]` - Clinical significance (pathogenic, benign, etc.)
-- `[disorder]` - Disease/condition name
-- `[variant name]` - HGVS expression or variant identifier
+- `[Properties]` - Clinical-significance and other record properties: `clinsig_pathogenic`, `clinsig_likely_pathogenic`, `clinsig_uncertain`, `clinsig_likely_benign`, `clinsig_benign`, `clinsig_has_conflicts` (there is **no `[CLNSIG]` field**)
+- `[Review status]` - e.g. `"reviewed by expert panel"`, `"practice guideline"`, `"criteria provided, single submitter"` (there is **no `[RVSTAT]` field**)
+- `[Disease/Phenotype]` - Disease/condition name (not `[disorder]`)
+- `[Variant name]` - HGVS expression or variant name
 - `[chr]` - Chromosome number
-- `[Assembly]` - GRCh37 or GRCh38
+- `[Base Position for Assembly GRCh37]` - GRCh37 coordinate; base GRCh38 position uses `[Base Position]`
 
 #### 2. esummary - Retrieve Record Summaries
 Get summary information for specific ClinVar records.
@@ -119,7 +120,7 @@ curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?dbfrom=clinvar&db
 
 ```bash
 # Step 1: Search for variants
-SEARCH_URL="https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=clinvar&term=CFTR[gene]+AND+pathogenic[CLNSIG]&retmode=json&retmax=10"
+SEARCH_URL="https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=clinvar&term=CFTR[gene]+AND+clinsig_pathogenic[Properties]&retmode=json&retmax=10"
 
 # Step 2: Parse IDs from search results
 # (Extract id list from JSON response)
@@ -142,7 +143,7 @@ sh -c "$(curl -fsSL ftp://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/install-edire
 
 **Search:**
 ```bash
-esearch -db clinvar -query "BRCA1[gene] AND pathogenic[CLNSIG]"
+esearch -db clinvar -query "BRCA1[gene] AND clinsig_pathogenic[Properties]"
 ```
 
 **Pipeline Search to Summary:**
@@ -154,7 +155,7 @@ esearch -db clinvar -query "TP53[gene]" | \
 
 **Count Results:**
 ```bash
-esearch -db clinvar -query "breast cancer[disorder]" | \
+esearch -db clinvar -query '"breast cancer"[Disease/Phenotype]' | \
   efilter -status reviewed | \
   efetch -format docsum
 ```
@@ -195,15 +196,17 @@ def search_clinvar(query, retmax=100):
     return record["IdList"]
 
 # Get summaries
+# Note: Entrez.read() parses XML, so do NOT pass retmode="json" here — the
+# default XML mode is what the parser expects. For JSON, fetch with requests instead.
 def get_summaries(id_list):
     ids = ",".join(id_list)
-    handle = Entrez.esummary(db="clinvar", id=ids, retmode="json")
+    handle = Entrez.esummary(db="clinvar", id=ids, version="2.0")
     record = Entrez.read(handle)
     handle.close()
     return record
 
 # Example usage
-variant_ids = search_clinvar("BRCA2[gene] AND pathogenic[CLNSIG]")
+variant_ids = search_clinvar("BRCA2[gene] AND clinsig_pathogenic[Properties]")
 summaries = get_summaries(variant_ids)
 ```
 

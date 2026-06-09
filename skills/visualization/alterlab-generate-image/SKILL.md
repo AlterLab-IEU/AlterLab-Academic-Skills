@@ -1,6 +1,6 @@
 ---
 name: alterlab-generate-image
-description: Generates or edits images via AI models (FLUX, Nano Banana 2) through an OpenRouter API key. Use when the request is for general-purpose image generation or editing — photos, illustrations, artwork, visual assets, concept art, posters, or any picture that is not a technical diagram. For flowcharts, circuits, pathways, neural-net architectures, and technical diagrams use the scientific-schematics skill instead. Part of the AlterLab Academic Skills suite.
+description: Generates or edits raster images via AI models (FLUX.2, Gemini 3.1 Flash Image / "Nano Banana 2") through an OpenRouter API key. Use when the request is to generate or edit a photo, illustration, artwork, concept art, poster hero image, or presentation/slide visual asset — anything that is not a technical diagram or a data chart. For flowcharts, circuits, pathways, neural-net architectures, and technical/methodology diagrams use alterlab-scientific-schematics; for plotting numeric data (scatter, bar, line) use alterlab-matplotlib instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 compatibility: Requires an OpenRouter API key
@@ -11,11 +11,11 @@ metadata:
 
 # Generate Image
 
-Generate and edit high-quality images using OpenRouter's image generation models including FLUX.2 Pro and Gemini 3.1 Flash Image Preview.
+Generate and edit high-quality images using OpenRouter's image generation models including FLUX.2 Pro and Gemini 3.1 Flash Image Preview (a.k.a. "Nano Banana 2").
 
 ## When to Use This Skill
 
-**Use generate-image for:**
+**Use this skill (`alterlab-generate-image`) for:**
 - Photos and photorealistic images
 - Artistic illustrations and artwork
 - Concept art and visual concepts
@@ -23,13 +23,9 @@ Generate and edit high-quality images using OpenRouter's image generation models
 - Image editing and modifications
 - Any general-purpose image generation needs
 
-**Use scientific-schematics instead for:**
-- Flowcharts and process diagrams
-- Circuit diagrams and electrical schematics
-- Biological pathways and signaling cascades
-- System architecture diagrams
-- CONSORT diagrams and methodology flowcharts
-- Any technical/schematic diagrams
+**Use a different skill instead for:**
+- Flowcharts, process diagrams, circuits, biological pathways, system architecture, CONSORT/methodology diagrams, or any technical schematic → `alterlab-scientific-schematics`
+- Plotting numeric data from a file or array (scatter, bar, line, distribution) → `alterlab-matplotlib` / `alterlab-plotly` / `alterlab-seaborn`
 
 ## Quick Start
 
@@ -64,58 +60,28 @@ This skill sends your prompts and any input image to a third-party API (OpenRout
 
 ## Model Selection
 
-**Default model**: `google/gemini-3.1-flash-image-preview` (high quality, recommended)
+**Default**: `google/gemini-3.1-flash-image-preview` ("Nano Banana 2") — high quality, generation + editing. Use this unless there's a reason not to.
 
-**Available models for generation and editing**:
-- `google/gemini-3.1-flash-image-preview` - High quality, supports generation + editing
-- `black-forest-labs/flux.2-pro` - Fast, high quality, supports generation + editing
+Other models (all support both generation and editing on OpenRouter):
+- `black-forest-labs/flux.2-pro` — frontier visual quality, strong prompt adherence, up to 4 MP.
+- `black-forest-labs/flux.2-flex` — cheaper; especially good at rendering text/typography and fine detail.
 
-**Generation only**:
-- `black-forest-labs/flux.2-flex` - Fast and cheap, but not as high quality as pro
-
-Select based on:
-- **Quality**: Use gemini-3.1-flash-image-preview or flux.2-pro
-- **Editing**: Use gemini-3.1-flash-image-preview or flux.2-pro (both support image editing)
-- **Cost**: Use flux.2-flex for generation only
+Model IDs are version-sensitive — confirm against https://openrouter.ai/models if a call returns a "model not found" error.
 
 ## Common Usage Patterns
 
-### Basic generation
 ```bash
-python scripts/generate_image.py "Your prompt here"
-```
-
-### Specify model
-```bash
-python scripts/generate_image.py "A cat in space" --model "black-forest-labs/flux.2-pro"
-```
-
-### Custom output path
-```bash
+# Generate (default model) to a chosen path
 python scripts/generate_image.py "Abstract art" --output artwork.png
+
+# Generate with a specific model
+python scripts/generate_image.py "A cat in space" --model "black-forest-labs/flux.2-pro"
+
+# Edit an existing image (edit mode is triggered by --input)
+python scripts/generate_image.py "Add sunglasses to the person" --input portrait.png --output cleaned.png
 ```
 
-### Edit an existing image
-```bash
-python scripts/generate_image.py "Make the background blue" --input photo.jpg
-```
-
-### Edit with a specific model
-```bash
-python scripts/generate_image.py "Add sunglasses to the person" --input portrait.png --model "black-forest-labs/flux.2-pro"
-```
-
-### Edit with custom output
-```bash
-python scripts/generate_image.py "Remove the text from the image" --input screenshot.png --output cleaned.png
-```
-
-### Multiple images
-Run the script multiple times with different prompts or output paths:
-```bash
-python scripts/generate_image.py "Image 1 description" --output image1.png
-python scripts/generate_image.py "Image 2 description" --output image2.png
-```
+For multiple images, run the script once per prompt with distinct `--output` paths (it always writes one file and overwrites the default `generated_image.png`).
 
 ## Script Parameters
 
@@ -127,63 +93,20 @@ python scripts/generate_image.py "Image 2 description" --output image2.png
 
 ## Example Use Cases
 
-### For Scientific Documents
 ```bash
-# Generate a conceptual illustration for a paper
-python scripts/generate_image.py "Microscopic view of cancer cells being attacked by immunotherapy agents, scientific illustration style" --output figures/immunotherapy_concept.png
+# Conceptual figure for a paper (illustration, not a data plot)
+python scripts/generate_image.py "Microscopic view of cancer cells being attacked by immunotherapy agents, clean scientific illustration style" --output figures/immunotherapy_concept.png
 
-# Create a visual for a presentation
-python scripts/generate_image.py "DNA double helix structure with highlighted mutation site, modern scientific visualization" --output slides/dna_mutation.png
-```
-
-### For Presentations and Posters
-```bash
-# Title slide background
+# Slide background / poster hero image
 python scripts/generate_image.py "Abstract blue and white background with subtle molecular patterns, professional presentation style" --output slides/background.png
-
-# Poster hero image
-python scripts/generate_image.py "Laboratory setting with modern equipment, photorealistic, well-lit" --output poster/hero.png
+python scripts/generate_image.py "Modern, well-lit laboratory with current equipment, photorealistic" --output poster/hero.png
 ```
 
-### For General Visual Content
-```bash
-# Website or documentation images
-python scripts/generate_image.py "Professional team collaboration around a digital whiteboard, modern office" --output docs/team_collaboration.png
+## Notes & Tips
 
-# Marketing materials
-python scripts/generate_image.py "Futuristic AI brain concept with glowing neural networks" --output marketing/ai_concept.png
-```
-
-## Error Handling
-
-The script provides clear error messages for:
-- Missing API key (with setup instructions)
-- API errors (with status codes)
-- Unexpected response formats
-- Missing dependencies (requests library)
-
-If the script fails, read the error message and address the issue before retrying.
-
-## Notes
-
-- Images are returned as base64-encoded data URLs and automatically saved as PNG files
-- The script supports both `images` and `content` response formats from different OpenRouter models
-- Generation time varies by model (typically 5-30 seconds)
-- For image editing, the input image is encoded as base64 and sent to the model
-- Supported input image formats: PNG, JPEG, GIF, WebP
-- Check OpenRouter pricing for cost information: https://openrouter.ai/models
-
-## Image Editing Tips
-
-- Be specific about what changes you want (e.g., "change the sky to sunset colors" vs "edit the sky")
-- Reference specific elements in the image when possible
-- For best results, use clear and detailed editing instructions
-- Both Gemini 3.1 Flash Image Preview and FLUX.2 Pro support image editing through OpenRouter
-
-## Integration with Other Skills
-
-- **scientific-schematics**: Use for technical diagrams, flowcharts, circuits, pathways
-- **generate-image**: Use for photos, illustrations, artwork, visual concepts
-- **scientific-slides**: Combine with generate-image for visually rich presentations
-- **latex-posters**: Use generate-image for poster visuals and hero images
+- Output is always one PNG. Images come back base64-encoded (as a data URL or content part) and are decoded and written to `--output`; the script handles both the `images` and `content` response shapes used by different OpenRouter models.
+- Supported input formats for editing: PNG, JPEG, GIF, WebP. The input is base64-encoded and sent with the edit prompt.
+- Editing works best with specific, element-referenced instructions — "change the sky to sunset colors" beats "edit the sky".
+- Generation typically takes ~5-30 s depending on model. Pricing: https://openrouter.ai/models
+- The script exits non-zero with a clear message on a missing API key, missing `requests`, an API error (with status code), or an unexpected response shape — read it and fix before retrying.
 

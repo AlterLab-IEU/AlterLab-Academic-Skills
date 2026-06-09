@@ -68,19 +68,27 @@ def map_uniprot_ids(ids, from_db, to_db):
     response = requests.post(submit_url, data=data)
     job_id = response.json()["jobId"]
 
-    # Poll for completion
+    # Poll for completion.
+    # The status endpoint returns {"jobStatus": "RUNNING"} or
+    # {"jobStatus": "FINISHED"} -- NOT a "results" key -- so check jobStatus.
     status_url = f"https://rest.uniprot.org/idmapping/status/{job_id}"
     while True:
-        response = requests.get(status_url)
-        status = response.json()
-        if "results" in status or "failedIds" in status:
+        status = requests.get(status_url, allow_redirects=False).json()
+        if status.get("jobStatus") == "FINISHED":
             break
+        if status.get("jobStatus") in ("ERROR", "FAILED") or "messages" in status:
+            raise RuntimeError(f"ID mapping failed: {status}")
         time.sleep(3)
 
-    # Get results
+    # Get results. Results are PAGINATED (default size=25); follow the
+    # "next" Link header to collect every mapping for large result sets.
     results_url = f"https://rest.uniprot.org/idmapping/results/{job_id}"
-    response = requests.get(results_url)
-    return response.json()
+    resp = requests.get(results_url, params={"size": 500})
+    results = resp.json()["results"]
+    while "next" in resp.links:
+        resp = requests.get(resp.links["next"]["url"])
+        results.extend(resp.json()["results"])
+    return results
 
 # Map UniProt IDs to PDB
 ids = ["P01308", "P04637"]
@@ -113,29 +121,29 @@ with open("human_proteins.fasta", "w") as f:
 import requests
 
 def get_all_results(query, fields=None):
-    """Get all results with pagination"""
+    """Get all results with cursor pagination.
+
+    The next-page URL lives in the "next" Link RESPONSE HEADER
+    (response.links["next"]), NOT in the JSON body -- the body only
+    has a "results" key. requests parses the Link header into
+    response.links for you.
+    """
     url = "https://rest.uniprot.org/uniprotkb/search"
     all_results = []
 
     params = {
         "query": query,
         "format": "json",
-        "size": 500  # Max size per page
+        "size": 500,  # Max page size
     }
-
     if fields:
         params["fields"] = ",".join(fields)
 
-    while True:
-        response = requests.get(url, params=params)
-        data = response.json()
-        all_results.extend(data['results'])
-
-        # Check for next page
-        if 'next' in data:
-            url = data['next']
-        else:
-            break
+    response = requests.get(url, params=params)
+    all_results.extend(response.json()["results"])
+    while "next" in response.links:
+        response = requests.get(response.links["next"]["url"])
+        all_results.extend(response.json()["results"])
 
     return all_results
 
@@ -297,21 +305,21 @@ async function mapIds(ids, fromDb, toDb) {
   });
   const { jobId } = await submitResponse.json();
 
-  // Poll for completion
+  // Poll for completion. The status endpoint returns
+  // {"jobStatus": "RUNNING"} or {"jobStatus": "FINISHED"} -- not a
+  // "results" key -- so check jobStatus.
   const statusUrl = `https://rest.uniprot.org/idmapping/status/${jobId}`;
   while (true) {
-    const statusResponse = await fetch(statusUrl);
-    const status = await statusResponse.json();
-
-    if ("results" in status || "failedIds" in status) {
-      break;
+    const status = await (await fetch(statusUrl)).json();
+    if (status.jobStatus === "FINISHED") break;
+    if (status.jobStatus === "ERROR" || status.messages) {
+      throw new Error(`ID mapping failed: ${JSON.stringify(status)}`);
     }
-
     await new Promise(resolve => setTimeout(resolve, 3000));
   }
 
-  // Get results
-  const resultsUrl = `https://rest.uniprot.org/idmapping/results/${jobId}`;
+  // Get results (paginated; follow the "next" Link header for large sets).
+  const resultsUrl = `https://rest.uniprot.org/idmapping/results/${jobId}?size=500`;
   const resultsResponse = await fetch(resultsUrl);
   return await resultsResponse.json();
 }

@@ -241,7 +241,9 @@ def qft_circuit(qubits):
 # Export to QASM
 qasm_str = circuit.to_qasm()
 
-# Import from QASM
+# Import from QASM (requires the optional `ply` package:
+#   uv pip install ply
+# otherwise the import raises ModuleNotFoundError: No module named 'ply')
 from cirq.contrib.qasm_import import circuit_from_qasm
 circuit = circuit_from_qasm(qasm_str)
 ```

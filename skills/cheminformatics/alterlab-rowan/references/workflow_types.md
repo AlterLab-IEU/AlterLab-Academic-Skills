@@ -18,16 +18,17 @@ Predict acid dissociation constants.
 
 ```python
 workflow = rowan.submit_pka_workflow(
-    initial_molecule=mol,
+    "c1ccccc1O",
     name="pKa calculation"
 )
 ```
 
-**Output:**
-- `strongest_acid`: pKa of most acidic proton
-- `strongest_base`: pKa of most basic site
-- `microscopic_pkas`: List of site-specific pKa values
-- `tautomer_populations`: Relative populations at pH 7
+**Result (`pKaResult`):**
+- `result.strongest_acid`: pKa of most acidic proton
+- `result.strongest_base`: pKa of most basic site
+- `result.conjugate_acids`, `result.conjugate_bases`: protonation microstates
+
+For macroscopic pKa, pH-dependent speciation, and isoelectric point use `submit_macropka_workflow` (`MacropKaResult`: `pka_values`, `microstates`, `isoelectric_point`).
 
 ---
 
@@ -37,14 +38,14 @@ Calculate oxidation/reduction potentials.
 
 ```python
 workflow = rowan.submit_redox_potential_workflow(
-    initial_molecule=mol,
+    mol,
     name="redox potential"
 )
 ```
 
-**Output:**
-- `oxidation_potential`: E° for oxidation (V vs SHE)
-- `reduction_potential`: E° for reduction (V vs SHE)
+**Result (`RedoxPotentialResult`):**
+- `result.oxidation_potential`: oxidation potential (V)
+- `result.reduction_potential`: reduction potential (V)
 
 ---
 
@@ -54,14 +55,13 @@ Predict aqueous and nonaqueous solubility.
 
 ```python
 workflow = rowan.submit_solubility_workflow(
-    initial_molecule=mol,
+    mol,
     name="solubility"
 )
 ```
 
-**Output:**
-- `aqueous_solubility`: Log S in water
-- `solubility_class`: "High", "Medium", or "Low"
+**Result (`SolubilityResult`):**
+- `result.solubilities`: predicted solubility entries (log S, per solvent/temperature)
 
 ---
 
@@ -70,10 +70,8 @@ workflow = rowan.submit_solubility_workflow(
 Calculate H-bond acceptor strength.
 
 ```python
-workflow = rowan.submit_workflow(
-    initial_molecule=mol,
-    workflow_type="hydrogen_bond_basicity",
-    workflow_data={},
+workflow = rowan.submit_hydrogen_bond_basicity_workflow(
+    "CC(=O)C",
     name="H-bond basicity"
 )
 ```
@@ -87,17 +85,17 @@ workflow = rowan.submit_workflow(
 
 Calculate homolytic bond dissociation energies.
 
+Select bonds to break by the atom(s) whose bonds to fragment (`atoms=`), or with the convenience flags `all_CH` / `all_CX`. There is no `bond_indices` argument.
+
 ```python
 workflow = rowan.submit_bde_workflow(
-    initial_molecule=mol,
-    bond_indices=(0, 1),  # Atom indices of bond
+    mol,
+    all_CH=True,        # break all C-H bonds; or atoms=[3, 7]
     name="BDE calculation"
 )
 ```
 
-**Output:**
-- `bde`: Bond dissociation energy (kcal/mol)
-- `radical_stability`: Stability of resulting radicals
+**Result (`BDEResult`):** bond dissociation energies (kcal/mol) per fragmented bond, in `result.data`.
 
 ---
 
@@ -107,15 +105,16 @@ Calculate reactivity indices for nucleophilic/electrophilic attack.
 
 ```python
 workflow = rowan.submit_fukui_workflow(
-    initial_molecule=mol,
+    mol,
     name="Fukui indices"
 )
 ```
 
-**Output:**
-- `fukui_plus`: Electrophilic attack susceptibility per atom
-- `fukui_minus`: Nucleophilic attack susceptibility per atom
-- `fukui_dual`: Dual descriptor per atom
+**Result (`FukuiResult`):**
+- `result.fukui_positive` (f+): susceptibility to nucleophilic attack, per atom
+- `result.fukui_negative` (f-): susceptibility to electrophilic attack, per atom
+- `result.fukui_zero` (f0): radical attack, per atom
+- `result.global_electrophilicity_index`
 
 ---
 
@@ -124,10 +123,8 @@ workflow = rowan.submit_fukui_workflow(
 Calculate relative energies of different spin multiplicities.
 
 ```python
-workflow = rowan.submit_workflow(
-    initial_molecule=mol,
-    workflow_type="spin_states",
-    workflow_data={},
+workflow = rowan.submit_spin_states_workflow(
+    mol,
     name="spin states"
 )
 ```
@@ -143,10 +140,8 @@ workflow = rowan.submit_workflow(
 Predict absorption, distribution, metabolism, excretion, and toxicity.
 
 ```python
-workflow = rowan.submit_workflow(
-    initial_molecule=mol,
-    workflow_type="admet",
-    workflow_data={},
+workflow = rowan.submit_admet_workflow(
+    mol,
     name="ADMET"
 )
 ```
@@ -169,16 +164,16 @@ Calculate energy at fixed geometry.
 
 ```python
 workflow = rowan.submit_basic_calculation_workflow(
-    initial_molecule=mol,
-    workflow_type="single_point",
+    mol,
+    tasks=["energy"],
     name="single point"
 )
 ```
 
-**Output:**
-- `energy`: Total energy (Hartree)
-- `dipole`: Dipole moment vector
-- `mulliken_charges`: Atomic partial charges
+**Result (`BasicCalculationResult`):**
+- `result.energy`: Total energy (Hartree)
+- `result.dipole`: Dipole moment vector
+- `result.charges`: Atomic partial charges
 
 ---
 
@@ -188,16 +183,16 @@ Optimize molecular geometry to minimum energy.
 
 ```python
 workflow = rowan.submit_basic_calculation_workflow(
-    initial_molecule=mol,
-    workflow_type="optimization",
+    mol,
+    tasks=["optimize"],
     name="optimization"
 )
 ```
 
-**Output:**
-- `final_molecule`: Optimized structure
-- `energy`: Final energy (Hartree)
-- `convergence`: Optimization details
+**Result (`BasicCalculationResult`):**
+- `result.molecule`: Optimized structure (stjames.Molecule)
+- `result.energy`: Final energy (Hartree)
+- `result.optimization_energies()`: Energy at each step
 
 ---
 
@@ -207,18 +202,15 @@ Calculate IR/Raman frequencies and thermochemistry.
 
 ```python
 workflow = rowan.submit_basic_calculation_workflow(
-    initial_molecule=mol,
-    workflow_type="frequency",
+    mol,
+    tasks=["optimize", "frequencies"],
     name="frequency"
 )
 ```
 
-**Output:**
-- `frequencies`: Vibrational frequencies (cm⁻¹)
-- `ir_intensities`: IR intensities
-- `zpe`: Zero-point energy
-- `thermal_corrections`: Enthalpy, entropy, Gibbs free energy
-- `imaginary_frequencies`: Count of negative frequencies
+**Result (`BasicCalculationResult`):**
+- `result.frequencies`: Vibrational frequencies (cm⁻¹; negative = imaginary)
+- `result.molecule.zero_point_energy`, `.thermal_enthalpy_corr`, `.thermal_free_energy_corr`, `.gibbs_free_energy`: thermochemistry (Hartree)
 
 ---
 
@@ -228,15 +220,16 @@ Generate and optimize conformer ensemble.
 
 ```python
 workflow = rowan.submit_conformer_search_workflow(
-    initial_molecule=mol,
+    mol,
     name="conformer search"
 )
 ```
 
-**Output:**
-- `conformers`: List of conformer structures with energies
-- `lowest_energy_conformer`: Global minimum structure
-- `boltzmann_weights`: Population weights at 298 K
+**Result (`ConformerSearchResult`):**
+- `result.num_conformers`: number of unique conformers
+- `result.get_energies()`: relative energies (kcal/mol), ascending
+- `result.get_conformers()` / `result.get_conformer(0)`: conformers as `stjames.Molecule`
+- `result.sasa`, `result.polar_sasa`, `result.radii_of_gyration`
 
 ---
 
@@ -246,34 +239,28 @@ Enumerate and rank tautomers.
 
 ```python
 workflow = rowan.submit_tautomer_search_workflow(
-    initial_molecule=mol,
+    mol,
     name="tautomer search"
 )
 ```
 
-**Output:**
-- `tautomers`: List of tautomer structures
-- `energies`: Relative energies
-- `populations`: Boltzmann populations
+**Result (`TautomerResult`):** ranked tautomers with relative energies and Boltzmann populations (see `result.data`).
 
 ---
 
-### Dihedral Scan
+### Coordinate / Dihedral Scan
 
-Scan torsion angle energy surface.
+Scan a bond, angle, or torsion energy surface with `submit_scan_workflow`. The scan coordinate and range are passed via the scan settings (see the API docs); there is no `submit_dihedral_scan_workflow`.
 
 ```python
-workflow = rowan.submit_dihedral_scan_workflow(
-    initial_molecule=mol,
-    dihedral_indices=(0, 1, 2, 3),  # Atom indices
-    name="dihedral scan"
+workflow = rowan.submit_scan_workflow(
+    mol,
+    name="dihedral scan",
+    # scan_settings define the coordinate (atoms), start/stop, and number of steps
 )
 ```
 
-**Output:**
-- `angles`: Dihedral angles scanned (degrees)
-- `energies`: Energy at each angle
-- `barrier_height`: Rotation barrier (kcal/mol)
+**Result (`ScanResult`):** per-point angles and energies (Hartree) in `result.data`; convert relative energies to kcal/mol (× 627.509) for the rotation barrier.
 
 ---
 
@@ -282,37 +269,32 @@ workflow = rowan.submit_dihedral_scan_workflow(
 Progressive refinement with multiple methods.
 
 ```python
-workflow = rowan.submit_workflow(
-    initial_molecule=mol,
-    workflow_type="multistage_optimization",
-    workflow_data={
-        "stages": ["gfn2_xtb", "aimnet2", "dft"]
-    },
+workflow = rowan.submit_multistage_optimization_workflow(
+    mol,
     name="multistage opt"
 )
 ```
 
-**Output:**
-- `final_molecule`: Optimized structure
-- `stage_energies`: Energy after each stage
+Progressively refines the geometry (e.g. xTB → NNP → DFT) using built-in stage settings. **Result:** optimized structure plus per-stage energies in `result.data`.
 
 ---
 
 ### Transition State Search
 
-Find transition state geometry.
+Find a transition-state geometry. v3 exposes a double-ended (reactant/product) TS search and an IRC workflow; there is no single-`submit_ts_search_workflow`.
 
 ```python
-workflow = rowan.submit_ts_search_workflow(
-    initial_molecule=mol,  # Starting guess near TS
+# Double-ended TS search (provide reactant/product endpoints in the inputs)
+workflow = rowan.submit_double_ended_ts_search_workflow(
+    mol,
     name="TS search"
 )
+
+# Intrinsic reaction coordinate from a TS
+irc = rowan.submit_irc_workflow(ts_mol, name="IRC")
 ```
 
-**Output:**
-- `ts_structure`: Transition state geometry
-- `imaginary_frequency`: Single imaginary frequency
-- `barrier_height`: Activation energy
+**Output:** transition-state structure, the imaginary frequency, and barrier information in `result.data`.
 
 ---
 
@@ -321,10 +303,8 @@ workflow = rowan.submit_ts_search_workflow(
 Calculate ligand strain energy.
 
 ```python
-workflow = rowan.submit_workflow(
-    initial_molecule=mol,
-    workflow_type="strain",
-    workflow_data={},
+workflow = rowan.submit_strain_workflow(
+    mol,
     name="strain"
 )
 ```
@@ -335,24 +315,20 @@ workflow = rowan.submit_workflow(
 
 ---
 
-### Orbital Calculation
+### Electronic Properties (orbitals)
 
-Calculate molecular orbitals.
+Calculate frontier-orbital energies and related electronic properties. (The workflow type is `electronic_properties`; there is no `orbitals` type.)
 
 ```python
-workflow = rowan.submit_workflow(
-    initial_molecule=mol,
-    workflow_type="orbitals",
-    workflow_data={},
-    name="orbitals"
+workflow = rowan.submit_electronic_properties_workflow(
+    mol,
+    name="electronic properties"
 )
 ```
 
 **Output:**
-- `homo_energy`: HOMO energy (eV)
-- `lumo_energy`: LUMO energy (eV)
-- `homo_lumo_gap`: Band gap (eV)
-- `orbital_coefficients`: MO coefficients
+- HOMO / LUMO energies and HOMO-LUMO gap
+- additional electronic descriptors in `result.data`
 
 ---
 
@@ -364,27 +340,24 @@ Dock ligand to protein binding site.
 
 ```python
 workflow = rowan.submit_docking_workflow(
-    protein=protein_uuid,
-    pocket={
-        "center": [10.0, 20.0, 30.0],
-        "size": [20.0, 20.0, 20.0]
-    },
+    protein=protein_uuid,           # UUID or Protein object
+    pocket=[[10.0, 20.0, 30.0],     # center (Å)
+            [20.0, 20.0, 20.0]],    # box size (Å)
     initial_molecule=mol,
-    executable="vina",           # "vina" or "qvina2"
-    scoring_function="vinardo",  # "vina" or "vinardo"
+    executable="vina",              # "vina" or "qvina2"
+    scoring_function="vinardo",     # "vina" or "vinardo"
     exhaustiveness=8,
-    do_csearch=True,             # Conformer search before docking
-    do_optimization=True,        # Optimize conformers
-    do_pose_refinement=True,     # Refine poses with QM
+    do_csearch=False,               # conformer search before docking
+    do_optimization=False,          # optimize conformers
+    do_pose_refinement=True,        # refine poses (default True)
     name="docking"
 )
 ```
 
-**Output:**
-- `docking_score`: Best Vina score (kcal/mol)
-- `poses`: List of docked poses with scores
-- `ligand_strain`: Strain energy of bound conformer
-- `pose_sdf`: SDF file of poses
+**Result (`DockingResult`):**
+- `result.scores`: list of `DockingScore` (sorted best-first), each with `.score` (kcal/mol), `.strain`, `.rmsd`, `.posebusters_valid`, `.pose`
+- `result.best_pose`: top pose as `stjames.Molecule`
+- `result.get_poses()`: all poses as molecules
 
 ---
 
@@ -394,18 +367,16 @@ Screen multiple ligands against one target.
 
 ```python
 workflow = rowan.submit_batch_docking_workflow(
+    smiles_list=["CCO", "c1ccccc1", "CC(=O)O"],   # note: smiles_list is first
     protein=protein_uuid,
-    pocket=pocket_dict,
-    smiles_list=["CCO", "c1ccccc1", "CC(=O)O"],
+    pocket=[[cx, cy, cz], [sx, sy, sz]],
     executable="qvina2",
     scoring_function="vina",
     name="batch docking"
 )
 ```
 
-**Output:**
-- `results`: List of docking results per ligand
-- `rankings`: Sorted by score
+**Result (`BatchDockingResult`):** `result.scores` holds the per-ligand docking scores (same `DockingScore` fields as single docking); rank ligands by their best score.
 
 ---
 
@@ -417,26 +388,23 @@ Predict protein-ligand complex structure using AI.
 workflow = rowan.submit_protein_cofolding_workflow(
     initial_protein_sequences=["MSKGEELFT..."],
     initial_smiles_list=["CCO"],
-    model="boltz_2",       # "boltz_1x", "boltz_2", "chai_1r"
-    use_msa_server=False,  # Use MSA for better accuracy
-    use_potentials=True,   # Apply physical constraints
-    compute_strain=False,  # Calculate ligand strain
+    model="boltz_2",        # "chai_1r" | "boltz_1" | "boltz_2" | "openfold_3"
+    use_msa_server=True,    # build an MSA (default True; improves accuracy)
+    use_potentials=False,   # apply physical-potential refinement
+    num_samples=None,       # number of predictions to generate
+    compute_strain=False,   # calculate ligand strain
     do_pose_refinement=False,
     name="cofolding"
 )
 ```
 
-**Models:**
-- `chai_1r`: Chai-1 model (~2 min)
-- `boltz_1x`: Boltz-1 model (~2 min)
-- `boltz_2`: Boltz-2 model (latest, recommended)
+**Models:** `chai_1r`, `boltz_1`, `boltz_2` (recommended), `openfold_3`. There is no `boltz_1x`.
 
-**Output:**
-- `structure_pdb`: Predicted complex structure
-- `ptm_score`: Predicted TM score (0-1, higher = more confident)
-- `interface_ptm`: Interface prediction confidence
-- `aggregate_score`: Combined confidence metric
-- `ligand_rmsd`: If reference available
+**Result (`ProteinCofoldingResult`):**
+- `result.predictions`: list of per-sample `CofoldingResult`
+- each prediction's `.scores.ptm` and `.scores.iptm` (predicted TM / interface confidence, 0-1), `.scores.avg_lddt`
+- `result.affinity_score` (if `ligand_binding_affinity_index` was set)
+- `result.predicted_structure_uuid` for the predicted structure
 
 ---
 
@@ -445,21 +413,15 @@ workflow = rowan.submit_protein_cofolding_workflow(
 Molecular dynamics simulation of docked pose.
 
 ```python
-workflow = rowan.submit_workflow(
-    initial_molecule=mol,
-    workflow_type="pose_analysis_md",
-    workflow_data={
-        "protein_uuid": protein_uuid,
-        "pose_sdf": pose_sdf_content
-    },
+workflow = rowan.submit_pose_analysis_md_workflow(
+    # protein + docked pose inputs; see the function signature for required args
     name="pose MD"
 )
 ```
 
-**Output:**
-- `trajectory`: MD trajectory file
-- `rmsd_over_time`: Ligand RMSD
-- `interactions`: Protein-ligand interactions
+**Output:** a short MD trajectory plus ligand RMSD / interaction analysis in `result.data`.
+
+> For full, long-timescale explicit-solvent MD trajectories and trajectory analysis, that is a separate molecular-dynamics tool, not this Rowan skill — Rowan's `pose_analysis_md` is a short pose-stability check.
 
 ---
 
@@ -526,14 +488,13 @@ Generate MSA for protein sequences.
 
 ```python
 workflow = rowan.submit_msa_workflow(
-    sequences=["MSKGEELFT..."],
+    initial_protein_sequences=["MSKGEELFT..."],   # not `sequences=`
+    output_formats={"colabfold"},                 # optional: colabfold | chai | boltz
     name="MSA"
 )
 ```
 
-**Output:**
-- `msa`: Multiple sequence alignment
-- `coverage`: Sequence coverage
+**Output:** the alignment(s) in the requested format(s), accessible via `result.data` / the typed `MSAResult`.
 
 ---
 
@@ -542,19 +503,14 @@ workflow = rowan.submit_msa_workflow(
 Design protein binders.
 
 ```python
-workflow = rowan.submit_workflow(
-    workflow_type="protein_binder_design",
-    workflow_data={
-        "target_sequence": "MSKGEELFT...",
-        "target_hotspots": [10, 15, 20]
-    },
+workflow = rowan.submit_protein_binder_design_workflow(
+    # target sequence + hotspot residues; see the function signature
     name="binder design"
 )
 ```
 
 **Output:**
-- `designed_sequences`: Binder sequences
-- `confidence_scores`: Per-design confidence
+- designed binder sequences and per-design confidence in `result.data`
 
 ---
 
@@ -567,25 +523,29 @@ All workflow submission functions accept:
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `name` | str | Workflow name (optional) |
-| `folder_uuid` | str | Organize in folder |
-| `max_credits` | float | Credit limit |
+| `folder_uuid` / `folder` | str / Folder | Organize in folder |
+| `max_credits` | int | Credit limit |
+| `webhook_url` | str | URL Rowan POSTs to on completion |
+| `is_draft` | bool | Submit without starting (call `submit_draft()` later) |
 
 ### Method Selection
 
-For basic calculations, specify method:
+For basic calculations, pass `tasks` plus `method`/`basis_set`/`preset` as direct keyword arguments (not a `workflow_data` dict):
 
 ```python
 workflow = rowan.submit_basic_calculation_workflow(
-    initial_molecule=mol,
-    workflow_type="optimization",
-    workflow_data={
-        "method": "gfn2_xtb",  # or "aimnet2", "dft"
-        "basis_set": "def2-SVP"  # for DFT
-    }
+    mol,
+    tasks=["optimize"],
+    method="gfn2_xtb",        # or e.g. "aimnet2_wb97md3"
+    basis_set="def2-SVP",     # for DFT
+    # or instead use a preset:
+    # preset="organic_nnp",   # general_nnp | organic_nnp | rapid_semiempirical | routine_dft | careful_dft
 )
 ```
 
-**Available Methods:**
-- Neural network: `aimnet2`, `egret`
+**Method families:**
+- Neural network potentials (e.g. AIMNet2, Egret)
 - Semiempirical: `gfn1_xtb`, `gfn2_xtb`
-- DFT: `b3lyp`, `pbe`, `wb97x`
+- DFT: hybrid/GGA functionals with selectable basis sets
+
+The exact accepted method strings come from `stjames.Method`; the `preset` argument is the simplest way to pick a sensible level of theory.

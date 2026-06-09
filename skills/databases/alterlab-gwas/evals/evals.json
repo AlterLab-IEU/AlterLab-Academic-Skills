@@ -16,7 +16,7 @@
       "expected_output": "Invokes alterlab-gwas to query the trait's associations endpoint (/efoTraits/EFO_0001360/associations) or the Summary Statistics API with a p_upper threshold, paginating results and filtering to genome-wide significant hits (p <= 5e-8), returning rsIDs, risk alleles, and effect sizes.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "5" }
+        { "type": "output_contains", "value": "5e-8" }
       ]
     },
     {

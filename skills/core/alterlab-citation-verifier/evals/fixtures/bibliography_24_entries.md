@@ -43,7 +43,7 @@ OpenAlex / Semantic Scholar / arXiv and return a per-entry verdict.
 
 19. Bender, E. M., Gebru, T., McMillan-Major, A., & Shmitchell, S. (2021). On the dangers of stochastic parrots: Can language models be too big? *Proceedings of FAccT 2021*, 610-623. https://doi.org/10.1145/3442188.3445922 [REAL — expected VERIFIED]
 
-20. Tanaka, H., & Whitfield, D. (2022). Generative adversarial networks for synthetic medical imaging: A retracted meta-analysis. *Medical Imaging Advances, 9*(2), 77-95. [Retraction Watch flag expected — verifier should surface the retraction]
+20. Tanaka, H., & Whitfield, D. (2022). Generative adversarial networks for synthetic medical imaging: A retracted meta-analysis. *Medical Imaging Advances, 9*(2), 77-95. [retraction flag expected (Crossref update-to / OpenAlex is_retracted) — verifier should surface the retraction]
 
 21. Mayer, R. E. (2009). *Multimedia learning* (2nd ed.). Cambridge University Press. [REAL — expected VERIFIED]
 

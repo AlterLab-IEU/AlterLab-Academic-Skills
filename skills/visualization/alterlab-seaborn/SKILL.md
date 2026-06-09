@@ -1,6 +1,6 @@
 ---
 name: alterlab-seaborn
-description: Builds statistical plots with the seaborn Python library and pandas DataFrame integration, on attractive matplotlib-based defaults. Use for quick exploration of distributions, relationships, and categorical comparisons — box plots, violin plots, pair plots, heatmaps. For interactive charts use plotly, for journal publication styling use scientific-visualization, for low-level custom plotting use matplotlib. Part of the AlterLab Academic Skills suite.
+description: Builds statistical plots with the seaborn Python library and pandas DataFrame integration, on attractive matplotlib-based defaults. Use for quick exploration of distributions, relationships, and categorical comparisons — box plots, violin plots, swarm/strip plots, KDE/histograms, pair plots, joint plots, regression plots, correlation heatmaps, and faceted small multiples (relplot/displot/catplot/lmplot). For interactive/hover/zoom charts defer to alterlab-plotly; for exact journal/manuscript styling (column widths, point fonts, CMYK, vector export) defer to alterlab-scientific-viz; for low-level custom matplotlib figures defer to alterlab-matplotlib (seaborn integrates with it for fine-tuning). Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 compatibility: Requires the seaborn and pandas Python libraries (pip install seaborn pandas); no API key or external service needed
@@ -19,9 +19,9 @@ Seaborn is a Python visualization library for creating publication-quality stati
 
 Use seaborn for quick, attractive statistical graphics straight from a pandas DataFrame: distributions, relationships, categorical comparisons, correlation heatmaps, and faceted small multiples. Route elsewhere when the need differs:
 
-- **Interactive charts** → plotly
-- **Journal/publication styling** → scientific-visualization skill
-- **Low-level custom plotting** → matplotlib (seaborn integrates with it for fine-tuning)
+- **Interactive charts** (hover, zoom, HTML dashboards) → `alterlab-plotly`
+- **Exact journal/manuscript styling** (column widths, point fonts, CMYK, vector export) → `alterlab-scientific-viz`
+- **Low-level custom plotting** → `alterlab-matplotlib` (seaborn integrates with it for fine-tuning)
 
 ## Design Philosophy
 
@@ -32,6 +32,8 @@ Use seaborn for quick, attractive statistical graphics straight from a pandas Da
 5. **Matplotlib integration** — full compatibility with matplotlib customization when needed.
 
 ## Quick Start
+
+Examples target **seaborn ≥ 0.13** (verified on 0.13.2). Two API points that bite on this version: pass `palette=` only together with `hue=` (palette-without-hue is deprecated, removed in 0.14), and style error bars via `err_kws={...}` rather than the removed-in-0.15 `errcolor`/`errwidth`/`scale`/`join` keywords.
 
 ```python
 import seaborn as sns

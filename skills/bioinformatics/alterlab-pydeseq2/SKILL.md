@@ -28,10 +28,19 @@ Use this skill when:
 ## Installation and Requirements
 
 ```bash
-uv pip install pydeseq2
+uv pip install "pydeseq2>=0.5,<0.6"
 ```
 
-**System requirements:** Python 3.10-3.11, pandas 1.4.3+, numpy 1.23.0+, scipy 1.11.0+, scikit-learn 1.1.1+, anndata 0.8.0+. Optional for plots: matplotlib, seaborn.
+**System requirements (pydeseq2 0.5.x):** Python ≥3.11; numpy ≥2.0, pandas ≥2.2, scipy ≥1.12, scikit-learn ≥1.4, anndata ≥0.11, formulaic ≥1.0.2 (parses the `~` design formula), matplotlib ≥3.9. These are pulled in automatically as dependencies.
+
+**API note (0.4+):** parallelism is configured through an `inference` object, not a bare `n_cpus=` kwarg:
+
+```python
+from pydeseq2.default_inference import DefaultInference
+inference = DefaultInference(n_cpus=8)
+dds = DeseqDataSet(counts=counts_df, metadata=metadata, design="~condition", inference=inference)
+ds = DeseqStats(dds, contrast=["condition", "treated", "control"], inference=inference)
+```
 
 ## Core Workflow
 

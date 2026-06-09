@@ -45,8 +45,13 @@ def get_base_style() -> Dict[str, Any]:
         # Figure
         'figure.dpi': 100,  # Display DPI (changed on save)
         'figure.facecolor': 'white',
+        # Leave both layout engines off globally: the examples in this skill use
+        # explicit fig.tight_layout() / manual GridSpec margins. Forcing
+        # constrained_layout here would warn ("layout has changed to tight") and
+        # silently override those calls. Enable per-figure instead:
+        #   fig, ax = plt.subplots(layout='constrained')
         'figure.autolayout': False,
-        'figure.constrained_layout.use': True,
+        'figure.constrained_layout.use': False,
 
         # Font
         'font.size': 8,

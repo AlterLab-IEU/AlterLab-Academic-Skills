@@ -3,7 +3,7 @@ name: alterlab-esm
 description: Run ESM protein language models — ESM3 for generative multimodal protein design across sequence, structure, and function, and ESM C for efficient embeddings and representations — locally or via the cloud Forge API. Use when working with protein sequences, structures, or function prediction, designing novel proteins, generating protein embeddings, performing inverse folding, or doing protein-engineering tasks. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Runs under `uv run python` with the `esm` package. Models run locally; the cloud Forge API path requires an EvolutionaryScale Forge token (ESM3ForgeInferenceClient)."
+compatibility: "Runs under `uv run python` with the `esm` package (pin `esm>=3.1,<3.2`; requires Python >=3.10). Local model weights run best on a CUDA GPU; CPU works for ESM C embeddings but is slow. The cloud Forge/Biohub API path requires an EvolutionaryScale token (ESM3ForgeInferenceClient)."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -68,11 +68,13 @@ Use ESM3's structure track for structure prediction from sequence or inverse fol
 ```python
 from esm.sdk.api import ESM3InferenceClient, ESMProtein, GenerationConfig
 
-# Predict structure from sequence
-protein = ESMProtein(sequence="MPRTKEINDAGLIVHSP...")
+# Predict structure from a complete sequence
+protein = ESMProtein(sequence="MPRTKEINDAGLIVHSP")
 protein_with_structure = model.generate(
     protein,
-    GenerationConfig(track="structure", num_steps=protein.sequence.count("_"))
+    # num_steps controls how many structure tokens are decoded per step;
+    # use the sequence length (not a "_" count — the sequence is complete here)
+    GenerationConfig(track="structure", num_steps=len(protein.sequence))
 )
 
 # Access predicted structure
@@ -108,30 +110,35 @@ Generate high-quality embeddings for downstream tasks like function prediction, 
 
 ```python
 from esm.models.esmc import ESMC
-from esm.sdk.api import ESMProtein
+from esm.sdk.api import ESMProtein, LogitsConfig
 
-# Load ESM C model
-model = ESMC.from_pretrained("esmc-300m").to("cuda")
+# Load ESM C model (note: local from_pretrained names use UNDERSCORES)
+model = ESMC.from_pretrained("esmc_300m").to("cuda")
 
-# Get embeddings
-protein = ESMProtein(sequence="MPRTKEINDAGLIVHSP...")
+# Encode, then request embeddings via the logits() API
+protein = ESMProtein(sequence="MPRTKEINDAGLIVHSP")
 protein_tensor = model.encode(protein)
+out = model.logits(protein_tensor, LogitsConfig(sequence=True, return_embeddings=True))
 
-# Generate embeddings
-embeddings = model.forward(protein_tensor)
+embeddings = out.embeddings   # (1, L+2, hidden_dim), incl. BOS/EOS tokens
+logits = out.logits.sequence  # per-position amino-acid logits
 ```
+
+Do NOT call `model.forward(...)` to get embeddings — `forward` returns a raw model output, not a usable representation tensor. Use `model.logits(..., LogitsConfig(return_embeddings=True)).embeddings`.
 
 **Batch processing:**
 
 ```python
-# Encode multiple proteins
+# Encode multiple proteins and pull mean-pooled embeddings
 proteins = [
-    ESMProtein(sequence="MPRTKEIND..."),
-    ESMProtein(sequence="AGLIVHSPQ..."),
-    ESMProtein(sequence="KTEFLNDGR...")
+    ESMProtein(sequence="MPRTKEIND"),
+    ESMProtein(sequence="AGLIVHSPQ"),
+    ESMProtein(sequence="KTEFLNDGR"),
 ]
-
-embeddings_list = [model.logits(model.forward(model.encode(p))) for p in proteins]
+cfg = LogitsConfig(sequence=True, return_embeddings=True)
+embeddings_list = [
+    model.logits(model.encode(p), cfg).embeddings.mean(dim=1) for p in proteins
+]
 ```
 
 See `references/esm-c-api.md` for ESM C model details, efficiency comparisons, and advanced embedding strategies.
@@ -216,39 +223,34 @@ See `references/forge-api.md` for detailed Forge API documentation, authenticati
 - `esm3-large-2024-03` (98B) - Highest quality, slower (Forge only)
 
 **ESM C Models (Embeddings):**
-- `esmc-300m` (30 layers) - Lightweight, fast inference
-- `esmc-600m` (36 layers) - Balanced performance
-- `esmc-6b` (80 layers) - Maximum representation quality
+- `esmc_300m` (30 layers) - Lightweight, fast inference; open weights, runs locally
+- `esmc_600m` (36 layers) - Balanced performance; open weights, runs locally
+- `esmc-6b-2024-12` (80 layers) - Maximum representation quality; Forge/Biohub API only
+
+Naming gotcha: local `ESMC.from_pretrained(...)` names use **underscores** (`esmc_300m`, `esmc_600m`). The Forge/Biohub client strings use **hyphens with a date** (e.g. `esmc-6b-2024-12`).
 
 **Selection criteria:**
-- **Local development/testing:** Use `esm3-sm-open-v1` or `esmc-300m`
+- **Local development/testing:** Use `esm3-sm-open-v1` or `esmc_300m`
 - **Production quality:** Use `esm3-medium-2024-08` via Forge
-- **Maximum accuracy:** Use `esm3-large-2024-03` or `esmc-6b`
+- **Maximum accuracy:** Use `esm3-large-2024-03` or `esmc-6b-2024-12`
 - **High throughput:** Use Forge API with batch executor
 - **Cost optimization:** Use smaller models, implement caching strategies
 
 ## Installation
 
-**Basic installation:**
+**Basic installation** (pin the major version — the SDK is alpha and API-unstable across minors):
 
 ```bash
-uv pip install esm
+uv pip install "esm>=3.1,<3.2"
 ```
 
-**With Flash Attention (recommended for faster inference):**
+**With Flash Attention (recommended for faster GPU inference):**
 
 ```bash
-uv pip install esm
 uv pip install flash-attn --no-build-isolation
 ```
 
-**For Forge API access:**
-
-```bash
-uv pip install esm  # SDK includes Forge client
-```
-
-No additional dependencies needed. Obtain Forge API token at https://forge.evolutionaryscale.ai
+The Forge/Biohub client (`ESM3ForgeInferenceClient`) ships inside the `esm` package — no extra install. Obtain an API token at https://forge.evolutionaryscale.ai
 
 ## Common Workflows
 

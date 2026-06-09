@@ -1,8 +1,8 @@
 ---
 name: alterlab-geo
-description: Access NCBI GEO (Gene Expression Omnibus) for gene expression and functional genomics data — search and download microarray and RNA-seq datasets by GSE, GSM, or GPL accession and retrieve SOFT and series matrix files. Use when locating public expression datasets, fetching processed expression matrices, or sourcing transcriptomics data for differential-expression analysis. Part of the AlterLab Academic Skills suite.
+description: Access NCBI GEO (Gene Expression Omnibus) for gene expression and functional genomics data — search and download microarray and RNA-seq datasets by GSE, GSM, GPL, or GDS accession and retrieve SOFT, MINiML, and series matrix files. Use when locating public expression datasets, fetching processed expression matrices, downloading a study's supplementary files, or sourcing per-study transcriptomics data for differential-expression analysis. For raw FASTQ sequencing reads by SRA/ENA run accession use alterlab-ena; for reference tissue-expression baselines (median TPM across human tissues) use alterlab-gtex; for cancer cohort somatic mutations and copy-number use alterlab-cbioportal. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(uv:*)
 compatibility: Keyless NCBI E-utilities REST API (email required by NCBI); optional NCBI API key raises rate limits
 metadata:
     skill-author: AlterLab
@@ -13,7 +13,7 @@ metadata:
 
 ## Overview
 
-The Gene Expression Omnibus (GEO) is NCBI's public repository for high-throughput gene expression and functional genomics data. GEO contains over 264,000 studies with more than 8 million samples from both array-based and sequence-based experiments.
+The Gene Expression Omnibus (GEO) is NCBI's public repository for high-throughput gene expression and functional genomics data. It holds hundreds of thousands of studies (Series) and millions of samples from both array-based and sequence-based experiments. For current totals see the GEO browser at https://www.ncbi.nlm.nih.gov/geo/.
 
 ## When to Use This Skill
 
@@ -34,15 +34,14 @@ GEO organizes data hierarchically using different accession types:
 
 - **Series (GSE)** — a complete experiment with related samples (e.g. `GSE123456`).
   Largest organizational unit. Holds experimental design, samples, study info.
-  Current count: 264,928+ series.
 - **Sample (GSM)** — a single experimental sample / biological replicate
-  (e.g. `GSM987654`). Linked to platforms and series. 8,068,632+ samples.
+  (e.g. `GSM987654`). Linked to platforms and series.
 - **Platform (GPL)** — the microarray or sequencing platform (e.g. `GPL570`,
   Affymetrix Human Genome U133 Plus 2.0 Array). Shared across experiments.
-  27,739+ platforms.
 - **DataSet (GDS)** — curated, consistently-formatted collections (e.g. `GDS5678`)
-  processed for differential analysis. 4,348 curated datasets. Ideal for quick
-  comparative analyses.
+  processed for differential analysis. Ideal for quick comparative analyses, but
+  the curated GDS set is legacy and no longer growing — most recent studies exist
+  only as GSE Series, so prefer GSE for new work.
 - **Profiles** — gene-specific expression data linked to sequence features,
   queryable by gene name, cross-referenced to Entrez Gene.
 
@@ -158,9 +157,9 @@ Entrez.api_key = "your_api_key_here"
 
 ## Scripts
 
-`scripts/query_geo.py` — runnable helper for GEO DataSets via NCBI E-utilities (no key; `NCBI_API_KEY` lifts the rate limit):
+`scripts/query_geo.py` — runnable helper for GEO DataSets via NCBI E-utilities (no key; `NCBI_API_KEY` lifts the rate limit). Has a PEP 723 inline-dependency header, so `uv run` installs `requests` automatically:
 
 ```bash
-python scripts/query_geo.py search "breast cancer AND Homo sapiens[ORGN]" --retmax 5
-python scripts/query_geo.py summary 200000001,200000002
+uv run scripts/query_geo.py search "breast cancer AND Homo sapiens[ORGN]" --retmax 5
+uv run scripts/query_geo.py summary 200000001,200000002
 ```

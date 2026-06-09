@@ -1,66 +1,44 @@
 # Troubleshooting Common Issues
 
-Fixes for AI generation, image quality, quality-check, and accessibility problems.
+Fixes for AI generation, quality, and accessibility problems. All controls are prompt-based plus the
+`--iterations` and `--doc-type` flags; there is no separate quality-check toolkit to run.
+
+## API and Setup Issues
+
+**Problem**: `OPENROUTER_API_KEY not found`
+- Set it: `export OPENROUTER_API_KEY='sk-or-v1-...'`, or pass `--api-key`, or put it in a `.env`
+  file (requires `pip install python-dotenv`).
+- Verify it is exported in the same shell: `echo $OPENROUTER_API_KEY`.
+
+**Problem**: `requests library not found`
+- Install it: `pip install requests`.
+
+**Problem**: "No image data in API response" / generation returns nothing
+- Re-run with `-v` to print the raw API response structure.
+- Confirm the configured image model actually supports image output. The default is
+  `ALTERLAB_IMAGE_MODEL` (Nano Banana 2); override with another image-capable model if needed.
 
 ## AI Generation Issues
 
-**Problem**: Overlapping text or elements
-- **Solution**: AI generation automatically handles spacing
-- **Solution**: Increase iterations: `--iterations 2` for better refinement
+**Problem**: Overlapping text or elements, or elements not connecting properly
+- Make the prompt more specific about layout, connection points, and spacing
+  (e.g. "vertical top-to-bottom flow, generous spacing, no overlapping boxes").
+- Raise `--iterations 2` so the review feedback drives a second, corrected generation.
 
-**Problem**: Elements not connecting properly
-- **Solution**: Make your prompt more specific about connections and layout
-- **Solution**: Increase iterations for better refinement
-
-## Image Quality Issues
-
-**Problem**: Export quality poor
-- **Solution**: AI generation produces high-quality images automatically
-- **Solution**: Increase iterations for better results: `--iterations 2`
-
-**Problem**: Elements overlap after generation
-- **Solution**: AI generation automatically handles spacing
-- **Solution**: Increase iterations: `--iterations 2` for better refinement
-- **Solution**: Make your prompt more specific about layout and spacing requirements
-
-## Quality Check Issues
-
-**Problem**: False positive overlap detection
-- **Solution**: Adjust threshold: `detect_overlaps(image_path, threshold=0.98)`
-- **Solution**: Manually review flagged regions in visual report
-
-**Problem**: Generated image quality is low
-- **Solution**: AI generation produces high-quality images by default
-- **Solution**: Increase iterations for better results: `--iterations 2`
-
-**Problem**: Colorblind simulation shows poor contrast
-- **Solution**: Switch to Okabe-Ito palette explicitly in code
-- **Solution**: Add redundant encoding (shapes, patterns, line styles)
-- **Solution**: Increase color saturation and lightness differences
-
-**Problem**: High-severity overlaps detected
-- **Solution**: Review overlap_report.json for exact positions
-- **Solution**: Increase spacing in those specific regions
-- **Solution**: Re-run with adjusted parameters and verify again
-
-**Problem**: Visual report generation fails
-- **Solution**: Check Pillow and matplotlib installations
-- **Solution**: Ensure image file is readable: `Image.open(path).verify()`
-- **Solution**: Check sufficient disk space for report generation
+**Problem**: Quality score never reaches the threshold (stuck NEEDS_IMPROVEMENT)
+- Lower the bar to match the real venue with `--doc-type` (e.g. `poster` = 7.0 vs `journal` = 8.5).
+- Add the missing detail the critique calls out (labels, counts, direction) to the prompt.
 
 ## Accessibility Problems
 
+The guidelines prompt already requests an Okabe-Ito palette, redundant encoding, and grayscale
+compatibility. If the result still falls short:
+
 **Problem**: Colors indistinguishable in grayscale
-- **Solution**: Run accessibility checker: `verify_accessibility(image_path)`
-- **Solution**: Add patterns, shapes, or line styles for redundancy
-- **Solution**: Increase contrast between adjacent elements
+- Add explicit redundant encoding to the prompt: distinct shapes, line styles, or fill patterns
+  per category, not color alone.
+- Ask for higher contrast between adjacent elements.
 
 **Problem**: Text too small when printed
-- **Solution**: Run resolution validator: `validate_resolution(image_path)`
-- **Solution**: Design at final size, use minimum 7-8 pt fonts
-- **Solution**: Check physical dimensions in resolution report
-
-**Problem**: Accessibility checks consistently fail
-- **Solution**: Review accessibility_report.json for specific failures
-- **Solution**: Increase color contrast by at least 20%
-- **Solution**: Test with actual grayscale conversion before finalizing
+- Request larger, consistent label sizes and design for the final print size.
+- Re-generate at a higher target size; the guidelines ask for >=10 pt labels by default.

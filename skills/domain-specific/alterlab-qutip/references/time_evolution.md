@@ -147,21 +147,23 @@ result = mcsolve(H, psi0, tlist, c_ops, e_ops=[num(N)], ntraj=ntraj)
 
 # Results averaged over trajectories
 n_avg = result.expect[0]
-n_std = result.std_expect[0]  # Standard deviation
+n_std = result.std_expect[0]  # Standard deviation across trajectories
 
-# Individual trajectories (if options.store_states=True)
-options = Options(store_states=True)
-result = mcsolve(H, psi0, tlist, c_ops, ntraj=ntraj, options=options)
-trajectories = result.states  # List of trajectory lists
+# Individual trajectories: set keep_runs_results=True (options is a dict in v5)
+result = mcsolve(H, psi0, tlist, c_ops, ntraj=ntraj,
+                 options={"keep_runs_results": True})
+trajectories = result.runs_states  # runs_states[trajectory][time]
 ```
 
 ### Photon Counting
 
 ```python
-# Track quantum jumps
-result = mcsolve(H, psi0, tlist, c_ops, ntraj=ntraj, options=options)
+# Track quantum jumps (per-trajectory jump records need keep_runs_results)
+result = mcsolve(H, psi0, tlist, c_ops, ntraj=ntraj,
+                 options={"keep_runs_results": True})
 
-# Access jump times and which operator caused the jump
+# col_times[i] holds the jump times of trajectory i; col_which[i] the c_ops indices.
+# result.collapse[i] is the same info as (time, op_index) tuples.
 for traj in result.col_times:
     print(f"Jump times: {traj}")
 
@@ -195,18 +197,23 @@ H0 = sigmaz()
 H1 = sigmax()
 H = [H0, [H1, 'cos(w*t)']]
 args = {'w': w_d}
-
-# Floquet modes and quasi-energies
 T = 2 * np.pi / w_d  # Period
-f_modes, f_energies = floquet_modes(H, T, args)
 
-# Initial state in Floquet basis
+# Quasi-energies / Floquet modes: in v5 use FloquetBasis
+# (the standalone floquet_modes() is deprecated).
+fbasis = FloquetBasis(H, T, args=args)
+f_energies = fbasis.e_quasi   # quasi-energies
+
+# Initial state and dissipation
 psi0 = basis(2, 0)
-
-# Dissipation in Floquet basis
 c_ops = [np.sqrt(0.1) * sigmam()]
 
-result = fmmesolve(H, psi0, tlist, c_ops, e_ops=[num(2)], T=T, args=args)
+# v5 fmmesolve signature: fmmesolve(H, rho0, tlist, c_ops=..., spectra_cb=...,
+# T=..., w_th=..., e_ops=..., args=...). spectra_cb gives the bath noise power
+# spectrum S(w) for each c_op; omit it to use the default flat spectrum.
+result = fmmesolve(H, psi0, tlist, c_ops=c_ops,
+                   spectra_cb=[lambda w: 0.5 * (w > 0)],
+                   e_ops=[sigmaz()], T=T, args=args)
 ```
 
 ## Stochastic Solvers
@@ -214,17 +221,20 @@ result = fmmesolve(H, psi0, tlist, c_ops, e_ops=[num(2)], T=T, args=args)
 ### Stochastic Schrödinger Equation (ssesolve)
 
 ```python
-# Diffusion operator
+# Stochastic collapse (measurement) operators
 sc_ops = [np.sqrt(0.1) * destroy(N)]
 
-# Heterodyne detection
+# Detection scheme is chosen with heterodyne=True/False (NOT a `noise` code,
+# which was the v4 API). False = homodyne (default), True = heterodyne.
 result = ssesolve(H, psi0, tlist, sc_ops=sc_ops, e_ops=[num(N)],
-                   ntraj=500, noise=1)  # noise=1 for heterodyne
+                   ntraj=500, heterodyne=True)
 ```
 
 ### Stochastic Master Equation (smesolve)
 
 ```python
+# smesolve(H, rho0, tlist, c_ops, sc_ops, heterodyne=False, *, e_ops, ...)
+# c_ops are deterministic Lindblad channels; sc_ops are measured (stochastic).
 result = smesolve(H, psi0, tlist, c_ops=[], sc_ops=sc_ops,
                    e_ops=[num(N)], ntraj=500)
 ```
@@ -301,36 +311,38 @@ corr = correlation_3op_1t(H, None, taulist, c_ops, A, B, C)
 
 ## Solver Options
 
-```python
-from qutip import Options
+In QuTiP 5 options are a plain `dict` (the v4 `Options`/`solver.Options` class
+was removed). Pass it via the `options=` keyword:
 
-options = Options()
-options.nsteps = 10000  # Max internal steps
-options.atol = 1e-8  # Absolute tolerance
-options.rtol = 1e-6  # Relative tolerance
-options.method = 'adams'  # or 'bdf' for stiff problems
-options.store_states = True  # Store all states
-options.store_final_state = True  # Store only final state
+```python
+options = {
+    "nsteps": 10000,        # Max internal steps
+    "atol": 1e-8,           # Absolute tolerance
+    "rtol": 1e-6,           # Relative tolerance
+    "method": "adams",      # or 'bdf' for stiff problems
+    "store_states": True,   # Store all states
+    "store_final_state": True,
+}
 
 result = mesolve(H, psi0, tlist, c_ops, options=options)
 ```
 
 ### Progress Bar
 
+`progress_bar` takes a string in v5 — `'text'`, `'enhanced'`, `'tqdm'`, or `''`
+(empty/False to disable). It is no longer a boolean.
+
 ```python
-options.progress_bar = True
-result = mesolve(H, psi0, tlist, c_ops, options=options)
+result = mesolve(H, psi0, tlist, c_ops, options={"progress_bar": "text"})
 ```
 
 ## Saving and Loading Results
 
 ```python
-# Save results
-result.save("my_simulation.dat")
-
-# Load results
-from qutip import Result
-loaded_result = Result.load("my_simulation.dat")
+# Use qsave/qload (pickle-based) — Result has no .save()/.load() in v5.
+# A ".qu" extension is appended automatically.
+qsave(result, "my_simulation")
+loaded_result = qload("my_simulation")  # reads my_simulation.qu
 ```
 
 ## Tips for Efficient Simulations

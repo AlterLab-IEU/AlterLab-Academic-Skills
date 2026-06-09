@@ -27,7 +27,7 @@ VENUE_REQUIREMENTS = {
         "margins": {"top": 2.54, "bottom": 2.54, "left": 2.54, "right": 2.54},  # cm (1 inch)
         "font_size": 10,
         "font_family": "Times",
-        "format": "two-column"
+        "format": "single-column"
     },
     "plos_one": {
         "page_limit": None,  # No limit

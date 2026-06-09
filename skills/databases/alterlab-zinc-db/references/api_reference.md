@@ -4,6 +4,15 @@
 
 Complete technical reference for programmatic access to the ZINC database, covering API endpoints, query syntax, parameters, response formats, and advanced usage patterns for ZINC22, ZINC20, and legacy versions.
 
+> **Request model (read first).** CartBlanche22 searches are submitted as **form
+> fields** — either `curl -F field=value` (multipart) or a form-encoded POST (what
+> `scripts/query_zinc.py` sends). The legacy "colon URL" form
+> (`/substances.txt:zinc_id=...`) is not supported by the current service. Every
+> search is **asynchronous**: the endpoint returns a JSON task handle
+> (`{"task": "<uuid>"}`) and the rows are assembled server-side for the web UI. For
+> large programmatic retrieval, use the bulk file repository (below) rather than
+> scraping task results.
+
 ## Base URLs
 
 ### ZINC22 (Current)
@@ -27,40 +36,34 @@ Retrieve compound information using ZINC identifiers.
 
 **Endpoint**: `/substances.txt`
 
-**Parameters**:
-- `zinc_id` (required): Single ZINC ID or comma-separated list
+**Parameters** (form fields):
+- `zinc_ids` (required): Comma-separated list of ZINC IDs, or `@file` (one per line).
+  Note the field is **plural** — `zinc_id` returns HTTP 400.
 - `output_fields` (optional): Comma-separated field names (default: all fields)
-
-**URL Format**:
-```
-https://cartblanche22.docking.org/substances.txt:zinc_id={ZINC_ID}&output_fields={FIELDS}
-```
 
 **Examples**:
 
-Single compound:
+Multiple compounds (inline):
 ```bash
-curl "https://cartblanche22.docking.org/[email protected]_fields=zinc_id,smiles,catalogs"
+curl -X GET "https://cartblanche22.docking.org/substances.txt" \
+  -F zinc_ids="ZINC000019632618,ZINC000000000001" \
+  -F output_fields="zinc_id,smiles,catalogs"
 ```
 
-Multiple compounds:
+Batch retrieval from a file:
 ```bash
-curl "https://cartblanche22.docking.org/substances.txt:zinc_id=ZINC000000000001,ZINC000000000002,ZINC000000000003&output_fields=zinc_id,smiles,tranche"
+# zinc_ids.txt: one ZINC ID per line
+curl -X GET "https://cartblanche22.docking.org/substances.txt" \
+  -F zinc_ids=@zinc_ids.txt \
+  -F output_fields="zinc_id,smiles,tranche"
 ```
 
-Batch retrieval from file:
-```bash
-# Create file with ZINC IDs (one per line or comma-separated)
-curl -X POST "https://cartblanche22.docking.org/substances.txt?output_fields=zinc_id,smiles" \
-  -F "zinc_id=@zinc_ids.txt"
+**Response** (JSON task handle):
+```json
+{"task": "0bf64e3e-ac00-4123-9270-7bfd3572117c"}
 ```
-
-**Response Format** (TSV):
-```
-zinc_id	smiles	catalogs
-ZINC000000000001	CC(C)O	[vendor1,vendor2]
-ZINC000000000002	c1ccccc1	[vendor3]
-```
+The result rows (TSV-style columns: `zinc_id`, `smiles`, `catalogs`, …) are then
+materialized in the web UI task view.
 
 ### 2. Structure Search by SMILES
 
@@ -68,40 +71,36 @@ Search for compounds by chemical structure with optional similarity thresholds.
 
 **Endpoint**: `/smiles.txt`
 
-**Parameters**:
-- `smiles` (required): Query SMILES string (URL-encode if necessary)
-- `dist` (optional): Tanimoto distance threshold (0-10, default: 0 = exact)
-- `adist` (optional): Alternative distance metric (0-10, default: 0)
+**Parameters** (form fields):
+- `smiles` (required): Query SMILES string (inline, or `@file` for a batch of queries)
+- `dist` (optional): Tanimoto distance threshold (default: 0 = exact)
+- `adist` (optional): Anonymous (graph-topology) distance for broader searches (default: 0)
 - `output_fields` (optional): Comma-separated field names
-
-**URL Format**:
-```
-https://cartblanche22.docking.org/smiles.txt:smiles={SMILES}&dist={DIST}&adist={ADIST}&output_fields={FIELDS}
-```
 
 **Examples**:
 
-Exact structure match:
+Exact structure match (dist/adist default to 0):
 ```bash
-curl "https://cartblanche22.docking.org/smiles.txt:smiles=c1ccccc1&output_fields=zinc_id,smiles"
+curl -X GET "https://cartblanche22.docking.org/smiles.txt" \
+  -F smiles="c1ccccc1" -F output_fields="zinc_id,smiles"
 ```
 
 Similarity search (Tanimoto distance = 3):
 ```bash
-curl "https://cartblanche22.docking.org/smiles.txt:smiles=CC(C)Cc1ccc(cc1)C(C)C(=O)O&dist=3&output_fields=zinc_id,smiles,catalogs"
+curl -X GET "https://cartblanche22.docking.org/smiles.txt" \
+  -F smiles="CC(C)Cc1ccc(cc1)C(C)C(=O)O" -F dist=3 \
+  -F output_fields="zinc_id,smiles,catalogs"
 ```
 
-Broad similarity search:
+Broad similarity search (both metrics):
 ```bash
-curl "https://cartblanche22.docking.org/smiles.txt:smiles=c1ccccc1&dist=5&adist=5&output_fields=zinc_id,smiles,tranche"
+curl -X GET "https://cartblanche22.docking.org/smiles.txt" \
+  -F smiles="c1ccccc1" -F dist=5 -F adist=5 \
+  -F output_fields="zinc_id,smiles,tranche"
 ```
 
-URL-encoded SMILES (for special characters):
-```bash
-# Original: CC(=O)Oc1ccccc1C(=O)O
-# Encoded: CC%28%3DO%29Oc1ccccc1C%28%3DO%29O
-curl "https://cartblanche22.docking.org/smiles.txt:smiles=CC%28%3DO%29Oc1ccccc1C%28%3DO%29O&dist=2"
-```
+Because SMILES is sent as a form-field value rather than embedded in the URL, no
+URL-encoding of special characters (`(`, `=`, `#`) is needed.
 
 **Distance Parameters Interpretation**:
 - `dist=0`: Exact match
@@ -115,18 +114,15 @@ Query compounds by vendor catalog numbers.
 
 **Endpoint**: `/catitems.txt`
 
-**Parameters**:
-- `catitem_id` (required): Supplier catalog code
+**Parameters** (form fields):
+- `supplier_codes` (required): Supplier catalog code(s) — inline, or `@file`
 - `output_fields` (optional): Comma-separated field names
-
-**URL Format**:
-```
-https://cartblanche22.docking.org/catitems.txt:catitem_id={SUPPLIER_CODE}&output_fields={FIELDS}
-```
 
 **Example**:
 ```bash
-curl "https://cartblanche22.docking.org/catitems.txt:catitem_id=SUPPLIER-12345&output_fields=zinc_id,smiles,supplier_code,catalogs"
+curl -X GET "https://cartblanche22.docking.org/catitems.txt" \
+  -F supplier_codes="SUPPLIER-12345" \
+  -F output_fields="zinc_id,smiles,supplier_code,catalogs"
 ```
 
 ### 4. Random Compound Sampling
@@ -135,36 +131,28 @@ Generate random compound sets with optional filtering by chemical properties.
 
 **Endpoint**: `/substance/random.txt`
 
-**Parameters**:
+**Parameters** (form fields):
 - `count` (optional): Number of compounds to retrieve (default: 100, max: depends on server)
 - `subset` (optional): Filter by predefined subset (e.g., 'lead-like', 'drug-like', 'fragment')
 - `output_fields` (optional): Comma-separated field names
-
-**URL Format**:
-```
-https://cartblanche22.docking.org/substance/random.txt:count={COUNT}&subset={SUBSET}&output_fields={FIELDS}
-```
 
 **Examples**:
 
 Random 100 compounds (default):
 ```bash
-curl "https://cartblanche22.docking.org/substance/random.txt"
+curl "https://cartblanche22.docking.org/substance/random.txt" -F count=100
 ```
 
 Random lead-like molecules:
 ```bash
-curl "https://cartblanche22.docking.org/substance/random.txt:count=1000&subset=lead-like&output_fields=zinc_id,smiles,tranche"
-```
-
-Random drug-like molecules:
-```bash
-curl "https://cartblanche22.docking.org/substance/random.txt:count=5000&subset=drug-like&output_fields=zinc_id,smiles"
+curl "https://cartblanche22.docking.org/substance/random.txt" \
+  -F count=1000 -F subset="lead-like" -F output_fields="zinc_id,smiles,tranche"
 ```
 
 Random fragments:
 ```bash
-curl "https://cartblanche22.docking.org/substance/random.txt:count=500&subset=fragment&output_fields=zinc_id,smiles,tranche"
+curl "https://cartblanche22.docking.org/substance/random.txt" \
+  -F count=500 -F subset="fragment" -F output_fields="zinc_id,smiles,tranche"
 ```
 
 **Subset Definitions**:
@@ -203,12 +191,14 @@ If `output_fields` is not specified, endpoints return all available fields in TS
 
 Request specific fields only:
 ```bash
-curl "https://cartblanche22.docking.org/[email protected]_fields=zinc_id,smiles"
+curl -X GET "https://cartblanche22.docking.org/substances.txt" \
+  -F zinc_ids="ZINC000019632618" -F output_fields="zinc_id,smiles"
 ```
 
 Request multiple fields:
 ```bash
-curl "https://cartblanche22.docking.org/[email protected]_fields=zinc_id,smiles,tranche,catalogs"
+curl -X GET "https://cartblanche22.docking.org/substances.txt" \
+  -F zinc_ids="ZINC000019632618" -F output_fields="zinc_id,smiles,tranche,catalogs"
 ```
 
 ## Tranche System
@@ -350,81 +340,66 @@ obabel H05P035M400-0.db2 -O output.mol2
 
 ### Combining Multiple Search Criteria
 
-**Python wrapper for complex queries**:
+**Python wrapper for complex queries** (form-encoded POST, stdlib only):
 
 ```python
-import subprocess
-import pandas as pd
-from io import StringIO
+import json
+import urllib.parse
+import urllib.request
+
+BASE = "https://cartblanche22.docking.org"
+
+def _post(path, fields):
+    data = urllib.parse.urlencode(fields).encode("utf-8")
+    req = urllib.request.Request(
+        f"{BASE}/{path}", data=data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        return json.loads(resp.read().decode("utf-8"))
 
 def advanced_zinc_search(smiles=None, zinc_ids=None, dist=0,
                          subset=None, count=None, output_fields=None):
     """
-    Flexible ZINC search with multiple criteria.
+    Submit a ZINC22 search. Returns the JSON task handle ({"task": "<uuid>"});
+    retrieve the rows from the web UI task view.
 
-    Args:
-        smiles: SMILES string for structure search
-        zinc_ids: List of ZINC IDs for batch retrieval
-        dist: Distance parameter for similarity (0-10)
-        subset: Subset filter (lead-like, drug-like, fragment)
-        count: Number of random compounds
-        output_fields: List of fields to return
-
-    Returns:
-        pandas DataFrame with results
+    Exactly one of smiles / zinc_ids / count must be given.
     """
-    if output_fields is None:
-        output_fields = ['zinc_id', 'smiles', 'tranche', 'catalogs']
+    fields_str = ",".join(output_fields or ["zinc_id", "smiles", "tranche", "catalogs"])
 
-    fields_str = ','.join(output_fields)
-
-    # Structure search
     if smiles:
-        url = f"https://cartblanche22.docking.org/smiles.txt:smiles={smiles}&dist={dist}&output_fields={fields_str}"
-
-    # Batch retrieval
-    elif zinc_ids:
-        zinc_ids_str = ','.join(zinc_ids)
-        url = f"https://cartblanche22.docking.org/substances.txt:zinc_id={zinc_ids_str}&output_fields={fields_str}"
-
-    # Random sampling
-    elif count:
-        url = f"https://cartblanche22.docking.org/substance/random.txt:count={count}&output_fields={fields_str}"
+        return _post("smiles.txt",
+                     {"smiles": smiles, "dist": dist, "output_fields": fields_str})
+    if zinc_ids:
+        return _post("substances.txt",
+                     {"zinc_ids": ",".join(zinc_ids), "output_fields": fields_str})
+    if count:
+        body = {"count": count, "output_fields": fields_str}
         if subset:
-            url += f"&subset={subset}"
-
-    else:
-        raise ValueError("Must specify smiles, zinc_ids, or count")
-
-    # Execute query
-    result = subprocess.run(['curl', '-s', url],
-                          capture_output=True, text=True)
-
-    # Parse to DataFrame
-    df = pd.read_csv(StringIO(result.stdout), sep='\t')
-
-    return df
+            body["subset"] = subset
+        return _post("substance/random.txt", body)
+    raise ValueError("Must specify smiles, zinc_ids, or count")
 ```
 
 **Usage examples**:
 
 ```python
-# Find similar compounds
-df = advanced_zinc_search(
+# Find similar compounds (submits the search, returns a task handle)
+task = advanced_zinc_search(
     smiles="CC(C)Cc1ccc(cc1)C(C)C(=O)O",
     dist=3,
-    output_fields=['zinc_id', 'smiles', 'catalogs']
+    output_fields=["zinc_id", "smiles", "catalogs"],
 )
 
 # Batch retrieval
-zinc_ids = ["ZINC000000000001", "ZINC000000000002"]
-df = advanced_zinc_search(zinc_ids=zinc_ids)
+task = advanced_zinc_search(zinc_ids=["ZINC000019632618", "ZINC000000000001"])
 
 # Random drug-like set
-df = advanced_zinc_search(
-    count=1000,
-    subset='drug-like',
-    output_fields=['zinc_id', 'smiles', 'tranche']
+task = advanced_zinc_search(
+    count=1000, subset="drug-like",
+    output_fields=["zinc_id", "smiles", "tranche"],
 )
 ```
 
@@ -472,8 +447,10 @@ def filter_by_properties(df, mw_range=None, logp_range=None,
 
     return df[mask]
 
-# Example: Get drug-like compounds with specific properties
-df = advanced_zinc_search(count=10000, subset='drug-like')
+# Example: filter exported result rows by molecular properties.
+# `df` is a DataFrame with a 'tranche' column (exported from the UI task view,
+# or read from the bulk file repository) — advanced_zinc_search only returns the
+# task handle, so the rows are fetched separately.
 filtered = filter_by_properties(
     df,
     mw_range=(300, 450),
@@ -687,6 +664,7 @@ Most query patterns work across versions, but URLs differ:
 - **ZINC API Guide**: https://wiki.docking.org/index.php/ZINC_api
 - **File Access Guide**: https://wiki.docking.org/index.php/ZINC22:Getting_started
 - **Publications**:
-  - ZINC22: J. Chem. Inf. Model. 2023
-  - ZINC15: J. Chem. Inf. Model. 2020, 60, 6065-6073
+  - ZINC22: Tingle et al., *J. Chem. Inf. Model.* 2023, 63(4), 1166–1176. DOI: 10.1021/acs.jcim.2c01253
+  - ZINC20: Irwin et al., *J. Chem. Inf. Model.* 2020, 60(12), 6065–6073. DOI: 10.1021/acs.jcim.0c00675
+  - ZINC15: Sterling & Irwin, *J. Chem. Inf. Model.* 2015, 55, 2324–2337. DOI: 10.1021/acs.jcim.5b00559
 - **Support**: Contact via ZINC website or GitHub issues

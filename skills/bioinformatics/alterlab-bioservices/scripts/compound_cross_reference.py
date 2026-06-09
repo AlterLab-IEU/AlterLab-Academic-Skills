@@ -5,9 +5,14 @@ Compound Cross-Database Search
 This script searches for a compound by name and retrieves identifiers
 from multiple databases:
 - KEGG Compound
-- ChEBI
-- ChEMBL (via UniChem)
+- ChEBI (cross-referenced from the KEGG entry)
 - Basic compound properties
+
+Note: bioservices dropped its UniChem KEGG->ChEMBL mapping helper in 2022,
+and there is no KEGG Web Service KEGG->ChEMBL route either. If a ChEMBL ID
+is required, obtain it separately (e.g. the ChEMBL REST API /
+chembl_webresource_client, or the live UniChem REST API directly). This
+script therefore stops at the reliable KEGG -> ChEBI cross-reference.
 
 Usage:
     python compound_cross_reference.py COMPOUND_NAME [--output FILE]
@@ -20,7 +25,7 @@ Examples:
 
 import sys
 import argparse
-from bioservices import KEGG, UniChem, ChEBI, ChEMBL
+from bioservices import KEGG, ChEBI
 
 
 def search_kegg_compound(compound_name):
@@ -144,29 +149,31 @@ def get_kegg_info(kegg, kegg_id):
         return None
 
 
-def get_chembl_id(kegg_id):
-    """Map KEGG ID to ChEMBL via UniChem."""
+def confirm_chebi_via_conv(kegg, kegg_id, chebi_from_entry):
+    """Confirm/obtain the ChEBI ID via KEGG.conv as a cross-check.
+
+    KEGG.conv('chebi', 'compound') returns a dict keyed by 'cpd:Cxxxxx'.
+    This is the supported bioservices route for KEGG -> ChEBI.
+    """
     print(f"\n{'='*70}")
-    print("STEP 3: ChEMBL Mapping (via UniChem)")
+    print("STEP 3: KEGG -> ChEBI (via KEGG.conv)")
     print(f"{'='*70}")
 
     try:
-        u = UniChem()
+        print(f"Mapping cpd:{kegg_id} to ChEBI via KEGG.conv...")
+        conv = kegg.conv("chebi", "compound")
+        chebi = conv.get(f"cpd:{kegg_id}")
 
-        print(f"Mapping KEGG:{kegg_id} to ChEMBL...")
-
-        chembl_id = u.get_compound_id_from_kegg(kegg_id)
-
-        if chembl_id:
-            print(f"✓ ChEMBL ID: {chembl_id}")
-            return chembl_id
+        if chebi:
+            print(f"✓ ChEBI (conv): {chebi}")
+            return chebi.replace("chebi:", "")
         else:
-            print("✗ No ChEMBL mapping found")
-            return None
+            print("⊘ No conv mapping; falling back to ChEBI parsed from entry")
+            return chebi_from_entry
 
     except Exception as e:
-        print(f"✗ Error: {e}")
-        return None
+        print(f"✗ Error: {e} (falling back to ChEBI parsed from entry)")
+        return chebi_from_entry
 
 
 def get_chebi_info(chebi_id):
@@ -219,63 +226,7 @@ def get_chebi_info(chebi_id):
         return None
 
 
-def get_chembl_info(chembl_id):
-    """Retrieve ChEMBL compound information."""
-    print(f"\n{'='*70}")
-    print("STEP 5: ChEMBL Details")
-    print(f"{'='*70}")
-
-    if not chembl_id:
-        print("⊘ No ChEMBL ID available")
-        return None
-
-    try:
-        c = ChEMBL()
-
-        print(f"Retrieving ChEMBL entry for {chembl_id}...")
-
-        compound = c.get_compound_by_chemblId(chembl_id)
-
-        if compound:
-            print(f"\n✓ ChEMBL Information:")
-            print(f"  ID: {chembl_id}")
-
-            if 'pref_name' in compound and compound['pref_name']:
-                print(f"  Preferred Name: {compound['pref_name']}")
-
-            if 'molecule_properties' in compound:
-                props = compound['molecule_properties']
-
-                if 'full_mwt' in props:
-                    print(f"  Molecular Weight: {props['full_mwt']}")
-
-                if 'alogp' in props:
-                    print(f"  LogP: {props['alogp']}")
-
-                if 'hba' in props:
-                    print(f"  H-Bond Acceptors: {props['hba']}")
-
-                if 'hbd' in props:
-                    print(f"  H-Bond Donors: {props['hbd']}")
-
-            if 'molecule_structures' in compound:
-                structs = compound['molecule_structures']
-
-                if 'canonical_smiles' in structs:
-                    smiles = structs['canonical_smiles']
-                    print(f"  SMILES: {smiles[:60]}{'...' if len(smiles) > 60 else ''}")
-
-            return compound
-        else:
-            print("✗ Failed to retrieve ChEMBL entry")
-            return None
-
-    except Exception as e:
-        print(f"✗ Error: {e}")
-        return None
-
-
-def save_results(compound_name, kegg_info, chembl_id, output_file):
+def save_results(compound_name, kegg_info, chebi_id, output_file):
     """Save results to file."""
     print(f"\n{'='*70}")
     print(f"Saving results to {output_file}")
@@ -303,10 +254,8 @@ def save_results(compound_name, kegg_info, chembl_id, output_file):
         f.write("-" * 70 + "\n")
         if kegg_info:
             f.write(f"KEGG: {kegg_info['kegg_id']}\n")
-            if kegg_info['chebi_id']:
-                f.write(f"ChEBI: {kegg_info['chebi_id']}\n")
-        if chembl_id:
-            f.write(f"ChEMBL: {chembl_id}\n")
+        if chebi_id:
+            f.write(f"ChEBI: {chebi_id}\n")
         f.write("\n")
 
     print(f"✓ Results saved")
@@ -343,17 +292,14 @@ Examples:
     # Step 2: Get KEGG details
     kegg_info = get_kegg_info(kegg, kegg_id)
 
-    # Step 3: Map to ChEMBL
-    chembl_id = get_chembl_id(kegg_id)
+    # Step 3: Cross-reference KEGG -> ChEBI (via KEGG.conv, with entry fallback)
+    chebi_from_entry = kegg_info['chebi_id'] if kegg_info else None
+    chebi_id = confirm_chebi_via_conv(kegg, kegg_id, chebi_from_entry)
 
     # Step 4: Get ChEBI details
     _chebi_info = None
-    if kegg_info and kegg_info['chebi_id']:
-        _chebi_info = get_chebi_info(kegg_info['chebi_id'])
-    # Step 5: Get ChEMBL details
-    _chembl_info = None
-    if chembl_id:
-        _chembl_info = get_chembl_info(chembl_id)
+    if chebi_id:
+        _chebi_info = get_chebi_info(chebi_id)
 
     # Summary
     print(f"\n{'='*70}")
@@ -362,15 +308,15 @@ Examples:
     print(f"  Compound: {args.compound}")
     if kegg_info:
         print(f"  KEGG ID: {kegg_info['kegg_id']}")
-        if kegg_info['chebi_id']:
-            print(f"  ChEBI ID: {kegg_info['chebi_id']}")
-    if chembl_id:
-        print(f"  ChEMBL ID: {chembl_id}")
+    if chebi_id:
+        print(f"  ChEBI ID: {chebi_id}")
+    print("  ChEMBL ID: not mapped here (no bioservices KEGG->ChEMBL route;")
+    print("             use the ChEMBL REST API / chembl_webresource_client)")
     print(f"{'='*70}")
 
     # Save to file if requested
     if args.output:
-        save_results(args.compound, kegg_info, chembl_id, args.output)
+        save_results(args.compound, kegg_info, chebi_id, args.output)
 
 
 if __name__ == "__main__":

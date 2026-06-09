@@ -4,7 +4,7 @@
     {
       "id": "build-lung-ct-dataset",
       "prompt": "I want to build a training set of chest CT scans from the NLST collection in IDC. Find the series and download a small batch to a local folder.",
-      "expected_output": "Triggers the Imaging Data Commons skill. Instantiates IDCClient from idc-index, runs client.sql_query against the index table filtering Modality='CT', BodyPartExamined='CHEST', collection_id='nlst', then downloads with client.download_from_selection(seriesInstanceUID=[...], downloadDir=...). Recommends LIMIT during exploration and small batches to avoid timeouts; verifies IDC data version (v23) with client.get_idc_version(). No authentication required.",
+      "expected_output": "Triggers the Imaging Data Commons skill. Instantiates IDCClient from idc-index, runs client.sql_query against the index table filtering Modality='CT', BodyPartExamined='CHEST', collection_id='nlst', then downloads with client.download_from_selection(seriesInstanceUID=[...], downloadDir=...). Recommends LIMIT during exploration and small batches to avoid timeouts; verifies IDC data version (v24) with client.get_idc_version(). No authentication required.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "idc-index" },

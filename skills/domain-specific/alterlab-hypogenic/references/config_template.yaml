@@ -1,150 +1,104 @@
-# HypoGeniC Configuration Template
-# Complete example configuration for hypothesis generation and testing
+# HypoGeniC config.yaml template
+#
+# This matches the real schema used by the `hypogenic` package
+# (https://github.com/ChicagoHAI/hypothesis-generation). The top-level keys are:
+#   task_name, train_data_path, val_data_path, test_data_path, prompt_templates
+#
+# IMPORTANT details that trip people up:
+#   - Placeholders use ${...} substitution (e.g. ${headline_1}, ${num_hypotheses}),
+#     NOT {var}. Feature placeholders must match the *_features keys in your JSON
+#     (text_features_1, text_features_2, ... — or your custom names).
+#   - Each prompt template is split by role (system / user). The first role is the
+#     system message, the second is the user message.
+#   - Keys under prompt_templates that are NOT one of the known templates below are
+#     treated as reusable "extra keys": you can reference them as ${EXTRA_KEY} inside
+#     other templates (here `observations` is reused inside batched_generation).
+#   - Model, API key, Redis port, generation epochs, etc. are passed as CLI flags to
+#     `hypogenic_generation` / `hypogenic_inference` (run with --help), or as
+#     arguments in the examples/*.py scripts. They do NOT live in this file.
 
-# Dataset paths
-data:
-  train: "data/train.json"
-  validation: "data/val.json"
-  test: "data/test.json"
+task_name: headline_binary
 
-  # Dataset should contain:
-  # - text_features_1, text_features_2, ... text_features_n (lists of strings)
-  # - label (list of strings)
+train_data_path: ./headline_binary_train.json
+val_data_path: ./headline_binary_val.json
+test_data_path: ./headline_binary_test.json
 
-# Model configuration
-model:
-  name: "gpt-4"  # or "gpt-3.5-turbo", "claude-3", etc.
-  api_key_env: "OPENAI_API_KEY"  # Environment variable for API key
-  temperature: 0.7
-  max_tokens: 2048
-
-# Redis caching (optional - reduces API costs)
-cache:
-  enabled: true
-  host: "localhost"
-  port: 6832
-
-# Hypothesis generation parameters
-generation:
-  method: "hypogenic"  # Options: "hypogenic", "hyporefine", "union"
-  num_hypotheses: 20
-  batch_size: 5
-  max_iterations: 10
-
-  # For HypoRefine method
-  literature:
-    papers_directory: "papers/"  # Directory containing PDF files
-    num_papers: 10
-
-  # For Union methods
-  union:
-    literature_hypotheses: "literature_hypotheses.json"
-    deduplicate: true
-
-# Prompt templates
-prompts:
-  # Observations prompt - generates initial observations from data
+prompt_templates:
+  # --- Reusable extra key: one formatted observation, reused below as ${observations}
   observations: |
-    Analyze the following data samples and identify patterns:
+    Headline 1: ${headline_1}
+    Headline 2: ${headline_2}
+    Observation: ${label}
 
-    {data_samples}
+  # --- Required: batched hypothesis generation
+  batched_generation:
+    system: |
+      You are a social media expert. Given a pair of headlines, you predict which
+      one received more clicks. We will give you a set of observations, and you must
+      propose ${num_hypotheses} possible, generalizable hypotheses that help predict
+      which headline gets more clicks. Each hypothesis should be a one-sentence,
+      testable statement.
+    user: |
+      Here are the observations:
+      ${observations}
 
-    Generate 5 distinct observations about patterns that distinguish between the two classes.
-    Focus on specific, testable characteristics.
+      Generate ${num_hypotheses} distinct hypotheses. Number them and keep each to a
+      single sentence.
 
-  # Batched generation prompt - creates hypotheses from observations
-  batched_generation: |
-    Based on these observations about the data:
+  # --- Optional: few-shot baseline (no generated hypotheses, just demonstrations)
+  few_shot_baseline:
+    system: |
+      You are a social media expert. Given a pair of headlines, predict which one
+      received more clicks. Give your final answer in the format "Final answer: ...".
+    user: |
+      ${observations}
+      Which headline got more clicks: Headline 1 or Headline 2?
 
-    {observations}
+  # --- Required for inference: apply ONE hypothesis to a new example
+  inference:
+    system: |
+      You are a social media expert. Use the given hypothesis to predict which
+      headline received more clicks. End with "Final answer: Headline 1" or
+      "Final answer: Headline 2".
+    user: |
+      Hypothesis: ${hypothesis}
 
-    Generate {num_hypotheses} distinct, testable hypotheses that could explain the differences between classes.
-    Each hypothesis should:
-    1. Be specific and measurable
-    2. Focus on a single characteristic or pattern
-    3. Be falsifiable through empirical testing
+      Headline 1: ${headline_1}
+      Headline 2: ${headline_2}
 
-    Format each hypothesis as: "Hypothesis X: [clear statement]"
+      Which headline got more clicks? Give your reasoning, then the final answer.
 
-  # Inference prompt - tests hypotheses against data
-  inference: |
-    Hypothesis: {hypothesis}
+  # --- Optional: relevance filter used during generation/refinement
+  is_relevant:
+    system: |
+      You decide whether a hypothesis is relevant to predicting headline clicks.
+      Answer only "yes" or "no".
+    user: |
+      Hypothesis: ${hypothesis}
+      Headline 1: ${headline_1}
+      Headline 2: ${headline_2}
+      Is this hypothesis relevant to this example?
 
-    Data sample:
-    {sample_text}
+  # --- Optional: adaptive inference (selects/uses multiple hypotheses)
+  adaptive_inference:
+    system: |
+      You are a social media expert. Multiple hypotheses are provided. Weigh them and
+      predict which headline received more clicks. End with "Final answer: ...".
+    user: |
+      Hypotheses:
+      ${hypotheses}
 
-    Does this sample support or contradict the hypothesis?
-    Respond with: SUPPORT, CONTRADICT, or NEUTRAL
+      Headline 1: ${headline_1}
+      Headline 2: ${headline_2}
 
-    Explanation: [brief reasoning]
+  # --- Optional: adaptive selection (pick the best hypotheses for an example)
+  adaptive_selection:
+    system: |
+      Given several hypotheses and an example, select the hypotheses most useful for
+      predicting which headline received more clicks.
+    user: |
+      Hypotheses:
+      ${hypotheses}
 
-  # Relevance checking prompt - filters hypotheses
-  relevance_check: |
-    Hypothesis: {hypothesis}
-    Task: {task_description}
-
-    Is this hypothesis relevant and testable for the given task?
-    Respond with: RELEVANT or NOT_RELEVANT
-
-    Reasoning: [brief explanation]
-
-  # Adaptive refinement prompt - for HypoRefine
-  adaptive_refinement: |
-    Current hypothesis: {hypothesis}
-
-    This hypothesis performed poorly on these challenging examples:
-    {challenging_examples}
-
-    Generate an improved hypothesis that addresses these failures while maintaining the core insight.
-
-    Improved hypothesis: [statement]
-
-# Inference configuration
-inference:
-  method: "voting"  # Options: "voting", "weighted", "ensemble"
-  confidence_threshold: 0.7
-  max_samples: 1000  # Limit for large test sets
-
-# Output configuration
-output:
-  directory: "output/"
-  save_intermediate: true  # Save hypotheses after each iteration
-  format: "json"  # Options: "json", "csv"
-  verbose: true
-
-# Custom label extraction (optional)
-# Define a custom function in your code to parse specific output formats
-label_extraction:
-  pattern: "PREDICTION: {label}"  # Regex pattern for extracting predictions
-  valid_labels: ["0", "1"]  # Expected label values
-
-# Task-specific settings
-task:
-  name: "example_task"
-  description: "Binary classification task for [describe your specific domain]"
-  features:
-    - name: "text_features_1"
-      description: "Primary text content"
-    - name: "text_features_2"
-      description: "Additional contextual information"
-  labels:
-    - name: "0"
-      description: "Negative class"
-    - name: "1"
-      description: "Positive class"
-
-# Evaluation metrics
-evaluation:
-  metrics:
-    - "accuracy"
-    - "precision"
-    - "recall"
-    - "f1"
-  cross_validation: false
-  num_folds: 5
-
-# Logging
-logging:
-  level: "INFO"  # Options: "DEBUG", "INFO", "WARNING", "ERROR"
-  file: "logs/hypogenic.log"
-  console: true
+      Headline 1: ${headline_1}
+      Headline 2: ${headline_2}

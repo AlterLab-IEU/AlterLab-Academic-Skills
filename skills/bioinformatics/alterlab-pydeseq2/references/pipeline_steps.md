@@ -100,13 +100,14 @@ design = "~group + condition + group:condition"  # Interaction effects
 
 ```python
 from pydeseq2.dds import DeseqDataSet
+from pydeseq2.default_inference import DefaultInference
 
 dds = DeseqDataSet(
     counts=counts_df,
     metadata=metadata,
     design="~condition",
-    refit_cooks=True,  # Refit after removing outliers
-    n_cpus=1           # Parallel processing (adjust as needed)
+    refit_cooks=True,                          # Refit after removing outliers
+    inference=DefaultInference(n_cpus=1),      # Parallelism lives on the inference object (0.4+)
 )
 
 # Run the complete DESeq2 pipeline

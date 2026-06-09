@@ -96,17 +96,22 @@ ones = da.ones((10000, 10000), chunks=(1000, 1000))
 empty = da.empty((10000, 10000), chunks=(1000, 1000))
 ```
 
-### From Functions
+### From Delayed Loaders
 ```python
-# Create array from function
-def create_block(block_id):
-    return np.random.random((1000, 1000)) * block_id[0]
+import dask
 
-x = da.from_delayed(
-    [[dask.delayed(create_block)((i, j)) for j in range(10)] for i in range(10)],
-    shape=(10000, 10000),
-    dtype=float
-)
+# da.from_delayed wraps ONE delayed object into a single-chunk array;
+# assemble many of them with da.block / da.concatenate / da.stack.
+@dask.delayed
+def create_block(i, j):
+    return np.random.random((1000, 1000)) * i
+
+grid = [
+    [da.from_delayed(create_block(i, j), shape=(1000, 1000), dtype=float)
+     for j in range(10)]
+    for i in range(10)
+]
+x = da.block(grid)  # tiles the 10x10 grid into a (10000, 10000) array
 ```
 
 ### From Disk

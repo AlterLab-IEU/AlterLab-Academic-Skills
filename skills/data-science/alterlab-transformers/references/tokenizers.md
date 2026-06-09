@@ -304,14 +304,24 @@ sequence_ids = encoding.sequence_ids()
 
 ### Custom Preprocessing
 
-Subclass for custom behavior:
+`AutoTokenizer` is a factory (`from_pretrained` returns a concrete `PreTrainedTokenizerFast`), so you cannot subclass it directly. Wrap the loaded tokenizer instead:
 
 ```python
-class CustomTokenizer(AutoTokenizer):
+from transformers import AutoTokenizer
+
+class CustomTokenizer:
+    def __init__(self, model_id):
+        self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+
     def __call__(self, text, **kwargs):
-        # Custom preprocessing
-        text = text.lower().strip()
-        return super().__call__(text, **kwargs)
+        # Custom preprocessing, then delegate
+        if isinstance(text, str):
+            text = text.lower().strip()
+        else:
+            text = [t.lower().strip() for t in text]
+        return self.tokenizer(text, **kwargs)
+
+tokenizer = CustomTokenizer("bert-base-uncased")
 ```
 
 ## Chat Templates

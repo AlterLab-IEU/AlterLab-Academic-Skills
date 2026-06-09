@@ -4,12 +4,11 @@
     {
       "id": "search-recent-highly-cited",
       "prompt": "Find the most highly cited papers on quantum computing published since 2020. I want the top influential works, sorted by citations.",
-      "expected_output": "Triggers the OpenAlex skill. Initializes OpenAlexClient with an email (polite pool) and uses client.search_works (or find_highly_cited_recent_papers) with search='quantum computing', filter publication_year:>2020, sort='cited_by_count:desc', per_page up to 200. Returns a ranked list. No API key required.",
+      "expected_output": "Triggers the OpenAlex skill. Initializes OpenAlexClient (a free api_key raises the daily budget but keyless also works) and uses client.search_works (or find_highly_cited_recent_papers) with search='quantum computing', filter publication_year:>2020, sort='cited_by_count:desc', per_page up to 200. Returns a ranked list.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "openalex" },
-        { "type": "behavior", "value": "Filters by publication_year:>2020 and sorts by cited_by_count:desc to surface highly cited recent works." },
-        { "type": "behavior", "value": "Initializes the client with an email for the polite pool." }
+        { "type": "behavior", "value": "Filters by publication_year:>2020 and sorts by cited_by_count:desc to surface highly cited recent works." }
       ]
     },
     {

@@ -1,6 +1,6 @@
 ---
 name: alterlab-scholar-eval
-description: Evaluates scholarly work with the ScholarEval framework, producing structured assessment across research-quality dimensions (problem formulation, methodology, analysis, and writing) with quantitative scoring and actionable feedback. Use when scoring or grading a paper, thesis, or research output against rubric-style criteria. For checklist-based peer-review writing prefer peer-review; for evidence/claim quality use scientific-critical-thinking. Part of the AlterLab Academic Skills suite.
+description: Evaluates scholarly work with the ScholarEval framework, producing structured assessment across research-quality dimensions (problem formulation, methodology, analysis, and writing) with quantitative rubric scores and actionable feedback. Use when scoring or grading a paper, thesis, or research output against rubric-style criteria, or benchmarking publication readiness across revisions. For checklist-based narrative reviewer reports prefer alterlab-peer-review; for evidence/claim quality and argument soundness use alterlab-scientific-thinking. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit
 compatibility: No external tools, API keys, or services required — scores work from the Read/Write/Edit tools alone
@@ -254,7 +254,7 @@ This skill integrates seamlessly with the scientific writer workflow:
 - Some dimensions may not apply to all work types (e.g., data collection for purely theoretical papers)
 - Cultural and disciplinary differences in scholarly norms should be considered
 - This framework complements, not replaces, domain-specific expertise
-- Use in combination with peer-review skill for comprehensive assessment
+- Use in combination with alterlab-peer-review for comprehensive assessment
 
 ## Citation
 

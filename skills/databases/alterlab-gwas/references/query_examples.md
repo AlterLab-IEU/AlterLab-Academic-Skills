@@ -44,10 +44,10 @@ The GWAS Catalog provides two REST APIs for programmatic access.
    variant_info = response.json()
    ```
 
-4. **Traits endpoint** - `/efoTraits/{efoID}`
+4. **Traits endpoint** - `/efoTraits/{shortForm}`
    ```python
-   # Get trait information
-   url = "https://www.ebi.ac.uk/gwas/rest/api/efoTraits/EFO_0001360"
+   # Get trait information (main REST API uses current short-forms, e.g. MONDO_0005148)
+   url = "https://www.ebi.ac.uk/gwas/rest/api/efoTraits/MONDO_0005148"
    response = requests.get(url, headers={"Content-Type": "application/json"})
    trait_info = response.json()
    ```
@@ -58,7 +58,7 @@ The GWAS Catalog provides two REST APIs for programmatic access.
 ```python
 import requests
 
-trait = "EFO_0001360"  # Type 2 diabetes
+trait = "MONDO_0005148"  # Type 2 diabetes (main REST API short-form; legacy EFO_0001360 404s here)
 base_url = "https://www.ebi.ac.uk/gwas/rest/api"
 
 # Query associations for this trait
@@ -66,11 +66,12 @@ url = f"{base_url}/efoTraits/{trait}/associations"
 response = requests.get(url, headers={"Content-Type": "application/json"})
 associations = response.json()
 
-# Process results
+# Process results — rsID and risk allele are nested, not top-level
 for assoc in associations.get('_embedded', {}).get('associations', []):
-    variant = assoc.get('rsId')
+    variant = (assoc.get('snps') or [{}])[0].get('rsId')
     pvalue = assoc.get('pvalue')
-    risk_allele = assoc.get('strongestAllele')
+    risk_allele = ((assoc.get('loci') or [{}])[0]
+                   .get('strongestRiskAlleles') or [{}])[0].get('riskAlleleName')
     print(f"{variant}: p={pvalue}, risk allele={risk_allele}")
 ```
 
@@ -92,9 +93,9 @@ params = {"projection": "associationBySnp"}
 response = requests.get(url, params=params, headers={"Content-Type": "application/json"})
 associations = response.json()
 
-# Extract trait names and p-values
+# Extract trait names and p-values — trait name is nested under efoTraits[]
 for assoc in associations.get('_embedded', {}).get('associations', []):
-    trait = assoc.get('efoTrait')
+    trait = (assoc.get('efoTraits') or [{}])[0].get('trait')
     pvalue = assoc.get('pvalue')
     print(f"Trait: {trait}, p-value: {pvalue}")
 ```
@@ -106,7 +107,8 @@ import requests
 # Query summary statistics API
 base_url = "https://www.ebi.ac.uk/gwas/summary-statistics/api"
 
-# Find associations by trait with p-value threshold
+# Find associations by trait with p-value threshold.
+# Summary Statistics API keys on the legacy EFO id (the main REST API uses MONDO_0005148).
 trait = "EFO_0001360"  # Type 2 diabetes
 p_upper = "0.000000001"  # p < 1e-9
 url = f"{base_url}/traits/{trait}/associations"
@@ -214,7 +216,8 @@ def query_gwas_catalog(trait_id, p_threshold=5e-8):
     Query GWAS Catalog for trait associations
 
     Args:
-        trait_id: EFO trait identifier (e.g., 'EFO_0001360')
+        trait_id: trait short-form for the main REST API (e.g. 'MONDO_0005148');
+                  legacy EFO ids such as EFO_0001360 404 on this API
         p_threshold: P-value threshold for filtering
 
     Returns:
@@ -243,13 +246,19 @@ def query_gwas_catalog(trait_id, p_threshold=5e-8):
         for assoc in associations:
             pvalue = assoc.get('pvalue')
             if pvalue and float(pvalue) <= p_threshold:
+                # rsID / allele / trait are nested, not top-level
+                rs = (assoc.get('snps') or [{}])[0].get('rsId')
+                allele = ((assoc.get('loci') or [{}])[0]
+                          .get('strongestRiskAlleles') or [{}])[0].get('riskAlleleName')
+                trait = (assoc.get('efoTraits') or [{}])[0].get('trait')
                 results.append({
-                    'variant': assoc.get('rsId'),
+                    'variant': rs,
                     'pvalue': pvalue,
-                    'risk_allele': assoc.get('strongestAllele'),
+                    'risk_allele': allele,
                     'or_beta': assoc.get('orPerCopyNum') or assoc.get('betaNum'),
-                    'trait': assoc.get('efoTrait'),
-                    'pubmed_id': assoc.get('pubmedId')
+                    'trait': trait,
+                    # follow _links.study.href for accession + PubMed ID
+                    'study_href': assoc.get('_links', {}).get('study', {}).get('href'),
                 })
 
         page += 1
@@ -258,7 +267,7 @@ def query_gwas_catalog(trait_id, p_threshold=5e-8):
     return pd.DataFrame(results)
 
 # Example usage
-df = query_gwas_catalog('EFO_0001360')  # Type 2 diabetes
+df = query_gwas_catalog('MONDO_0005148')  # Type 2 diabetes (main REST API short-form)
 print(df.head())
 print(f"\nTotal associations: {len(df)}")
 print(f"Unique variants: {df['variant'].nunique()}")

@@ -148,11 +148,11 @@ Generates:
 Interactive template selection:
 
 ```bash
-cd .claude/skills/treatment-plans/scripts
-python generate_template.py
+# Run from the skill directory
+python scripts/generate_template.py
 
-# Or specify type directly
-python generate_template.py --type mental_health --output depression_treatment_plan.tex
+# Or specify type directly (one_page is the preferred default for most cases)
+python scripts/generate_template.py --type mental_health --output depression_treatment_plan.tex
 ```
 
 ### Validation Workflow

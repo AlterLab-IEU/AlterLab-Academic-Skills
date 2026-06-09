@@ -27,7 +27,8 @@
       "expected_output": "Invokes alterlab-link-health: applies the same tiered methodology generalized from lychee to markdown-link-check, hardening checker config, repairing intra-repo file references, substituting dead external URLs, and excluding irreducible residuals, with the Tier 3 regression guardrail in force.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Recognizes the generic markdown-link-check checker and applies the same four-tier link-repair methodology." }
+        { "type": "output_contains", "value": "tier" },
+        { "type": "behavior", "value": "Recognizes the generic markdown-link-check checker and applies the same four-tier link-repair methodology, keeping the no-regression guardrail in force." }
       ]
     },
     {

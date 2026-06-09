@@ -294,7 +294,7 @@ Update the specified stage's status.
 
 | Parameter | Description |
 |-----------|------------|
-| stage_id | "1", "2", "2.5", "3", "4", "3p", "4p", "4.5", "5" |
+| stage_id | "1", "2", "2.5", "3", "4", "3p", "4p", "4.5", "5", "6" |
 | status | "pending", "in_progress", "completed", "skipped", "blocked" |
 | details | mode, outputs, decision, verdict, and other additional information |
 
@@ -395,6 +395,7 @@ Produce the Progress Dashboard. Format as follows:
   Stage 4'  RE-REVISE         [status]
   Stage 4.5 FINAL INTEGRITY   [status] [verdict]
   Stage 5   FINALIZE          [status]
+  Stage 6   PROCESS SUMMARY   [status]
 
 +---------------------------------------------+
 | Integrity:                                  |

@@ -1,8 +1,8 @@
 ---
 name: alterlab-dnanexus
-description: Develops and runs genomics pipelines on the DNAnexus cloud platform using the dxpy Python SDK and dx CLI — build apps/applets, upload/download data, and execute workflows over FASTQ/BAM/VCF files. Use when building or running a DNAnexus app, applet, or workflow, uploading/downloading sequencing data, or developing genomics pipelines on DNAnexus. Part of the AlterLab Academic Skills suite.
+description: Develops and runs genomics pipelines on the DNAnexus cloud platform using the dxpy Python SDK and dx CLI — build apps/applets, write dxapp.json, upload/download data, and execute jobs/workflows over FASTQ/BAM/VCF files. Use when building or running a DNAnexus app, applet, or workflow, writing dxapp.json, using dx-app-wizard or dx build, calling dxpy (find_data_objects, DXApplet.run, upload_local_file), or uploading/downloading sequencing data on DNAnexus. For LatchBio (Latch SDK @workflow/@task, LatchFile) use alterlab-latchbio instead; for Benchling LIMS use alterlab-benchling.
 license: MIT
-allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
+allowed-tools: Read Write Edit Bash(dx:*) Bash(dx-app-wizard:*) Bash(dx-build-app:*) Bash(uv:*) Bash(python:*)
 compatibility: Requires a DNAnexus account
 metadata:
     skill-author: AlterLab
@@ -183,10 +183,12 @@ dxpy.download_dxfile(output_id, "aligned.bam")
 ```python
 import dxpy
 
-# Find BAM files from a specific experiment
+# Find BAM files from a specific experiment.
+# name defaults to exact match; pass name_mode="glob" to use wildcards.
 files = dxpy.find_data_objects(
     classname="file",
     name="*.bam",
+    name_mode="glob",
     properties={"experiment": "exp001"},
     project="project-xxxx"
 )
@@ -278,34 +280,11 @@ dx whoami
 
 ## Common Patterns
 
-### Pattern 1: Batch Processing
+Batch processing (find files, launch parallel jobs) is shown in the Quick Start above; see `references/job-execution.md` for scatter-gather and subjobs.
 
-Process multiple files with the same analysis:
+### Pattern 1: Multi-Step Pipeline
 
-```python
-# Find all FASTQ files
-files = dxpy.find_data_objects(
-    classname="file",
-    name="*.fastq",
-    project="project-xxxx"
-)
-
-# Launch parallel jobs
-jobs = []
-for file_result in files:
-    job = dxpy.DXApplet("applet-xxxx").run({
-        "input": dxpy.dxlink(file_result["id"])
-    })
-    jobs.append(job)
-
-# Wait for all completions
-for job in jobs:
-    job.wait_on_done()
-```
-
-### Pattern 2: Multi-Step Pipeline
-
-Chain multiple analyses together:
+Chain multiple analyses together (`get_output_ref` passes one job's output as the next job's input):
 
 ```python
 # Step 1: Quality control
@@ -322,7 +301,7 @@ variant_job = variant_applet.run({
 })
 ```
 
-### Pattern 3: Data Organization
+### Pattern 2: Data Organization
 
 Organize analysis results systematically:
 
@@ -349,16 +328,12 @@ result_file = dxpy.upload_local_file(
 
 ## Best Practices
 
-1. **Error Handling**: Always wrap API calls in try-except blocks
-2. **Resource Management**: Choose appropriate instance types for workloads
-3. **Data Organization**: Use consistent folder structures and metadata
-4. **Cost Optimization**: Archive old data, use appropriate storage classes
-5. **Documentation**: Include clear descriptions in dxapp.json
-6. **Testing**: Test apps with various input types before production use
-7. **Version Control**: Use semantic versioning for apps
-8. **Security**: Never hardcode credentials in source code
-9. **Logging**: Include informative log messages for debugging
-10. **Cleanup**: Remove temporary files and failed jobs
+- Never hardcode API tokens; authenticate via `dx login` or `DX_SECURITY_CONTEXT`.
+- `find_*` `name` filters match exactly by default — pass `name_mode="glob"` for wildcards.
+- Pass job outputs to downstream inputs with `get_output_ref()` directly (it is already a dxlink).
+- Pick instance types deliberately and set `timeoutPolicy` to cap runaway cost.
+
+Each reference file ends with topic-specific best practices for deeper guidance.
 
 ## Resources
 

@@ -108,7 +108,7 @@ class PatentSearchClient:
         if sort is None:
             sort = [{"patent_date": "desc"}]
 
-        options = {"size": 100}
+        options = {"page": page, "per_page": per_page}
 
         return self._request("patent", query, fields, sort, options)
 

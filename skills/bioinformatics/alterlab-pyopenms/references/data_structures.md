@@ -163,8 +163,8 @@ ms.FeatureXMLFile().load("features.featureXML", feature_map)
 # Access properties
 print(f"Number of features: {feature_map.size()}")
 
-# Get unique features
-print(f"Unique features: {feature_map.getUniqueId()}")
+# getUniqueId() returns the map's own unique identifier (not a feature count)
+print(f"Map unique ID: {feature_map.getUniqueId()}")
 
 # Metadata
 primary_path = feature_map.getPrimaryMSRunPath()
@@ -264,9 +264,10 @@ df = consensus_map.get_df()
 Identification results for a single spectrum.
 
 ```python
-# Load identifications
+# Load identifications.
+# pyOpenMS 3.x: peptide_ids must be a PeptideIdentificationList, not [].
 protein_ids = []
-peptide_ids = []
+peptide_ids = ms.PeptideIdentificationList()
 ms.IdXMLFile().load("identifications.idXML", protein_ids, peptide_ids)
 
 # Access peptide identification
@@ -420,10 +421,13 @@ print(f"Formula: {formula.toString()}")
 print(f"Monoisotopic mass: {formula.getMonoWeight():.4f}")
 print(f"Average mass: {formula.getAverageWeight():.4f}")
 
-# Element composition
-print(f"Carbon atoms: {formula.getNumberOf(b'C')}")
-print(f"Hydrogen atoms: {formula.getNumberOf(b'H')}")
-print(f"Oxygen atoms: {formula.getNumberOf(b'O')}")
+# Element composition: getElementalComposition() returns a dict keyed by
+# the element symbol as bytes (there is no getNumberOf in pyOpenMS 3.x).
+composition = formula.getElementalComposition()  # e.g. {b'C': 6, b'H': 12, b'O': 6}
+print(f"Carbon atoms: {composition[b'C']}")
+print(f"Hydrogen atoms: {composition[b'H']}")
+print(f"Oxygen atoms: {composition[b'O']}")
+print(f"Total atoms: {formula.getNumberOfAtoms()}")
 
 # Arithmetic operations
 formula2 = ms.EmpiricalFormula("H2O")
@@ -466,12 +470,12 @@ params_copy = ms.Param(params)
 ### Memory Management
 
 ```python
-# For large files, use indexed access instead of full loading
-indexed_mzml = ms.IndexedMzMLFileLoader()
-indexed_mzml.load("large_file.mzML")
+# For large files, use on-disk access instead of full loading
+od = ms.OnDiscMSExperiment()
+od.openFile("large_file.mzML")
 
-# Access specific spectrum without loading entire file
-spec = indexed_mzml.getSpectrumById(100)
+# Access a specific spectrum without loading the entire file into memory
+spec = od.getSpectrum(100)
 ```
 
 ### Type Conversion

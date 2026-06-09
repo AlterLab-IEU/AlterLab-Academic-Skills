@@ -8,7 +8,10 @@
 figure.dpi: 100
 figure.facecolor: white
 figure.autolayout: False
-figure.constrained_layout.use: True
+# Layout engines left off: call fig.tight_layout() or use
+# plt.subplots(layout='constrained') per figure. Forcing constrained_layout
+# here warns and overrides explicit tight_layout() calls.
+figure.constrained_layout.use: False
 figure.figsize: 3.5, 2.5
 
 # Font properties

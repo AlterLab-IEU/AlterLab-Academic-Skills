@@ -44,10 +44,11 @@
     {
       "id": "create-fcs-from-array",
       "prompt": "I have a NumPy array of synthetic cytometry events and channel names; I want to write it out as a proper FCS file with descriptive stain names and some custom metadata.",
-      "expected_output": "Invokes alterlab-flowio. Uses create_fcs(path, events, channel_names, opt_channel_names=..., metadata=...) to write the array out as an FCS 3.1 file, noting the single-precision float export.",
+      "expected_output": "Invokes alterlab-flowio. Uses create_fcs(fh, events.flatten(), channel_names, opt_channel_names=..., metadata_dict=...) where fh is a writable binary file handle (open(path,'wb')) and the event array is flattened to 1-D, noting the FCS 3.1 single-precision float export.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "create_fcs" }
+        { "type": "output_contains", "value": "create_fcs" },
+        { "type": "behavior", "value": "Passes a binary file handle (not a path string) and a flattened 1-D event array to create_fcs, using opt_channel_names and metadata_dict." }
       ]
     },
     {

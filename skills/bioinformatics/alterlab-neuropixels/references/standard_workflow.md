@@ -2,6 +2,14 @@
 
 Complete step-by-step guide for analyzing Neuropixels recordings from raw data to curated units.
 
+> **API note.** The `npa.*` calls below are illustrative shorthand for "a convenience
+> wrapper" — there is **no installable `npa`/`neuropixels_analysis` package**. The only
+> bundled helpers are in `scripts/neuropixels_pipeline.py`: `load_recording`,
+> `preprocess`, `check_drift`, `correct_motion`, `run_spike_sorting`, `postprocess`,
+> `curate_units`, `export_results`, `run_pipeline`. For anything not in that list, use the
+> SpikeInterface call shown alongside it. The verified end-to-end example is in
+> "Full Pipeline Example" at the bottom of this file.
+
 ## Overview
 
 This reference documents the complete analysis pipeline:
@@ -32,8 +40,8 @@ recording = si.read_openephys('/path/to/experiment/')
 # NWB format
 recording = si.read_nwb('/path/to/file.nwb')
 
-# Or use our convenience wrapper
-recording = npa.load_recording('/path/to/data/', format='spikeglx')
+# Or use the bundled helper (format is auto-detected from directory contents)
+recording = load_recording('/path/to/data/', stream_id='imec0.ap')
 ```
 
 ### Verify Recording Properties
@@ -60,11 +68,12 @@ locations = recording.get_channel_locations()
 rec_preprocessed = npa.preprocess(recording)
 
 # Option 2: Step-by-step control
-rec = si.bandpass_filter(recording, freq_min=300, freq_max=6000)
-rec = si.phase_shift(rec)  # Correct ADC phase
-bad_channels = si.detect_bad_channels(rec)
-rec = rec.remove_channels(bad_channels)
-rec = si.common_reference(rec, operator='median')
+rec = si.highpass_filter(recording, freq_min=400)  # 400 Hz is the SpikeInterface NP default
+rec = si.phase_shift(rec)  # Correct ADC phase (NP 1.0)
+# detect_bad_channels returns a (bad_channel_ids, channel_labels) TUPLE — unpack it:
+bad_channel_ids, channel_labels = si.detect_bad_channels(rec)
+rec = rec.remove_channels(bad_channel_ids)
+rec = si.common_reference(rec, operator='median', reference='global')
 rec_preprocessed = rec
 ```
 
@@ -323,17 +332,13 @@ export_to_phy(
 
 ### Export to NWB
 
-```python
-from spikeinterface.exporters import export_to_nwb
+SpikeInterface has **no** native NWB exporter. Use NeuroConv (`pip install neuroconv`):
 
-export_to_nwb(
-    analyzer,
-    nwbfile_path='results.nwb',
-    metadata={
-        'session_description': 'Neuropixels recording',
-        'experimenter': 'Lab Name',
-    },
-)
+```python
+from neuroconv.tools.spikeinterface import write_recording, write_sorting
+
+write_recording(recording=rec_corrected, nwbfile_path='results.nwb', overwrite=True)
+write_sorting(sorting=sorting, nwbfile_path='results.nwb')
 ```
 
 ### Save Quality Summary

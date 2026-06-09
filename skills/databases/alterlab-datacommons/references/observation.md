@@ -108,7 +108,7 @@ All response objects support:
 - `to_json()`: Format as JSON string
 - `to_dict()`: Return as dictionary
 - `get_data_by_entity()`: Reorganize by entity instead of variable
-- `to_observation_records()`: Flatten into individual records
+- `to_observations_as_records()`: Flatten into individual records
 
 ## Common Use Cases
 
@@ -151,7 +151,7 @@ Use relation expressions to fetch observations for related entities:
 ```python
 # Get data for all counties within California
 response = client.observation.fetch(
-    variable_dcids=["MedianIncome_Household"],
+    variable_dcids=["Median_Income_Household"],
     entity_expression="geoId/06<-containedInPlace+{typeOf:County}",
     date="2020"
 )
@@ -161,20 +161,29 @@ response = client.observation.fetch(
 
 The API integrates seamlessly with Pandas. Install with Pandas support:
 ```bash
-pip install "datacommons-client[Pandas]"
+pip install "datacommons-client[pandas]"
 ```
 
-Response objects can be converted to DataFrames for analysis:
+The client exposes a dedicated `observations_dataframe()` accessor that mirrors
+`observation.fetch()` arguments and returns a tidy DataFrame directly:
+```python
+df = client.observations_dataframe(
+    variable_dcids=["Count_Person"],
+    entity_dcids=["geoId/06", "geoId/48"],
+    date="all",
+)
+# Columns: date, entity, variable, value (plus facet/provenance columns)
+```
+
+Alternatively, flatten an existing response with `to_observations_as_records()` (which
+returns a list of flat records, not a DataFrame) and wrap it yourself:
 ```python
 response = client.observation.fetch(
     variable_dcids=["Count_Person"],
     entity_dcids=["geoId/06", "geoId/48"],
-    date="all"
+    date="all",
 )
-
-# Convert to DataFrame
-df = response.to_observation_records()
-# Returns DataFrame with columns: date, entity, variable, value
+df = pd.DataFrame(response.to_observations_as_records())
 ```
 
 ## Important Notes

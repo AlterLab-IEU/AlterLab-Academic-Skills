@@ -53,7 +53,7 @@ import pubchempy as pcp
 
 compound = pcp.get_compounds('aspirin', 'name')[0]
 print(compound.cid, compound.molecular_formula, compound.molecular_weight)
-print(compound.canonical_smiles, compound.xlogp, compound.tpsa)
+print(compound.smiles, compound.xlogp, compound.tpsa)
 ```
 
 Prefer CIDs for repeated queries (more efficient than names/structures). Similarity and
@@ -63,10 +63,17 @@ automatically. See `references/best_practices.md` for rate limits and error hand
 ## Installation Requirements
 
 ```bash
-uv pip install pubchempy   # Python-based access
-uv pip install requests    # direct API / bioactivity queries
-uv pip install pandas      # optional, for data analysis
+uv pip install 'pubchempy>=1.0.5'  # Python-based access (1.0.5 = current SMILES property names)
+uv pip install requests            # direct API / bioactivity queries
+uv pip install pandas              # optional, for data analysis
 ```
+
+**SMILES property naming (PubChem changed this in 2025):** the PUG-REST `CanonicalSMILES`
+and `IsomericSMILES` properties are deprecated. Use `SMILES` (full SMILES with
+stereo/isotope info, replaces `IsomericSMILES`) and `ConnectivitySMILES` (connectivity-only,
+replaces `CanonicalSMILES`). In PubChemPy 1.0.5 the matching Compound attributes are
+`compound.smiles` and `compound.connectivity_smiles` (the old `canonical_smiles` /
+`isomeric_smiles` attributes still resolve but are deprecated).
 
 ## Helper Scripts
 

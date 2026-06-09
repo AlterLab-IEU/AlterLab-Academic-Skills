@@ -326,12 +326,18 @@ Quantifies abnormal short-term fluctuations reflecting autonomic dysregulation.
 Respiratory Sinus Arrhythmia - heart rate modulation by breathing.
 
 ```python
-rsa = nk.hrv_rsa(peaks, rsp_signal, sampling_rate=1000, method='porges1980')
+# First positional arg is the processed ECG `signals` DataFrame (from ecg_process), not
+# bare peaks. `rsp_signals` must also be a processed RSP DataFrame (with an RSP_Clean
+# column), and R-peak indices are supplied via rpeaks=. There is no `method` argument.
+ecg_signals, ecg_info = nk.ecg_process(ecg, sampling_rate=1000)
+rsp_signals, _ = nk.rsp_process(rsp, sampling_rate=1000)
+rsa = nk.hrv_rsa(ecg_signals, rsp_signals=rsp_signals,
+                 rpeaks=ecg_info['ECG_R_Peaks'], sampling_rate=1000)
 ```
 
 **Methods:**
-- `'porges1980'`: Porges-Bohrer method (band-pass filtered HR around breathing frequency)
-- `'harrison2021'`: Peak-to-trough RSA (max-min HR per breath cycle)
+- The peak-to-trough (P2T), Porges-Bohrer, and Gates methods are all computed together and
+  returned as separate keys (e.g. `RSA_P2T_Mean`, `RSA_PorgesBohrer`, `RSA_Gates_Mean`).
 
 **Requirements:**
 - Both ECG and respiratory signals

@@ -1,6 +1,13 @@
 # Medchem Rules and Filters Catalog
 
-Comprehensive catalog of all available medicinal chemistry rules, structural alerts, and filters in medchem.
+Background and selection guidance for medicinal-chemistry rules, structural alerts, and filters.
+The rule criteria and literature references below are conceptual background; for the exact
+implementation and the canonical name list use `mc.rules.RuleFilters.list_available_rules()`.
+
+> **Verified against `medchem==2.0.5`.** Not every rule below is shipped as a named medchem
+> function (e.g. Rule of Drug, strict lead-likeness, and Golden Triangle have no dedicated
+> function in this version — see notes). Apply those criteria via `RuleFilters` of the available
+> rules plus property windows (`mc.rules.in_range`) or the query DSL.
 
 ## Table of Contents
 
@@ -61,7 +68,7 @@ mc.rules.basic_rules.rule_of_veber(mol)
 
 ---
 
-### Rule of Drug
+### Rule of Drug (composite — no single function)
 
 **Purpose:** Combined drug-likeness assessment
 
@@ -70,9 +77,12 @@ mc.rules.basic_rules.rule_of_veber(mol)
 - Passes Veber rules
 - Does not contain PAINS substructures
 
-**Usage:**
+**There is no `rule_of_drug` function in medchem 2.0.5.** Compose it explicitly, e.g. with the query DSL:
 ```python
-mc.rules.basic_rules.rule_of_drug(mol)
+qf = mc.query.QueryFilter(
+    'MATCHRULE("rule_of_five") AND MATCHRULE("rule_of_veber") AND NOT HASALERT("pains")'
+)
+keep = qf(mol_list, n_jobs=-1)
 ```
 
 ---
@@ -96,7 +106,7 @@ mc.rules.basic_rules.rule_of_reos(mol)
 
 ---
 
-### Golden Triangle
+### Golden Triangle (no single function)
 
 **Reference:** Johnson et al., J Med Chem (2009) 52:5487-5500
 
@@ -106,14 +116,11 @@ mc.rules.basic_rules.rule_of_reos(mol)
 - 200 ≤ MW ≤ 50 × LogP + 400
 - LogP: -2 to 5
 
-**Usage:**
-```python
-mc.rules.basic_rules.golden_triangle(mol)
-```
+**No `golden_triangle` function in medchem 2.0.5.** Implement with computed `mw`/`clogp`
+descriptors and `mc.rules.in_range`, or a custom callable passed to `RuleFilters(rule_list=[...])`.
 
 **Notes:**
-- Defines optimal physicochemical space
-- Visual representation resembles a triangle on MW vs LogP plot
+- Defines an optimal physicochemical space (a triangle on the MW vs LogP plot).
 
 ---
 
@@ -156,20 +163,19 @@ mc.rules.basic_rules.rule_of_leadlike_soft(mol)
 
 ---
 
-### Rule of Leadlike (Strict)
+### Rule of Leadlike (Strict) — not shipped
 
-**Purpose:** Restrictive lead-like criteria
+**Purpose:** Restrictive lead-like criteria (more aggressive than `rule_of_leadlike_soft`)
 
-**Criteria:**
+**Criteria (conceptual):**
 - Molecular Weight: 200-350 Da
 - LogP: -2 to 3.5
 - Rotatable Bonds ≤ 7
 - Number of Rings: 1-3
 
-**Usage:**
-```python
-mc.rules.basic_rules.rule_of_leadlike_strict(mol)
-```
+**medchem 2.0.5 ships only `rule_of_leadlike_soft`** (there is no `rule_of_leadlike_strict`).
+For stricter lead-likeness, combine `rule_of_oprea` with tighter property windows
+(`mc.rules.in_range`) or `HASPROP` queries.
 
 ---
 
@@ -240,10 +246,13 @@ mc.rules.basic_rules.rule_of_cns(mol)
 - Alkyl/aryl aldehydes
 - Michael acceptors (specific patterns)
 
-**Usage:**
+**Usage** (PAINS lives in the alert system, not a `pains_filter` rule function):
 ```python
-mc.rules.basic_rules.pains_filter(mol)
-# Returns True if NO PAINS found
+# Functional API (lowercase set name), True = no PAINS / keep:
+mc.functional.alert_filter(mol_list, alerts=["pains"], n_jobs=-1)
+# Or via the CommonAlerts class restricted to the PAINS set:
+mc.structural.CommonAlertsFilters(alerts_set=["PAINS"])(mols=mol_list, n_jobs=-1)
+# Or the RDKit catalog: mc.catalogs.NamedCatalogs.pains()
 ```
 
 **Notes:**
@@ -282,18 +291,21 @@ mc.rules.basic_rules.pains_filter(mol)
 
 **Usage:**
 ```python
-alert_filter = mc.structural.CommonAlertsFilters()
-has_alerts, details = alert_filter.check_mol(mol)
+alert_filter = mc.structural.CommonAlertsFilters()   # or alerts_set=["PAINS", "BMS"]
+df = alert_filter(mols=mol_list, n_jobs=-1, progress=True)
 ```
 
-**Return Format:**
-```python
-{
-    "has_alerts": True,
-    "alert_details": ["reactive_epoxide", "metabolic_hydrazine"],
-    "num_alerts": 2
-}
-```
+**Return format** — a pandas DataFrame, one row per molecule:
+
+| column        | meaning                                              |
+|---------------|------------------------------------------------------|
+| `mol`         | the RDKit molecule                                   |
+| `pass_filter` | `True` if clean (no alert triggered)                 |
+| `status`      | `"ok"` or `"exclude"`                                |
+| `reasons`     | `;`-joined matched alert names (`NaN` when clean)    |
+
+(There is no `check_mol` method in 2.0.5.) Discover the available alert sets with
+`mc.structural.CommonAlertsFilters.list_default_available_alerts()`.
 
 ---
 
@@ -310,156 +322,76 @@ has_alerts, details = alert_filter.check_mol(mol)
 
 **Usage:**
 ```python
-nibr_filter = mc.structural.NIBRFilters()
-results = nibr_filter(mols=mol_list, n_jobs=-1)
+nibr = mc.structural.NIBRFilters()
+df = nibr(mols=mol_list, n_jobs=-1)        # DataFrame: mol, pass_filter, severity, status, reasons, ...
+# or the functional one-liner returning a NumPy bool array:
+keep = mc.functional.nibr_filter(mol_list, max_severity=10, n_jobs=-1)
 ```
-
-**Return Format:** Boolean list (True = passes)
 
 ---
 
 ### Lilly Demerits Filter
 
-**Reference:** Based on Eli Lilly medicinal chemistry rules
+**Reference:** Bruns & Watson, J Med Chem (2012) 55:9763-9772, doi 10.1021/jm301008n
+(275 rules developed over ~18 years).
 
-**Source:** 275 structural patterns accumulated over 18 years
-
-**Purpose:** Identify assay interference and problematic functionalities
+**Purpose:** Identify assay interference and problematic functionalities via a demerit score.
 
 **Mechanism:**
-- Each matched pattern adds demerits
-- Molecules with >100 demerits are rejected
-- Some patterns add 10-50 demerits, others add 100+ (instant rejection)
+- Each matched pattern adds demerits; molecules above a demerit ceiling are rejected.
+- The original paper rejects at >100 demerits; medchem exposes this as the `max_demerits`
+  argument (**default 160** in 2.0.5 — set `max_demerits=100` to match the paper).
+- High-severity patterns can hard-reject; lower-severity patterns accumulate.
 
-**Demerit Categories:**
+**Requires external binaries** (`mamba install -c conda-forge lilly-medchem-rules`); the call
+raises `ImportError` if they are missing. The class lives at
+`medchem.structural.lilly_demerits.LillyDemeritsFilters`; use the functional entry point:
 
-1. **High Demerits (>50):**
-   - Known toxic groups
-   - Highly reactive functionalities
-   - Strong metal chelators
-
-2. **Medium Demerits (20-50):**
-   - Metabolic liabilities
-   - Aggregation-prone structures
-   - Frequent hitters
-
-3. **Low Demerits (5-20):**
-   - Minor concerns
-   - Context-dependent issues
-
-**Usage:**
 ```python
-lilly_filter = mc.structural.LillyDemeritsFilters()
-results = lilly_filter(mols=mol_list, n_jobs=-1)
-```
-
-**Return Format:**
-```python
-{
-    "demerits": 35,
-    "passes": True,  # (demerits ≤ 100)
-    "matched_patterns": [
-        {"pattern": "phenolic_ester", "demerits": 20},
-        {"pattern": "aniline_derivative", "demerits": 15}
-    ]
-}
+keep = mc.functional.lilly_demerit_filter(mol_list, max_demerits=160, n_jobs=-1)
+# NumPy bool array: True = within the demerit ceiling (kept)
 ```
 
 ---
 
 ## Chemical Group Patterns
 
-### Hinge Binders
+`ChemicalGroup(groups=[...])` matches curated catalog groups. **Validate names against
+`mc.groups.list_default_chemical_groups()`** — verified default groups include:
 
-**Purpose:** Identify kinase hinge-binding motifs
+| group name                              | use                                  |
+|-----------------------------------------|--------------------------------------|
+| `hinge_binders`                         | kinase hinge-binding motifs          |
+| `electrophilic_warheads_for_kinases`    | covalent kinase warheads             |
+| `common_warhead_covalent_inhibitors`    | covalent-inhibitor warheads          |
+| `privileged_kinase_inhibitor_scaffolds` | privileged kinase scaffolds          |
+| `privileged_scaffolds`                  | privileged drug scaffolds            |
+| `aggregator`                            | aggregation-prone motifs             |
 
-**Common Patterns:**
-- Aminopyridines
-- Aminopyrimidines
-- Indazoles
-- Benzimidazoles
-
-**Usage:**
 ```python
 group = mc.groups.ChemicalGroup(groups=["hinge_binders"])
-has_hinge = group.has_match(mol_list)
+group.has_match(mol)                                       # bool for ONE molecule
+keep = mc.functional.chemical_group_filter(mol_list, chemical_group=group)  # batch -> bool array
 ```
 
-**Application:** Kinase inhibitor design
-
----
-
-### Phosphate Binders
-
-**Purpose:** Identify phosphate-binding groups
-
-**Common Patterns:**
-- Basic amines in specific geometries
-- Guanidinium groups
-- Arginine mimetics
-
-**Usage:**
-```python
-group = mc.groups.ChemicalGroup(groups=["phosphate_binders"])
-```
-
-**Application:** Kinase inhibitors, phosphatase inhibitors
-
----
-
-### Michael Acceptors
-
-**Purpose:** Identify electrophilic Michael acceptor groups
-
-**Common Patterns:**
-- α,β-Unsaturated carbonyls
-- α,β-Unsaturated nitriles
-- Vinyl sulfones
-- Acrylamides
-
-**Usage:**
-```python
-group = mc.groups.ChemicalGroup(groups=["michael_acceptors"])
-```
-
-**Notes:**
-- Can be desirable for covalent inhibitors
-- Often flagged as reactive alerts in screening
-
----
-
-### Reactive Groups
-
-**Purpose:** Identify generally reactive functionalities
-
-**Common Patterns:**
-- Epoxides
-- Aziridines
-- Acyl halides
-- Isocyanates
-- Sulfonyl chlorides
-
-**Usage:**
-```python
-group = mc.groups.ChemicalGroup(groups=["reactive_groups"])
-```
+> `phosphate_binders`, `michael_acceptors`, and `reactive_groups` are **not** default catalog
+> names in 2.0.5. For Michael acceptors / reactive electrophiles, use the alert filters
+> (`alert_filter`, `CommonAlertsFilters`) or a custom SMARTS catalog (below). For covalent
+> warheads, use `electrophilic_warheads_for_kinases` / `common_warhead_covalent_inhibitors`.
 
 ---
 
 ## Custom SMARTS Patterns
 
-Define custom structural patterns using SMARTS:
+`ChemicalGroup` has no `custom_smarts` argument. Build a catalog from your own SMARTS with
+`mc.catalogs.catalog_from_smarts`, then match via `mc.functional.catalog_filter`:
 
 ```python
-custom_patterns = {
-    "my_warhead": "[C;H0](=O)C(F)(F)F",  # Trifluoromethyl ketone
-    "my_scaffold": "c1ccc2c(c1)ncc(n2)N",  # Aminobenzimidazole
-}
-
-group = mc.groups.ChemicalGroup(
-    groups=["hinge_binders"],
-    custom_smarts=custom_patterns
+cat = mc.catalogs.catalog_from_smarts(
+    smarts=["[CX3]=[CX3]C(=O)[NX3]", "[C;H0](=O)C(F)(F)F"],  # acrylamide, CF3-ketone warhead
+    labels=["acrylamide", "tfm_ketone"],
 )
+keep = mc.functional.catalog_filter(mol_list, catalogs=[cat])  # True = no match / keep
 ```
 
 ---
@@ -474,8 +406,8 @@ Recommended filters:
 - Common Alerts (permissive settings)
 
 ```python
-rfilter = mc.rules.RuleFilters(rule_list=["rule_of_five", "pains_filter"])
-alert_filter = mc.structural.CommonAlertsFilters()
+rfilter = mc.rules.RuleFilters(rule_list=["rule_of_five"])
+alert_filter = mc.structural.CommonAlertsFilters(alerts_set=["PAINS"])  # PAINS via alerts, not a rule
 ```
 
 ---
@@ -485,12 +417,13 @@ alert_filter = mc.structural.CommonAlertsFilters()
 Recommended filters:
 - Rule of Oprea or Leadlike (soft)
 - NIBR filters
-- Lilly Demerits
+- Lilly Demerits (needs external binaries)
 
 ```python
 rfilter = mc.rules.RuleFilters(rule_list=["rule_of_oprea"])
-nibr_filter = mc.structural.NIBRFilters()
-lilly_filter = mc.structural.LillyDemeritsFilters()
+nibr = mc.structural.NIBRFilters()
+# Lilly via the functional API (requires lilly-medchem-rules binaries):
+# keep_lilly = mc.functional.lilly_demerit_filter(mols, n_jobs=-1)
 ```
 
 ---
@@ -498,15 +431,15 @@ lilly_filter = mc.structural.LillyDemeritsFilters()
 ### Lead Optimization
 
 Recommended filters:
-- Rule of Drug
-- Leadlike (strict)
+- Rule of Five + Veber (compose "rule of drug")
+- Lead-likeness (`rule_of_oprea`) + tighter property windows
 - Full structural alert analysis
-- Complexity filters
+- Complexity filter
 
 ```python
-rfilter = mc.rules.RuleFilters(rule_list=["rule_of_drug", "rule_of_leadlike_strict"])
+rfilter = mc.rules.RuleFilters(rule_list=["rule_of_five", "rule_of_veber", "rule_of_oprea"])
 alert_filter = mc.structural.CommonAlertsFilters()
-complexity_filter = mc.complexity.ComplexityFilter(max_complexity=400)
+complexity_filter = mc.complexity.ComplexityFilter(limit="95", complexity_metric="bertz")
 ```
 
 ---
@@ -515,16 +448,13 @@ complexity_filter = mc.complexity.ComplexityFilter(max_complexity=400)
 
 Recommended filters:
 - Rule of CNS
-- Reduced PAINS criteria (CNS-focused)
-- BBB permeability constraints
+- PAINS / alert screening
+- BBB-oriented property windows (low TPSA, low HBD)
 
 ```python
 rfilter = mc.rules.RuleFilters(rule_list=["rule_of_cns"])
-constraints = mc.constraints.Constraints(
-    tpsa_max=90,
-    hbd_max=2,
-    mw_range=(300, 450)
-)
+# Property windows via the query DSL (no all-in-one Constraints object):
+qf = mc.query.QueryFilter('HASPROP("tpsa" <= 90) AND HASPROP("n_lipinski_hbd" <= 2) AND HASPROP("mw" <= 450)')
 ```
 
 ---
@@ -533,12 +463,12 @@ constraints = mc.constraints.Constraints(
 
 Recommended filters:
 - Rule of Three
-- Minimal complexity
-- Basic reactive group check
+- Low complexity
+- Reactive-group / alert check
 
 ```python
 rfilter = mc.rules.RuleFilters(rule_list=["rule_of_three"])
-complexity_filter = mc.complexity.ComplexityFilter(max_complexity=250)
+complexity_filter = mc.complexity.ComplexityFilter(limit="90", complexity_metric="bertz")
 ```
 
 ---
@@ -575,11 +505,11 @@ complexity_filter = mc.complexity.ComplexityFilter(max_complexity=250)
 Modern approaches combine rules with ML:
 
 ```python
-# Rule-based pre-filtering
-rule_results = mc.rules.RuleFilters(rule_list=["rule_of_five"])(mols)
-filtered_mols = [mol for mol, r in zip(mols, rule_results) if r["passes"]]
+# Rule-based pre-filtering (RuleFilters returns a DataFrame with a pass_all column)
+res = mc.rules.RuleFilters(rule_list=["rule_of_five"])(mols=mols, n_jobs=-1)
+filtered_mols = [mol for mol, ok in zip(mols, res["pass_all"]) if ok]
 
-# ML model scoring on filtered set
+# ML model scoring on the filtered set
 ml_scores = ml_model.predict(filtered_mols)
 
 # Combined decision
@@ -602,3 +532,4 @@ final_candidates = [
 7. Walters WP & Murcko MA. Adv Drug Deliv Rev (2002) 54:255-271
 8. Hann MM & Oprea TI. Curr Opin Chem Biol (2004) 8:255-263
 9. Rishton GM. Drug Discov Today (1997) 2:382-384
+10. Bruns RF & Watson IA. J Med Chem (2012) 55:9763-9772 (Lilly MedChem Rules)

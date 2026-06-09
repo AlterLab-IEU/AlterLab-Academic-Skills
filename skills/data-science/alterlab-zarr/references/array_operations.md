@@ -61,8 +61,8 @@ z.blocks[0, 0]                     # Block/chunk indexing
 ## Resizing and Appending
 
 ```python
-# Resize array
-z.resize(15000, 15000)  # Expands or shrinks dimensions
+# Resize array — pass the new shape as a single tuple (v3)
+z.resize((15000, 15000))  # Expands or shrinks dimensions
 
 # Append data along an axis
 z.append(np.random.random((1000, 10000)), axis=0)  # Adds rows
@@ -137,20 +137,23 @@ print(root.tree())
 #      └── prcp (365, 720, 1440) f4
 ```
 
-### H5py-Compatible API
+### Creating arrays inside groups
 
-Zarr provides an h5py-compatible interface for familiar HDF5 users:
+Create arrays with the group's `create_array`, and use `require_group` to get-or-create a
+subgroup (handy when migrating HDF5 hierarchies):
 
 ```python
-# Create group with h5py-style methods
 root = zarr.group('data.zarr')
-dataset = root.create_dataset('my_data', shape=(1000, 1000), chunks=(100, 100),
-                              dtype='f4')
+dataset = root.create_array(name='my_data', shape=(1000, 1000), chunks=(100, 100),
+                            dtype='f4')
 
-# Access like h5py
+# require_group returns the subgroup, creating it only if absent
 grp = root.require_group('subgroup')
-arr = grp.require_dataset('array', shape=(500, 500), chunks=(50, 50), dtype='i4')
+arr = grp.create_array(name='array', shape=(500, 500), chunks=(50, 50), dtype='i4')
 ```
+
+> Zarr v3 dropped the h5py-style `create_dataset` / `require_dataset` group methods — use
+> `create_array` (and `require_group` for groups).
 
 ## Consolidated Metadata
 

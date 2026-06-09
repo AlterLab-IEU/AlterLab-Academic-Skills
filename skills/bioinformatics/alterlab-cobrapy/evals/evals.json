@@ -47,6 +47,7 @@
       "expected_output": "Invokes alterlab-cobrapy. Uses sample from cobra.sampling (OptGP method with processes for parallelism) to draw samples, then inspects the distribution for the target reaction (e.g. a histogram of samples['PFK']).",
       "assertions": [
         { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "sample" },
         { "type": "behavior", "value": "Uses cobra.sampling.sample (OptGP/ACHR) to characterize the flux distribution." }
       ]
     },

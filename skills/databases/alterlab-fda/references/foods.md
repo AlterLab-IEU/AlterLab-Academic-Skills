@@ -371,4 +371,4 @@ These account for over 90% of food allergies and are the most common reasons for
 - CFSAN Adverse Event Reporting: https://www.fda.gov/food/compliance-enforcement-food/cfsan-adverse-event-reporting-system-caers
 - Food Recalls: https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts
 - API Basics: See `api_basics.md` in this references directory
-- Python examples: See `scripts/fda_food_query.py`
+- Python helper: See `scripts/fda_query.py` (the `FDAQuery` class) and `scripts/fda_examples.py`

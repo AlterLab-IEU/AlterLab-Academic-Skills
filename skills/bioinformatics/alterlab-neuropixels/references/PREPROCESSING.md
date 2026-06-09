@@ -110,34 +110,34 @@ rec_interp = si.interpolate_bad_channels(recording, bad_channel_ids=bad_channel_
 
 ## Motion Correction
 
-### Estimate Motion
-```python
-# Estimate motion (drift)
-motion, temporal_bins, spatial_bins = si.estimate_motion(
-    recording,
-    method='decentralized',
-    rigid=False,              # Non-rigid motion estimation
-    win_step_um=50,           # Spatial window step
-    win_sigma_um=150,         # Spatial window sigma
-    progress_bar=True
-)
-```
+### Estimate and Apply Motion Correction
 
-### Apply Motion Correction
+The simplest path is the all-in-one `correct_motion` with a preset (it detects
+peaks, estimates motion, and interpolates in one call):
+
 ```python
-rec_corrected = si.correct_motion(
+# One-shot: returns the drift-corrected recording
+rec_corrected = si.correct_motion(recording, preset='nonrigid_fast_and_accurate')
+
+# To inspect the estimate too, ask for motion_info
+rec_corrected, motion_info = si.correct_motion(
     recording,
-    motion,
-    temporal_bins,
-    spatial_bins,
-    interpolate_motion_border=True
+    preset='nonrigid_fast_and_accurate',
+    output_motion_info=True,
+    folder='motion_output/',
 )
 ```
 
 ### Motion Visualization
 ```python
-si.plot_motion(motion, temporal_bins, spatial_bins)
+# motion_info['motion'] is a Motion object (bins are carried inside it)
+from spikeinterface.widgets import plot_motion
+plot_motion(motion_info['motion'], recording=recording)
 ```
+
+See `MOTION_CORRECTION.md` for the low-level `estimate_motion` / `interpolate_motion`
+API. Note: `estimate_motion` returns a single `Motion` object in current
+SpikeInterface (not the old `(motion, temporal_bins, spatial_bins)` tuple).
 
 ## Probe-Specific Processing
 

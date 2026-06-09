@@ -4,6 +4,8 @@
 
 Content is king in research posters. This guide covers writing strategies, section-specific guidance, visual-text balance, and best practices for communicating research effectively in poster format.
 
+> **Note for this (HTML/CSS) skill:** the content/writing guidance here is format-agnostic. A few code snippets are LaTeX because this guide is shared with the LaTeX workflow — in this skill, put the same content into the HTML template's title/author/`.block`/caption markup instead.
+
 ## Core Content Principles
 
 ### 1. The 3-5 Minute Rule
@@ -63,11 +65,10 @@ Hook (Problem) → Approach → Discovery → Impact
 | Discussion/Conclusions | 100-150 | 25% |
 | References/Acknowledgments | 50-100 | 10% |
 
-**Counting Tool**:
-```latex
-% Add word count to poster (remove for final)
-\usepackage{texcount}
-% Compile with: texcount -inc poster.tex
+**Counting Tool**: strip the HTML tags and count words, e.g.
+```bash
+# rough word count of visible text in the poster
+sed 's/<[^>]*>/ /g' poster.html | wc -w
 ```
 
 ### 4. Visual-to-Text Ratio

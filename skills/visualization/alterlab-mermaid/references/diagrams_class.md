@@ -50,10 +50,13 @@ classDiagram
     BaseProcessor <|-- CreditCardProcessor : extends
     BaseProcessor <|-- DigitalWalletProcessor : extends
 
-    style PaymentProcessor fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#3b0764
-    style BaseProcessor fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
-    style CreditCardProcessor fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
-    style DigitalWalletProcessor fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
+    classDef iface fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#3b0764
+    classDef base fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
+    classDef impl fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
+
+    cssClass "PaymentProcessor" iface
+    cssClass "BaseProcessor" base
+    cssClass "CreditCardProcessor,DigitalWalletProcessor" impl
 ```
 
 ---
@@ -63,7 +66,7 @@ classDiagram
 - Use `<<interface>>` and `<<abstract>>` stereotypes for clarity
 - Show visibility: `+` public, `-` private, `#` protected
 - Keep to **4–6 classes** per diagram — split larger hierarchies
-- Use `style ClassName fill:...,stroke:...,color:...` for light semantic coloring:
+- Style with `classDef` + `cssClass` (or the `:::` shorthand: `class Foo:::impl`) — never inline `style`, per the style guide. Use the approved palette for light semantic coloring:
   - 🟣 Purple for interfaces/abstractions
   - 🔵 Blue for base/abstract classes
   - 🟢 Green for concrete implementations
@@ -225,18 +228,15 @@ classDiagram
 
     DeliveryAttempt --> DeliveryStatus : has
 
-    style Channel fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#3b0764
-    style DeliveryStatus fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#3b0764
-    style NotificationService fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
-    style NotificationQueue fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
-    style ChannelRegistry fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
-    style EmailChannel fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
-    style SMSChannel fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
-    style PushChannel fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
-    style WebhookChannel fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
-    style Notification fill:#f3f4f6,stroke:#6b7280,stroke-width:2px,color:#1f2937
-    style Recipient fill:#f3f4f6,stroke:#6b7280,stroke-width:2px,color:#1f2937
-    style DeliveryAttempt fill:#f3f4f6,stroke:#6b7280,stroke-width:2px,color:#1f2937
+    classDef iface fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#3b0764
+    classDef core fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
+    classDef impl fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
+    classDef model fill:#f3f4f6,stroke:#6b7280,stroke-width:2px,color:#1f2937
+
+    cssClass "Channel,DeliveryStatus" iface
+    cssClass "NotificationService,NotificationQueue,ChannelRegistry" core
+    cssClass "EmailChannel,SMSChannel,PushChannel,WebhookChannel" impl
+    cssClass "Notification,Recipient,DeliveryAttempt" model
 ```
 
 ### Why this works

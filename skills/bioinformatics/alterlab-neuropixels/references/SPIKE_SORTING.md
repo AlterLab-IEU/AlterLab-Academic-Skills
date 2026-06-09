@@ -28,7 +28,7 @@ import spikeinterface.full as si
 sorting = si.run_sorter(
     'kilosort4',
     recording,
-    output_folder='ks4_output',
+    folder='ks4_output',
     verbose=True
 )
 
@@ -40,7 +40,7 @@ print(f"Found {len(sorting.unit_ids)} units")
 sorting = si.run_sorter(
     'kilosort4',
     recording,
-    output_folder='ks4_output',
+    folder='ks4_output',
     # Detection
     Th_universal=9,        # Spike detection threshold
     Th_learned=8,          # Learned threshold
@@ -92,7 +92,7 @@ ks4_params = {
 sorting = si.run_sorter(
     'kilosort3',
     recording,
-    output_folder='ks3_output',
+    folder='ks3_output',
     # Key parameters
     detect_threshold=6,
     projection_threshold=[9, 9],
@@ -114,7 +114,7 @@ pip install spykingcircus
 sorting = si.run_sorter(
     'spykingcircus2',
     recording,
-    output_folder='sc2_output',
+    folder='sc2_output',
     # Parameters
     detect_threshold=5,
     selection_method='all',
@@ -133,7 +133,7 @@ pip install mountainsort5
 sorting = si.run_sorter(
     'mountainsort5',
     recording,
-    output_folder='ms5_output',
+    folder='ms5_output',
     # Parameters
     detect_threshold=5.0,
     scheme='2',  # '1', '2', or '3'
@@ -145,9 +145,9 @@ sorting = si.run_sorter(
 ### Compare Sorters
 ```python
 # Run multiple sorters
-sorting_ks4 = si.run_sorter('kilosort4', recording, output_folder='ks4/')
-sorting_sc2 = si.run_sorter('spykingcircus2', recording, output_folder='sc2/')
-sorting_ms5 = si.run_sorter('mountainsort5', recording, output_folder='ms5/')
+sorting_ks4 = si.run_sorter('kilosort4', recording, folder='ks4/')
+sorting_sc2 = si.run_sorter('spykingcircus2', recording, folder='sc2/')
+sorting_ms5 = si.run_sorter('mountainsort5', recording, folder='ms5/')
 
 # Compare results
 comparison = si.compare_multiple_sorters(
@@ -159,14 +159,16 @@ comparison = si.compare_multiple_sorters(
 agreement = comparison.get_agreement_sorting()
 ```
 
-### Ensemble Sorting
+### Consensus / Agreement Sorting
 ```python
-# Create consensus sorting
-sorting_ensemble = si.create_ensemble_sorting(
+# Keep only units found by at least `minimum_agreement_count` sorters.
+# (There is no `si.create_ensemble_sorting`; the agreement sorting comes from
+#  the MultiSortingComparison object.)
+comparison = si.compare_multiple_sorters(
     [sorting_ks4, sorting_sc2, sorting_ms5],
-    voting_method='agreement',
-    min_agreement=2  # Unit must be found by at least 2 sorters
+    name_list=['KS4', 'SC2', 'MS5'],
 )
+sorting_consensus = comparison.get_agreement_sorting(minimum_agreement_count=2)
 ```
 
 ## Sorting in Docker/Singularity
@@ -176,7 +178,7 @@ sorting_ensemble = si.create_ensemble_sorting(
 sorting = si.run_sorter(
     'kilosort3',
     recording,
-    output_folder='ks3_docker/',
+    folder='ks3_docker/',
     docker_image='spikeinterface/kilosort3-compiled-base:latest',
     verbose=True
 )
@@ -187,7 +189,7 @@ sorting = si.run_sorter(
 sorting = si.run_sorter(
     'kilosort3',
     recording,
-    output_folder='ks3_singularity/',
+    folder='ks3_singularity/',
     singularity_image='/path/to/kilosort3.sif',
     verbose=True
 )
@@ -206,11 +208,19 @@ recordings = [
 # Concatenate
 recording_concat = si.concatenate_recordings(recordings)
 
-# Sort
-sorting = si.run_sorter('kilosort4', recording_concat, output_folder='ks4/')
+# Sort the concatenated recording, then slice the result back per original
+# segment using frame ranges (there is no `si.split_sorting` helper).
+sorting = si.run_sorter('kilosort4', recording_concat, folder='ks4/')
 
-# Split back by original recording
-sortings_split = si.split_sorting(sorting, recording_concat)
+fs = recording_concat.get_sampling_frequency()
+n_samples = [r.get_num_samples() for r in recordings]
+bounds = [0]
+for n in n_samples:
+    bounds.append(bounds[-1] + n)
+sortings_split = [
+    sorting.frame_slice(start_frame=bounds[i], end_frame=bounds[i + 1])
+    for i in range(len(recordings))
+]
 ```
 
 ### Sort by Segment
@@ -221,11 +231,15 @@ from pathlib import Path
 segments_output = Path('sorting_segments')
 sortings = []
 
-for i, segment in enumerate(recording.split_by_times([0, 3600, 7200, 10800])):
+# Slice the recording into time windows with time_slice (there is no
+# `split_by_times`), then sort each window.
+edges_s = [0, 3600, 7200, 10800]
+for i in range(len(edges_s) - 1):
+    segment = recording.time_slice(start_time=edges_s[i], end_time=edges_s[i + 1])
     sorting_seg = si.run_sorter(
         'kilosort4',
         segment,
-        output_folder=segments_output / f'segment_{i}'
+        folder=segments_output / f'segment_{i}'
     )
     sortings.append(sorting_seg)
 ```
@@ -245,11 +259,12 @@ si.export_to_phy(analyzer, output_folder='phy_export/')
 
 ### Load Phy Curation
 ```python
-# After manual curation in Phy
-sorting_curated = si.read_phy('phy_export/')
+# After manual curation in Phy, read the curated sorting back. By default
+# read_phy keeps units labelled 'good' (and 'mua' if you ask for it).
+sorting_curated = si.read_phy('phy_export/', exclude_cluster_groups=['noise'])
 
-# Or apply Phy labels
-sorting_curated = si.apply_phy_curation(sorting, 'phy_export/')
+# The 'quality' labels assigned in Phy are available as a unit property:
+labels = sorting_curated.get_property('quality')
 ```
 
 ### Automatic Curation
@@ -302,7 +317,7 @@ for unit_id in sorting.unit_ids:
 sorting = si.run_sorter(
     'kilosort4',
     recording,
-    output_folder='ks4/',
+    folder='ks4/',
     batch_size=30000  # Smaller batch
 )
 ```
@@ -313,7 +328,7 @@ sorting = si.run_sorter(
 sorting = si.run_sorter(
     'kilosort4',
     recording,
-    output_folder='ks4/',
+    folder='ks4/',
     Th_universal=7,  # Lower from default 9
     Th_learned=6
 )
@@ -325,7 +340,7 @@ sorting = si.run_sorter(
 sorting = si.run_sorter(
     'kilosort4',
     recording,
-    output_folder='ks4/',
+    folder='ks4/',
     dmin=20,   # Increase from 15
     dminx=16   # Increase from 12
 )

@@ -541,22 +541,23 @@ Examine validation report:
 
 ### Step 4: Auto-Fix
 
-Use auto-fix for safe corrections:
+`validate_citations.py` reports only; safe corrections are applied by
+`format_bibtex.py`, which runs them by default (disable with `--no-fix`):
 
 ```bash
-python scripts/validate_citations.py references.bib \
-  --auto-fix \
+python scripts/format_bibtex.py references.bib \
+  --deduplicate \
   --output fixed_references.bib
 ```
 
-**Auto-fix can**:
+**These fixes can**:
 - Fix page range format (- to --)
 - Remove "pp." from pages
-- Standardize author separators
-- Fix common syntax errors
+- Strip DOI URL prefixes
+- Standardize author separators (`;`, `&` to `and`)
 - Normalize field order
 
-**Auto-fix cannot**:
+**They cannot**:
 - Add missing information
 - Find correct DOIs
 - Determine which duplicate to keep
@@ -564,7 +565,7 @@ python scripts/validate_citations.py references.bib \
 
 ### Step 5: Manual Review
 
-Review auto-fixed file:
+Review the fixed file:
 ```bash
 # Check what changed
 diff references.bib fixed_references.bib
@@ -655,12 +656,12 @@ Don't validate manually - use scripts:
 ### 3. Keep Backup
 
 ```bash
-# Before auto-fix
+# Before fixing
 cp references.bib references_backup.bib
 
-# Run auto-fix
-python scripts/validate_citations.py references.bib \
-  --auto-fix \
+# Apply fixes with format_bibtex.py
+python scripts/format_bibtex.py references.bib \
+  --deduplicate \
   --output references_fixed.bib
 
 # Review changes

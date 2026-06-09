@@ -79,29 +79,30 @@ def remove_z_gates(circuit: cirq.Circuit) -> cirq.Circuit:
 transformed = remove_z_gates(circuit)
 ```
 
-### Transformer Class
+### Transformer via map_operations
+
+Cirq has no `Transformer` base class to subclass; a transformer is just a callable
+`(circuit, *, context=None) -> circuit`. For per-operation rewrites use
+`map_operations` (note: replacing a 1-qubit op with a different 1-qubit op is fine;
+changing qubit count requires `map_operations_and_unroll`).
 
 ```python
+import numpy as np
 from cirq.transformers import transformer_primitives
 
-class HToRyTransformer(transformer_primitives.Transformer):
-    """Replace H gates with Ry(π/2)."""
+@cirq.transformer
+def h_to_ry(circuit: cirq.Circuit, *, context=None) -> cirq.Circuit:
+    """Replace H gates with Ry(π/2) (up to global phase)."""
+    def map_op(op: cirq.Operation, _) -> cirq.OP_TREE:
+        if isinstance(op.gate, cirq.HPowGate) and op.gate.exponent == 1:
+            return cirq.ry(np.pi / 2)(op.qubits[0])
+        return op
 
-    def __call__(self, circuit: cirq.Circuit, *, context=None) -> cirq.Circuit:
-        def map_op(op: cirq.Operation, _) -> cirq.OP_TREE:
-            if isinstance(op.gate, cirq.HPowGate):
-                return cirq.ry(np.pi/2)(op.qubits[0])
-            return op
+    return transformer_primitives.map_operations(
+        circuit, map_op, deep=True
+    ).unfreeze(copy=False)
 
-        return transformer_primitives.map_operations(
-            circuit,
-            map_op,
-            deep=True
-        ).unfreeze(copy=False)
-
-# Apply transformer
-transformer = HToRyTransformer()
-result = transformer(circuit)
+result = h_to_ry(circuit)
 ```
 
 ## Gate Decomposition
@@ -188,14 +189,19 @@ from cirq.transformers import drop_empty_moments
 cleaned = drop_empty_moments(circuit)
 ```
 
-### Align Measurements
+### Align Operations
 
 ```python
-from cirq.transformers import dephase_measurements
+from cirq.transformers import align_left, align_right
 
-# Move measurements to end and remove operations after
-aligned = dephase_measurements(circuit)
+# Slide operations as early (or as late) as possible to compact moments
+aligned = align_left(circuit)
+aligned = align_right(circuit)
 ```
+
+`dephase_measurements` is a different tool: it replaces each terminal measurement
+with a dephasing channel, used when simulating measurement as decoherence rather
+than collapsing to a sampled bit.
 
 ## Circuit Compilation
 
@@ -221,43 +227,46 @@ device.validate_circuit(compiled)
 
 ### Two-Qubit Gate Compilation
 
-```python
-# Compile to specific two-qubit gate
-from cirq import two_qubit_to_cz
+Prefer `optimize_for_target_gateset(circuit, gateset=cirq.CZTargetGateset())` for
+whole-circuit compilation. To decompose a single two-qubit unitary by hand, use
+`cirq.two_qubit_matrix_to_cz_operations`, which takes the two qubits and the 4x4
+matrix (not an operation):
 
-# Convert all two-qubit gates to CZ
+```python
 cz_circuit = cirq.Circuit()
-for moment in circuit:
-    for op in moment:
-        if len(op.qubits) == 2:
-            cz_circuit.append(two_qubit_to_cz(op))
-        else:
-            cz_circuit.append(op)
+for op in circuit.all_operations():
+    if len(op.qubits) == 2:
+        q0, q1 = op.qubits
+        cz_circuit.append(
+            cirq.two_qubit_matrix_to_cz_operations(
+                q0, q1, cirq.unitary(op), allow_partial_czs=False
+            )
+        )
+    else:
+        cz_circuit.append(op)
 ```
 
 ## Qubit Routing
 
 ### Route Circuit to Device Topology
 
+Routing inserts SWAPs so every two-qubit gate acts on physically connected qubits.
+Use the `cirq.RouteCQC` transformer. Its device graph is a plain `networkx.Graph`
+whose **nodes are `cirq.Qid`s** (not coordinate tuples), and it is called directly
+on the circuit:
+
 ```python
-from cirq.transformers import route_circuit
+import networkx as nx
 
-# Define device connectivity
-device_graph = cirq.NamedTopology(
-    {
-        (0, 0): [(0, 1), (1, 0)],
-        (0, 1): [(0, 0), (1, 1)],
-        (1, 0): [(0, 0), (1, 1)],
-        (1, 1): [(0, 1), (1, 0)]
-    }
-)
+# Device connectivity graph (nodes are qubits)
+q = cirq.GridQubit.rect(2, 2)
+device_graph = nx.Graph()
+device_graph.add_edges_from([
+    (q[0], q[1]), (q[0], q[2]), (q[1], q[3]), (q[2], q[3])
+])
 
-# Route logical qubits to physical qubits
-routed_circuit = route_circuit(
-    circuit,
-    device_graph=device_graph,
-    routing_algo=cirq.RouteCQC(device_graph)
-)
+router = cirq.RouteCQC(device_graph)
+routed_circuit = router(circuit)
 ```
 
 ### SWAP Network Insertion

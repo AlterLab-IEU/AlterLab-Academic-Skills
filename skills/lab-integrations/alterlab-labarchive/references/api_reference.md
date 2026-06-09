@@ -1,5 +1,7 @@
 # LabArchives API Reference
 
+> **Verification status.** Confirmed against the `labarchivespy` wrapper and its examples: `users/user_access_info`, `users/user_info_via_id`, `utilities/institutional_login_urls`, and `notebooks/notebook_backup`. The `entries/*`, `notebooks/list_notebooks`, and `site_reports/*` method names below describe the documented REST surface but are **not** exercised by the wrapper and have not been independently verified here — confirm exact class/method/parameter names against your institution's LabArchives API documentation (linked from the LabArchives notebook share page) before relying on them. The notebook list is also returned inline by `user_access_info`, so a separate `list_notebooks` call may be unnecessary.
+
 ## API Structure
 
 All LabArchives API calls follow this URL pattern:
@@ -34,7 +36,7 @@ Retrieve user ID and notebook access information.
 
 **Parameters:**
 - `login_or_email` (required): User's email address or login username
-- `password` (required): User's external applications password (not regular login password)
+- `password` (required): User's "LA App authentication" token (not the regular login password)
 
 **Returns:** XML or JSON response containing:
 - User ID (uid)
@@ -325,11 +327,11 @@ Retrieve institutional login URLs for SSO integration.
 
 ## Rate Limiting
 
-LabArchives implements rate limiting to ensure service stability:
+LabArchives may throttle high request volumes (HTTP 429). Exact published limits are not documented here — do not assume a specific number. Practical guidance:
 
-- **Recommended:** Maximum 60 requests per minute per API key
-- **Burst allowance:** Short bursts up to 100 requests may be tolerated
-- **Best practice:** Implement 1-2 second delays between requests for batch operations
+- **Be conservative:** add a short delay (e.g. 1-2 s) between requests in batch loops.
+- **Back off on 429:** retry with exponential backoff rather than hammering the endpoint.
+- Confirm any institution-specific quota with your LabArchives administrator.
 
 ## API Versioning
 

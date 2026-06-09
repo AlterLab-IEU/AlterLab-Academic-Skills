@@ -7,7 +7,8 @@
       "expected_output": "Invokes alterlab-ginkgo-cloud. Routes to the Cell Free Protein Expression Validation protocol on cloud.ginkgo.bio: submit the FASTA (up to 1800 bp), expect expression confirmation, baseline titer (mg/L), and virtual gel images at $39/sample with a 5-10 day turnaround, walking through the ordering workflow.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "cell free" }
+        { "type": "output_contains", "value": "cell free" },
+        { "type": "output_contains", "value": "$39" }
       ]
     },
     {

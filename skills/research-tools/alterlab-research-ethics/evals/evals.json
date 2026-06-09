@@ -60,6 +60,16 @@
         {"type": "output_contains", "value": "alterlab-survey-design"},
         {"type": "behavior", "value": "Recognizes questionnaire item-writing is survey-design territory and defers to alterlab-survey-design."}
       ]
+    },
+    {
+      "id": "near-miss-turkish-etik-kurul",
+      "prompt": "I'm at a Turkish university and need to figure out which etik kurul my survey-based study has to go to and prepare the başvuru form. Can you handle the Turkish ethics committee application?",
+      "expected_output": "This is a Turkey-specific etik kurul routing and application task governed by the TR Dizin/ULAKBIM trigger rule and TİTCK requirements, not general international IRB/Belmont guidance. The skill's 'Does NOT Trigger' table routes Turkish etik kurul applications to alterlab-tr-research-ethics. Defers there rather than producing a US-style IRB application.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-tr-research-ethics"},
+        {"type": "behavior", "value": "Recognizes a Turkish etik kurul application is Turkey-specific and defers to alterlab-tr-research-ethics rather than giving a US-style IRB walkthrough."}
+      ]
     }
   ]
 }

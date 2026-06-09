@@ -13,7 +13,7 @@
     {
       "id": "cloud-s3-store-consolidated",
       "prompt": "I need to write a large scientific array to an S3 bucket so collaborators can read slices of it remotely without downloading the whole thing. What's the right way to chunk it and minimize cloud latency?",
-      "expected_output": "Invokes alterlab-zarr: configures an s3fs.S3Map store, picks cloud-appropriate chunk sizes (5-100 MB), writes the array, and calls zarr.consolidate_metadata so readers can zarr.open_consolidated to cut metadata round-trips, optionally recommending sharding to reduce object count.",
+      "expected_output": "Invokes alterlab-zarr: configures an fsspec-backed S3 store (e.g. FsspecStore.from_url for an s3:// URL), picks cloud-appropriate chunk sizes (5-100 MB), writes the array, and calls zarr.consolidate_metadata so readers can zarr.open_consolidated to cut metadata round-trips, optionally recommending sharding to reduce object count.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Uses an S3 store with cloud-sized chunks and consolidates metadata (open_consolidated) to reduce cloud latency." }
@@ -31,7 +31,7 @@
     {
       "id": "hdf5-to-zarr-conversion",
       "prompt": "I have a big dataset in an HDF5 file and want to convert it to Zarr so I can do parallel out-of-core processing later. How do I migrate it?",
-      "expected_output": "Invokes alterlab-zarr: reads the HDF5 dataset with h5py and writes it to a Zarr store via zarr.array with appropriate chunks, notes the h5py-compatible group API (create_dataset/require_group), and mentions that the resulting store can be loaded lazily with Dask (da.from_zarr) for parallel computation.",
+      "expected_output": "Invokes alterlab-zarr: reads the HDF5 dataset with h5py and writes it to a Zarr store via zarr.array (or group.create_array) with appropriate chunks, and mentions that the resulting store can be loaded lazily with Dask (da.from_zarr) for parallel computation.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "zarr" }

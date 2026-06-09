@@ -5,19 +5,15 @@ This document provides practical examples for common molfeat use cases.
 ## Installation
 
 ```bash
-# Recommended: Using conda/mamba
-mamba install -c conda-forge molfeat
-
-# Alternative: Using pip
-pip install molfeat
+uv pip install molfeat
 
 # With all optional dependencies
-pip install "molfeat[all]"
+uv pip install "molfeat[all]"
 
 # With specific dependencies
-pip install "molfeat[dgl]"          # For GNN models
-pip install "molfeat[graphormer]"   # For Graphormer
-pip install "molfeat[transformer]"  # For ChemBERTa, ChemGPT
+uv pip install "molfeat[dgl]"          # For GNN models
+uv pip install "molfeat[graphormer]"   # For Graphormer
+uv pip install "molfeat[transformer]"  # For ChemBERTa, ChemGPT
 ```
 
 ---
@@ -592,6 +588,7 @@ top_hits = [screening_smiles[i] for i in ranked_indices[:top_n]]
 ```python
 from molfeat.calc import RDKitDescriptors2D
 from sklearn.linear_model import Ridge
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_score
 import numpy as np
@@ -600,30 +597,30 @@ import numpy as np
 smiles = load_molecules()
 y = load_activity_values()  # e.g., IC50, logP
 
-# Featurize with interpretable descriptors
+# Featurize with interpretable descriptors once (deterministic, no leakage)
 transformer = MoleculeTransformer(RDKitDescriptors2D(), n_jobs=-1)
 X = transformer(smiles)
 
-# Standardize features
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
-
-# Build linear model
-model = Ridge(alpha=1.0)
-scores = cross_val_score(model, X_scaled, y, cv=5, scoring='r2')
+# Put scaling INSIDE the pipeline so each CV fold fits its own scaler
+# (fitting StandardScaler on all X before cross_val_score leaks test-fold stats)
+model = Pipeline([
+    ("scaler", StandardScaler()),
+    ("ridge", Ridge(alpha=1.0)),
+])
+scores = cross_val_score(model, X, y, cv=5, scoring="r2")
 print(f"R² = {scores.mean():.3f} (+/- {scores.std():.3f})")
 
-# Fit final model
-model.fit(X_scaled, y)
+# Fit final model on all data
+model.fit(X, y)
 
-# Interpret feature importance
+# Interpret feature importance (coefficients live on the ridge step)
 feature_names = transformer.featurizer.columns
-importance = np.abs(model.coef_)
-top_features_idx = importance.argsort()[-10:][::-1]
+coef = model.named_steps["ridge"].coef_
+top_features_idx = np.abs(coef).argsort()[-10:][::-1]
 
 print("Top 10 important features:")
 for idx in top_features_idx:
-    print(f"  {feature_names[idx]}: {model.coef_[idx]:.3f}")
+    print(f"  {feature_names[idx]}: {coef[idx]:.3f}")
 ```
 
 ### Similarity Search

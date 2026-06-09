@@ -115,7 +115,7 @@ query = DataQuery(
     input_ids=["4HHB"],
     return_data_list=["struct.title", "exptl.method"],
 )
-data = query.exec()  # in Python 3.14+/Jupyter: await query.exec()
+data = query.exec()  # synchronous; returns a dict
 entry = data["data"]["entries"][0]
 print(entry["struct"]["title"])
 print(entry["exptl"][0]["method"])
@@ -270,17 +270,20 @@ for pdb_id, info in results.items():
 
 ## Python Package Installation
 
-Install the official RCSB PDB Python API client:
+Install the official RCSB PDB Python API client (`rcsb-api`, current major version
+1.x; examples here target `>=1.7`):
 
 ```bash
-# Current recommended package
-uv pip install rcsb-api
-
-# For legacy code (deprecated, use rcsb-api instead)
-uv pip install rcsbsearchapi
+uv pip install "rcsb-api>=1.7"
 ```
 
-The `rcsb-api` package provides unified access to both Search and Data APIs through the `rcsbapi.search` and `rcsbapi.data` modules.
+The `rcsb-api` package provides unified access to both Search and Data APIs through
+the `rcsbapi.search` and `rcsbapi.data` modules. (The older `rcsbsearchapi` package
+is superseded by `rcsb-api` and its `import rcsbsearchapi` path is gone — prefer
+`rcsb-api` for new code.)
+
+The `scripts/query_pdb.py` helper needs none of this — it hits the public REST APIs
+with only the Python standard library.
 
 ## Common Use Cases
 

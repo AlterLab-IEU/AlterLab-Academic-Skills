@@ -37,7 +37,7 @@ def init_client(config):
         )
     except ImportError:
         print("❌ labarchives-py package not installed")
-        print("   Install with: pip install git+https://github.com/mcmero/labarchives-py")
+        print('   Install with: uv pip install "git+https://github.com/mcmero/labarchives-py"')
         sys.exit(1)
 
 
@@ -66,14 +66,23 @@ def get_user_id(client, config):
         sys.exit(1)
 
 
-def list_notebooks(client, uid):
-    """List all accessible notebooks for a user"""
+def list_notebooks(client, config, uid):
+    """List all accessible notebooks for a user.
+
+    The notebook list is returned by the same user_access_info call used to
+    authenticate, so re-authenticate with the login credentials. Passing a bare
+    {'uid': uid} does NOT work: user_access_info requires login_or_email plus
+    the LA App authentication token.
+    """
     import xml.etree.ElementTree as ET
 
     print(f"\n📚 Listing notebooks for user ID: {uid}\n")
 
-    # Get user access info which includes notebook list
-    login_params = {'uid': uid}
+    # user_access_info requires login credentials and returns the notebook tree.
+    login_params = {
+        'login_or_email': config['user_email'],
+        'password': config['user_external_password'],
+    }
 
     try:
         response = client.make_call('users', 'user_access_info', params=login_params)
@@ -162,12 +171,12 @@ def backup_notebook(client, uid, nbid, output_dir='backups', json_format=False,
         return None
 
 
-def backup_all_notebooks(client, uid, output_dir='backups', json_format=False,
+def backup_all_notebooks(client, config, uid, output_dir='backups', json_format=False,
                         no_attachments=False):
     """Backup all accessible notebooks"""
     print("\n📦 Backing up all notebooks...\n")
 
-    notebooks = list_notebooks(client, uid)
+    notebooks = list_notebooks(client, config, uid)
 
     if not notebooks:
         print("No notebooks to backup")
@@ -256,13 +265,13 @@ Examples:
 
     # Execute command
     if args.command == 'list':
-        list_notebooks(client, uid)
+        list_notebooks(client, config, uid)
 
     elif args.command == 'backup':
         backup_notebook(client, uid, args.nbid, args.output, args.json, args.no_attachments)
 
     elif args.command == 'backup-all':
-        backup_all_notebooks(client, uid, args.output, args.json, args.no_attachments)
+        backup_all_notebooks(client, config, uid, args.output, args.json, args.no_attachments)
 
 
 if __name__ == '__main__':

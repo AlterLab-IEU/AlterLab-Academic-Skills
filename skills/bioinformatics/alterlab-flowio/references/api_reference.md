@@ -115,16 +115,18 @@ flow_data.write_fcs('output.fcs', metadata={'$SRC': 'Modified data'})
 ### read_multiple_data_sets()
 
 ```python
-read_multiple_data_sets(fcs_file,
+read_multiple_data_sets(filename_or_handle,
                         ignore_offset_error=False,
                         ignore_offset_discrepancy=False,
-                        use_header_offsets=False)
+                        use_header_offsets=False,
+                        only_text=False)
 ```
 
 Read all datasets from an FCS file containing multiple datasets.
 
 **Parameters:**
-- Same as FlowData constructor (except `nextdata_offset`)
+- Same as the FlowData constructor except `nextdata_offset` and `null_channel_list`
+  (accepts a path or file handle plus the offset/`only_text` flags).
 
 **Returns:**
 - List of FlowData instances, one for each dataset
@@ -142,37 +144,38 @@ for i, dataset in enumerate(datasets):
 ### create_fcs()
 
 ```python
-create_fcs(filename,
+create_fcs(file_handle,
            event_data,
            channel_names,
            opt_channel_names=None,
-           metadata=None)
+           metadata_dict=None)
 ```
 
 Create a new FCS file from event data.
 
 **Parameters:**
-- `filename` (str): Output file path
-- `event_data` (ndarray): 2-D NumPy array of event data (rows=events, columns=channels)
+- `file_handle`: A **writable binary file handle** (e.g. `open(path, 'wb')`), **not** a path string. (`create_fcs` calls `file_handle.seek(0)`; passing a `str` raises `AttributeError: 'str' object has no attribute 'seek'`.)
+- `event_data`: **Flattened 1-D** sequence of event values, channel-interleaved (event0_ch0, event0_ch1, …, event1_ch0, …). Pass `array.flatten()` for a 2-D `(events, channels)` matrix. (Internally `n_points = len(event_data)`; a 2-D array gives `len == n_events`, raising `ValueError: Number of data points is not a multiple of the number of channels`.)
 - `channel_names` (list): List of PnN (short) channel names
 - `opt_channel_names` (list): Optional list of PnS (descriptive) channel names
-- `metadata` (dict): Optional dictionary of TEXT segment keywords
+- `metadata_dict` (dict): Optional dictionary of TEXT segment keywords. **Note the name: `metadata_dict`, not `metadata`** (the latter is used by `write_fcs`); passing `metadata=` raises `TypeError`.
 
 **Example:**
 ```python
 import numpy as np
 from flowio import create_fcs
 
-# Create synthetic data
-events = np.random.rand(10000, 5)
+# Create synthetic data (n_events * n_channels values)
+events = (np.random.rand(10000, 5) * 1000).astype('float32')
 channels = ['FSC-A', 'SSC-A', 'FL1-A', 'FL2-A', 'Time']
 opt_channels = ['Forward Scatter', 'Side Scatter', 'FITC', 'PE', 'Time']
 
-create_fcs('synthetic.fcs',
-           events,
-           channels,
-           opt_channel_names=opt_channels,
-           metadata={'$SRC': 'Synthetic data'})
+with open('synthetic.fcs', 'wb') as fh:
+    create_fcs(fh,
+               events.flatten(),
+               channels,
+               opt_channel_names=opt_channels,
+               metadata_dict={'$SRC': 'Synthetic data'})
 ```
 
 ## Exception Classes
@@ -309,21 +312,22 @@ import numpy as np
 from flowio import create_fcs
 
 # Generate or process data
-data = np.random.rand(5000, 3) * 1000
+data = (np.random.rand(5000, 3) * 1000).astype('float32')
 
 # Define channels
 channels = ['FSC-A', 'SSC-A', 'FL1-A']
 stains = ['Forward Scatter', 'Side Scatter', 'GFP']
 
-# Create FCS file
-create_fcs('output.fcs',
-           data,
-           channels,
-           opt_channel_names=stains,
-           metadata={
-               '$SRC': 'Python script',
-               '$DATE': '19-OCT-2025'
-           })
+# Create FCS file (binary file handle + flattened events + metadata_dict=)
+with open('output.fcs', 'wb') as fh:
+    create_fcs(fh,
+               data.flatten(),
+               channels,
+               opt_channel_names=stains,
+               metadata_dict={
+                   '$SRC': 'Python script',
+                   '$DATE': '19-OCT-2025'
+               })
 ```
 
 ### Processing Multi-Dataset Files
@@ -360,13 +364,14 @@ events = flow.as_array(preprocess=False)
 # Modify data (example: apply custom transformation)
 events[:, 0] = events[:, 0] * 1.5  # Scale first channel
 
-# Note: Currently, FlowIO doesn't support direct modification of event data
-# For modifications, use create_fcs() instead:
+# FlowIO doesn't modify event data in place; write a new file with create_fcs()
+# (binary handle + flattened events + metadata_dict=).
 from flowio import create_fcs
 
-create_fcs('modified.fcs',
-           events,
-           flow.pnn_labels,
-           opt_channel_names=flow.pns_labels,
-           metadata=flow.text)
+with open('modified.fcs', 'wb') as fh:
+    create_fcs(fh,
+               events.flatten(),
+               flow.pnn_labels,
+               opt_channel_names=flow.pns_labels,
+               metadata_dict=flow.text)
 ```

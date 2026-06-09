@@ -47,8 +47,10 @@ Use one of four methods to construct the consensus peaks:
 
 The simplest approach using a fixed coverage threshold:
 
+The top-level command is `geniml build-universe`, with the method (`cc`/`ccf`/`ml`/`hmm`) as a subcommand. Verified `cc` flags: `--coverage-folder`, `--output-file`, `--coverage-prefix`, `--merge`, `--filter-size`, `--cutoff`.
+
 ```bash
-geniml universe build cc \
+geniml build-universe cc \
   --coverage-folder coverage/ \
   --output-file universe_cc.bed \
   --cutoff 5 \
@@ -65,74 +67,50 @@ geniml universe build cc \
 
 ### 2. Coverage Cutoff Flexible (CCF)
 
-Creates confidence intervals around likelihood cutoffs for boundaries and region cores:
+Adds flexibility around the cutoff for region boundaries and cores:
 
 ```bash
-geniml universe build ccf \
+geniml build-universe ccf \
   --coverage-folder coverage/ \
   --output-file universe_ccf.bed \
-  --cutoff 5 \
-  --confidence 0.95 \
   --merge 100 \
   --filter-size 50
 ```
 
-**Additional parameters:**
-- `--confidence`: Confidence level for flexible boundaries (0-1)
-
-**Use when:** Uncertainty in peak boundaries should be captured
+**Use when:** Uncertainty in peak boundaries should be captured. Run `geniml build-universe ccf --help` for its exact flags.
 
 ### 3. Maximum Likelihood (ML)
 
-Builds probabilistic models accounting for region start/end positions:
+Builds probabilistic models accounting for region start/end positions. The ML universe is fit against a likelihood model:
 
 ```bash
-geniml universe build ml \
+geniml build-universe ml \
   --coverage-folder coverage/ \
   --output-file universe_ml.bed \
+  --model-file model.tar \
   --merge 100 \
-  --filter-size 50 \
-  --model-type gaussian
+  --filter-size 50
 ```
 
-**Parameters:**
-- `--model-type`: Distribution for likelihood estimation (gaussian, poisson)
-
-**Use when:** Statistical modeling of peak locations is important
+**Use when:** Statistical modeling of peak locations is important. (Build the likelihood model first via `geniml lh`; see `geniml build-universe ml --help`.)
 
 ### 4. Hidden Markov Model (HMM)
 
 Models genomic regions as hidden states with coverage as emissions:
 
 ```bash
-geniml universe build hmm \
+geniml build-universe hmm \
   --coverage-folder coverage/ \
   --output-file universe_hmm.bed \
-  --states 3 \
   --merge 100 \
   --filter-size 50
 ```
 
-**Parameters:**
-- `--states`: Number of HMM hidden states (typically 2-5)
+**Use when:** Complex patterns of genomic states should be captured. Run `geniml build-universe hmm --help` for its exact flags.
 
-**Use when:** Complex patterns of genomic states should be captured
+## API note
 
-## Python API
-
-```python
-from geniml.universe import build_universe
-
-# Build using coverage cutoff method
-universe = build_universe(
-    coverage_folder='coverage/',
-    method='cc',
-    cutoff=5,
-    merge_distance=100,
-    min_size=50,
-    output_file='universe.bed'
-)
-```
+Universe building is driven through the CLI (`geniml build-universe ...`); there is no stable top-level `geniml.universe.build_universe` function to import. Invoke the CLI from Python with `subprocess` if you need to script it.
 
 ## Method Comparison
 
@@ -171,23 +149,13 @@ universe = build_universe(
 
 ### Quality Control
 
-After building, assess universe quality:
+After building, assess universe quality with the `assess-universe` CLI command (it reports fit metrics between the universe and the input coverage/regions):
 
-```python
-from geniml.evaluation import assess_universe
-
-metrics = assess_universe(
-    universe_file='universe.bed',
-    coverage_folder='coverage/',
-    bed_files='bed_files/'
-)
-
-print(f"Number of regions: {metrics['n_regions']}")
-print(f"Mean region size: {metrics['mean_size']:.1f}bp")
-print(f"Coverage of input peaks: {metrics['coverage']:.1%}")
+```bash
+geniml assess-universe --help   # inspect available metrics/flags for your version
 ```
 
-**Key metrics:**
+**Key metrics to look at:**
 - **Region count**: Should capture major features without excessive fragmentation
 - **Size distribution**: Should match expected biology (e.g., ~500bp for ATAC-seq)
 - **Input coverage**: Proportion of original peaks represented (typically >80%)

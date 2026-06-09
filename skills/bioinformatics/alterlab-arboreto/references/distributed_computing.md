@@ -105,14 +105,17 @@ For very large datasets, connect to a remote Dask distributed scheduler running 
 
 ### Step 1: Set Up Dask Scheduler (on cluster head node)
 ```bash
-dask-scheduler
+dask scheduler
 # Output: Scheduler at tcp://10.118.224.134:8786
 ```
 
 ### Step 2: Start Dask Workers (on cluster compute nodes)
 ```bash
-dask-worker tcp://10.118.224.134:8786
+dask worker tcp://10.118.224.134:8786
 ```
+
+(The legacy `dask-scheduler` / `dask-worker` entrypoints still work but the
+`dask scheduler` / `dask worker` subcommands are the current form.)
 
 ### Step 3: Connect from Client
 ```python
@@ -138,10 +141,10 @@ if __name__ == '__main__':
 
 **Worker configuration**:
 ```bash
-dask-worker tcp://scheduler:8786 \
-    --nprocs 4 \              # Number of processes per node
-    --nthreads 1 \            # Threads per process
-    --memory-limit 16GB       # Memory per process
+dask worker tcp://scheduler:8786 \
+    --nworkers 4 \           # Number of worker processes per node (--nprocs is deprecated)
+    --nthreads 1 \           # Threads per worker
+    --memory-limit 16GB      # Memory per worker
 ```
 
 **For large-scale inference**:

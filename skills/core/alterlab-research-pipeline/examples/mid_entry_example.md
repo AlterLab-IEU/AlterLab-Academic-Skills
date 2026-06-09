@@ -361,7 +361,7 @@ formatter_agent executing LaTeX conversion...
   Stage 4 REVISE      [v] Completed
     Round: 1, Addressed: 3/3
   Stage 3' RE-REVIEW  [v] Completed
-    Mode: full, Loop: 1/2
+    Mode: full, Loop: 1/1
     Decision: Minor Revision (Accept)
   Stage 5 FINALIZE    [v] Completed
     Format: LaTeX (Elsevier)

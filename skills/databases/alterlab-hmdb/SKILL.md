@@ -32,10 +32,10 @@ This skill should be used when performing metabolomics research, clinical chemis
 
 ## Database Contents
 
-HMDB version 5.0 (current as of 2025) contains:
+HMDB version 5.0 (released 2022; latest major version as of mid-2026) contains:
 
-- **220,945 metabolite entries** covering both water-soluble and lipid-soluble compounds
-- **8,610 protein sequences** for enzymes and transporters involved in metabolism
+- **220,945 metabolite entries** covering both water-soluble and lipid-soluble compounds (the v5.0 paper reported 217,920; the live site count grows with curation)
+- **~8,600 protein sequences** for enzymes and transporters involved in metabolism
 - **130+ data fields per metabolite** including:
   - Chemical properties (structure, formula, molecular weight, InChI, SMILES)
   - Clinical data (biomarker associations, diseases, normal/abnormal concentrations)
@@ -119,27 +119,21 @@ HMDB offers bulk data downloads at https://www.hmdb.ca/downloads in multiple for
 - Download XML format for comprehensive data including all fields
 - Use SDF format for structure-based analysis and cheminformatics workflows
 - Parse CSV/TSV formats for integration with data analysis pipelines
-- Check version dates to ensure up-to-date data (current: v5.0, 2023-07-01)
+- Check version dates to ensure up-to-date data (current major version: v5.0)
 
 **Usage Requirements:**
 - Free for academic and non-commercial research
 - Commercial use requires explicit permission (contact samackay@ualberta.ca)
 - Cite HMDB publication when using data
 
-### 4. Programmatic API Access
+### 4. Programmatic Access
 
-**API Availability:**
-HMDB does not provide a public REST API. Programmatic access requires contacting the development team:
+HMDB publishes **no documented public REST API**. Practical programmatic routes, in order of preference:
 
-- **Academic/Research groups:** Contact eponine@ualberta.ca (Eponine) or samackay@ualberta.ca (Scott)
-- **Commercial organizations:** Contact samackay@ualberta.ca (Scott) for customized API access
-
-**Alternative Programmatic Access:**
-- **R/Bioconductor**: Use the `hmdbQuery` package for R-based queries
-  - Install: `BiocManager::install("hmdbQuery")`
-  - Provides HTTP-based querying functions
-- **Downloaded datasets**: Parse XML or CSV files locally for programmatic analysis
-- **Web scraping**: Not recommended; contact team for proper API access instead
+- **Bulk downloads (preferred for any volume):** Parse the XML/SDF/CSV dumps from https://www.hmdb.ca/downloads locally. This is the only route that scales and won't get rate-limited.
+- **Per-record XML endpoint:** Each entry is served as XML at `https://www.hmdb.ca/metabolites/<ID>.xml` (used by `scripts/query_hmdb.py`). Undocumented and aggressively rate-limited/blocked (HTTP 403/429) for automated clients — fine for a handful of ad-hoc lookups, not for batch jobs. Send a descriptive User-Agent and back off on failures.
+- **R/Bioconductor `hmdbQuery`:** `BiocManager::install("hmdbQuery")` wraps the same web endpoints for R workflows.
+- **Custom API:** For sanctioned bulk/commercial API access, contact the HMDB team (see Usage Requirements above for the listed address).
 
 ### 5. Common Research Workflows
 

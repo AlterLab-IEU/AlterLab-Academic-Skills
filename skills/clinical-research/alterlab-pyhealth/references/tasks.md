@@ -2,23 +2,29 @@
 
 ## Overview
 
-PyHealth provides 20+ predefined clinical prediction tasks for common healthcare AI applications. Each task function transforms raw patient data into structured input-output pairs for model training.
+PyHealth provides 20+ predefined clinical prediction tasks for common healthcare AI applications. Each task transforms raw patient data into structured input-output pairs for model training.
 
-## Task Function Structure
+> **Naming convention (PyHealth 2.x).** Tasks are **classes** in `CamelCase`, named `{Task}{Dataset}`, e.g. `MortalityPredictionMIMIC4`, `ReadmissionPredictionMIMIC3`, `DrugRecommendationMIMIC3`, `LengthOfStayPredictionMIMIC4`. You **instantiate** the class and pass the instance to `set_task`. The old snake-case `*_fn` function names below are the pre-2.0 API; map each to its `CamelCase` class equivalent (drop the `_fn`, CamelCase the words, dataset suffix uppercased — `mortality_prediction_mimic4_fn` -> `MortalityPredictionMIMIC4`). When unsure of an exact class name, check `pyhealth.tasks` in the installed version.
 
-All task functions inherit from `BaseTask` and provide:
+## Task Structure
 
-- **input_schema**: Defines input features (diagnoses, medications, labs, etc.)
-- **output_schema**: Defines prediction targets (labels, values)
-- **pre_filter()**: Optional patient/visit filtering logic
+Each task subclasses `BaseTask` (`from pyhealth.tasks.base_task import BaseTask`) and defines:
+
+- **task_name**: String identifier
+- **input_schema**: Dict mapping feature keys to processor types (e.g. `{"conditions": "sequence"}`; tuple form `("stagenet", {"padding": 0})` passes processor kwargs)
+- **output_schema**: Dict mapping the label key to its type (e.g. `{"mortality": "binary"}`)
+- **`__call__(patient)`**: Returns the list of sample dicts for one patient
 
 **Usage Pattern:**
 ```python
 from pyhealth.datasets import MIMIC4Dataset
-from pyhealth.tasks import mortality_prediction_mimic4_fn
+from pyhealth.tasks import MortalityPredictionMIMIC4
 
-dataset = MIMIC4Dataset(root="/path/to/data")
-sample_dataset = dataset.set_task(mortality_prediction_mimic4_fn)
+dataset = MIMIC4Dataset(
+    root="/path/to/data",
+    tables=["diagnoses_icd", "procedures_icd", "prescriptions"],
+)
+sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 ```
 
 ## Electronic Health Record (EHR) Tasks
@@ -210,55 +216,53 @@ sample_dataset = dataset.set_task(mortality_prediction_mimic4_fn)
 
 ### Creating Custom Tasks
 
-Define custom prediction tasks by specifying input/output schemas:
+Subclass `BaseTask`, declare `input_schema` / `output_schema`, and implement `__call__` to emit one flat sample dict per prediction. Sample keys must match the schema keys; PyHealth wires up the matching processors automatically.
 
 ```python
-from pyhealth.tasks import BaseTask
+from typing import Any, Dict, List
+from pyhealth.tasks.base_task import BaseTask
 
-def custom_task_fn(patient):
-    """Custom prediction task"""
 
-    # Define input features
-    samples = []
+class MyReadmissionTask(BaseTask):
+    task_name: str = "MyReadmissionTask"
+    # Keys here become the model's feature_keys / label_key.
+    input_schema: Dict[str, str] = {
+        "conditions": "sequence",
+        "procedures": "sequence",
+    }
+    output_schema: Dict[str, str] = {"readmitted": "binary"}
 
-    for i, visit in enumerate(patient.visits):
-        # Skip if not enough history
-        if i < 2:
-            continue
+    def __call__(self, patient: Any) -> List[Dict[str, Any]]:
+        samples: List[Dict[str, Any]] = []
+        visits = patient.get_events(event_type="admissions")
 
-        # Create input from historical visits
-        input_info = {
-            "diagnoses": [],
-            "medications": [],
-            "procedures": []
-        }
+        for i, visit in enumerate(visits):
+            if i < 2:  # require some history
+                continue
 
-        # Collect features from previous visits
-        for past_visit in patient.visits[:i]:
-            for event in past_visit.events:
-                if event.vocabulary == "ICD10CM":
-                    input_info["diagnoses"].append(event.code)
-                elif event.vocabulary == "NDC":
-                    input_info["medications"].append(event.code)
+            conditions, procedures = [], []
+            for past in visits[:i]:
+                for event in past.events:
+                    if event.vocabulary == "ICD10CM":
+                        conditions.append(event.code)
+                    elif event.vocabulary == "ICD10PROC":
+                        procedures.append(event.code)
 
-        # Define prediction target
-        # Example: predict specific outcome at current visit
-        output_info = {
-            "label": 1 if some_condition else 0
-        }
+            samples.append({
+                "patient_id": patient.patient_id,
+                "conditions": conditions,
+                "procedures": procedures,
+                "readmitted": 1 if some_condition else 0,
+            })
 
-        samples.append({
-            "patient_id": patient.patient_id,
-            "visit_id": visit.visit_id,
-            "input_info": input_info,
-            "output_info": output_info
-        })
+        return samples
 
-    return samples
 
-# Apply custom task
-sample_dataset = dataset.set_task(custom_task_fn)
+# Apply the custom task (instantiate it)
+sample_dataset = dataset.set_task(MyReadmissionTask())
 ```
+
+> Event access patterns (`patient.get_events(...)`, `event.vocabulary`) vary by dataset/version — confirm against the dataset's loaded tables before relying on a specific attribute.
 
 ### Task Function Components
 
@@ -326,39 +330,42 @@ sample_dataset = dataset.set_task(custom_task_fn)
 
 ## Task Output Structure
 
-All task functions return `SampleDataset` with:
+`set_task` returns a `SampleDataset` of flat sample dicts whose keys match the task's `input_schema` / `output_schema`:
 
 ```python
 sample = {
     "patient_id": "unique_patient_id",
-    "visit_id": "unique_visit_id",  # if applicable
-    "input_info": {
-        # Input features (diagnoses, medications, etc.)
-    },
-    "output_info": {
-        # Prediction targets (labels, values)
-    }
+    # feature keys from input_schema, e.g.:
+    "conditions": ["428.0", "401.9"],
+    "procedures": ["9904", "3893"],
+    "drugs": ["Metoprolol", "Lisinopril"],
+    # label key from output_schema, e.g.:
+    "mortality": 0,
 }
 ```
 
 ## Integration with Models
 
-Tasks define the input/output contract for models:
+The task's schema keys are exactly the model's `feature_keys` / `label_key`:
 
 ```python
 from pyhealth.datasets import MIMIC4Dataset
-from pyhealth.tasks import mortality_prediction_mimic4_fn
+from pyhealth.tasks import MortalityPredictionMIMIC4
 from pyhealth.models import Transformer
 
 # 1. Create task-specific dataset
-dataset = MIMIC4Dataset(root="/path/to/data")
-sample_dataset = dataset.set_task(mortality_prediction_mimic4_fn)
+dataset = MIMIC4Dataset(
+    root="/path/to/data",
+    tables=["diagnoses_icd", "procedures_icd", "prescriptions"],
+)
+sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 
-# 2. Model automatically adapts to task schema
+# 2. Point the model at the task's schema keys
 model = Transformer(
     dataset=sample_dataset,
-    feature_keys=["diagnoses", "medications"],
-    mode="binary",  # matches task output
+    feature_keys=["conditions", "procedures", "drugs"],
+    label_key="mortality",
+    mode="binary",
 )
 ```
 

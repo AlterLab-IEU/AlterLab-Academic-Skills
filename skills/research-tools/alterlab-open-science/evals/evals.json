@@ -34,10 +34,10 @@
     {
       "id": "near-miss-research-ethics",
       "prompt": "I need to prepare an IRB application for a study involving human participants — help me with the informed consent form and the ethics review submission.",
-      "expected_output": "Does NOT invoke alterlab-open-science; defers to a research-ethics / IRB skill. The ask is about human-subjects ethics approval and informed consent, not about open-science practices like preregistration, FAIR data sharing, or open access. Open-science guidance covers transparency/reproducibility, not IRB submissions.",
+      "expected_output": "Does NOT invoke alterlab-open-science; defers to alterlab-research-ethics. The ask is about human-subjects ethics approval and informed consent, not about open-science practices like preregistration, FAIR data sharing, or open access. Open-science guidance covers transparency/reproducibility, not IRB submissions.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
-        { "type": "behavior", "value": "Recognizes IRB/informed-consent as research-ethics territory, distinct from open-science transparency practices, and defers." }
+        { "type": "behavior", "value": "Routes IRB/informed-consent to the alterlab-research-ethics skill rather than treating it as an open-science transparency task." }
       ]
     }
   ]

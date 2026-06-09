@@ -1,6 +1,6 @@
 ---
 name: alterlab-interpro
-description: Query InterPro for protein family, domain, and functional site annotations, integrating Pfam, PANTHER, PRINTS, SMART, SUPERFAMILY, and 11 other member databases. Use when predicting protein function, analyzing domain architecture, classifying proteins by family or evolution, or mapping signatures to GO terms. Part of the AlterLab Academic Skills suite.
+description: Query the EMBL-EBI InterPro REST API for protein family, domain, and functional-site annotations integrated from member databases (Pfam, PANTHER, PRINTS, SMART, SUPERFAMILY, CDD, ProSite, NCBIfam, and others). Use when predicting protein function, analyzing or comparing domain architecture, classifying a protein by family or homologous superfamily, resolving a Pfam/InterPro accession, or mapping a protein's signatures to GO terms. Not for raw UniProt entry/FASTA retrieval or AlphaFold 3D structures. Part of the AlterLab Academic Skills suite.
 license: CC0-1.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless InterPro REST API (no authentication required)
@@ -13,7 +13,7 @@ metadata:
 
 ## Overview
 
-InterPro (https://www.ebi.ac.uk/interpro/) is a comprehensive resource for protein family and domain classification maintained by EMBL-EBI. It integrates signatures from 13 member databases including Pfam, PANTHER, PRINTS, ProSite, SMART, TIGRFAM, SUPERFAMILY, CDD, and others, providing a unified view of protein functional annotations for over 100 million protein sequences.
+InterPro (https://www.ebi.ac.uk/interpro/) is a comprehensive resource for protein family and domain classification maintained by EMBL-EBI. It integrates predictive signatures from its member databases — including Pfam, PANTHER, PRINTS, ProSite, SMART, NCBIfam, SUPERFAMILY, CDD, Gene3D, and others (see the member-database table below) — into a unified set of entries, providing a single view of functional annotation across UniProtKB. (The legacy TIGRFAMs were absorbed into NCBIfam.)
 
 InterPro classifies proteins into:
 - **Families**: Groups of proteins sharing common ancestry and function
@@ -69,12 +69,22 @@ def interpro_get(endpoint, params=None):
     return response.json()
 ```
 
+**Endpoint direction gotcha (read this first).** In the InterPro API the *first*
+path segment is the resource type you get back. To list **entries** for a
+protein, the protein filter goes last: `entry/InterPro/protein/UniProt/{id}/`.
+To list **proteins** for an entry, the protein resource goes first:
+`protein/UniProt/entry/InterPro/{id}/`. The reversed forms
+(`protein/UniProt/{id}/entry/InterPro/`, `entry/InterPro/{id}/protein/UniProt/`)
+return only a `*_url` wrapper with no `results` and `count: null` — a silent
+empty, not an error.
+
 ### 2. Look Up a Protein
 
 ```python
 def get_protein_entries(uniprot_id):
     """Get all InterPro entries that match a UniProt protein."""
-    data = interpro_get(f"protein/UniProt/{uniprot_id}/entry/InterPro/")
+    # Resource (entry) first, protein filter last — see direction gotcha above.
+    data = interpro_get(f"entry/InterPro/protein/UniProt/{uniprot_id}/")
     return data
 
 # Example: Human p53 (TP53)
@@ -82,11 +92,11 @@ result = get_protein_entries("P04637")
 entries = result.get("results", [])
 
 for entry in entries:
-    meta = entry["metadata"]
+    meta = entry["metadata"]  # `name` is a string on this grouped endpoint
     print(f"  {meta['accession']} ({meta['type']}): {meta['name']}")
-    # e.g., IPR011615 (domain): p53, tetramerisation domain
-    #       IPR010991 (domain): p53, DNA-binding domain
-    #       IPR013872 (family): p53 family
+    # e.g., IPR002117 (family): p53 tumour suppressor family
+    #       IPR011615 (domain): p53, DNA-binding domain
+    #       IPR010991 (domain): p53, tetramerisation domain
 ```
 
 ### 3. Get Specific InterPro Entry
@@ -96,16 +106,21 @@ def get_entry(interpro_id):
     """Fetch details for an InterPro entry."""
     return interpro_get(f"entry/InterPro/{interpro_id}/")
 
-# Example: Get Pfam domain PF00397 (WW domain)
+# Example: Get the InterPro entry the WW domain maps to
 ww_entry = get_entry("IPR001202")
-print(f"Name: {ww_entry['metadata']['name']}")
-print(f"Type: {ww_entry['metadata']['type']}")
+# On the single-entry detail endpoint, `name` is a dict {"name", "short"};
+# on list/grouped endpoints it is a plain string. Handle both:
+name = ww_entry["metadata"]["name"]
+print(f"Name: {name['name'] if isinstance(name, dict) else name}")
+print(f"Type: {ww_entry['metadata']['type']}")  # -> domain
 
-# Also supports member database IDs:
+# Member-database accessions resolve through the same endpoint shape.
+# Use lowercase db names (entry/pfam/...); the response carries the
+# integrated InterPro accession under metadata['integrated'].
 def get_pfam_entry(pfam_id):
-    return interpro_get(f"entry/Pfam/{pfam_id}/")
+    return interpro_get(f"entry/pfam/{pfam_id}/")
 
-pfam = get_pfam_entry("PF00397")
+pfam = get_pfam_entry("PF00397")  # metadata['integrated'] == 'IPR001202'
 ```
 
 ### 4. Search Proteins by InterPro Entry
@@ -114,58 +129,72 @@ pfam = get_pfam_entry("PF00397")
 def get_proteins_for_entry(interpro_id, database="UniProt", page_size=25):
     """Get all proteins annotated with an InterPro entry."""
     params = {"page_size": page_size}
-    data = interpro_get(f"entry/InterPro/{interpro_id}/protein/{database}/", params)
+    # Resource (protein) first, entry filter last — see direction gotcha above.
+    data = interpro_get(f"protein/{database}/entry/InterPro/{interpro_id}/", params)
     return data
 
-# Example: Find all human kinase-domain proteins
+# Example: count proteins carrying the protein kinase domain
 kinase_proteins = get_proteins_for_entry("IPR000719")  # Protein kinase domain
-print(f"Total proteins: {kinase_proteins['count']}")
+print(f"Total proteins: {kinase_proteins['count']}")  # response has count/next/results
 ```
 
 ### 5. Domain Architecture
 
+Per-residue match locations live on the **entry/protein grouped** endpoint, not
+on the bare `protein/UniProt/{id}/` record (that record only carries
+`metadata`, with no `entries` key). Each entry's hits are under
+`results[].proteins[].entry_protein_locations[].fragments[]`:
+
 ```python
 def get_domain_architecture(uniprot_id):
-    """Get the complete domain architecture of a protein."""
-    data = interpro_get(f"protein/UniProt/{uniprot_id}/")
-    return data
+    """Get the domain architecture of a protein with sequence positions."""
+    data = interpro_get(f"entry/InterPro/protein/UniProt/{uniprot_id}/")
 
-# Example: Get full domain architecture for EGFR
-egfr = get_domain_architecture("P00533")
+    arch = []
+    for result in data.get("results", []):
+        meta = result["metadata"]
+        for prot in result.get("proteins", []):
+            for loc in prot.get("entry_protein_locations", []):
+                for frag in loc.get("fragments", []):
+                    arch.append({
+                        "accession": meta["accession"],
+                        "type": meta["type"],
+                        "name": meta["name"],
+                        "start": frag["start"],
+                        "end": frag["end"],
+                    })
+    # Order along the sequence to read off the architecture N->C terminus
+    arch.sort(key=lambda d: d["start"])
+    return arch
 
-# The response includes locations of all matching entries on the sequence
-for entry in egfr.get("entries", []):
-    for fragment in entry.get("entry_protein_locations", []):
-        for loc in fragment.get("fragments", []):
-            print(f"  {entry['accession']}: {loc['start']}-{loc['end']}")
+# Example: full domain architecture for EGFR, ordered along the sequence
+for d in get_domain_architecture("P00533"):
+    print(f"  {d['start']:>5}-{d['end']:<5} {d['accession']} ({d['type']}): {d['name']}")
 ```
 
 ### 6. GO Term Mapping
+
+The protein record aggregates GO terms from all of its InterPro signatures under
+`metadata.go_terms` (already deduplicated), so no per-entry walk is needed:
 
 ```python
 def get_go_terms_for_protein(uniprot_id):
     """Get GO terms associated with a protein via InterPro."""
     data = interpro_get(f"protein/UniProt/{uniprot_id}/")
+    # NB: go_terms can be present but null for proteins with no GO mapping,
+    # so coalesce to [] rather than relying on the dict default.
+    return data.get("metadata", {}).get("go_terms") or []
 
-    # GO terms are embedded in the entry metadata
-    go_terms = []
-    for entry in data.get("entries", []):
-        go = entry.get("metadata", {}).get("go_terms", [])
-        go_terms.extend(go)
-
-    # Deduplicate
-    seen = set()
-    unique_go = []
-    for term in go_terms:
-        if term["identifier"] not in seen:
-            seen.add(term["identifier"])
-            unique_go.append(term)
-
-    return unique_go
-
-# GO terms include:
-# {"identifier": "GO:0004672", "name": "protein kinase activity", "category": {"code": "F", "name": "Molecular Function"}}
+# GO terms look like:
+# {"identifier": "GO:0004672", "name": "protein kinase activity",
+#  "category": {"code": "F", "name": "molecular_function"}}
+# category.code is one of F (molecular_function), P (biological_process),
+# C (cellular_component).
 ```
+
+To attribute GO terms to specific signatures instead of the protein as a whole,
+read `metadata.go_terms` on each entry from
+`entry/InterPro/protein/UniProt/{id}/` (each entry carries its own `go_terms`).
 
 ### 7. Batch Protein Lookup
 
@@ -176,7 +205,7 @@ def batch_lookup_proteins(uniprot_ids, database="UniProt"):
     results = {}
     for uid in uniprot_ids:
         try:
-            data = interpro_get(f"protein/{database}/{uid}/entry/InterPro/")
+            data = interpro_get(f"entry/InterPro/protein/{database}/{uid}/")
             entries = data.get("results", [])
             results[uid] = [
                 {
@@ -211,7 +240,9 @@ def search_entries(query, entry_type=None, taxonomy_id=None):
 
     endpoint = "entry/InterPro/"
     if taxonomy_id:
-        endpoint = f"entry/InterPro/taxonomy/UniProt/{taxonomy_id}/"
+        # taxonomy is a filter, not the returned resource, so it can follow
+        # the entry resource directly (lowercase 'uniprot' in the path).
+        endpoint = f"entry/InterPro/taxonomy/uniprot/{taxonomy_id}/"
 
     return interpro_get(endpoint, params)
 
@@ -272,34 +303,41 @@ def characterize_protein(uniprot_id):
 
 ## API Endpoint Summary
 
+The returned-resource type is whatever comes **first** in the path; trailing
+filters narrow it. Reversing the two halves yields a `*_url`-only wrapper.
+
 | Endpoint | Description |
 |----------|-------------|
-| `/protein/UniProt/{id}/` | Full annotation for a protein |
-| `/protein/UniProt/{id}/entry/InterPro/` | InterPro entries for a protein |
-| `/entry/InterPro/{id}/` | Details of an InterPro entry |
-| `/entry/Pfam/{id}/` | Pfam entry details |
-| `/entry/InterPro/{id}/protein/UniProt/` | Proteins with an entry |
-| `/entry/InterPro/` | Search/list InterPro entries |
-| `/taxonomy/UniProt/{tax_id}/` | Proteins from a taxon |
-| `/structure/PDB/{pdb_id}/` | Structures mapped to InterPro |
+| `/protein/UniProt/{id}/` | Full annotation for a protein (incl. `metadata.go_terms`) |
+| `/entry/InterPro/protein/UniProt/{id}/` | InterPro entries for a protein (with match locations) |
+| `/entry/InterPro/{id}/` | Details of an InterPro entry (`name` is a `{name,short}` dict) |
+| `/entry/pfam/{id}/` | Pfam member-db entry details (`metadata.integrated` = InterPro id) |
+| `/protein/UniProt/entry/InterPro/{id}/` | Proteins carrying an entry (paginated, with `count`) |
+| `/entry/InterPro/?search=...` | Search/list InterPro entries (`name` is a string here) |
+| `/entry/InterPro/taxonomy/uniprot/{tax_id}/` | InterPro entries seen in a taxon (paginated) |
+| `/structure/PDB/entry/InterPro/{id}/` | Structures mapped to an entry |
 
 ## Member Databases
 
+Source-database names as the API returns them (the `source_database` field /
+`entry/{db}/...` path segment) are shown in parentheses where they differ.
+
 | Database | Focus |
 |----------|-------|
-| Pfam | Protein domains (HMM profiles) |
-| PANTHER | Protein families and subfamilies |
-| PRINTS | Protein fingerprints |
-| ProSitePatterns | Amino acid patterns |
-| ProSiteProfiles | Protein profile patterns |
-| SMART | Protein domain analysis |
-| TIGRFAM | JCVI curated protein families |
-| SUPERFAMILY | Structural classification |
-| CDD | Conserved Domain Database (NCBI) |
-| HAMAP | Microbial protein families |
-| NCBIfam | NCBI curated TIGRFAMs |
-| Gene3D | CATH structural classification |
-| PIRSR | PIR site rules |
+| Pfam (`pfam`) | Protein domains (HMM profiles) |
+| PANTHER (`panther`) | Protein families and subfamilies |
+| PRINTS (`prints`) | Protein fingerprints |
+| ProSite patterns (`prosite`) | Amino acid patterns |
+| ProSite profiles (`profile`) | Protein profile patterns |
+| SMART (`smart`) | Mobile signalling/extracellular domains |
+| NCBIfam (`ncbifam`) | NCBI curated families (absorbed the former TIGRFAMs) |
+| SUPERFAMILY (`ssf`) | SCOP structural classification |
+| CDD (`cdd`) | Conserved Domain Database (NCBI) |
+| HAMAP (`hamap`) | Microbial protein families |
+| Gene3D (`cathgene3d`) | CATH structural classification |
+| PIRSF (`pirsf`) | PIR whole-protein families |
+| SFLD (`sfld`) | Structure-Function Linkage Database (enzymes) |
+| AntiFam (`antifam`) | Spurious-ORF filter (false-positive removal) |
 
 ## Best Practices
 

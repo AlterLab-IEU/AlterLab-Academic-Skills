@@ -86,25 +86,6 @@ binary_image = otsu_filter(grayscale_image)
 - Nuclei segmentation
 - Binary mask creation
 
-### AdaptiveThreshold
-
-Apply adaptive thresholding for local intensity variations.
-
-```python
-from histolab.filters.image_filters import AdaptiveThreshold
-
-adaptive_filter = AdaptiveThreshold(
-    block_size=11,      # Size of local neighborhood
-    offset=2            # Constant subtracted from mean
-)
-binary_image = adaptive_filter(grayscale_image)
-```
-
-**Use cases:**
-- Non-uniform illumination
-- Local contrast enhancement
-- Handling variable staining intensity
-
 ### Invert
 
 Invert image intensity values.
@@ -264,17 +245,18 @@ filled_image = fill_holes_filter(binary_image)
 Combine multiple filters in sequence:
 
 ```python
-from histolab.filters.image_filters import RgbToGrayscale, OtsuThreshold
-from histolab.filters.morphological_filters import BinaryDilation, RemoveSmallObjects
-from histolab.filters.compositions import Compose
+from histolab.filters.image_filters import RgbToGrayscale, OtsuThreshold, Compose
+from histolab.filters.morphological_filters import (
+    BinaryDilation, RemoveSmallObjects, RemoveSmallHoles
+)
 
-# Create filter pipeline
+# Create filter pipeline (Compose lives in image_filters and takes a list)
 tissue_detection_pipeline = Compose([
     RgbToGrayscale(),
     OtsuThreshold(),
     BinaryDilation(disk_size=5),
     RemoveSmallHoles(area_threshold=1000),
-    RemoveSmallObjects(area_threshold=500)
+    RemoveSmallObjects(min_size=500)
 ])
 
 # Apply pipeline
@@ -301,8 +283,7 @@ red_channel_filter = Lambda(lambda img: img[:, :, 0])
 ### Standard Tissue Detection
 
 ```python
-from histolab.filters.compositions import Compose
-from histolab.filters.image_filters import RgbToGrayscale, OtsuThreshold
+from histolab.filters.image_filters import RgbToGrayscale, OtsuThreshold, Compose
 from histolab.filters.morphological_filters import (
     BinaryDilation, RemoveSmallHoles, RemoveSmallObjects
 )
@@ -312,14 +293,14 @@ tissue_detection = Compose([
     OtsuThreshold(),
     BinaryDilation(disk_size=5),
     RemoveSmallHoles(area_threshold=1000),
-    RemoveSmallObjects(area_threshold=500)
+    RemoveSmallObjects(min_size=500)
 ])
 ```
 
 ### Pen Mark Removal
 
 ```python
-from histolab.filters.image_filters import RgbToHsv, Lambda
+from histolab.filters.image_filters import RgbToHsv, Lambda, Compose
 import numpy as np
 
 def remove_pen_marks(hsv_image):
@@ -340,8 +321,9 @@ pen_removal = Compose([
 ### Nuclei Enhancement
 
 ```python
-from histolab.filters.image_filters import RgbToHed, HistogramEqualization
-from histolab.filters.compositions import Compose
+from histolab.filters.image_filters import (
+    RgbToHed, HistogramEqualization, Lambda, Compose
+)
 
 nuclei_enhancement = Compose([
     RgbToHed(),
@@ -353,7 +335,9 @@ nuclei_enhancement = Compose([
 ### Contrast Normalization
 
 ```python
-from histolab.filters.image_filters import StretchContrast, HistogramEqualization
+from histolab.filters.image_filters import (
+    RgbToGrayscale, StretchContrast, HistogramEqualization, Compose
+)
 
 contrast_normalization = Compose([
     RgbToGrayscale(),
@@ -378,8 +362,7 @@ gray_filter = RgbToGrayscale()
 filtered_tile = tile.apply_filters(gray_filter)
 
 # Chain multiple filters
-from histolab.filters.compositions import Compose
-from histolab.filters.image_filters import StretchContrast
+from histolab.filters.image_filters import StretchContrast, Compose
 
 filter_chain = Compose([
     RgbToGrayscale(),
@@ -394,54 +377,42 @@ Integrate custom filters with tissue masks:
 
 ```python
 from histolab.masks import TissueMask
-from histolab.filters.compositions import Compose
 from histolab.filters.image_filters import RgbToGrayscale, OtsuThreshold
-from histolab.filters.morphological_filters import BinaryDilation
+from histolab.filters.morphological_filters import (
+    BinaryDilation, RemoveSmallObjects
+)
 
-# Custom aggressive tissue detection
-aggressive_filters = Compose([
+# Custom aggressive tissue detection. TissueMask takes the individual filters as
+# positional varargs (TissueMask(*filters)) — not a Compose object or filters=.
+custom_mask = TissueMask(
     RgbToGrayscale(),
     OtsuThreshold(),
-    BinaryDilation(disk_size=10),  # Larger dilation
-    RemoveSmallObjects(area_threshold=5000)  # Remove only large artifacts
-])
-
-# Create mask with custom filters
-custom_mask = TissueMask(filters=aggressive_filters)
+    BinaryDilation(disk_size=10),       # Larger dilation
+    RemoveSmallObjects(min_size=5000),  # Remove only large artifacts
+)
 ```
 
 ## Stain Normalization
 
-While histolab doesn't have built-in stain normalization, filters can be used for basic normalization:
+histolab 0.7.0 ships built-in stain normalizers in `histolab.stain_normalizer`:
+`MacenkoStainNormalizer` and `ReinhardStainNormalizer`. Both follow a
+fit-on-target / transform-on-source pattern (PIL images in, PIL image out).
 
 ```python
-from histolab.filters.image_filters import RgbToHed, Lambda
-import numpy as np
+from histolab.stain_normalizer import MacenkoStainNormalizer
+# from histolab.stain_normalizer import ReinhardStainNormalizer  # alternative
 
-def normalize_hed(hed_image, target_means=[0.65, 0.70], target_stds=[0.15, 0.13]):
-    """Simple H&E normalization."""
-    h_channel = hed_image[:, :, 0]
-    e_channel = hed_image[:, :, 1]
+normalizer = MacenkoStainNormalizer()
 
-    # Normalize hematoxylin
-    h_normalized = (h_channel - h_channel.mean()) / h_channel.std()
-    h_normalized = h_normalized * target_stds[0] + target_means[0]
+# Fit to a reference slide/tile whose staining you want to match
+normalizer.fit(reference_tile.image)  # reference_tile.image is a PIL.Image
 
-    # Normalize eosin
-    e_normalized = (e_channel - e_channel.mean()) / e_channel.std()
-    e_normalized = e_normalized * target_stds[1] + target_means[1]
-
-    hed_image[:, :, 0] = h_normalized
-    hed_image[:, :, 1] = e_normalized
-
-    return hed_image
-
-normalization_pipeline = Compose([
-    RgbToHed(),
-    Lambda(normalize_hed)
-    # Convert back to RGB if needed
-])
+# Normalize a new tile to that reference
+normalized = normalizer.transform(tile.image)  # returns a PIL.Image
 ```
+
+Use this instead of hand-rolling HED-channel rescaling — the built-in methods
+estimate the stain matrix (Macenko) or LAB color statistics (Reinhard) properly.
 
 ## Best Practices
 
@@ -474,8 +445,7 @@ blur_detector = Lambda(lambda img: laplacian_blur_score(
 ### Tissue Coverage
 
 ```python
-from histolab.filters.image_filters import RgbToGrayscale, OtsuThreshold
-from histolab.filters.compositions import Compose
+from histolab.filters.image_filters import RgbToGrayscale, OtsuThreshold, Compose
 
 def tissue_coverage(image):
     """Calculate percentage of tissue in image."""
@@ -494,7 +464,7 @@ coverage_filter = Lambda(tissue_coverage)
 **Solutions:**
 - Reduce `area_threshold` in `RemoveSmallObjects`
 - Decrease erosion/opening disk size
-- Try adaptive thresholding instead of Otsu
+- Detect tissue in HSV/HED space (e.g. saturation channel) before thresholding
 
 ### Issue: Too many artifacts included
 **Solutions:**
@@ -509,6 +479,5 @@ coverage_filter = Lambda(tissue_coverage)
 
 ### Issue: Variable staining quality
 **Solutions:**
-- Apply histogram equalization
-- Use adaptive thresholding
-- Implement stain normalization pipeline
+- Apply histogram equalization or contrast stretching
+- Normalize staining with `MacenkoStainNormalizer` / `ReinhardStainNormalizer`

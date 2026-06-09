@@ -215,9 +215,9 @@ with qml.tape.QuantumTape() as tape:
 print("Operations:", tape.operations)
 print("Observables:", tape.observables)
 
-# Transform tape
-expanded_tape = transforms.expand_tape(tape)
-optimized_tape = transforms.cancel_inverses(tape)
+# Transform a tape: transforms return (tapes, post_processing_fn)
+optimized_tapes, fn = transforms.cancel_inverses(tape)
+optimized_tape = optimized_tapes[0]
 ```
 
 ### Decomposition
@@ -588,14 +588,15 @@ def circuit(params):
 
 params = np.random.random(10)
 
-# Get resource information
+# Get resource information (PennyLane 0.45: CircuitSpecs object).
+# Gate counts/depth/types/sizes live under the 'resources' entry.
 specs = qml.specs(circuit)(params)
+res = specs["resources"]
 
-print(f"Total gates: {specs['num_operations']}")
-print(f"Circuit depth: {specs['depth']}")
-print(f"Gate types: {specs['gate_types']}")
-print(f"Gate sizes: {specs['gate_sizes']}")
-print(f"Trainable params: {specs['num_trainable_params']}")
+print(f"Total gates: {res.num_gates}")
+print(f"Circuit depth: {res.depth}")
+print(f"Gate types: {dict(res.gate_types)}")
+print(f"Gate sizes: {dict(res.gate_sizes)}")
 ```
 
 ### Estimate Execution Time

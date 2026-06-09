@@ -3,13 +3,15 @@
 ZINC22 query tool.
 
 Query the ZINC22 CartBlanche API for purchasable compounds. CartBlanche accepts
-POST form submissions: ZINC-ID lookups return tab-delimited text synchronously,
-while SMILES and random-sample searches are dispatched asynchronously and return
-a JSON task handle ({"task": "<uuid>"}) to be retrieved from the web UI.
+form-encoded POST submissions and dispatches every search (ID lookup, SMILES,
+random sample) asynchronously: each call returns a JSON task handle
+({"task": "<uuid>"}). The result rows are assembled server-side and shown in the
+web UI at https://cartblanche22.docking.org (the task-retrieval route serves the
+single-page app, so there is no plain-text polling endpoint to scrape).
 Standard library only.
 
 API base: https://cartblanche22.docking.org
-Docs:     https://wiki.docking.org
+Docs:     https://wiki.docking.org/index.php/Zinc22:Searching
 """
 
 import argparse
@@ -55,9 +57,13 @@ def _parse(text):
 
 
 def by_id(zinc_ids, output_fields="zinc_id,smiles,catalogs"):
-    """Synchronous lookup of one or more ZINC IDs."""
+    """Submit a ZINC-ID lookup; returns a JSON task handle.
+
+    The form field is ``zinc_ids`` (plural); the singular ``zinc_id`` is
+    rejected with HTTP 400.
+    """
     return _parse(_post("substances.txt", {
-        "zinc_id": ",".join(zinc_ids),
+        "zinc_ids": ",".join(zinc_ids),
         "output_fields": output_fields,
     }))
 
@@ -83,7 +89,7 @@ def main():
     parser = argparse.ArgumentParser(description="Query the ZINC22 CartBlanche API")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    p_i = sub.add_parser("id", help="Look up ZINC IDs (synchronous)")
+    p_i = sub.add_parser("id", help="Look up ZINC IDs (async task handle)")
     p_i.add_argument("zinc_ids", nargs="+", help="One or more ZINC IDs")
     p_i.add_argument("--fields", default="zinc_id,smiles,catalogs", help="Output fields")
 

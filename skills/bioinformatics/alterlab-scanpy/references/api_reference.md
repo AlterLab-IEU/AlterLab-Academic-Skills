@@ -92,9 +92,9 @@ sc.tl.draw_graph(adata, layout='fa')             # Force-directed graph
 ### Clustering
 
 ```python
-sc.tl.leiden(adata, resolution=0.5)              # Leiden clustering (recommended)
+# flavor='igraph' is the future default and far faster; bare leiden warns
+sc.tl.leiden(adata, resolution=0.5, flavor='igraph', n_iterations=2)  # recommended
 sc.tl.louvain(adata, resolution=0.5)             # Louvain clustering
-sc.tl.kmeans(adata, n_clusters=10)               # K-means clustering
 ```
 
 ### Marker Genes and Differential Expression
@@ -247,5 +247,8 @@ sc.settings.n_jobs = 8                 # Number of parallel jobs
 sc.logging.print_versions()            # Print version information
 sc.logging.print_memory_usage()        # Print memory usage
 adata.copy()                           # Create a copy of AnnData object
-adata.concatenate([adata1, adata2])    # Concatenate AnnData objects
+
+# adata.concatenate(...) is deprecated; use anndata.concat (see alterlab-anndata)
+import anndata as ad
+ad.concat([adata1, adata2], join='inner', label='batch')  # Concatenate AnnData objects
 ```

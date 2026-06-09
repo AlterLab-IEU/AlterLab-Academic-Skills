@@ -43,7 +43,7 @@
     {
       "id": "near-miss-literature-review",
       "prompt": "Write me a comprehensive systematic literature review of CRISPR base-editing off-target effects across PubMed, arXiv, and bioRxiv, formatted as a markdown document with a synthesis table.",
-      "expected_output": "Should NOT trigger hypothesis-generation. This is a request to produce a comprehensive systematic literature review document across multiple databases, which is the alterlab-literature-review skill's territory, not deriving testable hypotheses from an observation. The correct response defers to the literature-review skill; hypothesis-gen only does a focused literature search as input to forming hypotheses, not a standalone review deliverable.",
+      "expected_output": "Should NOT trigger hypothesis-generation. This is a request to produce a comprehensive systematic literature review document across multiple databases, which is the alterlab-literature-review skill's territory, not deriving testable hypotheses from an observation. The correct response defers to alterlab-literature-review; hypothesis-gen only does a focused literature search as input to forming hypotheses, not a standalone review deliverable.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "literature-review" }
@@ -52,10 +52,10 @@
     {
       "id": "near-miss-open-ended-brainstorming",
       "prompt": "I want to brainstorm wide-open, blue-sky research directions for our lab on AI in virtual production over the next five years. Just throw out lots of creative ideas, no need for testable mechanisms yet.",
-      "expected_output": "Should NOT trigger hypothesis-generation. This is open-ended, divergent ideation rather than formulating falsifiable, mechanistic hypotheses from a specific observation. Per this skill's own guidance, open-ended ideation belongs to scientific-brainstorming; the correct response defers there rather than forcing structured competing hypotheses.",
+      "expected_output": "Should NOT trigger hypothesis-generation. This is open-ended, divergent ideation ('blue-sky', 'no testable mechanisms yet') rather than formulating falsifiable, mechanistic hypotheses from a specific observation. The correct response engages in wide-open idea generation rather than forcing the structured competing-hypotheses / experimental-design workflow this skill is built for.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
-        { "type": "output_contains", "value": "brainstorming" }
+        { "type": "behavior", "value": "Does not impose the structured competing-hypotheses, predictions, and experimental-design workflow; instead offers open-ended, divergent research directions as requested." }
       ]
     }
   ]

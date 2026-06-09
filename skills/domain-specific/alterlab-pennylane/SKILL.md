@@ -71,6 +71,9 @@ for i in range(100):
 
 ## Core Capabilities
 
+New to PennyLane? See `references/getting_started.md` for installation, QNodes,
+devices, gradients, and a first optimization loop.
+
 ### 1. Quantum Circuit Construction
 
 Build circuits with gates, measurements, and state preparation. See `references/quantum_circuits.md` for:
@@ -156,21 +159,27 @@ for epoch in range(100):
 ```python
 from pennylane import qchem
 
-# 1. Build Hamiltonian
+# 1. Build Hamiltonian (returns the qubit Hamiltonian and qubit count)
 symbols = ['H', 'H']
 coords = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.74])
 H, n_qubits = qchem.molecular_hamiltonian(symbols, coords)
 
-# 2. Define ansatz
+# 2. Set up UCCSD ansatz from the excitations
+hf_state = qchem.hf_state(electrons=2, orbitals=n_qubits)
+singles, doubles = qchem.excitations(electrons=2, orbitals=n_qubits)
+s_wires, d_wires = qchem.excitations_to_wires(singles, doubles)
+
+dev = qml.device('default.qubit', wires=n_qubits)
+
 @qml.qnode(dev)
 def vqe_circuit(params):
-    qml.BasisState(qchem.hf_state(2, n_qubits), wires=range(n_qubits))
-    qml.UCCSD(params, wires=range(n_qubits))
+    qml.UCCSD(params, wires=range(n_qubits),
+              s_wires=s_wires, d_wires=d_wires, init_state=hf_state)
     return qml.expval(H)
 
-# 3. Optimize
+# 3. Optimize (one parameter per excitation)
 opt = qml.AdamOptimizer(stepsize=0.1)
-params = np.zeros(10, requires_grad=True)
+params = np.zeros(len(singles) + len(doubles), requires_grad=True)
 
 for i in range(100):
     params, energy = opt.step_and_cost(vqe_circuit, params)
@@ -180,12 +189,17 @@ for i in range(100):
 ### Switch Between Devices
 
 ```python
-# Same circuit, different backends
-circuit_def = lambda dev: qml.qnode(dev)(circuit_function)
+# Define the circuit body once, bind it to a device on demand.
+def circuit_body(params):
+    qml.AngleEmbedding(params, wires=range(4))
+    return qml.expval(qml.PauliZ(0))
+
+def make_qnode(dev):
+    return qml.qnode(dev)(circuit_body)
 
 # Test on simulator
 dev_sim = qml.device('default.qubit', wires=4)
-result_sim = circuit_def(dev_sim)(params)
+result_sim = make_qnode(dev_sim)(params)
 
 # Run on quantum hardware (IBM, via Qiskit Runtime)
 from qiskit_ibm_runtime import QiskitRuntimeService
@@ -193,20 +207,9 @@ from qiskit_ibm_runtime import QiskitRuntimeService
 service = QiskitRuntimeService(channel='ibm_quantum_platform')  # requires saved IBM Cloud credentials
 backend = service.least_busy(operational=True, simulator=False)
 dev_hw = qml.device('qiskit.remote', wires=4, backend=backend)
-result_hw = circuit_def(dev_hw)(params)
+# On hardware, build the QNode with diff_method='parameter-shift' for gradients.
+result_hw = make_qnode(dev_hw)(params)
 ```
-
-## Detailed Documentation
-
-For comprehensive coverage of specific topics, consult the reference files:
-
-- **Getting started**: `references/getting_started.md` - Installation, basic concepts, first steps
-- **Quantum circuits**: `references/quantum_circuits.md` - Gates, measurements, circuit patterns
-- **Quantum ML**: `references/quantum_ml.md` - Hybrid models, framework integration, QNNs
-- **Quantum chemistry**: `references/quantum_chemistry.md` - VQE, molecular Hamiltonians, chemistry workflows
-- **Devices**: `references/devices_backends.md` - Simulators, hardware plugins, device configuration
-- **Optimization**: `references/optimization.md` - Optimizers, gradients, variational algorithms
-- **Advanced**: `references/advanced_features.md` - Templates, transforms, JIT compilation, noise
 
 ## Best Practices
 

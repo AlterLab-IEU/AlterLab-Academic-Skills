@@ -1,156 +1,57 @@
 # Research Lookup Skill
 
-This skill provides real-time research information lookup using Perplexity's Sonar Pro Search model through OpenRouter.
+Real-time research lookup with automatic dual-backend routing:
+
+- **Parallel Chat API** (`core` model) — default for all general research, market/technical/statistical queries.
+- **Perplexity `sonar-pro-search`** (via OpenRouter) — academic-specific paper searches (DOIs, peer-reviewed sources, citations).
+
+The router inspects each query for academic keywords (see `ACADEMIC_KEYWORDS` in
+`scripts/research_lookup.py`) and sends those to Perplexity; everything else goes
+to Parallel. See `SKILL.md` for the full routing rules, save-to-`sources/`
+workflow, and paper-quality ranking.
 
 ## Setup
 
-1. **Get OpenRouter API Key:**
-   - Visit [openrouter.ai](https://openrouter.ai)
-   - Create account and generate API key
-   - Add credits to your account
+Set at least one backend key (both recommended):
 
-2. **Configure Environment:**
-   ```bash
-   export OPENROUTER_API_KEY="your_api_key_here"
-   ```
+```bash
+export PARALLEL_API_KEY="your_parallel_api_key"      # primary backend
+export OPENROUTER_API_KEY="your_openrouter_api_key"  # academic search + fallback
+```
 
-3. **Test Setup:**
-   ```bash
-   python scripts/research_lookup.py --model-info
-   ```
+Python deps: `openai` (Parallel Chat API client) and `requests` (Perplexity HTTP calls).
 
 ## Usage
 
-### Command Line Usage
-
 ```bash
-# Single research query
-python scripts/research_lookup.py "Recent advances in CRISPR gene editing 2024"
+# Auto-routed query (recommended) — save to the project's sources/ folder
+python scripts/research_lookup.py "latest advances in quantum computing 2025" \
+  -o sources/research_quantum.md
 
-# Multiple queries with delay
-python scripts/research_lookup.py --batch "CRISPR applications" "gene therapy trials" "ethical considerations"
+# Academic paper search (auto-routes to Perplexity)
+python scripts/research_lookup.py "find papers on CRISPR off-target effects" \
+  -o sources/papers_crispr.md
 
-# Claude Code integration (called automatically)
-python lookup.py "your research query here"
+# Force a backend
+python scripts/research_lookup.py "topic" --force-backend parallel
+python scripts/research_lookup.py "topic" --force-backend perplexity
+
+# Batch queries / JSON output
+python scripts/research_lookup.py --batch "query 1" "query 2" -o sources/batch.md
+python scripts/research_lookup.py "topic" --json -o sources/research.json
 ```
 
-### Claude Code Integration
-
-The research lookup tool is automatically available in Claude Code when you:
-
-1. **Ask research questions:** "Research recent advances in quantum computing"
-2. **Request literature reviews:** "Find current studies on climate change impacts"
-3. **Need citations:** "What are the latest papers on transformer attention mechanisms?"
-4. **Want technical information:** "Standard protocols for flow cytometry"
-
-## Features
-
-- **Academic Focus:** Prioritizes peer-reviewed papers and reputable sources
-- **Current Information:** Focuses on recent publications (2020-2024)
-- **Complete Citations:** Provides full bibliographic information with DOIs
-- **Multiple Formats:** Supports various query types and research needs
-- **High Search Context:** Always uses high search context for deeper, more comprehensive research
-- **Quality Prioritization:** Automatically prioritizes highly-cited papers from top venues
-- **Cost Effective:** Typically $0.01-0.05 per research query
-
-## Paper Quality Prioritization
-
-This skill **always prioritizes high-impact, influential papers** over obscure publications. Results are ranked by:
-
-### Citation-Based Ranking
-
-| Paper Age | Citation Threshold | Classification |
-|-----------|-------------------|----------------|
-| 0-3 years | 20+ citations | Noteworthy |
-| 0-3 years | 100+ citations | Highly Influential |
-| 3-7 years | 100+ citations | Significant |
-| 3-7 years | 500+ citations | Landmark |
-| 7+ years | 500+ citations | Seminal |
-| 7+ years | 1000+ citations | Foundational |
-
-### Venue Quality Tiers
-
-Papers from higher-tier venues are always preferred:
-
-- **Tier 1 (Highest Priority):** Nature, Science, Cell, NEJM, Lancet, JAMA, PNAS, Nature Medicine, Nature Biotechnology
-- **Tier 2 (High Priority):** High-impact journals (IF>10), top conferences (NeurIPS, ICML, ICLR for ML/AI)
-- **Tier 3 (Good):** Respected specialized journals (IF 5-10)
-- **Tier 4 (Use Sparingly):** Other peer-reviewed venues
-
-### Author Reputation
-
-The skill prefers papers from:
-- Senior researchers with high h-index
-- Established research groups at recognized institutions
-- Authors with multiple publications in Tier-1 venues
-- Researchers with recognized expertise (awards, editorial positions)
-
-### Relevance Priority
-
-1. Papers directly addressing the research question
-2. Papers with applicable methods/data
-3. Tangentially related papers (only from top venues or highly cited)
-
-## Query Examples
-
-### Academic Research
-- "Recent systematic reviews on AI in medical diagnosis 2024"
-- "Meta-analysis of randomized controlled trials for depression treatment"
-- "Current state of quantum computing error correction research"
-
-### Technical Methods
-- "Standard protocols for immunohistochemistry in tissue samples"
-- "Best practices for machine learning model validation"
-- "Statistical methods for analyzing longitudinal data"
-
-### Statistical Data
-- "Global renewable energy adoption statistics 2024"
-- "Prevalence of diabetes in different populations"
-- "Market size for autonomous vehicles industry"
-
-## Response Format
-
-Each research result includes:
-- **Summary:** Brief overview of key findings
-- **Key Studies:** 3-5 most relevant recent papers
-- **Citations:** Complete bibliographic information
-- **Usage Stats:** Token usage for cost tracking
-- **Timestamp:** When the research was performed
-
-## Integration with Scientific Writing
-
-This skill enhances the scientific writing process by providing:
-
-1. **Literature Reviews:** Current research for introduction sections
-2. **Methods Validation:** Verify protocols against current standards
-3. **Results Context:** Compare findings with recent similar studies
-4. **Discussion Support:** Latest evidence for arguments
-5. **Citation Management:** Properly formatted references
+`lookup.py` is a thin single-query wrapper used by the Claude Code integration;
+the CLI in `scripts/research_lookup.py` is the full interface (batch, force-backend,
+JSON, file output).
 
 ## Troubleshooting
 
-**"API key not found"**
-- Ensure `OPENROUTER_API_KEY` environment variable is set
-- Check that you have credits in your OpenRouter account
+- **"no backend API key set"** — set `PARALLEL_API_KEY` and/or `OPENROUTER_API_KEY`.
+- **Parallel query times out** — `core`-model queries can take up to several minutes; the script uses long timeouts. Rephrase or narrow if it stalls.
+- **Perplexity rate limit / 4xx** — check OpenRouter credits and that your key has Perplexity access.
+- **No relevant results** — make the query more specific, add a time frame (e.g. "2024-2025"), or use academic keywords to force the Perplexity path.
 
-**"Model not available"**
-- Verify your API key has access to Perplexity models
-- Check OpenRouter status page for service issues
-
-**"Rate limit exceeded"**
-- Add delays between requests using `--delay` option
-- Check your OpenRouter account limits
-
-**"No relevant results"**
-- Try more specific or broader queries
-- Include time frames (e.g., "2023-2024")
-- Use academic keywords and technical terms
-
-## Cost Management
-
-- Monitor usage through OpenRouter dashboard
-- Typical costs: $0.01-0.05 per research query
-- Batch processing available for multiple queries
-- Consider query specificity to optimize token usage
-
-This skill is designed for academic and research purposes, providing high-quality, cited information to support scientific writing and research activities.
+This skill is part of the AlterLab Academic Skills suite. For direct
+single-backend Perplexity search use the `alterlab-perplexity` skill; for
+Zotero/BibTeX reference management use `alterlab-pyzotero`.

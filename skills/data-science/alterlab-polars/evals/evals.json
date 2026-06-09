@@ -4,7 +4,7 @@
     {
       "id": "lazy-scan-large-csv",
       "prompt": "I have a 40GB CSV of sensor readings that fits in RAM but pandas takes forever to filter and aggregate. I only need three columns and rows where status == 'active', then group by device_id and average the reading. How do I make this fast?",
-      "expected_output": "Invokes alterlab-polars and uses lazy evaluation: pl.scan_csv to build a LazyFrame, applies .filter(pl.col('status') == 'active') and .select on the three needed columns early so predicate and projection pushdown kick in, then .group_by('device_id').agg(pl.col('reading').mean()), and finishes with .collect() (optionally streaming=True). Explains that the lazy query plan is optimized before execution, unlike eager pandas.",
+      "expected_output": "Invokes alterlab-polars and uses lazy evaluation: pl.scan_csv to build a LazyFrame, applies .filter(pl.col('status') == 'active') and .select on the three needed columns early so predicate and projection pushdown kick in, then .group_by('device_id').agg(pl.col('reading').mean()), and finishes with .collect() (optionally engine=\"streaming\" to lower peak memory). Explains that the lazy query plan is optimized before execution, unlike eager pandas.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "scan_csv" },

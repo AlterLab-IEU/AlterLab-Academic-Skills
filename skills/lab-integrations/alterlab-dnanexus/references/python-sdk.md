@@ -250,10 +250,13 @@ record = dxpy.new_dxrecord(
 ### Search Functions
 
 ```python
-# Find data objects
+# Find data objects.
+# name matches exactly by default; name_mode="glob" enables * and ? wildcards
+# (use name_mode="regexp" for regular expressions).
 results = dxpy.find_data_objects(
     classname="file",
     name="*.fastq",
+    name_mode="glob",
     project="project-xxxx",
     folder="/raw_data",
     describe=True
@@ -262,9 +265,10 @@ results = dxpy.find_data_objects(
 for result in results:
     print(f"{result['describe']['name']}: {result['id']}")
 
-# Find projects
+# Find projects (find_projects also defaults to exact name match)
 projects = dxpy.find_projects(
     name="*analysis*",
+    name_mode="glob",
     describe=True
 )
 
@@ -481,10 +485,11 @@ dxpy.download_dxfile(output_id, "result.txt")
 ### Batch File Processing
 
 ```python
-# Find all FASTQ files
+# Find all FASTQ files (name_mode="glob" enables the wildcard)
 files = dxpy.find_data_objects(
     classname="file",
     name="*.fastq",
+    name_mode="glob",
     project="project-xxxx"
 )
 

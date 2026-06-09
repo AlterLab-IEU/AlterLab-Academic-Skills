@@ -255,11 +255,9 @@ with open('graph.pkl', 'wb') as f:
 # Read pickle
 with open('graph.pkl', 'rb') as f:
     G = pickle.load(f)
-
-# NetworkX convenience functions
-nx.write_gpickle(G, 'graph.gpickle')
-G = nx.read_gpickle('graph.gpickle')
 ```
+Note: `nx.write_gpickle` / `nx.read_gpickle` were removed in NetworkX 3.0. Use the
+standard `pickle` module directly, as shown above. Only unpickle files you trust.
 
 ## CSV Files
 
@@ -348,15 +346,20 @@ A = nx.to_scipy_sparse_array(G)
 mmwrite('graph.mtx', A)
 ```
 
-### Shapefile (for Geographic Networks)
+### Geographic Networks
+`nx.read_shp` / `nx.write_shp` were removed in NetworkX 3.0. To build a graph from
+geospatial data, read the geometries with a dedicated library and add edges yourself,
+e.g. with GeoPandas:
 ```python
-# Requires pyshp library
-# Read geographic network from shapefile
-G = nx.read_shp('roads.shp')
+import geopandas as gpd
 
-# Write to shapefile
-nx.write_shp(G, 'network')
+gdf = gpd.read_file('roads.shp')
+G = nx.Graph()
+for line in gdf.geometry:
+    coords = list(line.coords)
+    nx.add_path(G, coords)  # connect consecutive vertices of each LineString
 ```
+For street networks specifically, the `osmnx` package builds NetworkX graphs directly.
 
 ## Format Selection Guidelines
 
@@ -399,8 +402,10 @@ with gzip.open('graph.adjlist.gz', 'wt') as f:
 with gzip.open('graph.adjlist.gz', 'rt') as f:
     G = nx.read_adjlist(f)
 
-# Use binary formats (faster)
-nx.write_gpickle(G, 'graph.gpickle')  # Faster than text formats
+# Use binary pickle (faster than text formats; only load files you trust)
+import pickle
+with open('graph.pkl', 'wb') as f:
+    pickle.dump(G, f)
 
 # Use sparse matrices for adjacency
 A = nx.to_scipy_sparse_array(G, format='csr')  # Memory efficient

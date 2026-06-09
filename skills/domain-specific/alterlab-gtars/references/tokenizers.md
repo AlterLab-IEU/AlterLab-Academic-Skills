@@ -1,103 +1,89 @@
 # Genomic Tokenizers
 
-Tokenizers convert genomic regions into discrete tokens for machine learning applications, particularly useful for training genomic deep learning models.
+Tokenizers map genomic regions onto a fixed vocabulary of discrete tokens for ML
+models — the preprocessing layer that `geniml` builds embeddings on top of.
 
-## Python API
+> The class is **`Tokenizer`** (in `gtars.tokenizers`). There is no `TreeTokenizer`.
+> Verified against v0.8.
 
-### Creating a Tokenizer
-
-Load tokenizer configurations from various sources:
-
-```python
-import gtars
-
-# From BED file
-tokenizer = gtars.tokenizers.TreeTokenizer.from_bed_file("regions.bed")
-
-# From configuration file
-tokenizer = gtars.tokenizers.TreeTokenizer.from_config("tokenizer_config.yaml")
-
-# From region string
-tokenizer = gtars.tokenizers.TreeTokenizer.from_region_string("chr1:1000-2000")
-```
-
-### Tokenizing Genomic Regions
-
-Convert genomic coordinates to tokens:
+## Building a tokenizer
 
 ```python
-# Tokenize a single region
-token = tokenizer.tokenize("chr1", 1000, 2000)
+from gtars.tokenizers import Tokenizer
 
-# Tokenize multiple regions
-tokens = []
-for chrom, start, end in regions:
-    token = tokenizer.tokenize(chrom, start, end)
-    tokens.append(token)
+# Build the vocabulary from a "universe" BED file
+tokenizer = Tokenizer.from_bed("universe.bed")
+
+# Or load a saved/published tokenizer
+tokenizer = Tokenizer.from_config("tokenizer.toml")
+tokenizer = Tokenizer.from_pretrained("databio/...")   # from a hub identifier
 ```
 
-### Token Properties
+## Tokenizing regions
 
-Access token information:
+`tokenize` accepts a `RegionSet` or a list of `Region` objects (note `Region`'s
+4th positional `rest` arg) and returns token **strings**:
 
 ```python
-# Get token ID
-token_id = token.id
+from gtars.models import Region, RegionSet
 
-# Get genomic coordinates
-chrom = token.chromosome
-start = token.start
-end = token.end
+regions = [Region("chr1", 1500, 1800, None), Region("chr2", 5500, 5600, None)]
+tokens = tokenizer.tokenize(regions)        # e.g. ['chr1:1000-2000', 'chr2:5000-6000']
 
-# Get token metadata
-metadata = token.metadata
+# A RegionSet works directly too:
+tokens = tokenizer.tokenize(RegionSet("query.bed"))
 ```
 
-## Use Cases
-
-### Machine Learning Preprocessing
-
-Tokenizers are essential for preparing genomic data for ML models:
-
-1. **Sequence modeling**: Convert genomic intervals into discrete tokens for transformer models
-2. **Position encoding**: Create consistent positional encodings across datasets
-3. **Data augmentation**: Generate alternative tokenizations for training
-
-### Integration with geniml
-
-The tokenizers module integrates seamlessly with the geniml library for genomic ML:
+## Tokens to IDs (for the model)
 
 ```python
-# Tokenize regions for geniml
-from gtars.tokenizers import TreeTokenizer
-import geniml
+ids = tokenizer.convert_tokens_to_ids(tokens)   # [0, 2, ...]
+back = tokenizer.convert_ids_to_tokens(ids)      # token strings
 
-tokenizer = TreeTokenizer.from_bed_file("training_regions.bed")
-tokens = [tokenizer.tokenize(r.chrom, r.start, r.end) for r in regions]
-
-# Use tokens in geniml models
-model = geniml.Model(vocab_size=tokenizer.vocab_size)
+# encode() maps a single token string to its id(s):
+tokenizer.encode("chr1:1000-2000")               # -> [0]
 ```
 
-## Configuration Format
+## Vocabulary and special tokens
 
-Tokenizer configuration files support YAML format:
-
-```yaml
-# tokenizer_config.yaml
-type: tree
-resolution: 1000  # Token resolution in base pairs
-chromosomes:
-  - chr1
-  - chr2
-  - chr3
-options:
-  overlap_handling: merge
-  gap_threshold: 100
+```python
+tokenizer.vocab_size                 # int
+tokenizer.get_vocab()                # {token: id}
+tokenizer.special_tokens_map         # {'unk_token': '<unk>', 'pad_token': '<pad>', ...}
+tokenizer.unk_token, tokenizer.unk_token_id
+tokenizer.pad_token, tokenizer.pad_token_id
+tokenizer.mask_token, tokenizer.cls_token, tokenizer.bos_token, tokenizer.eos_token
 ```
 
-## Performance Considerations
+Out-of-universe regions map to the unknown token.
 
-- TreeTokenizer uses efficient data structures for fast tokenization
-- Batch tokenization is recommended for large datasets
-- Pre-loading tokenizers reduces overhead for repeated operations
+## Tokenizing fragment files directly
+
+For single-cell fragment files, `tokenize_fragment_file` tokenizes fragments in
+one call:
+
+```python
+from gtars.tokenizers import tokenize_fragment_file
+# Signature varies by version; check help(tokenize_fragment_file).
+```
+
+## Integration with geniml
+
+`gtars` produces token IDs; `geniml` (skill `alterlab-geniml`) trains the embedding
+/ Region2Vec models on top of them. Pass `convert_tokens_to_ids(...)` output into
+the geniml model; do not train embeddings inside gtars.
+
+```python
+from gtars.tokenizers import Tokenizer
+from gtars.models import RegionSet
+
+tokenizer = Tokenizer.from_bed("universe.bed")
+ids = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(RegionSet("training.bed")))
+# -> feed `ids` to a geniml or custom model (vocab_size = tokenizer.vocab_size)
+```
+
+## Performance considerations
+
+- Build the tokenizer once and reuse it; vocabulary construction is the costly step.
+- Tokenize whole `RegionSet`s in one call rather than region-by-region.
+- Persist token IDs with `gtars.utils.write_tokens_to_gtok` to avoid re-tokenizing.

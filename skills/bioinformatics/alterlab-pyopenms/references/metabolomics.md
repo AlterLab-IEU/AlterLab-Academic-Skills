@@ -30,48 +30,63 @@ def metabolomics_pipeline(input_files, output_dir):
         exp = ms.MSExperiment()
         ms.MzMLFile().load(mzml_file, exp)
 
-        # Peak picking if needed
-        if not exp.getSpectrum(0).isSorted():
-            picker = ms.PeakPickerHiRes()
-            exp_picked = ms.MSExperiment()
-            picker.pickExperiment(exp, exp_picked)
-            exp = exp_picked
+        # Peak picking if the data is still in profile mode
+        picker = ms.PeakPickerHiRes()
+        exp_picked = ms.MSExperiment()
+        picker.pickExperiment(exp, exp_picked)
+        exp = exp_picked
+        exp.updateRanges()
 
-        # Feature detection
-        ff = ms.FeatureFinder()
-        params = ff.getParameters("centroided")
+        # Feature detection via the metabolomics chain
+        # (MassTraceDetection -> ElutionPeakDetection -> FeatureFindingMetabo).
+        # For peptide/centroided data use FeatureFinderAlgorithmPicked instead.
+        mtd = ms.MassTraceDetection()
+        mtd_params = mtd.getDefaults()
+        mtd_params.setValue("mass_error_ppm", 5.0)   # tight for high-res metabolites
+        mtd_params.setValue("noise_threshold_int", 1000.0)
+        mtd.setParameters(mtd_params)
+        mass_traces = []
+        mtd.run(exp, mass_traces, 0)
 
-        # Metabolomics-specific parameters
-        params.setValue("mass_trace:mz_tolerance", 5.0)  # ppm, tighter for metabolites
-        params.setValue("mass_trace:min_spectra", 5)
-        params.setValue("isotopic_pattern:charge_low", 1)
-        params.setValue("isotopic_pattern:charge_high", 2)  # Mostly singly charged
+        epd = ms.ElutionPeakDetection()
+        split_traces = []
+        epd.detectPeaks(mass_traces, split_traces)
 
+        ffm = ms.FeatureFindingMetabo()
+        ffm_params = ffm.getDefaults()
+        ffm_params.setValue("isotope_filtering_model", "none")
+        ffm.setParameters(ffm_params)
         features = ms.FeatureMap()
-        ff.run("centroided", exp, features, params, ms.FeatureMap())
+        chrom_out = []
+        ffm.run(split_traces, features, chrom_out)
 
         features.setPrimaryMSRunPath([mzml_file.encode()])
         feature_maps.append(features)
 
         print(f"  Detected {features.size()} features")
 
-    # Step 2: Adduct detection and grouping
+    # Step 2: Adduct detection and grouping.
+    # Class is MetaboliteFeatureDeconvolution; potential_adducts uses the
+    # "Element:charge:probability" syntax (NOT "[M+H]+"), and compute() takes
+    # four maps: (fm_in, fm_out, cons_map, cons_map_pairs).
     print("Detecting adducts...")
     adduct_grouped_maps = []
 
-    adduct_detector = ms.MetaboliteAdductDecharger()
+    adduct_detector = ms.MetaboliteFeatureDeconvolution()
     params = adduct_detector.getParameters()
-    params.setValue("potential_adducts", "[M+H]+,[M+Na]+,[M+K]+,[M+NH4]+,[M-H]-,[M+Cl]-")
+    params.setValue("potential_adducts", [b"H:+:0.6", b"Na:+:0.2",
+                                          b"K:+:0.1", b"NH4:+:0.1"])
     params.setValue("charge_min", 1)
     params.setValue("charge_max", 1)
     adduct_detector.setParameters(params)
 
     for fm in feature_maps:
         fm_out = ms.FeatureMap()
-        adduct_detector.compute(fm, fm_out, ms.ConsensusMap())
+        adduct_detector.compute(fm, fm_out, ms.ConsensusMap(), ms.ConsensusMap())
         adduct_grouped_maps.append(fm_out)
 
-    # Step 3: RT alignment
+    # Step 3: RT alignment.
+    # align() processes one map at a time against a fixed reference.
     print("Aligning retention times...")
     aligner = ms.MapAlignmentAlgorithmPoseClustering()
 
@@ -81,9 +96,13 @@ def metabolomics_pipeline(input_files, output_dir):
     params.setValue("pairfinder:distance_MZ:unit", "ppm")
     aligner.setParameters(params)
 
-    aligned_maps = []
-    transformations = []
-    aligner.align(adduct_grouped_maps, aligned_maps, transformations)
+    aligner.setReference(adduct_grouped_maps[0])
+    transformer = ms.MapAlignmentTransformer()
+    for fm in adduct_grouped_maps[1:]:
+        trafo = ms.TransformationDescription()
+        aligner.align(fm, trafo)
+        transformer.transformRetentionTimes(fm, trafo, True)
+    aligned_maps = adduct_grouped_maps  # transformed in place
 
     # Step 4: Feature linking
     print("Linking features...")
@@ -129,39 +148,31 @@ consensus = metabolomics_pipeline(input_files, "output")
 
 ```python
 # Create adduct detector
-adduct_detector = ms.MetaboliteAdductDecharger()
+adduct_detector = ms.MetaboliteFeatureDeconvolution()
 
-# Configure common adducts
+# Configure common adducts.
+# Each entry is "Element:charge:probability" (probabilities are relative
+# weights, not required to sum to 1). This is NOT the "[M+H]+" notation.
 params = adduct_detector.getParameters()
 
 # Positive mode adducts
-positive_adducts = [
-    "[M+H]+",
-    "[M+Na]+",
-    "[M+K]+",
-    "[M+NH4]+",
-    "[2M+H]+",
-    "[M+H-H2O]+"
-]
+positive_adducts = [b"H:+:0.6", b"Na:+:0.2", b"K:+:0.1", b"NH4:+:0.1"]
 
-# Negative mode adducts
-negative_adducts = [
-    "[M-H]-",
-    "[M+Cl]-",
-    "[M+FA-H]-",  # Formate
-    "[2M-H]-"
-]
+# Negative mode adducts (set charge_min/charge_max to negative for these)
+negative_adducts = [b"H-1:-:0.8", b"Cl:-:0.2"]
 
 # Set for positive mode
-params.setValue("potential_adducts", ",".join(positive_adducts))
+params.setValue("potential_adducts", positive_adducts)
 params.setValue("charge_min", 1)
 params.setValue("charge_max", 1)
 params.setValue("max_neutrals", 1)
 adduct_detector.setParameters(params)
 
-# Apply adduct detection
+# Apply adduct detection. compute() needs four maps:
+# (input, output, consensus, consensus_pairs).
 feature_map_out = ms.FeatureMap()
-adduct_detector.compute(feature_map, feature_map_out, ms.ConsensusMap())
+adduct_detector.compute(feature_map, feature_map_out,
+                        ms.ConsensusMap(), ms.ConsensusMap())
 ```
 
 ### Access Adduct Information
@@ -458,13 +469,14 @@ min_spectra_values = [3, 5, 7]
 
 for tol in mz_tolerances:
     for min_spec in min_spectra_values:
-        ff = ms.FeatureFinder()
-        params = ff.getParameters("centroided")
+        ff = ms.FeatureFinderAlgorithmPicked()
+        params = ff.getParameters()
         params.setValue("mass_trace:mz_tolerance", tol)
         params.setValue("mass_trace:min_spectra", min_spec)
+        ff.setParameters(params)
 
         features = ms.FeatureMap()
-        ff.run("centroided", exp, features, params, ms.FeatureMap())
+        ff.run(exp, features, params, ms.FeatureMap())
 
         print(f"tol={tol}, min_spec={min_spec}: {features.size()} features")
 ```

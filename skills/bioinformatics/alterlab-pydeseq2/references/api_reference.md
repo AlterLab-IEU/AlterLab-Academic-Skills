@@ -15,7 +15,7 @@ The main class for differential expression analysis that handles data processing
 - `metadata`: pandas DataFrame of shape (samples × variables) with sample annotations
 - `design`: str, Wilkinson formula specifying the statistical model (e.g., "~condition", "~group + condition")
 - `refit_cooks`: bool, whether to refit parameters after removing Cook's distance outliers (default: True)
-- `n_cpus`: int, number of CPUs to use for parallel processing (optional)
+- `inference`: an inference object (e.g. `DefaultInference(n_cpus=8)`) that controls the numerical backend and parallelism. In pydeseq2 0.4+ this is how CPUs are set; passing `n_cpus=` directly to the constructor is deprecated.
 - `quiet`: bool, suppress progress messages (default: False)
 
 **Key Methods:**
@@ -74,7 +74,7 @@ Class for performing statistical tests and computing p-values for differential e
 - `alpha`: float, significance threshold for independent filtering (default: 0.05)
 - `cooks_filter`: bool, whether to filter outliers based on Cook's distance (default: True)
 - `independent_filter`: bool, whether to perform independent filtering (default: True)
-- `n_cpus`: int, number of CPUs for parallel processing (optional)
+- `inference`: inference object controlling the backend/parallelism (reuse the same one passed to `DeseqDataSet`). In 0.4+ this replaces the deprecated `n_cpus=` kwarg.
 - `quiet`: bool, suppress progress messages (default: False)
 
 **Key Methods:**
@@ -186,13 +186,17 @@ Default implementation of inference methods using scipy, sklearn, and numpy.
 ```python
 from pydeseq2.dds import DeseqDataSet
 from pydeseq2.ds import DeseqStats
+from pydeseq2.default_inference import DefaultInference
+
+inference = DefaultInference(n_cpus=8)  # set parallelism here, not via n_cpus= on the constructors
 
 # 1. Initialize dataset
 dds = DeseqDataSet(
     counts=counts_df,
     metadata=metadata,
     design="~condition",
-    refit_cooks=True
+    refit_cooks=True,
+    inference=inference,
 )
 
 # 2. Fit dispersions and LFCs
@@ -202,7 +206,8 @@ dds.deseq2()
 ds = DeseqStats(
     dds,
     contrast=["condition", "treated", "control"],
-    alpha=0.05
+    alpha=0.05,
+    inference=inference,
 )
 ds.summary()
 
@@ -219,10 +224,11 @@ results = ds.results_df
 
 PyDESeq2 aims to match the default settings of DESeq2 v1.34.0. Some differences may exist as it is a from-scratch reimplementation in Python.
 
-**Tested with:**
-- Python 3.10-3.11
-- anndata 0.8.0+
-- numpy 1.23.0+
-- pandas 1.4.3+
-- scikit-learn 1.1.1+
-- scipy 1.11.0+
+**Dependencies (pydeseq2 0.5.x):**
+- Python ≥3.11
+- anndata ≥0.11
+- numpy ≥2.0
+- pandas ≥2.2
+- scikit-learn ≥1.4
+- scipy ≥1.12
+- formulaic ≥1.0.2 (design-formula parser)

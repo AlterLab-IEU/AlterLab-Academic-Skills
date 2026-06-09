@@ -13,7 +13,17 @@ metadata:
 
 ## Overview
 
-The Metabolomics Workbench is a comprehensive NIH Common Fund-sponsored platform hosted at UCSD that serves as the primary repository for metabolomics research data. It provides programmatic access to over 4,200 processed studies (3,790+ publicly available), standardized metabolite nomenclature through RefMet, and powerful search capabilities across multiple analytical platforms (GC-MS, LC-MS, NMR).
+The Metabolomics Workbench is a comprehensive NIH Common Fund-sponsored platform hosted at UCSD that serves as the primary repository for metabolomics research data. It provides programmatic access to several thousand processed studies (4,300+ publicly available via the REST API as of 2026-06), standardized metabolite nomenclature through RefMet, and powerful search capabilities across multiple analytical platforms (GC-MS, LC-MS, NMR).
+
+### API gotchas (verified 2026-06)
+
+Read these before parsing responses — several behaviors contradict the naive "`/json` always returns JSON" assumption:
+
+- **`/json` is not always JSON.** The `moverz` context and the `study` `summary`/search outputs return **tab-delimited text even when you ask for `/json`**. The `scripts/query_metabolomics_wb.py` helper wraps such bodies as `{"raw": "<tsv>"}` rather than failing. Parse the TSV; do not assume keyed JSON objects.
+- **`moverz` issues a 302 redirect** to an internal `.php` handler. `urllib`/`requests` follow redirects automatically; raw `curl` does **not** unless you pass `-L` (otherwise you get an empty body).
+- **List available studies with `/txt`, not `/json`.** `study/study_id/ST/available/json` returns an empty body; use `study/study_id/ST/available/txt` (columns: `project_id`, `study_id`, `analysis_id`).
+- **`refmet/match` returns the field `refmet_name`** (plus `formula`, `exactmass`, classes, `refmet_id`) — not `name`.
+- **Study search by `refmet_name` uses the indexed RefMet name**, which may differ from `refmet/match` output (e.g. `match/citrate` gives `Citric acid`, but the study index is keyed on `Tyrosine`-style entries). Verify the name resolves to studies; an empty result usually means a name-index mismatch, not "no studies."
 
 ## Scripts
 
@@ -68,8 +78,8 @@ Query metabolomics studies by various criteria and retrieve complete experimenta
 
 **Example queries:**
 ```python
-# List all available public studies
-response = requests.get('https://www.metabolomicsworkbench.org/rest/study/study_id/ST/available/json')
+# List all available public studies (use /txt — the /json variant returns empty)
+response = requests.get('https://www.metabolomicsworkbench.org/rest/study/study_id/ST/available/txt')
 
 # Get study summary
 response = requests.get('https://www.metabolomicsworkbench.org/rest/study/study_id/ST000001/summary/json')
@@ -200,9 +210,9 @@ To identify potential compounds from mass spectrometry m/z values:
    response = requests.get('https://www.metabolomicsworkbench.org/rest/moverz/MB/180.06/M+H/0.5/json')
    ```
 
-2. Review candidate compounds from results
+2. Review candidate compounds from results. Note: `moverz` returns **tab-delimited text** (name, systematic name, formula, ion, classes) — not JSON, and with no `regno` column. Use the returned name/formula to look the compound up.
 
-3. Retrieve detailed information for candidate compounds:
+3. Retrieve detailed information for a candidate by an identifier you have (e.g. registry number or formula):
    ```python
    response = requests.get('https://www.metabolomicsworkbench.org/rest/compound/regno/{regno}/all/json')
    ```

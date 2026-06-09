@@ -1,6 +1,8 @@
 # Workflow Recipes
 
-Common multi-step patterns combining Parallel's Search, Extract, and Deep Research APIs for scientific writing tasks.
+Common multi-step patterns combining the skill's `search`, `extract`, and `research` commands for scientific writing tasks.
+
+> **Scope:** these recipes use `scripts/parallel_web.py`, which wraps the Chat API (`search`/`research`, models `base`/`core`) and the Extract API (`extract`). The script does NOT accept `--processor`, `--queries`, `--max-results`, `source_policy`, or `research_structured()` — those belong to the raw Search/Task APIs (see [api_reference.md](api_reference.md)). Where a recipe needs domain pinning or structured output, call the SDK directly.
 
 ---
 
@@ -24,19 +26,18 @@ Common multi-step patterns combining Parallel's Search, Extract, and Deep Resear
 
 **Goal:** Gather research and citations for writing a single section of a scientific paper.
 
-**APIs:** Deep Research (pro-fast) + Search
+**Commands:** `research` (core) + `search`
 
 ```bash
 # Step 1: Deep research for comprehensive background
 python scripts/parallel_web.py research \
-  "Recent advances in federated learning for healthcare AI, focusing on privacy-preserving training methods, real-world deployments, and regulatory considerations (2023-2025)" \
-  --processor pro-fast -o sources/section_background.md
+  "Recent advances in federated learning for healthcare AI (2023-2025): privacy-preserving training methods, real-world deployments, and regulatory considerations. Structure as (1) key approaches, (2) clinical deployments, (3) regulatory landscape, (4) open challenges, with statistics." \
+  --model core -o sources/research_federated_learning_health.md
 
 # Step 2: Targeted search for specific citations
 python scripts/parallel_web.py search \
-  "Find peer-reviewed papers on federated learning in hospitals" \
-  --queries "federated learning clinical deployment" "privacy preserving ML healthcare" \
-  --max-results 10 -o sources/section_citations.txt
+  "Find recent peer-reviewed papers on federated learning deployed in hospital settings, preferring Nature, The Lancet, arXiv, and PubMed-indexed venues." \
+  -o sources/search_federated_learning_papers.md
 ```
 
 **Python version:**
@@ -46,23 +47,19 @@ from parallel_web import ParallelDeepResearch, ParallelSearch
 researcher = ParallelDeepResearch()
 searcher = ParallelSearch()
 
-# Step 1: Deep background research
+# Step 1: Deep background research (fold structure into the query string)
 background = researcher.research(
     query="Recent advances in federated learning for healthcare AI (2023-2025): "
-          "privacy-preserving methods, real-world deployments, regulatory landscape",
-    processor="pro-fast",
-    description="Structure as: (1) Key approaches, (2) Clinical deployments, "
-                "(3) Regulatory considerations, (4) Open challenges. Include statistics."
+          "privacy-preserving methods, real-world deployments, regulatory landscape. "
+          "Structure as: (1) key approaches, (2) clinical deployments, "
+          "(3) regulatory considerations, (4) open challenges. Include statistics.",
+    model="core",
 )
 
-# Step 2: Find specific papers to cite
+# Step 2: Find specific papers to cite (name source preferences in the objective)
 papers = searcher.search(
-    objective="Find recent peer-reviewed papers on federated learning deployed in hospital settings",
-    search_queries=[
-        "federated learning hospital clinical study 2024",
-        "privacy preserving machine learning healthcare deployment"
-    ],
-    source_policy={"allow_domains": ["nature.com", "thelancet.com", "arxiv.org", "pubmed.ncbi.nlm.nih.gov"]},
+    objective="Find recent peer-reviewed papers on federated learning deployed in hospital "
+              "settings; prefer nature.com, thelancet.com, arxiv.org, and PubMed-indexed venues.",
 )
 
 # Combine: use background for writing, papers for citations
@@ -81,13 +78,14 @@ papers = searcher.search(
 ```bash
 # Option A: Search for the paper
 python scripts/parallel_web.py search \
-  "Vaswani et al 2017 Attention is All You Need paper NeurIPS" \
-  --queries "Attention is All You Need DOI" --max-results 5
+  "Find the exact citation details (DOI, venue, year) for 'Attention Is All You Need' by Vaswani et al., 2017 (NeurIPS)." \
+  -o sources/search_attention_citation.md
 
 # Option B: Extract metadata from a DOI
 python scripts/parallel_web.py extract \
   "https://doi.org/10.48550/arXiv.1706.03762" \
-  --objective "Complete citation: authors, title, venue, year, pages, DOI"
+  --objective "Complete citation: authors, title, venue, year, pages, DOI" \
+  -o sources/extract_attention_doi.md
 ```
 
 **Python version:**
@@ -99,13 +97,12 @@ extractor = ParallelExtract()
 
 # Step 1: Find the paper
 result = searcher.search(
-    objective="Find the exact citation details for the Attention Is All You Need paper by Vaswani et al.",
-    search_queries=["Attention is All You Need Vaswani 2017 NeurIPS DOI"],
-    max_results=5,
+    objective="Find the exact citation details (DOI, venue, year) for the "
+              "'Attention Is All You Need' paper by Vaswani et al., 2017.",
 )
 
-# Step 2: Extract full metadata from the paper's page
-paper_url = result["results"][0]["url"]
+# Step 2: Extract full metadata from the paper's page (use a citation from the result)
+paper_url = result["sources"][0]["url"]
 metadata = extractor.extract(
     urls=[paper_url],
     objective="Complete BibTeX citation: all authors, title, conference/journal, year, pages, DOI, volume",
@@ -133,31 +130,25 @@ topic = "CRISPR-based diagnostics for infectious diseases"
 
 # Stage 1: Broad research overview
 overview = researcher.research(
-    query=f"Comprehensive review of {topic}: key developments, clinical applications, "
-          f"regulatory status, commercial products, and future directions (2020-2025)",
-    processor="ultra-fast",
-    description="Structure as a literature review: (1) Historical development, "
-                "(2) Current technologies, (3) Clinical applications, "
-                "(4) Regulatory landscape, (5) Commercial products, "
-                "(6) Limitations and future directions. Include key statistics and milestones."
+    query=f"Comprehensive review of {topic} (2020-2025): key developments, clinical "
+          f"applications, regulatory status, commercial products, future directions. "
+          f"Structure as a literature review: (1) historical development, (2) current "
+          f"technologies, (3) clinical applications, (4) regulatory landscape, "
+          f"(5) commercial products, (6) limitations and future directions. "
+          f"Include key statistics and milestones.",
+    model="core",
 )
 
-# Stage 2: Find specific landmark papers
+# Stage 2: Find specific landmark papers (name preferred venues in the objective)
 key_papers = searcher.search(
-    objective=f"Find the most cited and influential papers on {topic} from Nature, Science, Cell, NEJM",
-    search_queries=[
-        "CRISPR diagnostics SHERLOCK DETECTR Nature",
-        "CRISPR point-of-care testing clinical study",
-        "nucleic acid detection CRISPR review"
-    ],
-    source_policy={
-        "allow_domains": ["nature.com", "science.org", "cell.com", "nejm.org", "thelancet.com"],
-    },
-    max_results=15,
+    objective=f"Find the most cited and influential papers on {topic}; prefer "
+              f"nature.com, science.org, cell.com, nejm.org, thelancet.com. "
+              f"Include SHERLOCK/DETECTR point-of-care work and major reviews.",
+    model="core",
 )
 
-# Stage 3: Extract detailed content from top 5 papers
-top_urls = [r["url"] for r in key_papers["results"][:5]]
+# Stage 3: Extract detailed content from the top cited sources
+top_urls = [s["url"] for s in key_papers["sources"][:5]]
 detailed = extractor.extract(
     urls=top_urls,
     objective="Study design, key results, sensitivity/specificity data, and clinical implications",
@@ -179,34 +170,37 @@ researcher = ParallelDeepResearch()
 
 industry = "AI-powered drug discovery"
 
-# Stage 1: Market overview (ultra-fast for maximum depth)
+# Stage 1: Market overview (core for maximum depth)
 market_overview = researcher.research(
     query=f"Comprehensive market analysis of {industry}: market size, growth rate, "
-          f"key segments, geographic distribution, and forecast through 2030",
-    processor="ultra-fast",
-    description="Include specific dollar figures, CAGR percentages, and data sources. "
-                "Break down by segment and geography."
+          f"key segments, geographic distribution, and forecast through 2030. "
+          f"Include specific dollar figures, CAGR percentages, and data sources; "
+          f"break down by segment and geography.",
+    model="core",
 )
 
 # Stage 2: Competitive landscape
-competitors = researcher.research_structured(
-    query=f"Top 10 companies in {industry}: revenue, funding, key products, partnerships, and market position",
-    processor="pro-fast",
+# For structured JSON output, use the raw Task API (see deep_research_guide.md);
+# the research command returns a markdown report.
+competitors = researcher.research(
+    query=f"Top 10 companies in {industry}: revenue, funding, key products, "
+          f"partnerships, and market position. Present as a comparison table.",
+    model="core",
 )
 
 # Stage 3: Technology and innovation trends
 tech_trends = researcher.research(
-    query=f"Technology trends and innovation landscape in {industry}: "
-          f"emerging approaches, breakthrough technologies, patent landscape, and R&D investment",
-    processor="pro-fast",
-    description="Focus on specific technologies, quantify R&D spending, and identify emerging leaders."
+    query=f"Technology trends and innovation landscape in {industry}: emerging "
+          f"approaches, breakthrough technologies, patent landscape, and R&D investment. "
+          f"Quantify R&D spending and identify emerging leaders.",
+    model="core",
 )
 
 # Stage 4: Regulatory and risk analysis
 regulatory = researcher.research(
     query=f"Regulatory landscape and risk factors for {industry}: "
           f"FDA guidance, EMA requirements, compliance challenges, and market risks",
-    processor="pro-fast",
+    model="core",
 )
 ```
 
@@ -230,9 +224,8 @@ companies = ["OpenAI", "Anthropic", "Google DeepMind"]
 # Step 1: Search for recent data on each company
 for company in companies:
     result = searcher.search(
-        objective=f"Latest product launches, funding, team size, and strategy for {company} in 2025",
-        search_queries=[f"{company} product launch 2025", f"{company} funding valuation"],
-        source_policy={"after_date": "2024-06-01"},
+        objective=f"Latest (2025) product launches, funding, team size, and strategy "
+                  f"for {company}. Prefer primary announcements from the past year.",
     )
 
 # Step 2: Extract from company pages
@@ -248,13 +241,10 @@ company_data = extractor.extract(
 
 # Step 3: Deep research for synthesis
 comparison = researcher.research(
-    query=f"Detailed comparison of {', '.join(companies)}: "
-          f"products, pricing, technology approach, market position, strengths, weaknesses",
-    processor="pro-fast",
-    description="Create a structured comparison covering: "
-                "(1) Product portfolio, (2) Technology approach, (3) Pricing, "
-                "(4) Market position, (5) Strengths/weaknesses, (6) Future outlook. "
-                "Include a summary comparison table."
+    query=f"Detailed comparison of {', '.join(companies)}: product portfolio, "
+          f"technology approach, pricing, market position, strengths/weaknesses, "
+          f"and future outlook. Include a summary comparison table.",
+    model="core",
 )
 ```
 
@@ -274,13 +264,12 @@ claim = "The global AI market is expected to reach $1.8 trillion by 2030"
 
 # Step 1: Search for corroborating sources
 result = searcher.search(
-    objective=f"Verify this claim: '{claim}'. Find authoritative sources that confirm or contradict this figure.",
-    search_queries=["global AI market size 2030 forecast", "artificial intelligence market projection trillion"],
-    max_results=8,
+    objective=f"Verify this claim: '{claim}'. Find authoritative sources that confirm or "
+              f"contradict this figure, with the forecast year, CAGR, and methodology.",
 )
 
 # Step 2: Extract specific figures from top sources
-source_urls = [r["url"] for r in result["results"][:3]]
+source_urls = [s["url"] for s in result["sources"][:3]]
 details = extractor.extract(
     urls=source_urls,
     objective="Specific market size figures, forecast years, CAGR, and methodology of the projection",
@@ -307,18 +296,16 @@ topic = "EU AI Act implementation"
 
 # Step 1: Find the latest news
 latest = searcher.search(
-    objective=f"Latest news and developments on {topic} from the past month",
-    search_queries=[f"{topic} 2025", f"{topic} latest updates"],
-    source_policy={"after_date": "2025-01-15"},
-    max_results=15,
+    objective=f"Latest news and developments on {topic} from the past month (2025), "
+              f"covering key updates and official actions.",
 )
 
 # Step 2: Synthesize into a briefing
 briefing = researcher.research(
-    query=f"Summarize the latest developments in {topic} as of February 2025: "
-          f"key milestones, compliance deadlines, industry reactions, and implications",
-    processor="pro-fast",
-    description="Write a concise 500-word executive briefing with timeline of key events."
+    query=f"Summarize the latest developments in {topic} as of 2025: key milestones, "
+          f"compliance deadlines, industry reactions, and implications. "
+          f"Write a concise ~500-word executive briefing with a timeline of key events.",
+    model="core",
 )
 ```
 
@@ -336,13 +323,12 @@ extractor = ParallelExtract()
 
 # Step 1: Find documentation pages
 docs = searcher.search(
-    objective="Find official PyTorch documentation for implementing custom attention mechanisms",
-    search_queries=["PyTorch attention mechanism tutorial", "PyTorch MultiheadAttention documentation"],
-    source_policy={"allow_domains": ["pytorch.org", "github.com/pytorch"]},
+    objective="Find official PyTorch documentation for implementing custom attention "
+              "mechanisms (e.g. MultiheadAttention); prefer pytorch.org.",
 )
 
 # Step 2: Extract full content from documentation pages
-doc_urls = [r["url"] for r in docs["results"][:3]]
+doc_urls = [s["url"] for s in docs["sources"][:3]]
 full_docs = extractor.extract(
     urls=doc_urls,
     objective="Complete API reference, parameters, usage examples, and code snippets",
@@ -367,30 +353,24 @@ research_area = "AI-guided antibiotic discovery to combat antimicrobial resistan
 # Step 1: Significance and burden of disease
 significance = researcher.research(
     query=f"Burden of antimicrobial resistance: mortality statistics, economic impact, "
-          f"WHO priority pathogens, and projections. Include specific numbers.",
-    processor="pro-fast",
-    description="Focus on statistics suitable for NIH Significance section: "
-                "deaths per year, economic cost, resistance trends, and urgency."
+          f"WHO priority pathogens, and projections. Provide specific numbers suitable "
+          f"for an NIH Significance section: deaths per year, economic cost, resistance "
+          f"trends, and urgency.",
+    model="core",
 )
 
 # Step 2: Innovation landscape
 innovation = researcher.research(
-    query=f"Current approaches to {research_area}: successes (halicin, etc.), "
-          f"limitations of current methods, and what makes our approach novel",
-    processor="pro-fast",
-    description="Focus on Innovation section: what has been tried, what gaps remain, "
-                "and what new approaches are emerging."
+    query=f"Current approaches to {research_area}: successes (e.g. halicin), limitations "
+          f"of current methods, and emerging novel approaches. Frame for an Innovation "
+          f"section: what has been tried, what gaps remain, what is emerging.",
+    model="core",
 )
 
 # Step 3: Find specific papers for preliminary data context
 papers = searcher.search(
-    objective="Find landmark papers on AI-discovered antibiotics and ML approaches to drug discovery",
-    search_queries=[
-        "halicin AI antibiotic discovery Nature",
-        "machine learning antibiotic resistance prediction",
-        "deep learning drug discovery antibiotics"
-    ],
-    source_policy={"allow_domains": ["nature.com", "science.org", "cell.com", "pnas.org"]},
+    objective="Find landmark papers on AI-discovered antibiotics and ML approaches to "
+              "drug discovery (e.g. halicin); prefer nature.com, science.org, cell.com, pnas.org.",
 )
 ```
 
@@ -435,16 +415,17 @@ result = researcher.research("How does the CRISPR-Cas9 gene editing mechanism wo
 
 ---
 
-## Performance Cheat Sheet
+## Command Cheat Sheet (this skill)
 
-| Task | Processor | Expected Time | Approximate Cost |
-|------|-----------|---------------|------------------|
-| Quick fact lookup | `base-fast` | 15-50s | $0.01 |
-| Section background | `pro-fast` | 30s-5min | $0.10 |
-| Comprehensive report | `ultra-fast` | 1-10min | $0.30 |
-| Web search (10 results) | Search API | 1-3s | $0.005 |
-| URL extraction (1 URL) | Extract API | 1-20s | $0.001 |
-| URL extraction (5 URLs) | Extract API | 5-30s | $0.005 |
+| Task | Command | Expected Time |
+|------|---------|---------------|
+| Quick fact lookup / web search | `search` (`base`) | ~15-100s |
+| Heavier search | `search --model core` | ~1-5min |
+| Section background | `research --model base` | ~15-100s |
+| Comprehensive report | `research` (`core`, default) | ~1-5min |
+| URL / citation verification | `extract` | seconds |
+
+For raw Task API processor latency/cost (`base-fast` … `ultra8x-fast`), see [api_reference.md](api_reference.md).
 
 ---
 
@@ -452,5 +433,5 @@ result = researcher.research("How does the CRISPR-Cas9 gene editing mechanism wo
 
 - [API Reference](api_reference.md) - Complete API parameter reference
 - [Search Best Practices](search_best_practices.md) - Effective search queries
-- [Deep Research Guide](deep_research_guide.md) - Processor selection and output formats
+- [Deep Research Guide](deep_research_guide.md) - The `research` command, output formats, raw Task API
 - [Extraction Patterns](extraction_patterns.md) - URL content extraction

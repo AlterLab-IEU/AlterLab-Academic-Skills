@@ -148,6 +148,8 @@ Rationale:
 
 ## Combining Strength and Quality
 
+The `Grade 1A/1B/2A/...` codes below are the **ACCP/Guyatt (CHEST) notation**, not GRADE proper — GRADE reports recommendation strength and evidence certainty as two separate statements. The combined codes are kept here because oncology guidelines commonly use them; label them as ACCP-style when both axes are reported together.
+
 ### All Nine Possible Combinations
 
 | Evidence Quality | Strong For (↑↑) | Weak For (↑) | Strong Against (↓↓) | Weak Against (↓) |

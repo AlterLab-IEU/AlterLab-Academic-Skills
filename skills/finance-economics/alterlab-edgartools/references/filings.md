@@ -123,8 +123,9 @@ if tenk and tenk.financials:
 | 5 | Form5 | edgar.ownership |
 | DEF 14A | ProxyStatement | edgar.proxy |
 | 13F-HR | ThirteenF | edgar.holdings |
-| SC 13D/G | Schedule13 | edgar.ownership |
-| NPORT-P | NportFiling | edgar.nport |
+| SC 13D | Schedule13D | edgar.beneficial_ownership |
+| SC 13G | Schedule13G | edgar.beneficial_ownership |
+| NPORT-P | FundReport | edgar.funds.reports |
 | 144 | Form144 | edgar.ownership |
 
 ### Get XBRL Data

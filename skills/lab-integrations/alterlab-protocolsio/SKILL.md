@@ -1,6 +1,6 @@
 ---
 name: alterlab-protocolsio
-description: Manages scientific protocols through the protocols.io API — search, create, update, and publish protocols, manage steps and materials, handle discussions and comments, organize workspaces, and upload/manage files. Use when discovering, developing, or publishing protocols.io protocols, collaborating on protocol steps/materials, tracking experiments, or integrating protocols.io into lab documentation workflows. Part of the AlterLab Academic Skills suite.
+description: Manages scientific protocols through the protocols.io API v3 — search, create, update, and publish protocols (with DOI), manage steps and materials, handle protocol/step discussions and comments, organize team workspaces, and upload/manage workspace files. Use when discovering, developing, publishing, or citing protocols.io protocols, collaborating on protocol steps/materials, recording experiment runs, or integrating protocols.io into lab documentation. Not for general ELN entries/notebooks (use alterlab-benchling or alterlab-labarchive) or lab-instrument/liquid-handler control.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
 compatibility: Requires a protocols.io access token — a personal CLIENT_ACCESS_TOKEN for personal content or an OAUTH_ACCESS_TOKEN via the OAuth flow
@@ -152,8 +152,10 @@ Follow the guidance in the relevant reference files:
 
 All API requests use the base URL:
 ```
-https://api.protocols.io/v3
+https://www.protocols.io/api/v3
 ```
+
+The `www.` host is canonical. `https://protocols.io/api/v3` 301-redirects to it; the bare `api.protocols.io` host does not resolve — do not use it.
 
 All requests require the Authorization header:
 ```
@@ -161,6 +163,10 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
 Most endpoints support JSON request/response format with `Content-Type: application/json`.
+
+### Response and error signaling
+
+protocols.io returns its own status in a JSON `status_code` field, where `0` means success. It does **not** map errors cleanly onto HTTP status codes — e.g. a bad/missing token comes back as **HTTP 400** with body `{"error_message": "...", "status_code": 1218}`, not HTTP 401. Check the JSON `status_code` (and `error_message`), not just the HTTP code, when deciding whether a call succeeded.
 
 ## Content Format Options
 
@@ -259,7 +265,7 @@ headers = {"Authorization": f"Bearer {token}"}
 
 # Search for CRISPR protocols
 response = requests.get(
-    "https://api.protocols.io/v3/protocols",
+    "https://www.protocols.io/api/v3/protocols",
     headers=headers,
     params={
         "filter": "public",
@@ -293,7 +299,7 @@ data = {
 }
 
 response = requests.post(
-    "https://api.protocols.io/v3/protocols",
+    "https://www.protocols.io/api/v3/protocols",
     headers=headers,
     json=data
 )
@@ -320,7 +326,7 @@ with open("data.csv", "rb") as f:
     }
 
     response = requests.post(
-        "https://api.protocols.io/v3/workspaces/12345/files/upload",
+        "https://www.protocols.io/api/v3/workspaces/12345/files/upload",
         headers=headers,
         files=files,
         data=data

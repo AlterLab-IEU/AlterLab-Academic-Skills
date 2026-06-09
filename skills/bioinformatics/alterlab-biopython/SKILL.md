@@ -13,7 +13,9 @@ metadata:
 
 ## Overview
 
-Biopython is a comprehensive set of freely available Python tools for biological computation. It provides functionality for sequence manipulation, file I/O, database access, structural bioinformatics, phylogenetics, and many other bioinformatics tasks. The current version is **Biopython 1.85** (released January 2025), which supports Python 3 and requires NumPy.
+Biopython is a comprehensive set of freely available Python tools for biological computation. It provides functionality for sequence manipulation, file I/O, database access, structural bioinformatics, phylogenetics, and many other bioinformatics tasks. The current version is **Biopython 1.87**, which supports Python 3 and requires NumPy.
+
+> **Version note (1.78+):** The command-line application wrappers in `Bio.Blast.Applications` (`Ncbiblastn/p/x...Commandline`, `NcbimakeblastdbCommandline`) and `Bio.Align.Applications` (`ClustalOmegaCommandline`, `MuscleCommandline`) were deprecated in 1.78 and **removed** — they no longer import. Call BLAST+/aligner executables via `subprocess` instead (see `references/blast.md` and `references/alignment.md`). `Bio.pairwise2` is deprecated; use `Bio.Align.PairwiseAligner`.
 
 ## When to Use This Skill
 
@@ -46,10 +48,14 @@ Biopython is organized into modular sub-packages, each addressing specific bioin
 
 ## Installation and Setup
 
-Install Biopython using pip (requires Python 3 and NumPy):
+Install Biopython (requires Python 3 and NumPy). On this machine, prefer running scripts with `uv run`:
 
-```python
-uv pip install biopython
+```bash
+# Ad-hoc: run a script with Biopython available, no venv to manage
+uv run --with biopython script.py
+
+# Or add it to a project
+uv add biopython
 ```
 
 For NCBI database access, always set your email address (required by NCBI):

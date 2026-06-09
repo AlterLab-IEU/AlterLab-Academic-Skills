@@ -1,177 +1,147 @@
 #!/usr/bin/env python3
 """
-Example usage of the Research Lookup skill with automatic model selection.
+Example usage of the Research Lookup skill with automatic backend routing.
 
-This script demonstrates:
-1. Automatic model selection based on query complexity
-2. Manual model override options
+Demonstrates:
+1. Automatic backend selection (Parallel Chat API vs Perplexity academic search)
+2. Manual backend override via force_backend
 3. Batch query processing
-4. Integration with scientific writing workflows
+
+The router (ResearchLookup) sends academic-keyword queries to Perplexity
+sonar-pro-search and everything else to the Parallel Chat API (core model).
 """
 
 import os
 import sys
 
 # Import the main research lookup class from scripts/
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scripts'))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts"))
 from research_lookup import ResearchLookup
 
 
-def example_automatic_selection():
-    """Demonstrate automatic model selection."""
+def example_automatic_routing():
+    """Demonstrate automatic backend routing."""
     print("=" * 80)
-    print("EXAMPLE 1: Automatic Model Selection")
+    print("EXAMPLE 1: Automatic Backend Routing")
     print("=" * 80)
     print()
-    
+
     research = ResearchLookup()
-    
-    # Simple lookup - will use Sonar Pro Search
-    query1 = "Recent advances in CRISPR gene editing 2024"
+
+    # General/market query -> Parallel Chat API (core model)
+    query1 = "AI adoption in the healthcare industry: statistics and recent developments"
     print(f"Query: {query1}")
-    print(f"Expected model: Sonar Pro Search (fast lookup)")
+    print("Expected backend: parallel (general research)")
     result1 = research.lookup(query1)
-    print(f"Actual model: {result1.get('model')}")
+    print(f"Actual backend: {result1.get('backend')} | model: {result1.get('model')}")
     print()
-    
-    # Complex analysis - will use Sonar Reasoning Pro
-    query2 = "Compare and contrast the efficacy of mRNA vaccines versus traditional vaccines"
+
+    # Academic-keyword query -> Perplexity sonar-pro-search
+    query2 = "Find peer-reviewed papers on CRISPR off-target effects with DOIs"
     print(f"Query: {query2}")
-    print(f"Expected model: Sonar Reasoning Pro (analytical)")
+    print("Expected backend: perplexity (academic paper search)")
     result2 = research.lookup(query2)
-    print(f"Actual model: {result2.get('model')}")
+    print(f"Actual backend: {result2.get('backend')} | model: {result2.get('model')}")
     print()
 
 
 def example_manual_override():
-    """Demonstrate manual model override."""
+    """Demonstrate manual backend override via force_backend."""
     print("=" * 80)
-    print("EXAMPLE 2: Manual Model Override")
+    print("EXAMPLE 2: Manual Backend Override")
     print("=" * 80)
     print()
-    
-    # Force Sonar Pro Search for budget-constrained rapid lookup
-    research_pro = ResearchLookup(force_model='pro')
-    query = "Explain the mechanism of CRISPR-Cas9"
+
+    query = "Global renewable energy market trends and projections"
+
+    # Force Parallel even though no academic keywords are present (default would
+    # already pick parallel here, but force_backend pins it explicitly).
+    research_parallel = ResearchLookup(force_backend="parallel")
     print(f"Query: {query}")
-    print(f"Forced model: Sonar Pro Search")
-    result = research_pro.lookup(query)
-    print(f"Model used: {result.get('model')}")
+    print("Forced backend: parallel")
+    result = research_parallel.lookup(query)
+    print(f"Backend used: {result.get('backend')} | model: {result.get('model')}")
     print()
-    
-    # Force Sonar Reasoning Pro for critical analysis
-    research_reasoning = ResearchLookup(force_model='reasoning')
+
+    # Force Perplexity for the same query (overrides the non-academic heuristic).
+    research_perplexity = ResearchLookup(force_backend="perplexity")
     print(f"Query: {query}")
-    print(f"Forced model: Sonar Reasoning Pro")
-    result = research_reasoning.lookup(query)
-    print(f"Model used: {result.get('model')}")
+    print("Forced backend: perplexity")
+    result = research_perplexity.lookup(query)
+    print(f"Backend used: {result.get('backend')} | model: {result.get('model')}")
     print()
 
 
 def example_batch_queries():
-    """Demonstrate batch query processing."""
+    """Demonstrate batch query processing (mixed routing)."""
     print("=" * 80)
     print("EXAMPLE 3: Batch Query Processing")
     print("=" * 80)
     print()
-    
+
     research = ResearchLookup()
-    
-    # Mix of simple and complex queries
+
     queries = [
-        "Recent clinical trials for Alzheimer's disease",  # Sonar Pro Search
-        "Compare deep learning vs traditional ML in drug discovery",  # Sonar Reasoning Pro
-        "Statistical power analysis methods",  # Sonar Pro Search
+        "Recent clinical trials for Alzheimer's disease",          # -> parallel
+        "Find seminal papers on transformer attention mechanisms",  # -> perplexity
+        "Statistical power analysis methods overview",              # -> parallel
     ]
-    
-    print("Processing batch queries...")
-    print("Each query will automatically select the appropriate model")
+
+    print("Processing batch queries (each auto-routed)...")
     print()
-    
+
     results = research.batch_lookup(queries, delay=1.0)
-    
+
     for i, result in enumerate(results):
-        print(f"Query {i+1}: {result['query'][:50]}...")
-        print(f"  Model: {result.get('model')}")
-        print(f"  Type: {result.get('model_type')}")
+        print(f"Query {i + 1}: {result['query'][:50]}...")
+        print(f"  Backend: {result.get('backend')} | model: {result.get('model')}")
+        print(f"  Success: {result.get('success')}")
         print()
 
 
-def example_scientific_writing_workflow():
-    """Demonstrate integration with scientific writing workflow."""
+def example_routing_preview():
+    """Show backend routing decisions without making API calls."""
     print("=" * 80)
-    print("EXAMPLE 4: Scientific Writing Workflow")
+    print("ROUTING PREVIEW (No API calls required)")
     print("=" * 80)
     print()
-    
-    _research = ResearchLookup()    
-    # Literature review phase - use Pro for breadth
-    print("PHASE 1: Literature Review (Breadth)")
-    lit_queries = [
-        "Recent papers on machine learning in genomics 2024",
-        "Clinical applications of AI in radiology",
-        "RNA sequencing analysis methods"
+
+    # _select_backend reads availability from env; stub both keys so it routes
+    # purely on the query heuristic for this preview.
+    os.environ.setdefault("PARALLEL_API_KEY", "test")
+    os.environ.setdefault("OPENROUTER_API_KEY", "test")
+    research = ResearchLookup()
+
+    test_queries = [
+        ("Recent CRISPR studies", "parallel"),
+        ("Find papers on CRISPR off-target effects", "perplexity"),
+        ("Compare mRNA vs traditional vaccines", "parallel"),
+        ("Systematic review of immunotherapy in NSCLC", "perplexity"),
+        ("Global AI market size 2025", "parallel"),
+        ("Cite the original BERT paper", "perplexity"),
     ]
-    
-    for query in lit_queries:
-        print(f"  - {query}")
-        # These will automatically use Sonar Pro Search
-    print()
-    
-    # Discussion phase - use Reasoning Pro for synthesis
-    print("PHASE 2: Discussion (Synthesis & Analysis)")
-    discussion_queries = [
-        "Compare the advantages and limitations of different ML approaches in genomics",
-        "Explain the relationship between model interpretability and clinical adoption",
-        "Analyze the ethical implications of AI in medical diagnosis"
-    ]
-    
-    for query in discussion_queries:
-        print(f"  - {query}")
-        # These will automatically use Sonar Reasoning Pro
+
+    for query, expected in test_queries:
+        backend = research._select_backend(query)
+        status = "OK " if backend == expected else "XX "
+        print(f"{status} {backend:11s} <- '{query}'")
     print()
 
 
 def main():
-    """Run all examples (requires OPENROUTER_API_KEY to be set)."""
-    
-    if not os.getenv("OPENROUTER_API_KEY"):
-        print("Note: Set OPENROUTER_API_KEY environment variable to run live queries")
-        print("These examples show the structure without making actual API calls")
+    """Run the routing preview; live examples require API keys."""
+    if not (os.getenv("PARALLEL_API_KEY") or os.getenv("OPENROUTER_API_KEY")):
+        print("Note: set PARALLEL_API_KEY and/or OPENROUTER_API_KEY to run live queries.")
+        print("Showing routing decisions only (no API calls).")
         print()
-    
-    # Uncomment to run examples (requires API key)
-    # example_automatic_selection()
+
+    example_routing_preview()
+
+    # Uncomment to run live examples (requires API keys):
+    # example_automatic_routing()
     # example_manual_override()
     # example_batch_queries()
-    # example_scientific_writing_workflow()
-    
-    # Show complexity assessment without API calls
-    print("=" * 80)
-    print("COMPLEXITY ASSESSMENT EXAMPLES (No API calls required)")
-    print("=" * 80)
-    print()
-    
-    os.environ.setdefault("OPENROUTER_API_KEY", "test")
-    research = ResearchLookup()
-    
-    test_queries = [
-        ("Recent CRISPR studies", "pro"),
-        ("Compare CRISPR vs TALENs", "reasoning"),
-        ("Explain how CRISPR works", "reasoning"),
-        ("Western blot protocol", "pro"),
-        ("Pros and cons of different sequencing methods", "reasoning"),
-    ]
-    
-    for query, expected in test_queries:
-        complexity = research._assess_query_complexity(query)
-        model_name = "Sonar Reasoning Pro" if complexity == "reasoning" else "Sonar Pro Search"
-        status = "✓" if complexity == expected else "✗"
-        print(f"{status} '{query}'")
-        print(f"  → {model_name}")
-        print()
 
 
 if __name__ == "__main__":
     main()
-

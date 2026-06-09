@@ -140,7 +140,7 @@ print(f"Overdispersion: {overdispersion:.2f}")
 
 if overdispersion > 1.5:
     # Use Negative Binomial instead
-    from statsmodels.discrete.count_model import NegativeBinomial
+    from statsmodels.discrete.discrete_model import NegativeBinomial
     nb_model = NegativeBinomial(y_counts, X)
     nb_results = nb_model.fit()
     print(nb_results.summary())

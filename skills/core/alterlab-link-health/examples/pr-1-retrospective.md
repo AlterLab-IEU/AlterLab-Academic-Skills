@@ -4,8 +4,7 @@ The source audit that generated this skill. Real numbers, real commits, one real
 
 - **Repo**: `AlterLab-IEU/AlterLab-Academic-Skills`
 - **PR**: [#1 fix(ci): harden link-check workflow and repair broken refs (link-health audit)](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/pull/1)
-- **Audit started**: 2026-04-21 09:10
-- **Merged**: 2026-04-21 08:03 UTC, squash commit `93a72fe`
+- **Audit + merge**: 2026-04-21, squash commit `93a72fe`
 - **Branch**: `fix/link-health-audit` (deleted on merge)
 
 ## Before / after

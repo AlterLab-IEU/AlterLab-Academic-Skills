@@ -34,7 +34,7 @@
     {
       "id": "custom-tissue-mask-artifacts",
       "prompt": "My slides have a lot of pen marks and small debris that keep getting picked up as tissue. How can I build a stricter tissue mask that removes those artifacts before I extract tiles?",
-      "expected_output": "Invokes alterlab-histolab: builds a Compose filter pipeline (RgbToGrayscale, OtsuThreshold, BinaryDilation, RemoveSmallHoles, RemoveSmallObjects with larger thresholds), passes it as TissueMask(filters=...), visualizes with locate_mask, then extracts with that extraction_mask.",
+      "expected_output": "Invokes alterlab-histolab: builds a stricter tissue-detection filter chain (RgbToGrayscale, OtsuThreshold, BinaryDilation, RemoveSmallHoles, RemoveSmallObjects with larger area thresholds) and passes those filters to TissueMask as positional varargs (TissueMask(RgbToGrayscale(), OtsuThreshold(), ...)), visualizes with locate_mask, then extracts passing that mask as extract(slide, extraction_mask=...).",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "TissueMask" },

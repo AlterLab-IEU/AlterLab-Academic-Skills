@@ -35,7 +35,7 @@ Set up API access credentials and regional endpoints for LabArchives API integra
 **Prerequisites:**
 - Enterprise LabArchives license with API access enabled
 - API access key ID and password from LabArchives administrator
-- User authentication credentials (email and external applications password)
+- User authentication credentials: email plus the **LA App authentication** password token (LabArchives → click your name, top-right → "LA App authentication"). This token is the `password` passed to `user_access_info`; it is not your normal login password.
 
 **Configuration setup:**
 
@@ -125,6 +125,8 @@ For comprehensive API method documentation, refer to `references/api_reference.m
 ### 4. Entry and Attachment Management
 
 Create, modify, and manage notebook entries and file attachments.
+
+> **Wrapper limitation (verified):** `labarchivespy.client.Client.make_call` is GET-only — it builds an HMAC-signed query URL (`akid` + method + `expires` → `sig`) and calls `requests.get`. It cannot POST bodies or multipart files. The wrapper's README only exercises `users/user_access_info`, `users/user_info_via_id`, `utilities/institutional_login_urls`, and `notebooks/notebook_backup`; those are confirmed working. Write operations (create entry, comment, attachment upload) are **not** provided by the wrapper and must be issued as your own signed requests — the bundled scripts use raw `requests.post` for uploads and you must replicate the `akid`/`expires`/`sig` signing the wrapper does internally. Treat the `entries/*` and `site_reports/*` method names below as the documented API surface to confirm against your institution's API docs, not as wrapper helpers.
 
 **Entry operations:**
 - Create new entries in notebooks
@@ -220,15 +222,13 @@ python3 scripts/notebook_operations.py backup-all --email user@example.edu --pas
 
 ## Python Package Installation
 
-Install the `labarchives-py` wrapper for simplified API access:
+The `labarchives-py` wrapper (provides the `labarchivespy` import) is git-only — there is no PyPI release, so pin to a commit if you need reproducibility:
 
 ```bash
-git clone https://github.com/mcmero/labarchives-py
-cd labarchives-py
-uv pip install .
+uv pip install "git+https://github.com/mcmero/labarchives-py"
 ```
 
-Alternatively, use direct HTTP requests via Python's `requests` library for custom implementations.
+The wrapper handles request signing and the authenticated GET calls (`user_access_info`, `user_info_via_id`, `notebook_backup`). For anything it does not cover (entry/comment creation, attachment upload), issue your own `requests` calls with the same `akid`/`expires`/`sig` signing.
 
 ## Best Practices
 

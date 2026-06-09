@@ -43,19 +43,21 @@ To determine if a dependency is cancer-selective:
 import pandas as pd
 import numpy as np
 
-def compute_selectivity(gene_effect_df, target_gene, cancer_lineage):
-    """Compute selectivity score for a cancer lineage."""
+def compute_selectivity(gene_effect_df, cell_info, target_gene, cancer_lineage,
+                        id_col="ModelID", lineage_col="OncotreeLineage"):
+    """Compute selectivity score for a cancer lineage.
+
+    cell_info: metadata DataFrame (Model.csv). On older releases use
+    id_col="DepMap_ID", lineage_col="lineage".
+    """
     scores = gene_effect_df[target_gene].dropna()
 
-    # Get cell line metadata
-    from depmap_utils import load_cell_line_info
-    cell_info = load_cell_line_info()
     scores_df = scores.reset_index()
-    scores_df.columns = ["DepMap_ID", "score"]
-    scores_df = scores_df.merge(cell_info[["DepMap_ID", "lineage"]])
+    scores_df.columns = [id_col, "score"]
+    scores_df = scores_df.merge(cell_info[[id_col, lineage_col]])
 
-    cancer_scores = scores_df[scores_df["lineage"] == cancer_lineage]["score"]
-    other_scores = scores_df[scores_df["lineage"] != cancer_lineage]["score"]
+    cancer_scores = scores_df[scores_df[lineage_col] == cancer_lineage]["score"]
+    other_scores = scores_df[scores_df[lineage_col] != cancer_lineage]["score"]
 
     # Selectivity: lower mean in cancer lineage vs others
     selectivity = other_scores.mean() - cancer_scores.mean()
@@ -88,22 +90,12 @@ Good screens: skewness < −1, AUC > 0.85
 
 ## Cancer Lineage Codes
 
-Common values for `lineage` field in `sample_info.csv`:
-
-| Lineage | Description |
-|---------|-------------|
-| `lung` | Lung cancer |
-| `breast` | Breast cancer |
-| `colorectal` | Colorectal cancer |
-| `brain_cancer` | Brain cancer (GBM, etc.) |
-| `leukemia` | Leukemia |
-| `lymphoma` | Lymphoma |
-| `prostate` | Prostate cancer |
-| `ovarian` | Ovarian cancer |
-| `pancreatic` | Pancreatic cancer |
-| `skin` | Melanoma and other skin |
-| `liver` | Liver cancer |
-| `kidney` | Kidney cancer |
+Current releases annotate lineage in `Model.csv` via `OncotreeLineage` (title-case
+Oncotree terms, e.g. `Lung`, `Breast`, `Bowel`, `Skin`, `Myeloid`, `Lymphoid`).
+Older releases used a lowercase `lineage` column in `sample_info.csv` (e.g. `lung`,
+`breast`, `colorectal`, `leukemia`). The vocabulary and exact spellings differ
+between releases — always pull the unique values from the file you downloaded
+(`cell_info[lineage_col].unique()`) rather than hard-coding labels.
 
 ## Synthetic Lethality Analysis
 

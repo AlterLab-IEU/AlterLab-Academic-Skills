@@ -41,10 +41,11 @@ metadata = {
     'protocolName': 'My Protocol',
     'author': 'Name <email@example.com>',
     'description': 'Protocol description',
-    'apiLevel': '2.19'  # Use latest available API version
+    'apiLevel': '2.19'  # Pin to a level your robot's app/firmware accepts
 }
 
-# Requirements (optional)
+# Requirements (optional). When present, apiLevel here takes precedence over the
+# value in metadata, and robotType is required for Flex.
 requirements = {
     'robotType': 'Flex',  # or 'OT-2'
     'apiLevel': '2.19'
@@ -71,14 +72,15 @@ def run(protocol: protocol_api.ProtocolContext):
 def run(protocol: protocol_api.ProtocolContext):
     # Load pipette on specific mount
     left_pipette = protocol.load_instrument(
-        'p1000_single_flex',  # Instrument name
-        'left',               # Mount: 'left' or 'right'
-        tip_racks=[tip_rack]  # List of tip rack labware objects
+        'flex_1channel_1000',  # Instrument name (Flex convention)
+        'left',                # Mount: 'left' or 'right'
+        tip_racks=[tip_rack]   # List of tip rack labware objects
     )
 ```
 
-Common pipette names:
-- Flex: `p50_single_flex`, `p1000_single_flex`, `p50_multi_flex`, `p1000_multi_flex`
+Common pipette load names (these are the exact `instrument_name` strings — do NOT invent
+`p1000_single_flex`-style names; Flex uses the `flex_<channels>_<volume>` convention):
+- Flex: `flex_1channel_50`, `flex_1channel_1000`, `flex_8channel_50`, `flex_8channel_1000`, `flex_96channel_1000`
 - OT-2: `p20_single_gen2`, `p300_single_gen2`, `p1000_single_gen2`, `p20_multi_gen2`, `p300_multi_gen2`
 
 **Loading Labware:**
@@ -102,21 +104,27 @@ tips = adapter.load_labware('opentrons_flex_96_tiprack_200ul')
 **Loading Modules:**
 
 ```python
-# Temperature module
+# Temperature module (Flex + OT-2)
 temp_module = protocol.load_module('temperature module gen2', 'D3')
 temp_plate = temp_module.load_labware('corning_96_wellplate_360ul_flat')
 
-# Magnetic module
-mag_module = protocol.load_module('magnetic module gen2', 'C2')
-mag_plate = mag_module.load_labware('nest_96_wellplate_100ul_pcr_full_skirt')
-
-# Heater-Shaker module
+# Heater-Shaker module (Flex + OT-2)
 hs_module = protocol.load_module('heaterShakerModuleV1', 'D1')
 hs_plate = hs_module.load_labware('corning_96_wellplate_360ul_flat')
 
 # Thermocycler module (takes up specific slots automatically)
 tc_module = protocol.load_module('thermocyclerModuleV2')
 tc_plate = tc_module.load_labware('nest_96_wellplate_100ul_pcr_full_skirt')
+
+# Magnetic Module (OT-2 ONLY) — an active, motorized module. Flex does not
+# support it; on Flex use the unpowered Magnetic Block instead (see below).
+mag_module = protocol.load_module('magnetic module gen2', '1')  # OT-2 numeric slot
+mag_plate = mag_module.load_labware('nest_96_wellplate_100ul_pcr_full_skirt')
+
+# Magnetic Block (Flex ONLY) — unpowered; labware is moved on/off it with the
+# Gripper. There is no engage/disengage; it has no motors.
+mag_block = protocol.load_module('magneticBlockV1', 'C2')
+block_plate = mag_block.load_labware('nest_96_wellplate_100ul_pcr_full_skirt')
 ```
 
 ### 3. Liquid Handling Operations
@@ -265,7 +273,11 @@ current_temp = temp_module.temperature  # Current temperature
 target_temp = temp_module.target  # Target temperature
 ```
 
-**Magnetic Module:**
+**Magnetic Module (OT-2 only):**
+
+The active Magnetic Module exists only on the OT-2. On the Flex, use the unpowered
+Magnetic Block (`magneticBlockV1`), which has no `engage`/`disengage` — labware is moved
+on and off it with the Gripper.
 
 ```python
 # Engage (raise magnets)
@@ -340,14 +352,19 @@ tc_module.deactivate_lid()
 tc_module.deactivate_block()
 ```
 
-**Absorbance Plate Reader:**
+**Absorbance Plate Reader (Flex):**
 
 ```python
-# Initialize and read
-result = plate_reader.read(wavelengths=[450, 650])
+# Load (lid must be closed to initialize, open to load/read labware)
+plate_reader = protocol.load_module('absorbanceReaderV1', 'D3')
 
-# Access readings
-absorbance_data = result  # Dict with wavelength keys
+# Initialize: wavelengths are set here, NOT on read()
+plate_reader.close_lid()
+plate_reader.initialize('multi', [450, 650])  # 'single' or 'multi'
+plate_reader.open_lid()
+
+# Read the loaded plate (returns a dict keyed by wavelength)
+result = plate_reader.read()
 ```
 
 ### 6. Liquid Tracking and Labeling
@@ -480,7 +497,7 @@ def run(protocol: protocol_api.ProtocolContext):
     dest = protocol.load_labware('corning_96_wellplate_360ul_flat', 'D2')
 
     # Load pipette
-    p1000 = protocol.load_instrument('p1000_single_flex', 'left', tip_racks=[tips])
+    p1000 = protocol.load_instrument('flex_1channel_1000', 'left', tip_racks=[tips])
 
     # Transfer from all wells in source to dest
     p1000.transfer(
@@ -544,7 +561,7 @@ def run(protocol: protocol_api.ProtocolContext):
 
 ## Best Practices
 
-1. **Always specify API level**: Use the latest stable API version in metadata
+1. **Always specify API level**: Pin a stable `apiLevel` your robot's app/firmware supports (run `opentrons_simulate` to confirm); do not blindly use a number higher than the robot accepts
 2. **Use meaningful labels**: Label labware for easier identification in logs
 3. **Check tip availability**: Ensure sufficient tips for protocol completion
 4. **Add comments**: Use `protocol.comment()` for debugging and logging

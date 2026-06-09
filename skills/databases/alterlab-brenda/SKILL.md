@@ -59,7 +59,9 @@ from scripts.brenda_queries import parse_km_entry
 km_data = get_km_values("1.1.1.1", organism="Saccharomyces cerevisiae")
 for entry in km_data:
     parsed = parse_km_entry(entry)
-    print(parsed["organism"], parsed["substrate"], parsed["km_value"])
+    # parse_km_entry keys mirror the raw BRENDA fields: 'kmValue' (string)
+    # plus a derived 'km_value_numeric' (float). There is no 'km_value' key.
+    print(parsed.get("organism"), parsed.get("substrate"), parsed.get("km_value_numeric"))
 ```
 
 EC numbers must be fully qualified (e.g. `1.1.1.1`, not `1.1.1`). Wildcards (`*`) broaden

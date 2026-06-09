@@ -14,7 +14,7 @@ import urllib.request
 from typing import Optional, Dict, Any, List
 
 
-DATASETS_API_BASE = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene"
+DATASETS_API_BASE = "https://api.ncbi.nlm.nih.gov/datasets/v2/gene"
 
 
 def get_taxon_id(taxon_name: str) -> Optional[str]:
@@ -126,6 +126,9 @@ def fetch_multiple_genes(gene_ids: List[str], api_key: Optional[str] = None) -> 
     """
     Fetch data for multiple genes by ID.
 
+    The Datasets v2 API accepts comma-separated Gene IDs on the GET
+    /gene/id/{ids} path (there is no POST /gene/id body endpoint).
+
     Args:
         gene_ids: List of Gene IDs
         api_key: Optional NCBI API key
@@ -133,17 +136,14 @@ def fetch_multiple_genes(gene_ids: List[str], api_key: Optional[str] = None) -> 
     Returns:
         Combined gene data as dictionary
     """
-    # For multiple genes, use POST request
-    url = f"{DATASETS_API_BASE}/id"
+    url = f"{DATASETS_API_BASE}/id/{','.join(gene_ids)}"
 
-    data = json.dumps({"gene_ids": gene_ids}).encode('utf-8')
-    headers = {'Content-Type': 'application/json'}
-
+    headers = {}
     if api_key:
         headers['api-key'] = api_key
 
     try:
-        req = urllib.request.Request(url, data=data, headers=headers, method='POST')
+        req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req) as response:
             return json.loads(response.read().decode())
     except urllib.error.HTTPError as e:
@@ -158,57 +158,92 @@ def display_gene_info(data: Dict[str, Any], verbose: bool = False) -> None:
     """
     Display gene information in human-readable format.
 
+    Parses the Datasets v2 response, which wraps each gene under
+    ``reports[].gene`` (NOT a top-level ``genes`` list).
+
     Args:
         data: Gene data dictionary from API
         verbose: Show detailed information
     """
-    if 'genes' not in data:
+    reports = data.get('reports')
+    if not reports:
         print("No gene data found in response")
         return
 
-    for gene in data['genes']:
-        gene_info = gene.get('gene', {})
+    for report in reports:
+        gene_info = report.get('gene', {})
 
         print(f"Gene ID: {gene_info.get('gene_id', 'N/A')}")
         print(f"Symbol: {gene_info.get('symbol', 'N/A')}")
         print(f"Description: {gene_info.get('description', 'N/A')}")
 
-        if 'tax_name' in gene_info:
-            print(f"Organism: {gene_info['tax_name']}")
+        # Organism (v2 uses tax_id / taxname / common_name)
+        if 'taxname' in gene_info:
+            print(f"Organism: {gene_info['taxname']}")
 
-        if 'chromosomes' in gene_info:
-            chromosomes = ', '.join(gene_info['chromosomes'])
-            print(f"Chromosome(s): {chromosomes}")
+        if gene_info.get('chromosomes'):
+            print(f"Chromosome(s): {', '.join(gene_info['chromosomes'])}")
+
+        # Cytogenetic map location
+        for loc in gene_info.get('map_locations', []):
+            if loc.get('map_type') == 'Cytogenetic':
+                print(f"Map Location: {loc.get('map_value', 'N/A')}")
+                break
 
         # Nomenclature
         if 'nomenclature_authority' in gene_info:
             auth = gene_info['nomenclature_authority']
-            print(f"Nomenclature: {auth.get('authority', 'N/A')}")
+            print(f"Nomenclature: {auth.get('authority', 'N/A')} "
+                  f"({auth.get('identifier', 'N/A')})")
 
         # Synonyms
-        if 'synonyms' in gene_info and gene_info['synonyms']:
+        if gene_info.get('synonyms'):
             print(f"Synonyms: {', '.join(gene_info['synonyms'])}")
 
         if verbose:
-            # Gene type
             if 'type' in gene_info:
                 print(f"Type: {gene_info['type']}")
 
-            # Genomic locations
-            if 'genomic_ranges' in gene_info:
-                print("\nGenomic Locations:")
-                for range_info in gene_info['genomic_ranges']:
-                    accession = range_info.get('accession_version', 'N/A')
-                    start = range_info.get('range', [{}])[0].get('begin', 'N/A')
-                    end = range_info.get('range', [{}])[0].get('end', 'N/A')
-                    strand = range_info.get('orientation', 'N/A')
-                    print(f"  {accession}: {start}-{end} ({strand})")
+            print(f"Transcripts: {gene_info.get('transcript_count', 'N/A')}, "
+                  f"Proteins: {gene_info.get('protein_count', 'N/A')} "
+                  f"(use the product_report endpoint for RefSeq accessions)")
 
-            # Transcripts
-            if 'transcripts' in gene_info:
-                print(f"\nTranscripts: {len(gene_info['transcripts'])}")
-                for transcript in gene_info['transcripts'][:5]:  # Show first 5
-                    print(f"  {transcript.get('accession_version', 'N/A')}")
+            if gene_info.get('swiss_prot_accessions'):
+                print(f"UniProt/Swiss-Prot: "
+                      f"{', '.join(gene_info['swiss_prot_accessions'])}")
+
+            if gene_info.get('ensembl_gene_ids'):
+                print(f"Ensembl: {', '.join(gene_info['ensembl_gene_ids'])}")
+
+            # Genomic locations: annotations[].genomic_locations[].genomic_range
+            locations = []
+            for ann in gene_info.get('annotations', []):
+                assembly = ann.get('assembly_name', 'N/A')
+                for gl in ann.get('genomic_locations', []):
+                    accession = gl.get('genomic_accession_version', 'N/A')
+                    rng = gl.get('genomic_range', {})
+                    locations.append(
+                        f"  {assembly} {accession}: "
+                        f"{rng.get('begin', 'N/A')}-{rng.get('end', 'N/A')} "
+                        f"({rng.get('orientation', 'N/A')})"
+                    )
+            if locations:
+                print("\nGenomic Locations:")
+                print('\n'.join(locations))
+
+            # Gene Ontology terms
+            go = gene_info.get('gene_ontology') or {}
+            go_lines = []
+            for category in ('molecular_functions', 'biological_processes',
+                             'cellular_components'):
+                for term in (go.get(category) or [])[:5]:
+                    go_lines.append(
+                        f"  [{category.split('_')[0]}] "
+                        f"{term.get('go_id', '')} {term.get('name', '')}".rstrip()
+                    )
+            if go_lines:
+                print("\nGene Ontology (first few per category):")
+                print('\n'.join(go_lines))
 
         print()
 

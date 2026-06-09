@@ -1,6 +1,21 @@
 # API Reference
 
-Quick reference for the bundled helper functions in `scripts/neuropixels_pipeline.py`, organized by module. These ship as local scripts (there is no installable `neuropixels_analysis` package); import them with `from scripts.neuropixels_pipeline import ...`. Note: the actually-bundled functions are `load_recording`, `preprocess`, `check_drift`, `correct_motion`, `run_spike_sorting`, `postprocess`, `curate_units`, `export_results`, and `run_pipeline`. Any function listed below that is not in that set is illustrative only and not provided by the bundled scripts — use the equivalent SpikeInterface call instead.
+> **READ THIS FIRST.** Only **nine** functions are actually bundled, all in
+> `scripts/neuropixels_pipeline.py` and imported as plain functions (there is **no**
+> `npa` module and **no** installable `neuropixels_analysis` package):
+> `load_recording`, `preprocess`, `check_drift`, `correct_motion`,
+> `run_spike_sorting`, `postprocess`, `curate_units`, `export_results`, `run_pipeline`.
+> Their real signatures are in the source file — trust that over the sketches below.
+>
+> Everything documented with an `npa.` prefix (e.g. `npa.estimate_motion`,
+> `npa.compare_sorters`, `npa.CurationSession`, `npa.analyze_unit_visually`,
+> `npa.plot_*`) is **illustrative pseudocode, NOT a real API** — the signatures shown
+> are approximate and several have no bundled equivalent at all. Use the corresponding
+> SpikeInterface call (`si.*` / `sw.*`) instead, or build it yourself. Do not import or
+> call `npa.*` as written.
+
+Quick reference, organized by capability. Import the real helpers with
+`from scripts.neuropixels_pipeline import load_recording, preprocess, ...`.
 
 ## Core Module
 

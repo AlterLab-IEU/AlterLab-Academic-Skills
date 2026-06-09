@@ -4,15 +4,15 @@
 
 | Type | Description | Example |
 |------|-------------|---------|
-| `family` | Group of related proteins sharing common evolutionary origin | IPR013872: p53 family |
-| `domain` | Distinct structural/functional unit that can exist independently | IPR011615: p53 tetramerisation domain |
-| `homologous_superfamily` | Proteins related by structure but not necessarily sequence | IPR009003: Peptidase, aspartic |
-| `repeat` | Short sequence unit that occurs in multiple copies | IPR000822: Ankyrin repeat |
-| `site` | Residues important for function | IPR018060: Metalloprotease active site |
-| `conserved_site` | Conserved sequence motif (functional) | IPR016152: PTB/PI domain binding site |
-| `active_site` | Catalytic residues | IPR000743: RING domain |
-| `binding_site` | Residues involved in binding | — |
-| `ptm` | Post-translational modification site | — |
+| `family` | Group of related proteins sharing common evolutionary origin | IPR002117: p53 tumour suppressor family |
+| `domain` | Distinct structural/functional unit that can exist independently | IPR010991: p53, tetramerisation domain |
+| `homologous_superfamily` | Proteins related by structure but not necessarily sequence | IPR009003: Peptidase S1, PA clan |
+| `repeat` | Short sequence unit that occurs in multiple copies | IPR002110: Ankyrin repeat |
+| `site` | Parent category for the functional-site types below | (see subtypes) |
+| `conserved_site` | Conserved sequence motif (functional) | IPR000047: Helix-turn-helix motif |
+| `active_site` | Catalytic residues | IPR000169: Cysteine peptidase, cysteine active site |
+| `binding_site` | Residues involved in binding | IPR000048: IQ motif, EF-hand binding site |
+| `ptm` | Post-translational modification site | IPR000152: EGF-type aspartate/asparagine hydroxylation site |
 
 ## Common Domain Accessions
 
@@ -33,12 +33,12 @@
 
 | Accession | Name | Function |
 |-----------|------|---------|
-| IPR013087 | Zinc finger, C2H2 | DNA binding |
-| IPR017456 | CCCH zinc finger | RNA binding |
-| IPR011991 | Winged helix-turn-helix | Transcription factor DNA binding |
-| IPR011607 | MH1 domain | SMAD DNA binding |
-| IPR003313 | ARID domain | AT-rich DNA binding |
-| IPR014756 | E1-E2 ATPase, nucleotide-binding | — |
+| IPR013087 | Zinc finger C2H2-type | DNA binding |
+| IPR000571 | Zinc finger, CCCH-type | RNA binding |
+| IPR036388 | Winged helix-like DNA-binding domain superfamily | Transcription factor DNA binding |
+| IPR036578 | SMAD MH1 domain superfamily | SMAD DNA binding |
+| IPR001606 | ARID DNA-binding domain | AT-rich DNA binding |
+| IPR000679 | Zinc finger, GATA-type | DNA binding (GATA TFs) |
 
 ### Structural Domains
 
@@ -127,20 +127,21 @@ For protein sequences not in UniProt (novel/predicted sequences), run InterProSc
 ### Human Disease-Relevant Domains
 
 ```python
+# Names/types verified against the InterPro entry endpoint.
 DISEASE_DOMAINS = {
     # Cancer
-    "IPR011615": "p53 tetramerization",
-    "IPR012346": "p53/p63/p73, tetramerization domain",
+    "IPR011615": "p53, DNA-binding domain",
+    "IPR012346": "p53/RUNT-type transcription factor, DNA-binding domain superfamily",
     "IPR000719": "Protein kinase domain",
-    "IPR004827": "Basic-leucine zipper (bZIP) TF",
+    "IPR004827": "Basic-leucine zipper domain",
 
     # Neurodegenerative
-    "IPR003527": "MAP kinase, ERK1/2",
-    "IPR016024": "ARM-type fold",
+    "IPR003527": "Mitogen-activated protein (MAP) kinase, conserved site",
+    "IPR016024": "Armadillo-type fold",
 
     # Metabolic
-    "IPR001764": "Glycoside hydrolase, family 13 (amylase)",
-    "IPR006047": "Glycoside hydrolase superfamily",
+    "IPR001764": "Glycoside hydrolase, family 3, N-terminal",
+    "IPR006047": "Glycosyl hydrolase family 13, catalytic domain",
 }
 ```
 
@@ -152,8 +153,8 @@ DISEASE_DOMAINS = {
 | PF00076 | RRM_1 (RNA recognition motif) |
 | PF00096 | zf-C2H2 (zinc finger) |
 | PF00397 | WW domain |
-| PF00400 | WD40 repeat |
-| PF00415 | RasGEF domain |
-| PF00018 | SH3 domain |
+| PF00400 | WD40 repeat (WD domain, G-beta repeat) |
+| PF00415 | RCC1 repeat (regulator of chromosome condensation) |
+| PF00018 | SH3 domain (SH3_1) |
 | PF00017 | SH2 domain |
-| PF02196 | zf-C3HC4 (RING finger) |
+| PF00097 | zf-C3HC4 (RING finger) |

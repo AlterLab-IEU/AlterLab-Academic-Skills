@@ -48,7 +48,7 @@ compound = pcp.get_compounds('caffeine', 'name')[0]
 molecular_formula = compound.molecular_formula
 molecular_weight = compound.molecular_weight
 iupac_name = compound.iupac_name
-smiles = compound.canonical_smiles
+smiles = compound.smiles  # full SMILES (was canonical_smiles, now deprecated)
 inchi = compound.inchi
 xlogp = compound.xlogp  # Partition coefficient
 tpsa = compound.tpsa    # Topological polar surface area
@@ -57,7 +57,7 @@ tpsa = compound.tpsa    # Topological polar surface area
 **Get Specific Properties**:
 ```python
 properties = pcp.get_properties(
-    ['MolecularFormula', 'MolecularWeight', 'CanonicalSMILES', 'XLogP'],
+    ['MolecularFormula', 'MolecularWeight', 'SMILES', 'XLogP'],
     'aspirin',
     'name'
 )
@@ -82,10 +82,11 @@ for name in compound_names:
 df = pd.DataFrame(all_properties)
 ```
 
-**Available Properties**: MolecularFormula, MolecularWeight, CanonicalSMILES, IsomericSMILES,
+**Available Properties**: MolecularFormula, MolecularWeight, SMILES, ConnectivitySMILES,
 InChI, InChIKey, IUPACName, XLogP, TPSA, HBondDonorCount, HBondAcceptorCount,
 RotatableBondCount, Complexity, Charge, and many more (see `api_reference.md` for the
-complete list).
+complete list). Note: `CanonicalSMILES`/`IsomericSMILES` were deprecated in 2025 in favor of
+`ConnectivitySMILES`/`SMILES`.
 
 ## 3. Similarity Search
 
@@ -96,7 +97,7 @@ import pubchempy as pcp
 
 # Start with a query compound
 query_compound = pcp.get_compounds('gefitinib', 'name')[0]
-query_smiles = query_compound.canonical_smiles
+query_smiles = query_compound.smiles
 
 # Perform similarity search
 similar_compounds = pcp.get_compounds(
@@ -152,7 +153,7 @@ import pubchempy as pcp
 compound = pcp.get_compounds('aspirin', 'name')[0]
 
 # Convert to different formats
-smiles = compound.canonical_smiles
+smiles = compound.smiles
 inchi = compound.inchi
 inchikey = compound.inchikey
 cid = compound.cid

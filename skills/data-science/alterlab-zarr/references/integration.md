@@ -90,38 +90,36 @@ ds.to_zarr('climate_data.zarr')
 - Integration with pandas for time series
 - NetCDF-like interface familiar to climate/geospatial scientists
 
-## Parallel Computing and Synchronization
+## Parallel Computing and Concurrency
 
-### Thread-Safe Operations
+Zarr v3 removed the explicit `synchronizer` objects (`ThreadSynchronizer` /
+`ProcessSynchronizer`) and the `synchronizer=` argument that existed in Zarr v2. The v3 model
+is simpler:
 
-```python
-from zarr import ThreadSynchronizer
-import zarr
-
-# For multi-threaded writes
-synchronizer = ThreadSynchronizer()
-z = zarr.open_array('data.zarr', mode='r+', shape=(10000, 10000),
-                    chunks=(1000, 1000), synchronizer=synchronizer)
-
-# Safe for concurrent writes from multiple threads
-# (when writes don't span chunk boundaries)
-```
-
-### Process-Safe Operations
+- **Concurrent reads** are always safe and need no coordination.
+- **Within one process**, reads and writes are thread-safe.
+- **Across processes**, concurrent writes are safe *only when each process writes to a disjoint
+  set of chunks* (and the store backend supports atomic per-key writes). Overlapping writes to
+  the *same* chunk from multiple processes still require external coordination — design the
+  workload so writers own non-overlapping chunk-aligned regions instead.
 
 ```python
-from zarr import ProcessSynchronizer
 import zarr
 
-# For multi-process writes
-synchronizer = ProcessSynchronizer('sync_data.sync')
-z = zarr.open_array('data.zarr', mode='r+', shape=(10000, 10000),
-                    chunks=(1000, 1000), synchronizer=synchronizer)
+# Tune Zarr's internal I/O concurrency (defaults: async.concurrency=10).
+# Lower these when pairing with Dask so dask_threads * async.concurrency
+# doesn't overwhelm the storage backend.
+zarr.config.set({
+    "async.concurrency": 4,
+    "threading.max_workers": 4,
+})
 
-# Safe for concurrent writes from multiple processes
+# Multiple workers writing to chunk-aligned, non-overlapping regions is safe
+# without any synchronizer:
+z = zarr.open_array('data.zarr', mode='r+')   # chunks e.g. (1000, 1000)
+# worker A: z[0:1000, :] = block_a
+# worker B: z[1000:2000, :] = block_b
 ```
 
-**Note**:
-- Concurrent reads require no synchronization
-- Synchronization only needed for writes that may span chunk boundaries
-- Each process/thread writing to separate chunks needs no synchronization
+For distributed/out-of-core writes, prefer Dask's `da.to_zarr`, which schedules
+non-overlapping chunk writes for you.

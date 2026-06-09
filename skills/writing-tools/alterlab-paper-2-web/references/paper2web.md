@@ -41,8 +41,9 @@ python pipeline_all.py \
 
 - `--input-dir`: Directory containing paper files (PDF or LaTeX)
 - `--output-dir`: Directory for generated website files
-- `--model-choice`: LLM model selection (1=GPT-4, 2=GPT-4.1)
-- `--enable-logo-search`: Use Google Search API to find institution logos (optional)
+- `--model-choice 1`: Select the website (Paper2Web) component (2=poster, 3=PR materials; omit to run all)
+
+Logo discovery uses the optional `GOOGLE_SEARCH_API_KEY` / `GOOGLE_SEARCH_ENGINE_ID` credentials in `.env` (see `installation.md`).
 
 ### Input Format Requirements
 
@@ -161,9 +162,7 @@ When enabled with Google Search API:
 4. **High-quality figures**: Use vector formats (PDF, SVG) when available
 
 ### Model Selection
-- **GPT-4**: Best balance of quality and cost
-- **GPT-4.1**: Latest features, higher cost
-- **GPT-3.5-turbo**: Faster processing, acceptable for simple papers
+The LLM is set via `OPENAI_API_KEY` / `OPENAI_API_BASE` in `.env` (point the base at OpenRouter to use Claude or other models). Stronger models give the best layout and content quality; cheaper models are fine for drafts of simple papers.
 
 ### Output Optimization
 1. Review generated content for accuracy

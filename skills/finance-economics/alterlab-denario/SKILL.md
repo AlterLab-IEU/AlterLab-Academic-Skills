@@ -1,9 +1,9 @@
 ---
 name: alterlab-denario
-description: Runs Denario, a multiagent AI system for scientific research assistance that automates end-to-end research workflows from data analysis to publication with customizable agent orchestration. Use when generating research ideas from datasets, developing research methodologies, executing computational experiments, performing literature searches, or generating publication-ready papers in LaTeX format. Part of the AlterLab Academic Skills suite.
+description: Runs Denario (AstroPilot-AI), a multiagent AI system for scientific research assistance that automates end-to-end research workflows from a described dataset through idea, methodology, computational results, and a publication-ready LaTeX paper. Built on AG2 + LangGraph with a cmbagent analysis backend. Use when driving the Denario pipeline (Denario.get_idea/get_method/get_results/get_paper), generating research ideas from a dataset description, auto-developing methodology, executing analysis agents, or emitting a journal-formatted (APS/AAS/JHEP/ICML/NeurIPS/PASJ) LaTeX manuscript. Part of the AlterLab Academic Skills suite.
 license: GPL-3.0
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Requires the denario Python package and an LLM provider API key (e.g. OPENAI_API_KEY, GEMINI_API_KEY, or Vertex AI). Needs Python 3.12+ and network access.
+allowed-tools: Read WebFetch Bash(uv:*) Bash(python:*)
+compatibility: Requires the denario Python package (Python 3.12+) and at least an OPENAI_API_KEY (required for the analysis/results module). GOOGLE_API_KEY (Gemini), ANTHROPIC_API_KEY (Claude), and PERPLEXITY_API_KEY (citation search) are optional. LaTeX is needed to compile the paper. Needs network access.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -13,7 +13,9 @@ metadata:
 
 ## Overview
 
-Denario is a multiagent AI system designed to automate scientific research workflows from initial data analysis through publication-ready manuscripts. Built on AG2 and LangGraph frameworks, it orchestrates multiple specialized agents to handle hypothesis generation, methodology development, computational analysis, and paper writing.
+Denario (by AstroPilot-AI) is a multiagent AI system designed to automate scientific research workflows from a described dataset through publication-ready manuscripts. It implements agents with AG2 and LangGraph, using [cmbagent](https://github.com/CMBAgents/cmbagent) as the research-analysis backend, to handle hypothesis generation, methodology development, computational analysis, and paper writing.
+
+Source: https://github.com/AstroPilot-AI/Denario  |  Docs: https://denario.readthedocs.io  |  Paper: arXiv:2510.26887 (v1.0, Nov 2025).
 
 ## When to Use This Skill
 
@@ -27,29 +29,25 @@ Use this skill when:
 
 ## Installation
 
-Install denario using uv (recommended):
+Install with uv (recommended). Quote the extra so zsh does not glob `[app]`:
 
 ```bash
 uv init
 uv add "denario[app]"
 ```
 
-Or using pip:
-
-```bash
-uv pip install "denario[app]"
-```
-
-For Docker deployment or building from source, see `references/installation.md`.
+The `[app]` extra pulls in the Streamlit GUI (DenarioApp); omit it for headless/library use. For Docker deployment or building from source, see `references/installation.md`.
 
 ## LLM API Configuration
 
-Denario requires API keys from supported LLM providers. Supported providers include:
-- Google Vertex AI
-- OpenAI
-- Other LLM services compatible with AG2/LangGraph
+On init, `Denario` reads provider keys from the environment via its `KeyManager` (no config object). The relevant variables:
 
-Store API keys securely using environment variables or `.env` files. For detailed configuration instructions including Vertex AI setup, see `references/llm_configuration.md`.
+- `OPENAI_API_KEY` — **required** (the analysis/results module needs it; OpenAI models are the cmbagent-mode defaults).
+- `GOOGLE_API_KEY` — optional, a **Gemini API key** (the default LLM for the faster `mode="fast"` path). Note this is a plain Gemini key, not a Vertex AI service-account JSON.
+- `ANTHROPIC_API_KEY` — optional (Claude).
+- `PERPLEXITY_API_KEY` — optional, only for citation search.
+
+Set them in the shell or a `.env` (loaded with `python-dotenv` before importing `denario`). Google Vertex AI is also supported as a backend; see `references/llm_configuration.md` for that and `.env`/Docker details.
 
 ## Core Research Workflow
 
@@ -78,7 +76,7 @@ Generate research hypotheses from the data description:
 den.get_idea()
 ```
 
-This produces a research question or hypothesis based on the described data. Alternatively, provide a custom idea:
+This produces a research question or hypothesis based on the described data. `get_idea()` and `get_method()` take a `mode` argument: `mode="fast"` (default; LangGraph backend, faster but less reliable) or `mode="cmbagent"` (cmbagent backend, slower but more reliable). Alternatively, provide a custom idea:
 
 ```python
 den.set_idea("Custom research hypothesis")
@@ -126,9 +124,15 @@ The generated paper includes proper formatting for the specified journal, integr
 
 ## Available Journals
 
-Denario supports multiple journal formatting styles:
-- `Journal.APS` - American Physical Society format
-- Additional journals may be available; check `references/research_pipeline.md` for the complete list
+`get_paper(journal=...)` defaults to `Journal.NONE` (plain LaTeX, unsrt bibliography). The `Journal` enum (`from denario import Journal`) supports:
+
+- `Journal.NONE` — generic LaTeX, no journal preset
+- `Journal.AAS` — American Astronomical Society (e.g. ApJ)
+- `Journal.APS` — American Physical Society (Physical Review, PRL, PRA, ...)
+- `Journal.ICML` — International Conference on Machine Learning
+- `Journal.JHEP` — Journal of High Energy Physics (incl. JCAP)
+- `Journal.NeurIPS` — Conference on Neural Information Processing Systems
+- `Journal.PASJ` — Publications of the Astronomical Society of Japan
 
 ## Launching the GUI
 
@@ -186,17 +190,9 @@ den.get_results()
 den.get_paper(journal=Journal.APS)
 ```
 
-### Literature Search Integration
+### Literature / Novelty Check
 
-For literature search functionality and additional workflow examples, see `references/examples.md`.
-
-## Advanced Features
-
-- **Multiagent orchestration**: AG2 and LangGraph coordinate specialized agents for different research tasks
-- **Reproducible research**: All stages produce structured outputs that can be version-controlled
-- **Journal integration**: Automatic formatting for target publication venues
-- **Flexible input**: Manual or automated at each pipeline stage
-- **Docker deployment**: Containerized environment with LaTeX and all dependencies
+Use `den.check_idea(mode="semantic_scholar")` (or `mode="futurehouse"`) to test whether an idea is original against existing literature before committing to method/results. See `references/examples.md`.
 
 ## Detailed References
 

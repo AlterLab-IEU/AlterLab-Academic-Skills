@@ -7,8 +7,6 @@ Open Notebook is deployed as a Docker Compose stack with two main services: the 
 ### Minimal docker-compose.yml
 
 ```yaml
-version: "3.8"
-
 services:
   surrealdb:
     image: surrealdb/surrealdb:latest
@@ -45,16 +43,16 @@ volumes:
 export OPEN_NOTEBOOK_ENCRYPTION_KEY="your-secure-random-key"
 
 # Start services
-docker-compose up -d
+docker compose up -d
 
 # View logs
-docker-compose logs -f open-notebook
+docker compose logs -f open-notebook
 
 # Stop services
-docker-compose down
+docker compose down
 
 # Stop and remove data
-docker-compose down -v
+docker compose down -v
 ```
 
 ## Environment Variables

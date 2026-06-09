@@ -3,10 +3,11 @@
 ## Base Information
 
 **Base URL:** `https://api.openalex.org`
-**Authentication:** None required
-**Rate Limits:**
-- Default: 1 request/second, 100k requests/day
-- Polite pool (with email): 10 requests/second, 100k requests/day
+**Authentication:** Optional but recommended. A free API key (from `openalex.org/settings/api`) is passed as `?api_key=YOUR_KEY`.
+**Rate Limits (daily cost/credit model):**
+- Keyless: $0.01/day free budget
+- With a free API key: $1/day free budget
+- Per-call cost varies by operation (see "Cost Model" below); past the free budget you pay for what you use.
 
 ## Critical Best Practices
 
@@ -58,11 +59,14 @@ for attempt in range(max_retries):
         time.sleep(wait_time)
 ```
 
-### ✅ DO: Add email for 10x rate limit boost
+### ✅ DO: Add a free API key to raise the daily budget
 ```
-?mailto=yourname@example.edu
+?api_key=YOUR_KEY
 ```
-Increases from 1 req/sec → 10 req/sec.
+Raises the free daily budget from $0.01 (keyless) to $1. Get a key free at `openalex.org/settings/api`.
+
+### ✅ DO: Prefer filter over search to spend less budget
+`search=` calls cost roughly 10x a list+filter call. Filter by IDs/fields where possible and use `select=` to keep responses lean.
 
 ## Entity Endpoints
 
@@ -87,7 +91,8 @@ Increases from 1 req/sec → 10 req/sec.
 | `sample=` | Random results | `?sample=50&seed=42` |
 | `select=` | Limit fields | `?select=id,title` |
 | `group_by=` | Aggregate by field | `?group_by=publication_year` |
-| `mailto=` | Email for polite pool | `?mailto=you@example.edu` |
+| `api_key=` | Free API key (raises daily budget to $1) | `?api_key=YOUR_KEY` |
+| `mailto=` | Optional contact email (harmless; no longer changes limits) | `?mailto=you@example.edu` |
 
 ## Filter Syntax
 
@@ -301,16 +306,17 @@ ISSN: /sources/issn:0028-0836
 1. **Use maximum page size**: `?per-page=200` (8x fewer calls)
 2. **Batch ID lookups**: Use pipe operator for up to 50 IDs
 3. **Select only needed fields**: `?select=id,title,publication_year`
-4. **Use concurrent requests**: With rate limiting (10 req/sec with email)
-5. **Add email**: `?mailto=you@example.edu` for 10x speed boost
+4. **Prefer filter over search**: list+filter calls cost ~10x less than `search=` calls
+5. **Add an API key**: `?api_key=YOUR_KEY` raises the free daily budget from $0.01 to $1
 
 ## Error Handling
 
 ### HTTP Status Codes
 - `200` - Success
 - `400` - Bad request (check filter syntax)
-- `403` - Rate limit exceeded (implement backoff)
+- `403` - Forbidden ("slow down"; back off)
 - `404` - Entity doesn't exist
+- `429` - Too Many Requests / daily budget exhausted (back off; add an API key to raise the budget)
 - `500` - Server error (retry with backoff)
 
 ### Exponential Backoff
@@ -334,22 +340,35 @@ def fetch_with_retry(url, max_retries=5):
     raise Exception(f"Failed after {max_retries} retries")
 ```
 
-## Rate Limiting
+## Cost Model & Rate Limiting
 
-### Without Email (Default Pool)
-- 1 request/second
-- 100,000 requests/day
+OpenAlex uses a daily USD cost budget rather than a fixed requests/second cap.
 
-### With Email (Polite Pool)
-- 10 requests/second
-- 100,000 requests/day
-- **Always use for production**
+### Daily Free Budget
+- **Keyless**: $0.01/day
+- **With a free API key** (`openalex.org/settings/api`): $1/day — recommended
 
-### Concurrent Request Strategy
-1. Track requests per second globally
-2. Use semaphore or rate limiter across threads
-3. Monitor for 403 responses
-4. Back off if limits hit
+### Approximate operation cost (what $1/day buys)
+- Single-entity lookups (`/works/W...`): effectively free / unlimited
+- List + filter calls (e.g. `/works?filter=...`): ~10,000 calls (~1M results)
+- `search=` calls: ~1,000 calls (~100k results) — ~10x the cost of a filter call
+- Content/PDF downloads: ~100
+
+Implication: resolve and filter by IDs; reserve `search=` for genuine free-text needs; use `select=` to keep responses cheap.
+
+### Reading the budget from responses
+Every response includes cost headers and `meta.cost_usd`:
+```
+x-ratelimit-limit-usd: 1
+x-ratelimit-remaining-usd: 0.9999
+x-ratelimit-cost-usd: 0.0001
+```
+
+### Strategy when the budget runs low
+1. Add an API key (raises budget 100x vs keyless)
+2. Replace `search=` with `filter=` where possible
+3. Back off and retry on 429/403
+4. Spread heavy bulk jobs across days, or top up the account
 
 ## Common Mistakes to Avoid
 
@@ -357,15 +376,15 @@ def fetch_with_retry(url, max_retries=5):
 2. ❌ Filtering by entity names → ✅ Get IDs first
 3. ❌ Default page size → ✅ Use `per-page=200`
 4. ❌ Sequential ID lookups → ✅ Batch with pipe operator
-5. ❌ No error handling → ✅ Implement retry with backoff
-6. ❌ Ignoring rate limits → ✅ Global rate limiting
-7. ❌ Not including email → ✅ Add `mailto=`
+5. ❌ No error handling → ✅ Implement retry with backoff on 429/403/5xx
+6. ❌ Burning budget on `search=` → ✅ Filter by IDs/fields; reserve `search=` for free text
+7. ❌ Running keyless for bulk jobs → ✅ Add a free `api_key=` (raises budget 100x)
 8. ❌ Fetching all fields → ✅ Use `select=`
 
 ## Additional Resources
 
-- Full documentation: https://docs.openalex.org
-- API Overview: https://docs.openalex.org/how-to-use-the-api/api-overview
-- Entity schemas: https://docs.openalex.org/api-entities
-- Help: https://openalex.org/help
+- Full documentation: https://developers.openalex.org (docs.openalex.org now redirects here)
+- Authentication & pricing: https://developers.openalex.org/guides/authentication
+- Get a free API key: https://openalex.org/settings/api
+- LLM quick reference: https://developers.openalex.org/guides/llm-quick-reference
 - User group: https://groups.google.com/g/openalex-users

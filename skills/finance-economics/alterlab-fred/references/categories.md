@@ -19,7 +19,7 @@ FRED organizes data in a hierarchical category structure. The root category has 
 - Money, Banking, & Finance (32991)
 - Population, Employment, & Labor Markets (10)
 - National Accounts (32992)
-- Production & Business Activity (32455)
+- Production & Business Activity (1)
 - Prices (32455)
 - International Data (32263)
 - U.S. Regional Data (3008)

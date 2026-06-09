@@ -63,9 +63,10 @@ Decompose EDA into tonic (slow baseline) and phasic (rapid responses) components
 tonic, phasic = nk.eda_phasic(eda_cleaned, sampling_rate=100, method='cvxeda')
 ```
 
-**Methods:**
+**Methods:** (the function default is `'highpass'`; pass `method='cvxeda'` explicitly for the
+recommended decomposition)
 
-**1. cvxEDA (default, recommended):**
+**1. cvxEDA (recommended):**
 ```python
 tonic, phasic = nk.eda_phasic(eda_cleaned, sampling_rate=100, method='cvxeda')
 ```

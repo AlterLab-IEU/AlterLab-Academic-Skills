@@ -267,15 +267,17 @@ bcftools view -i 'INFO/GENEINFO~"BRCA"' clinvar.vcf.gz
 bcftools annotate -a clinvar.vcf.gz -c INFO your_variants.vcf
 ```
 
-**Using PyVCF:**
+**Using pysam** (the `PyVCF`/`import vcf` package is unmaintained and breaks on Python 3.10+; use `pysam` or `cyvcf2`):
 ```python
-import vcf
+import pysam
 
-vcf_reader = vcf.Reader(filename='clinvar.vcf.gz')
-for record in vcf_reader:
-    clnsig = record.INFO.get('CLNSIG', [])
-    if 'Pathogenic' in clnsig:
-        print(f"{record.CHROM}:{record.POS} - {clnsig}")
+vcf = pysam.VariantFile("clinvar.vcf.gz")
+for rec in vcf:
+    # CLNSIG is a single delimited string (e.g. "Pathogenic/Likely_pathogenic"),
+    # so test as a substring rather than list membership.
+    clnsig = str(rec.info.get("CLNSIG", ""))
+    if "Pathogenic" in clnsig:
+        print(f"{rec.chrom}:{rec.pos} - {clnsig}")
 ```
 
 ### Tab-Delimited Processing

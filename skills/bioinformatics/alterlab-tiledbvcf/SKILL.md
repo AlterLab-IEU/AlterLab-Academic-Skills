@@ -3,7 +3,7 @@ name: alterlab-tiledbvcf
 description: Store and query genomic variant data at scale with TileDB-VCF — ingest VCF/BCF into compressed TileDB arrays, add samples incrementally, run fast parallel region/sample queries, and export back to VCF. Use when managing population-genomics variant datasets that are too large for flat VCF, building joint variant stores, or querying thousands of samples by region. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Runs under `uv run python` with tiledbvcf-py (conda-forge/bioconda); local VCF stores work offline. TileDB Cloud features require a TileDB Cloud account and TILEDB_REST_TOKEN."
+compatibility: "tiledbvcf-py is distributed via the `tiledb` conda channel (not PyPI/conda-forge/bioconda); native osx-arm64 builds exist for Apple Silicon. Local VCF stores work offline. TileDB Cloud features require a TileDB Cloud account and TILEDB_REST_TOKEN."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -18,39 +18,26 @@ TileDB-VCF is a high-performance C++ library with Python and CLI interfaces for 
 ## When to Use This Skill
 
 This skill should be used when:
-- Learning TileDB-VCF concepts and workflows
-- Prototyping genomics analyses and pipelines
-- Working with small-to-medium datasets (< 1000 samples)
-- Need incremental addition of new samples to existing datasets
-- Require efficient querying of specific genomic regions across many samples
-- Working with cloud-stored variant data (S3, Azure, GCS)
-- Need to export subsets of large VCF datasets
-- Building variant databases for cohort studies
-- Educational projects and method development
-- Performance is critical for variant data operations
+- Building a queryable, compressed variant store from many single-sample VCF/BCF files (cohort/population datasets too large for flat VCF)
+- Incrementally adding new samples to an existing store without re-merging
+- Querying specific genomic regions across many samples (region/sample-partitioned reads)
+- Exporting region/sample subsets back to VCF/BCF for downstream tools
+- Working with variant data on cloud storage (S3, Azure, GCS) or TileDB Cloud
+- Prototyping or teaching scalable genomics-variant workflows
 
 ## Quick Start
 
 ### Installation
 
-**Preferred Method: Conda/Mamba**
+**Preferred method: conda/mamba from the `tiledb` channel.** `tiledbvcf-py` is NOT on PyPI, conda-forge, or bioconda — it ships from the `tiledb` Anaconda channel, with native `osx-arm64` builds (no Rosetta/`CONDA_SUBDIR` workaround needed on Apple Silicon). Supports Python 3.9–3.12.
 ```bash
-# Enter the following two lines if you are on a M1 Mac
-CONDA_SUBDIR=osx-64
-conda config --env --set subdir osx-64
-
-# Create the conda environment
-conda create -n tiledb-vcf "python<3.10"
+# Native Apple Silicon (osx-arm64) — also works on osx-64 / linux-64
+conda create -n tiledb-vcf -c conda-forge -c tiledb \
+  python=3.12 tiledbvcf-py=0.40 pandas pyarrow numpy
 conda activate tiledb-vcf
-
-# Mamba is a faster and more reliable alternative to conda
-conda install -c conda-forge mamba
-
-# Install TileDB-Py and TileDB-VCF, align with other useful libraries
-mamba install -y -c conda-forge -c bioconda -c tiledb tiledb-py tiledbvcf-py pandas pyarrow numpy
 ```
 
-**Alternative: Docker Images**
+**Alternative: Docker images** (pulls the CLI/Python interface; latest tag tracks current release)
 ```bash
 docker pull tiledb/tiledbvcf-py     # Python interface
 docker pull tiledb/tiledbvcf-cli    # Command-line interface
@@ -64,7 +51,7 @@ import tiledbvcf
 
 # Create a new dataset
 ds = tiledbvcf.Dataset(uri="my_dataset", mode="w",
-                      cfg=tiledbvcf.ReadConfig(memory_budget=1024))
+                      cfg=tiledbvcf.ReadConfig(memory_budget_mb=1024))
 
 # Ingest VCF files (must be single-sample with indexes)
 # Requirements:
@@ -174,11 +161,11 @@ TileDB-VCF excels at large-scale population genomics analyses requiring efficien
 
 **Schema Configuration:**
 ```python
-# Custom schema with specific tile extents
+# Partition a large read across region/sample space
 config = tiledbvcf.ReadConfig(
-    memory_budget=2048,  # MB
-    region_partition=(0, 3095677412),  # Full genome
-    sample_partition=(0, 10000)  # Up to 10k samples
+    memory_budget_mb=2048,        # memory budget in MB
+    region_partition=(0, 10),     # (partition_index, num_partitions) over regions
+    sample_partition=(0, 4),      # (partition_index, num_partitions) over samples
 )
 ```
 
@@ -199,10 +186,9 @@ regions = ["chr1:1000000-2000000", "chr2:500000-1500000"]
 
 # Whole chromosome
 regions = ["chr1"]
-
-# BED-style (0-based, half-open converted internally)
-regions = ["chr1:999999-2000000"]  # Equivalent to 1-based chr1:1000000-2000000
 ```
+
+**Note:** `regions=` strings are always 1-based inclusive — a start <= 0 raises "Regions must be 1-based". There is no implicit BED-style conversion. To use 0-based half-open BED intervals, pass a BED file via `read(bed_file="regions.bed", ...)` instead of the `regions=` list.
 
 ### Memory Management
 
@@ -272,187 +258,77 @@ tiledbvcf stat --uri my_dataset
 
 ## Advanced Features
 
-### Allele Frequency Analysis
+These are methods on the `Dataset` object (open in mode="r"), not top-level `tiledbvcf` functions. There is no `read_allele_frequency` or `sample_qc` function — use the methods below.
+
+### Allele counts / frequencies
 ```python
-# Calculate allele frequencies
-af_df = tiledbvcf.read_allele_frequency(
-    uri="my_dataset",
+ds = tiledbvcf.Dataset(uri="my_dataset", mode="r")
+
+# Internal allele-count (AC) array, returned as a pandas DataFrame
+ac_df = ds.read_allele_count(region="chr1:1000000-2000000")
+
+# Apply an allele-frequency filter at read time on a normal read()
+df = ds.read(
+    attrs=["sample_name", "pos_start", "alleles", "fmt_GT"],
     regions=["chr1:1000000-2000000"],
-    samples=["sample1", "sample2", "sample3"]
+    set_af_filter="<0.01",  # keep variants with AF below threshold
 )
 ```
 
-### Sample Quality Control
+### Variant statistics (QC)
 ```python
-# Perform sample QC
-qc_results = tiledbvcf.sample_qc(
-    uri="my_dataset",
-    samples=["sample1", "sample2"]
-)
+# Internal variant-stats array (per-variant aggregate stats) as a DataFrame
+stats_df = ds.read_variant_stats(region="chr1:1000000-2000000")
 ```
+Note: `read_allele_count` and `read_variant_stats` require the dataset to have been
+ingested with the corresponding internal arrays enabled (the default in recent versions).
 
-### Custom Configurations
+### TileDB config passthrough
 ```python
-# Advanced configuration
+# Pass raw TileDB Embedded config keys (e.g. cloud creds, cache sizing)
 config = tiledbvcf.ReadConfig(
-    memory_budget=4096,
+    memory_budget_mb=4096,
     tiledb_config={
         "sm.tile_cache_size": "1000000000",
-        "vfs.s3.region": "us-east-1"
-    }
+        "vfs.s3.region": "us-east-1",
+    },
 )
 ```
 
 
 ## Resources
 
-## Getting Help
-
-### Open Source TileDB-VCF Resources
-
-**Open Source Documentation:**
-- TileDB Academy: https://cloud.tiledb.com/academy/
-- Population Genomics Guide: https://cloud.tiledb.com/academy/structure/life-sciences/population-genomics/
-- TileDB-VCF GitHub: https://github.com/TileDB-Inc/TileDB-VCF
-
-### TileDB-Cloud Resources
-
-**For Large-Scale/Production Genomics:**
-- TileDB-Cloud Platform: https://cloud.tiledb.com
-- TileDB Academy (All Documentation): https://cloud.tiledb.com/academy/
-
-**Getting Started:**
-- Free account signup: https://cloud.tiledb.com
-- Contact: sales@tiledb.com for enterprise needs
+- TileDB-VCF GitHub (source, issues, releases): https://github.com/TileDB-Inc/TileDB-VCF
+- Population Genomics Guide (Academy): https://cloud.tiledb.com/academy/structure/life-sciences/population-genomics/
+- Python API reference: https://tiledb-inc.github.io/TileDB-VCF/documentation/reference/Dataset.html
+- TileDB Cloud (managed, distributed): https://cloud.tiledb.com
 
 ## Scaling to TileDB-Cloud
 
-When your genomics workloads outgrow single-node processing, TileDB-Cloud provides enterprise-scale capabilities for production genomics pipelines.
+When workloads outgrow single-node processing (roughly: > 1000 samples, > 100 GB of VCF, or a need for distributed compute / shared access), the same datasets can be ingested and queried on TileDB Cloud via `tiledb-cloud-py`. The local `tiledbvcf` API stays the same; the cloud package adds distributed orchestration.
 
-**Note**: This section covers TileDB-Cloud capabilities based on available documentation. For complete API details and current functionality, consult the official TileDB-Cloud documentation and API reference.
-
-### Setting Up TileDB-Cloud
-
-**1. Create Account and Get API Token**
+**Setup**
 ```bash
-# Sign up at https://cloud.tiledb.com
-# Generate API token in your account settings
+pip install "tiledb-cloud[life-sciences]"   # cloud client with genomics extras
+export TILEDB_REST_TOKEN="your_api_token"   # auth is automatic from this env var
 ```
 
-**2. Install TileDB-Cloud Python Client**
-```bash
-# Base installation
-pip install tiledb-cloud
+**Distributed ingest and read.** The cloud VCF entry points live in `tiledb.cloud.vcf`:
+- `tiledb.cloud.vcf.ingest(...)` — distributed ingestion into a `tiledb://namespace/dataset` URI
+- `tiledb.cloud.vcf.build_read_dag(...)` — builds a distributed read DAG over regions/samples
 
-# With genomics-specific functionality
-pip install tiledb-cloud[life-sciences]
-```
+Exact signatures and resource arguments change between releases, so consult the current Cloud API reference rather than hard-coding them: https://cloud.tiledb.com/academy/structure/life-sciences/population-genomics/api-reference/cloud/
 
-**3. Configure Authentication**
-```bash
-# Set environment variable with your API token
-export TILEDB_REST_TOKEN="your_api_token"
-```
-
+Cloud-hosted datasets are still opened with the normal `tiledbvcf.Dataset` API by passing a `tiledb://` URI plus a `tiledb_config` carrying credentials:
 ```python
-import tiledb.cloud
-
-# Authentication is automatic via TILEDB_REST_TOKEN
-# No explicit login required in code
-```
-
-### Migrating from Open Source to TileDB-Cloud
-
-**Large-Scale Ingestion**
-```python
-# TileDB-Cloud: Distributed VCF ingestion
-import tiledb.cloud.vcf
-
-# Use specialized VCF ingestion module
-# Note: Exact API requires TileDB-Cloud documentation
-# This represents the available functionality structure
-tiledb.cloud.vcf.ingestion.ingest_vcf_dataset(
-    source="s3://my-bucket/vcf-files/",
-    output="tiledb://my-namespace/large-dataset",
-    namespace="my-namespace",
-    acn="my-s3-credentials",
-    ingest_resources={"cpu": "16", "memory": "64Gi"}
-)
-```
-
-**Distributed Query Processing**
-```python
-# TileDB-Cloud: VCF querying across distributed storage
-import tiledb.cloud.vcf
 import tiledbvcf
 
-# Define the dataset URI
-dataset_uri = "tiledb://TileDB-Inc/gvcf-1kg-dragen-v376"
-
-# Get all samples from the dataset
-ds = tiledbvcf.Dataset(dataset_uri, tiledb_config=cfg)
-samples = ds.samples()
-
-# Define attributes and ranges to query on
-attrs = ["sample_name", "fmt_GT", "fmt_AD", "fmt_DP"]
-regions = ["chr13:32396898-32397044", "chr13:32398162-32400268"]
-
-# Perform the read, which is executed in a distributed fashion
-df = tiledb.cloud.vcf.read(
-    dataset_uri=dataset_uri,
-    regions=regions,
-    samples=samples,
-    attrs=attrs,
-    namespace="my-namespace",  # specifies which account to charge
+cfg = {"rest.token": "your_api_token"}  # or rely on TILEDB_REST_TOKEN
+ds = tiledbvcf.Dataset("tiledb://TileDB-Inc/gvcf-1kg-dragen-v376",
+                       mode="r", tiledb_config=cfg)
+df = ds.read(
+    attrs=["sample_name", "fmt_GT", "fmt_AD", "fmt_DP"],
+    regions=["chr13:32396898-32397044", "chr13:32398162-32400268"],
+    samples=ds.samples(),
 )
-df.to_pandas()
 ```
-
-### Enterprise Features
-
-**Data Sharing and Collaboration**
-```python
-# TileDB-Cloud provides enterprise data sharing capabilities
-# through namespace-based permissions and group management
-
-# Access shared datasets via TileDB-Cloud URIs
-dataset_uri = "tiledb://shared-namespace/population-study"
-
-# Collaborate through shared notebooks and compute resources
-# (Specific API requires TileDB-Cloud documentation)
-```
-
-**Cost Optimization**
-- **Serverless Compute**: Pay only for actual compute time
-- **Auto-scaling**: Automatically scale up/down based on workload
-- **Spot Instances**: Use cost-optimized compute for batch jobs
-- **Data Tiering**: Automatic hot/cold storage management
-
-**Security and Compliance**
-- **End-to-end Encryption**: Data encrypted in transit and at rest
-- **Access Controls**: Fine-grained permissions and audit logs
-- **HIPAA/SOC2 Compliance**: Enterprise security standards
-- **VPC Support**: Deploy in private cloud environments
-
-### When to Migrate Checklist
-
-✅ **Migrate to TileDB-Cloud if you have:**
-- [ ] Datasets > 1000 samples
-- [ ] Need to process > 100GB of VCF data
-- [ ] Require distributed computing
-- [ ] Multiple team members need access
-- [ ] Need enterprise security/compliance
-- [ ] Want cost-optimized serverless compute
-- [ ] Require 24/7 production uptime
-
-### Getting Started with TileDB-Cloud
-
-1. **Start Free**: TileDB-Cloud offers free tier for evaluation
-2. **Migration Support**: TileDB team provides migration assistance
-3. **Training**: Access to genomics-specific tutorials and examples
-4. **Professional Services**: Custom deployment and optimization
-
-**Next Steps:**
-- Visit https://cloud.tiledb.com to create account
-- Review documentation at https://cloud.tiledb.com/academy/
-- Contact sales@tiledb.com for enterprise needs

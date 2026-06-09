@@ -4,7 +4,7 @@
     {
       "id": "population-timeseries",
       "prompt": "Pull the full population time series for California and Texas from Data Commons so I can plot how they've grown since 2000.",
-      "expected_output": "Triggers the Data Commons skill. Resolves the place names to DCIDs (geoId/06 for California, geoId/48 for Texas) via client.resolve.fetch_dcids_by_name, then queries client.observation.fetch with variable_dcids=['Count_Person'] and date='all', and converts the response to a Pandas DataFrame (to_observation_records / pivot on date) for plotting. Uses the datacommons-client Python API v2.",
+      "expected_output": "Triggers the Data Commons skill. Resolves the place names to DCIDs (geoId/06 for California, geoId/48 for Texas) via client.resolve.fetch_dcids_by_name, then queries client.observation.fetch with variable_dcids=['Count_Person'] and date='all', and converts the response to a Pandas DataFrame (via client.observations_dataframe or response.to_observations_as_records, then pivot on date) for plotting. Uses the datacommons-client Python API v2.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "Count_Person" },
@@ -15,7 +15,7 @@
     {
       "id": "county-hierarchy-income",
       "prompt": "I need median household income for every county in California in 2020 from Data Commons. Get them all in one go rather than county by county.",
-      "expected_output": "Triggers Data Commons. Uses a containedInPlace relation expression (entity_expression='geoId/06<-containedInPlace+{typeOf:County}') in client.observation.fetch with the appropriate income statistical variable (e.g. Median_Income_Household / MedianIncome_Household) for date='2020', returning all counties in a single hierarchy query. Reflects the best practice of querying all children at once.",
+      "expected_output": "Triggers Data Commons. Uses a containedInPlace relation expression (entity_expression='geoId/06<-containedInPlace+{typeOf:County}') in client.observation.fetch with the median household income statistical variable (Median_Income_Household) for date='2020', returning all counties in a single hierarchy query. Reflects the best practice of querying all children at once.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "containedInPlace" },

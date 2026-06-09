@@ -176,7 +176,8 @@ gcd(60, 48, 36)  # 12
 ### Modular Arithmetic
 
 ```python
-from sympy.ntheory import mod_inverse, totient, is_primitive_root
+from sympy import mod_inverse, totient
+from sympy.ntheory import is_primitive_root
 
 # Modular inverse (find x such that a*x ≡ 1 (mod m))
 mod_inverse(3, 7)  # 5 (because 3*5 = 15 ≡ 1 (mod 7))
@@ -390,7 +391,7 @@ A = FiniteSet(1, 2, 3)
 ### Polynomial Manipulation
 
 ```python
-from sympy import Poly, symbols, factor, expand, roots
+from sympy import Poly, symbols, factor, expand, roots, div
 x, y = symbols('x y')
 
 # Create polynomial
@@ -590,7 +591,7 @@ perimeter = tri.perimeter  # a + b + sqrt(a**2 + b**2)
 ### Pattern 2: Number Theory Calculation
 
 ```python
-from sympy.ntheory import factorint, totient, isprime
+from sympy import factorint, totient, isprime
 
 # Factor and analyze
 n = 12345

@@ -5,10 +5,10 @@ license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Requires the idc-index Python package; keyless IDC data access (no authentication required)
 metadata:
-    version: 1.4.0
+    version: 1.5.0
     skill-author: AlterLab
-    idc-index: "0.11.10"
-    idc-data-version: "v23"
+    idc-index: "0.12.3"
+    idc-data-version: "v24"
     repository: https://github.com/ImagingDataCommons/idc-claude-skill
 ---
 
@@ -18,23 +18,24 @@ metadata:
 
 Use the `idc-index` Python package to query and download public cancer imaging data from the National Cancer Institute Imaging Data Commons (IDC). No authentication required for data access.
 
-**Current IDC Data Version: v23** (always verify with `IDCClient().get_idc_version()`)
+**Current IDC Data Version: v24** (always verify with `IDCClient().get_idc_version()`)
 
 **Primary tool:** `idc-index` ([GitHub](https://github.com/imagingdatacommons/idc-index))
 
 **CRITICAL - Check package version and upgrade if needed (run this FIRST):**
 
 ```python
-import idc_index
+from importlib.metadata import version as _v
+from packaging.version import Version
 
-REQUIRED_VERSION = "0.11.10"  # Must match metadata.idc-index in this file
-installed = idc_index.__version__
+REQUIRED_VERSION = "0.12.3"  # Must match metadata.idc-index in this file
+installed = _v("idc-index")
 
-if installed < REQUIRED_VERSION:
-    print(f"Upgrading idc-index from {installed} to {REQUIRED_VERSION}...")
-    import subprocess
-    subprocess.run(["pip3", "install", "--upgrade", "--break-system-packages", "idc-index"], check=True)
-    print("Upgrade complete. Restart Python to use new version.")
+# Compare as versions, not strings ("0.9.0" < "0.11.0" is False as a string).
+if Version(installed) < Version(REQUIRED_VERSION):
+    print(f"idc-index {installed} is older than {REQUIRED_VERSION}; upgrade with:")
+    print("    pip install --upgrade idc-index   # or: uv pip install --upgrade idc-index")
+    print("Then restart Python to load the new version.")
 else:
     print(f"idc-index {installed} meets requirement ({REQUIRED_VERSION})")
 ```
@@ -45,7 +46,7 @@ else:
 from idc_index import IDCClient
 client = IDCClient()
 
-# Verify IDC data version (should be "v23")
+# Verify IDC data version (should be "v24")
 print(f"IDC data version: {client.get_idc_version()}")
 
 # Get collection count and total series
@@ -236,13 +237,13 @@ pip install --upgrade idc-index
 
 **Important:** New IDC data release will always trigger a new version of `idc-index`. Always use `--upgrade` flag while installing, unless an older version is needed for reproducibility.
 
-**IMPORTANT:** IDC data version v23 is current. Always verify your version:
+**IMPORTANT:** IDC data version v24 is current. Always verify your version:
 ```python
-print(client.get_idc_version())  # Should return "v23"
+print(client.get_idc_version())  # Should return "v24"
 ```
 If you see an older version, upgrade with: `pip install --upgrade idc-index`
 
-**Tested with:** idc-index 0.11.10 (IDC data version v23)
+**Tested with:** idc-index 0.12.3 (IDC data version v24)
 
 **Optional (for data analysis):**
 ```bash
@@ -344,7 +345,7 @@ See `references/use_cases.md` for complete end-to-end workflow examples includin
 
 ## Best Practices
 
-- **Verify IDC version before generating responses** - Always call `client.get_idc_version()` at the start of a session to confirm you're using the expected data version (currently v23). If using an older version, recommend `pip install --upgrade idc-index`
+- **Verify IDC version before generating responses** - Always call `client.get_idc_version()` at the start of a session to confirm you're using the expected data version (currently v24). If using an older version, recommend `pip install --upgrade idc-index`
 - **Check licenses before use** - Always query the `license_short_name` field and respect licensing terms (CC BY vs CC BY-NC)
 - **Generate citations for attribution** - Use `citations_from_selection()` to get properly formatted citations from `source_DOI` values; include these in publications
 - **Start with small queries** - Use `LIMIT` clause when exploring to avoid long downloads and understand data structure

@@ -58,8 +58,11 @@ results = search_entities("BRCA1", entity_types=["target"])
 ```python
 # Search by disease name
 results = search_entities("alzheimer", entity_types=["disease"])
-# Returns: [{"id": "EFO_0000249", "name": "Alzheimer disease", ...}]
+# Returns: [{"id": "MONDO_0004975", "name": "Alzheimer disease", ...}]
 ```
+Always resolve the ID via search rather than hardcoding it — Open Targets has
+migrated many diseases from EFO to MONDO IDs (e.g. Alzheimer disease is now
+`MONDO_0004975`, not the older `EFO_0000249`).
 
 **For drugs:**
 ```python
@@ -69,9 +72,9 @@ results = search_entities("aspirin", entity_types=["drug"])
 ```
 
 **Identifiers used:**
-- Targets: Ensembl gene IDs (e.g., `ENSG00000157764`)
-- Diseases: EFO (Experimental Factor Ontology) IDs (e.g., `EFO_0000249`)
-- Drugs: ChEMBL IDs (e.g., `CHEMBL25`)
+- Targets: Ensembl gene IDs (e.g., `ENSG00000157764` = BRAF, `ENSG00000012048` = BRCA1)
+- Diseases: ontology IDs — EFO, **MONDO** (now common), HP, Orphanet (e.g., `MONDO_0004975` = Alzheimer disease). The `disease(efoId:)` argument accepts any of these.
+- Drugs: ChEMBL IDs (e.g., `CHEMBL25` = aspirin)
 
 ### 2. Query Target Information
 
@@ -106,7 +109,7 @@ Get disease details and associated targets/drugs.
 ```python
 from scripts.query_opentargets import get_disease_info
 
-disease_info = get_disease_info("EFO_0000249", include_targets=True)
+disease_info = get_disease_info("MONDO_0004975", include_targets=True)
 
 # Access fields:
 # - name: Disease name
@@ -125,14 +128,15 @@ from scripts.query_opentargets import get_target_disease_evidence
 # Get all evidence
 evidence = get_target_disease_evidence(
     ensembl_id="ENSG00000157764",
-    efo_id="EFO_0000249"
+    efo_id="MONDO_0004975"
 )
 
-# Filter by evidence type
+# The API filters by data SOURCE, not broad data type. To narrow to genetic
+# evidence, pass its sources (or fetch all rows and filter on datatypeId).
 genetic_evidence = get_target_disease_evidence(
     ensembl_id="ENSG00000157764",
-    efo_id="EFO_0000249",
-    data_types=["genetic_association"]
+    efo_id="MONDO_0004975",
+    datasource_ids=["gwas_catalog", "clinvar", "gene_burden"]
 )
 
 # Each evidence record contains:
@@ -161,24 +165,23 @@ Identify drugs used for a disease and their targets.
 ```python
 from scripts.query_opentargets import get_known_drugs_for_disease
 
-drugs = get_known_drugs_for_disease("EFO_0000249")
+drugs = get_known_drugs_for_disease("MONDO_0004975")
 
-# drugs contains:
-# - uniqueDrugs: Total number of unique drugs
-# - uniqueTargets: Total number of unique targets
-# - rows: List of drug-target-indication records with:
-#   - drug: {name, drugType, maximumClinicalTrialPhase}
-#   - targets: Genes targeted by the drug
-#   - phase: Clinical trial phase for this indication
-#   - status: Trial status (active, completed, etc.)
-#   - mechanismOfAction: How drug works
+# Helper queries the `drugAndClinicalCandidates` field (the former `knownDrugs`
+# field was removed). It returns:
+# - count: Total number of drug-indication records
+# - rows: List of records, each with:
+#   - maxClinicalStage: Max stage reached for this disease (enum string)
+#   - drug: {id, name, drugType, maximumClinicalStage, mechanismsOfAction{rows{actionType, mechanismOfAction, targets}}}
+#   - clinicalReports: [{trialPhase, clinicalStage, trialOverallStatus}]
 ```
 
-**Clinical phases:**
-- Phase 4: Approved drug
-- Phase 3: Late-stage clinical trials
-- Phase 2: Mid-stage trials
-- Phase 1: Early safety trials
+**Clinical stage** is an enum string (not an integer):
+- `APPROVAL`: Approved drug (the former Phase 4)
+- `PHASE_3`: Late-stage clinical trials
+- `PHASE_2`: Mid-stage trials
+- `PHASE_1`: Early safety trials
+- `UNKNOWN`: Stage not recorded
 
 ### 6. Get Drug Information
 
@@ -192,10 +195,10 @@ drug_info = get_drug_info("CHEMBL25")
 # Access:
 # - name, synonyms: Drug identifiers
 # - drugType: Small molecule, antibody, etc.
-# - maximumClinicalTrialPhase: Development stage
-# - mechanismsOfAction: Target and action type
-# - indications: Diseases with trial phases
-# - withdrawnNotice: If withdrawn, reasons and countries
+# - maximumClinicalStage: Development stage (enum string, e.g. "APPROVAL")
+# - mechanismsOfAction.rows: Target(s) and action type
+# - indications.rows: Diseases with maxClinicalStage per indication
+# - drugWarnings: Toxicity/withdrawal warnings (toxicityClass, description, country, year)
 ```
 
 ### 7. Get All Associations for a Target
@@ -232,7 +235,7 @@ Key information:
 - **Interactive browser:** `https://api.platform.opentargets.org/api/v4/graphql/browser`
 - **No authentication required**
 - **Request only needed fields** to minimize response size
-- **Use pagination** for large result sets: `page: {size: N, index: M}`
+- **Use pagination** for large result sets: `page: {index: M, size: N}` — both `index` and `size` are required (non-null)
 
 Refer to `references/api_reference.md` for:
 - Complete endpoint documentation
@@ -356,7 +359,11 @@ Complete target annotation reference:
 
 ## Data Updates and Versioning
 
-The Open Targets Platform is updated **quarterly** with new data releases. The current release (as of October 2025) is available at the API endpoint.
+The Open Targets Platform is updated periodically with new data releases. The
+GraphQL schema changes between releases — field names and argument names move
+(this skill's queries were verified against data version 26.03). If a field
+errors, introspect the live schema via the GraphQL browser. Confirm the running
+version with the `meta { apiVersion { x y z } dataVersion { year month } }` query.
 
 **Release information:** Check https://platform-docs.opentargets.org/release-notes for the latest updates.
 

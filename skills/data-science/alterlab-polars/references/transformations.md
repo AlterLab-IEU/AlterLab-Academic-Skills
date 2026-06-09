@@ -20,10 +20,13 @@ result = df1.join(df2, on="id", how="inner")
 result = df1.join(df2, on="id", how="left")
 ```
 
-**Outer Join (union):**
+**Full (outer) Join (union):**
 ```python
-# Keep all rows from both DataFrames
-result = df1.join(df2, on="id", how="outer")
+# Keep all rows from both DataFrames (how="outer" was renamed to "full")
+result = df1.join(df2, on="id", how="full")
+
+# how="full" keeps both key columns (id, id_right). Coalesce them into one:
+result = df1.join(df2, on="id", how="full", coalesce=True)
 ```
 
 **Cross Join (Cartesian product):**
@@ -228,11 +231,11 @@ df = pl.DataFrame({
     "sales": [100, 150, 120, 160]
 })
 
-# Pivot: products become columns
+# Pivot: products become columns (`columns=` was renamed to `on=`)
 pivoted = df.pivot(
-    values="sales",
+    "product",      # on: column whose values become new columns
     index="date",
-    columns="product"
+    values="sales",
 )
 # Result:
 # date     | A   | B
@@ -253,9 +256,9 @@ df = pl.DataFrame({
 
 # Aggregate duplicates
 pivoted = df.pivot(
-    values="sales",
+    "product",
     index="date",
-    columns="product",
+    values="sales",
     aggregate_function="sum"  # or "mean", "max", "min", etc.
 )
 ```
@@ -271,9 +274,9 @@ df = pl.DataFrame({
 })
 
 pivoted = df.pivot(
-    values="sales",
+    "product",
     index=["region", "date"],
-    columns="product"
+    values="sales",
 )
 ```
 
@@ -405,7 +408,7 @@ wide = pl.DataFrame({
 long = wide.unpivot(index="id", on=["A", "B"])
 
 # Back to wide (maybe with transformations)
-wide_again = long.pivot(values="value", index="id", columns="variable")
+wide_again = long.pivot("variable", index="id", values="value")
 ```
 
 ### Pattern 2: Nested to Flat
@@ -442,7 +445,7 @@ result = (
     sales
     .group_by("date", "product")
     .agg(pl.col("sales").sum())
-    .pivot(values="sales", index="date", columns="product")
+    .pivot("product", index="date", values="sales")
 )
 ```
 
@@ -470,7 +473,7 @@ result = (
         metric=pl.col("variable").str.extract(r"Q[0-9]_(.*)", 1)
     )
     .drop("variable")
-    .pivot(values="value", index=["id", "quarter"], columns="metric")
+    .pivot("metric", index=["id", "quarter"], values="value")
 )
 ```
 
@@ -545,5 +548,5 @@ orders.join(customers, on="customer_id").join(products, on="product_id")
 
 ```python
 # Pivot for reporting
-sales.pivot(values="amount", index="month", columns="product")
+sales.pivot("product", index="month", values="amount")
 ```

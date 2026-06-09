@@ -1,25 +1,43 @@
 # Deep Research Guide
 
-Comprehensive guide to using Parallel's Task API for deep research, including processor selection, output formats, structured schemas, and advanced patterns.
+How to run deep research with this skill's `research` command, plus reference material on Parallel's raw Task API for when you need processors, structured schemas, or async runs.
+
+> **Scope — read first:** `scripts/parallel_web.py research` wraps the **Chat API** `core` model (override with `--model base`). It is synchronous and returns a markdown report with citations. It does NOT take `processor`, `description`, or `output_schema`, and there is NO `research_structured()` method. Everything below mentioning `processor=`, `description=`, `research_structured()`, or async `task_run` is the **raw Task API** (`POST /v1/tasks/runs`) — usable only by calling the SDK/HTTP API directly, not through `parallel_web.py`.
 
 ---
 
-## Overview
+## Using the `research` command (Chat API)
 
-Deep Research transforms natural language research queries into comprehensive intelligence reports. Unlike simple search, it performs multi-step web exploration across authoritative sources and synthesizes findings with inline citations and confidence levels.
+```bash
+# Default: core model, comprehensive report
+python scripts/parallel_web.py research \
+  "Comprehensive analysis of the global EV battery market: competitive landscape, market size, and growth projections through 2030." \
+  -o sources/research_ev_battery_market.md
 
-**Key characteristics:**
-- Multi-step, multi-source research
-- Automatic citation and source attribution
-- Structured or text output formats
-- Asynchronous processing (30 seconds to 25+ minutes)
-- Research basis with confidence levels per finding
+# Faster / cheaper pass with the base model
+python scripts/parallel_web.py research "Latest funding rounds in AI startups (2025)" --model base \
+  -o sources/research_ai_funding.md
+```
+
+To steer the report's focus or structure, write it into the query string itself (the Chat API has no separate `description` field):
+
+```bash
+python scripts/parallel_web.py research \
+  "Electric-vehicle battery technology landscape. Focus on (1) solid-state progress, (2) charging-speed improvements, (3) cost-per-kWh trends, (4) key patents. Use clear section headers." \
+  --model core -o sources/research_ev_battery_tech.md
+```
+
+`base` vs `core`: use `base` for quick factual synthesis (15-100s), `core` for deep multi-source reports (1-5min). See [API Reference](api_reference.md) for the full model table.
 
 ---
 
-## Processor Selection
+## Raw Task API (processors, schemas, async)
 
-Choosing the right processor is the most important decision. It determines research depth, speed, and cost.
+Everything in this section requires calling the Parallel SDK/HTTP API directly. The bundled script does not expose it.
+
+### Processor Selection
+
+For the raw Task API, choosing the right processor determines research depth, speed, and cost.
 
 ### Decision Matrix
 
@@ -70,61 +88,48 @@ Choosing the right processor is the most important decision. It determines resea
 
 ---
 
-## Output Formats
+### Output Formats
 
-### Text Mode (Markdown Reports)
+These use the raw Task API SDK (`client.task_run`). For the skill's `research` command, you only get text output — fold focus/structure requests into the query string instead.
+
+#### Text Mode (Markdown Reports)
 
 Returns a comprehensive markdown report with inline citations. Best for human consumption and document integration.
 
 ```python
-researcher = ParallelDeepResearch()
+# raw Task API
+from parallel import Parallel
+from parallel.types import TaskSpecParam
+client = Parallel()
 
-result = researcher.research(
-    query="Comprehensive analysis of mRNA vaccine technology platforms and their applications beyond COVID-19",
+run = client.task_run.create(
+    input="Comprehensive analysis of mRNA vaccine platforms beyond COVID-19. "
+          "Focus on clinical trials, approved applications, pipeline, key companies, and market size.",
     processor="pro-fast",
-    description="Focus on clinical trials, approved applications, pipeline developments, and key companies. Include market size data."
+    task_spec=TaskSpecParam(output_schema={"type": "text"}),
 )
-
-# result["output"] contains a full markdown report
-# result["citations"] contains source URLs with excerpts
+result = client.task_run.result(run.run_id, api_timeout=3600)
+print(result.output.content)  # markdown report
 ```
 
 **When to use text mode:**
 - Writing scientific documents (papers, reviews, reports)
 - Background research for a topic
-- Creating summaries for human readers
 - When you need flowing prose, not structured data
 
-**Guiding text output with `description`:**
+#### Auto-Schema Mode (Structured JSON)
 
-The `description` parameter steers the report content:
-
-```python
-# Focus on specific aspects
-result = researcher.research(
-    query="Electric vehicle battery technology landscape",
-    description="Focus on: (1) solid-state battery progress, (2) charging speed improvements, (3) cost per kWh trends, (4) key patents and IP. Format as a structured report with clear sections."
-)
-
-# Control length and depth
-result = researcher.research(
-    query="AI in drug discovery",
-    description="Provide a concise 500-word executive summary covering key applications, notable successes, leading companies, and market projections."
-)
-```
-
-### Auto-Schema Mode (Structured JSON)
-
-Lets the processor determine the best output structure automatically. Returns structured JSON with per-field citations.
+Lets the processor determine the best output structure automatically. Returns structured JSON with per-field citations (raw Task API only — omit `task_spec` for auto-schema):
 
 ```python
-result = researcher.research_structured(
-    query="Top 5 cloud computing companies: revenue, market share, key products, and recent developments",
+# raw Task API
+run = client.task_run.create(
+    input="Top 5 cloud computing companies: revenue, market share, key products, recent developments",
     processor="pro-fast",
 )
-
-# result["content"] contains structured data (dict)
-# result["basis"] contains per-field citations with confidence
+result = client.task_run.result(run.run_id, api_timeout=3600)
+print(result.output.content)  # structured dict
+print(result.output.basis)    # per-field citations
 ```
 
 **When to use auto-schema:**
@@ -133,11 +138,12 @@ result = researcher.research_structured(
 - When you need programmatic access to individual data points
 - Integration with databases or spreadsheets
 
-### Custom JSON Schema
+#### Custom JSON Schema
 
-Define exactly what fields you want returned:
+Define exactly what fields you want returned (raw Task API):
 
 ```python
+# raw Task API
 schema = {
     "type": "object",
     "properties": {
@@ -172,10 +178,12 @@ schema = {
     "additionalProperties": False
 }
 
-result = researcher.research_structured(
-    query="Global cybersecurity market analysis",
-    output_schema=schema,
+run = client.task_run.create(
+    input="Global cybersecurity market analysis",
+    processor="pro-fast",
+    task_spec=TaskSpecParam(output_schema={"type": "json", "json_schema": schema}),
 )
+result = client.task_run.result(run.run_id, api_timeout=3600)
 ```
 
 ---
@@ -219,14 +227,15 @@ compliance, and performance benchmarks from 2023-2025 publications."
 
 ---
 
-## Working with Research Basis
+## Working with Citations / Basis
 
-Every deep research result includes a **basis** -- citations, reasoning, and confidence levels for each finding.
+Every research result includes citations (the Chat API "basis"): source URLs with excerpts.
 
-### Text Mode Basis
+### From the `research` command (Chat API)
 
 ```python
-result = researcher.research(query="...", processor="pro-fast")
+from parallel_web import ParallelDeepResearch
+result = ParallelDeepResearch().research(query="...", model="core")
 
 # Citations are deduplicated and include URLs + excerpts
 for citation in result["citations"]:
@@ -236,20 +245,11 @@ for citation in result["citations"]:
         print(f"Excerpt: {citation['excerpts'][0][:200]}")
 ```
 
-### Structured Mode Basis
+### Structured-Mode Basis (raw Task API)
 
-```python
-result = researcher.research_structured(query="...", processor="pro-fast")
+When using the raw Task API with a schema, each field carries its own per-field basis with confidence and reasoning (`result.output.basis`). The Chat API used by this skill returns text + flat citations only, not per-field confidence.
 
-for basis_entry in result["basis"]:
-    print(f"Field: {basis_entry['field']}")
-    print(f"Confidence: {basis_entry['confidence']}")
-    print(f"Reasoning: {basis_entry['reasoning']}")
-    for cit in basis_entry["citations"]:
-        print(f"  Source: {cit['url']}")
-```
-
-### Confidence Levels
+### Confidence Levels (raw Task API basis)
 
 | Level | Meaning | Action |
 |-------|---------|--------|
@@ -261,51 +261,58 @@ for basis_entry in result["basis"]:
 
 ## Advanced Patterns
 
+These use the skill's `ParallelDeepResearch` / `ParallelExtract` classes (Chat + Extract APIs).
+
 ### Multi-Stage Research
 
-Use different processors in sequence for progressively deeper research:
+Use `base` for a fast overview, then `core` for a deep dive, feeding context forward:
 
 ```python
-# Stage 1: Quick overview with base-fast
+from parallel_web import ParallelDeepResearch
+researcher = ParallelDeepResearch()
+
+# Stage 1: Quick overview with the base model
 overview = researcher.research(
     query="What are the main approaches to quantum error correction?",
-    processor="base-fast",
+    model="base",
 )
 
-# Stage 2: Deep dive on the most promising approach
+# Stage 2: Deep dive, carrying context forward
 deep_dive = researcher.research(
-    query=f"Detailed analysis of surface code quantum error correction: "
+    query=f"Detailed analysis of surface-code quantum error correction: "
           f"recent breakthroughs, implementation challenges, and leading research groups. "
-          f"Context: {overview['output'][:500]}",
-    processor="pro-fast",
+          f"Context so far: {overview['response'][:500]}",
+    model="core",
 )
 ```
 
 ### Comparative Research
 
+Fold the comparison structure into the query string (no separate `description` field on the Chat API):
+
 ```python
 result = researcher.research(
-    query="Compare and contrast three leading large language model architectures: "
-          "GPT-4, Claude, and Gemini. Cover architecture differences, benchmark performance, "
-          "pricing, context window, and unique capabilities. Include specific benchmark scores.",
-    processor="pro-fast",
-    description="Create a structured comparison with a summary table. Include specific numbers and benchmarks."
+    query="Compare three leading LLM architectures (GPT-4, Claude, Gemini): "
+          "architecture differences, benchmark scores, pricing, context window, "
+          "and unique capabilities. Present a summary comparison table with specific numbers.",
+    model="core",
 )
 ```
 
 ### Research with Follow-Up Extraction
 
 ```python
+from parallel_web import ParallelDeepResearch, ParallelExtract
+researcher = ParallelDeepResearch()
+extractor = ParallelExtract()
+
 # Step 1: Research to find relevant sources
 research_result = researcher.research(
     query="Most influential papers on attention mechanisms in 2024",
-    processor="pro-fast",
+    model="core",
 )
 
-# Step 2: Extract full content from the most relevant sources
-from parallel_web import ParallelExtract
-extractor = ParallelExtract()
-
+# Step 2: Extract full content from the top cited sources
 key_urls = [c["url"] for c in research_result["citations"][:5]]
 for url in key_urls:
     extracted = extractor.extract(
@@ -316,28 +323,12 @@ for url in key_urls:
 
 ---
 
-## Performance Optimization
+## Performance and Cost
 
-### Reducing Latency
-
-1. **Use `-fast` processors**: 2-5x faster than standard
-2. **Use `core-fast` for moderate queries**: Sub-2-minute for most questions
-3. **Be specific in queries**: Vague queries require more exploration
-4. **Set appropriate timeouts**: Don't over-wait
-
-### Reducing Cost
-
-1. **Start with `base-fast`**: Upgrade only if depth is insufficient
-2. **Use `core-fast` for moderate complexity**: $0.025 vs $0.10 for pro
-3. **Batch related queries**: One well-crafted query > multiple simple ones
-4. **Cache results**: Store research output for reuse across sections
-
-### Maximizing Quality
-
-1. **Use `pro-fast` or `ultra-fast`**: More sources = better synthesis
-2. **Provide context**: "I'm writing a paper for Nature Medicine about..."
-3. **Use `description` parameter**: Guide the output structure and focus
-4. **Verify critical findings**: Cross-check with Search API or Extract
+- **Pick the right model:** `base` for fast factual synthesis, `core` for deep multi-source reports. With the raw Task API, choose the cheapest processor that hits your depth (start at `base-fast`/`core-fast`, escalate to `pro-fast`/`ultra-fast` only when needed).
+- **Be specific:** vague queries cost more exploration time for worse results.
+- **Batch and cache:** one well-crafted query beats several shallow ones; save every result to `sources/` and reuse it across sections (see SKILL.md).
+- **Verify critical findings:** cross-check key citations with `extract` before citing.
 
 ---
 
@@ -346,11 +337,10 @@ for url in key_urls:
 | Mistake | Impact | Fix |
 |---------|--------|-----|
 | Query too vague | Scattered, unfocused results | Add specific aspects and time bounds |
-| Query too long (>15K chars) | API rejection or degraded results | Summarize context, focus on key question |
-| Wrong processor | Too slow or too shallow | Use decision matrix above |
-| Not using `description` | Report structure not aligned with needs | Add description to guide output |
-| Ignoring confidence levels | Using low-confidence data as fact | Check basis confidence before citing |
-| Not verifying citations | Risk of outdated or misattributed data | Cross-check key citations with Extract |
+| Query too long | API rejection or degraded results | Summarize context, focus on key question |
+| Using `base` for a deep report | Too shallow | Use `--model core` for comprehensive research |
+| Folding nothing into the query | Report structure not aligned with needs | Write focus/structure requests into the query string |
+| Not verifying citations | Risk of outdated or misattributed data | Cross-check key citations with `extract` |
 
 ---
 

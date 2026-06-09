@@ -91,7 +91,7 @@ def get_compound_properties(
         properties = [
             'MolecularFormula',
             'MolecularWeight',
-            'CanonicalSMILES',
+            'SMILES',  # was CanonicalSMILES; deprecated by PubChem in 2025
             'IUPACName',
             'XLogP',
             'TPSA',
@@ -252,7 +252,7 @@ def print_compound_info(compound: pcp.Compound) -> None:
     print(f"IUPAC Name: {compound.iupac_name or 'N/A'}")
     print(f"Molecular Formula: {compound.molecular_formula or 'N/A'}")
     print(f"Molecular Weight: {compound.molecular_weight or 'N/A'} g/mol")
-    print(f"Canonical SMILES: {compound.canonical_smiles or 'N/A'}")
+    print(f"SMILES: {compound.smiles or 'N/A'}")
     print(f"InChI: {compound.inchi or 'N/A'}")
     print(f"InChI Key: {compound.inchikey or 'N/A'}")
     print(f"XLogP: {compound.xlogp or 'N/A'}")

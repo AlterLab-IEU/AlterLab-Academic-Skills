@@ -37,6 +37,7 @@
       "expected_output": "Invokes alterlab-uniprot. Uses the stream endpoint https://rest.uniprot.org/uniprotkb/stream with a query like 'kinase AND organism_id:9606 AND reviewed:true' and format=fasta to download the complete result set without pagination.",
       "assertions": [
         { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "stream" },
         { "type": "behavior", "value": "Uses the UniProt stream endpoint for large result sets instead of paginated search." }
       ]
     },

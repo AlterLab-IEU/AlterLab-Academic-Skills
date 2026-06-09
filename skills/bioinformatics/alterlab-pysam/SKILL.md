@@ -208,7 +208,9 @@ Specify format when opening files:
 1. **Coordinate confusion:** Remember 0-based vs 1-based systems in different contexts
 2. **Missing indices:** Many operations require index files—create them first
 3. **Partial overlaps:** `fetch()` returns reads overlapping region boundaries, not just those fully contained
-4. **Iterator scope:** Keep pileup iterator references alive to avoid "PileupProxy accessed after iterator finished" errors
+4. **Unbounded pileup:** `pileup(chrom, start, stop)` yields columns for every position spanned by overlapping reads, not just `start..stop`—pass `truncate=True` to restrict to the requested window
+5. **Silent base-quality drop:** `count_coverage()` defaults to `quality_threshold=15`, so low-quality bases are omitted; set `quality_threshold=0` to count all
+6. **Iterator scope:** Keep pileup iterator references alive to avoid "PileupProxy accessed after iterator finished" errors
 5. **Quality score editing:** Cannot modify `query_qualities` in place after changing `query_sequence`—create a copy first
 6. **Stream limitations:** Only stdin/stdout are supported for streaming, not arbitrary Python file objects
 7. **Thread safety:** While GIL is released during I/O, comprehensive thread-safety hasn't been fully validated

@@ -50,10 +50,10 @@ This skill helps medical device manufacturers prepare comprehensive documentatio
    ```
 
 3. **Review results:**
-   - Identify which of the 31 required procedures are present
+   - Identify which required procedures are present vs. missing. The script checks the 26 always-applicable documented procedures (it omits the conditional "when applicable" ones — design, installation, servicing, sterilization, etc. — to avoid false-negative gaps); the full set is "31" by convention. See `references/quick-reference.md` for the full list and counting note.
    - Identify missing key documents (Quality Manual, MDF, etc.)
-   - Calculate compliance percentage
-   - Prioritize missing documentation
+   - Calculate compliance percentage (reported against the 26 procedures the script tracks)
+   - Prioritize missing documentation, including any conditional procedures that apply to this manufacturer
 
 4. **Present findings to user:**
    - Summarize what exists

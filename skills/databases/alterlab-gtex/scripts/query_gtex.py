@@ -6,11 +6,13 @@ Base: https://gtexportal.org/api/v2/  (GET, JSON)
   /association/singleTissueEqtl       gencodeId|variantId, tissueSiteDetailId
   /dataset/tissueSiteDetail           list available tissues
 
-Gene IDs are versioned GENCODE IDs, e.g. ENSG00000130203.10 (APOE).
+Gene IDs are versioned GENCODE IDs whose .version suffix must match the dataset:
+gtex_v10 uses GENCODE v39 (e.g. APOE = ENSG00000130203.10, PCSK9 = ENSG00000169174.11),
+gtex_v8 uses GENCODE v26. The wrong suffix silently returns zero rows.
 
 Smoke test:
     uv run python query_gtex.py expression ENSG00000130203.10
-    uv run python query_gtex.py eqtl ENSG00000169174.14 --tissue Liver
+    uv run python query_gtex.py eqtl ENSG00000169174.11 --tissue Liver
     uv run python query_gtex.py tissues
 """
 import argparse

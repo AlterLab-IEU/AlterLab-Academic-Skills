@@ -1,8 +1,8 @@
 ---
 name: alterlab-hypogenic
-description: Runs automated LLM-driven hypothesis generation and testing on tabular datasets with HypoGeniC, combining literature insights with data-driven testing. Use when systematically exploring hypotheses about patterns in empirical data (for example deception detection or content analysis). For manual hypothesis formulation use hypothesis-generation; for creative ideation use scientific-brainstorming. Part of the AlterLab Academic Skills suite.
+description: Runs automated LLM-driven hypothesis generation and testing on tabular datasets with HypoGeniC, combining literature insights with data-driven testing. Use when systematically exploring hypotheses about patterns in empirical data (for example deception detection or content analysis). For manual hypothesis formulation use alterlab-hypothesis-gen; for open-ended creative ideation use alterlab-scientific-brainstorm. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(uv:*) Bash(python:*) Bash(hypogenic_generation:*) Bash(hypogenic_inference:*) Bash(git clone:*)
 compatibility: Requires the hypogenic Python package plus an LLM provider API key (e.g. OPENAI_API_KEY) for hypothesis generation. Runs via `uv run python`.
 metadata:
     skill-author: AlterLab
@@ -33,19 +33,14 @@ hypogenic_generation --config ./data/your_task/config.yaml --method hypogenic --
 hypogenic_inference --config ./data/your_task/config.yaml --hypotheses output/hypotheses.json
 ```
 
-**Or use Python API:**
+> Flag names below are illustrative. The upstream docs expose exact arguments only via
+> `hypogenic_generation --help` / `hypogenic_inference --help` — confirm there before scripting.
 
-```python
-from hypogenic import BaseTask
+**Or use the example scripts** (the library ships runnable scripts under `examples/`; there is no one-line fluent `task.generate_hypotheses(...)` API — see "Python API Usage" below for the real classes):
 
-# Create task with your configuration
-task = BaseTask(config_path="./data/your_task/config.yaml")
-
-# Generate hypotheses
-task.generate_hypotheses(method="hypogenic", num_hypotheses=20)
-
-# Run inference
-results = task.inference(hypothesis_bank="./output/hypotheses.json")
+```bash
+python ./examples/generation.py   --help   # HypoGeniC data-driven generation
+python ./examples/inference.py     --help   # single-hypothesis inference
 ```
 
 ## When to Use This Skill
@@ -79,11 +74,10 @@ Use this skill when working on:
 - Custom label extraction for domain-specific tasks
 - Modular architecture for easy extension
 
-**Proven Results**
-- 8.97% improvement over few-shot baselines
-- 15.75% improvement over literature-only approaches
-- 80-84% hypothesis diversity (non-redundant insights)
-- Human evaluators report significant decision-making improvements
+**Reported Results** (from arXiv:2410.17309, *Literature Meets Data*)
+- +8.97% over few-shot, +15.75% over literature-only, +3.37% over data-driven-only baselines
+- Human accuracy improved +7.44% (deception detection) and +14.19% (AI-generated content detection)
+- A redundancy checker prunes near-duplicate hypotheses to keep the final bank diverse
 
 ## Core Capabilities
 
@@ -282,67 +276,56 @@ hypogenic_inference --help
 
 ## Python API Usage
 
-For programmatic control and custom workflows, use Hypogenic directly in your Python code:
-
-### Basic HypoGeniC Generation
+For programmatic control, copy and adapt the scripts under `examples/`. The library is **not** a one-call fluent API — generation runs as an explicit init/update loop over the algorithm classes, and inference runs through the inference registry. The real building blocks (verified against `examples/generation.py` and `examples/inference.py`):
 
 ```python
-from hypogenic import BaseTask
+from hypogenic.tasks import BaseTask
+from hypogenic.prompt import BasePrompt
+from hypogenic.LLM_wrapper import llm_wrapper_register
+from hypogenic.extract_label import extract_label_register
+from hypogenic.algorithm.generation import DefaultGeneration
+from hypogenic.algorithm.inference import DefaultInference, inference_register
+from hypogenic.algorithm.replace import DefaultReplace
+from hypogenic.algorithm.update import DefaultUpdate
 
-# Clone example datasets first
-# git clone https://github.com/ChicagoHAI/HypoGeniC-datasets.git ./data
-
-# Load your task with custom extract_label function
+# 1. Task: pass a custom extract_label, or reuse a registered one
+#    (e.g. "shoe", "hotel_reviews", "retweet", "headline_binary").
 task = BaseTask(
-    config_path="./data/your_task/config.yaml",
-    extract_label=lambda text: extract_your_label(text)
+    "./data/your_task/config.yaml",
+    extract_label=my_extract_label,         # or None + from_register=...
+    from_register=extract_label_register,
 )
 
-# Generate hypotheses
-task.generate_hypotheses(
-    method="hypogenic",
-    num_hypotheses=20,
-    output_path="./output/hypotheses.json"
-)
+# 2. Build the LLM backend via the registry (API or local model)
+api = llm_wrapper_register.build(model_type)(model=model_name, path_name=model_path)
+prompt_class = BasePrompt(task)
 
-# Run inference
-results = task.inference(
-    hypothesis_bank="./output/hypotheses.json",
-    test_data="./data/your_task/your_task_test.json"
+# 3. Generation pipeline: inference -> generation -> update loop
+inference_class  = DefaultInference(api, prompt_class, train_data, task)
+generation_class = DefaultGeneration(api, prompt_class, inference_class, task)
+update_class     = DefaultUpdate(
+    generation_class, inference_class, DefaultReplace(max_num_hypotheses), save_path
+)
+hypotheses_bank = update_class.update(
+    current_epoch=epoch, hypotheses_bank=hyp_bank,
+    current_seed=seed, cache_seed=cache_seed,
 )
 ```
 
-### HypoRefine/Union Methods
+For **HypoRefine / Union** methods (literature + data), adapt `examples/union_generation.py` instead — it produces three banks: HypoRefine (integrated), literature-only, and Literature ∪ HypoRefine.
+
+### Inference
 
 ```python
-# For literature-integrated approaches
-# git clone https://github.com/ChicagoHAI/Hypothesis-agent-datasets.git ./data
-
-# Generate with HypoRefine
-task.generate_hypotheses(
-    method="hyporefine",
-    num_hypotheses=15,
-    literature_path="./literature/your_task/",
-    output_path="./output/"
+# Load a saved hypothesis bank, then run inference through the registry
+inference_class = inference_register.build(inference_type)(
+    api, prompt_class, train_data, task
 )
-# This generates 3 hypothesis banks:
-# - HypoRefine (integrated approach)
-# - Literature-only hypotheses
-# - Literature∪HypoRefine (union)
+pred_list, label_list = inference_class.run_inference_final(test_data, hyp_bank)
+# evaluate with get_results(pred_list, label_list)  -> accuracy / F1
 ```
 
-### Multi-Hypothesis Inference
-
-```python
-from examples.multi_hyp_inference import run_multi_hypothesis_inference
-
-# Test multiple hypotheses simultaneously
-results = run_multi_hypothesis_inference(
-    config_path="./data/your_task/config.yaml",
-    hypothesis_bank="./output/hypotheses.json",
-    test_data="./data/your_task/your_task_test.json"
-)
-```
+`inference_type` selects the strategy, e.g. `default`, `one_step_adaptive`, `filter_and_weight`, `two_step_adaptive`, `upperbound` (see `examples/multi_hyp_inference.py` for multi-hypothesis runs).
 
 ### Custom Label Extraction
 
@@ -419,14 +402,6 @@ def extract_label(llm_output: str) -> str:
 
 **Adaptive Refinement:** Use challenging examples to iteratively improve hypothesis quality
 
-## Expected Outcomes
-
-Research using hypogenic has demonstrated:
-- 14.19% accuracy improvement in AI-content detection tasks
-- 7.44% accuracy improvement in deception detection tasks
-- 80-84% of hypothesis pairs offering distinct, non-redundant insights
-- High helpfulness ratings from human evaluators across multiple research domains
-
 ## Troubleshooting
 
 **Issue:** Generated hypotheses are too generic
@@ -467,7 +442,7 @@ Define your task configuration with:
 Create a custom label extraction function that parses LLM outputs for your domain:
 
 ```python
-from hypogenic import BaseTask
+from hypogenic.tasks import BaseTask
 
 def extract_my_label(llm_output: str) -> str:
     """Custom label extraction for your task.
@@ -483,11 +458,8 @@ def extract_my_label(llm_output: str) -> str:
     match = re.search(r'final answer:\s+(.*)', llm_output, re.IGNORECASE)
     return match.group(1).strip() if match else llm_output.strip()
 
-# Use your custom task
-task = BaseTask(
-    config_path="./your_task/config.yaml",
-    extract_label=extract_my_label
-)
+# Use your custom task (first positional arg is the config path)
+task = BaseTask("./your_task/config.yaml", extract_label=extract_my_label)
 ```
 
 ### Step 4: (Optional) Process Literature
@@ -620,37 +592,15 @@ git clone https://github.com/ChicagoHAI/HypoGeniC-datasets.git ./data
 git clone https://github.com/ChicagoHAI/Hypothesis-agent-datasets.git ./data
 ```
 
-### Community & Contributions
-
-- **Contributors:** 7+ active contributors
-- **Stars:** 89+ on GitHub
-- **Topics:** research-tool, interpretability, hypothesis-generation, scientific-discovery, llm-application
-
 For contributions or questions, visit the GitHub repository and check the issues page.
 
 ## Local Resources
 
 ### references/
 
-`config_template.yaml` - Complete example configuration file with all required prompt templates and parameters. This includes:
-- Full YAML structure for task configuration
-- Example prompt templates for all methods
-- Placeholder variable documentation
-- Role-based prompt examples
-
-### scripts/
-
-Scripts directory is available for:
-- Custom data preparation utilities
-- Format conversion tools
-- Analysis and evaluation scripts
-- Integration with external tools
-
-### assets/
-
-Assets directory is available for:
-- Example datasets and templates
-- Sample hypothesis banks
-- Visualization outputs
-- Documentation supplements
+`config_template.yaml` — a runnable-shape `config.yaml` matching the real `hypogenic`
+schema (`task_name`, `train/val/test_data_path`, `prompt_templates` with role-based
+system/user sub-keys and `${...}` placeholders). Read it before authoring a config:
+it documents the `${...}` substitution, the reusable "extra key" mechanism, and which
+settings belong in CLI flags rather than the YAML.
 

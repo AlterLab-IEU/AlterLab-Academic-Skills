@@ -174,22 +174,24 @@ Be cautious with variants that have:
 
 ## Common Query Patterns
 
+> **Field-tag note:** ClinVar's E-utilities index has **no `[CLNSIG]` or `[RVSTAT]` field**. Pathogenicity is filtered through the `[Properties]` field (`clinsig_pathogenic`, `clinsig_likely_pathogenic`, `clinsig_benign`, `clinsig_likely_benign`, `clinsig_uncertain`, `clinsig_has_conflicts`) and review status through the `[Review status]` field. Unknown tags fall back to `[All Fields]` and silently stop filtering — check `querytranslation` in the response.
+
 ### Search for High-Confidence Pathogenic Variants
 
 ```
-BRCA1[gene] AND pathogenic[CLNSIG] AND practice guideline[RVSTAT]
+BRCA1[gene] AND clinsig_pathogenic[Properties] AND "practice guideline"[Review status]
 ```
 
 ### Filter by Review Status
 
 ```
-TP53[gene] AND (reviewed by expert panel[RVSTAT] OR practice guideline[RVSTAT])
+TP53[gene] AND ("reviewed by expert panel"[Review status] OR "practice guideline"[Review status])
 ```
 
 ### Exclude Conflicting Interpretations
 
 ```
-CFTR[gene] AND pathogenic[CLNSIG] NOT conflicting[RVSTAT]
+CFTR[gene] AND clinsig_pathogenic[Properties] NOT clinsig_has_conflicts[Properties]
 ```
 
 ## Updates and Reclassifications

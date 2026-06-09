@@ -398,7 +398,7 @@ app.layout = html.Div([
     dcc.Graph(figure=fig)
 ])
 
-app.run_server(debug=True)
+app.run(debug=True)  # Dash 3.x removed run_server(); use app.run()
 ```
 
 ### Saving and Loading

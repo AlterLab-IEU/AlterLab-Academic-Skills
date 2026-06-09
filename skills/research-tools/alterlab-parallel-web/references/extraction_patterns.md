@@ -233,12 +233,12 @@ extractor = ParallelExtract()
 
 # Step 1: Find relevant pages
 search_result = searcher.search(
-    objective="Find the original transformer paper and its key follow-up papers",
-    search_queries=["attention is all you need paper", "transformer architecture paper"],
+    objective="Find the original 'Attention Is All You Need' transformer paper and its "
+              "key follow-up papers.",
 )
 
-# Step 2: Extract detailed content from top results
-top_urls = [r["url"] for r in search_result["results"][:3]]
+# Step 2: Extract detailed content from the top cited sources
+top_urls = [s["url"] for s in search_result["sources"][:3]]
 extract_result = extractor.extract(
     urls=top_urls,
     objective="Abstract, architecture description, key results, and ablation studies",

@@ -6,14 +6,16 @@ PyHealth provides 33+ models for healthcare prediction tasks, ranging from simpl
 
 ## Model Base Class
 
-All models inherit from `BaseModel` with standard PyTorch functionality:
+All models inherit from `BaseModel` with standard PyTorch functionality.
+
+> **Required init args (PyHealth 2.x).** Every model needs **all three** of `feature_keys=[...]`, `label_key="..."`, and `mode=...`. The keys must match the task's `input_schema` / `output_schema` (for the built-in EHR tasks these are typically `feature_keys=["conditions", "procedures", "drugs"]` and `label_key` = the output key such as `"mortality"`, `"readmission"`, `"drugs"`, `"los"`). The examples below abbreviate to `feature_keys=[...], label_key="...", mode=...`; supply real keys from your task.
 
 **Key Attributes:**
 - `dataset`: Associated SampleDataset
-- `feature_keys`: Input features to use (e.g., ["diagnoses", "medications"])
+- `feature_keys`: Input feature keys (must exist in the task's `input_schema`)
+- `label_key`: Target key (must exist in the task's `output_schema`)
 - `mode`: Task type ("binary", "multiclass", "multilabel", "regression")
 - `embedding_dim`: Feature embedding dimension
-- `device`: Computation device (CPU/GPU)
 
 **Key Methods:**
 - `forward()`: Model forward pass
@@ -38,8 +40,9 @@ from pyhealth.models import LogisticRegression
 
 model = LogisticRegression(
     dataset=sample_dataset,
-    feature_keys=["diagnoses", "medications"],
-    mode="binary"
+    feature_keys=["conditions", "procedures", "drugs"],
+    label_key="mortality",
+    mode="binary",
 )
 ```
 
@@ -61,11 +64,10 @@ from pyhealth.models import MLP
 
 model = MLP(
     dataset=sample_dataset,
-    feature_keys=["diagnoses", "medications"],
+    feature_keys=["conditions", "procedures", "drugs"],
+    label_key="mortality",
     mode="binary",
     hidden_dim=128,
-    num_layers=3,
-    dropout=0.5
 )
 ```
 
@@ -94,11 +96,9 @@ from pyhealth.models import CNN
 
 model = CNN(
     dataset=sample_dataset,
-    feature_keys=["diagnoses", "medications"],
+    feature_keys=["conditions", "procedures", "drugs"],
+    label_key="mortality",
     mode="binary",
-    num_filters=64,
-    kernel_size=3,
-    num_layers=3
 )
 ```
 
@@ -134,12 +134,11 @@ from pyhealth.models import RNN
 
 model = RNN(
     dataset=sample_dataset,
-    feature_keys=["diagnoses", "medications"],
+    feature_keys=["conditions", "procedures", "drugs"],
+    label_key="mortality",
     mode="binary",
     rnn_type="LSTM",
     hidden_dim=128,
-    num_layers=2,
-    bidirectional=True
 )
 ```
 
@@ -175,12 +174,12 @@ from pyhealth.models import Transformer
 
 model = Transformer(
     dataset=sample_dataset,
-    feature_keys=["diagnoses", "medications"],
+    feature_keys=["conditions", "procedures", "drugs"],
+    label_key="mortality",
     mode="binary",
-    num_heads=8,
-    num_layers=6,
-    hidden_dim=256,
-    dropout=0.1
+    embedding_dim=128,
+    num_layers=2,
+    dropout=0.1,
 )
 ```
 
@@ -197,8 +196,9 @@ from pyhealth.models import TransformersModel
 model = TransformersModel(
     dataset=sample_dataset,
     feature_keys=["text"],
+    label_key="label",
     mode="multiclass",
-    pretrained_model="emilyalsentzer/Bio_ClinicalBERT"
+    model_name="emilyalsentzer/Bio_ClinicalBERT",
 )
 ```
 
@@ -228,12 +228,10 @@ from pyhealth.models import GNN
 
 model = GNN(
     dataset=sample_dataset,
-    feature_keys=["diagnoses", "medications"],
+    feature_keys=["conditions", "procedures"],
+    label_key="drugs",
     mode="multilabel",
-    gnn_type="GAT",
     hidden_dim=128,
-    num_layers=3,
-    num_heads=4
 )
 ```
 
@@ -259,15 +257,16 @@ from pyhealth.models import RETAIN
 
 model = RETAIN(
     dataset=sample_dataset,
-    feature_keys=["diagnoses", "medications"],
+    feature_keys=["conditions", "procedures", "drugs"],
+    label_key="mortality",
     mode="binary",
-    hidden_dim=128
 )
 
-# Get attention weights for interpretation
-outputs = model(batch)
-visit_attention = outputs["visit_attention"]
-feature_attention = outputs["feature_attention"]
+# A forward pass returns a dict: loss, y_prob, y_true, logit.
+# For feature-/token-level interpretation, use the Chefer relevance
+# explainer (see references/training_evaluation.md), not ad-hoc attention keys.
+out = model(**batch)
+loss, y_prob = out["loss"], out["y_prob"]
 ```
 
 **Best for:**
@@ -307,11 +306,14 @@ from pyhealth.models import GAMENet
 
 model = GAMENet(
     dataset=sample_dataset,
-    feature_keys=["diagnoses", "medications"],
-    mode="multilabel",
-    embedding_dim=128,
-    ddi_adj_path="/path/to/ddi_adjacency_matrix.pkl"
+    embedding_dim=64,
+    hidden_dim=64,
+    ddi_adj_path="/path/to/ddi_adj.pkl",
+    ehr_adj_path="/path/to/ehr_adj.pkl",
 )
+# Note: drug-recommendation models (GAMENet/SafeDrug/MoleRec/MICRON) infer their
+# diagnoses/procedures -> drugs schema from the DrugRecommendation* task and do
+# not take feature_keys/label_key/mode.
 ```
 
 **MICRON** (`MICRON`)
@@ -337,10 +339,10 @@ from pyhealth.models import SafeDrug
 
 model = SafeDrug(
     dataset=sample_dataset,
-    feature_keys=["diagnoses", "medications"],
-    mode="multilabel",
-    ddi_adj_path="/path/to/ddi_matrix.pkl",
-    molecule_path="/path/to/molecule_graphs.pkl"
+    embedding_dim=64,
+    hidden_dim=64,
+    ddi_adj_path="/path/to/ddi_adj.pkl",      # DDI adjacency matrix
+    molecule_path="/path/to/molecule.pkl",     # drug molecular info
 )
 ```
 
@@ -368,11 +370,10 @@ from pyhealth.models import StageNet
 
 model = StageNet(
     dataset=sample_dataset,
-    feature_keys=["diagnoses", "medications"],
+    feature_keys=["icd_codes", "labs"],   # matches MortalityPredictionStageNetMIMIC4
+    label_key="mortality",
     mode="binary",
-    hidden_dim=128,
-    num_stages=3,
-    chunk_size=128
+    chunk_size=128,
 )
 ```
 
@@ -559,33 +560,36 @@ model = StageNet(
 
 ```python
 from pyhealth.datasets import MIMIC4Dataset
-from pyhealth.tasks import mortality_prediction_mimic4_fn
+from pyhealth.tasks import MortalityPredictionMIMIC4
 from pyhealth.models import Transformer
 from pyhealth.trainer import Trainer
 
 # 1. Prepare data
-dataset = MIMIC4Dataset(root="/path/to/data")
-sample_dataset = dataset.set_task(mortality_prediction_mimic4_fn)
+dataset = MIMIC4Dataset(
+    root="/path/to/data",
+    tables=["diagnoses_icd", "procedures_icd", "prescriptions"],
+)
+sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 
 # 2. Initialize model
 model = Transformer(
     dataset=sample_dataset,
-    feature_keys=["diagnoses", "medications", "procedures"],
+    feature_keys=["conditions", "procedures", "drugs"],
+    label_key="mortality",
     mode="binary",
     embedding_dim=128,
-    num_heads=8,
-    num_layers=3,
-    dropout=0.3
+    num_layers=2,
+    dropout=0.3,
 )
 
 # 3. Train model
-trainer = Trainer(model=model)
+trainer = Trainer(model=model, metrics=["pr_auc", "roc_auc", "f1"])
 trainer.train(
     train_dataloader=train_loader,
     val_dataloader=val_loader,
     epochs=50,
-    monitor="pr_auc_score",
-    monitor_criterion="max"
+    monitor="pr_auc",
+    monitor_criterion="max",
 )
 
 # 4. Evaluate

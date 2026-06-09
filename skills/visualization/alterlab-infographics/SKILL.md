@@ -1,6 +1,6 @@
 ---
 name: alterlab-infographics
-description: "Creates professional infographics with Nano Banana Pro AI and smart iterative refinement, using Gemini 3 Pro for quality review and integrating research-lookup plus web search for accurate data — supports 10 infographic types, 8 industry styles, and colorblind-safe palettes. Use when the request is for an infographic, data-story graphic, statistical poster, comparison chart, timeline, or process visual that pairs designed layout with sourced figures. Part of the AlterLab Academic Skills suite."
+description: "Creates professional infographics with Nano Banana Pro AI and smart iterative refinement, using Gemini 3 Pro for automated quality review and an optional Perplexity Sonar research phase for accurate, sourced data — supports 10 infographic types, 8 industry styles, and colorblind-safe palettes. Use when the request is for an infographic, data-story graphic, statistical poster, comparison chart, timeline, process/how-to visual, or list/social graphic that pairs a designed layout with figures. Use alterlab-scientific-schematics instead for technical flowcharts, CONSORT/PRISMA, pathways, or architecture diagrams; alterlab-generate-image for non-infographic illustrations."
 license: MIT
 metadata:
     skill-author: AlterLab
@@ -58,22 +58,22 @@ Generate any infographic by describing it; the script handles generation, review
 
 ```bash
 # Generate a list infographic (default threshold 7.5/10)
-python skills/infographics/scripts/generate_infographic.py \
+python scripts/generate_infographic.py \
   "5 benefits of regular exercise" \
   -o figures/exercise_benefits.png --type list
 
 # Marketing (highest threshold: 8.5/10)
-python skills/infographics/scripts/generate_infographic.py \
+python scripts/generate_infographic.py \
   "Product features comparison" \
   -o figures/product_comparison.png --type comparison --doc-type marketing
 
 # Corporate style + colorblind-safe palette
-python skills/infographics/scripts/generate_infographic.py \
+python scripts/generate_infographic.py \
   "Company milestones 2010-2025" \
   -o figures/timeline.png --type timeline --style corporate
 
 # WITH RESEARCH for accurate, up-to-date data
-python skills/infographics/scripts/generate_infographic.py \
+python scripts/generate_infographic.py \
   "Global AI market size and growth projections" \
   -o figures/ai_market.png --type statistical --research
 ```

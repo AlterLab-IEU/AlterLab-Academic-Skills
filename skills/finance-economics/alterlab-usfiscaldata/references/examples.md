@@ -65,26 +65,27 @@ print(conversions.head(10))
 
 ```python
 # Recent 10-year note auctions
+# Notes/bonds/TIPS carry the auction rate in high_yield; bills use high_discnt_rate.
 result = fetch("/v1/accounting/od/auctions_query",
                filter="security_type:eq:Note,security_term:eq:10-Year",
                sort="-record_date", **{"page[size]": 20})
 df = pd.DataFrame(result["data"])
-numeric_cols = ["accepted_comp_bid_rate_amt", "bid_to_cover_ratio", 
-                "total_accepted_amt", "indirect_bid_pct_accepted"]
+numeric_cols = ["high_yield", "bid_to_cover_ratio",
+                "total_accepted", "indirect_bidder_accepted"]
 for col in numeric_cols:
     if col in df.columns:
         df[col] = pd.to_numeric(df[col], errors="coerce")
-print(df[["record_date", "security_term", "accepted_comp_bid_rate_amt", 
+print(df[["record_date", "security_term", "high_yield",
          "bid_to_cover_ratio"]].head(10))
 
 # Auction yield trend: 2-year vs 10-year
 def get_auction_yields(term, n=24):
     result = fetch("/v1/accounting/od/auctions_query",
-                   fields="record_date,security_term,accepted_comp_bid_rate_amt",
+                   fields="record_date,security_term,high_yield",
                    filter=f"security_type:eq:Note,security_term:eq:{term}",
                    sort="-record_date", **{"page[size]": n})
     df = pd.DataFrame(result["data"])
-    df["yield"] = df["accepted_comp_bid_rate_amt"].astype(float)
+    df["yield"] = pd.to_numeric(df["high_yield"], errors="coerce")
     df["date"] = pd.to_datetime(df["record_date"])
     return df[["date", "yield", "security_term"]].sort_values("date")
 
@@ -152,12 +153,12 @@ print(pivot.tail(5))
 
 # I Bond rates history
 result = fetch("/v1/accounting/od/i_bonds_interest_rates",
-               sort="-effective_date", **{"page[size]": 20})
+               sort="-earning_period_start", **{"page[size]": 20})
 df = pd.DataFrame(result["data"])
 df["total_rate"] = df["combined_rate"].astype(float)
 df["fixed_rate"] = df["fixed_rate"].astype(float)
 print("I Bond rate history:")
-print(df[["effective_date", "fixed_rate", "total_rate"]].head(10))
+print(df[["earning_period_start", "fixed_rate", "total_rate"]].head(10))
 ```
 
 ### Fiscal Year Summary

@@ -19,9 +19,9 @@ Polars is a lightning-fast DataFrame library for Python and Rust built on Apache
 
 ### Installation and Basic Usage
 
-Install Polars:
-```python
-uv pip install polars
+Pin a recent 1.x (examples here use the Polars 1.x API):
+```bash
+uv add 'polars>=1.0'
 ```
 
 Basic DataFrame creation and operations:
@@ -268,7 +268,7 @@ pl.concat([df1, df2], how="diagonal")
 ### Pivot and Unpivot
 Reshape data:
 ```python
-# Pivot (wide format)
+# Pivot (wide format): on= is the column whose values become new columns
 df.pivot("product", index="date", values="sales")
 
 # Unpivot (long format)
@@ -319,6 +319,16 @@ For comprehensive migration guide, load `references/pandas_migration.md`.
 
 ## Best Practices
 
+### Polars 1.x API notes (renamed since 0.x)
+These older names appear in stale tutorials and LLM training data; use the 1.x form:
+- `read_csv(dtypes=...)` -> `read_csv(schema_overrides=...)`
+- `pl.Utf8` -> `pl.String`
+- `pl.NUMERIC_DTYPES` -> `import polars.selectors as cs; cs.numeric()`
+- `join(how="outer")` -> `join(how="full")` (and `how="full"` no longer coalesces keys; pass `coalesce=True` for old behavior)
+- `pivot(columns=...)` -> `pivot(on=...)` (`on` is the first positional arg)
+- `collect(streaming=True)` -> `collect(engine="streaming")`
+- `read_database(connection_uri=...)` -> `read_database_uri(uri=...)`
+
 ### Performance Optimization
 
 1. **Use lazy evaluation for large datasets:**
@@ -332,9 +342,9 @@ For comprehensive migration guide, load `references/pandas_migration.md`.
    - Use `.map_elements()` only when necessary
    - Prefer native Polars operations
 
-3. **Use streaming for very large data:**
+3. **Use the streaming engine to lower peak memory:**
    ```python
-   lf.collect(streaming=True)
+   lf.collect(engine="streaming")  # `streaming=True` is deprecated
    ```
 
 4. **Select only needed columns early:**

@@ -148,8 +148,9 @@ GET /singleNucleotidePolymorphisms/{rsId}/associations
 ```python
 import requests
 
-# Find all associations for type 2 diabetes
-trait_id = "EFO_0001360"
+# Find all associations for type 2 diabetes.
+# Main REST API uses current short-forms: MONDO_0005148 (legacy EFO_0001360 404s here).
+trait_id = "MONDO_0005148"
 url = f"https://www.ebi.ac.uk/gwas/rest/api/efoTraits/{trait_id}/associations"
 params = {"size": 100, "page": 0}
 response = requests.get(url, params=params, headers={"Content-Type": "application/json"})
@@ -159,21 +160,19 @@ associations = data.get('_embedded', {}).get('associations', [])
 print(f"Found {len(associations)} associations")
 ```
 
-**Response Fields:**
-- `rsId`: Variant identifier
-- `strongestAllele`: Risk or effect allele
-- `pvalue`: Association p-value
-- `pvalueText`: P-value as reported (may include inequality)
-- `pvalueMantissa`: Mantissa of p-value
-- `pvalueExponent`: Exponent of p-value
-- `orPerCopyNum`: Odds ratio per allele copy
-- `betaNum`: Effect size (quantitative traits)
-- `betaUnit`: Unit of measurement
-- `range`: Confidence interval
-- `standardError`: Standard error
-- `efoTrait`: Trait name
-- `mappedLabel`: EFO standardized term
-- `studyId`: Associated study accession
+**Response Fields (verified against the live v2 API):** the rsID, allele, and
+trait are **nested**, not top-level. On an association object:
+- `pvalue`: Association p-value (top-level)
+- `pvalueMantissa` / `pvalueExponent`: p-value split form (top-level)
+- `orPerCopyNum`: Odds ratio per allele copy (top-level; `null` for quantitative traits)
+- `betaNum`: Effect size for quantitative traits (top-level; `null` for case-control)
+- `betaUnit`, `betaDirection`: Unit / direction of beta
+- `range`, `standardError`: Confidence interval and standard error
+- `riskFrequency`: Reported risk-allele frequency
+- `snps[].rsId`: variant rsID (no top-level `rsId`)
+- `loci[].strongestRiskAlleles[].riskAlleleName`: risk allele, e.g. `rs7903146-T` (no top-level `strongestAllele`)
+- `efoTraits[].trait` (plus `uri`, `shortForm`): trait name (no top-level `efoTrait`/`mappedLabel`)
+- `_links.study.href`: follow for study accession and PubMed ID (not inline)
 
 #### 3. Variants (Single Nucleotide Polymorphisms)
 
@@ -354,7 +353,9 @@ GET /traits/{efoId}/associations
 ```python
 import requests
 
-# Find highly significant associations for a trait
+# Find highly significant associations for a trait.
+# Summary Statistics API still keys on the legacy EFO id (EFO_0001360);
+# MONDO_0005148 used by the main REST API 404s here.
 trait_id = "EFO_0001360"
 base_url = "https://www.ebi.ac.uk/gwas/summary-statistics/api"
 url = f"{base_url}/traits/{trait_id}/associations"
@@ -445,9 +446,13 @@ Responses follow the HAL (Hypertext Application Language) specification:
   "_embedded": {
     "associations": [
       {
-        "rsId": "rs7903146",
-        "pvalue": 1.2e-30,
-        "efoTrait": "type 2 diabetes",
+        "pvalue": 8e-12,
+        "orPerCopyNum": 1.54,
+        "snps": [{ "rsId": "rs7903146" }],
+        "loci": [
+          { "strongestRiskAlleles": [{ "riskAlleleName": "rs7903146-T" }] }
+        ],
+        "efoTraits": [{ "trait": "type 2 diabetes mellitus" }],
         "_links": {
           "self": {
             "href": "https://www.ebi.ac.uk/gwas/rest/api/associations/12345"
@@ -546,9 +551,10 @@ def get_variant_pleiotropy(rs_id):
 
     traits = {}
     for assoc in data.get('_embedded', {}).get('associations', []):
-        trait = assoc.get('efoTrait')
+        # trait name is nested under efoTraits[], not top-level
+        trait = (assoc.get('efoTraits') or [{}])[0].get('trait')
         pvalue = assoc.get('pvalue')
-        if trait:
+        if trait and pvalue:
             if trait not in traits or float(pvalue) < float(traits[trait]):
                 traits[trait] = pvalue
 
@@ -694,13 +700,17 @@ class GWASCatalogQuery:
             for assoc in associations:
                 pvalue = assoc.get('pvalue')
                 if pvalue and float(pvalue) <= p_threshold:
+                    # rsID / allele / study are nested, not top-level
+                    rs = (assoc.get('snps') or [{}])[0].get('rsId')
+                    allele = ((assoc.get('loci') or [{}])[0]
+                              .get('strongestRiskAlleles') or [{}])[0].get('riskAlleleName')
                     results.append({
-                        'rs_id': assoc.get('rsId'),
+                        'rs_id': rs,
                         'pvalue': float(pvalue),
-                        'risk_allele': assoc.get('strongestAllele'),
+                        'risk_allele': allele,
                         'or_beta': assoc.get('orPerCopyNum') or assoc.get('betaNum'),
-                        'study': assoc.get('studyId'),
-                        'pubmed_id': assoc.get('pubmedId')
+                        # follow _links.study.href for accession + PubMed ID
+                        'study_href': assoc.get('_links', {}).get('study', {}).get('href'),
                     })
 
             page += 1

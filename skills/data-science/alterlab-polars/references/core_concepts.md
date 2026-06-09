@@ -81,8 +81,9 @@ df.select(pl.all() * 2)
 # All columns ending with "_value"
 df.select(pl.col("^.*_value$") * 100)
 
-# All numeric columns
-df.select(pl.col(pl.NUMERIC_DTYPES) + 1)
+# All numeric columns (use the selectors module)
+import polars.selectors as cs
+df.select(cs.numeric() + 1)
 ```
 
 **Exclude patterns:**
@@ -116,7 +117,7 @@ Polars has a strict type system based on Apache Arrow.
 - `Float32`, `Float64` - Floating point numbers
 
 **Text:**
-- `Utf8` / `String` - UTF-8 encoded strings
+- `String` - UTF-8 encoded strings (`Utf8` is a deprecated alias)
 - `Categorical` - Categorized strings (low cardinality)
 - `Enum` - Fixed set of string values
 
@@ -148,7 +149,7 @@ Convert between types explicitly:
 df.select(
     pl.col("age").cast(pl.Float64),
     pl.col("date_string").str.strptime(pl.Date, "%Y-%m-%d"),
-    pl.col("id").cast(pl.Utf8)
+    pl.col("id").cast(pl.String)
 )
 ```
 
@@ -264,26 +265,28 @@ result = lf.filter(pl.col("age") > 25).select("name", "age")
 print(result.explain())  # Shows optimized plan
 ```
 
-### Streaming Mode
+### Streaming Engine
 
-Process data larger than memory:
+The streaming engine processes the query in chunks to lower peak memory:
 
 ```python
-# Enable streaming for very large datasets
+# Enable the streaming engine for large datasets
 lf = pl.scan_csv("very_large.csv")
-result = lf.filter(pl.col("age") > 25).collect(streaming=True)
+result = lf.filter(pl.col("age") > 25).collect(engine="streaming")
+# Note: the old `collect(streaming=True)` keyword is deprecated.
 ```
 
 **Streaming benefits:**
-- Process data larger than RAM
 - Lower peak memory usage
 - Chunk-based processing
-- Automatic memory management
 
 **Streaming limitations:**
-- Not all operations support streaming
+- Not all operations support streaming (unsupported ops fall back to in-memory)
 - May be slower for small data
-- Some operations require materializing entire dataset
+- Some operations require materializing the entire dataset
+
+For datasets that genuinely exceed RAM, prefer an out-of-core engine (dask/vaex)
+rather than relying on Polars streaming.
 
 ### Converting Between Eager and Lazy
 
@@ -358,7 +361,7 @@ Polars enforces strict typing:
 
 # Must cast explicitly
 df.with_columns(
-    pl.col("int_col").cast(pl.Utf8) + "_suffix"
+    pl.col("int_col").cast(pl.String) + "_suffix"
 )
 ```
 

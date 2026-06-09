@@ -4,7 +4,7 @@
     {
       "id": "single-pose-prediction",
       "prompt": "Dock aspirin (CC(=O)Oc1ccccc1C(=O)O) into my protein.pdb and give me the top binding poses. Where does it sit?",
-      "expected_output": "Invokes alterlab-diffdock: runs python -m inference with default_inference_args.yaml, --protein_path protein.pdb and the aspirin --ligand SMILES, writing ranked poses (rank_1.sdf ...) plus confidence scores to an out_dir, and interprets the predicted binding pose / confidence.",
+      "expected_output": "Invokes alterlab-diffdock: runs python -m inference with default_inference_args.yaml, --protein_path protein.pdb and the aspirin --ligand SMILES, writing ranked poses (rank1.sdf, rank1_confidence<score>.sdf ...) into a per-complex out_dir, and interprets the predicted binding pose / confidence.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Runs DiffDock inference to produce ranked 3D poses and a confidence score, and clarifies that the output is a pose, not a binding affinity." }

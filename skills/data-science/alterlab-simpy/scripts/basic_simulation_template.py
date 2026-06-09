@@ -18,7 +18,7 @@ class SimulationConfig:
         self.num_resources = 2
         self.num_processes = 10
         self.sim_time = 100
-        self.arrival_rate = 5.0  # Average time between arrivals
+        self.mean_interarrival_time = 5.0  # Mean time between arrivals (NOT a rate)
         self.service_time_mean = 3.0  # Average service time
         self.service_time_std = 1.0  # Service time standard deviation
 
@@ -124,8 +124,10 @@ def customer_generator(env, resource, stats, config):
     customer_count = 0
 
     while True:
-        # Wait for next customer arrival (exponential distribution)
-        inter_arrival_time = random.expovariate(1.0 / config.arrival_rate)
+        # Wait for next customer arrival (exponential inter-arrival times).
+        # expovariate takes the rate lambda = 1 / mean, so a Poisson arrival
+        # process has mean inter-arrival time config.mean_interarrival_time.
+        inter_arrival_time = random.expovariate(1.0 / config.mean_interarrival_time)
         yield env.timeout(inter_arrival_time)
 
         # Create new customer process
@@ -162,7 +164,7 @@ def run_simulation(config):
     # Run simulation
     print(f"Starting simulation for {config.sim_time} time units...")
     print(f"Resources: {config.num_resources}")
-    print(f"Average arrival rate: {config.arrival_rate:.2f}")
+    print(f"Mean inter-arrival time: {config.mean_interarrival_time:.2f}")
     print(f"Average service time: {config.service_time_mean:.2f}")
     print("-" * 50)
 
@@ -179,7 +181,7 @@ def main():
     # Customize configuration if needed
     config.num_resources = 2
     config.sim_time = 50
-    config.arrival_rate = 2.0
+    config.mean_interarrival_time = 2.0
     config.service_time_mean = 3.0
 
     # Run simulation

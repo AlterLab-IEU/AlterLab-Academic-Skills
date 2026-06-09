@@ -25,7 +25,8 @@ USER_AGENT = "AlterLab-Academic-Skills/1.0 (HMDB metabolite query tool)"
 # Simple, well-known top-level fields in the HMDB metabolite XML schema.
 FIELDS = [
     "accession", "name", "chemical_formula", "average_molecular_weight",
-    "monisotopic_molecular_weight", "iupac_name", "smiles", "inchi",
+    "monisotopic_molecular_weight",  # HMDB's actual (misspelled) XML tag
+    "iupac_name", "smiles", "inchi",
     "inchikey", "cas_registry_number", "kegg_id", "pubchem_compound_id",
     "chebi_id", "status", "description",
 ]

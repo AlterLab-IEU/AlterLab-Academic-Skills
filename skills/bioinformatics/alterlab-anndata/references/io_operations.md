@@ -2,6 +2,12 @@
 
 AnnData provides comprehensive I/O functionality for reading and writing data in various formats.
 
+> **Namespaces (anndata >= 0.11):** all format readers/writers live in the
+> `anndata.io` module — use `ad.io.read_csv`, `ad.io.read_mtx`, `ad.io.read_loom`,
+> `ad.io.read_elem`, etc. The old top-level `ad.read_csv`-style names still work
+> but warn. **Exceptions that stay top-level without a warning:** `ad.read_h5ad`,
+> `ad.read_zarr`, `adata.write_h5ad`, `adata.write_zarr`.
+
 ## Native Formats
 
 ### H5AD (HDF5-based)
@@ -89,62 +95,58 @@ adata = ad.read_zarr(store)
 ### CSV/TSV
 ```python
 # Read CSV (genes as columns, cells as rows)
-adata = ad.read_csv('data.csv')
+adata = ad.io.read_csv('data.csv')
 
 # Read with custom delimiter
-adata = ad.read_csv('data.tsv', delimiter='\t')
+adata = ad.io.read_csv('data.tsv', delimiter='\t')
 
 # Specify that first column is row names
-adata = ad.read_csv('data.csv', first_column_names=True)
+adata = ad.io.read_csv('data.csv', first_column_names=True)
 ```
 
 ### Excel
 ```python
 # Read Excel file
-adata = ad.read_excel('data.xlsx')
+adata = ad.io.read_excel('data.xlsx')
 
 # Read specific sheet
-adata = ad.read_excel('data.xlsx', sheet='Sheet1')
+adata = ad.io.read_excel('data.xlsx', sheet='Sheet1')
 ```
 
 ### Matrix Market (MTX)
-Common format for sparse matrices in genomics.
+Common format for sparse matrices in genomics. `.mtx` stores variables x
+observations; `read_mtx` does NOT transpose for you, so verify orientation.
 
 ```python
-# Read MTX with associated files
-# Requires: matrix.mtx, genes.tsv, barcodes.tsv
-adata = ad.read_mtx('matrix.mtx')
+# Read MTX (just the matrix)
+adata = ad.io.read_mtx('matrix.mtx')
 
-# Read with custom gene and barcode files
-adata = ad.read_mtx(
-    'matrix.mtx',
-    var_names='genes.tsv',
-    obs_names='barcodes.tsv'
-)
-
-# Transpose if needed (MTX often has genes as rows)
+# MTX often has genes as rows — transpose so cells are observations
 adata = adata.T
 ```
 
 ### 10X Genomics formats
+The 10x readers (`read_10x_h5`, `read_10x_mtx`) live in **scanpy**, not anndata. They return a standard AnnData object.
 ```python
+import scanpy as sc
+
 # Read 10X h5 format
-adata = ad.read_10x_h5('filtered_feature_bc_matrix.h5')
+adata = sc.read_10x_h5('filtered_feature_bc_matrix.h5')
 
 # Read 10X MTX directory
-adata = ad.read_10x_mtx('filtered_feature_bc_matrix/')
+adata = sc.read_10x_mtx('filtered_feature_bc_matrix/')
 
 # Specify genome if multiple present
-adata = ad.read_10x_h5('data.h5', genome='GRCh38')
+adata = sc.read_10x_h5('data.h5', genome='GRCh38')
 ```
 
 ### Loom
 ```python
 # Read Loom file
-adata = ad.read_loom('data.loom')
+adata = ad.io.read_loom('data.loom')
 
 # Read with specific observation and variable annotations
-adata = ad.read_loom(
+adata = ad.io.read_loom(
     'data.loom',
     obs_names='CellID',
     var_names='Gene'
@@ -154,10 +156,10 @@ adata = ad.read_loom(
 ### Text files
 ```python
 # Read generic text file
-adata = ad.read_text('data.txt', delimiter='\t')
+adata = ad.io.read_text('data.txt', delimiter='\t')
 
 # Read with custom parameters
-adata = ad.read_text(
+adata = ad.io.read_text(
     'data.txt',
     delimiter=',',
     first_column_names=True,
@@ -168,13 +170,13 @@ adata = ad.read_text(
 ### UMI tools
 ```python
 # Read UMI tools format
-adata = ad.read_umi_tools('counts.tsv')
+adata = ad.io.read_umi_tools('counts.tsv')
 ```
 
 ### HDF5 (generic)
 ```python
 # Read from HDF5 file (not h5ad format)
-adata = ad.read_hdf('data.h5', key='dataset')
+adata = ad.io.read_hdf('data.h5', key='dataset')
 ```
 
 ## Alternative Output Formats
@@ -200,46 +202,43 @@ adata.write_csvs('output_dir/', skip_data=True)  # Skip X matrix
 adata.write_loom('output.loom')
 ```
 
-## Reading Specific Elements
+## Reading/Writing Specific Elements
 
-For fine-grained control, read specific elements from storage:
-
-```python
-from anndata import read_elem
-
-# Read just observation annotations
-obs = read_elem('data.h5ad/obs')
-
-# Read specific layer
-layer = read_elem('data.h5ad/layers/normalized')
-
-# Read unstructured data element
-params = read_elem('data.h5ad/uns/pca_params')
-```
-
-## Writing Specific Elements
+For fine-grained control, read or write individual elements (an obs DataFrame, a
+sparse matrix, a layer) without constructing a full AnnData. The element API
+takes an **open** h5py/zarr group and an in-group path — not a filesystem path
+string. Lives under `ad.io`.
 
 ```python
-from anndata import write_elem
+import anndata as ad
 import h5py
 
-# Write element to existing file
+# Read just observation annotations (pass the open group element)
+with h5py.File('data.h5ad', 'r') as f:
+    obs = ad.io.read_elem(f['obs'])
+    layer = ad.io.read_elem(f['layers/normalized'])
+
+# Write an element into an existing file
 with h5py.File('data.h5ad', 'a') as f:
-    write_elem(f, 'new_layer', adata.X.copy())
+    ad.io.write_elem(f, 'layers/new_layer', adata.X.copy())
 ```
 
 ## Lazy Operations
 
-For very large datasets, use lazy reading to avoid loading entire datasets:
+For very large datasets, open the whole store lazily so array data is backed by
+Dask and annotation frames by xarray — nothing is read until accessed. Pass an
+open h5py file (you manage its lifetime):
 
 ```python
-from anndata.experimental import read_elem_lazy
+import anndata as ad
+import h5py
 
-# Lazy read (returns dask array or similar)
-X_lazy = read_elem_lazy('large_data.h5ad/X')
+f = h5py.File('large_data.h5ad', 'r')
+adata = ad.experimental.read_lazy(f)
 
-# Compute only when needed
-subset = X_lazy[:100, :100].compute()
+print(type(adata.X))   # dask.array.core.Array
+# Compute only the slice you need
+subset = adata.X[:100, :100].compute()
 ```
 
 ## Common I/O Patterns
@@ -247,11 +246,11 @@ subset = X_lazy[:100, :100].compute()
 ### Convert between formats
 ```python
 # MTX to H5AD
-adata = ad.read_mtx('matrix.mtx').T
+adata = ad.io.read_mtx('matrix.mtx').T
 adata.write_h5ad('data.h5ad')
 
 # CSV to H5AD
-adata = ad.read_csv('data.csv')
+adata = ad.io.read_csv('data.csv')
 adata.write_h5ad('data.h5ad')
 
 # H5AD to Zarr
@@ -355,19 +354,19 @@ for i in range(0, adata.n_obs, chunk_size):
 ```
 
 ### Strategy 3: Use AnnCollection
+A lightweight virtual collection over several AnnData objects that behaves like
+one large dataset without concatenating in memory. Pass backed AnnData objects
+(read each with `backed='r'`) so X stays on disk until a batch is accessed.
 ```python
+import anndata as ad
 from anndata.experimental import AnnCollection
 
-# Create collection without loading data
-adatas = [f'dataset_{i}.h5ad' for i in range(10)]
-collection = AnnCollection(
-    adatas,
-    join_obs='inner',
-    join_vars='inner'
-)
+# Open each file backed, then wrap — data is loaded only when a batch is sliced
+adatas = [ad.read_h5ad(f'dataset_{i}.h5ad', backed='r') for i in range(10)]
+collection = AnnCollection(adatas)
 
-# Process collection lazily
-# Data is loaded only when accessed
+batch = collection[10:20]   # materializes just this slice
+print(batch.X.shape)
 ```
 
 ## Common Issues and Solutions

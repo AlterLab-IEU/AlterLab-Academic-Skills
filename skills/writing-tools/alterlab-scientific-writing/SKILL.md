@@ -1,6 +1,6 @@
 ---
 name: alterlab-scientific-writing
-description: Writes scientific manuscripts in full flowing paragraphs (never bullet points) via a two-stage process — section outlines with key points using research-lookup, then conversion to prose — applying IMRAD structure, citations (APA/AMA/Vancouver), figures/tables, and reporting guidelines (CONSORT/STROBE/PRISMA). Use when drafting research papers or journal submissions and writing manuscript sections (introduction, methods, results, discussion). Part of the AlterLab Academic Skills suite.
+description: Writes scientific manuscripts in full flowing paragraphs (never bullet points) via a two-stage process — section outlines with key points using research-lookup, then conversion to prose — applying IMRAD structure, citations (APA/AMA/Vancouver), figures/tables, and reporting guidelines (CONSORT/STROBE/PRISMA). Use when drafting or revising research papers, journal submissions, or any manuscript section (abstract, introduction, methods, results, discussion), or professional/technical reports. For a specific venue's LaTeX template and house style use alterlab-venue-templates; to build a BibTeX bibliography or verify reference metadata use alterlab-citation-mgmt. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 compatibility: No API key or external service required for drafting; optional professional-report formatting with scientific_report.sty needs a LaTeX distribution (XeLaTeX/LuaLaTeX)
@@ -13,9 +13,7 @@ metadata:
 
 ## Overview
 
-**This is the core skill for the deep research and writing tool**—combining AI-driven deep research with well-formatted written outputs. Every document produced is backed by comprehensive literature search and verified citations through the research-lookup skill.
-
-Scientific writing is a process for communicating research with precision and clarity. Write manuscripts using IMRAD structure, citations (APA/AMA/Vancouver), figures/tables, and reporting guidelines (CONSORT/STROBE/PRISMA). Apply this skill for research papers and journal submissions.
+Scientific writing communicates research with precision and clarity. Write manuscripts using IMRAD structure, citations (APA/AMA/Vancouver), figures/tables, and reporting guidelines (CONSORT/STROBE/PRISMA). Apply this skill for research papers and journal submissions. Ground claims in literature gathered via the **alterlab-research-lookup** skill, and verify every citation against its source.
 
 **Critical Principle: Always write in full paragraphs with flowing prose. Never submit bullet points in the final manuscript.** Use a two-stage process: first create section outlines with key points using research-lookup, then convert those outlines into complete paragraphs.
 
@@ -35,7 +33,7 @@ This skill should be used when:
 
 ## Figures and Visual Elements (Optional)
 
-Well-chosen figures—such as a graphical abstract, methods flowchart, or conceptual diagram—can strengthen a manuscript, but they are optional and should be added only where they genuinely improve clarity. If a diagram or figure would aid comprehension, invoke the **alterlab-scientific-schematics** skill (diagrams/schematics) or the **alterlab-generate-image** skill (images). Figures are optional — add them only where they improve clarity.
+Well-chosen figures—such as a graphical abstract, methods flowchart, or conceptual diagram—can strengthen a manuscript, but they are optional and should be added only where they genuinely improve clarity. If a diagram or figure would aid comprehension, invoke the **alterlab-scientific-schematics** skill (diagrams/schematics) or the **alterlab-generate-image** skill (images).
 
 ---
 
@@ -270,45 +268,14 @@ For per-discipline conventions (biomedical/clinical, molecular biology and genet
 
 ## Integration with Other Scientific Skills
 
-This skill works effectively with:
-- **Data analysis skills**: For generating results to report
-- **Statistical analysis**: For determining appropriate statistical presentations
-- **Literature review skills**: For contextualizing research
-- **Figure creation tools**: For developing publication-quality visualizations
-- **Venue-templates skill**: For venue-specific writing styles and formatting (journal manuscripts)
-- **scientific_report.sty**: For professional reports, white papers, and technical documents
+Use this skill for the general scientific-writing craft (IMRAD, clarity, prose, citation styles in text). Hand off to a sibling skill when the task is theirs:
 
-### Professional Reports vs. Journal Manuscripts
+- **alterlab-research-lookup** — literature search to populate Stage-1 outlines and ground claims.
+- **alterlab-venue-templates** — a specific venue's LaTeX template, page-limit/formatting rules, and house writing style (Nature/Science, Cell Press, medical journals, ML/CS conferences). Apply this skill's principles first, then adapt to the venue there.
+- **alterlab-citation-mgmt** — building/validating a BibTeX bibliography and pulling reference metadata (this skill applies citation *styles* in text but does not build the reference library).
+- **alterlab-scientific-schematics** / **alterlab-generate-image** — diagrams/schematics and images when a figure would aid clarity.
 
-**Choose the right formatting approach:**
-
-| Document Type | Formatting Approach |
-|---------------|---------------------|
-| Journal manuscripts | Use `venue-templates` skill |
-| Conference papers | Use `venue-templates` skill |
-| Research reports | Use `scientific_report.sty` (this skill) |
-| White papers | Use `scientific_report.sty` (this skill) |
-| Technical reports | Use `scientific_report.sty` (this skill) |
-| Grant reports | Use `scientific_report.sty` (this skill) |
-
-### Venue-Specific Writing Styles
-
-**Before writing for a specific venue, consult the venue-templates skill for writing style guides:**
-
-Different venues have dramatically different writing expectations:
-- **Nature/Science**: Accessible, story-driven, broad significance
-- **Cell Press**: Mechanistic depth, graphical abstracts, Highlights
-- **Medical journals (NEJM, Lancet)**: Structured abstracts, evidence language
-- **ML conferences (NeurIPS, ICML)**: Contribution bullets, ablation studies
-- **CS conferences (CHI, ACL)**: Field-specific conventions
-
-The venue-templates skill provides:
-- `venue_writing_styles.md`: Master style comparison
-- Venue-specific guides: `nature_science_style.md`, `cell_press_style.md`, `medical_journal_styles.md`, `ml_conference_style.md`, `cs_conference_style.md`
-- `reviewer_expectations.md`: What reviewers look for at each venue
-- Writing examples in `assets/examples/`
-
-**Workflow**: First use this skill for general scientific writing principles (IMRAD, clarity, citations), then consult venue-templates for venue-specific style adaptation.
+**Formatting routing**: Journal manuscripts and conference papers use the `venue-templates` skill. Research reports, white papers, technical reports, and grant/progress reports use `scientific_report.sty` (this skill, §8). Theses use institutional templates.
 
 ## References
 
@@ -339,8 +306,6 @@ This skill includes LaTeX style packages and templates for professional report f
 - Tables with alternating row colors and professional headers
 - Scientific notation commands for p-values, effect sizes, confidence intervals
 - Professional headers and footers
-
-**For venue-specific writing styles** (tone, voice, abstract format, reviewer expectations), see the **venue-templates** skill which provides comprehensive style guides for Nature/Science, Cell Press, medical journals, ML conferences, and CS conferences.
 
 Load these references as needed when working on specific aspects of scientific writing.
 

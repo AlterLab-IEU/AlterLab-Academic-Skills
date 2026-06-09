@@ -138,13 +138,11 @@ def predict_new_molecules(model, smiles_list, transformers=None):
     # Create dataset
     new_dataset = dc.data.NumpyDataset(X=features)
 
-    # Apply transformers (if any)
-    if transformers:
-        for transformer in transformers:
-            new_dataset = transformer.transform(new_dataset)
-
-    # Predict
-    predictions = model.predict(new_dataset)
+    # Pass the training transformers to predict() so any y-normalization
+    # is undone and predictions come back in the original units. Do NOT
+    # call transformer.transform() on this X-only dataset — these
+    # transformers normalize y, not the fingerprint features.
+    predictions = model.predict(new_dataset, transformers=transformers or [])
 
     # Display results
     print("\nPredictions:")

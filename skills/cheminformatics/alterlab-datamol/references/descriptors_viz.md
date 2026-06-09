@@ -43,17 +43,22 @@ Compute multiple molecular properties for a single molecule.
 - **Parameters**:
   - `properties_fn`: Custom list of descriptor functions
   - `add_properties`: Include additional computed properties
-- **Returns**: Dictionary of descriptor name → value pairs
-- **Default descriptors include**:
-  - Molecular weight, LogP, number of H-bond donors/acceptors
-  - Aromatic atoms, stereocenters, rotatable bonds
-  - TPSA (Topological Polar Surface Area)
-  - Ring count, heteroatom count
+- **Returns**: Dictionary of descriptor name → value pairs (~22 keys)
+- **Default keys** (datamol's own names, verified on 0.12.x): `mw`, `fsp3`,
+  `n_lipinski_hba`, `n_lipinski_hbd`, `n_rings`, `n_hetero_atoms`,
+  `n_heavy_atoms`, `n_rotatable_bonds`, `n_radical_electrons`, `tpsa`, `qed`,
+  `clogp`, `sas`, plus aliphatic/aromatic/saturated carbocycle/heterocycle/ring
+  counts.
+- **Naming gotcha**: logP is `clogp`; H-bond donors/acceptors are
+  `n_lipinski_hbd` / `n_lipinski_hba`. There is **no** `logp`, `hbd`, `hba`, or
+  `n_aromatic_atoms` key (use the standalone `n_aromatic_atoms(mol)` function for
+  that count).
 - **Example**:
   ```python
   mol = dm.to_mol("CCO")
   descriptors = dm.descriptors.compute_many_descriptors(mol)
-  # Returns: {'mw': 46.07, 'logp': -0.03, 'hbd': 1, 'hba': 1, ...}
+  # {'mw': 46.04, 'clogp': -0.0, 'n_lipinski_hbd': 1, 'n_lipinski_hba': 1,
+  #  'tpsa': 20.23, ...}
   ```
 
 #### `dm.descriptors.batch_compute_many_descriptors(mols, properties_fn=None, add_properties=True, n_jobs=1, batch_size=None, progress=False)`
@@ -94,9 +99,9 @@ Retrieve any descriptor function from RDKit by name.
 descriptors = dm.descriptors.compute_many_descriptors(mol)
 is_druglike = (
     descriptors['mw'] <= 500 and
-    descriptors['logp'] <= 5 and
-    descriptors['hbd'] <= 5 and
-    descriptors['hba'] <= 10
+    descriptors['clogp'] <= 5 and
+    descriptors['n_lipinski_hbd'] <= 5 and
+    descriptors['n_lipinski_hba'] <= 10
 )
 ```
 

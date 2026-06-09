@@ -46,19 +46,19 @@
     {
       "id": "near-miss-hypothesis-gen-manual",
       "prompt": "I observed that students who used our new tutoring tool scored higher on the final. Help me turn this single observation into a formal, falsifiable hypothesis with a proposed mechanism and an experiment to test it.",
-      "expected_output": "Should NOT trigger the hypogenic skill. This is manual, single-observation hypothesis formulation with a mechanism and experimental design and no dataset to run automated LLM-driven testing over. It belongs to the hypothesis-generation skill, which hypogenic's own description points to for manual formulation. Defer to hypothesis-generation.",
+      "expected_output": "Should NOT trigger the hypogenic skill. This is manual, single-observation hypothesis formulation with a mechanism and experimental design and no dataset to run automated LLM-driven testing over. It belongs to the alterlab-hypothesis-gen skill, which hypogenic's own description points to for manual formulation. Defer to alterlab-hypothesis-gen.",
       "assertions": [
         {"type": "should_not_trigger", "value": true},
-        {"type": "output_contains", "value": "hypothesis-generation"}
+        {"type": "output_contains", "value": "alterlab-hypothesis-gen"}
       ]
     },
     {
       "id": "near-miss-scientific-brainstorm-ideation",
       "prompt": "I'm at the very start of a project on misinformation and I have no data or observations yet. I just want to freely brainstorm interesting research directions and find cross-disciplinary angles and gaps.",
-      "expected_output": "Should NOT trigger the hypogenic skill. This is open-ended early-stage ideation with no dataset and no observations to test, which is the territory of the scientific-brainstorming skill, not automated data-driven hypothesis testing. Defer to scientific-brainstorming.",
+      "expected_output": "Should NOT trigger the hypogenic skill. This is open-ended early-stage ideation with no dataset and no observations to test, which is the territory of the alterlab-scientific-brainstorm skill, not automated data-driven hypothesis testing. Defer to alterlab-scientific-brainstorm.",
       "assertions": [
         {"type": "should_not_trigger", "value": true},
-        {"type": "output_contains", "value": "scientific-brainstorming"}
+        {"type": "output_contains", "value": "alterlab-scientific-brainstorm"}
       ]
     }
   ]

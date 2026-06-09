@@ -147,11 +147,13 @@ def _detect_venue_tier(url: str) -> Optional[str]:
 
 def main():
     """Main entry point for Claude Code tool."""
-    # Check for API key
-    if not os.getenv("OPENROUTER_API_KEY"):
-        print("❌ Error: OPENROUTER_API_KEY environment variable not set")
-        print("Please set it in your .env file or export it:")
-        print("  export OPENROUTER_API_KEY='your_openrouter_api_key'")
+    # Need at least one backend key. Parallel is the primary backend; Perplexity
+    # is used for academic queries and as fallback.
+    if not (os.getenv("PARALLEL_API_KEY") or os.getenv("OPENROUTER_API_KEY")):
+        print("❌ Error: no backend API key set")
+        print("Set at least one of these (export or .env):")
+        print("  export PARALLEL_API_KEY='your_parallel_api_key'      # primary (Parallel Chat API)")
+        print("  export OPENROUTER_API_KEY='your_openrouter_api_key'  # academic/fallback (Perplexity)")
         return 1
 
     # Get query from command line arguments

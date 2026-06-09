@@ -100,161 +100,118 @@ Account/Workspace
         └── Records
 ```
 
+> API note: `Project`, `Table`, and `Record` are constructed **by id** (e.g. `Table(table_id)`); they do not expose `.create()`/`.get()`/`.list()` classmethods. You normally discover ids through `Account` and `Project.list_tables()`. Reads use getters (`get_values()`, `get_columns()`); writes go through the `table.update()` transaction context. Always check the current SDK signatures, as the Registry API evolves.
+
 ### Working with Projects
 
 ```python
+from latch.account import Account
 from latch.registry.project import Project
 
-# Get or create a project
-project = Project.create(
-    name="RNA-seq Analysis",
-    description="Bulk RNA-seq experiments"
-)
+# Discover projects in the current workspace
+account = Account.current()
+projects = account.list_registry_projects()
 
-# List existing projects
-all_projects = Project.list()
+# Or construct directly by id
+project = Project("proj_123")
+display_name = project.get_display_name()
 
-# Get project by ID
-project = Project.get(project_id="proj_123")
+# List tables within a project
+tables = project.list_tables()
 ```
 
 ### Working with Tables
 
-Tables store structured data records:
-
 ```python
 from latch.registry.table import Table
 
-# Create a table
-table = Table.create(
-    project_id=project.id,
-    name="Samples",
-    columns=[
-        {"name": "sample_id", "type": "string"},
-        {"name": "condition", "type": "string"},
-        {"name": "replicate", "type": "number"},
-        {"name": "fastq_file", "type": "file"}
-    ]
-)
+# Construct a table by id (e.g. obtained from project.list_tables())
+table = Table("tbl_456")
 
-# List tables in project
-tables = Table.list(project_id=project.id)
-
-# Get table by ID
-table = Table.get(table_id="tbl_456")
+# Inspect the schema: {column_key: Column}
+columns = table.get_columns()
 ```
 
 ### Column Types
 
-Supported data types:
-- `string` - Text data
-- `number` - Numeric values (integer or float)
-- `boolean` - True/False values
-- `date` - Date values
-- `file` - LatchFile references
-- `directory` - LatchDir references
-- `link` - References to records in other tables
-- `enum` - Enumerated values from predefined list
+Registry columns are typed. Common Python column types passed to `upsert_column` (from `latch.registry.types`) include:
+- `str` - Text data
+- `int` / `float` - Numeric values
+- `bool` - True/False values
+- `datetime.date` / `datetime.datetime` - Date / timestamp values
+- `LatchFile` / `LatchDir` - file / directory references
+- `LinkedRecordType[...]` - reference to a record in another table (from `latch.registry.types`)
+- enums - a fixed set of allowed string values
 
 ### Working with Records
 
+Records are read with getters and written through the table's update transaction (upsert is keyed by record **name**).
+
 ```python
-from latch.registry.record import Record
+# Read records: list_records() yields pages of {record_id: Record}
+for page in table.list_records():
+    for record_id, record in page.items():
+        name = record.get_name()
+        values = record.get_values()  # {column_key: value}
 
-# Create a record
-record = Record.create(
-    table_id=table.id,
-    values={
-        "sample_id": "S001",
-        "condition": "treated",
-        "replicate": 1,
-        "fastq_file": LatchFile("latch:///data/S001.fastq")
-    }
-)
-
-# Bulk create records
-records = Record.bulk_create(
-    table_id=table.id,
-    records=[
-        {"sample_id": "S001", "condition": "treated"},
-        {"sample_id": "S002", "condition": "control"}
-    ]
-)
-
-# Query records
-all_records = Record.list(table_id=table.id)
-filtered = Record.list(
-    table_id=table.id,
-    filter={"condition": "treated"}
-)
-
-# Update record
-record.update(values={"replicate": 2})
-
-# Delete record
-record.delete()
+# Create or update records, and update the schema, atomically
+with table.update() as updater:
+    updater.upsert_record(
+        "S001",
+        condition="treated",
+        replicate=1,
+        fastq_file=LatchFile("latch:///data/S001.fastq"),
+    )
+    updater.upsert_record("S002", condition="control")
+    # updater.delete_record("S003")
+# Changes commit when the context exits
 ```
 
 ### Linked Records
 
-Create relationships between tables:
+Link columns reference records in another table. Add a link column with `upsert_column` using `LinkedRecordType` parameterized by the target table's id, then upsert the record with the linked `Record` (or its id):
 
 ```python
-# Define table with link column
-results_table = Table.create(
-    project_id=project.id,
-    name="Results",
-    columns=[
-        {"name": "sample", "type": "link", "target_table": samples_table.id},
-        {"name": "alignment_bam", "type": "file"},
-        {"name": "gene_counts", "type": "file"}
-    ]
-)
+from latch.registry.types import LinkedRecordType
 
-# Create record with link
-result_record = Record.create(
-    table_id=results_table.id,
-    values={
-        "sample": sample_record.id,  # Link to sample record
-        "alignment_bam": LatchFile("latch:///results/aligned.bam"),
-        "gene_counts": LatchFile("latch:///results/counts.tsv")
-    }
-)
+with results_table.update() as updater:
+    updater.upsert_column("sample", LinkedRecordType["tbl_samples_id"])  # target table id
+    updater.upsert_column("alignment_bam", LatchFile)
 
-# Access linked data
-sample_data = result_record.values["sample"].resolve()
+with results_table.update() as updater:
+    updater.upsert_record(
+        "result_S001",
+        sample=sample_record,  # the linked Record (or its id)
+        alignment_bam=LatchFile("latch:///results/aligned.bam"),
+    )
 ```
 
 ### Enum Columns
 
-Define columns with predefined values:
+Add an enum column by passing a Python `Enum` (or its allowed values) to `upsert_column`:
 
 ```python
-table = Table.create(
-    project_id=project.id,
-    name="Experiments",
-    columns=[
-        {
-            "name": "status",
-            "type": "enum",
-            "options": ["pending", "running", "completed", "failed"]
-        }
-    ]
-)
+from enum import Enum
+
+class Status(Enum):
+    pending = "pending"
+    running = "running"
+    completed = "completed"
+    failed = "failed"
+
+with table.update() as updater:
+    updater.upsert_column("status", Status)
 ```
 
 ### Transactions and Bulk Updates
 
-Efficiently update multiple records:
+The `table.update()` context manager **is** the transaction: every `upsert_record` / `upsert_column` / `delete_record` inside it is committed atomically on exit. Group bulk changes in a single block:
 
 ```python
-from latch.registry.transaction import Transaction
-
-# Start transaction
-with Transaction() as txn:
-    for record in records:
-        record.update(values={"status": "processed"}, transaction=txn)
-    # Changes committed when exiting context
+with table.update() as updater:
+    for name in record_names:
+        updater.upsert_record(name, status="processed")
+    # all updates commit atomically here
 ```
 
 ## Integration with Workflows
@@ -268,116 +225,77 @@ from latch.registry.table import Table
 from latch.registry.record import Record
 
 @small_task
-def process_and_save(sample_id: str, table_id: str) -> str:
-    # Get sample from registry
-    table = Table.get(table_id=table_id)
-    records = Record.list(
-        table_id=table_id,
-        filter={"sample_id": sample_id}
-    )
-    sample = records[0]
+def process_and_save(sample_name: str, table_id: str) -> str:
+    table = Table(table_id)
 
-    # Process file
-    input_file = sample.values["fastq_file"]
-    # ... processing logic ...
+    # Find the record by name
+    sample = None
+    for page in table.list_records():
+        for record in page.values():
+            if record.get_name() == sample_name:
+                sample = record
+                break
+        if sample is not None:
+            break
 
-    # Save results back to registry
-    sample.update(values={
-        "status": "completed",
-        "results_file": output_file
-    })
+    # Read its file column
+    input_file = sample.get_values()["fastq_file"]
+    # ... processing logic produces output_file (a LatchFile) ...
+
+    # Save results back to the registry via the update transaction
+    with table.update() as updater:
+        updater.upsert_record(sample_name, status="completed", results_file=input_file)
 
     return "Success"
 
 @workflow
-def registry_workflow(sample_id: str, table_id: str):
-    """Workflow integrated with Registry"""
-    return process_and_save(sample_id=sample_id, table_id=table_id)
+def registry_workflow(sample_name: str, table_id: str) -> str:
+    """Workflow integrated with the Registry"""
+    return process_and_save(sample_name=sample_name, table_id=table_id)
 ```
 
-### Automatic Workflow Execution on Data
+### Launch plans (preset parameters)
 
-Configure workflows to run automatically when data is added to Registry folders:
-
-```python
-from latch.resources.launch_plan import LaunchPlan
-
-# Create launch plan that watches a folder
-launch_plan = LaunchPlan.create(
-    workflow_name="rnaseq_pipeline",
-    name="auto_process",
-    trigger_folder="latch:///incoming_data",
-    default_inputs={
-        "output_dir": "latch:///results"
-    }
-)
-```
+A launch plan attaches named default parameters to a workflow so they pre-fill the console form. (See references/workflow-creation.md for the exact `LaunchPlan(workflow, name, default_params=...)` form.) Automated "run on new data" triggers are configured on the platform side, not via a `trigger_folder` argument to `LaunchPlan`.
 
 ## Account and Workspace Management
 
-### Account Information
+The active workspace is determined by your login (`latch login` / `latch workspace`). `Account.current()` returns the current workspace's account; use it to enumerate Registry projects. There is no `Account.list()` / `Account.set_current()` — switch workspaces with the CLI (`latch workspace`).
 
 ```python
 from latch.account import Account
 
-# Get current account
+# Get the current workspace's account
 account = Account.current()
 
-# Account properties
-workspace_id = account.id
-workspace_name = account.name
-```
-
-### Team Workspaces
-
-Access shared team workspaces:
-
-```python
-# List available workspaces
-workspaces = Account.list()
-
-# Switch workspace
-Account.set_current(workspace_id="ws_789")
+# Enumerate this workspace's Registry projects
+projects = account.list_registry_projects()
 ```
 
 ## Functions for Data Operations
 
-### Joining Data
+### Channel/data operators
 
-The `latch.functions` module provides data manipulation utilities:
-
-```python
-from latch.functions import left_join, inner_join, outer_join, right_join
-
-# Join tables
-combined = left_join(
-    left_table=table1,
-    right_table=table2,
-    on="sample_id"
-)
-```
-
-### Filtering
+`latch.functions.operators` provides Nextflow-style operators that work on **lists/dicts** (channels), not on Registry `Table` objects:
 
 ```python
-from latch.functions import filter_records
+from latch.functions.operators import left_join, inner_join, outer_join, right_join, latch_filter, group_tuple
 
-# Filter records
-filtered = filter_records(
-    table=table,
-    condition=lambda record: record["replicate"] > 1
-)
+# left/right/inner/outer_join take two dicts keyed by a common key
+combined = left_join(left_dict, right_dict)
+
+# latch_filter filters a list by a predicate, regex, or type
+filtered = latch_filter(channel, predicate=lambda x: x["replicate"] > 1)
 ```
 
 ### Secrets Management
 
-Store and retrieve secrets securely:
+Retrieve secrets stored in your workspace from inside a task:
 
 ```python
-from latch.functions import get_secret
+from latch.functions.secrets import get_secret
 
-# Retrieve secret in workflow
-api_key = get_secret("api_key")
+api_key = get_secret("api_key")  # get_secret(secret_name)
 ```
 
 ## Best Practices
@@ -395,33 +313,35 @@ api_key = get_secret("api_key")
 
 ### Sample Tracking
 
+Add columns to an existing table via its update transaction. (Create the table itself in the platform UI, or obtain it from `project.list_tables()`.)
+
 ```python
-# Create samples table
-samples = Table.create(
-    project_id=project.id,
-    name="Samples",
-    columns=[
-        {"name": "sample_id", "type": "string"},
-        {"name": "collection_date", "type": "date"},
-        {"name": "raw_fastq_r1", "type": "file"},
-        {"name": "raw_fastq_r2", "type": "file"},
-        {"name": "status", "type": "enum", "options": ["pending", "processing", "complete"]}
-    ]
-)
+import datetime
+from enum import Enum
+from latch.types import LatchFile
+
+class SampleStatus(Enum):
+    pending = "pending"
+    processing = "processing"
+    complete = "complete"
+
+with samples_table.update() as updater:
+    updater.upsert_column("sample_id", str)
+    updater.upsert_column("collection_date", datetime.date)
+    updater.upsert_column("raw_fastq_r1", LatchFile)
+    updater.upsert_column("raw_fastq_r2", LatchFile)
+    updater.upsert_column("status", SampleStatus)
 ```
 
 ### Results Organization
 
 ```python
-# Create results table linked to samples
-results = Table.create(
-    project_id=project.id,
-    name="Analysis Results",
-    columns=[
-        {"name": "sample", "type": "link", "target_table": samples.id},
-        {"name": "alignment_bam", "type": "file"},
-        {"name": "variants_vcf", "type": "file"},
-        {"name": "qc_metrics", "type": "file"}
-    ]
-)
+from latch.registry.types import LinkedRecordType
+from latch.types import LatchFile
+
+with results_table.update() as updater:
+    updater.upsert_column("sample", LinkedRecordType["tbl_samples_id"])  # link to a Samples record
+    updater.upsert_column("alignment_bam", LatchFile)
+    updater.upsert_column("variants_vcf", LatchFile)
+    updater.upsert_column("qc_metrics", LatchFile)
 ```

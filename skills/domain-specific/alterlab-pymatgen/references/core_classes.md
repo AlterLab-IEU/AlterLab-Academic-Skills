@@ -6,7 +6,7 @@ This reference documents the fundamental classes in `pymatgen.core` that form th
 
 Pymatgen follows an object-oriented design where elements, sites, and structures are represented as objects. The framework emphasizes periodic boundary conditions for crystal representation while maintaining flexibility for molecular systems.
 
-**Unit Conventions**: All units in pymatgen are typically assumed to be in atomic units:
+**Unit Conventions**: pymatgen uses metric/spectroscopic units (not Hartree atomic units):
 - Lengths: angstroms (Å)
 - Energies: electronvolts (eV)
 - Angles: degrees
@@ -313,6 +313,6 @@ Represents spectroscopic data with methods for normalization and processing.
 
 1. **Immutability**: Use immutable versions (`IStructure`, `IMolecule`) when structures shouldn't be modified
 2. **Serialization**: Prefer `as_dict()`/`from_dict()` over pickle for long-term storage
-3. **Units**: Always work in atomic units (Å, eV) - conversions are available in `pymatgen.core.units`
+3. **Units**: Default units are Å and eV (not Hartree atomic units) - conversions are available in `pymatgen.core.units`
 4. **File I/O**: Use `from_file()` for automatic format detection
 5. **Coordinates**: Pay attention to whether methods expect Cartesian or fractional coordinates

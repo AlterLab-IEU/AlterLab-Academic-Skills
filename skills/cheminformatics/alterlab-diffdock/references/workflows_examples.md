@@ -44,14 +44,15 @@ python -m inference \
   --out_dir results/single_docking/
 ```
 
-**Output Structure**:
+**Output Structure**: results go into a per-complex subdirectory; confidence is embedded in each pose filename (no separate scores file):
 ```
 results/single_docking/
-├── index_0_rank_1.sdf       # Top-ranked prediction
-├── index_0_rank_2.sdf       # Second-ranked prediction
-├── ...
-├── index_0_rank_10.sdf      # 10th prediction (if samples_per_complex=10)
-└── confidence_scores.txt    # Scores for all predictions
+└── complex_0/
+    ├── rank1.sdf                   # Top pose (no score in name)
+    ├── rank1_confidence-0.42.sdf   # Same pose with confidence suffix
+    ├── rank2_confidence-1.10.sdf   # 2nd-ranked prediction
+    ├── ...
+    └── rank10_confidence-3.05.sdf  # 10th prediction (if samples_per_complex=10)
 ```
 
 ### Using Ligand Structure File
@@ -114,15 +115,16 @@ python -m inference \
   --batch_size 10
 ```
 
-**Output Structure**:
+**Output Structure** (one subdirectory per `complex_name`, confidence in each filename):
 ```
 results/batch_predictions/
 ├── complex1/
-│   ├── rank_1.sdf
-│   ├── rank_2.sdf
+│   ├── rank1.sdf
+│   ├── rank1_confidence-0.42.sdf
+│   ├── rank2_confidence-1.10.sdf
 │   └── ...
 ├── complex2/
-│   ├── rank_1.sdf
+│   ├── rank1.sdf
 │   └── ...
 └── complex3/
     └── ...
@@ -172,28 +174,34 @@ python -m inference \
 
 ```python
 # analyze_screening_results.py
+# DiffDock embeds the confidence in each pose filename
+# (e.g. rank1_confidence-1.23.sdf), so parse it from there.
 import os
+import re
 import pandas as pd
 
 results = []
 results_dir = "results/virtual_screening/"
+conf_re = re.compile(r"confidence(-?\d+\.?\d*)")
 
 for complex_dir in os.listdir(results_dir):
-    confidence_file = os.path.join(results_dir, complex_dir, "confidence_scores.txt")
-    if os.path.exists(confidence_file):
-        with open(confidence_file) as f:
-            scores = [float(line.strip()) for line in f]
-            top_score = max(scores)
-            results.append({"complex": complex_dir, "top_confidence": top_score})
+    subdir = os.path.join(results_dir, complex_dir)
+    if not os.path.isdir(subdir):
+        continue
+    scores = [
+        float(m.group(1))
+        for fname in os.listdir(subdir)
+        if (m := conf_re.search(fname))
+    ]
+    if scores:
+        results.append({"complex": complex_dir, "top_confidence": max(scores)})
 
-# Sort by confidence
-df = pd.DataFrame(results)
-df_sorted = df.sort_values("top_confidence", ascending=False)
-
-# Get top 100 hits
-top_hits = df_sorted.head(100)
-top_hits.to_csv("top_hits.csv", index=False)
+# Sort by confidence and keep the top 100 hits
+df = pd.DataFrame(results).sort_values("top_confidence", ascending=False)
+df.head(100).to_csv("top_hits.csv", index=False)
 ```
+
+(Or just run `python scripts/analyze_results.py results/virtual_screening/ --best 100 --export top_hits.csv`.)
 
 ## Workflow 5: Ensemble Docking with Protein Flexibility
 

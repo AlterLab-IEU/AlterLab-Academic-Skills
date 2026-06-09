@@ -22,12 +22,15 @@ X_scaled = (X - X.mean(axis=0)) / X.std(axis=0)
 
 # 2. BUILD MODEL
 # ==============
-with pm.Model() as model:
-    # Define coordinates for named dimensions
-    coords = {
-        'predictors': ['var1', 'var2', 'var3'],
-        'obs_id': np.arange(len(y))
-    }
+coords = {
+    'predictors': ['var1', 'var2', 'var3'],
+    'obs_id': np.arange(len(y)),
+}
+
+with pm.Model(coords=coords) as model:
+    # Wrap predictors in pm.Data so they can be swapped for predictions later.
+    # The 'obs_id' dim is mutable so new data can have a different length.
+    X_data = pm.Data('X_data', X_scaled, dims=('obs_id', 'predictors'))
 
     # Priors
     alpha = pm.Normal('alpha', mu=0, sigma=1)
@@ -35,7 +38,7 @@ with pm.Model() as model:
     sigma = pm.HalfNormal('sigma', sigma=1)
 
     # Linear predictor
-    mu = alpha + pm.math.dot(X_scaled, beta)
+    mu = alpha + pm.math.dot(X_data, beta)
 
     # Likelihood
     y_obs = pm.Normal('y_obs', mu=mu, sigma=sigma, observed=y, dims='obs_id')
@@ -43,7 +46,7 @@ with pm.Model() as model:
 # 3. PRIOR PREDICTIVE CHECK
 # ==========================
 with model:
-    prior_pred = pm.sample_prior_predictive(samples=1000, random_seed=42)
+    prior_pred = pm.sample_prior_predictive(draws=1000, random_seed=42)
 
 # Visualize prior predictions
 az.plot_ppc(prior_pred, group='prior', num_pp_samples=100)
@@ -116,19 +119,21 @@ X_new = ...  # New predictor values
 X_new_scaled = (X_new - X.mean(axis=0)) / X.std(axis=0)
 
 with model:
-    # Update data
-    pm.set_data({'X': X_new_scaled})
+    # Update data (new coords for the mutable obs_id dim)
+    pm.set_data({'X_data': X_new_scaled}, coords={'obs_id': np.arange(len(X_new_scaled))})
 
     # Sample predictions
     post_pred = pm.sample_posterior_predictive(
-        idata.posterior,
+        idata,
         var_names=['y_obs'],
-        random_seed=42
+        predictions=True,
+        extend_inferencedata=True,
+        random_seed=42,
     )
 
-# Prediction intervals
-y_pred_mean = post_pred.posterior_predictive['y_obs'].mean(dim=['chain', 'draw'])
-y_pred_hdi = az.hdi(post_pred.posterior_predictive, var_names=['y_obs'])
+# Prediction intervals (predictions=True stores results in idata.predictions)
+y_pred_mean = idata.predictions['y_obs'].mean(dim=['chain', 'draw'])
+y_pred_hdi = az.hdi(idata.predictions, var_names=['y_obs'])
 
 # 9. SAVE RESULTS
 # ===============
@@ -337,7 +342,7 @@ Always validate priors:
 
 ```python
 with model:
-    prior_pred = pm.sample_prior_predictive(samples=1000)
+    prior_pred = pm.sample_prior_predictive(draws=1000)
 
 # Check if predictions are reasonable
 print(f"Prior predictive range: {prior_pred.prior_predictive['y'].min():.2f} to {prior_pred.prior_predictive['y'].max():.2f}")

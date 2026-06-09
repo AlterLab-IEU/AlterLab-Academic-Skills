@@ -72,6 +72,9 @@ def detect_file_type(filepath):
         # Microscopy/Imaging
         'tif': ('microscopy_imaging', 'Tagged Image File Format'),
         'tiff': ('microscopy_imaging', 'Tagged Image File Format'),
+        'png': ('microscopy_imaging', 'Portable Network Graphics'),
+        'jpg': ('microscopy_imaging', 'JPEG Image'),
+        'jpeg': ('microscopy_imaging', 'JPEG Image'),
         'nd2': ('microscopy_imaging', 'Nikon NIS-Elements'),
         'lif': ('microscopy_imaging', 'Leica Image Format'),
         'czi': ('microscopy_imaging', 'Carl Zeiss Image'),
@@ -280,10 +283,14 @@ def analyze_general_scientific(filepath, extension):
         elif extension in ['csv', 'tsv']:
             import pandas as pd
             sep = '\t' if extension == 'tsv' else ','
-            df = pd.read_csv(filepath, sep=sep, nrows=10000)  # Sample first 10k rows
+            sample_rows = 10000
+            df = pd.read_csv(filepath, sep=sep, nrows=sample_rows)
+            sampled = len(df) == sample_rows  # likely truncated; stats reflect the sample only
 
             results = {
-                'shape': df.shape,
+                'sampled_first_n_rows': sample_rows if sampled else None,
+                'note': f'Stats computed on first {sample_rows} rows only; re-run without nrows for full-file metrics.' if sampled else 'Full file read.',
+                'shape_read': df.shape,
                 'columns': list(df.columns),
                 'dtypes': {col: str(dtype) for col, dtype in df.dtypes.items()},
                 'missing_values': df.isnull().sum().to_dict(),
@@ -370,7 +377,7 @@ def analyze_bioinformatics(filepath, extension):
             }
 
     except ImportError as e:
-        results['error'] = f"Required library not installed (try: pip install biopython): {e}"
+        results['error'] = f"Required library not installed (try: uv pip install biopython): {e}"
     except Exception as e:
         results['error'] = f"Analysis error: {e}"
 
@@ -410,7 +417,7 @@ def analyze_imaging(filepath, extension):
                     results['page_count'] = frame_count
 
     except ImportError as e:
-        results['error'] = f"Required library not installed (try: pip install pillow): {e}"
+        results['error'] = f"Required library not installed (try: uv pip install pillow): {e}"
     except Exception as e:
         results['error'] = f"Analysis error: {e}"
 
@@ -516,7 +523,7 @@ def generate_markdown_report(analysis, output_path=None):
 def main():
     """Main CLI interface."""
     if len(sys.argv) < 2:
-        print("Usage: python eda_analyzer.py <filepath> [output.md]")
+        print("Usage: uv run python eda_analyzer.py <filepath> [output.md]")
         print("  filepath: Path to the data file to analyze")
         print("  output.md: Optional output path for markdown report")
         sys.exit(1)

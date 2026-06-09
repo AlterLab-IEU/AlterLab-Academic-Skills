@@ -1,6 +1,6 @@
 ---
 name: alterlab-gtex
-description: Query the GTEx (Genotype-Tissue Expression) portal for tissue-specific gene expression, expression quantitative trait loci (eQTLs), and splicing QTLs (sQTLs). Use when checking which tissues express a gene, linking GWAS or non-coding variants to gene regulation, or interpreting the regulatory effects of variants across human tissues. Part of the AlterLab Academic Skills suite.
+description: Query the GTEx (Genotype-Tissue Expression) portal v2 REST API for tissue-specific gene expression (median TPM across 54 human tissues), expression QTLs (eQTLs), and splicing QTLs (sQTLs). Use when checking which tissues express a gene, finding which gene a non-coding/GWAS variant regulates via eQTLs, or interpreting variant regulatory effects across tissues. NOT for curated trait-variant associations (use alterlab-gwas), population allele frequencies or variant constraint (use alterlab-gnomad), or gene/transcript structure and ID mapping (use alterlab-ensembl). Part of the AlterLab Academic Skills suite.
 license: CC-BY-4.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless GTEx portal REST API (no authentication required)
@@ -74,16 +74,16 @@ def get_gene_expression_by_tissue(gene_id_or_symbol, dataset_id="gtex_v10"):
     records = data.get("data", [])
     df = pd.DataFrame(records)
     if not df.empty:
-        df = df[["tissueSiteDetailId", "tissueSiteDetail", "median", "unit"]].sort_values(
+        # v2 returns tissueSiteDetailId (not a display-name column), median, unit, geneSymbol
+        df = df[["geneSymbol", "tissueSiteDetailId", "median", "unit"]].sort_values(
             "median", ascending=False
         )
     return df
 
-# Example: get expression of APOE across tissues
+# Example: get expression of APOE across tissues (v10 = GENCODE v39; APOE keeps .10 here)
 df = get_gene_expression_by_tissue("ENSG00000130203.10")  # APOE GENCODE ID
-# Or use gene symbol (some endpoints accept both)
 print(df.head(10))
-# Output: tissue name, median TPM, sorted by highest expression
+# Output: tissueSiteDetailId, median TPM, sorted by highest expression
 ```
 
 ### 3. eQTL Lookup
@@ -119,12 +119,14 @@ def query_eqtl(gene_id, tissue_id=None, dataset_id="gtex_v10"):
 
     df = pd.DataFrame(all_results)
     if not df.empty:
-        df = df.sort_values("pval", ascending=True)
+        df = df.sort_values("pValue", ascending=True)
     return df
 
-# Example: Find eQTLs for PCSK9
-df = query_eqtl("ENSG00000169174.14")
-print(df[["snpId", "tissueSiteDetailId", "slope", "pval", "gencodeId"]].head(20))
+# Example: Find eQTLs for PCSK9 (v10 GENCODE ID — version suffix must match the dataset)
+df = query_eqtl("ENSG00000169174.11")
+# v2 single-tissue eQTL fields: snpId, variantId, tissueSiteDetailId, nes, pValue, gencodeId
+# (nes = normalized effect size of the alt allele; there is no separate slope/qval/maf here)
+print(df[["snpId", "tissueSiteDetailId", "nes", "pValue", "gencodeId"]].head(20))
 ```
 
 ### 4. Single-Tissue eQTL by Variant
@@ -247,7 +249,7 @@ def interpret_gwas_variant(variant_id, dataset_id="gtex_v10"):
     df = pd.DataFrame(data.get("data", []))
     if df.empty:
         return df
-    return df[["geneSymbol", "tissueSiteDetailId", "slope", "pval", "maf"]].sort_values("pval")
+    return df[["geneSymbol", "tissueSiteDetailId", "nes", "pValue"]].sort_values("pValue")
 
 # Example
 results = interpret_gwas_variant("chr1_154453788_A_T_b38")
@@ -290,12 +292,12 @@ print(results.groupby("geneSymbol")["tissueSiteDetailId"].count().sort_values(as
 
 ## Best Practices
 
-- **Use GENCODE IDs** (e.g., `ENSG00000130203.10`) for gene queries; the `.version` suffix matters for some endpoints
+- **GENCODE version suffix must match the dataset** (biggest gotcha): v10 maps to GENCODE **v39**, v8 maps to GENCODE **v26**, and the same gene gets a different `.version` in each. PCSK9 is `ENSG00000169174.11` in v10 but `.10` in v8 — querying the wrong suffix silently returns zero results. Resolve the correct ID per dataset with `/reference/gene?geneId=SYMBOL&gencodeVersion=v39` (use `v26` for v8). `geneSymbol` is also accepted by most endpoints and sidesteps the suffix.
 - **GTEx variant IDs** use the format `chr{chrom}_{pos}_{ref}_{alt}_b38` (GRCh38) — different from rs IDs
 - **Handle pagination**: Large queries (e.g., all eGenes) require iterating through pages
 - **Tissue nomenclature**: Use `tissueSiteDetailId` (e.g., `Whole_Blood`) not display names for API calls
-- **FDR correction**: GTEx uses FDR < 0.05 (q-value) as the significance threshold for eQTLs
-- **Effect alleles**: The `slope` field is the effect of the alternative allele; positive = higher expression with alt allele
+- **FDR threshold**: GTEx calls eGenes/eQTLs at FDR < 0.05. The single-tissue eQTL/sQTL responses are already filtered to significant pairs and return `pValue` + `nes` (no per-row `qval`); the per-gene `qValue` lives on the `/association/egene` endpoint.
+- **Effect size**: the QTL response field is `nes` (normalized effect size of the alternative allele), not `slope`; positive `nes` = higher expression with the alt allele.
 
 ## Data Downloads (for large-scale analysis)
 
@@ -323,6 +325,6 @@ wget https://storage.googleapis.com/adult-gtex/bulk-gex/v10/rna-seq/GTEx_Analysi
 
 ```bash
 python scripts/query_gtex.py expression ENSG00000130203.10
-python scripts/query_gtex.py eqtl ENSG00000169174.14 --tissue Liver
+python scripts/query_gtex.py eqtl ENSG00000169174.11 --tissue Liver   # v10 GENCODE ID
 python scripts/query_gtex.py tissues
 ```

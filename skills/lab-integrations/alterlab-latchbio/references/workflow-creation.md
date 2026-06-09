@@ -5,20 +5,24 @@ The Latch SDK enables defining serverless bioinformatics workflows using Python 
 
 ## Installation
 
-Install the Latch SDK:
+Install the Latch SDK (Python 3.9+):
 ```bash
-python3 -m pip install latch
+uv pip install latch   # or: pip install latch
 ```
 
 **Prerequisites:**
-- Docker must be installed and running locally
-- Latch account credentials
+- Docker must be installed and running locally (registration builds a container)
+- Latch account credentials (`latch login`)
 
 ## Initializing a New Workflow
 
 Create a new workflow template:
 ```bash
 latch init <workflow-name>
+
+# Pick a starting template with --template; valid values include:
+#   empty, docker, subprocess, r, conda, snakemake, nfcore
+latch init my-nf-wf --template nfcore
 ```
 
 This generates a workflow directory with:
@@ -101,80 +105,64 @@ Latch supports uploading existing pipelines in:
 
 ### Nextflow Integration
 
-Import Nextflow pipelines:
+Scaffold with `latch init --template nfcore`, point the metadata at your `main.nf`, then register. The Latch SDK wraps the Nextflow pipeline (generating a Latch entrypoint) and builds the container, giving it an auto-generated no-code UI on the platform:
 ```bash
-latch register --nextflow <nextflow-directory>
+# register the directory, pointing at the Nextflow entrypoint script
+latch register <workflow-directory> --nf-script main.nf
+
+# or use the dedicated nextflow command group
+latch nextflow register <workflow-directory>
 ```
 
 ### Snakemake Integration
 
-Import Snakemake pipelines:
+Scaffold with `latch init --template snakemake`, then register pointing at the Snakefile:
 ```bash
-latch register --snakemake <snakemake-directory>
+latch register <workflow-directory> --snakefile Snakefile
 ```
+For local iteration on a Snakemake workflow, `latch develop --snakemake <workflow-directory>` runs it in a remote dev environment.
 
 ## Workflow Execution
 
-### From CLI
+The primary way to run a registered workflow is its auto-generated UI on the Latch platform: open the workflow, fill the parameter form, and launch.
 
-Execute a registered workflow:
-```bash
-latch execute <workflow-name> --input-file <path> --output-dir <path>
-```
+### From Python (inside a running execution)
 
-### From Python
+Helpers in `latch.executions` operate on the *current* execution rather than launching new ones — e.g. rename the run or attach result links so they surface in the UI:
 
-Execute workflows programmatically:
 ```python
-from latch.account import Account
-from latch.executions import execute_workflow
+from latch.executions import rename_current_execution, add_execution_results
 
-account = Account.current()
-execution = execute_workflow(
-    workflow_name="my_workflow",
-    parameters={
-        "input_file": "/path/to/file",
-        "output_dir": "/path/to/output"
-    }
-)
+rename_current_execution("rnaseq - sample S001")
+add_execution_results(["latch:///results/S001"])
 ```
+
+> Note: older CLI launch helpers (`latch launch`, `latch get-params`) are deprecated. Prefer launching from the platform UI, or script launches via the Latch GraphQL API. Verify any programmatic-launch API against the current SDK before relying on it.
 
 ## Launch Plans
 
 Launch plans define preset parameter configurations:
 
+A launch plan populates the workflow's console form with named preset parameters. `create()` takes the workflow function, a launch-plan name, and `default_params` (note the keyword name and that the first argument is the workflow object, not a string):
+
 ```python
 from latch.resources.launch_plan import LaunchPlan
+from latch.types import LatchFile, LatchDir
+from wf import my_workflow
 
-# Define a launch plan with preset parameters
-launch_plan = LaunchPlan.create(
-    workflow_name="my_workflow",
-    name="default_config",
-    default_inputs={
-        "input_file": "/data/sample.fastq",
-        "output_dir": "/results"
-    }
+LaunchPlan(
+    my_workflow,
+    "Default config",
+    default_params={
+        "input_file": LatchFile("latch:///data/sample.fastq"),
+        "output_dir": LatchDir("latch:///results"),
+    },
 )
 ```
 
-## Conditional Sections
+## Workflow UI Metadata and Conditional Sections
 
-Create dynamic UIs with conditional parameter sections:
-
-```python
-from latch.types import LatchParameter
-from latch.resources.conditional import conditional_section
-
-@workflow
-def my_workflow(
-    mode: str,
-    advanced_param: str = conditional_section(
-        condition=lambda inputs: inputs.mode == "advanced"
-    )
-):
-    """Workflow with conditional parameters"""
-    pass
-```
+The workflow's docstring and a `LatchMetadata`/`LatchParameter` block control how the parameter form renders (labels, descriptions, grouping). The UI also supports **Fork / conditional sections** that show parameters only when an upstream choice selects a given branch. The exact metadata API changes between SDK versions, so check the current docs (`latch.types.metadata`) for `LatchMetadata`, `LatchParameter`, and the Fork/`_IsPresent` constructs before wiring up a conditional section.
 
 ## Best Practices
 
@@ -250,5 +238,4 @@ latch register --verbose <workflow-directory>
 ## References
 
 - Official Documentation: https://docs.latch.bio
-- GitHub Repository: https://github.com/latchbio/latch
-- Slack Community: https://join.slack.com/t/latchbiosdk
+- GitHub Repository (authoritative for CLI flags and decorator/API names): https://github.com/latchbio/latch

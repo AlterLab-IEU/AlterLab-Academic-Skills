@@ -6,8 +6,8 @@ This script demonstrates common query patterns for the ChEMBL database
 using the chembl_webresource_client Python library.
 
 Requirements:
-    pip install chembl_webresource_client
-    pip install pandas (optional, for data manipulation)
+    uv pip install chembl_webresource_client
+    uv pip install pandas  # optional, for data manipulation
 """
 
 from chembl_webresource_client.new_client import new_client
@@ -247,7 +247,7 @@ def export_to_dataframe(data):
         import pandas as pd
         return pd.DataFrame(data)
     except ImportError:
-        print("pandas not installed. Install with: pip install pandas")
+        print("pandas not installed. Install with: uv pip install pandas")
         return None
 
 

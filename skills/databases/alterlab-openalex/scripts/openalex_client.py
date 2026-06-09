@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """
-OpenAlex API Client with rate limiting and error handling.
+OpenAlex API Client with throttling and error handling.
 
 Provides a robust client for interacting with the OpenAlex API with:
-- Automatic rate limiting (polite pool: 10 req/sec)
-- Exponential backoff retry logic
+- Client-side request spacing (the API uses a daily USD cost budget, not a
+  fixed req/sec cap; spacing avoids transient 429/403 throttles)
+- Exponential backoff retry logic on 429/403/5xx
 - Pagination support
 - Batch operations support
+
+OpenAlex runs on a daily cost (credit) model: $0.01/day free keyless, or
+$1/day with a free API key from openalex.org/settings/api. Pass api_key= to
+raise the budget.
 """
 
 import time
@@ -20,18 +25,35 @@ class OpenAlexClient:
 
     BASE_URL = "https://api.openalex.org"
 
-    def __init__(self, email: Optional[str] = None, requests_per_second: int = 10):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        email: Optional[str] = None,
+        requests_per_second: int = 10,
+    ):
         """
         Initialize OpenAlex client.
 
         Args:
-            email: Email for polite pool (10x rate limit boost)
-            requests_per_second: Max requests per second (default: 10 for polite pool)
+            api_key: Free OpenAlex API key (openalex.org/settings/api). Raises the
+                free daily budget from $0.01 (keyless) to $1. Recommended.
+            email: Optional contact email. Harmless; no longer affects limits.
+            requests_per_second: Client-side request spacing cap (default: 10).
         """
+        self.api_key = api_key
         self.email = email
         self.requests_per_second = requests_per_second
         self.min_delay = 1.0 / requests_per_second
         self.last_request_time = 0
+
+    def auth_params(self) -> Dict[str, str]:
+        """Return auth query params (api_key and/or mailto) for direct requests."""
+        params: Dict[str, str] = {}
+        if self.api_key:
+            params['api_key'] = self.api_key
+        if self.email:
+            params['mailto'] = self.email
+        return params
 
     def _rate_limit(self):
         """Ensure requests don't exceed rate limit."""
@@ -61,9 +83,8 @@ class OpenAlexClient:
         if params is None:
             params = {}
 
-        # Add email to params for polite pool
-        if self.email:
-            params['mailto'] = self.email
+        # Add api_key / mailto for auth and the raised daily budget
+        params = {**params, **self.auth_params()}
 
         url = urljoin(self.BASE_URL, endpoint)
 
@@ -74,10 +95,10 @@ class OpenAlexClient:
 
                 if response.status_code == 200:
                     return response.json()
-                elif response.status_code == 403:
-                    # Rate limited
+                elif response.status_code in (429, 403):
+                    # Throttled / daily budget exhausted (429) or "slow down" (403)
                     wait_time = 2 ** attempt
-                    print(f"Rate limited. Waiting {wait_time}s before retry...")
+                    print(f"Throttled ({response.status_code}). Waiting {wait_time}s before retry...")
                     time.sleep(wait_time)
                 elif response.status_code >= 500:
                     # Server error
@@ -322,7 +343,7 @@ class OpenAlexClient:
 
 
 if __name__ == "__main__":
-    # Example usage
+    # Example usage. Pass api_key="YOUR_KEY" for the $1/day budget; keyless also works.
     client = OpenAlexClient(email="your-email@example.com")
 
     # Search for works about machine learning

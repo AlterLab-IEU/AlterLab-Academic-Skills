@@ -223,8 +223,11 @@ mst = nx.minimum_spanning_tree(G, weight='weight')
 # Maximum spanning tree
 mst_max = nx.maximum_spanning_tree(G, weight='weight')
 
-# Enumerate all spanning trees
-all_spanning = nx.all_spanning_trees(G)
+# Enumerate all spanning trees (iterator, weight-ordered)
+all_spanning = list(nx.SpanningTreeIterator(G))
+
+# Count spanning trees without enumerating (Kirchhoff's theorem)
+num_spanning = nx.number_of_spanning_trees(G)
 ```
 
 ### Tree Properties
@@ -294,10 +297,10 @@ cliques = list(nx.find_cliques(G))
 # Maximum clique (NP-complete, approximate)
 max_clique = nx.approximation.max_clique(G)
 
-# Clique number
-clique_number = nx.graph_clique_number(G)
+# Clique number (graph_clique_number was removed in NetworkX 3.0)
+clique_number = max(len(c) for c in nx.find_cliques(G))
 
-# Number of maximal cliques containing each node
+# Size of the largest maximal clique containing each node
 clique_counts = nx.node_clique_number(G)
 ```
 

@@ -33,7 +33,8 @@
       "prompt": "Can you build a process infographic showing the five steps of our podcast production workflow for a social media post?",
       "expected_output": "Invokes alterlab-infographics in process/how-to mode (--type process, social-oriented style): generates a numbered step-by-step graphic with directional flow via Nano Banana Pro, reviewed by Gemini 3 Pro against the social document-type threshold (7.0/10) with early stopping when met.",
       "assertions": [
-        { "type": "should_trigger", "value": true }
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Selects the process (--type process) preset for a numbered step-by-step workflow rather than a generic image." }
       ]
     },
     {

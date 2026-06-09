@@ -143,7 +143,7 @@ def main():
     sorting = si.run_sorter(
         SORTER,
         rec,
-        output_folder=output_path / f'{SORTER}_output',
+        folder=output_path / f'{SORTER}_output',  # `folder=` (the old `output_folder=` is deprecated)
         verbose=True,
         **SORTER_PARAMS,
     )

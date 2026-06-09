@@ -47,8 +47,13 @@ Research interest: Identifying seasonal patterns and long-term trends
 Generate research hypotheses based on the data description.
 
 ```python
-den.get_idea()
+den.get_idea(mode="fast")  # or mode="cmbagent"
 ```
+
+**Parameters:**
+- `mode` (str): `"fast"` (default) uses the LangGraph backend — faster, less reliable; `"cmbagent"` uses the cmbagent backend — slower, more reliable.
+- `llm` (str | LLM): model for the fast path (default `gemini-2.0-flash`).
+- `idea_maker_model`, `idea_hater_model`, `planner_model`, `plan_reviewer_model`, `orchestration_model`, `formatter_model`: per-agent models for cmbagent mode (OpenAI defaults).
 
 **Returns:** Research idea/hypothesis (stored internally in project directory)
 
@@ -84,8 +89,13 @@ den.set_idea("Analyze the impact of El Niño events on regional temperature anom
 Develop a research methodology based on the idea and data description.
 
 ```python
-den.get_method()
+den.get_method(mode="fast")  # or mode="cmbagent"
 ```
+
+**Parameters:**
+- `mode` (str): `"fast"` (default, LangGraph) or `"cmbagent"`, same trade-off as `get_idea`.
+- `llm` (str | LLM): model for the fast path (default `gemini-2.0-flash`).
+- `method_generator_model`, `planner_model`, `plan_reviewer_model`, `orchestration_model`, `formatter_model`: per-agent models for cmbagent mode.
 
 **Returns:** Methodology document (stored internally in project directory)
 
@@ -130,11 +140,19 @@ den.set_method("methodology.md")
 
 ##### get_results()
 
-Execute the methodology, perform computations, and generate results.
+Execute the methodology, perform computations, and generate results. This stage runs the cmbagent analysis backend (engineer + researcher agents) and can write/execute code.
 
 ```python
 den.get_results()
 ```
+
+**Key parameters (all optional):**
+- `involved_agents` (list[str]): agents employed, default `['engineer', 'researcher']`.
+- `engineer_model` (default `gpt-4.1`), `researcher_model` (default `o3-mini`), plus `planner_model`, `plan_reviewer_model`, `orchestration_model`, `formatter_model`.
+- `hardware_constraints` (str | None): hardware limits passed to the agents.
+- `max_n_attempts` (int, default 10): retries per step on code-execution failure.
+- `max_n_steps` (int, default 6): maximum workflow steps.
+- `restart_at_step` (int, default -1): step to restart the experiment from.
 
 **Returns:** Results document with analysis outputs (stored internally in project directory)
 
@@ -186,11 +204,11 @@ den.set_results("results.md")
 Generate a publication-ready LaTeX paper with the research findings.
 
 ```python
-den.get_paper(journal: Journal = None)
+den.get_paper(journal: Journal = Journal.NONE)
 ```
 
 **Parameters:**
-- `journal` (Journal, optional): Target journal for formatting. Defaults to generic format.
+- `journal` (Journal): Target journal for formatting. Defaults to `Journal.NONE` (generic LaTeX, unsrt bibliography).
 
 **Returns:** LaTeX paper with proper formatting (stored in project directory)
 
@@ -218,11 +236,15 @@ from denario import Journal
 
 #### Available Journals
 
-- `Journal.APS` - American Physical Society format
-  - Suitable for Physical Review, Physical Review Letters, etc.
-  - Uses RevTeX document class
+`Journal` is a `str` Enum (`from denario import Journal`) with these members:
 
-Additional journal formats may be available. Check the latest denario documentation for the complete list.
+- `Journal.NONE` (`None`) — generic LaTeX, unsrt bibliography style
+- `Journal.AAS` (`"AAS"`) — American Astronomical Society journals (e.g. ApJ)
+- `Journal.APS` (`"APS"`) — American Physical Society (Physical Review, PRL, PRA, ...)
+- `Journal.ICML` (`"ICML"`) — International Conference on Machine Learning
+- `Journal.JHEP` (`"JHEP"`) — Journal of High Energy Physics (incl. JCAP)
+- `Journal.NeurIPS` (`"NeurIPS"`) — Conference on Neural Information Processing Systems
+- `Journal.PASJ` (`"PASJ"`) — Publications of the Astronomical Society of Japan
 
 #### Usage
 
@@ -324,21 +346,23 @@ den.get_paper(journal=Journal.APS)
 
 After running a complete workflow, the project directory contains:
 
+Artifacts are written under an `input_files/` subdirectory (constants from `denario/config.py`):
+
 ```
 project_dir/
-├── data_description.txt    # Input: data context
-├── idea.md                 # Generated or provided research idea
-├── methodology.md          # Generated or provided methodology
-├── results.md              # Generated or provided results
-├── figures/                # Generated visualizations
-│   ├── figure_1.png
-│   ├── figure_2.png
-│   └── ...
-├── paper.tex               # Generated LaTeX source
-├── paper.pdf               # Compiled PDF (if LaTeX available)
-└── logs/                   # Agent execution logs
-    └── ...
+├── input_files/
+│   ├── data_description.md   # Input: data context
+│   ├── idea.md               # Generated or provided research idea
+│   ├── methods.md            # Generated or provided methodology
+│   ├── results.md            # Generated or provided results
+│   ├── literature.md         # Literature/novelty-check output (if run)
+│   ├── referee.md            # AI-referee feedback (if run)
+│   └── plots/                # Generated visualizations
+├── paper/                    # Generated LaTeX source + compiled PDF
+└── ...
 ```
+
+Note: file names are `methods.md` and `data_description.md` (markdown), not `methodology.md`/`.txt`.
 
 ## Advanced Features
 
@@ -373,29 +397,19 @@ All stages produce structured outputs saved to the project directory:
 - Auditable (logs of agent decisions and code execution)
 - Reproducible (saved methodologies can be re-run)
 
-### Literature Search
+### Literature / Novelty Check
 
-Denario includes capabilities for literature searches to provide context for research ideas and methodology development. See `examples.md` for literature search workflows.
+`check_idea(mode='semantic_scholar' | 'futurehouse')` checks a generated or supplied idea against existing literature to assess originality. `semantic_scholar` mode can use `SEMANTIC_SCHOLAR_KEY`; citation search uses `PERPLEXITY_API_KEY`. There is no standalone keyword-search method — novelty checking is idea-driven via `check_idea`. See `examples.md`.
+
+Other public helpers worth knowing: `enhance_data_description()`, `get_keywords()`, `referee()` (AI-referee feedback on the paper), `research_pilot()` (run the full pipeline in one call), and `show_*()` to print intermediate artifacts.
 
 ## Error Handling
 
 ### Common Issues
 
-**Missing data description:**
-```python
-den = Denario(project_dir="./project")
-den.get_idea()  # Error: must call set_data_description() first
-```
+**Missing prerequisite stages:** each stage reads the prior stage's file from the project directory (`get_method` reads the data description + idea; `get_results` reads idea + method). If a prerequisite was never set, the run fails (e.g. `FileNotFoundError`).
 
-**Solution:** Always set data description before generating ideas.
-
-**Missing prerequisite stages:**
-```python
-den = Denario(project_dir="./project")
-den.get_results()  # Error: must have idea and method first
-```
-
-**Solution:** Follow the workflow order or manually set prerequisite stages.
+**Solution:** Follow the workflow order — `set_data_description` → idea → method → results → paper — or supply the missing stage with the corresponding `set_*` method.
 
 **LaTeX compilation errors:**
 ```python
@@ -431,7 +445,7 @@ Review generated methodologies before executing:
 
 ```python
 den.get_method()
-# Review the methodology.md file in project_dir
+# Review input_files/methods.md in project_dir
 # If needed, refine with set_method()
 ```
 
@@ -443,15 +457,15 @@ Build the research pipeline incrementally:
 # Stage 1: Validate idea generation
 den.set_data_description("...")
 den.get_idea()
-# Review idea.md, adjust if needed
+# Review input_files/idea.md, adjust if needed
 
 # Stage 2: Validate methodology
 den.get_method()
-# Review methodology.md, adjust if needed
+# Review input_files/methods.md, adjust if needed
 
 # Stage 3: Execute and validate results
 den.get_results()
-# Review results.md and figures/
+# Review input_files/results.md and input_files/plots/
 
 # Stage 4: Generate paper
 den.get_paper(journal=Journal.APS)

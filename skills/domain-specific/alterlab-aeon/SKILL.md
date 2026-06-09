@@ -2,7 +2,7 @@
 name: alterlab-aeon
 description: Runs time series machine learning with the aeon library — classification, regression, clustering, forecasting, anomaly detection, segmentation, and similarity search via scikit-learn compatible APIs. Use when working with temporal data, sequential patterns, or time-indexed observations (univariate or multivariate) that need specialized algorithms beyond standard ML approaches. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(uv run python:*) Bash(uv pip install:*)
 compatibility: No API key required. Runs locally via `uv run python`; requires the aeon Python package.
 metadata:
     skill-author: AlterLab
@@ -29,8 +29,13 @@ Apply this skill when:
 ## Installation
 
 ```bash
-uv pip install aeon
+uv pip install "aeon>=1.4"
 ```
+
+Module layout below targets aeon 1.x. Import paths changed across the 0.x→1.x
+reorg (e.g. forecasters moved under `aeon.forecasting.stats`, series anomaly
+detectors under `aeon.anomaly_detection.series.*`); if an import fails, check the
+current API reference rather than assuming an older path.
 
 ## Core Capabilities
 
@@ -99,11 +104,17 @@ Predict future time series values. See `references/forecasting.md` for forecaste
 
 **Quick Start:**
 ```python
-from aeon.forecasting.arima import ARIMA
+from aeon.forecasting.stats import ARIMA
 
-forecaster = ARIMA(order=(1, 1, 1))
+# Orders are separate args (p, d, q) — not an `order` tuple.
+forecaster = ARIMA(p=1, d=1, q=1)
 forecaster.fit(y_train)
-y_pred = forecaster.predict(fh=[1, 2, 3, 4, 5])
+
+# predict() / forecast() return ONE value: self.horizon steps ahead (default 1).
+next_step = forecaster.predict()
+
+# For a multi-step path, use iterative_forecast (returns a 1D ndarray):
+y_pred = forecaster.iterative_forecast(y_train, prediction_horizon=5)
 ```
 
 ### 5. Anomaly Detection
@@ -112,7 +123,8 @@ Identify unusual patterns or outliers. See `references/anomaly_detection.md` for
 
 **Quick Start:**
 ```python
-from aeon.anomaly_detection import STOMP
+import numpy as np
+from aeon.anomaly_detection.series.distance_based import STOMP
 
 detector = STOMP(window_size=50)
 anomaly_scores = detector.fit_predict(y)
@@ -140,7 +152,7 @@ Find similar patterns within or across time series. See `references/similarity_s
 
 **Quick Start:**
 ```python
-from aeon.similarity_search import StompMotif
+from aeon.similarity_search.series.motifs import StompMotif
 
 # Find recurring patterns
 motif_finder = StompMotif(window_size=50, k=3)
@@ -244,10 +256,10 @@ X_train, y_train = load_regression("Covid3Month", split="train")
 
 **Benchmarking:**
 ```python
-from aeon.benchmarking import get_estimator_results
+from aeon.benchmarking.results_loaders import get_estimator_results
 
-# Compare with published results
-published = get_estimator_results("ROCKET", "GunPoint")
+# Compare with published results (estimators + datasets are lists)
+published = get_estimator_results(estimators=["ROCKET"], datasets=["GunPoint"])
 ```
 
 ## Common Workflows
@@ -288,8 +300,9 @@ predictions = clf.predict(X_test_features)
 ### Anomaly Detection with Visualization
 
 ```python
-from aeon.anomaly_detection import STOMP
+import numpy as np
 import matplotlib.pyplot as plt
+from aeon.anomaly_detection.series.distance_based import STOMP
 
 detector = STOMP(window_size=50)
 scores = detector.fit_predict(y)

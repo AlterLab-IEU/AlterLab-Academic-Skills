@@ -4,17 +4,17 @@ Before submitting diagrams, verify each item.
 
 ## Visual Quality
 - [ ] High-quality image format (PNG from AI generation)
-- [ ] No overlapping elements (AI handles automatically)
-- [ ] Adequate spacing between all components (AI optimizes)
+- [ ] No overlapping elements (visually confirm in the output)
+- [ ] Adequate spacing between all components
 - [ ] Clean, professional alignment
 - [ ] All arrows connect properly to intended targets
 
 ## Accessibility
 - [ ] Colorblind-safe palette (Okabe-Ito) used
-- [ ] Works in grayscale (tested with accessibility checker)
-- [ ] Sufficient contrast between elements (verified)
+- [ ] Works in grayscale (test: `magick diagram.png -colorspace gray gray.png`)
+- [ ] Sufficient contrast between elements
 - [ ] Redundant encoding where appropriate (shapes + colors)
-- [ ] Colorblind simulation passes all checks
+- [ ] Checked with a colorblind simulator (e.g. Color Oracle) if color is load-bearing
 
 ## Typography and Readability
 - [ ] Text minimum 7-8 pt at final size
@@ -30,20 +30,18 @@ Before submitting diagrams, verify each item.
 - [ ] Meets journal-specific dimension requirements
 - [ ] Exported in required format for journal (PDF/EPS/TIFF)
 
-## Quality Verification (Required)
-- [ ] Ran `run_quality_checks()` and achieved PASS status
-- [ ] Reviewed overlap detection report (zero high-severity overlaps)
-- [ ] Passed accessibility verification (grayscale and colorblind)
-- [ ] Resolution validated at target DPI (300+ for print)
-- [ ] Visual quality report generated and reviewed
-- [ ] All quality reports saved with figure files
+## Quality Verification
+- [ ] Reviewed the `*_review_log.json` and confirmed the final score met the document-type threshold
+- [ ] Visually confirmed no overlapping or cut-off elements
+- [ ] Confirmed legibility in grayscale and adequate contrast
+- [ ] Resolution adequate at target size (300+ DPI for print)
+- [ ] Final image and review log saved together
 
 ## Documentation and Version Control
-- [ ] Source files (.tex, .py) saved for future revision
-- [ ] Quality reports archived in `quality_reports/` directory
-- [ ] Configuration parameters documented (colors, spacing, sizes)
-- [ ] Git commit includes source, output, and quality reports
-- [ ] README or comments explain how to regenerate figure
+- [ ] Generation prompt and `--doc-type` recorded for future regeneration
+- [ ] Review log (`*_review_log.json`) kept alongside the figure
+- [ ] Git commit includes the prompt/command, the output image, and the review log
+- [ ] README or comments explain how to regenerate the figure
 
 ## Final Integration Check
 - [ ] Figure displays correctly in compiled manuscript

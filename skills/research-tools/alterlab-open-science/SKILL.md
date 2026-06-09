@@ -1,6 +1,6 @@
 ---
 name: alterlab-open-science
-description: "Guidance for open science practices — preregistration (OSF Registries, AsPredicted, PROSPERO, ClinicalTrials.gov), open data and FAIR principles, repository choice (Zenodo, Dryad, Figshare), open access routes (Green/Gold/Diamond), Creative Commons licensing, reproducible computational workflows (Docker, Binder, Code Ocean), registered reports, open peer review, and TOP Guidelines. Use when preregistering a study, writing a data management plan for a grant (NSF, NIH, ERC, UKRI), choosing a data repository, navigating open access, or building reproducible analyses. Part of the AlterLab Academic Skills suite."
+description: "Guidance for open science practices — preregistration (OSF Registries, AsPredicted, PROSPERO, ClinicalTrials.gov), open data and FAIR principles, repository choice (Zenodo, Dryad, Figshare), open access routes (Green/Gold/Diamond), Creative Commons licensing, reproducible computational workflows (Docker, Binder, Code Ocean), registered reports, open peer review, and TOP Guidelines. Use when preregistering a study, writing the FAIR data-sharing and repository section of a grant data management plan (NSF, NIH, ERC, UKRI), choosing a data repository, navigating open access, or building reproducible analyses. For human-subjects ethics, IRB applications, informed consent, or GDPR/HIPAA compliance, defer to alterlab-research-ethics. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read WebFetch WebSearch Bash(python:*)
 compatibility: No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.
@@ -336,7 +336,9 @@ Binder (mybinder.org) takes a GitHub repository with an environment.yml (Python)
 name: my-research-env
 channels:
   - conda-forge
-  - defaults
+  - nodefaults  # avoid Anaconda's `defaults` channel: its ToS can require a
+                # paid license for larger orgs and for mirroring/embedding.
+                # conda-forge is community-maintained and free for any use.
 dependencies:
   - python=3.11
   - numpy=1.26
@@ -345,10 +347,12 @@ dependencies:
   - matplotlib=3.8
   - seaborn=0.13
   - statsmodels=0.14
-  - jupyter=1.0
+  - jupyterlab=4.0
   - pip:
     - pingouin==0.5.3
 ```
+
+Pin exact versions (not floating ranges) so the environment rebuilds identically. Generate the file from a working env with `conda env export --from-history -f environment.yml` to avoid OS-specific packages that break on Binder.
 
 **Code Ocean:** A commercial platform that provides guaranteed computational reproducibility with a published DOI for each "compute capsule." Used by journals including Nature for results verification.
 

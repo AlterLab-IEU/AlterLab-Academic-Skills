@@ -3,7 +3,7 @@ name: alterlab-diffdock
 description: Predicts protein-ligand binding poses with DiffDock diffusion-based molecular docking from PDB structures and SMILES, producing pose confidence scores for virtual screening and structure-based drug design. Use when docking ligands into a protein, generating binding poses, or screening compounds against a target; not for binding affinity prediction. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Requires a local DiffDock checkout (gcorso/DiffDock via conda or Docker) and a GPU for practical use; no API key or account. The skill's helper scripts (scripts/) run standalone under python/uv."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -99,15 +99,17 @@ python -m inference \
   --out_dir results/sequence_docking/
 ```
 
-**Output Structure:**
+**Output Structure:** DiffDock writes one subdirectory per complex (even for a single run), with the confidence embedded in each pose's filename:
 ```
 results/single_docking/
-├── rank_1.sdf          # Top-ranked pose
-├── rank_2.sdf          # Second-ranked pose
-├── ...
-├── rank_10.sdf         # 10th pose (default: 10 samples)
-└── confidence_scores.txt
+└── complex_0/
+    ├── rank1.sdf                   # Top pose (no score in name)
+    ├── rank1_confidence-0.42.sdf   # Same pose, confidence in filename
+    ├── rank2_confidence-1.10.sdf   # 2nd-ranked pose
+    ├── ...
+    └── rank10_confidence-3.05.sdf  # 10th pose (default: 10 samples)
 ```
+There is no separate `confidence_scores.txt`; the confidence value is the `confidenceN.NN` suffix. Poses are ranked by descending confidence (`rank1` = best).
 
 ### Workflow 2: Batch Processing Multiple Complexes
 

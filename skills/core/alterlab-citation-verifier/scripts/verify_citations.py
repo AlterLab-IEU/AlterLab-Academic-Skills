@@ -5,7 +5,8 @@ Given a bibliography (BibTeX, a list of DOIs/arXiv IDs, or free-form references)
 this checks whether each entry ACTUALLY EXISTS by querying four keyless public
 APIs (Crossref, OpenAlex, Semantic Scholar, arXiv) with a polite ``mailto``
 identifier. It resolves DOI / arXiv identifiers, fuzzy-matches title and authors
-(difflib Levenshtein-style ratio, default threshold 0.70), flags Crossref-marked
+(difflib SequenceMatcher ratio — Ratcliff/Obershelp, not edit-distance — default
+threshold 0.70), flags Crossref/OpenAlex-marked
 retractions, and emits a JSON verdict per entry mapped to the AlterLab citation
 hallucination taxonomy (TF / PAC / IH / PH / SH).
 
@@ -146,7 +147,7 @@ def _normalize(text: str) -> str:
 
 
 def title_ratio(a: str, b: str) -> float:
-    """Levenshtein-style similarity ratio (0..1) via difflib on normalized titles."""
+    """Similarity ratio (0..1) via difflib SequenceMatcher on normalized titles."""
     return SequenceMatcher(None, _normalize(a), _normalize(b)).ratio()
 
 

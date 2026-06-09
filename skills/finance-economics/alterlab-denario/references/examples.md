@@ -79,16 +79,13 @@ den.get_paper(journal=Journal.APS)
 ```bash
 tree climate_research/
 # climate_research/
-# ├── data_description.txt
-# ├── idea.md
-# ├── methodology.md
-# ├── results.md
-# ├── figures/
-# │   ├── temperature_trend.png
-# │   ├── decadal_averages.png
-# │   └── acceleration_analysis.png
-# ├── paper.tex
-# └── paper.pdf
+# ├── input_files/
+# │   ├── data_description.md
+# │   ├── idea.md
+# │   ├── methods.md
+# │   ├── results.md
+# │   └── plots/
+# └── paper/        # generated LaTeX source + compiled PDF
 ```
 
 ## Enhancing Input Descriptions
@@ -155,11 +152,11 @@ Tools: Biopython, TensorFlow, scikit-learn
 # Generate idea
 den.set_idea("Develop a deep learning model for predicting protein secondary structure from amino acid sequences")
 
-# NOTE: Literature search functionality would be integrated here
-# The specific API for literature search should be checked in denario's documentation
-# Example conceptual usage:
-# den.search_literature(keywords=["protein structure prediction", "deep learning", "LSTM"])
-# This would inform methodology and provide citations for the paper
+# Check the idea against existing literature for novelty.
+# check_idea(mode=...) supports 'semantic_scholar' (default) or 'futurehouse'.
+den.check_idea(mode="semantic_scholar")
+# 'semantic_scholar' mode benefits from SEMANTIC_SCHOLAR_KEY; citation search uses PERPLEXITY_API_KEY.
+# This informs whether the hypothesis is original before investing in method/results.
 ```
 
 ## Generate Research Ideas from Data
@@ -278,32 +275,35 @@ Maximum queue length reduced from 42 vehicles to 28 vehicles during peak hours.
 den.get_paper(journal=Journal.APS)
 ```
 
-## Fast Mode with Gemini
+## Fast vs. cmbagent Mode
 
-Use Google's Gemini models for faster execution.
+`get_idea` and `get_method` accept `mode="fast"` (default; LangGraph backend, faster, less reliable, default LLM `gemini-2.0-flash`) or `mode="cmbagent"` (cmbagent backend, slower, more reliable, OpenAI model defaults).
 
-### Example: Rapid Prototyping
+### Example: Rapid Prototyping (fast mode)
 
 ```python
-# Configure for fast mode (conceptual - check denario documentation)
-# This would involve setting appropriate LLM backend
-
 den = Denario(project_dir="./fast_research")
 
-# Same workflow, optimized for speed
 den.set_data_description("""
 Quick analysis needed: Monthly sales data (2 years)
 Goal: Identify seasonal patterns and forecast next quarter
 Tools: pandas, Prophet
 """)
 
-# Fast execution
-den.get_idea()
-den.get_method()
+# Fast path (default). Pass an explicit llm to override the default gemini-2.0-flash.
+den.get_idea(mode="fast")
+den.get_method(mode="fast")
 den.get_results()
-den.get_paper()
+den.get_paper()  # defaults to Journal.NONE
+```
 
-# Trade-off: Faster execution, potentially less detailed analysis
+### Example: Reliable run (cmbagent mode)
+
+```python
+den.get_idea(mode="cmbagent")     # uses OpenAI agent defaults (gpt-4o, o3-mini, gpt-4.1)
+den.get_method(mode="cmbagent")
+den.get_results()
+den.get_paper(journal=Journal.APS)
 ```
 
 ## Hybrid Workflow: Custom Idea + Automated Method
@@ -448,13 +448,13 @@ Review and refine at each stage:
 # Generate
 den.get_idea()
 
-# Review idea.md
+# Review input_files/idea.md
 # If needed, refine:
 den.set_idea("Refined version of the idea")
 
 # Continue
 den.get_method()
-# Review methodology.md
+# Review input_files/methods.md
 # Refine if needed, then proceed
 ```
 

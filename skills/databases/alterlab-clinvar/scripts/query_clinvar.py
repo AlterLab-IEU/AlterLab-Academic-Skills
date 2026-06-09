@@ -5,10 +5,15 @@ Base: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/  (db=clinvar)
   esearch.fcgi   term -> ClinVar UIDs
   esummary.fcgi  id   -> record summaries (version 2.0 JSON)
 
-Search field examples: BRCA1[gene], pathogenic[CLNSIG], breast cancer[disorder]
+Search field tags (verified via einfo; unknown tags silently fall back to
+[All Fields] and stop filtering — check 'querytranslation' in the response):
+    BRCA1[gene]
+    clinsig_pathogenic[Properties]            (also clinsig_likely_pathogenic, clinsig_benign, clinsig_has_conflicts)
+    "reviewed by expert panel"[Review status]
+    "breast cancer"[Disease/Phenotype]
 
 Smoke test:
-    uv run python query_clinvar.py search "BRCA1[gene] AND pathogenic[CLNSIG]" --retmax 5
+    uv run python query_clinvar.py search "BRCA1[gene] AND clinsig_pathogenic[Properties]" --retmax 5
     uv run python query_clinvar.py summary 12345,12346
 """
 import argparse

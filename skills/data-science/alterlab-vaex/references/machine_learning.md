@@ -605,12 +605,12 @@ selected_features = [f for f, v in feature_variances.items() if v > threshold]
 ### Class Weights
 
 ```python
-# Compute class weights
-class_counts = df.groupby('target', agg='count')
+# Compute class weights from per-class counts
+counts = df['target'].value_counts()  # pandas Series indexed by class label
 total = len(df)
 weights = {
-    0: total / (2 * class_counts[0]),
-    1: total / (2 * class_counts[1])
+    label: total / (len(counts) * n)
+    for label, n in counts.items()
 }
 
 # Use in model

@@ -77,7 +77,7 @@ await pr.set_temperature(37)
 data = await pr.read_absorbance(wavelength=450)  # nm
 
 # Luminescence reading
-data = await pr.read_luminescence()
+data = await pr.read_luminescence(focal_height=10)
 
 # Fluorescence reading
 data = await pr.read_fluorescence(
@@ -112,17 +112,17 @@ Combine plate reading with liquid handling:
 
 ```python
 from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.liquid_handling.backends import STAR
+from pylabrobot.liquid_handling.backends import STARBackend
 from pylabrobot.resources import STARLetDeck
 from pylabrobot.plate_reading import PlateReader
 from pylabrobot.plate_reading.clario_star_backend import CLARIOstarBackend
 
 # Initialize liquid handler
-lh = LiquidHandler(backend=STAR(), deck=STARLetDeck())
+lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
 await lh.setup()
 
 # Initialize plate reader
-pr = PlateReader(name="CLARIOstar", backend=CLARIOstarBackend())
+pr = PlateReader(name="CLARIOstar", backend=CLARIOstarBackend(), size_x=0, size_y=0, size_z=0)
 await pr.setup()
 
 # Set temperature early
@@ -131,8 +131,8 @@ await pr.set_temperature(37)
 try:
     # Prepare samples with liquid handler
     tip_rack = TIP_CAR_480_A00(name="tips")
-    reagent_plate = Cos_96_DW_1mL(name="reagents")
-    assay_plate = Cos_96_DW_1mL(name="assay")
+    reagent_plate = Cor_96_wellplate_360ul_Fb(name="reagents")
+    assay_plate = Cor_96_wellplate_360ul_Fb(name="assay")
 
     lh.deck.assign_child_resource(tip_rack, rails=1)
     lh.deck.assign_child_resource(reagent_plate, rails=10)
@@ -140,11 +140,9 @@ try:
 
     # Transfer samples
     await lh.pick_up_tips(tip_rack["A1:H1"])
-    await lh.transfer(
-        reagent_plate["A1:H12"],
-        assay_plate["A1:H12"],
-        vols=100
-    )
+    for col in range(1, 13):
+        await lh.aspirate(reagent_plate[f"A{col}:H{col}"], vols=[100] * 8)
+        await lh.dispense(assay_plate[f"A{col}:H{col}"], vols=[100] * 8)
     await lh.drop_tips()
 
     # Move plate to reader (manual or robotic arm)
@@ -192,8 +190,8 @@ async def run_plate_reading_assay():
     """Complete workflow with sample prep and reading"""
 
     # Initialize equipment
-    lh = LiquidHandler(backend=STAR(), deck=STARLetDeck())
-    pr = PlateReader(name="CLARIOstar", backend=CLARIOstarBackend())
+    lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
+    pr = PlateReader(name="CLARIOstar", backend=CLARIOstarBackend(), size_x=0, size_y=0, size_z=0)
 
     await lh.setup()
     await pr.setup()
@@ -204,8 +202,8 @@ async def run_plate_reading_assay():
     try:
         # Define resources
         tip_rack = TIP_CAR_480_A00(name="tips")
-        samples = Cos_96_DW_1mL(name="samples")
-        assay_plate = Cos_96_DW_1mL(name="assay")
+        samples = Cor_96_wellplate_360ul_Fb(name="samples")
+        assay_plate = Cor_96_wellplate_360ul_Fb(name="assay")
         substrate = Trough_100ml(name="substrate")
 
         lh.deck.assign_child_resource(tip_rack, rails=1)
@@ -215,11 +213,9 @@ async def run_plate_reading_assay():
 
         # Transfer samples
         await lh.pick_up_tips(tip_rack["A1:H1"])
-        await lh.transfer(
-            samples["A1:H12"],
-            assay_plate["A1:H12"],
-            vols=50
-        )
+        for col in range(1, 13):
+            await lh.aspirate(samples[f"A{col}:H{col}"], vols=[50] * 8)
+            await lh.dispense(assay_plate[f"A{col}:H{col}"], vols=[50] * 8)
         await lh.drop_tips()
 
         # Add substrate
@@ -228,7 +224,7 @@ async def run_plate_reading_assay():
             await lh.transfer(
                 substrate["channel_1"],
                 assay_plate[f"A{col}:H{col}"],
-                vols=50
+                source_vol=50
             )
         await lh.drop_tips()
 
@@ -316,7 +312,7 @@ print(f"Average weight: {average_weight} g")
 
 ```python
 # Weigh samples during protocol
-lh = LiquidHandler(backend=STAR(), deck=STARLetDeck())
+lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
 scale = Scale(name="scale", backend=MettlerToledoBackend())
 
 await lh.setup()
@@ -328,12 +324,12 @@ try:
 
     # Dispense liquid
     await lh.pick_up_tips(tip_rack["A1"])
-    await lh.aspirate(reagent["A1"], vols=1000)
+    await lh.aspirate(reagent["A1"], vols=[1000])
 
     # (Move to scale position)
 
     # Dispense and weigh
-    await lh.dispense(container, vols=1000)
+    await lh.dispense(container, vols=[1000])
     weight = await scale.get_weight()
 
     print(f"Dispensed weight: {weight} g")
@@ -368,8 +364,8 @@ async def multi_device_workflow():
     """Coordinate liquid handler, plate reader, and scale"""
 
     # Initialize all devices
-    lh = LiquidHandler(backend=STAR(), deck=STARLetDeck())
-    pr = PlateReader(name="CLARIOstar", backend=CLARIOstarBackend())
+    lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
+    pr = PlateReader(name="CLARIOstar", backend=CLARIOstarBackend(), size_x=0, size_y=0, size_z=0)
     scale = Scale(name="scale", backend=MettlerToledoBackend())
 
     await lh.setup()
@@ -384,7 +380,9 @@ async def multi_device_workflow():
 
         # 2. Prepare samples with liquid handler
         await lh.pick_up_tips(tip_rack["A1:H1"])
-        await lh.transfer(source["A1:H12"], dest["A1:H12"], vols=100)
+        for col in range(1, 13):
+            await lh.aspirate(source[f"A{col}:H{col}"], vols=[100] * 8)
+            await lh.dispense(dest[f"A{col}:H{col}"], vols=[100] * 8)
         await lh.drop_tips()
 
         # 3. Read plate
@@ -425,7 +423,7 @@ async def multi_device_workflow():
 async def kinetic_reading(num_reads: int, interval: int):
     """Perform kinetic plate reading"""
 
-    pr = PlateReader(name="CLARIOstar", backend=CLARIOstarBackend())
+    pr = PlateReader(name="CLARIOstar", backend=CLARIOstarBackend(), size_x=0, size_y=0, size_z=0)
     await pr.setup()
 
     try:

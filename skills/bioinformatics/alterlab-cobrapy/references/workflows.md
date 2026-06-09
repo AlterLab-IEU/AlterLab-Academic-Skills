@@ -13,7 +13,7 @@ from cobra.io import load_model
 from cobra.flux_analysis import single_gene_deletion, double_gene_deletion
 
 # Step 1: Load model
-model = load_model("ecoli")
+model = load_model("textbook")  # E. coli core model (bundled, runs offline)
 print(f"Loaded model: {model.id}")
 print(f"Model contains {len(model.reactions)} reactions, {len(model.metabolites)} metabolites, {len(model.genes)} genes")
 
@@ -89,7 +89,7 @@ from cobra.medium import minimal_medium
 import pandas as pd
 
 # Step 1: Load model and check current medium
-model = load_model("ecoli")
+model = load_model("textbook")  # E. coli core model (bundled, runs offline)
 current_medium = model.medium
 print("Current medium composition:")
 for exchange, bound in current_medium.items():
@@ -192,7 +192,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Step 1: Load model
-model = load_model("ecoli")
+model = load_model("textbook")  # E. coli core model (bundled, runs offline)
 baseline = model.slim_optimize()
 print(f"Baseline growth: {baseline:.3f} /h")
 
@@ -300,7 +300,7 @@ TARGET_METABOLITE = "EX_ac_e"  # Acetate production
 CARBON_SOURCE = "EX_glc__D_e"  # Glucose uptake
 
 # Step 2: Load model
-model = load_model("ecoli")
+model = load_model("textbook")  # E. coli core model (bundled, runs offline)
 print(f"Designing strain for {TARGET_METABOLITE} production")
 
 # Step 3: Calculate baseline production envelope
@@ -326,36 +326,27 @@ plt.savefig("production_envelope_wildtype.png", dpi=300)
 # Step 4: Maximize production while maintaining growth
 print("\nOptimizing for production...")
 
-# Set minimum growth constraint
-MIN_GROWTH = 0.1  # Maintain at least 10% of max growth
+BIOMASS = "BIOMASS_Ecoli_core_w_GAM"  # biomass reaction id in the textbook model
 
-with model:
-    # Change objective to product formation
-    model.objective = TARGET_METABOLITE
-    model.objective_direction = "max"
+# Record max growth before re-tasking the objective
+max_growth = model.slim_optimize()
+MIN_GROWTH = 0.1 * max_growth  # require at least 10% of max growth
 
-    # Add growth constraint
-    growth_reaction = model.reactions.get_by_id(model.objective.name) if hasattr(model.objective, 'name') else list(model.objective.variables.keys())[0].name
-    max_growth = model.slim_optimize()
+# Permanently constrain growth and switch the objective to product formation.
+# (These are deliberate model changes that persist through the knockout screen
+# below; use `with model:` instead if you want them to revert.)
+model.reactions.get_by_id(BIOMASS).lower_bound = MIN_GROWTH
+model.objective = TARGET_METABOLITE
+model.objective_direction = "max"
 
-model.reactions.BIOMASS_Ecoli_core_w_GAM.lower_bound = MIN_GROWTH
-
-with model:
-    model.objective = TARGET_METABOLITE
-    model.objective_direction = "max"
-    production_solution = model.optimize()
-
-    max_production = production_solution.objective_value
-    print(f"Maximum production: {max_production:.3f} mmol/gDW/h")
-    print(f"Growth rate: {production_solution.fluxes['BIOMASS_Ecoli_core_w_GAM']:.3f} /h")
+production_solution = model.optimize()
+max_production = production_solution.objective_value
+print(f"Maximum production: {max_production:.3f} mmol/gDW/h")
+print(f"Growth rate: {production_solution.fluxes[BIOMASS]:.3f} /h")
 
 # Step 5: Identify beneficial gene knockouts
 print("\nScreening for beneficial knockouts...")
-
-# Reset model
-model.reactions.BIOMASS_Ecoli_core_w_GAM.lower_bound = MIN_GROWTH
-model.objective = TARGET_METABOLITE
-model.objective_direction = "max"
+# The growth constraint and product objective from Step 4 are still in effect.
 
 knockout_results = []
 for gene in model.genes:
@@ -432,7 +423,7 @@ from cobra.flux_analysis import flux_variability_analysis
 import pandas as pd
 
 # Step 1: Load model
-model = load_model("ecoli")  # Or read_sbml_model("your_model.xml")
+model = load_model("textbook")  # E. coli core; or read_sbml_model("your_model.xml")
 print(f"Model: {model.id}")
 print(f"Reactions: {len(model.reactions)}")
 print(f"Metabolites: {len(model.metabolites)}")

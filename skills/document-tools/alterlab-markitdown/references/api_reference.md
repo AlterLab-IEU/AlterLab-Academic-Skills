@@ -233,7 +233,7 @@ model = os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8"
 
 # Initialize OpenRouter client (OpenAI-compatible API)
 client = OpenAI(
-    api_key="your-openrouter-api-key",
+    api_key=os.environ["OPENROUTER_API_KEY"],
     base_url="https://openrouter.ai/api/v1"
 )
 

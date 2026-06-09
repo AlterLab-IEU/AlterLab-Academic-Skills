@@ -260,70 +260,21 @@ english[la]
 
 Grep pattern for query examples: `diabetes|cancer|cardiovascular|clinical trial|systematic review`
 
-### 7. Search History and Saved Searches
+### 7. Related Articles and Citation Discovery
 
-Use PubMed's search history and My NCBI features for efficient research workflows.
+Find related research programmatically with ELink (pre-calculated neighbors based on title/abstract similarity and MeSH overlap):
 
-**Search History** (via Advanced Search):
-- Maintains up to 100 searches
-- Expires after 8 hours of inactivity
-- Combine previous searches using # references
-- Preview result counts before executing
-
-**Example**:
 ```
-#1: diabetes mellitus[mh]
-#2: cardiovascular diseases[mh]
-#3: #1 AND #2 AND risk factors[tiab]
-```
-
-**My NCBI Features**:
-- Save searches indefinitely
-- Set up email alerts for new matching articles
-- Create collections of saved articles
-- Organize research by project or topic
-
-**RSS Feeds**:
-Create RSS feeds for any search to monitor new publications in your area of interest.
-
-### 8. Related Articles and Citation Discovery
-
-Find related research and explore citation networks.
-
-**Similar Articles Feature**:
-Every PubMed article includes pre-calculated related articles based on:
-- Title and abstract similarity
-- MeSH term overlap
-- Weighted algorithmic matching
-
-**ELink for Related Data**:
-```
-# Find related articles programmatically
 elink.fcgi?dbfrom=pubmed&db=pubmed&id=PMID&cmd=neighbor
 ```
 
-**Citation Links**:
-- LinkOut to full text from publishers
-- Links to PubMed Central free articles
-- Connections to related NCBI databases (GenBank, ClinicalTrials.gov, etc.)
+`cmd=prlinks` returns publisher full-text URLs; `cmd=llinks` returns LinkOut URLs.
 
-### 9. Export and Citation Management
+### 8. Export for Citation Management
 
-Export search results in various formats for citation management and further analysis.
+Use EFetch with `rettype=medline&retmode=text` to export records in MEDLINE/.nbib format for reference managers (Zotero, Mendeley, EndNote):
 
-**Export Formats**:
-- .nbib files for reference managers (Zotero, Mendeley, EndNote)
-- AMA, MLA, APA, NLM citation styles
-- CSV for data analysis
-- XML for programmatic processing
-
-**Clipboard and Collections**:
-- Clipboard: Temporary storage for up to 500 items (8-hour expiration)
-- Collections: Permanent storage via My NCBI account
-
-**Batch Export via API**:
-```python
-# Export citations in MEDLINE format
+```
 efetch.fcgi?db=pubmed&id=PMID1,PMID2&rettype=medline&retmode=text
 ```
 
@@ -356,110 +307,22 @@ Extensive collection of example queries for various research scenarios, disease 
 - Searching for specific study designs or populations
 
 **Reference Loading Strategy**:
-Load reference files into context as needed based on the specific task. For brief queries or basic searches, the information in this SKILL.md may be sufficient. For complex operations, consult the appropriate reference file.
-
-## Common Workflows
-
-### Workflow 1: Basic Literature Search
-
-1. Identify key concepts and synonyms
-2. Construct query with Boolean operators and field tags
-3. Review initial results and refine query
-4. Apply filters (date, article type, language)
-5. Export results for analysis
-
-### Workflow 2: Systematic Review Search
-
-1. Define research question using PICO framework
-2. Identify all relevant MeSH terms and synonyms
-3. Construct comprehensive search strategy
-4. Search multiple databases (include PubMed)
-5. Document search strategy and date
-6. Export results for screening and review
-
-### Workflow 3: Programmatic Data Extraction
-
-1. Design search query and test in web interface
-2. Implement search using ESearch API
-3. Use history server for large result sets
-4. Retrieve detailed records with EFetch
-5. Parse XML/JSON responses
-6. Store data locally with caching
-7. Implement rate limiting and error handling
-
-### Workflow 4: Citation Discovery
-
-1. Start with known relevant article
-2. Use Similar Articles to find related work
-3. Check citing articles (when available)
-4. Explore MeSH terms from relevant articles
-5. Construct new searches based on discoveries
-6. Use ELink to find related database entries
-
-### Workflow 5: Ongoing Literature Monitoring
-
-1. Construct comprehensive search query
-2. Test and refine query for precision
-3. Save search to My NCBI account
-4. Set up email alerts for new matches
-5. Create RSS feed for feed reader monitoring
-6. Review new articles regularly
+Load reference files as needed. For basic searches this SKILL.md is usually enough; consult the references for complex query construction (`search_syntax.md`), API workflows (`api_reference.md`), or domain templates (`common_queries.md`).
 
 ## Tips and Best Practices
 
-### Search Strategy
-- Start broad, then narrow with field tags and filters
-- Include synonyms and MeSH terms for comprehensive coverage
-- Use quotation marks for exact phrases
-- Check Search Details in Advanced Search to verify query translation
-- Combine multiple searches using search history
-
-### API Usage
-- Obtain API key for higher rate limits (10 req/sec vs 3 req/sec)
-- Use history server for result sets > 500 articles
-- Implement exponential backoff for rate limit handling
-- Cache results locally to minimize redundant requests
-- Always include descriptive User-Agent header
-
-### Quality Filtering
-- Prefer systematic reviews and meta-analyses for synthesized evidence
-- Use publication type filters to find specific study designs
-- Filter by date for most recent research
-- Apply language filters as appropriate
-- Use free full text filter for immediate access
-
-### Citation Management
-- Export early and often to avoid losing search results
-- Use .nbib format for compatibility with most reference managers
-- Create My NCBI account for permanent collections
-- Document search strategies for reproducibility
-- Use Collections to organize research by project
+- **Verify translation**: Automatic Term Mapping can silently expand terms; check the query translation (or bypass ATM with field tags / double quotes) when results look off.
+- **API throughput**: keyless is 3 req/s by IP; an API key raises it to 10 req/s. Send a descriptive User-Agent, add exponential backoff on HTTP 429, and cache to avoid redundant calls.
+- **Large result sets** (>~500 records): use the history server (`usehistory=y`, then page EFetch with `retstart`/`retmax`) or EPost, rather than one huge `id` list (which can hit HTTP 414).
+- **Evidence quality**: prefer `systematic review[pt]`, `meta-analysis[pt]`, and `randomized controlled trial[pt]`; pair with `humans[mh]`, `english[la]`, and a `[dp]` range as appropriate.
+- **Reproducibility**: record the exact query string and the search date — PubMed results change as records are added and re-indexed.
 
 ## Limitations and Considerations
 
-### Database Coverage
-- Primarily biomedical and life sciences literature
-- Pre-1975 articles often lack abstracts
-- Full author names available from 2002 forward
-- Non-English abstracts available but may default to English display
-
-### Search Limitations
-- Display limited to 10,000 results maximum
-- Search history expires after 8 hours of inactivity
-- Clipboard holds max 500 items with 8-hour expiration
-- Automatic term mapping may produce unexpected results
-
-### API Considerations
-- Rate limits apply (3-10 requests/second)
-- Large queries may time out (use history server)
-- XML parsing required for detailed data extraction
-- API key recommended for production use
-
-### Access Limitations
-- PubMed provides citations and abstracts (not always full text)
-- Full text access depends on publisher, institutional access, or open access status
-- LinkOut availability varies by journal and institution
-- Some content requires subscription or payment
+- **Scope**: peer-reviewed biomedical/life-sciences literature (MEDLINE + PubMed). For preprints use a preprint server; for trial-registry records (NCT IDs, recruitment status) use ClinicalTrials.gov.
+- **Coverage gaps**: pre-1975 articles often lack abstracts; full author names are indexed from 2002 forward.
+- **Result caps**: ESearch returns at most 10,000 UIDs per query (page with `retstart`, or use the history server).
+- **Full text**: PubMed provides citations/abstracts, not full text. Access depends on publisher, open-access status, or institutional subscription; detailed records require XML parsing.
 
 ## Support Resources
 

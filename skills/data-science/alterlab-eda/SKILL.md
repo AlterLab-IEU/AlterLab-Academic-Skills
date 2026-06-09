@@ -1,9 +1,14 @@
 ---
 name: alterlab-eda
-description: Performs comprehensive exploratory data analysis (EDA) on scientific data files across 88 formats, auto-detecting file type and generating detailed markdown reports with format-specific analysis, quality metrics, and downstream-analysis recommendations. Use when analyzing any scientific data file to understand its structure, content, quality, and characteristics, including chemistry, bioinformatics, microscopy, spectroscopy, proteomics, and metabolomics formats. Part of the AlterLab Academic Skills suite.
+description: Exploratory data analysis (EDA) on a scientific data file — auto-detects the format, runs structure/quality/statistics checks, and writes a markdown EDA report with downstream recommendations. Use when asked to "explore", "analyze", "summarize", "profile", or "QC" a data file, or to understand its structure/content/quality before deciding what analysis to run. Covers tabular (.csv .tsv .xlsx .parquet), arrays (.npy .npz .hdf5 .h5 .mat .fits), sequence/genomics (.fasta .fastq .sam .bam .vcf .bed .gff .gtf .h5ad), microscopy (.tif .nd2 .czi .lif .ims .dcm .nii), spectroscopy/MS (.mzML .mzXML .mgf .fid .jdx), chemistry (.pdb .cif .mol .sdf .xyz .gro), and proteomics/metabolomics (.pepXML .mzid .mzTab). For zero-shot forecasting of a series use alterlab-timesfm; to create/configure a chunked cloud array store use alterlab-zarr. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; bundled scripts/ auto-install format-specific Python parsers on demand.
+allowed-tools:
+    - Read
+    - Write
+    - Edit
+    - Bash(uv:*)
+    - Bash(python:*)
+compatibility: No API key required. Run scripts via `uv run python` (this machine is uv-first); install format-specific parsers with `uv pip install <pkg>` on demand.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -114,16 +119,11 @@ Search the reference file for the specific extension (e.g., search for "### .fas
 
 Use the `scripts/eda_analyzer.py` script OR implement custom analysis:
 
-**Option A: Use the analyzer script**
-```python
-# The script automatically:
-# 1. Detects file type
-# 2. Loads reference information
-# 3. Performs format-specific analysis
-# 4. Generates markdown report
-
-python scripts/eda_analyzer.py <filepath> [output.md]
+**Option A: Use the analyzer script** (auto-detects type, loads the reference, runs format-specific analysis, writes the report)
+```bash
+uv run python scripts/eda_analyzer.py <filepath> [output.md]
 ```
+The script has built-in analyzers for tabular (`.csv`/`.tsv`), arrays (`.npy`/`.npz`/`.hdf5`), JSON, sequence (`.fasta`/`.fastq`), and basic imaging (`.tif`). For every other format it still detects the type and embeds the reference info, but you perform the data analysis yourself (Option B).
 
 **Option B: Custom analysis in the conversation**
 Based on the format information from the reference file, perform appropriate analysis:
@@ -268,77 +268,11 @@ Reference files are large (10,000+ words each). To efficiently use them:
 
 ## Examples
 
-### Example 1: Analyzing a FASTQ file
+The pattern is always: detect extension -> read the matching reference section -> run format-appropriate analysis -> write `<stem>_eda_report.md`.
 
-```python
-# User provides: "Analyze reads.fastq"
-
-# 1. Detect file type
-extension = '.fastq'
-category = 'bioinformatics_genomics'
-
-# 2. Read reference info
-# Search references/bioinformatics_genomics_formats.md for "### .fastq"
-
-# 3. Perform analysis
-from Bio import SeqIO
-sequences = list(SeqIO.parse('reads.fastq', 'fastq'))
-# Calculate: read count, length distribution, quality scores, GC content
-
-# 4. Generate report
-# Include: format description, analysis results, QC recommendations
-
-# 5. Save as: reads_eda_report.md
-```
-
-### Example 2: Analyzing a CSV dataset
-
-```python
-# User provides: "Explore experiment_results.csv"
-
-# 1. Detect: .csv → general_scientific
-
-# 2. Load reference for CSV format
-
-# 3. Analyze
-import pandas as pd
-df = pd.read_csv('experiment_results.csv')
-# Dimensions, dtypes, missing values, statistics, correlations
-
-# 4. Generate report with:
-# - Data structure
-# - Missing value patterns
-# - Statistical summaries
-# - Correlation matrix
-# - Outlier detection results
-
-# 5. Save report
-```
-
-### Example 3: Analyzing microscopy data
-
-```python
-# User provides: "Analyze cells.nd2"
-
-# 1. Detect: .nd2 → microscopy_imaging (Nikon format)
-
-# 2. Read reference for ND2 format
-# Learn: multi-dimensional (XYZCT), requires nd2reader
-
-# 3. Analyze
-from nd2reader import ND2Reader
-with ND2Reader('cells.nd2') as images:
-    # Extract: dimensions, channels, timepoints, metadata
-    # Calculate: intensity statistics, frame info
-
-# 4. Generate report with:
-# - Image dimensions (XY, Z-stacks, time, channels)
-# - Channel wavelengths
-# - Pixel size and calibration
-# - Recommendations for image analysis
-
-# 5. Save report
-```
+- **`reads.fastq`** -> bioinformatics. `from Bio import SeqIO; SeqIO.parse(path, 'fastq')`. Report read count, length distribution, per-read quality, GC content, then QC recommendations.
+- **`experiment_results.csv`** -> general scientific. `pd.read_csv`. Report shape, dtypes, missing-value patterns, summary stats, correlations, duplicates, outliers.
+- **`cells.nd2`** -> microscopy (Nikon). `from nd2reader import ND2Reader`. Report XYZCT dimensions, channels/timepoints, pixel size/calibration, intensity stats, then image-analysis recommendations.
 
 ## Troubleshooting
 
@@ -348,15 +282,7 @@ Many scientific formats require specialized libraries:
 
 **Problem:** Import error when trying to read a file
 
-**Solution:** Provide clear installation instructions
-```python
-try:
-    from Bio import SeqIO
-except ImportError:
-    print("Install Biopython: uv pip install biopython")
-```
-
-Common requirements by category:
+**Solution:** Install the parser with `uv pip install <pkg>` (do NOT use bare `pip` on this machine), then retry. Common requirements by category:
 - **Bioinformatics:** `biopython`, `pysam`, `pyBigWig`
 - **Chemistry:** `rdkit`, `mdanalysis`, `cclib`
 - **Microscopy:** `tifffile`, `nd2reader`, `aicsimageio`, `pydicom`
@@ -383,51 +309,18 @@ For very large files:
 
 ## Script Usage
 
-The `scripts/eda_analyzer.py` can be used directly:
-
 ```bash
-# Basic usage
-python scripts/eda_analyzer.py data.csv
-
-# Specify output file
-python scripts/eda_analyzer.py data.csv output_report.md
-
-# The script will:
-# 1. Auto-detect file type
-# 2. Load format references
-# 3. Perform appropriate analysis
-# 4. Generate markdown report
+uv run python scripts/eda_analyzer.py data.csv                 # report -> data_eda_report.md
+uv run python scripts/eda_analyzer.py data.csv output_report.md
 ```
 
-The script supports automatic analysis for many common formats, but custom analysis in the conversation provides more flexibility and domain-specific insights.
+The script auto-detects the file type, loads the matching reference section, runs built-in analysis where available, and writes the markdown report. For formats without a built-in analyzer, prefer custom analysis in the conversation (Option B) for domain-specific insight. Note: for `.csv`/`.tsv` the script samples the first 10,000 rows, so report dimensions/missing counts as *sampled* unless you re-run on the full file.
 
 ## Advanced Usage
 
-### Multi-File Analysis
-
-When analyzing multiple related files:
-1. Perform individual EDA on each file
-2. Create a summary comparison report
-3. Identify relationships and dependencies
-4. Suggest integration strategies
-
-### Quality Control
-
-For data quality assessment:
-1. Check format compliance
-2. Validate metadata consistency
-3. Assess completeness
-4. Identify outliers and anomalies
-5. Compare to expected ranges/distributions
-
-### Preprocessing Recommendations
-
-Based on data characteristics, recommend:
-1. Normalization strategies
-2. Missing value imputation
-3. Outlier handling
-4. Batch correction
-5. Format conversions
+- **Multi-file:** EDA each file individually, then write a comparison report noting relationships, dependencies, and integration strategy.
+- **Quality control:** check format compliance, validate metadata consistency (stated vs actual dimensions), assess completeness, flag outliers/anomalies against expected ranges.
+- **Preprocessing recommendations:** tailor to the data — normalization, missing-value imputation, outlier handling, batch correction, format conversion.
 
 ## Resources
 

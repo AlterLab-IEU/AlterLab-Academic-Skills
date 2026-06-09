@@ -11,13 +11,16 @@ STRING provides protein-protein interaction data from over 40 sources covering
 5000+ genomes with ~59.3 million proteins and 20+ billion interactions.
 """
 
+import os
 import urllib.request
 import urllib.parse
 import urllib.error
 from typing import List, Union
 
 
-STRING_BASE_URL = "https://string-db.org/api"
+# Default to the current API. For reproducible research, pin a version by setting
+# STRING_BASE_URL, e.g. "https://version-12-0.string-db.org/api", before import.
+STRING_BASE_URL = os.environ.get("STRING_BASE_URL", "https://string-db.org/api")
 
 
 def string_map_ids(identifiers: Union[str, List[str]],

@@ -148,7 +148,7 @@ form144.securities            # security details
 
 ---
 
-### Fund Voting Records (N-PX) → FundReport
+### Fund Voting Records (N-PX) → NPX
 
 ```python
 npx = filing.obj()
@@ -203,9 +203,9 @@ twentyf.financials  # financial data for foreign issuers
 | 13F-HR | ThirteenF | `infotable`, `total_value` |
 | SC 13D | Schedule13D | `total_shares`, `items` |
 | SC 13G | Schedule13G | `total_shares` |
-| NPORT-P | NportFiling | fund portfolio |
+| NPORT-P | FundReport | fund portfolio |
 | 144 | Form144 | `proposed_sale_amount`, `securities` |
-| N-PX | FundReport | `votes` |
+| N-PX | NPX | `votes` |
 | Form D | FormD | `offering`, `recipients` |
 | Form C | FormC | `offering_information` |
 | 10-D | TenD | `loans`, `properties`, `asset_data` |
@@ -219,11 +219,11 @@ twentyf.financials  # financial data for foreign issuers
 from edgar import Company
 
 apple = Company("AAPL")
-filing = apple.get_latest_filing("10-K")
+filing = apple.latest("10-K")   # or apple.get_filings(form="10-K").latest()
 tenk = filing.obj()          # returns TenK with all sections and financials
 ```
 
-If a form type is not yet supported, `filing.obj()` raises `UnsupportedFilingTypeError`.
+If a form type is not supported, `filing.obj()` returns `None` (or the filing's raw XBRL object when XBRL is present) — it does not raise. Always guard with `if obj is None`.
 
 ## Pattern for Unknown Form Types
 

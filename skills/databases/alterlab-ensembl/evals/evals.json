@@ -7,7 +7,7 @@
       "expected_output": "Invokes alterlab-ensembl to call the Ensembl REST API symbol lookup (e.g. /lookup/symbol/homo_sapiens/BRCA2 or client.symbol_lookup) returning the ENSG ID, location, and transcript information, optionally expanded.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "ensembl" }
+        { "type": "output_contains", "value": "ENSG00000139618" }
       ]
     },
     {

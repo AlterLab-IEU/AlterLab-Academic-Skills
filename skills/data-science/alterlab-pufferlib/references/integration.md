@@ -1,8 +1,17 @@
 # PufferLib Integration Guide
 
+> Targets PufferLib **3.0.x**.
+>
+> **Critical rule for this whole guide:** any env wrapped via the emulation layer
+> (`GymnasiumPufferEnv` / `PettingZooPufferEnv`) is *not* a native PufferEnv, so
+> `pufferlib.vector.make` requires an explicit `backend=pufferlib.vector.Multiprocessing`
+> (or `Serial`). The default `backend=PufferEnv` is native-only and raises
+> `APIUsageError` on a wrapped env. The examples below omit it for brevity only where
+> noted — add it in real code.
+
 ## Overview
 
-PufferLib provides an emulation layer that enables seamless integration with popular RL frameworks including Gymnasium, OpenAI Gym, PettingZoo, and many specialized environment libraries. The emulation layer flattens observation and action spaces for efficient vectorization while maintaining compatibility.
+PufferLib provides an emulation layer that enables seamless integration with popular RL frameworks including Gymnasium, OpenAI Gym, PettingZoo, and many specialized environment libraries. The emulation layer flattens observation and action spaces for efficient vectorization while maintaining compatibility. Many third-party suites also ship ready-made bindings under `pufferlib.environments.*` (e.g. `atari`, `procgen`, `nethack`, `minigrid`, `crafter`), each exposing an `env_creator`.
 
 ## Gymnasium Integration
 
@@ -18,18 +27,20 @@ import pufferlib.vector
 # `pufferlib.emulate`/`pufferlib.make`; wrap Gymnasium envs with
 # `pufferlib.emulation.GymnasiumPufferEnv`, then vectorize.
 
-# Method 1: Wrap a single Gymnasium env, then vectorize
+# Method 1: Wrap a single Gymnasium env, then vectorize.
+# Wrapped envs require an explicit backend (default backend=PufferEnv is native-only).
 def cartpole_creator():
     return pufferlib.emulation.GymnasiumPufferEnv(
         env_creator=lambda: gym.make('CartPole-v1'))
 
-env = pufferlib.vector.make(cartpole_creator, num_envs=256)
+env = pufferlib.vector.make(
+    cartpole_creator, num_envs=256, backend=pufferlib.vector.Multiprocessing)
 
 # Method 2: Same pattern with an inline creator
 env = pufferlib.vector.make(
     lambda: pufferlib.emulation.GymnasiumPufferEnv(
         env_creator=lambda: gym.make('CartPole-v1')),
-    num_envs=256,
+    num_envs=256, backend=pufferlib.vector.Multiprocessing,
 )
 
 # Method 3: Custom Gymnasium environment
@@ -53,11 +64,27 @@ class MyGymEnv(gym.Env):
 # Wrap custom environment (MyGymEnv is a gym.Env, so emulate it)
 env = pufferlib.vector.make(
     lambda: pufferlib.emulation.GymnasiumPufferEnv(env_creator=MyGymEnv),
-    num_envs=128,
+    num_envs=128, backend=pufferlib.vector.Multiprocessing,
 )
 ```
 
 ### Atari Environments
+
+The simplest path is PufferLib's bundled Atari binding, which handles the standard
+preprocessing for you:
+
+```python
+import pufferlib.environments.atari as atari
+import pufferlib.vector
+
+# The binding takes an ALE ROM name (e.g. 'breakout', 'pong') and returns an
+# already-emulated env, so still pass a non-native backend.
+env = pufferlib.vector.make(
+    atari.env_creator('breakout'),
+    num_envs=256, backend=pufferlib.vector.Multiprocessing)
+```
+
+You can also build the Gymnasium env yourself and emulate it:
 
 ```python
 import functools
@@ -66,23 +93,17 @@ from gymnasium.wrappers import AtariPreprocessing, FrameStack
 import pufferlib.emulation
 import pufferlib.vector
 
-# Standard Atari setup -- a plain Gymnasium creator
 def make_atari_env(env_name='ALE/Pong-v5'):
     env = gym.make(env_name)
     env = AtariPreprocessing(env, frame_skip=4)
     env = FrameStack(env, num_stack=4)
     return env
 
-# Wrap in a GymnasiumPufferEnv, then vectorize
 def atari_creator():
     return pufferlib.emulation.GymnasiumPufferEnv(env_creator=make_atari_env)
 
-env = pufferlib.vector.make(atari_creator, num_envs=256)
-
-# Bind a specific game via functools.partial on the Gymnasium creator
-pong_creator = lambda: pufferlib.emulation.GymnasiumPufferEnv(
-    env_creator=functools.partial(make_atari_env, env_name='ALE/Pong-v5'))
-env = pufferlib.vector.make(pong_creator, num_envs=256)
+env = pufferlib.vector.make(
+    atari_creator, num_envs=256, backend=pufferlib.vector.Multiprocessing)
 ```
 
 ### Complex Observation Spaces
@@ -119,10 +140,11 @@ class ComplexObsEnv(gym.Env):
         }
         return obs, 1.0, False, False, {}
 
-# PufferLib automatically flattens and unflattens complex spaces
+# GymnasiumPufferEnv flattens Dict spaces to a Box for the trainer; recover the
+# structure in the policy via pufferlib.pytorch.nativize_tensor (see policies.md).
 env = pufferlib.vector.make(
     lambda: pufferlib.emulation.GymnasiumPufferEnv(env_creator=ComplexObsEnv),
-    num_envs=128,
+    num_envs=128, backend=pufferlib.vector.Multiprocessing,
 )
 ```
 
@@ -141,7 +163,8 @@ def pistonball_creator():
     return pufferlib.emulation.PettingZooPufferEnv(
         env_creator=lambda: pistonball_v6.parallel_env())
 
-env = pufferlib.vector.make(pistonball_creator, num_envs=128)
+env = pufferlib.vector.make(
+    pistonball_creator, num_envs=128, backend=pufferlib.vector.Multiprocessing)
 ```
 
 ### AEC (Agent Environment Cycle) Environments
@@ -158,7 +181,8 @@ def chess_creator():
     return pufferlib.emulation.PettingZooPufferEnv(
         env_creator=lambda: aec_to_parallel(chess_v5.env()))
 
-env = pufferlib.vector.make(chess_creator, num_envs=64)
+env = pufferlib.vector.make(
+    chess_creator, num_envs=64, backend=pufferlib.vector.Multiprocessing)
 ```
 
 ### Multi-Agent Training
@@ -166,85 +190,67 @@ env = pufferlib.vector.make(chess_creator, num_envs=64)
 ```python
 import pufferlib.emulation
 import pufferlib.vector
-from pufferlib.pufferl import PuffeRL
+from pufferlib.pufferl import PuffeRL, load_config
 
-# Create multi-agent environment.
-# PufferLib has no string registry -- pass an environment constructor
-# (callable). `kaz_creator` is a placeholder that wraps a PettingZoo env
-# (e.g. knights_archers_zombies) with PettingZooPufferEnv.
-env = pufferlib.vector.make(kaz_creator, num_envs=128)
+# Create multi-agent environment. `kaz_creator` is a placeholder that wraps a
+# PettingZoo env (e.g. knights_archers_zombies) with PettingZooPufferEnv.
+env = pufferlib.vector.make(
+    kaz_creator, num_envs=128, backend=pufferlib.vector.Multiprocessing)
 
-# Shared policy for all agents
-policy = create_policy(env.observation_space, env.action_space)
+# One shared policy serves all agents. PufferLib emulates PettingZoo as a single
+# flat agent axis, so build the policy from the PER-AGENT spaces.
+policy = create_policy(env.single_observation_space, env.single_action_space)
 
-# Train
-trainer = PuffeRL(env=env, policy=policy)
+# Train: PuffeRL(config_dict, vecenv, policy). Loop on global_step.
+args = load_config('puffer_breakout')          # or your own env config
+config = {**args['train'], 'env': 'multiagent'}
+trainer = PuffeRL(config, env, policy)
 
-for iteration in range(num_iterations):
-    # Observations are dicts: {agent_id: batch_obs}
-    rollout = trainer.evaluate()
-
-    # Train on multi-agent data
+while trainer.global_step < config['total_timesteps']:
+    trainer.evaluate()   # rollouts are batched arrays, not {agent_id: ...} dicts
     trainer.train()
     trainer.mean_and_log()
 ```
 
 ## Third-Party Environments
 
+PufferLib ships bindings for these suites under `pufferlib.environments.<name>`,
+each exposing an `env_creator(name, ...)` (install the underlying package first).
+They are emulated, so pass `backend=pufferlib.vector.Multiprocessing`. The
+`make_*` names in the GPUDrive/MicroRTS/Griddly snippets below are placeholders
+for whichever creator you obtain (binding `env_creator` or your own callable).
+
 ### Procgen
 
 ```python
-import functools
+import pufferlib.environments.procgen as procgen
 import pufferlib.vector
 
-# PufferLib has no string registry -- pass an environment constructor
-# (callable). `make_coinrun` is a placeholder for the Procgen env creator you
-# provide (e.g. wrapping the third-party Procgen env); bind kwargs with
-# functools.partial.
 env = pufferlib.vector.make(
-    functools.partial(make_coinrun, distribution_mode='easy'),
-    num_envs=256,
-)
-
-# Custom configuration
-env = pufferlib.vector.make(
-    functools.partial(
-        make_coinrun,
-        num_levels=200,  # Number of unique levels
-        start_level=0,   # Starting level seed
-        distribution_mode='hard',
-    ),
-    num_envs=256,
-)
+    procgen.env_creator('coinrun'),
+    num_envs=256, backend=pufferlib.vector.Multiprocessing)
 ```
 
-### NetHack
+### NetHack / MiniHack
 
 ```python
+import pufferlib.environments.nethack as nethack
 import pufferlib.vector
 
-# Pass a constructor callable -- there is no string registry.
-# make_nethack / make_minihack_* are placeholders for the env creators you
-# provide (functions that build the corresponding env).
-
-# NetHack Learning Environment
-env = pufferlib.vector.make(make_nethack, num_envs=128)
-
-# MiniHack variants
-env = pufferlib.vector.make(make_minihack_corridor, num_envs=128)
-env = pufferlib.vector.make(make_minihack_room, num_envs=128)
+env = pufferlib.vector.make(
+    nethack.env_creator('nethack'),
+    num_envs=128, backend=pufferlib.vector.Multiprocessing)
 ```
 
 ### Minigrid
 
 ```python
+import pufferlib.environments.minigrid as minigrid
 import pufferlib.vector
 
-# Pass a constructor callable -- there is no string registry.
-# make_minigrid_* are placeholders for the env creators you provide.
-env = pufferlib.vector.make(make_minigrid_empty_8x8, num_envs=256)
-env = pufferlib.vector.make(make_minigrid_doorkey_8x8, num_envs=256)
-env = pufferlib.vector.make(make_minigrid_multiroom, num_envs=256)
+env = pufferlib.vector.make(
+    minigrid.env_creator('MiniGrid-Empty-8x8-v0'),
+    num_envs=256, backend=pufferlib.vector.Multiprocessing)
 ```
 
 ### Neural MMO
@@ -321,130 +327,45 @@ env = pufferlib.vector.make(make_griddly_sokoban, num_envs=256)
 
 ## Custom Wrappers
 
-### Observation Wrappers
+There is **no `pufferlib.Wrapper`** base class. For emulated envs, wrap at the
+**Gymnasium** level (subclass `gymnasium.Wrapper`) *before* passing the env to
+`GymnasiumPufferEnv` — that way you keep the standard Gymnasium 5-tuple step
+`(obs, reward, terminated, truncated, info)` and PufferLib handles the rest.
+PufferLib also ships ready wrappers (`pufferlib.ResizeObservation`,
+`pufferlib.ClipAction`, `pufferlib.EpisodeStats`). For frame stacking / action
+repeat, prefer the standard `gymnasium.wrappers` (e.g. `FrameStack`).
 
 ```python
 import numpy as np
-import pufferlib
-from pufferlib import PufferEnv
+import gymnasium as gym
+import pufferlib.emulation
+import pufferlib.vector
 
-class NormalizeObservations(pufferlib.Wrapper):
-    """Normalize observations to zero mean and unit variance."""
-
-    def __init__(self, env):
-        super().__init__(env)
-        self.obs_mean = np.zeros(env.observation_space.shape)
-        self.obs_std = np.ones(env.observation_space.shape)
-        self.count = 0
-
-    def reset(self):
-        obs = self.env.reset()
-        return self._normalize(obs)
-
-    def step(self, action):
-        obs, reward, done, info = self.env.step(action)
-        return self._normalize(obs), reward, done, info
-
-    def _normalize(self, obs):
-        # Update running statistics
-        self.count += 1
-        delta = obs - self.obs_mean
-        self.obs_mean += delta / self.count
-        self.obs_std = np.sqrt(((self.count - 1) * self.obs_std ** 2 + delta * (obs - self.obs_mean)) / self.count)
-
-        # Normalize
-        return (obs - self.obs_mean) / (self.obs_std + 1e-8)
-```
-
-### Reward Wrappers
-
-```python
-class RewardShaping(pufferlib.Wrapper):
-    """Add shaped rewards to environment."""
+class RewardShaping(gym.Wrapper):
+    """Add a shaped reward at the Gymnasium level."""
 
     def __init__(self, env, shaping_fn):
         super().__init__(env)
         self.shaping_fn = shaping_fn
 
     def step(self, action):
-        obs, reward, done, info = self.env.step(action)
+        obs, reward, terminated, truncated, info = self.env.step(action)
+        reward = reward + self.shaping_fn(obs, action)
+        return obs, reward, terminated, truncated, info
 
-        # Add shaped reward
-        shaped_reward = reward + self.shaping_fn(obs, action)
-
-        return obs, shaped_reward, done, info
-
-# Usage
 def proximity_shaping(obs, action):
-    """Reward agent for getting closer to goal."""
     goal_pos = np.array([10, 10])
-    agent_pos = obs[:2]
-    distance = np.linalg.norm(goal_pos - agent_pos)
+    distance = np.linalg.norm(goal_pos - obs[:2])
     return -0.1 * distance
 
-# Pass a constructor callable -- there is no string registry. `make_env`
-# is a placeholder for your env creator.
-env = pufferlib.vector.make(make_env, num_envs=128)
-env = RewardShaping(env, proximity_shaping)
-```
+# Apply wrappers inside the creator, then emulate + vectorize.
+def shaped_creator():
+    base = gym.make('CartPole-v1')
+    base = RewardShaping(base, proximity_shaping)
+    return pufferlib.emulation.GymnasiumPufferEnv(env_creator=lambda: base)
 
-### Frame Stacking
-
-```python
-class FrameStack(pufferlib.Wrapper):
-    """Stack frames for temporal context."""
-
-    def __init__(self, env, num_stack=4):
-        super().__init__(env)
-        self.num_stack = num_stack
-        self.frames = None
-
-    def reset(self):
-        obs = self.env.reset()
-
-        # Initialize frame stack
-        self.frames = np.repeat(obs[np.newaxis], self.num_stack, axis=0)
-
-        return self._get_obs()
-
-    def step(self, action):
-        obs, reward, done, info = self.env.step(action)
-
-        # Update frame stack
-        self.frames = np.roll(self.frames, shift=-1, axis=0)
-        self.frames[-1] = obs
-
-        if done:
-            self.frames = None
-
-        return self._get_obs(), reward, done, info
-
-    def _get_obs(self):
-        return self.frames
-```
-
-### Action Repeat
-
-```python
-class ActionRepeat(pufferlib.Wrapper):
-    """Repeat actions for multiple steps."""
-
-    def __init__(self, env, repeat=4):
-        super().__init__(env)
-        self.repeat = repeat
-
-    def step(self, action):
-        total_reward = 0.0
-        done = False
-
-        for _ in range(self.repeat):
-            obs, reward, done, info = self.env.step(action)
-            total_reward += reward
-
-            if done:
-                break
-
-        return obs, total_reward, done, info
+env = pufferlib.vector.make(
+    shaped_creator, num_envs=128, backend=pufferlib.vector.Multiprocessing)
 ```
 
 ## Space Conversion
@@ -469,27 +390,25 @@ original_space = Dict({
 # But can be unflattened when needed for policy processing
 ```
 
-### Unflattening for Policies
+### Recovering structure in the policy
+
+There is no `unflatten_observations` helper. Use
+`pufferlib.pytorch.nativize_dtype` (once, from `env.emulated`) plus
+`pufferlib.pytorch.nativize_tensor` per batch to recover the structured dict:
 
 ```python
-from pufferlib.pytorch import unflatten_observations
+import pufferlib.pytorch
 
-class PolicyWithUnflatten(nn.Module):
-    def __init__(self, observation_space, action_space):
+class PolicyWithDictObs(nn.Module):
+    def __init__(self, env):
         super().__init__()
-        self.observation_space = observation_space
-        # ... policy architecture ...
+        self.dtype = pufferlib.pytorch.nativize_dtype(env.emulated)
+        # ... encoders / heads ...
 
-    def forward(self, flat_observations):
-        # Unflatten to original structure
-        observations = unflatten_observations(
-            flat_observations,
-            self.observation_space
-        )
-
-        # Now observations is a dict with 'image', 'vector', 'discrete'
-        image_features = self.image_encoder(observations['image'])
-        vector_features = self.vector_encoder(observations['vector'])
+    def encode_observations(self, flat_observations, state=None):
+        obs = pufferlib.pytorch.nativize_tensor(flat_observations, self.dtype)
+        image_features = self.image_encoder(obs['image'].float() / 255.0)
+        vector_features = self.vector_encoder(obs['vector'])
         # ...
 ```
 
@@ -610,11 +529,11 @@ import pufferlib.vector
 # `make_coinrun` is a placeholder for your PufferEnv creator.
 env = pufferlib.vector.make(make_coinrun, num_envs=256)
 
-# Slower: Generic Gymnasium wrapper (still fast, but emulation overhead)
+# Slower: Generic Gymnasium wrapper (emulated -> needs a non-native backend)
 env = pufferlib.vector.make(
     lambda: pufferlib.emulation.GymnasiumPufferEnv(
         env_creator=lambda: gym.make('CartPole-v1')),
-    num_envs=256,
+    num_envs=256, backend=pufferlib.vector.Multiprocessing,
 )
 
 # Slowest: Nested wrappers add overhead
@@ -624,7 +543,8 @@ def nested_creator():
     gym_env = AnotherWrapper(gym_env)
     return pufferlib.emulation.GymnasiumPufferEnv(env_creator=lambda: gym_env)
 
-env = pufferlib.vector.make(nested_creator, num_envs=256)
+env = pufferlib.vector.make(
+    nested_creator, num_envs=256, backend=pufferlib.vector.Multiprocessing)
 ```
 
 ### Minimize Wrapper Overhead
@@ -641,22 +561,24 @@ def bad_creator():
     env = Wrapper3(env)
     return pufferlib.emulation.GymnasiumPufferEnv(env_creator=lambda: env)
 
-env = pufferlib.vector.make(bad_creator, num_envs=256)
+env = pufferlib.vector.make(
+    bad_creator, num_envs=256, backend=pufferlib.vector.Multiprocessing)
 
 # GOOD: Combine wrapper logic
 class CombinedWrapper(gym.Wrapper):
     def step(self, action):
-        obs, reward, done, truncated, info = self.env.step(action)
+        obs, reward, terminated, truncated, info = self.env.step(action)
         # Apply all transformations at once
         obs = self._transform_obs(obs)
         reward = self._transform_reward(reward)
-        return obs, reward, done, truncated, info
+        return obs, reward, terminated, truncated, info
 
 def good_creator():
     env = CombinedWrapper(gym.make('CartPole-v1'))
     return pufferlib.emulation.GymnasiumPufferEnv(env_creator=lambda: env)
 
-env = pufferlib.vector.make(good_creator, num_envs=256)
+env = pufferlib.vector.make(
+    good_creator, num_envs=256, backend=pufferlib.vector.Multiprocessing)
 ```
 
 ## Debugging Integration
@@ -664,26 +586,26 @@ env = pufferlib.vector.make(good_creator, num_envs=256)
 ### Verify Environment Compatibility
 
 ```python
+import numpy as np
+
 def test_environment(env, num_steps=100):
-    """Test environment for common issues."""
-    # Test reset
-    obs = env.reset()
-    assert env.observation_space.contains(obs), "Invalid initial observation"
+    """Smoke-test a single PufferEnv before vectorizing (5-tuple native API)."""
+    obs, info = env.reset()
+    assert isinstance(info, list), "PufferEnv reset must return an info LIST"
 
-    # Test steps
     for _ in range(num_steps):
-        action = env.action_space.sample()
-        obs, reward, done, info = env.step(action)
+        # One action per agent.
+        action = np.array([env.single_action_space.sample()
+                           for _ in range(env.num_agents)])
+        obs, reward, terminal, truncation, info = env.step(action)
 
-        assert env.observation_space.contains(obs), "Invalid observation"
-        assert isinstance(reward, (int, float)), "Invalid reward type"
-        assert isinstance(done, bool), "Invalid done type"
-        assert isinstance(info, dict), "Invalid info type"
+        assert np.all(np.isfinite(np.asarray(reward, dtype=float))), "Non-finite reward"
+        assert isinstance(info, list), "info must be a list of dicts"
 
-        if done:
-            obs = env.reset()
+        if np.any(terminal) or np.any(truncation):
+            obs, info = env.reset()
 
-    print("✓ Environment passed compatibility test")
+    print("Environment passed compatibility test")
 
 # Test before vectorizing
 test_environment(MyEnvironment())
@@ -702,21 +624,22 @@ gym_env = gym.make('CartPole-v1')
 puffer_env = pufferlib.vector.make(
     lambda: pufferlib.emulation.GymnasiumPufferEnv(
         env_creator=lambda: gym.make('CartPole-v1')),
-    num_envs=1,
+    num_envs=1, backend=pufferlib.vector.Multiprocessing,
 )
 
-# Test with same seed
+# Both reset() calls return (obs, info). vecenv.step returns a 5-tuple:
+# (obs, rewards, terminals, truncations, infos).
 gym_env.reset(seed=42)
-puffer_obs = puffer_env.reset()
+puffer_obs, _ = puffer_env.reset(seed=42)
 
 for _ in range(100):
     action = gym_env.action_space.sample()
 
-    gym_obs, gym_reward, gym_done, gym_truncated, gym_info = gym_env.step(action)
-    puffer_obs, puffer_reward, puffer_done, puffer_info = puffer_env.step(np.array([action]))
+    gym_obs, gym_reward, gym_term, gym_trunc, gym_info = gym_env.step(action)
+    puffer_obs, puffer_reward, puffer_term, puffer_trunc, *_ = \
+        puffer_env.step(np.array([action]))
 
-    # Compare outputs (accounting for batch dimension)
+    # Compare outputs (accounting for the leading batch/agent dimension)
     assert np.allclose(gym_obs, puffer_obs[0])
     assert gym_reward == puffer_reward[0]
-    assert gym_done == puffer_done[0]
 ```

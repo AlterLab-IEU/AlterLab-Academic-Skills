@@ -63,37 +63,86 @@ class BioRxivSearcher:
             self._log(f"Error making request: {e}")
             return {"messages": [{"status": "error", "message": str(e)}], "collection": []}
 
+    # Per-page size of the /details endpoint (fixed by the API at 30 records).
+    PAGE_SIZE = 30
+
+    @staticmethod
+    def _normalize_category(category: str) -> str:
+        """Normalize a category to the API's per-paper form (lowercase, spaces)."""
+        return category.strip().lower().replace("-", " ")
+
     def search_by_date_range(
         self,
         start_date: str,
         end_date: str,
-        category: Optional[str] = None
+        category: Optional[str] = None,
+        max_results: Optional[int] = None
     ) -> List[Dict]:
         """
-        Search for preprints within a date range.
+        Search for preprints within a date range, paginating through all results.
+
+        The /details endpoint returns only 30 records per call and reports the
+        total via messages[0]['total']; this method follows the cursor until the
+        full result set (or max_results) is retrieved.
+
+        Category filtering is done CLIENT-SIDE: the /details endpoint does not
+        accept a category path segment, but every record carries a 'category'
+        field (lowercase with spaces, e.g. 'cell biology'). The hyphenated form
+        used elsewhere ('cell-biology') is normalized to match.
 
         Args:
             start_date: Start date in YYYY-MM-DD format
             end_date: End date in YYYY-MM-DD format
-            category: Optional category filter (e.g., 'neuroscience')
+            category: Optional category filter (hyphenated or spaced form)
+            max_results: Optional cap on records fetched (caps API calls too)
 
         Returns:
             List of preprint dictionaries
         """
         self._log(f"Searching bioRxiv from {start_date} to {end_date}")
 
-        if category:
-            endpoint = f"details/biorxiv/{start_date}/{end_date}/{category}"
-        else:
-            endpoint = f"details/biorxiv/{start_date}/{end_date}"
+        wanted_cat = self._normalize_category(category) if category else None
+        results: List[Dict] = []
+        cursor = 0
+        total = None
 
-        data = self._make_request(endpoint)
+        while True:
+            # Date-range form: details/biorxiv/{start}/{end}/{cursor}/json
+            endpoint = f"details/biorxiv/{start_date}/{end_date}/{cursor}/json"
+            data = self._make_request(endpoint)
 
-        if "collection" in data:
-            self._log(f"Found {len(data['collection'])} preprints")
-            return data["collection"]
+            messages = data.get("messages") or [{}]
+            status = messages[0].get("status")
+            if status and status != "ok":
+                self._log(f"API status: {status} - {messages[0]}")
+                break
 
-        return []
+            collection = data.get("collection", [])
+            if not collection:
+                break
+
+            for paper in collection:
+                if wanted_cat and self._normalize_category(paper.get("category", "")) != wanted_cat:
+                    continue
+                results.append(paper)
+                if max_results and len(results) >= max_results:
+                    self._log(f"Reached max_results={max_results}; stopping pagination")
+                    return results
+
+            # Determine total once and decide whether to continue paginating.
+            if total is None:
+                try:
+                    total = int(messages[0].get("total", len(collection)))
+                except (TypeError, ValueError):
+                    total = len(collection)
+                self._log(f"Total records in range: {total}")
+
+            cursor += self.PAGE_SIZE
+            if cursor >= total:
+                break
+
+        self._log(f"Found {len(results)} preprints (after any category filter)")
+        return results
 
     def search_by_interval(
         self,
@@ -130,12 +179,16 @@ class BioRxivSearcher:
             doi = doi.split('doi.org/')[-1]
 
         self._log(f"Fetching details for DOI: {doi}")
-        endpoint = f"details/biorxiv/{doi}"
+        # Documented DOI form: details/biorxiv/{doi}/na/json
+        endpoint = f"details/biorxiv/{doi}/na/json"
 
         data = self._make_request(endpoint)
 
-        if "collection" in data and len(data["collection"]) > 0:
-            return data["collection"][0]
+        collection = data.get("collection", [])
+        if collection:
+            # The API returns one entry per version, ordered ascending;
+            # return the latest version.
+            return collection[-1]
 
         return {}
 
@@ -227,13 +280,16 @@ class BioRxivSearcher:
         self._log(f"Found {len(matching_papers)} papers matching keywords")
         return matching_papers
 
-    def download_pdf(self, doi: str, output_path: str) -> bool:
+    def download_pdf(self, doi: str, output_path: str,
+                     version: Optional[str] = None) -> bool:
         """
         Download the PDF of a paper.
 
         Args:
             doi: The DOI of the paper
             output_path: Path where PDF should be saved
+            version: Optional version number (e.g. '2'). If omitted, the latest
+                version is looked up via get_paper_details(); falls back to v1.
 
         Returns:
             True if download successful, False otherwise
@@ -242,8 +298,13 @@ class BioRxivSearcher:
         if 'doi.org' in doi:
             doi = doi.split('doi.org/')[-1]
 
-        # Construct PDF URL
-        pdf_url = f"https://www.biorxiv.org/content/{doi}v1.full.pdf"
+        # Resolve the version so revised preprints get the right PDF.
+        if version is None:
+            details = self.get_paper_details(doi)
+            version = details.get("version") or "1"
+
+        # Construct PDF URL (bioRxiv PDFs are served from www, not the API host).
+        pdf_url = f"https://www.biorxiv.org/content/{doi}v{version}.full.pdf"
 
         self._log(f"Downloading PDF from: {pdf_url}")
 
@@ -289,10 +350,11 @@ class BioRxivSearcher:
         if include_abstract:
             result["abstract"] = paper.get("abstract", "")
 
-        # Add PDF and HTML URLs
+        # Add PDF and HTML URLs (fall back to v1 if version is missing).
         if result["doi"]:
-            result["pdf_url"] = f"https://www.biorxiv.org/content/{result['doi']}v{result['version']}.full.pdf"
-            result["html_url"] = f"https://www.biorxiv.org/content/{result['doi']}v{result['version']}"
+            version = result["version"] or "1"
+            result["pdf_url"] = f"https://www.biorxiv.org/content/{result['doi']}v{version}.full.pdf"
+            result["html_url"] = f"https://www.biorxiv.org/content/{result['doi']}v{version}"
 
         return result
 
@@ -401,7 +463,7 @@ def main():
             return 1
 
         results = searcher.search_by_date_range(
-            start_date, end_date, args.category
+            start_date, end_date, args.category, max_results=args.limit
         )
 
     # Apply limit

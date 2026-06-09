@@ -440,16 +440,25 @@ class MetadataExtractor:
         return f'{last_name}{year}{keyword}'
     
     def _protect_title(self, title: str) -> str:
-        """Protect capitalization in title for BibTeX."""
-        # Protect common acronyms and proper nouns
+        """Brace-protect known acronyms so BibTeX styles keep their capitalization.
+
+        Matching is CASE-SENSITIVE on purpose: we only protect a word that already
+        appears in its canonical (acronym) form. Using re.IGNORECASE here would
+        silently rewrite the author's casing (e.g. "Covid" -> "{COVID}", "python"
+        -> "{Python}"), corrupting the original title. We also avoid re-bracing a
+        word that is already inside braces.
+        """
+        # Common acronyms and proper nouns worth protecting from down-casing.
         protected_words = [
             'DNA', 'RNA', 'CRISPR', 'COVID', 'HIV', 'AIDS', 'AlphaFold',
             'Python', 'AI', 'ML', 'GPU', 'CPU', 'USA', 'UK', 'EU'
         ]
-        
+
         for word in protected_words:
-            title = re.sub(rf'\b{word}\b', f'{{{word}}}', title, flags=re.IGNORECASE)
-        
+            # Negative look-behind/ahead reject adjacent word chars or an existing brace.
+            title = re.sub(rf'(?<![{{\w]){re.escape(word)}(?![\w}}])',
+                           f'{{{word}}}', title)
+
         return title
     
     def extract(self, identifier: str) -> Optional[str]:

@@ -4,7 +4,7 @@
     {
       "id": "predicted-structure-by-uniprot",
       "prompt": "I have UniProt accession P00520 and there's no experimental PDB structure for it. Can you pull the AlphaFold predicted 3D structure and download the mmCIF coordinate file?",
-      "expected_output": "Invokes alterlab-alphafold-db. Retrieves the AlphaFold prediction for P00520 (e.g. via the prediction API endpoint or Biopython's alphafold_db.get_predictions), resolves the AlphaFold ID (AF-P00520-F1), and downloads the model_v4.cif coordinate file from alphafold.ebi.ac.uk/files. Notes that this is an AI prediction, not an experimental structure.",
+      "expected_output": "Invokes alterlab-alphafold-db. Retrieves the AlphaFold prediction for P00520 (e.g. via the prediction API endpoint or Biopython's alphafold_db.get_predictions), resolves the AlphaFold ID (AF-P00520-F1), and downloads the mmCIF model coordinate file using the version-stamped cifUrl from the prediction response (currently model_v6.cif) rather than a hardcoded _v4 URL. Notes that this is an AI prediction, not an experimental structure.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "AlphaFold" },
@@ -14,7 +14,7 @@
     {
       "id": "confidence-plddt-pae",
       "prompt": "For the AlphaFold model AF-P04637-F1, how reliable is the prediction? I want the per-residue pLDDT scores and the PAE matrix so I can judge which domains are confidently placed.",
-      "expected_output": "Invokes alterlab-alphafold-db. Fetches the confidence_v4.json (pLDDT) and predicted_aligned_error_v4.json (PAE) files for AF-P04637-F1, interprets pLDDT bands (>90 very high, 70-90 high, 50-70 low, <50 very low) and PAE thresholds (<5 Å confident relative positioning, >15 Å uncertain domain arrangement), and explains which regions/domains are reliable.",
+      "expected_output": "Invokes alterlab-alphafold-db. Fetches the per-residue confidence JSON (pLDDT, from plddtDocUrl) and the PAE JSON (from paeDocUrl) for AF-P04637-F1 — using the version-stamped URLs from the prediction response, not hardcoded _v4 URLs. Interprets pLDDT bands (>90 very high, 70-90 high, 50-70 low, <50 very low) and PAE thresholds (<5 Å confident relative positioning, >15 Å uncertain domain arrangement), and explains which regions/domains are reliable.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "pLDDT" },
@@ -33,7 +33,7 @@
     {
       "id": "batch-plddt-stats",
       "prompt": "I have a list of UniProt IDs (P00520, P12931, P04637). For each one, download the AlphaFold model and give me the average pLDDT and the fraction of residues above 90 confidence.",
-      "expected_output": "Invokes alterlab-alphafold-db. Loops over the UniProt IDs, retrieves each prediction and its confidence_v4.json (or reads pLDDT from the mmCIF B-factor column), and computes average pLDDT and the high-confidence (>90) fraction per protein, returning a per-protein summary table.",
+      "expected_output": "Invokes alterlab-alphafold-db. Loops over the UniProt IDs, retrieves each prediction and its per-residue confidence JSON (via plddtDocUrl, or reads pLDDT from the mmCIF B-factor column), and computes average pLDDT and the high-confidence (>90) fraction per protein, returning a per-protein summary table.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Iterates over multiple UniProt accessions and reports per-protein confidence statistics (mean pLDDT, high-confidence fraction)." }

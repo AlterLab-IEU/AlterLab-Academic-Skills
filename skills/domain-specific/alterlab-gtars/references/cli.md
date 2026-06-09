@@ -1,222 +1,100 @@
 # Command-Line Interface
 
-Gtars provides a comprehensive CLI for genomic interval analysis directly from the terminal.
+The gtars CLI is the `gtars-cli` crate (binary name `gtars`), separate from the
+Python package. Subcommand availability depends on the Cargo features compiled in,
+and exact flag sets evolve across versions — **always confirm with
+`gtars <command> --help`**. Subcommand names below verified against the v0.8 CLI.
 
 ## Installation
 
 ```bash
-# Install with all features
-cargo install gtars-cli --features "uniwig overlaprs igd bbcache scoring fragsplit"
+# Common feature set
+cargo install gtars-cli --features "uniwig overlaprs igd bbcache scoring fragsplit genomicdist"
 
-# Install specific features only
-cargo install gtars-cli --features "uniwig overlaprs"
+# Subset
+cargo install gtars-cli --features "uniwig igd"
 ```
 
-## Global Options
+## Subcommands (verified)
+
+| Command | Feature | Purpose |
+|---|---|---|
+| `igd` | `igd` | Create or search an Integrated Genome Database (overlap index) |
+| `overlaprs` | `overlaprs` | Pairwise BED overlap from the command line |
+| `uniwig` | `uniwig` | Accumulation / coverage tracks from a BED or BAM file |
+| `bbcache` | `bbcache` | Cache/manage BED files (e.g. from BEDbase) |
+| `pb` | `fragsplit` | Split fragment files into pseudobulks by cluster label |
+| `scoring` | `scoring` | Score region/fragment files against a reference |
+| `genomicdist` | `genomicdist` | Genomic distribution analysis |
+| `ranges` | (built-in) | Range operations |
+| `consensus` | (built-in) | Consensus region operations |
+| `prep` | (built-in) | Preprocessing utilities |
+
+> Note: the fragment-splitting command is **`pb`** (pseudobulk), not `fragsplit`,
+> even though the feature that enables it is named `fragsplit`.
+
+## IGD
+
+IGD has two subcommands: `create` and `search`.
 
 ```bash
-# Display help
-gtars --help
-
-# Show version
-gtars --version
-
-# Verbose output
-gtars --verbose <command>
-
-# Quiet mode
-gtars --quiet <command>
+gtars igd create --help    # build a database (typically from a directory of BEDs)
+gtars igd search --help    # query the database with regions
 ```
 
-## IGD Commands
+## uniwig
 
-Build and query IGD indexes for overlap detection:
+A single subcommand (no `generate` sub-subcommand). Real flags include `--file`,
+`--filetype` (`bed`/`bam`), `--fileheader`, `--outputtype`, `--counttype`,
+`--smoothsize`, `--stepsize`, `--threads`.
 
 ```bash
-# Build IGD index
-gtars igd build --input regions.bed --output regions.igd
-
-# Query single region
-gtars igd query --index regions.igd --region "chr1:1000-2000"
-
-# Query from file
-gtars igd query --index regions.igd --query-file queries.bed --output results.bed
-
-# Count overlaps
-gtars igd count --index regions.igd --query-file queries.bed
+gtars uniwig --file fragments.bed --filetype bed \
+             --fileheader coverage --outputtype bw
+gtars uniwig --help        # accepted --outputtype values vary by version
 ```
 
-## Overlap Commands
+## pb (fragment pseudobulking)
 
-Compute overlaps between genomic region sets:
+Takes a fragments file and a cluster-mapping file. Real flags include
+`--fragments` and `--mapping`.
 
 ```bash
-# Find overlapping regions
-gtars overlaprs overlap --set-a regions_a.bed --set-b regions_b.bed --output overlaps.bed
-
-# Count overlaps
-gtars overlaprs count --set-a regions_a.bed --set-b regions_b.bed
-
-# Filter regions by overlap
-gtars overlaprs filter --input regions.bed --filter overlapping.bed --output filtered.bed
-
-# Subtract regions
-gtars overlaprs subtract --set-a regions_a.bed --set-b regions_b.bed --output difference.bed
+gtars pb --fragments fragments.bed.gz --mapping cluster_mapping.tsv
+gtars pb --help
 ```
 
-## Uniwig Commands
+## overlaprs / scoring / bbcache / genomicdist
 
-Generate coverage tracks from genomic intervals:
+Flag sets vary; inspect each:
 
 ```bash
-# Generate coverage track
-gtars uniwig generate --input fragments.bed --output coverage.wig
-
-# Specify resolution
-gtars uniwig generate --input fragments.bed --output coverage.wig --resolution 10
-
-# Generate BigWig
-gtars uniwig generate --input fragments.bed --output coverage.bw --format bigwig
-
-# Strand-specific coverage
-gtars uniwig generate --input fragments.bed --output forward.wig --strand +
+gtars overlaprs --help
+gtars scoring --help
+gtars bbcache --help
+gtars genomicdist --help
 ```
 
-## BBCache Commands
+## Input/output formats
 
-Cache and manage BED files from BEDbase.org:
-
-```bash
-# Cache BED file from bedbase
-gtars bbcache fetch --id <bedbase_id> --output cached.bed
-
-# List cached files
-gtars bbcache list
-
-# Clear cache
-gtars bbcache clear
-
-# Update cache
-gtars bbcache update
-```
-
-## Scoring Commands
-
-Score fragment overlaps against reference datasets:
-
-```bash
-# Score fragments
-gtars scoring score --fragments fragments.bed --reference reference.bed --output scores.txt
-
-# Batch scoring
-gtars scoring batch --fragments-dir ./fragments/ --reference reference.bed --output-dir ./scores/
-
-# Score with weights
-gtars scoring score --fragments fragments.bed --reference reference.bed --weights weights.txt --output scores.txt
-```
-
-## FragSplit Commands
-
-Split fragment files by cell barcodes or clusters:
-
-```bash
-# Split by barcode
-gtars fragsplit split --input fragments.tsv --barcodes barcodes.txt --output-dir ./split/
-
-# Split by clusters
-gtars fragsplit cluster-split --input fragments.tsv --clusters clusters.txt --output-dir ./clustered/
-
-# Filter fragments
-gtars fragsplit filter --input fragments.tsv --min-fragments 100 --output filtered.tsv
-```
-
-## Common Workflows
-
-### Workflow 1: Overlap Analysis Pipeline
-
-```bash
-# Step 1: Build IGD index for reference
-gtars igd build --input reference_regions.bed --output reference.igd
-
-# Step 2: Query with experimental data
-gtars igd query --index reference.igd --query-file experimental.bed --output overlaps.bed
-
-# Step 3: Generate statistics
-gtars overlaprs count --set-a experimental.bed --set-b reference_regions.bed
-```
-
-### Workflow 2: Coverage Track Generation
-
-```bash
-# Step 1: Generate coverage
-gtars uniwig generate --input fragments.bed --output coverage.wig --resolution 10
-
-# Step 2: Convert to BigWig
-gtars uniwig generate --input fragments.bed --output coverage.bw --format bigwig
-```
-
-### Workflow 3: Fragment Processing
-
-```bash
-# Step 1: Filter fragments
-gtars fragsplit filter --input raw_fragments.tsv --min-fragments 100 --output filtered.tsv
-
-# Step 2: Split by clusters
-gtars fragsplit cluster-split --input filtered.tsv --clusters clusters.txt --output-dir ./by_cluster/
-
-# Step 3: Score against reference
-gtars scoring batch --fragments-dir ./by_cluster/ --reference reference.bed --output-dir ./scores/
-```
-
-## Input/Output Formats
-
-### BED Format
-Standard 3-column or extended BED format:
+### BED
 ```
 chr1    1000    2000
 chr1    3000    4000
 chr2    5000    6000
 ```
+Coordinates are 0-based, half-open `[start, end)`.
 
-### Fragment Format (TSV)
-Tab-separated format for single-cell fragments:
-```
-chr1    1000    2000    BARCODE1
-chr1    3000    4000    BARCODE2
-chr2    5000    6000    BARCODE1
-```
+### Fragment files
+Single-cell fragments, typically gzipped BED-like (`chrom start end barcode ...`),
+paired with a separate cluster-mapping file for `pb`.
 
-### WIG Format
-Wiggle format for coverage tracks:
-```
-fixedStep chrom=chr1 start=1000 step=10
-12
-15
-18
-```
+### Coverage output
+uniwig writes BigWig / accumulation tracks for genome-browser visualization.
 
-## Performance Options
+## Tips
 
-```bash
-# Set thread count
-gtars --threads 8 <command>
-
-# Memory limit
-gtars --memory-limit 4G <command>
-
-# Buffer size
-gtars --buffer-size 10000 <command>
-```
-
-## Error Handling
-
-```bash
-# Continue on errors
-gtars --continue-on-error <command>
-
-# Strict mode (fail on warnings)
-gtars --strict <command>
-
-# Log to file
-gtars --log-file output.log <command>
-```
+- Compile only the features you need to keep the binary small.
+- Coordinate-sort BED/BAM inputs before `uniwig` and IGD operations.
+- For repeated overlap queries against a fixed database, build an IGD index once
+  (`gtars igd create`) and `search` it many times.

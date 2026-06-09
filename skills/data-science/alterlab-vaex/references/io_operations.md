@@ -235,34 +235,26 @@ df_combined.export_hdf5('combined_data.hdf5')
 ```python
 import vaex
 
-# Process CSV in chunks
-chunk_size = 1_000_000
-output_file = 'processed.hdf5'
+# Stream a large CSV through Vaex and write a single HDF5 in one call.
+# chunk_size controls how much is read at a time; convert= writes the HDF5.
+df = vaex.open('huge.csv', convert='processed.hdf5', chunk_size=1_000_000)
 
-for i, df_chunk in enumerate(vaex.from_csv_chunked('huge.csv', chunk_size=chunk_size)):
-    # Process chunk
-    df_chunk['new_col'] = df_chunk.x + df_chunk.y
+# Now memory-mapped and instant to reopen
+df = vaex.open('processed.hdf5')
 
-    # Append to HDF5
-    if i == 0:
-        df_chunk.export_hdf5(output_file)
-    else:
-        df_chunk.export_hdf5(output_file, mode='a')  # Append
-
-# Load final result
-df = vaex.open(output_file)
+# Add derived columns lazily after conversion (no extra memory)
+df['new_col'] = df.x + df.y
 ```
 
-### Exporting in Chunks
+### Exporting Large DataFrames
 
 ```python
-# Export large DataFrame in chunks (for CSV)
-chunk_size = 1_000_000
+# export_* already streams the data; you don't need a manual chunk loop.
+# Prefer HDF5/Arrow over CSV for large output.
+df.export_hdf5('large_output.hdf5', progress=True)
 
-for i in range(0, len(df), chunk_size):
-    df_chunk = df[i:i+chunk_size]
-    mode = 'w' if i == 0 else 'a'
-    df_chunk.export_csv('large_output.csv', mode=mode, header=(i == 0))
+# If you must write CSV, export_csv writes incrementally under the hood:
+df.export_csv('large_output.csv', chunk_size=1_000_000)
 ```
 
 ## Pandas Integration
@@ -430,8 +422,8 @@ df = vaex.open('data.hdf5')  # No data loaded into RAM
 # Data is read from disk on-demand
 mean = df.x.mean()  # Streams through data, minimal memory
 
-# Check if column is memory-mapped
-print(df.is_local('column_name'))  # False = memory-mapped
+# Check whether a column is virtual (lazy) vs a real on-disk/in-memory column
+print('column_name' in df.virtual_columns)  # True = virtual expression
 ```
 
 ### Forcing Data into Memory

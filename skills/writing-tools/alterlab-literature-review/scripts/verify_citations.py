@@ -18,9 +18,18 @@ class CitationVerifier:
         })
 
     def extract_dois(self, text: str) -> List[str]:
-        """Extract all DOIs from text."""
-        doi_pattern = r'10\.\d{4,}/[^\s\]\)"]+'
-        return re.findall(doi_pattern, text)
+        """Extract all DOIs from text (deduplicated, trailing punctuation stripped)."""
+        doi_pattern = r'10\.\d{4,}/[^\s\]\)"<>]+'
+        raw = re.findall(doi_pattern, text)
+        seen = set()
+        dois = []
+        for doi in raw:
+            # Strip sentence/markdown punctuation that commonly trails a DOI.
+            doi = doi.rstrip('.,;:)>"\']')
+            if doi and doi not in seen:
+                seen.add(doi)
+                dois.append(doi)
+        return dois
 
     def verify_doi(self, doi: str) -> Tuple[bool, Dict]:
         """

@@ -28,11 +28,12 @@ Healthcare encounter containing:
 
 ## BaseDataset Class
 
+In PyHealth 2.x, dataset constructors take an explicit `tables=[...]` list naming the source tables to load (table names come from the dataset's YAML config, e.g. `mimic4_ehr.yaml`).
+
 **Key Methods:**
-- `get_patient(patient_id)`: Retrieve single patient record
 - `iter_patients()`: Iterate through all patients
 - `stats()`: Get dataset statistics (patients, visits, events)
-- `set_task(task_fn)`: Define prediction task
+- `set_task(task)`: Apply a prediction task. Pass an **instance** of a task class (e.g. `MortalityPredictionMIMIC4()`), not a bare function.
 
 ## Available Datasets
 
@@ -126,8 +127,8 @@ Converts raw datasets into task-specific formatted samples.
 
 **Usage Pattern:**
 ```python
-# After setting task on BaseDataset
-sample_dataset = dataset.set_task(task_fn)
+# After setting a task (a task-class instance) on a BaseDataset
+sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 ```
 
 ## Data Splitting Functions
@@ -153,15 +154,17 @@ sample_dataset = dataset.set_task(task_fn)
 ## Common Workflow
 
 ```python
-from pyhealth.datasets import MIMIC4Dataset
-from pyhealth.tasks import mortality_prediction_mimic4_fn
-from pyhealth.datasets import split_by_patient
+from pyhealth.datasets import MIMIC4Dataset, split_by_patient
+from pyhealth.tasks import MortalityPredictionMIMIC4
 
-# 1. Load dataset
-dataset = MIMIC4Dataset(root="/path/to/data")
+# 1. Load dataset (declare the tables you need)
+dataset = MIMIC4Dataset(
+    root="/path/to/data",
+    tables=["diagnoses_icd", "procedures_icd", "prescriptions"],
+)
 
-# 2. Set prediction task
-sample_dataset = dataset.set_task(mortality_prediction_mimic4_fn)
+# 2. Set prediction task (instantiate the task class)
+sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 
 # 3. Split data
 train, val, test = split_by_patient(sample_dataset, [0.7, 0.1, 0.2])
@@ -172,7 +175,7 @@ print(dataset.stats())
 
 ## Performance Notes
 
-- PyHealth is **3x faster than pandas** for healthcare data processing
+- PyHealth 2.x uses a **polars-backed** data layer for fast, memory-efficient processing
 - Optimized for large-scale EHR datasets
 - Memory-efficient patient iteration
 - Vectorized operations for feature extraction

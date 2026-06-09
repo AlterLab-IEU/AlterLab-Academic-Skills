@@ -24,6 +24,10 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "make_subplots"
         }
       ]
     },
@@ -46,13 +50,17 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "Surface"
         }
       ]
     },
     {
       "id": "near-miss-matplotlib",
       "prompt": "I need a static, print-ready PDF figure of this line plot for journal submission — vector output, 300 DPI fallback PNG, no interactivity needed.",
-      "expected_output": "Does NOT invoke alterlab-plotly. A static publication figure with vector PDF output is matplotlib's (or scientific-visualization's) territory; defers to matplotlib since no interactivity is required.",
+      "expected_output": "Does NOT invoke alterlab-plotly. A static publication figure with vector PDF output is matplotlib's (alterlab-matplotlib) territory; defers to matplotlib since no interactivity is required.",
       "assertions": [
         {
           "type": "should_not_trigger",

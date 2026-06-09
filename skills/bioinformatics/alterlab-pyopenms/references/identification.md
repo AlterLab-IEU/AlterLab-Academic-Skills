@@ -23,9 +23,11 @@ PyOpenMS integrates with these search engines:
 ```python
 import pyopenms as ms
 
-# Load identification results
+# Load identification results.
+# pyOpenMS 3.x: peptide_ids MUST be a PeptideIdentificationList (a plain []
+# is rejected by load()); protein_ids stays a plain list.
 protein_ids = []
-peptide_ids = []
+peptide_ids = ms.PeptideIdentificationList()
 
 ms.IdXMLFile().load("identifications.idXML", protein_ids, peptide_ids)
 
@@ -84,46 +86,36 @@ for protein_id in protein_ids:
 
 ### FDR Filtering
 
-Apply FDR filtering to control false positives:
+Apply FDR filtering to control false positives.
+
+Prerequisite: `fdr.apply()` needs each hit annotated with a `target_decoy`
+meta value (`"target"` / `"decoy"`). That annotation is produced by searching a
+concatenated target-decoy database and running `PeptideIndexer`; without it,
+`apply()` raises "Meta value 'target_decoy' does not exist". After `apply()`,
+each hit's **score becomes its q-value** (lower is better), so filtering at 1%
+FDR is just a score threshold — use `IDFilter` rather than hand-rolled loops:
 
 ```python
-# Create FDR object
+# Create FDR object and rewrite scores to q-values
 fdr = ms.FalseDiscoveryRate()
+fdr.apply(peptide_ids)              # peptide_ids is a PeptideIdentificationList
 
-# Apply FDR at PSM level
-fdr.apply(peptide_ids)
+# Filter at 1% FDR. filterHitsByScore respects each ID's score orientation
+# (apply() sets it to lower-is-better), so this keeps hits with q-value <= 0.01.
+ms.IDFilter().filterHitsByScore(peptide_ids, 0.01)
+ms.IDFilter().removeEmptyIdentifications(peptide_ids)
 
-# Filter by FDR threshold
-fdr_threshold = 0.01  # 1% FDR
-filtered_peptide_ids = []
-
-for peptide_id in peptide_ids:
-    # Keep hits below FDR threshold
-    filtered_hits = []
-    for hit in peptide_id.getHits():
-        if hit.getScore() <= fdr_threshold:  # Lower score = better
-            filtered_hits.append(hit)
-
-    if filtered_hits:
-        peptide_id.setHits(filtered_hits)
-        filtered_peptide_ids.append(peptide_id)
-
-print(f"Peptides passing FDR: {len(filtered_peptide_ids)}")
+print(f"Peptide IDs passing 1% FDR: {len(peptide_ids)}")
 ```
 
-### Score Transformation
+### Inspecting q-values
 
-Convert scores to q-values:
+After `apply()`, the hit score is the q-value:
 
 ```python
-# Apply score transformation
-fdr.apply(peptide_ids)
-
-# Access q-values
 for peptide_id in peptide_ids:
     for hit in peptide_id.getHits():
-        q_value = hit.getMetaValue("q-value")
-        print(f"Sequence: {hit.getSequence().toString()}, q-value: {q_value}")
+        print(f"Sequence: {hit.getSequence().toString()}, q-value: {hit.getScore()}")
 ```
 
 ## Protein Inference
@@ -136,7 +128,7 @@ Map peptide identifications to proteins:
 # Create mapper
 mapper = ms.IDMapper()
 
-# Map to features
+# Map to features (peptide_ids is a PeptideIdentificationList)
 feature_map = ms.FeatureMap()
 ms.FeatureXMLFile().load("features.featureXML", feature_map)
 
@@ -297,43 +289,33 @@ def identification_workflow(spectrum_file, fasta_file, output_file):
     # comet = ms.CometAdapter()
     # protein_ids, peptide_ids = comet.search(exp, search_params)
 
-    # For this example, load pre-computed results
+    # For this example, load pre-computed results (already PeptideIndexer-
+    # annotated with target_decoy). peptide_ids must be a PeptideIdentificationList.
     protein_ids = []
-    peptide_ids = []
+    peptide_ids = ms.PeptideIdentificationList()
     ms.IdXMLFile().load("raw_identifications.idXML", protein_ids, peptide_ids)
 
     print(f"Initial peptide IDs: {len(peptide_ids)}")
 
-    # Step 4: Apply FDR filtering
+    # Step 4: Apply FDR (scores -> q-values) and filter at 1% with IDFilter
     fdr = ms.FalseDiscoveryRate()
     fdr.apply(peptide_ids)
+    ms.IDFilter().filterHitsByScore(peptide_ids, 0.01)
+    ms.IDFilter().removeEmptyIdentifications(peptide_ids)
 
-    # Filter by 1% FDR
-    filtered_peptide_ids = []
-    for peptide_id in peptide_ids:
-        filtered_hits = []
-        for hit in peptide_id.getHits():
-            q_value = hit.getMetaValue("q-value")
-            if q_value <= 0.01:
-                filtered_hits.append(hit)
-
-        if filtered_hits:
-            peptide_id.setHits(filtered_hits)
-            filtered_peptide_ids.append(peptide_id)
-
-    print(f"Peptides after FDR (1%): {len(filtered_peptide_ids)}")
+    print(f"Peptide IDs after FDR (1%): {len(peptide_ids)}")
 
     # Step 5: Protein inference
     inference = ms.BasicProteinInferenceAlgorithm()
-    inference.run(filtered_peptide_ids, protein_ids)
+    inference.run(peptide_ids, protein_ids)
 
     print(f"Identified proteins: {len(protein_ids)}")
 
     # Step 6: Save results
-    ms.IdXMLFile().store(output_file, protein_ids, filtered_peptide_ids)
+    ms.IdXMLFile().store(output_file, protein_ids, peptide_ids)
     print(f"Results saved to {output_file}")
 
-    return protein_ids, filtered_peptide_ids
+    return protein_ids, peptide_ids
 
 # Run workflow
 protein_ids, peptide_ids = identification_workflow(
@@ -347,33 +329,28 @@ protein_ids, peptide_ids = identification_workflow(
 
 ### Library Matching
 
+Load an MSP spectral library. `MSPFile.load` reads the library spectra into an
+`MSExperiment` and their peptide annotations into a `PeptideIdentificationList`:
+
 ```python
-# Load spectral library
-library = ms.MSPFile()
-library_spectra = []
-library.load("spectral_library.msp", library_spectra)
+# Load spectral library (spectra -> MSExperiment, annotations -> ID list)
+library_ids = ms.PeptideIdentificationList()
+library_spectra = ms.MSExperiment()
+ms.MSPFile().load("spectral_library.msp", library_ids, library_spectra)
 
 # Load experimental spectra
 exp = ms.MSExperiment()
 ms.MzMLFile().load("data.mzML", exp)
 
-# Compare spectra
-spectra_compare = ms.SpectraSTSimilarityScore()
-
-for exp_spec in exp:
-    if exp_spec.getMSLevel() == 2:
-        best_match_score = 0
-        best_match_lib = None
-
-        for lib_spec in library_spectra:
-            score = spectra_compare.operator()(exp_spec, lib_spec)
-            if score > best_match_score:
-                best_match_score = score
-                best_match_lib = lib_spec
-
-        if best_match_score > 0.7:  # Threshold
-            print(f"Match found: score {best_match_score:.3f}")
+print(f"Library spectra: {library_spectra.getNrSpectra()}, "
+      f"query MS2 spectra: {sum(s.getMSLevel() == 2 for s in exp)}")
 ```
+
+For the actual spectral comparison, score pairs of `MSSpectrum` objects with a
+similarity metric such as `BinnedSpectrum` + `BinnedSpectralContrastAngle`
+(`SpectraSTSimilarityScore` exposes `preprocess`/`compute_F`, not a simple
+`operator()` call). For metabolite/small-molecule spectral matching, prefer the
+`matchms` skill, which is purpose-built for cosine/modified-cosine scoring.
 
 ## Best Practices
 
@@ -382,21 +359,27 @@ for exp_spec in exp:
 Use target-decoy approach for FDR calculation:
 
 ```python
-# Generate decoy database
+# Generate decoy database.
+# DecoyGenerator.reverseProtein takes/returns an AASequence (not a FASTAEntry),
+# so wrap each entry's sequence and write a new FASTAEntry with a decoy prefix.
 decoy_generator = ms.DecoyGenerator()
 
-# Load target database
+# Load target database (FASTAEntry list; plain [] is fine for FASTA)
 fasta_entries = []
 ms.FASTAFile().load("target.fasta", fasta_entries)
 
 # Generate decoys
 decoy_entries = []
 for entry in fasta_entries:
-    decoy_entry = decoy_generator.reverseProtein(entry)
-    decoy_entries.append(decoy_entry)
+    rev = decoy_generator.reverseProtein(ms.AASequence.fromString(entry.sequence))
+    decoy = ms.FASTAEntry()
+    decoy.identifier = "DECOY_" + entry.identifier
+    decoy.description = entry.description
+    decoy.sequence = rev.toUnmodifiedString()
+    decoy_entries.append(decoy)
 
-# Save combined database
-all_entries = fasta_entries + decoy_entries
+# Save combined target+decoy database
+all_entries = list(fasta_entries) + decoy_entries
 ms.FASTAFile().store("target_decoy.fasta", all_entries)
 ```
 
@@ -405,18 +388,17 @@ ms.FASTAFile().store("target_decoy.fasta", all_entries)
 Understand score types from different engines:
 
 ```python
-# Interpret scores based on search engine
+# The search engine lives on the ProteinIdentification run, not the peptide ID.
+# Map each run identifier to its engine name first.
+engine_by_run = {p.getIdentifier(): p.getSearchEngine() for p in protein_ids}
+
 for peptide_id in peptide_ids:
-    search_engine = peptide_id.getIdentifier()
+    engine = engine_by_run.get(peptide_id.getIdentifier(), "")
+    higher_better = peptide_id.isHigherScoreBetter()
 
     for hit in peptide_id.getHits():
         score = hit.getScore()
-
-        # Score interpretation varies by engine
-        if "Comet" in search_engine:
-            # Comet: higher E-value = worse
-            print(f"E-value: {score}")
-        elif "Mascot" in search_engine:
-            # Mascot: higher score = better
-            print(f"Ion score: {score}")
+        # Whether higher is better is recorded per ID; do not assume by engine
+        print(f"{engine} {peptide_id.getScoreType()}={score} "
+              f"(higher_better={higher_better})")
 ```

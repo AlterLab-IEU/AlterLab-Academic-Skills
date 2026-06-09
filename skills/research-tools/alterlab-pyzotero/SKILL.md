@@ -61,7 +61,7 @@ all_items = zot.everything(zot.items())
 - A `Zotero` instance is bound to a single library (user or group). All methods operate on that library.
 - Item data lives in `item['data']`. Access fields like `item['data']['title']`, `item['data']['creators']`.
 - Pyzotero returns 100 items by default (API default is 25). Use `zot.everything(zot.items())` to get all items.
-- Write methods return `True` on success or raise a `ZoteroError`.
+- Write methods return `True` on success or raise a `PyZoteroError` subclass (from `pyzotero.errors`; all class names end in `Error`, e.g. `ResourceNotFoundError`).
 
 ## Reference Files
 

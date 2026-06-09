@@ -33,11 +33,21 @@
     {
       "id": "near-miss-scholar-eval",
       "prompt": "I need to score these five candidate papers on a numeric rubric and rank them for an award committee — give me a quantitative scoring framework with weighted criteria.",
-      "expected_output": "Does NOT invoke alterlab-peer-review; defers to alterlab-scholar-eval. The ask is a quantitative scoring/ranking framework with weighted criteria, not a constructive prose manuscript/grant review. Peer-review produces narrative reviewer reports; scholar-evaluation produces numeric scoring frameworks.",
+      "expected_output": "Does NOT invoke alterlab-peer-review; defers to alterlab-scholar-eval. The ask is a quantitative scoring/ranking framework with weighted criteria, not a constructive prose manuscript/grant review. Peer-review produces narrative reviewer reports; alterlab-scholar-eval produces numeric rubric scoring.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
-        { "type": "output_contains", "value": "scholar-eval" },
-        { "type": "behavior", "value": "Distinguishes quantitative scoring/ranking (scholar-evaluation) from constructive peer-review prose and defers." }
+        { "type": "output_contains", "value": "alterlab-scholar-eval" },
+        { "type": "behavior", "value": "Distinguishes quantitative rubric scoring/ranking (alterlab-scholar-eval) from constructive peer-review prose and defers to the scoring skill." }
+      ]
+    },
+    {
+      "id": "near-miss-evidence-grading",
+      "prompt": "Don't write a reviewer report — I just want to grade the certainty of evidence in this RCT using GRADE and flag any confounders or causal-inference flaws in the design.",
+      "expected_output": "Does NOT invoke alterlab-peer-review; defers to alterlab-scientific-thinking. The ask is evidence-quality grading (GRADE) plus bias/confounder/causal-inference assessment, not a constructive submittable reviewer report.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-scientific-thinking" },
+        { "type": "behavior", "value": "Recognizes evidence-grading and bias/causal-inference analysis as alterlab-scientific-thinking territory and defers rather than producing a peer-review report." }
       ]
     }
   ]

@@ -225,13 +225,13 @@ print(f"Best validation score: {all_results['best_validation_score']}")
 ### Using ChemBERTa
 ```python
 import deepchem as dc
-from transformers import AutoTokenizer
 
-# Load your data
+# Load your data — ChemBERTa tokenizes raw SMILES itself, so featurize
+# with DummyFeaturizer (no precomputed features needed).
 loader = dc.data.CSVLoader(
     tasks=['activity'],
     feature_field='smiles',
-    featurizer=dc.feat.DummyFeaturizer()  # ChemBERTa handles featurization
+    featurizer=dc.feat.DummyFeaturizer()
 )
 dataset = loader.create_dataset('data.csv')
 
@@ -239,11 +239,14 @@ dataset = loader.create_dataset('data.csv')
 splitter = dc.splits.ScaffoldSplitter()
 train, test = splitter.train_test_split(dataset)
 
-# Load pretrained ChemBERTa
-model = dc.models.HuggingFaceModel(
-    model='seyonec/ChemBERTa-zinc-base-v1',
+# Fine-tune pretrained ChemBERTa. dc.models.Chemberta subclasses
+# HuggingFaceModel; tokenizer_path points at the pretrained vocab and
+# extra kwargs (learning_rate, ...) flow through to TorchModel.
+model = dc.models.Chemberta(
     task='regression',
-    n_tasks=1
+    tokenizer_path='seyonec/PubChem10M_SMILES_BPE_60k',
+    n_tasks=1,
+    learning_rate=2e-5
 )
 
 # Fine-tune
@@ -252,6 +255,11 @@ model.fit(train, nb_epoch=10)
 # Evaluate
 predictions = model.predict(test)
 ```
+
+> The lower-level `dc.models.HuggingFaceModel` is also available, but its
+> `model=` argument expects an instantiated `transformers` PreTrainedModel
+> plus a `tokenizer=`, not a model-id string. Prefer `dc.models.Chemberta`
+> for the simple fine-tuning path.
 
 ### Using GROVER
 ```python
@@ -334,17 +342,17 @@ molecules = gan.predict_gan_generator(
 ```python
 import deepchem as dc
 
-# Load materials data (structure files in CIF format)
-loader = dc.data.CIFLoader()
-dataset = loader.create_dataset('materials.csv')
-
-# Split data
-splitter = dc.splits.RandomSplitter()
-train, test = splitter.train_test_split(dataset)
+# Easiest path: a built-in materials benchmark featurized for CGCNN.
+# CGCNNFeaturizer builds crystal graphs from pymatgen Structure objects
+# (requires the optional `pymatgen` dependency).
+tasks, datasets, transformers = dc.molnet.load_perovskite(
+    featurizer=dc.feat.CGCNNFeaturizer(),
+    reload=False
+)
+train, valid, test = datasets
 
 # Create CGCNN model
 model = dc.models.CGCNNModel(
-    n_tasks=1,
     mode='regression',
     batch_size=32,
     learning_rate=0.001
@@ -354,9 +362,13 @@ model = dc.models.CGCNNModel(
 model.fit(train, nb_epoch=100)
 
 # Evaluate
-metric = dc.metrics.Metric(dc.metrics.mae_score)
-test_score = model.evaluate(test, [metric])
+metric = dc.metrics.Metric(dc.metrics.mean_absolute_error)
+test_score = model.evaluate(test, [metric], transformers)
 ```
+
+For your own crystals, featurize a list of pymatgen `Structure` objects
+with `dc.feat.CGCNNFeaturizer()` and wrap the result in a
+`dc.data.NumpyDataset(X=features, y=targets)`.
 
 ---
 

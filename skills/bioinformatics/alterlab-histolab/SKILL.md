@@ -1,6 +1,6 @@
 ---
 name: alterlab-histolab
-description: Extract and preprocess tiles from whole-slide images (WSI) with histolab — tissue detection, tile extraction, and H&E stain normalization. Use for lightweight slide pipelines, building tile datasets for ML, or quick tile-based analysis of histopathology slides — for advanced spatial proteomics, multiplexed imaging, or full deep-learning pathology pipelines use pathml. Part of the AlterLab Academic Skills suite.
+description: Extract and preprocess tiles from whole-slide images (WSI) with histolab — tissue detection, tile extraction (Random/Grid/Score tilers), and H&E stain normalization (Macenko/Reinhard). Use for lightweight slide pipelines, building tile datasets for ML, or quick tile-based analysis of histopathology slides — for advanced spatial proteomics, multiplexed imaging, or full deep-learning pathology pipelines use pathml. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
@@ -22,8 +22,13 @@ Use histolab for lightweight WSI tile pipelines: tissue detection, building tile
 ## Installation
 
 ```bash
-uv pip install histolab
+uv pip install "histolab==0.7.0"
 ```
+
+histolab wraps the **OpenSlide** C library, which is not bundled with the pip
+package. On macOS install it with `brew install openslide`; without it, any
+`import histolab.slide` fails with `Couldn't locate OpenSlide dylib`. The
+examples below are pinned to histolab 0.7.0; the API differs in older releases.
 
 ## Core Workflow
 
@@ -39,10 +44,18 @@ from histolab.slide import Slide
 from histolab.tiler import RandomTiler
 
 slide = Slide("slide.svs", processed_path="output/")
+# n_tiles, level, seed are CONSTRUCTOR args — not args to locate_tiles/extract.
 tiler = RandomTiler(tile_size=(512, 512), n_tiles=100, level=0, seed=42)
-tiler.locate_tiles(slide, n_tiles=20)  # preview first
-tiler.extract(slide)
+tiler.locate_tiles(slide)   # preview locations on the thumbnail first
+tiler.extract(slide)        # writes PNGs into processed_path
 ```
+
+**API gotcha (histolab 0.7.0):** `locate_tiles()` and `extract()` take only
+`slide`, an optional `extraction_mask`, and logging/styling kwargs — they do
+**not** accept `n_tiles`. Set `n_tiles` (and `seed`, `level`, `tile_size`,
+`check_tissue`, `tissue_percent`) on the tiler constructor. The
+`extraction_mask` is passed to `extract()`/`locate_tiles()`, never to the
+constructor.
 
 Full copy-pasteable pipelines (quick start, 5 end-to-end workflows, and per-capability examples) live in `references/workflows.md`.
 
@@ -55,7 +68,8 @@ Load, inspect, and work with WSI files (SVS, TIFF, NDPI, etc.): access metadata
 pyramidal/multi-level structures. Key class: `Slide`.
 
 See `references/slide_management.md` for slide initialization, built-in sample
-datasets (prostate, ovarian, breast, heart, kidney), pyramid levels, and
+datasets (`prostate_tissue`, `ovarian_tissue`, `breast_tissue`, `heart_tissue`,
+`aorta_tissue`, plus pen-marked and IHC samples), pyramid levels, and
 multi-slide processing.
 
 ### 2. Tissue Detection and Masks
@@ -95,10 +109,12 @@ See `references/tile_extraction.md` for scorers, reporting, and advanced
 
 Apply image-processing filters for tissue detection, QC, and preprocessing:
 - **Image filters** — `RgbToGrayscale`, `RgbToHsv`, `RgbToHed`, `OtsuThreshold`,
-  `AdaptiveThreshold`, `StretchContrast`, `HistogramEqualization`.
+  `Invert`, `StretchContrast`, `HistogramEqualization`, `Lambda`.
 - **Morphological filters** — `BinaryDilation`, `BinaryErosion`, `BinaryOpening`,
   `BinaryClosing`, `RemoveSmallObjects`, `RemoveSmallHoles`.
-- **Composition** — `Compose` chains filters into pipelines.
+- **Composition** — `Compose` (in `histolab.filters.image_filters`) chains
+  filters into pipelines. Pass custom filters to a mask as positional varargs:
+  `TissueMask(RgbToGrayscale(), OtsuThreshold(), ...)`.
 
 See `references/filters_preprocessing.md` for filter chaining, common pipelines
 (tissue detection, pen removal, nuclei enhancement), and QC filters.

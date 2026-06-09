@@ -32,22 +32,16 @@ class MyEnvironment(PufferEnv):
 
         # Define spaces and num_agents BEFORE calling super().__init__(buf)
 
-        # Define observation space
+        # Define observation space.
+        # IMPORTANT: a native PufferEnv obs space MUST be a Box (Dict is rejected
+        # by the base class). For Dict/structured observations, build a Gymnasium
+        # env and wrap it with pufferlib.emulation.GymnasiumPufferEnv instead.
+        #
         # Option 1: Flat vector observation
         self.single_observation_space = gymnasium.spaces.Box(
             low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)  # [x, y, goal_x, goal_y]
 
-        # Option 2: Dict observation with multiple components
-        # self.single_observation_space = gymnasium.spaces.Dict({
-        #     'position': gymnasium.spaces.Box(
-        #         low=-np.inf, high=np.inf, shape=(2,), dtype=np.float32),
-        #     'goal': gymnasium.spaces.Box(
-        #         low=-np.inf, high=np.inf, shape=(2,), dtype=np.float32),
-        #     'grid': gymnasium.spaces.Box(
-        #         low=0, high=1, shape=(grid_size, grid_size), dtype=np.float32),
-        # })
-
-        # Option 3: Image observation
+        # Option 2: Image observation (still a Box)
         # self.single_observation_space = gymnasium.spaces.Box(
         #     low=0, high=255, shape=(grid_size, grid_size, 3), dtype=np.uint8)
 
@@ -173,9 +167,15 @@ class MyEnvironment(PufferEnv):
 
 class MultiAgentEnvironment(PufferEnv):
     """
-    Multi-agent environment template.
+    Multi-agent environment template (NATIVE PufferEnv API).
 
-    Example: Cooperative navigation task where agents must reach individual goals.
+    Example: cooperative navigation where each agent reaches its own goal.
+
+    Native multi-agent uses the SAME array-based API as single-agent: set
+    num_agents > 1, make single_*_space PER AGENT, and have reset/step return
+    arrays whose leading dimension is num_agents. There is NO {agent_id: ...}
+    dict / '__all__' convention here -- that belongs to PettingZoo (use
+    pufferlib.emulation.PettingZooPufferEnv for those). obs space must be a Box.
     """
 
     def __init__(self, buf=None, num_agents=4, grid_size=10, max_steps=1000):
@@ -184,16 +184,10 @@ class MultiAgentEnvironment(PufferEnv):
         self.grid_size = grid_size
         self.max_steps = max_steps
 
-        # Per-agent observation space
-        self.single_observation_space = gymnasium.spaces.Dict({
-            'position': gymnasium.spaces.Box(
-                low=-np.inf, high=np.inf, shape=(2,), dtype=np.float32),
-            'goal': gymnasium.spaces.Box(
-                low=-np.inf, high=np.inf, shape=(2,), dtype=np.float32),
-            'others': gymnasium.spaces.Box(
-                low=-np.inf, high=np.inf,
-                shape=(2 * (num_agents - 1),), dtype=np.float32),  # Positions of other agents
-        })
+        # Per-agent observation: [pos(2), goal(2), other agent positions(2*(n-1))]
+        obs_dim = 2 + 2 + 2 * (num_agents - 1)
+        self.single_observation_space = gymnasium.spaces.Box(
+            low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32)
 
         # Per-agent action space
         self.single_action_space = gymnasium.spaces.Discrete(5)  # 4 directions + stay
@@ -205,59 +199,41 @@ class MultiAgentEnvironment(PufferEnv):
 
         super().__init__(buf)
 
-    def reset(self):
-        """Reset all agents."""
-        # Random initial positions
+    def reset(self, seed=None):
+        """Reset all agents. Returns (obs, info-list)."""
         self.agent_positions = np.random.rand(self.num_agents, 2) * self.grid_size
-
-        # Random goal positions
         self.goal_positions = np.random.rand(self.num_agents, 2) * self.grid_size
-
         self.step_count = 0
 
-        # Return observations for all agents
-        return {
-            f'agent_{i}': self._get_obs(i)
-            for i in range(self.num_agents)
-        }
+        return self._get_obs(), []
 
     def step(self, actions):
         """
         Step all agents.
 
         Args:
-            actions: Dict of {agent_id: action}
+            actions: array of shape (num_agents,) of discrete actions
 
         Returns:
-            observations: Dict of {agent_id: observation}
-            rewards: Dict of {agent_id: reward}
-            dones: Dict of {agent_id: done}
-            infos: Dict of {agent_id: info}
+            observations: (num_agents, obs_dim) float32 array
+            rewards: (num_agents,) float32 array
+            terminals: (num_agents,) bool array
+            truncations: (num_agents,) bool array
+            info: list of dicts (PufferEnv asserts info is a list)
         """
         self.step_count += 1
 
-        observations = {}
-        rewards = {}
-        dones = {}
-        infos = {}
+        actions = np.asarray(actions).reshape(self.num_agents)
+        for agent_idx in range(self.num_agents):
+            self._apply_action(agent_idx, int(actions[agent_idx]))
 
-        # Update all agents
-        for agent_id, action in actions.items():
-            agent_idx = int(agent_id.split('_')[1])
+        observations = self._get_obs()
+        rewards = self._compute_rewards()
+        terminals = self._terminated()
+        truncations = np.full(
+            self.num_agents, self.step_count >= self.max_steps, dtype=bool)
 
-            # Apply action
-            self._apply_action(agent_idx, action)
-
-            # Generate outputs
-            observations[agent_id] = self._get_obs(agent_idx)
-            rewards[agent_id] = self._compute_reward(agent_idx)
-            dones[agent_id] = self._is_done(agent_idx)
-            infos[agent_id] = {}
-
-        # Global done condition
-        dones['__all__'] = all(dones.values()) or self.step_count >= self.max_steps
-
-        return observations, rewards, dones, infos
+        return observations, rewards, terminals, truncations, []
 
     def _apply_action(self, agent_idx, action):
         """Apply action for specific agent."""
@@ -278,34 +254,31 @@ class MultiAgentEnvironment(PufferEnv):
             self.grid_size - 1
         )
 
-    def _compute_reward(self, agent_idx):
-        """Compute reward for specific agent."""
-        distance = np.linalg.norm(
-            self.agent_positions[agent_idx] - self.goal_positions[agent_idx]
-        )
-        return -distance / self.grid_size
+    def _compute_rewards(self):
+        """Per-agent reward: negative normalized distance to each agent's goal."""
+        distances = np.linalg.norm(
+            self.agent_positions - self.goal_positions, axis=1)
+        return (-distances / self.grid_size).astype(np.float32)
 
-    def _is_done(self, agent_idx):
-        """Check if specific agent is done."""
-        distance = np.linalg.norm(
-            self.agent_positions[agent_idx] - self.goal_positions[agent_idx]
-        )
-        return distance < 0.5
+    def _terminated(self):
+        """Per-agent termination: True once close to its goal."""
+        distances = np.linalg.norm(
+            self.agent_positions - self.goal_positions, axis=1)
+        return distances < 0.5
 
-    def _get_obs(self, agent_idx):
-        """Get observation for specific agent."""
-        # Get positions of other agents
-        other_positions = np.concatenate([
-            self.agent_positions[i]
-            for i in range(self.num_agents)
-            if i != agent_idx
-        ])
-
-        return {
-            'position': self.agent_positions[agent_idx].astype(np.float32),
-            'goal': self.goal_positions[agent_idx].astype(np.float32),
-            'others': other_positions.astype(np.float32)
-        }
+    def _get_obs(self):
+        """Build the (num_agents, obs_dim) observation array."""
+        obs = np.zeros(
+            (self.num_agents, self.single_observation_space.shape[0]),
+            dtype=np.float32)
+        for i in range(self.num_agents):
+            others = np.concatenate([
+                self.agent_positions[j] for j in range(self.num_agents) if j != i
+            ]) if self.num_agents > 1 else np.zeros(0, dtype=np.float32)
+            obs[i] = np.concatenate([
+                self.agent_positions[i], self.goal_positions[i], others
+            ]).astype(np.float32)
+        return obs
 
 
 def test_environment():
@@ -329,23 +302,24 @@ def test_environment():
     print("\nTesting multi-agent environment...")
     multi_env = MultiAgentEnvironment(num_agents=4)
 
-    obs = multi_env.reset()
-    print(f"Number of agents: {len(obs)}")
+    obs, info = multi_env.reset()
+    print(f"Obs shape (num_agents, obs_dim): {obs.shape}")
 
     for step in range(10):
-        actions = {
-            agent_id: multi_env.single_action_space.sample()
-            for agent_id in obs.keys()
-        }
-        obs, rewards, dones, infos = multi_env.step(actions)
+        # One action per agent: array of shape (num_agents,)
+        actions = np.array([
+            multi_env.single_action_space.sample()
+            for _ in range(multi_env.num_agents)
+        ])
+        obs, rewards, terminals, truncations, info = multi_env.step(actions)
 
-        print(f"Step {step}: mean_reward={np.mean(list(rewards.values())):.3f}")
+        print(f"Step {step}: mean_reward={rewards.mean():.3f}")
 
-        if dones.get('__all__', False):
-            obs = multi_env.reset()
+        if terminals.all() or truncations.any():
+            obs, info = multi_env.reset()
             print("Episode finished, resetting...")
 
-    print("\n✓ Environment tests passed!")
+    print("\nEnvironment tests passed.")
 
 
 if __name__ == '__main__':

@@ -159,13 +159,15 @@ power_law = models.PowerLaw1D(amplitude=10, x_0=1, alpha=2)
 
 ```python
 # Generate noisy data
+rng = np.random.default_rng(0)
 true_model = models.Gaussian1D(amplitude=10, mean=5, stddev=1)
 x = np.linspace(0, 10, 100)
 y_true = true_model(x)
-y_noisy = y_true + np.random.normal(0, 0.5, x.shape)
+y_noisy = y_true + rng.normal(0, 0.5, x.shape)
 
-# Fit model
-fitter = fitting.LevMarLSQFitter()
+# Fit model. TRFLSQFitter is the recommended non-linear least-squares fitter
+# in current astropy; LevMarLSQFitter still works but is being phased out.
+fitter = fitting.TRFLSQFitter()
 initial_model = models.Gaussian1D(amplitude=8, mean=4, stddev=1.5)
 fitted_model = fitter(initial_model, x, y_noisy)
 
@@ -176,13 +178,15 @@ print(f"Fitted stddev: {fitted_model.stddev.value}")
 
 ### Compound Models
 
+The parameter is `amplitude`, not `amp` — passing `amp=` raises a TypeError.
+
 ```python
 # Add models
-double_gauss = models.Gaussian1D(amp=5, mean=3, stddev=1) + \
-               models.Gaussian1D(amp=8, mean=7, stddev=1.5)
+double_gauss = models.Gaussian1D(amplitude=5, mean=3, stddev=1) + \
+               models.Gaussian1D(amplitude=8, mean=7, stddev=1.5)
 
-# Compose models
-composite = models.Gaussian1D(amp=10, mean=5, stddev=1) | \
+# Compose models (output of one feeds the next)
+composite = models.Gaussian1D(amplitude=10, mean=5, stddev=1) | \
             models.Scale(factor=2)  # Scale output
 ```
 

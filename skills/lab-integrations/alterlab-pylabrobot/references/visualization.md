@@ -17,52 +17,50 @@ The PyLabRobot Visualizer is a browser-based tool that:
 
 ### Starting the Visualizer
 
-The visualizer runs as a web server and displays in your browser:
+The visualizer runs as a web server and displays in your browser. The `Visualizer` takes the resource to visualize (the `LiquidHandler`, or any `Resource`) as its first argument, and is started with `await vis.setup()` — there is no `lh.visualizer =` assignment and no `vis.start()`.
 
 ```python
 from pylabrobot.visualizer import Visualizer
 
-# Create visualizer
-vis = Visualizer()
+# Create visualizer bound to a resource (e.g. the liquid handler `lh`)
+vis = Visualizer(resource=lh)
 
-# Start web server (opens browser automatically)
-await vis.start()
+# Start file + websocket servers (opens browser automatically)
+await vis.setup()
 
 # Stop visualizer
 await vis.stop()
 ```
 
 **Default Settings:**
-- Port: 1234 (http://localhost:1234)
-- Opens browser automatically when started
+- File server on port 1337, websocket on port 2121 (override via `fs_port=` / `ws_port=`)
+- Opens browser automatically (`open_browser=False` to suppress)
 
 ### Connecting Liquid Handler to Visualizer
 
+Create the liquid handler first, then bind a `Visualizer` to it:
+
 ```python
 from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.liquid_handling.backends.simulation import ChatterboxBackend
+from pylabrobot.liquid_handling.backends import LiquidHandlerChatterboxBackend
 from pylabrobot.resources import STARLetDeck
 from pylabrobot.visualizer import Visualizer
 
-# Create visualizer
-vis = Visualizer()
-await vis.start()
-
 # Create liquid handler with simulation backend
 lh = LiquidHandler(
-    backend=ChatterboxBackend(num_channels=8),
+    backend=LiquidHandlerChatterboxBackend(num_channels=8),
     deck=STARLetDeck()
 )
-
-# Connect liquid handler to visualizer
-lh.visualizer = vis
-
 await lh.setup()
+
+# Bind the visualizer to the liquid handler and start it
+vis = Visualizer(resource=lh)
+await vis.setup()
 
 # Now all operations are visualized in real-time
 await lh.pick_up_tips(tip_rack["A1:H1"])
-await lh.aspirate(plate["A1:H1"], vols=100)
-await lh.dispense(plate["A2:H2"], vols=100)
+await lh.aspirate(plate["A1:H1"], vols=[100] * 8)
+await lh.dispense(plate["A2:H2"], vols=[100] * 8)
 await lh.drop_tips()
 ```
 
@@ -117,11 +115,13 @@ await lh.return_tips()                     # Tips shown as present in visualizer
 
 ```python
 from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.liquid_handling.backends.simulation import ChatterboxBackend
+from pylabrobot.liquid_handling.backends import LiquidHandlerChatterboxBackend
 from pylabrobot.resources import (
     STARLetDeck,
     TIP_CAR_480_A00,
-    Cos_96_DW_1mL,
+    PLT_CAR_L5AC_A00,
+    hamilton_96_tiprack_1000uL_filter,
+    Cor_96_wellplate_360ul_Fb,
     set_tip_tracking,
     set_volume_tracking
 )
@@ -131,39 +131,36 @@ from pylabrobot.visualizer import Visualizer
 set_tip_tracking(True)
 set_volume_tracking(True)
 
-# Create visualizer
-vis = Visualizer()
-await vis.start()
-
 # Create liquid handler
 lh = LiquidHandler(
-    backend=ChatterboxBackend(num_channels=8),
+    backend=LiquidHandlerChatterboxBackend(num_channels=8),
     deck=STARLetDeck()
 )
-lh.visualizer = vis
 await lh.setup()
 
-# Define resources
-tip_rack = TIP_CAR_480_A00(name="tips")
-source_plate = Cos_96_DW_1mL(name="source")
-dest_plate = Cos_96_DW_1mL(name="dest")
+# Bind and start the visualizer
+vis = Visualizer(resource=lh)
+await vis.setup()
 
-# Assign to deck
-lh.deck.assign_child_resource(tip_rack, rails=1)
-lh.deck.assign_child_resource(source_plate, rails=10)
-lh.deck.assign_child_resource(dest_plate, rails=15)
+# Define carriers + labware (rack/plate -> carrier site -> deck rail)
+tip_car = TIP_CAR_480_A00(name="tip_carrier")
+tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips_01")
+lh.deck.assign_child_resource(tip_car, rails=1)
+
+plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
+plt_car[0] = source_plate = Cor_96_wellplate_360ul_Fb(name="source")
+plt_car[1] = dest_plate = Cor_96_wellplate_360ul_Fb(name="dest")
+lh.deck.assign_child_resource(plt_car, rails=15)
 
 # Set initial volumes
 for well in source_plate.children:
     well.tracker.set_liquids([("sample", 200)])
 
-# Execute protocol with visualization
+# Execute protocol with visualization (parallel 8-channel column copy)
 await lh.pick_up_tips(tip_rack["A1:H1"])
-await lh.transfer(
-    source_plate["A1:H12"],
-    dest_plate["A1:H12"],
-    vols=100
-)
+for col in range(1, 13):
+    await lh.aspirate(source_plate[f"A{col}:H{col}"], vols=[100] * 8)
+    await lh.dispense(dest_plate[f"A{col}:H{col}"], vols=[100] * 8)
 await lh.drop_tips()
 
 # Keep visualizer open to inspect final state
@@ -212,9 +209,9 @@ tip_rack = deck.get_resource("tips")
 
 ## Simulation
 
-### ChatterboxBackend
+### LiquidHandlerChatterboxBackend
 
-The ChatterboxBackend simulates liquid handling operations:
+The `LiquidHandlerChatterboxBackend` simulates liquid handling operations:
 
 **Features:**
 - No hardware required
@@ -226,10 +223,10 @@ The ChatterboxBackend simulates liquid handling operations:
 **Setup:**
 
 ```python
-from pylabrobot.liquid_handling.backends.simulation import ChatterboxBackend
+from pylabrobot.liquid_handling.backends import LiquidHandlerChatterboxBackend
 
 # Create simulation backend
-backend = ChatterboxBackend(
+backend = LiquidHandlerChatterboxBackend(
     num_channels=8  # Simulate 8-channel pipette
 )
 
@@ -247,21 +244,20 @@ async def develop_protocol():
 
     # Use simulation for development
     lh = LiquidHandler(
-        backend=ChatterboxBackend(),
+        backend=LiquidHandlerChatterboxBackend(),
         deck=STARLetDeck()
     )
 
-    # Connect visualizer
-    vis = Visualizer()
-    await vis.start()
-    lh.visualizer = vis
-
     await lh.setup()
+
+    # Connect visualizer
+    vis = Visualizer(resource=lh)
+    await vis.setup()
 
     try:
         # Develop and test protocol
         await lh.pick_up_tips(tip_rack["A1"])
-        await lh.transfer(plate["A1"], plate["A2"], vols=100)
+        await lh.transfer(plate["A1"], plate["A2"], source_vol=100)
         await lh.drop_tips()
 
         print("Protocol development complete!")
@@ -281,18 +277,20 @@ async def validate_protocol():
     set_volume_tracking(True)
 
     lh = LiquidHandler(
-        backend=ChatterboxBackend(),
+        backend=LiquidHandlerChatterboxBackend(),
         deck=STARLetDeck()
     )
     await lh.setup()
 
     try:
-        # Setup resources
-        tip_rack = TIP_CAR_480_A00(name="tips")
-        plate = Cos_96_DW_1mL(name="plate")
+        # Setup carriers + labware (rack/plate -> carrier site -> deck rail)
+        tip_car = TIP_CAR_480_A00(name="tip_carrier")
+        tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips_01")
+        lh.deck.assign_child_resource(tip_car, rails=1)
 
-        lh.deck.assign_child_resource(tip_rack, rails=1)
-        lh.deck.assign_child_resource(plate, rails=10)
+        plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
+        plt_car[0] = plate = Cor_96_wellplate_360ul_Fb(name="plate")
+        lh.deck.assign_child_resource(plt_car, rails=10)
 
         # Set initial state
         for well in plate.children:
@@ -301,14 +299,11 @@ async def validate_protocol():
         # Execute protocol
         await lh.pick_up_tips(tip_rack["A1:H1"])
 
-        # Test different volumes
+        # Test different volumes via parallel aspirate/dispense
         test_volumes = [50, 100, 150]
         for i, vol in enumerate(test_volumes):
-            await lh.transfer(
-                plate[f"A{i+1}:H{i+1}"],
-                plate[f"A{i+4}:H{i+4}"],
-                vols=vol
-            )
+            await lh.aspirate(plate[f"A{i+1}:H{i+1}"], vols=[vol] * 8)
+            await lh.dispense(plate[f"A{i+4}:H{i+4}"], vols=[vol] * 8)
 
         await lh.drop_tips()
 
@@ -332,7 +327,7 @@ async def test_edge_cases():
     """Test protocol edge cases in simulation"""
 
     lh = LiquidHandler(
-        backend=ChatterboxBackend(),
+        backend=LiquidHandlerChatterboxBackend(),
         deck=STARLetDeck()
     )
     await lh.setup()
@@ -340,24 +335,24 @@ async def test_edge_cases():
     try:
         # Test 1: Empty well aspiration
         try:
-            await lh.aspirate(empty_plate["A1"], vols=100)
-            print("✗ Should have raised error for empty well")
+            await lh.aspirate(empty_plate["A1"], vols=[100])
+            print("Should have raised error for empty well")
         except Exception as e:
-            print(f"✓ Correctly raised error: {e}")
+            print(f"Correctly raised error: {e}")
 
         # Test 2: Overfilling well
         try:
-            await lh.dispense(small_well, vols=1000)  # Too much
-            print("✗ Should have raised error for overfilling")
+            await lh.dispense(small_well, vols=[1000])  # Too much
+            print("Should have raised error for overfilling")
         except Exception as e:
-            print(f"✓ Correctly raised error: {e}")
+            print(f"Correctly raised error: {e}")
 
         # Test 3: Tip capacity
         try:
-            await lh.aspirate(large_volume_well, vols=2000)  # Exceeds tip capacity
-            print("✗ Should have raised error for tip capacity")
+            await lh.aspirate(large_volume_well, vols=[2000])  # Exceeds tip capacity
+            print("Should have raised error for tip capacity")
         except Exception as e:
-            print(f"✓ Correctly raised error: {e}")
+            print(f"Correctly raised error: {e}")
 
     finally:
         await lh.stop()
@@ -371,32 +366,38 @@ Use simulation for automated testing:
 # test_protocols.py
 import pytest
 from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.liquid_handling.backends.simulation import ChatterboxBackend
+from pylabrobot.liquid_handling.backends import LiquidHandlerChatterboxBackend
+from pylabrobot.resources import (
+    STARLetDeck, TIP_CAR_480_A00, PLT_CAR_L5AC_A00,
+    hamilton_96_tiprack_1000uL_filter, Cor_96_wellplate_360ul_Fb,
+)
 
 @pytest.mark.asyncio
 async def test_transfer_protocol():
     """Test liquid transfer protocol"""
 
     lh = LiquidHandler(
-        backend=ChatterboxBackend(),
+        backend=LiquidHandlerChatterboxBackend(),
         deck=STARLetDeck()
     )
     await lh.setup()
 
     try:
-        # Setup
-        tip_rack = TIP_CAR_480_A00(name="tips")
-        plate = Cos_96_DW_1mL(name="plate")
+        # Setup carriers + labware
+        tip_car = TIP_CAR_480_A00(name="tip_carrier")
+        tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips_01")
+        lh.deck.assign_child_resource(tip_car, rails=1)
 
-        lh.deck.assign_child_resource(tip_rack, rails=1)
-        lh.deck.assign_child_resource(plate, rails=10)
+        plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
+        plt_car[0] = plate = Cor_96_wellplate_360ul_Fb(name="plate")
+        lh.deck.assign_child_resource(plt_car, rails=10)
 
         # Set initial volumes
         plate["A1"].tracker.set_liquids([(None, 200)])
 
-        # Execute
+        # Execute: one source well -> one target well
         await lh.pick_up_tips(tip_rack["A1"])
-        await lh.transfer(plate["A1"], plate["A2"], vols=100)
+        await lh.transfer(plate["A1"], plate["A2"], source_vol=100)
         await lh.drop_tips()
 
         # Assert
@@ -432,24 +433,22 @@ USE_HARDWARE = os.getenv("USE_HARDWARE", "false").lower() == "true"
 
 # Create appropriate backend
 if USE_HARDWARE:
-    from pylabrobot.liquid_handling.backends import STAR
-    backend = STAR()
+    from pylabrobot.liquid_handling.backends import STARBackend
+    backend = STARBackend()
     print("Running on Hamilton STAR hardware")
 else:
-    from pylabrobot.liquid_handling.backends.simulation import ChatterboxBackend
-    backend = ChatterboxBackend()
+    from pylabrobot.liquid_handling.backends import LiquidHandlerChatterboxBackend
+    backend = LiquidHandlerChatterboxBackend()
     print("Running in simulation mode")
 
 # Rest of protocol is identical
 lh = LiquidHandler(backend=backend, deck=STARLetDeck())
+await lh.setup()
 
 if not USE_HARDWARE:
     # Enable visualizer for simulation
-    vis = Visualizer()
-    await vis.start()
-    lh.visualizer = vis
-
-await lh.setup()
+    vis = Visualizer(resource=lh)
+    await vis.setup()
 
 # Protocol execution
 # ... (same code for hardware and simulation)
@@ -464,15 +463,14 @@ await lh.setup()
 async def visual_verification():
     """Run protocol with visual verification pauses"""
 
-    vis = Visualizer()
-    await vis.start()
-
     lh = LiquidHandler(
-        backend=ChatterboxBackend(),
+        backend=LiquidHandlerChatterboxBackend(),
         deck=STARLetDeck()
     )
-    lh.visualizer = vis
     await lh.setup()
+
+    vis = Visualizer(resource=lh)
+    await vis.setup()
 
     try:
         # Step 1
@@ -480,11 +478,11 @@ async def visual_verification():
         input("Press Enter to continue...")
 
         # Step 2
-        await lh.aspirate(source["A1:H1"], vols=100)
+        await lh.aspirate(source["A1:H1"], vols=[100] * 8)
         input("Press Enter to continue...")
 
         # Step 3
-        await lh.dispense(dest["A1:H1"], vols=100)
+        await lh.dispense(dest["A1:H1"], vols=[100] * 8)
         input("Press Enter to continue...")
 
         # Step 4
@@ -500,9 +498,9 @@ async def visual_verification():
 
 ### Visualizer Not Updating
 
-- Ensure `lh.visualizer = vis` is set before operations
+- Ensure the visualizer is bound to the liquid handler: `vis = Visualizer(resource=lh)`
 - Check that tracking is enabled globally
-- Verify visualizer is running (`vis.start()`)
+- Verify the visualizer has been started (`await vis.setup()`)
 - Refresh browser if connection is lost
 
 ### Tracking Not Working
@@ -512,9 +510,11 @@ async def visual_verification():
 set_tip_tracking(True)
 set_volume_tracking(True)
 
-# Then create resources
-tip_rack = TIP_CAR_480_A00(name="tips")
-plate = Cos_96_DW_1mL(name="plate")
+# Then create resources (rack/plate go into carrier sites)
+tip_car = TIP_CAR_480_A00(name="tip_carrier")
+tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips_01")
+plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
+plt_car[0] = plate = Cor_96_wellplate_360ul_Fb(name="plate")
 ```
 
 ### Simulation Errors

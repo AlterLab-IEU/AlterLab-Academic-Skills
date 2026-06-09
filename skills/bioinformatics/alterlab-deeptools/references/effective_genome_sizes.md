@@ -63,9 +63,13 @@ bamCoverage --bam input.bam --outFileName output.bw \
 
 ### bamCompare with RPGC normalization
 ```bash
+# In bamCompare, RPGC is a --normalizeUsing value, NOT a --scaleFactorsMethod.
+# --scaleFactorsMethod only accepts readCount, SES, or None, and is mutually
+# exclusive with --normalizeUsing (set one to None when using the other).
 bamCompare -b1 treatment.bam -b2 control.bam \
     --outFileName comparison.bw \
-    --scaleFactorsMethod RPGC \
+    --scaleFactorsMethod None \
+    --normalizeUsing RPGC \
     --effectiveGenomeSize 2913022398
 ```
 

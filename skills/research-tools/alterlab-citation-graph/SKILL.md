@@ -60,7 +60,7 @@ uv run python scripts/build_graph.py \
 uv run python scripts/build_graph.py \
     --seed 10.1038/nphys1170 \
     --seed W2741809807 \
-    --seed arXiv:1706.03762 \
+    --seed arXiv:2310.06825 \
     --depth 2 --per-seed 50 --top 40 \
     --mailto alterlab.ieu@gmail.com \
     --out graph/transformer
@@ -129,6 +129,9 @@ directly in Gephi, Cytoscape, yEd, or `networkx.read_graphml`.
   to throttle and keep `--per-seed` reasonable on shared networks.
 - **Coverage caveat.** OpenAlex citation coverage is broad but imperfect; very new
   preprints may have sparse `cited_by` sets.
+- **arXiv seeds.** An `arXiv:<id>` seed is resolved via its DataCite DOI
+  (`10.48550/arXiv.<id>`). If a preprint was later merged into its published-version
+  record, OpenAlex may carry only the publisher DOI — pass that DOI as the seed instead.
 
 ## Complementary Tools
 

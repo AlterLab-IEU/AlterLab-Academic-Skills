@@ -83,7 +83,7 @@ def load_multi_pred_example():
 
     # Method 2: Cold drug split (unseen drugs in test)
     print("\n--- Cold Drug Split ---")
-    split_cold_drug = data.get_split(method='cold_drug', seed=42)
+    split_cold_drug = data.get_split(method='cold_split', column_name='Drug', seed=42)
 
     train = split_cold_drug['train']
     test = split_cold_drug['test']
@@ -99,7 +99,7 @@ def load_multi_pred_example():
 
     # Method 3: Cold target split (unseen targets in test)
     print("\n--- Cold Target Split ---")
-    split_cold_target = data.get_split(method='cold_target', seed=42)
+    split_cold_target = data.get_split(method='cold_split', column_name='Target', seed=42)
 
     train = split_cold_target['train']
     test = split_cold_target['test']

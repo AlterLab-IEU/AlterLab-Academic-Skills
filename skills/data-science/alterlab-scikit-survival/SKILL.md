@@ -156,8 +156,11 @@ Handle situations with multiple mutually exclusive event types:
 ```python
 from sksurv.nonparametric import cumulative_incidence_competing_risks
 
-# Estimate cumulative incidence for each event type
-time_points, cif_event1, cif_event2 = cumulative_incidence_competing_risks(y)
+# Pass SEPARATE arrays: integer-coded event status (0=censored, 1, 2, ...)
+# and the observed time. Do NOT collapse the status to a boolean.
+times, cif = cumulative_incidence_competing_risks(event_status, time)
+# cif[0] = total risk (any event); cif[1:] = CIF for each event type k
+cif_event1, cif_event2 = cif[1], cif[2]
 ```
 
 **Use competing risks when**:
@@ -219,23 +222,27 @@ print(f"C-index: {c_index:.3f}")
 
 ### Workflow 2: High-Dimensional Data with Feature Selection
 
+The IPCW scorer wrappers (`as_concordance_index_ipcw_scorer`, `as_integrated_brier_score_scorer`, `as_cumulative_dynamic_auc_scorer`) WRAP the estimator and override its `.score()` method — they are NOT passed to `scoring=`. Pass the wrapped object as the GridSearchCV estimator and prefix tuned params with `estimator__`. There is no valid `scoring='concordance_index_ipcw'` string.
+
 ```python
+import numpy as np
 from sksurv.linear_model import CoxnetSurvivalAnalysis
 from sklearn.model_selection import GridSearchCV
 from sksurv.metrics import as_concordance_index_ipcw_scorer
 
-# 1. Use penalized Cox for feature selection
-estimator = CoxnetSurvivalAnalysis(l1_ratio=0.9)  # Lasso-like
+# 1. Penalized Cox for feature selection (l1_ratio near 1 = lasso-like sparsity)
+estimator = CoxnetSurvivalAnalysis(l1_ratio=0.9, fit_baseline_model=True)
 
-# 2. Tune regularization with cross-validation
-param_grid = {'alpha_min_ratio': [0.01, 0.001]}
-cv = GridSearchCV(estimator, param_grid,
-                  scoring=as_concordance_index_ipcw_scorer(), cv=5)
+# 2. Wrap the estimator so .score() uses Uno's C-index, then tune.
+#    tau caps the evaluation horizon to avoid unstable IPCW weights in the tail.
+wrapped = as_concordance_index_ipcw_scorer(estimator, tau=y['time'].max())
+param_grid = {'estimator__alpha_min_ratio': [0.01, 0.001]}
+cv = GridSearchCV(wrapped, param_grid, cv=5)
 cv.fit(X, y)
 
-# 3. Identify selected features
-best_model = cv.best_estimator_
-selected_features = np.where(best_model.coef_ != 0)[0]
+# 3. Identify selected features (unwrap to reach the Coxnet estimator)
+best_model = cv.best_estimator_.estimator_
+selected_features = np.where(best_model.coef_.ravel() != 0)[0]
 ```
 
 ### Workflow 3: Ensemble Method for Maximum Performance
@@ -243,6 +250,7 @@ selected_features = np.where(best_model.coef_ != 0)[0]
 ```python
 from sksurv.ensemble import GradientBoostingSurvivalAnalysis
 from sklearn.model_selection import GridSearchCV
+from sksurv.metrics import as_concordance_index_ipcw_scorer, concordance_index_ipcw
 
 # 1. Define parameter grid
 param_grid = {
@@ -251,14 +259,15 @@ param_grid = {
     'max_depth': [3, 5, 7]
 }
 
-# 2. Grid search
-gbs = GradientBoostingSurvivalAnalysis()
-cv = GridSearchCV(gbs, param_grid, cv=5,
-                  scoring=as_concordance_index_ipcw_scorer(), n_jobs=-1)
+# 2. Grid search (wrap estimator so .score() is Uno's C-index; prefix params)
+gbs = GradientBoostingSurvivalAnalysis(random_state=42)
+wrapped = as_concordance_index_ipcw_scorer(gbs, tau=y_train['time'].max())
+param_grid = {f'estimator__{k}': v for k, v in param_grid.items()}
+cv = GridSearchCV(wrapped, param_grid, cv=5, n_jobs=-1)
 cv.fit(X_train, y_train)
 
-# 3. Evaluate best model
-best_model = cv.best_estimator_
+# 3. Evaluate best model on held-out test set
+best_model = cv.best_estimator_.estimator_
 risk_scores = best_model.predict(X_test)
 c_index = concordance_index_ipcw(y_train, y_test, risk_scores)[0]
 ```
@@ -299,22 +308,25 @@ scikit-survival fully integrates with scikit-learn's ecosystem:
 
 ```python
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_score, GridSearchCV
+from sklearn.preprocessing import StandardScaler
+from sksurv.linear_model import CoxPHSurvivalAnalysis
+from sksurv.metrics import as_concordance_index_ipcw_scorer
 
-# Use pipelines
+# Build the pipeline, then wrap it so .score() is Uno's C-index.
+# Wrapping the whole pipeline keeps scaling inside each CV fold (no leakage).
 pipeline = Pipeline([
     ('scaler', StandardScaler()),
     ('model', CoxPHSurvivalAnalysis())
 ])
+wrapped = as_concordance_index_ipcw_scorer(pipeline, tau=y['time'].max())
 
-# Use cross-validation
-scores = cross_val_score(pipeline, X, y, cv=5,
-                         scoring=as_concordance_index_ipcw_scorer())
+# Cross-validation uses the wrapped estimator's .score(); leave scoring=None
+scores = cross_val_score(wrapped, X, y, cv=5)
 
-# Use grid search
-param_grid = {'model__alpha': [0.1, 1.0, 10.0]}
-cv = GridSearchCV(pipeline, param_grid, cv=5)
+# Grid search: params live under estimator__ (wrapper) then the pipeline step
+param_grid = {'estimator__model__alpha': [0.1, 1.0, 10.0]}
+cv = GridSearchCV(wrapped, param_grid, cv=5)
 cv.fit(X, y)
 ```
 
@@ -340,7 +352,7 @@ cv.fit(X, y)
 5. **Not checking for sufficient events per feature** → Rule of thumb: 10+ events per feature
 6. **Using built-in feature importance for RSF** → Use permutation importance
 7. **Ignoring proportional hazards assumption** → Validate or use alternative models
-8. **Not using appropriate scorers in cross-validation** → Use as_concordance_index_ipcw_scorer()
+8. **Passing `as_concordance_index_ipcw_scorer()` to `scoring=`** → It WRAPS the estimator (overriding `.score()`); pass the wrapped object as the estimator and prefix params with `estimator__`
 
 ## Reference Files
 
