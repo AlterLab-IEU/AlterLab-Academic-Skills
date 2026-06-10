@@ -11,17 +11,12 @@ on:
       - "pyproject.toml"
       - "uv.lock"
       - ".github/workflows/pytest.yml"
-  # Allow the behavioral job (below) to be triggered on demand.
+  # Run the behavioral job (below) on demand: gh workflow run pytest.yml
   workflow_dispatch:
-  # Weekly slow lane for the behavioral evals.
-  schedule:
-    - cron: "0 6 * * 1" # Mondays 06:00 UTC
 
 jobs:
   pytest:
     name: lint, compile, schema + eval
-    # Don't run the fast lane on the scheduled trigger (that's for behavioral only).
-    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -47,9 +42,10 @@ jobs:
 
   behavioral:
     name: behavioral evals (slow)
-    # Manual dispatch or the weekly cron only — this shells out to the claude CLI
-    # and LLM-judges output, so it is slow and consumes API budget.
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    # Manual dispatch only — shells out to the claude CLI and LLM-judges output,
+    # so it is slow and consumes API budget. Requires the ANTHROPIC_API_KEY repo
+    # secret (without it every eval errors `claude CLI exited 1`).
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
