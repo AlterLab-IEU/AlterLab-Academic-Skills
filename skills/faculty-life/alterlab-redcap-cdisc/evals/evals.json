@@ -1,0 +1,71 @@
+{
+  "skill": "alterlab-redcap-cdisc",
+  "evals": [
+    {
+      "id": "build-redcap-data-dictionary",
+      "prompt": "I'm starting a longitudinal cohort study and need to build it in REDCap. Can you draft the data dictionary for an enrollment form — record id, age, sex (female/male/other), contact email, and a pregnancy question that only appears for female participants? I need the importable CSV.",
+      "expected_output": "Invokes alterlab-redcap-cdisc in instrument-design mode: produces the 18-column REDCap data dictionary CSV with correct field types (text/radio/yesno), a coded choices string for sex (e.g. '1, Female | 2, Male | 3, Other'), integer validation with min/max for age, the contact email field flagged Identifier? = y, and branching logic on the pregnancy field ([sex] = \"1\") so it only shows for female participants. Notes that longitudinal events/arms are configured separately from the dictionary.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Generates an 18-column REDCap data dictionary with correct field types, a coded choices string, integer validation, an Identifier? flag on the email PII field, and branching logic on the pregnancy question; flags that longitudinal events are configured outside the dictionary." }
+      ]
+    },
+    {
+      "id": "lint-flawed-data-dictionary",
+      "prompt": "Before I import this into REDCap, can you check my data dictionary for problems? I think I left something out. (data_dictionary_flawed.csv attached)",
+      "expected_output": "Invokes alterlab-redcap-cdisc in lint mode: runs scripts/lint_data_dictionary.py over the CSV and reports the structural errors — the patient_email field is a likely identifier left unflagged (Identifier? not 'y'), the sex radio field is missing its required choices string, the pregnant branching logic references an unknown variable [sx] (typo for sex), and the bmi calc references variables (weight_kg, height_m) that do not exist in the dictionary. States that a clean lint still requires a REDCap test import.",
+      "files": ["fixtures/data_dictionary_flawed.csv"],
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Identifier" },
+        { "type": "behavior", "value": "Runs the structural linter, surfaces the unflagged-identifier, missing-choices, and unknown-variable-reference errors, and notes that a clean lint still needs a real REDCap test import." }
+      ]
+    },
+    {
+      "id": "map-crf-to-cdisc-sdtm",
+      "prompt": "My CRF collects adverse event terms, severity, vital signs, and demographics. To make the study submission-ready, which CDISC SDTM domains do these map to, and how does CDASH fit in?",
+      "expected_output": "Invokes alterlab-redcap-cdisc in CDISC-alignment mode: maps adverse event term/severity to the SDTM AE (Events) domain, vital signs to VS (Findings), demographics to DM, and explains that CDASH is the collection standard that uses the same observation classes and domains as the SDTMIG so the collected data traces into SDTM. Ties severity to a Controlled Terminology codelist (NCI-EVS, quarterly) without inventing codelist values, and advises confirming the current SDTM/CDASH version against cdisc.org.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "SDTM" },
+        { "type": "behavior", "value": "Maps AE/VS/DM to the correct SDTM domains, explains CDASH-to-SDTM traceability, names (not fabricates) the controlled-terminology codelist source (NCI-EVS), and flags that CDISC versions must be confirmed against the current release." }
+      ]
+    },
+    {
+      "id": "add-branching-and-validation",
+      "prompt": "In my existing REDCap form, I want the 'number of cigarettes per day' question to appear only when the participant answered that they currently smoke, and I want it validated as an integer between 0 and 100. How do I set that up in the dictionary?",
+      "expected_output": "Invokes alterlab-redcap-cdisc to configure branching logic and validation: sets Branching Logic so the cigarettes-per-day field shows only when the smoking-status field equals the 'currently smoke' code (e.g. [smoke_status] = \"1\"), sets the field's Text Validation Type to integer with Text Validation Min 0 and Max 100, and shows the exact dictionary columns to edit. Does not treat this as survey-instrument psychometrics.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Writes the branching-logic condition referencing the smoking-status field and sets integer validation with min 0 / max 100 in the correct data-dictionary columns." }
+      ]
+    },
+    {
+      "id": "near-miss-survey-design-psychometrics",
+      "prompt": "I'm developing a new 12-item anxiety questionnaire. Help me design the Likert response scale, reduce acquiescence bias, plan a pilot, and check internal consistency with Cronbach's alpha and a factor analysis.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-survey-design. The user wants instrument/questionnaire design and psychometrics — Likert scaling, response-bias mitigation, pilot testing, and reliability/validity (Cronbach's alpha, factor analysis) — not the construction or standards-mapping of the REDCap database that would capture the responses. alterlab-redcap-cdisc owns the data-capture instrument and CDISC alignment, not the measurement properties of the questions.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-survey-design" }
+      ]
+    },
+    {
+      "id": "near-miss-labarchive-eln-bridge",
+      "prompt": "I keep my lab notebook in LabArchives and want to automatically pull notebook entries and attachments out via its REST API and push them into our REDCap project each week. Can you wire up that sync?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-labarchive. The user wants to integrate the LabArchives electronic lab notebook via its REST API and bridge it to REDCap — an ELN-automation/connector task. alterlab-redcap-cdisc designs the REDCap instrument and CDISC mapping offline; programmatic LabArchives notebook access and the ELN-to-REDCap bridge are alterlab-labarchive's job.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-labarchive" }
+      ]
+    },
+    {
+      "id": "near-miss-kvkk-data-management-plan",
+      "prompt": "For my Turkish university study I need a KVKK-compliant data management plan — how to handle açık rıza, anonymization, and whether I need a VERBIS registration for the health data I'm collecting.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-kvkk-dmp. The user needs a KVKK (Turkish data-protection law) data management plan — explicit consent basis, anonymization, VERBIS, special-category health data — a legal/compliance deliverable. alterlab-redcap-cdisc designs the data-capture instrument and CDISC standards mapping, not the data-protection plan; KVKK DMP work belongs to alterlab-kvkk-dmp.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-kvkk-dmp" }
+      ]
+    }
+  ]
+}

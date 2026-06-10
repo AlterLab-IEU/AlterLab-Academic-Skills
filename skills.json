@@ -1,8 +1,8 @@
 {
   "summary": {
-    "total": 183,
+    "total": 209,
     "per_domain": {
-      "bioinformatics": 25,
+      "bioinformatics": 30,
       "cheminformatics": 12,
       "clinical-research": 7,
       "core": 8,
@@ -10,16 +10,19 @@
       "databases": 39,
       "document-tools": 2,
       "domain-specific": 17,
+      "faculty-life": 6,
       "finance-economics": 7,
       "lab-integrations": 9,
+      "methodology": 3,
       "research-tools": 14,
+      "turkish-academia": 12,
       "visualization": 8,
       "writing-tools": 13
     },
     "eval_coverage": {
-      "with_evals": 183,
+      "with_evals": 209,
       "without_evals": 0,
-      "total": 183,
+      "total": 209,
       "fraction": 1.0
     }
   },
@@ -120,6 +123,34 @@
         "identifier_mapping.md",
         "services_reference.md",
         "workflow_patterns.md"
+      ]
+    },
+    {
+      "name": "alterlab-blast",
+      "domain": "bioinformatics",
+      "description": "Runs NCBI BLAST+ 2.17.0 sequence searches from the command line: makeblastdb (with -parse_seqids), blastn/blastp/blastx/tblastn with tabular -outfmt 6/7 for parsing, correct -task choice (megablast vs blastn vs blastn-short), -taxids/-negative_taxids taxonomic scoping, and -mt_mode multithreading; plus a DIAMOND blastp --ultra-sensitive path for large protein searches. Warns that -max_target_seqs is a heuristic keep-count, not a top-N best-hits filter. Use when the user wants command-line BLAST, makeblastdb, a local BLAST database, blastn/blastp/blastx/tblastn searches, or DIAMOND protein search. For the Bio.Blast web NCBIWWW API prefer alterlab-biopython; for quick one-liner database lookups prefer alterlab-gget. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Requires NCBI BLAST+ 2.17.0 binaries on PATH (conda: `bioconda::blast`; or Homebrew `blast`); no API key or account needed for local searches. DIAMOND (`bioconda::diamond`) is optional and only used for the large-protein fast path. Parsing/QC helper runs under `uv run python` with the standard library only.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash(makeblastdb:*)",
+        "Bash(blastn:*)",
+        "Bash(blastp:*)",
+        "Bash(blastx:*)",
+        "Bash(tblastn:*)",
+        "Bash(blastdbcmd:*)",
+        "Bash(diamond:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 165,
+      "references": [
+        "blast_cli.md",
+        "diamond.md"
       ]
     },
     {
@@ -397,6 +428,31 @@
       ]
     },
     {
+      "name": "alterlab-nf-core-sarek",
+      "domain": "bioinformatics",
+      "description": "Runs FASTQ-to-VCF germline and somatic variant calling via the Nextflow nf-core/sarek pipeline pinned to -r 3.8.1 — builds the samplesheet.csv (patient, sex, status, sample, lane, fastq_1, fastq_2), runs bwa-mem/bwa-mem2/dragmap alignment plus GATK4 MarkDuplicates and BQSR against the GATK GRCh38 resource bundle (dbSNP, Mills/1000G indels), and selects callers — explicitly correcting that sarek defaults to Strelka when --tools is unset (pass haplotypecaller for GATK best practice or deepvariant for CNN accuracy), with a non-Nextflow manual GATK4 fallback. Use when the user wants a variant-calling pipeline, FASTQ to VCF, germline or somatic SNV/indel calling, nf-core/sarek, GATK best-practices alignment-to-VCF, or BQSR/HaplotypeCaller/Mutect2/DeepVariant; annotate hits with alterlab-clinvar/alterlab-gnomad/alterlab-cosmic, parse VCFs with alterlab-pysam, store at scale with alterlab-tiledbvcf. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Requires Nextflow plus a container engine (Docker/Singularity/Apptainer) or conda; the pipeline pulls nf-core/sarek 3.8.1 and reference bundles over the network on first run. The manual GATK4 fallback needs bwa-mem2 + samtools + gatk4 (bioconda) and runs offline once references are local. No API key. Indexing, BQSR and variant calling are long, compute-heavy jobs — good candidates to run locally rather than through repeated API calls.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash(uv:*)",
+        "Bash(nextflow:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 154,
+      "references": [
+        "caller_accuracy.md",
+        "manual_gatk4.md",
+        "samplesheet_schema.md",
+        "usage_3.8.1.md"
+      ]
+    },
+    {
       "name": "alterlab-pathml",
       "domain": "bioinformatics",
       "description": "Run full computational-pathology workflows with PathML — advanced whole-slide-image (WSI) analysis across 160+ slide formats, multiplexed immunofluorescence (CODEX, Vectra), nucleus segmentation, tissue-graph construction, and ML model training on pathology data. Use when building deep-learning pathology pipelines, analyzing multiplexed or spatial-proteomics slides, or segmenting nuclei — for simple H&E tile extraction histolab may be lighter. Part of the AlterLab Academic Skills suite.",
@@ -518,6 +574,62 @@
       ]
     },
     {
+      "name": "alterlab-qiime2-amplicon",
+      "domain": "bioinformatics",
+      "description": "Runs 16S/ITS amplicon (microbiome) analysis with the QIIME 2 amplicon distribution (2026.1; renamed to \"qiime2\" in 2026.4) in the correct order: manifest import, cutadapt trim-paired primer removal BEFORE dada2 denoise-paired (trunc-len chosen from the demux quality .qzv), feature-classifier classify-sklearn against a version-matched SILVA 138 or Greengenes2 classifier, and diversity core-metrics-phylogenetic — teaching the .qza/.qzv artifact-and-provenance model and the 2026.1 feature-table summarize change (the former summarize_plus). Use when the request mentions QIIME2, QIIME 2, qiime, 16S, 18S, ITS, amplicon, microbiome, ASV, DADA2 denoising, feature table, taxonomic classification, or core-metrics diversity. For downstream alpha/beta diversity, PCoA, and PERMANOVA on the exported feature table prefer alterlab-scikit-bio; this is conda-only (no pip install). Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Requires the QIIME 2 amplicon conda environment (cannot be pip-installed); commands are run via the `qiime` CLI. Pretrained classifiers and reference data are downloaded from the QIIME 2 Library. The helper scripts in scripts/ are stdlib-only and run under `uv run python` without a QIIME 2 env.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash(uv:*)",
+        "Bash(qiime:*)",
+        "Bash(conda:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 246,
+      "references": [
+        "classifiers.md",
+        "import_and_manifest.md",
+        "installation.md",
+        "pipeline_steps.md",
+        "version_notes.md"
+      ]
+    },
+    {
+      "name": "alterlab-rnaseq-quant",
+      "domain": "bioinformatics",
+      "description": "Quantifies bulk RNA-seq transcript abundance with salmon (v1.11.4 selective alignment) and kallisto (v0.52.0, kb-python workflow), builds a decoy-aware gentrome index, runs quant with --validateMappings --gcBias -l A, then imports estimates via tximport/tximeta with a tx2gene map and hands differential expression to alterlab-pydeseq2. Warns that salmon's index format changed to SSHash (rebuild pre-v1.11.2 indices) and that 'salmon alevin' was REMOVED (single-cell now uses piscem + alevin-fry). Use when quantifying RNA-seq transcript abundance, running salmon or kallisto, building a decoy-aware index, or wiring tximport to DESeq2; for differential expression use alterlab-pydeseq2, for FASTQ-to-VCF variant calling use alterlab-nf-core-sarek. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Requires the salmon and/or kallisto CLI on PATH (conda/bioconda or a container). salmon v1.11.4 and kallisto v0.52.0 are the versions this skill targets; the tximport/tx2gene helper runs under `uv run python` with pure stdlib (no pandas needed). No API key or account required; all work is local.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash(uv:*)",
+        "Bash(salmon:*)",
+        "Bash(kallisto:*)",
+        "Bash(kb:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 259,
+      "references": [
+        "decoy_index.md",
+        "kallisto_kb.md",
+        "salmon_quant.md",
+        "single_cell_alevin.md",
+        "tool_versions.md",
+        "tximport_handoff.md"
+      ]
+    },
+    {
       "name": "alterlab-scanpy",
       "domain": "bioinformatics",
       "description": "Run the standard single-cell RNA-seq analysis pipeline with Scanpy on AnnData — QC filtering, normalization, dimensionality reduction (PCA, UMAP, t-SNE), Leiden/Louvain clustering, marker/differential expression, and plotting. Use for exploratory scRNA-seq analysis with established workflows — for deep generative models use scvi-tools, for data-format and .h5ad questions use anndata. Part of the AlterLab Academic Skills suite.",
@@ -608,6 +720,29 @@
         "models-specialized.md",
         "theoretical-foundations.md",
         "workflows.md"
+      ]
+    },
+    {
+      "name": "alterlab-squidpy-spatial",
+      "domain": "bioinformatics",
+      "description": "Analyzes spatial transcriptomics with squidpy (1.8.x) on AnnData and SpatialData objects, routing platforms correctly: Visium spots use spatial_neighbors(coord_type='grid') and pair with deconvolution, while Xenium/MERFISH single-cell data use coord_type='generic'/Delaunay neighbors and spatialdata-io readers (xenium, visium_hd, merscope). Runs sq.gr.spatial_neighbors, nhood_enrichment, co_occurrence, spatial_autocorr (Moran's I for spatially variable genes), ripley, and ligrec. Use when the user wants spatial transcriptomics, squidpy, Visium/Xenium/MERFISH analysis, neighborhood enrichment, co-occurrence, or spatially variable genes; QC/clustering uses alterlab-scanpy and spot deconvolution (destVI/Tangram) uses alterlab-scvi-tools. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Self-contained — runs under `uv run python` with squidpy (1.8.x, needs spatialdata>=0.7.1, scanpy>=1.9.3, anndata>=0.9, Python>=3.11) installed; no API key or account required.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash(uv:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 158,
+      "references": [
+        "analysis_recipes.md",
+        "platform_routing.md",
+        "spatialdata_io.md"
       ]
     },
     {
@@ -3195,6 +3330,146 @@
       ]
     },
     {
+      "name": "alterlab-accreditation-aol",
+      "domain": "faculty-life",
+      "description": "Scaffolds program-level Assurance-of-Learning (AoL) documentation for AACSB (2020 Standard 5) and ABET (Criterion 3 Student Outcomes, Criterion 4 Continuous Improvement) accreditation — program learning outcomes / competency goals, curriculum-to-outcome mapping matrices, direct- and indirect-assessment plans, rubric design, and closing-the-loop continuous-improvement narratives — and validates the structure of an outcome-mapping matrix with scripts/aol_matrix.py. Use when the user needs AACSB or ABET assurance-of-learning material, a program-learning-outcomes set, a curriculum/outcome map or coverage matrix, a direct/indirect assessment plan, a closing-the-loop report, or accreditation self-study text. For single-course design or course rubrics prefer alterlab-teaching-design; for post-award grant reports prefer alterlab-grant-reporting. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key, account, or network required — accreditation-format guidance plus a stdlib-only outcome-mapping-matrix validator (scripts/aol_matrix.py). The school still submits its self-study through AACSB myAccreditation or the ABET portal; this skill drafts text and checks structure, it does not file or accredit.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 197,
+      "references": [
+        "accreditor_standards.md",
+        "aol_templates.md",
+        "closing_the_loop.md"
+      ]
+    },
+    {
+      "name": "alterlab-grant-reporting",
+      "domain": "faculty-life",
+      "description": "Drafts post-award grant deliverables across funder formats — NIH RPPR (Annual/Interim/Final via eRA Commons), NSF annual/final project reports and the public Project Outcomes Report (Research.gov), and Horizon Europe / ERC periodic and final reports (technical Part A/B + financial statements on the EU Funding & Tenders Portal) — plus milestone and deliverable tracking, budget-vs-actual variance narratives, no-cost-extension and rebudgeting justifications, and effort/closeout reporting. Computes report due dates from the award period with scripts/report_deadlines.py. Use when the user needs a grant progress or final report, post-award reporting, an RPPR, a periodic report, a no-cost-extension request, milestone tracking, or a budget-variance narrative. For writing new proposals prefer alterlab-research-grants; for TÜBİTAK proposals prefer alterlab-tubitak-proposal. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key, account, or network required — report-format guidance plus a stdlib-only deadline calculator (scripts/report_deadlines.py); the user still submits through the funder's own portal (eRA Commons / Research.gov / EU Funding & Tenders Portal)",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 168,
+      "references": [
+        "budget_variance.md",
+        "funder_formats.md",
+        "nce_rebudget.md"
+      ]
+    },
+    {
+      "name": "alterlab-preprint-deposition",
+      "domain": "faculty-life",
+      "description": "Drives preprint deposition across servers (arXiv, bioRxiv, medRxiv, SSRN, OSF Preprints): picks the right server by field, prepares submission metadata, sets the license (arXiv offers CC BY/BY-SA/BY-NC-SA/BY-NC-ND 4.0, the arXiv non-exclusive license, or CC0; bioRxiv/medRxiv offer CC BY/BY-NC/BY-ND/BY-NC-ND/CC0 or No-reuse), maps arXiv category taxonomy, handles immutable versioning and preprint DOIs, checks a journal's preprint/self-archiving policy via the Sherpa Romeo v2 API, and links the posted preprint to the published article. Reuses alterlab-arxiv and alterlab-biorxiv for metadata and alterlab-open-science for data-repository choice. Use when depositing a preprint, choosing a preprint server, preparing an arXiv or bioRxiv submission, setting a preprint license, or checking journal preprint policy; for Zenodo/Dryad/Figshare data deposition prefer alterlab-open-science, for TÜBİTAK Aperta prefer alterlab-aperta. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required for the deposition workflow itself. Optional Python helpers run via `uv run python` (stdlib-only, requests optional). The journal-policy check uses the Sherpa Romeo v2 API, which requires a free registered api-key; the bioRxiv/medRxiv preprint-to-publication check uses the keyless api.biorxiv.org content API.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "WebFetch"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 196,
+      "references": [
+        "journal_policy.md",
+        "licensing.md",
+        "server_selection.md",
+        "submission_metadata.md"
+      ]
+    },
+    {
+      "name": "alterlab-recommendation-letters",
+      "domain": "faculty-life",
+      "description": "Drafts evidence-anchored academic reference and recommendation letters across types — graduate admission, faculty hiring, tenure/promotion external review, fellowship, and award nomination — from a structured prompt of candidate accomplishments, role context, evaluator relationship, and audience, calibrating specificity and register to the letter type and running a no-fabrication guard that flags unsupported superlatives, unanchored rankings, and claims with no evidence in the supplied dossier. Ships scripts/letter_scaffold.py to emit a typed section skeleton and scripts/claim_guard.py to lint a draft for evidence-free assertions. Use when the request is to write a recommendation or reference letter for a student or colleague, a tenure or promotion external-review letter, a fellowship or award nomination, or to check a letter draft for unsupported claims. For a candidate writing their own CV, research statement, or career narrative prefer alterlab-academic-career. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key, account, or network required — generates letters from the supplied dossier via the Read/Write/Edit tools plus two stdlib-only helpers (scripts/letter_scaffold.py, scripts/claim_guard.py) run through `uv run python`. The recommender always reviews, signs, and submits the final letter themselves.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 194,
+      "references": [
+        "evidence_and_specificity.md",
+        "intake_checklist.md",
+        "letter_types.md"
+      ]
+    },
+    {
+      "name": "alterlab-redcap-cdisc",
+      "domain": "faculty-life",
+      "description": "Designs validated research data-capture instruments and aligns them to CDISC submission standards. Builds REDCap projects from a requirements spec: instrument and field design, the 18-column data dictionary (Variable/Field Name, Form Name, Field Type, Choices, Branching Logic, Text Validation, Identifier?), field validation (date_ymd, integer, number, email, phone), branching/show-field logic, longitudinal events and survey settings, and lints a data dictionary for common errors. Maps a study to CDISC: CDASH collection fields, SDTM domain mapping (DM, AE, VS, LB, EX, CM, MH across Interventions/Events/Findings classes), and NCI-EVS controlled terminology. Use when the user wants to build a REDCap project, write or lint a data dictionary, set up branching logic or validation, or map a study to CDISC SDTM/CDASH/CDISC CT. For LabArchives ELN bridging use alterlab-labarchive; for Likert/sampling/reliability use alterlab-survey-design. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required — designs REDCap data dictionaries as offline CSV and maps to CDISC standards from local rules; the bundled linter is stdlib-only `uv run python`. Pushing a dictionary into a live REDCap instance (the REDCap API) is out of scope and delegated to the instance owner.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash",
+        "WebSearch",
+        "WebFetch"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 197,
+      "references": [
+        "cdisc_mapping.md",
+        "redcap_design.md"
+      ]
+    },
+    {
+      "name": "alterlab-syllabus-ai-policy",
+      "domain": "faculty-life",
+      "description": "Drafts course-level generative-AI use policies and syllabus statements: assigns each graded task a permitted/restricted/prohibited tier (modeled on Cornell's prohibit/allow-with-attribution/encourage framework), writes the disclosure clause with a verbatim APA (OpenAI, 2023) or MLA Works Cited citation template for ChatGPT, and adds assessment-integrity, accessibility, and equity language bound to the institution's own academic-integrity code. Ships scripts/policy_builder.py to emit a paste-ready statement and scripts/policy_lint.py to flag a vague or self-contradicting draft. Use when the request mentions a syllabus AI policy, a course statement on ChatGPT or generative AI, an academic-integrity clause for AI tools, an AI-disclosure rule, or per-assignment permitted/prohibited AI tiers. For full course/backward design, syllabus, or rubrics use alterlab-teaching-design; for human-subjects AI-tool ethics use alterlab-research-ethics. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key or network required — emits institution-parameterized policy text from local templates via `uv run python`; WebFetch is used only to read a linked institutional academic-integrity code when the user supplies its URL",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "WebFetch"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 202,
+      "references": [
+        "disclosure_and_citation.md",
+        "integrity_accessibility.md",
+        "tier_framework.md"
+      ]
+    },
+    {
       "name": "alterlab-alpha-vantage",
       "domain": "finance-economics",
       "description": "Accesses real-time and historical stock market data, forex rates, cryptocurrency prices, commodities, economic indicators, and 50+ technical indicators via the Alpha Vantage API (requires a free API key from alphavantage.co). Use when fetching stock prices (OHLCV), company fundamentals (income statement, balance sheet, cash flow), earnings, options data, market news/sentiment, insider transactions, GDP, CPI, treasury yields, gold/silver/oil prices, Bitcoin/crypto prices, forex exchange rates, or calculating technical indicators (SMA, EMA, MACD, RSI, Bollinger Bands). Part of the AlterLab Academic Skills suite.",
@@ -3591,6 +3866,67 @@
       ]
     },
     {
+      "name": "alterlab-preregistration-discipline",
+      "domain": "methodology",
+      "description": "Enforces pre-registration discipline with the Iron Law NO DATA ANALYSIS WITHOUT A PRE-REGISTERED ANALYSIS PLAN FIRST, a spirit-vs-letter line, an Excuse-vs-Reality rationalization table, and a Red-Flags-STOP list (HARKing, optional stopping, post-hoc covariates, outlier-dropping, test-shopping). Runs a PLAN/COLLECT/CONFIRM/EXPLORE workflow that freezes hypotheses, tests, exclusions, and stopping rules before data, then forces unplanned findings to be labeled exploratory (their p-values lose confirmatory status, per COS confirmatory/exploratory model). Orchestrates, not replaces, alterlab-open-science (OSF/AsPredicted registration), alterlab-statistical-analysis (test selection, assumptions), and alterlab-scientific-thinking (bias grading). Use when analyzing data without a frozen plan, switching the primary outcome or adding covariates after seeing results, weighing early stopping, dropping outliers post-hoc, pre-registering a study, or rationalizing deviation. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required. Judgment/discipline skill; the optional helper runs locally via `uv run python` (stdlib only). Defers all registration mechanics and statistics to the sibling skills it orchestrates.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 207,
+      "references": [
+        "researcher_degrees_of_freedom.md",
+        "workflow_gates.md"
+      ]
+    },
+    {
+      "name": "alterlab-results-transparency",
+      "domain": "methodology",
+      "description": "Enforces results-reporting transparency as a discipline gate built on the Iron Law \"NO RESULTS CLAIM WITHOUT REPORTING EVERY ANALYSIS RUN\" — a numbered Gate Function (IDENTIFY the claim, LIST every test actually run including the ones that did not \"work\", CHECK assumptions were reported, CHECK effect size with 95% CI is present, CHECK pre-registration deviations are disclosed, ONLY THEN write the sentence), plus an Excuse-vs-Reality table and Red-Flags-STOP list for selective reporting, cherry-picking, and bare p-values. Use when writing up Results, claiming a finding from a subset of analyses, reporting a p-value without an effect size or confidence interval, dropping outliers post hoc, or omitting analyses that did not pan out. Orchestrates alterlab-statistical-analysis (tests, effect sizes), alterlab-preregistration-discipline (the frozen plan), and alterlab-open-science (TOP, disclosure); it does not run the tests itself. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required. Judgment/discipline skill; the optional reporting-gate helper runs locally via `uv run python` (stdlib only).",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 197,
+      "references": [
+        "gate_function.md",
+        "transparency_standards.md"
+      ]
+    },
+    {
+      "name": "alterlab-test-selection-guard",
+      "domain": "methodology",
+      "description": "Enforces statistical-test selection as a discipline, holding the Iron Law NO TEST CHOSEN AFTER SEEING THE P-VALUE: routes the choice through a fixed decision tree (outcome type -> groups -> paired? -> normality) terminating in named tests (t-test, Mann-Whitney U, ANOVA, Kruskal-Wallis, Wilcoxon, Friedman, chi-square, Pearson/Spearman, regression), gates interpretation behind a mandatory Shapiro-Wilk/Levene/linearity assumption check, blocks test-shopping with an Excuse-vs-Reality table and Red-Flags-STOP list, and applies a 3+-tests escalation gate forcing Bonferroni/FDR correction or an exploratory label. Use when choosing or switching a statistical test, asking which test to run, dropping a test after a non-significant result, or running many tests hunting for significance. For executing the chosen test prefer alterlab-statistical-analysis or alterlab-statsmodels; for the broader frozen-plan discipline see alterlab-preregistration-discipline. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required. A discipline-enforcing guidance skill; the optional decision-tree helper runs locally via `uv run python` (standard library only).",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 262,
+      "references": [
+        "assumption_gate.md",
+        "decision_tree.md",
+        "multiplicity.md",
+        "rationalizations.md"
+      ]
+    },
+    {
       "name": "alterlab-bgpt-search",
       "domain": "research-tools",
       "description": "Search scientific papers and retrieve structured experimental data extracted from full-text studies via the BGPT MCP server, returning 25+ fields per paper (methods, results, sample sizes, quality scores, conclusions). Use when running a literature review or evidence synthesis, or when needing experimental details (sample sizes, effect sizes, methods, quality scores) that abstracts alone do not provide. Part of the AlterLab Academic Skills suite.",
@@ -3880,6 +4216,279 @@
       "body_lines": 722,
       "references": [
         "survey-methodology.md"
+      ]
+    },
+    {
+      "name": "alterlab-akademik-tesvik",
+      "domain": "turkish-academia",
+      "description": "Computes the annual Turkish academic-incentive (akademik teşvik) score for Devlet (state) university öğretim elemanı (academic staff) from a classified activity list, applying the verified Akademik Teşvik Ödeneği Yönetmeliği (2018/11834) Faaliyet Hesaplama Tablosu headline puanları (Proje 20, Araştırma 15, Yayın 30, Patent 30, Atıf 30, Tebliğ 20, Ödül 20) with the k (author-count), p (Q1 1/Q2 0.8/Q3 0.5/Q4 0.25), and r (project-role) coefficients via türü puanı = Σ(faaliyet oranları) × headline (MADDE 8/2), then enforcing the per-type headline ceilings, the 100 cap (MADDE 8/3), and the net-30 payment gate (MADDE 10/3) in a deterministic scripts/tesvik_score.py. Use when the user wants to calculate akademik teşvik puanı, check the en az 30 (net-30) threshold, apply TABLO 4 ceilings, or estimate teşvik eligibility; keeps its coefficients separate from doçentlik scoring. For doçentlik point eligibility prefer alterlab-docentlik-eligibility. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key and no network required — applies the regulation's tables offline via `uv run python`; the regulation PDF is on mevzuat.gov.tr for re-verification",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 169,
+      "references": [
+        "hesaplama.md",
+        "tablo4.md"
+      ]
+    },
+    {
+      "name": "alterlab-aperta",
+      "domain": "turkish-academia",
+      "description": "Drives TÜBİTAK Açık Bilim Politikası (Open Science Policy) compliance and deposition into Aperta — TÜBİTAK ULAKBİM's national open archive at aperta.ulakbim.gov.tr — encoding the binding mandates (green-road deposit of the accepted manuscript on acceptance; open access within 6 months for fen/mühendislik (STEM) and 12 months for sosyal/beşeri (SSH); İlke-6 documentation when data must stay closed for KVKK/privacy reasons) and scaffolding a TÜBİTAK Veri Yönetim Planı / VYP (data management plan) at grant-application time. Use when depositing to Aperta, complying with the TÜBİTAK açık bilim policy, preparing a TÜBİTAK data management plan (VYP), reporting open-access compliance in a final report, or documenting a justified data embargo. For Zenodo/Dryad/OSF and international DMPs prefer alterlab-open-science; for the KVKK lawful-basis/anonymisation plan prefer alterlab-kvkk-dmp. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required. Guidance + scaffolding skill; uses WebFetch for live policy/repository checks and optional Python helpers via `uv run python` (stdlib-only, requests optional).",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "WebFetch"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 181,
+      "references": [
+        "aperta_repository.md",
+        "policy_mandates.md",
+        "vyp_template.md"
+      ]
+    },
+    {
+      "name": "alterlab-dergipark",
+      "domain": "turkish-academia",
+      "description": "Harvests article metadata, abstracts, and full-text PDFs from DergiPark (TÜBİTAK ULAKBİM's national journal-hosting platform, ~2,537 journals) via its verified platform-wide OAI-PMH endpoint (https://dergipark.org.tr/api/public/oai/; verbs Identify/ListSets/ListRecords/GetRecord; prefixes oai_dc/oai_mods/oai_marc/oai_etdms; setSpec=journal-slug), parses Highwire citation_* and DC.* meta tags on /pub/{slug}/article/{id} pages, pulls PDFs from the citation_pdf_url path, and emits BibTeX/RIS locally. Use when the user wants to harvest a Turkish journal, fetch DergiPark articles, list a journal archive, get BibTeX/RIS for a DergiPark paper, or read a journal aim-and-scope (öz/kapsam). For TR Dizin indexing status use alterlab-trdizin; for YÖK theses use alterlab-yok-tez; for academic profiles use alterlab-yok-akademik. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required — harvests DergiPark's public OAI-PMH 2.0 endpoint and open article pages via `uv run python` (requests if present, else stdlib urllib); degrades gracefully offline by emitting a network_unavailable error rather than fabricating records",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash",
+        "WebFetch"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 119,
+      "references": [
+        "endpoints.md",
+        "indexing.md",
+        "oai-cookbook.md"
+      ]
+    },
+    {
+      "name": "alterlab-docentlik-eligibility",
+      "domain": "turkish-academia",
+      "description": "Scores a Turkish associate-professorship (doçentlik / associate professorship) publication list against the per-field ÜAK (Üniversitelerarası Kurul / Inter-University Council) criteria tables, applying the author-share rule (full; 0.8 + 0.5; lead-author half-the-rest split) and pass-fail checking each mandatory minimum (100 total points, 90 post-doctorate, ≥3 lead-author Q-indexed articles). Ships a dated Sağlık (Health) TABLO 10 reference (Q1 30 / Q2 20 / Q3 15 / Q4 10 / AHCI 20 / ESCI 10 / TR Dizin 10) and a verify-against-current-UAK-period disclaimer. Use when the user wants to check doçentlik eligibility, calculate ÜAK points, audit lead-author (başlıca yazar) requirements, or see if a CV meets associate-professor thresholds; verify a journal's live TR Dizin status with alterlab-trdizin first, and compute the akademik teşvik (academic-incentive) score with alterlab-akademik-tesvik. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required — pure offline scorer (stdlib Python) over a bundled, dated ÜAK criteria table; live journal-index status is delegated to alterlab-trdizin",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 239,
+      "references": [
+        "scoring_rules.md",
+        "uak_criteria.md"
+      ]
+    },
+    {
+      "name": "alterlab-kvkk-dmp",
+      "domain": "turkish-academia",
+      "description": "Produces KVKK-compliant (Law 6698, as amended by Law 7499 — published in the Official Gazette 12 Mar 2024, KVKK provisions effective 1 Jun 2024) data management plans for Turkish research, encoding the açık rıza (explicit consent) default basis, the Art. 28(1)(b) anonymization exemption as the primary compliance lever, the Art. 6 special-category regime for health/genetic/biometric data, Art. 7 deletion/destruction/anonymization at purpose-end, the Art. 13 thirty-day data-subject response window, Art. 9 cross-border adequacy-decision rules for cloud/overseas data, and Art. 16 VERBIS pre-processing registration, with a KVKK-vs-GDPR crosswalk. Use when the user needs a KVKK data management plan, to anonymize a research dataset under Turkish law, a VERBIS check, or to fix EU DMP boilerplate for Turkey; for pure GDPR/HIPAA use alterlab-research-ethics. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required — generates KVKK data management plans from primary mevzuat (Law 6698) encoded in references/; the optional scaffold runs via `uv run python` on the standard library only",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 177,
+      "references": [
+        "anonymization_methods.md",
+        "dmp_walkthrough.md",
+        "kvkk_articles.md",
+        "kvkk_vs_gdpr.md"
+      ]
+    },
+    {
+      "name": "alterlab-tr-academic-style",
+      "domain": "turkish-academia",
+      "description": "Formats manuscripts for Turkish journals: TR Dizin submission rules (TR Dizin mandates a set abstract word limit, two referees from different institutions, Latin script for non-Latin-alphabet articles, and only suggests a second-language abstract; bilingual oz/abstract ~200-250 words and 3-5 keywords are common journal house conventions to confirm against the journal's yazim kurallari) and the Turkish adaptation of APA-7 (ve ark./vd. for multi-author cites, ampersand only in the reference list, s. for page, Cev. for translator, t.y. for no date, aktaran for as-cited-in, Turkish capitalization). Use when writing for a Turkish/Turkce journal, preparing a TR Dizin submission, needing Turkce APA 7 in-text or reference formatting, or formatting a bilingual oz. For English-language citation styles prefer alterlab-citation-mgmt or alterlab-venue-templates; for live TR Dizin index status use alterlab-trdizin. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key or network required — applies the official TR Dizin evaluation criteria (and flags journal house conventions separately) plus the Turkish APA-7 adaptation offline; the linter in scripts/ runs on stdlib only",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 163,
+      "references": [
+        "trdizin_manuscript.md",
+        "turkce_apa7.md"
+      ]
+    },
+    {
+      "name": "alterlab-tr-research-ethics",
+      "domain": "turkish-academia",
+      "description": "Scaffolds Turkish human-subjects etik kurul (ethics committee) applications and routes a study to the correct committee using the TR Dizin/ULAKBIM 2020 trigger rule: survey, interview, focus-group, observation, or experiment data collection requires a university Girisimsel Olmayan Etik Kurulu (non-interventional committee); drug, device, cosmetic, stem-cell, or BA-BE clinical studies also require a TITCK-approved Klinik Arastirmalar Etik Kurulu plus a separate TITCK permit. Generates bilingual (TR/EN) Etik Kurul Basvuru Formu, basvuru dilekcesi (cover petition), and Bilgilendirilmis Gonullu Olur Formu (informed consent), and lints a consent draft against the TITCK 2023 minimum-content checklist. Use when the user needs a Turkish etik kurul basvurusu, an onam/olur (consent) formu, asks which ethics committee a study requires, or needs TITCK approval guidance. For non-Turkey IRB/Belmont/GDPR use alterlab-research-ethics; for KVKK data plans use alterlab-kvkk-dmp. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required. Guidance + offline scaffolder; the consent linter (scripts/consent_form_check.py) runs locally via `uv run python` with the Python standard library only.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 194,
+      "references": [
+        "consent_minimum_contents.md",
+        "dossier_templates.md",
+        "etik_kurul_routing.md"
+      ]
+    },
+    {
+      "name": "alterlab-trdizin",
+      "domain": "turkish-academia",
+      "description": "Searches TR Dizin (TÜBİTAK ULAKBİM national citation index) and verifies a journal's current national-index status through its confirmed unauthenticated REST/Elasticsearch API at https://search.trdizin.gov.tr/api/defaultSearch/{publication|journal|author|institution}/ (params q, order e.g. relevance-DESC, page), parsing hits.hits[]._source plus faceted aggregations, and derives indexing status from a journal record's isActive + journalYear coverage vs rejectYearList. Use when the user wants to search TR Dizin, check if a journal is TR Dizin indexed (TR Dizin'de var mı / taranıyor mu), find Turkish-indexed publications, verify national-index status before submitting, or audit doçentlik-eligible venues. For DergiPark hosting prefer alterlab-dergipark; for doçentlik points prefer alterlab-docentlik-eligibility; for teşvik scoring prefer alterlab-akademik-tesvik. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.1",
+      "compatibility": "No API key required — queries the keyless TR Dizin search API (https://search.trdizin.gov.tr/api/defaultSearch/) via `uv run python` (requests if present, else stdlib urllib); reports network failure rather than passing silently",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash",
+        "WebFetch"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 158,
+      "references": [
+        "api_reference.md",
+        "journal_status.md"
+      ]
+    },
+    {
+      "name": "alterlab-tubitak-proposal",
+      "domain": "turkish-academia",
+      "description": "Scaffolds TÜBİTAK ARDEB national research proposals (1001 Bilimsel ve Teknolojik Araştırma Projeleri and 1002-A Hızlı Destek Modülü) against the official .doc form trees: 1. ÖZGÜN DEĞER (konunun önemi/özgün değer, araştırma sorusu/hipotezi, amaç ve hedefler), 2. YÖNTEM, 3. PROJE YÖNETİMİ (iş-zaman çizelgesi/iş paketleri + B-Planı, araştırma olanakları), 4. YAYGIN ETKİ, EK-1 Kaynaklar, EK-2 Bütçe ve Gerekçesi. Enforces the 600-word TR/EN özet (abstract) caps, program caps (1001 <=36 months/3,000,000 TRY for 2026-1; 1002-A <=12 months/150,000 TRY, rolling), and the four panel review dimensions; submission via PBS (ardeb-pbs.tubitak.gov.tr) with ARBİS prerequisite. Delegates generic grant craft to alterlab-research-grants. Use when the user wants to write a TÜBİTAK 1001 or 1002-A proposal, draft özgün değer or yaygın etki sections, scaffold a Turkish national grant, or map broader-impacts framing to TÜBİTAK terms. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required — generates proposal scaffolds offline; the structure checker runs via `uv run python` on stdlib only. Program caps/forms change each call period; WebFetch the live PBS/guide pages to confirm before submission.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "WebFetch"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 221,
+      "references": [
+        "form_structure.md",
+        "program_profiles.md",
+        "review_criteria.md",
+        "terminology_bridge.md"
+      ]
+    },
+    {
+      "name": "alterlab-yok-akademik",
+      "domain": "turkish-academia",
+      "description": "Looks up a Turkish academic's official YOKSIS-backed profile, current affiliation, unvan (academic title), publications, research projects, and supervised theses on the YOK Akademik portal (akademik.yok.gov.tr/AkademikArama/), a server-rendered JSP app with no public JSON API, by scraping its verified endpoints (AkademisyenArama POST search, viewAuthor.jsp profile, AkademisyenProjeBilgileri, AkademisyenYonTezBilgileri) keyed by an opaque authorId, with Turkish-character (Iı Şş Ğğ Çç Öö Üü) normalization for name matching. Use when the request is to verify a Turkish academic's current institution, find a researcher on YOK Akademik, confirm affiliation for authorship or a recommendation letter, or list someone's supervised theses or projects. For admission statistics (kontenjan, taban puan) use alterlab-yokatlas; for the national thesis full-text archive use alterlab-yok-tez; for publication metadata enrichment use alterlab-openalex. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required — scrapes the public YOK Akademik JSP portal (akademik.yok.gov.tr/AkademikArama/) via `uv run python` (requests + BeautifulSoup, stdlib fallback) and WebFetch; there is NO official public JSON API",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash",
+        "WebFetch"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 155,
+      "references": [
+        "affiliation_verification.md",
+        "endpoints.md",
+        "turkish_names.md"
+      ]
+    },
+    {
+      "name": "alterlab-yok-tez",
+      "domain": "turkish-academia",
+      "description": "Searches YÖK Ulusal Tez Merkezi (tez.yok.gov.tr/UlusalTezMerkezi), Turkey's mandatory national graduate-thesis repository, for literature-review discovery and pre-proposal özgünlük (originality) checks. Drives the detailed search form (Tez Adı/Yazar/Danışman/Konu/Anahtar Kelime/Özet, tez türü, year range, language, İzinli/İzinsiz permission status) via the saidsurucu/yoktez-mcp tool, applies Turkish auto-stemming and ve/veya/içermesin boolean operators, runs paired Turkish+English queries, and emits Türkçe APA-7 thesis citations mapping Tez No to the published Yayın No. Use when the user wants to search Turkish theses, ara YÖK tez, check thesis novelty before approving a proposal, find dissertations by advisor (danışman) or university, dedupe a topic against existing tezler, or cite a YÖK thesis; respects the 2000-results-per-search cap and online-view-only access. For non-thesis Turkish journals use alterlab-dergipark or alterlab-trdizin. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required — searches via the saidsurucu/yoktez-mcp connector (local `uvx` or hosted https://yoktezmcp.fastmcp.app/mcp) or by driving the public tez.yok.gov.tr Detaylı Tarama form; full-text is online-view-only, no bulk download",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "WebFetch"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 208,
+      "references": [
+        "access_legal.md",
+        "citation_apa7.md",
+        "endpoints.md",
+        "search_syntax.md"
+      ]
+    },
+    {
+      "name": "alterlab-yokatlas",
+      "domain": "turkish-academia",
+      "description": "Retrieves Türkiye higher-education program and admission statistics from YÖK Atlas (yokatlas.yok.gov.tr) — quotas (kontenjan), placements (yerleşen), minimum admission scores (taban puan), success ranks (başarı sırası), and per-title academic-staff counts — via the keyless yokatlas-py (>=0.6.0, MIT) wrapper over the JSON API at /api/tercih-kilavuz/ (search, universiteler, universite-programlar), with SearchFilters for puan türü (SAY/SÖZ/EA/DİL/TYT), university type (DEVLET/VAKIF), province, and success-rank ranges. Use when the request mentions YÖK Atlas, program statistics, kontenjan/quota data, taban puan/minimum admission score, başarı sırası/success rank, placement counts, or program staff counts for institutional research, program benchmarking, or student advising. For an academic's CV/profile/affiliation prefer alterlab-yok-akademik; for theses prefer alterlab-yok-tez. Legacy PHP endpoints are dead post-April-2026; only the JSON API is used. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required — wraps the keyless YÖK Atlas JSON API (/api/tercih-kilavuz/) through yokatlas-py v0.6.0 (MIT, Python >=3.10) run via `uv run --with yokatlas-py python`; degrades to a documented manual lookup when offline",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash",
+        "WebFetch"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 167,
+      "references": [
+        "api_endpoints.md",
+        "query_recipes.md"
       ]
     },
     {

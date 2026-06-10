@@ -1,15 +1,15 @@
 # AlterLab Academic Skills — by AlterLab Creative Technologies Laboratory
 
-> **Project**: AlterLab Academic Skills — 183 Claude AI skills for faculty and researchers
+> **Project**: AlterLab Academic Skills — 209 Claude AI skills for faculty and researchers
 > **Owner**: AlterLab Creative Technologies Laboratory
 
 ---
 
 ## Project Overview
 
-This project provides **183 professional Claude AI skills** organized into 13 domain categories for faculty members, academicians, and researchers. Each skill transforms Claude into a domain-specific expert assistant tailored to academic research, scientific computing, and scholarly publishing workflows.
+This project provides **209 professional Claude AI skills** organized into 16 domain categories for faculty members, academicians, and researchers. Each skill transforms Claude into a domain-specific expert assistant tailored to academic research, scientific computing, and scholarly publishing workflows.
 
-The repo is installable as a Claude Code plugin marketplace named `alterlab-academic-skills`, with 13 domain plugins (`alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`).
+The repo is installable as a Claude Code plugin marketplace named `alterlab-academic-skills`, with 16 domain plugins (`alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`, `alterlab-turkish-academia`, `alterlab-faculty-life`, `alterlab-methodology`).
 
 ### Audience
 - Faculty members and academic researchers
@@ -28,7 +28,7 @@ The repo is installable as a Claude Code plugin marketplace named `alterlab-acad
 |----------|------|-------|-------------|
 | Core Pipeline | `skills/core/` | 8 | Research -> Write -> Review -> Publish pipeline + citation-verifier + link-health |
 | Databases | `skills/databases/` | 39 | Scientific database connectors |
-| Bioinformatics | `skills/bioinformatics/` | 25 | Genomics, proteomics, molecular biology |
+| Bioinformatics | `skills/bioinformatics/` | 30 | Genomics, proteomics, molecular biology |
 | Cheminformatics | `skills/cheminformatics/` | 12 | Chemistry, drug discovery |
 | Clinical Research | `skills/clinical-research/` | 7 | Clinical decision support, medical tools |
 | Data Science | `skills/data-science/` | 22 | ML, statistics, data analysis |
@@ -39,8 +39,11 @@ The repo is installable as a Claude Code plugin marketplace named `alterlab-acad
 | Document Tools | `skills/document-tools/` | 2 | Markdown conversion, notebook handling |
 | Research Tools | `skills/research-tools/` | 14 | Search, discovery, reference management |
 | Finance & Economics | `skills/finance-economics/` | 7 | Financial data and analysis |
+| Turkish Academia | `skills/turkish-academia/` | 12 | Turkish academic system workflows (YÖK, ÜAK, DergiPark, TÜBİTAK) |
+| Faculty Life | `skills/faculty-life/` | 6 | Faculty research-lifecycle and academic administration |
+| Methodology | `skills/methodology/` | 3 | Research methodology and rigor scaffolds |
 
-**Total: 183 skills across 13 categories**
+**Total: 209 skills across 16 categories**
 
 ---
 
@@ -116,7 +119,7 @@ When MCP tools are available, skills should prefer them over simulated responses
 |---------|---------|
 | `python scripts/audit_skills.py` | Audit skills (frontmatter, naming, counts) |
 | `pytest tests/` | Run the validation test suite |
-| `python scripts/gen_marketplace.py` | Regenerate the `alterlab-academic-skills` marketplace + 13 domain plugins |
+| `python scripts/gen_marketplace.py` | Regenerate the `alterlab-academic-skills` marketplace + 16 domain plugins |
 
 ---
 

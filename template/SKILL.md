@@ -40,8 +40,9 @@ citations, benchmarks, or DOIs.
 <!--
 AUTHORING CHECKLIST (see CONTRIBUTING.md → Skill Quality Standards):
 - name == this directory's name, lowercase-hyphen, no 'claude'/'anthropic'
-- description: third person, leads with what + "Use when", suite label LAST, <=1536 chars
+- description: third person, leads with what + "Use when", suite label LAST, <=1024 chars
 - body <500 lines; reference files exist; tools scoped in allowed-tools
-- add evals/evals.json (>=3 should_trigger + >=2 should_not_trigger)
+- add evals/evals.json on the docs/evals.schema.json shape
+  (>=3 should_trigger + >=1 should_not_trigger assertion — see docs/evals.md)
 - validate: python scripts/audit_skills.py  &&  uv run pytest tests/
 -->

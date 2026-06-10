@@ -1,0 +1,72 @@
+{
+  "skill": "alterlab-blast",
+  "evals": [
+    {
+      "id": "makeblastdb-then-blastp",
+      "prompt": "I have a FASTA of ~5,000 bacterial proteins and a handful of query proteins. I want to build a local protein database on my machine and BLAST my queries against it, and get a tab-separated hit table I can load into pandas. How do I do this with the command-line BLAST tools?",
+      "expected_output": "Invokes alterlab-blast for the local CLI workflow: builds the database with `makeblastdb -dbtype prot -parse_seqids`, runs `blastp -query ... -db ... -outfmt 6` with an explicit -evalue, and hands the tabular file to scripts/parse_blast_tab.py. Notes that -outfmt 6 yields the std 12 columns and that -parse_seqids is needed for later blastdbcmd retrieval. Does not reach for the Biopython web API.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "makeblastdb" },
+        { "type": "behavior", "value": "Builds the DB with makeblastdb -parse_seqids and searches with blastp -outfmt 6, rather than using the web NCBIWWW API." }
+      ]
+    },
+    {
+      "id": "max-target-seqs-best-hit-pitfall",
+      "prompt": "I ran blastn with -max_target_seqs 1 to get the single best hit per query, but a colleague said my best hits look wrong. Is -max_target_seqs 1 the right way to get the top hit?",
+      "expected_output": "Invokes alterlab-blast and corrects the misconception: explains that -max_target_seqs is a heuristic keep-count applied during the search (ties broken by database order), NOT a guaranteed top-N best-hits filter, so -max_target_seqs 1 does not reliably return the best hit. Recommends keeping a generous value and selecting the top row by post-hoc bitscore sort via scripts/parse_blast_tab.py --best-hit.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "max_target_seqs" },
+        { "type": "behavior", "value": "States that -max_target_seqs is a heuristic cutoff, not a top-N filter, and recommends sorting by bitscore after the search to get the true best hit." }
+      ]
+    },
+    {
+      "id": "diamond-large-protein-search",
+      "prompt": "blastp against the full nr database is taking forever for my 2 million predicted metagenome proteins. Is there a faster command-line option that still gives me BLAST-like protein hits in tabular form?",
+      "expected_output": "Invokes alterlab-blast and routes to the DIAMOND fast path: `diamond makedb` then `diamond blastp --ultra-sensitive --outfmt 6 ...` for BLAST-comparable recall at large scale. Flags the DIAMOND quoting gotcha (custom --outfmt 6 columns are UNQUOTED, the inverse of BLAST+) and notes DIAMOND is protein-space only. Output stays parseable by scripts/parse_blast_tab.py.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "diamond" },
+        { "type": "behavior", "value": "Recommends DIAMOND blastp --ultra-sensitive for the large protein search and warns the custom --outfmt column list must be unquoted for DIAMOND." }
+      ]
+    },
+    {
+      "id": "taxid-scoped-blastn",
+      "prompt": "I'm BLASTing some contigs against nt but I only care about hits to primates, and I want to exclude bacterial contamination. How do I restrict a command-line blastn search by taxonomy?",
+      "expected_output": "Invokes alterlab-blast and uses taxonomic scoping: `-taxids` to restrict to a clade (primates) and `-negative_taxids` to exclude bacteria, run against a taxonomy-aware DB such as NCBI's pre-formatted nt. Explains that subtree expansion is automatic and that a taxonomy-aware database (or build-time taxids) is required.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "taxids" },
+        { "type": "behavior", "value": "Uses -taxids/-negative_taxids against a taxonomy-aware DB and notes the database must carry taxonomy mapping." }
+      ]
+    },
+    {
+      "id": "near-miss-biopython-web-blast",
+      "prompt": "I don't want to install or download any databases. Can you script a quick BLAST of one protein sequence against NCBI's servers from Python using Bio.Blast.NCBIWWW and parse the XML result?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-biopython. The user explicitly wants the Biopython web BLAST API (Bio.Blast.NCBIWWW.qblast against NCBI servers, no local DB), not local BLAST+ binaries or a local database. alterlab-blast is the command-line/local-database skill and does not run the web NCBIWWW API.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-biopython" }
+      ]
+    },
+    {
+      "id": "near-miss-gget-oneliner",
+      "prompt": "I just want a fast one-liner to BLAST a single short sequence and also grab the gene's Ensembl info, without setting up any databases. What's the quickest tool for that interactive lookup?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-gget. The user wants a quick interactive one-liner lookup (gget blast plus Ensembl gene info) with no local database setup, which is gget's niche. alterlab-blast targets local BLAST+ databases and CLI searches, not throwaway one-liner web queries.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-gget" }
+      ]
+    },
+    {
+      "id": "near-miss-phylogenetics-tree",
+      "prompt": "I have 60 homologous protein sequences and I want to align them and build a maximum-likelihood phylogenetic tree with bootstrap support, then visualize it. How should I do this?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-phylogenetics. The user wants multiple sequence alignment plus tree inference and visualization, not a similarity/homology search against a database. alterlab-blast only performs BLAST+/DIAMOND sequence search and does not build phylogenetic trees.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-phylogenetics" }
+      ]
+    }
+  ]
+}
