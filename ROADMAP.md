@@ -1,10 +1,16 @@
 # Roadmap
 
 This roadmap schedules work **deferred out of v2.0** so that v2.0 stays a focused trust-and-reach
-release rather than a net-new-authoring sprawl. v2.0's job was to make the existing 180 skills
+release rather than a net-new-authoring sprawl. v2.0's job was to make the existing corpus
 provably trustworthy (executable evals everywhere, deterministic citation/integrity gates,
 script-correctness CI) and reachable (spec-conformant per-domain bundles, a generated catalog,
-honest provenance). The domains below are the planned **v2.x expansions**.
+honest provenance). The domains below were the planned **v2.x expansions**.
+
+> **✅ All four expansion domains (v2.1–v2.4) shipped in v2.1.0** — 26 new skills across
+> faculty-life, the Turkish academic ecosystem, bioinformatics pipelines, and the methodology
+> layer, lifting the corpus to **209 skills / 16 domains** with day-one evals on every new skill.
+> See [`CHANGELOG.md`](CHANGELOG.md) `[2.1.0]`. The day-one-evals discipline below remains the
+> standing bar for all future work.
 
 ## Day-one-evals discipline (applies to everything below)
 
@@ -22,10 +28,10 @@ commit:
 This is the non-negotiable bar. A new domain does not "land" until its skills clear it. See
 [`docs/evals.md`](docs/evals.md) and [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-## v2.1 — Faculty-life / research-lifecycle domain
+## v2.1 — Faculty-life / research-lifecycle domain ✅ shipped in v2.1.0
 
-The strongest demand-side gap: the administrative and pedagogical lifecycle around research that
-the current corpus does not touch. Candidate skills:
+Shipped as `skills/faculty-life/` (6 skills). The strongest demand-side gap: the administrative
+and pedagogical lifecycle around research that the corpus did not previously touch. Skills:
 
 - Syllabus AI-policy drafting and course-level AI-use statements
 - IRB / ethics protocol and informed-consent scaffolding
@@ -38,9 +44,11 @@ the current corpus does not touch. Candidate skills:
 Scope is XL net-new authoring; each skill ships day-one evals. This domain is the highest-priority
 expansion because it serves the faculty audience the suite is aimed at.
 
-## v2.2 — Humanities & Turkish academic ecosystem
+## v2.2 — Humanities & Turkish academic ecosystem ✅ shipped in v2.1.0
 
-The strongest white-space play, and the one that differentiates an Izmir-based, bilingual lab:
+Shipped as `skills/turkish-academia/` (12 skills — expanded from the 5 original candidates to a
+full national-platform suite, the flagship of v2.1.0). The strongest white-space play, and the one
+that differentiates an Izmir-based, bilingual lab:
 
 - **DergiPark** integration — Turkey's national academic journal platform
 - **YÖK / YÖK Akademik** — Council of Higher Education author/affiliation lookups
@@ -51,10 +59,10 @@ The strongest white-space play, and the one that differentiates an Izmir-based, 
 This domain makes the EN/TR bilingual documentation substrate pay off and addresses an audience no
 English-first skills library serves. XL; deferred from v2.0, every skill day-one-evaluated.
 
-## v2.3 — Bioinformatics pipeline gaps
+## v2.3 — Bioinformatics pipeline gaps ✅ shipped in v2.1.0
 
-The inherited bioinformatics coverage is connector- and analysis-rich but thin on end-to-end
-pipelines. Planned additions:
+Shipped: bioinformatics grew 25 → 30. The inherited bioinformatics coverage was connector- and
+analysis-rich but thin on end-to-end pipelines. Additions:
 
 - FASTQ → VCF variant-calling pipeline (alignment, dedup, calling, filtering)
 - Spatial transcriptomics (squidpy)
@@ -65,13 +73,13 @@ pipelines. Planned additions:
 These extend an existing strong domain rather than opening a new one, so they can land
 incrementally. Day-one evals apply.
 
-## v2.4 — Methodology layer
+## v2.4 — Methodology layer ✅ shipped in v2.1.0
 
-A cross-cutting methodology discipline (inspired by "superpowers"-style rigor: Iron Laws,
-rationalization tables, decision/flow scaffolds) that sits above the domain skills and enforces
-research-method correctness — pre-registration discipline, study-design selection, statistical-test
-selection guards, and reasoning-transparency scaffolds. Deferred from v2.0 because it is not core
-to the trust release; sequenced last so it can codify patterns proven across the expanded corpus.
+Shipped as `skills/methodology/` (3 skills). A cross-cutting methodology discipline (inspired by
+"superpowers"-style rigor: Iron Laws, rationalization tables, decision/flow scaffolds) that sits
+above the domain skills and enforces research-method correctness — pre-registration discipline,
+statistical-test selection guards, and results-reporting transparency. Sequenced last so it could
+codify patterns proven across the expanded corpus.
 
 ## Explicitly not scheduled here
 

@@ -75,6 +75,9 @@ CATEGORY_BLURB = {
     "document-tools": "Document and Markdown conversion (MarkItDown, Open Notebook)",
     "research-tools": "Search, discovery, Zotero, qualitative methods, ethics, and open science",
     "finance-economics": "Economic and financial data (FRED, Alpha Vantage, SEC EDGAR, market research)",
+    "turkish-academia": "Turkish academic system workflows (YÖK, ÜAK, DergiPark, YÖK-Tez, TÜBİTAK, doçentlik)",
+    "faculty-life": "Faculty research-lifecycle and academic administration (syllabus AI-policy, IRB/consent, post-award grant admin, recommendation letters, accreditation AoL)",
+    "methodology": "Research methodology and rigor scaffolds (Iron Laws, rationalization tables, decision flowcharts, systematic-reasoning checklists)",
 }
 
 # `category` powers the `/plugin > Discover` filter UI; keywords aid search.
@@ -92,6 +95,9 @@ CATEGORY_TAGS = {
     "document-tools": ("productivity", ["markdown", "document-conversion", "markitdown"]),
     "research-tools": ("research", ["literature-search", "zotero", "qualitative", "ethics", "open-science"]),
     "finance-economics": ("data", ["finance", "economics", "fred", "sec-edgar", "market-research"]),
+    "turkish-academia": ("research", ["turkish-academia", "yok", "uak", "dergipark", "yok-tez", "tubitak"]),
+    "faculty-life": ("productivity", ["faculty", "teaching", "irb", "grant-admin", "accreditation", "recommendation-letters"]),
+    "methodology": ("research", ["methodology", "research-rigor", "systematic-reasoning", "checklists", "decision-flowcharts"]),
 }
 
 
@@ -235,16 +241,24 @@ def build(version: str, verdict: str) -> dict:
         if entry is not None:
             plugins.append(entry)
     total = sum(len(p["skills"]) for p in plugins)
+    description = f"{total} Claude skills for academic research, organized by domain"
     return {
         "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
         "name": "alterlab-academic-skills",
+        # Top-level description/version are the first-class marketplace fields per the
+        # Claude Code plugin-marketplace spec; the metadata block below mirrors them for
+        # backward compatibility (and `metadata.version` is read by tests/test_versioning.py).
+        "description": description,
+        "version": version,
         "owner": {
             "name": "AlterLab @ Izmir University of Economics",
             "email": "alterlab.ieu@gmail.com",
         },
         "metadata": {
-            "description": f"{total} Claude skills for academic research, organized by domain",
+            "description": description,
             "version": version,
+            # metadata.author advertises the marketplace maintainer (agentskills.io spec).
+            "author": AUTHOR,
         },
         "plugins": plugins,
     }

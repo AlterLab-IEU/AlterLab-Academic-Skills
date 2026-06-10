@@ -67,11 +67,11 @@ data resource's terms before use in research or redistribution.
 ## Per-skill license distribution
 
 Each skill declares the license appropriate to its own content in its `SKILL.md`
-frontmatter. Current distribution across the 180 skills:
+frontmatter. Current distribution across the 209 skills:
 
 | License | Skills |
 |---|---:|
-| MIT | 146 |
+| MIT | 175 |
 | Apache-2.0 | 17 |
 | GPL-3.0 | 4 |
 | CC0-1.0 | 4 |
