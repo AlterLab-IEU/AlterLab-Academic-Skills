@@ -38,13 +38,10 @@ BODY_OVER_SOFT_LIMIT: frozenset[str] = frozenset(
         "skills/cheminformatics/alterlab-molfeat/SKILL.md",
         "skills/cheminformatics/alterlab-rdkit/SKILL.md",
         "skills/core/alterlab-deep-research/SKILL.md",
-        "skills/core/alterlab-paper-writer/SKILL.md",
         "skills/core/alterlab-research-pipeline/SKILL.md",
         "skills/core/alterlab-teaching-design/SKILL.md",
         "skills/core/alterlab-thesis-supervisor/SKILL.md",
-        "skills/data-science/alterlab-shap/SKILL.md",
         "skills/domain-specific/alterlab-hypogenic/SKILL.md",
-        "skills/finance-economics/alterlab-market-research/SKILL.md",
         "skills/lab-integrations/alterlab-opentrons/SKILL.md",
         "skills/research-tools/alterlab-mixed-methods/SKILL.md",
         "skills/research-tools/alterlab-open-science/SKILL.md",
@@ -53,7 +50,6 @@ BODY_OVER_SOFT_LIMIT: frozenset[str] = frozenset(
         "skills/research-tools/alterlab-scientific-thinking/SKILL.md",
         "skills/research-tools/alterlab-survey-design/SKILL.md",
         "skills/writing-tools/alterlab-academic-career/SKILL.md",
-        "skills/writing-tools/alterlab-venue-templates/SKILL.md",
     }
 )
 

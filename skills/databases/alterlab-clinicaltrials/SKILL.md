@@ -401,33 +401,12 @@ print(f"Found {len(phase2_3_trials)} Phase 2/3 immunotherapy trials")
 
 ## Resources
 
-### scripts/query_clinicaltrials.py
-
-Comprehensive Python script providing helper functions for common query patterns:
-
-- `search_studies()` - Search for trials with various filters
-- `get_study_details()` - Retrieve full information for a specific trial
-- `search_with_all_results()` - Automatically paginate through all results
-- `extract_study_summary()` - Extract key information for quick overview
-
-Run the script directly for example usage:
-
-```bash
-python3 scripts/query_clinicaltrials.py
-```
-
-### references/api_reference.md
-
-Detailed API documentation including:
-
-- Complete endpoint specifications
-- All query parameters and valid values
-- Response data structure and modules
-- Common use cases with code examples
-- Error handling and best practices
-- Data standards (ISO 8601 dates, CommonMark markdown)
-
-Load this reference when working with unfamiliar API features or troubleshooting issues.
+- `scripts/query_clinicaltrials.py` — helpers for the common query patterns:
+  `search_studies()`, `get_study_details()`, `search_with_all_results()`
+  (auto-pagination), `extract_study_summary()`. Run directly for example usage.
+- `references/api_reference.md` — full endpoint/parameter specs, response
+  modules, error handling, and data standards (ISO 8601, CommonMark). Load when
+  working with unfamiliar API features or troubleshooting.
 
 ## Best Practices
 

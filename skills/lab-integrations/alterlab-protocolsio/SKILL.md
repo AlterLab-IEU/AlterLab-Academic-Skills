@@ -1,6 +1,6 @@
 ---
 name: alterlab-protocolsio
-description: Manages scientific protocols through the protocols.io API v3 — search, create, update, and publish protocols (with DOI), manage steps and materials, handle protocol/step discussions and comments, organize team workspaces, and upload/manage workspace files. Use when discovering, developing, publishing, or citing protocols.io protocols, collaborating on protocol steps/materials, recording experiment runs, or integrating protocols.io into lab documentation. Not for general ELN entries/notebooks (use alterlab-benchling or alterlab-labarchive) or lab-instrument/liquid-handler control.
+description: Manages scientific protocols through the protocols.io API v3 — search, create, update, and publish protocols (with DOI), manage steps and materials, handle protocol/step discussions and comments, organize team workspaces, and upload/manage workspace files. Use when discovering, developing, publishing, or citing protocols.io protocols, collaborating on protocol steps/materials, recording experiment runs, or integrating protocols.io into lab documentation. Not for general ELN entries/notebooks (use alterlab-benchling or alterlab-labarchive) or lab-instrument/liquid-handler control. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
 compatibility: Requires a protocols.io access token — a personal CLIENT_ACCESS_TOKEN for personal content or an OAUTH_ACCESS_TOKEN via the OAuth flow

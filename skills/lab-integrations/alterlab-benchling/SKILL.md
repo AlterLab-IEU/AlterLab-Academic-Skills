@@ -415,15 +415,9 @@ The SDK handles unknown enum values and types gracefully:
 
 ## Resources
 
-### references/
-
-Detailed reference documentation for in-depth information:
-
-- **authentication.md** - Comprehensive authentication guide including OIDC, security best practices, and credential management
-- **sdk_reference.md** - Detailed Python SDK reference with advanced patterns, examples, and all entity types
-- **api_endpoints.md** - REST API endpoint reference for direct HTTP calls without the SDK
-
-Load these references as needed for specific integration requirements.
+Load `references/` as needed: **authentication.md** (OIDC, security best
+practices, credential management), **sdk_reference.md** (advanced SDK patterns,
+all entity types), **api_endpoints.md** (REST endpoints for direct HTTP calls).
 
 ## Common Use Cases
 
@@ -502,12 +496,7 @@ for page in sequences:
                 "length": len(seq.bases)
             })
 
-# Save to CSV or database
-import csv
-with open("sequences.csv", "w") as f:
-    writer = csv.DictWriter(f, fieldnames=export_data[0].keys())
-    writer.writeheader()
-    writer.writerows(export_data)
+# Then write export_data to CSV/database as needed (e.g. csv.DictWriter).
 ```
 
 ## Additional Resources
