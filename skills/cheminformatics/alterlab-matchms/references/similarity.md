@@ -73,7 +73,9 @@ scores = calculate_scores(references, queries, similarity_func)
 
 ---
 
-### ModifiedCosine
+### ModifiedCosineGreedy
+
+> **Rename:** this class was previously `ModifiedCosine`. In current matchms it is `ModifiedCosineGreedy` (with a `ModifiedCosineHungarian` variant for optimal peak assignment). Importing `ModifiedCosine` raises `ImportError`.
 
 **Description**: Extends cosine similarity by accounting for precursor m/z differences. Allows peaks to match after applying a mass shift based on the difference between precursor masses. Useful for comparing spectra of related compounds (isotopes, adducts, analogs).
 
@@ -90,9 +92,9 @@ scores = calculate_scores(references, queries, similarity_func)
 
 **Example**:
 ```python
-from matchms.similarity import ModifiedCosine
+from matchms.similarity import ModifiedCosineGreedy
 
-similarity_func = ModifiedCosine(tolerance=0.1)
+similarity_func = ModifiedCosineGreedy(tolerance=0.1)
 scores = calculate_scores(references, queries, similarity_func)
 ```
 
@@ -118,18 +120,16 @@ scores = calculate_scores(references, queries, similarity_func)
 **Example**:
 ```python
 from matchms.similarity import NeutralLossesCosine
-from matchms.filtering import add_losses
 
-# First add losses to spectra
-spectra_with_losses = [add_losses(s) for s in spectra]
-
+# NeutralLossesCosine computes neutral losses internally from precursor_mz —
+# there is no separate add_losses() filter (it was removed). Just score directly.
 similarity_func = NeutralLossesCosine(tolerance=0.1)
-scores = calculate_scores(references_with_losses, queries_with_losses, similarity_func)
+scores = calculate_scores(references, queries, similarity_func)
 ```
 
 **Requirements**:
-- Both spectra must have valid precursor_mz metadata
-- Use `add_losses()` filter to compute neutral losses before scoring
+- Both spectra must have valid precursor_mz metadata (losses are derived from it)
+- To inspect/store losses on a spectrum, use the `Spectrum.compute_losses(loss_mz_from=0.0, loss_mz_to=None)` method / `Spectrum.losses` property — the old `matchms.filtering.add_losses` filter no longer exists
 
 ---
 
@@ -148,13 +148,13 @@ These functions compare molecular structures rather than spectral peaks.
 - Structure-activity relationship studies
 
 **Parameters**:
-- `fingerprint_type` (str, default="daylight"): Type of fingerprint
-  - `"daylight"`: Daylight fingerprint
-  - `"morgan1"`, `"morgan2"`, `"morgan3"`: Morgan fingerprints with radius 1, 2, or 3
-- `similarity_measure` (str, default="jaccard"): Similarity metric
+- `similarity_measure` (str, default="jaccard"): Similarity metric — one of `"jaccard"`, `"dice"`, `"cosine"` (other values raise an assertion)
   - `"jaccard"`: Jaccard index (intersection / union)
   - `"dice"`: Dice coefficient (2 * intersection / (size1 + size2))
   - `"cosine"`: Cosine similarity
+- `set_empty_scores` (float/int/str, default="nan"): value returned when a fingerprint is missing
+
+The **fingerprint type** is NOT a parameter of FingerprintSimilarity — it is chosen earlier when you call `add_fingerprint(spectrum, fingerprint_type="morgan2", ...)`. FingerprintSimilarity just compares whatever fingerprints are already attached.
 
 **Example**:
 ```python
@@ -192,18 +192,17 @@ These functions compare metadata fields rather than spectral or structural data.
 
 **Parameters**:
 - `field` (str): Metadata field name to compare
-- `matching_type` (str, default="exact"): Matching method
-  - `"exact"`: Exact string/value match
-  - `"difference"`: Absolute difference for numerical values
-  - `"relative_difference"`: Relative difference for numerical values
-- `tolerance` (float, optional): Maximum difference for numerical matching
+- `matching_type` (str, default="equal_match"): Matching method — only `"equal_match"` or `"difference"` are accepted (other values raise an assertion)
+  - `"equal_match"`: Entries must be exactly equal (works for strings or numbers)
+  - `"difference"`: Numerical match if `abs(a - b) <= tolerance`
+- `tolerance` (float, default=0.1): Maximum difference for `"difference"` matching
 
-**Example (Exact matching)**:
+**Example (Exact / equality matching)**:
 ```python
 from matchms.similarity import MetadataMatch
 
 # Match by instrument type
-similarity_func = MetadataMatch(field="instrument_type", matching_type="exact")
+similarity_func = MetadataMatch(field="instrument_type", matching_type="equal_match")
 scores = calculate_scores(references, queries, similarity_func)
 ```
 
@@ -265,14 +264,13 @@ scores = calculate_scores(references, queries, similarity_func)
 - Neutral mass-based library searches
 
 **Parameters**:
-- `tolerance` (float, default=0.1): Maximum mass difference for matching
-- `tolerance_type` (str, default="Dalton"): Tolerance unit ("Dalton" or "ppm")
+- `tolerance` (float, default=0.1): Maximum absolute mass difference (Daltons) for matching. Unlike `PrecursorMzMatch`, `ParentMassMatch` takes only `tolerance` — there is no `tolerance_type` argument.
 
 **Example**:
 ```python
 from matchms.similarity import ParentMassMatch
 
-similarity_func = ParentMassMatch(tolerance=0.1, tolerance_type="Dalton")
+similarity_func = ParentMassMatch(tolerance=0.1)
 scores = calculate_scores(references, queries, similarity_func)
 ```
 
@@ -286,21 +284,26 @@ scores = calculate_scores(references, queries, similarity_func)
 
 Combine multiple similarity metrics for robust compound identification:
 
+`Scores.scores` is a sparse structured array, so indexing it (`scores.scores[j, i]`)
+returns a record with `..._score` and `..._matches` fields — NOT a plain float.
+To do arithmetic, pull a dense float matrix with `to_array("<FunctionName>_score")`:
+
 ```python
 from matchms import calculate_scores
-from matchms.similarity import CosineGreedy, ModifiedCosine, FingerprintSimilarity
+from matchms.similarity import CosineGreedy, ModifiedCosineGreedy, FingerprintSimilarity
 
 # Calculate multiple similarity scores
 cosine_scores = calculate_scores(refs, queries, CosineGreedy())
-modified_cosine_scores = calculate_scores(refs, queries, ModifiedCosine())
+modified_cosine_scores = calculate_scores(refs, queries, ModifiedCosineGreedy())
 fingerprint_scores = calculate_scores(refs, queries, FingerprintSimilarity())
 
-# Combine scores with weights
-for i, query in enumerate(queries):
-    for j, ref in enumerate(refs):
-        combined_score = (0.5 * cosine_scores.scores[j, i] +
-                         0.3 * modified_cosine_scores.scores[j, i] +
-                         0.2 * fingerprint_scores.scores[j, i])
+# Extract dense float matrices (rows = references, cols = queries)
+cos = cosine_scores.scores.to_array("CosineGreedy_score")
+mod = modified_cosine_scores.scores.to_array("ModifiedCosineGreedy_score")
+# FingerprintSimilarity returns a single unnamed score field:
+fp = fingerprint_scores.scores.to_array("FingerprintSimilarity")
+
+combined = 0.5 * cos + 0.3 * mod + 0.2 * fp  # element-wise, shape (n_refs, n_queries)
 ```
 
 ## Accessing Scores Results
@@ -308,18 +311,24 @@ for i, query in enumerate(queries):
 The `Scores` object provides multiple methods to access results:
 
 ```python
-# Get best matches for a query
-best_matches = scores.scores_by_query(query_spectrum, sort=True)[:10]
+# Get best matches for a query. For cosine-family scores you MUST pass the
+# field name to sort on; bare sort=True raises IndexError.
+best_matches = scores.scores_by_query(query_spectrum,
+                                      name="CosineGreedy_score",
+                                      sort=True)[:10]
 
-# Get scores as numpy array
-score_array = scores.scores
+# scores.scores is a sparse, structured (StackedSparseArray) object, not a
+# plain numpy float matrix. Pull a dense float matrix by score-field name:
+score_matrix = scores.scores.to_array("CosineGreedy_score")  # shape (n_refs, n_queries)
 
-# Get scores as pandas DataFrame
+# There is no to_dataframe()/to_list(). Build a DataFrame from to_array:
 import pandas as pd
-df = scores.to_dataframe()
+df = pd.DataFrame(score_matrix,
+                  index=[r.get("compound_name") for r in scores.references],
+                  columns=[q.get("compound_name") for q in scores.queries])
 
-# Filter by threshold
-high_scores = [(i, j, score) for i, j, score in scores.to_list() if score > 0.7]
+# Drop low scores IN PLACE (filter_by_range mutates `scores` and returns None):
+scores.filter_by_range(name="CosineGreedy_score", low=0.7)
 
 # Save scores
 scores.to_json("scores.json")
@@ -335,11 +344,11 @@ scores.to_pickle("scores.pkl")
 
 **Slow methods** (smaller datasets or high accuracy):
 - CosineHungarian
-- ModifiedCosine (slower than CosineGreedy)
+- ModifiedCosineGreedy (slower than CosineGreedy)
 - NeutralLossesCosine
 - FingerprintSimilarity (requires fingerprint computation)
 
-**Recommendation**: For large-scale library searches, use PrecursorMzMatch to pre-filter candidates, then apply CosineGreedy or ModifiedCosine to filtered results.
+**Recommendation**: For large-scale library searches, use PrecursorMzMatch to pre-filter candidates, then apply CosineGreedy or ModifiedCosineGreedy to filtered results.
 
 ## Common Similarity Workflows
 
@@ -353,11 +362,11 @@ scores = calculate_scores(library_spectra, query_spectra,
 
 ### Multi-Metric Matching
 ```python
-from matchms.similarity import CosineGreedy, ModifiedCosine, FingerprintSimilarity
+from matchms.similarity import CosineGreedy, ModifiedCosineGreedy, FingerprintSimilarity
 
 # Spectral similarity
 cosine = calculate_scores(refs, queries, CosineGreedy())
-modified = calculate_scores(refs, queries, ModifiedCosine())
+modified = calculate_scores(refs, queries, ModifiedCosineGreedy())
 
 # Structural similarity
 fingerprint = calculate_scores(refs, queries, FingerprintSimilarity())

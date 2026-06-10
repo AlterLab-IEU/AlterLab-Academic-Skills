@@ -54,18 +54,22 @@ curl https://alphafold.ebi.ac.uk/api/prediction/P00520
     "uniprotEnd": 1130,
     "uniprotSequence": "MLEICLKLVGCKSKKGLSSSSSCYLEEALQRPVASDFEPQGLSEAARWNSKENLLAGPSENDPNLFVALYDFVASGDNTLSITKGEKLRVLGYNHNGEWCEAQTKNGQGWVPSNYITPVNSLEKHSWYHGPVSRNAAEYLLSSGINGSFLVRESESSPGQRSISLRYEGRVYHYRINTASDGKLYVSSESRFNTLAELVHHHSTVADGLITTLHYPAPKRNKPTVYGVSPNYDKWEMERTDITMKHKLGGGQYGEVYEGVWKKYSLTVAVKTLKEDTMEVEEFLKEAAVMKEIKHPNLVQLLGVCTREPPFYIITEFMTYGNLLDYLRECNRQEVNAVVLLYMATQISSAMEYLEKKNFIHRDLAARNCLVGENHLVKVADFGLSRLMTGDTYTAHAGAKFPIKWTAPESLAYNKFSIKSDVWAFGVLLWEIATYGMSPYPGIDLSQVYELLEKDYRMERPEGCPEKVYELMRACWQWNPSDRPSFAEIHQAFETMFQESSISDEVEKELGKQGVRGAVSTLLQAPELPTKTRTSRRAAEHRDTTDVPEMPHSKGQGESDPLDHEPAVSPLLPRKERGPPEGGLNEDERLLPKDKKTNLFSALIKKKKKTAPTPPKRSSSFREMDGQPERRGAGEEEGRDISNGALAFTPLDTADPAKSPKPSNGAGVPNGALRESGGSGFRSPHLWKKSSTLTSSRLATGEEEGGGSSSKRFLRSCSASCVPHGAKDTEWRSVTLPRDLQSTGRQFDSSTFGGHKSEKPALPRKRAGENRSDQVTRGTVTPPPRLVKKNEEAADEVFKDIMESSPGSSPPNLTPKPLRRQVTVAPASGLPHKEEAGKGSALGTPAAAEPVTPTSKAGSGAPGGTSKGPAEESRVRRHKHSSESPGRDKGKLSRLKPAPPPPPAASAGKAGGKPSQSPSQEAAGEAVLGAKTKATSLVDAVNSDAAKPSQPGEGLKKPVLPATPKPQSAKPSGTPISPAPVPSTLPSASSALAGDQPSSTAFIPLISTRVSLRKTRQPPERIASGAITKGVVLDSTEALCLAISRNSEQMASHSAVLEAGKNLYTFCVSYVDSIQQMRNKFAFREAINKLENNLRELQICPATAGSGPAATQDFSKLLSSVKEISDIVQR",
     "modelCreatedDate": "2021-07-01",
-    "latestVersion": 4,
-    "allVersions": [1, 2, 3, 4],
-    "cifUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v4.cif",
-    "bcifUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v4.bcif",
-    "pdbUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v4.pdb",
-    "paeImageUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-predicted_aligned_error_v4.png",
-    "paeDocUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-predicted_aligned_error_v4.json"
+    "latestVersion": 6,
+    "allVersions": [1, 2, 3, 4, 5, 6],
+    "cifUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v6.cif",
+    "bcifUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v6.bcif",
+    "pdbUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v6.pdb",
+    "plddtDocUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-confidence_v6.json",
+    "paeImageUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-predicted_aligned_error_v6.png",
+    "paeDocUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-predicted_aligned_error_v6.json"
   }
 ]
 ```
 
-**Response Fields:**
+> **Always read the file URLs from this response** rather than hand-building a
+> `_v{N}` suffix: the version moves (now v6) and old `_v4` file URLs return 404.
+
+**Response Fields** (selected — the live response includes more):
 - `entryId`: AlphaFold internal identifier (format: AF-{uniprot}-F{fragment})
 - `gene`: Gene symbol
 - `uniprotAccession`: UniProt accession
@@ -79,6 +83,7 @@ curl https://alphafold.ebi.ac.uk/api/prediction/P00520
 - `latestVersion`: Current model version number
 - `allVersions`: List of available versions
 - `cifUrl/bcifUrl/pdbUrl`: Structure file download URLs
+- `plddtDocUrl`: Per-residue confidence (pLDDT) JSON URL
 - `paeImageUrl`: PAE visualization image URL
 - `paeDocUrl`: PAE data JSON URL
 
@@ -120,7 +125,8 @@ https://alphafold.ebi.ac.uk/files/{alphafold_id}-{file_type}_{version}.{extensio
 **Components:**
 - `{alphafold_id}`: Entry identifier (e.g., "AF-P00520-F1")
 - `{file_type}`: Type of file (see below)
-- `{version}`: Database version (e.g., "v4")
+- `{version}`: Database version (currently "v6"). **Prefer the exact URLs from the
+  `/prediction/{uniprot}` response over hand-building this** — old `_v4` URLs 404.
 - `{extension}`: File format extension
 
 ### Available File Types
@@ -129,7 +135,7 @@ https://alphafold.ebi.ac.uk/files/{alphafold_id}-{file_type}_{version}.{extensio
 
 **mmCIF Format (Recommended):**
 ```
-https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v4.cif
+https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v6.cif
 ```
 - Standard crystallographic format
 - Contains full metadata
@@ -138,7 +144,7 @@ https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v4.cif
 
 **Binary CIF Format:**
 ```
-https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v4.bcif
+https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v6.bcif
 ```
 - Compressed binary version of mmCIF
 - Smaller file size (~70% reduction)
@@ -147,7 +153,7 @@ https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v4.bcif
 
 **PDB Format (Legacy):**
 ```
-https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v4.pdb
+https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v6.pdb
 ```
 - Traditional PDB text format
 - Limited to 99,999 atoms
@@ -158,43 +164,50 @@ https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v4.pdb
 
 **Per-Residue Confidence (JSON):**
 ```
-https://alphafold.ebi.ac.uk/files/AF-P00520-F1-confidence_v4.json
+https://alphafold.ebi.ac.uk/files/AF-P00520-F1-confidence_v6.json
 ```
 
 **Structure:**
 ```json
 {
+  "residueNumber": [1, 2, 3, ...],
   "confidenceScore": [87.5, 91.2, 93.8, ...],
   "confidenceCategory": ["high", "very_high", "very_high", ...]
 }
 ```
 
 **Fields:**
+- `residueNumber`: 1-based residue index, one per residue
 - `confidenceScore`: Array of pLDDT values (0-100) for each residue
 - `confidenceCategory`: Categorical classification (very_low, low, high, very_high)
 
 #### 3. Predicted Aligned Error (JSON)
 
 ```
-https://alphafold.ebi.ac.uk/files/AF-P00520-F1-predicted_aligned_error_v4.json
+https://alphafold.ebi.ac.uk/files/AF-P00520-F1-predicted_aligned_error_v6.json
 ```
 
-**Structure:**
+**Structure:** a single-element JSON array wrapping one object:
 ```json
-{
-  "distance": [[0, 2.3, 4.5, ...], [2.3, 0, 3.1, ...], ...],
-  "max_predicted_aligned_error": 31.75
-}
+[
+  {
+    "predicted_aligned_error": [[0, 2.3, 4.5, ...], [2.3, 0, 3.1, ...], ...],
+    "max_predicted_aligned_error": 31.75
+  }
+]
 ```
 
 **Fields:**
-- `distance`: N×N matrix of PAE values in Ångströms
+- `predicted_aligned_error`: N×N matrix of PAE values in Ångströms
 - `max_predicted_aligned_error`: Maximum PAE value in the matrix
+
+> The response is wrapped in a one-element array, so index `[0]` before the key:
+> `pae[0]['predicted_aligned_error']`.
 
 #### 4. PAE Visualization (PNG)
 
 ```
-https://alphafold.ebi.ac.uk/files/AF-P00520-F1-predicted_aligned_error_v4.png
+https://alphafold.ebi.ac.uk/files/AF-P00520-F1-predicted_aligned_error_v6.png
 ```
 - Pre-rendered PAE heatmap
 - Useful for quick visual assessment
@@ -235,6 +248,7 @@ AlphaFold stores per-residue confidence (pLDDT) in the B-factor field. This allo
 
 ```json
 {
+  "residueNumber": [1, 2, 3, ...],   // 1-based residue index, one per residue
   "confidenceScore": [
     87.5,   // Residue 1 pLDDT
     91.2,   // Residue 2 pLDDT
@@ -259,28 +273,35 @@ AlphaFold stores per-residue confidence (pLDDT) in the B-factor field. This allo
 ### PAE JSON Schema
 
 ```json
-{
-  "distance": [
-    [0.0, 2.3, 4.5, ...],     // PAE from residue 1 to all residues
-    [2.3, 0.0, 3.1, ...],     // PAE from residue 2 to all residues
-    [4.5, 3.1, 0.0, ...]      // PAE from residue 3 to all residues
-    // ... N×N matrix for N residues
-  ],
-  "max_predicted_aligned_error": 31.75
-}
+[
+  {
+    "predicted_aligned_error": [
+      [0.0, 2.3, 4.5, ...],     // PAE from residue 1 to all residues
+      [2.3, 0.0, 3.1, ...],     // PAE from residue 2 to all residues
+      [4.5, 3.1, 0.0, ...]      // PAE from residue 3 to all residues
+      // ... N×N matrix for N residues
+    ],
+    "max_predicted_aligned_error": 31.75
+  }
+]
 ```
 
-**Interpretation:**
-- `distance[i][j]`: Expected position error (Ångströms) of residue j if the predicted and true structures were aligned on residue i
+**Interpretation** (with `pae = pae[0]['predicted_aligned_error']`):
+- `pae[i][j]`: Expected position error (Ångströms) of residue j if the predicted and true structures were aligned on residue i
 - Lower values indicate more confident relative positioning
 - Diagonal is always 0 (residue aligned to itself)
-- Matrix is not symmetric: distance[i][j] ≠ distance[j][i]
+- Matrix is not symmetric: pae[i][j] ≠ pae[j][i]
 
 ---
 
 ## Google Cloud Access
 
 AlphaFold DB is hosted on Google Cloud Platform for bulk access.
+
+> **Note:** The bulk GCS bucket and BigQuery dataset are versioned independently
+> of the REST API and currently lag at **v4** (bucket `...-alphafold-v4`, proteome
+> archives `..._v4.tar`). The per-protein REST API serves **v6**. Use the v4 paths
+> below for bulk access; do not "upgrade" them to v6.
 
 ### Cloud Storage Bucket
 
@@ -385,7 +406,9 @@ For processing many proteins, use concurrent downloads with appropriate rate lim
 
 ### 4. Version Management
 
-Always specify and track database versions in your code (current: v4).
+Read file URLs from the `/prediction` response rather than hardcoding a version
+suffix. The REST API currently serves **v6**; the bulk GCS/BigQuery datasets lag
+at **v4**. Track which version a result came from in your code.
 
 ---
 
@@ -423,10 +446,16 @@ Always specify and track database versions in your code (current: v4).
 
 ## Version History
 
+The `/prediction` response reports `latestVersion` and `allVersions`; treat those
+as the source of truth rather than this list.
+
 - **v1** (2021): Initial release with ~350K structures
 - **v2** (2022): Expanded to 200M+ structures
 - **v3** (2023): Updated models and expanded coverage
-- **v4** (2024): Current version with improved confidence metrics
+- **v4** (2024): Improved confidence metrics; still the version served by the bulk
+  GCS bucket and BigQuery dataset
+- **v5–v6**: Later model updates served by the REST API (`latestVersion` is 6 as
+  observed); bulk datasets had not been re-cut to these at time of writing
 
 ## Citation
 

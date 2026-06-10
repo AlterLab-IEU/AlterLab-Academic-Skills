@@ -18,8 +18,8 @@
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "parallel_web.py research"},
-        {"type": "output_contains", "value": "core"},
-        {"type": "behavior", "value": "Selects the research command with the core model for a comprehensive report and saves the result to sources/."}
+        {"type": "output_contains", "value": "core model"},
+        {"type": "behavior", "value": "Selects the research command with the core model (the default for deep research) for a comprehensive report and saves the result to sources/ via -o."}
       ]
     },
     {

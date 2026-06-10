@@ -160,13 +160,16 @@ class HierarchicalGNN(torch.nn.Module):
 from torch_geometric.utils import is_undirected
 print(f"Is undirected: {is_undirected(data.edge_index)}")
 
-# Connected components
-from torch_geometric.utils import connected_components
-print(f"Connected components: {connected_components(data.edge_index)}")
-
 # Contains self-loops
 from torch_geometric.utils import contains_self_loops
 print(f"Has self-loops: {contains_self_loops(data.edge_index)}")
+
+# Connected components — PyG has no utils.connected_components; convert to
+# networkx, or use the LargestConnectedComponents transform (see transforms ref).
+import networkx as nx
+from torch_geometric.utils import to_networkx
+G = to_networkx(data, to_undirected=True)
+print(f"Connected components: {nx.number_connected_components(G)}")
 ```
 
 ### GPU Training

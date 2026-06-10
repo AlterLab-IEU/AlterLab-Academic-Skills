@@ -136,12 +136,13 @@ task_synthon = tasks.SynthonCompletion(
     num_synthon_beam=5  # Beam search for synthon generation
 )
 
-# End-to-end
+# End-to-end: wrap the two SUB-TASKS (not the raw models)
 task_retro = tasks.Retrosynthesis(
-    model=model_center,
-    synthon_model=model_synthon,
-    center_topk=5,
-    num_synthon_beam=10
+    task_center,            # CenterIdentification task
+    task_synthon,           # SynthonCompletion task
+    center_topk=2,
+    num_synthon_beam=5,
+    max_prediction=10
 )
 ```
 

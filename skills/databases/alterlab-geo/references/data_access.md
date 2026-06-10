@@ -10,20 +10,25 @@ import ftplib
 import os
 
 def download_geo_ftp(accession, file_type="matrix", dest_dir="./data"):
-    """Download GEO files via FTP"""
-    # Construct FTP path based on accession type
-    if accession.startswith("GSE"):
-        # Series files
-        gse_num = accession[3:]
-        base_num = gse_num[:-3] + "nnn"
-        ftp_path = f"/geo/series/GSE{base_num}/{accession}/"
+    """Download GEO series files via FTP.
 
-        if file_type == "matrix":
-            filename = f"{accession}_series_matrix.txt.gz"
-        elif file_type == "soft":
-            filename = f"{accession}_family.soft.gz"
-        elif file_type == "miniml":
-            filename = f"{accession}_family.xml.tgz"
+    Each file type lives in its own subdirectory of the series folder
+    (matrix/, soft/, miniml/) — the path below must include it.
+    """
+    if not accession.startswith("GSE"):
+        raise ValueError("This helper only handles GSE series accessions")
+
+    # Accession-to-path rule: zero-pad to >=4 digits, replace last 3 with 'nnn'.
+    # GSE123456 -> GSE123nnn ; GSE1234 -> GSE1nnn ; GSE567 -> GSEnnn
+    gse_num = accession[3:]
+    base_num = (gse_num[:-3] or "") + "nnn"
+
+    subdir, filename = {
+        "matrix": ("matrix", f"{accession}_series_matrix.txt.gz"),
+        "soft":   ("soft",   f"{accession}_family.soft.gz"),
+        "miniml": ("miniml", f"{accession}_family.xml.tgz"),
+    }[file_type]
+    ftp_path = f"/geo/series/GSE{base_num}/{accession}/{subdir}/"
 
     # Connect to FTP server
     ftp = ftplib.FTP("ftp.ncbi.nlm.nih.gov")
@@ -66,5 +71,7 @@ wget ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE123nnn/GSE123456/soft/GSE123456_fa
 - No rate limits for FTP downloads.
 - Preferred method for bulk downloads.
 - Can download entire directories with `wget -r`.
-- The accession-to-path rule: `GSE123456` → directory `GSE123nnn` (last three
-  digits replaced with `nnn`).
+- The accession-to-path rule: take the numeric part and replace its last three
+  digits with `nnn`. `GSE123456` → `GSE123nnn`; `GSE1234` → `GSE1nnn`; series
+  below 1000 (e.g. `GSE567`) live in the catch-all `GSEnnn` directory. The same
+  rule applies to `samples/GSM…nnn/` and `platforms/GPL…nnn/`.

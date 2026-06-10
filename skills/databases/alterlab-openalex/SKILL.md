@@ -3,10 +3,10 @@ name: alterlab-openalex
 description: Query and analyze scholarly literature using the OpenAlex API across 240M+ works, retrieving papers, authors, institutions, citations, and open access status. Use when searching academic papers, tracking citations, finding works by author or institution, analyzing research trends, discovering open access publications, or running bibliometric analysis. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless OpenAlex REST API; polite-pool mailto recommended (no authentication required)
+compatibility: OpenAlex REST API at api.openalex.org. Works keyless ($0.01/day credit); a free API key (openalex.org/settings/api) raises the free allowance to $1/day.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
 ---
 
 # OpenAlex Database
@@ -19,11 +19,15 @@ OpenAlex is a comprehensive open catalog of 240M+ scholarly works, authors, inst
 
 ### Basic Setup
 
-Always initialize the client with an email address to access the polite pool (more consistent response times):
+OpenAlex now runs on a credit model (see "Rate Limits & Cost" below). It still works with no credentials, but a **free API key** raises the daily free allowance from $0.01 to $1 — get one at `openalex.org/settings/api` and pass it to the client:
 
 ```python
 from scripts.openalex_client import OpenAlexClient
 
+# Recommended: free API key (raises free allowance to $1/day)
+client = OpenAlexClient(api_key="YOUR_KEY")
+
+# Keyless still works (lower $0.01/day allowance); mailto is optional/harmless
 client = OpenAlexClient(email="your-email@example.edu")
 ```
 
@@ -34,8 +38,6 @@ Install required package using uv:
 ```bash
 uv pip install requests
 ```
-
-No API key required - OpenAlex is completely open.
 
 ## Core Capabilities
 
@@ -223,7 +225,7 @@ work = client.get_entity('works', 'https://doi.org/10.1038/s41586-021-03819-2')
 import requests
 citing_response = requests.get(
     work['cited_by_api_url'],
-    params={'mailto': client.email, 'per-page': 200}
+    params={**client.auth_params(), 'per-page': 200}
 )
 citing_works = citing_response.json()['results']
 ```
@@ -280,10 +282,10 @@ with open('papers.csv', 'w', newline='', encoding='utf-8') as f:
 
 ## Critical Best Practices
 
-### Always Use Email for Polite Pool
-Add an email to join the polite pool, which gives more consistent response times (the rate limit is the same for all users):
+### Use a Free API Key to Raise the Daily Allowance
+Without credentials you get a $0.01/day free credit; a free API key raises it to $1/day. Pass the key to the client:
 ```python
-client = OpenAlexClient(email="your-email@example.edu")
+client = OpenAlexClient(api_key="YOUR_KEY")  # free at openalex.org/settings/api
 ```
 
 ### Use Two-Step Pattern for Entity Lookups
@@ -460,11 +462,12 @@ Use for common research queries with simplified interfaces.
 
 ## Troubleshooting
 
-### Rate Limiting
-If encountering 403 errors:
-1. Ensure email is added to requests
-2. Verify not exceeding 10 req/sec
-3. Client automatically implements exponential backoff
+### Daily Limit / Throttling (429)
+If encountering 429 (Too Many Requests) errors:
+1. Add a free API key to raise the daily allowance from $0.01 to $1 (`OpenAlexClient(api_key=...)`)
+2. Reduce cost: prefer single-entity and list+filter calls over `search=` (search costs more credits per call); use `select=` to keep responses cheap
+3. Client automatically backs off and retries on 429/403/5xx
+4. Inspect the `x-ratelimit-remaining-usd` / `x-ratelimit-cost-usd` response headers to see remaining budget
 
 ### Empty Results
 If searches return no results:
@@ -478,18 +481,21 @@ For large queries:
 2. Use `select=` to limit returned fields
 3. Break into smaller queries if needed
 
-## Rate Limits
+## Rate Limits & Cost
 
-- **Rate limit (all users)**: 10 requests/second, 100,000 requests/day
-- **Polite pool (add `mailto` email)**: same rate limit, but more consistent response times. Always include an email for production workflows.
+OpenAlex uses a daily cost (credit) model, not a fixed requests/second limit. Each call has a small USD cost; you get a free daily budget and pay only past it.
 
-Always use polite pool for production workflows by providing email to client.
+- **Keyless**: $0.01/day free budget.
+- **With a free API key** (`openalex.org/settings/api`): $1/day free budget. Recommended.
+- **Approximate costs per $1** (the bulk of the work): single-entity lookups are effectively free/unlimited; ~10,000 list+filter calls; ~1,000 `search=` calls; ~100 PDF/content downloads. So `search=` is ~10x more expensive than list+filter — filter when you can.
+- Live budget is reported in response headers: `x-ratelimit-limit-usd`, `x-ratelimit-remaining-usd`, `x-ratelimit-cost-usd` (and the response `meta.cost_usd`).
+- Exhausting the daily budget returns **429 Too Many Requests** (403 also signals "slow down"). The client backs off and retries on these.
 
 ## Notes
 
-- No authentication required
-- All data is open and free
-- Rate limits apply globally, not per IP
-- Use LitLLM with OpenRouter if LLM-based analysis is needed (don't use Perplexity API directly)
-- Client handles pagination, retries, and rate limiting automatically
+- All data is open and free; the daily budget is generous for typical research workloads.
+- A free API key is recommended for any non-trivial workflow; keyless is fine for one-off lookups.
+- Costs/limits apply per credential (per key, or per IP when keyless), not per request type alone — minimize `search=` and use `select=` to stretch the budget.
+- Use LitLLM with OpenRouter if LLM-based analysis is needed (don't use Perplexity API directly).
+- Client handles pagination, retries, and backoff automatically.
 

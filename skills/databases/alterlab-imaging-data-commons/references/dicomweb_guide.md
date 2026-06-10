@@ -39,7 +39,7 @@ Replace `{VERSION}` with the IDC release number. To find the current version:
 ```python
 from idc_index import IDCClient
 client = IDCClient()
-print(client.get_idc_version())  # e.g., "23" for v23
+print(client.get_idc_version())  # e.g., "v24" (returned with the "v" prefix)
 ```
 
 - **~96% data coverage** - Only replicates data from `idc-open-data` bucket (missing ~4% from other buckets)
@@ -333,8 +333,14 @@ import requests
 credentials, project = default()
 credentials.refresh(Request())
 
-# Build authenticated request
-base_url = "https://healthcare.googleapis.com/v1/projects/nci-idc-data/locations/us-central1/datasets/idc/dicomStores/idc-store-v23/dicomWeb"
+# Build authenticated request.
+# NOTE: the DICOM store name is IDC-version-specific (e.g. idc-store-v24 for v24).
+# Confirm the current store name from the IDC docs/forum rather than hardcoding a version.
+IDC_STORE = f"idc-store-{client.get_idc_version()}"  # -> "idc-store-v24"
+base_url = (
+    "https://healthcare.googleapis.com/v1/projects/nci-idc-data"
+    f"/locations/us-central1/datasets/idc/dicomStores/{IDC_STORE}/dicomWeb"
+)
 
 response = requests.get(
     f"{base_url}/studies",

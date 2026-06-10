@@ -33,7 +33,8 @@
       "prompt": "Here's a mzML file from the mass spec. Give me a structural overview and a data-quality assessment so I know what I'm working with.",
       "expected_output": "Invokes alterlab-eda: detects .mzML as a spectroscopy/proteomics format, loads the appropriate reference (pymzml/pyteomics libraries), summarizes spectra structure and metadata, assesses completeness and quality, and produces a markdown EDA report with preprocessing and downstream-analysis suggestions.",
       "assertions": [
-        { "type": "should_trigger", "value": true }
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Identifies the file as mzML mass-spectrometry data and uses pymzml or pyteomics (not pandas) to summarize spectra/metadata, then reports a data-quality assessment." }
       ]
     },
     {

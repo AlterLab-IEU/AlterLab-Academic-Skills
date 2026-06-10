@@ -168,7 +168,7 @@ def batch_lookup_by_ids(gene_ids: List[str], api_key: Optional[str] = None) -> L
                 'organism': gene.get('organism', {}).get('scientificname', 'N/A'),
                 'chromosome': gene.get('chromosome', 'N/A'),
                 'map_location': gene.get('maplocation', 'N/A'),
-                'type': gene.get('geneticsource', 'N/A')
+                'genetic_source': gene.get('geneticsource', 'N/A')
             })
         else:
             results.append({
@@ -231,7 +231,7 @@ def batch_lookup_by_symbols(gene_symbols: List[str], organism: str,
                 'organism': gene.get('organism', {}).get('scientificname', 'N/A'),
                 'chromosome': gene.get('chromosome', 'N/A'),
                 'map_location': gene.get('maplocation', 'N/A'),
-                'type': gene.get('geneticsource', 'N/A')
+                'genetic_source': gene.get('geneticsource', 'N/A')
             })
 
     return results

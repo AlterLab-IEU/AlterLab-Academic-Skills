@@ -188,17 +188,17 @@ final_result = combine(results)
 
 ### Subsetting performance
 ```python
-# Fast: Boolean indexing with arrays
-mask = np.array(adata.obs['quality'] > 0.5)
+# Boolean masks and integer indices both work; pass a numpy array (not a
+# pandas Series) to avoid index-alignment surprises.
+mask = (adata.obs['quality'] > 0.5).to_numpy()
 subset = adata[mask, :]
 
-# Slow: Boolean indexing with Series (creates view chain)
-subset = adata[adata.obs['quality'] > 0.5, :]
-
-# Fastest: Integer indices
-indices = np.where(adata.obs['quality'] > 0.5)[0]
+# Equivalent via integer positions
+indices = np.where(mask)[0]
 subset = adata[indices, :]
 ```
+Subsetting returns a lightweight **view** — call `.copy()` when you need an
+independent object (see Views vs Copies above).
 
 ### Avoid repeated subsetting
 ```python
@@ -414,12 +414,12 @@ adata.obs = adata.obs.merge(external_metadata, left_index=True, right_index=True
 ```python
 from anndata.experimental import AnnLoader
 
-# Create PyTorch DataLoader
+# Create PyTorch DataLoader (accepts an AnnData or an AnnCollection)
 dataloader = AnnLoader(adata, batch_size=128, shuffle=True)
 
-# Iterate in training loop
+# Iterate in training loop — batches are dict-like with tensors
 for batch in dataloader:
-    X = batch.X
+    X = batch["X"]      # torch.Tensor
     # Train model on batch
 ```
 

@@ -6,7 +6,7 @@ allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
 compatibility: Requires the pylabrobot Python package (pip install pylabrobot); runs against the built-in simulator without hardware, real runs need supported devices (Hamilton, Tecan, Opentrons, plate readers, pumps)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
 ---
 
 # PyLabRobot
@@ -86,39 +86,44 @@ Visualize and simulate laboratory protocols:
 
 ## Quick Start
 
-To get started with PyLabRobot, install the package and initialize a liquid handler:
+To get started with PyLabRobot, install the package and initialize a liquid handler. PyLabRobot is async — all device calls are `await`ed and must run inside an event loop (`asyncio.run(...)` or a Jupyter cell).
 
 ```python
-# Install PyLabRobot
 # uv pip install pylabrobot
 
-# Basic liquid handling setup
 from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.liquid_handling.backends import STAR
-from pylabrobot.resources import STARLetDeck
+from pylabrobot.liquid_handling.backends import STARBackend
+from pylabrobot.resources import (
+    STARLetDeck,
+    TIP_CAR_480_A00,            # tip CARRIER (holds racks at sites [0]..[4])
+    PLT_CAR_L5AC_A00,           # plate carrier
+    hamilton_96_tiprack_1000uL_filter,
+    Cor_96_wellplate_360ul_Fb,
+)
 
-# Initialize liquid handler
-lh = LiquidHandler(backend=STAR(), deck=STARLetDeck())
+lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
 await lh.setup()
+
+# Labware is two-level: a rack/plate goes into a carrier site, then the
+# carrier is assigned to a deck rail. Carriers are NOT indexed for wells/tips.
+tip_car = TIP_CAR_480_A00(name="tip_carrier")
+tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips_01")
+lh.deck.assign_child_resource(tip_car, rails=3)
+
+plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
+plt_car[0] = plate = Cor_96_wellplate_360ul_Fb(name="plate_01")
+lh.deck.assign_child_resource(plt_car, rails=15)
 
 # Basic operations
 await lh.pick_up_tips(tip_rack["A1:H1"])
-await lh.aspirate(plate["A1"], vols=100)
-await lh.dispense(plate["A2"], vols=100)
+await lh.aspirate(plate["A1"], vols=[100])
+await lh.dispense(plate["A2"], vols=[100])
 await lh.drop_tips()
 ```
 
 ## Working with References
 
-This skill organizes detailed information across multiple reference files. Load the relevant reference when:
-- **Liquid Handling**: Writing pipetting protocols, tip management, transfers
-- **Resources**: Defining deck layouts, managing plates/tips, custom labware
-- **Hardware Backends**: Connecting to specific robots, switching platforms
-- **Analytical Equipment**: Integrating plate readers, scales, or analytical devices
-- **Material Handling**: Using heater shakers, incubators, centrifuges, pumps
-- **Visualization**: Simulating protocols, visualizing deck states
-
-All reference files can be found in the `references/` directory and contain comprehensive examples, API usage patterns, and best practices.
+Load the matching file in `references/` for task-specific examples and API patterns. The "Core Capabilities" list above maps each capability area to its reference file.
 
 ## Best Practices
 
@@ -137,23 +142,34 @@ When creating laboratory automation protocols with PyLabRobot:
 
 ### Liquid Transfer Protocol
 
+`lh.transfer(source, targets, ...)` distributes from ONE source well to MANY target
+wells; it takes `source_vol` or `target_vols` (NOT `vols`, NOT `dest=`). For a
+parallel column-to-column move, drive `aspirate`/`dispense` directly with list `vols`.
+
 ```python
 # Setup
-lh = LiquidHandler(backend=STAR(), deck=STARLetDeck())
+lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
 await lh.setup()
 
-# Define resources
-tip_rack = TIP_CAR_480_A00(name="tip_rack")
-source_plate = Cos_96_DW_1mL(name="source")
-dest_plate = Cos_96_DW_1mL(name="dest")
+# Define carriers + labware (rack/plate -> carrier site -> deck rail)
+tip_car = TIP_CAR_480_A00(name="tip_carrier")
+tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips_01")
+lh.deck.assign_child_resource(tip_car, rails=1)
 
-lh.deck.assign_child_resource(tip_rack, rails=1)
-lh.deck.assign_child_resource(source_plate, rails=10)
-lh.deck.assign_child_resource(dest_plate, rails=15)
+plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
+plt_car[0] = source = Cor_96_wellplate_360ul_Fb(name="source")
+plt_car[1] = dest = Cor_96_wellplate_360ul_Fb(name="dest")
+lh.deck.assign_child_resource(plt_car, rails=15)
 
-# Transfer protocol
+# One-to-many distribute: 100 uL from source A1 into the first column of dest
+await lh.pick_up_tips(tip_rack["A1"])
+await lh.transfer(source["A1"], dest["A1:H1"], source_vol=100)
+await lh.drop_tips()
+
+# Parallel 8-channel column copy via aspirate + dispense
 await lh.pick_up_tips(tip_rack["A1:H1"])
-await lh.transfer(source_plate["A1:H12"], dest_plate["A1:H12"], vols=100)
+await lh.aspirate(source["A1:H1"], vols=[100] * 8)
+await lh.dispense(dest["A1:H1"], vols=[100] * 8)
 await lh.drop_tips()
 ```
 
@@ -164,7 +180,7 @@ await lh.drop_tips()
 from pylabrobot.plate_reading import PlateReader
 from pylabrobot.plate_reading.clario_star_backend import CLARIOstarBackend
 
-pr = PlateReader(name="CLARIOstar", backend=CLARIOstarBackend())
+pr = PlateReader(name="CLARIOstar", backend=CLARIOstarBackend(), size_x=0, size_y=0, size_z=0)
 await pr.setup()
 
 # Set temperature and read

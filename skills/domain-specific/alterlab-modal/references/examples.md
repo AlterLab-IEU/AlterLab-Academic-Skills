@@ -352,12 +352,15 @@ def compute_statistics(data: dict):
 ## Scheduled Data Collection
 
 ```python
+sensor_volume = modal.Volume.from_name("sensor-data", create_if_missing=True)
+
 @app.function(
     schedule=modal.Cron("*/30 * * * *"),  # Every 30 minutes
     secrets=[modal.Secret.from_name("api-keys")],
-    volumes={"/data": modal.Volume.from_name("sensor-data")}
+    volumes={"/data": sensor_volume},
 )
 def collect_sensor_data():
+    import os
     import requests
     import json
     from datetime import datetime
@@ -375,7 +378,7 @@ def collect_sensor_data():
     with open(f"/data/{timestamp}.json", "w") as f:
         json.dump(data, f)
 
-    volume.commit()
+    sensor_volume.commit()
 
     return f"Collected {len(data)} sensor readings"
 ```

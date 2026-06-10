@@ -117,9 +117,10 @@ Create references to job outputs before they complete:
 # Launch first job
 job1 = dxpy.DXApplet("applet-1").run({"input": "..."})
 
-# Launch second job using output reference
+# Launch second job using the output reference directly.
+# get_output_ref() already returns a job-based dxlink — do NOT wrap it in dxpy.dxlink().
 job2 = dxpy.DXApplet("applet-2").run({
-    "input": dxpy.dxlink(job1.get_output_ref("output_name"))
+    "input": job1.get_output_ref("output_name")
 })
 ```
 

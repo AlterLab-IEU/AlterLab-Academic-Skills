@@ -163,10 +163,10 @@ cross(v1, v2)  # Cross product
 
 **Quantum mechanics:**
 ```python
-from sympy.physics.quantum import Ket, Bra, Commutator
+from sympy.physics.quantum import Ket, Operator, Commutator
 psi = Ket('psi')
-A = Operator('A')
-comm = Commutator(A, B).doit()
+A, B = Operator('A'), Operator('B')
+comm = Commutator(A, B).doit()  # A*B - B*A
 ```
 
 **For detailed physics capabilities:** See `references/physics-mechanics.md`
@@ -344,53 +344,16 @@ print(f"Numerical: {result.evalf()}")
 
 ## Integration with Scientific Workflows
 
-### With NumPy
-
-```python
-import numpy as np
-from sympy import symbols, lambdify
-
-x = symbols('x')
-expr = x**2 + 2*x + 1
-
-f = lambdify(x, expr, 'numpy')
-x_array = np.linspace(-5, 5, 100)
-y_array = f(x_array)
-```
-
-### With Matplotlib
-
-```python
-import matplotlib.pyplot as plt
-import numpy as np
-from sympy import symbols, lambdify, sin
-
-x = symbols('x')
-expr = sin(x) / x
-
-f = lambdify(x, expr, 'numpy')
-x_vals = np.linspace(-10, 10, 1000)
-y_vals = f(x_vals)
-
-plt.plot(x_vals, y_vals)
-plt.show()
-```
-
-### With SciPy
+`lambdify` is the bridge from symbolic SymPy to the numerical stack: derive/simplify exactly, then compile to a fast callable for NumPy, Matplotlib, or SciPy. For NumPy plotting the pattern is the one in Best Practices #5 (`lambdify(x, expr, 'numpy')` over `np.linspace`). A common non-obvious case is feeding a symbolic equation to a numerical root finder:
 
 ```python
 from scipy.optimize import fsolve
 from sympy import symbols, lambdify
 
-# Define equation symbolically
+# Derive symbolically, then solve numerically where no closed form exists
 x = symbols('x')
-equation = x**3 - 2*x - 5
-
-# Convert to numerical function
-f = lambdify(x, equation, 'numpy')
-
-# Solve numerically with initial guess
-solution = fsolve(f, 2)
+f = lambdify(x, x**3 - 2*x - 5, 'numpy')
+solution = fsolve(f, 2)  # initial guess 2
 ```
 
 ## Quick Reference: Most Common Functions
@@ -419,54 +382,8 @@ from sympy import And, Or, Not, Implies, FiniteSet, Interval, Union
 # Output
 from sympy import latex, pprint, lambdify, init_printing
 
-# Utilities
-from sympy import evalf, N, nsimplify
-```
-
-## Getting Started Examples
-
-### Example 1: Solve Quadratic Equation
-```python
-from sympy import symbols, solve, sqrt
-x = symbols('x')
-solution = solve(x**2 - 5*x + 6, x)
-# [2, 3]
-```
-
-### Example 2: Calculate Derivative
-```python
-from sympy import symbols, diff, sin
-x = symbols('x')
-f = sin(x**2)
-df_dx = diff(f, x)
-# 2*x*cos(x**2)
-```
-
-### Example 3: Evaluate Integral
-```python
-from sympy import symbols, integrate, exp
-x = symbols('x')
-integral = integrate(x * exp(-x**2), (x, 0, oo))
-# 1/2
-```
-
-### Example 4: Matrix Eigenvalues
-```python
-from sympy import Matrix
-M = Matrix([[1, 2], [2, 1]])
-eigenvals = M.eigenvals()
-# {3: 1, -1: 1}
-```
-
-### Example 5: Generate Python Function
-```python
-from sympy import symbols, lambdify
-import numpy as np
-x = symbols('x')
-expr = x**2 + 2*x + 1
-f = lambdify(x, expr, 'numpy')
-f(np.array([1, 2, 3]))
-# array([ 4,  9, 16])
+# Utilities (numerical eval: N(expr) or expr.evalf())
+from sympy import N, nsimplify, simplify, S, Rational
 ```
 
 ## Troubleshooting Common Issues

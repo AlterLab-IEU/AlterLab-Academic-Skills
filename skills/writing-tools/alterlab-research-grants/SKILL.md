@@ -1,6 +1,6 @@
 ---
 name: alterlab-research-grants
-description: Writes competitive research grant proposals for NSF, NIH, DOE, DARPA, and Taiwan NSTC — applies agency-specific formatting and review criteria, prepares budgets, and drafts broader-impacts, significance statements, and innovation narratives that comply with submission requirements. Use when drafting or revising a grant proposal, aligning a proposal to a funding agency's review criteria, or preparing grant budgets and compliance sections. Part of the AlterLab Academic Skills suite.
+description: Writes competitive research grant proposals for NSF, NIH, DOE, DARPA, and Taiwan NSTC — applies agency-specific formatting and review criteria, prepares budgets, and drafts broader-impacts, significance statements, and innovation narratives that comply with submission requirements. Use when drafting or revising a grant proposal, aligning a proposal to a funding agency's review criteria, or preparing grant budgets and compliance sections. For Turkey's TÜBİTAK 1001/1002-A national proposals use alterlab-tubitak-proposal; to write a reviewer's critique of someone else's proposal use alterlab-peer-review; for a journal manuscript use alterlab-scientific-writing. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 compatibility: No external tools, API keys, or services required — ships no helper scripts and works from the Read/Write/Edit/Bash tools alone
@@ -92,36 +92,15 @@ These cross-cutting topics are consolidated in `references/writing_and_workflow.
 - **5-phase development workflow** — planning (2-6 mo out) → drafting → internal review → finalization →
   submission (submit 24-48 h early; never wait for the deadline).
 
-## Integration with Other Skills
+## Reference Files
 
-This skill works effectively with:
-- **Scientific Writing**: For clear, compelling prose
-- **Literature Review**: For comprehensive background sections
-- **Peer Review**: For self-assessment before submission
-- **Research Lookup**: For finding relevant citations and prior work
-- **Data Visualization**: For creating effective figures
+Load these as needed; the body above already cites each one at its point of use.
 
-## Resources
-
-This skill includes comprehensive reference files covering specific aspects of grant writing:
-
-- `references/agency_profiles.md`: Agency profiles, review criteria, and award-mechanism catalogs (NSF/NIH/DOE/DARPA/NSTC)
-- `references/proposal_components.md`: Detailed guidance on the ten core proposal components
-- `references/writing_and_workflow.md`: Writing principles, common mistakes, resubmission strategies, and the 5-phase development workflow
-- `references/nsf_guidelines.md`: NSF-specific requirements, formatting, review criteria, and strategies
-- `references/nih_guidelines.md`: NIH mechanisms, review criteria, and submission requirements
-- `references/doe_guidelines.md`: DOE programs, emphasis areas, review criteria, and application procedures
-- `references/darpa_guidelines.md`: DARPA BAAs, program offices, review criteria, and proposal strategies
-- `references/nstc_guidelines.md`: Taiwan NSTC CM03 format, review criteria, and bilingual requirements
-- `references/broader_impacts.md`: Strategies for compelling broader impacts statements
-- `references/specific_aims_guide.md`: Writing effective specific aims pages
-- `references/research_methods.md`: Methodology guidance for experimental, computational, and clinical research
-- `references/budget_preparation.md`: Budget development and justification
-- `references/timeline_planning.md`: Creating realistic timelines and milestones
-- `references/team_building.md`: Assembling and presenting effective teams
-- `references/resubmission_strategies.md`: Responding to reviews and revising proposals
-
-Load these references as needed when working on specific aspects of grant writing.
+- `references/agency_profiles.md` — agency profiles, review criteria, award-mechanism catalogs (NSF/NIH/DOE/DARPA/NSTC)
+- `references/proposal_components.md` — the ten core proposal components, with discipline-specific method guidance
+- `references/writing_and_workflow.md` — writing principles, common mistakes, and the 5-phase development workflow
+- Per-agency guides — `references/nsf_guidelines.md`, `nih_guidelines.md`, `doe_guidelines.md`, `darpa_guidelines.md`, `nstc_guidelines.md`
+- Component deep-dives — `references/broader_impacts.md`, `specific_aims_guide.md`, `research_methods.md`, `budget_preparation.md`, `timeline_planning.md`, `team_building.md`, `resubmission_strategies.md`
 
 ## Templates and Assets
 

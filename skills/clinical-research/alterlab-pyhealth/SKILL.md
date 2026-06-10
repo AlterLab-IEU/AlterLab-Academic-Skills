@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    pyhealth-version: "2.0.1"
 ---
 
 # PyHealth: Healthcare AI Toolkit
@@ -14,6 +15,14 @@ metadata:
 ## Overview
 
 PyHealth is a comprehensive Python library for healthcare AI that provides specialized tools, models, and datasets for clinical machine learning. Use this skill when developing healthcare prediction models, processing clinical data, working with medical coding systems, or deploying AI solutions in healthcare settings.
+
+> **Version gotcha (read first).** This skill targets **PyHealth 2.x** (pin `pyhealth==2.0.1`). The 2.0 rewrite changed the API in ways the wider web (and pre-2024 tutorials) get wrong:
+> - **Tasks are classes you instantiate**, e.g. `MortalityPredictionMIMIC4()`, `DrugRecommendationMIMIC3()` — *not* the old snake-case `mortality_prediction_mimic4_fn` functions. Pass the instance to `dataset.set_task(task)`.
+> - **Datasets take an explicit `tables=[...]`** list (e.g. `tables=["diagnoses_icd", "procedures_icd", "prescriptions"]`).
+> - **Models require `label_key=`** in addition to `feature_keys=` and `mode=`. Common feature keys for EHR tasks are `"conditions"`, `"procedures"`, `"drugs"`.
+> - **Metric names have no `_score` suffix**: `pr_auc`, `roc_auc`, `f1`; multilabel/drug-rec use the `*_samples` family (`jaccard_samples`, `f1_samples`, `pr_auc_samples`, `ddi`). Pass `metrics=[...]` to the **`Trainer` constructor**, and `monitor=` one of those names.
+> - 2.0.1 requires **Python 3.12 or 3.13** (`>=3.12,<3.14`).
+> When unsure of a class/arg name, check the current source rather than trusting older snippets.
 
 ## When to Use This Skill
 
@@ -36,22 +45,24 @@ PyHealth operates through a modular 5-stage pipeline optimized for healthcare AI
 4. **Training**: Train with automatic checkpointing, monitoring, and evaluation
 5. **Deployment**: Calibrate, interpret, and validate for clinical use
 
-**Performance**: 3x faster than pandas for healthcare data processing
+PyHealth 2.x uses a **polars-backed** data layer for fast, memory-efficient processing of large EHR tables.
 
 ## Quick Start Workflow
 
 ```python
-from pyhealth.datasets import MIMIC4Dataset
-from pyhealth.tasks import mortality_prediction_mimic4_fn
-from pyhealth.datasets import split_by_patient, get_dataloader
+from pyhealth.datasets import MIMIC4Dataset, split_by_patient, get_dataloader
+from pyhealth.tasks import MortalityPredictionMIMIC4
 from pyhealth.models import Transformer
 from pyhealth.trainer import Trainer
 
-# 1. Load dataset and set task
-dataset = MIMIC4Dataset(root="/path/to/data")
-sample_dataset = dataset.set_task(mortality_prediction_mimic4_fn)
+# 1. Load dataset (declare the tables you need) and set the task (a class instance)
+dataset = MIMIC4Dataset(
+    root="/path/to/data",
+    tables=["diagnoses_icd", "procedures_icd", "prescriptions"],
+)
+sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 
-# 2. Split data
+# 2. Split data by patient (no leakage across splits)
 train, val, test = split_by_patient(sample_dataset, [0.7, 0.1, 0.2])
 
 # 3. Create data loaders
@@ -59,23 +70,25 @@ train_loader = get_dataloader(train, batch_size=64, shuffle=True)
 val_loader = get_dataloader(val, batch_size=64, shuffle=False)
 test_loader = get_dataloader(test, batch_size=64, shuffle=False)
 
-# 4. Initialize and train model
+# 4. Initialize and train (feature_keys + label_key + mode all required)
 model = Transformer(
     dataset=sample_dataset,
-    feature_keys=["diagnoses", "medications"],
+    feature_keys=["conditions", "procedures", "drugs"],
+    label_key="mortality",
     mode="binary",
-    embedding_dim=128
+    embedding_dim=128,
 )
 
-trainer = Trainer(model=model, device="cuda")
+trainer = Trainer(model=model, metrics=["pr_auc", "roc_auc", "f1"])  # device auto-detected
 trainer.train(
     train_dataloader=train_loader,
     val_dataloader=val_loader,
     epochs=50,
-    monitor="pr_auc_score"
+    monitor="pr_auc",            # AUPRC — robust for the rare-mortality class
+    monitor_criterion="max",
 )
 
-# 5. Evaluate
+# 5. Evaluate (uses the metrics passed to the Trainer)
 results = trainer.evaluate(test_loader)
 ```
 
@@ -205,19 +218,19 @@ This skill includes comprehensive reference documentation organized by functiona
 - Fairness metrics for bias assessment
 - Calibration methods (Platt scaling, temperature scaling)
 - Uncertainty quantification (conformal prediction, MC dropout)
-- Interpretability tools (attention visualization, SHAP, ChEFER)
+- Interpretability tools (attention visualization, SHAP, Chefer relevance via `pyhealth.interpret.methods.CheferRelevance`)
 - Complete training pipeline example
 
 ## Installation
 
 ```bash
-uv pip install pyhealth
+uv pip install "pyhealth==2.0.1"
 ```
 
-**Requirements:**
-- Python ≥ 3.7
-- PyTorch ≥ 1.8
-- NumPy, pandas, scikit-learn
+**Requirements (PyHealth 2.0.1):**
+- Python **3.12 or 3.13** (`>=3.12,<3.14`) — note this machine's default `uv` Python is 3.14, which is *outside* the supported range; create the env with `uv venv --python 3.13` for PyHealth work.
+- PyTorch (pulled in as a dependency)
+- NumPy, pandas, polars, scikit-learn
 
 ## Common Use Cases
 
@@ -315,11 +328,11 @@ uv pip install pyhealth
    - Long sequences → Transformer
    - Graph relationships → GNN
 
-3. **Monitor validation metrics**: Use appropriate metrics for task and handle class imbalance
-   - Binary classification: AUROC, AUPRC (especially for rare events)
-   - Multi-class: macro-F1 (for imbalanced), weighted-F1
-   - Multi-label: Jaccard, example-F1
-   - Regression: MAE, RMSE
+3. **Monitor validation metrics**: Use appropriate metrics for task and handle class imbalance. PyHealth metric strings (pass to `Trainer(metrics=[...])` / `monitor=`):
+   - Binary: `roc_auc`, `pr_auc` (prefer `pr_auc` for rare events), `f1`, `accuracy`
+   - Multi-class: `f1_macro`, `f1_weighted`, `accuracy`, `cohen_kappa`
+   - Multi-label / drug-rec: `jaccard_samples`, `f1_samples`, `pr_auc_samples`, `ddi`
+   - Regression: `mae`, `mse`, `r2`
 
 ### Clinical Deployment
 
@@ -329,7 +342,7 @@ uv pip install pyhealth
 
 3. **Quantify uncertainty**: Provide confidence estimates for predictions
 
-4. **Interpret predictions**: Use attention weights, SHAP, or ChEFER for clinical trust
+4. **Interpret predictions**: Use attention weights, SHAP, or Chefer relevance for clinical trust
 
 5. **Validate thoroughly**: Use held-out test sets from different time periods or sites
 
@@ -369,7 +382,7 @@ uv pip install pyhealth
 - Process data in chunks
 
 **Poor performance**:
-- Check class imbalance and use appropriate metrics (AUPRC vs AUROC)
+- Check class imbalance and use appropriate metrics (`pr_auc` vs `roc_auc`)
 - Verify preprocessing (normalization, missing data handling)
 - Increase model capacity or training epochs
 - Check for data leakage in train/test split
@@ -384,26 +397,28 @@ uv pip install pyhealth
 
 - **Documentation**: https://pyhealth.readthedocs.io/
 - **GitHub Issues**: https://github.com/sunlabuiuc/PyHealth/issues
-- **Tutorials**: 7 core tutorials + 5 practical pipelines available online
+- **Examples/notebooks**: https://github.com/sunlabuiuc/PyHealth/tree/master/examples
 
 ## Example: Complete Workflow
 
 ```python
 # Complete mortality prediction pipeline
-from pyhealth.datasets import MIMIC4Dataset
-from pyhealth.tasks import mortality_prediction_mimic4_fn
-from pyhealth.datasets import split_by_patient, get_dataloader
+from pyhealth.datasets import MIMIC4Dataset, split_by_patient, get_dataloader
+from pyhealth.tasks import MortalityPredictionMIMIC4
 from pyhealth.models import RETAIN
 from pyhealth.trainer import Trainer
 
-# 1. Load dataset
+# 1. Load dataset (declare the tables the task needs)
 print("Loading MIMIC-IV dataset...")
-dataset = MIMIC4Dataset(root="/data/mimic4")
+dataset = MIMIC4Dataset(
+    root="/data/mimic4",
+    tables=["diagnoses_icd", "procedures_icd", "prescriptions"],
+)
 print(dataset.stats())
 
-# 2. Define task
+# 2. Define task (instantiate the task class)
 print("Setting mortality prediction task...")
-sample_dataset = dataset.set_task(mortality_prediction_mimic4_fn)
+sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 print(f"Generated {len(sample_dataset)} samples")
 
 # 3. Split data (by patient to prevent leakage)
@@ -417,62 +432,65 @@ train_loader = get_dataloader(train_ds, batch_size=64, shuffle=True)
 val_loader = get_dataloader(val_ds, batch_size=64)
 test_loader = get_dataloader(test_ds, batch_size=64)
 
-# 5. Initialize interpretable model
+# 5. Initialize interpretable model (label_key is required)
 print("Initializing RETAIN model...")
 model = RETAIN(
     dataset=sample_dataset,
-    feature_keys=["diagnoses", "procedures", "medications"],
+    feature_keys=["conditions", "procedures", "drugs"],
+    label_key="mortality",
     mode="binary",
     embedding_dim=128,
-    hidden_dim=128
 )
 
 # 6. Train model
 print("Training model...")
-trainer = Trainer(model=model, device="cuda")
+import torch
+trainer = Trainer(
+    model=model,
+    metrics=["accuracy", "pr_auc", "roc_auc", "f1"],
+)
 trainer.train(
     train_dataloader=train_loader,
     val_dataloader=val_loader,
     epochs=50,
-    optimizer="Adam",
-    learning_rate=1e-3,
-    weight_decay=1e-5,
-    monitor="pr_auc_score",  # Use AUPRC for imbalanced data
+    optimizer_class=torch.optim.Adam,
+    optimizer_params={"lr": 1e-3, "weight_decay": 1e-5},
+    monitor="pr_auc",          # Use AUPRC for the imbalanced (rare-mortality) outcome
     monitor_criterion="max",
-    save_path="./checkpoints/mortality_retain"
 )
 
-# 7. Evaluate on test set
+# 7. Evaluate on test set (uses the metrics passed to the Trainer)
 print("Evaluating on test set...")
-test_results = trainer.evaluate(
-    test_loader,
-    metrics=["accuracy", "precision", "recall", "f1_score",
-             "roc_auc_score", "pr_auc_score"]
-)
+test_results = trainer.evaluate(test_loader)
 
 print("\nTest Results:")
 for metric, value in test_results.items():
     print(f"  {metric}: {value:.4f}")
 
-# 8. Get predictions with attention for interpretation
-predictions = trainer.inference(
+# 8. Get predictions for analysis.
+# inference() returns (y_true, y_prob, loss) by default; requesting extras
+# extends the tuple to (y_true, y_prob, loss, additional_outputs, patient_ids).
+y_true, y_prob, loss, extra, patient_ids = trainer.inference(
     test_loader,
-    additional_outputs=["visit_attention", "feature_attention"],
-    return_patient_ids=True
+    additional_outputs=["attention_weights"],
+    return_patient_ids=True,
 )
 
-# 9. Analyze a high-risk patient
-high_risk_idx = predictions["y_pred"].argmax()
-patient_id = predictions["patient_ids"][high_risk_idx]
-visit_attn = predictions["visit_attention"][high_risk_idx]
-feature_attn = predictions["feature_attention"][high_risk_idx]
+# 9. Flag the highest-risk patient
+positive_prob = y_prob if y_prob.ndim == 1 else y_prob[..., -1]
+high_risk_idx = int(positive_prob.argmax())
+print(f"\nHighest-risk patient: {patient_ids[high_risk_idx]}")
+print(f"Risk score: {float(positive_prob[high_risk_idx]):.3f}")
 
-print(f"\nHigh-risk patient: {patient_id}")
-print(f"Risk score: {predictions['y_pred'][high_risk_idx]:.3f}")
-print(f"Most influential visit: {visit_attn.argmax()}")
-print(f"Most important features: {feature_attn[visit_attn.argmax()].argsort()[-5:]}")
+# 10. Feature-level interpretation via Chefer relevance (works on attention models)
+from pyhealth.interpret.methods import CheferRelevance
+relevance = CheferRelevance(model)
+one = get_dataloader(test, batch_size=1, shuffle=False)
+scores = relevance.get_relevance_matrix(**next(iter(one)))
+for feature_key, rel in scores.items():
+    print(f"{feature_key}: top tokens -> {rel[0].topk(5).indices.tolist()}")
 
-# 10. Save model for deployment
+# 11. Save the trained model
 trainer.save("./models/mortality_retain_final.pt")
 print("\nModel saved successfully!")
 ```

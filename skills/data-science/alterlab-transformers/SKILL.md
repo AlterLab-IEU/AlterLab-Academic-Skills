@@ -3,7 +3,7 @@ name: alterlab-transformers
 description: Pre-trained transformer models with Hugging Face Transformers for NLP, computer vision, audio, and multimodal tasks. Use for text generation, classification, question answering, translation, summarization, image classification, object detection, speech recognition, or fine-tuning transformer models on custom datasets. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: Some features require an Huggingface token
+compatibility: No API key required for public models. Runs locally via `uv run python`; requires the transformers and torch Python packages. A Hugging Face token (HF_TOKEN) is needed only for gated/private models.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -42,9 +42,9 @@ from huggingface_hub import login
 login()  # Follow prompts to enter token
 ```
 
-Or set environment variable:
+Or set the environment variable the Hub client reads (`HF_TOKEN`):
 ```bash
-export HUGGINGFACE_TOKEN="your_token_here"
+export HF_TOKEN="your_token_here"
 ```
 
 Get tokens at: https://huggingface.co/settings/tokens

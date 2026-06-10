@@ -4,7 +4,7 @@
     {
       "id": "cpic-clopidogrel-dosing",
       "prompt": "My patient is CYP2C19 *1/*2 (intermediate metabolizer) and we're considering clopidogrel. What does the CPIC guideline say about dosing or alternative therapy?",
-      "expected_output": "Invokes alterlab-clinpgx. Queries the ClinPGx guidelineAnnotation endpoint for clopidogrel (relatedChemicals.symbol), surfaces the CPIC recommendation (alternative antiplatelet therapy for intermediate/poor metabolizers), and notes evidence level. May reference checking the drug label endpoint too.",
+      "expected_output": "Invokes alterlab-clinpgx. Queries the ClinPGx guidelineAnnotation endpoint for clopidogrel (relatedChemicals.name), surfaces the CPIC recommendation (alternative antiplatelet therapy for intermediate/poor metabolizers), and notes evidence level. May reference checking the drug label endpoint too.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "CPIC" }

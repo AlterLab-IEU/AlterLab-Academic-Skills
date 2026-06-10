@@ -82,47 +82,41 @@ protein_ids = get_uniprot_ids("HBB", from_db="Gene_Name", to_db="UniProtKB")
 
 ## 2. Downloading Structure Files
 
-AlphaFold provides multiple file formats for each prediction:
+AlphaFold provides multiple file formats for each prediction. **Read the file
+URLs from the prediction metadata rather than hand-building a `_v{N}` suffix** —
+the DB version advances (currently v6) and old hardcoded `_v4` URLs now 404. The
+prediction record carries the exact, version-stamped URLs:
 
-**File Types Available:**
-
-- **Model coordinates** (`model_v4.cif`): Atomic coordinates in mmCIF/PDBx format
-- **Confidence scores** (`confidence_v4.json`): Per-residue pLDDT scores (0-100)
-- **Predicted Aligned Error** (`predicted_aligned_error_v4.json`): PAE matrix for residue pair confidence
-
-**Download URLs:**
+- `cifUrl` / `pdbUrl` / `bcifUrl` — model coordinates (mmCIF / PDB / binary CIF)
+- `plddtDocUrl` — per-residue pLDDT confidence JSON (0-100)
+- `paeDocUrl` — Predicted Aligned Error JSON
 
 ```python
 import requests
 
-alphafold_id = "AF-P00520-F1"
-version = "v4"
+# Resolve the current file URLs from the prediction metadata.
+rec = requests.get("https://alphafold.ebi.ac.uk/api/prediction/P00520").json()[0]
+alphafold_id = rec["entryId"]  # e.g. "AF-P00520-F1"
 
-# Model coordinates (mmCIF)
-model_url = f"https://alphafold.ebi.ac.uk/files/{alphafold_id}-model_{version}.cif"
-response = requests.get(model_url)
-with open(f"{alphafold_id}.cif", "w") as f:
-    f.write(response.text)
+# Model coordinates (mmCIF) — write bytes, never decode/re-encode text.
+r = requests.get(rec["cifUrl"])
+with open(f"{alphafold_id}.cif", "wb") as f:
+    f.write(r.content)
 
 # Confidence scores (JSON)
-confidence_url = f"https://alphafold.ebi.ac.uk/files/{alphafold_id}-confidence_{version}.json"
-response = requests.get(confidence_url)
-confidence_data = response.json()
+confidence_data = requests.get(rec["plddtDocUrl"]).json()
 
 # Predicted Aligned Error (JSON)
-pae_url = f"https://alphafold.ebi.ac.uk/files/{alphafold_id}-predicted_aligned_error_{version}.json"
-response = requests.get(pae_url)
-pae_data = response.json()
+pae_data = requests.get(rec["paeDocUrl"]).json()
 ```
 
 **PDB Format (Alternative):**
 
 ```python
 # Download as PDB format instead of mmCIF
-pdb_url = f"https://alphafold.ebi.ac.uk/files/{alphafold_id}-model_{version}.pdb"
-response = requests.get(pdb_url)
+r = requests.get(rec["pdbUrl"])
 with open(f"{alphafold_id}.pdb", "wb") as f:
-    f.write(response.content)
+    f.write(r.content)
 ```
 
 ## 3. Working with Confidence Metrics
@@ -132,15 +126,13 @@ AlphaFold predictions include confidence estimates critical for interpretation:
 **pLDDT (per-residue confidence):**
 
 ```python
-import json
 import requests
 
-# Load confidence scores
-alphafold_id = "AF-P00520-F1"
-confidence_url = f"https://alphafold.ebi.ac.uk/files/{alphafold_id}-confidence_v4.json"
-confidence = requests.get(confidence_url).json()
+# Resolve the confidence-JSON URL from the prediction metadata (version-stamped).
+rec = requests.get("https://alphafold.ebi.ac.uk/api/prediction/P00520").json()[0]
+confidence = requests.get(rec["plddtDocUrl"]).json()
 
-# Extract pLDDT scores
+# Extract pLDDT scores (keys: residueNumber, confidenceScore, confidenceCategory)
 plddt_scores = confidence['confidenceScore']
 
 # Interpret confidence levels
@@ -161,13 +153,13 @@ PAE indicates confidence in relative domain positions:
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Load PAE matrix
-pae_url = f"https://alphafold.ebi.ac.uk/files/{alphafold_id}-predicted_aligned_error_v4.json"
-pae = requests.get(pae_url).json()
+# Load PAE matrix (rec from the prediction metadata, as above)
+pae = requests.get(rec["paeDocUrl"]).json()
 
-# Visualize PAE matrix
-# The AlphaFold PAE endpoint returns a single-element JSON array, so index [0]
-# before the key. (If a future response returns a bare object, drop the [0].)
+# Visualize PAE matrix.
+# The PAE JSON is a single-element array of one object with keys
+# 'predicted_aligned_error' (the N×N matrix) and 'max_predicted_aligned_error',
+# so index [0] before the key.
 pae_matrix = np.array(pae[0]['predicted_aligned_error'])
 plt.figure(figsize=(10, 8))
 plt.imshow(pae_matrix, cmap='viridis_r', vmin=0, vmax=30)
@@ -229,20 +221,24 @@ print(f"Found {len(results)} high-confidence human proteins")
 
 **Download by Species:**
 
-> ⚠️ **Security Note**: The example below uses `shell=True` for simplicity. In production environments, prefer using `subprocess.run()` with a list of arguments to prevent command injection vulnerabilities. See [Python subprocess security](https://docs.python.org/3/library/subprocess.html#security-considerations).
+> ⚠️ **Security Note**: Always invoke `gsutil` via `subprocess.run()` with a list
+> of arguments (never `shell=True` with an interpolated string), and validate the
+> taxonomy ID is an integer. Both guard against command injection. See
+> [Python subprocess security](https://docs.python.org/3/library/subprocess.html#security-considerations).
 
 ```python
+import os
 import subprocess
-import shlex
 
 def download_proteome(taxonomy_id, output_dir="./proteomes"):
-    """Download all AlphaFold predictions for a species"""
+    """Download all AlphaFold predictions for a species (bulk GCS, still v4)."""
     # Validate taxonomy_id is an integer to prevent injection
     if not isinstance(taxonomy_id, int):
         raise ValueError("taxonomy_id must be an integer")
 
+    os.makedirs(output_dir, exist_ok=True)
     pattern = f"gs://public-datasets-deepmind-alphafold-v4/proteomes/proteome-tax_id-{taxonomy_id}-*_v4.tar"
-    # Use list form instead of shell=True for security
+    # List form (no shell=True) prevents command injection.
     subprocess.run(["gsutil", "-m", "cp", pattern, f"{output_dir}/"], check=True)
 
 # Download E. coli proteome (tax ID: 83333)
@@ -262,7 +258,7 @@ import numpy as np
 
 # Parse mmCIF file
 parser = MMCIFParser(QUIET=True)
-structure = parser.get_structure("protein", "AF-P00520-F1-model_v4.cif")
+structure = parser.get_structure("protein", "AF-P00520-F1-model_v6.cif")
 
 # Extract coordinates
 coords = []
@@ -292,7 +288,7 @@ AlphaFold stores pLDDT scores in the B-factor column:
 from Bio.PDB import MMCIFParser
 
 parser = MMCIFParser(QUIET=True)
-structure = parser.get_structure("protein", "AF-P00520-F1-model_v4.cif")
+structure = parser.get_structure("protein", "AF-P00520-F1-model_v6.cif")
 
 # Extract pLDDT from B-factors
 plddt_scores = []
@@ -312,27 +308,34 @@ print(f"High confidence residues: {len(high_conf_regions)}")
 Process multiple predictions efficiently:
 
 ```python
-from Bio.PDB import alphafold_db
-import pandas as pd
+import os
 
+import numpy as np
+import pandas as pd
+import requests
+
+os.makedirs("./batch_structures", exist_ok=True)
 uniprot_ids = ["P00520", "P12931", "P04637"]  # Multiple proteins
 results = []
 
 for uniprot_id in uniprot_ids:
     try:
-        # Get prediction
-        predictions = list(alphafold_db.get_predictions(uniprot_id))
+        # Get prediction metadata (carries version-stamped file URLs)
+        preds = requests.get(
+            f"https://alphafold.ebi.ac.uk/api/prediction/{uniprot_id}"
+        ).json()
 
-        if predictions:
-            pred = predictions[0]
+        if preds:
+            rec = preds[0]
+            alphafold_id = rec['entryId']
 
-            # Download structure
-            cif_file = alphafold_db.download_cif_for(pred, directory="./batch_structures")
+            # Download structure coordinates
+            cif = requests.get(rec['cifUrl'])
+            with open(f"./batch_structures/{alphafold_id}.cif", "wb") as fh:
+                fh.write(cif.content)
 
             # Get confidence data
-            alphafold_id = pred['entryId']
-            conf_url = f"https://alphafold.ebi.ac.uk/files/{alphafold_id}-confidence_v4.json"
-            conf_data = requests.get(conf_url).json()
+            conf_data = requests.get(rec['plddtDocUrl']).json()
 
             # Calculate statistics
             plddt_scores = conf_data['confidenceScore']

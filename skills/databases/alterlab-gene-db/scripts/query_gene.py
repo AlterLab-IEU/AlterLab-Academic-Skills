@@ -140,6 +140,13 @@ def search_and_summarize(query: str, organism: Optional[str] = None,
         max_results: Maximum number of results
         api_key: Optional NCBI API key
     """
+    # A bare token with no field tag (e.g. "BRCA1") becomes an unfocused
+    # full-text search that matches many genes. If the query carries no
+    # field tag at all, treat it as a gene symbol so the symbol resolves
+    # to its own Gene ID instead of every gene that mentions it.
+    if '[' not in query:
+        query = f"{query}[sym]"
+
     # Add organism filter if provided
     if organism:
         if '[organism]' not in query.lower():
@@ -171,7 +178,7 @@ def search_and_summarize(query: str, organism: Optional[str] = None,
                 print(f"  Organism: {gene.get('organism', {}).get('scientificname', 'N/A')}")
                 print(f"  Chromosome: {gene.get('chromosome', 'N/A')}")
                 print(f"  Map Location: {gene.get('maplocation', 'N/A')}")
-                print(f"  Type: {gene.get('geneticsource', 'N/A')}")
+                print(f"  Source: {gene.get('geneticsource', 'N/A')}")
                 print()
 
     # Respect rate limits

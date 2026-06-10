@@ -321,19 +321,11 @@ si.export_to_phy(
 
 ### Export to NWB
 ```python
-from spikeinterface.exporters import export_to_nwb
+# SpikeInterface has NO native NWB exporter — use NeuroConv (pip install neuroconv).
+from neuroconv.tools.spikeinterface import write_recording, write_sorting
 
-export_to_nwb(
-    recording,
-    sorting,
-    'output.nwb',
-    metadata=dict(
-        session_description='Neuropixels recording',
-        experimenter='Name',
-        lab='Lab name',
-        institution='Institution'
-    )
-)
+write_recording(recording=recording, nwbfile_path='output.nwb', overwrite=True)
+write_sorting(sorting=sorting, nwbfile_path='output.nwb')
 ```
 
 ### Export Report

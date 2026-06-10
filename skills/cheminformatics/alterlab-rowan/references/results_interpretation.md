@@ -15,33 +15,36 @@
 
 ### Basic Pattern
 
+Use `workflow.result()` — it blocks, fetches, and returns a typed `WorkflowResult` with attribute access. It raises `rowan.WorkflowError` on failure, so you usually do not check status by hand.
+
 ```python
 import rowan
 
-workflow = rowan.submit_pka_workflow(mol, name="test")
+workflow = rowan.submit_pka_workflow("c1ccccc1O", name="test")
 
-# Wait for completion
-workflow.wait_for_result()
-
-# Fetch results (not loaded by default)
-workflow.fetch_latest(in_place=True)
-
-# Check status before accessing data
-if workflow.status == "completed":
-    print(workflow.data)
-elif workflow.status == "failed":
-    print(f"Failed: {workflow.error_message}")
+try:
+    result = workflow.result()        # blocks until done; raises on failure/stop
+    print(result.strongest_acid)      # typed attribute, NOT workflow.data['...']
+except rowan.WorkflowError as e:
+    print(f"Failed: {e}")             # see workflow.logfile for details
 ```
+
+> The raw `workflow.data` dict still exists, but field names there are not stable across workflow types — prefer the typed `result` object below. Each result object also exposes `.data` (the raw dict) if you need it.
 
 ### Workflow Status Values
 
-| Status | Description |
-|--------|-------------|
-| `pending` | Queued, waiting for resources |
-| `running` | Currently executing |
-| `completed` | Successfully finished |
-| `failed` | Execution failed |
-| `stopped` | Manually stopped |
+`workflow.status` is the integer enum `stjames.Status` (use `.name` for a label, `workflow.done()` for a finished check):
+
+| Status | Value | Description |
+|--------|-------|-------------|
+| `QUEUED` | 0 | Queued, waiting for resources |
+| `RUNNING` | 1 | Currently executing |
+| `COMPLETED_OK` | 2 | Successfully finished |
+| `FAILED` | 3 | Execution failed |
+| `STOPPED` | 4 | Manually stopped |
+| `AWAITING_QUEUE` | 5 | Waiting to enter the queue |
+| `DRAFT` | 6 | Submitted as a draft (call `submit_draft()`) |
+| `PREEMPTED` | 7 | Preempted by the scheduler |
 
 ### Credits Charged
 
@@ -57,26 +60,20 @@ print(f"Credits used: {workflow.credits_charged}")
 ### pKa Results
 
 ```python
-workflow = rowan.submit_pka_workflow(mol, name="pKa")
-workflow.wait_for_result()
-workflow.fetch_latest(in_place=True)
+workflow = rowan.submit_pka_workflow("c1ccccc1O", name="pKa")
+result = workflow.result()                 # pKaResult
 
-data = workflow.data
+strongest_acid = result.strongest_acid     # most acidic pKa
+strongest_base = result.strongest_base     # most basic pKa (if applicable)
 
-# Macroscopic pKa
-strongest_acid = data['strongest_acid']  # Most acidic pKa
-strongest_base = data['strongest_base']  # Most basic pKa (if applicable)
-
-# Microscopic pKa (site-specific)
-micro_pkas = data['microscopic_pkas']
-for site in micro_pkas:
-    print(f"Site {site['atom_index']}: pKa = {site['pka']:.2f}")
-
-# Tautomer analysis
-tautomers = data.get('tautomer_populations', {})
-for smiles, pop in tautomers.items():
-    print(f"{smiles}: {pop:.1%}")
+# Protonation states found
+for microstate in result.conjugate_acids:
+    print("conjugate acid:", microstate)
+for microstate in result.conjugate_bases:
+    print("conjugate base:", microstate)
 ```
+
+For macroscopic pKa / pH-dependent speciation, use `submit_macropka_workflow` and read `result.pka_values`, `result.microstates`, `result.microstate_weights_by_ph`, and `result.isoelectric_point`.
 
 **Interpretation:**
 - pKa < 0: Strong acid
@@ -89,13 +86,10 @@ for smiles, pop in tautomers.items():
 ### Redox Potential Results
 
 ```python
-data = workflow.data
+result = workflow.result()             # RedoxPotentialResult
 
-oxidation_potential = data['oxidation_potential']  # V vs SHE
-reduction_potential = data['reduction_potential']  # V vs SHE
-
-print(f"Oxidation: {oxidation_potential:.2f} V vs SHE")
-print(f"Reduction: {reduction_potential:.2f} V vs SHE")
+print(f"Oxidation: {result.oxidation_potential} V")
+print(f"Reduction: {result.reduction_potential} V")
 ```
 
 **Interpretation:**
@@ -108,13 +102,12 @@ print(f"Reduction: {reduction_potential:.2f} V vs SHE")
 ### Solubility Results
 
 ```python
-data = workflow.data
+result = workflow.result()             # SolubilityResult
 
-log_s = data['aqueous_solubility']  # Log10(mol/L)
-classification = data['solubility_class']
-
-print(f"Log S: {log_s:.2f}")
-print(f"Classification: {classification}")  # "High", "Medium", "Low"
+# result.solubilities holds the predicted solubility entries
+# (per solvent / temperature, as log S in mol/L)
+for entry in result.solubilities:
+    print(entry)
 ```
 
 **Interpretation:**
@@ -127,22 +120,21 @@ print(f"Classification: {classification}")  # "High", "Medium", "Low"
 ### Fukui Index Results
 
 ```python
-data = workflow.data
+result = workflow.result()             # FukuiResult
 
-# Per-atom reactivity indices
-fukui_plus = data['fukui_plus']   # Nucleophilic attack sites
-fukui_minus = data['fukui_minus']  # Electrophilic attack sites
-fukui_dual = data['fukui_dual']    # Dual descriptor
+f_plus = result.fukui_positive   # f+ : susceptibility to nucleophilic attack (per atom)
+f_minus = result.fukui_negative  # f- : susceptibility to electrophilic attack (per atom)
+f_zero = result.fukui_zero       # f0 : radical attack (per atom)
+print(f"Global electrophilicity index: {result.global_electrophilicity_index}")
 
-# Find most reactive sites
-for i, (fp, fm, fd) in enumerate(zip(fukui_plus, fukui_minus, fukui_dual)):
-    print(f"Atom {i}: f+ = {fp:.3f}, f- = {fm:.3f}, dual = {fd:.3f}")
+for i, (fp, fm, fz) in enumerate(zip(f_plus, f_minus, f_zero)):
+    print(f"Atom {i}: f+ = {fp:.3f}, f- = {fm:.3f}, f0 = {fz:.3f}")
 ```
 
 **Interpretation:**
 - High f+ = susceptible to nucleophilic attack
 - High f- = susceptible to electrophilic attack
-- Dual > 0 = electrophilic character, Dual < 0 = nucleophilic character
+- High f0 = susceptible to radical attack
 
 ---
 
@@ -151,14 +143,15 @@ for i, (fp, fm, fd) in enumerate(zip(fukui_plus, fukui_minus, fukui_dual)):
 ### Geometry Optimization Results
 
 ```python
-data = workflow.data
+result = workflow.result()             # BasicCalculationResult
 
-final_mol = data['final_molecule']  # stjames.Molecule
-final_energy = data['energy']  # Hartree
-converged = data['convergence']
-
+final_mol = result.molecule            # stjames.Molecule with optimized coords
+final_energy = result.energy           # Hartree
 print(f"Final energy: {final_energy:.6f} Hartree")
-print(f"Converged: {converged}")
+
+# Also available: result.molecules (all steps), result.dipole, result.charges,
+# result.frequencies (if a frequencies task was requested),
+# result.optimization_energies() (energy at each optimization step)
 ```
 
 ---
@@ -166,20 +159,17 @@ print(f"Converged: {converged}")
 ### Conformer Search Results
 
 ```python
-data = workflow.data
+result = workflow.result()             # ConformerSearchResult
 
-conformers = data['conformers']
-lowest_energy = data['lowest_energy_conformer']
+energies = result.get_energies()       # relative energies (kcal/mol), ascending
+print(f"Found {result.num_conformers} conformers")
 
-# Analyze conformer distribution
-for i, conf in enumerate(conformers):
-    rel_energy = (conf['energy'] - conformers[0]['energy']) * 627.509  # kcal/mol
+for i, rel_energy in enumerate(energies):
     print(f"Conformer {i}: ΔE = {rel_energy:.2f} kcal/mol")
 
-# Boltzmann weights
-weights = data.get('boltzmann_weights', [])
-for i, w in enumerate(weights):
-    print(f"Conformer {i}: population = {w:.1%}")
+conformers = result.get_conformers()   # list of stjames.Molecule
+lowest = result.get_conformer(0)       # lowest-energy conformer
+# Also: result.sasa, result.polar_sasa, result.radii_of_gyration
 ```
 
 **Interpretation:**
@@ -191,25 +181,24 @@ for i, w in enumerate(weights):
 
 ### Frequency Calculation Results
 
-```python
-data = workflow.data
+Run with `tasks=["optimize", "frequencies"]` (or `["frequencies"]`). The typed `BasicCalculationResult` exposes the frequencies and a molecule carrying thermochemistry.
 
-frequencies = data['frequencies']  # cm⁻¹
-ir_intensities = data['ir_intensities']  # km/mol
-zpe = data['zpe']  # Hartree
-gibbs = data['gibbs_free_energy']  # Hartree
+```python
+result = workflow.result()             # BasicCalculationResult
+
+frequencies = result.frequencies       # cm⁻¹ (negative values = imaginary modes)
+mol = result.molecule
 
 # Check for imaginary frequencies
 imaginary = [f for f in frequencies if f < 0]
 if imaginary:
-    print(f"Warning: {len(imaginary)} imaginary frequencies")
-    print("Structure may be a transition state or saddle point")
+    print(f"Warning: {len(imaginary)} imaginary frequency/frequencies")
 else:
     print("Structure is a true minimum")
 
-# Thermochemistry at 298 K
-print(f"ZPE: {zpe * 627.509:.2f} kcal/mol")
-print(f"Gibbs free energy: {gibbs:.6f} Hartree")
+# Thermochemistry lives on the molecule (Hartree)
+print(f"ZPE: {mol.zero_point_energy}")
+print(f"Gibbs free energy: {mol.gibbs_free_energy}")
 ```
 
 **Interpretation:**
@@ -219,27 +208,13 @@ print(f"Gibbs free energy: {gibbs:.6f} Hartree")
 
 ---
 
-### Dihedral Scan Results
+### Scan Results
+
+A coordinate/dihedral scan is submitted with `rowan.submit_scan_workflow(...)`. Read the per-point energies from the result; the raw points live in `result.data`. Convert relative energies to kcal/mol with the factor below to find the rotation barrier.
 
 ```python
-data = workflow.data
-
-angles = data['angles']  # degrees
-energies = data['energies']  # Hartree
-
-# Find barrier
-min_e = min(energies)
-max_e = max(energies)
-barrier = (max_e - min_e) * 627.509  # kcal/mol
-
-print(f"Rotation barrier: {barrier:.2f} kcal/mol")
-
-# Find minima
-import numpy as np
-rel_energies = [(e - min_e) * 627.509 for e in energies]
-for angle, e in zip(angles, rel_energies):
-    if e < 0.5:  # Near minimum
-        print(f"Minimum at {angle}°")
+result = workflow.result()             # ScanResult
+data = result.data                     # raw scan points (angles + energies, Hartree)
 ```
 
 ---
@@ -249,23 +224,20 @@ for angle, e in zip(angles, rel_energies):
 ### Single Docking Results
 
 ```python
-data = workflow.data
+result = workflow.result()             # DockingResult
 
-# Docking score (more negative = better)
-score = data['docking_score']  # kcal/mol
-print(f"Docking score: {score:.2f} kcal/mol")
+# result.scores is a list of DockingScore (sorted best-first)
+best = result.scores[0]
+print(f"Best docking score: {best.score:.2f} kcal/mol")   # more negative = better
+print(f"Ligand strain: {best.strain} kcal/mol")
+print(f"RMSD: {best.rmsd}, PoseBusters valid: {best.posebusters_valid}")
 
-# All poses
-poses = data['poses']
-for i, pose in enumerate(poses):
-    print(f"Pose {i}: score = {pose['score']:.2f} kcal/mol")
+for i, s in enumerate(result.scores):
+    print(f"Pose {i}: score = {s.score:.2f} kcal/mol")
 
-# Ligand strain
-strain = data.get('ligand_strain', 0)
-print(f"Ligand strain: {strain:.2f} kcal/mol")
-
-# Download poses
-workflow.download_sdf_file("docked_poses.sdf")
+# Top pose / all poses as structures
+best_pose = result.best_pose           # stjames.Molecule
+all_poses = result.get_poses()         # list of stjames.Molecule
 ```
 
 **Interpretation:**
@@ -277,22 +249,7 @@ workflow.download_sdf_file("docked_poses.sdf")
 
 ### Batch Docking Results
 
-```python
-data = workflow.data
-
-results = data['results']
-for r in results:
-    smiles = r['smiles']
-    score = r['best_score']
-    strain = r.get('ligand_strain', 0)
-    print(f"{smiles[:30]}: score = {score:.2f}, strain = {strain:.2f}")
-
-# Sort by score
-sorted_results = sorted(results, key=lambda x: x['best_score'])
-print("\nTop 10 hits:")
-for r in sorted_results[:10]:
-    print(f"{r['smiles']}: {r['best_score']:.2f}")
-```
+`submit_batch_docking_workflow` returns a single workflow whose result (`BatchDockingResult`) exposes `result.scores` for the screened library. Each entry carries the same `DockingScore` fields shown above (`score`, `strain`, `rmsd`, `posebusters_valid`); rank ligands by their best score. Use `result.data` for the full raw aggregation.
 
 **Scoring Function Differences:**
 - **Vina**: Original scoring function
@@ -305,22 +262,24 @@ for r in sorted_results[:10]:
 ### Protein-Ligand Complex Prediction
 
 ```python
-data = workflow.data
+result = workflow.result()             # ProteinCofoldingResult
 
-# Confidence scores
-ptm = data['ptm_score']  # Predicted TM score (0-1)
-interface_ptm = data['interface_ptm']  # Interface confidence
-aggregate = data['aggregate_score']  # Combined score
+# One CofoldingResult per sample; take the first
+top = result.predictions[0]
+print(f"pTM: {top.scores.ptm:.3f}")          # predicted TM score (0-1)
+print(f"interface pTM: {top.scores.iptm:.3f}")
+print(f"avg LDDT: {top.scores.avg_lddt}")
+print(f"PoseBusters valid: {top.posebusters_valid}")
 
-print(f"Predicted TM score: {ptm:.3f}")
-print(f"Interface pTM: {interface_ptm:.3f}")
-print(f"Aggregate score: {aggregate:.3f}")
+# Binding-affinity prediction (if computed via ligand_binding_affinity_index)
+if result.affinity_score:
+    print(f"Affinity pred_value: {result.affinity_score.pred_value}")
 
-# Download structure
-pdb_content = data['structure_pdb']
-with open("complex.pdb", "w") as f:
-    f.write(pdb_content)
+# Predicted structures are stored by UUID; download via the workflow
+predicted_uuid = top.predicted_structure_uuid
 ```
+
+> The score attributes are `scores.ptm` and `scores.iptm` (not `ptm_score` / `interface_ptm`). `result.scores` gives the aggregate scores; `result.predictions` gives per-sample results.
 
 **Confidence Score Interpretation:**
 
@@ -354,52 +313,36 @@ Low confidence may indicate:
 
 ```python
 import rowan
-import stjames
 
-mol = stjames.Molecule.from_smiles("c1ccccc1O")
-
-# Run with different methods
-results = {}
-
-for method in ['gfn2_xtb', 'aimnet2']:
+energies = {}
+for method in ["gfn2_xtb", "aimnet2_wb97md3"]:
     wf = rowan.submit_basic_calculation_workflow(
-        initial_molecule=mol,
-        workflow_type="optimization",
-        workflow_data={"method": method},
-        name=f"opt_{method}"
+        "c1ccccc1O",
+        tasks=["optimize"],
+        method=method,
+        name=f"opt_{method}",
     )
-    wf.wait_for_result()
-    wf.fetch_latest(in_place=True)
-    results[method] = wf.data['energy']
+    energies[method] = wf.result().energy
 
-# Compare energies
-for method, energy in results.items():
+for method, energy in energies.items():
     print(f"{method}: {energy:.6f} Hartree")
 ```
 
 ### Consistency Checks
 
 ```python
-# For pKa
-def validate_pka(data):
-    pka = data['strongest_acid']
-
-    # Check reasonable range
-    if pka < -5 or pka > 20:
+# For pKa (pass a pKaResult)
+def validate_pka(result):
+    pka = result.strongest_acid
+    if pka is not None and (pka < -5 or pka > 20):
         print("Warning: pKa outside typical range")
 
-    # Compare with known references
-    # (implementation depends on reference data)
-
-# For docking
-def validate_docking(data):
-    score = data['docking_score']
-    strain = data.get('ligand_strain', 0)
-
-    if score > 0:
+# For docking (pass a DockingResult)
+def validate_docking(result):
+    best = result.scores[0]
+    if best.score > 0:
         print("Warning: Positive docking score suggests poor binding")
-
-    if strain > 5:
+    if best.strain and best.strain > 5:
         print("Warning: High ligand strain - binding mode may be unrealistic")
 ```
 
@@ -420,8 +363,10 @@ def validate_docking(data):
 ### Issue: Workflow Failed
 
 ```python
-if workflow.status == "failed":
-    print(f"Error: {workflow.error_message}")
+import stjames
+
+if workflow.status == stjames.Status.FAILED:
+    print(workflow.logfile)   # diagnostic log; there is no workflow.error_message
 
     # Common causes:
     # - Invalid SMILES
@@ -430,6 +375,8 @@ if workflow.status == "failed":
     # - Credit limit exceeded
 ```
 
+(`workflow.result()` raises `rowan.WorkflowError` for failed/stopped workflows, so wrapping it in try/except is usually simpler than checking status.)
+
 ### Issue: Unexpected Results
 
 1. **pKa off by >2 units**: Check tautomers, ensure correct protonation state
@@ -437,11 +384,11 @@ if workflow.status == "failed":
 3. **Optimization not converged**: Try different starting geometry
 4. **High strain energy**: Conformer may be wrong
 
-### Issue: Missing Data Fields
+### Issue: Missing Attributes
 
 ```python
-# Use .get() with defaults
-energy = data.get('energy', None)
+# Typed result attributes may be None when not computed
+energy = getattr(result, "energy", None)
 if energy is None:
     print("Energy not available")
 ```
@@ -454,28 +401,30 @@ if energy is None:
 
 ```python
 import pandas as pd
+import rowan
 
-# Collect results from multiple workflows
-results = []
+rows = []
 for wf in workflows:
-    wf.fetch_latest(in_place=True)
-    if wf.status == "completed":
-        results.append({
-            'name': wf.name,
-            'pka': wf.data.get('strongest_acid'),
-            'credits': wf.credits_charged
-        })
+    try:
+        result = wf.result(wait=False)   # don't block on still-running jobs
+    except rowan.WorkflowError:
+        continue
+    rows.append({
+        "name": wf.name,
+        "pka": result.strongest_acid,
+        "credits": wf.credits_charged,
+    })
 
-df = pd.DataFrame(results)
-df.to_csv("results.csv", index=False)
+pd.DataFrame(rows).to_csv("results.csv", index=False)
 ```
 
 ### Export Structures
 
 ```python
-# Download SDF with all poses
-workflow.download_sdf_file("poses.sdf")
+# Poses come back as stjames.Molecule objects you can write to XYZ
+result = docking_workflow.result()
+result.best_pose.to_xyz(out_file="best_pose.xyz")
 
-# Download trajectory (for MD)
+# Download MD trajectory files (for MD workflows)
 workflow.download_dcd_files(output_dir="trajectories/")
 ```

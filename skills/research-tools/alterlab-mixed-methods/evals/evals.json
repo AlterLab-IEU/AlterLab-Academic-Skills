@@ -29,7 +29,8 @@
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "exploratory sequential"},
-        {"type": "behavior", "value": "Names exploratory sequential design and describes the instrument-development bridge from qualitative themes to validated survey items."}
+        {"type": "output_contains", "value": "factor analysis"},
+        {"type": "behavior", "value": "Names exploratory sequential design and describes the instrument-development bridge from qualitative themes to validated survey items via item pool, expert review, and EFA/CFA."}
       ]
     },
     {
@@ -38,8 +39,8 @@
       "expected_output": "Guides writing the integration portion of the methods section: state when integration occurs, which integration strategy is used (merging, connecting, or embedding), and which specific techniques (joint displays, data transformation such as quantitizing/qualitizing). Should stress naming the design, justifying the rationale for mixing, and using precise integration vocabulary rather than 'combined' or 'synthesized'.",
       "assertions": [
         {"type": "should_trigger", "value": true},
-        {"type": "output_contains", "value": "integration"},
-        {"type": "behavior", "value": "Tells the user to specify integration timing, strategy (merging/connecting/embedding), and concrete techniques, and warns against vague integration language."}
+        {"type": "output_contains", "value": "joint display"},
+        {"type": "behavior", "value": "Tells the user to specify integration timing, the strategy (merging/connecting/embedding), and concrete techniques (joint displays, quantitizing/qualitizing), and warns against vague integration language such as 'combined' or 'synthesized'."}
       ]
     },
     {

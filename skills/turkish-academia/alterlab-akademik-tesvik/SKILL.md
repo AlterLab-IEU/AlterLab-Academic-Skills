@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No API key and no network required — applies the regulation's tables offline via `uv run python`; the regulation PDF is on mevzuat.gov.tr for re-verification
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-06-06"
+  version: "1.0.1"
+  last_updated: "2026-06-09"
 ---
 
 # Akademik Teşvik — Annual Incentive Score Calculator
@@ -164,8 +164,10 @@ before quoting money.
   salary coefficient?
 - Is this an **annual teşvik** question — or a **doçentlik** one that belongs to
   `alterlab-docentlik-eligibility`?
-- Is the subject a **Devlet** (state) university staff member? Private/foundation
-  universities are out of the regulation's scope.
+- Is the subject a **Devlet** (state) university staff member? Foundation/private
+  universities are out of scope; **yabancı uyruklu** (foreign-national) staff
+  cannot benefit at all (MADDE 6/9), and faaliyetler done while seconded to a
+  **vakıf** university are not counted (MADDE 6/7).
 
 ## References
 

@@ -39,18 +39,15 @@ resource = Resource(
 
 ### Plates
 
-Microplates with wells for holding liquids:
+Microplates with wells for holding liquids. Labware names follow a
+`<vendor>_<wells>_<kind>_<volume>_<bottom>` convention; browse `pylabrobot.resources`
+(grouped by vendor: `corning`, `opentrons`, `hamilton`, ...) for the exact classes.
 
 ```python
-from pylabrobot.resources import (
-    Cos_96_DW_1mL,      # 96-well plate, 1mL deep well
-    Cos_96_DW_500ul,    # 96-well plate, 500µL
-    Plate_384_Sq,       # 384-well square plate
-    Cos_96_PCR          # 96-well PCR plate
-)
+from pylabrobot.resources import Cor_96_wellplate_360ul_Fb  # Corning 96-well, 360 uL, flat bottom
 
 # Create plate
-plate = Cos_96_DW_1mL(name="sample_plate")
+plate = Cor_96_wellplate_360ul_Fb(name="sample_plate")
 
 # Access wells
 well_a1 = plate["A1"]                  # Single well
@@ -62,26 +59,25 @@ all_wells = plate.children             # All wells as list
 
 ### Tip Racks
 
-Containers holding pipette tips:
+A **tip rack** holds tips and is the resource you index for tips. Tip racks are not
+placed on rails directly — they sit in a **tip carrier** (`TIP_CAR_480_A00`), which is
+then assigned to a deck rail (see Carriers and Deck Management below).
 
 ```python
 from pylabrobot.resources import (
-    TIP_CAR_480_A00,    # 96 standard tips
-    HTF_L,              # Hamilton tips, filtered
-    TipRack             # Generic tip rack
+    TIP_CAR_480_A00,                    # tip CARRIER (5 sites), NOT a rack
+    hamilton_96_tiprack_1000uL_filter,  # a 96-position filtered tip rack
 )
+from pylabrobot.resources import set_tip_tracking
+set_tip_tracking(True)
 
-# Create tip rack
-tip_rack = TIP_CAR_480_A00(name="tips")
+tip_car = TIP_CAR_480_A00(name="tip_carrier")
+tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips_01")
 
-# Access tips
+# Index the RACK (not the carrier) for tips
 tip_a1 = tip_rack["A1"]                # Single tip position
 tips_row = tip_rack["A1:H1"]           # Row of tips
 tips_col = tip_rack["A1:A12"]          # Column of tips
-
-# Check tip presence (requires tip tracking enabled)
-from pylabrobot.resources import set_tip_tracking
-set_tip_tracking(True)
 
 has_tip = tip_rack["A1"].tracker.has_tip
 ```
@@ -130,7 +126,7 @@ from pylabrobot.resources import (
 carrier = PlateCarrier(name="plate_carrier")
 
 # Assign plate to carrier
-plate = Cos_96_DW_1mL(name="plate")
+plate = Cor_96_wellplate_360ul_Fb(name="plate")
 carrier.assign_child_resource(plate, location=(0, 0, 0))
 ```
 
@@ -156,14 +152,14 @@ Resources are assigned to specific deck positions using rails or coordinates:
 
 ```python
 from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.resources import STARLetDeck, TIP_CAR_480_A00, Cos_96_DW_1mL
+from pylabrobot.resources import STARLetDeck, TIP_CAR_480_A00, Cor_96_wellplate_360ul_Fb
 
 lh = LiquidHandler(backend=backend, deck=STARLetDeck())
 
 # Assign using rail positions (Hamilton STAR)
 tip_rack = TIP_CAR_480_A00(name="tips")
-source_plate = Cos_96_DW_1mL(name="source")
-dest_plate = Cos_96_DW_1mL(name="dest")
+source_plate = Cor_96_wellplate_360ul_Fb(name="source")
+dest_plate = Cor_96_wellplate_360ul_Fb(name="dest")
 
 lh.deck.assign_child_resource(tip_rack, rails=1)
 lh.deck.assign_child_resource(source_plate, rails=10)
@@ -411,14 +407,15 @@ elif isinstance(resource, TipRack):
 
 ```python
 from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.liquid_handling.backends import STAR
+from pylabrobot.liquid_handling.backends import STARBackend
 from pylabrobot.resources import (
     STARLetDeck,
     TIP_CAR_480_A00,
-    Cos_96_DW_1mL,
-    Trough_100ml,
+    PLT_CAR_L5AC_A00,
+    hamilton_96_tiprack_1000uL_filter,
+    Cor_96_wellplate_360ul_Fb,
     set_tip_tracking,
-    set_volume_tracking
+    set_volume_tracking,
 )
 
 # Enable tracking
@@ -426,28 +423,24 @@ set_tip_tracking(True)
 set_volume_tracking(True)
 
 # Initialize liquid handler
-lh = LiquidHandler(backend=STAR(), deck=STARLetDeck())
+lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
 await lh.setup()
 
-# Define resources
-tip_rack_1 = TIP_CAR_480_A00(name="tips_1")
-tip_rack_2 = TIP_CAR_480_A00(name="tips_2")
-source_plate = Cos_96_DW_1mL(name="source")
-dest_plate = Cos_96_DW_1mL(name="dest")
-buffer = Trough_100ml(name="buffer")
+# Tip racks go into a tip carrier's sites (TIP_CAR_480_A00 holds 5 racks)
+tip_car = TIP_CAR_480_A00(name="tip_carrier")
+tip_car[0] = tip_rack_1 = hamilton_96_tiprack_1000uL_filter(name="tips_1")
+tip_car[1] = tip_rack_2 = hamilton_96_tiprack_1000uL_filter(name="tips_2")
+lh.deck.assign_child_resource(tip_car, rails=1)
 
-# Assign to deck
-lh.deck.assign_child_resource(tip_rack_1, rails=1)
-lh.deck.assign_child_resource(tip_rack_2, rails=2)
-lh.deck.assign_child_resource(buffer, rails=5)
-lh.deck.assign_child_resource(source_plate, rails=10)
-lh.deck.assign_child_resource(dest_plate, rails=15)
+# Plates go into a plate carrier's sites
+plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
+plt_car[0] = source_plate = Cor_96_wellplate_360ul_Fb(name="source")
+plt_car[1] = dest_plate = Cor_96_wellplate_360ul_Fb(name="dest")
+lh.deck.assign_child_resource(plt_car, rails=15)
 
 # Set initial volumes
 for well in source_plate.children:
     well.tracker.set_liquids([(None, 200)])
-
-buffer["channel_1"].tracker.set_liquids([(None, 50000)])  # 50 mL
 
 # Save deck layout
 lh.deck.save("my_protocol_deck.json")
@@ -473,7 +466,7 @@ with open("initial_state.json", "r") as f:
 deck.load_all_state(state)
 
 # Use with liquid handler
-lh = LiquidHandler(backend=STAR(), deck=deck)
+lh = LiquidHandler(backend=STARBackend(), deck=deck)
 await lh.setup()
 
 # Access resources by name

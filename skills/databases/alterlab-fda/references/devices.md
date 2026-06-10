@@ -629,4 +629,4 @@ def get_device_classification(product_code, api_key):
 - Device Classification Database: https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfpcd/classification.cfm
 - GUDID: https://accessgudid.nlm.nih.gov/
 - API Basics: See `api_basics.md` in this references directory
-- Python examples: See `scripts/fda_device_query.py`
+- Python helper: See `scripts/fda_query.py` (the `FDAQuery` class) and `scripts/fda_examples.py`

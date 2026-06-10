@@ -4,11 +4,11 @@
     {
       "id": "register-dna-sequences-sdk",
       "prompt": "I have a FASTA file of 40 plasmid constructs I need to load into our Benchling registry. Write a script that creates each as a circular DNA sequence in folder fld_abc123 and registers it.",
-      "expected_output": "Invokes alterlab-benchling. Uses the benchling-sdk Python client (Benchling + ApiKeyAuth) and benchling.dna_sequences.create with DnaSequenceCreate (bases, is_circular=True, folder_id), parsing the FASTA with Bio.SeqIO, and registers entities via entity_registry_id or naming_strategy (noting you use one or the other, never both).",
+      "expected_output": "Invokes alterlab-benchling. Uses the benchling-sdk Python client (Benchling + ApiKeyAuth) and benchling.dna_sequences.create with DnaSequenceCreate (bases, is_circular=True, folder_id), parsing the FASTA with Bio.SeqIO, and registers entities by setting registry_id plus a naming_strategy (NEW_IDS or IDS_FROM_NAMES). Should not pass both entity_registry_id and naming_strategy together.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "benchling" },
-        { "type": "behavior", "value": "Uses the benchling-sdk dna_sequences.create call and notes entity_registry_id and naming_strategy are mutually exclusive." }
+        { "type": "output_contains", "value": "DnaSequenceCreate" },
+        { "type": "behavior", "value": "Uses benchling.dna_sequences.create and registers by setting registry_id with a naming_strategy; does not combine entity_registry_id with naming_strategy in the same create call." }
       ]
     },
     {

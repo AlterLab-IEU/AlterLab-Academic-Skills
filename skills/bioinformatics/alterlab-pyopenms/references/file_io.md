@@ -50,55 +50,64 @@ print(f"Spectra: {exp.getNrSpectra()}")
 print(f"Chromatograms: {exp.getNrChromatograms()}")
 ```
 
-### Indexed Access
+### Indexed (on-disk) Access
 
-Efficient random access for large files:
+Efficient random access for large files via `OnDiscMSExperiment` (the indexed
+backend in pyOpenMS 3.x). It keeps spectra on disk and loads them on demand:
 
 ```python
-# Create indexed access
-indexed_mzml = ms.IndexedMzMLFileLoader()
-indexed_mzml.load("large_file.mzML")
+# Open an (indexed) mzML on disk
+od = ms.OnDiscMSExperiment()
+od.openFile("large_file.mzML")        # returns True on success
+print(f"Spectra: {od.getNrSpectra()}")
 
-# Get specific spectrum by index
-spec = indexed_mzml.getSpectrumById(100)
+# Get a specific spectrum by index — only this spectrum is read from disk
+spec = od.getSpectrum(100)
 
 # Access by native ID
-spec = indexed_mzml.getSpectrumByNativeId("scan=5000")
+spec = od.getSpectrumByNativeId("controllerType=0 controllerNumber=1 scan=5000")
 ```
 
 ### Streaming Access
 
-Memory-efficient processing for very large files:
+Memory-efficient processing for very large files. `transform()` drives a
+consumer object (subclass the provided consumer interface and override
+`consumeSpectrum` / `consumeChromatogram`); it does not subclass an
+`MSExperimentConsumer` (that class does not exist):
 
 ```python
-# Define consumer function
-class SpectrumProcessor(ms.MSExperimentConsumer):
+# Stream-count MS2 spectra without holding the whole file in memory
+class MS2Counter(ms.MSDataStoringConsumer):
     def __init__(self):
         super().__init__()
         self.count = 0
 
     def consumeSpectrum(self, spec):
-        # Process spectrum
         if spec.getMSLevel() == 2:
             self.count += 1
+        super().consumeSpectrum(spec)
 
-# Stream file
-consumer = SpectrumProcessor()
+consumer = MS2Counter()
 ms.MzMLFile().transform("large.mzML", consumer)
 print(f"Processed {consumer.count} MS2 spectra")
 ```
 
 ### Cached Access
 
-Balance between memory usage and speed:
+Write a binary cache for fast repeated reads via `CachedmzML`:
 
 ```python
-# Use on-disk caching
-options = ms.CachedmzML()
-options.setMetaDataOnly(False)
-
 exp = ms.MSExperiment()
-ms.CachedmzMLHandler().load("sample.mzML", exp, options)
+ms.MzMLFile().load("sample.mzML", exp)
+
+# Store a cache (creates sample_cached.mzML + a .cached binary sidecar)
+ms.CachedmzML().store("sample_cached.mzML", exp)
+
+# Later: load the cache for fast random access
+cached = ms.CachedmzML()
+ms.CachedmzML().load("sample_cached.mzML", cached)
+print(f"Cached spectra: {cached.getNrSpectra()}")
+spec = cached.getSpectrum(0)
 ```
 
 ## Writing mzML Files
@@ -132,9 +141,11 @@ file_handler.store("compressed.mzML", exp)
 ### idXML Format
 
 ```python
-# Load identification results
+# Load identification results.
+# pyOpenMS 3.x: protein_ids is a plain list, but peptide_ids MUST be a
+# PeptideIdentificationList (a plain [] is rejected). Same for mzIdentML/pepXML.
 protein_ids = []
-peptide_ids = []
+peptide_ids = ms.PeptideIdentificationList()
 
 ms.IdXMLFile().load("identifications.idXML", protein_ids, peptide_ids)
 
@@ -155,7 +166,7 @@ for peptide_id in peptide_ids:
 ```python
 # Read mzIdentML
 protein_ids = []
-peptide_ids = []
+peptide_ids = ms.PeptideIdentificationList()
 
 ms.MzIdentMLFile().load("results.mzid", protein_ids, peptide_ids)
 ```
@@ -165,7 +176,7 @@ ms.MzIdentMLFile().load("results.mzid", protein_ids, peptide_ids)
 ```python
 # Load pepXML
 protein_ids = []
-peptide_ids = []
+peptide_ids = ms.PeptideIdentificationList()
 
 ms.PepXMLFile().load("results.pep.xml", protein_ids, peptide_ids)
 ```
@@ -314,15 +325,14 @@ For large files:
 3. Clear data structures when no longer needed
 
 ```python
-# Good for large files
-indexed_mzml = ms.IndexedMzMLFileLoader()
-indexed_mzml.load("huge_file.mzML")
+# Good for large files: OnDiscMSExperiment reads spectra on demand
+od = ms.OnDiscMSExperiment()
+od.openFile("huge_file.mzML")
 
-# Process spectra one at a time
-for i in range(indexed_mzml.getNrSpectra()):
-    spec = indexed_mzml.getSpectrumById(i)
+# Process spectra one at a time (only the current spectrum is in memory)
+for i in range(od.getNrSpectra()):
+    spec = od.getSpectrum(i)
     # Process spectrum
-    # Spectrum automatically cleaned up after processing
 ```
 
 ### Error Handling

@@ -173,30 +173,62 @@ def map_ids(ids: List[str], from_db: str, to_db: str,
     response.raise_for_status()
     job_id = response.json()["jobId"]
 
-    # Step 2: Poll for completion
+    # Step 2: Poll for completion.
+    # GOTCHA: the status endpoint returns {"jobStatus": "RUNNING"} while the
+    # job runs and {"jobStatus": "FINISHED"} when done (a finished job 303-
+    # redirects to the results URL). It does NOT return a "results" key, so
+    # checking for "results"/"failedIds" here would loop forever. A failed
+    # job returns {"jobStatus": "ERROR", ...} or {"messages": [...]}.
     status_endpoint = f"{BASE_URL}/idmapping/status/{job_id}"
 
     while True:
-        response = requests.get(status_endpoint)
+        # Don't follow the 303 so we can inspect jobStatus directly.
+        response = requests.get(status_endpoint, allow_redirects=False)
         response.raise_for_status()
         status = response.json()
 
-        if "results" in status or "failedIds" in status:
+        job_status = status.get("jobStatus")
+        if job_status == "FINISHED" or response.status_code == 303:
             break
+        if job_status in ("ERROR", "FAILED") or "messages" in status:
+            raise RuntimeError(f"ID mapping job failed: {status}")
 
         time.sleep(POLLING_INTERVAL)
 
-    # Step 3: Retrieve results
+    # Step 3: Retrieve results.
+    # GOTCHA: results are PAGINATED (default size=25). The first page only
+    # carries part of a large mapping; follow the "next" Link header until
+    # it is gone. Bump size to the 500 maximum to cut round-trips.
     results_endpoint = f"{BASE_URL}/idmapping/results/{job_id}"
+    params = {"format": format, "size": 500}
 
-    params = {"format": format}
     response = requests.get(results_endpoint, params=params)
     response.raise_for_status()
 
-    if format == "json":
-        return response.json()
-    else:
-        return response.text
+    if format != "json":
+        # Non-JSON formats (tsv, fasta, ...) still paginate via the Link
+        # header; concatenate the pages' text bodies.
+        text = response.text
+        while "next" in response.links:
+            response = requests.get(response.links["next"]["url"])
+            response.raise_for_status()
+            text += response.text
+        return text
+
+    data = response.json()
+    results = data.get("results", [])
+    failed = data.get("failedIds", [])
+    while "next" in response.links:
+        response = requests.get(response.links["next"]["url"])
+        response.raise_for_status()
+        page = response.json()
+        results.extend(page.get("results", []))
+        failed.extend(page.get("failedIds", []))
+
+    merged = {"results": results}
+    if failed:
+        merged["failedIds"] = failed
+    return merged
 
 
 def get_available_fields() -> List[Dict]:

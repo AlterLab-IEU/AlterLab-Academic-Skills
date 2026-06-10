@@ -407,12 +407,13 @@ For researchers who prefer open-source tools over NVivo/Atlas.ti:
 
 ```python
 import pandas as pd
-from collections import Counter
+from pathlib import Path
 
-# Load transcripts
+# Load transcripts (read_text closes the file handle automatically)
+
 transcripts = {
-    'P01': open('data/P01_transcript.txt').read(),
-    'P02': open('data/P02_transcript.txt').read(),
+    p.stem: p.read_text(encoding='utf-8')
+    for p in sorted(Path('data').glob('P*_transcript.txt'))
 }
 
 # Define codebook
@@ -466,16 +467,13 @@ print(code_freq)
 
 ```python
 from sklearn.feature_extraction.text import CountVectorizer
-import nltk
-from nltk.corpus import stopwords
-
-nltk.download('stopwords')
-stop_words = set(stopwords.words('english'))
 
 # Combine all transcripts
 all_text = ' '.join(transcripts.values())
 
-# Bigram frequency (useful for identifying recurring phrases)
+# Bigram/trigram frequency (useful for identifying recurring phrases).
+# CountVectorizer's built-in 'english' stop-word list removes function words;
+# treat output as a sensitizing aid, not a substitute for interpretive coding.
 vectorizer = CountVectorizer(ngram_range=(2, 3), stop_words='english', max_features=50)
 bigrams = vectorizer.fit_transform([all_text])
 bigram_freq = dict(zip(vectorizer.get_feature_names_out(), bigrams.toarray()[0]))

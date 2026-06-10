@@ -70,7 +70,7 @@ unit_labels = results['unit_labels']
 import spikeinterface.full as si
 
 # After spike sorting
-sorting = si.run_sorter('kilosort4', recording, output_folder='ks4/')
+sorting = si.run_sorter('kilosort4', recording, folder='ks4/')
 
 # Create analyzer and compute required extensions
 analyzer = si.create_sorting_analyzer(sorting, recording, sparse=True)
@@ -227,12 +227,12 @@ unique_ids = um.get_unique_ids()
 # 3. Run UnitMatch for cross-session tracking
 
 # Session 1
-sorting1 = si.run_sorter('kilosort4', rec1, output_folder='session1/ks4/')
+sorting1 = si.run_sorter('kilosort4', rec1, folder='session1/ks4/')
 # Run Bombcell
 labels1 = bc.run_bombcell('session1/ks4/', raw1_path)
 
 # Session 2
-sorting2 = si.run_sorter('kilosort4', rec2, output_folder='session2/ks4/')
+sorting2 = si.run_sorter('kilosort4', rec2, folder='session2/ks4/')
 labels2 = bc.run_bombcell('session2/ks4/', raw2_path)
 
 # Track units across sessions

@@ -226,15 +226,16 @@ print(f"Mutation range: {min(distances)}-{max(distances)}")
 print("\nGenerating embeddings for clustering...")
 
 from esm.models.esmc import ESMC
+from esm.sdk.api import LogitsConfig
 
-embedding_model = ESMC.from_pretrained("esmc-300m").to("cuda")
+embedding_model = ESMC.from_pretrained("esmc_300m").to("cuda")
+_emb_cfg = LogitsConfig(sequence=True, return_embeddings=True)
 
 def get_embedding(sequence):
     """Get mean-pooled embedding for sequence."""
     protein = ESMProtein(sequence=sequence)
-    tensor = embedding_model.encode(protein)
-    emb = embedding_model.forward(tensor)
-    return emb.mean(dim=1).cpu().detach().numpy().flatten()
+    out = embedding_model.logits(embedding_model.encode(protein), _emb_cfg)
+    return out.embeddings.mean(dim=1).cpu().detach().numpy().flatten()
 
 variant_embeddings = np.array([get_embedding(seq) for seq in variants])
 
@@ -321,8 +322,9 @@ optimized_sequences = []
 
 for i in range(num_designs):
     # Start with structure, remove sequence
+    # coordinates is a torch tensor in the ESM SDK -> use .clone(), not .copy()
     design_protein = ESMProtein(
-        coordinates=target_protein.coordinates.copy(),
+        coordinates=target_protein.coordinates.clone(),
         secondary_structure=target_protein.secondary_structure
     )
 
@@ -460,14 +462,14 @@ Build a pipeline that predicts protein function using both generative (ESM3) and
 ```python
 from esm.models.esm3 import ESM3
 from esm.models.esmc import ESMC
-from esm.sdk.api import ESMProtein, GenerationConfig
+from esm.sdk.api import ESMProtein, GenerationConfig, LogitsConfig
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
 
 # Setup models
 esm3_model = ESM3.from_pretrained("esm3-sm-open-v1").to("cuda")
-esmc_model = ESMC.from_pretrained("esmc-600m").to("cuda")
+esmc_model = ESMC.from_pretrained("esmc_600m").to("cuda")
 
 # Example: Predict if protein is an enzyme
 # (In practice, you'd have a labeled training set)
@@ -493,11 +495,13 @@ def predict_function_embedding(sequence, function_classifier):
 
     # Get embedding
     protein = ESMProtein(sequence=sequence)
-    tensor = esmc_model.encode(protein)
-    embedding = esmc_model.forward(tensor)
+    out = esmc_model.logits(
+        esmc_model.encode(protein),
+        LogitsConfig(sequence=True, return_embeddings=True),
+    )
 
-    # Mean pool
-    embedding_pooled = embedding.mean(dim=1).cpu().detach().numpy()
+    # Mean pool over the token axis
+    embedding_pooled = out.embeddings.mean(dim=1).cpu().detach().numpy()
 
     # Predict with classifier
     prediction = function_classifier.predict(embedding_pooled)
@@ -536,7 +540,7 @@ Cluster and analyze a large protein dataset using ESM C embeddings.
 
 ```python
 from esm.models.esmc import ESMC
-from esm.sdk.api import ESMProtein
+from esm.sdk.api import ESMProtein, LogitsConfig
 import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.decomposition import PCA
@@ -544,7 +548,8 @@ from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 
 # Setup
-model = ESMC.from_pretrained("esmc-600m").to("cuda")
+model = ESMC.from_pretrained("esmc_600m").to("cuda")
+emb_cfg = LogitsConfig(sequence=True, return_embeddings=True)
 
 # Load protein dataset (example)
 sequences = [
@@ -562,11 +567,10 @@ print("Generating embeddings...")
 embeddings = []
 for i, seq in enumerate(sequences):
     protein = ESMProtein(sequence=seq)
-    tensor = model.encode(protein)
-    emb = model.forward(tensor)
+    out = model.logits(model.encode(protein), emb_cfg)
 
-    # Mean pooling
-    emb_pooled = emb.mean(dim=1).cpu().detach().numpy().flatten()
+    # Mean pooling over the token axis
+    emb_pooled = out.embeddings.mean(dim=1).cpu().detach().numpy().flatten()
     embeddings.append(emb_pooled)
 
     if (i + 1) % 100 == 0:
@@ -590,9 +594,11 @@ embeddings_2d = tsne.fit_transform(embeddings_pca)
 # Step 3: Clustering
 print("\nClustering...")
 
-# DBSCAN for density-based clustering
+# DBSCAN for density-based clustering.
+# Cluster on the PCA-reduced space (same space the t-SNE plot is derived from),
+# and tune `eps` to your data — 0.5 is rarely right for raw high-dim embeddings.
 clustering = DBSCAN(eps=0.5, min_samples=5)
-cluster_labels = clustering.fit_predict(embeddings)
+cluster_labels = clustering.fit_predict(embeddings_pca)
 
 n_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
 n_noise = list(cluster_labels).count(-1)

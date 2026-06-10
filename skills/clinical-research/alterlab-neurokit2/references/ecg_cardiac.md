@@ -332,8 +332,9 @@ nk.ecg_plot(signals, info)
 ecg_signals, ecg_info = nk.ecg_process(ecg, sampling_rate=1000)
 rsp_signals, rsp_info = nk.rsp_process(rsp, sampling_rate=1000)
 
-# Compute RSA
-rsa = nk.hrv_rsa(ecg_info['ECG_R_Peaks'], rsp_signals['RSP_Clean'], sampling_rate=1000)
+# Compute RSA: pass the processed ECG + RSP signals DataFrames; R-peaks go via rpeaks=
+rsa = nk.hrv_rsa(ecg_signals, rsp_signals=rsp_signals,
+                 rpeaks=ecg_info['ECG_R_Peaks'], sampling_rate=1000)
 ```
 
 ### Multi-modal Integration

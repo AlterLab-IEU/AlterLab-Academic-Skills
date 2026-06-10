@@ -11,14 +11,21 @@ Body: { "query": "<graphql_query>", "variables": { ... } }
 
 ## Dataset Identifiers
 
+These are values of the `DatasetId` enum (used by `variant(...)`, `gene.variants(...)`,
+`region.variants(...)`). In v4 there is no separate `_genomes` dataset id: `gnomad_r4`
+returns both `exome` and `genome` blocks per variant.
+
 | ID | Description | Reference Genome |
 |----|-------------|-----------------|
-| `gnomad_r4` | gnomAD v4 exomes (730K individuals) | GRCh38 |
-| `gnomad_r4_genomes` | gnomAD v4 genomes (76K individuals) | GRCh38 |
-| `gnomad_r3` | gnomAD v3 genomes (76K individuals) | GRCh38 |
-| `gnomad_r2_1` | gnomAD v2 exomes (125K individuals) | GRCh37 |
+| `gnomad_r4` | gnomAD v4 exomes + genomes (exomes ~730K, genomes ~76K) | GRCh38 |
+| `gnomad_r3` | gnomAD v3 genomes (~76K) | GRCh38 |
+| `gnomad_r2_1` | gnomAD v2 exomes (~125K) + genomes | GRCh37 |
 | `gnomad_r2_1_non_cancer` | v2 non-cancer subset | GRCh37 |
-| `gnomad_cnv_r4` | Copy number variants | GRCh38 |
+| `exac` | ExAC (legacy) | GRCh37 |
+
+Structural / copy-number variants use their own enums, NOT `DatasetId`:
+- `structural_variants(dataset: StructuralVariantDatasetId!)` — e.g. `gnomad_sv_r4`, `gnomad_sv_r2_1`
+- `copy_number_variants(dataset: CopyNumberVariantDatasetId!)` — `gnomad_cnv_r4`
 
 ## Core Query Templates
 
@@ -28,7 +35,7 @@ Body: { "query": "<graphql_query>", "variables": { ... } }
 query GeneVariants($gene_symbol: String!, $dataset: DatasetId!, $reference_genome: ReferenceGenomeId!) {
   gene(gene_symbol: $gene_symbol, reference_genome: $reference_genome) {
     gene_id
-    gene_symbol
+    symbol             # NB: the field is `symbol`; `gene_symbol` is only the query argument
     chrom
     start
     stop
@@ -38,6 +45,7 @@ query GeneVariants($gene_symbol: String!, $dataset: DatasetId!, $reference_genom
       ref
       alt
       consequence
+      gene_symbol       # valid here (on the Variant type), unlike on Gene above
       lof
       lof_flags
       lof_filter
@@ -46,17 +54,16 @@ query GeneVariants($gene_symbol: String!, $dataset: DatasetId!, $reference_genom
         ac
         an
         ac_hom
-        populations { id ac an af ac_hom }
+        populations { id ac an ac_hom }   # no `af` subfield — compute af = ac / an
       }
       exome {
         af
         ac
         an
         ac_hom
-        populations { id ac an af ac_hom }
+        populations { id ac an ac_hom }
       }
       rsids
-      clinvar_variation_id
       in_silico_predictors { id value flags }
     }
   }
@@ -73,19 +80,29 @@ query VariantDetails($variantId: String!, $dataset: DatasetId!) {
     pos
     ref
     alt
-    consequence
-    lof
-    lof_flags
     rsids
-    genome { af ac an ac_hom populations { id ac an af } }
-    exome { af ac an ac_hom populations { id ac an af } }
+    # consequence/lof are NOT top-level on a single variant — they are per
+    # transcript. Pull them from transcript_consequences (use is_canonical
+    # to pick the representative one). There is no top-level clinvar_variation_id.
+    transcript_consequences {
+      gene_symbol
+      major_consequence
+      consequence_terms
+      lof
+      lof_flags
+      lof_filter
+      is_canonical
+      polyphen_prediction
+      sift_prediction
+    }
+    genome { af ac an ac_hom populations { id ac an ac_hom } }   # no `af` subfield: af = ac / an
+    exome { af ac an ac_hom populations { id ac an ac_hom } }
     in_silico_predictors { id value flags }
-    clinvar_variation_id
   }
 }
 ```
 
-**Variant ID format:** `{chrom}-{pos}-{ref}-{alt}` (e.g., `17-43094692-G-A`)
+**Variant ID format:** `{chrom}-{pos}-{ref}-{alt}` (e.g., `17-43094692-G-C`)
 
 ### 3. Gene Constraint
 
@@ -93,7 +110,7 @@ query VariantDetails($variantId: String!, $dataset: DatasetId!) {
 query GeneConstraint($gene_symbol: String!, $reference_genome: ReferenceGenomeId!) {
   gene(gene_symbol: $gene_symbol, reference_genome: $reference_genome) {
     gene_id
-    gene_symbol
+    symbol
     gnomad_constraint {
       exp_lof exp_mis exp_syn
       obs_lof obs_mis obs_syn
@@ -139,9 +156,10 @@ query ClinVarVariants($gene_symbol: String!, $reference_genome: ReferenceGenomeI
       clinical_significance
       clinvar_variation_id
       gold_stars
+      review_status
       major_consequence
       in_gnomad
-      gnomad_exomes { ac an af }
+      gnomad { exome { ac an } genome { ac an } }   # no `af` subfield: af = ac / an
     }
   }
 }

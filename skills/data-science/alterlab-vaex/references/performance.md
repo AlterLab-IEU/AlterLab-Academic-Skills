@@ -54,38 +54,35 @@ mean_x = df.x.mean()      # Pass 1 through data
 std_x = df.x.std()        # Pass 2 through data
 max_x = df.x.max()        # Pass 3 through data
 
-# With delay - single pass through dataset
-mean_x = df.x.mean(delay=True)
-std_x = df.x.std(delay=True)
-max_x = df.x.max(delay=True)
-results = vaex.execute([mean_x, std_x, max_x])  # Single pass!
+# With delay - single pass through dataset.
+# Each delayed call returns a promise; df.execute() runs all pending ops together.
+mean_x = df.mean(df.x, delay=True)
+std_x = df.std(df.x, delay=True)
+max_x = df.max(df.x, delay=True)
 
-print(results[0])  # mean
-print(results[1])  # std
-print(results[2])  # max
+df.execute()        # Single pass triggers all delayed operations
+print(mean_x.get()) # mean
+print(std_x.get())  # std
+print(max_x.get())  # max
 ```
 
 ### Delayed Execution with Multiple Columns
 
 ```python
-# Compute statistics for many columns efficiently
-stats = {}
-delayed_results = []
+# Compute statistics for many columns efficiently.
+# Build the promises first, run one pass, then collect with .get().
+columns = ['sales', 'quantity', 'profit', 'cost']
+promises = {
+    column: (df.mean(df[column], delay=True), df.std(df[column], delay=True))
+    for column in columns
+}
 
-for column in ['sales', 'quantity', 'profit', 'cost']:
-    mean = df[column].mean(delay=True)
-    std = df[column].std(delay=True)
-    delayed_results.extend([mean, std])
+df.execute()  # Single pass over the data
 
-# Execute all at once
-results = vaex.execute(delayed_results)
-
-# Process results
-for i, column in enumerate(['sales', 'quantity', 'profit', 'cost']):
-    stats[column] = {
-        'mean': results[i*2],
-        'std': results[i*2 + 1]
-    }
+stats = {
+    column: {'mean': mean_p.get(), 'std': std_p.get()}
+    for column, (mean_p, std_p) in promises.items()
+}
 ```
 
 ### When to Use delay=True
@@ -104,53 +101,49 @@ mean3 = df.col3.mean()
 mean4 = df.col4.mean()
 
 # Good: 1 pass through dataset
-results = vaex.execute([
-    df.col1.mean(delay=True),
-    df.col2.mean(delay=True),
-    df.col3.mean(delay=True),
-    df.col4.mean(delay=True)
-])
+promises = [
+    df.mean(df.col1, delay=True),
+    df.mean(df.col2, delay=True),
+    df.mean(df.col3, delay=True),
+    df.mean(df.col4, delay=True),
+]
+df.execute()
+results = [p.get() for p in promises]
 ```
 
-## Asynchronous Operations
+## Composing Delayed Computations
 
-Process data asynchronously using async/await:
-
-### Async with async/await
+Vaex's delayed mechanism is promise-based (not Python `async`/`await`). Use the
+`@vaex.delayed` decorator to chain post-processing onto delayed results; the whole
+chain runs when `df.execute()` is called.
 
 ```python
 import vaex
-import asyncio
 
-async def compute_statistics(df):
-    # Create async tasks
-    mean_task = df.x.mean(delay=True)
-    std_task = df.x.std(delay=True)
+df = vaex.open('large_file.hdf5')
 
-    # Execute asynchronously
-    results = await vaex.async_execute([mean_task, std_task])
+@vaex.delayed
+def normalized_range(min_val, max_val):
+    # Runs once the two delayed aggregations resolve
+    return (max_val - min_val)
 
-    return {'mean': results[0], 'std': results[1]}
+# Build the chain (nothing computed yet)
+result = normalized_range(df.min(df.x, delay=True), df.max(df.x, delay=True))
 
-# Run async function
-async def main():
-    df = vaex.open('large_file.hdf5')
-    stats = await compute_statistics(df)
-    print(stats)
-
-asyncio.run(main())
+df.execute()       # Single pass triggers the aggregations and the chained function
+print(result.get())
 ```
 
-### Using Promises/Futures
+### Retrieving a single delayed result
 
 ```python
-# Get future object
-future = df.x.mean(delay=True)
+# A delayed call returns a promise
+promise = df.mean(df.x, delay=True)
 
-# Do other work...
+# Do other work / build more promises...
 
-# Get result when ready
-result = future.get()  # Blocks until complete
+df.execute()           # Trigger the pass over the data
+result = promise.get() # Now the value is available
 ```
 
 ## Virtual Columns vs Materialized Columns
@@ -165,8 +158,8 @@ df['total'] = df.price * df.quantity
 df['log_sales'] = df.sales.log()
 df['full_name'] = df.first_name + ' ' + df.last_name
 
-# Check if virtual
-print(df.is_local('total'))  # False = virtual
+# Check if a column is virtual
+print('total' in df.virtual_columns)  # True = virtual (lazy expression)
 
 # Benefits:
 # - Zero memory overhead
@@ -177,14 +170,9 @@ print(df.is_local('total'))  # False = virtual
 ### Materialized Columns
 
 ```python
-# Materialize a virtual column
-df['total_materialized'] = df['total'].values
-
-# Or use materialize method
-df = df.materialize(df['total'], inplace=True)
-
-# Check if materialized
-print(df.is_local('total_materialized'))  # True = materialized
+# Materialize an existing virtual column in place (computes once, stores in RAM).
+# materialize(column=None) materializes all virtual columns when column is omitted.
+df = df.materialize('total')
 
 # When to materialize:
 # - Column computed repeatedly (amortize cost)
@@ -286,15 +274,16 @@ result = df.x.mean()  # Handles large data automatically
 # Check DataFrame memory footprint
 print(df.byte_size())  # Bytes used by materialized columns
 
-# Check column memory
+# Check which columns are materialized vs virtual
 for col in df.get_column_names():
-    if df.is_local(col):
-        print(f"{col}: {df[col].nbytes / 1e9:.2f} GB")
+    kind = 'virtual' if col in df.virtual_columns else 'materialized'
+    print(f"{col}: {kind}")
 
-# Profile operations
-import vaex.profiler
-with vaex.profiler():
-    result = df.x.mean()
+# Time an operation
+import time
+start = time.time()
+result = df.x.mean()
+print(f"mean computed in {time.time() - start:.3f}s")
 ```
 
 ## Parallel Computation
@@ -307,64 +296,53 @@ Vaex automatically parallelizes operations:
 # Vaex uses all CPU cores by default
 import vaex
 
-# Check/set thread count
-print(vaex.multithreading.thread_count_default)
-vaex.multithreading.thread_count_default = 8  # Use 8 threads
-
-# Operations automatically parallelize
+# Operations automatically parallelize across all cores
 mean = df.x.mean()  # Uses all threads
+
+# Cap the thread pool via the environment before importing vaex, e.g.:
+#   VAEX_NUM_THREADS=8 python script.py
 ```
 
-### Distributed Computing with Dask
+### Going Distributed
+
+Vaex is single-machine out-of-core. If you genuinely need a multi-node cluster
+(10s of TB, custom task graphs, a scheduler dashboard), reach for **Dask** instead
+— see the `alterlab-dask` skill. Convert a column to a Dask array when you need to
+hand data off:
 
 ```python
-# Convert to Dask for distributed processing
-import vaex
-import dask.dataframe as dd
-
-# Create Vaex DataFrame
-df_vaex = vaex.open('large_file.hdf5')
-
-# Convert to Dask
-df_dask = df_vaex.to_dask_dataframe()
-
-# Process with Dask
-result = df_dask.groupby('category')['value'].sum().compute()
+arr = df.x.to_dask_array()  # bridge a single column into the Dask ecosystem
 ```
 
 ## JIT Compilation
 
-Vaex can use Just-In-Time compilation for custom operations:
+Vaex can JIT-compile arithmetic expressions for a speed boost.
 
-### Using Numba
+### `.jit_numba()` / `.jit_pythran()` on expressions
 
 ```python
 import vaex
-import numba
 
-# Define JIT-compiled function
-@numba.jit
-def custom_calculation(x, y):
-    return x ** 2 + y ** 2
+df = vaex.open('large_file.hdf5')
 
-# Apply to DataFrame
-df['custom'] = df.apply(custom_calculation,
-                        arguments=[df.x, df.y],
-                        vectorize=True)
+# Build an expression as usual, then JIT-compile it.
+# Vaex generates and compiles optimized code for the expression.
+df['dist'] = (df.x ** 2 + df.y ** 2).jit_numba()   # requires numba
+# Alternative backend: (df.x ** 2 + df.y ** 2).jit_pythran()
+
+mean_dist = df.dist.mean()  # runs over the JIT-compiled expression
 ```
 
-### Custom Aggregations
+### Registering a custom Python function
 
 ```python
-@numba.jit
-def custom_sum(a):
-    total = 0
-    for val in a:
-        total += val * 2  # Custom logic
-    return total
+# Register a NumPy-vectorized function, then use it inside expressions.
+@vaex.register_function()
+def squared_sum(x, y):
+    return x ** 2 + y ** 2  # x, y arrive as NumPy arrays
 
-# Use in aggregation
-result = df.x.custom_agg(custom_sum)
+df['custom'] = df.func.squared_sum(df.x, df.y)
+result = df.custom.mean()
 ```
 
 ## Optimization Strategies
@@ -413,14 +391,14 @@ stats = {
 }
 
 # More efficient: Single pass
-delayed = [
-    df.x.mean(delay=True),
-    df.x.std(delay=True),
-    df.x.min(delay=True),
-    df.x.max(delay=True)
+promises = [
+    df.mean(df.x, delay=True),
+    df.std(df.x, delay=True),
+    df.min(df.x, delay=True),
+    df.max(df.x, delay=True),
 ]
-results = vaex.execute(delayed)
-stats = dict(zip(['mean', 'std', 'min', 'max'], results))
+df.execute()
+stats = dict(zip(['mean', 'std', 'min', 'max'], [p.get() for p in promises]))
 ```
 
 ### Strategy 4: Choose Optimal File Formats
@@ -469,13 +447,13 @@ elapsed = time.time() - start
 print(f"Computed in {elapsed:.2f} seconds")
 ```
 
-### Detailed Profiling
+### Progress Reporting
 
 ```python
-# Profile with context manager
-with vaex.profiler():
-    result = df.groupby('category').agg({'value': 'sum'})
-# Prints detailed timing information
+# Many Vaex operations accept progress=True to show a progress bar,
+# which doubles as a rough timing/feedback tool for long passes.
+result = df.groupby('category', agg={'value': 'sum'}, progress=True)
+df.export_hdf5('out.hdf5', progress=True)
 ```
 
 ### Benchmarking Patterns
@@ -505,10 +483,10 @@ for col in df.column_names:
     print(f"{col}: {df[col].mean()}")
 
 # Solution: Batch with delay=True
-delayed = [df[col].mean(delay=True) for col in df.column_names]
-results = vaex.execute(delayed)
-for col, result in zip(df.column_names, results):
-    print(f"{col}: {result}")
+promises = [df.mean(df[col], delay=True) for col in df.column_names]
+df.execute()
+for col, p in zip(df.column_names, promises):
+    print(f"{col}: {p.get()}")
 ```
 
 ### Issue: High Memory Usage

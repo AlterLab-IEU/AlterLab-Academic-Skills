@@ -55,7 +55,6 @@ Route these adjacent asks to the correct sibling skill — do **not** answer the
 | Checking whether the cited papers actually **exist** (fabricated citations) | `alterlab-citation-verifier` |
 | Computing **doçentlik** (associate-professorship) eligibility points from a publication list | `alterlab-docentlik-eligibility` |
 | Computing the **akademik teşvik** (academic-incentive) score | `alterlab-akademik-tesvik` |
-| Drafting the **recommendation letter** itself (this skill only verifies the affiliation that goes in it) | `alterlab-recommendation-letters` |
 
 YOK Akademik answers **"who is this academic, officially, and where are they now?"**
 It does **not** judge research quality, compute career-progression points, or fetch

@@ -15,10 +15,13 @@ The `Trainer` class manages the complete model training and evaluation workflow 
 from pyhealth.trainer import Trainer
 
 trainer = Trainer(
-    model=model,  # PyHealth or PyTorch model
-    device="cuda",  # or "cpu"
+    model=model,                          # PyHealth model
+    metrics=["pr_auc", "roc_auc", "f1"],  # metrics computed by evaluate()
+    # device is auto-detected; pass device="cpu"/"cuda" to override
 )
 ```
+
+The metric list you pass here is what `evaluate()` reports and what `monitor=` can reference during training.
 
 ### Training
 
@@ -29,30 +32,24 @@ Trains models with comprehensive monitoring and checkpointing.
 **Parameters:**
 - `train_dataloader`: Training data loader
 - `val_dataloader`: Validation data loader (optional)
-- `test_dataloader`: Test data loader (optional)
 - `epochs`: Number of training epochs
-- `optimizer`: Optimizer instance or class
-- `learning_rate`: Learning rate (default: 1e-3)
-- `weight_decay`: L2 regularization (default: 0)
-- `max_grad_norm`: Gradient clipping threshold
-- `monitor`: Metric to monitor (e.g., "pr_auc_score")
+- `optimizer_class`: Optimizer **class** (e.g. `torch.optim.Adam`, `torch.optim.AdamW`)
+- `optimizer_params`: Dict of optimizer kwargs (e.g. `{"lr": 1e-3, "weight_decay": 1e-5}`)
+- `monitor`: Metric to monitor — one of the names passed to `Trainer(metrics=...)`, e.g. `"pr_auc"`
 - `monitor_criterion`: "max" or "min"
-- `save_path`: Checkpoint save directory
 
 **Usage:**
 ```python
+import torch
+
 trainer.train(
     train_dataloader=train_loader,
     val_dataloader=val_loader,
-    test_dataloader=test_loader,
     epochs=50,
-    optimizer=torch.optim.Adam,
-    learning_rate=1e-3,
-    weight_decay=1e-5,
-    max_grad_norm=5.0,
-    monitor="pr_auc_score",
+    optimizer_class=torch.optim.Adam,
+    optimizer_params={"lr": 1e-3, "weight_decay": 1e-5},
+    monitor="pr_auc",
     monitor_criterion="max",
-    save_path="./checkpoints"
 )
 ```
 
@@ -81,18 +78,23 @@ Performs predictions on datasets.
 
 **Usage:**
 ```python
-predictions = trainer.inference(
-    dataloader=test_loader,
-    additional_outputs=["attention_weights", "embeddings"],
-    return_patient_ids=True
+# Default: returns a 3-tuple
+y_true, y_prob, loss = trainer.inference(test_loader)
+
+# With extras: returns a 5-tuple (order matters)
+y_true, y_prob, loss, additional_outputs, patient_ids = trainer.inference(
+    test_loader,
+    additional_outputs=["attention_weights"],
+    return_patient_ids=True,
 )
 ```
 
-**Returns:**
-- `y_pred`: Model predictions
-- `y_true`: Ground truth labels
-- `patient_ids`: Patient identifiers (if requested)
-- Additional outputs (if specified)
+**Returns (tuple, not a dict):**
+- `y_true`: Ground truth labels (array)
+- `y_prob`: Predicted probabilities (array)
+- `loss` / `mean_loss`: Mean loss over the dataset
+- `additional_outputs`: Dict of requested extras (only if `additional_outputs=` given)
+- `patient_ids`: Patient identifiers (only if `return_patient_ids=True`)
 
 ### Evaluation
 
@@ -102,19 +104,21 @@ Computes comprehensive evaluation metrics.
 
 **Parameters:**
 - `dataloader`: Data loader for evaluation
-- `metrics`: List of metric functions
+
+`evaluate()` uses the metric list set on the `Trainer` (`Trainer(metrics=[...])`) — it does **not** take a `metrics=` argument. To compute metrics ad hoc, call the metric function directly on `inference()` outputs.
 
 **Usage:**
 ```python
-from pyhealth.metrics import binary_metrics_fn
-
-results = trainer.evaluate(
-    dataloader=test_loader,
-    metrics=["accuracy", "pr_auc_score", "roc_auc_score", "f1_score"]
-)
-
+# Uses metrics passed to Trainer(...)
+results = trainer.evaluate(test_loader)
 print(results)
-# Output: {'accuracy': 0.85, 'pr_auc_score': 0.78, 'roc_auc_score': 0.82, 'f1_score': 0.73}
+# e.g. {'pr_auc': 0.78, 'roc_auc': 0.82, 'f1': 0.73}
+
+# Or compute metrics manually from predictions
+from pyhealth.metrics.binary import binary_metrics_fn
+
+y_true, y_prob, loss = trainer.inference(test_loader)
+binary_metrics_fn(y_true, y_prob, metrics=["pr_auc", "roc_auc", "f1"])
 ```
 
 ### Checkpoint Management
@@ -133,24 +137,25 @@ trainer.load("./models/best_model.pt")
 
 ### Binary Classification Metrics
 
-**Available Metrics:**
+**Available metric strings:**
 - `accuracy`: Overall accuracy
-- `precision`: Positive predictive value
-- `recall`: Sensitivity/True positive rate
-- `f1_score`: F1 score (harmonic mean of precision and recall)
-- `roc_auc_score`: Area under ROC curve
-- `pr_auc_score`: Area under precision-recall curve
+- `f1`: F1 score
+- `precision_recall_f1` / `precision` / `recall`
+- `roc_auc`: Area under ROC curve
+- `pr_auc`: Area under precision-recall curve
 - `cohen_kappa`: Inter-rater reliability
+
+(Strings have no `_score` suffix.)
 
 **Usage:**
 ```python
-from pyhealth.metrics import binary_metrics_fn
+from pyhealth.metrics.binary import binary_metrics_fn
 
-# Comprehensive binary metrics
+# Note: arg is y_prob (predicted probabilities), not thresholded y_pred
 metrics = binary_metrics_fn(
     y_true=labels,
-    y_pred=predictions,
-    metrics=["accuracy", "f1_score", "pr_auc_score", "roc_auc_score"]
+    y_prob=probabilities,
+    metrics=["accuracy", "f1", "pr_auc", "roc_auc"],
 )
 ```
 
@@ -174,21 +179,21 @@ optimal_threshold = thresholds[np.argmax(f1_scores)]
 
 ### Multi-Class Classification Metrics
 
-**Available Metrics:**
+**Available metric strings:**
 - `accuracy`: Overall accuracy
-- `macro_f1`: Unweighted mean F1 across classes
-- `micro_f1`: Global F1 (total TP, FP, FN)
-- `weighted_f1`: Weighted mean F1 by class frequency
+- `f1_macro`: Unweighted mean F1 across classes
+- `f1_micro`: Global F1 (total TP, FP, FN)
+- `f1_weighted`: Weighted mean F1 by class frequency
 - `cohen_kappa`: Multi-class kappa
 
 **Usage:**
 ```python
-from pyhealth.metrics import multiclass_metrics_fn
+from pyhealth.metrics.multiclass import multiclass_metrics_fn
 
 metrics = multiclass_metrics_fn(
     y_true=labels,
-    y_pred=predictions,
-    metrics=["accuracy", "macro_f1", "weighted_f1"]
+    y_prob=probabilities,
+    metrics=["accuracy", "f1_macro", "f1_weighted"],
 )
 ```
 
@@ -211,21 +216,22 @@ sns.heatmap(cm, annot=True, fmt='d')
 
 ### Multi-Label Classification Metrics
 
-**Available Metrics:**
-- `jaccard_score`: Intersection over union
+**Available metric strings** (the `*_samples` family is the per-example average used for drug recommendation):
+- `jaccard_samples`: Sample-averaged Jaccard (intersection over union)
+- `f1_samples`: Sample-averaged F1
+- `pr_auc_samples`: Sample-averaged AUPRC
 - `hamming_loss`: Fraction of incorrect labels
-- `example_f1`: F1 per example (micro average)
-- `label_f1`: F1 per label (macro average)
+- `ddi`: Drug-drug interaction rate (drug-rec models)
 
 **Usage:**
 ```python
-from pyhealth.metrics import multilabel_metrics_fn
+from pyhealth.metrics.multilabel import multilabel_metrics_fn
 
-# y_pred: [n_samples, n_labels] binary matrix
+# y_prob: [n_samples, n_labels] probability matrix
 metrics = multilabel_metrics_fn(
     y_true=label_matrix,
-    y_pred=pred_matrix,
-    metrics=["jaccard_score", "example_f1", "label_f1"]
+    y_prob=prob_matrix,
+    metrics=["jaccard_samples", "f1_samples", "pr_auc_samples"],
 )
 ```
 
@@ -242,20 +248,20 @@ def precision_at_k(y_true, y_pred, k=10):
 
 ### Regression Metrics
 
-**Available Metrics:**
-- `mean_absolute_error`: Average absolute error
-- `mean_squared_error`: Average squared error
-- `root_mean_squared_error`: RMSE
-- `r2_score`: Coefficient of determination
+**Available metric strings:**
+- `mae`: Mean absolute error
+- `mse`: Mean squared error
+- `rmse`: Root mean squared error
+- `r2`: Coefficient of determination
 
 **Usage:**
 ```python
-from pyhealth.metrics import regression_metrics_fn
+from pyhealth.metrics.regression import regression_metrics_fn
 
 metrics = regression_metrics_fn(
     y_true=true_values,
-    y_pred=predictions,
-    metrics=["mae", "rmse", "r2"]
+    y_prob=predictions,
+    metrics=["mae", "rmse", "r2"],
 )
 ```
 
@@ -270,23 +276,25 @@ medape = np.median(np.abs((y_true - y_pred) / y_true)) * 100
 
 ### Fairness Metrics
 
-**Purpose:** Assess model bias across demographic groups
+**Purpose:** Assess model bias across a protected vs. unprotected group.
 
-**Available Metrics:**
-- `demographic_parity`: Equal positive prediction rates
-- `equalized_odds`: Equal TPR and FPR across groups
-- `equal_opportunity`: Equal TPR across groups
-- `predictive_parity`: Equal PPV across groups
+**`pyhealth.metrics.fairness.fairness_metrics_fn`** — available metric strings:
+- `disparate_impact`: Ratio of favorable-outcome rates (protected / unprotected)
+- `statistical_parity_difference`: Difference in favorable-outcome rates
+
+**Signature:** `fairness_metrics_fn(y_true, y_prob, sensitive_attributes, favorable_outcome=1, metrics=[...], threshold=0.5)` where `sensitive_attributes` is a 0/1 array (1 = protected group).
 
 **Usage:**
 ```python
-from pyhealth.metrics import fairness_metrics_fn
+from pyhealth.metrics.fairness import fairness_metrics_fn
 
+# sensitive_attributes: 1 for the protected group, 0 otherwise
 fairness_results = fairness_metrics_fn(
     y_true=labels,
-    y_pred=predictions,
-    sensitive_attributes=demographics,  # e.g., race, gender
-    metrics=["demographic_parity", "equalized_odds"]
+    y_prob=probabilities,
+    sensitive_attributes=protected_mask,
+    favorable_outcome=1,
+    metrics=["disparate_impact", "statistical_parity_difference"],
 )
 ```
 
@@ -527,42 +535,45 @@ shap_values = explainer.shap_values(test_data)
 shap.summary_plot(shap_values, test_data, feature_names=feature_names)
 ```
 
-### ChEFER (Clinical Health Event Feature Extraction and Ranking)
+### Chefer Relevance (PyHealth's built-in attention interpretability)
 
-**PyHealth's Interpretability Tool:**
+PyHealth ships the Chefer relevance method for attention-based models (e.g. `Transformer`). The class is `CheferRelevance` in `pyhealth.interpret.methods`; call `get_relevance_matrix(**batch)` on a single-sample batch.
 
 ```python
-from pyhealth.explain import ChEFER
+from pyhealth.interpret.methods import CheferRelevance
+from pyhealth.datasets import get_dataloader
 
-explainer = ChEFER(model=model, dataset=test_dataset)
+relevance = CheferRelevance(model)
 
-# Get feature importance for prediction
-importance_scores = explainer.explain(
-    patient_id="patient_123",
-    visit_id="visit_456"
-)
+# One sample at a time (batch_size=1)
+loader = get_dataloader(test_dataset, batch_size=1, shuffle=False)
+batch = next(iter(loader))
 
-# Visualize top features
-explainer.plot_importance(importance_scores, top_k=20)
+scores = relevance.get_relevance_matrix(**batch)  # dict: feature_key -> relevance tensor
+for feature_key, rel in scores.items():
+    top_tokens = rel[0].topk(5).indices
+    print(f"{feature_key}: top-5 tokens -> {top_tokens.tolist()}")
 ```
 
 ## Complete Training Pipeline Example
 
 ```python
-from pyhealth.datasets import MIMIC4Dataset
-from pyhealth.tasks import mortality_prediction_mimic4_fn
-from pyhealth.datasets import split_by_patient, get_dataloader
+import torch
+from pyhealth.datasets import MIMIC4Dataset, split_by_patient, get_dataloader
+from pyhealth.tasks import MortalityPredictionMIMIC4
 from pyhealth.models import Transformer
 from pyhealth.trainer import Trainer
-from pyhealth.metrics import binary_metrics_fn
 
 # 1. Load and prepare data
-dataset = MIMIC4Dataset(root="/path/to/mimic4")
-sample_dataset = dataset.set_task(mortality_prediction_mimic4_fn)
+dataset = MIMIC4Dataset(
+    root="/path/to/mimic4",
+    tables=["diagnoses_icd", "procedures_icd", "prescriptions"],
+)
+sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 
-# 2. Split data
+# 2. Split data by patient
 train_data, val_data, test_data = split_by_patient(
-    sample_dataset, ratios=[0.7, 0.1, 0.2], seed=42
+    sample_dataset, [0.7, 0.1, 0.2]
 )
 
 # 3. Create data loaders
@@ -573,48 +584,41 @@ test_loader = get_dataloader(test_data, batch_size=64, shuffle=False)
 # 4. Initialize model
 model = Transformer(
     dataset=sample_dataset,
-    feature_keys=["diagnoses", "procedures", "medications"],
+    feature_keys=["conditions", "procedures", "drugs"],
+    label_key="mortality",
     mode="binary",
     embedding_dim=128,
-    num_heads=8,
-    num_layers=3,
-    dropout=0.3
+    num_layers=2,
+    dropout=0.3,
 )
 
 # 5. Train model
-trainer = Trainer(model=model, device="cuda")
+trainer = Trainer(model=model, metrics=["accuracy", "pr_auc", "roc_auc", "f1"])
 trainer.train(
     train_dataloader=train_loader,
     val_dataloader=val_loader,
     epochs=50,
-    optimizer=torch.optim.Adam,
-    learning_rate=1e-3,
-    weight_decay=1e-5,
-    monitor="pr_auc_score",
+    optimizer_class=torch.optim.Adam,
+    optimizer_params={"lr": 1e-3, "weight_decay": 1e-5},
+    monitor="pr_auc",
     monitor_criterion="max",
-    save_path="./checkpoints/mortality_model"
 )
 
-# 6. Evaluate on test set
-test_results = trainer.evaluate(
-    test_loader,
-    metrics=["accuracy", "precision", "recall", "f1_score",
-             "roc_auc_score", "pr_auc_score"]
-)
-
+# 6. Evaluate on test set (uses the Trainer's metric list)
+test_results = trainer.evaluate(test_loader)
 print("Test Results:")
 for metric, value in test_results.items():
     print(f"{metric}: {value:.4f}")
 
-# 7. Get predictions for analysis
-predictions = trainer.inference(test_loader, return_patient_ids=True)
-y_pred, y_true, patient_ids = predictions
+# 7. Get predictions for analysis (tuple unpacking)
+y_true, y_prob, loss = trainer.inference(test_loader)
 
 # 8. Calibration analysis
 from sklearn.calibration import calibration_curve
 
-fraction_pos, mean_pred = calibration_curve(y_true, y_pred, n_bins=10)
-ece = expected_calibration_error(y_true, y_pred)
+positive_prob = y_prob if y_prob.ndim == 1 else y_prob[..., -1]
+fraction_pos, mean_pred = calibration_curve(y_true, positive_prob, n_bins=10)
+ece = expected_calibration_error(y_true, positive_prob)
 print(f"Expected Calibration Error: {ece:.4f}")
 
 # 9. Save final model

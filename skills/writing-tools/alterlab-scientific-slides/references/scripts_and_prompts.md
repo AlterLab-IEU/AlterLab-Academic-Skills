@@ -36,7 +36,13 @@ Use `--attach` when you want Nano Banana Pro to see existing images as context:
 ```bash
 export OPENROUTER_API_KEY='your_api_key_here'
 # Get key at: https://openrouter.ai/keys
+
+# Optional: override the default Gemini image/review models (routed via OpenRouter)
+# export ALTERLAB_IMAGE_MODEL='google/...'
+# export ALTERLAB_REVIEW_MODEL='google/...'
 ```
+
+The key can also be supplied via `--api-key` or a `.env` file in the working directory (or a parent). Refinement is hard-capped at 2 iterations regardless of `--iterations`.
 
 ## slides_to_pdf.py
 

@@ -237,26 +237,29 @@ print(f"Used {gbs.n_estimators_} iterations")
 
 ### Hyperparameter Tuning
 
+The IPCW scorer wrappers wrap the estimator's `.score()`; they are not passed to
+`scoring=`, and `scoring='concordance_index_ipcw'` is not a valid string. Wrap the
+estimator and prefix tuned params with `estimator__`.
+
 ```python
 from sklearn.model_selection import GridSearchCV
+from sksurv.metrics import as_concordance_index_ipcw_scorer
+
+wrapped = as_concordance_index_ipcw_scorer(
+    GradientBoostingSurvivalAnalysis(random_state=42), tau=y['time'].max()
+)
 
 param_grid = {
-    'learning_rate': [0.01, 0.05, 0.1],
-    'n_estimators': [100, 200, 300],
-    'max_depth': [3, 5, 7],
-    'subsample': [0.8, 1.0]
+    'estimator__learning_rate': [0.01, 0.05, 0.1],
+    'estimator__n_estimators': [100, 200, 300],
+    'estimator__max_depth': [3, 5, 7],
+    'estimator__subsample': [0.8, 1.0]
 }
 
-cv = GridSearchCV(
-    GradientBoostingSurvivalAnalysis(),
-    param_grid,
-    scoring='concordance_index_ipcw',
-    cv=5,
-    n_jobs=-1
-)
+cv = GridSearchCV(wrapped, param_grid, cv=5, n_jobs=-1)
 cv.fit(X, y)
 
-best_model = cv.best_estimator_
+best_model = cv.best_estimator_.estimator_  # unwrap to the fitted GBSA model
 ```
 
 ## ComponentwiseGradientBoostingSurvivalAnalysis

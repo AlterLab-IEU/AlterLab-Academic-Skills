@@ -2,8 +2,14 @@
 
 **Full Documentation:** https://docs.parallel.ai
 **API Key:** https://platform.parallel.ai
-**Python SDK:** `pip install parallel-web`
+**Python SDK:** `uv pip install parallel-web` (imports as `parallel`)
 **Environment Variable:** `PARALLEL_API_KEY`
+
+> **What this skill's `scripts/parallel_web.py` actually wraps:**
+> - `search` and `research` commands → the **Chat API** (`base` / `core` models, via the OpenAI SDK). They do NOT call the raw Search API or Task API.
+> - `extract` command → the **Extract API** (via the `parallel` SDK).
+>
+> The Search API and Task API sections below document Parallel's raw HTTP endpoints for reference only. The bundled script does not expose `search_queries`, `max_results`, `source_policy`, `mode`, or `processor` — those are raw-API parameters. To use them you must call the SDK/HTTP API directly.
 
 ---
 

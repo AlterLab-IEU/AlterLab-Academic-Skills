@@ -1,9 +1,9 @@
 ---
 name: alterlab-phylogenetics
-description: Build and analyze phylogenetic trees end-to-end using MAFFT for multiple sequence alignment, IQ-TREE 2 for maximum-likelihood inference, and FastTree for fast NJ/ML, then visualize with ETE3 or FigTree. Use when reconstructing trees from sequences for evolutionary analysis, microbial genomics, viral phylodynamics, protein-family studies, or molecular-clock estimation. Part of the AlterLab Academic Skills suite.
+description: Build phylogenetic trees end-to-end from raw sequences — MAFFT multiple sequence alignment, optional TrimAl trimming, IQ-TREE 2 maximum-likelihood inference with model selection and bootstraps, FastTree for large datasets, then visualize with ETE3 or FigTree. Use when reconstructing trees from sequences (FASTA) for evolutionary analysis, microbial genomics, viral phylodynamics, protein-family studies, or molecular-clock dating. For manipulating/comparing an EXISTING Newick tree (prune, root, Robinson-Foulds, duplication/speciation events) use alterlab-etetoolkit; for plain sequence parsing/translation use alterlab-biopython. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Needs external CLI tools (MAFFT, IQ-TREE 2, FastTree; optionally TrimAl) on PATH — install via bioconda or Homebrew, NOT pip/uv. Python parts (ETE3 for visualization) run under `uv run python`. No API key or account required."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -20,12 +20,18 @@ Phylogenetic analysis reconstructs the evolutionary history of biological sequen
 3. **FastTree** — Fast approximate maximum likelihood (for large datasets)
 4. **ETE3** — Python library for tree manipulation and visualization
 
-**Installation:**
+**Installation:** The aligners and tree builders are compiled CLI tools (not on PyPI). Install the binaries via bioconda or Homebrew; install the Python visualization layer with uv.
 ```bash
-# Conda (recommended for CLI tools)
-conda install -c bioconda mafft iqtree fasttree
-pip install ete3
+# CLI binaries — bioconda (cross-platform) ...
+conda install -c bioconda mafft iqtree fasttree trimal
+# ... or Homebrew on macOS (Apple Silicon): IQ-TREE/TrimAl live in the brewsci/bio tap
+brew install mafft fasttree
+brew tap brewsci/bio && brew install brewsci/bio/iqtree brewsci/bio/trimal  # iqtree formula ships the iqtree2 binary
+
+# Python visualization layer
+uv pip install "ete3==3.1.3"   # also needs numpy<2 and PyQt5 for rendering
 ```
+> ETE3 (3.1.3) is the last ete3 release and can be fragile to install on Python ≥3.12 (pins old numpy/PyQt5). If `t.render()` fails, fall back to writing the Newick tree and viewing it in FigTree/iTOL, or use the maintained successor `ete4` (note: ete4 changed the `TreeStyle`/`render` API, so the snippets below are ete3-specific).
 
 ## When to Use This Skill
 
@@ -324,10 +330,10 @@ def full_phylogenetic_analysis(
             model="gtr" if sequence_type == "nt" else "lg"
         )
     else:
-        model = "TEST" if sequence_type == "nt" else "TEST"
+        # -m TEST auto-detects the alphabet (nt vs aa) and selects the best model.
         iqtree_files = run_iqtree(
             aligned, prefix,
-            model=model,
+            model="TEST",
             bootstrap=bootstrap,
             n_threads=n_threads
         )
@@ -379,8 +385,8 @@ def full_phylogenetic_analysis(
 | `LG+G4` | Le-Gascuel + Gamma | Best average protein model |
 | `WAG+G4` | Whelan-Goldman | Widely used |
 | `JTT+G4` | Jones-Taylor-Thornton | Classical model |
-| `Q.pfam+G4` | pfam-trained | For Pfam-like protein families |
-| `Q.bird+G4` | Bird-specific | Vertebrate proteins |
+| `Q.pfam+G4` | Pfam-trained (QMaker) | General protein families |
+| `Q.bird+G4` | Bird clade-specific (QMaker) | Bird proteins; siblings: Q.mammal, Q.insect, Q.yeast, Q.plant |
 
 **Tip:** Use `-m TEST` to let IQ-TREE automatically select the best model.
 

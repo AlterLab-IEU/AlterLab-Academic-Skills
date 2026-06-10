@@ -1,6 +1,6 @@
 ---
 name: alterlab-parallel-web
-description: Search the web, extract URL content, and run deep research using the Parallel Web Systems Chat API and Extract API, returning synthesized summaries with citations. Use for general web searches, research queries, fetching and extracting page content, or broad information gathering (requires PARALLEL_API_KEY). Part of the AlterLab Academic Skills suite.
+description: Search the web, run deep research, and extract URL content via the Parallel Web Systems Chat API (OpenAI-compatible) and Extract API, returning synthesized summaries with citations. Use for general web searches, current-events/market/technical lookups, comprehensive research reports, broad information gathering, or verifying a known URL's content (requires PARALLEL_API_KEY). NOT for scholarly paper retrieval (use research-lookup) or Scholar/PubMed database searches (use citation-management). Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 compatibility: PARALLEL_API_KEY required
@@ -222,12 +222,9 @@ python scripts/parallel_web.py extract "https://example.com/article" --objective
 
 ### Why Save Everything
 
-1. **Reproducibility**: Every claim in the final document can be traced back to its raw source material
-2. **Context Window Recovery**: If context is compacted mid-task, saved results can be re-read from `sources/`
-3. **Audit Trail**: The `sources/` folder provides complete transparency into how information was gathered
-4. **Reuse Across Sections**: Saved research can be referenced by multiple sections without duplicate API calls
-5. **Cost Efficiency**: Avoid redundant API calls by checking `sources/` for existing results
-6. **Peer Review Support**: Reviewers can verify the research backing every claim
+- **Reproducibility / audit / peer review**: every claim traces back to its raw source material.
+- **Context recovery**: if context is compacted mid-task, re-read saved results from `sources/`.
+- **Cost efficiency**: check `sources/` first to avoid redundant (paid) API calls and reuse results across sections.
 
 ### Logging
 
@@ -248,25 +245,17 @@ ls sources/  # Check existing saved results
 
 ---
 
-## Integration with Scientific Writer
+## Routing
 
-### Routing Table
+| Task | Tool |
+|------|------|
+| Web search, current events, market/technical lookup | `parallel_web.py search` (this skill) |
+| Comprehensive research report | `parallel_web.py research --model core` (this skill) |
+| Citation verification / DOI metadata from a known URL | `parallel_web.py extract` (this skill) |
+| Scholarly paper retrieval (peer-reviewed journals to cite) | `research-lookup` (routes to Perplexity) |
+| Google Scholar / PubMed / CrossRef database search | `citation-management` |
 
-| Task | Tool | Command |
-|------|------|---------|
-| Web search (any) | `parallel_web.py search` | `python scripts/parallel_web.py search "query" -o sources/search_<topic>.md` |
-| Deep research | `parallel_web.py research` | `python scripts/parallel_web.py research "query" -o sources/research_<topic>.md` |
-| Citation verification | `parallel_web.py extract` | `python scripts/parallel_web.py extract "url" -o sources/extract_<source>.md` |
-| Academic paper search | `research_lookup.py` | Routes to Perplexity sonar-pro-search |
-| DOI/metadata lookup | `parallel_web.py extract` | Extract from DOI URLs (verification) |
-
-### When Writing Scientific Documents
-
-1. **Before writing any section**, use `search` or `research` to gather background information — **save results to `sources/`**
-2. **For academic citations**, use `research-lookup` (which routes academic queries to Perplexity) — **save results to `sources/`**
-3. **For citation verification** (confirming a specific URL), use `parallel_web.py extract` — **save results to `sources/`**
-4. **For current market/industry data**, use `parallel_web.py research --model core` — **save results to `sources/`**
-5. **Before any new query**, check `sources/` for existing results to avoid duplicate API calls
+When writing scientific documents: gather background with `search`/`research` before drafting a section, verify any specific URL with `extract`, and route purely academic paper searches to `research-lookup`. Always check `sources/` first and save every result back (see above).
 
 ---
 
@@ -276,11 +265,14 @@ ls sources/  # Check existing saved results
 # Required: Set your Parallel API key
 export PARALLEL_API_KEY="your_api_key_here"
 
-# Required Python packages
-pip install openai        # For Chat API (search/research)
-pip install parallel-web  # For Extract API (verification only)
+# Required Python packages (uv is the toolchain on this machine)
+uv pip install openai        # For Chat API (search/research)
+uv pip install parallel-web  # For Extract API (verification only)
+# Or run the script ad hoc without a venv:
+#   uv run --with openai --with parallel-web scripts/parallel_web.py search "query"
 ```
 
+The `parallel-web` PyPI package installs as the `parallel` import module (used only by `extract`).
 Get your API key at https://platform.parallel.ai
 
 ---
@@ -299,17 +291,17 @@ The script handles errors gracefully and returns structured error responses:
 
 **Common issues:**
 - `PARALLEL_API_KEY not set`: Set the environment variable
-- `openai not installed`: Run `pip install openai`
-- `parallel-web not installed`: Run `pip install parallel-web` (only needed for extract)
+- `openai not installed`: Run `uv pip install openai`
+- `parallel-web not installed`: Run `uv pip install parallel-web` (only needed for extract)
 - `Rate limit exceeded`: Wait and retry (default: 300 req/min for Chat API)
 
 ---
 
 ## Complementary Skills
 
+See the Routing table above for `research-lookup` (scholarly papers) and `citation-management` (Scholar/PubMed/CrossRef). Also:
+
 | Skill | Use For |
 |-------|---------|
-| `research-lookup` | Academic paper searches (routes to Perplexity for scholarly queries) |
-| `citation-management` | Google Scholar, PubMed, CrossRef database searches |
 | `literature-review` | Systematic literature reviews across academic databases |
 | `scientific-schematics` | Generate diagrams from research findings |

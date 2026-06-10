@@ -257,41 +257,30 @@ adata_combined = ad.concat([adata1, adata2], uns_merge='unique')
 
 ## Lazy Concatenation (AnnCollection)
 
-For very large datasets, use lazy concatenation that doesn't load all data:
+For very large datasets, wrap several AnnData objects in a virtual collection
+that behaves like one big dataset without concatenating in memory. Open each
+file `backed='r'` so X stays on disk until a batch is sliced. `AnnCollection`
+takes AnnData objects (not raw path strings).
 
 ```python
+import anndata as ad
 from anndata.experimental import AnnCollection
 
-# Create collection from file paths (doesn't load data)
-files = ['data1.h5ad', 'data2.h5ad', 'data3.h5ad']
-collection = AnnCollection(
-    files,
-    join_obs='outer',
-    join_vars='inner',
-    label='dataset',
-    keys=['dataset1', 'dataset2', 'dataset3']
-)
+# Open backed, then wrap (data not loaded yet)
+adatas = [ad.read_h5ad(p, backed='r') for p in ['data1.h5ad', 'data2.h5ad', 'data3.h5ad']]
+collection = AnnCollection(adatas)
 
-# Access data lazily
-print(collection.n_obs)  # Total observations
-print(collection.obs.head())  # Metadata loaded, not X
+# Access metadata and slice lazily
+print(len(collection))           # total observations
+print(collection.obs.head())     # concatenated obs, X not loaded
 
-# Convert to regular AnnData when needed (loads all data)
-adata = collection.to_adata()
+batch = collection[10:20]        # materializes just this slice
+print(batch.X.shape)
 ```
 
-### Working with AnnCollection
-```python
-# Subset without loading data
-subset = collection[collection.obs['cell_type'] == 'T cell']
-
-# Iterate through datasets
-for adata in collection:
-    print(adata.shape)
-
-# Access specific dataset
-first_dataset = collection[0]
-```
+`AnnCollection` is also the multi-file backend for `AnnLoader` (PyTorch
+mini-batch training). For an eagerly concatenated object, use `ad.concat`
+instead.
 
 ## Concatenation on Disk
 
@@ -300,11 +289,13 @@ For datasets too large for memory, concatenate directly on disk:
 ```python
 from anndata.experimental import concat_on_disk
 
-# Concatenate without loading into memory
+# Concatenate without loading into memory; output path is the `out_file` kwarg.
+# Pass a mapping to also inject batch keys via `label`.
 concat_on_disk(
-    ['data1.h5ad', 'data2.h5ad', 'data3.h5ad'],
-    'combined.h5ad',
-    join='outer'
+    {'b1': 'data1.h5ad', 'b2': 'data2.h5ad', 'b3': 'data3.h5ad'},
+    out_file='combined.h5ad',
+    label='batch',
+    join='outer',
 )
 
 # Load result in backed mode

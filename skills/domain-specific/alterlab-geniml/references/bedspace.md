@@ -41,9 +41,11 @@ The preprocessing step adds `__label__` prefixes to metadata and converts region
 
 Execute StarSpace model on preprocessed data:
 
+The StarSpace path flag is `-s` / `--path-to-starsapce` (the geniml CLI literally misspells "starspace" as "starsapce"). Verified flags: `-s`, `-i/--input`, `-n/--epochs`, `-d/--dim`, `-l/--lr`, `-o/--output`.
+
 ```bash
 geniml bedspace train \
-  --path-to-starspace /path/to/starspace \
+  -s /path/to/starspace \
   --input preprocessed.txt \
   --output model/ \
   --dim 100 \
@@ -58,54 +60,44 @@ geniml bedspace train \
 
 ### 3. Distances
 
-Compute distance metrics between region sets and metadata labels:
+Compute distances between region sets and labels. This command takes the trained model (`-i`), the StarSpace path (`-s`), train/test metadata (`--metadata-train` / `--metadata-test`), the universe, the data files (`-f`), and the label string (`-l`):
 
 ```bash
 geniml bedspace distances \
-  --input model/ \
-  --metadata labels.csv \
-  --universe universe.bed \
-  --output distances.pkl
+  -i model/ \
+  -s /path/to/starspace \
+  --metadata-train train.csv \
+  --metadata-test test.csv \
+  -u universe.bed \
+  -f regions/ \
+  -l "cell_type" \
+  -o distances/
 ```
 
-This step creates a distance matrix needed for similarity searches.
+This step creates the distance data needed for similarity searches.
 
 ### 4. Search
 
-Retrieve similar items across three scenarios:
+Retrieve similar items across three scenarios. **The query is a positional argument (last), not a `-q` flag.** `-t` is the search type, `-d` the distances file, `-n` the number of results.
 
-**Region-to-Label (r2l)**: Query region set → retrieve similar metadata labels
+**Region-to-Label (r2l)**: query region set → similar metadata labels
 ```bash
-geniml bedspace search -t r2l -d distances.pkl -q query_regions.bed -n 10
+geniml bedspace search -t r2l -d distances.pkl -n 10 query_regions.bed
 ```
 
-**Label-to-Region (l2r)**: Query metadata label → retrieve similar region sets
+**Label-to-Region (l2r)**: query metadata label → similar region sets
 ```bash
-geniml bedspace search -t l2r -d distances.pkl -q "T_cell" -n 10
+geniml bedspace search -t l2r -d distances.pkl -n 10 "T_cell"
 ```
 
-**Region-to-Region (r2r)**: Query region set → retrieve similar region sets
+**Region-to-Region (r2r)**: query region set → similar region sets
 ```bash
-geniml bedspace search -t r2r -d distances.pkl -q query_regions.bed -n 10
+geniml bedspace search -t r2r -d distances.pkl -n 10 query_regions.bed
 ```
 
-The `-n` parameter controls the number of results returned.
+## API note
 
-## Python API
-
-```python
-from geniml.bedspace import BEDSpaceModel
-
-# Load trained model
-model = BEDSpaceModel.load('model/')
-
-# Query similar items
-results = model.search(
-    query="T_cell",
-    search_type="l2r",
-    top_k=10
-)
-```
+BEDspace is driven entirely through the `geniml bedspace` CLI (it orchestrates the external StarSpace binary). There is no public `BEDSpaceModel` Python class to import; script the workflow via `subprocess` if needed.
 
 ## Best Practices
 

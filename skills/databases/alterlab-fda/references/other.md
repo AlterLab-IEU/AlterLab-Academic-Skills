@@ -469,4 +469,4 @@ The FDA Unique Ingredient Identifier (UNII) system provides:
 - UNII Search: https://precision.fda.gov/uniisearch
 - OpenFDA Other APIs: https://open.fda.gov/apis/other/
 - API Basics: See `api_basics.md` in this references directory
-- Python examples: See `scripts/fda_substance_query.py`
+- Python helper: See `scripts/fda_query.py` (the `FDAQuery` class) and `scripts/fda_examples.py`

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Perplexity Search via LitLLM and OpenRouter
+Perplexity Search via LiteLLM and OpenRouter
 
 This script performs AI-powered web searches using Perplexity models through
 LiteLLM and OpenRouter. It provides real-time, grounded answers with source citations.
@@ -170,7 +170,7 @@ Available Models:
 
     parser.add_argument(
         "--model",
-        default="sonar-pro",
+        default=os.environ.get("DEFAULT_MODEL", "sonar-pro"),
         choices=[
             "sonar-pro",
             "sonar-pro-search",
@@ -178,21 +178,21 @@ Available Models:
             "sonar-reasoning-pro",
             "sonar-reasoning"
         ],
-        help="Perplexity model to use (default: sonar-pro)"
+        help="Perplexity model to use (default: sonar-pro, or $DEFAULT_MODEL)"
     )
 
     parser.add_argument(
         "--max-tokens",
         type=int,
-        default=4000,
-        help="Maximum tokens in response (default: 4000)"
+        default=int(os.environ.get("DEFAULT_MAX_TOKENS", "4000")),
+        help="Maximum tokens in response (default: 4000, or $DEFAULT_MAX_TOKENS)"
     )
 
     parser.add_argument(
         "--temperature",
         type=float,
-        default=0.2,
-        help="Response temperature 0.0-1.0 (default: 0.2)"
+        default=float(os.environ.get("DEFAULT_TEMPERATURE", "0.2")),
+        help="Response temperature 0.0-1.0 (default: 0.2, or $DEFAULT_TEMPERATURE)"
     )
 
     parser.add_argument(

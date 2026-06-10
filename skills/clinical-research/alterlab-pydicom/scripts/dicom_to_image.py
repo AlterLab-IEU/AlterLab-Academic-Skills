@@ -25,7 +25,10 @@ except ImportError as e:
 def apply_windowing(pixel_array, ds):
     """Apply VOI LUT windowing if available."""
     try:
-        from pydicom.pixel_data_handlers.util import apply_voi_lut
+        try:
+            from pydicom.pixels import apply_voi_lut  # pydicom >= 3.0
+        except ImportError:
+            from pydicom.pixel_data_handlers.util import apply_voi_lut  # pydicom 2.x
         return apply_voi_lut(pixel_array, ds)
     except (ImportError, AttributeError):
         return pixel_array
@@ -85,7 +88,10 @@ def convert_dicom_to_image(input_path, output_path, image_format='PNG',
             if ds.PhotometricInterpretation in ['YBR_FULL', 'YBR_FULL_422']:
                 # Convert from YBR to RGB
                 try:
-                    from pydicom.pixel_data_handlers.util import convert_color_space
+                    try:
+                        from pydicom.pixels import convert_color_space  # pydicom >= 3.0
+                    except ImportError:
+                        from pydicom.pixel_data_handlers.util import convert_color_space  # pydicom 2.x
                     pixel_array = convert_color_space(pixel_array,
                                                      ds.PhotometricInterpretation, 'RGB')
                 except ImportError:

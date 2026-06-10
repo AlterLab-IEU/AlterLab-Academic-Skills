@@ -278,13 +278,15 @@ data = pd.DataFrame({
 
 # Set style
 sns.set_style('ticks')
-sns.set_palette(['#0072B2', '#E69F00', '#009E73'])
 
 fig, ax = plt.subplots(figsize=(3.5, 3))
 
 # Create violin plot
+# seaborn >=0.13: color by category via hue + legend=False
+# (a bare palette without hue is deprecated and removed in v0.14)
 sns.violinplot(data=data, x='condition', y='value', ax=ax,
-               inner='box', linewidth=0.8)
+               hue='condition', palette=['#0072B2', '#E69F00', '#009E73'],
+               legend=False, inner='box', linewidth=0.8)
 
 # Add strip plot
 sns.stripplot(data=data, x='condition', y='value', ax=ax,

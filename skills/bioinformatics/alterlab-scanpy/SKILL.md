@@ -147,13 +147,15 @@ sc.tl.tsne(adata)
 ### 4. Clustering
 
 ```python
-# Leiden clustering (recommended)
-sc.tl.leiden(adata, resolution=0.5)
+# Leiden clustering (recommended). Pass flavor='igraph' (the future default) +
+# n_iterations=2 — the bare call emits a FutureWarning and uses the slow backend.
+sc.tl.leiden(adata, resolution=0.5, flavor='igraph', n_iterations=2)
 sc.pl.umap(adata, color='leiden', legend_loc='on data')
 
 # Try multiple resolutions to find optimal granularity
 for res in [0.3, 0.5, 0.8, 1.0]:
-    sc.tl.leiden(adata, resolution=res, key_added=f'leiden_{res}')
+    sc.tl.leiden(adata, resolution=res, flavor='igraph', n_iterations=2,
+                 key_added=f'leiden_{res}')
 ```
 
 ### 5. Marker Gene Identification
@@ -301,7 +303,7 @@ sc.pp.combat(adata, key='batch')
 
 1. **Always save raw counts**: `adata.raw = adata` before filtering genes
 2. **Check QC plots carefully**: Adjust thresholds based on dataset quality
-3. **Use Leiden over Louvain**: More efficient and better results
+3. **Use Leiden with `flavor='igraph'`**: The future default and far faster than Louvain or the legacy `leidenalg` backend — `pip`/`uv` install the `igraph` package (not bundled with scanpy)
 4. **Try multiple clustering resolutions**: Find optimal granularity
 5. **Validate cell type annotations**: Use multiple marker genes
 6. **Use `use_raw=True` for gene expression plots**: Shows original counts

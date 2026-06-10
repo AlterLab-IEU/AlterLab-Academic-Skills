@@ -245,7 +245,8 @@ G_directed = G.to_directed()
 
 ### Basic Information
 ```python
-print(nx.info(G))   # Summary of graph structure
+# nx.info() was removed in NetworkX 3.0; print the graph for a summary
+print(G)            # e.g. 'Graph with 34 nodes and 78 edges'
 
 # Density (ratio of actual edges to possible edges)
 nx.density(G)

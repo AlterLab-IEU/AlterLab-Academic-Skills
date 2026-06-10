@@ -217,42 +217,50 @@ After obtaining a Pareto front, MCDM helps select preferred solution(s).
 ### MCDM Methods in Pymoo
 
 #### 1. Pseudo-Weights
-**Concept:** Weight each objective, select solution minimizing weighted sum
-**Formula:** `score = w1*f1 + w2*f2 + ... + wM*fM`
+**Concept:** For each solution, pymoo computes a *pseudo-weight* vector — the
+normalized distance from the nadir point per objective (a high value on objective
+*i* means the solution is good on *i*). It then returns the solution whose
+pseudo-weight vector is closest (L1) to your target `weights`. This is **not** a
+weighted-sum scalarization; it picks the point that best matches the requested
+trade-off proportions. The indicator normalizes internally with the front's
+ideal/nadir, so you do not need to pre-normalize `F`.
 
 **Usage:**
 ```python
 from pymoo.mcdm.pseudo_weights import PseudoWeights
 
-# Define weights (must sum to 1)
-weights = np.array([0.3, 0.7])  # 30% weight on f1, 70% on f2
+# Target trade-off proportions (should sum to 1)
+weights = np.array([0.3, 0.7])  # want a solution ~30% biased to f1, 70% to f2
 
 dm = PseudoWeights(weights)
-best_idx = dm.do(result.F)
+best_idx = dm.do(result.F)        # returns a single integer index
 best_solution = result.X[best_idx]
 ```
 
 **When to use:**
 - Clear preference articulation available
-- Objectives commensurable
-- Linear trade-offs acceptable
+- Want a solution matching a target trade-off ratio
 
 **Limitations:**
 - Requires weight specification
-- Linear assumption may not capture preferences
-- Sensitive to objective scaling
+- Reflects relative objective standing, not absolute values
+- A target weight may have no exactly matching solution on the front
 
 #### 2. Compromise Programming
-**Concept:** Select solution closest to ideal point
-**Metric:** Distance to ideal (e.g., Euclidean, Tchebycheff)
+**Concept:** Select solution closest to the ideal point under a distance metric.
+**Metric:** Distance to ideal (`metric="euclidean"` by default; passed to the constructor, not to `do`).
 
-**Usage:**
 ```python
 from pymoo.mcdm.compromise_programming import CompromiseProgramming
 
-dm = CompromiseProgramming()
-best_idx = dm.do(result.F, ideal=ideal_point, nadir=nadir_point)
+dm = CompromiseProgramming(metric="euclidean")
+best_idx = dm.do(result.F)   # bounds are estimated from F automatically
 ```
+
+> Caveat: in pymoo 0.6.1.x `CompromiseProgramming._do` is incomplete and may return
+> `None` for the selected index. For a robust "closest-to-ideal" pick, do it directly:
+> normalize `F`, then `best_idx = np.argmin(np.linalg.norm(F_norm, axis=1))`.
+> For preference- or knee-based selection prefer `PseudoWeights` / `HighTradeoffPoints`.
 
 **When to use:**
 - Ideal objective values known or estimable
@@ -313,15 +321,15 @@ plot.show()
 
 ### Advanced MCDM Techniques
 
-#### Knee Point Detection
-**Concept:** Solutions where small improvement in one objective causes large degradation in others
+#### Knee / High-Tradeoff Point Detection
+**Concept:** Solutions where a small improvement in one objective causes a large degradation in others — "knees" of the front.
 
 **Usage:**
 ```python
-from pymoo.mcdm.knee import KneePoint
+from pymoo.mcdm.high_tradeoff import HighTradeoffPoints
 
-km = KneePoint()
-knee_idx = km.do(result.F)
+dm = HighTradeoffPoints()       # epsilon controls sensitivity (default 0.125)
+knee_idx = dm.do(result.F)      # returns array of indices (or None if none found)
 knee_solutions = result.X[knee_idx]
 ```
 
@@ -330,20 +338,33 @@ knee_solutions = result.X[knee_idx]
 - Balanced trade-offs desired
 - Convex Pareto fronts
 
+> Note: in pymoo 0.6.x the knee-point selector lives in `pymoo.mcdm.high_tradeoff`
+> as `HighTradeoffPoints` — there is no `pymoo.mcdm.knee` module.
+
 #### Hypervolume Contribution
 **Concept:** Select solutions contributing most to hypervolume
 **Use case:** Maintain diverse subset of solutions
 
-**Usage:**
+**Usage:** pymoo's `HV` indicator (0.6.x) exposes only `do(F)`, which returns the
+hypervolume of a *set*. Per-point contribution is the leave-one-out drop in HV:
+
 ```python
+import numpy as np
 from pymoo.indicators.hv import HV
 
-hv = HV(ref_point=reference_point)
-hv_contributions = hv.calc_contributions(result.F)
+# ref_point must dominate (be worse than) every objective vector; e.g. nadir + margin
+ref_point = result.F.max(axis=0) + 0.1
+hv = HV(ref_point=ref_point)
+
+total = hv.do(result.F)
+contributions = np.array([
+    total - hv.do(np.delete(result.F, i, axis=0))
+    for i in range(len(result.F))
+])
 
 # Select top contributors
 top_k = 5
-top_indices = np.argsort(hv_contributions)[-top_k:]
+top_indices = np.argsort(contributions)[-top_k:]
 selected_solutions = result.X[top_indices]
 ```
 

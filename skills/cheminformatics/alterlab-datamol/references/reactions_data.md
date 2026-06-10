@@ -158,14 +158,17 @@ RDKit solubility dataset with train/test splits.
 - **Example**:
   ```python
   sol_df = dm.data.solubility(as_df=True)
+  # Columns: mol, ID, NAME, SOL, SOL_classification, smiles, split
+  # The numeric solubility target is the 'SOL' column.
 
   # Split into train/test
   train_df = sol_df[sol_df['split'] == 'train']
   test_df = sol_df[sol_df['split'] == 'test']
 
-  # Use for model development
-  X_train = dm.to_fp(train_df[mol_column])
-  y_train = train_df['solubility']
+  # Featurize: to_fp takes ONE mol, so stack per-row into a matrix.
+  import numpy as np
+  X_train = np.array([dm.to_fp(m) for m in train_df['mol']])
+  y_train = train_df['SOL'].values
   ```
 
 ### Usage Guidelines
@@ -192,14 +195,15 @@ sol_df = dm.data.solubility()
 train = sol_df[sol_df['split'] == 'train']
 test = sol_df[sol_df['split'] == 'test']
 
-# Featurization
-X_train = dm.to_fp(train['mol'])
-X_test = dm.to_fp(test['mol'])
+# Featurization: to_fp is per-molecule, so build the matrix row by row
+import numpy as np
+X_train = np.array([dm.to_fp(m) for m in train['mol']])
+X_test = np.array([dm.to_fp(m) for m in test['mol']])
 
-# Model training (example)
+# Model training (example) — 'SOL' is the numeric solubility target column
 from sklearn.ensemble import RandomForestRegressor
 model = RandomForestRegressor()
-model.fit(X_train, train['solubility'])
+model.fit(X_train, train['SOL'])
 predictions = model.predict(X_test)
 ```
 

@@ -6,7 +6,7 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
 ---
 
 # PyOpenMS
@@ -17,10 +17,10 @@ PyOpenMS provides Python bindings to the OpenMS library for computational mass s
 
 ## Installation
 
-Install using uv:
+Install using uv (pyOpenMS 3.x — examples here are verified against 3.5):
 
 ```bash
-uv pip install pyopenms
+uv pip install "pyopenms>=3.4"
 ```
 
 Verify installation:
@@ -29,6 +29,11 @@ Verify installation:
 import pyopenms
 print(pyopenms.__version__)
 ```
+
+> Version note: pyOpenMS 3.x removed the old `FeatureFinder` facade. Use
+> `FeatureFinderAlgorithmPicked` (the former `"centroided"` algorithm) or, for
+> metabolomics, the `MassTraceDetection` → `ElutionPeakDetection` →
+> `FeatureFindingMetabo` chain. See `references/feature_detection.md`.
 
 ## Core Capabilities
 
@@ -79,9 +84,14 @@ gaussian.filterExperiment(exp)
 Detect and link features across spectra and samples for quantitative analysis.
 
 ```python
-# Detect features
-ff = ms.FeatureFinder()
-ff.run("centroided", exp, features, params, ms.FeatureMap())
+# Detect features in centroided data (pyOpenMS 3.x API)
+ff = ms.FeatureFinderAlgorithmPicked()
+params = ff.getParameters()          # defaults for the "centroided" algorithm
+ff.setParameters(params)
+
+features = ms.FeatureMap()
+seeds = ms.FeatureMap()              # empty seeds = detect de novo
+ff.run(exp, features, params, seeds)
 ```
 
 **For complete workflows**: See `references/feature_detection.md`
@@ -95,14 +105,20 @@ Integrate with search engines and process identification results.
 Basic identification workflow:
 
 ```python
-# Load identification data
+# Load identification data.
+# pyOpenMS 3.x: protein_ids is a plain list, peptide_ids MUST be a
+# PeptideIdentificationList (a plain [] is rejected by load()).
 protein_ids = []
-peptide_ids = []
+peptide_ids = ms.PeptideIdentificationList()
 ms.IdXMLFile().load("identifications.idXML", protein_ids, peptide_ids)
 
-# Apply FDR filtering
+# Compute q-values (target-decoy FDR), then filter at 1%.
+# fdr.apply() requires target/decoy hits annotated with a 'target_decoy'
+# meta value (run PeptideIndexer on a concatenated target-decoy search first).
 fdr = ms.FalseDiscoveryRate()
-fdr.apply(peptide_ids)
+fdr.apply(peptide_ids)               # rewrites scores to q-values (lower = better)
+ms.IDFilter().filterHitsByScore(peptide_ids, 0.01)
+ms.IDFilter().removeEmptyIdentifications(peptide_ids)
 ```
 
 **For detailed workflows**: See `references/identification.md`

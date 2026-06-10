@@ -6,7 +6,7 @@ This document covers additional protocols.io API features including user profile
 
 ## Base URL
 
-All endpoints use the base URL: `https://protocols.io/api/v3`
+All endpoints use the base URL: `https://www.protocols.io/api/v3`
 
 ## User Profile Management
 
@@ -29,7 +29,7 @@ Retrieve the authenticated user's profile information.
 **Example Request:**
 ```bash
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  "https://protocols.io/api/v3/profile"
+  "https://www.protocols.io/api/v3/profile"
 ```
 
 ### Update User Profile
@@ -59,7 +59,7 @@ curl -X PATCH \
     "bio": "Researcher specializing in CRISPR gene editing and molecular biology",
     "orcid": "0000-0001-2345-6789"
   }' \
-  "https://protocols.io/api/v3/profile"
+  "https://www.protocols.io/api/v3/profile"
 ```
 
 ### Upload Profile Image
@@ -101,7 +101,7 @@ Discover recently published public protocols.
 **Example Request:**
 ```bash
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  "https://protocols.io/api/v3/publications?category=molecular-biology&date_from=2025-01-01&order_field=published_on&order_dir=desc"
+  "https://www.protocols.io/api/v3/publications?category=molecular-biology&date_from=2025-01-01&order_field=published_on&order_dir=desc"
 ```
 
 **Use Cases:**
@@ -150,7 +150,7 @@ curl -X POST \
     "modifications": "Extended incubation time in step 3 from 30 min to 45 min",
     "results": "Flow cytometry confirmed 87% GFP+ cells after 72h. Western blot showed complete knockout in positive population."
   }' \
-  "https://protocols.io/api/v3/protocols/12345/runs"
+  "https://www.protocols.io/api/v3/protocols/12345/runs"
 ```
 
 ### List Experiment Records
@@ -215,7 +215,7 @@ Retrieve notifications for the authenticated user.
 **Example Request:**
 ```bash
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  "https://protocols.io/api/v3/notifications?read=false&type=comment"
+  "https://www.protocols.io/api/v3/notifications?read=false&type=comment"
 ```
 
 ### Mark Notification as Read
@@ -264,7 +264,7 @@ Export all protocols and workspace data from an organization.
 **Example Request:**
 ```bash
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  "https://protocols.io/api/v3/organizations/12345/export?format=json&include_files=true&include_comments=true"
+  "https://www.protocols.io/api/v3/organizations/12345/export?format=json&include_files=true&include_comments=true"
 ```
 
 ## Common Integration Patterns
@@ -276,7 +276,7 @@ Build a protocol discovery workflow:
 ```python
 # Search for relevant protocols
 response = requests.get(
-    'https://protocols.io/api/v3/publications',
+    'https://www.protocols.io/api/v3/publications',
     headers={'Authorization': f'Bearer {token}'},
     params={'key': 'CRISPR', 'category': 'molecular-biology'}
 )
@@ -285,7 +285,7 @@ response = requests.get(
 for protocol in response.json()['items']:
     # Get full details
     details = requests.get(
-        f'https://protocols.io/api/v3/protocols/{protocol["id"]}',
+        f'https://www.protocols.io/api/v3/protocols/{protocol["id"]}',
         headers={'Authorization': f'Bearer {token}'}
     )
     # Import to local system

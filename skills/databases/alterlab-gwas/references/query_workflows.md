@@ -4,9 +4,9 @@ Step-by-step workflows for disease-, variant-, and gene-centric queries, systema
 
 ## Workflow 1: Exploring Genetic Associations for a Disease
 
-1. **Identify the trait** using EFO terms or free text:
-   - Search web interface for disease name
-   - Note the EFO ID (e.g., EFO_0001360 for type 2 diabetes)
+1. **Identify the trait** using ontology terms or free text:
+   - Search web interface or `/efoTraits/search/findByTrait?trait=...` for the disease name
+   - Note the current short-form (e.g., MONDO_0005148 for type 2 diabetes on the main REST API). Legacy EFO ids like EFO_0001360 may 404 on the main API but are still used by the Summary Statistics API — see the trait-ID gotcha in SKILL.md.
 
 2. **Query associations via API:**
    ```python

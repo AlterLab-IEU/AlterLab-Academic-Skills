@@ -164,7 +164,9 @@ sns.boxplot(
     x='treatment',
     y='response',
     order=['Control', 'Low', 'Medium', 'High'],
+    hue='treatment',          # assign hue to use a palette (palette-without-hue removed in 0.14)
     palette='Set2',
+    legend=False,
     ax=ax
 )
 
@@ -589,7 +591,7 @@ sns.pointplot(
     y='measurement',
     color='red',
     markers='D',
-    scale=1.5,
+    markersize=10,   # 'scale' was removed; size via matplotlib Line2D kwargs
     errorbar=('ci', 95),
     capsize=0.2,
     ax=axes[0]
@@ -646,7 +648,7 @@ sns.pointplot(
     order=sorted(dose_df['dose'].unique()),
     color='blue',
     markers='o',
-    scale=1.2,
+    markersize=9,    # 'scale' was removed; size via matplotlib Line2D kwargs
     errorbar=('ci', 95),
     capsize=0.1,
     ax=ax

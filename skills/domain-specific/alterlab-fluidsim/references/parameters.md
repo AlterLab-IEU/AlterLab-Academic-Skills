@@ -75,13 +75,7 @@ params.time_stepping.type_time_scheme = "RK4"  # or "RK2", "Euler"
 params.init_fields.type = "noise"  # initialization method
 ```
 
-**Available types**:
-- `"noise"`: Random noise
-- `"dipole"`: Vortex dipole
-- `"vortex"`: Single vortex
-- `"taylor_green"`: Taylor-Green vortex
-- `"from_file"`: Load from file
-- `"in_script"`: Define in script
+**Available types (ns2d)**: `"constant"`, `"noise"`, `"jet"`, `"dipole"`, `"from_file"`, `"from_simul"`, `"in_script"`. Available types vary by solver — there is no built-in `"taylor_green"` init type; seed it via `"in_script"` (see below). Setting an unsupported type raises an error, so check the solver's `params.init_fields` for valid values.
 
 #### From File
 
@@ -98,14 +92,16 @@ params.init_fields.type = "in_script"
 # Define initialization after creating sim
 sim = Simul(params)
 
-# Access state fields
-vx = sim.state.state_phys.get_var("vx")
-vy = sim.state.state_phys.get_var("vy")
-
-# Set fields
+# Build physical-space fields
 X, Y = sim.oper.get_XY_loc()
-vx[:] = np.sin(X) * np.cos(Y)
-vy[:] = -np.cos(X) * np.sin(Y)
+vx = np.sin(X) * np.cos(Y)
+vy = -np.cos(X) * np.sin(Y)
+
+# Set the physical state, then compute spectral FROM physical.
+# (statephys_from_statespect goes the OTHER way and would overwrite
+# the fields you just set with the empty spectral state.)
+sim.state.init_statephys_from(vx=vx, vy=vy)
+sim.state.statespect_from_statephys()
 
 # Run simulation
 sim.time_stepping.start()

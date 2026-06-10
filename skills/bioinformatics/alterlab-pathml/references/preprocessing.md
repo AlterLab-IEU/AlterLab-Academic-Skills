@@ -10,6 +10,8 @@ PathML provides a modular preprocessing architecture based on composable transfo
 
 The `Pipeline` class composes a sequence of transforms applied consecutively:
 
+A `Pipeline` is a reusable, serializable list of transforms. You apply it by passing it to a slide's or dataset's `run()` method (the slide/dataset drives execution, not the pipeline):
+
 ```python
 from pathml.preprocessing import Pipeline, Transform1, Transform2
 
@@ -21,10 +23,10 @@ pipeline = Pipeline([
 ])
 
 # Run on a single slide
-pipeline.run(slide_data)
+slide_data.run(pipeline)
 
-# Run on a dataset
-pipeline.run(dataset, distributed=True, n_workers=8)
+# Run on a dataset (parallelized via a Dask client)
+dataset.run(pipeline, client=client)
 ```
 
 **Key features:**
@@ -242,34 +244,37 @@ Normalize H&E staining across slides to account for variations in staining proce
 ```python
 from pathml.preprocessing import StainNormalizationHE
 
-# Normalize to reference slide
+# Normalize to reference stain vectors
 transform = StainNormalizationHE(
-    target='normalize',  # 'normalize', 'hematoxylin', or 'eosin'
-    stain_estimation_method='macenko',  # 'macenko' or 'vahadane'
-    tissue_mask_name=None  # Optional tissue mask for better estimation
+    target="normalize",  # "normalize", "hematoxylin", or "eosin"
+    stain_estimation_method="macenko",  # "macenko" or "vahadane"
 )
 ```
 
 **Target modes:**
-- `'normalize'` - Normalize both stains to reference
-- `'hematoxylin'` - Extract hematoxylin channel only
-- `'eosin'` - Extract eosin channel only
+- `"normalize"` - Normalize both stains to reference
+- `"hematoxylin"` - Extract hematoxylin channel only
+- `"eosin"` - Extract eosin channel only
 
 **Stain estimation methods:**
-- `'macenko'` - Macenko et al. 2009 method (faster, more stable)
-- `'vahadane'` - Vahadane et al. 2016 method (more accurate, slower)
+- `"macenko"` - Macenko et al. 2009 method (faster, more stable)
+- `"vahadane"` - Vahadane et al. 2016 method (more accurate, slower)
 
-**Advanced parameters:**
+**Other documented parameters** (confirm against the API docs for your version):
 ```python
 transform = StainNormalizationHE(
-    target='normalize',
-    stain_estimation_method='macenko',
-    target_od=None,  # Optical density matrix for reference (optional)
-    target_concentrations=None,  # Target stain concentrations (optional)
-    regularizer=0.1,  # Regularization for vahadane method
-    background_intensity=240  # Background intensity level
+    target="normalize",
+    stain_estimation_method="macenko",
+    optical_density_threshold=0.15,   # OD cutoff separating tissue from background
+    angular_percentile=0.01,          # robust percentile for stain-vector estimation
+    regularizer=0.01,                 # regularization for the vahadane method
+    background_intensity=245,          # assumed background intensity
+    stain_matrix_target_od=None,       # reference stain matrix in OD space (optional)
+    max_c_target=None,                 # reference max stain concentrations (optional)
 )
 ```
+
+Note: `StainNormalizationHE` does not take a `tissue_mask_name` argument; it estimates stain vectors from the tile's optical-density distribution.
 
 **Workflow:**
 1. Convert RGB to optical density (OD)
@@ -278,17 +283,16 @@ transform = StainNormalizationHE(
 4. Normalize to reference stain distribution
 5. Reconstruct normalized RGB image
 
-**Example with tissue mask:**
+**Example: detect tissue, then normalize:**
 ```python
 from pathml.preprocessing import Pipeline, TissueDetectionHE, StainNormalizationHE
 
 pipeline = Pipeline([
-    TissueDetectionHE(),  # Create tissue mask first
+    TissueDetectionHE(),  # creates the 'tissue' mask
     StainNormalizationHE(
-        target='normalize',
-        stain_estimation_method='macenko',
-        tissue_mask_name='tissue'  # Use tissue mask for better estimation
-    )
+        target="normalize",
+        stain_estimation_method="macenko",
+    ),
 ])
 ```
 
@@ -330,34 +334,34 @@ transform = LabelWhiteSpaceHE(
 ```python
 from pathml.preprocessing import SegmentMIF
 
-# Segment cells using Mesmer deep learning model
+# Segment cells using the DeepCell Mesmer model.
+# nuclear_channel / cytoplasm_channel are INTEGER indices into the
+# (collapsed) channel stack, not marker name strings.
 transform = SegmentMIF(
-    nuclear_channel='DAPI',  # Nuclear marker channel name
-    cytoplasm_channel='CD45',  # Cytoplasm marker channel name
-    model='mesmer',  # Deep learning segmentation model
-    image_resolution=0.5,  # Microns per pixel
-    compartment='whole-cell'  # 'nuclear', 'cytoplasm', or 'whole-cell'
+    model="mesmer",
+    nuclear_channel=0,        # e.g. index of DAPI
+    cytoplasm_channel=29,     # e.g. index of a membrane/cytoplasm marker
+    image_resolution=0.377,   # microns per pixel
 )
 ```
-- Uses DeepCell Mesmer model for cell segmentation
-- Requires nuclear and cytoplasm channel specification
-- Produces instance segmentation masks
+- Uses the DeepCell Mesmer model for whole-cell + nuclear segmentation
+- Channels are specified by integer index into the channel stack
+- Writes `cell_segmentation` and `nuclear_segmentation` masks
+- Fine-grained control is via `preprocess_kwargs`, `postprocess_kwargs_nuclear`, and `postprocess_kwargs_whole_cell` (there is no `compartment` argument)
 
 **SegmentMIFRemote:**
 ```python
 from pathml.preprocessing import SegmentMIFRemote
 
-# Remote inference using DeepCell API
+# Remote inference using the DeepCell Kiosk API (no local GPU)
 transform = SegmentMIFRemote(
-    nuclear_channel='DAPI',
-    cytoplasm_channel='CD45',
-    model='mesmer',
-    api_url='https://deepcell.org/api'
+    model="mesmer",
+    nuclear_channel=0,
+    cytoplasm_channel=29,
 )
 ```
-- Same functionality as SegmentMIF but uses remote API
-- No local GPU required
-- Suitable for batch processing
+- Same functionality as SegmentMIF but offloads inference to the DeepCell service
+- No local GPU required; suitable for batch processing
 
 ### Marker Quantification
 
@@ -365,16 +369,13 @@ transform = SegmentMIFRemote(
 ```python
 from pathml.preprocessing import QuantifyMIF
 
-# Quantify marker expression per cell
-transform = QuantifyMIF(
-    segmentation_mask_name='cell_segmentation',
-    markers=['CD3', 'CD4', 'CD8', 'CD20', 'CD45'],
-    output_format='anndata'  # or 'dataframe'
-)
+# Quantify marker expression per cell. The only argument is the name of
+# the segmentation mask produced by SegmentMIF.
+transform = QuantifyMIF(segmentation_mask="cell_segmentation")
 ```
-- Extracts mean marker intensity per segmented cell
-- Computes morphological features (area, perimeter, etc.)
-- Outputs AnnData object for downstream single-cell analysis
+- Extracts mean marker intensity per segmented cell across all channels
+- Computes per-cell spatial/morphology info
+- Writes an AnnData object to `slide.counts` for downstream single-cell analysis (read it back via `slide.counts`, or concatenate across a dataset with `anndata.concat([s.counts for s in dataset.slides], ...)`)
 
 ### CODEX/Vectra Specific
 
@@ -382,14 +383,11 @@ transform = QuantifyMIF(
 ```python
 from pathml.preprocessing import CollapseRunsCODEX
 
-# Consolidate multi-run CODEX data
-transform = CollapseRunsCODEX(
-    z_slice=2,  # Select specific z-slice
-    run_order=[0, 1, 2]  # Order of acquisition runs
-)
+# Consolidate a multi-cycle CODEX z-stack by selecting a focal plane.
+transform = CollapseRunsCODEX(z=0)  # 'z' selects the z-plane index
 ```
-- Merges channels from multiple CODEX acquisition runs
-- Selects focal plane from z-stacks
+- Collapses the CODEX z-stack/cycles into a single multi-channel image
+- `z` selects the focal plane (0-indexed)
 
 **CollapseRunsVectra:**
 ```python
@@ -448,23 +446,19 @@ from pathml.preprocessing import (
 )
 
 codex_pipeline = Pipeline([
-    # 1. Consolidate multi-run data
-    CollapseRunsCODEX(z_slice=2),
+    # 1. Collapse the z-stack
+    CollapseRunsCODEX(z=0),
 
-    # 2. Cell segmentation
+    # 2. Cell segmentation (integer channel indices)
     SegmentMIF(
-        nuclear_channel='DAPI',
-        cytoplasm_channel='CD45',
-        model='mesmer',
-        image_resolution=0.377
+        model="mesmer",
+        nuclear_channel=0,
+        cytoplasm_channel=29,
+        image_resolution=0.377,
     ),
 
-    # 3. Quantify markers
-    QuantifyMIF(
-        segmentation_mask_name='cell_segmentation',
-        markers=['CD3', 'CD4', 'CD8', 'CD20', 'PD1', 'PDL1'],
-        output_format='anndata'
-    )
+    # 3. Quantify markers -> writes AnnData to slide.counts
+    QuantifyMIF(segmentation_mask="cell_segmentation"),
 ])
 ```
 
@@ -509,68 +503,56 @@ advanced_pipeline = Pipeline([
 ### Single Slide Processing
 
 ```python
-from pathml.core import SlideData
+from pathml.core import HESlide
 
 # Load slide
-wsi = SlideData.from_slide("slide.svs")
+wsi = HESlide("slide.svs")
 
-# Generate tiles
-wsi.generate_tiles(level=1, tile_size=256, stride=256)
-
-# Run pipeline
-pipeline.run(wsi)
+# Run the pipeline. SlideData.run handles tiling internally; pass tiling
+# options through (e.g. tile_size / level) as supported by your version.
+wsi.run(pipeline, tile_size=256, tile_stride=256, level=1)
 
 # Access processed data
 for tile in wsi.tiles:
     normalized_image = tile.image
-    tissue_mask = tile.masks.get('tissue')
-    nucleus_mask = tile.masks.get('nucleus')
+    tissue_mask = tile.masks.get("tissue")
+    nucleus_mask = tile.masks.get("nucleus")
 ```
 
 ### Batch Processing with Distributed Execution
 
 ```python
-from pathml.core import SlideDataset
+from pathml.core import HESlide, SlideDataset
 from dask.distributed import Client
 import glob
 
 # Start Dask client
-client = Client(n_workers=8, threads_per_worker=2, memory_limit='4GB')
+client = Client(n_workers=8, threads_per_worker=2, memory_limit="4GB")
 
-# Create dataset
+# Create dataset from slide objects
 slide_paths = glob.glob("data/*.svs")
-dataset = SlideDataset(
-    slide_paths,
-    tile_size=512,
-    stride=512,
-    level=1
-)
+dataset = SlideDataset([HESlide(p) for p in slide_paths])
 
-# Run pipeline in parallel
-dataset.run(
-    pipeline,
-    distributed=True,
-    client=client
-)
+# Run pipeline in parallel (tiling options passed through to run())
+dataset.run(pipeline, client=client, tile_size=512, tile_stride=512, level=1)
 
-# Save results
-dataset.to_hdf5("processed_dataset.h5")
+# Persist results to h5path (one file per slide in the directory)
+dataset.write("processed/")
 
 client.close()
 ```
 
-### Conditional Pipeline Execution
+### Filtering Tiles After Processing
 
-Execute transforms only on tiles meeting specific criteria:
+Filter on masks produced by the pipeline (e.g. keep only tissue tiles):
 
 ```python
-# Filter tiles before processing
-wsi.generate_tiles(level=1, tile_size=256)
+wsi.run(pipeline, tile_size=256, level=1)
 
-# Run pipeline only on tissue tiles
-for tile in wsi.tiles:
-    if tile.masks.get('tissue') is not None:
-        pipeline.run(tile)
+tissue_tiles = [
+    tile for tile in wsi.tiles
+    if tile.masks.get("tissue") is not None and tile.masks["tissue"].any()
+]
 ```
 
 ## Performance Optimization
@@ -578,13 +560,15 @@ for tile in wsi.tiles:
 ### Memory Management
 
 ```python
+from pathml.core import HESlide, SlideDataset
+
 # Process large datasets in batches
 batch_size = 100
 for i in range(0, len(slide_paths), batch_size):
-    batch_paths = slide_paths[i:i+batch_size]
-    batch_dataset = SlideDataset(batch_paths)
-    batch_dataset.run(pipeline, distributed=True)
-    batch_dataset.to_hdf5(f"batch_{i}.h5")
+    batch_paths = slide_paths[i:i + batch_size]
+    batch_dataset = SlideDataset([HESlide(p) for p in batch_paths])
+    batch_dataset.run(pipeline, client=client)
+    batch_dataset.write(f"processed/batch_{i}/")
 ```
 
 ### GPU Acceleration

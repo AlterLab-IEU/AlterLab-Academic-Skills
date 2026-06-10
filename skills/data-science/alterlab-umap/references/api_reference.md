@@ -2,7 +2,9 @@
 
 ## UMAP Class
 
-`umap.UMAP(n_neighbors=15, n_components=2, metric='euclidean', n_epochs=None, learning_rate=1.0, init='spectral', min_dist=0.1, spread=1.0, low_memory=True, set_op_mix_ratio=1.0, local_connectivity=1.0, repulsion_strength=1.0, negative_sample_rate=5, transform_queue_size=4.0, a=None, b=None, random_state=None, metric_kwds=None, angular_rp_forest=False, target_n_neighbors=-1, target_metric='categorical', target_metric_kwds=None, target_weight=0.5, transform_seed=42, transform_mode='embedding', force_approximation_algorithm=False, verbose=False, unique=False, densmap=False, dens_lambda=2.0, dens_frac=0.3, dens_var_shift=0.1, output_dens=False, disconnection_distance=None, precomputed_knn=(None, None, None))`
+`umap.UMAP(n_neighbors=15, n_components=2, metric='euclidean', metric_kwds=None, output_metric='euclidean', output_metric_kwds=None, n_epochs=None, learning_rate=1.0, init='spectral', min_dist=0.1, spread=1.0, low_memory=True, n_jobs=-1, set_op_mix_ratio=1.0, local_connectivity=1.0, repulsion_strength=1.0, negative_sample_rate=5, transform_queue_size=4.0, a=None, b=None, random_state=None, angular_rp_forest=False, target_n_neighbors=-1, target_metric='categorical', target_metric_kwds=None, target_weight=0.5, transform_seed=42, transform_mode='embedding', force_approximation_algorithm=False, verbose=False, tqdm_kwds=None, unique=False, densmap=False, dens_lambda=2.0, dens_frac=0.3, dens_var_shift=0.1, output_dens=False, disconnection_distance=None, precomputed_knn=(None, None, None))`
+
+*(Signature verified against umap-learn 0.5.x.)*
 
 Find low-dimensional embedding that approximates the underlying manifold of the data.
 
@@ -119,6 +121,9 @@ Method for transforming new data:
 - `'graph'`: Use nearest neighbor graph
 
 ### Performance Parameters
+
+#### n_jobs (int, default: -1)
+Number of parallel jobs for nearest-neighbor search and other parallelizable steps. `-1` uses all cores. **Gotcha:** if `random_state` is set, UMAP forces `n_jobs=1` (single-threaded) for reproducibility and warns `"n_jobs value ... overridden to 1 by setting random_state. Use no seed for parallelism."` Leave `random_state=None` to keep multi-core speed during exploration; set the seed only for final reproducible runs.
 
 #### low_memory (bool, default: True)
 Whether to use a memory-efficient implementation. Set to False only if memory is not a constraint and you want faster performance.
@@ -499,11 +504,13 @@ reducer = umap.UMAP(
     random_state=42
 )
 
-embedding = reducer.fit_transform(data)
-
-# Access density estimates
-original_density = reducer.rad_orig_  # Density in original space
-embedded_density = reducer.rad_emb_   # Density in embedded space
+# NOTE: with output_dens=True, fit_transform returns a 3-tuple, not the
+# embedding alone — unpack it (verified, umap-learn 0.5.x):
+embedding, rad_orig, rad_emb = reducer.fit_transform(data)
+# rad_orig: log-radii (density proxy) in original space, shape (n_samples,)
+# rad_emb:  log-radii in the embedded space, shape (n_samples,)
+# The same values are also exposed as reducer.rad_orig_ / reducer.rad_emb_.
+# With the default output_dens=False, fit_transform returns just the embedding.
 ```
 
 ### Aligned UMAP for Time Series

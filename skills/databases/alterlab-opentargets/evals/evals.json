@@ -4,7 +4,7 @@
     {
       "id": "target-discovery-for-disease",
       "prompt": "I'm looking for therapeutic targets for Alzheimer's disease. Use Open Targets to give me the top genes ranked by association score, prioritizing genetic evidence.",
-      "expected_output": "Invokes alterlab-opentargets. Resolves Alzheimer disease to its EFO ID (EFO_0000249) via the search/GraphQL API, retrieves associated targets with their association scores, and ranks them, emphasizing genetic_association evidence per the target-prioritization strategy. Notes scores are relative rankings, not absolute confidence.",
+      "expected_output": "Invokes alterlab-opentargets. Resolves Alzheimer disease to its current ontology ID (MONDO_0004975) via the search/GraphQL API, retrieves associated targets with their association scores, and ranks them, emphasizing genetic_association evidence per the target-prioritization strategy. Notes scores are relative rankings, not absolute confidence.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "association score" },
@@ -24,7 +24,7 @@
     {
       "id": "target-disease-evidence",
       "prompt": "Show me the genetic association evidence behind the BRAF (ENSG00000157764) link to its associated disease in Open Targets — datasource, score, and supporting literature.",
-      "expected_output": "Invokes alterlab-opentargets. Queries target-disease evidence filtered to data_types=['genetic_association'], returning per-evidence datasourceId (e.g. gwas_catalog, clinvar), datatypeId, score (0-1), studyId, and associated literature.",
+      "expected_output": "Invokes alterlab-opentargets. Queries target-disease evidence narrowed to genetic association (via genetic_association datasource_ids such as gwas_catalog/clinvar, or by filtering returned rows on datatypeId), returning per-evidence datasourceId (e.g. gwas_catalog, clinvar), datatypeId, score (0-1), studyId, and associated literature.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "genetic_association" },

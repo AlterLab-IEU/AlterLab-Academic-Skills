@@ -13,10 +13,11 @@
     {
       "id": "high-confidence-gene-variants",
       "prompt": "Give me all pathogenic CFTR variants in ClinVar that have expert-panel or practice-guideline review, using the E-utilities API.",
-      "expected_output": "Invokes alterlab-clinvar to build an esearch query such as CFTR[gene] AND pathogenic[CLNSIG] AND (reviewed by expert panel[RVSTAT] OR practice guideline[RVSTAT]) against db=clinvar, returning the high-confidence (3-4 star) pathogenic variant set.",
+      "expected_output": "Invokes alterlab-clinvar to build an esearch query against db=clinvar using the correct ClinVar field tags, e.g. CFTR[gene] AND clinsig_pathogenic[Properties] AND (\"reviewed by expert panel\"[Review status] OR \"practice guideline\"[Review status]), returning the high-confidence (3-4 star) pathogenic variant set. Must NOT use the non-existent [CLNSIG]/[RVSTAT] tags, which silently fall back to [All Fields].",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "clinvar" }
+        { "type": "output_contains", "value": "[Review status]" },
+        { "type": "behavior", "value": "Filters review status through the [Review status] field and pathogenicity through clinsig_*[Properties], not via [CLNSIG] or [RVSTAT]." }
       ]
     },
     {

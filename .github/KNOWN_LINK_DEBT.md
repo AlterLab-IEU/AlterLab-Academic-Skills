@@ -13,7 +13,7 @@ URLs where the host systematically blocks or fails for CI runners, regardless of
 | `unicarbkb.org/*` | Invalid request format on HEAD from CI; probe-dependent 405 on desktop too. | 2026-04-21 | Host announces support for HEAD / link-checker bots |
 | `dicom.nema.org/*` | TCP connection reset when requested from GitHub Actions (Azure) runners; pages load in browser. | 2026-04-21 | GitHub runner network policy changes |
 | `console.cloud.google.com/marketplace/*` | HTTP/2 handshake errors against GCP marketplace pages from CI. | 2026-04-21 | lychee HTTP/2 behaviour improves |
-| `gnomad.broadinstitute.org/api` (GraphQL) | GraphQL endpoints return 400 on GET (accepted via `accept=[..., "400", ...]` but included here for traceability). | 2026-04-21 | — |
+| ~~`gnomad.broadinstitute.org/api` (GraphQL)~~ | RESOLVED 2026-06-08: the global `accept = 400` was removed because it masks broken API endpoints. Re-probing showed this URL returns **200** to lychee's HEAD/GET (it serves a GraphiQL playground), so it never needed a 400 exception. No exclusion required; left in normal checking. | 2026-04-21 | — |
 | `linkedin.com/*`, `x.com/*`, `twitter.com/*`, `t.co/*` | Aggressive anti-bot (999/403/451) regardless of accept config. | 2026-04-21 | — |
 | `iqtree.org/workshop/molevol2022*` | SSL certificate expired; content still useful as prose citation. | 2026-04-21 | Cert renewal |
 | `*.stlouisfed.org/*` | HTTP/2 handshake fails from GH Actions runners; alive from desktop. | 2026-04-21 | lychee / curl HTTP/2 improvements |

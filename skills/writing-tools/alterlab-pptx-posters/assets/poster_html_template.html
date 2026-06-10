@@ -12,17 +12,28 @@
    where they improve clarity.
 */
 
+/* Fix the printed/exported page to the poster size (36x48in portrait) with
+   zero margin, so print-to-PDF and chrome --headless export at full
+   dimensions instead of cropping to Letter/A4. Change size to match if you
+   resize the body below. */
+@page {
+  size: 36in 48in;
+  margin: 0;
+}
+
 html { background: #f0f4f8; }
 
 body {
-  width: 2592pt;
-  height: 3456pt;
+  width: 2592pt;   /* 36in x 72pt/in */
+  height: 3456pt;  /* 48in x 72pt/in */
   margin: 0;
   padding: 0;
   font-family: Arial, Helvetica, sans-serif;
   display: flex;
   flex-direction: column;
   background-color: #f7fafc;
+  -webkit-print-color-adjust: exact;   /* keep gradients/backgrounds in print */
+  print-color-adjust: exact;
 }
 
 .header {

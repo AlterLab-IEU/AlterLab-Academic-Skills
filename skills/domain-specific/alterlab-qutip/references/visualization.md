@@ -193,9 +193,10 @@ plt.show()
 ```python
 from qutip import QFunc
 
-# For calculating Q-function at many points
-qf = QFunc(rho)
-Q = qf.eval(xvec, xvec)
+# v5: construct QFunc with the phase-space grid, then call it on each state.
+# Reusing one QFunc instance across many states is much faster than qfunc().
+qf = QFunc(xvec, xvec)
+Q = qf(rho)
 ```
 
 ## Fock State Probability Distribution
@@ -282,12 +283,14 @@ H = sigmaz()
 
 fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
-matrix_histogram(H.full(), xlabels=['0', '1'], ylabels=['0', '1'],
+# v5: use bar_style ('real'/'img'/'abs'/'phase') and x_basis/y_basis
+# (the v4 bar_type / xlabels / ylabels kwargs were renamed).
+matrix_histogram(H.full(), x_basis=['0', '1'], y_basis=['0', '1'],
                  fig=fig, ax=axes[0])
 axes[0].set_title('Real Part')
 
-matrix_histogram(H.full(), bar_type='imag', xlabels=['0', '1'],
-                 ylabels=['0', '1'], fig=fig, ax=axes[1])
+matrix_histogram(H.full(), bar_style='img', x_basis=['0', '1'],
+                 y_basis=['0', '1'], fig=fig, ax=axes[1])
 axes[1].set_title('Imaginary Part')
 
 plt.tight_layout()
@@ -304,11 +307,11 @@ rho = coherent_dm(10, 2)
 fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
 # Absolute value
-matrix_histogram(rho.full(), bar_type='abs', fig=fig, ax=axes[0])
+matrix_histogram(rho.full(), bar_style='abs', fig=fig, ax=axes[0])
 axes[0].set_title('Absolute Value')
 
 # Phase
-matrix_histogram(rho.full(), bar_type='phase', fig=fig, ax=axes[1])
+matrix_histogram(rho.full(), bar_style='phase', fig=fig, ax=axes[1])
 axes[1].set_title('Phase')
 
 plt.tight_layout()
@@ -343,7 +346,9 @@ plt.show()
 Visualize quantum channel/gate action.
 
 ```python
-from qutip.qip.operations import cnot
+# Requires the separate qutip-qip package. In v5 gates live in qutip_qip,
+# not the removed in-tree qutip.qip module.
+from qutip_qip.operations import cnot
 from qutip_qip.tomography import qpt, qpt_plot_combined
 
 # Define process (e.g., CNOT gate)

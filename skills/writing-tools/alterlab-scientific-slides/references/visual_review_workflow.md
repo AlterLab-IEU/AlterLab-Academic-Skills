@@ -81,7 +81,7 @@ pip install pymupdf
 **Basic Conversion**:
 ```bash
 # Convert all slides to JPEG images
-python skills/scientific-slides/scripts/pdf_to_images.py presentation.pdf slide --dpi 150
+python scripts/pdf_to_images.py presentation.pdf slide --dpi 150
 
 # Creates: slide-001.jpg, slide-002.jpg, slide-003.jpg, ...
 ```
@@ -89,28 +89,28 @@ python skills/scientific-slides/scripts/pdf_to_images.py presentation.pdf slide 
 **High-Resolution Conversion**:
 ```bash
 # Higher quality for detailed inspection (300 DPI)
-python skills/scientific-slides/scripts/pdf_to_images.py presentation.pdf slide --dpi 300
+python scripts/pdf_to_images.py presentation.pdf slide --dpi 300
 
 # PNG format (lossless, larger files)
-python skills/scientific-slides/scripts/pdf_to_images.py presentation.pdf slide --dpi 150 --format png
+python scripts/pdf_to_images.py presentation.pdf slide --dpi 150 --format png
 ```
 
 **Convert Specific Slides**:
 ```bash
 # Slides 5-10 only
-python skills/scientific-slides/scripts/pdf_to_images.py presentation.pdf slide --dpi 150 --first 5 --last 10
+python scripts/pdf_to_images.py presentation.pdf slide --dpi 150 --first 5 --last 10
 
 # Single slide
-python skills/scientific-slides/scripts/pdf_to_images.py presentation.pdf slide --dpi 150 --first 3 --last 3
+python scripts/pdf_to_images.py presentation.pdf slide --dpi 150 --first 3 --last 3
 ```
 
 **Output Options**:
 ```bash
 # Different output directory
-python skills/scientific-slides/scripts/pdf_to_images.py presentation.pdf review/slide --dpi 150
+python scripts/pdf_to_images.py presentation.pdf review/slide --dpi 150
 
 # Custom naming
-python skills/scientific-slides/scripts/pdf_to_images.py presentation.pdf output/presentation --dpi 150
+python scripts/pdf_to_images.py presentation.pdf output/presentation --dpi 150
 ```
 
 ### Method 2: Using PowerPoint Thumbnail Script

@@ -65,29 +65,24 @@ def check_cysteines(sequence):
 
 **Purpose:** Fast solubility prediction for filtering sequences.
 
-**Method:** Machine learning model trained on E. coli expression data.
+**Method:** Transformer/ESM-based model predicting solubility and usability.
 
-**Usage:**
+**Access:** NetSolP is the DTU Health Tech web service (no `pip install netsolp` package
+exists). Submit via the web UI at `https://services.healthtech.dtu.dk/services/NetSolP-1.0/`,
+or run the downloadable model locally per DTU's instructions. The snippet below is a
+**sketch** of an HTTP call — confirm the actual request/response shape against the current
+service before relying on it.
+
 ```python
-# Install: uv pip install requests
+# Only requests is needed locally: uv pip install requests
 import requests
 
 def predict_solubility_netsolp(sequence):
-    """Predict protein solubility using NetSolP web service"""
-    url = "https://services.healthtech.dtu.dk/services/NetSolP-1.0/api/predict"
-
-    data = {
-        "sequence": sequence,
-        "format": "fasta"
-    }
-
-    response = requests.post(url, data=data)
+    """Sketch: submit a sequence to the NetSolP web service. Verify the real endpoint/payload."""
+    url = "https://services.healthtech.dtu.dk/services/NetSolP-1.0/"
+    # The live service is form/job based; treat this as a placeholder, not a working call.
+    response = requests.post(url, data={"sequence": sequence, "format": "fasta"})
     return response.json()
-
-# Example
-sequence = "MKVLWAALLGLLGAAA..."
-result = predict_solubility_netsolp(sequence)
-print(f"Solubility score: {result['score']}")
 ```
 
 **Interpretation:**
@@ -104,34 +99,26 @@ print(f"Solubility score: {result['score']}")
 
 **Purpose:** Advanced solubility prediction with higher accuracy.
 
-**Method:** Deep learning model incorporating sequence and structural features.
+**Method:** Gradient-boosting model on sequence-derived features (soluble expression in E. coli).
 
-**Usage:**
+**Access:** SoluProt is a Loschmidt Laboratories web server
+(`https://loschmidt.chemi.muni.cz/soluprot/`) — there is no `pip install soluprot` package.
+Submit sequences via the web UI (or its batch interface) and read the returned scores. Treat
+the helper below as a thin wrapper you would write around whatever programmatic access the
+service exposes:
+
 ```python
-# Install: uv pip install soluprot
-from soluprot import predict_solubility
+def screen_variants_soluprot(scores_by_name, threshold=0.6):
+    """
+    Given solubility scores retrieved from the SoluProt web server, flag the soluble ones.
 
-def screen_variants_soluprot(sequences):
-    """Screen multiple sequences for solubility"""
-    results = []
-    for name, seq in sequences.items():
-        score = predict_solubility(seq)
-        results.append({
-            'name': name,
-            'sequence': seq,
-            'solubility_score': score,
-            'predicted_soluble': score > 0.6
-        })
-    return results
-
-# Example
-sequences = {
-    'variant_1': 'MKVLW...',
-    'variant_2': 'MATGV...'
-}
-
-results = screen_variants_soluprot(sequences)
-soluble_variants = [r for r in results if r['predicted_soluble']]
+    Args:
+        scores_by_name: {name: soluprot_score} obtained from the service.
+    """
+    return [
+        {"name": name, "solubility_score": score, "predicted_soluble": score > threshold}
+        for name, score in scores_by_name.items()
+    ]
 ```
 
 **Interpretation:**
@@ -148,43 +135,28 @@ soluble_variants = [r for r in results if r['predicted_soluble']]
 
 **Purpose:** Redesign protein sequences to improve solubility while maintaining function.
 
-**Method:** Graph neural network that suggests mutations to increase solubility.
+**Method:** A solubility-biased **weight set for ProteinMPNN** (it ships as a model checkpoint
+within the ProteinMPNN / LigandMPNN family, e.g. selectable via a `--model_name`/weights flag),
+not a standalone `pip install soluble-mpnn` package. It is structure-conditioned: you provide a
+backbone (PDB) and it proposes solubility-improving sequences for it.
 
-**Usage:**
+**Access:** Clone ProteinMPNN or LigandMPNN
+(`github.com/dauparas/ProteinMPNN`, `github.com/dauparas/LigandMPNN`), download the weights,
+and run the provided design script selecting the soluble model. There is no PyPI package; do
+not `uv pip install soluble-mpnn`.
+
+**Usage (conceptual):**
 ```python
-# Install: uv pip install soluble-mpnn
-from soluble_mpnn import optimize_sequence
+# Pseudocode around the ProteinMPNN/LigandMPNN CLI. Actual invocation is a script call
+# (e.g. `python run.py --pdb_path bb.pdb --model_name soluble_... --sampling_temp 0.1`),
+# parsed from its FASTA output. Lower temperature = more conservative redesign.
+def optimize_for_solubility(structure_pdb, num_variants=10, temperature=0.1):
+    """Redesign a backbone for solubility with the soluble ProteinMPNN weights.
 
-def optimize_for_solubility(sequence, structure_pdb=None):
+    Returns proposed sequences for the given structure. Requires a backbone (PDB);
+    SolubleMPNN is structure-conditioned and cannot run from sequence alone.
     """
-    Redesign sequence for improved solubility
-
-    Args:
-        sequence: Original amino acid sequence
-        structure_pdb: Optional PDB file for structure-aware design
-
-    Returns:
-        Optimized sequence variants ranked by predicted solubility
-    """
-
-    variants = optimize_sequence(
-        sequence=sequence,
-        structure=structure_pdb,
-        num_variants=10,
-        temperature=0.1  # Lower = more conservative mutations
-    )
-
-    return variants
-
-# Example
-original_seq = "MKVLWAALLGLLGAAA..."
-optimized_variants = optimize_for_solubility(original_seq)
-
-for i, variant in enumerate(optimized_variants):
-    print(f"Variant {i+1}:")
-    print(f"  Sequence: {variant['sequence']}")
-    print(f"  Solubility score: {variant['solubility_score']}")
-    print(f"  Mutations: {variant['mutations']}")
+    ...  # invoke the ProteinMPNN/LigandMPNN script, collect sampled sequences
 ```
 
 **Design strategy:**
@@ -409,6 +381,12 @@ else:
 
 ## Recommended Optimization Workflow
 
+The functions below are **pseudocode** that stitch the tools above into a pipeline. The
+helper calls (`predict_solubility_netsolp`, `predict_solubility`, `optimize_sequence`,
+`predict_structure_alphafold`) stand in for whatever access each tool actually provides (web
+service, cloned repo CLI, or local model) — they are not importable packages. Wire them up to
+the real tools before running.
+
 ### Step 1: Initial Screening (Fast)
 
 ```python
@@ -583,31 +561,33 @@ top_sequences_for_testing = optimized_library[:50]
 
 ## Integration with Adaptyv
 
-After computational optimization, submit sequences to Adaptyv:
+After computational optimization, submit the top sequences to the Foundry API. The API takes
+a `{label: sequence}` map inside `experiment_spec` (not a FASTA blob) and uses a draft → submit
+flow — see `reference/api_reference.md` and `reference/examples.md`.
 
 ```python
+import os, requests
+
 # After optimization pipeline
 optimized_sequences = complete_optimization_pipeline(initial_library)
 
-# Prepare FASTA format
-fasta_content = ""
-for seq_data in optimized_sequences[:50]:  # Top 50
-    fasta_content += f">{seq_data['name']}\n{seq_data['sequence']}\n"
+# Build the {label: sequence} map for the top candidates
+sequences = {s["name"]: s["sequence"] for s in optimized_sequences[:50]}
 
-# Submit to Adaptyv
-import requests
-response = requests.post(
-    "https://kq5jp7qj7wdqklhsxmovkzn4l40obksv.lambda-url.eu-central-1.on.aws/experiments",
-    headers={"Authorization": f"Bearer {api_key}"},
-    json={
-        "sequences": fasta_content,
-        "experiment_type": "expression",
-        "metadata": {
-            "optimization_method": "SolubleMPNN_ESM_pipeline",
-            "computational_scores": [s['combined'] for s in optimized_sequences[:50]]
-        }
-    }
-)
+base_url = "https://foundry-api-public.adaptyvbio.com/api/v1"
+headers = {"Authorization": f"Bearer {os.environ['ADAPTYV_API_KEY']}",
+           "Content-Type": "application/json"}
+
+# Create a draft expression experiment (no target needed for expression)
+resp = requests.post(f"{base_url}/experiments", headers=headers, json={
+    "name": "SolubleMPNN_ESM_pipeline top 50",
+    "experiment_spec": {"experiment_type": "expression", "sequences": sequences},
+})
+resp.raise_for_status()
+exp_id = resp.json()["experiment_id"]
+
+# Review the quote, then submit
+requests.post(f"{base_url}/experiments/{exp_id}/submit", headers=headers).raise_for_status()
 ```
 
 ## Troubleshooting

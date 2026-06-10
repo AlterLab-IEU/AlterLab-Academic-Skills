@@ -3,7 +3,7 @@ name: alterlab-matplotlib
 description: Builds plots with the matplotlib Python library for full low-level customization, exporting to PNG/PDF/SVG for publication. Use when fine-grained control over every plot element is needed, when creating novel or non-standard plot types, or when integrating plotting into a specific scientific Python workflow. For quick statistical plots use seaborn, for interactive charts use plotly, for publication-ready multi-panel figures with journal styling use scientific-visualization. Part of the AlterLab Academic Skills suite.
 license: BSD-3-Clause
 allowed-tools: Read Write Edit Bash(python:*)
-compatibility: Requires the matplotlib Python library (pip install matplotlib); no API key or external service needed
+compatibility: Requires the matplotlib Python library, version >= 3.9 (pip install 'matplotlib>=3.9'); examples also use numpy, and the histogram-fit example uses scipy. No API key or external service needed.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -161,7 +161,8 @@ ax.clabel(contour, inline=True, fontsize=8)
 
 **Box plots** - Statistical distributions
 ```python
-ax.boxplot([data1, data2, data3], labels=['A', 'B', 'C'])
+# 'tick_labels' replaced 'labels' in matplotlib 3.9 (old name removed in 3.11)
+ax.boxplot([data1, data2, data3], tick_labels=['A', 'B', 'C'])
 ```
 
 **Violin plots** - Distribution densities
@@ -230,8 +231,8 @@ plt.savefig('figure.png', dpi=300, bbox_inches='tight', transparent=True)
 ### 6. Working with 3D Plots
 
 ```python
-from mpl_toolkits.mplot3d import Axes3D
-
+# projection='3d' auto-registers the 3D axes; no Axes3D import needed
+# (the old `from mpl_toolkits.mplot3d import Axes3D` is a no-op on modern matplotlib).
 fig = plt.figure(figsize=(10, 8))
 ax = fig.add_subplot(111, projection='3d')
 
@@ -310,22 +311,33 @@ plt.savefig('analysis.png', dpi=300, bbox_inches='tight')
 
 ## Quick Reference Scripts
 
-This skill includes helper scripts in the `scripts/` directory:
+This skill includes runnable helper scripts in the `scripts/` directory. Run them
+directly to produce a figure or a style sheet, or read them as worked examples of
+the patterns above. They require `matplotlib>=3.9` and `numpy` (the histogram
+example also needs `scipy`).
 
 ### `plot_template.py`
-Template script demonstrating various plot types with best practices. Use this as a starting point for creating new visualizations.
+Run `scripts/plot_template.py` to render any of the supported plot types (line,
+scatter, bar, histogram, heatmap, contour, box, violin, 3d, or `all` as a GridSpec
+montage). Each `create_*` helper accepts an optional `ax=` so you can compose your
+own multi-panel layouts.
 
-**Usage:**
 ```bash
-python scripts/plot_template.py
+# Render the full montage at 300 DPI
+python scripts/plot_template.py --plot-type all --output figure.png
+# Single plot type
+python scripts/plot_template.py --plot-type scatter --output scatter.png
 ```
 
 ### `style_configurator.py`
-Interactive utility to configure matplotlib style preferences and generate custom style sheets.
+Run `scripts/style_configurator.py` to preview a style preset (publication,
+presentation, web, dark, minimal) and export it as a reusable `.mplstyle` file.
 
-**Usage:**
 ```bash
-python scripts/style_configurator.py
+python scripts/style_configurator.py --list                    # show presets
+python scripts/style_configurator.py --preset publication \
+    --output my_style.mplstyle                                 # export style sheet
+python scripts/style_configurator.py --preset publication --preview
 ```
 
 ## Detailed References

@@ -26,16 +26,16 @@ def load_benchmark_group():
     # Initialize benchmark group
     group = admet_group(path='data/')
 
-    # Get available benchmarks
-    print("\nAvailable benchmarks in ADMET group:")
-    benchmark_names = group.dataset_names
-    print(f"Total: {len(benchmark_names)} datasets")
-
-    for i, name in enumerate(benchmark_names[:10], 1):
-        print(f"  {i}. {name}")
-
-    if len(benchmark_names) > 10:
-        print(f"  ... and {len(benchmark_names) - 10} more")
+    # List available benchmarks (attribute name differs by TDC version;
+    # fall back gracefully if it is not exposed).
+    benchmark_names = getattr(group, "dataset_names", None)
+    if benchmark_names:
+        print("\nAvailable benchmarks in ADMET group:")
+        print(f"Total: {len(benchmark_names)} datasets")
+        for i, name in enumerate(benchmark_names[:10], 1):
+            print(f"  {i}. {name}")
+        if len(benchmark_names) > 10:
+            print(f"  ... and {len(benchmark_names) - 10} more")
 
     return group
 
@@ -48,55 +48,55 @@ def single_dataset_evaluation(group, dataset_name='Caco2_Wang'):
     print(f"Example 1: Single Dataset Evaluation ({dataset_name})")
     print("=" * 60)
 
-    # Get dataset benchmarks
+    # group.get(name) returns {'name', 'train_val', 'test'} — NOT indexed by seed.
+    # The fixed test set is shared across seeds; only the train/valid partition varies.
     benchmark = group.get(dataset_name)
+    name = benchmark['name']
+    test = benchmark['test']
+    print(f"\nBenchmark structure: keys = {list(benchmark.keys())}")
+    print(f"  Fixed test size: {len(test)}")
 
-    print(f"\nBenchmark structure:")
-    print(f"  Seeds: {list(benchmark.keys())}")
-
-    # Required: Evaluate with 5 different seeds
-    predictions = {}
+    # Required: evaluate with 5 different seeds, one predictions dict per seed.
+    predictions_list = []
 
     for seed in [1, 2, 3, 4, 5]:
         print(f"\n--- Seed {seed} ---")
 
-        # Get train/valid data for this seed
-        train = benchmark[seed]['train']
-        valid = benchmark[seed]['valid']
-
-        print(f"Train size: {len(train)}")
-        print(f"Valid size: {len(valid)}")
+        # Per-seed train/valid partition of train_val
+        train, valid = group.get_train_valid_split(
+            benchmark=name, split_type='default', seed=seed
+        )
+        print(f"Train size: {len(train)}  Valid size: {len(valid)}")
 
         # TODO: Replace with your model training
-        # model = YourModel()
+        # model = YourModel(random_state=seed)
         # model.fit(train['Drug'], train['Y'])
+        # y_pred = model.predict(test['Drug'])
 
-        # For demonstration, create dummy predictions
-        # Replace with: predictions[seed] = model.predict(benchmark[seed]['test'])
-        test = benchmark[seed]['test']
+        # For demonstration, create dummy predictions on the fixed test set
         y_true = test['Y'].values
-
-        # Simulate predictions (add controlled noise)
         np.random.seed(seed)
         y_pred = y_true + np.random.normal(0, 0.3, len(y_true))
 
-        predictions[seed] = y_pred
+        # Predictions dict is keyed by the benchmark name
+        predictions_list.append({name: y_pred})
 
-        # Evaluate this seed
+        # Quick per-seed sanity metric
         evaluator = Evaluator(name='MAE')
-        score = evaluator(y_true, y_pred)
-        print(f"MAE for seed {seed}: {score:.4f}")
+        print(f"MAE for seed {seed}: {evaluator(y_true, y_pred):.4f}")
 
-    # Evaluate across all seeds
+    # Aggregate mean/std across the 5 seeds
     print("\n--- Overall Evaluation ---")
-    results = group.evaluate(predictions)
+    results = group.evaluate_many(predictions_list)
 
+    # evaluate_many lowercases the benchmark name in its keys
+    key = name.lower()
+    mean_score, std_score = results[key]
     print(f"\nResults for {dataset_name}:")
-    mean_score, std_score = results[dataset_name]
     print(f"  Mean MAE: {mean_score:.4f}")
     print(f"  Std MAE: {std_score:.4f}")
 
-    return predictions, results
+    return predictions_list, results
 
 
 def multiple_datasets_evaluation(group):
@@ -119,31 +119,35 @@ def multiple_datasets_evaluation(group):
         print(f"{'='*40}")
 
         benchmark = group.get(dataset_name)
-        predictions = {}
+        name = benchmark['name']
+        test = benchmark['test']
+        predictions_list = []
 
         # Train and predict for each seed
         for seed in [1, 2, 3, 4, 5]:
-            _train = benchmark[seed]['train']
-            test = benchmark[seed]['test']
+            _train, _valid = group.get_train_valid_split(
+                benchmark=name, split_type='default', seed=seed
+            )
 
             # TODO: Replace with your model
-            # model = YourModel()
-            # model.fit(train['Drug'], train['Y'])
-            # predictions[seed] = model.predict(test['Drug'])
+            # model = YourModel(random_state=seed)
+            # model.fit(_train['Drug'], _train['Y'])
+            # y_pred = model.predict(test['Drug'])
 
             # Dummy predictions for demonstration
             np.random.seed(seed)
             y_true = test['Y'].values
             y_pred = y_true + np.random.normal(0, 0.3, len(y_true))
-            predictions[seed] = y_pred
+            predictions_list.append({name: y_pred})
 
-        all_predictions[dataset_name] = predictions
+        all_predictions[dataset_name] = predictions_list
 
-        # Evaluate this dataset
-        results = group.evaluate({dataset_name: predictions})
-        all_results[dataset_name] = results[dataset_name]
+        # Evaluate this dataset across its 5 seeds
+        results = group.evaluate_many(predictions_list)
+        key = name.lower()
+        all_results[dataset_name] = results[key]
 
-        mean_score, std_score = results[dataset_name]
+        mean_score, std_score = results[key]
         print(f"  {dataset_name}: {mean_score:.4f} ± {std_score:.4f}")
 
     # Summary
@@ -179,35 +183,28 @@ def custom_model_template():
 from tdc.benchmark_group import admet_group
 from your_library import YourModel  # Replace with your model
 
-# Initialize benchmark group
 group = admet_group(path='data/')
-benchmark = group.get('Caco2_Wang')
 
-predictions = {}
-
+predictions_list = []
 for seed in [1, 2, 3, 4, 5]:
-    # Get data for this seed
-    train = benchmark[seed]['train']
-    valid = benchmark[seed]['valid']
-    test = benchmark[seed]['test']
+    benchmark = group.get('Caco2_Wang')      # {'name', 'train_val', 'test'}
+    name = benchmark['name']
+    test = benchmark['test']                 # fixed across seeds
 
-    # Extract features and labels
-    X_train, y_train = train['Drug'], train['Y']
-    X_valid, y_valid = valid['Drug'], valid['Y']
-    X_test = test['Drug']
+    # Per-seed train/valid partition
+    train, valid = group.get_train_valid_split(
+        benchmark=name, split_type='default', seed=seed
+    )
 
-    # Initialize and train model
     model = YourModel(random_state=seed)
-    model.fit(X_train, y_train)
+    model.fit(train['Drug'], train['Y'])
+    # Optional early stopping: model.fit(..., validation_data=(valid['Drug'], valid['Y']))
 
-    # Optionally use validation set for early stopping
-    # model.fit(X_train, y_train, validation_data=(X_valid, y_valid))
+    y_pred = model.predict(test['Drug'])
+    predictions_list.append({name: y_pred})  # dict keyed by benchmark name
 
-    # Make predictions on test set
-    predictions[seed] = model.predict(X_test)
-
-# Evaluate with TDC
-results = group.evaluate(predictions)
+# Aggregate across seeds -> {'caco2_wang': [mean, std]}
+results = group.evaluate_many(predictions_list)
 print(f"Results: {results}")
 '''
 
@@ -218,16 +215,19 @@ print(f"Results: {results}")
     return code_template
 
 
-def multi_seed_statistics(predictions_dict):
+def multi_seed_statistics(predictions_list):
     """
-    Example: Analyzing multi-seed prediction statistics
+    Example: Analyzing multi-seed prediction statistics.
+
+    `predictions_list` is the list produced above: one {benchmark_name: y_pred}
+    dict per seed.
     """
     print("\n" + "=" * 60)
     print("Example 4: Multi-Seed Statistics Analysis")
     print("=" * 60)
 
-    # Analyze prediction variability across seeds
-    all_preds = np.array([predictions_dict[seed] for seed in [1, 2, 3, 4, 5]])
+    # Each dict has a single benchmark-name key; pull out its prediction array.
+    all_preds = np.array([next(iter(p.values())) for p in predictions_list])
 
     print("\nPrediction statistics across 5 seeds:")
     print(f"  Shape: {all_preds.shape}")
@@ -260,9 +260,9 @@ To submit results to TDC leaderboards:
    - Do not modify the train/valid/test splits
    - Report mean ± std across all 5 seeds
 
-2. Format your results:
-   results = group.evaluate(predictions)
-   # Returns: {'dataset_name': [mean_score, std_score]}
+2. Format your results (one {name: y_pred} dict per seed, collected in a list):
+   results = group.evaluate_many(predictions_list)
+   # Returns: {'dataset_name': [mean_score, std_score]}  (name lowercased)
 
 3. Submit to leaderboard:
    - Visit: https://tdcommons.ai/benchmark/admet_group/
@@ -299,7 +299,7 @@ def main():
     group = load_benchmark_group()
 
     # Example 1: Single dataset evaluation
-    predictions, results = single_dataset_evaluation(group)
+    predictions_list, results = single_dataset_evaluation(group)
 
     # Example 2: Multiple datasets evaluation
     all_predictions, all_results = multiple_datasets_evaluation(group)
@@ -308,7 +308,7 @@ def main():
     custom_model_template()
 
     # Example 4: Multi-seed statistics
-    multi_seed_statistics(predictions)
+    multi_seed_statistics(predictions_list)
 
     # Example 5: Leaderboard submission guide
     leaderboard_submission_guide()

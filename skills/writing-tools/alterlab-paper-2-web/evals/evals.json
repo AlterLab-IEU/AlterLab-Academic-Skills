@@ -4,7 +4,7 @@
     {
       "id": "paper2web-homepage",
       "prompt": "I just put my paper on arXiv. Can you turn the LaTeX source into an interactive, explorable project homepage I can host on GitHub Pages?",
-      "expected_output": "Invokes alterlab-paper-2-web in the Paper2Web path: runs the Paper2All pipeline (pipeline_all.py with --generate-website) on the LaTeX source to produce a layout-aware, responsive interactive homepage with interactive figures/tables/citations and navigation, outputs index.html/styles.css/assets, and notes GitHub Pages as a deployment target.",
+      "expected_output": "Invokes alterlab-paper-2-web in the Paper2Web path: runs the Paper2All pipeline (pipeline_all.py with --model-choice 1) on the LaTeX source to produce a layout-aware, responsive interactive homepage with interactive figures/tables/citations and navigation, outputs index.html/styles.css/assets, and notes GitHub Pages as a deployment target.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "Paper2Web" }
@@ -13,7 +13,7 @@
     {
       "id": "paper2video-abstract",
       "prompt": "I want a narrated presentation video — slides with voiceover and synced cursor highlights — generated from my paper for a journal video abstract. Talking-head optional.",
-      "expected_output": "Invokes alterlab-paper-2-web in the Paper2Video path: uses the light/video pipeline (pipeline_light.py or --generate-video) to auto-generate slides from the paper structure, natural speech narration, synchronized cursor movements/highlights, with optional Hallo2 talking-head (noting GPU requirement), producing final_video.mp4 plus slides/audio/subtitles.",
+      "expected_output": "Invokes alterlab-paper-2-web in the Paper2Video path: uses the video pipeline (pipeline_light.py in the separate p2v env) to auto-generate slides from the paper structure, natural speech narration, synchronized cursor movements/highlights, with optional Hallo2 talking-head via pipeline.py (noting GPU requirement), producing final_video.mp4 plus slides/audio/subtitles.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "Paper2Video" }
@@ -22,7 +22,7 @@
     {
       "id": "paper2poster-from-paper",
       "prompt": "Generate a print-ready 60x40 inch conference poster directly from my PDF paper, with a QR code linking to the paper and our lab logo.",
-      "expected_output": "Invokes alterlab-paper-2-web in the Paper2Poster path: runs the pipeline with --generate-poster and custom --poster-width-inches/--poster-height-inches (60x40), produces a high-resolution (300+ DPI) print-ready poster_final.pdf/png with professional layout, QR code generation, and institution branding/logo support.",
+      "expected_output": "Invokes alterlab-paper-2-web in the Paper2Poster path: runs pipeline_all.py with --model-choice 2 and custom --poster-width-inches/--poster-height-inches (60x40), produces a high-resolution (300+ DPI) print-ready poster_final.pdf/png with professional layout. May note that the QR code and lab-logo branding are not first-class documented flags and could need manual addition.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "Paper2Poster" }
@@ -31,7 +31,7 @@
     {
       "id": "full-promo-package",
       "prompt": "My paper got accepted at a conference. I want the complete promotional package — website, poster, and presentation video — all generated from the same LaTeX source.",
-      "expected_output": "Invokes alterlab-paper-2-web to generate all three components via the Paper2All pipeline (pipeline_all.py --model-choice 1 producing website + poster + video), organizing outputs per component (website/, poster/, video/), and may advise the priority order (website fastest, then poster, then video) for a tight deadline.",
+      "expected_output": "Invokes alterlab-paper-2-web to generate the full package: pipeline_all.py without --model-choice (or run per-component) for the website and poster, plus the separate video pipeline (pipeline_light.py in the p2v env). Organizes outputs per component (website/, poster/, video/), and may advise the priority order (website fastest, then poster, then video) for a tight deadline.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Generates all three Paper2All components (website, poster, and video) from one source rather than just one." }

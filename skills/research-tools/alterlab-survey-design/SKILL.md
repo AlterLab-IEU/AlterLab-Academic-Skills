@@ -1,6 +1,6 @@
 ---
 name: alterlab-survey-design
-description: "Comprehensive survey and instrument design assistant supporting questionnaire construction, Likert scale design, question types (open/closed/matrix), response bias mitigation, sampling strategies (probability/non-probability), pilot testing, instrument validation (Cronbach's alpha, factor analysis), online survey tools (Qualtrics, REDCap, Google Forms), interview protocol development, focus group facilitation, mixed-mode surveys, and cultural adaptation of instruments. Use when designing a survey or questionnaire, building Likert scales, planning a sampling strategy, pilot testing, validating an instrument (Cronbach's alpha, factor analysis), developing an interview protocol, improving response rates, or working in Qualtrics or REDCap. Part of the AlterLab Academic Skills suite."
+description: "Comprehensive survey and instrument design assistant supporting questionnaire construction, Likert scale design, question types (open/closed/matrix), response bias mitigation, sampling strategies (probability/non-probability), pilot testing, instrument validation (Cronbach's alpha, factor analysis), online survey tools (Qualtrics, REDCap, Google Forms), interview protocol development, focus group facilitation, mixed-mode surveys, and cultural adaptation of instruments. Use when designing a survey or questionnaire, building Likert scales, planning a sampling strategy, pilot testing, validating an instrument (Cronbach's alpha, factor analysis), developing an interview protocol, improving response rates, or working in Qualtrics or REDCap. For analyzing interview/focus-group data use alterlab-qualitative-methods; for qual+quant integration alterlab-mixed-methods; for test selection/power analysis alterlab-statistical-analysis; for IRB/consent alterlab-research-ethics. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read WebFetch WebSearch Bash(python:*)
 compatibility: No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.
@@ -39,10 +39,12 @@ This skill should be used when:
 
 | Scenario | Use Instead |
 |----------|-------------|
-| Qualitative data analysis (coding, themes) | `alterlab-qualitative-methods` |
-| Statistical analysis beyond validation | Data science skills |
+| Qualitative data analysis (coding, themes, focus group/interview analysis) | `alterlab-qualitative-methods` |
+| Integrating qual + quant strands (convergent/sequential designs, joint displays) | `alterlab-mixed-methods` |
+| Hypothesis-test selection, assumption checks, power analysis beyond validation | `alterlab-statistical-analysis` |
+| Specialized social-science methods (Delphi, Q-methodology, QCA) | `alterlab-social-science-methods` |
 | Writing the research paper | `alterlab-paper-writer` |
-| Ethics/IRB for survey research | `alterlab-research-ethics` |
+| Ethics/IRB applications, informed consent for survey research | `alterlab-research-ethics` |
 
 ---
 
@@ -322,10 +324,11 @@ def sample_size_two_groups(effect_size, alpha=0.05, power=0.80):
     n = 2 * ((z_alpha + z_beta) / effect_size) ** 2
     return int(np.ceil(n))
 
-# Examples
-print(f"Small effect (d=0.2):  {sample_size_two_groups(0.2)} per group")   # 394
-print(f"Medium effect (d=0.5): {sample_size_two_groups(0.5)} per group")   # 64
-print(f"Large effect (d=0.8):  {sample_size_two_groups(0.8)} per group")   # 26
+# Examples (normal approximation; exact noncentral-t values are ~1 larger:
+# 394 / 64 / 26 — use statsmodels TTestIndPower for the exact figures)
+print(f"Small effect (d=0.2):  {sample_size_two_groups(0.2)} per group")   # 393
+print(f"Medium effect (d=0.5): {sample_size_two_groups(0.5)} per group")   # 63
+print(f"Large effect (d=0.8):  {sample_size_two_groups(0.8)} per group")   # 25
 ```
 
 ### 6. Response Bias Mitigation

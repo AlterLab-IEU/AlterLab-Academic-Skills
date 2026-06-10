@@ -2,8 +2,8 @@
 name: alterlab-thesis-supervisor
 description: "Supervises theses and dissertations end to end — structure guidance from proposal through defense, chapter-by-chapter writing support (introduction, literature review, methodology, results, discussion), supervision strategies, committee management, defense and viva voce preparation, timeline planning, feedback integration, examiner-expectation guidance, and formatting (APA 7, Chicago, university styles). Use when the request mentions thesis, dissertation, supervision, defense preparation, viva, proposal defense, thesis structure, thesis chapter, literature review chapter, methodology chapter, results chapter, discussion chapter, thesis timeline, committee, thesis formatting, or dissertation proposal. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash WebFetch WebSearch
-compatibility: Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required
+allowed-tools: Read Write Edit WebFetch WebSearch
+compatibility: Uses built-in Claude tools only (Read/Write/Edit/WebFetch/WebSearch); no external API key or account required
 metadata:
   skill-author: AlterLab
   version: "1.0.0"

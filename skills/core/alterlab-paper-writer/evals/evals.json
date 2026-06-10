@@ -9,6 +9,14 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Starts with the Phase 0 configuration interview and awaits user confirmation before running the pipeline, rather than dumping a finished paper immediately; final LaTeX uses the apa7 document class (not article) for APA 7.0 output."
+        },
+        {
+          "type": "output_contains",
+          "value": "apa7"
         }
       ]
     },
@@ -20,6 +28,14 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Selects plan mode (not full) and asks Socratic questions chapter by chapter instead of writing prose; the deliverable is a Chapter Plan plus INSIGHT Collection, with at least two rounds of dialogue per chapter, not a finished draft."
+        },
+        {
+          "type": "output_contains",
+          "value": "Chapter Plan"
         }
       ]
     },
@@ -31,6 +47,14 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Runs revision-coach mode standalone (no prior pipeline run required), classifying and prioritizing each reviewer comment and mapping it to a manuscript section, rather than rewriting the manuscript."
+        },
+        {
+          "type": "output_contains",
+          "value": "Revision Roadmap"
         }
       ]
     },
@@ -42,6 +66,10 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Runs only the formatter_agent to convert both in-text citations and the reference list from APA 7 to IEEE, without re-running literature, drafting, or peer-review phases."
         }
       ]
     },
@@ -53,6 +81,10 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Produces an English abstract (150-300 words) and an independently composed Traditional Chinese abstract (300-500 characters) that is not a mechanical translation, with 5-7 keywords per language; does not run the full drafting pipeline."
         }
       ]
     },

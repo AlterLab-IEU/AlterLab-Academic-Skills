@@ -18,7 +18,7 @@ try:
     from rdkit import Chem
     from rdkit.Chem import Descriptors
 except ImportError:
-    print("Error: RDKit not installed. Install with: conda install -c conda-forge rdkit")
+    print("Error: RDKit not installed. Run with: uv run --with rdkit python molecular_properties.py ...")
     sys.exit(1)
 
 
@@ -62,7 +62,7 @@ def calculate_properties(mol):
 
         # Flexibility
         'Rotatable_Bonds': Descriptors.NumRotatableBonds(mol),
-        'Fraction_Csp3': Descriptors.FractionCsp3(mol),
+        'Fraction_Csp3': Descriptors.FractionCSP3(mol),
 
         # Complexity
         'BertzCT': Descriptors.BertzCT(mol),

@@ -33,10 +33,11 @@
     {
       "id": "final-report-compliance",
       "prompt": "I'm writing the final report (sonuç raporu) for my TÜBİTAK project and need to show that I complied with the open-access requirements. How do I report my Aperta deposits?",
-      "expected_output": "Invokes alterlab-aperta in final-report compliance mode. Produces a compliance statement listing, per output, the Aperta DOI, the access mode (open/restricted), and the open-access date, and confirms each meets the field embargo ceiling — or, for closed data, references the İlke-6 justification. Distinguishes writing the open-science compliance statement (this skill) from writing the rest of the sonuç raporu narrative (which is alterlab-grant-reporting). Ends with the verify-against-current-policy disclaimer.",
+      "expected_output": "Invokes alterlab-aperta in final-report compliance mode. Produces a compliance statement listing, per output, the Aperta DOI, the access mode (open/restricted), and the open-access date, and confirms each meets the field embargo ceiling — or, for closed data, references the İlke-6 justification. Scopes itself to the open-science / data-deposition compliance statement and does not write the rest of the sonuç raporu narrative. Ends with the verify-against-current-policy disclaimer.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Builds a per-output Aperta DOI + access-mode + open-access-date compliance statement and confirms it against the field embargo ceiling, without writing the full grant report." }
+        { "type": "output_contains", "value": "İlke-6" },
+        { "type": "behavior", "value": "Builds a per-output Aperta DOI + access-mode + open-access-date compliance statement and confirms it against the field embargo ceiling, without writing the full grant report narrative." }
       ]
     },
     {
@@ -60,10 +61,10 @@
     {
       "id": "near-miss-preprint-deposition",
       "prompt": "Before I even submit to a journal I want to post my manuscript as a preprint so I can cite it. Which server should I use — arXiv, SSRN, or bioRxiv — and how do I deposit it there?",
-      "expected_output": "Does NOT invoke this skill; defers to alterlab-preprint-deposition. The user wants to post a preprint to a preprint server (arXiv/SSRN/bioRxiv) before journal submission — not a green-road deposit of an accepted manuscript into Aperta under the TÜBİTAK policy. alterlab-aperta handles deposit-on-acceptance into the national open archive, not preprint-server posting.",
+      "expected_output": "Does NOT invoke this skill; routes to alterlab-open-science. The user wants to post a preprint to a preprint server (arXiv/SSRN/bioRxiv) before journal submission — not a green-road deposit of an accepted manuscript into Aperta under the TÜBİTAK policy. alterlab-aperta handles deposit-on-acceptance into the national open archive, not preprint-server posting or open-access routes in general, which belong to alterlab-open-science.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
-        { "type": "output_contains", "value": "alterlab-preprint-deposition" }
+        { "type": "output_contains", "value": "alterlab-open-science" }
       ]
     }
   ]

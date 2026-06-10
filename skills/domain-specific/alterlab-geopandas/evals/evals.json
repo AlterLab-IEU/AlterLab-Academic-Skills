@@ -63,6 +63,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-social-science-methods" }
       ]
+    },
+    {
+      "id": "near-miss-geomaster-raster",
+      "prompt": "I have a stack of Sentinel-2 satellite scenes and I want to compute NDVI per pixel, classify land cover, and mosaic the rasters into a single cloud-optimized GeoTIFF.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-geomaster (remote sensing / raster). NDVI, per-pixel classification, and raster mosaicking are raster/earth-observation operations on satellite imagery, not the tabular vector geometry work (sjoin, buffer, overlay, choropleth) that GeoPandas handles.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-geomaster" }
+      ]
     }
   ]
 }

@@ -1,9 +1,9 @@
 ---
 name: alterlab-adaptyv
-description: Submits and tracks experiments on the Adaptyv cloud laboratory platform for automated protein testing and wet-lab validation, and optimizes protein sequences for expression using computational tools (NetSolP, SoluProt, SolubleMPNN, ESM). Use when designing proteins that need experimental validation such as binding assays, expression testing, thermostability measurements, or enzyme activity assays, when submitting experiments via API, tracking experiment status, downloading results, or managing protein design workflows with wet-lab validation. Part of the AlterLab Academic Skills suite.
+description: Submits and tracks protein-testing experiments on the Adaptyv Bio Foundry cloud lab (wet-lab validation), and optimizes protein sequences before submission with computational tools (NetSolP, SoluProt, SolubleMPNN, ESM). Use when designing proteins that need wet-lab validation - binding/affinity screening, expression testing, thermostability, or fluorescence assays - or when submitting experiments to the Foundry API, browsing the target catalog, tracking experiment status, retrieving results, or pre-screening sequences for solubility/expression. Triggers on "Adaptyv", "Foundry API", "cloud lab", "biolayer interferometry / BLI", "wet-lab validation". Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
-compatibility: Requires an Adaptyv account and ADAPTYV_API_KEY for experiment submission; local protein-optimization tools (ESM, NetSolP, SoluProt) run via `uv run python` without a key.
+compatibility: Requires an Adaptyv Bio Foundry account and an ADAPTYV_API_KEY token for experiment submission; local protein-optimization steps (ESM, etc.) run via `uv run python` without a key.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -11,31 +11,38 @@ metadata:
 
 # Adaptyv
 
-Adaptyv is a cloud laboratory platform that provides automated protein testing and validation services. Submit protein sequences via API or web interface and receive experimental results in approximately 21 days.
+Adaptyv Bio runs the **Foundry** cloud lab: submit protein sequences and a target, the lab runs the assay, and you retrieve experimental data (binding/affinity, thermostability, expression, fluorescence). The public **Foundry API** drives the full lifecycle programmatically. Turnaround is on the order of weeks; confirm the current estimate from the per-experiment quote rather than assuming a fixed number.
+
+> The exact request/response shapes evolve. This skill captures the verified API contract and conventions; for the authoritative spec see the OpenAPI doc at `https://foundry-api-public.adaptyvbio.com/api/v1/openapi.json` and `https://docs.adaptyvbio.com`.
+
+## Prefer the official tooling first
+
+Adaptyv ships its own integrations - reach for them before hand-rolling `requests`:
+- **Official Python SDK** — `github.com/adaptyvbio/adaptyv-sdk` (MIT). Decorator-based: wrap a design function with `@lab.experiment(target=...)`; reads `ADAPTYV_API_KEY` / `ADAPTYV_API_URL` (and optional `ADAPTYV_ORGANIZATION_ID`) from the environment. Install from source (`pip install -e .` after cloning — no PyPI release confirmed; verify before pinning).
+- **Adaptyv's own Claude Code skills** — `github.com/adaptyvbio/protein-design-skills`. Useful prior art for protein-design + Foundry workflows.
+
+Use this skill's raw-`requests` recipes when the SDK is unavailable or you need fine control over the lifecycle.
 
 ## Quick Start
 
 ### Authentication Setup
 
-Adaptyv requires API authentication. Set up your credentials:
-
-1. Contact support@adaptyvbio.com to request API access (platform is in alpha/beta)
-2. Receive your API access token
-3. Set environment variable:
+1. Create a token in the Foundry portal: `https://foundry.adaptyvbio.com/` → **Organization → Settings → Tokens** (pick a role: Member = read/write, Viewer = read-only; set an expiry). The token value is shown only once — copy it immediately.
+2. Set it in your environment (never commit it):
 
 ```bash
-export ADAPTYV_API_KEY="your_api_key_here"
+export ADAPTYV_API_KEY="your_token_here"
 ```
 
-Or create a `.env` file:
+Or put it in a gitignored `.env`:
 
 ```
-ADAPTYV_API_KEY=your_api_key_here
+ADAPTYV_API_KEY=your_token_here
 ```
 
 ### Installation
 
-Install the required package using uv:
+If using the raw API directly:
 
 ```bash
 uv pip install requests python-dotenv
@@ -43,7 +50,7 @@ uv pip install requests python-dotenv
 
 ### Basic Usage
 
-Submit protein sequences for testing:
+The API uses a **draft → submit** flow: create an experiment (it starts as a `draft`), then submit it. `sequences` is a `{label: amino_acid_string}` map (multi-chain constructs join chains with a colon, e.g. `"heavy:light"`).
 
 ```python
 import os
@@ -53,35 +60,45 @@ from dotenv import load_dotenv
 load_dotenv()
 
 api_key = os.getenv("ADAPTYV_API_KEY")
-base_url = "https://kq5jp7qj7wdqklhsxmovkzn4l40obksv.lambda-url.eu-central-1.on.aws"
-
+base_url = "https://foundry-api-public.adaptyvbio.com/api/v1"
 headers = {
     "Authorization": f"Bearer {api_key}",
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
 }
 
-# Submit experiment
-response = requests.post(
+# 1. Create a draft experiment
+resp = requests.post(
     f"{base_url}/experiments",
     headers=headers,
     json={
-        "sequences": ">protein1\nMKVLWALLGLLGAA...",
-        "experiment_type": "binding",
-        "webhook_url": "https://your-webhook.com/callback"
-    }
+        "name": "mini-binder round 1",
+        "experiment_spec": {
+            "experiment_type": "affinity",   # screening|affinity|thermostability|fluorescence|expression
+            "method": "bli",                 # bli|spr (for binding-type assays)
+            "target_id": "<target uuid from GET /targets>",
+            "sequences": {
+                "design_a": "MKVLWALLGLLGAA...",
+                "design_b": "MATGVLWALLG...",
+            },
+        },
+    },
 )
+resp.raise_for_status()
+experiment_id = resp.json()["experiment_id"]
 
-experiment_id = response.json()["experiment_id"]
+# 2. Submit it to the lab (after reviewing the quote — see reference/api_reference.md)
+requests.post(f"{base_url}/experiments/{experiment_id}/submit", headers=headers).raise_for_status()
 ```
 
 ## Available Experiment Types
-Adaptyv supports multiple assay types:
-- **Binding assays** - Test protein-target interactions using biolayer interferometry
-- **Expression testing** - Measure protein expression levels
-- **Thermostability** - Characterize protein thermal stability
-- **Enzyme activity** - Assess enzymatic function
+Foundry supports these `experiment_type` values:
+- **screening** - Binding detection via biolayer interferometry (BLI) or SPR. Requires a target.
+- **affinity** - Kinetic constants (KD, kon, koff) by BLI/SPR. Requires a target.
+- **thermostability** - Melting temperature (Tm) via DSF. No target required.
+- **fluorescence** - Fluorescence intensity. No target required.
+- **expression** - Protein yield quantification. No target required.
 
-See `reference/experiments.md` for detailed information on each experiment type and workflows.
+See `reference/experiments.md` for detailed information on each assay and its outputs.
 
 ## Protein Sequence Optimization
 Before submitting sequences, optimize them for better expression and stability:
@@ -92,11 +109,11 @@ Before submitting sequences, optimize them for better expression and stability:
 - Poor solubility predictions
 
 **Recommended tools:**
-- NetSolP / SoluProt - Initial solubility filtering
-- SolubleMPNN - Sequence redesign for improved solubility
-- ESM - Sequence likelihood scoring
-- ipTM - Interface stability assessment
-- pSAE - Hydrophobic exposure quantification
+- NetSolP / SoluProt - Initial solubility filtering (both are web services, not pip packages)
+- SolubleMPNN - Solubility-biased sequence redesign (a weight set within the ProteinMPNN / LigandMPNN family)
+- ESM (`fair-esm`) - Sequence likelihood / naturalness scoring
+- ipTM (AlphaFold-Multimer / ColabFold) - Interface stability for binder designs
+- pSAE - Solvent-accessible hydrophobic exposure, from a predicted/known structure
 
 See `reference/protein_optimization.md` for detailed optimization workflows and tool usage.
 
@@ -107,9 +124,10 @@ For complete API documentation including all endpoints, request/response formats
 For concrete code examples covering common use cases (experiment submission, status tracking, result retrieval, batch processing), see `reference/examples.md`.
 
 ## Important Notes
-- Platform is currently in alpha/beta phase with features subject to change
-- Not all platform features are available via API yet
-- Results typically delivered in ~21 days
-- Contact support@adaptyvbio.com for access requests or questions
-- Suitable for high-throughput AI-driven protein design workflows
+- The Foundry API is public but still evolving — treat the OpenAPI doc (`/api/v1/openapi.json`) as the source of truth and verify field names before relying on them.
+- Submission is two-step: create a `draft`, review the cost quote, then `POST .../submit`. Nothing is charged until you confirm the quote.
+- `affinity`/`screening` require a `target_id` from the catalog (`GET /targets`); `thermostability`, `fluorescence`, and `expression` do not.
+- Turnaround is multiple weeks — read the estimate from the experiment/quote rather than assuming a fixed number.
+- Support and docs: support@adaptyvbio.com / `https://docs.adaptyvbio.com`.
+- Suitable for high-throughput AI-driven protein design workflows (closed-loop design → test → learn).
 

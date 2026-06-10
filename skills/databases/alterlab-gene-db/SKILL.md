@@ -26,7 +26,7 @@ NCBI provides two main APIs for gene data access:
 1. **E-utilities** (Traditional): Full-featured API for all Entrez databases with flexible querying
 2. **NCBI Datasets API** (Newer): Optimized for gene data retrieval with simplified workflows
 
-Choose E-utilities for complex queries and cross-database searches. Choose Datasets API for straightforward gene data retrieval with metadata and sequences in a single request.
+Choose E-utilities for complex queries and cross-database searches. Choose the Datasets API for straightforward gene metadata retrieval (one gene report per request; transcript/protein RefSeq accessions come from the separate `product_report` endpoint).
 
 ## Common Workflows
 
@@ -51,12 +51,15 @@ To fetch detailed information for known Gene IDs:
 2. Alternatively, use `scripts/query_gene.py` with E-utilities EFetch for specific formats
 3. Specify desired output format (JSON, XML, or text)
 
-The Datasets API returns:
-- Gene nomenclature and aliases
-- Reference sequences (RefSeqs) for transcripts and proteins
-- Chromosomal location and mapping
+The Datasets API gene report returns:
+- Gene nomenclature, aliases, and cross-references (HGNC, Ensembl, UniProt/Swiss-Prot, OMIM)
+- Genomic location and assembly mapping (per assembly, e.g. GRCh38 and T2T-CHM13)
 - Gene Ontology (GO) annotations
-- Associated publications
+- Transcript and protein counts
+
+For the individual transcript/protein RefSeq accessions, request the
+`product_report` endpoint (`GET /gene/id/{id}/product_report`) — the base
+gene report carries the counts, not the accessions.
 
 ### Batch Gene Lookups
 

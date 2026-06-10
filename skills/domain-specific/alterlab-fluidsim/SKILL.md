@@ -250,10 +250,11 @@ sim.output.spectra.plot1d(tmin=30.0, tmax=50.0)
 
 ```python
 from fluidsim.solvers.ns2d.strat.solver import Simul
+import numpy as np
 
 params = Simul.create_default_params()
 params.oper.nx = params.oper.ny = 256
-params.N = 2.0  # stratification strength
+params.N = 2.0  # stratification strength (Brunt-Vaisala frequency)
 params.nu_2 = 5e-4
 params.time_stepping.t_end = 20.0
 
@@ -262,8 +263,9 @@ params.init_fields.type = "in_script"
 sim = Simul(params)
 X, Y = sim.oper.get_XY_loc()
 b = sim.state.state_phys.get_var("b")
-b[:] = exp(-((X - 3.14)**2 + (Y - 3.14)**2) / 0.5)
-sim.state.statephys_from_statespect()
+b[:] = np.exp(-((X - 3.14)**2 + (Y - 3.14)**2) / 0.5)
+# Sync spectral state FROM the physical field just set (not the reverse)
+sim.state.statespect_from_statephys()
 
 sim.time_stepping.start()
 sim.output.phys_fields.plot("b")
@@ -305,17 +307,19 @@ params.init_fields.type = "in_script"
 
 sim = Simul(params)
 X, Y = sim.oper.get_XY_loc()
-vx = sim.state.state_phys.get_var("vx")
-vy = sim.state.state_phys.get_var("vy")
-vx[:] = np.sin(X) * np.cos(Y)
-vy[:] = -np.cos(X) * np.sin(Y)
-sim.state.statephys_from_statespect()
+vx = np.sin(X) * np.cos(Y)
+vy = -np.cos(X) * np.sin(Y)
+# Set the physical state, then compute the spectral state FROM it
+sim.state.init_statephys_from(vx=vx, vy=vy)
+sim.state.statespect_from_statephys()
 
 sim.time_stepping.start()
 
-# Validate energy decay
-df = sim.output.spatial_means.load()
-# Compare with analytical solution
+# Validate energy decay. spatial_means.load() returns a dict of numpy
+# arrays keyed by "t", "E", etc. (NOT a pandas DataFrame).
+data = sim.output.spatial_means.load()
+t, E = data["t"], data["E"]
+# Compare E(t) decay with the analytical Taylor-Green solution
 ```
 
 ## Quick Reference

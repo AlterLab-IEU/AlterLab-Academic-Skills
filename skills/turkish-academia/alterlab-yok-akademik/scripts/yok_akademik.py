@@ -447,7 +447,7 @@ def cmd_search(query: str) -> dict[str, Any]:
     forms, so we run the exact string first and a folded variant second, de-dup by id.
     """
     variants = [query]
-    folded = query.translate(_FOLD)  # keep case for display variant; portal is lenient
+    folded = query.translate(_FOLD)  # diacritic-folded ASCII variant; portal is lenient
     if folded != query:
         variants.append(folded)
 

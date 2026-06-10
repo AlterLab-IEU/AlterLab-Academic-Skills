@@ -57,7 +57,7 @@ Route adjacent requests to the correct sibling skill instead of forcing this one
 | An **etik kurul** (ethics committee) application or which committee is needed (anket/TİTCK) | `alterlab-tr-research-ethics` | That skill scaffolds the Turkish ethics-board submission; KVKK-DMP covers data protection, not ethics review |
 | Depositing accepted manuscripts / data in **Aperta** or a TÜBİTAK open-science **VYP** (veri yönetim planı / data-management plan) for the funder | `alterlab-aperta` | Aperta owns the TÜBİTAK open-science mandate and funder-facing VYP; KVKK-DMP only supplies the Principle-6 "why data is closed" justification |
 | Building a TÜBİTAK ARDEB 1001/1002-A proposal | `alterlab-tubitak-proposal` | That skill scaffolds the proposal form; KVKK-DMP only fills the data-protection annex |
-| A REDCap / CDISC clinical-data capture or standardization workflow | `alterlab-redcap-cdisc` | That owns clinical data instruments; KVKK-DMP governs the legal-basis/retention layer over them |
+| Building a data-capture instrument / survey (Qualtrics, REDCap) or questionnaire | `alterlab-survey-design` | That owns instrument design; KVKK-DMP governs the legal-basis/retention layer over the data they collect |
 | Turkish APA-7 / TR Dizin citation style or academic-writing conventions | `alterlab-tr-academic-style` | Style, not data protection |
 
 If a workflow needs both a **funder VYP** (Aperta) and a **KVKK DMP** (here),

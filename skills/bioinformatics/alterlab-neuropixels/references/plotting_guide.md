@@ -25,11 +25,10 @@ plt.rcParams['font.family'] = 'sans-serif'
 ### Basic Drift Map
 
 ```python
-# Using npa
-npa.plot_drift(recording, output='drift_map.png')
-
-# Using SpikeInterface widgets
-from spikeinterface.preprocessing import detect_peaks, localize_peaks
+# detect_peaks / localize_peaks live in spikeinterface.sortingcomponents,
+# NOT in spikeinterface.preprocessing.
+from spikeinterface.sortingcomponents.peak_detection import detect_peaks
+from spikeinterface.sortingcomponents.peak_localization import localize_peaks
 
 peaks = detect_peaks(recording, method='locally_exclusive')
 peak_locations = localize_peaks(recording, peaks, method='center_of_mass')
@@ -46,27 +45,17 @@ plt.savefig('drift_raster.png', bbox_inches='tight')
 ### Motion Estimate Visualization
 
 ```python
-motion_info = npa.estimate_motion(recording)
+# correct_motion(..., output_motion_info=True) returns motion_info whose
+# ['motion'] is a Motion object. The widget reads time/space bins from it.
+rec_corrected, motion_info = si.correct_motion(
+    recording, preset='nonrigid_fast_and_accurate',
+    output_motion_info=True, folder='motion_output/',
+)
 
-fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-
-# Motion over time
-ax = axes[0]
-for i in range(motion_info['motion'].shape[1]):
-    ax.plot(motion_info['temporal_bins'], motion_info['motion'][:, i], alpha=0.5)
-ax.set_xlabel('Time (s)')
-ax.set_ylabel('Motion (um)')
-ax.set_title('Estimated Motion')
-
-# Motion histogram
-ax = axes[1]
-ax.hist(motion_info['motion'].flatten(), bins=50, edgecolor='black')
-ax.set_xlabel('Motion (um)')
-ax.set_ylabel('Count')
-ax.set_title('Motion Distribution')
-
-plt.tight_layout()
-plt.savefig('motion_analysis.png', dpi=300)
+# plot_motion_info takes the whole motion_info dict and overlays peaks + drift;
+# plot_motion takes the Motion object alone. Either works.
+si.plot_motion_info(motion_info, recording, color_amplitude=True)
+plt.savefig('motion_analysis.png', dpi=300, bbox_inches='tight')
 ```
 
 ## Waveform Plots
@@ -111,7 +100,8 @@ plt.savefig(f'unit_{unit_id}_probe.png')
 ### Metrics Overview
 
 ```python
-npa.plot_quality_metrics(analyzer, metrics, output='quality_overview.png')
+sw.plot_quality_metrics(analyzer)
+plt.savefig('quality_overview.png', dpi=300, bbox_inches='tight')
 ```
 
 ### Metrics Distribution
@@ -334,7 +324,8 @@ plt.savefig(f'unit_{unit_id}_isi_detailed.png', dpi=300)
 ### Unit Summary Panel
 
 ```python
-npa.plot_unit_summary(analyzer, unit_id, output=f'unit_{unit_id}_summary.png')
+sw.plot_unit_summary(analyzer, unit_id=unit_id)
+plt.savefig(f'unit_{unit_id}_summary.png', dpi=300, bbox_inches='tight')
 ```
 
 ### Manual Multi-Panel Summary

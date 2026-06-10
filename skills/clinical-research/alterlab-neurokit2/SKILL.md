@@ -72,7 +72,10 @@ hrv_indices = nk.hrv(peaks, sampling_rate=1000)
 hrv_time = nk.hrv_time(peaks)
 hrv_freq = nk.hrv_frequency(peaks, sampling_rate=1000)
 hrv_nonlinear = nk.hrv_nonlinear(peaks, sampling_rate=1000)
-hrv_rsa = nk.hrv_rsa(peaks, rsp_signal, sampling_rate=1000)
+# hrv_rsa takes the *processed* ECG and RSP signal DataFrames (from ecg_process/rsp_process,
+# not raw arrays or bare peaks); pass R-peak indices via rpeaks=. See references/hrv.md.
+hrv_rsa = nk.hrv_rsa(ecg_signals, rsp_signals=rsp_signals,
+                     rpeaks=info['ECG_R_Peaks'], sampling_rate=1000)
 ```
 
 ### 3. Brain Signal Analysis (EEG)
@@ -88,12 +91,14 @@ Analyze electroencephalography signals for frequency power, complexity, and micr
 
 **Key functions:**
 ```python
-# Power analysis across frequency bands
-power = nk.eeg_power(eeg_data, sampling_rate=250, channels=['Fz', 'Cz', 'Pz'])
+# Power analysis across frequency bands (returns power per channel × band).
+# Select/subset channels upstream on the MNE Raw or array; eeg_power has no `channels` arg.
+power = nk.eeg_power(eeg_data, sampling_rate=250)
 
-# Microstate analysis
-microstates = nk.microstates_segment(eeg_data, n_microstates=4, method='kmod')
-static = nk.microstates_static(microstates)
+# Microstate analysis (sampling_rate is required for the default train='gfp' path)
+microstates = nk.microstates_segment(eeg_data, n_microstates=4, method='kmod',
+                                     sampling_rate=250)
+static = nk.microstates_static(microstates, sampling_rate=250)
 dynamic = nk.microstates_dynamic(microstates)
 ```
 
@@ -204,8 +209,8 @@ Compute nonlinear dynamics, fractal dimensions, and information-theoretic measur
 
 **Key functions:**
 ```python
-# Multiple complexity metrics at once
-complexity_indices = nk.complexity(signal, sampling_rate=1000)
+# Multiple complexity metrics at once (note: complexity() takes no sampling_rate)
+complexity_indices, info = nk.complexity(signal)
 
 # Specific measures
 apen = nk.entropy_approximate(signal)
@@ -276,6 +281,9 @@ Most `*_analyze()` functions automatically choose the appropriate mode.
 ```bash
 uv pip install neurokit2
 ```
+
+Function signatures in this skill are verified against **neurokit2 0.2.13**. If you need
+a reproducible env, pin it: `uv pip install "neurokit2==0.2.13"`.
 
 For development version:
 ```bash

@@ -326,7 +326,7 @@ Example code:
 -------------
 from sklearn.model_selection import KFold
 
-kf = KFold(n_splits=k, shuffle=True, random_seed=42)
+kf = KFold(n_splits=k, shuffle=True, random_state=42)
 cv_scores = {name: [] for name in models_dict.keys()}
 
 for train_idx, test_idx in kf.split(X):

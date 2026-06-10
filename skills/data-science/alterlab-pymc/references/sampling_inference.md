@@ -142,16 +142,18 @@ Good separation between energy distributions indicates healthy sampling.
 # Increase target acceptance rate
 idata = pm.sample(target_accept=0.95)
 
-# Or reparameterize using non-centered parameterization
-# Bad (centered):
+# Or reparameterize a hierarchical model using non-centered parameterization
+# Bad (centered) — group effects directly depend on the hyperpriors,
+# creating a funnel that NUTS struggles with:
 mu = pm.Normal('mu', 0, 1)
 sigma = pm.HalfNormal('sigma', 1)
-x = pm.Normal('x', mu, sigma, observed=data)
+theta = pm.Normal('theta', mu, sigma, dims='group')
 
-# Good (non-centered):
+# Good (non-centered) — sample a standardized offset, then rescale:
 mu = pm.Normal('mu', 0, 1)
 sigma = pm.HalfNormal('sigma', 1)
-x_offset = pm.Normal('x_offset', 0, 1, observed=(data - mu) / sigma)
+theta_offset = pm.Normal('theta_offset', 0, 1, dims='group')
+theta = pm.Deterministic('theta', mu + sigma * theta_offset, dims='group')
 ```
 
 #### Slow Sampling
@@ -238,7 +240,7 @@ Better captures multimodality but more computationally expensive.
 
 Sample from the prior distribution (before seeing data).
 
-**`pm.sample_prior_predictive(samples=500, **kwargs)`**
+**`pm.sample_prior_predictive(draws=500, **kwargs)`**
 
 **Purpose:**
 - Validate priors are reasonable
@@ -248,7 +250,7 @@ Sample from the prior distribution (before seeing data).
 **Example:**
 ```python
 with model:
-    prior_pred = pm.sample_prior_predictive(samples=1000)
+    prior_pred = pm.sample_prior_predictive(draws=1000)
 
 # Visualize prior predictions
 az.plot_ppc(prior_pred, group='prior')

@@ -12,7 +12,7 @@ PufferEnv is designed for performance through in-place operations:
 - Observations, actions, and rewards are initialized from a shared buffer object
 - All operations happen in-place to avoid creating and copying arrays
 - Native support for both single-agent and multi-agent environments
-- Flat observation/action spaces for efficient vectorization
+- **Native spaces must be flat**: `single_observation_space` must be a `Box`, and `single_action_space` a `Discrete`, `MultiDiscrete`, or `Box`. A `Dict` (or other structured) observation space is **not** allowed for a native PufferEnv — the base class raises `APIUsageError`. If you need Dict/structured observations, build a Gymnasium env and use `pufferlib.emulation.GymnasiumPufferEnv`, which flattens them for you.
 
 ### Creating a PufferEnv
 
@@ -24,13 +24,10 @@ from pufferlib import PufferEnv
 
 class MyEnvironment(PufferEnv):
     def __init__(self, buf=None):
-        # Define observation and action spaces BEFORE super().__init__(buf)
-        self.single_observation_space = gymnasium.spaces.Dict({
-            'image': gymnasium.spaces.Box(
-                low=0, high=255, shape=(84, 84, 3), dtype=np.uint8),
-            'vector': gymnasium.spaces.Box(
-                low=-np.inf, high=np.inf, shape=(10,), dtype=np.float32),
-        })
+        # Define spaces and num_agents BEFORE super().__init__(buf).
+        # Native obs space MUST be a Box (no Dict). Here: an 84x84x3 image.
+        self.single_observation_space = gymnasium.spaces.Box(
+            low=0, high=255, shape=(84, 84, 3), dtype=np.uint8)
         self.single_action_space = gymnasium.spaces.Discrete(4)  # 4 discrete actions
         self.num_agents = 1
 
@@ -42,12 +39,8 @@ class MyEnvironment(PufferEnv):
         self.agent_pos = np.array([0, 0])
         self.step_count = 0
 
-        # Return initial observation and an (empty) info list
-        obs = {
-            'image': np.zeros((84, 84, 3), dtype=np.uint8),
-            'vector': np.zeros(10, dtype=np.float32)
-        }
-
+        # Return initial observation and an (empty) info LIST (asserted by PufferEnv)
+        obs = np.zeros((84, 84, 3), dtype=np.uint8)
         return obs, []
 
     def step(self, action):
@@ -65,7 +58,7 @@ class MyEnvironment(PufferEnv):
         # Generate observation
         obs = self._get_observation()
 
-        # Additional info (list of dicts, one per agent)
+        # Additional info (list of dicts; PufferEnv asserts info is a list)
         info = [{'episode': {'r': rewards, 'l': self.step_count}}] if truncations else []
 
         return obs, rewards, terminals, truncations, info
@@ -75,11 +68,8 @@ class MyEnvironment(PufferEnv):
         return 1.0
 
     def _get_observation(self):
-        """Generate observation from current state."""
-        return {
-            'image': np.random.randint(0, 256, (84, 84, 3), dtype=np.uint8),
-            'vector': np.random.randn(10).astype(np.float32)
-        }
+        """Generate observation from current state (a Box-shaped array)."""
+        return np.random.randint(0, 256, (84, 84, 3), dtype=np.uint8)
 ```
 
 ### Observation Spaces
@@ -88,45 +78,37 @@ Define spaces directly with `gymnasium.spaces` and assign them to
 `self.single_observation_space` / `self.single_action_space` before calling
 `super().__init__(buf)`.
 
-#### Discrete Spaces
+#### Native observation spaces (Box only)
+
+A native PufferEnv observation space must be a `Box`. Encode discrete or
+heterogeneous state into a single Box vector/array:
 
 ```python
 import gymnasium
 
-# Single discrete value
-self.single_observation_space = gymnasium.spaces.Discrete(10)  # Values 0-9
+# Flat continuous/feature vector
+self.single_observation_space = gymnasium.spaces.Box(
+    low=-np.inf, high=np.inf, shape=(10,), dtype=np.float32)
 
-# Dict with discrete values
-self.single_observation_space = gymnasium.spaces.Dict({
-    'position': gymnasium.spaces.Box(
-        low=-np.inf, high=np.inf, shape=(1,), dtype=np.float32),  # Continuous
-    'type': gymnasium.spaces.Discrete(5),  # Discrete
-})
+# Image observation
+self.single_observation_space = gymnasium.spaces.Box(
+    low=0, high=255, shape=(84, 84, 3), dtype=np.uint8)
 ```
 
-#### Continuous Spaces
+#### Dict / structured observations (emulation path only)
+
+`Dict` observation spaces are **not** valid for a native PufferEnv. To use them,
+build a Gymnasium env and wrap it with `pufferlib.emulation.GymnasiumPufferEnv`,
+which flattens the Dict to a Box for you (recover the structure in the policy via
+`pufferlib.pytorch.nativize_tensor`):
 
 ```python
 import gymnasium
-
-# Box spaces (continuous)
-self.single_observation_space = gymnasium.spaces.Dict({
-    'image': gymnasium.spaces.Box(
-        low=0, high=255, shape=(84, 84, 3), dtype=np.uint8),       # Image
-    'vector': gymnasium.spaces.Box(
-        low=-np.inf, high=np.inf, shape=(10,), dtype=np.float32),  # Vector
-    'scalar': gymnasium.spaces.Box(
-        low=-np.inf, high=np.inf, shape=(1,), dtype=np.float32),   # Single value
+# Inside a standard gymnasium.Env (NOT a PufferEnv):
+observation_space = gymnasium.spaces.Dict({
+    'image': gymnasium.spaces.Box(low=0, high=255, shape=(84, 84, 3), dtype=np.uint8),
+    'vector': gymnasium.spaces.Box(low=-np.inf, high=np.inf, shape=(10,), dtype=np.float32),
 })
-```
-
-#### Multi-Discrete Spaces
-
-```python
-import gymnasium
-
-# Multiple discrete values
-self.single_observation_space = gymnasium.spaces.MultiDiscrete([3, 5, 2])  # 3 values, 5 values, 2 values
 ```
 
 ### Action Spaces
@@ -147,113 +129,80 @@ self.single_action_space = gymnasium.spaces.MultiDiscrete([3, 3])  # Two 3-way d
 
 ## Multi-Agent Environments
 
-PufferLib has native multi-agent support, treating single-agent and multi-agent environments uniformly.
+PufferLib has native multi-agent support, treating single-agent and multi-agent environments uniformly: set `num_agents > 1` and use the **same** array-based API as a single-agent env. There is no `{agent_id: ...}` dict / `'__all__'` convention in native PufferEnv — that belongs to PettingZoo (use `pufferlib.emulation.PettingZooPufferEnv` for those). The native obs/reward/terminal/truncation buffers are simply sized along a leading agent axis, and `info` is a list of dicts.
 
 ### Multi-Agent PufferEnv
 
 ```python
 import gymnasium
+import numpy as np
 
 class MultiAgentEnv(PufferEnv):
     def __init__(self, num_agents=4, buf=None):
-        # Define spaces and num_agents BEFORE super().__init__(buf)
+        # Define spaces and num_agents BEFORE super().__init__(buf).
+        # single_*_space is PER AGENT and must be a Box (obs) / Discrete-or-Box (action).
         self.num_agents = num_agents
-
-        # Per-agent observation space
-        self.single_observation_space = gymnasium.spaces.Dict({
-            'position': gymnasium.spaces.Box(
-                low=-np.inf, high=np.inf, shape=(2,), dtype=np.float32),
-            'velocity': gymnasium.spaces.Box(
-                low=-np.inf, high=np.inf, shape=(2,), dtype=np.float32),
-            'global': gymnasium.spaces.Box(
-                low=-np.inf, high=np.inf, shape=(10,), dtype=np.float32),
-        })
-
-        # Per-agent action space
+        self.single_observation_space = gymnasium.spaces.Box(
+            low=-np.inf, high=np.inf, shape=(14,), dtype=np.float32)  # e.g. pos+vel+global
         self.single_action_space = gymnasium.spaces.Discrete(5)
 
         super().__init__(buf)
 
-    def reset(self):
-        """Reset all agents."""
-        self.agents = {f'agent_{i}': Agent(i) for i in range(self.num_agents)}
-
-        # Return observations for all agents
-        return {
-            agent_id: self._get_obs(agent)
-            for agent_id, agent in self.agents.items()
-        }
+    def reset(self, seed=None):
+        """Reset all agents. Returns (obs, info-list)."""
+        # obs is shaped (num_agents, *single_observation_space.shape)
+        obs = np.zeros((self.num_agents, 14), dtype=np.float32)
+        return obs, []
 
     def step(self, actions):
-        """Step all agents."""
-        # actions is a dict: {agent_id: action}
-        observations = {}
-        rewards = {}
-        dones = {}
-        infos = {}
-
-        for agent_id, action in actions.items():
-            agent = self.agents[agent_id]
-
-            # Update agent
-            agent.update(action)
-
-            # Generate results
-            observations[agent_id] = self._get_obs(agent)
-            rewards[agent_id] = self._compute_reward(agent)
-            dones[agent_id] = agent.is_done()
-            infos[agent_id] = {}
-
-        # Check for global done condition
-        dones['__all__'] = all(dones.values())
-
-        return observations, rewards, dones, infos
+        """Step all agents. `actions` is an array of shape (num_agents, ...).
+        Returns (obs, rewards, terminals, truncations, info-list) where the first
+        four are arrays of length num_agents and info is a list of dicts."""
+        obs = self._get_observations()                 # (num_agents, 14)
+        rewards = self._compute_rewards()               # (num_agents,)
+        terminals = self._terminated()                  # (num_agents,) bool
+        truncations = self._truncated()                 # (num_agents,) bool
+        info = []
+        return obs, rewards, terminals, truncations, info
 ```
 
-## Ocean Environment Suite
+## Environments: Ocean vs. third-party bindings
 
-PufferLib provides the Ocean suite with 20+ pre-built environments:
+PufferLib ships two distinct collections — keep them straight:
 
-### Available Environments
+- **Ocean** (`pufferlib.ocean`) is PufferLib's own suite of fast, mostly native-C
+  environments. It includes `breakout`, `pong`, `snake`, `enduro`, `freeway`,
+  `connect4`, `go`, `g2048`, `tetris`, `pacman`, `nmmo3`, `moba`, `drive`,
+  `rware`, `trash_pickup`, `cartpole`, `grid`, and many more (40+). These are the
+  high-throughput envs the SPS benchmarks refer to.
+- **Third-party bindings** (`pufferlib.environments.*`) wrap external suites:
+  `atari`, `procgen`, `nethack`, `minihack`, `minigrid`, `crafter`, `craftax`,
+  `butterfly` (PettingZoo), `magent`, `nmmo`, `gpudrive`, `microrts`, `griddly`,
+  `pokemon_red`, `mujoco`, `dm_control`, `vizdoom`, and others. So Atari, Procgen,
+  and NetHack are **bindings, not Ocean envs**.
 
-#### Arcade Games
-- **Atari**: Classic Atari 2600 games via Arcade Learning Environment
-- **Procgen**: Procedurally generated games for generalization testing
-
-#### Grid-Based
-- **Minigrid**: Partially observable gridworld environments
-- **Crafter**: Open-ended survival crafting game
-- **NetHack**: Classic roguelike dungeon crawler
-- **MiniHack**: Simplified NetHack variants
-
-#### Multi-Agent
-- **PettingZoo**: Multi-agent environment suite (including Butterfly)
-- **MAgent**: Large-scale multi-agent scenarios
-- **Neural MMO**: Massively multi-agent survival game
-
-#### Specialized
-- **Pokemon Red**: Classic Pokemon game environment
-- **GPUDrive**: High-performance driving simulator
-- **Griddly**: Grid-based game engine
-- **MicroRTS**: Real-time strategy game
-
-### Using Ocean Environments
+### Using these environments
 
 ```python
 import functools
 import pufferlib.vector
+import pufferlib.ocean
 
-# Vectorize an env-constructor callable
-env = pufferlib.vector.make(make_coinrun_env, num_envs=256)
+# Ocean (native): resolve a constructor with env_creator. The name is prefixed
+# 'puffer_' (matching the CLI `puffer train puffer_breakout`).
+breakout = pufferlib.ocean.environment.env_creator('puffer_breakout')
+env = pufferlib.vector.make(breakout, num_envs=256)
 
-# With custom configuration (bind constructor kwargs via functools.partial)
+# Bind constructor kwargs with functools.partial (PufferLib has no string registry).
+snake = pufferlib.ocean.environment.env_creator('puffer_snake')
+env = pufferlib.vector.make(functools.partial(snake, num_agents=4), num_envs=128)
+
+# Third-party bindings live under pufferlib.environments.<name> and expose an
+# `env_creator`. They are not native, so pass an explicit backend.
+import pufferlib.environments.atari as atari
 env = pufferlib.vector.make(
-    functools.partial(make_pong_env, frameskip=4, framestack=4),
-    num_envs=128,
-)
-
-# Multi-agent environment
-env = pufferlib.vector.make(make_knights_archers_zombies_env, num_envs=4)
+    atari.env_creator('BreakoutNoFrameskip-v4'),
+    num_envs=128, backend=pufferlib.vector.Multiprocessing)
 ```
 
 ## Custom Environment Development
@@ -354,12 +303,15 @@ import gymnasium as gym
 import pufferlib.emulation
 import pufferlib.vector
 
-# Wrap a Gymnasium env in a GymnasiumPufferEnv, then vectorize
+# Wrap a Gymnasium env in a GymnasiumPufferEnv, then vectorize. Wrapped
+# (non-native) envs require an explicit backend (default backend=PufferEnv is
+# native-only).
 def env_creator():
     return pufferlib.emulation.GymnasiumPufferEnv(
         env_creator=lambda: gym.make('CartPole-v1'))
 
-env = pufferlib.vector.make(env_creator, num_envs=256)
+env = pufferlib.vector.make(
+    env_creator, num_envs=256, backend=pufferlib.vector.Multiprocessing)
 ```
 
 ### PettingZoo Environments
@@ -369,42 +321,44 @@ from pettingzoo.butterfly import pistonball_v6
 import pufferlib.emulation
 import pufferlib.vector
 
-# Wrap a PettingZoo env in a PettingZooPufferEnv, then vectorize
+# Wrap a PettingZoo env in a PettingZooPufferEnv, then vectorize.
 def env_creator():
     return pufferlib.emulation.PettingZooPufferEnv(
         env_creator=lambda: pistonball_v6.parallel_env())
 
-env = pufferlib.vector.make(env_creator, num_envs=128)
+env = pufferlib.vector.make(
+    env_creator, num_envs=128, backend=pufferlib.vector.Multiprocessing)
 ```
 
 ### Custom Wrappers
 
+A PufferEnv defines `single_observation_space` / `single_action_space` — assigning
+`observation_space` / `action_space` is rejected by the base class. Mirror the
+wrapped env's *single* spaces, set `num_agents` before `super().__init__`, and keep
+the native 5-tuple step signature.
+
 ```python
 class CustomWrapper(pufferlib.PufferEnv):
-    """Wrapper to modify environment behavior."""
+    """Wrapper to modify a native PufferEnv's behavior."""
 
     def __init__(self, base_env, buf=None):
-        super().__init__(buf)
         self.base_env = base_env
-        self.observation_space = base_env.observation_space
-        self.action_space = base_env.action_space
+        # Copy the per-agent spaces (NOT observation_space/action_space).
+        self.single_observation_space = base_env.single_observation_space
+        self.single_action_space = base_env.single_action_space
+        self.num_agents = base_env.num_agents
+        super().__init__(buf)
 
-    def reset(self):
-        obs = self.base_env.reset()
-        # Modify observation
-        return self._process_obs(obs)
+    def reset(self, seed=None):
+        obs, info = self.base_env.reset(seed)
+        return self._process_obs(obs), info
 
     def step(self, action):
-        # Modify action
-        modified_action = self._process_action(action)
-
-        obs, reward, done, info = self.base_env.step(modified_action)
-
-        # Modify outputs
+        action = self._process_action(action)
+        obs, rewards, terminals, truncations, info = self.base_env.step(action)
         obs = self._process_obs(obs)
-        reward = self._process_reward(reward)
-
-        return obs, reward, done, info
+        rewards = self._process_reward(rewards)
+        return obs, rewards, terminals, truncations, info
 ```
 
 ## Environment Best Practices
@@ -436,28 +390,23 @@ def step(self, action):
     raw_reward = compute_raw_reward()
     reward = np.clip(raw_reward / 100.0, -10, 10)
 
-    return obs, reward, done, info
+    return obs, reward, terminal, truncation, info
 ```
 
 ### Episode Termination
+
+PufferLib keeps termination and truncation separate (the 4th return value).
+A time limit is a *truncation*; reaching a goal/failure is a *termination*.
 
 ```python
 def step(self, action):
     # ... environment logic ...
 
-    # Multiple termination conditions
-    timeout = self.step_count >= self.max_steps
-    success = self._check_success()
-    failure = self._check_failure()
+    terminal = self._check_success() or self._check_failure()  # task-ending
+    truncation = self.step_count >= self.max_steps             # time limit
+    info = [{'success': self._check_success()}] if (terminal or truncation) else []
 
-    done = timeout or success or failure
-
-    info = {
-        'TimeLimit.truncated': timeout,
-        'success': success
-    }
-
-    return obs, reward, done, info
+    return obs, reward, terminal, truncation, info
 ```
 
 ### Memory Efficiency
@@ -482,16 +431,15 @@ class MemoryEfficientEnv(PufferEnv):
 ### Validation Checks
 
 ```python
-# Add assertions to catch bugs
+# Add assertions to catch bugs. Note: PufferEnv exposes single_*_space (per agent);
+# observation_space/action_space are the joint (batched) spaces set by the base class.
 def step(self, action):
-    assert self.action_space.contains(action), f"Invalid action: {action}"
+    obs, reward, terminal, truncation, info = self._step_impl(action)
 
-    obs, reward, done, info = self._step_impl(action)
+    assert self.single_observation_space.contains(obs), "Invalid observation"
+    assert np.all(np.isfinite(reward)), "Non-finite reward"
 
-    assert self.observation_space.contains(obs), "Invalid observation"
-    assert np.isfinite(reward), "Non-finite reward"
-
-    return obs, reward, done, info
+    return obs, reward, terminal, truncation, info
 ```
 
 ### Rendering
@@ -522,10 +470,10 @@ logger = logging.getLogger(__name__)
 def step(self, action):
     logger.debug(f"Step {self.step_count}: action={action}")
 
-    obs, reward, done, info = self._step_impl(action)
+    obs, reward, terminal, truncation, info = self._step_impl(action)
 
-    if done:
+    if np.any(terminal) or np.any(truncation):
         logger.info(f"Episode finished: reward={self.total_reward}")
 
-    return obs, reward, done, info
+    return obs, reward, terminal, truncation, info
 ```

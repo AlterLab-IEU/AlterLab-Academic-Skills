@@ -6,7 +6,7 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: API required
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
 ---
 
 # Rowan: Cloud-Based Quantum Chemistry Platform
@@ -33,9 +33,13 @@ Rowan is a cloud-based computational chemistry platform that provides programmat
 
 ### Installation
 
+Requires Python >= 3.12. This skill targets `rowan-python` 3.x (the current major version; v2 had a different result API).
+
 ```bash
-uv pip install rowan-python
+uv pip install "rowan-python>=3.0"
 ```
+
+Installing `rowan-python` also pulls in `stjames` (molecule/result models) and `rdkit`.
 
 ### Authentication
 
@@ -65,114 +69,110 @@ print(f"Logged in as: {user.username}")
 print(f"Credits available: {user.credits}")
 ```
 
+## The Result Pattern (read this first)
+
+Every `submit_*_workflow` returns a `Workflow`. Do NOT read `workflow.data[...]` by hand and do NOT call the deprecated `wait_for_result()`. The v3 idiom is a single call:
+
+```python
+workflow = rowan.submit_pka_workflow("c1ccccc1O", name="phenol pKa")
+result = workflow.result()        # blocks until done, returns a typed WorkflowResult
+print(result.strongest_acid)      # typed attribute access, not a dict key
+```
+
+Key facts:
+- `workflow.result(wait=True, poll_interval=5)` blocks, fetches, and raises `rowan.WorkflowError` if the workflow failed or was stopped. Use `wait=False` to grab whatever is ready without blocking.
+- `workflow.status` is the **integer** enum `stjames.Status` (`QUEUED=0, RUNNING=1, COMPLETED_OK=2, FAILED=3, STOPPED=4`), not a string. Use `workflow.done()` / `workflow.is_finished()` rather than comparing to `"completed"`.
+- `submit_*` functions accept a SMILES string, an `stjames.Molecule`, or an RDKit `Mol` directly as `initial_molecule` — you rarely need to build a molecule first. `stjames.Molecule.from_smiles(smiles)` takes only the SMILES (no `charge=`/`multiplicity=` kwargs).
+
 ## Core Workflows
 
 ### 1. pKa Prediction
 
-Calculate the acid dissociation constant for molecules:
+Predict micro-pKa / acid dissociation constants:
 
 ```python
 import rowan
-import stjames
 
-# Create molecule from SMILES
-mol = stjames.Molecule.from_smiles("c1ccccc1O")  # Phenol
-
-# Submit pKa workflow
+# initial_molecule accepts a SMILES string directly
 workflow = rowan.submit_pka_workflow(
-    initial_molecule=mol,
-    name="phenol pKa calculation"
+    "c1ccccc1O",  # Phenol
+    name="phenol pKa calculation",
+    pka_range=(2, 12),                  # default
+    method="aimnet2_wagen2024",         # default NNP-based pKa model
 )
 
-# Wait for completion
-workflow.wait_for_result()
-workflow.fetch_latest(in_place=True)
-
-# Access results
-print(f"Strongest acid pKa: {workflow.data['strongest_acid']}")  # ~10.17
+result = workflow.result()
+print(f"Strongest acid pKa: {result.strongest_acid}")
+print(f"Strongest base pKa: {result.strongest_base}")
 ```
+
+For macroscopic pKa, microstate populations vs. pH, isoelectric point, and logD/solubility-vs-pH, use `rowan.submit_macropka_workflow(...)` and read `result.pka_values`, `result.microstates`, `result.isoelectric_point`.
 
 ### 2. Conformer Search
 
-Generate and optimize molecular conformers:
+Generate and rank a conformer ensemble:
 
 ```python
 import rowan
-import stjames
-
-mol = stjames.Molecule.from_smiles("CCCC")  # Butane
 
 workflow = rowan.submit_conformer_search_workflow(
-    initial_molecule=mol,
-    name="butane conformer search"
+    "CCCC",  # Butane
+    name="butane conformer search",
+    final_method="aimnet2_wb97md3",     # NNP; default
 )
 
-workflow.wait_for_result()
-workflow.fetch_latest(in_place=True)
-
-# Access conformer ensemble
-conformers = workflow.data['conformers']
-for i, conf in enumerate(conformers):
-    print(f"Conformer {i}: Energy = {conf['energy']:.4f} Hartree")
+result = workflow.result()
+print(f"Found {result.num_conformers} conformers")
+for energy in result.get_energies():   # relative energies, kcal/mol
+    print(f"  ΔE = {energy:.2f} kcal/mol")
+lowest = result.get_conformer(0)       # stjames.Molecule of the lowest-energy conformer
 ```
 
 ### 3. Geometry Optimization
 
-Optimize molecular geometry to minimum energy structure:
+`submit_basic_calculation_workflow` is task-driven: pass `tasks` (e.g. `["optimize"]`, `["energy"]`, `["optimize", "frequencies"]`), not a `workflow_type` string.
 
 ```python
 import rowan
-import stjames
-
-mol = stjames.Molecule.from_smiles("CC(=O)O")  # Acetic acid
 
 workflow = rowan.submit_basic_calculation_workflow(
-    initial_molecule=mol,
+    "CC(=O)O",  # Acetic acid
+    tasks=["optimize"],
+    preset="organic_nnp",     # quick NNP preset; or set method=/basis_set= explicitly
     name="acetic acid optimization",
-    workflow_type="optimization"
 )
 
-workflow.wait_for_result()
-workflow.fetch_latest(in_place=True)
-
-# Get optimized structure
-optimized_mol = workflow.data['final_molecule']
-print(f"Final energy: {optimized_mol.energy} Hartree")
+result = workflow.result()
+print(f"Final energy: {result.energy} Hartree")
+optimized_mol = result.molecule   # stjames.Molecule with optimized coordinates
 ```
 
 ### 4. Protein-Ligand Docking
 
-Dock small molecules to protein targets:
+Dock small molecules to protein targets. The pocket is `[[center_x, center_y, center_z], [size_x, size_y, size_z]]` in Angstroms — a list of two 3-vectors, NOT a dict.
 
 ```python
 import rowan
 
-# First, upload or create protein
-protein = rowan.create_protein_from_pdb_id(
-    name="EGFR kinase",
-    code="1M17"
-)
+# Create protein from a PDB ID (fetched from RCSB)
+protein = rowan.create_protein_from_pdb_id(name="EGFR kinase", code="1M17")
+protein.sanitize()   # strip waters/ions, fix residues
 
-# Define binding pocket (from crystal structure or manual)
-pocket = {
-    "center": [10.0, 20.0, 30.0],
-    "size": [20.0, 20.0, 20.0]
-}
+pocket = [[10.0, 20.0, 30.0],    # center (Å)
+          [20.0, 20.0, 20.0]]    # box size (Å)
 
-# Submit docking
 workflow = rowan.submit_docking_workflow(
-    protein=protein.uuid,
+    protein=protein,             # Protein object or its .uuid
     pocket=pocket,
-    initial_molecule=stjames.Molecule.from_smiles("Cc1ccc(NC(=O)c2ccc(CN3CCN(C)CC3)cc2)cc1"),
-    name="EGFR docking"
+    initial_molecule="Cc1ccc(NC(=O)c2ccc(CN3CCN(C)CC3)cc2)cc1",
+    scoring_function="vinardo",  # or "vina"
+    name="EGFR docking",
 )
 
-workflow.wait_for_result()
-workflow.fetch_latest(in_place=True)
-
-# Access docking results
-docking_score = workflow.data['docking_score']
-print(f"Docking score: {docking_score}")
+result = workflow.result()
+best = result.scores[0]          # DockingScore, sorted best-first
+print(f"Best docking score: {best.score} kcal/mol")
+best_pose = result.best_pose     # stjames.Molecule of the top pose
 ```
 
 ### 5. Protein Cofolding (AI Structure Prediction)
@@ -182,72 +182,37 @@ Predict protein-ligand complex structures using AI models:
 ```python
 import rowan
 
-# Protein sequence
 protein_seq = "MENFQKVEKIGEGTYGVVYKARNKLTGEVVALKKIRLDTETEGVPSTAIREISLLKELNHPNIVKLLDVIHTENKLYLVFEFLHQDLKKFMDASALTGIPLPLIKSYLFQLLQGLAFCHSHRVLHRDLKPQNLLINTEGAIKLADFGLARAFGVPVRTYTHEVVTLWYRAPEILLGCKYYSTAVDIWSLGCIFAEMVTRRALFPGDSEIDQLFRIFRTLGTPDEVVWPGVTSMPDYKPSFPKWARQDFSKVVPPLDEDGRSLLSQMLHYDPNKRISAKAALAHPFFQDVTKPVPHLRL"
-
-# Ligand SMILES
 ligand = "CCC(C)CN=C1NCC2(CCCOC2)CN1"
 
-# Submit cofolding with Chai-1
 workflow = rowan.submit_protein_cofolding_workflow(
     initial_protein_sequences=[protein_seq],
     initial_smiles_list=[ligand],
     name="kinase-ligand cofolding",
-    model="chai_1r"  # or "boltz_1x", "boltz_2"
+    model="chai_1r",   # or "boltz_1", "boltz_2", "openfold_3"
 )
 
-workflow.wait_for_result()
-workflow.fetch_latest(in_place=True)
-
-# Access structure predictions
-print(f"Predicted TM Score: {workflow.data['ptm_score']}")
-print(f"Interface pTM: {workflow.data['interface_ptm']}")
+result = workflow.result()
+top = result.predictions[0]            # first CofoldingResult sample
+print(f"pTM: {top.scores.ptm}")        # predicted TM score (0-1)
+print(f"interface pTM: {top.scores.iptm}")
 ```
 
-## RDKit-Native API
-
-For users working with RDKit molecules, Rowan provides a simplified interface:
-
-```python
-import rowan
-from rdkit import Chem
-
-# Create RDKit molecule
-mol = Chem.MolFromSmiles("c1ccccc1O")
-
-# Compute pKa directly
-pka_result = rowan.run_pka(mol)
-print(f"pKa: {pka_result.strongest_acid}")
-
-# Batch processing
-mols = [Chem.MolFromSmiles(smi) for smi in ["CCO", "CC(=O)O", "c1ccccc1O"]]
-results = rowan.batch_pka(mols)
-
-for mol, result in zip(mols, results):
-    print(f"{Chem.MolToSmiles(mol)}: pKa = {result.strongest_acid}")
-```
-
-**Available RDKit-native functions:**
-- `run_pka`, `batch_pka` - pKa calculations
-- `run_tautomers`, `batch_tautomers` - Tautomer enumeration
-- `run_conformers`, `batch_conformers` - Conformer generation
-- `run_energy`, `batch_energy` - Single-point energies
-- `run_optimization`, `batch_optimization` - Geometry optimization
-
-See `references/rdkit_native.md` for complete documentation.
+> Note: the cofolding model strings are `chai_1r`, `boltz_1`, `boltz_2`, `openfold_3` (there is no `boltz_1x`). Confidence lives on `result.scores` / each prediction's `.scores` as `.ptm` and `.iptm`.
 
 ## Workflow Management
 
 ### List and Query Workflows
 
 ```python
-# List recent workflows
+# List recent workflows (page is 0-indexed; default size=10)
 workflows = rowan.list_workflows(size=10)
 for wf in workflows:
-    print(f"{wf.name}: {wf.status}")
+    print(f"{wf.name}: {wf.status.name}")   # status is an int enum
 
-# Filter by status
-pending = rowan.list_workflows(status="running")
+# Filter by type / name substring / folder
+pka_runs = rowan.list_workflows(workflow_type="pka", name_contains="phenol")
+folder_runs = rowan.list_workflows(parent_uuid=folder.uuid)
 
 # Retrieve specific workflow
 workflow = rowan.retrieve_workflow("workflow-uuid")
@@ -256,14 +221,13 @@ workflow = rowan.retrieve_workflow("workflow-uuid")
 ### Batch Operations
 
 ```python
-# Submit multiple workflows
+# Submit many workflows of one type at once
 workflows = rowan.batch_submit_workflow(
-    molecules=[mol1, mol2, mol3],
     workflow_type="pka",
-    workflow_data={}
+    initial_smileses=["CCO", "CC(=O)O", "c1ccccc1O"],
 )
 
-# Poll status of multiple workflows
+# Non-blocking status poll (returns a list of {uuid, status, ...} dicts)
 statuses = rowan.batch_poll_status([wf.uuid for wf in workflows])
 ```
 
@@ -275,13 +239,13 @@ folder = rowan.create_folder(name="Drug Discovery Project")
 
 # Submit workflow to folder
 workflow = rowan.submit_pka_workflow(
-    initial_molecule=mol,
+    "CCO",
     name="compound pKa",
-    folder_uuid=folder.uuid
+    folder=folder,          # or folder_uuid=folder.uuid
 )
 
 # List workflows in folder
-folder_workflows = rowan.list_workflows(folder_uuid=folder.uuid)
+folder_workflows = rowan.list_workflows(parent_uuid=folder.uuid)
 ```
 
 ## Computational Methods
@@ -305,9 +269,8 @@ Methods are automatically selected based on workflow type, or can be specified e
 
 For detailed API documentation, consult these reference files:
 
-- **`references/api_reference.md`**: Complete API documentation - Workflow class, submission functions, retrieval methods
-- **`references/workflow_types.md`**: All 30+ workflow types with parameters - pKa, docking, cofolding, etc.
-- **`references/rdkit_native.md`**: RDKit-native API functions for seamless cheminformatics integration
+- **`references/api_reference.md`**: Workflow class, submission functions, retrieval methods, the result pattern
+- **`references/workflow_types.md`**: The full set of workflow types with parameters - pKa, docking, cofolding, etc.
 - **`references/molecule_handling.md`**: stjames.Molecule class - creating molecules from SMILES, XYZ, RDKit
 - **`references/proteins_and_organization.md`**: Protein upload, folder management, project organization
 - **`references/results_interpretation.md`**: Understanding workflow outputs, confidence scores, validation
@@ -316,110 +279,89 @@ For detailed API documentation, consult these reference files:
 
 ### Pattern 1: Property Prediction Pipeline
 
+Submit everything first, then collect results — submission is non-blocking, `result()` blocks.
+
 ```python
 import rowan
-import stjames
 
 smiles_list = ["CCO", "c1ccccc1O", "CC(=O)O"]
 
-# Submit all pKa calculations
-workflows = []
-for smi in smiles_list:
-    mol = stjames.Molecule.from_smiles(smi)
-    wf = rowan.submit_pka_workflow(
-        initial_molecule=mol,
-        name=f"pKa: {smi}"
-    )
-    workflows.append(wf)
+# Submit all pKa calculations (SMILES strings are accepted directly)
+workflows = [rowan.submit_pka_workflow(smi, name=f"pKa: {smi}") for smi in smiles_list]
 
-# Wait for all to complete
+# Collect results
 for wf in workflows:
-    wf.wait_for_result()
-    wf.fetch_latest(in_place=True)
-    print(f"{wf.name}: pKa = {wf.data['strongest_acid']}")
+    result = wf.result()
+    print(f"{wf.name}: pKa = {result.strongest_acid}")
 ```
 
 ### Pattern 2: Virtual Screening
 
+For screening a library against one target, prefer the dedicated batch-docking workflow over a Python loop.
+
 ```python
 import rowan
 
-# Upload protein once
-protein = rowan.upload_protein("target.pdb", name="Drug Target")
-protein.sanitize()  # Clean structure
+protein = rowan.upload_protein(name="Drug Target", file_path="target.pdb")
+protein.sanitize()
 
-# Define pocket
-pocket = {"center": [x, y, z], "size": [20, 20, 20]}
+pocket = [[x, y, z], [20.0, 20.0, 20.0]]   # center, size (Å)
 
-# Screen compound library
-for smiles in compound_library:
-    mol = stjames.Molecule.from_smiles(smiles)
-    workflow = rowan.submit_docking_workflow(
-        protein=protein.uuid,
-        pocket=pocket,
-        initial_molecule=mol,
-        name=f"Dock: {smiles[:20]}"
-    )
+workflow = rowan.submit_batch_docking_workflow(
+    smiles_list=compound_library,
+    protein=protein,
+    pocket=pocket,
+    name="library screen",
+)
+result = workflow.result()
 ```
 
 ### Pattern 3: Conformer-Based Analysis
 
 ```python
 import rowan
-import stjames
 
-mol = stjames.Molecule.from_smiles("complex_molecule_smiles")
-
-# Generate conformers
 conf_wf = rowan.submit_conformer_search_workflow(
-    initial_molecule=mol,
-    name="conformer search"
+    "C1CCCCC1",  # any SMILES
+    name="conformer search",
 )
-conf_wf.wait_for_result()
-conf_wf.fetch_latest(in_place=True)
+result = conf_wf.result()
 
-# Analyze lowest energy conformers
-conformers = sorted(conf_wf.data['conformers'], key=lambda x: x['energy'])
-print(f"Found {len(conformers)} unique conformers")
-print(f"Energy range: {conformers[0]['energy']:.4f} to {conformers[-1]['energy']:.4f} Hartree")
+energies = result.get_energies()   # relative energies, kcal/mol, ascending
+print(f"Found {result.num_conformers} conformers")
+print(f"Energy range: {energies[0]:.2f} to {energies[-1]:.2f} kcal/mol")
 ```
 
 ## Best Practices
 
 1. **Set API key via environment variable** for security and convenience
 2. **Use folders** to organize related workflows
-3. **Check workflow status** before accessing data
-4. **Use batch functions** for multiple similar calculations
-5. **Handle errors gracefully** - workflows can fail due to invalid molecules
-6. **Monitor credits** - use `rowan.whoami().credits` to check balance
+3. **Use `workflow.result()`** — it waits, fetches, and raises on failure in one call
+4. **Use batch functions** (`batch_submit_workflow`, `submit_batch_docking_workflow`) for many similar jobs
+5. **Cap spend with `max_credits=`** on any submission, and check `rowan.whoami().credits`
 
 ## Error Handling
+
+`workflow.result()` raises `rowan.WorkflowError` if the workflow failed or was stopped, so wrap it:
 
 ```python
 import rowan
 
+workflow = rowan.submit_pka_workflow("c1ccccc1O", name="calculation", max_credits=10)
+
 try:
-    workflow = rowan.submit_pka_workflow(
-        initial_molecule=mol,
-        name="calculation"
-    )
-    workflow.wait_for_result(timeout=3600)  # 1 hour timeout
-
-    if workflow.status == "completed":
-        workflow.fetch_latest(in_place=True)
-        print(workflow.data)
-    elif workflow.status == "failed":
-        print(f"Workflow failed: {workflow.error_message}")
-
-except rowan.RowanAPIError as e:
-    print(f"API error: {e}")
-except TimeoutError:
-    print("Workflow timed out")
+    result = workflow.result()       # blocks until done; raises on failure
+    print(result.strongest_acid)
+except rowan.WorkflowError as e:
+    # workflow failed/stopped — inspect workflow.logfile for details
+    print(f"Workflow failed: {e}")
+    print(workflow.logfile)
 ```
+
+`workflow.status` is the int enum `stjames.Status`; check `workflow.done()` for a non-blocking finished test.
 
 ## Additional Resources
 
 - **Web Interface**: https://labs.rowansci.com
 - **Documentation**: https://docs.rowansci.com
-- **Python API Docs**: https://docs.rowansci.com/api/python/v2/
 - **Tutorials**: https://docs.rowansci.com/tutorials

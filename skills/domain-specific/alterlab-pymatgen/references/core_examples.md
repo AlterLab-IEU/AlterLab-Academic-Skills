@@ -281,10 +281,12 @@ See the Electronic Structure Code I/O section of `io_formats.md` and
 ```python
 # Diffraction patterns
 from pymatgen.analysis.diffraction.xrd import XRDCalculator
-xrd = XRDCalculator()
+xrd = XRDCalculator(wavelength="CuKa")
 pattern = xrd.get_pattern(struct)
-for peak in pattern.hkls:
-    print(f"2θ = {peak['2theta']:.2f}°, hkl = {peak['hkl']}")
+# pattern.x = 2θ (deg), pattern.y = intensity, pattern.hkls[i] = list of hkl dicts for peak i
+for two_theta, intensity, hkl_info in zip(pattern.x, pattern.y, pattern.hkls):
+    hkls = ", ".join(str(h["hkl"]) for h in hkl_info)
+    print(f"2θ = {two_theta:.2f}°, I = {intensity:.1f}, hkl = {hkls}")
 pattern.plot()
 ```
 

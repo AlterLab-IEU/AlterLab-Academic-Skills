@@ -250,7 +250,7 @@ Additional descriptor calculations.
 - `rdMolDescriptors.CalcNumAromaticHeterocycles(mol)` - Aromatic heterocycles
 - `rdMolDescriptors.CalcNumSpiroAtoms(mol)` - Spiro atoms
 - `rdMolDescriptors.CalcNumBridgeheadAtoms(mol)` - Bridgehead atoms
-- `rdMolDescriptors.CalcFractionCsp3(mol)` - Fraction of sp3 carbons
+- `rdMolDescriptors.CalcFractionCSP3(mol)` - Fraction of sp3 carbons (note uppercase `CSP3`)
 - `rdMolDescriptors.CalcLabuteASA(mol)` - Labute accessible surface area
 - `rdMolDescriptors.CalcTPSA(mol)` - TPSA
 - `rdMolDescriptors.CalcMolFormula(mol)` - Molecular formula
@@ -408,12 +408,17 @@ Modern fingerprint generation API (RDKit 2020.09+).
 
 ## Installation
 
-```bash
-# Using conda (recommended)
-conda install -c conda-forge rdkit
+The canonical PyPI package is `rdkit` (the old `rdkit-pypi` wheel is deprecated).
 
-# Using pip
-pip install rdkit-pypi
+```bash
+# uv-first: run a one-off script with RDKit available
+uv run --with rdkit python script.py
+
+# or add it to the project
+uv add rdkit
+
+# conda is also supported
+conda install -c conda-forge rdkit
 ```
 
 ## Importing

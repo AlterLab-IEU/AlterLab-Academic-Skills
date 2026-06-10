@@ -272,17 +272,23 @@ model.save("peakvi_model")
 
 ## Integration with Gene Expression (RNA+ATAC)
 
-For paired multimodal data (RNA+ATAC from same cells), use **MultiVI** instead:
+For paired multimodal data (RNA+ATAC from same cells), use **MultiVI** instead.
+The current API takes a `MuData` object (one modality per `.mod`) via
+`setup_mudata`:
 
 ```python
 # For 10x Multiome or similar paired data
-scvi.model.MULTIVI.setup_anndata(
-    adata,
+scvi.model.MULTIVI.setup_mudata(
+    mdata,
     batch_key="sample",
-    modality_key="modality"  # "RNA" or "ATAC"
+    modalities={"rna_layer": "rna", "atac_layer": "atac"},
 )
 
-model = scvi.model.MULTIVI(adata)
+model = scvi.model.MULTIVI(
+    mdata,
+    n_genes=mdata.mod["rna"].n_vars,
+    n_regions=mdata.mod["atac"].n_vars,
+)
 model.train()
 
 # Get joint latent space

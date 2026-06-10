@@ -32,6 +32,8 @@ uv pip install edgartools
 uv pip install "edgartools[ai]"
 ```
 
+API examples here are verified against edgartools 5.35.x. To run a one-off without a venv: `uv run --with edgartools python ...`.
+
 ## Core Workflow
 
 ### Find a Company
@@ -111,7 +113,7 @@ company.exchange                 # "Nasdaq"
 | Form 4 | Form4 | `reporting_owner`, `transactions` |
 | 13F-HR | ThirteenF | `infotable`, `total_value` |
 | DEF 14A | ProxyStatement | `executive_compensation`, `proposals` |
-| SC 13D/G | Schedule13 | `total_shares`, `items` |
+| SC 13D/G | Schedule13D / Schedule13G | `total_shares`, `items` |
 | Form D | FormD | `offering`, `recipients` |
 
 **Important:** `filing.financials` does NOT exist. Use `filing.obj().financials`.

@@ -180,8 +180,10 @@ The Datasets API provides streamlined access to gene data with metadata and sequ
 ### Base URL
 
 ```
-https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene
+https://api.ncbi.nlm.nih.gov/datasets/v2/gene
 ```
+
+> Note: the older `v2alpha` path still resolves but is superseded by `v2`; use `v2`. Every gene response wraps results under a top-level `reports` array (each item has a `gene` object), plus a `total_count` field — there is no top-level `genes` key.
 
 ### Authentication
 
@@ -200,51 +202,52 @@ Retrieve gene data by Gene ID.
 **Example Request:**
 
 ```bash
-curl "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/id/672"
+curl "https://api.ncbi.nlm.nih.gov/datasets/v2/gene/id/672"
 ```
 
 **Response Format (JSON):**
 
 ```json
 {
-  "genes": [
+  "reports": [
     {
       "gene": {
         "gene_id": "672",
         "symbol": "BRCA1",
         "description": "BRCA1 DNA repair associated",
-        "tax_name": "Homo sapiens",
-        "taxid": 9606,
+        "tax_id": "9606",
+        "taxname": "Homo sapiens",
+        "common_name": "human",
+        "type": "PROTEIN_CODING",
+        "orientation": "minus",
         "chromosomes": ["17"],
-        "type": "protein-coding",
         "synonyms": ["BRCC1", "FANCS", "PNCA4", "RNF53"],
-        "nomenclature_authority": {
-          "authority": "HGNC",
-          "identifier": "HGNC:1100"
-        },
-        "genomic_ranges": [
+        "nomenclature_authority": { "authority": "HGNC", "identifier": "HGNC:1100" },
+        "swiss_prot_accessions": ["P38398"],
+        "ensembl_gene_ids": ["ENSG00000012048"],
+        "map_locations": [{ "map_type": "Cytogenetic", "map_value": "17q21.31" }],
+        "annotations": [
           {
-            "accession_version": "NC_000017.11",
-            "range": [
+            "assembly_name": "GRCh38.p14",
+            "genomic_locations": [
               {
-                "begin": 43044295,
-                "end": 43170245,
-                "orientation": "minus"
+                "genomic_accession_version": "NC_000017.11",
+                "genomic_range": { "begin": "43044295", "end": "43170327", "orientation": "minus" }
               }
             ]
           }
         ],
-        "transcripts": [
-          {
-            "accession_version": "NM_007294.4",
-            "length": 7207
-          }
-        ]
+        "transcript_count": 368,
+        "protein_count": 368,
+        "gene_ontology": { "molecular_functions": [], "biological_processes": [], "cellular_components": [] }
       }
     }
-  ]
+  ],
+  "total_count": 1
 }
 ```
+
+> Field notes (verified against the live v2 API): numeric coordinates are returned as **strings**; `type` is upper-case (e.g. `PROTEIN_CODING`); the genomic location lives at `annotations[].genomic_locations[].genomic_range`, not a top-level `genomic_ranges`; the base report carries `transcript_count`/`protein_count` and GO terms but **not** the individual transcript/protein RefSeq accessions — fetch `GET /gene/id/{id}/product_report` for those.
 
 ### Get Gene by Symbol
 
@@ -259,30 +262,24 @@ Retrieve gene data by symbol and organism.
 **Example Request:**
 
 ```bash
-curl "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/symbol/BRCA1/taxon/9606"
+curl "https://api.ncbi.nlm.nih.gov/datasets/v2/gene/symbol/BRCA1/taxon/9606"
 ```
 
 ### Get Multiple Genes
 
-Retrieve data for multiple genes.
+Retrieve data for multiple genes by passing comma-separated Gene IDs on the
+GET path. (There is no working `POST /gene/id` body endpoint on v2.)
 
-**Endpoint:** `POST /gene/id`
-
-**Request Body:**
-
-```json
-{
-  "gene_ids": ["672", "7157", "5594"]
-}
-```
+**Endpoint:** `GET /gene/id/{id1,id2,...}`
 
 **Example Request:**
 
 ```bash
-curl -X POST "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/gene/id" \
-  -H "Content-Type: application/json" \
-  -d '{"gene_ids": ["672", "7157", "5594"]}'
+curl "https://api.ncbi.nlm.nih.gov/datasets/v2/gene/id/672,7157,5594"
 ```
+
+The response is the same `reports`/`total_count` envelope, with one `reports[]`
+entry per gene.
 
 ---
 

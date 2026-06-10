@@ -278,46 +278,14 @@ Literature management and citation integration.
 
 ## OAuth Authentication for Integrations
 
-LabArchives now uses OAuth 2.0 for new third-party integrations.
+LabArchives offers OAuth 2.0 for newer third-party integrations, alongside the signed-request API-key flow this skill uses for direct API access.
 
-**OAuth flow for app developers:**
+The standard OAuth 2.0 authorization-code shape applies (request an authorization code, then exchange it with `client_id`/`client_secret` for an access + refresh token), but the **authorization and token endpoint URLs, scopes, and registration process are not documented here** — obtain them from LabArchives developer support for your region rather than guessing endpoint paths.
 
-```python
-def labarchives_oauth_flow(client_id, client_secret, redirect_uri):
-    """Implement OAuth 2.0 flow for LabArchives integration"""
-    import requests
-
-    # Step 1: Get authorization code
-    auth_url = "https://mynotebook.labarchives.com/oauth/authorize"
-    auth_params = {
-        'client_id': client_id,
-        'redirect_uri': redirect_uri,
-        'response_type': 'code',
-        'scope': 'read write'
-    }
-    # User visits auth_url and grants permission
-
-    # Step 2: Exchange code for access token
-    token_url = "https://mynotebook.labarchives.com/oauth/token"
-    token_params = {
-        'client_id': client_id,
-        'client_secret': client_secret,
-        'redirect_uri': redirect_uri,
-        'grant_type': 'authorization_code',
-        'code': authorization_code  # From redirect
-    }
-
-    response = requests.post(token_url, data=token_params)
-    tokens = response.json()
-
-    return tokens['access_token'], tokens['refresh_token']
-```
-
-**OAuth advantages:**
-- More secure than API keys
-- Fine-grained permission control
+**Why OAuth over API keys, when available:**
+- Fine-grained, revocable permission scopes
 - Token refresh for long-running integrations
-- Revocable access
+- No long-lived shared secret embedded in clients
 
 ## Custom Integration Development
 
@@ -396,7 +364,7 @@ class LabArchivesIntegration:
 - Ensure compatible software version
 
 **File upload failures:**
-- Verify file size limits (typically 2GB per file)
+- Verify the file is within your account's per-file size limit (confirm the current limit with your LabArchives administrator)
 - Check file format compatibility
 - Ensure sufficient storage quota
 

@@ -33,15 +33,16 @@ DEFAULT_WEIGHTS = {
     "citations": 0.05
 }
 
-# Quality level definitions
-QUALITY_LEVELS = {
-    (4.5, 5.0): ("Exceptional", "Ready for top-tier publication"),
-    (4.0, 4.4): ("Strong", "Publication-ready with minor revisions"),
-    (3.5, 3.9): ("Good", "Major revisions required, promising work"),
-    (3.0, 3.4): ("Acceptable", "Significant revisions needed"),
-    (2.0, 2.9): ("Weak", "Fundamental issues, major rework required"),
-    (0.0, 1.9): ("Poor", "Not suitable without complete revision")
-}
+# Quality level definitions, keyed by inclusive lower bound (descending).
+# Contiguous thresholds so any score in [0.0, 5.0] maps to a level.
+QUALITY_LEVELS = [
+    (4.5, "Exceptional", "Ready for top-tier publication"),
+    (4.0, "Strong", "Publication-ready with minor revisions"),
+    (3.5, "Good", "Major revisions required, promising work"),
+    (3.0, "Acceptable", "Significant revisions needed"),
+    (2.0, "Weak", "Fundamental issues, major rework required"),
+    (0.0, "Poor", "Not suitable without complete revision"),
+]
 
 
 def load_scores(filepath: Path) -> Dict[str, float]:
@@ -106,16 +107,17 @@ def calculate_weighted_average(scores: Dict[str, float], weights: Dict[str, floa
         total_score += score * weight
         total_weight += weight
 
-    # Normalize if not all dimensions were scored
+    # Renormalize over the dimensions actually scored, so a partial
+    # (targeted) evaluation returns a value on the same 1-5 scale.
     if total_weight > 0:
-        return total_score / total_weight * (sum(weights.values()) / total_weight)
+        return total_score / total_weight
     return 0.0
 
 
 def get_quality_level(score: float) -> tuple:
     """Get quality level description for a given score."""
-    for (low, high), (level, description) in QUALITY_LEVELS.items():
-        if low <= score <= high:
+    for low, level, description in QUALITY_LEVELS:
+        if score >= low:
             return level, description
     return "Unknown", "Score out of expected range"
 

@@ -19,7 +19,7 @@ try:
     from rdkit.Chem import MACCSkeys, rdFingerprintGenerator
     from rdkit import DataStructs
 except ImportError:
-    print("Error: RDKit not installed. Install with: conda install -c conda-forge rdkit")
+    print("Error: RDKit not installed. Run with: uv run --with rdkit python similarity_search.py ...")
     sys.exit(1)
 
 

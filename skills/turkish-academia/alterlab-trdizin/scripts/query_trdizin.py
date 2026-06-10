@@ -53,7 +53,7 @@ ORDERS = (
 PAGE_SIZE = 10  # server-side page size; the server ignores a client limit param
 DEFAULT_MAILTO = "alterlab.ieu@gmail.com"
 USER_AGENT = (
-    "alterlab-trdizin/1.0.0 (https://github.com/AlterLab-IEU/"
+    "alterlab-trdizin/1.0.1 (https://github.com/AlterLab-IEU/"
     "AlterLab-Academic-Skills; mailto:{mailto})"
 )
 HTTP_TIMEOUT = 25

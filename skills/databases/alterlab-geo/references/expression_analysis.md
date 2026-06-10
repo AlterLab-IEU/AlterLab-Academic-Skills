@@ -51,7 +51,13 @@ from scipy import stats
 gse = GEOparse.get_GEO(geo="GSE123456", destdir="./data")
 expression_df = gse.pivot_samples('VALUE')
 
-# Define sample groups
+# IMPORTANT: difference-of-means equals log2 fold change ONLY on log2-scale data.
+# Many series matrices are already log2; some (especially RNA-seq counts/linear
+# intensities) are not. Check and transform before computing fold changes.
+if expression_df.min().min() >= 0 and expression_df.max().max() > 100:
+    expression_df = np.log2(expression_df + 1)  # now on log2 scale
+
+# Define sample groups (replace with the real GSM ids for each group)
 control_samples = ["GSM1", "GSM2", "GSM3"]
 treatment_samples = ["GSM4", "GSM5", "GSM6"]
 
@@ -61,7 +67,7 @@ for gene in expression_df.index:
     control_expr = expression_df.loc[gene, control_samples]
     treatment_expr = expression_df.loc[gene, treatment_samples]
 
-    # Calculate statistics
+    # log2 fold change = difference of group means on the log2 scale
     fold_change = treatment_expr.mean() - control_expr.mean()
     t_stat, p_value = stats.ttest_ind(treatment_expr, control_expr)
 

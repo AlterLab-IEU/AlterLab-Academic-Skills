@@ -76,7 +76,9 @@ in the references below.
 2. Prefer STRING IDs (`9606.ENSP00000269305`) over gene names.
 3. Specify `species` for networks > 10 proteins.
 4. Respect rate limits — wait ~1 second between API calls.
-5. Use versioned URLs for reproducibility (see `string_reference.md`).
+5. Pin a version for reproducibility — set `STRING_BASE_URL` to a stable
+   subdomain (e.g. `https://version-12-0.string-db.org/api`) before running the
+   helpers; see `string_reference.md`.
 6. Handle errors gracefully — check for an `"Error:"` prefix in returned strings.
 7. Match the confidence threshold to your analysis goals.
 

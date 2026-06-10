@@ -41,9 +41,10 @@ This skill should be used when working with:
 ### 1. Basic Setup
 
 ```python
-from scripts.fda_query import FDAQuery
+# Run from the skill's scripts/ dir, or add it to sys.path first.
+from fda_query import FDAQuery
 
-# Initialize (API key optional but recommended)
+# API key is optional (works keyless); pass it or set FDA_API_KEY.
 fda = FDAQuery(api_key="YOUR_API_KEY")
 
 # Query drug adverse events
@@ -113,9 +114,10 @@ label = fda.query_drug_label("Keytruda", brand=True)
 # Check for recalls
 recalls = fda.query_drug_recalls(drug_name="metformin")
 
-# Monitor shortages
-shortages = fda.query("drug", "drugshortages",
-                     search="status:Currently+in+Shortage")
+# Monitor shortages (endpoint is drug/shortages; status values:
+# "Current", "To Be Discontinued", "Resolved")
+shortages = fda.query("drug", "shortages",
+                     search="status:Current")
 ```
 
 **Reference:** See `references/drugs.md` for detailed documentation

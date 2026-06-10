@@ -18,12 +18,18 @@ Molecular dynamics (MD) simulation computationally models the time evolution of 
 - **OpenMM** (https://openmm.org/): High-performance MD simulation engine with GPU support, Python API, and flexible force field support
 - **MDAnalysis** (https://mdanalysis.org/): Python library for reading, writing, and analyzing MD trajectories from all major simulation packages
 
-**Installation:**
+**Installation** (verified versions: OpenMM 8.x, MDAnalysis 2.x):
 ```bash
-conda install -c conda-forge openmm mdanalysis nglview
-# or
-pip install openmm mdanalysis
+# uv (preferred) — both ship binary wheels for arm64 macOS, no conda needed
+uv add openmm "mdanalysis>=2.9" pdbfixer
+# pdbfixer is not on PyPI for all platforms; if the wheel is unavailable:
+uv pip install "pdbfixer @ git+https://github.com/openmm/pdbfixer.git"
+
+# conda-forge alternative (pulls CUDA builds on Linux):
+# conda install -c conda-forge openmm mdanalysis pdbfixer nglview
 ```
+Note: on Apple Silicon there is no CUDA; OpenMM falls back to the `CPU` (and, on
+macOS, `OpenCL`/Metal) platforms — see the platform-selection block below.
 
 ## When to Use This Skill
 
@@ -300,11 +306,13 @@ def compute_rmsd(u, selection="backbone", reference_frame=0):
     Returns:
         numpy array of (time, rmsd) values
     """
-    # Align trajectory to minimize RMSD
+    # Pre-align the trajectory (rewrites coordinates in memory) so that any
+    # downstream per-atom analysis sees superimposed frames.
     aligner = align.AlignTraj(u, u, select=selection, in_memory=True)
     aligner.run()
 
-    # Compute RMSD
+    # rms.RMSD does its own optimal superposition against ref_frame, so the
+    # RMSD numbers below do not depend on the AlignTraj step above.
     R = rms.RMSD(u, select=selection, ref_frame=reference_frame)
     R.run()
 
@@ -358,28 +366,36 @@ def compute_rmsf(u, selection="backbone", start_frame=0):
 ### 4. Protein-Ligand Contacts
 
 ```python
+from MDAnalysis.lib import distances as mda_distances
+
 def analyze_contacts(u, protein_sel="protein", ligand_sel="resname LIG",
                       radius=4.5, start_frame=0):
     """
-    Track protein-ligand contacts over trajectory.
+    Track which protein residues are in contact with the ligand per frame.
 
     Args:
         radius: Contact distance cutoff in Angstroms
+
+    Returns:
+        list of sets, one per analyzed frame, of contacting protein resids
     """
     protein = u.select_atoms(protein_sel)
     ligand = u.select_atoms(ligand_sel)
 
     contact_frames = []
     for ts in u.trajectory[start_frame:]:
-        # Find protein atoms within radius of ligand
-        distances = contacts.contact_matrix(
-            protein.positions, ligand.positions, radius
+        # Pairwise protein-ligand distance matrix (PBC-aware via box=u.dimensions),
+        # then threshold into a boolean contact matrix.
+        # NOTE: contacts.contact_matrix(d, radius) takes a *distance matrix* d,
+        # not raw coordinates — passing positions directly is a common bug.
+        dmat = mda_distances.distance_array(
+            protein.positions, ligand.positions, box=u.dimensions
         )
-        contact_residues = set()
-        for i in range(distances.shape[0]):
-            if distances[i].any():
-                contact_residues.add(protein.atoms[i].resid)
-        contact_frames.append(contact_residues)
+        contact_mask = contacts.contact_matrix(dmat, radius)  # shape (n_prot, n_lig)
+
+        # A protein atom is in contact if it is close to any ligand atom.
+        contacting_atoms = protein.atoms[contact_mask.any(axis=1)]
+        contact_frames.append(set(contacting_atoms.resids))
 
     return contact_frames
 ```
@@ -419,22 +435,23 @@ def fix_pdb(input_pdb, output_pdb, ph=7.0):
     return output_pdb
 ```
 
-### GAFF2 for Small Molecules (via OpenFF Toolkit)
+### Small-Molecule Parameterization (via OpenFF Toolkit)
 
 ```python
-# For ligand parameterization, use OpenFF toolkit or ACPYPE
-# pip install openff-toolkit
+# uv add openff-toolkit openff-interchange
+# openff-2.2.0.offxml is OpenFF "Sage" — a SMIRNOFF force field, NOT GAFF2.
+# (For actual GAFF2, parameterize with AmberTools antechamber/ACPYPE instead.)
 from openff.toolkit import Molecule, ForceField as OFFForceField
-from openff.interchange import Interchange
 
-def parameterize_ligand(smiles, ff_name="openff-2.0.0.offxml"):
-    """Generate GAFF2/OpenFF parameters for a small molecule."""
+def parameterize_ligand(smiles, ff_name="openff-2.2.0.offxml"):
+    """Generate OpenFF (Sage) parameters for a small molecule as an Interchange."""
     mol = Molecule.from_smiles(smiles)
     mol.generate_conformers(n_conformers=1)
+    mol.assign_partial_charges("am1bcc")  # AM1-BCC charges, OpenFF default
 
     off_ff = OFFForceField(ff_name)
     interchange = off_ff.create_interchange(mol.to_topology())
-    return interchange
+    return interchange  # -> interchange.to_openmm() for an OpenMM System
 ```
 
 ## Best Practices

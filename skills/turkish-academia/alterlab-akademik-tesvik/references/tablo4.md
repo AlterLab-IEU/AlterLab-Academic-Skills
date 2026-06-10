@@ -11,7 +11,11 @@ Yönetmeliği** (Academic Incentive Allowance Regulation) and its annexed tables
 - Scope (MADDE 1): **Devlet** (state) yükseköğretim kurumları kadrolarındaki
   öğretim elemanları (state higher-education academic staff). Also applies to
   Milli Savunma Üniversitesi, Jandarma/Sahil Güvenlik Akademisi, Polis Akademisi.
-- Last verified against the PDF: 2026-06-06.
+- Scope exclusions (MADDE 6): **yabancı uyruklu** (foreign-national) öğretim
+  elemanları cannot benefit at all (MADDE 6/9); faaliyetler done while seconded
+  (görevlendirme) to a **vakıf** (foundation) university are not counted
+  (MADDE 6/7).
+- Last verified against the PDF: 2026-06-09.
 
 > Always re-verify against the current regulation text before a real
 > başvuru (application); ÜAK/Cumhurbaşkanı amendments revise rows periodically.
@@ -78,6 +82,13 @@ where the regulation row uses it.
 |---|---|
 | Yürütücü (PI / coordinator) | 1 |
 | Araştırmacı, Bursiyer (researcher, fellow) | 0.5 |
+
+> **No-share / no-ranking activities (MADDE 8/7):** for faaliyetler with no
+> special share ratio and no author ordering, the oran is divided by the number
+> of contributors (`oran / kişi sayısı`). **Exception:** SERGİ *karma* (group)
+> etkinlikler and international performance-based *karma* audio/video recordings
+> are scored at **full points (tam puan), with k NOT applied**, regardless of
+> contributor count.
 
 ## Worked row examples (oran cells, verbatim from Tablo 4)
 

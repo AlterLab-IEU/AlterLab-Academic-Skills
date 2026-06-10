@@ -75,9 +75,13 @@ Example: `https://rest.uniprot.org/uniprotkb/P12345.fasta`
 Map protein identifiers between different database systems and retrieve multiple entries efficiently.
 
 **ID Mapping workflow:**
-1. Submit mapping job to: `https://rest.uniprot.org/idmapping/run`
-2. Check job status: `https://rest.uniprot.org/idmapping/status/{jobId}`
+1. Submit mapping job (POST): `https://rest.uniprot.org/idmapping/run` with `from`, `to`, `ids`
+2. Poll job status: `https://rest.uniprot.org/idmapping/status/{jobId}`
 3. Retrieve results: `https://rest.uniprot.org/idmapping/results/{jobId}`
+
+**Two non-obvious gotchas (both handled in `scripts/uniprot_client.py`):**
+- The status endpoint returns `{"jobStatus":"RUNNING"}` then `{"jobStatus":"FINISHED"}` (a finished job also 303-redirects to the results URL). It does NOT return a `results`/`failedIds` key, so poll on `jobStatus == "FINISHED"`, not on the presence of `results`.
+- Results are **paginated** (default `size=25`, max `500`). The first page is only part of a large mapping; follow the `next` Link **response header** (`response.links["next"]` in `requests`) until it is gone. The same `next`-Link pagination applies to the `/uniprotkb/search` endpoint — the JSON body carries only `results`, never a `next` key.
 
 **Supported databases for mapping:**
 - UniProtKB AC/ID

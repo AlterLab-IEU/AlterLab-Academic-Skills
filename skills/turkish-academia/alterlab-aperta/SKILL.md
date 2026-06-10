@@ -54,8 +54,8 @@ correct sibling:
 | The **KVKK** lawful-basis selector, anonymisation vs pseudonymisation, VERBİS, cross-border transfer plan | `alterlab-kvkk-dmp` |
 | Which **etik kurul** (ethics committee) is needed, informed-consent / onam form, TİTCK permit | `alterlab-tr-research-ethics` |
 | Scaffolding the **ARDEB 1001 / 1002-A proposal** narrative (özgün değer, yaygın etki, work packages) | `alterlab-tubitak-proposal` |
-| Posting a **preprint** to a server (arXiv, bioRxiv, SSRN) before/independent of acceptance | `alterlab-preprint-deposition` |
-| Writing the TÜBİTAK **sonuç raporu / ara rapor** narrative itself (progress, deliverables) | `alterlab-grant-reporting` |
+| Posting a **preprint** to a server (arXiv, bioRxiv, SSRN) before/independent of acceptance, or open-access routes in general | `alterlab-open-science` |
+| Writing the TÜBİTAK **sonuç raporu / ara rapor** narrative itself (progress, deliverables) — this skill writes only the open-science/data-deposition compliance statement, not the report body | (out of scope — narrative report writing) |
 | Checking a journal's **TR Dizin** indexing status before submitting | `alterlab-trdizin` |
 | Depositing a graduate **thesis** to YÖK Ulusal Tez Merkezi | `alterlab-yok-tez` |
 

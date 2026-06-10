@@ -2,7 +2,7 @@
 name: alterlab-arxiv
 description: Search and retrieve preprints from arXiv via the Atom API by keywords, authors, arXiv IDs, date ranges, or subject categories. Use when finding or fetching papers in physics, mathematics, computer science, quantitative biology, quantitative finance, statistics, electrical engineering, or economics, or resolving an arXiv ID to its metadata and PDF. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv:*)
 compatibility: Keyless arXiv Atom API (no authentication required)
 metadata:
     skill-author: AlterLab
@@ -14,6 +14,8 @@ metadata:
 ## Overview
 
 This skill provides Python tools for searching and retrieving preprints from arXiv.org via its public Atom API. It supports keyword search, author search, category filtering, arXiv ID lookup, and PDF download. Results are returned as structured JSON with titles, abstracts, authors, categories, and links.
+
+The script declares its `requests` dependency via a PEP 723 inline header, so the most reliable way to run it is `uv run scripts/arxiv_search.py ...` (resolves deps automatically). The `python scripts/arxiv_search.py ...` examples below work when `requests` is already installed.
 
 ## When to Use This Skill
 
@@ -230,22 +232,22 @@ All searches return structured JSON:
 
 ```json
 {
-  "query": "ti:sparse autoencoder AND cat:cs.LG",
-  "result_count": 15,
+  "query": "id_list:2309.10668",
+  "result_count": 1,
   "results": [
     {
       "arxiv_id": "2309.10668",
-      "title": "Towards Monosemanticity: Decomposing Language Models With Dictionary Learning",
-      "authors": ["Trenton Bricken", "Adly Templeton", "..."],
+      "title": "Language Modeling Is Compression",
+      "authors": ["Grégoire Delétang", "Anian Ruoss", "..."],
       "abstract": "Full abstract text...",
-      "categories": ["cs.LG", "cs.AI"],
+      "categories": ["cs.LG", "cs.AI", "cs.CL", "cs.IT"],
       "primary_category": "cs.LG",
-      "published": "2023-09-19T17:58:00Z",
-      "updated": "2023-10-04T14:22:00Z",
-      "doi": "10.48550/arXiv.2309.10668",
-      "pdf_url": "http://arxiv.org/pdf/2309.10668v1",
-      "abs_url": "http://arxiv.org/abs/2309.10668v1",
-      "comment": "42 pages, 30 figures",
+      "published": "2023-09-19T14:50:38Z",
+      "updated": "2024-03-18T23:15:47Z",
+      "doi": "",
+      "pdf_url": "https://arxiv.org/pdf/2309.10668v2",
+      "abs_url": "https://arxiv.org/abs/2309.10668v2",
+      "comment": "",
       "journal_ref": ""
     }
   ]
@@ -347,7 +349,7 @@ results = searcher.search(query=query, max_results=20)
 2. **Use category filters**: Dramatically reduces noise. `cs.LG` is where most ML papers live.
 3. **Cache results**: Save to JSON to avoid re-fetching.
 4. **Use `sort_by=submittedDate`** for recent papers, `relevance` for keyword searches.
-5. **Max 300 results per query**: arXiv API caps at this. For larger sets, paginate with `start` parameter.
+5. **Max 2000 results per call**: arXiv caps a single request at 2000 (the script clamps to this). For larger sets, paginate with the `start` parameter, up to a 30000 total cap.
 6. **arXiv IDs**: Use bare IDs (`2309.10668`), not full URLs, in programmatic code.
 7. **Combine with openalex-database**: For citation counts and impact metrics arXiv doesn't provide.
 
@@ -355,7 +357,7 @@ results = searcher.search(query=query, max_results=20)
 
 - **No full-text search**: Only searches metadata (title, abstract, authors, comments)
 - **No citation data**: Use openalex-database or Semantic Scholar for citations
-- **Max 300 results**: Per query. Use pagination for larger sets.
+- **Max 2000 results per call**: Use pagination (`start`) for larger sets, up to a 30000 total cap.
 - **Rate limited**: ~1 request per 3 seconds recommended
 - **Atom XML responses**: The script parses these into JSON automatically
 - **Search lag**: New papers may take hours to appear in API results

@@ -34,8 +34,14 @@ def _get(path, params=None):
 
 
 def protein(uniprot_id):
-    """InterPro entries that match a UniProt protein."""
-    return _get(f"protein/UniProt/{uniprot_id}/entry/InterPro")
+    """InterPro entries that match a UniProt protein.
+
+    The first path segment is the resource you want returned, so to list
+    *entries* for a protein the protein filter goes last:
+    entry/InterPro/protein/UniProt/{id}/. (The inverse, protein/UniProt/{id}/
+    entry/InterPro/, returns an empty wrapper with no results.)
+    """
+    return _get(f"entry/InterPro/protein/UniProt/{uniprot_id}")
 
 
 def entry(interpro_id):
@@ -44,9 +50,14 @@ def entry(interpro_id):
 
 
 def entry_proteins(interpro_id, page_size=25):
-    """UniProt proteins annotated with an InterPro entry."""
+    """UniProt proteins annotated with an InterPro entry.
+
+    Mirror of protein(): to list *proteins* the protein resource goes first,
+    protein/UniProt/entry/InterPro/{id}/. This returns count/next/results;
+    entry/InterPro/{id}/protein/UniProt/ only returns a proteins_url wrapper.
+    """
     return _get(
-        f"entry/InterPro/{interpro_id}/protein/UniProt",
+        f"protein/UniProt/entry/InterPro/{interpro_id}",
         {"page_size": page_size},
     )
 

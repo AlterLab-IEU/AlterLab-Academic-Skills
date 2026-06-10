@@ -17,8 +17,8 @@ distortion lives in the gap between the claim and the source.
 and keeps their verdicts separate:
 
 1. `scripts/verify_citations.py` — *does this work exist?* (Crossref / OpenAlex / Semantic
-   Scholar / arXiv resolution, title+author Levenshtein >= 0.70, DOI/arXiv-ID resolution,
-   Retraction Watch flag).
+   Scholar / arXiv resolution, title+author similarity >= 0.70 via difflib `SequenceMatcher`,
+   DOI/arXiv-ID resolution, retraction flag from Crossref `update-to` / OpenAlex `is_retracted`).
 2. `scripts/claim_faithfulness.py` — *does this work support the claim?* (compares the user's
    sentence against the source's actual content, mapping the result to the
    TF / PAC / IH / PH / SH taxonomy).
@@ -58,9 +58,9 @@ Resolving against Crossref / OpenAlex / Semantic Scholar / arXiv...
   Crossref:          MATCH   doi:10.1177/0956797614524581
   OpenAlex:          MATCH   W2relevant-id
   Semantic Scholar:  MATCH   corpusId confirmed
-  Title Levenshtein: 1.00  (exact)
+  Title ratio:       1.00  (exact; difflib SequenceMatcher)
   Author match:      Mueller, P. A. / Oppenheimer, D. M.  -> exact
-  Retraction Watch:  not listed
+  Retraction flag:   none (Crossref update-to / OpenAlex is_retracted)
   Year / venue:      2014 / Psychological Science 25(6), 1159-1168  -> confirmed
 
 EXISTENCE VERDICT: VERIFIED
@@ -153,7 +153,7 @@ Do NOT cite Mueller & Oppenheimer (2014) for this sentence. Either:
       actually reports it — this paper is not it.
 
 ## Audit trail
-- verify_citations.py: Crossref/OpenAlex/Semantic Scholar all MATCH; Levenshtein 1.00; not in Retraction Watch.
+- verify_citations.py: Crossref/OpenAlex/Semantic Scholar all MATCH; title ratio 1.00; no retraction flag.
 - claim_faithfulness.py: intervention mismatch, effect-direction contradiction, "31%" absent from source.
 ```
 
@@ -181,10 +181,11 @@ effect size, or sample count with no counterpart in the cited work — is one of
 signals of a semantic hallucination. The verifier surfaces it rather than rounding past it.
 
 ### 4. Graceful degradation keeps the gate honest offline
-When Crossref/OpenAlex/Semantic Scholar APIs or the network are unavailable, the verifier
-degrades to WebSearch (and, failing that, `requests`-based resolution) rather than silently
-returning a pass. An entry it genuinely cannot check is reported as UNVERIFIABLE, never
-quietly marked VERIFIED — the same zero-gray-zone discipline the integrity agent enforces.
+When the network is unavailable, `verify_citations.py` emits an `unverified` verdict per entry
+(repo verdict `UNVERIFIED`) with manual-check instructions, rather than silently returning a
+pass; the agent then falls back to a WebSearch pass. An entry it genuinely cannot check is
+reported as `unverified`, never quietly marked `verified` — the same zero-gray-zone discipline
+the integrity agent enforces.
 
 ### 5. This is the case prompt-only taxonomies miss
 A prose taxonomy can *describe* SH, but it cannot *retrieve and compare* the source. Wiring

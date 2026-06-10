@@ -6,8 +6,8 @@ Aeon provides forecasting algorithms for predicting future time series values.
 
 Simple forecasting strategies for comparison:
 
-- `NaiveForecaster` - Multiple strategies: last value, mean, seasonal naive
-  - Parameters: `strategy` ("last", "mean", "seasonal"), `sp` (seasonal period)
+- `NaiveForecaster` - Strategies: last value, mean, seasonal-last
+  - Parameters: `strategy` ("last", "mean", "seasonal_last"), `seasonal_period`, `horizon`
   - **Use when**: Establishing baselines or simple patterns
 
 ## Statistical Models
@@ -61,35 +61,33 @@ Apply regression to lagged features:
 ## Quick Start
 
 ```python
-from aeon.forecasting.naive import NaiveForecaster
-from aeon.forecasting.arima import ARIMA
 import numpy as np
+from aeon.forecasting import NaiveForecaster
+from aeon.forecasting.stats import ARIMA
 
 # Create time series
-y = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+y = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], dtype=float)
 
-# Naive baseline
-naive = NaiveForecaster(strategy="last")
+# Naive baseline — predict() returns ONE value, `horizon` steps ahead.
+naive = NaiveForecaster(strategy="last", horizon=1)
 naive.fit(y)
-forecast_naive = naive.predict(fh=[1, 2, 3])
+next_naive = naive.predict()
 
-# ARIMA model
-arima = ARIMA(order=(1, 1, 1))
+# ARIMA — orders are separate args (p, d, q), NOT an `order` tuple.
+arima = ARIMA(p=1, d=1, q=1)
 arima.fit(y)
-forecast_arima = arima.predict(fh=[1, 2, 3])
+next_arima = arima.predict()
 ```
 
 ## Forecasting Horizon
 
-The forecasting horizon (`fh`) specifies which future time points to predict:
+Aeon 1.x has no sktime-style `fh` / `ForecastingHorizon` object. A forecaster
+predicts a single point `self.horizon` steps ahead. For a multi-step path, use
+`iterative_forecast`, which fits once and feeds its own predictions back in:
 
 ```python
-# Relative horizon (next 3 steps)
-fh = [1, 2, 3]
-
-# Absolute horizon (specific time indices)
-from aeon.forecasting.base import ForecastingHorizon
-fh = ForecastingHorizon([11, 12, 13], is_relative=False)
+# 1D ndarray of length 3 (steps t+1, t+2, t+3)
+multi_step = arima.iterative_forecast(y, prediction_horizon=3)
 ```
 
 ## Model Selection
@@ -105,16 +103,16 @@ fh = ForecastingHorizon([11, 12, 13], is_relative=False)
 
 ## Evaluation Metrics
 
-Use standard forecasting metrics:
+Aeon forecasters return plain numpy arrays, so score them with sklearn metrics
+(aeon 1.x dropped the old `aeon.performance_metrics` module):
 
 ```python
-from aeon.performance_metrics.forecasting import (
+from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
-    mean_absolute_percentage_error
+    mean_absolute_percentage_error,
 )
 
-# Calculate error
 mae = mean_absolute_error(y_true, y_pred)
 mse = mean_squared_error(y_true, y_pred)
 mape = mean_absolute_percentage_error(y_true, y_pred)
@@ -122,14 +120,14 @@ mape = mean_absolute_percentage_error(y_true, y_pred)
 
 ## Exogenous Variables
 
-Many forecasters support exogenous features:
+Many forecasters accept exogenous features via the positional `exog` argument
+(not sktime's `X=`):
 
 ```python
-# Train with exogenous variables
-forecaster.fit(y, X=X_train)
+forecaster.fit(y, exog=exog_train)
 
-# Predict requires future exogenous values
-y_pred = forecaster.predict(fh=[1, 2, 3], X=X_test)
+# predict() uses the exog already seen in fit; pass new exog explicitly if needed
+y_pred = forecaster.predict(exog=exog_train)
 ```
 
 ## Base Classes

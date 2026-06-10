@@ -11,9 +11,10 @@ Usage:
            --output results/
 
 Requirements:
-    - pydeseq2
-    - pandas
+    - pydeseq2 >= 0.5 (pulls in pandas, numpy, etc.)
     - matplotlib (optional, for plots)
+
+Run with: uv run scripts/run_deseq2_analysis.py ...
 """
 
 import argparse
@@ -25,9 +26,10 @@ import pandas as pd
 
 try:
     from pydeseq2.dds import DeseqDataSet
+    from pydeseq2.default_inference import DefaultInference
     from pydeseq2.ds import DeseqStats
 except ImportError:
-    print("Error: pydeseq2 not installed. Install with: pip install pydeseq2")
+    print('Error: pydeseq2 not installed. Install with: uv pip install "pydeseq2>=0.5,<0.6"')
     sys.exit(1)
 
 
@@ -89,7 +91,7 @@ def filter_data(counts_df, metadata, min_counts=10, condition_col=None):
     return counts_df, metadata
 
 
-def run_deseq2(counts_df, metadata, design, n_cpus=1):
+def run_deseq2(counts_df, metadata, design, inference):
     """Run DESeq2 normalization and fitting."""
     print(f"\nInitializing DeseqDataSet with design: {design}")
 
@@ -98,7 +100,7 @@ def run_deseq2(counts_df, metadata, design, n_cpus=1):
         metadata=metadata,
         design=design,
         refit_cooks=True,
-        n_cpus=n_cpus,
+        inference=inference,
         quiet=False
     )
 
@@ -118,7 +120,7 @@ def run_deseq2(counts_df, metadata, design, n_cpus=1):
     return dds
 
 
-def run_statistical_tests(dds, contrast, alpha=0.05, shrink_lfc=True):
+def run_statistical_tests(dds, contrast, inference, alpha=0.05, shrink_lfc=True):
     """Perform Wald tests and compute p-values."""
     print(f"\nPerforming statistical tests...")
     print(f"  Contrast: {contrast}")
@@ -130,6 +132,7 @@ def run_statistical_tests(dds, contrast, alpha=0.05, shrink_lfc=True):
         alpha=alpha,
         cooks_filter=True,
         independent_filter=True,
+        inference=inference,
         quiet=False
     )
 
@@ -327,13 +330,17 @@ Examples:
         condition_col=condition_col
     )
 
+    # Shared inference backend (controls parallelism in pydeseq2 0.4+)
+    inference = DefaultInference(n_cpus=args.n_cpus)
+
     # Run DESeq2
-    dds = run_deseq2(counts_df, metadata, args.design, n_cpus=args.n_cpus)
+    dds = run_deseq2(counts_df, metadata, args.design, inference)
 
     # Statistical testing
     ds = run_statistical_tests(
         dds,
         contrast=args.contrast,
+        inference=inference,
         alpha=args.alpha,
         shrink_lfc=not args.no_shrink
     )

@@ -49,18 +49,21 @@ scores = calculate_scores(references=processed_library,
                          queries=processed_queries,
                          similarity_function=CosineGreedy(tolerance=0.1))
 
-# Get top matches for each query
+# Get top matches for each query.
+# scores_by_query returns (reference_Spectrum, structured_score) tuples — the
+# first element is the matched reference spectrum itself (not an index), and the
+# score is a structured record whose float lives in the "<Func>_score" field.
+# You MUST pass name=... to sort cosine-family scores.
 print("\nTop matches:")
 for i, query in enumerate(processed_queries):
-    top_matches = scores.scores_by_query(query, sort=True)[:5]
+    top_matches = scores.scores_by_query(query, name="CosineGreedy_score", sort=True)[:5]
 
     query_name = query.get("compound_name", f"Query {i}")
     print(f"\n{query_name}:")
 
-    for ref_idx, score in top_matches:
-        ref_spectrum = processed_library[ref_idx]
-        ref_name = ref_spectrum.get("compound_name", f"Ref {ref_idx}")
-        print(f"  {ref_name}: {score:.4f}")
+    for ref_spectrum, score in top_matches:
+        ref_name = ref_spectrum.get("compound_name", "unknown")
+        print(f"  {ref_name}: {score['CosineGreedy_score']:.4f}")
 ```
 
 ---
@@ -126,9 +129,9 @@ Combine multiple similarity metrics for robust compound identification.
 ```python
 from matchms.importing import load_from_mgf
 from matchms.filtering import (default_filters, normalize_intensities,
-                               derive_inchi_from_smiles, add_fingerprint, add_losses)
+                               derive_inchi_from_smiles, add_fingerprint)
 from matchms import calculate_scores
-from matchms.similarity import (CosineGreedy, ModifiedCosine,
+from matchms.similarity import (CosineGreedy, ModifiedCosineGreedy,
                                 NeutralLossesCosine, FingerprintSimilarity)
 import numpy as np
 
@@ -141,13 +144,12 @@ def process_for_multimetric(spectrum):
     spectrum = default_filters(spectrum)
     spectrum = normalize_intensities(spectrum)
 
-    # Add chemical fingerprints
+    # Add chemical fingerprints (fingerprint_type: "morgan1"/"morgan2"/"morgan3"/"daylight")
     spectrum = derive_inchi_from_smiles(spectrum)
     spectrum = add_fingerprint(spectrum, fingerprint_type="morgan2", nbits=2048)
 
-    # Add neutral losses
-    spectrum = add_losses(spectrum, loss_mz_from=5.0, loss_mz_to=200.0)
-
+    # NeutralLossesCosine derives losses internally from precursor_mz, so no
+    # add_losses step is needed here.
     return spectrum
 
 processed_library = [process_for_multimetric(s) for s in library if s is not None]
@@ -160,7 +162,7 @@ cosine_scores = calculate_scores(processed_library, processed_queries,
 
 print("Calculating Modified Cosine similarity...")
 modified_cosine_scores = calculate_scores(processed_library, processed_queries,
-                                         ModifiedCosine(tolerance=0.1))
+                                         ModifiedCosineGreedy(tolerance=0.1))
 
 print("Calculating Neutral Losses similarity...")
 neutral_losses_scores = calculate_scores(processed_library, processed_queries,
@@ -170,33 +172,27 @@ print("Calculating Fingerprint similarity...")
 fingerprint_scores = calculate_scores(processed_library, processed_queries,
                                       FingerprintSimilarity(similarity_measure="jaccard"))
 
-# Combine scores with weights
-weights = {
-    'cosine': 0.4,
-    'modified_cosine': 0.3,
-    'neutral_losses': 0.2,
-    'fingerprint': 0.1
-}
+# Combine scores with weights.
+# scores.scores is a structured sparse array, so pull dense float matrices by
+# the score-field name first (shape = (n_references, n_queries)), then do
+# vectorized arithmetic — never index `.scores[j, i]` directly for a float.
+cos = cosine_scores.scores.to_array("CosineGreedy_score")
+mod = modified_cosine_scores.scores.to_array("ModifiedCosineGreedy_score")
+nl = neutral_losses_scores.scores.to_array("NeutralLossesCosine_score")
+fp = fingerprint_scores.scores.to_array("FingerprintSimilarity")
+
+combined_matrix = 0.4 * cos + 0.3 * mod + 0.2 * nl + 0.1 * fp  # (n_refs, n_queries)
 
 # Get combined scores for each query
+import numpy as np
 for i, query in enumerate(processed_queries):
     query_name = query.get("compound_name", f"Query {i}")
 
-    combined_scores = []
-    for j, ref in enumerate(processed_library):
-        combined = (weights['cosine'] * cosine_scores.scores[j, i] +
-                   weights['modified_cosine'] * modified_cosine_scores.scores[j, i] +
-                   weights['neutral_losses'] * neutral_losses_scores.scores[j, i] +
-                   weights['fingerprint'] * fingerprint_scores.scores[j, i])
-        combined_scores.append((j, combined))
-
-    # Sort by combined score
-    combined_scores.sort(key=lambda x: x[1], reverse=True)
-
+    order = np.argsort(combined_matrix[:, i])[::-1]  # best refs first
     print(f"\n{query_name} - Top 3 matches:")
-    for ref_idx, score in combined_scores[:3]:
+    for ref_idx in order[:3]:
         ref_name = processed_library[ref_idx].get("compound_name", f"Ref {ref_idx}")
-        print(f"  {ref_name}: {score:.4f}")
+        print(f"  {ref_name}: {combined_matrix[ref_idx, i]:.4f}")
 ```
 
 ---
@@ -230,17 +226,17 @@ print("Calculating cosine similarity for filtered candidates...")
 cosine_scores = calculate_scores(processed_library, processed_queries,
                                 CosineGreedy(tolerance=0.1))
 
-# Step 3: Apply mass filter to cosine scores
+# Step 3: Apply mass filter to cosine scores.
+# Pull dense float matrices by score-field name (don't index .scores[j, i],
+# which yields a structured record, not a float).
+import numpy as np
+mass_mask = mass_filter.scores.to_array("PrecursorMzMatch")     # 1.0 / 0.0
+cos = cosine_scores.scores.to_array("CosineGreedy_score")
+
 for i, query in enumerate(processed_queries):
-    candidates = []
-
-    for j, ref in enumerate(processed_library):
-        # Only consider if precursor matches
-        if mass_filter.scores[j, i] > 0:
-            cosine_score = cosine_scores.scores[j, i]
-            candidates.append((j, cosine_score))
-
-    # Sort by cosine score
+    # Keep only references whose precursor matched, then rank by cosine
+    candidates = [(j, cos[j, i]) for j in range(len(processed_library))
+                  if mass_mask[j, i] > 0]
     candidates.sort(key=lambda x: x[1], reverse=True)
 
     query_name = query.get("compound_name", f"Query {i}")
@@ -259,26 +255,26 @@ for i, query in enumerate(processed_queries):
 Create a standardized pipeline for consistent processing.
 
 ```python
+import pickle
 from matchms import SpectrumProcessor
-from matchms.filtering import (default_filters, normalize_intensities,
-                               select_by_relative_intensity,
-                               remove_peaks_around_precursor_mz,
-                               require_minimum_number_of_peaks,
-                               derive_inchi_from_smiles, add_fingerprint)
+from matchms.filtering import default_filters
 from matchms.importing import load_from_mgf
-from matchms.exporting import save_as_pickle
+# Other filters are referenced by name (string) below; default_filters is a
+# composite and must be passed as the callable, not the string "default_filters".
+# matchms has no save_as_pickle — pickle files are written with stdlib pickle.
 
-# Define custom processing pipeline
+# Define custom processing pipeline. Prefer ("filter_name", {kwargs}) tuples:
+# they're introspectable via pipeline.processing_steps for reproducibility.
 def create_standard_pipeline():
     """Create a reusable processing pipeline"""
     return SpectrumProcessor([
         default_filters,
-        normalize_intensities,
-        lambda s: remove_peaks_around_precursor_mz(s, mz_tolerance=17),
-        lambda s: select_by_relative_intensity(s, intensity_from=0.01),
-        lambda s: require_minimum_number_of_peaks(s, n_required=5),
-        derive_inchi_from_smiles,
-        lambda s: add_fingerprint(s, fingerprint_type="morgan2")
+        "normalize_intensities",
+        ("remove_peaks_around_precursor_mz", {"mz_tolerance": 17}),
+        ("select_by_relative_intensity", {"intensity_from": 0.01}),
+        ("require_minimum_number_of_peaks", {"n_required": 5}),
+        "derive_inchi_from_smiles",
+        ("add_fingerprint", {"fingerprint_type": "morgan2"}),
     ])
 
 # Create pipeline instance
@@ -293,19 +289,17 @@ for dataset_file in datasets:
     # Load spectra
     spectra = list(load_from_mgf(dataset_file))
 
-    # Apply pipeline
-    processed = []
-    for spectrum in spectra:
-        result = pipeline(spectrum)
-        if result is not None:
-            processed.append(result)
+    # Apply pipeline. A SpectrumProcessor is NOT callable — use process_spectra
+    # (returns a (spectra, report) tuple) or process_spectrum for one spectrum.
+    processed, report = pipeline.process_spectra(spectra)
 
     print(f"  Loaded: {len(spectra)}")
     print(f"  Processed: {len(processed)}")
 
-    # Save processed data
+    # Save processed data (stdlib pickle; reload with load_from_pickle)
     output_file = dataset_file.replace(".mgf", "_processed.pkl")
-    save_as_pickle(processed, output_file)
+    with open(output_file, "wb") as f:
+        pickle.dump(processed, f)
     print(f"  Saved to: {output_file}")
 ```
 
@@ -460,13 +454,18 @@ print("Calculating similarities...")
 scores = calculate_scores(processed_lib1, processed_lib2,
                          CosineGreedy(tolerance=0.1))
 
-# Find high-similarity pairs (potential duplicates or similar compounds)
+# Find high-similarity pairs (potential duplicates or similar compounds).
+# Pull a dense float matrix by score-field name; rows = lib1 (references),
+# cols = lib2 (queries). Indexing scores.scores[i, j] directly gives a
+# structured record, not a comparable float.
+score_matrix = scores.scores.to_array("CosineGreedy_score")
+
 threshold = 0.8
 similar_pairs = []
 
 for i, spec1 in enumerate(processed_lib1):
     for j, spec2 in enumerate(processed_lib2):
-        score = scores.scores[i, j]
+        score = float(score_matrix[i, j])
         if score >= threshold:
             similar_pairs.append({
                 'lib1_idx': i,
@@ -561,7 +560,8 @@ Generate a detailed compound identification report.
 from matchms.importing import load_from_mgf
 from matchms.filtering import default_filters, normalize_intensities
 from matchms import calculate_scores
-from matchms.similarity import CosineGreedy, ModifiedCosine
+from matchms.similarity import CosineGreedy, ModifiedCosineGreedy
+import numpy as np
 import pandas as pd
 
 def identify_compounds(query_file, library_file, output_csv="identification_report.csv"):
@@ -580,7 +580,11 @@ def identify_compounds(query_file, library_file, output_csv="identification_repo
     # Calculate similarities
     print("Calculating similarities...")
     cosine_scores = calculate_scores(proc_library, proc_queries, CosineGreedy())
-    modified_scores = calculate_scores(proc_library, proc_queries, ModifiedCosine())
+    modified_scores = calculate_scores(proc_library, proc_queries, ModifiedCosineGreedy())
+
+    # Dense float matrices (rows = references/library, cols = queries)
+    cos = cosine_scores.scores.to_array("CosineGreedy_score")
+    mod = modified_scores.scores.to_array("ModifiedCosineGreedy_score")
 
     # Generate report
     results = []
@@ -588,21 +592,19 @@ def identify_compounds(query_file, library_file, output_csv="identification_repo
         query_name = query.get("compound_name", f"Unknown_{i}")
         query_mz = query.get("precursor_mz", "N/A")
 
-        # Get top 5 matches
-        cosine_matches = cosine_scores.scores_by_query(query, sort=True)[:5]
+        # Rank library by cosine for this query, take top 5
+        top_lib = np.argsort(cos[:, i])[::-1][:5]
 
-        for rank, (lib_idx, cos_score) in enumerate(cosine_matches, 1):
+        for rank, lib_idx in enumerate(top_lib, 1):
             ref = proc_library[lib_idx]
-            mod_score = modified_scores.scores[lib_idx, i]
-
             results.append({
                 'Query': query_name,
                 'Query_mz': query_mz,
                 'Rank': rank,
                 'Match': ref.get("compound_name", f"Ref_{lib_idx}"),
                 'Match_mz': ref.get("precursor_mz", "N/A"),
-                'Cosine_Score': cos_score,
-                'Modified_Cosine': mod_score,
+                'Cosine_Score': float(cos[lib_idx, i]),
+                'Modified_Cosine': float(mod[lib_idx, i]),
                 'InChIKey': ref.get("inchikey", "N/A")
             })
 
@@ -635,7 +637,7 @@ report = identify_compounds("unknowns.mgf", "reference_library.mgf")
 2. **Save intermediate results**: Use pickle format for fast reloading of processed spectra
 3. **Monitor memory usage**: Use generators for large files instead of loading all at once
 4. **Validate data quality**: Apply quality filters before similarity calculations
-5. **Choose appropriate similarity metrics**: CosineGreedy for speed, ModifiedCosine for related compounds
+5. **Choose appropriate similarity metrics**: CosineGreedy for speed, ModifiedCosineGreedy for related compounds
 6. **Combine multiple metrics**: Use multiple similarity scores for robust identification
 7. **Filter by precursor mass first**: Dramatically speeds up large library searches
 8. **Document your pipeline**: Save processing parameters for reproducibility

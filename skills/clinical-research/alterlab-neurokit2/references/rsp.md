@@ -239,7 +239,7 @@ rvt = nk.rsp_rvt(cleaned_rsp, peaks, sampling_rate=100)
 - Respiratory confound regression
 
 **Reference:**
-- Birn, R. M., et al. (2008). Separating respiratory-variation-related fluctuations from neuronal-activity-related fluctuations in fMRI. NeuroImage, 31(4), 1536-1548.
+- Birn, R. M., et al. (2006). Separating respiratory-variation-related fluctuations from neuronal-activity-related fluctuations in fMRI. NeuroImage, 31(4), 1536-1548.
 
 ### rsp_rav()
 
@@ -442,8 +442,9 @@ analysis = nk.rsp_analyze(signals, sampling_rate=100)
 ecg_signals, ecg_info = nk.ecg_process(ecg, sampling_rate=1000)
 rsp_signals, rsp_info = nk.rsp_process(rsp, sampling_rate=100)
 
-# Respiratory sinus arrhythmia (RSA)
-rsa = nk.hrv_rsa(ecg_info['ECG_R_Peaks'], rsp_signals['RSP_Clean'], sampling_rate=1000)
+# Respiratory sinus arrhythmia (RSA): pass processed ECG + RSP DataFrames, R-peaks via rpeaks=
+rsa = nk.hrv_rsa(ecg_signals, rsp_signals=rsp_signals,
+                 rpeaks=ecg_info['ECG_R_Peaks'], sampling_rate=1000)
 
 # Or use bio_process for multi-signal integration
 bio_signals, bio_info = nk.bio_process(ecg=ecg, rsp=rsp, sampling_rate=1000)
@@ -505,6 +506,6 @@ bio_signals, bio_info = nk.bio_process(ecg=ecg, rsp=rsp, sampling_rate=1000)
 
 ## References
 
-- Khodadad, D., Nordebo, S., Müller, B., Waldmann, A., Yerworth, R., Becher, T., ... & Bayford, R. (2018). A review of tissue substitutes for ultrasound imaging. Ultrasound in medicine & biology, 44(9), 1807-1823.
+- Khodadad, D., Nordebo, S., Müller, B., Waldmann, A., Yerworth, R., Becher, T., ... & Bayford, R. (2018). Optimized breath detection algorithm in electrical impedance tomography. Physiological Measurement, 39(9), 094001.
 - Grossman, P., & Taylor, E. W. (2007). Toward understanding respiratory sinus arrhythmia: Relations to cardiac vagal tone, evolution and biobehavioral functions. Biological psychology, 74(2), 263-285.
 - Birn, R. M., Diamond, J. B., Smith, M. A., & Bandettini, P. A. (2006). Separating respiratory-variation-related fluctuations from neuronal-activity-related fluctuations in fMRI. NeuroImage, 31(4), 1536-1548.

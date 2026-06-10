@@ -68,13 +68,14 @@ counts2 = results[1].data.meas.get_counts()
 
 ```python
 from qiskit.circuit import Parameter
+import numpy as np
 
 theta = Parameter('θ')
 qc = QuantumCircuit(1)
 qc.ry(theta, 0)
 qc.measure_all()
 
-# Run with parameter values
+# Run with parameter values (one row per parameter set)
 sampler = StatevectorSampler()
 param_values = [[0], [np.pi/4], [np.pi/2]]
 result = sampler.run([(qc, param_values)], shots=1024).result()
@@ -144,7 +145,10 @@ result = estimator.run([(qc, observable, param_values)]).result()
 
 ## IBM Quantum Runtime Primitives
 
-For running on real hardware, use runtime primitives:
+For running on real hardware, use runtime primitives. **On hardware, circuits must be
+transpiled to the backend ISA first** (and Estimator observables remapped with
+`observable.apply_layout(isa.layout)`) — see `transpilation.md` and `patterns.md`. The
+snippets below focus on the primitive API and omit that step for brevity.
 
 ### Runtime Sampler
 

@@ -64,17 +64,17 @@ When creating infographics that require accurate, up-to-date data, use the `--re
 
 ```bash
 # Research and generate statistical infographic
-python skills/infographics/scripts/generate_infographic.py \
+python scripts/generate_infographic.py \
   "Global renewable energy adoption rates by country" \
   -o figures/renewable_energy.png --type statistical --research
 
 # Research for timeline infographic
-python skills/infographics/scripts/generate_infographic.py \
+python scripts/generate_infographic.py \
   "History of artificial intelligence breakthroughs" \
   -o figures/ai_history.png --type timeline --research
 
 # Research for comparison infographic
-python skills/infographics/scripts/generate_infographic.py \
+python scripts/generate_infographic.py \
   "Electric vehicles vs hydrogen vehicles comparison" \
   -o figures/ev_hydrogen.png --type comparison --research
 ```
@@ -111,7 +111,7 @@ When research is enabled, additional files are created:
 ## Command-Line Reference
 
 ```bash
-python skills/infographics/scripts/generate_infographic.py [OPTIONS] PROMPT
+python scripts/generate_infographic.py [OPTIONS] PROMPT
 
 Arguments:
   PROMPT                    Description of the infographic content
@@ -132,7 +132,7 @@ Options:
 ### List All Options
 
 ```bash
-python skills/infographics/scripts/generate_infographic.py --list-options
+python scripts/generate_infographic.py --list-options
 ```
 
 ## Configuration
@@ -200,10 +200,10 @@ better sleep, lower blood pressure, emotional balance"
 
 ## Integration with Other Skills
 
-- **scientific-schematics**: For technical diagrams and flowcharts
-- **market-research-reports**: Infographics for business reports
-- **scientific-slides**: Infographic elements for presentations
-- **generate-image**: For non-infographic visual content
+- **alterlab-scientific-schematics**: technical diagrams, flowcharts, CONSORT/PRISMA, pathways
+- **alterlab-generate-image**: non-infographic visual content (illustrations, photos, hero images)
+- **alterlab-market-research**: infographics embedded in business reports
+- **alterlab-scientific-slides**: infographic elements for presentations
 
 ## Quick Reference Checklist
 

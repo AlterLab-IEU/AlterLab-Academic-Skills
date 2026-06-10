@@ -302,22 +302,26 @@ params = {
 
 ### 6. Drug Shortages
 
-**Endpoint**: `https://api.fda.gov/drug/drugshortages.json`
+**Endpoint**: `https://api.fda.gov/drug/shortages.json` (note: the path is
+`shortages`, not `drugshortages`)
 
 **Purpose**: Access information about current and resolved drug shortages affecting the United States.
 
 **Data Source**: FDA Drug Shortages Database
 
-**Key Fields**:
-- `product_name` - Name of drug in shortage
-- `status` - Current status (Currently in Shortage, Resolved, Discontinued)
-- `reason` - Reason for shortage
-- `shortage_start_date` - When shortage began
-- `resolution_date` - When shortage was resolved (if applicable)
-- `discontinuation_date` - If product was discontinued
-- `active_ingredient` - Active ingredients
-- `marketed_by` - Companies marketing the product
+**Key Fields** (verified against the live schema):
+- `generic_name` - Generic name of drug in shortage (primary search field)
+- `company_name` - Company reporting the shortage
+- `status` - Current status; observed values are `Current`,
+  `To Be Discontinued`, and `Resolved`
+- `shortage_reason` - Reason for shortage
+- `initial_posting_date` - When the shortage was first posted
+- `update_date` / `update_type` - Most recent update and its type
+- `availability` - Free-text availability/resolution notes
+- `therapeutic_category` - Therapeutic category
+- `dosage_form` - Dosage form
 - `presentation` - Dosage form and strength
+- `package_ndc` - Affected package NDC(s)
 
 **Common Use Cases**:
 - Formulary management
@@ -331,27 +335,27 @@ params = {
 # Find current drug shortages
 params = {
     "api_key": api_key,
-    "search": "status:Currently+in+Shortage",
+    "search": "status:Current",
     "limit": 100
 }
 
-response = requests.get("https://api.fda.gov/drug/drugshortages.json", params=params)
+response = requests.get("https://api.fda.gov/drug/shortages.json", params=params)
 ```
 
 ```python
-# Search for shortages of a specific drug
+# Search for shortages of a specific drug (use generic_name)
 params = {
     "api_key": api_key,
-    "search": "product_name:*amoxicillin*",
+    "search": "generic_name:*amoxicillin*",
     "limit": 10
 }
 ```
 
 ```python
-# Get shortage history (both current and resolved)
+# Get shortage history (both current and resolved) for an ingredient
 params = {
     "api_key": api_key,
-    "search": "active_ingredient:epinephrine",
+    "search": "generic_name:*epinephrine*",
     "limit": 50
 }
 ```
@@ -464,5 +468,5 @@ def get_all_results(endpoint, search_query, api_key, max_results=1000):
 
 - OpenFDA Drug API Documentation: https://open.fda.gov/apis/drug/
 - API Basics: See `api_basics.md` in this references directory
-- Python examples: See `scripts/fda_drug_query.py`
+- Python helper: See `scripts/fda_query.py` (the `FDAQuery` class) and `scripts/fda_examples.py`
 - Field reference guides: Available at https://open.fda.gov/apis/drug/[endpoint]/searchable-fields/

@@ -390,13 +390,15 @@ monitor.report()
 monitor.export_csv('data.csv')
 ```
 
+**Import note:** these `from scripts....` paths are relative to the skill directory. Copy the script next to your simulation, or add the skill directory to `PYTHONPATH` before importing.
+
 ## Reference Documentation
 
-Detailed guides for specific topics:
+Detailed guides, loaded on demand:
 
 - **`references/resources.md`** - All resource types with examples
 - **`references/events.md`** - Event system and patterns
-- **`references/process-interaction.md`** - Process synchronization
+- **`references/process-interaction.md`** - Process synchronization (signals, yields, interrupts)
 - **`references/monitoring.md`** - Data collection techniques
 - **`references/real-time.md`** - Real-time simulation setup
 

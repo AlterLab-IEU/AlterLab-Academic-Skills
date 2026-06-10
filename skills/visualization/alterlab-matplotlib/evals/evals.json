@@ -24,6 +24,14 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "plot_surface"
+        },
+        {
+          "type": "behavior",
+          "value": "Creates a 3D Axes (projection='3d') and uses plot_surface with cmap='viridis', setting set_zlabel in addition to the x/y labels."
         }
       ]
     },
@@ -50,6 +58,14 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "rcParams"
+        },
+        {
+          "type": "behavior",
+          "value": "Sets font/label/tick sizes through plt.rcParams (and/or plt.style.use), then draws a bar chart via the object-oriented fig, ax = plt.subplots() interface."
         }
       ]
     },

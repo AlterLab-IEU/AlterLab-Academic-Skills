@@ -15,7 +15,15 @@ A feature represents a chromatographic peak characterized by:
 
 ## Feature Finding
 
-### Feature Finder Multiples (FFM)
+> pyOpenMS 3.x note: the old `FeatureFinder` facade (`ff.run("centroided", ...)`)
+> was removed. The former `"centroided"` algorithm is now the standalone class
+> `FeatureFinderAlgorithmPicked`; its `run(input_map, output, params, seeds)`
+> takes the param object directly (no algorithm-name string). The
+> `mass_trace:*` and `isotopic_pattern:*` parameter names are unchanged.
+> For small molecules, prefer the metabolomics chain below
+> (`MassTraceDetection` → `ElutionPeakDetection` → `FeatureFindingMetabo`).
+
+### FeatureFinderAlgorithmPicked (peptide / centroided data)
 
 Standard algorithm for feature detection in centroided data:
 
@@ -25,22 +33,25 @@ import pyopenms as ms
 # Load centroided data
 exp = ms.MSExperiment()
 ms.MzMLFile().load("centroided.mzML", exp)
+exp.updateRanges()
 
-# Create feature finder
-ff = ms.FeatureFinder()
+# Create feature finder (former "centroided" algorithm)
+ff = ms.FeatureFinderAlgorithmPicked()
 
 # Get default parameters
-params = ff.getParameters("centroided")
+params = ff.getParameters()
 
 # Modify key parameters
 params.setValue("mass_trace:mz_tolerance", 10.0)  # ppm
 params.setValue("mass_trace:min_spectra", 7)  # Min scans per feature
 params.setValue("isotopic_pattern:charge_low", 1)
 params.setValue("isotopic_pattern:charge_high", 4)
+ff.setParameters(params)
 
-# Run feature detection
+# Run feature detection (empty seeds = de novo)
 features = ms.FeatureMap()
-ff.run("centroided", exp, features, params, ms.FeatureMap())
+seeds = ms.FeatureMap()
+ff.run(exp, features, params, seeds)
 
 print(f"Detected {features.size()} features")
 
@@ -48,26 +59,44 @@ print(f"Detected {features.size()} features")
 ms.FeatureXMLFile().store("features.featureXML", features)
 ```
 
-### Feature Finder for Metabolomics
+### FeatureFindingMetabo (small molecules)
 
-Optimized for small molecules:
+The dedicated metabolomics workflow runs mass-trace detection, elution-peak
+splitting, then assembles features:
 
 ```python
-# Create feature finder for metabolomics
-ff = ms.FeatureFinder()
+# Load centroided data
+exp = ms.MSExperiment()
+ms.MzMLFile().load("centroided.mzML", exp)
+exp.updateRanges()
 
-# Get metabolomics-specific parameters
-params = ff.getParameters("centroided")
+# 1. Detect mass traces
+mtd = ms.MassTraceDetection()
+mtd_params = mtd.getDefaults()
+mtd_params.setValue("mass_error_ppm", 5.0)       # tight for high-res metabolomics
+mtd_params.setValue("noise_threshold_int", 1000.0)
+mtd.setParameters(mtd_params)
+mass_traces = []
+mtd.run(exp, mass_traces, 0)  # 0 = no limit on number of traces
 
-# Configure for metabolomics
-params.setValue("mass_trace:mz_tolerance", 5.0)  # Lower tolerance
-params.setValue("mass_trace:min_spectra", 5)
-params.setValue("isotopic_pattern:charge_low", 1)  # Mostly singly charged
-params.setValue("isotopic_pattern:charge_high", 2)
+# 2. Split traces into elution peaks
+epd = ms.ElutionPeakDetection()
+epd_params = epd.getDefaults()
+epd_params.setValue("width_filtering", "fixed")
+epd.setParameters(epd_params)
+split_traces = []
+epd.detectPeaks(mass_traces, split_traces)
 
-# Run detection
+# 3. Assemble features
+ffm = ms.FeatureFindingMetabo()
+ffm_params = ffm.getDefaults()
+ffm_params.setValue("isotope_filtering_model", "none")
+ffm.setParameters(ffm_params)
 features = ms.FeatureMap()
-ff.run("centroided", exp, features, params, ms.FeatureMap())
+chrom_out = []
+ffm.run(split_traces, features, chrom_out)
+
+print(f"Detected {features.size()} features")
 ```
 
 ## Accessing Feature Data
@@ -140,10 +169,16 @@ ms.FeatureXMLFile().load("sample2.featureXML", fm2)
 # Create aligner
 aligner = ms.MapAlignmentAlgorithmPoseClustering()
 
-# Align maps
-fm_aligned = []
-transformations = []
-aligner.align([fm1, fm2], fm_aligned, transformations)
+# align() works on ONE map against a reference (it does NOT take a list).
+# Pick a reference map, then align every other map to it.
+aligner.setReference(fm1)  # fm1 is the reference; leave it unchanged
+
+trafo = ms.TransformationDescription()
+aligner.align(fm2, trafo)  # fills `trafo`; fm2 itself is not modified yet
+
+# Apply the transformation to fm2's retention times
+transformer = ms.MapAlignmentTransformer()
+transformer.transformRetentionTimes(fm2, trafo, True)
 ```
 
 ### Feature Linking Algorithm
@@ -215,20 +250,23 @@ for map_idx, description in file_descriptions.items():
 Identify different ionization forms of the same molecule:
 
 ```python
-# Create adduct detector
-adduct_detector = ms.MetaboliteAdductDecharger()
+# Create adduct detector (class: MetaboliteFeatureDeconvolution)
+adduct_detector = ms.MetaboliteFeatureDeconvolution()
 
-# Configure parameters
+# Configure parameters. Adducts use "Element:charge:probability" syntax,
+# NOT "[M+H]+". Set one polarity at a time via charge_min/charge_max.
 params = adduct_detector.getParameters()
-params.setValue("potential_adducts", "[M+H]+,[M+Na]+,[M+K]+,[M-H]-")
+params.setValue("potential_adducts", [b"H:+:0.7", b"Na:+:0.2", b"K:+:0.1"])
 params.setValue("charge_min", 1)
 params.setValue("charge_max", 1)
 params.setValue("max_neutrals", 1)
 adduct_detector.setParameters(params)
 
-# Detect adducts
+# Detect adducts. compute() takes four maps:
+# (input, output, consensus, consensus_pairs).
 feature_map_out = ms.FeatureMap()
-adduct_detector.compute(feature_map, feature_map_out, ms.ConsensusMap())
+adduct_detector.compute(feature_map, feature_map_out,
+                        ms.ConsensusMap(), ms.ConsensusMap())
 ```
 
 ## Complete Feature Detection Workflow
@@ -257,14 +295,17 @@ def feature_detection_workflow(input_files, output_consensus):
         exp = ms.MSExperiment()
         ms.MzMLFile().load(mzml_file, exp)
 
+        exp.updateRanges()
+
         # Find features
-        ff = ms.FeatureFinder()
-        params = ff.getParameters("centroided")
+        ff = ms.FeatureFinderAlgorithmPicked()
+        params = ff.getParameters()
         params.setValue("mass_trace:mz_tolerance", 10.0)
         params.setValue("mass_trace:min_spectra", 7)
+        ff.setParameters(params)
 
         features = ms.FeatureMap()
-        ff.run("centroided", exp, features, params, ms.FeatureMap())
+        ff.run(exp, features, params, ms.FeatureMap())
 
         # Store filename in feature map
         features.setPrimaryMSRunPath([mzml_file.encode()])
@@ -272,12 +313,17 @@ def feature_detection_workflow(input_files, output_consensus):
         feature_maps.append(features)
         print(f"  Found {features.size()} features")
 
-    # Step 2: Align retention times
+    # Step 2: Align retention times.
+    # align() takes one map at a time; use the first map as the reference.
     print("Aligning retention times...")
     aligner = ms.MapAlignmentAlgorithmPoseClustering()
-    aligned_maps = []
-    transformations = []
-    aligner.align(feature_maps, aligned_maps, transformations)
+    aligner.setReference(feature_maps[0])
+    transformer = ms.MapAlignmentTransformer()
+    for fm in feature_maps[1:]:
+        trafo = ms.TransformationDescription()
+        aligner.align(fm, trafo)
+        transformer.transformRetentionTimes(fm, trafo, True)
+    aligned_maps = feature_maps  # transformed in place
 
     # Step 3: Link features
     print("Linking features across samples...")
@@ -351,9 +397,9 @@ for feature in feature_map:
 
 ```python
 # Annotate features with peptide identifications
-# Load identifications
+# Load identifications (peptide list must be a PeptideIdentificationList)
 protein_ids = []
-peptide_ids = []
+peptide_ids = ms.PeptideIdentificationList()
 ms.IdXMLFile().load("identifications.idXML", protein_ids, peptide_ids)
 
 # Create ID mapper
@@ -380,12 +426,13 @@ Optimize parameters for your data type:
 mz_tolerances = [5.0, 10.0, 20.0]  # ppm
 
 for tol in mz_tolerances:
-    ff = ms.FeatureFinder()
-    params = ff.getParameters("centroided")
+    ff = ms.FeatureFinderAlgorithmPicked()
+    params = ff.getParameters()
     params.setValue("mass_trace:mz_tolerance", tol)
+    ff.setParameters(params)
 
     features = ms.FeatureMap()
-    ff.run("centroided", exp, features, params, ms.FeatureMap())
+    ff.run(exp, features, params, ms.FeatureMap())
 
     print(f"Tolerance {tol} ppm: {features.size()} features")
 ```

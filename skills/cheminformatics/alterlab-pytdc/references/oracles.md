@@ -187,11 +187,11 @@ score = oracle(smiles)
 
 **Median Molecules**
 ```python
-oracle = Oracle(name='Median1', 'Median2')
+oracle = Oracle(name='Median1')   # 'Median2' is a separate oracle
 score = oracle(smiles)
 ```
-- Tests ability to generate molecules with median properties
-- Useful for distribution learning benchmarks
+- Tests ability to generate molecules with properties between two references
+- A GuacaMol multi-property objective
 
 **Rediscovery**
 ```python

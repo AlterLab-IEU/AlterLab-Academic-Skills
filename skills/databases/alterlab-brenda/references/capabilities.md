@@ -34,9 +34,11 @@ from scripts.brenda_queries import parse_km_entry, extract_organism_data
 for entry in km_data:
     parsed = parse_km_entry(entry)
     organism = extract_organism_data(entry)
-    print(f"Organism: {parsed['organism']}")
-    print(f"Substrate: {parsed['substrate']}")
-    print(f"Km value: {parsed['km_value']}")
+    # parse_km_entry exposes raw BRENDA field 'kmValue' (string) and the
+    # derived 'km_value_numeric' (float); there is no 'km_value' key.
+    print(f"Organism: {parsed.get('organism')}")
+    print(f"Substrate: {parsed.get('substrate')}")
+    print(f"Km value: {parsed.get('kmValue')}  (numeric: {parsed.get('km_value_numeric')})")
     print(f"pH: {parsed.get('ph', 'N/A')}")
     print(f"Temperature: {parsed.get('temperature', 'N/A')}")
 ```
@@ -73,7 +75,13 @@ for reaction in reactions:
 
 ## 3. Enzyme Discovery
 
-**Find Enzymes by Substrate**:
+> Gotcha: `getKmValue` responses do **not** carry an `ecNumber` field, so
+> `search_enzymes_by_substrate` (built on Km data) returns `ec_number=''` and has
+> no `enzyme_name`/`reaction` keys — it yields organism + substrate + Km. To resolve
+> EC numbers and reactions for a substrate, query reaction data
+> (`search_by_pattern` / `get_reactions`), whose entries include `ecNumber`.
+
+**Find Enzymes by Substrate** (organism/substrate/Km, no EC number):
 ```python
 from scripts.brenda_queries import search_enzymes_by_substrate
 
@@ -81,9 +89,9 @@ from scripts.brenda_queries import search_enzymes_by_substrate
 enzymes = search_enzymes_by_substrate("glucose", limit=20)
 
 for enzyme in enzymes:
-    print(f"EC: {enzyme['ec_number']}")
-    print(f"Name: {enzyme['enzyme_name']}")
-    print(f"Reaction: {enzyme['reaction']}")
+    print(f"Organism: {enzyme['organism']}")
+    print(f"Substrate: {enzyme['substrate']}")
+    print(f"Km: {enzyme['km_value']}")
 ```
 
 **Find Enzymes by Product**:

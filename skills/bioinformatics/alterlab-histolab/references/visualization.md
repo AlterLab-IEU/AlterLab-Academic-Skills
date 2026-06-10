@@ -25,9 +25,8 @@ plt.show()
 ### Save Thumbnail to Disk
 
 ```python
-# Save thumbnail as image file
-slide.save_thumbnail()
-# Saves to processed_path/thumbnails/slide_name_thumb.png
+# `thumbnail` is a PIL.Image — save it directly (there is no save_thumbnail()).
+slide.thumbnail.save("output/thumbnail.png")
 ```
 
 ### Scaled Images
@@ -134,14 +133,14 @@ Preview tile locations before extraction:
 from histolab.tiler import RandomTiler, GridTiler, ScoreTiler
 from histolab.scorer import NucleiScorer
 
-# RandomTiler preview
+# RandomTiler preview (n_tiles is on the constructor; locate_tiles takes no n_tiles)
 random_tiler = RandomTiler(
     tile_size=(512, 512),
     n_tiles=50,
     level=0,
     seed=42
 )
-random_tiler.locate_tiles(slide, n_tiles=20)
+random_tiler.locate_tiles(slide)
 
 # GridTiler preview
 grid_tiler = GridTiler(
@@ -156,7 +155,7 @@ score_tiler = ScoreTiler(
     n_tiles=30,
     scorer=NucleiScorer()
 )
-score_tiler.locate_tiles(slide, n_tiles=15)
+score_tiler.locate_tiles(slide)
 ```
 
 This displays colored rectangles on the slide thumbnail indicating where tiles will be extracted.
@@ -298,12 +297,12 @@ plt.title('Distribution of Tile Scores')
 plt.grid(axis='y', alpha=0.3)
 plt.show()
 
-# Score vs tissue percentage scatter
+# Raw score vs scaled (0-1) score — the two numeric columns the report provides
 plt.figure(figsize=(10, 6))
-plt.scatter(report_df['tissue_percent'], report_df['score'], alpha=0.5)
-plt.xlabel('Tissue Percentage')
-plt.ylabel('Tile Score')
-plt.title('Tile Score vs Tissue Coverage')
+plt.scatter(report_df['score'], report_df['scaled_score'], alpha=0.5)
+plt.xlabel('Raw Score')
+plt.ylabel('Scaled Score (0-1)')
+plt.title('Raw vs Scaled Tile Score')
 plt.grid(alpha=0.3)
 plt.show()
 ```
@@ -326,16 +325,16 @@ bottom_tiles = report_df.tail(8)
 
 fig, axes = plt.subplots(2, 8, figsize=(20, 6))
 
-# Display top tiles
+# Display top tiles (the report column is 'filename', not 'tile_name')
 for idx, (_, row) in enumerate(top_tiles.iterrows()):
-    tile_img = Image.open(f"output/tiles/{row['tile_name']}")
+    tile_img = Image.open(f"output/tiles/{row['filename']}")
     axes[0, idx].imshow(tile_img)
     axes[0, idx].set_title(f"Score: {row['score']:.3f}", fontsize=8)
     axes[0, idx].axis('off')
 
 # Display bottom tiles
 for idx, (_, row) in enumerate(bottom_tiles.iterrows()):
-    tile_img = Image.open(f"output/tiles/{row['tile_name']}")
+    tile_img = Image.open(f"output/tiles/{row['filename']}")
     axes[1, idx].imshow(tile_img)
     axes[1, idx].set_title(f"Score: {row['score']:.3f}", fontsize=8)
     axes[1, idx].axis('off')
@@ -410,8 +409,9 @@ plt.show()
 ### Before and After Filtering
 
 ```python
-from histolab.filters.image_filters import RgbToGrayscale, HistogramEqualization
-from histolab.filters.compositions import Compose
+from histolab.filters.image_filters import (
+    RgbToGrayscale, HistogramEqualization, Compose
+)
 
 # Define filter pipeline
 filter_pipeline = Compose([
@@ -438,7 +438,7 @@ plt.show()
 ### Multi-Step Filter Visualization
 
 ```python
-from histolab.filters.image_filters import RgbToGrayscale, OtsuThreshold
+from histolab.filters.image_filters import RgbToGrayscale, OtsuThreshold, Compose
 from histolab.filters.morphological_filters import BinaryDilation, RemoveSmallObjects
 
 # Individual filter steps
@@ -447,7 +447,7 @@ steps = [
     ("Grayscale", RgbToGrayscale()),
     ("Otsu Threshold", Compose([RgbToGrayscale(), OtsuThreshold()])),
     ("After Dilation", Compose([RgbToGrayscale(), OtsuThreshold(), BinaryDilation(disk_size=5)])),
-    ("Remove Small Objects", Compose([RgbToGrayscale(), OtsuThreshold(), BinaryDilation(disk_size=5), RemoveSmallObjects(area_threshold=500)]))
+    ("Remove Small Objects", Compose([RgbToGrayscale(), OtsuThreshold(), BinaryDilation(disk_size=5), RemoveSmallObjects(min_size=500)]))
 ]
 
 fig, axes = plt.subplots(1, len(steps), figsize=(20, 4))
@@ -517,6 +517,7 @@ with PdfPages('slide_report.pdf') as pdf:
 ```python
 from ipywidgets import interact, IntSlider
 import matplotlib.pyplot as plt
+from histolab.filters.image_filters import RgbToGrayscale, OtsuThreshold, Compose
 from histolab.filters.morphological_filters import BinaryDilation
 
 @interact(disk_size=IntSlider(min=1, max=20, value=5))

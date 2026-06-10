@@ -1,6 +1,6 @@
 # IDC Core API — Worked Examples
 
-**Tested with:** idc-index 0.11.10 (IDC data version v23)
+**Tested with:** idc-index 0.12.3 (IDC data version v24)
 
 Copy-paste recipes for the essential `idc-index` capabilities. The main SKILL.md
 summarizes each capability and routes here for runnable code. For specialized

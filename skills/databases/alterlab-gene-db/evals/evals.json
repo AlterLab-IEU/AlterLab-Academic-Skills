@@ -14,11 +14,11 @@
     {
       "id": "fetch-gene-metadata",
       "prompt": "Pull the full annotation for TP53 from NCBI — RefSeq transcripts and proteins, chromosomal location, and GO terms.",
-      "expected_output": "Triggers NCBI Gene. Uses scripts/fetch_gene_data.py against the NCBI Datasets API (e.g. --symbol TP53 --taxon human or --gene-id 7157) to retrieve nomenclature/aliases, RefSeqs for transcripts and proteins, chromosomal location, and Gene Ontology annotations in a single request. Notes Datasets API is preferred for comprehensive single-gene retrieval over E-utilities.",
+      "expected_output": "Triggers NCBI Gene. Uses scripts/fetch_gene_data.py against the NCBI Datasets v2 API (e.g. --symbol TP53 --taxon human or --gene-id 7157) to retrieve nomenclature/aliases, chromosomal location, and Gene Ontology annotations from the gene report, and notes that the individual transcript/protein RefSeq accessions come from the product_report endpoint (GET /gene/id/{id}/product_report) rather than the base report. Prefers the Datasets API over E-utilities for comprehensive single-gene retrieval.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "RefSeq" },
-        { "type": "behavior", "value": "Uses the NCBI Datasets API via fetch_gene_data.py to return RefSeqs, genomic location, and GO annotations." }
+        { "type": "behavior", "value": "Uses the NCBI Datasets API via fetch_gene_data.py for genomic location and GO annotations, and gets transcript/protein RefSeq accessions from the product_report endpoint." }
       ]
     },
     {

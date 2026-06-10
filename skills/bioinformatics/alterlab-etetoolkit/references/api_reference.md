@@ -198,15 +198,15 @@ t.populate(5, names_library=["A", "B", "C", "D", "E"])
 ### Removing & Deleting Nodes
 
 ```python
-# Detach: removes entire subtree
+# Detach: removes node and its entire subtree from the parent
 node.detach()
 # or
-parent.remove_child(node)
+parent.remove_child(node)  # same effect: child + subtree gone
 
-# Delete: removes node, reconnects children to parent
+# Delete: removes only this node, reconnecting its children to its parent
 node.delete()
-# or
-parent.remove_child(node)
+# delete(preserve_branch_length=True) adds the deleted node's dist to its children
+node.delete(preserve_branch_length=True)
 ```
 
 ### Pruning
@@ -318,14 +318,16 @@ monophyletic_nodes = tree.get_monophyletic(
 ### Tree Comparison
 
 ```python
-# Robinson-Foulds distance
-rf, max_rf, common_leaves, parts_t1, parts_t2 = t1.robinson_foulds(t2)
+# Robinson-Foulds distance.
+# robinson_foulds() returns MORE than 5 values in current ete3
+# (rf, max_rf, common_leaves, parts_t1, parts_t2, discarded_t1, discarded_t2),
+# so unpack defensively rather than to a fixed 5-tuple.
+result = t1.robinson_foulds(t2)
+rf, max_rf, common_leaves, parts_t1, parts_t2 = result[:5]
 print(f"RF distance: {rf}/{max_rf}")
 
-# Normalized RF distance
-result = t1.compare(t2)
-norm_rf = result["norm_rf"]  # 0.0 to 1.0
-ref_edges = result["ref_edges_in_source"]
+# Normalized RF distance (compare() returns a dict; key is "norm_rf", 0.0–1.0)
+norm_rf = t1.compare(t2)["norm_rf"]
 ```
 
 ## Input/Output
@@ -571,13 +573,5 @@ except:
     print("Tree lacks internal node names")
 ```
 
-## Best Practices
-
-1. **Use appropriate traversal**: Postorder for bottom-up, preorder for top-down
-2. **Cache for repeated access**: Use `get_cached_content()` for frequent queries
-3. **Use iterators for large trees**: Memory-efficient processing
-4. **Preserve branch lengths**: Use `preserve_branch_length=True` when pruning
-5. **Choose copy method wisely**: "newick" for speed, "cpickle" for full fidelity
-6. **Validate monophyly**: Check returned clade type (monophyletic/paraphyletic/polyphyletic)
-7. **Use PhyloTree for phylogenetics**: Specialized methods for evolutionary analysis
-8. **Cache NCBI queries**: Store results to avoid repeated database access
+> For traversal/caching/pruning/copy-method best practices, see
+> `newick_and_best_practices.md` (single source of truth — not duplicated here).

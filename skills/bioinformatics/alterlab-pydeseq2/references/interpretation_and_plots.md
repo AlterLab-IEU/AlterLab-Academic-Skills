@@ -25,6 +25,8 @@ print(f"Downregulated: {len(downregulated)}")
 ## Ranking and Sorting
 
 ```python
+import numpy as np
+
 # Sort by adjusted p-value
 top_by_padj = ds.results_df.sort_values("padj").head(20)
 

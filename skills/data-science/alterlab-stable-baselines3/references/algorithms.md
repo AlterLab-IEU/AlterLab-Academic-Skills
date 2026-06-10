@@ -13,7 +13,7 @@ This document provides detailed characteristics of all RL algorithms in Stable B
 | **DDPG** | Off-Policy | Continuous | High | Medium | Continuous control (use TD3 instead) |
 | **DQN** | Off-Policy | Discrete | Medium | Medium | Discrete actions, Atari games |
 | **HER** | Off-Policy | All | Very High | Medium | Goal-conditioned tasks |
-| **RecurrentPPO** | On-Policy | All | Medium | Slow | Partial observability (POMDP) |
+| **RecurrentPPO** (Contrib) | On-Policy | All | Medium | Slow | Partial observability (POMDP) |
 
 ## Detailed Algorithm Characteristics
 
@@ -171,9 +171,9 @@ This document provides detailed characteristics of all RL algorithms in Stable B
 - `exploration_fraction`: 0.1
 - `exploration_final_eps`: 0.05
 
-**Variants:**
+**Variants (SB3-Contrib):**
 - **QR-DQN**: Distributional RL version for better value estimates
-- **Maskable DQN**: For environments with action masking
+- For action masking with discrete actions, use **MaskablePPO** (SB3-Contrib); SB3-Contrib has no maskable DQN
 
 ### HER (Hindsight Experience Replay)
 
@@ -210,7 +210,7 @@ model = SAC(
 
 ### RecurrentPPO
 
-**Overview:** PPO with LSTM policy for handling partial observability.
+**Overview:** PPO with LSTM policy for handling partial observability. Lives in **SB3-Contrib** (`from sb3_contrib import RecurrentPPO`), not core SB3.
 
 **Strengths:**
 - Handles partial observability (POMDP)
@@ -311,23 +311,13 @@ model = SAC(
 
 ## Performance Benchmarks
 
-Approximate expected performance (mean reward) on common benchmarks:
+General trends hold across tasks: on continuous-control (MuJoCo) benchmarks SAC and TD3 substantially outperform on-policy PPO at equal sample budgets thanks to off-policy sample efficiency; on Atari, PPO and DQN reach broadly comparable scores. Absolute numbers vary heavily with hyperparameters, env version, and training length, so do not treat any single figure as canonical.
 
-### Continuous Control (MuJoCo)
-- **HalfCheetah-v3**: PPO ~1800, SAC ~12000, TD3 ~9500
-- **Hopper-v3**: PPO ~2500, SAC ~3600, TD3 ~3600
-- **Walker2d-v3**: PPO ~3000, SAC ~5500, TD3 ~5000
-
-### Discrete Control (Atari)
-- **Breakout**: PPO ~400, DQN ~300
-- **Pong**: PPO ~20, DQN ~20
-- **Space Invaders**: PPO ~1000, DQN ~800
-
-*Note: Performance varies significantly with hyperparameters and training time.*
+For tuned hyperparameters and reproducible benchmark scores per (algorithm, environment), consult the RL Baselines3 Zoo rather than memorized numbers: https://github.com/DLR-RM/rl-baselines3-zoo
 
 ## Additional Resources
 
 - **RL Baselines3 Zoo**: Collection of pre-trained agents and hyperparameters: https://github.com/DLR-RM/rl-baselines3-zoo
 - **Hyperparameter Tuning**: Use Optuna for systematic tuning
 - **Custom Policies**: Extend base policies for custom network architectures
-- **Contribution Repo**: SB3-Contrib for experimental algorithms (QR-DQN, TQC, etc.)
+- **Contribution Repo**: SB3-Contrib for experimental algorithms (QR-DQN, TQC, TRPO, ARS, MaskablePPO, RecurrentPPO, CrossQ): https://sb3-contrib.readthedocs.io

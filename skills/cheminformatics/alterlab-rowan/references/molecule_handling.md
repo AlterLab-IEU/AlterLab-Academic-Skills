@@ -37,7 +37,7 @@ mol = stjames.Molecule.from_smiles("CC(=O)[O-]")  # Acetate
 mol = stjames.Molecule.from_smiles("CC(=O)Oc1ccccc1C(=O)O")  # Aspirin
 ```
 
-**Note:** `from_smiles()` automatically generates 3D coordinates.
+**Note:** `from_smiles()` automatically generates 3D coordinates. Its only argument is the SMILES string — charge and multiplicity are inferred from the SMILES (see below for how to set them explicitly).
 
 ---
 
@@ -118,20 +118,22 @@ mol = stjames.Molecule.from_rdkit(rdkit_mol)
 
 ### Specifying Charge and Multiplicity
 
+`from_smiles()` takes **only** the SMILES — it does not accept `charge`/`multiplicity` keywords. Encode charge in the SMILES itself, or set the fields explicitly via `from_xyz(...)` (which does accept them) or by assigning on the model.
+
 ```python
 import stjames
 
-# Neutral singlet (default)
+# Charge encoded in SMILES
+mol = stjames.Molecule.from_smiles("CC(=O)[O-]")   # acetate, charge -1 inferred
+mol = stjames.Molecule.from_smiles("[NH4+]")        # ammonium, charge +1 inferred
+
+# Explicit charge/multiplicity when building from coordinates
+mol = stjames.Molecule.from_xyz(o2_xyz, charge=0, multiplicity=3)  # triplet O2
+
+# Or set on the model (it is a pydantic Molecule)
 mol = stjames.Molecule.from_smiles("CCO")
-
-# Cation doublet
-mol = stjames.Molecule.from_smiles("CCO", charge=1, multiplicity=2)
-
-# Anion singlet
-mol = stjames.Molecule.from_smiles("CC(=O)[O-]", charge=-1, multiplicity=1)
-
-# Triplet oxygen
-mol = stjames.Molecule.from_smiles("[O][O]", charge=0, multiplicity=3)
+mol.charge = 1
+mol.multiplicity = 2
 ```
 
 ---
@@ -170,9 +172,9 @@ print(f"Mulliken spin densities: {mol.mulliken_spin_densities}")
 ```python
 # After frequency calculation
 print(f"ZPE: {mol.zero_point_energy} Hartree")
-print(f"Thermal correction to enthalpy: {mol.thermal_correction_enthalpy}")
-print(f"Thermal correction to Gibbs: {mol.thermal_correction_gibbs}")
-print(f"Gibbs free energy: {mol.gibbs_free_energy} Hartree")
+print(f"Thermal enthalpy correction: {mol.thermal_enthalpy_corr}")
+print(f"Thermal free-energy correction: {mol.thermal_free_energy_corr}")
+print(f"Gibbs free energy: {mol.gibbs_free_energy} Hartree")  # property (alias for sum_energy_free_energy)
 ```
 
 ### Vibrational Modes (after frequency calculation)
@@ -180,9 +182,6 @@ print(f"Gibbs free energy: {mol.gibbs_free_energy} Hartree")
 ```python
 for mode in mol.vibrational_modes:
     print(f"Frequency: {mode.frequency} cm⁻¹")
-    print(f"Reduced mass: {mode.reduced_mass} amu")
-    print(f"IR intensity: {mode.ir_intensity} km/mol")
-    print(f"Displacements: {mode.displacements}")
 ```
 
 ### Periodic Cell
@@ -197,6 +196,8 @@ if mol.cell:
 
 ## Geometry Methods
 
+**Atom indices here are 1-based** (the methods reject 0). This differs from `mol.atoms[...]` list access, which is 0-based.
+
 ### Distance Between Atoms
 
 ```python
@@ -204,8 +205,8 @@ import stjames
 
 mol = stjames.Molecule.from_smiles("CCO")
 
-# Distance between atoms 0 and 1 (in Angstroms)
-d = mol.distance(0, 1)
+# Distance between atoms 1 and 2 (1-indexed), in Angstroms
+d = mol.distance(1, 2)
 print(f"C-C bond length: {d:.3f} Å")
 ```
 
@@ -216,12 +217,11 @@ import stjames
 
 mol = stjames.Molecule.from_smiles("CCO")
 
-# Angle formed by atoms 0-1-2 (C-C-O)
-angle = mol.angle(0, 1, 2, degrees=True)
+# Angle formed by atoms 1-2-3 (C-C-O); degrees=True by default
+angle = mol.angle(1, 2, 3, degrees=True)
 print(f"C-C-O angle: {angle:.1f}°")
 
-# In radians
-angle_rad = mol.angle(0, 1, 2, degrees=False)
+angle_rad = mol.angle(1, 2, 3, degrees=False)  # radians
 ```
 
 ### Dihedral Angle
@@ -231,12 +231,12 @@ import stjames
 
 mol = stjames.Molecule.from_smiles("CCCC")
 
-# Dihedral angle for atoms 0-1-2-3
-dihedral = mol.dihedral(0, 1, 2, 3, degrees=True)
+# Dihedral angle for atoms 1-2-3-4 (1-indexed)
+dihedral = mol.dihedral(1, 2, 3, 4, degrees=True)
 print(f"Dihedral: {dihedral:.1f}°")
 
-# Use positive domain (0 to 360)
-dihedral_pos = mol.dihedral(0, 1, 2, 3, degrees=True, positive_domain=True)
+# positive_domain defaults to True (0 to 360); pass False for -180..180
+dihedral_signed = mol.dihedral(1, 2, 3, 4, degrees=True, positive_domain=False)
 ```
 
 ### Translation
@@ -293,22 +293,13 @@ import rowan
 mol = rowan.smiles_to_stjames("CCO")
 ```
 
-### Molecule Lookup by Name
-
-```python
-import rowan
-
-# Convert common names to SMILES
-smiles = rowan.molecule_lookup("aspirin")
-print(smiles)  # "CC(=O)Oc1ccccc1C(=O)O"
-
-smiles = rowan.molecule_lookup("caffeine")
-print(smiles)  # "Cn1cnc2c1c(=O)n(c(=O)n2C)C"
-
-# Use with workflow submission
-mol = stjames.Molecule.from_smiles(rowan.molecule_lookup("ibuprofen"))
-workflow = rowan.submit_pka_workflow(mol, name="Ibuprofen pKa")
-```
+> There is no built-in name-to-SMILES lookup (no `rowan.molecule_lookup`). Resolve common names to SMILES with an external source (PubChem, a local dictionary, or RDKit), then submit:
+>
+> ```python
+> import rowan
+> aspirin = "CC(=O)Oc1ccccc1C(=O)O"
+> workflow = rowan.submit_pka_workflow(aspirin, name="Aspirin pKa")
+> ```
 
 ---
 
@@ -316,7 +307,7 @@ workflow = rowan.submit_pka_workflow(mol, name="Ibuprofen pKa")
 
 ### Atom Class
 
-Each atom in `mol.atoms` is an `Atom` object.
+Each atom in `mol.atoms` is an `stjames.Atom`. Coordinates live in `position` (a 3-vector); there are no `.x/.y/.z` attributes. Use the `atomic_symbol` property for the element symbol.
 
 ```python
 import stjames
@@ -324,30 +315,28 @@ import stjames
 mol = stjames.Molecule.from_smiles("CCO")
 
 for i, atom in enumerate(mol.atoms):
-    print(f"Atom {i}: {atom.element}")
-    print(f"  Position: ({atom.x:.3f}, {atom.y:.3f}, {atom.z:.3f})")
+    x, y, z = atom.position
+    print(f"Atom {i}: {atom.atomic_symbol} at ({x:.3f}, {y:.3f}, {z:.3f})")
 ```
 
 ### Atom Attributes
 
 | Attribute | Type | Description |
 |-----------|------|-------------|
-| `element` | str | Element symbol (e.g., "C", "O", "H") |
-| `x` | float | X coordinate (Å) |
-| `y` | float | Y coordinate (Å) |
-| `z` | float | Z coordinate (Å) |
 | `atomic_number` | int | Atomic number |
+| `atomic_symbol` | str | Element symbol (e.g. "C", "O", "H"), derived property |
+| `position` | list[float] | `[x, y, z]` coordinates (Å) |
+| `mass` | float | Atomic mass (amu) |
 
 ### Getting Coordinates as Array
 
 ```python
-import stjames
 import numpy as np
 
 mol = stjames.Molecule.from_smiles("CCO")
 
-# Extract positions as numpy array
-positions = np.array([[atom.x, atom.y, atom.z] for atom in mol.atoms])
+# mol.coordinates is already a list of [x, y, z]; convert to ndarray
+positions = np.array(mol.coordinates)
 print(f"Positions shape: {positions.shape}")  # (N_atoms, 3)
 ```
 
@@ -381,11 +370,10 @@ import stjames
 # Create neutral molecule
 mol = stjames.Molecule.from_smiles("c1ccccc1")
 
-# Create cation version
-mol_cation = stjames.Molecule.from_smiles("c1ccccc1", charge=1, multiplicity=2)
-
-# Or modify existing (if supported)
-# Note: May need to recreate from coordinates
+# Make a cation-doublet copy by assigning on the model (from_smiles takes no charge kwarg)
+mol_cation = mol.model_copy()
+mol_cation.charge = 1
+mol_cation.multiplicity = 2
 ```
 
 ### Combining Geometry Analysis
@@ -395,33 +383,27 @@ import stjames
 
 mol = stjames.Molecule.from_smiles("CCCC")
 
-# Analyze butane conformer
+# Analyze butane conformer (geometry methods are 1-indexed)
 print("Butane geometry analysis:")
-print(f"  C1-C2 bond: {mol.distance(0, 1):.3f} Å")
-print(f"  C2-C3 bond: {mol.distance(1, 2):.3f} Å")
-print(f"  C3-C4 bond: {mol.distance(2, 3):.3f} Å")
-print(f"  C-C-C angle: {mol.angle(0, 1, 2, degrees=True):.1f}°")
-print(f"  C-C-C-C dihedral: {mol.dihedral(0, 1, 2, 3, degrees=True):.1f}°")
+print(f"  C1-C2 bond: {mol.distance(1, 2):.3f} Å")
+print(f"  C2-C3 bond: {mol.distance(2, 3):.3f} Å")
+print(f"  C3-C4 bond: {mol.distance(3, 4):.3f} Å")
+print(f"  C-C-C angle: {mol.angle(1, 2, 3, degrees=True):.1f}°")
+print(f"  C-C-C-C dihedral: {mol.dihedral(1, 2, 3, 4, degrees=True):.1f}°")
 ```
 
 ---
 
 ## Electron Sanity Check
 
-The `stjames.Molecule` class validates that charge and multiplicity are consistent with the number of electrons:
+The `stjames.Molecule` class can validate that charge and multiplicity are consistent with the number of electrons via `mol.check_electron_sanity()`. Set the spin state when building from coordinates (`from_xyz(..., multiplicity=3)`) or by assigning `mol.multiplicity`:
 
 ```python
 import stjames
 
-# This will fail validation
-try:
-    # Oxygen with wrong multiplicity
-    mol = stjames.Molecule.from_smiles("[O][O]", charge=0, multiplicity=1)
-except ValueError as e:
-    print(f"Validation error: {e}")
-
-# Correct: triplet oxygen
-mol = stjames.Molecule.from_smiles("[O][O]", charge=0, multiplicity=3)
+# Triplet oxygen, built from coordinates with explicit multiplicity
+mol = stjames.Molecule.from_xyz(o2_xyz, charge=0, multiplicity=3)
+mol.check_electron_sanity()   # raises if charge/multiplicity are inconsistent
 ```
 
 The validation ensures:

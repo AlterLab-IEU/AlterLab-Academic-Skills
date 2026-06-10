@@ -296,10 +296,10 @@ vif_data["VIF"] = [variance_inflation_factor(X.values, i) for i in range(len(X.c
 **3. Influential observations**:
 ```python
 # Cook's distance, DFBetas, leverage
-from statsmodels.stats.outliers_influence import OLSInfluence
-
-influence = OLSInfluence(model)
-cooks_d = influence.cooks_distance
+# For a fitted Logit/GLM model, use get_influence() (returns GLMInfluence);
+# do NOT use OLSInfluence, which is for OLS results only.
+influence = model.get_influence()      # model = sm.Logit(y, X).fit()
+cooks_d = influence.cooks_distance[0]   # cooks_distance is a (stat, p) tuple
 ```
 
 **4. Model fit**:

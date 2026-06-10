@@ -23,19 +23,21 @@
     {
       "id": "gpu-task-config",
       "prompt": "My AlphaFold step on Latch keeps running out of memory and needs a GPU. How do I configure the task resources?",
-      "expected_output": "Invokes alterlab-latchbio. Routes to resource configuration: use a GPU task decorator (@small_gpu_task/@large_gpu_task) or @custom_task with explicit CPU/memory/GPU (K80/V100/A100) specs to right-size the AlphaFold step.",
+      "expected_output": "Invokes alterlab-latchbio. Routes to resource configuration: use a dedicated GPU task decorator (@small_gpu_task/@large_gpu_task, or @v100_x1_task / @g6e_*_task) to get a GPU node. Notes that @custom_task tunes CPU/memory/storage_gib only and does NOT accept gpu/gpu_type parameters, so GPUs come from the GPU decorators, not from custom_task.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "gpu_task" }
+        { "type": "output_contains", "value": "gpu_task" },
+        { "type": "behavior", "value": "Recommends a GPU task decorator and does not claim @custom_task takes a gpu/gpu_type argument." }
       ]
     },
     {
       "id": "registry-integrated-workflow",
-      "prompt": "I want my Latch workflow to pull a sample by sample_id from a Registry table, process it, and write the result and status back to that record.",
-      "expected_output": "Invokes alterlab-latchbio. Uses the Latch Registry API (Table.get, Record.list with a filter, record.update with values) inside a task to read the sample and write status/result back, integrating Registry with the workflow.",
+      "prompt": "I want my Latch workflow to pull a sample record from a Registry table, process it, and write the result and status back to that record.",
+      "expected_output": "Invokes alterlab-latchbio. Uses the real Latch Registry API inside a task: construct the Table by id (Table(table_id), not Table.get), iterate table.list_records() and read columns with record.get_values(), then write status/result back via the `with table.update() as updater: updater.upsert_record(...)` transaction. Does NOT use the non-existent Record.list/Record.create/record.update(values=...) API.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "Registry" }
+        { "type": "output_contains", "value": "upsert_record" },
+        { "type": "behavior", "value": "Reads via table.list_records()/get_values() and writes via the table.update() transaction; does not invent Record.list or record.update(values=)." }
       ]
     },
     {

@@ -82,36 +82,37 @@ Efficiently store and manage large pathology datasets using HDF5 format. PathML 
 
 ### Installation
 
-```bash
-# Install PathML
-uv pip install pathml
+PathML pins specific versions of OpenSlide, Bio-Formats (via JPype/JVM), and DeepCell. The maintainers recommend a conda environment; pure-pip installs frequently fail on the OpenSlide/Java native deps. Verify the supported Python version against the PathML README before pinning.
 
-# With optional dependencies for all features
-uv pip install pathml[all]
+```bash
+# PathML expects its native deps (OpenSlide, a JDK for Bio-Formats) present first.
+uv pip install pathml
 ```
 
 ### Basic Workflow Example
 
 ```python
-from pathml.core import SlideData
+from pathml.core import HESlide
 from pathml.preprocessing import Pipeline, StainNormalizationHE, TissueDetectionHE
 
-# Load a whole-slide image
-wsi = SlideData.from_slide("path/to/slide.svs")
+# Load a whole-slide image. Use the HESlide convenience class for H&E,
+# or SlideData(filepath=..., slide_type=types.HE) for the generic constructor.
+# (There is no SlideData.from_slide.)
+wsi = HESlide("path/to/slide.svs", name="example")
 
 # Create preprocessing pipeline
 pipeline = Pipeline([
     TissueDetectionHE(),
-    StainNormalizationHE(target='normalize', stain_estimation_method='macenko')
+    StainNormalizationHE(target="normalize", stain_estimation_method="macenko"),
 ])
 
-# Run pipeline
-pipeline.run(wsi)
+# Run the pipeline on the slide (SlideData.run handles tiling + transforms)
+wsi.run(pipeline)
 
 # Access processed tiles
 for tile in wsi.tiles:
     processed_image = tile.image
-    tissue_mask = tile.masks['tissue']
+    tissue_mask = tile.masks["tissue"]
 ```
 
 ### Common Workflows
@@ -125,43 +126,28 @@ for tile in wsi.tiles:
 
 **Multiparametric Imaging (CODEX):**
 1. Load CODEX slide with `CODEXSlide`
-2. Collapse multi-run channel data
-3. Segment cells using Mesmer model
-4. Quantify marker expression
-5. Export to AnnData for single-cell analysis
+2. Collapse multi-run channel data with `CollapseRunsCODEX`
+3. Segment cells using `SegmentMIF` (Mesmer)
+4. Quantify per-cell marker expression with `QuantifyMIF`
+5. Read the resulting AnnData from `slide.counts` for single-cell analysis
 
 **Training ML Models:**
-1. Prepare dataset with public pathology data
-2. Create PyTorch DataLoader with PathML datasets
-3. Train HoVer-Net or custom models
+1. Prepare data with a `pathml.datasets` DataModule (e.g. `PanNukeDataModule`) or a `TileDataset`
+2. Train `HoVerNet` (or another model) with a standard PyTorch loop
+3. Post-process predictions with `post_process_batch_hovernet`
 4. Evaluate on held-out test sets
-5. Deploy with ONNX for inference
+5. Optionally export to ONNX for inference
 
-## References to Detailed Documentation
+## Reference Files
 
-When working on specific tasks, refer to the appropriate reference file for comprehensive information:
+Load the relevant reference for detailed API, workflows, and gotchas:
 
-- **Loading images:** `references/image_loading.md`
-- **Preprocessing workflows:** `references/preprocessing.md`
-- **Spatial analysis:** `references/graphs.md`
-- **Model training:** `references/machine_learning.md`
-- **CODEX/multiplex IF:** `references/multiparametric.md`
-- **Data storage:** `references/data_management.md`
+- `references/image_loading.md` - WSI formats, slide classes, loading strategies
+- `references/preprocessing.md` - transform catalog, pipeline construction, stain normalization
+- `references/graphs.md` - graph builders, feature extraction, spatial analysis
+- `references/machine_learning.md` - HoVer-Net/HACTNet, training, datasets, ONNX inference
+- `references/multiparametric.md` - CODEX/Vectra/multiplex IF, cell segmentation, quantification
+- `references/data_management.md` - h5path storage, tile management, batch processing
 
-## Resources
-
-This skill includes comprehensive reference documentation organized by capability area. Each reference file contains detailed API information, workflow examples, best practices, and troubleshooting guidance for specific PathML functionality.
-
-### references/
-
-Documentation files providing in-depth coverage of PathML capabilities:
-
-- `image_loading.md` - Whole-slide image formats, loading strategies, slide classes
-- `preprocessing.md` - Complete transform catalog, pipeline construction, preprocessing workflows
-- `graphs.md` - Graph construction methods, feature extraction, spatial analysis
-- `machine_learning.md` - Model architectures, training workflows, evaluation, inference
-- `multiparametric.md` - CODEX, Vectra, multiplex IF analysis, cell segmentation, quantification
-- `data_management.md` - HDF5 storage, tile management, batch processing, dataset organization
-
-Load these references as needed when working on specific computational pathology tasks.
+PathML's API surface shifts between releases; treat the reference code as workflow scaffolding and confirm exact class/method names against the version you have installed (`python -c "import pathml; print(pathml.__version__)"`) and the official API docs at https://pathml.readthedocs.io/.
 

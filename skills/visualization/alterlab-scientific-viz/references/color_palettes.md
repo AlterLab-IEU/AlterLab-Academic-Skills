@@ -150,8 +150,9 @@ plt.imshow(data, cmap='BrBG')
 ```
 
 ### Avoid These Diverging Maps
-- **RdGn (Red-Green)**: Problematic for red-green colorblindness
-- **RdYlGn (Red-Yellow-Green)**: Same issue
+- **RdYlGn (Red-Yellow-Green)**: Problematic for red-green colorblindness
+- **Any custom red↔green diverging map** (there is no built-in `RdGn` in
+  matplotlib, but homemade red/green maps share the same problem)
 
 ### When to Use Diverging Maps
 - Correlation matrices
@@ -295,11 +296,15 @@ fig = px.scatter(df, x='x', y='y', color='category',
 
 ## Grayscale Compatibility
 
-All figures should remain interpretable in grayscale. Test by converting to grayscale:
+All figures should remain interpretable in grayscale. `savefig` has no
+grayscale option, so save normally and convert the rendered raster:
 
 ```python
-# Convert figure to grayscale for testing
-fig.savefig('figure_gray.png', dpi=300, colormap='gray')
+# Save the color figure, then convert a copy to grayscale for inspection
+fig.savefig('figure.png', dpi=300)
+
+from PIL import Image
+Image.open('figure.png').convert('L').save('figure_gray.png')
 ```
 
 **Strategies for grayscale compatibility:**

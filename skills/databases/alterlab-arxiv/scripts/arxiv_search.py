@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.9"
+# dependencies = ["requests>=2.31"]
+# ///
 """
 arXiv Search Tool
 Search and retrieve preprints from arXiv via the Atom API.
 Supports keyword search, author search, category filtering, ID lookup, and PDF download.
+
+Run with uv (resolves the requests dependency automatically):
+    uv run scripts/arxiv_search.py --keywords "diffusion models" --category cs.LG
 """
 
 import requests
@@ -19,7 +26,7 @@ from typing import List, Dict, Optional
 class ArxivSearcher:
     """Search interface for arXiv preprints via the Atom API."""
 
-    BASE_URL = "http://export.arxiv.org/api/query"
+    BASE_URL = "https://export.arxiv.org/api/query"
     ATOM_NS = "{http://www.w3.org/2005/Atom}"
     ARXIV_NS = "{http://arxiv.org/schemas/atom}"
 
@@ -105,7 +112,7 @@ class ArxivSearcher:
             "comment": text("comment", self.ARXIV_NS),
             "journal_ref": text("journal_ref", self.ARXIV_NS),
             "pdf_url": pdf_url,
-            "abs_url": abs_url or f"http://arxiv.org/abs/{arxiv_id}",
+            "abs_url": abs_url or f"https://arxiv.org/abs/{arxiv_id}",
         }
 
     def _fetch(self, params: Dict) -> List[Dict]:
@@ -147,7 +154,8 @@ class ArxivSearcher:
 
         Args:
             query: arXiv query string (e.g., "ti:transformer AND cat:cs.LG")
-            max_results: Maximum number of results (max 300 per request)
+            max_results: Maximum number of results (max 2000 per request;
+                paginate with `start` for larger sets, up to 30000 total)
             start: Starting index for pagination
             sort_by: One of "relevance", "lastUpdatedDate", "submittedDate"
             sort_order: "ascending" or "descending"
@@ -160,7 +168,8 @@ class ArxivSearcher:
         if sort_order not in self.VALID_SORT_ORDER:
             raise ValueError(f"sort_order must be one of {self.VALID_SORT_ORDER}")
 
-        max_results = min(max_results, 300)
+        # arXiv caps a single call at 2000 results (slices of at most 2000).
+        max_results = min(max_results, 2000)
 
         params = {
             "search_query": query,
@@ -210,7 +219,7 @@ class ArxivSearcher:
         arxiv_id = re.sub(r"^https?://arxiv\.org/abs/", "", arxiv_id.strip())
         arxiv_id = re.sub(r"v\d+$", "", arxiv_id)
 
-        pdf_url = f"http://arxiv.org/pdf/{arxiv_id}"
+        pdf_url = f"https://arxiv.org/pdf/{arxiv_id}"
         self._log(f"Downloading: {pdf_url}")
 
         # If output_path is a directory, generate filename
@@ -300,7 +309,7 @@ Examples:
 
     filter_group = parser.add_argument_group("Filter options")
     filter_group.add_argument("--category", "-c", help="arXiv category (e.g., cs.LG)")
-    filter_group.add_argument("--max-results", type=int, default=50, help="Max results (default: 50, max: 300)")
+    filter_group.add_argument("--max-results", type=int, default=50, help="Max results (default: 50, max: 2000 per call)")
     filter_group.add_argument(
         "--sort-by",
         choices=ArxivSearcher.VALID_SORT_BY,

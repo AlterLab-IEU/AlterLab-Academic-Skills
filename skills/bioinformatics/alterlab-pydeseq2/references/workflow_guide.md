@@ -170,8 +170,8 @@ print(f"Indices match: {all(counts_df.index == metadata.index)}")
 # Check for negative values
 assert (counts_df >= 0).all().all(), "Counts must be non-negative"
 
-# Check for non-integer values
-assert counts_df.applymap(lambda x: x == int(x)).all().all(), "Counts must be integers"
+# Check for non-integer values (pandas >= 2.1: use .map, not the removed .applymap)
+assert (counts_df == counts_df.round()).all().all(), "Counts must be integers"
 ```
 
 ---
@@ -451,12 +451,15 @@ ds.results_df.to_csv("results_shrunken.csv")
 
 For large datasets:
 ```python
-# Use parallel processing
+from pydeseq2.default_inference import DefaultInference
+
+# Use parallel processing via an inference object (n_cpus= is no longer a constructor kwarg in 0.4+)
+inference = DefaultInference(n_cpus=4)  # adjust to available cores
 dds = DeseqDataSet(
     counts=counts_df,
     metadata=metadata,
     design="~condition",
-    n_cpus=4  # Adjust based on available cores
+    inference=inference,
 )
 
 # Process in batches if needed
@@ -572,7 +575,7 @@ print(top_genes)
 **Solutions:**
 ```python
 # 1. Use fewer CPUs (paradoxically can help)
-dds = DeseqDataSet(..., n_cpus=1)
+dds = DeseqDataSet(..., inference=DefaultInference(n_cpus=1))
 
 # 2. Filter more aggressively
 genes_to_keep = counts_df.columns[counts_df.sum(axis=0) >= 20]

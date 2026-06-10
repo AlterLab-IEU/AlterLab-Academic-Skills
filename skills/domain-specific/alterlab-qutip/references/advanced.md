@@ -4,7 +4,11 @@
 
 For time-periodic Hamiltonians H(t + T) = H(t).
 
-### Floquet Modes and Quasi-Energies
+### Floquet Modes and Quasi-Energies (v5 `FloquetBasis`)
+
+In QuTiP 5 the Floquet machinery is wrapped in the `FloquetBasis` class. The
+standalone `floquet_modes`/`floquet_states`/`floquet_state_decomposition`
+functions still exist but are deprecated in favour of `FloquetBasis` methods.
 
 ```python
 from qutip import *
@@ -19,39 +23,39 @@ H1 = sigmax()
 H = [H0, [H1, 'cos(w*t)']]
 args = {'w': w_d}
 
-# Calculate Floquet modes and quasi-energies
-f_modes, f_energies = floquet_modes(H, T, args)
-
+# Floquet basis: quasi-energies and modes
+fbasis = FloquetBasis(H, T, args=args)
+f_energies = fbasis.e_quasi      # quasi-energies
+f_modes_0 = fbasis.mode(0.0)     # Floquet modes at t = 0
 print("Quasi-energies:", f_energies)
-print("Floquet modes:", f_modes)
 ```
 
-### Floquet States at Time t
+### Floquet States and Decomposition
 
 ```python
-# Get Floquet state at specific time
+# Floquet states (mode * phase) at a given time
 t = 1.0
-f_states_t = floquet_states(f_modes, f_energies, t)
-```
+f_states_t = fbasis.state(t)
 
-### Floquet State Decomposition
-
-```python
-# Decompose initial state in Floquet basis
+# Decompose an initial state into the Floquet basis at t = 0
 psi0 = basis(2, 0)
-f_coeff = floquet_state_decomposition(f_modes, f_energies, psi0)
+coeffs = fbasis.to_floquet_basis(psi0)   # column of amplitudes
+psi0_back = fbasis.from_floquet_basis(coeffs)  # round-trip back to lab frame
 ```
 
 ### Floquet-Markov Master Equation
 
 ```python
-# Time evolution with dissipation
+# Time evolution with dissipation. v5 fmmesolve takes c_ops plus a spectra_cb
+# list (the noise power spectrum S(w) for each c_op); omit spectra_cb for the
+# default flat spectrum.
 c_ops = [np.sqrt(0.1) * sigmam()]
 tlist = np.linspace(0, 20, 200)
 
-result = fmmesolve(H, psi0, tlist, c_ops, e_ops=[sigmaz()], T=T, args=args)
+result = fmmesolve(H, psi0, tlist, c_ops=c_ops,
+                   spectra_cb=[lambda w: 0.5 * (w > 0)],
+                   e_ops=[sigmaz()], T=T, args=args)
 
-# Plot results
 import matplotlib.pyplot as plt
 plt.plot(tlist, result.expect[0])
 plt.xlabel('Time')
@@ -59,22 +63,12 @@ plt.ylabel('⟨σz⟩')
 plt.show()
 ```
 
-### Floquet Tensor
+### Floquet Steady State
 
 ```python
-# Floquet tensor (generalized Bloch-Redfield)
-A_ops = [[sigmaz(), lambda w: 0.1 * w if w > 0 else 0]]
-
-# Build Floquet tensor
-R, U = floquet_markov_mesolve(H, psi0, tlist, A_ops, e_ops=[sigmaz()],
-                               T=T, args=args)
-```
-
-### Effective Hamiltonian
-
-```python
-# Time-averaged effective Hamiltonian
-H_eff = floquet_master_equation_steadystate(H, c_ops, T, args)
+# Periodic (Floquet) steady state of a driven, dissipative system
+c_ops = [np.sqrt(0.1) * sigmam()]
+rho_ss = steadystate_floquet(H0, c_ops, H1, w_d)
 ```
 
 ## Hierarchical Equations of Motion (HEOM)
@@ -89,13 +83,14 @@ from qutip import heom
 # System Hamiltonian
 H_sys = sigmaz()
 
-# Bath correlation function (exponential)
+# Bath correlation as a sum of exponentials. BosonicBath needs BOTH the real
+# and imaginary expansion coefficients: (Q, ck_real, vk_real, ck_imag, vk_imag).
 Q = sigmax()  # System-bath coupling operator
-ck_real = [0.1]  # Coupling strengths
-vk_real = [0.5]  # Bath frequencies
-
-# HEOM bath
-bath = heom.BosonicBath(Q, ck_real, vk_real)
+ck_real = [0.1]   # real coupling strengths
+vk_real = [0.5]   # real bath frequencies
+ck_imag = [0.0]   # imaginary coupling strengths
+vk_imag = [0.5]   # imaginary bath frequencies
+bath = heom.BosonicBath(Q, ck_real, vk_real, ck_imag, vk_imag)
 
 # Initial state
 rho0 = basis(2, 0) * basis(2, 0).dag()
@@ -108,16 +103,16 @@ hsolver = heom.HEOMSolver(H_sys, [bath], max_depth=max_depth)
 tlist = np.linspace(0, 10, 100)
 result = hsolver.run(rho0, tlist)
 
-# Extract reduced system density matrix
-rho_sys = [r.extract_state(0) for r in result.states]
+# result.states already holds the reduced system density matrices (one per time)
+rho_sys = result.states
 ```
 
 ### Multiple Baths
 
 ```python
-# Define multiple baths
-bath1 = heom.BosonicBath(sigmax(), [0.1], [0.5])
-bath2 = heom.BosonicBath(sigmay(), [0.05], [1.0])
+# Define multiple baths (each needs real + imaginary coefficients)
+bath1 = heom.BosonicBath(sigmax(), [0.1], [0.5], [0.0], [0.5])
+bath2 = heom.BosonicBath(sigmay(), [0.05], [1.0], [0.0], [1.0])
 
 hsolver = heom.HEOMSolver(H_sys, [bath1, bath2], max_depth=5)
 ```
@@ -139,12 +134,13 @@ bath = DrudeLorentzBath(Q, lam, gamma, T, Nk)
 ### HEOM Options
 
 ```python
-options = heom.HEOMSolver.Options(
-    nsteps=2000,
-    store_states=True,
-    rtol=1e-7,
-    atol=1e-9
-)
+# Options are a plain dict in v5 (no HEOMSolver.Options class)
+options = {
+    "nsteps": 2000,
+    "store_states": True,
+    "rtol": 1e-7,
+    "atol": 1e-9,
+}
 
 hsolver = heom.HEOMSolver(H_sys, [bath], max_depth=5, options=options)
 ```
@@ -153,15 +149,18 @@ hsolver = heom.HEOMSolver(H_sys, [bath], max_depth=5, options=options)
 
 For identical particle systems (e.g., spin ensembles).
 
+In QuTiP 5.3, the PIQS helpers must be imported from `qutip.piqs.piqs`
+(`from qutip.piqs import ...` does not re-export them).
+
 ### Dicke States
 
 ```python
-from qutip import dicke
+from qutip.piqs.piqs import dicke
 
 # Dicke state |j, m⟩ for N spins
 N = 10  # Number of spins
-j = N/2  # Total angular momentum
-m = 0   # z-component
+j = N / 2  # Total angular momentum
+m = 0      # z-component
 
 psi = dicke(N, j, m)
 ```
@@ -169,7 +168,7 @@ psi = dicke(N, j, m)
 ### Permutation-Invariant Operators
 
 ```python
-from qutip.piqs import jspin
+from qutip.piqs.piqs import jspin
 
 # Collective spin operators
 N = 10
@@ -182,49 +181,56 @@ Jm = jspin(N, '-')
 
 ### PIQS Dynamics
 
+The `Dicke` class builds the permutation-invariant Liouvillian; feed it to
+`mesolve` (it has no `.solve()` method — the in-class integrator is `pisolve`).
+
 ```python
-from qutip.piqs import Dicke
+from qutip.piqs.piqs import Dicke, dicke, jspin
+from qutip import mesolve
 
 # Setup Dicke model
 N = 10
-emission = 1.0
-dephasing = 0.5
-pumping = 0.0
-collective_emission = 0.0
+system = Dicke(N=N, emission=1.0, dephasing=0.5,
+               pumping=0.0, collective_emission=0.0)
 
-system = Dicke(N=N, emission=emission, dephasing=dephasing,
-               pumping=pumping, collective_emission=collective_emission)
+L = system.liouvillian()         # permutation-invariant Liouvillian
+Jz = jspin(N, 'z')
+rho0 = dicke(N, N / 2, N / 2)    # all spins up
 
-# Initial state
-psi0 = dicke(N, N/2, N/2)  # All spins up
-
-# Time evolution
+# Time evolution via mesolve using the PIQS Liouvillian
 tlist = np.linspace(0, 10, 100)
-result = system.solve(psi0, tlist, e_ops=[Jz])
+result = mesolve(L, rho0, tlist, e_ops=[Jz])
+
+# Alternatively, integrate directly with the class method (no e_ops):
+# result = system.pisolve(rho0, tlist)
 ```
 
 ## Non-Markovian Monte Carlo
 
 Quantum trajectories with memory effects.
 
+In v5, `nm_mcsolve` takes `ops_and_rates`: a list of `(collapse_op, rate)` pairs
+where `rate` can be a constant, a `f(t, **kwargs)` callable, or a string
+coefficient. Memory effects are encoded by rates that go **negative** in time
+(the solver tracks the influence martingale).
+
 ```python
 from qutip import nm_mcsolve
 
-# Non-Markovian bath correlation
-def bath_correlation(t1, t2):
-    tau = abs(t2 - t1)
-    return np.exp(-tau / 2.0) * np.cos(tau)
-
 # System setup
 H = sigmaz()
-c_ops = [sigmax()]
 psi0 = basis(2, 0)
 tlist = np.linspace(0, 10, 100)
 
-# Solve with memory
-result = nm_mcsolve(H, psi0, tlist, c_ops, sc_ops=[],
-                     bath_corr=bath_correlation, ntraj=500,
-                     e_ops=[sigmaz()])
+# Time-dependent (possibly negative) rate -> non-Markovian dynamics.
+# Use the pythonic f(t, **kwargs) signature (the old f(t, args) form is
+# deprecated and will be removed in QuTiP 5.5).
+def gamma(t, **kwargs):
+    return np.exp(-t / 2.0) * np.cos(t)
+
+result = nm_mcsolve(H, psi0, tlist,
+                    ops_and_rates=[(sigmam(), gamma)],
+                    ntraj=500, e_ops=[sigmaz()])
 ```
 
 ## Stochastic Solvers with Measurements
@@ -232,27 +238,27 @@ result = nm_mcsolve(H, psi0, tlist, c_ops, sc_ops=[],
 ### Continuous Measurement
 
 ```python
-# Homodyne detection
-sc_ops = [np.sqrt(0.1) * destroy(N)]  # Measurement operator
+# Detection scheme is selected with heterodyne=True/False (the v4 `noise`
+# integer codes are gone).
+sc_ops = [np.sqrt(0.1) * destroy(N)]  # measurement operator
 
+# Homodyne detection (default)
 result = ssesolve(H, psi0, tlist, sc_ops=sc_ops,
-                   e_ops=[num(N)], ntraj=100,
-                   noise=11)  # 11 for homodyne
+                   e_ops=[num(N)], ntraj=100, heterodyne=False)
 
 # Heterodyne detection
 result = ssesolve(H, psi0, tlist, sc_ops=sc_ops,
-                   e_ops=[num(N)], ntraj=100,
-                   noise=12)  # 12 for heterodyne
+                   e_ops=[num(N)], ntraj=100, heterodyne=True)
 ```
 
 ### Photon Counting
 
 ```python
-# Quantum jump times
+# Per-trajectory jump records require keep_runs_results (options is a dict in v5)
 result = mcsolve(H, psi0, tlist, c_ops, ntraj=50,
-                 options=Options(store_states=True))
+                 options={"keep_runs_results": True})
 
-# Extract measurement times
+# Extract jump times and which c_op fired, per trajectory
 for i, jump_times in enumerate(result.col_times):
     print(f"Trajectory {i} jump times: {jump_times}")
     print(f"Which operator: {result.col_which[i]}")
@@ -314,21 +320,20 @@ result = brmesolve(H, psi0, tlist, a_ops, e_ops=[sigmaz()])
 # Liouvillian
 L = liouvillian(H, c_ops)
 
-# Convert between representations
-from qutip import (spre, spost, sprepost,
-                    super_to_choi, choi_to_super,
-                    super_to_kraus, kraus_to_super)
+# Convert between representations. v5 uses the unified to_* family
+# (super_to_choi / super_to_kraus from v4 were removed).
+from qutip import spre, spost, sprepost, to_choi, to_kraus, kraus_to_super
 
 # Superoperator forms
 L_spre = spre(H)  # Left multiplication
 L_spost = spost(H)  # Right multiplication
 L_sprepost = sprepost(H, H.dag())
 
-# Choi matrix
-choi = super_to_choi(L)
-
-# Kraus operators
-kraus = super_to_kraus(L)
+# Build a CPTP superoperator first (sprepost is a valid channel; a Liouvillian
+# generator is not), then convert it.
+S = sprepost(H, H.dag())
+choi = to_choi(S)    # Choi matrix
+kraus = to_kraus(S)  # list of Kraus operators
 ```
 
 ### Quantum Channels
@@ -376,26 +381,29 @@ E_dephasing = kraus_to_super([K0, K1])
 ### Extract Individual Trajectories
 
 ```python
-options = Options(store_states=True, store_final_state=False)
-result = mcsolve(H, psi0, tlist, c_ops, ntraj=100, options=options)
+# keep_runs_results=True stores every trajectory (options is a dict in v5)
+result = mcsolve(H, psi0, tlist, c_ops, ntraj=100,
+                 options={"keep_runs_results": True})
 
-# Access individual trajectories
-for i in range(len(result.states)):
-    trajectory = result.states[i]  # List of states for trajectory i
+# runs_states[i] is the list of states for trajectory i
+for i in range(len(result.runs_states)):
+    trajectory = result.runs_states[i]
     # Analyze trajectory
 ```
 
 ### Trajectory Statistics
 
 ```python
-# Mean and standard deviation
+# Averages and standard deviation come for free (no keep_runs_results needed)
 result = mcsolve(H, psi0, tlist, c_ops, e_ops=[num(N)], ntraj=500)
 
 n_mean = result.expect[0]
 n_std = result.std_expect[0]
 
-# Photon number distribution at final time
-final_states = [result.states[i][-1] for i in range(len(result.states))]
+# Per-trajectory final states require keep_runs_results
+runs = mcsolve(H, psi0, tlist, c_ops, ntraj=500,
+               options={"keep_runs_results": True})
+final_states = [traj[-1] for traj in runs.runs_states]
 ```
 
 ## Time-Dependent Terms Advanced
@@ -405,9 +413,10 @@ final_states = [result.states[i][-1] for i in range(len(result.states))]
 ```python
 from qutip import QobjEvo
 
-# Time-dependent Hamiltonian with QobjEvo
-def drive(t, args):
-    return args['A'] * np.exp(-t/args['tau']) * np.sin(args['w'] * t)
+# Time-dependent Hamiltonian with QobjEvo. v5 prefers the pythonic coefficient
+# signature f(t, **kwargs) (the old f(t, args) form is deprecated, removed in 5.5).
+def drive(t, A, w, tau, **kwargs):
+    return A * np.exp(-t / tau) * np.sin(w * t)
 
 H0 = num(N)
 H1 = destroy(N) + create(N)
@@ -415,7 +424,7 @@ args = {'A': 1.0, 'w': 1.0, 'tau': 5.0}
 
 H_td = QobjEvo([H0, [H1, drive]], args=args)
 
-# Can update args without recreating
+# .arguments() updates the parameters in place (returns None)
 H_td.arguments({'A': 2.0, 'w': 1.5, 'tau': 10.0})
 ```
 
@@ -433,13 +442,16 @@ result = sesolve(H, psi0, tlist, args=args)
 ### Callback Functions
 
 ```python
-# Advanced control
-def time_dependent_coeff(t, args):
-    # Access solver state if needed
-    return complex_function(t, args)
+# Coefficient callbacks take time plus the named args (pythonic f(t, **kwargs))
+def time_dependent_coeff(t, **kwargs):
+    return complex_function(t, **kwargs)
 
 H = [H0, [H1, time_dependent_coeff]]
 ```
+
+> Note: time-dependent coefficients elsewhere in these docs are written with the
+> legacy `f(t, args)` signature, which still works but is deprecated and will be
+> removed in QuTiP 5.5. Prefer `f(t, **kwargs)` in new code.
 
 ## Parallel Processing
 
@@ -473,32 +485,30 @@ results = serial_map(simulate, gamma_values)
 ### Save/Load Quantum Objects
 
 ```python
-# Save
-H.save('hamiltonian.qu')
-psi.save('state.qu')
+# qsave/qload (pickle-based). Qobj has no .save() method in v5.
+# A ".qu" extension is added automatically.
+qsave(H, 'hamiltonian')
+qsave(psi, 'state')
 
-# Load
-H_loaded = qload('hamiltonian.qu')
-psi_loaded = qload('state.qu')
+H_loaded = qload('hamiltonian')   # reads hamiltonian.qu
+psi_loaded = qload('state')
 ```
 
 ### Save/Load Results
 
 ```python
-# Save simulation results
+# Result also has no .save()/.load(); use qsave/qload.
 result = mesolve(H, psi0, tlist, c_ops, e_ops=[num(N)])
-result.save('simulation.dat')
-
-# Load results
-from qutip import Result
-loaded_result = Result.load('simulation.dat')
+qsave(result, 'simulation')
+loaded_result = qload('simulation')
 ```
 
 ### Export to MATLAB
 
 ```python
-# Export to .mat file
-H.matlab_export('hamiltonian.mat', 'H')
+# Qobj has no matlab_export in v5; write the dense array with scipy.
+import scipy.io as sio
+sio.savemat('hamiltonian.mat', {'H': H.full()})
 ```
 
 ## Solver Options
@@ -506,38 +516,29 @@ H.matlab_export('hamiltonian.mat', 'H')
 ### Fine-Tuning Solvers
 
 ```python
-options = Options()
+# Options is a plain dict in v5 (the Options class was removed).
+options = {
+    "nsteps": 10000,        # Max internal steps
+    "rtol": 1e-8,           # Relative tolerance
+    "atol": 1e-10,          # Absolute tolerance
+    "method": "adams",      # Non-stiff (default); use 'bdf' for stiff problems
+    "store_states": True,
+    "store_final_state": True,
+    "progress_bar": "text",  # string, not True
+}
 
-# Integration parameters
-options.nsteps = 10000  # Max internal steps
-options.rtol = 1e-8     # Relative tolerance
-options.atol = 1e-10    # Absolute tolerance
-
-# Method selection
-options.method = 'adams'  # Non-stiff (default)
-# options.method = 'bdf'  # Stiff problems
-
-# Storage options
-options.store_states = True
-options.store_final_state = True
-
-# Progress
-options.progress_bar = True
-
-# Random number seed (for reproducibility)
-options.seeds = 12345
-
+# The RNG seed is a solver keyword (not an option), e.g. for mcsolve:
 result = mesolve(H, psi0, tlist, c_ops, options=options)
+# result = mcsolve(H, psi0, tlist, c_ops, ntraj=500, seeds=12345, options=options)
 ```
 
 ### Debugging
 
 ```python
-# Enable detailed output
-options.verbose = True
-
-# Memory tracking
-options.num_cpus = 1  # Easier debugging
+# Run trajectories serially on one core for reproducible, debuggable runs.
+# (There is no `verbose` option in v5.)
+result = mcsolve(H, psi0, tlist, c_ops, ntraj=10,
+                 options={"map": "serial", "num_cpus": 1})
 ```
 
 ## Performance Tips

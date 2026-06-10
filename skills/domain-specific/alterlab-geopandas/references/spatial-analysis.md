@@ -60,9 +60,11 @@ nearest = gpd.sjoin_nearest(gdf1, gdf2, distance_col='distance')
 # Limit search radius (significantly improves performance)
 nearest = gpd.sjoin_nearest(gdf1, gdf2, max_distance=1000)
 
-# Find k nearest neighbors
-nearest = gpd.sjoin_nearest(gdf1, gdf2, k=5)
+# Exclude self-matches when both frames are the same layer
+nearest = gpd.sjoin_nearest(gdf1, gdf1, exclusive=True)
 ```
+
+Note: `sjoin_nearest` returns one row per nearest match (ties produce multiple rows). It has no `k` parameter; for k-nearest neighbors query the spatial index (`gdf.sindex.nearest`) directly.
 
 ## Overlay Operations
 

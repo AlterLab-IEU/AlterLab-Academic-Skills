@@ -10,7 +10,7 @@ https://eutils.ncbi.nlm.nih.gov/entrez/eutils/
 
 ## API Key Requirements
 
-As of December 1, 2018, NCBI enforces API key usage for E-utility calls. API keys increase rate limits from 3 requests/second to 10 requests/second. To obtain an API key, register for an NCBI account and generate a key from your account settings.
+API keys are optional, not mandatory. Since May 2018 NCBI has issued API keys that raise the per-key rate limit from 3 requests/second (the keyless default, tracked by IP) to 10 requests/second; higher rates are available on request. Without a key you can still use the E-utilities at up to 3 req/s. To obtain a key, sign in to your NCBI account, open Account settings, and create one under API Key Management.
 
 Include the API key in requests using the `&api_key` parameter:
 ```

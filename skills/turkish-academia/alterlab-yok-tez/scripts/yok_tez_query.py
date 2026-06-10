@@ -176,18 +176,35 @@ def format_apa7(rec: dict) -> str:
             f"[{ttype}, {univ}]. YÖK Ulusal Tez Merkezi."
         )
     # Unpublished / restricted form. Turkish APA lowercases the type phrase,
-    # e.g. "Yüksek Lisans tezi" -> "yüksek lisans tezi".
-    low_type = ttype.lower() if ttype else "tez"
+    # e.g. "Yüksek Lisans tezi" -> "yüksek lisans tezi". The search form and the
+    # --thesis-type flag use bare labels ("Doktora", "Yüksek Lisans"), so ensure
+    # the phrase ends in "tezi" — the template is "[Yayımlanmamış ... tezi]".
+    low_type = ttype.lower().strip() if ttype else "tez"
+    if not low_type.endswith("tez") and not low_type.endswith("tezi"):
+        low_type = f"{low_type} tezi"
     return (
         f"{author} ({year}). {title} "
         f"[Yayımlanmamış {low_type}]. {univ}."
     )
 
 
+def _ascii_key(s: str) -> str:
+    """ASCII-fold a Turkish surname into a safe BibTeX cite key.
+
+    BibTeX cite keys must be ASCII; e.g. 'Yılmaz' -> 'yilmaz', 'Şahin' -> 'sahin'.
+    """
+    tr_map = str.maketrans({
+        "ı": "i", "İ": "i", "ş": "s", "Ş": "s", "ğ": "g", "Ğ": "g",
+        "ç": "c", "Ç": "c", "ö": "o", "Ö": "o", "ü": "u", "Ü": "u",
+    })
+    folded = s.translate(tr_map).lower()
+    return "".join(ch for ch in folded if ch.isascii() and ch.isalnum())
+
+
 def format_bibtex(rec: dict) -> str:
     ttype = str(rec.get("thesis_type", "")).lower()
     entry = "phdthesis" if "doktora" in ttype or "phd" in ttype else "mastersthesis"
-    key = (str(rec.get("author", "thesis")).split(",")[0].strip().lower()
+    key = (_ascii_key(str(rec.get("author", "thesis")).split(",")[0])
            or "thesis") + str(rec.get("year", ""))
     note = "YÖK Ulusal Tez Merkezi"
     if rec.get("tez_no"):

@@ -14,19 +14,21 @@
     {
       "id": "cross-vendor-plate-reader-integration",
       "prompt": "I need one protocol that runs liquid handling and then reads absorbance on a BMG CLARIOstar plate reader, all from the same Python script.",
-      "expected_output": "Invokes alterlab-pylabrobot. Integrates analytical equipment: uses a PlateReader with the CLARIOstarBackend (await pr.setup, set_temperature, read_absorbance) alongside the LiquidHandler, leveraging PyLabRobot's unified cross-device interface.",
+      "expected_output": "Invokes alterlab-pylabrobot. Integrates analytical equipment: uses a PlateReader with the CLARIOstarBackend (await pr.setup, read_absorbance) alongside the LiquidHandler in one script, leveraging PyLabRobot's unified cross-device interface.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "CLARIOstar" }
+        { "type": "output_contains", "value": "CLARIOstar" },
+        { "type": "behavior", "value": "Drives a PlateReader (CLARIOstarBackend, read_absorbance) and a LiquidHandler from the same async script." }
       ]
     },
     {
       "id": "simulation-before-hardware",
       "prompt": "Before I run anything on the real robot I want to simulate my PyLabRobot protocol and watch the deck state. How do I do that?",
-      "expected_output": "Invokes alterlab-pylabrobot. Routes to visualization/simulation: use the ChatterboxBackend (or simulation mode) and the browser visualizer to test the protocol and watch tip presence and liquid volumes without physical hardware.",
+      "expected_output": "Invokes alterlab-pylabrobot. Routes to visualization/simulation: swap in the LiquidHandlerChatterboxBackend and attach a Visualizer (Visualizer(resource=lh); await vis.setup()) to watch tip presence and liquid volumes without physical hardware.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "simulation" }
+        { "type": "output_contains", "value": "Visualizer" },
+        { "type": "behavior", "value": "Uses a no-hardware simulation backend (LiquidHandlerChatterboxBackend) and starts the Visualizer to inspect deck state before running on hardware." }
       ]
     },
     {

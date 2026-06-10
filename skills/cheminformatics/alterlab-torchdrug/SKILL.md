@@ -3,7 +3,7 @@ name: alterlab-torchdrug
 description: Builds PyTorch-native graph neural networks for molecules and proteins with TorchDrug, supporting custom GNN architectures for drug discovery, protein modeling, and knowledge-graph reasoning. Use when developing custom graph models, predicting protein properties, or doing retrosynthesis; for pre-trained models and diverse featurizers use deepchem, for benchmark datasets use pytdc. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Self-contained — runs locally, no API key or account required. TorchDrug 0.2.1 requires Python >=3.7,<3.11 (use `uv venv --python 3.10`)."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -46,16 +46,22 @@ This skill should be used when working with:
 ### Installation
 
 ```bash
-uv pip install torchdrug
-# Or with optional dependencies
-uv pip install torchdrug[full]
+# TorchDrug 0.2.1 (last release, Jul 2023) requires Python >=3.7,<3.11 and
+# torch >=1.8. It will NOT solve on Python 3.11+ — pin an older interpreter:
+uv venv --python 3.10
+uv pip install torchdrug==0.2.1 torch
 ```
+
+Gotchas:
+- Install `torch` first if the solver struggles; TorchDrug builds graph ops against the installed torch.
+- TorchDrug vendors its own `data.DataLoader`, `data.Graph`, and `core.Engine` — reach for those, not the bare PyTorch equivalents (see the loop below).
+- It is unmaintained as of 2025; for new Python/torch stacks consider `alterlab-torch-geometric` or `alterlab-deepchem`. Use this skill when you specifically need TorchDrug's task/dataset abstractions.
 
 ### Quick Example
 
 ```python
-from torchdrug import datasets, models, tasks
-from torch.utils.data import DataLoader
+import torch
+from torchdrug import data, datasets, models, tasks
 
 # Load molecular dataset
 dataset = datasets.BBBP("~/molecule-datasets/")
@@ -78,17 +84,22 @@ task = tasks.PropertyPrediction(
     metric=["auroc", "auprc"]
 )
 
-# Train with PyTorch
+# Train with a native PyTorch loop.
+# NOTE: use torchdrug.data.DataLoader (NOT torch.utils.data.DataLoader) — its
+# default graph_collate packs data.Graph objects; the stock PyTorch collate cannot.
 optimizer = torch.optim.Adam(task.parameters(), lr=1e-3)
-train_loader = DataLoader(train_set, batch_size=32, shuffle=True)
+train_loader = data.DataLoader(train_set, batch_size=32, shuffle=True)
 
 for epoch in range(100):
     for batch in train_loader:
-        loss = task(batch)
+        # task.forward returns (loss, metric), not a bare tensor.
+        loss, metric = task(batch)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 ```
+
+For the standard (non-custom) path, `core.Engine(task, train_set, valid_set, test_set, optimizer, batch_size=...)` wraps this loop and handles batching/devices. Use the manual loop above when you need full control over the training step.
 
 ## Core Capabilities
 
@@ -344,7 +355,8 @@ graph_construction_model = layers.GraphConstruction(
     ],
     edge_feature="gearnet",
 )
-graph = graph_construction_model(protein)
+# GraphConstruction operates on a packed protein batch, not a bare Protein.
+graph = graph_construction_model(data.Protein.pack([protein]))
 ```
 
 ### With PyTorch Lightning

@@ -39,11 +39,12 @@ python scripts/format_bibtex.py combined.bib \
   --descending \
   --output formatted.bib
 
-# Step 6: Validate
-python scripts/validate_citations.py formatted.bib \
-  --auto-fix \
+# Step 6: Apply fixes (format_bibtex.py), then validate (report-only)
+cp formatted.bib final_references.bib
+python scripts/validate_citations.py final_references.bib \
+  --check-dois \
   --report validation.json \
-  --output final_references.bib
+  --verbose
 
 # Step 7: Review any issues
 cat validation.json | grep -A 3 '"errors"'
@@ -82,10 +83,11 @@ python scripts/format_bibtex.py step1_formatted.bib \
   --deduplicate \
   --output step2_deduplicated.bib
 
-# Step 3: Validate and auto-fix
+# Step 3: Validate (report-only); fixes already applied by format_bibtex above
 python scripts/validate_citations.py step2_deduplicated.bib \
-  --auto-fix \
-  --output step3_validated.bib
+  --report step3_validation.json \
+  --verbose
+cp step2_deduplicated.bib step3_validated.bib
 
 # Step 4: Sort by year
 python scripts/format_bibtex.py step3_validated.bib \
@@ -150,11 +152,12 @@ python scripts/format_bibtex.py crispr_refs.bib \
   --descending \
   --output references.bib
 
-# 5. Validate all citations
-python scripts/validate_citations.py references.bib \
-  --auto-fix \
+# 5. Validate all citations (report-only; resolve DOIs with --check-dois)
+cp references.bib final_references.bib
+python scripts/validate_citations.py final_references.bib \
+  --check-dois \
   --report validation.json \
-  --output final_references.bib
+  --verbose
 
 # 6. Review validation report and fix any remaining issues
 cat validation.json

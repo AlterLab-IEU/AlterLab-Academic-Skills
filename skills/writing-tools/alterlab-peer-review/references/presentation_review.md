@@ -20,12 +20,6 @@ presentation rather than a manuscript.
 3. Document issues with specific slide numbers
 4. Provide feedback on visual formatting and content
 
-**Print when starting review:**
-```
-[HH:MM:SS] PEER REVIEW: Presentation detected - converting to images for review
-[HH:MM:SS] PDF REVIEW: NEVER reading PDF directly - using image-based inspection
-```
-
 ## Presentation-Specific Evaluation Criteria
 
 **Visual Design and Readability:**
@@ -135,21 +129,5 @@ Slide 18: Alignment - title not centered
 - Whether slide count matches intended duration
 - Appropriate level of detail for talk type
 - Balance between sections
-
-## Example Image-Based Review Process
-
-```
-[14:30:00] PEER REVIEW: Starting review of presentation
-[14:30:05] PEER REVIEW: Presentation detected - converting to images
-[14:30:10] PDF REVIEW: Running pdf_to_images.py on presentation.pdf
-[14:30:15] PDF REVIEW: Converted 25 slides to images in review/ directory
-[14:30:20] PDF REVIEW: Inspecting slide 1/25 - title slide
-[14:30:25] PDF REVIEW: Inspecting slide 2/25 - introduction
-...
-[14:35:40] PDF REVIEW: Inspecting slide 25/25 - acknowledgments
-[14:35:45] PDF REVIEW: Completed image-based review
-[14:35:50] PEER REVIEW: Found 8 layout issues, 3 content issues
-[14:35:55] PEER REVIEW: Generating structured feedback by slide number
-```
 
 **Remember:** For presentations, the visual inspection via images is MANDATORY. Never attempt to read presentation PDFs as text - it will fail and miss all visual formatting issues.

@@ -52,17 +52,15 @@ def parse_single_complex(complex_dir):
     """Parse results for a single complex."""
     predictions = []
 
-    # Look for SDF files with rank information
+    # DiffDock writes one SDF per pose, named like:
+    #   rank1.sdf                  (top pose, written when --save_visualisation)
+    #   rank1_confidence-1.23.sdf  (every pose, confidence embedded in name)
+    # Match the rank, ignoring any leading "index_<n>_" prefix.
     for sdf_file in complex_dir.glob("*.sdf"):
-        filename = sdf_file.name
-
-        # Extract rank from filename (e.g., "rank_1.sdf" or "index_0_rank_1.sdf")
-        rank_match = re.search(r'rank_(\d+)', filename)
+        rank_match = re.search(r'rank[_]?(\d+)', sdf_file.name)
         if rank_match:
             rank = int(rank_match.group(1))
-
-            # Try to extract confidence score from filename or separate file
-            confidence = extract_confidence_score(sdf_file, complex_dir)
+            confidence = extract_confidence_score(sdf_file)
 
             predictions.append({
                 'rank': rank,
@@ -71,49 +69,27 @@ def parse_single_complex(complex_dir):
                 'confidence': confidence
             })
 
-    # Sort by rank
-    predictions.sort(key=lambda x: x['rank'])
+    # DiffDock emits both rank1.sdf and rank1_confidence*.sdf for the top pose;
+    # keep one entry per rank, preferring the variant that carries the score.
+    by_rank = {}
+    for pred in predictions:
+        existing = by_rank.get(pred['rank'])
+        if existing is None or (existing['confidence'] is None and pred['confidence'] is not None):
+            by_rank[pred['rank']] = pred
+    predictions = sorted(by_rank.values(), key=lambda x: x['rank'])
 
     return {'predictions': predictions} if predictions else None
 
 
-def extract_confidence_score(sdf_file, complex_dir):
+def extract_confidence_score(sdf_file):
     """
-    Extract confidence score for a prediction.
+    Extract the confidence score for a prediction.
 
-    Tries multiple methods:
-    1. Read from confidence_scores.txt file
-    2. Parse from SDF file properties
-    3. Extract from filename if present
+    DiffDock embeds the confidence in the filename, e.g.
+    ``rank1_confidence-1.23.sdf`` -> -1.23. The plain ``rank1.sdf`` written
+    for the top pose carries no score, so it returns None.
     """
-    # Method 1: confidence_scores.txt
-    confidence_file = complex_dir / "confidence_scores.txt"
-    if confidence_file.exists():
-        try:
-            with open(confidence_file) as f:
-                lines = f.readlines()
-                # Extract rank from filename
-                rank_match = re.search(r'rank_(\d+)', sdf_file.name)
-                if rank_match:
-                    rank = int(rank_match.group(1))
-                    if rank <= len(lines):
-                        return float(lines[rank - 1].strip())
-        except Exception:
-            pass
-
-    # Method 2: Parse from SDF file
-    try:
-        with open(sdf_file) as f:
-            content = f.read()
-            # Look for confidence score in SDF properties
-            conf_match = re.search(r'confidence[:\s]+(-?\d+\.?\d*)', content, re.IGNORECASE)
-            if conf_match:
-                return float(conf_match.group(1))
-    except Exception:
-        pass
-
-    # Method 3: Filename (e.g., "rank_1_conf_0.95.sdf")
-    conf_match = re.search(r'conf_(-?\d+\.?\d*)', sdf_file.name)
+    conf_match = re.search(r'confidence(-?\d+\.?\d*)', sdf_file.name)
     if conf_match:
         return float(conf_match.group(1))
 

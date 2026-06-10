@@ -96,8 +96,11 @@ sns.set_palette('colorblind')
 
 # Create statistical comparison figure
 fig, ax = plt.subplots(figsize=(3.5, 3))
-sns.boxplot(data=df, x='treatment', y='response', 
-            order=['Control', 'Low', 'High'], palette='Set2', ax=ax)
+# seaborn >=0.13: pass hue + legend=False to color by category
+# (a bare palette= without hue= is deprecated and removed in v0.14)
+sns.boxplot(data=df, x='treatment', y='response',
+            order=['Control', 'Low', 'High'],
+            hue='treatment', palette='Set2', legend=False, ax=ax)
 sns.stripplot(data=df, x='treatment', y='response',
               order=['Control', 'Low', 'High'], 
               color='black', alpha=0.3, size=3, ax=ax)

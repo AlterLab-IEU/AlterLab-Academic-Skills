@@ -6,7 +6,11 @@ This script provides reusable functions for querying the Open Targets Platform
 GraphQL API. Use these functions to retrieve target, disease, drug, and
 association data.
 
-Dependencies: requests (pip install requests)
+Verified against Open Targets data version 26.03 (API meta apiVersion 26.03.1).
+The schema changes between releases; if a field errors, introspect the live
+schema at the GraphQL browser (see references/api_reference.md).
+
+Dependencies: requests. Run with uv: `uv run --with requests scripts/query_opentargets.py`
 """
 
 import requests
@@ -60,9 +64,10 @@ def search_entities(query_string: str, entity_types: Optional[List[str]] = None)
     Returns:
         List of search results with id, name, entity type, and description
     """
+    # NOTE: Pagination requires both `index` and `size` (both non-null).
     query = """
       query search($queryString: String!, $entityNames: [String!]) {
-        search(queryString: $queryString, entityNames: $entityNames, page: {size: 10}) {
+        search(queryString: $queryString, entityNames: $entityNames, page: {index: 0, size: 10}) {
           hits {
             id
             entity
@@ -93,7 +98,7 @@ def get_target_info(ensembl_id: str, include_diseases: bool = False) -> Dict[str
         Dictionary with target information including tractability, safety, expression
     """
     disease_fragment = """
-      associatedDiseases(page: {size: 10}) {
+      associatedDiseases(page: {index: 0, size: 10}) {
         rows {
           disease {
             id
@@ -101,7 +106,7 @@ def get_target_info(ensembl_id: str, include_diseases: bool = False) -> Dict[str
           }
           score
           datatypeScores {
-            componentId
+            id
             score
           }
         }
@@ -126,13 +131,11 @@ def get_target_info(ensembl_id: str, include_diseases: bool = False) -> Dict[str
           safetyLiabilities {{
             event
             effects {{
+              direction
               dosing
-              organsAffected
             }}
             biosamples {{
-              tissue {{
-                label
-              }}
+              tissueLabel
             }}
           }}
 
@@ -157,14 +160,17 @@ def get_disease_info(efo_id: str, include_targets: bool = False) -> Dict[str, An
     Retrieve information about a disease.
 
     Args:
-        efo_id: EFO disease identifier (e.g., "EFO_0000249")
+        efo_id: Disease identifier. Open Targets has migrated many diseases to
+            MONDO IDs (e.g. Alzheimer disease is "MONDO_0004975", not
+            "EFO_0000249"). The `disease(efoId:)` argument accepts EFO, MONDO,
+            HP, Orphanet, etc. IDs. Resolve the current ID via search_entities().
         include_targets: Whether to include top associated targets
 
     Returns:
         Dictionary with disease information
     """
     target_fragment = """
-      associatedTargets(page: {size: 10}) {
+      associatedTargets(page: {index: 0, size: 10}) {
         rows {
           target {
             id
@@ -173,7 +179,7 @@ def get_disease_info(efo_id: str, include_targets: bool = False) -> Dict[str, An
           }
           score
           datatypeScores {
-            componentId
+            id
             score
           }
         }
@@ -203,22 +209,27 @@ def get_disease_info(efo_id: str, include_targets: bool = False) -> Dict[str, An
 
 
 def get_target_disease_evidence(ensembl_id: str, efo_id: str,
-                                  data_types: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+                                  datasource_ids: Optional[List[str]] = None) -> List[Dict[str, Any]]:
     """
     Retrieve evidence linking a target to a disease.
 
     Args:
         ensembl_id: Ensembl gene ID
-        efo_id: EFO disease identifier
-        data_types: Optional filter for evidence types (e.g., ["genetic_association", "known_drug"])
+        efo_id: Disease identifier (EFO/MONDO/etc.)
+        datasource_ids: Optional filter by data SOURCE id, e.g.
+            ["gwas_catalog", "clinvar", "chembl"]. The API filters by data
+            source, not by broad data type; to keep only genetic_association
+            evidence, either pass its sources (gwas_catalog, gene_burden,
+            clinvar, gene2phenotype, genomics_england, orphanet, uniprot_*,
+            clingen) or fetch all rows and filter client-side on `datatypeId`.
 
     Returns:
         List of evidence records with scores and sources
     """
     query = """
-      query evidences($ensemblId: String!, $efoId: String!, $dataTypes: [String!]) {
+      query evidences($ensemblId: String!, $efoId: String!, $datasourceIds: [String!]) {
         disease(efoId: $efoId) {
-          evidences(ensemblIds: [$ensemblId], datatypes: $dataTypes, size: 100) {
+          evidences(ensemblIds: [$ensemblId], datasourceIds: $datasourceIds, size: 100) {
             rows {
               datasourceId
               datatypeId
@@ -234,8 +245,8 @@ def get_target_disease_evidence(ensembl_id: str, efo_id: str,
     """
 
     variables = {"ensemblId": ensembl_id, "efoId": efo_id}
-    if data_types:
-        variables["dataTypes"] = data_types
+    if datasource_ids:
+        variables["datasourceIds"] = datasource_ids
 
     result = execute_query(query, variables)
     return result.get("disease", {}).get("evidences", {}).get("rows", [])
@@ -243,34 +254,49 @@ def get_target_disease_evidence(ensembl_id: str, efo_id: str,
 
 def get_known_drugs_for_disease(efo_id: str) -> Dict[str, Any]:
     """
-    Get drugs known to be used for a disease.
+    Get drugs and clinical candidates known to be used for a disease.
+
+    As of recent releases the `knownDrugs` field was replaced by
+    `drugAndClinicalCandidates`. Each row carries the drug (with its mechanisms
+    of action and targeted genes), the maximum clinical stage reached for this
+    indication, and the underlying clinical trial reports.
 
     Args:
-        efo_id: EFO disease identifier
+        efo_id: Disease identifier (EFO/MONDO/etc.)
 
     Returns:
-        Dictionary with drug information including phase, targets, and status
+        Dictionary with `count` and `rows` of drug-indication records. Clinical
+        stage is an enum string (e.g. "APPROVAL", "PHASE_3", "PHASE_2",
+        "PHASE_1", "UNKNOWN").
     """
     query = """
-      query knownDrugs($efoId: String!) {
+      query drugCandidates($efoId: String!) {
         disease(efoId: $efoId) {
-          knownDrugs {
-            uniqueDrugs
-            uniqueTargets
+          drugAndClinicalCandidates {
+            count
             rows {
+              maxClinicalStage
               drug {
                 id
                 name
                 drugType
-                maximumClinicalTrialPhase
+                maximumClinicalStage
+                mechanismsOfAction {
+                  rows {
+                    actionType
+                    mechanismOfAction
+                    targets {
+                      id
+                      approvedSymbol
+                    }
+                  }
+                }
               }
-              targets {
-                id
-                approvedSymbol
+              clinicalReports {
+                trialPhase
+                clinicalStage
+                trialOverallStatus
               }
-              phase
-              status
-              mechanismOfAction
             }
           }
         }
@@ -278,7 +304,7 @@ def get_known_drugs_for_disease(efo_id: str) -> Dict[str, Any]:
     """
 
     result = execute_query(query, {"efoId": efo_id})
-    return result.get("disease", {}).get("knownDrugs", {})
+    return result.get("disease", {}).get("drugAndClinicalCandidates", {})
 
 
 def get_drug_info(chembl_id: str) -> Dict[str, Any]:
@@ -298,25 +324,32 @@ def get_drug_info(chembl_id: str) -> Dict[str, Any]:
           name
           synonyms
           drugType
-          maximumClinicalTrialPhase
-          hasBeenWithdrawn
-          withdrawnNotice {
-            reasons
-            countries
+          maximumClinicalStage
+          drugWarnings {
+            toxicityClass
+            description
+            year
+            country
           }
           mechanismsOfAction {
-            actionType
-            mechanismOfAction
-            targetName
-            targets {
-              id
-              approvedSymbol
+            rows {
+              actionType
+              mechanismOfAction
+              targetName
+              targets {
+                id
+                approvedSymbol
+              }
             }
           }
           indications {
-            disease
-            efoId
-            maxPhaseForIndication
+            rows {
+              disease {
+                id
+                name
+              }
+              maxClinicalStage
+            }
           }
         }
       }
@@ -340,7 +373,7 @@ def get_target_associations(ensembl_id: str, min_score: float = 0.0) -> List[Dic
     query = """
       query targetAssociations($ensemblId: String!) {
         target(ensemblId: $ensemblId) {
-          associatedDiseases(page: {size: 100}) {
+          associatedDiseases(page: {index: 0, size: 100}) {
             count
             rows {
               disease {
@@ -349,7 +382,7 @@ def get_target_associations(ensembl_id: str, min_score: float = 0.0) -> List[Dic
               }
               score
               datatypeScores {
-                componentId
+                id
                 score
               }
             }
@@ -395,8 +428,8 @@ if __name__ == "__main__":
         efo_id = disease_results[0]['id']
         print(f"  Found: {disease_results[0]['name']} ({efo_id})")
 
-        # Get known drugs
-        print(f"\n  Known drugs for {disease_results[0]['name']}:")
+        # Get known drugs / clinical candidates
+        print(f"\n  Drugs and clinical candidates for {disease_results[0]['name']}:")
         drugs = get_known_drugs_for_disease(efo_id)
-        for drug in drugs.get('rows', [])[:5]:
-            print(f"    - {drug['drug']['name']} (Phase {drug['phase']})")
+        for row in drugs.get('rows', [])[:5]:
+            print(f"    - {row['drug']['name']} (max stage: {row.get('maxClinicalStage')})")

@@ -2,7 +2,7 @@
 name: alterlab-kegg
 description: Provide direct REST API access to KEGG (academic use only) for pathway analysis, gene-to-pathway mapping, metabolic pathways, drug interactions, and ID conversion. Use when querying KEGG pathways, mapping genes/compounds to metabolic maps, or doing KEGG enrichment via raw HTTP/REST — for Python workflows spanning multiple databases prefer bioservices instead, use this for direct REST work or KEGG-specific control. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(uv:*) Bash(python3:*)
 compatibility: Keyless KEGG REST API (academic use only; no authentication required)
 metadata:
     skill-author: AlterLab
@@ -86,14 +86,14 @@ from scripts.kegg_api import kegg_find
 results = kegg_find('genes', 'p53')
 shiga_toxin = kegg_find('genes', 'shiga toxin')
 
-# Chemical formula search (exact match)
+# Chemical formula search (partial match, atom order ignored)
 compounds = kegg_find('compound', 'C7H10N4O2', 'formula')
 
 # Molecular weight range search
 drugs = kegg_find('drug', '300-310', 'exact_mass')
 ```
 
-**Search options**: `formula` (exact match), `exact_mass` (range), `mol_weight` (range)
+**Search options**: `formula` (partial match — finds formulae containing the query, atom order ignored), `exact_mass` (range, rounded to the query's decimal place), `mol_weight` (range)
 
 ### 4. Retrieving Entries (`kegg_get`)
 
@@ -120,16 +120,19 @@ nt_seq = kegg_get('hsa:10458', 'ntseq')
 # Get compound structure
 mol_file = kegg_get('cpd:C00002', 'mol')  # ATP in MOL format
 
-# Get pathway as JSON (single entry only)
-pathway_json = kegg_get('hsa05130', 'json')
-
-# Get pathway image (single entry only)
+# Get pathway image (PNG) — single entry only
 pathway_img = kegg_get('hsa05130', 'image')
+
+# Get pathway KGML (XML structure) — single entry only
+pathway_kgml = kegg_get('hsa05130', 'kgml')
+
+# Get a BRITE hierarchy as JSON (json is for BRITE, not pathways)
+brite_json = kegg_get('br:br08301', 'json')
 ```
 
-**Output formats**: `aaseq` (protein FASTA), `ntseq` (nucleotide FASTA), `mol` (MOL format), `kcf` (KCF format), `image` (PNG), `kgml` (XML), `json` (pathway JSON)
+**Output formats**: `aaseq` (protein FASTA), `ntseq` (nucleotide FASTA), `mol`/`kcf` (compound/glycan/drug structures), `image` (PNG, pathway maps and compound/glycan/drug), `image2x` (doubled-size PNG, reference `map#####` only), `kgml` (pathway XML), `conf` (pathway map coordinates), `json` (BRITE hierarchies only — `/get/hsa05130/json` returns HTTP 400)
 
-**Important**: Image, KGML, and JSON formats allow only one entry at a time.
+**Important**: `image`, `image2x`, and `kgml` allow only one entry at a time. Sequence and structure formats accept up to 10 entries.
 
 ### 5. ID Conversion (`kegg_conv`)
 
@@ -346,7 +349,7 @@ Reference `references/kegg_reference.md` for detailed pathway lists and classifi
 
 Respect these constraints when using the KEGG API:
 
-1. **Entry limits**: Maximum 10 entries per operation (except image/kgml/json: 1 entry only)
+1. **Entry limits**: Maximum 10 entries per operation (except `image`/`image2x`/`kgml`: 1 entry only)
 2. **Academic use**: API is for academic use only; commercial use requires licensing
 3. **HTTP status codes**: Check for 200 (success), 400 (bad request), 404 (not found)
 4. **Rate limiting**: No explicit limit, but avoid rapid-fire requests
@@ -367,7 +370,8 @@ For comprehensive API documentation, database specifications, organism codes, an
 **404 Not Found**: Entry or database doesn't exist; verify IDs and organism codes
 **400 Bad Request**: Syntax error in API call; check parameter formatting
 **Empty results**: Search term may not match entries; try broader keywords
-**Image/KGML errors**: These formats only work with single entries; remove batch processing
+**Image/KGML errors**: `image`/`image2x`/`kgml` only work with single entries; remove batch processing
+**`json` on a pathway returns 400**: `json` is only valid for BRITE hierarchies (e.g. `br:br08301`); use `kgml` for pathway structure
 
 ## Additional Tools
 

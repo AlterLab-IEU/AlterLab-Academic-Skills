@@ -1,6 +1,6 @@
 ---
 name: alterlab-networkx
-description: Creates, analyzes, and visualizes complex networks and graphs in Python with NetworkX. Use when working with network/graph data structures, analyzing relationships between entities, computing graph algorithms (shortest paths, centrality, clustering), detecting communities, generating synthetic networks, or visualizing topologies — applicable to social, biological, transportation, citation, and any pairwise-relationship networks. Part of the AlterLab Academic Skills suite.
+description: Creates, analyzes, and visualizes complex networks and graphs in Python with NetworkX. Use when working with network/graph data structures, analyzing relationships between entities, computing graph algorithms (shortest paths, centrality, clustering), detecting communities, generating synthetic networks, or visualizing topologies — applicable to social, biological, transportation, citation, and any pairwise-relationship networks. This is classical graph analytics, not deep learning — for training graph neural networks (GCN/message passing, node/edge/graph classification on Cora-style data) use alterlab-torch-geometric instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: No API key required. Runs locally via `uv run python`; requires the networkx Python package.
@@ -257,15 +257,20 @@ plt.savefig('network.pdf', bbox_inches='tight')  # Vector format
 
 ### Installation
 
-Ensure NetworkX is installed:
+Examples here target **NetworkX 3.x** (3.6+). Several APIs were removed in 3.0 —
+`nx.info`, `nx.write_gpickle`/`nx.read_gpickle`, `nx.read_shp`/`nx.write_shp`,
+`nx.graph_clique_number` — and `nx.random_tree` was renamed to
+`nx.random_labeled_tree`; the references note the replacements.
+
 ```python
-# Check if installed
+# Check installed version
 import networkx as nx
 print(nx.__version__)
-
-# Install if needed (via bash)
-# uv pip install networkx
-# uv pip install networkx[default]  # With optional dependencies
+```
+```bash
+# Install if needed
+uv pip install networkx
+uv pip install 'networkx[default]'   # adds numpy/scipy/pandas/matplotlib extras
 ```
 
 ### Common Workflow Pattern

@@ -15,12 +15,14 @@ metadata:
 
 Provides comprehensive access to the Data Commons Python API v2 for querying statistical observations, exploring the knowledge graph, and resolving entity identifiers. Data Commons aggregates data from census bureaus, health organizations, environmental agencies, and other authoritative sources into a unified knowledge graph.
 
+Verified against `datacommons-client` 2.x (the current major). This is the V2 client (package `datacommons_client`), not the legacy `datacommons` (V1) package — the two have different APIs; do not mix them.
+
 ## Installation
 
-Install the Data Commons Python client with Pandas support:
+Install the Data Commons V2 client with Pandas support (extra is lowercase `pandas`):
 
 ```bash
-uv pip install "datacommons-client[Pandas]"
+uv pip install "datacommons-client[pandas]"
 ```
 
 For basic usage without Pandas:
@@ -65,7 +67,7 @@ response = client.observation.fetch(
 
 # Query by hierarchy
 response = client.observation.fetch(
-    variable_dcids=["MedianIncome_Household"],
+    variable_dcids=["Median_Income_Household"],
     entity_expression="geoId/06<-containedInPlace+{typeOf:County}",
     date="2020"
 )
@@ -166,8 +168,19 @@ Most Data Commons queries follow this pattern:
    # As dictionary
    data = response.to_dict()
 
-   # As Pandas DataFrame
-   df = pd.DataFrame(response.to_observation_records())
+   # As flat records (list of dataclasses: date, entity, variable, value + facet)
+   records = response.to_observations_as_records()
+   df = pd.DataFrame(records)
+   ```
+
+   To skip the manual conversion, the client also exposes a dedicated DataFrame
+   accessor that runs the same query and returns a tidy DataFrame directly:
+   ```python
+   df = client.observations_dataframe(
+       variable_dcids=["Count_Person"],
+       entity_dcids=["geoId/06", "geoId/48"],
+       date="all",
+   )
    ```
 
 ## Finding Statistical Variables
@@ -195,18 +208,17 @@ available = client.observation.fetch_available_statistical_variables(
 
 ## Working with Pandas
 
-All observation responses integrate with Pandas:
+The idiomatic path is the client's `observations_dataframe()` accessor, which mirrors
+`observation.fetch()` arguments but returns a tidy DataFrame in one call (requires the
+`pandas` extra):
 
 ```python
-response = client.observation.fetch(
+df = client.observations_dataframe(
     variable_dcids=["Count_Person"],
     entity_dcids=["geoId/06", "geoId/48"],
-    date="all"
+    date="all",
 )
-
-# Convert to DataFrame
-df = pd.DataFrame(response.to_observation_records())
-# Columns: date, entity, variable, value
+# Columns: date, entity, variable, value (plus facet/provenance columns)
 
 # Reshape for analysis
 pivot = df.pivot_table(
@@ -214,6 +226,18 @@ pivot = df.pivot_table(
     index='date',
     columns='entity'
 )
+```
+
+If you already have a response object, flatten it with `to_observations_as_records()`
+(note the method name) and wrap in a DataFrame:
+
+```python
+response = client.observation.fetch(
+    variable_dcids=["Count_Person"],
+    entity_dcids=["geoId/06", "geoId/48"],
+    date="all",
+)
+df = pd.DataFrame(response.to_observations_as_records())
 ```
 
 ## API Authentication

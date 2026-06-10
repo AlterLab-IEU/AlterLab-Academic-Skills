@@ -41,9 +41,9 @@ import matplotlib.pyplot as plt
 
 BASE = "https://data.financialresearch.gov/hf/v1"
 
-# Fetch overall leverage ratio
+# Fetch leverage ratio for the 10 largest funds (equal-weighted average)
 resp = requests.get(f"{BASE}/series/timeseries", params={
-    "mnemonic": "FPF-ALLQHF_LEVERAGERATIO_GAVWMEAN",
+    "mnemonic": "FPF-ALLQHF_GAVN10_LEVERAGERATIO_AVERAGE",
     "remove_nulls": "true"
 })
 df = pd.DataFrame(resp.json(), columns=["date", "leverage"])
@@ -51,7 +51,7 @@ df["date"] = pd.to_datetime(df["date"])
 
 # Get metadata
 meta_resp = requests.get(f"{BASE}/metadata/query", params={
-    "mnemonic": "FPF-ALLQHF_LEVERAGERATIO_GAVWMEAN",
+    "mnemonic": "FPF-ALLQHF_GAVN10_LEVERAGERATIO_AVERAGE",
     "fields": "description/name,schedule/observation_frequency"
 })
 meta = meta_resp.json()
@@ -75,11 +75,13 @@ import matplotlib.pyplot as plt
 
 BASE = "https://data.financialresearch.gov/hf/v1"
 
+# Strategy-level leverage uses the GAVWMEAN (gross-asset-weighted) stat.
+# (There is no ALLQHF GAVWMEAN equivalent; aggregate leverage is cohort-based — see example 2.)
 strategies = {
-    "All Funds": "FPF-ALLQHF_LEVERAGERATIO_GAVWMEAN",
     "Equity": "FPF-STRATEGY_EQUITY_LEVERAGERATIO_GAVWMEAN",
     "Credit": "FPF-STRATEGY_CREDIT_LEVERAGERATIO_GAVWMEAN",
     "Macro": "FPF-STRATEGY_MACRO_LEVERAGERATIO_GAVWMEAN",
+    "Relative value": "FPF-STRATEGY_RV_LEVERAGERATIO_GAVWMEAN",
 }
 
 resp = requests.get(f"{BASE}/series/multifull", params={

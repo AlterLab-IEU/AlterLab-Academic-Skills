@@ -34,10 +34,13 @@ def _get(path, params=None):
 
 
 def search(name=None, species=None, collection="CORE", tf_class=None,
-           tf_family=None, page=1, page_size=25):
-    """Search JASPAR matrices."""
+           tf_family=None, latest=True, page=1, page_size=25):
+    """Search JASPAR matrices. latest=True returns only the current version
+    of each profile (otherwise every historical version is listed)."""
     params = {"collection": collection, "page": page,
               "page_size": page_size, "format": "json"}
+    if latest:
+        params["version"] = "latest"
     if name:
         params["name"] = name
     if species:
@@ -64,6 +67,8 @@ def main():
     p_s.add_argument("--collection", default="CORE", help="JASPAR collection (default CORE)")
     p_s.add_argument("--tf-class", help="TF structural class")
     p_s.add_argument("--tf-family", help="TF family")
+    p_s.add_argument("--all-versions", action="store_true",
+                     help="Include historical profile versions (default: latest only)")
     p_s.add_argument("--page", type=int, default=1, help="Page number")
     p_s.add_argument("--page-size", type=int, default=25, help="Results per page")
 
@@ -74,7 +79,9 @@ def main():
     try:
         if args.command == "search":
             result = search(args.name, args.species, args.collection,
-                            args.tf_class, args.tf_family, args.page, args.page_size)
+                            args.tf_class, args.tf_family,
+                            latest=not args.all_versions,
+                            page=args.page, page_size=args.page_size)
         elif args.command == "matrix":
             result = matrix(args.matrix_id)
     except urllib.error.HTTPError as exc:

@@ -49,7 +49,7 @@
     {
       "id": "near-miss-pyzotero",
       "prompt": "I have a list of DOIs from my last search. Can you fetch their BibTeX, add them to my Zotero library, and organize them into a collection?",
-      "expected_output": "Does NOT invoke this skill; defers to alterlab-pyzotero (citation/reference management). The user wants to convert DOIs to BibTeX and manage a Zotero library, not look up or route a research query, so it belongs to the citation-management skill.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-pyzotero (Zotero/reference management). The user wants to convert DOIs to BibTeX and manage a Zotero library, not look up or route a research query, so it belongs to the alterlab-pyzotero skill.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-pyzotero" }

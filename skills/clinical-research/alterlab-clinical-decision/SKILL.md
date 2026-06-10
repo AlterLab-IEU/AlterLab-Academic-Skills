@@ -20,9 +20,9 @@ Generate professional clinical decision support (CDS) documents for pharmaceutic
 
 All documents are generated as publication-ready LaTeX/PDF files optimized for pharmaceutical research, regulatory submissions, and clinical guideline development.
 
-**Note:** For individual patient treatment plans at the bedside, use the `treatment-plans` skill instead. This skill focuses on group-level analyses and evidence synthesis for pharmaceutical/research settings.
+**Note:** For individual patient treatment plans at the bedside, use the `alterlab-treatment-plans` skill instead. For single-patient case reports for journal submission (e.g. CARE-guideline cases), use `alterlab-clinical-reports`. This skill focuses on group-level analyses and evidence synthesis for pharmaceutical/research settings.
 
-**Writing Style:** For publication-ready documents targeting medical journals, consult the **venue-templates** skill's `medical_journal_styles.md` for guidance on structured abstracts, evidence language, and CONSORT/STROBE compliance.
+**Writing Style:** For publication-ready documents targeting medical journals, consult the `alterlab-venue-templates` skill's `medical_journal_styles.md` for guidance on structured abstracts, evidence language, and CONSORT/STROBE compliance.
 
 ## Capabilities
 
@@ -99,9 +99,8 @@ Use this skill when you need to:
 - **Create clinical decision algorithms** with flowcharts for treatment sequencing
 
 **Do NOT use this skill for:**
-- Individual patient treatment plans (use `treatment-plans` skill)
-- Bedside clinical care documentation (use `treatment-plans` skill)
-- Simple patient-specific treatment protocols (use `treatment-plans` skill)
+- Individual patient treatment plans, bedside care documentation, or patient-specific protocols (use `alterlab-treatment-plans`)
+- Single-patient case reports for journal submission, e.g. CARE-guideline cases (use `alterlab-clinical-reports`)
 
 ## Document Structure
 
@@ -260,32 +259,22 @@ The first page of every CDS document should contain ONLY the executive summary w
 ## Integration
 
 This skill integrates with:
-- **scientific-writing**: Citation management, statistical reporting, evidence synthesis
-- **clinical-reports**: Medical terminology, HIPAA compliance, regulatory documentation
-- **scientific-schematics**: TikZ flowcharts for decision algorithms and treatment pathways
-- **treatment-plans**: Individual patient applications of cohort-derived insights (bidirectional)
+- **alterlab-scientific-writing**: Citation management, statistical reporting, evidence synthesis
+- **alterlab-clinical-reports**: Medical terminology, HIPAA compliance, single-patient case reports
+- **alterlab-scientific-schematics**: TikZ flowcharts for decision algorithms and treatment pathways
+- **alterlab-treatment-plans**: Individual patient applications of cohort-derived insights (bidirectional)
 
-## Key Differentiators from Treatment-Plans Skill
+## Routing: this skill vs. siblings
 
-**Clinical Decision Support (this skill):**
-- **Audience**: Pharmaceutical companies, clinical researchers, guideline committees, medical affairs
-- **Scope**: Population-level analyses, evidence synthesis, guideline development
-- **Focus**: Biomarker stratification, statistical comparisons, evidence grading
-- **Output**: Multi-page analytical documents (5-15 pages typical) with extensive figures and tables
-- **Use Cases**: Drug development, regulatory submissions, clinical practice guidelines, medical strategy
-- **Example**: "Analyze 60 HER2+ breast cancer patients by hormone receptor status with survival outcomes"
+The discriminator is **unit of analysis**: this skill operates on **groups** (cohorts, subgroups, evidence bases); the siblings operate on a **single patient**.
 
-**Treatment-Plans Skill:**
-- **Audience**: Clinicians, patients, care teams
-- **Scope**: Individual patient care planning
-- **Focus**: SMART goals, patient-specific interventions, monitoring plans
-- **Output**: Concise 1-4 page actionable care plans
-- **Use Cases**: Bedside clinical care, EMR documentation, patient-centered planning
-- **Example**: "Create treatment plan for a 55-year-old patient with newly diagnosed type 2 diabetes"
+| Ask | Skill |
+| --- | --- |
+| Cohort/subgroup analysis, biomarker stratification, GRADE-graded guideline, pharma/RWE strategy doc (group-level) | **this skill** |
+| Individual patient care plan, SMART goals, patient-specific dosing/monitoring for the chart | `alterlab-treatment-plans` |
+| Single-patient case report for journal submission (e.g. CARE-guideline) | `alterlab-clinical-reports` |
 
-**When to use each:**
-- Use **clinical-decision-support** for: cohort analyses, biomarker stratification studies, treatment guideline development, pharmaceutical strategy documents
-- Use **treatment-plans** for: individual patient care plans, treatment protocols for specific patients, bedside clinical documentation
+Example for this skill: "Analyze 60 HER2+ breast cancer patients by hormone receptor status with survival outcomes."
 
 ## Example Usage
 
@@ -338,39 +327,16 @@ This skill integrates with:
 > at each line of therapy.
 ```
 
-## Key Features
+## Evidence Grading
 
-### Biomarker Classification
-- Genomic: Mutations, CNV, gene fusions
-- Expression: RNA-seq, IHC scores
-- Molecular subtypes: Disease-specific classifications
-- Clinical actionability: Therapy selection guidance
+This skill uses two complementary axes (see `references/treatment_recommendations.md` and `assets/recommendation_strength_guide.md` for the full matrix):
 
-### Outcome Metrics
-- Survival: OS (overall survival), PFS (progression-free survival)
-- Response: ORR (objective response rate), DOR (duration of response), DCR (disease control rate)
-- Quality: ECOG performance status, symptom burden
-- Safety: Adverse events, dose modifications
+- **Recommendation strength** — Strong (Grade 1, "we recommend": benefits clearly outweigh risks) vs. Conditional/Weak (Grade 2, "we suggest": trade-offs exist, patient values matter). A third "Research" tier flags insufficient evidence.
+- **Certainty of evidence** — High / Moderate / Low / Very Low, per the GRADE Working Group's domains (downgrade for risk of bias, inconsistency, indirectness, imprecision, publication bias; upgrade observational data for large effect, dose-response, plausible confounding).
 
-### Statistical Methods
-- Survival analysis: Kaplan-Meier curves, log-rank tests
-- Group comparisons: t-tests, chi-square, Fisher's exact
-- Effect sizes: Hazard ratios, odds ratios with 95% CI
-- Significance: p-values, multiple testing corrections
+The compact letter codes used throughout (1A, 1B, 2A, 2B, 2C) are the **ACCP/Guyatt notation** (popularized by the ACCP/CHEST antithrombotic guidelines), which pairs the two axes into a single label. GRADE proper does not use these codes; report them as ACCP-style notation when both are cited, and never invent a grade not supported by the underlying evidence.
 
-### Evidence Grading
-
-**GRADE System**
-- **1A**: Strong recommendation, high-quality evidence
-- **1B**: Strong recommendation, moderate-quality evidence  
-- **2A**: Weak recommendation, high-quality evidence
-- **2B**: Weak recommendation, moderate-quality evidence
-- **2C**: Weak recommendation, low-quality evidence
-
-**Recommendation Strength**
-- **Strong**: Benefits clearly outweigh risks
-- **Conditional**: Trade-offs exist, patient values important
-- **Research**: Insufficient evidence, clinical trials needed
+(Biomarker, outcome-metric, and statistical-method details are covered under **Capabilities** above and in the `references/` files.)
 
 ## Best Practices
 
@@ -448,7 +414,6 @@ See the `assets/` directory for LaTeX templates:
 - `treatment_recommendation_template.tex` - Evidence-based clinical practice guidelines with GRADE grading
 - `clinical_pathway_template.tex` - TikZ decision algorithm flowcharts for treatment sequencing
 - `biomarker_report_template.tex` - Molecular subtype classification and genomic profile reports
-- `evidence_synthesis_template.tex` - Systematic evidence review and meta-analysis summaries
 
 **Template Features:**
 - 0.5in margins for compact presentation

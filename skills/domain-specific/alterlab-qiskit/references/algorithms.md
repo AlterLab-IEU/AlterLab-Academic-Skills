@@ -427,17 +427,21 @@ uv pip install qiskit-algorithms
 - HHL (Linear systems)
 
 **Example: Quantum Phase Estimation**
+
+> `qiskit-algorithms` is a separate community package, not part of the Qiskit SDK. The
+> legacy `quantum_instance=` argument was removed — pass a `sampler` primitive instead.
+
 ```python
-from qiskit.circuit.library import QFT
 from qiskit_algorithms import PhaseEstimation
+from qiskit.primitives import StatevectorSampler
 
 # Create unitary operator
 num_qubits = 3
 unitary = QuantumCircuit(num_qubits)
 # ... define unitary ...
 
-# Phase estimation
-pe = PhaseEstimation(num_evaluation_qubits=3, quantum_instance=backend)
+# Phase estimation driven by a Sampler primitive (not quantum_instance)
+pe = PhaseEstimation(num_evaluation_qubits=3, sampler=StatevectorSampler())
 result = pe.estimate(unitary=unitary, state_preparation=initial_state)
 ```
 
@@ -488,17 +492,19 @@ print(f"Optimal portfolio: {result.x}")
 ### Time Evolution
 
 ```python
+from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.synthesis import SuzukiTrotter
 from qiskit.quantum_info import SparsePauliOp
 
 # Define Hamiltonian
 hamiltonian = SparsePauliOp(["XX", "YY", "ZZ"], coeffs=[1.0, 1.0, 1.0])
 
-# Time evolution
+# Time evolution: build a PauliEvolutionGate, choosing the product-formula synthesis
 time = 1.0
-evolution_gate = SuzukiTrotter(order=2, reps=10).synthesize(
+evolution_gate = PauliEvolutionGate(
     hamiltonian,
-    time
+    time=time,
+    synthesis=SuzukiTrotter(order=2, reps=10),
 )
 
 qc = QuantumCircuit(2)

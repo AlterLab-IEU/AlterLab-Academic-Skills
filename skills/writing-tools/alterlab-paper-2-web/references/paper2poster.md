@@ -31,12 +31,13 @@ Paper2Poster automatically generates professional academic posters from research
 
 ### Basic Poster Generation
 
+`--model-choice 2` selects the poster component (it does NOT pick the LLM):
+
 ```bash
 python pipeline_all.py \
   --input-dir "path/to/papers" \
   --output-dir "path/to/output" \
-  --model-choice 1 \
-  --generate-poster
+  --model-choice 2
 ```
 
 ### Custom Poster Dimensions
@@ -46,7 +47,6 @@ python pipeline_all.py \
   --input-dir "path/to/papers" \
   --output-dir "path/to/output" \
   --model-choice 2 \
-  --generate-poster \
   --poster-width-inches 60 \
   --poster-height-inches 40
 ```
@@ -56,20 +56,13 @@ python pipeline_all.py \
 **Basic Configuration:**
 - `--input-dir`: Directory containing paper files
 - `--output-dir`: Directory for generated posters
-- `--model-choice`: LLM model selection (1=GPT-4, 2=GPT-4.1)
-- `--generate-poster`: Enable poster generation
+- `--model-choice 2`: Select the poster (Paper2Poster) component
 
 **Poster Dimensions:**
-- `--poster-width-inches`: Width in inches (default: 48)
-- `--poster-height-inches`: Height in inches (default: 36)
-- `--poster-orientation`: Portrait or landscape (default: landscape)
-- `--poster-dpi`: Resolution in DPI (default: 300)
+- `--poster-width-inches`: Width in inches
+- `--poster-height-inches`: Height in inches
 
-**Design Options:**
-- `--poster-template`: Template style (default: modern)
-- `--color-scheme`: Color palette selection
-- `--institution-branding`: Include institution colors and logos
-- `--font-family`: Typography selection
+The LLM is configured via `.env` (`OPENAI_API_KEY` / `OPENAI_API_BASE`); see `installation.md`.
 
 ## Standard Poster Sizes
 
@@ -286,7 +279,7 @@ Specify custom colors in configuration:
 ## Advanced Features
 
 ### QR Code Generation
-Automatically generates QR codes for:
+QR codes are not a documented pipeline flag — add them manually (e.g. with a QR generator + image editor) for:
 - Paper PDF or DOI
 - Project website
 - GitHub repository

@@ -165,26 +165,23 @@ risk_scores = estimator.predict(X_test)
 
 ### Tuning Alpha (Regularization)
 
+The `as_*_scorer` wrappers wrap the estimator's `.score()` — they are NOT passed
+to `scoring=`. Wrap the estimator, prefix tuned params with `estimator__`.
+
 ```python
 from sklearn.model_selection import GridSearchCV
 from sksurv.metrics import as_concordance_index_ipcw_scorer
 
-# Define parameter grid
+wrapped = as_concordance_index_ipcw_scorer(FastSurvivalSVM(), tau=y['time'].max())
+
 param_grid = {
-    'alpha': [0.1, 0.5, 1.0, 5.0, 10.0, 50.0]
+    'estimator__alpha': [0.1, 0.5, 1.0, 5.0, 10.0, 50.0]
 }
 
-# Grid search
-cv = GridSearchCV(
-    FastSurvivalSVM(),
-    param_grid,
-    scoring=as_concordance_index_ipcw_scorer(),
-    cv=5,
-    n_jobs=-1
-)
+cv = GridSearchCV(wrapped, param_grid, cv=5, n_jobs=-1)
 cv.fit(X, y)
 
-print(f"Best alpha: {cv.best_params_['alpha']}")
+print(f"Best alpha: {cv.best_params_['estimator__alpha']}")
 print(f"Best C-index: {cv.best_score_:.3f}")
 ```
 
@@ -192,21 +189,18 @@ print(f"Best C-index: {cv.best_score_:.3f}")
 
 ```python
 from sklearn.model_selection import GridSearchCV
+from sksurv.metrics import as_concordance_index_ipcw_scorer
 
-# Define parameter grid for kernel SVM
+wrapped = as_concordance_index_ipcw_scorer(
+    FastKernelSurvivalSVM(kernel='rbf'), tau=y['time'].max()
+)
+
 param_grid = {
-    'alpha': [0.1, 1.0, 10.0],
-    'gamma': ['scale', 'auto', 0.001, 0.01, 0.1, 1.0]
+    'estimator__alpha': [0.1, 1.0, 10.0],
+    'estimator__gamma': ['scale', 'auto', 0.001, 0.01, 0.1, 1.0]
 }
 
-# Grid search
-cv = GridSearchCV(
-    FastKernelSurvivalSVM(kernel='rbf'),
-    param_grid,
-    scoring=as_concordance_index_ipcw_scorer(),
-    cv=5,
-    n_jobs=-1
-)
+cv = GridSearchCV(wrapped, param_grid, cv=5, n_jobs=-1)
 cv.fit(X, y)
 
 print(f"Best parameters: {cv.best_params_}")
@@ -264,16 +258,12 @@ from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-# Create model
+# Create model, then wrap so .score() is Uno's C-index (leave scoring=None)
 svm = FastSurvivalSVM(alpha=1.0, max_iter=100, random_state=42)
+wrapped = as_concordance_index_ipcw_scorer(svm, tau=y['time'].max())
 
-# Cross-validation
-scores = cross_val_score(
-    svm, X_scaled, y,
-    cv=5,
-    scoring=as_concordance_index_ipcw_scorer(),
-    n_jobs=-1
-)
+# Cross-validation uses the wrapped estimator's .score()
+scores = cross_val_score(wrapped, X_scaled, y, cv=5, n_jobs=-1)
 
 print(f"Mean C-index: {scores.mean():.3f} (±{scores.std():.3f})")
 ```
@@ -328,35 +318,28 @@ from sksurv.metrics import as_concordance_index_ipcw_scorer
 # Split data
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Create pipeline
+# Pipeline keeps scaling inside each CV fold (no leakage); wrap it for scoring
 pipeline = Pipeline([
     ('scaler', StandardScaler()),
     ('svm', FastKernelSurvivalSVM(kernel='rbf'))
 ])
+wrapped = as_concordance_index_ipcw_scorer(pipeline, tau=y_train['time'].max())
 
-# Define parameter grid
+# Params live under estimator__ (wrapper) then the pipeline step name
 param_grid = {
-    'svm__alpha': [0.1, 1.0, 10.0],
-    'svm__gamma': ['scale', 0.01, 0.1, 1.0]
+    'estimator__svm__alpha': [0.1, 1.0, 10.0],
+    'estimator__svm__gamma': ['scale', 0.01, 0.1, 1.0]
 }
 
-# Grid search
-cv = GridSearchCV(
-    pipeline,
-    param_grid,
-    scoring=as_concordance_index_ipcw_scorer(),
-    cv=5,
-    n_jobs=-1,
-    verbose=1
-)
+cv = GridSearchCV(wrapped, param_grid, cv=5, n_jobs=-1, verbose=1)
 cv.fit(X_train, y_train)
 
-# Best model
-best_model = cv.best_estimator_
+# Unwrap to the fitted pipeline for prediction
+best_model = cv.best_estimator_.estimator_
 print(f"Best parameters: {cv.best_params_}")
 print(f"Best CV C-index: {cv.best_score_:.3f}")
 
-# Evaluate on test set
+# Evaluate on held-out test set
 risk_scores = best_model.predict(X_test)
 c_index = concordance_index_ipcw(y_train, y_test, risk_scores)[0]
 print(f"Test C-index: {c_index:.3f}")

@@ -48,25 +48,39 @@ store.close()
 
 ## Cloud Storage (S3, GCS)
 
-```python
-import s3fs
-import zarr
+Zarr v3 ships a native `FsspecStore` — the idiomatic way to target object stores. Install the
+matching fsspec backend (`s3fs` for S3, `gcsfs` for GCS).
 
-# S3 storage
-s3 = s3fs.S3FileSystem(anon=False)  # Use credentials
-store = s3fs.S3Map(root='my-bucket/path/to/array.zarr', s3=s3)
-z = zarr.open_array(store=store, mode='w', shape=(1000, 1000), chunks=(100, 100))
+```python
+import zarr
+from zarr.storage import FsspecStore
+
+# S3 via URL (credentials picked up from the fsspec backend / env)
+store = FsspecStore.from_url(
+    "s3://my-bucket/path/to/array.zarr",
+    storage_options={"anon": False},   # forwarded to s3fs
+)
+z = zarr.open_array(store=store, mode='w', shape=(1000, 1000),
+                    chunks=(100, 100), dtype='f4')
 z[:] = data
 
-# Google Cloud Storage
-import gcsfs
-gcs = gcsfs.GCSFileSystem(project='my-project')
-store = gcsfs.GCSMap(root='my-bucket/path/to/array.zarr', gcs=gcs)
-z = zarr.open_array(store=store, mode='w', shape=(1000, 1000), chunks=(100, 100))
+# Google Cloud Storage — same pattern with a gs:// URL
+store = FsspecStore.from_url(
+    "gs://my-bucket/path/to/array.zarr",
+    storage_options={"project": "my-project"},
+)
+z = zarr.open_array(store=store, mode='w', shape=(1000, 1000),
+                    chunks=(100, 100), dtype='f4')
+
+# A bare s3:// / gs:// path string also works directly:
+z = zarr.open_array("s3://my-bucket/path/to/array.zarr", mode='r')
 ```
 
+A plain fsspec mapping (`s3fs.S3Map(root=..., s3=...)`) is still accepted as a store, but
+`FsspecStore.from_url` is preferred in v3.
+
 **Cloud Storage Best Practices**:
-- Use consolidated metadata to reduce latency: `zarr.consolidate_metadata(store)`
-- Align chunk sizes with cloud object sizing (typically 5-100 MB optimal)
-- Enable parallel writes using Dask for large-scale data
-- Consider sharding to reduce number of objects
+- Consolidate metadata to cut round-trips: `zarr.consolidate_metadata(store)`, then read with `zarr.open_consolidated(store)`
+- Align chunk sizes with cloud object sizing (roughly 5-100 MB per chunk)
+- Use Dask (`da.to_zarr`) for parallel, chunk-aligned writes at scale
+- Consider sharding (`shards=`) to reduce the number of stored objects

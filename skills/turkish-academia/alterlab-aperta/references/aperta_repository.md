@@ -62,6 +62,6 @@ InvenioRDM deposit form; confirm exact labels on the live Aperta form.
 
 ## Not Aperta's job (route elsewhere)
 
-- International deposit (Zenodo/Dryad/Figshare/OSF) → `alterlab-open-science`.
-- Preprint posting to arXiv/bioRxiv/SSRN → `alterlab-preprint-deposition`.
+- International deposit (Zenodo/Dryad/Figshare/OSF), open-access routes, or
+  preprint posting to arXiv/bioRxiv/SSRN → `alterlab-open-science`.
 - The KVKK lawful-basis/anonymisation determination → `alterlab-kvkk-dmp`.

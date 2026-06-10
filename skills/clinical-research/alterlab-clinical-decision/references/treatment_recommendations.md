@@ -44,7 +44,10 @@ Evidence-based treatment recommendations provide clinicians with systematic guid
 - Implications: Different choices for different patients; shared decision-making
 - Symbol: ↑ (weak for) or ↓ (weak against)
 
-**GRADE Notation Examples**
+**Compact letter-code notation (ACCP/Guyatt style)**
+
+The single-label codes below come from the ACCP/CHEST grading scheme (Guyatt et al.), not from GRADE itself — GRADE reports strength and certainty separately rather than as a combined code. The codes are widely reused in oncology guidelines, so they are retained here; cite them as ACCP-style notation when reporting both axes together.
+
 - **1A**: Strong recommendation, high-quality evidence
 - **1B**: Strong recommendation, moderate-quality evidence
 - **2A**: Weak recommendation, high-quality evidence

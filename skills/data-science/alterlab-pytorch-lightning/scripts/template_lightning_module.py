@@ -168,7 +168,6 @@ class TemplateLightningModule(L.LightningModule):
             mode="min",
             factor=0.5,
             patience=5,
-            verbose=True,
         )
 
         # Return configuration
@@ -183,6 +182,11 @@ class TemplateLightningModule(L.LightningModule):
         }
 
     # Optional: Add custom methods for model-specific logic
+
+    @property
+    def num_parameters(self) -> int:
+        """Total number of parameters in the model."""
+        return sum(p.numel() for p in self.parameters())
 
     def on_train_epoch_end(self):
         """Called at the end of each training epoch."""

@@ -96,7 +96,7 @@ Searches for entries by keywords or molecular properties.
 
 **Examples**:
 - `/find/genes/shiga toxin` - Keyword search in genes
-- `/find/compound/C7H10N4O2/formula` - Exact formula match
+- `/find/compound/C7H10N4O2/formula` - Partial formula match (atom order ignored; returns formulae containing the query)
 - `/find/drug/300-310/exact_mass` - Mass range search (300-310 Da)
 - `/find/compound/300-310/mol_weight` - Molecular weight range
 
@@ -111,23 +111,27 @@ Retrieves full database entries or specific data formats.
 - `option` - Output format (optional)
 
 **Output Options**:
-- `aaseq` - Amino acid sequences (FASTA)
-- `ntseq` - Nucleotide sequences (FASTA)
-- `mol` - MOL format (compounds/drugs)
-- `kcf` - KCF format (KEGG Chemical Function, compounds/drugs)
-- `image` - PNG image (pathway maps, single entry only)
-- `kgml` - KGML XML (pathway structure, single entry only)
-- `json` - JSON format (pathway only, single entry only)
+- `aaseq` - Amino acid sequences (FASTA; genes; up to 10 entries)
+- `ntseq` - Nucleotide sequences (FASTA; genes; up to 10 entries)
+- `mol` - MOL format (compound/glycan/drug)
+- `kcf` - KCF format (KEGG Chemical Function; compound/glycan/drug)
+- `image` - PNG image (pathway maps and compound/glycan/drug; single entry only)
+- `image2x` - Doubled-size PNG (reference `map#####` pathways only; single entry)
+- `kgml` - KGML XML (pathway structure; single entry only)
+- `conf` - Pathway map coordinate config (single entry)
+- `json` - JSON (BRITE hierarchies only, e.g. `br:br08301`)
 
 **Examples**:
 - `/get/hsa00010` - Glycolysis pathway (human)
 - `/get/hsa:10458+ece:Z5100` - Multiple genes (max 10)
 - `/get/hsa:10458/aaseq` - Protein sequence
 - `/get/cpd:C00002` - ATP compound entry
-- `/get/hsa05130/json` - Pathways in cancer as JSON
+- `/get/hsa05130/kgml` - Pathways-in-cancer structure as KGML XML
 - `/get/hsa05130/image` - Pathway map as PNG
+- `/get/br:br08301/json` - BRITE hierarchy as JSON
 
-**Image Restrictions**: Only one entry allowed with image option
+**Single-entry restriction**: `image`, `image2x`, and `kgml` accept only one entry.
+**`json` is BRITE-only**: requesting `json` for a pathway (e.g. `/get/hsa05130/json`) returns HTTP 400. Use `kgml` for machine-readable pathway structure.
 
 ### 5. CONV - ID Conversion
 
@@ -262,7 +266,7 @@ Chronological classification and target-based classification
 ## API Limitations and Best Practices
 
 ### Rate Limits and Restrictions
-- Maximum 10 entries per single operation (except image/kgml: 1 entry)
+- Maximum 10 entries per single operation (except `image`/`image2x`/`kgml`: 1 entry)
 - Academic use only - commercial use requires separate licensing
 - No explicit rate limit documented, but avoid rapid-fire requests
 

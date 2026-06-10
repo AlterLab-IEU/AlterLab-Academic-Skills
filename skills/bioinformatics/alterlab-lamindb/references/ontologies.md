@@ -224,8 +224,9 @@ artifact = ln.Artifact.from_anndata(
     description="scRNA-seq data with validated cell type annotations"
 ).save()
 
-# Link ontology records to artifact
-artifact.feature_sets.add_ontology(cell_types)
+# Link ontology records to artifact via the typed accessor
+# (the accessor is the registry name, pluralized: cell_types, tissues, genes, ...)
+artifact.cell_types.add(cell_types)
 ```
 
 ### Annotating DataFrames
@@ -250,12 +251,12 @@ artifact = ln.Artifact.from_dataframe(
     key="metadata/sample_info.parquet"
 ).save()
 
-# Link ontology records
+# Link ontology records via the typed accessors
 cell_type_records = bt.CellType.from_values(df["cell_type"])
 tissue_records = bt.Tissue.from_values(df["tissue"])
 
-artifact.feature_sets.add_ontology(cell_type_records)
-artifact.feature_sets.add_ontology(tissue_records)
+artifact.cell_types.add(cell_type_records)
+artifact.tissues.add(tissue_records)
 ```
 
 ## Managing Custom Terms and Hierarchies
@@ -420,9 +421,9 @@ artifact = ln.Artifact.from_dataframe(
     description="Curated experimental data with ontology-validated annotations"
 ).save()
 
-# Link ontology records
-artifact.feature_sets.add_ontology(bt.CellType.from_values(df["cell_type"]))
-artifact.feature_sets.add_ontology(bt.Tissue.from_values(df["tissue"]))
+# Link ontology records via the typed accessors
+artifact.cell_types.add(bt.CellType.from_values(df["cell_type"]))
+artifact.tissues.add(bt.Tissue.from_values(df["tissue"]))
 
 ln.finish()  # Complete tracking
 ```
@@ -445,19 +446,19 @@ mouse_records = bt.Gene.from_values(mouse_orthologs, organism="mouse")
 ## Querying Ontology-Annotated Data
 
 ```python
-# Find all datasets with specific cell type
+# Find all datasets annotated with a specific cell type
 t_cell = bt.CellType.get(name="T cell")
-ln.Artifact.filter(feature_sets__cell_types=t_cell).to_dataframe()
+ln.Artifact.filter(cell_types=t_cell).to_dataframe()
 
 # Find datasets measuring specific genes
 cd8a = bt.Gene.get(symbol="CD8A", organism="human")
-ln.Artifact.filter(feature_sets__genes=cd8a).to_dataframe()
+ln.Artifact.filter(genes=cd8a).to_dataframe()
 
 # Query across ontology hierarchy
 # Find all datasets with T cell or T cell subtypes
 t_cell_subtypes = t_cell.query_children()
 ln.Artifact.filter(
-    feature_sets__cell_types__in=t_cell_subtypes
+    cell_types__in=t_cell_subtypes
 ).to_dataframe()
 ```
 

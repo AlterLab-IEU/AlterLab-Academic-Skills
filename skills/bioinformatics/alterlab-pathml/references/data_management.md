@@ -4,54 +4,46 @@
 
 PathML provides efficient data management solutions for handling large-scale pathology datasets through HDF5 storage, tile management strategies, and optimized batch processing workflows. The framework enables seamless storage and retrieval of images, masks, features, and metadata in formats optimized for machine learning pipelines and downstream analysis.
 
-## HDF5 Integration
+## h5path Storage
 
-HDF5 (Hierarchical Data Format) is the primary storage format for processed PathML data, providing:
-- Efficient compression and chunked storage
-- Fast random access to subsets of data
-- Support for arbitrarily large datasets
-- Hierarchical organization of heterogeneous data types
-- Cross-platform compatibility
+PathML persists processed slides in its own **h5path** format (an HDF5 layout). The relevant calls are `SlideData.write(path)` and `SlideDataset.write(dir)` — there is no `to_hdf5`/`from_hdf5` method. h5path gives you compression, chunked storage, fast random access, and a hierarchical layout for images/masks/tiles/counts.
 
-### Saving to HDF5
+### Writing h5path
 
 **Single slide:**
 ```python
-from pathml.core import SlideData
+from pathml.core import HESlide
 
-# Load and process slide
-wsi = SlideData.from_slide("slide.svs")
-wsi.generate_tiles(level=1, tile_size=256, stride=256)
+# Load and process slide (run() handles tiling)
+wsi = HESlide("slide.svs")
+wsi.run(pipeline, tile_size=256, level=1)
 
-# Run preprocessing pipeline
-pipeline.run(wsi)
-
-# Save to HDF5
-wsi.to_hdf5("processed_slide.h5")
+# Write to disk (h5path); use the .h5path extension by convention
+wsi.write("processed_slide.h5path")
 ```
 
 **Multiple slides (SlideDataset):**
 ```python
-from pathml.core import SlideDataset
+from pathml.core import HESlide, SlideDataset
+from dask.distributed import Client
 import glob
 
-# Create dataset
 slide_paths = glob.glob("data/*.svs")
-dataset = SlideDataset(slide_paths, tile_size=256, stride=256, level=1)
+dataset = SlideDataset([HESlide(p) for p in slide_paths])
 
-# Process
-dataset.run(pipeline, distributed=True, n_workers=8)
+client = Client(n_workers=8, threads_per_worker=2)
+dataset.run(pipeline, client=client, tile_size=256, level=1)
 
-# Save entire dataset
-dataset.to_hdf5("processed_dataset.h5")
+# Writes one h5path file per slide into the directory
+dataset.write("processed/")
 ```
 
-### HDF5 File Structure
+### h5path File Structure
 
-PathML HDF5 files are organized hierarchically:
+h5path files are organized hierarchically. The layout below is illustrative — the exact group names are internal and version-dependent, so read/write through the PathML API rather than hard-coding paths:
 
 ```
-processed_dataset.h5
+processed_dataset.h5path
 ├── slide_0/
 │   ├── metadata/
 │   │   ├── name
@@ -75,155 +67,88 @@ processed_dataset.h5
 └── ...
 ```
 
-### Loading from HDF5
+### Reading h5path back
 
-**Load entire slide:**
+**Reload a written slide** by constructing `SlideData` from the h5path file. To serve its tiles to a model, wrap it in `pathml.datasets.TileDataset`:
+
 ```python
 from pathml.core import SlideData
+from pathml.datasets import TileDataset
 
-# Load from HDF5
-wsi = SlideData.from_hdf5("processed_slide.h5")
+# Reload the processed slide
+wsi = SlideData("processed_slide.h5path")
 
 # Access tiles
 for tile in wsi.tiles:
     image = tile.image
     masks = tile.masks
-    # Process tile...
+
+# Or stream tiles to a PyTorch DataLoader
+tile_dataset = TileDataset("processed_slide.h5path")
 ```
 
-**Load specific tiles:**
-```python
-# Load only tiles at specific indices
-tile_indices = [0, 10, 20, 30]
-tiles = wsi.load_tiles_from_hdf5("processed_slide.h5", indices=tile_indices)
+(If your PathML version exposes a different reload entry point, confirm it in the core API docs.)
 
-for tile in tiles:
-    # Process subset...
-    pass
-```
+**Low-level access with h5py** is possible since h5path is HDF5 underneath, but the internal group layout is an implementation detail and can change between versions — prefer the PathML API for forward compatibility:
 
-**Memory-mapped access:**
 ```python
 import h5py
 
-# Open HDF5 file without loading into memory
-with h5py.File("processed_dataset.h5", 'r') as f:
-    # Access specific data
-    tile_0_image = f['slide_0/tiles/tile_0/image'][:]
-    tissue_mask = f['slide_0/tiles/tile_0/masks/tissue'][:]
-
-    # Iterate through tiles efficiently
-    for tile_key in f['slide_0/tiles'].keys():
-        tile_image = f[f'slide_0/tiles/{tile_key}/image'][:]
-        # Process without loading all tiles...
+with h5py.File("processed_slide.h5path", "r") as f:
+    print(list(f.keys()))  # inspect the layout for your version
 ```
 
 ## Tile Management
 
 ### Tile Generation Strategies
 
-**Fixed-size tiles with no overlap:**
+Tiling is driven by `generate_tiles` (a generator) or by the tiling arguments passed to `SlideData.run`/`SlideDataset.run`. Confirm the tile-size keyword (`shape` vs `tile_size`) for your installed version.
+
+**Fixed-size tiles with no overlap** (`stride == shape`):
 ```python
-wsi.generate_tiles(
-    level=1,
-    tile_size=256,
-    stride=256,  # stride = tile_size → no overlap
-    pad=False  # Don't pad edge tiles
-)
+for tile in wsi.generate_tiles(level=1, shape=256, stride=256, pad=False):
+    ...
 ```
-- **Use case:** Standard tile-based processing, classification
-- **Pros:** Simple, no redundancy, fast processing
-- **Cons:** Edge effects at tile boundaries
+- Standard tile-based processing/classification; simple, no redundancy; edge effects at boundaries.
 
-**Overlapping tiles:**
+**Overlapping tiles** (`stride < shape`):
 ```python
-wsi.generate_tiles(
-    level=1,
-    tile_size=256,
-    stride=128,  # 50% overlap
-    pad=False
-)
+for tile in wsi.generate_tiles(level=1, shape=256, stride=128):  # 50% overlap
+    ...
 ```
-- **Use case:** Segmentation, detection (reduces boundary artifacts)
-- **Pros:** Better boundary handling, smoother stitching
-- **Cons:** More tiles, redundant computation
+- Better for segmentation/detection (reduces boundary artifacts); more tiles, redundant compute.
 
-**Adaptive tiling based on tissue content:**
+**Tissue-only tiling:** run a pipeline that includes `TissueDetectionHE`, then filter the resulting `wsi.tiles` by tissue coverage:
 ```python
-from pathml.utils import adaptive_tile_generation
+wsi.run(pipeline, tile_size=256, level=1)  # pipeline includes TissueDetectionHE()
 
-# Generate tiles only in tissue regions
-wsi.generate_tiles(level=1, tile_size=256, stride=256)
-
-# Filter to keep only tiles with sufficient tissue
-tissue_tiles = []
-for tile in wsi.tiles:
-    if tile.masks.get('tissue') is not None:
-        tissue_coverage = tile.masks['tissue'].sum() / (tile_size**2)
-        if tissue_coverage > 0.5:  # Keep tiles with >50% tissue
-            tissue_tiles.append(tile)
-
-wsi.tiles = tissue_tiles
+tile_area = 256 * 256
+tissue_tiles = [
+    tile for tile in wsi.tiles
+    if tile.masks.get("tissue") is not None
+    and tile.masks["tissue"].sum() / tile_area > 0.5
+]
 ```
-- **Use case:** Sparse tissue samples, efficiency
-- **Pros:** Reduces processing of background tiles
-- **Cons:** Requires tissue detection preprocessing step
 
 ### Tile Stitching
 
-Reconstruct full slide from processed tiles:
+PathML does not ship a general `stitch_tiles` utility; reassemble predictions yourself from each tile's `coords`. A simple non-overlapping reassembly:
 
 ```python
-from pathml.utils import stitch_tiles
+import numpy as np
 
-# Process tiles
+# Allocate at the working level's dimensions (W, H from the backend)
+W, H = wsi.shape
+canvas = np.zeros((H, W), dtype=np.float32)
+
 for tile in wsi.tiles:
-    tile.prediction = model.predict(tile.image)
-
-# Stitch predictions back to full resolution
-full_prediction_map = stitch_tiles(
-    wsi.tiles,
-    output_shape=wsi.level_dimensions[1],  # Use level 1 dimensions
-    tile_size=256,
-    stride=256,
-    method='average'  # 'average', 'max', or 'first'
-)
-
-# Visualize
-import matplotlib.pyplot as plt
-plt.figure(figsize=(15, 15))
-plt.imshow(full_prediction_map)
-plt.title('Stitched Prediction Map')
-plt.axis('off')
-plt.show()
+    pred = model.predict(tile.image)  # (h, w)
+    j, i = tile.coords                # top-left (x, y)
+    h, w = pred.shape
+    canvas[i:i + h, j:j + w] = pred   # average/blend instead for overlaps
 ```
 
-**Stitching methods:**
-- `'average'`: Average overlapping regions (smooth transitions)
-- `'max'`: Maximum value in overlapping regions
-- `'first'`: Keep first tile's value (no blending)
-- `'weighted'`: Distance-weighted blending for smooth boundaries
-
-### Tile Caching
-
-Cache frequently accessed tiles for faster iteration:
-
-```python
-from pathml.utils import TileCache
-
-# Create cache
-cache = TileCache(max_size_gb=10)
-
-# Cache tiles during first iteration
-for i, tile in enumerate(wsi.tiles):
-    cache.add(f'tile_{i}', tile.image)
-    # Process tile...
-
-# Subsequent iterations use cached data
-for i in range(len(wsi.tiles)):
-    cached_image = cache.get(f'tile_{i}')
-    # Fast access...
-```
+For overlapping tiles, accumulate predictions and a per-pixel count, then divide to average.
 
 ## Dataset Organization
 
@@ -308,23 +233,17 @@ Process slides one at a time (memory-efficient):
 
 ```python
 import glob
-from pathml.core import SlideData
+from pathml.core import HESlide
 from pathml.preprocessing import Pipeline
 
-slide_paths = glob.glob('raw_slides/**/*.svs', recursive=True)
+slide_paths = glob.glob("raw_slides/**/*.svs", recursive=True)
 
 for slide_path in slide_paths:
-    # Load slide
-    wsi = SlideData.from_slide(slide_path)
-    wsi.generate_tiles(level=1, tile_size=256, stride=256)
+    wsi = HESlide(slide_path)
+    wsi.run(pipeline, tile_size=256, level=1)
 
-    # Process
-    pipeline.run(wsi)
-
-    # Save
-    output_path = slide_path.replace('raw_slides', 'processed').replace('.svs', '.h5')
-    wsi.to_hdf5(output_path)
-
+    output_path = slide_path.replace("raw_slides", "processed").replace(".svs", ".h5path")
+    wsi.write(output_path)
     print(f"Processed: {slide_path}")
 ```
 
@@ -333,7 +252,7 @@ for slide_path in slide_paths:
 Process multiple slides in parallel:
 
 ```python
-from pathml.core import SlideDataset
+from pathml.core import HESlide, SlideDataset
 from dask.distributed import Client, LocalCluster
 from pathml.preprocessing import Pipeline
 
@@ -341,27 +260,20 @@ from pathml.preprocessing import Pipeline
 cluster = LocalCluster(
     n_workers=8,
     threads_per_worker=2,
-    memory_limit='8GB',
-    dashboard_address=':8787'  # View progress at localhost:8787
+    memory_limit="8GB",
+    dashboard_address=":8787",  # progress at localhost:8787
 )
 client = Client(cluster)
 
-# Create dataset
-slide_paths = glob.glob('raw_slides/**/*.svs', recursive=True)
-dataset = SlideDataset(slide_paths, tile_size=256, stride=256, level=1)
+# Create dataset from slide objects
+slide_paths = glob.glob("raw_slides/**/*.svs", recursive=True)
+dataset = SlideDataset([HESlide(p) for p in slide_paths])
 
-# Distribute processing
-dataset.run(
-    pipeline,
-    distributed=True,
-    client=client,
-    scheduler='distributed'
-)
+# Distribute processing (pass the client; tiling options go to run())
+dataset.run(pipeline, client=client, tile_size=256, level=1)
 
-# Save results
-for i, slide in enumerate(dataset):
-    output_path = slide_paths[i].replace('raw_slides', 'processed').replace('.svs', '.h5')
-    slide.to_hdf5(output_path)
+# Write one h5path per slide into a directory
+dataset.write("processed/")
 
 client.close()
 cluster.close()
@@ -407,23 +319,22 @@ with open('submit_jobs.sh', 'w') as f:
 ```python
 # process_slide.py
 import argparse
-from pathml.core import SlideData
+from pathml.core import HESlide
 from pathml.preprocessing import Pipeline
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--slide_path', type=str, required=True)
+parser.add_argument("--slide_path", type=str, required=True)
 args = parser.parse_args()
 
 # Load and process
-wsi = SlideData.from_slide(args.slide_path)
-wsi.generate_tiles(level=1, tile_size=256, stride=256)
+wsi = HESlide(args.slide_path)
 
 pipeline = Pipeline([...])
-pipeline.run(wsi)
+wsi.run(pipeline, tile_size=256, level=1)
 
 # Save
-output_path = args.slide_path.replace('raw_slides', 'processed').replace('.svs', '.h5')
-wsi.to_hdf5(output_path)
+output_path = args.slide_path.replace("raw_slides", "processed").replace(".svs", ".h5path")
+wsi.write(output_path)
 
 print(f"Processed: {args.slide_path}")
 ```
@@ -443,8 +354,8 @@ model.eval()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = model.to(device)
 
-# Load processed slide
-wsi = SlideData.from_hdf5('processed/slide001.h5')
+# Load processed slide from h5path
+wsi = SlideData("processed/slide001.h5path")
 
 # Extract features for each tile
 features = []

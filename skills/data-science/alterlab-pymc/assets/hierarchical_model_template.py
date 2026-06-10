@@ -59,9 +59,10 @@ coords = {
 }
 
 with pm.Model(coords=coords) as hierarchical_model:
-    # Data containers (for later predictions)
-    X_data = pm.Data('X_data', X)
-    groups_data = pm.Data('groups_data', groups)
+    # Data containers (mutable, for later predictions). Tagging them with the
+    # 'obs' dim lets pm.set_data() resize cleanly for out-of-sample data.
+    X_data = pm.Data('X_data', X, dims='obs')
+    groups_data = pm.Data('groups_data', groups, dims='obs')
 
     # Hyperpriors (population-level parameters)
     # TODO: Adjust hyperpriors based on your domain knowledge
@@ -98,7 +99,7 @@ print(f"Observations: {n_obs}")
 
 print("\nRunning prior predictive check...")
 with hierarchical_model:
-    prior_pred = pm.sample_prior_predictive(samples=500, random_seed=42)
+    prior_pred = pm.sample_prior_predictive(draws=500, random_seed=42)
 
 # Visualize prior predictions
 fig, ax = plt.subplots(figsize=(10, 6))
@@ -281,17 +282,23 @@ new_X = np.array([-2, -1, 0, 1, 2])
 new_groups = np.array([0, 2, 4, 6, 8])  # Select some groups
 
 with hierarchical_model:
-    pm.set_data({'X_data': new_X, 'groups_data': new_groups, 'obs': np.arange(len(new_X))})
-
-    post_pred = pm.sample_posterior_predictive(
-        idata.posterior,
-        var_names=['y_obs'],
-        random_seed=42
+    # 'obs' is a coord (not a Data container), so update it via coords=.
+    pm.set_data(
+        {'X_data': new_X, 'groups_data': new_groups},
+        coords={'obs': np.arange(len(new_X))},
     )
 
-y_pred_samples = post_pred.posterior_predictive['y_obs']
+    post_pred = pm.sample_posterior_predictive(
+        idata,
+        var_names=['y_obs'],
+        predictions=True,
+        extend_inferencedata=True,
+        random_seed=42,
+    )
+
+y_pred_samples = idata.predictions['y_obs']
 y_pred_mean = y_pred_samples.mean(dim=['chain', 'draw']).values
-y_pred_hdi = az.hdi(y_pred_samples, hdi_prob=0.95).values
+y_pred_hdi = az.hdi(y_pred_samples, hdi_prob=0.95)['y_obs'].values
 
 print(f"Predictions for existing groups:")
 print(f"{'Group':<10} {'X':<10} {'Mean':<15} {'95% HDI Lower':<15} {'95% HDI Upper':<15}")

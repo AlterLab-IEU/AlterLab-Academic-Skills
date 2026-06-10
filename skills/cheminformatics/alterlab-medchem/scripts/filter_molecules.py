@@ -5,18 +5,21 @@ Batch molecular filtering using medchem library.
 This script provides a production-ready workflow for filtering compound libraries
 using medchem rules, structural alerts, and custom constraints.
 
+Verified against medchem==2.0.5.
+
 Usage:
-    python filter_molecules.py input.csv --rules rule_of_five,rule_of_cns --alerts nibr --output filtered.csv
-    python filter_molecules.py input.sdf --rules rule_of_drug --lilly --complexity 400 --output results.csv
+    python filter_molecules.py input.csv --rules rule_of_five,rule_of_cns --nibr --output filtered.csv
+    python filter_molecules.py input.sdf --rules rule_of_oprea --lilly --complexity-metric bertz --output results.csv
     python filter_molecules.py smiles.txt --nibr --pains --n-jobs -1 --output clean.csv
 """
 
 import argparse
 import sys
 from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 
 try:
+    import numpy as np
     import pandas as pd
     import datamol as dm
     import medchem as mc
@@ -24,7 +27,7 @@ try:
     from tqdm import tqdm
 except ImportError as e:
     print(f"Error: Missing required package: {e}")
-    print("Install dependencies: pip install medchem datamol pandas tqdm")
+    print("Install dependencies: uv pip install medchem datamol pandas tqdm")
     sys.exit(1)
 
 
@@ -95,18 +98,19 @@ def load_molecules(input_file: Path, smiles_column: str = "smiles") -> Tuple[pd.
 
 
 def apply_rule_filters(mols: List[Chem.Mol], rules: List[str], n_jobs: int) -> pd.DataFrame:
-    """Apply medicinal chemistry rule filters."""
+    """Apply medicinal chemistry rule filters.
+
+    RuleFilters(...)(...) returns a DataFrame with a `mol` column, `pass_all`,
+    `pass_any`, and one boolean column per rule. We keep the per-rule booleans
+    plus `pass_all` (renamed for clarity).
+    """
     print(f"\nApplying rule filters: {', '.join(rules)}")
 
     rfilter = mc.rules.RuleFilters(rule_list=rules)
-    results = rfilter(mols=mols, n_jobs=n_jobs, progress=True)
+    res = rfilter(mols=mols, n_jobs=n_jobs, progress=True)
 
-    # Convert to DataFrame
-    df_results = pd.DataFrame(results)
-
-    # Add summary column
-    df_results["passes_all_rules"] = df_results.all(axis=1)
-
+    df_results = res[rules].copy().reset_index(drop=True)
+    df_results["passes_all_rules"] = res["pass_all"].to_numpy()
     return df_results
 
 
@@ -115,39 +119,33 @@ def apply_structural_alerts(mols: List[Chem.Mol], alert_type: str, n_jobs: int) 
     print(f"\nApplying {alert_type} structural alerts...")
 
     if alert_type == "common":
-        alert_filter = mc.structural.CommonAlertsFilters()
-        results = alert_filter(mols=mols, n_jobs=n_jobs, progress=True)
-
+        res = mc.structural.CommonAlertsFilters()(mols=mols, n_jobs=n_jobs, progress=True)
+        # `pass_filter` is True when the molecule is clean (no alert triggered).
         df_results = pd.DataFrame({
-            "has_common_alerts": [r["has_alerts"] for r in results],
-            "num_common_alerts": [r["num_alerts"] for r in results],
-            "common_alert_details": [", ".join(r["alert_details"]) if r["alert_details"] else "" for r in results]
+            "passes_common_alerts": res["pass_filter"].to_numpy(),
+            "common_alert_details": res["reasons"].fillna("").to_numpy(),
         })
 
     elif alert_type == "nibr":
-        nibr_filter = mc.structural.NIBRFilters()
-        results = nibr_filter(mols=mols, n_jobs=n_jobs, progress=True)
-
+        res = mc.structural.NIBRFilters()(mols=mols, n_jobs=n_jobs, progress=True)
         df_results = pd.DataFrame({
-            "passes_nibr": results
+            "passes_nibr": res["pass_filter"].to_numpy(),
+            "nibr_severity": res["severity"].to_numpy(),
         })
 
     elif alert_type == "lilly":
-        lilly_filter = mc.structural.LillyDemeritsFilters()
-        results = lilly_filter(mols=mols, n_jobs=n_jobs, progress=True)
-
-        df_results = pd.DataFrame({
-            "lilly_demerits": [r["demerits"] for r in results],
-            "passes_lilly": [r["passes"] for r in results],
-            "lilly_patterns": [", ".join([p["pattern"] for p in r["matched_patterns"]]) for r in results]
-        })
+        # Requires external Lilly binaries (conda: lilly-medchem-rules).
+        try:
+            keep = mc.functional.lilly_demerit_filter(mols, n_jobs=n_jobs, progress=True)
+        except ImportError:
+            print("Error: Lilly demerits need the 'lilly-medchem-rules' binaries "
+                  "(mamba install -c conda-forge lilly-medchem-rules). Skipping --lilly.")
+            sys.exit(1)
+        df_results = pd.DataFrame({"passes_lilly": np.asarray(keep, dtype=bool)})
 
     elif alert_type == "pains":
-        results = [mc.rules.basic_rules.pains_filter(mol) for mol in tqdm(mols, desc="PAINS")]
-
-        df_results = pd.DataFrame({
-            "passes_pains": results
-        })
+        keep = mc.functional.alert_filter(mols, alerts=["pains"], n_jobs=n_jobs, progress=True)
+        df_results = pd.DataFrame({"passes_pains": np.asarray(keep, dtype=bool)})
 
     else:
         raise ValueError(f"Unknown alert type: {alert_type}")
@@ -155,50 +153,59 @@ def apply_structural_alerts(mols: List[Chem.Mol], alert_type: str, n_jobs: int) 
     return df_results
 
 
-def apply_complexity_filter(mols: List[Chem.Mol], max_complexity: float, method: str = "bertz") -> pd.DataFrame:
-    """Calculate molecular complexity."""
-    print(f"\nCalculating molecular complexity (method={method}, max={max_complexity})...")
+def apply_complexity_filter(mols: List[Chem.Mol], method: str, limit: str, n_jobs: int) -> pd.DataFrame:
+    """Flag molecules exceeding the complexity percentile threshold.
 
-    complexity_scores = [
-        mc.complexity.calculate_complexity(mol, method=method)
-        for mol in tqdm(mols, desc="Complexity")
-    ]
-
-    df_results = pd.DataFrame({
-        "complexity_score": complexity_scores,
-        "passes_complexity": [score <= max_complexity for score in complexity_scores]
-    })
-
-    return df_results
-
-
-def apply_constraints(mols: List[Chem.Mol], constraints: Dict, n_jobs: int) -> pd.DataFrame:
-    """Apply custom property constraints."""
-    print(f"\nApplying constraints: {constraints}")
-
-    constraint_filter = mc.constraints.Constraints(**constraints)
-    results = constraint_filter(mols=mols, n_jobs=n_jobs, progress=True)
-
-    df_results = pd.DataFrame({
-        "passes_constraints": [r["passes"] for r in results],
-        "constraint_violations": [", ".join(r["violations"]) if r["violations"] else "" for r in results]
-    })
-
-    return df_results
+    `complexity_filter` returns a boolean array (True = within the limit / keep).
+    """
+    print(f"\nApplying complexity filter (metric={method}, limit={limit} percentile)...")
+    keep = mc.functional.complexity_filter(
+        mols, complexity_metric=method, limit=limit, n_jobs=n_jobs, progress=True
+    )
+    return pd.DataFrame({"passes_complexity": np.asarray(keep, dtype=bool)})
 
 
 def apply_chemical_groups(mols: List[Chem.Mol], groups: List[str]) -> pd.DataFrame:
-    """Detect chemical groups."""
+    """Detect chemical groups (one boolean column per group)."""
     print(f"\nDetecting chemical groups: {', '.join(groups)}")
-
-    group_detector = mc.groups.ChemicalGroup(groups=groups)
-    results = group_detector.get_all_matches(mols)
-
     df_results = pd.DataFrame()
     for group in groups:
-        df_results[f"has_{group}"] = [bool(r.get(group)) for r in results]
-
+        cg = mc.groups.ChemicalGroup(groups=[group])
+        matched = mc.functional.chemical_group_filter(mols, chemical_group=cg)
+        df_results[f"has_{group}"] = np.asarray(matched, dtype=bool)
     return df_results
+
+
+def apply_property_windows(mols: List[Chem.Mol], args) -> pd.DataFrame:
+    """Enforce physchem property windows via RDKit descriptors + medchem.rules.in_range.
+
+    medchem has no all-in-one property-window object, so we compute the standard
+    descriptors with RDKit and gate each with `mc.rules.in_range`.
+    """
+    from rdkit.Chem import Descriptors, Crippen
+    from rdkit.Chem import rdMolDescriptors as rd
+
+    print("\nApplying property windows...")
+    in_range = mc.rules.in_range
+    passes = []
+    for mol in tqdm(mols, desc="Properties"):
+        ok = True
+        if args.mw_range:
+            lo, hi = map(float, args.mw_range.split(","))
+            ok &= in_range(Descriptors.MolWt(mol), min_val=lo, max_val=hi)
+        if args.logp_range:
+            lo, hi = map(float, args.logp_range.split(","))
+            ok &= in_range(Crippen.MolLogP(mol), min_val=lo, max_val=hi)
+        if args.tpsa_max is not None:
+            ok &= in_range(rd.CalcTPSA(mol), max_val=args.tpsa_max)
+        if args.hbd_max is not None:
+            ok &= in_range(rd.CalcNumLipinskiHBD(mol), max_val=args.hbd_max)
+        if args.hba_max is not None:
+            ok &= in_range(rd.CalcNumLipinskiHBA(mol), max_val=args.hba_max)
+        if args.rotatable_bonds_max is not None:
+            ok &= in_range(rd.CalcNumRotatableBonds(mol), max_val=args.rotatable_bonds_max)
+        passes.append(bool(ok))
+    return pd.DataFrame({"passes_properties": passes})
 
 
 def generate_summary(df: pd.DataFrame, output_file: Path):
@@ -229,8 +236,8 @@ def generate_summary(df: pd.DataFrame, output_file: Path):
         if alert_cols:
             f.write("STRUCTURAL ALERTS:\n")
             f.write("-" * 40 + "\n")
-            if "has_common_alerts" in df.columns:
-                n_clean = (~df["has_common_alerts"]).sum()
+            if "passes_common_alerts" in df.columns:
+                n_clean = df["passes_common_alerts"].sum()
                 pct = 100 * n_clean / len(df)
                 f.write(f"  No common alerts: {n_clean} ({pct:.1f}%)\n")
             if "passes_nibr" in df.columns:
@@ -241,8 +248,6 @@ def generate_summary(df: pd.DataFrame, output_file: Path):
                 n_pass = df["passes_lilly"].sum()
                 pct = 100 * n_pass / len(df)
                 f.write(f"  Passes Lilly: {n_pass} ({pct:.1f}%)\n")
-                avg_demerits = df["lilly_demerits"].mean()
-                f.write(f"  Average Lilly demerits: {avg_demerits:.1f}\n")
             if "passes_pains" in df.columns:
                 n_pass = df["passes_pains"].sum()
                 pct = 100 * n_pass / len(df)
@@ -250,24 +255,12 @@ def generate_summary(df: pd.DataFrame, output_file: Path):
             f.write("\n")
 
         # Complexity
-        if "complexity_score" in df.columns:
+        if "passes_complexity" in df.columns:
             f.write("COMPLEXITY:\n")
             f.write("-" * 40 + "\n")
-            avg_complexity = df["complexity_score"].mean()
-            f.write(f"  Average complexity: {avg_complexity:.1f}\n")
-            if "passes_complexity" in df.columns:
-                n_pass = df["passes_complexity"].sum()
-                pct = 100 * n_pass / len(df)
-                f.write(f"  Within threshold: {n_pass} ({pct:.1f}%)\n")
-            f.write("\n")
-
-        # Constraints
-        if "passes_constraints" in df.columns:
-            f.write("CONSTRAINTS:\n")
-            f.write("-" * 40 + "\n")
-            n_pass = df["passes_constraints"].sum()
+            n_pass = df["passes_complexity"].sum()
             pct = 100 * n_pass / len(df)
-            f.write(f"  Passes all constraints: {n_pass} ({pct:.1f}%)\n")
+            f.write(f"  Within complexity limit: {n_pass} ({pct:.1f}%)\n")
             f.write("\n")
 
         # Overall pass rate
@@ -306,17 +299,21 @@ def main():
     parser.add_argument("--lilly", action="store_true", help="Apply Lilly demerits filter")
     parser.add_argument("--pains", action="store_true", help="Apply PAINS filter")
 
-    # Complexity
-    parser.add_argument("--complexity", type=float, help="Maximum complexity threshold")
-    parser.add_argument("--complexity-method", default="bertz", choices=["bertz", "whitlock", "barone"],
-                       help="Complexity calculation method")
+    # Complexity (percentile threshold against a reference set)
+    parser.add_argument("--complexity", action="store_true",
+                        help="Apply the complexity filter (percentile threshold)")
+    parser.add_argument("--complexity-method", default="bertz",
+                        choices=["bertz", "whitlock", "barone", "smcm", "twc"],
+                        help="Complexity metric (default: bertz)")
+    parser.add_argument("--complexity-limit", default="99",
+                        help="Percentile limit against the reference set (default: 99)")
 
-    # Constraints
+    # Property windows (RDKit descriptors + medchem.rules.in_range)
     parser.add_argument("--mw-range", help="Molecular weight range (e.g., 200,500)")
-    parser.add_argument("--logp-range", help="LogP range (e.g., -2,5)")
+    parser.add_argument("--logp-range", help="cLogP range (e.g., -2,5)")
     parser.add_argument("--tpsa-max", type=float, help="Maximum TPSA")
-    parser.add_argument("--hbd-max", type=int, help="Maximum H-bond donors")
-    parser.add_argument("--hba-max", type=int, help="Maximum H-bond acceptors")
+    parser.add_argument("--hbd-max", type=int, help="Maximum Lipinski H-bond donors")
+    parser.add_argument("--hba-max", type=int, help="Maximum Lipinski H-bond acceptors")
     parser.add_argument("--rotatable-bonds-max", type=int, help="Maximum rotatable bonds")
 
     # Chemical groups
@@ -360,29 +357,16 @@ def main():
 
     # Complexity
     if args.complexity:
-        df_complexity = apply_complexity_filter(mols, args.complexity, args.complexity_method)
+        df_complexity = apply_complexity_filter(
+            mols, args.complexity_method, args.complexity_limit, args.n_jobs
+        )
         result_dfs.append(df_complexity)
 
-    # Constraints
-    constraints = {}
-    if args.mw_range:
-        mw_min, mw_max = map(float, args.mw_range.split(","))
-        constraints["mw_range"] = (mw_min, mw_max)
-    if args.logp_range:
-        logp_min, logp_max = map(float, args.logp_range.split(","))
-        constraints["logp_range"] = (logp_min, logp_max)
-    if args.tpsa_max:
-        constraints["tpsa_max"] = args.tpsa_max
-    if args.hbd_max:
-        constraints["hbd_max"] = args.hbd_max
-    if args.hba_max:
-        constraints["hba_max"] = args.hba_max
-    if args.rotatable_bonds_max:
-        constraints["rotatable_bonds_max"] = args.rotatable_bonds_max
-
-    if constraints:
-        df_constraints = apply_constraints(mols, constraints, args.n_jobs)
-        result_dfs.append(df_constraints)
+    # Property windows
+    if any([args.mw_range, args.logp_range, args.tpsa_max,
+            args.hbd_max, args.hba_max, args.rotatable_bonds_max]):
+        df_props = apply_property_windows(mols, args)
+        result_dfs.append(df_props)
 
     # Chemical groups
     if args.groups:

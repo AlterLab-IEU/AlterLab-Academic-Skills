@@ -39,19 +39,27 @@ z = zarr.zeros((10000, 10000), chunks=(1000, 1000))  # Square chunks
 
 ## Sharding for Large-Scale Storage
 
-When arrays have millions of small chunks, use sharding to group chunks into larger storage objects:
+When arrays have millions of small chunks, use sharding (a Zarr v3 feature) to group chunks
+into larger storage objects. `shards` is the storage-object size; `chunks` is the inner,
+independently-decodable unit. Each shard dimension must be a whole multiple of the chunk dimension.
 
 ```python
-from zarr.codecs import ShardingCodec, BytesCodec
-from zarr.codecs.blosc import BloscCodec
+import zarr
 
-# Create array with sharding
+# Create array with sharding — one storage object per (1000, 1000) shard,
+# each containing 10x10 = 100 inner (100, 100) chunks.
 z = zarr.create_array(
     store='data.zarr',
     shape=(100000, 100000),
-    chunks=(100, 100),  # Small chunks for access
-    shards=(1000, 1000),  # Groups 100 chunks per shard
-    dtype='f4'
+    chunks=(100, 100),    # inner, independently-decodable unit
+    shards=(1000, 1000),  # storage object groups 100 chunks per shard
+    dtype='f4',
+)
+
+# Or let Zarr size the shards automatically:
+z_auto = zarr.create_array(
+    store='data2.zarr', shape=(100000, 100000),
+    chunks=(100, 100), shards="auto", dtype='f4',
 )
 ```
 
@@ -64,62 +72,65 @@ z = zarr.create_array(
 
 ## Compression
 
-Zarr applies compression per chunk to reduce storage while maintaining fast access.
+Zarr applies compression per chunk to reduce storage while maintaining fast access. On
+`create_array`, pass codecs via the `compressors=` keyword (a single codec or a list).
+The `codecs=` keyword does **not** exist on `create_array` in Zarr v3.
 
 ### Configuring Compression
 
 ```python
-from zarr.codecs.blosc import BloscCodec
-from zarr.codecs import GzipCodec, ZstdCodec
+from zarr.codecs import BloscCodec, BloscShuffle, GzipCodec
 
-# Default: Blosc with Zstandard
-z = zarr.zeros((1000, 1000), chunks=(100, 100))  # Uses default compression
+# Default (no compressors specified): Zstandard (ZstdCodec)
+z = zarr.create_array(store='default.zarr', shape=(1000, 1000),
+                      chunks=(100, 100), dtype='f4')
 
-# Configure Blosc codec
+# Configure Blosc codec. shuffle accepts the BloscShuffle enum
+# (.noshuffle / .shuffle / .bitshuffle); the equivalent strings are also accepted.
 z = zarr.create_array(
     store='data.zarr',
     shape=(1000, 1000),
     chunks=(100, 100),
     dtype='f4',
-    codecs=[BloscCodec(cname='zstd', clevel=5, shuffle='shuffle')]
+    compressors=BloscCodec(cname='zstd', clevel=5, shuffle=BloscShuffle.shuffle),
 )
 
-# Available Blosc compressors: 'blosclz', 'lz4', 'lz4hc', 'snappy', 'zlib', 'zstd'
+# Available Blosc compressors (cname): 'blosclz', 'lz4', 'lz4hc', 'zlib', 'zstd'
 
 # Use Gzip compression
 z = zarr.create_array(
-    store='data.zarr',
+    store='gz.zarr',
     shape=(1000, 1000),
     chunks=(100, 100),
     dtype='f4',
-    codecs=[GzipCodec(level=6)]
+    compressors=GzipCodec(level=6),
 )
 
 # Disable compression
 z = zarr.create_array(
-    store='data.zarr',
+    store='raw.zarr',
     shape=(1000, 1000),
     chunks=(100, 100),
     dtype='f4',
-    codecs=[BytesCodec()]  # No compression
+    compressors=None,  # no compression
 )
 ```
 
 ### Compression Performance Tips
 
-- **Blosc** (default): Fast compression/decompression, good for interactive workloads
-- **Zstandard**: Better compression ratios, slightly slower than LZ4
-- **Gzip**: Maximum compression, slower performance
-- **LZ4**: Fastest compression, lower ratios
-- **Shuffle**: Enable shuffle filter for better compression on numeric data
+- **Zstandard** (default): strong ratio with good speed; the sensible default for scientific data
+- **Blosc**: a meta-compressor (wraps zstd/lz4/etc.) with byte-shuffle filters; fast for interactive workloads
+- **Gzip**: maximum compatibility / high ratio, slower performance
+- **LZ4** (via Blosc `cname='lz4'`): fastest compression, lower ratios
+- **Shuffle**: enable the shuffle filter for better compression on numeric data
 
 ```python
-# Optimal for numeric scientific data
-codecs=[BloscCodec(cname='zstd', clevel=5, shuffle='shuffle')]
+# Balanced default for numeric scientific data
+compressors=BloscCodec(cname='zstd', clevel=5, shuffle=BloscShuffle.shuffle)
 
 # Optimal for speed
-codecs=[BloscCodec(cname='lz4', clevel=1)]
+compressors=BloscCodec(cname='lz4', clevel=1)
 
 # Optimal for compression ratio
-codecs=[GzipCodec(level=9)]
+compressors=GzipCodec(level=9)
 ```

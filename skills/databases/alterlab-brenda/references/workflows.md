@@ -7,21 +7,26 @@ inventory and `capabilities.md` for per-capability snippets.
 
 Find suitable enzymes for a specific substrate:
 
+Note: `getKmValue` entries carry no `ecNumber`, so to recover EC numbers and
+reaction equations for a substrate, discover via reaction data (`search_by_pattern`),
+then pull kinetics with `get_km_values`.
+
 ```python
 from scripts.brenda_client import get_km_values
-from scripts.brenda_queries import search_enzymes_by_substrate, compare_substrate_affinity
+from scripts.brenda_queries import search_by_pattern
 
-# Search for enzymes that act on substrate
+# Discover enzymes whose reactions mention the substrate (these entries have ecNumber)
 substrate = "2-phenylethanol"
-enzymes = search_enzymes_by_substrate(substrate, limit=15)
+hits = search_by_pattern(substrate, limit=15)
 
-print(f"Found {len(enzymes)} enzymes for {substrate}")
-for enzyme in enzymes:
-    print(f"EC {enzyme['ec_number']}: {enzyme['enzyme_name']}")
+print(f"Found {len(hits)} reaction hits for {substrate}")
+for hit in hits:
+    print(f"EC {hit['ec_number']} ({hit['organism']}): {hit['reaction']}")
 
-# Get kinetic data for best candidates
-if enzymes:
-    best_ec = enzymes[0]['ec_number']
+# Get kinetic data for the first candidate with an EC number
+candidates = [h for h in hits if h['ec_number']]
+if candidates:
+    best_ec = candidates[0]['ec_number']
     km_data = get_km_values(best_ec, substrate=substrate)
 
     if km_data:
@@ -127,21 +132,22 @@ from scripts.brenda_visualization import plot_kinetic_parameters
 ec_number = "1.1.1.1"
 km_data = get_km_values(ec_number)
 
-# Analyze kinetic parameters
+# Analyze kinetic parameters. parse_km_entry only sets 'km_value_numeric'
+# when the raw kmValue field contained a parseable number, so filter on it.
 all_entries = []
 for entry in km_data:
     parsed = parse_km_entry(entry)
-    if parsed['km_value']:
+    if parsed.get('km_value_numeric') is not None:
         all_entries.append(parsed)
 
 print(f"Analyzed {len(all_entries)} kinetic entries")
 
-# Find best kinetic performer
-best_km = min(all_entries, key=lambda x: x['km_value'])
+# Find best kinetic performer (lowest Km = highest affinity)
+best_km = min(all_entries, key=lambda x: x['km_value_numeric'])
 print(f"\nBest kinetic performer:")
-print(f"  Organism: {best_km['organism']}")
-print(f"  Substrate: {best_km['substrate']}")
-print(f"  Km: {best_km['km_value']}")
+print(f"  Organism: {best_km.get('organism')}")
+print(f"  Substrate: {best_km.get('substrate')}")
+print(f"  Km: {best_km['km_value_numeric']}")
 
 # Get modeling parameters
 model_data = get_modeling_parameters(ec_number, substrate=best_km['substrate'])

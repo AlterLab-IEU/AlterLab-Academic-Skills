@@ -34,11 +34,11 @@
     {
       "id": "batched-delayed-aggregations",
       "prompt": "I want to compute the mean of one column, the std of another, and the sum of a third over my huge Vaex DataFrame, but I'd rather not pass over the data three separate times. Can these run in a single scan?",
-      "expected_output": "Invokes alterlab-vaex for batched lazy aggregations: requests each statistic with delay=True (df.x.mean(delay=True), df.y.std(delay=True), df.z.sum(delay=True)) and executes them together with vaex.execute([...]) so they share a single pass over the data rather than three scans.",
+      "expected_output": "Invokes alterlab-vaex for batched lazy aggregations: requests each statistic with delay=True (df.mean(df.x, delay=True), df.std(df.y, delay=True), df.sum(df.z, delay=True)), calls df.execute() once to run them in a single pass, then collects each result with .get() rather than scanning the data three times.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "delay=True" },
-        { "type": "behavior", "value": "Batches the multiple aggregations with delay=True and a single vaex.execute call so they share one pass over the data." }
+        { "type": "behavior", "value": "Batches the multiple aggregations with delay=True and triggers a single pass with df.execute(), retrieving each result via .get(), so they share one scan over the data." }
       ]
     },
     {

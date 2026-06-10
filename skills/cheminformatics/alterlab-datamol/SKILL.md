@@ -35,6 +35,8 @@ Guide users to install datamol:
 uv pip install datamol
 ```
 
+Examples here are verified against **datamol 0.12.x** (pulls in RDKit automatically). The descriptor key names below are stable in this line; pin if you depend on them: `uv pip install 'datamol>=0.12,<0.13'`.
+
 **Import convention**:
 ```python
 import datamol as dm
@@ -63,11 +65,11 @@ if mol is None:
 
 **Converting molecules to SMILES**:
 ```python
-# Canonical SMILES
+# Canonical, isomeric SMILES (both default True — stereochemistry is kept)
 smiles = dm.to_smiles(mol)
 
-# Isomeric SMILES (includes stereochemistry)
-smiles = dm.to_smiles(mol, isomeric=True)
+# Drop stereochemistry explicitly if needed
+flat_smiles = dm.to_smiles(mol, isomeric=False)
 
 # Other formats
 inchi = dm.to_inchi(mol)
@@ -146,8 +148,12 @@ Refer to `references/descriptors_viz.md` for detailed descriptor documentation.
 ```python
 # Get standard descriptor set
 descriptors = dm.descriptors.compute_many_descriptors(mol)
-# Returns: {'mw': 46.07, 'logp': -0.03, 'hbd': 1, 'hba': 1,
-#           'tpsa': 20.23, 'n_aromatic_atoms': 0, ...}
+# Returns ~22 keys. Note datamol's naming (NOT rdkit's):
+#   {'mw': 46.04, 'clogp': -0.0, 'n_lipinski_hbd': 1, 'n_lipinski_hba': 1,
+#    'tpsa': 20.23, 'n_rotatable_bonds': 0, 'n_aromatic_rings': 0, 'qed': ...,
+#    'fsp3': ..., 'sas': ..., 'n_rings': 0, ...}
+# Key gotcha: logP is 'clogp', donors/acceptors are 'n_lipinski_hbd'/'n_lipinski_hba'.
+# There is no 'logp', 'hbd', 'hba', or 'n_aromatic_atoms' key in this dict.
 ```
 
 **Batch descriptor computation** (recommended for datasets):
@@ -176,14 +182,14 @@ n_rigid = dm.descriptors.n_rigid_bonds(mol)
 
 **Drug-likeness filtering (Lipinski's Rule of Five)**:
 ```python
-# Filter compounds
+# Filter compounds (use datamol's exact key names)
 def is_druglike(mol):
     desc = dm.descriptors.compute_many_descriptors(mol)
     return (
         desc['mw'] <= 500 and
-        desc['logp'] <= 5 and
-        desc['hbd'] <= 5 and
-        desc['hba'] <= 10
+        desc['clogp'] <= 5 and
+        desc['n_lipinski_hbd'] <= 5 and
+        desc['n_lipinski_hba'] <= 10
     )
 
 druglike_mols = [mol for mol in mols if is_druglike(mol)]
@@ -513,14 +519,15 @@ desc_df = dm.descriptors.batch_compute_many_descriptors(
     progress=True
 )
 
-# 4. Filter by drug-likeness
+# 4. Filter by drug-likeness (batch_compute_many_descriptors uses the same keys
+#    as compute_many_descriptors: clogp, n_lipinski_hbd, n_lipinski_hba)
 druglike = (
     (desc_df['mw'] <= 500) &
-    (desc_df['logp'] <= 5) &
-    (desc_df['hbd'] <= 5) &
-    (desc_df['hba'] <= 10)
+    (desc_df['clogp'] <= 5) &
+    (desc_df['n_lipinski_hbd'] <= 5) &
+    (desc_df['n_lipinski_hba'] <= 10)
 )
-filtered_df = df[druglike]
+filtered_df = df[druglike.values]
 
 # 5. Cluster and select diverse subset
 diverse_mols = dm.pick_diverse(
@@ -569,12 +576,9 @@ for scaffold, group in sar_df.groupby('scaffold'):
 ### Virtual Screening Pipeline
 
 ```python
-# 1. Generate fingerprints for query and library
-query_fps = [dm.to_fp(mol) for mol in query_actives]
-library_fps = [dm.to_fp(mol) for mol in library_mols]
-
-# 2. Calculate similarities
-from scipy.spatial.distance import cdist
+# 1. Calculate Tanimoto distances between query actives and the library.
+#    dm.cdist takes the molecules directly (it fingerprints internally),
+#    returning an (n_query, n_library) distance matrix.
 import numpy as np
 
 distances = dm.cdist(query_actives, library_mols, n_jobs=-1)

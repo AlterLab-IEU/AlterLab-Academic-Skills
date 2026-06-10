@@ -14,12 +14,13 @@ vibe check — do not assert that a reference is real because it *looks* plausib
 Steps:
 1. **Collect** — Parse the references from $ARGUMENTS (a `.bib` file, a manuscript
    path, or a pasted list). If nothing was given, ask for the references or file.
-2. **Existence check** — For each reference resolve it against Crossref, OpenAlex,
-   Semantic Scholar, and arXiv (via the bundled academic MCP servers when enabled,
-   otherwise the documented `requests`/WebSearch fallback). Match title and authors
-   with a Levenshtein similarity threshold (≥ 0.70) and resolve any DOI / arXiv ID.
+2. **Existence check** — Run `scripts/verify_citations.py` to resolve each reference
+   against Crossref, OpenAlex, Semantic Scholar, and arXiv (keyless public APIs via
+   WebFetch / `requests` / stdlib `urllib`). Match title and authors with the difflib
+   `SequenceMatcher` ratio threshold (≥ 0.70) and resolve any DOI / arXiv ID.
    Flag anything that matches nothing as **likely hallucinated**.
-3. **Retraction screen** — Flag retracted or expression-of-concern items.
+3. **Retraction screen** — Flag items marked retracted in Crossref (`update-to`) or
+   OpenAlex (`is_retracted`).
 4. **Claim faithfulness** — Where a claim is tied to a citation, check the claim is
    actually supported by that source and map any mismatch to the
    TF / PAC / IH / PH / SH taxonomy.
@@ -27,5 +28,6 @@ Steps:
    retracted), the resolver that confirmed it, and the matched DOI/ID. Summarize how
    many of N citations could not be verified.
 
-Degrade gracefully and say so explicitly when no MCP server or network is available
-(see `references/mcp_setup.md` for the fallback contract).
+Degrade gracefully and say so explicitly when the network is unavailable: the script
+emits `unverified` verdicts (never a silent pass), and you should fall back to a manual
+WebSearch pass as the SKILL.md "Graceful Degradation" section describes.

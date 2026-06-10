@@ -87,8 +87,8 @@ Use isolation principles:
 ## Quick Start
 
 ```python
-from aeon.anomaly_detection import STOMP
 import numpy as np
+from aeon.anomaly_detection.series.distance_based import STOMP
 
 # Create time series with anomaly
 y = np.concatenate([

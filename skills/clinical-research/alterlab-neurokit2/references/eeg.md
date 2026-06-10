@@ -11,12 +11,11 @@ Analyze electroencephalography (EEG) signals for frequency band power, channel q
 Compute power across standard frequency bands for specified channels.
 
 ```python
-power = nk.eeg_power(eeg_data, sampling_rate=250, channels=['Fz', 'Cz', 'Pz'],
-                     frequency_bands={'Delta': (0.5, 4),
-                                     'Theta': (4, 8),
-                                     'Alpha': (8, 13),
-                                     'Beta': (13, 30),
-                                     'Gamma': (30, 45)})
+# eeg_power computes power for every channel in the input and has no `channels` argument;
+# subset channels upstream (on the MNE Raw/Epochs or array). The band argument is the
+# singular `frequency_band`, a list of (low, high) tuples or band-name strings.
+power = nk.eeg_power(eeg_data, sampling_rate=250,
+                     frequency_band=[(0.5, 4), (4, 8), (8, 13), (13, 30), (30, 45)])
 ```
 
 **Standard frequency bands:**
@@ -27,8 +26,9 @@ power = nk.eeg_power(eeg_data, sampling_rate=250, channels=['Fz', 'Cz', 'Pz'],
 - **Gamma (30-45 Hz)**: Cognitive processing, binding
 
 **Returns:**
-- DataFrame with power values for each channel × frequency band combination
-- Columns: `Channel_Band` (e.g., 'Fz_Alpha', 'Cz_Beta')
+- DataFrame with one row per channel (a `Channel` column) and one column per frequency band
+- Band columns are named by band when band-name strings are passed (e.g., `Alpha`, `Beta`),
+  or `Hz_<low>_<high>` when (low, high) tuples are passed
 
 **Use cases:**
 - Resting state analysis

@@ -104,7 +104,7 @@ This project's own paper contained a Mashup Fabrication (Pattern #3):
 |-----------|--------------------|-----------------------------|
 | Scope | 6 major ethical dimensions (AI disclosure, attribution, dual use, etc.) | Focused: references + citations + data |
 | Verification depth | Spot-check 20% of references | **100% full verification** |
-| Verification method | Format and logic checks | **WebSearch item-by-item cross-referencing** |
+| Verification method | Format and logic checks | **Deterministic script resolution (verify_citations.py / claim_faithfulness.py), WebSearch fallback** |
 | Trigger timing | alterlab-deep-research Phase 5 | pipeline Stage 2.5 + Stage 4.5 |
 | Verdict | CLEARED / CONDITIONAL / BLOCKED | **PASS / FAIL (with correction list)** |
 

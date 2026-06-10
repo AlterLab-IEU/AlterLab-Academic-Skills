@@ -33,111 +33,81 @@ import pufferlib.vector
 # the callable that builds your env (a PufferEnv class, or a function /
 # functools.partial that returns one).
 
-# Automatic vectorization
+# Native PufferEnv (default backend=PufferEnv)
 env = pufferlib.vector.make(env_creator, num_envs=256)
 
-# With explicit configuration
+# With explicit configuration. envs-per-worker is derived as num_envs // num_workers.
 env = pufferlib.vector.make(
     env_creator,
     num_envs=256,
     num_workers=8,
-    envs_per_worker=32
+    backend=pufferlib.vector.Multiprocessing,
 )
 ```
 
-### Manual Vectorization
+### Choosing a backend
+
+The backends live in `pufferlib.vector` (`Serial`, `Multiprocessing`, `Ray`) — there is **no `pufferlib.vectorization` module**. In normal use you do not instantiate them directly; you pass the class as the `backend=` argument to `pufferlib.vector.make`:
 
 ```python
-from pufferlib import PufferEnv
-from pufferlib.vectorization import Serial, Multiprocessing
+import pufferlib.vector
 
-# Serial vectorization (single process)
-vec_env = Serial(
-    env_creator=lambda: MyEnvironment(),
-    num_envs=16
-)
+# Serial — single process, easy debugging
+env = pufferlib.vector.make(
+    MyEnvironment, num_envs=16, backend=pufferlib.vector.Serial)
 
-# Multiprocessing vectorization
-vec_env = Multiprocessing(
-    env_creator=lambda: MyEnvironment(),
-    num_envs=256,
-    num_workers=8
-)
+# Multiprocessing — parallel workers (required for wrapped Gymnasium/PettingZoo envs)
+env = pufferlib.vector.make(
+    MyEnvironment, num_envs=256, num_workers=8,
+    backend=pufferlib.vector.Multiprocessing)
+
+# Native (default) — a native PufferEnv that handles per-process batching itself
+env = pufferlib.vector.make(MyNativePufferEnv, num_envs=256)  # backend=PufferEnv
 ```
 
 ## Vectorization Modes
 
-### Serial Vectorization
+`pufferlib.vector.make` accepts only these extra kwargs: `num_workers`, `batch_size`, `zero_copy`, `overwork`, `backend` (plus `num_envs`, `seed`, `env_args`, `env_kwargs`). Passing anything else (e.g. `envs_per_worker`, `mode`, `surplus_envs`) raises `APIUsageError`.
 
-Best for debugging and lightweight environments:
+### Serial
 
-```python
-from pufferlib.vectorization import Serial
-
-vec_env = Serial(
-    env_creator=env_creator_fn,
-    num_envs=16
-)
-
-# All environments run in main process
-# No multiprocessing overhead
-# Easier debugging with standard tools
-```
-
-**When to use:**
-- Development and debugging
-- Very fast environments (< 1μs per step)
-- Small number of environments (< 32)
-- Single-threaded profiling
-
-### Multiprocessing Vectorization
-
-Best for most production use cases:
+Best for debugging and lightweight environments — all envs run in the main process:
 
 ```python
-from pufferlib.vectorization import Multiprocessing
+import pufferlib.vector
 
-vec_env = Multiprocessing(
-    env_creator=env_creator_fn,
-    num_envs=256,
-    num_workers=8,
-    envs_per_worker=32
-)
-
-# Parallel execution across workers
-# True parallelism for CPU-bound environments
-# Scales to hundreds of environments
+env = pufferlib.vector.make(
+    env_creator, num_envs=16, backend=pufferlib.vector.Serial)
 ```
 
-**When to use:**
-- Production training
-- CPU-intensive environments
-- Large-scale parallel simulation
-- Maximizing throughput
+**When to use:** development/debugging, very fast envs, small env counts, single-threaded profiling.
 
-### Async Vectorization
+### Multiprocessing
 
-For environments with variable step times:
+Best for most production use cases and required for wrapped Gymnasium/PettingZoo envs:
 
 ```python
-vec_env = Multiprocessing(
-    env_creator=env_creator_fn,
-    num_envs=256,
-    num_workers=8,
-    mode='async',
-    surplus_envs=32  # Simulate extra environments
-)
+import pufferlib.vector
 
-# Returns batches as soon as ready
-# Better GPU utilization
-# Handles variable environment speeds
+env = pufferlib.vector.make(
+    env_creator, num_envs=256, num_workers=8,
+    backend=pufferlib.vector.Multiprocessing)
 ```
 
-**When to use:**
-- Variable environment step times
-- Maximizing GPU utilization
-- Network-based environments
-- External simulators
+**When to use:** production training, CPU-intensive envs, large-scale parallel simulation.
+
+### Asynchronous batching (surplus envs)
+
+There is no `mode='async'` flag. Async-style behavior comes from setting
+`batch_size` smaller than `num_envs`: PufferLib simulates the surplus
+environments and returns the first `batch_size` agents that are ready, which
+improves GPU utilization with variable step times.
+
+```python
+env = pufferlib.vector.make(
+    env_creator, num_envs=256, batch_size=128, num_workers=8,
+    backend=pufferlib.vector.Multiprocessing)  # 128 surplus envs hide stragglers
+```
 
 ## Optimizing Vectorization Performance
 
@@ -159,22 +129,20 @@ num_workers = num_cpus
 num_workers = num_cpus // 2  # Physical cores only
 ```
 
-### Envs Per Worker
+### Envs per worker (derived, not a kwarg)
+
+PufferLib computes envs-per-worker as `num_envs // num_workers` — there is no
+`envs_per_worker` argument. Tune the ratio by choosing `num_envs` and
+`num_workers`:
 
 ```python
-# Fast environments (< 10μs per step)
-envs_per_worker = 64  # More envs per worker
+# Fast envs -> pack many per worker (high num_envs / num_workers ratio)
+env = pufferlib.vector.make(env_creator, num_envs=512, num_workers=8,    # 64 each
+    backend=pufferlib.vector.Multiprocessing)
 
-# Medium environments (10-100μs per step)
-envs_per_worker = 32  # Balanced
-
-# Slow environments (> 100μs per step)
-envs_per_worker = 16  # Fewer envs per worker
-
-# Calculate from target batch size
-batch_size = 32768
-num_workers = 8
-envs_per_worker = batch_size // num_workers
+# Slow envs -> fewer per worker
+env = pufferlib.vector.make(env_creator, num_envs=128, num_workers=8,    # 16 each
+    backend=pufferlib.vector.Multiprocessing)
 ```
 
 ### Batch Size Tuning
@@ -205,37 +173,34 @@ PufferLib uses shared memory for zero-copy observation passing:
 ```python
 import numpy as np
 import gymnasium
-from multiprocessing import shared_memory
 
 class OptimizedEnv(PufferEnv):
     def __init__(self, buf=None):
-        # Define spaces and num_agents BEFORE super().__init__(buf)
-        self.single_observation_space = gymnasium.spaces.Dict({
-            'obs': gymnasium.spaces.Box(
-                low=0, high=255, shape=(84, 84, 3), dtype=np.uint8),
-        })
+        # Define spaces and num_agents BEFORE super().__init__(buf).
+        # Native obs space must be a Box.
+        self.single_observation_space = gymnasium.spaces.Box(
+            low=0, high=255, shape=(84, 84, 3), dtype=np.uint8)
         self.single_action_space = gymnasium.spaces.Discrete(4)
         self.num_agents = 1
 
+        # super().__init__ calls set_buffers, which allocates the shared buffers
+        # self.observations / self.rewards / self.terminals / self.truncations.
         super().__init__(buf)
 
-        # Observations written directly to shared memory
-        self._obs_buffer = None
-
-    def reset(self):
-        # Write to shared memory in-place
-        if self._obs_buffer is None:
-            self._obs_buffer = np.zeros((84, 84, 3), dtype=np.uint8)
-
-        self._render_to_buffer(self._obs_buffer)
-        return {'obs': self._obs_buffer}
+    def reset(self, seed=None):
+        # Write directly into the shared observation buffer (no allocation).
+        self._render_to_buffer(self.observations)
+        return self.observations, []
 
     def step(self, action):
-        # In-place updates only
         self._update_state(action)
-        self._render_to_buffer(self._obs_buffer)
+        self._render_to_buffer(self.observations)  # in-place into shared buffer
 
-        return {'obs': self._obs_buffer}, reward, done, info
+        # Write reward/flags into the shared buffers, then return them.
+        self.rewards[:] = self._reward()
+        self.terminals[:] = self._terminated()
+        self.truncations[:] = self._truncated()
+        return self.observations, self.rewards, self.terminals, self.truncations, []
 ```
 
 ### Zero-Copy Patterns
@@ -257,75 +222,55 @@ def get_observation(self):
 def step(self, action):
     new_state = self.state + action  # Allocates
     self.state = new_state
-    return obs, reward, done, info
+    return obs, reward, terminal, truncation, info
 
 # GOOD: In-place operations
 def step(self, action):
     self.state += action  # In-place
-    return obs, reward, done, info
+    return obs, reward, terminal, truncation, info
 ```
 
 ## Advanced Vectorization
 
-### Custom Vectorization
+### Wrapping a vecenv
+
+There is no public `VectorEnv` base class to subclass. To add custom behavior,
+wrap the object returned by `pufferlib.vector.make` and delegate `reset`/`step`:
 
 ```python
-from pufferlib.vectorization import VectorEnv
+import pufferlib.vector
 
-class CustomVectorEnv(VectorEnv):
-    """Custom vectorization implementation."""
+class CustomVecWrapper:
+    """Illustrative wrapper around a PufferLib vecenv."""
 
-    def __init__(self, env_creator, num_envs, **kwargs):
-        super().__init__()
+    def __init__(self, vecenv):
+        self.vecenv = vecenv
+        self.num_envs = vecenv.num_envs
+        self.single_observation_space = vecenv.single_observation_space
+        self.single_action_space = vecenv.single_action_space
 
-        self.envs = [env_creator() for _ in range(num_envs)]
-        self.num_envs = num_envs
-
-    def reset(self):
-        """Reset all environments."""
-        observations = [env.reset() for env in self.envs]
-        return self._stack_obs(observations)
+    def reset(self, seed=0):
+        return self.vecenv.reset(seed)
 
     def step(self, actions):
-        """Step all environments."""
-        results = [env.step(action) for env, action in zip(self.envs, actions)]
+        return self.vecenv.step(actions)  # delegate, then post-process as needed
 
-        obs, rewards, dones, infos = zip(*results)
-
-        return (
-            self._stack_obs(obs),
-            np.array(rewards),
-            np.array(dones),
-            list(infos)
-        )
-
-    def _stack_obs(self, observations):
-        """Stack observations into batch."""
-        return np.stack(observations, axis=0)
+vecenv = pufferlib.vector.make(
+    env_creator, num_envs=256, backend=pufferlib.vector.Multiprocessing)
+vecenv = CustomVecWrapper(vecenv)
 ```
 
-### Hierarchical Vectorization
+### Large-scale parallelism
 
-For very large-scale parallelism:
+PufferLib already packs `num_envs // num_workers` environments into each worker
+process, so a single `make` call covers the "hierarchical" case — you do not
+nest backends. Scale by raising `num_envs` and `num_workers`:
 
 ```python
-# Outer: Multiprocessing vectorization (8 workers)
-# Inner: Each worker runs serial vectorization (32 envs)
-# Total: 256 parallel environments
-
-def create_serial_vec_env():
-    return Serial(
-        env_creator=lambda: MyEnvironment(),
-        num_envs=32
-    )
-
-outer_vec_env = Multiprocessing(
-    env_creator=create_serial_vec_env,
-    num_envs=8,  # 8 serial vec envs
-    num_workers=8
-)
-
-# Total environments: 8 * 32 = 256
+# 256 envs across 8 workers => 32 envs per worker, handled internally.
+env = pufferlib.vector.make(
+    env_creator, num_envs=256, num_workers=8,
+    backend=pufferlib.vector.Multiprocessing)
 ```
 
 ## Multi-Agent Vectorization
@@ -354,30 +299,9 @@ env = pufferlib.vector.make(
 # Rewards: {agent_id: [batch_rewards]} for each agent
 ```
 
-### Custom Multi-Agent Vectorization
-
-```python
-class MultiAgentVectorEnv(VectorEnv):
-    def step(self, actions):
-        """
-        Args:
-            actions: Dict of {agent_id: [batch_actions]}
-
-        Returns:
-            observations: Dict of {agent_id: [batch_obs]}
-            rewards: Dict of {agent_id: [batch_rewards]}
-            dones: Dict of {agent_id: [batch_dones]}
-            infos: List of dicts
-        """
-        # Distribute actions to environments
-        env_actions = self._distribute_actions(actions)
-
-        # Step each environment
-        results = [env.step(act) for env, act in zip(self.envs, env_actions)]
-
-        # Collect and batch results
-        return self._batch_results(results)
-```
+Multi-agent vectorization is handled internally — you do not implement a custom
+vectorizer. Pass your multi-agent PufferEnv (or a PettingZooPufferEnv-wrapped
+env) to `pufferlib.vector.make` and PufferLib batches across agents and envs.
 
 ## Performance Monitoring
 
@@ -432,25 +356,24 @@ def analyze_bottlenecks(vec_env):
 ### Real-Time Monitoring
 
 ```python
-class MonitoredVectorEnv(VectorEnv):
-    """Vector environment with performance monitoring."""
+class MonitoredVecEnv:
+    """Wraps a PufferLib vecenv to log throughput (no base class to subclass)."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+    def __init__(self, vecenv):
+        self.vecenv = vecenv
+        self.num_envs = vecenv.num_envs
         self.step_times = []
         self.step_count = 0
 
+    def reset(self, seed=0):
+        return self.vecenv.reset(seed)
+
     def step(self, actions):
         start = time.perf_counter()
-
-        result = super().step(actions)
-
-        elapsed = time.perf_counter() - start
-        self.step_times.append(elapsed)
+        result = self.vecenv.step(actions)
+        self.step_times.append(time.perf_counter() - start)
         self.step_count += 1
 
-        # Log every 1000 steps
         if self.step_count % 1000 == 0:
             mean_time = np.mean(self.step_times[-1000:])
             sps = self.num_envs / mean_time
@@ -483,14 +406,16 @@ print(f"Speedup: {vec_sps / single_sps:.1f}x")
 ### Memory Issues
 
 ```python
-# Reduce number of environments
-num_envs = 128  # Instead of 256
+import pufferlib.vector
 
-# Reduce envs per worker
-envs_per_worker = 16  # Instead of 32
+# Reduce number of environments (lowers per-worker env count too)
+env = pufferlib.vector.make(
+    env_creator, num_envs=128, num_workers=8,   # was num_envs=256
+    backend=pufferlib.vector.Multiprocessing)
 
-# Use Serial mode for debugging
-vec_env = Serial(env_creator, num_envs=16)
+# Use the Serial backend for debugging (single process)
+env = pufferlib.vector.make(
+    env_creator, num_envs=16, backend=pufferlib.vector.Serial)
 ```
 
 ### Synchronization Problems
@@ -513,28 +438,16 @@ class ThreadSafeEnv(PufferEnv):
 
 ### Configuration Guidelines
 
+Tune `num_envs` and `num_workers` (envs-per-worker is the derived ratio):
+
 ```python
-# Start conservative
-config = {
-    'num_envs': 64,
-    'num_workers': 4,
-    'envs_per_worker': 16
-}
+# Start conservative, then scale up iteratively.
+vec_kwargs = dict(num_envs=64, num_workers=4)      # 16 envs/worker
+vec_kwargs = dict(num_envs=256, num_workers=8)     # 32 envs/worker
 
-# Scale up iteratively
-config = {
-    'num_envs': 256,     # 4x increase
-    'num_workers': 8,     # 2x increase
-    'envs_per_worker': 32 # 2x increase
-}
-
-# Monitor and adjust
-if sps < target_sps:
-    # Try increasing num_envs or num_workers
-    pass
-if memory_usage > threshold:
-    # Reduce num_envs or envs_per_worker
-    pass
+# Monitor and adjust:
+#   sps below target  -> raise num_envs and/or num_workers
+#   memory too high   -> lower num_envs (and consider cpu_offload in training)
 ```
 
 ### Environment Design
@@ -554,22 +467,24 @@ class EfficientEnv(PufferEnv):
         self._update_state_inplace(action)
         self._render_to_obs()
 
-        return self._obs, reward, done, info
+        return self._obs, reward, terminal, truncation, info
 ```
 
 ### Testing
 
 ```python
-# Test vectorization matches serial
-serial_env = Serial(env_creator, num_envs=4)
-vec_env = Multiprocessing(env_creator, num_envs=4, num_workers=2)
+import numpy as np
+import pufferlib.vector
 
-# Run parallel and verify results match
-serial_env.seed(42)
-vec_env.seed(42)
+# Verify the Multiprocessing backend matches Serial for the same seed.
+serial_env = pufferlib.vector.make(
+    env_creator, num_envs=4, seed=42, backend=pufferlib.vector.Serial)
+vec_env = pufferlib.vector.make(
+    env_creator, num_envs=4, num_workers=2, seed=42,
+    backend=pufferlib.vector.Multiprocessing)
 
-serial_obs = serial_env.reset()
-vec_obs = vec_env.reset()
+serial_obs, _ = serial_env.reset(seed=42)
+vec_obs, _ = vec_env.reset(seed=42)
 
 assert np.allclose(serial_obs, vec_obs), "Vectorization mismatch!"
 ```

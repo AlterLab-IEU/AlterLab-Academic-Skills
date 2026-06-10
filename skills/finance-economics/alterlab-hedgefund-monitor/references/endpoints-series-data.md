@@ -42,7 +42,7 @@ BASE = "https://data.financialresearch.gov/hf/v1"
 
 # Full history for a series
 resp = requests.get(f"{BASE}/series/timeseries", params={
-    "mnemonic": "FPF-ALLQHF_LEVERAGERATIO_GAVWMEAN"
+    "mnemonic": "FPF-STRATEGY_EQUITY_LEVERAGERATIO_GAVWMEAN"
 })
 data = resp.json()
 df = pd.DataFrame(data, columns=["date", "leverage"])
@@ -105,18 +105,22 @@ Array of `[date, value]` pairs where value = x - y at each date.
 
 ### Examples
 
+> Both `x` and `y` must be valid mnemonics **within this HFM API** (the `/hf/v1` namespace).
+> Mnemonics from OFR's other APIs (e.g. the `REPO-*` short-term funding series) are not
+> resolvable here and return `Invalid mnemonic`.
+
 ```python
-# Spread between two repo rates
+# Equity-minus-credit leverage gap (both are real FPF strategy mnemonics)
 resp = requests.get(f"{BASE}/calc/spread", params={
-    "x": "REPO-GCF_AR_G30-P",
-    "y": "REPO-TRI_AR_AG-P",
-    "start_date": "2019-01-01",
+    "x": "FPF-STRATEGY_EQUITY_LEVERAGERATIO_GAVWMEAN",
+    "y": "FPF-STRATEGY_CREDIT_LEVERAGERATIO_GAVWMEAN",
+    "start_date": "2015-01-01",
     "remove_nulls": "true"
 })
-spread = pd.DataFrame(resp.json(), columns=["date", "spread_bps"])
+spread = pd.DataFrame(resp.json(), columns=["date", "leverage_gap"])
 spread["date"] = pd.to_datetime(spread["date"])
 
-# Annual spread with mean aggregation
+# Same spread, resampled to annual with mean aggregation
 resp = requests.get(f"{BASE}/calc/spread", params={
     "x": "FPF-STRATEGY_EQUITY_LEVERAGERATIO_GAVWMEAN",
     "y": "FPF-STRATEGY_CREDIT_LEVERAGERATIO_GAVWMEAN",

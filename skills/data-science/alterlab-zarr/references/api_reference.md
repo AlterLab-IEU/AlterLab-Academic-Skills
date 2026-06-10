@@ -4,30 +4,37 @@ This reference provides a concise overview of commonly used Zarr functions, para
 
 ## Array Creation Functions
 
+> **Zarr v3 note:** the high-level creation functions take `compressors=` / `filters=`
+> (not the v2 `compressor=`). Passing `compressor=` to a `zarr_format=3` array raises a
+> `ValueError`. `compressors=None` disables compression; omitting it defaults to Zstandard.
+
 ### `zarr.zeros()` / `zarr.ones()` / `zarr.empty()`
 ```python
-zarr.zeros(shape, chunks=None, dtype='f8', store=None, compressor='default',
+zarr.zeros(shape, *, chunks=None, dtype='f8', store=None, compressors='auto',
            fill_value=0, order='C', filters=None)
 ```
-Create arrays filled with zeros, ones, or empty (uninitialized) values.
+Create arrays filled with zeros, ones, or empty (uninitialized) values. These thin wrappers
+forward their keyword arguments to `create_array`.
 
 **Key parameters:**
 - `shape`: Tuple defining array dimensions (e.g., `(1000, 1000)`)
-- `chunks`: Tuple defining chunk dimensions (e.g., `(100, 100)`), or `None` for no chunking
+- `chunks`: Tuple defining chunk dimensions (e.g., `(100, 100)`), `'auto'`, or `None`
 - `dtype`: NumPy data type (e.g., `'f4'`, `'i8'`, `'bool'`)
-- `store`: Storage location (string path, Store object, or `None` for memory)
-- `compressor`: Compression codec or `None` for no compression
+- `store`: Storage location (string path, Store object, or mapping; `None` for in-memory)
+- `compressors`: codec, list of codecs, `'auto'` (Zstandard default), or `None` to disable
 
-### `zarr.create_array()` / `zarr.create()`
+### `zarr.create_array()`
 ```python
-zarr.create_array(store, shape, chunks, dtype='f8', compressor='default',
-                  fill_value=0, order='C', filters=None, overwrite=False)
+zarr.create_array(store, *, shape, dtype='f8', chunks='auto', shards=None,
+                  compressors='auto', filters=None, fill_value=0, order='C',
+                  zarr_format=3, overwrite=False)
 ```
-Create a new array with explicit control over all parameters.
+Create a new array with explicit control over all parameters. Use `shards=` (Zarr v3) for
+sharded storage.
 
 ### `zarr.array()`
 ```python
-zarr.array(data, chunks=None, dtype=None, compressor='default', store=None)
+zarr.array(data, *, chunks='auto', dtype=None, compressors='auto', store=None)
 ```
 Create array from existing data (NumPy array, list, etc.).
 
@@ -40,8 +47,8 @@ z = zarr.array(data, chunks=(100, 100), store='data.zarr')
 
 ### `zarr.open_array()` / `zarr.open()`
 ```python
-zarr.open_array(store, mode='a', shape=None, chunks=None, dtype=None,
-                compressor='default', fill_value=0)
+zarr.open_array(store, *, mode='a', shape=None, chunks='auto', dtype=None,
+                compressors='auto', fill_value=0)
 ```
 Open existing array or create new one.
 
@@ -89,53 +96,53 @@ store.close()
 
 ### Cloud Storage (S3/GCS)
 ```python
-# S3
-import s3fs
-s3 = s3fs.S3FileSystem(anon=False)
-store = s3fs.S3Map(root='bucket/path/data.zarr', s3=s3)
+from zarr.storage import FsspecStore
 
-# GCS
-import gcsfs
-gcs = gcsfs.GCSFileSystem(project='my-project')
-store = gcsfs.GCSMap(root='bucket/path/data.zarr', gcs=gcs)
+# S3 (needs s3fs)
+store = FsspecStore.from_url("s3://bucket/path/data.zarr",
+                             storage_options={"anon": False})
+
+# GCS (needs gcsfs)
+store = FsspecStore.from_url("gs://bucket/path/data.zarr",
+                             storage_options={"project": "my-project"})
 ```
 
 ## Compression Codecs
 
-### Blosc Codec (Default)
+Pass codecs through the `compressors=` keyword on `create_array` (not `codecs=`).
+
+### Blosc Codec
 ```python
-from zarr.codecs.blosc import BloscCodec
+from zarr.codecs import BloscCodec, BloscShuffle
 
 codec = BloscCodec(
-    cname='zstd',      # Compressor: 'blosclz', 'lz4', 'lz4hc', 'snappy', 'zlib', 'zstd'
-    clevel=5,          # Compression level: 0-9
-    shuffle='shuffle'  # Shuffle filter: 'noshuffle', 'shuffle', 'bitshuffle'
+    cname='zstd',                  # 'blosclz', 'lz4', 'lz4hc', 'zlib', 'zstd'
+    clevel=5,                      # Compression level: 0-9
+    shuffle=BloscShuffle.shuffle,  # .noshuffle / .shuffle / .bitshuffle (strings also accepted)
 )
 
 z = zarr.create_array(store='data.zarr', shape=(1000, 1000), chunks=(100, 100),
-                      dtype='f4', codecs=[codec])
+                      dtype='f4', compressors=codec)
 ```
 
 **Blosc compressor characteristics:**
 - `'lz4'`: Fastest compression, lower ratio
-- `'zstd'`: Balanced (default), good ratio and speed
+- `'zstd'`: Balanced, good ratio and speed
 - `'zlib'`: Good compatibility, moderate performance
 - `'lz4hc'`: Better ratio than lz4, slower
-- `'snappy'`: Fast, moderate ratio
-- `'blosclz'`: Blosc's default
+- `'blosclz'`: Blosc's own default codec
 
 ### Other Codecs
 ```python
-from zarr.codecs import GzipCodec, ZstdCodec, BytesCodec
+from zarr.codecs import GzipCodec, ZstdCodec
 
-# Gzip compression (maximum ratio, slower)
+# Zstandard compression — the default when compressors is unspecified
+ZstdCodec(level=3)  # Level typically 1-22
+
+# Gzip compression (maximum compatibility / high ratio, slower)
 GzipCodec(level=6)  # Level 0-9
 
-# Zstandard compression
-ZstdCodec(level=3)  # Level 1-22
-
-# No compression
-BytesCodec()
+# No compression: pass compressors=None to create_array (do not pass an empty codec)
 ```
 
 ## Array Indexing and Selection
@@ -191,9 +198,9 @@ arr2 = root['group1/data']
 ```python
 root = zarr.group('data.zarr')
 
-# h5py-compatible methods
-dataset = root.create_dataset('data', shape=(1000, 1000), chunks=(100, 100))
-subgrp = root.require_group('subgroup')  # Create if doesn't exist
+# Create arrays / subgroups
+dataset = root.create_array(name='data', shape=(1000, 1000), chunks=(100, 100), dtype='f4')
+subgrp = root.require_group('subgroup')  # get-or-create
 
 # Visualize structure
 print(root.tree())
@@ -203,6 +210,9 @@ print(list(root.keys()))
 print(list(root.groups()))
 print(list(root.arrays()))
 ```
+
+> Zarr v3 removed the h5py-style `create_dataset` / `require_dataset` methods; use
+> `create_array`.
 
 ## Array Attributes and Metadata
 
@@ -234,30 +244,27 @@ del z.attrs['tags']
 ```python
 z = zarr.zeros((1000, 1000), chunks=(100, 100), dtype='f4')
 
-z.shape          # (1000, 1000)
-z.chunks         # (100, 100)
-z.dtype          # dtype('float32')
-z.size           # 1000000
-z.nbytes         # 4000000 (uncompressed size in bytes)
-z.nbytes_stored  # Actual compressed size on disk
-z.nchunks        # 100 (number of chunks)
-z.cdata_shape    # Shape in terms of chunks: (10, 10)
+z.shape            # (1000, 1000)
+z.chunks           # (100, 100)
+z.dtype            # dtype('float32')
+z.size             # 1000000
+z.nbytes           # 4000000 (uncompressed size in bytes)
+z.nbytes_stored()  # method() in v3 — actual compressed size on disk
+z.nchunks          # 100 (number of chunks)
+z.cdata_shape      # Shape in terms of chunks: (10, 10)
 ```
 
 ### Methods
 ```python
 # Information
-print(z.info)  # Detailed information about array
-print(z.info_items())  # Info as list of tuples
+print(z.info)             # Summary (shape, chunks, dtype, codecs)
+print(z.info_complete())  # Adds on-disk size / compression ratio (reads store)
 
-# Resizing
-z.resize(1500, 1500)  # Change dimensions
+# Resizing — pass the new shape as a single tuple (v3)
+z.resize((1500, 1500))  # Change dimensions
 
 # Appending
 z.append(new_data, axis=0)  # Add data along axis
-
-# Copying
-z2 = z.copy(store='new_location.zarr')
 ```
 
 ## Chunking Guidelines
@@ -357,23 +364,25 @@ ds.to_zarr('climate.zarr')
 
 ## Parallel Computing
 
-### Synchronizers
+Zarr v3 has **no** `synchronizer` objects or `synchronizer=` argument (removed from v2).
+Coordinate concurrent writers by region instead, and tune I/O concurrency via config.
+
 ```python
-from zarr import ThreadSynchronizer, ProcessSynchronizer
+import zarr
 
-# Multi-threaded writes
-sync = ThreadSynchronizer()
-z = zarr.open_array('data.zarr', mode='r+', synchronizer=sync)
+# Tune internal concurrency (default async.concurrency=10)
+zarr.config.set({"async.concurrency": 4, "threading.max_workers": 4})
 
-# Multi-process writes
-sync = ProcessSynchronizer('sync.sync')
-z = zarr.open_array('data.zarr', mode='r+', synchronizer=sync)
+# Safe concurrent writes: each writer owns a disjoint, chunk-aligned region
+z = zarr.open_array('data.zarr', mode='r+')
+# worker A: z[0:1000, :] = ... ; worker B: z[1000:2000, :] = ...
 ```
 
-**Note:** Synchronization only needed for:
-- Concurrent writes that may span chunk boundaries
-- Not needed for reads (always safe)
-- Not needed if each process writes to separate chunks
+**Rules of thumb:**
+- Reads are always safe (no coordination)
+- Within a process, reads and writes are thread-safe
+- Across processes, only writes to disjoint chunks are safe; overlapping writes to the same
+  chunk need external coordination — restructure so writers don't share chunks
 
 ## Metadata Consolidation
 
@@ -460,10 +469,11 @@ z = zarr.open('data.zarr', mode='r')
 # Detailed information
 print(z.info)
 
-# Size statistics
+# Size statistics (nbytes_stored() is a method in v3)
+stored = z.nbytes_stored()
 print(f"Uncompressed: {z.nbytes / 1e6:.2f} MB")
-print(f"Compressed: {z.nbytes_stored / 1e6:.2f} MB")
-print(f"Ratio: {z.nbytes / z.nbytes_stored:.1f}x")
+print(f"Compressed: {stored / 1e6:.2f} MB")
+print(f"Ratio: {z.nbytes / stored:.1f}x")
 
 # Chunk information
 print(f"Chunks: {z.chunks}")
@@ -504,12 +514,18 @@ z = zarr.open('data.zarr', mode='r')
 ## Error Handling
 
 ```python
+from zarr.errors import ArrayNotFoundError  # also: GroupNotFoundError, NodeNotFoundError
+
 try:
     z = zarr.open_array('data.zarr', mode='r')
-except zarr.errors.PathNotFoundError:
-    print("Array does not exist")
-except zarr.errors.ReadOnlyError:
-    print("Cannot write to read-only array")
+except FileNotFoundError:
+    print("Store path does not exist")
+except ArrayNotFoundError:
+    print("Store exists but holds no array at this path")
 except Exception as e:
     print(f"Unexpected error: {e}")
 ```
+
+> Zarr v3 renamed the v2 exceptions: there is no `PathNotFoundError` or `ReadOnlyError`. A
+> missing store raises `FileNotFoundError`; a missing node raises `ArrayNotFoundError` /
+> `GroupNotFoundError`.

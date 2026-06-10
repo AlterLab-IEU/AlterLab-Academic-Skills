@@ -188,15 +188,19 @@ from bioservices import ChEMBL
 c = ChEMBL()
 ```
 
-**Key Methods:**
-- `get_molecule_form(chembl_id)`: Compound details
-- `get_target(chembl_id)`: Target information
-- `get_similarity(chembl_id)`: Get similar compounds for given 
-- `get_assays()`: Bioassay data
+**Key Methods (bioservices >= 1.6.0):**
+- `get_molecule(query=None, limit=20, offset=0)`: Retrieve molecule records (by ChEMBL ID, list of IDs, or filters)
+- `search_molecule(query)`: Free-text molecule search
+- `get_target(query)`: Target information
+- `get_similarity(smiles_or_id, similarity)`: Find similar compounds
+- `get_substructure(smiles_or_id)`: Substructure search
+
+Note: the pre-1.6.0 helpers `get_compound_by_chemblId()` / `get_molecule_form()`
+were removed when the API was simplified in 1.6.0; use `get_molecule()` instead.
 
 **Use cases:**
 - Drug discovery data
-- Find similar compounds  
+- Find similar compounds
 - Bioactivity information
 - Target-compound relationships
 
@@ -206,27 +210,20 @@ c = ChEMBL()
 
 Chemical identifier mapping service.
 
-**Initialization:**
-```python
-from bioservices import UniChem
-u = UniChem()
-```
+**Important (bioservices behavior):** The compound-mapping convenience methods
+that previously lived on `bioservices.UniChem` (e.g. `get_compound_id_from_kegg`,
+`get_src_compound_ids`, `get_all_compound_ids`) were **dropped from bioservices in
+2022** and are no longer available. There is also no KEGG -> ChEMBL route in the
+KEGG Web Service. For chemical ID cross-referencing today:
 
-**Key Methods:**
-- `get_compound_id_from_kegg(kegg_id)`: KEGG → ChEMBL
-- `get_all_compound_ids(src_compound_id, src_id)`: Get all IDs
-- `get_src_compound_ids(src_compound_id, from_src_id, to_src_id)`: Convert IDs
-
-**Source IDs:**
-- 1: ChEMBL
-- 2: DrugBank
-- 3: PDB
-- 6: KEGG
-- 7: ChEBI
-- 22: PubChem
+- Use `KEGG.conv("chebi", "compound")` for the supported KEGG -> ChEBI mapping
+  (ChEBI IDs are also embedded in KEGG compound entries and can be parsed out).
+- For KEGG/ChEBI -> ChEMBL (or other UniChem sources), call the **live UniChem
+  REST API directly** (`https://www.ebi.ac.uk/unichem/`) or the **ChEMBL web
+  service / `chembl_webresource_client`** — these are separate from bioservices.
 
 **Use cases:**
-- Cross-database compound ID mapping
+- Cross-database compound ID mapping (via the routes above, not bioservices.UniChem)
 - Linking chemical databases
 
 ---

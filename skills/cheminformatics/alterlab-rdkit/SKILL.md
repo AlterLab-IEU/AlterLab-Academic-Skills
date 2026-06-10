@@ -110,7 +110,6 @@ for problem in problems:
     print(problem.GetType(), problem.Message())
 
 # Partial sanitization (skip specific steps)
-from rdkit.Chem import rdMolStandardize
 Chem.SanitizeMol(mol, sanitizeOps=Chem.SANITIZE_ALL ^ Chem.SANITIZE_PROPERTIES)
 ```
 

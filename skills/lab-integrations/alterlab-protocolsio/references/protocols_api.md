@@ -6,7 +6,7 @@ The Protocols API is the core functionality of protocols.io, supporting the comp
 
 ## Base URL
 
-All protocol endpoints use the base URL: `https://protocols.io/api/v3`
+All protocol endpoints use the base URL: `https://www.protocols.io/api/v3`
 
 ## Content Format Parameter
 
@@ -43,7 +43,7 @@ Retrieve protocols with filtering and pagination.
 **Example Request:**
 ```bash
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  "https://protocols.io/api/v3/protocols?filter=public&key=CRISPR&page_size=20&content_format=html"
+  "https://www.protocols.io/api/v3/protocols?filter=public&key=CRISPR&page_size=20&content_format=html"
 ```
 
 ### Search by DOI
@@ -102,7 +102,7 @@ curl -X POST \
     "description": "Comprehensive protocol for CRISPR-Cas9 mediated gene editing",
     "tags": ["CRISPR", "gene editing", "molecular biology"]
   }' \
-  "https://protocols.io/api/v3/protocols"
+  "https://www.protocols.io/api/v3/protocols"
 ```
 
 ### Update Protocol
@@ -141,7 +141,7 @@ curl -X POST \
     "duration": 3600,
     "temperature": 25
   }' \
-  "https://protocols.io/api/v3/protocols/12345/steps"
+  "https://www.protocols.io/api/v3/protocols/12345/steps"
 ```
 
 ### Update Protocol Step
@@ -204,7 +204,7 @@ curl -X POST \
     "version_notes": "Initial publication",
     "publish_type": "new"
   }' \
-  "https://protocols.io/api/v3/protocols/12345/publish"
+  "https://www.protocols.io/api/v3/protocols/12345/publish"
 ```
 
 ## Bookmarks
@@ -240,7 +240,7 @@ Generate a formatted PDF version of a protocol.
 
 **Example:**
 ```
-https://protocols.io/api/v3/view/crispr-protocol-abc123.pdf?compact=1
+https://www.protocols.io/api/v3/view/crispr-protocol-abc123.pdf?compact=1
 ```
 
 ## Common Use Cases

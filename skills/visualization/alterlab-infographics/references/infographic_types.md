@@ -60,7 +60,7 @@ data labels on chart, clean professional design.
 
 **Healthcare Statistics:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Statistical infographic about heart disease: \
    Main stat: 17.9 million deaths per year globally. \
    Supporting stats in grid: 1 in 4 deaths caused by heart disease, \
@@ -68,12 +68,12 @@ python skills/generate-image/scripts/generate_image.py \
    150 minutes of exercise weekly reduces risk by 30%. \
    Heart icon, red and pink color scheme with gray accents, \
    large bold numbers, clean medical professional design, white background" \
-  --output figures/heart_disease_stats.png
+  --output figures/heart_disease_stats.png --type statistical --style healthcare
 ```
 
 **Business Metrics:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Statistical infographic for Q4 business results: \
    Revenue: $2.4M (+15% YoY), Customers: 12,500 (+22%), \
    NPS Score: 78 (+8 points), Retention: 94%. \
@@ -81,7 +81,7 @@ python skills/generate-image/scripts/generate_image.py \
    bar chart showing quarterly trend, \
    navy blue and gold corporate color scheme, \
    professional business design, white background" \
-  --output figures/q4_metrics.png
+  --output figures/q4_metrics.png --type statistical --style corporate
 ```
 
 ---
@@ -147,7 +147,7 @@ project name header, clean professional design.
 
 **Technology Evolution:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Horizontal timeline infographic: Evolution of Mobile Phones \
    1983: First mobile phone (Motorola DynaTAC), \
    1992: First smartphone (IBM Simon), \
@@ -157,12 +157,12 @@ python skills/generate-image/scripts/generate_image.py \
    2023: Foldable phones mainstream. \
    Phone icons evolving at each node, gradient from gray (old) to blue (new), \
    connecting timeline arrow, year labels, clean tech design" \
-  --output figures/mobile_evolution.png
+  --output figures/mobile_evolution.png --type timeline --style technology
 ```
 
 **Company History:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Vertical timeline infographic: Our Company Journey \
    2010: Founded in garage with 2 employees, \
    2012: First major client signed, \
@@ -173,7 +173,7 @@ python skills/generate-image/scripts/generate_image.py \
    Milestone icons for each event, alternating left-right layout, \
    blue and gold corporate colors, growth trajectory feel, \
    professional business design" \
-  --output figures/company_history.png
+  --output figures/company_history.png --type timeline --style corporate
 ```
 
 ---
@@ -238,7 +238,7 @@ clear yes/no labels, flowchart style, white background.
 
 **Recipe Process:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Process infographic: How to Make Perfect Coffee \
    Step 1: Grind fresh beans (coffee grinder icon), \
    Step 2: Heat water to 200°F (thermometer icon), \
@@ -248,12 +248,12 @@ python skills/generate-image/scripts/generate_image.py \
    Vertical flow with large numbered circles, \
    brown and cream coffee color scheme, \
    arrows between steps, cozy design feel" \
-  --output figures/coffee_process.png
+  --output figures/coffee_process.png --type process
 ```
 
 **Onboarding Workflow:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Process infographic: New Employee Onboarding \
    Day 1: Welcome orientation and paperwork (clipboard icon), \
    Week 1: Meet your team and set up workspace (people icon), \
@@ -263,7 +263,7 @@ python skills/generate-image/scripts/generate_image.py \
    Horizontal timeline flow with milestones, \
    teal and coral corporate colors, \
    professional HR design style" \
-  --output figures/onboarding_process.png
+  --output figures/onboarding_process.png --type process --style marketing
 ```
 
 ---
@@ -335,7 +335,7 @@ balanced visual weight, white background.
 
 **Software Comparison:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Comparison infographic: Slack vs Microsoft Teams \
    Pricing: Both offer free tiers with paid upgrades, \
    Integration: Slack 2000+ apps, Teams Microsoft ecosystem, \
@@ -345,12 +345,12 @@ python skills/generate-image/scripts/generate_image.py \
    Purple left side (Slack), blue right side (Teams), \
    logos at top, feature comparison rows, \
    checkmarks for strengths, modern tech design" \
-  --output figures/slack_vs_teams.png
+  --output figures/slack_vs_teams.png --type comparison --style technology
 ```
 
 **Diet Comparison:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Comparison infographic: Keto Diet vs Mediterranean Diet \
    Weight loss: Both effective, Keto faster initial, \
    Heart health: Mediterranean better long-term, \
@@ -360,7 +360,7 @@ python skills/generate-image/scripts/generate_image.py \
    Green left (Keto), blue right (Mediterranean), \
    food icons for each, health/heart icons, \
    clean wellness design style" \
-  --output figures/diet_comparison.png
+  --output figures/diet_comparison.png --type comparison --style healthcare
 ```
 
 ---
@@ -428,7 +428,7 @@ educational engaging design, white background.
 
 **Productivity Tips:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "List infographic: 7 Productivity Tips for Remote Workers \
    1. Create a dedicated workspace (desk icon), \
    2. Set regular working hours (clock icon), \
@@ -439,12 +439,12 @@ python skills/generate-image/scripts/generate_image.py \
    7. End each day with tomorrow's plan (checklist icon). \
    Large colorful numbers, icons beside each tip, \
    teal and orange color scheme, friendly modern design" \
-  --output figures/remote_work_tips.png
+  --output figures/remote_work_tips.png --type list --style marketing
 ```
 
 **Fun Facts:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Facts infographic: 5 Amazing Facts About Honey \
    Fact 1: Honey never spoils - 3000 year old honey is still edible, \
    Fact 2: Bees visit 2 million flowers to make 1 lb of honey, \
@@ -454,7 +454,7 @@ python skills/generate-image/scripts/generate_image.py \
    Hexagon honeycomb shapes for each fact, \
    golden yellow and black color scheme, bee illustrations, \
    fun educational design" \
-  --output figures/honey_facts.png
+  --output figures/honey_facts.png --type list
 ```
 
 ---
@@ -506,7 +506,7 @@ legend with value scale, clean map design.
 
 **Global Data:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Geographic infographic: Global Renewable Energy Adoption 2025 \
    Leaders: Iceland 100%, Norway 98%, Costa Rica 95%, \
    Growing: Germany 50%, UK 45%, China 30%, \
@@ -516,12 +516,12 @@ python skills/generate-image/scripts/generate_image.py \
    legend showing percentage scale, \
    key country callouts with percentages, \
    clean modern cartographic style" \
-  --output figures/renewable_map.png
+  --output figures/renewable_map.png --type geographic --style nature
 ```
 
 **US Regional:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Geographic infographic: Tech Jobs by US Region 2025 \
    West Coast: 35% of tech jobs (California, Washington), \
    Northeast: 25% (New York, Massachusetts), \
@@ -532,7 +532,7 @@ python skills/generate-image/scripts/generate_image.py \
    blue and purple tech color scheme, \
    legend showing job concentration, \
    professional business design" \
-  --output figures/tech_jobs_map.png
+  --output figures/tech_jobs_map.png --type geographic --style technology
 ```
 
 ---
@@ -587,7 +587,7 @@ role titles in boxes, white background.
 
 **Learning Pyramid:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Hierarchical pyramid infographic: Learning Retention Rates \
    Top: Teaching others - 90% retention, \
    Level 2: Practice by doing - 75% retention, \
@@ -598,12 +598,12 @@ python skills/generate-image/scripts/generate_image.py \
    Colorful pyramid with 6 levels, \
    gradient from green (top) to red (base), \
    percentage labels, educational design" \
-  --output figures/learning_pyramid.png
+  --output figures/learning_pyramid.png --type hierarchical --style education
 ```
 
 **Energy Pyramid:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Hierarchical pyramid infographic: Ecological Energy Pyramid \
    Top: Apex predators (eagles, wolves) - smallest, \
    Level 2: Secondary consumers (snakes, foxes), \
@@ -613,7 +613,7 @@ python skills/generate-image/scripts/generate_image.py \
    green gradient from base to top, \
    energy flow arrows on side, \
    scientific educational design" \
-  --output figures/energy_pyramid.png
+  --output figures/energy_pyramid.png --type hierarchical --style nature
 ```
 
 ---
@@ -666,7 +666,7 @@ technical illustration style, white background.
 
 **Business as Body:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Anatomical infographic: A Business is Like a Human Body \
    Brain = Leadership and strategy (makes decisions), \
    Heart = Company culture (pumps energy), \
@@ -676,12 +676,12 @@ python skills/generate-image/scripts/generate_image.py \
    Human body silhouette in blue, \
    labeled callout boxes for each part, \
    professional corporate design, white background" \
-  --output figures/business_body.png
+  --output figures/business_body.png --type anatomical --style corporate
 ```
 
 **Computer as House:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Anatomical infographic: Computer as a House \
    CPU = The brain/office (processes information), \
    RAM = The desk (temporary workspace), \
@@ -691,7 +691,7 @@ python skills/generate-image/scripts/generate_image.py \
    House illustration with cutaway view, \
    labeled rooms matching computer parts, \
    blue and gray tech colors, educational style" \
-  --output figures/computer_house.png
+  --output figures/computer_house.png --type anatomical --style technology
 ```
 
 ---
@@ -733,7 +733,7 @@ modern professional design, white background.
 
 **Designer Resume:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Resume infographic for a Graphic Designer: \
    Circular avatar placeholder at top, \
    Skills with colored bars: Adobe Suite 95%, UI/UX 90%, Branding 85%, Motion 75%. \
@@ -742,7 +742,7 @@ python skills/generate-image/scripts/generate_image.py \
    Education: BFA Graphic Design. \
    Contact icons row at bottom. \
    Coral and teal color scheme, creative modern design" \
-  --output figures/designer_resume.png
+  --output figures/designer_resume.png --type resume --style marketing
 ```
 
 ---
@@ -801,7 +801,7 @@ Instagram square format.
 
 **Inspirational Quote:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Social media infographic quote card: \
    Quote: 'The best time to plant a tree was 20 years ago. \
    The second best time is now.' \
@@ -810,12 +810,12 @@ python skills/generate-image/scripts/generate_image.py \
    gradient background from deep green to teal, \
    tree silhouette illustration, Instagram square format, \
    modern inspirational design" \
-  --output figures/tree_quote.png
+  --output figures/tree_quote.png --type social --style nature
 ```
 
 **Engagement Stats:**
 ```bash
-python skills/generate-image/scripts/generate_image.py \
+python scripts/generate_infographic.py \
   "Social media infographic: Email Marketing Stats \
    Headline: Is Your Email Strategy Working? \
    Stat 1: 4400% ROI on email marketing, \
@@ -824,7 +824,7 @@ python skills/generate-image/scripts/generate_image.py \
    Bold colorful numbers, envelope icons, \
    purple and yellow vibrant colors, \
    Instagram square format, engaging design" \
-  --output figures/email_stats_social.png
+  --output figures/email_stats_social.png --type social --style marketing
 ```
 
 ---

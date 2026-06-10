@@ -31,7 +31,7 @@ TEMPLATES = {
             "description": "Top-tier machine learning conference",
             "page_limit": "8 pages + unlimited refs",
             "citation_style": "Numbered [1]",
-            "format": "Two column",
+            "format": "Single column",
             "anonymization": "Required (double-blind)"
         },
         "plos_one": {

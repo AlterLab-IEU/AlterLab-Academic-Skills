@@ -218,10 +218,11 @@ count_rows = df.count()
 # With selections
 mean_adult_age = df.age.mean(selection='adults')
 
-# Multiple at once with delay
-mean = df.age.mean(delay=True)
-std = df.age.std(delay=True)
-results = vaex.execute([mean, std])
+# Multiple at once with delay (single pass): build promises, then df.execute()
+mean = df.mean(df.age, delay=True)
+std = df.std(df.age, delay=True)
+df.execute()
+mean_val, std_val = mean.get(), std.get()
 ```
 
 ### Available Aggregation Functions
@@ -305,12 +306,12 @@ result = df.groupby('category').agg({
 ### GroupBy with Binning
 
 ```python
-# Bin continuous variable and aggregate
-result = df.groupby(vaex.vrange(0, 100, 10)).agg({
-    'sales': 'sum'
-})
+# Bin a continuous variable, then group on the bin index.
+# digitize() returns the bin each value falls into (a virtual column).
+df['sales_bin'] = df.amount.digitize([0, 25, 50, 75, 100])
+result = df.groupby('sales_bin').agg({'sales': 'sum'})
 
-# Datetime binning
+# Datetime binning: group on an extracted datetime component
 result = df.groupby(df.timestamp.dt.year).agg({
     'sales': 'sum'
 })
@@ -336,10 +337,11 @@ df['age_group'] = df.age.digitize(bins)
 ### Statistical Binning
 
 ```python
-# Equal-width bins
-df['value_bin'] = df.value.digitize(
-    vaex.vrange(df.value.min(), df.value.max(), 10)
-)
+import numpy as np
+
+# Equal-width bins (compute the edges once, then bin)
+edges = np.linspace(df.value.min(), df.value.max(), 11)  # 10 bins -> 11 edges
+df['value_bin'] = df.value.digitize(edges)
 
 # Quantile-based bins
 quantiles = df.value.quantile([0.25, 0.5, 0.75])
@@ -357,10 +359,11 @@ counts = df.count(binby=[df.x, df.y], limits=[[0, 10], [0, 10]], shape=(100, 100
 # Mean on a grid
 mean_z = df.mean(df.z, binby=[df.x, df.y], limits=[[0, 10], [0, 10]], shape=(50, 50))
 
-# Multiple statistics on grid
+# Multiple statistics on grid in a single pass
 stats = df.mean(df.z, binby=[df.x, df.y], shape=(50, 50), delay=True)
 counts = df.count(binby=[df.x, df.y], shape=(50, 50), delay=True)
-results = vaex.execute([stats, counts])
+df.execute()
+mean_grid, count_grid = stats.get(), counts.get()
 ```
 
 ## Handling Missing Data
@@ -385,13 +388,12 @@ missing_pct = df.age.isna().mean() * 100
 # Filter out missing
 df_clean = df[df.age.notna()]
 
-# Fill missing with value
+# Fill missing with a value (creates a virtual column)
 df['age_filled'] = df.age.fillna(0)
 df['age_filled'] = df.age.fillna(df.age.mean())
 
-# Forward/backward fill (for time series)
-df['age_ffill'] = df.age.fillna(method='ffill')
-df['age_bfill'] = df.age.fillna(method='bfill')
+# Note: out-of-core, order-dependent fills (forward/backward) are not a native
+# Vaex operation — compute the fill on a materialized/pandas slice if you need it.
 ```
 
 ### Missing Data Types in Vaex

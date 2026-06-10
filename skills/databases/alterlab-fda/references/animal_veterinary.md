@@ -374,4 +374,4 @@ Different sources may have different reporting thresholds and detail levels.
 - FDA Center for Veterinary Medicine: https://www.fda.gov/animal-veterinary
 - VeDDRA: https://www.hma.eu/
 - API Basics: See `api_basics.md` in this references directory
-- Python examples: See `scripts/fda_animal_query.py`
+- Python helper: See `scripts/fda_query.py` (the `FDAQuery` class) and `scripts/fda_examples.py`

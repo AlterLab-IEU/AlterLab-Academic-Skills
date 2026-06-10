@@ -56,7 +56,11 @@ def _fetch(url: str, timeout: float):
 
         resp = requests.get(url, timeout=timeout,
                             headers={"User-Agent": USER_AGENT})
-        return resp.status_code, resp.text if resp.encoding else ""
+        # resp.text always decodes (apparent-encoding fallback when no charset
+        # header). Returning it unconditionally keeps this backend consistent
+        # with the urllib branch; gating on resp.encoding would drop the body
+        # for charset-less pages and falsely flag keywords as missing.
+        return resp.status_code, resp.text
     except ImportError:
         import urllib.request
 

@@ -198,16 +198,23 @@ ax.hexbin(x, y, gridsize=50, cmap='viridis')
 from matplotlib.font_manager import findfont, FontProperties
 print(findfont(FontProperties(family='sans-serif')))
 
-# Solution 2: Rebuild font cache
-import matplotlib.font_manager
-matplotlib.font_manager._rebuild()
+# Solution 2: Specify fallback fonts (DejaVu Sans always ships with matplotlib)
+plt.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'sans-serif']
 
-# Solution 3: Suppress warnings
+# Solution 3: Rebuild the font cache after installing new fonts.
+# NOTE: the old matplotlib.font_manager._rebuild() was removed; it is no longer
+# a public API. Instead delete the cache directory and restart Python so the
+# fontManager is regenerated on import:
+import matplotlib, shutil, os
+cache_dir = matplotlib.get_cachedir()
+for name in os.listdir(cache_dir):
+    if name.startswith('fontlist'):
+        os.remove(os.path.join(cache_dir, name))
+# (or `rm ~/.cache/matplotlib/fontlist-*.json` from the shell, then re-run.)
+
+# Solution 4: Suppress the warning (last resort)
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
-
-# Solution 4: Specify fallback fonts
-plt.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'sans-serif']
 ```
 
 ### Issue: LaTeX Rendering Errors

@@ -52,7 +52,8 @@ from qutip import entropy_vn
 
 # Density matrix entropy
 rho = thermal_dm(N, 2)
-S = entropy_vn(rho)  # Returns S = -Tr(ρ log₂ ρ)
+S = entropy_vn(rho)             # natural log by default: -Tr(ρ ln ρ)
+S_bits = entropy_vn(rho, base=2)  # pass base=2 for entropy in bits
 ```
 
 ### Linear Entropy
@@ -112,14 +113,19 @@ F = fidelity(psi1, psi2)  # Returns value in [0, 1]
 
 ### Process Fidelity
 
+`process_fidelity(oper, target=None)` compares two channels. Pass channels in a
+consistent representation (both superoperators, or both unitaries) — not a
+unitary against a state.
+
 ```python
-from qutip import process_fidelity
+from qutip import process_fidelity, to_super, propagator
 
-# Fidelity between two processes (superoperators)
-U_ideal = (-1j * H * t).expm()
-U_actual = mesolve(H, basis(N, 0), [0, t], c_ops).states[-1]
+# Ideal unitary channel vs. the actual (dissipative) channel after time t
+U_ideal = (-1j * H * t).expm()           # ideal unitary
+S_ideal = to_super(U_ideal)              # as a superoperator
+S_actual = propagator(H, t, c_ops)       # open-system propagator (superoperator)
 
-F_proc = process_fidelity(U_ideal, U_actual)
+F_proc = process_fidelity(S_actual, S_ideal)
 ```
 
 ### Trace Distance
@@ -219,68 +225,60 @@ is_pure = abs((rho * rho).tr() - 1.0) < 1e-10
 # Is operator Hermitian?
 H.isherm
 
-# Is operator unitary?
-U.check_isunitary()
+# Is operator unitary? (property, not a method)
+U.isunitary
 ```
 
 ## Measurement
 
-### Projective Measurement
-
-```python
-from qutip import measurement
-
-# Measure in computational basis
-psi = (basis(2, 0) + basis(2, 1)).unit()
-
-# Perform measurement
-result, state_after = measurement.measure(psi, None)  # Random outcome
-
-# Specific measurement operator
-M = basis(2, 0).proj()
-prob = measurement.measure_povm(psi, [M, qeye(2) - M])
-```
-
-### Measurement Statistics
-
-```python
-from qutip import measurement_statistics
-
-# Get all possible outcomes and probabilities
-outcomes, probabilities = measurement_statistics(psi, [M0, M1])
-```
+Measurement helpers live in `qutip.measurement` (they are **not** exposed at the
+top level of `qutip`). Single-shot helpers return `(outcome, collapsed_state)`;
+the `*_statistics_*` helpers return every possible outcome with its probability.
 
 ### Observable Measurement
 
 ```python
-from qutip import measure_observable
+from qutip.measurement import measure_observable, measurement_statistics_observable
 
-# Measure observable and get result + collapsed state
-result, state_collapsed = measure_observable(psi, sigmaz())
+psi = (basis(2, 0) + basis(2, 1)).unit()
+
+# Single shot: random eigenvalue + post-measurement state
+value, state_collapsed = measure_observable(psi, sigmaz())
+
+# All outcomes: eigenvalues, projectors, probabilities
+eigenvalues, projectors, probabilities = measurement_statistics_observable(psi, sigmaz())
 ```
 
-### POVM Measurements
+### POVM Measurement
 
 ```python
-from qutip import measure_povm
+from qutip.measurement import measure_povm, measurement_statistics_povm
 
-# Positive Operator-Valued Measure
-E_0 = Qobj([[0.8, 0], [0, 0.2]])
-E_1 = Qobj([[0.2, 0], [0, 0.8]])
+# Projective POVM in the computational basis
+M = basis(2, 0).proj()
+povm = [M, qeye(2) - M]
 
-result, state_after = measure_povm(psi, [E_0, E_1])
+# Single shot: index of the POVM element that fired + post-measurement state
+index, state_after = measure_povm(psi, povm)
+
+# All outcomes: post-measurement states and their probabilities
+collapsed_states, probabilities = measurement_statistics_povm(psi, povm)
 ```
 
 ## Coherence Measures
 
 ### l1-norm Coherence
 
-```python
-from qutip import coherence_l1norm
+There is no built-in `coherence_l1norm`; compute the l1-norm of coherence (sum of
+absolute values of the off-diagonal elements) directly from the density matrix:
 
-# l1-norm of off-diagonal elements
-C_l1 = coherence_l1norm(rho)
+```python
+M = rho.full()
+C_l1 = np.abs(M).sum() - np.abs(np.diag(M)).sum()
 ```
+
+QuTiP does provide the optical coherence functions `coherence_function_g1` and
+`coherence_function_g2` for first- and second-order field correlations.
 
 ## Correlation Functions
 
@@ -304,22 +302,21 @@ corr_2t = correlation_2op_2t(H, rho0, tlist, taulist, c_ops, A, B)
 ### Three-Operator Correlation
 
 ```python
-from qutip import correlation_3op_1t
+from qutip import correlation_3op_1t, correlation_3op_2t
 
-# ⟨A(t)B(t+τ)C(t)⟩
+# ⟨A(0) B(τ) C(0)⟩ as a function of τ (single starting time)
 C_op = num(N)
 corr_3 = correlation_3op_1t(H, rho0, taulist, c_ops, A, B, C_op)
+
+# ⟨A(t) B(t+τ) C(t)⟩ resolved in both t and τ
+tlist = np.linspace(0, 10, 100)
+corr_3_2t = correlation_3op_2t(H, rho0, tlist, taulist, c_ops, A, B, C_op)
 ```
 
-### Four-Operator Correlation
-
-```python
-from qutip import correlation_4op_1t
-
-# ⟨A(0)B(τ)C(τ)D(0)⟩
-D_op = create(N)
-corr_4 = correlation_4op_1t(H, rho0, taulist, c_ops, A, B, C_op, D_op)
-```
+QuTiP 5 ships the 2- and 3-operator correlators (`correlation_2op_1t`,
+`correlation_2op_2t`, `correlation_3op_1t`, `correlation_3op_2t`); there is no
+`correlation_4op_*`. Build a 4-operator correlator by passing products as the
+inner operators of `correlation_3op_*`.
 
 ## Spectrum Analysis
 
@@ -340,15 +337,6 @@ from qutip import spectrum
 # Emission/absorption spectrum
 wlist = np.linspace(0, 2, 200)
 spec = spectrum(H, wlist, c_ops, A, B)
-```
-
-### Pseudo-Modes
-
-```python
-from qutip import spectrum_pi
-
-# Spectrum with pseudo-mode decomposition
-spec_pi = spectrum_pi(H, rho0, wlist, c_ops, A, B)
 ```
 
 ## Steady State Analysis
@@ -377,15 +365,6 @@ assert (L * operator_to_vector(rho_ss)).norm() < 1e-10
 
 # Compute steady-state expectation values
 n_ss = expect(num(N), rho_ss)
-```
-
-## Quantum Fisher Information
-
-```python
-from qutip import qfisher
-
-# Quantum Fisher information
-F_Q = qfisher(rho, num(N))  # w.r.t. generator num(N)
 ```
 
 ## Matrix Analysis
@@ -421,18 +400,17 @@ rho_squared = rho ** 2
 
 ### Singular Value Decomposition
 
+Qobj has no `.svd()`; take the SVD on the dense array:
+
 ```python
-# SVD of operator
-U, S, Vh = H.svd()
+U, S, Vh = np.linalg.svd(H.full())
 ```
 
 ### Permutations
 
 ```python
-from qutip import permute
-
-# Permute subsystems
-rho_permuted = permute(rho, [1, 0])  # Swap subsystems
+# Permute subsystems (method on Qobj; there is no top-level qutip.permute)
+rho_permuted = rho.permute([1, 0])  # Swap subsystems
 ```
 
 ## Partial Operations

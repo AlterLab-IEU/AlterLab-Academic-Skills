@@ -86,34 +86,35 @@ python scripts/extract_metadata.py \
 # Different output formats
 python scripts/extract_metadata.py \
   --doi 10.1038/nature12345 \
-  --format json  # or bibtex, yaml
+  --format json  # bibtex (default) or json
 ```
 
 ## validate_citations.py
 
 Validate BibTeX entries for accuracy and completeness.
 
-**Features**: DOI verification via doi.org and CrossRef; required-field checking;
-duplicate detection; format validation; auto-fix common issues; detailed reporting.
+**Features**: required-field checking (per entry type); duplicate detection (DOI,
+key, identical title); format validation (year, DOI pattern, page dashes, author
+separators); optional DOI resolution via doi.org/CrossRef; JSON report.
+
+This tool reports only — it does not rewrite the `.bib`. Run `format_bibtex.py` to
+apply fixes. DOI resolution is off by default; pass `--check-dois` to enable it.
 
 ```bash
-# Basic validation
-python scripts/validate_citations.py references.bib
+# Offline validation (fields, format, duplicates) — fast
+python scripts/validate_citations.py references.bib --verbose
 
-# With auto-fix
-python scripts/validate_citations.py references.bib \
-  --auto-fix \
-  --output fixed_references.bib
+# Also resolve every DOI against doi.org/CrossRef — slow, network-bound
+python scripts/validate_citations.py references.bib --check-dois
 
-# Detailed validation report
+# Save a machine-readable JSON report
 python scripts/validate_citations.py references.bib \
   --report validation_report.json \
   --verbose
-
-# Only check DOIs
-python scripts/validate_citations.py references.bib \
-  --check-dois-only
 ```
+
+Flags: `--check-dois`, `--report FILE`, `--verbose`. (`--auto-fix` is accepted but
+currently a no-op; use `format_bibtex.py` for fixes.)
 
 ## format_bibtex.py
 
@@ -137,27 +138,31 @@ python scripts/format_bibtex.py references.bib \
   --deduplicate \
   --output clean_refs.bib
 
-# Complete cleanup
+# Complete cleanup (dedup + sort newest-first; common fixes run by default)
 python scripts/format_bibtex.py references.bib \
   --deduplicate \
   --sort year \
-  --validate \
-  --auto-fix \
+  --descending \
   --output final_refs.bib
 ```
+
+Common fixes (page-range dashes, `pp.` stripping, DOI URL prefixes, author
+separators) are applied automatically; pass `--no-fix` to disable them.
 
 ## doi_to_bibtex.py
 
 Quick DOI to BibTeX conversion.
 
-**Features**: fast single-DOI conversion; batch processing; multiple output
-formats; clipboard support.
+**Features**: fast single-DOI conversion via DOI content negotiation; batch
+processing with rate limiting; `bibtex` (default) or `json` output. Unlike
+`extract_metadata.py`, this returns the publisher's raw BibTeX verbatim (no field
+reordering or title-brace protection) — use `format_bibtex.py` afterward to clean it.
 
 ```bash
 # Single DOI
 python scripts/doi_to_bibtex.py 10.1038/s41586-021-03819-2
 
-# Multiple DOIs
+# Multiple DOIs (rate-limited; tune with --delay)
 python scripts/doi_to_bibtex.py \
   10.1038/nature12345 \
   10.1126/science.abc1234 \
@@ -165,7 +170,4 @@ python scripts/doi_to_bibtex.py \
 
 # From file (one DOI per line)
 python scripts/doi_to_bibtex.py --input dois.txt --output references.bib
-
-# Copy to clipboard
-python scripts/doi_to_bibtex.py 10.1038/nature12345 --clipboard
 ```

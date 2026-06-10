@@ -3,9 +3,9 @@ Phylogenetic Analysis Pipeline
 ===============================
 Complete workflow: MAFFT alignment → IQ-TREE tree → ETE3 visualization.
 
-Requirements:
-    conda install -c bioconda mafft iqtree
-    pip install ete3
+Requirements (CLI binaries are NOT on PyPI):
+    conda install -c bioconda mafft iqtree fasttree   # or Homebrew: brew install mafft fasttree; brew install brewsci/bio/iqtree
+    uv pip install "ete3==3.1.3"                       # visualization only (optional)
 
 Usage:
     python phylogenetic_analysis.py sequences.fasta --type nt --threads 4
@@ -19,18 +19,17 @@ import sys
 from pathlib import Path
 
 
-def check_dependencies():
-    """Check that required tools are installed."""
-    tools = {
-        "mafft": "conda install -c bioconda mafft",
-        "iqtree2": "conda install -c bioconda iqtree",
-    }
-    missing = []
-    for tool, install_cmd in tools.items():
-        result = subprocess.run(["which", tool], capture_output=True)
-        if result.returncode != 0:
-            missing.append(f"  {tool}: {install_cmd}")
+def check_dependencies(use_fasttree: bool = False):
+    """Check that the required CLI tools are on PATH (binaries are not pip-installable)."""
+    from shutil import which
 
+    tools = {"mafft": "conda install -c bioconda mafft  (or: brew install mafft)"}
+    if use_fasttree:
+        tools["FastTree"] = "conda install -c bioconda fasttree  (or: brew install fasttree)"
+    else:
+        tools["iqtree2"] = "conda install -c bioconda iqtree  (or: brew install brewsci/bio/iqtree)"
+
+    missing = [f"  {tool}: {hint}" for tool, hint in tools.items() if which(tool) is None]
     if missing:
         print("Missing dependencies:")
         for m in missing:
@@ -140,7 +139,7 @@ def visualize_tree(tree_file: str, output_png: str, outgroup: str = None) -> Non
         from ete3 import Tree, TreeStyle
     except ImportError:
         print("ETE3 not installed. Skipping visualization.")
-        print("  Install: pip install ete3")
+        print('  Install: uv pip install "ete3==3.1.3"')
         return
 
     t = Tree(tree_file)
@@ -219,6 +218,8 @@ def main():
                         help="Output directory")
 
     args = parser.parse_args()
+
+    check_dependencies(use_fasttree=args.fasttree)
 
     # Setup
     os.makedirs(args.output_dir, exist_ok=True)

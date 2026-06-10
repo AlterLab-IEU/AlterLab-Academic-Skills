@@ -173,11 +173,11 @@ def inference(model_id: str):
 Save checkpoints during long training jobs:
 
 ```python
-volume = modal.Volume.from_name("checkpoints")
+volume = modal.Volume.from_name("checkpoints", create_if_missing=True)
 VOL_PATH = "/vol"
 
 @app.function(
-    gpu="A10G",
+    gpu="A10",
     timeout=2*60*60,  # 2 hours
     volumes={VOL_PATH: volume}
 )
@@ -185,7 +185,7 @@ def finetune():
     from transformers import Seq2SeqTrainer, Seq2SeqTrainingArguments
 
     training_args = Seq2SeqTrainingArguments(
-        output_dir=str(VOL_PATH / "model"),  # Checkpoints saved to Volume
+        output_dir=f"{VOL_PATH}/model",  # Checkpoints saved to Volume
         save_steps=100,
         # ... more args
     )

@@ -70,6 +70,7 @@ gdf.plot(column='population', legend=True,
 
 # Use separate axes for colorbar
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 fig, ax = plt.subplots(1, 1, figsize=(10, 6))
 divider = make_axes_locatable(ax)
 cax = divider.append_axes("right", size="5%", pad=0.1)
@@ -208,7 +209,9 @@ gdf_webmercator.plot(ax=ax, alpha=0.5, edgecolor='k')
 
 # Add basemap
 ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.Mapnik)
-# Other sources: ctx.providers.CartoDB.Positron, ctx.providers.Stamen.Terrain
+# Other sources: ctx.providers.CartoDB.Positron, ctx.providers.CartoDB.Voyager
+# Note: the Stamen providers were removed from contextily (Stamen migrated to Stadia Maps);
+# use ctx.providers.Stadia.* with a Stadia API key, or CartoDB/OpenStreetMap instead.
 
 plt.show()
 ```

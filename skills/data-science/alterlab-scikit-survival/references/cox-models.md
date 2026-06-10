@@ -93,23 +93,29 @@ risk_scores = estimator.predict(X, alpha=0.1)
 ```
 
 ### Cross-Validation for Alpha Selection
+
+The IPCW scorer wrappers WRAP the estimator (overriding its `.score()` method);
+they are not passed to `scoring=`, and there is no `scoring='concordance_index_ipcw'`
+string. Wrap the estimator, then prefix tuned params with `estimator__`.
+
 ```python
 from sklearn.model_selection import GridSearchCV
-from sksurv.metrics import concordance_index_censored
+from sksurv.metrics import as_concordance_index_ipcw_scorer
 
-# Define parameter grid
-param_grid = {'l1_ratio': [0.1, 0.5, 0.9],
-              'alpha_min_ratio': [0.01, 0.001]}
+# Wrap so .score() uses Uno's C-index; tau caps the IPCW evaluation horizon
+wrapped = as_concordance_index_ipcw_scorer(
+    CoxnetSurvivalAnalysis(), tau=y['time'].max()
+)
 
-# Grid search with C-index
-cv = GridSearchCV(CoxnetSurvivalAnalysis(),
-                  param_grid,
-                  scoring='concordance_index_ipcw',
-                  cv=5)
+# Note the estimator__ prefix on every tuned parameter
+param_grid = {'estimator__l1_ratio': [0.1, 0.5, 0.9],
+              'estimator__alpha_min_ratio': [0.01, 0.001]}
+
+cv = GridSearchCV(wrapped, param_grid, cv=5)
 cv.fit(X, y)
 
-# Best parameters
 best_params = cv.best_params_
+# Unwrap to reach the fitted Coxnet model: cv.best_estimator_.estimator_
 ```
 
 ## IPCRidge

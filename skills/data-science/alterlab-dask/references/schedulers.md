@@ -482,7 +482,7 @@ class CustomPlugin(WorkerPlugin):
         worker.custom_resource = initialize_resource()
 
 client = Client()
-client.register_worker_plugin(CustomPlugin())
+client.register_plugin(CustomPlugin())  # register_worker_plugin is deprecated since 2023.9.2
 ```
 
 ## Troubleshooting

@@ -4,6 +4,8 @@
 
 Effective poster layout organizes content for maximum impact and comprehension. This guide covers grid systems, spatial organization, visual flow, and layout patterns for research posters.
 
+> **Note for this (HTML/CSS) skill:** the layout *principles* (grids, column counts, reading patterns, white space) are format-agnostic. The LaTeX code blocks (`beamerposter`, `tikzposter`, `baposter`) are shared with the LaTeX workflow — read them as illustrations, not instructions. In `assets/poster_html_template.html` you build columns with `display: flex` (or CSS grid): the template's `.main-content` is a flex row of three `.column` elements. A 3-column layout is `flex: 1 1 0` per column; a 65/35 asymmetric split is `flex: 0 0 65%` / `flex: 0 0 35%`. Gaps come from `gap:`/`padding:`, not `\hspace`.
+
 ## Grid Systems and Column Layouts
 
 ### Common Grid Patterns

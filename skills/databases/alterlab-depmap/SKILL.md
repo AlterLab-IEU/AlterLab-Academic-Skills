@@ -21,9 +21,10 @@ The Cancer Dependency Map (DepMap) project, run by the Broad Institute, systemat
 
 **Key resources:**
 - DepMap Portal: https://depmap.org/portal/
-- DepMap data downloads: https://depmap.org/portal/download/all/
-- Python package: `depmap` (or access via API/downloads)
-- API: https://depmap.org/portal/api/
+- DepMap data downloads: https://depmap.org/portal/data_page/
+- Figshare deposits (programmatic, keyless): https://api.figshare.com/v2/articles/{article_id}
+
+**Access model — read this first.** DepMap has *no* documented, stable public REST API for gene-level queries (the internal `depmap.org/portal/api/...` paths are undocumented and return 404 for ad-hoc requests — do not script against them). The supported workflow is: download the release matrix CSVs, then analyse them locally with pandas. The keyless programmatic path to those files is the **Figshare API** (`/articles/{id}/files` lists `name` + `download_url`); `scripts/query_depmap.py` wraps this.
 
 ## When to Use This Skill
 
@@ -61,70 +62,42 @@ Each cell line has:
 
 ## Core Capabilities
 
-### 1. DepMap API
+### 1. Resolve & Download Release Files (Figshare API, keyless)
+
+Get the file inventory for a release, resolve a file's download URL by name, then stream it to disk. Article IDs: 24Q4 = `27993248`, 24Q2 = `25880521`, 23Q4 = `24667905`. Figshare hosting stopped after 24Q4 — for newer releases (25Q2+) download manually from https://depmap.org/portal/data_page/.
 
 ```python
 import requests
-import pandas as pd
 
-BASE_URL = "https://depmap.org/portal/api"
+FIGSHARE = "https://api.figshare.com/v2"
 
-def depmap_get(endpoint, params=None):
-    url = f"{BASE_URL}/{endpoint}"
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-    return response.json()
+def list_release_files(article_id=27993248):
+    """List {name, download_url} for every file in a DepMap release."""
+    r = requests.get(f"{FIGSHARE}/articles/{article_id}/files", timeout=60)
+    r.raise_for_status()
+    return {f["name"]: f["download_url"] for f in r.json()}
+
+def download_depmap_file(name, article_id=27993248, out_path=None):
+    """Resolve `name` to its Figshare URL and stream it to disk."""
+    url = list_release_files(article_id)[name]   # KeyError if name not in release
+    out_path = out_path or name
+    with requests.get(url, stream=True, timeout=300) as r:
+        r.raise_for_status()
+        with open(out_path, "wb") as f:
+            for chunk in r.iter_content(chunk_size=1 << 16):
+                f.write(chunk)
+    return out_path
+
+# download_depmap_file("CRISPRGeneEffect.csv")   # ~430 MB
+# CLI equivalent: scripts/query_depmap.py (see end of file)
 ```
 
-### 2. Gene Dependency Scores
+Cell line metadata lives in `Model.csv` (current releases) — older releases used `sample_info.csv`. Column names also drifted across releases (e.g. `primary_disease` -> `OncotreePrimaryDisease`, `lineage` -> `OncotreeLineage`); inspect the header of the version you downloaded rather than assuming.
 
-```python
-def get_gene_dependency(gene_symbol, dataset="Chronos_Combined"):
-    """Get CRISPR dependency scores for a gene across all cell lines."""
-    url = f"{BASE_URL}/gene"
-    params = {
-        "gene_id": gene_symbol,
-        "dataset": dataset
-    }
-    response = requests.get(url, params=params)
-    return response.json()
-
-# Alternatively, use the /data endpoint:
-def get_dependencies_slice(gene_symbol, dataset_name="CRISPRGeneEffect"):
-    """Get a gene's dependency slice from a dataset."""
-    url = f"{BASE_URL}/data/gene_dependency"
-    params = {"gene_name": gene_symbol, "dataset_name": dataset_name}
-    response = requests.get(url, params=params)
-    data = response.json()
-    return data
-```
-
-### 3. Download-Based Analysis (Recommended for Large Queries)
-
-For large-scale analysis, download DepMap data files and analyze locally:
+### 2. Load the Gene Effect Matrix
 
 ```python
 import pandas as pd
-import requests, os
-
-def download_depmap_data(url, output_path):
-    """Download a DepMap data file."""
-    response = requests.get(url, stream=True)
-    with open(output_path, 'wb') as f:
-        for chunk in response.iter_content(chunk_size=8192):
-            f.write(chunk)
-
-# DepMap 24Q4 data files (update version as needed)
-FILES = {
-    "crispr_gene_effect": "https://figshare.com/ndownloader/files/...",
-    # OR download from: https://depmap.org/portal/download/all/
-    # Files available:
-    # CRISPRGeneEffect.csv - Chronos gene effect scores
-    # OmicsExpressionProteinCodingGenesTPMLogp1.csv - mRNA expression
-    # OmicsSomaticMutationsMatrixDamaging.csv - mutation binary matrix
-    # OmicsCNGene.csv - copy number
-    # sample_info.csv - cell line metadata
-}
 
 def load_depmap_gene_effect(filepath="CRISPRGeneEffect.csv"):
     """
@@ -136,12 +109,12 @@ def load_depmap_gene_effect(filepath="CRISPRGeneEffect.csv"):
     df.columns = [col.split(" ")[0] for col in df.columns]
     return df
 
-def load_cell_line_info(filepath="sample_info.csv"):
-    """Load cell line metadata."""
+def load_cell_line_info(filepath="Model.csv"):
+    """Load cell line metadata (older releases: sample_info.csv)."""
     return pd.read_csv(filepath)
 ```
 
-### 4. Identifying Selective Dependencies
+### 3. Identifying Selective Dependencies
 
 ```python
 import numpy as np
@@ -169,13 +142,13 @@ def find_selective_dependencies(gene_effect_df, cell_line_info, target_gene,
 
     return result.sort_values("gene_effect")
 
-# Example usage (after loading data)
+# Example usage (after loading data; adjust column names to your release header)
 # df_effect = load_depmap_gene_effect("CRISPRGeneEffect.csv")
-# cell_info = load_cell_line_info("sample_info.csv")
+# cell_info = load_cell_line_info("Model.csv")
 # deps = find_selective_dependencies(df_effect, cell_info, "KRAS", cancer_type="Lung")
 ```
 
-### 5. Biomarker Analysis (Gene Effect vs. Mutation)
+### 4. Biomarker Analysis (Gene Effect vs. Mutation)
 
 ```python
 import pandas as pd
@@ -216,7 +189,7 @@ def biomarker_analysis(gene_effect_df, mutation_df, target_gene, biomarker_gene)
     }
 ```
 
-### 6. Co-Essentiality Analysis
+### 5. Co-Essentiality Analysis
 
 ```python
 import pandas as pd
@@ -250,7 +223,7 @@ def co_essentiality(gene_effect_df, target_gene, top_n=20):
 
 ### Workflow 1: Target Validation for a Cancer Type
 
-1. Download `CRISPRGeneEffect.csv` and `sample_info.csv`
+1. Download `CRISPRGeneEffect.csv` and the cell-line metadata file (`Model.csv`, or `sample_info.csv` on older releases)
 2. Filter cell lines by cancer type
 3. Compute mean gene effect for target gene in cancer vs. all others
 4. Calculate selectivity: how specific is the dependency to your cancer type?
@@ -276,13 +249,13 @@ def co_essentiality(gene_effect_df, target_gene, top_n=20):
 | `CRISPRGeneEffect.csv` | CRISPR Chronos gene effect (primary dependency data) |
 | `CRISPRGeneEffectUnscaled.csv` | Unscaled CRISPR scores |
 | `RNAi_merged.csv` | DEMETER2 RNAi dependency |
-| `sample_info.csv` | Cell line metadata (lineage, disease, etc.) |
+| `Model.csv` | Cell line metadata (lineage, disease, etc.); older releases: `sample_info.csv` |
 | `OmicsExpressionProteinCodingGenesTPMLogp1.csv` | mRNA expression |
 | `OmicsSomaticMutationsMatrixDamaging.csv` | Damaging somatic mutations (binary) |
 | `OmicsCNGene.csv` | Copy number per gene |
 | `PRISM_Repurposing_Primary_Screens_Data.csv` | Drug sensitivity (repurposing library) |
 
-Download all files from: https://depmap.org/portal/download/all/
+File names vary slightly between releases — confirm against the inventory (`query_depmap.py list` or the portal data page) before scripting. Download from https://depmap.org/portal/data_page/ or via the Figshare API (Capability 1).
 
 ## Best Practices
 
@@ -296,7 +269,7 @@ Download all files from: https://depmap.org/portal/download/all/
 ## Additional Resources
 
 - **DepMap Portal**: https://depmap.org/portal/
-- **Data downloads**: https://depmap.org/portal/download/all/
+- **Data downloads**: https://depmap.org/portal/data_page/
 - **DepMap paper**: Behan FM et al. (2019) Nature. PMID: 30971826
 - **Chronos paper**: Dempster JM et al. (2021) Genome Biology 22(1):343. PMID: 34930405. DOI: 10.1186/s13059-021-02540-7
 - **GitHub**: https://github.com/broadinstitute/depmap-portal
@@ -304,9 +277,9 @@ Download all files from: https://depmap.org/portal/download/all/
 
 ## Scripts
 
-`scripts/query_depmap.py` — runnable helper for the DepMap portal API (no key; for matrix-scale work download the release files):
+`scripts/query_depmap.py` — keyless helper that lists a DepMap release's files and resolves a file's download URL via the Figshare API (`--article` goes before the subcommand):
 
 ```bash
-python scripts/query_depmap.py gene KRAS --dataset Chronos_Combined
-python scripts/query_depmap.py slice KRAS --dataset-name CRISPRGeneEffect
+uv run --with requests python scripts/query_depmap.py --article 27993248 list
+uv run --with requests python scripts/query_depmap.py --article 27993248 url CRISPRGeneEffect.csv
 ```

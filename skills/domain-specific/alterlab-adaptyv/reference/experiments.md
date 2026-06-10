@@ -2,9 +2,23 @@
 
 ## Overview
 
-Adaptyv provides multiple experimental assay types for comprehensive protein characterization. Each experiment type has specific applications, workflows, and data outputs.
+The Foundry API exposes these `experiment_type` values:
 
-## Binding Assays
+| `experiment_type` | What it measures | `target_id` required? | Method |
+|---|---|---|---|
+| `screening` | Binding yes/no (hit detection) | yes | `bli` / `spr` |
+| `affinity` | Kinetic constants KD, kon, koff | yes | `bli` / `spr` |
+| `thermostability` | Melting temperature (Tm) via DSF | no | — |
+| `fluorescence` | Fluorescence intensity | no | — |
+| `expression` | Protein yield | no | — |
+
+The sections below describe the science behind each assay and its typical outputs. **Enzyme
+activity** is covered at the end: it is not its own self-service `experiment_type` — a
+fluorogenic/colorimetric readout maps onto the `fluorescence` assay, and bespoke activity work
+should be scoped with Adaptyv directly. Result JSON shapes shown are **illustrative**; confirm
+field names against a live response or the OpenAPI doc.
+
+## Binding Assays (`screening` / `affinity`)
 
 ### Description
 
@@ -85,7 +99,7 @@ As molecules bind, the optical thickness increases, causing a wavelength shift p
 }
 ```
 
-## Expression Testing
+## Expression Testing (`expression`)
 
 ### Description
 
@@ -141,11 +155,11 @@ Available expression platforms:
 }
 ```
 
-## Thermostability Testing
+## Thermostability Testing (`thermostability`)
 
 ### Description
 
-Measure protein thermal stability to assess structural integrity, predict shelf-life, and identify stabilizing mutations.
+Measure protein thermal stability to assess structural integrity, predict shelf-life, and identify stabilizing mutations. Foundry reports melting temperature (Tm) via differential scanning fluorimetry (DSF).
 
 ### Use Cases
 
@@ -155,24 +169,21 @@ Measure protein thermal stability to assess structural integrity, predict shelf-
 - Stability-driven protein engineering
 - Quality control screening
 
-### Measurement Techniques
+### Measurement Technique
 
-**Differential Scanning Fluorimetry (DSF):**
-- Monitors protein unfolding via fluorescent dye binding
+**Differential Scanning Fluorimetry (DSF)** is the Foundry method:
+- Monitors protein unfolding via a fluorescent dye
 - Determines melting temperature (Tm)
 - High-throughput capable
 
-**Circular Dichroism (CD):**
-- Secondary structure analysis
-- Thermal unfolding curves
-- Reversibility assessment
+(Other techniques such as circular dichroism exist in the field, but DSF/Tm is what the
+self-service thermostability assay reports.)
 
 ### Measured Parameters
 
-- **Tm** - Melting temperature (midpoint of unfolding)
-- **ΔH** - Enthalpy of unfolding
-- **Aggregation temperature** (Tagg)
-- **Reversibility** - Refolding after heating
+- **Tm** - Melting temperature (midpoint of unfolding) — the primary reported value
+- Derived metrics such as enthalpy of unfolding, aggregation temperature, or reversibility may
+  be available depending on the run; confirm what a given assay returns rather than assuming.
 
 ### Workflow
 
@@ -201,6 +212,11 @@ Measure protein thermal stability to assess structural integrity, predict shelf-
 ```
 
 ## Enzyme Activity Assays
+
+> Not a standalone self-service `experiment_type`. A continuous fluorogenic readout maps onto
+> the `fluorescence` assay; HPLC/MS endpoint or fully custom activity assays should be scoped
+> with Adaptyv directly (support@adaptyvbio.com). The kinetics below are standard enzymology,
+> applicable however the readout is obtained.
 
 ### Description
 
@@ -296,19 +312,12 @@ Adaptyv includes automated QC steps:
 
 ### Timeline Expectations
 
-**Standard turnaround:** ~21 days from submission to results
+Turnaround is on the order of **a few weeks** from submission to results (construct
+generation → expression → purification → assay → analysis/QC). The actual estimate is given
+per experiment in the quote — read it from there rather than assuming a fixed number.
 
-**Timeline breakdown:**
-- Construct generation: 3-5 days
-- Expression: 5-7 days
-- Purification: 2-3 days
-- Assay execution: 3-5 days
-- Analysis and QC: 2-3 days
-
-**Factors affecting timeline:**
-- Custom targets (add 1-2 weeks)
-- Novel assay development (add 2-4 weeks)
-- Large batch sizes (may add 1 week)
+**Factors that extend the timeline:** custom/non-catalog targets, bespoke assay development,
+and very large batches.
 
 ### Cost Optimization
 
@@ -354,7 +363,7 @@ Results integrate with computational workflows:
 - Incomplete data → Contact support with experiment ID
 
 **Getting help:**
-- Email: support@adaptyvbio.com
-- Include experiment ID and specific question
+- Email: support@adaptyvbio.com (or use the Foundry portal)
+- Include the experiment code/ID and a specific question
 - Provide context (design goals, expected results)
-- Response time: <24 hours for active experiments
+- Docs: https://docs.adaptyvbio.com

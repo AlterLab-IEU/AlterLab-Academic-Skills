@@ -75,8 +75,10 @@ scvi.model.SCVI.setup_anndata(
     continuous_covariate_keys=["percent_mito", "n_counts"]
 )
 
-# Check registration
-adata.uns['_scvi']['summary_stats']
+# Inspect the registration (covariates, layer, summary stats).
+# Use the public API — adata.uns["_scvi"] is private and its layout changes.
+model = scvi.model.SCVI(adata)
+model.view_anndata_setup()
 ```
 
 ### 5. Model Training
@@ -268,8 +270,8 @@ print(f"GPU count: {torch.cuda.device_count()}")
 # Reduce batch size if OOM
 model.train(batch_size=64)  # Instead of default 128
 
-# Mixed precision training (saves memory)
-model.train(precision=16)
+# Mixed-precision training (saves memory) — pass via Lightning trainer kwargs
+model.train(precision="16-mixed")
 
 # Clear cache between runs
 import torch
@@ -325,33 +327,40 @@ ref_model.train()
 ref_model.save("reference_model")
 ```
 
-### Mapping Query to Reference
+### Mapping Query to Reference (scVI embedding)
+
+`load_query_data` validates the query against the reference's registration and
+sets up the new query-batch parameters automatically — do NOT call
+`setup_anndata` on the query yourself. Query gene order must match the
+reference; missing genes are padded with zeros.
 
 ```python
-# Load reference
-ref_model = scvi.model.SCVI.load("reference_model", adata=ref_adata)
+# Transfer learning: load query straight from the saved reference dir.
+query_model = scvi.model.SCVI.load_query_data(query_adata, "reference_model")
 
-# Setup query with same parameters
-scvi.model.SCVI.setup_anndata(query_adata, batch_key="batch")
+# scArches-style fine-tune: only the new query-specific params are updated;
+# reference weights stay frozen, so the reference embedding is unchanged.
+query_model.train(max_epochs=200, plan_kwargs={"weight_decay": 0.0})
 
-# Transfer learning
-query_model = scvi.model.SCVI.load_query_data(
+query_adata.obsm["X_scVI"] = query_model.get_latent_representation()
+```
+
+### Label transfer (scANVI — preferred over a hand-rolled KNN)
+
+If the reference was trained with scANVI, `predict()` transfers labels directly
+through the model, so you do not need a separate KNN classifier:
+
+```python
+# Reference must be a saved SCANVI model (e.g. via SCANVI.from_scvi_model).
+query_model = scvi.model.SCANVI.load_query_data(
     query_adata,
-    "reference_model"
+    "scanvi_reference",
+    freeze_dropout=True,
 )
+query_model.train(max_epochs=200, plan_kwargs={"weight_decay": 0.0})
 
-# Fine-tune on query (optional)
-query_model.train(max_epochs=200)
-
-# Get query embeddings
-query_latent = query_model.get_latent_representation()
-
-# Transfer labels using KNN
-from sklearn.neighbors import KNeighborsClassifier
-
-knn = KNeighborsClassifier(n_neighbors=15)
-knn.fit(ref_model.get_latent_representation(), ref_adata.obs["cell_type"])
-query_adata.obs["predicted_cell_type"] = knn.predict(query_latent)
+query_adata.obs["predicted_cell_type"] = query_model.predict()
+query_adata.obsm["X_scANVI"] = query_model.get_latent_representation()
 ```
 
 ## Model Minification
@@ -498,7 +507,7 @@ model.train(max_epochs=500)
 model.train(batch_size=64)
 
 # Use mixed precision
-model.train(precision=16)
+model.train(precision="16-mixed")
 
 # Reduce model size
 model = scvi.model.SCVI(adata, n_latent=10, n_hidden=64)

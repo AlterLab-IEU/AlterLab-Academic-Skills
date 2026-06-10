@@ -3,7 +3,7 @@ name: alterlab-pufferlib
 description: High-performance reinforcement learning with PufferLib — fast parallel training, vectorized environments, and multi-agent systems achieving 2-10x speedups over standard implementations. Use when scaling RL training, running vectorized or multi-agent setups, or integrating game environments (Atari, Procgen, NetHack). For quick prototyping or standard, well-documented algorithm implementations prefer stable-baselines3. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the pufferlib Python package (GPU optional for faster training).
+compatibility: No API key required. Runs locally via `uv run python`; requires the pufferlib Python package (GPU optional for faster training). Targets PufferLib 3.0.x (the current PyPI release); the dev `4.0` branch has a different, unstable API.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -30,40 +30,39 @@ Use this skill when:
 
 ### 1. High-Performance Training (PuffeRL)
 
-PuffeRL is PufferLib's optimized PPO+LSTM training algorithm achieving 1M-4M steps/second.
+PuffeRL is PufferLib's optimized PPO trainer (CleanRL-derived, with optional LSTM via `models.LSTMWrapper`) built for high-throughput training.
 
-**Quick start training:**
+**Recommended path — CLI / high-level helper.** Drive training from a config (an `.ini` in `pufferlib/config/`) rather than hand-wiring the trainer:
 ```bash
-# CLI training
-puffer train procgen-coinrun --train.device cuda --train.learning-rate 3e-4
-
-# Distributed training
-torchrun --nproc_per_node=4 train.py
+# CLI: env name resolves to a registered config + Ocean env
+puffer train puffer_breakout --train.device cuda --train.learning-rate 0.015
+```
+```python
+import pufferlib.pufferl as pufferl
+# train(env_name, args=None, vecenv=None, policy=None, logger=None)
+pufferl.train('puffer_breakout')
 ```
 
-**Python training loop:**
+**Manual loop.** `PuffeRL(config, vecenv, policy, logger=None)` — note the first arg is a **config dict** (not flat kwargs), the env arg is `vecenv`, and the loop is driven by `global_step`. The three loop methods are real: `evaluate()`, `train()`, `mean_and_log()`.
 ```python
-import pufferlib
 import pufferlib.vector
-from pufferlib.pufferl import PuffeRL
+from pufferlib.pufferl import PuffeRL, load_config
 
-# Create vectorized environment (vector.make takes an env-constructor callable)
-env = pufferlib.vector.make(make_coinrun_env, num_envs=256)
+# Native PufferEnv -> default backend=PufferEnv. For wrapped (Gymnasium/
+# PettingZoo) envs you MUST pass backend=pufferlib.vector.Multiprocessing.
+vecenv = pufferlib.vector.make(MyPufferEnv, num_envs=256)
 
-# Create trainer
-trainer = PuffeRL(
-    env=env,
-    policy=my_policy,
-    device='cuda',
-    learning_rate=3e-4,
-    batch_size=32768
-)
+# load_config returns a nested args dict (sections: 'train', 'vec', 'env', ...)
+# with defaults from pufferlib/config/*.ini. PuffeRL takes the 'train' section.
+args = load_config('puffer_breakout')
+config = {**args['train'], 'env': 'puffer_breakout'}
+config['device'] = 'cuda'
 
-# Training loop
-for iteration in range(num_iterations):
-    trainer.evaluate()  # Collect rollouts
-    trainer.train()     # Train on batch
-    trainer.mean_and_log()  # Log results
+trainer = PuffeRL(config, vecenv, my_policy)
+while trainer.global_step < config['total_timesteps']:
+    trainer.evaluate()      # Collect rollouts
+    trainer.train()         # Train on batch
+    trainer.mean_and_log()  # Aggregate + log
 ```
 
 **For comprehensive training guidance**, read `references/training.md` for:
@@ -134,10 +133,11 @@ Achieve maximum throughput with optimized parallel simulation.
 ```python
 import pufferlib.vector
 
-# Automatic vectorization (pass an env-constructor callable)
+# Pass an env-constructor callable. Default backend=PufferEnv is native-only;
+# for wrapped (Gymnasium/PettingZoo) envs add backend=pufferlib.vector.Multiprocessing.
 env = pufferlib.vector.make(env_creator, num_envs=256, num_workers=8)
 
-# Performance benchmarks:
+# Performance benchmarks (PufferLib's published figures; vary by env/hardware):
 # - Pure Python envs: 100k-500k SPS
 # - C-based envs: 100M+ SPS
 # - With training: 400k-4M total SPS
@@ -208,12 +208,15 @@ import gymnasium as gym
 import pufferlib.emulation
 import pufferlib.vector
 
-# Wrap a Gymnasium env in a GymnasiumPufferEnv, then vectorize
+# Wrap a Gymnasium env in a GymnasiumPufferEnv, then vectorize.
+# Wrapped (non-native) envs require an explicit backend (Serial or Multiprocessing);
+# the default backend=PufferEnv is only for native PufferEnvs.
 def env_creator():
     return pufferlib.emulation.GymnasiumPufferEnv(
         env_creator=lambda: gym.make('CartPole-v1'))
 
-env = pufferlib.vector.make(env_creator, num_envs=256)
+env = pufferlib.vector.make(
+    env_creator, num_envs=256, backend=pufferlib.vector.Multiprocessing)
 ```
 
 **PettingZoo multi-agent:**
@@ -222,12 +225,13 @@ import pufferlib.emulation
 import pufferlib.vector
 from pettingzoo.butterfly import knights_archers_zombies_v10
 
-# Wrap a PettingZoo env in a PettingZooPufferEnv, then vectorize
+# Wrap a PettingZoo env in a PettingZooPufferEnv, then vectorize.
 def env_creator():
     return pufferlib.emulation.PettingZooPufferEnv(
         env_creator=lambda: knights_archers_zombies_v10.parallel_env())
 
-env = pufferlib.vector.make(env_creator, num_envs=128)
+env = pufferlib.vector.make(
+    env_creator, num_envs=128, backend=pufferlib.vector.Multiprocessing)
 ```
 
 **Supported frameworks:**
@@ -410,12 +414,14 @@ env = pufferlib.vector.make(make_minigrid_env, num_envs=256)
 ```python
 import pufferlib.vector
 
-# PettingZoo (pass an env-constructor callable)
-env = pufferlib.vector.make(make_pistonball_env, num_envs=128)
+# PettingZoo, wrapped via PettingZooPufferEnv (needs an explicit backend)
+env = pufferlib.vector.make(
+    make_pistonball_env, num_envs=128, backend=pufferlib.vector.Multiprocessing)
 
-# Shared policy for all agents
+# One shared policy serves all agents (single_observation_space / single_action_space
+# are per-agent). Pass config (dict), vecenv, policy positionally to PuffeRL.
 policy = create_policy(env.single_observation_space, env.single_action_space)
-trainer = PuffeRL(env=env, policy=policy)
+trainer = PuffeRL(config, env, policy)
 ```
 
 ### Custom Task Development
@@ -426,9 +432,9 @@ import pufferlib.vector
 class MyTask(PufferEnv):
     # ... implement environment ...
 
-# Vectorize (pass the env class/constructor callable) and train
+# Native PufferEnv -> default backend=PufferEnv is fine here.
 env = pufferlib.vector.make(MyTask, num_envs=256)
-trainer = PuffeRL(env=env, policy=my_policy)
+trainer = PuffeRL(config, env, my_policy)  # config is a dict (see Training above)
 ```
 
 ### High-Performance Optimization
@@ -447,7 +453,9 @@ env = pufferlib.vector.make(
 ## Installation
 
 ```bash
-uv pip install pufferlib
+# Pin the 3.0 line — the config-dict trainer API and import paths in this skill
+# target it. The dev 4.0 branch differs.
+uv pip install "pufferlib==3.0.*"
 ```
 
 ## Documentation

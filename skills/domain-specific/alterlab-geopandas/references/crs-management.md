@@ -220,7 +220,7 @@ print(gdf.crs.to_epsg())
 # Get WKT representation
 print(gdf.crs.to_wkt())
 
-# Get PROJ string
+# Get PROJ string (lossy — pyproj warns; prefer to_wkt() to round-trip a CRS)
 print(gdf.crs.to_proj4())
 
 # Check if CRS is geographic (lat/lon)

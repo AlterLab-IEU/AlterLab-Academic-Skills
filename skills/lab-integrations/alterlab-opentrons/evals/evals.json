@@ -32,7 +32,7 @@
     {
       "id": "multichannel-plate-replication",
       "prompt": "Write an Opentrons protocol to replicate a full 96-well plate to a second plate using an 8-channel pipette.",
-      "expected_output": "Invokes alterlab-opentrons. Loads a multi-channel pipette (e.g. p300_multi_gen2 or p1000_multi_flex) and replicates the plate column-by-column, using a single-column reference per transfer with new_tip handling.",
+      "expected_output": "Invokes alterlab-opentrons. Loads a multi-channel pipette (e.g. p300_multi_gen2 on OT-2 or flex_8channel_1000 on Flex) and replicates the plate column-by-column, using a single-column reference per transfer with new_tip handling.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Uses a multi-channel pipette and replicates the plate using column references." }

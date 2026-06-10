@@ -34,13 +34,16 @@ coords = {
 }
 
 with pm.Model(coords=coords) as model:
+    # Wrap predictors in pm.Data so they can be swapped for predictions later
+    X_data = pm.Data('X_data', X_scaled, dims=('obs_id', 'predictors'))
+
     # Priors
     alpha = pm.Normal('alpha', mu=0, sigma=1)
     beta = pm.Normal('beta', mu=0, sigma=1, dims='predictors')
     sigma = pm.HalfNormal('sigma', sigma=1)
 
     # Linear predictor
-    mu = alpha + pm.math.dot(X_scaled, beta)
+    mu = alpha + pm.math.dot(X_data, beta)
 
     # Likelihood
     y_obs = pm.Normal('y_obs', mu=mu, sigma=sigma, observed=y, dims='obs_id')
@@ -50,7 +53,7 @@ with pm.Model(coords=coords) as model:
 - Use weakly informative priors (not flat priors)
 - Use `HalfNormal` or `Exponential` for scale parameters
 - Use named dimensions (`dims`) instead of `shape` when possible
-- Use `pm.Data()` for values that will be updated for predictions
+- Wrap any value you will later swap for predictions in `pm.Data()`
 
 ## 3. Prior Predictive Check
 
@@ -148,14 +151,16 @@ X_new = ...  # New predictor values
 X_new_scaled = (X_new - X_mean) / X_std
 
 with model:
-    pm.set_data({'X_scaled': X_new_scaled})
-    post_pred = pm.sample_posterior_predictive(
-        idata.posterior,
+    pm.set_data({'X_data': X_new_scaled}, coords={'obs_id': np.arange(len(X_new_scaled))})
+    pm.sample_posterior_predictive(
+        idata,
         var_names=['y_obs'],
-        random_seed=42
+        predictions=True,
+        extend_inferencedata=True,
+        random_seed=42,
     )
 
-# Extract prediction intervals
-y_pred_mean = post_pred.posterior_predictive['y_obs'].mean(dim=['chain', 'draw'])
-y_pred_hdi = az.hdi(post_pred.posterior_predictive, var_names=['y_obs'])
+# Extract prediction intervals (predictions=True -> idata.predictions)
+y_pred_mean = idata.predictions['y_obs'].mean(dim=['chain', 'draw'])
+y_pred_hdi = az.hdi(idata.predictions, var_names=['y_obs'])
 ```

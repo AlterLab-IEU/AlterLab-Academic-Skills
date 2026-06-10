@@ -111,18 +111,18 @@ model.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
 
 ### Precision Control
 
-**torch_dtype**: Set model precision
+**dtype**: Set model precision (the `torch_dtype` keyword is deprecated; use `dtype`)
 ```python
 import torch
 
 # Float16 (half precision)
-model = AutoModel.from_pretrained("model-id", torch_dtype=torch.float16)
+model = AutoModel.from_pretrained("model-id", dtype=torch.float16)
 
 # BFloat16 (better range than float16)
-model = AutoModel.from_pretrained("model-id", torch_dtype=torch.bfloat16)
+model = AutoModel.from_pretrained("model-id", dtype=torch.bfloat16)
 
-# Auto (use original dtype)
-model = AutoModel.from_pretrained("model-id", torch_dtype="auto")
+# Auto (use original dtype from the checkpoint config)
+model = AutoModel.from_pretrained("model-id", dtype="auto")
 ```
 
 ### Attention Implementation
@@ -150,22 +150,31 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 ```
 
-**load_in_8bit**: 8-bit quantization (requires bitsandbytes)
+**Quantization** (requires the `bitsandbytes` package). Pass a `BitsAndBytesConfig` via `quantization_config`. The old direct `load_in_8bit=`/`load_in_4bit=` keyword arguments to `from_pretrained` were deprecated and removed in transformers v5.
+
+8-bit:
 ```python
+from transformers import BitsAndBytesConfig
+
+quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+
 model = AutoModelForCausalLM.from_pretrained(
     "model-id",
-    load_in_8bit=True,
+    quantization_config=quantization_config,
     device_map="auto"
 )
 ```
 
-**load_in_4bit**: 4-bit quantization
+4-bit (with NF4 + double quantization for best memory/accuracy):
 ```python
+import torch
 from transformers import BitsAndBytesConfig
 
 quantization_config = BitsAndBytesConfig(
     load_in_4bit=True,
-    bnb_4bit_compute_dtype=torch.float16
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_compute_dtype=torch.float16,
 )
 
 model = AutoModelForCausalLM.from_pretrained(
@@ -202,20 +211,20 @@ model = AutoModelForCausalLM.from_config(config)  # Random weights
 
 ### Training vs Evaluation Mode
 
-Models load in evaluation mode by default:
+A freshly loaded model is in **training mode** (`model.training == True`), so dropout and other stochastic layers are active. Always call `model.eval()` before inference to get deterministic outputs:
 
 ```python
 model = AutoModel.from_pretrained("model-id")
-print(model.training)  # False
+print(model.training)  # True
 
-# Switch to training mode
-model.train()
-
-# Switch back to evaluation mode
+# Switch to evaluation mode for inference (disables dropout)
 model.eval()
+
+# Switch back to training mode for fine-tuning
+model.train()
 ```
 
-Evaluation mode disables dropout and uses batch norm statistics.
+For inference, also wrap forward passes in `torch.no_grad()` (or `torch.inference_mode()`) to skip gradient tracking. The `Trainer` and the `pipeline` API handle eval mode for you.
 
 ## Saving Models
 
@@ -307,18 +316,22 @@ model = AutoModel.from_pretrained("./model")
 
 ### ONNX Export
 
-Export for optimized inference:
+The in-library `transformers.onnx` exporter has been removed; use [Optimum](https://huggingface.co/docs/optimum) instead.
+
+```bash
+uv pip install optimum-onnx
+```
 
 ```python
-from transformers.onnx import export
+# Export at load time with the ORTModel classes
+from optimum.onnxruntime import ORTModelForCausalLM
+from transformers import AutoTokenizer
 
-# Export to ONNX
-export(
-    tokenizer=tokenizer,
-    model=model,
-    config=config,
-    output=Path("model.onnx")
-)
+ort_model = ORTModelForCausalLM.from_pretrained("gpt2", export=True)
+tokenizer = AutoTokenizer.from_pretrained("gpt2")
+
+ort_model.save_pretrained("./onnx_model")
+tokenizer.save_pretrained("./onnx_model")
 ```
 
 ## Best Practices
@@ -336,11 +349,18 @@ export(
 
 **CUDA out of memory:**
 ```python
+import torch
+from transformers import AutoModel, BitsAndBytesConfig
+
 # Use smaller precision
-model = AutoModel.from_pretrained("model-id", torch_dtype=torch.float16)
+model = AutoModel.from_pretrained("model-id", dtype=torch.float16)
 
 # Or use quantization
-model = AutoModel.from_pretrained("model-id", load_in_8bit=True)
+model = AutoModel.from_pretrained(
+    "model-id",
+    quantization_config=BitsAndBytesConfig(load_in_8bit=True),
+    device_map="auto",
+)
 
 # Or use CPU
 model = AutoModel.from_pretrained("model-id", device_map="cpu")
@@ -354,8 +374,8 @@ model = AutoModel.from_pretrained("model-id", low_cpu_mem_usage=True)
 
 **Model not found:**
 ```python
-# Verify model ID on hub.co
-# Check authentication for private models
+# Verify the model ID on https://huggingface.co
+# Check authentication for gated/private models
 from huggingface_hub import login
 login()
 ```

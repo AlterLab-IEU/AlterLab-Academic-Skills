@@ -25,7 +25,7 @@
 4. **Storage Backend**: Match to environment
    ```python
    # Local: LocalStore (default)
-   # Cloud: S3Map/GCSMap with consolidated metadata
+   # Cloud: FsspecStore.from_url("s3://...") with consolidated metadata
    # Temporary: MemoryStore
    ```
 
@@ -54,10 +54,11 @@ print(z.info)
 # - Storage size (compressed vs uncompressed)
 # - Storage location
 
-# Check storage size
-print(f"Compressed size: {z.nbytes_stored / 1e6:.2f} MB")
+# Check storage size (nbytes_stored() is a method in v3)
+stored = z.nbytes_stored()
+print(f"Compressed size: {stored / 1e6:.2f} MB")
 print(f"Uncompressed size: {z.nbytes / 1e6:.2f} MB")
-print(f"Compression ratio: {z.nbytes / z.nbytes_stored:.2f}x")
+print(f"Compression ratio: {z.nbytes / stored:.2f}x")
 ```
 
 ## Common Patterns
@@ -96,12 +97,11 @@ result = (dask_z @ dask_z.T).compute()  # Parallel matrix multiply
 ### Pattern: Cloud-Native Workflow
 
 ```python
-import s3fs
 import zarr
+from zarr.storage import FsspecStore
 
-# Write to S3
-s3 = s3fs.S3FileSystem()
-store = s3fs.S3Map(root='s3://my-bucket/data.zarr', s3=s3)
+# Write to S3 (needs s3fs)
+store = FsspecStore.from_url("s3://my-bucket/data.zarr")
 
 # Create array with appropriate chunking for cloud
 z = zarr.open_array(store=store, mode='w',
@@ -114,9 +114,9 @@ z[:] = data
 zarr.consolidate_metadata(store)
 
 # Read from S3 (anywhere, anytime)
-store_read = s3fs.S3Map(root='s3://my-bucket/data.zarr', s3=s3)
-z_read = zarr.open_consolidated(store_read)
-subset = z_read[0:100, 0:100]
+store_read = FsspecStore.from_url("s3://my-bucket/data.zarr")
+root = zarr.open_consolidated(store_read)
+subset = root[0:100, 0:100]
 ```
 
 ### Pattern: Format Conversion
@@ -195,12 +195,16 @@ shards = (10000, 10000)  # Groups many chunks
 
 ### Issue: Concurrent Write Conflicts
 
-**Solution**: Use synchronizers or ensure non-overlapping writes
+Zarr v3 has no `synchronizer` object (that was a Zarr v2 feature). Make concurrent writers
+safe by giving each one a disjoint, chunk-aligned region so no two writers touch the same chunk:
+
 ```python
-from zarr import ProcessSynchronizer
+import zarr
 
-sync = ProcessSynchronizer('sync.sync')
-z = zarr.open_array('data.zarr', mode='r+', synchronizer=sync)
+z = zarr.open_array('data.zarr', mode='r+')  # chunks e.g. (1000, 1000)
+# worker A writes z[0:1000, :]; worker B writes z[1000:2000, :] — no overlap, no coordination
 
-# Or design workflow so each process writes to separate chunks
+# For distributed writes, let Dask schedule non-overlapping chunk writes:
+import dask.array as da
+da.to_zarr(dask_array, 'data.zarr')
 ```

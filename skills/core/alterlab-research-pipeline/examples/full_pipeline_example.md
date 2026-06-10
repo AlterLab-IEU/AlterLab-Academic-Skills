@@ -433,7 +433,7 @@ formatter_agent executing format conversion...
     Addressed: 5/5 required revisions
 
   Stage 3' RE-REVIEW  [v] Completed
-    Loop: 1/2
+    Loop: 1/1
     Decision: Minor Revision (Accept)
 
   Stage 5 FINALIZE    [v] Completed

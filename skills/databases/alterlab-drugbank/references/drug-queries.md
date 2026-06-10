@@ -6,11 +6,10 @@ DrugBank provides comprehensive drug information with 200+ data fields per entry
 ## Database Contents
 
 ### Drug Categories
-- **FDA-Approved Small Molecules**: ~2,037 drugs
-- **Biotech/Biologic Drugs**: ~241 entries
-- **Nutraceuticals**: ~96 compounds
-- **Experimental Drugs**: ~6,000+ compounds
-- **Withdrawn/Discontinued**: Historical drugs with safety data
+Each entry has a `type` attribute (`small molecule` or `biotech`) plus group tags (`approved`, `investigational`, `experimental`, `nutraceutical`, `illicit`, `withdrawn`) under `<groups>`. Counts grow per release, so compute them from the loaded version rather than quoting fixed totals:
+- **Small molecules** vs **biotech/biologic** drugs — split on the `type` attribute.
+- **Approved / investigational / experimental / nutraceutical / withdrawn** — filter on `<group>` tags.
+- **Withdrawn/Discontinued**: historical drugs retained with safety data (`withdrawn` group).
 
 ### Data Fields (200+ per entry)
 - **Identifiers**: DrugBank ID, CAS number, UNII, PubChem CID

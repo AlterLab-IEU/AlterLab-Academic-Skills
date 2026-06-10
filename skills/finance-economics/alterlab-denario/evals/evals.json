@@ -43,6 +43,17 @@
       ]
     },
     {
+      "id": "mode-and-journal-options",
+      "prompt": "When I run Denario's get_idea and get_method, is there a way to trade reliability for speed? And besides APS, can it format the paper for a machine-learning conference like NeurIPS?",
+      "expected_output": "Triggers Denario. Explains the mode argument on get_idea()/get_method(): mode=\"fast\" (default, LangGraph backend, faster but less reliable) vs mode=\"cmbagent\" (slower, more reliable). Confirms the Journal enum includes NeurIPS (also AAS, ICML, JHEP, PASJ, NONE) and that get_paper(journal=Journal.NeurIPS) selects it.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "cmbagent"},
+        {"type": "output_contains", "value": "Journal.NeurIPS"},
+        {"type": "behavior", "value": "Names the mode=\"fast\"/\"cmbagent\" trade-off on get_idea/get_method and confirms NeurIPS is a supported Journal enum value passed to get_paper."}
+      ]
+    },
+    {
       "id": "near-miss-deep-research",
       "prompt": "I just need a thorough, fact-checked literature review on the current state of graph neural networks for molecular property prediction, with citations to primary sources. No data analysis, no paper writing — just the research report.",
       "expected_output": "Should NOT trigger Denario. This is a standalone web-research and source-synthesis task, not an end-to-end data-to-paper pipeline driven by a dataset. Defer to the alterlab-deep-research skill, which fans out web searches and synthesizes a cited report.",

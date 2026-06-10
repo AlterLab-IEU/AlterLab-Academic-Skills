@@ -392,130 +392,18 @@ explainer = joblib.load('explainer.pkl')
 
 ## Integration with Other Tools
 
-### Jupyter Notebooks
-- Interactive force plots work seamlessly
-- Inline plot display with `show=True` (default)
-- Combine with markdown for narrative explanations
-
-### MLflow / Experiment Tracking
-```python
-import mlflow
-
-with mlflow.start_run():
-    # Train model
-    model = train_model(X_train, y_train)
-
-    # Compute SHAP
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer(X_test)
-
-    # Log plots
-    shap.plots.beeswarm(shap_values, show=False)
-    mlflow.log_figure(plt.gcf(), "shap_beeswarm.png")
-    plt.close()
-
-    # Log feature importance metrics
-    mean_abs_shap = np.abs(shap_values.values).mean(axis=0)
-    for feature, importance in zip(X_test.columns, mean_abs_shap):
-        mlflow.log_metric(f"shap_{feature}", importance)
-```
-
-### Production APIs
-```python
-class ExplanationService:
-    def __init__(self, model_path, explainer_path):
-        self.model = joblib.load(model_path)
-        self.explainer = joblib.load(explainer_path)
-
-    def predict_with_explanation(self, X):
-        prediction = self.model.predict(X)
-        shap_values = self.explainer(X)
-
-        return {
-            'prediction': prediction[0],
-            'base_value': shap_values.base_values[0],
-            'feature_contributions': dict(zip(X.columns, shap_values.values[0]))
-        }
-```
+- **Jupyter**: interactive force plots render inline; plots display with `show=True` (default). For saving to file, pass `show=False` then `plt.savefig(...)`.
+- **MLflow / experiment tracking**: log plots with `mlflow.log_figure(plt.gcf(), "shap_beeswarm.png")` and log `np.abs(shap_values.values).mean(0)` per feature as metrics. Full snippet in `references/workflows.md` (MLOps integration).
+- **Production APIs**: persist model + explainer with `joblib`, recompute SHAP at request time, return base value + per-feature contributions. Full `ExplanationService` class in `references/workflows.md` (Workflow 7).
 
 ## Reference Documentation
 
-This skill includes comprehensive reference documentation organized by topic:
+Load these on demand (via Read) for depth beyond this SKILL.md:
 
-### references/explainers.md
-Complete guide to all explainer classes:
-- `TreeExplainer` - Fast, exact explanations for tree-based models
-- `DeepExplainer` - Deep learning models (TensorFlow, PyTorch)
-- `KernelExplainer` - Model-agnostic (works with any model)
-- `LinearExplainer` - Fast explanations for linear models
-- `GradientExplainer` - Gradient-based for neural networks
-- `PermutationExplainer` - Exact but slow for any model
-
-Includes: Constructor parameters, methods, supported models, when to use, examples, performance considerations.
-
-### references/plots.md
-Comprehensive visualization guide:
-- **Waterfall plots** - Individual prediction breakdowns
-- **Beeswarm plots** - Global importance with value distributions
-- **Bar plots** - Clean feature importance summaries
-- **Scatter plots** - Feature-prediction relationships and interactions
-- **Force plots** - Interactive additive force visualizations
-- **Heatmap plots** - Multi-sample comparison grids
-- **Violin plots** - Distribution-focused alternatives
-- **Decision plots** - Multiclass prediction paths
-
-Includes: Parameters, use cases, examples, best practices, plot selection guide.
-
-### references/workflows.md
-Detailed workflows and best practices:
-- Basic model explanation workflow
-- Model debugging and validation
-- Feature engineering guidance
-- Model comparison and selection
-- Fairness and bias analysis
-- Deep learning model explanation
-- Production deployment
-- Time series model explanation
-- Common pitfalls and solutions
-- Advanced techniques
-- MLOps integration
-
-Includes: Step-by-step instructions, code examples, decision criteria, troubleshooting.
-
-### references/theory.md
-Theoretical foundations:
-- Shapley values from game theory
-- Mathematical formulas and properties
-- Connection to other explanation methods (LIME, DeepLIFT, etc.)
-- SHAP computation algorithms (Tree SHAP, Kernel SHAP, etc.)
-- Conditional expectations and baseline selection
-- Interpreting SHAP values
-- Interaction values
-- Theoretical limitations and considerations
-
-Includes: Mathematical foundations, proofs, comparisons, advanced topics.
-
-## Usage Guidelines
-
-**When to load reference files**:
-- Load `explainers.md` when user needs detailed information about specific explainer types or parameters
-- Load `plots.md` when user needs detailed visualization guidance or exploring plot options
-- Load `workflows.md` when user has complex multi-step tasks (debugging, fairness analysis, production deployment)
-- Load `theory.md` when user asks about theoretical foundations, Shapley values, or mathematical details
-
-**Default approach** (without loading references):
-- Use this SKILL.md for basic explanations and quick start
-- Provide standard workflows and common patterns
-- Reference files are available if more detail is needed
-
-**Loading references**:
-```python
-# To load reference files, use the Read tool with appropriate file path:
-# /path/to/shap/references/explainers.md
-# /path/to/shap/references/plots.md
-# /path/to/shap/references/workflows.md
-# /path/to/shap/references/theory.md
-```
+- **`references/explainers.md`** — every explainer class (constructor params, supported models, methods, perf). Load when choosing an explainer or needing exact parameters.
+- **`references/plots.md`** — every plot function (params, use cases, plot-selection guide). Load when picking or tuning a visualization.
+- **`references/workflows.md`** — full step-by-step workflows (debugging, feature engineering, model comparison, fairness, deep learning, production, time series, MLOps). Load for multi-step tasks.
+- **`references/theory.md`** — Shapley-value math, axioms, computation algorithms, conditional expectations, comparisons to LIME/permutation/Gini importance. Load for theoretical questions.
 
 ## Best Practices Summary
 
@@ -541,25 +429,26 @@ Includes: Mathematical foundations, proofs, comparisons, advanced topics.
 
 ## Installation
 
+The modern API used throughout this skill — the callable `explainer(X)` returning an `Explanation` object, plus the `shap.plots.*` namespace — requires **shap >= 0.41**. Latest verified release is **0.52** (June 2026). Pin it in a uv project:
+
 ```bash
-# Basic installation
-uv pip install shap
+# In a uv project (adds to pyproject.toml + uv.lock):
+uv add "shap>=0.41" matplotlib
 
-# With visualization dependencies
-uv pip install shap matplotlib
-
-# Latest version
-uv pip install -U shap
+# Scratch / one-off run (ephemeral env, nothing persisted):
+uv run --with "shap>=0.41" --with matplotlib python explain.py
 ```
 
-**Dependencies**: numpy, pandas, scikit-learn, matplotlib, scipy
+(`uv pip install` works only inside an already-activated venv; prefer `uv add` / `uv run --with` so the dependency is recorded.)
 
-**Optional**: xgboost, lightgbm, tensorflow, torch (depending on model types)
+**Dependencies**: numpy, pandas, scikit-learn, matplotlib, scipy (pulled in automatically).
+
+**Optional**: xgboost, lightgbm, catboost, tensorflow, torch (depending on model types).
 
 ## Additional Resources
 
 - **Official Documentation**: https://shap.readthedocs.io/
-- **GitHub Repository**: https://github.com/slundberg/shap
+- **GitHub Repository**: https://github.com/shap/shap
 - **Original Paper**: Lundberg & Lee (2017) - "A Unified Approach to Interpreting Model Predictions"
 - **Nature MI Paper**: Lundberg et al. (2020) - "From local explanations to global understanding with explainable AI for trees"
 

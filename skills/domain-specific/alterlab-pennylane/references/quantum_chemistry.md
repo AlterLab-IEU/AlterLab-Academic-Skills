@@ -38,30 +38,31 @@ print(f"Number of qubits needed: {n_qubits}")
 ### Jordan-Wigner Transformation
 
 ```python
-# Hamiltonian is automatically in qubit form via Jordan-Wigner
-# Manual transformation:
+# Hamiltonian is automatically in qubit form via Jordan-Wigner.
+# Manual transformation of a fermionic operator:
 from pennylane import fermi
 
 # Fermionic operators
 a_0 = fermi.FermiC(0)  # Creation operator
 a_1 = fermi.FermiA(1)  # Annihilation operator
 
-# Convert to qubits
-qubit_op = qml.qchem.jordan_wigner(a_0 * a_1)
+# Convert to qubits (top-level function in current PennyLane)
+qubit_op = qml.jordan_wigner(a_0 * a_1)
 ```
 
 ### Bravyi-Kitaev Transformation
 
 ```python
-# Alternative mapping (more efficient for some systems)
-from pennylane.qchem import bravyi_kitaev
-
-# Build Hamiltonian with Bravyi-Kitaev
+# Alternative mapping (more efficient for some systems).
+# Build the Hamiltonian directly with the bravyi_kitaev mapping:
 hamiltonian, n_qubits = qchem.molecular_hamiltonian(
     symbols,
     coordinates,
     mapping='bravyi_kitaev'
 )
+
+# Or map a fermionic operator manually with the top-level function:
+qubit_op = qml.bravyi_kitaev(a_0 * a_1, n=n_qubits)
 ```
 
 ### Custom Hamiltonians
@@ -125,22 +126,23 @@ print(f"Final ground state energy: {energy:.8f} Ha")
 ### UCCSD Ansatz
 
 ```python
-from pennylane.qchem import UCCSD
-
 # Singles and doubles excitations
 singles, doubles = qchem.excitations(electrons=2, orbitals=n_qubits)
+s_wires, d_wires = qchem.excitations_to_wires(singles, doubles)
 
 @qml.qnode(dev)
 def uccsd_circuit(params):
-    # Hartree-Fock reference
-    qml.BasisState(hf_state, wires=range(n_qubits))
-
-    # UCCSD ansatz
-    UCCSD(params, wires=range(n_qubits), s_wires=singles, d_wires=doubles)
-
+    # UCCSD includes the Hartree-Fock state prep via init_state
+    qml.UCCSD(
+        params,
+        wires=range(n_qubits),
+        s_wires=s_wires,
+        d_wires=d_wires,
+        init_state=hf_state,
+    )
     return qml.expval(hamiltonian)
 
-# Initialize parameters
+# Initialize parameters (one per excitation)
 n_params = len(singles) + len(doubles)
 params = np.zeros(n_params, requires_grad=True)
 

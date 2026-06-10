@@ -4,7 +4,7 @@
     {
       "id": "he-preprocessing-pipeline",
       "prompt": "I have an Aperio SVS whole-slide image of H&E tissue. Build me a PathML preprocessing pipeline that does tissue detection and Macenko stain normalization, then iterate the processed tiles.",
-      "expected_output": "Invokes alterlab-pathml. Loads the slide with SlideData.from_slide(...), builds a Pipeline([TissueDetectionHE(), StainNormalizationHE(stain_estimation_method='macenko')]), runs it, and iterates wsi.tiles accessing tile.image and tile.masks. Composable WSI preprocessing with stain normalization is a core PathML capability.",
+      "expected_output": "Invokes alterlab-pathml. Loads the slide with HESlide(...) (or SlideData(filepath=..., slide_type=types.HE); NOT a from_slide factory), builds a Pipeline([TissueDetectionHE(), StainNormalizationHE(stain_estimation_method='macenko')]), runs it via wsi.run(pipeline), and iterates wsi.tiles accessing tile.image and tile.masks. Composable WSI preprocessing with stain normalization is a core PathML capability.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "StainNormalizationHE" }

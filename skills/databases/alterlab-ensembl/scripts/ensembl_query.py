@@ -53,7 +53,8 @@ class EnsemblAPIClient:
         params: Optional[Dict] = None,
         max_retries: int = 3,
         method: str = "GET",
-        data: Optional[Dict] = None
+        data: Optional[Dict] = None,
+        content_type: str = "application/json"
     ) -> Any:
         """
         Make an API request with error handling and retries.
@@ -64,14 +65,16 @@ class EnsemblAPIClient:
             max_retries: Maximum number of retry attempts
             method: HTTP method (GET or POST)
             data: JSON data for POST requests
+            content_type: Accept/Content-Type header. Use
+                'text/x-fasta' or 'text/plain' to get raw text back.
 
         Returns:
-            JSON response data
+            Parsed JSON for application/json, otherwise the raw response text.
 
         Raises:
             Exception: If request fails after max retries
         """
-        headers = {"Content-Type": "application/json"}
+        headers = {"Content-Type": content_type}
         url = f"{self.server}{endpoint}"
 
         for attempt in range(max_retries):
@@ -80,12 +83,14 @@ class EnsemblAPIClient:
 
             try:
                 if method == "POST":
-                    response = requests.post(url, headers=headers, json=data)
+                    response = requests.post(url, headers=headers, json=data, params=params)
                 else:
                     response = requests.get(url, headers=headers, params=params)
 
                 if response.status_code == 200:
-                    return response.json()
+                    if content_type == "application/json":
+                        return response.json()
+                    return response.text
                 elif response.status_code == 429:
                     # Rate limited - wait and retry
                     retry_after = int(response.headers.get('Retry-After', 1))
@@ -154,10 +159,7 @@ class EnsemblAPIClient:
         params = {"type": seq_type}
 
         if format == "fasta":
-            headers = {"Content-Type": "text/x-fasta"}
-            url = f"{self.server}{endpoint}"
-            response = requests.get(url, headers=headers, params=params)
-            return response.text
+            return self._make_request(endpoint, params=params, content_type="text/x-fasta")
 
         return self._make_request(endpoint, params=params)
 
@@ -181,10 +183,7 @@ class EnsemblAPIClient:
         endpoint = f"/sequence/region/{species}/{region}"
 
         if format == "fasta":
-            headers = {"Content-Type": "text/x-fasta"}
-            url = f"{self.server}{endpoint}"
-            response = requests.get(url, headers=headers)
-            return response.text
+            return self._make_request(endpoint, content_type="text/x-fasta")
 
         return self._make_request(endpoint)
 
@@ -346,13 +345,16 @@ def main():
     )
     parser.add_argument(
         "--assembly",
-        default="GRCh37",
-        help="For GRCh37, use grch37.rest.ensembl.org server"
+        default="GRCh38",
+        help="Genome assembly; pass GRCh37 to use the legacy "
+             "grch37.rest.ensembl.org server (default: GRCh38 / current)"
     )
 
     args = parser.parse_args()
 
-    # Select appropriate server
+    # Select appropriate server. Current assemblies (GRCh38 and all
+    # non-human species) use rest.ensembl.org; only GRCh37/hg19 uses
+    # the dedicated legacy server.
     server = "https://rest.ensembl.org"
     if args.assembly.lower() == "grch37":
         server = "https://grch37.rest.ensembl.org"

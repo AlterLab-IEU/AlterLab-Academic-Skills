@@ -216,9 +216,9 @@ curator = ln.curators.AnnDataCurator(adata, schema)
 curator.validate()
 artifact = curator.save_artifact(key="scrna/validated.h5ad")
 
-# Link ontology annotations
+# Link ontology annotations (validated CellType records)
 cell_types = bt.CellType.from_values(adata.obs.cell_type)
-artifact.feature_sets.add_ontology(cell_types)
+artifact.cell_types.add(cell_types)  # typed accessor: <registry-name-plural>.add(...)
 
 ln.finish()
 ```

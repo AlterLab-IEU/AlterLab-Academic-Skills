@@ -146,7 +146,7 @@ df.with_columns(
 
 | Operation | Pandas | Polars |
 |-----------|--------|--------|
-| Pivot | `df.pivot(index="a", columns="b", values="c")` | `df.pivot(values="c", index="a", columns="b")` |
+| Pivot | `df.pivot(index="a", columns="b", values="c")` | `df.pivot("b", index="a", values="c")` |
 | Melt | `df.melt(id_vars="id")` | `df.unpivot(index="id")` |
 
 ### I/O Operations

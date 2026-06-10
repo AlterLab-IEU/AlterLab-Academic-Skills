@@ -60,9 +60,12 @@ events = flow.as_array()
 import numpy as np
 from flowio import create_fcs
 
-# Write a new FCS file from a NumPy array
-data = np.array([[100, 200, 50], [150, 180, 60]])  # 2 events, 3 channels
-create_fcs('output.fcs', data, ['FSC-A', 'SSC-A', 'FL1-A'])
+# Write a new FCS file from a NumPy array.
+# Gotcha: create_fcs takes a WRITABLE BINARY FILE HANDLE (not a path) and a
+# FLATTENED 1-D event array — pass data.flatten(), not the 2-D matrix.
+data = np.array([[100, 200, 50], [150, 180, 60]], dtype='float32')  # 2 events, 3 channels
+with open('output.fcs', 'wb') as fh:
+    create_fcs(fh, data.flatten(), ['FSC-A', 'SSC-A', 'FL1-A'])
 ```
 
 ## Core Workflow
@@ -75,8 +78,9 @@ create_fcs('output.fcs', data, ['FSC-A', 'SSC-A', 'FL1-A'])
 3. **Extract** — Get a NumPy array via `flow.as_array()` (preprocessed) or
    `flow.as_array(preprocess=False)` (raw). Slice by channel type as needed.
 4. **Transform / export** — Convert to a pandas DataFrame or CSV; or write a new
-   FCS file with `flow.write_fcs(...)` / `create_fcs(...)` (always FCS 3.1,
-   single-precision float).
+   FCS file with `flow.write_fcs(path, ...)` (takes a path) or `create_fcs(fh,
+   data.flatten(), ...)` (takes a binary file handle + flattened events). Output
+   is always FCS 3.1, single-precision float.
 5. **Multi-dataset** — If a file holds multiple datasets, use
    `read_multiple_data_sets()` instead of the constructor.
 

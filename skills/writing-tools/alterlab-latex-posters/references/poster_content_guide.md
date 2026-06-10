@@ -63,11 +63,9 @@ Hook (Problem) → Approach → Discovery → Impact
 | Discussion/Conclusions | 100-150 | 25% |
 | References/Acknowledgments | 50-100 | 10% |
 
-**Counting Tool**:
-```latex
-% Add word count to poster (remove for final)
-\usepackage{texcount}
-% Compile with: texcount -inc poster.tex
+**Counting Tool**: `texcount` is a command-line script bundled with TeX Live (not a LaTeX package — do not `\usepackage` it). Run it on the source:
+```bash
+texcount -inc poster.tex
 ```
 
 ### 4. Visual-to-Text Ratio

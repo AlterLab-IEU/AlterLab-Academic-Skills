@@ -113,12 +113,15 @@ filtered_events = events[mask]
 print(f"Original events: {len(events)}")
 print(f"Filtered events: {len(filtered_events)}")
 
-# Create new FCS file with filtered data
-create_fcs('filtered.fcs',
-           filtered_events,
-           flow.pnn_labels,
-           opt_channel_names=flow.pns_labels,
-           metadata={**flow.text, '$SRC': 'Filtered data'})
+# Create new FCS file with filtered data.
+# create_fcs wants a binary file handle + a FLATTENED 1-D event array, and the
+# metadata keyword is metadata_dict= (not metadata=).
+with open('filtered.fcs', 'wb') as fh:
+    create_fcs(fh,
+               filtered_events.flatten(),
+               flow.pnn_labels,
+               opt_channel_names=flow.pns_labels,
+               metadata_dict={**flow.text, '$SRC': 'Filtered data'})
 ```
 
 ## Extracting Specific Channels

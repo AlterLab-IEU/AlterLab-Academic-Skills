@@ -17,13 +17,20 @@ ZINC is a freely accessible repository of 230M+ purchasable compounds maintained
 
 ## Scripts
 
-`scripts/query_zinc.py` — query the ZINC22 CartBlanche API via POST (stdlib only, JSON to stdout):
+`scripts/query_zinc.py` — query the ZINC22 CartBlanche API via form-encoded POST (stdlib only, JSON to stdout):
 
 ```bash
-python scripts/query_zinc.py id ZINC000019632618          # synchronous ZINC-ID lookup
-python scripts/query_zinc.py smiles "c1ccccc1" --dist 3   # SMILES search (returns async task handle)
-python scripts/query_zinc.py random --count 100 --subset lead-like   # random sample (async task handle)
+python scripts/query_zinc.py id ZINC000019632618          # ZINC-ID lookup
+python scripts/query_zinc.py smiles "c1ccccc1" --dist 3   # SMILES similarity search
+python scripts/query_zinc.py random --count 100 --subset lead-like   # random sample
 ```
+
+**Every CartBlanche search is asynchronous.** Each call returns a JSON task handle
+(`{"task": "<uuid>"}`); the result rows are assembled server-side and rendered in the
+web UI at `https://cartblanche22.docking.org`. There is no plain-text polling endpoint —
+the task route serves the single-page app. Use the script to submit searches and obtain
+the task id, then open the UI to retrieve/export rows, or use the bulk file repository
+(below) for programmatic large-scale retrieval.
 
 ## When to Use This Skill
 
@@ -62,7 +69,14 @@ All ZINC22 searches can be performed programmatically via the CartBlanche22 API:
 
 **Base URL**: `https://cartblanche22.docking.org/`
 
-All API endpoints return data in text or JSON format with customizable fields.
+Searches are submitted as **form-encoded POST** requests (the `scripts/query_zinc.py`
+helper does this) or as `curl -F` form-field uploads. Endpoints accept either an inline
+value or an `@file` upload, and **every search returns a JSON task handle**
+(`{"task": "<uuid>"}`) — results are then rendered in the web UI. Pass the desired
+columns via the `output_fields` form field.
+
+> The older "colon URL" form (`/substances.txt:zinc_id=...`) does **not** work against
+> the current CartBlanche22 service; use form fields as shown below.
 
 ## Core Capabilities
 
@@ -72,15 +86,20 @@ Retrieve specific compounds using their ZINC identifiers.
 
 **Web interface**: https://cartblanche22.docking.org/search/zincid
 
-**API endpoint**:
+**API endpoint** (form field is `zinc_ids`, plural — the singular `zinc_id` returns HTTP 400):
 ```bash
-curl "https://cartblanche22.docking.org/[email protected]_fields=smiles,zinc_id"
+# Inline list of IDs
+curl -X GET "https://cartblanche22.docking.org/substances.txt" \
+  -F zinc_ids="ZINC000019632618,ZINC000000000001" \
+  -F output_fields="zinc_id,smiles,catalogs"
+
+# Or upload a file of IDs (one per line)
+curl -X GET "https://cartblanche22.docking.org/substances.txt" \
+  -F zinc_ids=@zinc_ids.txt \
+  -F output_fields="zinc_id,smiles,tranche"
 ```
 
-**Multiple IDs**:
-```bash
-curl "https://cartblanche22.docking.org/substances.txt:zinc_id=ZINC000000000001,ZINC000000000002&output_fields=smiles,zinc_id,tranche"
-```
+Both return a task handle; open the printed UI task URL to view rows.
 
 **Response fields**: `zinc_id`, `smiles`, `sub_id`, `supplier_code`, `catalogs`, `tranche` (includes H-count, LogP, MW, phase)
 
@@ -92,23 +111,20 @@ Find compounds by chemical structure using SMILES notation, with optional distan
 
 **API endpoint**:
 ```bash
-curl "https://cartblanche22.docking.org/[email protected]=4-Fadist=4"
+curl -X GET "https://cartblanche22.docking.org/smiles.txt" \
+  -F smiles="c1ccccc1" -F dist=3 -F adist=3 \
+  -F output_fields="zinc_id,smiles,tranche"
 ```
 
-**Parameters**:
-- `smiles`: Query SMILES string (URL-encoded if necessary)
+**Parameters** (each passed as a `-F` form field):
+- `smiles`: Query SMILES string (inline, or `@file` for a batch of queries)
 - `dist`: Tanimoto distance threshold (default: 0 for exact match)
-- `adist`: Alternative distance parameter for broader searches (default: 0)
+- `adist`: Anonymous (graph-topology) distance for broader searches (default: 0)
 - `output_fields`: Comma-separated list of desired output fields
 
-**Example - Exact match**:
+**Example - Exact match** (dist/adist default to 0):
 ```bash
-curl "https://cartblanche22.docking.org/smiles.txt:smiles=c1ccccc1"
-```
-
-**Example - Similarity search**:
-```bash
-curl "https://cartblanche22.docking.org/smiles.txt:smiles=c1ccccc1&dist=3&output_fields=zinc_id,smiles,tranche"
+curl -X GET "https://cartblanche22.docking.org/smiles.txt" -F smiles="c1ccccc1"
 ```
 
 ### 3. Search by Supplier Codes
@@ -117,9 +133,11 @@ Query compounds from specific chemical suppliers or retrieve all molecules from 
 
 **Web interface**: https://cartblanche22.docking.org/search/catitems
 
-**API endpoint**:
+**API endpoint** (form field is `supplier_codes`):
 ```bash
-curl "https://cartblanche22.docking.org/catitems.txt:catitem_id=SUPPLIER-CODE-123"
+curl -X GET "https://cartblanche22.docking.org/catitems.txt" \
+  -F supplier_codes="SUPPLIER-CODE-123" \
+  -F output_fields="zinc_id,smiles,supplier_code,catalogs"
 ```
 
 **Use cases**:
@@ -135,17 +153,18 @@ Generate random compound sets for screening or benchmarking purposes.
 
 **API endpoint**:
 ```bash
-curl "https://cartblanche22.docking.org/substance/random.txt:count=100"
+curl "https://cartblanche22.docking.org/substance/random.txt" -F count=100
 ```
 
-**Parameters**:
+**Parameters** (each passed as a `-F` form field):
 - `count`: Number of random compounds to retrieve (default: 100)
 - `subset`: Filter by subset (e.g., 'lead-like', 'drug-like', 'fragment')
 - `output_fields`: Customize returned data fields
 
 **Example - Random lead-like molecules**:
 ```bash
-curl "https://cartblanche22.docking.org/substance/random.txt:count=1000&subset=lead-like&output_fields=zinc_id,smiles,tranche"
+curl "https://cartblanche22.docking.org/substance/random.txt" \
+  -F count=1000 -F subset="lead-like" -F output_fields="zinc_id,smiles,tranche"
 ```
 
 ## Common Workflows
@@ -154,25 +173,25 @@ curl "https://cartblanche22.docking.org/substance/random.txt:count=1000&subset=l
 
 1. **Define search criteria** based on target properties or desired chemical space
 
-2. **Query ZINC22** using appropriate search method:
+2. **Submit the search** with the appropriate method:
    ```bash
-   # Example: Get drug-like compounds with specific LogP and MW
-   curl "https://cartblanche22.docking.org/substance/random.txt:count=10000&subset=drug-like&output_fields=zinc_id,smiles,tranche" > docking_library.txt
+   # Example: random drug-like compounds; returns a task handle for the web UI
+   python scripts/query_zinc.py random --count 10000 --subset drug-like \
+     --fields zinc_id,smiles,tranche
    ```
 
-3. **Parse results** to extract ZINC IDs and SMILES:
+3. **Retrieve and parse rows** (export from the UI task view, or pull tranche files
+   from the bulk repository) into a DataFrame and filter on tranche properties:
    ```python
    import pandas as pd
 
-   # Load results
-   df = pd.read_csv('docking_library.txt', sep='\t')
+   df = pd.read_csv('docking_library.tsv', sep='\t')
 
-   # Filter by properties in tranche data
    # Tranche format: H##P###M###-phase
    # H = H-bond donors, P = LogP*10, M = MW
    ```
 
-4. **Download 3D structures** for docking using ZINC ID or download from file repositories
+4. **Download 3D structures** for docking from the file repository (see below)
 
 ### Workflow 2: Finding Analogs of a Hit Compound
 
@@ -181,16 +200,17 @@ curl "https://cartblanche22.docking.org/substance/random.txt:count=1000&subset=l
    hit_smiles = "CC(C)Cc1ccc(cc1)C(C)C(=O)O"  # Example: Ibuprofen
    ```
 
-2. **Perform similarity search** with distance threshold:
+2. **Perform similarity search** with a distance threshold:
    ```bash
-   curl "https://cartblanche22.docking.org/smiles.txt:smiles=CC(C)Cc1ccc(cc1)C(C)C(=O)O&dist=5&output_fields=zinc_id,smiles,catalogs" > analogs.txt
+   python scripts/query_zinc.py smiles "CC(C)Cc1ccc(cc1)C(C)C(=O)O" \
+     --dist 5 --fields zinc_id,smiles,catalogs
    ```
 
-3. **Analyze results** to identify purchasable analogs:
+3. **Analyze results** to identify purchasable analogs (after exporting the task rows):
    ```python
    import pandas as pd
 
-   analogs = pd.read_csv('analogs.txt', sep='\t')
+   analogs = pd.read_csv('analogs.tsv', sep='\t')
    print(f"Found {len(analogs)} analogs")
    print(analogs[['zinc_id', 'smiles', 'catalogs']].head(10))
    ```
@@ -209,9 +229,11 @@ curl "https://cartblanche22.docking.org/substance/random.txt:count=1000&subset=l
    zinc_ids_str = ",".join(zinc_ids)
    ```
 
-2. **Query ZINC22 API**:
+2. **Query ZINC22 API** (one batch request, `zinc_ids` plural):
    ```bash
-   curl "https://cartblanche22.docking.org/substances.txt:zinc_id=ZINC000000000001,ZINC000000000002&output_fields=zinc_id,smiles,supplier_code,catalogs"
+   curl -X GET "https://cartblanche22.docking.org/substances.txt" \
+     -F zinc_ids="ZINC000000000001,ZINC000000000002" \
+     -F output_fields="zinc_id,smiles,supplier_code,catalogs"
    ```
 
 3. **Process results** for downstream analysis or purchasing
@@ -225,7 +247,8 @@ curl "https://cartblanche22.docking.org/substance/random.txt:count=1000&subset=l
 
 2. **Generate random sample**:
    ```bash
-   curl "https://cartblanche22.docking.org/substance/random.txt:count=5000&subset=lead-like&output_fields=zinc_id,smiles,tranche" > chemical_space_sample.txt
+   python scripts/query_zinc.py random --count 5000 --subset lead-like \
+     --fields zinc_id,smiles,tranche
    ```
 
 3. **Analyze chemical diversity** and prepare for virtual screening
@@ -244,7 +267,9 @@ Customize API responses with the `output_fields` parameter:
 
 **Example**:
 ```bash
-curl "https://cartblanche22.docking.org/substances.txt:zinc_id=ZINC000000000001&output_fields=zinc_id,smiles,catalogs,tranche"
+curl -X GET "https://cartblanche22.docking.org/substances.txt" \
+  -F zinc_ids="ZINC000000000001" \
+  -F output_fields="zinc_id,smiles,catalogs,tranche"
 ```
 
 ## Tranche System
@@ -281,59 +306,48 @@ Refer to ZINC documentation at https://wiki.docking.org for downloading protocol
 
 ## Python Integration
 
-### Using curl with Python
+### Submitting searches
+
+Use the bundled `scripts/query_zinc.py` (stdlib only) rather than hand-rolling URLs —
+it sends the correct form-encoded POST and returns the JSON task handle:
 
 ```python
-import subprocess
-import json
+import json, subprocess
 
-def query_zinc_by_id(zinc_id, output_fields="zinc_id,smiles,catalogs"):
-    """Query ZINC22 by ZINC ID."""
-    url = f"https://cartblanche22.docking.org/[email protected]_id={zinc_id}&output_fields={output_fields}"
-    result = subprocess.run(['curl', url], capture_output=True, text=True)
-    return result.stdout
+def submit(*args):
+    """Run query_zinc.py and return the parsed JSON (task handle or rows)."""
+    out = subprocess.run(
+        ["python", "scripts/query_zinc.py", *args],
+        capture_output=True, text=True, check=True,
+    ).stdout
+    return json.loads(out)
 
-def search_by_smiles(smiles, dist=0, adist=0, output_fields="zinc_id,smiles"):
-    """Search ZINC22 by SMILES with optional distance parameters."""
-    url = f"https://cartblanche22.docking.org/smiles.txt:smiles={smiles}&dist={dist}&adist={adist}&output_fields={output_fields}"
-    result = subprocess.run(['curl', url], capture_output=True, text=True)
-    return result.stdout
-
-def get_random_compounds(count=100, subset=None, output_fields="zinc_id,smiles,tranche"):
-    """Get random compounds from ZINC22."""
-    url = f"https://cartblanche22.docking.org/substance/random.txt:count={count}&output_fields={output_fields}"
-    if subset:
-        url += f"&subset={subset}"
-    result = subprocess.run(['curl', url], capture_output=True, text=True)
-    return result.stdout
+task = submit("id", "ZINC000019632618", "--fields", "zinc_id,smiles,catalogs")
+# -> {"task": "<uuid>"}; open the UI task view to export rows
 ```
 
-### Parsing Results
+### Parsing tranche codes
+
+Once you have result rows (a `tranche` column, exported from the UI or read from the
+file repository), decode each code. The LogP segment can be negative (`P-005`), so the
+regex allows a leading sign:
 
 ```python
-import pandas as pd
-from io import StringIO
+import re
 
-# Query ZINC and parse as DataFrame
-result = query_zinc_by_id("ZINC000000000001")
-df = pd.read_csv(StringIO(result), sep='\t')
-
-# Extract tranche properties
 def parse_tranche(tranche_str):
-    """Parse ZINC tranche code to extract properties."""
-    # Format: H##P###M###-phase
-    import re
-    match = re.match(r'H(\d+)P(\d+)M(\d+)-(\d+)', tranche_str)
-    if match:
-        return {
-            'h_donors': int(match.group(1)),
-            'logP': int(match.group(2)) / 10.0,
-            'mw': int(match.group(3)),
-            'phase': int(match.group(4))
-        }
-    return None
+    """Parse a ZINC tranche code, e.g. 'H05P035M400-0'."""
+    match = re.match(r"H(\d+)P(-?\d+)M(\d+)-(\d+)", tranche_str)
+    if not match:
+        return None
+    return {
+        "h_donors": int(match.group(1)),
+        "logp": int(match.group(2)) / 10.0,
+        "mw": int(match.group(3)),
+        "phase": int(match.group(4)),
+    }
 
-df['tranche_props'] = df['tranche'].apply(parse_tranche)
+# df["tranche_props"] = df["tranche"].apply(parse_tranche)
 ```
 
 ## Best Practices
@@ -400,15 +414,14 @@ ZINC explicitly states: **"We do not guarantee the quality of any molecule for a
 - **ZINC Wiki**: https://wiki.docking.org/
 - **File Repository**: https://files.docking.org/zinc22/
 - **GitHub**: https://github.com/docking-org/
-- **Primary Publication**: Sterling & Irwin, J. Chem. Inf. Model 2015 (ZINC15); Irwin et al., J. Chem. Inf. Model 2020 (ZINC20)
-- **ZINC22 Publication**: Irwin et al., J. Chem. Inf. Model 2023
+- **Primary Publications**: Tingle et al., *J. Chem. Inf. Model.* 2023 (ZINC22); Irwin et al., *J. Chem. Inf. Model.* 2020 (ZINC20); Sterling & Irwin, *J. Chem. Inf. Model.* 2015 (ZINC15)
 
 ## Citations
 
 When using ZINC in publications, cite the appropriate version:
 
 **ZINC22**:
-Irwin, J. J., et al. "ZINC22—A Free Multi-Billion-Scale Database of Tangible Compounds for Ligand Discovery." *Journal of Chemical Information and Modeling* 2023.
+Tingle, B. I.; Tang, K. G.; Castanon, M.; Gutierrez, J. J.; Khurelbaatar, M.; Dandarchuluun, C.; Moroz, Y. S.; Irwin, J. J. "ZINC-22─A Free Multi-Billion-Scale Database of Tangible Compounds for Ligand Discovery." *Journal of Chemical Information and Modeling* 2023, 63(4), 1166–1176. DOI: 10.1021/acs.jcim.2c01253.
 
 **ZINC20**:
 Irwin, J. J.; Tang, K. G.; Young, J.; et al. "ZINC20—A Free Ultralarge-Scale Chemical Database for Ligand Discovery." *Journal of Chemical Information and Modeling* 2020, 60(12), 6065–6073. DOI: 10.1021/acs.jcim.0c00675.

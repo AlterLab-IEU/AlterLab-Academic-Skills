@@ -1,8 +1,8 @@
 ---
 name: alterlab-geomaster
-description: Covers geospatial science across remote sensing, GIS, spatial analysis, and machine learning for earth observation — satellite imagery processing (Sentinel, Landsat, MODIS, SAR, hyperspectral), vector and raster operations, spatial statistics, point cloud processing, network analysis, and cloud-native workflows (STAC, COG, Planetary Computer), with examples across Python, R, Julia, JavaScript, C++, Java, Go, and Rust. Use for remote sensing workflows, GIS analysis, spatial ML, earth observation data processing, terrain analysis, hydrological modeling, marine spatial analysis, atmospheric science, or any geospatial computation task. Part of the AlterLab Academic Skills suite.
+description: Covers geospatial science across remote sensing, GIS, spatial analysis, and machine learning for earth observation — satellite imagery processing (Sentinel, Landsat, MODIS, SAR, hyperspectral), raster and DEM operations, spectral indices (NDVI/EVI/NDWI), spatial statistics, point cloud processing, network analysis, and cloud-native workflows (STAC, COG, Planetary Computer), with examples across Python, R, Julia, JavaScript, C++, Java, Go, and Rust. Use for remote sensing workflows, satellite/raster image classification, terrain/slope/hillshade analysis, spatial ML on earth-observation data, hydrological modeling, marine spatial analysis, or atmospheric science. For pure tabular vector work with no raster/EO aspect (plain GeoPandas sjoin, buffer, overlay, dissolve, choropleths) prefer the geopandas skill; for celestial-sphere astronomy coordinates (ICRS/galactic, FITS, WCS) prefer the astropy skill. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(uv:*) Bash(python:*)
 compatibility: No API key required for local geospatial work. Runs via `uv run python`; cloud-native STAC/Planetary Computer workflows need network access (and provider credentials where applicable).
 metadata:
     skill-author: AlterLab
@@ -15,27 +15,29 @@ Comprehensive geospatial science skill covering GIS, remote sensing, spatial ana
 
 ## Installation
 
-```bash
-# Core Python stack (conda recommended)
-conda install -c conda-forge gdal rasterio fiona shapely pyproj geopandas rsgislib
+Pick ONE package manager for the GDAL-backed stack. Modern pip wheels for
+rasterio/fiona/pyproj/shapely bundle their own GDAL/GEOS/PROJ, so a pure-pip
+(uv) env covers the core libs without a system GDAL. Do NOT mix conda-GDAL
+with pip rasterio/fiona in the same env — the two ship different GDAL binaries
+and the ABI mismatch segfaults. The standalone `gdal` Python bindings do NOT
+bundle binaries (they need a matching system/conda libgdal); PDAL and rsgislib
+likewise have no reliable pip wheels — get those via conda (Option B).
 
-# Remote sensing & ML
+```bash
+# Option A — uv/pip env (recommended here): wheels bundle GDAL/GEOS/PROJ.
+# rasterio/fiona cover most GDAL needs; standalone `gdal` -> use Option B.
+uv pip install rasterio fiona shapely pyproj geopandas
 uv pip install torchgeo earthengine-api
 uv pip install scikit-learn xgboost torch-geometric
-
-# Network & visualization
 uv pip install osmnx networkx folium keplergl
 uv pip install cartopy contextily mapclassify
-
-# Big data & cloud
 uv pip install xarray rioxarray dask-geopandas
-uv pip install pystac-client planetary-computer
+uv pip install pystac-client planetary-computer odc-stac rio-cogeo
+uv pip install laspy[lazrs] open3d        # PDAL: use conda (no pip wheel)
 
-# Point clouds
-uv pip install laspy pylas open3d pdal
-
-# Databases
-conda install -c conda-forge postgis spatialite
+# Option B — conda env (best for PDAL / rsgislib / system GDAL tooling)
+conda install -c conda-forge gdal rasterio fiona shapely pyproj geopandas \
+    rsgislib pdal python-pdal postgis libspatialite
 ```
 
 ## Quick Start
@@ -144,13 +146,18 @@ area_sqm = gdf_metric.geometry.area
 ### Spectral Indices
 
 ```python
-def calculate_indices(image_path):
-    """NDVI, EVI, SAVI, NDWI from Sentinel-2."""
+def calculate_indices(image_path, bands=(2, 3, 4, 8, 11)):
+    """NDVI, EVI, SAVI, NDWI from Sentinel-2.
+
+    `bands` maps (B02, B03, B04, B08, B11) to the 1-based band indices in
+    your file. EVI's constants (6, 7.5, +1) assume surface reflectance in
+    [0, 1]; raw L2A DN are scaled by 10000, so divide first or EVI is wrong.
+    """
     with rasterio.open(image_path) as src:
-        B02, B03, B04, B08, B11 = [src.read(i).astype(float) for i in [1,2,3,4,5]]
+        B02, B03, B04, B08, B11 = (src.read(b).astype(float) for b in bands)
 
     ndvi = (B08 - B04) / (B08 + B04 + 1e-8)
-    evi = 2.5 * (B08 - B04) / (B08 + 6*B04 - 7.5*B02 + 1)
+    evi = 2.5 * (B08 - B04) / (B08 + 6*B04 - 7.5*B02 + 1 + 1e-8)
     savi = ((B08 - B04) / (B08 + B04 + 0.5)) * 1.5
     ndwi = (B03 - B08) / (B03 + B08 + 1e-8)
 
@@ -160,9 +167,11 @@ def calculate_indices(image_path):
 ### Vector Operations
 
 ```python
-# Buffer (use projected CRS!)
+# Buffer (use projected CRS! 1000 = metres in UTM).
+# Keep the result in the projected frame; don't bolt projected geometry
+# back onto a geographic gdf or you silently mix CRS in one column.
 gdf_proj = gdf.to_crs(gdf.estimate_utm_crs())
-gdf['buffer_1km'] = gdf_proj.geometry.buffer(1000)
+gdf_proj['buffer_1km'] = gdf_proj.geometry.buffer(1000)
 
 # Spatial relationships
 intersects = gdf[gdf.geometry.intersects(other_geometry)]
@@ -275,8 +284,10 @@ search = catalog.search(
 )
 
 # Load as xarray (cloud-native!)
+# pystac-client >= 0.7: use search.items() (get_items() is deprecated).
+items = list(search.items())[:5]
 data = odc.stac.load(
-    list(search.get_items())[:5],
+    items,
     bands=["B02", "B03", "B04", "B08"],
     crs="EPSG:32610",
     resolution=10,
@@ -342,8 +353,8 @@ rf = RandomForestClassifier(n_jobs=-1)  # All cores
 
 1. **Always check CRS** before spatial operations
 2. **Use projected CRS** for area/distance calculations
-3. **Validate geometries**: `gdf = gdf[gdf.is_valid]`
-4. **Handle missing data**: `gdf['geometry'] = gdf['geometry'].fillna(None)`
+3. **Validate geometries**: `gdf = gdf[gdf.is_valid]` (repair with `gdf.geometry.make_valid()`)
+4. **Drop missing geometries**: `gdf = gdf[gdf.geometry.notna() & ~gdf.geometry.is_empty]` (`fillna(None)` does NOT work on a geometry column)
 5. **Use efficient formats**: GeoPackage > Shapefile, Parquet for large data
 6. **Apply cloud masking** to optical imagery
 7. **Preserve lineage** for reproducible research

@@ -13,22 +13,25 @@ metadata:
 
 ## Overview
 
-JASPAR (https://jaspar.elixir.no/) is the gold-standard open-access database of curated, non-redundant transcription factor (TF) binding profiles stored as position frequency matrices (PFMs). JASPAR 2024 contains 1,210 non-redundant TF binding profiles for 164 eukaryotic species. Each profile is experimentally derived (ChIP-seq, SELEX, HT-SELEX, protein binding microarray, etc.) and rigorously validated.
+JASPAR (https://jaspar.elixir.no/) is the gold-standard open-access database of curated, non-redundant transcription factor (TF) binding profiles stored as position frequency matrices (PFMs). The JASPAR 2024 release added 329 new profiles to the CORE collection (~20% growth over the prior release); the live API currently serves ~2,600 latest-version CORE profiles across taxa. Each profile is experimentally derived (ChIP-seq, SELEX, HT-SELEX, protein binding microarray, etc.) and curated.
 
 **Key resources:**
 - JASPAR portal: https://jaspar.elixir.no/
 - REST API: https://jaspar.elixir.no/api/v1/
 - API docs: https://jaspar.elixir.no/api/v1/docs/
-- Python package: `jaspar` (via Biopython) or direct API
+- Python access: direct REST (see `scripts/query_jaspar.py`) or Biopython's `Bio.motifs.jaspar` module (there is no standalone `jaspar` PyPI package)
 
 ## Scripts
 
 `scripts/query_jaspar.py` — query the JASPAR REST API (stdlib only, JSON to stdout):
 
 ```bash
-python scripts/query_jaspar.py search --name CTCF --species 9606   # search profiles
+python scripts/query_jaspar.py search --name CTCF --species 9606   # latest-version profiles only
+python scripts/query_jaspar.py search --name CTCF --all-versions   # include historical versions
 python scripts/query_jaspar.py matrix MA0139.1                     # fetch a matrix (PFM)
 ```
+
+`search` defaults to `version=latest` (one row per profile); pass `--all-versions` to see every historical version. `--species` maps to the API's `tax_id` param (NCBI taxonomy ID).
 
 ## When to Use This Skill
 
@@ -82,7 +85,7 @@ def search_jaspar(
     if tf_name:
         params["name"] = tf_name
     if species:
-        params["species"] = species  # Use taxonomy ID or name, e.g., "9606" for human
+        params["tax_id"] = species  # NCBI taxonomy ID, e.g. "9606" for human
     if tf_class:
         params["tf_class"] = tf_class
     if tf_family:
@@ -112,20 +115,23 @@ def get_matrix(matrix_id):
 # Example: Get CTCF matrix
 ctcf_matrix = get_matrix("MA0139.1")
 
-# Matrix structure:
+# Matrix structure (actual API fields; no "consensus" or "length" key — derive
+# motif length from len(pfm["A"])):
 # {
 #   "matrix_id": "MA0139.1",
 #   "name": "CTCF",
+#   "base_id": "MA0139",
+#   "version": 1,
 #   "collection": "CORE",
 #   "tax_group": "vertebrates",
-#   "pfm": { "A": [...], "C": [...], "G": [...], "T": [...] },
-#   "consensus": "CCGCGNGGNGGCAG",
-#   "length": 19,
+#   "pfm": { "A": [...], "C": [...], "G": [...], "T": [...] },  # 19 columns for CTCF
 #   "species": [{"tax_id": 9606, "name": "Homo sapiens"}],
 #   "class": ["C2H2 zinc finger factors"],
-#   "family": ["BEN domain factors"],
+#   "family": ["More than 3 adjacent zinc fingers"],
 #   "type": "ChIP-seq",
-#   "uniprot_ids": ["P49711"]
+#   "uniprot_ids": ["P49711"],
+#   "pubmed_ids": ["17512414"],
+#   "sequence_logo": "https://jaspar.elixir.no/static/logos/svg/MA0139.1.svg"
 # }
 ```
 
@@ -214,7 +220,8 @@ def scan_sequence(sequence: str, pwm: np.ndarray, threshold_pct: float = 0.8) ->
     return hits
 
 # Example: Scan a promoter sequence for CTCF binding sites
-promoter = "AGCCCGCGAGGNGGCAGTTGCCTGGAGCAGGATCAGCAGATC"
+# (windows containing non-ACGT bases such as N are skipped by scan_sequence)
+promoter = "AGCCCGCGAGGTGGCAGTTGCCTGGAGCAGGATCAGCAGATC"
 pwm, name = get_pwm("MA0139.1")
 hits = scan_sequence(promoter, pwm, threshold_pct=0.75)
 for hit in hits:
@@ -299,8 +306,8 @@ promoter = "CCCGCCCGCCCGCCGCCCGCAGTTAATGAGCCCAGCGTGCC"  # Example
 
 all_hits = []
 for m in matrices[:10]:  # Limit for demo
-    pwm_data = requests.get(f"https://jaspar.elixir.no/api/v1/matrix/{m['matrix_id']}/").json()
-    pfm = pfm_data["pfm"]
+    matrix_data = requests.get(f"https://jaspar.elixir.no/api/v1/matrix/{m['matrix_id']}/").json()
+    pfm = matrix_data["pfm"]
     pfm_arr = np.array([pfm["A"], pfm["C"], pfm["G"], pfm["T"]], dtype=float) + 0.8
     ppm = pfm_arr / pfm_arr.sum(axis=0)
     pwm = np.log2(ppm / 0.25)
@@ -332,15 +339,14 @@ for h in sorted(all_hits, key=lambda x: -x["score"])[:5]:
 
 ## Collections Available
 
-| Collection | Description | Profiles |
-|------------|-------------|----------|
-| `CORE` | Non-redundant, high-quality profiles | ~1,210 |
-| `UNVALIDATED` | Experimentally derived but not validated | ~500 |
-| `PHYLOFACTS` | Phylogenetically conserved sites | ~50 |
-| `CNE` | Conserved non-coding elements | ~30 |
-| `POLII` | RNA Pol II binding profiles | ~20 |
-| `FAM` | TF family representative profiles | ~170 |
-| `SPLICE` | Splice factor profiles | ~20 |
+The current JASPAR API serves two collections (verify counts via `GET /matrix/?collection=...&version=latest`):
+
+| Collection | Description | Latest-version profiles (approx.) |
+|------------|-------------|-----------------------------------|
+| `CORE` | Non-redundant, curated, experimentally validated profiles | ~2,600 |
+| `UNVALIDATED` | Inferred/experimentally derived but not yet validated | ~1,400 |
+
+Legacy collections (`PHYLOFACTS`, `CNE`, `POLII`, `FAM`, `SPLICE`) appear in older JASPAR literature but return 0 results from the current API — do not rely on them.
 
 ## Best Practices
 

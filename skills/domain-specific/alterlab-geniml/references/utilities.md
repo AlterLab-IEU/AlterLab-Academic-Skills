@@ -16,37 +16,39 @@ Use BBClient when:
 
 ### Python Usage
 
+`load_bed(bed_id)` downloads (if needed) and caches a BED file from BEDbase and returns a `gtars` `RegionSet`. The default cache folder is `~/.bbcache`.
+
 ```python
 from geniml.bbclient import BBClient
 
-# Initialize client
-client = BBClient(cache_folder='~/.bedcache')
+# Initialize client (default cache_folder='~/.bbcache')
+client = BBClient(cache_folder='~/.bbcache')
 
-# Fetch and cache BED file
-bed_file = client.load_bed(bed_id='GSM123456')
+# Fetch + cache a BED file by its BEDbase digest/id -> RegionSet
+region_set = client.load_bed('<bedbase-bed-id>')
 
-# Access cached file
-regions = client.get_regions('GSM123456')
+# Bedsets and local files are supported too:
+#   client.load_bedset('<bedset-id>')
+#   client.add_bed_to_cache('local.bed')
+# Inspect what is cached: client.list_beds(), client.list_bedsets()
 ```
+
+There is no `get_regions` method — iterate the returned `RegionSet` directly.
 
 ### R Integration
 
 ```r
 library(reticulate)
-geniml <- import("geniml.bbclient")
+bbclient <- import("geniml.bbclient")
 
-# Initialize client
-client <- geniml$BBClient(cache_folder='~/.bedcache')
-
-# Load BED file
-bed_file <- client$load_bed(bed_id='GSM123456')
+client <- bbclient$BBClient(cache_folder = "~/.bbcache")
+region_set <- client$load_bed("<bedbase-bed-id>")
 ```
 
 ### Best Practices
 
-- Configure cache directory with sufficient storage
-- Use consistent cache locations across analyses
-- Clear cache periodically to remove unused files
+- Use a cache directory with ample storage and keep it consistent across analyses
+- Prune unused cached files periodically (`remove_bedfile_from_cache`)
 
 ---
 
@@ -64,57 +66,48 @@ Use BEDshift when:
 - Assessing significance of genomic overlaps
 - Benchmarking analysis methods
 
-### Usage
+### Python Usage
+
+BEDshift is a class, `Bedshift(bedfile_path, chrom_sizes=None, delimiter='\t')`. You apply perturbation operations (each takes a *rate* in 0-1), then write out. Perturbations: `add`, `drop`, `shift`, `cut`, `merge` (and `*_from_file` variants); `all_perturbations(...)` applies several at once.
 
 ```python
-from geniml.bedshift import bedshift
+from geniml.bedshift.bedshift import Bedshift
 
-# Randomize BED file preserving chromosome distribution
-randomized = bedshift(
-    input_bed='peaks.bed',
-    genome='hg38',
-    preserve_chrom=True,
-    n_iterations=100
-)
+bs = Bedshift('peaks.bed', chrom_sizes='hg38.chrom.sizes')
+bs.set_seed(42)
+
+# Shift 30% of regions (shiftrate, shiftmean, shiftstdev), drop 10% (droprate),
+# then write the perturbed BED
+bs.shift(0.3, 0, 150)
+bs.drop(0.1)
+bs.to_bed('randomized_peaks.bed')
+
+# Reset to the original regions to start another independent replicate
+bs.reset_bed()
 ```
+
+To generate many null replicates, loop and write a file per iteration (or use the CLI `-r/--repeat`).
 
 ### CLI Usage
 
+Flags are `-b/--bedfile`, a genome via `-g/--genome` (refgenie id) **or** chrom sizes via `-l/--chrom-lengths`, perturbation rates (`-d` drop, `-a` add, `-s` shift, `-c` cut, `-m` merge), `-r/--repeat`, `-o/--outputfile`, `--seed`. There is no `--input`, `--preserve-chrom`, or `--iterations` flag.
+
 ```bash
 geniml bedshift \
-  --input peaks.bed \
-  --genome hg38 \
-  --preserve-chrom \
-  --iterations 100 \
-  --output randomized_peaks.bed
+  -b peaks.bed \
+  -g hg38 \
+  -s 0.3 \
+  -d 0.1 \
+  -r 100 \
+  -o randomized_peaks.bed \
+  --seed 42
 ```
-
-### Randomization Strategies
-
-**Preserve chromosome distribution:**
-```python
-bedshift(input_bed, genome, preserve_chrom=True)
-```
-Maintains regions on same chromosomes as original.
-
-**Preserve distance distribution:**
-```python
-bedshift(input_bed, genome, preserve_distance=True)
-```
-Maintains inter-region distances.
-
-**Preserve region sizes:**
-```python
-bedshift(input_bed, genome, preserve_size=True)
-```
-Keeps original region lengths.
 
 ### Best Practices
 
-- Choose randomization strategy matching null hypothesis
-- Generate multiple iterations for robust statistics
-- Validate randomized output maintains desired properties
-- Document randomization parameters for reproducibility
+- Choose perturbation rates that match your null hypothesis
+- Generate multiple replicates (`-r`) for robust statistics
+- Record the seed and rates for reproducibility
 
 ---
 
@@ -134,42 +127,34 @@ Use evaluation tools when:
 
 ### Embedding Evaluation
 
-```python
-from geniml.evaluation import evaluate_embeddings
+geniml's evaluation lives in the `geniml.eval` package, exposed mainly through the CLI command `geniml eval` (the import path is `geniml.eval`, **not** `geniml.evaluation`). Run `geniml eval --help` for the metrics/flags in your version.
 
-# Evaluate Region2Vec embeddings
-metrics = evaluate_embeddings(
-    embeddings_file='region2vec_model/embeddings.npy',
-    labels_file='metadata.csv',
-    metrics=['silhouette', 'davies_bouldin', 'calinski_harabasz']
+For ad-hoc cluster-quality checks, compute standard metrics directly with scikit-learn on the embeddings (`adata.obsm['scembed_X']` or a region-embedding matrix) and your labels:
+
+```python
+from sklearn.metrics import (
+    silhouette_score, davies_bouldin_score, calinski_harabasz_score
 )
 
-print(f"Silhouette score: {metrics['silhouette']:.3f}")
-print(f"Davies-Bouldin index: {metrics['davies_bouldin']:.3f}")
+X = adata.obsm['scembed_X']
+labels = adata.obs['leiden']
+
+print("Silhouette:", silhouette_score(X, labels))            # -1..1, higher better
+print("Davies-Bouldin:", davies_bouldin_score(X, labels))     # >=0, lower better
+print("Calinski-Harabasz:", calinski_harabasz_score(X, labels))  # higher better
 ```
 
-### Clustering Metrics
+### Cell-Type Annotation Evaluation
 
-**Silhouette score:** Measures cluster cohesion and separation (-1 to 1, higher better)
-
-**Davies-Bouldin index:** Average similarity between clusters (≥0, lower better)
-
-**Calinski-Harabasz score:** Ratio of between/within cluster dispersion (higher better)
-
-### scEmbed Cell-Type Annotation Evaluation
+When you have predicted vs. true labels, score with sklearn:
 
 ```python
-from geniml.evaluation import evaluate_annotation
+from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 
-# Evaluate cell-type predictions
-results = evaluate_annotation(
-    predicted=adata.obs['predicted_celltype'],
-    true=adata.obs['true_celltype'],
-    metrics=['accuracy', 'f1', 'confusion_matrix']
-)
-
-print(f"Accuracy: {results['accuracy']:.1%}")
-print(f"F1 score: {results['f1']:.3f}")
+y_true = adata.obs['true_celltype']
+y_pred = adata.obs['predicted_celltype']
+print("Accuracy:", accuracy_score(y_true, y_pred))
+print("Macro F1:", f1_score(y_true, y_pred, average='macro'))
 ```
 
 ### Best Practices
@@ -196,80 +181,41 @@ Tokenization is a required preprocessing step for:
 
 ### Hard Tokenization
 
-Strict overlap-based tokenization:
+Strict overlap-based tokenization. Import the real function `hard_tokenization_main` from `geniml.tokenization.main` (shells out to `bedtools`):
 
 ```python
-from geniml.tokenization import hard_tokenization
+from geniml.tokenization.main import hard_tokenization_main
 
-hard_tokenization(
+hard_tokenization_main(
     src_folder='bed_files/',
     dst_folder='tokenized/',
     universe_file='universe.bed',
-    p_value_threshold=1e-9
+    fraction=1e-9,
 )
 ```
 
 **Parameters:**
-- `p_value_threshold`: Significance level for overlap (typically 1e-9 or 1e-6)
+- `fraction`: minimum **overlap fraction** required to assign a region to a universe token (default 1e-9). This is an overlap threshold, not a p-value. Use a larger value (e.g. 1e-6) to be more permissive.
 
-### Soft Tokenization
+### Modern tokenizer (gtars)
 
-Probabilistic tokenization allowing partial matches:
-
-```python
-from geniml.tokenization import soft_tokenization
-
-soft_tokenization(
-    src_folder='bed_files/',
-    dst_folder='tokenized/',
-    universe_file='universe.bed',
-    overlap_threshold=0.5
-)
-```
-
-**Parameters:**
-- `overlap_threshold`: Minimum overlap fraction (0-1)
-
-### Universe-Based Tokenization
-
-Map regions to universe tokens with custom parameters:
+The current/object-oriented path uses the `gtars` `Tokenizer`, which `Region2VecExModel` and `ScEmbed` use internally:
 
 ```python
-from geniml.tokenization import universe_tokenization
+from gtars.tokenizers import Tokenizer
 
-universe_tokenization(
-    bed_file='peaks.bed',
-    universe_file='universe.bed',
-    output_file='tokens.txt',
-    method='hard',
-    threshold=1e-9
-)
+tokenizer = Tokenizer('universe.bed')
+# tokenizer(regions) -> tokenized regions; pass `tokenizer=...` to a model constructor
 ```
 
 ### Best Practices
 
 - **Universe quality**: Use comprehensive, well-constructed universes
-- **Threshold selection**: More stringent (lower p-value) for higher confidence
-- **Validation**: Check tokenization coverage (what % of regions tokenized)
-- **Consistency**: Use same universe and parameters across related analyses
+- **Threshold selection**: Smaller `fraction` is stricter
+- **Validation**: Check what % of input regions land on a universe token before training
+- **Consistency**: Use the same universe and parameters across related analyses
 
-### Tokenization Coverage
-
-Check how well regions tokenize:
-
-```python
-from geniml.tokenization import check_coverage
-
-coverage = check_coverage(
-    bed_file='peaks.bed',
-    universe_file='universe.bed',
-    threshold=1e-9
-)
-
-print(f"Tokenization coverage: {coverage:.1%}")
-```
-
-Aim for >80% coverage for reliable training.
+Aim for high tokenization coverage (>80%) before training; very low coverage usually means the universe doesn't match the assembly or is too sparse.
 
 ---
 
@@ -287,99 +233,72 @@ Use Text2BedNN when:
 - Creating metadata-aware search systems
 - Deploying interactive genomic search applications
 
-### Workflow
+### Architecture (real modules)
 
-**Step 1: Prepare embeddings**
+Search is split across two packages — confirm the exact class signatures in your installed version before wiring them up:
 
-Train BEDspace or Region2Vec model with metadata.
+- `geniml.search.backends` — vector index backends, e.g. `HNSWBackend` (needs `hnswlib`) and a file backend. These store/query region embeddings.
+- `geniml.search.query2vec` — turns a query (text or region) into a vector.
+- `geniml.search.interfaces` — search interface wiring the encoder to a backend.
+- `geniml.text2bednn.text2bednn` — the natural-language→BED neural model that maps text embeddings into the region-embedding space.
 
-**Step 2: Build search index**
+### Workflow (conceptual)
 
-```python
-from geniml.search import build_search_index
-
-build_search_index(
-    embeddings_file='bedspace_model/embeddings.npy',
-    metadata_file='metadata.csv',
-    output_dir='search_backend/'
-)
-```
-
-**Step 3: Query the index**
-
-```python
-from geniml.search import SearchBackend
-
-backend = SearchBackend.load('search_backend/')
-
-# Natural language query
-results = backend.query(
-    text="T cell regulatory regions",
-    top_k=10
-)
-
-# Metadata query
-results = backend.query(
-    metadata={'cell_type': 'T_cell', 'tissue': 'blood'},
-    top_k=10
-)
-```
+1. Train a region/metadata model (Region2Vec or BEDspace) to get region embeddings.
+2. Load them into a backend (e.g. `from geniml.search.backends import HNSWBackend`).
+3. Encode the query with a `query2vec` encoder (or the trained `text2bednn` model for natural-language text).
+4. Query the backend for nearest regions.
 
 ### Best Practices
 
 - Train embeddings with rich metadata for better search
 - Index large collections for comprehensive coverage
 - Validate search relevance on known queries
-- Deploy with API for interactive applications
+- `HNSWBackend` requires `hnswlib`; on newer Python it may warn/fail to import — pin a compatible Python if you need it
 
 ---
 
 ## Additional Tools
 
-### I/O Utilities
+### I/O
+
+geniml's I/O is class-based, in `geniml.io.io` — `RegionSet`, `BedSet`, `Region`, `TokenizedRegionSet` (there are no `read_bed`/`write_bed`/`load_universe` helper functions). A `RegionSet` wraps a BED file and is iterable:
 
 ```python
-from geniml.io import read_bed, write_bed, load_universe
+from geniml.io import RegionSet
 
-# Read BED file
-regions = read_bed('peaks.bed')
-
-# Write BED file
-write_bed(regions, 'output.bed')
-
-# Load universe
-universe = load_universe('universe.bed')
+rs = RegionSet('peaks.bed')        # load
+for region in rs:                  # iterate Region objects
+    ...
 ```
 
-### Model Utilities
+`BBClient.load_bed()` also returns a (gtars) region set for remote/cached files.
+
+### Saving / loading models
+
+The embedding models persist themselves — there is no generic `geniml.models.save_model`. Use the model's own methods:
 
 ```python
-from geniml.models import save_model, load_model
-
-# Save trained model
-save_model(model, 'my_model/')
-
-# Load model
-model = load_model('my_model/')
+model.export('my_model/')                 # ScEmbed / Region2VecExModel -> checkpoint.pt, config.yaml, universe.bed
+model = ScEmbed.from_pretrained('my_model/')
 ```
 
 ### Common Patterns
 
-**Pipeline workflow:**
-```python
-# 1. Build universe
-universe = build_universe(coverage_folder='coverage/', method='cc', cutoff=5)
+End-to-end region-embedding pipeline (verified imports):
 
-# 2. Tokenize
-hard_tokenization(src_folder='beds/', dst_folder='tokens/',
-                   universe_file='universe.bed', p_value_threshold=1e-9)
+```python
+from geniml.tokenization.main import hard_tokenization_main
+from geniml.region2vec.main_legacy import region2vec
+
+# 1. Build a universe via the CLI first: `geniml build-universe cc ...`
+# 2. Tokenize (needs the bedtools binary)
+hard_tokenization_main('beds/', 'tokens/', 'universe.bed', fraction=1e-9)
 
 # 3. Train embeddings
-region2vec(token_folder='tokens/', save_dir='model/', num_shufflings=1000)
+region2vec(token_folder='tokens/', save_dir='model/', num_shufflings=1000, embedding_dim=100)
 
-# 4. Evaluate
-metrics = evaluate_embeddings(embeddings_file='model/embeddings.npy',
-                               labels_file='metadata.csv')
+# 4. Evaluate cluster quality with sklearn metrics (see Evaluation section above)
 ```
 
 This modular design allows flexible composition of geniml tools for diverse genomic ML workflows.

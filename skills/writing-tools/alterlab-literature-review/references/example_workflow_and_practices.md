@@ -119,8 +119,9 @@ python scripts/generate_pdf.py crispr_sickle_cell_review.md \
 - **seaborn**: Statistical visualizations
 
 ### Writing Skills
-- **brand-guidelines**: Apply institutional branding to the PDF
-- **internal-comms**: Adapt the review for different audiences
+- **alterlab-scientific-writing**: Turn the structured synthesis into flowing manuscript prose (Introduction/Discussion sections).
+- **alterlab-citation-mgmt**: Convert DOIs to BibTeX and build the bibliography.
+- **alterlab-citation-verifier**: Audit that every reference actually exists and is not retracted.
 
 ## Dependencies
 

@@ -1,13 +1,13 @@
 ---
 name: alterlab-research-ethics
-description: "Comprehensive research ethics and compliance assistant supporting IRB/ethics board applications, informed consent drafting, data management plans, Belmont Report principles, GDPR compliance for research, HIPAA considerations, vulnerable populations protocols, deception research, confidentiality and anonymity, research integrity (fabrication/falsification/plagiarism), conflict of interest disclosure, and dual-use research oversight. Use when preparing an IRB or ethics board application, drafting informed consent, writing a data management plan, addressing GDPR/HIPAA in research, protecting human subjects or vulnerable populations, handling animal ethics, or disclosing conflicts of interest. Part of the AlterLab Academic Skills suite."
+description: "International research ethics and compliance assistant supporting IRB/ethics board applications, informed consent drafting, data management plans, Belmont Report principles, Declaration of Helsinki (2024), GDPR compliance for research, HIPAA considerations, vulnerable populations protocols, deception research, confidentiality and anonymity, research integrity (fabrication/falsification/plagiarism), conflict of interest disclosure, and dual-use research oversight. Use when preparing an IRB or ethics board application, drafting informed consent, writing a data management plan, addressing GDPR/HIPAA in research, protecting human subjects or vulnerable populations, handling animal ethics, or disclosing conflicts of interest. For Turkey-specific etik kurul use alterlab-tr-research-ethics; for KVKK data plans alterlab-kvkk-dmp; for survey wording alterlab-survey-design; for qualitative methodology alterlab-qualitative-methods. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read WebFetch WebSearch Bash(python:*)
 compatibility: No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-03-18"
+  version: "1.1.0"
+  last_updated: "2026-06-09"
 ---
 
 # Research Ethics — Ethics, Compliance & Integrity Agent
@@ -41,9 +41,11 @@ This skill should be used when:
 | Scenario | Use Instead |
 |----------|-------------|
 | Legal advice on data protection | Consult institutional legal counsel |
+| Turkish etik kurul application / committee routing | `alterlab-tr-research-ethics` |
+| KVKK (Turkish data-protection) data management plan | `alterlab-kvkk-dmp` |
 | Survey instrument design | `alterlab-survey-design` |
 | Qualitative methodology | `alterlab-qualitative-methods` |
-| Clinical trial design | Clinical research skills |
+| Clinical trial design / clinical reporting | `clinical-research` skills (e.g. `alterlab-clinical-reports`) |
 
 ---
 
@@ -61,14 +63,17 @@ The Belmont Report remains the foundational document for research ethics in the 
 | **Beneficence** | Obligation to maximize benefits and minimize harms; do no harm | Risk-benefit analysis; safety protocols; monitoring for adverse events; data security |
 | **Justice** | Fair distribution of research benefits and burdens; equitable participant selection | Inclusion/exclusion criteria justified; not targeting vulnerable groups for convenience; sharing research benefits |
 
-#### Declaration of Helsinki (WMA, 2013 revision)
+#### Declaration of Helsinki (WMA, 2024 revision)
+
+The 2024 revision (adopted October 2024) is the only official version; the WMA states earlier versions should be cited only for historical purposes. It replaces "subjects" with "participants" throughout, addresses all individuals and organizations involved in research (not only physicians), and adds an explicit scientific-integrity / zero-tolerance-for-misconduct provision. Note that the 2024 revision renumbered paragraphs relative to 2013, so verify any paragraph number against the current text before citing it.
 
 Key principles extending beyond the Belmont Report:
-- Research involving human subjects must conform to generally accepted scientific principles
-- The well-being of the individual research subject must take precedence over all other interests
-- Every research study involving human subjects must be registered in a publicly accessible database before recruitment begins
+- Research involving human participants must conform to generally accepted scientific principles
+- The well-being of the individual research participant must take precedence over all other interests
+- Every research study involving human participants must be registered in a publicly accessible database before recruitment of the first participant
 - Negative and inconclusive results must be published or otherwise made publicly available
 - Post-study provisions: participants who benefit from the research should have access to the intervention
+- Meaningful engagement with participants and their communities before, during, and after the study
 
 #### Singapore Statement on Research Integrity (2010)
 
@@ -686,6 +691,6 @@ If YES to both an agent AND an effect → Institutional DURC review required
 - Office for Human Research Protections (OHRP). (2018). *45 CFR 46 (Common Rule)*. https://www.hhs.gov/ohrp/regulations-and-policy/regulations/45-cfr-46/
 - Resnik, D. B. (2020). *The ethics of research with human subjects: Protecting people, advancing science, promoting trust*. Springer.
 - Steneck, N. H. (2007). *ORI introduction to the responsible conduct of research*. Government Printing Office.
-- World Medical Association. (2013). *Declaration of Helsinki*. https://www.wma.net/policies-post/wma-declaration-of-helsinki/
+- World Medical Association. (2024). *Declaration of Helsinki — Ethical principles for medical research involving human participants* (2024 revision). https://www.wma.net/policies-post/wma-declaration-of-helsinki/
 
 See also: `references/ethics-guidelines.md` for expanded regulatory details.

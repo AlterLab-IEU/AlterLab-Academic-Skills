@@ -58,7 +58,7 @@ export OPENROUTER_API_KEY='your_api_key_here'
 # Get key at: https://openrouter.ai/keys
 ```
 
-The `generate_slide_image.py` script reads `OPENROUTER_API_KEY` (or accepts `--api-key`). Full script options and prompt-writing templates are in `references/scripts_and_prompts.md`.
+The `generate_slide_image.py` script reads `OPENROUTER_API_KEY` (or accepts `--api-key`); a `.env` in the working dir or a parent also works. The image and quality-review models default to Google Gemini image/vision models routed through OpenRouter and can be overridden with `ALTERLAB_IMAGE_MODEL` / `ALTERLAB_REVIEW_MODEL`. Refinement is capped at 2 iterations. Full script options and prompt-writing templates are in `references/scripts_and_prompts.md`.
 
 ### Minimal example
 
@@ -80,7 +80,7 @@ If a diagram or figure would aid comprehension, invoke the **alterlab-scientific
 1. **Plan** — define talk type, duration, audience, venue. Use the **research-lookup** skill to gather 8-15 papers for citations and outline the narrative arc (Hook → Context → Gap → Approach → Results [40-50% of time] → Implications → Closure).
 2. **Choose implementation** — Nano Banana Pro PDF (default), PowerPoint via PPTX skill, or LaTeX Beamer (math-heavy).
 3. **Build visual-first** — every slide needs a strong visual; text is supporting (3-4 bullets, 4-6 words, 24-28pt body / 36-44pt titles). Modern palette, high contrast (7:1 preferred), 40-50% white space.
-4. **Validate visually** — convert to images with `pdf_to_images.py`, inspect for overflow/overlap/small fonts/contrast, iterate until clean. Run `validate_presentation.py` for slide-count/timing/font checks.
+4. **Validate visually** — convert to images with `pdf_to_images.py`, inspect for overflow/overlap/small fonts/contrast, iterate until clean. Run `validate_presentation.py --duration N` for slide-count-vs-duration, file-size, and (PPTX-only) font-size/bullet-count checks. Contrast is judged visually from the images, not by the script.
 5. **Practice** — 3-5 times with a timer (~1 slide/min), set checkpoints, never skip conclusions.
 
 ## Routing — where to look

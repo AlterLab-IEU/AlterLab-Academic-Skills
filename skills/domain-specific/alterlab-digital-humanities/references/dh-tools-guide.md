@@ -10,7 +10,7 @@
 | NER accuracy | High | Moderate | High | Very high | High (literary) |
 | Languages | 25+ | 20+ | 66+ | 20+ | English |
 | Dependency parsing | Yes | Limited | Yes | No | Yes |
-| Coreference | Yes (v3.5+) | No | No | No | Yes |
+| Coreference | Experimental (separate `spacy-experimental` pkg, `en_coreference_web_trf`; not in core `en_core_web_*` pipelines) | No | No | No | Yes |
 | Sentiment | No (use extension) | Yes (VADER) | Yes | Yes | No |
 | Ease of use | Easy | Easy | Easy | Moderate | Easy |
 | Character detection | No | No | No | No | Yes |

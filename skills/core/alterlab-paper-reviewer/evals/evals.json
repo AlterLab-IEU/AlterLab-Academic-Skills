@@ -9,6 +9,14 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Configures a 5-reviewer panel (Editor-in-Chief + 3 peer reviewers + Devil's Advocate) and produces multiple independent reviews culminating in a single Editorial Decision and a prioritized Revision Roadmap."
+        },
+        {
+          "type": "output_contains",
+          "value": "Revision Roadmap"
         }
       ]
     },
@@ -20,6 +28,10 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Runs only the field_analyst and methodology_reviewer agents (not the full panel) and assesses sampling, statistical validity, effect sizes, and reproducibility."
         }
       ]
     },
@@ -31,6 +43,14 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Builds a revision-response checklist and marks each prior comment FULLY_ADDRESSED / PARTIALLY_ADDRESSED / NOT_ADDRESSED / MADE_WORSE, then issues a new Decision."
+        },
+        {
+          "type": "output_contains",
+          "value": "FULLY_ADDRESSED"
         }
       ]
     },
@@ -42,6 +62,10 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Engages the Devil's Advocate reviewer to produce the strongest counter-argument and detect logical fallacies; any CRITICAL finding blocks an Accept decision."
         }
       ]
     },
@@ -53,6 +77,10 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Enters a Socratic dialogue that opens with strengths and reveals issues through questions rather than dumping a fix list, ending with a structured Revision Roadmap."
         }
       ]
     },
@@ -82,6 +110,17 @@
       "id": "no-trigger-revise-from-comments",
       "prompt": "I already have the reviewer comments and the revision roadmap - now just make the actual edits to my manuscript for me.",
       "expected_output": "defers to alterlab-paper-writer (revision mode) / does not invoke alterlab-paper-reviewer (the user wants the revisions executed, not the paper reviewed again)",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "no-trigger-single-referee-report",
+      "prompt": "A journal asked me to be a reviewer. Write me one structured, checklist-based referee report on this manuscript with a recommendation.",
+      "expected_output": "defers to alterlab-peer-review / does not invoke alterlab-paper-reviewer (the user wants a single reviewer's structured report, not a simulated multi-reviewer panel with an editorial decision)",
       "assertions": [
         {
           "type": "should_not_trigger",

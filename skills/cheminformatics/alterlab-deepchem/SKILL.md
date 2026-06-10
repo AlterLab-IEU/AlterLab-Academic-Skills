@@ -293,11 +293,10 @@ new_smiles = ['CCO', 'c1ccccc1', 'CC(C)O']
 new_features = featurizer.featurize(new_smiles)
 new_dataset = dc.data.NumpyDataset(X=new_features)
 
-# Apply same transformations as training
-for transformer in transformers:
-    new_dataset = transformer.transform(new_dataset)
-
-predictions = model.predict(new_dataset)
+# Pass the training transformers to predict() to undo y-normalization
+# so predictions come back in the original units. (Don't .transform()
+# the X-only dataset — those transformers act on y, not the features.)
+predictions = model.predict(new_dataset, transformers=transformers)
 ```
 
 ## Typical Workflows

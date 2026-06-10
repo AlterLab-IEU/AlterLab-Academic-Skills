@@ -23,7 +23,9 @@ The `Protein` class represents a protein structure stored on Rowan.
 | `name` | str | User-assigned name |
 | `data` | str | PDB structure data (lazy-loaded) |
 | `sanitized` | bool | Whether structure has been cleaned |
+| `pocket` | list[list[float]] | Stored binding pocket `[[center], [size]]`, if set |
 | `public` | bool | Public visibility flag |
+| `ancestor_uuid` | str | Containing folder UUID |
 | `created_at` | datetime | Upload timestamp |
 
 ---
@@ -76,8 +78,8 @@ proteins = rowan.list_proteins()
 for p in proteins:
     print(f"{p.name}: {p.uuid}")
 
-# Filter by name
-proteins = rowan.list_proteins(name="EGFR")
+# Filter by name substring
+proteins = rowan.list_proteins(name_contains="EGFR")
 ```
 
 ---
@@ -116,12 +118,10 @@ protein = rowan.retrieve_protein("protein-uuid")
 # Update name
 protein.update(name="EGFR Kinase Domain")
 
-# Define binding pocket
+# Define binding pocket — [[center], [size]] (Å), same format as docking
 protein.update(
-    pocket={
-        "center": [10.0, 20.0, 30.0],
-        "size": [20.0, 20.0, 20.0]
-    }
+    pocket=[[10.0, 20.0, 30.0],
+            [20.0, 20.0, 20.0]]
 )
 ```
 
@@ -206,8 +206,8 @@ folders = rowan.list_folders()
 for f in folders:
     print(f"{f.name}: {f.uuid}")
 
-# Filter
-folders = rowan.list_folders(name="Project", starred=True)
+# Filter (name substring)
+folders = rowan.list_folders(name_contains="Project", starred=True)
 ```
 
 ---
@@ -238,11 +238,12 @@ Visualize folder hierarchy.
 ```python
 import rowan
 
-# Print structure starting from root
-rowan.print_folder_tree()
+# Print the tree rooted at a given folder UUID (uuid is required)
+rowan.print_folder_tree("folder-uuid")
 
-# Print from specific folder
-rowan.print_folder_tree(root_uuid="folder-uuid")
+# Or call it on a Folder object
+folder = rowan.retrieve_folder("folder-uuid")
+folder.print_folder_tree()
 ```
 
 Output:
@@ -294,10 +295,10 @@ workflow = rowan.submit_pka_workflow(
 import rowan
 
 folder = rowan.retrieve_folder("folder-uuid")
-workflows = rowan.list_workflows(folder_uuid=folder.uuid)
+workflows = rowan.list_workflows(parent_uuid=folder.uuid)   # list_workflows uses parent_uuid
 
 for wf in workflows:
-    print(f"{wf.name}: {wf.status}")
+    print(f"{wf.name}: {wf.status.name}")
 ```
 
 ---
@@ -314,6 +315,7 @@ Projects are top-level containers for organizing folders and workflows.
 |-----------|------|-------------|
 | `uuid` | str | Unique identifier |
 | `name` | str | Project name |
+| `root_folder_uuid` | str | UUID of the project's root folder (nest folders under this) |
 | `created_at` | datetime | Creation timestamp |
 
 ---
@@ -372,7 +374,9 @@ project.delete()
 
 ---
 
-### Create Folder in Project
+### Create Folder Under a Project
+
+`create_folder` does not take a `project_uuid` — nest folders under a project's root folder via `parent_uuid`.
 
 ```python
 import rowan
@@ -380,7 +384,7 @@ import rowan
 project = rowan.create_project("Drug Discovery")
 folder = rowan.create_folder(
     name="Phase 1 Compounds",
-    project_uuid=project.uuid
+    parent_uuid=project.root_folder_uuid,
 )
 ```
 
@@ -392,33 +396,30 @@ folder = rowan.create_folder(
 
 ```python
 import rowan
-import stjames
 
 # Create project structure
 project = rowan.create_project("EGFR Inhibitor Campaign")
+root = project.root_folder_uuid
 
-# Create organized folders
-target_folder = rowan.create_folder("Target Preparation", project_uuid=project.uuid)
-hit_folder = rowan.create_folder("Hit Finding", project_uuid=project.uuid)
-lead_folder = rowan.create_folder("Lead Optimization", project_uuid=project.uuid)
+# Create organized folders under the project's root folder
+target_folder = rowan.create_folder("Target Preparation", parent_uuid=root)
+hit_folder = rowan.create_folder("Hit Finding", parent_uuid=root)
+lead_folder = rowan.create_folder("Lead Optimization", parent_uuid=root)
 
 # Upload and prepare protein
 protein = rowan.create_protein_from_pdb_id("EGFR", "1M17")
 protein.sanitize()
 
-# Define binding site
-pocket = {
-    "center": [10.0, 20.0, 30.0],  # From crystal ligand
-    "size": [20.0, 20.0, 20.0]
-}
+# Define binding site — [[center], [size]] (Å)
+pocket = [[10.0, 20.0, 30.0],   # from crystal ligand
+          [20.0, 20.0, 20.0]]
 
 # Submit docking workflows to hit folder
 for smiles in hit_compounds:
-    mol = stjames.Molecule.from_smiles(smiles)
     workflow = rowan.submit_docking_workflow(
         protein=protein.uuid,
         pocket=pocket,
-        initial_molecule=mol,
+        initial_molecule=smiles,    # SMILES accepted directly
         name=f"Dock: {smiles[:20]}",
         folder_uuid=hit_folder.uuid
     )
@@ -467,14 +468,15 @@ folder = rowan.create_folder("EGFR_Conformer_Search")
 
 ```python
 import rowan
+import stjames
 from datetime import datetime, timedelta
 
-# Find old completed workflows
+# Find old completed workflows (status filter takes the Status int value)
 old_cutoff = datetime.now() - timedelta(days=30)
-workflows = rowan.list_workflows(status="completed")
+workflows = rowan.list_workflows(status=stjames.Status.COMPLETED_OK.value)
 
 for wf in workflows:
-    if wf.completed_at < old_cutoff:
+    if wf.completed_at and wf.completed_at < old_cutoff:
         # Delete data but keep metadata
         wf.delete_data()
         # Or delete entirely
@@ -490,10 +492,10 @@ import rowan
 user = rowan.whoami()
 print(f"Available credits: {user.credits}")
 
-# Set credit limit per workflow
+# Cap spend per workflow (max_credits is an int)
 workflow = rowan.submit_pka_workflow(
-    initial_molecule=mol,
+    "c1ccccc1O",
     name="pKa calculation",
-    max_credits=10.0  # Fail if exceeds 10 credits
+    max_credits=10,
 )
 ```

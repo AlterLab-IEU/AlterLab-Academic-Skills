@@ -38,7 +38,8 @@ def generate_chipseq_qc_workflow(output_file, params):
 
 # Configuration
 INPUT_BAM="{params.get('input_bam', 'Input.bam')}"
-CHIP_BAM=("{params.get('chip_bams', 'ChIP1.bam ChIP2.bam')}")
+# Word-split the space-separated list into a multi-element array.
+CHIP_BAM=({params.get('chip_bams', 'ChIP1.bam ChIP2.bam')})
 GENOME_SIZE={params.get('genome_size', '2913022398')}
 THREADS={params.get('threads', '8')}
 OUTPUT_DIR="{params.get('output_dir', 'deeptools_qc')}"
@@ -419,7 +420,9 @@ Examples:
         parser.print_help()
         sys.exit(1)
 
-    # Prepare parameters
+    # Prepare parameters. Drop keys whose value is None so the per-workflow
+    # `params.get(key, default)` placeholders actually fall back to their
+    # defaults instead of substituting the literal string "None".
     params = {
         'threads': args.threads,
         'genome_size': args.genome_size,
@@ -432,6 +435,7 @@ Examples:
         'genes_bed': args.genes_bed,
         'peaks_bed': args.peaks_bed,
     }
+    params = {k: v for k, v in params.items() if v is not None}
 
     # Generate workflow
     if args.workflow == 'chipseq_qc':

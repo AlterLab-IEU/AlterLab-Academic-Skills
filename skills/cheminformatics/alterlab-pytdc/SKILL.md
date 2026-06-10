@@ -1,6 +1,6 @@
 ---
 name: alterlab-pytdc
-description: Loads Therapeutics Data Commons (TDC, PyTDC) AI-ready drug-discovery datasets and benchmarks — ADME, toxicity, drug-target interaction (DTI), scaffold splits, and molecular oracles for therapeutic ML and pharmacological prediction. Use when fetching a standardized benchmark dataset, applying scaffold or cold-split evaluation, or sourcing labeled molecules for ADMET, toxicity, or DTI modeling. Part of the AlterLab Academic Skills suite.
+description: Loads Therapeutics Data Commons (TDC, PyTDC) AI-ready drug-discovery datasets and benchmarks — ADME, toxicity, drug-target interaction (DTI), scaffold splits, and molecular oracles for therapeutic ML and pharmacological prediction. Use when fetching a standardized benchmark dataset, applying scaffold or cold-split evaluation, or sourcing labeled molecules for ADMET, toxicity, or DTI modeling. Sources data, splits, and oracles only — defer molecular featurization (ECFP/fingerprints), model training, and transformers to a molecular-ML skill (e.g. deepchem). Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
@@ -158,6 +158,8 @@ Predict binding affinity between drugs and protein targets.
 from tdc.multi_pred import DTI
 data = DTI(name='BindingDB_Kd')
 split = data.get_split()
+# Cold-drug split (test set has only unseen drugs):
+cold = data.get_split(method='cold_split', column_name='Drug')
 ```
 
 **Available datasets:**
@@ -257,18 +259,24 @@ Benchmark groups provide curated collections of related datasets for systematic 
 from tdc.benchmark_group import admet_group
 group = admet_group(path='data/')
 
-# Get benchmark datasets
-benchmark = group.get('Caco2_Wang')
-predictions = {}
-
+predictions_list = []
 for seed in [1, 2, 3, 4, 5]:
-    train, valid = benchmark['train'], benchmark['valid']
-    # Train model here
-    predictions[seed] = model.predict(benchmark['test'])
+    benchmark = group.get('Caco2_Wang')
+    name = benchmark['name']
+    # train_val is split into train/valid per seed; test is FIXED across seeds.
+    train_val, test = benchmark['train_val'], benchmark['test']
+    train, valid = group.get_train_valid_split(
+        benchmark=name, split_type='default', seed=seed
+    )
+    # Train model here, then predict on `test`
+    predictions = {name: model.predict(test)}  # dict keyed by benchmark name
+    predictions_list.append(predictions)
 
-# Evaluate with required 5 seeds
-results = group.evaluate(predictions)
+# Evaluate across the 5 seeds → {'caco2_wang': [mean, std]}
+results = group.evaluate_many(predictions_list)
 ```
+
+Note the structure: `group.get(name)` returns a dict with keys `name`, `train_val`, `test` (NOT one keyed by seed). The per-seed train/valid split comes from `group.get_train_valid_split(...)`; the `test` set is held fixed. Each seed's predictions go into a dict keyed by the benchmark name; collect those dicts in a list and pass to `group.evaluate_many(...)`. (Use `group.evaluate(predictions)` only for a single-seed submission dict.)
 
 **ADMET Group includes 22 datasets** covering absorption, distribution, metabolism, excretion, and toxicity.
 
@@ -297,16 +305,17 @@ split = data.get_split(method='scaffold', seed=1, frac=[0.7, 0.1, 0.2])
 # Random split
 split = data.get_split(method='random', seed=42, frac=[0.8, 0.1, 0.1])
 
-# Cold split (for DTI/DDI tasks)
-split = data.get_split(method='cold_drug', seed=1)  # Unseen drugs in test
-split = data.get_split(method='cold_target', seed=1)  # Unseen targets in test
+# Cold split (for DTI/DDI tasks) — pick the held-out entity via column_name
+split = data.get_split(method='cold_split', column_name='Drug', seed=1)    # Unseen drugs in test
+split = data.get_split(method='cold_split', column_name='Target', seed=1)  # Unseen targets in test
+# Pass a list to hold out multiple entities: column_name=['Drug', 'Target']
 ```
 
 **Available split strategies:**
 - `random`: Random shuffling
-- `scaffold`: Scaffold-based (for chemical diversity)
-- `cold_drug`, `cold_target`, `cold_drug_target`: For DTI tasks
-- `temporal`: Time-based splits for temporal datasets
+- `scaffold`: Scaffold-based (Bemis-Murcko, for chemical diversity)
+- `cold_split`: For DTI/DDI tasks — set `column_name` to the entity (`'Drug'`, `'Target'`, or a list) you want unseen in test
+- `combination`: For drug-combination datasets
 
 ### 2. Model Evaluation
 
@@ -384,12 +393,12 @@ dti_datasets = retrieve_dataset_names('DTI')
 ### Label Transformations
 
 ```python
-# Get label mapping
-label_map = data.get_label_map(name='DrugBank')
+from tdc.utils import get_label_map
+label_map = get_label_map(name='DrugBank', task='DDI')
 
-# Convert labels
-from tdc.chem_utils import label_transform
-transformed = label_transform(y, from_unit='nM', to_unit='p')
+# Unit/log conversion is done via methods ON the dataset object, not a standalone import:
+data = DTI(name='DAVIS')
+data.convert_to_log(form='binding')   # e.g. Kd (nM) -> pKd; convert_from_log() reverses it
 ```
 
 ### Database Queries

@@ -1,0 +1,47 @@
+AlterLab Academic Skills
+Copyright (c) 2026 AlterLab Creative Technologies Laboratory
+Licensed under the MIT License (see LICENSE).
+
+This product includes material derived from the following upstream works.
+Their original copyright and license notices are retained, as required by
+those licenses. See THIRD_PARTY_NOTICES.md for the full terms, the per-skill
+derivation map, and license-compatibility details.
+
+-------------------------------------------------------------------------------
+Upstream 1: scientific-agent-skills
+  Source : https://github.com/K-Dense-AI/scientific-agent-skills
+  Author : K-Dense Inc.
+  License: MIT License
+  Notice : Copyright (c) 2025 K-Dense Inc.
+
+  The bulk of the AlterLab suite (bioinformatics, cheminformatics, data-science,
+  databases, visualization, lab-integrations, and domain-specific tool-wrapper
+  skills) is a content fork of this MIT-licensed collection, modified and
+  extended by AlterLab. MIT permits use, modification, distribution, and
+  sublicensing provided the above copyright and permission notice are retained.
+-------------------------------------------------------------------------------
+Upstream 2: academic-research-skills
+  Source : https://github.com/Imbad0202/academic-research-skills
+  Author : Cheng-I Wu (吳政宜)
+  License: Creative Commons Attribution-NonCommercial 4.0 International
+           (CC-BY-NC 4.0) -- https://creativecommons.org/licenses/by-nc/4.0/
+  Notice : Copyright (c) 2026 Cheng-I Wu
+
+  Required attribution (reproduced verbatim, as requested by the upstream):
+
+      Based on Academic Research Skills by Cheng-I Wu
+      https://github.com/Imbad0202/academic-research-skills
+
+  The following four AlterLab skills adapt this work:
+      skills/core/alterlab-deep-research      (from "Deep Research")
+      skills/core/alterlab-paper-writer       (from "Academic Paper")
+      skills/core/alterlab-paper-reviewer     (from "Academic Paper Reviewer")
+      skills/core/alterlab-research-pipeline  (from "Academic Pipeline")
+
+  IMPORTANT: CC-BY-NC 4.0 is a NonCommercial license and is NOT compatible with
+  the permissive MIT license used by the rest of this repository. These four
+  skills MAY NOT be used commercially without separate permission from the
+  upstream author, and CC-BY-NC 4.0 -- not MIT -- governs them, regardless of
+  the "license: MIT" value currently in their SKILL.md frontmatter. See
+  THIRD_PARTY_NOTICES.md for details.
+-------------------------------------------------------------------------------

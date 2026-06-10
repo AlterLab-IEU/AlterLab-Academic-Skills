@@ -3,7 +3,7 @@ name: alterlab-bgpt-search
 description: Search scientific papers and retrieve structured experimental data extracted from full-text studies via the BGPT MCP server, returning 25+ fields per paper (methods, results, sample sizes, quality scores, conclusions). Use when running a literature review or evidence synthesis, or when needing experimental details (sample sizes, effect sizes, methods, quality scores) that abstracts alone do not provide. Part of the AlterLab Academic Skills suite.
 allowed-tools: Bash
 license: MIT
-compatibility: Connects to the BGPT MCP server. Free tier allows 50 searches per network with no API key; higher volume needs a BGPT API key from bgpt.pro/mcp. Requires network access.
+compatibility: Connects to the BGPT MCP server. Free tier allows 50 free results with no API key; higher volume needs a BGPT API key from bgpt.pro/mcp. Requires network access.
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -19,14 +19,12 @@ BGPT is a remote MCP server that searches a curated database of scientific paper
 
 ## When to Use This Skill
 
-Use this skill when:
-- Searching for scientific papers with specific experimental details
-- Conducting systematic or scoping literature reviews
-- Finding quantitative results, sample sizes, or effect sizes across studies
-- Comparing methodologies used in different studies
-- Looking for papers with quality scores or evidence grading
-- Needing structured data from full-text papers (not just abstracts)
-- Building evidence tables for meta-analyses or clinical guidelines
+Use BGPT when the value is in structured full-text experimental data, not titles/abstracts:
+- Building evidence tables for a meta-analysis, scoping review, or clinical guideline
+- Extracting sample sizes, effect sizes, methods, protocols, or conclusions across studies
+- Comparing methodologies, or filtering papers by quality score / evidence grading
+
+For broad title/abstract discovery use `alterlab-pubmed`; for real-time web-grounded summaries of recent developments use `alterlab-perplexity`.
 
 ## Setup
 
@@ -71,13 +69,13 @@ The server returns structured results including:
 
 ## Pricing
 
-- **Free tier**: 50 searches per network, no API key required
-- **Paid**: $0.01 per result with an API key from [bgpt.pro/mcp](https://bgpt.pro/mcp)
+- **Free tier**: 50 free results, no API key required
+- **Paid**: $0.02 per result (billed per result actually returned, not per search) with an API key from [bgpt.pro/mcp](https://bgpt.pro/mcp)
 
 ## Complementary Skills
 
 Pairs well with:
-- `literature-review` — Use BGPT to gather structured data, then synthesize with literature-review workflows
-- `pubmed-database` — Use PubMed for broad searches, BGPT for deep experimental data
-- `biorxiv-database` — Combine preprint discovery with full-text data extraction
-- `citation-management` — Manage citations from BGPT search results
+- `alterlab-literature-review` — gather structured data with BGPT, then synthesize
+- `alterlab-pubmed` — PubMed for broad discovery, BGPT for deep experimental data
+- `alterlab-biorxiv` — combine preprint discovery with full-text data extraction
+- `alterlab-pyzotero` — manage citations from BGPT search results

@@ -26,8 +26,8 @@ use YOK Akademik for the affiliation ground truth and OpenAlex for the bibliogra
 - **Authorship bylines** — confirming the affiliation line for a Turkish co-author
   before submission.
 - **Recommendation letters** — verifying the candidate's (or referee's) current title
-  and institution. (The letter *itself* is `alterlab-recommendation-letters`; this
-  skill only supplies the verified affiliation that goes into it.)
+  and institution. (This skill only supplies the verified affiliation that goes into the
+  letter; it does not draft the letter itself.)
 - **Grant teams / editorial boards** — confirming a named person's post and unvan.
 
 ## Disambiguation checklist (do this every time)

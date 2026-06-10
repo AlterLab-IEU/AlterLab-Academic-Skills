@@ -1,9 +1,9 @@
 ---
 name: alterlab-latchbio
-description: Builds and deploys bioinformatics pipelines on the LatchBio platform using the Latch SDK — author workflows with @workflow/@task decorators, handle LatchFile/LatchDir I/O, deploy serverless workflows, and wrap Nextflow/Snakemake pipelines. Use when developing or deploying a Latch SDK workflow, registering tasks, or porting a Nextflow/Snakemake bioinformatics pipeline onto LatchBio. Part of the AlterLab Academic Skills suite.
+description: Builds and deploys bioinformatics pipelines on the LatchBio platform using the Latch SDK — author workflows with @workflow/@task decorators, handle LatchFile/LatchDir I/O, register serverless workflows, configure CPU/GPU task resources, organize data in the Latch Registry, and wrap Nextflow/Snakemake pipelines. Use when developing or deploying a Latch SDK workflow, sizing task resources, working with the Registry, or porting a Nextflow/Snakemake bioinformatics pipeline onto LatchBio. Not for DNAnexus (dxpy/dx CLI) or generic Flyte. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
-compatibility: Requires a LatchBio account and workspace plus the Latch SDK (pip install latch); deploying workflows needs `latch login`
+compatibility: Requires a LatchBio account and workspace plus the Latch SDK (`uv pip install latch`, latch>=2.x, Python 3.9+); deploying workflows needs Docker running and `latch login`
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -41,34 +41,32 @@ The Latch platform provides four main areas of functionality:
 - Cost optimization strategies
 
 ### 4. Verified Workflows
-- Production-ready pre-built pipelines
-- Bulk RNA-seq, DESeq2, pathway analysis
-- AlphaFold and ColabFold for protein structure prediction
-- Single-cell tools (ArchR, scVelo, emptyDropsR)
-- CRISPR analysis, phylogenetics, and more
+- Production-ready pre-built pipelines maintained by Latch
+- Importable from the `latch.verified` Python module: `rnaseq`, `deseq2_wf`, `mafft`, `trim_galore`, `gene_ontology_pathway_analysis`
+- Many more pipelines (e.g. AlphaFold, single-cell, CRISPR) are available as Verified Workflows in the platform UI; verify the exact import name in `latch.verified` before relying on a Python import (see references/verified-workflows.md)
 
 ## Quick Start
 
 ### Installation and Setup
 
 ```bash
-# Install Latch SDK
-python3 -m uv pip install latch
+# Install Latch SDK (uv-first; pip install latch also works)
+uv pip install latch
 
 # Login to Latch
 latch login
 
-# Initialize a new workflow
+# Initialize a new workflow (scaffolds wf/, Dockerfile, version)
 latch init my-workflow
 
-# Register workflow to platform
+# Register workflow to platform (builds container, generates the UI)
 latch register my-workflow
 ```
 
 **Prerequisites:**
-- Docker installed and running
+- Docker installed and running (registration builds a container locally)
 - Latch account credentials
-- Python 3.8+
+- Python 3.9+ (Latch SDK `requires-python >=3.9`)
 
 ### Basic Workflow Example
 
@@ -124,77 +122,12 @@ This skill should be used when encountering any of the following scenarios:
 
 ## Detailed Documentation
 
-This skill includes comprehensive reference documentation organized by capability:
+Load the reference that matches the task:
 
-### references/workflow-creation.md
-**Read this for:**
-- Creating and registering workflows
-- Task definition and decorators
-- Supporting Python, Nextflow, Snakemake
-- Launch plans and conditional sections
-- Workflow execution (CLI and programmatic)
-- Multi-step and parallel pipelines
-- Troubleshooting registration issues
-
-**Key topics:**
-- `latch init` and `latch register` commands
-- `@workflow` and `@task` decorators
-- LatchFile and LatchDir basics
-- Type annotations and docstrings
-- Launch plans with preset parameters
-- Conditional UI sections
-
-### references/data-management.md
-**Read this for:**
-- Cloud storage with LatchFile and LatchDir
-- Registry system (Projects, Tables, Records)
-- Linked records and relationships
-- Enum and typed columns
-- Bulk operations and transactions
-- Integration with workflows
-- Account and workspace management
-
-**Key topics:**
-- `latch:///` path format
-- File transfer and glob patterns
-- Creating and querying Registry tables
-- Column types (string, number, file, link, enum)
-- Record CRUD operations
-- Workflow-Registry integration
-
-### references/resource-configuration.md
-**Read this for:**
-- Task resource decorators
-- Custom CPU, memory, GPU configuration
-- GPU types (K80, V100, A100)
-- Timeout and storage settings
-- Resource optimization strategies
-- Cost-effective workflow design
-- Monitoring and debugging
-
-**Key topics:**
-- `@small_task`, `@large_task`, `@small_gpu_task`, `@large_gpu_task`
-- `@custom_task` with precise specifications
-- Multi-GPU configuration
-- Resource selection by workload type
-- Platform limits and quotas
-
-### references/verified-workflows.md
-**Read this for:**
-- Pre-built production workflows
-- Bulk RNA-seq and DESeq2
-- AlphaFold and ColabFold
-- Single-cell analysis (ArchR, scVelo)
-- CRISPR editing analysis
-- Pathway enrichment
-- Integration with custom workflows
-
-**Key topics:**
-- `latch.verified` module imports
-- Available verified workflows
-- Workflow parameters and options
-- Combining verified and custom steps
-- Version management
+- **references/workflow-creation.md** — `latch init`/`latch register`, `@workflow`/`@task` decorators, type annotations and docstrings (these populate the UI), launch plans, conditional sections, CLI/programmatic execution, parallel `map_task`, registration troubleshooting.
+- **references/data-management.md** — `LatchFile`/`LatchDir` and `latch:///` paths, glob patterns, the Registry API (`Project`, `Table`, `Record`), column types, the `table.update()` transaction, and workflow-Registry integration.
+- **references/resource-configuration.md** — standard task decorators, `@custom_task(cpu, memory, storage_gib, timeout)`, the GPU task decorators (`small_gpu_task`/`large_gpu_task`, `v100_x{1,4,8}_task`, `g6e_*_task`), and resource/cost right-sizing.
+- **references/verified-workflows.md** — pipelines importable from `latch.verified` and how to combine them with custom tasks.
 
 ## Common Workflow Patterns
 
@@ -259,29 +192,38 @@ def gpu_pipeline(input_file: LatchFile) -> LatchFile:
 ```python
 from latch import workflow, small_task
 from latch.registry.table import Table
-from latch.registry.record import Record
-from latch.types import LatchFile
 
 @small_task
-def process_and_track(sample_id: str, table_id: str) -> str:
-    """Process sample and update Registry"""
-    # Get sample from registry
-    table = Table.get(table_id=table_id)
-    records = Record.list(table_id=table_id, filter={"sample_id": sample_id})
-    sample = records[0]
+def process_and_track(sample_name: str, table_id: str) -> str:
+    """Process a sample tracked in a Registry table and write status/result back."""
+    table = Table(table_id)  # construct by id; no Table.get classmethod
 
-    # Process
-    input_file = sample.values["fastq_file"]
-    output = process(input_file)
+    # Find the record by name. list_records() yields pages of {record_id: Record}.
+    sample = None
+    for page in table.list_records():
+        for record in page.values():
+            if record.get_name() == sample_name:
+                sample = record
+                break
+        if sample is not None:
+            break
+    if sample is None:
+        raise ValueError(f"No record named {sample_name}")
 
-    # Update registry
-    sample.update(values={"status": "completed", "result": output})
+    # Read column values
+    values = sample.get_values()
+    input_file = values["fastq_file"]  # a LatchFile for a 'file'-typed column
+    # ... processing logic produces an output LatchFile ...
+
+    # Write status/result back via the table.update() transaction (upsert by name)
+    with table.update() as updater:
+        updater.upsert_record(sample_name, status="completed", result=input_file)
     return "Success"
 
 @workflow
-def registry_workflow(sample_id: str, table_id: str):
-    """Workflow integrated with Registry"""
-    return process_and_track(sample_id=sample_id, table_id=table_id)
+def registry_workflow(sample_name: str, table_id: str) -> str:
+    """Workflow integrated with the Latch Registry."""
+    return process_and_track(sample_name=sample_name, table_id=table_id)
 ```
 
 ## Best Practices
@@ -338,17 +280,7 @@ def registry_workflow(sample_id: str, table_id: str):
 
 ## Additional Resources
 
-- **Official Documentation**: https://docs.latch.bio
-- **GitHub Repository**: https://github.com/latchbio/latch
-- **Slack Community**: Join Latch SDK workspace
-- **API Reference**: https://docs.latch.bio/api/latch.html
-- **Blog**: https://blog.latch.bio
-
-## Support
-
-For issues or questions:
-1. Check documentation links above
-2. Search GitHub issues
-3. Ask in Slack community
-4. Contact support@latch.bio
+- Official Documentation: https://docs.latch.bio
+- GitHub Repository (verify current API/decorator names here): https://github.com/latchbio/latch
+- Support: support@latch.bio
 

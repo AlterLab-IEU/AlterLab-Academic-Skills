@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["requests"]
+# ///
 """Query NCBI GEO DataSets via E-utilities (no API key required; key lifts limits).
 
 Base: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/  (db=gds)
   esearch.fcgi   term -> GEO UIDs
   esummary.fcgi  id   -> dataset/series summaries (Accession, title, n_samples)
 
-Smoke test:
-    uv run python query_geo.py search "breast cancer AND Homo sapiens[ORGN]" --retmax 5
-    uv run python query_geo.py summary 200000001,200000002
+Run with uv (auto-installs the inline `requests` dependency):
+    uv run scripts/query_geo.py search "breast cancer AND Homo sapiens[ORGN]" --retmax 5
+    uv run scripts/query_geo.py summary 200000001,200000002
 """
 import argparse
 import json

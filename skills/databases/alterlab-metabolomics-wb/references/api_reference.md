@@ -25,6 +25,11 @@ The REST API follows a consistent URL pattern:
 - **json**: Machine-readable JSON format (default)
 - **txt**: Tab-delimited text format for human readability
 
+**Caveat:** the format suffix is not honored uniformly. The `moverz` context and the `study`
+`summary`/search outputs return **tab-delimited text even when `/json` is requested**, and
+`study/study_id/ST/available/json` returns an empty body (use `/txt`). Always be ready to parse
+TSV; do not assume a keyed JSON object from every `/json` URL. (Verified 2026-06.)
+
 ## Context 1: Compound
 
 Retrieve metabolite structure and identification data.
@@ -117,13 +122,13 @@ Access metabolomics research study metadata and experimental results.
 | `untarg_factors` | Untargeted study factors |
 | `untarg_data` | Untargeted experimental data |
 | `datatable` | Formatted data table |
-| `available` | List available studies (use with ST as input_value) |
+| `available` | List available studies (use with `ST` as input_value; request `/txt` — the `/json` form returns an empty body) |
 
 ### Example Requests
 
 ```bash
-# List all publicly available studies
-curl "https://www.metabolomicsworkbench.org/rest/study/study_id/ST/available/json"
+# List all publicly available studies (use /txt; the /json variant returns an empty body)
+curl "https://www.metabolomicsworkbench.org/rest/study/study_id/ST/available/txt"
 
 # Get study summary
 curl "https://www.metabolomicsworkbench.org/rest/study/study_id/ST000001/summary/json"
@@ -312,23 +317,25 @@ Perform mass spectrometry precursor ion searches by m/z value.
 |--------|-------------|
 | `M` | Uncharged molecule | Direct ionization methods |
 
+**Important:** `moverz` returns a **302 redirect** to an internal handler and the body is **tab-delimited text even with `/json`**. Pass `curl -L` so curl follows the redirect (without it the body is empty). The columns are `Input m/z`, `Matched m/z`, `Delta`, `Name`, `Systematic name`, `Formula`, `Ion`, `Category`, `Main class`, `Sub class` — there is no `regno` field, so parse by column, not as a keyed JSON object.
+
 ### Example Requests
 
 ```bash
-# Search for compounds with m/z 635.52 (M+H) in MB database
-curl "https://www.metabolomicsworkbench.org/rest/moverz/MB/635.52/M+H/0.5/json"
+# Search for compounds with m/z 635.52 (M+H) in MB database (-L follows the 302)
+curl -L "https://www.metabolomicsworkbench.org/rest/moverz/MB/635.52/M+H/0.5/json"
 
 # Search in RefMet with negative mode
-curl "https://www.metabolomicsworkbench.org/rest/moverz/REFMET/200.15/M-H/0.3/json"
+curl -L "https://www.metabolomicsworkbench.org/rest/moverz/REFMET/200.15/M-H/0.3/json"
 
 # Search lipids database
-curl "https://www.metabolomicsworkbench.org/rest/moverz/LIPIDS/760.59/M+Na/0.5/json"
+curl -L "https://www.metabolomicsworkbench.org/rest/moverz/LIPIDS/760.59/M+Na/0.5/json"
 
-# Calculate exact mass for known metabolite
-curl "https://www.metabolomicsworkbench.org/rest/moverz/exactmass/PC(34:1)/M+H/json"
+# Calculate exact mass for known metabolite (returns plain text: name, ion, mass, formula)
+curl -L "https://www.metabolomicsworkbench.org/rest/moverz/exactmass/PC(34:1)/M+H/json"
 
 # High-resolution MS search (tight tolerance)
-curl "https://www.metabolomicsworkbench.org/rest/moverz/MB/180.0634/M+H/0.01/json"
+curl -L "https://www.metabolomicsworkbench.org/rest/moverz/MB/180.0634/M+H/0.01/json"
 ```
 
 ## Context 6: Gene
@@ -463,32 +470,53 @@ As of 2025, the Metabolomics Workbench REST API does not enforce strict rate lim
 
 ## Python Example: Complete Workflow
 
+Stdlib-only (mirrors `scripts/query_metabolomics_wb.py`). This reflects the real response
+shapes: `refmet/match` returns JSON with a `refmet_name` key, while `study` searches and
+`moverz` return **tab-delimited text** — handle them as TSV, not keyed JSON. `urllib` follows
+the `moverz` 302 redirect automatically.
+
 ```python
-import requests
+import urllib.request
+import urllib.parse
 import json
 
-# 1. Standardize metabolite name using RefMet
-metabolite = "citrate"
-response = requests.get(f'https://www.metabolomicsworkbench.org/rest/refmet/match/{metabolite}/name/json')
-standardized_name = response.json()['name']
+BASE = "https://www.metabolomicsworkbench.org/rest"
 
-# 2. Search for studies containing this metabolite
-response = requests.get(f'https://www.metabolomicsworkbench.org/rest/study/refmet_name/{standardized_name}/summary/json')
-studies = response.json()
+def get(path):
+    """GET a REST path; return parsed JSON or, for text endpoints, the raw body string."""
+    req = urllib.request.Request(f"{BASE}/{path}", headers={"User-Agent": "demo/1.0"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        body = r.read().decode("utf-8")
+    try:
+        return json.loads(body)
+    except json.JSONDecodeError:
+        return body  # tab-delimited text (study summary/search, moverz)
 
-# 3. Get detailed data from a specific study
-study_id = studies[0]['study_id']
-response = requests.get(f'https://www.metabolomicsworkbench.org/rest/study/study_id/{study_id}/data/json')
-data = response.json()
+def tsv_rows(text):
+    """Parse a tab-delimited body into a list of {column: value} dicts (header = first line)."""
+    lines = [ln for ln in text.splitlines() if ln.strip()]
+    if not lines:
+        return []
+    header = lines[0].split("\t")
+    return [dict(zip(header, ln.split("\t"))) for ln in lines[1:]]
 
-# 4. Perform m/z search for compound identification
-mz_value = 180.06
-response = requests.get(f'https://www.metabolomicsworkbench.org/rest/moverz/MB/{mz_value}/M+H/0.5/json')
-matches = response.json()
+# 1. Standardize a metabolite name (JSON; the field is `refmet_name`)
+standardized = get(f"refmet/match/{urllib.parse.quote('citrate')}/name/json")["refmet_name"]
 
-# 5. Get compound structure
-regno = matches[0]['regno']
-response = requests.get(f'https://www.metabolomicsworkbench.org/rest/compound/regno/{regno}/png')
-with open('structure.png', 'wb') as f:
-    f.write(response.content)
+# 2. Find studies measuring it (returns TAB-DELIMITED text, not JSON)
+studies_text = get(f"study/refmet_name/{urllib.parse.quote(standardized)}/summary/json")
+study_ids = sorted({r["study_id"] for r in tsv_rows(studies_text) if "study_id" in r})
+
+# 3. Pull full data for the first study (JSON, keyed by metabolite/sample)
+if study_ids:
+    data = get(f"study/study_id/{study_ids[0]}/data/json")
+
+# 4. m/z search for compound identification (TAB-DELIMITED text; follows a 302)
+mz_text = get("moverz/MB/635.52/M+H/0.5/json")
+candidates = tsv_rows(mz_text)  # columns: Name, Systematic name, Formula, Ion, ... (no regno)
+
+# 5. Fetch a compound's structure PNG by registry number (when you have a regno)
+req = urllib.request.Request(f"{BASE}/compound/regno/11/png", headers={"User-Agent": "demo/1.0"})
+with urllib.request.urlopen(req, timeout=60) as r, open("structure.png", "wb") as f:
+    f.write(r.read())
 ```

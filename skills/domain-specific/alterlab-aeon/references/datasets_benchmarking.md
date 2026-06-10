@@ -140,16 +140,20 @@ print(metadata)
 Access pre-computed benchmark results:
 
 ```python
-from aeon.benchmarking import get_estimator_results
-
-# Get results for specific algorithm on dataset
-results = get_estimator_results(
-    estimator_name="ROCKET",
-    dataset_name="GunPoint"
+from aeon.benchmarking.results_loaders import (
+    get_estimator_results,
+    get_available_estimators,
 )
 
-# Get all available estimators for a dataset
-estimators = get_available_estimators("GunPoint")
+# Get results for given estimators on given datasets (both are lists)
+results = get_estimator_results(
+    estimators=["ROCKET"],
+    datasets=["GunPoint"],
+    task="classification",
+)
+
+# Get available estimators for a learning task
+estimators = get_available_estimators(task="classification")
 ```
 
 ### Resampling Strategies
@@ -157,13 +161,13 @@ estimators = get_available_estimators("GunPoint")
 Create reproducible train/test splits:
 
 ```python
-from aeon.benchmarking import stratified_resample
+from aeon.benchmarking.resampling import stratified_resample_data
 
-# Stratified resampling maintaining class distribution
-X_train, X_test, y_train, y_test = stratified_resample(
-    X, y,
+# Pools an existing train/test split, then re-splits at the same sizes while
+# preserving class proportions (use a different random_state per resample).
+X_train, y_train, X_test, y_test = stratified_resample_data(
+    X_train, y_train, X_test, y_test,
     random_state=42,
-    test_size=0.3
 )
 ```
 
@@ -189,10 +193,10 @@ auc = range_roc_auc_score(y_true, y_scores)
 
 **Clustering Metrics**:
 ```python
-from aeon.benchmarking.metrics.clustering import clustering_accuracy
+from aeon.benchmarking.metrics.clustering import clustering_accuracy_score
 
-# Clustering accuracy with label matching
-accuracy = clustering_accuracy(y_true, y_pred)
+# Clustering accuracy with optimal label matching
+accuracy = clustering_accuracy_score(y_true, y_pred)
 ```
 
 **Segmentation Metrics**:
@@ -214,16 +218,11 @@ hausdorff_err = hausdorff_error(y_true, y_pred)
 Post-hoc analysis for algorithm comparison:
 
 ```python
-from aeon.benchmarking import (
-    nemenyi_test,
-    wilcoxon_test
-)
+from aeon.benchmarking.stats import nemenyi_test, wilcoxon_test
 
-# Nemenyi test for multiple algorithms
-results = nemenyi_test(scores_matrix, alpha=0.05)
-
-# Pairwise Wilcoxon signed-rank test
-stat, p_value = wilcoxon_test(scores_alg1, scores_alg2)
+# `results` is a (n_datasets, n_estimators) score matrix; `labels` names columns.
+# Wilcoxon returns a (n_estimators, n_estimators) matrix of pairwise p-values.
+p_values = wilcoxon_test(results, labels, lower_better=False)
 ```
 
 ## Benchmark Collections
@@ -261,9 +260,8 @@ Complete benchmarking workflow:
 ```python
 from aeon.datasets import load_classification
 from aeon.classification.convolution_based import RocketClassifier
-from aeon.benchmarking import get_estimator_results
+from aeon.benchmarking.results_loaders import get_estimator_results
 from sklearn.metrics import accuracy_score
-import numpy as np
 
 # Load dataset
 dataset_name = "GunPoint"
@@ -279,9 +277,9 @@ y_pred = clf.predict(X_test)
 accuracy = accuracy_score(y_test, y_pred)
 print(f"Accuracy: {accuracy:.4f}")
 
-# Compare with published results
-published = get_estimator_results("ROCKET", dataset_name)
-print(f"Published ROCKET accuracy: {published['accuracy']:.4f}")
+# Compare with published results (nested dict: {estimator: {dataset: score}})
+published = get_estimator_results(estimators=["ROCKET"], datasets=[dataset_name])
+print(f"Published ROCKET accuracy: {published['ROCKET'][dataset_name]:.4f}")
 ```
 
 ## Best Practices
@@ -305,8 +303,12 @@ X_train, X_test, y_train, y_test = train_test_split(X, y)
 Ensure reproducibility:
 
 ```python
+from aeon.benchmarking.resampling import stratified_resample_data
+
 clf = RocketClassifier(random_state=42)
-results = stratified_resample(X, y, random_state=42)
+X_tr, y_tr, X_te, y_te = stratified_resample_data(
+    X_train, y_train, X_test, y_test, random_state=42
+)
 ```
 
 ### 3. Report Multiple Metrics
@@ -357,14 +359,21 @@ print(f"Your model: {accuracy:.4f}")
 Test if improvements are statistically significant:
 
 ```python
-from aeon.benchmarking import wilcoxon_test
+import numpy as np
+from aeon.benchmarking.stats import wilcoxon_test
 
-# Run on multiple datasets
-accuracies_alg1 = [0.85, 0.92, 0.78, 0.88]
-accuracies_alg2 = [0.83, 0.90, 0.76, 0.86]
+# `results`: rows = datasets, columns = estimators (here 4 datasets x 2 estimators)
+results = np.array([
+    [0.85, 0.83],
+    [0.92, 0.90],
+    [0.78, 0.76],
+    [0.88, 0.86],
+])
+labels = ["alg1", "alg2"]
 
-stat, p_value = wilcoxon_test(accuracies_alg1, accuracies_alg2)
-if p_value < 0.05:
+# Returns a (n_estimators, n_estimators) matrix of pairwise p-values.
+p_values = wilcoxon_test(results, labels)
+if p_values[0, 1] < 0.05:
     print("Difference is statistically significant")
 ```
 

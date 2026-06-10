@@ -82,21 +82,20 @@ mask_array = biggest_mask(slide)
 
 ## Customizing Masks with Filters
 
-Masks accept custom filter chains for specialized tissue detection:
+Masks accept custom filters for specialized tissue detection. Pass the filters
+as **positional varargs** (`TissueMask(*filters)`) — not as a `filters=` keyword
+and not as a single `Compose` object. They replace the default filter chain.
 
 ```python
 from histolab.masks import TissueMask
 from histolab.filters.image_filters import RgbToGrayscale, OtsuThreshold
 from histolab.filters.morphological_filters import BinaryDilation, RemoveSmallHoles
 
-# Define custom filter composition
 custom_mask = TissueMask(
-    filters=[
-        RgbToGrayscale(),
-        OtsuThreshold(),
-        BinaryDilation(disk_size=5),
-        RemoveSmallHoles(area_threshold=500)
-    ]
+    RgbToGrayscale(),
+    OtsuThreshold(),
+    BinaryDilation(disk_size=5),
+    RemoveSmallHoles(area_threshold=500),
 )
 ```
 
@@ -175,56 +174,48 @@ roi_mask = RectangularMask(x_start=1000, y_start=500, width=2000, height=1500)
 Pathology slides often contain pen markings or digital annotations. Exclude them using custom masks:
 
 ```python
-from histolab.masks import TissueMask
-from histolab.filters.image_filters import RgbToGrayscale, OtsuThreshold
-from histolab.filters.morphological_filters import BinaryDilation
+import cv2
+import numpy as np
+from histolab.masks import TissueMask, BinaryMask
 
 class AnnotationExclusionMask(BinaryMask):
     def _mask(self, obj):
-        thumb = obj.thumbnail
+        # Run the default tissue detection first; its output sets the target shape.
+        tissue_mask = TissueMask()(obj)            # bool ndarray (H, W)
+        h, w = tissue_mask.shape[:2]
 
-        # Convert to HSV to detect pen marks (often blue/green)
-        hsv = cv2.cvtColor(np.array(thumb), cv2.COLOR_RGB2HSV)
+        # Build a pen-mark mask at the SAME resolution as tissue_mask so the
+        # arrays line up for the boolean combine below.
+        thumb = np.array(obj.thumbnail.convert("RGB"))
+        thumb = cv2.resize(thumb, (w, h), interpolation=cv2.INTER_NEAREST)
+        hsv = cv2.cvtColor(thumb, cv2.COLOR_RGB2HSV)
 
-        # Define color ranges for pen marks
+        # HSV range for blue/green pen marks (OpenCV hue is 0-179)
         lower_blue = np.array([100, 50, 50])
         upper_blue = np.array([130, 255, 255])
+        pen_mask = cv2.inRange(hsv, lower_blue, upper_blue).astype(bool)
 
-        # Create mask excluding pen marks
-        pen_mask = cv2.inRange(hsv, lower_blue, upper_blue)
-
-        # Apply standard tissue detection
-        tissue_mask = TissueMask()(obj)
-
-        # Combine: keep tissue, exclude pen marks
-        final_mask = tissue_mask & ~pen_mask.astype(bool)
-
-        return final_mask
+        # Keep tissue, drop pen marks
+        return tissue_mask & ~pen_mask
 ```
 
 ## Integration with Tile Extraction
 
-Masks integrate seamlessly with tilers through the `extraction_mask` parameter:
+Masks integrate with tilers through the `extraction_mask` parameter of
+`extract()` / `locate_tiles()` — **not** the tiler constructor:
 
 ```python
 from histolab.tiler import RandomTiler
 from histolab.masks import TissueMask, BiggestTissueBoxMask
 
-# Use TissueMask to extract from all tissue
-random_tiler = RandomTiler(
-    tile_size=(512, 512),
-    n_tiles=100,
-    level=0,
-    extraction_mask=TissueMask()  # Extract from all tissue regions
-)
+random_tiler = RandomTiler(tile_size=(512, 512), n_tiles=100, level=0, seed=42)
 
-# Or use default BiggestTissueBoxMask
-random_tiler = RandomTiler(
-    tile_size=(512, 512),
-    n_tiles=100,
-    level=0,
-    extraction_mask=BiggestTissueBoxMask()  # Default behavior
-)
+# Extract from ALL tissue sections
+random_tiler.extract(slide, extraction_mask=TissueMask())
+
+# Default behavior (largest tissue bounding box) — extraction_mask defaults to
+# BiggestTissueBoxMask(), so this is equivalent to omitting it
+random_tiler.extract(slide, extraction_mask=BiggestTissueBoxMask())
 ```
 
 ## Best Practices

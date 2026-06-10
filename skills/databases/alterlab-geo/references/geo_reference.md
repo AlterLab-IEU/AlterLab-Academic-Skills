@@ -253,7 +253,7 @@ Common search fields for building targeted queries:
 **Example Complex Query:**
 ```python
 query = """
-    (breast cancer[MeSH] OR breast neoplasms[Title]) AND
+    (breast cancer[MeSH Terms] OR breast neoplasms[Title]) AND
     Homo sapiens[Organism] AND
     expression profiling by array[Entry Type] AND
     2020:2024[Publication Date] AND

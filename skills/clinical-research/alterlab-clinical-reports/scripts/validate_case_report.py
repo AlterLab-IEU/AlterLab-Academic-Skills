@@ -13,6 +13,7 @@ Usage:
 import argparse
 import json
 import re
+import sys
 from pathlib import Path
 from typing import Dict, List
 
@@ -316,7 +317,7 @@ def main():
         
         if args.output:
             with open(args.output, 'w') as f:
-                json.dumps(report, f, indent=2)
+                json.dump(report, f, indent=2)
             print(f"\nJSON report saved to: {args.output}")
         
         # Exit with non-zero if validation failed
@@ -329,6 +330,5 @@ def main():
 
 
 if __name__ == "__main__":
-    import sys
     sys.exit(main())
 

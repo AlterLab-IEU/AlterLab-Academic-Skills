@@ -10,6 +10,14 @@ endpoint with parameters (e.g. `GET /v1/data/gene?symbol=CYP2D6`,
 `GET /v1/data/variant?symbol=rs4244285`) and read the accession ID from the
 response.
 
+**Response/param reminder** (verified): every response is wrapped as
+`{"status": "success"|"fail", "data": [...]}`, so read records from
+`response.json()["data"]` — it is never a bare list. Filter genes with
+`relatedGenes.symbol` but drugs with `relatedChemicals.name`
+(`relatedChemicals.symbol` returns `status: "fail"`). The snippets below call
+`response.json()` for brevity; unwrap `["data"]` in real use (the helpers in
+`scripts/query_clinpgx.py` do this for you).
+
 Base URL: `https://api.clinpgx.org/v1/data/`
 
 ## 1. Gene Queries
@@ -41,14 +49,14 @@ gene_data = response.json()
 Retrieve drug information including pharmacogenomic annotations and mechanisms:
 
 ```python
-# Get drug details by ClinPGx accession ID
-response = requests.get("https://api.clinpgx.org/v1/data/chemical/PA448515")  # Warfarin
-drug_data = response.json()
+# Get drug details by ClinPGx accession ID (response is {"status","data"})
+response = requests.get("https://api.clinpgx.org/v1/data/chemical/PA451906")  # Warfarin
+drug_data = response.json()["data"]
 
-# Search drugs by name
+# Search drugs by name (filter chemicals by .name, not .symbol)
 response = requests.get("https://api.clinpgx.org/v1/data/chemical",
                        params={"name": "warfarin"})
-drugs = response.json()
+drugs = response.json()["data"]
 ```
 
 **Drug categories with pharmacogenomic significance:**
@@ -69,7 +77,7 @@ accession IDs:
 ```python
 # Derive gene-drug relationships from guideline annotations
 response = requests.get("https://api.clinpgx.org/v1/data/guidelineAnnotation",
-                       params={"relatedChemicals.symbol": "codeine"})
+                       params={"relatedChemicals.name": "codeine"})
 guideline_annotations = response.json()
 
 # Pair report endpoint (requires accession IDs for both objects)
@@ -195,7 +203,7 @@ Access pharmacogenomic information from drug labels:
 ```python
 # Get drug labels with PGx information
 response = requests.get("https://api.clinpgx.org/v1/data/label",
-                       params={"relatedChemicals.symbol": "warfarin"})
+                       params={"relatedChemicals.name": "warfarin"})
 labels = response.json()
 
 # Filter by regulatory source
@@ -219,7 +227,7 @@ pathway_data = response.json()
 
 # Search pathways related to a drug
 response = requests.get("https://api.clinpgx.org/v1/data/pathway",
-                       params={"relatedChemicals.symbol": "warfarin"})
+                       params={"relatedChemicals.name": "warfarin"})
 pathways = response.json()
 ```
 

@@ -15,7 +15,7 @@ metadata:
 
 scVelo is the leading Python package for RNA velocity analysis in single-cell RNA-seq data. It infers cell state transitions by modeling the kinetics of mRNA splicing — using the ratio of unspliced (pre-mRNA) to spliced (mature mRNA) abundances to determine whether a gene is being upregulated or downregulated in each cell. This allows reconstruction of developmental trajectories and identification of cell fate decisions without requiring time-course data.
 
-**Installation:** `pip install scvelo`
+**Installation:** `uv pip install "scvelo==0.3.4"` (latest as of mid-2025). Gotcha: scVelo's deps declare `numpy>=1.17` with no upper bound, but the stack breaks under **numpy 2.x** — if you hit cryptic `np.float_`/dtype errors on import or in plotting, pin `numpy<2` (e.g. `numpy==1.26.4`). pandas 2.x is fine on 0.3.x.
 
 **Key resources:**
 - Documentation: https://scvelo.readthedocs.io/
@@ -83,9 +83,11 @@ scv.pp.filter_and_normalize(
     n_top_genes=2000        # Top highly variable genes
 )
 
-# Compute first and second order moments (means and variances)
-# knn_connectivities must be computed first
-sc.pp.neighbors(adata, n_neighbors=30, n_pcs=30)
+# Compute first and second order moments (means and variances).
+# scv.pp.moments runs PCA + a kNN graph internally if they're absent, so
+# you do NOT need a separate sc.pp.neighbors call here. Calling moments with
+# n_pcs/n_neighbors and ALSO running sc.pp.neighbors first just recomputes the
+# graph with possibly mismatched params — let moments own it on a fresh object.
 scv.pp.moments(
     adata,
     n_pcs=30,

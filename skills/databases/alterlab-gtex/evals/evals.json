@@ -22,7 +22,7 @@
     {
       "id": "interpret-gwas-variant",
       "prompt": "I have a non-coding GWAS hit at chr1:154453788 (A>T). Which genes does it regulate, and in which tissues, according to GTEx eQTL data?",
-      "expected_output": "Invokes alterlab-gtex to interpret a GWAS locus. Converts the variant to GTEx ID format (chr1_154453788_A_T_b38), queries singleTissueEqtl by variantId across tissues, and returns the genes regulated by the variant with effect direction (slope) and tissue. May mention checking effect-allele concordance and colocalization.",
+      "expected_output": "Invokes alterlab-gtex to interpret a GWAS locus. Converts the variant to GTEx ID format (chr1_154453788_A_T_b38), queries singleTissueEqtl by variantId across tissues, and returns the genes regulated by the variant with effect direction (nes, the normalized effect size) and tissue. May mention checking effect-allele concordance and colocalization.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Converts the variant to GTEx b38 ID format and returns regulated genes per tissue from eQTL data." }

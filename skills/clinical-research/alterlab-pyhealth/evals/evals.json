@@ -4,11 +4,11 @@
     {
       "id": "mortality-prediction-mimic4",
       "prompt": "I want to predict ICU mortality on MIMIC-IV. Load the dataset, set up the mortality task, split by patient, and train an interpretable RETAIN model monitoring AUPRC since the outcome is rare.",
-      "expected_output": "Invokes alterlab-pyhealth. Loads MIMIC4Dataset, sets the mortality_prediction_mimic4_fn task, uses split_by_patient to prevent leakage, builds get_dataloader loaders, initializes RETAIN in binary mode, trains with Trainer monitoring pr_auc_score (AUPRC for imbalance), and evaluates. Recommends RETAIN for interpretability via attention weights.",
+      "expected_output": "Invokes alterlab-pyhealth. Loads MIMIC4Dataset (with tables=[...]), sets the MortalityPredictionMIMIC4() task class, uses split_by_patient to prevent leakage, builds get_dataloader loaders, initializes RETAIN with feature_keys + label_key='mortality' in binary mode, trains with Trainer(metrics=[...]) monitoring pr_auc (AUPRC for imbalance), and evaluates. Recommends RETAIN for interpretability.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "split_by_patient" },
-        { "type": "behavior", "value": "Uses MIMIC4Dataset, a mortality task fn, split_by_patient, RETAIN, and the Trainer monitoring AUPRC/pr_auc_score." }
+        { "type": "behavior", "value": "Uses MIMIC4Dataset, a mortality task class instance, split_by_patient, RETAIN, and the Trainer monitoring AUPRC (pr_auc)." }
       ]
     },
     {

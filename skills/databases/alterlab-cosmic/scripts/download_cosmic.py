@@ -17,8 +17,14 @@ Usage:
     )
 
 Requirements:
-    - requests library: pip install requests
+    - requests library: uv pip install requests
     - Valid COSMIC account credentials (register at cancer.sanger.ac.uk/cosmic)
+
+COSMIC's file_download endpoint expects HTTP Basic auth: an
+"Authorization: Basic <base64(email:password)>" header. requests' auth=(email,
+password) tuple produces exactly that header, so do not "simplify" it away.
+The endpoint returns JSON with a time-limited signed "url"; the actual file is
+fetched from that url WITHOUT the auth header (see download_cosmic_file below).
 """
 
 import requests
@@ -32,17 +38,19 @@ def download_cosmic_file(
     password: str,
     filepath: str,
     output_filename: Optional[str] = None,
-    genome_assembly: str = "GRCh38"
 ) -> bool:
     """
     Download a file from COSMIC database.
+
+    The genome assembly is encoded in `filepath` (e.g. the leading "GRCh38/"),
+    so it is not a separate argument here. Use get_common_file_path() to build
+    a filepath for a given assembly.
 
     Args:
         email: COSMIC account email
         password: COSMIC account password
         filepath: Relative path to file (e.g., "GRCh38/cosmic/latest/CosmicMutantExport.tsv.gz")
         output_filename: Optional custom output filename (default: last part of filepath)
-        genome_assembly: Genome assembly version (GRCh37 or GRCh38, default: GRCh38)
 
     Returns:
         True if download successful, False otherwise
@@ -114,7 +122,7 @@ def download_cosmic_file(
                         print(f"\rProgress: {progress:.1f}%", end='', flush=True)
                 print()  # New line after progress
 
-        print(f"✓ Successfully downloaded: {output_filename}")
+        print(f"Successfully downloaded: {output_filename}")
         return True
 
     except requests.exceptions.Timeout:
@@ -153,7 +161,7 @@ def get_common_file_path(
         'gene_expression': f'{genome_assembly}/cosmic/{version}/CosmicCompleteGeneExpression.tsv.gz',
         'copy_number': f'{genome_assembly}/cosmic/{version}/CosmicCompleteCNA.tsv.gz',
         'fusion_genes': f'{genome_assembly}/cosmic/{version}/CosmicFusionExport.tsv.gz',
-        'signatures': f'signatures/signatures.tsv',
+        'signatures': 'signatures/signatures.tsv',
         'sample_info': f'{genome_assembly}/cosmic/{version}/CosmicSample.tsv.gz',
     }
 
@@ -221,7 +229,6 @@ Examples:
         password=args.password,
         filepath=filepath,
         output_filename=args.output,
-        genome_assembly=args.assembly
     )
 
     return 0 if success else 1

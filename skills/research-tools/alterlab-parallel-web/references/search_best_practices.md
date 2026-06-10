@@ -1,46 +1,47 @@
-# Search API Best Practices
+# Search Best Practices
 
-Comprehensive guide to getting the best results from Parallel's Search API.
+How to get the best results from this skill's `search`/`research` commands, plus the raw Search API params for when you call the HTTP/SDK API directly.
+
+> **Scope:** `scripts/parallel_web.py search` wraps the **Chat API** (`base`/`core` models). Its only inputs are the `objective` string and `--model`. The `search_queries`, `max_results`, `source_policy`, and `mode` parameters in this doc belong to the **raw Search API** (`POST /v1beta/search`) and are NOT accepted by the script — examples using them are labeled "raw Search API". The objective-writing advice applies to both.
 
 ---
 
 ## Core Concepts
 
-The Search API returns ranked, LLM-optimized excerpts from web sources based on natural language objectives. Results are designed to serve directly as model input, enabling faster reasoning and higher-quality completions.
-
-### Key Advantages Over Traditional Search
-
-- **Context engineering for token efficiency**: Results are ranked by reasoning utility, not engagement
-- **Single-hop resolution**: Complex multi-topic queries resolved in one request
-- **Multi-hop efficiency**: Deep research workflows complete in fewer tool calls
+Both the Chat API (this skill) and the raw Search API return LLM-optimized, citation-backed results from web sources based on a natural-language objective, ranked for reasoning utility rather than engagement. A single well-scoped objective often resolves a complex, multi-topic question in one request.
 
 ---
 
-## Crafting Effective Search Queries
+## Crafting Effective Objectives
 
-### Provide Both `objective` AND `search_queries`
+A strong `objective` is the single biggest lever on result quality for the Chat API search/research commands. State your broader task, source preferences, freshness, and content type in one natural-language string.
 
-The `objective` describes your broader goal; `search_queries` ensures specific keywords are prioritized. Using both together gives significantly better results.
-
-**Good:**
-```python
-searcher.search(
-    objective="I'm writing a literature review on Alzheimer's treatments. Find peer-reviewed research papers and clinical trial results from the past 2 years on amyloid-beta targeted therapies.",
-    search_queries=[
-        "amyloid beta clinical trials 2024-2025",
-        "Alzheimer's monoclonal antibody treatment results",
-        "lecanemab donanemab trial outcomes"
-    ],
-)
+**Good (works with `parallel_web.py search "<objective>"`):**
+```bash
+python scripts/parallel_web.py search \
+  "I'm writing a literature review on Alzheimer's treatments. Find peer-reviewed research and clinical-trial results from the past 2 years on amyloid-beta targeted therapies (e.g. lecanemab, donanemab) with outcome data." \
+  -o sources/search_alzheimer_amyloid.md
 ```
 
 **Poor:**
-```python
-# Too vague - no context about intent
-searcher.search(objective="Alzheimer's treatment")
+```bash
+# Too vague - no context about intent or scope
+python scripts/parallel_web.py search "Alzheimer's treatment"
+```
 
-# Missing objective - no context for ranking
-searcher.search(search_queries=["Alzheimer's drugs"])
+**Raw Search API** (direct SDK call, not the script) lets you pair the objective with explicit keyword queries:
+```python
+# raw Search API — requires calling the SDK directly, not parallel_web.py
+from parallel import Parallel
+client = Parallel()
+client.beta.search(
+    objective="Find peer-reviewed clinical-trial results on amyloid-beta therapies (2024-2025).",
+    search_queries=[
+        "amyloid beta clinical trials 2024-2025",
+        "lecanemab donanemab trial outcomes",
+    ],
+    max_results=10,
+)
 ```
 
 ### Objective Writing Tips
@@ -82,9 +83,9 @@ from the past month."
 
 ---
 
-## Search Modes
+## Search Modes (raw Search API only)
 
-Use the `mode` parameter to optimize for your workflow:
+These `mode`, `source_policy`, and `max_results` features belong to the raw Search API (`POST /v1beta/search`). They are NOT available through `parallel_web.py`; use them only when calling the SDK/HTTP API directly. Use the `mode` parameter to optimize for your workflow:
 
 | Mode | Best For | Excerpt Style | Latency |
 |------|----------|---------------|---------|
@@ -114,12 +115,13 @@ Use the `mode` parameter to optimize for your workflow:
 
 ---
 
-## Source Policy
+## Source Policy (raw Search API only)
 
-Control which domains are included or excluded from results:
+Control which domains are included or excluded from results (direct SDK call, not `parallel_web.py`):
 
 ```python
-searcher.search(
+# raw Search API
+client.beta.search(
     objective="Find clinical trial results for new cancer immunotherapy drugs",
     search_queries=["checkpoint inhibitor clinical trials 2025"],
     source_policy={
@@ -176,7 +178,9 @@ allow_domains = [
 
 ---
 
-## Controlling Result Volume
+## Controlling Result Volume (raw Search API only)
+
+These knobs apply to the raw Search API, not `parallel_web.py`.
 
 ### `max_results` Parameter
 
@@ -192,9 +196,10 @@ allow_domains = [
 ### Excerpt Length Control
 
 ```python
-searcher.search(
+# raw Search API
+client.beta.search(
     objective="...",
-    max_chars_per_result=10000,  # Default: 10000
+    excerpts={"max_chars_per_result": 10000},  # Default: 10000
 )
 ```
 
@@ -206,61 +211,43 @@ searcher.search(
 
 ## Common Patterns
 
+These use this skill's `search` command. The pattern is the same every time: pack the intent, scope, and freshness into one objective string and save to `sources/`.
+
 ### Pattern 1: Research Before Writing
 
-```python
-# Before writing each section, search for relevant information
-result = searcher.search(
-    objective="Find recent advances in transformer attention mechanisms for a NeurIPS paper introduction",
-    search_queries=["attention mechanism innovations 2024", "efficient transformers"],
-    max_results=10,
-)
-
-# Extract key findings for the section
-for r in result["results"]:
-    print(f"Source: {r['title']} ({r['url']})")
-    # Use excerpts to inform writing
+```bash
+python scripts/parallel_web.py search \
+  "Find recent advances in transformer attention mechanisms (2024-2025) for a NeurIPS paper introduction: efficient-attention variants, key results, and benchmarks." \
+  -o sources/search_attention_advances.md
 ```
 
 ### Pattern 2: Fact Verification
 
-```python
-# Quick verification of a specific claim
-result = searcher.search(
-    objective="Verify: Did GPT-4 achieve 86.4% on MMLU benchmark?",
-    search_queries=["GPT-4 MMLU benchmark score"],
-    max_results=5,
-)
+```bash
+python scripts/parallel_web.py search \
+  "Verify whether GPT-4 achieved 86.4% on the MMLU benchmark. Cite the primary source and note the evaluation setting." \
+  -o sources/search_gpt4_mmlu.md
 ```
 
 ### Pattern 3: Competitive Intelligence
 
-```python
-result = searcher.search(
-    objective="Find recent product launches and funding announcements for AI coding assistants in 2025",
-    search_queries=[
-        "AI coding assistant funding 2025",
-        "code generation tool launch",
-        "AI developer tools new product"
-    ],
-    source_policy={"after_date": "2025-01-01"},
-    max_results=15,
-)
+```bash
+python scripts/parallel_web.py search \
+  "Find recent (2025) product launches and funding announcements for AI coding assistants. Prefer primary announcements and reputable tech press." \
+  --model core -o sources/search_ai_coding_tools.md
 ```
 
 ### Pattern 4: Multi-Language Research
 
-```python
-# Search includes multilingual results automatically
-result = searcher.search(
-    objective="Find global perspectives on AI regulation, including EU, China, and US approaches",
-    search_queries=[
-        "EU AI Act implementation 2025",
-        "China AI regulation policy",
-        "US AI executive order updates"
-    ],
-)
+The Chat API returns multilingual sources automatically — just name the regions in the objective:
+
+```bash
+python scripts/parallel_web.py search \
+  "Find global perspectives on AI regulation, covering the EU AI Act, China's AI policy, and US executive actions, with 2025 updates." \
+  --model core -o sources/search_ai_regulation_global.md
 ```
+
+To pin specific authoritative domains or a date floor, use `source_policy` via the raw Search API (see above).
 
 ---
 

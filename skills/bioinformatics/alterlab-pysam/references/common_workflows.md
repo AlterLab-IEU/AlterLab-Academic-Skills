@@ -113,10 +113,9 @@ def calculate_coverage(bam_file, chrom, start, end):
     length = end - start
     coverage = [0] * length
 
-    # Count coverage at each position
-    for pileupcolumn in samfile.pileup(chrom, start, end):
-        if start <= pileupcolumn.pos < end:
-            coverage[pileupcolumn.pos - start] = pileupcolumn.nsegments
+    # truncate=True restricts columns to the requested window
+    for pileupcolumn in samfile.pileup(chrom, start, end, truncate=True):
+        coverage[pileupcolumn.reference_pos - start] = pileupcolumn.nsegments
 
     samfile.close()
 
@@ -134,11 +133,8 @@ def find_low_coverage_regions(bam_file, chrom, start, end, min_coverage=10):
     in_low_region = False
     region_start = None
 
-    for pileupcolumn in samfile.pileup(chrom, start, end):
-        pos = pileupcolumn.pos
-        if pos < start or pos >= end:
-            continue
-
+    for pileupcolumn in samfile.pileup(chrom, start, end, truncate=True):
+        pos = pileupcolumn.reference_pos
         coverage = pileupcolumn.nsegments
 
         if coverage < min_coverage:
@@ -168,9 +164,8 @@ def coverage_statistics(bam_file, chrom, start, end):
 
     coverages = []
 
-    for pileupcolumn in samfile.pileup(chrom, start, end):
-        if start <= pileupcolumn.pos < end:
-            coverages.append(pileupcolumn.nsegments)
+    for pileupcolumn in samfile.pileup(chrom, start, end, truncate=True):
+        coverages.append(pileupcolumn.nsegments)
 
     samfile.close()
 
@@ -269,20 +264,20 @@ def filter_variants_by_support(vcf_file, bam_file, output_file, min_alt_reads=3)
         for alt in variant.alts:
             allele_counts[alt] = 0
 
-        # Pileup at variant position
+        # Pileup at variant position (truncate=True yields only this column)
         for pileupcolumn in samfile.pileup(
             variant.chrom,
             variant.pos - 1,
-            variant.pos
+            variant.pos,
+            truncate=True,
         ):
-            if pileupcolumn.pos == variant.pos - 1:  # 0-based
-                for pileupread in pileupcolumn.pileups:
-                    if not pileupread.is_del and not pileupread.is_refskip:
-                        base = pileupread.alignment.query_sequence[
-                            pileupread.query_position
-                        ]
-                        if base in allele_counts:
-                            allele_counts[base] += 1
+            for pileupread in pileupcolumn.pileups:
+                if not pileupread.is_del and not pileupread.is_refskip:
+                    base = pileupread.alignment.query_sequence[
+                        pileupread.query_position
+                    ]
+                    if base in allele_counts:
+                        allele_counts[base] += 1
 
         # Check if any alt allele has sufficient support
         has_support = any(
@@ -431,7 +426,7 @@ def create_coverage_bedgraph(bam_file, output_file, chrom=None):
             region_start = None
 
             for pileupcolumn in samfile.pileup(chrom):
-                pos = pileupcolumn.pos
+                pos = pileupcolumn.reference_pos
                 cov = pileupcolumn.nsegments
 
                 if cov != current_cov:

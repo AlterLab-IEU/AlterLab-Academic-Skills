@@ -13,7 +13,7 @@
     {
       "id": "neurips-conference-format",
       "prompt": "What are the formatting requirements and the official style file for a NeurIPS submission, and is anonymization required?",
-      "expected_output": "Invokes alterlab-venue-templates for conference formatting: from references/conferences_formatting.md gives the NeurIPS spec — 8 pages main text plus unlimited references/appendix, two-column 10pt, the official neurips style file, numbered bracket citations, colorblind-safe figures — and confirms anonymization is required for the initial double-blind submission.",
+      "expected_output": "Invokes alterlab-venue-templates for conference formatting: from references/conferences_formatting.md gives the NeurIPS spec — 8 pages main text plus unlimited references/appendix, single-column Times 10pt, the official neurips style file, numbered bracket citations, colorblind-safe figures — and confirms anonymization is required for the initial double-blind submission.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "anonymization" }

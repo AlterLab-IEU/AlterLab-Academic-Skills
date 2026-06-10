@@ -145,8 +145,8 @@ The Search API supports seven primary query types:
 
 1. **TextQuery** - Full-text search
 2. **AttributeQuery** - Property-based search
-3. **SequenceQuery** - Sequence similarity search
-4. **SequenceMotifQuery** - Motif pattern search
+3. **SeqSimilarityQuery** - Sequence similarity search
+4. **SeqMotifQuery** - Motif pattern search
 5. **StructSimilarityQuery** - 3D structure similarity
 6. **StructMotifQuery** - Structural motif search
 7. **ChemSimilarityQuery** - Chemical similarity search
@@ -169,61 +169,64 @@ Available operators for AttributeQuery:
 
 ### Common Searchable Attributes
 
+There are two equivalent ways to build an `AttributeQuery`. The idiomatic form
+uses the tab-completable `search_attributes` object with Python comparison
+operators; the explicit form passes a dotted-path **string** to `AttributeQuery`.
+Note: `AttributeQuery(attribute=...)` takes a string path, not an `Attr` object.
+
 **Resolution and Quality:**
 ```python
-from rcsbapi.search import AttributeQuery
-from rcsbapi.search.attrs import rcsb_entry_info
+from rcsbapi.search import AttributeQuery, search_attributes as attrs
 
-# High-resolution structures
+# Idiomatic form
+query = attrs.rcsb_entry_info.resolution_combined < 2.0
+
+# Explicit form (equivalent)
 query = AttributeQuery(
-    attribute=rcsb_entry_info.resolution_combined,
+    attribute="rcsb_entry_info.resolution_combined",
     operator="less",
-    value=2.0
+    value=2.0,
 )
 ```
 
 **Experimental Method:**
 ```python
-from rcsbapi.search.attrs import exptl
+from rcsbapi.search import AttributeQuery
 
 query = AttributeQuery(
-    attribute=exptl.method,
+    attribute="exptl.method",
     operator="exact_match",
-    value="X-RAY DIFFRACTION"
+    value="X-RAY DIFFRACTION",
 )
 ```
 
 **Organism:**
 ```python
-from rcsbapi.search.attrs import rcsb_entity_source_organism
+from rcsbapi.search import search_attributes as attrs
 
-query = AttributeQuery(
-    attribute=rcsb_entity_source_organism.scientific_name,
-    operator="exact_match",
-    value="Homo sapiens"
-)
+query = attrs.rcsb_entity_source_organism.scientific_name == "Homo sapiens"
 ```
 
 **Molecular Weight:**
 ```python
-from rcsbapi.search.attrs import rcsb_polymer_entity
+from rcsbapi.search import AttributeQuery
 
 query = AttributeQuery(
-    attribute=rcsb_polymer_entity.formula_weight,
+    attribute="rcsb_polymer_entity.formula_weight",
     operator="range",
-    value=(10000, 50000)  # 10-50 kDa
+    value=(10000, 50000),  # 10-50 kDa
 )
 ```
 
 **Release Date:**
 ```python
-from rcsbapi.search.attrs import rcsb_accession_info
+from rcsbapi.search import AttributeQuery
 
 # Structures released in 2024
 query = AttributeQuery(
-    attribute=rcsb_accession_info.initial_release_date,
+    attribute="rcsb_accession_info.initial_release_date",
     operator="range",
-    value=("2024-01-01", "2024-12-31")
+    value=("2024-01-01", "2024-12-31"),
 )
 ```
 
@@ -232,21 +235,21 @@ query = AttributeQuery(
 Search for structures with similar sequences using MMseqs2:
 
 ```python
-from rcsbapi.search import SequenceQuery
+from rcsbapi.search import SeqSimilarityQuery
 
 # Basic sequence search
-query = SequenceQuery(
+query = SeqSimilarityQuery(
     value="MTEYKLVVVGAGGVGKSALTIQLIQNHFVDEYDPTIEDSYRKQVVIDGETCLLDILDTAGQEEYSAMRDQYMRTGEGFLCVFAINNTKSFEDIHHYREQIKRVKDSEDVPMVLVGNKCDLPSRTVDTKQAQDLARSYGIPFIETSAKTRQGVDDAFYTLVREIRKHKEKMSKDGKKKKKKSKTKCVIM",
     evalue_cutoff=0.1,
-    identity_cutoff=0.9
+    identity_cutoff=0.9,
 )
 
 # With sequence type specified
-query = SequenceQuery(
+query = SeqSimilarityQuery(
     value="ACGTACGTACGT",
     evalue_cutoff=1e-5,
     identity_cutoff=0.8,
-    sequence_type="dna"  # or "rna" or "protein"
+    sequence_type="dna",  # or "rna" or "protein"
 )
 ```
 
@@ -283,74 +286,53 @@ query = StructSimilarityQuery(
 Use Python bitwise operators to combine queries:
 
 ```python
-from rcsbapi.search import TextQuery, AttributeQuery
-from rcsbapi.search.attrs import rcsb_entry_info, rcsb_entity_source_organism
+from rcsbapi.search import TextQuery, search_attributes as attrs
 
 # AND operation (&)
 query1 = TextQuery("kinase")
-query2 = AttributeQuery(
-    attribute=rcsb_entity_source_organism.scientific_name,
-    operator="exact_match",
-    value="Homo sapiens"
-)
+query2 = attrs.rcsb_entity_source_organism.scientific_name == "Homo sapiens"
 combined = query1 & query2
 
 # OR operation (|)
-organism1 = AttributeQuery(
-    attribute=rcsb_entity_source_organism.scientific_name,
-    operator="exact_match",
-    value="Homo sapiens"
-)
-organism2 = AttributeQuery(
-    attribute=rcsb_entity_source_organism.scientific_name,
-    operator="exact_match",
-    value="Mus musculus"
-)
+organism1 = attrs.rcsb_entity_source_organism.scientific_name == "Homo sapiens"
+organism2 = attrs.rcsb_entity_source_organism.scientific_name == "Mus musculus"
 combined = organism1 | organism2
 
 # NOT operation (~)
 all_structures = TextQuery("protein")
-low_res = AttributeQuery(
-    attribute=rcsb_entry_info.resolution_combined,
-    operator="greater",
-    value=3.0
-)
+low_res = attrs.rcsb_entry_info.resolution_combined > 3.0
 high_res_only = all_structures & (~low_res)
 
 # Complex combinations
 high_res_human_kinases = (
-    TextQuery("kinase") &
-    AttributeQuery(
-        attribute=rcsb_entity_source_organism.scientific_name,
-        operator="exact_match",
-        value="Homo sapiens"
-    ) &
-    AttributeQuery(
-        attribute=rcsb_entry_info.resolution_combined,
-        operator="less",
-        value=2.5
-    )
+    TextQuery("kinase")
+    & (attrs.rcsb_entity_source_organism.scientific_name == "Homo sapiens")
+    & (attrs.rcsb_entry_info.resolution_combined < 2.5)
 )
 ```
 
 ### Return Types
 
-Control what information is returned:
+Control what information is returned. `return_type` is a string keyword argument
+(valid values: "entry", "assembly", "polymer_entity", "non_polymer_entity",
+"polymer_instance", "mol_definition"; default "entry"). There is no `ReturnType`
+enum. To get scores, set `results_verbosity` ("minimal" = scores only,
+"verbose" = all metadata, "compact" = IDs only, the default).
 
 ```python
-from rcsbapi.search import TextQuery, ReturnType
+from rcsbapi.search import TextQuery
 
 query = TextQuery("hemoglobin")
 
-# Return PDB IDs (default)
+# Return entry IDs (default)
 results = list(query())  # ['4HHB', '1A3N', ...]
 
 # Return entry IDs with scores
-results = list(query(return_type=ReturnType.ENTRY, return_scores=True))
+results = list(query(results_verbosity="minimal"))
 # [{'identifier': '4HHB', 'score': 0.95}, ...]
 
 # Return polymer entities
-results = list(query(return_type=ReturnType.POLYMER_ENTITY))
+results = list(query(return_type="polymer_entity"))
 # ['4HHB_1', '4HHB_2', ...]
 ```
 
@@ -460,41 +442,34 @@ def fetch_with_retry(url, max_retries=5, initial_delay=1):
 
 ### Batch Processing Best Practices
 
-1. **Use Search API first** to get list of IDs, then fetch data
-2. **Cache results** to avoid redundant queries
-3. **Process in chunks** rather than all at once
-4. **Add delays** between requests to respect rate limits
-5. **Use GraphQL** for complex queries to minimize requests
+1. **Use Search API first** to get the list of IDs, then fetch data
+2. **Fetch in one DataQuery** — `input_ids` accepts many IDs at once, so prefer a
+   single query (optionally with `batch_size`) over a per-ID loop
+3. **Cache results** to avoid redundant queries
+4. **Add delays** only if you fall back to many separate raw HTTP requests
+
+`DataQuery` retrieves all requested IDs in one call. For very large ID lists pass
+`batch_size` to `exec()` so the client chunks the GraphQL request for you:
 
 ```python
-import time
 from rcsbapi.search import TextQuery
-from rcsbapi.data import fetch, Schema
+from rcsbapi.data import DataQuery
 
-def batch_fetch_structures(query, delay=0.5):
-    """
-    Fetch structures matching a query with rate limiting.
-
-    Args:
-        query: Search query object
-        delay: Delay between requests in seconds
-    """
-    # Get list of IDs
+def batch_fetch_structures(query, fields=None):
+    """Fetch entry data for every PDB ID matching a search query."""
     pdb_ids = list(query())
     print(f"Found {len(pdb_ids)} structures")
 
-    # Fetch data for each
-    results = {}
-    for i, pdb_id in enumerate(pdb_ids):
-        try:
-            data = fetch(pdb_id, schema=Schema.ENTRY)
-            results[pdb_id] = data
-            print(f"Fetched {i+1}/{len(pdb_ids)}: {pdb_id}")
-            time.sleep(delay)  # Rate limiting
-        except Exception as e:
-            print(f"Error fetching {pdb_id}: {e}")
+    data_query = DataQuery(
+        input_type="entries",
+        input_ids=pdb_ids,
+        return_data_list=fields or ["rcsb_id", "struct.title", "exptl.method"],
+    )
+    # batch_size chunks large ID lists into multiple requests automatically
+    response = data_query.exec(batch_size=200)
+    return {e["rcsb_id"]: e for e in response["data"]["entries"]}
 
-    return results
+results = batch_fetch_structures(TextQuery("hemoglobin"))
 ```
 
 ## Advanced Use Cases
@@ -503,13 +478,12 @@ def batch_fetch_structures(query, delay=0.5):
 
 ```python
 from rcsbapi.search import AttributeQuery
-from rcsbapi.search.attrs import rcsb_polymer_entity, rcsb_nonpolymer_entity_instance_container_identifiers
 
-# Find structures with specific drug molecule
+# Find structures containing a specific ligand (3-letter chemical component ID)
 query = AttributeQuery(
-    attribute=rcsb_nonpolymer_entity_instance_container_identifiers.comp_id,
+    attribute="rcsb_nonpolymer_entity_instance_container_identifiers.comp_id",
     operator="exact_match",
-    value="ATP"  # or other ligand code
+    value="ATP",  # or other ligand code
 )
 
 results = list(query())
@@ -519,21 +493,11 @@ print(f"Found {len(results)} structures with ATP")
 ### Filtering by Resolution and R-factor
 
 ```python
-from rcsbapi.search import AttributeQuery
-from rcsbapi.search.attrs import rcsb_entry_info, refine
+from rcsbapi.search import search_attributes as attrs
 
 # High-quality X-ray structures
-resolution_query = AttributeQuery(
-    attribute=rcsb_entry_info.resolution_combined,
-    operator="less",
-    value=2.0
-)
-
-rfactor_query = AttributeQuery(
-    attribute=refine.ls_R_factor_R_free,
-    operator="less",
-    value=0.25
-)
+resolution_query = attrs.rcsb_entry_info.resolution_combined < 2.0
+rfactor_query = attrs.refine.ls_R_factor_R_free < 0.25
 
 high_quality = resolution_query & rfactor_query
 results = list(high_quality())
@@ -542,19 +506,17 @@ results = list(high_quality())
 ### Finding Recent Structures
 
 ```python
-from rcsbapi.search import AttributeQuery
-from rcsbapi.search.attrs import rcsb_accession_info
-
-# Structures released in last month
 import datetime
+from rcsbapi.search import AttributeQuery
 
+# Structures released in the last month
 one_month_ago = (datetime.date.today() - datetime.timedelta(days=30)).isoformat()
 today = datetime.date.today().isoformat()
 
 query = AttributeQuery(
-    attribute=rcsb_accession_info.initial_release_date,
+    attribute="rcsb_accession_info.initial_release_date",
     operator="range",
-    value=(one_month_ago, today)
+    value=(one_month_ago, today),
 )
 
 recent_structures = list(query())

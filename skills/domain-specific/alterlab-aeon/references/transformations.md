@@ -14,12 +14,12 @@ Aeon distinguishes between:
 
 Fast, scalable feature generation using random kernels:
 
-- `RocketTransformer` - Random convolutional kernels
-- `MiniRocketTransformer` - Simplified ROCKET for speed
-- `MultiRocketTransformer` - Enhanced ROCKET variant
+- `Rocket` - Random convolutional kernels
+- `MiniRocket` - Simplified ROCKET for speed
+- `MultiRocket` - Enhanced ROCKET variant
 - `HydraTransformer` - Multi-resolution dilated convolutions
-- `MultiRocketHydraTransformer` - Combines ROCKET and Hydra
-- `ROCKETGPU` - GPU-accelerated variant
+
+(Class names have no `Transformer` suffix except `HydraTransformer`.)
 
 **Use when**: Need fast, scalable features for any ML algorithm, strong baseline performance.
 
@@ -102,7 +102,8 @@ Advanced analysis methods:
 
 ### Pipeline Composition
 
-- `CollectionTransformerPipeline` - Chain multiple transformers
+- Chain transformers/estimators with sklearn `Pipeline` (aeon transformers are
+  sklearn-compatible) or aeon's `make_pipeline` from `aeon.pipeline`.
 
 ## Series Transformers
 
@@ -143,21 +144,21 @@ Transform individual time series (e.g., for preprocessing in forecasting).
 ## Quick Start: Feature Extraction
 
 ```python
-from aeon.transformations.collection.convolution_based import RocketTransformer
-from aeon.classification.sklearn import RotationForest
+from aeon.transformations.collection.convolution_based import Rocket
+from aeon.classification.sklearn import RotationForestClassifier
 from aeon.datasets import load_classification
 
 # Load data
 X_train, y_train = load_classification("GunPoint", split="train")
 X_test, y_test = load_classification("GunPoint", split="test")
 
-# Extract ROCKET features
-rocket = RocketTransformer()
+# Extract ROCKET features (fit on train only)
+rocket = Rocket()
 X_train_features = rocket.fit_transform(X_train)
 X_test_features = rocket.transform(X_test)
 
-# Use with any sklearn classifier
-clf = RotationForest()
+# Use with any sklearn-style classifier
+clf = RotationForestClassifier()
 clf.fit(X_train_features, y_train)
 accuracy = clf.score(X_test_features, y_test)
 ```
@@ -165,16 +166,13 @@ accuracy = clf.score(X_test_features, y_test)
 ## Quick Start: Preprocessing Pipeline
 
 ```python
-from aeon.transformations.collection import (
-    MinMaxScaler,
-    SimpleImputer,
-    CollectionTransformerPipeline
-)
+from sklearn.pipeline import Pipeline
+from aeon.transformations.collection import MinMaxScaler, SimpleImputer
 
-# Build preprocessing pipeline
-pipeline = CollectionTransformerPipeline([
+# Aeon collection transformers are sklearn-compatible — chain them with sklearn Pipeline
+pipeline = Pipeline([
     ('imputer', SimpleImputer(strategy='mean')),
-    ('scaler', MinMaxScaler())
+    ('scaler', MinMaxScaler()),
 ])
 
 X_transformed = pipeline.fit_transform(X_train)
@@ -193,7 +191,7 @@ y_smoothed = smoother.fit_transform(y)
 ## Algorithm Selection
 
 ### For Feature Extraction:
-- **Speed + Performance**: MiniRocketTransformer
+- **Speed + Performance**: MiniRocket
 - **Interpretability**: Catch22, TSFresh
 - **Dimensionality reduction**: PAA, SAX, PCA
 - **Discriminative patterns**: Shapelet transforms
@@ -219,12 +217,13 @@ y_smoothed = smoother.fit_transform(y)
    X_test_tf = transformer.transform(X_test)
    ```
 
-2. **Pipeline composition**: Chain transformers for complex workflows
+2. **Pipeline composition**: Chain transformers with sklearn `Pipeline`
    ```python
-   pipeline = CollectionTransformerPipeline([
+   from sklearn.pipeline import Pipeline
+   pipeline = Pipeline([
        ('imputer', SimpleImputer()),
        ('scaler', Normalizer()),
-       ('features', RocketTransformer())
+       ('features', Rocket()),
    ])
    ```
 

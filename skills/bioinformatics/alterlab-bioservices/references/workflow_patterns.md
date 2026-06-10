@@ -395,28 +395,26 @@ print(compound_entry[:500])
 
 **Output:** ChEBI ID (e.g., 5292) and compound information
 
-### Step 3: Cross-Reference to ChEMBL via UniChem
+### Step 3: Confirm KEGG -> ChEBI via KEGG.conv
 
 ```python
-from bioservices import UniChem
-
-u = UniChem()
-
-# Convert KEGG → ChEMBL
-try:
-    chembl_id = u.get_compound_id_from_kegg(kegg_id_clean)
-    print(f"ChEMBL ID: {chembl_id}")
-except Exception as e:
-    print(f"UniChem lookup failed: {e}")
-    chembl_id = None
+# KEGG.conv is the supported bioservices route for KEGG -> ChEBI.
+# It returns a dict keyed by source IDs, e.g. {'cpd:C11222': 'chebi:5292', ...}.
+conv = k.conv("chebi", "compound")
+chebi_from_conv = conv.get(kegg_id)  # kegg_id is the 'cpd:Cxxxxx' form
+print(f"ChEBI (via conv): {chebi_from_conv}")
 ```
 
-**Output:** ChEMBL ID (e.g., CHEMBL278315)
+> **No bioservices KEGG -> ChEMBL route.** The old `UniChem.get_compound_id_from_kegg`
+> helper was dropped from bioservices in 2022, and the KEGG Web Service has no
+> KEGG -> ChEMBL mapping. If you need a ChEMBL ID, fetch it separately via the
+> ChEMBL web service / `chembl_webresource_client` or the live UniChem REST API
+> (`https://www.ebi.ac.uk/unichem/`) — both are outside bioservices.
 
-### Step 4: Retrieve Detailed Information
+### Step 4: Retrieve Detailed ChEBI Information
 
 ```python
-# Get ChEBI information
+# Get ChEBI information for the cross-referenced compound
 if chebi_id:
     from bioservices import ChEBI
     c = ChEBI()
@@ -427,21 +425,9 @@ if chebi_id:
         print(f"ChEBI Name: {chebi_entity.chebiAsciiName}")
     except Exception as e:
         print(f"ChEBI lookup failed: {e}")
-
-# Get ChEMBL information
-if chembl_id:
-    from bioservices import ChEMBL
-    chembl = ChEMBL()
-
-    try:
-        chembl_compound = chembl.get_compound_by_chemblId(chembl_id)
-        print(f"\nChEMBL Molecular Weight: {chembl_compound['molecule_properties']['full_mwt']}")
-        print(f"ChEMBL SMILES: {chembl_compound['molecule_structures']['canonical_smiles']}")
-    except Exception as e:
-        print(f"ChEMBL lookup failed: {e}")
 ```
 
-**Output:** Chemical properties from multiple databases
+**Output:** Chemical properties from KEGG and ChEBI
 
 ### Complete Compound Workflow Summary
 
@@ -449,13 +435,12 @@ if chembl_id:
 
 **Output:**
 - KEGG ID: C11222
-- ChEBI ID: 5292
-- ChEMBL ID: CHEMBL278315
+- ChEBI ID: 5292 (via KEGG entry / `KEGG.conv`)
 - Chemical formula
 - Molecular weight
-- SMILES structure
+- ChEMBL ID / SMILES: not via bioservices — fetch from ChEMBL separately if needed
 
-**Script:** `scripts/compound_cross_reference.py` automates this workflow.
+**Script:** `scripts/compound_cross_reference.py` automates the KEGG -> ChEBI portion.
 
 ---
 

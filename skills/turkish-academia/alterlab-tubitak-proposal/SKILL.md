@@ -77,7 +77,7 @@ the per-section drafting briefs).
 
 | # | Section (TR) | English gloss | 1001 | 1002-A |
 |---|--------------|---------------|------|--------|
-| Özet | Özet / Summary | Abstract (TR **and** EN), Anahtar Kelimeler | ✅ | ✅ |
+| Özet | ÖZET (TR) + ABSTRACT (EN) | Abstract as **two separate blocks** (TR + EN), each with Anahtar Kelimeler / Keywords | ✅ | ✅ |
 | 1 | **ÖZGÜN DEĞER** | Original value / significance | ✅ | ✅ |
 | 1.1 | Konunun Önemi ve Özgün Değer | Importance & original value of the topic | ✅ | ✅ |
 | 1.2 | Araştırma Sorusu / Hipotezi | Research question / hypothesis | ✅ | ✅ |

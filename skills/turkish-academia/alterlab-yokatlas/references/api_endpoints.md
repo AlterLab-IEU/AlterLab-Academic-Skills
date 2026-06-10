@@ -57,7 +57,7 @@ Module-level shortcuts:
 |----------|-----------|---------|
 | `search_programs` | `search_programs(filters_dict, size=…)` | paginated page of `Program` |
 | `get_program` | `get_program(kilavuz_kodu: int)` | one `Program` or `None` |
-| `list_universities` | `list_universities()` | all 221 universities |
+| `list_universities` | `list_universities()` | every university (count drifts — see above; ~221–227 observed) |
 
 Object API: `YokAtlasClient` (sync) / `AsyncYokAtlasClient` (async),
 `SearchFilters`, `Program`, `YearlyStats`, `Settings`.
@@ -85,7 +85,7 @@ with YokAtlasClient() as client:
 | `birim_turu_id` | int | `46` = Lisans (bachelor's), `47` = Önlisans (associate) |
 | `burs_orani_id` | int | scholarship ratio |
 | `ogrenim_turu_id` | int | study mode (full-time / part-time) |
-| `kilavuzKodu` | int | single-program filter (the guide code) |
+| `kilavuz_kodu` | int | single-program filter (the guide code); snake_case in `SearchFilters` — the camelCase `kilavuzKodu` only appears in the wire payload built by `to_payload()` |
 | `min_basari_sirasi` / `max_basari_sirasi` | int | success-rank window |
 
 ### Returned statistic fields (`YearlyStats`)

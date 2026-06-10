@@ -22,19 +22,19 @@
     {
       "id": "lilly-nibr-lead-opt",
       "prompt": "For lead optimization, run the NIBR filter set and Lilly demerits on my candidate list and tell me which ones exceed 100 demerits.",
-      "expected_output": "Invokes alterlab-medchem: applies mc.structural.NIBRFilters and mc.structural.LillyDemeritsFilters with n_jobs=-1, reporting per-molecule demerit scores and flagging those rejected at >100 demerits, for stricter lead-optimization triage.",
+      "expected_output": "Invokes alterlab-medchem: applies mc.structural.NIBRFilters and the Lilly demerits filter (mc.functional.lilly_demerit_filter, which needs the external lilly-medchem-rules binaries) with max_demerits=100 to honor the user's threshold (noting medchem's default ceiling is 160), reporting which molecules are rejected, for stricter lead-optimization triage.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Uses NIBRFilters and LillyDemeritsFilters and identifies molecules above the 100-demerit rejection threshold." }
+        { "type": "behavior", "value": "Uses NIBRFilters plus the Lilly demerit filter (via medchem.functional.lilly_demerit_filter, flagging the external-binary requirement) and applies the 100-demerit threshold the user asked for." }
       ]
     },
     {
       "id": "complexity-and-constraints",
-      "prompt": "Filter my set to molecular weight 200-500, logP between -2 and 5, TPSA under 140, and also drop anything with Bertz complexity above 500.",
-      "expected_output": "Invokes alterlab-medchem: applies mc.constraints.Constraints (mw_range, logp_range, tpsa_max, rotatable bounds) and mc.complexity.ComplexityFilter(max_complexity=500) to enforce the property windows and complexity ceiling, returning the molecules that satisfy all constraints.",
+      "prompt": "Filter my set to molecular weight 200-500, logP between -2 and 5, TPSA under 140, and also drop anything with high Bertz molecular complexity.",
+      "expected_output": "Invokes alterlab-medchem: enforces the MW/logP/TPSA property windows via the query DSL HASPROP (or mc.rules.in_range over computed descriptors, since medchem has no all-in-one Constraints property object) and applies the Bertz complexity filter (mc.complexity.ComplexityFilter / mc.functional.complexity_filter with complexity_metric='bertz' and a percentile limit), returning molecules that satisfy all conditions.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Uses medchem constraints plus a complexity filter to enforce the MW/logP/TPSA windows and the Bertz complexity ceiling." }
+        { "type": "behavior", "value": "Enforces the MW/logP/TPSA windows via HASPROP or in_range (NOT a fabricated Constraints(mw_range=...) object) and applies the Bertz complexity filter via ComplexityFilter/complexity_filter with complexity_metric='bertz'." }
       ]
     },
     {

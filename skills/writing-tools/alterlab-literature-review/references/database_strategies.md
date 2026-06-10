@@ -1,20 +1,22 @@
 # Literature Database Search Strategies
 
-This document provides comprehensive guidance for searching multiple literature databases systematically and effectively.
+This document provides comprehensive guidance for searching multiple literature databases systematically and effectively. For per-database access patterns (exact APIs and code), see `references/database_search_guidance.md` — it is authoritative on *how* to query; this file covers *strategy*.
+
+> Note: `gget` is a genomics tool (Ensembl gene info, BLAST, AlphaFold, Enrichr). It has **no** PubMed or bioRxiv literature-search command. For literature search use NCBI E-utilities (Entrez) and the bioRxiv API / Europe PMC, as detailed in `database_search_guidance.md`.
 
 ## Available Databases and Skills
 
 ### Biomedical & Life Sciences
 
 #### PubMed / PubMed Central
-- **Access**: Use `gget` skill or WebFetch tool
+- **Access**: NCBI E-utilities (Entrez `esearch`/`efetch`), via Biopython `Bio.Entrez` or the eutils endpoints directly (see `database_search_guidance.md`)
 - **Coverage**: 35M+ citations in biomedical literature
 - **Best for**: Clinical studies, biomedical research, genetics, molecular biology
 - **Search tips**: Use MeSH terms, Boolean operators (AND, OR, NOT), field tags [Title], [Author]
 - **Example**: `"CRISPR"[Title] AND "gene editing"[Title/Abstract] AND 2020:2024[Publication Date]`
 
 #### bioRxiv / medRxiv
-- **Access**: Use `gget` skill or direct API
+- **Access**: bioRxiv content API (`api.biorxiv.org`) for date/DOI ranges, or Europe PMC for keyword search across both servers
 - **Coverage**: Preprints in biology and medicine
 - **Best for**: Latest unpublished research, cutting-edge findings
 - **Note**: Not peer-reviewed; verify findings with caution
@@ -247,20 +249,7 @@ All searches must be documented for reproducibility:
 
 ### Prioritizing High-Impact Papers (CRITICAL)
 
-**Always prioritize papers based on citation count, venue quality, and author reputation.** Quality matters more than quantity.
-
-#### Citation Metrics in Database Searches
-
-Use citation counts to identify influential work:
-
-| Paper Age | Citations | Classification |
-|-----------|-----------|----------------|
-| 0-3 years | 20+ | Noteworthy |
-| 0-3 years | 100+ | Highly Influential |
-| 3-7 years | 100+ | Significant |
-| 3-7 years | 500+ | Landmark |
-| 7+ years | 500+ | Seminal |
-| 7+ years | 1000+ | Foundational |
+**Always prioritize papers based on citation count, venue quality, and author reputation.** Quality matters more than quantity. The canonical citation-count thresholds, venue tiers, and author-reputation criteria live in `references/source_quality_prioritization.md` — use those; this section covers only the *database-side search features* that surface high-impact work.
 
 **Database-Specific Citation Features:**
 - **Google Scholar:** Sort by citation count, use "Cited by" feature
@@ -268,29 +257,12 @@ Use citation counts to identify influential work:
 - **OpenAlex:** Citation counts, citation context analysis
 - **PubMed:** Use "Cited by" in PMC, check citation counts via Google Scholar
 
-#### Filtering by Journal Quality
-
-Prioritize papers from higher-tier venues:
-
-**Tier 1 (Always Prefer):**
-- Nature, Science, Cell, NEJM, Lancet, JAMA, PNAS
-- Nature Medicine, Nature Biotechnology, Nature Methods
-- Search tip: `source:Nature` or `journal:Nature` in Google Scholar
-
-**Tier 2 (High Priority):**
-- High-impact specialized journals (Impact Factor >10)
-- Top conferences: NeurIPS, ICML, ICLR, CVPR, ACL
-
-**Tier 3 (Include When Relevant):**
-- Respected field-specific journals (IF 5-10)
-
-**PubMed Journal Filtering:**
+**Journal-quality filtering (search syntax):**
 ```
+# PubMed — restrict to Tier-1 venues:
 "Nature"[Journal] OR "Science"[Journal] OR "Cell"[Journal]
-```
 
-**Google Scholar Journal Filtering:**
-```
+# Google Scholar — restrict by source:
 source:Nature source:Science source:Cell
 ```
 
@@ -412,25 +384,20 @@ Many databases suggest related articles:
 ## Example Multi-Database Search Workflow
 
 ```python
-# Example workflow using available skills
+# Example end-to-end workflow. See database_search_guidance.md for the exact
+# API calls; the steps below are the orchestration, not literal commands.
 
-# 1. Search PubMed via gget
 search_term = "CRISPR AND sickle cell disease"
-# Use gget search pubmed search_term
 
-# 2. Search bioRxiv
-# Use gget search biorxiv search_term
+# 1. PubMed/PMC via NCBI E-utilities (Entrez esearch/efetch) — Bio.Entrez
+# 2. bioRxiv/medRxiv via api.biorxiv.org (date/DOI range) or Europe PMC (keyword)
+# 3. arXiv via its API, e.g. query: cat:q-bio AND "CRISPR" AND "sickle cell"
+# 4. Semantic Scholar via its REST API (free tier or API key)
 
-# 3. Search arXiv for computational papers
-# Search arXiv with: cat:q-bio AND "CRISPR" AND "sickle cell"
-
-# 4. Search Semantic Scholar via API
-# Use semantic scholar API with search query
-
-# 5. Aggregate and deduplicate results
+# 5. Aggregate and deduplicate the combined results
 # python search_databases.py combined_results.json --deduplicate --format markdown --output review_papers.md
 
-# 6. Verify all citations
+# 6. Verify all citations against CrossRef
 # python verify_citations.py review_papers.md
 
 # 7. Generate final PDF

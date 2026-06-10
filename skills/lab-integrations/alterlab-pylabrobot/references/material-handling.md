@@ -68,11 +68,11 @@ await hs.unlock_plate()
 
 ```python
 from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.liquid_handling.backends import STAR
+from pylabrobot.liquid_handling.backends import STARBackend
 from pylabrobot.resources import STARLetDeck
 
 # Initialize devices
-lh = LiquidHandler(backend=STAR(), deck=STARLetDeck())
+lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
 hs = HeaterShaker(name="hs", backend=HamiltonHeaterShakerBackend())
 
 await lh.setup()
@@ -84,7 +84,7 @@ try:
 
     # Prepare samples
     tip_rack = TIP_CAR_480_A00(name="tips")
-    plate = Cos_96_DW_1mL(name="plate")
+    plate = Cor_96_wellplate_360ul_Fb(name="plate")
 
     lh.deck.assign_child_resource(tip_rack, rails=1)
 
@@ -93,7 +93,8 @@ try:
 
     # Transfer reagents to plate on heater shaker
     await lh.pick_up_tips(tip_rack["A1:H1"])
-    await lh.transfer(reagent["A1:H1"], plate["A1:H1"], vols=100)
+    await lh.aspirate(reagent["A1:H1"], vols=[100] * 8)
+    await lh.dispense(plate["A1:H1"], vols=[100] * 8)
     await lh.drop_tips()
 
     # Lock plate and start incubation
@@ -317,7 +318,7 @@ await centrifuge.stop_spin()
 async def centrifuge_workflow():
     """Complete centrifugation workflow"""
 
-    lh = LiquidHandler(backend=STAR(), deck=STARLetDeck())
+    lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
     centrifuge = Centrifuge(name="vspin", backend=VSpinBackend())
 
     await lh.setup()
@@ -326,7 +327,8 @@ async def centrifuge_workflow():
     try:
         # Prepare samples
         await lh.pick_up_tips(tip_rack["A1:H1"])
-        await lh.transfer(samples["A1:H12"], plate["A1:H12"], vols=200)
+        await lh.aspirate(samples["A1:H1"], vols=[200] * 8)
+        await lh.dispense(plate["A1:H1"], vols=[200] * 8)
         await lh.drop_tips()
 
         # Load into centrifuge
@@ -461,7 +463,7 @@ async def complex_workflow():
     """Multi-device automated workflow"""
 
     # Initialize all devices
-    lh = LiquidHandler(backend=STAR(), deck=STARLetDeck())
+    lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
     hs = HeaterShaker(name="hs", backend=HamiltonHeaterShakerBackend())
     centrifuge = Centrifuge(name="vspin", backend=VSpinBackend())
     pump = Pump(name="pump", backend=ColeParmerMasterflexBackend())
@@ -474,7 +476,8 @@ async def complex_workflow():
     try:
         # 1. Sample preparation
         await lh.pick_up_tips(tip_rack["A1:H1"])
-        await lh.transfer(samples["A1:H12"], plate["A1:H12"], vols=100)
+        await lh.aspirate(samples["A1:H1"], vols=[100] * 8)
+        await lh.dispense(plate["A1:H1"], vols=[100] * 8)
         await lh.drop_tips()
 
         # 2. Add reagent via pump
@@ -499,11 +502,8 @@ async def complex_workflow():
 
         # 5. Transfer supernatant
         await lh.pick_up_tips(tip_rack["A2:H2"])
-        await lh.transfer(
-            plate["A1:H12"],
-            output_plate["A1:H12"],
-            vols=80
-        )
+        await lh.aspirate(plate["A1:H1"], vols=[80] * 8)
+        await lh.dispense(output_plate["A1:H1"], vols=[80] * 8)
         await lh.drop_tips()
 
     finally:
@@ -577,7 +577,7 @@ await incubate_with_shaking(
 async def process_plates(plate_list: list):
     """Process multiple plates through workflow"""
 
-    lh = LiquidHandler(backend=STAR(), deck=STARLetDeck())
+    lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
     hs = HeaterShaker(name="hs", backend=HamiltonHeaterShakerBackend())
 
     await lh.setup()
@@ -589,11 +589,8 @@ async def process_plates(plate_list: list):
 
             # Transfer samples
             await lh.pick_up_tips(tip_rack[f"A{i+1}:H{i+1}"])
-            await lh.transfer(
-                source[f"A{i+1}:H{i+1}"],
-                plate["A1:H1"],
-                vols=100
-            )
+            await lh.aspirate(source[f"A{i+1}:H{i+1}"], vols=[100] * 8)
+            await lh.dispense(plate["A1:H1"], vols=[100] * 8)
             await lh.drop_tips()
 
             # Incubate

@@ -7,7 +7,7 @@ Overview of databases queried by gget modules, including update frequencies and 
 The databases queried by gget are continuously being updated, which sometimes changes their structure. gget modules are tested automatically on a biweekly basis and updated to match new database structures when necessary. Always keep gget updated:
 
 ```bash
-pip install --upgrade gget
+uv pip install --upgrade gget
 ```
 
 ## Database Directory

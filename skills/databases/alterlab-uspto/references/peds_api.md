@@ -34,13 +34,13 @@ The recommended way to access PEDS is through the `uspto-opendata-python` librar
 ### Installation
 
 ```bash
-pip install uspto-opendata-python
+uv pip install uspto-opendata-python
 ```
 
 ### Basic Usage
 
 ```python
-from uspto.peds import PE DSClient
+from uspto.peds import PEDSClient
 
 # Initialize client
 client = PEDSClient()

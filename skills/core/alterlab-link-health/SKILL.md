@@ -61,7 +61,7 @@ Finalize the post-merge cleanup: resolve pending human-decision items, file foll
 |----------|-----------------------------|
 | Fix a single broken link in a single file | Direct Edit — no pipeline needed |
 | Add a new URL to skill docs | `alterlab-scientific-writing` or the relevant domain skill |
-| Audit citations (DOI resolution, author verification) | `alterlab-paper-reviewer` integrity-check mode |
+| Verify a bibliography actually exists (DOI/author resolution, fabricated/hallucinated citations) | `alterlab-citation-verifier` — it cross-checks Crossref/OpenAlex/Semantic Scholar/arXiv. Link-health only repairs broken hyperlinks in docs; it never validates that a cited work exists. |
 | Audit repo structure beyond links (schema, metadata) | Separate `schema-drift` audit (out of scope) |
 
 ---

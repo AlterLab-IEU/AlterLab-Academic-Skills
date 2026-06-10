@@ -1,6 +1,6 @@
 ---
 name: alterlab-open-notebook
-description: Run Open Notebook, a self-hosted open-source alternative to Google NotebookLM with a full REST API, for AI-powered research and document analysis. Use when organizing research materials into notebooks, ingesting diverse content sources (PDFs, videos, audio, web pages, Office documents), generating AI-powered notes and summaries, creating multi-speaker podcasts from research, chatting with documents using context-aware AI, searching across materials with full-text and vector search, or running custom content transformations. Supports 16+ AI providers including OpenAI, Anthropic, Google, Ollama, Groq, and Mistral with complete data privacy through self-hosting. Part of the AlterLab Academic Skills suite.
+description: Run Open Notebook, a self-hosted open-source alternative to Google NotebookLM with a full REST API, for AI-powered research and document analysis. Use when organizing research materials into notebooks, ingesting diverse content sources (PDFs, videos, audio, web pages, Office documents), generating AI-powered notes and summaries, creating multi-speaker podcasts from research, chatting with documents using context-aware AI, searching across materials with full-text and vector search, or running custom content transformations. Supports 18+ AI providers including OpenAI, Anthropic, Google, Ollama, LM Studio, Groq, and Mistral with complete data privacy through self-hosting. For a one-shot file-to-Markdown conversion (no notebook, chat, or search), use alterlab-markitdown instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 compatibility: Requires a self-hosted Open Notebook instance (Docker Compose) plus an AI provider API key (OpenAI/Anthropic/Google/Groq/Mistral) or a local Ollama; set OPEN_NOTEBOOK_ENCRYPTION_KEY and OPEN_NOTEBOOK_PASSWORD
@@ -30,8 +30,8 @@ Unlike Google's Notebook LM, which has no publicly available API outside of the 
 
 ### Prerequisites
 
-- Docker Desktop installed
-- API key for at least one AI provider (or local Ollama for free local inference)
+- Docker with Docker Compose v2 (OrbStack or Docker Desktop both work; `docker compose` must be available)
+- API key for at least one AI provider (or local Ollama / LM Studio for free local inference)
 
 ### Installation
 
@@ -44,8 +44,8 @@ curl -o docker-compose.yml https://raw.githubusercontent.com/lfnovo/open-noteboo
 # Set the required encryption key
 export OPEN_NOTEBOOK_ENCRYPTION_KEY="your-secret-key-here"
 
-# Launch the services
-docker-compose up -d
+# Launch the services (v2 syntax; OrbStack/Docker Desktop both expose this)
+docker compose up -d
 ```
 
 Access the application:
@@ -221,24 +221,26 @@ result = requests.post(f"{BASE_URL}/transformations/execute", json={
 
 ## Supported AI Providers
 
-Open Notebook supports 16+ AI providers through the Esperanto library:
+Open Notebook supports 18+ AI providers through the Esperanto library. A representative subset:
 
 | Provider | LLM | Embedding | Speech-to-Text | Text-to-Speech |
 |----------|-----|-----------|----------------|----------------|
 | OpenAI | Yes | Yes | Yes | Yes |
 | Anthropic | Yes | No | No | No |
-| Google GenAI | Yes | Yes | No | Yes |
+| Google GenAI | Yes | Yes | Yes | Yes |
 | Vertex AI | Yes | Yes | No | Yes |
 | Ollama | Yes | Yes | No | No |
+| LM Studio | Yes | Yes | Yes | Yes |
 | Groq | Yes | No | Yes | No |
-| Mistral | Yes | Yes | No | No |
-| Azure OpenAI | Yes | Yes | No | No |
+| Mistral | Yes | Yes | Yes | Yes |
+| Azure OpenAI | Yes | Yes | Yes | Yes |
 | DeepSeek | Yes | No | No | No |
-| xAI | Yes | No | No | No |
-| OpenRouter | Yes | No | No | No |
+| xAI | Yes | No | No | Yes |
+| OpenRouter | Yes | Yes | No | No |
 | ElevenLabs | No | No | Yes | Yes |
-| Perplexity | Yes | No | No | No |
 | Voyage | No | Yes | No | No |
+
+LM Studio is reached via the OpenAI-compatible provider, so it inherits the full capability set. For the full provider matrix see the upstream README.
 
 ## Environment Variables
 

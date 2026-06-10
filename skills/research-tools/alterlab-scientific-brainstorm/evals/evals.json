@@ -41,11 +41,11 @@
     {
       "id": "near-miss-hypothesis-generation",
       "prompt": "I already have a dataset showing that sleep duration correlates with exam scores. Help me formulate specific, testable hypotheses I can actually run statistical tests on.",
-      "expected_output": "This is formulating testable hypotheses from existing data/observations, which the skill's description explicitly routes elsewhere ('For formulating testable hypotheses from data use hypothesis-generation'). Defers to the hypothesis-generation / scientific-thinking skill (alterlab-scientific-thinking) rather than running an open-ended brainstorming session, since there is already a specific observation rather than a blank-slate ideation need.",
+      "expected_output": "This is formulating testable hypotheses from an existing dataset/observation, which the skill's description explicitly routes elsewhere ('For formulating testable hypotheses from observations or data use hypothesis-gen'). Defers to the hypothesis-gen skill rather than running an open-ended brainstorming session, since there is already a specific observation rather than a blank-slate ideation need.",
       "assertions": [
         {"type": "should_not_trigger", "value": true},
-        {"type": "output_contains", "value": "hypothesis"},
-        {"type": "behavior", "value": "Recognizes that formulating testable hypotheses from data belongs to hypothesis-generation/scientific-thinking and defers rather than free-form brainstorming."}
+        {"type": "output_contains", "value": "hypothesis-gen"},
+        {"type": "behavior", "value": "Recognizes that formulating testable hypotheses from a dataset belongs to the hypothesis-gen skill and defers there rather than starting free-form brainstorming."}
       ]
     }
   ]

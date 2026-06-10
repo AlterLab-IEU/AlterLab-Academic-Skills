@@ -149,10 +149,10 @@ print(f"Lilliefors test p-value: {lf_pval:.4f}")
 ```python
 from statsmodels.stats.diagnostic import linear_reset
 
-reset_test = linear_reset(results, power=2)
-f_stat, f_pval = reset_test
+# linear_reset returns a ContrastResults object, not a tuple
+reset_test = linear_reset(results, power=2, use_f=True)
 
-print(f"RESET test p-value: {f_pval:.4f}")
+print(f"RESET test p-value: {reset_test.pvalue:.4f}")
 # H0: Model is correctly specified (linear)
 # If rejected, may need polynomial terms or transformations
 ```
@@ -765,7 +765,9 @@ print(f"Cohen's d: {d:.4f}")
 # η² = SS_between / SS_total
 
 def eta_squared(anova_table):
-    return anova_table['sum_sq'][0] / anova_table['sum_sq'].sum()
+    # anova_lm tables are indexed by term name, so select the effect row
+    # positionally with .iloc rather than by label 0
+    return anova_table['sum_sq'].iloc[0] / anova_table['sum_sq'].sum()
 
 # After running ANOVA
 eta_sq = eta_squared(anova_table)

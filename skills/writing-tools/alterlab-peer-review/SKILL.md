@@ -1,6 +1,6 @@
 ---
 name: alterlab-peer-review
-description: Writes structured, checklist-based manuscript and grant peer reviews — assesses methodology, statistical validity, reporting-standards compliance (CONSORT/STROBE), and gives constructive feedback. Use when writing a formal peer review or revising a manuscript against review criteria. For evaluating claims/evidence quality prefer scientific-critical-thinking; for quantitative scoring frameworks use scholar-evaluation. Part of the AlterLab Academic Skills suite.
+description: Writes structured, checklist-based manuscript and grant peer reviews — assesses methodology, statistical validity, reporting-standards compliance (CONSORT/STROBE/PRISMA), and gives constructive feedback. Use when writing a formal reviewer report, responding to a journal/grant review invitation, or revising a manuscript against reviewer criteria. For evaluating claims/evidence quality prefer alterlab-scientific-thinking; for a multi-reviewer mock-panel verdict use alterlab-paper-reviewer; for quantitative rubric scoring use alterlab-scholar-eval. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 compatibility: No external tools, API keys, or services required — produces reviews from the Read/Write/Edit/Bash tools alone
@@ -9,11 +9,11 @@ metadata:
     version: "1.0.0"
 ---
 
-# Scientific Critical Evaluation and Peer Review
+# Manuscript and Grant Peer Review
 
 ## Overview
 
-Peer review is a systematic process for evaluating scientific manuscripts. Assess methodology, statistics, design, reproducibility, ethics, and reporting standards. Apply this skill for manuscript and grant review across disciplines with constructive, rigorous evaluation.
+Peer review is a systematic process for evaluating scientific manuscripts and proposals. Assess methodology, statistics, design, reproducibility, ethics, and reporting standards, then deliver a structured, constructive reviewer report. Apply this skill for manuscript and grant review across disciplines.
 
 ## When to Use This Skill
 
@@ -25,6 +25,11 @@ This skill should be used when:
 - Evaluating reproducibility and data availability
 - Checking compliance with reporting guidelines (CONSORT, STROBE, PRISMA)
 - Providing constructive feedback on scientific writing
+
+**Defer to a sibling skill when the task is:**
+- Grading evidence quality / spotting biases, confounders, or causal-inference flaws → `alterlab-scientific-thinking`
+- Producing a multi-reviewer mock-panel verdict (accept/reject decision from several simulated reviewers) → `alterlab-paper-reviewer`
+- Scoring or ranking work on a numeric weighted rubric → `alterlab-scholar-eval`
 
 ## Peer Review Workflow
 

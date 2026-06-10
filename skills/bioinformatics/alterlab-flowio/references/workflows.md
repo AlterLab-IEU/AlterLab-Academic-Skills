@@ -111,18 +111,27 @@ Generate FCS files from NumPy arrays or other data sources.
 
 **Basic creation:**
 
+> **`create_fcs` call contract (two easy mistakes):**
+> 1. First arg is a **writable binary file handle** (`open(path, 'wb')`), not a
+>    path string — it calls `file_handle.seek(0)`.
+> 2. `event_data` must be a **flattened 1-D** sequence (channel-interleaved); pass
+>    `array.flatten()`, not the 2-D `(events, channels)` matrix.
+> 3. The metadata keyword is `metadata_dict=` (not `metadata=`, which belongs to
+>    `write_fcs`).
+
 ```python
 import numpy as np
 from flowio import create_fcs
 
 # Create event data (rows=events, columns=channels)
-events = np.random.rand(10000, 5) * 1000
+events = (np.random.rand(10000, 5) * 1000).astype('float32')
 
 # Define channel names
 channel_names = ['FSC-A', 'SSC-A', 'FL1-A', 'FL2-A', 'Time']
 
 # Create FCS file
-create_fcs('output.fcs', events, channel_names)
+with open('output.fcs', 'wb') as fh:
+    create_fcs(fh, events.flatten(), channel_names)
 ```
 
 **With descriptive channel names:**
@@ -132,10 +141,11 @@ create_fcs('output.fcs', events, channel_names)
 channel_names = ['FSC-A', 'SSC-A', 'FL1-A', 'FL2-A', 'Time']
 descriptive_names = ['Forward Scatter', 'Side Scatter', 'FITC', 'PE', 'Time']
 
-create_fcs('output.fcs',
-           events,
-           channel_names,
-           opt_channel_names=descriptive_names)
+with open('output.fcs', 'wb') as fh:
+    create_fcs(fh,
+               events.flatten(),
+               channel_names,
+               opt_channel_names=descriptive_names)
 ```
 
 **With custom metadata:**
@@ -149,11 +159,12 @@ metadata = {
     '$INST': 'Laboratory A'
 }
 
-create_fcs('output.fcs',
-           events,
-           channel_names,
-           opt_channel_names=descriptive_names,
-           metadata=metadata)
+with open('output.fcs', 'wb') as fh:
+    create_fcs(fh,
+               events.flatten(),
+               channel_names,
+               opt_channel_names=descriptive_names,
+               metadata_dict=metadata)
 ```
 
 **Note:** FlowIO exports as FCS 3.1 with single-precision floating-point data.
@@ -184,12 +195,13 @@ events = flow.as_array(preprocess=False)
 # Modify event data
 events[:, 0] = events[:, 0] * 1.5  # Scale first channel
 
-# Create new FCS file with modified data
-create_fcs('modified.fcs',
-           events,
-           flow.pnn_labels,
-           opt_channel_names=flow.pns_labels,
-           metadata=flow.text)
+# Create new FCS file with modified data (handle + flattened + metadata_dict=)
+with open('modified.fcs', 'wb') as fh:
+    create_fcs(fh,
+               events.flatten(),
+               flow.pnn_labels,
+               opt_channel_names=flow.pns_labels,
+               metadata_dict=flow.text)
 ```
 
 ## Handling Multi-Dataset FCS Files

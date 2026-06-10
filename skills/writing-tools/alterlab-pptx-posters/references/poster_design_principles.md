@@ -4,6 +4,8 @@
 
 Effective poster design balances visual appeal, readability, and scientific content. This guide covers typography, color theory, visual hierarchy, accessibility, and evidence-based design principles for research posters.
 
+> **Note for this (HTML/CSS) skill:** the design *principles* below are format-agnostic and apply directly. Some code samples are written in LaTeX because this guide is shared with the LaTeX poster workflow — treat them as illustrations of the principle, not instructions. In this skill you implement the same ideas with CSS in `assets/poster_html_template.html` (e.g. `font-size`, `color`, `linear-gradient(...)`, `border-radius`, fl/grid columns). CSS contrast/palette tooling: the same WebAIM/Coblis checkers apply.
+
 ## Core Design Principles
 
 ### 1. Visual Hierarchy
@@ -33,13 +35,12 @@ Guide viewers through content in logical order using size, color, position, and 
    - Weight: Regular or light
    - Purpose: Context and attribution
 
-**Implementation**:
-```latex
-% Define hierarchy in LaTeX
-\setbeamerfont{title}{size=\VeryHuge,series=\bfseries}        % 90pt+
-\setbeamerfont{block title}{size=\Huge,series=\bfseries}      % 60pt
-\setbeamerfont{block body}{size=\LARGE}                        % 30pt
-\setbeamerfont{caption}{size=\large}                           % 24pt
+**Implementation (CSS, as in the template):**
+```css
+.poster-title { font-size: 108pt; font-weight: bold; }  /* primary */
+.block-title  { font-size: 52pt;  font-weight: bold; }  /* secondary */
+.block-content{ font-size: 34pt; }                       /* tertiary */
+.references   { font-size: 24pt; }                       /* quaternary */
 ```
 
 ### 2. White Space (Negative Space)
@@ -194,19 +195,6 @@ Weak Fallow      Terminal Area
 - Print at 25% scale
 - Read from 2-3 feet distance
 - If legible, full-scale poster will be readable from 8-12 feet
-
-**Size Conversion**:
-| LaTeX Command | Approximate Size | Use Case |
-|---------------|------------------|----------|
-| `\tiny` | 10pt | Avoid on posters |
-| `\small` | 16pt | Minimal use only |
-| `\normalsize` | 20pt | References (scaled up) |
-| `\large` | 24pt | Captions, small text |
-| `\Large` | 28pt | Body text (minimum) |
-| `\LARGE` | 32pt | Body text (recommended) |
-| `\huge` | 36pt | Subheadings |
-| `\Huge` | 48pt | Section headers |
-| `\VeryHuge` | 72pt+ | Title |
 
 ### Text Formatting Best Practices
 
@@ -784,12 +772,11 @@ Research on poster effectiveness shows:
 - **Vischeck**: Another color blindness checker
 - **Accessibility Checker**: WCAG compliance
 
-### LaTeX Packages
-- `xcolor`: Extended color support
-- `tcolorbox`: Colored boxes and frames
-- `fontawesome5`: Icon fonts
-- `qrcode`: QR code generation
-- `tikz`: Custom graphics
+### For HTML/CSS Posters
+- CSS `linear-gradient()` / `radial-gradient()`: section and header backgrounds
+- CSS `box-shadow`, `border-radius`: depth and rounded blocks (see template)
+- Google Fonts / `@font-face`: web fonts (Open Sans, Roboto, Lato)
+- Any QR generator (e.g. `qrencode` CLI) → embed the PNG as an `<img>`
 
 ## Conclusion
 

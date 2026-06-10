@@ -18,11 +18,10 @@ Comprehensive formatting requirements and submission guidelines for major academ
   - Main paper: 8 pages (excluding references)
   - References: Unlimited
   - Appendix/Supplementary: Unlimited (optional, reviewed at discretion)
-- **Format**: Two-column
-- **Font**: Times or Times New Roman, 10pt for body text
+- **Format**: Single-column (NeurIPS style; text block 5.5 in wide × 9 in tall)
+- **Font**: Times or Times New Roman, 10pt for body text (11pt leading)
 - **Line spacing**: Single-spaced
-- **Margins**: 1 inch (2.54 cm) all sides
-- **Column separation**: 0.25 inch (0.635 cm)
+- **Margins**: Left margin 1.5 in; text confined to the 5.5 × 9 in block
 - **Paper size**: US Letter (8.5 × 11 inches)
 - **Anonymization**: **Required** for initial submission (double-blind review)
   - Remove author names, affiliations
@@ -33,7 +32,6 @@ Comprehensive formatting requirements and submission guidelines for major academ
 - **Figures**: 
   - High resolution (300+ dpi)
   - Colorblind-friendly palettes recommended
-  - Can span both columns if needed
 - **Tables**: Clear, readable at publication size
 - **Equations**: Numbered if referenced
 - **LaTeX Class**: `neurips_2024.sty` (updated annually)
@@ -433,7 +431,7 @@ Comprehensive formatting requirements and submission guidelines for major academ
 
 | Conference | Pages | Format | Blind | Citations | Template |
 |------------|-------|--------|-------|-----------|----------|
-| **NeurIPS** | 8 + refs | Two-col | Double | [1] | `neurips_article.tex` |
+| **NeurIPS** | 8 + refs | Single-col | Double | [1] | `neurips_article.tex` |
 | **ICML** | 8 + refs | Two-col | Double | [1] | `icml_article.tex` |
 | **ICLR** | 8 + refs | Two-col | Double | [1] | `iclr_article.tex` |
 | **CVPR** | 8 + refs | Two-col | Double | [1] | `cvpr_article.tex` |

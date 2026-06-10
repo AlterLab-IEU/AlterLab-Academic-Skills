@@ -13,8 +13,9 @@ with open('paper.pdf', 'wb') as f:
 zot.dump('ATTACHMENTKEY')
 
 # Dump to a specific path and filename
+# Signature: dump(itemkey, filename=None, path=None)
 zot.dump('ATTACHMENTKEY', 'renamed_paper.pdf', '/home/user/papers/')
-# Returns the full file path on success
+# Writes the file to disk; returns None
 ```
 
 **Note**: HTML snapshots are dumped as `.zip` files named with the item key.

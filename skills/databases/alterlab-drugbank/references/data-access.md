@@ -35,15 +35,15 @@ download_drugbank(username="user", password="pass")
 ### drugbank-downloader
 Primary tool for programmatic access:
 ```bash
-pip install drugbank-downloader
+uv pip install drugbank-downloader
 ```
 
 **Requirements:** Python >=3.9
 
 ### Optional Dependencies
 ```bash
-pip install bioversions  # For automatic latest version detection
-pip install lxml  # For XML parsing optimization
+uv pip install bioversions  # For automatic latest version detection
+uv pip install lxml  # For XML parsing optimization
 ```
 
 ## Data Download Methods
@@ -130,12 +130,14 @@ if drugbank_dir.exists():
 ```
 
 ### Version History
-- **Version 6.0** (2024): Latest release, expanded drug entries
-- **Version 5.1.x** (2019-2023): Incremental updates
-- **Version 5.0** (2017): ~9,591 drug entries
-- **Version 4.0** (2014): Added metabolite structures
-- **Version 3.0** (2011): Added transporter and pathway data
-- **Version 2.0** (2009): Added interactions and ADMET
+DrugBank has released the 5.1.x series and a 6.x line; entry counts grow with each release. Don't hardcode "the latest" — resolve it at runtime with `bioversions` (or check go.drugbank.com/releases), then pin that exact version for reproducibility.
+
+```python
+import bioversions
+latest = bioversions.get_version("drugbank")  # resolve, then pass to download_drugbank(version=latest)
+```
+
+Notable schema additions over time: interactions and ADMET fields (5.0+ era), transporter and SMPDB pathway data, and metabolite structures. Confirm field availability against the version you actually download rather than assuming.
 
 ## API Access
 

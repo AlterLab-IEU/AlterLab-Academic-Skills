@@ -4,18 +4,19 @@ Professional clinical decision support documents for medical professionals in ph
 
 ## Quick Start
 
-This skill enables generation of three types of clinical documents:
+This skill generates two types of **group-level** clinical documents:
 
-1. **Individual Patient Treatment Plans** - Personalized protocols for specific patients
-2. **Patient Cohort Analysis** - Biomarker-stratified group analyses with outcomes
-3. **Treatment Recommendation Reports** - Evidence-based clinical guidelines
+1. **Patient Cohort Analysis** - Biomarker-stratified group analyses with outcomes
+2. **Treatment Recommendation Reports** - Evidence-based clinical guidelines with GRADE/ACCP grading
 
 All documents are generated as compact, professional LaTeX/PDF files.
+
+For **individual patient** treatment plans use `alterlab-treatment-plans`; for **single-patient case reports** use `alterlab-clinical-reports`.
 
 ## Directory Structure
 
 ```
-clinical-decision-support/
+alterlab-clinical-decision/
 ├── SKILL.md                     # Main skill definition
 ├── README.md                    # This file
 │
@@ -81,9 +82,9 @@ Python scripts require:
 - `matplotlib`: Visualization
 - `pyyaml` (optional): YAML input for decision trees
 
-Install with:
+Install with uv (preferred) or pip:
 ```bash
-pip install pandas numpy scipy lifelines matplotlib pyyaml
+uv pip install pandas numpy scipy lifelines matplotlib pyyaml
 ```
 
 ## References Included
@@ -112,18 +113,11 @@ pip install pandas numpy scipy lifelines matplotlib pyyaml
 
 ## Integration
 
-Integrates with existing skills:
-- **scientific-writing**: Citation management, statistical reporting
-- **clinical-reports**: Medical terminology, HIPAA compliance
-- **scientific-schematics**: TikZ flowcharts
+Integrates with sibling skills:
+- **alterlab-scientific-writing**: Citation management, statistical reporting
+- **alterlab-clinical-reports**: Medical terminology, HIPAA compliance, single-patient case reports
+- **alterlab-scientific-schematics**: TikZ flowcharts
+- **alterlab-treatment-plans**: Individual patient applications of cohort-derived insights
 
-## Version
-
-Version 1.0 - Initial release
-Created: November 2024
-Last Updated: November 5, 2024
-
-## Questions or Feedback
-
-This skill was designed for pharmaceutical and clinical research professionals creating clinical decision support documents. For questions about usage or suggestions for improvements, contact the Scientific Writer development team.
+Version is tracked in `SKILL.md` frontmatter (`metadata.version`).
 

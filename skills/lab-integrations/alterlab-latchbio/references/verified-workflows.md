@@ -1,487 +1,94 @@
 # Verified Workflows
 
 ## Overview
-Latch Verified Workflows are production-ready, pre-built bioinformatics pipelines developed and maintained by Latch engineers. These workflows are used by top pharmaceutical companies and biotech firms for research and discovery.
+Latch Verified Workflows are production-ready, pre-built bioinformatics pipelines maintained by Latch. They are available to launch from the platform UI, and a subset is importable from the `latch.verified` Python module for use inside your own SDK workflows.
 
-## Available in Python SDK
+> Important: the set of pipelines importable from `latch.verified` is **small and specific**, and differs from the (larger) catalog of Verified Workflows shown in the platform UI. Before writing `from latch.verified import <name>`, confirm the exact symbol exists (`python -c "import latch.verified as v; print(dir(v))"`) and check its parameters — verified-workflow signatures change between releases.
 
-The `latch.verified` module provides programmatic access to verified workflows from Python code.
+## Importable from `latch.verified`
 
-### Importing Verified Workflows
+As of the current SDK, `latch.verified` exports:
+
+| Import | Pipeline |
+| --- | --- |
+| `rnaseq` | Bulk RNA-seq alignment + quantification |
+| `deseq2_wf` | DESeq2 differential expression |
+| `trim_galore` | Adapter / quality trimming |
+| `mafft` | Multiple sequence alignment |
+| `gene_ontology_pathway_analysis` | GO pathway / enrichment analysis |
 
 ```python
 from latch.verified import (
-    bulk_rnaseq,
-    deseq2,
-    mafft,
+    rnaseq,
+    deseq2_wf,
     trim_galore,
-    alphafold,
-    colabfold
+    mafft,
+    gene_ontology_pathway_analysis,
 )
 ```
 
-## Core Verified Workflows
+These are ordinary Latch workflow functions: call them inside a `@workflow`, passing `LatchFile`/`LatchDir` inputs. Inspect each one's signature (e.g. `help(rnaseq)` or its docstring/UI parameter form) for the exact parameter names — do not assume them.
 
-### Bulk RNA-seq Analysis
+### Bulk RNA-seq (`rnaseq`)
+- Read quality control, adapter trimming, alignment, and gene-level quantification, with a MultiQC report.
+- Takes FASTQ inputs (single- or paired-end) and a reference genome selection.
 
-**Alignment and Quantification:**
-```python
-from latch.verified import bulk_rnaseq
-from latch.types import LatchFile
+### Differential expression (`deseq2_wf`)
+- Normalization/variance stabilization, differential testing, and standard plots (MA, volcano, PCA) from a count matrix plus sample metadata and a design formula.
 
-# Run bulk RNA-seq pipeline
-results = bulk_rnaseq(
-    fastq_r1=LatchFile("latch:///data/sample_R1.fastq.gz"),
-    fastq_r2=LatchFile("latch:///data/sample_R2.fastq.gz"),
-    reference_genome="hg38",
-    output_dir="latch:///results/rnaseq"
-)
-```
+### Trimming (`trim_galore`)
+- Automatic adapter detection plus quality trimming, single- or paired-end, with FastQC integration.
 
-**Features:**
-- Read quality control with FastQC
-- Adapter trimming
-- Alignment with STAR or HISAT2
-- Gene-level quantification with featureCounts
-- MultiQC report generation
+### Multiple sequence alignment (`mafft`)
+- MAFFT alignment (FFT-NS / G-INS-i / L-INS-i families) with automatic algorithm selection for a FASTA input.
 
-### Differential Expression Analysis
+### Pathway enrichment (`gene_ontology_pathway_analysis`)
+- GO-based enrichment over a gene list.
 
-**DESeq2:**
-```python
-from latch.verified import deseq2
-from latch.types import LatchFile
+## Pipelines available in the platform UI (not in `latch.verified`)
 
-# Run differential expression analysis
-results = deseq2(
-    count_matrix=LatchFile("latch:///data/counts.csv"),
-    sample_metadata=LatchFile("latch:///data/metadata.csv"),
-    design_formula="~ condition",
-    output_dir="latch:///results/deseq2"
-)
-```
+Many widely used pipelines — e.g. AlphaFold / ColabFold (protein structure), single-cell tools (ArchR for scATAC-seq, scVelo for RNA velocity, empty-droplet calling), and CRISPR editing analysis (CRISPResso2) — are offered as Verified Workflows you launch from the platform UI. They are **not** guaranteed to be importable from `latch.verified` under those names. To use one, launch it from the platform UI, or wrap your own task around the underlying tool.
 
-**Features:**
-- Normalization and variance stabilization
-- Differential expression testing
-- MA plots and volcano plots
-- PCA visualization
-- Annotated results tables
-
-### Pathway Analysis
-
-**Enrichment Analysis:**
-```python
-from latch.verified import pathway_enrichment
-
-results = pathway_enrichment(
-    gene_list=LatchFile("latch:///data/deg_list.txt"),
-    organism="human",
-    databases=["GO_Biological_Process", "KEGG", "Reactome"],
-    output_dir="latch:///results/pathways"
-)
-```
-
-**Supported Databases:**
-- Gene Ontology (GO)
-- KEGG pathways
-- Reactome
-- WikiPathways
-- MSigDB collections
-
-### Sequence Alignment
-
-**MAFFT Multiple Sequence Alignment:**
-```python
-from latch.verified import mafft
-from latch.types import LatchFile
-
-aligned = mafft(
-    input_fasta=LatchFile("latch:///data/sequences.fasta"),
-    algorithm="auto",
-    output_format="fasta"
-)
-```
-
-**Features:**
-- Multiple alignment algorithms (FFT-NS-1, FFT-NS-2, G-INS-i, L-INS-i)
-- Automatic algorithm selection
-- Support for large alignments
-- Various output formats
-
-### Adapter and Quality Trimming
-
-**Trim Galore:**
-```python
-from latch.verified import trim_galore
-
-trimmed = trim_galore(
-    fastq_r1=LatchFile("latch:///data/sample_R1.fastq.gz"),
-    fastq_r2=LatchFile("latch:///data/sample_R2.fastq.gz"),
-    quality_threshold=20,
-    adapter_auto_detect=True
-)
-```
-
-**Features:**
-- Automatic adapter detection
-- Quality trimming
-- FastQC integration
-- Support for single-end and paired-end
-
-## Protein Structure Prediction
-
-### AlphaFold
-
-**Standard AlphaFold:**
-```python
-from latch.verified import alphafold
-from latch.types import LatchFile
-
-structure = alphafold(
-    sequence_fasta=LatchFile("latch:///data/protein.fasta"),
-    model_preset="monomer",
-    use_templates=True,
-    output_dir="latch:///results/alphafold"
-)
-```
-
-**Features:**
-- Monomer and multimer prediction
-- Template-based modeling option
-- MSA generation
-- Confidence metrics (pLDDT, PAE)
-- PDB structure output
-
-**Model Presets:**
-- `monomer`: Single protein chain
-- `monomer_casp14`: CASP14 competition version
-- `monomer_ptm`: With pTM confidence
-- `multimer`: Protein complexes
-
-### ColabFold
-
-**Optimized AlphaFold Alternative:**
-```python
-from latch.verified import colabfold
-
-structure = colabfold(
-    sequence_fasta=LatchFile("latch:///data/protein.fasta"),
-    num_models=5,
-    use_amber_relax=True,
-    output_dir="latch:///results/colabfold"
-)
-```
-
-**Features:**
-- Faster than standard AlphaFold
-- MMseqs2-based MSA generation
-- Multiple model predictions
-- Amber relaxation
-- Ranking by confidence
-
-**Advantages:**
-- 3-5x faster MSA generation
-- Lower compute cost
-- Similar accuracy to AlphaFold
-
-## Single-Cell Analysis
-
-### ArchR (scATAC-seq)
-
-**Chromatin Accessibility Analysis:**
-```python
-from latch.verified import archr
-
-results = archr(
-    fragments_file=LatchFile("latch:///data/fragments.tsv.gz"),
-    genome="hg38",
-    output_dir="latch:///results/archr"
-)
-```
-
-**Features:**
-- Arrow file generation
-- Quality control metrics
-- Dimensionality reduction
-- Clustering
-- Peak calling
-- Motif enrichment
-
-### scVelo (RNA Velocity)
-
-**RNA Velocity Analysis:**
-```python
-from latch.verified import scvelo
-
-results = scvelo(
-    adata_file=LatchFile("latch:///data/adata.h5ad"),
-    mode="dynamical",
-    output_dir="latch:///results/scvelo"
-)
-```
-
-**Features:**
-- Spliced/unspliced quantification
-- Velocity estimation
-- Dynamical modeling
-- Trajectory inference
-- Visualization
-
-### emptyDropsR (Cell Calling)
-
-**Empty Droplet Detection:**
-```python
-from latch.verified import emptydrops
-
-filtered_matrix = emptydrops(
-    raw_matrix_dir=LatchDir("latch:///data/raw_feature_bc_matrix"),
-    fdr_threshold=0.01
-)
-```
-
-**Features:**
-- Distinguish cells from empty droplets
-- FDR-based thresholding
-- Ambient RNA removal
-- Compatible with 10X data
-
-## Gene Editing Analysis
-
-### CRISPResso2
-
-**CRISPR Editing Assessment:**
-```python
-from latch.verified import crispresso2
-
-results = crispresso2(
-    fastq_r1=LatchFile("latch:///data/sample_R1.fastq.gz"),
-    amplicon_sequence="AGCTAGCTAG...",
-    guide_rna="GCTAGCTAGC",
-    output_dir="latch:///results/crispresso"
-)
-```
-
-**Features:**
-- Indel quantification
-- Base editing analysis
-- Prime editing analysis
-- HDR quantification
-- Allele frequency plots
-
-## Phylogenetics
-
-### Phylogenetic Tree Construction
-
-```python
-from latch.verified import phylogenetics
-
-tree = phylogenetics(
-    alignment_file=LatchFile("latch:///data/aligned.fasta"),
-    method="maximum_likelihood",
-    bootstrap_replicates=1000,
-    output_dir="latch:///results/phylo"
-)
-```
-
-**Features:**
-- Multiple tree-building methods
-- Bootstrap support
-- Tree visualization
-- Model selection
-
-## Workflow Integration
-
-### Using Verified Workflows in Custom Pipelines
+## Combining a verified workflow with custom tasks
 
 ```python
 from latch import workflow, small_task
-from latch.verified import bulk_rnaseq, deseq2
+from latch.verified import rnaseq
 from latch.types import LatchFile, LatchDir
 
-@workflow
-def complete_rnaseq_analysis(
-    fastq_files: List[LatchFile],
-    metadata: LatchFile,
-    output_dir: LatchDir
-) -> LatchFile:
-    """
-    Complete RNA-seq analysis pipeline using verified workflows
-    """
-    # Run alignment for each sample
-    aligned_samples = []
-    for fastq in fastq_files:
-        result = bulk_rnaseq(
-            fastq_r1=fastq,
-            reference_genome="hg38",
-            output_dir=output_dir
-        )
-        aligned_samples.append(result)
-
-    # Aggregate counts and run differential expression
-    count_matrix = aggregate_counts(aligned_samples)
-    deseq_results = deseq2(
-        count_matrix=count_matrix,
-        sample_metadata=metadata,
-        design_formula="~ condition"
-    )
-
-    return deseq_results
-```
-
-## Best Practices
-
-### When to Use Verified Workflows
-
-**Use Verified Workflows for:**
-1. Standard analysis pipelines
-2. Well-established methods
-3. Production-ready analyses
-4. Reproducible research
-5. Validated bioinformatics tools
-
-**Build Custom Workflows for:**
-1. Novel analysis methods
-2. Custom preprocessing steps
-3. Integration with proprietary tools
-4. Experimental pipelines
-5. Highly specialized workflows
-
-### Combining Verified and Custom
-
-```python
-from latch import workflow, small_task
-from latch.verified import alphafold
-from latch.types import LatchFile
+@small_task
+def preprocess(raw: LatchFile) -> LatchFile:
+    """Custom preprocessing before the verified pipeline."""
+    # custom logic here
+    return raw
 
 @small_task
-def preprocess_sequence(raw_fasta: LatchFile) -> LatchFile:
-    """Custom preprocessing"""
-    # Custom logic here
-    return processed_fasta
-
-@small_task
-def postprocess_structure(pdb_file: LatchFile) -> LatchFile:
-    """Custom post-analysis"""
-    # Custom analysis here
-    return analysis_results
+def postprocess(results: LatchDir) -> LatchFile:
+    """Custom post-analysis on the verified pipeline's output."""
+    # custom logic here
+    return LatchFile("summary.txt", "latch:///results/summary.txt")
 
 @workflow
-def custom_structure_pipeline(input_fasta: LatchFile) -> LatchFile:
-    """
-    Combine custom steps with verified AlphaFold
-    """
-    # Custom preprocessing
-    processed = preprocess_sequence(raw_fasta=input_fasta)
-
-    # Use verified AlphaFold
-    structure = alphafold(
-        sequence_fasta=processed,
-        model_preset="monomer_ptm"
-    )
-
-    # Custom post-processing
-    results = postprocess_structure(pdb_file=structure)
-
-    return results
+def custom_rnaseq(input_fastq: LatchFile, output_dir: LatchDir) -> LatchFile:
+    """Custom preprocessing -> verified rnaseq -> custom postprocessing."""
+    cleaned = preprocess(raw=input_fastq)
+    # Pass cleaned into rnaseq(...) using its actual parameter names (verify first).
+    results = rnaseq(...)  # noqa: F821 - fill in real params from the workflow's signature
+    return postprocess(results=results)
 ```
 
-## Accessing Workflow Documentation
+## When to use verified vs. custom
 
-### In-Platform Documentation
+**Use a verified workflow for:** standard, well-established analyses where reproducibility and a maintained implementation matter (e.g. bulk RNA-seq, DESeq2, trimming, MSA).
 
-Each verified workflow includes:
-- Parameter descriptions
-- Input/output specifications
-- Method details
-- Citation information
-- Example usage
+**Build a custom workflow for:** novel methods, custom preprocessing, proprietary tools, or anything not covered by a verified pipeline.
 
-### Viewing Available Workflows
+## Versioning
 
-```python
-from latch.verified import list_workflows
-
-# List all available verified workflows
-workflows = list_workflows()
-
-for workflow in workflows:
-    print(f"{workflow.name}: {workflow.description}")
-```
-
-## Version Management
-
-### Workflow Versions
-
-Verified workflows are versioned and maintained:
-- Bug fixes and improvements
-- New features added
-- Backward compatibility maintained
-- Version pinning available
-
-### Using Specific Versions
-
-```python
-from latch.verified import bulk_rnaseq
-
-# Use specific version
-results = bulk_rnaseq(
-    fastq_r1=input_file,
-    reference_genome="hg38",
-    workflow_version="2.1.0"
-)
-```
+Verified workflows are versioned and maintained by Latch (tool upgrades, fixes). Pin/launch a specific version through the workflow's launch interface; consult the workflow's page for the available versions and parameters.
 
 ## Support and Updates
 
-### Getting Help
-
-- **Documentation**: https://docs.latch.bio
-- **Slack Community**: Latch SDK workspace
-- **Support**: support@latch.bio
-- **GitHub Issues**: Report bugs and request features
-
-### Workflow Updates
-
-Verified workflows receive regular updates:
-- Tool version upgrades
-- Performance improvements
-- Bug fixes
-- New features
-
-Subscribe to release notes for update notifications.
-
-## Common Use Cases
-
-### Complete RNA-seq Study
-
-```python
-# 1. Quality control and alignment
-aligned = bulk_rnaseq(fastq=samples)
-
-# 2. Differential expression
-deg = deseq2(counts=aligned)
-
-# 3. Pathway enrichment
-pathways = pathway_enrichment(genes=deg)
-```
-
-### Protein Structure Analysis
-
-```python
-# 1. Predict structure
-structure = alphafold(sequence=protein_seq)
-
-# 2. Custom analysis
-results = analyze_structure(pdb=structure)
-```
-
-### Single-Cell Workflow
-
-```python
-# 1. Filter cells
-filtered = emptydrops(matrix=raw_counts)
-
-# 2. RNA velocity
-velocity = scvelo(adata=filtered)
-```
+- Documentation: https://docs.latch.bio
+- GitHub (authoritative source for `latch.verified` exports and signatures): https://github.com/latchbio/latch
+- Support: support@latch.bio

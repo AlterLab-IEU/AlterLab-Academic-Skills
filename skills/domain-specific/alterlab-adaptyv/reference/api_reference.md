@@ -1,308 +1,182 @@
-# Adaptyv API Reference
+# Adaptyv Foundry API Reference
+
+This is a working reference for the public **Foundry API**. The API evolves, so treat the
+machine-readable OpenAPI schema as authoritative and verify exact field names against it:
+
+- OpenAPI: `https://foundry-api-public.adaptyvbio.com/api/v1/openapi.json`
+- Docs: `https://docs.adaptyvbio.com`
+
+Response JSON below is **illustrative** (shapes shown to orient parsing code), not a guaranteed
+contract — confirm fields from the OpenAPI doc or a live response before depending on them.
 
 ## Base URL
 
 ```
-https://kq5jp7qj7wdqklhsxmovkzn4l40obksv.lambda-url.eu-central-1.on.aws
+https://foundry-api-public.adaptyvbio.com/api/v1
 ```
 
 ## Authentication
 
-All API requests require bearer token authentication in the request header:
+All requests use a bearer token:
 
 ```
-Authorization: Bearer YOUR_API_KEY
+Authorization: Bearer YOUR_API_TOKEN
 ```
 
-To obtain API access:
-1. Contact support@adaptyvbio.com
-2. Request API access during alpha/beta period
-3. Receive your personal access token
+Create and manage tokens in the Foundry portal at `https://foundry.adaptyvbio.com/` under
+**Organization → Settings → Tokens**:
+- **Role** — `Member` (read/write) or `Viewer` (read-only).
+- **Expiry** — from 7 days up to 1 year.
+- The token value is displayed **once** at creation — copy it before closing the dialog.
 
-Store your API key securely:
-- Use environment variables: `ADAPTYV_API_KEY`
-- Never commit API keys to version control
-- Use `.env` files with `.gitignore` for local development
+Store it as the `ADAPTYV_API_KEY` environment variable (also read by the official SDK), keep it
+out of version control, and load it from a gitignored `.env` in local development.
+
+## Experiment Lifecycle
+
+Experiments move through a state machine, roughly:
+
+```
+Draft → WaitingForConfirmation → QuoteSent → WaitingForMaterials
+      → InQueue → InProduction → DataAnalysis → InReview → Done
+```
+
+The typical programmatic flow:
+
+1. `GET /targets` — find a `target_id` (only needed for binding-type assays).
+2. `POST /experiments` — create a **draft** with the sequences + spec.
+3. `GET /experiments/{id}/quote` (or `POST /experiments/cost-estimate`) — review cost.
+4. `POST /experiments/{id}/submit` — submit to the lab. Nothing is charged before this.
+5. Poll `GET /experiments/{id}` (or use a webhook) until `Done`.
+6. `GET /experiments/{id}/results` — retrieve data.
 
 ## Endpoints
 
+### Targets
+
+#### Browse Target Catalog
+
+`GET /targets`
+
+Browse available target antigens. Filter by name, vendor, and self-service availability.
+Targets with a calibrated self-service price support instant cost estimates and automated checkout.
+
+Returns a list of targets each carrying a `target_id` (UUID) to reference when creating
+binding (`screening` / `affinity`) experiments.
+
 ### Experiments
 
-#### Create Experiment
+#### Create Experiment (draft)
 
-Submit protein sequences for experimental testing.
-
-**Endpoint:** `POST /experiments`
+`POST /experiments`
 
 **Request Body:**
 ```json
 {
-  "sequences": ">protein1\nMKVLWALLGLLGAA...\n>protein2\nMATGVLWALLG...",
-  "experiment_type": "binding|expression|thermostability|enzyme_activity",
-  "target_id": "optional_target_identifier",
-  "webhook_url": "https://your-webhook.com/callback",
-  "metadata": {
-    "project": "optional_project_name",
-    "notes": "optional_notes"
+  "name": "mini-binder round 1",
+  "webhook_url": "https://your-server.com/adaptyv-webhook",
+  "experiment_spec": {
+    "experiment_type": "screening|affinity|thermostability|fluorescence|expression",
+    "method": "bli|spr",
+    "target_id": "<uuid, required for screening/affinity>",
+    "sequences": {
+      "design_a": "MKVLWALLGLLGAA...",
+      "design_b": "MATGVLWALLG..."
+    }
   }
 }
 ```
 
-**Sequence Format:**
-- FASTA format with headers
-- Multiple sequences supported
-- Standard amino acid codes
+Notes:
+- `sequences` is a **map** of `label → amino_acid_string` (not a FASTA blob).
+- **Multi-chain** constructs join chains with a colon, e.g. a Fab as `"HEAVY...:LIGHT..."`.
+- `method` (`bli` / `spr`) applies to binding-type assays; non-binding assays
+  (`thermostability`, `fluorescence`, `expression`) do not need a `target_id`.
 
-**Response:**
+**Response (illustrative):**
 ```json
 {
-  "experiment_id": "exp_abc123xyz",
-  "status": "submitted",
-  "created_at": "2025-11-24T10:00:00Z",
-  "estimated_completion": "2025-12-15T10:00:00Z"
+  "experiment_id": "<uuid>",
+  "experiment_code": "EXP-XXXX",
+  "status": "draft",
+  "costs": { "...": "..." }
 }
 ```
+
+#### Update Draft
+
+`PATCH /experiments/{experiment_id}`
+
+Edit a draft (name, sequences, spec) before submitting.
+
+#### Cost Estimate
+
+`POST /experiments/cost-estimate`
+
+Accepts the same `experiment_spec` structure and returns an estimated price (USD cents),
+typically broken into assay and material costs. Use this to budget before committing.
+
+#### Submit Experiment
+
+`POST /experiments/{experiment_id}/submit`
+
+Submits a draft to the lab. After this the experiment advances through the lifecycle above.
 
 #### Get Experiment Status
 
-Check the current status of an experiment.
+`GET /experiments/{experiment_id}`
 
-**Endpoint:** `GET /experiments/{experiment_id}`
-
-**Response:**
-```json
-{
-  "experiment_id": "exp_abc123xyz",
-  "status": "submitted|processing|completed|failed",
-  "created_at": "2025-11-24T10:00:00Z",
-  "updated_at": "2025-11-25T14:30:00Z",
-  "progress": {
-    "stage": "sequencing|expression|assay|analysis",
-    "percentage": 45
-  }
-}
-```
-
-**Status Values:**
-- `submitted` - Experiment received and queued
-- `processing` - Active testing in progress
-- `completed` - Results available for download
-- `failed` - Experiment encountered an error
+Returns the experiment's current `status` (a lifecycle state above) and a `results_status`
+field (`none` / `partial` / `all`) indicating how much result data is ready.
 
 #### List Experiments
 
-Retrieve all experiments for your organization.
+`GET /experiments`
 
-**Endpoint:** `GET /experiments`
-
-**Query Parameters:**
-- `status` - Filter by status (optional)
-- `limit` - Number of results per page (default: 50)
-- `offset` - Pagination offset (default: 0)
-
-**Response:**
-```json
-{
-  "experiments": [
-    {
-      "experiment_id": "exp_abc123xyz",
-      "status": "completed",
-      "experiment_type": "binding",
-      "created_at": "2025-11-24T10:00:00Z"
-    }
-  ],
-  "total": 150,
-  "limit": 50,
-  "offset": 0
-}
-```
+Lists experiments for your organization. Supports pagination / filtering — check the OpenAPI
+doc for the exact query parameters.
 
 ### Results
 
 #### Get Experiment Results
 
-Download results from a completed experiment.
+`GET /experiments/{experiment_id}/results`
 
-**Endpoint:** `GET /experiments/{experiment_id}/results`
+Returns the experimental data once the run completes. Contents depend on `experiment_type`:
+binding classifications and kinetic constants (KD, kon, koff) for `screening`/`affinity`,
+melting temperatures for `thermostability`, intensities for `fluorescence`, and yields for
+`expression`. See `reference/experiments.md` for per-assay output details.
 
-**Response:**
-```json
-{
-  "experiment_id": "exp_abc123xyz",
-  "results": [
-    {
-      "sequence_id": "protein1",
-      "measurements": {
-        "kd": 1.2e-9,
-        "kon": 1.5e5,
-        "koff": 1.8e-4
-      },
-      "quality_metrics": {
-        "confidence": "high",
-        "r_squared": 0.98
-      }
-    }
-  ],
-  "download_urls": {
-    "raw_data": "https://...",
-    "analysis_package": "https://...",
-    "report": "https://..."
-  }
-}
-```
+### Quotes
 
-### Targets
-
-#### Search Target Catalog
-
-Search the ACROBiosystems antigen catalog.
-
-**Endpoint:** `GET /targets`
-
-**Query Parameters:**
-- `search` - Search term (protein name, UniProt ID, etc.)
-- `species` - Filter by species
-- `category` - Filter by category
-
-**Response:**
-```json
-{
-  "targets": [
-    {
-      "target_id": "tgt_12345",
-      "name": "Human PD-L1",
-      "species": "Homo sapiens",
-      "uniprot_id": "Q9NZQ7",
-      "availability": "in_stock|custom_order",
-      "price_usd": 450
-    }
-  ]
-}
-```
-
-#### Request Custom Target
-
-Request an antigen not in the standard catalog.
-
-**Endpoint:** `POST /targets/request`
-
-**Request Body:**
-```json
-{
-  "target_name": "Custom target name",
-  "uniprot_id": "optional_uniprot_id",
-  "species": "species_name",
-  "notes": "Additional requirements"
-}
-```
-
-### Organization
-
-#### Get Credits Balance
-
-Check your organization's credit balance and usage.
-
-**Endpoint:** `GET /organization/credits`
-
-**Response:**
-```json
-{
-  "balance": 10000,
-  "currency": "USD",
-  "usage_this_month": 2500,
-  "experiments_remaining": 22
-}
-```
+`GET /experiments/{experiment_id}/quote` — retrieve the quote for a draft.
+`POST /quotes/{quote_id}/confirm` — confirm a quote (pricing / invoicing).
 
 ## Webhooks
 
-Configure webhook URLs to receive notifications when experiments complete.
-
-**Webhook Payload:**
-```json
-{
-  "event": "experiment.completed",
-  "experiment_id": "exp_abc123xyz",
-  "status": "completed",
-  "timestamp": "2025-12-15T10:00:00Z",
-  "results_url": "/experiments/exp_abc123xyz/results"
-}
-```
-
-**Webhook Events:**
-- `experiment.submitted` - Experiment received
-- `experiment.started` - Processing began
-- `experiment.completed` - Results available
-- `experiment.failed` - Error occurred
-
-**Security:**
-- Verify webhook signatures (details provided during onboarding)
-- Use HTTPS endpoints only
-- Respond with 200 OK to acknowledge receipt
+Pass `webhook_url` when creating an experiment to receive a callback as the run progresses,
+instead of polling. Use an HTTPS endpoint and acknowledge with `200 OK`. Verify the payload
+shape and any signature scheme against the current docs before parsing in production.
 
 ## Error Handling
 
-**Error Response Format:**
-```json
-{
-  "error": {
-    "code": "invalid_sequence",
-    "message": "Sequence contains invalid amino acid codes",
-    "details": {
-      "sequence_id": "protein1",
-      "position": 45,
-      "character": "X"
-    }
-  }
-}
-```
-
-**Common Error Codes:**
-- `authentication_failed` - Invalid or missing API key
-- `invalid_sequence` - Malformed FASTA or invalid amino acids
-- `insufficient_credits` - Not enough credits for experiment
-- `target_not_found` - Specified target ID doesn't exist
-- `rate_limit_exceeded` - Too many requests
-- `experiment_not_found` - Invalid experiment ID
-- `internal_error` - Server-side error
-
-## Rate Limits
-
-- 100 requests per minute per API key
-- 1000 experiments per day per organization
-- Batch submissions encouraged for large-scale testing
-
-When rate limited, response includes:
-```
-HTTP 429 Too Many Requests
-Retry-After: 60
-```
+Errors are returned with appropriate HTTP status codes (e.g. `401` unauthorized, `404` not
+found, `422` validation error) and a JSON body describing the problem. Implement retry with
+exponential backoff for `429`/`5xx`, and surface `4xx` validation messages to the caller
+rather than retrying. See `reference/examples.md` for a reusable retry wrapper.
 
 ## Best Practices
 
-1. **Use webhooks** for long-running experiments instead of polling
-2. **Batch sequences** when submitting multiple variants
-3. **Cache results** to avoid redundant API calls
-4. **Implement retry logic** with exponential backoff
-5. **Monitor credits** to avoid experiment failures
-6. **Validate sequences** locally before submission
-7. **Use descriptive metadata** for better experiment tracking
-
-## API Versioning
-
-The API is currently in alpha/beta. Breaking changes may occur but will be:
-- Announced via email to registered users
-- Documented in the changelog
-- Supported with migration guides
-
-Current version is reflected in response headers:
-```
-X-API-Version: alpha-2025-11
-```
+1. **Use the official SDK** (`adaptyvbio/adaptyv-sdk`) where possible; drop to raw `requests` only when needed.
+2. **Review the quote** before `submit` — nothing is charged until you confirm.
+3. **Use webhooks** for long-running experiments instead of tight polling.
+4. **Validate sequences locally** (valid amino acids, correct colon-separated multi-chain format) before submission.
+5. **Tag experiments** with a clear `name` and meaningful labels for traceability.
+6. **Pre-filter computationally** (see `reference/protein_optimization.md`) so you only pay to test promising candidates.
 
 ## Support
 
-For API issues or questions:
 - Email: support@adaptyvbio.com
-- Documentation updates: https://docs.adaptyvbio.com
-- Report bugs with experiment IDs and request details
+- Docs: `https://docs.adaptyvbio.com`
+- OpenAPI: `https://foundry-api-public.adaptyvbio.com/api/v1/openapi.json`
+- Report bugs with the `experiment_code` / `experiment_id` and request details.

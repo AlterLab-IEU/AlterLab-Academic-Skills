@@ -221,7 +221,8 @@ data = [np.random.normal(loc, 1, 50) for loc in [3.5, 4.0, 3.8, 4.5]]
 labels = ['Public', 'Private', 'Technical', 'National']
 
 fig, ax = plt.subplots(figsize=(6.9, 4.5))
-bp = ax.boxplot(data, labels=labels, patch_artist=True, widths=0.6,
+# matplotlib >=3.9: use tick_labels (the old `labels=` is deprecated, removed in 3.11)
+bp = ax.boxplot(data, tick_labels=labels, patch_artist=True, widths=0.6,
                 medianprops=dict(color='black', linewidth=1.5))
 for patch, color in zip(bp['boxes'], CB):
     patch.set_facecolor(color)

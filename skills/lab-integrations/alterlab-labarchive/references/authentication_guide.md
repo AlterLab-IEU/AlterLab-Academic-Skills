@@ -19,23 +19,21 @@ You need two sets of credentials:
 
 #### User Authentication Credentials (self-configured)
 - **Email**: Your LabArchives account email (e.g., researcher@university.edu)
-- **External Applications Password**: Set in your LabArchives account settings
+- **LA App authentication password token**: Retrieved from your LabArchives account; this is the `password` value passed to `users/user_access_info`.
 
-## Setting Up External Applications Password
+## Setting Up the LA App Authentication Password Token
 
-The external applications password is different from your regular LabArchives login password. It provides API access without exposing your primary credentials.
+This token is different from your regular LabArchives login password (and is the only way SSO/institutional-login users can authenticate to the API). It provides API access without exposing your primary credentials.
 
-**Steps to create external applications password:**
+**Steps to retrieve the token:**
 
 1. Log into your LabArchives account at mynotebook.labarchives.com (or your institutional URL)
-2. Navigate to **Account Settings** (click your name in top-right corner)
-3. Select **Security & Privacy** tab
-4. Find **External Applications** section
-5. Click **Generate New Password** or **Reset Password**
-6. Copy and securely store this password (you won't see it again)
-7. Use this password for all API authentication
+2. Click your name in the top-right corner
+3. Select **LA App authentication**
+4. Copy the displayed password token and store it securely
+5. Use this token as the `password` parameter for all API authentication
 
-**Security note:** Treat this password like an API token. If compromised, regenerate it immediately from account settings.
+**Security note:** Treat this token like an API key. If compromised, regenerate it from the same screen.
 
 ## Configuration File Setup
 
@@ -51,7 +49,7 @@ access_password: YOUR_ACCESS_PASSWORD_HERE
 
 # User credentials (for user-specific operations)
 user_email: researcher@university.edu
-user_external_password: YOUR_EXTERNAL_APP_PASSWORD_HERE
+user_external_password: YOUR_LA_APP_AUTH_TOKEN_HERE  # the "LA App authentication" token
 ```
 
 **Alternative: Environment variables**
@@ -199,9 +197,9 @@ Contact LabArchives developer support for OAuth integration documentation.
    - Verify credentials with your LabArchives administrator
    - Check for typos or extra whitespace in config file
 
-2. **Wrong external applications password**
-   - Confirm you're using the external applications password, not your regular login password
-   - Regenerate external applications password in account settings
+2. **Wrong LA App authentication token**
+   - Confirm you're using the "LA App authentication" token, not your regular login password
+   - Regenerate the token from the LA App authentication screen (click your name, top-right)
 
 3. **API access not enabled**
    - Contact your LabArchives administrator to enable API access for your account
@@ -257,7 +255,7 @@ response = requests.get(url, params=params, verify=False)
    - Use environment variables or secret management systems
 
 2. **Rotate credentials regularly**
-   - Change external applications password every 90 days
+   - Regenerate the LA App authentication token periodically
    - Regenerate API keys annually
 
 3. **Use least privilege principle**

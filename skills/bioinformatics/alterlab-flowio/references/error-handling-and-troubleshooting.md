@@ -77,7 +77,10 @@ Access these segments via `FlowData` attributes:
 | "Multiple datasets error" | Use `read_multiple_data_sets()` instead of the `FlowData` constructor |
 | Out of memory with large files | Use `only_text=True` for metadata-only operations, or process events in chunks |
 | Unexpected channel counts | Check for null channels; use `null_channel_list` to exclude them |
-| Cannot modify event data in place | FlowIO doesn't support direct modification; extract data, modify, then use `create_fcs()` to save |
+| Cannot modify event data in place | FlowIO doesn't support direct modification; extract data, modify, then use `create_fcs()` to save (see below for its call contract) |
+| `create_fcs` → `AttributeError: 'str' object has no attribute 'seek'` | First arg must be a writable binary file handle (`open(path, 'wb')`), not a path string |
+| `create_fcs` → `ValueError: Number of data points is not a multiple of the number of channels` | `event_data` must be a flattened 1-D array; pass `array.flatten()`, not the 2-D `(events, channels)` matrix |
+| `create_fcs` → `TypeError: unexpected keyword argument 'metadata'` | Use `metadata_dict=` for `create_fcs` (only `write_fcs` uses `metadata=`) |
 
 ## Integration Notes
 

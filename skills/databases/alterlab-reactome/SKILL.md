@@ -13,7 +13,7 @@ metadata:
 
 ## Overview
 
-Reactome is a free, open-source, curated pathway database with 2,825+ human pathways. Query biological pathways, perform overrepresentation and expression analysis, map genes to pathways, explore molecular interactions via REST API and Python client for systems biology research.
+Reactome is a free, open-source, curated pathway database (thousands of human pathways). Query biological pathways, perform overrepresentation and expression analysis, map genes to pathways, explore molecular interactions via REST API and Python client for systems biology research.
 
 ## When to Use This Skill
 
@@ -93,11 +93,38 @@ data = response.json()
 ```python
 import requests
 
-event_id = "R-HSA-69278"
+# NOTE: the path is /data/participants/{id}/... (NOT /data/event/{id}/...);
+# the older /data/event/.../participatingPhysicalEntities now returns 404.
+pathway_id = "R-HSA-69278"
 response = requests.get(
-    f"https://reactome.org/ContentService/data/event/{event_id}/participatingPhysicalEntities"
+    f"https://reactome.org/ContentService/data/participants/{pathway_id}/participatingPhysicalEntities"
 )
 molecules = response.json()
+```
+
+**Map a gene/protein to the pathways it participates in:**
+```python
+import requests
+
+# /data/mapping/{resource}/{id}/pathways  — resource = UniProt, Ensembl, etc.
+response = requests.get(
+    "https://reactome.org/ContentService/data/mapping/UniProt/P04637/pathways",
+    params={"species": "9606"},  # taxId; 9606 = Homo sapiens
+)
+pathways = response.json()  # list of {stId, displayName, ...}
+```
+Use a UniProt accession (e.g. `P04637`) or an Ensembl gene ID for the mapping
+endpoint. To start from a gene symbol (e.g. `TP53`), either resolve it to a
+UniProt/Ensembl ID first, or submit it through the Analysis Service
+(`/identifiers/`), which auto-detects symbols and returns the matched pathways.
+
+**Search for an entity by name** (when you don't have a stable ID):
+```python
+response = requests.get(
+    "https://reactome.org/ContentService/search/query",
+    params={"query": "glycolysis", "species": "Homo sapiens", "types": "Pathway"},
+)
+hits = response.json()["results"]  # grouped result clusters
 ```
 
 ### Using reactome2py Package
@@ -251,12 +278,20 @@ This skill includes `scripts/reactome_query.py`, a helper script for common Reac
 # Query pathway information
 python scripts/reactome_query.py query R-HSA-69278
 
+# List participating molecules in a pathway
+python scripts/reactome_query.py entities R-HSA-69278
+
+# Search for a pathway by name
+python scripts/reactome_query.py search "cell cycle"
+
 # Perform overrepresentation analysis
 python scripts/reactome_query.py analyze gene_list.txt
 
 # Get database version
 python scripts/reactome_query.py version
 ```
+
+The script depends only on `requests`; run it with `uv run --with requests scripts/reactome_query.py ...`.
 
 ## Additional Resources
 
@@ -268,12 +303,16 @@ python scripts/reactome_query.py version
 
 For comprehensive API endpoint documentation, see `references/api_reference.md` in this skill.
 
-## Current Database Statistics (Version 94, September 2025)
+## Database Version
 
-- 2,825 human pathways
-- 16,002 reactions
-- 11,630 proteins
-- 2,176 small molecules
-- 1,070 drugs
-- 41,373 literature references
+Reactome ships quarterly releases; the live version (96 as of this writing,
+verified via the API) is the source of truth — don't hardcode counts that go
+stale. Fetch the current release and per-type statistics at query time:
+
+```bash
+curl -s https://reactome.org/ContentService/data/database/version
+```
+
+Release-level content statistics are summarised at
+https://reactome.org/about/statistics.
 

@@ -428,10 +428,9 @@ reference_fasta = response.text
 **Error Handling Pattern:**
 
 ```python
-import time
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from urllib3.util import Retry  # not requests.packages.urllib3 (deprecated shim)
 
 def create_session_with_retries():
     """Create requests session with retry logic"""

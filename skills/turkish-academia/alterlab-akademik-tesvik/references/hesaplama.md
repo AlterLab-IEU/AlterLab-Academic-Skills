@@ -149,5 +149,11 @@ verify the period's announced figure) before quoting an amount.
 - **Assuming a high activity count guarantees payment.** The headline ceilings +
   the net-30 gate can leave a single-type-heavy CV below threshold.
 - **Quoting money from a stale katsayısı.** Always flag the as-of date.
-- **Private-university staff.** The regulation covers Devlet (state) staff;
-  foundation/private universities are out of scope.
+- **Out-of-scope subjects.** The regulation covers Devlet (state) staff only.
+  **Yabancı uyruklu** (foreign-national) öğretim elemanları cannot benefit at all
+  (MADDE 6/9); faaliyetler performed while seconded (görevlendirme) to a **vakıf**
+  (foundation) university are not counted (MADDE 6/7).
+- **Forgetting the no-ranking divisor / sergi exception (MADDE 8/7).** Activities
+  with no share ratio or author ordering take `oran / kişi sayısı`; but SERGİ
+  *karma* etkinlikler and international performance-based *karma* audio/video
+  recordings are scored at full points regardless of contributor count.

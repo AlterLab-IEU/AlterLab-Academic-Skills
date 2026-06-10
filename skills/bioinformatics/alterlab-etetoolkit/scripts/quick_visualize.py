@@ -64,11 +64,14 @@ def apply_node_styling(tree, args):
             nstyle["fgcolor"] = args.internal_color
             nstyle["size"] = args.internal_size
 
-            # Color by support if enabled
+            # Color by support if enabled. Support may be on a 0-1 scale
+            # (posterior / aLRT) or a 0-100 scale (bootstrap); normalize to
+            # 0-1 so the thresholds work for either.
             if args.color_by_support and hasattr(node, 'support') and node.support:
-                if node.support >= 0.9:
+                support = node.support / 100.0 if node.support > 1.0 else node.support
+                if support >= 0.9:
                     nstyle["fgcolor"] = "darkgreen"
-                elif node.support >= 0.7:
+                elif support >= 0.7:
                     nstyle["fgcolor"] = "orange"
                 else:
                     nstyle["fgcolor"] = "red"

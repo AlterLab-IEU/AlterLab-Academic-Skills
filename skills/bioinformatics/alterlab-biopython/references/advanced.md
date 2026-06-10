@@ -442,7 +442,6 @@ for record in SeqIO.parse("reads.fastq", "fastq"):
 
 ```python
 from Bio import SeqIO
-from Bio.SeqUtils import gc_fraction
 
 def find_orfs(seq, min_length=100):
     """Find all ORFs in sequence."""
@@ -486,7 +485,6 @@ for orf in orfs:
 
 ```python
 from Bio import SeqIO
-from Bio.SeqUtils import CodonUsage
 
 def analyze_codon_usage(fasta_file):
     """Analyze codon usage in coding sequences."""

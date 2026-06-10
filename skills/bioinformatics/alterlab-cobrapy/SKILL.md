@@ -15,6 +15,16 @@ metadata:
 
 COBRApy is a Python library for constraint-based reconstruction and analysis (COBRA) of metabolic models, essential for systems biology research. Work with genome-scale metabolic models, perform computational simulations of cellular metabolism, conduct metabolic engineering analyses, and predict phenotypic behaviors.
 
+## Installation and Requirements
+
+```bash
+uv pip install 'cobra>=0.29,<0.32'
+```
+
+**Requirements:** Python 3.8+; depends on optlang and a solver (GLPK ships by default via swiglpk; CPLEX/Gurobi optional). Optional for plots: matplotlib, seaborn, pandas (pandas is already a hard dependency). Flux sampling and parallel deletions use multiprocessing.
+
+> **Bundled model names.** `load_model` only recognizes three bundled aliases: `"textbook"` (the E. coli core model, `e_coli_core`), `"iJO1366"` (full E. coli genome-scale), and `"salmonella"`. Any other identifier (e.g. `"ecoli"`, `"e_coli_core"`) is not a bundled alias and triggers a remote lookup against BiGG/BioModels, which requires network access and may fail. Use `read_sbml_model("path.xml")` for your own models.
+
 ## Core Capabilities
 
 COBRApy provides comprehensive tools organized into several key areas:

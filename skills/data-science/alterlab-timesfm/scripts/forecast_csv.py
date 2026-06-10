@@ -129,13 +129,15 @@ def forecast_series(
 
     results = {}
     for i, col in enumerate(value_cols):
+        # Quantile index map: 0=mean, 1=q10, 2=q20, ..., 8=q80, 9=q90.
+        # 80% PI = q10..q90 (index 1/9); 60% PI = q20..q80 (index 2/8).
         results[col] = {
             "forecast": point[i].tolist(),
-            "lower_90": quantiles[i, :, 1].tolist(),  # 10th percentile
-            "lower_80": quantiles[i, :, 2].tolist(),  # 20th percentile
-            "median": quantiles[i, :, 5].tolist(),  # 50th percentile
-            "upper_80": quantiles[i, :, 8].tolist(),  # 80th percentile
-            "upper_90": quantiles[i, :, 9].tolist(),  # 90th percentile
+            "lower_80": quantiles[i, :, 1].tolist(),  # q10 — lower bound of 80% PI
+            "lower_60": quantiles[i, :, 2].tolist(),  # q20 — lower bound of 60% PI
+            "median": quantiles[i, :, 5].tolist(),  # q50
+            "upper_60": quantiles[i, :, 8].tolist(),  # q80 — upper bound of 60% PI
+            "upper_80": quantiles[i, :, 9].tolist(),  # q90 — upper bound of 80% PI
         }
 
     return results
@@ -169,11 +171,11 @@ def write_csv_output(
                 "series": col,
                 "step": h + 1,
                 "forecast": data["forecast"][h],
-                "lower_90": data["lower_90"][h],
                 "lower_80": data["lower_80"][h],
+                "lower_60": data["lower_60"][h],
                 "median": data["median"][h],
+                "upper_60": data["upper_60"][h],
                 "upper_80": data["upper_80"][h],
-                "upper_90": data["upper_90"][h],
             }
             if isinstance(future_dates[0], (pd.Timestamp,)):
                 row["date"] = future_dates[h]

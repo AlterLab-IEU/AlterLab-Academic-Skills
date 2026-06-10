@@ -158,10 +158,12 @@ from fluidsim import load_sim_for_plot
 import matplotlib.pyplot as plt
 
 sim = load_sim_for_plot("simulation_dir")
-df = sim.output.spatial_means.load()
+# load() returns a dict of numpy arrays keyed by "t", "E", "EZ" (enstrophy),
+# etc. — NOT a pandas DataFrame. Index it like a dict.
+data = sim.output.spatial_means.load()
 
 plt.figure()
-plt.plot(df["t"], df["E"], label="Kinetic Energy")
+plt.plot(data["t"], data["E"], label="Kinetic Energy")
 plt.xlabel("Time")
 plt.ylabel("Energy")
 plt.legend()
@@ -176,14 +178,16 @@ sim = load_sim_for_plot("simulation_dir")
 # Plot energy spectrum
 sim.output.spectra.plot1d(tmin=5.0, tmax=10.0)  # average over time range
 
-# Get spectral data
-k, E_k = sim.output.spectra.load1d_mean(tmin=5.0, tmax=10.0)
+# Get spectral data. load1d_mean(...) returns a dict of arrays keyed by
+# wavenumber and spectrum names (e.g. "kx"/"ky" and the energy spectra) —
+# inspect the keys for your solver rather than assuming a fixed tuple.
+data = sim.output.spectra.load1d_mean(tmin=5.0, tmax=10.0)
+print(data.keys())  # discover the available wavenumber / spectrum arrays
 
-# Check for power law
+# Check for power law (pick the wavenumber and spectrum keys from data)
 import numpy as np
-log_k = np.log(k)
-log_E = np.log(E_k)
-# fit power law in inertial range
+# log_k = np.log(data["kx"]); log_E = np.log(data["spectrum1Dkx_E"])
+# fit a power law in the inertial range
 ```
 
 ### Parametric Study Analysis
@@ -203,9 +207,10 @@ for sim_dir in os.listdir("simulations"):
 
     sim = load_sim_for_plot(f"simulations/{sim_dir}")
 
-    # Extract key metrics
-    df = sim.output.spatial_means.load()
-    final_energy = df["E"].iloc[-1]
+    # Extract key metrics. spatial_means.load() returns a dict of numpy
+    # arrays, so index with [-1] rather than pandas .iloc[-1].
+    data = sim.output.spatial_means.load()
+    final_energy = data["E"][-1]
 
     # Get parameters
     nu = sim.params.nu_2
@@ -277,7 +282,8 @@ with h5py.File("state_phys_t10.000.h5", "r") as f:
     vx = f["state_phys"]["vx"][:]
     np.save("vx.npy", vx)
 
-# Export to CSV
-df = sim.output.spatial_means.load()
-df.to_csv("spatial_means.csv", index=False)
+# Export to CSV (load() yields a dict of arrays; wrap in a DataFrame first)
+import pandas as pd
+data = sim.output.spatial_means.load()
+pd.DataFrame(data).to_csv("spatial_means.csv", index=False)
 ```

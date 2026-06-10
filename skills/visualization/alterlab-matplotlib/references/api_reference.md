@@ -56,7 +56,7 @@ ax = fig.add_subplot(111)  # Alternative method
 
 **Statistical plots:**
 - `ax.hist(data, bins=10, density=False)` - Histogram
-- `ax.boxplot(data, labels=None)` - Box plot
+- `ax.boxplot(data, tick_labels=None)` - Box plot (`tick_labels` replaced `labels` in matplotlib 3.9)
 - `ax.violinplot(data)` - Violin plot
 
 **2D plots:**

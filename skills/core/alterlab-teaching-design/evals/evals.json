@@ -9,6 +9,14 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "ABCD"
+        },
+        {
+          "type": "behavior",
+          "value": "Each learning outcome uses an observable, measurable Bloom's verb (not 'understand'/'know'/'appreciate') and is mapped to an assessment, and at least one outcome's cognitive level is named (e.g. Apply, Analyze, Evaluate, Create)."
         }
       ]
     },
@@ -20,6 +28,10 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Produces a four-column analytic rubric with a row per criterion (argument, evidence use, analysis, writing quality), weighted criteria, and a distinct prose descriptor in each of the four performance-level cells (not just numeric labels)."
         }
       ]
     },
@@ -31,6 +43,10 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Explicitly identifies the assessment as misaligned because a multiple-choice exam cannot evidence a 'create'-level outcome, and recommends replacing it with a production task (project/portfolio/design) at the Create level rather than just adding more MCQ items."
         }
       ]
     },
@@ -42,6 +58,10 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Names all three Community of Inquiry presences (social, cognitive, teaching) with at least one concrete module-design move for each, and includes accessibility provisions (e.g. captions/transcripts) in the online module structure."
         }
       ]
     },
@@ -53,6 +73,10 @@
         {
           "type": "should_trigger",
           "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Organizes recommendations under UDL's three principles (engagement/representation/action & expression) and gives at least two concrete inclusive-assessment moves such as an assessment menu, exemplars of strong/weak work, or revision-and-resubmit."
         }
       ]
     },

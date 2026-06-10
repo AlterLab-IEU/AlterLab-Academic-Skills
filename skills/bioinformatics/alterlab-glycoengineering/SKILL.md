@@ -3,7 +3,7 @@ name: alterlab-glycoengineering
 description: Analyze and engineer protein glycosylation — scan sequences for N-glycosylation sequons (N-X-S/T), predict O-glycosylation hotspots, and reach curated glycoengineering tools (NetOGlyc, GlycoShield, GlycoWorkbench). Use when identifying or designing glycosylation sites, optimizing therapeutic-antibody or biologic glycoforms, or doing glycoprotein engineering and vaccine-design work. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Sequon scanning and mutation helpers are pure-Python stdlib (re, typing) — run them under `uv run python` directly. The optional database/prediction helpers need `requests` (and the batch example needs `pandas`); external web services (NetOGlyc, GlyConnect) need network access but no API key or account."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -53,8 +53,9 @@ def find_n_glycosylation_sequons(sequence: str) -> List[dict]:
     """
     seq = sequence.upper()
     results = []
-    i = 0
-    while i <= len(seq) - 3:
+    # Step by 1, not 3: adjacent sequons can overlap (e.g. NNST has a sequon at
+    # both position 1 (N-N-S) and position 2 (N-S-T)); skipping ahead misses them.
+    for i in range(len(seq) - 2):
         triplet = seq[i:i+3]
         if triplet[0] == 'N' and triplet[1] != 'P' and triplet[2] in {'S', 'T'}:
             context = seq[max(0, i-3):i+6]  # ±3 residue context
@@ -64,9 +65,6 @@ def find_n_glycosylation_sequons(sequence: str) -> List[dict]:
                 'context': context,
                 'sequon_type': 'NXS' if triplet[2] == 'S' else 'NXT'
             })
-            i += 3
-        else:
-            i += 1
     return results
 
 def summarize_glycosylation_sites(sequence: str, protein_name: str = "") -> str:
@@ -204,25 +202,15 @@ Web service for high-accuracy O-GalNAc site prediction:
 - **Output**: Per-residue O-glycosylation probability scores
 - **Method**: Neural network trained on experimentally verified O-GalNAc sites
 
-```python
-import requests
+NetOGlyc 4.0 has no stable public REST API — the CGI submission endpoint and
+its form parameters change between web-service revisions. For reliable results,
+submit FASTA at the web interface and download the result table:
 
-def submit_netoglycv4(fasta_sequence: str) -> str:
-    """
-    Submit sequence to NetOGlyc 4.0 web service.
-    Returns the job URL for result retrieval.
+- NetOGlyc 4.0 (O-GalNAc): https://services.healthtech.dtu.dk/services/NetOGlyc-4.0/
+- NetNGlyc 1.0 (N-glyc): https://services.healthtech.dtu.dk/services/NetNGlyc-1.0/
 
-    Note: This uses the DTU Health Tech web service. Results take ~1-5 min.
-    """
-    url = "https://services.healthtech.dtu.dk/cgi-bin/webface2.cgi"
-    # NetOGlyc submission (parameters may vary with web service version)
-    # Recommend using the web interface directly for most use cases
-    print("Submit sequence at: https://services.healthtech.dtu.dk/services/NetOGlyc-4.0/")
-    return url
-
-# Also: NetNGlyc for N-glycosylation prediction
-# URL: https://services.healthtech.dtu.dk/services/NetNGlyc-1.0/
-```
+The standalone packages are also downloadable from those pages for offline/batch
+runs. Use the inline `find_n_glycosylation_sequons` above as a fast pre-screen.
 
 ### 2. GlycoShield-MD (Glycan Shielding Analysis)
 

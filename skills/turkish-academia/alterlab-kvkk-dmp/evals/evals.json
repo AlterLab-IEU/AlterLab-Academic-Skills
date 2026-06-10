@@ -36,7 +36,8 @@
       "expected_output": "Invokes alterlab-kvkk-dmp. Explains Art. 16: controllers must register with VERBIS (Veri Sorumluları Sicili) before processing, but the Board exempts categories of controllers by objective criteria (e.g. employee count, annual balance sheet, activity type). Advises recording the VERBIS status (registered / exempt-by-criterion / pending) in the DMP and checking the current Board exemption criteria, without asserting a specific exemption applies.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "VERBIS" }
+        { "type": "output_contains", "value": "Art. 16" },
+        { "type": "behavior", "value": "Ties the duty to Art. 16 (register before processing), notes the Board's objective-criterion exemptions, and advises recording status + checking current criteria rather than asserting a specific exemption applies." }
       ]
     },
     {

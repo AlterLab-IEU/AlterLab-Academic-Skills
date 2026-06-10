@@ -4,6 +4,16 @@
 
 PyHealth provides comprehensive data processing utilities to transform raw healthcare data into model-ready formats. Processors handle feature extraction, sequence processing, signal transformation, and label preparation.
 
+> **How processors are actually wired in PyHealth 2.x (read first).** You rarely import and compose processor objects by hand. Instead, a **task's `input_schema` / `output_schema` maps each key to a processor by string name**, and `set_task` builds the processors for you. Examples seen in the codebase: `"sequence"`, `"timeseries"`, `"stagenet"`, `"stagenet_tensor"`, `"binary"`, `"multiclass"`, `"multilabel"`, `"regression"`. The tuple form passes kwargs: `("stagenet", {"padding": 0})`.
+>
+> ```python
+> class MyTask(BaseTask):
+>     input_schema  = {"conditions": "sequence", "labs": "timeseries"}
+>     output_schema = {"mortality": "binary"}
+> ```
+>
+> The class-by-class catalog below is a **conceptual reference** to the kinds of processing PyHealth performs. Treat the exact class names, import paths, and constructor kwargs as **illustrative, not verified** for 2.0.1 — confirm against `pyhealth.processors` / the installed source before importing a specific class. Prefer the schema-string approach above.
+
 ## Processor Base Class
 
 All processors inherit from `Processor` with standard interface:

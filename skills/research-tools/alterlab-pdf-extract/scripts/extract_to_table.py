@@ -13,9 +13,11 @@ token-efficient Markdown before any column is extracted.
 
 Two extraction backends:
   * heuristic (default, no API, fully offline): for each column, locate the most
-    relevant Markdown section/sentences by keyword overlap with the column spec
-    and emit a short evidence snippet. Deterministic and free — good for a first
-    pass, screening, and for reproducible tests.
+    relevant Markdown section/sentences by LITERAL keyword overlap with the column
+    spec and emit a short evidence snippet. Deterministic and free — good for a
+    first pass, screening, and for reproducible tests. Matching is lexical, not
+    semantic: phrase columns as 'Label:question' using the words the papers
+    actually use (a bare label like "Sample size" won't match "240 participants").
   * llm (optional): hand the converted Markdown + the column questions to a model
     via an OpenAI-compatible endpoint (e.g. OpenRouter) for a precise structured
     answer per column. The model ID follows the ALTERLAB_MODEL convention
@@ -26,9 +28,10 @@ so the file compiles and `--help` works without them installed.
 
 Examples
 --------
-  # Define columns inline, heuristic backend, write a Markdown table:
+  # Heuristic backend — phrase columns so the question carries paper vocabulary:
   uv run python extract_to_table.py papers/*.pdf \
-      --columns "Sample size" "Main finding" "Method" "Limitations" \
+      --column "Sample size:how many participants were enrolled" \
+      --column "Main finding:primary result reported" \
       --format md -o evidence.md
 
   # Columns with explicit extraction questions, CSV out:

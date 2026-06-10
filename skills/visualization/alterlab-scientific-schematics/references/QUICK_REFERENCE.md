@@ -19,8 +19,8 @@ echo 'export OPENROUTER_API_KEY="sk-or-v1-your_key"' >> ~/.bashrc  # or ~/.zshrc
 python scripts/generate_schematic.py "your diagram description" -o output.png
 
 # That's it! Automatic:
-# - Iterative refinement (3 rounds)
-# - Quality review and improvement
+# - Smart iteration (up to 2 rounds; stops early once quality threshold is met)
+# - Quality review by Gemini 3.1 Pro Preview
 # - Publication-ready output
 ```
 
@@ -79,9 +79,8 @@ python scripts/generate_schematic.py \
 
 For input `diagram.png`, you get:
 - `diagram_v1.png` - First iteration
-- `diagram_v2.png` - Second iteration  
-- `diagram_v3.png` - Final iteration
-- `diagram.png` - Copy of final
+- `diagram_v2.png` - Second iteration (only if v1 was below threshold)
+- `diagram.png` - Copy of the final accepted version
 - `diagram_review_log.json` - Quality scores and critiques
 
 ## Review Log
@@ -91,21 +90,18 @@ For input `diagram.png`, you get:
   "iterations": [
     {
       "iteration": 1,
-      "score": 7.0,
+      "score": 7.5,
+      "needs_improvement": true,
       "critique": "Good start. Font too small..."
     },
     {
       "iteration": 2,
       "score": 8.5,
-      "critique": "Much improved. Minor spacing issues..."
-    },
-    {
-      "iteration": 3,
-      "score": 9.5,
-      "critique": "Excellent. Publication ready."
+      "needs_improvement": false,
+      "critique": "Much improved. Publication ready."
     }
   ],
-  "final_score": 9.5
+  "final_score": 8.5
 }
 ```
 
@@ -151,20 +147,12 @@ pip install requests
 - Specify label requirements
 - Increase iterations: `--iterations 2`
 
-## Testing
-
-```bash
-# Verify installation
-python test_ai_generation.py
-
-# Should show: "6/6 tests passed"
-```
-
 ## Cost
 
-Typical cost per diagram (max 2 iterations):
-- Simple (1 iteration): $0.05-0.15
-- Complex (2 iterations): $0.10-0.30
+Each iteration is one image-generation call plus one review call, billed at OpenRouter's current
+per-token rates for the image and review models. Smart iteration stops after 1 iteration when the
+first generation already meets the threshold, so simple diagrams cost roughly half a 2-iteration
+run. Check live pricing at https://openrouter.ai/models.
 
 ## How Nano Banana 2 Works
 
@@ -191,17 +179,17 @@ python scripts/generate_schematic.py "diagram" -o out.png -v
 ## Quick Start Checklist
 
 - [ ] Set `OPENROUTER_API_KEY` environment variable
-- [ ] Run `python test_ai_generation.py` (should pass 6/6)
+- [ ] `pip install requests` (and optionally `python-dotenv` for `.env` support)
 - [ ] Try: `python scripts/generate_schematic.py "test diagram" -o test.png`
-- [ ] Review output files (test_v1.png, v2, v3, review_log.json)
+- [ ] Review output files (test_v1.png, optionally test_v2.png, test_review_log.json)
 - [ ] Read SKILL.md for detailed documentation
 - [ ] Check README.md for examples
 
 ## Resources
 
-- Full documentation: `SKILL.md`
+- Full documentation: `../SKILL.md`
 - Detailed guide: `README.md`
-- Implementation details: `IMPLEMENTATION_SUMMARY.md`
-- Example script: `example_usage.sh`
+- AI generation deep dive: `ai_generation_guide.md`
+- Example script: `../scripts/example_usage.sh`
 - Get API key: https://openrouter.ai/keys
 

@@ -6,7 +6,7 @@ Workspaces in protocols.io enable team collaboration by organizing protocols, ma
 
 ## Base URL
 
-All workspace endpoints use the base URL: `https://protocols.io/api/v3`
+All workspace endpoints use the base URL: `https://www.protocols.io/api/v3`
 
 ## Workspace Operations
 
@@ -30,7 +30,7 @@ Retrieve all workspaces the authenticated user has access to.
 **Example Request:**
 ```bash
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  "https://protocols.io/api/v3/workspaces"
+  "https://www.protocols.io/api/v3/workspaces"
 ```
 
 ### Get Workspace Details
@@ -83,7 +83,7 @@ curl -X POST \
   -d '{
     "message": "I am collaborating with Dr. Smith on the CRISPR project and would like to access the shared protocols."
   }' \
-  "https://protocols.io/api/v3/workspaces/12345/join-request"
+  "https://www.protocols.io/api/v3/workspaces/12345/join-request"
 ```
 
 ### Join Public Workspace
@@ -117,7 +117,7 @@ Retrieve all protocols in a workspace.
 **Example Request:**
 ```bash
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  "https://protocols.io/api/v3/workspaces/12345/protocols?filter=all&order_field=modified_on&order_dir=desc"
+  "https://www.protocols.io/api/v3/workspaces/12345/protocols?filter=all&order_field=modified_on&order_dir=desc"
 ```
 
 ### Create Protocol in Workspace

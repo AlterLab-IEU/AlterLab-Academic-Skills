@@ -30,10 +30,10 @@ Use this skill when working with:
 
 ## Installation
 
-Install pydicom and common dependencies:
+Targets **pydicom 3.x** (3.0 reorganized the pixel APIs — see the version note below). Install pydicom and common dependencies:
 
 ```bash
-uv pip install pydicom
+uv pip install "pydicom>=3.0"
 uv pip install pillow  # For image format conversion
 uv pip install numpy   # For pixel array manipulation
 uv pip install matplotlib  # For visualization
@@ -42,9 +42,20 @@ uv pip install matplotlib  # For visualization
 For handling compressed DICOM files, additional packages may be needed:
 
 ```bash
-uv pip install pylibjpeg pylibjpeg-libjpeg pylibjpeg-openjpeg  # JPEG compression
+uv pip install pylibjpeg pylibjpeg-libjpeg pylibjpeg-openjpeg  # JPEG / JPEG 2000
 uv pip install python-gdcm  # Alternative compression handler
+uv pip install pyjpegls     # JPEG-LS encode/decode (replaces older JPEG-LS handlers)
 ```
+
+### pydicom 3.0 API changes (important)
+
+3.0 moved all pixel handling into the `pydicom.pixels` module and deprecated some long-standing APIs (the old names still work but emit warnings and are removed in 4.0):
+
+- `from pydicom.pixel_data_handlers.util import apply_voi_lut` → **`from pydicom.pixels import apply_voi_lut`** (same for `convert_color_space`).
+- `pydicom.encoders` → **`pydicom.pixels.encoders`**.
+- `ds.save_as(path, write_like_original=False)` → **`ds.save_as(path, enforce_file_format=True)`** (`write_like_original=True`, the default, became implicit and is no longer needed).
+
+All examples below use the 3.x APIs.
 
 ## Core Workflows
 
@@ -95,7 +106,7 @@ print(f"Rows: {ds.Rows}, Columns: {ds.Columns}")
 
 # Apply windowing for display (CT/MRI)
 if hasattr(ds, 'WindowCenter') and hasattr(ds, 'WindowWidth'):
-    from pydicom.pixel_data_handlers.util import apply_voi_lut
+    from pydicom.pixels import apply_voi_lut  # pydicom 3.x location
     windowed_image = apply_voi_lut(pixel_array, ds)
 else:
     windowed_image = pixel_array
@@ -115,7 +126,7 @@ if ds.PhotometricInterpretation == 'RGB':
     rgb_image = ds.pixel_array
     plt.imshow(rgb_image)
 elif ds.PhotometricInterpretation == 'YBR_FULL':
-    from pydicom.pixel_data_handlers.util import convert_color_space
+    from pydicom.pixels import convert_color_space  # pydicom 3.x location
     rgb_image = convert_color_space(ds.pixel_array, 'YBR_FULL', 'RGB')
     plt.imshow(rgb_image)
 ```
@@ -232,13 +243,13 @@ Create DICOM files from scratch:
 
 ```python
 import pydicom
-from pydicom.dataset import Dataset, FileDataset
+from pydicom.dataset import Dataset, FileDataset, FileMetaDataset
 from datetime import datetime
 import numpy as np
 
-# Create file meta information
-file_meta = Dataset()
-file_meta.MediaStorageSOPClassUID = pydicom.uid.generate_uid()
+# Create file meta information (use FileMetaDataset, not a bare Dataset)
+file_meta = FileMetaDataset()
+file_meta.MediaStorageSOPClassUID = pydicom.uid.CTImageStorage
 file_meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
 file_meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
 
@@ -292,9 +303,9 @@ ds = pydicom.dcmread('compressed.dcm')
 print(f"Transfer Syntax: {ds.file_meta.TransferSyntaxUID}")
 print(f"Transfer Syntax Name: {ds.file_meta.TransferSyntaxUID.name}")
 
-# Decompress and save as uncompressed
+# Decompress and save as uncompressed (Transfer Syntax becomes Explicit VR LE)
 ds.decompress()
-ds.save_as('uncompressed.dcm', write_like_original=False)
+ds.save_as('uncompressed.dcm', enforce_file_format=True)
 
 # Or compress when saving (requires appropriate encoder)
 ds_uncompressed = pydicom.dcmread('uncompressed.dcm')
@@ -417,7 +428,7 @@ Detailed reference information is available in the `references/` directory:
 ## Best Practices
 
 1. **Always check for required attributes** before accessing them using `hasattr()` or `get()`
-2. **Preserve file metadata** when modifying files by using `save_as()` with `write_like_original=True`
+2. **Preserve original encoding** when modifying files: plain `ds.save_as(path)` keeps the source layout (pydicom 3.x makes this the default); pass `enforce_file_format=True` only when you need a fully standard-compliant File Format output
 3. **Use Transfer Syntax UIDs** to understand compression format before processing pixel data
 4. **Handle exceptions** when reading files from untrusted sources
 5. **Apply proper windowing** (VOI LUT) for medical image visualization
@@ -427,9 +438,9 @@ Detailed reference information is available in the `references/` directory:
 
 ## Documentation
 
-Official pydicom documentation: https://pydicom.github.io/pydicom/dev/
-- User Guide: https://pydicom.github.io/pydicom/dev/guides/user/index.html
-- Tutorials: https://pydicom.github.io/pydicom/dev/tutorials/index.html
-- API Reference: https://pydicom.github.io/pydicom/dev/reference/index.html
-- Examples: https://pydicom.github.io/pydicom/dev/auto_examples/index.html
+Official pydicom documentation (stable = current 3.x release): https://pydicom.github.io/pydicom/stable/
+- User Guide: https://pydicom.github.io/pydicom/stable/guides/user/index.html
+- Tutorials: https://pydicom.github.io/pydicom/stable/tutorials/index.html
+- API Reference: https://pydicom.github.io/pydicom/stable/reference/index.html
+- v3.0 release notes (API migration): https://pydicom.github.io/pydicom/stable/release_notes/v3.0.0.html
 

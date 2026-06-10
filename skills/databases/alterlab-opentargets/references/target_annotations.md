@@ -295,8 +295,11 @@ query = """
       safetyLiabilities {
         event
         effects {
+          direction
           dosing
-          organsAffected
+        }
+        biosamples {
+          tissueLabel
         }
       }
 
@@ -317,20 +320,24 @@ query = """
       # Chemical probes
       chemicalProbes {
         id
-        probeminer
+        probeMinerScore
+        isHighQuality
         origin
       }
 
-      # Known drugs
-      knownDrugs {
-        uniqueDrugs
+      # Drugs and clinical candidates (replaces the former `knownDrugs`)
+      drugAndClinicalCandidates {
+        count
         rows {
+          maxClinicalStage
           drug {
             name
-            maximumClinicalTrialPhase
+            maximumClinicalStage
           }
-          phase
-          status
+          clinicalReports {
+            trialPhase
+            trialOverallStatus
+          }
         }
       }
 

@@ -92,13 +92,16 @@ with MPRester() as mpr:
 
 ```python
 with MPRester() as mpr:
-    # Materials containing Fe and O
+    # Materials containing Fe and O (and possibly other elements)
     materials = mpr.materials.summary.search(elements=["Fe", "O"])
 
-    # Materials containing ONLY Fe and O (excluding others)
+    # Materials containing ONLY Fe and O: constrain the chemical system
+    materials = mpr.materials.summary.search(chemsys="Fe-O")
+
+    # Exclude specific elements (exclude_elements takes a list of symbols)
     materials = mpr.materials.summary.search(
         elements=["Fe", "O"],
-        exclude_elements=True
+        exclude_elements=["C"]
     )
 ```
 
@@ -410,9 +413,10 @@ import json
 with MPRester() as mpr:
     materials = mpr.materials.summary.search(chemsys="Li-Fe-O")
 
-    # Save to file
+    # Save to file (mp-api docs are pydantic v2 models; use model_dump(mode="json")
+    # to get JSON-serializable output — .dict() is deprecated in pydantic v2)
     with open("li_fe_o_materials.json", "w") as f:
-        json.dump([mat.dict() for mat in materials], f)
+        json.dump([mat.model_dump(mode="json") for mat in materials], f)
 
 # Load cached results
 with open("li_fe_o_materials.json", "r") as f:

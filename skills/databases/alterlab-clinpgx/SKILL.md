@@ -1,6 +1,6 @@
 ---
 name: alterlab-clinpgx
-description: Access ClinPGx pharmacogenomics data (the successor to PharmGKB) to query gene-drug interactions, CPIC dosing guidelines, and star-allele functions. Use when interpreting pharmacogenes (CYP2D6, CYP2C19, TPMT), looking up genotype-guided drug dosing, or supporting precision medicine and clinical pharmacogenomics decisions. Part of the AlterLab Academic Skills suite.
+description: Access ClinPGx pharmacogenomics data (the successor to PharmGKB) to query gene-drug interactions, CPIC/DPWG dosing guidelines, drug labels, and pharmacogene records. Use when interpreting pharmacogenes (CYP2D6, CYP2C19, TPMT, DPYD, SLCO1B1), looking up genotype-guided drug dosing, checking PGx drug-safety associations (e.g. HLA-B*57:01 and abacavir), or supporting precision medicine and clinical pharmacogenomics decisions. For star-allele definitions/frequencies see PharmVar; for germline/somatic variant pathogenicity see alterlab-clinvar. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless ClinPGx (PharmGKB) API for basic access (no authentication required)
@@ -35,8 +35,12 @@ Use this skill for:
 
 ## Setup and Access Essentials
 
+Only `requests` is needed. Run the helper script (or any snippet) with an
+ephemeral dependency — no venv to manage:
+
 ```bash
-uv pip install requests
+uv run --with requests python scripts/query_clinpgx.py
+# or, inside an existing project venv: uv pip install requests
 ```
 
 Base URL: `https://api.clinpgx.org/v1/data/`
@@ -47,6 +51,15 @@ Base URL: `https://api.clinpgx.org/v1/data/`
   with parameters (e.g. `GET /v1/data/gene?symbol=CYP2D6`,
   `GET /v1/data/variant?symbol=rs4244285`) and read the accession ID from the
   response.
+- **Response envelope** (verified): every response is a JSON object
+  `{"status": "success"|"fail", "data": [...]}` — the payload is **never** a bare
+  list. Read results from `response.json()["data"]`; on `status == "fail"`,
+  `data` is `{"errors": [...]}` (e.g. "No results matching criteria").
+- **Query-param convention** (verified): genes filter on `relatedGenes.symbol`
+  (the `.name` form fails), while chemicals/drugs filter on
+  `relatedChemicals.name` — `relatedChemicals.symbol` silently returns
+  `status: "fail"` with zero results. The `gene` collection takes `?symbol=`, the
+  `chemical` collection takes `?name=`, and `variant` accepts `?symbol=`/`?name=`.
 - **Rate limits**: 2 requests per second maximum; excessive requests return HTTP
   429. Implement a ~500ms delay between requests.
 - **Authentication**: Not required for basic access.
@@ -62,7 +75,7 @@ Base URL: `https://api.clinpgx.org/v1/data/`
    There is no `/allele` resource — use **PharmVar** (https://www.pharmvar.org/)
    for star-allele definitions and population frequencies.
 3. **Derive gene-drug relationships** — From guideline annotations
-   (`relatedGenes.symbol` / `relatedChemicals.symbol`), or the
+   (`relatedGenes.symbol` for genes, `relatedChemicals.name` for drugs), or the
    `/report/pair/{firstObjId}/{secondObjId}/{resultType}` endpoint.
 4. **Filter by evidence level** — Prefer levels 1A/1B/2A for clinical use;
    confirm field names against the live OpenAPI spec.

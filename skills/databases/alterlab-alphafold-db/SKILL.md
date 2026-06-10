@@ -6,7 +6,7 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless AlphaFold DB (EBI) REST API; optional Google Cloud/BigQuery for bulk proteome downloads
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
 ---
 
 # AlphaFold Database
@@ -49,20 +49,24 @@ Three entry points, in order of preference:
 
 ### 2. Downloading Structure Files
 
-Each prediction exposes three files at `https://alphafold.ebi.ac.uk/files/{id}-*_v4.*`:
+The `/prediction` response carries version-stamped file URLs — **use those, don't
+hand-build a `_v{N}` suffix.** The DB version advances (currently v6) and old
+`_v4` file URLs now 404:
 
-- `model_v4.cif` — atomic coordinates (mmCIF/PDBx). `model_v4.pdb` for PDB format.
-- `confidence_v4.json` — per-residue pLDDT scores (0-100).
-- `predicted_aligned_error_v4.json` — PAE matrix.
+- `cifUrl` / `pdbUrl` / `bcifUrl` — atomic coordinates (mmCIF / PDB / binary CIF).
+- `plddtDocUrl` — per-residue pLDDT scores (0-100).
+- `paeDocUrl` — PAE matrix.
 
-Download recipes (text vs binary write) in `code_examples.md` §2.
+Download recipe (resolve URLs from the API, write bytes) in `code_examples.md` §2.
 
 ### 3. Working with Confidence Metrics
 
-- **pLDDT**: read `confidence['confidenceScore']`; thresholds in
+- **pLDDT**: from `plddtDocUrl`, read `confidence['confidenceScore']` (keys:
+  `residueNumber`, `confidenceScore`, `confidenceCategory`); thresholds in
   "Confidence Interpretation Guidelines" below.
-- **PAE**: the endpoint returns a single-element JSON array, so index `[0]`
-  before the key (`pae[0]['predicted_aligned_error']`). Visualization recipe in
+- **PAE**: from `paeDocUrl`. The endpoint returns a single-element JSON array of
+  one object, so index `[0]` before the key
+  (`pae[0]['predicted_aligned_error']`). Visualization recipe in
   `code_examples.md` §3.
 
 ### 4. Bulk Data Access via Google Cloud
@@ -133,7 +137,7 @@ filtering structures where `provider == 'AlphaFold DB'`. Recipe in
 
 **PAE (Predicted Aligned Error):** Matrix indicating confidence in relative positions between residue pairs. Low values (<5 Å) suggest confident relative positioning.
 
-**Database Version:** Current version is v4. File URLs include version suffix (e.g., `model_v4.cif`).
+**Database Version:** The REST API currently serves v6 (the response reports `latestVersion` / `allVersions`); the bulk GCS/BigQuery datasets lag at v4. File URLs include a version suffix (e.g., `model_v6.cif`) — read them from the prediction response rather than hardcoding the suffix.
 
 **Fragment Number:** Large proteins may be split into fragments. Fragment number appears in AlphaFold ID (e.g., F1, F2).
 
@@ -184,10 +188,10 @@ Consult this reference for detailed API information, bulk download strategies, o
 
 ### Version Management
 
-- Current database version: v4 (as of 2024-2025)
-- File URLs include version suffix (e.g., `_v4.cif`)
-- Check for database updates regularly
-- Older versions may be deprecated over time
+- REST API serves v6 (`latestVersion`); bulk GCS/BigQuery datasets lag at v4
+- Read file URLs from the `/prediction` response — never hardcode the `_v{N}` suffix
+- Old `_v4` file URLs now 404; superseded versions are removed from `/files`
+- Track which version a downloaded result came from
 
 ### Data Quality Considerations
 

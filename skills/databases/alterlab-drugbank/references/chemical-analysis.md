@@ -307,21 +307,28 @@ sim_matrix = create_similarity_matrix(drug_list)
 ### Generate Different Fingerprint Types
 ```python
 from rdkit.Chem import MACCSkeys, rdFingerprintGenerator
-from rdkit.Chem.AtomPairs import Pairs
-from rdkit.Chem.Fingerprints import FingerprintMols
 
 def generate_fingerprints(smiles):
-    """Generate multiple types of molecular fingerprints"""
+    """Generate multiple types of molecular fingerprints.
+
+    All generators share the same .GetFingerprint(mol) interface, so the
+    bit vectors are directly comparable with DataStructs.TanimotoSimilarity.
+    Uses the modern rdFingerprintGenerator API; the legacy
+    FingerprintMols.FingerprintMol and Pairs.GetAtomPairFingerprint helpers
+    are deprecated.
+    """
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         return None
 
     morgan_gen = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=2048)
+    rdkit_gen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048)
+    atompair_gen = rdFingerprintGenerator.GetAtomPairGenerator(fpSize=2048)
     fingerprints = {
-        'morgan_fp': morgan_gen.GetFingerprint(mol),
+        'morgan_fp': morgan_gen.GetFingerprint(mol),       # ECFP4-style
         'maccs_keys': MACCSkeys.GenMACCSKeys(mol),
-        'topological_fp': FingerprintMols.FingerprintMol(mol),
-        'atom_pairs': Pairs.GetAtomPairFingerprint(mol)
+        'topological_fp': rdkit_gen.GetFingerprint(mol),   # RDKit/Daylight-style
+        'atom_pairs': atompair_gen.GetFingerprint(mol)
     }
 
     return fingerprints

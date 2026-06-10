@@ -34,11 +34,11 @@
     {
       "id": "ref-download-ensembl",
       "prompt": "I need the GTF annotation and cDNA FASTA for mouse from Ensembl to build a kallisto index. What's the fastest way to grab the download links or the files themselves?",
-      "expected_output": "Triggers the gget skill. Should use gget ref to retrieve Ensembl reference links/files (e.g. `gget ref -w gtf -w cdna -d mouse`), using the -w/--which selectors and -d/--download flag. May mention listing species with --list_species or specifying a release with -r.",
+      "expected_output": "Triggers the gget skill. Should use gget ref to retrieve Ensembl reference links/files (e.g. `gget ref -w gtf,cdna -d mouse`), passing the file types to -w/--which as a comma-separated list and using the -d/--download flag. May mention listing species with --list_species or specifying a release with -r.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "gget ref"},
-        {"type": "behavior", "value": "Uses gget ref with --which to select GTF and cDNA and --download to fetch the mouse Ensembl reference files."}
+        {"type": "behavior", "value": "Uses gget ref with --which (comma-separated gtf,cdna) and --download to fetch the mouse Ensembl reference files."}
       ]
     },
     {

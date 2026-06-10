@@ -52,7 +52,7 @@ Molecular profile IDs are structured as `{studyId}_{type}`:
 |-------------|----------------|
 | `_mutations` | Somatic mutations (MAF) |
 | `_gistic` | Copy number (GISTIC discrete: -2, -1, 0, 1, 2) |
-| `_cna` | Copy number (continuous log2 ratio) |
+| `_linear_CNA` | Copy number (continuous log2 ratio; older studies may use `_log2CNA`) |
 | `_mrna` | mRNA expression (z-scores or log2) |
 | `_rna_seq_v2_mrna` | RNA-seq (RSEM) |
 | `_rna_seq_v2_mrna_median_Zscores` | RNA-seq z-scores relative to normals |

@@ -83,21 +83,23 @@ Systematic assessment must consider:
 
 ---
 
-## 3. Declaration of Helsinki — Key Articles
+## 3. Declaration of Helsinki — Key Provisions (2024 revision)
 
-| Article | Provision |
-|---------|-----------|
-| 6 | Primary purpose of medical research is to understand causes, development, and effects of diseases and improve interventions |
-| 7 | Research must conform to generally accepted scientific principles, be based on adequate knowledge of the scientific literature |
-| 8 | Some groups are particularly vulnerable and need special protection |
-| 12 | Research must be conducted by scientifically qualified persons, supervised by a competent physician |
-| 15 | Participants who suffer harm are entitled to appropriate compensation and treatment |
-| 20 | Vulnerable populations should not participate unless the research responds to their health needs and cannot be carried out in non-vulnerable populations |
-| 22 | Research protocol must be submitted for consideration, comment, guidance, and approval to a research ethics committee before the study begins |
-| 25 | Freely given informed consent required, preferably in writing |
-| 33 | Use of placebo is acceptable when no proven intervention exists, or when compelling methodological reasons necessitate it and patients will not suffer serious harm |
-| 35 | Every research study involving human subjects must be registered in a publicly accessible database before recruitment of the first subject |
-| 36 | Researchers have a duty to make publicly available the results of their research, including negative and inconclusive results |
+The current version was adopted at the WMA's 75th General Assembly in October 2024 and is the only official version (earlier revisions are for historical reference only). It replaces "subjects" with "participants" throughout, extends duties to all individuals and organizations involved in research (not only physicians), and strengthens scientific-integrity and community-engagement provisions. The 2024 revision renumbered paragraphs relative to the 2013 text, so confirm any paragraph number against the current document before citing it; the provisions below are stated by topic.
+
+| Topic | Provision |
+|-------|-----------|
+| Purpose of medical research | To understand the causes, development, and effects of diseases and to improve interventions |
+| Scientific soundness | Research must conform to generally accepted scientific principles and be based on adequate knowledge of the scientific literature |
+| Vulnerability | Some groups and individuals are particularly vulnerable and need specifically considered protection |
+| Qualifications | Research must be conducted by appropriately qualified and trained persons |
+| Compensation for harm | Participants who suffer harm are entitled to appropriate compensation and treatment |
+| Inclusion of vulnerable groups | Justified only when the research responds to their health needs/priorities and cannot be carried out in a non-vulnerable group |
+| Ethics committee review | The protocol must be submitted for consideration, comment, guidance, and approval to a research ethics committee before the study begins |
+| Informed consent | Freely given informed consent required, preferably in writing |
+| Use of placebo | Acceptable when no proven intervention exists, or when compelling methodological reasons justify it and participants will not be subject to serious or irreversible harm |
+| Trial registration | Every study involving human participants must be registered in a publicly accessible database before recruitment of the first participant |
+| Publication of results | Researchers have a duty to make results publicly available, including negative and inconclusive results |
 
 ---
 
@@ -223,4 +225,4 @@ All four criteria must be met:
 - Russell, W. M. S., & Burch, R. L. (1959). *The principles of humane experimental technique*. Methuen.
 - Steneck, N. H. (2007). *ORI introduction to the responsible conduct of research*. Government Printing Office.
 - U.S. Department of Health and Human Services. (2018). *45 CFR 46 (Common Rule, revised)*. https://www.hhs.gov/ohrp/regulations-and-policy/regulations/45-cfr-46/
-- World Medical Association. (2013). *Declaration of Helsinki*. https://www.wma.net/policies-post/wma-declaration-of-helsinki/
+- World Medical Association. (2024). *Declaration of Helsinki — Ethical principles for medical research involving human participants* (2024 revision). https://www.wma.net/policies-post/wma-declaration-of-helsinki/

@@ -38,11 +38,12 @@ Use gnomAD when:
 
 gnomAD uses a GraphQL API accessible at `https://gnomad.broadinstitute.org/api`. Most queries fetch variants by gene or specific genomic position.
 
-**Datasets available:**
-- `gnomad_r4` — gnomAD v4 exomes (recommended default, GRCh38)
-- `gnomad_r4_genomes` — gnomAD v4 genomes (GRCh38)
-- `gnomad_r3` — gnomAD v3 genomes (GRCh38)
-- `gnomad_r2_1` — gnomAD v2 exomes (GRCh37)
+**Datasets available** (values of the `DatasetId` enum):
+- `gnomad_r4` — gnomAD v4, GRCh38 (recommended default; returns both `exome` and `genome` blocks per variant — there is no separate `gnomad_r4_genomes` id)
+- `gnomad_r3` — gnomAD v3 genomes, GRCh38
+- `gnomad_r2_1` — gnomAD v2, GRCh37 (use only for GRCh37 compatibility)
+
+Structural and copy-number variants use separate enums: `structural_variants(dataset: gnomad_sv_r4)` and `copy_number_variants(dataset: gnomad_cnv_r4)`.
 
 **Reference genomes:**
 - `GRCh38` — default for v3/v4
@@ -61,7 +62,7 @@ def query_gnomad_gene(gene_symbol, dataset="gnomad_r4", reference_genome="GRCh38
     query GeneVariants($gene_symbol: String!, $dataset: DatasetId!, $reference_genome: ReferenceGenomeId!) {
       gene(gene_symbol: $gene_symbol, reference_genome: $reference_genome) {
         gene_id
-        gene_symbol
+        symbol
         variants(dataset: $dataset) {
           variant_id
           pos
@@ -77,7 +78,7 @@ def query_gnomad_gene(gene_symbol, dataset="gnomad_r4", reference_genome="GRCh38
               id
               ac
               an
-              af
+              ac_hom
             }
           }
           exome {
@@ -108,13 +109,22 @@ result = query_gnomad_gene("BRCA1")
 gene_data = result["data"]["gene"]
 variants = gene_data["variants"]
 
-# Filter to rare PTVs
+# Filter to rare protein-truncating variants.
+# Note the parentheses: without them `and` binds tighter than `or`, so the AF
+# filter would silently apply only to the consequence branch.
+# Per-population frequency is af = ac / an (the populations entries expose
+# ac/an, not af). Genome `af` here is absent for variants seen only in exomes,
+# so fall back to exome af.
+def variant_af(v):
+    g = (v.get("genome") or {}).get("af")
+    return g if g is not None else (v.get("exome") or {}).get("af", 1)
+
 rare_ptvs = [
     v for v in variants
-    if v.get("lof") == "LC" or v.get("consequence") in ["stop_gained", "frameshift_variant"]
-    and v.get("genome", {}).get("af", 1) < 0.001
+    if (v.get("lof") == "HC" or v.get("consequence") in ["stop_gained", "frameshift_variant"])
+    and variant_af(v) < 0.001
 ]
-print(f"Found {len(rare_ptvs)} rare PTVs in {gene_data['gene_symbol']}")
+print(f"Found {len(rare_ptvs)} rare PTVs in {gene_data['symbol']}")
 ```
 
 ### 3. Querying a Specific Variant
@@ -126,6 +136,9 @@ def query_gnomad_variant(variant_id, dataset="gnomad_r4"):
     """Fetch details for a specific variant (e.g., '1-55516888-G-GA')."""
     url = "https://gnomad.broadinstitute.org/api"
 
+    # On a single variant, consequence/lof are NOT top-level fields — they
+    # live under transcript_consequences[] (per transcript). Populations
+    # expose ac/an only; compute per-population af = ac / an.
     query = """
     query VariantDetails($variantId: String!, $dataset: DatasetId!) {
       variant(variantId: $variantId, dataset: $dataset) {
@@ -134,39 +147,33 @@ def query_gnomad_variant(variant_id, dataset="gnomad_r4"):
         pos
         ref
         alt
+        rsids
         genome {
           af
           ac
           an
           ac_hom
-          populations {
-            id
-            ac
-            an
-            af
-          }
+          populations { id ac an ac_hom }
         }
         exome {
           af
           ac
           an
           ac_hom
-          populations {
-            id
-            ac
-            an
-            af
-          }
+          populations { id ac an ac_hom }
         }
-        consequence
-        lof
-        rsids
+        transcript_consequences {
+          gene_symbol
+          major_consequence
+          lof
+          lof_flags
+          is_canonical
+        }
         in_silico_predictors {
           id
           value
           flags
         }
-        clinvar_variation_id
       }
     }
     """
@@ -178,17 +185,20 @@ def query_gnomad_variant(variant_id, dataset="gnomad_r4"):
     return response.json()
 
 # Example: query a specific variant
-result = query_gnomad_variant("17-43094692-G-A")  # BRCA1 missense
+result = query_gnomad_variant("17-43094692-G-C")  # BRCA1 missense, rs80357199
 variant = result["data"]["variant"]
 
 if variant:
-    genome_af = variant.get("genome", {}).get("af", "N/A")
-    exome_af = variant.get("exome", {}).get("af", "N/A")
+    genome_af = (variant.get("genome") or {}).get("af", "N/A")
+    exome_af = (variant.get("exome") or {}).get("af", "N/A")
+    # Pick the consequence from the canonical transcript when present.
+    tcs = variant.get("transcript_consequences") or []
+    canonical = next((t for t in tcs if t.get("is_canonical")), tcs[0] if tcs else {})
     print(f"Variant: {variant['variant_id']}")
-    print(f"  Consequence: {variant['consequence']}")
+    print(f"  Consequence: {canonical.get('major_consequence')}")
     print(f"  Genome AF: {genome_af}")
     print(f"  Exome AF: {exome_af}")
-    print(f"  LoF: {variant.get('lof')}")
+    print(f"  LoF: {canonical.get('lof')}")
 ```
 
 ### 4. Gene Constraint Scores
@@ -206,7 +216,7 @@ def query_gnomad_constraint(gene_symbol, reference_genome="GRCh38"):
     query GeneConstraint($gene_symbol: String!, $reference_genome: ReferenceGenomeId!) {
       gene(gene_symbol: $gene_symbol, reference_genome: $reference_genome) {
         gene_id
-        gene_symbol
+        symbol
         gnomad_constraint {
           exp_lof
           exp_mis
@@ -239,7 +249,7 @@ result = query_gnomad_constraint("KCNQ2")
 gene = result["data"]["gene"]
 constraint = gene["gnomad_constraint"]
 
-print(f"Gene: {gene['gene_symbol']}")
+print(f"Gene: {gene['symbol']}")
 print(f"  pLI:   {constraint['pLI']:.3f}  (>0.9 = LoF intolerant)")
 print(f"  LOEUF: {constraint['oe_lof_upper']:.3f}  (<0.35 = highly constrained)")
 print(f"  Obs/Exp LoF: {constraint['oe_lof']:.3f}")
@@ -274,7 +284,6 @@ def get_population_frequencies(variant_id, dataset="gnomad_r4"):
             id
             ac
             an
-            af
             ac_hom
           }
         }
@@ -319,10 +328,11 @@ def query_gnomad_sv(gene_symbol):
     """Query structural variants overlapping a gene."""
     url = "https://gnomad.broadinstitute.org/api"
 
+    # structural_variants requires a dataset argument (gnomad_sv_r4).
     query = """
-    query SVsByGene($gene_symbol: String!) {
+    query SVsByGene($gene_symbol: String!, $dataset: StructuralVariantDatasetId!) {
       gene(gene_symbol: $gene_symbol, reference_genome: GRCh38) {
-        structural_variants {
+        structural_variants(dataset: $dataset) {
           variant_id
           type
           chrom
@@ -336,7 +346,10 @@ def query_gnomad_sv(gene_symbol):
     }
     """
 
-    response = requests.post(url, json={"query": query, "variables": {"gene_symbol": gene_symbol}})
+    response = requests.post(
+        url,
+        json={"query": query, "variables": {"gene_symbol": gene_symbol, "dataset": "gnomad_sv_r4"}}
+    )
     return response.json()
 ```
 
@@ -399,9 +412,9 @@ def query_gnomad_sv(gene_symbol):
 
 ## Scripts
 
-`scripts/query_gnomad.py` — runnable helper for the gnomAD GraphQL API (no key):
+`scripts/query_gnomad.py` — runnable helper for the gnomAD GraphQL API (no key). It carries inline PEP 723 deps, so run the file directly with `uv run` (not `uv run python ...`) to auto-install `requests`:
 
 ```bash
-python scripts/query_gnomad.py variant 17-43094692-G-A --dataset gnomad_r4
-python scripts/query_gnomad.py constraint BRCA1 --genome GRCh38
+uv run scripts/query_gnomad.py variant 17-43094692-G-C --dataset gnomad_r4
+uv run scripts/query_gnomad.py constraint BRCA1 --genome GRCh38
 ```

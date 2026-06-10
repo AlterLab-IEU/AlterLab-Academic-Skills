@@ -33,7 +33,7 @@ Authorization: Bearer [ACCESS_TOKEN]
 Direct users to the authorization URL to grant access:
 
 ```
-GET https://protocols.io/api/v3/oauth/authorize
+GET https://www.protocols.io/api/v3/oauth/authorize
 ```
 
 **Parameters:**
@@ -44,7 +44,7 @@ GET https://protocols.io/api/v3/oauth/authorize
 
 **Example:**
 ```
-https://protocols.io/api/v3/oauth/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&response_type=code&state=RANDOM_STRING
+https://www.protocols.io/api/v3/oauth/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&response_type=code&state=RANDOM_STRING
 ```
 
 ### Step 2: Exchange Authorization Code for Token
@@ -52,7 +52,7 @@ https://protocols.io/api/v3/oauth/authorize?client_id=YOUR_CLIENT_ID&redirect_ur
 After user authorization, protocols.io redirects to your `redirect_uri` with an authorization code. Exchange this code for an access token:
 
 ```
-POST https://protocols.io/api/v3/oauth/token
+POST https://www.protocols.io/api/v3/oauth/token
 ```
 
 **Parameters:**
@@ -73,7 +73,7 @@ POST https://protocols.io/api/v3/oauth/token
 Before the access token expires (typically 1 year), use the refresh token to obtain a new access token:
 
 ```
-POST https://protocols.io/api/v3/oauth/token
+POST https://www.protocols.io/api/v3/oauth/token
 ```
 
 **Parameters:**

@@ -14,7 +14,7 @@
     {
       "id": "stratified-flow-solver",
       "prompt": "I'm modeling a stably stratified flow with a Brunt-Vaisala frequency around N=2 and want to drop a buoyant blob and watch the buoyancy field evolve. Which solver and parameters?",
-      "expected_output": "Invokes alterlab-fluidsim for a stratified-flow simulation. Selects the stratified solver (Simul from fluidsim.solvers.ns2d.strat.solver), sets params.N=2.0 for stratification, uses init_fields.type='in_script' to seed the buoyancy variable 'b' via sim.state.state_phys.get_var('b') and statephys_from_statespect(), runs, then plots sim.output.phys_fields.plot('b').",
+      "expected_output": "Invokes alterlab-fluidsim for a stratified-flow simulation. Selects the stratified solver (Simul from fluidsim.solvers.ns2d.strat.solver), sets params.N=2.0 for stratification, uses init_fields.type='in_script' to seed the buoyancy variable 'b' via sim.state.state_phys.get_var('b'), then syncs the spectral state FROM the physical field with sim.state.statespect_from_statephys() (not the reverse), runs, then plots sim.output.phys_fields.plot('b').",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "strat" },
@@ -33,7 +33,7 @@
     {
       "id": "taylor-green-validation",
       "prompt": "I want to validate my setup against the Taylor-Green vortex by seeding the analytic velocity field and checking that the energy decays correctly over time.",
-      "expected_output": "Invokes alterlab-fluidsim for a validation run. Uses the ns2d solver with init_fields.type='in_script', seeds vx=sin(X)cos(Y), vy=-cos(X)sin(Y) via sim.oper.get_XY_loc() and state_phys.get_var, calls statephys_from_statespect(), runs, and loads sim.output.spatial_means to compare energy decay against the analytical Taylor-Green solution.",
+      "expected_output": "Invokes alterlab-fluidsim for a validation run. Uses the ns2d solver with init_fields.type='in_script', seeds vx=sin(X)cos(Y), vy=-cos(X)sin(Y) via sim.oper.get_XY_loc(), sets the physical state (e.g. sim.state.init_statephys_from(vx=vx, vy=vy)) then computes the spectral state with sim.state.statespect_from_statephys(), runs, and loads sim.output.spatial_means (a dict of arrays keyed by 't','E') to compare energy decay against the analytical Taylor-Green solution.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Seeds the analytic Taylor-Green field via in_script initial conditions and validates energy decay using spatial_means output." }

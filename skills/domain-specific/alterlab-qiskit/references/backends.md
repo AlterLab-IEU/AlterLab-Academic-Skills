@@ -22,9 +22,9 @@ Qiskit is backend-agnostic and supports execution on simulators and real quantum
 ```python
 from qiskit_ibm_runtime import QiskitRuntimeService
 
-# First time: save credentials
+# First time: save credentials (legacy channel="ibm_quantum" was removed)
 QiskitRuntimeService.save_account(
-    channel="ibm_quantum",
+    channel="ibm_quantum_platform",
     token="YOUR_IBM_QUANTUM_TOKEN"
 )
 
@@ -270,37 +270,36 @@ result = job.result()
 
 ## Error Mitigation
 
-### Measurement Error Mitigation
+The legacy `from qiskit_ibm_runtime import Options` class was removed. With V2 primitives,
+set options either as a dict at construction (`Estimator(backend, options={...})`) or by
+mutating `primitive.options` after construction.
+
+**`resilience_level` is an Estimator-only knob — `SamplerV2` does NOT accept it.** For the
+Sampler, reduce noise with `twirling` and `dynamical_decoupling` instead.
+
+### Estimator resilience (expectation values)
 
 ```python
-from qiskit_ibm_runtime import SamplerV2 as Sampler, Options
+from qiskit_ibm_runtime import EstimatorV2 as Estimator
 
-# Configure error mitigation
-options = Options()
-options.resilience_level = 1  # 0=none, 1=minimal, 2=moderate, 3=heavy
+# 0=none, 1=minimal (TREX readout twirling), 2=moderate (adds ZNE) — see docs for exact mapping
+estimator = Estimator(backend, options={"resilience_level": 2})
 
-sampler = Sampler(backend, options=options)
-job = sampler.run([qc], shots=1024)
-result = job.result()
+# Or mutate after construction:
+estimator.options.resilience_level = 2
+estimator.options.resilience.zne_mitigation = True   # explicit ZNE
 ```
 
-### Error Mitigation Levels
-
-- **Level 0**: No mitigation
-- **Level 1**: Readout error mitigation
-- **Level 2**: Level 1 + gate error mitigation
-- **Level 3**: Level 2 + advanced techniques
-
-**Qiskit's Samplomatic package** can reduce sampling overhead by up to 100x with probabilistic error cancellation.
-
-### Zero Noise Extrapolation (ZNE)
+### Sampler noise reduction (bitstrings)
 
 ```python
-options = Options()
-options.resilience_level = 2
-options.resilience.zne_mitigation = True
+from qiskit_ibm_runtime import SamplerV2 as Sampler
 
-sampler = Sampler(backend, options=options)
+sampler = Sampler(backend)
+sampler.options.dynamical_decoupling.enable = True
+sampler.options.twirling.enable_gates = True
+job = sampler.run([isa_circuit], shots=1024)   # circuit must already be transpiled (ISA)
+result = job.result()
 ```
 
 ## Monitoring Usage and Costs
@@ -311,7 +310,7 @@ sampler = Sampler(backend, options=options)
 # For IBM Quantum
 service = QiskitRuntimeService()
 
-# Check remaining credits
+# Inspect usage for your instance (quota/usage stats)
 print(service.usage())
 ```
 
@@ -402,7 +401,7 @@ print([b.name for b in service.backends()])
 ```python
 # Re-save credentials
 QiskitRuntimeService.save_account(
-    channel="ibm_quantum",
+    channel="ibm_quantum_platform",
     token="YOUR_TOKEN",
     overwrite=True
 )

@@ -134,9 +134,11 @@ Fink's taxonomy is non-hierarchical and interactive. Six categories of significa
 
 ---
 
-## 5. Universal Design for Learning (CAST, 2018)
+## 5. Universal Design for Learning (CAST)
 
-### UDL Guidelines Version 2.2
+> **Version note:** CAST released **UDL Guidelines 3.0** on 2024-07-30, superseding 2.2. The three principles below (Engagement / Representation / Action & Expression) are stable across versions, but 3.0 reorganized and relabeled the underlying guidelines/checkpoints and added an explicit focus on removing barriers rooted in bias and exclusion. The numbered checkpoints listed here follow the **2.2** structure; confirm the current labels at https://udlguidelines.cast.org before quoting checkpoint numbers in formal materials.
+
+### UDL Guidelines (2.2 structure)
 
 **Engagement (Affective Networks — the WHY)**
 - Provide options for recruiting interest (7)
@@ -205,7 +207,7 @@ Key components of PCK:
 
 - Anderson, L. W., & Krathwohl, D. R. (Eds.). (2001). *A taxonomy for learning, teaching, and assessing*. Longman.
 - Biggs, J., & Tang, C. (2011). *Teaching for quality learning at university* (4th ed.). Open University Press.
-- CAST. (2018). *Universal Design for Learning Guidelines version 2.2*. https://udlguidelines.cast.org
+- CAST. (2024). *Universal Design for Learning Guidelines version 3.0*. https://udlguidelines.cast.org (version 2.2, 2018, remains available on the site's Downloads page)
 - Fink, L. D. (2013). *Creating significant learning experiences* (2nd ed.). Jossey-Bass.
 - Shulman, L. S. (1986). Those who understand: Knowledge growth in teaching. *Educational Researcher*, 15(2), 4-14.
 - Wiggins, G., & McTighe, J. (2005). *Understanding by design* (2nd ed.). ASCD.

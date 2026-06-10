@@ -20,8 +20,32 @@ from typing import Dict, List, Optional, Any
 # ClinPGx resources are addressed by ClinPGx accession IDs in the path
 # (e.g. gene CYP2D6 = PA128, CYP2C9 = PA126), not by symbols/rsIDs. Resolve a
 # symbol or rsID via the collection endpoints with params (e.g. ?symbol=CYP2D6).
+#
+# Query-param convention (verified against the live API):
+#   - genes are matched by `relatedGenes.symbol` (the `.name` form fails)
+#   - chemicals/drugs are matched by `relatedChemicals.name` (the `.symbol`
+#     form returns status:"fail" / "No results matching criteria")
+#
+# Response envelope: every response is a JSON object of the form
+#   {"status": "success"|"fail", "data": [...] | {"errors": [...]}}
+# so the payload is NEVER a bare list — read it via `payload["data"]`. The
+# helpers below unwrap this for you (see `unwrap`).
 BASE_URL = "https://api.clinpgx.org/v1/data/"
 RATE_LIMIT_DELAY = 0.5  # 500ms delay = 2 requests/second
+
+
+def unwrap(payload: Optional[Dict]) -> Optional[Any]:
+    """
+    Unwrap the ClinPGx {"status", "data"} response envelope.
+
+    Returns the inner `data` on success, or None when the request failed,
+    returned no results, or the payload was empty/malformed.
+    """
+    if not isinstance(payload, dict):
+        return None
+    if payload.get("status") == "fail":
+        return None
+    return payload.get("data")
 
 
 def rate_limited_request(url: str, params: Optional[Dict] = None, delay: float = RATE_LIMIT_DELAY) -> requests.Response:
@@ -132,7 +156,7 @@ def get_gene_info(gene_symbol: str) -> Optional[List[Dict]]:
         >>> print(genes[0]['symbol'], genes[0]['id'])
     """
     url = f"{BASE_URL}gene"
-    return safe_api_call(url, {"symbol": gene_symbol})
+    return unwrap(safe_api_call(url, {"symbol": gene_symbol}))
 
 
 def get_gene_by_id(gene_id: str) -> Optional[Dict]:
@@ -146,7 +170,7 @@ def get_gene_by_id(gene_id: str) -> Optional[Dict]:
         Gene information dictionary
     """
     url = f"{BASE_URL}gene/{gene_id}"
-    return safe_api_call(url)
+    return unwrap(safe_api_call(url))
 
 
 def get_drug_info(drug_name: str) -> Optional[List[Dict]]:
@@ -166,7 +190,7 @@ def get_drug_info(drug_name: str) -> Optional[List[Dict]]:
     """
     url = f"{BASE_URL}chemical"
     params = {"name": drug_name}
-    return safe_api_call(url, params)
+    return unwrap(safe_api_call(url, params))
 
 
 def get_gene_drug_pairs(gene: Optional[str] = None, drug: Optional[str] = None) -> Optional[List[Dict]]:
@@ -196,9 +220,9 @@ def get_gene_drug_pairs(gene: Optional[str] = None, drug: Optional[str] = None) 
     if gene:
         params["relatedGenes.symbol"] = gene
     if drug:
-        params["relatedChemicals.symbol"] = drug
+        params["relatedChemicals.name"] = drug
 
-    return safe_api_call(url, params)
+    return unwrap(safe_api_call(url, params))
 
 
 def get_pair_report(first_obj_id: str, second_obj_id: str,
@@ -217,7 +241,7 @@ def get_pair_report(first_obj_id: str, second_obj_id: str,
         Pair report data
     """
     url = f"https://api.clinpgx.org/v1/report/pair/{first_obj_id}/{second_obj_id}/{result_type}"
-    return safe_api_call(url)
+    return unwrap(safe_api_call(url))
 
 
 def get_cpic_guidelines(gene: Optional[str] = None, drug: Optional[str] = None) -> Optional[List[Dict]]:
@@ -243,9 +267,9 @@ def get_cpic_guidelines(gene: Optional[str] = None, drug: Optional[str] = None) 
     if gene:
         params["relatedGenes.symbol"] = gene
     if drug:
-        params["relatedChemicals.symbol"] = drug
+        params["relatedChemicals.name"] = drug
 
-    return safe_api_call(url, params)
+    return unwrap(safe_api_call(url, params))
 
 
 def get_alleles(gene: str) -> Optional[List[Dict]]:
@@ -270,7 +294,7 @@ def get_alleles(gene: str) -> Optional[List[Dict]]:
     """
     url = f"{BASE_URL}guidelineAnnotation"
     params = {"relatedGenes.symbol": gene}
-    return safe_api_call(url, params)
+    return unwrap(safe_api_call(url, params))
 
 
 def get_clinical_annotations(
@@ -303,11 +327,11 @@ def get_clinical_annotations(
     if gene:
         params["relatedGenes.symbol"] = gene
     if drug:
-        params["relatedChemicals.symbol"] = drug
+        params["relatedChemicals.name"] = drug
     if evidence_level:
         params["levelOfEvidence"] = evidence_level
 
-    return safe_api_call(url, params)
+    return unwrap(safe_api_call(url, params))
 
 
 def get_drug_labels(drug: str, source: Optional[str] = None) -> Optional[List[Dict]]:
@@ -329,11 +353,11 @@ def get_drug_labels(drug: str, source: Optional[str] = None) -> Optional[List[Di
         >>> fda_labels = get_drug_labels("warfarin", source="FDA")
     """
     url = f"{BASE_URL}label"
-    params = {"relatedChemicals.symbol": drug}
+    params = {"relatedChemicals.name": drug}
     if source:
         params["source"] = source
 
-    return safe_api_call(url, params)
+    return unwrap(safe_api_call(url, params))
 
 
 def search_variants(rsid: Optional[str] = None) -> Optional[List[Dict]]:
@@ -355,7 +379,7 @@ def search_variants(rsid: Optional[str] = None) -> Optional[List[Dict]]:
         >>> # full record: get_variant_by_id(variants[0]['id'])
     """
     url = f"{BASE_URL}variant"
-    return safe_api_call(url, {"symbol": rsid})
+    return unwrap(safe_api_call(url, {"symbol": rsid}))
 
 
 def get_variant_by_id(variant_id: str) -> Optional[Dict]:
@@ -369,7 +393,7 @@ def get_variant_by_id(variant_id: str) -> Optional[Dict]:
         Variant information dictionary
     """
     url = f"{BASE_URL}variant/{variant_id}"
-    return safe_api_call(url)
+    return unwrap(safe_api_call(url))
 
 
 def get_pathway_info(pathway_id: Optional[str] = None, drug: Optional[str] = None) -> Optional[Any]:
@@ -392,14 +416,14 @@ def get_pathway_info(pathway_id: Optional[str] = None, drug: Optional[str] = Non
     """
     if pathway_id:
         url = f"{BASE_URL}pathway/{pathway_id}"
-        return safe_api_call(url)
+        return unwrap(safe_api_call(url))
 
     url = f"{BASE_URL}pathway"
     params = {}
     if drug:
-        params["relatedChemicals.symbol"] = drug
+        params["relatedChemicals.name"] = drug
 
-    return safe_api_call(url, params)
+    return unwrap(safe_api_call(url, params))
 
 
 # Utility Functions
@@ -488,7 +512,7 @@ def find_actionable_gene_drug_pairs(source: str = "CPIC") -> Optional[List[Dict]
     """
     url = f"{BASE_URL}guidelineAnnotation"
     params = {"source": source}
-    return safe_api_call(url, params)
+    return unwrap(safe_api_call(url, params))
 
 
 # Example Usage

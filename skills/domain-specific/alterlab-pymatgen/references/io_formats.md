@@ -144,8 +144,9 @@ incar.write_file("INCAR")
 
 # KPOINTS (k-point mesh)
 from pymatgen.io.vasp.inputs import Kpoints
-kpoints = Kpoints.automatic(20)  # 20x20x20 Gamma-centered mesh
-kpoints = Kpoints.automatic_density(struct, 1000)  # By density
+kpoints = Kpoints.automatic(20)  # VASP fully-automatic scheme (length parameter 20)
+kpoints = Kpoints.automatic_density(struct, 1000)  # By k-point density
+kpoints = Kpoints.automatic_gamma_density(struct, 1000)  # density, Gamma-centered
 kpoints.write_file("KPOINTS")
 
 # POTCAR (pseudopotentials)

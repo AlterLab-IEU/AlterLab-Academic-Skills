@@ -31,13 +31,13 @@ python scripts/generate_schematic.py "MAPK signaling pathway" -o figures/pathway
 
 ## Features
 
-### Iterative Refinement Process
+### Smart Iterative Refinement Process
 
 1. **Generation 1**: Create initial diagram from your description
-2. **Review 1**: AI evaluates clarity, labels, accuracy, accessibility
-3. **Generation 2**: Improve based on critique
-4. **Review 2**: Second evaluation with specific feedback
-5. **Generation 3**: Final polished version
+2. **Review 1**: Gemini 3.1 Pro Preview evaluates clarity, labels, accuracy, accessibility
+3. **Stop early** if the score meets the document-type threshold (no extra API calls)
+4. **Generation 2** (only if below threshold): Improve based on critique
+5. **Review 2**: Second evaluation; this is the final version (max 2 iterations)
 
 ### Automatic Quality Standards
 
@@ -85,9 +85,8 @@ python scripts/generate_schematic.py \
 
 **Output:**
 - `figures/consort_v1.png` - Initial generation
-- `figures/consort_v2.png` - After first review
-- `figures/consort_v3.png` - Final version
-- `figures/consort.png` - Copy of final version
+- `figures/consort_v2.png` - After first review (only if v1 was below threshold)
+- `figures/consort.png` - Copy of the final accepted version
 - `figures/consort_review_log.json` - Detailed review log
 
 ### Example 2: Neural Network Architecture
@@ -195,31 +194,30 @@ Each generation produces a JSON review log:
 ```json
 {
   "user_prompt": "CONSORT participant flow diagram...",
+  "doc_type": "journal",
+  "quality_threshold": 8.5,
   "iterations": [
     {
       "iteration": 1,
       "image_path": "figures/consort_v1.png",
       "prompt": "Full generation prompt...",
-      "critique": "Score: 7/10. Issues: font too small...",
-      "score": 7.0,
+      "critique": "SCORE: 7.5. Issues: font too small...",
+      "score": 7.5,
+      "needs_improvement": true,
       "success": true
     },
     {
       "iteration": 2,
       "image_path": "figures/consort_v2.png",
       "score": 8.5,
-      "critique": "Much improved. Remaining issues..."
-    },
-    {
-      "iteration": 3,
-      "image_path": "figures/consort_v3.png",
-      "score": 9.5,
-      "critique": "Excellent. Publication ready."
+      "needs_improvement": false,
+      "critique": "Much improved. Publication ready."
     }
   ],
-  "final_image": "figures/consort_v3.png",
-  "final_score": 9.5,
-  "success": true
+  "final_image": "figures/consort_v2.png",
+  "final_score": 8.5,
+  "success": true,
+  "early_stop": false
 }
 ```
 
@@ -253,11 +251,11 @@ echo 'export OPENROUTER_API_KEY="your_key"' >> ~/.bashrc
 ### Import Errors
 
 ```bash
-# Install requests library
+# Install the only runtime dependency
 pip install requests
 
-# Or use the package manager
-pip install -r requirements.txt
+# Optional: python-dotenv enables loading OPENROUTER_API_KEY from a .env file
+pip install python-dotenv
 ```
 
 ### Generation Fails
@@ -278,30 +276,13 @@ If iterations consistently score below 7/10:
 3. Specify visual requirements explicitly
 4. Increase iterations: `--iterations 2`
 
-## Testing
-
-Run verification tests:
-
-```bash
-python test_ai_generation.py
-```
-
-This tests:
-- File structure
-- Module imports
-- Class initialization
-- Error handling
-- Prompt engineering
-- Wrapper script
-
 ## Cost Considerations
 
-OpenRouter pricing for models used:
-- **Nano Banana 2**: ~$2/M input tokens, ~$12/M output tokens
-
-Typical costs per diagram:
-- Simple diagram (1 iteration): ~$0.05-0.15
-- Complex diagram (2 iterations): ~$0.10-0.30
+Each run makes one image-generation call per iteration plus one review call per iteration, billed
+through OpenRouter at the current per-token rates for the image and review models. Smart iteration
+keeps cost down: if the first generation meets the document-type threshold it stops after a single
+generate-and-review pair (1 iteration) instead of the maximum of 2. Check live pricing for the
+configured models on https://openrouter.ai/models before estimating a budget.
 
 ## Examples Gallery
 
@@ -317,11 +298,7 @@ See the full SKILL.md for extensive examples including:
 
 For issues or questions:
 1. Check SKILL.md for detailed documentation
-2. Run test_ai_generation.py to verify setup
-3. Use verbose mode (-v) to see detailed errors
-4. Review the review_log.json for quality feedback
-
-## License
-
-Part of the scientific-writer package. See main repository for license information.
+2. Use verbose mode (-v) to see detailed errors and API responses
+3. Review the `*_review_log.json` for per-iteration quality feedback
+4. See `references/troubleshooting.md` for common fixes
 

@@ -184,23 +184,27 @@ plot.show()
 **Purpose:** Show optimization progress over time
 **Best for:** Understanding convergence behavior, presentations
 
-**Usage:**
-```python
-from pymoo.visualization.video import Video
+Animation is **not** built into `pymoo.visualization`. In pymoo 0.6.x it is driven by
+the separate `pyrecorder` package (`uv pip install pyrecorder`, pulls in opencv). Run
+with `save_history=True`, then record one frame per stored generation:
 
-# Create animation from algorithm history
-anim = Video(result.algorithm)
-anim.save("optimization_progress.mp4")
+```python
+from pyrecorder.recorder import Recorder
+from pyrecorder.writers.video import Video
+from pymoo.visualization.scatter import Scatter
+
+# result = minimize(problem, algorithm, ('n_gen', N), seed=1, save_history=True)
+with Recorder(Video("optimization_progress.mp4")) as rec:
+    for entry in result.history:
+        plot = Scatter(title=f"gen {entry.n_gen}")
+        plot.add(entry.opt.get("F"))
+        plot.do()
+        rec.record()
 ```
 
 **Requirements:**
-- Algorithm must store history (use `save_history=True` in minimize)
-- ffmpeg installed for video export
-
-**Customization:**
-- Frame rate
-- Plot type per frame
-- Overlay information (generation, hypervolume, etc.)
+- `save_history=True` in `minimize`
+- `pyrecorder` installed (writes MP4 via opencv; ffmpeg optional for re-encode)
 
 ## Advanced Features
 
@@ -335,9 +339,10 @@ result = minimize(
 from pymoo.visualization.scatter import Scatter
 
 plot = Scatter(title="Convergence Over Generations")
-for gen in [0, 50, 100, 150, 200]:
+# history has one entry per generation; for n_gen=200 valid indices are 0..199
+for gen in [0, 50, 100, 150, 199]:
     F = result.history[gen].opt.get("F")
-    plot.add(F, alpha=0.5, label=f"Gen {gen}")
+    plot.add(F, alpha=0.5, label=f"Gen {gen + 1}")
 plot.show()
 ```
 

@@ -389,11 +389,10 @@ Same as `boxplot()`, plus:
 - `bw_method` - KDE bandwidth method
 - `bw_adjust` - KDE bandwidth multiplier
 - `cut` - KDE extension beyond extremes
-- `density_norm` - "area", "count", "width"
+- `density_norm` - "area", "count", "width" (renamed from the deprecated `scale`)
+- `common_norm` - Normalize density across hue levels (renamed from the deprecated `scale_hue`)
 - `inner` - "box", "quartile", "point", "stick", None
 - `split` - Split violins for hue comparison
-- `scale` - Scaling method: "area", "count", "width"
-- `scale_hue` - Scale across hue levels
 - `gridsize` - KDE grid resolution
 
 **Example:**
@@ -442,8 +441,7 @@ sns.boxenplot(data=df, x='day', y='total_bill',
 - `saturation` - Color saturation
 - `width` - Bar width
 - `dodge` - Separate hue levels side-by-side
-- `errcolor` - Error bar color
-- `errwidth` - Error bar line width
+- `err_kws` - Dict of matplotlib `Line2D` props for the error bars (e.g. `{'color': 'gray', 'linewidth': 2}`); replaces the deprecated `errcolor`/`errwidth` (removed in 0.15)
 - `capsize` - Error bar cap width
 - `native_scale` - Use numeric scale
 - `formatter` - Formatter for categorical axis
@@ -454,7 +452,8 @@ sns.boxenplot(data=df, x='day', y='total_bill',
 ```python
 sns.barplot(data=df, x='day', y='total_bill',
             hue='sex', estimator='median',
-            errorbar=('ci', 95), capsize=0.1)
+            errorbar=('ci', 95), capsize=0.1,
+            err_kws={'color': 'gray', 'linewidth': 1.5})
 ```
 
 ### countplot()
@@ -480,10 +479,10 @@ sns.countplot(data=df, x='day', hue='time',
 **Key Parameters:**
 Same as `barplot()`, plus:
 - `markers` - Marker style(s)
-- `linestyles` - Line style(s)
-- `scale` - Scale for markers
-- `join` - Connect points with lines
+- `linestyles` - Line style(s); use `linestyle='none'` to drop the connecting line
 - `capsize` - Error bar cap width
+
+Note (seaborn ≥ 0.13): `scale` and `join` are deprecated (removed in 0.15). Control marker/line size with matplotlib `Line2D` kwargs (`markersize`, `linewidth`) and remove the line with `linestyles='none'`.
 
 **Example:**
 ```python

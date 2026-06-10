@@ -34,11 +34,17 @@ Search for clinical trials using various query parameters and filters.
 | `query.term` | string | General full-text search | `breast cancer treatment` |
 | `filter.overallStatus` | string | Status-based filtering (comma-separated) | `RECRUITING,NOT_YET_RECRUITING` |
 | `filter.ids` | string | NCT ID intersection filtering (comma-separated) | `NCT04852770,NCT01728545` |
-| `filter.phase` | string | Study phase filtering | `PHASE1,PHASE2` |
+| `aggFilters` | string | Faceted filtering, incl. phase. Values within a facet are space-separated | `phase:2 3`, `results:with` |
+| `filter.advanced` | string | Essie-syntax advanced query (supports AREA[...] and OR/AND) | `AREA[Phase](PHASE2 OR PHASE3)` |
 | `sort` | string | Result ordering | `LastUpdatePostDate:desc` |
 | `pageSize` | integer | Results per page (max 1000) | `100` |
-| `pageToken` | string | Pagination token from previous response | `<token>` |
+| `pageToken` | string | Pagination cursor — pass back the `nextPageToken` from the previous response | `<token>` |
+| `countTotal` | boolean | Include `totalCount` in the response (omitted by default) | `true` |
 | `format` | string | Response format (`json` or `csv`) | `json` |
+
+> **There is no `filter.phase` parameter** — it returns HTTP 400. Filter phases
+> via `aggFilters=phase:N` (N = 0–4) or `filter.advanced=AREA[Phase]...`. Phases
+> can also be post-filtered client-side on `designModule.phases`.
 
 **Valid Status Values:**
 - `RECRUITING` - Currently recruiting participants
@@ -66,12 +72,13 @@ Search for clinical trials using various query parameters and filters.
 
 **Example Request:**
 ```bash
-curl "https://clinicaltrials.gov/api/v2/studies?query.cond=lung+cancer&filter.overallStatus=RECRUITING&pageSize=10&format=json"
+curl "https://clinicaltrials.gov/api/v2/studies?query.cond=lung+cancer&filter.overallStatus=RECRUITING&pageSize=10&countTotal=true&format=json"
 ```
 
 **Example Response Structure:**
 ```json
 {
+  "totalCount": 1234,
   "studies": [
     {
       "protocolSection": { ... },
@@ -79,10 +86,14 @@ curl "https://clinicaltrials.gov/api/v2/studies?query.cond=lung+cancer&filter.ov
       "hasResults": false
     }
   ],
-  "totalCount": 1234,
-  "pageToken": "next_page_token_here"
+  "nextPageToken": "next_page_token_here"
 }
 ```
+
+> `totalCount` appears only when the request includes `countTotal=true`. The
+> pagination cursor is named `nextPageToken` in the response; feed it back into
+> the request as the `pageToken` parameter to fetch the next page. When there are
+> no further pages, `nextPageToken` is absent.
 
 ### 2. Get Study Details
 
@@ -162,7 +173,8 @@ params = {
     "query.cond": "breast cancer",
     "filter.overallStatus": "RECRUITING",
     "pageSize": 20,
-    "sort": "LastUpdatePostDate:desc"
+    "sort": "LastUpdatePostDate:desc",
+    "countTotal": "true"  # needed for data['totalCount']
 }
 
 response = requests.get(url, params=params)
@@ -182,7 +194,7 @@ Find trials testing a specific intervention or drug:
 ```python
 params = {
     "query.intr": "Pembrolizumab",
-    "filter.phase": "PHASE3",
+    "aggFilters": "phase:3",  # NOT filter.phase (that returns HTTP 400)
     "pageSize": 50
 }
 
@@ -240,8 +252,9 @@ while True:
 
     all_studies.extend(data['studies'])
 
-    # Check if there are more pages
-    page_token = data.get('pageToken')
+    # Check if there are more pages. The response field is 'nextPageToken';
+    # it is passed back in as the 'pageToken' request parameter (above).
+    page_token = data.get('nextPageToken')
     if not page_token:
         break
 

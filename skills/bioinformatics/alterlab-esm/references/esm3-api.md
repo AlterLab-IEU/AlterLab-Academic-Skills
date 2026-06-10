@@ -148,14 +148,25 @@ protein_output = model.generate(
 )
 ```
 
-**Forward Pass (Advanced):**
+**Logits and decoding (Advanced):**
 
 ```python
-# Get raw model logits for custom sampling
+from esm.sdk.api import LogitsConfig
+
+# encode -> tensor, request per-track logits for custom sampling
 protein_tensor = model.encode(protein)
-output = model.forward(protein_tensor)
-logits = model.decode(output)
+logits_output = model.logits(
+    protein_tensor,
+    LogitsConfig(sequence=True, structure=True, return_embeddings=True),
+)
+logits_output.logits.sequence   # per-position sequence logits
+logits_output.embeddings         # representations
+
+# decode() turns a (possibly edited) tensor back into an ESMProtein
+protein = model.decode(protein_tensor)
 ```
+
+`model.logits(...)` (not `model.forward(...)`) is the supported way to pull logits/embeddings; `model.decode(tensor)` reconstructs an `ESMProtein` from a tensor.
 
 ## Common Usage Patterns
 

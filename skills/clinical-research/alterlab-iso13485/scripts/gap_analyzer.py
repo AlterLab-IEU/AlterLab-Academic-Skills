@@ -17,7 +17,13 @@ from typing import Dict, List, Tuple
 from datetime import datetime
 
 
-# ISO 13485:2016 Required Documented Procedures
+# ISO 13485:2016 always-applicable documented procedures.
+# This set deliberately covers the 26 procedures that apply to essentially every
+# manufacturer. It omits the conditional "when applicable" procedures (e.g. 6.3
+# infrastructure, 6.4.2 contamination control, 7.5.2 cleanliness, 7.5.3 installation,
+# 7.5.4 servicing, 7.5.7 sterilization, 7.5.10 customer property, 8.4 data analysis)
+# so that a legitimately-excluded procedure is not flagged as a false-negative gap.
+# The full procedure set is cited as "31" by convention; see references/quick-reference.md.
 REQUIRED_PROCEDURES = {
     "4.1.5": {
         "title": "Risk Management",

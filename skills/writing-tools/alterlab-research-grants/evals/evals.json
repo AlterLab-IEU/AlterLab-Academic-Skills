@@ -64,6 +64,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "peer-review" }
       ]
+    },
+    {
+      "id": "near-miss-tubitak-national-proposal",
+      "prompt": "I'm applying to TÜBİTAK 1001 (ARDEB). Help me write the özgün değer section and the work-package/iş-zaman çizelgesi for the proposal form.",
+      "expected_output": "Should NOT trigger research-grants. A TÜBİTAK 1001/ARDEB national proposal has its own official .doc form tree (özgün değer, yöntem, proje yönetimi, yaygın etki) and program caps that the alterlab-tubitak-proposal skill owns; this skill covers NSF/NIH/DOE/DARPA/NSTC, not the Turkish national agency. The correct response defers to tubitak-proposal.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "tubitak-proposal" }
+      ]
     }
   ]
 }

@@ -13,18 +13,39 @@ metadata:
 
 ## Overview
 
-This skill provides efficient Python-based tools for searching and retrieving preprints from the bioRxiv database. It enables comprehensive searches by keywords, authors, date ranges, and categories, returning structured JSON metadata that includes titles, abstracts, DOIs, and citation information. The skill also supports PDF downloads for full-text analysis.
+Python tooling over the keyless bioRxiv API for searching and retrieving **life-sciences preprints**. Searches by keyword, author, date range, and category, returning structured JSON (titles, abstracts, DOIs, authors, versions), and downloads full-text PDFs.
+
+For **published, peer-reviewed** literature use `alterlab-pubmed`; for **computer-science / physics / math** preprints use `alterlab-arxiv`. bioRxiv covers biology subjects only.
+
+### How it works (and its limits)
+
+The bioRxiv `/details` endpoint has **no server-side keyword, author, or category filter** — it only returns preprints by date range, 30 records per page. So this tool:
+
+1. Paginates the full date range (following the cursor until all records are retrieved), then
+2. Filters **client-side** by keyword (substring over title/abstract), author (substring over the author list), and category (exact match on each paper's `category` field).
+
+Implication: a wide date range means many API calls and a large download. Keep ranges as tight as the question allows, and prefer `--category` and `--limit` to bound the work.
 
 ## When to Use This Skill
 
 Use this skill when:
-- Searching for recent preprints in specific research areas
-- Tracking publications by particular authors
-- Conducting systematic literature reviews
-- Analyzing research trends over time periods
+- Searching for recent life-sciences preprints in specific research areas
+- Tracking preprints by particular authors
+- Conducting systematic preprint literature reviews
+- Analyzing preprint trends over time periods
 - Retrieving metadata for citation management
 - Downloading preprint PDFs for analysis
 - Filtering papers by bioRxiv subject categories
+
+## Running the script
+
+The script's only dependency is `requests`. Run it with uv so the dependency is provisioned on the fly:
+
+```bash
+uv run --with requests scripts/biorxiv_search.py --help
+```
+
+The `python scripts/biorxiv_search.py ...` invocations below are shorthand; substitute `uv run --with requests scripts/biorxiv_search.py ...` (or activate an environment that has `requests`).
 
 ## Core Search Capabilities
 
@@ -51,7 +72,7 @@ python scripts/biorxiv_search.py \
 ```
 
 **Search Fields:**
-By default, keywords are searched in both title and abstract. Customize with `--search-fields`:
+Keyword matching is a case-insensitive substring match, and a paper matches if **any** keyword is found (OR semantics, not AND). By default keywords are searched in both title and abstract. Customize with `--search-fields`:
 ```python
 python scripts/biorxiv_search.py \
   --keywords "AlphaFold" \
@@ -204,7 +225,7 @@ All searches return structured JSON with the following format:
     {
       "doi": "10.1101/2024.01.15.123456",
       "title": "Paper Title Here",
-      "authors": "Smith J, Doe J, Johnson A",
+      "authors": "Smith, J.; Doe, J.; Johnson, A.",
       "author_corresponding": "Smith J",
       "author_corresponding_institution": "University Example",
       "date": "2024-01-15",
@@ -333,19 +354,19 @@ formatted = searcher.format_result(paper, include_abstract=True)
 
 ## Best Practices
 
-1. **Use appropriate date ranges**: Smaller date ranges return faster. For keyword searches over long periods, consider splitting into multiple queries.
+1. **Keep date ranges tight**: Because filtering is client-side, the tool paginates the *entire* range (30 records/page) before filtering. A single busy week is ~800 preprints (~27 API calls); a full year is tens of thousands. Narrow the range, or use `--days-back` for recency.
 
-2. **Filter by category**: When possible, use `--category` to reduce data transfer and improve search precision.
+2. **Filter by category**: Use `--category` to cut the result set down (e.g. for trend analysis). It does not reduce the number of API calls — every paper in the range is still fetched, then filtered locally on the per-paper `category` field.
 
-3. **Respect rate limits**: The script includes automatic delays (0.5s between requests). For large-scale data collection, add additional delays.
+3. **Cap with `--limit`**: For pure date-range searches, `--limit` also stops pagination early, so it genuinely reduces API calls. For keyword/author searches the whole range must be scanned first, so `--limit` only trims the final list.
 
-4. **Cache results**: Save search results to JSON files to avoid repeated API calls.
+4. **Respect rate limits**: The script sleeps 0.5s between requests. There is no documented hard rate limit, but for large collections add more delay and cache results to JSON.
 
-5. **Version tracking**: Preprints can have multiple versions. The `version` field indicates which version is returned. PDF URLs include the version number.
+5. **Version tracking**: Preprints can have multiple versions. DOI lookups return the **latest** version; `download_pdf` resolves the latest version automatically (pass `version=` to override). PDF/HTML URLs embed the version number.
 
-6. **Handle errors gracefully**: Check the `result_count` in output JSON. Empty results may indicate date range issues or API connectivity problems.
+6. **Handle empty results**: Check `result_count`. Empty results usually mean the date range had no matching papers, an over-narrow category, or transient API connectivity issues — not a silent truncation (pagination retrieves the full range).
 
-7. **Verbose mode for debugging**: Use `--verbose` flag to see detailed logging of API requests and responses.
+7. **Verbose mode for debugging**: Use `--verbose` to see each paginated API request and the reported `total`.
 
 ## Advanced Features
 

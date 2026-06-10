@@ -32,47 +32,51 @@ PathML leverages OpenSlide and other specialized libraries to handle format-spec
 
 ### SlideData
 
-`SlideData` is the fundamental class for representing whole-slide images in PathML.
+`SlideData` is the fundamental class for representing whole-slide images in PathML. You construct it directly (there is no `SlideData.from_slide` factory) or via a convenience subclass (`HESlide`, `VectraSlide`, `CODEXSlide`, `MultiparametricSlide`, `IHCSlide`).
 
 **Loading from file:**
 ```python
-from pathml.core import SlideData
+from pathml.core import SlideData, HESlide, types
 
-# Load a whole-slide image
-wsi = SlideData.from_slide("path/to/slide.svs")
+# Convenience subclass for H&E (recommended for brightfield H&E)
+wsi = HESlide("path/to/slide.svs", name="example")
 
-# Load with specific backend
-wsi = SlideData.from_slide("path/to/slide.svs", backend="openslide")
+# Generic constructor. backend is a STRING ("openslide" | "bioformats" | "dicom");
+# slide_type carries the stain/dimensionality (use a pathml.core.types instance).
+wsi = SlideData("path/to/slide.svs", backend="openslide", slide_type=types.HE)
 
-# Load from OME-TIFF
-wsi = SlideData.from_slide("path/to/slide.ome.tiff", backend="bioformats")
+# OME-TIFF via the Bio-Formats backend
+wsi = SlideData("path/to/slide.ome.tiff", backend="bioformats")
 ```
 
 **Key attributes:**
 - `wsi.slide` - Backend slide object (OpenSlide, BioFormats, etc.)
-- `wsi.tiles` - Collection of image tiles
-- `wsi.metadata` - Slide metadata dictionary
-- `wsi.level_dimensions` - Image pyramid level dimensions
-- `wsi.level_downsamples` - Downsample factors for each pyramid level
+- `wsi.tiles` - Collection of image tiles (populated after a tiling/Pipeline run)
+- `wsi.masks` - Slide-level masks
+- `wsi.shape` - Image dimensions
+- `wsi.name` - Slide name
 
 **Methods:**
-- `wsi.generate_tiles()` - Generate tiles from the slide
-- `wsi.read_region()` - Read a specific region at a given level
-- `wsi.get_thumbnail()` - Get a thumbnail image
+- `wsi.run(pipeline, ...)` - Run a preprocessing Pipeline (handles tiling + transforms)
+- `wsi.generate_tiles()` - Generator over `Tile` objects
+- `wsi.extract_region(location, size, ...)` - Read a specific region (delegates to the backend)
+- `wsi.write(path)` - Write contents to disk in h5path format
 
-### SlideType
+### SlideType and types
 
-`SlideType` is an enumeration defining supported slide backends:
+`SlideType` describes a slide's stain/dimensionality (NOT the backend). The `pathml.core.types` module exposes pre-made instances you pass as `slide_type`:
 
 ```python
-from pathml.core import SlideType
+from pathml.core import types
 
-# Available backends
-SlideType.OPENSLIDE  # For most WSI formats (SVS, NDPI, etc.)
-SlideType.BIOFORMATS  # For OME-TIFF and other formats
-SlideType.DICOM  # For DICOM WSI
-SlideType.VectraQPTIFF  # For Vectra multiplex IF
+types.HE       # H&E brightfield
+types.IHC      # immunohistochemistry
+types.IF       # immunofluorescence
+types.CODEX    # CODEX multiplex IF
+types.Vectra   # Vectra multiplex IF
 ```
+
+The decoding backend is selected separately with the string `backend` argument (`"openslide"`, `"bioformats"`, or `"dicom"`).
 
 ### Specialized Slide Classes
 
@@ -92,13 +96,10 @@ codex_slide = CODEXSlide(
 
 **VectraSlide:**
 ```python
-from pathml.core import types
+from pathml.core import VectraSlide
 
-# Load Vectra multiplex IF data
-vectra_slide = SlideData.from_slide(
-    "path/to/vectra.qptiff",
-    backend=SlideType.VectraQPTIFF
-)
+# Load Vectra multiplex IF data (.qptiff); uses the Bio-Formats backend
+vectra_slide = VectraSlide("path/to/vectra.qptiff")
 ```
 
 **MultiparametricSlide:**
@@ -106,72 +107,71 @@ vectra_slide = SlideData.from_slide(
 from pathml.core import MultiparametricSlide
 
 # Generic multiparametric imaging
-mp_slide = MultiparametricSlide(path="path/to/multiparametric_data")
+mp_slide = MultiparametricSlide("path/to/multiparametric_data", backend="bioformats")
 ```
 
 ## Loading Strategies
 
 ### Tile-Based Loading
 
-For large WSI files, tile-based loading enables memory-efficient processing:
+For large WSI files, tile-based loading enables memory-efficient processing. `generate_tiles` returns a generator over `Tile` objects; iterate it directly. To persist tiles on the slide, run a `Pipeline` (see `preprocessing.md`), after which they are available on `wsi.tiles`.
 
 ```python
-from pathml.core import SlideData
+from pathml.core import HESlide
 
 # Load slide
-wsi = SlideData.from_slide("path/to/slide.svs")
+wsi = HESlide("path/to/slide.svs")
 
-# Generate tiles at specific magnification level
-wsi.generate_tiles(
-    level=0,  # Pyramid level (0 = highest resolution)
-    tile_size=256,  # Tile dimensions in pixels
-    stride=256,  # Spacing between tiles (256 = no overlap)
-    pad=False  # Whether to pad edge tiles
-)
-
-# Iterate over tiles
-for tile in wsi.tiles:
-    image = tile.image  # numpy array
-    coords = tile.coords  # (x, y) coordinates
+# Iterate tiles lazily at a chosen level
+for tile in wsi.generate_tiles(
+    level=0,        # Pyramid level (0 = highest resolution)
+    shape=256,      # Tile dimensions in pixels
+    stride=256,     # Spacing between tiles (256 = no overlap)
+    pad=False,      # Whether to pad edge tiles
+):
+    image = tile.image   # numpy array
+    coords = tile.coords  # (i, j) coordinates
     # Process tile...
 ```
 
 **Overlapping tiles:**
 ```python
-# Generate tiles with 50% overlap
-wsi.generate_tiles(
-    level=0,
-    tile_size=256,
-    stride=128  # 50% overlap
-)
+# 50% overlap
+for tile in wsi.generate_tiles(level=0, shape=256, stride=128):
+    ...
 ```
+
+Confirm the exact tiling keyword (`shape` vs `tile_size`) against your installed PathML version; it has differed across releases.
 
 ### Region-Based Loading
 
 Extract specific regions of interest directly:
 
 ```python
-# Read region at specific location and level
-region = wsi.read_region(
-    location=(10000, 15000),  # (x, y) in level 0 coordinates
-    level=1,  # Pyramid level
-    size=(512, 512)  # Width, height in pixels
+# Read region at a specific location. extract_region delegates to the
+# active backend (OpenSlide/Bio-Formats/DICOM); see your backend for the
+# exact level/coordinate semantics.
+region = wsi.extract_region(
+    location=(10000, 15000),  # (x, y) coordinates
+    size=(512, 512),          # width, height in pixels
 )
 
-# Returns numpy array
+# Returns a numpy array
 ```
 
 ### Pyramid Level Selection
 
-Whole-slide images are stored in multi-resolution pyramids. Select the appropriate level based on desired magnification:
+Whole-slide images are stored in multi-resolution pyramids. Select the appropriate level based on desired magnification. Pyramid metadata lives on the backend object (`wsi.slide`); for OpenSlide it exposes `level_dimensions` and `level_downsamples`:
 
 ```python
-# Inspect available levels
-print(wsi.level_dimensions)  # [(width0, height0), (width1, height1), ...]
-print(wsi.level_downsamples)  # [1.0, 4.0, 16.0, ...]
+# Inspect available levels via the OpenSlide backend
+osh = wsi.slide.slide  # underlying openslide.OpenSlide handle
+print(osh.level_dimensions)   # [(width0, height0), (width1, height1), ...]
+print(osh.level_downsamples)  # [1.0, 4.0, 16.0, ...]
 
-# Load at lower resolution for faster processing
-wsi.generate_tiles(level=2, tile_size=256)  # Use level 2 (16x downsampled)
+# Tile at a lower resolution for faster processing
+for tile in wsi.generate_tiles(level=2, shape=256):  # level 2 (e.g. 16x downsampled)
+    ...
 ```
 
 **Common pyramid levels:**
@@ -182,73 +182,67 @@ wsi.generate_tiles(level=2, tile_size=256)  # Use level 2 (16x downsampled)
 
 ### Thumbnail Loading
 
-Generate low-resolution thumbnails for visualization and quality control:
+Generate low-resolution thumbnails for visualization and quality control. PathML exposes `wsi.plot()` for a quick thumbnail view; for an array, pull one from the backend handle:
 
 ```python
-# Get thumbnail
-thumbnail = wsi.get_thumbnail(size=(1024, 1024))
-
-# Display with matplotlib
 import matplotlib.pyplot as plt
+
+# Quick built-in thumbnail plot
+wsi.plot()
+
+# Or get an array via the OpenSlide backend handle
+thumbnail = wsi.slide.slide.get_thumbnail((1024, 1024))
 plt.imshow(thumbnail)
-plt.axis('off')
+plt.axis("off")
 plt.show()
 ```
 
 ## Batch Loading with SlideDataset
 
-Process multiple slides efficiently using `SlideDataset`:
+Process multiple slides efficiently using `SlideDataset`, which wraps a list of `SlideData` objects (not raw paths):
 
 ```python
-from pathml.core import SlideDataset
+from pathml.core import HESlide, SlideDataset
 import glob
 
-# Create dataset from multiple slides
+# Build slide objects, then a dataset
 slide_paths = glob.glob("data/*.svs")
-dataset = SlideDataset(
-    slide_paths,
-    tile_size=256,
-    stride=256,
-    level=0
-)
+slides = [HESlide(p) for p in slide_paths]
+dataset = SlideDataset(slides)
 
-# Iterate over all tiles from all slides
-for tile in dataset:
-    image = tile.image
-    slide_id = tile.slide_id
-    # Process tile...
+# Access individual slides
+for slide in dataset.slides:
+    print(slide.name)
 ```
 
 **With preprocessing pipeline:**
 ```python
 from pathml.preprocessing import Pipeline, StainNormalizationHE
 
-# Create pipeline
 pipeline = Pipeline([
-    StainNormalizationHE(target='normalize')
+    StainNormalizationHE(target="normalize"),
 ])
 
-# Apply to entire dataset
-dataset = SlideDataset(slide_paths)
-dataset.run(pipeline, distributed=True, n_workers=8)
+# Run across the dataset. PathML parallelizes with Dask via a client;
+# pass a dask.distributed Client (see the distributed example below).
+dataset.run(pipeline)
 ```
 
 ## Metadata Access
 
-Extract slide metadata including acquisition parameters, magnification, and vendor-specific information:
+Extract slide metadata including acquisition parameters, magnification, and vendor-specific information. For OpenSlide-backed slides the vendor properties live on the backend handle:
 
 ```python
-# Access metadata
-metadata = wsi.metadata
+# OpenSlide properties dictionary
+props = wsi.slide.slide.properties
 
-# Common metadata fields
-print(metadata.get('openslide.objective-power'))  # Magnification
-print(metadata.get('openslide.mpp-x'))  # Microns per pixel X
-print(metadata.get('openslide.mpp-y'))  # Microns per pixel Y
-print(metadata.get('openslide.vendor'))  # Scanner vendor
+print(props.get("openslide.objective-power"))  # Magnification
+print(props.get("openslide.mpp-x"))            # Microns per pixel X
+print(props.get("openslide.mpp-y"))            # Microns per pixel Y
+print(props.get("openslide.vendor"))           # Scanner vendor
 
 # Slide dimensions
-print(wsi.level_dimensions[0])  # (width, height) at level 0
+print(wsi.shape)  # full-resolution dimensions
 ```
 
 ## Working with DICOM Slides
@@ -256,17 +250,10 @@ print(wsi.level_dimensions[0])  # (width, height) at level 0
 PathML supports DICOM WSI through specialized handling:
 
 ```python
-from pathml.core import SlideData, SlideType
+from pathml.core import SlideData
 
-# Load DICOM WSI
-dicom_slide = SlideData.from_slide(
-    "path/to/slide.dcm",
-    backend=SlideType.DICOM
-)
-
-# DICOM-specific metadata
-print(dicom_slide.metadata.get('PatientID'))
-print(dicom_slide.metadata.get('StudyDate'))
+# Load DICOM WSI (backend is the string "dicom")
+dicom_slide = SlideData("path/to/slide.dcm", backend="dicom")
 ```
 
 ## Working with OME-TIFF
@@ -276,14 +263,11 @@ OME-TIFF provides an open standard for multi-dimensional imaging:
 ```python
 from pathml.core import SlideData
 
-# Load OME-TIFF
-ome_slide = SlideData.from_slide(
-    "path/to/slide.ome.tiff",
-    backend="bioformats"
-)
+# Load OME-TIFF via the Bio-Formats backend (requires a JDK / JVM)
+ome_slide = SlideData("path/to/slide.ome.tiff", backend="bioformats")
 
-# Access channel information for multi-channel images
-n_channels = ome_slide.shape[2]  # Number of channels
+# Inspect dimensions / channels
+print(ome_slide.shape)
 ```
 
 ## Performance Considerations
@@ -293,13 +277,12 @@ n_channels = ome_slide.shape[2]  # Number of channels
 For large WSI files (often >1GB), use tile-based loading to avoid memory exhaustion:
 
 ```python
-# Efficient: Tile-based processing
-wsi.generate_tiles(level=1, tile_size=256)
-for tile in wsi.tiles:
-    process_tile(tile)  # Process one tile at a time
+# Efficient: stream tiles one at a time
+for tile in wsi.generate_tiles(level=1, shape=256):
+    process_tile(tile)
 
-# Inefficient: Loading entire slide into memory
-full_image = wsi.read_region((0, 0), level=0, wsi.level_dimensions[0])  # May crash
+# Inefficient: pulling the whole level-0 image into memory may crash
+full_image = wsi.extract_region(location=(0, 0), size=wsi.shape)
 ```
 
 ### Distributed Processing
@@ -307,15 +290,14 @@ full_image = wsi.read_region((0, 0), level=0, wsi.level_dimensions[0])  # May cr
 Use Dask for parallel processing across multiple workers:
 
 ```python
-from pathml.core import SlideDataset
+from pathml.core import HESlide, SlideDataset
 from dask.distributed import Client
 
-# Start Dask client
+# Start a Dask client and pass it to run()
 client = Client(n_workers=8, threads_per_worker=2)
 
-# Process dataset in parallel
-dataset = SlideDataset(slide_paths)
-dataset.run(pipeline, distributed=True, client=client)
+dataset = SlideDataset([HESlide(p) for p in slide_paths])
+dataset.run(pipeline, client=client)
 ```
 
 ### Level Selection
@@ -370,30 +352,26 @@ Balance resolution and performance by selecting appropriate pyramid levels:
 ### Loading and Inspecting a New Slide
 
 ```python
-from pathml.core import SlideData
-import matplotlib.pyplot as plt
+from pathml.core import HESlide
 
 # Load slide
-wsi = SlideData.from_slide("path/to/slide.svs")
+wsi = HESlide("path/to/slide.svs", name="example")
 
 # Inspect properties
-print(f"Dimensions: {wsi.level_dimensions}")
-print(f"Downsamples: {wsi.level_downsamples}")
-print(f"Magnification: {wsi.metadata.get('openslide.objective-power')}")
+print(f"Shape: {wsi.shape}")
+props = wsi.slide.slide.properties  # OpenSlide properties
+print(f"Magnification: {props.get('openslide.objective-power')}")
 
-# Generate thumbnail for QC
-thumbnail = wsi.get_thumbnail(size=(1024, 1024))
-plt.imshow(thumbnail)
-plt.title(f"Slide: {wsi.name}")
-plt.axis('off')
-plt.show()
+# Quick thumbnail for QC
+wsi.plot()
 ```
 
 ### Processing Multiple Slides
 
 ```python
-from pathml.core import SlideDataset
+from pathml.core import HESlide, SlideDataset
 from pathml.preprocessing import Pipeline, TissueDetectionHE
+from dask.distributed import Client
 import glob
 
 # Find all slides
@@ -402,19 +380,13 @@ slide_paths = glob.glob("data/slides/*.svs")
 # Create pipeline
 pipeline = Pipeline([TissueDetectionHE()])
 
-# Process all slides
-dataset = SlideDataset(
-    slide_paths,
-    tile_size=512,
-    stride=512,
-    level=1
-)
+# Build dataset from slide objects and run with a Dask client
+dataset = SlideDataset([HESlide(p) for p in slide_paths])
+client = Client(n_workers=8, threads_per_worker=2)
+dataset.run(pipeline, client=client)
 
-# Run pipeline with distributed processing
-dataset.run(pipeline, distributed=True, n_workers=8)
-
-# Save processed data
-dataset.to_hdf5("processed_dataset.h5")
+# Persist each processed slide to h5path
+dataset.write("processed/")
 ```
 
 ### Loading CODEX Multiparametric Data
@@ -426,18 +398,18 @@ from pathml.preprocessing import Pipeline, CollapseRunsCODEX, SegmentMIF
 # Load CODEX slide
 codex = CODEXSlide("path/to/codex_dir", stain="IF")
 
-# Create CODEX-specific pipeline
+# Create CODEX-specific pipeline. SegmentMIF channels are integer indices
+# into the collapsed channel stack (see multiparametric.md).
 pipeline = Pipeline([
-    CollapseRunsCODEX(z_slice=2),  # Select z-slice
+    CollapseRunsCODEX(z=0),  # select z-plane
     SegmentMIF(
-        nuclear_channel='DAPI',
-        cytoplasm_channel='CD45',
-        model='mesmer'
-    )
+        model="mesmer",
+        nuclear_channel=0,
+        cytoplasm_channel=29,
+    ),
 ])
 
-# Process
-pipeline.run(codex)
+codex.run(pipeline)
 ```
 
 ## Additional Resources

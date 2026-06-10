@@ -249,13 +249,18 @@ Each evidence source has its own scoring methodology:
 
 ### Filtering by Data Type
 
+The `evidences` query filters by data SOURCE (`datasourceIds`), not by broad data
+type. To keep only certain data types, either enumerate their sources or fetch
+all rows and filter client-side on the returned `datatypeId`.
+
 ```python
 query = """
-  query evidenceByType($ensemblId: String!, $efoId: String!, $dataTypes: [String!]) {
+  query evidenceBySource($ensemblId: String!, $efoId: String!, $datasourceIds: [String!]) {
     disease(efoId: $efoId) {
-      evidences(ensemblIds: [$ensemblId], datatypes: $dataTypes) {
+      evidences(ensemblIds: [$ensemblId], datasourceIds: $datasourceIds, size: 100) {
         rows {
           datasourceId
+          datatypeId
           score
         }
       }
@@ -264,27 +269,32 @@ query = """
 """
 variables = {
     "ensemblId": "ENSG00000157764",
-    "efoId": "EFO_0000249",
-    "dataTypes": ["genetic_association", "somatic_mutation"]
+    "efoId": "MONDO_0004975",
+    # genetic_association + somatic_mutation sources
+    "datasourceIds": ["gwas_catalog", "clinvar", "gene_burden", "cancer_gene_census", "intogen"]
 }
 ```
 
 ### Accessing Data Type Scores
 
-Data type scores aggregate all source scores within that type:
+Each `datatypeScores` entry aggregates all source scores within that data type;
+`id` is the data type (e.g. "genetic_association"). `associatedDiseases` has no
+per-disease-ID filter argument, so fetch the page and filter client-side on the
+disease ID to read the breakdown for one target-disease pair.
 
 ```python
 query = """
-  query associationScores($ensemblId: String!, $efoId: String!) {
+  query associationScores($ensemblId: String!) {
     target(ensemblId: $ensemblId) {
-      associatedDiseases(efoIds: [$efoId]) {
+      associatedDiseases(page: {index: 0, size: 25}) {
         rows {
           disease {
+            id
             name
           }
           score
           datatypeScores {
-            componentId
+            id
             score
           }
         }

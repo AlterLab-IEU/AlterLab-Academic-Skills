@@ -23,9 +23,10 @@ Zarr is a Python library for storing large N-dimensional arrays with chunking an
 uv pip install zarr
 ```
 
-Requires Python 3.11+. For cloud storage support, install additional packages:
-```python
-uv pip install s3fs  # For S3
+Requires Python 3.11+ and Zarr v3 (`zarr>=3`). For cloud storage support, install the matching
+fsspec backend:
+```bash
+uv pip install s3fs   # For S3
 uv pip install gcsfs  # For Google Cloud Storage
 ```
 
@@ -54,7 +55,7 @@ data = z[0:100, 0:100]  # Returns NumPy array
 
 1. **Create or open** an array/group, picking a store appropriate to the environment (local, in-memory, ZIP, S3/GCS).
 2. **Choose chunking** aligned to your access pattern (aim for 1-10 MB chunks; rows-first → chunks span columns, and vice versa). This is the single biggest performance lever.
-3. **Pick compression** based on workload — Blosc/Zstd (balanced, default), LZ4 (fast), Gzip (max ratio).
+3. **Pick compression** via `compressors=` based on workload — Zstandard (the default), Blosc+LZ4 (fast), Gzip (max ratio); `compressors=None` to disable.
 4. **Read/write** with NumPy-style indexing; resize/append as data grows.
 5. **Scale out** with Dask (lazy, out-of-core, parallel) or label with Xarray for climate/geospatial data.
 6. **For cloud and many-array stores**, consolidate metadata and consider sharding to cut object/file count.

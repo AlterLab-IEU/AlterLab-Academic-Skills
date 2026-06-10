@@ -122,12 +122,16 @@ de_results = model.differential_expression(
     groupby="cell_type",
     group1="TypeA",
     group2="TypeB",
-    mode="change",  # Use composite hypothesis testing
-    delta=0.25      # Minimum effect size threshold
+    mode="change",  # composite hypothesis testing with an effect-size threshold
+    delta=0.25,     # minimum |LFC| to count as a real change
 )
+
+# Significance lives in proba_de (posterior prob. of DE), NOT a p-value.
+# In "change" mode this is the posterior prob. that |LFC| > delta.
+sig = de_results[de_results["proba_de"] > 0.95]
 ```
 
-See `references/differential-expression.md` for detailed methodology and interpretation.
+See `references/differential-expression.md` for the full output schema and interpretation.
 
 ### Model Persistence
 Save and load trained models:

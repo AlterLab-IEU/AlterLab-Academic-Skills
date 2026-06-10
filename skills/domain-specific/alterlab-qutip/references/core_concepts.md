@@ -73,7 +73,7 @@ maximally_mixed_dm(2)  # Maximally mixed state
 N = 10
 a = destroy(N)  # Annihilation operator
 a_dag = create(N)  # Creation operator
-num = num(N)  # Number operator (a†a)
+n_op = num(N)  # Number operator (a†a) — don't name it `num`, that shadows the function
 ```
 
 ### Pauli Matrices
@@ -142,14 +142,14 @@ rho_B = ptrace(rho, 1)  # Trace out subsystem 1
 ```python
 # Expectation values
 psi = coherent(N, alpha)
-expect(num, psi)  # ⟨n⟩
+expect(n_op, psi)  # ⟨n⟩
 
 # For multiple operators
-ops = [a, a_dag, num]
+ops = [a, a_dag, n_op]
 expect(ops, psi)  # Returns list
 
 # Variance
-variance(num, psi)  # Var(n) = ⟨n²⟩ - ⟨n⟩²
+variance(n_op, psi)  # Var(n) = ⟨n²⟩ - ⟨n⟩²
 ```
 
 ## Superoperators and Liouvillians
@@ -158,7 +158,7 @@ variance(num, psi)  # Var(n) = ⟨n²⟩ - ⟨n⟩²
 
 ```python
 # System Hamiltonian
-H = num
+H = n_op
 
 # Collapse operators (dissipation)
 c_ops = [np.sqrt(0.1) * a]  # Decay rate 0.1
@@ -172,19 +172,18 @@ L = -1j * (spre(H) - spost(H)) + lindblad_dissipator(a, a)
 
 ### Superoperator Representations
 
+In v5 a single `to_*` family converts a superoperator/channel between
+representations (the directional v4 helpers like `choi_to_super` were removed):
+
 ```python
-# Kraus representation
-kraus_to_super(kraus_ops)
+# Build a superoperator from Kraus operators
+S = kraus_to_super(kraus_ops)
 
-# Choi matrix
-choi_to_super(choi_matrix)
-
-# Chi (process) matrix
-chi_to_super(chi_matrix)
-
-# Conversions
-super_to_choi(L)
-choi_to_kraus(choi_matrix)
+# Convert any superoperator to another representation
+choi = to_choi(S)     # Choi matrix
+chi  = to_chi(S)       # chi (process) matrix
+kr   = to_kraus(S)     # list of Kraus operators
+sup  = to_super(choi)  # back to superoperator from Choi
 ```
 
 ## Quantum Gates (requires qutip-qip)
@@ -255,18 +254,24 @@ args = {'w': 1.0}
 ### Spin Chains
 
 ```python
-# Heisenberg chain
+# Heisenberg chain.
+# QuTiP has no `tensor_at`; build a small helper that places an operator on
+# one site of an N-qubit tensor product (identity everywhere else).
+def site_op(op, i, N):
+    ops = [qeye(2)] * N
+    ops[i] = op
+    return tensor(ops)
+
 N_spins = 5
 J = 1.0  # Exchange coupling
 
-# Build Hamiltonian
 H = 0
 for i in range(N_spins - 1):
     # σᵢˣσᵢ₊₁ˣ + σᵢʸσᵢ₊₁ʸ + σᵢᶻσᵢ₊₁ᶻ
     H += J * (
-        tensor_at([sigmax()], i, N_spins) * tensor_at([sigmax()], i+1, N_spins) +
-        tensor_at([sigmay()], i, N_spins) * tensor_at([sigmay()], i+1, N_spins) +
-        tensor_at([sigmaz()], i, N_spins) * tensor_at([sigmaz()], i+1, N_spins)
+        site_op(sigmax(), i, N_spins) * site_op(sigmax(), i + 1, N_spins) +
+        site_op(sigmay(), i, N_spins) * site_op(sigmay(), i + 1, N_spins) +
+        site_op(sigmaz(), i, N_spins) * site_op(sigmaz(), i + 1, N_spins)
     )
 ```
 
@@ -279,9 +284,9 @@ rand_dm(N)  # Random density matrix
 rand_herm(N)  # Random Hermitian operator
 rand_unitary(N)  # Random unitary
 
-# Commutator and anti-commutator
+# Commutator and anti-commutator (anticommutator via kind='anti')
 commutator(A, B)  # [A, B]
-anti_commutator(A, B)  # {A, B}
+commutator(A, B, kind='anti')  # {A, B}
 
 # Matrix exponential
 (-1j * H * t).expm()  # e^(-iHt)

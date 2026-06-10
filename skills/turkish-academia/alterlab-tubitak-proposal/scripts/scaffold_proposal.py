@@ -80,10 +80,16 @@ class Section:
 
 # The verified ARDEB form tree (../references/form_structure.md).
 SECTIONS: list[Section] = [
-    Section("ozet", "Özet", "Özet (TR) ve Summary (EN) + Anahtar Kelimeler",
-            "Abstract in Turkish AND English (≤600 words each) + keywords",
+    # ÖZET and ABSTRACT are two SEPARATE blocks on the official form (one per language),
+    # each capped independently — keep them split so each can be word-counted on its own.
+    Section("ozet", "Özet", "ÖZET (TR) + Anahtar Kelimeler",
+            "Turkish abstract (≤600 words) + Turkish keywords",
             "Bilimsel Nitelik / Özgün Değer",
-            "Gap, aim, method, expected impact in one breath; ≤600 words per language."),
+            "Gap, aim, method, expected impact in one breath; ≤600 words."),
+    Section("abstract", "Özet-EN", "ABSTRACT (EN) + Keywords",
+            "English abstract (≤600 words) + English keywords",
+            "Bilimsel Nitelik / Özgün Değer",
+            "Faithful English rendering of the ÖZET; ≤600 words (counted separately)."),
     Section("ozgun_deger", "1", "ÖZGÜN DEĞER", "Original value / significance",
             "Bilimsel Nitelik / Özgün Değer",
             "The most weighted block; this is where novelty is decided."),
@@ -155,8 +161,8 @@ def build_scaffold(program: str, title: str, lang: str) -> str:
     for sec in SECTIONS:
         if not _required(sec, program):
             continue
-        # The Özet section has no numeric prefix; everything else leads with its number.
-        prefix = "" if sec.number == "Özet" else f"{sec.number}. "
+        # The abstract sections have no numeric prefix; everything else leads with its number.
+        prefix = "" if sec.number in ("Özet", "Özet-EN") else f"{sec.number}. "
         if lang == "en":
             heading = f"{prefix}{sec.en}"
         elif lang == "both":
@@ -184,9 +190,15 @@ def build_scaffold(program: str, title: str, lang: str) -> str:
 # ---- structure / cap check -------------------------------------------------
 
 _WORD_RE = re.compile(r"\b[\wçğıöşüÇĞİÖŞÜ’'-]+\b", re.UNICODE)
+_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+_PLACEHOLDER_RE = re.compile(r"^\s*_…_\s*$", re.MULTILINE)
 
 
 def _word_count(text: str) -> int:
+    # Don't count scaffold annotations (<!-- brief/dimension -->) or the _…_ placeholder
+    # toward the abstract word cap — only the researcher's own prose counts.
+    text = _COMMENT_RE.sub(" ", text)
+    text = _PLACEHOLDER_RE.sub(" ", text)
     return len(_WORD_RE.findall(text))
 
 
@@ -226,7 +238,9 @@ def check_draft(path: str, program: str) -> dict:
         # use a robust contains check on a short distinctive substring
         needle = token.lower()[:18]
         if needle and needle not in low:
-            missing.append(f"{sec.number}. {sec.tr}")
+            # The two abstract blocks have non-numeric internal ids; show just the heading.
+            label = sec.tr if sec.number in ("Özet", "Özet-EN") else f"{sec.number}. {sec.tr}"
+            missing.append(label)
     if missing:
         findings.append({"level": "warn", "code": "missing-sections",
                          "detail": f"{len(missing)} required section(s) not found: " + "; ".join(missing)})

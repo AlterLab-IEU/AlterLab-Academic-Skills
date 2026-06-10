@@ -88,10 +88,9 @@ Creates print-ready academic posters with professional layouts and visual design
 
 **Key Features**:
 - Custom poster dimensions (any size)
-- Professional design templates
-- Institution branding support
-- QR code generation for links
-- High-resolution output (300+ DPI)
+- Professional design layouts
+- High-resolution, print-ready output
+- QR codes / institution logos may need to be added manually (not documented pipeline flags)
 
 **Best For**: Conference poster sessions, symposiums, academic exhibitions, virtual conferences
 
@@ -107,15 +106,17 @@ Creates print-ready academic posters with professional layouts and visual design
    ```bash
    git clone https://github.com/YuhangChen1/Paper2All.git
    cd Paper2All
-   conda create -n paper2all python=3.11
-   conda activate paper2all
+   conda create -n p2w python=3.11
+   conda activate p2w
    pip install -r requirements.txt
    ```
+   Paper2Video runs in its own environment (`conda create -n p2v python=3.10`), and the optional talking-head module in a third (`conda create -n hallo python=3.10`).
 
 2. **Configure API Keys** (create `.env` file):
    ```
    OPENAI_API_KEY=your_openai_api_key_here
-   # Optional: GOOGLE_API_KEY and GOOGLE_CSE_ID for logo search
+   OPENAI_API_BASE=https://api.openai.com/v1   # or https://openrouter.ai/api/v1 for OpenRouter
+   # Optional: GOOGLE_SEARCH_API_KEY and GOOGLE_SEARCH_ENGINE_ID for logo search
    ```
 
 3. **Install System Dependencies**:
@@ -129,12 +130,20 @@ Creates print-ready academic posters with professional layouts and visual design
 
 ### Basic Usage
 
-**Generate All Components** (website + poster + video):
+`pipeline_all.py` drives the website, poster, and PR-material modules. The `--model-choice` flag selects **which component** to run — it is NOT a model selector. Omit it to run all modules (with automatic PDF detection).
+
+| `--model-choice` | Component |
+|------------------|-----------|
+| (omitted)        | All modules |
+| `1`              | Website (Paper2Web) only |
+| `2`              | Poster (Paper2Poster) only |
+| `3`              | PR materials (AutoPR) only |
+
+**Generate Everything** (website + poster + PR materials):
 ```bash
 python pipeline_all.py \
   --input-dir "path/to/paper" \
-  --output-dir "path/to/output" \
-  --model-choice 1
+  --output-dir "path/to/output"
 ```
 
 **Generate Website Only**:
@@ -142,8 +151,7 @@ python pipeline_all.py \
 python pipeline_all.py \
   --input-dir "path/to/paper" \
   --output-dir "path/to/output" \
-  --model-choice 1 \
-  --generate-website
+  --model-choice 1
 ```
 
 **Generate Poster with Custom Size**:
@@ -151,13 +159,12 @@ python pipeline_all.py \
 python pipeline_all.py \
   --input-dir "path/to/paper" \
   --output-dir "path/to/output" \
-  --model-choice 1 \
-  --generate-poster \
+  --model-choice 2 \
   --poster-width-inches 60 \
   --poster-height-inches 40
 ```
 
-**Generate Video** (lightweight pipeline):
+**Generate Video** (separate `p2v` environment, lightweight pipeline — no talking-head):
 ```bash
 python pipeline_light.py \
   --model_name_t gpt-4.1 \
@@ -165,6 +172,8 @@ python pipeline_light.py \
   --result_dir "path/to/output" \
   --paper_latex_root "path/to/paper"
 ```
+
+For the full video pipeline with a Hallo2 talking-head, use `pipeline.py` with `--ref_img`, `--ref_audio`, and `--gpu_list` (requires the `hallo` env and an NVIDIA A6000 48GB GPU).
 
 → **See `references/usage_examples.md` for comprehensive workflow examples**
 
@@ -236,22 +245,19 @@ input/
 
 ## Common Parameters
 
-### Model Selection
-- `--model-choice 1`: GPT-4 (best balance of quality and cost)
-- `--model-choice 2`: GPT-4.1 (latest features, higher cost)
-- `--model_name_t gpt-3.5-turbo`: Faster, lower cost (acceptable quality)
+### Component Selection (`pipeline_all.py`)
+- `--model-choice 1`: Website (Paper2Web) only
+- `--model-choice 2`: Poster (Paper2Poster) only
+- `--model-choice 3`: PR materials (AutoPR) only
+- (omit `--model-choice`): Run all modules
 
-### Component Selection
-- `--generate-website`: Enable website generation
-- `--generate-poster`: Enable poster generation
-- `--generate-video`: Enable video generation
-- `--enable-talking-head`: Add talking-head to video (requires GPU)
+### Model Selection (video pipeline)
+- `--model_name_t`: Model for text/script generation (e.g. `gpt-4.1`)
+- `--model_name_v`: Model for visual/slide generation (e.g. `gpt-4.1`)
 
-### Customization
+### Poster Customization (`pipeline_all.py`)
 - `--poster-width-inches [width]`: Custom poster width
 - `--poster-height-inches [height]`: Custom poster height
-- `--video-duration [seconds]`: Target video length
-- `--enable-logo-search`: Automatic institution logo discovery
 
 ## Output Structure
 
@@ -284,9 +290,9 @@ output/
 4. **Clean LaTeX**: Remove compilation artifacts, ensure source compiles successfully
 
 ### Model Selection Strategy
-- **GPT-4**: Best for production-quality outputs, conferences, publications
-- **GPT-4.1**: Use when you need latest features or best possible quality
-- **GPT-3.5-turbo**: Use for quick drafts, testing, or simple papers
+The LLM is configured via `OPENAI_API_KEY` / `OPENAI_API_BASE` in `.env` (point the base at OpenRouter to use Claude or other models). The video pipeline takes explicit `--model_name_t` / `--model_name_v` overrides:
+- **Stronger models (e.g. gpt-4.1)**: Best for production-quality outputs, conferences, publications
+- **Cheaper/faster models**: Fine for quick drafts, testing, or simple papers
 
 ### Component Priority
 For tight deadlines, generate in this order:
@@ -407,8 +413,7 @@ Process multiple papers efficiently:
 for paper in paper1 paper2 paper3; do
     python pipeline_all.py \
       --input-dir input/$paper \
-      --output-dir output/$paper \
-      --model-choice 1 &
+      --output-dir output/$paper &
 done
 wait
 ```

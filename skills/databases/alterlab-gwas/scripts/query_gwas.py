@@ -41,7 +41,15 @@ def variant(rs_id):
 
 
 def trait(efo_id, page=0, size=100):
-    """Associations for an EFO trait term (e.g. EFO_0001360)."""
+    """Associations for a trait term on the main REST API.
+
+    Pass the trait short-form as the catalog currently stores it, e.g.
+    MONDO_0005148 for type 2 diabetes. NOTE: the main REST API has migrated
+    many traits to MONDO/current EFO short-forms, so older IDs such as
+    EFO_0001360 now return 404 here (they still work on the separate
+    Summary Statistics API). Look the current ID up via
+    /efoTraits/search/findByTrait?trait=... if a path 404s.
+    """
     return _get(
         f"efoTraits/{efo_id}/associations", {"page": page, "size": size}
     )
@@ -59,8 +67,8 @@ def main():
     p_v = sub.add_parser("variant", help="Associations for an rsID")
     p_v.add_argument("rs_id", help="Variant rsID, e.g. rs7903146")
 
-    p_t = sub.add_parser("trait", help="Associations for an EFO trait")
-    p_t.add_argument("efo_id", help="EFO trait ID, e.g. EFO_0001360")
+    p_t = sub.add_parser("trait", help="Associations for a trait term")
+    p_t.add_argument("efo_id", help="Trait short-form, e.g. MONDO_0005148")
     p_t.add_argument("--page", type=int, default=0, help="Page index (0-based)")
     p_t.add_argument("--size", type=int, default=100, help="Results per page")
 

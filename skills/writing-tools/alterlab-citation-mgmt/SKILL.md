@@ -70,12 +70,14 @@ python scripts/format_bibtex.py references.bib --deduplicate --sort year --desce
 Entry types, required fields, and formatting rules: `references/bibtex_formatting.md`.
 
 ### Phase 4 — Validation
-Verify DOIs resolve, required fields are present, data is consistent, and there are no
-duplicates.
+Verify required fields are present, data is consistent, and there are no duplicates.
+DOI resolution is network-bound and OFF by default — add `--check-dois` to actually
+hit doi.org/CrossRef (slow). `validate_citations.py` reports only; it does not rewrite
+the file. To apply fixes (page dashes, author separators, dedup), run `format_bibtex.py`.
 
 ```bash
-python scripts/validate_citations.py references.bib --auto-fix \
-  --report validation.json --output validated_references.bib
+python scripts/validate_citations.py references.bib --check-dois \
+  --report validation.json --verbose
 ```
 Validation criteria and report format: `references/citation_validation.md` and the
 Validation Checks summary in `references/search_strategy_reference.md`.

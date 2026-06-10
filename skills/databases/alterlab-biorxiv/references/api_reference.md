@@ -21,23 +21,38 @@ Be respectful of the API:
 
 ### 1. Details by Date Range
 
-Retrieve preprints posted within a specific date range.
+Retrieve preprints posted within a specific date range. **There is no server-side
+category filter on this endpoint** — see the note below.
 
 **Endpoint:**
 ```
-GET /details/biorxiv/{start_date}/{end_date}
-GET /details/biorxiv/{start_date}/{end_date}/{category}
+GET /details/biorxiv/{start_date}/{end_date}/{cursor}/{format}
 ```
 
 **Parameters:**
 - `start_date`: Start date in YYYY-MM-DD format
 - `end_date`: End date in YYYY-MM-DD format
-- `category` (optional): Filter by subject category
+- `cursor`: Absolute record offset for pagination (0, then 30, 60, ...). The
+  endpoint returns **30 records per call**; iterate the cursor until it reaches
+  `messages[0].total`.
+- `format`: `json` (default) or `xml`
+
+**Pagination:** the `/details` endpoint is capped at 30 records per request.
+`messages[0]` reports `count` (records in this page), `cursor` (current offset),
+and `total` (records in the whole range). To retrieve everything, loop the cursor
+by 30 until `cursor >= total`.
+
+**Category filtering:** the `category` cannot be passed as a path segment here —
+e.g. `/details/biorxiv/{start}/{end}/neuroscience` returns an empty body. Filter
+client-side on each record's `category` field instead. Note that in records the
+category is **lowercase with spaces** (e.g. `cell biology`), whereas the input
+form used in URLs elsewhere is **hyphenated** (e.g. `cell-biology`); normalize
+between the two when filtering.
 
 **Example:**
 ```
-GET https://api.biorxiv.org/details/biorxiv/2024-01-01/2024-01-31
-GET https://api.biorxiv.org/details/biorxiv/2024-01-01/2024-01-31/neuroscience
+GET https://api.biorxiv.org/details/biorxiv/2024-01-01/2024-01-31/0/json
+GET https://api.biorxiv.org/details/biorxiv/2024-01-01/2024-01-31/30/json
 ```
 
 **Response:**
@@ -46,15 +61,17 @@ GET https://api.biorxiv.org/details/biorxiv/2024-01-01/2024-01-31/neuroscience
   "messages": [
     {
       "status": "ok",
-      "count": 150,
-      "total": 150
+      "interval": "2024-01-01:2024-01-31",
+      "cursor": 0,
+      "count": 30,
+      "total": "801"
     }
   ],
   "collection": [
     {
       "doi": "10.1101/2024.01.15.123456",
       "title": "Example Paper Title",
-      "authors": "Smith J, Doe J, Johnson A",
+      "authors": "Smith, J.; Doe, J.; Johnson, A.",
       "author_corresponding": "Smith J",
       "author_corresponding_institution": "University Example",
       "date": "2024-01-15",
@@ -70,40 +87,52 @@ GET https://api.biorxiv.org/details/biorxiv/2024-01-01/2024-01-31/neuroscience
 }
 ```
 
+Note: `authors` is **semicolon-separated** (`"Smith, J.; Doe, J."`), not
+comma-separated. `total` may be returned as a string.
+
 ### 2. Details by DOI
 
-Retrieve details for a specific preprint by DOI.
+Retrieve details for a specific preprint by DOI. The response `collection`
+contains one entry per version (ordered ascending), so the last entry is the
+latest version.
 
 **Endpoint:**
 ```
-GET /details/biorxiv/{doi}
+GET /details/biorxiv/{doi}/na/{format}
 ```
 
 **Parameters:**
 - `doi`: The DOI of the preprint (e.g., `10.1101/2024.01.15.123456`)
+- `format`: `json` or `xml`
 
 **Example:**
 ```
-GET https://api.biorxiv.org/details/biorxiv/10.1101/2024.01.15.123456
+GET https://api.biorxiv.org/details/biorxiv/10.1101/2024.01.15.123456/na/json
 ```
 
-### 3. Publications by Interval
+### 3. Published-Article Metadata (Pubs)
 
-Retrieve recent publications from a time interval.
+Retrieve metadata for the **published (journal) version** of bioRxiv preprints
+that have subsequently been published. Useful for linking a preprint to its
+peer-reviewed DOI; it is not a feed of arbitrary preprints.
 
 **Endpoint:**
 ```
-GET /pubs/biorxiv/{interval}/{cursor}/{format}
+GET /pubs/biorxiv/{interval}/{cursor}
 ```
 
 **Parameters:**
-- `interval`: Number of days back to search (e.g., `1` for last 24 hours)
-- `cursor`: Pagination cursor (0 for first page, increment by 100 for subsequent pages)
-- `format`: Response format (`json` or `xml`)
+- `interval`: A date range (`YYYY-MM-DD/YYYY-MM-DD`) or a numeric value for the N
+  most recent published records.
+- `cursor`: Pagination cursor. This endpoint returns **100 records per call**;
+  increment the cursor by 100 for subsequent pages.
+
+The response carries both preprint and publication fields (e.g. `biorxiv_doi`,
+`published_doi`, `published_journal`, publication dates).
 
 **Example:**
 ```
-GET https://api.biorxiv.org/pubs/biorxiv/1/0/json
+GET https://api.biorxiv.org/pubs/biorxiv/2024-01-01/2024-01-31/0
 ```
 
 **Response includes pagination:**
@@ -161,7 +190,7 @@ Each paper in the `collection` array contains:
 |-------|-------------|------|
 | `doi` | Digital Object Identifier | string |
 | `title` | Paper title | string |
-| `authors` | Comma-separated author list | string |
+| `authors` | Semicolon-separated author list (e.g. `"Smith, J.; Doe, J."`) | string |
 | `author_corresponding` | Corresponding author name | string |
 | `author_corresponding_institution` | Corresponding author's institution | string |
 | `date` | Publication date (YYYY-MM-DD) | string |
@@ -213,8 +242,8 @@ Full structured XML is available via the `jatsxml` field in the API response.
 
 ### Recent Papers by Category
 
-1. Use `/pubs/biorxiv/{interval}/0/json` endpoint
-2. Filter by category if needed
+1. Use the `/details` date-range endpoint over a recent window (e.g. the last N days)
+2. Paginate the full range, then filter client-side on each paper's `category` field
 
 ## Error Handling
 

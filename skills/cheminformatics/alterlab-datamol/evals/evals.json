@@ -7,7 +7,7 @@
       "expected_output": "Invokes alterlab-datamol: reads the CSV with dm.read_csv, standardizes each molecule via dm.standardize_mol (disconnect_metals/normalize/reionize) while dropping None parses from dm.to_mol, then runs dm.descriptors.batch_compute_many_descriptors with n_jobs=-1 to get mw/logp/hbd/hba/tpsa, returning a clean DataFrame ready for a Rule-of-Five mask.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Uses datamol (dm.*) for parsing, standardization, and batch descriptor computation rather than raw RDKit, and handles failed SMILES parses." }
+        { "type": "behavior", "value": "Uses datamol (dm.*) for parsing, standardization, and dm.descriptors.batch_compute_many_descriptors rather than raw RDKit, handles failed SMILES parses, and references the descriptors by datamol's own key names (clogp, n_lipinski_hbd, n_lipinski_hba) — not RDKit's logp/hbd/hba." }
       ]
     },
     {
@@ -25,7 +25,7 @@
       "expected_output": "Invokes alterlab-datamol: computes Bemis-Murcko scaffolds with dm.to_scaffold_murcko, canonicalizes each via dm.to_smiles, groups molecules per scaffold and uses a Counter to surface the 10 most frequent scaffold SMILES.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "scaffold" }
+        { "type": "output_contains", "value": "dm.to_scaffold_murcko" }
       ]
     },
     {

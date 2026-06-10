@@ -1,6 +1,6 @@
 # Digital Pathology Guide for IDC
 
-**Tested with:** IDC data version v23, idc-index 0.11.10
+**Tested with:** IDC data version v24, idc-index 0.12.3
 
 For general IDC queries and downloads, use `idc-index` (see main SKILL.md). This guide covers slide microscopy (SM) imaging, microscopy bulk simple annotations (ANN), and segmentations (SEG) in the context of digital pathology in IDC.
 

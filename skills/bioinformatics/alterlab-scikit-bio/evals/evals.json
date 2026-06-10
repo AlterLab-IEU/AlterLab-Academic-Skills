@@ -24,11 +24,11 @@
     {
       "id": "unifrac-phylogenetic",
       "prompt": "I want weighted UniFrac distances between my microbiome samples, which means I need to bring in my phylogenetic tree and map the feature IDs.",
-      "expected_output": "Invokes alterlab-scikit-bio. Uses beta_diversity('weighted_unifrac', counts_matrix, ids=..., tree=tree, otu_ids=feature_ids), noting that phylogenetic metrics require the tree and OTU/feature ID mapping; tree read via TreeNode.read.",
+      "expected_output": "Invokes alterlab-scikit-bio. Uses beta_diversity('weighted_unifrac', counts_matrix, ids=..., tree=tree, taxa=feature_ids), noting that phylogenetic metrics require the tree and feature (taxa) ID mapping; tree read via TreeNode.read.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "unifrac" },
-        { "type": "behavior", "value": "Computes UniFrac passing a tree and otu_ids alongside the counts." }
+        { "type": "behavior", "value": "Computes UniFrac passing a tree and taxa (feature) IDs alongside the counts." }
       ]
     },
     {

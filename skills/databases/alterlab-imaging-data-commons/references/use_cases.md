@@ -1,6 +1,6 @@
 # Common Use Cases for IDC
 
-**Tested with:** idc-index 0.11.9 (IDC data version v23)
+**Tested with:** idc-index 0.12.3 (IDC data version v24)
 
 This guide provides complete end-to-end workflow examples for common IDC use cases. Each use case demonstrates the full workflow from query to download with best practices.
 

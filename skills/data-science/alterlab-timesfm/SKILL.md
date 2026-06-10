@@ -196,8 +196,8 @@ for i, col in enumerate(df.columns):
     forecast_df = pd.DataFrame({
         "date": future_dates,
         "forecast": point[i],
-        "lower_80": quantiles[i, :, 2],  # 20th percentile
-        "upper_80": quantiles[i, :, 8],  # 80th percentile
+        "lower_80": quantiles[i, :, 1],  # q10 — lower bound of 80% PI
+        "upper_80": quantiles[i, :, 9],  # q90 — upper bound of 80% PI
     })
     print(f"\n--- {col} ---")
     print(forecast_df.to_string(index=False))

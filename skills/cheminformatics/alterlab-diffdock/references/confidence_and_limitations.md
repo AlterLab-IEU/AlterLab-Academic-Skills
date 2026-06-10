@@ -173,9 +173,10 @@ For methodology details and benchmarking results, see:
    - "DiffDock: Diffusion Steps, Twists, and Turns for Molecular Docking"
    - Corso et al., arXiv:2210.01776
 
-2. **DiffDock-L Paper** (2024):
+2. **DiffDock-L Paper** (ICLR 2024):
+   - "Deep Confident Steps to New Pockets: Strategies for Docking Generalization"
    - Enhanced model with improved generalization
-   - Stärk et al., arXiv:2402.18396
+   - Corso et al., arXiv:2402.18396
 
 3. **PoseBusters Benchmark**:
    - Rigorous docking evaluation framework

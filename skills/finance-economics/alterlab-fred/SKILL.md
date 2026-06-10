@@ -51,9 +51,14 @@ from scripts.fred_query import FREDQuery
 # Initialize with API key
 fred = FREDQuery(api_key="YOUR_KEY")  # or uses FRED_API_KEY env var
 
-# Get GDP data
-gdp = fred.get_series("GDP")
-print(f"Latest GDP: {gdp['observations'][-1]}")
+# get_series returns METADATA (title, units, frequency) under "seriess".
+# For the actual data values, use get_observations (returns "observations").
+meta = fred.get_series("GDP")
+print(meta["seriess"][0]["title"])  # "Gross Domestic Product"
+
+# Get the latest GDP value
+gdp = fred.get_observations("GDP", limit=1, sort_order="desc")
+print(f"Latest GDP: {gdp['observations'][0]}")
 
 # Get unemployment rate observations
 unemployment = fred.get_observations("UNRATE", limit=12)

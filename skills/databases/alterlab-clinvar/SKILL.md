@@ -1,6 +1,6 @@
 ---
 name: alterlab-clinvar
-description: Query NCBI ClinVar via the E-utilities API or FTP for the clinical significance of genetic variants, searching by gene, variant, or genomic position and interpreting pathogenicity classifications. Use when assessing whether a variant is pathogenic or benign, annotating VCFs with clinical interpretations, or supporting genomic and clinical-genetics medicine. Part of the AlterLab Academic Skills suite.
+description: Query NCBI ClinVar via the E-utilities API or FTP for the clinical significance (pathogenicity) of human germline genetic variants, searching by gene, variant, condition, or genomic position and interpreting ACMG/AMP classifications and review-status star ratings. Use when assessing whether a variant is pathogenic, likely pathogenic, VUS, likely benign, or benign, resolving conflicting interpretations, or annotating a VCF with ClinVar clinical significance. For population allele frequencies by ancestry use alterlab-gnomad; for somatic cancer mutation frequencies use alterlab-cosmic. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless NCBI E-utilities REST API; optional NCBI API key raises rate limits
@@ -35,13 +35,14 @@ This skill should be used when:
 
 Search ClinVar using the web interface at https://www.ncbi.nlm.nih.gov/clinvar/
 
-**Common search patterns:**
+**Common search patterns** (field tags verified against the live `einfo` field list — there is **no `[CLNSIG]` or `[RVSTAT]` field**; using them silently falls back to `[All Fields]` and does NOT filter):
 - By gene: `BRCA1[gene]`
-- By clinical significance: `pathogenic[CLNSIG]`
-- By condition: `breast cancer[disorder]`
-- By variant: `NM_000059.3:c.1310_1313del[variant name]`
+- By clinical significance: `clinsig_pathogenic[Properties]` (also `clinsig_likely_pathogenic`, `clinsig_benign`, `clinsig_likely_benign`, `clinsig_uncertain`, `clinsig_has_conflicts`)
+- By review status: `"reviewed by expert panel"[Review status]`, `"practice guideline"[Review status]`, `"criteria provided, single submitter"[Review status]`
+- By condition: `"breast cancer"[Disease/Phenotype]`
+- By variant: `"c.1310_1313del"[Variant name]`
 - By chromosome: `13[chr]`
-- Combined: `BRCA1[gene] AND pathogenic[CLNSIG]`
+- Combined: `BRCA1[gene] AND clinsig_pathogenic[Properties]`
 
 #### Programmatic Access via E-utilities
 
@@ -54,8 +55,9 @@ Access ClinVar programmatically using NCBI's E-utilities API. Refer to `referenc
 **Quick example using curl:**
 ```bash
 # Search for pathogenic BRCA1 variants
-curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=clinvar&term=BRCA1[gene]+AND+pathogenic[CLNSIG]&retmode=json"
+curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=clinvar&term=BRCA1[gene]+AND+clinsig_pathogenic[Properties]&retmode=json"
 ```
+Always inspect the `querytranslation` field in the response: if a `[...]` tag is unknown, NCBI rewrites it to `[All Fields]` and your filter is silently dropped.
 
 **Best practices:**
 - Test queries on the web interface before automating
@@ -162,16 +164,18 @@ bcftools view -i 'INFO/GENEINFO~"BRCA"' clinvar.vcf.gz
 bcftools annotate -a clinvar.vcf.gz -c INFO your_variants.vcf
 ```
 
-**Using PyVCF in Python:**
+**Using pysam in Python** (the old `PyVCF`/`import vcf` package is unmaintained and breaks on Python 3.10+; use `pysam` or `cyvcf2` instead):
 ```python
-import vcf
+import pysam
 
-vcf_reader = vcf.Reader(filename='clinvar.vcf.gz')
-for record in vcf_reader:
-    clnsig = record.INFO.get('CLNSIG', [])
-    if 'Pathogenic' in clnsig:
-        gene = record.INFO.get('GENEINFO', [''])[0]
-        print(f"{record.CHROM}:{record.POS} {gene} - {clnsig}")
+vcf = pysam.VariantFile("clinvar.vcf.gz")
+for rec in vcf:
+    # CLNSIG is a comma/pipe-delimited string (e.g. "Pathogenic/Likely_pathogenic");
+    # match as substring, not equality.
+    clnsig = str(rec.info.get("CLNSIG", ""))
+    if "Pathogenic" in clnsig:
+        gene = rec.info.get("GENEINFO", "")
+        print(f"{rec.chrom}:{rec.pos} {gene} - {clnsig}")
 ```
 
 #### Working with Tab-Delimited Files
@@ -217,7 +221,7 @@ When multiple submitters provide different classifications for the same variant,
 
 **Search query to exclude conflicts:**
 ```
-TP53[gene] AND pathogenic[CLNSIG] NOT conflicting[RVSTAT]
+TP53[gene] AND clinsig_pathogenic[Properties] NOT clinsig_has_conflicts[Properties]
 ```
 
 ### 6. Track Classification Updates
@@ -261,7 +265,7 @@ Contact: clinvar@ncbi.nlm.nih.gov for submission account setup.
 **Steps:**
 1. Search using web interface or E-utilities:
    ```
-   CFTR[gene] AND pathogenic[CLNSIG] AND (reviewed by expert panel[RVSTAT] OR practice guideline[RVSTAT])
+   CFTR[gene] AND clinsig_pathogenic[Properties] AND ("reviewed by expert panel"[Review status] OR "practice guideline"[Review status])
    ```
 2. Review results, noting review status (should be ★★★ or ★★★★)
 3. Export variant list or retrieve full records via efetch
@@ -296,7 +300,7 @@ Contact: clinvar@ncbi.nlm.nih.gov for submission account setup.
 **Steps:**
 1. Search by condition:
    ```
-   hereditary breast cancer[disorder] OR "Breast-ovarian cancer, familial"[disorder]
+   "hereditary breast cancer"[Disease/Phenotype] OR "Breast-ovarian cancer, familial"[Disease/Phenotype]
    ```
 2. Download results as CSV or retrieve via E-utilities
 3. Filter by review status to prioritize high-confidence variants
@@ -366,7 +370,7 @@ For questions about ClinVar or data submission: clinvar@ncbi.nlm.nih.gov
 `scripts/query_clinvar.py` — runnable helper for ClinVar via NCBI E-utilities (no key; `NCBI_API_KEY` lifts the rate limit):
 
 ```bash
-python scripts/query_clinvar.py search "BRCA1[gene] AND pathogenic[CLNSIG]" --retmax 5
+python scripts/query_clinvar.py search "BRCA1[gene] AND clinsig_pathogenic[Properties]" --retmax 5
 python scripts/query_clinvar.py summary 12345,12346
 ```
 

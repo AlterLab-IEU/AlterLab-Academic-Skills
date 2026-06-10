@@ -48,10 +48,10 @@ This document provides a comprehensive reference of all filtering functions avai
 - Ensures consistency between SMILES, InChI, and InChIKey
 - Validates chemical structure annotations match
 
-**add_fingerprint(spectrum, fingerprint_type="daylight", nbits=2048, radius=2)**
+**add_fingerprint(spectrum, fingerprint_type="daylight", nbits=2048)**
 - Generates molecular fingerprints for similarity calculations
-- Fingerprint types: "daylight", "morgan1", "morgan2", "morgan3"
-- Used with FingerprintSimilarity scoring
+- `fingerprint_type` is one of: `"daylight"`, `"morgan1"`, `"morgan2"`, `"morgan3"` (the digit is the Morgan radius; there is no separate `radius=` argument and `"morgan"` alone is invalid)
+- Used with FingerprintSimilarity scoring; requires rdkit
 
 ### Mass & Charge Information
 
@@ -124,25 +124,25 @@ This document provides a comprehensive reference of all filtering functions avai
 
 ### Repair & Quality Functions
 
-**repair_adduct_based_on_smiles(spectrum, mass_tolerance=0.1)**
-- Corrects adduct using SMILES and mass matching
-- Validates adduct matches calculated mass
+**repair_adduct_based_on_parent_mass(spectrum, mass_tolerance)**
+- Corrects adduct so it is consistent with the parent mass
+- `mass_tolerance` is required (no default)
+- Related: `repair_adduct_and_parent_mass_based_on_smiles(spectrum, mass_tolerance)`
 
-**repair_parent_mass_is_mol_wt(spectrum, mass_tolerance=0.1)**
-- Converts molecular weight to monoisotopic mass
-- Fixes common metadata confusion
+**repair_parent_mass_is_molar_mass(spectrum, mass_tolerance)**
+- Converts an average molar mass mistakenly stored as parent mass to the monoisotopic mass
+- `mass_tolerance` is required (no default)
 
-**repair_precursor_is_parent_mass(spectrum)**
-- Fixes swapped precursor/parent mass values
-- Corrects field misassignments
+**repair_parent_mass_from_smiles(spectrum, mass_tolerance=0.1)**
+- Recomputes parent mass from the SMILES structure
 
-**repair_smiles_of_salts(spectrum, mass_tolerance=0.1)**
+**repair_smiles_of_salts(spectrum, mass_tolerance)**
 - Removes salt components to match parent mass
-- Extracts relevant molecular fragment
+- Extracts relevant molecular fragment; `mass_tolerance` is required (no default)
 
-**require_parent_mass_match_smiles(spectrum, mass_tolerance=0.1)**
+**require_parent_mass_match_smiles(spectrum, mass_tolerance)**
 - Validates parent mass against SMILES-calculated mass
-- Returns None if masses don't match within tolerance
+- Returns None if masses don't match within tolerance; `mass_tolerance` is required
 
 **require_valid_annotation(spectrum)**
 - Ensures complete, consistent chemical annotations
@@ -196,38 +196,42 @@ This document provides a comprehensive reference of all filtering functions avai
 
 ### Loss Calculation
 
-**add_losses(spectrum, loss_mz_from=5.0, loss_mz_to=200.0)**
-- Derives neutral losses from precursor mass
-- Calculates loss = precursor_mz - fragment_mz
-- Adds losses to spectrum for NeutralLossesCosine scoring
+**Spectrum.compute_losses(loss_mz_from=0.0, loss_mz_to=None)** (method, not a filter)
+- Derives neutral losses (loss = precursor_mz - fragment_mz) and returns a `Fragments` object; also exposed via the `Spectrum.losses` property
+- The old `matchms.filtering.add_losses` filter no longer exists — `NeutralLossesCosine` computes losses internally, so you rarely need to call this yourself
 
 ## Pipeline Functions
 
 **default_filters(spectrum)**
-- Applies nine essential metadata filters sequentially:
+- Applies nine essential metadata filters sequentially (matchms 0.33.x):
   1. make_charge_int
-  2. add_precursor_mz
-  3. add_retention_time
-  4. add_retention_index
-  5. derive_adduct_from_name
-  6. derive_formula_from_name
-  7. clean_compound_name
-  8. harmonize_undefined_smiles
-  9. harmonize_undefined_inchi
+  2. add_compound_name
+  3. derive_adduct_from_name
+  4. derive_formula_from_name
+  5. clean_compound_name
+  6. interpret_pepmass
+  7. add_precursor_mz
+  8. derive_ionmode
+  9. correct_charge
 - Recommended starting point for metadata harmonization
+- Note: retention-time / structure-harmonization filters (add_retention_time, harmonize_undefined_smiles, etc.) are NOT part of default_filters — add them explicitly if needed
 
 **SpectrumProcessor(filters)**
 - Orchestrates multi-filter pipelines
-- Accepts list of filter functions
+- Accepts an iterable of filters; each item may be a filter name (str), a callable, or a `("filter_name", {kwargs})` tuple. The string/tuple form is preferred because `processor.processing_steps` then reports the exact parameters used (reproducibility).
+- A `SpectrumProcessor` instance is **not callable**. Run it with `processor.process_spectrum(spectrum)` (single) or `processor.process_spectra(spectra)` (list).
+- `process_spectra` returns a **`(processed_spectra, report)` tuple** — unpack it.
 - Example:
 ```python
 from matchms import SpectrumProcessor
+from matchms.filtering import default_filters
 processor = SpectrumProcessor([
-    default_filters,
-    normalize_intensities,
-    lambda s: select_by_relative_intensity(s, intensity_from=0.01)
+    default_filters,  # composite — pass the callable; "default_filters" is not a registered string name
+    "normalize_intensities",
+    ("select_by_relative_intensity", {"intensity_from": 0.01}),
 ])
-processed = processor(spectrum)
+processed = processor.process_spectrum(spectrum)         # one spectrum
+processed_list, report = processor.process_spectra(spectra)  # many
 ```
 
 ## Common Filter Combinations

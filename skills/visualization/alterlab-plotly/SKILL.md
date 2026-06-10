@@ -1,6 +1,6 @@
 ---
 name: alterlab-plotly
-description: Builds interactive charts with the Plotly Python library — hover tooltips, zoom, pan, and HTML/web-embeddable output. Use when a visualization needs interactivity, when building dashboards, exploratory data analysis, or presentation/web-embedded charts. For static publication figures use matplotlib or scientific-visualization. Part of the AlterLab Academic Skills suite.
+description: Builds INTERACTIVE charts with the Plotly Python library (plotly.express / graph_objects) — hover tooltips, zoom/pan, animations, rangesliders, 3D rotation, and standalone HTML/web-embeddable output. Use when a chart must be interactive or web-embedded, for dashboards (incl. Dash), exploratory data analysis, or rotatable 3D plots. For static publication figures defer to alterlab-matplotlib; for static statistical charts (heatmaps, distributions) defer to alterlab-seaborn; for diagrams/schematics defer to alterlab-scientific-viz. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 compatibility: Requires the plotly Python library (pip install plotly); static image export (PNG/PDF/SVG) additionally needs kaleido
@@ -75,7 +75,7 @@ Plotly supports 40+ chart types organized into categories:
 
 **Financial Charts:** candlestick, OHLC, waterfall, funnel, time series
 
-**Maps:** scatter maps, choropleth, density maps (geographic visualization)
+**Maps:** scatter maps, choropleth, density maps (geographic, MapLibre-backed)
 
 **3D Charts:** scatter3d, surface, mesh, cone, volume
 
@@ -164,7 +164,8 @@ For complete export options, see [references/export-interactivity.md](references
 ```python
 import plotly.express as px
 
-# Scatter plot with trendline
+# Scatter plot with trendline (trendline='ols'/'lowess' requires statsmodels:
+#   uv pip install statsmodels)
 fig = px.scatter(df, x='temperature', y='yield', trendline='ols')
 
 # Heatmap from matrix
@@ -249,7 +250,7 @@ app.layout = html.Div([
     dcc.Graph(figure=fig)
 ])
 
-app.run_server(debug=True)
+app.run(debug=True)  # Dash 3.x: run_server() was removed; use app.run()
 ```
 
 ## Reference Files

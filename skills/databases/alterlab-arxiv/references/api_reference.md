@@ -7,8 +7,10 @@ The arXiv API provides programmatic access to preprint metadata via an Atom XML 
 ## Base URL
 
 ```
-http://export.arxiv.org/api/query
+https://export.arxiv.org/api/query
 ```
+
+(The docs historically show `http://`; the endpoint also serves HTTPS, which the script uses.)
 
 ## Rate Limiting
 
@@ -24,7 +26,7 @@ http://export.arxiv.org/api/query
 | `search_query` | Query string with field prefixes and boolean operators | (none) |
 | `id_list` | Comma-separated arXiv IDs | (none) |
 | `start` | Starting index for pagination (0-based) | `0` |
-| `max_results` | Number of results to return (max 300) | `10` |
+| `max_results` | Number of results to return (max 2000 per call) | `10` |
 | `sortBy` | Sort field: `relevance`, `lastUpdatedDate`, `submittedDate` | `relevance` |
 | `sortOrder` | Sort direction: `ascending`, `descending` | `descending` |
 
@@ -138,24 +140,25 @@ The API returns an Atom 1.0 XML feed.
 ### Entry elements
 
 ```xml
+<!-- Illustrative entry: structure only; values are placeholders. -->
 <entry>
   <!-- Unique identifier (includes version) -->
-  <id>http://arxiv.org/abs/2309.10668v2</id>
+  <id>http://arxiv.org/abs/YYMM.NNNNNv2</id>
 
   <!-- Dates -->
   <published>2023-09-19T17:58:00Z</published>
   <updated>2023-10-04T14:22:00Z</updated>
 
   <!-- Metadata -->
-  <title>Towards Monosemanticity: Decomposing Language Models...</title>
-  <summary>We attempt to reverse-engineer a trained neural network...</summary>
+  <title>Example Paper Title...</title>
+  <summary>Full abstract text...</summary>
 
   <!-- Authors -->
   <author>
-    <name>Trenton Bricken</name>
+    <name>First Author</name>
   </author>
   <author>
-    <name>Adly Templeton</name>
+    <name>Second Author</name>
   </author>
 
   <!-- Categories -->
@@ -164,12 +167,12 @@ The API returns an Atom 1.0 XML feed.
   <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
 
   <!-- Links -->
-  <link href="http://arxiv.org/abs/2309.10668v2" rel="alternate" type="text/html"/>
-  <link href="http://arxiv.org/pdf/2309.10668v2" rel="related" type="application/pdf" title="pdf"/>
+  <link href="http://arxiv.org/abs/YYMM.NNNNNv2" rel="alternate" type="text/html"/>
+  <link href="http://arxiv.org/pdf/YYMM.NNNNNv2" rel="related" type="application/pdf" title="pdf"/>
 
-  <!-- Optional -->
+  <!-- Optional (present only when the author/arXiv supplies them) -->
   <arxiv:comment>42 pages, 30 figures</arxiv:comment>
-  <arxiv:doi>10.48550/arXiv.2309.10668</arxiv:doi>
+  <arxiv:doi>10.1103/PhysRevLett.XX.XXXXXX</arxiv:doi>
   <arxiv:journal_ref>...</arxiv:journal_ref>
 </entry>
 ```
@@ -353,7 +356,7 @@ The API returns an Atom 1.0 XML feed.
 
 ## Pagination
 
-The API returns at most 300 results per request. For larger result sets, paginate:
+The API returns at most 2000 results per request, and at most 30000 results in total across paginated calls (requests beyond that return HTTP 400). For larger result sets, paginate in slices of <=2000:
 
 ```python
 all_results = []
@@ -419,7 +422,7 @@ All formats are accepted by the API.
 4. **Empty result placeholder**: When no results are found, arXiv may return a single entry with an empty title and the id `http://arxiv.org/api/errors` - filter this out
 5. **Version numbering**: `published` date is v1 submission; `updated` is latest version date
 6. **Rate limiting**: Exceeding limits can result in 403 errors or temporary bans
-7. **Max 300 per request**: Even if `max_results` is set higher, only 300 are returned
+7. **Max 2000 per request**: `max_results` is capped at 2000 per call; retrieve more via `start`-based pagination (30000 total cap)
 
 ## External Resources
 

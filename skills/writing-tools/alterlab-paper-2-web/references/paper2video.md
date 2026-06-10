@@ -43,6 +43,8 @@ Paper2Video generates presentation videos from LaTeX sources, transforming acade
 
 ## Usage
 
+The video pipelines run in their own `p2v` conda environment (Python 3.10), separate from the `p2w` website/poster environment.
+
 ### Basic Video Generation (Without Talking-Head)
 
 ```bash
@@ -55,36 +57,33 @@ python pipeline_light.py \
 
 ### Full Video Generation (With Talking-Head)
 
+Use `pipeline.py` with a reference image and audio for the Hallo2 talking-head (requires the `hallo` env and an NVIDIA A6000 48GB GPU):
+
 ```bash
-python pipeline_all.py \
-  --input-dir "path/to/papers" \
-  --output-dir "path/to/output" \
-  --model-choice 1 \
-  --enable-talking-head
+python pipeline.py \
+  --model_name_t gpt-4.1 \
+  --model_name_v gpt-4.1 \
+  --result_dir /path/to/output \
+  --paper_latex_root /path/to/paper \
+  --ref_img /path/to/ref_img.png \
+  --ref_audio /path/to/ref_audio.wav \
+  --gpu_list [0,1,2,3,4,5,6,7]
 ```
 
 ### Parameters
 
 **Model Configuration:**
-- `--model_name_t`: Model for text/subtitle generation (default: gpt-4.1)
-- `--model_name_v`: Model for visual/slide generation (default: gpt-4.1)
-- `--model-choice`: Preset model configuration (1=GPT-4, 2=GPT-4.1)
+- `--model_name_t`: Model for text/subtitle generation (e.g. `gpt-4.1`)
+- `--model_name_v`: Model for visual/slide generation (e.g. `gpt-4.1`)
 
 **Input/Output:**
 - `--paper_latex_root`: Root directory of LaTeX paper source
-- `--result_dir` or `--output-dir`: Output directory for generated videos
-- `--input-dir`: Directory containing multiple papers to process
+- `--result_dir`: Output directory for generated videos
 
-**Video Options:**
-- `--enable-talking-head`: Enable talking-head video generation (requires GPU)
-- `--video-duration`: Target video duration in seconds (default: auto-calculated)
-- `--slides-per-minute`: Control presentation pacing (default: 2-3)
-- `--voice`: Voice selection for speech synthesis
-
-**Quality Settings:**
-- `--video-resolution`: Output resolution (default: 1920x1080)
-- `--video-fps`: Frame rate (default: 30)
-- `--audio-quality`: Audio bitrate (default: 192kbps)
+**Talking-Head Options (`pipeline.py`):**
+- `--ref_img`: Reference image of the presenter
+- `--ref_audio`: Reference audio for voice cloning
+- `--gpu_list`: GPUs to use for Hallo2 generation (e.g. `[0,1,2,3,4,5,6,7]`)
 
 ## Input Requirements
 
@@ -242,9 +241,9 @@ Benefits:
 4. **Complete content**: Include all necessary files and references
 
 ### Model Selection
-- **Text generation (model_name_t)**: GPT-4.1 for best script quality
-- **Visual generation (model_name_v)**: GPT-4.1 for optimal slide design
-- For faster processing with acceptable quality: GPT-3.5-turbo
+- **Text generation (`--model_name_t`)**: a strong model (e.g. `gpt-4.1`) for best script quality
+- **Visual generation (`--model_name_v`)**: a strong model (e.g. `gpt-4.1`) for optimal slide design
+- A cheaper/faster model is acceptable for drafts of simple papers
 
 ### Video Optimization
 1. **Target duration**: 10-15 minutes for conference talks, 30-45 for detailed presentations

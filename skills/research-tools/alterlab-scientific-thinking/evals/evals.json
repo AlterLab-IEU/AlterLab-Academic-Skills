@@ -40,10 +40,10 @@
     {
       "id": "near-miss-peer-review",
       "prompt": "Here is a colleague's full manuscript submitted to a journal. Please write me a formal structured peer review with section-by-section comments and an accept/minor/major/reject recommendation I can submit to the editor.",
-      "expected_output": "Does NOT invoke this skill; defers to the peer-review skill (alterlab-paper-reviewer). The user wants a formal, submittable structured peer review with a verdict, not an internal critical-thinking evaluation of evidence quality. The skill's own description routes formal peer review writing to peer-review.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-peer-review. The user wants a formal, submittable referee report with section-by-section comments and an editorial verdict, not an internal critical-thinking evaluation of evidence quality. This skill's description routes formal peer review writing to alterlab-peer-review (and a multi-reviewer mock panel to alterlab-paper-reviewer).",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
-        { "type": "output_contains", "value": "peer-review" }
+        { "type": "output_contains", "value": "alterlab-peer-review" }
       ]
     },
     {

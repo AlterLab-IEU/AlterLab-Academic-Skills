@@ -2,8 +2,8 @@
 name: alterlab-omero
 description: Manages microscopy image data on an OMERO server via the OMERO Python API (BlitzGateway) — access images, retrieve datasets, read pixel data, manage ROIs and annotations, and batch-process. Use when connecting to an OMERO server, pulling microscopy images or datasets, analyzing pixels, managing ROIs/annotations, or running high-content screening and microscopy workflows. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
-compatibility: Requires a reachable OMERO server (host, port, credentials) and the omero-py client (pip install omero-py) for BlitzGateway access
+allowed-tools: Read, Write, Edit, Bash(uv:*)
+compatibility: Requires a reachable OMERO server (host, port, credentials) and the omero-py client (uv pip install omero-py) for BlitzGateway access
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -125,9 +125,9 @@ Covers permissions, filesets, cross-group queries, delete operations, and other 
 uv pip install omero-py
 ```
 
-**Requirements:**
-- Python 3.7+
-- Zeroc Ice 3.6+
+**Requirements (omero-py 5.22.x):**
+- Python 3.10+
+- Zeroc Ice: omero-py pins `zeroc-ice>=3.6.5,<3.7` — Ice 3.7 is NOT supported, so don't install a 3.7 wheel.
 - Access to an OMERO server (host, port, credentials)
 
 ## Quick Start
@@ -219,6 +219,7 @@ Always wrap OMERO operations in try-except blocks and ensure connections are pro
 from omero.gateway import BlitzGateway
 import traceback
 
+conn = None  # bind first so the finally block is safe if the constructor raises
 try:
     conn = BlitzGateway(username, password, host=host, port=port)
     if not conn.connect():

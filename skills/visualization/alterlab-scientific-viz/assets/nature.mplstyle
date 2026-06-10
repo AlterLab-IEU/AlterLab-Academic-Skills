@@ -9,7 +9,9 @@
 # Figure properties
 figure.dpi: 100
 figure.facecolor: white
-figure.constrained_layout.use: True
+# Layout engine left off: call fig.tight_layout() or use
+# plt.subplots(layout='constrained') per figure to avoid override warnings.
+figure.constrained_layout.use: False
 figure.figsize: 3.5, 2.625  # 89 mm single column, 3:4 aspect
 
 # Font properties (Nature prefers smaller fonts)

@@ -80,9 +80,9 @@ Returns data + metadata for multiple series in one request. Response is keyed by
 ### Examples
 
 ```python
-# Fetch multiple leverage series at once
+# Fetch multiple strategy-level leverage series at once
 resp = requests.get(f"{BASE}/series/multifull", params={
-    "mnemonics": "FPF-ALLQHF_LEVERAGERATIO_GAVWMEAN,FPF-STRATEGY_EQUITY_LEVERAGERATIO_GAVWMEAN,FPF-STRATEGY_CREDIT_LEVERAGERATIO_GAVWMEAN",
+    "mnemonics": "FPF-STRATEGY_EQUITY_LEVERAGERATIO_GAVWMEAN,FPF-STRATEGY_CREDIT_LEVERAGERATIO_GAVWMEAN,FPF-STRATEGY_MACRO_LEVERAGERATIO_GAVWMEAN",
     "start_date": "2015-01-01",
     "remove_nulls": "true"
 })

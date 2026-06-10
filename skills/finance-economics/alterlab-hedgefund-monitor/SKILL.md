@@ -6,7 +6,7 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: No API key or registration required. Queries the open OFR Hedge Fund Monitor REST API; needs network access.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
 ---
 
 # OFR Hedge Fund Monitor API
@@ -35,13 +35,20 @@ results = resp.json()
 
 # Fetch a single time series
 resp = requests.get(f"{BASE}/series/timeseries", params={
-    "mnemonic": "FPF-ALLQHF_LEVERAGERATIO_GAVWMEAN",
+    "mnemonic": "FPF-STRATEGY_EQUITY_LEVERAGERATIO_GAVWMEAN",
     "start_date": "2015-01-01"
 })
 series = resp.json()  # [[date, value], ...]
 df = pd.DataFrame(series, columns=["date", "value"])
 df["date"] = pd.to_datetime(df["date"])
 ```
+
+**Mnemonics are exact — guessing fails.** The API rejects unknown identifiers with a plain
+`Invalid mnemonic` string (HTTP 200, not JSON). Always discover real mnemonics via
+`/metadata/search` or `/metadata/mnemonics` before requesting data. Note in particular that
+there is **no** `FPF-ALLQHF_LEVERAGERATIO_*` series: aggregate leverage is published per
+gross-asset cohort (see below), while the `GAVWMEAN`/`NAVWMEAN` asset-weighted leverage means
+exist only at the strategy level.
 
 ## Authentication
 
@@ -54,7 +61,11 @@ None required. The API is fully open and free.
 | `fpf` | SEC Form PF — aggregated stats from qualifying hedge fund filings | Quarterly |
 | `tff` | CFTC Traders in Financial Futures — futures market positioning | Monthly |
 | `scoos` | FRB Senior Credit Officer Opinion Survey on Dealer Financing Terms | Quarterly |
-| `ficc` | FICC Sponsored Repo Service Volumes | Monthly |
+| `ficc` | FICC Sponsored Repo Service Volumes | Daily |
+
+> The `/series/dataset` index returns `long_name: "FormPF"` for every dataset (an upstream API
+> label quirk); the real source names are above. Confirm a series' true cadence via
+> `schedule/observation_frequency` in its metadata.
 
 ## Data Categories
 
@@ -101,18 +112,24 @@ The HFM organizes data into six categories (each downloadable as CSV):
 ## Key FPF Mnemonic Patterns
 
 Mnemonics follow the pattern `FPF-{SCOPE}_{METRIC}_{STAT}`:
-- Scope: `ALLQHF` (all qualifying hedge funds), `STRATEGY_CREDIT`, `STRATEGY_EQUITY`, `STRATEGY_MACRO`, etc.
-- Metrics: `LEVERAGERATIO`, `GAV` (gross assets), `NAV` (net assets), `GNE` (gross notional exposure), `BORROWING`
-- Stats: `SUM`, `GAVWMEAN`, `NAVWMEAN`, `P5`, `P50`, `P95`, `PCTCHANGE`, `COUNT`
+- Scope: `ALLQHF` (all qualifying hedge funds), or a strategy such as `STRATEGY_CREDIT`,
+  `STRATEGY_EQUITY`, `STRATEGY_MACRO`, `STRATEGY_RV` (relative value), `STRATEGY_FUTURES`, etc.
+  ALLQHF leverage/cash metrics carry a gross-asset cohort segment: `GAVN10` (10 largest funds),
+  `GAVN11TO50`, `GAVN51` (rest).
+- Metrics: `GAV` (gross assets), `NAV` (net assets), `GNE` (gross notional exposure),
+  `LEVERAGERATIO`, `CASHRATIO`, `COUNT`, plus stress-test scenarios (`CDSUP250BPS`, etc.)
+- Stats: `SUM`, `AVERAGE` (equal-weighted, used for ALLQHF cohorts), `GAVWMEAN`/`NAVWMEAN`
+  (asset-weighted, strategy-level only), `P5`, `P50`, `P95`, `PCTCHANGE`
 
 ```python
-# Common series examples
+# Verified series examples (all return data as of 2026)
 mnemonics = [
-    "FPF-ALLQHF_LEVERAGERATIO_GAVWMEAN",   # All funds: leverage (gross asset-weighted)
-    "FPF-ALLQHF_GAV_SUM",                  # All funds: gross assets (total)
-    "FPF-ALLQHF_NAV_SUM",                  # All funds: net assets (total)
-    "FPF-ALLQHF_GNE_SUM",                  # All funds: gross notional exposure
-    "FICC-SPONSORED_REPO_VOL",             # FICC: sponsored repo volume
+    "FPF-ALLQHF_GAVN10_LEVERAGERATIO_AVERAGE",    # 10 largest funds: leverage (equal-weighted)
+    "FPF-STRATEGY_EQUITY_LEVERAGERATIO_GAVWMEAN", # Equity strategy: leverage (GAV-weighted)
+    "FPF-ALLQHF_GAV_SUM",                         # All funds: gross assets (total $)
+    "FPF-ALLQHF_NAV_SUM",                         # All funds: net assets (total $)
+    "FPF-ALLQHF_GNE_SUM",                         # All funds: gross notional exposure
+    "FICC-SPONSORED_REPO_VOL",                    # FICC: sponsored repo volume (daily)
 ]
 ```
 

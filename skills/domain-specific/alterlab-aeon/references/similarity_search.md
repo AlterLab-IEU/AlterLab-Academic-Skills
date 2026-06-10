@@ -36,8 +36,8 @@ Find similar time series across collections.
 ## Quick Start: Motif Discovery
 
 ```python
-from aeon.similarity_search import StompMotif
 import numpy as np
+from aeon.similarity_search.series.motifs import StompMotif
 
 # Create time series with repeated patterns
 pattern = np.sin(np.linspace(0, 2*np.pi, 50))
@@ -60,8 +60,8 @@ for i, (idx1, idx2) in enumerate(motifs):
 ## Quick Start: Subsequence Search
 
 ```python
-from aeon.similarity_search import MassSNN
 import numpy as np
+from aeon.similarity_search.series.neighbors import MassSNN
 
 # Time series to search within
 y = np.sin(np.linspace(0, 20, 500))
@@ -81,7 +81,7 @@ print(f"Best match at index {best_match_idx}")
 ## Quick Start: Approximate NN on Collections
 
 ```python
-from aeon.similarity_search import RandomProjectionIndexANN
+from aeon.similarity_search.collection.neighbors import RandomProjectionIndexANN
 from aeon.datasets import load_classification
 
 # Load time series collection
@@ -106,7 +106,7 @@ The matrix profile is a fundamental data structure for many similarity search ta
 - **Discord**: Subsequence with maximum minimum distance (anomaly)
 
 ```python
-from aeon.similarity_search import StompMotif
+from aeon.similarity_search.series.motifs import StompMotif
 
 # Compute matrix profile and find motifs/discords
 mp = StompMotif(window_size=50)

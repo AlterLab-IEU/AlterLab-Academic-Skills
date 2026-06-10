@@ -23,6 +23,12 @@ algo.setParameters(params)
 algo.filterExperiment(exp)  # or filterSpectrum(spec)
 ```
 
+> Method-name gotcha (pyOpenMS 3.x): the apply method differs by class.
+> `GaussFilter` / `SavitzkyGolayFilter` / `MorphologicalFilter` use
+> `filterExperiment(exp)`, but the spectrum mowers and the normalizer
+> (`ThresholdMower`, `WindowMower`, `NLargest`, `Normalizer`) use
+> `filterPeakMap(exp)` (or `filterSpectrum(spec)` / `filterPeakSpectrum(spec)`).
+
 ## Smoothing
 
 ### Gaussian Filter
@@ -87,23 +93,9 @@ exp_picked = ms.MSExperiment()
 peak_picker.pickExperiment(exp, exp_picked)
 ```
 
-### Peak Picker for CWT
-
-Continuous wavelet transform-based peak picking:
-
-```python
-# Create CWT peak picker
-cwt_picker = ms.PeakPickerCWT()
-
-# Configure parameters
-params = cwt_picker.getParameters()
-params.setValue("signal_to_noise", 1.0)
-params.setValue("peak_width", 0.15)  # Expected peak width
-cwt_picker.setParameters(params)
-
-# Pick peaks
-cwt_picker.pickExperiment(exp, exp_picked)
-```
+> Note: the old CWT-based picker (`PeakPickerCWT`) and `IsotopeWaveletTransform`
+> were removed in pyOpenMS 3.x. Use `PeakPickerHiRes` for high-resolution data;
+> it is the supported centroiding algorithm.
 
 ## Normalization
 
@@ -120,8 +112,8 @@ params = normalizer.getParameters()
 params.setValue("method", "to_one")  # Options: "to_one", "to_TIC"
 normalizer.setParameters(params)
 
-# Apply normalization
-normalizer.filterExperiment(exp)
+# Apply normalization (Normalizer uses filterPeakMap, not filterExperiment)
+normalizer.filterPeakMap(exp)
 ```
 
 ## Peak Filtering
@@ -139,8 +131,8 @@ params = mower.getParameters()
 params.setValue("threshold", 1000.0)  # Absolute intensity threshold
 mower.setParameters(params)
 
-# Apply filter
-mower.filterExperiment(exp)
+# Apply filter (mowers use filterPeakMap)
+mower.filterPeakMap(exp)
 ```
 
 ### Window Mower
@@ -157,8 +149,8 @@ params.setValue("windowsize", 50.0)  # Window size in m/z
 params.setValue("peakcount", 2)  # Keep top N peaks per window
 window_mower.setParameters(params)
 
-# Apply filter
-window_mower.filterExperiment(exp)
+# Apply filter (mowers use filterPeakMap)
+window_mower.filterPeakMap(exp)
 ```
 
 ### N Largest Peaks
@@ -174,8 +166,8 @@ params = n_largest.getParameters()
 params.setValue("n", 200)  # Keep 200 most intense peaks
 n_largest.setParameters(params)
 
-# Apply filter
-n_largest.filterExperiment(exp)
+# Apply filter (NLargest uses filterPeakMap)
+n_largest.filterPeakMap(exp)
 ```
 
 ## Baseline Reduction
@@ -222,7 +214,8 @@ merger.mergeSpectraBlockWise(exp)
 
 ### Charge Deconvolution
 
-Determine charge states and convert to neutral masses:
+Determine charge states and convert to neutral masses. `FeatureDeconvolution`
+operates on a FeatureMap (not an MSExperiment), and `compute()` takes four maps:
 
 ```python
 # Create feature deconvoluter
@@ -232,30 +225,13 @@ deconvoluter = ms.FeatureDeconvolution()
 params = deconvoluter.getParameters()
 params.setValue("charge_min", 1)
 params.setValue("charge_max", 4)
-params.setValue("potential_charge_states", "1,2,3,4")
 deconvoluter.setParameters(params)
 
-# Apply deconvolution
+# Apply deconvolution: (input FeatureMap, output FeatureMap,
+# consensus, consensus_pairs)
 feature_map_out = ms.FeatureMap()
-deconvoluter.compute(exp, feature_map, feature_map_out, ms.ConsensusMap())
-```
-
-### Isotope Deconvolution
-
-Remove isotopic patterns:
-
-```python
-# Create isotope wavelet transform
-isotope_wavelet = ms.IsotopeWaveletTransform()
-
-# Configure parameters
-params = isotope_wavelet.getParameters()
-params.setValue("max_charge", 3)
-params.setValue("intensity_threshold", 10.0)
-isotope_wavelet.setParameters(params)
-
-# Apply transformation
-isotope_wavelet.transform(exp)
+deconvoluter.compute(feature_map, feature_map_out,
+                     ms.ConsensusMap(), ms.ConsensusMap())
 ```
 
 ## Retention Time Alignment
@@ -274,34 +250,38 @@ exp2 = ms.MSExperiment()
 ms.MzMLFile().load("run1.mzML", exp1)
 ms.MzMLFile().load("run2.mzML", exp2)
 
-# Create reference
-reference = ms.MSExperiment()
+# align() aligns ONE map against a set reference and fills a
+# TransformationDescription (it does not take a pair of maps).
+aligner.setReference(exp1)            # exp1 is the reference
+trafo = ms.TransformationDescription()
+aligner.align(exp2, trafo)
 
-# Align experiments
-transformations = []
-aligner.align(exp1, exp2, transformations)
-
-# Apply transformation
+# Apply transformation to exp2 (third arg: store original RT in meta value)
 transformer = ms.MapAlignmentTransformer()
-transformer.transformRetentionTimes(exp2, transformations[0])
+transformer.transformRetentionTimes(exp2, trafo, True)
 ```
 
 ## Mass Calibration
 
 ### Internal Calibration
 
-Calibrate mass axis using known reference masses:
+Calibrate the mass axis using known reference (lock) masses. The pyOpenMS 3.x
+API (`ms.InternalCalibration`) is two-step and stricter than it looks:
 
-```python
-# Create internal calibration
-calibration = ms.InternalCalibration()
+1. `fillCalibrants(exp, ref_masses, tol_ppm, require_mono, require_iso,
+   failed_lock_masses, verbose)` — populates the internal calibrant list.
+   `ref_masses` is a `List[InternalCalibration_LockMass]` (build each lock mass
+   object explicitly; raw floats are rejected), and `failed_lock_masses` is a
+   `ms.CalibrationData()` that receives masses that could not be located.
+2. `calibrate(exp, target_mslvl, model_type, rt_chunk, use_RANSAC,
+   post_ppm_median, post_ppm_MAD, file_models, file_models_plot,
+   file_residuals, file_residuals_plot, rscript_executable)` — fits and applies
+   per-spectrum models. Use `rt_chunk < 0` for a single global model and pass
+   empty strings for the optional R plot/CSV outputs. Returns `False` if the
+   post-calibration ppm thresholds are not met.
 
-# Set reference masses
-reference_masses = [500.0, 1000.0, 1500.0]  # Known m/z values
-
-# Calibrate
-calibration.calibrate(exp, reference_masses)
-```
+For most workflows the TOPP tool `InternalCalibration` (run via `subprocess`)
+is simpler than wiring the lock-mass objects by hand.
 
 ## Quality Control
 
@@ -355,14 +335,14 @@ def preprocess_experiment(input_file, output_file):
     params = normalizer.getParameters()
     params.setValue("method", "to_TIC")
     normalizer.setParameters(params)
-    normalizer.filterExperiment(exp_picked)
+    normalizer.filterPeakMap(exp_picked)
 
     # 4. Filter low-intensity peaks
     mower = ms.ThresholdMower()
     params = mower.getParameters()
     params.setValue("threshold", 10.0)
     mower.setParameters(params)
-    mower.filterExperiment(exp_picked)
+    mower.filterPeakMap(exp_picked)
 
     # Save processed data
     ms.MzMLFile().store(output_file, exp_picked)

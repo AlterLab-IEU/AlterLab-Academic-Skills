@@ -15,7 +15,7 @@ Each HMDB metabolite entry contains 130+ data fields organized into several cate
 - `synonyms`: Alternative names and common names
 - `chemical_formula`: Molecular formula (e.g., C6H12O6)
 - `average_molecular_weight`: Average molecular weight in Daltons
-- `monoisotopic_molecular_weight`: Monoisotopic molecular weight
+- `monisotopic_molecular_weight`: Monoisotopic molecular weight. Note: the HMDB XML/SDF schema misspells this tag as `monisotopic_...` (no second `o`) — match the literal tag exactly when parsing.
 
 **Structure Representations:**
 - `smiles`: Simplified Molecular Input Line Entry System string
@@ -198,7 +198,7 @@ When downloading HMDB data in XML format, the structure follows this pattern:
   <name>1-Methylhistidine</name>
   <chemical_formula>C7H11N3O2</chemical_formula>
   <average_molecular_weight>169.1811</average_molecular_weight>
-  <monoisotopic_molecular_weight>169.085126436</monoisotopic_molecular_weight>
+  <monisotopic_molecular_weight>169.085126436</monisotopic_molecular_weight>
   <smiles>CN1C=NC(CC(=O)O)=C1</smiles>
   <inchi>InChI=1S/C7H11N3O2/c1-10-4-8-3-5(10)2-7(11)12/h3-4H,2H2,1H3,(H,11,12)</inchi>
   <inchikey>BRMWTNUJHUMWMS-UHFFFAOYSA-N</inchikey>

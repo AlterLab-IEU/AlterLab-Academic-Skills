@@ -78,7 +78,7 @@ API key for **PatentSearch API** is provided by PatentsView. Register at:
 Set the API key as an environment variable:
 ```bash
 export USPTO_API_KEY="your_api_key_here"
-export PATENTSVIEW_API_KEY="you_api_key_here"
+export PATENTSVIEW_API_KEY="your_api_key_here"
 ```
 
 ### Helper Scripts

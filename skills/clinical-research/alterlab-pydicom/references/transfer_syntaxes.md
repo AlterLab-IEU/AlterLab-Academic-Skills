@@ -231,11 +231,12 @@ import pydicom
 
 ds = pydicom.dcmread('compressed.dcm')
 
-# Decompress in-place
+# Decompress in-place (Transfer Syntax UID becomes Explicit VR Little Endian)
 ds.decompress()
 
-# Now save as uncompressed
-ds.save_as('uncompressed.dcm', write_like_original=False)
+# Now save (pydicom 3.x: use enforce_file_format=True instead of the
+# removed-in-4.0 write_like_original=False)
+ds.save_as('uncompressed.dcm', enforce_file_format=True)
 ```
 
 ## Compression
@@ -259,16 +260,19 @@ ds.compress(pydicom.uid.JPEGBaseline8Bit)
 ds.save_as('compressed_jpeg.dcm')
 ```
 
-### Compression with Custom Encoding Parameters
+### Compression with a Specific Encoding Plugin
 ```python
 import pydicom
-from pydicom.encoders import JPEGLSLosslessEncoder
 
 ds = pydicom.dcmread('uncompressed.dcm')
 
-# Compress with custom parameters
-ds.compress(pydicom.uid.JPEGLSLossless, encoding_plugin='pylibjpeg')
+# Force a particular encoding plugin (pydicom 3.x picks an available one by default)
+ds.compress(pydicom.uid.JPEGLSLossless, encoding_plugin='pyjpegls')
 ```
+
+Note: in pydicom 3.0 the encoder classes moved from `pydicom.encoders` to
+`pydicom.pixels.encoders` (the old path is removed in 4.0). You rarely need to
+import them directly — `Dataset.compress()` selects an encoder for you.
 
 ## Installing Compression Handlers
 
@@ -306,18 +310,18 @@ No additional packages needed - built into pydicom
 pip install pylibjpeg pylibjpeg-libjpeg pylibjpeg-openjpeg python-gdcm
 ```
 
-## Checking Available Handlers
+## Checking Available Decoder Plugins (pydicom 3.x)
+
+In pydicom 3.0+ the legacy `get_pixel_data_handlers()` helper is gone. Instead,
+ask the decoder for a given transfer syntax which plugins are installed:
 
 ```python
-import pydicom
+from pydicom.pixels import get_decoder
+from pydicom.uid import JPEG2000Lossless
 
-# List available pixel data handlers
-from pydicom.pixel_data_handlers.util import get_pixel_data_handlers
-handlers = get_pixel_data_handlers()
-
-print("Available handlers:")
-for handler in handlers:
-    print(f"  - {handler.__name__}")
+decoder = get_decoder(JPEG2000Lossless)
+print(f"Decodable now: {decoder.is_available}")
+print(f"Plugins found: {decoder.available_plugins}")  # e.g. ('pylibjpeg', 'gdcm')
 ```
 
 ## Best Practices

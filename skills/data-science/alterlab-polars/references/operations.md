@@ -20,8 +20,9 @@ df.select(pl.col("name"), pl.col("age"))
 # All columns starting with "sales_"
 df.select(pl.col("^sales_.*$"))
 
-# All numeric columns
-df.select(pl.col(pl.NUMERIC_DTYPES))
+# All numeric columns (use the selectors module)
+import polars.selectors as cs
+df.select(cs.numeric())
 
 # All columns except specific ones
 df.select(pl.all().exclude("id", "timestamp"))
@@ -510,9 +511,9 @@ df.filter(pl.col("date").dt.month().is_in([6, 7, 8]))  # Summer months
 ### Working with List Columns
 
 ```python
-# Create list column
+# Combine several columns into one list column
 df.with_columns(
-    items_list=pl.col("item1", "item2", "item3").to_list()
+    items_list=pl.concat_list("item1", "item2", "item3")
 )
 
 # List operations

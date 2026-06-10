@@ -1,6 +1,6 @@
 ---
 name: alterlab-cbioportal
-description: Query cBioPortal via its REST API for cancer genomics data including somatic mutations, copy number alterations, gene expression, and survival data across hundreds of cancer studies (TCGA and others). Use when validating cancer targets, profiling oncogenes or tumor suppressors across tumor types, or pulling patient-level mutation and clinical outcome data. Part of the AlterLab Academic Skills suite.
+description: Query cBioPortal via its keyless REST API for cancer genomics across TCGA, GENIE, MSK-IMPACT and hundreds of studies — somatic mutations, copy-number alterations (GISTIC), mRNA/protein expression, structural variants, and patient-level clinical/survival data. Use when asked how often a gene is mutated/amplified/deleted in a tumor type, to profile oncogenes or tumor suppressors across cancers (pan-cancer alteration frequency), to pull patient-level mutations joined to OS/clinical outcomes, or to validate a cancer target from cohort genomics. For germline variant pathogenicity use alterlab-clinvar; for mutational-signature (SBS) decomposition use alterlab-cosmic; for CRISPR/RNAi gene-dependency use alterlab-depmap; for aggregated target-disease evidence use alterlab-opentargets. Part of the AlterLab Academic Skills suite.
 license: LGPL-3.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless cBioPortal REST API for public data (no authentication required)
@@ -188,20 +188,24 @@ def get_alteration_frequency(study_id, gene_symbols, alteration_types=None):
         headers=HEADERS
     ).json())
 
-    # Get gene Entrez IDs
+    # Get gene Entrez IDs. /genes/fetch takes a plain JSON array of identifiers
+    # plus a geneIdType query param; symbols WITHOUT the param resolve to [].
     gene_data = requests.post(
         f"{BASE_URL}/genes/fetch",
-        json=[{"hugoGeneSymbol": g} for g in gene_symbols],
+        params={"geneIdType": "HUGO_GENE_SYMBOL"},
+        json=gene_symbols,
         headers=HEADERS
     ).json()
-    entrez_ids = [g["entrezGeneId"] for g in gene_data]
+    # Response order is not guaranteed; map by symbol.
+    entrez_by_symbol = {g["hugoGeneSymbol"]: g["entrezGeneId"] for g in gene_data}
+    entrez_ids = [entrez_by_symbol[g] for g in gene_symbols if g in entrez_by_symbol]
 
     # Get mutations
     mutation_profile = f"{study_id}_mutations"
     mutations = get_mutations(mutation_profile, entrez_ids, all_samples_id)
 
     freq = {}
-    for g_symbol, e_id in zip(gene_symbols, entrez_ids):
+    for g_symbol, e_id in entrez_by_symbol.items():
         mutated = len(set(m["patientId"] for m in mutations if m["entrezGeneId"] == e_id))
         freq[g_symbol] = mutated / total_samples * 100
 
@@ -215,20 +219,31 @@ for gene, pct in sorted(freq.items(), key=lambda x: -x[1]):
 
 ### 7. Clinical Data
 
+The global `/clinical-data/fetch` endpoint is **POST-only** (a GET returns HTTP 405).
+The simplest path for one study is the per-study GET endpoint, which returns a list
+of `{patientId, studyId, clinicalAttributeId, value}` records:
+
 ```python
-def get_clinical_data(study_id, attribute_ids=None):
-    """Get patient-level clinical data."""
-    params = {"studyId": study_id}
-    all_clinical = cbioportal_get(
-        "clinical-data/fetch",
-        params
-    )
-    # Returns list of {patientId, studyId, clinicalAttributeId, value}
+def get_patient_clinical_data(study_id, attribute_ids):
+    """Patient-level clinical data via the per-study GET endpoint.
+
+    GET /studies/{studyId}/clinical-data?clinicalDataType=PATIENT&attributeId=...
+    accepts a single attributeId, so we query each and concatenate.
+    """
+    records = []
+    for attr in attribute_ids:
+        records += cbioportal_get(
+            f"studies/{study_id}/clinical-data",
+            {"clinicalDataType": "PATIENT", "attributeId": attr, "pageSize": 100000},
+        )
+    return records
 
 # Clinical attributes include:
 # OS_STATUS, OS_MONTHS, DFS_STATUS, DFS_MONTHS (survival)
-# TUMOR_STAGE, GRADE, AGE, SEX, RACE
-# Study-specific attributes vary
+# AJCC_PATHOLOGIC_TUMOR_STAGE, GRADE, AGE, SEX, RACE
+# Study-specific attributes vary — list them with get_clinical_attributes().
+# GOTCHA: OS_STATUS / DFS_STATUS are encoded "1:DECEASED" / "0:LIVING"
+# (event:label), not bare 0/1 — split on ":" before survival analysis.
 
 def get_clinical_attributes(study_id):
     """List all available clinical attributes for a study."""
@@ -245,10 +260,11 @@ import requests, pandas as pd
 def alteration_profile(study_id, gene_symbol):
     """Full alteration profile for a gene in a cancer study."""
 
-    # 1. Get gene Entrez ID
+    # 1. Get gene Entrez ID (plain array body + geneIdType param)
     gene_info = requests.post(
         f"{BASE_URL}/genes/fetch",
-        json=[{"hugoGeneSymbol": gene_symbol}],
+        params={"geneIdType": "HUGO_GENE_SYMBOL"},
+        json=[gene_symbol],
         headers=HEADERS
     ).json()[0]
     entrez_id = gene_info["entrezGeneId"]
@@ -310,7 +326,8 @@ def survival_by_mutation(study_id, gene_symbol):
 
     gene_info = requests.post(
         f"{BASE_URL}/genes/fetch",
-        json=[{"hugoGeneSymbol": gene_symbol}],
+        params={"geneIdType": "HUGO_GENE_SYMBOL"},
+        json=[gene_symbol],
         headers=HEADERS
     ).json()[0]
     entrez_id = gene_info["entrezGeneId"]
@@ -318,11 +335,16 @@ def survival_by_mutation(study_id, gene_symbol):
     mutations = get_mutations(f"{study_id}_mutations", [entrez_id])
     mutated_patients = set(m["patientId"] for m in mutations)
 
-    clinical = cbioportal_get("clinical-data/fetch", {"studyId": study_id})
+    # Patient-level survival via the per-study GET endpoint (clinical-data/fetch
+    # is POST-only — a GET there returns HTTP 405).
+    clinical = get_patient_clinical_data(study_id, ["OS_MONTHS", "OS_STATUS"])
     clinical_df = pd.DataFrame(clinical)
 
-    os_data = clinical_df[clinical_df["clinicalAttributeId"].isin(["OS_MONTHS", "OS_STATUS"])]
-    os_wide = os_data.pivot(index="patientId", columns="clinicalAttributeId", values="value")
+    os_wide = clinical_df.pivot(index="patientId", columns="clinicalAttributeId", values="value")
+    # OS_STATUS is encoded as "1:DECEASED" / "0:LIVING"; split off the 0/1 event flag.
+    if "OS_STATUS" in os_wide:
+        os_wide["OS_EVENT"] = os_wide["OS_STATUS"].str.startswith("1").astype("Int64")
+    os_wide["OS_MONTHS"] = pd.to_numeric(os_wide.get("OS_MONTHS"), errors="coerce")
     os_wide["mutated"] = os_wide.index.isin(mutated_patients)
 
     return os_wide
@@ -338,8 +360,9 @@ def survival_by_mutation(study_id, gene_symbol):
 | `POST /molecular-profiles/{profileId}/discrete-copy-number/fetch` | Get CNA data |
 | `POST /molecular-profiles/{profileId}/molecular-data/fetch` | Get expression data |
 | `GET /studies/{studyId}/clinical-attributes` | Available clinical variables |
-| `GET /clinical-data/fetch` | Clinical data |
-| `POST /genes/fetch` | Gene metadata by symbol or Entrez ID |
+| `GET /studies/{studyId}/clinical-data` | Clinical data for one study (one `attributeId` per call) |
+| `POST /clinical-data/fetch?clinicalDataType=PATIENT` | Clinical data across studies (POST-only; GET → 405) |
+| `POST /genes/fetch?geneIdType=HUGO_GENE_SYMBOL` | Resolve symbols → Entrez IDs (body is a plain JSON array, e.g. `["TP53"]`) |
 | `GET /studies/{studyId}/sample-lists` | Sample lists |
 
 ## Best Practices
@@ -347,7 +370,7 @@ def survival_by_mutation(study_id, gene_symbol):
 - **Know your study IDs**: Use the Swagger UI or `GET /studies` to find the correct study ID
 - **Use sample lists**: Each study has an `all` sample list and subsets; always specify the appropriate one
 - **TCGA vs. GENIE**: TCGA data is comprehensive but older; GENIE has more recent clinical sequencing data
-- **Entrez gene IDs**: The API uses Entrez IDs — use `/genes/fetch` to convert from symbols
+- **Entrez gene IDs**: The API uses Entrez IDs — convert from symbols with `POST /genes/fetch?geneIdType=HUGO_GENE_SYMBOL`. The body must be a **plain JSON array** (`["TP53","KRAS"]`); the object form `[{"hugoGeneSymbol":...}]` returns HTTP 400, and omitting `geneIdType` silently returns `[]` for symbols. Response order is not guaranteed — map results back by `hugoGeneSymbol`.
 - **Handle 404s**: Some molecular profiles may not exist for all studies
 - **Rate limiting**: Add delays for bulk queries; consider downloading data files for large-scale analyses
 

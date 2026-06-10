@@ -21,7 +21,7 @@ df = pl.read_csv(
     columns=["col1", "col2"],  # Select specific columns
     n_rows=1000,  # Read only first 1000 rows
     skip_rows=10,  # Skip first 10 rows
-    dtypes={"col1": pl.Int64, "col2": pl.Utf8},  # Specify types
+    schema_overrides={"col1": pl.Int64, "col2": pl.String},  # `dtypes=` was renamed
     null_values=["NA", "null", ""],  # Define null values
     encoding="utf-8",
     ignore_errors=False
@@ -171,10 +171,10 @@ df.write_json("output.json", pretty=True, row_oriented=False)
 # Read first sheet
 df = pl.read_excel("data.xlsx")
 
-# Specific sheet
+# Specific sheet by name
 df = pl.read_excel("data.xlsx", sheet_name="Sheet1")
-# Or by index
-df = pl.read_excel("data.xlsx", sheet_id=0)
+# Or by 1-based index (sheet_id=0 reads ALL sheets into a dict)
+df = pl.read_excel("data.xlsx", sheet_id=1)
 
 # With options
 df = pl.read_excel(
@@ -190,13 +190,14 @@ df = pl.read_excel(
 ### Writing Excel
 
 ```python
-# Write to Excel
+# Write to Excel (requires the xlsxwriter package)
 df.write_excel("output.xlsx")
 
-# Multiple sheets
-with pl.ExcelWriter("output.xlsx") as writer:
-    df1.write_excel(writer, worksheet="Sheet1")
-    df2.write_excel(writer, worksheet="Sheet2")
+# Multiple sheets: pass a shared xlsxwriter.Workbook via `workbook=`
+import xlsxwriter
+with xlsxwriter.Workbook("output.xlsx") as wb:
+    df1.write_excel(workbook=wb, worksheet="Sheet1")
+    df2.write_excel(workbook=wb, worksheet="Sheet2")
 ```
 
 ## Database Connectivity
@@ -206,15 +207,22 @@ with pl.ExcelWriter("output.xlsx") as writer:
 ```python
 import polars as pl
 
-# Read entire table
-df = pl.read_database("SELECT * FROM users", connection_uri="postgresql://...")
-
-# Using connectorx for better performance
+# From a URI (uses ConnectorX/ADBC under the hood) - fast for bulk reads
 df = pl.read_database_uri(
     "SELECT * FROM users WHERE age > 25",
     uri="postgresql://user:pass@localhost/db"
 )
+
+# From an existing connection object (e.g. SQLAlchemy / DBAPI / ADBC cursor)
+from sqlalchemy import create_engine
+engine = create_engine("postgresql://user:pass@localhost/db")
+with engine.connect() as conn:
+    df = pl.read_database("SELECT * FROM users", connection=conn)
 ```
+
+Note: `pl.read_database` takes a live `connection`, while `pl.read_database_uri`
+takes a `uri` string. The old `read_database(..., connection_uri=...)` signature
+was split into these two functions.
 
 ### Write to Database
 
@@ -304,18 +312,12 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/path/to/credentials.json"
 ## Google BigQuery
 
 ```python
-# Read from BigQuery
-df = pl.read_database(
-    "SELECT * FROM project.dataset.table",
-    connection_uri="bigquery://project"
-)
-
-# Or using Google Cloud SDK
+# Via the Google Cloud BigQuery client, then hand the Arrow result to Polars
 from google.cloud import bigquery
 client = bigquery.Client()
 
 query = "SELECT * FROM project.dataset.table WHERE date > '2023-01-01'"
-df = pl.from_pandas(client.query(query).to_dataframe())
+df = pl.from_arrow(client.query(query).to_arrow())  # zero-copy from Arrow
 ```
 
 ## Apache Arrow
@@ -400,8 +402,9 @@ pl_df = pl.from_pandas(pd_df)
 # To Pandas
 pd_df = pl_df.to_pandas()
 
-# Zero-copy when possible
-pl_df = pl.from_arrow(pd_df)
+# Go through Arrow for zero-copy when possible (from_arrow takes an Arrow table)
+import pyarrow as pa
+pl_df = pl.from_arrow(pa.Table.from_pandas(pd_df))
 ```
 
 ### Lists of Rows
@@ -424,17 +427,20 @@ df = pl.DataFrame(data, schema=["name", "age"])
 
 ## Streaming Large Files
 
-For datasets larger than memory, use lazy mode with streaming:
+For large datasets, use lazy mode with the streaming engine to lower peak memory:
 
 ```python
-# Streaming mode
+# Streaming engine
 lf = pl.scan_csv("very_large.csv")
-result = lf.filter(pl.col("value") > 100).collect(streaming=True)
+result = lf.filter(pl.col("value") > 100).collect(engine="streaming")
 
 # Streaming with multiple files
 lf = pl.scan_parquet("data/*.parquet")
-result = lf.group_by("category").agg(pl.col("value").sum()).collect(streaming=True)
+result = lf.group_by("category").agg(pl.col("value").sum()).collect(engine="streaming")
 ```
+
+`collect(streaming=True)` is deprecated; use `engine="streaming"`. For data that
+genuinely exceeds RAM, prefer an out-of-core engine (dask/vaex).
 
 ## Best Practices
 
@@ -477,8 +483,8 @@ result = (
     .collect()
 )
 
-# 3. Use streaming for very large data
-result = lf.filter(...).select(...).collect(streaming=True)
+# 3. Use the streaming engine for large data
+result = lf.filter(...).select(...).collect(engine="streaming")
 
 # 4. Read only needed rows during development
 df = pl.read_csv("large.csv", n_rows=10000)  # Sample for testing
@@ -501,10 +507,10 @@ lf.sink_parquet("output.parquet")  # Streaming write
 ### Performance Tips
 
 ```python
-# 1. Specify dtypes when reading CSV
+# 1. Specify types when reading CSV
 df = pl.read_csv(
     "data.csv",
-    dtypes={"id": pl.Int64, "name": pl.Utf8}  # Avoids inference
+    schema_overrides={"id": pl.Int64, "name": pl.String}  # Avoids inference
 )
 
 # 2. Use appropriate compression
@@ -540,18 +546,19 @@ else:
 ## Schema Management
 
 ```python
-# Infer schema from sample
+# Infer schema from a sample
 schema = pl.read_csv("data.csv", n_rows=1000).schema
-
-# Use inferred schema for full read
-df = pl.read_csv("data.csv", dtypes=schema)
 
 # Define schema explicitly
 schema = {
     "id": pl.Int64,
-    "name": pl.Utf8,
+    "name": pl.String,
     "date": pl.Date,
-    "value": pl.Float64
+    "value": pl.Float64,
 }
-df = pl.read_csv("data.csv", dtypes=schema)
+
+# `schema=` declares the full schema (all columns);
+# `schema_overrides=` overrides only the columns you name and infers the rest.
+df = pl.read_csv("data.csv", schema=schema)
+df = pl.read_csv("data.csv", schema_overrides={"id": pl.Int64})
 ```

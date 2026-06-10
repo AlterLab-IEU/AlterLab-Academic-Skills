@@ -50,7 +50,7 @@ Route adjacent requests to the correct sibling skill instead of firing here:
 | Drafting the TÜBİTAK ARDEB 1001/1002-A **proposal** narrative | `alterlab-tubitak-proposal` |
 | Survey **instrument design** / item wording (not the ethics dossier) | `alterlab-survey-design` |
 | Qualitative interview/focus-group **method design** | `alterlab-qualitative-methods` |
-| Pre-registration of hypotheses & analysis plan | `alterlab-preregistration-discipline` |
+| Pre-registration of hypotheses & analysis plan | `alterlab-open-science` |
 | Checking a journal's TR Dizin indexing status | `alterlab-trdizin` |
 | Docentlik (associate-professorship) eligibility / point math | `alterlab-docentlik-eligibility` |
 | Akademik teşvik (academic-incentive) scoring | `alterlab-akademik-tesvik` |

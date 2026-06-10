@@ -27,7 +27,7 @@ def search_geo_datasets(query, retmax=20):
     return results
 
 # Example searches
-results = search_geo_datasets("breast cancer[MeSH] AND Homo sapiens[Organism]")
+results = search_geo_datasets("breast cancer[MeSH Terms] AND Homo sapiens[Organism]")
 print(f"Found {results['Count']} datasets")
 
 # Search by specific platform

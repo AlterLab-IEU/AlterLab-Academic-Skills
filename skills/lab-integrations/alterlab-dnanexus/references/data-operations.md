@@ -180,10 +180,11 @@ record.close()
 
 ### Finding Data Objects
 
-**Search by name**:
+**Search by name** (`name` matches exactly by default; pass `name_mode="glob"` for `*`/`?` wildcards, or `name_mode="regexp"` for regular expressions):
 ```python
 results = dxpy.find_data_objects(
     name="*.fastq",
+    name_mode="glob",
     project="project-xxxx",
     folder="/raw_data"
 )

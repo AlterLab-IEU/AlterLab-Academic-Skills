@@ -32,8 +32,8 @@ For analyzing **your own** dataset (not the reference atlas), use scanpy or scvi
 
 ```bash
 uv pip install cellxgene-census
-# For ML workflows:
-uv pip install cellxgene-census[experimental]
+# For PyTorch ML workflows (loaders moved out of cellxgene-census):
+uv pip install tiledbsoma-ml
 ```
 
 ## Core Workflow
@@ -60,14 +60,14 @@ with cellxgene_census.open_soma(census_version="2023-07-25") as census:
 
 - **Small/medium query (fits in RAM)** → `get_anndata()`. See `references/querying_expression.md`.
 - **Query exceeds RAM** → `axis_query()` with chunked iteration and incremental stats. See `references/querying_expression.md`.
-- **Training ML models** → experimental PyTorch dataloader / `ExperimentDataset`. See `references/ml_and_scanpy.md`.
+- **Training ML models** → `tiledbsoma_ml` PyTorch dataloader / `ExperimentDataset`. See `references/ml_and_scanpy.md`.
 - **Standard scanpy analysis / multi-tissue integration** → see `references/ml_and_scanpy.md`.
 - **Need full schema, all metadata fields, or filter-syntax details** → `references/census_schema.md`.
 
 ## Reference Index
 
 - **`references/querying_expression.md`** — Opening the Census, exploring metadata, small/medium `get_anndata()` queries, and large out-of-core `axis_query()` processing with incremental statistics.
-- **`references/ml_and_scanpy.md`** — PyTorch dataloader / `ExperimentDataset` train-test splits, scanpy integration, multi-dataset/tissue integration, and four worked use cases.
+- **`references/ml_and_scanpy.md`** — `tiledbsoma_ml` PyTorch dataloader / `ExperimentDataset` train-test splits, scanpy integration, multi-dataset/tissue integration (`anndata.concat`), and four worked use cases.
 - **`references/best_practices_and_troubleshooting.md`** — Primary-data filtering, version pinning, query-size estimation, `tissue_general` vs `tissue`, presence matrices, the full obs/var metadata field list, and a troubleshooting guide.
 - **`references/census_schema.md`** — Census data structure, all metadata fields, value-filter syntax/operators, SOMA object types, and data inclusion criteria.
-- **`references/common_patterns.md`** — Additional exploratory, in-memory, out-of-core, PyTorch, scanpy, and multi-dataset query patterns with pitfalls.
+- **`references/common_patterns.md`** — Extras beyond the core recipes: incremental (Welford) variance out-of-core, ontology-term filtering, batch-processing sweeps, and a common-pitfalls list.

@@ -8,7 +8,16 @@
 # HTTP status codes treated as success. Extends (not replaces) the defaults.
 # 403 and 429 are kept because academic/publisher sites frequently bot-block
 # HEAD requests from GitHub Actions runners (DOI → BMJ/Oxford/Sage/OECD/etc.).
-accept = ["200..=299", "301", "302", "304", "308", "400", "403", "429"]
+#
+# 400 is deliberately NOT accepted. A 400 Bad Request means the host actively
+# rejected the request — it masks genuinely broken or moved API endpoints and
+# malformed URLs, which is exactly the link rot this check exists to surface.
+# (Verified 2026-06-08: the one endpoint previously cited as needing 400 —
+# gnomAD's GraphQL playground at gnomad.broadinstitute.org/api — actually
+# returns 200 to lychee's HEAD/GET, so nothing in the repo relies on 400.)
+# If a specific host legitimately answers 400 to a HEAD/GET probe, exclude that
+# exact URL in .lycheeignore with a rationale rather than re-globalising 400.
+accept = ["200..=299", "301", "302", "304", "308", "403", "429"]
 
 # Cache link-check results between scheduled runs. lychee writes `.lycheecache`.
 cache = true

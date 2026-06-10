@@ -100,8 +100,9 @@ sc.tl.umap(adata)
 ### 7. Clustering
 
 ```python
-# Leiden clustering (recommended)
-sc.tl.leiden(adata, resolution=0.5)
+# Leiden clustering (recommended). flavor='igraph' is the future default and is
+# orders of magnitude faster; the bare call emits a FutureWarning.
+sc.tl.leiden(adata, resolution=0.5, flavor='igraph', n_iterations=2)
 
 # Alternative: Louvain clustering
 # sc.tl.louvain(adata, resolution=0.5)

@@ -14,7 +14,7 @@
     {
       "id": "feature-detection-quant",
       "prompt": "I want to detect features (chromatographic peaks) in my centroided mzML for quantification, then get them into a pandas DataFrame for downstream stats. How do I do this with pyOpenMS?",
-      "expected_output": "Triggers the pyOpenMS skill. Should use FeatureFinder.run('centroided', exp, ...) to produce a FeatureMap, then convert with FeatureMap.get_df() (or load a featureXML via FeatureXMLFile) into a pandas DataFrame. May mention the algorithm parameter system.",
+      "expected_output": "Triggers the pyOpenMS skill. Should use the pyOpenMS 3.x feature finder (FeatureFinderAlgorithmPicked().run(exp, features, params, seeds), or the MassTraceDetection -> ElutionPeakDetection -> FeatureFindingMetabo chain) to produce a FeatureMap, then convert with FeatureMap.get_df() (or load a featureXML via FeatureXMLFile) into a pandas DataFrame. Must NOT use the removed FeatureFinder.run('centroided', ...) facade. May mention the algorithm parameter system.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "FeatureMap"},
@@ -24,11 +24,11 @@
     {
       "id": "peptide-id-fdr-filter",
       "prompt": "I ran a database search and have an idXML of peptide-spectrum matches. I want to load the identifications in Python and apply FDR filtering at the peptide level. What's the pyOpenMS code?",
-      "expected_output": "Triggers the pyOpenMS skill. Should load with IdXMLFile().load('identifications.idXML', protein_ids, peptide_ids) into protein/peptide ID lists, then apply FalseDiscoveryRate().apply(peptide_ids) for FDR filtering. May mention supported search engines (Comet, MSGFPlus, XTandem).",
+      "expected_output": "Triggers the pyOpenMS skill. Should load with IdXMLFile().load('identifications.idXML', protein_ids, peptide_ids) where (in pyOpenMS 3.x) peptide_ids is a PeptideIdentificationList (not a plain []), then run FalseDiscoveryRate().apply(peptide_ids) to compute q-values and filter at 1% via IDFilter().filterHitsByScore(peptide_ids, 0.01). May note the target_decoy/PeptideIndexer prerequisite and supported search engines (Comet, MSGFPlus, XTandem).",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "FalseDiscoveryRate"},
-        {"type": "behavior", "value": "Loads identifications from idXML and applies FalseDiscoveryRate to filter the peptide IDs."}
+        {"type": "behavior", "value": "Loads identifications from idXML (peptide_ids as a PeptideIdentificationList) and applies FalseDiscoveryRate, then filters the peptide IDs at a q-value threshold (e.g. via IDFilter)."}
       ]
     },
     {

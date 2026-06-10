@@ -6,7 +6,7 @@ metadata:
     skill-author: AlterLab
     version: "1.0.0"
 allowed-tools: Read Write Edit Bash
-compatibility: Requires a LaTeX distribution (pdflatex/xelatex/lualatex) with the beamerposter, tikzposter, or baposter packages installed to compile posters
+compatibility: Requires a LaTeX distribution (pdflatex/xelatex/lualatex) with beamerposter or tikzposter installed (or baposter.cls placed alongside the .tex) to compile posters
 ---
 
 # LaTeX Research Posters
@@ -159,21 +159,24 @@ is available at `scripts/review_poster.sh`.
 
 - **alterlab-scientific-schematics** — generate poster diagrams and flowcharts.
 - **alterlab-generate-image** — stylized graphics, conceptual illustrations, summary visuals.
-- **Scientific Writing** — develop poster content from a paper.
-- **Literature Review** — contextualize the research.
-- **Data Analysis** — create result figures and charts.
+- **alterlab-scientific-writing** — develop poster content from a paper.
+- **alterlab-literature-review** — contextualize the research.
 
 ## Package Installation
 
 ```bash
-# TeX Live (Linux/Mac)
-tlmgr install beamerposter tikzposter baposter
+# TeX Live (Linux/Mac) — beamerposter and tikzposter are on CTAN
+tlmgr install beamerposter tikzposter
 
 # Additional recommended packages
-tlmgr install qrcode graphics xcolor tcolorbox subcaption
+tlmgr install qrcode graphicx xcolor tcolorbox subcaption
 
 # MiKTeX (Windows) typically auto-installs packages on first use.
 ```
+
+**baposter is not on CTAN/TeX Live.** Obtain `baposter.cls` from its repository
+(github.com/mloesch/baposter) or the Overleaf template and place it next to your
+`.tex` file. (CTAN's `xebaposter` is a separate Persian/Latin fork, not the same class.)
 
 ## Scripts
 

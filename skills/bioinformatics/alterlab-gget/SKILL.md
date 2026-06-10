@@ -3,7 +3,7 @@ name: alterlab-gget
 description: "Run fast one-liner queries to 20+ bioinformatics databases from the gget CLI or Python — gene info (Ensembl), BLAST, AlphaFold structures, Enrichr enrichment, and more. Use for quick interactive lookups of genes, sequences, structures, or pathways — for batch processing or advanced BLAST use biopython, for multi-database Python workflows use bioservices. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Install with `uv pip install gget`; core modules need no API key or account. cosmic needs a COSMIC account; gpt needs an OpenAI key; alphafold/cellxgene/elm/gpt need a one-time `gget setup`."
 metadata:
     skill-author: AlterLab
     version: "1.0.0"
@@ -22,10 +22,7 @@ gget is a command-line bioinformatics tool and Python package providing unified 
 Install gget in a clean virtual environment to avoid conflicts:
 
 ```bash
-# Using uv (recommended)
-uv pip install gget
-
-# Or using pip
+# Install (or upgrade) into a clean environment
 uv pip install --upgrade gget
 
 # In Python/Jupyter

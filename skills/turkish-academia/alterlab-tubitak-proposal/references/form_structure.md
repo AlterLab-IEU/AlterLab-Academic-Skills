@@ -19,10 +19,12 @@ Authoritative form/guide sources (verify the current period before relying on ca
 
 ---
 
-## ÖZET (Summary / Abstract)
+## ÖZET (TR) + ABSTRACT (EN)
 
-- Written in **both Turkish and English**, each **≤ 600 words** (see `program_profiles.md`).
-- Followed by **Anahtar Kelimeler** (keywords) in both languages.
+- Written as **two separate blocks** — ÖZET (Turkish) and ABSTRACT (English) — each **≤ 600
+  words** counted *independently* (see `program_profiles.md`). Keep them as distinct headings so
+  the per-language cap can actually be measured; don't merge them into one block.
+- Each is followed by its **Anahtar Kelimeler / Keywords**.
 - This is the panel's first read. State the gap, the aim, the method in one breath, and the
   expected yaygın etki (broader impact). Do not exceed the word cap — it is an eligibility filter.
 

@@ -113,11 +113,13 @@ def analyze_sequences(
         for i, seq_data in enumerate(sequences):
             print(f"\n{i+1}. Predicting structure for {seq_data['id']}...")
             try:
-                _structure_dir = output_path / f"structure_{seq_data['id']}"                # Uncomment to run AlphaFold prediction:
-                # gget.alphafold(seq_data['seq'], out=str(structure_dir))
+                structure_dir = output_path / f"structure_{seq_data['id']}"
+                # Uncomment to run AlphaFold prediction:
+                # gget.alphafold(seq_data["seq"], out=str(structure_dir))
                 # print(f"   Structure saved to: {structure_dir}")
                 print(
-                    "   (Prediction skipped - uncomment code to run AlphaFold prediction)"
+                    f"   (Prediction skipped for {structure_dir.name}; "
+                    "uncomment code to run AlphaFold prediction)"
                 )
             except Exception as e:
                 print(f"   Error: {e}")

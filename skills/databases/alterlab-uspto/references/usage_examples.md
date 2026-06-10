@@ -8,7 +8,7 @@ Set API keys as environment variables before running:
 
 ```bash
 export USPTO_API_KEY="your_api_key_here"
-export PATENTSVIEW_API_KEY="you_api_key_here"
+export PATENTSVIEW_API_KEY="your_api_key_here"
 ```
 
 ---
@@ -27,7 +27,7 @@ client = PatentSearchClient()
 
 # Search for machine learning patents (keywords in abstract)
 results = client.search_patents({
-    "_text_all": {"patent_abstract": "machine learning"}
+    "patent_abstract": {"_text_all": ["machine", "learning"]}
 })
 
 for patent in results['patents']:

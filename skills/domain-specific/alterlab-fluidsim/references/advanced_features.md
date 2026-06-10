@@ -78,16 +78,14 @@ sim = Simul(params)
 # Get coordinate arrays
 X, Y = sim.oper.get_XY_loc()
 
-# Define velocity fields
-vx = sim.state.state_phys.get_var("vx")
-vy = sim.state.state_phys.get_var("vy")
+# Define velocity fields (Taylor-Green vortex)
+vx = np.sin(X) * np.cos(Y)
+vy = -np.cos(X) * np.sin(Y)
 
-# Taylor-Green vortex
-vx[:] = np.sin(X) * np.cos(Y)
-vy[:] = -np.cos(X) * np.sin(Y)
-
-# Initialize state in Fourier space
-sim.state.statephys_from_statespect()
+# Set the physical state, then compute the spectral state FROM it.
+# Note the direction: statespect_from_statephys (spectral from physical).
+sim.state.init_statephys_from(vx=vx, vy=vy)
+sim.state.statespect_from_statephys()
 
 # Run simulation
 sim.time_stepping.start()
@@ -115,7 +113,8 @@ x0, y0 = pi, pi
 sigma = 0.5
 b[:] = np.exp(-((X - x0)**2 + (Y - y0)**2) / (2 * sigma**2))
 
-sim.state.statephys_from_statespect()
+# Compute the spectral state FROM the physical field just set.
+sim.state.statespect_from_statephys()
 sim.time_stepping.start()
 ```
 
@@ -243,10 +242,11 @@ for sim_dir in os.listdir("simulations"):
         nu = sim.params.nu_2
         nx = sim.params.oper.nx
 
-        # Extract results
-        df = sim.output.spatial_means.load()
-        final_energy = df["E"].iloc[-1]
-        mean_energy = df["E"].mean()
+        # Extract results. load() returns a dict of numpy arrays, so use
+        # numpy indexing/reductions, not pandas .iloc / .mean().
+        data = sim.output.spatial_means.load()
+        final_energy = data["E"][-1]
+        mean_energy = data["E"].mean()
 
         results.append({
             "nu": nu,
