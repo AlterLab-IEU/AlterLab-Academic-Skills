@@ -98,7 +98,6 @@ def assigned_tiers(text: str) -> set[str]:
 
 def lint(text: str) -> list[Finding]:
     findings: list[Finding] = []
-    lower = text.lower()
 
     tiers_present = sorted(assigned_tiers(text))
     has_restricted_or_permitted = bool(
