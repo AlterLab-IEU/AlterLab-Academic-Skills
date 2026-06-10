@@ -2,9 +2,9 @@
 <img src=".github/header-banner.svg" width="100%" alt="AlterLab Akademik Beceriler">
 <br>
 
-<a href="skills/"><img src="https://img.shields.io/badge/Beceri-209-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Beceriler"></a>
+<a href="skills/"><img src="https://img.shields.io/badge/Beceri-210-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Beceriler"></a>
 <a href="skills/"><img src="https://img.shields.io/badge/Alan-16-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Alanlar"></a>
-<a href="docs/evals.md"><img src="https://img.shields.io/badge/Eval-209%2F209-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Eval kapsamı"></a>
+<a href="docs/evals.md"><img src="https://img.shields.io/badge/Eval-210%2F210-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Eval kapsamı"></a>
 <a href="https://www.anthropic.com"><img src="https://img.shields.io/badge/Claude-AI%20Destekli-F97316?style=for-the-badge&logo=anthropic&logoColor=white" alt="Claude AI"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/Lisans-MIT-10B981?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="MIT Lisansı"></a>
 <a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases"><img src="https://img.shields.io/github/v/release/AlterLab-IEU/AlterLab-Academic-Skills?style=for-the-badge&logo=github&color=8B5CF6&logoColor=white&label=Sürüm" alt="Sürüm"></a>
@@ -29,9 +29,9 @@
 
 <br><br>
 
-<h3>🧬 Fakülte üyeleri, araştırmacılar ve akademisyenler için özel olarak tasarlanmış 209 Claude AI becerisi</h3>
+<h3>🧬 Fakülte üyeleri, araştırmacılar ve akademisyenler için özel olarak tasarlanmış 210 Claude AI becerisi</h3>
 <p><em>16 araştırma alanına yayılmış — Türk akademisinden biyoinformatiğe, dijital beşeri bilimlere</em></p>
-<p><em>209/209 beceri çalıştırılabilir eval ile gelir · deterministik atıf-doğrulayıcı · claude.ai için alan paketleri</em></p>
+<p><em>210/210 beceri çalıştırılabilir eval ile gelir · deterministik atıf-doğrulayıcı · claude.ai için alan paketleri</em></p>
 
 <p>
 <b>Araştırma Hattı</b> · <b>Bilimsel Veritabanları</b> · <b>Biyoinformatik</b> · <b>Veri Bilimi</b> · <b>Görselleştirme</b> · <b>Klinik Araştırma</b> · <b>ve daha fazlası</b>
@@ -96,14 +96,14 @@
 <summary><b>Genişletmek / daraltmak için tıklayın</b></summary>
 <br>
 
-- [🚀 Sürüm 2.1.0'da Yenilikler](#-sürüm-210da-yenilikler)
+- [🚀 Sürüm 2.2.0'da Yenilikler](#-sürüm-220da-yenilikler)
 - [🎯 Bu Proje Nedir?](#-bu-proje-nedir)
 - [✨ Öne Çıkan Özellikler](#-öne-çıkan-özellikler)
 - [🆕 Sürüm 2.0'da Yenilikler](#-sürüm-20da-yenilikler)
 - [🗂️ Alan Genel Bakışı](#%EF%B8%8F-alan-genel-bakışı)
 - [🚀 Hızlı Başlangıç](#-hızlı-başlangıç)
-- [⚡ Çekirdek Hat — 8 Beceri](#-çekirdek-hat--8-beceri)
-- [📚 209 Becerinin Tamamı](#-209-becerinin-tamamı)
+- [⚡ Çekirdek Hat — 9 Beceri](#-çekirdek-hat--9-beceri)
+- [📚 210 Becerinin Tamamı](#-210-becerinin-tamamı)
 - [🏗️ Proje Yapısı](#%EF%B8%8F-proje-yapısı)
 - [⚙️ Beceriler Nasıl Çalışır?](#%EF%B8%8F-beceriler-nasıl-çalışır)
 - [💡 Kullanım Örnekleri](#-kullanım-örnekleri)
@@ -116,19 +116,22 @@
 
 <br>
 
-## 🚀 Sürüm 2.1.0'da Yenilikler
+## 🚀 Sürüm 2.2.0'da Yenilikler
+
+- 🧠 **191 becerinin araştırma-temelli yükseltilmesi** — önceden var olan tüm becerilerde doğruluk ve derinlik geçişi: düzeltilmiş mevzuat/API ayrıntıları, `references/` içine inceltilen gövdeler ve sürüm artışları. 
+- 🧩 **Yeni çekirdek beceri: İş Akışı Orkestrasyonu** (`alterlab-workflow-orchestration`) — AlterLab becerilerini çok-ajanlı iş akışlarına dönüştürür; koleksiyon **210 beceriye** yükseldi. → [Çekirdek Hat](#-çekirdek-hat--9-beceri)
 
 - 🇹🇷 **Türk Akademisi amiral suiti (12 beceri)** — herhangi bir beceri kütüphanesindeki en kapsamlı Türk-akademi suiti: DergiPark, TR Dizin, YÖK Tez, YÖK Akademik, YÖKATLAS, TÜBİTAK 1001/1002-A önerileri, doçentlik uygunluğu, akademik teşvik puanlama, Türkçe APA-7 üslubu, etik kurul başvuruları, KVKK veri yönetim planları ve TÜBİTAK Aperta — her biri doğrulanmış bir ulusal-platform uç noktasına bağlı. → [Türk Akademisi](#-türk-akademisi--ulusal-platformlar--akademik-iş-akışı-12-beceri)
 - 🎓 **Fakülte Yaşamı (6 beceri)** — müfredat yapay zeka politikası, ödül-sonrası hibe raporlama, tavsiye mektupları, AACSB/ABET akreditasyonu (AoL), REDCap/CDISC veri toplama ve ön baskı deposu. → [Fakülte Yaşamı](#-fakülte-yaşamı--öğretim-hizmet--akademik-kariyer-6-beceri)
 - 🧪 **Metodoloji (3 beceri)** — araştırma yöntemlerine uygulanan superpowers tarzı titizlik (Demir Kurallar, Bahane-Gerçek tabloları): ön kayıt disiplini, istatistiksel-test seçim koruması ve sonuç-raporlama şeffaflığı. → [Metodoloji](#-metodoloji--araştırma-titizliği--disiplin-kapıları-3-beceri)
 - 🧬 **Biyoinformatik 25 → 30'a çıktı** — üretim hatları: nf-core/sarek varyant çağırma, QIIME 2 amplikon, salmon/kallisto RNA-seq nicelleme, NCBI BLAST+ ve Squidpy uzamsal transkriptomik. → [Biyoinformatik](#-biyoinformatik--genomik-proteomik-ve-moleküler-biyoloji-30-beceri)
-- ✅ **26 yeni becerinin tamamında ilk günden eval** — kapsam **209 / 209** olarak kalır, her PR'da CI ile denetlenir. → [`docs/evals.md`](docs/evals.md)
+- ✅ **26 yeni becerinin tamamında ilk günden eval** — kapsam **210 / 210** olarak kalır; şema + kapsam denetimi her PR'da CI'da çalışır, davranışsal eval geçişi ise istek üzerine (`workflow_dispatch`) yürütülür. → [`docs/evals.md`](docs/evals.md)
 
 <br>
 
 ## 🎯 Bu Proje Nedir?
 
-Fakülte üyeleri, akademisyenler ve araştırmacılar için tasarlanmış, **özel amaçlı 209 Claude AI becerisinden** oluşan kapsamlı bir paket — akademik araştırma yaşam döngüsünün tamamını kapsayacak şekilde **16 alan kategorisine** ayrılmıştır.
+Fakülte üyeleri, akademisyenler ve araştırmacılar için tasarlanmış, **özel amaçlı 210 Claude AI becerisinden** oluşan kapsamlı bir paket — akademik araştırma yaşam döngüsünün tamamını kapsayacak şekilde **16 alan kategorisine** ayrılmıştır.
 
 Her beceri, Claude'u akademik araştırma, bilimsel hesaplama ve akademik yayıncılık iş akışlarına göre uyarlanmış **alana özgü bir uzman asistana** dönüştürür.
 
@@ -156,15 +159,15 @@ Sürüm 2.0, koleksiyonu bir beceri listesinden **denetlenmiş, doğrulanmış v
 
 | | Özellik | Açıklama |
 |:---:|:---|:---|
-| ✅ | **Davranışsal Eval Kapsamı** | 209 becerinin **tamamı** (%100) Anthropic'in tetikleme/tetiklememe biçimini izleyen `evals/evals.json` dosyalarıyla gelir; `scripts/run_evals.py` ile çalıştırılır |
+| ✅ | **Davranışsal Eval Kapsamı** | 210 becerinin **tamamı** (%100) Anthropic'in tetikleme/tetiklememe biçimini izleyen `evals/evals.json` dosyalarıyla gelir; `scripts/run_evals.py` ile çalıştırılır |
 | 🔎 | **Atıf Doğrulayıcı** | Yeni `alterlab-citation-verifier` becerisi, bir kaynakçadaki her girdinin **gerçekten var olduğunu** dört anahtarsız bilimsel API (Crossref, OpenAlex, Semantic Scholar, arXiv) üzerinden çapraz kontrol ederek doğrular |
 | 📦 | **Alan Paketleri (Domain Packs)** | Tüm alanlar, bağımsız olarak kurulabilen Claude Code eklentileri olarak paketlenir — yalnızca ihtiyacınız olanı kurun, tüm depoyu değil |
 | 🔌 | **MCP Öncelikli Veri** | Beceriler, ilgili MCP araçları (PubMed, Scholar Gateway, Clinical Trials, Hugging Face) mevcut olduğunda eğitim verisi yerine **canlı veriyi** tercih eder ve kaynağı + erişim tarihini gösterir |
 | ⌨️ | **Slash Komutları** | Çekirdek iş akışları için doğrudan komutlar: `/research-pipeline`, `/lit-review`, `/review-paper`, `/cite-check` |
-| 🔁 | **Genişletilmiş Çekirdek Hat** | Çekirdek hat artık **8 beceri** içeriyor — atıf doğrulama ve bağlantı sağlığı denetimi de dahil olmak üzere bütünlük araçları eklendi |
+| 🔁 | **Genişletilmiş Çekirdek Hat** | Çekirdek hat artık **9 beceri** içeriyor — atıf doğrulama ve bağlantı sağlığı denetimi de dahil olmak üzere bütünlük araçları eklendi |
 
 > [!NOTE]
-> Eval kapsamı artık tüm koleksiyonu kapsar (209 / 209). Tam değişiklik geçmişi için [CHANGELOG.md](CHANGELOG.md) dosyasına bakın.
+> Eval kapsamı artık tüm koleksiyonu kapsar (210 / 210). Tam değişiklik geçmişi için [CHANGELOG.md](CHANGELOG.md) dosyasına bakın.
 
 ### 🚀 v2.0'deki ek yenilikler
 
@@ -172,7 +175,7 @@ Yukarıdaki tabloyu tamamlayan, v2.0 ile gelen başlıca sayfa eklentileri:
 
 | | Yenilik | Ayrıntı |
 |:---:|:---|:---|
-| 🌐 | **Canlı Katalog** | 209 becerinin tamamı, gözatılabilir bir web kataloğunda yayımlanır: [alterlab-ieu.github.io/AlterLab-Academic-Skills](https://alterlab-ieu.github.io/AlterLab-Academic-Skills/) — kurulum yapmadan tüm koleksiyonu inceleyin |
+| 🌐 | **Canlı Katalog** | 210 becerinin tamamı, gözatılabilir bir web kataloğunda yayımlanır: [alterlab-ieu.github.io/AlterLab-Academic-Skills](https://alterlab-ieu.github.io/AlterLab-Academic-Skills/) — kurulum yapmadan tüm koleksiyonu inceleyin |
 | 🤖 | **Kayıtlı Alt-Ajanlar** | Çekirdek hat, `core` eklentisiyle birlikte kaydedilen özelleşmiş alt-ajanlar olarak gelir; eğik çizgi komutları (`/research-pipeline`, `/lit-review`, `/review-paper`, `/cite-check`) ve birlikte paketlenen akademik MCP (PubMed / OpenAlex / Crossref / Zotero) ile sürülür |
 | 🗂️ | **Üretilen Katalog** | Makine okunabilir [`skills.json`](skills.json), beceri frontmatter'ından otomatik üretilir; bir CI kapısı bu README'deki her sayımı doğrular ve dürüst tutar |
 | 📜 | **Dürüst Köken** | Bu depo, MIT lisanslı [K-Dense `scientific-agent-skills`](https://github.com/K-Dense-AI/scientific-agent-skills) projesinden içerik çatallamasıdır; köken [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md), [`PROVENANCE.md`](PROVENANCE.md) ve [`CITATION.cff`](CITATION.cff) dosyalarında açıkça belgelenir |
@@ -186,7 +189,7 @@ Yukarıdaki tabloyu tamamlayan, v2.0 ile gelen başlıca sayfa eklentileri:
 
 | | Alan | Beceri | Odak Alanları |
 |:---:|:---|:---:|:---|
-| 🔄 | **Çekirdek Hat** | **8** | Çok-ajanlı araştır → yaz → değerlendir → yayınla hattı + öğretim + tez + bütünlük araçları |
+| 🔄 | **Çekirdek Hat** | **9** | Çok-ajanlı araştır → yaz → değerlendir → yayınla hattı + öğretim + tez + bütünlük araçları + iş akışı orkestrasyonu |
 | 🗄️ | **Veritabanları** | **39** | Bilimsel veritabanı bağlayıcıları — PubMed, ChEMBL, UniProt, ClinicalTrials.gov, COSMIC ve daha fazlası |
 | 🧬 | **Biyoinformatik** | **30** | Genomik, proteomik, moleküler biyoloji — Scanpy, BioPython, ESM, tek hücre analizi, nf-core/sarek, QIIME 2, RNA-seq nicelleme |
 | ⚗️ | **Kemoinformatik** | **12** | Kimya ve ilaç keşfi — RDKit, moleküler dinamik, docking, ADMET |
@@ -257,7 +260,7 @@ Bir beceri dizinini sıkıştırıp **Ayarlar → Yetenekler** altından yükley
 
 ---
 
-## ⚡ Çekirdek Hat — 8 Beceri
+## ⚡ Çekirdek Hat — 9 Beceri
 
 > *Sistemin kalbi — 39 özelleşmiş ajanlı, araştırmadan yayına çok-ajanlı bir üretim hattı; ayrıca öğretim, tez danışmanlığı ve bütünlük doğrulama araçları.*
 
@@ -271,6 +274,7 @@ Bir beceri dizinini sıkıştırıp **Ayarlar → Yetenekler** altından yükley
 | 6 | **📋 Tez Danışmanı** | — | Tez rehberliği, savunma hazırlığı, jüri yönetimi |
 | 7 | **🔎 Atıf Doğrulayıcı** | — | Kaynakçadaki her girdiyi dört anahtarsız bilimsel API üzerinden doğrular |
 | 8 | **🔗 Bağlantı Sağlığı** | — | Depo genelinde bağlantı sağlığı denetimi meta-becerisi |
+| 9 | **🧩 İş Akışı Orkestrasyonu** | — | AlterLab becerilerini çok-ajanlı iş akışlarına dönüştürür: paralel alt-ajan dağıtımı, hatlar, jüri panelleri, çekişmeli doğrulama |
 
 ### Tam Hat Akışı
 
@@ -288,7 +292,7 @@ derin-araştırma (sokratik/tam)
 
 ---
 
-## 📚 209 Becerinin Tamamı
+## 📚 210 Becerinin Tamamı
 
 ### 🗄️ Veritabanları — Bilimsel Veritabanı Bağlayıcıları (39 Beceri)
 
@@ -730,7 +734,7 @@ Beceriler kademeli olarak yüklenir:
 3. **Referanslar** — Görev gerektirdikçe, `references/*.md` dosyaları talep üzerine yüklenir.
 4. **MCP Tercihi** — İlgili MCP araçları (PubMed, Scholar Gateway, Clinical Trials, Hugging Face) mevcutsa, beceriler eğitim verisi yerine canlı veriyi tercih eder ve kaynağı + erişim tarihini gösterir.
 
-Bu kademeli yükleme yaklaşımı sayesinde 209 becerinin tamamı aynı projede mevcut olabilir; Claude yalnızca ihtiyaç duyduğunu hafızaya çeker.
+Bu kademeli yükleme yaklaşımı sayesinde 210 becerinin tamamı aynı projede mevcut olabilir; Claude yalnızca ihtiyaç duyduğunu hafızaya çeker.
 
 > [!NOTE]
 > **İpucu:** Tek bir Claude Projesi içinde birden çok beceriyi birleştirerek çok-uzmanlı bir ekip kurun. Örneğin **Derin Araştırma** + **Makale Yazarı** + **Makale Hakemi** becerilerini birlikte yükleyerek araştırmadan yayına eksiksiz bir iş akışı elde edin.
@@ -825,7 +829,7 @@ Her becerinin kapsadığı aracın ayrı bir lisansı olabilir — ilgili SKILL.
 
 <br><br>
 
-<b>209 beceri · 16 alan · 209'u çalıştırılabilir eval ile · uzman düzeyinde araştırmaya 1 komut uzaklıkta</b>
+<b>210 beceri · 16 alan · 210'u çalıştırılabilir eval ile · uzman düzeyinde araştırmaya 1 komut uzaklıkta</b>
 
 <br><br>
 

@@ -4,6 +4,39 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] — 2026-06-10
+
+The "elevation" release: a research-backed accuracy and depth pass over the whole
+pre-existing corpus, plus one new core skill — **210 skills across 16 domains**,
+210 / 210 with executable evals.
+
+### Added
+
+- **`alterlab-workflow-orchestration`** (core): composes AlterLab skills into
+  multi-agent agentic workflows — parallel subagent fan-out, sequential pipelines,
+  judge panels, adversarial verification, and loop-until-clean review cycles —
+  mapped onto current Claude Code subagent / Claude Agent SDK orchestration patterns.
+
+### Changed
+
+- **Research-backed elevation of 191 pre-existing skills**: corrected regulation and
+  API details (e.g. Akademik Teşvik MADDE 6/7–6/9 scope exclusions), slimmed
+  oversized bodies into `references/`, refreshed eval rubrics, and bumped
+  `metadata.version` on every touched skill.
+- README (EN/TR) eval-coverage wording now states precisely what runs where: the
+  schema + trigger-coverage gate runs in CI on every PR; the behavioral pass
+  (claude CLI + LLM judge) runs on demand via `workflow_dispatch`.
+
+### Fixed
+
+- Frontmatter YAML in `alterlab-perplexity` and `alterlab-tubitak-proposal`
+  (unquoted `:` in `description` broke parsing → Agent Skills spec failures).
+- Re-added the suite mention to 5 rewritten descriptions; body-length ratchet
+  brought back to green (4 stale entries delisted, 2 bodies re-slimmed under the
+  500-line soft cap).
+- Behavioral evals CI lane no longer runs on a weekly cron without credentials
+  (manual `workflow_dispatch` only; requires the `ANTHROPIC_API_KEY` repo secret).
+
 ## [2.1.0] — 2026-06-06
 
 A roadmap-clearing content release: **26 new skills across the four v2.1–v2.4 roadmap
