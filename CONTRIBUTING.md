@@ -22,9 +22,12 @@ Skills must belong to one of the following categories:
 | Data Science | `skills/data-science/` | ML, statistics, data analysis |
 | Document Tools | `skills/document-tools/` | Markdown conversion and notebook tooling |
 | Domain-Specific | `skills/domain-specific/` | Quantum, geospatial, materials science |
+| Faculty Life | `skills/faculty-life/` | Faculty research-lifecycle and academic administration |
 | Finance & Economics | `skills/finance-economics/` | Financial data and analysis |
 | Lab Integrations | `skills/lab-integrations/` | Laboratory platform connectors |
+| Methodology | `skills/methodology/` | Research methodology and rigor scaffolds |
 | Research Tools | `skills/research-tools/` | Search, discovery, reference management |
+| Turkish Academia | `skills/turkish-academia/` | Turkish academic system workflows (YÖK, ÜAK, DergiPark, TÜBİTAK) |
 | Visualization | `skills/visualization/` | Scientific plotting and graphics |
 | Writing Tools | `skills/writing-tools/` | Scientific writing, citations, posters |
 

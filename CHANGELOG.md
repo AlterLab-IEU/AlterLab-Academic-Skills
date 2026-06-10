@@ -4,6 +4,50 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] — 2026-06-06
+
+A roadmap-clearing content release: **26 new skills across the four v2.1–v2.4 roadmap
+domains**, lifting the corpus from **183 → 209 skills across 13 → 16 domain categories**,
+with day-one executable evals on every new skill (coverage holds at **209 / 209**).
+
+### Added
+
+- **Turkish-academia suite (12 skills — the release flagship)** under
+  `skills/turkish-academia/`: `alterlab-dergipark`, `alterlab-trdizin`, `alterlab-yok-tez`,
+  `alterlab-yok-akademik`, `alterlab-yokatlas`, `alterlab-tubitak-proposal`,
+  `alterlab-docentlik-eligibility`, `alterlab-akademik-tesvik`, `alterlab-tr-academic-style`,
+  `alterlab-tr-research-ethics`, `alterlab-kvkk-dmp`, and `alterlab-aperta`. Each is wired to
+  a **verified national-platform endpoint** (DergiPark's platform-wide OAI-PMH feed, the
+  TR Dizin REST/Elasticsearch API, the YÖK Tez / YÖK Akademik / YÖKATLAS portals, TÜBİTAK
+  ARDEB PBS, and ULAKBİM Aperta), and encodes the live regulatory rules (ÜAK doçentlik
+  tables, the Akademik Teşvik Yönetmeliği scoring, KVKK Law 6698 as amended by Law 7499,
+  and the TR Dizin/ULAKBİM ethics-committee trigger).
+- **Faculty Life (6 skills)** under `skills/faculty-life/`: `alterlab-syllabus-ai-policy`,
+  `alterlab-grant-reporting`, `alterlab-recommendation-letters`, `alterlab-accreditation-aol`,
+  `alterlab-redcap-cdisc`, and `alterlab-preprint-deposition`.
+- **Methodology (3 skills)** under `skills/methodology/`: `alterlab-preregistration-discipline`,
+  `alterlab-test-selection-guard`, and `alterlab-results-transparency` — superpowers-style
+  discipline gates (Iron Laws, Excuse-vs-Reality rationalization tables, Red-Flags-STOP lists)
+  applied to research methods.
+- **Bioinformatics pipelines (25 → 30)**: `alterlab-nf-core-sarek` (nf-core/sarek variant
+  calling), `alterlab-qiime2-amplicon` (16S/ITS microbiome), `alterlab-rnaseq-quant`
+  (salmon/kallisto), `alterlab-blast` (NCBI BLAST+), and `alterlab-squidpy-spatial`
+  (spatial transcriptomics).
+- **Day-one evals on all 26 new skills**: every new skill ships `evals/evals.json` on the
+  canonical [agentskills.io](https://agentskills.io) schema, so eval coverage stays at
+  **209 / 209**, CI-gated on every PR via `scripts/run_evals.py --strict`.
+
+### Changed
+
+- **Phase-0 infrastructure** ahead of the expansion: the contributor `template/` was fixed to
+  the canonical eval schema; the generated `.claude-plugin/marketplace.json` gained first-class
+  top-level `description` and `version` fields plus `metadata.author`; and three new domain
+  plugins (`alterlab-turkish-academia`, `alterlab-faculty-life`, `alterlab-methodology`) join
+  the marketplace, bringing it to **16 plugins**.
+- **Version bumped to 2.1.0** across the three sources of truth (`pyproject.toml`,
+  `package.json`, `.claude-plugin/marketplace.json`); `skills.json` and both READMEs
+  regenerated to **209 skills / 16 domains**.
+
 ## [2.0.0] — 2026-06-06
 
 ### ⚠️ Breaking — action required for 1.x installs
@@ -130,6 +174,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 - Initial public release of the AlterLab Academic Skills collection.
 
+[2.1.0]: https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases/tag/v2.1.0
 [2.0.0]: https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases/tag/v2.0.0
 [1.2.0]: https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases/tag/v1.2.0
 [1.1.0]: https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases/tag/v1.1.0

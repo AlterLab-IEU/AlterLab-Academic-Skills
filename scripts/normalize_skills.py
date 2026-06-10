@@ -76,6 +76,9 @@ ALLOWED_TOOLS_BY_CATEGORY = {
     "finance-economics":  "Read WebFetch Bash(curl:*) Bash(python:*)",
     "lab-integrations":   "Read Write Edit Bash(curl:*) Bash(python:*)",
     "research-tools":     "Read WebFetch WebSearch Bash(python:*)",
+    "turkish-academia":   "Read WebFetch WebSearch Bash(python:*)",
+    "faculty-life":       "Read Write Edit WebFetch Bash(python:*)",
+    "methodology":        "Read Write Edit",
     "visualization":      "Read Write Edit Bash(python:*)",
     "writing-tools":      "Read Write Edit",
 }

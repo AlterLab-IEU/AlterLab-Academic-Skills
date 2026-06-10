@@ -1,0 +1,7 @@
+Variable / Field Name,Form Name,Section Header,Field Type,Field Label,"Choices, Calculations, OR Slider Labels",Field Note,Text Validation Type OR Show Slider Number,Text Validation Min,Text Validation Max,Identifier?,Branching Logic (Show field only if...),Required Field?,Custom Alignment,Question Number (surveys only),Matrix Group Name,Matrix Ranking?,Field Annotation
+record_id,enrollment,,text,Record ID,,,,,,y,,,,,,,
+patient_email,enrollment,,text,Participant email,,,email,,,,,,,,,,
+age,enrollment,,text,Age,,,integer,18,120,,,y,,,,,
+sex,enrollment,,radio,Sex,,,,,,,,y,,,,,
+pregnant,enrollment,,yesno,Currently pregnant?,,,,,,,"[sx] = ""1""",,,,,,
+bmi,enrollment,,calc,BMI,"round([weight_kg]/([height_m]^2),1)",,,,,,,,,,,,

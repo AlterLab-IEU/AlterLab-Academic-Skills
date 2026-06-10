@@ -1,20 +1,26 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "alterlab-academic-skills",
+  "description": "209 Claude skills for academic research, organized by domain",
+  "version": "2.1.0",
   "owner": {
     "name": "AlterLab @ Izmir University of Economics",
     "email": "alterlab.ieu@gmail.com"
   },
   "metadata": {
-    "description": "183 Claude skills for academic research, organized by domain",
-    "version": "2.0.0"
+    "description": "209 Claude skills for academic research, organized by domain",
+    "version": "2.1.0",
+    "author": {
+      "name": "AlterLab @ Izmir University of Economics",
+      "url": "https://github.com/AlterLab-IEU"
+    }
   },
   "plugins": [
     {
       "name": "alterlab-bioinformatics",
       "source": "./skills/bioinformatics",
-      "description": "Genomics, proteomics, and single-cell analysis (Scanpy, BioPython, pysam, ESM) (25 skills)",
-      "version": "2.0.0",
+      "description": "Genomics, proteomics, and single-cell analysis (Scanpy, BioPython, pysam, ESM) (30 skills)",
+      "version": "2.1.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -35,6 +41,7 @@
         "./alterlab-arboreto",
         "./alterlab-biopython",
         "./alterlab-bioservices",
+        "./alterlab-blast",
         "./alterlab-cellxgene",
         "./alterlab-cobrapy",
         "./alterlab-deeptools",
@@ -46,15 +53,19 @@
         "./alterlab-histolab",
         "./alterlab-lamindb",
         "./alterlab-neuropixels",
+        "./alterlab-nf-core-sarek",
         "./alterlab-pathml",
         "./alterlab-phylogenetics",
         "./alterlab-pydeseq2",
         "./alterlab-pyopenms",
         "./alterlab-pysam",
+        "./alterlab-qiime2-amplicon",
+        "./alterlab-rnaseq-quant",
         "./alterlab-scanpy",
         "./alterlab-scikit-bio",
         "./alterlab-scvelo",
         "./alterlab-scvi-tools",
+        "./alterlab-squidpy-spatial",
         "./alterlab-tiledbvcf"
       ]
     },
@@ -62,7 +73,7 @@
       "name": "alterlab-cheminformatics",
       "source": "./skills/cheminformatics",
       "description": "Chemistry and drug discovery (RDKit, docking, ADMET, mass spec) (12 skills)",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -97,7 +108,7 @@
       "name": "alterlab-clinical-research",
       "source": "./skills/clinical-research",
       "description": "Clinical decision support, medical imaging, and regulatory workflows (7 skills)",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -126,7 +137,7 @@
       "name": "alterlab-core",
       "source": "./skills/core",
       "description": "Core research-to-publication pipeline plus teaching and thesis tools (8 skills)",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -171,7 +182,7 @@
       "name": "alterlab-data-science",
       "source": "./skills/data-science",
       "description": "Machine learning and statistics (scikit-learn, PyTorch, transformers, SHAP) (22 skills)",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -216,7 +227,7 @@
       "name": "alterlab-databases",
       "source": "./skills/databases",
       "description": "Connectors to scientific databases (PubMed, ChEMBL, UniProt, GEO, and more) (39 skills)",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -280,7 +291,7 @@
       "name": "alterlab-document-tools",
       "source": "./skills/document-tools",
       "description": "Document and Markdown conversion (MarkItDown, Open Notebook) (2 skills)",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -303,7 +314,7 @@
       "name": "alterlab-domain-specific",
       "source": "./skills/domain-specific",
       "description": "Quantum computing, geospatial, materials, astronomy, and digital humanities (17 skills)",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -340,10 +351,40 @@
       ]
     },
     {
+      "name": "alterlab-faculty-life",
+      "source": "./skills/faculty-life",
+      "description": "Faculty research-lifecycle and academic administration (syllabus AI-policy, IRB/consent, post-award grant admin, recommendation letters, accreditation AoL) (6 skills)",
+      "version": "2.1.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "faculty",
+        "teaching",
+        "irb",
+        "grant-admin",
+        "accreditation",
+        "recommendation-letters"
+      ],
+      "strict": false,
+      "skills": [
+        "./alterlab-accreditation-aol",
+        "./alterlab-grant-reporting",
+        "./alterlab-preprint-deposition",
+        "./alterlab-recommendation-letters",
+        "./alterlab-redcap-cdisc",
+        "./alterlab-syllabus-ai-policy"
+      ]
+    },
+    {
       "name": "alterlab-finance-economics",
       "source": "./skills/finance-economics",
       "description": "Economic and financial data (FRED, Alpha Vantage, SEC EDGAR, market research) (7 skills)",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -373,7 +414,7 @@
       "name": "alterlab-lab-integrations",
       "source": "./skills/lab-integrations",
       "description": "Laboratory platforms (Benchling, DNAnexus, Opentrons, Protocols.io) (9 skills)",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -401,10 +442,36 @@
       ]
     },
     {
+      "name": "alterlab-methodology",
+      "source": "./skills/methodology",
+      "description": "Research methodology and rigor scaffolds (Iron Laws, rationalization tables, decision flowcharts, systematic-reasoning checklists) (3 skills)",
+      "version": "2.1.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
+      "license": "MIT",
+      "category": "research",
+      "keywords": [
+        "methodology",
+        "research-rigor",
+        "systematic-reasoning",
+        "checklists",
+        "decision-flowcharts"
+      ],
+      "strict": false,
+      "skills": [
+        "./alterlab-preregistration-discipline",
+        "./alterlab-results-transparency",
+        "./alterlab-test-selection-guard"
+      ]
+    },
+    {
       "name": "alterlab-research-tools",
       "source": "./skills/research-tools",
       "description": "Search, discovery, Zotero, qualitative methods, ethics, and open science (14 skills)",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -438,10 +505,46 @@
       ]
     },
     {
+      "name": "alterlab-turkish-academia",
+      "source": "./skills/turkish-academia",
+      "description": "Turkish academic system workflows (YÖK, ÜAK, DergiPark, YÖK-Tez, TÜBİTAK, doçentlik) (12 skills)",
+      "version": "2.1.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
+      "license": "MIT",
+      "category": "research",
+      "keywords": [
+        "turkish-academia",
+        "yok",
+        "uak",
+        "dergipark",
+        "yok-tez",
+        "tubitak"
+      ],
+      "strict": false,
+      "skills": [
+        "./alterlab-akademik-tesvik",
+        "./alterlab-aperta",
+        "./alterlab-dergipark",
+        "./alterlab-docentlik-eligibility",
+        "./alterlab-kvkk-dmp",
+        "./alterlab-tr-academic-style",
+        "./alterlab-tr-research-ethics",
+        "./alterlab-trdizin",
+        "./alterlab-tubitak-proposal",
+        "./alterlab-yok-akademik",
+        "./alterlab-yok-tez",
+        "./alterlab-yokatlas"
+      ]
+    },
+    {
       "name": "alterlab-visualization",
       "source": "./skills/visualization",
       "description": "Publication-quality plotting and schematics (Matplotlib, Seaborn, Plotly) (8 skills)",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -472,7 +575,7 @@
       "name": "alterlab-writing-tools",
       "source": "./skills/writing-tools",
       "description": "Scientific writing, citations, grants, posters, and academic career (13 skills)",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
