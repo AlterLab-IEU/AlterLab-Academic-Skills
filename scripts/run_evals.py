@@ -239,6 +239,16 @@ def validate_all() -> list[SkillResult]:
 # a skill that legitimately stalls on live tool use does not silently masquerade as a FAIL.
 _NO_ANSWER = "<no-answer>"
 
+# A _NO_ANSWER subtype: the runner environment (the `claude` CLI's usage-policy classifier)
+# *refused* the prompt before the skill could be exercised — distinct from a timeout or a
+# crash. Common on benign biomedical / clinical / genomics prompts via the Claude Code CLI,
+# which applies a conservative dual-use classifier the raw API does not. Surfaced separately
+# so an environment refusal is never silently scored as a generic inconclusive, and so a
+# corpus whose prompts are mostly refused is loudly visible rather than reading as "0 failed".
+_REFUSED = f"{_NO_ANSWER} ENV-REFUSED"
+# Signatures of the CLI usage-policy refusal — printed to *stdout* with a non-zero exit.
+_REFUSAL_SIGNATURES = ("violate our Usage Policy", "unable to respond to this request")
+
 
 def _claude(prompt: str, model: str, timeout: int, system: str | None = None) -> str:
     """Run a one-shot prompt through the claude CLI and return stdout text.
@@ -246,7 +256,8 @@ def _claude(prompt: str, model: str, timeout: int, system: str | None = None) ->
     When ``system`` is given it is injected via ``--append-system-prompt`` — this is how the
     target skill's SKILL.md is primed into the call so we grade the *skill*, not bare Claude.
     Errors/timeouts are returned as a ``_NO_ANSWER``-prefixed marker rather than raised, so a
-    single bad run degrades to a non-verdict instead of aborting the whole eval.
+    single bad run degrades to a non-verdict instead of aborting the whole eval. A usage-policy
+    refusal is mapped to the ``_REFUSED`` subtype so it is reported distinctly downstream.
     """
     cmd = ["claude", "--model", model]
     if system:
@@ -256,14 +267,24 @@ def _claude(prompt: str, model: str, timeout: int, system: str | None = None) ->
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
         return f"{_NO_ANSWER} TIMEOUT after {timeout}s"
+    # The CLI prints usage-policy refusals to stdout and exits non-zero, so check both streams.
+    combined = f"{proc.stdout} {proc.stderr}"
+    if any(sig in combined for sig in _REFUSAL_SIGNATURES):
+        return _REFUSED
     if proc.returncode != 0:
-        return f"{_NO_ANSWER} claude CLI exited {proc.returncode}: {proc.stderr.strip()[:300]}"
+        detail = (proc.stderr.strip() or proc.stdout.strip())[:300]
+        return f"{_NO_ANSWER} claude CLI exited {proc.returncode}: {detail}"
     return proc.stdout.strip()
 
 
 def _is_answer(response: str) -> bool:
     """True if ``response`` is a real model answer (not a _NO_ANSWER error/timeout marker)."""
     return bool(response) and not response.startswith(_NO_ANSWER)
+
+
+def _is_refusal(response: str) -> bool:
+    """True if ``response`` is an environment (usage-policy) refusal rather than a real answer."""
+    return response.startswith(_REFUSED)
 
 
 # --- Fixture materialization ------------------------------------------------------------
@@ -454,8 +475,11 @@ def _eval_verdict_from_assertions(per_run: list[list[tuple[str, str, str]]]) -> 
 def run_behavioral(skill_filter: str | None, timeout: int, runs: int) -> int:
     """Grade each eval by injecting its SKILL.md, materializing fixtures, and voting over N runs.
 
-    Reports, per eval: the skilled majority verdict and the bare-vs-skill delta. Returns 1 if
-    any eval's skilled majority verdict is FAIL, else 0 (NA evals do not fail the run).
+    Reports, per eval: the skilled majority verdict and the bare-vs-skill rubric delta, and a
+    run-level tally of passed / failed / inconclusive / env-refused. Returns 1 if any eval's
+    skilled verdict is FAIL, else 0. NA/refused evals do not fail the run (an environment
+    refusal is not a skill defect), but they are counted and surfaced so a run that graded
+    nothing can never read as "0 failed" = success.
     """
     model = alterlab_model()
     print(f"Behavioral grading with model: {model} "
@@ -467,7 +491,7 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int) -> int:
               file=sys.stderr)
         return 2
 
-    graded = failed = 0
+    graded = passed = failed = na = refused = 0
     for d in skill_dirs():
         if skill_filter and skill_filter not in d.name:
             continue
@@ -496,8 +520,10 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int) -> int:
                 # --- Skilled arm: SKILL.md injected, run N times, vote ---
                 skilled_runs: list[list[tuple[str, str, str]]] = []
                 skilled_rubric: list[str] = []
+                skilled_refused = False
                 for _ in range(runs):
                     resp = _claude(prompt, model, timeout, system=skill_md)
+                    skilled_refused = skilled_refused or _is_refusal(resp)
                     skilled_runs.append(grade_assertions(e, d.name, resp, model, timeout))
                     skilled_rubric.append(_judge_rubric(rubric, resp, model, timeout)[0])
 
@@ -519,27 +545,54 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int) -> int:
             else:
                 verdict = "NA"
 
+            # The delta compares the two arms on the *overall rubric* only (the bare arm has no
+            # skill context, so it cannot carry the should_trigger/should_not_trigger
+            # assertions). Labelled "rubric:" so it never reads as contradicting an assertion-
+            # driven verdict (e.g. a near-miss that fails should_not_trigger while both arms'
+            # rubrics pass).
             delta = _delta(bare_overall, skilled_overall)
+            # Classify the eval outcome for the run-level tally.
+            na_kind = "env-refused" if skilled_refused else "inconclusive"
             mark = {"PASS": "✓", "FAIL": "✗", "NA": "?"}[verdict]
             if verdict == "FAIL":
                 failed += 1
-            print(f"{mark} {label}: skilled={verdict} "
+            elif verdict == "PASS":
+                passed += 1
+            elif skilled_refused:
+                refused += 1
+            else:
+                na += 1
+            na_note = f" [{na_kind}]" if verdict == "NA" else ""
+            print(f"{mark} {label}: skilled={verdict}{na_note} "
                   f"(assertions {assertion_verdict}, rubric {skilled_overall}) | "
                   f"bare rubric {bare_overall} -> {delta}")
 
-    print(f"\n{graded} eval(s) graded, {failed} failed.")
+    # Headline: never let "0 failed" imply success — report passed/failed/inconclusive/refused
+    # so a run that graded nothing (everything refused or inconclusive) is unmistakable.
+    verified = passed + failed
+    print(f"\n{graded} eval(s) graded: {passed} passed, {failed} failed, "
+          f"{na} inconclusive, {refused} env-refused.")
+    if graded and verified == 0:
+        print("WARNING: 0 evals produced a gradeable verdict — the environment refused or "
+              "could not answer every prompt; this run verifies NOTHING about the skills.",
+              file=sys.stderr)
+    elif refused:
+        print(f"NOTE: {refused} eval(s) were refused by the runner environment (usage-policy "
+              "classifier), not graded against the skill. Common for biomedical/clinical/"
+              "genomics prompts via the Claude Code CLI; use the API runner for those domains.",
+              file=sys.stderr)
     return 1 if failed else 0
 
 
 def _delta(bare: str, skilled: str) -> str:
-    """One-line characterization of the bare-vs-skill delta for an eval's overall rubric."""
+    """One-line characterization of the bare-vs-skill delta on the overall rubric."""
     if bare == "FAIL" and skilled == "PASS":
-        return "SKILL HELPED (bare FAIL -> skilled PASS)"
+        return "rubric: SKILL HELPED (bare FAIL -> skilled PASS)"
     if bare == "PASS" and skilled == "FAIL":
-        return "SKILL HURT (bare PASS -> skilled FAIL)"
+        return "rubric: SKILL HURT (bare PASS -> skilled FAIL)"
     if "NA" in (bare, skilled):
-        return f"INCONCLUSIVE (bare={bare}, skilled={skilled})"
-    return f"NO DELTA (both {bare})"
+        return f"rubric: INCONCLUSIVE (bare={bare}, skilled={skilled})"
+    return f"rubric: NO DELTA (both {bare})"
 
 
 # --- Validation reporting ---------------------------------------------------------------
