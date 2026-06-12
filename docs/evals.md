@@ -97,6 +97,26 @@ V(s).validate(json.load(open(sys.argv[1])))" \
 uv run python scripts/run_evals.py --behavioral
 ```
 
+### Reading a `--behavioral` run
+
+The summary line reports **passed / failed / inconclusive / env-refused** — not just
+"failed". Only `FAIL` makes the run exit non-zero; `NA`/refused do not (an environment
+refusal is not a skill defect). But they are counted so a run that graded *nothing* can
+never read as success — if every prompt is refused or times out you get a loud
+`WARNING: ... verifies NOTHING`.
+
+**`env-refused`** means the **runner environment** declined the prompt before the skill ran.
+The `claude` *Claude Code CLI* applies a conservative dual-use usage-policy classifier that
+the raw API does not, so benign **biomedical / clinical / genomics** prompts (PubMed
+E-utilities, variant calling, clinical-statistics test selection) are frequently refused.
+Those domains therefore **cannot be self-graded on the local CLI** — run them through the
+API behavioral lane (`workflow_dispatch` with `ANTHROPIC_API_KEY`) instead. General,
+administrative, methodology, writing, and Turkish-academia skills grade fine locally.
+
+The per-eval **`rubric:` delta** (`SKILL HELPED` / `HURT` / `NO DELTA`) compares the two
+arms on the *overall rubric only* — the bare arm carries no `should_trigger` assertions — so
+it is labelled `rubric:` and never contradicts an assertion-driven `FAIL` verdict.
+
 ## Worked example
 
 A complete, schema-valid eval file for a representative skill. It shows the full convention:

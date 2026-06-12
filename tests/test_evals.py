@@ -128,3 +128,26 @@ def _domain_of(skill_name: str) -> str | None:
         if d.name == skill_name:
             return d.parent.name
     return None
+
+
+# --- Behavioral-runner reporting guards -------------------------------------------------
+# These pin the honesty fixes for --behavioral's NA/refusal handling, which are pure-logic
+# and need no `claude` CLI. They exist because a run that grades NOTHING (every prompt timed
+# out or was usage-policy-refused) must never be readable as "0 failed" = success.
+
+def test_refusal_marker_is_a_no_answer_subtype() -> None:
+    """A usage-policy refusal is a non-answer (so judges return NA) AND a distinct refusal."""
+    assert run_evals._is_refusal(run_evals._REFUSED)
+    assert not run_evals._is_answer(run_evals._REFUSED)
+    # A generic non-answer is NOT a refusal — the two outcomes stay distinguishable.
+    assert not run_evals._is_refusal(f"{run_evals._NO_ANSWER} TIMEOUT after 60s")
+    # A real answer is neither.
+    assert run_evals._is_answer("here is a real response")
+    assert not run_evals._is_refusal("here is a real response")
+
+
+def test_delta_labels_are_rubric_scoped() -> None:
+    """The bare-vs-skill delta is rubric-only, so every label must say so — it must never read
+    as contradicting an assertion-driven verdict (e.g. 'skilled=FAIL ... NO DELTA both PASS')."""
+    for bare, skilled in [("FAIL", "PASS"), ("PASS", "FAIL"), ("PASS", "NA"), ("PASS", "PASS")]:
+        assert run_evals._delta(bare, skilled).startswith("rubric:")
