@@ -164,19 +164,6 @@
         "./alterlab-thesis-supervisor",
         "./alterlab-workflow-orchestration"
       ],
-      "commands": [
-        "./alterlab-citation-verifier/commands",
-        "./alterlab-deep-research/commands",
-        "./alterlab-paper-reviewer/commands",
-        "./alterlab-research-pipeline/commands"
-      ],
-      "agents": [
-        "./alterlab-deep-research/agents",
-        "./alterlab-paper-reviewer/agents",
-        "./alterlab-paper-writer/agents",
-        "./alterlab-research-pipeline/agents"
-      ],
-      "hooks": "./hooks/hooks.json",
       "mcpServers": "./.mcp.json"
     },
     {
