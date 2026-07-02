@@ -245,6 +245,27 @@ Yukarıdaki tabloyu tamamlayan, v2.0 ile gelen başlıca sayfa eklentileri:
 
 ## 🚀 Hızlı Başlangıç
 
+### 🎓 Yeni misiniz / teknik değil misiniz? **Claude uygulamasında** başlayın — terminal ve git yok
+
+Beceriler **claude.ai (tarayıcı)** ve **Claude masaüstü uygulamasında** basit bir yükleme ile çalışır — komut satırı gerekmez:
+
+1. Claude'da **kod yürütmenin** açık olduğundan emin olun: **Ayarlar → Yetenekler** *(Team/Enterprise: bir yönetici bunu kuruluş için bir kez açar)*.
+2. **Özelleştir ▸ Beceriler** bölümünü açın → **[claude.ai/customize/skills](https://claude.ai/customize/skills)**.
+3. **`+`** → **Beceri oluştur** → **Beceri yükle** öğesine tıklayın ve bir becerinin **`.zip`** dosyasını seçin.
+4. Becerinin anahtarını **Açık** konuma getirin. Artık normal şekilde sohbet edin — Claude, isteğiniz eşleştiğinde beceriyi otomatik kullanır.
+
+**`.zip` dosyasını nereden alırım? Terminal gerektirmeyen iki yol:**
+
+- **Tek beceri** — bu deponun üstündeki yeşil **`< > Code` ▸ Download ZIP** düğmesine tıklayın, arşivi açın, istediğiniz beceri klasörüne (ör. `skills/bioinformatics/alterlab-scanpy`) sağ tıklayıp **Sıkıştır / Zip** yapın. *O* zip'i yükleyin.
+- **Bütün bir alan** — [Sürümler sayfasından](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases) hazır bir paket indirin (ör. `bioinformatics.zip`).
+
+> [!IMPORTANT]
+> Sohbete sürüklenen gevşek bir `.md` dosyası kurulu bir beceri **değildir** — `SKILL.md` dosyasını içeren bir **beceri klasörünün zip'i** olmalıdır. Yalnızca güvendiğiniz kaynaklardan beceri kurun; uygulamada yüklediğiniz beceriler hesabınıza bağlıdır ve Claude Code ile senkronize olmaz.
+
+<br>
+
+*Terminal veya Claude Code kullanmaya alışkın mısınız? Bunun yerine aşağıdaki seçeneklerden birini seçin.*
+
 ### 🌍 Seçenek 1 — Agent Skills (açık standart) *(Önerilen)*
 
 ```bash
@@ -274,7 +295,7 @@ Bir klon üzerinde yerel geliştirme için Claude Code'u doğrudan dizine yönle
 claude --plugin-dir /path/to/AlterLab-Academic-Skills
 ```
 
-Mevcut alan eklentileri: `alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`, `alterlab-turkish-academia`, `alterlab-faculty-life`, `alterlab-methodology`.
+Mevcut alan eklentileri (17): `alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`, `alterlab-turkish-academia`, `alterlab-faculty-life`, `alterlab-methodology`, `alterlab-social-science-workflow`.
 
 ### 📁 Seçenek 3 — Kişisel veya Proje Kurulumu (elle)
 
@@ -290,7 +311,7 @@ Ardından Claude Code'u yeniden başlatın. Bir beceri `~/.claude/skills/<ad>/SK
 
 ### 🌐 Seçenek 4 — Claude.ai
 
-Bir beceri dizinini sıkıştırıp **Ayarlar → Yetenekler** altından yükleyin (kod yürütme içeren bir plan gerektirir). Beceriler claude.ai ile Claude Code arasında senkronize olmaz.
+Bir becerinin dizinini `.zip` olarak sıkıştırın, ardından **Özelleştir ▸ Beceriler** ([claude.ai/customize/skills](https://claude.ai/customize/skills)) → **`+`** → **Beceri oluştur** → **Beceri yükle** ile yükleyin (**Ayarlar → Yetenekler** altında kod yürütme etkin olmalıdır). Terminalsiz adım adım kılavuz için yukarıdaki **Claude uygulamasında başlayın** bölümüne bakın. Beceriler claude.ai ile Claude Code arasında senkronize olmaz.
 
 <br>
 
