@@ -61,21 +61,35 @@ jobs:
           echo "Total skills: $SKILL_COUNT"
 
       - name: Build distributable bundles
-        # One zip per domain plugin plus a full-collection zip, written to dist/.
+        # One zip per domain plugin, one zip per individual skill, plus a
+        # full-collection zip, all written to dist/.
         run: |
           mkdir -p dist
           VERSION="${{ steps.ver.outputs.version }}"
-          # Per-domain plugin bundles.
+          ROOT="$PWD"
+          # Per-domain plugin bundles (dist/alterlab-<domain>-<version>.zip).
           for dom in skills/*/; do
             [ -d "$dom" ] || continue
             name=$(basename "$dom")
             ( cd skills && zip -rq "../dist/alterlab-${name}-${VERSION}.zip" "$name" )
           done
+          # Per-skill bundles: one zip per skill, the skill folder at the archive's
+          # top level (<name>/SKILL.md …) so the claude.ai "Customize ▸ Skills →
+          # Upload a skill" flow accepts it directly — non-technical users download
+          # one file and upload it (dist/skill-<name>-<version>.zip).
+          find skills -name SKILL.md -type f -print0 | while IFS= read -r -d '' skillmd; do
+            skdir=$(dirname "$skillmd")        # skills/<domain>/<name>
+            name=$(basename "$skdir")
+            parent=$(dirname "$skdir")         # skills/<domain>
+            ( cd "$parent" && zip -rq "$ROOT/dist/skill-${name}-${VERSION}.zip" "$name" \
+                -x '*/__pycache__/*' '*.pyc' '*.pyo' '*/.DS_Store' )
+          done
           # Full collection bundle (skills + marketplace manifest).
           zip -rq "dist/alterlab-academic-skills-${VERSION}.zip" \
             skills .claude-plugin/marketplace.json README.md LICENSE
-          echo "Built bundles:"
-          ls -1 dist/
+          echo "Built $(ls -1 dist/ | wc -l) bundles:"
+          ls -1 dist/ | head -20
+          echo "  … (per-skill zips: $(ls -1 dist/skill-*.zip | wc -l))"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -90,7 +104,11 @@ jobs:
 
             This release includes **${{ steps.count.outputs.total }}** academic skills.
 
-            Attached bundles: one zip per domain plugin plus the full collection.
+            **Attached bundles:**
+            - `skill-<name>-${{ steps.ver.outputs.version }}.zip` — one zip per individual skill, ready to drop into the Claude app (**Customize ▸ Skills → Upload a skill**) — no terminal needed.
+            - `alterlab-<domain>-${{ steps.ver.outputs.version }}.zip` — one zip per domain plugin.
+            - `alterlab-academic-skills-${{ steps.ver.outputs.version }}.zip` — the full collection.
+
             See the auto-generated changelog below for details.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

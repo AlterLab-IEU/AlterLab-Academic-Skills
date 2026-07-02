@@ -6,6 +6,18 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **One-click per-skill install bundles.** Releases now attach a
+  `skill-<name>-<version>.zip` for every individual skill, structured with the skill
+  folder at the archive's top level (`<name>/SKILL.md` …) so it drops straight into the
+  Claude app (**Customize ▸ Skills → Upload a skill**) — no terminal, no re-zipping.
+  `scripts/build_bundles.py` gains `--skills` / `--skills-only` to build these into
+  `dist/skills/` locally, `tests/test_bundles.py` locks the structure (every skill
+  covered, valid, top-level `SKILL.md`, byte-deterministic), and the README
+  "install in the Claude app" path now points non-technical users at these one-file
+  downloads.
+
 ## [2.6.0] — 2026-07-02
 
 Front-door routing — most users don't know 239 skill names by heart. A new core router turns
