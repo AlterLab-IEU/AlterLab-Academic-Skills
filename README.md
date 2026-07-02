@@ -90,16 +90,27 @@
 
 <br>
 
-## 🚀 What's New in v2.2.0
+## 🚀 What's New in v2.3.0
 
-- 🧠 **Research-backed elevation of 191 skills** — a corpus-wide accuracy and depth pass over every pre-existing skill: corrected regulation/API details, slimmed oversized bodies into `references/`, and version-bumped touched skills. 
+- 🛡️ **Trust manifest you can verify before installing** — a generated, CI-attested [`SECURITY_SCAN.md`](SECURITY_SCAN.md): the full outbound-host allowlist (66 domains, each categorized) plus an attestation of **no shell-pipe, no `eval`-on-input, no hardcoded secrets**. → [`SECURITY_SCAN.md`](SECURITY_SCAN.md)
+- 🎯 **Activation + collision benchmarks** — `run_evals.py --activation` measures auto-selection rate against Anthropic's **90%** bar, and [`scripts/confusion_matrix.py`](scripts/confusion_matrix.py) statically ranks cross-firing risk between sibling skills. A **nightly rotating 1/7 behavioral shard** LLM-judges the whole corpus each week. → [`docs/evals.md`](docs/evals.md)
+- 🧭 **Sharper routing** — **42 confusable descriptions** now carry explicit `prefer alterlab-x` routing (quantum, protein/structure DBs, cheminformatics toolkits, single-cell, pathology, plotting, RL).
+- 🧩 **Agents & teams, formalized** — [`docs/agents-and-teams.md`](docs/agents-and-teams.md) names the **35 subagents** and the 4 teams they compose (Research, Writing, Reviewer Panel, Pipeline Orchestration).
+- 🔌 **Portability map** — [`docs/portability.md`](docs/portability.md) states exactly what transfers to Codex / Cursor / Gemini vs. Claude-Code-specific, and `check_claudeai_compat.py` guards the claude.ai uploader whitelist.
+- ✂️ **Every body under the soft cap** — the last **17** over-500-line skills split into `references/`; the body-length ratchet is now empty. Coverage holds at **210 / 210**. → [`docs/evals.md`](docs/evals.md)
+
+<details>
+<summary><b>Previously — What's New in v2.2.0</b></summary>
+<br>
+
+- 🧠 **Research-backed elevation of 191 skills** — a corpus-wide accuracy and depth pass over every pre-existing skill: corrected regulation/API details, slimmed oversized bodies into `references/`, and version-bumped touched skills.
 - 🧩 **New core skill: Workflow Orchestration** (`alterlab-workflow-orchestration`) — composes AlterLab skills into multi-agent workflows (subagent fan-out, pipelines, judge panels, adversarial verification), lifting the corpus to **210 skills**. → [Core Pipeline](#-core-pipeline--9-skills)
-
 - 🇹🇷 **Turkish-academia flagship (12 skills)** — the deepest Turkish-academia suite in any skills library: DergiPark, TR Dizin, YÖK Tez, YÖK Akademik, YÖKATLAS, TÜBİTAK 1001/1002-A proposals, doçentlik eligibility, akademik teşvik scoring, Turkish APA-7 style, TR research ethics, KVKK data-management plans, and TÜBİTAK Aperta — each wired to a verified national-platform endpoint. → [Turkish Academia](#-turkish-academia--national-platforms--scholarly-workflow-12-skills)
 - 🎓 **Faculty Life (6 skills)** — syllabus AI policy, post-award grant reporting, recommendation letters, AACSB/ABET accreditation (AoL), REDCap/CDISC capture, and preprint deposition. → [Faculty Life](#-faculty-life--teaching-service--the-academic-career-6-skills)
 - 🧪 **Methodology (3 skills)** — superpowers-style rigor (Iron Laws, Excuse-vs-Reality tables) applied to research methods: pre-registration discipline, statistical-test-selection guard, and results-reporting transparency. → [Methodology](#-methodology--research-rigor--discipline-gates-3-skills)
 - 🧬 **Bioinformatics grew 25 → 30** — production pipelines: nf-core/sarek variant calling, QIIME 2 amplicon, salmon/kallisto RNA-seq quant, NCBI BLAST+, and Squidpy spatial transcriptomics. → [Bioinformatics](#-bioinformatics--genomics-proteomics--molecular-biology-30-skills)
-- ✅ **Day-one evals on all 26 new skills** — coverage stays **210 / 210**; the shape + coverage gate runs in CI on every PR. → [`docs/evals.md`](docs/evals.md)
+
+</details>
 
 <details>
 <summary><b>Previously — What's New in v2.0</b></summary>
@@ -122,7 +133,7 @@
 <summary><b>Click to expand / collapse</b></summary>
 <br>
 
-- [🚀 What's New in v2.2.0](#-whats-new-in-v220)
+- [🚀 What's New in v2.3.0](#-whats-new-in-v230)
 - [🎯 What Is This?](#-what-is-this)
 - [🆕 v2.0 Highlights](#-v20-highlights)
 - [✨ Key Features](#-key-features)

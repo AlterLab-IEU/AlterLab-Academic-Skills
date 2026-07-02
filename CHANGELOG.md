@@ -4,6 +4,61 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] — 2026-07-02
+
+The "review & trust" release: implements the external repo-review roadmap end to end —
+new activation/collision benchmarks, a CI-attested trust manifest, formalized agents/teams
+and portability docs, the final body splits, and sharper cross-skill routing. Still
+**210 skills across 16 domains**, 210 / 210 with executable evals; audit clean (0 errors,
+0 warnings), full test suite green.
+
+### Added
+
+- **Trust manifest** — generated, CI-enforced [`SECURITY_SCAN.md`](SECURITY_SCAN.md)
+  (`scripts/gen_security_scan.py`): the full outbound-host allowlist (66 domains, each
+  categorized) plus a static attestation of **no shell-pipe, no `os.system` / `shell=True`,
+  no `eval`/`exec` on input, no hardcoded secrets**. `--check` fails on drift, `--strict`
+  on any violation.
+- **Activation harness** — `scripts/run_evals.py --activation` measures auto-selection rate
+  (does the model pick the right skill from its description among same-domain distractors)
+  against Anthropic's 90% bar, and reports the cross-fire rate. `--shard i/n` drives a
+  **nightly rotating 1/7 behavioral** CI job so the whole corpus is LLM-judged each week.
+- **Cross-skill confusion matrix** — `scripts/confusion_matrix.py` statically ranks sibling
+  cross-firing risk by trigger-noun overlap and flags routing gaps; a test guards against
+  dangling near-miss deferral targets.
+- **claude.ai compatibility guard** — `scripts/check_claudeai_compat.py` (frontmatter
+  whitelist check + `--package` to strip the `compatibility` key for uploads).
+- **Agents & teams catalog** — generated [`docs/agents-and-teams.md`](docs/agents-and-teams.md)
+  formalizing the 35 pipeline subagents into 4 named teams.
+- **Portability statement** — generated [`docs/portability.md`](docs/portability.md):
+  portable-core vs. Claude-Code/SDK-specific fields.
+- Guards: `tests/test_no_readme_in_skill_root.py`, and a `frontmatter-yaml-unsafe`
+  audit check + per-skill test.
+
+### Changed
+
+- Sharpened **42 confusable sibling descriptions** with explicit `prefer alterlab-x` routing
+  (quantum, protein/structure DBs, cheminformatics toolkits, single-cell, pathology,
+  plotting, RL, citation-verifier vs paper-writer, research-lookup vs parallel-web).
+- Split the final **17 over-500-line** SKILL.md bodies into `references/`; the body-length
+  ratchet is now **empty** — every skill is held to the 500-line soft cap.
+- Documented the noun/tool-vs-gerund naming rationale in `CONTRIBUTING.md`; added
+  README trust/portability links and `docs/evals.md` activation + shard sections.
+- Regenerated `marketplace.json` — restored the `core` plugin's stale
+  `commands` / `agents` / `hooks` entries.
+- Softened the "Evals 210/210" badge to "Eval coverage 210/210" to match the honest wording.
+
+### Fixed
+
+- Reconciled the 209→210 skill-count drift (`CLAUDE.md`, `pyproject.toml`) and core 8→9;
+  corrected the README's "39 agents" → **35** to match disk.
+- Removed the two skill-root `README.md` files (the Agent Skills spec forbids `README.md`
+  at a skill root); research-lookup content preserved under `references/`.
+- Frontmatter YAML in `alterlab-histolab` and `alterlab-qutip` (an unquoted `:` in
+  `description` broke strict parsing → Agent Skills spec failure). `audit_skills.py` now
+  flags this class at the source, so — unlike the recurrences in v2.2.0 — it cannot slip
+  past the tolerant parser again.
+
 ## [2.2.0] — 2026-06-10
 
 The "elevation" release: a research-backed accuracy and depth pass over the whole

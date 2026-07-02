@@ -4,7 +4,7 @@ requires-python = ">=3.12"
 
 [[package]]
 name = "alterlab-academic-skills"
-version = "2.2.0"
+version = "2.3.0"
 source = { virtual = "." }
 
 [package.dev-dependencies]
