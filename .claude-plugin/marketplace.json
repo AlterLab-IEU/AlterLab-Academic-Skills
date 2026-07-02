@@ -1,14 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "alterlab-academic-skills",
-  "description": "214 Claude skills for academic research, organized by domain",
+  "description": "217 Claude skills for academic research, organized by domain",
   "version": "2.3.0",
   "owner": {
     "name": "AlterLab @ Izmir University of Economics",
     "email": "alterlab.ieu@gmail.com"
   },
   "metadata": {
-    "description": "214 Claude skills for academic research, organized by domain",
+    "description": "217 Claude skills for academic research, organized by domain",
     "version": "2.3.0",
     "author": {
       "name": "AlterLab @ Izmir University of Economics",
@@ -19,7 +19,7 @@
     {
       "name": "alterlab-bioinformatics",
       "source": "./skills/bioinformatics",
-      "description": "Genomics, proteomics, and single-cell analysis (Scanpy, BioPython, pysam, ESM) (33 skills)",
+      "description": "Genomics, proteomics, and single-cell analysis (Scanpy, BioPython, pysam, ESM) (36 skills)",
       "version": "2.3.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
@@ -55,14 +55,17 @@
         "./alterlab-glycoengineering",
         "./alterlab-histolab",
         "./alterlab-lamindb",
+        "./alterlab-ligandmpnn",
         "./alterlab-neuropixels",
         "./alterlab-nf-core-sarek",
         "./alterlab-pathml",
         "./alterlab-phylogenetics",
+        "./alterlab-proteinmpnn",
         "./alterlab-pydeseq2",
         "./alterlab-pyopenms",
         "./alterlab-pysam",
         "./alterlab-qiime2-amplicon",
+        "./alterlab-rfdiffusion",
         "./alterlab-rnaseq-quant",
         "./alterlab-scanpy",
         "./alterlab-scikit-bio",

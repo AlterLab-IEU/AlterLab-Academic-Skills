@@ -1,8 +1,8 @@
 {
   "summary": {
-    "total": 214,
+    "total": 217,
     "per_domain": {
-      "bioinformatics": 33,
+      "bioinformatics": 36,
       "cheminformatics": 12,
       "clinical-research": 7,
       "core": 9,
@@ -20,9 +20,9 @@
       "writing-tools": 13
     },
     "eval_coverage": {
-      "with_evals": 214,
+      "with_evals": 217,
       "without_evals": 0,
-      "total": 214,
+      "total": 217,
       "fraction": 1.0
     }
   },
@@ -461,6 +461,27 @@
       ]
     },
     {
+      "name": "alterlab-ligandmpnn",
+      "domain": "bioinformatics",
+      "description": "Design protein sequences around bound ligands, metals, and nucleic acids with LigandMPNN (Dauparas 2023) — inverse folding that conditions on non-protein context, so binding-pocket and metal-site residues are chosen to fit the actual ligand. Use when designing a small-molecule or metal binding pocket, redesigning residues that contact a ligand/ion/nucleic acid, or doing enzyme active-site design where the substrate matters. For backbone sequence design with NO ligand/metal context prefer alterlab-proteinmpnn; to GENERATE a backbone or scaffold a functional site prefer alterlab-rfdiffusion; to validate a design by refolding prefer alterlab-alphafold; to co-fold or dock the ligand prefer alterlab-boltz or alterlab-diffdock. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Runs LigandMPNN (`dauparas/LigandMPNN`, PyTorch) under `uv run python` via its `run.py`. Model checkpoints download once (small; no account). CPU works for typical sizes; a GPU only speeds large batches. Input is a structure containing the protein PLUS the ligand/metal/nucleic-acid atoms (e.g. a PDB with the HETATM records).",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash(uv:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 73,
+      "references": [
+        "ligandmpnn_usage.md"
+      ]
+    },
+    {
       "name": "alterlab-neuropixels",
       "domain": "bioinformatics",
       "description": "Analyze Neuropixels 1.0/2.0 extracellular electrophysiology with SpikeInterface — load SpikeGLX/Open Ephys recordings, preprocess and motion-correct, run Kilosort4 spike sorting, compute quality metrics, apply Allen/IBL curation, and do AI-assisted visual inspection. Use when working with neural recordings, spike sorting, or extracellular electrophysiology, or when the user mentions Neuropixels, SpikeGLX, Open Ephys, Kilosort, quality metrics, or unit curation. Part of the AlterLab Academic Skills suite.",
@@ -563,6 +584,27 @@
       ]
     },
     {
+      "name": "alterlab-proteinmpnn",
+      "domain": "bioinformatics",
+      "description": "Design protein sequences for a fixed backbone with ProteinMPNN (Dauparas 2022) — message-passing inverse folding that outputs sequences predicted to fold to a given structure, with fixed positions, tied/symmetric chains, amino-acid bias, and a soluble-model variant. Use when inverse-folding a backbone PDB into sequences, redesigning selected positions, imposing symmetry across chains, or generating the sequence step of a design→fold→score loop. For pocket/interface design WITH a bound ligand, metal, or nucleic acid prefer alterlab-ligandmpnn; to GENERATE a new backbone prefer alterlab-rfdiffusion; to refold and validate a design prefer alterlab-alphafold; for generative multimodal design prefer alterlab-esm. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Runs `protein_mpnn_run.py` from `dauparas/ProteinMPNN` (PyTorch) under `uv run python`. The model is small — it runs on CPU and does not require a GPU (a GPU only speeds large batches). Network weights ship with the repo (no download/account). Input is a backbone PDB; output is a FASTA of designed sequences with scores.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash(uv:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 75,
+      "references": [
+        "proteinmpnn_usage.md"
+      ]
+    },
+    {
       "name": "alterlab-pydeseq2",
       "domain": "bioinformatics",
       "description": "Run differential gene expression analysis on bulk RNA-seq count matrices with PyDESeq2, the Python port of DESeq2 — size-factor normalization, dispersion estimation, Wald tests, FDR (Benjamini-Hochberg) correction, and volcano/MA plots. Use when identifying differentially expressed genes between conditions from raw bulk RNA-seq counts. Part of the AlterLab Academic Skills suite.",
@@ -661,6 +703,27 @@
         "installation.md",
         "pipeline_steps.md",
         "version_notes.md"
+      ]
+    },
+    {
+      "name": "alterlab-rfdiffusion",
+      "domain": "bioinformatics",
+      "description": "Generate de-novo protein backbones with RFdiffusion (Watson 2023) — a diffusion model for unconditional monomer generation, motif scaffolding, binder design against a target, and symmetric oligomers. Use when generating a new protein backbone from scratch, scaffolding a functional motif into a fold, designing a binder backbone to a target surface, or building symmetric assemblies; RFdiffusion produces the STRUCTURE, then alterlab-proteinmpnn designs its sequence and alterlab-alphafold validates it. For sequence design of an existing backbone prefer alterlab-proteinmpnn (or alterlab-ligandmpnn with a ligand); to fold a known sequence prefer alterlab-alphafold; for generative multimodal design prefer alterlab-esm. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Runs RFdiffusion (`RosettaCommons/RFdiffusion`, PyTorch + SE(3)-transformer) under `uv run python` via `run_inference.py`. Requires a CUDA GPU for practical generation; model weights download once and cache (several GB; no account). Outputs backbone PDBs (no sequence) — pair with alterlab-proteinmpnn then alterlab-alphafold. Dispatch runs via alterlab-remote-compute.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash(uv:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 75,
+      "references": [
+        "rfdiffusion_usage.md"
       ]
     },
     {

@@ -6,11 +6,20 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-Foundation-model skills — the suite gains a **runnable structure-prediction** cluster plus the
-provider-agnostic GPU dispatch layer they build on. **210 → 214 skills** (bioinformatics
-30 → 33, domain-specific 17 → 18), still 100% eval coverage.
+Foundation-model skills — the suite gains a **runnable structure-prediction** cluster, the
+**protein-design** cluster that completes the design→fold→score loop, and the provider-agnostic
+GPU dispatch layer they build on. **210 → 217 skills** (bioinformatics 30 → 36, domain-specific
+17 → 18), still 100% eval coverage.
 
 ### Added
+
+- **`alterlab-proteinmpnn`** (bioinformatics) — ProteinMPNN (Dauparas 2022): fixed-backbone
+  inverse folding with fixed positions, tied/symmetric chains, and AA bias.
+- **`alterlab-ligandmpnn`** (bioinformatics) — LigandMPNN (Dauparas 2023): ligand/metal/
+  nucleic-acid-aware pocket and active-site sequence design.
+- **`alterlab-rfdiffusion`** (bioinformatics) — RFdiffusion (Watson 2023): de-novo backbone
+  generation, motif scaffolding, binder design, symmetry. Completes the design→fold→score loop
+  with proteinmpnn + alphafold.
 
 - **`alterlab-remote-compute`** (domain-specific) — provider-agnostic `submit → poll → harvest`
   dispatch across SLURM/HPC (`sbatch`/`sacct`) and managed GPU APIs (Modal, RunPod, GCP Batch /
