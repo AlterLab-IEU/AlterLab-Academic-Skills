@@ -33,6 +33,8 @@
 <p><em>Organized across 17 research domains — from Turkish academia to bioinformatics to digital humanities</em></p>
 <p><em>239/239 ship executable evals · deterministic citation-existence verifier · per-domain bundles for claude.ai</em></p>
 
+<p>🧭 <b>New in v2.6 — don't know which skill?</b> Just say <b>"use AlterLab skills"</b> and Claude picks it for you · type <b><code>alterflow</code></b> to launch a full multi-agent workflow</p>
+
 <p>
 <b>Research Pipeline</b> · <b>Scientific Databases</b> · <b>Bioinformatics</b> · <b>Data Science</b> · <b>Visualization</b> · <b>Clinical Research</b> · <b>and more</b>
 </p>
@@ -87,6 +89,37 @@
 </tr>
 </table>
 </div>
+
+<br>
+
+## ⚡ Try It — One Line, the Right Skill
+
+**You don't need to know skill names.** Describe the task and `alterlab-skill-finder` (the front door) picks the skill for you — and tells you which one, and why.
+
+**Route — one task → one skill:**
+
+> 💬 *"Use AlterLab skills to review my methods section."*
+> 🧭 → **`alterlab-paper-reviewer`** (methodology-focus)
+
+> 💬 *"Which AlterLab skill finds and fact-checks papers on CRISPR off-target effects?"*
+> 🧭 → **`alterlab-deep-research`** + **`alterlab-pubmed`**
+
+**`alterflow` — a goal that spans stages → a clarified, multi-agent workflow:**
+
+> 💬 *"**alterflow** — investigate the link between sleep and memory, and turn it into a publishable paper."*
+> 🧭 → asks 2–4 scoping questions **first**, then plans and runs:
+
+```mermaid
+flowchart LR
+    A["⌨️ alterflow"] --> Q{"clarify<br/>2–4 questions"}
+    Q --> P["plan + confirm<br/>(with rough cost)"]
+    P --> R["🔬 deep-research"]
+    R --> W["📝 paper-writer"]
+    W --> V["🔍 paper-reviewer"]
+    V --> F["📄 final paper"]
+```
+
+> Questions before execution — it never starts a 20-agent run blind, and simple tasks stay single-skill. Built on Anthropic's **routing** and **orchestrator-workers** patterns.
 
 <br>
 
@@ -169,7 +202,8 @@
 <summary><b>Click to expand / collapse</b></summary>
 <br>
 
-- [🚀 What's New in v2.3.0](#-whats-new-in-v230)
+- [⚡ Try It — One Line, the Right Skill](#-try-it--one-line-the-right-skill)
+- [🚀 What's New in v2.6.0](#-whats-new-in-v260)
 - [🎯 What Is This?](#-what-is-this)
 - [🆕 v2.0 Highlights](#-v20-highlights)
 - [✨ Key Features](#-key-features)

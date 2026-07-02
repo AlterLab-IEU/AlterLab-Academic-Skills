@@ -33,6 +33,8 @@
 <p><em>17 araştırma alanına yayılmış — Türk akademisinden biyoinformatiğe, dijital beşeri bilimlere</em></p>
 <p><em>239/239 beceri çalıştırılabilir eval ile gelir · deterministik atıf-doğrulayıcı · claude.ai için alan paketleri</em></p>
 
+<p>🧭 <b>v2.6'da yeni — hangi beceri gerektiğini bilmiyor musunuz?</b> Sadece <b>"AlterLab becerilerini kullan"</b> deyin, Claude sizin için seçsin · <b><code>alterflow</code></b> yazarak tam çok-ajanlı bir iş akışı başlatın</p>
+
 <p>
 <b>Araştırma Hattı</b> · <b>Bilimsel Veritabanları</b> · <b>Biyoinformatik</b> · <b>Veri Bilimi</b> · <b>Görselleştirme</b> · <b>Klinik Araştırma</b> · <b>ve daha fazlası</b>
 </p>
@@ -90,12 +92,44 @@
 
 <br>
 
+## ⚡ Hemen Deneyin — Tek Satır, Doğru Beceri
+
+**Beceri adlarını bilmenize gerek yok.** Görevi anlatın; `alterlab-skill-finder` (ön kapı) sizin için beceriyi seçer — hangisini ve neden seçtiğini söyleyerek.
+
+**Yönlendir — tek görev → tek beceri:**
+
+> 💬 *"AlterLab becerilerini kullanarak yöntem bölümümü değerlendir."*
+> 🧭 → **`alterlab-paper-reviewer`** (metodoloji odaklı)
+
+> 💬 *"CRISPR hedef-dışı etkileri üzerine makale bulup doğrulayan hangi AlterLab becerisi?"*
+> 🧭 → **`alterlab-deep-research`** + **`alterlab-pubmed`**
+
+**`alterflow` — birden çok aşamaya yayılan bir hedef → netleştirilmiş, çok-ajanlı bir iş akışı:**
+
+> 💬 *"**alterflow** — uyku ile bellek arasındaki bağı araştır ve yayımlanabilir bir makaleye dönüştür."*
+> 🧭 → **önce** 2–4 kapsam sorusu sorar, sonra planlar ve çalıştırır:
+
+```mermaid
+flowchart LR
+    A["⌨️ alterflow"] --> Q{"netleştir<br/>2–4 soru"}
+    Q --> P["planla + onayla<br/>(kaba maliyetle)"]
+    P --> R["🔬 deep-research"]
+    R --> W["📝 paper-writer"]
+    W --> V["🔍 paper-reviewer"]
+    V --> F["📄 nihai makale"]
+```
+
+> Yürütmeden önce sorular — asla kör bir 20-ajanlı koşu başlatmaz; basit görevler tek-beceri kalır. Anthropic'in **yönlendirme** ve **orkestratör-işçi** desenleri üzerine kurulu.
+
+<br>
+
 ## 📋 İçindekiler
 
 <details open>
 <summary><b>Genişletmek / daraltmak için tıklayın</b></summary>
 <br>
 
+- [⚡ Hemen Deneyin — Tek Satır, Doğru Beceri](#-hemen-deneyin--tek-satır-doğru-beceri)
 - [🚀 Sürüm 2.2.0'da Yenilikler](#-sürüm-220da-yenilikler)
 - [🎯 Bu Proje Nedir?](#-bu-proje-nedir)
 - [✨ Öne Çıkan Özellikler](#-öne-çıkan-özellikler)
