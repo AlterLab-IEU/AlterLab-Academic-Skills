@@ -1359,8 +1359,8 @@
       "domain": "clinical-research",
       "description": "Develops, tests, and deploys clinical machine learning models with the PyHealth healthcare AI toolkit. Use when working with electronic health records (EHR), clinical prediction tasks (mortality, readmission, drug recommendation), medical coding systems (ICD, NDC, ATC), physiological signals (EEG, ECG), healthcare datasets (MIMIC-III/IV, eICU, OMOP), or implementing deep learning models for healthcare (RETAIN, SafeDrug, Transformer, GNN). Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.1",
+      "compatibility": "Self-contained — runs under `uv run python` with PyHealth 2.0.1 installed; no API key or account required.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -2714,8 +2714,8 @@
       "domain": "databases",
       "description": "Query and download public cancer imaging data from the NCI Imaging Data Commons (IDC) using the idc-index Python package, filtering by metadata, visualizing in-browser, and checking licenses, with no authentication required. Use when obtaining large-scale radiology (CT, MR, PET) or digital pathology DICOM datasets for AI/ML training or cancer imaging research. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.5.0",
-      "compatibility": "Requires the idc-index Python package; keyless IDC data access (no authentication required)",
+      "version": "1.5.1",
+      "compatibility": "Requires the idc-index Python package (pinned to 0.12.3, IDC data release v24); keyless IDC data access (no authentication required)",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -4197,7 +4197,7 @@
       "domain": "research-tools",
       "description": "Search scientific papers and retrieve structured experimental data extracted from full-text studies via the BGPT MCP server, returning 25+ fields per paper (methods, results, sample sizes, quality scores, conclusions). Use when running a literature review or evidence synthesis, or when needing experimental details (sample sizes, effect sizes, methods, quality scores) that abstracts alone do not provide. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Connects to the BGPT MCP server. Free tier allows 50 free results with no API key; higher volume needs a BGPT API key from bgpt.pro/mcp. Requires network access.",
       "allowed_tools": [
         "Bash"

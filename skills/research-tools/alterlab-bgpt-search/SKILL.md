@@ -6,9 +6,8 @@ license: MIT
 compatibility: Connects to the BGPT MCP server. Free tier allows 50 free results with no API key; higher volume needs a BGPT API key from bgpt.pro/mcp. Requires network access.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
-    website: https://bgpt.pro/mcp
-    github: https://github.com/connerlambden/bgpt-mcp
+    version: "1.0.1"
+    skill-source: https://github.com/connerlambden/bgpt-mcp
 ---
 
 # BGPT Paper Search

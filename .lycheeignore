@@ -19,6 +19,8 @@
 # pylabrobot docs removed in the upstream MyST rewrite — no current equivalent
 # (audit agent-4). Sphinx-style API module pages and a couple of user_guide/
 # topic pages were folded into the new layout without redirects.
+# Re-verified 2026-07-02 (issue #2): docs.pylabrobot.org/api/* and
+# user_guide/*.html still 404; the GitHub examples tree URL returns 403 from CI.
 ^https?://docs\.pylabrobot\.org/api/.*
 ^https?://docs\.pylabrobot\.org/user_guide/(basic|backends)\.html$
 ^https?://github\.com/PyLabRobot/pylabrobot/tree/main/examples.*
@@ -49,11 +51,12 @@
 # never reachable from CI.
 ^https?://localhost(:\d+)?/.*
 
-# pylabrobot docs site is still mid-restructure (MyST migration).
-# Individual page-level rewrites keep landing on 404s as upstream
-# moves content around. Blanket-exclude until the skill gets its
-# own docs refresh PR — links stay visible in prose, CI stops
-# reporting false positives.
+# pylabrobot docs (MyST migration). Re-verified 2026-07-02 (issue #2): the site
+# ROOT (docs.pylabrobot.org, /index.html) and discuss.pylabrobot.org are now live
+# (200) — those are NOT excluded and are link-checked — but the migration produced
+# a client-rendered SPA with NO stable deep URLs (every /user_guide/*, /api/*,
+# /resources/* path still 404s). Keep this blanket deep-path exclusion until upstream
+# exposes stable page URLs; the skill already links only the stable root.
 ^https?://docs\.pylabrobot\.org/.*
 
 # St. Louis Fed hosts consistently fail HTTP/2 handshakes from
