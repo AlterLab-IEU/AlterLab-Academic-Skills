@@ -4,6 +4,15 @@ on:
   push:
     tags:
       - "v*"
+  # Manual release lane — lets a release be cut from `main` without a tag push
+  # (useful when the environment cutting the release cannot push tag refs). The
+  # gh-release step creates the tag at the current commit, so no tag push is needed.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (blank = use pyproject [project].version)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -18,21 +27,31 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Gate — tag must match pyproject version
-        # The git tag (e.g. v2.0.0) must equal [project].version in pyproject.toml,
-        # which is the single source of truth propagated to marketplace.json and
-        # package.json. Refuse to release a mismatched tag.
+      - name: Resolve version + tag
+        id: ver
+        # pyproject [project].version is the single source of truth. On a tag push the
+        # tag must match it; on manual dispatch the version defaults to it (and any
+        # explicit input must still match). tag = v<version> either way.
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
           PYPROJECT_VERSION=$(
             grep -m1 -E '^version\s*=' pyproject.toml | sed -E 's/.*"([^"]+)".*/\1/'
           )
-          echo "tag version:       $TAG"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG="${GITHUB_REF_NAME}"
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+            [ -n "$VERSION" ] || VERSION="$PYPROJECT_VERSION"
+            TAG="v${VERSION}"
+          fi
           echo "pyproject version: $PYPROJECT_VERSION"
-          if [ "$TAG" != "$PYPROJECT_VERSION" ]; then
-            echo "::error::tag '$GITHUB_REF_NAME' does not match pyproject version '$PYPROJECT_VERSION'"
+          echo "release version:   $VERSION  (tag $TAG)"
+          if [ "$VERSION" != "$PYPROJECT_VERSION" ]; then
+            echo "::error::release version '$VERSION' does not match pyproject version '$PYPROJECT_VERSION'"
             exit 1
           fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Count total skills
         id: count
@@ -45,7 +64,7 @@ jobs:
         # One zip per domain plugin plus a full-collection zip, written to dist/.
         run: |
           mkdir -p dist
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${{ steps.ver.outputs.version }}"
           # Per-domain plugin bundles.
           for dom in skills/*/; do
             [ -d "$dom" ] || continue
@@ -61,10 +80,13 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          # On manual dispatch this creates the tag at the current commit; on a tag
+          # push it is the tag that already triggered the run.
+          tag_name: ${{ steps.ver.outputs.tag }}
           generate_release_notes: true
           files: dist/*.zip
           body: |
-            ## AlterLab Academic Skills ${{ github.ref_name }}
+            ## AlterLab Academic Skills ${{ steps.ver.outputs.tag }}
 
             This release includes **${{ steps.count.outputs.total }}** academic skills.
 
