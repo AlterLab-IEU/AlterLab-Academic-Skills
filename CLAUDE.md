@@ -1,15 +1,15 @@
 # AlterLab Academic Skills — by AlterLab Creative Technologies Laboratory
 
-> **Project**: AlterLab Academic Skills — 221 Claude AI skills for faculty and researchers
+> **Project**: AlterLab Academic Skills — 232 Claude AI skills for faculty and researchers
 > **Owner**: AlterLab Creative Technologies Laboratory
 
 ---
 
 ## Project Overview
 
-This project provides **221 professional Claude AI skills** organized into 16 domain categories for faculty members, academicians, and researchers. Each skill transforms Claude into a domain-specific expert assistant tailored to academic research, scientific computing, and scholarly publishing workflows.
+This project provides **232 professional Claude AI skills** organized into 17 domain categories for faculty members, academicians, and researchers. Each skill transforms Claude into a domain-specific expert assistant tailored to academic research, scientific computing, and scholarly publishing workflows.
 
-The repo is installable as a Claude Code plugin marketplace named `alterlab-academic-skills`, with 16 domain plugins (`alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`, `alterlab-turkish-academia`, `alterlab-faculty-life`, `alterlab-methodology`).
+The repo is installable as a Claude Code plugin marketplace named `alterlab-academic-skills`, with 17 domain plugins (`alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`, `alterlab-turkish-academia`, `alterlab-faculty-life`, `alterlab-methodology`, `alterlab-social-science-workflow`).
 
 ### Audience
 - Faculty members and academic researchers
@@ -42,8 +42,9 @@ The repo is installable as a Claude Code plugin marketplace named `alterlab-acad
 | Turkish Academia | `skills/turkish-academia/` | 12 | Turkish academic system workflows (YÖK, ÜAK, DergiPark, TÜBİTAK) |
 | Faculty Life | `skills/faculty-life/` | 6 | Faculty research-lifecycle and academic administration |
 | Methodology | `skills/methodology/` | 3 | Research methodology and rigor scaffolds |
+| Social-Science Workflow | `skills/social-science-workflow/` | 11 | Stage-gated methods spine: orchestrator + 4 validity gates + 6 analysis modules (causal-inference, SEM/psychometrics, QCA, SNA, ABM, text-as-data) |
 
-**Total: 221 skills across 16 categories**
+**Total: 232 skills across 17 categories**
 
 ---
 
@@ -119,7 +120,7 @@ When MCP tools are available, skills should prefer them over simulated responses
 |---------|---------|
 | `python scripts/audit_skills.py` | Audit skills (frontmatter, naming, counts) |
 | `pytest tests/` | Run the validation test suite |
-| `python scripts/gen_marketplace.py` | Regenerate the `alterlab-academic-skills` marketplace + 16 domain plugins |
+| `python scripts/gen_marketplace.py` | Regenerate the `alterlab-academic-skills` marketplace + 17 domain plugins |
 
 ---
 
