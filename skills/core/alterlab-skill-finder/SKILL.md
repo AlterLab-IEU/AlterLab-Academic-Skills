@@ -1,6 +1,6 @@
 ---
 name: alterlab-skill-finder
-description: "The AlterLab front door and multi-agent launcher — routes a task to the right AlterLab skill(s) when the user invokes the suite without naming one, and on the keyword 'ultralab' (aliases 'alterresearch' / 'alterflow') it CLARIFIES the goal with a few questions, SELECTS the skills the task needs, and runs a dynamic multi-agent workflow composing them (via alterlab-workflow-orchestration, alterlab-research-pipeline, or alterlab-ssci-orchestrator). Triggers on 'use AlterLab skills', 'which AlterLab skill for X', 'is there an AlterLab skill for…', 'ultralab …', or any generic AlterLab request where the user does not know skill names. It always asks clarifying questions before executing a multi-step run. Use when someone references AlterLab generically or fires the ultralab keyword; when the user already names a specific skill, defer to that skill directly. Part of the AlterLab Academic Skills suite."
+description: "The AlterLab front door and multi-agent launcher — routes a task to the right AlterLab skill(s) when the user invokes the suite without naming one, and on the keyword 'alterflow' (aliases 'alterresearch' / 'ultralab') it CLARIFIES the goal with a few questions, SELECTS the skills the task needs, and runs a dynamic multi-agent workflow composing them (via alterlab-workflow-orchestration, alterlab-research-pipeline, or alterlab-ssci-orchestrator). Triggers on 'use AlterLab skills', 'which AlterLab skill for X', 'is there an AlterLab skill for…', 'alterflow …', or any generic AlterLab request where the user does not know skill names. It always asks clarifying questions before executing a multi-step run. Use when someone references AlterLab generically or fires the alterflow keyword; when the user already names a specific skill, defer to that skill directly. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Task
 compatibility: "No API key or network required. A routing + orchestration front-end: it reads the bundled skill index and hands off to the matching AlterLab skill(s). Multi-agent execution uses the host's subagent/Workflow tools where available (Claude Code, Cowork); on surfaces without them it decomposes the work into sequential phases."
@@ -12,7 +12,7 @@ metadata:
 
 # AlterLab Skill Finder — Name the Task, Get the Right Skill (or the Whole Workflow)
 
-**Skill type: ROUTER / LAUNCHER.** Users say *"use AlterLab skills"* or fire **`ultralab`** without
+**Skill type: ROUTER / LAUNCHER.** Users say *"use AlterLab skills"* or fire **`alterflow`** without
 knowing the 230+ skill names. This is the front door: it reads the task, picks the AlterLab skill(s)
 that fit, and either **uses one skill** or **launches a clarified, multi-agent workflow**.
 
@@ -29,13 +29,13 @@ ALWAYS ASK YOUR QUESTIONS BEFORE YOU START A MULTI-STEP RUN.
 | Mode | Fires on | What happens |
 |------|----------|--------------|
 | **Route** (default) | "use AlterLab skills to…", "which AlterLab skill for…", any generic AlterLab ask | classify the task → map to a domain → name and **apply** the best-fitting skill(s) |
-| **Orchestrate** | the keyword **`ultralab`** (or `alterresearch` / `alterflow`), or a task that spans several stages | **clarify → select skills → plan a multi-agent workflow → confirm → execute** |
+| **Orchestrate** | the keyword **`alterflow`** (or `alterresearch` / `ultralab`), or a task that spans several stages | **clarify → select skills → plan a multi-agent workflow → confirm → execute** |
 
 ## When to Use This Skill
 
 - "Use AlterLab skills to [do X]." / "Which AlterLab skill should I use for [task]?"
 - "Is there an AlterLab skill / workflow for [task]?"
-- "**ultralab** — investigate [topic] and draft a paper." (→ Orchestrate mode)
+- "**alterflow** — investigate [topic] and draft a paper." (→ Orchestrate mode)
 - Any request that references AlterLab by name without specifying a skill.
 
 ### Does NOT Trigger
@@ -57,7 +57,7 @@ ALWAYS ASK YOUR QUESTIONS BEFORE YOU START A MULTI-STEP RUN.
 4. **Apply it** — invoke the skill and do the work. Tell the user which skill you picked and why (one line).
 5. **If the routing genuinely forks, ask ONE clarifying question** before committing.
 
-## Orchestrate mode — `ultralab` (clarify FIRST, then multi-agent)
+## Orchestrate mode — `alterflow` (clarify FIRST, then multi-agent)
 
 When the user fires the keyword or the task clearly spans stages, do **not** start executing. Run
 this sequence:

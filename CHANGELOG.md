@@ -18,7 +18,7 @@ multi-agent orchestration. **1 new skill** takes the core category **9 → 10** 
 - **`alterlab-skill-finder`** — the AlterLab front door and multi-agent launcher. In **Route** mode
   (default) it classifies a task, maps it across all 17 domains via a generated skill index, and
   names the concrete skill(s) it picked (and why) — so users never have to memorize skill names. On
-  the **`ultralab`** keyword (aliases `alterresearch` / `alterflow`) it switches to **Orchestrate**
+  the **`alterflow`** keyword (aliases `alterresearch` / `ultralab`) it switches to **Orchestrate**
   mode: it first asks a few scoping/clarifying questions, then selects the skills the goal needs and
   runs a dynamic multi-agent workflow composing them (via `alterlab-research-pipeline`,
   `alterlab-ssci-orchestrator`, or `alterlab-workflow-orchestration`). It defers to a named skill

@@ -21,13 +21,13 @@
       ]
     },
     {
-      "id": "ultralab-keyword-orchestrate",
-      "prompt": "ultralab — investigate the link between sleep and memory consolidation and turn it into a publishable paper.",
+      "id": "alterflow-keyword-orchestrate",
+      "prompt": "alterflow — investigate the link between sleep and memory consolidation and turn it into a publishable paper.",
       "expected_output": "Invokes alterlab-skill-finder in Orchestrate mode: FIRST asks 2-4 clarifying/scoping questions (quantitative vs qualitative, dataset/corpus, target output, depth) before executing, then selects the skills and proposes a multi-agent workflow (e.g. alterlab-research-pipeline: deep-research -> paper-writer -> paper-reviewer). Does not start executing before clarifying.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-research-pipeline" },
-        { "type": "behavior", "value": "On the ultralab keyword, asks clarifying questions before execution and plans a multi-agent workflow composing the right skills." }
+        { "type": "behavior", "value": "On the alterflow keyword, asks clarifying questions before execution and plans a multi-agent workflow composing the right skills." }
       ]
     },
     {

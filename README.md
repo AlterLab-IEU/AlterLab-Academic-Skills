@@ -93,7 +93,7 @@
 ## 🚀 What's New in v2.6.0
 
 - 🧭 **New front door — `alterlab-skill-finder`** — most users don't know 239 skill names by heart, so this router turns *"use AlterLab skills for this"* into the right skill(s). It classifies the task, maps it across all 17 domains, names the concrete skill(s) it picked (and why), and applies them — no name-memorization required. → [Core Pipeline](#-core-pipeline--10-skills)
-- ⚡ **`ultralab` keyword → clarify-first multi-agent orchestration** — say **`ultralab`** (aliases `alterresearch` / `alterflow`) and the router first asks a few scoping questions, then **selects** the skills the goal needs and launches a **dynamic multi-agent workflow** composing them (via `alterlab-research-pipeline`, `alterlab-ssci-orchestrator`, or `alterlab-workflow-orchestration`). Questions before execution — it never starts blind.
+- ⚡ **`alterflow` keyword → clarify-first multi-agent orchestration** — say **`alterflow`** (aliases `alterresearch` / `ultralab`) and the router first asks a few scoping questions, then **selects** the skills the goal needs and launches a **dynamic multi-agent workflow** composing them (via `alterlab-research-pipeline`, `alterlab-ssci-orchestrator`, or `alterlab-workflow-orchestration`). Questions before execution — it never starts blind.
 - 🗂️ **Always-current skill index** — a generated [`skill_index.md`](skills/core/alterlab-skill-finder/references/skill_index.md) lists every skill grouped by domain with a one-line "use when"; a new CI test (`test_skill_index.py`) fails the build if a skill is added or renamed and the index is not regenerated (`scripts/gen_skill_index.py --check`).
 - 📈 **239 skills across 17 domains**, 239 / 239 with executable evals; audit clean (0 errors, 0 warnings), full test suite green.
 
@@ -246,7 +246,7 @@ and degrades gracefully to plain `requests` / WebSearch when no MCP or network i
 
 | | Domain | Skills | Focus Areas |
 |:---:|:---|:---:|:---|
-| 🔄 | **Core Pipeline** | **10** | Multi-agent research → write → review → publish pipeline + citation verifier + teaching + thesis + workflow orchestration + skill-finder router (the `ultralab` launcher) |
+| 🔄 | **Core Pipeline** | **10** | Multi-agent research → write → review → publish pipeline + citation verifier + teaching + thesis + workflow orchestration + skill-finder router (the `alterflow` launcher) |
 | 🗄️ | **Databases** | **39** | Connectors to scientific databases — PubMed, ChEMBL, UniProt, ClinicalTrials.gov, COSMIC, and more |
 | 🧬 | **Bioinformatics** | **30** | Genomics, proteomics, molecular biology — Scanpy, BioPython, ESM, single-cell analysis, nf-core/sarek, QIIME 2, RNA-seq quant |
 | ⚗️ | **Cheminformatics** | **12** | Chemistry and drug discovery — RDKit, molecular dynamics, docking, ADMET |
@@ -396,7 +396,7 @@ Installing the `core` plugin also registers these slash commands:
 | 7 | **📋 Thesis Supervisor** | — | Dissertation guidance, defense prep, committee management |
 | 8 | **🔗 Link Health** | — | Repo link-health audit meta-skill |
 | 9 | **🧩 Workflow Orchestration** | — | Composes AlterLab skills into multi-agent workflows: subagent fan-out, pipelines, judge panels, adversarial verification |
-| 10 | **🧭 Skill Finder** | — | Front-door router — turns *"use AlterLab skills"* into the right skill(s); the **`ultralab`** keyword clarifies the goal then launches a dynamic multi-agent workflow |
+| 10 | **🧭 Skill Finder** | — | Front-door router — turns *"use AlterLab skills"* into the right skill(s); the **`alterflow`** keyword clarifies the goal then launches a dynamic multi-agent workflow |
 
 <br>
 

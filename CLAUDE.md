@@ -50,7 +50,7 @@ The repo is installable as a Claude Code plugin marketplace named `alterlab-acad
 
 ## Core Pipeline Routing Rules
 
-The core category holds 10 skills: 6 pipeline skills (`alterlab-research-pipeline`, `alterlab-deep-research`, `alterlab-paper-writer`, `alterlab-paper-reviewer`, `alterlab-teaching-design`, `alterlab-thesis-supervisor`) plus `alterlab-citation-verifier`, `alterlab-link-health`, `alterlab-workflow-orchestration` (composes skills into multi-agent workflows), and `alterlab-skill-finder` (the front-door router / `ultralab` multi-agent launcher that picks skills for users who don't know their names). The pipeline skills coordinate as a multi-agent research-to-publication system:
+The core category holds 10 skills: 6 pipeline skills (`alterlab-research-pipeline`, `alterlab-deep-research`, `alterlab-paper-writer`, `alterlab-paper-reviewer`, `alterlab-teaching-design`, `alterlab-thesis-supervisor`) plus `alterlab-citation-verifier`, `alterlab-link-health`, `alterlab-workflow-orchestration` (composes skills into multi-agent workflows), and `alterlab-skill-finder` (the front-door router / `alterflow` multi-agent launcher that picks skills for users who don't know their names). The pipeline skills coordinate as a multi-agent research-to-publication system:
 
 ### Skill Routing
 

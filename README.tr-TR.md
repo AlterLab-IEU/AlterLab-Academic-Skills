@@ -276,7 +276,7 @@ Bir beceri dizinini sıkıştırıp **Ayarlar → Yetenekler** altından yükley
 | 7 | **🔎 Atıf Doğrulayıcı** | — | Kaynakçadaki her girdiyi dört anahtarsız bilimsel API üzerinden doğrular |
 | 8 | **🔗 Bağlantı Sağlığı** | — | Depo genelinde bağlantı sağlığı denetimi meta-becerisi |
 | 9 | **🧩 İş Akışı Orkestrasyonu** | — | AlterLab becerilerini çok-ajanlı iş akışlarına dönüştürür: paralel alt-ajan dağıtımı, hatlar, jüri panelleri, çekişmeli doğrulama |
-| 10 | **🧭 Beceri Bulucu** | — | Ön kapı yönlendiricisi — *"AlterLab becerilerini kullan"* isteğini doğru beceri(ler)e çevirir; **`ultralab`** anahtar sözcüğü hedefi netleştirip dinamik çok-ajanlı bir iş akışı başlatır |
+| 10 | **🧭 Beceri Bulucu** | — | Ön kapı yönlendiricisi — *"AlterLab becerilerini kullan"* isteğini doğru beceri(ler)e çevirir; **`alterflow`** anahtar sözcüğü hedefi netleştirip dinamik çok-ajanlı bir iş akışı başlatır |
 
 ### Tam Hat Akışı
 
