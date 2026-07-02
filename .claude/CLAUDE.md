@@ -2,9 +2,9 @@
 
 ## Skill Routing Rules
 
-### Core Pipeline Skills (`skills/core/` holds 9 skills)
+### Core Pipeline Skills (`skills/core/` holds 10 skills)
 
-`skills/core/` contains 9 skills: the 4 orchestration skills below, plus `alterlab-teaching-design`, `alterlab-thesis-supervisor`, `alterlab-citation-verifier`, `alterlab-link-health`, and `alterlab-workflow-orchestration`.
+`skills/core/` contains 10 skills: the 4 orchestration skills below, plus `alterlab-teaching-design`, `alterlab-thesis-supervisor`, `alterlab-citation-verifier`, `alterlab-link-health`, `alterlab-workflow-orchestration`, and `alterlab-skill-finder` (the front-door router / `ultralab` multi-agent launcher).
 
 | Skill | Trigger When | Modes |
 |-------|-------------|-------|

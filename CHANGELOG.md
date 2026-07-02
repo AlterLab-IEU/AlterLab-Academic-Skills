@@ -6,6 +6,29 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.6.0] — 2026-07-02
+
+Front-door routing — most users don't know 239 skill names by heart. A new core router turns
+*"use AlterLab skills for this"* into the right skill(s), and a keyword launches clarify-first
+multi-agent orchestration. **1 new skill** takes the core category **9 → 10** and the corpus
+**238 → 239**, still 100% eval coverage across 17 domains.
+
+### Added
+
+- **`alterlab-skill-finder`** — the AlterLab front door and multi-agent launcher. In **Route** mode
+  (default) it classifies a task, maps it across all 17 domains via a generated skill index, and
+  names the concrete skill(s) it picked (and why) — so users never have to memorize skill names. On
+  the **`ultralab`** keyword (aliases `alterresearch` / `alterflow`) it switches to **Orchestrate**
+  mode: it first asks a few scoping/clarifying questions, then selects the skills the goal needs and
+  runs a dynamic multi-agent workflow composing them (via `alterlab-research-pipeline`,
+  `alterlab-ssci-orchestrator`, or `alterlab-workflow-orchestration`). It defers to a named skill
+  when the user already knows it, and to `alterlab-workflow-orchestration` when the user is
+  hand-designing workflow mechanics.
+- **`scripts/gen_skill_index.py`** + **`references/skill_index.md`** — a generated, always-current
+  index of every skill grouped by domain with a one-line "use when", the routing table the finder
+  reads. A new `tests/test_skill_index.py` and `gen_skill_index.py --check` fail CI if a skill is
+  added or renamed without regenerating the index.
+
 ### Changed
 
 - **`social-science-workflow` is now a standalone-installable plugin** — the domain folder carries

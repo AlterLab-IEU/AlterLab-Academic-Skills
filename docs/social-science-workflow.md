@@ -10,7 +10,7 @@ existing skills rather than reimplementing them.
 ## Install it as its own plugin
 
 The domain is a **standalone-installable Claude Code plugin** — you do not have to take the whole
-238-skill suite. Two ways:
+239-skill suite. Two ways:
 
 ```bash
 # 1. From the AlterLab marketplace — install only this domain (17 skills):
