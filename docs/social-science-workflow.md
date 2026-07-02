@@ -45,13 +45,28 @@ generalization: <statistical | analytical>
 # inference-gate reads all of the above and audits every claim sentence against it.
 ```
 
+## The analysis modules
+
+The orchestrator dispatches to six pluggable analysis modules by `design_type`. Each is a
+methods-discipline skill wrapping a **web-verified** library stack (versions pinned in each SKILL):
+
+| Module | Method | Stack |
+|--------|--------|-------|
+| `alterlab-causal-inference` | DiD / IV / RDD / panel FE / PSM / CATE | statsmodels, linearmodels, pyfixest, DoWhy, EconML, rdrobust |
+| `alterlab-sem-psychometrics` | CFA / SEM / EFA / IRT / invariance | semopy, factor_analyzer, pingouin/girth (+ stdlib omega) |
+| `alterlab-qca` | csQCA / mvQCA / fsQCA | **R QCA package via Rscript** (no maintained Python lib) |
+| `alterlab-sna` | centrality, community, ERGM | networkx, python-igraph, R statnet |
+| `alterlab-abm-mesa` | agent-based modeling | Mesa 3 (AgentSet API) |
+| `alterlab-text-as-data` | topic modeling, embeddings, dictionaries | BERTopic, scikit-learn, gensim, spaCy, sentence-transformers |
+
 ## What the gates do NOT do
 
-They do not run models. Execution is routed to existing suite skills:
+They do not run models. Execution is routed to sibling skills:
 
 - Design depth / qualitative mechanics → `alterlab-qualitative-methods`, `alterlab-mixed-methods`
 - Instrument construction → `alterlab-survey-design`
-- CFA / SEM / invariance → the psychometrics skill (phase 2)
+- CFA / SEM / invariance → `alterlab-sem-psychometrics`
+- Causal estimation → `alterlab-causal-inference`
 - Test choice → `alterlab-test-selection-guard`
 - Computation → `alterlab-statistical-analysis`
 
@@ -69,9 +84,10 @@ carries the Design Passport between them. The two compose: the sampling gate han
 `alterlab-test-selection-guard`, and the inference gate's transparency checks echo the
 methodology domain's reporting discipline.
 
-## Roadmap
+## Status
 
-Phase 1 (shipped) is the four **validity gates** above — the eval-first showcase. Phase 2 adds the
-thin **orchestrator** and six pluggable **analysis modules** (causal-inference, SEM/psychometrics,
-QCA, social-network analysis, agent-based modeling, text-as-data), each web-verified against its
-library's current API before shipping.
+The full spine is shipped: the **orchestrator**, the four **validity gates**, and the six
+**analysis modules** — 11 skills. Every analysis-module library was web-verified against its
+current API before shipping (no invented flags; QCA shells to R since no maintained Python library
+exists). The gates and modules *call* the existing qualitative-methods, mixed-methods,
+survey-design, statistical-analysis, statsmodels, and networkx skills rather than rebuilding them.

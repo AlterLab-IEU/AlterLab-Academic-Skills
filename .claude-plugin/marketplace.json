@@ -1,14 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "alterlab-academic-skills",
-  "description": "225 Claude skills for academic research, organized by domain",
+  "description": "232 Claude skills for academic research, organized by domain",
   "version": "2.4.0",
   "owner": {
     "name": "AlterLab @ Izmir University of Economics",
     "email": "alterlab.ieu@gmail.com"
   },
   "metadata": {
-    "description": "225 Claude skills for academic research, organized by domain",
+    "description": "232 Claude skills for academic research, organized by domain",
     "version": "2.4.0",
     "author": {
       "name": "AlterLab @ Izmir University of Economics",
@@ -518,7 +518,7 @@
     {
       "name": "alterlab-social-science-workflow",
       "source": "./skills/social-science-workflow",
-      "description": "Stage-gated social-science methods spine (design/identifying-assumption, measurement reliability-vs-validity, sampling/power, and inferential-claim audit gates) (4 skills)",
+      "description": "Stage-gated social-science methods spine (design/identifying-assumption, measurement reliability-vs-validity, sampling/power, and inferential-claim audit gates) (11 skills)",
       "version": "2.4.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
@@ -537,10 +537,17 @@
       ],
       "strict": false,
       "skills": [
+        "./alterlab-abm-mesa",
+        "./alterlab-causal-inference",
+        "./alterlab-qca",
+        "./alterlab-sem-psychometrics",
+        "./alterlab-sna",
         "./alterlab-ssci-design-gate",
         "./alterlab-ssci-inference-gate",
         "./alterlab-ssci-measurement-gate",
-        "./alterlab-ssci-sampling-gate"
+        "./alterlab-ssci-orchestrator",
+        "./alterlab-ssci-sampling-gate",
+        "./alterlab-text-as-data"
       ]
     },
     {

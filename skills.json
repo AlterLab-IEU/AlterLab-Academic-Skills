@@ -1,6 +1,6 @@
 {
   "summary": {
-    "total": 225,
+    "total": 232,
     "per_domain": {
       "bioinformatics": 38,
       "cheminformatics": 12,
@@ -15,15 +15,15 @@
       "lab-integrations": 9,
       "methodology": 3,
       "research-tools": 14,
-      "social-science-workflow": 4,
+      "social-science-workflow": 11,
       "turkish-academia": 12,
       "visualization": 9,
       "writing-tools": 13
     },
     "eval_coverage": {
-      "with_evals": 225,
+      "with_evals": 232,
       "without_evals": 0,
-      "total": 225,
+      "total": 232,
       "fraction": 1.0
     }
   },
@@ -4501,6 +4501,96 @@
       ]
     },
     {
+      "name": "alterlab-abm-mesa",
+      "domain": "social-science-workflow",
+      "description": "Builds agent-based models of social systems with Mesa 3 — the current AgentSet API (model.agents.shuffle_do('step'), auto-assigned unique_id, mandatory super().__init__(seed=...)), cell spaces (mesa.discrete_space OrthogonalMooreGrid / classic mesa.space grids), the DataCollector, batch_run parameter sweeps, and SolaraViz — for emergence, segregation, diffusion, opinion dynamics, and cooperation models. It uses the Mesa 3.x API (the old mesa.time schedulers like RandomActivation are removed) and treats the model as a generative theory to be validated, not just run. Use when the request mentions an agent-based model, Mesa, simulating interacting agents, or emergent macro behavior from micro rules. For discrete-event (queueing/process) simulation prefer alterlab-simpy; for reinforcement learning prefer alterlab-stable-baselines3. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Requires mesa>=3 (pip; API changed substantially from Mesa 2 — mesa.time schedulers removed). Optional SolaraViz for interactive visualization. No API key; runs locally via `uv run python`. On the Anthropic API (no runtime install) declare mesa as a dependency.",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 103,
+      "references": [
+        "mesa_patterns.md"
+      ]
+    },
+    {
+      "name": "alterlab-causal-inference",
+      "domain": "social-science-workflow",
+      "description": "Estimates causal effects from observational and quasi-experimental data — difference-in-differences, instrumental variables, regression discontinuity, panel fixed effects, propensity-score / doubly-robust methods, and heterogeneous treatment effects (CATE) — using the verified Python stack: statsmodels and linearmodels (PanelOLS, IV2SLS), pyfixest (feols, event studies, Sun-Abraham, did2s), DoWhy (identify -> estimate -> refute), EconML (LinearDML, CausalForestDML, DRLearner), and rdrobust for RD. It names the identifying assumption before estimating and runs a refutation/robustness check after. Use when the request mentions difference-in-differences, instrumental variables, regression discontinuity, fixed effects / panel causal estimation, propensity scores, or treatment-effect estimation from non-randomized data. For choosing the design first prefer alterlab-ssci-design-gate; for plain regression or descriptive stats prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): statsmodels, linearmodels>=6, pyfixest>=0.25, dowhy>=0.12, econml>=0.15, rdrobust>=1.3 (pip). Runs locally via `uv run python`; no API key.",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 81,
+      "references": [
+        "estimators.md"
+      ]
+    },
+    {
+      "name": "alterlab-qca",
+      "domain": "social-science-workflow",
+      "description": "Runs Qualitative Comparative Analysis — crisp-set (csQCA), multi-value (mvQCA), and fuzzy-set (fsQCA) — for small-to-medium-N configurational research: calibrating raw data into set membership, building and refining a truth table, and Boolean minimization into conservative / parsimonious / intermediate solutions with consistency and coverage. Because there is no maintained Python QCA library, it shells out to R's QCA package (calibrate, truthTable, minimize) via Rscript and documents that dependency honestly rather than faking a Python API. Use when the request mentions QCA, fsQCA, csQCA, configurational or set-theoretic analysis, necessary/sufficient conditions, truth tables, or calibration of conditions. For net-effect estimation of a single treatment prefer alterlab-causal-inference; for interpretive analysis prefer alterlab-qualitative-methods. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Requires R with the QCA package (install.packages('QCA'); optionally SetMethods). NO maintained Python QCA library exists, so this skill shells to R via Rscript — declare R as a dependency. No API key. On the Anthropic API (no runtime install) document the R requirement and degrade gracefully.",
+      "allowed_tools": [
+        "Read",
+        "Bash(Rscript:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 91,
+      "references": [
+        "qca_in_r.md"
+      ]
+    },
+    {
+      "name": "alterlab-sem-psychometrics",
+      "domain": "social-science-workflow",
+      "description": "Fits and evaluates measurement models — confirmatory factor analysis, full structural equation models, exploratory factor analysis, item response theory, and multi-group measurement invariance — using the verified Python stack: semopy (model syntax =~ / ~ / ~~, Model.fit, inspect(std_est=True), calc_stats for CFI/TLI/RMSEA), factor_analyzer (EFA, KMO, Bartlett, ConfirmatoryFactorAnalyzer), and pingouin/girth, computing McDonald's omega from standardized loadings and judging fit against Hu & Bentler cutoffs. Use when the request mentions confirmatory factor analysis, structural equation modeling, a latent variable or construct model, factor loadings, IRT, or measurement invariance across groups. For deciding whether a scale is trustworthy at all prefer alterlab-ssci-measurement-gate; for plain regression prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): semopy>=2.3, factor_analyzer>=0.5, pingouin>=0.5, optionally girth (IRT) (pip). SRMR and omega are not returned by semopy — compute omega with the bundled script; IRT beyond 2PL is often better in R mirt. Runs locally via `uv run python`; no API key.",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 101,
+      "references": [
+        "fit_and_invariance.md"
+      ]
+    },
+    {
+      "name": "alterlab-sna",
+      "domain": "social-science-workflow",
+      "description": "Applies social-network-analysis method discipline to relational data — degree/betweenness/closeness/eigenvector centrality and PageRank, community detection (Louvain and greedy-modularity native in networkx, Leiden via igraph), and inferential network models (ERGM) — choosing the measure that matches the substantive question and the right dependence assumptions, then routing computation to the existing networkx (and igraph/R) tooling. Use when the request mentions social network analysis, centrality, key players/brokerage, community or cluster detection in a network, ERGM, or modeling ties between nodes. For general graph algorithms and plotting prefer alterlab-networkx; for graph neural networks prefer alterlab-torch-geometric. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Computation routes to networkx>=3.4 (centrality, native Louvain/greedy-modularity). Leiden and very large graphs -> python-igraph>=0.11. ERGM has no mature Python package -> R statnet/ergm via an R bridge (declare it). No API key; runs locally via `uv run python`.",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 90,
+      "references": [
+        "sna_methods.md"
+      ]
+    },
+    {
       "name": "alterlab-ssci-design-gate",
       "domain": "social-science-workflow",
       "description": "Routes a social-science study to its research design — true experiment, quasi-experiment (difference-in-differences, instrumental variables, regression discontinuity, interrupted time series, fixed effects), observational/correlational, qualitative, or mixed — by walking the random-selection and random-assignment decisions, then PINS the identifying assumption the causal claim will rest on (parallel trends, exclusion restriction, continuity at the cutoff, selection-on-observables, or qualitative saturation logic) before any analysis begins. Use when choosing a study design, asking what design to use, framing a causal question from observational data, or deciding experiment vs quasi-experiment vs observational. For executing the analysis prefer alterlab-statistical-analysis; for qualitative design depth prefer alterlab-qualitative-methods; for choosing the statistical test downstream prefer alterlab-test-selection-guard. Part of the AlterLab Academic Skills suite.",
@@ -4555,6 +4645,24 @@
       ]
     },
     {
+      "name": "alterlab-ssci-orchestrator",
+      "domain": "social-science-workflow",
+      "description": "Coordinates a social-science study through the stage-gated methods pipeline — question then design-gate then measurement-gate then sampling-gate then the right analysis module then inference-gate then reporting — holding a single YAML Design Passport that each gate reads and appends, and enforcing gate order with PASS / WARN / BLOCK semantics (design-gate and inference-gate are fail-closed). It is thin: it routes and holds the artifact, it does not run analysis itself. Use when a researcher describes a whole social-science study end to end, asks to run the methods pipeline or a full methodology review, or wants the design-to-inference workflow coordinated rather than a single step. For a single stage trigger that gate directly (alterlab-ssci-design-gate, -measurement-gate, -sampling-gate, -inference-gate); for multi-agent execution mechanics see alterlab-workflow-orchestration. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required. A thin discipline-enforcing pipeline coordinator; it dispatches to sibling gate/analysis skills that run locally. Extends the composition patterns of alterlab-workflow-orchestration.",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 105,
+      "references": [
+        "pipeline_contract.md"
+      ]
+    },
+    {
       "name": "alterlab-ssci-sampling-gate",
       "domain": "social-science-workflow",
       "description": "Gates who is sampled, how, and how many before data collection — checks that the sampling FRAME matches the target population (coverage error), that the METHOD is named (probability vs non-probability: simple random, stratified, cluster, systematic, quota, convenience, snowball), that sample SIZE follows the inference paradigm (an a-priori power analysis for hypothesis tests, a precision/margin-of-error target for estimation, or saturation/information power for qualitative studies — never a rule of thumb or collect-until-significant), and that the generalization claim matches the sample (statistical generalization only from probability samples). Use when asking how many participants are needed, planning recruitment, running or checking a power analysis, or judging whether a sample supports a population claim. For questionnaire items prefer alterlab-survey-design; for choosing the statistical test prefer alterlab-test-selection-guard. Part of the AlterLab Academic Skills suite.",
@@ -4570,6 +4678,24 @@
       "body_lines": 99,
       "references": [
         "sampling_and_power.md"
+      ]
+    },
+    {
+      "name": "alterlab-text-as-data",
+      "domain": "social-science-workflow",
+      "description": "Analyzes text as social-science data — topic modeling (BERTopic with embeddings + class-based TF-IDF, LDA/NMF via scikit-learn or gensim), document embeddings (sentence-transformers), dictionary/lexicon methods, and supervised text classification — choosing the method that matches the inferential goal (discovery vs measurement vs prediction) and validating topic reliability rather than trusting one stochastic run. It uses the verified stack (BERTopic, scikit-learn, gensim CoherenceModel, spaCy, sentence-transformers) with pinned patterns. Use when the request mentions topic modeling, text as data, computational text analysis, document embeddings, dictionary/sentiment lexicons, or classifying a corpus. For training or fine-tuning transformer models prefer alterlab-transformers; for humanities close-reading corpora prefer alterlab-digital-humanities. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): bertopic>=0.16, scikit-learn>=1.3, gensim>=4.3, spacy>=3.7 (+ a model like en_core_web_sm), sentence-transformers>=2.2 (pip). Runs locally via `uv run python`; no API key.",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 77,
+      "references": [
+        "text_stack.md"
       ]
     },
     {
