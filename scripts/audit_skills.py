@@ -12,6 +12,8 @@ Checks performed:
   - `metadata.skill-author` present (AlterLab convention)
   - `metadata.version` present (AlterLab convention — ERROR)
   - `compatibility` present, top-level or under `metadata` (AlterLab convention — WARNING)
+  - No non-canonical frontmatter keys — every top-level / metadata key is in the canonical
+    schema (KNOWN_TOPLEVEL_KEYS / KNOWN_METADATA_KEYS); ad-hoc one-offs are ERROR (Issue #3)
   - Suite-label footer present in body (AlterLab convention)
   - Every relative-path citation in the body resolves on disk: `references/*.md`,
     `shared/*.md`, `shared/schemas/*.schema.json`, and skill-local `scripts/*.py`
@@ -84,6 +86,28 @@ LICENSE_ALIASES = {
     "cecill free software license agreement": "CeCILL-2.1",
 }
 
+# Canonical frontmatter schema (Issue #3). Any top-level or metadata key outside these
+# sets is schema drift — an ad-hoc one-off that should be consolidated into a canonical
+# field (provenance URLs -> `metadata.skill-source`; tool version pins -> `compatibility`).
+KNOWN_TOPLEVEL_KEYS = {
+    "name",
+    "description",
+    "license",
+    "allowed-tools",
+    "compatibility",
+    "metadata",
+}
+KNOWN_METADATA_KEYS = {
+    "skill-author",      # required — AlterLab convention
+    "version",           # required — quoted semver
+    "last_updated",      # optional — ISO date
+    "depends_on",        # optional — sibling-skill dependencies
+    "skill-source",      # optional — upstream repo/tool provenance
+    "skill-contributors",  # optional — external-contributor attribution
+    "source_audit",      # optional — link-health audit provenance (generated)
+    "compatibility",     # accepted nested alternative to the top-level field
+}
+
 
 @dataclass
 class Finding:
@@ -118,6 +142,7 @@ def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
 
     fm: dict[str, str] = {}
     current_block_key: str | None = None
+    block_indent: int | None = None  # indent of the block's DIRECT children
     for line in lines[1:end_idx]:
         if not line.strip() or line.lstrip().startswith("#"):
             continue
@@ -126,9 +151,16 @@ def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
         if m and not line.startswith(" ") and not line.startswith("\t"):
             key, val = m.group(1), m.group(2).strip()
             current_block_key = key if val == "" else None
+            block_indent = None
             fm[key] = val
         elif current_block_key:
-            # Indented value under a parent block, e.g. metadata.skill-author
+            # Only DIRECT children of the block count as `parent.key`. Deeper-nested lines
+            # (e.g. `org:`/`role:` under a `skill-contributors:` list item) are not direct keys.
+            indent = len(line) - len(line.lstrip())
+            if block_indent is None:
+                block_indent = indent
+            if indent != block_indent:
+                continue
             m2 = re.match(r"^\s+([A-Za-z][A-Za-z0-9_-]*)\s*:\s*(.*)$", line)
             if m2:
                 fm[f"{current_block_key}.{m2.group(1)}"] = m2.group(2).strip().strip('"')
@@ -367,6 +399,17 @@ def audit_skill(skill_md: Path) -> SkillReport:
     # corpus and read by gen_catalog) OR nested under `metadata.compatibility`.
     if "compatibility" not in fm and "metadata.compatibility" not in fm:
         report.findings.append(Finding(str(rel), "warning", "compatibility-missing", "Missing `compatibility` field (top-level or under metadata; declare the target runtime/spec)"))
+
+    # Canonical schema (Issue #3) — ERROR: no ad-hoc frontmatter keys. Every top-level and
+    # metadata key must be in the canonical set; a one-off key is schema drift that should be
+    # consolidated (provenance -> metadata.skill-source; version pin -> compatibility).
+    for key in fm:
+        if "." in key:
+            block, child = key.split(".", 1)
+            if block == "metadata" and child not in KNOWN_METADATA_KEYS:
+                report.findings.append(Finding(str(rel), "error", "metadata-key-unknown", f"Non-canonical `metadata.{child}` key — consolidate into a canonical field (skill-source / compatibility). Allowed: {sorted(KNOWN_METADATA_KEYS)}"))
+        elif key not in KNOWN_TOPLEVEL_KEYS:
+            report.findings.append(Finding(str(rel), "error", "frontmatter-key-unknown", f"Non-canonical top-level frontmatter key `{key}`. Allowed: {sorted(KNOWN_TOPLEVEL_KEYS)}"))
 
     # Suite-label — convention is the description mentions the AlterLab suite.
     # Accept any phrasing containing the loose label.

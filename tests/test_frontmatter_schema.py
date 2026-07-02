@@ -77,6 +77,30 @@ def test_alterlab_naming_convention(skill_md: Path) -> None:
     )
 
 
+def test_frontmatter_keys_are_canonical(skill_md: Path) -> None:
+    """No ad-hoc frontmatter keys (Issue #3). Every top-level and metadata key must be in the
+    canonical schema; a one-off key is drift to consolidate (provenance -> metadata.skill-source,
+    version pin -> compatibility)."""
+    fm, _ = audit_skills.parse_frontmatter(skill_md.read_text(encoding="utf-8"))
+    unknown_top = [
+        k for k in fm if "." not in k and k not in audit_skills.KNOWN_TOPLEVEL_KEYS
+    ]
+    unknown_meta = [
+        k.split(".", 1)[1]
+        for k in fm
+        if k.startswith("metadata.")
+        and k.split(".", 1)[1] not in audit_skills.KNOWN_METADATA_KEYS
+    ]
+    assert not unknown_top, (
+        f"non-canonical top-level frontmatter key(s) {unknown_top}; "
+        f"allowed: {sorted(audit_skills.KNOWN_TOPLEVEL_KEYS)}"
+    )
+    assert not unknown_meta, (
+        f"non-canonical metadata key(s) {unknown_meta}; consolidate into a canonical field "
+        f"(skill-source / compatibility). allowed: {sorted(audit_skills.KNOWN_METADATA_KEYS)}"
+    )
+
+
 def test_frontmatter_is_strict_yaml_safe(skill_md: Path) -> None:
     """No unquoted scalar may contain ': ' (colon+space) or a trailing ':' — the tolerant
     audit parser accepts these but strict YAML (the external skills-ref validator) rejects them."""
