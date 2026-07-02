@@ -117,6 +117,37 @@ The per-eval **`rubric:` delta** (`SKILL HELPED` / `HURT` / `NO DELTA`) compares
 arms on the *overall rubric only* — the bare arm carries no `should_trigger` assertions — so
 it is labelled `rubric:` and never contradicts an assertion-driven `FAIL` verdict.
 
+### Activation harness (`--activation`)
+
+The `description` is the trigger surface, so the metric that matters for a 210-skill suite is
+*auto-selection rate*: given a realistic request, does the model pick the **right** skill from
+its description when the true skill sits among plausible same-domain distractors? That is both
+the activation rate (Anthropic's bar: **90%+**) and, via wrong picks, the **cross-fire rate**.
+
+```bash
+uv run python scripts/run_evals.py --activation                 # whole corpus
+uv run python scripts/run_evals.py --activation --skill qiskit  # one cluster
+uv run python scripts/run_evals.py --activation --distractors 8 # harder discrimination
+```
+
+It reuses the `should_trigger` prompts already in every `evals.json` (with `should_not_trigger`
+as a cross-fire control) and reports activation rate, cross-fire rate, and a per-category
+breakdown. Needs the `claude` CLI, so it runs on demand (a `workflow_dispatch` **activation**
+job), not per-PR. Pair it with `scripts/confusion_matrix.py`, which statically ranks the
+sibling pairs most at risk of cross-firing (no CLI needed) — sharpen the descriptions of the
+top-overlap pairs, then re-run `--activation` to measure the before/after.
+
+### Nightly rotating behavioral shard (`--shard i/n`)
+
+Grading all 210 skills behaviorally every night would be slow and costly, so the scheduled
+**behavioral-nightly** CI job grades a deterministic **1/7 shard** (`--shard $((day%7))/7`).
+Over a week the whole corpus is judged by the LLM rubric, which lets the eval claim a real
+behavioral pass-rate *over time* rather than only "coverage exists". Run a shard locally with:
+
+```bash
+uv run python scripts/run_evals.py --behavioral --shard 3/7
+```
+
 ## Worked example
 
 A complete, schema-valid eval file for a representative skill. It shows the full convention:

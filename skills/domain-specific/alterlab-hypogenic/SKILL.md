@@ -276,123 +276,20 @@ hypogenic_inference --help
 
 ## Python API Usage
 
-For programmatic control, copy and adapt the scripts under `examples/`. The library is **not** a one-call fluent API — generation runs as an explicit init/update loop over the algorithm classes, and inference runs through the inference registry. The real building blocks (verified against `examples/generation.py` and `examples/inference.py`):
+The library is **not** a one-call fluent API — generation runs as an explicit init/update
+loop over the algorithm classes (`DefaultGeneration`, `DefaultInference`, `DefaultUpdate`,
+`DefaultReplace`), and inference runs through the `inference_register`. Copy and adapt the
+scripts under `examples/`; for HypoRefine/Union adapt `examples/union_generation.py`.
 
-```python
-from hypogenic.tasks import BaseTask
-from hypogenic.prompt import BasePrompt
-from hypogenic.LLM_wrapper import llm_wrapper_register
-from hypogenic.extract_label import extract_label_register
-from hypogenic.algorithm.generation import DefaultGeneration
-from hypogenic.algorithm.inference import DefaultInference, inference_register
-from hypogenic.algorithm.replace import DefaultReplace
-from hypogenic.algorithm.update import DefaultUpdate
-
-# 1. Task: pass a custom extract_label, or reuse a registered one
-#    (e.g. "shoe", "hotel_reviews", "retweet", "headline_binary").
-task = BaseTask(
-    "./data/your_task/config.yaml",
-    extract_label=my_extract_label,         # or None + from_register=...
-    from_register=extract_label_register,
-)
-
-# 2. Build the LLM backend via the registry (API or local model)
-api = llm_wrapper_register.build(model_type)(model=model_name, path_name=model_path)
-prompt_class = BasePrompt(task)
-
-# 3. Generation pipeline: inference -> generation -> update loop
-inference_class  = DefaultInference(api, prompt_class, train_data, task)
-generation_class = DefaultGeneration(api, prompt_class, inference_class, task)
-update_class     = DefaultUpdate(
-    generation_class, inference_class, DefaultReplace(max_num_hypotheses), save_path
-)
-hypotheses_bank = update_class.update(
-    current_epoch=epoch, hypotheses_bank=hyp_bank,
-    current_seed=seed, cache_seed=cache_seed,
-)
-```
-
-For **HypoRefine / Union** methods (literature + data), adapt `examples/union_generation.py` instead — it produces three banks: HypoRefine (integrated), literature-only, and Literature ∪ HypoRefine.
-
-### Inference
-
-```python
-# Load a saved hypothesis bank, then run inference through the registry
-inference_class = inference_register.build(inference_type)(
-    api, prompt_class, train_data, task
-)
-pred_list, label_list = inference_class.run_inference_final(test_data, hyp_bank)
-# evaluate with get_results(pred_list, label_list)  -> accuracy / F1
-```
-
-`inference_type` selects the strategy, e.g. `default`, `one_step_adaptive`, `filter_and_weight`, `two_step_adaptive`, `upperbound` (see `examples/multi_hyp_inference.py` for multi-hypothesis runs).
-
-### Custom Label Extraction
-
-The `extract_label()` function is critical for parsing LLM outputs. Implement it based on your task:
-
-```python
-def extract_label(llm_output: str) -> str:
-    """Extract predicted label from LLM inference text.
-    
-    Default behavior: searches for 'final answer:\s+(.*)' pattern.
-    Customize for your domain-specific output format.
-    """
-    import re
-    match = re.search(r'final answer:\s+(.*)', llm_output, re.IGNORECASE)
-    if match:
-        return match.group(1).strip()
-    return llm_output.strip()
-```
-
-**Important:** Extracted labels must match the format of `label` values in your dataset for correct accuracy calculation.
+Full import list, the generation/inference loop, `inference_type` strategy options, and the
+critical `extract_label()` parsing contract: see `references/python_api.md`.
 
 ## Workflow Examples
 
-### Example 1: Data-Driven Hypothesis Generation (HypoGeniC)
-
-**Scenario:** Detecting AI-generated content without prior theoretical framework
-
-**Steps:**
-1. Prepare dataset with text samples and labels (human vs. AI-generated)
-2. Create `config.yaml` with appropriate prompt templates
-3. Run hypothesis generation:
-   ```bash
-   hypogenic_generation --config config.yaml --method hypogenic --num_hypotheses 20
-   ```
-4. Run inference on test set:
-   ```bash
-   hypogenic_inference --config config.yaml --hypotheses output/hypotheses.json --test_data data/test.json
-   ```
-5. Analyze results for patterns like formality, grammatical precision, and tone differences
-
-### Example 2: Literature-Informed Hypothesis Testing (HypoRefine)
-
-**Scenario:** Deception detection in hotel reviews building on existing research
-
-**Steps:**
-1. Collect 10 relevant papers on linguistic deception cues
-2. Prepare dataset with genuine and fraudulent reviews
-3. Configure `config.yaml` with literature processing and data generation templates
-4. Run HypoRefine:
-   ```bash
-   hypogenic_generation --config config.yaml --method hyporefine --papers papers/ --num_hypotheses 15
-   ```
-5. Test hypotheses examining pronoun frequency, detail specificity, and other linguistic patterns
-6. Compare literature-based and data-driven hypothesis performance
-
-### Example 3: Comprehensive Hypothesis Coverage (Union Method)
-
-**Scenario:** Mental stress detection maximizing hypothesis diversity
-
-**Steps:**
-1. Generate literature hypotheses from mental health research papers
-2. Generate data-driven hypotheses from social media posts
-3. Run Union method to combine and deduplicate:
-   ```bash
-   hypogenic_generation --config config.yaml --method union --literature_hypotheses lit_hyp.json
-   ```
-4. Inference captures both theoretical constructs (posting behavior changes) and data patterns (emotional language shifts)
+Three end-to-end scenarios — data-driven (HypoGeniC, AI-content detection), literature-informed
+(HypoRefine, deception in hotel reviews), and comprehensive coverage (Union, mental-stress
+detection) — with dataset prep, generation, and inference commands for each: see
+`references/workflow_examples.md`.
 
 ## Performance Optimization
 
@@ -418,158 +315,26 @@ def extract_label(llm_output: str) -> str:
 
 ## Creating Custom Tasks
 
-To add a new task or dataset to Hypogenic:
+Adding a new task follows five steps: (1) prepare `train/val/test` JSON with
+`text_features_*` + `label` keys, (2) author `config.yaml`, (3) implement a custom
+`extract_label()`, (4) optionally process literature PDFs for HypoRefine/Union, and
+(5) run generation + inference.
 
-### Step 1: Prepare Your Dataset
-
-Create three JSON files following the required format:
-- `your_task_train.json`
-- `your_task_val.json`
-- `your_task_test.json`
-
-Each file must have keys for text features (`text_features_1`, etc.) and `label`.
-
-### Step 2: Create config.yaml
-
-Define your task configuration with:
-- Task name and dataset paths
-- Prompt templates for observations, generation, inference
-- Any extra keys for reusable prompt components
-- Placeholder variables (e.g., `${text_features_1}`, `${num_hypotheses}`)
-
-### Step 3: Implement extract_label Function
-
-Create a custom label extraction function that parses LLM outputs for your domain:
-
-```python
-from hypogenic.tasks import BaseTask
-
-def extract_my_label(llm_output: str) -> str:
-    """Custom label extraction for your task.
-    
-    Must return labels in same format as dataset 'label' field.
-    """
-    # Example: Extract from specific format
-    if "Final prediction:" in llm_output:
-        return llm_output.split("Final prediction:")[-1].strip()
-    
-    # Fallback to default pattern
-    import re
-    match = re.search(r'final answer:\s+(.*)', llm_output, re.IGNORECASE)
-    return match.group(1).strip() if match else llm_output.strip()
-
-# Use your custom task (first positional arg is the config path)
-task = BaseTask("./your_task/config.yaml", extract_label=extract_my_label)
-```
-
-### Step 4: (Optional) Process Literature
-
-For HypoRefine/Union methods:
-1. Create `literature/your_task_name/raw/` directory
-2. Add relevant research paper PDFs
-3. Run GROBID preprocessing
-4. Process with `pdf_preprocess.py`
-
-### Step 5: Generate and Test
-
-Run hypothesis generation and inference using CLI or Python API:
-
-```bash
-# CLI approach
-hypogenic_generation --config your_task/config.yaml --method hypogenic --num_hypotheses 20
-hypogenic_inference --config your_task/config.yaml --hypotheses output/hypotheses.json
-
-# Or use Python API (see Python API Usage section)
-```
+Full step-by-step guide with the custom `extract_label` implementation and BaseTask wiring:
+see `references/custom_tasks.md`.
 
 ## Repository Structure
 
-Understanding the repository layout:
-
-```
-hypothesis-generation/
-├── hypogenic/              # Core package code
-├── hypogenic_cmd/          # CLI entry points
-├── hypothesis_agent/       # HypoRefine agent framework
-├── literature/            # Literature processing utilities
-├── modules/               # GROBID and preprocessing modules
-├── examples/              # Example scripts
-│   ├── generation.py      # Basic HypoGeniC generation
-│   ├── union_generation.py # HypoRefine/Union generation
-│   ├── inference.py       # Single hypothesis inference
-│   ├── multi_hyp_inference.py # Multiple hypothesis inference
-│   └── pdf_preprocess.py  # Literature PDF processing
-├── data/                  # Example datasets (clone separately)
-├── tests/                 # Unit tests
-└── IO_prompting/          # Prompt templates and experiments
-```
-
-**Key directories:**
-- **hypogenic/**: Main package with BaseTask and generation logic
-- **examples/**: Reference implementations for common workflows
-- **literature/**: Tools for PDF processing and literature extraction
-- **modules/**: External tool integrations (GROBID, etc.)
+Core code lives in `hypogenic/`, CLI entry points in `hypogenic_cmd/`, the HypoRefine agent in
+`hypothesis_agent/`, PDF/literature tools in `literature/` + `modules/`, and runnable scripts in
+`examples/`. Full annotated directory tree: see `references/repository_structure.md`.
 
 ## Related Publications
 
-### HypoBench (2025)
-
-Liu, H., Huang, S., Hu, J., Zhou, Y., & Tan, C. (2025). HypoBench: Towards Systematic and Principled Benchmarking for Hypothesis Generation. arXiv preprint arXiv:2504.11524.
-
-- **Paper:** https://arxiv.org/abs/2504.11524
-- **Description:** Benchmarking framework for systematic evaluation of hypothesis generation methods
-
-**BibTeX:**
-```bibtex
-@misc{liu2025hypobenchsystematicprincipledbenchmarking,
-      title={HypoBench: Towards Systematic and Principled Benchmarking for Hypothesis Generation}, 
-      author={Haokun Liu and Sicong Huang and Jingyu Hu and Yangqiaoyu Zhou and Chenhao Tan},
-      year={2025},
-      eprint={2504.11524},
-      archivePrefix={arXiv},
-      primaryClass={cs.AI},
-      url={https://arxiv.org/abs/2504.11524}, 
-}
-```
-
-### Literature Meets Data (2024)
-
-Liu, H., Zhou, Y., Li, M., Yuan, C., & Tan, C. (2024). Literature Meets Data: A Synergistic Approach to Hypothesis Generation. arXiv preprint arXiv:2410.17309.
-
-- **Paper:** https://arxiv.org/abs/2410.17309
-- **Code:** https://github.com/ChicagoHAI/hypothesis-generation
-- **Description:** Introduces HypoRefine and demonstrates synergistic combination of literature-based and data-driven hypothesis generation
-
-**BibTeX:**
-```bibtex
-@misc{liu2024literaturemeetsdatasynergistic,
-      title={Literature Meets Data: A Synergistic Approach to Hypothesis Generation}, 
-      author={Haokun Liu and Yangqiaoyu Zhou and Mingxuan Li and Chenfei Yuan and Chenhao Tan},
-      year={2024},
-      eprint={2410.17309},
-      archivePrefix={arXiv},
-      primaryClass={cs.AI},
-      url={https://arxiv.org/abs/2410.17309}, 
-}
-```
-
-### Hypothesis Generation with Large Language Models (2024)
-
-Zhou, Y., Liu, H., Srivastava, T., Mei, H., & Tan, C. (2024). Hypothesis Generation with Large Language Models. In Proceedings of EMNLP Workshop of NLP for Science.
-
-- **Paper:** https://aclanthology.org/2024.nlp4science-1.10/
-- **Description:** Original HypoGeniC framework for data-driven hypothesis generation
-
-**BibTeX:**
-```bibtex
-@inproceedings{zhou2024hypothesisgenerationlargelanguage,
-      title={Hypothesis Generation with Large Language Models}, 
-      author={Yangqiaoyu Zhou and Haokun Liu and Tejes Srivastava and Hongyuan Mei and Chenhao Tan},
-      booktitle = {Proceedings of EMNLP Workshop of NLP for Science},
-      year={2024},
-      url={https://aclanthology.org/2024.nlp4science-1.10/},
-}
-```
+The framework rests on three papers from ChicagoHAI: **HypoBench** (2025, arXiv:2504.11524),
+**Literature Meets Data** (2024, arXiv:2410.17309, introduces HypoRefine), and the original
+**Hypothesis Generation with Large Language Models** (2024, EMNLP NLP4Science). Full citations,
+descriptions, and BibTeX entries: see `references/publications.md`.
 
 ## Additional Resources
 
@@ -598,9 +363,17 @@ For contributions or questions, visit the GitHub repository and check the issues
 
 ### references/
 
-`config_template.yaml` — a runnable-shape `config.yaml` matching the real `hypogenic`
-schema (`task_name`, `train/val/test_data_path`, `prompt_templates` with role-based
-system/user sub-keys and `${...}` placeholders). Read it before authoring a config:
-it documents the `${...}` substitution, the reusable "extra key" mechanism, and which
-settings belong in CLI flags rather than the YAML.
+- `config_template.yaml` — a runnable-shape `config.yaml` matching the real `hypogenic`
+  schema (`task_name`, `train/val/test_data_path`, `prompt_templates` with role-based
+  system/user sub-keys and `${...}` placeholders). Read it before authoring a config:
+  it documents the `${...}` substitution, the reusable "extra key" mechanism, and which
+  settings belong in CLI flags rather than the YAML.
+- `python_api.md` — the init/update generation loop, inference registry, `inference_type`
+  strategy options, and the `extract_label()` parsing contract.
+- `workflow_examples.md` — three end-to-end scenarios (HypoGeniC, HypoRefine, Union).
+- `custom_tasks.md` — five-step guide for adding a new task or dataset.
+- `repository_structure.md` — annotated layout of the upstream repository.
+- `publications.md` — full citations and BibTeX for the HypoGeniC/HypoRefine/HypoBench papers.
+
+Part of the AlterLab Academic Skills suite.
 

@@ -1,6 +1,6 @@
 ---
 name: alterlab-chembl
-description: Query ChEMBL for bioactive molecules and drug discovery data — search compounds by structure or physicochemical properties, retrieve bioactivity measurements (IC50, Ki, EC50), and find inhibitors of a target. Use when screening chemical libraries, mining bioactivity for a protein, running SAR studies, or sourcing medicinal-chemistry data. For measured binding affinities prefer bindingdb. Part of the AlterLab Academic Skills suite.
+description: Query ChEMBL via the chembl_webresource_client Python client for curated bioactive molecules and drug-like compound libraries at scale — search compounds by structure or physicochemical properties, retrieve bioactivity measurements (IC50, Ki, EC50), and find inhibitors of a target. Use when screening chemical libraries, mining curated bioactivity for a protein, running SAR studies, or sourcing medicinal-chemistry data; for measured protein-ligand binding affinities (Ki/Kd/IC50) prefer alterlab-bindingdb instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(uv run:*) Bash(uv pip:*)
 compatibility: Keyless ChEMBL REST API (no authentication required)

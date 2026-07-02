@@ -4,7 +4,7 @@
 
 <a href="skills/"><img src="https://img.shields.io/badge/Skills-210-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Skills"></a>
 <a href="skills/"><img src="https://img.shields.io/badge/Domains-16-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Domains"></a>
-<a href="docs/evals.md"><img src="https://img.shields.io/badge/Evals-210%2F210-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Eval coverage"></a>
+<a href="docs/evals.md"><img src="https://img.shields.io/badge/Eval%20coverage-210%2F210-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Eval coverage"></a>
 <a href="https://www.anthropic.com"><img src="https://img.shields.io/badge/Claude-AI%20Powered-F97316?style=for-the-badge&logo=anthropic&logoColor=white" alt="Claude AI"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-10B981?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="MIT License"></a>
 <a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases"><img src="https://img.shields.io/github/v/release/AlterLab-IEU/AlterLab-Academic-Skills?style=for-the-badge&logo=github&color=8B5CF6&logoColor=white&label=Release" alt="Release"></a>
@@ -316,7 +316,9 @@ Installing the `core` plugin also registers these slash commands:
 <br>
 
 > [!NOTE]
-> **210 / 210 skills ship executable evals** on the canonical [agentskills.io](https://agentskills.io) schema. Schema and trigger-coverage are validated in CI on every PR; the behavioral pass (claude CLI + LLM judge) runs on demand via `workflow_dispatch`. See [`docs/evals.md`](docs/evals.md) for how coverage is measured and how to run `scripts/run_evals.py` locally.
+> **210 / 210 skills ship executable evals** on the canonical [agentskills.io](https://agentskills.io) schema. Schema and trigger-coverage are validated in CI on every PR; the behavioral pass (claude CLI + LLM judge) runs on demand via `workflow_dispatch` **and nightly over a rotating 1/7 shard**, so the whole corpus is behaviorally judged across each week. An [`--activation`](docs/evals.md) harness additionally measures auto-selection rate against Anthropic's 90% bar, and [`scripts/confusion_matrix.py`](scripts/confusion_matrix.py) statically ranks cross-firing risk between sibling skills. See [`docs/evals.md`](docs/evals.md).
+>
+> **Trust & portability signals** (all generated + CI-enforced): [`SECURITY_SCAN.md`](SECURITY_SCAN.md) — outbound-host allowlist + a no-shell-pipe / no-`eval`-on-input / no-hardcoded-secrets attestation; [`docs/portability.md`](docs/portability.md) — what transfers to Codex/Cursor/Gemini vs. Claude-Code-specific; [`docs/agents-and-teams.md`](docs/agents-and-teams.md) — the 35 pipeline subagents and the teams they compose.
 
 <br>
 
@@ -324,14 +326,14 @@ Installing the `core` plugin also registers these slash commands:
 
 ## ⚡ Core Pipeline — 9 Skills
 
-> *The heart of the system — a multi-agent research-to-publication pipeline with 39 specialized agents, plus teaching and thesis supervision tools.*
+> *The heart of the system — a multi-agent research-to-publication pipeline with 35 specialized agents, plus teaching and thesis supervision tools.*
 
 | # | Skill | Agents | What It Does |
 |:---:|:---|:---:|:---|
 | 1 | **🔬 Deep Research** | 13 | Multi-mode research with systematic review, Socratic dialogue, fact-checking |
 | 2 | **📝 Paper Writer** | 12 | Academic paper authoring with LaTeX, bilingual support, 9 writing modes |
 | 3 | **🔍 Paper Reviewer** | 7 | Multi-perspective peer review with Devil's Advocate, 0–100 quality rubrics |
-| 4 | **🔄 Research Pipeline** | 7 | 10-stage orchestrator with integrity verification and material passports |
+| 4 | **🔄 Research Pipeline** | 3 | 10-stage orchestrator with integrity verification and material passports |
 | 5 | **🔎 Citation Verifier** | — | Deterministic citation-existence gate over Crossref / OpenAlex / Semantic Scholar / arXiv |
 | 6 | **🎓 Teaching Design** | — | Course design, syllabi, rubrics, Bloom's taxonomy, backward design |
 | 7 | **📋 Thesis Supervisor** | — | Dissertation guidance, defense prep, committee management |

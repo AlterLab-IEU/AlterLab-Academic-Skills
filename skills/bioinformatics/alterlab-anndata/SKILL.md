@@ -1,6 +1,6 @@
 ---
 name: alterlab-anndata
-description: Build, slice, concatenate, read, and write AnnData annotated data matrices (obs, var, X, layers, obsm, uns) for single-cell analysis in the scverse ecosystem. Use when handling .h5ad files, managing cell and gene annotations, or wrangling single-cell matrices — this is the data-format skill, for analysis workflows use scanpy, for probabilistic models use scvi-tools, for population-scale queries use cellxgene-census. Part of the AlterLab Academic Skills suite.
+description: Build, slice, concatenate, read, and write AnnData annotated data matrices (obs, var, X, layers, obsm, uns) — the scverse data STRUCTURE, not an analysis pipeline. Use when creating or wrangling .h5ad/zarr files, managing cell and gene annotations, concatenating batches, or handling layers/obsm/backed-mode; for the QC, normalization, clustering, UMAP, and differential-expression analysis pipeline prefer alterlab-scanpy instead, and for RNA velocity from spliced/unspliced layers prefer alterlab-scvelo instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Runs under `uv run python` with `anndata` (>=0.11) installed in the project env; no API key or account required."

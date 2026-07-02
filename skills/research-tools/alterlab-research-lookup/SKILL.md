@@ -1,6 +1,6 @@
 ---
 name: alterlab-research-lookup
-description: Look up current research information by auto-routing queries to the best backend — the Parallel Web Systems Chat API (primary) or Perplexity sonar-pro-search (academic paper searches). Use when finding papers, gathering research data, or verifying scientific information and unsure which search backend to use (requires PARALLEL_API_KEY and OPENROUTER_API_KEY). Part of the AlterLab Academic Skills suite.
+description: Look up current research and scholarly papers by auto-routing each query to the best backend — the Parallel Web Systems Chat API (general research) or Perplexity sonar-pro-search (academic paper searches) — and save every result with citations to sources/. Use when finding papers, gathering research data, verifying scientific claims, or assembling citation lists and unsure which search backend fits. For plain general web search or extracting content from a known URL prefer alterlab-parallel-web instead (requires PARALLEL_API_KEY and OPENROUTER_API_KEY). Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 compatibility: PARALLEL_API_KEY and OPENROUTER_API_KEY required
@@ -349,6 +349,8 @@ This skill enhances scientific writing by providing:
 - If the selected backend's API key is missing, tries the other backend
 - If both backends fail, returns structured error response
 - Rephrase queries for better results if initial response is insufficient
+
+Backend-key setup and specific error messages: see `references/troubleshooting.md`.
 
 ---
 

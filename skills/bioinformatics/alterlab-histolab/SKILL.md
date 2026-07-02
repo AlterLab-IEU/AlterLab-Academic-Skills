@@ -1,6 +1,6 @@
 ---
 name: alterlab-histolab
-description: Extract and preprocess tiles from whole-slide images (WSI) with histolab — tissue detection, tile extraction (Random/Grid/Score tilers), and H&E stain normalization (Macenko/Reinhard). Use for lightweight slide pipelines, building tile datasets for ML, or quick tile-based analysis of histopathology slides — for advanced spatial proteomics, multiplexed imaging, or full deep-learning pathology pipelines use pathml. Part of the AlterLab Academic Skills suite.
+description: Extract and preprocess tiles from whole-slide images (WSI) with histolab — OpenSlide-backed slide loading, tissue detection and masks, Random/Grid/Score tile extraction, and image/morphological filters for H&E preprocessing. Use when the user needs lightweight WSI slide preprocessing: building tile datasets for ML training, tissue segmentation, or quick tile-based inspection of histopathology slides. For end-to-end computational-pathology, deep-learning model training, nucleus segmentation, or multiplexed/spatial-proteomics (CODEX, Vectra) pipelines prefer alterlab-pathml instead. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."

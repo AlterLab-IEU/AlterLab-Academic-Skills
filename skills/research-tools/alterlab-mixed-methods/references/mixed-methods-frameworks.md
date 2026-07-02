@@ -116,6 +116,52 @@ Mixed methods criteria:
 - 5.4. Are divergences and inconsistencies between quantitative and qualitative results adequately addressed?
 - 5.5. Do the different components of the study adhere to the quality criteria of each tradition?
 
+### Legitimation Framework and Additional Quality Standards
+
+```
+Legitimation Framework (Onwuegbuzie & Johnson, 2006):
+
+1. Sample integration legitimation
+   - Do the quantitative and qualitative samples relate appropriately?
+   - Are sampling decisions justified for both strands?
+
+2. Inside-outside legitimation
+   - Are emic (insider) and etic (outsider) perspectives balanced?
+
+3. Weakness minimization legitimation
+   - Does each strand compensate for limitations of the other?
+
+4. Sequential legitimation
+   - In sequential designs, do findings from one phase meaningfully
+     inform the next phase?
+
+5. Conversion legitimation
+   - If data transformation occurred (quantitizing/qualitizing),
+     was it done rigorously without losing essential meaning?
+
+6. Paradigmatic mixing legitimation
+   - Is the philosophical foundation coherent and justified?
+
+7. Commensurability legitimation
+   - Can inferences from different paradigms be meaningfully combined?
+
+8. Multiple validities legitimation
+   - Does each strand meet its own quality standards?
+   - Quantitative: validity, reliability, generalizability
+   - Qualitative: credibility, transferability, dependability, confirmability
+
+9. Political legitimation
+   - Are the values and perspectives of all stakeholders considered?
+
+Additional quality standards (Creswell & Plano Clark):
+  - Clear mixed methods research question (not just separate qual and quan questions)
+  - Justified rationale for mixing (why not a single method?)
+  - Rigorous individual strand methods
+  - Explicit integration procedures
+  - Coherent philosophical worldview
+  - Feasibility (time, resources, expertise for both methods)
+```
+
 ## Philosophical Worldviews for Mixed Methods
 
 | Worldview | Core Tenets | Implications for Mixed Methods | Key Authors |

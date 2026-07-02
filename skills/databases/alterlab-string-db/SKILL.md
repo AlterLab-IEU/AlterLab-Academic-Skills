@@ -1,6 +1,6 @@
 ---
 name: alterlab-string-db
-description: Query the STRING API for protein-protein interactions (59M proteins, 20B interactions across 5000+ species), building interaction networks and running GO/KEGG functional enrichment. Use when constructing a protein-protein interaction network, discovering functional partners of a protein, or running PPI-based enrichment for systems biology. Part of the AlterLab Academic Skills suite.
+description: Query the STRING API for protein-protein interactions (59M proteins, 20B interactions across 5000+ species), building interaction networks, discovering functional partners, and running GO/KEGG/Pfam enrichment on protein lists. Use when constructing a protein-protein interaction network, expanding from seed proteins to functional partners, or running PPI-based enrichment for systems biology; for curated metabolic pathway maps and reactions prefer alterlab-kegg, and for protein sequences, annotations, or accession ID mapping prefer alterlab-uniprot instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless STRING REST API (no authentication required)

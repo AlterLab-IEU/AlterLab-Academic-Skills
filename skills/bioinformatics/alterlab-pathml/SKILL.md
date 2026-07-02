@@ -1,6 +1,6 @@
 ---
 name: alterlab-pathml
-description: Run full computational-pathology workflows with PathML — advanced whole-slide-image (WSI) analysis across 160+ slide formats, multiplexed immunofluorescence (CODEX, Vectra), nucleus segmentation, tissue-graph construction, and ML model training on pathology data. Use when building deep-learning pathology pipelines, analyzing multiplexed or spatial-proteomics slides, or segmenting nuclei — for simple H&E tile extraction histolab may be lighter. Part of the AlterLab Academic Skills suite.
+description: Run full computational-pathology workflows with PathML — whole-slide-image (WSI) analysis across 160+ slide formats, multiplexed immunofluorescence (CODEX, Vectra, MERFISH), nucleus segmentation/classification (HoVer-Net, HACTNet), tissue- and cell-graph construction, HDF5 dataset management, and deep-learning model training on pathology data. Use when the user builds end-to-end deep-learning pathology pipelines, analyzes multiplexed or spatial-proteomics slides, or segments nuclei. For lightweight H&E slide preprocessing, tissue masking, or plain Random/Grid/Score tile extraction prefer alterlab-histolab instead. Part of the AlterLab Academic Skills suite.
 license: GPL-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."

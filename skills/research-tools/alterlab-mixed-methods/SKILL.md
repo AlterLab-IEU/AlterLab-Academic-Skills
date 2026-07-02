@@ -67,21 +67,7 @@ Example research question:
 - Merging point: At the results level (side-by-side comparison) or at the data transformation level (qualitizing or quantitizing)?
 - Handling discrepancy: What if findings conflict? Plan for this a priori.
 
-```markdown
-## Joint Display Template for Convergent Design
-
-| Quantitative Finding    | Qualitative Finding      | Assessment      | Meta-inference            |
-|------------------------|--------------------------|-----------------|---------------------------|
-| Mean self-efficacy     | Theme: "Confident but    | Partial         | Survey captures general   |
-| score = 4.2/5.0        | overwhelmed"            | convergence     | trend but misses nuance   |
-| (SD = 0.6)             |                          |                 | of contextual variation   |
-| Sig. correlation       | Theme: "Support networks | Convergence     | Both methods confirm      |
-| with peer support      | sustain confidence"      |                 | social support mechanism  |
-| (r = .42, p < .001)    |                          |                 |                           |
-| No gender difference   | Theme: "Gendered         | Divergence      | Qualitative reveals       |
-| in mean scores         | expectations shape        |                 | different mechanisms      |
-| (t = 0.8, p = .42)    | confidence differently"  |                 | masked by similar means   |
-```
+A worked convergent-design joint display (survey statistics vs. interview themes with per-row convergence assessment and meta-inference) is in `references/joint_display_templates.md`.
 
 #### Explanatory Sequential Design (QUAN → qual)
 
@@ -315,41 +301,7 @@ Embedding Techniques:
 
 ### 4. Joint Displays
 
-Joint displays are visual representations that bring quantitative and qualitative findings together in a single display for integrated analysis.
-
-```markdown
-## Joint Display Type 1: Side-by-Side Comparison
-
-| Quantitative Result | Related Qualitative Theme | Integration Assessment |
-|--------------------|--------------------------|-----------------------|
-| [Statistic]        | [Theme + exemplar quote] | Convergent/Divergent  |
-
-## Joint Display Type 2: Statistics-by-Themes Matrix
-
-|                    | Theme A           | Theme B           | Theme C           |
-|--------------------|-------------------|-------------------|-------------------|
-| High scorers (>M+1SD) | Prevalence: 80%  | Prevalence: 20%   | Prevalence: 60%   |
-|                    | Key quote: "..."  | Key quote: "..."  | Key quote: "..."  |
-| Low scorers (<M-1SD)  | Prevalence: 15%   | Prevalence: 85%   | Prevalence: 30%   |
-|                    | Key quote: "..."  | Key quote: "..."  | Key quote: "..."  |
-
-## Joint Display Type 3: Case-Oriented Display
-
-| Case | Quant Profile          | Qual Profile                | Integrated Narrative    |
-|------|------------------------|-----------------------------|-------------------------|
-| P01  | High efficacy, low burnout | "I love what I do"      | Intrinsic motivation    |
-| P02  | High efficacy, high burnout | "I'm good but exhausted" | Competent but depleted |
-| P03  | Low efficacy, low burnout  | "I've disengaged"        | Withdrawal coping      |
-
-## Joint Display Type 4: Process/Timeline Display
-
-| Phase    | Quantitative Data | Qualitative Data | Integration Point        |
-|----------|-------------------|-------------------|--------------------------|
-| Baseline | Pre-test scores   | Entry interviews  | Contextualize scores     |
-| Mid-point| Progress measures | Process interviews| Explain variation        |
-| Post     | Outcome measures  | Exit interviews   | Interpret outcomes       |
-| Follow-up| Retention data    | Follow-up calls   | Understand sustainability|
-```
+Joint displays are visual representations that bring quantitative and qualitative findings together in a single display for integrated analysis. Four ready-to-use layouts — side-by-side comparison, statistics-by-themes matrix, case-oriented display, and process/timeline display — plus a worked convergent-design example are in `references/joint_display_templates.md`. Copy a template, populate both strands, then add the integration/meta-inference column.
 
 ### 5. Meta-Inferences
 
@@ -383,150 +335,19 @@ Quality criteria for meta-inferences:
 
 ### 6. Quality Criteria for Mixed Methods Research
 
-```
-Legitimation Framework (Onwuegbuzie & Johnson, 2006):
-
-1. Sample integration legitimation
-   - Do the quantitative and qualitative samples relate appropriately?
-   - Are sampling decisions justified for both strands?
-
-2. Inside-outside legitimation
-   - Are emic (insider) and etic (outsider) perspectives balanced?
-
-3. Weakness minimization legitimation
-   - Does each strand compensate for limitations of the other?
-
-4. Sequential legitimation
-   - In sequential designs, do findings from one phase meaningfully
-     inform the next phase?
-
-5. Conversion legitimation
-   - If data transformation occurred (quantitizing/qualitizing),
-     was it done rigorously without losing essential meaning?
-
-6. Paradigmatic mixing legitimation
-   - Is the philosophical foundation coherent and justified?
-
-7. Commensurability legitimation
-   - Can inferences from different paradigms be meaningfully combined?
-
-8. Multiple validities legitimation
-   - Does each strand meet its own quality standards?
-   - Quantitative: validity, reliability, generalizability
-   - Qualitative: credibility, transferability, dependability, confirmability
-
-9. Political legitimation
-   - Are the values and perspectives of all stakeholders considered?
-
-Additional quality standards (Creswell & Plano Clark):
-  - Clear mixed methods research question (not just separate qual and quan questions)
-  - Justified rationale for mixing (why not a single method?)
-  - Rigorous individual strand methods
-  - Explicit integration procedures
-  - Coherent philosophical worldview
-  - Feasibility (time, resources, expertise for both methods)
-```
+Rigor is judged against Onwuegbuzie & Johnson's (2006) nine legitimation types — sample integration, inside-outside, weakness minimization, sequential, conversion, paradigmatic mixing, commensurability, multiple validities, and political legitimation — plus Creswell & Plano Clark's additional standards (clear mixed methods question, justified rationale, rigorous individual strands, explicit integration, coherent worldview, feasibility). The full annotated legitimation framework and standards, alongside GRAMMS and MMAT checklists, are in `references/mixed-methods-frameworks.md`.
 
 ### 7. Software Tools for Mixed Methods Integration
 
-```
-Dedicated mixed methods software:
-  - NVivo: Mixed methods project support with quantitative import
-    and matrix coding queries; can import SPSS data
-  - MAXQDA: "Mixed Methods" workspace, joint displays built in,
-    statistical integration, imports survey data
-  - Dedoose: Cloud-based, designed specifically for mixed methods,
-    real-time collaboration, code co-occurrence with demographics
-
-Quantitative analysis:
-  - R/RStudio: Comprehensive statistical analysis, integrates with
-    qualitative exports via packages (RQDA, qualitativeR)
-  - SPSS: Standard statistical package, exports to NVivo
-  - Stata: Strong for survey and panel data
-  - Python (pandas, scipy, statsmodels): Flexible, scriptable
-
-Qualitative analysis:
-  - NVivo, MAXQDA, ATLAS.ti, Dedoose (see above)
-  - Python (qualitative coding with custom scripts, NLP)
-
-Integration and visualization:
-  - R (ggplot2, ComplexHeatmap): Joint displays and integrated visualizations
-  - Python (matplotlib, seaborn, plotly): Custom joint displays
-  - Tableau: Interactive dashboards combining qual and quan
-  - Excel/Google Sheets: Simple joint display tables
-
-Data management:
-  - OSF (Open Science Framework): Manage both strands in one project
-  - REDCap: Collect structured and free-text data
-  - Qualtrics: Surveys with open-ended questions
-
-Diagramming tools for mixed methods designs:
-  - Lucidchart, draw.io, Miro: Visual design diagrams
-  - LaTeX (TikZ): Publication-quality design diagrams
-```
+Dedicated platforms (NVivo, MAXQDA, Dedoose) support integrated projects and joint displays; quantitative work runs in R, SPSS, Stata, or Python, qualitative work in the CAQDAS tools above, and integration/visualization in R, Python, or Tableau. The full annotated catalog — including data-management (OSF, REDCap, Qualtrics) and diagramming (Lucidchart, draw.io, TikZ) tools — is in `references/software_and_reporting.md`.
 
 ### 8. Writing a Mixed Methods Methods Section
 
-```markdown
-## Template: Methods Section Structure
-
-### Research Design
-- Name the specific mixed methods design (e.g., explanatory sequential)
-- Provide the notation (e.g., QUAN → qual)
-- Include a visual diagram of the design
-- Justify why mixed methods is needed (not just convenient)
-- State the philosophical worldview (typically pragmatism)
-- Cite methodological literature (Creswell & Plano Clark, Teddlie & Tashakkori)
-
-### Participants and Sampling
-- Describe sampling for each strand separately
-- Explain the relationship between samples
-- For sequential designs, explain how Phase 1 informed Phase 2 sampling
-- Report sample sizes with justification for each strand
-
-### Data Collection
-- Describe quantitative instruments (with psychometric properties)
-- Describe qualitative protocols (with sample questions)
-- Explain timing and sequencing of data collection
-- Address IRB considerations for each phase
-
-### Data Analysis
-- Describe quantitative analysis procedures
-- Describe qualitative analysis procedures
-- **Critically: Describe integration procedures explicitly**
-  - When does integration occur?
-  - What integration strategy is used (merging, connecting, embedding)?
-  - What specific techniques are employed (joint displays, data transformation)?
-
-### Quality and Rigor
-- Report validity/reliability for quantitative strand
-- Report trustworthiness criteria for qualitative strand
-- Report mixed methods legitimation criteria
-- Describe researcher positionality and reflexivity
-```
+A methods section names and diagrams the design, describes sampling and data collection per strand, and — critically — makes the integration procedures explicit, then reports strand-specific and mixed methods quality criteria. The full section-by-section template (Research Design, Participants and Sampling, Data Collection, Data Analysis, Quality and Rigor) is in `references/software_and_reporting.md`.
 
 ### 9. Common Mixed Methods Research Questions
 
-```
-Structure of mixed methods research questions:
-
-Type 1: Hybrid question (single integrated question)
-  "How and why do faculty members' quantitative research productivity
-   metrics relate to their qualitative experiences of academic identity?"
-
-Type 2: Separate strand questions + integration question
-  Quantitative: "What is the relationship between X and Y?"
-  Qualitative: "How do participants experience Z?"
-  Mixed: "In what ways do the quantitative relationships between X and Y
-          converge with or diverge from participants' experiences of Z?"
-
-Type 3: Phased questions (for sequential designs)
-  Phase 1: "What themes characterize participants' experiences?"
-  Phase 2: "To what extent do the themes from Phase 1 predict outcomes
-            when tested with a larger sample?"
-  Integration: "How do the qualitative themes and quantitative predictive
-                model together explain the phenomenon?"
-```
+Mixed methods questions take three structures: a single hybrid question, separate strand questions plus an integration question, or phased questions for sequential designs. Worked examples of each are in `references/software_and_reporting.md`.
 
 ## Best Practices
 
@@ -583,4 +404,9 @@ Type 3: Phased questions (for sequential designs)
 - O'Cathain, A., Murphy, E., & Nicholl, J. (2008). The quality of mixed methods studies in health services research. *Journal of Health Services Research & Policy*, 13(2), 92-98.
 - Schoonenboom, J., & Johnson, R. B. (2017). How to construct a mixed methods research design. *Kolner Zeitschrift fur Soziologie und Sozialpsychologie*, 69(Suppl 2), 107-131.
 
-See also: `references/mixed-methods-frameworks.md`
+See also:
+- `references/mixed-methods-frameworks.md` — design typology comparisons, detailed integration techniques, legitimation framework, GRAMMS/MMAT checklists, philosophical worldviews, and reading lists.
+- `references/joint_display_templates.md` — four joint display layouts plus a worked convergent-design example.
+- `references/software_and_reporting.md` — software catalog, methods-section template, and research-question structures.
+
+Part of the AlterLab Academic Skills suite.

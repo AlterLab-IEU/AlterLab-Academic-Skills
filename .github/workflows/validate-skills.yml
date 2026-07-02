@@ -8,6 +8,13 @@ on:
       - "skills/**"
       - "scripts/audit_skills.py"
       - "scripts/normalize_skills.py"
+      - "scripts/check_claudeai_compat.py"
+      - "scripts/gen_security_scan.py"
+      - "SECURITY_SCAN.md"
+      - "scripts/gen_agents_catalog.py"
+      - "docs/agents-and-teams.md"
+      - "scripts/gen_portability.py"
+      - "docs/portability.md"
       - "scripts/gen_marketplace.py"
       - "scripts/gen_catalog.py"
       - "skills.json"
@@ -33,6 +40,28 @@ jobs:
         run: |
           python3 scripts/audit_skills.py
         # Exits non-zero on any errors. Warnings are reported but do not fail CI.
+
+      - name: Portability doc is current
+        run: python3 scripts/gen_portability.py --check
+
+      - name: Agents/teams catalog is current + members exist
+        # docs/agents-and-teams.md is generated from skills/core/**/agents/*.md.
+        # --check fails if it drifts; --strict fails if a team names a missing agent.
+        run: python3 scripts/gen_agents_catalog.py --check --strict
+
+      - name: Security scan / trust manifest is current + clean
+        # SECURITY_SCAN.md is generated from a static scan of the shipped skill code.
+        # --check fails if it drifts; --strict fails if the no-shell-pipe / no-eval-on-input
+        # / no-hardcoded-secrets attestation is ever violated.
+        run: python3 scripts/gen_security_scan.py --check --strict
+
+      - name: claude.ai uploader frontmatter compatibility
+        # The claude.ai custom-skill .zip validator rejects any top-level frontmatter
+        # key outside {name, description, license, allowed-tools, metadata}. This suite
+        # intentionally adds exactly `compatibility` (Claude-Code/SDK-only). --strict
+        # fails only on UNEXPECTED (drift) keys, catching accidental key-creep that
+        # would break every claude.ai upload at once — before a user hits it.
+        run: python3 scripts/check_claudeai_compat.py --strict
 
       - name: Confirm marketplace.json is up to date
         # The plugin catalog is generated from the skills/ tree; fail if it drifts.
