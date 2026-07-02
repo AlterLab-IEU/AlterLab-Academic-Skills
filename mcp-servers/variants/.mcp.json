@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "variants": {
+      "command": "uv",
+      "args": ["run", "--with", "fastmcp", "python", "mcp-servers/variants/server.py"],
+      "env": {}
+    }
+  }
+}

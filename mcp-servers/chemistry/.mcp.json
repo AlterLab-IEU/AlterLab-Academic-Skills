@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "chemistry": {
+      "command": "uv",
+      "args": ["run", "--with", "fastmcp", "python", "mcp-servers/chemistry/server.py"],
+      "env": {}
+    }
+  }
+}

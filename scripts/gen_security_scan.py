@@ -99,6 +99,8 @@ _DOMAIN_CATEGORY = {
     "dergipark.org.tr": "Turkish journals (DergiPark)", "trdizin.gov.tr": "TR Dizin index",
     "tubitak.gov.tr": "TÜBİTAK", "uak.gov.tr": "ÜAK (doçentlik)", "ulakbim.gov.tr": "ULAKBİM",
     "yok.gov.tr": "YÖK",
+    # Gene / annotation aggregators (MCP connectors)
+    "mygene.info": "Gene annotation",
     # Infra / CDN / docs
     "github.com": "Source / infra", "jsdelivr.net": "CDN", "readthedocs.io": "Docs",
     "w3.org": "Standards", "graphdrawing.org": "Standards", "fastmcp.app": "MCP infra",
@@ -110,10 +112,16 @@ _DOMAIN_CATEGORY = {
 
 
 def shipped_files() -> list[Path]:
+    """Code a user installs/runs: the skill tree plus the standalone MCP connectors."""
+    roots = [SKILLS_DIR]
+    connectors = REPO_ROOT / "mcp-servers"
+    if connectors.is_dir():
+        roots.append(connectors)
     files: list[Path] = []
-    for pat in ("*.py", "*.sh"):
-        files += SKILLS_DIR.rglob(pat)
-    files += SKILLS_DIR.rglob(".mcp.json")
+    for root in roots:
+        for pat in ("*.py", "*.sh"):
+            files += root.rglob(pat)
+        files += root.rglob(".mcp.json")
     return sorted(files)
 
 
@@ -157,10 +165,10 @@ def render(result: dict) -> str:
                  "`python3 scripts/gen_security_scan.py`; CI fails if this file is stale "
                  "(`--check`) or if the attestation is violated (`--strict`).")
     lines.append("")
-    lines.append("This manifest is a static scan of the code a user actually installs "
-                 f"(`skills/**`): **{n_py} Python**, **{n_sh} shell**, and **{n_mcp} "
-                 "`.mcp.json`** files. It exists so a cautious lab can verify the suite's "
-                 "posture without auditing every file by hand.")
+    lines.append("This manifest is a static scan of the code a user actually installs or runs "
+                 f"(`skills/**` and the `mcp-servers/**` connectors): **{n_py} Python**, "
+                 f"**{n_sh} shell**, and **{n_mcp} `.mcp.json`** files. It exists so a cautious "
+                 "lab can verify the suite's posture without auditing every file by hand.")
     lines.append("")
 
     lines.append("## Attestation")

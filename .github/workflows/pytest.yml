@@ -6,6 +6,7 @@ on:
   pull_request:
     paths:
       - "skills/**"
+      - "mcp-servers/**"
       - "scripts/**"
       - "tests/**"
       - "pyproject.toml"
@@ -31,11 +32,11 @@ jobs:
           enable-cache: true
 
       - name: Byte-compile all skill Python
-        # Catches syntax errors in every shipped skill script.
-        run: python -m compileall skills/ -q
+        # Catches syntax errors in every shipped skill script + the MCP connectors.
+        run: python -m compileall skills/ mcp-servers/ -q
 
-      - name: Ruff lint (skills, scripts, tests)
-        run: uv run ruff check skills/ scripts/ tests/
+      - name: Ruff lint (skills, scripts, tests, mcp-servers)
+        run: uv run ruff check skills/ scripts/ tests/ mcp-servers/
 
       - name: Run schema tests
         run: uv run --frozen pytest tests/ -ra --tb=short

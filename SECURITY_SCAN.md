@@ -2,7 +2,7 @@
 
 > **Generated** — do not edit by hand. Regenerate with `python3 scripts/gen_security_scan.py`; CI fails if this file is stale (`--check`) or if the attestation is violated (`--strict`).
 
-This manifest is a static scan of the code a user actually installs (`skills/**`): **237 Python**, **3 shell**, and **2 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
+This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **241 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
 
 ## Attestation
 
@@ -26,10 +26,10 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | Domain | Category | Refs |
 |--------|----------|------|
 | `arxiv.org` | Preprints / literature | 11 |
-| `bindingdb.org` | Binding affinities | 2 |
+| `bindingdb.org` | Binding affinities | 3 |
 | `biorxiv.org` | Preprints / literature | 5 |
 | `brenda-enzymes.org` | Enzymes | 2 |
-| `broadinstitute.org` | Genomics | 2 |
+| `broadinstitute.org` | Genomics | 3 |
 | `cbioportal.org` | Cancer genomics | 2 |
 | `clinicaltrials.gov` | Clinical trials | 2 |
 | `clinpgx.org` | Pharmacogenomics | 3 |
@@ -41,7 +41,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `docking.org` | Compound libraries | 4 |
 | `doi.org` | DOI resolver | 26 |
 | `drugbank.ca` | Drugs | 1 |
-| `ebi.ac.uk` | EMBL-EBI | 9 |
+| `ebi.ac.uk` | EMBL-EBI | 12 |
 | `elixir.no` | Bioinformatics infra | 3 |
 | `ensembl.org` | Genomics | 3 |
 | `example.com` | Placeholder (docs only) | 1 |
@@ -59,8 +59,9 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `materialsproject.org` | Materials | 1 |
 | `metabolomicsworkbench.org` | Metabolomics | 3 |
 | `monarchinitiative.org` | Phenotypes | 3 |
+| `mygene.info` | Gene annotation | 1 |
 | `nf-co.re` | nf-core pipelines | 1 |
-| `nih.gov` | NCBI / NIH | 15 |
+| `nih.gov` | NCBI / NIH | 17 |
 | `openai.com` | LLM backend (user key) | 1 |
 | `openalex.org` | Scholarly index | 16 |
 | `openarchives.org` | OAI-PMH | 2 |
@@ -70,8 +71,8 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `patentsview.org` | Patents | 1 |
 | `pharmvar.org` | Pharmacogenomics | 3 |
 | `purl.org` | Persistent URLs | 1 |
-| `rcsb.org` | Protein structures | 6 |
-| `reactome.org` | Pathways | 3 |
+| `rcsb.org` | Protein structures | 7 |
+| `reactome.org` | Pathways | 4 |
 | `readthedocs.io` | Docs | 2 |
 | `sanger.ac.uk` | Wellcome Sanger | 1 |
 | `scientific-writer.local` | Local (non-network) | 1 |
@@ -86,13 +87,13 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `tubitak.gov.tr` | TÜBİTAK | 2 |
 | `uak.gov.tr` | ÜAK (doçentlik) | 2 |
 | `ulakbim.gov.tr` | ULAKBİM | 2 |
-| `uniprot.org` | Proteins | 1 |
+| `uniprot.org` | Proteins | 2 |
 | `uspto.gov` | Patents | 5 |
 | `w3.org` | Standards | 2 |
 | `wikipedia.org` | Reference | 1 |
 | `yok.gov.tr` | YÖK | 3 |
 
-_66 distinct domains._
+_67 distinct domains._
 
 ## Method
 

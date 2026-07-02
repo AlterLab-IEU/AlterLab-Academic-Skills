@@ -22,6 +22,14 @@ visualization 8 → 9, document-tools 2 → 3), still 100% eval coverage.
   data-fidelity, label legibility floor/ceiling, bbox-collision detection, 300-dpi export.
 - **`alterlab-pdf-explore`** (document-tools) — deep single-PDF Q&A: parse once, answer across
   sections/figures/appendices, extract-every-instance, read values off charts.
+- **Aggregated MCP connectors** (`mcp-servers/`) — four standalone FastMCP servers wrapping the
+  highest-traffic data clusters behind typed tool surfaces: `structures` (RCSB PDB + AlphaFold
+  DB + Complex Portal), `variants` (gnomAD + ClinVar/NCBI), `chemistry` (PubChem + BindingDB),
+  and `genes-ontologies` (MyGene + UniProt + QuickGO + Reactome). Stdlib-HTTP only (dep:
+  `fastmcp`), credentials read from env, graceful error objects. Their `.mcp.json` manifests
+  are shape-validated by `tests/test_mcp_manifest.py` (the academic-server bundle requirement is
+  scoped to the core/databases skill plugins), and the connector code is covered by
+  `SECURITY_SCAN.md` and CI lint/compile.
 
 - **`alterlab-proteinmpnn`** (bioinformatics) — ProteinMPNN (Dauparas 2022): fixed-backbone
   inverse folding with fixed positions, tied/symmetric chains, and AA bias.

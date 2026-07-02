@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "structures": {
+      "command": "uv",
+      "args": ["run", "--with", "fastmcp", "python", "mcp-servers/structures/server.py"],
+      "env": {}
+    }
+  }
+}

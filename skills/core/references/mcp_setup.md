@@ -115,3 +115,18 @@ fallback order is:
 
 A skill that reaches step 2 or 3 must state in its report that it ran in fallback mode
 so the user knows the result was not produced by the deterministic MCP path.
+
+## Aggregated data connectors (mcp-servers/)
+
+Beyond the four academic servers above, the repo ships standalone **aggregated MCP
+connectors** under `mcp-servers/` (see [`mcp-servers/README.md`](../../../mcp-servers/README.md)).
+Each wraps a high-traffic scientific-data cluster behind a typed tool surface and is added to
+an MCP client via its own `.mcp.json`:
+
+- `structures` — experimental (RCSB PDB) + predicted (AlphaFold DB) structures and complexes.
+- `variants` — gnomAD population frequencies + ClinVar clinical significance (NCBI).
+- `chemistry` — PubChem compound lookup/similarity + BindingDB measured affinities.
+- `genes-ontologies` — MyGene gene lookup, UniProt entries, QuickGO annotations, Reactome pathways.
+
+These are cross-domain infrastructure, not per-domain skill plugins; NCBI-backed tools read a
+contact email from `NCBI_EMAIL` and never hardcode credentials.
