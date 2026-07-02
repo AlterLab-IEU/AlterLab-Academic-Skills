@@ -6,6 +6,55 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.5.0] — 2026-07-02
+
+Social-science domain expansion — makes `social-science-workflow` methodologically even-handed
+(it was quantitative-positivist by construction) and closes a correctness gap (complex-survey
+analysis). **6 new skills** take the domain **11 → 17** and the corpus **232 → 238**, still 100%
+eval coverage across 17 domains. Every library API was web-verified to its current version before
+shipping; where the field standard is R (survey/srvyr, mice, metafor, lme4) and the repo already
+shells to R, the R path is documented as authoritative.
+
+### Added — correctness & analysis modules
+
+- **`alterlab-survey-analysis`** — design-based inference for complex-sample surveys (GSS/ANES/
+  ESS/DHS): declare a design (weights/strata/PSU/FPC) before estimating; Taylor + replicate-weight
+  SEs; post-stratification / raking / GREG; design-adjusted GLMs; correct domain estimation. Uses
+  Python samplics (stable) / svy (successor, pin+re-verify) or R survey + srvyr. Fixes the
+  falsely-narrow-CI error of analyzing weighted surveys unweighted.
+- **`alterlab-qualitative-analysis`** — codebook / thematic / content analysis with intercoder
+  reliability done correctly (Krippendorff's alpha primary, + CIs; Cohen/Fleiss kappa), a stdlib
+  nominal-alpha calculator with a bootstrap CI, human↔LLM double-coding, and the crucial branch:
+  a coefficient for content-analytic coding, consensus-and-reflexivity for reflexive TA.
+- **`alterlab-multilevel-models`** — mixed-effects / hierarchical models (statsmodels MixedLM,
+  bambi; R lme4 / glmmTMB / brms) that enforces the reporting items reviews find under-reported
+  (full fixed+random spec, centering, variance components + ICC, estimation, assumptions,
+  comparisons, effect sizes).
+- **`alterlab-meta-analysis`** — effect-size pooling under fixed/random effects (statsmodels
+  meta_analysis; R metafor), heterogeneity (I²/τ²/Q), forest/funnel plots, publication-bias tests
+  (Egger, trim-and-fill), PRISMA reporting.
+- **`alterlab-missing-data`** — principled missingness: forces an MCAR/MAR/MNAR statement, then
+  MICE with **Rubin's-rules pooling** or FIML (statsmodels MICE, R mice), with the explicit caveat
+  that single imputation and sklearn IterativeImputer understate SEs.
+
+### Added — the qualitative validity gate
+
+- **`alterlab-ssci-reflexivity-gate`** — the qualitative analog of the measurement gate: positionality
+  + Lincoln & Guba trustworthiness (credibility/transferability/dependability/confirmability),
+  fail-closed against ungrounded interpretivist generalization, with a stdlib
+  `trustworthiness_checklist.py` linter and a Design-Passport stanza.
+
+### Changed
+
+- **`alterlab-ssci-orchestrator`** (1.0.0 → 1.1.0) — routing table gains the survey / qualitative /
+  multilevel / meta-analysis rows and a missing-data cross-cutting step; the measurement stage now
+  paradigm-selects `measurement-gate` (quant) vs `reflexivity-gate` (qual); the Design Passport
+  gains the positionality/trustworthiness block; `passport.py` routes the new modules.
+
+`confusion_matrix.py` reports zero new routing gaps; the new skills carry near-miss deferrals to
+survey-design, text-as-data, measurement-gate, causal-inference, statsmodels, deep-research, and
+statistical-analysis.
+
 ## [2.4.0] — 2026-07-02
 
 Social-science methods spine — a new **17th domain**, `social-science-workflow`, adds a

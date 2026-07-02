@@ -40,9 +40,20 @@ _MODULE = {
     "network": "alterlab-sna",
     "abm": "alterlab-abm-mesa",
     "text": "alterlab-text-as-data",
+    "survey": "alterlab-survey-analysis",
+    "multilevel": "alterlab-multilevel-models",
+    "nested": "alterlab-multilevel-models",
+    "hierarchical": "alterlab-multilevel-models",
+    "meta": "alterlab-meta-analysis",
+    "qual-coding": "alterlab-qualitative-analysis",
     "qualitative": "alterlab-qualitative-methods",
     "mixed": "alterlab-mixed-methods",
     "descriptive": "alterlab-statistical-analysis",
+}
+
+# Cross-cutting steps that run outside the design_type -> module map.
+_CROSSCUTTING = {
+    "missing": "alterlab-missing-data (run BEFORE the analysis module — impute + pool)",
 }
 
 
@@ -65,7 +76,10 @@ def next_gate(stage: str, verdict: str) -> tuple[str, str]:
 
 
 def route(design_type: str) -> str:
-    return _MODULE.get(design_type.lower(), "alterlab-statistical-analysis (no causal/latent/relational structure detected)")
+    key = design_type.lower()
+    if key in _CROSSCUTTING:
+        return _CROSSCUTTING[key]
+    return _MODULE.get(key, "alterlab-statistical-analysis (no causal/latent/relational structure detected)")
 
 
 def main() -> int:

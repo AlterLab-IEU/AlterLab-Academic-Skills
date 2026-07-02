@@ -1,6 +1,6 @@
 {
   "summary": {
-    "total": 232,
+    "total": 238,
     "per_domain": {
       "bioinformatics": 38,
       "cheminformatics": 12,
@@ -15,15 +15,15 @@
       "lab-integrations": 9,
       "methodology": 3,
       "research-tools": 14,
-      "social-science-workflow": 11,
+      "social-science-workflow": 17,
       "turkish-academia": 12,
       "visualization": 9,
       "writing-tools": 13
     },
     "eval_coverage": {
-      "with_evals": 232,
+      "with_evals": 238,
       "without_evals": 0,
-      "total": 232,
+      "total": 238,
       "fraction": 1.0
     }
   },
@@ -4537,6 +4537,60 @@
       ]
     },
     {
+      "name": "alterlab-meta-analysis",
+      "domain": "social-science-workflow",
+      "description": "Runs quantitative meta-analysis — computes effect sizes (Hedges' g / standardized mean difference, log odds/risk ratios) with their variances, pools them under fixed-effect and random-effects models, quantifies heterogeneity (I-squared, tau-squared, Cochran's Q), draws forest and funnel plots, and tests publication bias (Egger's regression, trim-and-fill) — using statsmodels.stats.meta_analysis in Python or the field-standard R metafor via Rscript. It enforces PRISMA reporting and the random- vs fixed-effect decision. Use when pooling effect sizes across studies, running a systematic review's quantitative synthesis, or assessing heterogeneity and publication bias. For finding and screening the literature prefer alterlab-deep-research; for a single study's statistics prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): Python statsmodels>=0.14 (statsmodels.stats.meta_analysis) — OR the field-standard R metafor>=5.0 via Rscript (escalc/rma/forest/funnel/regtest/trimfill). Note: the PyPI PythonMeta package is stale/unmaintained — prefer statsmodels or metafor. Runs locally via `uv run python` / `Rscript`; no API key.",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 89,
+      "references": [
+        "pooling_and_bias.md"
+      ]
+    },
+    {
+      "name": "alterlab-missing-data",
+      "domain": "social-science-workflow",
+      "description": "Handles missing data with principled methods — forces an explicit MCAR / MAR / MNAR mechanism statement, then applies multiple imputation by chained equations (MICE) with Rubin's-rules pooling of estimates and standard errors, or full-information maximum likelihood (FIML) where a likelihood/SEM model applies. Uses statsmodels MICE / MICEData in Python or the field-standard R mice via Rscript, and warns that single (mean/regression) imputation and scikit-learn's IterativeImputer return one completed dataset without Rubin's-rules pooling, so they understate standard errors if used as multiple imputation. Use when a dataset has missing values, when choosing an imputation strategy, or when reporting how missingness was handled. For general modeling on complete data prefer alterlab-statistical-analysis; for latent-variable models with FIML prefer alterlab-sem-psychometrics. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): Python statsmodels>=0.14 (statsmodels.imputation.mice), pandas; scikit-learn IterativeImputer only for single imputation (NOT Rubin pooling) — OR the field-standard R mice>=3.19 via Rscript (mice/with/pool). Runs locally via `uv run python` / `Rscript`; no API key.",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 100,
+      "references": [
+        "mechanisms_and_pooling.md"
+      ]
+    },
+    {
+      "name": "alterlab-multilevel-models",
+      "domain": "social-science-workflow",
+      "description": "Fits and reports mixed-effects / multilevel / hierarchical models for clustered, nested, longitudinal, and repeated-measures data — random intercepts and slopes, variance components and the ICC, cross-level interactions, and GLMMs (logistic/Poisson) — using statsmodels MixedLM and bambi (Bayesian on PyMC) in Python, or the field-standard R lme4 / glmmTMB / brms via Rscript. It enforces the reporting items reviews find under-reported: full fixed + random specification, centering, variance components + ICC, estimation method, assumption checks, model comparisons, and effect sizes. Use when data are grouped/nested (students in schools, repeated measures, panel/longitudinal) and the question concerns within- vs between-cluster variation. For general single-level regression prefer alterlab-statsmodels; for panel fixed effects used for causal identification prefer alterlab-causal-inference. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): Python statsmodels>=0.14 (MixedLM), optionally bambi>=0.18 (Bayesian, on PyMC) — OR the field-standard R lme4>=2.0 (+ lmerTest for p-values), glmmTMB, brms, and performance (icc/r2) via Rscript. Runs locally via `uv run python` / `Rscript`; no API key.",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 85,
+      "references": [
+        "mlm_reporting.md"
+      ]
+    },
+    {
       "name": "alterlab-qca",
       "domain": "social-science-workflow",
       "description": "Runs Qualitative Comparative Analysis — crisp-set (csQCA), multi-value (mvQCA), and fuzzy-set (fsQCA) — for small-to-medium-N configurational research: calibrating raw data into set membership, building and refining a truth table, and Boolean minimization into conservative / parsimonious / intermediate solutions with consistency and coverage. Because there is no maintained Python QCA library, it shells out to R's QCA package (calibrate, truthTable, minimize) via Rscript and documents that dependency honestly rather than faking a Python API. Use when the request mentions QCA, fsQCA, csQCA, configurational or set-theoretic analysis, necessary/sufficient conditions, truth tables, or calibration of conditions. For net-effect estimation of a single treatment prefer alterlab-causal-inference; for interpretive analysis prefer alterlab-qualitative-methods. Part of the AlterLab Academic Skills suite.",
@@ -4552,6 +4606,25 @@
       "body_lines": 91,
       "references": [
         "qca_in_r.md"
+      ]
+    },
+    {
+      "name": "alterlab-qualitative-analysis",
+      "domain": "social-science-workflow",
+      "description": "Analyzes qualitative data as a dispatched pipeline module — codebook development, thematic / framework / content analysis, and inter-coder reliability computed correctly (Krippendorff's alpha as primary via the krippendorff package or a bundled stdlib nominal calculator with bootstrap CIs; Cohen's / Fleiss' kappa via statsmodels) with 95% CIs and thresholds (alpha >= .80 reliable, .667-.80 tentative). It BRANCHES by design: coefficient-based ICR for codebook / content-analytic coding, versus consensus-and-reflexivity for reflexive thematic analysis where a statistic is not the right criterion. Supports human-vs-LLM double-coding with an alpha check against a human gold standard. Use when coding interviews or open-ended text, building a codebook, or reporting intercoder reliability. For topic modeling / embeddings / supervised text classification prefer alterlab-text-as-data; for the reflexivity gate prefer alterlab-ssci-reflexivity-gate. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): Python krippendorff>=0.8, statsmodels>=0.14 (Fleiss/Cohen kappa via statsmodels.stats.inter_rater), pandas. For alpha with CIs use R irrCAC / icr, or the bundled stdlib nominal calculator. Optional LLM-assisted coding uses the platform's model. Runs locally via `uv run python`; no extra API key.",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 82,
+      "references": [
+        "icr_and_reporting.md",
+        "reflexive_vs_codebook.md"
       ]
     },
     {
@@ -4649,7 +4722,7 @@
       "domain": "social-science-workflow",
       "description": "Coordinates a social-science study through the stage-gated methods pipeline — question then design-gate then measurement-gate then sampling-gate then the right analysis module then inference-gate then reporting — holding a single YAML Design Passport that each gate reads and appends, and enforcing gate order with PASS / WARN / BLOCK semantics (design-gate and inference-gate are fail-closed). It is thin: it routes and holds the artifact, it does not run analysis itself. Use when a researcher describes a whole social-science study end to end, asks to run the methods pipeline or a full methodology review, or wants the design-to-inference workflow coordinated rather than a single step. For a single stage trigger that gate directly (alterlab-ssci-design-gate, -measurement-gate, -sampling-gate, -inference-gate); for multi-agent execution mechanics see alterlab-workflow-orchestration. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key required. A thin discipline-enforcing pipeline coordinator; it dispatches to sibling gate/analysis skills that run locally. Extends the composition patterns of alterlab-workflow-orchestration.",
       "allowed_tools": [
         "Read",
@@ -4657,9 +4730,27 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 105,
+      "body_lines": 121,
       "references": [
         "pipeline_contract.md"
+      ]
+    },
+    {
+      "name": "alterlab-ssci-reflexivity-gate",
+      "domain": "social-science-workflow",
+      "description": "Gates trustworthiness before qualitative or interpretivist claims are written — the qualitative analog of the measurement gate. Checks that researcher positionality and role are stated, that the four Lincoln & Guba trustworthiness criteria are addressed (credibility via triangulation / member-checking / prolonged engagement, transferability via thick description, dependability via an audit trail, confirmability via reflexive bracketing), and that reflexivity is evidenced rather than asserted. Fail-closed: interpretivist generalizing or causal language is refused without the corresponding warrant. Use when a study is qualitative / ethnographic / interpretivist, when reviewing trustworthiness or reflexivity, or before writing up thematic or grounded-theory findings. For quantitative measurement validity prefer alterlab-ssci-measurement-gate; for running the coding prefer alterlab-qualitative-analysis; for the final claim audit prefer alterlab-ssci-inference-gate. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required. A discipline-enforcing gate; coding execution is handed to alterlab-qualitative-analysis. Reads/writes the YAML Design Passport like the other ssci gates; the optional checklist linter runs locally via `uv run python` (standard library only).",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 95,
+      "references": [
+        "trustworthiness.md"
       ]
     },
     {
@@ -4678,6 +4769,25 @@
       "body_lines": 99,
       "references": [
         "sampling_and_power.md"
+      ]
+    },
+    {
+      "name": "alterlab-survey-analysis",
+      "domain": "social-science-workflow",
+      "description": "Analyzes complex-sample survey data with design-based inference — declares a survey design (weights, strata, PSUs/clusters, FPC) before estimating means, totals, proportions, ratios, and quantiles, computes design-adjusted standard errors via Taylor linearization or replicate weights (BRR, Jackknife, Bootstrap), calibrates with post-stratification / raking / GREG, and fits design-adjusted GLMs (linear, logistic, Poisson). Uses samplics (stable Python), the emerging svy successor, or the field-standard R survey + srvyr via Rscript. Use when analyzing GSS/ANES/ESS/DHS/Eurobarometer or any weighted/stratified/clustered survey, when a dataset ships survey weights, or when someone quotes unweighted percentages from a complex survey. For questionnaire and sampling-plan DESIGN prefer alterlab-survey-design; for the sampling-adequacy gate prefer alterlab-ssci-sampling-gate; for causal identification prefer alterlab-causal-inference. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): Python samplics>=0.6 (stable; TaylorEstimator) — or svy>=0.18 (samplics' successor; API still maturing, pin + re-verify) — OR the field-standard R survey>=4.5 + srvyr>=1.3 via Rscript (csSampling+brms for Bayesian design-based models). Runs locally via `uv run python` / `Rscript`; no API key.",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 106,
+      "references": [
+        "design_and_variance.md",
+        "python_vs_r.md"
       ]
     },
     {
