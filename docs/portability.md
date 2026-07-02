@@ -2,7 +2,7 @@
 
 > **Generated** — do not edit by hand. Regenerate with `python3 scripts/gen_portability.py`; CI fails if this file is stale.
 
-All **217** skills are authored on the cross-platform [Agent Skills open standard](https://agentskills.io). Every skill's **required trigger surface — `name`, `description`, and the Markdown body — is 100% portable** and runs unchanged on any conformant runtime (Codex, Cursor, Gemini CLI, the Claude Agent SDK, …). The table below states what else transfers.
+All **221** skills are authored on the cross-platform [Agent Skills open standard](https://agentskills.io). Every skill's **required trigger surface — `name`, `description`, and the Markdown body — is 100% portable** and runs unchanged on any conformant runtime (Codex, Cursor, Gemini CLI, the Claude Agent SDK, …). The table below states what else transfers.
 
 ## What transfers
 
@@ -24,8 +24,8 @@ All **217** skills are authored on the cross-platform [Agent Skills open standar
 
 ## By the numbers
 
-- **217/217** skills: portable-core frontmatter only (`name`/`description` required; plus the `compatibility` convention).
-- **209** bundle `references/*.md` — portable Markdown.
+- **221/221** skills: portable-core frontmatter only (`name`/`description` required; plus the `compatibility` convention).
+- **213** bundle `references/*.md` — portable Markdown.
 - **121** bundle `scripts/*.py` — portable plain Python.
 - **4** bundle Claude Code `agents/` and **4** bundle `commands/` — Claude-Code/SDK-specific.
 - Domain-level Claude extras: `.mcp.json` in `core`, `databases`; `hooks/` in `core`.

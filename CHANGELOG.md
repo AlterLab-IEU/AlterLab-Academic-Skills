@@ -7,11 +7,21 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 Foundation-model skills — the suite gains a **runnable structure-prediction** cluster, the
-**protein-design** cluster that completes the design→fold→score loop, and the provider-agnostic
-GPU dispatch layer they build on. **210 → 217 skills** (bioinformatics 30 → 36, domain-specific
-17 → 18), still 100% eval coverage.
+**protein-design** cluster that completes the design→fold→score loop, single-cell + genomics
+foundation models, figure-QA and single-PDF exploration, and the provider-agnostic GPU dispatch
+layer they build on. **210 → 221 skills** (bioinformatics 30 → 38, domain-specific 17 → 18,
+visualization 8 → 9, document-tools 2 → 3), still 100% eval coverage.
 
 ### Added
+
+- **`alterlab-scgpt`** (bioinformatics) — scGPT single-cell foundation model (Cui 2024):
+  zero-shot / fine-tuned cell-type annotation, embeddings, and batch integration on AnnData.
+- **`alterlab-borzoi`** (bioinformatics) — Borzoi (Linder 2025, `calico/borzoi`): sequence →
+  genome-wide functional tracks and non-coding variant effect scoring / in-silico mutagenesis.
+- **`alterlab-figure-qa`** (visualization) — render-then-verify publication-figure QA:
+  data-fidelity, label legibility floor/ceiling, bbox-collision detection, 300-dpi export.
+- **`alterlab-pdf-explore`** (document-tools) — deep single-PDF Q&A: parse once, answer across
+  sections/figures/appendices, extract-every-instance, read values off charts.
 
 - **`alterlab-proteinmpnn`** (bioinformatics) — ProteinMPNN (Dauparas 2022): fixed-backbone
   inverse folding with fixed positions, tied/symmetric chains, and AA bias.

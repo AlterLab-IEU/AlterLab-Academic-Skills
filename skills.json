@@ -1,14 +1,14 @@
 {
   "summary": {
-    "total": 217,
+    "total": 221,
     "per_domain": {
-      "bioinformatics": 36,
+      "bioinformatics": 38,
       "cheminformatics": 12,
       "clinical-research": 7,
       "core": 9,
       "data-science": 22,
       "databases": 39,
-      "document-tools": 2,
+      "document-tools": 3,
       "domain-specific": 18,
       "faculty-life": 6,
       "finance-economics": 7,
@@ -16,13 +16,13 @@
       "methodology": 3,
       "research-tools": 14,
       "turkish-academia": 12,
-      "visualization": 8,
+      "visualization": 9,
       "writing-tools": 13
     },
     "eval_coverage": {
-      "with_evals": 217,
+      "with_evals": 221,
       "without_evals": 0,
-      "total": 217,
+      "total": 221,
       "fraction": 1.0
     }
   },
@@ -193,6 +193,27 @@
       "body_lines": 77,
       "references": [
         "boltz_usage.md"
+      ]
+    },
+    {
+      "name": "alterlab-borzoi",
+      "domain": "bioinformatics",
+      "description": "Predict genome-wide functional genomics tracks from DNA sequence with Borzoi (Linder 2025) — a sequence-to-function model outputting RNA-seq, CAGE, ATAC, and ChIP coverage across long context, used to score non-coding and regulatory variant effects. Use when predicting functional tracks from a DNA sequence, scoring a non-coding/regulatory variant's effect on expression or chromatin, or doing in-silico mutagenesis of a locus. To LOOK UP a variant's population frequency prefer alterlab-gnomad; for its clinical significance prefer alterlab-clinvar; for protein-structure effects prefer alterlab-alphafold; for single-cell foundation models prefer alterlab-scgpt. Part of the AlterLab Academic Skills suite.",
+      "license": "Apache-2.0",
+      "version": "1.0.0",
+      "compatibility": "Runs Borzoi (`calico/borzoi`; install per repo — TODO(verify) exact pin) under `uv run python`. Model weights download once and cache; a CUDA GPU is recommended (the model takes long DNA context and is heavy on CPU). Inputs are DNA sequences (FASTA / genome coordinates + a reference); outputs are multi-track coverage arrays. Dispatch large scans via alterlab-remote-compute.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash(uv:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 70,
+      "references": [
+        "borzoi_usage.md"
       ]
     },
     {
@@ -776,6 +797,27 @@
         "api_reference.md",
         "plotting_guide.md",
         "standard_workflow.md"
+      ]
+    },
+    {
+      "name": "alterlab-scgpt",
+      "domain": "bioinformatics",
+      "description": "Apply the scGPT single-cell foundation model (Cui 2024) to annotate and embed cells — zero-shot and fine-tuned cell-type annotation, gene/cell embeddings, batch integration, and gene-regulatory / perturbation inference from AnnData. Use when annotating cell types with a pretrained foundation model, generating scGPT embeddings, integrating batches with a transformer, or running zero-shot single-cell inference on an h5ad. For probabilistic latent models (scVI/scANVI) prefer alterlab-scvi-tools; for the standard QC→cluster→UMAP→DE pipeline prefer alterlab-scanpy; for the AnnData data structure itself prefer alterlab-anndata; for protein language models prefer alterlab-esm. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Runs the scGPT model (`bowang-lab/scGPT`; install `scgpt` — TODO(verify) exact pin) under `uv run python`. Pretrained checkpoints download once and cache (GB-scale); a CUDA GPU is strongly recommended (CPU is impractical for large datasets). Input/output is AnnData (`.h5ad`) in the scverse ecosystem. Dispatch heavy fine-tuning via alterlab-remote-compute.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash(uv:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 71,
+      "references": [
+        "scgpt_usage.md"
       ]
     },
     {
@@ -3059,6 +3101,27 @@
       ]
     },
     {
+      "name": "alterlab-pdf-explore",
+      "domain": "document-tools",
+      "description": "Explore a single PDF in depth — parse it once, then answer questions across its sections, figures, tables, and appendices — comparing methods across sections, extracting every instance of a pattern within the document, and reading values off its charts and tables. Use when interrogating one paper or report end-to-end, pulling every occurrence of something inside a document, or reading data from a figure/table in a PDF, serving the literature-review and paper-review pipeline. To build a comparison table across MANY papers prefer alterlab-pdf-extract; to simply convert a PDF to Markdown prefer alterlab-markitdown; for reference/citation management prefer alterlab-pyzotero. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Runs under `uv run python` with a PDF parser (e.g. `pymupdf`/`pdfplumber` — TODO(verify) preferred pin) plus, for scanned pages, an OCR pass. No GPU or account required. Parses the PDF once into a section/figure/table index that later questions reuse; large scanned PDFs are slower due to OCR.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash(uv:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 72,
+      "references": [
+        "pdf_explore_usage.md"
+      ]
+    },
+    {
       "name": "alterlab-adaptyv",
       "domain": "domain-specific",
       "description": "Submits and tracks protein-testing experiments on the Adaptyv Bio Foundry cloud lab (wet-lab validation), and optimizes protein sequences before submission with computational tools (NetSolP, SoluProt, SolubleMPNN, ESM). Use when designing proteins that need wet-lab validation - binding/affinity screening, expression testing, thermostability, or fluorescence assays - or when submitting experiments to the Foundry API, browsing the target catalog, tracking experiment status, retrieving results, or pre-screening sequences for solubility/expression. Triggers on \"Adaptyv\", \"Foundry API\", \"cloud lab\", \"biolayer interferometry / BLI\", \"wet-lab validation\". Part of the AlterLab Academic Skills suite.",
@@ -4707,6 +4770,27 @@
       "references": [
         "api_endpoints.md",
         "query_recipes.md"
+      ]
+    },
+    {
+      "name": "alterlab-figure-qa",
+      "domain": "visualization",
+      "description": "Verify publication figures with a render-then-check QA pass — data-fidelity against every underlying row, axis/label floor-and-ceiling legibility, bounding-box collision detection for overlapping text/markers, and 300-dpi print-readiness. Use when proofing or auditing a finished figure for correctness and print quality, catching mislabeled or overlapping elements, or confirming a plot faithfully represents its data before submission. For CREATING the plot prefer alterlab-matplotlib (or alterlab-seaborn / alterlab-plotly); for multi-panel publication layout prefer alterlab-scientific-viz; for schematic diagrams prefer alterlab-scientific-schematics. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Runs under `uv run python` with the plotting stack already used to make the figure (Matplotlib and, for image/text-box checks, Pillow). No GPU, no account. Operates on a rendered figure plus the source data — it re-renders and inspects, it does not need network access.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash(uv:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 68,
+      "references": [
+        "figure_qa_checklist.md"
       ]
     },
     {
