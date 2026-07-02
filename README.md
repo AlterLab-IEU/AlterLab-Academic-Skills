@@ -291,13 +291,22 @@ Add the marketplace once, then install only the domains you need:
 /reload-plugins
 ```
 
+Each domain is its **own installable plugin** — install only what you need. For example, the full
+social-science methods spine (17 skills: orchestrator + 5 validity gates + 11 analysis modules):
+
+```bash
+/plugin marketplace add AlterLab-IEU/AlterLab-Academic-Skills
+/plugin install alterlab-social-science-workflow@alterlab-academic-skills
+/reload-plugins
+```
+
 For local development against a clone, point Claude Code at the directory directly:
 
 ```bash
 claude --plugin-dir /path/to/AlterLab-Academic-Skills
 ```
 
-Available domain plugins: `alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`, `alterlab-turkish-academia`, `alterlab-faculty-life`, `alterlab-methodology`.
+Available domain plugins (17): `alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`, `alterlab-turkish-academia`, `alterlab-faculty-life`, `alterlab-methodology`, `alterlab-social-science-workflow`.
 
 ### 📁 Option 3 — Personal or Project Install (manual)
 

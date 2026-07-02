@@ -78,7 +78,7 @@ CATEGORY_BLURB = {
     "turkish-academia": "Turkish academic system workflows (YÖK, ÜAK, DergiPark, YÖK-Tez, TÜBİTAK, doçentlik)",
     "faculty-life": "Faculty research-lifecycle and academic administration (syllabus AI-policy, IRB/consent, post-award grant admin, recommendation letters, accreditation AoL)",
     "methodology": "Research methodology and rigor scaffolds (Iron Laws, rationalization tables, decision flowcharts, systematic-reasoning checklists)",
-    "social-science-workflow": "Stage-gated social-science methods spine (design/identifying-assumption, measurement reliability-vs-validity, sampling/power, and inferential-claim audit gates)",
+    "social-science-workflow": "Stage-gated social-science methods spine — orchestrator + 5 validity gates (design/identifying-assumption, measurement, sampling/power, reflexivity, inference) and 11 analysis modules (causal inference, complex-survey analysis, SEM/psychometrics, multilevel models, QCA, SNA, ABM, text-as-data, qualitative analysis, meta-analysis, missing data)",
 }
 
 # `category` powers the `/plugin > Discover` filter UI; keywords aid search.
@@ -205,6 +205,43 @@ def build_plugin_scoped(cat_dir: Path, version: str) -> dict | None:
     return entry
 
 
+# Domains that ALSO ship a standalone `.claude-plugin/plugin.json`, so the folder can be
+# installed as its own plugin (clone + `claude --plugin-dir skills/<domain>`), independent of
+# the umbrella marketplace. plugin.json supports an explicit `skills` array (Claude Code plugins
+# reference), so no restructuring is needed. Add a domain name here to give it the same treatment.
+STANDALONE_PLUGIN_DOMAINS = {"social-science-workflow"}
+
+
+def build_domain_plugin_json(cat_dir: Path, version: str) -> dict | None:
+    """Standalone `.claude-plugin/plugin.json` for a single domain (plugin root == the domain dir).
+
+    Reuses the scoped marketplace entry but drops the marketplace-only `source` / `strict` /
+    `category` fields. The `skills` array is already plugin-root-relative (`./<skill>`), which is
+    exactly right when the plugin root is the domain folder itself."""
+    entry = build_plugin_scoped(cat_dir, version)
+    if entry is None:
+        return None
+    drop = {"source", "strict", "category"}
+    manifest = {
+        "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+        **{k: v for k, v in entry.items() if k not in drop},
+    }
+    return manifest
+
+
+def domain_plugin_paths(version: str) -> list[tuple[Path, str]]:
+    """(path, rendered-json) for every standalone domain plugin.json to emit / drift-check."""
+    out = []
+    for cat in sorted(STANDALONE_PLUGIN_DOMAINS):
+        cat_dir = SKILLS / cat
+        manifest = build_domain_plugin_json(cat_dir, version)
+        if manifest is None:
+            continue
+        path = cat_dir / ".claude-plugin" / "plugin.json"
+        out.append((path, json.dumps(manifest, indent=2, ensure_ascii=False) + "\n"))
+    return out
+
+
 def build_plugin_legacy(cat_dir: Path, version: str) -> dict | None:
     """Legacy (v1.x) shape, kept ONLY for the verdict == 'no-go' fallback.
 
@@ -289,6 +326,8 @@ def main() -> int:
     rendered = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
     pkg_rendered = render_package_json(version)
 
+    domain_plugins = domain_plugin_paths(version)
+
     if args.check:
         stale = []
         current = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
@@ -297,6 +336,10 @@ def main() -> int:
         pkg_current = PACKAGE_JSON.read_text(encoding="utf-8") if PACKAGE_JSON.exists() else ""
         if pkg_current != pkg_rendered:
             stale.append("package.json (version out of sync with pyproject.toml)")
+        for path, text in domain_plugins:
+            cur = path.read_text(encoding="utf-8") if path.exists() else ""
+            if cur != text:
+                stale.append(str(path.relative_to(REPO)))
         if stale:
             print(
                 "out of date — run: uv run python scripts/gen_marketplace.py\n  - "
@@ -313,9 +356,13 @@ def main() -> int:
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(rendered, encoding="utf-8")
     PACKAGE_JSON.write_text(pkg_rendered, encoding="utf-8")
+    for path, text in domain_plugins:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
     total = sum(len(p["skills"]) for p in data["plugins"])
+    extra = f" + {len(domain_plugins)} standalone plugin.json" if domain_plugins else ""
     print(
-        f"Wrote {OUT.relative_to(REPO)} + package.json: "
+        f"Wrote {OUT.relative_to(REPO)} + package.json{extra}: "
         f"{len(data['plugins'])} plugins, {total} skills, v{version} (verdict={verdict})."
     )
     return 0

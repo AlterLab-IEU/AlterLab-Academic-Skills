@@ -7,6 +7,25 @@ refuses to advance until its one discipline is satisfied, and each writes to a s
 Passport** that the next gate reads. The gates and modules deliberately *route to* the suite's
 existing skills rather than reimplementing them.
 
+## Install it as its own plugin
+
+The domain is a **standalone-installable Claude Code plugin** — you do not have to take the whole
+238-skill suite. Two ways:
+
+```bash
+# 1. From the AlterLab marketplace — install only this domain (17 skills):
+/plugin marketplace add AlterLab-IEU/AlterLab-Academic-Skills
+/plugin install alterlab-social-science-workflow@alterlab-academic-skills
+/reload-plugins
+
+# 2. Standalone from a clone — the domain folder carries its own .claude-plugin/plugin.json:
+git clone https://github.com/AlterLab-IEU/AlterLab-Academic-Skills.git
+claude --plugin-dir AlterLab-Academic-Skills/skills/social-science-workflow
+```
+
+The folder's `.claude-plugin/plugin.json` declares all 17 skills via an explicit `skills` array, so
+no restructuring is needed and it loads as its own plugin.
+
 ## The five gates
 
 | Order | Skill | The one rule it enforces |
