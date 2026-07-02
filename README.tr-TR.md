@@ -144,6 +144,7 @@ Her beceri, Claude'u akademik araştırma, bilimsel hesaplama ve akademik yayın
 
 | | Özellik | Açıklama |
 |:---:|:---|:---|
+| 🧭 | **Tek Komutluk Ön Kapı** | Yalnızca *"AlterLab becerilerini kullan"* deyin — `alterlab-skill-finder` sizin için doğru beceri(ler)i seçer; **`alterflow`** anahtar sözcüğü hedefinizi netleştirip çok-ajanlı bir iş akışı başlatır |
 | 🔬 | **Araştırmaya Hazır** | Çalışan araştırmacıların kullandığı gerçek bilimsel yöntemler, veritabanları ve profesyonel çerçeveler üzerine kurulu beceriler |
 | 🤖 | **Çok-Ajanlı Hatlar** | Çekirdek beceriler zincirlenir: Araştır → Yaz → Değerlendir → Yayınla, kesintisiz bir iş akışında |
 | 📊 | **39 Veritabanı Entegrasyon Becerisi** | PubMed, ChEMBL, UniProt, ClinicalTrials.gov, COSMIC ve daha fazlasına anında erişim |

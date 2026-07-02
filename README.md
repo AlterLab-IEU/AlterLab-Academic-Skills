@@ -229,10 +229,24 @@ and degrades gracefully to plain `requests` / WebSearch when no MCP or network i
 
 <br>
 
+### 🧭 Headline feature — `alterlab-skill-finder` (the front door)
+
+No one memorizes **239** skill names. `alterlab-skill-finder` is the **front door**: say *"use AlterLab skills for this"* and it classifies your task, maps it across all **17 domains**, and applies the right skill(s) — telling you which it picked and why. For a goal that spans stages, the **`alterflow`** keyword turns it into a **launcher**:
+
+- **CLARIFY** — asks 2–4 scoping questions *before* doing anything,
+- **SELECT & PLAN** — picks the skills the goal needs and lays out a dynamic multi-agent workflow, scaling the agent count to complexity,
+- **CONFIRM** — shows the plan *and its rough cost*, then executes,
+- **COMPOSE** — reuses the existing orchestrators (`alterlab-research-pipeline`, `alterlab-ssci-orchestrator`, `alterlab-workflow-orchestration`) rather than reinventing them.
+
+Built on Anthropic's documented **routing** and **orchestrator-workers** patterns — questions before execution, simplest path by default.
+
+<br>
+
 ## ✨ Key Features
 
 | | Feature | Description |
 |:---:|:---|:---|
+| 🧭 | **One-Command Front Door** | Just say *"use AlterLab skills"* — `alterlab-skill-finder` picks the right skill(s) for you; the **`alterflow`** keyword clarifies your goal, then launches a multi-agent workflow |
 | 🔬 | **Research-Ready** | Skills built on real scientific methods, databases, and professional frameworks used by working researchers |
 | 🤖 | **Multi-Agent Pipelines** | Core skills chain together: Research → Write → Review → Publish in a seamless workflow |
 | 📊 | **39 Database Integration Skills** | Instant access to PubMed, ChEMBL, UniProt, ClinicalTrials.gov, COSMIC, and more |
