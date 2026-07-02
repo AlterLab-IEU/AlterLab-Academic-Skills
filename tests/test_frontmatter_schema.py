@@ -77,6 +77,17 @@ def test_alterlab_naming_convention(skill_md: Path) -> None:
     )
 
 
+def test_frontmatter_is_strict_yaml_safe(skill_md: Path) -> None:
+    """No unquoted scalar may contain ': ' (colon+space) or a trailing ':' — the tolerant
+    audit parser accepts these but strict YAML (the external skills-ref validator) rejects them."""
+    text = skill_md.read_text(encoding="utf-8")
+    unsafe = audit_skills.yaml_unsafe_frontmatter_keys(text)
+    assert not unsafe, (
+        f"frontmatter key(s) {unsafe} contain an unquoted ': ' or trailing ':' that breaks "
+        "strict YAML parsers (skills-ref). Quote the value or rephrase (e.g. use ' — ')."
+    )
+
+
 def test_suite_mention_in_description_or_body(skill_md: Path) -> None:
     text = skill_md.read_text(encoding="utf-8")
     fm, body = audit_skills.parse_frontmatter(text)

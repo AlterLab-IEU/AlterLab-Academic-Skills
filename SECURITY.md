@@ -37,6 +37,19 @@ All pull requests that modify skills are scanned for potential security issues. 
 - Validate all external input referenced in skill instructions
 - Follow the principle of least privilege for allowed tools metadata
 
+## Trust Manifest
+
+[`SECURITY_SCAN.md`](SECURITY_SCAN.md) is a **generated, CI-attested** manifest of the
+shipped skill code. It enumerates the full outbound-host allowlist (all legitimate
+scientific/academic APIs, user-keyed LLM backends, or documentation placeholders — no
+telemetry) and attests, from a static scan, that the code contains **no shell-pipe, no
+`os.system` / `shell=True`, no `eval`/`exec` on input, and no hardcoded secrets**.
+
+It is regenerated with `python3 scripts/gen_security_scan.py` and enforced in CI:
+`--check` fails the build if the manifest drifts from the code, and `--strict` fails if any
+attestation is violated. So the manifest can never silently go stale or become untrue — it
+is a verifiable signal you can check before installing, not a hand-maintained promise.
+
 ## Supported Versions
 
 | Version | Supported |

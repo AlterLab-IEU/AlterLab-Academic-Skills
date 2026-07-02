@@ -13,6 +13,10 @@ on:
       - ".github/workflows/pytest.yml"
   # Run the behavioral job (below) on demand: gh workflow run pytest.yml
   workflow_dispatch:
+  # Nightly: grade a rotating 1/7 shard of the corpus behaviorally, so the whole
+  # suite is covered by an LLM judge over each week without grading 210 every night.
+  schedule:
+    - cron: "0 6 * * *"
 
 jobs:
   pytest:
@@ -41,7 +45,7 @@ jobs:
         run: uv run python scripts/run_evals.py --strict
 
   behavioral:
-    name: behavioral evals (slow)
+    name: behavioral evals (full, manual)
     # Manual dispatch only — shells out to the claude CLI and LLM-judges output,
     # so it is slow and consumes API budget. Requires the ANTHROPIC_API_KEY repo
     # secret (without it every eval errors `claude CLI exited 1`).
@@ -62,3 +66,53 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: uv run python scripts/run_evals.py --behavioral
+
+  behavioral-nightly:
+    name: behavioral evals (nightly rotating shard)
+    # Scheduled only — grades a deterministic 1/7 shard chosen from the day of the
+    # year, so the full corpus is behaviorally judged across each week. This is what
+    # lets the eval claim a real behavioral pass-rate over time rather than only
+    # "coverage exists". Same API-budget/secret requirements as the full job.
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run behavioral evals for today's shard
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          SHARD=$(( $(date -u +%j) % 7 ))
+          echo "Grading behavioral shard ${SHARD}/7 (day $(date -u +%j))"
+          uv run python scripts/run_evals.py --behavioral --shard "${SHARD}/7"
+
+  activation:
+    name: activation harness (auto-selection rate)
+    # Manual dispatch only — measures whether the model selects the right skill from
+    # its description among same-domain distractors (Anthropic's 90%+ activation bar)
+    # and the cross-fire rate. CLI + API budget, so it is not a per-PR gate.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Measure activation rate
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: uv run python scripts/run_evals.py --activation

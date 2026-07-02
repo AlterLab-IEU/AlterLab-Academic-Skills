@@ -44,89 +44,9 @@ Academic CV vs. Industry Resume:
 
 #### CV Section Order and Content
 
-```markdown
-## Standard Academic CV Structure
+The standard academic CV runs twelve sections in a conventional order: Header, Education, Academic Appointments, Publications (categorized), Grants and Funding, Awards and Honors, Invited Talks and Presentations, Teaching Experience, Mentoring and Advising, Service, Professional Memberships, and optional Skills and Training. Each carries specific content and formatting conventions (e.g., bold your name in author lists, mark student co-authors, note funding role and amount).
 
-### 1. Header
-- Full name (no nicknames unless that is your professional name)
-- Title and department
-- Institutional address
-- Email (institutional preferred), phone
-- Website URL, ORCID iD
-- Do NOT include: photo, age, marital status, citizenship (unless required)
-
-### 2. Education
-- Reverse chronological order
-- Include: degree, institution, year, dissertation/thesis title, advisor name
-- Example:
-  Ph.D. in Cognitive Psychology, University of Michigan, 2019
-    Dissertation: "Attentional Mechanisms in Bilingual Language Switching"
-    Advisor: Dr. Jane Smith
-
-### 3. Academic Appointments
-- Current position first
-- Include: title, department, institution, dates
-- List visiting positions and postdocs separately or together
-
-### 4. Publications
-  Organize into clear categories:
-  a. Peer-Reviewed Journal Articles (numbered, reverse chronological)
-  b. Books and Edited Volumes
-  c. Book Chapters
-  d. Conference Proceedings (if peer-reviewed and valued in your field)
-  e. Manuscripts Under Review (be honest about status)
-  f. Working Papers / Preprints
-  g. Non-Peer-Reviewed Publications (commentaries, reviews, etc.)
-
-  Formatting conventions:
-  - Bold your name in author lists
-  - Include DOI when available
-  - Note corresponding authorship if relevant
-  - Mark student co-authors with asterisk (*) and note convention
-  - Include journal impact factor ONLY if your field values this
-
-### 5. Grants and Funding
-  - Funded grants (role, agency, title, amount, dates)
-  - Pending grants
-  - Internal grants and fellowships
-
-  Example:
-  Co-PI, National Science Foundation (SES-2345678), "Computational Models
-  of Decision-Making Under Uncertainty," $450,000, 2024-2027
-
-### 6. Awards and Honors
-  - Reverse chronological
-  - Include the granting body and brief description if not self-evident
-
-### 7. Invited Talks and Presentations
-  a. Invited Keynotes and Plenaries
-  b. Invited Talks / Colloquia
-  c. Conference Presentations (oral)
-  d. Conference Posters
-
-### 8. Teaching Experience
-  - Courses taught with institution and term
-  - Note if new course development, graduate vs. undergraduate
-  - Include enrollment numbers if impressive
-
-### 9. Mentoring and Advising
-  - Doctoral students (current and completed, with placement)
-  - Master's students
-  - Undergraduate thesis students
-  - Postdoctoral scholars supervised
-
-### 10. Service
-  a. Departmental (committees, roles)
-  b. University (senate, task forces)
-  c. Professional (journal editor, reviewer, conference organizer)
-  d. Community and public engagement
-
-### 11. Professional Memberships
-
-### 12. Skills and Training (optional)
-  - Languages, software, methodological training
-  - Only if relevant and not obvious from your work
-```
+Full section-by-section blueprint with per-section content rules and worked examples: see `references/cv_structure.md`.
 
 #### CV Tailoring by Position Type
 
@@ -393,121 +313,17 @@ Future Plans:
 
 ### 7. Building an Academic Web Presence
 
-```
-Essential Components:
-
-1. Personal Academic Website
-   - Clean, professional design (no flashy themes)
-   - Key pages: About, Research, Publications, Teaching, CV, Contact
-   - Host options: GitHub Pages (free), WordPress, Squarespace, university page
-   - Update at least once per semester
-   - Include a professional headshot
-   - Make publications accessible (link to PDFs where copyright allows)
-
-2. Google Scholar Profile
-   - Claim your profile and verify your email
-   - Merge duplicate entries
-   - Monitor for incorrect attributions
-   - Your h-index and citation counts are publicly visible here
-
-3. ORCID (Open Researcher and Contributor ID)
-   - Register at orcid.org — it's free and takes 5 minutes
-   - Use your ORCID iD on all manuscripts, grants, and reviews
-   - Connect to CrossRef, Scopus, and Web of Science for auto-updates
-   - Include in your CV header and email signature
-
-4. Social Media for Academics
-   - Twitter/X: Share papers, engage in scholarly discussion, live-tweet conferences
-   - LinkedIn: Professional network, especially for interdisciplinary work
-   - Mastodon (academicmastodon): Growing scholarly community
-   - ResearchGate: Paper sharing, but be cautious about copyright
-   - Bluesky: Emerging academic community
-
-5. Institutional Profile Page
-   - Keep updated (many are neglected)
-   - Ensure it links to your personal website
-   - Include a recent photo and accurate information
-```
+A durable, institution-independent web presence is built from five components: a clean personal academic website (About, Research, Publications, Teaching, CV, Contact), a claimed Google Scholar profile, an ORCID iD wired to CrossRef/Scopus/Web of Science, academic social media (Twitter/X, LinkedIn, Mastodon, Bluesky), and a maintained institutional profile page. Prioritize what persists across career moves — your own site and ORCID — over pages you do not control.
 
 ### 8. Understanding Impact Metrics
 
-```
-Common Metrics and Their Limitations:
-
-h-index
-  Definition: h papers have been cited at least h times each
-  Strengths: Balances productivity and impact; single number
-  Weaknesses: Field-dependent, career-length dependent, cannot decrease,
-              penalizes early-career researchers, ignores author position
-  Use: Context-dependent comparison within subfield and career stage
-
-i10-index
-  Definition: Number of publications with at least 10 citations
-  Strengths: Simple, easy to understand
-  Weaknesses: Same field and career biases as h-index
-
-Journal Impact Factor (JIF)
-  Definition: Average citations per article in a journal over 2 years
-  Strengths: Quick journal quality heuristic
-  Weaknesses: Skewed by a few highly cited papers, gaming by journals,
-              varies dramatically across fields, says nothing about
-              individual paper quality
-  DORA declaration: Many institutions now discourage using JIF for
-                    evaluation of individuals
-
-Altmetrics
-  Definition: Non-traditional impact indicators (social media mentions,
-              news coverage, policy citations, downloads, bookmarks)
-  Strengths: Captures broader societal impact, faster than citations
-  Weaknesses: Gameable, noisy, not yet widely accepted for evaluation
-
-Field-Weighted Citation Impact (FWCI)
-  Definition: Ratio of actual citations to expected citations for the field
-  Strengths: Normalizes across fields
-  Weaknesses: Requires Scopus access, still citation-focused
-
-Contextualizing your metrics:
-  - Always compare within your subfield and career stage
-  - Present metrics alongside narrative context
-  - Use DORA-aligned framing: discuss the contribution, not the journal
-  - Include qualitative indicators: invited talks, awards, adoption by others
-```
+Bibliometrics (h-index, i10-index, Journal Impact Factor, Altmetrics, Field-Weighted Citation Impact) each carry field- and career-stage biases and should be contextualized, never presented bare. Follow DORA-aligned framing: discuss the contribution, not the journal; compare only within subfield and career stage; and pair numbers with qualitative indicators such as invited talks, awards, and adoption of your work by others.
 
 ### 9. Conference Networking
 
-```
-Before the Conference:
-  - Review the program; identify 5-10 people whose work you want to discuss
-  - Email 1-2 people in advance to suggest a brief meeting
-  - Prepare a 30-second description of your research (elevator pitch)
-  - Bring business cards or have a QR code to your website
-  - Update your conference app profile if applicable
+Effective conference networking is planned across three phases — before (identify targets, email ahead, prepare an elevator pitch), during (attend talks, ask genuine questions, introduce yourself, take notes), and after (follow up within a week, connect, propose concrete next steps) — with structured-event tactics for introverts.
 
-During the Conference:
-  - Attend talks by people you want to meet (sit near the front)
-  - Ask thoughtful questions after talks (brief, genuine, not showing off)
-  - Introduce yourself after sessions: "I enjoyed your talk on X.
-    I work on Y, and I see a connection with Z. Could we chat more?"
-  - Attend receptions, dinners, and informal gatherings
-  - Include junior and senior people in your networking
-  - Take notes on conversations (names, topics, follow-ups)
-  - Share insights on social media (tag presenters, use conference hashtag)
-
-After the Conference:
-  - Send follow-up emails within one week
-  - Connect on LinkedIn or Twitter
-  - Share papers you discussed
-  - Propose concrete next steps (collaboration, review, invitation)
-  - Add contacts to your professional network file
-
-Networking for Introverts:
-  - Use structured events (workshops, poster sessions) where conversation
-    is built in
-  - Volunteer for session chair or organizer roles
-  - Attend smaller satellite events rather than large receptions
-  - Set a goal (e.g., "have three genuine conversations today")
-  - It's okay to take breaks; sustained networking is exhausting
-```
+Full component checklists, metric definitions with strengths/weaknesses, and phase-by-phase networking scripts (including the introvert playbook): see `references/professional_development.md`.
 
 ### 10. Mentorship Statements
 
@@ -598,3 +414,5 @@ Networking for Introverts:
 - National Center for Faculty Development & Diversity (NCFDD). https://www.ncfdd.org/
 
 See also: `references/career-templates.md`
+
+Part of the AlterLab Academic Skills suite.

@@ -26,32 +26,13 @@ import pytest
 import audit_skills
 from tests.known_failures import BODY_TOO_LONG
 
-# Frozen backlog of SKILL.md bodies still over the 500-line soft cap as of the
-# v2.0 slimming wave. Measured live (body = lines after the closing `---`, via
-# audit_skills.parse_frontmatter). Target was 0; the slimming agents left these
-# 21. Ratchet rule: this set may only shrink. When you slim one of these below
-# 500 lines, REMOVE its entry — the stale-entry gate will fail until you do.
-BODY_OVER_SOFT_LIMIT: frozenset[str] = frozenset(
-    {
-        "skills/cheminformatics/alterlab-datamol/SKILL.md",
-        "skills/cheminformatics/alterlab-deepchem/SKILL.md",
-        "skills/cheminformatics/alterlab-molfeat/SKILL.md",
-        "skills/cheminformatics/alterlab-rdkit/SKILL.md",
-        "skills/core/alterlab-deep-research/SKILL.md",
-        "skills/core/alterlab-research-pipeline/SKILL.md",
-        "skills/core/alterlab-teaching-design/SKILL.md",
-        "skills/core/alterlab-thesis-supervisor/SKILL.md",
-        "skills/domain-specific/alterlab-hypogenic/SKILL.md",
-        "skills/lab-integrations/alterlab-opentrons/SKILL.md",
-        "skills/research-tools/alterlab-mixed-methods/SKILL.md",
-        "skills/research-tools/alterlab-open-science/SKILL.md",
-        "skills/research-tools/alterlab-qualitative-methods/SKILL.md",
-        "skills/research-tools/alterlab-research-ethics/SKILL.md",
-        "skills/research-tools/alterlab-scientific-thinking/SKILL.md",
-        "skills/research-tools/alterlab-survey-design/SKILL.md",
-        "skills/writing-tools/alterlab-academic-career/SKILL.md",
-    }
-)
+# Frozen backlog of SKILL.md bodies over the 500-line soft cap. The v2.0 wave left
+# 17 offenders; the v2.2 body-split wave moved the detail of every one into
+# references/ and drained the backlog to EMPTY. Ratchet rule: this set may only
+# shrink and must never grow — a body over 500 lines that is not listed here fails,
+# so every skill is now held to the soft cap with no exceptions. If you must add a
+# temporary offender, you almost certainly should split it into references/ instead.
+BODY_OVER_SOFT_LIMIT: frozenset[str] = frozenset()
 
 
 def _body_lines(skill_md: Path) -> int:

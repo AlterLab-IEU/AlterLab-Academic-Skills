@@ -177,149 +177,28 @@ Ready to proceed to Stage [Y]? You can also:
 
 ## Orchestrator Workflow
 
-### Step 1: INTAKE & DETECTION
+The orchestrator runs a four-step loop for every stage:
 
-```
-pipeline_orchestrator_agent analyzes the user's input:
+1. **INTAKE & DETECTION** — Analyze the user's materials to pick the entry stage (no materials -> Stage 1; paper draft -> Stage 2.5; review comments -> Stage 4; final draft -> Stage 5) and confirm entry point + goal.
+2. **MODE RECOMMENDATION** — Recommend per-stage modes by user type (novice -> socratic/plan/guided; experienced -> full; time-limited -> quick), explaining the trade-offs so the user chooses.
+3. **STAGE EXECUTION** — Dispatch the stage's skill (never doing the work itself), monitor completion, compile deliverables, update state via `state_tracker_agent`, then raise a MANDATORY checkpoint.
+4. **TRANSITION** — After confirmation, pass deliverables forward via the per-stage handoff protocol, then begin the next stage.
 
-1. What materials does the user have?
-   - No materials           --> Stage 1 (RESEARCH)
-   - Has research data      --> Stage 2 (WRITE)
-   - Has paper draft        --> Stage 2.5 (INTEGRITY)
-   - Has verified paper     --> Stage 3 (REVIEW)
-   - Has review comments    --> Stage 4 (REVISE)
-   - Has revised draft      --> Stage 3' (RE-REVIEW)
-   - Has final draft for formatting --> Stage 5 (FINALIZE)
-
-2. What is the user's goal?
-   - Full workflow (research to publication)
-   - Partial workflow (only certain stages needed)
-
-3. Determine entry point, confirm with user
-```
-
-### Step 2: MODE RECOMMENDATION
-
-```
-Based on entry point and user preferences, recommend modes for each stage:
-
-User type determination:
-- Novice / wants guidance --> socratic (Stage 1) + plan (Stage 2) + guided (Stage 3)
-- Experienced / wants direct output --> full (Stage 1) + full (Stage 2) + full (Stage 3)
-- Time-limited --> quick (Stage 1) + full (Stage 2) + quick (Stage 3)
-
-Explain the differences between modes when recommending, letting the user choose
-```
-
-### Step 3: STAGE EXECUTION
-
-```
-Call the corresponding skill (does not do work itself, purely dispatching):
-
-1. Inform the user which Stage is about to begin
-2. Load the corresponding skill's SKILL.md
-3. Launch the skill with the recommended mode
-4. Monitor stage completion status
-
-After completion:
-1. Compile deliverables list
-2. Update pipeline state (call state_tracker_agent)
-3. [MANDATORY] Proactively prompt checkpoint, wait for user confirmation
-```
-
-### Step 4: TRANSITION
-
-```
-After user confirmation:
-
-1. Pass the previous stage's deliverables as input to the next stage
-2. Trigger handoff protocol (defined in each skill's SKILL.md):
-   - Stage 1  --> 2: alterlab-deep-research handoff (RQ Brief + Bibliography + Synthesis)
-   - Stage 2  --> 2.5: Pass complete paper to integrity_verification_agent
-   - Stage 2.5 --> 3: Pass verified paper to reviewer
-   - Stage 3  --> 4: Pass Revision Roadmap to alterlab-paper-writer revision mode
-   - Stage 4  --> 3': Pass revised draft and Response to Reviewers to reviewer
-   - Stage 3' --> 4': Pass new Revision Roadmap to alterlab-paper-writer revision mode
-   - Stage 4/4' --> 4.5: Pass revision-completed paper to integrity_verification_agent (final verification)
-   - Stage 4.5 --> 5: Pass verified final draft to format-convert mode
-3. Begin next stage
-```
+Full detection decision tree, mode-selection matrix, and the complete per-stage handoff mapping: see `references/orchestrator_workflow.md`.
 
 ---
 
-## Integrity Review Protocol (Added in v2.0)
+## Integrity & Two-Stage Review Protocols (v2.0)
 
-### Stage 2.5: First Integrity Check (Pre-Review Integrity)
+**Stage 2.5 — First Integrity Check (pre-review):** After WRITE, before REVIEW. `integrity_verification_agent` Mode 1 runs Phases A-E (100% reference existence, >=30% citation-context spot-check, 100% statistical data, >=30% originality + self-plagiarism, 30% claim spot-check / min 10 claims). PASS -> Stage 3; FAIL -> correction list, fix item-by-item, re-verify (max 3 rounds).
 
-**Trigger**: After Stage 2 (WRITE) completion, before Stage 3 (REVIEW)
-**Purpose**: Ensure all references and data are not fabricated or erroneous before submission for review
+**Stage 4.5 — Final Integrity Check (post-revision):** After RE-REVISE / RE-REVIEW-Accept, before FINALIZE. Mode 2 runs Phases A-E at full coverage (100% citation-context, 100% claim verification, zero MAJOR_DISTORTION + zero UNVERIFIABLE required) and cross-checks that every Stage 2.5 issue is resolved. Must PASS with zero issues to reach Stage 5.
 
-```
-Execution steps:
-1. integrity_verification_agent executes Mode 1 (initial verification) on the paper
-2. Verification scope:
-   - Phase A: 100% reference existence + bibliographic accuracy + ghost citations
-   - Phase B: >= 30% citation context spot-check
-   - Phase C: 100% statistical data verification
-   - Phase D: >= 30% originality spot-check + self-plagiarism check
-   - Phase E: 30% claim verification spot-check (minimum 10 claims)
-3. Result handling:
-   - PASS -> checkpoint -> Stage 3
-   - FAIL -> produce correction list -> fix item by item -> re-verify corrected items
-   - PASS after corrections -> checkpoint -> Stage 3
-   - Still FAIL after 3 rounds -> notify user, list unverifiable items
-```
+**Stage 3 — First Review:** EIC + R1 (methodology) + R2 (domain) + R3 (interdisciplinary) + Devil's Advocate. Output: 5 reports + Editorial Decision + Revision Roadmap + Socratic Revision Coaching. Accept -> Stage 4.5 / Minor|Major -> Stage 4 / Reject -> Stage 2 or end.
 
-### Stage 4.5: Final Integrity Check (Post-Revision Final Check)
+**Stage 3' — Verification Review:** `re-review` mode over revised draft + Response to Reviewers. Output: revision-response comparison table + new-issues list + new Editorial Decision. Accept|Minor -> Stage 4.5 / Major -> Stage 4'.
 
-**Trigger**: After Stage 4' (RE-REVISE) or Stage 3' (RE-REVIEW, Accept) completion, before Stage 5 (FINALIZE)
-**Purpose**: Confirm the revised paper is 100% correct and ready for publication
-
-```
-Execution steps:
-1. integrity_verification_agent executes Mode 2 (final verification) on the revised draft
-2. Verification scope:
-   - Phase A: 100% reference verification (including those added during revision)
-   - Phase B: 100% citation context verification (not spot-check, full check)
-   - Phase C: 100% statistical data verification
-   - Phase D: >= 50% originality spot-check (100% for newly added/modified paragraphs)
-   - Phase E: 100% claim verification (zero MAJOR_DISTORTION + zero UNVERIFIABLE required)
-3. Special check: Compare with Stage 2.5 results to confirm all previous issues are resolved
-4. Result handling:
-   - PASS (zero issues) -> checkpoint -> Stage 5
-   - FAIL -> fix -> re-verify -> PASS -> Stage 5
-5. **Must PASS with zero issues to proceed to Stage 5**
-```
-
----
-
-## Two-Stage Review Protocol (Added in v2.0)
-
-### Stage 3: First Review (Full Review)
-
-- **Input**: Paper that passed integrity check
-- **Review team**: EIC + R1 (methodology) + R2 (domain) + R3 (interdisciplinary) + Devil's Advocate
-- **Output**: 5 review reports + Editorial Decision + Revision Roadmap + Socratic Revision Coaching
-- **Decision branches**: Accept -> Stage 4.5 / Minor|Major -> Revision Coaching -> Stage 4 / Reject -> Stage 2 or end
-
-See `alterlab-paper-reviewer/SKILL.md` for review process details.
-
-### Stage 3 -> 4 Transition: Revision Coaching
-
-EIC uses Socratic dialogue to guide the user in understanding review comments and planning revision strategy (max 8 rounds). User can say "just fix it for me" to skip.
-
-### Stage 3': Second Review (Verification Review)
-
-- **Input**: Revised draft + Response to Reviewers + original Revision Roadmap
-- **Mode**: `alterlab-paper-reviewer` re-review mode
-- **Output**: Revision response comparison table + new issues list + new Editorial Decision
-- **Decision branches**: Accept|Minor -> Stage 4.5 / Major -> Residual Coaching -> Stage 4'
-
-See `alterlab-paper-reviewer/SKILL.md` Re-Review Mode for verification review process.
-
-### Stage 3' -> 4' Transition: Residual Coaching
-
-EIC guides the user in understanding residual issues and making trade-offs (max 5 rounds). User can say "just fix it" to skip.
+Revision Coaching (Stage 3->4, max 8 rounds) and Residual Coaching (Stage 3'->4', max 5 rounds) use EIC Socratic dialogue; the user can say "just fix it" to skip. Full phase-by-phase execution steps, result handling, and coaching detail: see `references/integrity_and_review_protocols.md`.
 
 ---
 
@@ -344,131 +223,9 @@ Users can enter from any stage. The orchestrator will:
 
 **Trigger**: User says "I received reviewer comments," "reviewer comments," "revise and resubmit," etc.
 
-### Differences from Internal Review
+Unlike internal simulated review, external review handles unstructured, variable-quality human comments that must be judged (accept / partially accept / reject) rather than accepted wholesale. The four-step workflow is: (1) intake and structuring into an External Review Summary with user confirmation; (2) strategic revision coaching (judgment + strategy + risk assessment per Major comment, no default "accept all", max 8 rounds); (3) revision + point-by-point Response to Reviewers letter; (4) self-verification for completeness/consistency/truthfulness. Honest capability boundaries apply: AI verification does not equal human-reviewer satisfaction, and final scholarly judgment rests with the researcher.
 
-| Aspect | Internal Review (Stage 3 simulation) | External Review (real journal) |
-|--------|-------------------------------------|-------------------------------|
-| Source of review comments | Pipeline's AI reviewers | Journal's human reviewers |
-| Comment format | Structured (Revision Roadmap) | Unstructured (free text, PDF, email) |
-| Comment quality | Consistent, predictable | Variable quality, may be vague or contradictory |
-| Revision strategy | Can accept wholesale | Need to judge which to accept/reject/negotiate |
-| Acceptance criteria | AI re-review suffices | Ultimately decided by human reviewers |
-
-### Step 1: Intake and Structuring
-
-```
-1. Receive reviewer comments (supported formats):
-   - Directly pasted text
-   - Provide PDF/DOCX file path
-   - Copy from journal system review letter
-
-2. Parse into structured list:
-   For each comment, extract:
-   - Reviewer number (Reviewer 1/2/3 or R1/R2/R3)
-   - Comment type: Major / Minor / Editorial / Positive
-   - Core request (one-sentence summary)
-   - Original text quote
-   - Paper section involved
-
-3. Produce External Review Summary:
-   +----------------------------------------+
-   | External Review Summary                |
-   +----------------------------------------+
-   | Journal: [journal name]                |
-   | Decision: [R&R / Major / Minor]        |
-   | Reviewers: [N]                         |
-   | Total comments: [N]                    |
-   |   Major: [n]  Minor: [n]  Editorial: [n]|
-   +----------------------------------------+
-
-4. Confirm parsing results with user:
-   "I organized the reviewer comments into [N] items. Here is the summary — please confirm nothing was missed or misinterpreted."
-```
-
-### Step 2: Strategic Revision Coaching (External Revision Coaching)
-
-Unlike the Socratic coaching for internal review, external review coaching focuses more on **strategic judgment**:
-
-```
-For each Major comment, guide the user to think through:
-
-1. Understanding layer
-   "What is this reviewer's core concern? Is it about methodology, theory, or presentation?"
-
-2. Judgment layer
-   "Do you agree with this criticism?"
-   - Agree -> "How do you plan to revise?"
-   - Partially agree -> "Which parts do you agree with and which not? What is your basis for disagreement?"
-   - Disagree -> "What is your rebuttal argument? Can you support it with literature or data?"
-
-3. Strategy layer
-   "How will you phrase this in the response letter?"
-   - Accept revision: Show specifically what was changed and where
-   - Partially accept: Explain the accepted parts + reasons for non-acceptance (must be persuasive)
-   - Reject: Provide sufficient scholarly rationale (literature, data, methodological argumentation)
-
-4. Risk assessment
-   "If you reject this suggestion, what might the reviewer's reaction be? Is it worth the risk?"
-```
-
-**Key principles**:
-- **Do not default to "accept all"**: Real reviewer comments are not always correct — some may be based on misunderstanding or school-of-thought bias
-- **Encourage user to inject context**: "What school of thought do you think this reviewer might come from? What context might they not be aware of?"
-- **User can say "just fix it for me" to skip**: But when skipping strategic discussion, AI defaults to accepting all comments (conservative strategy)
-- **Maximum 8 rounds of dialogue**, but at least 1 round per Major comment
-
-### Step 3: Revision and Response to Reviewers
-
-```
-Produce two documents:
-
-1. Revised draft
-   - Track all modification locations (additions/deletions/rewrites)
-   - Revision content consistent with Response to Reviewers
-
-2. Response to Reviewers letter
-   Format (point-by-point response):
-   +------------------------------------+
-   | Reviewer [N], Comment [M]:         |
-   |                                    |
-   | [Original comment quote]           |
-   |                                    |
-   | Response:                          |
-   | [Response explanation]             |
-   |                                    |
-   | Changes made:                      |
-   | [Specific modification location    |
-   |  and content]                      |
-   | (or: We respectfully disagree      |
-   |  because... [rationale])           |
-   +------------------------------------+
-```
-
-### Step 4: Self-Verification (Completeness Check)
-
-```
-Stage 3' behavior adjustments in external review mode:
-
-1. Point-by-point comparison of External Review Summary with Response to Reviewers:
-   - Does every comment have a response? (completeness)
-   - Is each response consistent with actual changes? (consistency)
-   - Were the places claimed as "modified" actually changed? (truthfulness)
-
-2. New citation verification:
-   - New references added during revision enter Stage 4.5 integrity verification
-
-3. Things NOT done (different from internal review):
-   - Do not reassess paper quality (that is the human reviewers' job)
-   - Do not issue a new Editorial Decision
-   - Do not raise new revision requests
-```
-
-### Honest Capability Boundaries
-
-1. **AI verification does not equal human reviewer satisfaction**: Stage 3' can confirm revisions are "complete and consistent," but cannot predict whether human reviewers will accept your responses. Reviewers may have unstated expectations, school-of-thought preferences, or methodological insistence
-2. **Unstructured comments may not parse perfectly**: Some reviewers write vaguely (e.g., "the methodology needs more work"), and AI will do its best to parse but may miss implied intentions. After parsing, **user confirmation is mandatory**
-3. **AI cannot make scholarly judgments for you**: "Should I accept Reviewer 2's suggestion?" is your decision. AI can provide an analytical framework, but final judgment rests with the researcher
-4. **Cross-cultural review convention differences**: Response conventions differ across journals/academic circles (some require extreme deference, others accept direct rebuttal). AI defaults to neutral academic tone; the user can request adjustments
+Full comparison table, per-step templates (External Review Summary, Response to Reviewers), coaching questions, and the four capability-boundary caveats: see `references/external_review_protocol.md`.
 
 ---
 
@@ -522,46 +279,9 @@ See `templates/pipeline_status_template.md` for the output template.
 
 ## Reproducibility
 
-v2.0 design ensures consistent quality assurance with each execution:
+v2.0 design ensures consistent quality assurance with each execution: mandatory Stage 2.5 + 4.5 integrity checks that cannot be skipped, five fixed review perspectives (EIC + R1/R2/R3 + Devil's Advocate), standardized verification search templates, explicit PASS/FAIL thresholds (zero SERIOUS + zero MEDIUM + zero MAJOR_DISTORTION + zero UNVERIFIABLE), and per-stage recorded deliverables for retrospective audit. When the pipeline ends, `state_tracker_agent` produces a complete audit trail.
 
-### Standardized Workflow
-
-| Guarantee Item | Mechanism |
-|---------------|-----------|
-| Integrity check every time | Stage 2.5 + Stage 4.5 are **mandatory** stages, cannot be skipped |
-| Consistent review angles | EIC + R1/R2/R3 + Devil's Advocate — five fixed perspectives |
-| Consistent verification methods | integrity_verification_agent uses standardized search templates |
-| Consistent quality thresholds | Integrity check PASS/FAIL criteria are explicit (zero SERIOUS + zero MEDIUM + zero MAJOR_DISTORTION + zero UNVERIFIABLE) |
-| Traceable workflow | Every stage's deliverables are recorded, enabling retrospective audit |
-
-### Audit Trail
-
-When the pipeline ends, state_tracker_agent produces a complete audit trail:
-
-```
-Pipeline Audit Trail
-====================
-Topic: [topic]
-Started: [time]
-Completed: [time]
-Total Stages: [X/10]
-
-Stage 1 RESEARCH: [mode] -> [output count]
-Stage 2 WRITE: [mode] -> [word count]
-Stage 2.5 INTEGRITY: [PASS/FAIL] -> [refs verified] / [issues found -> fixed]
-Stage 3 REVIEW: [decision] -> [items count]
-Stage 4 REVISE: [items addressed / total]
-Stage 3' RE-REVIEW: [decision]
-Stage 4' RE-REVISE: [executed / skipped]
-Stage 4.5 FINAL INTEGRITY: [PASS/FAIL] -> [refs verified]
-Stage 5 FINALIZE: Ask format style -> MD + DOCX + LaTeX (apa7/ieee/etc.) -> tectonic -> PDF
-Stage 6 PROCESS SUMMARY: Ask language -> MD -> LaTeX -> PDF (zh/en)
-
-Integrity Summary:
-  Pre-review: [X] refs checked, [Y] issues found, [Y] fixed
-  Final: [X] refs checked, [Y] issues found, [Y] fixed
-  Overall: [CLEAN / ISSUES NOTED]
-```
+Standardized-workflow guarantee table and the full end-of-pipeline audit-trail template: see `references/reproducibility_and_audit.md`.
 
 ---
 
@@ -570,116 +290,9 @@ Integrity Summary:
 **Trigger**: After Stage 5 (FINALIZE) completion
 **Purpose**: Document the complete human-AI collaboration history for the paper creation process, for user sharing, reporting, or reflection
 
-### Workflow
+Workflow: ask language preference (zh / en / both) -> review session history and compile user quotes, per-stage decisions, iteration details, and pipeline statistics -> generate Markdown (`paper_creation_process.md` / `_en.md`) -> convert to LaTeX and compile PDF via tectonic (Chinese uses xeCJK + Source Han Serif TC VF). The record ends with a **mandatory Collaboration Quality Evaluation** — a `/insight`-style final chapter scoring the user 1-100 across six dimensions (Direction Setting, Intellectual Contribution, Quality Gatekeeping, Iteration Discipline, Delegation Efficiency, Meta-Learning) with honest, evidence-based, constructive analysis (What Worked Well / Missed Opportunities / Recommendations / Human vs AI Value-Add / Claude self-reflection).
 
-```
-1. Ask user language preference:
-   "Which language version of the process record would you like to generate first?"
-   - Chinese (Traditional Chinese)
-   - English
-   - Both (default: generate the user's primary conversation language first)
-
-2. Review session history and compile the following:
-   - User's initial instructions (verbatim quote)
-   - Key decision points and user interventions at each stage
-   - Direction correction moments and reasons
-   - Iteration count and review result summaries
-   - Intellectual insights raised by the user (e.g., questions that spawned new chapters)
-   - Quality requirement evolution (e.g., formatting, tone adjustments)
-   - Pipeline statistics (stage count, review rounds, integrity verification count, etc.)
-
-3. Generate Markdown version (paper_creation_process.md / paper_creation_process_en.md)
-
-4. Convert to LaTeX and compile PDF:
-   - pandoc MD -> LaTeX body
-   - Package complete LaTeX document (with cover page, table of contents, headers/footers)
-   - tectonic compile PDF
-   - Chinese version requires xeCJK + Source Han Serif TC VF
-```
-
-### Required Content in Process Record
-
-| Section | Content |
-|---------|---------|
-| Paper Information | Title, final deliverables list |
-| Stage-by-Stage Process | Input/output/key decisions for each stage, with verbatim user quotes |
-| Iteration Details | Review comment summaries, revision items, re-review results |
-| Interaction Pattern Summary | User role, Claude role, intervention count, key turning points — statistics table |
-| User Key Decisions | Chronological list of every important decision made by the user |
-| Key Lessons | Reusable lessons learned from the process |
-| **Collaboration Quality Evaluation** | **Final chapter: 1-100 score + dimensional analysis + improvement suggestions** (see below) |
-
-### Collaboration Quality Evaluation (Final Chapter, Mandatory)
-
-The final chapter of the process record is a "Collaboration Quality Evaluation" that honestly and constructively assesses the user's performance in the human-AI collaboration. Format follows the Claude Code CLI `/insight` feature.
-
-#### Scoring Dimensions (each 1-100, weighted average for overall score)
-
-```
-+--------------------------------------------------+
-|  Collaboration Quality Score: [XX]/100            |
-+--------------------------------------------------+
-|                                                   |
-|  Direction Setting          [----------  ] XX     |
-|  Clarity, timing, scope definition                |
-|                                                   |
-|  Intellectual Contribution  [------------ ] XX    |
-|  Insight depth, original questions, concept        |
-|  challenges                                       |
-|                                                   |
-|  Quality Gatekeeping        [---------   ] XX     |
-|  Visual inspection, formatting requirements,       |
-|  quality standards                                |
-|                                                   |
-|  Iteration Discipline       [----------  ] XX     |
-|  Timely direction correction, willingness to       |
-|  re-run pipeline, refusing to settle              |
-|                                                   |
-|  Delegation Efficiency      [-------     ] XX     |
-|  When to intervene/when to let go, instruction     |
-|  precision, checkpoint efficiency                 |
-|                                                   |
-|  Meta-Learning              [------------ ] XX    |
-|  Feeding experience back to skills, requesting     |
-|  lesson recording, process improvement awareness  |
-|                                                   |
-+--------------------------------------------------+
-```
-
-#### Scoring Criteria
-
-| Score Range | Meaning |
-|------------|---------|
-| 90-100 | Exceptional — User intervention significantly elevated the paper's intellectual quality beyond what AI could produce independently |
-| 75-89 | Excellent — User made correct directional decisions and effectively leveraged the pipeline's iteration capabilities |
-| 60-74 | Good — User completed necessary decisions but some opportunities were missed |
-| 40-59 | Basic — User primarily served as a "continue" button with little substantive intervention |
-| 1-39 | Needs Improvement — User intervention may have disrupted the workflow or lacked critical quality gatekeeping |
-
-#### Required Subsections
-
-1. **Overall Score**: Total score + one-sentence evaluation
-2. **What Worked Well**: 2-4 specific behaviors, with verbatim user quotes
-3. **Missed Opportunities**: 1-3 things the user could have done but didn't
-4. **Recommendations for Next Time**: 3-5 specific, actionable improvement suggestions
-5. **Human vs AI Value-Add**: Clearly identify which aspects of the final paper quality came from user intervention (not achievable by AI independently)
-
-#### Evaluation Principles
-
-- **Honesty first**: No inflation, no pleasantries. If the user only pressed "continue," reflect that truthfully
-- **Evidence-based**: Every score is supported by specific behaviors or conversation records
-- **Constructive**: Every criticism must include actionable improvement suggestions
-- **Acknowledge uncertainty**: If certain dimensions cannot be evaluated (e.g., mid-entry skipped the research stage), mark as N/A
-- **Bidirectional reflection**: Also candidly point out Claude's shortcomings during the process (e.g., areas requiring multiple corrections)
-
-### Output Specifications
-
-- **Filename**: `paper_creation_process.md` (Chinese) / `paper_creation_process_en.md` (English)
-- **PDF**: `paper_creation_process_zh.pdf` / `paper_creation_process_en.pdf`
-- **LaTeX template**: `article` class, 12pt, A4, Times New Roman + Source Han Serif TC VF
-- **Includes table of contents**: `\tableofcontents`
-- **Header**: left = document title (italic), right = date
-- **Compilation**: tectonic (same toolchain as Stage 5)
+Full workflow steps, required-content table, six-dimension score card, scoring-criteria bands, required subsections, evaluation principles, and output specifications: see `references/process_summary_protocol.md`.
 
 ---
 
@@ -732,6 +345,11 @@ The final chapter of the process record is a "Collaboration Quality Evaluation" 
 | Reference | Purpose |
 |-----------|---------|
 | `references/pipeline_state_machine.md` | Complete state machine definition: all legal transitions, preconditions, actions |
+| `references/orchestrator_workflow.md` | Full four-step orchestration loop: detection decision tree, mode-selection matrix, per-stage handoff mapping |
+| `references/integrity_and_review_protocols.md` | Stage 2.5/4.5 integrity gates + Stage 3/3' two-stage review: phase-by-phase execution steps and coaching detail |
+| `references/external_review_protocol.md` | Full external (real journal) review workflow: intake templates, strategic coaching, Response to Reviewers, capability boundaries |
+| `references/reproducibility_and_audit.md` | Standardized-workflow guarantee table + full end-of-pipeline audit-trail template |
+| `references/process_summary_protocol.md` | Stage 6 process record: workflow, required content, Collaboration Quality Evaluation score card, output specs |
 | `references/plagiarism_detection_protocol.md` | Phase D originality verification protocol + self-plagiarism + AI text characteristics |
 | `references/mode_advisor.md` | Unified cross-skill decision tree: maps user intent to optimal skill + mode |
 | `references/claim_verification_protocol.md` | Phase E claim verification protocol: claim extraction, source tracing, cross-referencing, verdict taxonomy |

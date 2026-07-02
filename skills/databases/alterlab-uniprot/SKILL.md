@@ -1,6 +1,6 @@
 ---
 name: alterlab-uniprot
-description: Provide direct REST API access to UniProt (Swiss-Prot/TrEMBL) for protein searches, FASTA sequence retrieval, and ID mapping. Use when looking up a protein entry, fetching a protein FASTA sequence, or mapping accessions between databases over raw HTTP/REST — for Python workflows spanning multiple databases prefer bioservices (unified interface to 40+ services) instead, use this for direct REST work or UniProt-specific control. Part of the AlterLab Academic Skills suite.
+description: Provide direct REST API access to UniProt (Swiss-Prot/TrEMBL) for protein sequence searches, FASTA retrieval, functional annotations (GO terms, domains), and cross-database ID mapping. Use when looking up a protein entry, fetching a protein FASTA sequence, or mapping accessions between databases over raw HTTP/REST; for EXPERIMENTAL 3D structures prefer alterlab-pdb, for AI-PREDICTED 3D structures prefer alterlab-alphafold-db, for protein-protein interaction networks prefer alterlab-string-db, and for Python workflows spanning many databases prefer bioservices instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless UniProt REST API (no authentication required)

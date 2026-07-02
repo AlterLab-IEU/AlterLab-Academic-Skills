@@ -1,13 +1,13 @@
 # AlterLab Academic Skills — by AlterLab Creative Technologies Laboratory
 
-> **Project**: AlterLab Academic Skills — 209 Claude AI skills for faculty and researchers
+> **Project**: AlterLab Academic Skills — 210 Claude AI skills for faculty and researchers
 > **Owner**: AlterLab Creative Technologies Laboratory
 
 ---
 
 ## Project Overview
 
-This project provides **209 professional Claude AI skills** organized into 16 domain categories for faculty members, academicians, and researchers. Each skill transforms Claude into a domain-specific expert assistant tailored to academic research, scientific computing, and scholarly publishing workflows.
+This project provides **210 professional Claude AI skills** organized into 16 domain categories for faculty members, academicians, and researchers. Each skill transforms Claude into a domain-specific expert assistant tailored to academic research, scientific computing, and scholarly publishing workflows.
 
 The repo is installable as a Claude Code plugin marketplace named `alterlab-academic-skills`, with 16 domain plugins (`alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`, `alterlab-turkish-academia`, `alterlab-faculty-life`, `alterlab-methodology`).
 
@@ -26,7 +26,7 @@ The repo is installable as a Claude Code plugin marketplace named `alterlab-acad
 
 | Category | Path | Count | Description |
 |----------|------|-------|-------------|
-| Core Pipeline | `skills/core/` | 8 | Research -> Write -> Review -> Publish pipeline + citation-verifier + link-health |
+| Core Pipeline | `skills/core/` | 9 | Research -> Write -> Review -> Publish pipeline + citation-verifier + link-health + workflow-orchestration |
 | Databases | `skills/databases/` | 39 | Scientific database connectors |
 | Bioinformatics | `skills/bioinformatics/` | 30 | Genomics, proteomics, molecular biology |
 | Cheminformatics | `skills/cheminformatics/` | 12 | Chemistry, drug discovery |
@@ -43,13 +43,13 @@ The repo is installable as a Claude Code plugin marketplace named `alterlab-acad
 | Faculty Life | `skills/faculty-life/` | 6 | Faculty research-lifecycle and academic administration |
 | Methodology | `skills/methodology/` | 3 | Research methodology and rigor scaffolds |
 
-**Total: 209 skills across 16 categories**
+**Total: 210 skills across 16 categories**
 
 ---
 
 ## Core Pipeline Routing Rules
 
-The core category holds 8 skills: 6 pipeline skills (`alterlab-research-pipeline`, `alterlab-deep-research`, `alterlab-paper-writer`, `alterlab-paper-reviewer`, `alterlab-teaching-design`, `alterlab-thesis-supervisor`) plus `alterlab-citation-verifier` and `alterlab-link-health`. The pipeline skills coordinate as a multi-agent research-to-publication system:
+The core category holds 9 skills: 6 pipeline skills (`alterlab-research-pipeline`, `alterlab-deep-research`, `alterlab-paper-writer`, `alterlab-paper-reviewer`, `alterlab-teaching-design`, `alterlab-thesis-supervisor`) plus `alterlab-citation-verifier`, `alterlab-link-health`, and `alterlab-workflow-orchestration` (composes skills into multi-agent workflows). The pipeline skills coordinate as a multi-agent research-to-publication system:
 
 ### Skill Routing
 

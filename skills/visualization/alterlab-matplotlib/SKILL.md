@@ -1,6 +1,6 @@
 ---
 name: alterlab-matplotlib
-description: Builds plots with the matplotlib Python library for full low-level customization, exporting to PNG/PDF/SVG for publication. Use when fine-grained control over every plot element is needed, when creating novel or non-standard plot types, or when integrating plotting into a specific scientific Python workflow. For quick statistical plots use seaborn, for interactive charts use plotly, for publication-ready multi-panel figures with journal styling use scientific-visualization. Part of the AlterLab Academic Skills suite.
+description: Builds plots with the matplotlib Python library (pyplot and the object-oriented Figure/Axes API) for full low-level customization, exporting to PNG/PDF/SVG. Use when fine-grained control over individual plot elements is needed — custom line/scatter/bar/histogram/heatmap/contour/box/violin/3D plots, rcParams and style-sheet tuning, or GridSpec subplot layouts inside a scientific Python workflow. Does NOT cover opinionated journal-ready multi-panel figure workflows (Nature/Science/Cell formatting, colorblind-safe palettes, significance annotations); for those prefer alterlab-scientific-viz instead. Part of the AlterLab Academic Skills suite.
 license: BSD-3-Clause
 allowed-tools: Read Write Edit Bash(python:*)
 compatibility: Requires the matplotlib Python library, version >= 3.9 (pip install 'matplotlib>=3.9'); examples also use numpy, and the histogram-fit example uses scipy. No API key or external service needed.

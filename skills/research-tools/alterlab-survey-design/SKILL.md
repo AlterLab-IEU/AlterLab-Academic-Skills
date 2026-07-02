@@ -88,248 +88,67 @@ Step 10: Deploy, monitor, and analyze
 
 ### 2. Construct Definition and Operationalization
 
-Before writing a single item, define what you are measuring.
+Before writing a single item, define what you are measuring. Map each construct to its dimensions, indicators, distinct-but-related constructs, and a nomological network so every item traces back to something specific.
 
-**Construct Mapping Template:**
-
-```markdown
-## Construct Map
-
-### Construct: [Name]
-### Definition: [Precise conceptual definition with citation]
-
-### Dimensions/Facets:
-1. [Dimension 1] — [Definition]
-   - Indicators: [Observable behaviors or attitudes]
-   - Example items: [Draft items]
-
-2. [Dimension 2] — [Definition]
-   - Indicators: [Observable behaviors or attitudes]
-   - Example items: [Draft items]
-
-3. [Dimension 3] — [Definition]
-   - Indicators: [Observable behaviors or attitudes]
-   - Example items: [Draft items]
-
-### Related but Distinct Constructs:
-- [Construct A] — How it differs from your construct
-- [Construct B] — How it differs from your construct
-
-### Nomological Network:
-- Should correlate positively with: [Constructs]
-- Should correlate negatively with: [Constructs]
-- Should be unrelated to: [Constructs]
-```
+Full **Construct Mapping Template**: see `references/item_writing_and_scales.md`.
 
 ### 3. Item Writing
 
 #### Question Types and When to Use Them
 
-| Type | Format | Best For | Example |
-|------|--------|----------|---------|
-| Closed-ended (single choice) | Radio buttons | Mutually exclusive categories | "What is your highest degree? ( ) Bachelor's ( ) Master's ( ) Doctoral" |
-| Closed-ended (multiple choice) | Checkboxes | Non-mutually exclusive categories | "Which tools do you use? [ ] Qualtrics [ ] REDCap [ ] Google Forms" |
-| Likert scale | Rating scale | Attitudes, perceptions, frequency | "I feel confident using statistics: Strongly Disagree 1 2 3 4 5 Strongly Agree" |
-| Semantic differential | Bipolar scale | Evaluative judgments | "The training was: Useless ___:___:___:___:___ Useful" |
-| Ranking | Drag-and-drop or numbered | Forced prioritization | "Rank these factors from most to least important: ___" |
-| Matrix/Grid | Likert items in table | Multiple items with same response scale | [See matrix example below] |
-| Open-ended | Text box | Exploratory, rich responses | "What challenges do you face in your research?" |
-| Numeric | Number input | Precise quantities | "How many publications do you have? ___" |
-| Visual analog scale (VAS) | Slider | Continuous measurement | "Rate your pain: No pain |------●------| Worst pain" |
+| Type | Format | Best For |
+|------|--------|----------|
+| Closed-ended (single choice) | Radio buttons | Mutually exclusive categories |
+| Closed-ended (multiple choice) | Checkboxes | Non-mutually exclusive categories |
+| Likert scale | Rating scale | Attitudes, perceptions, frequency |
+| Semantic differential | Bipolar scale | Evaluative judgments |
+| Ranking | Drag-and-drop or numbered | Forced prioritization |
+| Matrix/Grid | Likert items in table | Multiple items with same response scale |
+| Open-ended | Text box | Exploratory, rich responses |
+| Numeric | Number input | Precise quantities |
+| Visual analog scale (VAS) | Slider | Continuous measurement |
 
-#### Likert Scale Design
+#### Likert Scale — Number of Points
 
-**Number of Points:**
+| Points | Trade-off | Use When |
+|--------|-----------|----------|
+| 4-point | Forces a choice (no midpoint) | Avoid social desirability midpoint clustering |
+| 5-point | Most common, well-understood; central-tendency bias | Standard attitudinal measurement |
+| 6-point | Forced choice with more granularity | Force direction with more options |
+| 7-point | Greater discrimination; better for factor analysis | Established psychometric instruments |
 
-| Points | Pros | Cons | Use When |
-|--------|------|------|----------|
-| 4-point | Forces a choice (no midpoint) | May frustrate genuinely neutral respondents | You want to avoid social desirability midpoint clustering |
-| 5-point | Most common; well-understood | Central tendency bias; midpoint ambiguity | Standard attitudinal measurement |
-| 6-point | Forced choice with more granularity | Less familiar to respondents | You want to force direction with more options |
-| 7-point | Greater discrimination; better for factor analysis | May exceed respondents' discriminative capacity | Established psychometric instruments; research contexts |
+**Item-writing essentials — DO:** simple/clear language; one concept per item (no double-barreled); specific time frames; match scale to stem; pilot with the target population; over-generate items. **DO NOT:** leading/loaded language; double negatives; assume knowledge; use absolutes; write overly long items; ask about hypotheticals when you mean actual behavior.
 
-**Likert Scale Labeling:**
-
-```
-FULLY LABELED (recommended for clarity):
-Strongly Disagree | Disagree | Neutral | Agree | Strongly Agree
-
-END-ANCHORED ONLY (acceptable for experienced respondents):
-Strongly Disagree | 2 | 3 | 4 | Strongly Agree
-
-AGREEMENT:        Strongly Disagree → Strongly Agree
-FREQUENCY:        Never → Always
-IMPORTANCE:       Not at all Important → Extremely Important
-SATISFACTION:     Very Dissatisfied → Very Satisfied
-LIKELIHOOD:       Very Unlikely → Very Likely
-QUALITY:          Very Poor → Excellent
-```
-
-#### Item Writing Rules
-
-**DO:**
-1. Use simple, clear language (avoid jargon, acronyms, technical terms unless your population uses them)
-2. Ask about one thing per item (no double-barreled questions)
-3. Use specific time frames ("In the past 30 days..." not "Do you ever...")
-4. Match the response scale to the question stem
-5. Include both positively and negatively worded items (with caution — see pitfalls)
-6. Pilot test items with your target population
-7. Write 2-3x more items than you need (expect to cut during validation)
-
-**DO NOT:**
-1. Use leading or loaded language ("Don't you agree that...")
-2. Use double negatives ("How much do you disagree with not implementing...")
-3. Assume knowledge ("Rate the effectiveness of the Delphi method" — respondent may not know it)
-4. Use absolutes ("always," "never," "all," "none") unless measuring frequency
-5. Create unnecessarily long items (aim for under 20 words per item)
-6. Use hypothetical scenarios when asking about actual behavior
-
-**Examples of Item Revisions:**
-
-```
-POOR: "How satisfied are you with the quality and timeliness of feedback?"
-       (Double-barreled: quality AND timeliness)
-FIX:  Item 1: "How satisfied are you with the quality of feedback you receive?"
-      Item 2: "How satisfied are you with the timeliness of feedback you receive?"
-
-POOR: "Students should not be required to not attend classes."
-       (Double negative)
-FIX:  "Class attendance should be mandatory."
-
-POOR: "Do you agree that the new policy is beneficial?"
-       (Leading — assumes the policy is beneficial)
-FIX:  "The new policy has been beneficial to my work."
-       (Neutral stem; let the Likert scale capture agreement/disagreement)
-
-POOR: "Rate your teaching effectiveness." (1-5)
-       (Socially desirable response; no reference frame)
-FIX:  "In the past semester, how often did you use student feedback
-       to modify your teaching?" (Never / Rarely / Sometimes / Often / Always)
-```
+Full question-type examples, Likert labeling schemes, the complete DO / DO NOT rules, and worked before/after item revisions: see `references/item_writing_and_scales.md`.
 
 ### 4. Survey Structure and Flow
 
-**Recommended Survey Organization:**
+Organize the instrument as: welcome + consent → screening → main content grouped by construct (easy questions first, sensitive items mid-survey) → demographics at the end → thank-you/debrief. Use skip logic to hide irrelevant questions and route ineligible respondents.
 
-```markdown
-## Survey Structure Template
-
-### Page 1: Welcome and Consent
-- Study title, purpose, estimated time
-- Consent checkbox (mandatory before proceeding)
-- Contact information for questions
-
-### Page 2: Screening Questions (if applicable)
-- Eligibility criteria
-- Route ineligible respondents to end-of-survey message
-
-### Page 3-N: Main Content Sections
-- Group by topic/construct
-- Progress bar visible
-- Section headers with brief context
-- Start with engaging, easy questions
-- Place sensitive questions in the middle (after rapport, before fatigue)
-- Use skip logic to hide irrelevant questions
-
-### Page N+1: Demographics
-- Place at the END (reduces dropout from sensitive questions early)
-- Include only demographics you will actually analyze
-- Provide "Prefer not to answer" option for sensitive items
-
-### Final Page: Thank You
-- Thank participant
-- Provide debriefing information
-- Share contact info for results
-- Remind of withdrawal procedure
-```
-
-**Skip Logic Design:**
-
-```
-Q1: Do you supervise graduate students?
-    ( ) Yes → Show Q2-Q5 (supervision questions)
-    ( ) No  → Skip to Q6
-
-Q3: How many students do you currently supervise?
-    [Number input]
-    If Q3 > 5 → Show Q4 (workload management question)
-    If Q3 ≤ 5 → Skip to Q5
-
-Q10: Would you like to participate in a follow-up interview?
-     ( ) Yes → Show Q11 (contact information)
-     ( ) No  → Skip to end
-```
+Full **Survey Structure Template** and **Skip Logic Design** examples: see `references/item_writing_and_scales.md`.
 
 ### 5. Sampling Strategies
 
-**Probability Sampling (every member of population has a known, non-zero chance of selection):**
+**Probability Sampling** (every member has a known, non-zero chance of selection; generalizable):
 
-| Method | How It Works | Pros | Cons |
-|--------|-------------|------|------|
-| Simple random | Select randomly from complete list | Unbiased, generalizable | Requires complete sampling frame |
-| Systematic | Select every kth element from list | Easy to implement | Periodicity risk if list has pattern |
-| Stratified | Divide population into strata, then random sample within each | Ensures representation of subgroups | Requires knowledge of population characteristics |
-| Cluster | Randomly select clusters (schools, hospitals), then sample within | Practical when no individual-level list exists | Higher sampling error than SRS |
-| Multi-stage | Combine methods (e.g., cluster then stratified) | Flexible, practical for large populations | Complex to implement and analyze |
+| Method | How It Works | Trade-off |
+|--------|-------------|-----------|
+| Simple random | Select randomly from complete list | Unbiased, but needs a complete sampling frame |
+| Systematic | Select every kth element | Easy, but periodicity risk if list has a pattern |
+| Stratified | Random sample within population strata | Ensures subgroup representation; needs population knowledge |
+| Cluster | Randomly select clusters, then sample within | Practical without individual list; higher sampling error |
+| Multi-stage | Combine methods (cluster then stratified) | Flexible for large populations; complex to analyze |
 
-**Non-Probability Sampling (no guarantee of representativeness):**
+**Non-Probability Sampling** (no representativeness guarantee):
 
-| Method | How It Works | Pros | Cons |
-|--------|-------------|------|------|
-| Convenience | Recruit whoever is available | Fast, cheap | Not generalizable; strong bias |
-| Purposive | Select participants based on specific criteria | Targets relevant subgroups | Researcher bias in selection |
-| Snowball | Existing participants recruit others | Access to hard-to-reach populations | Biased toward connected individuals |
-| Quota | Set quotas for subgroups, then convenience sample within | Ensures diversity on key dimensions | Not truly random within quotas |
+| Method | How It Works | Trade-off |
+|--------|-------------|-----------|
+| Convenience | Recruit whoever is available | Fast/cheap, but strong bias |
+| Purposive | Select on specific criteria | Targets relevant subgroups; researcher bias |
+| Snowball | Participants recruit others | Reaches hidden populations; biased toward the connected |
+| Quota | Convenience sample within subgroup quotas | Ensures diversity; not truly random within quotas |
 
-**Sample Size Determination:**
-
-```
-For descriptive surveys (estimating proportions):
-n = (Z² × p × (1-p)) / E²
-
-Where:
-  Z = Z-score for confidence level (1.96 for 95%)
-  p = Expected proportion (use 0.5 if unknown — most conservative)
-  E = Margin of error (e.g., 0.05 for ±5%)
-
-Example: 95% confidence, 5% margin of error, unknown proportion
-n = (1.96² × 0.5 × 0.5) / 0.05² = 384.16 → 385 respondents
-
-Adjust for finite population:
-n_adj = n / (1 + (n-1)/N)
-Where N = population size
-
-Adjust for expected response rate:
-n_needed = n_adj / expected_response_rate
-Example: 385 / 0.30 = 1,284 invitations needed for 30% response rate
-```
-
-**For comparative surveys (detecting differences between groups):**
-
-```python
-# Power analysis for two-group comparison
-from scipy import stats
-import numpy as np
-
-def sample_size_two_groups(effect_size, alpha=0.05, power=0.80):
-    """
-    Calculate sample size per group for independent samples t-test.
-
-    effect_size: Cohen's d (0.2=small, 0.5=medium, 0.8=large)
-    alpha: significance level
-    power: desired statistical power
-    """
-    z_alpha = stats.norm.ppf(1 - alpha/2)
-    z_beta = stats.norm.ppf(power)
-    n = 2 * ((z_alpha + z_beta) / effect_size) ** 2
-    return int(np.ceil(n))
-
-# Examples (normal approximation; exact noncentral-t values are ~1 larger:
-# 394 / 64 / 26 — use statsmodels TTestIndPower for the exact figures)
-print(f"Small effect (d=0.2):  {sample_size_two_groups(0.2)} per group")   # 393
-print(f"Medium effect (d=0.5): {sample_size_two_groups(0.5)} per group")   # 63
-print(f"Large effect (d=0.8):  {sample_size_two_groups(0.8)} per group")   # 25
-```
+Size the sample with the proportion formula `n = (Z² × p × (1-p)) / E²` for descriptive surveys (adjusting for finite population and expected response rate), or a power analysis for comparative surveys. Worked sample-size formulas and the Python two-group power-analysis helper: see `references/sampling_and_power.md`.
 
 ### 6. Response Bias Mitigation
 
@@ -346,172 +165,26 @@ print(f"Large effect (d=0.8):  {sample_size_two_groups(0.8)} per group")   # 25
 
 ### 7. Pilot Testing
 
-**Three-Phase Pilot Testing Protocol:**
+Run a **three-phase pilot** before full deployment: (1) expert review for content/face validity (CVI thresholds: Item-CVI ≥ 0.78, Scale-CVI/Ave ≥ 0.90); (2) cognitive interviews (n = 5-10) using think-aloud and probing questions; (3) a quantitative pilot (n = 30-50) assessing completion, missing data, distributions, internal consistency, and item-total correlations.
 
-```markdown
-## Phase 1: Expert Review (n = 3-5 experts)
-
-### Content Validity
-- Do items adequately cover the construct?
-- Are any important facets missing?
-- Are items relevant to the target population?
-- Content Validity Index (CVI): Rate each item as
-  1 = Not relevant, 2 = Somewhat relevant, 3 = Quite relevant, 4 = Highly relevant
-  Item-CVI = proportion of experts rating 3 or 4 (threshold: ≥ 0.78)
-  Scale-CVI/Ave = mean of Item-CVIs (threshold: ≥ 0.90)
-
-### Face Validity
-- Do items appear to measure what they claim?
-- Is the language clear and appropriate?
-- Is the survey length reasonable?
-
----
-
-## Phase 2: Cognitive Interviews (n = 5-10 from target population)
-
-### Think-Aloud Protocol
-"Please read each question out loud and tell me what you are thinking
-as you decide on your answer."
-
-### Probing Questions
-- "What does [term] mean to you?"
-- "How did you arrive at your answer?"
-- "Was this question easy or difficult to answer? Why?"
-- "Can you put this question in your own words?"
-- "Is there anything confusing about this question?"
-- "Would you change anything about this question?"
-
-### Document
-- Items that cause confusion or hesitation
-- Items interpreted differently than intended
-- Items where response options do not fit
-- Suggested wording improvements
-- Time to complete each section
-
----
-
-## Phase 3: Quantitative Pilot (n = 30-50 from target population)
-
-### Assess
-- [ ] Completion rate and completion time
-- [ ] Item-level missing data (flag items with >10% missing)
-- [ ] Response distributions (flag items with >90% in one category)
-- [ ] Internal consistency (Cronbach's alpha per subscale)
-- [ ] Item-total correlations (flag items < 0.30)
-- [ ] Inter-item correlations (flag pairs > 0.85 — redundancy)
-- [ ] Open-ended feedback on survey experience
-- [ ] Technical issues (display, skip logic, mobile compatibility)
-```
+Full phase-by-phase protocol with probe scripts and the quantitative-pilot checklist: see `references/pilot_and_validation.md`.
 
 ### 8. Instrument Validation
 
-#### Reliability
-
-**Internal Consistency:**
-
-```python
-import pandas as pd
-import numpy as np
-
-def cronbachs_alpha(df):
-    """
-    Calculate Cronbach's alpha for a set of items.
-    df: DataFrame where each column is an item and each row is a respondent.
-    """
-    n_items = df.shape[1]
-    item_variances = df.var(axis=0, ddof=1)
-    total_variance = df.sum(axis=1).var(ddof=1)
-
-    alpha = (n_items / (n_items - 1)) * (1 - item_variances.sum() / total_variance)
-    return alpha
-
-# Example
-data = pd.DataFrame({
-    'item1': [4, 3, 5, 4, 3, 5, 4, 3, 2, 4],
-    'item2': [3, 3, 4, 4, 2, 5, 4, 3, 3, 4],
-    'item3': [4, 4, 5, 3, 3, 4, 5, 2, 3, 5],
-    'item4': [3, 2, 4, 4, 3, 5, 4, 3, 2, 3],
-})
-
-alpha = cronbachs_alpha(data)
-print(f"Cronbach's alpha: {alpha:.3f}")
-
-# Interpretation:
-# α ≥ 0.90  Excellent (but check for redundancy)
-# 0.80 ≤ α < 0.90  Good
-# 0.70 ≤ α < 0.80  Acceptable
-# 0.60 ≤ α < 0.70  Questionable
-# α < 0.60  Poor — revise items
-```
-
-**Item-Total Correlations:**
-
-```python
-def item_total_correlations(df):
-    """Calculate corrected item-total correlations."""
-    results = {}
-    for col in df.columns:
-        rest = df.drop(columns=col).sum(axis=1)
-        corr = df[col].corr(rest)
-        results[col] = round(corr, 3)
-    return results
-
-itc = item_total_correlations(data)
-for item, corr in itc.items():
-    flag = " ← REVIEW" if corr < 0.30 else ""
-    print(f"  {item}: r = {corr}{flag}")
-```
-
-#### Validity
+Assess **reliability** (Cronbach's alpha per subscale, corrected item-total correlations — flag items < 0.30) and **validity** across the evidence types below. Use exploratory factor analysis (Bartlett's test, KMO, eigenvalues, rotated loadings) to check internal structure.
 
 | Type | Question | Method |
 |------|----------|--------|
-| **Content validity** | Do items cover the construct adequately? | Expert review, CVI calculation |
-| **Face validity** | Do items appear to measure the construct? | Target population review |
-| **Construct validity** | Does the instrument measure the theoretical construct? | Factor analysis (EFA/CFA) |
-| **Convergent validity** | Does it correlate with similar measures? | Correlation with established instruments (r > 0.50) |
-| **Discriminant validity** | Is it distinct from different constructs? | Low correlation with theoretically unrelated measures (r < 0.30) |
-| **Criterion validity (concurrent)** | Does it correlate with a current criterion? | Correlation with gold standard measured simultaneously |
-| **Criterion validity (predictive)** | Does it predict a future outcome? | Correlation with criterion measured later |
-| **Known-groups validity** | Can it distinguish groups known to differ? | Compare scores between groups that should differ |
+| Content validity | Do items cover the construct adequately? | Expert review, CVI calculation |
+| Face validity | Do items appear to measure the construct? | Target population review |
+| Construct validity | Does it measure the theoretical construct? | Factor analysis (EFA/CFA) |
+| Convergent validity | Does it correlate with similar measures? | Correlation with established instruments (r > 0.50) |
+| Discriminant validity | Is it distinct from different constructs? | Low correlation with unrelated measures (r < 0.30) |
+| Criterion (concurrent) | Does it correlate with a current criterion? | Correlation with gold standard, measured simultaneously |
+| Criterion (predictive) | Does it predict a future outcome? | Correlation with criterion measured later |
+| Known-groups | Can it distinguish groups known to differ? | Compare scores between groups that should differ |
 
-**Exploratory Factor Analysis (EFA):**
-
-```python
-from factor_analyzer import FactorAnalyzer
-from factor_analyzer.factor_analyzer import calculate_bartlett_sphericity, calculate_kmo
-
-# Check suitability for factor analysis
-chi_square, p_value = calculate_bartlett_sphericity(data)
-print(f"Bartlett's test: χ² = {chi_square:.2f}, p = {p_value:.4f}")
-# p < 0.05 → suitable for factor analysis
-
-kmo_all, kmo_model = calculate_kmo(data)
-print(f"KMO: {kmo_model:.3f}")
-# KMO > 0.60 → suitable; > 0.80 → good; > 0.90 → excellent
-
-# Determine number of factors (parallel analysis)
-fa = FactorAnalyzer(rotation=None, n_factors=data.shape[1])
-fa.fit(data)
-eigenvalues, _ = fa.get_eigenvalues()
-print("Eigenvalues:", [f"{ev:.3f}" for ev in eigenvalues])
-# Retain factors with eigenvalue > 1 (Kaiser criterion)
-# Also use scree plot and parallel analysis
-
-# Run EFA with chosen number of factors
-fa = FactorAnalyzer(n_factors=2, rotation='oblimin', method='ml')
-fa.fit(data)
-
-# Factor loadings
-loadings = pd.DataFrame(
-    fa.loadings_,
-    index=data.columns,
-    columns=[f'Factor {i+1}' for i in range(2)]
-)
-print("\nFactor Loadings:")
-print(loadings.round(3))
-# Items should load ≥ 0.40 on one factor and < 0.30 on others
-```
+Runnable Python for Cronbach's alpha, item-total correlations, EFA, and the three-phase pilot protocol: see `references/pilot_and_validation.md`. For CFA fit indices, measurement invariance, and the broader psychometric framework, see `references/survey-methodology.md`.
 
 ### 9. Online Survey Platform Comparison
 
@@ -531,153 +204,21 @@ print(loadings.round(3))
 
 ### 10. Interview Protocol Development
 
-**Semi-Structured Interview Guide Template:**
+Build semi-structured interview guides with a scripted opening/consent, a warm-up question, main-question blocks organized by construct (each with probes), a closing catch-all, and a post-interview field-notes routine.
 
-```markdown
-## Interview Protocol
-
-### Study: [Title]
-### Interviewer: [Name]
-### Participant ID: ___  Date: ___  Start Time: ___
-
----
-
-### Opening (5 minutes)
-- Thank participant for their time
-- Review consent (confirm recording permission)
-- Explain purpose: "I'm interested in understanding your experiences with [topic]"
-- Explain format: "I have some questions prepared, but this is a conversation.
-  There are no right or wrong answers. Please share as much or as little
-  as you're comfortable with."
-
-### Warm-Up Question (5 minutes)
-1. "Can you tell me about your role and how you came to it?"
-   - Probe: "How long have you been in this position?"
-
-### Main Questions (30-40 minutes)
-
-**Block A: [Topic/Construct 1]**
-2. "Describe your experience with [topic]."
-   - Probe: "Can you give me a specific example?"
-   - Probe: "How did that make you feel?"
-   - Probe: "What happened next?"
-
-3. "What challenges have you encountered related to [topic]?"
-   - Probe: "How did you handle that?"
-   - Probe: "What support, if any, did you receive?"
-
-**Block B: [Topic/Construct 2]**
-4. "How has [topic] changed over time for you?"
-   - Probe: "What prompted that change?"
-   - Probe: "Looking back, what would you have done differently?"
-
-5. "What factors have been most influential in shaping your [topic]?"
-   - Probe: "Can you elaborate on [specific factor mentioned]?"
-
-**Block C: [Topic/Construct 3]**
-6. [Question]
-   - Probes
-
-### Closing (5 minutes)
-7. "Is there anything else about [topic] that you think is important
-   and that I haven't asked about?"
-8. "Do you have any questions for me?"
-
-### Post-Interview
-- Thank participant; explain next steps and timeline
-- Stop recording
-- Write field notes immediately after:
-  - Key impressions
-  - Non-verbal observations
-  - Reflections on the interview process
-  - Emerging analytical ideas
-
-End Time: ___  Total Duration: ___
-```
+Full **Semi-Structured Interview Guide Template**: see `references/qualitative_protocols.md`.
 
 ### 11. Focus Group Facilitation
 
-**Focus Group Design Checklist:**
+Plan groups of 6-10 (4-6 for complex topics), 3-5 groups per segment until saturation, homogeneous within and heterogeneous across. Assign moderator and note-taker roles, prepare a neutral environment, and use funnel-approach facilitation to manage dominant and quiet voices.
 
-```markdown
-## Focus Group Planning
-
-### Composition
-- Participants per group: 6-10 (4-6 for complex topics)
-- Number of groups: 3-5 per population segment (until saturation)
-- Homogeneity within groups (shared experience/characteristic)
-- Heterogeneity across groups (variation in perspectives)
-
-### Roles
-- Moderator: Facilitates discussion, manages dynamics
-- Note-taker: Records non-verbal cues, group dynamics, key quotes
-- Optional: Observer behind one-way glass or via video
-
-### Environment
-- Comfortable, neutral, private setting
-- Circular or U-shaped seating (no head of table)
-- Recording equipment tested before session
-- Refreshments available
-- Name tents (first names or pseudonyms)
-
-### Facilitation Techniques
-- Opening: Icebreaker or round-robin introduction
-- Funnel approach: Broad → specific questions
-- Manage dominant voices: "Let's hear from others..."
-- Draw out quiet participants: "We haven't heard from everyone yet..."
-- Handle conflict: "It sounds like there are different perspectives here,
-  and that's valuable. Let's explore both views."
-- Closing: "Of everything we've discussed, what stands out as most important?"
-```
+Full **Focus Group Design Checklist**: see `references/qualitative_protocols.md`.
 
 ### 12. Cultural Adaptation of Instruments
 
-**Brislin's (1970) Back-Translation Method:**
+Adapt instruments across languages/cultures using Brislin's (1970) back-translation cycle (forward translation → independent back-translation → reconciliation → cultural review → cognitive interviews → validation) and the 10-step ISPOR cross-cultural adaptation guidelines.
 
-```
-Original instrument (Source Language)
-         │
-         ▼
-Forward translation by Translator A
-(Source → Target language; bilingual with target as dominant)
-         │
-         ▼
-Back-translation by Translator B
-(Target → Source language; bilingual with source as dominant;
- has NOT seen original instrument)
-         │
-         ▼
-Compare original and back-translation
-(Research team + both translators)
-         │
-         ├── Discrepancies? → Revise target version → Re-translate → Compare again
-         │
-         └── Equivalent? → Proceed to expert review
-                              │
-                              ▼
-                    Cultural review panel
-                    (Experts familiar with target culture)
-                              │
-                              ▼
-                    Cognitive interviews in target population
-                              │
-                              ▼
-                    Pilot test and psychometric validation
-                    in target population
-```
-
-**ISPOR Guidelines for Cross-Cultural Adaptation:**
-
-1. Preparation (permissions, concept elaboration)
-2. Forward translation (2 independent translators)
-3. Reconciliation of forward translations
-4. Back-translation
-5. Back-translation review
-6. Harmonization across language versions
-7. Cognitive debriefing with target population
-8. Review of cognitive debriefing results
-9. Proofreading
-10. Final report documenting all decisions
+Full back-translation flow diagram and ISPOR step list: see `references/qualitative_protocols.md`.
 
 ---
 

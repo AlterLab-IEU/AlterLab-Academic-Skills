@@ -150,32 +150,7 @@ Phase 6: Writing Up
     Relate findings to literature and research question
 ```
 
-**Coding Example:**
-
-```
-Data Extract                          | Codes
-────────────────────────────────────────────────────────
-"I felt completely lost in the first   | - Disorientation
-semester. Nobody told me what was      | - Lack of guidance
-expected. I just figured it out by     | - Self-reliance
-watching what other people did."       | - Peer learning (informal)
-                                       | - Hidden curriculum
-```
-
-**Theme Development Example:**
-
-```
-Codes:                              → Theme:
-- Lack of guidance                    "Navigating the Hidden Curriculum"
-- Hidden curriculum
-- Unwritten rules                   → Subtheme 1: "Figuring It Out Alone"
-- Self-reliance                       (codes: self-reliance, trial and error,
-- Trial and error                      absence of mentorship)
-- Peer learning (informal)
-- Absence of mentorship             → Subtheme 2: "Learning by Watching"
-- Observing others                    (codes: peer learning, observing others,
-- Mimicking successful behaviors       mimicking successful behaviors)
-```
+Worked coding example and theme-development example: see `references/worked_examples.md`.
 
 ### 3. Grounded Theory
 
@@ -303,16 +278,7 @@ Step 6: Looking for Patterns Across Cases
     Retain idiographic detail — do not flatten into generic themes
 ```
 
-**IPA Table of Themes Example:**
-
-```markdown
-| Superordinate Theme | Subtheme | P1 | P2 | P3 | P4 | P5 |
-|--------------------|-----------|----|----|----|----|----|
-| Living with uncertainty | Not knowing the future | pp.3,7 | pp.2,5 | pp.4 | — | pp.6,8 |
-| | Oscillating between hope and fear | pp.8 | pp.3,9 | pp.7,10 | pp.2 | pp.5 |
-| Redefining identity | Loss of former self | pp.5,12 | pp.6 | pp.8,11 | pp.3,7 | pp.9 |
-| | Constructing a new normal | pp.14 | pp.11 | — | pp.9,12 | pp.11,14 |
-```
+IPA master table-of-themes example (superordinate themes, subthemes, per-participant page references): see `references/worked_examples.md`.
 
 ### 5. Case Study Methodology (Yin, 2018)
 
@@ -390,138 +356,13 @@ Level 3: THEMES / THEORETICAL CODES
     learn the unwritten rules of their profession)
 ```
 
-**Codebook Template:**
-
-```markdown
-| Code | Definition | Inclusion Criteria | Exclusion Criteria | Example |
-|------|-----------|-------------------|-------------------|---------|
-| PEER-SUPPORT | Instances where participants describe receiving help, advice, or emotional support from peers/colleagues | Informal help, peer mentoring, collegial advice | Formal institutional mentoring programs | "My colleague down the hall basically taught me how to write a grant" |
-| ISOLATION | Expressions of feeling alone, disconnected, or unsupported in professional role | Emotional isolation, geographic isolation, intellectual isolation | Temporary solitude by choice | "Nobody in my department does what I do, so there's no one to talk to" |
-```
+Full codebook template (definition, inclusion/exclusion criteria, worked example): see `references/worked_examples.md`.
 
 ### 7. Python-Based Qualitative Analysis Workflows
 
-For researchers who prefer open-source tools over NVivo/Atlas.ti:
+For researchers who prefer open-source tools over NVivo/Atlas.ti, ready-to-run Python recipes cover keyword-based initial coding, bigram/trigram frequency and collocation analysis, and thematic-network visualization.
 
-**Basic Text Coding with Python:**
-
-```python
-import pandas as pd
-from pathlib import Path
-
-# Load transcripts (read_text closes the file handle automatically)
-
-transcripts = {
-    p.stem: p.read_text(encoding='utf-8')
-    for p in sorted(Path('data').glob('P*_transcript.txt'))
-}
-
-# Define codebook
-codebook = {
-    'PEER_SUPPORT': [
-        'colleague helped', 'learned from peers', 'informal mentoring',
-        'asked a friend', 'peer advice'
-    ],
-    'ISOLATION': [
-        'felt alone', 'no one to talk to', 'disconnected',
-        'on my own', 'nobody understands'
-    ],
-    'INSTITUTIONAL_BARRIERS': [
-        'red tape', 'bureaucracy', 'no support from admin',
-        'policy prevented', 'institutional resistance'
-    ],
-}
-
-# Simple keyword-based initial coding (supplement with manual coding)
-def code_transcript(text, codebook):
-    results = []
-    sentences = text.split('.')
-    for i, sentence in enumerate(sentences):
-        sentence_lower = sentence.lower().strip()
-        for code, keywords in codebook.items():
-            for keyword in keywords:
-                if keyword in sentence_lower:
-                    results.append({
-                        'sentence_num': i + 1,
-                        'text': sentence.strip(),
-                        'code': code,
-                        'keyword_match': keyword
-                    })
-    return pd.DataFrame(results)
-
-# Code all transcripts
-all_coded = []
-for pid, text in transcripts.items():
-    coded = code_transcript(text, codebook)
-    coded['participant'] = pid
-    all_coded.append(coded)
-
-coded_data = pd.concat(all_coded, ignore_index=True)
-
-# Code frequency by participant
-code_freq = coded_data.groupby(['participant', 'code']).size().unstack(fill_value=0)
-print(code_freq)
-```
-
-**Word Frequency and Collocation Analysis:**
-
-```python
-from sklearn.feature_extraction.text import CountVectorizer
-
-# Combine all transcripts
-all_text = ' '.join(transcripts.values())
-
-# Bigram/trigram frequency (useful for identifying recurring phrases).
-# CountVectorizer's built-in 'english' stop-word list removes function words;
-# treat output as a sensitizing aid, not a substitute for interpretive coding.
-vectorizer = CountVectorizer(ngram_range=(2, 3), stop_words='english', max_features=50)
-bigrams = vectorizer.fit_transform([all_text])
-bigram_freq = dict(zip(vectorizer.get_feature_names_out(), bigrams.toarray()[0]))
-sorted_bigrams = sorted(bigram_freq.items(), key=lambda x: x[1], reverse=True)
-
-print("Top 20 bigrams/trigrams:")
-for phrase, count in sorted_bigrams[:20]:
-    print(f"  {phrase}: {count}")
-```
-
-**Thematic Network Visualization:**
-
-```python
-import networkx as nx
-import matplotlib.pyplot as plt
-
-# Define theme relationships
-G = nx.Graph()
-
-# Add nodes (themes and subthemes)
-themes = {
-    'Navigating Uncertainty': ['Ambiguous expectations', 'Shifting goalposts', 'Information gaps'],
-    'Building Support Networks': ['Peer mentoring', 'Online communities', 'Cross-departmental allies'],
-    'Identity Transformation': ['Role conflict', 'Impostor feelings', 'Growing confidence'],
-}
-
-for theme, subthemes in themes.items():
-    G.add_node(theme, node_type='global_theme', size=3000)
-    for sub in subthemes:
-        G.add_node(sub, node_type='organizing_theme', size=1500)
-        G.add_edge(theme, sub)
-
-# Cross-theme connections
-G.add_edge('Ambiguous expectations', 'Impostor feelings')
-G.add_edge('Peer mentoring', 'Growing confidence')
-
-# Visualize
-colors = ['#e74c3c' if G.nodes[n].get('node_type') == 'global_theme' else '#3498db' for n in G.nodes]
-sizes = [G.nodes[n].get('size', 1000) for n in G.nodes]
-
-plt.figure(figsize=(14, 10))
-pos = nx.spring_layout(G, k=2, seed=42)
-nx.draw(G, pos, with_labels=True, node_color=colors, node_size=sizes,
-        font_size=9, font_weight='bold', edge_color='#bdc3c7', width=2)
-plt.title("Thematic Network")
-plt.tight_layout()
-plt.savefig('figures/thematic_network.png', dpi=300, bbox_inches='tight')
-```
+Full code recipes: see `references/python_workflows.md`.
 
 ### 8. Trustworthiness Criteria (Lincoln & Guba, 1985)
 
@@ -550,63 +391,13 @@ Trustworthiness in qualitative research parallels validity and reliability in qu
 4. Methodological triangulation — Multiple methods (interviews + surveys + observations)
 ```
 
-**Member Checking Protocol:**
-
-```markdown
-## Member Checking Procedure
-
-1. Share with participants:
-   - [ ] Individual transcript (for accuracy)
-   - [ ] Preliminary theme descriptions (for resonance)
-   - [ ] Draft findings section (for interpretation check)
-
-2. Ask participants:
-   - "Does this accurately represent your experience?"
-   - "Is there anything you would change, add, or clarify?"
-   - "Are there any themes that surprise you or feel incorrect?"
-
-3. Document:
-   - Changes made based on participant feedback
-   - Disagreements and how they were resolved
-   - Participants' emotional responses to findings
-
-4. Reporting:
-   - State how many participants reviewed findings
-   - Describe the nature and extent of any changes
-   - Note any discrepancies between researcher and participant interpretations
-```
+Full member-checking procedure and reporting template: see `references/worked_examples.md`.
 
 ### 9. Reflexivity
 
 Reflexivity is the researcher's ongoing critical self-examination of their role, assumptions, and influence on the research process.
 
-**Reflexive Journal Prompts:**
-
-```markdown
-## Reflexive Journal Entry — [Date]
-
-### Before Data Collection
-- What assumptions am I bringing to this interview/observation?
-- How might my identity (gender, race, professional status, discipline) influence what participants share?
-- What do I expect to find? How might this expectation shape my questions?
-
-### During Data Collection
-- What surprised me?
-- When did I feel uncomfortable? Why?
-- What did I notice about power dynamics in the interaction?
-- What questions did I avoid asking? Why?
-
-### During Analysis
-- Which codes came easily? Which were difficult? Why?
-- Am I privileging certain voices over others?
-- What am I not seeing because of my perspective?
-- How are my emerging interpretations shaped by my theoretical commitments?
-
-### Ongoing
-- How has my understanding of the phenomenon changed?
-- What would a researcher from a different background see differently?
-- Am I being faithful to participants' meanings, or imposing my own?
-```
+Reflexive journal prompts spanning before, during, and after data collection and analysis: see `references/worked_examples.md`.
 
 ---
 
@@ -664,3 +455,5 @@ Reflexivity is the researcher's ongoing critical self-examination of their role,
 - Yin, R. K. (2018). *Case study research and applications: Design and methods* (6th ed.). Sage.
 
 See also: `references/qualitative-frameworks.md` for expanded methodology details.
+
+Part of the AlterLab Academic Skills suite.

@@ -38,6 +38,31 @@ If your skill does not fit any existing category, open an issue to discuss addin
 - **Folder name**: `alterlab-{name}` (lowercase, hyphenated)
 - **Examples**: `alterlab-blast`, `alterlab-pubmed`, `alterlab-r-stats`
 
+#### Noun/tool names vs. gerunds — a deliberate deviation
+
+Anthropic's `skill-creator` *recommends* gerund names (`analyzing-data`,
+`reviewing-code`). This suite deliberately uses **noun/tool** names
+(`alterlab-biopython`, `alterlab-rdkit`, `alterlab-pubmed`) for the ~200 skills
+that wrap a specific tool, library, database, or academic system. This is an
+intentional decision, not an oversight:
+
+- For a tool/database wrapper, the tool's own name **is** the highest-signal
+  trigger token. A researcher who wants BioPython types "biopython", not
+  "manipulating biological sequences" — so `alterlab-biopython` maximizes
+  discoverability where it matters most.
+- Noun names keep the 39-connector database cluster and the 30-skill
+  bioinformatics cluster scannable and one-to-one with the real ecosystem.
+
+Where a gerund genuinely aids discovery — the **capability/pipeline** skills that
+describe an *activity* rather than wrap a tool (`alterlab-paper-writer`,
+`alterlab-deep-research`, `alterlab-paper-reviewer`) — do **not** rename the
+folder. Instead, carry the gerund phrasing as concrete trigger nouns inside the
+`description`'s "Use when …" clause (e.g. "Use when writing / drafting / revising a
+paper …"), so the activation surface covers both registers without churning the
+canonical `alterlab-` name. New tool-wrapper skills should follow the noun
+convention; new capability skills should lead their description with the activity
+verbs a user would actually type.
+
 ### 3. Folder Structure
 
 ```
@@ -79,8 +104,19 @@ Part of the AlterLab Academic Skills suite.
 - `allowed-tools` -- **space-separated** open-standard list, e.g. `Read Write Edit Bash(python:*)`
 - `metadata.skill-author` -- must be `AlterLab`
 - `metadata.version` -- quoted semver string, e.g. `"1.0.0"`
+- `compatibility` -- documents the skill's target runtime / required env & keys. **Claude-Code/SDK-only**: this is the one top-level key outside the claude.ai uploader whitelist (see below).
 
 > There is **no** top-level `version:` field, and **no** `metadata.tags` or `metadata.category`. Category is derived from the folder path, not the frontmatter.
+
+### claude.ai custom-skill uploads
+
+The claude.ai `.zip` uploader accepts only these top-level frontmatter keys:
+`{name, description, license, allowed-tools, metadata}`. This suite ships one extra —
+`compatibility` — which is valid in the open standard and Claude Code but **not** on
+claude.ai. Do **not** add further non-whitelisted top-level keys: one unexpected key
+fails *every* skill's upload at once. `scripts/check_claudeai_compat.py --strict` (run
+in CI) catches such drift, and `scripts/check_claudeai_compat.py --package OUT` writes
+claude.ai-safe copies with `compatibility` stripped, ready to zip and upload.
 
 ## Pull Request Process
 

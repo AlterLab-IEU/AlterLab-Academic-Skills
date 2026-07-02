@@ -1,6 +1,6 @@
 ---
 name: alterlab-scientific-viz
-description: Orchestrates matplotlib, seaborn, and plotly with publication styles to produce journal-ready figures. Use when creating journal-submission figures that need multi-panel layouts, statistical significance annotations, error bars, colorblind-safe palettes, or specific journal formatting (Nature, Science, Cell). For quick statistical exploration use seaborn or plotly directly, for raw low-level plotting use matplotlib. Part of the AlterLab Academic Skills suite.
+description: Orchestrates matplotlib, seaborn, and plotly with opinionated publication styles to produce journal-ready figures. Use when preparing journal-submission figures that need multi-panel layouts with bold panel labels, statistical significance annotations, error bars, colorblind-safe palettes (Okabe-Ito), or specific journal formatting (Nature, Science, Cell). Does NOT cover raw low-level plotting or fine-grained control of individual plot elements; for building custom plots from scratch or tuning every artist and rcParam prefer alterlab-matplotlib instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 compatibility: Requires the matplotlib, seaborn, and plotly Python libraries (pip install matplotlib seaborn plotly); no API key or external service needed

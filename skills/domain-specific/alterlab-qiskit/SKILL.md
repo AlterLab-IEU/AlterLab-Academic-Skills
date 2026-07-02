@@ -1,6 +1,6 @@
 ---
 name: alterlab-qiskit
-description: Builds and runs quantum circuits with Qiskit, IBM's quantum computing framework, including Qiskit Runtime for production workloads and quantum error mitigation. Use when targeting IBM Quantum hardware, running production workloads via Qiskit Runtime, applying error mitigation, or using IBM optimization tools. For Google hardware use cirq; for gradient-based quantum ML use pennylane; for open quantum system simulations use qutip. Part of the AlterLab Academic Skills suite.
+description: Builds, transpiles, and runs quantum circuits with Qiskit, IBM's quantum computing framework, including Qiskit Runtime primitives (Sampler/Estimator), circuit transpilation, and error mitigation on IBM Quantum hardware. Use when targeting IBM Quantum backends, transpiling circuits, running Runtime sessions or batches, or applying resilience/error mitigation. For Google Quantum AI hardware and NISQ circuits prefer alterlab-cirq; for gradient-trained quantum ML and hybrid quantum-classical models prefer alterlab-pennylane; for open-system Lindblad/master-equation dynamics prefer alterlab-qutip. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No API key required for local simulation. Runs via `uv run python`; requires the qiskit Python package. IBM Quantum hardware/Runtime needs an IBM Quantum account and API token.

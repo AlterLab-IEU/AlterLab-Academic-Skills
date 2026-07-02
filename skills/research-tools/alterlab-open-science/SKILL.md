@@ -68,28 +68,7 @@ Preregistration involves publicly recording your research plan -- hypotheses, me
 9. **Exclusion criteria** -- Rules for removing data points or participants
 10. **Exploratory analyses** -- Planned but not confirmatory
 
-**Example: Preregistration excerpt**
-
-```
-Hypothesis 1: Participants in the spaced practice condition will score
-higher on the delayed retention test (administered 7 days after training)
-than participants in the massed practice condition.
-
-Analysis: Independent samples t-test comparing mean retention scores
-between conditions. Alpha = .05, two-tailed. If the Levene test indicates
-unequal variances (p < .05), the Welch t-test will be used. Effect size
-will be reported as Cohen d with 95% CI.
-
-Power analysis: A priori power analysis using G*Power (Faul et al., 2007)
-indicates that n = 64 per group (N = 128 total) is required to detect
-a medium effect (d = 0.50) with 80% power at alpha = .05.
-```
-
-**Preregistration does NOT mean:**
-- You cannot do exploratory analyses -- you simply label them as exploratory
-- Your study is invalid if you deviate from the plan -- you report and justify deviations
-- You must preregister everything -- observational studies with no hypothesis need not preregister
-- Qualitative research cannot be preregistered -- it can, though templates differ
+A worked preregistration excerpt (hypothesis, analysis plan, power analysis) and the common misconceptions about what preregistration does *not* require (exploratory analyses, deviations, qualitative work) are collected in `references/preregistration_guide.md`. Reusable OSF and AsPredicted templates live in `references/open-science-resources.md`.
 
 ### Registered Reports
 
@@ -113,29 +92,7 @@ Registered reports take preregistration further by embedding it in the peer revi
 
 **Journals offering registered reports:** Over 300 journals across disciplines now accept registered reports. The Center for Open Science maintains the complete list at cos.io/rr.
 
-**Example: Stage 1 submission structure**
-
-```
-1. Introduction
-   1.1 Background and motivation
-   1.2 Existing evidence and gaps
-   1.3 Theoretical framework
-   1.4 Specific hypotheses (numbered, directional)
-
-2. Methods
-   2.1 Design overview
-   2.2 Participants (target N, power justification, recruitment)
-   2.3 Materials and procedures
-   2.4 Measures (with psychometric evidence)
-   2.5 Analysis plan
-       2.5.1 Confirmatory analyses (mapped to hypotheses)
-       2.5.2 Robustness checks
-       2.5.3 Exploratory analyses (planned but not confirmatory)
-   2.6 Data exclusion criteria
-   2.7 Timeline
-
-3. Pilot data (if available)
-```
+A full annotated Stage 1 submission structure (introduction, methods, layered analysis plan, exclusion criteria, timeline) is in `references/preregistration_guide.md`; a discipline-by-discipline list of registered-report journals is in `references/open-science-resources.md`.
 
 ### Open Data and FAIR Principles
 
@@ -164,31 +121,7 @@ The FAIR principles provide a framework for making data maximally useful for bot
 - Associate data with detailed provenance
 - Meet domain-relevant community standards
 
-**Practical data sharing checklist:**
-
-```
-Before sharing:
-[ ] Remove or anonymize personally identifiable information (PII)
-[ ] Check IRB/ethics approval covers data sharing
-[ ] Verify no proprietary restrictions from data providers
-[ ] Clean variable names and remove internal codes
-[ ] Create a comprehensive codebook/data dictionary
-
-Preparing the deposit:
-[ ] Choose appropriate file formats (CSV over XLSX, open formats preferred)
-[ ] Write a README describing the dataset structure
-[ ] Create a data dictionary with all variable definitions
-[ ] Include analysis scripts that reproduce published results
-[ ] Add a LICENSE file (CC-BY 4.0 recommended for data)
-[ ] Include the study preregistration link if applicable
-
-Depositing:
-[ ] Upload to a persistent repository (Zenodo, Dryad, Figshare, or domain-specific)
-[ ] Obtain a DOI
-[ ] Set an embargo period if needed (e.g., until publication)
-[ ] Link the dataset DOI to the paper DOI
-[ ] Add the data availability statement to the manuscript
-```
+**Practical data sharing checklist:** A full three-phase checklist (before sharing, preparing the deposit, depositing) covering de-identification, codebooks, formats, licensing, DOIs, and data availability statements is in `references/data_sharing_and_dmp.md`. Metadata standards and preferred open file formats by discipline are in `references/open-science-resources.md`.
 
 ### Data Management Plans
 
@@ -209,31 +142,7 @@ Most major funders now require a data management plan (DMP) as part of grant app
 5. Access, distribution, and reuse considerations
 6. Oversight of data management and sharing
 
-**Example: DMP excerpt**
-
-```
-Data Types: This project will generate three primary data types:
-(1) survey responses from approximately 500 participants (Qualtrics,
-exported as CSV), (2) semi-structured interview transcripts from 30
-participants (audio recordings transcribed to text), and (3) behavioral
-log data from the learning platform (JSON format, approximately 2GB).
-
-Sharing Plan: De-identified survey and behavioral data will be deposited
-in the ICPSR data repository within 12 months of the project end date
-and assigned a DOI. Interview transcripts will be shared in redacted
-form, with participant consent for sharing obtained during recruitment.
-Audio recordings will not be shared due to re-identification risk.
-
-Standards: Survey data will follow DDI (Data Documentation Initiative)
-metadata standards. Variable names will use the codebook published with
-our validated instrument (Martinez et al., 2024). All dates will use
-ISO 8601 format.
-```
-
-**DMP tools:**
-- DMPTool (dmptool.org) -- US-focused, funder-specific templates
-- DMPonline (dmponline.dcc.ac.uk) -- UK/EU-focused
-- ARGOS (argos.openaire.eu) -- EU OpenAIRE aligned
+A worked DMP excerpt (data types, sharing plan, standards) and the list of DMP authoring tools (DMPTool, DMPonline, ARGOS) are in `references/data_sharing_and_dmp.md`.
 
 ### Open Access Publishing
 
@@ -309,63 +218,9 @@ Reproducibility means that another researcher can take your data and code and ob
 4. **Containerization** -- Package the complete computational environment (Docker, Singularity)
 5. **Executable environment** -- Provide a one-click way to run the analysis (Binder, Code Ocean)
 
-**Docker for reproducible research:**
+**Tooling for each level:** *Docker/Singularity* package the complete environment; *Binder* (mybinder.org) turns a GitHub repo with an `environment.yml` or `install.R` into a live interactive Jupyter/RStudio session with zero local install; *Code Ocean* provides guaranteed reproducibility with a published DOI per "compute capsule" (used by Nature and others for results verification). Always pin exact package versions so environments rebuild identically.
 
-```dockerfile
-# Dockerfile for a reproducible R analysis
-FROM rocker/tidyverse:4.3.0
-
-# Install additional R packages
-RUN install2.r --error lme4 brms papaja here
-
-# Copy analysis files
-COPY . /home/rstudio/project
-WORKDIR /home/rstudio/project
-
-# Run the analysis
-CMD ["Rscript", "analysis/main.R"]
-```
-
-**Binder for interactive reproducibility:**
-
-Binder (mybinder.org) takes a GitHub repository with an environment.yml (Python) or install.R (R) file and creates a live, interactive Jupyter or RStudio environment that anyone can use without installing anything.
-
-**Example: environment.yml for Binder**
-
-```yaml
-name: my-research-env
-channels:
-  - conda-forge
-  - nodefaults  # avoid Anaconda's `defaults` channel: its ToS can require a
-                # paid license for larger orgs and for mirroring/embedding.
-                # conda-forge is community-maintained and free for any use.
-dependencies:
-  - python=3.11
-  - numpy=1.26
-  - pandas=2.1
-  - scipy=1.11
-  - matplotlib=3.8
-  - seaborn=0.13
-  - statsmodels=0.14
-  - jupyterlab=4.0
-  - pip:
-    - pingouin==0.5.3
-```
-
-Pin exact versions (not floating ranges) so the environment rebuilds identically. Generate the file from a working env with `conda env export --from-history -f environment.yml` to avoid OS-specific packages that break on Binder.
-
-**Code Ocean:** A commercial platform that provides guaranteed computational reproducibility with a published DOI for each "compute capsule." Used by journals including Nature for results verification.
-
-**Best practices for reproducible code:**
-
-1. Use relative paths (never absolute paths like /Users/yourname/data/)
-2. Set random seeds for any stochastic process
-3. Use a package manager (renv for R, conda/pip for Python)
-4. Record the session info (sessionInfo() in R, pip freeze in Python)
-5. Automate the entire pipeline (Makefile, Snakemake, targets)
-6. Use version control (git) from the start
-7. Write a README that explains how to run the analysis
-8. Test on a clean machine before sharing
+Copy-ready recipes -- a Dockerfile for an R analysis, an annotated Binder `environment.yml`, a CITATION.cff software-citation file, and the eight core rules for reproducible code (relative paths, random seeds, package managers, session info, pipeline automation, version control, README, clean-machine testing) -- are in `references/reproducible_workflows.md`. A Makefile pipeline and a full project directory layout are in `references/open-science-resources.md`.
 
 ### Computational Notebooks
 
@@ -481,22 +336,7 @@ Research software is increasingly recognized as a first-class scholarly output. 
 8. **Write a software paper** -- Journal of Open Source Software (JOSS) publishes peer-reviewed software papers
 9. **Add a CITATION.cff file** -- Machine-readable citation metadata
 
-**Example: CITATION.cff**
-
-```yaml
-cff-version: 1.2.0
-message: "If you use this software, please cite it as below."
-authors:
-  - family-names: "Martinez"
-    given-names: "Rosa"
-    orcid: "https://orcid.org/0000-0002-1234-5678"
-title: "PyRetention: A Python Package for Learning Retention Analysis"
-version: 2.1.0
-doi: 10.5281/zenodo.1234567
-date-released: 2025-09-15
-url: "https://github.com/martinez-lab/pyretention"
-license: MIT
-```
+A ready-to-adapt CITATION.cff example (authors, ORCID, version, DOI, license) is in `references/reproducible_workflows.md`.
 
 ## Best Practices
 
@@ -574,3 +414,5 @@ license: MIT
 - Center for Open Science. (2026). *TOP Guidelines*. https://www.cos.io/initiatives/top-guidelines
 - Creative Commons. (2026). *About CC Licenses*. https://creativecommons.org/licenses/
 - FOSTER Open Science. (2026). *Open Science Training Handbook*. https://web.archive.org/web/2019/https://book.fosteropenscience.eu
+
+Part of the AlterLab Academic Skills suite.

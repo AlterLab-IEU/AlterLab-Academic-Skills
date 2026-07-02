@@ -134,108 +134,9 @@ User Input
 
 ## Orchestration Workflow (6 Phases)
 
-```
-User: "Research [topic]"
-     |
-=== Phase 1: SCOPING (Interactive) ===
-     |
-     |-> [research_question_agent] -> RQ Brief
-     |   - FINER criteria scoring (Feasible, Interesting, Novel, Ethical, Relevant)
-     |   - Scope boundaries (in-scope / out-of-scope)
-     |   - 2-3 sub-questions
-     |
-     |-> [research_architect_agent] -> Methodology Blueprint
-     |   - Research paradigm (positivist / interpretivist / pragmatist)
-     |   - Method selection (qualitative / quantitative / mixed)
-     |   - Data strategy (primary / secondary / both)
-     |   - Analytical framework
-     |   - Validity & reliability criteria
-     |
-     +-> [devils_advocate_agent] -- CHECKPOINT 1
-         - RQ clarity and answerable?
-         - Method appropriate for question?
-         - Scope too broad or too narrow?
-         - Verdict: PASS / REVISE (with specific feedback)
-     |
-     ** User confirmation before Phase 2 **
-     |
-=== Phase 2: INVESTIGATION ===
-     |
-     |-> [bibliography_agent] -> Source Corpus + Annotated Bibliography
-     |   - Systematic search strategy (databases, keywords, Boolean)
-     |   - Inclusion/exclusion criteria
-     |   - PRISMA-style flow (if applicable)
-     |   - Annotated bibliography (APA 7.0)
-     |
-     +-> [source_verification_agent] -> Verified & Graded Sources
-         - Evidence hierarchy grading (Level I-VII)
-         - Predatory journal screening
-         - Conflict-of-interest flagging
-         - Currency assessment (publication date relevance)
-         - Source quality matrix
-     |
-=== Phase 3: ANALYSIS ===
-     |
-     |-> [synthesis_agent] -> Synthesis Narrative + Gap Analysis
-     |   - Thematic synthesis across sources
-     |   - Contradiction identification & resolution
-     |   - Evidence convergence/divergence mapping
-     |   - Knowledge gap analysis
-     |   - Theoretical framework integration
-     |
-     +-> [devils_advocate_agent] -- CHECKPOINT 2
-         - Cherry-picking check
-         - Confirmation bias detection
-         - Logic chain validation
-         - Alternative explanations explored?
-         - Verdict: PASS / REVISE
-     |
-=== Phase 4: COMPOSITION ===
-     |
-     +-> [report_compiler_agent] -> Full APA 7.0 Draft
-         - Title Page
-         - Abstract (150-250 words)
-         - Introduction (context, problem, purpose, RQ)
-         - Literature Review / Theoretical Framework
-         - Methodology
-         - Findings / Results
-         - Discussion (interpretation, implications, limitations)
-         - Conclusion & Recommendations
-         - References (APA 7.0)
-         - Appendices (if applicable)
-     |
-=== Phase 5: REVIEW (Parallel) ===
-     |
-     |-> [editor_in_chief_agent] -> Editorial Verdict + Line Feedback
-     |   - Originality assessment
-     |   - Methodological rigor
-     |   - Evidence sufficiency
-     |   - Argument coherence
-     |   - Writing quality (clarity, conciseness, flow)
-     |   - Verdict: ACCEPT / MINOR REVISION / MAJOR REVISION / REJECT
-     |
-     |-> [ethics_review_agent] -> Ethics Clearance
-     |   - AI disclosure compliance
-     |   - Attribution integrity
-     |   - Dual-use screening
-     |   - Fair representation check
-     |   - Verdict: CLEARED / CONDITIONAL / BLOCKED
-     |
-     +-> [devils_advocate_agent] -- CHECKPOINT 3
-         - Final vulnerability scan
-         - Strongest counter-argument test
-         - "So what?" significance check
-         - Verdict: PASS / REVISE
-     |
-=== Phase 6: REVISION ===
-     |
-     +-> [report_compiler_agent] -> Final Report
-         - Address editorial feedback
-         - Resolve ethics conditions
-         - Incorporate devil's advocate insights
-         - Max 2 revision loops
-         - Remaining issues -> "Acknowledged Limitations" section
-```
+The standard pipeline runs six phases: **1. Scoping** (RQ Brief + Methodology Blueprint, Checkpoint 1) → **2. Investigation** (Source Corpus + verified/graded sources) → **3. Analysis** (Synthesis + gap analysis, Checkpoint 2) → **4. Composition** (full APA 7.0 draft) → **5. Review** (editorial + ethics + Checkpoint 3, parallel) → **6. Revision** (final report, max 2 loops).
+
+Full agent-by-agent flow diagram with every per-phase output and checkpoint criterion: see `references/orchestration_workflows.md` (Standard Orchestration Workflow section).
 
 ### Checkpoint Rules
 
@@ -253,55 +154,9 @@ Core principle: From the perspective of a Q1 international journal editor-in-chi
 See `agents/socratic_mentor_agent.md` for the detailed agent definition.
 See `references/socratic_questioning_framework.md` for the questioning framework.
 
-```
-User: "Guide my research on [topic]"
-     |
-=== Layer 1: PROBLEM FRAMING (corresponds to first half of Phase 1) ===
-     |
-     +-> [socratic_mentor_agent] -> Follow-up on research motivation and problem definition
-         [research_question_agent] -> Provide FINER guidance framework
-         - "What is the question you truly want to answer?"
-         - "Why does this question matter? To whom?"
-         - "If your research succeeds, how would the world be different?"
-         Extract [INSIGHT: ...] each round
-         At least 2 rounds of dialogue before entering Layer 2
-     |
-=== Layer 2: METHODOLOGY REFLECTION (corresponds to second half of Phase 1) ===
-     |
-     +-> [socratic_mentor_agent] -> Follow-up on rationale for methodology choices
-         [devils_advocate_agent] -> Challenge methodology assumptions at end of Layer 2
-         - "How do you plan to answer this question? Why this approach?"
-         - "Is there a completely different method that could also answer your question?"
-         - "What is the biggest weakness of your method?"
-         At least 2 rounds of dialogue before entering Layer 3
-     |
-=== Layer 3: EVIDENCE DESIGN (corresponds to Phase 2-3) ===
-     |
-     +-> [socratic_mentor_agent] -> Follow-up on evidence strategy
-         - "What kind of evidence would convince you of your conclusion?"
-         - "What evidence would make you change your conclusion?"
-         - "What are you most worried about not finding?"
-         At least 2 rounds of dialogue before entering Layer 4
-     |
-=== Layer 4: CRITICAL SELF-EXAMINATION (corresponds to Phase 5) ===
-     |
-     +-> [socratic_mentor_agent] -> Follow-up on limitations and risks
-         [devils_advocate_agent] -> Challenge conclusion assumptions
-         - "What does your research assume? What if those assumptions don't hold?"
-         - "How would someone with the opposite view refute you?"
-         - "What negative impact could your research have?"
-         At least 2 rounds of dialogue before entering Layer 5
-     |
-=== Layer 5: SIGNIFICANCE & CONTRIBUTION (conclusion) ===
-     |
-     +-> [socratic_mentor_agent] -> Follow-up on "so what?"
-         - "Why should readers care about your findings?"
-         - "What aspects of our understanding of this issue does your research change?"
-         At least 1 round of dialogue
-     |
-     +-> Compile all [INSIGHT]s into Research Plan Summary
-         Can directly hand off to alterlab-paper-writer (plan mode)
-```
+Socratic mode advances through five layers: **1. Problem Framing** → **2. Methodology Reflection** → **3. Evidence Design** → **4. Critical Self-Examination** → **5. Significance & Contribution**. Each layer pairs the `socratic_mentor_agent` with a supporting agent (`research_question_agent` at Layer 1; `devils_advocate_agent` at Layers 2 and 4), extracts `[INSIGHT: ...]` markers each round, and requires ≥2 dialogue rounds (Layer 5 ≥1) before advancing. Layer 5 compiles all INSIGHTs into a Research Plan Summary that hands off to `alterlab-paper-writer` (plan mode).
+
+Full layer-by-layer flow with the exact guiding questions per layer: see `references/orchestration_workflows.md` (Socratic Mode Layer Flow section).
 
 ### Socratic Mode Dialogue Management Rules
 
@@ -321,84 +176,9 @@ Full PRISMA-compliant systematic literature review with optional meta-analysis. 
 See `agents/risk_of_bias_agent.md` and `agents/meta_analysis_agent.md` for detailed agent definitions.
 See `references/systematic_review_toolkit.md` for the Cochrane/PRISMA/GRADE reference guide.
 
-```
-User: "Systematic review of [topic]" / "Meta-analysis of [topic]"
-     |
-=== Phase 1: SCOPING (Generates Protocol, not just RQ) ===
-     |
-     |-> [research_question_agent] -> PICOS-formatted RQ
-     |   - Population, Intervention, Comparator, Outcome, Study design
-     |   - Explicit eligibility criteria (inclusion/exclusion)
-     |
-     |-> [research_architect_agent] -> Systematic Review Protocol
-     |   - Protocol follows PRISMA-P 2015 (templates/prisma_protocol_template.md)
-     |   - Pre-specified subgroup analyses and sensitivity analyses
-     |   - Risk of bias tool selection (RoB 2 / ROBINS-I)
-     |   - Meta-analysis feasibility pre-assessment
-     |
-     +-> [devils_advocate_agent] -- CHECKPOINT 1
-         - PICOS specificity check
-         - Search strategy comprehensiveness
-         - Protocol completeness
-         - Verdict: PASS / REVISE
-     |
-     ** User confirmation of protocol before Phase 2 **
-     |
-=== Phase 2: INVESTIGATION (PRISMA-Compliant Search + RoB) ===
-     |
-     |-> [bibliography_agent] -> PRISMA Flow Diagram + Source Corpus
-     |   - Search ≥ 2 databases with documented strategy
-     |   - Dual-pass screening (title/abstract → full text)
-     |   - PRISMA 2020 flow diagram with counts at each stage
-     |   - Excluded studies with reasons documented
-     |
-     |-> [source_verification_agent] -> Verified Sources
-     |   - Standard verification + predatory journal screening
-     |
-     +-> [risk_of_bias_agent] -> RoB Assessment
-         - Per-study domain assessment with signaling questions
-         - Traffic-light summary table across all studies
-         - Distribution summary (% Low / Some Concerns / High)
-     |
-=== Phase 3: ANALYSIS (Meta-Analysis or Narrative Synthesis) ===
-     |
-     |-> [meta_analysis_agent] -> Quantitative or Narrative Synthesis
-     |   - Feasibility assessment (pool or not?)
-     |   - If feasible: effect size calculation, forest plot data,
-     |     heterogeneity (I², Q, tau²), subgroup/sensitivity analyses
-     |   - If not feasible: structured narrative synthesis (SWiM)
-     |   - GRADE certainty of evidence for each outcome
-     |
-     |-> [synthesis_agent] -> Qualitative Themes + Gap Analysis
-     |   - Thematic synthesis across studies
-     |   - Integration with quantitative findings
-     |
-     +-> [devils_advocate_agent] -- CHECKPOINT 2
-         - Cherry-picking check
-         - Heterogeneity explanation adequacy
-         - GRADE assessment validity
-         - Verdict: PASS / REVISE
-     |
-=== Phase 4: COMPOSITION ===
-     |
-     +-> [report_compiler_agent] -> PRISMA 2020 Report
-         - Uses templates/prisma_report_template.md
-         - All 27 PRISMA items mapped to sections
-         - Study characteristics table
-         - Risk of bias summary table
-         - Forest plot data (if meta-analysis)
-         - GRADE Summary of Findings table
-     |
-=== Phase 5: REVIEW (Parallel) ===
-     |
-     |-> [editor_in_chief_agent] -> Editorial Verdict
-     |-> [ethics_review_agent] -> Ethics Clearance
-     +-> [devils_advocate_agent] -- CHECKPOINT 3
-     |
-=== Phase 6: REVISION ===
-     |
-     +-> [report_compiler_agent] -> Final PRISMA Report
-```
+This mode reuses the six phases but with PRISMA-specific outputs: **1. Scoping** produces a PICOS RQ and a full PRISMA-P protocol (not just an RQ); **2. Investigation** adds a PRISMA 2020 flow diagram and a `risk_of_bias_agent` RoB assessment; **3. Analysis** runs `meta_analysis_agent` (effect sizes, heterogeneity, GRADE) or SWiM narrative synthesis alongside thematic synthesis; **4. Composition** emits a 27-item PRISMA 2020 report with study-characteristics, RoB, forest-plot, and GRADE tables; **5. Review** and **6. Revision** mirror the standard pipeline.
+
+Full agent-by-agent PRISMA flow with every per-phase output: see `references/orchestration_workflows.md` (Systematic Review Mode Pipeline section).
 
 ### Systematic Review Checkpoint Rules
 
@@ -526,6 +306,7 @@ See `alterlab-research-pipeline/SKILL.md` for the complete workflow.
 | `references/socratic_questioning_framework.md` | 6 types of Socratic questions + 30+ prompt patterns | socratic_mentor |
 | `references/failure_paths.md` | 12 failure scenarios with triggers and recovery paths | all agents |
 | `references/mode_selection_guide.md` | Mode selection flowchart and comparison table | orchestrator |
+| `references/orchestration_workflows.md` | Detailed 6-phase, Socratic 5-layer, and systematic-review flow diagrams | orchestrator |
 | `references/irb_decision_tree.md` | IRB decision tree + Taiwan process + HE quick reference | ethics_review, research_architect |
 | `references/equator_reporting_guidelines.md` | EQUATOR reporting guideline mapping | research_architect, report_compiler |
 | `references/preregistration_guide.md` | Preregistration decision tree + platforms + checklist | research_architect |

@@ -1,6 +1,6 @@
 ---
 name: alterlab-deepchem
-description: Runs molecular machine learning with DeepChem — diverse featurizers, pre-built MoleculeNet datasets, and pre-trained models for property prediction (ADMET, toxicity) via traditional ML or GNNs. Use when running quick molecular ML experiments needing extensive featurization options, MoleculeNet benchmarks, or pre-trained models; for graph-first PyTorch workflows use torchdrug, for benchmark datasets use pytdc. Part of the AlterLab Academic Skills suite.
+description: Runs molecular machine learning with DeepChem — diverse featurizers, pre-built MoleculeNet benchmark datasets, and pre-trained models (ChemBERTa, GROVER) for property prediction (ADMET, toxicity, solubility) via traditional ML or graph neural networks. Use when running end-to-end molecular ML experiments that need MoleculeNet benchmarks, scaffold splitting, or ready-made models with minimal setup; for building custom PyTorch graph architectures prefer alterlab-torchdrug, and for standalone molecule-to-feature-vector generation prefer alterlab-molfeat. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
@@ -301,107 +301,12 @@ predictions = model.predict(new_dataset, transformers=transformers)
 
 ## Typical Workflows
 
-### Workflow A: Quick Benchmark Evaluation
+Three ready-to-run end-to-end recipes are provided:
+- **Workflow A — Quick Benchmark Evaluation**: load a MoleculeNet benchmark, train a GNN, and score it.
+- **Workflow B — Custom Data Prediction**: featurize a CSV, scaffold-split, normalize, train, and evaluate.
+- **Workflow C — Transfer Learning on a Small Dataset**: fine-tune a pretrained model on raw SMILES.
 
-For evaluating a model on standard benchmarks:
-
-```python
-import deepchem as dc
-
-# 1. Load benchmark
-tasks, datasets, _ = dc.molnet.load_bbbp(
-    featurizer='GraphConv',
-    splitter='scaffold'
-)
-train, valid, test = datasets
-
-# 2. Train model
-model = dc.models.GCNModel(n_tasks=len(tasks), mode='classification')
-model.fit(train, nb_epoch=50)
-
-# 3. Evaluate
-metric = dc.metrics.Metric(dc.metrics.roc_auc_score)
-test_score = model.evaluate(test, [metric])
-print(f"Test ROC-AUC: {test_score}")
-```
-
-### Workflow B: Custom Data Prediction
-
-For training on custom molecular datasets:
-
-```python
-import deepchem as dc
-
-# 1. Load and featurize data
-featurizer = dc.feat.CircularFingerprint(radius=2, size=2048)
-loader = dc.data.CSVLoader(
-    tasks=['activity'],
-    feature_field='smiles',
-    featurizer=featurizer
-)
-dataset = loader.create_dataset('my_molecules.csv')
-
-# 2. Split data (use ScaffoldSplitter for molecules!)
-splitter = dc.splits.ScaffoldSplitter()
-train, valid, test = splitter.train_valid_test_split(dataset)
-
-# 3. Normalize (optional but recommended)
-transformers = [dc.trans.NormalizationTransformer(
-    transform_y=True, dataset=train
-)]
-for transformer in transformers:
-    train = transformer.transform(train)
-    valid = transformer.transform(valid)
-    test = transformer.transform(test)
-
-# 4. Train model
-model = dc.models.MultitaskRegressor(
-    n_tasks=1,
-    n_features=2048,
-    layer_sizes=[1000, 500],
-    dropouts=0.25
-)
-model.fit(train, nb_epoch=50)
-
-# 5. Evaluate
-metric = dc.metrics.Metric(dc.metrics.r2_score)
-test_score = model.evaluate(test, [metric])
-```
-
-### Workflow C: Transfer Learning on Small Dataset
-
-For leveraging pretrained models:
-
-```python
-import deepchem as dc
-
-# 1. Load data (pretrained models often need raw SMILES)
-loader = dc.data.CSVLoader(
-    tasks=['activity'],
-    feature_field='smiles',
-    featurizer=dc.feat.DummyFeaturizer()  # Model handles featurization
-)
-dataset = loader.create_dataset('small_dataset.csv')
-
-# 2. Split data
-splitter = dc.splits.ScaffoldSplitter()
-train, test = splitter.train_test_split(dataset)
-
-# 3. Load pretrained model
-model = dc.models.Chemberta(
-    task='classification',
-    tokenizer_path='seyonec/PubChem10M_SMILES_BPE_60k',
-    n_tasks=1
-)
-
-# 4. Fine-tune
-model.fit(train, nb_epoch=10)
-
-# 5. Evaluate
-predictions = model.predict(test)
-```
-
-See `references/workflows.md` for 8 detailed workflow examples covering molecular generation, materials science, protein analysis, and more.
+Full runnable code for A/B/C: see `references/end_to_end_recipes.md`. For eight deeper workflows (molecular generation, materials science, protein analysis, custom-model integration, hyperparameter search): see `references/workflows.md`.
 
 ## Example Scripts
 
@@ -454,90 +359,11 @@ python scripts/transfer_learning.py \
     --epochs 20
 ```
 
-## Common Patterns and Best Practices
+## Common Patterns, Best Practices, and Pitfalls
 
-### Pattern 1: Always Use Scaffold Splitting for Molecules
-```python
-# GOOD: Prevents data leakage
-splitter = dc.splits.ScaffoldSplitter()
-train, test = splitter.train_test_split(dataset)
+Core habits: always scaffold-split molecular data to prevent leakage; normalize features and targets; start simple (Random Forest + `CircularFingerprint`) before scaling to deep nets and GNNs; balance imbalanced data with `BalancingTransformer` or balanced metrics; and use `DiskDataset` with smaller batch sizes to avoid memory issues. Recurring failure modes — data leakage, GNNs underperforming fingerprints, overfitting on small datasets, and import errors — each have concrete fixes.
 
-# BAD: Similar molecules in train and test
-splitter = dc.splits.RandomSplitter()
-train, test = splitter.train_test_split(dataset)
-```
-
-### Pattern 2: Normalize Features and Targets
-```python
-transformers = [
-    dc.trans.NormalizationTransformer(
-        transform_y=True,  # Also normalize target values
-        dataset=train
-    )
-]
-for transformer in transformers:
-    train = transformer.transform(train)
-    test = transformer.transform(test)
-```
-
-### Pattern 3: Start Simple, Then Scale
-1. Start with Random Forest + CircularFingerprint (fast baseline)
-2. Try XGBoost/LightGBM if RF works well
-3. Move to deep learning (MultitaskRegressor) if you have >5K samples
-4. Try GNNs if you have >10K samples
-5. Use transfer learning for small datasets or novel scaffolds
-
-### Pattern 4: Handle Imbalanced Data
-```python
-# Option 1: Balancing transformer
-transformer = dc.trans.BalancingTransformer(dataset=train)
-train = transformer.transform(train)
-
-# Option 2: Use balanced metrics
-metric = dc.metrics.Metric(dc.metrics.balanced_accuracy_score)
-```
-
-### Pattern 5: Avoid Memory Issues
-```python
-# Use DiskDataset for large datasets
-dataset = dc.data.DiskDataset.from_numpy(X, y, w, ids)
-
-# Use smaller batch sizes
-model = dc.models.GCNModel(batch_size=32)  # Instead of 128
-```
-
-## Common Pitfalls
-
-### Issue 1: Data Leakage in Drug Discovery
-**Problem**: Using random splitting allows similar molecules in train/test sets.
-**Solution**: Always use `ScaffoldSplitter` for molecular datasets.
-
-### Issue 2: GNN Underperforming vs Fingerprints
-**Problem**: Graph neural networks perform worse than simple fingerprints.
-**Solutions**:
-- Ensure dataset is large enough (>10K samples typically)
-- Increase training epochs (50-100)
-- Try different architectures (AttentiveFP, DMPNN instead of GCN)
-- Use pretrained models (GROVER)
-
-### Issue 3: Overfitting on Small Datasets
-**Problem**: Model memorizes training data.
-**Solutions**:
-- Use stronger regularization (increase dropout to 0.5)
-- Use simpler models (Random Forest instead of deep learning)
-- Apply transfer learning (ChemBERTa, GROVER)
-- Collect more data
-
-### Issue 4: Import Errors
-**Problem**: Module not found errors.
-**Solution**: Ensure DeepChem is installed with required dependencies:
-```bash
-uv pip install deepchem
-# For PyTorch models
-uv pip install deepchem[torch]
-# For all features
-uv pip install deepchem[all]
-```
+Full pattern recipes (with code) and the pitfall-to-fix catalog: see `references/best_practices.md`.
 
 ## Reference Documentation
 
@@ -568,6 +394,16 @@ Eight detailed end-to-end workflows:
 
 **When to reference**: Use these workflows as templates for implementing complete solutions.
 
+### `references/end_to_end_recipes.md`
+Three quick end-to-end recipes (benchmark evaluation, custom-data prediction, transfer learning) with full runnable code.
+
+**When to reference**: Grab one of these as a starting scaffold for a complete pipeline.
+
+### `references/best_practices.md`
+Best-practice patterns (splitting, normalization, model progression, class balancing, memory) and a pitfall-to-fix troubleshooting catalog.
+
+**When to reference**: Consult when debugging poor performance or choosing a modeling strategy.
+
 ## Installation Notes
 
 Basic installation:
@@ -593,4 +429,6 @@ If import errors occur, the user may need specific dependencies. Check the DeepC
 - GitHub repository: https://github.com/deepchem/deepchem
 - Tutorials: https://deepchem.readthedocs.io/en/latest/get_started/tutorials.html
 - Paper: "MoleculeNet: A Benchmark for Molecular Machine Learning"
+
+Part of the AlterLab Academic Skills suite.
 

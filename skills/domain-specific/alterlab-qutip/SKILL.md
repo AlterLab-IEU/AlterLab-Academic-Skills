@@ -1,6 +1,6 @@
 ---
 name: alterlab-qutip
-description: Simulates open quantum systems with QuTiP, the Quantum Toolbox in Python. Use when studying master equations, Lindblad dynamics, decoherence, quantum optics, or cavity QED, and for open-system dynamics or educational physics simulations. NOT for circuit-based quantum computing — use qiskit, cirq, or pennylane for quantum algorithms and hardware execution. Part of the AlterLab Academic Skills suite.
+description: Simulates open quantum systems with QuTiP, the Quantum Toolbox in Python, solving Lindblad master equations (mesolve), Monte Carlo trajectories (mcsolve), and unitary dynamics (sesolve). Use when studying master-equation or Lindblad dynamics, decoherence, dissipation, quantum optics, cavity QED, or open-system time evolution. NOT for circuit-based quantum computing or hardware execution — for IBM Quantum circuits prefer alterlab-qiskit, for Google Quantum AI or NISQ circuits prefer alterlab-cirq, and for gradient-trained quantum ML prefer alterlab-pennylane. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No API key required. Runs locally via `uv run python`; requires the qutip Python package.

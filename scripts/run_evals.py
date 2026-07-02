@@ -44,6 +44,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -77,6 +78,30 @@ def skill_dirs() -> list[Path]:
 
 def eval_path(skill_dir: Path) -> Path:
     return skill_dir / "evals" / "evals.json"
+
+
+def parse_shard(spec: str | None) -> tuple[int, int] | None:
+    """Parse an ``i/n`` shard spec into (i, n). Returns None for no sharding."""
+    if not spec:
+        return None
+    i_str, _, n_str = spec.partition("/")
+    i, n = int(i_str), int(n_str)
+    if n < 1 or not (0 <= i < n):
+        raise ValueError(f"--shard must be i/n with 0<=i<n (got {spec!r})")
+    return (i, n)
+
+
+def target_dirs(skill_filter: str | None, shard: tuple[int, int] | None) -> list[Path]:
+    """Skill dirs to grade after applying the name filter, then a deterministic shard.
+
+    Sharding lets a scheduled run grade a rotating subset (``--shard $((day%7))/7``) so the
+    slow CLI-graded lanes cover the whole corpus over time without grading all 210 each run.
+    """
+    dirs = [d for d in skill_dirs() if not (skill_filter and skill_filter not in d.name)]
+    if shard:
+        i, n = shard
+        dirs = [d for k, d in enumerate(dirs) if k % n == i]
+    return dirs
 
 
 # --- Schema validation ------------------------------------------------------------------
@@ -472,7 +497,8 @@ def _eval_verdict_from_assertions(per_run: list[list[tuple[str, str, str]]]) -> 
     return "NA"
 
 
-def run_behavioral(skill_filter: str | None, timeout: int, runs: int) -> int:
+def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
+                   shard: tuple[int, int] | None = None) -> int:
     """Grade each eval by injecting its SKILL.md, materializing fixtures, and voting over N runs.
 
     Reports, per eval: the skilled majority verdict and the bare-vs-skill rubric delta, and a
@@ -485,16 +511,19 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int) -> int:
     print(f"Behavioral grading with model: {model} "
           f"(ALTERLAB_MODEL convention; see skills/core/shared/model_env.md)")
     print(f"Each eval is run {runs}x with the skill's SKILL.md injected via "
-          f"--append-system-prompt; majority verdict is reported.\n")
+          f"--append-system-prompt; majority verdict is reported.")
+    targets = target_dirs(skill_filter, shard)
+    if shard:
+        print(f"Shard {shard[0]}/{shard[1]}: grading {len(targets)} of "
+              f"{len(skill_dirs())} skills this run.")
+    print()
     if subprocess.run(["which", "claude"], capture_output=True).returncode != 0:
         print("ERROR: the `claude` CLI is not on PATH; behavioral grading needs it.",
               file=sys.stderr)
         return 2
 
     graded = passed = failed = na = refused = 0
-    for d in skill_dirs():
-        if skill_filter and skill_filter not in d.name:
-            continue
+    for d in targets:
         f = eval_path(d)
         skill_md_path = d / "SKILL.md"
         if not f.exists() or not skill_md_path.exists():
@@ -595,6 +624,157 @@ def _delta(bare: str, skilled: str) -> str:
     return f"rubric: NO DELTA (both {bare})"
 
 
+# --- Activation harness (auto-selection rate) -------------------------------------------
+# The description is the trigger surface. This harness measures the metric that matters for
+# a 210-skill suite: given a realistic request, does the model *select the right skill from
+# its description* when the true skill sits among plausible same-domain distractors? That is
+# both the activation rate (Anthropic's bar: 90%+) and, via wrong picks, the cross-firing
+# rate. It reuses the `should_trigger` / `should_not_trigger` prompts already in every
+# evals.json — turning a static coverage gate into a discovery metric. Needs the claude CLI
+# (like --behavioral), so it runs on demand, not per-PR.
+
+_ACTIVATION_JUDGE = """A user sent this request to an assistant that can activate ONE \
+specialized skill from a catalog. Pick the single best skill BASED ONLY on the descriptions.
+
+USER REQUEST:
+{prompt}
+
+CANDIDATE SKILLS (name — description):
+{catalog}
+
+Reply with exactly one line:
+CHOICE: <one candidate name verbatim, or none>
+then one sentence of justification."""
+
+
+def _read_name_desc(skill_dir: Path) -> tuple[str, str]:
+    """Return (name, description) from a SKILL.md's flat frontmatter (tolerant parse)."""
+    lines = (skill_dir / "SKILL.md").read_text(encoding="utf-8").split("\n")
+    name = desc = ""
+    if not lines or lines[0].strip() != "---":
+        return skill_dir.name, ""
+    for line in lines[1:]:
+        if line.strip() == "---":
+            break
+        if line.startswith("name:"):
+            name = line.partition(":")[2].strip().strip('"')
+        elif line.startswith("description:"):
+            desc = line.partition(":")[2].strip().strip('"')
+    return (name or skill_dir.name), desc
+
+
+def skill_catalog() -> dict[str, tuple[str, str]]:
+    """name -> (category, description) for every skill."""
+    cat: dict[str, tuple[str, str]] = {}
+    for d in skill_dirs():
+        name, desc = _read_name_desc(d)
+        cat[name] = (d.parent.name, desc)
+    return cat
+
+
+def _candidates(target: str, catalog: dict[str, tuple[str, str]], n_distractors: int) -> list[str]:
+    """target + up to n_distractors same-category siblings (fallback: other categories)."""
+    tcat = catalog[target][0]
+    siblings = sorted(n for n, (c, _) in catalog.items() if c == tcat and n != target)
+    picked = siblings[:n_distractors]
+    if len(picked) < n_distractors:  # small domain — pad from the wider corpus
+        others = sorted(n for n, (c, _) in catalog.items() if c != tcat and n != target)
+        picked += others[: n_distractors - len(picked)]
+    return sorted([target, *picked])
+
+
+def _choose(prompt: str, cand_names: list[str], catalog: dict[str, tuple[str, str]],
+            model: str, timeout: int) -> str | None:
+    listing = "\n".join(f"- {n}: {catalog[n][1]}" for n in cand_names)
+    out = _claude(_ACTIVATION_JUDGE.format(prompt=prompt, catalog=listing), model, timeout)
+    if not _is_answer(out):
+        return None
+    m = re.search(r"CHOICE:\s*(alterlab-[a-z0-9-]+|none)", out, re.IGNORECASE)
+    return m.group(1).lower() if m else None
+
+
+def run_activation(skill_filter: str | None, timeout: int, runs: int, n_distractors: int,
+                   shard: tuple[int, int] | None = None) -> int:
+    """Measure auto-selection rate over should_trigger prompts (with should_not_trigger as a
+    cross-fire control). Reports activation rate vs the 90% bar and the cross-fire rate."""
+    model = alterlab_model()
+    if subprocess.run(["which", "claude"], capture_output=True).returncode != 0:
+        print("ERROR: the `claude` CLI is not on PATH; the activation harness needs it.",
+              file=sys.stderr)
+        return 2
+    catalog = skill_catalog()
+    targets = target_dirs(skill_filter, shard)
+    print(f"Activation harness with model: {model} (ALTERLAB_MODEL convention). "
+          f"{runs}x/prompt, {n_distractors} same-domain distractors; majority pick.")
+    if shard:
+        print(f"Shard {shard[0]}/{shard[1]}: {len(targets)} of {len(skill_dirs())} skills.")
+    print()
+
+    hits = cross = miss = 0                    # should_trigger outcomes
+    neg_ok = neg_bad = 0                       # should_not_trigger outcomes
+    per_cat: dict[str, list[int]] = {}         # category -> [hits, total]
+    for d in targets:
+        f = eval_path(d)
+        if not f.exists():
+            continue
+        try:
+            data = json.loads(f.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        target = d.name
+        if target not in catalog:
+            continue
+        cand = _candidates(target, catalog, n_distractors)
+        for e in data.get("evals", []) or []:
+            kinds = {a.get("type") for a in e.get("assertions", []) or []}
+            is_pos = "should_trigger" in kinds
+            is_neg = "should_not_trigger" in kinds
+            if not (is_pos or is_neg) or not e.get("prompt"):
+                continue
+            votes = [_choose(e["prompt"], cand, catalog, model, timeout) for _ in range(runs)]
+            real = [v for v in votes if v is not None]
+            if not real:
+                miss += 1
+                continue
+            choice = max(set(real), key=real.count)
+            if is_pos:
+                bucket = per_cat.setdefault(d.parent.name, [0, 0])
+                bucket[1] += 1
+                if choice == target:
+                    hits += 1
+                    bucket[0] += 1
+                elif choice in cand:
+                    cross += 1
+                else:
+                    miss += 1
+            else:  # near-miss: the target should NOT be chosen
+                if choice == target:
+                    neg_bad += 1
+                else:
+                    neg_ok += 1
+
+    graded_pos = hits + cross + miss
+    rate = (hits / graded_pos * 100) if graded_pos else 0.0
+    print("=== Activation (should_trigger) ===")
+    print(f"graded: {graded_pos} | correct: {hits} | cross-fired to sibling: {cross} | "
+          f"missed/none: {miss}")
+    print(f"activation rate: {rate:.1f}%  (Anthropic bar: 90%+)  "
+          f"| cross-fire rate: {(cross/graded_pos*100) if graded_pos else 0:.1f}%")
+    if per_cat:
+        print("per category (correct/total):")
+        for c in sorted(per_cat):
+            h, t = per_cat[c]
+            print(f"  {c:18} {h}/{t}")
+    graded_neg = neg_ok + neg_bad
+    if graded_neg:
+        print("\n=== Cross-fire control (should_not_trigger) ===")
+        print(f"graded: {graded_neg} | correctly NOT selected: {neg_ok} | "
+              f"wrongly self-selected: {neg_bad} "
+              f"({(neg_ok/graded_neg*100):.1f}% correct deferral)")
+    # A discovery metric, not a gate: never fail the run on activation rate.
+    return 0
+
+
 # --- Validation reporting ---------------------------------------------------------------
 def run_validation(strict: bool) -> int:
     results = validate_all()
@@ -629,19 +809,41 @@ def main(argv: list[str] | None = None) -> int:
                     help="exit non-zero if any skill violates the schema or coverage convention")
     ap.add_argument("--behavioral", action="store_true",
                     help="shell each eval prompt to the claude CLI and LLM-judge expected_output")
+    ap.add_argument("--activation", action="store_true",
+                    help="measure auto-selection rate: does the model pick the right skill "
+                         "from its description among same-domain distractors (needs claude CLI)")
+    ap.add_argument("--distractors", type=int, default=6,
+                    help="(activation) number of same-domain sibling distractors per prompt "
+                         "(default 6)")
     ap.add_argument("--skill", metavar="SUBSTR", default=None,
-                    help="(behavioral) only grade skills whose dir name contains SUBSTR")
+                    help="(behavioral/activation) only grade skills whose dir name contains SUBSTR")
     ap.add_argument("--timeout", type=int, default=600,
-                    help="(behavioral) per-claude-call timeout in seconds (default 600)")
+                    help="(behavioral/activation) per-claude-call timeout in seconds (default 600)")
     ap.add_argument("--runs", type=int, default=3,
-                    help="(behavioral) times to run each eval per arm; majority verdict wins "
-                         "(default 3)")
+                    help="(behavioral/activation) times to run each eval per arm; majority "
+                         "verdict wins (default 3)")
+    ap.add_argument("--shard", metavar="i/n", default=None,
+                    help="(behavioral/activation) grade only a deterministic shard of skills "
+                         "(e.g. 2/7) so a scheduled run rotates through the corpus over time")
     args = ap.parse_args(argv)
 
+    try:
+        shard = parse_shard(args.shard)
+    except ValueError as exc:
+        ap.error(str(exc))
+
+    if args.behavioral and args.activation:
+        ap.error("choose one of --behavioral / --activation, not both")
     if args.behavioral:
         if args.runs < 1:
             ap.error("--runs must be >= 1")
-        return run_behavioral(args.skill, args.timeout, args.runs)
+        return run_behavioral(args.skill, args.timeout, args.runs, shard)
+    if args.activation:
+        if args.runs < 1:
+            ap.error("--runs must be >= 1")
+        if args.distractors < 1:
+            ap.error("--distractors must be >= 1")
+        return run_activation(args.skill, args.timeout, args.runs, args.distractors, shard)
     return run_validation(args.strict)
 
 

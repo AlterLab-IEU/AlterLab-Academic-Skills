@@ -1,6 +1,6 @@
 ---
 name: alterlab-parallel-web
-description: Search the web, run deep research, and extract URL content via the Parallel Web Systems Chat API (OpenAI-compatible) and Extract API, returning synthesized summaries with citations. Use for general web searches, current-events/market/technical lookups, comprehensive research reports, broad information gathering, or verifying a known URL's content (requires PARALLEL_API_KEY). NOT for scholarly paper retrieval (use research-lookup) or Scholar/PubMed database searches (use citation-management). Part of the AlterLab Academic Skills suite.
+description: Search the web, run deep research, and extract content from known URLs via the Parallel Web Systems Chat API (OpenAI-compatible) and Extract API, returning synthesized summaries with inline citations. Use when running general web searches, current-events/market/technical lookups, broad information gathering, comprehensive research reports, or verifying a specific URL's content (requires PARALLEL_API_KEY). For scholarly paper retrieval or dual-backend academic lookup that auto-routes to Perplexity prefer alterlab-research-lookup instead. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 compatibility: PARALLEL_API_KEY required
