@@ -27,7 +27,18 @@ EXPECTED_SERVERS = {"pubmed", "openalex", "crossref", "zotero"}
 
 
 def _mcp_manifests() -> list[Path]:
-    return sorted(SKILLS_DIR.rglob(".mcp.json"))
+    """Every .mcp.json in the repo: the per-domain skill bundles under skills/, plus the
+    standalone aggregated connectors under mcp-servers/."""
+    manifests = list(SKILLS_DIR.rglob(".mcp.json"))
+    connectors = REPO_ROOT / "mcp-servers"
+    if connectors.is_dir():
+        manifests += list(connectors.rglob(".mcp.json"))
+    return sorted(manifests)
+
+
+# The academic-server bundle requirement applies only to these skill-plugin manifests; the
+# aggregated connectors under mcp-servers/ ship their own domain-specific servers.
+_ACADEMIC_BUNDLE_MANIFESTS = {"skills/core/.mcp.json", "skills/databases/.mcp.json"}
 
 
 def _load_servers(manifest: Path) -> dict:
@@ -91,6 +102,9 @@ def test_every_server_is_documented(manifest: Path) -> None:
     "manifest", _mcp_manifests(), ids=[str(m.relative_to(REPO_ROOT)) for m in _mcp_manifests()]
 )
 def test_expected_academic_servers_present(manifest: Path) -> None:
+    rel = manifest.relative_to(REPO_ROOT).as_posix()
+    if rel not in _ACADEMIC_BUNDLE_MANIFESTS:
+        pytest.skip(f"{rel}: academic-server bundle requirement applies only to core/databases")
     servers = set(_load_servers(manifest))
     missing = EXPECTED_SERVERS - servers
     assert not missing, (

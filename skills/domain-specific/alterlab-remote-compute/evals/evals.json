@@ -1,0 +1,51 @@
+{
+  "skill": "alterlab-remote-compute",
+  "evals": [
+    {
+      "id": "slurm-submit-track",
+      "prompt": "I'm on my university's HPC cluster. Help me submit a GPU batch job with sbatch that runs my folding script for up to 8 hours, then track it until it finishes and tell me if it succeeded or failed.",
+      "expected_output": "Invokes alterlab-remote-compute for the SLURM submit → poll → harvest path: writes an sbatch job script with #SBATCH --gres=gpu:1 and --time directives, submits with `sbatch --parsable`, and polls terminal state with sacct (not just squeue), checking the exit code before declaring success.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "sacct" },
+        { "type": "behavior", "value": "Uses sacct/exit code (not absence from squeue) to resolve terminal state, and requests a GPU via #SBATCH --gres." }
+      ]
+    },
+    {
+      "id": "cloud-gpu-poll-harvest",
+      "prompt": "I submitted a job to a RunPod serverless GPU endpoint and got back a job id. How do I poll its status and download the results when it's done, reading my API key from the environment?",
+      "expected_output": "Invokes alterlab-remote-compute for the managed-provider path: polls the RunPod /status/<id> endpoint with the key read from RUNPOD_API_KEY (never hardcoded), maps IN_QUEUE/IN_PROGRESS/COMPLETED to the normalized status vocabulary, and harvests output artifacts once SUCCEEDED.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Reads the API key from an environment variable and maps provider states to a normalized status." }
+      ]
+    },
+    {
+      "id": "portable-wrapper",
+      "prompt": "I want one job-submission wrapper that can run the same payload on either our SLURM cluster or a cloud GPU provider without rewriting it each time. What's the pattern?",
+      "expected_output": "Invokes alterlab-remote-compute and explains the provider-agnostic submit → poll → harvest contract with a common status vocabulary (PENDING/RUNNING/SUCCEEDED/FAILED/CANCELLED), pointing at scripts/dispatch.py which implements SLURM and a generic REST backend.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "submit" }
+      ]
+    },
+    {
+      "id": "gpu-model-dispatch",
+      "prompt": "My AlphaFold run needs a GPU that my laptop doesn't have. How should I dispatch the heavy compute to a remote backend and get the predicted structures back?",
+      "expected_output": "Invokes alterlab-remote-compute as the dispatch layer: submits the GPU job to SLURM or a managed provider, polls to completion, and harvests the output structures — while noting the actual folding command belongs to the dedicated model skill, not the dispatcher.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Dispatches the GPU workload remotely and harvests artifacts, rather than trying to run the model locally." }
+      ]
+    },
+    {
+      "id": "near-miss-modal",
+      "prompt": "I want to deploy an autoscaling serverless API on Modal that spins up GPU containers on demand and scales to zero. Walk me through the Modal app.",
+      "expected_output": "Should NOT trigger this skill; defers to alterlab-modal, which owns the Modal SDK, serverless-container deployment, and autoscaling. This skill only treats a Modal call as one backend when a workflow must stay provider-agnostic; a Modal-specific deployment ask belongs to alterlab-modal.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-modal" }
+      ]
+    }
+  ]
+}

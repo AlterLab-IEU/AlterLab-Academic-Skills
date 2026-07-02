@@ -4,7 +4,57 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.3.0] — 2026-07-02
+## [Unreleased]
+
+Foundation-model skills — the suite gains a **runnable structure-prediction** cluster, the
+**protein-design** cluster that completes the design→fold→score loop, single-cell + genomics
+foundation models, figure-QA and single-PDF exploration, and the provider-agnostic GPU dispatch
+layer they build on. **210 → 221 skills** (bioinformatics 30 → 38, domain-specific 17 → 18,
+visualization 8 → 9, document-tools 2 → 3), still 100% eval coverage.
+
+### Added
+
+- **`alterlab-scgpt`** (bioinformatics) — scGPT single-cell foundation model (Cui 2024):
+  zero-shot / fine-tuned cell-type annotation, embeddings, and batch integration on AnnData.
+- **`alterlab-borzoi`** (bioinformatics) — Borzoi (Linder 2025, `calico/borzoi`): sequence →
+  genome-wide functional tracks and non-coding variant effect scoring / in-silico mutagenesis.
+- **`alterlab-figure-qa`** (visualization) — render-then-verify publication-figure QA:
+  data-fidelity, label legibility floor/ceiling, bbox-collision detection, 300-dpi export.
+- **`alterlab-pdf-explore`** (document-tools) — deep single-PDF Q&A: parse once, answer across
+  sections/figures/appendices, extract-every-instance, read values off charts.
+- **Aggregated MCP connectors** (`mcp-servers/`) — four standalone FastMCP servers wrapping the
+  highest-traffic data clusters behind typed tool surfaces: `structures` (RCSB PDB + AlphaFold
+  DB + Complex Portal), `variants` (gnomAD + ClinVar/NCBI), `chemistry` (PubChem + BindingDB),
+  and `genes-ontologies` (MyGene + UniProt + QuickGO + Reactome). Stdlib-HTTP only (dep:
+  `fastmcp`), credentials read from env, graceful error objects. Their `.mcp.json` manifests
+  are shape-validated by `tests/test_mcp_manifest.py` (the academic-server bundle requirement is
+  scoped to the core/databases skill plugins), and the connector code is covered by
+  `SECURITY_SCAN.md` and CI lint/compile.
+
+- **`alterlab-proteinmpnn`** (bioinformatics) — ProteinMPNN (Dauparas 2022): fixed-backbone
+  inverse folding with fixed positions, tied/symmetric chains, and AA bias.
+- **`alterlab-ligandmpnn`** (bioinformatics) — LigandMPNN (Dauparas 2023): ligand/metal/
+  nucleic-acid-aware pocket and active-site sequence design.
+- **`alterlab-rfdiffusion`** (bioinformatics) — RFdiffusion (Watson 2023): de-novo backbone
+  generation, motif scaffolding, binder design, symmetry. Completes the design→fold→score loop
+  with proteinmpnn + alphafold.
+
+- **`alterlab-remote-compute`** (domain-specific) — provider-agnostic `submit → poll → harvest`
+  dispatch across SLURM/HPC (`sbatch`/`sacct`) and managed GPU APIs (Modal, RunPod, GCP Batch /
+  Vertex AI), with a stdlib-only `scripts/dispatch.py`. The prerequisite the GPU model skills
+  dispatch through; generalizes the single-provider `alterlab-modal`.
+- **`alterlab-alphafold`** (bioinformatics) — AlphaFold2 folding via ColabFold (Mirdita et al.
+  2022): MMseqs2 MSAs, monomer + AF2-Multimer complexes, pLDDT/pTM/ipTM/PAE confidence, and
+  design self-consistency checks.
+- **`alterlab-boltz`** (bioinformatics) — Boltz-2 (Passaro & Wohlwend 2025, `jwohlwend/boltz`),
+  an open AlphaFold3-style model: protein + ligand (SMILES/CCD) co-folding, protein–nucleic-acid
+  assemblies, and binding-affinity prediction.
+- **`alterlab-chai`** (bioinformatics) — Chai-1 (Chai Discovery 2024, `chaidiscovery/chai-lab`):
+  multi-entity complex prediction from a single typed FASTA, strong on antibody–antigen, with
+  optional MSAs and restraints.
+
+The three folders carry mutual `prefer alterlab-x` routing (alphafold ↔ boltz ↔ chai) and
+near-miss evals; `confusion_matrix.py` reports zero new routing gaps.
 
 The "review & trust" release: implements the external repo-review roadmap end to end —
 new activation/collision benchmarks, a CI-attested trust manifest, formalized agents/teams

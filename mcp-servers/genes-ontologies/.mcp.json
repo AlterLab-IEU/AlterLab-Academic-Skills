@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "genes-ontologies": {
+      "command": "uv",
+      "args": ["run", "--with", "fastmcp", "python", "mcp-servers/genes-ontologies/server.py"],
+      "env": {}
+    }
+  }
+}

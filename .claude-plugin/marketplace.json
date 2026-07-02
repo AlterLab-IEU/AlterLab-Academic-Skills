@@ -1,14 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "alterlab-academic-skills",
-  "description": "210 Claude skills for academic research, organized by domain",
+  "description": "221 Claude skills for academic research, organized by domain",
   "version": "2.3.0",
   "owner": {
     "name": "AlterLab @ Izmir University of Economics",
     "email": "alterlab.ieu@gmail.com"
   },
   "metadata": {
-    "description": "210 Claude skills for academic research, organized by domain",
+    "description": "221 Claude skills for academic research, organized by domain",
     "version": "2.3.0",
     "author": {
       "name": "AlterLab @ Izmir University of Economics",
@@ -19,7 +19,7 @@
     {
       "name": "alterlab-bioinformatics",
       "source": "./skills/bioinformatics",
-      "description": "Genomics, proteomics, and single-cell analysis (Scanpy, BioPython, pysam, ESM) (30 skills)",
+      "description": "Genomics, proteomics, and single-cell analysis (Scanpy, BioPython, pysam, ESM) (38 skills)",
       "version": "2.3.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
@@ -37,12 +37,16 @@
       ],
       "strict": false,
       "skills": [
+        "./alterlab-alphafold",
         "./alterlab-anndata",
         "./alterlab-arboreto",
         "./alterlab-biopython",
         "./alterlab-bioservices",
         "./alterlab-blast",
+        "./alterlab-boltz",
+        "./alterlab-borzoi",
         "./alterlab-cellxgene",
+        "./alterlab-chai",
         "./alterlab-cobrapy",
         "./alterlab-deeptools",
         "./alterlab-esm",
@@ -52,16 +56,20 @@
         "./alterlab-glycoengineering",
         "./alterlab-histolab",
         "./alterlab-lamindb",
+        "./alterlab-ligandmpnn",
         "./alterlab-neuropixels",
         "./alterlab-nf-core-sarek",
         "./alterlab-pathml",
         "./alterlab-phylogenetics",
+        "./alterlab-proteinmpnn",
         "./alterlab-pydeseq2",
         "./alterlab-pyopenms",
         "./alterlab-pysam",
         "./alterlab-qiime2-amplicon",
+        "./alterlab-rfdiffusion",
         "./alterlab-rnaseq-quant",
         "./alterlab-scanpy",
+        "./alterlab-scgpt",
         "./alterlab-scikit-bio",
         "./alterlab-scvelo",
         "./alterlab-scvi-tools",
@@ -291,7 +299,7 @@
     {
       "name": "alterlab-document-tools",
       "source": "./skills/document-tools",
-      "description": "Document and Markdown conversion (MarkItDown, Open Notebook) (2 skills)",
+      "description": "Document and Markdown conversion (MarkItDown, Open Notebook) (3 skills)",
       "version": "2.3.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
@@ -308,13 +316,14 @@
       "strict": false,
       "skills": [
         "./alterlab-markitdown",
-        "./alterlab-open-notebook"
+        "./alterlab-open-notebook",
+        "./alterlab-pdf-explore"
       ]
     },
     {
       "name": "alterlab-domain-specific",
       "source": "./skills/domain-specific",
-      "description": "Quantum computing, geospatial, materials, astronomy, and digital humanities (17 skills)",
+      "description": "Quantum computing, geospatial, materials, astronomy, and digital humanities (18 skills)",
       "version": "2.3.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
@@ -348,6 +357,7 @@
         "./alterlab-pymatgen",
         "./alterlab-qiskit",
         "./alterlab-qutip",
+        "./alterlab-remote-compute",
         "./alterlab-social-science-methods"
       ]
     },
@@ -544,7 +554,7 @@
     {
       "name": "alterlab-visualization",
       "source": "./skills/visualization",
-      "description": "Publication-quality plotting and schematics (Matplotlib, Seaborn, Plotly) (8 skills)",
+      "description": "Publication-quality plotting and schematics (Matplotlib, Seaborn, Plotly) (9 skills)",
       "version": "2.3.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
@@ -562,6 +572,7 @@
       ],
       "strict": false,
       "skills": [
+        "./alterlab-figure-qa",
         "./alterlab-generate-image",
         "./alterlab-infographics",
         "./alterlab-matplotlib",

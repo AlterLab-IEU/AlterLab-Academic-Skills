@@ -11,6 +11,7 @@ on:
       - "scripts/check_claudeai_compat.py"
       - "scripts/gen_security_scan.py"
       - "SECURITY_SCAN.md"
+      - "mcp-servers/**"
       - "scripts/gen_agents_catalog.py"
       - "docs/agents-and-teams.md"
       - "scripts/gen_portability.py"
