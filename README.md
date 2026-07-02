@@ -2,9 +2,9 @@
 <img src=".github/header-banner.svg" width="100%" alt="AlterLab Academic Skills">
 <br>
 
-<a href="skills/"><img src="https://img.shields.io/badge/Skills-238-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Skills"></a>
+<a href="skills/"><img src="https://img.shields.io/badge/Skills-239-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Skills"></a>
 <a href="skills/"><img src="https://img.shields.io/badge/Domains-17-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Domains"></a>
-<a href="docs/evals.md"><img src="https://img.shields.io/badge/Eval%20coverage-238%2F238-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Eval coverage"></a>
+<a href="docs/evals.md"><img src="https://img.shields.io/badge/Eval%20coverage-239%2F239-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Eval coverage"></a>
 <a href="https://www.anthropic.com"><img src="https://img.shields.io/badge/Claude-AI%20Powered-F97316?style=for-the-badge&logo=anthropic&logoColor=white" alt="Claude AI"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-10B981?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="MIT License"></a>
 <a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases"><img src="https://img.shields.io/github/v/release/AlterLab-IEU/AlterLab-Academic-Skills?style=for-the-badge&logo=github&color=8B5CF6&logoColor=white&label=Release" alt="Release"></a>
@@ -29,9 +29,9 @@
 
 <br><br>
 
-<h3>🧬 238 purpose-built Claude AI skills for faculty, researchers & academicians</h3>
+<h3>🧬 239 purpose-built Claude AI skills for faculty, researchers & academicians</h3>
 <p><em>Organized across 17 research domains — from Turkish academia to bioinformatics to digital humanities</em></p>
-<p><em>238/238 ship executable evals · deterministic citation-existence verifier · per-domain bundles for claude.ai</em></p>
+<p><em>239/239 ship executable evals · deterministic citation-existence verifier · per-domain bundles for claude.ai</em></p>
 
 <p>
 <b>Research Pipeline</b> · <b>Scientific Databases</b> · <b>Bioinformatics</b> · <b>Data Science</b> · <b>Visualization</b> · <b>Clinical Research</b> · <b>and more</b>
@@ -90,7 +90,16 @@
 
 <br>
 
-## 🚀 What's New in v2.5.0
+## 🚀 What's New in v2.6.0
+
+- 🧭 **New front door — `alterlab-skill-finder`** — most users don't know 239 skill names by heart, so this router turns *"use AlterLab skills for this"* into the right skill(s). It classifies the task, maps it across all 17 domains, names the concrete skill(s) it picked (and why), and applies them — no name-memorization required. → [Core Pipeline](#-core-pipeline--10-skills)
+- ⚡ **`alterflow` keyword → clarify-first multi-agent orchestration** — say **`alterflow`** (aliases `alterresearch` / `ultralab`) and the router first asks a few scoping questions, then **selects** the skills the goal needs and launches a **dynamic multi-agent workflow** composing them (via `alterlab-research-pipeline`, `alterlab-ssci-orchestrator`, or `alterlab-workflow-orchestration`). Questions before execution — it never starts blind.
+- 🗂️ **Always-current skill index** — a generated [`skill_index.md`](skills/core/alterlab-skill-finder/references/skill_index.md) lists every skill grouped by domain with a one-line "use when"; a new CI test (`test_skill_index.py`) fails the build if a skill is added or renamed and the index is not regenerated (`scripts/gen_skill_index.py --check`).
+- 📈 **239 skills across 17 domains**, 239 / 239 with executable evals; audit clean (0 errors, 0 warnings), full test suite green.
+
+<details>
+<summary><b>Previously — What's New in v2.5.0</b></summary>
+<br>
 
 - ⚖️ **Social-Science Workflow made even-handed (11 → 17 skills)** — the domain was quantitative-positivist by construction; v2.5 adds the qualitative and survey methods that were missing, plus depth. → [Social-Science Workflow](#-social-science-workflow--stage-gated-methods-spine-17-skills)
 - 📊 **`alterlab-survey-analysis` (correctness gap)** — design-based inference for complex-sample surveys (GSS/ANES/ESS/DHS): declare weights/strata/PSU/FPC *before* estimating, Taylor + replicate-weight SEs, post-stratification/raking, design-adjusted GLMs. Analyzing weighted surveys unweighted is a real error (falsely narrow CIs); this fixes it. samplics/svy or R survey+srvyr.
@@ -98,6 +107,8 @@
 - 📈 **Quantitative depth** — `alterlab-multilevel-models` (mixed-effects with the under-reported reporting checklist), `alterlab-meta-analysis` (pooling, I²/τ², Egger/trim-and-fill, PRISMA), `alterlab-missing-data` (MCAR/MAR/MNAR + MICE with **Rubin's-rules pooling**; the sklearn single-imputation trap flagged).
 - 🔬 **Every library web-verified & version-pinned** (samplics 0.6 / svy 0.18, krippendorff 0.8, statsmodels MixedLM, metafor 5.0, R mice 3.19, lme4 2.0). The orchestrator now paradigm-selects the measurement-stage gate (quant vs qual) and routes the new modules; `confusion_matrix.py` reports zero new gaps.
 - 📈 **238 skills across 17 domains**, 238 / 238 with executable evals; audit clean (0 errors, 0 warnings), full test suite green.
+
+</details>
 
 <details>
 <summary><b>Previously — What's New in v2.4.0</b></summary>
@@ -129,7 +140,7 @@
 <br>
 
 - 🧠 **Research-backed elevation of 191 skills** — a corpus-wide accuracy and depth pass over every pre-existing skill: corrected regulation/API details, slimmed oversized bodies into `references/`, and version-bumped touched skills.
-- 🧩 **New core skill: Workflow Orchestration** (`alterlab-workflow-orchestration`) — composes AlterLab skills into multi-agent workflows (subagent fan-out, pipelines, judge panels, adversarial verification), lifting the corpus to **210 skills**. → [Core Pipeline](#-core-pipeline--9-skills)
+- 🧩 **New core skill: Workflow Orchestration** (`alterlab-workflow-orchestration`) — composes AlterLab skills into multi-agent workflows (subagent fan-out, pipelines, judge panels, adversarial verification), lifting the corpus to **210 skills**. → [Core Pipeline](#-core-pipeline--10-skills)
 - 🇹🇷 **Turkish-academia flagship (12 skills)** — the deepest Turkish-academia suite in any skills library: DergiPark, TR Dizin, YÖK Tez, YÖK Akademik, YÖKATLAS, TÜBİTAK 1001/1002-A proposals, doçentlik eligibility, akademik teşvik scoring, Turkish APA-7 style, TR research ethics, KVKK data-management plans, and TÜBİTAK Aperta — each wired to a verified national-platform endpoint. → [Turkish Academia](#-turkish-academia--national-platforms--scholarly-workflow-12-skills)
 - 🎓 **Faculty Life (6 skills)** — syllabus AI policy, post-award grant reporting, recommendation letters, AACSB/ABET accreditation (AoL), REDCap/CDISC capture, and preprint deposition. → [Faculty Life](#-faculty-life--teaching-service--the-academic-career-6-skills)
 - 🧪 **Methodology (3 skills)** — superpowers-style rigor (Iron Laws, Excuse-vs-Reality tables) applied to research methods: pre-registration discipline, statistical-test-selection guard, and results-reporting transparency. → [Methodology](#-methodology--research-rigor--discipline-gates-3-skills)
@@ -165,8 +176,8 @@
 - [🗂️ Domain Overview](#%EF%B8%8F-domain-overview)
 - [🔎 Browse the Catalog](#-browse-the-catalog)
 - [🚀 Quick Start](#-quick-start)
-- [⚡ Core Pipeline — 9 Skills](#-core-pipeline--9-skills)
-- [📚 All 238 Skills](#-all-238-skills)
+- [⚡ Core Pipeline — 10 Skills](#-core-pipeline--10-skills)
+- [📚 All 239 Skills](#-all-239-skills)
 - [🏗️ Project Structure](#%EF%B8%8F-project-structure)
 - [⚙️ How Skills Work](#%EF%B8%8F-how-skills-work)
 - [💡 Usage Examples](#-usage-examples)
@@ -182,7 +193,7 @@
 
 ## 🎯 What Is This?
 
-A comprehensive suite of **238 purpose-built Claude AI skills** for faculty members, academicians, and researchers — organized into **17 domain categories** spanning the full academic research lifecycle.
+A comprehensive suite of **239 purpose-built Claude AI skills** for faculty members, academicians, and researchers — organized into **17 domain categories** spanning the full academic research lifecycle.
 
 Each skill transforms Claude into a **domain-specific expert assistant** tailored to academic research, scientific computing, and scholarly publishing workflows.
 
@@ -197,7 +208,7 @@ Each skill transforms Claude into a **domain-specific expert assistant** tailore
 
 | | What | Detail |
 |:---:|:---|:---|
-| ✅ | **Executable evals across the corpus** | **238 / 238** skills ship `evals/evals.json` on the canonical [agentskills.io](https://agentskills.io) schema, validated in CI. See [`docs/evals.md`](docs/evals.md). |
+| ✅ | **Executable evals across the corpus** | **239 / 239** skills ship `evals/evals.json` on the canonical [agentskills.io](https://agentskills.io) schema, validated in CI. See [`docs/evals.md`](docs/evals.md). |
 | 🔎 | **Citation-existence verifier** | New core skill `alterlab-citation-verifier` — a **deterministic** gate that checks every reference actually exists against four keyless scholarly APIs (Crossref, OpenAlex, Semantic Scholar, arXiv), flags retractions, and maps claim-faithfulness verdicts. See below. |
 | 📦 | **Per-domain bundles for claude.ai** | `dist/<domain>.zip` bundles (one per domain) attached to each [Release](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases) — each clears claude.ai's 200-file / 30 MB caps and vendors the shared handoff contracts. |
 | 🔌 | **Bundled academic MCP** | The `core` and `databases` plugins ship a `.mcp.json` wiring PubMed / OpenAlex / Crossref / Zotero, with a documented `requests/` fallback when no MCP is available. |
@@ -218,10 +229,24 @@ and degrades gracefully to plain `requests` / WebSearch when no MCP or network i
 
 <br>
 
+### 🧭 Headline feature — `alterlab-skill-finder` (the front door)
+
+No one memorizes **239** skill names. `alterlab-skill-finder` is the **front door**: say *"use AlterLab skills for this"* and it classifies your task, maps it across all **17 domains**, and applies the right skill(s) — telling you which it picked and why. For a goal that spans stages, the **`alterflow`** keyword turns it into a **launcher**:
+
+- **CLARIFY** — asks 2–4 scoping questions *before* doing anything,
+- **SELECT & PLAN** — picks the skills the goal needs and lays out a dynamic multi-agent workflow, scaling the agent count to complexity,
+- **CONFIRM** — shows the plan *and its rough cost*, then executes,
+- **COMPOSE** — reuses the existing orchestrators (`alterlab-research-pipeline`, `alterlab-ssci-orchestrator`, `alterlab-workflow-orchestration`) rather than reinventing them.
+
+Built on Anthropic's documented **routing** and **orchestrator-workers** patterns — questions before execution, simplest path by default.
+
+<br>
+
 ## ✨ Key Features
 
 | | Feature | Description |
 |:---:|:---|:---|
+| 🧭 | **One-Command Front Door** | Just say *"use AlterLab skills"* — `alterlab-skill-finder` picks the right skill(s) for you; the **`alterflow`** keyword clarifies your goal, then launches a multi-agent workflow |
 | 🔬 | **Research-Ready** | Skills built on real scientific methods, databases, and professional frameworks used by working researchers |
 | 🤖 | **Multi-Agent Pipelines** | Core skills chain together: Research → Write → Review → Publish in a seamless workflow |
 | 📊 | **39 Database Integration Skills** | Instant access to PubMed, ChEMBL, UniProt, ClinicalTrials.gov, COSMIC, and more |
@@ -235,7 +260,7 @@ and degrades gracefully to plain `requests` / WebSearch when no MCP or network i
 
 | | Domain | Skills | Focus Areas |
 |:---:|:---|:---:|:---|
-| 🔄 | **Core Pipeline** | **9** | Multi-agent research → write → review → publish pipeline + citation verifier + teaching + thesis + workflow orchestration |
+| 🔄 | **Core Pipeline** | **10** | Multi-agent research → write → review → publish pipeline + citation verifier + teaching + thesis + workflow orchestration + skill-finder router (the `alterflow` launcher) |
 | 🗄️ | **Databases** | **39** | Connectors to scientific databases — PubMed, ChEMBL, UniProt, ClinicalTrials.gov, COSMIC, and more |
 | 🧬 | **Bioinformatics** | **30** | Genomics, proteomics, molecular biology — Scanpy, BioPython, ESM, single-cell analysis, nf-core/sarek, QIIME 2, RNA-seq quant |
 | ⚗️ | **Cheminformatics** | **12** | Chemistry and drug discovery — RDKit, molecular dynamics, docking, ADMET |
@@ -260,7 +285,7 @@ and degrades gracefully to plain `requests` / WebSearch when no MCP or network i
 
 <a href="https://alterlab-ieu.github.io/AlterLab-Academic-Skills/"><img src="https://img.shields.io/badge/Browse%20the%20Catalog-Live%20%26%20Searchable-7C3AED?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Browse the live searchable catalog"></a>
 
-<em>Search all 238 skills by name, domain, or keyword — no install required.</em>
+<em>Search all 239 skills by name, domain, or keyword — no install required.</em>
 
 </div>
 
@@ -362,7 +387,7 @@ Installing the `core` plugin also registers these slash commands:
 <br>
 
 > [!NOTE]
-> **238 / 238 skills ship executable evals** on the canonical [agentskills.io](https://agentskills.io) schema. Schema and trigger-coverage are validated in CI on every PR; the behavioral pass (claude CLI + LLM judge) runs on demand via `workflow_dispatch` **and nightly over a rotating 1/7 shard**, so the whole corpus is behaviorally judged across each week. An [`--activation`](docs/evals.md) harness additionally measures auto-selection rate against Anthropic's 90% bar, and [`scripts/confusion_matrix.py`](scripts/confusion_matrix.py) statically ranks cross-firing risk between sibling skills. See [`docs/evals.md`](docs/evals.md).
+> **239 / 239 skills ship executable evals** on the canonical [agentskills.io](https://agentskills.io) schema. Schema and trigger-coverage are validated in CI on every PR; the behavioral pass (claude CLI + LLM judge) runs on demand via `workflow_dispatch` **and nightly over a rotating 1/7 shard**, so the whole corpus is behaviorally judged across each week. An [`--activation`](docs/evals.md) harness additionally measures auto-selection rate against Anthropic's 90% bar, and [`scripts/confusion_matrix.py`](scripts/confusion_matrix.py) statically ranks cross-firing risk between sibling skills. See [`docs/evals.md`](docs/evals.md).
 >
 > **Trust & portability signals** (all generated + CI-enforced): [`SECURITY_SCAN.md`](SECURITY_SCAN.md) — outbound-host allowlist + a no-shell-pipe / no-`eval`-on-input / no-hardcoded-secrets attestation; [`docs/portability.md`](docs/portability.md) — what transfers to Codex/Cursor/Gemini vs. Claude-Code-specific; [`docs/agents-and-teams.md`](docs/agents-and-teams.md) — the 35 pipeline subagents and the teams they compose.
 
@@ -370,7 +395,7 @@ Installing the `core` plugin also registers these slash commands:
 
 ---
 
-## ⚡ Core Pipeline — 9 Skills
+## ⚡ Core Pipeline — 10 Skills
 
 > *The heart of the system — a multi-agent research-to-publication pipeline with 35 specialized agents, plus teaching and thesis supervision tools.*
 
@@ -385,12 +410,13 @@ Installing the `core` plugin also registers these slash commands:
 | 7 | **📋 Thesis Supervisor** | — | Dissertation guidance, defense prep, committee management |
 | 8 | **🔗 Link Health** | — | Repo link-health audit meta-skill |
 | 9 | **🧩 Workflow Orchestration** | — | Composes AlterLab skills into multi-agent workflows: subagent fan-out, pipelines, judge panels, adversarial verification |
+| 10 | **🧭 Skill Finder** | — | Front-door router — turns *"use AlterLab skills"* into the right skill(s); the **`alterflow`** keyword clarifies the goal then launches a dynamic multi-agent workflow |
 
 <br>
 
 ---
 
-## 📚 All 238 Skills
+## 📚 All 239 Skills
 
 ### 🗄️ Databases — Scientific Database Connectors (39 Skills)
 
@@ -796,8 +822,8 @@ A stage-gated methods spine: an orchestrator holds a **Design Passport**, five g
 
 ```
 AlterLab-Academic-Skills/
-├── 📁 skills/                       # 238 skills across 17 domains
-│   ├── 🔄 core/                # 9 pipeline + citation-verifier + teaching + thesis skills
+├── 📁 skills/                       # 239 skills across 17 domains
+│   ├── 🔄 core/                # 10 pipeline + citation-verifier + teaching + thesis + skill-finder
 │   ├── 🗄️ databases/           # 39 database connectors
 │   ├── 🧬 bioinformatics/      # 38 bio/genomics tools
 │   ├── ⚗️ cheminformatics/     # 12 chemistry/drug discovery
@@ -881,8 +907,8 @@ Skills activate automatically based on user intent:
 
 | | **AlterLab Academic Skills** | **K-Dense scientific-agent-skills** | **anthropics/skills** |
 |:---|:---:|:---:|:---:|
-| **Skills** | 238 | 138 *(self-reported)* | General-purpose examples |
-| **Executable evals** | 238 / 238 shipped; coverage CI-gated, behavioral on demand | Not shipped as an eval harness | Not the project's focus |
+| **Skills** | 239 | 138 *(self-reported)* | General-purpose examples |
+| **Executable evals** | 239 / 239 shipped; coverage CI-gated, behavioral on demand | Not shipped as an eval harness | Not the project's focus |
 | **License** | MIT | MIT | MIT |
 | **Academic focus** | Built for the research lifecycle | Scientific tooling | General / reference |
 | **Bundles / marketplace** | Per-domain `claude.ai` bundles + Claude Code marketplace | — | — |
@@ -966,7 +992,7 @@ MIT License — Copyright (c) 2026 AlterLab Creative Technologies Laboratory
 
 <br><br>
 
-<b>238 skills · 17 domains · 238 with executable evals · 1 prompt away from expert-level research</b>
+<b>239 skills · 17 domains · 239 with executable evals · 1 prompt away from expert-level research</b>
 
 <br><br>
 

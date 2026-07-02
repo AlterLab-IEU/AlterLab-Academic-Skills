@@ -1,7 +1,7 @@
 [project]
 name = "alterlab-academic-skills"
-version = "2.5.0"
-description = "238 Claude AI skills for faculty and academic researchers"
+version = "2.6.0"
+description = "239 Claude AI skills for faculty and academic researchers"
 requires-python = ">=3.12"
 license = "MIT"
 

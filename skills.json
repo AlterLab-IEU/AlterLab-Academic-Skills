@@ -1,11 +1,11 @@
 {
   "summary": {
-    "total": 238,
+    "total": 239,
     "per_domain": {
       "bioinformatics": 38,
       "cheminformatics": 12,
       "clinical-research": 7,
-      "core": 9,
+      "core": 10,
       "data-science": 22,
       "databases": 39,
       "document-tools": 3,
@@ -21,9 +21,9 @@
       "writing-tools": 13
     },
     "eval_coverage": {
-      "with_evals": 238,
+      "with_evals": 239,
       "without_evals": 0,
-      "total": 238,
+      "total": 239,
       "fraction": 1.0
     }
   },
@@ -1582,6 +1582,24 @@
         "process_summary_protocol.md",
         "reproducibility_and_audit.md",
         "team_collaboration_protocol.md"
+      ]
+    },
+    {
+      "name": "alterlab-skill-finder",
+      "domain": "core",
+      "description": "The AlterLab front door and multi-agent launcher — routes a task to the right AlterLab skill(s) when the user invokes the suite without naming one, and for a multi-stage goal (or on the keyword 'alterflow', aliases 'alterresearch' / 'ultralab') it CLARIFIES the goal with a few questions, SELECTS the skills the task needs, and runs a dynamic multi-agent workflow composing them (via alterlab-workflow-orchestration, alterlab-research-pipeline, or alterlab-ssci-orchestrator). Triggers on 'use AlterLab skills', 'which AlterLab skill for X', 'is there an AlterLab skill for…', a multi-stage research goal, 'alterflow …', or any generic AlterLab request where the user does not know skill names. It always asks clarifying questions before executing a multi-step run. Use when someone references AlterLab generically, describes a multi-stage goal, or fires the alterflow keyword; when the user already names a specific skill, defer to that skill directly. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key or network required. A routing + orchestration front-end: it reads the bundled skill index and hands off to the matching AlterLab skill(s). Multi-agent execution uses the host's subagent/Workflow tools where available (Claude Code, Cowork); on surfaces without them it decomposes the work into sequential phases.",
+      "allowed_tools": [
+        "Read",
+        "Task"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 127,
+      "references": [
+        "skill_index.md"
       ]
     },
     {
