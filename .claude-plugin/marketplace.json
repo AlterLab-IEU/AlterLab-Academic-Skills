@@ -518,7 +518,7 @@
     {
       "name": "alterlab-social-science-workflow",
       "source": "./skills/social-science-workflow",
-      "description": "Stage-gated social-science methods spine (design/identifying-assumption, measurement reliability-vs-validity, sampling/power, and inferential-claim audit gates) (17 skills)",
+      "description": "Stage-gated social-science methods spine — orchestrator + 5 validity gates (design/identifying-assumption, measurement, sampling/power, reflexivity, inference) and 11 analysis modules (causal inference, complex-survey analysis, SEM/psychometrics, multilevel models, QCA, SNA, ABM, text-as-data, qualitative analysis, meta-analysis, missing data) (17 skills)",
       "version": "2.5.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",

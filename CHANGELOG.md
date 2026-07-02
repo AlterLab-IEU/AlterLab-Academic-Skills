@@ -6,6 +6,17 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+
+- **`social-science-workflow` is now a standalone-installable plugin** — the domain folder carries
+  its own generated `.claude-plugin/plugin.json` (explicit `skills` array of all 17 skills), so it
+  can be used on its own (`claude --plugin-dir skills/social-science-workflow`) in addition to the
+  umbrella marketplace install (`/plugin install alterlab-social-science-workflow@alterlab-academic-skills`).
+  `gen_marketplace.py` emits and drift-checks it (`STANDALONE_PLUGIN_DOMAINS`); the tooling ignores
+  the `.claude-plugin/` dir (skills are discovered by `SKILL.md` presence). Refreshed the domain's
+  marketplace blurb to the full 17-skill even-handed spine, and added the missing
+  `alterlab-social-science-workflow` to the README's installable-plugins list.
+
 ## [2.5.0] — 2026-07-02
 
 Social-science domain expansion — makes `social-science-workflow` methodologically even-handed
