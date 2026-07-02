@@ -137,6 +137,33 @@ def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
     return fm, body
 
 
+def yaml_unsafe_frontmatter_keys(text: str) -> list[str]:
+    """Top-level frontmatter keys whose UNQUOTED scalar value would break a strict YAML
+    parser. `parse_frontmatter` above is tolerant (regex, greedy `.*`) and silently accepts
+    these, but a real YAML parser — e.g. the external `skills-ref` spec validator — rejects
+    them. The common breaker is `': '` (colon+space) or a trailing `':'` inside a plain
+    scalar (a description like '... preprocessing: building ...' parses as a nested mapping).
+    Quoted values are safe. Returns the offending key names."""
+    lines = text.split("\n")
+    if not lines or lines[0].strip() != "---":
+        return []
+    out: list[str] = []
+    for line in lines[1:]:
+        if line.strip() == "---":
+            break
+        if not line or line[0] in " \t#":
+            continue  # blank, indented (nested), or comment
+        m = re.match(r"^([A-Za-z][A-Za-z0-9_-]*):\s(.*)$", line)
+        if not m:
+            continue
+        key, val = m.group(1), m.group(2)
+        if not val or val[0] in "\"'":
+            continue  # quoted scalar is safe
+        if ": " in val or val.rstrip().endswith(":"):
+            out.append(key)
+    return out
+
+
 def normalize_license(value: str) -> str | None:
     """Return canonical license string if recognized, else None."""
     if not value:
@@ -266,6 +293,16 @@ def audit_skill(skill_md: Path) -> SkillReport:
     if not fm:
         report.findings.append(Finding(str(rel), "error", "no-frontmatter", "Missing YAML frontmatter"))
         return report
+
+    # Strict-YAML safety: the tolerant parser above accepts scalars a real YAML parser (and the
+    # external skills-ref spec validator) rejects. Catch them here so CI fails locally, not only
+    # in the conformance job.
+    for key in yaml_unsafe_frontmatter_keys(text):
+        report.findings.append(Finding(
+            str(rel), "error", "frontmatter-yaml-unsafe",
+            f"`{key}` is an unquoted scalar containing ': ' (colon+space) or a trailing ':' — "
+            "breaks strict YAML parsers (skills-ref). Quote it or rephrase (e.g. use ' — ').",
+        ))
 
     name = fm.get("name", "").strip().strip('"')
     report.name = name
