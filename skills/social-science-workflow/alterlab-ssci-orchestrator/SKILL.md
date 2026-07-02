@@ -6,8 +6,8 @@ allowed-tools: Read Bash(python:*)
 compatibility: No API key required. A thin discipline-enforcing pipeline coordinator; it dispatches to sibling gate/analysis skills that run locally. Extends the composition patterns of alterlab-workflow-orchestration.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
-    depends_on: "alterlab-ssci-design-gate, alterlab-ssci-measurement-gate, alterlab-ssci-sampling-gate, alterlab-ssci-inference-gate; dispatches to alterlab-causal-inference, alterlab-sem-psychometrics, alterlab-qca, alterlab-sna, alterlab-abm-mesa, alterlab-text-as-data; extends alterlab-workflow-orchestration"
+    version: "1.1.0"
+    depends_on: "alterlab-ssci-design-gate, alterlab-ssci-measurement-gate, alterlab-ssci-sampling-gate, alterlab-ssci-reflexivity-gate, alterlab-ssci-inference-gate; dispatches to alterlab-causal-inference, alterlab-sem-psychometrics, alterlab-qca, alterlab-sna, alterlab-abm-mesa, alterlab-text-as-data, alterlab-survey-analysis, alterlab-qualitative-analysis, alterlab-multilevel-models, alterlab-meta-analysis, alterlab-missing-data; extends alterlab-workflow-orchestration"
 ---
 
 # SSci Orchestrator — Route the Study, Hold the Passport, Enforce the Gates
@@ -50,25 +50,38 @@ verdict visible in one artifact.
 ```
 research question
   └─> [design-gate]  ── pins design_type + identifying_assumption ──▶ (MANDATORY: BLOCK-capable)
-        └─> [measurement-gate]  ── reliability + validity + invariance ──▶ (WARN default)
+        └─> [measurement-gate]   quantitative constructs ─┐
+            [reflexivity-gate]   qualitative/interpretivist ─┴─▶ (measurement-stage analog)
               └─> [sampling-gate]  ── frame + method + size logic ──▶ (WARN default)
-                    └─> [ANALYSIS MODULE]  ── dispatched by design_type (see routing table) ──▶
+                    └─> [ANALYSIS MODULE]  ── dispatched by design_type / data (see routing table) ──▶
                           └─> [inference-gate]  ── audits claims vs design/sample ──▶ (MANDATORY: BLOCK-capable)
                                 └─> reporting
 ```
+
+At the measurement stage the orchestrator picks the **paradigm-appropriate** gate:
+`alterlab-ssci-measurement-gate` for quantitative constructs (reliability/validity/invariance),
+`alterlab-ssci-reflexivity-gate` for qualitative/interpretivist work (positionality + Lincoln &
+Guba trustworthiness). Mixed-methods runs both on the respective strands.
 
 **Analysis-module routing** (by `design_type` + data in the Passport):
 
 | If the design / data is… | Dispatch to |
 |---|---|
+| Complex-sample survey (weights / strata / clusters / FPC) | `alterlab-survey-analysis` |
 | Quasi-experimental / observational causal (DiD, IV, RDD, panel FE) | `alterlab-causal-inference` |
+| Clustered / nested / longitudinal (variance partitioning) | `alterlab-multilevel-models` |
 | Latent constructs, CFA / SEM / IRT / invariance | `alterlab-sem-psychometrics` |
 | Small-N configurational, set-theoretic (fsQCA/csQCA) | `alterlab-qca` |
 | Relational / network data | `alterlab-sna` |
 | Simulation of interacting agents | `alterlab-abm-mesa` |
-| Corpora / open-ended text | `alterlab-text-as-data` |
+| Corpora / open-ended text (computational) | `alterlab-text-as-data` |
+| Qualitative coding of interviews / open text (human) | `alterlab-qualitative-analysis` |
+| Pooling effect sizes across studies | `alterlab-meta-analysis` |
 | Interpretive / theory-building | `alterlab-qualitative-methods` (existing) |
 | Combined strands | `alterlab-mixed-methods` (existing) |
+
+**Cross-cutting**: when the dataset has missing values, `alterlab-missing-data` runs *before* the
+analysis module (state the mechanism, multiply impute) so every downstream estimate pools correctly.
 
 Full stage contract, PASS/WARN/BLOCK rules, and the analysis-module decision logic:
 `references/pipeline_contract.md`. A stdlib validator that reads a Design Passport and reports
@@ -85,9 +98,12 @@ stage: <design | measurement | sampling | analysis | inference | done>
 design_type: <set by design-gate>
 identifying_assumption: <set by design-gate>
 claim_type: <causal | associational | descriptive>
-constructs: [<appended by measurement-gate>]
+constructs: [<appended by measurement-gate — quantitative>]
+positionality: <appended by reflexivity-gate — qualitative>
+trustworthiness: {credibility, transferability, dependability, confirmability}  # reflexivity-gate
+reflexivity_evidence: <appended by reflexivity-gate — qualitative>
 sampling: {<appended by sampling-gate>}
-analysis_module: <chosen by the orchestrator from design_type>
+analysis_module: [<chosen by the orchestrator from design_type / data>]
 claims: [<audited by inference-gate>]
 gate_log: [{gate: design, verdict: PASS|WARN|BLOCK, note: ...}, ...]
 ```

@@ -2,7 +2,7 @@
 
 > **Generated** — do not edit by hand. Regenerate with `python3 scripts/gen_security_scan.py`; CI fails if this file is stale (`--check`) or if the attestation is violated (`--strict`).
 
-This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **248 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
+This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **250 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
 
 ## Attestation
 

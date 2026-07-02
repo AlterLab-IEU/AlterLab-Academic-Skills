@@ -8,15 +8,24 @@ enforces, the PASS/WARN/BLOCK semantics, and how the analysis module is chosen.
 | Stage | Gate skill | Prerequisite (must be PASS/WARN in `gate_log`) | Fail-closed? |
 |-------|-----------|------------------------------------------------|:---:|
 | design | `alterlab-ssci-design-gate` | (entry) | **yes (BLOCK-capable)** |
-| measurement | `alterlab-ssci-measurement-gate` | design | no (WARN default) |
+| measurement (quant) | `alterlab-ssci-measurement-gate` | design | no (WARN default) |
+| measurement (qual) | `alterlab-ssci-reflexivity-gate` | design | **yes (BLOCK-capable)** |
 | sampling | `alterlab-ssci-sampling-gate` | design | no (WARN default) |
-| analysis | (dispatched module) | design; measurement if latent constructs; sampling | inherits module |
+| analysis | (dispatched module) | design; the measurement-stage gate; sampling | inherits module |
 | inference | `alterlab-ssci-inference-gate` | analysis | **yes (BLOCK-capable)** |
 | reporting | (hand to `alterlab-paper-writer`) | inference PASS | — |
 
+**Measurement-stage gate is paradigm-selected.** For `design_type` in {experiment, DiD, IV, RDD,
+FE, observational, survey} with quantitative constructs → `alterlab-ssci-measurement-gate`. For
+`design_type: qualitative` (and the qualitative strand of mixed-methods) → `alterlab-ssci-reflexivity-gate`
+(positionality + Lincoln & Guba trustworthiness), which is **fail-closed** like the design and
+inference gates. Mixed-methods runs both gates on their respective strands.
+
 Measurement and sampling both depend only on design, so they may run in either order (or in
 parallel); the orchestrator dispatches whichever the study needs first. Analysis requires design,
-plus measurement when the study uses latent constructs.
+plus the measurement-stage gate. **Cross-cutting:** if the dataset has missing values,
+`alterlab-missing-data` runs before the analysis module (state mechanism → multiply impute → pool),
+so downstream estimates carry honest standard errors.
 
 ## Verdict semantics (borrowed from the ARS MANDATORY vs FULL/SLIM taxonomy)
 
@@ -40,16 +49,22 @@ N) — i.e. collect-until-significant.
 Choose from `design_type` + the data description, not the user's tool preference:
 
 ```
+complex-sample survey (weights/strata/clusters/FPC)     → alterlab-survey-analysis
 design_type == observational|quasi-experimental AND causal claim
     └─ effect estimation (DiD/IV/RDD/panel FE)         → alterlab-causal-inference
+clustered/nested/longitudinal, variance-partition Q     → alterlab-multilevel-models
 constructs present AND (CFA | SEM | IRT | invariance)  → alterlab-sem-psychometrics
 small N AND configurational/set-theoretic question     → alterlab-qca
 relational/network data (nodes + ties)                 → alterlab-sna
 mechanism via interacting heterogeneous agents          → alterlab-abm-mesa
-corpus / open-ended text is the data                    → alterlab-text-as-data
+corpus / open-ended text (computational)                → alterlab-text-as-data
+human coding of interviews / open text                  → alterlab-qualitative-analysis
+pooling effect sizes across studies                     → alterlab-meta-analysis
 interpretive / theory-building aim                       → alterlab-qualitative-methods (existing)
 combined qual + quant strands                            → alterlab-mixed-methods (existing)
 plain descriptive/inferential stats                      → alterlab-statistical-analysis (existing)
+# cross-cutting, runs BEFORE the module:
+dataset has missing values                               → alterlab-missing-data
 ```
 
 A study can dispatch to **more than one** module (e.g. a survey experiment → sem-psychometrics for
