@@ -1,6 +1,6 @@
 ---
 name: alterlab-skill-finder
-description: "The AlterLab front door and multi-agent launcher — routes a task to the right AlterLab skill(s) when the user invokes the suite without naming one, and on the keyword 'alterflow' (aliases 'alterresearch' / 'ultralab') it CLARIFIES the goal with a few questions, SELECTS the skills the task needs, and runs a dynamic multi-agent workflow composing them (via alterlab-workflow-orchestration, alterlab-research-pipeline, or alterlab-ssci-orchestrator). Triggers on 'use AlterLab skills', 'which AlterLab skill for X', 'is there an AlterLab skill for…', 'alterflow …', or any generic AlterLab request where the user does not know skill names. It always asks clarifying questions before executing a multi-step run. Use when someone references AlterLab generically or fires the alterflow keyword; when the user already names a specific skill, defer to that skill directly. Part of the AlterLab Academic Skills suite."
+description: "The AlterLab front door and multi-agent launcher — routes a task to the right AlterLab skill(s) when the user invokes the suite without naming one, and for a multi-stage goal (or on the keyword 'alterflow', aliases 'alterresearch' / 'ultralab') it CLARIFIES the goal with a few questions, SELECTS the skills the task needs, and runs a dynamic multi-agent workflow composing them (via alterlab-workflow-orchestration, alterlab-research-pipeline, or alterlab-ssci-orchestrator). Triggers on 'use AlterLab skills', 'which AlterLab skill for X', 'is there an AlterLab skill for…', a multi-stage research goal, 'alterflow …', or any generic AlterLab request where the user does not know skill names. It always asks clarifying questions before executing a multi-step run. Use when someone references AlterLab generically, describes a multi-stage goal, or fires the alterflow keyword; when the user already names a specific skill, defer to that skill directly. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Task
 compatibility: "No API key or network required. A routing + orchestration front-end: it reads the bundled skill index and hands off to the matching AlterLab skill(s). Multi-agent execution uses the host's subagent/Workflow tools where available (Claude Code, Cowork); on surfaces without them it decomposes the work into sequential phases."
@@ -28,8 +28,8 @@ ALWAYS ASK YOUR QUESTIONS BEFORE YOU START A MULTI-STEP RUN.
 
 | Mode | Fires on | What happens |
 |------|----------|--------------|
-| **Route** (default) | "use AlterLab skills to…", "which AlterLab skill for…", any generic AlterLab ask | classify the task → map to a domain → name and **apply** the best-fitting skill(s) |
-| **Orchestrate** | the keyword **`alterflow`** (or `alterresearch` / `ultralab`), or a task that spans several stages | **clarify → select skills → plan a multi-agent workflow → confirm → execute** |
+| **Route** (default) | "use AlterLab skills to…", "which AlterLab skill for…", any generic AlterLab ask | classify the task → map to a domain → name and **apply** the best-fitting skill(s) — Anthropic's **routing** pattern |
+| **Orchestrate** | a task that **spans several dependent stages** (research → write → review, etc.); the keyword **`alterflow`** — aliases `alterresearch` / `ultralab` — is an explicit shortcut into this mode | **clarify → select skills → plan a multi-agent workflow → confirm → execute** — Anthropic's **orchestrator-workers** pattern |
 
 ## When to Use This Skill
 
@@ -59,27 +59,39 @@ ALWAYS ASK YOUR QUESTIONS BEFORE YOU START A MULTI-STEP RUN.
 
 ## Orchestrate mode — `alterflow` (clarify FIRST, then multi-agent)
 
-When the user fires the keyword or the task clearly spans stages, do **not** start executing. Run
-this sequence:
+Fires when the task **spans several dependent stages** (e.g. "investigate X *and* write it up",
+"research → analyze → publish") — the `alterflow` keyword is just an explicit shortcut into this
+mode, not the only way in; detect the multi-stage intent even when the user never types it. This is
+Anthropic's **orchestrator-workers** pattern (a lead agent dynamically decomposes the task, delegates
+to workers, and synthesizes) with a human-in-the-loop clarify/confirm gate in front. Do **not** start
+executing — run this sequence:
 
 1. **CLARIFY (mandatory, before any execution).** Ask 2–4 sharp scoping questions — e.g. the research
    question / deliverable, quantitative vs qualitative, the dataset or corpus, the target output
    (report, paper, model, figures), depth/time budget, and language. Do not guess when the answer
    changes the plan.
 2. **SELECT.** From the answers, choose the AlterLab skills the job needs (use the domain map + the
-   index). List them.
-3. **PLAN.** Lay out a **dynamic multi-agent workflow** — the phases, which skill runs in each, where
-   subagents fan out in parallel, and the verification/critique step. Reuse the existing orchestrators
-   rather than reinventing them:
+   index). List them. **First ask whether it should be multi-agent at all:** if the work is tightly
+   coupled, needs one shared context, or has little that runs in parallel (Anthropic's caution — most
+   coding-like, dependency-heavy tasks), prefer a **sequential pipeline (prompt-chaining)** or a single
+   Route-mode skill over a fan-out.
+3. **PLAN.** Lay out the **dynamic multi-agent workflow** — the phases, which skill runs in each, where
+   subagents fan out in parallel, and the **evaluator-optimizer** verification/critique step. **Scale
+   the subagent count to complexity and default low** (Anthropic's rule of thumb: simple fact-finding
+   ≈ 1 agent; a focused comparison ≈ 2–4; only genuinely broad work ≈ 10+). Reuse the existing
+   orchestrators rather than reinventing them:
    - end-to-end research→publish → **`alterlab-research-pipeline`** (deep-research → paper-writer → paper-reviewer, revision loops)
    - a whole social-science study → **`alterlab-ssci-orchestrator`** (design → measurement/reflexivity → sampling → analysis module → inference)
    - a bespoke fan-out / judge-panel / adversarial-verify workflow → **`alterlab-workflow-orchestration`**
-4. **CONFIRM.** Show the selected skills + the plan in a few lines and get a go-ahead (or incorporate
-   a correction).
+4. **CONFIRM — plan *and its rough cost*.** Show the selected skills + the phases in a few lines,
+   **plus an effort estimate** (≈ how many phases / subagents). Multi-agent runs spend far more tokens
+   than a single pass, so let the user opt in knowingly; get a go-ahead (or incorporate a correction).
 5. **EXECUTE.** Run it as a multi-agent workflow — spawn subagents via the host's Task/Workflow tools
    where available (Claude Code, Cowork); on surfaces without them, execute the phases sequentially and
-   keep the same hand-offs. Carry each stage's artifact to the next (the pipelines define the hand-off
-   contracts).
+   keep the same hand-offs. **Give every spawned subagent a complete task spec** — an objective, an
+   output format, which skills/tools/sources to use, and clear boundaries — or workers duplicate work
+   and leave gaps (`alterlab-workflow-orchestration` models these specs). Carry each stage's artifact
+   to the next (the pipelines define the hand-off contracts).
 
 The one rule: **questions before execution.** A short clarify step beats a wrong 20-agent run.
 
