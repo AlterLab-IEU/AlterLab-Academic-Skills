@@ -4,7 +4,30 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.3.0] — 2026-07-02
+## [Unreleased]
+
+Foundation-model skills — the suite gains a **runnable structure-prediction** cluster plus the
+provider-agnostic GPU dispatch layer they build on. **210 → 214 skills** (bioinformatics
+30 → 33, domain-specific 17 → 18), still 100% eval coverage.
+
+### Added
+
+- **`alterlab-remote-compute`** (domain-specific) — provider-agnostic `submit → poll → harvest`
+  dispatch across SLURM/HPC (`sbatch`/`sacct`) and managed GPU APIs (Modal, RunPod, GCP Batch /
+  Vertex AI), with a stdlib-only `scripts/dispatch.py`. The prerequisite the GPU model skills
+  dispatch through; generalizes the single-provider `alterlab-modal`.
+- **`alterlab-alphafold`** (bioinformatics) — AlphaFold2 folding via ColabFold (Mirdita et al.
+  2022): MMseqs2 MSAs, monomer + AF2-Multimer complexes, pLDDT/pTM/ipTM/PAE confidence, and
+  design self-consistency checks.
+- **`alterlab-boltz`** (bioinformatics) — Boltz-2 (Passaro & Wohlwend 2025, `jwohlwend/boltz`),
+  an open AlphaFold3-style model: protein + ligand (SMILES/CCD) co-folding, protein–nucleic-acid
+  assemblies, and binding-affinity prediction.
+- **`alterlab-chai`** (bioinformatics) — Chai-1 (Chai Discovery 2024, `chaidiscovery/chai-lab`):
+  multi-entity complex prediction from a single typed FASTA, strong on antibody–antigen, with
+  optional MSAs and restraints.
+
+The three folders carry mutual `prefer alterlab-x` routing (alphafold ↔ boltz ↔ chai) and
+near-miss evals; `confusion_matrix.py` reports zero new routing gaps.
 
 The "review & trust" release: implements the external repo-review roadmap end to end —
 new activation/collision benchmarks, a CI-attested trust manifest, formalized agents/teams

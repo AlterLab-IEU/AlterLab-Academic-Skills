@@ -1,15 +1,15 @@
 {
   "summary": {
-    "total": 210,
+    "total": 214,
     "per_domain": {
-      "bioinformatics": 30,
+      "bioinformatics": 33,
       "cheminformatics": 12,
       "clinical-research": 7,
       "core": 9,
       "data-science": 22,
       "databases": 39,
       "document-tools": 2,
-      "domain-specific": 17,
+      "domain-specific": 18,
       "faculty-life": 6,
       "finance-economics": 7,
       "lab-integrations": 9,
@@ -20,13 +20,34 @@
       "writing-tools": 13
     },
     "eval_coverage": {
-      "with_evals": 210,
+      "with_evals": 214,
       "without_evals": 0,
-      "total": 210,
+      "total": 214,
       "fraction": 1.0
     }
   },
   "skills": [
+    {
+      "name": "alterlab-alphafold",
+      "domain": "bioinformatics",
+      "description": "Predict protein 3D structures with AlphaFold2 via ColabFold — MMseqs2-accelerated MSAs, monomer and AlphaFold2-Multimer complex folding, and confidence-based validation (pLDDT, pTM/ipTM, PAE). Use when folding a protein sequence or complex from FASTA, generating a predicted structure with confidence metrics, ranking models, or checking self-consistency of a design. For co-folding a protein WITH a small-molecule ligand or predicting binding affinity prefer alterlab-boltz; for antibody–antigen or one-FASTA multi-entity complexes prefer alterlab-chai; to LOOK UP an already-computed structure prefer alterlab-alphafold-db; for ESM embeddings or inverse folding prefer alterlab-esm. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Runs via ColabFold (`colabfold_batch`; install `colabfold[alphafold]` — TODO(verify) exact pin) under `uv run python`. Requires a CUDA GPU for folding (JAX/CUDA); the MSA step uses the hosted MMseqs2 API by default or a local database. AF2 network weights are downloaded once and cached (~several GB). Dispatch heavy runs via alterlab-remote-compute.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash(uv:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 90,
+      "references": [
+        "colabfold_usage.md"
+      ]
+    },
     {
       "name": "alterlab-anndata",
       "domain": "bioinformatics",
@@ -154,6 +175,27 @@
       ]
     },
     {
+      "name": "alterlab-boltz",
+      "domain": "bioinformatics",
+      "description": "Co-fold biomolecular complexes with Boltz-2, an open AlphaFold3-style model — predict protein + ligand (SMILES/CCD), protein + nucleic-acid, and multi-chain structures in one pass, with binding-affinity prediction. Use when folding a protein together with a small-molecule ligand, predicting a holo (ligand-bound) complex or its binding affinity, or co-folding protein–DNA/RNA assemblies. For protein-only or protein–protein folding without ligands prefer alterlab-alphafold; for antibody–antigen complexes prefer alterlab-chai; to dock a ligand into a FIXED receptor structure prefer alterlab-diffdock; to look up an existing structure prefer alterlab-pdb. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Runs the Boltz-2 model (`jwohlwend/boltz`; install the `boltz` package — TODO(verify) exact pin) under `uv run python`. Requires a CUDA GPU; model weights download once and cache (several GB). Inputs are a FASTA or a YAML spec listing chains + ligands (SMILES/CCD). Dispatch heavy runs via alterlab-remote-compute.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash(uv:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 77,
+      "references": [
+        "boltz_usage.md"
+      ]
+    },
+    {
       "name": "alterlab-cellxgene",
       "domain": "bioinformatics",
       "description": "Query the CZ CELLxGENE Census (61M+ cells) programmatically via cellxgene-census and TileDB-SOMA, slicing expression by tissue, disease, or cell type and returning AnnData. Use when pulling reference single-cell RNA-seq data from the largest curated public atlas, running population-scale queries, or benchmarking your data against a reference — for analyzing your own dataset use scanpy or scvi-tools. Part of the AlterLab Academic Skills suite.",
@@ -176,6 +218,27 @@
         "common_patterns.md",
         "ml_and_scanpy.md",
         "querying_expression.md"
+      ]
+    },
+    {
+      "name": "alterlab-chai",
+      "domain": "bioinformatics",
+      "description": "Predict biomolecular complexes with Chai-1, an open AlphaFold3-style model that folds multi-entity assemblies (proteins, ligands, nucleic acids) from a single typed FASTA — strong on antibody–antigen and protein–ligand complexes, with optional MSA and restraint inputs. Use when predicting an antibody–antigen complex, folding a mixed protein/ligand/nucleic-acid assembly described in one FASTA, or generating a complex with experimental restraints. For binding-affinity prediction or a ligand-focused co-fold prefer alterlab-boltz; for protein-only or protein–protein folding prefer alterlab-alphafold; to dock into a fixed receptor prefer alterlab-diffdock. Part of the AlterLab Academic Skills suite.",
+      "license": "Apache-2.0",
+      "version": "1.0.0",
+      "compatibility": "Runs the Chai-1 model (`chaidiscovery/chai-lab`; install the `chai_lab` package — TODO(verify) exact pin) under `uv run python`. Requires a CUDA GPU; weights download once and cache (several GB). Input is a single FASTA with typed records (protein/ligand/RNA/DNA); MSAs and restraints are optional. Dispatch heavy runs via alterlab-remote-compute.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash(uv:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 82,
+      "references": [
+        "chai_usage.md"
       ]
     },
     {
@@ -3354,6 +3417,27 @@
         "core_concepts.md",
         "time_evolution.md",
         "visualization.md"
+      ]
+    },
+    {
+      "name": "alterlab-remote-compute",
+      "domain": "domain-specific",
+      "description": "Dispatch long-running GPU/CPU jobs to remote compute with a provider-agnostic submit → poll → harvest pattern across SLURM/HPC (sbatch, squeue, sacct) and managed APIs (Modal, RunPod, GCP Batch / Vertex AI). Use when submitting a batch job to a cluster, polling job status, retrieving result artifacts from a scheduler or cloud GPU provider, or writing a portable job-submission wrapper; the foundation-model skills (alterlab-alphafold, alterlab-boltz, alterlab-rfdiffusion, and siblings) dispatch their GPU work through this pattern. For Modal-specific serverless container deployment and autoscaling prefer alterlab-modal instead. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Runs under `uv run python`; the portable dispatcher (`scripts/dispatch.py`) is stdlib-only. SLURM paths need `sbatch`/`squeue`/`sacct` on PATH (an HPC login node); managed backends need the provider CLI/SDK and account credentials read from environment variables (never hardcoded). No GPU is needed to submit/poll — only the remote job itself uses one.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash(uv:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 138,
+      "references": [
+        "providers.md"
       ]
     },
     {

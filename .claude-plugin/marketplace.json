@@ -1,14 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "alterlab-academic-skills",
-  "description": "210 Claude skills for academic research, organized by domain",
+  "description": "214 Claude skills for academic research, organized by domain",
   "version": "2.3.0",
   "owner": {
     "name": "AlterLab @ Izmir University of Economics",
     "email": "alterlab.ieu@gmail.com"
   },
   "metadata": {
-    "description": "210 Claude skills for academic research, organized by domain",
+    "description": "214 Claude skills for academic research, organized by domain",
     "version": "2.3.0",
     "author": {
       "name": "AlterLab @ Izmir University of Economics",
@@ -19,7 +19,7 @@
     {
       "name": "alterlab-bioinformatics",
       "source": "./skills/bioinformatics",
-      "description": "Genomics, proteomics, and single-cell analysis (Scanpy, BioPython, pysam, ESM) (30 skills)",
+      "description": "Genomics, proteomics, and single-cell analysis (Scanpy, BioPython, pysam, ESM) (33 skills)",
       "version": "2.3.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
@@ -37,12 +37,15 @@
       ],
       "strict": false,
       "skills": [
+        "./alterlab-alphafold",
         "./alterlab-anndata",
         "./alterlab-arboreto",
         "./alterlab-biopython",
         "./alterlab-bioservices",
         "./alterlab-blast",
+        "./alterlab-boltz",
         "./alterlab-cellxgene",
+        "./alterlab-chai",
         "./alterlab-cobrapy",
         "./alterlab-deeptools",
         "./alterlab-esm",
@@ -314,7 +317,7 @@
     {
       "name": "alterlab-domain-specific",
       "source": "./skills/domain-specific",
-      "description": "Quantum computing, geospatial, materials, astronomy, and digital humanities (17 skills)",
+      "description": "Quantum computing, geospatial, materials, astronomy, and digital humanities (18 skills)",
       "version": "2.3.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
@@ -348,6 +351,7 @@
         "./alterlab-pymatgen",
         "./alterlab-qiskit",
         "./alterlab-qutip",
+        "./alterlab-remote-compute",
         "./alterlab-social-science-methods"
       ]
     },
