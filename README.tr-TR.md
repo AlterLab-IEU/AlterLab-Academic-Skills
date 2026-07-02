@@ -254,10 +254,11 @@ Beceriler **claude.ai (tarayıcı)** ve **Claude masaüstü uygulamasında** bas
 3. **`+`** → **Beceri oluştur** → **Beceri yükle** öğesine tıklayın ve bir becerinin **`.zip`** dosyasını seçin.
 4. Becerinin anahtarını **Açık** konuma getirin. Artık normal şekilde sohbet edin — Claude, isteğiniz eşleştiğinde beceriyi otomatik kullanır.
 
-**`.zip` dosyasını nereden alırım? Terminal gerektirmeyen iki yol:**
+**`.zip` dosyasını nereden alırım? Terminal gerektirmeyen yollar, en kolayı önce:**
 
-- **Tek beceri** — bu deponun üstündeki yeşil **`< > Code` ▸ Download ZIP** düğmesine tıklayın, arşivi açın, istediğiniz beceri klasörüne (ör. `skills/bioinformatics/alterlab-scanpy`) sağ tıklayıp **Sıkıştır / Zip** yapın. *O* zip'i yükleyin.
-- **Bütün bir alan** — [Sürümler sayfasından](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases) hazır bir paket indirin (ör. `bioinformatics.zip`).
+- **Tek beceri (tek tık)** — [Sürümler sayfasında](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases) her beceri kendi hazır **`skill-<ad>-<sürüm>.zip`** dosyasıyla gelir (ör. `skill-alterlab-scanpy-2.6.0.zip`). O tek dosyayı indirip olduğu gibi yükleyin.
+- **Bütün bir alan** — aynı Sürümler sayfasından bir alan paketi indirin (ör. `alterlab-bioinformatics-<sürüm>.zip`).
+- **Kendiniz oluşturun (sürüm gerekmez)** — bu deponun üstündeki yeşil **`< > Code` ▸ Download ZIP** düğmesine tıklayın, arşivi açın, istediğiniz beceri klasörüne (ör. `skills/bioinformatics/alterlab-scanpy`) sağ tıklayıp **Sıkıştır / Zip** yapın. *O* zip'i yükleyin.
 
 > [!IMPORTANT]
 > Sohbete sürüklenen gevşek bir `.md` dosyası kurulu bir beceri **değildir** — `SKILL.md` dosyasını içeren bir **beceri klasörünün zip'i** olmalıdır. Yalnızca güvendiğiniz kaynaklardan beceri kurun; uygulamada yüklediğiniz beceriler hesabınıza bağlıdır ve Claude Code ile senkronize olmaz.

@@ -35,9 +35,11 @@ warning rather than a hard failure for two legitimately large domains.
 
 Usage::
 
-    uv run python scripts/build_bundles.py            # build all 13 bundles
-    uv run python scripts/build_bundles.py --verify   # build, then assert + report
-    uv run python scripts/build_bundles.py --clean    # remove dist/ first
+    uv run python scripts/build_bundles.py                 # build all domain bundles
+    uv run python scripts/build_bundles.py --verify        # build, then assert + report
+    uv run python scripts/build_bundles.py --clean         # remove dist/ first
+    uv run python scripts/build_bundles.py --skills        # + one zip per skill in dist/skills/
+    uv run python scripts/build_bundles.py --skills-only   # ONLY the per-skill zips
 """
 from __future__ import annotations
 
@@ -52,6 +54,10 @@ REPO = Path(__file__).resolve().parent.parent
 SKILLS = REPO / "skills"
 SHARED = SKILLS / "core" / "shared"
 DIST = REPO / "dist"
+# Per-skill single-skill bundles land here (one zip per skill), structured so the
+# claude.ai "Customize ▸ Skills → Upload a skill" uploader accepts them directly:
+# each zip contains the skill folder at its top level (``<name>/SKILL.md`` …).
+SKILLS_DIST = DIST / "skills"
 
 # --- thresholds -------------------------------------------------------------
 # Hard ceiling: a bundle larger than this is a build error (runaway bloat /
@@ -79,6 +85,15 @@ FIXED_DATE_TIME = (1980, 1, 1, 0, 0, 0)
 def domains() -> list[str]:
     """Return the sorted list of domain directory names under skills/."""
     return sorted(d.name for d in SKILLS.iterdir() if d.is_dir())
+
+
+def skill_dirs() -> list[Path]:
+    """Every skill directory (one containing a top-level ``SKILL.md``), sorted by name.
+
+    Discovery is by ``SKILL.md`` presence — the same rule the rest of the tooling
+    uses — so shared/support trees (e.g. ``skills/core/shared/``) are ignored.
+    """
+    return sorted((p.parent for p in SKILLS.rglob("SKILL.md")), key=lambda d: d.name)
 
 
 def _excluded(path: Path) -> bool:
@@ -142,6 +157,61 @@ def build_one(domain: str) -> Path:
     return out
 
 
+def build_skill(skill_dir: Path, out_dir: Path = SKILLS_DIST) -> Path:
+    """Build ``<out_dir>/<name>.zip`` for a single skill and return its path.
+
+    The archive contains the skill folder at its top level (``<name>/SKILL.md``,
+    ``<name>/references/…``, ``<name>/scripts/…``) — exactly the shape the
+    claude.ai "Upload a skill" flow expects, so a non-technical user can download
+    one file and upload it as-is. Uses the same deterministic member metadata as
+    the domain bundles, so re-runs are byte-identical.
+    """
+    out_dir.mkdir(parents=True, exist_ok=True)
+    name = skill_dir.name
+    out = out_dir / f"{name}.zip"
+    seen: set[str] = set()
+
+    members: list[tuple[Path, str]] = []
+    for f in _collect(skill_dir):
+        arc = f"{name}/{f.relative_to(skill_dir).as_posix()}"
+        members.append((f, arc))
+    members.sort(key=lambda t: t[1])
+
+    with zipfile.ZipFile(out, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for src, arc in members:
+            _add(zf, src, arc, seen)
+
+    return out
+
+
+def verify_skill(path: Path) -> tuple[int, int, list[str]]:
+    """Re-read a per-skill zip; return (size_bytes, file_count, problems).
+
+    A valid single-skill bundle must be intact and carry its ``SKILL.md`` at the
+    top level of the archived folder (``<name>/SKILL.md``) so the uploader finds it.
+    """
+    size = path.stat().st_size
+    problems: list[str] = []
+    with zipfile.ZipFile(path) as zf:
+        bad = zf.testzip()
+        if bad is not None:
+            problems.append(f"HARD: corrupt member {bad!r}")
+        names = zf.namelist()
+    count = len(names)
+
+    if f"{path.stem}/SKILL.md" not in names:
+        problems.append(f"HARD: missing {path.stem}/SKILL.md at archive top level")
+    if size >= MAX_SIZE_BYTES:
+        problems.append(f"HARD: {size / 1e6:.2f}MB exceeds {MAX_SIZE_BYTES / 1e6:.0f}MB ceiling")
+
+    return size, count, problems
+
+
+def build_all_skills(out_dir: Path = SKILLS_DIST) -> list[Path]:
+    """Build every per-skill zip into *out_dir*; return the sorted list of paths."""
+    return [build_skill(d, out_dir) for d in skill_dirs()]
+
+
 def verify_one(path: Path) -> tuple[int, int, list[str]]:
     """Re-read *path*; return (size_bytes, file_count, problems).
 
@@ -182,21 +252,31 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--verify", action="store_true", help="re-read each bundle, assert ceilings, print a report")
     ap.add_argument("--clean", action="store_true", help="remove dist/ before building")
+    ap.add_argument("--skills", action="store_true",
+                    help="also build one zip per skill into dist/skills/ (for the claude.ai uploader)")
+    ap.add_argument("--skills-only", action="store_true",
+                    help="build ONLY the per-skill zips (implies --skills), skipping domain bundles")
     args = ap.parse_args()
 
     if args.clean and DIST.exists():
         shutil.rmtree(DIST)
 
-    doms = domains()
     built: list[Path] = []
-    for d in doms:
-        p = build_one(d)
-        built.append(p)
-    print(f"Built {len(built)} bundle(s) into {DIST.relative_to(REPO)}/")
+    if not args.skills_only:
+        for d in domains():
+            built.append(build_one(d))
+        print(f"Built {len(built)} domain bundle(s) into {DIST.relative_to(REPO)}/")
+
+    skill_built: list[Path] = []
+    if args.skills or args.skills_only:
+        skill_built = build_all_skills()
+        print(f"Built {len(skill_built)} per-skill bundle(s) into {SKILLS_DIST.relative_to(REPO)}/")
 
     if not args.verify:
         for p in built:
             print(f"  {p.name}")
+        if skill_built:
+            print(f"  … + {len(skill_built)} per-skill zips in {SKILLS_DIST.relative_to(REPO)}/")
         return 0
 
     # --- verify + report -----------------------------------------------------
@@ -212,18 +292,33 @@ def main() -> int:
             else:
                 warnings.append(f"{p.name}: {pr}")
 
-    name_w = max(len(r[0]) for r in rows)
-    print()
-    print(f"{'bundle'.ljust(name_w)}  {'size(MB)':>8}  {'files':>5}  status")
-    print(f"{'-' * name_w}  {'-' * 8}  {'-' * 5}  {'-' * 6}")
-    for name, size, count, problems in sorted(rows):
-        if any(pr.startswith('HARD') for pr in problems):
-            status = "FAIL"
-        elif problems:
-            status = "warn"
-        else:
-            status = "ok"
-        print(f"{name.ljust(name_w)}  {_fmt_mb(size):>8}  {count:>5}  {status}")
+    if rows:
+        name_w = max(len(r[0]) for r in rows)
+        print()
+        print(f"{'bundle'.ljust(name_w)}  {'size(MB)':>8}  {'files':>5}  status")
+        print(f"{'-' * name_w}  {'-' * 8}  {'-' * 5}  {'-' * 6}")
+        for name, size, count, problems in sorted(rows):
+            if any(pr.startswith('HARD') for pr in problems):
+                status = "FAIL"
+            elif problems:
+                status = "warn"
+            else:
+                status = "ok"
+            print(f"{name.ljust(name_w)}  {_fmt_mb(size):>8}  {count:>5}  {status}")
+
+    # Per-skill zips are many (one per skill); summarise rather than list each.
+    if skill_built:
+        skill_hard = 0
+        biggest = 0
+        for p in skill_built:
+            size, _count, problems = verify_skill(p)
+            biggest = max(biggest, size)
+            for pr in problems:
+                if pr.startswith("HARD"):
+                    skill_hard += 1
+                    hard_failures.append(f"skills/{p.name}: {pr}")
+        print(f"\nPer-skill zips: {len(skill_built)} built, {len(skill_built) - skill_hard} "
+              f"valid (largest {_fmt_mb(biggest)}MB); each carries <name>/SKILL.md at top level.")
 
     if warnings:
         print(f"\n{len(warnings)} expectation warning(s) (non-fatal):")
@@ -236,7 +331,8 @@ def main() -> int:
             print(f"  FAIL {f}", file=sys.stderr)
         return 1
 
-    print(f"\nAll {len(built)} bundles within hard ceilings "
+    total = len(built) + len(skill_built)
+    print(f"\nAll {total} bundles within hard ceilings "
           f"(<{MAX_SIZE_BYTES // (1024 * 1024)}MB, intact, self-contained).")
     return 0
 

@@ -336,10 +336,11 @@ Skills work in **claude.ai (browser)** and the **Claude desktop app** with a pla
 3. Click **`+`** → **Create skill** → **Upload a skill**, and choose a skill's **`.zip`**.
 4. Flip the skill's toggle **On**. Now just chat normally — Claude uses the skill automatically when your request matches it.
 
-**Where do I get the `.zip`? Two no-terminal ways:**
+**Where do I get the `.zip`? No-terminal ways, easiest first:**
 
-- **One skill** — click the green **`< > Code` ▸ Download ZIP** button at the top of this repo, unzip it, then right-click the skill folder you want (e.g. `skills/bioinformatics/alterlab-scanpy`) and **Compress / Zip** it. Upload *that* zip.
-- **A whole domain at once** — download a ready-made bundle (e.g. `bioinformatics.zip`) from the **[Releases page](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases)**.
+- **One skill (one click)** — on the **[Releases page](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases)**, each skill ships its own ready-to-upload **`skill-<name>-<version>.zip`** (e.g. `skill-alterlab-scanpy-2.6.0.zip`). Download that one file and upload it as-is.
+- **A whole domain at once** — download a domain bundle (e.g. `alterlab-bioinformatics-<version>.zip`) from the same Releases page.
+- **Build it yourself (no release needed)** — click the green **`< > Code` ▸ Download ZIP** at the top of this repo, unzip, then right-click the skill folder you want (e.g. `skills/bioinformatics/alterlab-scanpy`) and **Compress / Zip** it. Upload *that* zip.
 
 > [!IMPORTANT]
 > A loose `.md` file dragged into a chat is **not** an installed skill — it must be a **zip of the skill folder** (with its `SKILL.md` inside). Only install skills from sources you trust, and note that skills you upload in the app are tied to your account and don't sync to Claude Code.
