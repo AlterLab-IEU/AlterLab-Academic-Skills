@@ -33,6 +33,8 @@
 <p><em>Organized across 17 research domains — from Turkish academia to bioinformatics to digital humanities</em></p>
 <p><em>239/239 ship executable evals · deterministic citation-existence verifier · per-domain bundles for claude.ai</em></p>
 
+<p>🧭 <b>New in v2.6 — don't know which skill?</b> Just say <b>"use AlterLab skills"</b> and Claude picks it for you · type <b><code>alterflow</code></b> to launch a full multi-agent workflow</p>
+
 <p>
 <b>Research Pipeline</b> · <b>Scientific Databases</b> · <b>Bioinformatics</b> · <b>Data Science</b> · <b>Visualization</b> · <b>Clinical Research</b> · <b>and more</b>
 </p>
@@ -87,6 +89,37 @@
 </tr>
 </table>
 </div>
+
+<br>
+
+## ⚡ Try It — One Line, the Right Skill
+
+**You don't need to know skill names.** Describe the task and `alterlab-skill-finder` (the front door) picks the skill for you — and tells you which one, and why.
+
+**Route — one task → one skill:**
+
+> 💬 *"Use AlterLab skills to review my methods section."*
+> 🧭 → **`alterlab-paper-reviewer`** (methodology-focus)
+
+> 💬 *"Which AlterLab skill finds and fact-checks papers on CRISPR off-target effects?"*
+> 🧭 → **`alterlab-deep-research`** + **`alterlab-pubmed`**
+
+**`alterflow` — a goal that spans stages → a clarified, multi-agent workflow:**
+
+> 💬 *"**alterflow** — investigate the link between sleep and memory, and turn it into a publishable paper."*
+> 🧭 → asks 2–4 scoping questions **first**, then plans and runs:
+
+```mermaid
+flowchart LR
+    A["⌨️ alterflow"] --> Q{"clarify<br/>2–4 questions"}
+    Q --> P["plan + confirm<br/>(with rough cost)"]
+    P --> R["🔬 deep-research"]
+    R --> W["📝 paper-writer"]
+    W --> V["🔍 paper-reviewer"]
+    V --> F["📄 final paper"]
+```
+
+> Questions before execution — it never starts a 20-agent run blind, and simple tasks stay single-skill. Built on Anthropic's **routing** and **orchestrator-workers** patterns.
 
 <br>
 
@@ -169,7 +202,8 @@
 <summary><b>Click to expand / collapse</b></summary>
 <br>
 
-- [🚀 What's New in v2.3.0](#-whats-new-in-v230)
+- [⚡ Try It — One Line, the Right Skill](#-try-it--one-line-the-right-skill)
+- [🚀 What's New in v2.6.0](#-whats-new-in-v260)
 - [🎯 What Is This?](#-what-is-this)
 - [🆕 v2.0 Highlights](#-v20-highlights)
 - [✨ Key Features](#-key-features)
@@ -293,6 +327,27 @@ Built on Anthropic's documented **routing** and **orchestrator-workers** pattern
 
 ## 🚀 Quick Start
 
+### 🎓 New here / not technical? Start in the **Claude app** — no terminal, no git
+
+Skills work in **claude.ai (browser)** and the **Claude desktop app** with a plain upload — no command line:
+
+1. In Claude, make sure **code execution** is on: **Settings → Capabilities** *(Team/Enterprise: an owner enables it once for the org)*.
+2. Open **Customize ▸ Skills** → **[claude.ai/customize/skills](https://claude.ai/customize/skills)**.
+3. Click **`+`** → **Create skill** → **Upload a skill**, and choose a skill's **`.zip`**.
+4. Flip the skill's toggle **On**. Now just chat normally — Claude uses the skill automatically when your request matches it.
+
+**Where do I get the `.zip`? Two no-terminal ways:**
+
+- **One skill** — click the green **`< > Code` ▸ Download ZIP** button at the top of this repo, unzip it, then right-click the skill folder you want (e.g. `skills/bioinformatics/alterlab-scanpy`) and **Compress / Zip** it. Upload *that* zip.
+- **A whole domain at once** — download a ready-made bundle (e.g. `bioinformatics.zip`) from the **[Releases page](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases)**.
+
+> [!IMPORTANT]
+> A loose `.md` file dragged into a chat is **not** an installed skill — it must be a **zip of the skill folder** (with its `SKILL.md` inside). Only install skills from sources you trust, and note that skills you upload in the app are tied to your account and don't sync to Claude Code.
+
+<br>
+
+*Comfortable with a terminal or Claude Code? Pick one of the options below instead.*
+
 ### 🌍 Option 1 — Agent Skills (open standard) *(Recommended)*
 
 ```bash
@@ -350,7 +405,7 @@ Then restart Claude Code. A skill must live at `~/.claude/skills/<name>/SKILL.md
 Every Release ships pre-built **`dist/<domain>.zip`** bundles. Each is spec-conformant and clears claude.ai's 200-file / 30 MB caps, and vendors the shared handoff contracts so cross-skill references resolve.
 
 1. Download the domain bundle you need from the [Releases page](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases) — e.g. `bioinformatics.zip`, `databases.zip`, `core.zip`.
-2. Upload it under **Settings → Capabilities** (requires a plan with code execution).
+2. In Claude, open **Customize ▸ Skills** ([claude.ai/customize/skills](https://claude.ai/customize/skills)) → **`+`** → **Create skill** → **Upload a skill**, then pick the zip (requires **code execution** enabled under **Settings → Capabilities**). See the [no-terminal walkthrough](#-new-here--not-technical-start-in-the-claude-app--no-terminal-no-git) above.
 
 Skills do not sync between claude.ai and Claude Code. To zip a single skill yourself instead, archive its directory (`zip -r alterlab-scanpy.zip skills/bioinformatics/alterlab-scanpy`).
 
