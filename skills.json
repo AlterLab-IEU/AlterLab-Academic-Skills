@@ -1,6 +1,6 @@
 {
   "summary": {
-    "total": 221,
+    "total": 225,
     "per_domain": {
       "bioinformatics": 38,
       "cheminformatics": 12,
@@ -15,14 +15,15 @@
       "lab-integrations": 9,
       "methodology": 3,
       "research-tools": 14,
+      "social-science-workflow": 4,
       "turkish-academia": 12,
       "visualization": 9,
       "writing-tools": 13
     },
     "eval_coverage": {
-      "with_evals": 221,
+      "with_evals": 225,
       "without_evals": 0,
-      "total": 221,
+      "total": 225,
       "fraction": 1.0
     }
   },
@@ -4497,6 +4498,78 @@
         "qualitative_protocols.md",
         "sampling_and_power.md",
         "survey-methodology.md"
+      ]
+    },
+    {
+      "name": "alterlab-ssci-design-gate",
+      "domain": "social-science-workflow",
+      "description": "Routes a social-science study to its research design — true experiment, quasi-experiment (difference-in-differences, instrumental variables, regression discontinuity, interrupted time series, fixed effects), observational/correlational, qualitative, or mixed — by walking the random-selection and random-assignment decisions, then PINS the identifying assumption the causal claim will rest on (parallel trends, exclusion restriction, continuity at the cutoff, selection-on-observables, or qualitative saturation logic) before any analysis begins. Use when choosing a study design, asking what design to use, framing a causal question from observational data, or deciding experiment vs quasi-experiment vs observational. For executing the analysis prefer alterlab-statistical-analysis; for qualitative design depth prefer alterlab-qualitative-methods; for choosing the statistical test downstream prefer alterlab-test-selection-guard. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required. A discipline-enforcing design-routing skill; the optional decision-tree helper runs locally via `uv run python` (standard library only).",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 112,
+      "references": [
+        "design_decision_tree.md"
+      ]
+    },
+    {
+      "name": "alterlab-ssci-inference-gate",
+      "domain": "social-science-workflow",
+      "description": "Audits final inferential claims against the design, sample, and uncertainty before they are written or published — refuses causal language unless the design's identifying assumption is defended (else downgrades to associational), corrects p-value and confidence-interval misreadings (a p-value is not the probability the null is true, non-significance is not proof of no effect, a 95% CI is not a 95% probability the parameter is inside it), demands effect sizes with intervals rather than significance stars, flags uncorrected multiple comparisons and optional stopping / HARKing, and scopes generalization to the sampling frame. Use when writing or checking a results or discussion section, interpreting a p-value or confidence interval, or deciding whether a finding supports a causal or population claim. For choosing the statistical test prefer alterlab-test-selection-guard; to execute the analysis prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required. A discipline-enforcing claim-audit skill; the optional claim linter runs locally via `uv run python` (standard library only).",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 109,
+      "references": [
+        "inference_audit.md"
+      ]
+    },
+    {
+      "name": "alterlab-ssci-measurement-gate",
+      "domain": "social-science-workflow",
+      "description": "Gates measurement quality before a scale or instrument is trusted — checks that each construct is defined and operationalized, that reliability is evidenced with McDonald omega (not Cronbach alpha alone, which assumes tau-equivalence and is only a lower bound), that reliability is not confused with validity (content, criterion, convergent/discriminant construct validity), and that measurement invariance is tested before comparing groups. Use when asking whether a scale or survey instrument is valid, reporting a Cronbach alpha, building or adopting a multi-item measure, or comparing a latent construct across groups. For designing the questionnaire items prefer alterlab-survey-design; for running the confirmatory factor analysis prefer alterlab-sem-psychometrics; to execute basic statistics prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required. A discipline-enforcing measurement-quality skill; reliability/CFA execution is handed to sibling skills that run locally via `uv run python`.",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 98,
+      "references": [
+        "reliability_and_validity.md"
+      ]
+    },
+    {
+      "name": "alterlab-ssci-sampling-gate",
+      "domain": "social-science-workflow",
+      "description": "Gates who is sampled, how, and how many before data collection — checks that the sampling FRAME matches the target population (coverage error), that the METHOD is named (probability vs non-probability: simple random, stratified, cluster, systematic, quota, convenience, snowball), that sample SIZE follows the inference paradigm (an a-priori power analysis for hypothesis tests, a precision/margin-of-error target for estimation, or saturation/information power for qualitative studies — never a rule of thumb or collect-until-significant), and that the generalization claim matches the sample (statistical generalization only from probability samples). Use when asking how many participants are needed, planning recruitment, running or checking a power analysis, or judging whether a sample supports a population claim. For questionnaire items prefer alterlab-survey-design; for choosing the statistical test prefer alterlab-test-selection-guard. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required. A discipline-enforcing sampling-and-power skill; the optional sample-size calculator runs locally via `uv run python` (standard library only).",
+      "allowed_tools": [
+        "Read",
+        "Bash(python:*)"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 99,
+      "references": [
+        "sampling_and_power.md"
       ]
     },
     {

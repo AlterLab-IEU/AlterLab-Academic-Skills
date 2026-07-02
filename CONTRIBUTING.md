@@ -27,11 +27,25 @@ Skills must belong to one of the following categories:
 | Lab Integrations | `skills/lab-integrations/` | Laboratory platform connectors |
 | Methodology | `skills/methodology/` | Research methodology and rigor scaffolds |
 | Research Tools | `skills/research-tools/` | Search, discovery, reference management |
+| Social-Science Workflow | `skills/social-science-workflow/` | Stage-gated design/measurement/sampling/inference validity gates |
 | Turkish Academia | `skills/turkish-academia/` | Turkish academic system workflows (YÖK, ÜAK, DergiPark, TÜBİTAK) |
 | Visualization | `skills/visualization/` | Scientific plotting and graphics |
 | Writing Tools | `skills/writing-tools/` | Scientific writing, citations, posters |
 
 If your skill does not fit any existing category, open an issue to discuss adding a new one.
+
+### Audience boundary — faculty repo, not the student (FC) repo
+
+This repository ships skills for **faculty members, academic researchers, and
+research staff**. Student-facing skills — study aids, assignment helpers,
+exam-prep, coursework tutors — belong in the separate **AlterLab FC (Faculty
+Companion / student)** repository, **not here**. When a proposed skill could
+serve either audience, scope its SKILL.md, description, and evals to the
+*researcher* task (e.g. "audit my manuscript's inferential claims", not "help me
+pass my stats exam"). A skill whose primary trigger is a student workflow will be
+redirected to the FC repo in review. The `social-science-workflow` gates are a
+model of this: they discipline a *researcher's* study, and route execution to
+sibling research skills rather than tutoring a learner.
 
 ### 2. Naming Convention
 

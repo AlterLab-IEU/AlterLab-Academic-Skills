@@ -78,6 +78,7 @@ CATEGORY_BLURB = {
     "turkish-academia": "Turkish academic system workflows (YÖK, ÜAK, DergiPark, YÖK-Tez, TÜBİTAK, doçentlik)",
     "faculty-life": "Faculty research-lifecycle and academic administration (syllabus AI-policy, IRB/consent, post-award grant admin, recommendation letters, accreditation AoL)",
     "methodology": "Research methodology and rigor scaffolds (Iron Laws, rationalization tables, decision flowcharts, systematic-reasoning checklists)",
+    "social-science-workflow": "Stage-gated social-science methods spine (design/identifying-assumption, measurement reliability-vs-validity, sampling/power, and inferential-claim audit gates)",
 }
 
 # `category` powers the `/plugin > Discover` filter UI; keywords aid search.
@@ -98,6 +99,7 @@ CATEGORY_TAGS = {
     "turkish-academia": ("research", ["turkish-academia", "yok", "uak", "dergipark", "yok-tez", "tubitak"]),
     "faculty-life": ("productivity", ["faculty", "teaching", "irb", "grant-admin", "accreditation", "recommendation-letters"]),
     "methodology": ("research", ["methodology", "research-rigor", "systematic-reasoning", "checklists", "decision-flowcharts"]),
+    "social-science-workflow": ("research", ["social-science", "research-design", "causal-inference", "psychometrics", "sampling", "power-analysis"]),
 }
 
 

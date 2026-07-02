@@ -2,9 +2,9 @@
 <img src=".github/header-banner.svg" width="100%" alt="AlterLab Akademik Beceriler">
 <br>
 
-<a href="skills/"><img src="https://img.shields.io/badge/Beceri-221-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Beceriler"></a>
-<a href="skills/"><img src="https://img.shields.io/badge/Alan-16-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Alanlar"></a>
-<a href="docs/evals.md"><img src="https://img.shields.io/badge/Eval-221%2F221-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Eval kapsamı"></a>
+<a href="skills/"><img src="https://img.shields.io/badge/Beceri-225-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Beceriler"></a>
+<a href="skills/"><img src="https://img.shields.io/badge/Alan-17-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Alanlar"></a>
+<a href="docs/evals.md"><img src="https://img.shields.io/badge/Eval-225%2F225-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Eval kapsamı"></a>
 <a href="https://www.anthropic.com"><img src="https://img.shields.io/badge/Claude-AI%20Destekli-F97316?style=for-the-badge&logo=anthropic&logoColor=white" alt="Claude AI"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/Lisans-MIT-10B981?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="MIT Lisansı"></a>
 <a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases"><img src="https://img.shields.io/github/v/release/AlterLab-IEU/AlterLab-Academic-Skills?style=for-the-badge&logo=github&color=8B5CF6&logoColor=white&label=Sürüm" alt="Sürüm"></a>
@@ -29,9 +29,9 @@
 
 <br><br>
 
-<h3>🧬 Fakülte üyeleri, araştırmacılar ve akademisyenler için özel olarak tasarlanmış 221 Claude AI becerisi</h3>
+<h3>🧬 Fakülte üyeleri, araştırmacılar ve akademisyenler için özel olarak tasarlanmış 225 Claude AI becerisi</h3>
 <p><em>16 araştırma alanına yayılmış — Türk akademisinden biyoinformatiğe, dijital beşeri bilimlere</em></p>
-<p><em>221/221 beceri çalıştırılabilir eval ile gelir · deterministik atıf-doğrulayıcı · claude.ai için alan paketleri</em></p>
+<p><em>225/225 beceri çalıştırılabilir eval ile gelir · deterministik atıf-doğrulayıcı · claude.ai için alan paketleri</em></p>
 
 <p>
 <b>Araştırma Hattı</b> · <b>Bilimsel Veritabanları</b> · <b>Biyoinformatik</b> · <b>Veri Bilimi</b> · <b>Görselleştirme</b> · <b>Klinik Araştırma</b> · <b>ve daha fazlası</b>
@@ -103,7 +103,7 @@
 - [🗂️ Alan Genel Bakışı](#%EF%B8%8F-alan-genel-bakışı)
 - [🚀 Hızlı Başlangıç](#-hızlı-başlangıç)
 - [⚡ Çekirdek Hat — 9 Beceri](#-çekirdek-hat--9-beceri)
-- [📚 221 Becerinin Tamamı](#-221-becerinin-tamamı)
+- [📚 225 Becerinin Tamamı](#-225-becerinin-tamamı)
 - [🏗️ Proje Yapısı](#%EF%B8%8F-proje-yapısı)
 - [⚙️ Beceriler Nasıl Çalışır?](#%EF%B8%8F-beceriler-nasıl-çalışır)
 - [💡 Kullanım Örnekleri](#-kullanım-örnekleri)
@@ -131,7 +131,7 @@
 
 ## 🎯 Bu Proje Nedir?
 
-Fakülte üyeleri, akademisyenler ve araştırmacılar için tasarlanmış, **özel amaçlı 221 Claude AI becerisinden** oluşan kapsamlı bir paket — akademik araştırma yaşam döngüsünün tamamını kapsayacak şekilde **16 alan kategorisine** ayrılmıştır.
+Fakülte üyeleri, akademisyenler ve araştırmacılar için tasarlanmış, **özel amaçlı 225 Claude AI becerisinden** oluşan kapsamlı bir paket — akademik araştırma yaşam döngüsünün tamamını kapsayacak şekilde **17 alan kategorisine** ayrılmıştır.
 
 Her beceri, Claude'u akademik araştırma, bilimsel hesaplama ve akademik yayıncılık iş akışlarına göre uyarlanmış **alana özgü bir uzman asistana** dönüştürür.
 
@@ -159,7 +159,7 @@ Sürüm 2.0, koleksiyonu bir beceri listesinden **denetlenmiş, doğrulanmış v
 
 | | Özellik | Açıklama |
 |:---:|:---|:---|
-| ✅ | **Davranışsal Eval Kapsamı** | 221 becerinin **tamamı** (%100) Anthropic'in tetikleme/tetiklememe biçimini izleyen `evals/evals.json` dosyalarıyla gelir; `scripts/run_evals.py` ile çalıştırılır |
+| ✅ | **Davranışsal Eval Kapsamı** | 225 becerinin **tamamı** (%100) Anthropic'in tetikleme/tetiklememe biçimini izleyen `evals/evals.json` dosyalarıyla gelir; `scripts/run_evals.py` ile çalıştırılır |
 | 🔎 | **Atıf Doğrulayıcı** | Yeni `alterlab-citation-verifier` becerisi, bir kaynakçadaki her girdinin **gerçekten var olduğunu** dört anahtarsız bilimsel API (Crossref, OpenAlex, Semantic Scholar, arXiv) üzerinden çapraz kontrol ederek doğrular |
 | 📦 | **Alan Paketleri (Domain Packs)** | Tüm alanlar, bağımsız olarak kurulabilen Claude Code eklentileri olarak paketlenir — yalnızca ihtiyacınız olanı kurun, tüm depoyu değil |
 | 🔌 | **MCP Öncelikli Veri** | Beceriler, ilgili MCP araçları (PubMed, Scholar Gateway, Clinical Trials, Hugging Face) mevcut olduğunda eğitim verisi yerine **canlı veriyi** tercih eder ve kaynağı + erişim tarihini gösterir |
@@ -167,7 +167,7 @@ Sürüm 2.0, koleksiyonu bir beceri listesinden **denetlenmiş, doğrulanmış v
 | 🔁 | **Genişletilmiş Çekirdek Hat** | Çekirdek hat artık **9 beceri** içeriyor — atıf doğrulama ve bağlantı sağlığı denetimi de dahil olmak üzere bütünlük araçları eklendi |
 
 > [!NOTE]
-> Eval kapsamı artık tüm koleksiyonu kapsar (221 / 221). Tam değişiklik geçmişi için [CHANGELOG.md](CHANGELOG.md) dosyasına bakın.
+> Eval kapsamı artık tüm koleksiyonu kapsar (225 / 225). Tam değişiklik geçmişi için [CHANGELOG.md](CHANGELOG.md) dosyasına bakın.
 
 ### 🚀 v2.0'deki ek yenilikler
 
@@ -205,6 +205,7 @@ Yukarıdaki tabloyu tamamlayan, v2.0 ile gelen başlıca sayfa eklentileri:
 | 🇹🇷 | **Türk Akademisi** | **12** | Ulusal platformlar & akademik iş akışı — DergiPark, TR Dizin, YÖK Tez/Akademik, YÖKATLAS, TÜBİTAK önerileri, doçentlik, teşvik, KVKK, Aperta |
 | 🎓 | **Fakülte Yaşamı** | **6** | Öğretim, hizmet & akademik kariyer — müfredat YZ politikası, hibe raporlama, tavsiye mektupları, akreditasyon, REDCap/CDISC, ön baskılar |
 | 🧪 | **Metodoloji** | **3** | Araştırma-titizliği disiplin kapıları — ön kayıt, test-seçim koruması, sonuç-raporlama şeffaflığı |
+| 🧭 | **Sosyal Bilim İş Akışı** | **4** | Aşamalı geçerlilik kapıları — tasarım/tanımlayıcı-varsayım, ölçüm güvenilirlik-vs-geçerlilik, örnekleme/güç, ve çıkarım-iddiası denetimi |
 <br>
 
 ## 🚀 Hızlı Başlangıç
@@ -292,7 +293,7 @@ derin-araştırma (sokratik/tam)
 
 ---
 
-## 📚 210 Becerinin Tamamı
+## 📚 225 Becerinin Tamamı
 
 ### 🗄️ Veritabanları — Bilimsel Veritabanı Bağlayıcıları (39 Beceri)
 
@@ -829,7 +830,7 @@ Her becerinin kapsadığı aracın ayrı bir lisansı olabilir — ilgili SKILL.
 
 <br><br>
 
-<b>210 beceri · 16 alan · 210'u çalıştırılabilir eval ile · uzman düzeyinde araştırmaya 1 komut uzaklıkta</b>
+<b>225 beceri · 17 alan · 225'i çalıştırılabilir eval ile · uzman düzeyinde araştırmaya 1 komut uzaklıkta</b>
 
 <br><br>
 

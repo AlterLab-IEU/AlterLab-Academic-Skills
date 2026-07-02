@@ -6,6 +6,38 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.4.0] — 2026-07-02
+
+Social-science methods spine — a new **17th domain**, `social-science-workflow`, adds a
+stage-gated chain of four **discipline-enforcing validity gates** that a study passes through
+before it is analyzed or written: **design** (pin the identifying assumption), **measurement**
+(reliability is not validity), **sampling** (power/precision/saturation, not a rule of thumb),
+and **inference** (the claim may not exceed the design). Each gate ships a stdlib helper script,
+a loaded-on-demand reference, and vignette-in / routing-out evals with near-miss negatives.
+**221 → 225 skills** (new `social-science-workflow` 0 → 4), still 100% eval coverage across
+16 → 17 domains.
+
+### Added
+
+- **`alterlab-ssci-design-gate`** (social-science-workflow) — routes a study to its design
+  family (experiment / DiD / IV / RDD / ITS / fixed-effects / observational / qualitative /
+  mixed) by the data-generating process and **pins the identifying assumption** the causal claim
+  rests on before any estimation. Stdlib `design_router.py`.
+- **`alterlab-ssci-measurement-gate`** (social-science-workflow) — enforces *reliability ≠
+  validity*: requires McDonald's omega (not Cronbach's alpha alone, which assumes tau-equivalence),
+  the four validities, and measurement invariance before any cross-group comparison. Routes CFA
+  execution to the psychometrics skill.
+- **`alterlab-ssci-sampling-gate`** (social-science-workflow) — gates frame, method, and size,
+  matching the **sizing logic to the inference** (a-priori power / precision / saturation) and
+  the generalization claim to the sample type. Stdlib `sample_size.py` (Acklam inverse-normal).
+- **`alterlab-ssci-inference-gate`** (social-science-workflow) — the terminal auditor: refuses
+  causal language without a defended assumption, corrects p-value / CI misreadings, flags
+  uncorrected multiplicity and optional stopping, and scopes generalization to the frame. Stdlib
+  `claim_audit.py` claim linter.
+
+The four gates carry mutual `prefer alterlab-x` routing and near-miss evals against existing
+methodology / survey / statistics skills; `confusion_matrix.py` reports zero new routing gaps.
+
 Foundation-model skills — the suite gains a **runnable structure-prediction** cluster, the
 **protein-design** cluster that completes the design→fold→score loop, single-cell + genomics
 foundation models, figure-QA and single-PDF exploration, and the provider-agnostic GPU dispatch

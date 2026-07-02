@@ -2,9 +2,9 @@
 <img src=".github/header-banner.svg" width="100%" alt="AlterLab Academic Skills">
 <br>
 
-<a href="skills/"><img src="https://img.shields.io/badge/Skills-221-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Skills"></a>
-<a href="skills/"><img src="https://img.shields.io/badge/Domains-16-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Domains"></a>
-<a href="docs/evals.md"><img src="https://img.shields.io/badge/Eval%20coverage-221%2F221-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Eval coverage"></a>
+<a href="skills/"><img src="https://img.shields.io/badge/Skills-225-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Skills"></a>
+<a href="skills/"><img src="https://img.shields.io/badge/Domains-17-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Domains"></a>
+<a href="docs/evals.md"><img src="https://img.shields.io/badge/Eval%20coverage-225%2F225-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Eval coverage"></a>
 <a href="https://www.anthropic.com"><img src="https://img.shields.io/badge/Claude-AI%20Powered-F97316?style=for-the-badge&logo=anthropic&logoColor=white" alt="Claude AI"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-10B981?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="MIT License"></a>
 <a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases"><img src="https://img.shields.io/github/v/release/AlterLab-IEU/AlterLab-Academic-Skills?style=for-the-badge&logo=github&color=8B5CF6&logoColor=white&label=Release" alt="Release"></a>
@@ -29,9 +29,9 @@
 
 <br><br>
 
-<h3>🧬 221 purpose-built Claude AI skills for faculty, researchers & academicians</h3>
-<p><em>Organized across 16 research domains — from Turkish academia to bioinformatics to digital humanities</em></p>
-<p><em>221/221 ship executable evals · deterministic citation-existence verifier · per-domain bundles for claude.ai</em></p>
+<h3>🧬 225 purpose-built Claude AI skills for faculty, researchers & academicians</h3>
+<p><em>Organized across 17 research domains — from Turkish academia to bioinformatics to digital humanities</em></p>
+<p><em>225/225 ship executable evals · deterministic citation-existence verifier · per-domain bundles for claude.ai</em></p>
 
 <p>
 <b>Research Pipeline</b> · <b>Scientific Databases</b> · <b>Bioinformatics</b> · <b>Data Science</b> · <b>Visualization</b> · <b>Clinical Research</b> · <b>and more</b>
@@ -90,7 +90,16 @@
 
 <br>
 
-## 🚀 What's New in v2.3.0
+## 🚀 What's New in v2.4.0
+
+- 🧭 **New 17th domain — Social-Science Workflow** — a stage-gated **methods spine** of four discipline-enforcing validity gates a study passes through before it is analyzed or written: **design** (pin the identifying assumption before any causal claim), **measurement** (reliability is *not* validity — omega, not alpha alone), **sampling** (power / precision / saturation, never a rule of thumb or collect-until-significant), and **inference** (the claim may not exceed its design, sample, or uncertainty). → [Social-Science Workflow](#-social-science-workflow--stage-gated-validity-gates-4-skills)
+- 🧪 **Each gate is executable, not just prose** — every gate ships a stdlib helper (`design_router.py`, `sample_size.py` with an Acklam inverse-normal, `claim_audit.py` claim linter), a loaded-on-demand reference, and **vignette-in / routing-out evals** with near-miss negatives against the existing methodology, survey, and statistics skills. `confusion_matrix.py` reports zero new routing gaps.
+- 🔗 **Composes, does not duplicate** — the gates *route to* the existing `alterlab-qualitative-methods`, `alterlab-mixed-methods`, `alterlab-survey-design`, `alterlab-statistical-analysis`, and `alterlab-test-selection-guard` skills rather than reimplementing them, threading a **Design Passport** hand-off from design → measurement → sampling → inference.
+- 📈 **225 skills across 17 domains**, 225 / 225 with executable evals; audit clean (0 errors, 0 warnings), full test suite green.
+
+<details>
+<summary><b>Previously — What's New in v2.3.0</b></summary>
+<br>
 
 - 🛡️ **Trust manifest you can verify before installing** — a generated, CI-attested [`SECURITY_SCAN.md`](SECURITY_SCAN.md): the full outbound-host allowlist (66 domains, each categorized) plus an attestation of **no shell-pipe, no `eval`-on-input, no hardcoded secrets**. → [`SECURITY_SCAN.md`](SECURITY_SCAN.md)
 - 🎯 **Activation + collision benchmarks** — `run_evals.py --activation` measures auto-selection rate against Anthropic's **90%** bar, and [`scripts/confusion_matrix.py`](scripts/confusion_matrix.py) statically ranks cross-firing risk between sibling skills. A **nightly rotating 1/7 behavioral shard** LLM-judges the whole corpus each week. → [`docs/evals.md`](docs/evals.md)
@@ -98,6 +107,8 @@
 - 🧩 **Agents & teams, formalized** — [`docs/agents-and-teams.md`](docs/agents-and-teams.md) names the **35 subagents** and the 4 teams they compose (Research, Writing, Reviewer Panel, Pipeline Orchestration).
 - 🔌 **Portability map** — [`docs/portability.md`](docs/portability.md) states exactly what transfers to Codex / Cursor / Gemini vs. Claude-Code-specific, and `check_claudeai_compat.py` guards the claude.ai uploader whitelist.
 - ✂️ **Every body under the soft cap** — the last **17** over-500-line skills split into `references/`; the body-length ratchet is now empty. Coverage holds at **210 / 210**. → [`docs/evals.md`](docs/evals.md)
+
+</details>
 
 <details>
 <summary><b>Previously — What's New in v2.2.0</b></summary>
@@ -141,7 +152,7 @@
 - [🔎 Browse the Catalog](#-browse-the-catalog)
 - [🚀 Quick Start](#-quick-start)
 - [⚡ Core Pipeline — 9 Skills](#-core-pipeline--9-skills)
-- [📚 All 221 Skills](#-all-221-skills)
+- [📚 All 225 Skills](#-all-225-skills)
 - [🏗️ Project Structure](#%EF%B8%8F-project-structure)
 - [⚙️ How Skills Work](#%EF%B8%8F-how-skills-work)
 - [💡 Usage Examples](#-usage-examples)
@@ -157,7 +168,7 @@
 
 ## 🎯 What Is This?
 
-A comprehensive suite of **221 purpose-built Claude AI skills** for faculty members, academicians, and researchers — organized into **16 domain categories** spanning the full academic research lifecycle.
+A comprehensive suite of **225 purpose-built Claude AI skills** for faculty members, academicians, and researchers — organized into **17 domain categories** spanning the full academic research lifecycle.
 
 Each skill transforms Claude into a **domain-specific expert assistant** tailored to academic research, scientific computing, and scholarly publishing workflows.
 
@@ -172,7 +183,7 @@ Each skill transforms Claude into a **domain-specific expert assistant** tailore
 
 | | What | Detail |
 |:---:|:---|:---|
-| ✅ | **Executable evals across the corpus** | **221 / 221** skills ship `evals/evals.json` on the canonical [agentskills.io](https://agentskills.io) schema, validated in CI. See [`docs/evals.md`](docs/evals.md). |
+| ✅ | **Executable evals across the corpus** | **225 / 225** skills ship `evals/evals.json` on the canonical [agentskills.io](https://agentskills.io) schema, validated in CI. See [`docs/evals.md`](docs/evals.md). |
 | 🔎 | **Citation-existence verifier** | New core skill `alterlab-citation-verifier` — a **deterministic** gate that checks every reference actually exists against four keyless scholarly APIs (Crossref, OpenAlex, Semantic Scholar, arXiv), flags retractions, and maps claim-faithfulness verdicts. See below. |
 | 📦 | **Per-domain bundles for claude.ai** | `dist/<domain>.zip` bundles (one per domain) attached to each [Release](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases) — each clears claude.ai's 200-file / 30 MB caps and vendors the shared handoff contracts. |
 | 🔌 | **Bundled academic MCP** | The `core` and `databases` plugins ship a `.mcp.json` wiring PubMed / OpenAlex / Crossref / Zotero, with a documented `requests/` fallback when no MCP is available. |
@@ -226,6 +237,7 @@ and degrades gracefully to plain `requests` / WebSearch when no MCP or network i
 | 🇹🇷 | **Turkish Academia** | **12** | National platforms & scholarly workflow — DergiPark, TR Dizin, YÖK Tez/Akademik, YÖKATLAS, TÜBİTAK proposals, doçentlik, teşvik, KVKK, Aperta |
 | 🎓 | **Faculty Life** | **6** | Teaching, service & the academic career — syllabus AI policy, grant reporting, recommendation letters, accreditation, REDCap/CDISC, preprints |
 | 🧪 | **Methodology** | **3** | Research-rigor discipline gates — pre-registration, test-selection guard, results-reporting transparency |
+| 🧭 | **Social-Science Workflow** | **4** | Stage-gated validity gates — design/identifying-assumption, measurement reliability-vs-validity, sampling/power, and inferential-claim audit |
 <br>
 
 ## 🔎 Browse the Catalog
@@ -234,7 +246,7 @@ and degrades gracefully to plain `requests` / WebSearch when no MCP or network i
 
 <a href="https://alterlab-ieu.github.io/AlterLab-Academic-Skills/"><img src="https://img.shields.io/badge/Browse%20the%20Catalog-Live%20%26%20Searchable-7C3AED?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Browse the live searchable catalog"></a>
 
-<em>Search all 221 skills by name, domain, or keyword — no install required.</em>
+<em>Search all 225 skills by name, domain, or keyword — no install required.</em>
 
 </div>
 
@@ -327,7 +339,7 @@ Installing the `core` plugin also registers these slash commands:
 <br>
 
 > [!NOTE]
-> **221 / 221 skills ship executable evals** on the canonical [agentskills.io](https://agentskills.io) schema. Schema and trigger-coverage are validated in CI on every PR; the behavioral pass (claude CLI + LLM judge) runs on demand via `workflow_dispatch` **and nightly over a rotating 1/7 shard**, so the whole corpus is behaviorally judged across each week. An [`--activation`](docs/evals.md) harness additionally measures auto-selection rate against Anthropic's 90% bar, and [`scripts/confusion_matrix.py`](scripts/confusion_matrix.py) statically ranks cross-firing risk between sibling skills. See [`docs/evals.md`](docs/evals.md).
+> **225 / 225 skills ship executable evals** on the canonical [agentskills.io](https://agentskills.io) schema. Schema and trigger-coverage are validated in CI on every PR; the behavioral pass (claude CLI + LLM judge) runs on demand via `workflow_dispatch` **and nightly over a rotating 1/7 shard**, so the whole corpus is behaviorally judged across each week. An [`--activation`](docs/evals.md) harness additionally measures auto-selection rate against Anthropic's 90% bar, and [`scripts/confusion_matrix.py`](scripts/confusion_matrix.py) statically ranks cross-firing risk between sibling skills. See [`docs/evals.md`](docs/evals.md).
 >
 > **Trust & portability signals** (all generated + CI-enforced): [`SECURITY_SCAN.md`](SECURITY_SCAN.md) — outbound-host allowlist + a no-shell-pipe / no-`eval`-on-input / no-hardcoded-secrets attestation; [`docs/portability.md`](docs/portability.md) — what transfers to Codex/Cursor/Gemini vs. Claude-Code-specific; [`docs/agents-and-teams.md`](docs/agents-and-teams.md) — the 35 pipeline subagents and the teams they compose.
 
@@ -355,7 +367,7 @@ Installing the `core` plugin also registers these slash commands:
 
 ---
 
-## 📚 All 221 Skills
+## 📚 All 225 Skills
 
 ### 🗄️ Databases — Scientific Database Connectors (39 Skills)
 
@@ -723,6 +735,23 @@ Installing the `core` plugin also registers these slash commands:
 
 </details>
 
+### 🧭 Social-Science Workflow — Stage-Gated Validity Gates (4 Skills)
+
+<details>
+<summary><b>Click to expand full social-science workflow skills list</b></summary>
+<br>
+
+A stage-gated methods spine. A study passes each gate in order, and the gate refuses to advance until its discipline is satisfied — threading a **Design Passport** from one to the next. The gates *route to* the existing qualitative-methods, survey-design, and statistics skills rather than reimplementing them.
+
+| # | Skill | What It Does |
+|:---:|:---|:---|
+| 1 | **SSci Design Gate** | Routes the study to its design family and **pins the identifying assumption** the causal claim rests on before any analysis |
+| 2 | **SSci Measurement Gate** | Enforces *reliability ≠ validity* — omega (not alpha alone), the four validities, and measurement invariance before group comparison |
+| 3 | **SSci Sampling Gate** | Matches the **sizing logic to the inference** (power / precision / saturation) and the generalization claim to the sample type |
+| 4 | **SSci Inference Gate** | The terminal auditor — no causal claim beyond the design, no p-value/CI misreading, no generalization beyond the frame |
+
+</details>
+
 <br>
 
 ---
@@ -731,23 +760,24 @@ Installing the `core` plugin also registers these slash commands:
 
 ```
 AlterLab-Academic-Skills/
-├── 📁 skills/                       # 221 skills across 16 domains
-│   ├── 🔄 core/                # 8 pipeline + citation-verifier + teaching + thesis skills
+├── 📁 skills/                       # 225 skills across 17 domains
+│   ├── 🔄 core/                # 9 pipeline + citation-verifier + teaching + thesis skills
 │   ├── 🗄️ databases/           # 39 database connectors
-│   ├── 🧬 bioinformatics/      # 30 bio/genomics tools
+│   ├── 🧬 bioinformatics/      # 38 bio/genomics tools
 │   ├── ⚗️ cheminformatics/     # 12 chemistry/drug discovery
 │   ├── 🏥 clinical-research/   # 7 clinical/medical tools
 │   ├── 📊 data-science/        # 22 ML/statistics tools
-│   ├── 📈 visualization/       # 8 plotting/charting tools
+│   ├── 📈 visualization/       # 9 plotting/charting tools
 │   ├── ✍️ writing-tools/       # 13 scientific writing & career tools
 │   ├── 🔧 lab-integrations/    # 9 lab platform connectors
-│   ├── 🌍 domain-specific/     # 17 specialized field tools
-│   ├── 📄 document-tools/      # 2 file format tools
+│   ├── 🌍 domain-specific/     # 18 specialized field tools
+│   ├── 📄 document-tools/      # 3 file format tools
 │   ├── 🔍 research-tools/      # 14 search, methods & ethics tools
 │   ├── 💰 finance-economics/   # 7 financial/economic tools
 │   ├── 🇹🇷 turkish-academia/    # 12 Turkish national-platform & workflow skills
 │   ├── 🎓 faculty-life/        # 6 teaching, service & career skills
-│   └── 🧪 methodology/         # 3 research-rigor discipline gates
+│   ├── 🧪 methodology/         # 3 research-rigor discipline gates
+│   └── 🧭 social-science-workflow/  # 4 stage-gated validity gates
 ├── 📁 dist/                          # per-domain .zip bundles for claude.ai (built on release)
 ├── 📁 scripts/                       # install.sh, gen_catalog.py, run_evals.py, audit_skills.py …
 ├── 📁 docs/                          # evals, integrity & design docs
@@ -815,8 +845,8 @@ Skills activate automatically based on user intent:
 
 | | **AlterLab Academic Skills** | **K-Dense scientific-agent-skills** | **anthropics/skills** |
 |:---|:---:|:---:|:---:|
-| **Skills** | 221 | 138 *(self-reported)* | General-purpose examples |
-| **Executable evals** | 221 / 221 shipped; coverage CI-gated, behavioral on demand | Not shipped as an eval harness | Not the project's focus |
+| **Skills** | 225 | 138 *(self-reported)* | General-purpose examples |
+| **Executable evals** | 225 / 225 shipped; coverage CI-gated, behavioral on demand | Not shipped as an eval harness | Not the project's focus |
 | **License** | MIT | MIT | MIT |
 | **Academic focus** | Built for the research lifecycle | Scientific tooling | General / reference |
 | **Bundles / marketplace** | Per-domain `claude.ai` bundles + Claude Code marketplace | — | — |
@@ -900,7 +930,7 @@ MIT License — Copyright (c) 2026 AlterLab Creative Technologies Laboratory
 
 <br><br>
 
-<b>221 skills · 16 domains · 221 with executable evals · 1 prompt away from expert-level research</b>
+<b>225 skills · 17 domains · 225 with executable evals · 1 prompt away from expert-level research</b>
 
 <br><br>
 
