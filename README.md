@@ -111,8 +111,8 @@
 
 ```mermaid
 flowchart LR
-    A["⌨️ alterflow"] --> Q{"clarify<br/>2–4 questions"}
-    Q --> P["plan + confirm<br/>(with rough cost)"]
+    A["⌨️ alterflow"] --> Q["clarify<br>2-4 questions"]
+    Q --> P["plan + confirm<br>rough cost"]
     P --> R["🔬 deep-research"]
     R --> W["📝 paper-writer"]
     W --> V["🔍 paper-reviewer"]
