@@ -151,9 +151,25 @@ python scripts/generate_schematic.py "flowchart" -o flow.png -v
 # Provide API key via flag
 python scripts/generate_schematic.py "diagram" -o out.png --api-key "sk-or-v1-..."
 
+# Use Atlas Cloud for image generation; OpenRouter still handles quality review
+ATLASCLOUD_API_KEY="..." python scripts/generate_schematic.py "diagram" -o out.png --image-provider atlas
+
 # Combine options
 python scripts/generate_schematic.py "neural network" -o nn.png --doc-type journal --iterations 2 -v
 ```
+
+### Optional Atlas Cloud Image Provider
+
+OpenRouter remains the default. `--image-provider atlas` routes only image generation through
+Atlas Cloud; Gemini 3.1 Pro Preview review still requires `OPENROUTER_API_KEY`. The default Atlas
+model is `openai/gpt-image-2/text-to-image`. You can override the model, output size, and quality
+with `ALTERLAB_ATLAS_IMAGE_MODEL`, `ALTERLAB_ATLAS_IMAGE_SIZE`, and
+`ALTERLAB_ATLAS_IMAGE_QUALITY`.
+
+Atlas submission POSTs are never retried automatically. Prediction GETs use bounded retries for
+transient failures, and a failed generation stops the current run instead of issuing another paid
+request. A second generation occurs only when a successful first image is reviewed below the
+selected document-quality threshold.
 
 ### Prompt Engineering Tips
 

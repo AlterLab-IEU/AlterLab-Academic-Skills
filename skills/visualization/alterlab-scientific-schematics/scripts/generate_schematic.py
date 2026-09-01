@@ -68,7 +68,8 @@ Examples:
   python generate_schematic.py "Circuit diagram" -o circuit.png -v
 
 Environment Variables:
-  OPENROUTER_API_KEY    Required for AI generation
+  OPENROUTER_API_KEY    Required for Gemini quality review
+  ATLASCLOUD_API_KEY    Required with --image-provider atlas
         """
     )
     
@@ -84,6 +85,9 @@ Environment Variables:
                        help="Maximum refinement iterations (default: 2, max: 2)")
     parser.add_argument("--api-key", 
                        help="OpenRouter API key (or use OPENROUTER_API_KEY env var)")
+    parser.add_argument("--image-provider", choices=["openrouter", "atlas"],
+                       default=os.getenv("ALTERLAB_IMAGE_PROVIDER", "openrouter"),
+                       help="Image generation provider (default: openrouter)")
     parser.add_argument("-v", "--verbose", action="store_true",
                        help="Verbose output")
     
@@ -99,6 +103,10 @@ Environment Variables:
         print("  export OPENROUTER_API_KEY='your_api_key'")
         print("\nOr use --api-key flag")
         sys.exit(1)
+
+    if args.image_provider == "atlas" and not os.getenv("ATLASCLOUD_API_KEY"):
+        print("Error: ATLASCLOUD_API_KEY environment variable not set")
+        sys.exit(1)
     
     # Find AI generation script
     script_dir = Path(__file__).parent
@@ -110,6 +118,7 @@ Environment Variables:
     
     # Build command
     cmd = [sys.executable, str(ai_script), args.prompt, "-o", args.output]
+    cmd.extend(["--image-provider", args.image_provider])
     
     if args.doc_type != "default":
         cmd.extend(["--doc-type", args.doc_type])
@@ -136,4 +145,3 @@ Environment Variables:
 
 if __name__ == "__main__":
     main()
-
