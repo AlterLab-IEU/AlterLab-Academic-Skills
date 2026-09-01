@@ -26,6 +26,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | Domain | Category | Refs |
 |--------|----------|------|
 | `arxiv.org` | Preprints / literature | 12 |
+| `atlascloud.ai` | other (review) | 1 |
 | `bindingdb.org` | Binding affinities | 3 |
 | `biorxiv.org` | Preprints / literature | 5 |
 | `brenda-enzymes.org` | Enzymes | 2 |
@@ -91,7 +92,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `wikipedia.org` | Reference | 1 |
 | `yok.gov.tr` | YÖK | 3 |
 
-_65 distinct domains._
+_66 distinct domains._
 
 ## Method
 

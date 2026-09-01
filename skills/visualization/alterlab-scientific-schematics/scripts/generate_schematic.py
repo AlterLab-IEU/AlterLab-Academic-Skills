@@ -70,6 +70,7 @@ Examples:
 
 Environment Variables:
   OPENROUTER_API_KEY    Required for AI generation (or put it in a .env file)
+  ATLASCLOUD_API_KEY    Required with --image-provider atlas
   ALTERLAB_IMAGE_MODEL  Override the image model (default: google/gemini-3.1-flash-image)
   ALTERLAB_REVIEW_MODEL Override the review model (default: google/gemini-3.1-pro-preview)
         """
@@ -87,6 +88,9 @@ Environment Variables:
                        help="Maximum refinement iterations (default: 2, max: 2)")
     parser.add_argument("--api-key", 
                        help="OpenRouter API key (or use OPENROUTER_API_KEY env var)")
+    parser.add_argument("--image-provider", choices=["openrouter", "atlas"],
+                       default=os.getenv("ALTERLAB_IMAGE_PROVIDER", "openrouter"),
+                       help="Image generation provider (default: openrouter)")
     parser.add_argument("-v", "--verbose", action="store_true",
                        help="Verbose output")
     
@@ -110,6 +114,7 @@ Environment Variables:
     
     # Build command
     cmd = [sys.executable, str(ai_script), args.prompt, "-o", args.output]
+    cmd.extend(["--image-provider", args.image_provider])
     
     if args.doc_type != "default":
         cmd.extend(["--doc-type", args.doc_type])
@@ -133,4 +138,3 @@ Environment Variables:
 
 if __name__ == "__main__":
     main()
-

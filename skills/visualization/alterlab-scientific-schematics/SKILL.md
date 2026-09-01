@@ -3,11 +3,11 @@ name: alterlab-scientific-schematics
 description: Creates publication-quality scientific diagrams with Nano Banana 2 AI and smart iterative refinement, using Gemini 3.1 Pro Preview for quality review and regenerating only when quality falls below the document-type threshold. Use when the request is for a rendered technical or scientific diagram — CONSORT/PRISMA flowcharts, neural-network architectures, system/block diagrams, biological pathways, circuits, or other complex scientific visuals. For general photos, illustrations, or artwork use alterlab-generate-image; for infographics use alterlab-infographics; for editable text-based Mermaid diagrams use alterlab-mermaid. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
-compatibility: Requires an OpenRouter API key (OPENROUTER_API_KEY) and the requests library for Nano Banana 2 generation (google/gemini-3.1-flash-image) and Gemini 3.1 Pro Preview quality review (google/gemini-3.1-pro-preview); override with ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL
+compatibility: Requires an OpenRouter API key (OPENROUTER_API_KEY) and the requests library for Nano Banana 2 generation (google/gemini-3.1-flash-image) and Gemini 3.1 Pro Preview quality review (google/gemini-3.1-pro-preview); override with ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL; the optional Atlas Cloud image provider additionally requires ATLASCLOUD_API_KEY
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.2.0"
+    last_updated: "2026-10-12"
 ---
 
 # Scientific Schematics and Diagrams
@@ -85,9 +85,20 @@ Get an API key at: https://openrouter.ai/keys
 
 Default models (verified on OpenRouter 2026-09-23): `google/gemini-3.1-flash-image` (Nano Banana 2) for generation and `google/gemini-3.1-pro-preview` for review. Override them with `ALTERLAB_IMAGE_MODEL` / `ALTERLAB_REVIEW_MODEL`.
 
+OpenRouter remains the default image provider. To generate the image through Atlas Cloud while
+keeping Gemini review on OpenRouter, set both keys and select the optional provider:
+
+```bash
+export ATLASCLOUD_API_KEY='your_atlas_key_here'
+python scripts/generate_schematic.py "Transformer architecture" -o figures/transformer.png --image-provider atlas
+```
+
+The Atlas route defaults to `openai/gpt-image-2/text-to-image`. Override it with
+`ALTERLAB_ATLAS_IMAGE_MODEL` when Atlas publishes another compatible text-to-image model.
+
 ### Data & privacy
 
-This skill's generation scripts (`scripts/generate_schematic_ai.py`) send your diagram description / prompt to a **third-party API (OpenRouter)** over the network for image generation and quality review. Your text prompts — and any details you include in them — leave your machine and are processed by an external provider. **Do not include confidential, clinical, patient-identifying, or unpublished proprietary content** in figure descriptions. Describe figures generically and add sensitive labels locally afterward if needed.
+This skill's generation scripts (`scripts/generate_schematic_ai.py`) send your diagram description / prompt to a **third-party API (OpenRouter, or Atlas Cloud when explicitly selected)** over the network for image generation. Quality review always uses OpenRouter. Your text prompts — and any details you include in them — leave your machine and are processed by an external provider. **Do not include confidential, clinical, patient-identifying, or unpublished proprietary content** in figure descriptions. Describe figures generically and add sensitive labels locally afterward if needed.
 
 ### AI Generation Best Practices
 
@@ -178,6 +189,9 @@ python scripts/generate_schematic.py "complex diagram" -o diagram.png --iteratio
 
 # Verbose mode
 python scripts/generate_schematic.py "diagram" -o out.png -v
+
+# Optional Atlas Cloud image generation (OpenRouter still performs review)
+python scripts/generate_schematic.py "diagram" -o out.png --image-provider atlas
 ```
 
 **Note:** The Nano Banana 2 AI generation system includes automatic quality review in its iterative refinement process. Each iteration is evaluated for scientific accuracy, clarity, and accessibility.
@@ -244,6 +258,9 @@ and final integration) in `references/submission_checklist.md`.
 # Required
 export OPENROUTER_API_KEY='your_api_key_here'
 
+# Optional Atlas Cloud image generation
+export ATLASCLOUD_API_KEY='your_atlas_key_here'
+
 # Get key at: https://openrouter.ai/keys
 ```
 
@@ -257,5 +274,4 @@ python scripts/generate_schematic.py "your diagram description" -o output.png
 ---
 
 Use this skill to create clear, accessible, publication-quality diagrams that effectively communicate complex scientific concepts. The AI-powered workflow with iterative refinement ensures diagrams meet professional standards.
-
 
