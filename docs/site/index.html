@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>AlterLab Academic Skills — Catalog</title>
-<meta name="description" content="Searchable catalog of the AlterLab Academic Skills suite — academic research skills across 13 domains with executable evals." />
+<meta name="description" content="Searchable catalog of the AlterLab Academic Skills suite — academic research skills across 17 domains, every one shipping executable evals." />
 <style>
   :root {
     --bg: #0d1117;
@@ -196,10 +196,11 @@
   main { padding: 26px 0 70px; }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr));
     gap: 16px;
   }
   .card {
+    min-width: 0;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -247,6 +248,7 @@
     letter-spacing: 0.03em;
   }
   .card p.desc {
+    overflow-wrap: anywhere;
     margin: 0 0 12px;
     color: var(--fg-muted);
     font-size: 13.5px;
@@ -286,6 +288,17 @@
   @media (max-width: 560px) {
     header.site { padding: 32px 0 22px; }
     .grid { grid-template-columns: 1fr; }
+    /* Keep the sticky filter bar compact on phones: one swipeable row of chips
+       instead of six wrapped rows covering half the viewport. */
+    .domains {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .domains::-webkit-scrollbar { display: none; }
+    .chip { flex: 0 0 auto; }
   }
 </style>
 </head>
