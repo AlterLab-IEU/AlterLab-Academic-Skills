@@ -1,5 +1,7 @@
 {
   "summary": {
+    "version": "2.6.1",
+    "generated_at": "2026-09-04",
     "total": 239,
     "per_domain": {
       "bioinformatics": 38,
