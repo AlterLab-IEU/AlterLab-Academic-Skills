@@ -253,6 +253,15 @@
   }
   .copy:hover { color: var(--fg); border-color: var(--fg-dim); }
   .copy[data-done="true"] { color: var(--good); border-color: var(--good); }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
   /* Cards */
   main { padding: 26px 0 70px; }
@@ -363,7 +372,7 @@
     .domains {
       flex-wrap: nowrap;
       overflow-x: auto;
-      padding-bottom: 4px;
+      padding: 3px 0 4px; /* room for the focus ring inside the overflow clip */
       scrollbar-width: none;
       -webkit-overflow-scrolling: touch;
     }
@@ -418,8 +427,9 @@
     <section class="install" id="install" aria-label="Install in Claude Code">
       <div class="ihead">
         <span><strong>Install in Claude Code</strong> — add the marketplace once, then install a domain plugin.</span>
-        <button class="copy" id="copy" type="button" aria-label="Copy install commands">Copy</button>
+        <button class="copy" id="copy" type="button">Copy</button>
       </div>
+      <span class="sr-only" id="copy-status" role="status" aria-live="polite"></span>
       <pre><code id="install-cmd"></code></pre>
       <p class="ihint" id="install-hint"></p>
     </section>
@@ -447,9 +457,12 @@
   // Try each candidate until one loads.
   var CANDIDATES = ["skills.json", "../../skills.json", "./skills.json", "/skills.json"];
   var REPO = "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills";
+  var RELEASE_API = "https://api.github.com/repos/AlterLab-IEU/AlterLab-Academic-Skills/releases/tags/v";
   var MARKETPLACE = "alterlab-academic-skills";
 
-  var state = { all: [], domains: [], activeDomain: null, query: "", version: null, generatedAt: null };
+  // assets: names of the zips attached to release v<version>; null = unknown
+  // (API unreachable or rate-limited), in which case links stay optimistic.
+  var state = { all: [], domains: [], activeDomain: null, query: "", version: null, generatedAt: null, assets: null };
 
   var el = {
     grid: document.getElementById("grid"),
@@ -466,7 +479,8 @@
     version: document.getElementById("version"),
     installCmd: document.getElementById("install-cmd"),
     installHint: document.getElementById("install-hint"),
-    copy: document.getElementById("copy")
+    copy: document.getElementById("copy"),
+    copyStatus: document.getElementById("copy-status")
   };
 
   function esc(s) {
@@ -539,7 +553,7 @@
       (domain !== null && state.activeDomain === domain);
     return '<button class="chip" type="button" data-domain="' + esc(domain || "") +
       '" aria-pressed="' + (pressed ? "true" : "false") + '">' +
-      esc(label) + '<span class="c">' + count + "</span></button>";
+      esc(label) + '<span class="c">' + esc(count) + "</span></button>";
   }
 
   function filtered() {
@@ -571,12 +585,15 @@
     }
   }
 
+  function announce(text) { el.copyStatus.textContent = text; }
+
   function copyInstall() {
     var text = installText();
     var done = function () {
       el.copy.textContent = "Copied";
       el.copy.setAttribute("data-done", "true");
-      setTimeout(function () { el.copy.textContent = "Copy"; el.copy.removeAttribute("data-done"); }, 1600);
+      announce("Install commands copied to clipboard.");
+      setTimeout(function () { el.copy.textContent = "Copy"; el.copy.removeAttribute("data-done"); announce(""); }, 1600);
     };
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text, done); });
@@ -593,8 +610,20 @@
     ta.style.opacity = "0";
     document.body.appendChild(ta);
     ta.select();
-    try { document.execCommand("copy"); done(); } catch (e) { /* text stays selectable in the block */ }
+    var ok = false;
+    try { ok = document.execCommand("copy") === true; } catch (e) { ok = false; }
     document.body.removeChild(ta);
+    if (ok) { done(); return; }
+    // execCommand reports false (no throw) when copying is unsupported or blocked:
+    // leave the commands selected so a keyboard copy works, and say so.
+    var range = document.createRange();
+    range.selectNodeContents(el.installCmd);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    el.copy.textContent = "Select & copy";
+    announce("Automatic copy is not available here. The commands are selected; press Ctrl or Cmd + C.");
+    setTimeout(function () { el.copy.textContent = "Copy"; announce(""); }, 2600);
   }
 
   function card(s) {
@@ -605,13 +634,14 @@
 
     var meta = "";
     if (s.has_scripts) meta += '<span class="tag">scripts</span>';
-    if (s.references && s.references.length) meta += '<span class="tag">' + s.references.length + " refs</span>";
+    if (s.references && s.references.length) meta += '<span class="tag">' + esc(s.references.length) + " refs</span>";
     if (s.license) meta += '<span class="tag">' + esc(s.license) + "</span>";
-    if (s.body_lines) meta += '<span class="tag">' + s.body_lines + " lines</span>";
+    if (s.body_lines) meta += '<span class="tag">' + esc(s.body_lines) + " lines</span>";
 
     var links = '<a href="' + REPO + "/tree/main/skills/" + encodeURIComponent(s.domain) + "/" +
       encodeURIComponent(s.name) + '" target="_blank" rel="noopener">Source</a>';
-    if (state.version) {
+    var zip = "skill-" + s.name + "-" + state.version + ".zip";
+    if (state.version && (state.assets === null || state.assets[zip])) {
       links += '<a href="' + REPO + "/releases/download/v" + encodeURIComponent(state.version) +
         "/skill-" + encodeURIComponent(s.name) + "-" + encodeURIComponent(state.version) +
         '.zip" title="Download this skill as a zip for the Claude app (Customize › Skills › Upload)">Install</a>';
@@ -655,6 +685,21 @@
     var summary = (data && data.summary) || {};
     state.version = summary.version || null;
     state.generatedAt = summary.generated_at || null;
+    if (state.version) {
+      fetch(RELEASE_API + encodeURIComponent(state.version), { headers: { Accept: "application/vnd.github+json" } })
+        .then(function (r) {
+          if (r.status === 404) return { assets: [] };
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.json();
+        })
+        .then(function (rel) {
+          var names = {};
+          (rel.assets || []).forEach(function (a) { names[a.name] = true; });
+          state.assets = names;
+          render();
+        })
+        .catch(function () { state.assets = null; });
+    }
     state.all = skills.slice().sort(function (a, b) {
       return (a.name || "").localeCompare(b.name || "");
     });
@@ -673,8 +718,6 @@
     renderStats(summary);
     renderDomains();
 
-    el.copy.addEventListener("click", copyInstall);
-
     var t;
     el.q.addEventListener("input", function () {
       clearTimeout(t);
@@ -683,6 +726,9 @@
 
     render();
   }
+
+  renderInstall();
+  el.copy.addEventListener("click", copyInstall);
 
   fetchCatalog()
     .then(init)

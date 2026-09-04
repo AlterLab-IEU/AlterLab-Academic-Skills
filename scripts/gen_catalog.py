@@ -275,9 +275,9 @@ def run_check(catalog: dict, rendered: str) -> int:
     # Carry the committed date stamp over so --check is deterministic across days.
     try:
         committed_stamp = json.loads(current)["summary"].get("generated_at")
-    except (json.JSONDecodeError, KeyError, TypeError):
+    except (json.JSONDecodeError, KeyError, TypeError, AttributeError):
         committed_stamp = None
-    if committed_stamp:
+    if isinstance(committed_stamp, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", committed_stamp):
         catalog["summary"]["generated_at"] = committed_stamp
         rendered = render(catalog)
     if current != rendered:

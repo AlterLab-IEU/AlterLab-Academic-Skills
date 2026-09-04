@@ -4,12 +4,16 @@ name: Deploy catalog to Pages
 # generated skills.json so the page can fetch the catalog as a sibling file.
 #
 # History: deploy runs #8 and #9 (2026-07-02) sat in `deployment_queued` for the
-# action's default 10-minute timeout, were aborted, and the site stayed at the
-# previous total. Three guards below make that impossible to miss again:
-#   1. a 20-minute deploy timeout,
-#   2. tag + release triggers so every release republishes,
-#   3. a `verify` job that polls the LIVE skills.json and fails the run unless
-#      the published catalog matches the repo's — a green run means a live site.
+# action's default 10-minute timeout, were aborted (red), and the site then sat
+# at the previous total for two months because nothing watched it. Guards:
+#   1. a 20-minute deploy timeout — addresses the queued-deploy abort itself;
+#   2. release.yml dispatches this workflow after every release (tags and
+#      releases created with GITHUB_TOKEN never fire `on: push` / `on: release`,
+#      so those triggers would be dead code here — only workflow_dispatch works);
+#   3. a `verify` job that proves a deploy which reported success is actually
+#      being served: the live skills.json must parse to exactly the repo's;
+#   4. catalog-freshness.yml runs after every deploy and daily; it opens an
+#      issue when the site is stale or a deploy failed, and re-deploys.
 on:
   push:
     branches: [main]
@@ -17,10 +21,6 @@ on:
       - "docs/site/**"
       - "skills.json"
       - ".github/workflows/gh-pages.yml"
-    # paths filters are not evaluated for tag pushes, so every v* tag deploys.
-    tags: ["v*"]
-  release:
-    types: [published]
   workflow_dispatch:
 
 # Allow the deploy job to publish to Pages.
@@ -83,49 +83,63 @@ jobs:
     name: Verify live catalog
     needs: deploy
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Poll the live skills.json until it matches the repo
-        # A green deploy that did not publish is the exact bug this job exists
-        # to catch: poll every 30 s for up to 10 min until summary.total equals
-        # the repo's AND no repo skill is missing from the live list.
+      - name: Poll the live skills.json until it equals the repo's
+        # Success = the live JSON parses to exactly the committed catalog (not
+        # merely the same total and names, which would pass description-only
+        # changes on a stale site). GitHub Pages sits behind Fastly with
+        # max-age=600 and ignores both query strings and request Cache-Control,
+        # so a fresh deploy can be served stale for up to 10 min: the window is
+        # 15 min and every attempt logs Age / X-Cache / ETag so a CDN lag and a
+        # broken Pages deploy are distinguishable in the log.
         run: |
           set -euo pipefail
           python3 - <<'PY'
           import json, os, sys, time, urllib.request
 
-          repo = json.load(open("skills.json", encoding="utf-8"))
-          want_total = repo["summary"]["total"]
-          want_names = {s["name"] for s in repo["skills"]}
-          url = f"{os.environ['LIVE_URL']}?cb={os.environ['GITHUB_SHA']}"
-          headers = {"Cache-Control": "no-cache", "Pragma": "no-cache",
-                     "User-Agent": "alterlab-academic-skills-verify"}
-          deadline = time.monotonic() + 600
-          attempt = 0
+          want = json.load(open("skills.json", encoding="utf-8"))
+          want_total = want["summary"]["total"]
+          want_names = {s["name"] for s in want["skills"]}
+          url = os.environ["LIVE_URL"]
+          headers = {"User-Agent": "alterlab-academic-skills-verify"}
+          deadline = time.monotonic() + 900
+          attempt, last = 0, {}
           while True:
               attempt += 1
               try:
                   with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=30) as r:
                       live = json.load(r)
-                      lastmod = r.headers.get("Last-Modified")
-                  total = live["summary"]["total"]
-                  missing = sorted(want_names - {s["name"] for s in live["skills"]})
-                  print(f"[{attempt}] live total={total} want={want_total} "
+                      h = r.headers
+                      last = {"age": h.get("Age"), "x_cache": h.get("X-Cache"),
+                              "etag": h.get("ETag"), "last_modified": h.get("Last-Modified")}
+                  total = live.get("summary", {}).get("total")
+                  missing = sorted(want_names - {s["name"] for s in live.get("skills", [])})
+                  equal = live == want
+                  print(f"[{attempt}] equal={equal} live total={total} want={want_total} "
                         f"missing={len(missing)} first_missing={missing[0] if missing else '-'} "
-                        f"last-modified={lastmod}")
-                  if total == want_total and not missing:
-                      print(f"::notice::Live catalog verified: {total} skills, Last-Modified {lastmod}")
+                        f"age={last['age']} x-cache={last['x_cache']} etag={last['etag']} "
+                        f"last-modified={last['last_modified']}")
+                  if equal:
+                      print(f"::notice::Live catalog verified: {total} skills, "
+                            f"Last-Modified {last['last_modified']}")
                       sys.exit(0)
               except Exception as e:  # network blip, JSON decode, etc. — keep polling
                   print(f"[{attempt}] fetch failed: {e}")
               if time.monotonic() >= deadline:
-                  print(f"::error::Live catalog still does not match the repo after 10 min "
-                        f"(want total={want_total}; see the poll log above). The deploy job "
-                        f"reported success but the published site is stale. Check Settings -> "
-                        f"Pages (Source must be 'GitHub Actions') and the github-pages "
-                        f"environment protection rules, then re-run this workflow.")
+                  age = last.get("age") or "0"
+                  edge_lag = (last.get("x_cache") or "").startswith("HIT") and age.isdigit() and int(age) < 600
+                  hint = ("The Fastly edge is still serving an older copy (X-Cache HIT, Age < 600): "
+                          "a CDN propagation lag, not a Pages failure — re-run this job."
+                          if edge_lag else
+                          "The deploy job reported success but the published catalog differs from "
+                          "the repo. Check Settings -> Pages (Source must be 'GitHub Actions') and "
+                          "the github-pages environment protection rules, then re-run this workflow.")
+                  print(f"::error::Live catalog still does not equal the repo's skills.json after "
+                        f"15 min (want total={want_total}; see the poll log). {hint}")
                   sys.exit(1)
               time.sleep(30)
           PY

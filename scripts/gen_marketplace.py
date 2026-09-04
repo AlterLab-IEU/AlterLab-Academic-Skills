@@ -37,7 +37,9 @@ so they MUST be enumerated explicitly or they will not load.
 The single source of truth for the version is ``[project].version`` in
 ``pyproject.toml``. This script reads it from there and writes it into BOTH
 ``.claude-plugin/marketplace.json`` and ``package.json``. Do not hand-edit the
-version in those generated files.
+version in those generated files. ``scripts/gen_catalog.py`` embeds the same
+version in ``skills.json`` (``summary.version``), so run BOTH after a bump —
+``gen_catalog.py --check`` fails on a bump that did not regenerate the catalog.
 
 Regenerate after adding/removing/moving skills:  uv run python scripts/gen_marketplace.py
 Verify it is up to date (CI):                     uv run python scripts/gen_marketplace.py --check
