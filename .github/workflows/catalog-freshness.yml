@@ -1,0 +1,204 @@
+name: Catalog freshness
+
+# The live catalog (GitHub Pages) fell behind `main` in July 2026 when two Pages
+# deploys timed out and nothing noticed for two months. This check compares the
+# LIVE skills.json against `main` after every Pages deploy, daily, and on demand.
+# When the site is stale (or the deploy that just finished failed) it opens or
+# refreshes exactly one issue titled "Live catalog is stale"; on the daily run it
+# also re-dispatches the Pages deploy. The issue closes itself the first time the
+# check finds the site fresh again.
+#
+# Why three triggers: GitHub disables a schedule-only workflow after 60 days
+# without repository activity — precisely the quiet period in which a site goes
+# stale unnoticed — and a cron alone would report a failed deploy up to 24 h late.
+on:
+  schedule:
+    - cron: "23 5 * * *"   # daily, 05:23 UTC
+  workflow_run:
+    workflows: ["Deploy catalog to Pages"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write   # gh workflow run gh-pages.yml, gh run list
+  issues: write    # open / refresh / close the stale-catalog issue
+
+concurrency:
+  group: catalog-freshness
+  cancel-in-progress: false
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  LIVE_URL: https://alterlab-ieu.github.io/AlterLab-Academic-Skills/skills.json
+  ISSUE_TITLE: "Live catalog is stale"
+
+jobs:
+  check:
+    name: Compare live catalog with main
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0   # commit dates are needed for the "newer than live" test
+
+      - name: Is a Pages deploy already in flight?
+        id: inflight
+        # A check that runs while a deploy is still publishing would see the old
+        # site and raise a false alarm; remediation is skipped in that case.
+        run: |
+          set -euo pipefail
+          n="$(gh run list --workflow gh-pages.yml --limit 10 --json status \
+                 --jq '[.[] | select(.status != "completed")] | length')"
+          echo "count=$n" >> "$GITHUB_OUTPUT"
+          echo "Pages deploys in flight: $n"
+
+      - name: Compare live skills.json with main
+        id: cmp
+        # The live file must parse to exactly main's skills.json. GitHub Pages sits
+        # behind Fastly with max-age=600 (query strings and request Cache-Control
+        # are ignored), so the comparison polls for up to 15 min before calling the
+        # site stale — unless the deploy that triggered this run already failed.
+        # Only key=value lines go to stdout (-> GITHUB_OUTPUT); diagnostics to stderr.
+        env:
+          DEPLOY_CONCLUSION: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion || '' }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' | tee -a "$GITHUB_OUTPUT"
+          import json, os, subprocess, sys, time, urllib.request
+          from email.utils import parsedate_to_datetime
+
+          def log(msg):
+              print(msg, file=sys.stderr, flush=True)
+
+          repo = json.load(open("skills.json", encoding="utf-8"))
+          repo_total = repo["summary"]["total"]
+          repo_names = {s["name"] for s in repo["skills"]}
+          # When main last touched what the site is built from.
+          git = ["git", "log", "-1", "--", "skills.json", "docs/site"]
+          repo_updated = subprocess.check_output(git[:3] + ["--format=%cI"] + git[3:], text=True).strip()
+          repo_updated_ts = parsedate_to_datetime(
+              subprocess.check_output(git[:3] + ["--format=%cD"] + git[3:], text=True).strip()).timestamp()
+
+          deploy_conclusion = os.environ.get("DEPLOY_CONCLUSION", "")
+          deploy_failed = deploy_conclusion not in ("", "success")
+          if deploy_failed:
+              log(f"::warning::the Pages deploy that triggered this run concluded '{deploy_conclusion}'")
+
+          url = os.environ["LIVE_URL"]
+          headers = {"User-Agent": "alterlab-catalog-freshness"}
+          deadline = time.monotonic() + (0 if deploy_failed else 900)
+          res = {"stale": True, "live_total": "", "missing": [], "live_lastmod": ""}
+          while True:
+              try:
+                  with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=60) as r:
+                      live = json.load(r)
+                      h = r.headers
+                      live_lastmod = h.get("Last-Modified") or ""
+                      age, xcache = h.get("Age"), h.get("X-Cache")
+                  live_total = live.get("summary", {}).get("total")
+                  missing = sorted(repo_names - {s["name"] for s in live.get("skills", [])})
+                  live_ts = parsedate_to_datetime(live_lastmod).timestamp() if live_lastmod else None
+                  if live_ts is None:
+                      log("::warning::live skills.json carries no Last-Modified header; timestamp test skipped")
+                  ts_stale = live_ts is not None and live_ts < repo_updated_ts
+                  stale = (live_total != repo_total) or bool(missing) or (live != repo) or ts_stale
+                  res = {"stale": stale, "live_total": live_total, "missing": missing, "live_lastmod": live_lastmod}
+                  log(f"live total={live_total} repo={repo_total} equal={live == repo} missing={len(missing)} "
+                      f"ts_stale={ts_stale} age={age} x-cache={xcache} last-modified={live_lastmod}")
+                  if not stale:
+                      break
+              except Exception as e:  # network blip, JSON decode — keep polling
+                  log(f"fetch failed: {e}")
+              if time.monotonic() >= deadline:
+                  break
+              time.sleep(30)
+
+          out = {
+              "stale": str(res["stale"] or deploy_failed).lower(),
+              "deploy_failed": str(deploy_failed).lower(),
+              "deploy_conclusion": deploy_conclusion,
+              "live_total": res["live_total"],
+              "repo_total": repo_total,
+              "live_lastmod": res["live_lastmod"],
+              "repo_updated": repo_updated,
+              "missing_count": len(res["missing"]),
+              "first_missing": res["missing"][0] if res["missing"] else "",
+          }
+          for k, v in out.items():
+              print(f"{k}={v}")
+          PY
+
+      - name: Re-run the Pages deploy
+        # Not on workflow_run: a deploy that just failed must not re-trigger itself
+        # in a loop; the daily run retries and a human sees the issue meanwhile.
+        if: >-
+          steps.cmp.outputs.stale == 'true' &&
+          steps.inflight.outputs.count == '0' &&
+          github.event_name != 'workflow_run'
+        run: gh workflow run gh-pages.yml --ref main
+
+      - name: Open or refresh the stale-catalog issue
+        if: steps.cmp.outputs.stale == 'true' && steps.inflight.outputs.count == '0'
+        env:
+          LIVE_TOTAL: ${{ steps.cmp.outputs.live_total }}
+          REPO_TOTAL: ${{ steps.cmp.outputs.repo_total }}
+          LIVE_LASTMOD: ${{ steps.cmp.outputs.live_lastmod }}
+          REPO_UPDATED: ${{ steps.cmp.outputs.repo_updated }}
+          MISSING_COUNT: ${{ steps.cmp.outputs.missing_count }}
+          FIRST_MISSING: ${{ steps.cmp.outputs.first_missing }}
+          DEPLOY_FAILED: ${{ steps.cmp.outputs.deploy_failed }}
+          DEPLOY_CONCLUSION: ${{ steps.cmp.outputs.deploy_conclusion }}
+          DEPLOY_RUN_URL: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.html_url || '' }}
+        run: |
+          set -euo pipefail
+          deploy_line=""
+          if [ "$DEPLOY_FAILED" = "true" ]; then
+            deploy_line="**The Pages deploy that triggered this check concluded \`${DEPLOY_CONCLUSION}\`** — see ${DEPLOY_RUN_URL}."
+          elif [ "${GITHUB_EVENT_NAME}" != "workflow_run" ]; then
+            deploy_line="The \`Deploy catalog to Pages\` workflow was re-dispatched automatically by [this run](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})."
+          fi
+          body="$(cat <<EOF
+          The live catalog at https://alterlab-ieu.github.io/AlterLab-Academic-Skills/ does not match \`main\`.
+
+          | | live site | \`main\` |
+          |---|---|---|
+          | skills (\`summary.total\`) | **${LIVE_TOTAL:-unknown}** | **${REPO_TOTAL}** |
+          | last updated | ${LIVE_LASTMOD:-unknown} | ${REPO_UPDATED} |
+
+          Skills on \`main\` missing from the site: ${MISSING_COUNT}${FIRST_MISSING:+ (first: \`${FIRST_MISSING}\`)}.
+
+          ${deploy_line}
+          If the deploy fails again, check **Settings → Pages** (Source must be *GitHub Actions*) and the
+          \`github-pages\` environment protection rules. This issue closes itself once the site is fresh.
+
+          _Last checked: $(date -u +'%Y-%m-%d %H:%M UTC') by [run ${GITHUB_RUN_ID}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})._
+          EOF
+          )"
+          # Exact-title lookup on the live issue list (not the lagging search index).
+          num="$(gh issue list --state open --limit 100 --json number,title \
+                   --jq "first(.[] | select(.title == \"$ISSUE_TITLE\") | .number) // empty")"
+          if [ -n "$num" ]; then
+            gh issue edit "$num" --body "$body"
+            echo "Refreshed issue #$num"
+          else
+            gh issue create --title "$ISSUE_TITLE" --body "$body"
+          fi
+
+      - name: Close the stale-catalog issue (site is fresh)
+        if: steps.cmp.outputs.stale == 'false'
+        env:
+          LIVE_TOTAL: ${{ steps.cmp.outputs.live_total }}
+          LIVE_LASTMOD: ${{ steps.cmp.outputs.live_lastmod }}
+        run: |
+          set -euo pipefail
+          gh issue list --state open --limit 100 --json number,title \
+            --jq ".[] | select(.title == \"$ISSUE_TITLE\") | .number" |
+          while read -r num; do
+            gh issue close "$num" --comment "Live catalog is fresh again: ${LIVE_TOTAL} skills, Last-Modified ${LIVE_LASTMOD:-unknown}."
+            echo "Closed issue #$num"
+          done
+          echo "Live catalog matches main (${LIVE_TOTAL} skills)."

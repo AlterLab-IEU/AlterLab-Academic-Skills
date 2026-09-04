@@ -151,6 +151,8 @@ claude.ai-safe copies with `compatibility` stripped, ready to zip and upload.
 7. **Regenerate the marketplace** if you added, removed, moved, or renamed a skill:
    ```bash
    python scripts/gen_marketplace.py  # rewrites .claude-plugin/marketplace.json
+   python scripts/gen_catalog.py      # rewrites skills.json (also required after any version bump:
+                                      # the catalog embeds summary.version from pyproject.toml)
    ```
    Commit the regenerated `marketplace.json` alongside your skill.
 8. **Wait for review** -- a maintainer will review your PR and may request changes.

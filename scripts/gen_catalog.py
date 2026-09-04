@@ -26,6 +26,10 @@ For each skill (a directory that contains a ``SKILL.md``):
 
 ## The summary block
 
+* ``version``        - the suite version, read from ``pyproject.toml`` ``[project].version``
+                       (the release tag is ``v<version>``; the catalog site builds
+                       per-skill install links from it)
+* ``generated_at``   - ISO date (not time) the catalog file was last written
 * ``total``          - number of skills discovered (load-bearing: README counts)
 * ``per_domain``     - {domain: count} map
 * ``eval_coverage``  - {with_evals, without_evals, total, fraction} for evals.json
@@ -33,7 +37,9 @@ For each skill (a directory that contains a ``SKILL.md``):
 ## --check mode (CI gate)
 
 Regenerates the catalog to memory and:
-  1. diffs it against the committed ``skills.json`` (fails on drift), AND
+  1. diffs it against the committed ``skills.json`` (fails on drift) — with the
+     committed ``summary.generated_at`` carried over, so the date stamp alone can
+     never fail the gate (it only refreshes when the file is actually rewritten), AND
   2. tolerantly extracts the skill count printed in ``README.md`` and
      ``README.tr-TR.md`` and verifies it equals ``summary.total``.
 
@@ -49,9 +55,11 @@ Verify it is up to date + READMEs agree (CI):     uv run python scripts/gen_cata
 from __future__ import annotations
 
 import argparse
+import datetime as _dt
 import json
 import re
 import sys
+import tomllib
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -59,6 +67,18 @@ SKILLS = REPO / "skills"
 OUT = REPO / "skills.json"
 README = REPO / "README.md"
 README_TR = REPO / "README.tr-TR.md"
+PYPROJECT = REPO / "pyproject.toml"
+
+
+def read_version() -> str | None:
+    """``[project].version`` from pyproject.toml — the single source of truth
+    (release.yml and gen_marketplace.py read the same field). None if absent."""
+    if not PYPROJECT.is_file():
+        return None
+    try:
+        return tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))["project"]["version"]
+    except (tomllib.TOMLDecodeError, KeyError, TypeError):
+        return None
 
 
 def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
@@ -172,6 +192,8 @@ def build_catalog() -> dict:
     with_evals = sum(1 for s in skills if s["has_evals"])
     total = len(skills)
     summary = {
+        "version": read_version(),
+        "generated_at": _dt.date.today().isoformat(),
         "total": total,
         "per_domain": dict(sorted(per_domain.items())),
         "eval_coverage": {
@@ -250,6 +272,14 @@ def run_check(catalog: dict, rendered: str) -> int:
     problems: list[str] = []
 
     current = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
+    # Carry the committed date stamp over so --check is deterministic across days.
+    try:
+        committed_stamp = json.loads(current)["summary"].get("generated_at")
+    except (json.JSONDecodeError, KeyError, TypeError, AttributeError):
+        committed_stamp = None
+    if isinstance(committed_stamp, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", committed_stamp):
+        catalog["summary"]["generated_at"] = committed_stamp
+        rendered = render(catalog)
     if current != rendered:
         problems.append(
             "skills.json is stale — run: uv run python scripts/gen_catalog.py"

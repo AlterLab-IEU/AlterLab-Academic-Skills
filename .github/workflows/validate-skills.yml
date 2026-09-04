@@ -19,6 +19,7 @@ on:
       - "scripts/gen_marketplace.py"
       - "scripts/gen_catalog.py"
       - "skills.json"
+      - "pyproject.toml"
       - "README.md"
       - "README.tr-TR.md"
       - ".claude-plugin/**"

@@ -4,7 +4,19 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>AlterLab Academic Skills — Catalog</title>
-<meta name="description" content="Searchable catalog of the AlterLab Academic Skills suite — academic research skills across 13 domains with executable evals." />
+<meta name="description" content="Searchable catalog of the AlterLab Academic Skills suite — academic research skills across 17 domains, every one shipping executable evals." />
+<link rel="canonical" href="https://alterlab-ieu.github.io/AlterLab-Academic-Skills/" />
+<meta name="theme-color" content="#0d1117" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="AlterLab Academic Skills" />
+<meta property="og:title" content="AlterLab Academic Skills — Catalog" />
+<meta property="og:description" content="Searchable catalog of the AlterLab Academic Skills suite — academic research skills across 17 domains, every one shipping executable evals." />
+<meta property="og:url" content="https://alterlab-ieu.github.io/AlterLab-Academic-Skills/" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="AlterLab Academic Skills — Catalog" />
+<meta name="twitter:description" content="Searchable catalog of the AlterLab Academic Skills suite — academic research skills across 17 domains, every one shipping executable evals." />
+<!-- Inline favicon so browsers never request a /favicon.ico that would 404. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d1117'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-size='34' font-weight='700' fill='%237aa2f7'%3EA%3C/text%3E%3C/svg%3E" />
 <style>
   :root {
     --bg: #0d1117;
@@ -74,6 +86,14 @@
   }
   .lede { color: var(--fg-muted); max-width: 70ch; margin: 0; font-size: 16px; }
   .lede a { color: var(--fg); border-bottom: 1px solid var(--border); }
+  .lede code { font-family: var(--mono); font-size: 0.92em; color: var(--fg); }
+  .version {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fg-dim);
+    margin: 12px 0 0;
+    letter-spacing: 0.02em;
+  }
 
   /* Stats / coverage */
   .stats {
@@ -192,14 +212,66 @@
   }
   .chip .c { opacity: 0.7; margin-left: 6px; }
 
+  /* Install block */
+  .install {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .install .ihead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--fg-muted);
+  }
+  .install .ihead strong { color: var(--fg); font-weight: 600; }
+  .install pre {
+    margin: 0;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--fg);
+  }
+  .install .ihint { margin: 8px 0 0; font-size: 12px; color: var(--fg-dim); }
+  .copy {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fg-muted);
+    background: var(--chip);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 11px;
+    cursor: pointer;
+    transition: border-color 120ms, color 120ms;
+  }
+  .copy:hover { color: var(--fg); border-color: var(--fg-dim); }
+  .copy[data-done="true"] { color: var(--good); border-color: var(--good); }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
   /* Cards */
   main { padding: 26px 0 70px; }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr));
     gap: 16px;
   }
   .card {
+    min-width: 0;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -247,11 +319,20 @@
     letter-spacing: 0.03em;
   }
   .card p.desc {
+    overflow-wrap: anywhere;
     margin: 0 0 12px;
     color: var(--fg-muted);
     font-size: 13.5px;
     line-height: 1.5;
   }
+  .card .links {
+    display: flex;
+    gap: 14px;
+    margin: 0 0 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .card .links a::before { content: "\2197 "; opacity: 0.6; }
   .card .meta {
     margin-top: auto;
     display: flex;
@@ -286,6 +367,17 @@
   @media (max-width: 560px) {
     header.site { padding: 32px 0 22px; }
     .grid { grid-template-columns: 1fr; }
+    /* Keep the sticky filter bar compact on phones: one swipeable row of chips
+       instead of six wrapped rows covering half the viewport. */
+    .domains {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding: 3px 0 4px; /* room for the focus ring inside the overflow clip */
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .domains::-webkit-scrollbar { display: none; }
+    .chip { flex: 0 0 auto; }
   }
 </style>
 </head>
@@ -298,9 +390,12 @@
       Purpose-built skills that turn an AI agent into a domain-specific academic
       research expert — literature review, paper writing &amp; review,
       citation/integrity verification, bioinformatics, cheminformatics, data science, and more.
+      Not sure which skill you need? Start with <code>alterlab-skill-finder</code> — describe
+      the task, or type <code>alterflow</code>, and it routes you to the right skills.
       Browse the full suite below, or read the
       <a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills">source on GitHub</a>.
     </p>
+    <p class="version" id="version" hidden></p>
 
     <div class="stats" id="stats"><!-- filled by JS --></div>
 
@@ -329,6 +424,15 @@
 
 <main>
   <div class="wrap">
+    <section class="install" id="install" aria-label="Install in Claude Code">
+      <div class="ihead">
+        <span><strong>Install in Claude Code</strong> — add the marketplace once, then install a domain plugin.</span>
+        <button class="copy" id="copy" type="button">Copy</button>
+      </div>
+      <span class="sr-only" id="copy-status" role="status" aria-live="polite"></span>
+      <pre><code id="install-cmd"></code></pre>
+      <p class="ihint" id="install-hint"></p>
+    </section>
     <div id="grid" class="grid" aria-live="polite"></div>
     <div id="status" class="empty">Loading catalog…</div>
   </div>
@@ -352,8 +456,13 @@
   //     /docs/site/index.html, catalog at /skills.json            -> "../../skills.json"
   // Try each candidate until one loads.
   var CANDIDATES = ["skills.json", "../../skills.json", "./skills.json", "/skills.json"];
+  var REPO = "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills";
+  var RELEASE_API = "https://api.github.com/repos/AlterLab-IEU/AlterLab-Academic-Skills/releases/tags/v";
+  var MARKETPLACE = "alterlab-academic-skills";
 
-  var state = { all: [], domains: [], activeDomain: null, query: "" };
+  // assets: names of the zips attached to release v<version>; null = unknown
+  // (API unreachable or rate-limited), in which case links stay optimistic.
+  var state = { all: [], domains: [], activeDomain: null, query: "", version: null, generatedAt: null, assets: null };
 
   var el = {
     grid: document.getElementById("grid"),
@@ -366,7 +475,12 @@
     domains: document.getElementById("domains"),
     q: document.getElementById("q"),
     resultCount: document.getElementById("resultCount"),
-    footTotal: document.getElementById("foot-total")
+    footTotal: document.getElementById("foot-total"),
+    version: document.getElementById("version"),
+    installCmd: document.getElementById("install-cmd"),
+    installHint: document.getElementById("install-hint"),
+    copy: document.getElementById("copy"),
+    copyStatus: document.getElementById("copy-status")
   };
 
   function esc(s) {
@@ -398,6 +512,11 @@
       stat(ev.with_evals != null ? ev.with_evals : "—", "With evals") +
       stat("MIT", "License");
     el.footTotal.textContent = total + " skills · " + domainCount + " domains";
+
+    var bits = [];
+    if (summary.version) bits.push("v" + summary.version);
+    if (summary.generated_at) bits.push("generated " + summary.generated_at);
+    if (bits.length) { el.version.textContent = bits.join(" · "); el.version.hidden = false; }
 
     if (ev.fraction != null) {
       var pct = Math.round(ev.fraction * 1000) / 10;
@@ -434,7 +553,7 @@
       (domain !== null && state.activeDomain === domain);
     return '<button class="chip" type="button" data-domain="' + esc(domain || "") +
       '" aria-pressed="' + (pressed ? "true" : "false") + '">' +
-      esc(label) + '<span class="c">' + count + "</span></button>";
+      esc(label) + '<span class="c">' + esc(count) + "</span></button>";
   }
 
   function filtered() {
@@ -448,6 +567,65 @@
     });
   }
 
+  function installText() {
+    var plugin = state.activeDomain ? "alterlab-" + state.activeDomain : "alterlab-core";
+    return "/plugin marketplace add AlterLab-IEU/AlterLab-Academic-Skills\n" +
+      "/plugin install " + plugin + "@" + MARKETPLACE;
+  }
+
+  function renderInstall() {
+    el.installCmd.textContent = installText();
+    if (state.activeDomain) {
+      var n = state.all.filter(function (s) { return s.domain === state.activeDomain; }).length;
+      el.installHint.textContent = "Installs the " + state.activeDomain + " plugin (" + n +
+        " skills). Pick another domain chip to switch, or All for the core plugin.";
+    } else {
+      el.installHint.textContent = "Showing the core plugin (research pipeline + alterlab-skill-finder). " +
+        "Pick a domain chip above to get that domain's install line.";
+    }
+  }
+
+  function announce(text) { el.copyStatus.textContent = text; }
+
+  function copyInstall() {
+    var text = installText();
+    var done = function () {
+      el.copy.textContent = "Copied";
+      el.copy.setAttribute("data-done", "true");
+      announce("Install commands copied to clipboard.");
+      setTimeout(function () { el.copy.textContent = "Copy"; el.copy.removeAttribute("data-done"); announce(""); }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text, done); });
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+
+  function fallbackCopy(text, done) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand("copy") === true; } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    if (ok) { done(); return; }
+    // execCommand reports false (no throw) when copying is unsupported or blocked:
+    // leave the commands selected so a keyboard copy works, and say so.
+    var range = document.createRange();
+    range.selectNodeContents(el.installCmd);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    el.copy.textContent = "Select & copy";
+    announce("Automatic copy is not available here. The commands are selected; press Ctrl or Cmd + C.");
+    setTimeout(function () { el.copy.textContent = "Copy"; announce(""); }, 2600);
+  }
+
   function card(s) {
     var evClass = s.has_evals ? "ev-yes" : "ev-no";
     var evLabel = s.has_evals ? "evals" : "no evals";
@@ -456,14 +634,24 @@
 
     var meta = "";
     if (s.has_scripts) meta += '<span class="tag">scripts</span>';
-    if (s.references && s.references.length) meta += '<span class="tag">' + s.references.length + " refs</span>";
+    if (s.references && s.references.length) meta += '<span class="tag">' + esc(s.references.length) + " refs</span>";
     if (s.license) meta += '<span class="tag">' + esc(s.license) + "</span>";
-    if (s.body_lines) meta += '<span class="tag">' + s.body_lines + " lines</span>";
+    if (s.body_lines) meta += '<span class="tag">' + esc(s.body_lines) + " lines</span>";
+
+    var links = '<a href="' + REPO + "/tree/main/skills/" + encodeURIComponent(s.domain) + "/" +
+      encodeURIComponent(s.name) + '" target="_blank" rel="noopener">Source</a>';
+    var zip = "skill-" + s.name + "-" + state.version + ".zip";
+    if (state.version && (state.assets === null || state.assets[zip])) {
+      links += '<a href="' + REPO + "/releases/download/v" + encodeURIComponent(state.version) +
+        "/skill-" + encodeURIComponent(s.name) + "-" + encodeURIComponent(state.version) +
+        '.zip" title="Download this skill as a zip for the Claude app (Customize › Skills › Upload)">Install</a>';
+    }
 
     return '<article class="card">' +
       '<div class="top"><h3>' + esc(s.name) + '</h3><div class="badges">' + badges + "</div></div>" +
       '<div class="domain">' + esc(s.domain) + "</div>" +
       '<p class="desc">' + esc(s.description) + "</p>" +
+      '<div class="links">' + links + "</div>" +
       '<div class="meta">' + meta + "</div>" +
       "</article>";
   }
@@ -475,6 +663,8 @@
         (dom !== null && state.activeDomain === dom);
       c.setAttribute("aria-pressed", pressed ? "true" : "false");
     });
+
+    renderInstall();
 
     var rows = filtered();
     el.resultCount.textContent = rows.length + " of " + state.all.length;
@@ -493,6 +683,23 @@
   function init(data) {
     var skills = (data && data.skills) || [];
     var summary = (data && data.summary) || {};
+    state.version = summary.version || null;
+    state.generatedAt = summary.generated_at || null;
+    if (state.version) {
+      fetch(RELEASE_API + encodeURIComponent(state.version), { headers: { Accept: "application/vnd.github+json" } })
+        .then(function (r) {
+          if (r.status === 404) return { assets: [] };
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.json();
+        })
+        .then(function (rel) {
+          var names = {};
+          (rel.assets || []).forEach(function (a) { names[a.name] = true; });
+          state.assets = names;
+          render();
+        })
+        .catch(function () { state.assets = null; });
+    }
     state.all = skills.slice().sort(function (a, b) {
       return (a.name || "").localeCompare(b.name || "");
     });
@@ -519,6 +726,9 @@
 
     render();
   }
+
+  renderInstall();
+  el.copy.addEventListener("click", copyInstall);
 
   fetchCatalog()
     .then(init)

@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: write
+  actions: write   # dispatch the Pages catalog deploy after the release exists
 
 jobs:
   release:
@@ -112,3 +113,12 @@ jobs:
             See the auto-generated changelog below for details.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Republish the Pages catalog
+        # Tags and releases created with GITHUB_TOKEN never trigger `on: push` or
+        # `on: release` in other workflows (only workflow_dispatch does), so the
+        # catalog site is re-deployed explicitly here — after the release and its
+        # per-skill zips exist, so the site's Install links resolve immediately.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run gh-pages.yml --ref main

@@ -10,7 +10,9 @@ dev = ["pytest>=8", "ruff>=0.8"]
 
 # [project].version above is the single source of truth for the package version.
 # scripts/gen_marketplace.py reads it from here and propagates it to both
-# .claude-plugin/marketplace.json and package.json. Do not hand-edit those.
+# .claude-plugin/marketplace.json and package.json; scripts/gen_catalog.py embeds
+# it in skills.json (summary.version). Run both after a bump. Do not hand-edit
+# those generated files.
 [tool.ruff]
 # Lint scope: the Python that ships inside skills, the maintenance scripts, and
 # the tests. Skill scripts are teaching artifacts (verbose, self-documenting),
