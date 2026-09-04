@@ -2,6 +2,14 @@ name: Deploy catalog to Pages
 
 # Publishes the static skills catalog (docs/site/index.html) alongside the
 # generated skills.json so the page can fetch the catalog as a sibling file.
+#
+# History: deploy runs #8 and #9 (2026-07-02) sat in `deployment_queued` for the
+# action's default 10-minute timeout, were aborted, and the site stayed at the
+# previous total. Three guards below make that impossible to miss again:
+#   1. a 20-minute deploy timeout,
+#   2. tag + release triggers so every release republishes,
+#   3. a `verify` job that polls the LIVE skills.json and fails the run unless
+#      the published catalog matches the repo's — a green run means a live site.
 on:
   push:
     branches: [main]
@@ -9,6 +17,10 @@ on:
       - "docs/site/**"
       - "skills.json"
       - ".github/workflows/gh-pages.yml"
+    # paths filters are not evaluated for tag pushes, so every v* tag deploys.
+    tags: ["v*"]
+  release:
+    types: [published]
   workflow_dispatch:
 
 # Allow the deploy job to publish to Pages.
@@ -21,6 +33,9 @@ permissions:
 concurrency:
   group: pages
   cancel-in-progress: false
+
+env:
+  LIVE_URL: https://alterlab-ieu.github.io/AlterLab-Academic-Skills/skills.json
 
 jobs:
   build:
@@ -57,3 +72,60 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # Pages deployments queued for >10 min on 2026-07-02 and the action's
+          # default timeout (600000 ms) aborted them. Wait up to 20 minutes.
+          timeout: 1200000
+          error_count: 10
+          reporting_interval: 10000
+
+  verify:
+    name: Verify live catalog
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Poll the live skills.json until it matches the repo
+        # A green deploy that did not publish is the exact bug this job exists
+        # to catch: poll every 30 s for up to 10 min until summary.total equals
+        # the repo's AND no repo skill is missing from the live list.
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, sys, time, urllib.request
+
+          repo = json.load(open("skills.json", encoding="utf-8"))
+          want_total = repo["summary"]["total"]
+          want_names = {s["name"] for s in repo["skills"]}
+          url = f"{os.environ['LIVE_URL']}?cb={os.environ['GITHUB_SHA']}"
+          headers = {"Cache-Control": "no-cache", "Pragma": "no-cache",
+                     "User-Agent": "alterlab-academic-skills-verify"}
+          deadline = time.monotonic() + 600
+          attempt = 0
+          while True:
+              attempt += 1
+              try:
+                  with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=30) as r:
+                      live = json.load(r)
+                      lastmod = r.headers.get("Last-Modified")
+                  total = live["summary"]["total"]
+                  missing = sorted(want_names - {s["name"] for s in live["skills"]})
+                  print(f"[{attempt}] live total={total} want={want_total} "
+                        f"missing={len(missing)} first_missing={missing[0] if missing else '-'} "
+                        f"last-modified={lastmod}")
+                  if total == want_total and not missing:
+                      print(f"::notice::Live catalog verified: {total} skills, Last-Modified {lastmod}")
+                      sys.exit(0)
+              except Exception as e:  # network blip, JSON decode, etc. — keep polling
+                  print(f"[{attempt}] fetch failed: {e}")
+              if time.monotonic() >= deadline:
+                  print(f"::error::Live catalog still does not match the repo after 10 min "
+                        f"(want total={want_total}; see the poll log above). The deploy job "
+                        f"reported success but the published site is stale. Check Settings -> "
+                        f"Pages (Source must be 'GitHub Actions') and the github-pages "
+                        f"environment protection rules, then re-run this workflow.")
+                  sys.exit(1)
+              time.sleep(30)
+          PY
