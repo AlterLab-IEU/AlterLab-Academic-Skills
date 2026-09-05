@@ -143,13 +143,17 @@ IMPORTANT - NO FIGURE NUMBERS:
 - The diagram should contain only the visual content itself
 """
     
-    def __init__(self, api_key: Optional[str] = None, verbose: bool = False):
+    def __init__(self, api_key: Optional[str] = None, verbose: bool = False,
+                 image_provider: str = "openrouter",
+                 atlas_api_key: Optional[str] = None):
         """
         Initialize the generator.
         
         Args:
             api_key: OpenRouter API key (or use OPENROUTER_API_KEY env var)
             verbose: Print detailed progress information
+            image_provider: Image generation provider (openrouter or atlas)
+            atlas_api_key: Atlas Cloud API key (or use ATLASCLOUD_API_KEY env var)
         """
         # Priority: 1) explicit api_key param, 2) environment variable, 3) .env file
         self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
@@ -171,6 +175,22 @@ IMPORTANT - NO FIGURE NUMBERS:
         self.verbose = verbose
         self._last_error = None  # Track last error for better reporting
         self.base_url = "https://openrouter.ai/api/v1"
+        self.image_provider = image_provider.lower()
+        if self.image_provider not in {"openrouter", "atlas"}:
+            raise ValueError("image_provider must be 'openrouter' or 'atlas'")
+
+        self.atlas_api_key = atlas_api_key or os.getenv("ATLASCLOUD_API_KEY")
+        if self.image_provider == "atlas" and not self.atlas_api_key:
+            raise ValueError(
+                "ATLASCLOUD_API_KEY not found. Set it before using the Atlas image provider."
+            )
+        self.atlas_base_url = "https://api.atlascloud.ai/api/v1"
+        self.atlas_image_model = (
+            os.environ.get("ALTERLAB_ATLAS_IMAGE_MODEL")
+            or "openai/gpt-image-2/text-to-image"
+        )
+        self.atlas_image_size = os.environ.get("ALTERLAB_ATLAS_IMAGE_SIZE") or "1536x1024"
+        self.atlas_image_quality = os.environ.get("ALTERLAB_ATLAS_IMAGE_QUALITY") or "high"
         # Model IDs follow the ALTERLAB_MODEL convention (skills/core/shared/model_env.md):
         # read an env var, else a dated default constant (reviewed 2026-06-06). These slots
         # need Google image/vision models, so they use dedicated vars rather than the Claude
@@ -347,6 +367,109 @@ IMPORTANT - NO FIGURE NUMBERS:
         
         base64_data = base64.b64encode(image_data).decode("utf-8")
         return f"data:{mime_type};base64,{base64_data}"
+
+    @staticmethod
+    def _atlas_response_data(response_json: Dict[str, Any]) -> Dict[str, Any]:
+        """Return the prediction object from wrapped or unwrapped Atlas responses."""
+        data = response_json.get("data", response_json)
+        return data if isinstance(data, dict) else {}
+
+    def _get_atlas_prediction(self, prediction_id: str) -> Optional[Dict[str, Any]]:
+        """Fetch one prediction state, retrying only transient GET failures."""
+        headers = {
+            "Authorization": f"Bearer {self.atlas_api_key}",
+            "User-Agent": "alterlab-academic-skills/2.6.1",
+        }
+        url = f"{self.atlas_base_url}/model/prediction/{prediction_id}"
+
+        for attempt in range(3):
+            try:
+                response = requests.get(url, headers=headers, timeout=30)
+                if response.status_code == 200:
+                    payload = response.json()
+                    if payload.get("code") not in (None, 0, 200):
+                        raise RuntimeError(f"Atlas API error: {payload}")
+                    return self._atlas_response_data(payload)
+                if response.status_code != 429 and response.status_code < 500:
+                    raise RuntimeError(
+                        f"Atlas prediction request failed (HTTP {response.status_code})"
+                    )
+            except (requests.exceptions.RequestException, ValueError) as exc:
+                if attempt == 2:
+                    self._last_error = f"Atlas prediction request failed: {exc}"
+                    return None
+            except RuntimeError as exc:
+                self._last_error = str(exc)
+                return None
+
+            if attempt < 2:
+                time.sleep(2 ** attempt)
+
+        self._last_error = "Atlas prediction request failed after bounded GET retries"
+        return None
+
+    def _generate_atlas_image(self, prompt: str) -> Optional[bytes]:
+        """Generate one image through Atlas Cloud without retrying the paid POST."""
+        headers = {
+            "Authorization": f"Bearer {self.atlas_api_key}",
+            "Content-Type": "application/json",
+            "User-Agent": "alterlab-academic-skills/2.6.1",
+        }
+        payload = {
+            "model": self.atlas_image_model,
+            "prompt": prompt,
+            "size": self.atlas_image_size,
+            "quality": self.atlas_image_quality,
+            "output_format": "png",
+        }
+
+        self._log(f"Submitting one Atlas generation request to {self.atlas_image_model}...")
+        try:
+            response = requests.post(
+                f"{self.atlas_base_url}/model/generateImage",
+                headers=headers,
+                json=payload,
+                timeout=120,
+            )
+            response.raise_for_status()
+            response_json = response.json()
+            if response_json.get("code") not in (None, 0, 200):
+                raise RuntimeError(f"Atlas API error: {response_json}")
+            prediction = self._atlas_response_data(response_json)
+            prediction_id = prediction.get("id")
+            if not prediction_id:
+                raise RuntimeError("Atlas response did not include a prediction ID")
+        except (requests.exceptions.RequestException, ValueError, RuntimeError) as exc:
+            self._last_error = f"Atlas generation request failed: {exc}"
+            self._log(f"✗ {self._last_error}")
+            return None
+
+        for _ in range(100):
+            prediction = self._get_atlas_prediction(prediction_id)
+            if prediction is None:
+                return None
+
+            status = str(prediction.get("status", "")).lower()
+            if status == "completed":
+                outputs = prediction.get("outputs") or []
+                if not outputs:
+                    self._last_error = "Atlas prediction completed without an output URL"
+                    return None
+                try:
+                    image_response = requests.get(outputs[0], timeout=60)
+                    image_response.raise_for_status()
+                    return image_response.content
+                except requests.exceptions.RequestException as exc:
+                    self._last_error = f"Atlas output download failed: {exc}"
+                    return None
+            if status == "failed":
+                self._last_error = f"Atlas prediction failed: {prediction}"
+                return None
+
+            time.sleep(3)
+
+        self._last_error = "Atlas prediction did not complete within 5 minutes"
+        return None
     
     def generate_image(self, prompt: str) -> Optional[bytes]:
         """
@@ -359,6 +482,9 @@ IMPORTANT - NO FIGURE NUMBERS:
             Image bytes or None if generation failed
         """
         self._last_error = None  # Reset error
+
+        if self.image_provider == "atlas":
+            return self._generate_atlas_image(prompt)
         
         messages = [
             {
@@ -679,7 +805,9 @@ Generate a publication-quality scientific diagram that meets all the guidelines 
                     "success": False,
                     "error": error_msg
                 })
-                continue
+                # A failed generation is terminal for this run. In particular,
+                # never repeat a paid provider POST as an implicit retry.
+                break
             
             # Save iteration image
             iter_path = output_dir / f"{base_name}_v{i}{extension}"
@@ -788,7 +916,8 @@ Note: Multiple iterations only occur if quality is BELOW the threshold.
       If the first generation meets the threshold, no extra API calls are made.
 
 Environment:
-  OPENROUTER_API_KEY    OpenRouter API key (required)
+  OPENROUTER_API_KEY    OpenRouter API key (required for quality review)
+  ATLASCLOUD_API_KEY    Atlas Cloud API key (required with --image-provider atlas)
         """
     )
     
@@ -802,6 +931,9 @@ Environment:
                                "report", "grant", "thesis", "preprint", "default"],
                        help="Document type for quality threshold (default: default)")
     parser.add_argument("--api-key", help="OpenRouter API key (or set OPENROUTER_API_KEY)")
+    parser.add_argument("--image-provider", choices=["openrouter", "atlas"],
+                       default=os.getenv("ALTERLAB_IMAGE_PROVIDER", "openrouter"),
+                       help="Image generation provider (default: openrouter)")
     parser.add_argument("-v", "--verbose", action="store_true",
                        help="Verbose output")
     
@@ -822,7 +954,11 @@ Environment:
         sys.exit(1)
     
     try:
-        generator = ScientificSchematicGenerator(api_key=api_key, verbose=args.verbose)
+        generator = ScientificSchematicGenerator(
+            api_key=api_key,
+            verbose=args.verbose,
+            image_provider=args.image_provider,
+        )
         results = generator.generate_iterative(
             user_prompt=args.prompt,
             output_path=args.output,
@@ -845,4 +981,3 @@ Environment:
 
 if __name__ == "__main__":
     main()
-
