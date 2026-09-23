@@ -1,12 +1,13 @@
 ---
 name: alterlab-survey-analysis
-description: "Analyzes complex-sample survey data with design-based inference — declares a survey design (weights, strata, PSUs/clusters, FPC) before estimating means, totals, proportions, ratios, and quantiles, computes design-adjusted standard errors via Taylor linearization or replicate weights (BRR, Jackknife, Bootstrap), calibrates with post-stratification / raking / GREG, and fits design-adjusted GLMs (linear, logistic, Poisson). Uses samplics (stable Python), the emerging svy successor, or the field-standard R survey + srvyr via Rscript. Use when analyzing GSS/ANES/ESS/DHS/Eurobarometer or any weighted/stratified/clustered survey, when a dataset ships survey weights, or when someone quotes unweighted percentages from a complex survey. For questionnaire and sampling-plan DESIGN prefer alterlab-survey-design; for the sampling-adequacy gate prefer alterlab-ssci-sampling-gate; for causal identification prefer alterlab-causal-inference. Part of the AlterLab Academic Skills suite."
+description: "Analyzes complex-sample survey data with design-based inference — declares a survey design (weights, strata, PSUs/clusters, FPC) before estimating means, totals, proportions, ratios, and quantiles, computes design-adjusted standard errors via Taylor linearization or replicate weights (BRR, Jackknife, Bootstrap), calibrates with post-stratification / raking / GREG, and fits design-adjusted GLMs (linear, logistic, Poisson). Uses svy in Python (the maintained successor to the now-archived samplics) or the field-standard R survey + srvyr via Rscript. Use when analyzing GSS/ANES/ESS/DHS/Eurobarometer or any weighted/stratified/clustered survey, when a dataset ships survey weights, or when someone quotes unweighted percentages from a complex survey. For questionnaire and sampling-plan DESIGN prefer alterlab-survey-design; for the sampling-adequacy gate prefer alterlab-ssci-sampling-gate; for causal identification prefer alterlab-causal-inference. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Bash(python:*)
-compatibility: "Requires (declare in-session, no runtime install on Anthropic API): Python samplics>=0.6 (stable; TaylorEstimator) — or svy>=0.18 (samplics' successor; API still maturing, pin + re-verify) — OR the field-standard R survey>=4.5 + srvyr>=1.3 via Rscript (csSampling+brms for Bayesian design-based models). Runs locally via `uv run python` / `Rscript`; no API key."
+compatibility: "Requires (declare in-session, no runtime install on Anthropic API): Python svy>=0.29 (samplics' maintained successor; beta, takes a polars DataFrame — pin the version) + polars; samplics 0.6 is archived (FutureWarning on import) and is for legacy code only — OR the field-standard R survey>=4.5 + srvyr>=1.3 via Rscript (GitHub-only csSampling + brms for Bayesian design-based models). Runs locally via `uv run python` / `Rscript`; no API key."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
     depends_on: "alterlab-survey-design (item/sample design), alterlab-ssci-sampling-gate (frame/size gate), alterlab-statistical-analysis; audited by alterlab-ssci-inference-gate"
 ---
 
@@ -69,16 +70,20 @@ report which. "Weight before quoting any percentage."
 
 ## Verified calls (pinned)
 
-**Python — samplics (stable):**
+**Python — svy (maintained successor to samplics; verified on svy 0.29):**
 ```python
-from samplics.estimation import TaylorEstimator
-from samplics.utils.types import PopParam
-est = TaylorEstimator(PopParam.mean)
-est.estimate(y=df["trust"], samp_weight=df["wt"], stratum=df["strata"], psu=df["psu"],
-             fpc=df.get("fpc", 1.0), domain=df.get("region"), deff=True, remove_nan=True)
+import polars as pl, svy
+design = svy.Design(stratum="strata", psu="psu", wgt="wt")   # FPC: pop_size=svy.PopSize(psu="N_psu")
+sample = svy.Sample(data=pl.from_pandas(df), design=design)  # svy takes a polars DataFrame
+sample.estimation.mean("trust", deff="wor")                  # Taylor linearization by default
+sample.estimation.mean("trust", by="region")                 # domain estimation, design kept intact
+sample.estimation.prop("trust01")                            # also .total() .ratio() .median()
+sample.glm.fit("trust01", x=["age", svy.Cat("educ")], family="binomial")
 ```
-`svy` (samplics' successor, `import svy`) mirrors this with `svy.Design(...)` / `svy.Sample(...)`;
-its API is still maturing — pin `svy>=0.18` and re-verify against the installed package.
+Provider-shipped replicate weights: `svy.Design(wgt="wt", rep_wgts=svy.JackknifeWgts(prefix="wtrep",
+n_reps=80))` (also `BrrWgts`, `BootstrapWgts`, `SdrWgts`), then `method="replication"`. svy is
+still beta — pin the version and re-check signatures after upgrades. `samplics` (`TaylorEstimator`)
+still runs but is archived and warns on import; keep it for legacy code only.
 
 **R — survey / srvyr (field standard, fully verified):**
 ```r
@@ -111,6 +116,6 @@ DOMAINS:    subset of the DESIGN object, not a filtered data frame
 ## References
 
 - `references/design_and_variance.md` — Taylor vs replicate variance, calibration math, DEFF, domain estimation.
-- `references/python_vs_r.md` — samplics/svy caveats and the canonical R survey/srvyr recipes.
+- `references/python_vs_r.md` — svy (and legacy samplics) caveats and the canonical R survey/srvyr recipes.
 
 Part of the AlterLab Academic Skills suite.

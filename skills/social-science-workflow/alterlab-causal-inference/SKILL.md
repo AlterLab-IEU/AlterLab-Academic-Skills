@@ -3,10 +3,11 @@ name: alterlab-causal-inference
 description: "Estimates causal effects from observational and quasi-experimental data — difference-in-differences, instrumental variables, regression discontinuity, panel fixed effects, propensity-score / doubly-robust methods, and heterogeneous treatment effects (CATE) — using the verified Python stack: statsmodels and linearmodels (PanelOLS, IV2SLS), pyfixest (feols, event studies, Sun-Abraham, did2s), DoWhy (identify -> estimate -> refute), EconML (LinearDML, CausalForestDML, DRLearner), and rdrobust for RD. It names the identifying assumption before estimating and runs a refutation/robustness check after. Use when the request mentions difference-in-differences, instrumental variables, regression discontinuity, fixed effects / panel causal estimation, propensity scores, or treatment-effect estimation from non-randomized data. For choosing the design first prefer alterlab-ssci-design-gate; for plain regression or descriptive stats prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Bash(python:*)
-compatibility: "Requires (declare in-session, no runtime install on Anthropic API): statsmodels, linearmodels>=6, pyfixest>=0.25, dowhy>=0.12, econml>=0.15, rdrobust>=1.3 (pip). Runs locally via `uv run python`; no API key."
+compatibility: "Requires (declare in-session, no runtime install on Anthropic API): statsmodels, linearmodels>=6, pyfixest>=0.29 (saturated event study; current 0.60), dowhy>=0.12, econml>=0.15, rdrobust>=1.3 (pip). Runs locally via `uv run python`; no API key."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
     depends_on: "alterlab-ssci-design-gate (design + assumption), alterlab-statsmodels, alterlab-statistical-analysis; audited by alterlab-ssci-inference-gate"
 ---
 
@@ -44,12 +45,12 @@ EVERY CAUSAL ESTIMATE INHERITS AN ASSUMPTION. STATE IT, ESTIMATE UNDER IT, THEN 
 
 | Design | Identifying assumption | Estimator (verified API) |
 |--------|------------------------|--------------------------|
-| **DiD / event study** | parallel trends | `pyfixest` (v0.60): `pf.feols("y ~ i(time, treat, ref) | unit + time", df)`, `pf.event_study(...)`, `pf.did2s(...)`; or `statsmodels` `smf.ols("y ~ treat*post").fit(cov_type='cluster', cov_kwds={'groups': df.unit})`. Staggered adoption → Sun-Abraham `sunab()` or `did2s`. |
+| **DiD / event study** | parallel trends | `pyfixest` (v0.60): `pf.feols("y ~ i(year, treat, ref=2018) | unit + year", df)` (`ref=` must be a keyword), `pf.event_study(...)`, `pf.did2s(...)`; or `statsmodels` `smf.ols("y ~ treat*post").fit(cov_type='cluster', cov_kwds={'groups': df.unit})`. Staggered adoption → `pf.event_study(df, yname, idname, tname, gname, estimator="saturated")` (cohort × event-time; `.aggregate()` applies Sun-Abraham weights) or `estimator="did2s"`. `sunab()` is R `fixest` syntax — pyfixest has no `sunab()`. |
 | **Panel fixed effects** | no time-varying confounders | `linearmodels` (v7): `PanelOLS.from_formula("y ~ 1 + x + EntityEffects + TimeEffects", panel).fit(cov_type='clustered', cluster_entity=True)`. |
 | **Instrumental variables** | exclusion restriction + relevance | `linearmodels` `IV2SLS.from_formula("y ~ 1 + exog + [treat ~ z1 + z2]", df).fit()`; check first-stage F (weak instrument). |
 | **Regression discontinuity** | continuity at the cutoff (no sorting) | `rdrobust` (v2): `rdrobust(y, x, c=cutoff)`, `rdbwselect`, `rdplot`; McCrary/density check for manipulation. |
 | **Selection-on-observables** | conditional ignorability | `DoWhy` (v0.14): `CausalModel(df, treatment, outcome, graph).identify_effect()` → `estimate_effect(method_name="backdoor.propensity_score_matching")` → `refute_estimate(..., method_name="random_common_cause")`. |
-| **Heterogeneous effects (CATE)** | (as above) + overlap | `EconML` (v0.16): `LinearDML()` / `CausalForestDML()` `.fit(Y, T, X=X, W=W)` then `.effect(X)`. |
+| **Heterogeneous effects (CATE)** | (as above) + overlap | `EconML` (v0.17): `LinearDML()` / `CausalForestDML()` `.fit(Y, T, X=X, W=W)` then `.effect(X)`. |
 
 A stdlib router that maps the design to the estimator + its assumption + the verified call:
 `scripts/estimator_router.py`. Fuller worked patterns and diagnostics:

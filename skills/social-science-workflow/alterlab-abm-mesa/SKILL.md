@@ -1,12 +1,13 @@
 ---
 name: alterlab-abm-mesa
-description: "Builds agent-based models of social systems with Mesa 3 — the current AgentSet API (model.agents.shuffle_do('step'), auto-assigned unique_id, mandatory super().__init__(seed=...)), cell spaces (mesa.discrete_space OrthogonalMooreGrid / classic mesa.space grids), the DataCollector, batch_run parameter sweeps, and SolaraViz — for emergence, segregation, diffusion, opinion dynamics, and cooperation models. It uses the Mesa 3.x API (the old mesa.time schedulers like RandomActivation are removed) and treats the model as a generative theory to be validated, not just run. Use when the request mentions an agent-based model, Mesa, simulating interacting agents, or emergent macro behavior from micro rules. For discrete-event (queueing/process) simulation prefer alterlab-simpy; for reinforcement learning prefer alterlab-stable-baselines3. Part of the AlterLab Academic Skills suite."
+description: "Builds agent-based models of social systems with Mesa 3 — the current AgentSet API (model.agents.shuffle_do('step'), auto-assigned unique_id, mandatory super().__init__(rng=...)), cell spaces (mesa.discrete_space OrthogonalMooreGrid / classic mesa.space grids), the DataCollector, batch_run parameter sweeps, and SolaraViz — for emergence, segregation, diffusion, opinion dynamics, and cooperation models. It uses the Mesa 3.x API (the old mesa.time schedulers like RandomActivation are removed) and treats the model as a generative theory to be validated, not just run. Use when the request mentions an agent-based model, Mesa, simulating interacting agents, or emergent macro behavior from micro rules. For discrete-event (queueing/process) simulation prefer alterlab-simpy; for reinforcement learning prefer alterlab-stable-baselines3. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Bash(python:*)
-compatibility: "Requires mesa>=3 (pip; API changed substantially from Mesa 2 — mesa.time schedulers removed). Optional SolaraViz for interactive visualization. No API key; runs locally via `uv run python`. On the Anthropic API (no runtime install) declare mesa as a dependency."
+compatibility: "Requires mesa>=3.4 (current 3.5.1 as of 2026-09; Mesa 4.0 is still alpha). API changed substantially from Mesa 2 — mesa.time schedulers removed; Mesa 3.5 deprecates Model(seed=) for Model(rng=). Optional SolaraViz via `uv pip install 'mesa[rec]'`. No API key; runs locally via `uv run python`. On the Anthropic API (no runtime install) declare mesa as a dependency."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
     depends_on: "alterlab-ssci-design-gate, alterlab-simpy (contrast: discrete-event); audited by alterlab-ssci-inference-gate"
 ---
 
@@ -41,7 +42,9 @@ THE MODEL IS A THEORY OF HOW MACRO EMERGES FROM MICRO. USE MESA 3 CORRECTLY, THE
 ## The Mesa 3 API (verified — do not ship Mesa 2 patterns)
 
 Mesa 3 removed `mesa.time` schedulers (`RandomActivation`, etc.). Agents auto-register into
-`model.agents`; `unique_id` is auto-assigned; the model **must** call `super().__init__(seed=...)`.
+`model.agents`; `unique_id` is auto-assigned; the model **must** call `super().__init__(rng=...)`.
+Mesa 3.5 deprecated the `seed=` keyword in favor of `rng=` (same behavior, but `seed=` now emits a
+`FutureWarning`), so new code passes `rng=`.
 
 ```python
 import mesa
@@ -58,8 +61,8 @@ class MoneyAgent(mesa.Agent):
             self.wealth -= 1
 
 class MoneyModel(mesa.Model):
-    def __init__(self, n=10, seed=None):
-        super().__init__(seed=seed)            # mandatory in Mesa 3
+    def __init__(self, n=10, rng=None):
+        super().__init__(rng=rng)              # mandatory; rng= replaces seed= (Mesa 3.5)
         MoneyAgent.create_agents(self, n)      # bulk creation helper
         self.datacollector = mesa.DataCollector(
             model_reporters={"Gini": compute_gini},
@@ -76,8 +79,9 @@ class MoneyModel(mesa.Model):
 - **Space**: classic `mesa.space.MultiGrid/SingleGrid/NetworkGrid` (maintenance mode) with
   `place_agent`/`move_agent`; new cell space `mesa.discrete_space.OrthogonalMooreGrid((w,h),
   torus=...)` / `OrthogonalVonNeumannGrid` / `HexGrid`.
-- **Batch sweeps**: `mesa.batch_run(MoneyModel, parameters={"n":[10,50,100]}, iterations=20,
-  max_steps=100, data_collection_period=-1)` → list of dicts.
+- **Batch sweeps**: `mesa.batch_run(MoneyModel, parameters={"n":[10,50,100]}, rng=range(20),
+  max_steps=100, data_collection_period=-1)` → list of dicts; each `rng` value seeds one replicate
+  (`iterations=` is deprecated since Mesa 3.4).
 - **Visualization**: `from mesa.visualization import SolaraViz, make_space_component,
   make_plot_component`.
 
@@ -89,7 +93,7 @@ checklist: `references/mesa_patterns.md`.
 An ABM that runs is not evidence. Report:
 
 1. **Replication** — multiple runs with different seeds; report the *distribution* of the macro
-   outcome, not one run (fix `seed=` for reproducibility, vary it for the distribution).
+   outcome, not one run (fix `rng=` for reproducibility, vary it for the distribution).
 2. **Parameter sweep** — `batch_run` across the key parameters; show how the emergent outcome
    depends on them (phase transitions, tipping points).
 3. **Pattern-oriented validation** — does the model reproduce the target stylized fact it was built

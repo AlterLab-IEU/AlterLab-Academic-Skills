@@ -1,7 +1,7 @@
 # SNA Methods — Selection, Community Detection, and Inference
 
-Loaded on demand from the sna SKILL.md. Verified against networkx (v3.6), python-igraph (v1.0),
-and R `ergm` (v4.12) current docs.
+Loaded on demand from the sna SKILL.md. Verified against networkx (v3.7), igraph (v1.0; PyPI
+`igraph`, formerly `python-igraph`), and R `ergm` (v4.12) current docs.
 
 ## Centrality selection (match to the claim)
 
@@ -21,9 +21,13 @@ centrality can fail to converge on some graphs — raise `max_iter` or use `page
 - **Louvain** (`nx.community.louvain_communities(G, weight=..., resolution=1.0)`) — native in
   networkx 3.x, fast, greedy modularity optimization. Can produce badly-connected (even
   disconnected) communities.
-- **Leiden** — fixes Louvain's connectivity flaw and is generally preferred; not in networkx, use
-  `python-igraph` `ig.Graph.community_leiden(objective_function="modularity")` or the `leidenalg`
-  package (supports CPM/Surprise/Significance quality functions).
+- **Leiden** — fixes Louvain's connectivity flaw and is generally preferred. Native in networkx
+  ≥ 3.7: `nx.community.leiden_communities(G, metric="modularity", resolution=1.0, seed=42)`
+  (default `metric="cpm"`; in networkx 3.5–3.6 the function is backend-only and raises without an
+  installed backend). For large graphs use igraph
+  `g.community_leiden(objective_function="modularity")` — its default objective is also CPM, which
+  returns all singletons on Zachary's karate club at resolution 1 — or the `leidenalg` package
+  (supports CPM/Surprise/Significance quality functions).
 - Score any partition with `nx.community.modularity(G, communities)`; resolution controls
   community size (higher → more, smaller communities).
 - For large graphs (10^5+ nodes) prefer igraph/graph-tool; export from networkx with

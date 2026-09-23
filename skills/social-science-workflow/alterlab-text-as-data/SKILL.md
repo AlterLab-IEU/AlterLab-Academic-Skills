@@ -6,7 +6,8 @@ allowed-tools: Read Bash(python:*)
 compatibility: "Requires (declare in-session, no runtime install on Anthropic API): bertopic>=0.16, scikit-learn>=1.3, gensim>=4.3, spacy>=3.7 (+ a model like en_core_web_sm), sentence-transformers>=2.2 (pip). Runs locally via `uv run python`; no API key."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
     depends_on: "alterlab-ssci-design-gate, alterlab-transformers (model training), alterlab-digital-humanities; audited by alterlab-ssci-inference-gate"
 ---
 
@@ -47,7 +48,7 @@ PICK BY GOAL: DISCOVERY vs MEASUREMENT vs PREDICTION. THEN VALIDATE THE TOPICS �
 | Discovery (bag-of-words, classic) | **LDA / NMF** | sklearn: `LatentDirichletAllocation(n_components=k).fit(CountVectorizer().fit_transform(docs))`; or gensim `LdaModel(corpus, num_topics=k, id2word=dictionary)`. |
 | Topic quality | **coherence** | gensim `CoherenceModel(model=lda, texts=tok, dictionary=d, coherence="c_v").get_coherence()`. |
 | **Measurement** (how much of concept X) | **dictionary / lexicon** | count validated lexicon terms; report reliability and validate against hand-coding. |
-| Embeddings / similarity | **sentence-transformers** (v5) | `SentenceTransformer("all-MiniLM-L6-v2").encode(texts)` → cluster / cosine-compare. |
+| Embeddings / similarity | **sentence-transformers** (v6) | `SentenceTransformer("all-MiniLM-L6-v2").encode(texts)` → cluster / cosine-compare. |
 | **Prediction** (label documents) | **supervised** | `TfidfVectorizer()` → a sklearn classifier; report held-out F1, not in-sample fit. |
 | Linguistic features (POS, entities) | **spaCy** (v3) | `nlp = spacy.load("en_core_web_sm"); doc = nlp(text)`. |
 

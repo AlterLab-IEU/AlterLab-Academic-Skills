@@ -4,7 +4,7 @@
     {
       "id": "anes-weighted-estimate",
       "prompt": "I have ANES data with V160101 weights and V160201 strata. Give me the weighted percentage who trust government, with correct standard errors.",
-      "expected_output": "Invokes alterlab-survey-analysis: builds a survey design object (weights + strata + PSU) and computes a design-based proportion with Taylor or replicate-weight SEs — not df.mean(). Uses samplics or R survey/srvyr, and reports the design effect.",
+      "expected_output": "Invokes alterlab-survey-analysis: builds a survey design object (weights + strata + PSU) and computes a design-based proportion with Taylor or replicate-weight SEs — not df.mean(). Uses svy (not the archived samplics) or R survey/srvyr, and reports the design effect.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "design" },
@@ -23,7 +23,7 @@
     {
       "id": "post-stratify-raking",
       "prompt": "Post-stratify my sample so it matches the census age-by-sex margins.",
-      "expected_output": "Invokes alterlab-survey-analysis: applies post-stratification / raking (iterative proportional fitting) to calibrate the weights to the known population margins, using survey::rake or samplics calibration.",
+      "expected_output": "Invokes alterlab-survey-analysis: applies post-stratification / raking (iterative proportional fitting) to calibrate the weights to the known population margins, using survey::rake or svy's sample.weighting.rake.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "rak" }

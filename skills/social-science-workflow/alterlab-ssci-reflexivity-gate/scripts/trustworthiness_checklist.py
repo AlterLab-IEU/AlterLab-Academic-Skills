@@ -13,14 +13,16 @@ missing warrants and emits a PASS / WARN / BLOCK verdict mirroring the other ssc
 from __future__ import annotations
 
 import argparse
+import re
 
 _CRITERIA = ("credibility", "transferability", "dependability", "confirmability")
 
 # Words that assert broad generalization — suspect in interpretivist write-ups.
+# Matched as whole words, so "prove" does not fire inside "improved" nor "all" inside "small".
 _GENERALIZE = [
-    "everyone", "everywhere", "all ", "in general", "generally", "universally",
+    "everyone", "everywhere", "all", "in general", "generally", "universally",
     "always", "any organization", "people are", "workers are", "prove", "proves", "proven",
-    "causes", "causo", "the population",
+    "causes", "caused", "the population",
 ]
 
 
@@ -45,7 +47,7 @@ def audit(positionality: bool, criteria: dict[str, bool], claim: str) -> tuple[s
             verdict = "WARN"
 
     low = claim.lower()
-    gen_hits = [g.strip() for g in _GENERALIZE if g in low]
+    gen_hits = [g for g in _GENERALIZE if re.search(rf"\b{re.escape(g)}\b", low)]
     if gen_hits and not criteria.get("transferability", False):
         findings.append(
             f"BLOCK: claim generalizes ({', '.join(sorted(set(gen_hits)))}) with no transferability "

@@ -1,7 +1,7 @@
 # Design-Based Variance and Calibration
 
 Loaded on demand from the survey-analysis SKILL.md. Verified against the R `survey` (Lumley) and
-`samplics` docs.
+`svy` docs.
 
 ## Why ignoring the design biases inference
 
@@ -48,7 +48,7 @@ predict both response and the outcome.
 ## Domain (subpopulation) estimation — do it right
 
 To estimate within a subgroup, **subset the design object** (`subset(design, region=="north")` in R;
-the `domain=` argument in samplics), never `df[df.region=="north"]`. Filtering the data frame
+the `by=` argument of svy's `sample.estimation.*`), never `df[df.region=="north"]`. Filtering the data frame
 discards the strata/PSU membership of the excluded units, so the domain variance is computed as if
 the subgroup were its own SRS — wrong. `subset.survey.design` deliberately retains the original
 count of clusters and strata so the domain SE is correct.

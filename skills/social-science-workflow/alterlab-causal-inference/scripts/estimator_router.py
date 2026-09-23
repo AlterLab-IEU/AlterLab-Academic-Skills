@@ -19,7 +19,8 @@ _MAP = {
         "pyfixest: pf.event_study(df, yname, idname, tname, gname, estimator='did2s')  |  or "
         "smf.ols('y ~ treat*post').fit(cov_type='cluster', cov_kwds={'groups': df.unit})",
         "PARALLEL TRENDS — treated & control would have moved together absent treatment",
-        "pre-trend / event-study plot; for staggered adoption use Sun-Abraham sunab() or did2s",
+        "pre-trend / event-study plot; for staggered adoption use event_study(estimator='saturated') "
+        "(Sun-Abraham weights via .aggregate()) or estimator='did2s'",
         "placebo (fake) treatment timing; leave-one-cohort-out",
     ),
     "fe": (

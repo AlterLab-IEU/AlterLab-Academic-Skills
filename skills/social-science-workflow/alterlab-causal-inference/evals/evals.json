@@ -4,7 +4,7 @@
     {
       "id": "did-event-study",
       "prompt": "A policy switched on in some states in 2019 and I have a state-by-year employment panel. Estimate the effect with difference-in-differences and handle the staggered rollout.",
-      "expected_output": "Invokes alterlab-causal-inference: names parallel trends as the identifying assumption, uses a staggered-adoption-safe estimator (Sun-Abraham sunab() or did2s in pyfixest, not naive two-way FE), inspects pre-trends, and reports the estimate with a clustered CI.",
+      "expected_output": "Invokes alterlab-causal-inference: names parallel trends as the identifying assumption, uses a staggered-adoption-safe estimator (pyfixest event_study with estimator='saturated' — Sun-Abraham weights — or 'did2s', not naive two-way FE), inspects pre-trends, and reports the estimate with a clustered CI.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "parallel trends" },

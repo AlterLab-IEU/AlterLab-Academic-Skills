@@ -1,7 +1,8 @@
 # Text-as-Data Stack — Patterns and Topic Reliability
 
 Loaded on demand from the text-as-data SKILL.md. Verified against current docs: BERTopic v0.17,
-scikit-learn, gensim v4.4, spaCy v3.8, sentence-transformers v5.
+scikit-learn, gensim v4.4, spaCy v3.8, sentence-transformers v6 (6.x requires transformers ≥ 5;
+plain `encode(texts)` is unchanged from v5).
 
 ## BERTopic (discovery, contextual)
 

@@ -42,11 +42,17 @@ _PVALUE_MISUSE = [
 ]
 
 
+def _whole_word_hits(terms: list[str], text: str) -> list[str]:
+    """Terms present as whole words/phrases, so 'cause' does not fire inside 'because'
+    and 'all' does not fire inside 'small' or 'overall'."""
+    return [t.strip() for t in terms if re.search(rf"\b{re.escape(t.strip())}\b", text)]
+
+
 def audit(design: str, assumption_defended: bool, sample: str, claim: str) -> list[str]:
     findings: list[str] = []
     low = claim.lower()
 
-    causal_hits = [v for v in _CAUSAL_VERBS if v in low]
+    causal_hits = _whole_word_hits(_CAUSAL_VERBS, low)
     if causal_hits:
         licensed = (design in _CAUSAL_DESIGNS and assumption_defended)
         if not licensed:
@@ -57,7 +63,7 @@ def audit(design: str, assumption_defended: bool, sample: str, claim: str) -> li
                 f"Downgrade to associational (is associated with / predicts / correlates with).")
 
     if sample.startswith("non"):
-        gen_hits = [g.strip() for g in _GENERALIZE if g in low]
+        gen_hits = _whole_word_hits(_GENERALIZE, low)
         if gen_hits:
             findings.append(
                 f"GENERALIZATION ({', '.join(sorted(set(gen_hits)))}) from a non-probability sample — "

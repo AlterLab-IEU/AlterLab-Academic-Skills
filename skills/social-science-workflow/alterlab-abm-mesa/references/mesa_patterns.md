@@ -14,7 +14,12 @@ API on `model.agents`.
 | `self.schedule.step()` | `self.agents.shuffle_do("step")` |
 | `mesa.time.SimultaneousActivation` | `self.agents.do("step")` then `self.agents.do("advance")` |
 | `self.schedule.agents` | `self.agents` |
-| — | `super().__init__(seed=seed)` is **mandatory** in the Model |
+| — | `super().__init__(rng=rng)` is **mandatory** in the Model |
+
+Later 3.x deprecations (old spellings still run but warn): `Model(seed=...)` → `Model(rng=...)`
+(Mesa 3.5), and `batch_run(iterations=n)` → `batch_run(rng=range(n))` or `rng=[None] * n` (Mesa 3.4).
+Indexing/slicing a user-built `AgentSet` is pending removal in Mesa 4.0 — on 3.5+ use
+`agentset.to_list()[i]`.
 
 ## Schelling segregation on a grid (cell space)
 
@@ -35,8 +40,8 @@ class Resident(CellAgent):
             self.cell = self.model.grid.select_random_empty_cell()   # move
 
 class Schelling(mesa.Model):
-    def __init__(self, width=20, height=20, density=0.8, tolerance=0.3, seed=None):
-        super().__init__(seed=seed)
+    def __init__(self, width=20, height=20, density=0.8, tolerance=0.3, rng=None):
+        super().__init__(rng=rng)
         self.tolerance = tolerance
         self.grid = OrthogonalMooreGrid((width, height), torus=True, random=self.random)
         for cell in self.grid.all_cells:
@@ -76,15 +81,16 @@ class Person(mesa.Agent):
         self.opinion = self.random.random()
 
     def step(self):
+        # NetworkGrid.get_neighbors returns the neighboring AGENTS (not node ids)
         neighbors = self.model.grid.get_neighbors(self.pos, include_center=False)
         if neighbors:
             other = self.random.choice(neighbors)
-            self.opinion += 0.1 * (self.model.agents[other].opinion - self.opinion)
+            self.opinion += 0.1 * (other.opinion - self.opinion)
 
 class OpinionModel(mesa.Model):
-    def __init__(self, n=100, seed=None):
-        super().__init__(seed=seed)
-        g = nx.erdos_renyi_graph(n, 0.05, seed=seed)
+    def __init__(self, n=100, rng=None):
+        super().__init__(rng=rng)
+        g = nx.erdos_renyi_graph(n, 0.05, seed=self.random)   # graph reproducible under rng
         self.grid = NetworkGrid(g)
         for node in g.nodes():
             a = Person(self)
@@ -100,13 +106,14 @@ class OpinionModel(mesa.Model):
 results = mesa.batch_run(
     Schelling,
     parameters={"tolerance": [0.2, 0.3, 0.4, 0.5], "density": [0.7, 0.9]},
-    iterations=25, max_steps=100, data_collection_period=-1, display_progress=True)
+    rng=range(25), max_steps=100, data_collection_period=-1, display_progress=True)
+# rng=range(25): 25 seeded replicates per parameter combination (replaces iterations=25)
 # results -> list[dict]; load into pandas to plot outcome vs tolerance
 ```
 
 ## Validation checklist (an ABM that runs is not evidence)
 
-- [ ] **Reproducible**: `seed=` fixed for a single run; varied across runs for a distribution.
+- [ ] **Reproducible**: `rng=` fixed for a single run; varied across runs for a distribution.
 - [ ] **Replicated**: report the macro outcome's distribution over ≥20 seeds, not one trajectory.
 - [ ] **Swept**: `batch_run` over key parameters; identify tipping points / phase transitions.
 - [ ] **Pattern-oriented**: reproduces the target stylized fact it was built to explain.

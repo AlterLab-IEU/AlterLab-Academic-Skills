@@ -6,7 +6,8 @@ allowed-tools: Read Bash(python:*)
 compatibility: No API key required. A discipline-enforcing measurement-quality skill; reliability/CFA execution is handed to sibling skills that run locally via `uv run python`.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
     depends_on: "alterlab-survey-design (item design), alterlab-sem-psychometrics (CFA/invariance), alterlab-statistical-analysis"
 ---
 
@@ -52,8 +53,9 @@ Cronbach's alpha assumes **tau-equivalence** (all items load equally on one fact
 **lower bound** on reliability under that model. **McDonald's omega** relaxes tau-equivalence by
 weighting items by their factor loadings and should be reported alongside alpha (McNeish, 2018,
 *Psychological Methods*, "Thanks coefficient alpha, we'll take it from here"). In practice the
-alpha-vs-omega gap for well-constructed unidimensional scales is often small (Warne, 2025 —
-around 4.5% underestimate), so the discipline is: **report both**, plus item-total correlations
+alpha-vs-omega gap for well-constructed unidimensional scales is often small (in one cognitive
+test battery, omega exceeded alpha by 4.5% on average — Warne, 2025, blog analysis), so the
+discipline is: **report both**, plus item-total correlations
 and a dimensionality check — not to fetishize a single number, but to show the estimate is not
 resting on an unexamined assumption.
 
