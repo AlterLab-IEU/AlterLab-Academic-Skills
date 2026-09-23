@@ -53,6 +53,7 @@ Since direct DOCX generation is not available, provide:
 - Provide LaTeX source that compiles to PDF
 - Or provide Pandoc command: `pandoc input.md -o output.pdf --pdf-engine=xelatex`
 - For zh-TW content: use XeLaTeX with CJK font support
+- For Turkish content: pdfLaTeX with `\usepackage[T1]{fontenc}` and `\usepackage[turkish]{babel}` (or XeLaTeX/LuaLaTeX with a font that covers ç ğ ı İ ö ş ü); if TikZ figures break under babel's Turkish shorthands, add `\usetikzlibrary{babel}`
 
 ### 5. Combined (All formats)
 - Generate Markdown + LaTeX + conversion instructions for DOCX and PDF
@@ -279,7 +280,7 @@ Before delivering the output, verify:
 | Citation Style | [APA 7th / Chicago / MLA / IEEE / Vancouver] |
 | Target Journal | [name or "General"] |
 | Word Count | [N] words |
-| Language | [EN / zh-TW / Bilingual] |
+| Language | [EN / TR / zh-TW / other / Bilingual] |
 
 ### Final Quality Checklist
 [Completed checklist with all items checked]
@@ -731,7 +732,7 @@ Quality gate not passed ->
 |-----------|---------|---------|
 | `draft_writer_agent` | Final Reviewed Draft | Markdown full text (passed peer review) |
 | `citation_compliance_agent` | Corrected Reference List + Citation Audit Report | Markdown Reference List + Audit table |
-| `abstract_bilingual_agent` | Bilingual Abstracts + Keywords | Markdown (EN + zh-TW) |
+| `abstract_bilingual_agent` | Bilingual Abstracts + Keywords | Markdown (EN + second language) |
 | `intake_agent` | Paper Configuration Record | Markdown table (output_format, target_journal, language) |
 | `peer_reviewer_agent` | Final Verdict (Accept) | Verdict confirmation |
 
@@ -746,7 +747,7 @@ Quality gate not passed ->
 ### Handoff Format Requirements
 
 - **Receiving citation_compliance_agent's Corrected Reference List**: Must be the final version; formatter does not modify citation content, only performs format conversion
-- **Receiving abstract_bilingual_agent's Abstracts**: EN and zh-TW abstracts are inserted as independent blocks; content is not modified
+- **Receiving abstract_bilingual_agent's Abstracts**: the English and second-language abstracts are inserted as independent blocks; content is not modified
 - **Final Reviewed Draft status confirmation**: Phase 7 must start only after peer_reviewer_agent gives an Accept verdict (unless user explicitly requests early formatting)
 
 ## Quality Criteria

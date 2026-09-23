@@ -202,9 +202,9 @@ AI-assisted assessment's primary advantage lies in the immediacy of feedback, re
 | Field | Type | Description |
 |-------|------|-------------|
 | `title` | string | Paper title |
-| `abstract` | object | `{english: string, chinese: string}` (chinese is required only if bilingual) |
+| `abstract` | object | `{english: string, secondary?: {lang, text}}` — second-language abstract when bilingual (`lang` is a BCP 47 tag such as `tr` or `zh-TW`; the old `chinese` key is still accepted) |
 | `authors` | list[Author] | Author information with CRediT roles |
-| `keywords` | object | `{en: list[string], zh_tw: list[string]}` bilingual keywords (3-6 each) |
+| `keywords` | object | `{en: list[string], secondary?: {lang, terms: list[string]}}` (3-7 each; the old `zh_tw` key is still accepted) |
 | `sections` | list[Section] | Ordered paper sections |
 | `references` | list[Reference] | Full reference list with cross-referencing |
 | `total_word_count` | integer | Total word count (excluding references) |

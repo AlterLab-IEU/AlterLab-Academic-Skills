@@ -74,6 +74,8 @@ Does your research collect, use, or analyze data from humans?
 
 ## 3. Taiwan IRB Process
 
+> Sections 1-2 follow the US Common Rule review tiers. This section documents Taiwan's process as one worked jurisdiction. For Turkey (etik kurul routing, TİTCK permits, KVKK) use `alterlab-tr-research-ethics`; for other jurisdictions and GDPR-based review use `alterlab-research-ethics`. The local committee's rules always take precedence.
+
 ### 3.1 Governing Authorities
 
 | Authority | Jurisdiction | Legal Basis |

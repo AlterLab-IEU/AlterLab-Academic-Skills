@@ -381,6 +381,7 @@ Quality gate not passed ->
 | Case study | Tolerate gray literature (policy documents, institutional reports) with non-standard citation formats |
 | Policy brief | Tolerate government reports without DOI; checking URL validity is more important |
 | Chinese paper | Enable Chinese citation special checks; check Chinese and English references separately for ordering |
+| Turkish paper | Apply the journal's Turkish APA conventions (often "ve" for "&", "vd." for "et al.", "s." for "p."); see `alterlab-tr-academic-style` |
 
 ## Collaboration Rules with Other Agents
 

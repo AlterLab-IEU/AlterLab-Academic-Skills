@@ -1,6 +1,6 @@
 ---
 name: alterlab-deep-research
-description: "Runs a 13-agent deep research pipeline for rigorous academic work on any topic across 7 modes (full research, quick brief, paper review, lit-review, fact-check, Socratic guided research dialogue, and systematic review with optional meta-analysis), covering research-question formulation, Socratic mentoring, methodology design, systematic literature search, source verification, cross-source synthesis, risk-of-bias assessment, meta-analysis, APA 7.0 report compilation, editorial and devil's-advocate review, ethics review, and post-research literature monitoring. Use when the request mentions research, deep research, literature review, systematic review, meta-analysis, PRISMA, evidence synthesis, fact-check, guide my research, help me think through, or 研究, 深度研究, 文獻回顧, 文獻探討, 系統性回顧, 後設分析, 事實查核, 引導我的研究, 幫我釐清, 幫我想想, 我不確定要研究什麼, 研究方向, 研究主題. Part of the AlterLab Academic Skills suite."
+description: "Runs a 13-agent deep research pipeline for rigorous academic work on any topic across 7 modes (full research, quick brief, paper review, lit-review, fact-check, Socratic guided research dialogue, and systematic review with optional meta-analysis), covering research-question formulation, Socratic mentoring, methodology design, systematic literature search, source verification, cross-source synthesis, risk-of-bias assessment, meta-analysis, APA 7.0 report compilation, editorial and devil's-advocate review, ethics review, and post-research literature monitoring. Use when the request mentions research, deep research, literature review, systematic review, meta-analysis, PRISMA, evidence synthesis, fact-check, guide my research, help me think through, or araştırma, literatür taraması, sistematik derleme, meta-analiz, araştırmamı yönlendir, or 研究, 深度研究, 文獻回顧, 文獻探討, 系統性回顧, 後設分析, 事實查核, 引導我的研究, 幫我釐清, 幫我想想, 我不確定要研究什麼, 研究方向, 研究主題. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required
@@ -43,6 +43,8 @@ Guide my research on the impact of declining birth rates on private universities
 ### Trigger Keywords
 
 **English**: research, deep research, literature review, systematic review, meta-analysis, PRISMA, evidence synthesis, fact-check, methodology, APA report, academic analysis, policy analysis, guide my research, help me think through, monitor this topic, set up alerts
+
+**Türkçe**: araştırma, derinlemesine araştırma, literatür taraması, literatür incelemesi, sistematik derleme, meta-analiz, kanıt sentezi, doğruluk kontrolü, araştırmamı yönlendir, araştırma sorumu netleştir, araştırma konusu
 
 **繁體中文**: 研究, 深度研究, 文獻回顧, 文獻探討, 系統性回顧, 後設分析, 證據綜整, 事實查核, 研究方法, 學術分析, 政策分析, 引導我的研究, 幫我釐清, 監測這個主題, 設定追蹤
 
@@ -311,7 +313,7 @@ See `alterlab-research-pipeline/SKILL.md` for the complete workflow.
 | `references/failure_paths.md` | 12 failure scenarios with triggers and recovery paths | all agents |
 | `references/mode_selection_guide.md` | Mode selection flowchart and comparison table | orchestrator |
 | `references/orchestration_workflows.md` | Detailed 6-phase, Socratic 5-layer, and systematic-review flow diagrams | orchestrator |
-| `references/irb_decision_tree.md` | IRB decision tree + Taiwan process + HE quick reference | ethics_review, research_architect |
+| `references/irb_decision_tree.md` | IRB decision tree (US tiers) + Taiwan process + HE quick reference; Turkey via `alterlab-tr-research-ethics` | ethics_review, research_architect |
 | `references/equator_reporting_guidelines.md` | EQUATOR reporting guideline mapping | research_architect, report_compiler |
 | `references/preregistration_guide.md` | Preregistration decision tree + platforms + checklist | research_architect |
 | `references/systematic_review_toolkit.md` | Cochrane Handbook v6.5, PRISMA 2020, RoB 2, ROBINS-I (2016 and V2), I² guide, GRADE, protocol registration | risk_of_bias, meta_analysis, bibliography, report_compiler |

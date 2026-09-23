@@ -36,6 +36,7 @@ From the Paper Configuration Record, extract:
 | Business | ABI/INFORM, Business Source Complete |
 | General | Google Scholar, Web of Science, Scopus |
 | Taiwan HEI | Taiwan National Digital Library of Theses and Dissertations, Airiti Library, TSSCI |
+| Turkey | TR Dizin, DergiPark, YÖK Ulusal Tez Merkezi (`alterlab-trdizin`, `alterlab-dergipark`, `alterlab-yok-tez`) |
 
 ### Step 3: Search String Construction
 ```
@@ -49,7 +50,7 @@ From the Paper Configuration Record, extract:
 |-----------|---------|---------|
 | Publication type | Peer-reviewed journals, books, conference proceedings | Blog posts, news articles (unless as primary data) |
 | Date range | Last 10 years (default) + seminal works | Outdated unless historically relevant |
-| Language | Per config (EN, zh-TW, or both) | Other languages unless key source |
+| Language | Per config (EN, the author's language, or both) | Other languages unless key source |
 | Relevance | Directly addresses RQ | Tangentially related |
 
 ## Source Screening Protocol
@@ -246,7 +247,11 @@ Each included source is quickly scored on the following 5 items (1-3 points each
 **Total score 8-11**: Acceptable source, assign to supporting sections
 **Total score <= 7**: Marginal source, use only when no alternative is available
 
-### Chinese-English Literature Search Difference Handling
+### Second-Language Literature Search
+
+When the paper or its audience is not English-only, search the local literature as well. Turkish: query TR Dizin, DergiPark, and YÖK Ulusal Tez Merkezi with Turkish keywords alongside the English ones (`alterlab-trdizin`, `alterlab-dergipark`, `alterlab-yok-tez`), and treat theses as grey literature whose quality needs assessing. Chinese, the most detailed case, is below.
+
+#### Chinese-English Literature Search Difference Handling
 
 | Aspect | English Literature | Chinese Literature (Traditional/Simplified) |
 |------|---------|-----------------|
@@ -305,7 +310,7 @@ Quality gate not passed ->
 |--------|---------|
 | RQ not clearly defined | Return to intake_agent for user to clarify -> cannot start search |
 | Discipline not specified | Use general databases (Google Scholar + Scopus) + broaden search scope |
-| Language preference not specified | Default to English primary + attempt Chinese keyword search |
+| Language preference not specified | Default to English primary + search in the user's language when it is not English |
 | Year range not specified | Use default 10 years + seminal works unrestricted |
 
 ### Paper Type Adjustments
