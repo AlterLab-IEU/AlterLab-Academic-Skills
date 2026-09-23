@@ -1,165 +1,161 @@
-# ÜAK Doçentlik Criteria — Bundled Table (Sağlık Bilimleri)
+# ÜAK Doçentlik Criteria — Term Status and Cross-Field Comparison
 
-> **last_verified: 2026-09-23** — transcribed from the primary ÜAK PDF
-> "TABLO 10. SAĞLIK BİLİMLERİ TEMEL ALANI" published for the **2026 Mart**
-> term. That PDF is byte-identical to the ones ÜAK posted for the 2025 Mart and
-> 2025 Ekim terms, so the Sağlık table has not changed since March 2025. On the
-> verification date the **2026 Ekim** section of the ÜAK page listed only the
-> *Bilim Alanları ve Anahtar Kelimeler* file (no per-field criteria PDFs yet).
+> **last_verified: 2026-09-23** — the ÜAK criteria page and all 12 per-field PDFs of the
+> **2026 Mart** term were downloaded and read that day. Verbatim rule lines and PDF hashes:
+> `field_tables.md`. How the scorer turns them into points and checks: `scoring_rules.md`.
 >
-> **ÜAK republishes the criteria for every application term.** Re-confirm the
-> live table for the candidate's own field and term before relying on any
-> output — see *Primary sources* below.
+> **ÜAK republishes the criteria for every application term, per temel alan.** Re-confirm
+> the live table for the candidate's own field and term before relying on any output.
 
 ## Contents
 
+- Term status (checked 2026-09-23)
 - What "doçentlik" is
-- Mandatory minimums — MODELLED by the scorer
-- Mandatory minimums — NOT modelled (verify by hand)
-- Per-index point table — Sağlık Bilimleri TABLO 10
-- Başlıca yazar (lead author) — Sağlık definition
-- Why this skill is a PARTIAL pre-screen
-- Other fields
+- The 12 tables at a glance (share rule, item-1 and item-2 minimums)
+- Other mandatory minimums at a glance
+- Per-item caps at a glance
+- What the scorer models and what stays manual
 - Primary sources (re-verify here)
+
+## Term status (checked 2026-09-23)
+
+- The ÜAK page (<https://www.uak.gov.tr/page/docentlik-basvuru-sartlari-kLPHX>) lists one
+  section per term. The newest, **"2026 Ekim Dönemi Doçentlik Başvuru Şartları"**, holds only
+  the *Bilim Alanları ve Anahtar Kelimeler* file (`6aa40cd9e0ea1.pdf`); its caption still reads
+  "2026 Mart Dönemi başvurularına ait bilgilerdir". No per-field criteria PDFs for Ekim 2026
+  were posted.
+- The newest section **with** per-field criteria is **"2026 Mart Dönemi Doçentlik Başvuru
+  Şartları"**: twelve PDFs, TABLO 1–6 and 8–13 (no TABLO 7 is posted). The 2026 Ekim Bilim
+  Alanları file lists exactly twelve temel alanlar, so every temel alan has a table.
+- **Change signal for Ekim 2026:** the 2026 Ekim Bilim Alanları file names the philology temel
+  alan "Dil Bilimi ve Filoloji"; the 2026 Mart Bilim Alanları file (`69b0017962c56.pdf`) and
+  TABLO 3 say "Filoloji". Expect at least naming changes in the Ekim criteria.
+- The Sağlık 2026 Mart PDF is byte-identical to the 2025 Mart and 2025 Ekim Sağlık PDFs (same
+  SHA-256). The other eleven were not compared across terms.
 
 ## What "doçentlik" is
 
-**Doçentlik** is the Turkish associate-professorship title, awarded through a
-national procedure run by **ÜAK** (Üniversitelerarası Kurul / the Inter-University
-Council). Eligibility to *apply* is gated by an objective, points-based
-publication threshold plus several item-specific mandatory minimums; the
-bundled table and minimums below encode that gate for the **Sağlık Bilimleri
-(Health Sciences)** field only. Applications run twice a year, in the March and
-October terms (başvuru dönemleri) announced by ÜAK.
+**Doçentlik** is the Turkish associate-professorship title, awarded through a national
+procedure run by **ÜAK** (Üniversitelerarası Kurul, the Inter-University Council). Eligibility
+to apply is gated by a points threshold (100 in total, 90 after the doctorate) plus mandatory
+minimums per TABLO item, which differ by temel alan. Applications run in the Mart and Ekim
+terms. The binding regulation is the **Doçentlik Yönetmeliği** (its Resmî Gazete details are
+UNVERIFIED in this revision — see *Primary sources*); the jury, not a score, makes the
+decision.
 
-## Mandatory minimums — MODELLED by the scorer
+## The 12 tables at a glance
 
-`score_docentlik.py` computes these four from a publication list and pass/fail
-checks each. **All four must pass** before the scorer returns its non-green
-`PRESCREEN_PASS_VERIFY_REMAINING` status (it never returns "ELIGIBLE").
+"post-doc" = after the doctorate (Güzel Sanatlar: or sanatta yeterlik; Sağlık: or the medical,
+dental, pharmacy or veterinary specialty). Every item-1/item-2 minimum below is post-doc.
 
-| Check | Threshold | TABLO 10 source |
-|---|---|---|
-| Total points | **≥ 100** | "asgari yüz (100) puanın sağlanmış olması" |
-| Post-doctorate points | **≥ 90** | "en az doksan (90) puanın doktora veya ... uzmanlık ünvanının alınmasından sonra ... elde edilmiş olması" (item-3 thesis-derived points excluded) |
-| International-article points (item 1), post-doctorate | **≥ 40** | Item 1 note: "doktora ... sonra, a bendinden en az üç makalede başlıca yazar olmak kaydıyla en az 40 puan almak zorunludur" — counted over all of item 1 (1a SCIE/SSCI Q1–Q4, 1b AHCI, 1c ESCI/Scopus, …) |
-| Lead-author item-1a articles, post-doctorate | **≥ 3** | Same note: the three başlıca-yazar articles must come from **1a** (SCIE/SSCI, Q1–Q4; **Q4 counts**) |
+| TABLO | Temel alan (`--alan`) | Author share | Başlıca yazar | Item-1 minimum | Item-2 minimum |
+|---|---|---|---|---|---|
+| 1 | Eğitim Bilimleri (`egitim`) | equal | — | ≥ 30 pts from 1a **Q1–Q3** (Q4 excluded) | ≥ 2 item-2 publications, ≥ 1 from 2a |
+| 2 | Fen Bilimleri ve Matematik (`fen`) | başlıca | single; advisor with own students | lead in ≥ 1 1a Q1–Q3 article and 40 pts (Biyoloji, Fizik, Kimya, Moleküler Biyoloji ve Genetik) or 20 pts (Matematik, İstatistik) | ≥ 10 pts from 2a |
+| 3 | Filoloji (`filoloji`) | equal | — | none | ≥ 6 from 2a (4 single-author, 3 in different journals) and ≥ 50 pts; *or* ≥ 2 from 1a–1c (1 single-author) and ≥ 50 pts |
+| 4 | Güzel Sanatlar (`guzel_sanatlar`) | equal | — | ≥ 10 pts from 1a–1d | ≥ 1 single-author 2a publication |
+| 5 | Hukuk (`hukuk`) | equal | — | none | as Filoloji |
+| 6 | İlahiyat (`ilahiyat`) | equal | — | none | ≥ 5 from 2a (3 single-author, 2 in different journals) and ≥ 50 pts; *or* as the Filoloji alternative |
+| 8 | Mimarlık, Planlama ve Tasarım (`mimarlik`) | başlıca | single; first author; advisor | lead in ≥ 1 article from 1a–1c and ≥ 20 pts | ≥ 10 pts from 2a |
+| 9 | Mühendislik (`muhendislik`) | başlıca | single; advisor with own students | lead in ≥ 1 1a Q1–Q3 article and 40 pts | ≥ 10 pts from 2a |
+| 10 | Sağlık Bilimleri (`saglik`) | başlıca | single; first author; advisor | lead in ≥ 3 1a articles and ≥ 40 pts | ≥ 3 item-2 publications, ≥ 2 from 2a, lead in ≥ 2 (manual check) |
+| 11 | Sosyal, Beşeri ve İdari Bilimler (`sosyal`) | equal | — | ≥ 10 pts from 1a–1d | ≥ 5 from 2a (3 single-author) in different journals; *or* ≥ 3 from 1a/1b (1 single-author) |
+| 12 | Ziraat, Orman ve Su Ürünleri (`ziraat`) | başlıca | single; advisor with own students | ≥ 30 pts from 1a, and ≥ 20 pts with lead in ≥ 1 1a Q1–Q3 article | ≥ 20 pts from 2a |
+| 13 | Spor Bilimleri (`spor`) | başlıca | single; first author; advisor | lead in 1a or 1b and ≥ 30 pts | ≥ 3 item-2 publications, ≥ 2 from 2a |
 
-## Mandatory minimums — NOT modelled (verify by hand)
+- **Equal split:** "Tek yazarlı yayınlarda yazar tam puan alır. Çok yazarlı yayınlarda puan
+  yazarlar arasında eşit olarak bölünür."
+- **Başlıca-yazar split (articles):** single author 1.0; two authors 0.8 (başlıca yazar) and
+  0.5 (the other); three or more: başlıca yazar half, the rest share the other half; an article
+  with no başlıca yazar is split equally; other publications too ("Diğer yayınlarda ise
+  toplam puan yazarlar arasında eşit olarak bölünür.").
+- **Başlıca yazar definitions differ** (ÜAK S.S.S. Q19). In Fen, Mühendislik and Ziraat,
+  first authorship alone does **not** make a başlıca yazar.
+- Where a threshold's source is not spelled out (e.g. "a bendinden … en az birinde başlıca
+  yazar olmak kaydıyla 40 puan"), see `scoring_rules.md` → *Ambiguous wording*.
 
-The live TABLO 10 also imposes the following mandatory minimums (asgari
-koşullar). The scorer **does not** compute these because a bare publication list
-does not carry the needed inputs (citation counts, congress papers, teaching,
-thesis-derivation, sub-category tags). They are emitted in every report under
-`summary.unmodelled_minimums`, so the output can never be mistaken for a
-complete eligibility decision.
+## Other mandatory minimums at a glance
 
-| Requirement | Threshold (2026 Mart TABLO 10) | Why not modelled |
-|---|---|---|
-| National articles (item 2) | Post-doctorate: ≥ 3 publications, ≥ 2 of them TR Dizin articles (2a), candidate başlıca yazar in ≥ 2. Foreign nationals and foreign-doçentlik-equivalence applicants may substitute the same number of 1a/1b/1c articles. | Needs national-vs-TR-Dizin status and a per-article lead-author count; resolve TR Dizin status with `alterlab-trdizin` first. |
-| Thesis-derived publication (item 3) | ≥ 1 publication from item 3 (a–h). Item 3 is capped at 20 points, its points do not count toward the 90, and a thesis-derived work is scored only here (never also as an item 1/2 article). | The input does not flag thesis-derived work. |
-| Citation (item 5) | ≥ 5 points from post-doctorate publications; self-citations excluded; several citations of the same work inside one citing publication count once. | Citation counts are not in the publication list. |
-| Scientific meeting (item 8) | ≥ 5 post-doctorate points; at most one paper per meeting. | Congress papers are a separate category. |
-| Education / teaching (item 9) | ≥ 2 points (2 years as kadrolu öğretim elemanı after the doctorate counts as 2). | Teaching activity is not a publication. |
+All twelve also require ≥ 1 thesis-derived publication (item 3, a–h) and ≥ 2 teaching points
+(item 9). Scientific-meeting minimum: ≥ 5 post-doc points everywhere.
 
-### Per-item point caps (2026 Mart TABLO 10)
+| `--alan` | Book (item 4, post-doc) | Citation (item 5, post-doc) | Meeting extra condition | Field-specific |
+|---|---|---|---|---|
+| `egitim` | — | ≥ 5 | — | — |
+| `fen` | — | ≥ 5 | — | — |
+| `filoloji` | ≥ 1 from 4a or 4c | ≥ 5 | — | — |
+| `guzel_sanatlar` | ≥ 1 book or 1 chapter | **≥ 2** | ≥ 1 paper presented personally | Özel Başvuru Şartları by sanat alanı (see `field_tables.md`) |
+| `hukuk` | ≥ 1 from 4a or 4c | ≥ 5 | ≥ 1 paper presented personally | — |
+| `ilahiyat` | ≥ 1 from 4a or 4c | ≥ 5 | — | Dinî Musiki: ≥ 10 from item 13 a–d |
+| `mimarlik` | — | ≥ 5 | — | item 13 Yarışma, Proje ve Yazılım ≥ 15, else ≥ 1 publication from 1a–1c |
+| `muhendislik` | — | ≥ 5 | — | — |
+| `saglik` | — | ≥ 5 | — | — |
+| `sosyal` | ≥ 1 book or 2 chapters | ≥ 5 | — | Görsel İletişim Tasarımı, İletişim Çalışmaları, Reklamcılık, Sinema, Halkla İlişkiler: ≥ 10 from item 13 c–e |
+| `ziraat` | — | ≥ 5 | — | — |
+| `spor` | ≥ 1 book or 2 chapters | ≥ 5 | — | — |
 
-| Item | Cap |
-|---|---|
-| 3. Lisansüstü tezlerden üretilmiş yayın | 20 (g/h bentleri together ≤ 5) |
-| 4. Kitap | 20 (c/d bentleri together ≤ 5) |
-| 5. Atıf | 10 |
-| 6. Lisansüstü tez danışmanlığı | 10 |
-| 7. Bilimsel araştırma projesi | 20 |
-| 8. Bilimsel toplantı | 10 |
-| 9. Eğitim-öğretim | 6 |
-| 10. Patent / faydalı model | no cap stated |
-| 11. Ödül | 25 |
-| 12. Editörlük | 4 |
-| 13. Diğer (WoS h-index ≥ 5; ≥ 6 months abroad at a top-300 university) | 10 |
+## Per-item caps at a glance
 
-Items 1 and 2 (articles) are uncapped. The scorer applies none of these caps
-because the input does not tag items by sub-category — a raw total can
-therefore overstate the usable total.
+"–" = no cap stated; "·" = the table has no such item; parentheses = sub-item caps (e.g.
+`cd≤5` = 4c + 4d together ≤ 5). Items 1–2 are uncapped everywhere.
 
-## Per-index point table — Sağlık Bilimleri TABLO 10
+| `--alan` | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `egitim` | 20 (gh≤5) | 20 (cd≤5) | 10 | 10 | 15 | 10 | 6 | – | 25 | 4 | 10 | · |
+| `fen` | 20 | 20 (cd≤5) | 10 | 10 | 30 | 10 | 6 | – | 25 | 4 | 10 | · |
+| `filoloji` | 20 (gh≤5) | – (cd≤30) | 10 | 10 | 20 | 10 | 6 | – | 25 | 4 | 10 | · |
+| `guzel_sanatlar` | 20 (gh≤5) | 20 (cd≤5) | 10 | 10 | 20 | 10 | 6 | – | 25 | 4 | 10 | · |
+| `hukuk` | 20 (gh≤10) | – (cd≤30) | 10 | 10 | 20 | 10 | 6 | – | 25 | 4 | 10 | · |
+| `ilahiyat` | 20 (gh≤5) | – (cde≤30) | 10 | 10 | 20 | 10 | 6 | – | 25 | 4 | 20 | 10 |
+| `mimarlik` | 20 | 20 (cd≤5) | 10 | 10 | 30 | 10 | 6 | – | 25 | 4 | – | 10 |
+| `muhendislik` | 20 | 20 (cd≤5) | 10 | 10 | 30 | 10 | 6 | – | 25 | 4 | 10 | · |
+| `saglik` | 20 (gh≤5) | 20 (cd≤5) | 10 | 10 | 20 | 10 | 6 | – | 25 | 4 | 10 | · |
+| `sosyal` | 20 (gh≤5) | 20 (cd≤5) | 10 | 10 | 20 | 10 | 6 | – | 25 | 4 | 20 | · |
+| `ziraat` | 20 | 20 (cd≤5) | 10 | 10 | 60 | 10 | 6 | – | 25 | 4 | 10 | · |
+| `spor` | 20 (gh≤5) | 20 (cd≤5) | 10 | 10 | 20 | 10 | 6 | – | 25 | 4 | 15 | 10 |
 
-| Index tier | Code | Points | Item |
-|---|---|---|---|
-| SCIE / SSCI, 1st quartile (Web of Science JIF quartile) | `Q1` | 30 | 1a |
-| 2nd quartile | `Q2` | 20 | 1a |
-| 3rd quartile | `Q3` | 15 | 1a |
-| 4th quartile | `Q4` | 10 | 1a |
-| Arts & Humanities Citation Index | `AHCI` | 20 | 1b |
-| Emerging Sources Citation Index | `ESCI` | 10 | 1c |
-| Scopus | `Scopus` | 10 | 1c |
-| TR Dizin (ULAKBİM national index) | `TRDizin` | 10 | 2a |
+Item 13 is "Diğer" except in İlahiyat (Sanatsal Uygulama/Etkinlik), Mimarlık (Yarışma, Proje
+ve Yazılım) and Spor (Sportif Başarı ve Temsil), where "Diğer" is item 14.
 
-Rows **not** bundled (items with these tiers are reported as unscored): other
-international indexes (1d) 5; letter to the editor / research note / abstract /
-book review in a 1a–1d journal (1e) 3; case report in a 1a journal (1f) 5; other
-peer-reviewed national journal (2b) 4; letter/note/abstract/review in a
-peer-reviewed national journal (2c) 2.
+## What the scorer models and what stays manual
 
-**Index tier glossary**
+**Modelled** (computed from the publication list, pass/fail): the 100-point total, the 90
+post-doc points (item 3 excluded), and each field's item-1 and item-2 minimums from the first
+table above — except Sağlık's item-2 minimum, which stays a manual check so the v2.1 Sağlık
+check set is unchanged.
 
-- **Q1–Q4** — the journal's Web of Science Journal Impact Factor quartile. Resolve
-  from the candidate's own JCR records.
-- **AHCI / ESCI / Scopus** — score a flat value; they count toward the item-1
-  ≥ 40 floor but **not** toward the ≥ 3 lead-author 1a articles.
-- **TR Dizin** — TÜBİTAK ULAKBİM's national citation index (item 2). Whether a
-  journal is *currently* TR Dizin-indexed is a live status — confirm with
-  `alterlab-trdizin` before scoring; DergiPark hosting does **not** imply TR
-  Dizin indexing.
+**Applied when entered:** item and sub-item caps on points supplied under `other_items`.
 
-## Başlıca yazar (lead author) — Sağlık definition
+**Manual** (listed in every report under `summary.unmodelled_minimums`): thesis-derived
+publication, book, citation, scientific-meeting and teaching minimums; field-specific
+requirements (Güzel Sanatlar Özel şartlar, Sosyal communication item 13, Mimarlık item 13,
+İlahiyat Dinî Musiki, Sağlık national articles); the different-journals conditions in
+Filoloji, Hukuk, İlahiyat and Sosyal; the predatory-journal rule (S.S.S. Q20); relevance to
+the bilim alanı; the foreign-national substitution.
 
-TABLO 10's *Tanımlar* section defines the candidate as başlıca yazar of:
-
-- (a) a single-author article;
-- (b) an article where they are the **first-listed author**;
-- (c) an article written with the graduate student(s) they supervise (several
-  students and a second advisor may appear, but the **second advisor** is not
-  başlıca yazar).
-
-Corresponding authorship is **not** in the Sağlık definition. TABLO 10 adds
-that where no başlıca yazar is indicated on an article with two or more
-authors, the points are split equally among the authors; the scorer does not
-model that case (it applies the lead / non-lead split from the declared flag).
-
-## Why this skill is a PARTIAL pre-screen
-
-The scorer models 4 of the TABLO 10 mandatory minimums but not the national /
-thesis-derived / citation / congress / education minimums or the per-item caps
-(above). Clearing the modelled checks is **necessary but not sufficient** for
-eligibility. Accordingly the scorer's verdict vocabulary is deliberately
-**FAIL_MODELLED_CHECK** / **PRESCREEN_PASS_VERIFY_REMAINING** — it has **no
-"ELIGIBLE" state** and structurally cannot emit a green eligibility verdict. The
-official decision is the doçentlik jury's.
-
-## Other fields
-
-Other ÜAK temel alanlar (Eğitim, Fen Bilimleri ve Matematik, Filoloji, Güzel
-Sanatlar, Hukuk, İlahiyat, Mimarlık-Planlama-Tasarım, Mühendislik, Sosyal-
-Beşeri-İdari, Spor, Ziraat-Orman-Su Ürünleri) each have their **own** table with
-different values, minimums and lead-author definitions. The bundled table here
-is Sağlık only. To score another field, supply that field's table from the live
-ÜAK source — never reuse the Sağlık numbers.
+The verdict vocabulary is **FAIL_MODELLED_CHECK** / **PRESCREEN_PASS_VERIFY_REMAINING** —
+there is no "ELIGIBLE" state. Passing every modelled check is necessary, not sufficient.
 
 ## Primary sources (re-verify here)
 
-- **ÜAK** — Doçentlik başvuru şartları, per term and per field:
-  <https://www.uak.gov.tr/page/docentlik-basvuru-sartlari-kLPHX>
-  - 2026 Mart Sağlık TABLO 10: `uak.gov.tr/documents/documents/69affdf9bb4a6.pdf`
-  - identical earlier copies: 2025 Ekim `68da32f147b67.pdf`, 2025 Mart
-    `688340614375c.pdf`
-  - The uak.gov.tr server omits its intermediate TLS certificate, so some HTTP
-    clients fail with "unable to get local issuer certificate"; a browser loads
-    it normally.
-- **Doçentlik Yönetmeliği** — the binding regulation (Resmî Gazete 15/4/2018,
-  No. 30392), on the official legislation portal:
-  `mevzuat.gov.tr/mevzuat?MevzuatNo=24519&MevzuatTur=7&MevzuatTertip=5`
-  (Resmî Gazete copy: `resmigazete.gov.tr/eskiler/2018/04/20180415-3.htm`).
-  Note: `mevzuat.gov.tr/MevzuatMetin/21.5.201811834.pdf` is a *different*
-  regulation — the **Akademik Teşvik Ödeneği Yönetmeliği** (see
-  `alterlab-akademik-tesvik`), not the doçentlik binding regulation.
+- **ÜAK — Doçentlik Başvuru Şartları** (per term, per field):
+  <https://www.uak.gov.tr/page/docentlik-basvuru-sartlari-kLPHX> — retrieved 2026-09-23.
+  The 12 per-field 2026 Mart PDFs, with SHA-256, are listed in `field_tables.md`.
+- **ÜAK — 2026 Mart Dönemi Sıkça Sorulan Sorular** (linked from the same page as "S.S.S."):
+  <https://www.uak.gov.tr/documents/documents/6a07202a2ea5f.pdf> — retrieved 2026-09-23.
+- **ÜAK — Bilim Alanları ve Anahtar Kelimeler**, 2026 Mart
+  (<https://www.uak.gov.tr/documents/documents/69b0017962c56.pdf>) and 2026 Ekim
+  (<https://www.uak.gov.tr/documents/documents/6aa40cd9e0ea1.pdf>) — retrieved 2026-09-23.
+- **Doçentlik Yönetmeliği** — **UNVERIFIED in this revision.** v2.1 cited it as Resmî
+  Gazete 15/4/2018, No. 30392, at
+  `mevzuat.gov.tr/mevzuat?MevzuatNo=24519&MevzuatTur=7&MevzuatTertip=5` (Resmî Gazete copy
+  `resmigazete.gov.tr/eskiler/2018/04/20180415-3.htm`). On 2026-09-23 both hosts timed out
+  from this environment, so those details were not re-checked; nothing in the scorer depends
+  on them. v2.1 also warned that `mevzuat.gov.tr/MevzuatMetin/21.5.201811834.pdf` is the
+  Akademik Teşvik Ödeneği Yönetmeliği (see `alterlab-akademik-tesvik`), not the doçentlik
+  regulation — likewise not re-checked here.
+- **TLS note:** uak.gov.tr serves its leaf certificate without the DigiCert intermediate, so
+  strict clients fail with "unable to get local issuer certificate". Add the intermediate
+  from the certificate's own AIA URL
+  (`cacerts.digicert.com/DigiCertGlobalG2TLSRSASHA2562020CA1-1.crt`) to the CA bundle — do
+  not disable verification. A browser loads the page normally.
