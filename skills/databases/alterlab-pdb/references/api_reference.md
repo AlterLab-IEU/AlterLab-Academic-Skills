@@ -260,24 +260,21 @@ Find structures with similar 3D geometry using BioZernike:
 ```python
 from rcsbapi.search import StructSimilarityQuery
 
-# Search by entry
-query = StructSimilarityQuery(
-    structure_search_type="entry",
-    entry_id="4HHB"
-)
+# structure_search_type selects the INPUT source: "entry_id" (default), "file_url",
+# or "file_upload". Chain vs assembly comparison is inferred from chain_id /
+# assembly_id. (Values such as "entry", "chain", "assembly" return HTTP 400.)
+
+# Search by assembly of a PDB entry
+query = StructSimilarityQuery(entry_id="4HHB", assembly_id="1")
 
 # Search by chain
-query = StructSimilarityQuery(
-    structure_search_type="chain",
-    entry_id="4HHB",
-    chain_id="A"
-)
+query = StructSimilarityQuery(entry_id="4HHB", chain_id="A")
 
-# Search by assembly
+# Search from a structure file URL (format: "cif", "bcif", or "pdb")
 query = StructSimilarityQuery(
-    structure_search_type="assembly",
-    entry_id="4HHB",
-    assembly_id="1"
+    structure_search_type="file_url",
+    file_url="https://files.rcsb.org/view/4HHB.cif",
+    file_format="cif",
 )
 ```
 

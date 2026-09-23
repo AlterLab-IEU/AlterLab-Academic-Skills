@@ -3,10 +3,11 @@ name: alterlab-zinc-db
 description: Access the ZINC database of 230M+ commercially available (purchasable) compounds, searching by ZINC ID or SMILES, running similarity searches, and downloading 3D-ready structures. Use when assembling a compound library for virtual screening, finding purchasable analogs, or obtaining docking-ready 3D structures for drug discovery. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless public ZINC database (no authentication required)
+compatibility: Keyless ZINC22 CartBlanche22 API and files.docking.org repository (no authentication required); zinc.docking.org / ZINC20 / ZINC15 web pages now sit behind a captcha
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # ZINC Database
@@ -20,17 +21,25 @@ ZINC is a freely accessible repository of 230M+ purchasable compounds maintained
 `scripts/query_zinc.py` — query the ZINC22 CartBlanche API via form-encoded POST (stdlib only, JSON to stdout):
 
 ```bash
-python scripts/query_zinc.py id ZINC000019632618          # ZINC-ID lookup
-python scripts/query_zinc.py smiles "c1ccccc1" --dist 3   # SMILES similarity search
-python scripts/query_zinc.py random --count 100 --subset lead-like   # random sample
+python scripts/query_zinc.py id ZINC000019632618 --wait     # ZINC-ID lookup, rows as JSON
+python scripts/query_zinc.py random --count 100 --subset lead-like   # returns a task id
+python scripts/query_zinc.py result <task-id>               # fetch that task's rows later
 ```
 
 **Every CartBlanche search is asynchronous.** Each call returns a JSON task handle
-(`{"task": "<uuid>"}`); the result rows are assembled server-side and rendered in the
-web UI at `https://cartblanche22.docking.org`. There is no plain-text polling endpoint —
-the task route serves the single-page app. Use the script to submit searches and obtain
-the task id, then open the UI to retrieve/export rows, or use the bulk file repository
-(below) for programmatic large-scale retrieval.
+(`{"task": "<uuid>"}`). Poll `GET https://cartblanche22.docking.org/search/result/<task>`:
+it returns `{"status": "PENDING", "progress": ...}` while the job runs and
+`{"status": "SUCCESS", "result": {...}}` when done, with rows grouped by source
+(`zinc22`, `zinc20`) and unmatched queries under `missing` / `zinc22_missing`
+(`--wait` does the polling). ID lookups finish in seconds; random samples can stay
+PENDING for minutes.
+
+**Known issue (verified 2026-09-23):** `smiles.txt` jobs finish immediately with
+`"zinc22_missing": [""]` — the server does not receive the query, whether the SMILES
+is sent inline, as a form upload, or as a file. Until that is fixed, run similarity
+searches in the CartBlanche22 web UI or in SmallWorld (https://sw.docking.org, which
+indexes ZINC20/ZINC22 builds) or Arthor (https://arthor.docking.org), and say so
+rather than reporting "no analogs found".
 
 ## When to Use This Skill
 
@@ -46,6 +55,16 @@ This skill should be used when:
 - **Supplier queries**: Identifying compounds from specific chemical vendors
 - **Random sampling**: Obtaining random compound sets for screening
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Compound properties, synonyms, and bioassays for a known molecule | `alterlab-pubchem` |
+| Measured potency (IC50/Ki) for a target | `alterlab-chembl` |
+| Docking ligands into a protein pocket | `alterlab-diffdock` |
+| Computing descriptors, filters, or fingerprints locally | `alterlab-rdkit` |
+| Medicinal-chemistry filters (PAINS, rules of thumb) on a library | `alterlab-medchem` |
+
 ## Database Versions
 
 ZINC has evolved through multiple versions:
@@ -60,8 +79,9 @@ This skill primarily focuses on ZINC22, the most current and comprehensive versi
 
 ### Web Interface
 
-Primary access point: https://zinc.docking.org/
-Interactive searching: https://cartblanche22.docking.org/
+Primary access point: https://cartblanche22.docking.org/ (zinc22.docking.org redirects here)
+Legacy ZINC20/ZINC15 pages (zinc.docking.org, zinc20.docking.org, zinc15.docking.org) now
+answer scripted requests with a captcha redirect — use them interactively only.
 
 ### API Access
 
@@ -180,8 +200,9 @@ curl "https://cartblanche22.docking.org/substance/random.txt" \
      --fields zinc_id,smiles,tranche
    ```
 
-3. **Retrieve and parse rows** (export from the UI task view, or pull tranche files
-   from the bulk repository) into a DataFrame and filter on tranche properties:
+3. **Retrieve and parse rows** (`python scripts/query_zinc.py result <task>`, export
+   from the UI task view, or pull tranche files from the bulk repository) into a
+   DataFrame and filter on tranche properties:
    ```python
    import pandas as pd
 
@@ -200,10 +221,12 @@ curl "https://cartblanche22.docking.org/substance/random.txt" \
    hit_smiles = "CC(C)Cc1ccc(cc1)C(C)C(=O)O"  # Example: Ibuprofen
    ```
 
-2. **Perform similarity search** with a distance threshold:
+2. **Perform similarity search** with a distance threshold — while the `smiles.txt`
+   API issue above persists, do this in the CartBlanche22 UI or SmallWorld
+   (https://sw.docking.org) and export the hits; once fixed, the script form is:
    ```bash
    python scripts/query_zinc.py smiles "CC(C)Cc1ccc(cc1)C(C)C(=O)O" \
-     --dist 5 --fields zinc_id,smiles,catalogs
+     --dist 5 --fields zinc_id,smiles,catalogs --wait
    ```
 
 3. **Analyze results** to identify purchasable analogs (after exporting the task rows):
@@ -322,8 +345,8 @@ def submit(*args):
     ).stdout
     return json.loads(out)
 
-task = submit("id", "ZINC000019632618", "--fields", "zinc_id,smiles,catalogs")
-# -> {"task": "<uuid>"}; open the UI task view to export rows
+state = submit("id", "ZINC000019632618", "--fields", "zinc_id,smiles,catalogs", "--wait")
+rows = state["result"].get("zinc22") or state["result"].get("zinc20") or []
 ```
 
 ### Parsing tranche codes
@@ -409,8 +432,8 @@ ZINC explicitly states: **"We do not guarantee the quality of any molecule for a
 
 ## Additional Resources
 
-- **ZINC Website**: https://zinc.docking.org/
 - **CartBlanche22 Interface**: https://cartblanche22.docking.org/
+- **SmallWorld / Arthor similarity search**: https://sw.docking.org, https://arthor.docking.org
 - **ZINC Wiki**: https://wiki.docking.org/
 - **File Repository**: https://files.docking.org/zinc22/
 - **GitHub**: https://github.com/docking-org/

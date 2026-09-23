@@ -4,10 +4,10 @@
 
 STRING (Search Tool for the Retrieval of Interacting Genes/Proteins) is a comprehensive database of known and predicted protein-protein interactions integrating data from over 40 sources.
 
-**Database Statistics (v12.0+):**
-- Coverage: 5000+ genomes
+**Database Statistics (v12.0, string-db.org/cgi/about, 2026-09):**
+- Coverage: 12,535 organisms (10,756 bacteria, 1,322 eukaryotes, 457 archaea)
 - Proteins: ~59.3 million
-- Interactions: 20+ billion
+- Interactions: ~27.5 billion in total, ~332 million at highest confidence (score ≥ 0.9)
 - Data types: Physical interactions, functional associations, co-expression, co-occurrence, text-mining, databases
 
 **Core Data Resource:** Designated by Global Biodata Coalition and ELIXIR
@@ -422,7 +422,7 @@ STRING data is freely available under **Creative Commons BY 4.0** license:
 - ✓ Modifications allowed
 - ✓ Redistribution allowed
 
-**Citation**: Szklarczyk et al. (latest publication)
+**Citation**: Szklarczyk D et al. (2025) The STRING database in 2025: protein networks with directionality of regulation. *Nucleic Acids Res* 53(D1):D730–D737. doi:10.1093/nar/gkae1113 (v12.0 itself is described in Szklarczyk D et al. (2023) *Nucleic Acids Res* 51(D1):D638–D646, doi:10.1093/nar/gkac1000)
 
 ## Rate Limits and Usage
 

@@ -22,14 +22,14 @@ Search and list TF binding profiles.
 | `matrix_id` | string | Exact matrix ID | `MA0139.1` |
 | `collection` | string | Collection name | `CORE` |
 | `tax_group` | string | Taxonomic group | `vertebrates` |
-| `tax_id` | string/int | NCBI taxonomy ID (preferred) | `9606` (human) |
-| `species` | string | Species name or tax ID (broader match) | `9606`, `Homo sapiens` |
-| `tf_class` | string | TF structural class | `C2H2 zinc finger factors` |
-| `tf_family` | string | TF family | `More than 3 adjacent zinc fingers` |
-| `type` | string | Experimental method | `ChIP-seq`, `SELEX` |
+| `tax_id` | string/int | NCBI taxonomy ID — the only working organism filter (`species=` is silently ignored and returns every taxon) | `9606` (human) |
+| `tf_class` | string | TF structural class — exact TFClass name | `C2H2 zinc finger factors` |
+| `tf_family` | string | TF family — exact TFClass name | `More than 3 adjacent zinc fingers` |
+| `data_type` | string | Experimental method (`type=` is silently ignored) | `ChIP-seq`, `SELEX`, `HT-SELEX` |
+| `release` | string | JASPAR release year | `2026` |
 | `version` | string | `latest` or specific version | `latest` |
 | `page` | int | Page number | `1` |
-| `page_size` | int | Results per page (max 500) | `25` |
+| `page_size` | int | Results per page (default 10, capped at 1000) | `25` |
 
 **Response** (`count` reflects the full result set for the filters; paginate via `next`):
 ```json
@@ -86,7 +86,7 @@ Sequence logos are exposed via the `sequence_logo` URL on each matrix object (e.
 
 ### `GET /collections/`
 
-List available collections. The current API serves two: `CORE` and `UNVALIDATED` (the legacy PHYLOFACTS/CNE/POLII/FAM/SPLICE collections are no longer populated).
+List available collections. The current API serves two: `CORE` and `UNVALIDATED` (the legacy PHYLOFACTS/CNE/POLII/FAM/SPLICE collections are no longer populated). The JASPAR 2026 Deep Learning (DL) collection is website-only; `collection=DL` returns 0 matrices.
 
 ### `GET /taxon/` and `GET /species/`
 
@@ -94,7 +94,7 @@ List available taxa / species.
 
 ### `GET /releases/`
 
-List JASPAR releases.
+List JASPAR releases (`year`, `release_number`, `pubmed_id`); the newest is 2026 (release 11, PMID 41325984).
 
 > There are **no** `/tf_class/` or `/tf_family/` listing endpoints (they 404). Filter by class/family directly on `/matrix/` using the `tf_class` / `tf_family` query parameters.
 
@@ -127,18 +127,23 @@ Verified against the live API (names/species/methods can change between releases
 
 ## TF Classes (partial list)
 
+Class names follow TFClass and must match exactly — near-misses such as `Homeodomain factors` or `Forkhead box (FOX) factors` return 0 rows. Names below were checked against the live API (CORE, latest):
+
 - `C2H2 zinc finger factors`
 - `Basic leucine zipper factors (bZIP)`
 - `Basic helix-loop-helix factors (bHLH)`
-- `Homeodomain factors`
-- `Forkhead box (FOX) factors`
-- `ETS-domain factors`
-- `Nuclear hormone receptors`
-- `Tryptophan cluster factors`
-- `p53-like transcription factors`
-- `STAT factors`
+- `Homeo domain factors`
+- `Fork head/winged helix factors`
+- `Tryptophan cluster factors` (includes ETS, IRF, and Myb families)
+- `Nuclear receptors with C4 zinc fingers`
+- `High-mobility group (HMG) domain factors`
+- `Rel homology region (RHR) factors`
+- `p53 domain factors`
+- `STAT domain factors`
 - `MADS box factors`
-- `T-box factors`
+- `T-Box factors`
+
+URL-encode the value fully (the `/` in `Fork head/winged helix factors` included).
 
 ## Python Example: Batch Download
 
@@ -152,8 +157,9 @@ def download_all_human_profiles(output_file="jaspar_human_profiles.json"):
         "collection": "CORE",
         "tax_id": "9606",      # NCBI taxonomy ID for human
         "version": "latest",   # one row per profile (skip historical versions)
-        "page_size": 500,
-        "page": 1
+        "page_size": 1000,     # server-side cap
+        "page": 1,
+        "format": "json",
     }
 
     profiles = []

@@ -3,10 +3,11 @@ name: alterlab-gtex
 description: Query the GTEx (Genotype-Tissue Expression) portal v2 REST API for tissue-specific gene expression (median TPM across 54 human tissues), expression QTLs (eQTLs), and splicing QTLs (sQTLs). Use when checking which tissues express a gene, finding which gene a non-coding/GWAS variant regulates via eQTLs, or interpreting variant regulatory effects across tissues. NOT for curated trait-variant associations (use alterlab-gwas), population allele frequencies or variant constraint (use alterlab-gnomad), or gene/transcript structure and ID mapping (use alterlab-ensembl). Part of the AlterLab Academic Skills suite.
 license: CC-BY-4.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless GTEx portal REST API (no authentication required)
+compatibility: Keyless GTEx Portal REST API v2 (no authentication required); datasets gtex_v10 (GENCODE v39) and gtex_v8 (GENCODE v26)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # GTEx Database
@@ -32,6 +33,16 @@ Use GTEx when:
 - **Splicing QTLs (sQTLs)**: Identifying variants that affect splicing ratios
 - **Tissue specificity analysis**: Determining which tissues express a gene of interest
 - **Gene expression exploration**: Retrieving normalized expression levels (TPM) per tissue
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Curated trait-variant associations, reported traits, study provenance | `alterlab-gwas` |
+| Population allele frequencies, LoF constraint (pLI/LOEUF) | `alterlab-gnomad` |
+| Gene/transcript models, VEP consequences, ID mapping | `alterlab-ensembl` |
+| Genetics-backed target-disease evidence scores (incl. colocalisation/L2G) | `alterlab-opentargets` |
+| Single-cell expression atlases (cell-type resolution) | `alterlab-cellxgene` |
 
 ## Core Capabilities
 
@@ -60,11 +71,11 @@ def gtex_get(endpoint, params=None):
 import requests
 import pandas as pd
 
-def get_gene_expression_by_tissue(gene_id_or_symbol, dataset_id="gtex_v10"):
-    """Get median gene expression across all tissues."""
+def get_gene_expression_by_tissue(gencode_id, dataset_id="gtex_v10"):
+    """Get median gene expression across all tissues (versioned GENCODE ID required)."""
     url = "https://gtexportal.org/api/v2/expression/medianGeneExpression"
     params = {
-        "gencodeId": gene_id_or_symbol,
+        "gencodeId": gencode_id,
         "datasetId": dataset_id,
         "itemsPerPage": 100
     }
@@ -251,9 +262,11 @@ def interpret_gwas_variant(variant_id, dataset_id="gtex_v10"):
         return df
     return df[["geneSymbol", "tissueSiteDetailId", "nes", "pValue"]].sort_values("pValue")
 
-# Example
-results = interpret_gwas_variant("chr1_154453788_A_T_b38")
-print(results.groupby("geneSymbol")["tissueSiteDetailId"].count().sort_values(ascending=False))
+# Example: rs2228145 (IL6R p.Asp358Ala). Resolve an rsID to the GTEx ID with
+# GET /dataset/variant?snpId=rs2228145&datasetId=gtex_v10 -> "chr1_154454494_A_C_b38"
+results = interpret_gwas_variant("chr1_154454494_A_C_b38")
+if not results.empty:
+    print(results.groupby("geneSymbol")["tissueSiteDetailId"].count().sort_values(ascending=False))
 ```
 
 ### Workflow 2: Gene Expression Atlas
@@ -280,19 +293,20 @@ print(results.groupby("geneSymbol")["tissueSiteDetailId"].count().sort_values(as
 | `/association/singleTissueSqtl` | Significant sQTL associations |
 | `/association/egene` | eGenes in a tissue |
 | `/dataset/tissueSiteDetail` | Available tissues with metadata |
-| `/reference/gene` | Gene metadata (GENCODE IDs, coordinates) |
-| `/variant/variantPage` | Variant lookup by rsID or position |
+| `/reference/gene` | Gene metadata; resolves a symbol to the dataset's versioned GENCODE ID |
+| `/dataset/variant` | Variant lookup by `snpId` (rsID) or `variantId`; returns the b38 GTEx ID |
 
 ## Datasets Available
 
 | ID | Description |
 |----|-------------|
-| `gtex_v10` | GTEx v10 (current; ~960 donors, 54 tissues) |
-| `gtex_v8` | GTEx v8 (838 donors, 49 tissues) — older but widely cited |
+| `gtex_v10` | GTEx v10 (current; 946 donors, 54 tissues, eQTLs mapped in 50; GENCODE v39) |
+| `gtex_v8` | GTEx v8 (948 donors, 838 genotyped; eQTLs in 49 of 54 tissues; GENCODE v26) — older but widely cited |
 
 ## Best Practices
 
-- **GENCODE version suffix must match the dataset** (biggest gotcha): v10 maps to GENCODE **v39**, v8 maps to GENCODE **v26**, and the same gene gets a different `.version` in each. PCSK9 is `ENSG00000169174.11` in v10 but `.10` in v8 — querying the wrong suffix silently returns zero results. Resolve the correct ID per dataset with `/reference/gene?geneId=SYMBOL&gencodeVersion=v39` (use `v26` for v8). `geneSymbol` is also accepted by most endpoints and sidesteps the suffix.
+- **GENCODE version suffix must match the dataset** (biggest gotcha): v10 maps to GENCODE **v39**, v8 maps to GENCODE **v26**, and the same gene gets a different `.version` in each. PCSK9 is `ENSG00000169174.11` in v10 but `.10` in v8 — querying the wrong suffix silently returns zero results. Resolve the correct ID per dataset with `/reference/gene?geneId=SYMBOL&gencodeVersion=v39` (use `v26` for v8). The expression and QTL endpoints only accept versioned `gencodeId` values — a bare symbol such as `APOE` also returns zero rows.
+- **Always pass `datasetId`**: some endpoints (`/association/singleTissueSqtl`, `/dataset/tissueSiteDetail`, `/dataset/variant`) still default to `gtex_v8` when it is omitted, so you silently get v8 data — and a v10 GENCODE ID returns nothing.
 - **GTEx variant IDs** use the format `chr{chrom}_{pos}_{ref}_{alt}_b38` (GRCh38) — different from rs IDs
 - **Handle pagination**: Large queries (e.g., all eGenes) require iterating through pages
 - **Tissue nomenclature**: Use `tissueSiteDetailId` (e.g., `Whole_Blood`) not display names for API calls
@@ -307,7 +321,7 @@ For genome-wide analyses, download full summary statistics rather than using the
 # All significant eQTLs (v10)
 wget https://storage.googleapis.com/adult-gtex/bulk-qtl/v10/single-tissue-cis-qtl/GTEx_Analysis_v10_eQTL.tar
 
-# Normalized expression matrices
+# Gene read counts (use ..._gene_tpm.gct.gz for TPM, ..._gene_median_tpm.gct.gz for per-tissue medians)
 wget https://storage.googleapis.com/adult-gtex/bulk-gex/v10/rna-seq/GTEx_Analysis_v10_RNASeQCv2.4.2_gene_reads.gct.gz
 ```
 
@@ -324,6 +338,7 @@ wget https://storage.googleapis.com/adult-gtex/bulk-gex/v10/rna-seq/GTEx_Analysi
 `scripts/query_gtex.py` — runnable helper for the GTEx Portal API v2 (no key):
 
 ```bash
+python scripts/query_gtex.py gene APOE                     # symbol -> versioned GENCODE ID for gtex_v10
 python scripts/query_gtex.py expression ENSG00000130203.10
 python scripts/query_gtex.py eqtl ENSG00000169174.11 --tissue Liver   # v10 GENCODE ID
 python scripts/query_gtex.py tissues

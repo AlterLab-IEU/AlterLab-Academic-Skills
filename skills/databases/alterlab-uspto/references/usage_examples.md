@@ -1,5 +1,7 @@
 # USPTO Usage Examples
 
+> **Status (verified 2026-09-23).** PEDS, the Assignment Search API, and the PatentsView PatentSearch API are offline (see the status table in `SKILL.md`). The examples below use the Open Data Portal (`https://api.uspto.gov`, `X-API-KEY` header, `USPTO_ODP_API_KEY`) and TSDR (`USPTO-API-KEY` header, `USPTO_TSDR_API_KEY`).
+
 Worked Python examples for the helper scripts and direct API calls, grouped by
 task. For full API references see `patentsearch_api.md`, `peds_api.md`,
 `trademark_api.md`, and `additional_apis.md`.
@@ -7,16 +9,17 @@ task. For full API references see `patentsearch_api.md`, `peds_api.md`,
 Set API keys as environment variables before running:
 
 ```bash
-export USPTO_API_KEY="your_api_key_here"
-export PATENTSVIEW_API_KEY="your_api_key_here"
+export USPTO_ODP_API_KEY="..."    # Open Data Portal key (data.uspto.gov)
+export USPTO_TSDR_API_KEY="..."   # TSDR key (account.uspto.gov/api-manager)
 ```
 
 ---
 
-## Task 1: Searching Patents (PatentSearch API)
+## Task 1: Searching Patents (ODP Patent File Wrapper)
 
-The PatentSearch API uses a JSON query language with various operators for
-flexible searching.
+The PatentsView PatentSearch API is offline (see `SKILL.md`), so searches go to
+the ODP Patent File Wrapper: bibliographic data for applications filed from
+2001-01-01, granted or pending. Set `USPTO_ODP_API_KEY` first.
 
 ### Basic Patent Search
 
@@ -25,165 +28,101 @@ from scripts.patent_search import PatentSearchClient
 
 client = PatentSearchClient()
 
-# Search for machine learning patents (keywords in abstract)
-results = client.search_patents({
-    "patent_abstract": {"_text_all": ["machine", "learning"]}
-})
-
-for patent in results['patents']:
-    print(f"{patent['patent_number']}: {patent['patent_title']}")
-```
-
-```python
-# Search by inventor
-results = client.search_by_inventor("John Smith")
-
-# Search by assignee/company
-results = client.search_by_assignee("Google")
-
-# Search by date range
-results = client.search_by_date_range("2024-01-01", "2024-12-31")
-
-# Search by CPC classification (H04N = video/image tech)
-results = client.search_by_classification("H04N")
-```
-
-### Advanced Patent Search
-
-Combine multiple criteria with logical operators:
-
-```python
-results = client.advanced_search(
-    keywords=["artificial", "intelligence"],
-    assignee="Microsoft",
-    start_date="2023-01-01",
-    end_date="2024-12-31",
-    cpc_codes=["G06N", "G06F"]  # AI and computing classifications
+# Invention-title phrase, newest grants first
+results = client.search_by_title(
+    "machine learning",
+    sort=[{"field": "applicationMetaData.grantDate", "order": "desc"}],
+    limit=50,
 )
+for rec in results["patentFileWrapperDataBag"]:
+    meta = rec["applicationMetaData"]
+    print(rec["applicationNumberText"], meta.get("patentNumber"), meta.get("inventionTitle"))
 ```
 
-### Direct API Usage
+```python
+client.search_by_inventor("John Smith")            # first-named inventor
+client.search_by_applicant("Google LLC")           # first-named applicant (not current owner)
+client.search_by_date_range("2024-01-01", "2024-12-31")   # grant dates
+client.get_patent("11234567")                      # one granted patent's file wrapper
+```
 
-For complex queries, use the API directly:
+### Advanced Search (direct API)
 
 ```python
+import os
 import requests
 
-url = "https://search.patentsview.org/api/v1/patent"
-headers = {
-    "X-Api-Key": "YOUR_API_KEY",
-    "Content-Type": "application/json"
+body = {
+    "q": 'applicationMetaData.inventionTitle:"neural network" AND applicationMetaData.firstApplicantName:Microsoft*',
+    "filters": [{"name": "applicationMetaData.applicationStatusDescriptionText", "value": ["Patented Case"]}],
+    "rangeFilters": [{"field": "applicationMetaData.grantDate", "valueFrom": "2023-01-01", "valueTo": "2024-12-31"}],
+    "fields": ["applicationNumberText", "applicationMetaData"],
+    "pagination": {"offset": 0, "limit": 100},
 }
-
-query = {
-    "q": {
-        "_and": [
-            {"patent_date": {"_gte": "2024-01-01"}},
-            {"assignee_organization": {"_text_any": ["Google", "Alphabet"]}},
-            {"cpc_subclass_id": ["G06N", "H04N"]}
-        ]
-    },
-    "f": ["patent_number", "patent_title", "patent_date", "inventor_name"],
-    "s": [{"patent_date": "desc"}],
-    "o": {"per_page": 100, "page": 1}
-}
-
-response = requests.post(url, headers=headers, json=query)
-results = response.json()
+r = requests.post("https://api.uspto.gov/api/v1/patent/applications/search",
+                  headers={"X-API-KEY": os.environ["USPTO_ODP_API_KEY"]}, json=body, timeout=60)
+data = r.json() if r.status_code != 404 else {"count": 0, "patentFileWrapperDataBag": []}
+print(data["count"])
 ```
 
-### Query Operators
+A simple GET form also exists:
+`GET /api/v1/patent/applications/search?q=applicationMetaData.inventionTitle:lidar&limit=25`.
+CPC codes are in `applicationMetaData.cpcClassificationBag`. Claims, abstracts,
+and descriptions are not in the file wrapper — use the ODP bulk grant /
+pre-grant XML products for full text.
 
-- **Equality**: `{"field": "value"}` or `{"field": {"_eq": "value"}}`
-- **Comparison**: `_gt`, `_gte`, `_lt`, `_lte`, `_neq`
-- **Text search**: `_text_all`, `_text_any`, `_text_phrase`
-- **String matching**: `_begins`, `_contains`
-- **Logical**: `_and`, `_or`, `_not`
-
-**Best Practice**: Use `_text_*` operators for text fields (more performant than
-`_contains` or `_begins`).
-
-### Available Patent Endpoints
-
-- `/patent` — Granted patents
-- `/publication` — Pregrant publications
-- `/inventor` — Inventor information
-- `/assignee` — Assignee information
-- `/cpc_subclass`, `/cpc_at_issue` — CPC classifications
-- `/uspc` — US Patent Classification
-- `/ipc` — International Patent Classification
-- `/claims`, `/brief_summary_text`, `/detail_description_text` — Text data (beta)
+The PatentsView query operators (`_text_all`, `_gte`, `_and`, …) and endpoints
+(`/patent`, `/inventor`, `/assignee`, …) are documented in
+`patentsearch_api.md` for reading older code; they do not apply to ODP.
 
 ---
 
-## Task 2: Patent Examination Data (PEDS)
+## Task 2: Patent Examination Data (ODP Patent File Wrapper)
 
-PEDS provides comprehensive prosecution history including transaction events,
-status changes, and examination timeline.
+PEDS was retired on 2025-03-14; the same prosecution data comes from the
+Patent File Wrapper endpoints. `scripts/peds_client.py` keeps the old
+`PEDSHelper` name as an alias of `FileWrapperClient`.
 
-### Installation
-
-```bash
-uv pip install uspto-opendata-python
-```
-
-### Basic PEDS Usage
+### Basic Usage
 
 ```python
-from scripts.peds_client import PEDSHelper
+from scripts.peds_client import FileWrapperClient
 
-helper = PEDSHelper()
+client = FileWrapperClient()          # reads USPTO_ODP_API_KEY
 
-# By application number
-app_data = helper.get_application("16123456")
-print(f"Title: {app_data['title']}")
-print(f"Status: {app_data['app_status']}")
+record = client.get_application("16123456")        # full file-wrapper record
+meta = record["applicationMetaData"]
+print(meta["inventionTitle"], "|", meta["applicationStatusDescriptionText"])
 
-# By patent number
-patent_data = helper.get_patent("11234567")
+patent_record = client.get_patent("11234567")      # look up by granted patent number
 ```
 
 ```python
-# Transaction history
-transactions = helper.get_transaction_history("16123456")
-for trans in transactions:
-    print(f"{trans['date']}: {trans['code']} - {trans['description']}")
+# Transaction history: eventDataBag items
+for event in client.get_transaction_history("16123456"):
+    print(event["eventDate"], event["eventCode"], event["eventDescriptionText"])
+
+# Office-action events only (CTNF, CTFR, AOPF, NOA)
+for event in client.get_office_actions("16123456"):
+    print(event["eventDate"], event["eventCode"])
 ```
 
 ```python
-# Office actions
-office_actions = helper.get_office_actions("16123456")
-for oa in office_actions:
-    if oa['code'] == 'CTNF':
-        print(f"Non-final rejection: {oa['date']}")
-    elif oa['code'] == 'CTFR':
-        print(f"Final rejection: {oa['date']}")
-    elif oa['code'] == 'NOA':
-        print(f"Notice of allowance: {oa['date']}")
-```
+summary = client.get_status_summary("16123456")
+print(summary["status"], summary["filing_date"], summary["days_since_filing"])
+if summary["is_patented"]:
+    print(summary["patent_number"], summary["grant_date"])
 
-```python
-# Status summary
-summary = helper.get_status_summary("16123456")
-print(f"Current status: {summary['current_status']}")
-print(f"Filing date: {summary['filing_date']}")
-print(f"Pendency: {summary['pendency_days']} days")
-
-if summary['is_patented']:
-    print(f"Patent number: {summary['patent_number']}")
-    print(f"Issue date: {summary['issue_date']}")
+family = client.get_continuity("16123456")          # {"parents": [...], "children": [...]}
+owners = client.get_assignments("16123456")         # assignmentBag records
 ```
 
 ### Prosecution Analysis
 
 ```python
-analysis = helper.analyze_prosecution("16123456")
-
-print(f"Total office actions: {analysis['total_office_actions']}")
-print(f"Non-final rejections: {analysis['non_final_rejections']}")
-print(f"Final rejections: {analysis['final_rejections']}")
-print(f"Allowed: {analysis['allowance']}")
-print(f"Responses filed: {analysis['responses']}")
+analysis = client.analyze_prosecution("16123456")
+print(analysis["non_final_rejections"], analysis["final_rejections"],
+      analysis["responses_filed"], analysis["allowed"], analysis["abandoned"])
 ```
 
 ### Common Transaction Codes
@@ -281,48 +220,24 @@ def monitor_portfolio(serial_numbers, api_key):
 
 ## Task 4: Assignments & Ownership
 
-Both patents and trademarks have Assignment Search APIs for tracking ownership
-changes.
-
-### Patent Assignment API
-
-**Base URL**: `https://assignment-api.uspto.gov/patent/v1.4/`
+The Assignment Search API (`assignment-api.uspto.gov`) no longer resolves.
+Recorded assignments for an application come from the Patent File Wrapper:
 
 ```python
-import requests
-import xml.etree.ElementTree as ET
+from scripts.peds_client import FileWrapperClient
 
-def get_patent_assignments(patent_number, api_key):
-    url = f"https://assignment-api.uspto.gov/patent/v1.4/assignment/patent/{patent_number}"
-    headers = {"X-Api-Key": api_key}
-
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        return response.text  # Returns XML
-
-assignments_xml = get_patent_assignments("11234567", api_key)
-root = ET.fromstring(assignments_xml)
-
-for assignment in root.findall('.//assignment'):
-    recorded_date = assignment.find('recordedDate').text
-    assignor = assignment.find('.//assignor/name').text
-    assignee = assignment.find('.//assignee/name').text
-    conveyance = assignment.find('conveyanceText').text
-
-    print(f"{recorded_date}: {assignor} → {assignee}")
-    print(f"  Type: {conveyance}\n")
+client = FileWrapperClient()
+for a in client.get_assignments("16123456"):          # assignmentBag records
+    assignors = ", ".join(x.get("assignorName", "?") for x in a.get("assignorBag") or [])
+    assignees = ", ".join(x.get("assigneeNameText", "?") for x in a.get("assigneeBag") or [])
+    print(a.get("assignmentRecordedDate"), a.get("reelAndFrameNumber"), a.get("conveyanceText"))
+    print(f"  {assignors} -> {assignees}")
 ```
 
-```python
-# Search by company name
-def find_company_patents(company_name, api_key):
-    url = "https://assignment-api.uspto.gov/patent/v1.4/assignment/search"
-    headers = {"X-Api-Key": api_key}
-    data = {"criteria": {"assigneeName": company_name}}
-
-    response = requests.post(url, headers=headers, json=data)
-    return response.text
-```
+The key names inside `assignorBag` / `assigneeBag` above are illustrative —
+print one record first and adjust. For company-wide ownership questions (all
+patents assigned to a firm), use the assignment datasets in the ODP bulk-data
+catalog rather than per-application calls.
 
 ### Common Assignment Types
 
@@ -336,51 +251,39 @@ def find_company_patents(company_name, api_key):
 
 ## Complete Analysis Example
 
-Combine multiple APIs for full patent intelligence:
+Combine the file-wrapper sections for a full picture of one patent:
 
 ```python
-def comprehensive_patent_analysis(patent_number, api_key):
-    """
-    Full patent analysis using multiple USPTO APIs.
-    """
-    from scripts.patent_search import PatentSearchClient
-    from scripts.peds_client import PEDSHelper
+from scripts.peds_client import FileWrapperClient
 
-    results = {}
 
-    # 1. Get patent details
-    patent_client = PatentSearchClient(api_key)
-    patent_data = patent_client.get_patent(patent_number)
-    results['patent'] = patent_data
-
-    # 2. Get examination history
-    peds = PEDSHelper()
-    results['prosecution'] = peds.analyze_prosecution(patent_number)
-    results['status'] = peds.get_status_summary(patent_number)
-
-    # 3. Get assignment history
-    import requests
-    assign_url = f"https://assignment-api.uspto.gov/patent/v1.4/assignment/patent/{patent_number}"
-    assign_resp = requests.get(assign_url, headers={"X-Api-Key": api_key})
-    results['assignments'] = assign_resp.text if assign_resp.status_code == 200 else None
-
-    # 4. Analyze results
-    print(f"\n=== Patent {patent_number} Analysis ===\n")
-    print(f"Title: {patent_data['patent_title']}")
-    print(f"Assignee: {', '.join(patent_data.get('assignee_organization', []))}")
-    print(f"Issue Date: {patent_data['patent_date']}")
-
-    print(f"\nProsecution:")
-    print(f"  Office Actions: {results['prosecution']['total_office_actions']}")
-    print(f"  Rejections: {results['prosecution']['non_final_rejections']} non-final, {results['prosecution']['final_rejections']} final")
-    print(f"  Pendency: {results['prosecution']['pendency_days']} days")
-
-    # Analyze citations
-    if 'cited_patent_number' in patent_data:
-        print(f"\nCitations:")
-        print(f"  Cites: {len(patent_data['cited_patent_number'])} patents")
-    if 'citedby_patent_number' in patent_data:
-        print(f"  Cited by: {len(patent_data['citedby_patent_number'])} patents")
-
+def comprehensive_patent_analysis(patent_number: str) -> dict:
+    """Bibliographic data, prosecution, family, and ownership for one US patent."""
+    client = FileWrapperClient()                       # USPTO_ODP_API_KEY
+    record = client.get_patent(patent_number)
+    if not record:
+        return {}
+    app = record["applicationNumberText"]
+    meta = record["applicationMetaData"]
+    results = {
+        "application": app,
+        "title": meta.get("inventionTitle"),
+        "applicant": meta.get("firstApplicantName"),
+        "filed": meta.get("filingDate"),
+        "granted": meta.get("grantDate"),
+        "cpc": meta.get("cpcClassificationBag"),
+        "prosecution": client.analyze_prosecution(app),
+        "family": client.get_continuity(app),
+        "assignments": client.get_assignments(app),
+    }
+    p = results["prosecution"]
+    print(f"{patent_number}: {results['title']} ({results['applicant']})")
+    print(f"  filed {results['filed']}, granted {results['granted']}")
+    print(f"  {p['non_final_rejections']} non-final / {p['final_rejections']} final rejections, "
+          f"{p['responses_filed']} responses")
     return results
 ```
+
+Forward/backward patent citations were a PatentsView feature; until that API
+returns, take them from the ODP bulk grant XML (references cited) or from the
+office-action citations API for examiner-cited art.

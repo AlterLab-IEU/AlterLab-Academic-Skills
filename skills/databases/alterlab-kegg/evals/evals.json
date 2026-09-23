@@ -13,7 +13,7 @@
     {
       "id": "retrieve-pathway-entry",
       "prompt": "Pull the KEGG glycolysis pathway entry hsa00010 and list the genes it contains.",
-      "expected_output": "Invokes alterlab-kegg. Uses kegg_get('hsa00010') to retrieve the pathway entry and kegg_link('genes', 'hsa00010') to list its member genes, all via the KEGG REST API.",
+      "expected_output": "Invokes alterlab-kegg. Uses kegg_get('hsa00010') to retrieve the pathway entry and kegg_link('hsa', 'hsa00010') to list its member genes (the organism code is the target; 'genes' returns HTTP 400), all via the KEGG REST API.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "hsa00010" }

@@ -3,10 +3,10 @@
 ## Base Information
 
 **Base URL:** `https://api.openalex.org`
-**Authentication:** Optional but recommended. A free API key (from `openalex.org/settings/api`) is passed as `?api_key=YOUR_KEY`.
-**Rate Limits (daily cost/credit model):**
-- Keyless: $0.01/day free budget
-- With a free API key: $1/day free budget
+**Authentication:** Optional but recommended. A free API key (from `openalex.org/settings/api`) is sent as an `Authorization: Bearer YOUR_KEY` header (preferred — keeps the key out of URLs and logs) or as `?api_key=YOUR_KEY`. The mailto "polite pool" was retired in Feb 2026; `mailto=` is ignored.
+**Rate Limits (daily cost budget + 100 requests/second ceiling, as of 2026-09):**
+- Keyless: $0.10/day, shared by everyone on your IP address
+- With a free API key: your own $1/day
 - Per-call cost varies by operation (see "Cost Model" below); past the free budget you pay for what you use.
 
 ## Critical Best Practices
@@ -31,9 +31,9 @@ Incorrect: `/works?filter=author_name:Einstein` - Names are ambiguous!
 
 ### ✅ DO: Use maximum page size for bulk extraction
 ```
-?per-page=200
+?per_page=100
 ```
-This is 8x faster than default (25).
+100 is the supported maximum (4x fewer calls than the default 25). `per_page=200` is still accepted as deprecated legacy behavior and will be removed — don't rely on it.
 
 ### ❌ DON'T: Use default page sizes
 Default is only 25 results per page.
@@ -42,7 +42,7 @@ Default is only 25 results per page.
 ```
 /works?filter=doi:10.1/abc|10.2/def|10.3/ghi
 ```
-Up to 50 values per filter.
+Up to 100 values per filter.
 
 ### ❌ DON'T: Make sequential API calls for lists
 Making 100 separate calls when you can batch them is inefficient.
@@ -61,23 +61,24 @@ for attempt in range(max_retries):
 
 ### ✅ DO: Add a free API key to raise the daily budget
 ```
-?api_key=YOUR_KEY
+Authorization: Bearer YOUR_KEY      # preferred header form
+?api_key=YOUR_KEY                   # query-param form (ends up in logs)
 ```
-Raises the free daily budget from $0.01 (keyless) to $1. Get a key free at `openalex.org/settings/api`.
+Replaces the shared $0.10/day keyless budget with your own $1/day. Get a key free at `openalex.org/settings/api`.
 
 ### ✅ DO: Prefer filter over search to spend less budget
 `search=` calls cost roughly 10x a list+filter call. Filter by IDs/fields where possible and use `select=` to keep responses lean.
 
 ## Entity Endpoints
 
-- `/works` - 240M+ scholarly documents
+- `/works` - 300M+ scholarly documents in the default core corpus (`corpus=all` adds ~60% more, mostly datasets and repository records)
 - `/authors` - Researcher profiles
 - `/sources` - Journals, repositories, conferences
 - `/institutions` - Universities, research organizations
 - `/topics` - Subject classifications (3-level hierarchy)
 - `/publishers` - Publishing organizations
 - `/funders` - Funding agencies
-- `/text` - Tag your own text with topics/keywords (POST)
+- `/text` - Tag your own text with topics/keywords (deprecated; $10 per 1,000 calls)
 
 ## Essential Query Parameters
 
@@ -85,14 +86,16 @@ Raises the free daily budget from $0.01 (keyless) to $1. Get a key free at `open
 |-----------|-------------|---------|
 | `filter=` | Filter results | `?filter=publication_year:2020` |
 | `search=` | Full-text search | `?search=machine+learning` |
+| `search.semantic=` | Embedding search on title+abstract (≤2,000 chars in, ≤50 results, 1 req/s; one search parameter per request) | `?search.semantic=predicting+drug+toxicity` |
 | `sort=` | Sort results | `?sort=cited_by_count:desc` |
-| `per-page=` | Results per page (max 200) | `?per-page=200` |
-| `page=` | Page number | `?page=2` |
+| `per_page=` | Results per page (default 25, max 100) | `?per_page=100` |
+| `page=` | Page number (page × per_page ≤ 10,000) | `?page=2` |
+| `cursor=` | Cursor paging past 10,000 results | `?cursor=*` then `meta.next_cursor` |
 | `sample=` | Random results | `?sample=50&seed=42` |
 | `select=` | Limit fields | `?select=id,title` |
 | `group_by=` | Aggregate by field | `?group_by=publication_year` |
 | `api_key=` | Free API key (raises daily budget to $1) | `?api_key=YOUR_KEY` |
-| `mailto=` | Optional contact email (harmless; no longer changes limits) | `?mailto=you@example.edu` |
+| `mailto=` | Ignored since the polite pool was retired (Feb 2026) — use an API key | — |
 
 ## Filter Syntax
 
@@ -123,7 +126,7 @@ Both mean: "works with author from US AND author from GB"
 Any of these:      ?filter=institutions.country_code:us|gb|ca
 Batch IDs:         ?filter=doi:10.1/abc|10.2/def
 ```
-Up to 50 values with pipes.
+Up to 100 values with pipes.
 
 ## Common Query Patterns
 
@@ -172,7 +175,7 @@ https://api.openalex.org/works?filter=authorships.institutions.id:I136199984
 
 ### Highly Cited Recent Papers
 ```bash
-https://api.openalex.org/works?filter=publication_year:>2020&sort=cited_by_count:desc&per-page=200
+https://api.openalex.org/works?filter=publication_year:>2020&sort=cited_by_count:desc&per_page=100
 ```
 
 ### Open Access Works
@@ -192,8 +195,8 @@ https://api.openalex.org/works?filter=publication_year:2022,is_oa:true,title.sea
 
 ### Bulk DOI Lookup
 ```bash
-# Get specific works by DOI (up to 50 per request)
-https://api.openalex.org/works?filter=doi:https://doi.org/10.1371/journal.pone.0266781|https://doi.org/10.1371/journal.pone.0267149&per-page=50
+# Get specific works by DOI (up to 100 per request)
+https://api.openalex.org/works?filter=doi:https://doi.org/10.1371/journal.pone.0266781|https://doi.org/10.1371/journal.pone.0267149&per_page=100
 ```
 
 ### Aggregate Data
@@ -211,10 +214,13 @@ https://api.openalex.org/works?group_by=authorships.institutions.id
 ### Pagination
 ```bash
 # First page
-https://api.openalex.org/works?filter=publication_year:2023&per-page=200
+https://api.openalex.org/works?filter=publication_year:2023&per_page=100
 
-# Next pages
-https://api.openalex.org/works?filter=publication_year:2023&per-page=200&page=2
+# Next pages (page-based paging stops at 10,000 results)
+https://api.openalex.org/works?filter=publication_year:2023&per_page=100&page=2
+
+# Beyond 10,000 results: cursor paging — start with cursor=*, then pass meta.next_cursor
+https://api.openalex.org/works?filter=publication_year:2023&per_page=100&cursor=*
 ```
 
 ## Response Structure
@@ -303,11 +309,11 @@ ISSN: /sources/issn:0028-0836
 
 ## Performance Tips
 
-1. **Use maximum page size**: `?per-page=200` (8x fewer calls)
-2. **Batch ID lookups**: Use pipe operator for up to 50 IDs
+1. **Use maximum page size**: `?per_page=100` (4x fewer calls than the default)
+2. **Batch ID lookups**: Use pipe operator for up to 100 IDs
 3. **Select only needed fields**: `?select=id,title,publication_year`
 4. **Prefer filter over search**: list+filter calls cost ~10x less than `search=` calls
-5. **Add an API key**: `?api_key=YOUR_KEY` raises the free daily budget from $0.01 to $1
+5. **Add an API key**: `?api_key=YOUR_KEY` gives your own $1/day instead of the shared $0.10/day keyless budget
 
 ## Error Handling
 
@@ -316,7 +322,7 @@ ISSN: /sources/issn:0028-0836
 - `400` - Bad request (check filter syntax)
 - `403` - Forbidden ("slow down"; back off)
 - `404` - Entity doesn't exist
-- `429` - Too Many Requests / daily budget exhausted (back off; add an API key to raise the budget)
+- `429` - Too Many Requests: either >100 requests/second (short `Retry-After`; back off) or daily budget exhausted (`Retry-After` counts down to midnight UTC; add an API key or wait)
 - `500` - Server error (retry with backoff)
 
 ### Exponential Backoff
@@ -342,17 +348,18 @@ def fetch_with_retry(url, max_retries=5):
 
 ## Cost Model & Rate Limiting
 
-OpenAlex uses a daily USD cost budget rather than a fixed requests/second cap.
+OpenAlex uses a daily USD cost budget plus a ceiling of 100 requests/second.
 
 ### Daily Free Budget
-- **Keyless**: $0.01/day
-- **With a free API key** (`openalex.org/settings/api`): $1/day — recommended
+- **Keyless**: $0.10/day, shared by everyone on your IP address (often already spent on campus, VPN, or cloud networks)
+- **With a free API key** (`openalex.org/settings/api`): your own $1/day — recommended
+- More: prepaid top-ups ($1 increments) or annual plans; check usage with `GET /rate-limit?api_key=...`
 
-### Approximate operation cost (what $1/day buys)
-- Single-entity lookups (`/works/W...`): effectively free / unlimited
-- List + filter calls (e.g. `/works?filter=...`): ~10,000 calls (~1M results)
-- `search=` calls: ~1,000 calls (~100k results) — ~10x the cost of a filter call
-- Content/PDF downloads: ~100
+### Operation cost (per 1,000 calls; help.openalex.org/access/example-costs, 2026-08)
+- Single-entity lookup by ID/DOI (`/works/W...`, `/works/doi:...`): free
+- List + filter calls (e.g. `/works?filter=...`): $0.10 → ~10,000 calls (~1M results) per $1
+- `search=` and `search.semantic=` calls: $1 → ~1,000 calls per $1
+- Content/PDF downloads: $10 → ~100 per $1
 
 Implication: resolve and filter by IDs; reserve `search=` for genuine free-text needs; use `select=` to keep responses cheap.
 
@@ -365,7 +372,7 @@ x-ratelimit-cost-usd: 0.0001
 ```
 
 ### Strategy when the budget runs low
-1. Add an API key (raises budget 100x vs keyless)
+1. Add an API key (your own budget, 10x the keyless one)
 2. Replace `search=` with `filter=` where possible
 3. Back off and retry on 429/403
 4. Spread heavy bulk jobs across days, or top up the account
@@ -374,17 +381,18 @@ x-ratelimit-cost-usd: 0.0001
 
 1. ❌ Using page numbers for sampling → ✅ Use `?sample=`
 2. ❌ Filtering by entity names → ✅ Get IDs first
-3. ❌ Default page size → ✅ Use `per-page=200`
+3. ❌ Default page size → ✅ Use `per_page=100`
 4. ❌ Sequential ID lookups → ✅ Batch with pipe operator
 5. ❌ No error handling → ✅ Implement retry with backoff on 429/403/5xx
 6. ❌ Burning budget on `search=` → ✅ Filter by IDs/fields; reserve `search=` for free text
-7. ❌ Running keyless for bulk jobs → ✅ Add a free `api_key=` (raises budget 100x)
+7. ❌ Running keyless for bulk jobs → ✅ Add a free `api_key=` (own budget, 10x keyless)
 8. ❌ Fetching all fields → ✅ Use `select=`
 
 ## Additional Resources
 
-- Full documentation: https://developers.openalex.org (docs.openalex.org now redirects here)
-- Authentication & pricing: https://developers.openalex.org/guides/authentication
+- Full documentation: https://help.openalex.org/api/ (docs.openalex.org and developers.openalex.org redirect here)
+- Authentication & rate limits: https://help.openalex.org/api/authentication/
+- Pricing and example costs: https://help.openalex.org/access/example-costs/
 - Get a free API key: https://openalex.org/settings/api
-- LLM quick reference: https://developers.openalex.org/guides/llm-quick-reference
+- LLM quick reference: https://help.openalex.org/api/llm-quick-reference/
 - User group: https://groups.google.com/g/openalex-users

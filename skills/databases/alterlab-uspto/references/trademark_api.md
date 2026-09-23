@@ -1,5 +1,7 @@
 # USPTO Trademark APIs Reference
 
+> **Status (verified 2026-09-23).** TSDR (`https://tsdrapi.uspto.gov/ts/cd/...`) is live. Send the TSDR key (from https://account.uspto.gov/api-manager/, separate from the ODP key) in the **`USPTO-API-KEY`** header — an `X-Api-Key` header is ignored and the request is treated as keyless (HTTP 401). Limits: 60 requests/minute per key, 4/minute for PDF and ZIP downloads. The official spec documents `casestatus/{caseid}/info` (ST96 XML); `info.json` is also served. The Trademark Assignment Search host (`assignment-api.uspto.gov`) no longer resolves; use assignment bulk data on data.uspto.gov.
+
 ## Overview
 
 USPTO provides two main APIs for trademark data:
@@ -21,9 +23,9 @@ TSDR enables programmatic retrieval of trademark case status documents and infor
 
 Requires API key registration at: https://account.uspto.gov/api-manager/
 
-Include API key in request header:
+Include the TSDR key in the request header:
 ```
-X-Api-Key: YOUR_API_KEY
+USPTO-API-KEY: YOUR_API_KEY
 ```
 
 ### Endpoints
@@ -31,19 +33,19 @@ X-Api-Key: YOUR_API_KEY
 #### Get Trademark Status by Serial Number
 
 ```
-GET /ts/cd/casedocs/sn{serial_number}/info.json
+GET /ts/cd/casestatus/sn{serial_number}/info.json
 ```
 
 **Example:**
 ```bash
-curl -H "X-Api-Key: YOUR_KEY" \
-  "https://tsdrapi.uspto.gov/ts/cd/casedocs/sn87654321/info.json"
+curl -H "USPTO-API-KEY: YOUR_KEY" \
+  "https://tsdrapi.uspto.gov/ts/cd/casestatus/sn87654321/info.json"
 ```
 
 #### Get Trademark Status by Registration Number
 
 ```
-GET /ts/cd/casedocs/rn{registration_number}/info.json
+GET /ts/cd/casestatus/rn{registration_number}/info.json
 ```
 
 ### Response Format
@@ -110,8 +112,8 @@ import requests
 
 def get_trademark_status(serial_number, api_key):
     """Retrieve trademark status by serial number."""
-    url = f"https://tsdrapi.uspto.gov/ts/cd/casedocs/sn{serial_number}/info.json"
-    headers = {"X-Api-Key": api_key}
+    url = f"https://tsdrapi.uspto.gov/ts/cd/casestatus/sn{serial_number}/info.json"
+    headers = {"USPTO-API-KEY": api_key}
 
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
@@ -228,7 +230,7 @@ import xml.etree.ElementTree as ET
 def search_trademark_assignments(registration_number, api_key):
     """Search assignments for a trademark registration."""
     url = f"https://assignment-api.uspto.gov/trademark/v1.4/assignment/application/{registration_number}"
-    headers = {"X-Api-Key": api_key}
+    headers = {"X-Api-Key": api_key}  # historical: this host no longer resolves
 
     response = requests.get(url, headers=headers)
     if response.status_code == 200:

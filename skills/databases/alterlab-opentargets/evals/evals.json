@@ -34,7 +34,7 @@
     {
       "id": "known-drugs-repurposing",
       "prompt": "What drugs are already known for Alzheimer's disease in Open Targets? Give me each drug, its target, mechanism of action, and clinical trial phase for drug-repurposing ideas.",
-      "expected_output": "Invokes alterlab-opentargets. Uses get_known_drugs_for_disease for the EFO ID and returns the drug-target-indication rows: drug name and type, targeted genes, mechanismOfAction, and clinical phase/status, framed for repurposing.",
+      "expected_output": "Invokes alterlab-opentargets. Resolves Alzheimer disease to its current ID (MONDO_0004975) via search, uses get_known_drugs_for_disease (the drugAndClinicalCandidates field that replaced knownDrugs), and returns the drug-target-indication rows: drug name and type, targeted genes, mechanismOfAction, and maxClinicalStage (e.g. APPROVAL, PHASE_3), framed for repurposing.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Lists known drugs for the disease with their targets, mechanisms of action, and clinical trial phases." }

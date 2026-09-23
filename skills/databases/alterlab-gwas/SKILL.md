@@ -1,12 +1,13 @@
 ---
 name: alterlab-gwas
-description: Query the NHGRI-EBI GWAS Catalog REST API for SNP-trait associations, retrieving variants by rs ID, disease/trait, or gene along with p-values and summary statistics. Use when investigating genome-wide association study hits, mapping a SNP or rsID to traits, building polygenic risk scores, or doing genetic epidemiology lookups. Part of the AlterLab Academic Skills suite.
+description: Query the NHGRI-EBI GWAS Catalog REST API v2 for curated SNP-trait associations, retrieving variants by rs ID, disease/trait (EFO/MONDO), gene, or study (GCST) with p-values, effect sizes, and ancestry, and locate full harmonised summary statistics on the FTP site. Use when investigating genome-wide association study hits, mapping a SNP or rsID to traits, selecting GWAS for polygenic risk scores or fine-mapping, or doing genetic epidemiology lookups. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless NHGRI-EBI GWAS Catalog REST API (no authentication required)
+compatibility: Keyless NHGRI-EBI GWAS Catalog REST API v2 (no authentication; 15 requests/s throttle); summary statistics via FTP (the Summary Statistics API is retired)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # GWAS Catalog Database
@@ -20,9 +21,11 @@ The GWAS Catalog is a curated repository of published genome-wide association st
 `scripts/query_gwas.py` — query the GWAS Catalog REST API (stdlib only, JSON to stdout):
 
 ```bash
-python scripts/query_gwas.py variant rs7903146           # associations for a SNP
-python scripts/query_gwas.py trait MONDO_0005148 --size 100  # associations for a trait
-python scripts/query_gwas.py study GCST001795            # study metadata
+python scripts/query_gwas.py variant rs7903146                 # associations for a SNP (strongest first)
+python scripts/query_gwas.py trait MONDO_0005148 --size 100    # associations for a trait
+python scripts/query_gwas.py gene TCF7L2                       # associations mapped to a gene
+python scripts/query_gwas.py find-trait "type 2 diabetes"      # free text -> efo_id
+python scripts/query_gwas.py study GCST001795                  # study metadata (+ summary-stats FTP link)
 ```
 
 ## When to Use This Skill
@@ -38,32 +41,42 @@ Use this skill for:
 - **Polygenic risk scores** — variants for risk prediction models
 - **Functional genomics** / **systematic reviews** — variant effects, literature synthesis
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Target-disease association scores, L2G / colocalisation evidence for drug targets | `alterlab-opentargets` |
+| Clinical pathogenicity of a variant (ACMG/AMP, review stars) | `alterlab-clinvar` |
+| Population allele frequencies or gene constraint | `alterlab-gnomad` |
+| Which gene/tissue a variant regulates (eQTL/sQTL) | `alterlab-gtex` |
+| Variant consequence (VEP), coordinates, gene models | `alterlab-ensembl` |
+
 ## Data Model
 
 Four core entities, each with a canonical identifier:
 - **Studies** → `GCST` accessions (e.g., GCST001234)
 - **Associations** → SNP-trait links with p-values (genome-wide significant: p ≤ 5×10⁻⁸)
 - **Variants** → `rs` numbers (e.g., rs7903146)
-- **Traits** → trait ontology short-forms (e.g., MONDO_0005148 = type 2 diabetes on the main REST API); genes use HGNC symbols (e.g., TCF7L2)
+- **Traits** → ontology short-forms in `efo_id` (e.g., MONDO_0005148 = type 2 diabetes mellitus); genes use HGNC symbols (e.g., TCF7L2)
 
-> **Trait-ID gotcha (verified):** the two APIs disagree on trait IDs. The main REST API has migrated many traits to MONDO / current EFO short-forms, so `efoTraits/MONDO_0005148` works but the legacy `efoTraits/EFO_0001360` now 404s. The Summary Statistics API still uses the legacy ID: `traits/EFO_0001360` works there but `traits/MONDO_0005148` 404s. If a trait path 404s, look up the current short-form with `/efoTraits/search/findByTrait?trait=...` (main API) before assuming the trait is absent.
+> **Trait-ID gotcha (verified 2026-09):** many traits have been re-mapped to MONDO / current EFO short-forms, and a stale ID returns an empty page rather than an error — `associations?efo_id=EFO_0001360` (legacy type 2 diabetes) gives 0 rows while `efo_id=MONDO_0005148` gives thousands. Resolve free text first with `GET /v2/efo-traits?efo_trait=type 2 diabetes` and use the returned `efo_id`. Older papers and pipelines may still cite the legacy EFO ID.
 
 ## APIs
 
-Two free, no-key REST APIs:
-- **GWAS Catalog API**: `https://www.ebi.ac.uk/gwas/rest/api` (curated associations, studies, variants, traits)
-- **Summary Statistics API**: `https://www.ebi.ac.uk/gwas/summary-statistics/api` (all tested variants, not just significant hits)
+- **GWAS Catalog REST API v2** (released Aug 2025): `https://www.ebi.ac.uk/gwas/rest/api/v2` — curated top associations, studies, SNPs, traits, genes, publications. Free, no key; throttled at 15 requests/second; default page size 20 (keep `size` ≤ 200 — larger pages time out). Interactive reference: https://www.ebi.ac.uk/gwas/rest/api/v2/docs
+- **Legacy v1** (`/gwas/rest/api/singleNucleotidePolymorphisms/...`, `/efoTraits/...`, camelCase fields) is deprecated and was scheduled for retirement by May 2026; it may still answer, but don't write new code against it.
+- **Summary Statistics API** (`/gwas/summary-statistics/api`) is retired (HTTP 410); full summary statistics are served from the FTP site (see workflow step 6). EBI describes a replacement API as "coming soon".
 
-Core endpoints: `/studies/{GCST}`, `/efoTraits/{efoID}/associations`, `/singleNucleotidePolymorphisms/{rsID}` and `/{rsID}/associations`. Responses are HAL+JSON with `_embedded` results, `_links` for related resources, and pagination (`page`, `size`).
+Core v2 endpoints: `/v2/associations` (filters `rs_id`, `efo_id`, `efo_trait`, `mapped_gene`, `accession_id`, `pubmed_id`; `sort=p_value&direction=asc`), `/v2/studies` and `/v2/studies/{accession_id}`, `/v2/single-nucleotide-polymorphisms` (by `rs_id`, `mapped_gene`, or `chromosome` + `bp_start`/`bp_end`), `/v2/efo-traits`, `/v2/genes/{gene_name}`. Responses are HAL+JSON with snake_case fields: results under `_embedded.<resource>` (`associations`, `studies`, `snps`, `efo_traits`), paging under `page` (`totalElements`, `totalPages`, `number`), next pages in `_links.next`.
 
 ## Core Workflow
 
-1. **Identify the entity** — get the EFO ID (trait), rs ID (variant), GCST (study), or HGNC symbol (gene). Use the web interface for free-text → EFO mapping.
-2. **Query the matching endpoint** — trait/variant/study/region; iterate pages via `page`/`size`.
+1. **Identify the entity** — get the `efo_id` (trait; resolve free text via `/v2/efo-traits?efo_trait=`), rs ID (variant), GCST (study), or HGNC symbol (gene).
+2. **Query the matching endpoint** — trait/variant/study/gene/region; iterate pages via `page`/`size` or follow `_links.next`.
 3. **Filter** — by p-value (≤ 5×10⁻⁸ for genome-wide significance), ancestry, sample size, discovery/replication status.
-4. **Extract** — rs IDs, effect alleles/directions, effect sizes (OR or beta), p-values.
+4. **Extract** — rs IDs and effect alleles (`snp_allele[]`), effect sizes (`or_per_copy_num` or the `beta` text), p-values. `p_value` underflows to `0.0` for very strong signals (rs7903146 in type 2 diabetes reaches 3×10⁻¹³¹⁵), so rank and report with `pvalue_mantissa` / `pvalue_exponent`.
 5. **Cross-reference** — Ensembl (consequences), gnomAD (frequencies), Open Targets, PGS Catalog.
-6. **For genome-wide analyses** — pull full summary statistics via the Summary Statistics API or FTP rather than scraping the association endpoints.
+6. **For genome-wide analyses** — find studies with `/v2/studies?efo_id=...&full_pvalue_set=true`; each study's `full_summary_stats` field gives its FTP directory. Harmonised files live at `https://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics/GCST<range>/<GCST>/harmonised/<GCST>.h.tsv.gz` (GWAS-SSF columns, tabix-indexed `.tbi`), so a region can be pulled remotely with `tabix <url> 10:112900000-113200000` instead of downloading the whole file. Don't scrape the association endpoints for this — they hold only curated top hits.
 
 ## Routing Guidance
 
@@ -87,9 +100,9 @@ When using GWAS Catalog data, cite:
 
 - **Website**: https://www.ebi.ac.uk/gwas/
 - **Documentation**: https://www.ebi.ac.uk/gwas/docs
-- **API docs**: https://www.ebi.ac.uk/gwas/rest/docs/api
-- **Summary Statistics API**: https://www.ebi.ac.uk/gwas/summary-statistics/docs/
-- **FTP site**: http://ftp.ebi.ac.uk/pub/databases/gwas/
+- **API v2 docs**: https://www.ebi.ac.uk/gwas/rest/api/v2/docs (OpenAPI: https://www.ebi.ac.uk/gwas/rest/api/v2/rest-api-doc.yaml)
+- **Summary statistics access**: https://www.ebi.ac.uk/gwas/docs/methods/summary-statistics
+- **FTP site**: https://ftp.ebi.ac.uk/pub/databases/gwas/
 - **Training materials**: https://github.com/EBISPOT/GWAS_Catalog-workshop (Jupyter notebooks, Colab)
 - **PGS Catalog** (polygenic scores): https://www.pgscatalog.org/
 - **Help and support**: gwas-info@ebi.ac.uk

@@ -72,6 +72,14 @@ def main():
         result = fetch_metabolite(args.hmdb_id)
     except urllib.error.HTTPError as exc:
         print(f"HTTP error {exc.code}: {exc.reason}", file=sys.stderr)
+        if exc.code in (403, 429):
+            print(
+                "hmdb.ca is blocking scripted access (Cloudflare challenge / rate limit). "
+                "Use the bulk downloads at https://www.hmdb.ca/downloads, or map the accession "
+                "via PubChem: https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/xref/RegistryID/"
+                f"{normalize_id(args.hmdb_id)}/cids/JSON",
+                file=sys.stderr,
+            )
         return 1
     except urllib.error.URLError as exc:
         print(f"Connection error: {exc.reason}", file=sys.stderr)

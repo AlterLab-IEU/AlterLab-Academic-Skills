@@ -3,10 +3,11 @@ name: alterlab-interpro
 description: Query the EMBL-EBI InterPro REST API for protein family, domain, and functional-site annotations integrated from member databases (Pfam, PANTHER, PRINTS, SMART, SUPERFAMILY, CDD, ProSite, NCBIfam, and others). Use when predicting protein function, analyzing or comparing domain architecture, classifying a protein by family or homologous superfamily, resolving a Pfam/InterPro accession, or mapping a protein's signatures to GO terms. Not for raw UniProt entry/FASTA retrieval or AlphaFold 3D structures. Part of the AlterLab Academic Skills suite.
 license: CC0-1.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless InterPro REST API (no authentication required)
+compatibility: Keyless InterPro REST API (no authentication required); verified against InterPro 110.0 / Pfam 38.2 (2026-09)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # InterPro Database
@@ -49,6 +50,16 @@ Use InterPro when:
 - **Evolutionary analysis**: Are two proteins in the same homologous superfamily?
 - **Structure prediction context**: What domains should a new protein structure be compared against?
 - **Pipeline annotation**: Batch-annotate proteomes or novel sequences
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Retrieving a UniProt entry, FASTA sequence, or ID mapping | `alterlab-uniprot` |
+| Predicted 3D models and pLDDT confidence | `alterlab-alphafold-db` |
+| Experimental structures, ligands, resolution | `alterlab-pdb` |
+| Protein-protein interaction networks and enrichment | `alterlab-string-db` |
+| Sequence similarity search against a database | `alterlab-blast` |
 
 ## Core Capabilities
 
@@ -353,4 +364,4 @@ Source-database names as the API returns them (the `source_database` field /
 - **InterProScan** (run locally): https://github.com/ebi-pf-team/interproscan
 - **API documentation**: https://github.com/ProteinsWebTeam/interpro7-api/blob/master/docs/
 - **Pfam**: https://www.ebi.ac.uk/interpro/entry/pfam/
-- **Citation**: Paysan-Lafosse T et al. (2023) Nucleic Acids Research. PMID: 36350672
+- **Citation**: Blum M et al. (2025) InterPro: the protein sequence classification resource in 2025. Nucleic Acids Research 53(D1):D444–D456. PMID: 39565202. DOI: 10.1093/nar/gkae1082

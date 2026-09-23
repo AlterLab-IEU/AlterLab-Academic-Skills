@@ -13,16 +13,16 @@
     {
       "id": "purchasable-analogs",
       "prompt": "Here's the SMILES of a hit compound. Find me purchasable analogs in ZINC within a Tanimoto distance of 5, with their supplier catalogs.",
-      "expected_output": "Invokes alterlab-zinc-db. Runs a CartBlanche22 SMILES search (smiles.txt) with dist=5 and output_fields including zinc_id, smiles, and catalogs to find purchasable analogs of the hit and report which vendors offer them.",
+      "expected_output": "Invokes alterlab-zinc-db. Plans a distance-5 similarity search for purchasable analogs with zinc_id, smiles, and catalogs, noting that the CartBlanche22 smiles.txt API currently returns zinc22_missing without running the query, so it routes the search through the CartBlanche22 web UI or SmallWorld (sw.docking.org) and reports which vendors offer the hits instead of claiming no analogs exist.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Runs a ZINC SMILES similarity search with a distance threshold and returns purchasable analogs with supplier/catalog info." }
+        { "type": "behavior", "value": "Sets up a ZINC similarity search with a distance threshold via a working route (web UI or SmallWorld) and returns purchasable analogs with supplier/catalog info." }
       ]
     },
     {
       "id": "batch-zinc-id-lookup",
       "prompt": "I have a list of ZINC IDs from a previous screen. Pull their SMILES, supplier codes, and catalogs from ZINC22 in one batch query.",
-      "expected_output": "Invokes alterlab-zinc-db. Uses the CartBlanche22 substances endpoint with a comma-separated list of zinc_id values and output_fields=zinc_id,smiles,supplier_code,catalogs to batch-retrieve the compounds.",
+      "expected_output": "Invokes alterlab-zinc-db. Uses the CartBlanche22 substances endpoint with a comma-separated zinc_ids list and output_fields=zinc_id,smiles,supplier_code,catalogs, then polls GET /search/result/<task> (query_zinc.py --wait) to batch-retrieve the compounds.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "ZINC" }

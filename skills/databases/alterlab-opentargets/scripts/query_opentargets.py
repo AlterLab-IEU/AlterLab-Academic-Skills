@@ -152,7 +152,8 @@ def get_target_info(ensembl_id: str, include_diseases: bool = False) -> Dict[str
     """
 
     result = execute_query(query, {"ensemblId": ensembl_id})
-    return result.get("target", {})
+    # An unknown/obsolete ID comes back as {"target": null}, so coalesce None to {}.
+    return result.get("target") or {}
 
 
 def get_disease_info(efo_id: str, include_targets: bool = False) -> Dict[str, Any]:
@@ -205,7 +206,7 @@ def get_disease_info(efo_id: str, include_targets: bool = False) -> Dict[str, An
     """
 
     result = execute_query(query, {"efoId": efo_id})
-    return result.get("disease", {})
+    return result.get("disease") or {}
 
 
 def get_target_disease_evidence(ensembl_id: str, efo_id: str,
@@ -249,7 +250,7 @@ def get_target_disease_evidence(ensembl_id: str, efo_id: str,
         variables["datasourceIds"] = datasource_ids
 
     result = execute_query(query, variables)
-    return result.get("disease", {}).get("evidences", {}).get("rows", [])
+    return ((result.get("disease") or {}).get("evidences") or {}).get("rows", [])
 
 
 def get_known_drugs_for_disease(efo_id: str) -> Dict[str, Any]:
@@ -304,7 +305,7 @@ def get_known_drugs_for_disease(efo_id: str) -> Dict[str, Any]:
     """
 
     result = execute_query(query, {"efoId": efo_id})
-    return result.get("disease", {}).get("drugAndClinicalCandidates", {})
+    return (result.get("disease") or {}).get("drugAndClinicalCandidates") or {}
 
 
 def get_drug_info(chembl_id: str) -> Dict[str, Any]:
@@ -322,7 +323,10 @@ def get_drug_info(chembl_id: str) -> Dict[str, Any]:
         drug(chemblId: $chemblId) {
           id
           name
-          synonyms
+          synonyms {
+            label
+            source
+          }
           drugType
           maximumClinicalStage
           drugWarnings {
@@ -356,7 +360,7 @@ def get_drug_info(chembl_id: str) -> Dict[str, Any]:
     """
 
     result = execute_query(query, {"chemblId": chembl_id})
-    return result.get("drug", {})
+    return result.get("drug") or {}
 
 
 def get_target_associations(ensembl_id: str, min_score: float = 0.0) -> List[Dict[str, Any]]:
@@ -392,7 +396,7 @@ def get_target_associations(ensembl_id: str, min_score: float = 0.0) -> List[Dic
     """
 
     result = execute_query(query, {"ensemblId": ensembl_id})
-    associations = result.get("target", {}).get("associatedDiseases", {}).get("rows", [])
+    associations = ((result.get("target") or {}).get("associatedDiseases") or {}).get("rows", [])
 
     # Filter by minimum score
     return [assoc for assoc in associations if assoc.get("score", 0) >= min_score]

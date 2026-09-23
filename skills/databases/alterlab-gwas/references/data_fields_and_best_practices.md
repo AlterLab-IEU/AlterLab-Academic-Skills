@@ -13,49 +13,44 @@ The GWAS Catalog is organized around four core entities:
 
 **Key Identifiers:**
 - Study accessions: `GCST` IDs (e.g., GCST001234)
-- Variant IDs: `rs` numbers (e.g., rs7903146) or `variant_id` format
-- Trait IDs: EFO terms (e.g., EFO_0001360 for type 2 diabetes)
+- Variant IDs: `rs` numbers (e.g., rs7903146); summary-statistics files add `variant_id` (`chr_pos_ref_alt`, GRCh38)
+- Trait IDs: ontology short-forms in `efo_id` (e.g., MONDO_0005148 for type 2 diabetes mellitus; the legacy EFO_0001360 returns no rows)
 - Gene symbols: HGNC approved names (e.g., TCF7L2)
 
 ## Response Formats and Data Fields
 
-**Key Fields in Association Records (verified against the live v2 API):**
+**Key fields in v2 association records** (`_embedded.associations[]`, verified against the live API 2026-09; v1 camelCase names such as `pvalue`, `efoTraits`, `orPerCopyNum` no longer apply):
 
-The rsID, allele, and trait are **nested**, not top-level — a frequent extraction bug. On an association object:
-- `pvalue`: Association p-value (top-level, present)
-- `pvalueMantissa` / `pvalueExponent`: p-value split form (top-level)
-- `orPerCopyNum`: Odds ratio per allele copy (top-level; `null` for quantitative traits)
-- `betaNum`: Effect size for quantitative traits (top-level; `null` for case-control)
-- `betaUnit`, `betaDirection`: Unit / direction of beta
-- `range`, `standardError`: Confidence interval and SE
-- `riskFrequency`: Reported risk-allele frequency
-- `snps[]`: array; the rsID is `snps[i].rsId` (there is **no** top-level `rsId`)
-- `loci[].strongestRiskAlleles[].riskAlleleName`: the risk allele, e.g. `rs7903146-T` (there is **no** top-level `strongestAllele`)
-- `efoTraits[]`: array of `{trait, uri, shortForm}`; the trait name is `efoTraits[i].trait` (there is **no** top-level `efoTrait` or `mappedLabel`)
-- `_links.study.href`: follow this for the study/accession and PubMed ID — these are **not** inline on the association
+- `p_value`: float — **underflows to `0.0`** for p below ~1e-308 (rs7903146 in T2D reaches 3e-1315); rank by the tuple (`pvalue_exponent`, `pvalue_mantissa`) and report the string `f"{mantissa}e{exponent}"`
+- `pvalue_description`: qualifier text (e.g. conditional analysis, sub-group)
+- `snp_allele[]`: `{rs_id, effect_allele}`; `snp_effect_allele[]`: strings like `rs7903146-T`
+- `efo_traits[]`: `{efo_id, efo_trait}` mapped ontology terms; `reported_trait[]`: author wording; `bg_efo_traits[]`: background traits
+- `or_per_copy_num` (float) / `or_value` (string): odds ratio; `beta_num` (float, often null) and `beta` (text such as `"0.0356 unit decrease"`); absent values are `"-"` or `null`
+- `ci_lower`, `ci_upper`, `range` (e.g. `[4.12-25.21]`): 95% CI
+- `risk_frequency`: reported risk-allele frequency (string; may be empty or a placeholder when not reported)
+- `mapped_genes[]`, `locations[]` (`"10:112998590"`, GRCh38)
+- `accession_id`, `pubmed_id`, `first_author`: inline study provenance
+- `_links.loci` → `strongest_risk_alleles[].risk_allele_name`; `_links.snp` → the variant record
 
 To list rsID/trait/p-value for an association `a`:
 ```python
-rs   = (a.get("snps") or [{}])[0].get("rsId")
-trait = (a.get("efoTraits") or [{}])[0].get("trait")
-allele = ((a.get("loci") or [{}])[0].get("strongestRiskAlleles") or [{}])[0].get("riskAlleleName")
-pval = a.get("pvalue")
+rs = a["snp_allele"][0]["rs_id"] if a.get("snp_allele") else None
+trait = "; ".join(t["efo_trait"] for t in a["efo_traits"])
+pval = f'{a["pvalue_mantissa"]}e{a["pvalue_exponent"]}'   # keep as text; float() gives 0.0 below ~1e-323
 ```
 
-**Study Metadata Fields:**
-- `accessionId`: GCST study identifier
-- `pubmedId`: PubMed ID
-- `author`: First author
-- `publicationDate`: Publication date
-- `ancestryInitial`: Discovery population ancestry
-- `ancestryReplication`: Replication population ancestry
-- `sampleSize`: Total sample size
+**Study metadata fields** (`/v2/studies`):
+- `accession_id`, `pubmed_id`, `disease_trait`, `efo_traits[]`
+- `initial_sample_size`, `replication_sample_size` (free text with ancestry and case/control counts)
+- `discovery_ancestry[]`, `replication_ancestry[]`, `cohort[]`
+- `full_summary_stats_available` (bool) and `full_summary_stats` (FTP directory or `"NA"`)
+- `snp_count`, `imputed`, `platforms`, `genotyping_technologies[]`, `gxe`, `gxg`, `terms_of_license`
 
 **Pagination:**
 Results are paginated (default 20 items per page). Navigate using:
-- `size` parameter: Number of results per page
-- `page` parameter: Page number (0-indexed)
-- `_links` in response: URLs for next/previous pages
+- `size` (keep ≤ 200; larger pages time out) and `page` (0-indexed)
+- `page` object in the response: `size`, `totalElements`, `totalPages`, `number`
+- `_links.next` / `_links.last` URLs
 
 ## Best Practices
 
@@ -73,7 +68,7 @@ Results are paginated (default 20 items per page). Navigate using:
 - Be aware of winner's curse in effect size estimates
 
 ### Rate Limiting and Ethics
-- Respect API usage guidelines (no excessive requests)
+- The API throttles each client at 15 requests/second (calls beyond that are slowed down)
 - Use summary statistics downloads for genome-wide analyses
 - Implement appropriate delays between API calls
 - Cache results locally when performing iterative analyses
@@ -103,6 +98,6 @@ Results are paginated (default 20 items per page). Navigate using:
 
 ### Data Access
 - Web interface: Free, no registration required
-- REST APIs: Free, no API key needed
-- FTP downloads: Open access
-- Rate limiting applies to API (be respectful)
+- REST API v2: Free, no API key needed (15 requests/second throttle)
+- FTP downloads: Open access (full and harmonised summary statistics)
+- The Summary Statistics API is retired; v1 REST paths are deprecated

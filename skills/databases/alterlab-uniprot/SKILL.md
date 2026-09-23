@@ -1,12 +1,13 @@
 ---
 name: alterlab-uniprot
-description: Provide direct REST API access to UniProt (Swiss-Prot/TrEMBL) for protein sequence searches, FASTA retrieval, functional annotations (GO terms, domains), and cross-database ID mapping. Use when looking up a protein entry, fetching a protein FASTA sequence, or mapping accessions between databases over raw HTTP/REST; for EXPERIMENTAL 3D structures prefer alterlab-pdb, for AI-PREDICTED 3D structures prefer alterlab-alphafold-db, for protein-protein interaction networks prefer alterlab-string-db, and for Python workflows spanning many databases prefer bioservices instead. Part of the AlterLab Academic Skills suite.
+description: Provide direct REST API access to UniProt (Swiss-Prot/TrEMBL) for protein sequence searches, FASTA retrieval, functional annotations (GO terms, domains), and cross-database ID mapping. Use when looking up a protein entry, fetching a protein FASTA sequence, or mapping accessions between databases over raw HTTP/REST; for EXPERIMENTAL 3D structures prefer alterlab-pdb, for AI-PREDICTED 3D structures prefer alterlab-alphafold-db, for protein-protein interaction networks prefer alterlab-string-db, and for Python workflows spanning many databases prefer alterlab-bioservices instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless UniProt REST API (no authentication required)
+compatibility: Keyless UniProt REST API at rest.uniprot.org (no authentication required); verified against UniProt release 2026_03
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # UniProt Database
@@ -26,6 +27,16 @@ This skill should be used when:
 - Querying reviewed (Swiss-Prot) vs. unreviewed (TrEMBL) protein data
 - Streaming large protein datasets
 - Building custom queries with field-specific search syntax
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Experimental 3D structures and coordinates | `alterlab-pdb` |
+| AI-predicted structures and pLDDT confidence | `alterlab-alphafold-db` |
+| Protein-protein interaction networks | `alterlab-string-db` |
+| Domain architecture and family classification | `alterlab-interpro` |
+| Sequence similarity search (BLAST) | `alterlab-blast` |
 
 ## Core Capabilities
 
@@ -152,8 +163,10 @@ gene:BRCA1
 accession:P12345
 organism_id:9606
 taxonomy_name:"Homo sapiens"
-annotation:(type:signal)
+ft_signal:*
 ```
+
+The pre-2022 `annotation:(type:...)`, `database:(type:...)`, `created:`/`modified:`, and `existence:"Evidence at protein level"` forms return HTTP 400 on the current API; use `ft_<feature>:*`, `database:<db>`, `date_created:`/`date_modified:`, and `existence:1`.
 
 **Range queries:**
 ```
@@ -192,6 +205,7 @@ See `/references/query_syntax.md` for comprehensive syntax documentation.
 
 ## Additional Resources
 
+- **Release in use**: every response carries `X-UniProt-Release` / `X-UniProt-Release-Date` headers (2026_03, 2 Sept 2026 at review time) — record them for reproducibility
 - **API Documentation**: https://www.uniprot.org/help/api
 - **Interactive API Explorer**: https://www.uniprot.org/api-documentation
 - **REST Tutorial**: https://www.uniprot.org/help/uniprot_rest_tutorial

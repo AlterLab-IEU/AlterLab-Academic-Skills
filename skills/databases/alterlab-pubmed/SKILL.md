@@ -3,10 +3,11 @@ name: alterlab-pubmed
 description: Provide direct REST API access to PubMed via the NCBI E-utilities API, supporting advanced Boolean/MeSH queries, batch processing, and citation management. Use when searching biomedical literature by MeSH terms, retrieving abstracts or PMIDs in bulk, or scripting custom PubMed queries over raw HTTP/REST — for Python workflows prefer biopython (Bio.Entrez) instead, use this for direct REST work or custom API implementations. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless NCBI E-utilities REST API; optional NCBI API key raises rate limits
+compatibility: Keyless NCBI E-utilities REST API (3 requests/s per IP); an optional NCBI API key (NCBI_API_KEY) raises this to 10 requests/s
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # PubMed Database
@@ -22,7 +23,7 @@ PubMed is the U.S. National Library of Medicine's comprehensive database providi
 ```bash
 python scripts/query_pubmed.py search "crispr[tiab] AND 2024[dp]" --retmax 20   # PMIDs
 python scripts/query_pubmed.py summary 39726939 39492484    # metadata for PMIDs
-python scripts/query_pubmed.py fetch 39726939               # abstracts (use --api-key for 10 req/s)
+python scripts/query_pubmed.py fetch 39726939               # abstracts (set NCBI_API_KEY or --api-key for 10 req/s)
 ```
 
 ## When to Use This Skill
@@ -36,6 +37,16 @@ This skill should be used when:
 - Retrieving citation information, abstracts, or full-text articles
 - Working with PMIDs (PubMed IDs) or DOIs
 - Creating automated workflows for literature monitoring or data extraction
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Cross-disciplinary literature search, citation counts, bibliometrics | `alterlab-openalex` |
+| Life-science preprints not yet peer reviewed | `alterlab-biorxiv` |
+| Trial registrations, recruitment status, NCT records | `alterlab-clinicaltrials` |
+| Checking that a bibliography's references exist or were retracted | `alterlab-citation-verifier` |
+| Python Entrez workflows inside a larger Biopython pipeline | `alterlab-biopython` |
 
 ## Core Capabilities
 
@@ -313,7 +324,7 @@ Load reference files as needed. For basic searches this SKILL.md is usually enou
 
 - **Verify translation**: Automatic Term Mapping can silently expand terms; check the query translation (or bypass ATM with field tags / double quotes) when results look off.
 - **API throughput**: keyless is 3 req/s by IP; an API key raises it to 10 req/s. Send a descriptive User-Agent, add exponential backoff on HTTP 429, and cache to avoid redundant calls.
-- **Large result sets** (>~500 records): use the history server (`usehistory=y`, then page EFetch with `retstart`/`retmax`) or EPost, rather than one huge `id` list (which can hit HTTP 414).
+- **Large result sets** (>~500 records): use the history server (`usehistory=y`, then page EFetch with `retstart`/`retmax`) or EPost, rather than one huge `id` list (which can hit HTTP 414). The history server does **not** lift the 9,999-record cap below.
 - **Evidence quality**: prefer `systematic review[pt]`, `meta-analysis[pt]`, and `randomized controlled trial[pt]`; pair with `humans[mh]`, `english[la]`, and a `[dp]` range as appropriate.
 - **Reproducibility**: record the exact query string and the search date — PubMed results change as records are added and re-indexed.
 
@@ -321,7 +332,7 @@ Load reference files as needed. For basic searches this SKILL.md is usually enou
 
 - **Scope**: peer-reviewed biomedical/life-sciences literature (MEDLINE + PubMed). For preprints use a preprint server; for trial-registry records (NCT IDs, recruitment status) use ClinicalTrials.gov.
 - **Coverage gaps**: pre-1975 articles often lack abstracts; full author names are indexed from 2002 forward.
-- **Result caps**: ESearch returns at most 10,000 UIDs per query (page with `retstart`, or use the history server).
+- **Result caps**: PubMed ESearch reaches only the first 9,999 records of a query — `retstart` above 9998 returns an error, and EFetch/ESummary from the history server hit the same wall. For bigger sets, split the query into date windows (e.g. `AND 2020/01/01:2020/06/30[dp]`) that each stay under 9,999 hits, or use EDirect, which batches automatically.
 - **Full text**: PubMed provides citations/abstracts, not full text. Access depends on publisher, open-access status, or institutional subscription; detailed records require XML parsing.
 
 ## Support Resources

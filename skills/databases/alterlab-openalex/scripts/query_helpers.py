@@ -6,7 +6,7 @@ Provides high-level functions for typical research queries.
 """
 
 from typing import List, Dict, Optional, Any
-from openalex_client import OpenAlexClient
+from openalex_client import MAX_PER_PAGE, OpenAlexClient
 
 
 def find_author_works(
@@ -28,7 +28,7 @@ def find_author_works(
     # Step 1: Find author ID
     author_response = client._make_request(
         '/authors',
-        params={'search': author_name, 'per-page': 1}
+        params={'search': author_name, 'per_page': 1}
     )
 
     if not author_response.get('results'):
@@ -43,11 +43,11 @@ def find_author_works(
     # Step 2: Get works by author
     works_params = {
         'filter': f'authorships.author.id:{author_id}',
-        'per-page': 200
+        'per_page': MAX_PER_PAGE
     }
 
-    if limit and limit <= 200:
-        works_params['per-page'] = limit
+    if limit and limit <= MAX_PER_PAGE:
+        works_params['per_page'] = limit
         response = client._make_request('/works', works_params)
         return response.get('results', [])
     else:
@@ -74,7 +74,7 @@ def find_institution_works(
     # Step 1: Find institution ID
     inst_response = client._make_request(
         '/institutions',
-        params={'search': institution_name, 'per-page': 1}
+        params={'search': institution_name, 'per_page': 1}
     )
 
     if not inst_response.get('results'):
@@ -89,11 +89,11 @@ def find_institution_works(
     # Step 2: Get works from institution
     works_params = {
         'filter': f'authorships.institutions.id:{inst_id}',
-        'per-page': 200
+        'per_page': MAX_PER_PAGE
     }
 
-    if limit and limit <= 200:
-        works_params['per-page'] = limit
+    if limit and limit <= MAX_PER_PAGE:
+        works_params['per_page'] = limit
         response = client._make_request('/works', works_params)
         return response.get('results', [])
     else:
@@ -124,13 +124,13 @@ def find_highly_cited_recent_papers(
     params = {
         'filter': f'publication_year:{years}',
         'sort': 'cited_by_count:desc',
-        'per-page': min(limit, 200)
+        'per_page': min(limit, MAX_PER_PAGE)
     }
 
     if topic:
         params['search'] = topic
 
-    if limit <= 200:
+    if limit <= MAX_PER_PAGE:
         response = client._make_request('/works', params)
         return response.get('results', [])
     else:
@@ -163,10 +163,10 @@ def get_open_access_papers(
     params = {
         'search': search_term,
         'filter': filter_str,
-        'per-page': min(limit, 200)
+        'per_page': min(limit, MAX_PER_PAGE)
     }
 
-    if limit <= 200:
+    if limit <= MAX_PER_PAGE:
         response = client._make_request('/works', params)
         return response.get('results', [])
     else:
@@ -234,7 +234,7 @@ def analyze_research_output(
     # Step 1: Find entity
     entity_response = client._make_request(
         endpoint,
-        params={'search': entity_name, 'per-page': 1}
+        params={'search': entity_name, 'per_page': 1}
     )
 
     if not entity_response.get('results'):
@@ -293,7 +293,7 @@ if __name__ == "__main__":
     # Example usage
     import json
 
-    client = OpenAlexClient(email="your-email@example.com")
+    client = OpenAlexClient()  # reads OPENALEX_API_KEY if set
 
     # Find works by author
     print("\n=== Finding works by author ===")

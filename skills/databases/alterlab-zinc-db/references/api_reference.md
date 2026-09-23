@@ -9,19 +9,26 @@ Complete technical reference for programmatic access to the ZINC database, cover
 > `scripts/query_zinc.py` sends). The legacy "colon URL" form
 > (`/substances.txt:zinc_id=...`) is not supported by the current service. Every
 > search is **asynchronous**: the endpoint returns a JSON task handle
-> (`{"task": "<uuid>"}`) and the rows are assembled server-side for the web UI. For
-> large programmatic retrieval, use the bulk file repository (below) rather than
-> scraping task results.
+> (`{"task": "<uuid>"}`); poll `GET /search/result/<task>` until `status` leaves
+> `PENDING` — the finished payload is `{"status": "SUCCESS", "result": {...}}` with rows
+> grouped by source (`zinc22`, `zinc20`) and unmatched inputs under `missing` /
+> `zinc22_missing` (`scripts/query_zinc.py ... --wait`). For large-scale retrieval use
+> the bulk file repository (below).
+>
+> **Known issue (verified 2026-09-23):** `smiles.txt` returns `"zinc22_missing": [""]`
+> for every submission (inline, multipart, or `@file`) — the query never reaches the
+> search. Use the CartBlanche22 UI or SmallWorld (`https://sw.docking.org`) for
+> similarity searches until it is fixed.
 
 ## Base URLs
 
 ### ZINC22 (Current)
 - **CartBlanche22 API**: `https://cartblanche22.docking.org/`
 - **File Repository**: `https://files.docking.org/zinc22/`
-- **Main Website**: `https://zinc.docking.org/`
+- **Main Website**: `https://zinc.docking.org/` (captcha-gated for scripted clients since 2026)
 
 ### ZINC20 (Maintained)
-- **API**: `https://zinc20.docking.org/`
+- **Web/API**: `https://zinc20.docking.org/` (captcha-gated for scripted clients; use SmallWorld at `https://sw.docking.org` for ZINC20 similarity searches)
 - **File Repository**: `https://files.docking.org/zinc20/`
 
 ### Documentation
@@ -62,8 +69,8 @@ curl -X GET "https://cartblanche22.docking.org/substances.txt" \
 ```json
 {"task": "0bf64e3e-ac00-4123-9270-7bfd3572117c"}
 ```
-The result rows (TSV-style columns: `zinc_id`, `smiles`, `catalogs`, …) are then
-materialized in the web UI task view.
+Poll `GET https://cartblanche22.docking.org/search/result/<task>` for the rows
+(`zinc_id`, `smiles`, `catalogs` with supplier codes/prices, `tranche`, …).
 
 ### 2. Structure Search by SMILES
 
@@ -363,7 +370,7 @@ def advanced_zinc_search(smiles=None, zinc_ids=None, dist=0,
                          subset=None, count=None, output_fields=None):
     """
     Submit a ZINC22 search. Returns the JSON task handle ({"task": "<uuid>"});
-    retrieve the rows from the web UI task view.
+    fetch the rows with GET /search/result/<task> once status != "PENDING".
 
     Exactly one of smiles / zinc_ids / count must be given.
     """

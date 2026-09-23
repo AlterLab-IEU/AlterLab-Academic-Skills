@@ -1,16 +1,18 @@
 # GWAS Catalog Query Workflows
 
-Step-by-step workflows for disease-, variant-, and gene-centric queries, systematic reviews, and summary-statistics analysis. Web-interface search modes are listed at the end.
+Step-by-step workflows for disease-, variant-, and gene-centric queries, systematic reviews, and summary-statistics analysis, using REST API v2 (`https://www.ebi.ac.uk/gwas/rest/api/v2`). Web-interface search modes are listed at the end.
 
 ## Workflow 1: Exploring Genetic Associations for a Disease
 
 1. **Identify the trait** using ontology terms or free text:
-   - Search web interface or `/efoTraits/search/findByTrait?trait=...` for the disease name
-   - Note the current short-form (e.g., MONDO_0005148 for type 2 diabetes on the main REST API). Legacy EFO ids like EFO_0001360 may 404 on the main API but are still used by the Summary Statistics API — see the trait-ID gotcha in SKILL.md.
+   - Search the web interface or `GET /v2/efo-traits?efo_trait=<name>` for the disease name
+   - Note the current short-form (e.g., MONDO_0005148 for type 2 diabetes mellitus). Legacy IDs such as EFO_0001360 return an empty page — see the trait-ID gotcha in SKILL.md.
+   - Decide whether descendant traits count (`show_child_trait=true`) and record that choice in your methods.
 
 2. **Query associations via API:**
    ```python
-   url = f"https://www.ebi.ac.uk/gwas/rest/api/efoTraits/{efo_id}/associations"
+   url = "https://www.ebi.ac.uk/gwas/rest/api/v2/associations"
+   params = {"efo_id": efo_id, "sort": "p_value", "direction": "asc", "size": 200}
    ```
 
 3. **Filter by significance and population:**
@@ -26,12 +28,13 @@ Step-by-step workflows for disease-, variant-, and gene-centric queries, systema
 
 1. **Query the variant:**
    ```python
-   url = f"https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/{rs_id}"
+   url = f"https://www.ebi.ac.uk/gwas/rest/api/v2/single-nucleotide-polymorphisms/{rs_id}"
    ```
 
 2. **Retrieve all trait associations:**
    ```python
-   url = f"https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/{rs_id}/associations"
+   url = "https://www.ebi.ac.uk/gwas/rest/api/v2/associations"
+   params = {"rs_id": rs_id, "sort": "p_value", "direction": "asc", "size": 200}
    ```
 
 3. **Analyze pleiotropy:** identify all traits associated with this variant, review effect directions across traits, look for shared biological pathways.
@@ -42,11 +45,11 @@ Step-by-step workflows for disease-, variant-, and gene-centric queries, systema
 
 1. **Search by gene symbol** in web interface or:
    ```python
-   url = f"https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/search/findByGene"
-   params = {"geneName": gene_symbol}
+   url = "https://www.ebi.ac.uk/gwas/rest/api/v2/associations"
+   params = {"mapped_gene": gene_symbol}          # add extended_geneset=true for all nearby genes
    ```
 
-2. **Retrieve variants in gene region:** get chromosomal coordinates for the gene, query variants in region, include promoter and regulatory regions (extend boundaries).
+2. **Retrieve variants in gene region:** get the gene span from `/v2/genes/{gene_name}` (`location`, e.g. `10:112950015-113167678`), then query `/v2/single-nucleotide-polymorphisms?chromosome=10&bp_start=...&bp_end=...`, extending the boundaries to cover promoter/regulatory regions.
 
 3. **Analyze association patterns:** identify traits associated with variants in this gene, look for consistent associations across studies, review effect sizes and directions.
 
@@ -66,18 +69,17 @@ Step-by-step workflows for disease-, variant-, and gene-centric queries, systema
 
 ## Workflow 5: Accessing and Analyzing Summary Statistics
 
-1. **Identify studies with summary statistics:** browse summary statistics portal, check FTP directory listings, query API for available studies.
+1. **Identify studies with summary statistics:** `GET /v2/studies?efo_id=<id>&full_pvalue_set=true`; each study's `full_summary_stats` field is its FTP directory. The nightly `harmonised_list.txt` on the FTP site lists every harmonised file.
 
 2. **Download summary statistics:**
    ```bash
-   # Via FTP
-   wget ftp://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics/GCSTXXXXXX/harmonised/GCSTXXXXXX-harmonised.tsv.gz
+   # Harmonised GWAS-SSF file (directories are bucketed in ranges of 1,000 accessions)
+   wget https://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics/GCST90475001-GCST90476000/GCST90475667/harmonised/GCST90475667.h.tsv.gz
    ```
 
-3. **Query via API for specific variants:**
-   ```python
-   url = f"https://www.ebi.ac.uk/gwas/summary-statistics/api/chromosomes/{chrom}/associations"
-   params = {"start": start_pos, "end": end_pos}
+3. **Query a region without downloading everything** (the Summary Statistics API is retired, HTTP 410):
+   ```bash
+   tabix -h https://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics/GCST90475001-GCST90476000/GCST90475667/harmonised/GCST90475667.h.tsv.gz 10:112900000-113200000
    ```
 
 4. **Process and analyze:** filter by p-value thresholds, extract effect sizes and confidence intervals, perform downstream analyses (fine-mapping, colocalization, etc.).

@@ -3,17 +3,18 @@ name: alterlab-pdb
 description: Access the RCSB Protein Data Bank (PDB) for EXPERIMENTALLY determined 3D structures (X-ray, cryo-EM, NMR) of proteins and nucleic acids — searching by text, sequence, or structure similarity and downloading coordinates in PDB/mmCIF format with metadata. Use when retrieving a structure by PDB ID, running sequence or structure similarity searches, or obtaining experimental coordinates for structural biology and drug discovery; for AI-PREDICTED structures of proteins lacking experimental data prefer alterlab-alphafold-db, and for protein sequences, annotations, or accession ID mapping prefer alterlab-uniprot instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless RCSB PDB REST API (no authentication required)
+compatibility: Keyless RCSB PDB Search API v2, Data API (REST v1 + GraphQL), and file downloads (no authentication required); Python examples use rcsb-api >= 1.7 (current 1.7.3 as of 2026-09)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # PDB Database
 
 ## Overview
 
-RCSB PDB is the worldwide repository for 3D structural data of biological macromolecules. Search for structures, retrieve coordinates and metadata, perform sequence and structure similarity searches across 200,000+ experimentally determined structures and computed models.
+RCSB PDB is the worldwide repository for 3D structural data of biological macromolecules. Search for structures, retrieve coordinates and metadata, perform sequence and structure similarity searches across ~260,000 experimentally determined entries (2026-09) plus computed structure models (CSMs) imported from AlphaFold DB and ModelArchive.
 
 ## Scripts
 
@@ -33,6 +34,16 @@ This skill should be used when:
 - Retrieving structural metadata, experimental methods, or quality metrics
 - Performing batch operations across multiple structures
 - Integrating PDB data into computational workflows for drug discovery, protein engineering, or structural biology research
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| AI-predicted structure for a protein without experimental data | `alterlab-alphafold-db` |
+| Protein sequence, function annotation, or accession mapping | `alterlab-uniprot` |
+| Domain/family classification of a protein | `alterlab-interpro` |
+| Predicting a new complex or co-folding structure | `alterlab-boltz` |
+| Docking a ligand into a structure | `alterlab-diffdock` |
 
 ## Core Capabilities
 
@@ -83,9 +94,12 @@ results = list(query())
 ```python
 from rcsbapi.search import StructSimilarityQuery
 
+# structure_search_type is "entry_id" (default), "file_url", or "file_upload";
+# pass assembly_id or chain_id to pick what is compared ("entry"/"chain"/"assembly"
+# are not valid search types and return HTTP 400)
 query = StructSimilarityQuery(
-    structure_search_type="entry",
-    entry_id="4HHB"  # Hemoglobin
+    entry_id="4HHB",   # Hemoglobin
+    assembly_id="1",   # or chain_id="A"
 )
 results = list(query())
 ```
@@ -226,7 +240,7 @@ resolution = data.get("rcsb_entry_info", {}).get("resolution_combined")
 method = data.get("exptl", [{}])[0].get("method")
 deposition_date = data.get("rcsb_accession_info", {}).get("deposit_date")
 
-print(f"Resolution: {resolution} Å")
+print(f"Resolution: {resolution[0] if resolution else None} Å")  # resolution_combined is a list
 print(f"Method: {method}")
 print(f"Deposited: {deposition_date}")
 ```
@@ -240,7 +254,8 @@ from rcsbapi.data import DataQuery
 
 pdb_ids = ["4HHB", "1MBN", "1GZX"]  # Hemoglobin, myoglobin, etc.
 
-# A single DataQuery can fetch all entries at once
+# A single DataQuery can fetch all entries at once. Use fully qualified paths:
+# source organism lives on polymer entities, not on the entry.
 query = DataQuery(
     input_type="entries",
     input_ids=pdb_ids,
@@ -248,17 +263,20 @@ query = DataQuery(
         "rcsb_id",
         "struct.title",
         "rcsb_entry_info.resolution_combined",
-        "rcsb_entity_source_organism.scientific_name",
+        "polymer_entities.rcsb_entity_source_organism.scientific_name",
     ],
 )
 
 results = {}
 for data in query.exec()["data"]["entries"]:
     pdb_id = data["rcsb_id"]
+    resolution = (data.get("rcsb_entry_info") or {}).get("resolution_combined") or [None]
+    entities = data.get("polymer_entities") or [{}]
+    organisms = (entities[0].get("rcsb_entity_source_organism") or [{}])
     results[pdb_id] = {
         "title": data["struct"]["title"],
-        "resolution": data.get("rcsb_entry_info", {}).get("resolution_combined"),
-        "organism": data.get("rcsb_entity_source_organism", [{}])[0].get("scientific_name")
+        "resolution": resolution[0],
+        "organism": organisms[0].get("scientific_name"),
     }
 
 # Display results

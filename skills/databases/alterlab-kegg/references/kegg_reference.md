@@ -167,9 +167,9 @@ Finds related entries within and between KEGG databases.
 
 **Examples**:
 - `/link/pathway/hsa` - All pathways linked to human genes
-- `/link/genes/hsa00010` - Genes in glycolysis pathway
+- `/link/hsa/hsa00010` - Genes in glycolysis pathway (target = organism code; `/link/genes/...` returns 400)
 - `/link/pathway/hsa:10458` - Pathways containing specific gene
-- `/link/compound/hsa00010` - Compounds in pathway
+- `/link/compound/map00010` - Compounds in a pathway (use the reference `map` ID; `hsa00010` returns nothing)
 
 ### 7. DDI - Drug-Drug Interactions
 
@@ -268,7 +268,7 @@ Chronological classification and target-based classification
 ### Rate Limits and Restrictions
 - Maximum 10 entries per single operation (except `image`/`image2x`/`kgml`: 1 entry)
 - Academic use only - commercial use requires separate licensing
-- No explicit rate limit documented, but avoid rapid-fire requests
+- At most 3 API calls per second — KEGG states that faster clients are blocked
 
 ### HTTP Status Codes
 - `200` - Success
@@ -308,7 +308,7 @@ pathways <- keggList("pathway")
 
 ### Workflow 2: Pathway Enrichment Context
 1. Use `/list/pathway/<org>` to get all organism pathways
-2. Use `/link/genes/<pathway_id>` to get genes in each pathway
+2. Use `/link/<org>/<pathway_id>` (e.g. `/link/hsa/hsa00010`) to get genes in each pathway — or `/link/pathway/<org>` once for all pathways
 3. Perform statistical enrichment analysis
 
 ### Workflow 3: Compound to Reaction Mapping

@@ -36,7 +36,7 @@ esearch.fcgi?db=pubmed&term=cancer&api_key=YOUR_API_KEY
 - `term` - Search query
 
 **Optional Parameters**:
-- `retmax` - Maximum records to return (default: 20, max: 10000)
+- `retmax` - Maximum records to return (default: 20, max: 10000; for PubMed `retstart + retmax` cannot reach past record 9,999)
 - `retstart` - Index of first record to return (default: 0)
 - `usehistory=y` - Store results on history server for large result sets
 - `retmode` - Return format (xml, json)
@@ -195,6 +195,8 @@ einfo.fcgi?db=pubmed&retmode=json&api_key=YOUR_API_KEY
 egquery.fcgi?term=cancer&api_key=YOUR_API_KEY
 ```
 
+> As of 2026-09 `egquery.fcgi` answers with a redirect to an internal NCBI host that fails (HTTP 502). To count hits per database, run ESearch against each database with `rettype=count` instead.
+
 ### 8. ESpell - Spelling Suggestions
 
 **Endpoint**: `espell.fcgi`
@@ -235,7 +237,7 @@ Nature|2010|463|7279|318|key2|
 
 ### Use History Server for Large Result Sets
 
-For queries returning more than 500 records, use the history server:
+For queries returning more than 500 records, use the history server. It still stops at the first 9,999 PubMed records (`retstart` > 9998 fails with "ESearch can only retrieve the first 9,999 records"); split larger queries into date windows (`[dp]` or `[edat]` ranges) or use EDirect.
 
 1. **Initial Search with History**:
 ```

@@ -27,7 +27,7 @@ No authentication is required for the GraphQL API. All data is freely accessible
 ## Schema Versioning
 
 The GraphQL schema changes between quarterly releases — field and argument names
-move. The queries below were verified against data version **26.03**. Confirm the
+move. The queries below were verified against data version **26.06** (API 26.6.3) on 2026-09-23. Confirm the
 running version and introspect when a field errors:
 
 ```graphql
@@ -39,7 +39,9 @@ Notable recent changes reflected below: `Pagination` requires both `index` and
 `datatypeScores`/`ScoredComponent` uses `id` (not `componentId`); the `evidences`
 query filters by `datasourceIds` (not `datatypes`); `Drug.maximumClinicalTrialPhase`
 became `maximumClinicalStage` (enum string), and `Drug.indications`/`mechanismsOfAction`
-are now paginated (`rows`).
+are now paginated (`rows`). In 26.06, `Drug.synonyms` and `Drug.tradeNames` became lists of
+`{label, source}` objects (select `synonyms { label source }`), and `Target.expressions` is gone —
+use `baselineExpression(page:)` (rows with `datasourceId`, `tissueBiosample { biosampleName }`, `median`, `unit`).
 
 ## Rate Limits
 
@@ -97,7 +99,7 @@ Retrieve gene annotations, tractability assessments, and disease associations.
 - `biotype` - Gene type (protein_coding, etc.)
 - `tractability` - Druggability assessment
 - `safetyLiabilities` - Safety information
-- `expressions` - Baseline expression data
+- `baselineExpression` - Baseline expression rows (GTEx, proteomics, scRNA pseudobulk; paginated)
 - `drugAndClinicalCandidates` - Approved/clinical drugs (replaces the former `knownDrugs`)
 - `associatedDiseases` - Disease associations with evidence
 

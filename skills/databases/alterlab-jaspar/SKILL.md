@@ -3,17 +3,18 @@ name: alterlab-jaspar
 description: Query JASPAR for transcription factor binding site (TFBS) profiles (PWMs/PFMs), searching by TF name, species, or class, scanning DNA sequences for binding sites, and comparing matrices. Use when doing motif analysis, regulatory genomics, transcription factor binding prediction, or interpreting regulatory/non-coding GWAS variants. Part of the AlterLab Academic Skills suite.
 license: CC0-1.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless JASPAR REST API (no authentication required)
+compatibility: Keyless JASPAR REST API v1 (no authentication required); serves the JASPAR 2026 release (2,633 CORE profiles, verified 2026-09)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # JASPAR Database
 
 ## Overview
 
-JASPAR (https://jaspar.elixir.no/) is the gold-standard open-access database of curated, non-redundant transcription factor (TF) binding profiles stored as position frequency matrices (PFMs). The JASPAR 2024 release added 329 new profiles to the CORE collection (~20% growth over the prior release); the live API currently serves ~2,600 latest-version CORE profiles across taxa. Each profile is experimentally derived (ChIP-seq, SELEX, HT-SELEX, protein binding microarray, etc.) and curated.
+JASPAR (https://jaspar.elixir.no/) is the gold-standard open-access database of curated, non-redundant transcription factor (TF) binding profiles stored as position frequency matrices (PFMs). The current release, JASPAR 2026, added 265 new CORE profiles and promoted 41 from UNVALIDATED, for 2,633 latest-version CORE profiles across six taxonomic groups (the count the live API returns). Each profile is experimentally derived (ChIP-seq, SELEX, HT-SELEX, protein binding microarray, etc.) and curated. JASPAR 2026 also launched a Deep Learning (DL) collection — 1,259 BPNet models trained on ENCODE ChIP-seq for 240 human TFs — which is browsed and downloaded on the website and is not exposed through `/api/v1/matrix/`.
 
 **Key resources:**
 - JASPAR portal: https://jaspar.elixir.no/
@@ -44,6 +45,16 @@ Use JASPAR when:
 - **TF family analysis**: Compare binding profiles across a TF family (e.g., all homeobox factors)
 - **ChIP-seq analysis**: Find known TF motifs enriched in ChIP-seq peaks
 - **ENCODE/ATAC-seq interpretation**: Match open chromatin regions to TF binding profiles
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Which traits a variant is associated with in published GWAS | `alterlab-gwas` |
+| Whether a variant changes gene expression in a tissue (eQTL) | `alterlab-gtex` |
+| Fetching genomic sequence, coordinates, or VEP consequences | `alterlab-ensembl` |
+| Processing ChIP-seq/ATAC-seq coverage tracks and heatmaps | `alterlab-deeptools` |
+| Deep-learning prediction of expression/chromatin from sequence | `alterlab-borzoi` |
 
 ## Core Capabilities
 
@@ -85,7 +96,9 @@ def search_jaspar(
     if tf_name:
         params["name"] = tf_name
     if species:
-        params["tax_id"] = species  # NCBI taxonomy ID, e.g. "9606" for human
+        # NCBI taxonomy ID, e.g. "9606". The API silently ignores a `species=` param
+        # (you get every taxon back), so it must be sent as `tax_id`.
+        params["tax_id"] = species
     if tf_class:
         params["tf_class"] = tf_class
     if tf_family:
@@ -98,8 +111,10 @@ def search_jaspar(
 ctcf = search_jaspar("CTCF", species="9606")
 print(f"Found {ctcf['count']} CTCF profiles")
 
-# Search for all homeobox TFs in human
-hox_tfs = search_jaspar(tf_class="Homeodomain", species="9606")
+# Search for all homeobox TFs in human. Class/family strings follow TFClass and
+# must match exactly ("Homeodomain" returns 0 rows; the stored class is
+# "Homeo domain factors") — read the "class" field of a known matrix to get it.
+hox_tfs = search_jaspar(tf_class="Homeo domain factors", species="9606")
 
 # Search for a TF family
 nfkb = search_jaspar(tf_family="NF-kappaB")
@@ -295,9 +310,11 @@ def variant_tfbs_impact(ref_seq: str, alt_seq: str, pwm: np.ndarray,
 import requests, numpy as np
 
 # 1. Get relevant TF matrices (e.g., all human TFs in CORE collection)
+#    tax_id (not species) filters by organism; page_size is capped at 1000
 response = requests.get(
     "https://jaspar.elixir.no/api/v1/matrix/",
-    params={"species": "9606", "collection": "CORE", "page_size": 500, "page": 1}
+    params={"tax_id": "9606", "collection": "CORE", "version": "latest",
+            "page_size": 1000, "page": 1, "format": "json"}
 )
 matrices = response.json()["results"]
 
@@ -341,10 +358,12 @@ for h in sorted(all_hits, key=lambda x: -x["score"])[:5]:
 
 The current JASPAR API serves two collections (verify counts via `GET /matrix/?collection=...&version=latest`):
 
-| Collection | Description | Latest-version profiles (approx.) |
+| Collection | Description | Latest-version profiles (2026-09) |
 |------------|-------------|-----------------------------------|
-| `CORE` | Non-redundant, curated, experimentally validated profiles | ~2,600 |
-| `UNVALIDATED` | Inferred/experimentally derived but not yet validated | ~1,400 |
+| `CORE` | Non-redundant, curated, experimentally validated profiles | 2,633 |
+| `UNVALIDATED` | Inferred/experimentally derived but not yet validated | ~1,030 |
+
+The JASPAR 2026 Deep Learning (DL) collection of BPNet models lives on the website (models downloadable; motif scanning via the tangermeme framework) rather than in the matrix API.
 
 Legacy collections (`PHYLOFACTS`, `CNE`, `POLII`, `FAM`, `SPLICE`) appear in older JASPAR literature but return 0 results from the current API — do not rely on them.
 
@@ -362,6 +381,7 @@ Legacy collections (`PHYLOFACTS`, `CNE`, `POLII`, `FAM`, `SPLICE`) appear in old
 
 - **JASPAR portal**: https://jaspar.elixir.no/
 - **API documentation**: https://jaspar.elixir.no/api/v1/docs/
+- **JASPAR 2026 paper (current release)**: Ovek Baydar D, et al. (2026) JASPAR 2026: expansion of transcription factor binding profiles and integration of deep learning models. Nucleic Acids Research 54(D1):D184-D193. DOI: 10.1093/nar/gkaf1209. PMID: 41325984
 - **JASPAR 2024 paper**: Rauluseviciute I, et al. (2024) JASPAR 2024: 20th anniversary of the open-access database of transcription factor binding profiles. Nucleic Acids Research 52(D1):D174-D182. DOI: 10.1093/nar/gkad1059. PMID: 37962376
 - **Biopython motifs**: https://biopython.org/docs/latest/Tutorial/chapter_motifs.html
 - **FIMO tool** (for large-scale scanning): https://meme-suite.org/meme/tools/fimo

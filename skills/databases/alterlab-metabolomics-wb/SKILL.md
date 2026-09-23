@@ -1,19 +1,20 @@
 ---
 name: alterlab-metabolomics-wb
-description: Access the NIH Metabolomics Workbench via its REST API (4,200+ studies), querying metabolites, RefMet standardized nomenclature, MS/NMR data, m/z mass searches, and study metadata. Use when retrieving public metabolomics study data, standardizing metabolite names with RefMet, running m/z lookups, or doing biomarker discovery. Part of the AlterLab Academic Skills suite.
+description: Access the NIH Metabolomics Workbench via its REST API (4,500+ public studies), querying metabolites, RefMet standardized nomenclature, MS/NMR data, m/z mass searches, and study metadata. Use when retrieving public metabolomics study data, standardizing metabolite names with RefMet, running m/z lookups, or doing biomarker discovery. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless Metabolomics Workbench REST API (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Metabolomics Workbench Database
 
 ## Overview
 
-The Metabolomics Workbench is a comprehensive NIH Common Fund-sponsored platform hosted at UCSD that serves as the primary repository for metabolomics research data. It provides programmatic access to several thousand processed studies (4,300+ publicly available via the REST API as of 2026-06), standardized metabolite nomenclature through RefMet, and powerful search capabilities across multiple analytical platforms (GC-MS, LC-MS, NMR).
+The Metabolomics Workbench is a comprehensive NIH Common Fund-sponsored platform hosted at UCSD that serves as the primary repository for metabolomics research data. It provides programmatic access to several thousand processed studies (4,587 public studies / 7,534 analyses listed by the REST API as of 2026-09), standardized metabolite nomenclature through RefMet, and powerful search capabilities across multiple analytical platforms (GC-MS, LC-MS, NMR).
 
 ### API gotchas (verified 2026-06)
 
@@ -21,7 +22,7 @@ Read these before parsing responses — several behaviors contradict the naive "
 
 - **`/json` is not always JSON.** The `moverz` context and the `study` `summary`/search outputs return **tab-delimited text even when you ask for `/json`**. The `scripts/query_metabolomics_wb.py` helper wraps such bodies as `{"raw": "<tsv>"}` rather than failing. Parse the TSV; do not assume keyed JSON objects.
 - **`moverz` issues a 302 redirect** to an internal `.php` handler. `urllib`/`requests` follow redirects automatically; raw `curl` does **not** unless you pass `-L` (otherwise you get an empty body).
-- **List available studies with `/txt`, not `/json`.** `study/study_id/ST/available/json` returns an empty body; use `study/study_id/ST/available/txt` (columns: `project_id`, `study_id`, `analysis_id`).
+- **List available studies with `/txt`, not `/json`.** `study/study_id/ST/available/json` returns an empty body; use `study/study_id/ST/available/txt`, which is a vertical `key<TAB>value` list (`project_id`, `study_id`, `analysis_id` lines repeating per analysis) — collect the `study_id` lines and de-duplicate, since a study with several analyses appears several times.
 - **`refmet/match` returns the field `refmet_name`** (plus `formula`, `exactmass`, classes, `refmet_id`) — not `name`.
 - **Study search by `refmet_name` uses the indexed RefMet name**, which may differ from `refmet/match` output (e.g. `match/citrate` gives `Citric acid`, but the study index is keyed on `Tyrosine`-style entries). Verify the name resolves to studies; an empty result usually means a name-index mismatch, not "no studies."
 
@@ -38,6 +39,16 @@ python scripts/query_metabolomics_wb.py moverz 635.52 --adduct M+H   # m/z searc
 ## When to Use This Skill
 
 This skill should be used when querying metabolite structures, accessing study data, standardizing nomenclature, performing mass spectrometry searches, or retrieving gene/protein-metabolite associations through the Metabolomics Workbench REST API.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Reference biology of a human metabolite (biofluid concentrations, biomarker evidence) | `alterlab-hmdb` |
+| General compound properties, synonyms, bioassays | `alterlab-pubchem` |
+| Pathway maps and KEGG compound/reaction mapping | `alterlab-kegg` |
+| Processing raw LC-MS/MS files (peak picking, feature detection) | `alterlab-pyopenms` |
+| Scoring MS/MS spectral similarity against libraries | `alterlab-matchms` |
 
 ## Core Capabilities
 
