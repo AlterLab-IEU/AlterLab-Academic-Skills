@@ -4,7 +4,7 @@
     {
       "id": "self-hosted-notebooklm-setup",
       "prompt": "I want a self-hosted, private alternative to Google NotebookLM that I run on my own machine and can drive programmatically. How do I stand it up and organize my research into notebooks?",
-      "expected_output": "Triggers alterlab-open-notebook. Recommends Open Notebook, the self-hosted open-source NotebookLM alternative with a full REST API. Describes Docker Compose deployment (setting OPEN_NOTEBOOK_ENCRYPTION_KEY, docker-compose up), the UI at localhost:8502 and REST API at localhost:5055, and creating a notebook via POST /api/notebooks.",
+      "expected_output": "Triggers alterlab-open-notebook. Recommends Open Notebook, the self-hosted open-source NotebookLM alternative with a full REST API. Describes Docker Compose deployment (replacing the OPEN_NOTEBOOK_ENCRYPTION_KEY placeholder in the official docker-compose.yml, then docker compose up -d), the UI at localhost:8502 and REST API at localhost:5055, and creating a notebook via POST /api/notebooks.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "Open Notebook" },
@@ -14,7 +14,7 @@
     {
       "id": "ingest-and-chat-sources",
       "prompt": "I've collected a bunch of arXiv links and PDFs for my tumor mutational burden review. I want to load them all into one workspace and then ask an AI questions that cite the actual sources. What's the workflow?",
-      "expected_output": "Triggers alterlab-open-notebook. Explains ingesting sources via POST /api/sources (URLs and uploaded PDF files, with vector + full-text indexing), then context-aware chat via /api/chat/sessions and /api/chat/execute with context including sources so answers cite them. May mention search (/api/search vector or full-text).",
+      "expected_output": "Triggers alterlab-open-notebook. Explains ingesting sources via POST /api/sources (form field type=link for URLs or type=upload for PDFs, embed=true for vector search), then context-aware chat: create a session with /api/chat/sessions, build context from the notebook's sources with /api/chat/context, and send it with the message to /api/chat/execute so answers draw on those sources. May mention search (/api/search with type vector or text).",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "sources" },
@@ -24,7 +24,7 @@
     {
       "id": "multi-speaker-podcast",
       "prompt": "Can I turn my collected research materials into a podcast episode with three different speakers discussing the findings, all generated locally?",
-      "expected_output": "Triggers alterlab-open-notebook. Explains Open Notebook's multi-speaker podcast generation (1-4 customizable speakers, beyond NotebookLM's 2-speaker limit) via POST /api/podcasts/generate with an episode profile and speaker profile IDs, polling the job status, and downloading the episode audio.",
+      "expected_output": "Triggers alterlab-open-notebook. Explains Open Notebook's multi-speaker podcast generation (1-4 customizable speakers, beyond NotebookLM's 2-speaker limit) via POST /api/podcasts/generate with episode_profile and speaker_profile names plus an episode_name, polling /api/podcasts/jobs/{job_id}, then finding the episode in /api/podcasts/episodes and downloading its audio.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "podcast" },
@@ -34,7 +34,7 @@
     {
       "id": "local-ollama-private-provider",
       "prompt": "I need my document-analysis notebook to stay fully private with no API costs — can I run it against a local Ollama model instead of a cloud provider, and configure that through the API?",
-      "expected_output": "Triggers alterlab-open-notebook. Confirms Open Notebook supports 16+ AI providers including Ollama for free local inference and full data sovereignty via self-hosting. Describes configuring a provider/credential (POST /api/credentials), discovering and registering models, and that data stays in local Docker volumes.",
+      "expected_output": "Triggers alterlab-open-notebook. Confirms Open Notebook supports 18+ AI providers including Ollama for free local inference and full data sovereignty via self-hosting. Describes configuring a provider/credential (POST /api/credentials), discovering and registering models, and that data stays in local Docker volumes.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "Ollama" },
@@ -48,6 +48,15 @@
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-markitdown" }
+      ]
+    },
+    {
+      "id": "near-miss-pyzotero",
+      "prompt": "Organize my Zotero library: move the 60 immunotherapy papers into a new collection, tag the ones missing DOIs, and export the collection as BibTeX.",
+      "expected_output": "Should NOT trigger alterlab-open-notebook — this is reference-library management in Zotero (collections, tags, BibTeX export via the Zotero Web API), not ingesting sources into a self-hosted notebook for AI chat or podcasts. Defer to alterlab-pyzotero.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-pyzotero" }
       ]
     }
   ]

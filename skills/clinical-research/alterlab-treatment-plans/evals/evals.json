@@ -58,6 +58,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-clinical-reports" }
       ]
+    },
+    {
+      "id": "near-miss-clinpgx",
+      "prompt": "What does the CPIC guideline say about clopidogrel for CYP2C19 poor metabolizers, and which alternative antiplatelet agents does it recommend?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-clinpgx. The ask is a pharmacogenomic guideline lookup (CPIC gene-drug recommendation for CYP2C19 and clopidogrel), not drafting an individual patient's treatment plan with SMART goals and follow-up.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-clinpgx" }
+      ]
     }
   ]
 }

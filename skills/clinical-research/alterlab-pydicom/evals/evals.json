@@ -24,7 +24,7 @@
     {
       "id": "decompress-transfer-syntax",
       "prompt": "Some of my DICOM files are JPEG2000 compressed and pydicom can't decode the pixel data. I want to check the transfer syntax and decompress them to uncompressed Explicit VR Little Endian.",
-      "expected_output": "Invokes alterlab-pydicom. Inspects ds.file_meta.TransferSyntaxUID (and .name), calls ds.decompress() then ds.save_as(..., write_like_original=False), and recommends installing the missing handlers (pylibjpeg / pylibjpeg-openjpeg / python-gdcm) so the compressed pixel data can be decoded.",
+      "expected_output": "Invokes alterlab-pydicom. Inspects ds.file_meta.TransferSyntaxUID (and .name), calls ds.decompress() then ds.save_as(..., enforce_file_format=True) (pydicom 3.x; write_like_original is deprecated), and recommends installing the missing handlers (pylibjpeg / pylibjpeg-openjpeg / python-gdcm) so the compressed pixel data can be decoded.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "TransferSyntaxUID" },
@@ -51,12 +51,12 @@
       ]
     },
     {
-      "id": "near-miss-media-pipeline",
-      "prompt": "I have a standard MP4 screen recording of a surgery. I want to compress it, trim the first 30 seconds, and convert it to a web-friendly format with ffmpeg.",
-      "expected_output": "Does NOT invoke this skill; defers to the media-pipeline skill. The task is transcoding/compressing/trimming an ordinary MP4 video with ffmpeg, not reading or manipulating DICOM medical-imaging files. Pydicom only handles the DICOM medical format, not consumer video formats.",
+      "id": "near-miss-imaging-data-commons",
+      "prompt": "Find public chest CT collections with lung nodule annotations in the NCI Imaging Data Commons and download a few series so I can build a research dataset.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-imaging-data-commons. The task is searching and downloading public cancer imaging collections from NCI IDC (idc-index queries, manifests, license checks), not reading or manipulating individual DICOM files. Pydicom becomes relevant only after the series are downloaded and need to be read or anonymized.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
-        { "type": "output_contains", "value": "media-pipeline" }
+        { "type": "output_contains", "value": "alterlab-imaging-data-commons" }
       ]
     }
   ]

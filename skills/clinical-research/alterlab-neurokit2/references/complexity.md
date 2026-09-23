@@ -4,6 +4,8 @@
 
 Complexity measures quantify the irregularity, unpredictability, and multiscale structure of time series signals. NeuroKit2 provides comprehensive entropy, fractal dimension, and nonlinear dynamics measures for assessing physiological signal complexity.
 
+> **Return values.** `complexity()` and every `entropy_*`, `fractal_*`, and `complexity_*` measure in NeuroKit2 0.2.13 return a `(value, info)` tuple — unpack it (`sampen, info = nk.entropy_sample(signal)`); the single-name assignments below are shorthand for the value.
+
 ## Main Function
 
 ### complexity()
@@ -486,8 +488,10 @@ linelength = nk.fractal_linelength(signal)
 Largest Lyapunov Exponent - chaos and divergence.
 
 ```python
-lyap = nk.complexity_lyapunov(signal, delay=None, dimension=None,
-                              sampling_rate=1000, show=False)
+# delay/dimension must be numbers (None raises TypeError); estimate them first with
+# complexity_delay() / complexity_dimension(). There is no sampling_rate argument.
+lle, info = nk.complexity_lyapunov(signal, delay=1, dimension=2,
+                                   method="rosenstein1993", show=False)
 ```
 
 **Interpretation:**

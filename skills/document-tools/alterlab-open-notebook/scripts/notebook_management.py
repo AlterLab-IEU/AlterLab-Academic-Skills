@@ -9,6 +9,7 @@ Prerequisites:
 
 Usage:
     export OPEN_NOTEBOOK_URL="http://localhost:5055"
+    export OPEN_NOTEBOOK_PASSWORD="..."   # only if the server sets one
     python notebook_management.py
 """
 
@@ -16,11 +17,13 @@ import os
 import requests
 
 BASE_URL = os.getenv("OPEN_NOTEBOOK_URL", "http://localhost:5055") + "/api"
+_PASSWORD = os.getenv("OPEN_NOTEBOOK_PASSWORD")
+HEADERS = {"Authorization": f"Bearer {_PASSWORD}"} if _PASSWORD else {}
 
 
 def create_notebook(name, description=""):
     """Create a new notebook."""
-    response = requests.post(f"{BASE_URL}/notebooks", json={
+    response = requests.post(f"{BASE_URL}/notebooks", headers=HEADERS, json={
         "name": name,
         "description": description,
     })
@@ -32,7 +35,7 @@ def create_notebook(name, description=""):
 
 def list_notebooks(archived=False):
     """List all notebooks, optionally filtering by archived status."""
-    response = requests.get(f"{BASE_URL}/notebooks", params={
+    response = requests.get(f"{BASE_URL}/notebooks", headers=HEADERS, params={
         "archived": archived,
     })
     response.raise_for_status()
@@ -47,7 +50,7 @@ def list_notebooks(archived=False):
 
 def get_notebook(notebook_id):
     """Retrieve a single notebook by ID."""
-    response = requests.get(f"{BASE_URL}/notebooks/{notebook_id}")
+    response = requests.get(f"{BASE_URL}/notebooks/{notebook_id}", headers=HEADERS)
     response.raise_for_status()
     return response.json()
 
@@ -62,7 +65,7 @@ def update_notebook(notebook_id, name=None, description=None, archived=None):
     if archived is not None:
         payload["archived"] = archived
     response = requests.put(
-        f"{BASE_URL}/notebooks/{notebook_id}", json=payload
+        f"{BASE_URL}/notebooks/{notebook_id}", headers=HEADERS, json=payload
     )
     response.raise_for_status()
     updated = response.json()
@@ -74,14 +77,16 @@ def delete_notebook(notebook_id, delete_sources=False):
     """Delete a notebook and optionally its exclusive sources."""
     # Preview what will be deleted
     preview = requests.get(
-        f"{BASE_URL}/notebooks/{notebook_id}/delete-preview"
+        f"{BASE_URL}/notebooks/{notebook_id}/delete-preview", headers=HEADERS
     ).json()
-    print(f"Deletion will affect {preview.get('note_count', 0)} notes "
-          f"and {preview.get('source_count', 0)} sources")
+    print(f"Deletion will affect {preview.get('note_count', 0)} notes, "
+          f"{preview.get('exclusive_source_count', 0)} notebook-only sources, "
+          f"and {preview.get('shared_source_count', 0)} shared sources")
 
     response = requests.delete(
         f"{BASE_URL}/notebooks/{notebook_id}",
-        params={"delete_sources": delete_sources},
+        headers=HEADERS,
+        params={"delete_exclusive_sources": delete_sources},
     )
     response.raise_for_status()
     print(f"Deleted notebook: {notebook_id}")
@@ -90,7 +95,7 @@ def delete_notebook(notebook_id, delete_sources=False):
 def link_source_to_notebook(notebook_id, source_id):
     """Associate an existing source with a notebook."""
     response = requests.post(
-        f"{BASE_URL}/notebooks/{notebook_id}/sources/{source_id}"
+        f"{BASE_URL}/notebooks/{notebook_id}/sources/{source_id}", headers=HEADERS
     )
     response.raise_for_status()
     print(f"Linked source {source_id} to notebook {notebook_id}")
@@ -99,7 +104,7 @@ def link_source_to_notebook(notebook_id, source_id):
 def unlink_source_from_notebook(notebook_id, source_id):
     """Remove the association between a source and a notebook."""
     response = requests.delete(
-        f"{BASE_URL}/notebooks/{notebook_id}/sources/{source_id}"
+        f"{BASE_URL}/notebooks/{notebook_id}/sources/{source_id}", headers=HEADERS
     )
     response.raise_for_status()
     print(f"Unlinked source {source_id} from notebook {notebook_id}")

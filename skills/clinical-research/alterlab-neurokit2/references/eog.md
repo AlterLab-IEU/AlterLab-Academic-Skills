@@ -26,12 +26,7 @@ signals, info = nk.eog_process(eog_signal, sampling_rate=500, method='neurokit')
   - `EOG_Rate`: Instantaneous blink rate (blinks/min)
 - `info`: Dictionary with blink indices and parameters
 
-**Methods:**
-- `'neurokit'`: NeuroKit2 optimized approach (default)
-- `'agarwal2019'`: Agarwal et al. (2019) algorithm
-- `'mne'`: MNE-Python method
-- `'brainstorm'`: Brainstorm toolbox approach
-- `'kong1998'`: Kong et al. (1998) method
+**Methods:** `eog_process` forwards `method` to both `eog_clean()` and `eog_findpeaks()`, so pass a value both accept: `'neurokit'`, `'mne'`, `'brainstorm'`, or `'blinker'`. Without `method`, cleaning uses `'neurokit'` and blink detection uses `'mne'` (which requires `mne` to be installed). Cleaning-only methods such as `'agarwal2019'` and `'kong1998'` belong on `eog_clean()`.
 
 ## Preprocessing Functions
 
@@ -73,8 +68,8 @@ blinks, info = nk.eog_peaks(cleaned_eog, sampling_rate=500, method='neurokit',
 ```
 
 **Methods:**
-- `'neurokit'`: Amplitude and duration criteria (default)
-- `'mne'`: MNE-Python blink detection
+- `'neurokit'`: Amplitude and duration criteria (no extra dependency)
+- `'mne'`: MNE-Python blink detection (the default for `eog_peaks`/`eog_process`; requires `mne`)
 - `'brainstorm'`: Brainstorm approach
 - `'blinker'`: BLINKER algorithm (Kleifges et al., 2017)
 
@@ -113,7 +108,8 @@ blinks_dict = nk.eog_findpeaks(cleaned_eog, sampling_rate=500, method='neurokit'
 Extract characteristics of individual blinks.
 
 ```python
-features = nk.eog_features(signals, sampling_rate=500)
+# Needs the cleaned signal plus the blink peak indices (from eog_process/eog_peaks)
+features = nk.eog_features(signals["EOG_Clean"], info["EOG_Blinks"], sampling_rate=500)
 ```
 
 **Computed features:**
@@ -284,8 +280,8 @@ cleaned = nk.eog_clean(eog_raw, sampling_rate=500, method='neurokit')
 # 2. Detect blinks
 blinks, info = nk.eog_peaks(cleaned, sampling_rate=500, method='neurokit')
 
-# 3. Extract features
-features = nk.eog_features(signals, sampling_rate=500)
+# 3. Extract features (cleaned signal + blink peak indices)
+features = nk.eog_features(cleaned, info["EOG_Blinks"], sampling_rate=500)
 
 # 4. Comprehensive processing (alternative)
 signals, info = nk.eog_process(eog_raw, sampling_rate=500)

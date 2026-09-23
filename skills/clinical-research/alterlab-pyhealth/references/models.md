@@ -6,23 +6,21 @@ PyHealth provides 33+ models for healthcare prediction tasks, ranging from simpl
 
 ## Model Base Class
 
-All models inherit from `BaseModel` with standard PyTorch functionality.
+All models inherit from `BaseModel` (a `torch.nn.Module`).
 
-> **Required init args (PyHealth 2.x).** Every model needs **all three** of `feature_keys=[...]`, `label_key="..."`, and `mode=...`. The keys must match the task's `input_schema` / `output_schema` (for the built-in EHR tasks these are typically `feature_keys=["conditions", "procedures", "drugs"]` and `label_key` = the output key such as `"mortality"`, `"readmission"`, `"drugs"`, `"los"`). The examples below abbreviate to `feature_keys=[...], label_key="...", mode=...`; supply real keys from your task.
+> **Init args (PyHealth 2.x, verified on 2.0.2).** Models take the `SampleDataset` returned by `set_task()` plus hyperparameters — e.g. `Transformer(dataset=sample_dataset, embedding_dim=128)`. `BaseModel.__init__(dataset)` reads the feature keys from the task's `input_schema`, the label key from its `output_schema`, and the mode (`"binary"`, `"multiclass"`, `"multilabel"`, `"regression"`) from the output processor. The 1.x arguments `feature_keys=`, `label_key=`, and `mode=` are **not** accepted by the core EHR models (they raise `TypeError`); only a few legacy generative/vision classes (`VAE`, `Graph_TorchvisionModel`) still take them. To change which inputs a model sees, change the task schema.
 
-**Key Attributes:**
+**Key Attributes (set from the dataset):**
 - `dataset`: Associated SampleDataset
-- `feature_keys`: Input feature keys (must exist in the task's `input_schema`)
-- `label_key`: Target key (must exist in the task's `output_schema`)
-- `mode`: Task type ("binary", "multiclass", "multilabel", "regression")
-- `embedding_dim`: Feature embedding dimension
+- `feature_keys`: List of input keys (from the task's `input_schema`)
+- `label_keys`: List of label keys (from the task's `output_schema`; most models require exactly one)
+- `mode`: Task type resolved from the output schema
+- `embedding_dim`: Feature embedding dimension (constructor argument)
 
 **Key Methods:**
-- `forward()`: Model forward pass
-- `train_step()`: Single training iteration
-- `eval_step()`: Single evaluation iteration
-- `save()`: Save model checkpoint
-- `load()`: Load model checkpoint
+- `forward(**batch)`: Returns a dict with `loss`, `y_prob`, `y_true`, `logit` (plus `embed` when called with `embed=True`)
+- `get_output_size()`, `get_loss_function()`, `prepare_y_prob()`: helpers used by subclasses
+- Checkpointing lives on the `Trainer` (`save_ckpt()` / `load_ckpt()`), not on the model
 
 ## General-Purpose Models
 
@@ -40,23 +38,21 @@ from pyhealth.models import LogisticRegression
 
 model = LogisticRegression(
     dataset=sample_dataset,
-    feature_keys=["conditions", "procedures", "drugs"],
-    label_key="mortality",
-    mode="binary",
 )
 ```
 
 **Multi-Layer Perceptron** (`MLP`)
 - Feedforward neural network
 - Configurable hidden layers
-- Supports mean/sum/max pooling
+- Mean/sum pooling of nested sequence inputs
 - Good baseline for structured data
 
-**Parameters:**
-- `hidden_dim`: Hidden layer size
-- `num_layers`: Number of hidden layers
-- `dropout`: Dropout rate
-- `pooling`: Aggregation method ("mean", "sum", "max")
+**Parameters (2.0.2):**
+- `embedding_dim`: Embedding size (default 128)
+- `hidden_dim`: Hidden layer size (default 128)
+- `n_layers`: Number of MLP layers (default 2)
+- `activation`: Activation name (default `"relu"`)
+- Nested sequence inputs are mean/sum-pooled before the MLP
 
 **Usage:**
 ```python
@@ -64,9 +60,6 @@ from pyhealth.models import MLP
 
 model = MLP(
     dataset=sample_dataset,
-    feature_keys=["conditions", "procedures", "drugs"],
-    label_key="mortality",
-    mode="binary",
     hidden_dim=128,
 )
 ```
@@ -84,11 +77,10 @@ model = MLP(
 - Max pooling for dimension reduction
 - Fully connected output layers
 
-**Parameters:**
-- `num_filters`: Number of convolutional filters
-- `kernel_size`: Convolution kernel size
-- `num_layers`: Number of conv layers
-- `dropout`: Dropout rate
+**Parameters (2.0.2):**
+- `embedding_dim`: Embedding size (default 128)
+- `hidden_dim`: Convolution channels (default 128)
+- `num_layers`: Number of conv layers (default 1)
 
 **Usage:**
 ```python
@@ -96,9 +88,6 @@ from pyhealth.models import CNN
 
 model = CNN(
     dataset=sample_dataset,
-    feature_keys=["conditions", "procedures", "drugs"],
-    label_key="mortality",
-    mode="binary",
 )
 ```
 
@@ -113,6 +102,8 @@ model = CNN(
 - Parallelizable (faster than RNNs)
 - Stable gradients
 
+**Usage:** `TCN(dataset=sample_dataset, embedding_dim=128, num_channels=128)` (`num_channels` may be a list, one entry per level)
+
 ### Recurrent Neural Networks
 
 **RNN** (`RNN`)
@@ -121,12 +112,9 @@ model = CNN(
 - Sequential processing
 - Captures temporal dependencies
 
-**Parameters:**
-- `rnn_type`: "LSTM", "GRU", or "RNN"
-- `hidden_dim`: Hidden state dimension
-- `num_layers`: Number of recurrent layers
-- `dropout`: Dropout rate
-- `bidirectional`: Use bidirectional RNN
+**Parameters (2.0.2):**
+- `embedding_dim`, `hidden_dim`: Embedding and hidden-state sizes (default 128)
+- Passed through to `RNNLayer`: `rnn_type` (`"GRU"` default, `"LSTM"`, `"RNN"`), `num_layers` (1), `dropout` (0.5), `bidirectional` (False)
 
 **Usage:**
 ```python
@@ -134,9 +122,6 @@ from pyhealth.models import RNN
 
 model = RNN(
     dataset=sample_dataset,
-    feature_keys=["conditions", "procedures", "drugs"],
-    label_key="mortality",
-    mode="binary",
     rnn_type="LSTM",
     hidden_dim=128,
 )
@@ -161,12 +146,12 @@ model = RNN(
 - Feed-forward networks
 - Layer normalization
 
-**Parameters:**
-- `num_heads`: Number of attention heads
-- `num_layers`: Number of transformer layers
-- `hidden_dim`: Hidden dimension
-- `dropout`: Dropout rate
-- `max_seq_length`: Maximum sequence length
+**Parameters (2.0.2):**
+- `embedding_dim`: Model width (default 128)
+- `heads`: Attention heads per block (default 1)
+- `num_layers`: Transformer blocks per feature stream (default 1)
+- `dropout`: Dropout rate (default 0.5)
+- `max_seq_len`: Maximum sequence length (default 1024)
 
 **Usage:**
 ```python
@@ -174,14 +159,14 @@ from pyhealth.models import Transformer
 
 model = Transformer(
     dataset=sample_dataset,
-    feature_keys=["conditions", "procedures", "drugs"],
-    label_key="mortality",
-    mode="binary",
     embedding_dim=128,
+    heads=2,
     num_layers=2,
     dropout=0.1,
 )
 ```
+
+`Transformer` implements the Chefer-relevance interface and `forward_from_embedding`, so it works with `CheferRelevance`, `AttentionRollout`, and the embedding-gradient methods (`IntegratedGradients`, `DeepLift`) in `pyhealth.interpret.methods` (see `references/training_evaluation.md`).
 
 **TransformersModel** (`TransformersModel`)
 - Integration with HuggingFace transformers
@@ -193,21 +178,19 @@ model = Transformer(
 ```python
 from pyhealth.models import TransformersModel
 
+# Signature: TransformersModel(dataset, model_name, dropout=0.1)
 model = TransformersModel(
-    dataset=sample_dataset,
-    feature_keys=["text"],
-    label_key="label",
-    mode="multiclass",
+    dataset=sample_dataset,          # task with a single text input and one label
     model_name="emilyalsentzer/Bio_ClinicalBERT",
 )
 ```
 
 ### Graph Neural Networks
 
-**GNN** (`GNN`)
-- Graph-based learning
+**GAT / GCN** (`GAT`, `GCN`) — there is no single `GNN` class in 2.x
+- Graph-based learning over the task's inputs
 - Models relationships between entities
-- Supports GAT (Graph Attention) and GCN (Graph Convolutional)
+- `GAT` (graph attention) and `GCN` (graph convolution) are separate classes
 
 **Use Cases:**
 - Drug-drug interactions
@@ -215,24 +198,19 @@ model = TransformersModel(
 - Knowledge graph integration
 - Comorbidity relationships
 
-**Parameters:**
-- `gnn_type`: "GAT" or "GCN"
-- `hidden_dim`: Hidden dimension
-- `num_layers`: Number of GNN layers
-- `dropout`: Dropout rate
-- `num_heads`: Attention heads (for GAT)
+**Parameters (2.0.2):**
+- `embedding_dim`: Embedding size (default 128)
+- `nhid`: Hidden units per graph layer (default 64)
+- `num_layers`: Number of graph layers (default 2)
+- `dropout`: Dropout rate (default 0.5)
+- `nheads`: Attention heads (`GAT` only, default 1)
 
 **Usage:**
 ```python
-from pyhealth.models import GNN
+from pyhealth.models import GAT, GCN
 
-model = GNN(
-    dataset=sample_dataset,
-    feature_keys=["conditions", "procedures"],
-    label_key="drugs",
-    mode="multilabel",
-    hidden_dim=128,
-)
+model = GAT(dataset=sample_dataset, embedding_dim=128, nhid=64, nheads=2)
+# or: GCN(dataset=sample_dataset, embedding_dim=128, nhid=64)
 ```
 
 ## Healthcare-Specific Models
@@ -257,14 +235,13 @@ from pyhealth.models import RETAIN
 
 model = RETAIN(
     dataset=sample_dataset,
-    feature_keys=["conditions", "procedures", "drugs"],
-    label_key="mortality",
-    mode="binary",
 )
 
 # A forward pass returns a dict: loss, y_prob, y_true, logit.
-# For feature-/token-level interpretation, use the Chefer relevance
-# explainer (see references/training_evaluation.md), not ad-hoc attention keys.
+# RETAIN is interpretable by design, but PyHealth does not return its
+# alpha/beta attention weights and it does not implement the Chefer or
+# forward_from_embedding interfaces. For post-hoc token attributions,
+# train a Transformer (see references/training_evaluation.md).
 out = model(**batch)
 loss, y_prob = out["loss"], out["y_prob"]
 ```
@@ -304,17 +281,16 @@ loss, y_prob = out["loss"], out["y_prob"]
 ```python
 from pyhealth.models import GAMENet
 
+# GAMENet builds its EHR co-occurrence and DDI adjacency matrices from the
+# dataset itself; passing ehr_adj/ddi_adj raises ValueError.
 model = GAMENet(
-    dataset=sample_dataset,
+    dataset=sample_dataset,   # from a DrugRecommendation* task
     embedding_dim=64,
     hidden_dim=64,
-    ddi_adj_path="/path/to/ddi_adj.pkl",
-    ehr_adj_path="/path/to/ehr_adj.pkl",
 )
-# Note: drug-recommendation models (GAMENet/SafeDrug/MoleRec/MICRON) infer their
-# diagnoses/procedures -> drugs schema from the DrugRecommendation* task and do
-# not take feature_keys/label_key/mode.
 ```
+
+Reference: Shang et al., GAMENet: Graph Augmented MEmory Networks for Recommending Medication Combination, AAAI 2019.
 
 **MICRON** (`MICRON`)
 - Medication recommendation with DDI constraints
@@ -328,21 +304,20 @@ model = GAMENet(
 - Balances efficacy and safety
 
 **Key Features:**
-- Molecular graph encoding
-- DDI graph neural network
-- Reinforcement learning for safety
-- Published in KDD 2021
+- Dual molecular graph encoders (global MPNN + local bipartite substructure encoder)
+- DDI-controllable loss that penalizes interacting drug pairs
+- Published at IJCAI 2021 (Yang et al., "SafeDrug: Dual Molecular Graph Encoders for Recommending Effective and Safe Drug Combinations")
 
 **Usage:**
 ```python
 from pyhealth.models import SafeDrug
 
+# SafeDrug derives the DDI matrix and molecule set from the dataset's ATC
+# drug codes (RDKit is a PyHealth dependency); it requires the label key "drugs".
 model = SafeDrug(
-    dataset=sample_dataset,
+    dataset=sample_dataset,   # from a DrugRecommendation* task
     embedding_dim=64,
     hidden_dim=64,
-    ddi_adj_path="/path/to/ddi_adj.pkl",      # DDI adjacency matrix
-    molecule_path="/path/to/molecule.pkl",     # drug molecular info
 )
 ```
 
@@ -368,11 +343,10 @@ model = SafeDrug(
 ```python
 from pyhealth.models import StageNet
 
+# Use with a StageNet-format task such as MortalityPredictionStageNetMIMIC4
+# (inputs "icd_codes" + "labs"); the schema, not the constructor, sets the inputs.
 model = StageNet(
     dataset=sample_dataset,
-    feature_keys=["icd_codes", "labs"],   # matches MortalityPredictionStageNetMIMIC4
-    label_key="mortality",
-    mode="binary",
     chunk_size=128,
 )
 ```
@@ -383,65 +357,43 @@ model = StageNet(
 - Time-varying risk assessment
 
 **Deepr** (`Deepr`)
-- Deep recurrent architecture
-- Medical concept embeddings
-- Temporal pattern learning
-- Published in JAMIA
+- Convolutional network over sequences of medical-record codes
+- Medical concept embeddings with visit separators
+- Published in IEEE Journal of Biomedical and Health Informatics (2017)
 
 ### Advanced Sequential Models
 
 **Agent** (`Agent`)
-- Reinforcement learning-based
-- Treatment recommendation
-- Action-value optimization
-- Policy learning for sequential decisions
+- "Dr. Agent": clinical prediction via mimicked second opinions
+- Two policy-gradient agents choose which parts of the patient history to attend to (dynamic skip connections)
 
 **GRASP** (`GRASP`)
-- Graph-based sequence patterns
-- Structural event relationships
-- Hierarchical representation learning
+- Health-status representation learning that incorporates knowledge from similar patients (clustered patient graph); AAAI 2021
+
+### Physiological Signal Models
 
 **SparcNet** (`SparcNet`)
-- Sparse clinical networks
-- Efficient feature selection
-- Reduced computational cost
-- Interpretable predictions
+- 1D dense convolutional network from the expert-level EEG classification study of seizures and rhythmic/periodic patterns (Neurology 2023)
+- Use for EEG event/abnormality classification tasks
 
 **ContraWR** (`ContraWR`)
-- Contrastive learning approach
-- Self-supervised pre-training
-- Robust representations
-- Limited labeled data scenarios
+- Supervised encoder from the ContraWR sleep-EEG work (STFT + 2D CNN)
+- Use for sleep staging and other spectrogram-style signal tasks
 
-### Medical Entity Linking
+### Record Linkage
 
 **MedLink** (`MedLink`)
-- Medical entity linking to knowledge bases
-- Clinical concept normalization
-- UMLS integration
-- Entity disambiguation
+- De-identified patient health record linkage (Wu et al., KDD 2023) — matches records of the same patient across sources; it is not concept/entity normalization
 
 ### Generative Models
 
-**GAN** (`GAN`)
-- Generative Adversarial Networks
-- Synthetic EHR data generation
-- Privacy-preserving data sharing
-- Augmentation for rare conditions
-
-**VAE** (`VAE`)
-- Variational Autoencoder
-- Patient representation learning
-- Anomaly detection
-- Latent space exploration
+- **Synthetic EHR**: `HALO`, `PromptEHR`, `MedGAN`, `CorGAN`, and `GPT`, used with the `EHRGeneration*` tasks
+- **Images**: `GAN` and `VAE` generate or reconstruct small (32–128 px) images; `VAE` and `Graph_TorchvisionModel` still take the legacy `feature_keys`/`label_key`/`mode` arguments
 
 ### Social Determinants of Health
 
-**SDOH** (`SDOH`)
-- Social determinants integration
-- Multi-modal prediction
-- Addresses health disparities
-- Combines clinical and social data
+**SdohClassifier** (`SdohClassifier`)
+- Sentence-level classification of social determinants of health from clinical text (MIMIC-III-derived SDoH annotations)
 
 ## Model Selection Guidelines
 
@@ -456,7 +408,7 @@ model = StageNet(
 **Multi-Label Classification** (Drug Recommendation)
 - Standard: CNN, RNN
 - Healthcare-specific: GAMENet, SafeDrug, MICRON, MoleRec
-- Graph-based: GNN
+- Graph-based: GAT, GCN
 
 **Regression** (Length of Stay)
 - Start with: MLP (baseline)
@@ -548,8 +500,8 @@ model = StageNet(
 ### Best Practices
 
 1. **Start with simple baselines** (Logistic Regression, MLP)
-2. **Use appropriate feature keys** based on data availability
-3. **Match mode to task output** (binary, multiclass, multilabel, regression)
+2. **Choose the task's input schema** (the model's inputs) based on data availability
+3. **Set the task's output schema to the prediction target** (binary, multiclass, multilabel, regression); the model's mode follows from it
 4. **Consider interpretability requirements** for clinical deployment
 5. **Validate on held-out test set** for realistic performance
 6. **Monitor for overfitting** especially with complex models
@@ -559,13 +511,13 @@ model = StageNet(
 ## Example Workflow
 
 ```python
-from pyhealth.datasets import MIMIC4Dataset
+from pyhealth.datasets import MIMIC4EHRDataset
 from pyhealth.tasks import MortalityPredictionMIMIC4
 from pyhealth.models import Transformer
 from pyhealth.trainer import Trainer
 
 # 1. Prepare data
-dataset = MIMIC4Dataset(
+dataset = MIMIC4EHRDataset(
     root="/path/to/data",
     tables=["diagnoses_icd", "procedures_icd", "prescriptions"],
 )
@@ -574,9 +526,6 @@ sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 # 2. Initialize model
 model = Transformer(
     dataset=sample_dataset,
-    feature_keys=["conditions", "procedures", "drugs"],
-    label_key="mortality",
-    mode="binary",
     embedding_dim=128,
     num_layers=2,
     dropout=0.3,

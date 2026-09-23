@@ -99,7 +99,7 @@ General approach for all procedures:
 
 **What is an MDF:**
 - File for each medical device type or family
-- Replaces separate DHF, DMR, DHR (per FDA QMSR harmonization)
+- Under the FDA QMSR it covers what the QSR called the DMR; design history lives in the design and development file (7.3.10) and production history in the per-device/batch records (7.5.1)
 - Contains all documentation about the device
 
 **Required contents per ISO 13485 Clause 4.2.3:**

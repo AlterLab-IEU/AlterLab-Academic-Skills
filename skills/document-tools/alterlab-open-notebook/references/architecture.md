@@ -33,7 +33,7 @@ Open Notebook is built as a modern Python web application with a clear separatio
 
 The REST API is built with FastAPI and organized into routers:
 
-- **20 route modules** covering notebooks, sources, notes, chat, search, podcasts, transformations, models, credentials, embeddings, settings, and more
+- **20+ route modules** covering notebooks, sources, notes, chat, search, podcasts, transformations, models, credentials, embeddings, settings, and more
 - Async/await throughout for non-blocking I/O
 - Pydantic models for request/response validation
 - Custom exception handlers mapping domain errors to HTTP status codes
@@ -61,7 +61,7 @@ AI features are powered by LangChain with the Esperanto multi-provider library:
 
 ### Esperanto Multi-Provider Library
 
-Esperanto provides a unified interface to 16+ AI providers:
+Esperanto provides a unified interface to 18+ AI providers:
 
 - Abstracts provider-specific API differences
 - Supports LLM, embedding, speech-to-text, and text-to-speech capabilities
@@ -73,7 +73,7 @@ Esperanto provides a unified interface to 16+ AI providers:
 The user interface is a React application built with Next.js:
 
 - Responsive design for desktop and tablet use
-- Real-time updates for chat and processing status
+- Status polling for background processing (live push updates are on the upstream roadmap)
 - File upload with progress tracking
 - Audio player for podcast episodes
 

@@ -7,10 +7,10 @@ This document provides detailed information about each file format supported by 
 ### PDF (.pdf)
 
 **Capabilities**:
-- Text extraction
+- Text-layer extraction (pdfminer.six / pdfplumber)
 - Table detection
 - Metadata extraction
-- OCR for scanned documents (with dependencies)
+- OCR for scanned pages only through the `markitdown-ocr` plugin or Azure Document Intelligence
 
 **Dependencies**:
 ```bash
@@ -25,7 +25,7 @@ uv pip install 'markitdown[pdf]'
 
 **Limitations**:
 - Complex layouts may not preserve perfect formatting
-- Scanned PDFs require OCR setup
+- Scanned PDFs have no text layer: use `markitdown-ocr`, Document Intelligence, or pre-process with `ocrmypdf`
 - Some PDF features (annotations, forms) may not convert
 
 **Example**:
@@ -34,7 +34,7 @@ from markitdown import MarkItDown
 
 md = MarkItDown()
 result = md.convert("research_paper.pdf")
-print(result.text_content)
+print(result.markdown)
 ```
 
 **Enhanced with Azure Document Intelligence**:
@@ -163,16 +163,16 @@ result = md.convert("experimental_data.xlsx")
 
 ## Image Formats
 
-### Images (.jpg, .jpeg, .png, .gif, .webp)
+### Images (.jpg, .jpeg, .png)
 
 **Capabilities**:
-- EXIF metadata extraction
-- OCR text extraction
-- AI-powered image descriptions
+- EXIF metadata extraction (requires the `exiftool` binary)
+- AI-powered image descriptions when `llm_client` / `llm_model` are set (the model can also transcribe visible text)
+- No local OCR engine; other image types (GIF, WebP, TIFF) are not handled by the built-in image converter
 
 **Dependencies**:
 ```bash
-uv pip install 'markitdown[all]'  # Includes image support
+uv pip install markitdown   # core only; install exiftool separately (e.g. apt/brew)
 ```
 
 **Best For**:
@@ -206,24 +206,17 @@ result = md.convert("graph.png")
 ```
 
 **OCR for Text Extraction**:
-Requires Tesseract OCR:
-```bash
-# macOS
-brew install tesseract
-
-# Ubuntu
-sudo apt-get install tesseract-ocr
-```
+MarkItDown does not call Tesseract. For images embedded in PDF/DOCX/PPTX/XLSX, install the `markitdown-ocr` plugin and pass an LLM client (`MarkItDown(enable_plugins=True, llm_client=..., llm_model=...)`); for standalone images, the LLM description above with a transcription-oriented `llm_prompt` is the built-in route, or use Azure Document Intelligence.
 
 ---
 
 ## Audio Formats
 
-### Audio (.wav, .mp3)
+### Audio (.wav, .mp3, .m4a, .mp4)
 
 **Capabilities**:
-- Metadata extraction
-- Speech-to-text transcription
+- Metadata extraction (via `exiftool`)
+- Speech-to-text transcription through the `speech_recognition` package's Google Web Speech backend (audio leaves your machine; check ethics approvals before transcribing participant recordings)
 - Duration and technical info
 
 **Dependencies**:
@@ -461,9 +454,10 @@ result = md.convert("message.msg")
    md = MarkItDown(docintel_endpoint="endpoint_url")
    ```
 
-2. **For scanned PDFs, ensure OCR is set up**:
+2. **For scanned PDFs, add OCR**:
    ```bash
-   brew install tesseract  # macOS
+   uv pip install markitdown-ocr openai   # LLM-vision OCR plugin
+   # or add a text layer locally first: ocrmypdf scan.pdf searchable.pdf
    ```
 
 3. **Split very large PDFs before conversion** for better performance
@@ -487,7 +481,7 @@ result = md.convert("message.msg")
 
 3. **Multiple sheets** are all included in output
 
-4. **Charts become text descriptions** (use AI for better descriptions)
+4. **Charts and embedded images are not converted** — only cell values; the `markitdown-ocr` plugin can OCR embedded images
 
 ### Image Best Practices
 
@@ -500,7 +494,7 @@ result = md.convert("message.msg")
    )
    ```
 
-2. **For text-heavy images, ensure OCR dependencies** are installed
+2. **For text-heavy images**, use a transcription-oriented `llm_prompt` or Azure Document Intelligence (there is no local OCR)
 
 3. **High-resolution images** may take longer to process
 
@@ -526,19 +520,20 @@ If you need to convert an unsupported format:
 
 ## Format Detection
 
-MarkItDown automatically detects format from:
+MarkItDown combines several signals to pick a converter:
 
-1. **File extension** (primary method)
-2. **MIME type** (fallback)
-3. **File signature** (magic bytes, fallback)
+1. **File extension** and **MIME type** (from the path, URL, HTTP headers, or your `StreamInfo`)
+2. **Content sniffing** with Google's Magika model, so files without a useful extension still route correctly
 
-**Override detection**:
+**Override detection** with a `StreamInfo` hint (the older `file_extension=` keyword is deprecated):
 ```python
+from markitdown import StreamInfo
+
 # Force specific format
-result = md.convert("file_without_extension", file_extension=".pdf")
+result = md.convert("file_without_extension", stream_info=StreamInfo(extension=".pdf"))
 
 # With streams
 with open("file", "rb") as f:
-    result = md.convert_stream(f, file_extension=".pdf")
+    result = md.convert_stream(f, stream_info=StreamInfo(extension=".pdf"))
 ```
 

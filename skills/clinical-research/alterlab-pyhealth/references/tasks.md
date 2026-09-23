@@ -4,7 +4,7 @@
 
 PyHealth provides 20+ predefined clinical prediction tasks for common healthcare AI applications. Each task transforms raw patient data into structured input-output pairs for model training.
 
-> **Naming convention (PyHealth 2.x).** Tasks are **classes** in `CamelCase`, named `{Task}{Dataset}`, e.g. `MortalityPredictionMIMIC4`, `ReadmissionPredictionMIMIC3`, `DrugRecommendationMIMIC3`, `LengthOfStayPredictionMIMIC4`. You **instantiate** the class and pass the instance to `set_task`. The old snake-case `*_fn` function names below are the pre-2.0 API; map each to its `CamelCase` class equivalent (drop the `_fn`, CamelCase the words, dataset suffix uppercased — `mortality_prediction_mimic4_fn` -> `MortalityPredictionMIMIC4`). When unsure of an exact class name, check `pyhealth.tasks` in the installed version.
+> **Naming convention (PyHealth 2.x).** Tasks are **classes** (mostly `{Task}{Dataset}`, e.g. `MortalityPredictionMIMIC4`, `ReadmissionPredictionMIMIC3`, `DrugRecommendationMIMIC3`). You **instantiate** the class and pass the instance to `set_task`. The names below are the class names exported by `pyhealth.tasks` in 2.0.2; the naming is not fully regular (e.g. `LengthOfStayPredictioneICU`, `MIMIC3ICD9Coding`, `EEGAbnormalTUAB`), so copy them rather than deriving them. A few legacy snake-case functions (`sleep_staging_isruc_fn`, `sleep_staging_shhs_fn`, `patient_linkage_mimic3_fn`, `drug_recommendation_*_fn`) are still exported for older signal/linkage workflows. When unsure, run `dir(pyhealth.tasks)` in the installed version.
 
 ## Task Structure
 
@@ -17,10 +17,10 @@ Each task subclasses `BaseTask` (`from pyhealth.tasks.base_task import BaseTask`
 
 **Usage Pattern:**
 ```python
-from pyhealth.datasets import MIMIC4Dataset
+from pyhealth.datasets import MIMIC4EHRDataset
 from pyhealth.tasks import MortalityPredictionMIMIC4
 
-dataset = MIMIC4Dataset(
+dataset = MIMIC4EHRDataset(
     root="/path/to/data",
     tables=["diagnoses_icd", "procedures_icd", "prescriptions"],
 )
@@ -33,31 +33,31 @@ sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 
 **Purpose:** Predict patient death risk at next visit or within specified timeframe
 
-**MIMIC-III Mortality** (`mortality_prediction_mimic3_fn`)
+**MIMIC-III Mortality** (`MortalityPredictionMIMIC3`; multimodal variant `MultimodalMortalityPredictionMIMIC3`)
 - Predicts death at next hospital visit
 - Binary classification task
 - Input: Historical diagnoses, procedures, medications
 - Output: Binary label (deceased/alive)
 
-**MIMIC-IV Mortality** (`mortality_prediction_mimic4_fn`)
+**MIMIC-IV Mortality** (`MortalityPredictionMIMIC4`; multimodal variant `MultimodalMortalityPredictionMIMIC4`)
 - Updated version for MIMIC-IV dataset
 - Enhanced feature set
 - Improved label quality
 
-**eICU Mortality** (`mortality_prediction_eicu_fn`)
+**eICU Mortality** (`MortalityPredictionEICU`, `MortalityPredictionEICU2`)
 - Multi-center ICU mortality prediction
 - Accounts for hospital-level variation
 
-**OMOP Mortality** (`mortality_prediction_omop_fn`)
+**OMOP Mortality** (`MortalityPredictionOMOP`)
 - Standardized mortality prediction
 - Works with OMOP common data model
 
-**In-Hospital Mortality** (`inhospital_mortality_prediction_mimic4_fn`)
+**In-Hospital Mortality** (`InHospitalMortalityMIMIC4`; MEDS-format data: `InHospitalMortalityMEDS`)
 - Predicts death during current hospitalization
 - Real-time risk assessment
 - Earlier prediction window than next-visit mortality
 
-**StageNet Mortality** (`mortality_prediction_mimic4_fn_stagenet`)
+**StageNet Mortality** (`MortalityPredictionStageNetMIMIC4`; inputs `icd_codes` + `labs`)
 - Specialized for StageNet model architecture
 - Temporal stage-aware prediction
 
@@ -65,61 +65,61 @@ sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 
 **Purpose:** Identify patients at risk of hospital readmission within specified timeframe (typically 30 days)
 
-**MIMIC-III Readmission** (`readmission_prediction_mimic3_fn`)
+**MIMIC-III Readmission** (`ReadmissionPredictionMIMIC3`)
 - 30-day readmission prediction
 - Binary classification
 - Input: Diagnosis history, medications, demographics
 - Output: Binary label (readmitted/not readmitted)
 
-**MIMIC-IV Readmission** (`readmission_prediction_mimic4_fn`)
+**MIMIC-IV Readmission** (`ReadmissionPredictionMIMIC4`)
 - Enhanced readmission features
 - Improved temporal modeling
 
-**eICU Readmission** (`readmission_prediction_eicu_fn`)
+**eICU Readmission** (`ReadmissionPredictionEICU`)
 - ICU-specific readmission risk
 - Multi-site data
 
-**OMOP Readmission** (`readmission_prediction_omop_fn`)
+**OMOP Readmission** (`ReadmissionPredictionOMOP`)
 - Standardized readmission prediction
 
 ### Length of Stay Prediction
 
 **Purpose:** Estimate hospital stay duration for resource planning and patient management
 
-**MIMIC-III Length of Stay** (`length_of_stay_prediction_mimic3_fn`)
+**MIMIC-III Length of Stay** (`LengthOfStayPredictionMIMIC3`)
 - Regression task
 - Input: Admission diagnoses, vitals, demographics
 - Output: Continuous value (days)
 
-**MIMIC-IV Length of Stay** (`length_of_stay_prediction_mimic4_fn`)
+**MIMIC-IV Length of Stay** (`LengthOfStayPredictionMIMIC4`; StageNet format: `LengthOfStayStageNetMIMIC4`)
 - Enhanced features for LOS prediction
 - Better temporal granularity
 
-**eICU Length of Stay** (`length_of_stay_prediction_eicu_fn`)
+**eICU Length of Stay** (`LengthOfStayPredictioneICU`)
 - ICU stay duration prediction
 - Multi-hospital data
 
-**OMOP Length of Stay** (`length_of_stay_prediction_omop_fn`)
+**OMOP Length of Stay** (`LengthOfStayPredictionOMOP`)
 - Standardized LOS prediction
 
 ### Drug Recommendation
 
 **Purpose:** Suggest appropriate medications based on patient history and current conditions
 
-**MIMIC-III Drug Recommendation** (`drug_recommendation_mimic3_fn`)
+**MIMIC-III Drug Recommendation** (`DrugRecommendationMIMIC3`)
 - Multi-label classification
 - Input: Diagnoses, previous medications, demographics
 - Output: Set of recommended drug codes
 - Considers drug-drug interactions
 
-**MIMIC-IV Drug Recommendation** (`drug_recommendation_mimic4_fn`)
+**MIMIC-IV Drug Recommendation** (`DrugRecommendationMIMIC4`)
 - Updated medication data
 - Enhanced interaction modeling
 
-**eICU Drug Recommendation** (`drug_recommendation_eicu_fn`)
+**eICU Drug Recommendation** (`DrugRecommendationEICU`)
 - Critical care medication recommendations
 
-**OMOP Drug Recommendation** (`drug_recommendation_omop_fn`)
+**OMOP Drug Recommendation** (`DrugRecommendationOMOP`)
 - Standardized drug recommendation
 
 **Key Considerations:**
@@ -131,7 +131,7 @@ sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 
 ### Medical Coding
 
-**MIMIC-III ICD-9 Coding** (`icd9_coding_mimic3_fn`)
+**MIMIC-III ICD-9 Coding** (`MIMIC3ICD9Coding`)
 - Assigns ICD-9 diagnosis/procedure codes to clinical notes
 - Multi-label text classification
 - Input: Clinical text/documentation
@@ -140,7 +140,7 @@ sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 
 ### Patient Linkage
 
-**MIMIC-III Patient Linking** (`patient_linkage_mimic3_fn`)
+**MIMIC-III Patient Linking** (`PatientLinkageMIMIC3Task`; legacy function `patient_linkage_mimic3_fn`)
 - Record matching and deduplication
 - Binary classification (same patient or not)
 - Input: Demographic and clinical features from two records
@@ -152,16 +152,16 @@ sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 
 **Purpose:** Classify sleep stages from EEG/physiological signals for sleep disorder diagnosis
 
-**ISRUC Sleep Staging** (`sleep_staging_isruc_fn`)
+**ISRUC Sleep Staging** (legacy function `sleep_staging_isruc_fn`)
 - Multi-class classification (Wake, N1, N2, N3, REM)
 - Input: Multi-channel EEG signals
 - Output: Sleep stage per epoch (typically 30 seconds)
 
-**SleepEDF Sleep Staging** (`sleep_staging_sleepedf_fn`)
+**SleepEDF Sleep Staging** (`SleepStagingSleepEDF`; legacy function `sleep_staging_sleepedf_fn`)
 - Standard sleep staging task
 - PSG signal processing
 
-**SHHS Sleep Staging** (`sleep_staging_shhs_fn`)
+**SHHS Sleep Staging** (legacy function `sleep_staging_shhs_fn`)
 - Large-scale sleep study data
 - Population-level sleep analysis
 
@@ -174,21 +174,20 @@ sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 
 ### EEG Analysis
 
-**Abnormality Detection** (`abnormality_detection_tuab_fn`)
+**Abnormality Detection** (`EEGAbnormalTUAB`)
 - Binary classification (normal/abnormal EEG)
 - Clinical screening application
 - Input: Multi-channel EEG recordings
 - Output: Binary label
 
-**Event Detection** (`event_detection_tuev_fn`)
+**Event Detection** (`EEGEventsTUEV`)
 - Identify specific EEG events (spikes, seizures)
 - Multi-class classification
 - Input: EEG time series
 - Output: Event type and timing
 
-**Seizure Detection** (`seizure_detection_tusz_fn`)
-- Specialized epileptic seizure detection
-- Critical for epilepsy monitoring
+**Seizure Detection** (no built-in TUSZ task class in 2.0.2)
+- Write a custom `BaseTask` over your EEG loader, or use the TUEV event task
 - Input: Continuous EEG
 - Output: Seizure/non-seizure classification
 
@@ -196,7 +195,7 @@ sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 
 ### COVID-19 Chest X-ray Classification
 
-**COVID-19 CXR** (`covid_classification_cxr_fn`)
+**COVID-19 CXR** (`COVID19CXRClassification`; also `ChestXray14BinaryClassification`, `ChestXray14MultilabelClassification`)
 - Multi-class image classification
 - Classes: COVID-19, bacterial pneumonia, viral pneumonia, normal
 - Input: Chest X-ray images
@@ -206,7 +205,7 @@ sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 
 ### Medical Transcription Classification
 
-**Medical Specialty Classification** (`medical_transcription_classification_fn`)
+**Medical Specialty Classification** (`MedicalTranscriptionsClassification`)
 - Classify clinical notes by medical specialty
 - Multi-class text classification
 - Input: Clinical transcription text
@@ -219,13 +218,14 @@ sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 Subclass `BaseTask`, declare `input_schema` / `output_schema`, and implement `__call__` to emit one flat sample dict per prediction. Sample keys must match the schema keys; PyHealth wires up the matching processors automatically.
 
 ```python
+from datetime import datetime, timedelta
 from typing import Any, Dict, List
-from pyhealth.tasks.base_task import BaseTask
+from pyhealth.tasks import BaseTask
 
 
-class MyReadmissionTask(BaseTask):
-    task_name: str = "MyReadmissionTask"
-    # Keys here become the model's feature_keys / label_key.
+class ThirtyDayReadmissionMIMIC4(BaseTask):
+    task_name: str = "ThirtyDayReadmissionMIMIC4"
+    # The model reads its inputs and label from these schemas.
     input_schema: Dict[str, str] = {
         "conditions": "sequence",
         "procedures": "sequence",
@@ -234,35 +234,41 @@ class MyReadmissionTask(BaseTask):
 
     def __call__(self, patient: Any) -> List[Dict[str, Any]]:
         samples: List[Dict[str, Any]] = []
-        visits = patient.get_events(event_type="admissions")
+        admissions = patient.get_events(event_type="admissions")
 
-        for i, visit in enumerate(visits):
-            if i < 2:  # require some history
+        for i in range(len(admissions) - 1):
+            adm, nxt = admissions[i], admissions[i + 1]
+            discharge = datetime.strptime(adm.dischtime, "%Y-%m-%d %H:%M:%S")
+
+            # Events are table rows; filter them to this admission's time window
+            diagnoses = patient.get_events(
+                event_type="diagnoses_icd", start=adm.timestamp, end=discharge
+            )
+            procedures = patient.get_events(
+                event_type="procedures_icd", start=adm.timestamp, end=discharge
+            )
+            conditions = [e.icd_code for e in diagnoses if getattr(e, "icd_code", None)]
+            procs = [e.icd_code for e in procedures if getattr(e, "icd_code", None)]
+            if not conditions or not procs:
                 continue
-
-            conditions, procedures = [], []
-            for past in visits[:i]:
-                for event in past.events:
-                    if event.vocabulary == "ICD10CM":
-                        conditions.append(event.code)
-                    elif event.vocabulary == "ICD10PROC":
-                        procedures.append(event.code)
 
             samples.append({
                 "patient_id": patient.patient_id,
+                "visit_id": adm.hadm_id,
                 "conditions": conditions,
-                "procedures": procedures,
-                "readmitted": 1 if some_condition else 0,
+                "procedures": procs,
+                "readmitted": int(nxt.timestamp - discharge <= timedelta(days=30)),
             })
 
         return samples
 
 
-# Apply the custom task (instantiate it)
-sample_dataset = dataset.set_task(MyReadmissionTask())
+# Apply the custom task (instantiate it); the dataset must load the
+# "diagnoses_icd" and "procedures_icd" tables
+sample_dataset = dataset.set_task(ThirtyDayReadmissionMIMIC4())
 ```
 
-> Event access patterns (`patient.get_events(...)`, `event.vocabulary`) vary by dataset/version — confirm against the dataset's loaded tables before relying on a specific attribute.
+> The pattern mirrors the built-in `MortalityPredictionMIMIC4`: `patient.get_events(event_type=<table>, start=..., end=...)` returns rows whose columns are attributes (`icd_code`, `hadm_id`, `dischtime`, ...). Column names come from the dataset's YAML config, so confirm them for other datasets before relying on a specific attribute.
 
 ### Task Function Components
 
@@ -302,7 +308,7 @@ sample_dataset = dataset.set_task(MyReadmissionTask())
 ### Signal Processing Tasks
 **Use when:** Working with physiological time-series data
 
-**Datasets:** SleepEDF, SHHS, ISRUC, TUEV, TUAB, TUSZ
+**Datasets:** SleepEDF, SHHS, ISRUC, TUEV, TUAB
 
 **Common tasks:**
 - Sleep staging for sleep disorder diagnosis
@@ -346,27 +352,22 @@ sample = {
 
 ## Integration with Models
 
-The task's schema keys are exactly the model's `feature_keys` / `label_key`:
+Models read their inputs and label directly from the task's `input_schema` / `output_schema`, so no key arguments are passed:
 
 ```python
-from pyhealth.datasets import MIMIC4Dataset
+from pyhealth.datasets import MIMIC4EHRDataset
 from pyhealth.tasks import MortalityPredictionMIMIC4
 from pyhealth.models import Transformer
 
 # 1. Create task-specific dataset
-dataset = MIMIC4Dataset(
+dataset = MIMIC4EHRDataset(
     root="/path/to/data",
     tables=["diagnoses_icd", "procedures_icd", "prescriptions"],
 )
 sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 
-# 2. Point the model at the task's schema keys
-model = Transformer(
-    dataset=sample_dataset,
-    feature_keys=["conditions", "procedures", "drugs"],
-    label_key="mortality",
-    mode="binary",
-)
+# 2. The model picks up "conditions"/"procedures"/"drugs" -> "mortality" (binary)
+model = Transformer(dataset=sample_dataset, embedding_dim=128)
 ```
 
 ## Best Practices

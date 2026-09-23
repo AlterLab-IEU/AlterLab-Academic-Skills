@@ -12,7 +12,7 @@ PyHealth provides comprehensive data processing utilities to transform raw healt
 >     output_schema = {"mortality": "binary"}
 > ```
 >
-> The class-by-class catalog below is a **conceptual reference** to the kinds of processing PyHealth performs. Treat the exact class names, import paths, and constructor kwargs as **illustrative, not verified** for 2.0.1 — confirm against `pyhealth.processors` / the installed source before importing a specific class. Prefer the schema-string approach above.
+> The class-by-class catalog below is a **conceptual reference** to the kinds of processing PyHealth performs. Treat the exact class names, import paths, and constructor kwargs as **illustrative, not verified** for 2.0.x — confirm against `pyhealth.processors` / the installed source before importing a specific class. Prefer the schema-string approach above.
 
 ## Processor Base Class
 

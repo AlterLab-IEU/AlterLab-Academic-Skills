@@ -55,15 +55,15 @@ trainer.train(
 
 **Training Features:**
 
-1. **Automatic Checkpointing**: Saves best model based on monitored metric
+1. **Automatic Checkpointing**: Saves the best model by the monitored metric (`best.ckpt`, when logging is enabled)
 
-2. **Early Stopping**: Stops training if no improvement
+2. **Early Stopping**: `patience=<epochs>` stops training when the monitored metric stops improving
 
-3. **Gradient Clipping**: Prevents exploding gradients
+3. **Gradient Clipping**: `max_grad_norm=<float>` clips gradients
 
-4. **Progress Tracking**: Displays training progress and metrics
+4. **Progress Tracking**: Logs training progress and validation metrics
 
-5. **Multi-GPU Support**: Automatic device placement
+5. **Device Placement**: Single device — CUDA if available, else CPU (override with `Trainer(device=...)`); multi-GPU training is not built in
 
 ### Inference
 
@@ -81,11 +81,13 @@ Performs predictions on datasets.
 # Default: returns a 3-tuple
 y_true, y_prob, loss = trainer.inference(test_loader)
 
-# With extras: returns a 5-tuple (order matters)
-y_true, y_prob, loss, additional_outputs, patient_ids = trainer.inference(
-    test_loader,
-    additional_outputs=["attention_weights"],
-    return_patient_ids=True,
+# With patient IDs: returns a 4-tuple
+y_true, y_prob, loss, patient_ids = trainer.inference(test_loader, return_patient_ids=True)
+
+# additional_outputs=[...] inserts a dict before patient_ids; request only keys the
+# model's forward() actually returns (e.g. "logit"; calibrated set models add "y_predset")
+y_true, y_prob, loss, extra, patient_ids = trainer.inference(
+    test_loader, additional_outputs=["logit"], return_patient_ids=True,
 )
 ```
 
@@ -123,15 +125,17 @@ binary_metrics_fn(y_true, y_prob, metrics=["pr_auc", "roc_auc", "f1"])
 
 ### Checkpoint Management
 
-**save() method**
+The `Trainer` saves and restores the model's `state_dict` (there is no `trainer.save()` / `trainer.load()`):
+
 ```python
-trainer.save("./models/best_model.pt")
+trainer.save_ckpt("./models/best_model.pt")
+trainer.load_ckpt("./models/best_model.pt")
+
+# Or load while constructing a trainer for an identically configured model
+trainer = Trainer(model=model, checkpoint_path="./models/best_model.pt")
 ```
 
-**load() method**
-```python
-trainer.load("./models/best_model.pt")
-```
+With logging enabled (the default), `train()` writes `last.ckpt` and `best.ckpt` (by `monitor`) under `output_path/exp_name` and reloads `best.ckpt` at the end (`load_best_model_at_last=True`). With `enable_logging=False` nothing is written, so call `save_ckpt()` yourself.
 
 ## Evaluation Metrics
 
@@ -140,7 +144,7 @@ trainer.load("./models/best_model.pt")
 **Available metric strings:**
 - `accuracy`: Overall accuracy
 - `f1`: F1 score
-- `precision_recall_f1` / `precision` / `recall`
+- `precision`, `recall`, `balanced_accuracy`, `jaccard`
 - `roc_auc`: Area under ROC curve
 - `pr_auc`: Area under precision-recall curve
 - `cohen_kappa`: Inter-rater reliability
@@ -221,7 +225,7 @@ sns.heatmap(cm, annot=True, fmt='d')
 - `f1_samples`: Sample-averaged F1
 - `pr_auc_samples`: Sample-averaged AUPRC
 - `hamming_loss`: Fraction of incorrect labels
-- `ddi`: Drug-drug interaction rate (drug-rec models)
+- `ddi`: Drug-drug interaction rate (drug-rec models; returned under the key `ddi_score`)
 
 **Usage:**
 ```python
@@ -248,21 +252,22 @@ def precision_at_k(y_true, y_pred, k=10):
 
 ### Regression Metrics
 
-**Available metric strings:**
+**Available metric strings (2.0.2):**
 - `mae`: Mean absolute error
 - `mse`: Mean squared error
-- `rmse`: Root mean squared error
-- `r2`: Coefficient of determination
+- `kl_divergence`: KL divergence between the normalized target and prediction vectors
+
+Any other name (e.g. `rmse`, `r2`) raises `ValueError`; compute those with scikit-learn.
 
 **Usage:**
 ```python
 from pyhealth.metrics.regression import regression_metrics_fn
 
-metrics = regression_metrics_fn(
-    y_true=true_values,
-    y_prob=predictions,
-    metrics=["mae", "rmse", "r2"],
-)
+# Signature: regression_metrics_fn(x, x_rec, metrics=None) — positional true, predicted
+metrics = regression_metrics_fn(true_values, predictions, metrics=["mae", "mse"])
+
+from sklearn.metrics import r2_score, root_mean_squared_error
+extra = {"rmse": root_mean_squared_error(true_values, predictions), "r2": r2_score(true_values, predictions)}
 ```
 
 **Percentage Error Metrics:**
@@ -371,22 +376,13 @@ calibrator.fit(val_predictions, val_labels)
 calibrated_probs = calibrator.predict(test_predictions)
 ```
 
-3. **Temperature Scaling**: Scale logits before softmax
+3. **Temperature Scaling and other built-in calibrators**: PyHealth wraps a trained model with a calibrator from `pyhealth.calib.calibration` (`TemperatureScaling`, `HistogramBinning`, `DirichletCalibration`, `KCal`) and fits it on a held-out calibration split. Check each class docstring for the task modes it supports.
 ```python
-def find_temperature(logits, labels):
-    """Find optimal temperature parameter"""
-    from scipy.optimize import minimize
+from pyhealth.calib.calibration import TemperatureScaling
 
-    def nll(temp):
-        scaled_logits = logits / temp
-        probs = torch.softmax(scaled_logits, dim=1)
-        return F.cross_entropy(probs, labels).item()
-
-    result = minimize(nll, x0=1.0, method='BFGS')
-    return result.x[0]
-
-temperature = find_temperature(val_logits, val_labels)
-calibrated_logits = test_logits / temperature
+cal_model = TemperatureScaling(model)       # model = trained PyHealth model
+cal_model.calibrate(cal_dataset=val_data)   # a split not used for checkpoint selection, ideally
+print(Trainer(model=cal_model, metrics=["accuracy"]).evaluate(test_loader))
 ```
 
 ### Uncertainty Quantification
@@ -395,24 +391,22 @@ calibrated_logits = test_logits / temperature
 
 Provide prediction sets with guaranteed coverage.
 
-**Usage:**
+**Usage (split conformal, multiclass, plain NumPy):**
 ```python
-from pyhealth.metrics import prediction_set_metrics_fn
+import numpy as np
 
-# Calibrate on validation set
-scores = 1 - val_predictions[np.arange(len(val_labels)), val_labels]
-quantile_level = np.quantile(scores, 0.9)  # 90% coverage
+alpha = 0.1                                   # target 90% coverage
+n = len(cal_labels)                           # held-out calibration split
+scores = 1 - cal_probs[np.arange(n), cal_labels]
+q_level = np.ceil((n + 1) * (1 - alpha)) / n  # finite-sample correction
+qhat = np.quantile(scores, q_level, method="higher")
 
-# Generate prediction sets on test set
-prediction_sets = test_predictions > (1 - quantile_level)
-
-# Evaluate
-metrics = prediction_set_metrics_fn(
-    y_true=test_labels,
-    prediction_sets=prediction_sets,
-    metrics=["coverage", "average_size"]
-)
+prediction_sets = test_probs >= (1 - qhat)    # boolean [n_test, n_classes]
+coverage = prediction_sets[np.arange(len(test_labels)), test_labels].mean()
+avg_size = prediction_sets.sum(axis=1).mean()
 ```
+
+PyHealth also ships prediction-set constructors in `pyhealth.calib.predictionset` (`LABEL`, `SCRIB`, `FavMac`, `CovariateLabel`, `ClusterLabel`, `NeighborhoodLabel`). They wrap a trained model, are fit with `.calibrate(cal_dataset=...)`, and expose the sets via `Trainer(model=cal_model).inference(loader, additional_outputs=["y_predset"])`; the multiclass metric function accepts them through `y_predset=` with metrics such as `miscoverage_ps`, `set_size`, and `rejection_rate`.
 
 **Monte Carlo Dropout:**
 
@@ -428,7 +422,7 @@ def predict_with_uncertainty(model, dataloader, num_samples=20):
         batch_preds = []
         for batch in dataloader:
             with torch.no_grad():
-                output = model(batch)
+                output = model(**batch)["y_prob"]
                 batch_preds.append(output)
         predictions.append(torch.cat(batch_preds))
 
@@ -457,46 +451,25 @@ std_pred = np.std(ensemble_preds, axis=0)  # Uncertainty
 
 ## Interpretability
 
-### Attention Visualization
+### Attention and Attribution Methods
 
-**For Transformer and RETAIN models:**
+PyHealth models do not return raw attention matrices from `forward()` / `Trainer.inference()` (the output dict is `loss`, `y_prob`, `y_true`, `logit`). Use the interpreters in `pyhealth.interpret.methods` instead; each takes a trained model and returns a dict of per-token scores keyed by input feature (`attribute(**batch)`):
 
-```python
-# Get attention weights during inference
-outputs = trainer.inference(
-    test_loader,
-    additional_outputs=["attention_weights"]
-)
-
-attention = outputs["attention_weights"]
-
-# Visualize attention for sample
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-sample_idx = 0
-sample_attention = attention[sample_idx]  # [seq_length, seq_length]
-
-sns.heatmap(sample_attention, cmap='viridis')
-plt.xlabel('Key Position')
-plt.ylabel('Query Position')
-plt.title('Attention Weights')
-plt.show()
-```
-
-**RETAIN Interpretation:**
+| Method | Works with (2.0.2) |
+|--------|--------------------|
+| `CheferRelevance`, `AttentionRollout` | Attention models: `Transformer`, `StageAttentionNet` |
+| `IntegratedGradients`, `DeepLift` (`use_embeddings=True`) | Models with `forward_from_embedding`: `Transformer`, `MLP`, `StageNet`, `StageAttentionNet`, `TorchvisionModel` |
+| `ShapExplainer`, `LimeExplainer` | Perturbation-based; see the class docstrings for input requirements |
 
 ```python
-# RETAIN provides visit-level and feature-level attention
-visit_attention = outputs["visit_attention"]  # Which visits are important
-feature_attention = outputs["feature_attention"]  # Which features are important
+from pyhealth.interpret.methods import IntegratedGradients
 
-# Find most influential visit
-most_important_visit = visit_attention[sample_idx].argmax()
-
-# Find most influential features in that visit
-important_features = feature_attention[sample_idx, most_important_visit].argsort()[-10:]
+ig = IntegratedGradients(model, use_embeddings=True, steps=50)
+batch = next(iter(get_dataloader(test_data, batch_size=1, shuffle=False)))
+attributions = ig.attribute(**batch)          # {"conditions": tensor, ...}
 ```
+
+**RETAIN** is interpretable by design (visit-level alpha and variable-level beta attention), but PyHealth 2.0.2 does not expose those weights through `forward()`, and RETAIN implements neither the Chefer interface nor `forward_from_embedding`. For attributions you can hand to clinicians, train a `Transformer` alongside it.
 
 ### Feature Importance
 
@@ -537,7 +510,7 @@ shap.summary_plot(shap_values, test_data, feature_names=feature_names)
 
 ### Chefer Relevance (PyHealth's built-in attention interpretability)
 
-PyHealth ships the Chefer relevance method for attention-based models (e.g. `Transformer`). The class is `CheferRelevance` in `pyhealth.interpret.methods`; call `get_relevance_matrix(**batch)` on a single-sample batch.
+PyHealth ships the Chefer relevance method for attention-based models (`Transformer`, `StageAttentionNet`; other models raise `ValueError`). The class is `CheferRelevance` in `pyhealth.interpret.methods`; call `attribute(**batch)` (the older `get_relevance_matrix(**batch)` is a deprecated alias).
 
 ```python
 from pyhealth.interpret.methods import CheferRelevance
@@ -549,7 +522,7 @@ relevance = CheferRelevance(model)
 loader = get_dataloader(test_dataset, batch_size=1, shuffle=False)
 batch = next(iter(loader))
 
-scores = relevance.get_relevance_matrix(**batch)  # dict: feature_key -> relevance tensor
+scores = relevance.attribute(**batch)  # dict: feature_key -> [batch, num_tokens] tensor
 for feature_key, rel in scores.items():
     top_tokens = rel[0].topk(5).indices
     print(f"{feature_key}: top-5 tokens -> {top_tokens.tolist()}")
@@ -559,13 +532,13 @@ for feature_key, rel in scores.items():
 
 ```python
 import torch
-from pyhealth.datasets import MIMIC4Dataset, split_by_patient, get_dataloader
+from pyhealth.datasets import MIMIC4EHRDataset, split_by_patient, get_dataloader
 from pyhealth.tasks import MortalityPredictionMIMIC4
 from pyhealth.models import Transformer
 from pyhealth.trainer import Trainer
 
 # 1. Load and prepare data
-dataset = MIMIC4Dataset(
+dataset = MIMIC4EHRDataset(
     root="/path/to/mimic4",
     tables=["diagnoses_icd", "procedures_icd", "prescriptions"],
 )
@@ -584,9 +557,6 @@ test_loader = get_dataloader(test_data, batch_size=64, shuffle=False)
 # 4. Initialize model
 model = Transformer(
     dataset=sample_dataset,
-    feature_keys=["conditions", "procedures", "drugs"],
-    label_key="mortality",
-    mode="binary",
     embedding_dim=128,
     num_layers=2,
     dropout=0.3,
@@ -622,7 +592,7 @@ ece = expected_calibration_error(y_true, positive_prob)
 print(f"Expected Calibration Error: {ece:.4f}")
 
 # 9. Save final model
-trainer.save("./models/mortality_transformer_final.pt")
+trainer.save_ckpt("./models/mortality_transformer_final.pt")
 ```
 
 ## Best Practices

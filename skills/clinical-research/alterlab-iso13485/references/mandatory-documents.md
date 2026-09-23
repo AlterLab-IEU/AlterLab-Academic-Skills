@@ -596,11 +596,11 @@ Organizations must define the "lifetime" of their medical devices and establish 
 
 ---
 
-## Transition to Medical Device File (MDF)
+## Mapping QSR Records to ISO 13485 Files (FDA QMSR)
 
-With FDA QMSR harmonization (effective February 2, 2026), organizations should prepare for transitioning from separate files to a unified Medical Device File (MDF) that replaces:
-- **DHF** (Design History File)
-- **DMR** (Device Master Record)
-- **DHR** (Device History Record)
+Under the FDA QMSR (in effect since February 2, 2026) the QSR record names are gone, but the content is still required; FDA's final rule treats ISO 13485's recordkeeping as substantively equivalent:
+- **DMR** (Device Master Record) → Medical Device File, clause 4.2.3
+- **DHF** (Design History File) → design and development file, clause 7.3.10
+- **DHR** (Device History Record) → record for each medical device or batch, clause 7.5.1 (with UDI recorded per § 820.35(c))
 
-The MDF approach aligns with ISO 13485:2016 requirements and provides a more unified documentation structure.
+Existing DHF/DMR/DHR structures can stay if they are cross-referenced to these clauses; renaming or merging them is optional, not a QMSR requirement.

@@ -8,21 +8,38 @@ detailed descriptions of images in documents (PowerPoint, PDFs with images, etc.
 
 import argparse
 import os
+import re
 import sys
 from pathlib import Path
 from markitdown import MarkItDown
 from openai import OpenAI
 
 
-# AlterLab model convention — default reviewed 2026-06-06; override via ALTERLAB_MODEL.
-# See skills/core/shared/model_env.md before changing the default. OpenRouter requires a
-# "provider/model" slug, so the dated Anthropic default carries its "anthropic/" prefix here.
-DEFAULT_MODEL = "anthropic/claude-opus-4-8"
+# AlterLab model convention — default reviewed 2026-09-23; override via ALTERLAB_MODEL.
+# See skills/core/shared/model_env.md before changing the default. ALTERLAB_MODEL holds an
+# Anthropic model ID; openrouter_slug() derives the "provider/model" slug OpenRouter needs.
+DEFAULT_MODEL = "claude-opus-5-5"
 
 
 def alterlab_model() -> str:
     """Return the model ID to use: $ALTERLAB_MODEL if set/non-empty, else the dated default."""
     return os.environ.get("ALTERLAB_MODEL") or DEFAULT_MODEL
+
+
+def openrouter_slug(model: str) -> str:
+    """Map an Anthropic model ID to its OpenRouter slug; pass anything else through.
+
+    OpenRouter names Claude models with a provider prefix and a dotted version
+    (claude-opus-5-5 -> anthropic/claude-opus-5.5). IDs that already carry a provider
+    prefix ("anthropic/...", "google/...") are returned unchanged.
+    """
+    if "/" in model:
+        return model
+    m = re.fullmatch(r"claude-([a-z]+)-(\d+)(?:-(\d{1,2}))?(?:-\d{8})?", model)
+    if not m:
+        return model
+    family, major, minor = m.groups()
+    return f"anthropic/claude-{family}-{major}" + (f".{minor}" if minor else "")
 
 
 # Predefined prompts for different use cases
@@ -102,6 +119,7 @@ def convert_with_ai(
     """
     if not model:
         model = alterlab_model()
+    model = openrouter_slug(model)
     try:
         # Initialize OpenRouter client (OpenAI-compatible)
         client = OpenAI(
@@ -167,10 +185,10 @@ Examples:
   python convert_with_ai.py paper.pdf output.md --prompt-type scientific
   
   # Convert a presentation with custom model
-  python convert_with_ai.py slides.pptx slides.md --model anthropic/claude-opus-4-8 --prompt-type presentation
+  python convert_with_ai.py slides.pptx slides.md --model anthropic/claude-opus-5.5 --prompt-type presentation
 
   # Use custom prompt with advanced vision model
-  python convert_with_ai.py diagram.png diagram.md --model anthropic/claude-opus-4-8 --custom-prompt "Describe this technical diagram"
+  python convert_with_ai.py diagram.png diagram.md --model anthropic/claude-opus-5.5 --custom-prompt "Describe this technical diagram"
 
   # Set API key via environment variable
   export OPENROUTER_API_KEY="sk-or-v1-..."
@@ -181,7 +199,8 @@ Environment Variables:
   ALTERLAB_MODEL        Override the default model ID (see skills/core/shared/model_env.md)
 
 Popular Models (use with --model):
-  anthropic/claude-opus-4-8 - Recommended for scientific vision (dated default)
+  anthropic/claude-opus-5.5 - Recommended for scientific vision (the dated default,
+                              claude-opus-5-5, maps to this slug)
   Any OpenRouter vision slug (e.g. a current Google Gemini Pro Vision model) also works.
         """
     )

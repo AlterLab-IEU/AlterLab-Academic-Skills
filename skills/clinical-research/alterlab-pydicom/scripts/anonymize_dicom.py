@@ -2,9 +2,15 @@
 """
 Anonymize DICOM files by removing or replacing Protected Health Information (PHI).
 
+This is a first-pass tag scrubber, not a validated de-identification profile: it does
+not shift other dates, replace UIDs, walk nested sequences, or detect text burned into
+the pixel data. For data leaving your institution, use a DICOM PS3.15 Annex E based
+tool (e.g. `deid` or `dicognito`) and review the output.
+
 Usage:
     python anonymize_dicom.py input.dcm output.dcm
     python anonymize_dicom.py input.dcm output.dcm --patient-id ANON001
+    python anonymize_dicom.py input.dcm output.dcm --keep-private   # keep vendor private tags
 """
 
 import argparse
@@ -34,10 +40,13 @@ PHI_TAGS = [
     'DerivationDescription', 'RequestingPhysician', 'RequestingService',
     'RequestedProcedureDescription', 'ScheduledPerformingPhysicianName',
     'PerformedLocation', 'PerformedStationName',
+    'AccessionNumber', 'OtherPatientIDs', 'OtherPatientNames', 'OtherPatientIDsSequence',
+    'PatientBirthName', 'StationName', 'DeviceSerialNumber',
 ]
 
 
-def anonymize_dicom(input_path, output_path, patient_id='ANONYMOUS', patient_name='ANONYMOUS'):
+def anonymize_dicom(input_path, output_path, patient_id='ANONYMOUS', patient_name='ANONYMOUS',
+                    remove_private=True):
     """
     Anonymize a DICOM file by removing or replacing PHI.
 
@@ -46,6 +55,7 @@ def anonymize_dicom(input_path, output_path, patient_id='ANONYMOUS', patient_nam
         output_path: Path to output anonymized DICOM file
         patient_id: Replacement patient ID (default: 'ANONYMOUS')
         patient_name: Replacement patient name (default: 'ANONYMOUS')
+        remove_private: Remove vendor private tags, which often hold identifiers (default: True)
     """
     try:
         # Read DICOM file
@@ -69,6 +79,13 @@ def anonymize_dicom(input_path, output_path, patient_id='ANONYMOUS', patient_nam
                 else:
                     delattr(ds, tag)
                     anonymized.append(f"{tag}: removed")
+
+        # Vendor private tags frequently carry names, IDs, or dates
+        if remove_private:
+            ds.remove_private_tags()
+            anonymized.append("private tags: removed")
+
+        ds.PatientIdentityRemoved = 'YES'
 
         # Anonymize UIDs if present (optional - maintains referential integrity)
         # Uncomment if you want to anonymize UIDs as well
@@ -106,6 +123,8 @@ Examples:
                        help='Replacement patient ID (default: ANONYMOUS)')
     parser.add_argument('--patient-name', type=str, default='ANONYMOUS',
                        help='Replacement patient name (default: ANONYMOUS)')
+    parser.add_argument('--keep-private', action='store_true',
+                       help='Keep vendor private tags (removed by default because they often contain PHI)')
     parser.add_argument('-v', '--verbose', action='store_true',
                        help='Show detailed anonymization information')
 
@@ -120,7 +139,8 @@ Examples:
     # Anonymize the file
     print(f"Anonymizing: {args.input}")
     success, result = anonymize_dicom(args.input, args.output,
-                                     args.patient_id, args.patient_name)
+                                     args.patient_id, args.patient_name,
+                                     remove_private=not args.keep_private)
 
     if success:
         print(f"✓ Successfully anonymized DICOM file: {args.output}")

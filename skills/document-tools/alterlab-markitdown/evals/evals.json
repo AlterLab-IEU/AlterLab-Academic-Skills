@@ -4,7 +4,7 @@
     {
       "id": "pdf-paper-to-markdown",
       "prompt": "I downloaded a research paper as a PDF (smith_2023_tmb.pdf) and I want it as clean Markdown so I can paste it into an LLM prompt without wasting tokens on layout junk. How do I do that?",
-      "expected_output": "Triggers alterlab-markitdown. Recommends Microsoft MarkItDown to convert the PDF to token-efficient Markdown, e.g. the markitdown CLI (`markitdown smith_2023_tmb.pdf -o smith_2023_tmb.md`) or the Python API (`from markitdown import MarkItDown; MarkItDown().convert(...)`, reading `result.text_content`). May note pip install 'markitdown[pdf]' for PDF support.",
+      "expected_output": "Triggers alterlab-markitdown. Recommends Microsoft MarkItDown to convert the PDF to token-efficient Markdown, e.g. the markitdown CLI (`markitdown smith_2023_tmb.pdf -o smith_2023_tmb.md`) or the Python API (`from markitdown import MarkItDown; MarkItDown().convert(...)`, reading `result.markdown`; `text_content` is a soft-deprecated alias). May note uv pip install 'markitdown[pdf]' for PDF support.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "markitdown" },
@@ -24,11 +24,11 @@
     {
       "id": "scanned-image-ocr",
       "prompt": "I have a scanned figure saved as a PNG with embedded text labels, plus a JPEG of a handwritten-ish chart. I need the text pulled out of these images into Markdown — does this tool do OCR?",
-      "expected_output": "Triggers alterlab-markitdown. Confirms MarkItDown extracts text from images (JPEG/PNG) via OCR and also reads EXIF metadata, converting to Markdown. May note that OCR requires tesseract installed (e.g. `brew install tesseract`) and that AI-enhanced image descriptions are optionally available via an LLM client.",
+      "expected_output": "Triggers alterlab-markitdown. Explains that MarkItDown's image converter handles JPEG/PNG, reads EXIF metadata (via exiftool), and produces text only through an LLM description when an llm_client/llm_model is configured; it has no local OCR engine, so tesseract alone does not help. Recommends an OCR route: an LLM client with a transcription-oriented llm_prompt, the markitdown-ocr plugin (for images inside PDF/DOCX/PPTX/XLSX), or Azure Document Intelligence.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "OCR" },
-        { "type": "behavior", "value": "Confirms image OCR text extraction to Markdown and mentions a dependency such as tesseract." }
+        { "type": "behavior", "value": "Explains that text extraction from images needs an LLM client, the markitdown-ocr plugin, or Azure Document Intelligence (no local tesseract OCR), and mentions EXIF metadata." }
       ]
     },
     {
@@ -48,6 +48,15 @@
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-open-notebook" }
+      ]
+    },
+    {
+      "id": "near-miss-pdf-explore",
+      "prompt": "In this trial report PDF, do the sample sizes in the results tables match the CONSORT flow diagram, and where does the appendix change the primary outcome definition?",
+      "expected_output": "Should NOT trigger alterlab-markitdown — the user wants located, cross-section answers about one PDF (tables vs. flow diagram vs. appendix), not a format conversion. Defer to alterlab-pdf-explore, which parses the document once and answers with page/section citations.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-pdf-explore" }
       ]
     }
   ]

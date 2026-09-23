@@ -58,6 +58,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-pyhealth" }
       ]
+    },
+    {
+      "id": "near-miss-exploratory-eda",
+      "prompt": "Run an EDA on my survey_results.csv: check missing values, distributions, and correlations between the columns and write me a short report.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-eda. Here 'EDA' means exploratory data analysis of a tabular data file (missingness, distributions, correlations, report), not electrodermal activity. NeuroKit2's EDA functions process skin-conductance biosignals.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-eda" }
+      ]
     }
   ]
 }

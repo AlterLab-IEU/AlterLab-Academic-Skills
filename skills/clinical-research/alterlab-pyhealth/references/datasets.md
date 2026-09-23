@@ -2,37 +2,27 @@
 
 ## Core Data Structures
 
+PyHealth 2.x stores every source table as rows of one long, polars-backed event table; the 1.x `Visit` object is deprecated.
+
 ### Event
-Individual medical occurrences with attributes including:
-- **code**: Medical code (diagnosis, medication, procedure, lab test)
-- **vocabulary**: Coding system (ICD-9-CM, NDC, LOINC, etc.)
-- **timestamp**: Event occurrence time
-- **value**: Numeric value (for labs, vital signs)
-- **unit**: Measurement unit
+One row from a source table:
+- **event_type**: The table it came from (e.g. `"admissions"`, `"diagnoses_icd"`, `"prescriptions"`)
+- **timestamp**: `datetime` of the event
+- **attributes**: The table's configured columns, readable as attributes (e.g. `event.icd_code`, `event.icd_version`, `event.hadm_id`, `event.dischtime` for MIMIC-IV); column names come from the dataset YAML config
 
 ### Patient
-Collection of events organized chronologically across visits. Each patient contains:
+All events for one patient, sorted by time:
 - **patient_id**: Unique identifier
-- **birth_datetime**: Date of birth
-- **gender**: Patient gender
-- **ethnicity**: Patient ethnicity
-- **visits**: List of visit objects
-
-### Visit
-Healthcare encounter containing:
-- **visit_id**: Unique identifier
-- **encounter_time**: Visit timestamp
-- **discharge_time**: Discharge timestamp
-- **visit_type**: Type of encounter (inpatient, outpatient, emergency)
-- **events**: List of events during this visit
+- **get_events(event_type=..., start=..., end=...)**: Events of one type, optionally within a time window — tasks use this to collect, e.g., the diagnoses recorded during an admission
+- Visits/admissions are just events of type `"admissions"` (or the dataset's equivalent)
 
 ## BaseDataset Class
 
-In PyHealth 2.x, dataset constructors take an explicit `tables=[...]` list naming the source tables to load (table names come from the dataset's YAML config, e.g. `mimic4_ehr.yaml`).
+In PyHealth 2.x, dataset constructors take an explicit table list naming the source tables to load (table names come from the dataset's YAML config, e.g. `mimic4_ehr.yaml`). Single-source loaders (`MIMIC3Dataset`, `MIMIC4EHRDataset`, `eICUDataset`, `OMOPDataset`) take `root=` + `tables=[...]`; the multimodal `MIMIC4Dataset` takes `ehr_root=` / `note_root=` / `cxr_root=` with `ehr_tables=` / `note_tables=` / `cxr_tables=`. The EHR loaders (MIMIC-III/IV, eICU, OMOP) accept `dev=True` to work on the first 1,000 patients.
 
 **Key Methods:**
 - `iter_patients()`: Iterate through all patients
-- `stats()`: Get dataset statistics (patients, visits, events)
+- `stats()`: Print dataset statistics (patient and event counts; returns `None`)
 - `set_task(task)`: Apply a prediction task. Pass an **instance** of a task class (e.g. `MortalityPredictionMIMIC4()`), not a bare function.
 
 ## Available Datasets
@@ -45,11 +35,11 @@ In PyHealth 2.x, dataset constructors take an explicit `tables=[...]` list namin
 - Diagnoses, procedures, medications, lab results
 - Usage: `from pyhealth.datasets import MIMIC3Dataset`
 
-**MIMIC-IV Dataset** (`MIMIC4Dataset`)
-- Updated version with 70,000+ patients
-- Improved data quality and coverage
-- Enhanced demographic and clinical detail
-- Usage: `from pyhealth.datasets import MIMIC4Dataset`
+**MIMIC-IV Datasets** (`MIMIC4EHRDataset`, `MIMIC4NoteDataset`, `MIMIC4CXRDataset`, `MIMIC4Dataset`)
+- Hospital + ICU EHR from Beth Israel Deaconess (MIMIC-IV), with optional notes and chest X-rays
+- `MIMIC4EHRDataset(root=..., tables=[...])` for structured EHR only
+- `MIMIC4Dataset(ehr_root=..., ehr_tables=[...], note_root=..., cxr_root=...)` to combine modalities
+- Usage: `from pyhealth.datasets import MIMIC4EHRDataset`
 
 **eICU Dataset** (`eICUDataset`)
 - Multi-center critical care database
@@ -154,11 +144,11 @@ sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 ## Common Workflow
 
 ```python
-from pyhealth.datasets import MIMIC4Dataset, split_by_patient
+from pyhealth.datasets import MIMIC4EHRDataset, split_by_patient
 from pyhealth.tasks import MortalityPredictionMIMIC4
 
 # 1. Load dataset (declare the tables you need)
-dataset = MIMIC4Dataset(
+dataset = MIMIC4EHRDataset(
     root="/path/to/data",
     tables=["diagnoses_icd", "procedures_icd", "prescriptions"],
 )
@@ -169,8 +159,8 @@ sample_dataset = dataset.set_task(MortalityPredictionMIMIC4())
 # 3. Split data
 train, val, test = split_by_patient(sample_dataset, [0.7, 0.1, 0.2])
 
-# 4. Get statistics
-print(dataset.stats())
+# 4. Get statistics (prints; returns None)
+dataset.stats()
 ```
 
 ## Performance Notes

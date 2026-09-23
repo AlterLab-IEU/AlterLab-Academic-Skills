@@ -46,6 +46,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-markitdown" }
       ]
+    },
+    {
+      "id": "near-miss-paper-reviewer",
+      "prompt": "Act as a journal review panel for this manuscript PDF: give me an editorial decision, reviewer reports, and a prioritized revision roadmap.",
+      "expected_output": "Should NOT trigger alterlab-pdf-explore as the primary skill; defers to alterlab-paper-reviewer, which runs the multi-reviewer panel and produces the editorial decision and revision roadmap. pdf-explore only supplies located evidence from inside a PDF.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-paper-reviewer" }
+      ]
     }
   ]
 }

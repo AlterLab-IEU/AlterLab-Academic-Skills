@@ -235,11 +235,11 @@ Medical code translation integrates seamlessly with PyHealth datasets:
 The `medcode` maps are independent of the dataset classes — load them directly and apply them to codes you pull from a dataset (event-traversal attributes vary by dataset/version; confirm against your loaded tables).
 
 ```python
-from pyhealth.datasets import MIMIC4Dataset
+from pyhealth.datasets import MIMIC4EHRDataset
 from pyhealth.medcode import CrossMap
 
 # Load dataset (declare the tables you need)
-dataset = MIMIC4Dataset(
+dataset = MIMIC4EHRDataset(
     root="/path/to/data",
     tables=["diagnoses_icd"],
 )
@@ -247,14 +247,17 @@ dataset = MIMIC4Dataset(
 # Load code mapping
 icd_to_ccs = CrossMap.load("ICD10CM", "CCSCM")
 
-# Process patient diagnoses
+# Process patient diagnoses (PyHealth 2.x: events are table rows; MIMIC-IV
+# diagnoses_icd rows carry icd_code and icd_version columns)
 for patient in dataset.iter_patients():
-    for visit in patient.visits:
-        diagnosis_events = [e for e in visit.events if e.vocabulary == "ICD10CM"]
-
-        for event in diagnosis_events:
-            ccs_codes = icd_to_ccs.map(event.code)
-            print(f"Diagnosis {event.code} -> CCS {ccs_codes}")
+    for event in patient.get_events(event_type="diagnoses_icd"):
+        if str(event.icd_version) != "10":
+            continue
+        try:
+            ccs_codes = icd_to_ccs.map(event.icd_code)  # map() standardizes the code
+        except KeyError:
+            ccs_codes = []                               # no CCS mapping for this code
+        print(f"Diagnosis {event.icd_code} -> CCS {ccs_codes}")
 ```
 
 ## Use Cases
