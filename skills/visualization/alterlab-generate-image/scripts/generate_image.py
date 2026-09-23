@@ -2,21 +2,32 @@
 """
 Generate and edit images using OpenRouter API with various image generation models.
 
-Supports OpenRouter image models that accept the chat-completions
-`modalities: ["image", "text"]` interface, e.g.:
-- google/gemini-3.1-flash-image-preview ("Nano Banana 2", generation + editing)
+Supports OpenRouter image models served on the chat-completions endpoint with the
+`modalities` parameter, e.g.:
+- google/gemini-3.1-flash-image ("Nano Banana 2", generation + editing)
 - black-forest-labs/flux.2-pro (generation + editing)
 - black-forest-labs/flux.2-flex (generation + editing)
 
 For image editing, provide an input image along with an editing prompt.
 """
 
+import os
 import sys
 import json
 import base64
 import argparse
 from pathlib import Path
 from typing import Optional
+
+# Image-model default follows the ALTERLAB_*_MODEL convention (skills/core/shared/model_env.md):
+# reviewed 2026-09-23. google/gemini-3.1-flash-image is the GA "Nano Banana 2"; the former
+# -preview ID was shut down by Google on 2026-06-25. Override via ALTERLAB_IMAGE_MODEL or --model.
+DEFAULT_IMAGE_MODEL = "google/gemini-3.1-flash-image"
+
+
+def default_image_model() -> str:
+    """Return $ALTERLAB_IMAGE_MODEL if set/non-empty, else the dated default."""
+    return os.environ.get("ALTERLAB_IMAGE_MODEL") or DEFAULT_IMAGE_MODEL
 
 
 def check_env_file() -> Optional[str]:
@@ -74,7 +85,7 @@ def save_base64_image(base64_data: str, output_path: str) -> None:
 
 def generate_image(
     prompt: str,
-    model: str = "google/gemini-3.1-flash-image-preview",
+    model: Optional[str] = None,
     output_path: str = "generated_image.png",
     api_key: Optional[str] = None,
     input_image: Optional[str] = None
@@ -84,9 +95,9 @@ def generate_image(
 
     Args:
         prompt: Text description of the image to generate, or editing instructions
-        model: OpenRouter model ID (default: google/gemini-3.1-flash-image-preview)
+        model: OpenRouter model ID (default: $ALTERLAB_IMAGE_MODEL or DEFAULT_IMAGE_MODEL)
         output_path: Path to save the generated image
-        api_key: OpenRouter API key (will check .env if not provided)
+        api_key: OpenRouter API key (falls back to $OPENROUTER_API_KEY, then a .env file)
         input_image: Path to an input image for editing (optional)
 
     Returns:
@@ -98,9 +109,11 @@ def generate_image(
         print("Error: 'requests' library not found. Install with: pip install requests")
         sys.exit(1)
 
-    # Check for API key
+    model = model or default_image_model()
+
+    # API key: explicit argument, then the environment, then a .env file
     if not api_key:
-        api_key = check_env_file()
+        api_key = os.environ.get("OPENROUTER_API_KEY") or check_env_file()
 
     if not api_key:
         print("❌ Error: OPENROUTER_API_KEY not found!")
@@ -140,24 +153,36 @@ def generate_image(
         print(f"📝 Prompt: {prompt}")
         message_content = prompt
 
-    # Make API request
-    response = requests.post(
-        url="https://openrouter.ai/api/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-        json={
-            "model": model,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": message_content
-                }
-            ],
-            "modalities": ["image", "text"]
-        }
-    )
+    # Make API request. Gemini/GPT image models return image + text; image-only models
+    # (e.g. FLUX.2) may reject a request that also asks for text, so retry once with
+    # modalities=["image"] on a client error.
+    response = None
+    for modalities in (["image", "text"], ["image"]):
+        try:
+            response = requests.post(
+                url="https://openrouter.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": model,
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": message_content
+                        }
+                    ],
+                    "modalities": modalities
+                },
+                timeout=300,
+            )
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Request failed: {e}")
+            sys.exit(1)
+        if response.status_code in (400, 422) and len(modalities) > 1:
+            continue
+        break
 
     # Check for errors
     if response.status_code != 200:
@@ -194,14 +219,17 @@ def generate_image(
                 save_base64_image(image["url"], output_path)
                 print(f"✅ Image saved to: {output_path}")
             else:
-                print(f"⚠️ Unexpected image format: {image}")
+                print(f"❌ Unexpected image format: {image}")
+                sys.exit(1)
         else:
-            print("⚠️ No image found in response")
+            print("❌ No image found in response")
             if message.get("content"):
                 print(f"Response content: {message['content']}")
+            sys.exit(1)
     else:
         print("❌ No choices in response")
         print(f"Response: {json.dumps(result, indent=2)}")
+        sys.exit(1)
 
     return result
 
@@ -212,7 +240,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Generate with default model (Gemini 3.1 Flash Image Preview)
+  # Generate with default model (Gemini 3.1 Flash Image, or $ALTERLAB_IMAGE_MODEL)
   python generate_image.py "A beautiful sunset over mountains"
 
   # Use a specific model
@@ -228,7 +256,7 @@ Examples:
   python generate_image.py "Add a hat to the person" --input portrait.png -m "black-forest-labs/flux.2-pro"
 
 Popular image models (all support generation + editing):
-  - google/gemini-3.1-flash-image-preview (default, "Nano Banana 2", high quality)
+  - google/gemini-3.1-flash-image (default, "Nano Banana 2", high quality)
   - black-forest-labs/flux.2-pro (frontier quality)
   - black-forest-labs/flux.2-flex (cheaper, strong text/typography)
         """
@@ -243,8 +271,8 @@ Popular image models (all support generation + editing):
     parser.add_argument(
         "--model", "-m",
         type=str,
-        default="google/gemini-3.1-flash-image-preview",
-        help="OpenRouter model ID (default: google/gemini-3.1-flash-image-preview)"
+        default=None,
+        help=f"OpenRouter model ID (default: $ALTERLAB_IMAGE_MODEL or {DEFAULT_IMAGE_MODEL})"
     )
 
     parser.add_argument(
@@ -263,7 +291,7 @@ Popular image models (all support generation + editing):
     parser.add_argument(
         "--api-key",
         type=str,
-        help="OpenRouter API key (will check .env if not provided)"
+        help="OpenRouter API key (default: $OPENROUTER_API_KEY, then a .env file)"
     )
 
     args = parser.parse_args()

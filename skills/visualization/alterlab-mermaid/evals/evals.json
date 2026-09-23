@@ -53,6 +53,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-seaborn" }
       ]
+    },
+    {
+      "id": "near-miss-scientific-writing",
+      "prompt": "Write the Discussion section of my manuscript in full paragraphs — interpret the main findings, compare them with prior studies, and cover limitations, with citations.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-scientific-writing. Drafting manuscript prose with citations is the writing skill's job; this skill covers Markdown documentation and Mermaid diagrams, not journal-article text.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-scientific-writing" }
+      ]
     }
   ]
 }

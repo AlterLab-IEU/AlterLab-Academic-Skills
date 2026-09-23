@@ -54,6 +54,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-scientific-viz" }
       ]
+    },
+    {
+      "id": "near-miss-eda",
+      "prompt": "Run a full exploratory data analysis on this instrument export (samples.parquet): check structure, missing values, and outliers, and write me an EDA report with next-step recommendations.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-eda. A format-aware EDA report covering structure, data quality, and summary statistics is alterlab-eda's workflow; seaborn is for drawing specific statistical plots once you know what to look at.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-eda" }
+      ]
     }
   ]
 }

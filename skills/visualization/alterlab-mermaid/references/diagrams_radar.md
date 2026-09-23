@@ -9,7 +9,7 @@
 **Best for:** Multi-dimensional comparisons, skill assessments, performance profiles, competitive analysis
 **When NOT to use:** Time series data (use [XY Chart](xy_chart.md)), simple proportions (use [Pie](pie.md))
 
-> ⚠️ **Accessibility:** Radar charts do **not** support `accTitle`/`accDescr`. Always place a descriptive _italic_ Markdown paragraph directly above the code block.
+> ✅ **Accessibility:** Radar charts support `accTitle`/`accDescr` (checked on Mermaid 11.12, 11.17, and 12.0) — put them on the lines right after `radar-beta`. An italic description paragraph above the block remains a useful fallback for readers of the raw Markdown.
 
 ---
 
@@ -19,6 +19,8 @@ _Radar chart comparing two engineering candidates across six core competency are
 
 ```mermaid
 radar-beta
+    accTitle: Team Skill Assessment Radar
+    accDescr: Compares two candidates on six skills scored 1 to 5, with Candidate A ahead in system design, communication, and teamwork and Candidate B ahead in algorithms, DevOps, and domain knowledge
     title Team Skill Assessment
     axis sys["System Design"], algo["Algorithms"], comms["Communication"], team["Teamwork"], ops["DevOps"], acq["Domain Knowledge"]
     curve candidate_a["Candidate A"]{4, 3, 5, 5, 2, 3}
@@ -50,6 +52,8 @@ _Description of what dimensions are being compared across which entities:_
 
 ```mermaid
 radar-beta
+    accTitle: Your Radar Title
+    accDescr: One sentence on which entities are compared across which dimensions and where they differ most
     title Your Radar Title
     axis dim1["Dimension 1"], dim2["Dimension 2"], dim3["Dimension 3"], dim4["Dimension 4"], dim5["Dimension 5"]
     curve series_a["Series A"]{3, 4, 2, 5, 3}

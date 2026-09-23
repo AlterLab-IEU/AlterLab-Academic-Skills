@@ -1,13 +1,14 @@
 ---
 name: alterlab-mermaid
-description: Writes Markdown documents and text-based Mermaid diagrams (flowcharts, sequence, class, ER, gantt, state, and more) with full style guides, 24 diagram-type references, and 9 document templates. Use when authoring a scientific document, report, analysis, or README, or when a diagram should be expressed as version-controllable Mermaid/Markdown text rather than a rendered image. For AI-rendered publication schematics use scientific-schematics instead. Part of the AlterLab Academic Skills suite.
+description: Writes Markdown documents and text-based Mermaid diagrams (flowcharts, sequence, class, ER, gantt, state, and more) with full style guides, 24 diagram-type references, and 9 document templates. Use when a diagram or technical document should live as version-controllable Markdown/Mermaid text rather than a rendered image — READMEs, methods and pipeline diagrams, analysis or status reports, ADRs, and project docs that render natively on GitHub and GitLab. For AI-rendered publication schematics use alterlab-scientific-schematics; for manuscript prose use alterlab-scientific-writing; for plots of numeric data use alterlab-matplotlib. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: Apache-2.0
-compatibility: No API key, network, or runtime dependencies. Authoring is pure Markdown/Mermaid text; diagrams render natively on GitHub, GitLab, Notion, VS Code, and any Mermaid-aware viewer.
+compatibility: No API key, network, or runtime dependencies. Authoring is pure Markdown/Mermaid text; diagrams render natively on GitHub, GitLab, Notion, VS Code, and any Mermaid-aware viewer. Syntax checked against Mermaid 11.12 and 12.0 (current 12.0.0 as of 2026-09).
 metadata:
   skill-author: AlterLab
   skill-source: https://github.com/SuperiorByteWorks-LLC/agent-project
-  version: "1.0.0"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
   skill-contributors:
     - name: Clayton Young
       org: Superior Byte Works, LLC / @borealBytes
@@ -42,15 +43,21 @@ converted to a polished image later — but the text version remains the source 
 
 Use this skill when:
 
-- Creating **any scientific document** — reports, analyses, manuscripts, methods sections
-- Writing **any documentation** — READMEs, how-tos, decision records, project docs
-- Producing **any diagram** — workflows, data pipelines, architectures, timelines, relationships
-- Generating **any output that will be version-controlled** — if it's going into git, it should be markdown
-- Working with **any other skill** — this skill defines the documentation layer that wraps every other output
-- Someone asks you to "add a diagram" or "visualize the relationship" — Mermaid first, always
+- Writing **Markdown documentation** — READMEs, how-tos, decision records, project docs, status reports, analysis write-ups
+- Producing **a structural or relational diagram** — workflows, data pipelines, architectures, timelines, schemas
+- Generating **output that will be version-controlled** — if it's going into git, it should be Markdown
+- Someone asks you to "add a diagram" or "visualize the relationship" inside a document — start with Mermaid
 
-Do NOT start with Python matplotlib, seaborn, or AI image generation for structural or relational diagrams.
-Those are Phase 2 and Phase 3 — only used when Mermaid cannot express what's needed (e.g., scatter plots with real data, photorealistic images).
+Don't start with Python matplotlib, seaborn, or AI image generation for structural or relational diagrams. Those are Phase 2 and Phase 3, used only when Mermaid cannot express what's needed (e.g., scatter plots with real data, photorealistic images), because a text diagram stays diffable and editable.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Drafting or revising manuscript prose (introduction, methods, discussion) | `alterlab-scientific-writing` / `alterlab-paper-writer` |
+| Polished, AI-rendered publication figure (PNG) of a schematic or architecture | `alterlab-scientific-schematics` |
+| Plot of real numeric data (scatter, distributions, heatmaps) | `alterlab-matplotlib` / `alterlab-seaborn` |
+| Converting PDFs, Office files, or web pages into Markdown | `alterlab-markitdown` |
 
 ## 🎨 The Source Format Philosophy
 
@@ -98,7 +105,7 @@ flowchart LR
 
 ### What Mermaid can express
 
-Mermaid covers 24 diagram types. Almost every scientific relationship fits one:
+This skill has a guide for 23 Mermaid diagram types plus a multi-diagram composition guide. Almost every scientific relationship fits one:
 
 | Use case | Diagram type | File |
 | -------------------------------------------- | ---------------- | ---------------------------------------------------- |
@@ -130,6 +137,8 @@ Mermaid covers 24 diagram types. Almost every scientific relationship fits one:
 > 💡 **Pick the right type, not the easy one.** Don't default to flowcharts for everything.
 > A timeline beats a flowchart for chronological events. A sequence beats a flowchart for
 > service interactions. Scan the table and match.
+
+**Renderer versions matter.** GitHub, GitLab, Notion, and VS Code each bundle their own Mermaid release. Mermaid 12.0 (September 2026) switched flowchart, class, ER, state, and requirement diagrams to the ELK layout by default and made `redux-color`/`neo` the default theme and look for those plus sequence diagrams, so the same source can lay out and look different on a 12.x renderer than on an 11.x one — don't hand-tune spacing for one renderer. `xychart`, `block`, `sankey`, and `packet` dropped their `-beta` suffix in Mermaid 11.9–11.10; both spellings parse on current Mermaid, and the `-beta` forms used in this skill also work on older renderers. Newer types (for example `venn-beta`, `ishikawa-beta`, `wardley-beta`, `swimlane`, use case, `agentflow-beta`) have no guide here; check that the target renderer supports them before relying on one.
 
 ---
 
@@ -217,7 +226,7 @@ max 3
 - **Use `radar-beta`** not `radar` (the bare keyword doesn't exist)
 - **Use `axis`** to define dimensions, **not** `x-axis`
 - **Use `curve`** to define data series, **not** quoted labels with colon
-- **No `accTitle`/`accDescr`** — radar-beta doesn't support accessibility annotations; always add a descriptive italic paragraph above the diagram
+- **`accTitle`/`accDescr` work** — put them on the lines after `radar-beta` (verified on Mermaid 11.12, 11.17, and 12.0)
 
 ### XY Chart vs Radar confusion
 
@@ -228,12 +237,12 @@ max 3
 
 ### Forgetting `accTitle`/`accDescr` on supported types
 
-Only some diagram types support `accTitle`/`accDescr`. For those that don't, always place a descriptive italic paragraph directly above the code block:
+Most diagram types render `accTitle`/`accDescr` as the SVG's accessible title and description. Mindmap, Sankey, and Block diagrams fail to parse with them, Treemap fails on older renderers (seen on Mermaid 11.12; accepted on 11.17 and 12.0), and Timeline and Kanban accept them but drop them (checked on Mermaid 11.12, 11.17, and 12.0). For those six, place a descriptive italic paragraph directly above the code block instead:
 
-> _Radar chart comparing three methods across five performance dimensions. Note: Radar charts do not support accTitle/accDescr._
+> _Mindmap of the literature landscape grouped by method family. Mindmaps do not support accTitle/accDescr._
 
 ```mermaid
-radar-beta
+mindmap
 ...
 ```
 
@@ -241,30 +250,30 @@ radar-beta
 
 ## 🔗 Integration with other skills
 
-### With `scientific-schematics`
+### With `alterlab-scientific-schematics`
 
-`scientific-schematics` generates AI-powered publication-quality images (PNG). Use the Mermaid diagram as the **brief** for the schematic:
+`alterlab-scientific-schematics` generates AI-powered publication-quality images (PNG). Use the Mermaid diagram as the **brief** for the schematic:
 
 ```
 Workflow:
 1. Create the concept as Mermaid in .md (this skill — Phase 1)
-2. Describe the same concept to scientific-schematics for a polished PNG (Phase 3)
+2. Describe the same concept to alterlab-scientific-schematics for a polished PNG (Phase 3)
 3. Commit both — the .md as source, the PNG as a supplementary figure
 ```
 
-### With `scientific-writing`
+### With `alterlab-scientific-writing`
 
-When `scientific-writing` produces a manuscript, all diagrams and structural figures should use this skill's standards. The writing skill handles prose and citations; this skill handles visual structure.
+When `alterlab-scientific-writing` produces a manuscript, all diagrams and structural figures should use this skill's standards. The writing skill handles prose and citations; this skill handles visual structure.
 
 ```
 Workflow:
-1. Use scientific-writing to draft the manuscript
+1. Use alterlab-scientific-writing to draft the manuscript
 2. For every figure that shows a workflow, architecture, or relationship:
    - Replace placeholder with a Mermaid diagram following this skill's guide
-3. Use scientific-schematics only for figures that truly need photorealistic/complex rendering
+3. Use alterlab-scientific-schematics only for figures that truly need photorealistic/complex rendering
 ```
 
-### With `literature-review`
+### With `alterlab-literature-review`
 
 Literature review produces summaries with lots of relationship data. Use this skill to:
 
@@ -278,7 +287,7 @@ Literature review produces summaries with lots of relationship data. Use this sk
 Before finalizing any document from any skill, apply this skill's checklist:
 
 - [ ] Does the document use a template? If so, did I start from the right one?
-- [ ] Are all diagrams in Mermaid with `accTitle` + `accDescr`?
+- [ ] Are all diagrams in Mermaid with `accTitle` + `accDescr` (or an italic description for the six types that can't take them)?
 - [ ] No `%%{init}`, no inline `style`, only `classDef`?
 - [ ] Are all external claims cited with `[^N]`?
 - [ ] One H1, emoji on H2 only?

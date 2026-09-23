@@ -1,7 +1,7 @@
 # Figure QA — Checklist & Recipes
 
-Full rubric and recipes for `alterlab-figure-qa`. The Matplotlib APIs below are stable, but
-confirm details against your installed version.
+Full rubric and recipes for `alterlab-figure-qa`. The Matplotlib APIs below are stable (checked
+on matplotlib 3.11.2), but confirm details against your installed version.
 
 ## The checklist
 
@@ -22,10 +22,25 @@ confirm details against your installed version.
 Render once, then measure text/legend extents in display coordinates and test for overlap:
 
 ```python
+from matplotlib.text import Text
+
 fig.canvas.draw()  # required before extents are available
 renderer = fig.canvas.get_renderer()
-boxes = [t.get_window_extent(renderer) for t in fig.findobj(match=Text) if t.get_text()]
-# pairwise overlap test on Bbox objects → report colliding pairs
+# findobj also returns labels of ticks outside the view limits, which are never drawn;
+# skip them or they show up as false collisions near the axes corners
+undrawn = set()
+for ax in fig.axes:
+    for axis in (ax.xaxis, ax.yaxis):
+        lo, hi = sorted(axis.get_view_interval())
+        for tick in axis.get_major_ticks() + axis.get_minor_ticks():
+            if not lo <= tick.get_loc() <= hi:
+                undrawn.update((id(tick.label1), id(tick.label2)))
+texts = [t for t in fig.findobj(match=Text)
+         if t.get_visible() and t.get_text() and id(t) not in undrawn]
+boxes = [t.get_window_extent(renderer) for t in texts]
+collisions = [(texts[i].get_text(), texts[j].get_text())
+              for i in range(len(boxes)) for j in range(i + 1, len(boxes))
+              if boxes[i].overlaps(boxes[j])]
 ```
 
 Compare each label's `get_window_extent` to the axes' `get_window_extent` to detect clipping

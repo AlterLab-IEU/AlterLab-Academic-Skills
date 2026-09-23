@@ -225,6 +225,9 @@ def save_style_file(style_dict, filename):
                         value_str = str(value)
                     else:
                         value_str = str(value)
+                    # '#' starts a comment in .mplstyle files, so hex colors must be quoted
+                    if value_str.startswith('#'):
+                        value_str = f'"{value_str}"'
                     f.write(f"{key}: {value_str}\n")
                 f.write("\n")
 

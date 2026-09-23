@@ -554,8 +554,9 @@ sns.catplot(data=df, x='day', y='total_bill',
 
 **Example:**
 ```python
+# order, robust, lowess, logistic, and logx are mutually exclusive (ValueError if combined)
 sns.regplot(data=df, x='total_bill', y='tip',
-            order=2, robust=True, ci=95,
+            order=2, ci=95,
             scatter_kws={'alpha': 0.5})
 ```
 

@@ -177,7 +177,8 @@ ax.set_ylabel('Values')
 
 ### Horizontal Box Plot
 ```python
-ax.boxplot([data1, data2, data3], vert=False,
+# orientation= (matplotlib >= 3.10) replaces vert=False, which is deprecated in 3.11
+ax.boxplot([data1, data2, data3], orientation='horizontal',
            tick_labels=['Group A', 'Group B', 'Group C'])
 ax.set_xlabel('Values')
 ```

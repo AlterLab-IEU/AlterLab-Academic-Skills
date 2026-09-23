@@ -16,7 +16,14 @@ Fixes for AI generation, quality, and accessibility problems. All controls are p
 **Problem**: "No image data in API response" / generation returns nothing
 - Re-run with `-v` to print the raw API response structure.
 - Confirm the configured image model actually supports image output. The default is
-  `ALTERLAB_IMAGE_MODEL` (Nano Banana 2); override with another image-capable model if needed.
+  `google/gemini-3.1-flash-image` (Nano Banana 2); set `ALTERLAB_IMAGE_MODEL` to use another
+  image-capable model. A "model not found" error usually means a retired ID — check
+  https://openrouter.ai/models.
+
+**Problem**: "Quality review skipped" / log shows `"review_skipped": true` and `"final_score": null`
+- The review call to `ALTERLAB_REVIEW_MODEL` (default `google/gemini-3.1-pro-preview`) failed, so
+  the image was kept without a score. Re-run with `-v` to see the error, then inspect the image
+  yourself or re-run once the review model responds.
 
 ## AI Generation Issues
 

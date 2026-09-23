@@ -53,8 +53,8 @@ fig.show()
 ### Maps
 - `px.scatter_geo()` - Geographic (projection-based) scatter plots
 - `px.choropleth()` - Choropleth maps
-- `px.scatter_map()` - Tile-map scatter (MapLibre; replaces deprecated `scatter_mapbox`)
-- `px.density_map()` - Density heatmaps on tile maps (replaces deprecated `density_mapbox`)
+- `px.scatter_map()` - Tile-map scatter (MapLibre; replaces `scatter_mapbox`, removed in Plotly 7)
+- `px.density_map()` - Density heatmaps on tile maps (replaces `density_mapbox`, removed in Plotly 7)
 
 ### Specialized
 - `px.sunburst()` - Hierarchical sunburst charts

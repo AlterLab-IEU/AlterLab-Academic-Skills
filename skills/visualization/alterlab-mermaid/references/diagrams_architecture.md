@@ -8,7 +8,7 @@
 **Best for:** Cloud infrastructure, service topology, deployment architecture, network layout
 **When NOT to use:** Logical system boundaries (use [C4](c4.md)), component layout without cloud semantics (use [Block](block.md))
 
-> ⚠️ **Accessibility:** Architecture diagrams do **not** support `accTitle`/`accDescr`. Always place a descriptive _italic_ Markdown paragraph directly above the code block.
+> ✅ **Accessibility:** Architecture diagrams support `accTitle`/`accDescr` (checked on Mermaid 11.12, 11.17, and 12.0) — put them on the lines right after `architecture-beta`. An italic description paragraph above the block remains a useful fallback for readers of the raw Markdown.
 
 ---
 
@@ -18,6 +18,8 @@ _Architecture diagram showing a cloud-hosted web application with a load balance
 
 ```mermaid
 architecture-beta
+    accTitle: Cloud Web App in a VPC
+    accDescr: A load balancer inside a VPC routes traffic to an API server that reads from a PostgreSQL database and a Redis cache
     group cloud(cloud)[AWS Cloud]
     group vpc(cloud)[VPC] in cloud
 
@@ -53,6 +55,8 @@ _Description of the infrastructure topology and key components:_
 
 ```mermaid
 architecture-beta
+    accTitle: Your Architecture Title
+    accDescr: One sentence on the main components and how requests flow between them
     group region(cloud)[Cloud Region]
 
     service frontend(internet)[Web Frontend] in region
@@ -71,6 +75,8 @@ _Multi-region cloud deployment with 3 nested groups (2 regional clusters + share
 
 ```mermaid
 architecture-beta
+    accTitle: Multi-Region Cloud Deployment
+    accDescr: Two regional clusters behind a shared CDN, each with a load balancer, app server, and database, with primary-to-replica database replication, a shared message queue, and central monitoring
     group cloud(cloud)[AWS Platform]
 
     group east(cloud)[US East Region] in cloud

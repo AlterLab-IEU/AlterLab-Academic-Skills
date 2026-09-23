@@ -98,6 +98,21 @@
           "value": "seaborn"
         }
       ]
+    },
+    {
+      "id": "near-miss-scientific-viz",
+      "prompt": "Get my four-panel results figure ready for a Nature submission — 89 mm column width, Okabe-Ito colors, bold panel letters, significance stars, and the journal's export settings.",
+      "expected_output": "Does NOT invoke alterlab-matplotlib. Journal-specific formatting (column widths, colorblind-safe palette, panel labels, significance annotations, submission export) is alterlab-scientific-viz's opinionated publication workflow rather than low-level matplotlib customization.",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-scientific-viz"
+        }
+      ]
     }
   ]
 }

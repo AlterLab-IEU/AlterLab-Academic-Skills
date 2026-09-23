@@ -52,6 +52,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-generate-image" }
       ]
+    },
+    {
+      "id": "near-miss-infographics",
+      "prompt": "Turn our trial's headline results — enrollment, response rate, and top three findings — into an eye-catching infographic for the department newsletter.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-infographics. A general-audience graphic that presents headline statistics is an infographic (type presets, styles, research-backed numbers), not a technical or methodology schematic.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-infographics" }
+      ]
     }
   ]
 }

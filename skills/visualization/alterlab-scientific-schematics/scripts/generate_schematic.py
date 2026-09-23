@@ -7,6 +7,7 @@ Nano Banana 2 handles everything automatically with smart iterative refinement.
 
 Smart iteration: Only regenerates if quality is below threshold for your document type.
 Quality review: Uses Gemini 3.1 Pro Preview for professional scientific evaluation.
+Models can be overridden with ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL.
 
 Usage:
     # Generate for journal paper (highest quality threshold)
@@ -68,7 +69,9 @@ Examples:
   python generate_schematic.py "Circuit diagram" -o circuit.png -v
 
 Environment Variables:
-  OPENROUTER_API_KEY    Required for AI generation
+  OPENROUTER_API_KEY    Required for AI generation (or put it in a .env file)
+  ALTERLAB_IMAGE_MODEL  Override the image model (default: google/gemini-3.1-flash-image)
+  ALTERLAB_REVIEW_MODEL Override the review model (default: google/gemini-3.1-pro-preview)
         """
     )
     
@@ -89,16 +92,13 @@ Environment Variables:
     
     args = parser.parse_args()
     
-    # Check for API key
+    # The key is handed to the child process through its environment, not argv, so it
+    # doesn't show up in the process list. If it is unset here, the child script still
+    # looks for it in a .env file and reports a missing key itself.
     api_key = args.api_key or os.getenv("OPENROUTER_API_KEY")
-    if not api_key:
-        print("Error: OPENROUTER_API_KEY environment variable not set")
-        print("\nFor AI generation, you need an OpenRouter API key.")
-        print("Get one at: https://openrouter.ai/keys")
-        print("\nSet it with:")
-        print("  export OPENROUTER_API_KEY='your_api_key'")
-        print("\nOr use --api-key flag")
-        sys.exit(1)
+    child_env = os.environ.copy()
+    if api_key:
+        child_env["OPENROUTER_API_KEY"] = api_key
     
     # Find AI generation script
     script_dir = Path(__file__).parent
@@ -119,15 +119,12 @@ Environment Variables:
     if iterations != 2:
         cmd.extend(["--iterations", str(iterations)])
     
-    if api_key:
-        cmd.extend(["--api-key", api_key])
-    
     if args.verbose:
         cmd.append("-v")
     
     # Execute
     try:
-        result = subprocess.run(cmd, check=False)
+        result = subprocess.run(cmd, check=False, env=child_env)
         sys.exit(result.returncode)
     except Exception as e:
         print(f"Error executing AI generation: {e}")

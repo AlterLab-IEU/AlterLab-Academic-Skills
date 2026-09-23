@@ -3,10 +3,11 @@ name: alterlab-scientific-viz
 description: Orchestrates matplotlib, seaborn, and plotly with opinionated publication styles to produce journal-ready figures. Use when preparing journal-submission figures that need multi-panel layouts with bold panel labels, statistical significance annotations, error bars, colorblind-safe palettes (Okabe-Ito), or specific journal formatting (Nature, Science, Cell). Does NOT cover raw low-level plotting or fine-grained control of individual plot elements; for building custom plots from scratch or tuning every artist and rcParam prefer alterlab-matplotlib instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
-compatibility: Requires the matplotlib, seaborn, and plotly Python libraries (pip install matplotlib seaborn plotly); no API key or external service needed
+compatibility: Requires the matplotlib (>= 3.9, current 3.11.2), seaborn (>= 0.13), and plotly Python libraries — uv pip install matplotlib seaborn plotly; plotly static export also needs kaleido >= 1 and a Chrome install (plotly_get_chrome); no API key or external service needed
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Scientific Visualization
@@ -26,6 +27,16 @@ This skill should be used when:
 - Following specific publication guidelines
 - Improving existing figures to meet publication standards
 - Creating figures that need to work in both color and grayscale
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Building a custom plot from scratch or tuning individual artists and rcParams | `alterlab-matplotlib` |
+| Quick exploratory statistical plot (pair plot, distributions) to eyeball data | `alterlab-seaborn` |
+| Interactive chart with hover/zoom or a web dashboard | `alterlab-plotly` |
+| Proofing a finished figure: data fidelity, overlapping labels, 300-dpi export check | `alterlab-figure-qa` |
+| Schematic, flowchart, or pathway diagram | `alterlab-scientific-schematics` |
 
 ## Quick Start Guide
 
@@ -97,7 +108,7 @@ sns.set_palette('colorblind')
 # Create statistical comparison figure
 fig, ax = plt.subplots(figsize=(3.5, 3))
 # seaborn >=0.13: pass hue + legend=False to color by category
-# (a bare palette= without hue= is deprecated and removed in v0.14)
+# (a bare palette= without hue= is deprecated, slated for removal in v0.14)
 sns.boxplot(data=df, x='treatment', y='response',
             order=['Control', 'Low', 'High'],
             hue='treatment', palette='Set2', legend=False, ax=ax)
@@ -238,7 +249,7 @@ Step-by-step recipes — full code for each lives in `references/common_tasks.md
 
 - **Matplotlib** — most control, best for complex multi-panel figures. Examples: `references/matplotlib_examples.md`.
 - **Seaborn** — high-level statistical graphics with automatic CIs and faceting. Full guide: `references/seaborn_in_publications.md`.
-- **Plotly** — interactive exploration; export static via `fig.write_image('figure.png', scale=3)` (~300 DPI). See `matplotlib_examples.md` Example 8.
+- **Plotly** — interactive exploration; export static via `fig.write_image('figure.png', scale=3)` (~300 DPI), which needs kaleido >= 1 plus Chrome (run `plotly_get_chrome` once). See `matplotlib_examples.md` Example 8.
 
 ## Resources
 
