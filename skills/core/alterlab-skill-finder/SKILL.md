@@ -2,11 +2,11 @@
 name: alterlab-skill-finder
 description: "The AlterLab front door and multi-agent launcher — routes a task to the right AlterLab skill(s) when the user invokes the suite without naming one, and for a multi-stage goal (or on the keyword 'alterflow', aliases 'alterresearch' / 'ultralab') it clarifies the goal with a few questions before anything runs, selects the skills the task needs, and runs a multi-agent workflow composing them (a packaged alterlab-workflows workflow, alterlab-research-pipeline, alterlab-ssci-orchestrator, or a bespoke plan via alterlab-workflow-orchestration). Triggers on 'use AlterLab skills', 'which AlterLab skill for X', 'is there an AlterLab skill for…', a multi-stage research goal, 'alterflow …', or any generic AlterLab request where the user does not know skill names. Use when someone references AlterLab generically, describes a multi-stage goal, or fires the alterflow keyword; when the user already names a specific skill, defer to that skill directly. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Task
+allowed-tools: Read Grep Agent
 compatibility: "No API key or network required. A routing + orchestration front-end: it reads the bundled skill index and hands off to the matching AlterLab skill(s). Multi-agent execution uses the host's subagent/Workflow tools where available (Claude Code, Cowork); on surfaces without them it decomposes the work into sequential phases."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.2.0"
     last_updated: "2026-09-23"
     depends_on: "dispatches to any AlterLab skill; composes multi-step runs via alterlab-research-pipeline, alterlab-workflow-orchestration, and alterlab-ssci-orchestrator"
 ---
@@ -55,8 +55,26 @@ ALWAYS ASK YOUR QUESTIONS BEFORE YOU START A MULTI-STEP RUN.
 3. **Select the skill(s)** — name the best fit. For an exact niche name, consult
    `references/skill_index.md` (every AlterLab skill, grouped by domain, one-liner each) or match the
    installed AlterLab skill descriptions.
-4. **Apply it** — invoke the skill and do the work. Tell the user which skill you picked and why (one line).
-5. **If the routing genuinely forks, ask ONE clarifying question** before committing.
+4. **Check it is installed.** The index lists all AlterLab skills, but the host can only run the ones
+   installed there. In Claude Code a skill is available when it appears in the host's skill list as
+   `alterlab-<domain>:<skill>`; a Skill call that returns *Unknown skill* means its plugin is not
+   installed. Then stop and use the **not-installed reply** below — do not retry, and do not search
+   for other tools.
+5. **Apply it** — invoke the skill and do the work. Tell the user which skill you picked and why (one line).
+6. **If the routing genuinely forks, ask ONE clarifying question** before committing.
+
+### Not-installed reply
+
+Name the skill and why it fits, then how to get it. Its plugin is `alterlab-` plus the domain id shown
+in backticks in the index heading (for example `turkish-academia` → `alterlab-turkish-academia`):
+
+- **Claude Code:** `/plugin install alterlab-<domain>@alterlab-academic-skills`, then `/reload-plugins`
+  (or `alterlab-complete@alterlab-academic-skills` for every domain).
+- **Claude app (claude.ai):** upload `skill-<skill-name>-<version>.zip` from the latest GitHub release
+  (Customize ▸ Skills → Upload a skill).
+
+If an installed skill covers part of the task, offer it as a stopgap and say what it will not cover;
+otherwise wait for the user to install the plugin.
 
 ## Orchestrate mode — `alterflow` (clarify FIRST, then multi-agent)
 
@@ -93,7 +111,7 @@ executing — run this sequence:
 5. **EXECUTE.** The user's go-ahead in step 4 is their opt-in to a multi-agent run. In Claude Code
    with dynamic workflows, launch a matching packaged workflow (`/alterlab-workflows:<name>`), or write
    a workflow script for a bespoke plan that fans out beyond a handful of workers; for a few workers,
-   spawn subagents (Task). On surfaces without these tools, execute the phases sequentially and keep
+   spawn subagents (the Agent tool). On surfaces without these tools, execute the phases sequentially and keep
    the same hand-offs. **Give every spawned subagent a complete task spec** — an objective, an
    output format, which skills/tools/sources to use, and clear boundaries — or workers duplicate work
    and leave gaps (`alterlab-workflow-orchestration` models these specs). Carry each stage's artifact
@@ -106,7 +124,7 @@ The one rule: **questions before execution.** A short clarify step beats a wrong
 | If the task is about… | Domain | Representative skills |
 |---|---|---|
 | Find literature, fact-check, discover, manage references | **research-tools** / **core** | `alterlab-deep-research`, `alterlab-research-lookup`, `alterlab-pyzotero`, `alterlab-citation-verifier` |
-| Write / draft / revise a paper, abstract, grant, poster | **core** / **writing-tools** | `alterlab-paper-writer`, `alterlab-scientific-writing`, `alterlab-grant-writer` |
+| Write / draft / revise a paper, abstract, grant, poster; disclose AI use | **core** / **writing-tools** | `alterlab-paper-writer`, `alterlab-scientific-writing`, `alterlab-research-grants`, `alterlab-ai-use-disclosure` |
 | Review / critique a manuscript | **core** | `alterlab-paper-reviewer` |
 | Query a scientific database (PubMed, ChEMBL, UniProt, GEO, …) | **databases** | `alterlab-pubmed`, `alterlab-chembl`, `alterlab-uniprot`, … (39) |
 | Genomics, proteomics, single-cell, structure prediction | **bioinformatics** | `alterlab-scanpy`, `alterlab-alphafold`, `alterlab-biopython`, … |
@@ -117,9 +135,10 @@ The one rule: **questions before execution.** A short clarify step beats a wrong
 | Lab platforms (Benchling, DNAnexus, Opentrons) | **lab-integrations** | `alterlab-benchling`, … |
 | Quantum, geospatial, materials, astronomy, digital humanities | **domain-specific** | `alterlab-qiskit`, `alterlab-geopandas`, `alterlab-pymatgen`, … |
 | Convert / handle documents, Markdown, notebooks, PDFs | **document-tools** | `alterlab-markitdown`, `alterlab-pdf-explore` |
-| Finance, economics, market/financial data | **finance-economics** | `alterlab-fred`, `alterlab-sec-edgar`, … |
-| Turkish academic system (YÖK, ÜAK, DergiPark, TÜBİTAK, doçentlik) | **turkish-academia** | `alterlab-dergipark`, `alterlab-tubitak-proposal`, `alterlab-docentlik-eligibility`, … |
-| Teaching, IRB, grant admin, accreditation, recommendation letters | **faculty-life** | `alterlab-syllabus-ai-policy`, `alterlab-irb-consent`, … |
+| Finance, economics, market/financial data | **finance-economics** | `alterlab-fred`, `alterlab-edgartools`, … |
+| Turkish academic system (YÖK, ÜAK, DergiPark, TÜBİTAK, BİDEB, doçentlik, KVKK) | **turkish-academia** | `alterlab-dergipark`, `alterlab-tubitak-proposal`, `alterlab-tubitak-bideb`, `alterlab-docentlik-eligibility`, `alterlab-kvkk-dmp`, … |
+| Research ethics, IRB / ethics-committee applications, consent forms | **research-tools** (Türkiye: **turkish-academia**) | `alterlab-research-ethics`, `alterlab-tr-research-ethics` |
+| Teaching, grant reporting, accreditation, recommendation letters, preprints | **faculty-life** | `alterlab-syllabus-ai-policy`, `alterlab-grant-reporting`, `alterlab-accreditation-aol`, … |
 | Research-rigor gates (pre-registration, test choice, transparency) | **methodology** | `alterlab-test-selection-guard`, `alterlab-preregistration-discipline` |
 | Design/run a whole **social-science study** (survey, qualitative, causal, multilevel, meta, missing data) | **social-science-workflow** | `alterlab-ssci-orchestrator` (+ 16 gates & modules) |
 | Run a packaged **multi-agent job** — citation audit, review panel, PRISMA screening, rebuttal, grant mock panel, literature map, claim stress-test | **workflows** | `alterlab-research-workflows` (`/alterlab-workflows:<name>`) |

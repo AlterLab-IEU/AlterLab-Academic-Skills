@@ -1593,15 +1593,16 @@
       "domain": "core",
       "description": "The AlterLab front door and multi-agent launcher — routes a task to the right AlterLab skill(s) when the user invokes the suite without naming one, and for a multi-stage goal (or on the keyword 'alterflow', aliases 'alterresearch' / 'ultralab') it clarifies the goal with a few questions before anything runs, selects the skills the task needs, and runs a multi-agent workflow composing them (a packaged alterlab-workflows workflow, alterlab-research-pipeline, alterlab-ssci-orchestrator, or a bespoke plan via alterlab-workflow-orchestration). Triggers on 'use AlterLab skills', 'which AlterLab skill for X', 'is there an AlterLab skill for…', a multi-stage research goal, 'alterflow …', or any generic AlterLab request where the user does not know skill names. Use when someone references AlterLab generically, describes a multi-stage goal, or fires the alterflow keyword; when the user already names a specific skill, defer to that skill directly. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "compatibility": "No API key or network required. A routing + orchestration front-end: it reads the bundled skill index and hands off to the matching AlterLab skill(s). Multi-agent execution uses the host's subagent/Workflow tools where available (Claude Code, Cowork); on surfaces without them it decomposes the work into sequential phases.",
       "allowed_tools": [
         "Read",
-        "Task"
+        "Grep",
+        "Agent"
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 133,
+      "body_lines": 152,
       "references": [
         "skill_index.md"
       ]

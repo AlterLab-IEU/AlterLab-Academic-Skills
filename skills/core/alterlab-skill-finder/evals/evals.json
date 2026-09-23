@@ -89,6 +89,25 @@
       ]
     },
     {
+      "id": "route-to-uninstalled-plugin",
+      "prompt": "Use AlterLab skills to help me write a KVKK-compliant data management plan for my TÜBİTAK 1001 project. (Only the alterlab-essentials plugins are installed.)",
+      "expected_output": "Invokes alterlab-skill-finder (Route mode): picks alterlab-kvkk-dmp from the skill index, notices that its plugin (alterlab-turkish-academia) is not installed, and says how to get it — `/plugin install alterlab-turkish-academia@alterlab-academic-skills` then `/reload-plugins` in Claude Code, or the skill's zip from the latest release in the Claude app — instead of retrying the skill or searching for other tools.",
+      "assertions": [
+        {
+          "type": "should_trigger",
+          "value": true
+        },
+        {
+          "type": "behavior",
+          "value": "Names alterlab-kvkk-dmp and the alterlab-turkish-academia plugin, and gives the install step for the user's surface."
+        },
+        {
+          "type": "behavior",
+          "value": "Does not claim to have applied a skill that is not installed."
+        }
+      ]
+    },
+    {
       "id": "near-miss-deep-research",
       "prompt": "Run alterlab-deep-research in full mode on the topic of graphene batteries.",
       "expected_output": "Should NOT trigger this skill; the user already named a specific skill (alterlab-deep-research), so it is invoked directly — no routing needed.",
