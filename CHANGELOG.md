@@ -121,8 +121,10 @@ left unchanged and listed as such, not guessed.
   forced tool choice.
 - **Core orchestration** — `alterlab-workflow-orchestration` 1.1.0 documents the primitives as
   verified on 2026-09-23 (subagent `tools` field, three-level nesting, fork mode, dynamic
-  workflows, agent teams); `alterlab-skill-finder` 1.1.0 routes multi-agent jobs to the packaged
-  workflows; `alterlab-research-pipeline` 2.7.0 has language-neutral stages and constraints that
+  workflows, agent teams); `alterlab-skill-finder` 1.2.0 routes multi-agent jobs to the packaged
+  workflows, says which plugin to install (or which zip to upload) when the best-fit skill is
+  not installed instead of failing on an unknown skill, and no longer names three skills that do
+  not exist (a new test checks every skill name a SKILL.md mentions); `alterlab-research-pipeline` 2.7.0 has language-neutral stages and constraints that
   state their reasons instead of shouting.
 - **CI** — Actions at current majors on the Node 24 runtime; Spec Conformance now also enforces
   the 500-character `compatibility` limit offline (`check_spec --no-external`); the weekly link
