@@ -6,7 +6,8 @@ allowed-tools: Read Bash(python:*)
 compatibility: No API key required. Judgment/discipline skill; the optional reporting-gate helper runs locally via `uv run python` (stdlib only).
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
+  version: "1.0.1"
+  last_updated: "2026-09-23"
 ---
 
 # Results Transparency — The Reporting Discipline Gate
@@ -192,8 +193,8 @@ labelled. It never computes a p-value or an effect size — that is
 - `references/gate_function.md` — the full gate walkthrough, the claim-manifest
   schema, and a worked pass/fail example.
 - `references/transparency_standards.md` — what a complete Results report
-  contains (CONSORT/STROBE results items, TOP Guidelines reporting standards,
-  APA results requirements) and how this skill maps onto sibling skills.
+  contains (CONSORT 2025/STROBE results items, the TOP 2025 Results Transparency
+  check, APA results requirements) and how this skill maps onto sibling skills.
 
 ## Self-Check Before Reporting
 

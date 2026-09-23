@@ -65,11 +65,26 @@ NEEDS_CHOICES = {"radio", "dropdown", "checkbox", "calc", "slider"}
 # Field types that store data (used for the identifier heuristic).
 DATA_FIELDS = FIELD_TYPES - {"descriptive"}
 
-# Legal Text Validation Type machine values (column 8), plus slider display.
+# Built-in Text Validation Type machine values for `text` fields (column 8), as
+# enumerated by the REDCapR and redcapAPI R packages (CRAN, 2026). Administrators
+# can disable individual types on an instance, so a clean lint still needs a test
+# import.
 VALIDATION_TYPES = {
-    "date_ymd", "date_mdy", "datetime_ymd", "time",
-    "integer", "number", "email", "phone", "zipcode",
+    "date_ymd", "date_mdy", "date_dmy",
+    "datetime_ymd", "datetime_mdy", "datetime_dmy",
+    "datetime_seconds_ymd", "datetime_seconds_mdy", "datetime_seconds_dmy",
+    "time", "time_hh_mm_ss", "time_mm_ss",
+    "integer", "number",
+    "number_1dp", "number_2dp", "number_3dp", "number_4dp",
+    "number_comma_decimal", "number_1dp_comma_decimal", "number_2dp_comma_decimal",
+    "number_3dp_comma_decimal", "number_4dp_comma_decimal",
+    "email", "phone", "phone_australia", "zipcode",
+    "postalcode_australia", "postalcode_canada", "postalcode_french",
+    "postalcode_germany",
+    "alpha_only", "mrn_10d", "mrn_generic", "ssn", "vmrn",
 }
+# Validation values that belong to a specific non-text field type.
+TYPE_BOUND_VALIDATION = {"autocomplete": "dropdown", "signature": "file"}
 
 # Variable / Field Name: lowercase letters, digits, underscore; not digit-first.
 FIELD_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
@@ -82,8 +97,13 @@ PII_HINTS = (
     "birth", "fax", "zip", "postal", "ip_address",
 )
 
-# Reference fields like [other_var] inside branching logic / calc expressions.
-VAR_REF_RE = re.compile(r"\[([a-z][a-z0-9_]*)(?:\([^)]*\))?\]")
+# Reference fields like [other_var] or [checkbox_var(3)] inside branching logic /
+# calc expressions. In longitudinal projects a reference can be prefixed by a
+# unique event name, e.g. [visit_1_arm_1][weight_kg]; the event token is not a
+# field, so only the last bracket of an adjacent pair is checked.
+VAR_REF_RE = re.compile(
+    r"(?:\[[a-z][a-z0-9_]*\])?\[([a-z][a-z0-9_]*)(?:\([^)]*\))?\]"
+)
 
 
 def _norm(s: str) -> str:
@@ -104,7 +124,7 @@ class Report:
     def as_dict(self) -> dict:
         return {
             "tool": "alterlab-redcap-cdisc/lint_data_dictionary.py",
-            "version": "1.0.0",
+            "version": "1.1.0",
             "summary": {
                 "rows_checked": self.rows_checked,
                 "header_ok": self.header_ok,
@@ -206,7 +226,8 @@ def lint(rows: list[list[str]]) -> Report:
                 "'Choices, Calculations, OR Slider Labels' value"
             )
 
-        # Text Validation Type legality (only meaningful for text/slider)
+        # Text Validation Type legality (text fields; slider display; the
+        # dropdown-autocomplete and file-signature special cases).
         if valid:
             vt = valid.lower()
             if ft == "slider":
@@ -214,14 +235,21 @@ def lint(rows: list[list[str]]) -> Report:
                     rep.warnings.append(
                         f"{loc}: slider validation {valid!r} should be 'NA' or 'number'"
                     )
+            elif vt in TYPE_BOUND_VALIDATION:
+                if ft != TYPE_BOUND_VALIDATION[vt]:
+                    rep.errors.append(
+                        f"{loc}: validation {valid!r} applies only to "
+                        f"{TYPE_BOUND_VALIDATION[vt]!r} fields, not {ft!r}"
+                    )
             elif vt not in VALIDATION_TYPES:
                 rep.errors.append(
                     f"{loc}: unknown Text Validation Type {valid!r} "
-                    f"(allowed: {', '.join(sorted(VALIDATION_TYPES))})"
+                    f"(built-ins: {', '.join(sorted(VALIDATION_TYPES))})"
                 )
-            if vt not in VALIDATION_TYPES and ft not in {"text", "slider"}:
+            elif ft != "text":
                 rep.warnings.append(
-                    f"{loc}: validation set on field type {ft!r} (usually only 'text')"
+                    f"{loc}: validation {valid!r} set on field type {ft!r} "
+                    "(only 'text' fields use it)"
                 )
 
         # Branching-logic / calc references must point to declared variables.

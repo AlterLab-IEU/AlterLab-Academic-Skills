@@ -24,17 +24,17 @@
     {
       "id": "journal-preprint-policy-check",
       "prompt": "Before I post my accepted manuscript as a preprint, can you check whether the journal I'm submitting to actually allows preprints? It's a Springer journal with ISSN 1476-4687.",
-      "expected_output": "Invokes alterlab-preprint-deposition: runs scripts/journal_policy.py against the Sherpa Romeo v2 API (https://v2.sherpa.ac.uk/cgi/retrieve, item-type=publication, requires a free api-key) for the ISSN, and reports the journal's prearchiving (preprint/submitted-version) permission plus any conditions (embargo, version allowed, required notice, DOI link). If no api-key is available it falls back to reading the publisher's policy page via WebFetch and says so explicitly, never asserting the policy from memory. Distinguishes the submitted (preprint) version from the accepted version.",
+      "expected_output": "Invokes alterlab-preprint-deposition: runs scripts/journal_policy.py against the Jisc Open Policy Finder API (formerly Sherpa Romeo; https://api.openpolicyfinder.jisc.ac.uk/retrieve, item-type=publication, free non-commercial key sent in an x-api-key header) for the ISSN, and reports the journal's prearchiving (preprint/submitted-version) permission plus any conditions (embargo, version allowed, required notice, DOI link). If no API key is available it falls back to reading the publisher's policy page via WebFetch and says so explicitly, never asserting the policy from memory. Distinguishes the submitted (preprint) version from the accepted version, and notes that bioRxiv/medRxiv will not post a manuscript a journal has already accepted.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "Sherpa Romeo" },
-        { "type": "behavior", "value": "Checks the specific journal's preprint policy via Sherpa Romeo (or a live publisher page) rather than asserting it from memory, and separates the submitted/preprint version permission from the accepted-version permission." }
+        { "type": "output_contains", "value": "Open Policy Finder" },
+        { "type": "behavior", "value": "Checks the specific journal's preprint policy via the Open Policy Finder API (or a live publisher page) rather than asserting it from memory, and separates the submitted from the accepted version." }
       ]
     },
     {
       "id": "link-published-doi-to-preprint",
       "prompt": "My bioRxiv preprint just got published in a journal. How do I link the published DOI back to the preprint so people find the final version, and can you confirm the preprint DOI 10.1101/2020.08.05.238071 is detected as published yet?",
-      "expected_output": "Invokes alterlab-preprint-deposition: explains post-publication linking (set the 'published in' / publisher field on the preprint record) and runs scripts/preprint_link_check.py against the keyless api.biorxiv.org /details/ and /pubs/ endpoints to confirm the preprint DOI resolves and surface any detected preprint-to-published-article link. Notes that an absent link does not mean the paper is unpublished and that the author should add the link manually on publication.",
+      "expected_output": "Invokes alterlab-preprint-deposition: explains post-publication linking (set the 'published in' / publisher field on the preprint record) and runs scripts/preprint_link_check.py against the keyless api.biorxiv.org /details/ endpoint (whose `published` field carries the article DOI once detected, for both 10.1101 and 10.64898 DOIs) and the /pubs/ endpoint for journal name and date, to confirm the preprint DOI resolves and surface any detected preprint-to-published-article link. Notes that an absent link does not mean the paper is unpublished and that the author should add the link manually on publication.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Explains linking the published DOI back to the preprint and uses the keyless api.biorxiv.org pubs/details endpoints to check for the published-article link, rather than searching for the preprint as a literature-review hit." }

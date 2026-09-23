@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash
 compatibility: No API key, account, or network required — generates letters from the supplied dossier via the Read/Write/Edit tools plus two stdlib-only helpers (scripts/letter_scaffold.py, scripts/claim_guard.py) run through `uv run python`. The recommender always reviews, signs, and submits the final letter themselves.
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-06-06"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
   depends_on: "alterlab-academic-career (owns the candidate's OWN CV/statements; this skill writes ABOUT a candidate for a third party)"
 ---
 
@@ -120,6 +120,28 @@ the facts the recommender must supply — not a fluent letter that papers over t
 holes with plausible fiction. A letter is a signed personal attestation; inventing
 its content is a research-integrity problem, not a style choice.
 
+### Even-handed wording and confidentiality
+
+Letter language shifts with the candidate's gender in ways that affect decisions:
+letters for women have been found to carry more "doubt raisers" (hedges, faint
+praise) and fewer standout adjectives (Trix & Psenka, 2003, *Discourse &
+Society* 14(2):191–220; Schmader, Whitehead & Wysocki, 2007, *Sex Roles*
+57:509–514), and to describe women in more communal and less agentic terms, with
+communal wording linked to weaker hiring outcomes (Madera, Hebl & Martin, 2009,
+*J Appl Psychol* 94(6):1591–1599). When drafting or reviewing, hold every
+candidate to the same evidence standard and the same ability/achievement
+vocabulary, replace hedges with the supporting evidence (or drop the claim), and
+cut personal details the letter would not mention for another candidate. Apply
+the same check across race and ethnicity, where a systematic review of
+academic-medicine letters also reports wording differences (Deshpande et al.,
+2024, *Acad Med* 99(9):1032–1037).
+
+Treat the dossier as confidential personnel or student-record data (FERPA,
+GDPR/KVKK, or the institution's own rules): use only what the recommender
+supplies for this letter, keep one candidate's details out of another's letter,
+and remind the recommender to check institutional rules before pasting student
+records into third-party tools.
+
 ---
 
 ## Workflow
@@ -188,6 +210,9 @@ every factual claim and sign/submit it themselves.
 - **Relationship stated up front.** The opening makes the basis for the assessment
   explicit (how, how long, in what capacity).
 - **Gaps surfaced, not filled.** Thin areas appear as bracketed asks, not fiction.
+- **Even-handed wording.** No doubt raisers or faint praise where evidence would
+  do, and the same ability/achievement vocabulary you would use for any
+  candidate with this record.
 - **Right skill?** A self-authored career document belongs to
   `alterlab-academic-career`; hand it off.
 

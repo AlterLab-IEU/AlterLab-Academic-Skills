@@ -1,13 +1,13 @@
 ---
 name: alterlab-syllabus-ai-policy
-description: "Drafts course-level generative-AI use policies and syllabus statements: assigns each graded task a permitted/restricted/prohibited tier (modeled on Cornell's prohibit/allow-with-attribution/encourage framework), writes the disclosure clause with a verbatim APA (OpenAI, 2023) or MLA Works Cited citation template for ChatGPT, and adds assessment-integrity, accessibility, and equity language bound to the institution's own academic-integrity code. Ships scripts/policy_builder.py to emit a paste-ready statement and scripts/policy_lint.py to flag a vague or self-contradicting draft. Use when the request mentions a syllabus AI policy, a course statement on ChatGPT or generative AI, an academic-integrity clause for AI tools, an AI-disclosure rule, or per-assignment permitted/prohibited AI tiers. For full course/backward design, syllabus, or rubrics use alterlab-teaching-design; for human-subjects AI-tool ethics use alterlab-research-ethics. Part of the AlterLab Academic Skills suite."
+description: "Drafts course-level generative-AI use policies and syllabus statements: assigns each graded task a permitted/restricted/prohibited tier (modeled on Cornell's prohibit/allow-with-attribution/encourage framework), writes the disclosure clause with current APA (2025: cite the shared chat or the tool) and MLA generative-AI citation templates, and adds assessment-integrity, accessibility, and equity language bound to the institution's own academic-integrity code. Ships scripts/policy_builder.py to emit a paste-ready statement and scripts/policy_lint.py to flag a vague or self-contradicting draft. Use when the request mentions a syllabus AI policy, a course statement on ChatGPT or generative AI, an academic-integrity clause for AI tools, an AI-disclosure rule, or per-assignment permitted/prohibited AI tiers. For full course/backward design, syllabus, or rubrics use alterlab-teaching-design; for human-subjects AI-tool ethics use alterlab-research-ethics. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) WebFetch
 compatibility: No API key or network required — emits institution-parameterized policy text from local templates via `uv run python`; WebFetch is used only to read a linked institutional academic-integrity code when the user supplies its URL
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-06-06"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
   depends_on: "alterlab-teaching-design (owns full syllabus/backward design; this is the focused AI-policy add-on)"
 ---
 
@@ -88,17 +88,22 @@ A tier alone is not a policy. Restricted and Permitted tasks require students to
 format — not "cite it appropriately". Use the documentation standard the course
 already uses:
 
-- **APA 7** — reference-list entry credits the maker, not the tool as author:
-  `OpenAI. (2023). ChatGPT (Mar 14 version) [Large language model]. https://chat.openai.com/chat`,
-  with in-text `(OpenAI, 2023)`; reproduce the prompt and output in an appendix
-  or the Methods section. (APA Style, *How to cite ChatGPT*.)
-- **MLA 9** — Works Cited via the template-of-core-elements, treating the tool as
-  the container, **not** the author:
-  `"<prompt>" prompt. ChatGPT, <version>, OpenAI, <date>, <URL>.`
-  MLA also requires acknowledging *functional* uses (editing, translation) in a
-  note. (MLA Style Center, *How do I cite generative AI in MLA style?*.)
+- **APA 7** (APA Style blog, September 2025 update) — the author is the AI
+  company, not the tool. Cite the **specific chat** when it generated ideas,
+  content, or information:
+  `Company. (Year, Month Day). Title of chat [Generative AI chat]. Tool/model. URL-of-shared-chat`;
+  cite the **tool** for general uses such as editing your own writing:
+  `OpenAI. (2025). ChatGPT (GPT-5) [Large language model]. https://chatgpt.com/`.
+  The chat title and the tool name are italicized. In-text `(OpenAI, 2025)`.
+  (This replaces the 2023 "Mar 14 version" example.)
+- **MLA 9** (MLA Style Center, revised August 2025) — Works Cited via the
+  template of core elements, with the tool as the container, **not** the author,
+  and the model named in the version element:
+  `"<Description of prompt>" prompt. ChatGPT, model <model>, OpenAI, <date>, <shareable chat URL>.`
+  Use the tool's general URL only when it offers no share link. MLA also asks
+  writers to acknowledge *functional* uses (editing, translation) in a note.
 
-`references/disclosure_and_citation.md` carries both verbatim templates, a
+`references/disclosure_and_citation.md` carries both templates with examples, a
 Chicago-style note option, and a ready-made student "AI-use declaration" block
 the statement can append to each submission.
 
@@ -195,8 +200,9 @@ than improvising them here.
 - `references/tier_framework.md` — the prohibit/restrict/permit decision tree,
   per-assessment-type guidance, worked examples, and the verbatim Cornell
   faculty-committee tier definitions this models.
-- `references/disclosure_and_citation.md` — APA 7, MLA 9, and Chicago AI-citation
-  templates (verbatim), plus a student AI-use declaration block.
+- `references/disclosure_and_citation.md` — APA 7 and MLA 9 AI-citation
+  templates as revised in 2025, a Chicago note option, plus a student AI-use
+  declaration block.
 - `references/integrity_accessibility.md` — integrity-binding wording,
   accessibility/equity checklist, and the detector-as-evidence caution.
 
@@ -205,9 +211,13 @@ than improvising them here.
 - Cornell University, *Report of the Committee on Generative Artificial
   Intelligence in Education* — prohibit / allow-with-attribution / encourage
   course-policy framework. teaching.cornell.edu.
-- APA Style, *How to cite ChatGPT* — `OpenAI. (2023). ChatGPT (… version) [Large
-  language model]. https://chat.openai.com/chat`. apastyle.apa.org.
-- MLA Style Center, *How do I cite generative AI in MLA style?* — tool-as-container
-  Works Cited template; do not treat the tool as author. style.mla.org.
+- APA Style blog, *Citing generative AI in APA Style: Part 1 — Reference formats*
+  (September 2025) — cite a specific chat `[Generative AI chat]` or the tool
+  `[Large language model]`, company as author; supersedes the 2023 *How to cite
+  ChatGPT* example. apastyle.apa.org (templates cross-checked against the UBC and
+  Oregon State University library guides, 2026-09-23).
+- MLA Style Center, *How do I cite generative AI in MLA style? (Updated and
+  Revised)* (August 2025) — tool as container, model in the version element,
+  shareable chat URL preferred. style.mla.org.
 
 Part of the AlterLab Academic Skills suite.

@@ -68,10 +68,15 @@ Use the categories from the award's own budget. Common ones:
 
 ## Funder-specific framing
 
-- **NIH** — significant rebudgeting and changes in scope are reported in the RPPR
-  **Section F (Changes)**; carryover and prior-approval requirements depend on
-  whether the award is under expanded authorities / SNAP. Confirm against the
-  Notice of Award.
+- **NIH** — spending variances surface in the annual RPPR through **G.10
+  (estimated unobligated balance)**: if the balance, including prior-year
+  carryover, will exceed 25% of the current year's total approved budget, give
+  the amount, explain it, and (if carryover is authorized) say how it will be
+  spent; otherwise carryover needs a prior-approval request. Delays behind the
+  variance go in **F.2**. A significant change in scope needs separate prior
+  approval — the RPPR is not the vehicle for requesting it. Carryover and
+  rebudgeting authority depend on the award (expanded authorities, SNAP, MYF);
+  confirm against the Notice of Award.
 - **NSF** — narrative belongs in the annual/final project report; certain
   reallocations and a single one-year NCE fall under the awardee's authority, with
   larger changes requiring NSF prior approval (confirm against PAPPG and the award

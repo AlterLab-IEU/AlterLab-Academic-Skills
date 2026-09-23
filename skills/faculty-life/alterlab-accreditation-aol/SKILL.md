@@ -1,12 +1,13 @@
 ---
 name: alterlab-accreditation-aol
-description: Scaffolds program-level Assurance-of-Learning (AoL) documentation for AACSB (2020 Standard 5) and ABET (Criterion 3 Student Outcomes, Criterion 4 Continuous Improvement) accreditation — program learning outcomes / competency goals, curriculum-to-outcome mapping matrices, direct- and indirect-assessment plans, rubric design, and closing-the-loop continuous-improvement narratives — and validates the structure of an outcome-mapping matrix with scripts/aol_matrix.py. Use when the user needs AACSB or ABET assurance-of-learning material, a program-learning-outcomes set, a curriculum/outcome map or coverage matrix, a direct/indirect assessment plan, a closing-the-loop report, or accreditation self-study text. For single-course design or course rubrics prefer alterlab-teaching-design; for post-award grant reports prefer alterlab-grant-reporting. Part of the AlterLab Academic Skills suite.
+description: Scaffolds program-level Assurance-of-Learning (AoL) documentation for AACSB (Standard 5 in the 2020 standards and the 2026 Global Standards) and ABET (Criterion 3 Student Outcomes, Criterion 4 Continuous Improvement) accreditation — program learning outcomes / competency goals, curriculum-to-outcome mapping matrices, direct- and indirect-assessment plans, rubric design, and closing-the-loop continuous-improvement narratives — and validates the structure of an outcome-mapping matrix with scripts/aol_matrix.py. Use when the user needs AACSB or ABET assurance-of-learning material, a program-learning-outcomes set, a curriculum/outcome map or coverage matrix, a direct/indirect assessment plan, a closing-the-loop report, or accreditation self-study text. For single-course design or course rubrics prefer alterlab-teaching-design; for post-award grant reports prefer alterlab-grant-reporting. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash
 compatibility: No API key, account, or network required — accreditation-format guidance plus a stdlib-only outcome-mapping-matrix validator (scripts/aol_matrix.py). The school still submits its self-study through AACSB myAccreditation or the ABET portal; this skill drafts text and checks structure, it does not file or accredit.
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
 ---
 
 # Accreditation Assurance-of-Learning — Program-Level AoL for AACSB & ABET
@@ -96,6 +97,19 @@ AACSB AoL is concerned with **broad, program-level competency goals** for each
 degree program, *not* detailed goals by course or topic — that course-level work
 is `alterlab-teaching-design`'s job.
 
+**Which AACSB edition applies?** AACSB adopted the **2026 Global Standards for
+Business Education** (ratified April 2026, effective 1 July 2026). 2026–27 is a
+pilot year: about 30 volunteer schools are reviewed under the new standards while
+the rest continue under the 2020 standards (a CIR visit in 2026–27 may use
+either); the 2026 standards apply to everyone from 2027–28. Standard 5 keeps its
+title and its 5.1–5.4 structure, but 5.1 now expects **learning objectives
+derived from each competency**, ties direct and indirect measures to those
+competencies/objectives "as opposed to simple satisfaction measures", lists
+**curriculum maps** in the suggested documentation, and requires Table 5-1 only
+for initial accreditation. Ask which edition the school's next review uses before
+drafting — the side-by-side is in
+[`references/accreditor_standards.md`](references/accreditor_standards.md).
+
 ### ABET — **Criterion 3 (Student Outcomes)** + **Criterion 4 (Continuous Improvement)**
 
 ABET frames AoL across linked criteria: **Criterion 2 Program Educational
@@ -107,8 +121,11 @@ the program).
 ABET's engineering criteria specify **seven required student outcomes (1)–(7)** —
 problem-solving, engineering design, communication, ethical/professional
 responsibility, teamwork, experimentation & data analysis, and acquiring/applying
-new knowledge. The verbatim text of all seven is in the references file; **quote
-them exactly** and never paraphrase a numbered outcome into the self-study.
+new knowledge. The verbatim text of all seven is in the references file (checked
+against the 2026–2027 EAC criteria, where they are unchanged); **quote them
+exactly** rather than paraphrasing a numbered outcome into the self-study, because
+reviewers check the program's outcomes against the published wording. ABET
+republishes its criteria every cycle, so confirm the edition for the review year.
 
 > Computing programs (CAC) and other commissions use a differently-worded outcome
 > set. This skill scaffolds the engineering (EAC) seven outcomes by default;

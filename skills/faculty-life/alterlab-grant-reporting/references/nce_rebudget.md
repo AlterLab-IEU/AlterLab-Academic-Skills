@@ -50,7 +50,9 @@ Current end date: {date}    Requested new end date: {date} ({N} months)
 - **NIH** — a grantee under expanded authorities may exercise a **first** no-cost
   extension of up to **12 months** by notifying NIH (no prior approval); a
   **second** or longer extension requires NIH prior approval. Confirm against the
-  Notice of Award and the NIH Grants Policy Statement.
+  Notice of Award and the NIH Grants Policy Statement. For a multi-year funded
+  (MYF) award, no annual RPPR is normally due while it is in an NCE unless the IC
+  asks for one; the Final RPPR clock (120 days) runs from the extended end date.
 - **NSF** — the awardee may authorize a **one-time extension of up to 12 months**
   (grantee-approved NCE) via Research.gov; any **further** extension is an
   NSF-approved NCE requiring NSF review. Confirm against the PAPPG and award

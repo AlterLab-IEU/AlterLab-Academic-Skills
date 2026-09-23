@@ -2,9 +2,11 @@
 
 "Closing the loop" is the difference between *collecting* assessment data and
 *using* it. Both accreditors look for the **action**: AACSB Standard 5.1 expects
-"evidence of actions taken to remediate" where competencies are not achieved;
-ABET Criterion 4 requires that assessment/evaluation results "are used to effect
-continuous improvement." A report full of charts that changes nothing is **not** a
+"evidence of actions taken to remediate" where competencies are not achieved
+(kept in the 2026 Global Standards, which add that results "inform and lead to
+curricular improvements"); ABET Criterion 4 requires that "the results of these
+evaluations must be systematically utilized as input for the program's continuous
+improvement actions." A report full of charts that changes nothing is **not** a
 closed loop.
 
 ## Table of contents
@@ -80,7 +82,8 @@ The structure is what matters; the figures above are placeholders.
 
 - Is there a **documented, regularly applied** process for assessing **and
   evaluating** the extent to which the student outcomes are attained?
-- Are the **results used to effect continuous improvement** of the program?
+- Are the results **systematically utilized as input** for the program's
+  continuous-improvement actions?
 - Is the loop tied back to **Criterion 3** student outcomes (and, upward, to the
   Criterion 2 program educational objectives)?
 

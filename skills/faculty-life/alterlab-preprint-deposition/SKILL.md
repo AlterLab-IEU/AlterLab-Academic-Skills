@@ -1,13 +1,13 @@
 ---
 name: alterlab-preprint-deposition
-description: "Drives preprint deposition across servers (arXiv, bioRxiv, medRxiv, SSRN, OSF Preprints): picks the right server by field, prepares submission metadata, sets the license (arXiv offers CC BY/BY-SA/BY-NC-SA/BY-NC-ND 4.0, the arXiv non-exclusive license, or CC0; bioRxiv/medRxiv offer CC BY/BY-NC/BY-ND/BY-NC-ND/CC0 or No-reuse), maps arXiv category taxonomy, handles immutable versioning and preprint DOIs, checks a journal's preprint/self-archiving policy via the Sherpa Romeo v2 API, and links the posted preprint to the published article. Reuses alterlab-arxiv and alterlab-biorxiv for metadata and alterlab-open-science for data-repository choice. Use when depositing a preprint, choosing a preprint server, preparing an arXiv or bioRxiv submission, setting a preprint license, or checking journal preprint policy; for Zenodo/Dryad/Figshare data deposition prefer alterlab-open-science, for TÜBİTAK Aperta prefer alterlab-aperta. Part of the AlterLab Academic Skills suite."
+description: "Drives preprint deposition across servers (arXiv, bioRxiv, medRxiv, ChemRxiv, SSRN, Research Square, OSF Preprints): picks the server by field, prepares submission metadata and arXiv categories, sets the license from each server's real option set (arXiv non-exclusive license or CC BY/BY-SA/BY-NC-SA/BY-NC-ND/CC0; bioRxiv/medRxiv CC variants or No-reuse) against funder mandates (NIH, NSF, Gates, Plan S), handles immutable versioning and preprint DOIs, checks a journal's preprint policy via the Jisc Open Policy Finder API (formerly Sherpa Romeo), and links the preprint to the published article. Reuses alterlab-arxiv and alterlab-biorxiv for metadata. Use when depositing a preprint, choosing a preprint server, preparing an arXiv, bioRxiv, or medRxiv submission, setting a preprint license, or checking journal preprint policy; for Zenodo/Dryad/Figshare data deposition prefer alterlab-open-science, for TÜBİTAK Aperta prefer alterlab-aperta. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) WebFetch
-compatibility: "No API key required for the deposition workflow itself. Optional Python helpers run via `uv run python` (stdlib-only, requests optional). The journal-policy check uses the Sherpa Romeo v2 API, which requires a free registered api-key; the bioRxiv/medRxiv preprint-to-publication check uses the keyless api.biorxiv.org content API."
+compatibility: "No API key required for the deposition workflow itself. Optional Python helpers run via `uv run python` (stdlib-only, requests optional). The journal-policy check uses the Jisc Open Policy Finder API (successor to the Sherpa Romeo v2 API, which was switched off in 2026), which needs a free non-commercial API key sent as an x-api-key header; the bioRxiv/medRxiv preprint-to-publication check uses the keyless api.biorxiv.org content API."
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-06-06"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
   depends_on: "alterlab-arxiv, alterlab-biorxiv (metadata/search), alterlab-open-science (data-repository & DMP choice)"
 ---
 
@@ -48,22 +48,27 @@ where, prepare its metadata/license, or reconcile it with a journal or a
 published version. Core jobs:
 
 1. **Server selection** — match field + manuscript type to arXiv, bioRxiv,
-   medRxiv, SSRN, or OSF Preprints. See `references/server_selection.md`.
+   medRxiv, ChemRxiv, SSRN, Research Square, or OSF Preprints. See
+   `references/server_selection.md`.
 2. **Submission metadata** — title, authors + ORCID, abstract, **arXiv primary
    + cross-list categories** or bioRxiv/medRxiv subject collection, funding,
    declarations. See `references/submission_metadata.md`.
 3. **License choice** — pick from each server's actual license set and explain
    the downstream commitment (e.g. CC BY is irrevocable; a later journal may
-   object to a permissive preprint license). See `references/licensing.md`.
+   object to a permissive preprint license; a funder may require CC BY). See
+   `references/licensing.md`.
 4. **Versioning & DOI** — arXiv versions (v1, v2, …) are **immutable and
    permanent**; a withdrawal is a *new* version with a tombstone, never a
-   deletion; bioRxiv/medRxiv assign a DOI on posting and accept revisions.
-5. **Journal preprint policy** — query the **Sherpa Romeo v2 API** for the
-   target journal's prearchiving (preprint) policy before posting. See
-   `references/journal_policy.md`.
+   deletion; every arXiv paper also gets a DataCite DOI
+   (`10.48550/arXiv.<id>`). bioRxiv/medRxiv assign a Crossref DOI on posting
+   (prefix `10.64898` since Dec 2025 under openRxiv, `10.1101` before) and accept
+   revisions under the same DOI.
+5. **Journal preprint policy** — query the **Jisc Open Policy Finder API**
+   (formerly Sherpa Romeo) for the target journal's prearchiving (preprint)
+   policy before posting. See `references/journal_policy.md`.
 6. **Post-publication linking** — connect the preprint to the published article
-   (publisher field on the server; the keyless `api.biorxiv.org` `/pubs/`
-   endpoint surfaces bioRxiv→journal links).
+   (publisher field on the server; the keyless `api.biorxiv.org` `/details/`
+   record carries a `published` DOI once bioRxiv/medRxiv detect the article).
 
 ### Does NOT Trigger — route adjacent requests to the right sibling
 
@@ -85,18 +90,20 @@ manuscript quality, novelty, or whether the work should be published.
 
 ## Server Matrix (summary — full detail in `references/server_selection.md`)
 
-| Server | Field fit | DOI on post | Default-ish license note | Moderation |
-|--------|-----------|-------------|--------------------------|------------|
-| **arXiv** | physics, math, CS, quant-bio (q-bio), q-fin, stat, EE/sys (eess), econ | No native DOI (arXiv ID is canonical; DataCite DOIs available) | arXiv non-exclusive license, or CC BY / BY-SA / BY-NC-SA / BY-NC-ND 4.0 / CC0 | Moderation + endorsement for new submitters |
-| **bioRxiv** | life sciences / biology | Yes (CSHL-issued DOI) | CC BY / BY-NC / BY-ND / BY-NC-ND / CC0 / No-reuse | Basic screening |
-| **medRxiv** | clinical / health sciences | Yes (CSHL-issued DOI) | Same license set as bioRxiv | Screening incl. ethics/▲non-trial checks |
-| **SSRN** | social sciences, economics, law, humanities | DOI varies by network | Author selects; SSRN posting terms | Light screening |
-| **OSF Preprints** | multi/cross-disciplinary + community servers | Yes (DOI via OSF) | CC0 / CC BY / CC BY-NC-ND / No license | Per-provider |
+| Server | Field fit | DOI on post | License options | Moderation |
+|--------|-----------|-------------|-----------------|------------|
+| **arXiv** (independent nonprofit since Jul 2026) | physics, math, CS, quant-bio (q-bio), q-fin, stat, EE/sys (eess), econ | Yes — DataCite `10.48550/arXiv.<id>`, auto-assigned; the arXiv ID stays canonical | arXiv non-exclusive license, or CC BY / BY-SA / BY-NC-SA / BY-NC-ND 4.0 / CC0 | Moderation + endorsement (tightened Jan 2026); CS review/position papers need prior peer review; a full English version is required |
+| **bioRxiv** (openRxiv) | life sciences / biology | Yes — Crossref, `10.64898/…` since Dec 2025 (`10.1101/…` before) | CC BY / BY-NC / BY-ND / BY-NC-ND / CC0 / No-reuse | Basic screening; not for manuscripts already accepted by a journal |
+| **medRxiv** (openRxiv) | clinical / health sciences | Yes — same prefixes as bioRxiv | Same license set as bioRxiv | Ethics, consent, and trial-registration declarations; no case reports, narrative reviews, or already-accepted papers |
+| **ChemRxiv** | chemistry and adjacent fields | Yes — Crossref `10.26434/chemrxiv…`, per version | CC BY / CC BY-NC / CC BY-NC-ND 4.0 | Basic screening; co-owned by ACS, RSC, GDCh, CCS, CSJ |
+| **SSRN** (Elsevier) | social sciences, economics, law, humanities | Yes — Crossref `10.2139/ssrn.<id>` | Author selects; SSRN posting terms | Light screening |
+| **Research Square** | any field; "In Review" for participating Springer Nature / BMC journals | Yes | CC BY 4.0 | Screened for author info, declarations, health risk |
+| **OSF Preprints** | multi/cross-disciplinary + community servers (PsyArXiv, SocArXiv, …) | Yes (DOI via OSF) | Varies by provider — general OSF: CC BY 4.0 or CC0; community servers add "No license" or NC/ND variants | Per-provider |
 
-> Category/license rows above name the **real** option sets each server
-> presents at submission. License *implications* (irrevocability, journal
-> friction) are in `references/licensing.md`; never assert a "best" license
-> without stating the trade-off.
+> Category/license rows above name the option sets each server presents at
+> submission, re-checked 2026-09-23. License *implications* (irrevocability,
+> journal friction, funder mandates) are in `references/licensing.md`; never
+> assert a "best" license without stating the trade-off.
 
 ---
 
@@ -106,19 +113,28 @@ manuscript quality, novelty, or whether the work should be published.
 
 Read the manuscript's domain. STEM-formal (physics/math/CS/stat/eess/econ/q-bio/
 q-fin) → **arXiv**. Biology → **bioRxiv**. Clinical/health → **medRxiv**.
-Social science/law/economics → **SSRN** (or arXiv econ). Cross-disciplinary or a
+Chemistry → **ChemRxiv**. Social science/law/economics → **SSRN** (or arXiv
+econ). Submitting to a Springer Nature / BMC journal that offers "In Review" →
+**Research Square** is the integrated option. Cross-disciplinary or a
 field-specific community server → **OSF Preprints**. Edge cases and the full
 decision tree live in `references/server_selection.md`.
+
+Check the server's gatekeeping before promising a posting date: arXiv now needs
+either an institutional email **plus** a claimed paper in the same endorsement
+domain, or a personal endorsement (since 21 Jan 2026); arXiv CS posts review and
+position papers only with proof of prior peer review (since 31 Oct 2025); and
+bioRxiv/medRxiv will not post a manuscript that a journal has already accepted.
 
 ### 2. Run the journal-policy check FIRST (if a target journal is known)
 
 Before posting, confirm the intended journal permits preprints. Use
-`scripts/journal_policy.py` to query the **Sherpa Romeo v2 API**
-(`https://v2.sherpa.ac.uk/cgi/retrieve`, `item-type=publication`, requires a
-free `api-key`). Report the journal's **prearchiving** (preprint) permission,
-any conditions (embargo, version allowed, required statement), and link the
-source. If no key is available, fall back to WebFetch on the publisher's policy
-page and say so. Details: `references/journal_policy.md`.
+`scripts/journal_policy.py` to query the **Jisc Open Policy Finder API**
+(`https://api.openpolicyfinder.jisc.ac.uk/retrieve`, `item-type=publication`,
+key in an `x-api-key` header; the old `v2.sherpa.ac.uk` Sherpa Romeo API was
+switched off at the end of July 2026). Report the journal's **prearchiving** (preprint)
+permission, any conditions (embargo, version allowed, required statement), and
+link the source. If no key is available, fall back to WebFetch on the publisher's
+policy page and say so. Details: `references/journal_policy.md`.
 
 > Most major publishers permit preprints, but conditions vary (some bar posting
 > the *accepted* version, some require a DOI link or a specific notice). Never
@@ -129,8 +145,11 @@ page and say so. Details: `references/journal_policy.md`.
 Build the metadata block the server needs: title, all authors with ORCID and
 affiliations, abstract, **arXiv primary category + optional cross-lists** (or
 bioRxiv/medRxiv subject collection), declarations (competing interests, funding,
-data/code availability, ethics/IRB for medRxiv), and the manuscript PDF. The
-canonical field-by-field checklist is in `references/submission_metadata.md`.
+data/code availability, ethics/IRB for medRxiv), and the manuscript files. For
+arXiv, upload the TeX/LaTeX source when the paper was written in TeX — arXiv
+typically rejects a PDF generated from TeX — and include a full English version
+if the paper is in another language. The canonical field-by-field checklist is in
+`references/submission_metadata.md`.
 To *look up* an existing arXiv/bioRxiv record's metadata for reuse, defer to
 `alterlab-arxiv` / `alterlab-biorxiv` rather than re-querying here.
 
@@ -148,8 +167,14 @@ explain the commitment:
   mandate (e.g. cOAlition S Plan S generally requires CC BY).
 - **CC0** — public-domain dedication; broadest, also irrevocable.
 
-Confirm whether a funder mandate forces a specific license before recommending.
-Full table + funder-mandate notes: `references/licensing.md`.
+arXiv states that the license chosen is irrevocable and cannot be changed, though
+a later version may carry a different license. Confirm whether a funder mandate
+forces a specific license before recommending — e.g. the Gates Foundation
+(policy effective 1 Jan 2025) expects funded manuscripts to be shared as a
+preprint under CC BY 4.0, and Plan S funders want CC BY. The NIH (from 1 July
+2025) and NSF (awards from 22 Jan 2026) zero-embargo policies cover the
+peer-reviewed accepted manuscript, not the preprint. Full table + funder-mandate
+notes: `references/licensing.md`.
 
 ### 5. Post, then manage versions
 
@@ -160,34 +185,43 @@ arXiv paper; that is impossible — only a withdrawal-version with a tombstone.
 
 ### 6. Link the published article after acceptance
 
-When the paper is published, link the DOI back to the preprint (the server's
-"published in" / publisher field; bioRxiv/medRxiv auto-detect many links and
-expose them via `api.biorxiv.org` `/pubs/{server}/...`). This makes the version
-of record discoverable from the preprint and vice versa.
+When the paper is published, link the DOI back to the preprint (arXiv's
+journal-ref/DOI fields; bioRxiv/medRxiv auto-detect many links). On the
+`api.biorxiv.org` content API the `/details/{server}/{doi}` record carries a
+`published` field with the article DOI once detected; the per-DOI
+`/pubs/{server}/{doi}` lookup currently returns nothing for `10.64898` DOIs, so
+read `published` first. This makes the version of record discoverable from the
+preprint and vice versa.
 
 ---
 
 ## Scripts
 
-- `scripts/journal_policy.py` — query the Sherpa Romeo v2 API for a journal's
-  preprint/self-archiving policy by ISSN or title (needs a free `--api-key`;
-  prints a structured summary; degrades to a manual-check instruction offline).
-- `scripts/server_recommender.py` — given a few flags (field, has-clinical-data,
-  target-journal-known, needs-DOI), prints a recommended server + license
-  shortlist with the trade-offs, from the rules in `references/server_selection.md`.
+- `scripts/journal_policy.py` — query the Jisc Open Policy Finder API for a
+  journal's preprint/self-archiving policy by ISSN or title (needs a free key via
+  `--api-key` or the `OPEN_POLICY_FINDER_API_KEY` environment variable; prints a
+  structured summary incl. embargo and locations; degrades to a manual-check
+  instruction offline).
+- `scripts/server_recommender.py` — given a few flags (`--field`, `--needs-doi`,
+  `--target-journal-known`, `--funder-requires-cc-by`), prints a recommended
+  server + license shortlist with the trade-offs and gatekeeping notes, from the
+  rules in `references/server_selection.md`.
 - `scripts/preprint_link_check.py` — query the keyless `api.biorxiv.org`
-  `/details/` and `/pubs/` endpoints to confirm a bioRxiv/medRxiv DOI exists and
-  surface any detected preprint→published-article link.
+  `/details/` (and, for journal name/date, `/pubs/`) endpoints to confirm a
+  bioRxiv/medRxiv DOI exists and surface any detected preprint→published-article
+  link; works for both `10.1101` and `10.64898` DOIs.
 
 All scripts are stdlib-first (use `requests` if present, else `urllib`), run in a
-bare `uv run python`, and never require a key except the Sherpa Romeo lookup.
+bare `uv run python`, and never require a key except the Open Policy Finder
+lookup.
 
 ---
 
 ## Self-Check Before Reporting
 
-- Did I **verify** the journal's preprint policy (Sherpa Romeo or the live
-  publisher page), or did I assert it from memory? Only the former is allowed.
+- Did I **verify** the journal's preprint policy (Open Policy Finder or the live
+  publisher page), or did I assert it from memory? Only the former is allowed,
+  because publisher policies change and a wrong "yes" can cost the submission.
 - Did I name the server's **real** license options and state the irrevocability
   / journal-friction trade-off, not a bare "use CC BY"?
 - Did I route a *search/fetch* request to `alterlab-arxiv`/`alterlab-biorxiv`,
@@ -202,6 +236,6 @@ bare `uv run python`, and never require a key except the Sherpa Romeo lookup.
 - `references/server_selection.md` — full server decision tree, field-by-field.
 - `references/submission_metadata.md` — per-server metadata field checklist.
 - `references/licensing.md` — license option sets, irrevocability, funder mandates.
-- `references/journal_policy.md` — Sherpa Romeo v2 API usage and policy reading.
+- `references/journal_policy.md` — Open Policy Finder API usage and policy reading.
 
 Part of the AlterLab Academic Skills suite.

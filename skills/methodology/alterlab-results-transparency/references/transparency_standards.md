@@ -33,12 +33,21 @@ These are recognised reporting standards, named here as the relevant standard �
 the disclosure *mechanics* (links, statements, where to file) are owned by
 `alterlab-open-science`, not by this skill:
 
-- **TOP Guidelines** (Transparency and Openness Promotion) — journal-level
-  standards for reporting standards, analytic transparency, and disclosure of all
-  analyses. `alterlab-open-science` covers TOP adoption and disclosure routes.
-- **CONSORT** — the reporting standard for randomized controlled trials; its
-  Results items require reporting outcomes and estimation (effect size + precision)
-  for *each* primary and secondary outcome, and all harms/unintended effects.
+- **TOP Guidelines** (Transparency and Openness Promotion), **updated as TOP
+  2025** (COS; Grant et al., 2026): seven Research Practices (Study Registration,
+  Study Protocol, Analysis Plan, Materials, Data, Analysis Code, and Reporting
+  Transparency), each implementable at Disclosed / Shared and Cited / Certified
+  levels, plus two Verification Practices. One of those, **Results
+  Transparency**, is exactly this skill's concern: an independent party verifies
+  that results were not reported selectively based on the nature of the findings,
+  by checking that the registration, protocol, and analysis plan match the final
+  report and that the report acknowledges every deviation. The gate here prepares
+  a manuscript to pass that check. `alterlab-open-science` covers TOP adoption and
+  disclosure routes (https://www.cos.io/initiatives/top-guidelines).
+- **CONSORT 2025** (Hopewell et al., *BMJ* 2025;389:e081123, which replaced
+  CONSORT 2010) — the reporting standard for randomized trials; its Results items
+  require reporting outcomes and estimation (effect size + precision) for *each*
+  primary and secondary outcome, and all harms/unintended effects.
 - **STROBE** — the reporting standard for observational studies; its Results items
   require reporting numbers analysed, unadjusted and adjusted estimates with their
   precision, and the analyses actually performed.
