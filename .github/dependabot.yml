@@ -1,0 +1,24 @@
+# Keeps CI actions and the dev toolchain current. Updates are grouped so each run opens at
+# most one PR per ecosystem; the PR's own CI (tests, spec conformance, workflow dry-runs)
+# decides whether it is safe to merge.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"
+
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      dev-tooling:
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(deps)"
