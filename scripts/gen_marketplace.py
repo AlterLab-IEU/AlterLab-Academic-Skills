@@ -195,8 +195,8 @@ USER_CONFIG_SPEC: dict[str, dict] = {
         "type": "string",
         "title": "Contact email for scholarly APIs",
         "description": (
-            "Sent as the polite-pool contact to NCBI E-utilities (PubMed), OpenAlex, and "
-            "Crossref. Recommended; leave blank to skip."
+            "Sent to NCBI E-utilities (PubMed) as the contact address NCBI asks every client "
+            "to identify itself with. Recommended; leave blank to skip."
         ),
         "default": "",
     },
@@ -206,6 +206,17 @@ USER_CONFIG_SPEC: dict[str, dict] = {
         "description": (
             "Raises the PubMed E-utilities rate limit. Create one under Account settings at "
             "https://www.ncbi.nlm.nih.gov/account/"
+        ),
+        "sensitive": True,
+        "default": "",
+    },
+    "openalex_api_key": {
+        "type": "string",
+        "title": "OpenAlex API key (recommended)",
+        "description": (
+            "Free key from https://openalex.org/settings/api. OpenAlex meters usage per day "
+            "(since February 2026); keyless requests share a small per-IP budget and fail with "
+            "HTTP 429 once it is spent."
         ),
         "sensitive": True,
         "default": "",
