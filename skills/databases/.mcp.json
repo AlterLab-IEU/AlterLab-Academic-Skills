@@ -1,17 +1,5 @@
 {
   "mcpServers": {
-    "pubmed": {
-      "command": "uvx",
-      "args": [
-        "--with",
-        "mcp<2",
-        "mcp-simple-pubmed@0.1.16"
-      ],
-      "env": {
-        "PUBMED_EMAIL": "${user_config.ncbi_email}",
-        "PUBMED_API_KEY": "${user_config.ncbi_api_key}"
-      }
-    },
     "openalex": {
       "command": "npx",
       "args": [

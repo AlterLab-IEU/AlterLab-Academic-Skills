@@ -13,8 +13,8 @@
   (literature review, grants), `alterlab-social-science-workflow` (meta-analysis),
   `alterlab-turkish-academia` (TÜBİTAK).
 - Network access for the scholarly APIs. Configure the core plugin
-  (`/plugin configure alterlab-core@alterlab-academic-skills`): the contact email identifies NCBI
-  calls, and a free OpenAlex API key gives OpenAlex calls their own daily budget — keyless calls
+  (`/plugin configure alterlab-core@alterlab-academic-skills`): a free OpenAlex API key gives
+  OpenAlex calls their own daily budget (export `NCBI_API_KEY` for PubMed-heavy runs) — keyless calls
   share a small per-IP budget and fail with HTTP 429 once it is spent (the verifier then reports
   UNVERIFIED, never fabricated).
 
@@ -70,7 +70,7 @@ return value (shown in the session) holds the key numbers and a short summary.
 |---|---|---|
 | `/alterlab-workflows:…` not in autocomplete | plugin not installed/enabled, or workflows disabled | `/plugin` → enable; check `/config` → Dynamic workflows |
 | Run stops at a permission prompt | a tool the agents need isn't allowed | allow Bash/WebFetch/WebSearch/Write, or run in auto mode |
-| Many `UNVERIFIED` citations | API rate limits or no network | set the contact email; rerun later — UNVERIFIED is never an accusation |
+| Many `UNVERIFIED` citations | API rate limits or no network | add an OpenAlex API key; rerun later — UNVERIFIED is never an accusation |
 | Screening report says κ is not defined | a screener used a single category for every record | check the codebook; tiny or homogeneous record sets can do this legitimately |
 | "nothing to resume" | the earlier run's results are gone (new session) | start the workflow again as a new run |
 

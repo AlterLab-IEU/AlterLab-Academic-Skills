@@ -191,26 +191,6 @@ def _agent_files(skill_dir: Path) -> list[str]:
 # unresolved credentials. Every key a `.mcp.json` references must have a spec here (checked in
 # `_user_config`). Strings default to "" so leaving an optional value blank substitutes cleanly.
 USER_CONFIG_SPEC: dict[str, dict] = {
-    "ncbi_email": {
-        "type": "string",
-        "title": "Contact email (needed for PubMed)",
-        "description": (
-            "Sent to NCBI E-utilities as the contact address NCBI asks every client to identify "
-            "itself with. The bundled PubMed server does not start without it; the other servers, "
-            "skills, and agents work either way."
-        ),
-        "default": "",
-    },
-    "ncbi_api_key": {
-        "type": "string",
-        "title": "NCBI API key (optional)",
-        "description": (
-            "Raises the PubMed E-utilities rate limit. Create one under Account settings at "
-            "https://www.ncbi.nlm.nih.gov/account/"
-        ),
-        "sensitive": True,
-        "default": "",
-    },
     "openalex_api_key": {
         "type": "string",
         "title": "OpenAlex API key (recommended)",
