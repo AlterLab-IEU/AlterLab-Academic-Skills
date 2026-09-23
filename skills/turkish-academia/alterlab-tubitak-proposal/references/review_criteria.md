@@ -16,9 +16,25 @@ weighted criteria, per the official *1001 Proje Önerisi Bilimsel Değerlendirme
 Nitelik**, **Proje Yönetimi**, **Çıktı, Etki ve Kazanımlar** — each rated on a six-level scale
 from "tüm boyutlarıyla karşılamaktadır" to "çok yetersiz" (2025 evaluation form).
 
+**3501** is scored on **five criteria** by the *3501 Proje Önerisi Bilimsel Değerlendirme Formu*
+(2025-05 upload, read 2026-09-23). Each question is rated on the same six-level scale (Çok iyi,
+İyi, Geliştirilebilir, Kısmen Yeterli/Sınırlı, Yetersiz, Çok yetersiz), with written strengths
+and weaknesses (at least 450 characters for Özgün Değer and Yöntem, 300 for the others). **The
+form publishes no criterion weights** — do not borrow 1001's 35/25/20/20. For projects reviewed
+by external advisors, TÜBİTAK compiles the final report from all advisors' views.
+
+| Criterion | What the evaluator is asked (form questions, condensed) | Mainly carried by |
+|-----------|--------------------------------------------------------|-------------------|
+| **1 Özgün Değer** | 1.1 problem, question/hypothesis well defined? 1.2 aims clear, measurable, achievable? 1.3 scope and importance set against the state of the art; conceptual/theoretical/methodological contribution and potential to close the gap | §1 (three fields), EK-1 |
+| **2 Yöntem** | 2.1 methods and their links, with citations; 2.2 design, variables, statistics, data/sample sources; 2.3 fit to the aims | §2 |
+| **3 Proje Yönetimi** | 3.1 İP definitions, who and when; 3.2 team adequate in quality and number; 3.3 success criteria measurable; 3.4 risks and B Planı realistic without drifting from the aims; 3.5 infrastructure adequate | İş Paketleri step, Araştırma Olanakları, team |
+| **4 Kariyer Geliştirme Potansiyeli** | 4.1 relation of the PI's master's/doctoral/specialty work to the proposal; 4.2 contribution to the PI's career; 4.3 new skills and interdisciplinary capability beyond the theses | Tez Bilgileri, §4 |
+| **5 Yaygın Etki** | 5.1 outputs clear and reachable; 5.2 impacts (application areas, socio-economic/cultural) clear and reachable; 5.3 dissemination plan concrete (audience, gains, tools, timing) | §5.1–5.3 |
+
 Evaluators themselves may not use generative-AI tools for any part of an evaluation (TÜBİTAK
 *Destek Süreçlerinde Üretken Yapay Zekânın Sorumlu ve Güvenilir Kullanımı Rehberi*, Eylül 2025,
-Bölüm 2) — relevant if a user asks for help reviewing someone else's proposal.
+Bölüm 2; the 3501 evaluation form restates the ban, and the guide page now serves v04, Ocak 2026,
+with the same rule) — relevant if a user asks for help reviewing someone else's proposal.
 
 ## How the axes interact
 
@@ -37,7 +53,8 @@ Bölüm 2) — relevant if a user asks for help reviewing someone else's proposa
 
 1. **Form-rule breaches** — 1001 özet over 600 words (TR or EN), more than 25 pages excluding
    EK-1/EK-2, a changed template, or content moved to external links: returned before review.
-   For 1002-A, keep every section inside its PBS word range (see `form_structure.md`).
+   For 1002-A and 3501, keep every section inside its PBS word range (see `form_structure.md`).
+   For 3501, also confirm the PI's eligibility (doctorate date, title, no earlier 3501) first.
 2. **Duration/budget over the program ceiling** — re-check the *current* period caps.
 3. **No B Planı** for the risky work packages — a required element of the İP tables.
 4. **Hedefler not mapped to work packages**, or literature review / reporting / article writing

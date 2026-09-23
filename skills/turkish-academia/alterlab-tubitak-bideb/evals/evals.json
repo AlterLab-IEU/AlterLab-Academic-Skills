@@ -1,0 +1,91 @@
+{
+  "skill": "alterlab-tubitak-bideb",
+  "evals": [
+    {
+      "id": "chooser-2219-postdoc-abroad",
+      "prompt": "I'm an assistant professor at a state university in Ankara (Turkish citizen, PhD in 2021). I'd like to spend 12 months doing research at a university in Germany. Which TÜBİTAK programme should I use, what does it pay, and what will the panel look at?",
+      "expected_output": "Invokes alterlab-tubitak-bideb and uses the programme chooser: recommends 2219 Yurt Dışı Doktora Sonrası Araştırma Burs Programı (up to 12 months at one host in one country) and explains why 2218 (domestic) and 2232 (relocation to Türkiye) do not fit. Raises the hard gates from the 2026 call — T.C. citizenship; an invitation from a host ranked in the applicant's field in the QS/THE top 100 (or Scimago-Government top 250 for institutes) or from a host advisor with CNCI/FWCI >= 1.00; YDS-type language score >= 65 or a 100%-foreign-language degree; not employed abroad; employer permission signed by the rector — and offers the pre-screen script. States the stipend ceiling for European countries (up to 2,350 EUR a month) plus one-off flights for up to 3 people, the evaluation weights (bilimsel nitelik 40, başvuru sahibinin yetkinliği 20, yurt dışında yapılma gerekçesi ve ev sahibi kurum/danışman 25, kariyer geliştirme 15), that the 2026 call closed on 15 Sep 2026 so the next call must be watched on the page, and the mandatory service equal to the stipend period — every figure dated with the verify-current-call note, and without calling the user eligible.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "2219" },
+        { "type": "behavior", "value": "Recommends 2219 from the user's situation, lists the invitation/ranking, language and citizenship gates, gives the dated stipend ceiling and the 40/20/25/15 weights, and notes that the 2026 call has closed instead of inventing next year's dates." }
+      ]
+    },
+    {
+      "id": "prescreen-2218-birth-extension-turkish",
+      "prompt": "2218 Yurt İçi Doktora Sonrası Araştırma Bursu'na başvurmayı düşünüyorum. Doktoramı Şubat 2020'de aldım, arada bir doğum yaptım. WoS'ta 2 makalem, TR Dizin'de 1 makalem var, YDS puanım 71. Uygun muyum? Araştırma önerisinin başlıklarını da çıkarır mısın?",
+      "expected_output": "Invokes alterlab-tubitak-bideb and runs scripts/bideb_prescreen.py screen for 2218: the 7-year window plus the one-year birth extension ends in February 2028; Tablo 1 gives 2x2 + 1 = 5 points, meeting the >= 5 applicant threshold; YDS 71 meets the >= 70 language gate. Reports PASS_COMPUTABLE_VERIFY_REST — not 'uygunsunuz' — and lists what must still be checked: host type, invitation signed by the host's highest official, not the applicant's own kadro institution or PhD institution, an advisor with >= 5 points in the last 2 years who is not the PhD advisor, all outputs indexed by the application date. Notes the 2026 call closed on 17 Aug 2026. Scaffolds the 2218 araştırma önerisi in the form's own order (Arial 9, <= 20 pages; TR and EN özet <= 500 words each; 1 Bilimsel Nitelik with 1.1-1.6 incl. Çalışma Takvimi totalling 100 and Risk Yönetimi/B Planı, 2 Başvuru Sahibinin Bilimsel Yetkinliği, 3 İlgili Kurumda Yapılma Gerekçesi ve Ev Sahibi Kurum/Danışman, 4 Kariyer Geliştirme Potansiyeli, 5 Diğer, 6 Ek Belgeler, 7-8 declarations) with the 40/20/20/20 weights, and adds the ÜYZ disclosure reminder.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "2218" },
+        { "type": "behavior", "value": "Computes the 7-year window with the birth extension and 5 Tablo 1 points, reports a partial pre-screen verdict rather than declaring eligibility, and scaffolds the 2218 form headings in order with their weights." }
+      ]
+    },
+    {
+      "id": "host-2221-visiting-professor-turkish",
+      "prompt": "Bölümümüze Kanada'da çalışan bir profesörü Şubat 2027'de 3 aylığına davet etmek istiyoruz. TÜBİTAK 2221 için başvuruyu kim yapar, hangi belgeler gerekiyor, ne kadar destek veriliyor ve hangi dönemde başvurmalıyız?",
+      "expected_output": "Invokes alterlab-tubitak-bideb for 2221 Konuk veya Akademik İzinli (Sabbatical) Bilim İnsanı Destekleme Programı: the inviting scientist (kadrolu at the host, holding a doctorate) applies in TYBS with e-imza, one application per guest; the guest needs a doctorate and at least 4 years abroad in a job requiring one. For a visit longer than one month lists the Turkish araştırma önerisi (100-word özet), the guest's diploma, a Turkish invitation letter signed by an institutional official other than the inviter, the guest employer's leave letter and the Letter of Commitment. States the amounts as of 01.05.2025 (66,000 TL a month for a guest, 84,000 TL for a sabbatical, round-trip travel, health insurance up to 560 TL a month for 3-12-month visits, no research costs), the >1-month evaluation weights (yetkinlik 40, bilimsel nitelik 15, yöntem 15, yönetim 15, katkı 15), and uses the timing helper to pick the 2026/4 period (2-30 Nov 2026) as the one closing before a February 2027 arrival, noting the guest must start within 6 months of the decision.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "2221" },
+        { "type": "behavior", "value": "Explains that the host-side scientist applies, lists the long-visit documents, gives the dated monthly amounts, and selects the November 2026 period for a February 2027 arrival." }
+      ]
+    },
+    {
+      "id": "relocation-2232b-early-career",
+      "prompt": "I'm a Turkish researcher, 37, finished my PhD in 2023 and have been a postdoc in the Netherlands since then. I'm thinking about moving back to a Turkish university. Is TÜBİTAK 2232-B realistic for me, what does it fund, and when is the next call?",
+      "expected_output": "Invokes alterlab-tubitak-bideb for 2232-B Uluslararası Genç Araştırmacılar Programı using the 2025 call: under 40 on the call opening day (plus one year per birth for women), doctorate within the last 4 years with at least 1 year of postdoctoral experience abroad, not more than 1 year in Türkiye in the last 3 years and not working in Türkiye on the opening day, a Highly Cited listing or at least 12 months in the last 5 years at institutions on the call's lists (QS/THE subject top 150 etc.), and no outstanding obligatory service from a public scholarship. Gives the 2025 amounts (PI stipend 150,000 TL a month, start-up package 2,350,000 TL, research support up to 3,000,000 TL, team bursiyers), 24-36 months, the weights (applicant 40, project 60), and says the 2025 call closed on 30 Dec 2025 with no 2026 call on the page on 2026-09-23, so the user should watch the page rather than rely on a date.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "2232-B" },
+        { "type": "behavior", "value": "Checks age, PhD recency, postdoc abroad, residence and ranked-institution gates from the 2025 call and states that no newer call was published instead of guessing its dates." }
+      ]
+    },
+    {
+      "id": "conference-2224a-points-timing-turkish",
+      "prompt": "Mart 2027'de Japonya'da Scopus'ta indekslenen bir konferansta bildiri sunacağım. Doktoralı araştırma görevlisiyim; 2024-2026 arasında 2 Scopus makalem ve 1 CPCI bildirim var, YDS 80. 2224-A'ya uygun muyum, ne kadar destek alırım, hangi dönemde başvurmalıyım?",
+      "expected_output": "Invokes alterlab-tubitak-bideb for 2224-A: as a doctorate holder working at a university the applicant needs at least 6 Tablo 1 points from the application year and the two previous calendar years; 2 Scopus articles (4) + 1 CPCI paper (1) = 5, so the points gate fails and the answer says so plainly, suggesting what would close the gap rather than implying eligibility. Explains that only travel, accommodation and registration are reimbursed after the event, up to the country ceiling in the table dated 10.01.2024 (1,000-2,000 USD range; look up Japan), converted to TL at the CBRT rate; that the event must be CPCI/Scopus indexed, the paper accepted or submitted, all co-authors must sign waivers and 2224-A can be used once a year; and, via the timing helper, that the 2026/3 period (5-27 Oct 2026) is the one to use for a March 2027 event.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "2224-A" },
+        { "type": "behavior", "value": "Computes 5 points against the >= 6 threshold and reports the shortfall, and identifies the October 2026 period for a March 2027 event." }
+      ]
+    },
+    {
+      "id": "near-miss-ardeb-3501",
+      "prompt": "Doktoramı 2021'de aldım, dr. öğretim üyesiyim. TÜBİTAK 3501 Kariyer Geliştirme projesi yazmak istiyorum; bütçe üst limiti ne ve özgün değer ile kariyer geliştirme potansiyeli bölümlerini nasıl kurgulamalıyım?",
+      "expected_output": "Does NOT invoke alterlab-tubitak-bideb; defers to alterlab-tubitak-proposal. 3501 Kariyer Geliştirme Programı is an ARDEB project grant typed into PBS (budget cap, word ranges and the five evaluation criteria including Kariyer Geliştirme Potansiyeli), not a BİDEB fellowship or bursary. alterlab-tubitak-bideb only mentions 3501 in its chooser to route early-career PIs to the proposal skill.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-tubitak-proposal" }
+      ]
+    },
+    {
+      "id": "near-miss-akademik-tesvik",
+      "prompt": "Bu yıl TÜBİTAK 2224-A desteğiyle yurt dışında bildiri sundum ve iki makalem yayımlandı. Akademik teşvik puanımı hesaplar mısın, net 30'u geçiyor muyum?",
+      "expected_output": "Does NOT invoke alterlab-tubitak-bideb; defers to alterlab-akademik-tesvik. The user wants the annual academic-incentive score computed under the Akademik Teşvik Ödeneği Yönetmeliği; mentioning a past 2224-A award does not make it a BİDEB application question.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-akademik-tesvik" }
+      ]
+    },
+    {
+      "id": "near-miss-academic-cv",
+      "prompt": "I need a polished academic CV and a two-page research statement for faculty job applications this autumn. I was a TÜBİTAK 2218 postdoctoral fellow, so please make that stand out.",
+      "expected_output": "Does NOT invoke alterlab-tubitak-bideb; defers to alterlab-academic-career. The task is CV and research-statement writing for faculty jobs; the past 2218 fellowship is content for the CV, not a BİDEB application to prepare.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-academic-career" }
+      ]
+    },
+    {
+      "id": "near-miss-docentlik",
+      "prompt": "Sağlık Bilimleri'nde doçentlik başvurusu için puanım yetiyor mu? 2219 bursuyla yurt dışında yaptığım çalışmadan çıkan makaleler de sayılır mı?",
+      "expected_output": "Does NOT invoke alterlab-tubitak-bideb; defers to alterlab-docentlik-eligibility. The question is whether a publication list clears ÜAK doçentlik thresholds; the 2219 fellowship is only where the work was done.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-docentlik-eligibility" }
+      ]
+    }
+  ]
+}

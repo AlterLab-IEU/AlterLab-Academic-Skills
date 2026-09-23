@@ -1,8 +1,8 @@
-# ARDEB 1001 & 1002-A Form Structure (annotated)
+# ARDEB 1001, 1002-A & 3501 Form Structure (annotated)
 
 The section trees below follow the directorate's own heading order: the official 1001 `.doc`
-form, and — for 1002-A — the PBS entry steps described in the *1002-A Hızlı Destek Modülü
-Başvuru İçeriği Bilgi Notu* (both read on 2026-09-23). Draft **to these headings, in this order**
+form, and — for 1002-A and 3501 — the PBS entry steps described in each programme's *Başvuru
+İçeriği Bilgi Notu* (all read on 2026-09-23). Draft **to these headings, in this order**
 — ARDEB evaluators score against this structure, not against an IMRaD paper. Keep the Turkish
 heading; the English in parentheses is a gloss for the drafter, not a section to add.
 
@@ -11,6 +11,7 @@ Authoritative sources (verify the current period before relying on caps):
 - 1001 form: `https://tubitak.gov.tr/sites/default/files/2024-04/1001_basvuru_formu.doc`
 - 1001 guide: `https://tubitak.gov.tr/sites/default/files/2024-04/ardeb_1001_basvuru_rehberi.pdf`
 - 1002-A content note: `https://tubitak.gov.tr/sites/default/files/2025-12/1002_a_basvuru_icerigi_bilginotu.doc`
+- 3501 content note: `https://tubitak.gov.tr/sites/default/files/2026-05/3501_basvuru_icerigi_bilgi_notu.doc`
 
 > Sub-heading wording is revised between periods. Treat the trees as the stable skeleton and
 > reconcile labels against the current form / note.
@@ -132,6 +133,38 @@ must be .jpg/.jpeg/.png. The bilgi notu does not state an özet word limit for 1
 
 ---
 
+# Part C — 3501 Kariyer Geliştirme (PBS entry screens)
+
+Like 1002-A, 3501 has **no .doc template**: each section is typed into a PBS screen and the
+system builds the form, EK-1 and EK-2. Word ranges below are from the *3501 Başvuru İçeriği
+Bilgi Notu*; numbering follows the 3501 evaluation form (1 Özgün Değer … 5 Yaygın Etki).
+Content placed behind links to external storage or web pages is returned without review.
+
+| # | Section (TR) | Words (min–max) | Notes |
+|---|--------------|-----------------|-------|
+| – | **PROJE YÜRÜTÜCÜSÜNÜN TEZ BİLGİLERİ** — Yüksek Lisans Tezi: title + yaygın etki | ≤ 150 | Only if the PI has a master's thesis; list its papers, chapters, books |
+| – | Doktora / Tıpta Uzmanlık (or equivalent) Tezi: title + yaygın etki | 50–350 | Feeds the Kariyer Geliştirme criterion (relation of the theses to the proposal) |
+| 1 | **ÖZGÜN DEĞER** — Konunun Önemi, Projenin Özgün Değeri | 1,000–4,000 | Critical literature review with qualitative/quantitative support; the gap and the conceptual/theoretical/methodological contribution |
+| 1 | Araştırma Sorusu veya Hipotezi | 100–400 | Problem(s), research question and/or hypothesis |
+| 1 | Amaç ve Hedefler | 150–500 | Clear, measurable, realistic, achievable within the project |
+| 2 | **YÖNTEM** | 1,000–3,750 | Methods and techniques with reasons for the choice (data-collection tools, analysis), design, variables, statistics; preliminary work; optional flow chart |
+| 3 | **PROJE YÖNETİMİ** | (built from the "Proje İş Paketleri" step) | ≤ 36 months; no İP longer than the project; per İP who/when, **Başarı Ölçütü**, **Projenin Başarısındaki Önemi (%)** totalling 100, **Ara Çıktılar**, risks with a **B Planı** under "Risk Bilgileri" (not mandatory for every İP); enter "Proje Personeli" and "Yardımcı Personel" first; **Araştırma Olanakları** lists infrastructure and its use. Literature review, reporting, dissemination, article writing and procurement are not work packages |
+| 4 | **KARİYER GELİŞTİRME POTANSİYELİ** | 250–700 | How the PI's master's/doctoral/specialty work relates to (and differs from) the proposal; what the project adds to the PI's career, new skills, interdisciplinary capability |
+| 5.1 | **YAYGIN ETKİ** — Öngörülen Çıktılar | — | Outputs by category with measurable targets, the time window of each, and users (if any) |
+| 5.2 | Öngörülen Etkiler | 50–400 | Application areas, end users (policy makers, civil society, private sector), socio-economic/cultural contribution; link to the On İkinci Kalkınma Planı and other policy documents with citations |
+| 5.3 | Proje Sonuçlarının Yayılımı ve Bilim İletişimi Kapsamında Gerçekleştirilecek Faaliyet Planı — Hedef Kitle | 10–125 | Who benefits and how they will be reached |
+| 5.3 | Hedefler ve Beklenen Kazanımlar | 10–125 | Awareness/knowledge goals and why sharing matters |
+| 5.3 | Kullanılacak Araçlar | 5–100 | Channels (digital platforms, media, workshops, podcasts, infographics, exhibitions …) and why |
+| 5.3 | Zamanlama | 5–75 | When and for how long |
+| – | Belirtmek İstediğiniz Diğer Konular | ≤ 500 (optional) | Only material that helps the evaluation |
+| EK-1 | Kaynaklar ("Kaynakça" step) | — | Every source cited in the text; **DOI mandatory where one exists** |
+| EK-2 | Bütçe ve Gerekçesi (budget steps) | — | Detailed justification per line; total must equal "Önerilen Destek Miktarı"; no proforma at application; limits in `program_profiles.md` |
+
+EK-3 (Proje Ekibinin Diğer Projeleri) is generated by PBS. The bilgi notu does not state an
+özet word limit for 3501 — check the "Proje Bilgileri" step in PBS.
+
+---
+
 ## 1001 vs 1002-A — the delta
 
 - **Format:** 1001 = uploaded .doc (≤ 25 pages excl. EK-1/EK-2); 1002-A = PBS text fields with
@@ -145,3 +178,14 @@ must be .jpg/.jpeg/.png. The bilgi notu does not state an özet word limit for 1
   `program_profiles.md`), with **rolling** submission instead of a periodic call.
 - 1002-A also serves needs arising in an accepted doctoral thesis (the doctoral student can be
   PI). The separate **1002-B Acil Destek Modülü** is for *urgent* needs and is out of scope.
+
+## 1001 vs 3501 — the delta
+
+- **Format:** 3501 is typed into PBS with word ranges (Part C); 1001 is an uploaded .doc.
+- **Headings:** 3501 keeps 1001's Özgün Değer / Yöntem / Proje Yönetimi / Yaygın Etki blocks and
+  adds the thesis-information step and **4. Kariyer Geliştirme Potansiyeli**; yaygın etki
+  becomes section 5.
+- **Evaluation:** five criteria on a six-level scale with no published weights (see
+  `review_criteria.md`) instead of 1001's four weighted panel criteria.
+- **Eligibility, money and timing:** ≤ 7 years after the doctorate, doçent or lower, first 3501;
+  1,500,000 TL; rolling submission — full table in `program_profiles.md`.
