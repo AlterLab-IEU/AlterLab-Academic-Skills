@@ -49,10 +49,19 @@
     {
       "id": "near-miss-bioservices",
       "prompt": "Map UniProt P00533 to its KEGG and Reactome pathway entries and pull the cross-referenced database IDs.",
-      "expected_output": "Does NOT invoke this skill; defers to alterlab-bioservices. The ask is multi-database identifier mapping and pathway cross-referencing, not glycosylation analysis. Although glycoengineering can query GlyConnect for a protein, generic cross-database ID mapping across KEGG/Reactome belongs to bioservices.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-bioservices. The ask is multi-database identifier mapping and pathway cross-referencing, not glycosylation analysis. Although glycoengineering can query GlyGen for a protein's glycosylation, generic cross-database ID mapping across KEGG/Reactome belongs to bioservices.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-bioservices" }
+      ]
+    },
+    {
+      "id": "near-miss-pyopenms",
+      "prompt": "I have LC-MS/MS raw files from a glycoproteomics run. Identify the glycopeptides and quantify them across my samples.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-pyopenms. Processing mass-spectrometry raw data (feature detection, peptide/glycopeptide identification, quantification) is an MS-data-processing task; this skill scans sequences for glycosylation sites and plans glycoengineering, it does not process spectra.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-pyopenms" }
       ]
     }
   ]

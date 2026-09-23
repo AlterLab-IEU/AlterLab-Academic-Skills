@@ -14,7 +14,7 @@ with cellxgene_census.open_soma() as census:
     summary = census["census_info"]["summary"].read().concat().to_pandas()
 
 # Open a specific version for reproducibility (preferred for published work)
-with cellxgene_census.open_soma(census_version="2023-07-25") as census:
+with cellxgene_census.open_soma(census_version="2025-11-08") as census:
     summary = census["census_info"]["summary"].read().concat().to_pandas()
 ```
 

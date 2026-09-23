@@ -3,10 +3,11 @@ name: alterlab-borzoi
 description: Predict genome-wide functional genomics tracks from DNA sequence with Borzoi (Linder 2025) — a sequence-to-function model outputting RNA-seq, CAGE, ATAC, and ChIP coverage across long context, used to score non-coding and regulatory variant effects. Use when predicting functional tracks from a DNA sequence, scoring a non-coding/regulatory variant's effect on expression or chromatin, or doing in-silico mutagenesis of a locus. To LOOK UP a variant's population frequency prefer alterlab-gnomad; for its clinical significance prefer alterlab-clinvar; for protein-structure effects prefer alterlab-alphafold; for single-cell foundation models prefer alterlab-scgpt. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Runs Borzoi (`calico/borzoi`; install per repo — TODO(verify) exact pin) under `uv run python`. Model weights download once and cache; a CUDA GPU is recommended (the model takes long DNA context and is heavy on CPU). Inputs are DNA sequences (FASTA / genome coordinates + a reference); outputs are multi-track coverage arrays. Dispatch large scans via alterlab-remote-compute."
+compatibility: "Reference TensorFlow code (`calico/borzoi` + `calico/baskerville` from git, TF 2.15.x) or the PyTorch port `borzoi-pytorch` (0.5.1 as of 2026-09, Hugging Face weights), under `uv run python`. Weights cache after first download; a CUDA GPU is strongly recommended (~500 kb DNA context). Input: DNA (FASTA or coordinates + reference); output: multi-track coverage arrays. Dispatch large scans via alterlab-remote-compute."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Borzoi (sequence → function)
@@ -45,15 +46,21 @@ Use this skill when the user wants to:
 
 ### 1. Track prediction from sequence
 
+The quickest path is the PyTorch port, which loads ported weights straight from the Hub:
+
 ```python
-# calico/borzoi — API sketch; TODO(verify) against installed borzoi
-# 1) extract the reference sequence window around a locus
-# 2) run the model to get multi-track predicted coverage
-# (see references/borzoi_usage.md for the exact model-loading + predict calls)
+from borzoi_pytorch import Borzoi
+
+# replicates 0-3, human by default; 'johahi/borzoi-replicate-0-mouse' for mouse heads
+model = Borzoi.from_pretrained("johahi/borzoi-replicate-0").eval().cuda()
+# one-hot encode the reference window around your locus, then:
+# predictions = model(one_hot_batch)   # (batch, tracks, bins)
 ```
 
-Provide a genome window (coordinates + reference, or a FASTA); the model returns predicted
-coverage across its output tracks.
+The reference TensorFlow implementation (`calico/borzoi` on top of `calico/baskerville`)
+is the source of truth for the published results and ships the variant-scoring and
+interpretation tutorials. Either way: provide a genome window (coordinates + reference, or a
+FASTA), one-hot encode it, and read predicted coverage across the output tracks.
 
 ### 2. Non-coding variant effect scoring
 
@@ -69,7 +76,9 @@ localize functionally important positions (motif/driver discovery).
 ### 4. GPU and dispatch
 
 Borzoi takes long context and is GPU-heavy; genome-wide or many-variant scans should be
-dispatched via `alterlab-remote-compute` (submit → poll → harvest).
+dispatched via `alterlab-remote-compute` (submit → poll → harvest). **Flashzoi**
+(`johahi/flashzoi-replicate-0..3`, needs FlashAttention-2) is a drop-in ~3x faster variant at
+comparable accuracy — worth it for large scans.
 
 ## Resources
 

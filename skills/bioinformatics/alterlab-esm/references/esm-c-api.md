@@ -503,7 +503,7 @@ cache.save()
 
 ## Comparison with ESM2
 
-EvolutionaryScale positions ESM C as a successor to ESM2 with better quality-per-parameter and improved efficiency. For exact speed/perplexity/quality numbers, consult the official ESM Cambrian benchmarks rather than relying on rules of thumb: https://www.evolutionaryscale.ai/blog/esm-cambrian
+Biohub (formerly EvolutionaryScale) positions ESMC as a successor to ESM2 with better quality-per-parameter and improved efficiency. For exact speed/perplexity/quality numbers, consult the official ESM Cambrian benchmarks rather than relying on rules of thumb: https://www.evolutionaryscale.ai/blog/esm-cambrian
 
 **Migration from ESM2:**
 
@@ -514,7 +514,7 @@ ESM C is *not* a literal drop-in for the old `esm.pretrained` API — the interf
 from esm import pretrained
 model, alphabet = pretrained.esm2_t33_650M_UR50D()
 
-# ESM C (evolutionaryscale/esm SDK): build ESMProtein, encode, then logits()
+# ESMC (Biohub `esm` SDK): build ESMProtein, encode, then logits()
 from esm.models.esmc import ESMC
 from esm.sdk.api import ESMProtein, LogitsConfig
 model = ESMC.from_pretrained("esmc_600m").to("cuda")
@@ -575,11 +575,11 @@ If using ESM C in research, cite:
 
 ```
 ESM Cambrian: https://www.evolutionaryscale.ai/blog/esm-cambrian
-EvolutionaryScale (2024)
+Biohub / EvolutionaryScale (2024)
 ```
 
 ## Additional Resources
 
 - ESM C blog post: https://www.evolutionaryscale.ai/blog/esm-cambrian
-- Model weights: HuggingFace EvolutionaryScale organization
+- Model weights: Hugging Face `biohub` organization (`biohub/ESMC-6B`, …)
 - Comparison benchmarks: See blog post for detailed performance comparisons

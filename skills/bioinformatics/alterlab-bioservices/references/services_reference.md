@@ -16,28 +16,32 @@ u = UniProt(verbose=False)
 
 **Key Methods:**
 
-- `search(query, frmt="tab", columns=None, limit=None, sort=None, compress=False, include=False, **kwargs)`
+- `search(query, frmt="tsv", columns=None, include_isoforms=False, sort="score", limit=None, size=25, database="uniprotkb", progress=False)`
   - Search UniProt with flexible query syntax
-  - `frmt`: "tab", "fasta", "xml", "rdf", "gff", "txt"
-  - `columns`: Comma-separated list (e.g., "id,genes,organism,length")
-  - Returns: String in requested format
+  - `frmt`: `"tsv"` (default), `"xlsx"`, `"fasta"`, `"json"`, `"gff"`. The pre-2022
+    `"tab"`, `"txt"`, `"xml"` and `"rdf"` values are no longer accepted here.
+  - `columns`: comma-separated **UniProt return-field names**, e.g.
+    `"accession,gene_names,organism_name,length"` (the old display labels such as
+    `"id,genes,organism"` were replaced in the June-2022 API)
+  - Returns: string in the requested format (all pages concatenated)
 
-- `retrieve(uniprot_id, frmt="txt")`
-  - Retrieve specific UniProt entry
-  - `frmt`: "txt", "fasta", "xml", "rdf", "gff"
-  - Returns: Entry data in requested format
+- `retrieve(uniprot_id, frmt="json", database="uniprot", include=False)`
+  - Retrieve specific UniProt entry (or a list of them)
+  - `frmt`: "json" (default), "txt", "xml", "rdf", "gff", "fasta"
+  - Returns: entry data in the requested format; a list when given a list of IDs
 
-- `mapping(fr="UniProtKB_AC-ID", to="KEGG", query="P43403")`
-  - Convert identifiers between databases
-  - `fr`/`to`: Database identifiers (see identifier_mapping.md)
-  - `query`: Single ID or comma-separated list
-  - Returns: Dictionary mapping input to output IDs
+- `mapping(fr="UniProtKB_AC-ID", to="KEGG", query="P43403", polling_interval_seconds=3, max_waiting_time=100)`
+  - Submit an ID-mapping job, poll it, and return the assembled payload
+  - `query`: single ID, comma-separated string, or list
+  - Returns: `{"results": [{"from": src, "to": tgt}, ...], "failedIds": [...]}` —
+    **not** a `{source: [targets]}` dict; build that yourself if you need it
+  - `valid_mapping` (property) lists the legal `fr`/`to` pairs straight from UniProt
 
-- `searchUniProtId(pattern, columns="entry name,length,organism", limit=100)`
-  - Convenience method for ID-based searches
-  - Returns: Tab-separated values
+- `get_df(entries, nChunk=100, organism=None, limit=10, columns=None)`
+  - Build a pandas DataFrame for a list of accessions
 
-**Common columns:** id, entry name, genes, organism, protein names, length, sequence, go-id, ec, pathway, interactor
+**Common `columns` values:** accession, id, gene_names, gene_primary, organism_name,
+organism_id, protein_name, length, sequence, mass, go_id, ec, xref_pdb, xref_kegg
 
 **Use cases:**
 - Protein sequence retrieval for BLAST
@@ -87,8 +91,11 @@ k.organism = "hsa"  # Set default organism
   - Returns: List of pathway IDs
 
 - `get_pathway_by_gene(gene_id, organism)`
-  - Find pathways containing gene
-  - Returns: List of pathway IDs
+  - Find pathways containing a gene, e.g. `get_pathway_by_gene("7535", "hsa")`
+  - Returns the parsed PATHWAY block — a **dict** `{pathway_id: pathway_name}`
+    (`{"hsa04064": "NF-kappa B signaling pathway", ...}`), despite the docstring's
+    "list of pathway Ids". Iterating it yields the IDs; `.items()` gives you the
+    names for free. IDs come back without the `path:` prefix.
 
 - `parse_kgml_pathway(pathway_id)`
   - Parse pathway KGML for interactions
@@ -125,8 +132,9 @@ h = HGNC()
 ```
 
 **Key Methods:**
-- `search(query)`: Search gene symbols/names
-- `fetch(format, query)`: Retrieve gene information
+- `search(database_or_query=None, query=None, frmt="json")`: search gene symbols/names
+- `fetch(database, query, frmt="json")`: retrieve a gene record
+- `get_info(frmt="json")`: list the searchable/stored fields
 
 **Use cases:**
 - Standardizing human gene names
@@ -145,8 +153,9 @@ m = MyGeneInfo()
 ```
 
 **Key Methods:**
-- `querymany(ids, scopes, fields, species)`: Batch gene queries
-- `getgene(geneid)`: Get gene annotation
+- `get_genes(ids, ...)` / `get_one_gene(geneid, ...)`: gene annotation by ID
+- `get_queries(...)` / `get_one_query(...)`: batch or single free-text query
+- `get_metadata()`, `get_taxonomy()`
 
 **Use cases:**
 - Batch gene annotation retrieval
@@ -166,10 +175,17 @@ from bioservices import ChEBI
 c = ChEBI()
 ```
 
-**Key Methods:**
-- `getCompleteEntity(chebi_id)`: Full compound information
-- `getLiteEntity(chebi_id)`: Basic information
-- `getCompleteEntityByList(chebi_ids)`: Batch retrieval
+**Key Methods** (REST since bioservices 1.13 — the SOAP interface is gone):
+- `getCompleteEntity(chebi_id)`: full entry as a dict-like `ChebiEntity`; accepts
+  `"CHEBI:27732"` or `"27732"`
+- `getLiteEntity(search, searchCategory="ALL", maximumResults=200, stars="ALL")`: search
+- `getCompleteEntityByList(chebi_ids)`: batch retrieval
+- `conv(chebi_id, target)`: cross-references for one source, e.g.
+  `conv("CHEBI:10102", "KEGG COMPOUND accession")`
+
+`ChebiEntity` exposes `.chebiId`, `.chebiAsciiName`, `.formula`, `.mass`, `.charge`,
+`.smiles`, `.inchiKey`, and `.DatabaseLinks` (list of `(accession, source_name)` pairs).
+Note `.formula` — the old SOAP attribute was `Formulae`.
 
 **Use cases:**
 - Small molecule information
@@ -189,7 +205,8 @@ c = ChEMBL()
 ```
 
 **Key Methods (bioservices >= 1.6.0):**
-- `get_molecule(query=None, limit=20, offset=0)`: Retrieve molecule records (by ChEMBL ID, list of IDs, or filters)
+- `get_molecule(query=None, limit=20, offset=0, filters=None)`: retrieve molecule records
+  (by ChEMBL ID, list of IDs, or filters)
 - `search_molecule(query)`: Free-text molecule search
 - `get_target(query)`: Target information
 - `get_similarity(smiles_or_id, similarity)`: Find similar compounds
@@ -238,9 +255,11 @@ from bioservices import PubChem
 p = PubChem()
 ```
 
-**Key Methods:**
-- `get_compounds(identifier, namespace)`: Retrieve compounds
-- `get_properties(properties, identifier, namespace)`: Get properties
+**Key Methods** (PUG REST, refreshed in bioservices 1.14):
+- `get_cids_by_name(name)`, `get_cids_by_smiles(smiles)`, `get_cids_by_inchikey(...)`
+- `get_compound_by_cid(cid)`, `get_compound_by_name(name)`, `get_compound_by_smiles(...)`
+- `get_properties(identifier, namespace="cid", properties=None)`, `get_synonyms(...)`,
+  `get_xrefs(...)`, `get_assay(aid)`
 
 **Use cases:**
 - Chemical structure retrieval
@@ -269,13 +288,20 @@ s = NCBIblast(verbose=False)
   - `email`: Required by NCBI
   - Returns: Job ID
 
-- `getStatus(jobid)`
+- `get_status(jobid)`
   - Check job status
-  - Returns: "RUNNING", "FINISHED", "ERROR"
+  - Returns: "RUNNING", "FINISHED", "ERROR", "FAILURE", or "NOT_FOUND"
 
-- `getResult(jobid, result_type)`
-  - Retrieve results
-  - `result_type`: "out" (default), "ids", "xml"
+- `wait(jobid)`
+  - Block until the job finishes (polls at `checkInterval` seconds)
+
+- `get_result(jobid, result_type)` / `get_result_types(jobid)`
+  - Retrieve results; `result_type` is one of the identifiers `get_result_types` returns
+    (e.g. "out", "ids", "xml")
+
+> The camelCase `getStatus` / `getResult` / `parametersDetails` names no longer exist;
+> only the docstrings still mention them. `NCBIBlastAPI` (bioservices 1.16) offers the same
+> run / get_status / get_result flow against NCBI's own BLAST URL API.
 
 **Important:** BLAST jobs are asynchronous. Always check status before retrieving results.
 
@@ -299,8 +325,9 @@ r = Reactome()
 ```
 
 **Key Methods:**
-- `get_pathway_by_id(pathway_id)`: Pathway details
-- `search_pathway(query)`: Search pathways
+- `get_pathways_top(species)`, `get_pathway_containedEvents(identifier)`,
+  `get_event_ancestors(identifier)`, `get_complex_subunits(identifier)`
+- `search_query(query)`, `search_facet_query(query)`, `get_species_all()`
 
 **Use cases:**
 - Human pathway analysis
@@ -308,33 +335,31 @@ r = Reactome()
 
 ---
 
-### PSICQUIC
+### STRING (replaces PSICQUIC / BioGRID)
 
-Protein interaction query service (federates 30+ databases).
+`PSICQUIC` and `BioGRID` were **removed in bioservices 1.14**; importing them raises
+`ImportError`. STRING covers the same "who interacts with this protein" question.
 
 **Initialization:**
 ```python
-from bioservices import PSICQUIC
-s = PSICQUIC()
+from bioservices import STRING
+s = STRING()
 ```
 
 **Key Methods:**
-- `query(database, query_string)`
-  - Query specific interaction database
-  - Returns: PSI-MI TAB format
+- `get_interaction_partners(identifiers, species=None, required_score=None, limit=None, network_type="functional")`
+  - Partners of the query proteins, including ones outside the input set
+- `get_interactions(identifiers, species=...)` — edges *within* the given set
+- `get_network(...)`, `get_enrichment(...)`, `get_functional_annotation(...)`,
+  `get_ppi_enrichment(...)`, `get_homology(...)`, `get_string_ids(...)`, `get_version()`
 
-- `activeDBs`
-  - Property listing available databases
-  - Returns: List of database names
-
-**Available databases:** MINT, IntAct, BioGRID, DIP, InnateDB, MatrixDB, MPIDB, UniProt, and 30+ more
-
-**Query syntax:** Supports AND, OR, species filters
-- Example: "ZAP70 AND species:9606"
+**Parameters that matter:** `species` is an NCBI taxid (9606 = human); `required_score`
+is 0–1000 (returned `score` values are 0–1); `network_type` is `"functional"` (default)
+or `"physical"`.
 
 **Use cases:**
 - Protein-protein interaction discovery
-- Network analysis
+- Network analysis and enrichment of an interactor set
 - Interactome mapping
 
 ---
@@ -370,8 +395,9 @@ o = OmniPath()
 ```
 
 **Key Methods:**
-- `interactions(datasets, organisms)`: Get interactions
-- `ptms(datasets, organisms)`: Post-translational modifications
+- `get_interactions(query="", frmt="json", fields=[])`
+- `get_ptms(query="", ptm_type=None, frmt="json", fields=[])`
+- `get_network(frmt="json")`, `get_resources(frmt="json")`
 
 **Use cases:**
 - Cell signaling analysis
@@ -391,14 +417,17 @@ from bioservices import QuickGO
 g = QuickGO()
 ```
 
-**Key Methods:**
-- `Term(go_id, frmt="obo")`
-  - Retrieve GO term information
-  - Returns: Term definition and metadata
-
-- `Annotation(protein=None, goid=None, format="tsv")`
-  - Get GO annotations
-  - Returns: Annotations in requested format
+**Key Methods** (the QuickGO REST refresh renamed most of these):
+- `get_go_terms(query)` / `go_search(query, limit=600, page=1)`
+  - Retrieve or search GO term information (parsed JSON)
+- `get_go_ancestors(query, relations=...)`, `get_go_children(query)`, `get_go_paths(_from, _to)`
+  - Navigate the ontology graph
+- `Annotation(geneProductId=None, goId=None, taxonId=None, aspect=None, includeFields=None, limit=100, page=1, ...)`
+  - Get GO annotations. `geneProductId` is prefixed (`"UniProtKB:P43403"`), `limit` is
+    capped at 100 (higher raises `TypeError`), and the result is a dict with
+    `numberOfHits` plus a `results` list of records (`goId`, `goName`, `goAspect`,
+    `qualifier`, `evidenceCode`, ...). The old `protein=` / `format=` parameters are gone.
+- `Annotation_from_goid(goId, ...)`, `gene_product_search(...)`
 
 **GO categories:**
 - Biological Process (BP)
@@ -425,9 +454,9 @@ b = BioMart()
 ```
 
 **Key Methods:**
-- `datasets(dataset)`: List available datasets
-- `attributes(dataset)`: List attributes
-- `query(query_xml)`: Execute BioMart query
+- `registry()`, `datasets(mart)`, `attributes(dataset)`, `filters(dataset)`
+- `new_query()` + `add_dataset_to_xml` / `add_attribute_to_xml` / `add_filter_to_xml`
+  + `get_xml()`, then `query(xmlq)`
 
 **Use cases:**
 - Bulk genomic data retrieval
@@ -447,8 +476,10 @@ a = ArrayExpress()
 ```
 
 **Key Methods:**
-- `queryExperiments(keywords)`: Search experiments
-- `retrieveExperiment(accession)`: Get experiment data
+- `search(query, page=1, page_size=20, ...)`: search studies (current BioStudies-backed API)
+- `get_study(accession)`, `get_files(accession)`, `retrieve_file(accession, filename)`
+- The legacy `queryExperiments` / `retrieveExperiment` helpers remain but target the
+  retired ArrayExpress endpoints
 
 **Use cases:**
 - Gene expression data
@@ -468,8 +499,8 @@ e = ENA()
 ```
 
 **Key Methods:**
-- `search_data(query)`: Search sequences
-- `retrieve_data(accession)`: Retrieve sequences
+- `get_data(identifier, frmt=...)`: retrieve records by accession
+- `get_taxon(taxon)`, `data_warehouse()`
 
 **Use cases:**
 - Nucleotide sequence retrieval
@@ -490,10 +521,11 @@ p = PDB()
 ```
 
 **Key Methods:**
-- `get_file(pdb_id, file_format)`: Download structure files
-- `search(query)`: Search structures
+- `search(query, request_options=None, request_info=None, return_type=None)`: RCSB Search API v2
+- `get_current_ids()`, `get_similarity_sequence(seq)`
 
-**File formats:** pdb, cif, xml
+For downloading coordinate files, fetch from RCSB directly (or use `alterlab-pdb`);
+the v2 API wrapper in bioservices is search-oriented.
 
 **Use cases:**
 - 3D structure retrieval
@@ -513,8 +545,10 @@ p = Pfam()
 ```
 
 **Key Methods:**
-- `searchSequence(sequence)`: Find domains in sequence
-- `getPfamEntry(pfam_id)`: Domain information
+- `show(Id)`, `get_protein(ID, output="json")`
+
+Pfam is now served through InterPro; the bioservices class scrapes those pages rather
+than calling a dedicated Pfam REST API, so prefer `alterlab-interpro` for real work.
 
 **Use cases:**
 - Protein domain identification
@@ -536,7 +570,8 @@ b = BioModels()
 ```
 
 **Key Methods:**
-- `get_model_by_id(model_id)`: Retrieve SBML model
+- `get_model(model_id, frmt="json")`, `get_model_files(model_id)`,
+  `get_model_download(model_id, filename=...)`, `search(query)`
 
 **Use cases:**
 - Systems biology modeling
@@ -571,8 +606,9 @@ b = BiGG()
 ```
 
 **Key Methods:**
-- `list_models()`: Available models
-- `get_model(model_id)`: Model details
+- `models` (property): available models
+- `get_model(model_id)`, `metabolites(...)`, `reactions(...)`, `genes(model_id)`,
+  `search(query, type_)`, `download(model_id, format_="json")`
 
 **Use cases:**
 - Metabolic network analysis
@@ -605,10 +641,12 @@ service = Service(verbose=False)  # Suppress HTTP logs
 
 ### Rate Limiting
 
-Services have timeouts and rate limits:
+Timeouts live on the `REST` object each service holds (`service.services`), so set them
+there — most classes are plain wrappers now rather than `REST` subclasses:
 ```python
-service.TIMEOUT = 30  # Adjust timeout
-service.DELAY = 1     # Delay between requests (if supported)
+k = KEGG()
+k.services.TIMEOUT = 30       # seconds
+k.services.settings.TIMEOUT = 30   # equivalent, via the settings object
 ```
 
 ### Output Formats
@@ -619,10 +657,10 @@ Common format parameters:
 
 ### Caching
 
-Some services cache results:
+Caching is opt-in at construction and backed by `requests_cache`:
 ```python
-service.CACHE = True  # Enable caching
-service.clear_cache()  # Clear cache
+k = KEGG(cache=True)       # store responses in a local sqlite cache
+k.services.clear_cache()   # drop it
 ```
 
 ## Additional Resources

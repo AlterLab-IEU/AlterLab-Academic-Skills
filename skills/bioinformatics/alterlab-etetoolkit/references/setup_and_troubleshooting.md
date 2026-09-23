@@ -3,8 +3,13 @@
 ## Installation
 
 ```bash
-# Basic installation
+# Basic installation — 3.1.3 is the last ete3 release (May 2023)
 uv pip install ete3
+
+# The maintained line is ete4 (4.4.0 as of 2026-09). Its API differs:
+# `from ete4 import Tree`, `parser=` instead of `format=`, `tree.leaves()`,
+# `node.props`, and a browser-based `explore()` in place of the Qt viewer.
+uv pip install ete4
 
 # With external dependencies for rendering (optional but recommended)
 # On macOS:
@@ -13,8 +18,8 @@ brew install qt@5
 # On Ubuntu/Debian:
 sudo apt-get install python3-pyqt5 python3-pyqt5.qtsvg
 
-# For full features including GUI
-uv pip install ete3[gui]
+# For full features including the Qt GUI
+uv pip install "ete3[gui]"
 ```
 
 ## First-time NCBI Taxonomy setup
@@ -42,7 +47,7 @@ ncbi.update_taxonomy_database()  # Download latest NCBI data
 uv pip install ete3
 
 # For GUI and rendering issues
-uv pip install ete3[gui]
+uv pip install "ete3[gui]"
 ```
 
 ### Rendering issues

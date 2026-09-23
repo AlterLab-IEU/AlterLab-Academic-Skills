@@ -40,29 +40,46 @@ from bioservices import UniProt
 u = UniProt()
 
 # Map single ID
-result = u.mapping(
+job = u.mapping(
     fr="UniProtKB_AC-ID",    # Source database
     to="KEGG",                # Target database
     query="P43403"            # Identifier to convert
 )
 
-print(result)
-# Output: {'P43403': ['hsa:7535']}
+print(job)
+# {'results': [{'from': 'P43403', 'to': 'hsa:7535'}], 'failedIds': []}
 ```
+
+> **Return shape (bioservices >= 1.10).** `mapping()` hands back UniProt's own
+> ID-mapping job payload: a dict with `results` (a list of `{"from": ..., "to": ...}`
+> rows) and `failedIds`. It is **not** keyed by source ID. Older code that does
+> `result[uniprot_id]` raises `KeyError`. Collapse it once and reuse:
+>
+> ```python
+> from collections import defaultdict
+>
+> def as_dict(job):
+>     """{'P43403': ['hsa:7535'], ...} from a UniProt mapping payload."""
+>     out = defaultdict(list)
+>     for row in (job or {}).get("results", []):
+>         out[row["from"]].append(row["to"])
+>     return dict(out)
+> ```
+>
+> For some targets (e.g. `to="UniProtKB"`) each `to` value is a full entry object rather
+> than a plain accession — check the type before treating it as a string.
 
 ### Batch Mapping
 
 ```python
-# Map multiple IDs (comma-separated)
+# Map multiple IDs (a list or a comma-separated string both work)
 ids = ["P43403", "P04637", "P53779"]
-result = u.mapping(
-    fr="UniProtKB_AC-ID",
-    to="KEGG",
-    query=",".join(ids)
-)
+job = u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query=ids)
 
-for uniprot_id, kegg_ids in result.items():
+for uniprot_id, kegg_ids in as_dict(job).items():   # as_dict from the note above
     print(f"{uniprot_id} → {kegg_ids}")
+
+print("unmapped:", job["failedIds"])
 ```
 
 ### Supported Database Pairs
@@ -184,58 +201,59 @@ from bioservices import UniProt
 u = UniProt()
 
 # Single mapping
-result = u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query="P43403")
-print(result)  # {'P43403': ['hsa:7535']}
+job = u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query="P43403")
+print(job)  # {'results': [{'from': 'P43403', 'to': 'hsa:7535'}], 'failedIds': []}
 ```
 
 #### KEGG → UniProt
 
 ```python
-# Reverse mapping
-result = u.mapping(fr="KEGG", to="UniProtKB", query="hsa:7535")
-print(result)  # {'hsa:7535': ['P43403']}
+# Reverse mapping. Non-UniProt sources map only *to* UniProtKB /
+# UniProtKB-Swiss-Prot / UniParc, so "to='UniProtKB_AC-ID'" is rejected here.
+job = u.mapping(fr="KEGG", to="UniProtKB", query="hsa:7535")
+print([r["from"] for r in job["results"]])  # ['hsa:7535']
 ```
 
 #### UniProt → Ensembl
 
 ```python
 # To Ensembl gene IDs
-result = u.mapping(fr="UniProtKB_AC-ID", to="Ensembl", query="P43403")
-print(result)  # {'P43403': ['ENSG00000115085']}
+job = u.mapping(fr="UniProtKB_AC-ID", to="Ensembl", query="P43403")
+print(as_dict(job))  # {'P43403': ['ENSG00000115085.x']}
 
 # To Ensembl protein IDs
-result = u.mapping(fr="UniProtKB_AC-ID", to="Ensembl_Protein", query="P43403")
-print(result)  # {'P43403': ['ENSP00000381359']}
+job = u.mapping(fr="UniProtKB_AC-ID", to="Ensembl_Protein", query="P43403")
+print(as_dict(job))  # {'P43403': ['ENSP00000381359.x']}
 ```
 
 #### UniProt → PDB
 
 ```python
 # Find 3D structures
-result = u.mapping(fr="UniProtKB_AC-ID", to="PDB", query="P04637")
-print(result)  # {'P04637': ['1A1U', '1AIE', '1C26', ...]}
+job = u.mapping(fr="UniProtKB_AC-ID", to="PDB", query="P04637")
+print(as_dict(job))  # {'P04637': ['1A1U', '1AIE', '1C26', ...]}
 ```
 
 #### UniProt → RefSeq
 
 ```python
 # Get RefSeq protein IDs
-result = u.mapping(fr="UniProtKB_AC-ID", to="RefSeq_Protein", query="P43403")
-print(result)  # {'P43403': ['NP_001070.2']}
+job = u.mapping(fr="UniProtKB_AC-ID", to="RefSeq_Protein", query="P43403")
+print(as_dict(job))  # {'P43403': ['NP_001070.2']}
 ```
 
 #### Gene Name → UniProt (via search, then mapping)
 
 ```python
 # First search for gene
-search_result = u.search("gene:ZAP70 AND organism:9606", frmt="tab", columns="id")
+search_result = u.search("gene:ZAP70 AND organism_id:9606", frmt="tsv", columns="accession")
 lines = search_result.strip().split("\n")
 if len(lines) > 1:
     uniprot_id = lines[1].split("\t")[0]
 
-    # Then map to other databases
-    kegg_id = u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query=uniprot_id)
-    print(kegg_id)
+    # Then map to other databases (as_dict collapses the job payload)
+    kegg_ids = as_dict(u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query=uniprot_id))
+    print(kegg_ids)
 ```
 
 ---
@@ -376,8 +394,8 @@ def gene_symbol_to_ids(gene_symbol, organism="9606"):
     u = UniProt()
 
     # Search for gene
-    query = f"gene:{gene_symbol} AND organism:{organism}"
-    result = u.search(query, frmt="tab", columns="id")
+    query = f"gene:{gene_symbol} AND organism_id:{organism}"
+    result = u.search(query, frmt="tsv", columns="accession")
 
     lines = result.strip().split("\n")
     if len(lines) < 2:
@@ -386,12 +404,16 @@ def gene_symbol_to_ids(gene_symbol, organism="9606"):
     uniprot_id = lines[1].split("\t")[0]
 
     # Map to multiple databases
+    def targets(to_db):
+        job = u.mapping(fr="UniProtKB_AC-ID", to=to_db, query=uniprot_id)
+        return [row["to"] for row in job.get("results", [])]
+
     ids = {
         'uniprot': uniprot_id,
-        'kegg': u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query=uniprot_id),
-        'ensembl': u.mapping(fr="UniProtKB_AC-ID", to="Ensembl", query=uniprot_id),
-        'refseq': u.mapping(fr="UniProtKB_AC-ID", to="RefSeq_Protein", query=uniprot_id),
-        'pdb': u.mapping(fr="UniProtKB_AC-ID", to="PDB", query=uniprot_id)
+        'kegg': targets("KEGG"),
+        'ensembl': targets("Ensembl"),
+        'refseq': targets("RefSeq_Protein"),
+        'pdb': targets("PDB"),
     }
 
     return ids
@@ -448,29 +470,30 @@ print(ids)
 from bioservices import UniProt
 
 def safe_batch_mapping(ids, from_db, to_db, chunk_size=100):
-    """Safely map IDs with error handling and chunking."""
+    """Map IDs in chunks, returning {source_id: [target_ids]}."""
     u = UniProt()
     all_results = {}
 
     for i in range(0, len(ids), chunk_size):
-        chunk = ids[i:i+chunk_size]
-        query = ",".join(chunk)
+        chunk = ids[i:i + chunk_size]
 
         try:
-            results = u.mapping(fr=from_db, to=to_db, query=query)
-            all_results.update(results)
-            print(f"✓ Processed {min(i+chunk_size, len(ids))}/{len(ids)}")
+            job = u.mapping(fr=from_db, to=to_db, query=",".join(chunk))
+            for src, targets in as_dict(job).items():   # as_dict defined above
+                all_results.setdefault(src, []).extend(targets)
+            print(f"✓ Processed {min(i + chunk_size, len(ids))}/{len(ids)}")
 
         except Exception as e:
             print(f"✗ Error at chunk {i}: {e}")
 
-            # Try individual IDs in failed chunk
+            # Retry the chunk one ID at a time so one bad ID doesn't lose the rest
             for single_id in chunk:
                 try:
-                    result = u.mapping(fr=from_db, to=to_db, query=single_id)
-                    all_results.update(result)
-                except:
-                    all_results[single_id] = None
+                    job = u.mapping(fr=from_db, to=to_db, query=single_id)
+                    all_results.update(as_dict(job))
+                except Exception as inner:
+                    print(f"  ✗ {single_id}: {inner}")
+                    all_results.setdefault(single_id, [])
 
     return all_results
 
@@ -492,8 +515,8 @@ def multi_hop_mapping(gene_symbol, organism="9606"):
     k = KEGG()
 
     # Step 1: Gene symbol → UniProt
-    query = f"gene:{gene_symbol} AND organism:{organism}"
-    result = u.search(query, frmt="tab", columns="id")
+    query = f"gene:{gene_symbol} AND organism_id:{organism}"
+    result = u.search(query, frmt="tsv", columns="accession")
 
     lines = result.strip().split("\n")
     if len(lines) < 2:
@@ -502,11 +525,12 @@ def multi_hop_mapping(gene_symbol, organism="9606"):
     uniprot_id = lines[1].split("\t")[0]
 
     # Step 2: UniProt → KEGG
-    kegg_mapping = u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query=uniprot_id)
-    if not kegg_mapping or uniprot_id not in kegg_mapping:
+    job = u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query=uniprot_id)
+    kegg_ids = [row["to"] for row in job.get("results", []) if row["from"] == uniprot_id]
+    if not kegg_ids:
         return None
 
-    kegg_id = kegg_mapping[uniprot_id][0]
+    kegg_id = kegg_ids[0]
 
     # Step 3: KEGG → Pathways
     organism_code, gene_id = kegg_id.split(":")
@@ -539,12 +563,13 @@ print(result)
 4. Some IDs may not have mappings in all databases
 
 ```python
-result = u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query="P43403")
+job = u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query="P43403")
 
-if not result or 'P43403' not in result:
+if not job or not job.get("results"):
     print("No mapping found. Try:")
-    print("1. Verify ID exists: u.search('P43403')")
-    print("2. Check if protein has KEGG annotation")
+    print("1. Verify the ID exists: u.search('accession:P43403')")
+    print("2. Check whether the protein has a KEGG annotation")
+    print("3. Inspect job['failedIds'] for IDs UniProt rejected outright")
 ```
 
 ### Issue 2: Too Many IDs in Batch
@@ -558,9 +583,9 @@ def chunked_mapping(ids, from_db, to_db, chunk_size=50):
     all_results = {}
 
     for i in range(0, len(ids), chunk_size):
-        chunk = ids[i:i+chunk_size]
-        result = u.mapping(fr=from_db, to=to_db, query=",".join(chunk))
-        all_results.update(result)
+        chunk = ids[i:i + chunk_size]
+        job = u.mapping(fr=from_db, to=to_db, query=",".join(chunk))
+        all_results.update(as_dict(job))
 
     return all_results
 ```
@@ -572,10 +597,10 @@ def chunked_mapping(ids, from_db, to_db, chunk_size=50):
 **Solution:** Handle as list
 
 ```python
-result = u.mapping(fr="UniProtKB_AC-ID", to="PDB", query="P04637")
-# Result: {'P04637': ['1A1U', '1AIE', '1C26', ...]}
+job = u.mapping(fr="UniProtKB_AC-ID", to="PDB", query="P04637")
+# as_dict(job) -> {'P04637': ['1A1U', '1AIE', '1C26', ...]}
 
-pdb_ids = result['P04637']
+pdb_ids = as_dict(job)['P04637']
 print(f"Found {len(pdb_ids)} PDB structures")
 
 for pdb_id in pdb_ids:
@@ -632,9 +657,9 @@ def polite_batch_mapping(ids, from_db, to_db):
     results = {}
 
     for i in range(0, len(ids), 50):
-        chunk = ids[i:i+50]
-        result = u.mapping(fr=from_db, to=to_db, query=",".join(chunk))
-        results.update(result)
+        chunk = ids[i:i + 50]
+        job = u.mapping(fr=from_db, to=to_db, query=",".join(chunk))
+        results.update(as_dict(job))
 
         time.sleep(0.5)  # Be nice to the API
 

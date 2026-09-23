@@ -226,7 +226,7 @@ bamCoverage --bam chip.bam --outFileName chip.bw \
     --normalizeUsing RPGC \
     --effectiveGenomeSize 2913022398 \
     --extendReads 200 \
-    --ignoreDuplicates
+    --samFlagExclude 1024
 ```
 
 **Reasoning:** Accounts for sequencing depth differences; RPGC provides interpretable coverage values.
@@ -242,7 +242,7 @@ bamCompare -b1 chip.bam -b2 input.bam -o ratio.bw \
     --operation log2 \
     --scaleFactorsMethod readCount \
     --extendReads 200 \
-    --ignoreDuplicates
+    --samFlagExclude 1024
 ```
 
 **Reasoning:** Log2 ratio shows enrichment (positive) and depletion (negative); readCount adjusts for depth.
@@ -364,7 +364,9 @@ bamCoverage --bam input.bam --outFileName output.bw \
 
 ### 4. Ignoring duplicates after GC correction
 **Problem:** Can introduce bias
-**Solution:** Never use `--ignoreDuplicates` after `correctGCBias`
+**Solution:** don't filter duplicates on a GC-corrected BAM (`--samFlagExclude 1024` on
+bamCoverage/bamCompare, or `--ignoreDuplicates` on the QC tools) — `correctGCBias` fixes
+under-representation by adding reads, and removing duplicates deletes exactly those
 
 ### 5. Using RPGC without effective genome size
 **Problem:** Command fails

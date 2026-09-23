@@ -153,9 +153,9 @@ The Census includes:
 These may need different normalization approaches.
 
 ### Versioning
-Census releases are versioned (e.g., "2023-07-25", "stable"). Always specify version for reproducible analysis:
+Census releases are versioned (e.g., "2025-11-08", "stable", "latest"). "stable" is the newest LTS build and "latest" the weekly one, so pin an explicit date for reproducible analysis:
 ```python
-census = cellxgene_census.open_soma(census_version="2023-07-25")
+census = cellxgene_census.open_soma(census_version="2025-11-08")
 ```
 
 ## Dataset Presence Matrix

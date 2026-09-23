@@ -90,7 +90,7 @@ correctGCBias \
     --correctedFile ChIP1_GCcorrected.bam
 ```
 
-**Note:** Only correct if significant bias is observed. Do NOT use `--ignoreDuplicates` with GC-corrected files.
+**Note:** only correct if a significant bias is observed, and do not filter duplicates on the corrected BAM — the correction adds reads in under-represented regions and duplicate removal would strip them again.
 
 ---
 
@@ -129,7 +129,7 @@ bamCoverage \
     --effectiveGenomeSize 2913022398 \
     --binSize 10 \
     --extendReads 200 \
-    --ignoreDuplicates \
+    --samFlagExclude 1024 \
     --numberOfProcessors 8
 
 # ChIP sample
@@ -140,7 +140,7 @@ bamCoverage \
     --effectiveGenomeSize 2913022398 \
     --binSize 10 \
     --extendReads 200 \
-    --ignoreDuplicates \
+    --samFlagExclude 1024 \
     --numberOfProcessors 8
 ```
 
@@ -158,7 +158,7 @@ bamCompare \
     --scaleFactorsMethod readCount \
     --binSize 10 \
     --extendReads 200 \
-    --ignoreDuplicates \
+    --samFlagExclude 1024 \
     --numberOfProcessors 8
 ```
 
@@ -287,7 +287,7 @@ for sample in Control_ChIP Treated_ChIP; do
         --effectiveGenomeSize 2913022398 \
         --binSize 10 \
         --extendReads 200 \
-        --ignoreDuplicates \
+        --samFlagExclude 1024 \
         --numberOfProcessors 8
 done
 ```

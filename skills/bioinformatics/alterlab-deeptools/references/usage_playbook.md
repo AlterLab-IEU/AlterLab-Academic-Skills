@@ -29,7 +29,7 @@ command-level detail lives in `tools_reference.md`, `workflows.md`,
 - Use bamCoverage with appropriate normalization.
 - Recommend RPGC or CPM based on use case.
 - Provide effective genome size for the organism.
-- Suggest relevant parameters (extendReads, ignoreDuplicates, binSize).
+- Suggest relevant parameters (extendReads, binSize, and `--samFlagExclude 1024` for duplicate filtering on bamCoverage/bamCompare in deepTools 4.0).
 
 **"Check ChIP quality":**
 - Run full QC workflow or use plotFingerprint specifically.

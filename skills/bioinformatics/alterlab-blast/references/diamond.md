@@ -78,5 +78,7 @@ frequent silent failure. The resulting `.tsv` is compatible with
 
 ## Version
 
-Pin to a current DIAMOND release (the project's latest at time of writing is
-the v2.2.x line). Run `diamond version` and record it alongside results.
+Pin to a current DIAMOND release — **2.2.8** is the latest on bioconda as of
+2026-09. Run `diamond version` and record it alongside results; a DIAMOND
+database built by one minor version is not guaranteed readable by another, so
+rebuild the `.dmnd` after upgrading.

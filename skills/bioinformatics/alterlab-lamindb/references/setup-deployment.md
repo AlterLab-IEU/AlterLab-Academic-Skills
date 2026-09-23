@@ -25,15 +25,17 @@ pip install 'lamindb[gcp]'
 # Flow cytometry formats
 pip install 'lamindb[fcs]'
 
-# Array storage and streaming (Zarr support)
-pip install 'lamindb[zarr]'
-
-# AWS S3 support (usually included by default)
-pip install 'lamindb[aws]'
+# Legacy zarr v2 stores only — zarr v3 support is included by default
+pip install 'lamindb[zarr-v2]'
 
 # Multiple extras
-pip install 'lamindb[gcp,zarr,fcs]'
+pip install 'lamindb[gcp,fcs]'
 ```
+
+As of lamindb 2.10 the published extras are `gcp`, `fcs`, `zarr-v2` and `dev`; S3 support
+ships with the default install, and the older `zarr` / `aws` extra names no longer exist
+(pip only warns about an unknown extra, so a stale name fails silently). `lamindb` itself is
+now a meta-package over `lamindb-core[full]`; install `lamindb-core` for the bare namespace.
 
 ### Module Plugins
 

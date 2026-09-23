@@ -326,9 +326,12 @@ gd_diagram.write("genome_diagram.pdf", "PDF")
 
 ## Sequence Comparison with Bio.pairwise2
 
-**Note**: Bio.pairwise2 is deprecated. Use Bio.Align.PairwiseAligner instead (see alignment.md).
+**Note**: `Bio.pairwise2` has been deprecated since 1.80 and is slated for removal —
+`Bio.Align.PairwiseAligner` replaces it (see `alignment.md`), and the 1.89 line adds
+`Bio.Align.global_align`/`local_align` as near drop-in convenience wrappers. Port legacy
+code rather than extending it.
 
-However, for legacy code:
+For reading existing scripts:
 
 ```python
 from Bio import pairwise2

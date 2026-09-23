@@ -54,6 +54,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-biopython" }
       ]
+    },
+    {
+      "id": "near-miss-boltz",
+      "prompt": "Co-fold my kinase with this inhibitor SMILES and give me a predicted binding affinity so I can rank a few analogues.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-boltz. Protein–ligand co-folding with an affinity estimate is Boltz-2's job; ESM models give sequence embeddings, ESMFold2 protein structures, and ESM3 generative design, but none of them place a small molecule or predict binding affinity.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-boltz" }
+      ]
     }
   ]
 }

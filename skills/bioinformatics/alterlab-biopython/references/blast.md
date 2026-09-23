@@ -4,7 +4,20 @@
 
 Bio.Blast provides tools for running BLAST searches (both locally and via NCBI web services) and parsing BLAST results in various formats. The module handles the complexity of submitting queries and parsing outputs.
 
-> **Two APIs (both shipped in 1.87):** The examples below use the long-standing `Bio.Blast.NCBIWWW.qblast` + `Bio.Blast.NCBIXML` parser, which still works. Biopython also ships a newer top-level API — `Bio.Blast.qblast(...)` plus `Bio.Blast.read`/`Bio.Blast.parse` returning `Record`/`Records` objects. For new code either is fine; the NCBIWWW/NCBIXML examples here are the most battle-tested.
+> **Two APIs (both ship in 1.88), and one of them is on the way out.** The examples below
+> use the long-standing `Bio.Blast.NCBIWWW.qblast` + `Bio.Blast.NCBIXML` parser, which still
+> works. The newer top-level API added in 1.84 — `Bio.Blast.qblast(...)` with
+> `Bio.Blast.read`/`Bio.Blast.parse` returning `Record`/`Records` — is where development has
+> moved, and **`Bio.Blast.NCBIXML` is declared obsolete in the 1.89 development line**.
+> Write new code against `Bio.Blast`; the differences that matter:
+>
+> - `Blast.qblast(...)` returns **bytes**, so the stream can be handed straight to the
+>   parser (XML encoding is declared inside the document) or written in binary mode.
+> - Results are `Bio.Blast.Record` objects: iterate hits directly (`for hit in record`),
+>   read `hit.target` (a `SeqRecord`), and pull scores from
+>   `hit[0].annotations["evalue"]` / `["bit score"]` rather than `hsp.expect`.
+> - Each HSP is a `Bio.Align.Alignment`, so alignment formatting/slicing works on it.
+> - Set `Blast.email` (and optionally `Blast.tool`) exactly as you would `Entrez.email`.
 
 ## Running BLAST via NCBI Web Services
 

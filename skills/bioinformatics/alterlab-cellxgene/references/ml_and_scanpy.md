@@ -14,7 +14,7 @@ import torch
 import tiledbsoma as soma
 from tiledbsoma_ml import ExperimentDataset, experiment_dataloader
 
-with cellxgene_census.open_soma(census_version="2023-07-25") as census:
+with cellxgene_census.open_soma(census_version="2025-11-08") as census:
     experiment = census["census_data"]["homo_sapiens"]
     with experiment.axis_query(
         measurement_name="RNA",
@@ -143,7 +143,7 @@ with cellxgene_census.open_soma() as census:
 import tiledbsoma as soma
 from tiledbsoma_ml import ExperimentDataset, experiment_dataloader
 
-with cellxgene_census.open_soma(census_version="2023-07-25") as census:
+with cellxgene_census.open_soma(census_version="2025-11-08") as census:
     experiment = census["census_data"]["homo_sapiens"]
     with experiment.axis_query(
         measurement_name="RNA",

@@ -140,7 +140,12 @@ adata = sc.read_10x_mtx('filtered_feature_bc_matrix/')
 adata = sc.read_10x_h5('data.h5', genome='GRCh38')
 ```
 
-### Loom
+### Loom (deprecated since anndata 0.13)
+
+Loom reading and writing emit a deprecation warning in 0.13 — the format is
+lightly maintained and covers only part of the AnnData model. Convert to h5ad or
+zarr once and work from there.
+
 ```python
 # Read Loom file
 adata = ad.io.read_loom('data.loom')
@@ -183,17 +188,12 @@ adata = ad.io.read_hdf('data.h5', key='dataset')
 
 ### CSV
 ```python
-# Write to CSV files (creates multiple files)
-adata.write_csvs('output_dir/')
+# Write annotation to CSV files (one file per component).
+# skip_data defaults to True, so X is NOT written unless you ask for it.
+adata.write_csvs('output_dir/')                    # obs.csv, var.csv, uns/... only
+adata.write_csvs('output_dir/', skip_data=False)   # also writes X.csv
 
-# This creates:
-# - output_dir/X.csv (expression matrix)
-# - output_dir/obs.csv (observation annotations)
-# - output_dir/var.csv (variable annotations)
-# - output_dir/uns.csv (unstructured annotations, if possible)
-
-# Skip certain components
-adata.write_csvs('output_dir/', skip_data=True)  # Skip X matrix
+# A CSV export cannot round-trip an AnnData — use write_h5ad for that.
 ```
 
 ### Loom

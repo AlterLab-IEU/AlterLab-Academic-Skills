@@ -17,7 +17,8 @@ from pathlib import Path
 try:
     from ete3 import Tree
 except ImportError:
-    print("Error: ete3 not installed. Install with: pip install ete3")
+    print("Error: ete3 not installed. Install with: uv pip install ete3")
+    print("(These scripts target the ete3 API; ete4 renames format= to parser=.)")
     sys.exit(1)
 
 
@@ -44,7 +45,7 @@ def reroot_tree(tree_file, output, outgroup=None, midpoint=False, format_num=0):
     if midpoint:
         midpoint_node = tree.get_midpoint_outgroup()
         tree.set_outgroup(midpoint_node)
-        print(f"Rerooted tree using midpoint method")
+        print("Rerooted tree using midpoint method")
     elif outgroup:
         try:
             outgroup_node = tree & outgroup
@@ -89,7 +90,7 @@ def tree_stats(tree_file, format_num=0):
     """Display tree statistics."""
     tree = load_tree(tree_file, format_num)
 
-    print(f"\n=== Tree Statistics ===")
+    print("\n=== Tree Statistics ===")
     print(f"File: {tree_file}")
     print(f"Number of leaves: {len(tree)}")
     print(f"Total nodes: {len(list(tree.traverse()))}")
@@ -101,7 +102,7 @@ def tree_stats(tree_file, format_num=0):
     # Branch length statistics
     branch_lengths = [node.dist for node in tree.traverse() if not node.is_root()]
     if branch_lengths:
-        print(f"\nBranch length statistics:")
+        print("\nBranch length statistics:")
         print(f"  Mean: {sum(branch_lengths)/len(branch_lengths):.4f}")
         print(f"  Min: {min(branch_lengths):.4f}")
         print(f"  Max: {max(branch_lengths):.4f}")
@@ -109,7 +110,7 @@ def tree_stats(tree_file, format_num=0):
     # Support values
     supports = [node.support for node in tree.traverse() if not node.is_leaf() and hasattr(node, 'support')]
     if supports:
-        print(f"\nSupport value statistics:")
+        print("\nSupport value statistics:")
         print(f"  Mean: {sum(supports)/len(supports):.2f}")
         print(f"  Min: {min(supports):.2f}")
         print(f"  Max: {max(supports):.2f}")

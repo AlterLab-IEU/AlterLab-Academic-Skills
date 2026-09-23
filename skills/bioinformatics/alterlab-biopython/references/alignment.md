@@ -18,11 +18,17 @@ from Bio import Align
 # Create aligner with default parameters
 aligner = Align.PairwiseAligner()
 
-# Default scores (Biopython 1.87):
+# Default scores (Biopython >= 1.86, verified on 1.88):
 # - Match score: +1.0
 # - Mismatch score: 0.0
-# - All gap scores: -1.0
+# - All gap scores: -1.0   <- was 0.0 before 1.86
 ```
+
+The 1.86 change of the default gap score from 0 to -1 matters: with a 0 gap score a
+mismatch and an insertion+deletion pair score identically, so the aligner returned many
+trivially different alignments of the same score. Scripts written against the old default
+will now return fewer alignments and different scores — set the gap scores explicitly if
+you need the previous behaviour.
 
 ### Customizing Alignment Parameters
 
@@ -173,7 +179,7 @@ seq_record = alignment[0]  # First sequence
 
 ### Alignment Analysis
 
-> **Removed API:** `Bio.Align.AlignInfo.SummaryInfo` lost its `gap_consensus`, `dumb_consensus`, and `pos_specific_score_matrix` methods (deprecated, then removed). In 1.87 `SummaryInfo` only exposes `get_column`. Compute a consensus with `Bio.motifs` or directly over alignment columns.
+> **Removed API:** `Bio.Align.AlignInfo.SummaryInfo` lost its `gap_consensus`, `dumb_consensus`, and `pos_specific_score_matrix` methods (deprecated, then removed). As of 1.88 `SummaryInfo` only exposes `get_column`. Compute a consensus with `Bio.motifs` or directly over alignment columns.
 
 ```python
 from Bio import motifs

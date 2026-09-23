@@ -198,24 +198,28 @@ def get_chebi_info(chebi_id):
         entity = c.getCompleteEntity(chebi_id)
 
         if entity:
+            # ChEBI moved to a REST API in bioservices 1.13; getCompleteEntity now
+            # returns a dict-like ChebiEntity whose formula lives on `.formula`
+            # (the old SOAP attribute was `Formulae`).
             print(f"\n✓ ChEBI Information:")
             print(f"  ID: {entity.chebiId}")
             print(f"  Name: {entity.chebiAsciiName}")
 
-            if hasattr(entity, 'Formulae') and entity.Formulae:
-                print(f"  Formula: {entity.Formulae}")
+            if entity.formula:
+                print(f"  Formula: {entity.formula}")
 
-            if hasattr(entity, 'mass') and entity.mass:
+            if entity.mass:
                 print(f"  Mass: {entity.mass}")
 
-            if hasattr(entity, 'charge') and entity.charge:
+            if entity.charge:
                 print(f"  Charge: {entity.charge}")
 
             return {
                 'chebi_id': entity.chebiId,
                 'name': entity.chebiAsciiName,
-                'formula': entity.Formulae if hasattr(entity, 'Formulae') else None,
-                'mass': entity.mass if hasattr(entity, 'mass') else None
+                'formula': entity.formula,
+                'mass': entity.mass,
+                'smiles': entity.smiles,
             }
         else:
             print("✗ Failed to retrieve ChEBI entry")

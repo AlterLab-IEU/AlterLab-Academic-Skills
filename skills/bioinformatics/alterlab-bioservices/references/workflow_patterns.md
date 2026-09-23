@@ -20,6 +20,22 @@ This document describes detailed multi-step workflows for common bioinformatics 
 
 **Example:** Analyzing human ZAP70 protein
 
+> Two API facts these workflows depend on (bioservices 1.16):
+> `UniProt.search(frmt=...)` accepts only `tsv`/`xlsx`/`fasta`/`json`/`gff` with
+> UniProt return-field names in `columns`, and `UniProt.mapping()` returns
+> `{"results": [{"from", "to"}...], "failedIds": [...]}`. The snippets below use this
+> helper to collapse a mapping job into `{source_id: [target_ids]}`:
+>
+> ```python
+> from collections import defaultdict
+>
+> def as_dict(job):
+>     out = defaultdict(list)
+>     for row in (job or {}).get("results", []):
+>         out[row["from"]].append(row["to"])
+>     return dict(out)
+> ```
+
 ### Step 1: UniProt Search and Identifier Retrieval
 
 ```python
@@ -29,7 +45,7 @@ u = UniProt(verbose=False)
 
 # Search for protein by name
 query = "ZAP70_HUMAN"
-results = u.search(query, frmt="tab", columns="id,genes,organism,length")
+results = u.search(query, frmt="tsv", columns="accession,gene_names,organism_name,length")
 
 # Parse results
 lines = results.strip().split("\n")
@@ -80,20 +96,20 @@ jobid = s.run(
 
 print(f"BLAST Job ID: {jobid}")
 
-# Wait for completion
+# Wait for completion (method names are snake_case in current bioservices)
 while True:
-    status = s.getStatus(jobid)
+    status = s.get_status(jobid)
     print(f"Status: {status}")
     if status == "FINISHED":
         break
-    elif status == "ERROR":
-        print("BLAST job failed")
+    elif status in ("ERROR", "FAILURE", "NOT_FOUND"):
+        print(f"BLAST job did not complete: {status}")
         break
     time.sleep(5)
 
 # Retrieve results
 if status == "FINISHED":
-    blast_results = s.getResult(jobid, "out")
+    blast_results = s.get_result(jobid, "out")
     print(blast_results[:500])  # Print first 500 characters
 ```
 
@@ -107,61 +123,45 @@ from bioservices import KEGG
 k = KEGG()
 
 # Get KEGG gene ID from UniProt mapping
-kegg_mapping = u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query=uniprot_id)
+kegg_mapping = as_dict(u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query=uniprot_id))
 print(f"KEGG mapping: {kegg_mapping}")
 
 # Extract KEGG gene ID (e.g., hsa:7535)
 if kegg_mapping:
-    kegg_gene_id = kegg_mapping[uniprot_id][0] if uniprot_id in kegg_mapping else None
+    kegg_gene_id = kegg_mapping.get(uniprot_id, [None])[0]
 
     if kegg_gene_id:
         # Find pathways containing this gene
         organism = kegg_gene_id.split(":")[0]  # e.g., "hsa"
         gene_id = kegg_gene_id.split(":")[1]   # e.g., "7535"
 
+        # get_pathway_by_gene returns {pathway_id: name} — the names come free.
         pathways = k.get_pathway_by_gene(gene_id, organism)
         print(f"Found {len(pathways)} pathways:")
 
-        # Get pathway names
-        for pathway_id in pathways:
-            pathway_info = k.get(pathway_id)
-            # Parse NAME line
-            for line in pathway_info.split("\n"):
-                if line.startswith("NAME"):
-                    pathway_name = line.replace("NAME", "").strip()
-                    print(f"  {pathway_id}: {pathway_name}")
-                    break
+        for pathway_id, pathway_name in pathways.items():
+            print(f"  {pathway_id}: {pathway_name}")
 ```
 
 **Output:**
-- path:hsa04064 - NF-kappa B signaling pathway
-- path:hsa04650 - Natural killer cell mediated cytotoxicity
-- path:hsa04660 - T cell receptor signaling pathway
-- path:hsa04662 - B cell receptor signaling pathway
+- hsa04064 - NF-kappa B signaling pathway
+- hsa04650 - Natural killer cell mediated cytotoxicity
+- hsa04660 - T cell receptor signaling pathway
+- hsa04662 - B cell receptor signaling pathway
 
 ### Step 5: Protein-Protein Interactions
 
 ```python
-from bioservices import PSICQUIC
+from bioservices import STRING   # PSICQUIC/BioGRID were removed in bioservices 1.14
 
-p = PSICQUIC()
+s = STRING()
 
-# Query MINT database for human (taxid:9606) interactions
-query = f"ZAP70 AND species:9606"
-interactions = p.query("mint", query)
+# Human (taxid 9606) partners of ZAP70, medium confidence and above
+interactions = s.get_interaction_partners("ZAP70", species=9606, required_score=400, limit=25)
 
-# Parse PSI-MI TAB format results
-if interactions:
-    interaction_lines = interactions.strip().split("\n")
-    print(f"Found {len(interaction_lines)} interactions")
-
-    # Print first few interactions
-    for line in interaction_lines[:5]:
-        fields = line.split("\t")
-        protein_a = fields[0]
-        protein_b = fields[1]
-        interaction_type = fields[11]
-        print(f"  {protein_a} - {protein_b}: {interaction_type}")
+print(f"Found {len(interactions)} interactions")
+for row in interactions[:5]:
+    print(f"  {row['preferredName_A']} - {row['preferredName_B']}: score={row['score']}")
 ```
 
 **Output:** List of proteins that interact with ZAP70
@@ -173,21 +173,18 @@ from bioservices import QuickGO
 
 g = QuickGO()
 
-# Get GO annotations for protein
-annotations = g.Annotation(protein=uniprot_id, format="tsv")
+# Get GO annotations for protein. The QuickGO REST parameters are
+# geneProductId / goId / taxonId / aspect; limit is capped at 100 per page.
+annotations = g.Annotation(
+    geneProductId=f"UniProtKB:{uniprot_id}",
+    includeFields="goName",
+    limit=100,
+)
 
 if annotations:
-    # Parse TSV results
-    lines = annotations.strip().split("\n")
-    print(f"Found {len(lines)-1} GO annotations")
-
-    # Display first few annotations
-    for line in lines[1:6]:  # Skip header
-        fields = line.split("\t")
-        go_id = fields[6]
-        go_term = fields[7]
-        go_aspect = fields[8]
-        print(f"  {go_id}: {go_term} [{go_aspect}]")
+    print(f"Found {annotations['numberOfHits']} GO annotations")
+    for row in annotations["results"][:5]:
+        print(f"  {row['goId']}: {row['goName']} [{row['goAspect']}]")
 ```
 
 **Output:** GO terms annotating ZAP70 function, process, and location
@@ -201,7 +198,7 @@ if annotations:
 2. Protein sequence (FASTA)
 3. Similar proteins (BLAST results)
 4. Biological pathways (KEGG)
-5. Interaction partners (PSICQUIC)
+5. Interaction partners (STRING)
 6. Functional annotations (GO terms)
 
 **Script:** `scripts/protein_analysis_workflow.py` automates this entire pipeline.
@@ -420,9 +417,12 @@ if chebi_id:
     c = ChEBI()
 
     try:
+        # REST-backed since bioservices 1.13: the entity is dict-like, and the
+        # formula attribute is `.formula` (SOAP-era code used `.Formulae`).
         chebi_entity = c.getCompleteEntity(f"CHEBI:{chebi_id}")
-        print(f"\nChEBI Formula: {chebi_entity.Formulae}")
+        print(f"\nChEBI Formula: {chebi_entity.formula}")
         print(f"ChEBI Name: {chebi_entity.chebiAsciiName}")
+        print(f"ChEBI SMILES: {chebi_entity.smiles}")
     except Exception as e:
         print(f"ChEBI lookup failed: {e}")
 ```
@@ -460,7 +460,7 @@ uniprot_ids = ["P43403", "P04637", "P53779", "Q9Y6K9"]
 
 # Batch mapping (comma-separated)
 query_string = ",".join(uniprot_ids)
-results = u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query=query_string)
+results = as_dict(u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query=query_string))
 
 print("UniProt → KEGG mapping:")
 for uniprot_id, kegg_ids in results.items():
@@ -490,8 +490,7 @@ def batch_convert(ids, from_db, to_db, chunk_size=100):
         query = ",".join(chunk)
 
         try:
-            results = u.mapping(fr=from_db, to=to_db, query=query)
-            all_results.update(results)
+            all_results.update(as_dict(u.mapping(fr=from_db, to=to_db, query=query)))
             print(f"Processed {min(i+chunk_size, len(ids))}/{len(ids)}")
         except Exception as e:
             print(f"Error processing chunk {i}: {e}")
@@ -532,9 +531,9 @@ gene_symbol = "TP53"
 
 # 1. Find UniProt entry
 u = UniProt()
-search_results = u.search(f"gene:{gene_symbol} AND organism:9606",
-                          frmt="tab",
-                          columns="id,genes,protein names")
+search_results = u.search(f"gene:{gene_symbol} AND organism_id:9606",
+                          frmt="tsv",
+                          columns="accession,gene_names,protein_name")
 
 # Extract UniProt ID
 lines = search_results.strip().split("\n")
@@ -545,7 +544,7 @@ if len(lines) > 1:
     print(f"UniProt ID: {uniprot_id}")
 
 # 2. Get KEGG pathways
-kegg_mapping = u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query=uniprot_id)
+kegg_mapping = as_dict(u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query=uniprot_id))
 if uniprot_id in kegg_mapping:
     kegg_id = kegg_mapping[uniprot_id][0]
 
@@ -559,23 +558,18 @@ if uniprot_id in kegg_mapping:
 
 # 3. Get GO annotations
 g = QuickGO()
-go_annotations = g.Annotation(protein=uniprot_id, format="tsv")
+go_annotations = g.Annotation(geneProductId=f"UniProtKB:{uniprot_id}", includeFields="goName", limit=100)
 
 if go_annotations:
-    lines = go_annotations.strip().split("\n")
-    print(f"\nGO Annotations ({len(lines)-1} total):")
+    print(f"\nGO Annotations ({go_annotations['numberOfHits']} total):")
 
-    # Group by aspect
-    aspects = {"P": [], "F": [], "C": []}
-    for line in lines[1:]:
-        fields = line.split("\t")
-        go_aspect = fields[8]  # P, F, or C
-        go_term = fields[7]
-        aspects[go_aspect].append(go_term)
+    # Group by aspect; goAspect is spelled out (biological_process, ...)
+    aspects = {}
+    for row in go_annotations["results"]:
+        aspects.setdefault(row["goAspect"], []).append(row.get("goName", row["goId"]))
 
-    print(f"  Biological Process: {len(aspects['P'])} terms")
-    print(f"  Molecular Function: {len(aspects['F'])} terms")
-    print(f"  Cellular Component: {len(aspects['C'])} terms")
+    for aspect, terms in aspects.items():
+        print(f"  {aspect}: {len(terms)} terms")
 
 # 4. Get protein sequence features
 full_entry = u.retrieve(uniprot_id, frmt="txt")
@@ -596,39 +590,24 @@ for line in full_entry.split("\n"):
 ### Workflow
 
 ```python
-from bioservices import PSICQUIC
+from bioservices import STRING
 import networkx as nx
 
 # Proteins of interest
-proteins = ["ZAP70", "LCK", "LAT", "SLP76", "PLCg1"]
+proteins = ["ZAP70", "LCK", "LAT", "LCP2", "PLCG1"]
 
-# Initialize PSICQUIC
-p = PSICQUIC()
-
-# Build network
+s = STRING()
 G = nx.Graph()
 
-for protein in proteins:
-    # Query for human interactions
-    query = f"{protein} AND species:9606"
+# One call covers the whole set; STRING returns the edges among them.
+try:
+    for row in s.get_interactions(proteins, species=9606, required_score=400):
+        G.add_edge(row["preferredName_A"], row["preferredName_B"], weight=row["score"])
+except Exception as e:
+    print(f"STRING query failed: {e}")
 
-    try:
-        results = p.query("intact", query)
-
-        if results:
-            lines = results.strip().split("\n")
-
-            for line in lines:
-                fields = line.split("\t")
-                # Extract protein names (simplified)
-                protein_a = fields[4].split(":")[1] if ":" in fields[4] else fields[4]
-                protein_b = fields[5].split(":")[1] if ":" in fields[5] else fields[5]
-
-                # Add edge
-                G.add_edge(protein_a, protein_b)
-
-    except Exception as e:
-        print(f"Error querying {protein}: {e}")
+# To pull in partners outside the input set, add:
+#   s.get_interaction_partners(proteins, species=9606, limit=10)
 
 print(f"Network: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges")
 
@@ -779,7 +758,7 @@ import pandas as pd
 from io import StringIO
 
 u = UniProt()
-results = u.search("zap70", frmt="tab", columns="id,genes,length,organism")
+results = u.search("zap70", frmt="tsv", columns="accession,gene_names,length,organism_name")
 
 # Load into DataFrame
 df = pd.read_csv(StringIO(results), sep="\t")

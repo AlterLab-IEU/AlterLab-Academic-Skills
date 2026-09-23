@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(makeblastdb:*) Bash(blastn:*)
 compatibility: "Requires NCBI BLAST+ 2.17.0 binaries on PATH (conda: `bioconda::blast`; or Homebrew `blast`); no API key or account needed for local searches. DIAMOND (`bioconda::diamond`) is optional and only used for the large-protein fast path. Parsing/QC helper runs under `uv run python` with the standard library only."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # BLAST+ — Command-Line Sequence Search
@@ -99,10 +100,11 @@ send evalue bitscore`. Use `-outfmt 7` for the same columns plus comment lines.
    spec quoted (`-outfmt '6 qseqid sseqid pident evalue'`); **DIAMOND wants it
    unquoted** (`--outfmt 6 qseqid sseqid pident evalue`). Mixing these up is a
    common silent error.
-5. **Multithreading.** Use `-num_threads N`. For *many small queries*, set
-   `-mt_mode 1` (split by query) so all threads stay busy; `-mt_mode 0` (default,
-   split by database volume) suits few large queries. BLAST+ 2.15+ can choose
-   automatically, but set it explicitly when in doubt.
+5. **Multithreading.** Use `-num_threads N`. Since BLAST+ 2.15 the default
+   `-mt_mode 0` means **BLAST picks the split for you** from query and database
+   size, which NCBI recommends leaving alone. Override only deliberately:
+   `-mt_mode 1` = ThreadByQuery (many small queries), `-mt_mode 2` =
+   ThreadByDatabase (few large queries, big DB).
 
 Full option reference, taxonomy scoping, and DB-prep details:
 [`references/blast_cli.md`](references/blast_cli.md).
@@ -132,9 +134,9 @@ diamond blastp -d nr_diamond -q query.faa -o hits.tsv \
 ```
 
 Sensitivity ladder (fast → most sensitive): `--fast`, `--mid-sensitive`,
-`--sensitive`, `--more-sensitive`, `--very-sensitive`, `--ultra-sensitive`.
-Use `--ultra-sensitive` when you need BLAST-comparable recall; default fast mode
-trades sensitivity for speed. DIAMOND's `--outfmt 6` is compatible with the
+`--sensitive`, `--more-sensitive`, `--very-sensitive`, `--ultra-sensitive`. With no
+sensitivity flag DIAMOND runs its default mode, which sits between `--fast` and
+`--mid-sensitive`. Use `--ultra-sensitive` when you need BLAST-comparable recall. DIAMOND's `--outfmt 6` is compatible with the
 BLAST+ tabular parser below. Details and tradeoffs:
 [`references/diamond.md`](references/diamond.md).
 

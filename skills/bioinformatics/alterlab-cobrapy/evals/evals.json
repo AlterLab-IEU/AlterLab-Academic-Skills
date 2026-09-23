@@ -68,6 +68,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-arboreto" }
       ]
+    },
+    {
+      "id": "near-miss-brenda",
+      "prompt": "What are the measured kcat and Km values of E. coli phosphofructokinase for fructose-6-phosphate? I need literature kinetic constants, not a simulation.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-brenda. The user wants curated enzyme kinetic parameters (kcat, Km) from the literature, which BRENDA provides; COBRApy runs steady-state constraint-based simulations and does not look up kinetic constants.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-brenda" }
+      ]
     }
   ]
 }

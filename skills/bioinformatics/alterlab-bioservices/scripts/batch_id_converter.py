@@ -59,6 +59,28 @@ DATABASE_CODES = {
     'biogrid': 'BioGRID'
 }
 
+# Note: the legal (from, to) pairs are published by UniProt itself — inspect
+# UniProt().valid_mapping if a pair is rejected. Non-UniProt sources such as
+# KEGG or PDB map only *to* UniProtKB / UniProtKB-Swiss-Prot / UniParc.
+
+
+def _mapping_as_dict(job):
+    """Collapse a UniProt ID-mapping job into {source_id: [target_ids]}.
+
+    Since the June-2022 UniProt API (bioservices >= 1.10), ``UniProt.mapping()``
+    returns the raw job payload — ``{"results": [{"from": ..., "to": ...}, ...],
+    "failedIds": [...]}`` — rather than a dict keyed by the source identifier.
+    Some targets (e.g. ``to="UniProtKB"``) return an entry object instead of a
+    plain accession, so those are reduced to their ``primaryAccession``.
+    """
+    out = {}
+    for row in (job or {}).get("results", []):
+        target = row.get("to")
+        if isinstance(target, dict):
+            target = target.get("primaryAccession") or target.get("id") or str(target)
+        out.setdefault(row.get("from"), []).append(target)
+    return out
+
 
 def normalize_database_code(code):
     """Normalize database code to official format."""
@@ -114,7 +136,7 @@ def batch_convert(ids, from_db, to_db, chunk_size=100, delay=0.5):
         try:
             print(f"  [{chunk_num}/{total_chunks}] Processing {len(chunk)} IDs...", end=" ")
 
-            results = u.mapping(fr=from_db, to=to_db, query=query)
+            results = _mapping_as_dict(u.mapping(fr=from_db, to=to_db, query=query))
 
             if results:
                 all_results.update(results)
@@ -135,7 +157,7 @@ def batch_convert(ids, from_db, to_db, chunk_size=100, delay=0.5):
             print(f"    Retrying individual IDs...")
             for single_id in chunk:
                 try:
-                    result = u.mapping(fr=from_db, to=to_db, query=single_id)
+                    result = _mapping_as_dict(u.mapping(fr=from_db, to=to_db, query=single_id))
                     if result:
                         all_results.update(result)
                         print(f"      ✓ {single_id}")

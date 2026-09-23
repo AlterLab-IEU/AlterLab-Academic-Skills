@@ -3,10 +3,11 @@ name: alterlab-lamindb
 description: Manage, annotate, and trace biological data with LaminDB, an open-source FAIR data framework that makes datasets queryable, versioned, and reproducible. Use when registering or querying biological datasets (scRNA-seq, spatial, flow cytometry), validating and curating data against ontologies (genes, cell types, diseases, tissues), tracking data lineage and computational workflows, building data lakehouses, or wiring integrations with Nextflow, Snakemake, W&B, or MLflow. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Runs under `uv run python` with `lamindb` installed (2.10.0 as of 2026-09, Python >= 3.10; `lamindb` is a meta-package over `lamindb-core[full]`). A local SQLite instance works offline after `lamin init`; `lamin login` and cloud/Postgres instances need a Lamin account and network access."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # LaminDB
@@ -35,6 +36,16 @@ Use this skill when:
 - **Deploying data infrastructure**: Setting up local or cloud-based data management systems
 - **Collaborating on datasets**: Sharing curated, annotated data with standardized metadata
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Analysing an scRNA-seq AnnData (QC, clustering, DE) rather than registering it | `alterlab-scanpy` |
+| Wrangling the AnnData object itself (slicing, concat, h5ad/zarr I/O) | `alterlab-anndata` |
+| Pulling reference cells from the public CELLxGENE Census | `alterlab-cellxgene` |
+| A lab ELN/LIMS (Benchling) as the system of record | `alterlab-benchling` |
+| Depositing a finished dataset in a public repository with a DOI | `alterlab-open-science` |
+
 ## Core Capabilities
 
 LaminDB provides six interconnected capability areas, each documented in detail in the references folder.
@@ -57,6 +68,13 @@ LaminDB provides six interconnected capability areas, each documented in detail 
 **Reference:** `references/core-concepts.md` - Read this for detailed information on artifacts, records, runs, transforms, features, versioning, and lineage tracking.
 
 ### 2. Data Management and Querying
+
+> **API names that changed.** Query results are materialized with **`.to_dataframe()`**
+> (the old `.df()`), artifacts are annotated with **`features.set_values({...})`** /
+> `features.remove_values([...])` (the old `add_values`), and a *remote* instance is opened
+> as a database object — `db = ln.DB("account/instance")`, then `db.Artifact.filter(...)`
+> — rather than by importing its registries. `ln.track()` / `ln.finish()` and the
+> `ln.Artifact.from_dataframe` / `from_anndata` constructors are unchanged.
 
 **Query capabilities:**
 - Registry exploration and lookup with auto-complete
@@ -162,9 +180,12 @@ LaminDB provides six interconnected capability areas, each documented in detail 
 ### 6. Setup and Deployment
 
 **Installation:**
-- Basic: `uv pip install lamindb`
-- With extras: `uv pip install 'lamindb[gcp,zarr,fcs]'`
-- Modules: bionty, wetlab, clinical
+- Full data-science stack: `uv pip install lamindb` (2.10.x as of 2026-09)
+- Minimal namespace only: `uv pip install lamindb-core`
+- Extras: `gcp`, `fcs`, `zarr-v2` (zarr v3 is the default now — the old bare `zarr` extra
+  is gone), e.g. `uv pip install 'lamindb[gcp,fcs]'`
+- Modules are mounted on the instance, not pip-installed:
+  `lamin init --storage ./mydata --modules bionty`
 
 **Instance types:**
 - Local SQLite (development)
@@ -236,8 +257,9 @@ for i, file in enumerate(data_files):
         description=f"scRNA-seq batch {i}"
     ).save()
 
-    # Annotate with features
-    artifact.features.add_values({
+    # Annotate with features. Current API is set_values / remove_values
+    # (add_values was renamed).
+    artifact.features.set_values({
         "batch": i,
         "tissue": tissues[i],
         "condition": conditions[i]
@@ -280,7 +302,7 @@ wandb.log({"accuracy": 0.95})
 import joblib
 joblib.dump(model, "model.pkl")
 model_artifact = ln.Artifact("model.pkl", key="models/exp-42.pkl").save()
-model_artifact.features.add_values({"wandb_run_id": wandb.run.id})
+model_artifact.features.set_values({"wandb_run_id": wandb.run.id})
 
 ln.finish()
 wandb.finish()
@@ -317,7 +339,8 @@ To start using LaminDB effectively:
 1. **Installation & Setup** (`references/setup-deployment.md`)
    - Install LaminDB and required extras
    - Authenticate with `lamin login`
-   - Initialize instance with `lamin init --storage ...`
+   - Initialize an instance: `lamin init --storage ./mydata --modules bionty`
+     (add `--db postgresql://...` for a Postgres-backed instance)
 
 2. **Learn Core Concepts** (`references/core-concepts.md`)
    - Understand Artifacts, Records, Runs, Transforms
@@ -389,3 +412,4 @@ Read the relevant reference file(s) based on the specific LaminDB capability nee
 - **Tutorial**: https://docs.lamin.ai/tutorial
 - **FAQ**: https://docs.lamin.ai/faq
 
+Part of the AlterLab Academic Skills suite.

@@ -13,7 +13,8 @@ from pathlib import Path
 try:
     from ete3 import Tree, TreeStyle, NodeStyle
 except ImportError:
-    print("Error: ete3 not installed. Install with: pip install ete3")
+    print("Error: ete3 not installed. Install with: uv pip install ete3")
+    print("(These scripts target the ete3 API; ete4 renames format= to parser=.)")
     sys.exit(1)
 
 

@@ -3,10 +3,11 @@ name: alterlab-glycoengineering
 description: Analyze and engineer protein glycosylation — scan sequences for N-glycosylation sequons (N-X-S/T), predict O-glycosylation hotspots, and reach curated glycoengineering tools (NetOGlyc, GlycoShield, GlycoWorkbench). Use when identifying or designing glycosylation sites, optimizing therapeutic-antibody or biologic glycoforms, or doing glycoprotein engineering and vaccine-design work. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Sequon scanning and mutation helpers are pure-Python stdlib (re, typing) — run them under `uv run python` directly. The optional database/prediction helpers need `requests` (and the batch example needs `pandas`); external web services (NetOGlyc, GlyConnect) need network access but no API key or account."
+compatibility: "Sequon scanning and mutation helpers are pure-Python stdlib (re, typing) — run them under `uv run python` directly. The optional database helpers need `requests` (and the batch example needs `pandas`); external web services (NetNGlyc/NetOGlyc, GlyGen, GlyTouCan) need network access but no API key or account. Endpoint status verified 2026-09."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Glycoengineering
@@ -29,6 +30,16 @@ Use this skill when:
 - **Biosimilar characterization**: Compare glycan patterns between reference and biosimilar
 - **Drug target analysis**: Does glycosylation affect target engagement for a receptor?
 - **Protein stability**: N-glycans often stabilize proteins; identify sites for stabilizing mutations
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Glycan/carbohydrate cheminformatics (structures, descriptors, SMILES) | `alterlab-rdkit` |
+| Identifying glycopeptides from mass-spectrometry raw data | `alterlab-pyopenms` |
+| Predicting the 3D structure of the glycoprotein itself | `alterlab-alphafold`, `alterlab-boltz` |
+| MD simulation of a glycan shield (setup, force fields, trajectories) | `alterlab-molecular-dynamics` |
+| Looking up a protein's curated sequence features in UniProt | `alterlab-uniprot` |
 
 ## N-Glycosylation Sequon Analysis
 
@@ -219,17 +230,11 @@ GlycoShield-MD analyzes how glycans shield protein surfaces during MD simulation
 - **Use**: Map glycan shielding on protein surface over MD trajectory
 - **Output**: Per-residue shielding fraction, visualization
 
-```bash
-# Installation
-pip install glycoshield
-
-# Basic usage: analyze glycan shielding from glycosylated protein MD trajectory
-glycoshield \
-    --topology glycoprotein.pdb \
-    --trajectory glycoprotein.xtc \
-    --glycan_resnames BGLCNA FUC \
-    --output shielding_analysis/
-```
+GlycoSHIELD is **not on PyPI** (verified 2026-09 — `pip install glycoshield` fails with
+404). Install it from the project's GitLab repository following its own README, which also
+documents the expected inputs: a glycoprotein topology (PDB), a trajectory, and the glycan
+residue names to treat as the shield. Output is a per-residue shielding fraction you can map
+onto the surface — the number that tells you which epitopes a glycan actually occludes.
 
 ### 3. GlycoWorkbench (Glycan Structure Drawing/Analysis)
 
@@ -237,30 +242,35 @@ glycoshield \
 - **Use**: Draw glycan structures, calculate masses, annotate MS spectra
 - **Format**: GlycoCT, IUPAC condensed glycan notation
 
-### 4. GlyConnect (Glycan-Protein Database)
+### 4. Experimentally verified glycosylation: GlyGen (and GlyConnect)
 
-- **URL**: https://glyconnect.expasy.org/
-- **Use**: Find experimentally verified glycoproteins and glycosylation sites
-- **Query**: By protein (UniProt ID), glycan structure, or tissue
+**GlyGen** (`api.glygen.org`) is the route that currently works programmatically —
+verified 2026-09 with plain GET requests returning JSON:
 
 ```python
 import requests
 
-def query_glyconnect(uniprot_id: str) -> dict:
-    """Query GlyConnect for glycosylation data for a protein."""
-    url = f"https://glyconnect.expasy.org/api/proteins/uniprot/{uniprot_id}"
-    response = requests.get(url, headers={"Accept": "application/json"})
-    if response.status_code == 200:
-        return response.json()
-    return {}
+def glygen_protein(uniprot_canonical_ac: str) -> dict:
+    """Protein record incl. reported glycosylation sites. Accession is canonical, e.g. 'P00533-1'."""
+    r = requests.get(f"https://api.glygen.org/protein/detail/{uniprot_canonical_ac}/", timeout=30)
+    return r.json() if r.ok else {}
 
-# Example: query EGFR glycosylation
-egfr_glyco = query_glyconnect("P00533")
+def glygen_glycan(glytoucan_ac: str) -> dict:
+    """Glycan record: mass, monosaccharide count, IUPAC/WURCS, cross-references."""
+    r = requests.get(f"https://api.glygen.org/glycan/detail/{glytoucan_ac}/", timeout=30)
+    return r.json() if r.ok else {}
+
+egfr = glygen_protein("P00533-1")
 ```
+
+**GlyConnect** (https://glyconnect.expasy.org/) remains an excellent curated resource to
+browse, but its public REST routes are unreliable: as of 2026-09
+`/api/proteins/uniprot/{acc}` returns HTTP 500 and the Swagger spec 404s. Use the web
+interface for GlyConnect, and GlyGen for scripted access.
 
 ### 5. UniCarbKB (Glycan Structure Database)
 
-- **URL**: https://unicarbkb.org/
+- **URL**: https://www.unicarbkb.org/ (the bare `unicarbkb.org` redirects here)
 - **Use**: Browse glycan structures, search by mass or composition
 - **Format**: GlycoCT or IUPAC notation
 
@@ -327,3 +337,5 @@ Neu5Ac-Gal-GlcNAc-Man/
 - **GlycoWorkbench**: https://glycoworkbench.software.informer.com/
 - **Review**: Apweiler R et al. (1999) Biochim Biophys Acta. PMID: 10580125
 - **Therapeutic glycoengineering review**: Jefferis R (2009) Nature Reviews Drug Discovery. PMID: 19247305
+
+Part of the AlterLab Academic Skills suite.

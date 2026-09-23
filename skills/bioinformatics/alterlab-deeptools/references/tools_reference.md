@@ -67,7 +67,7 @@ Converts BAM alignment files into normalized coverage tracks in bigWig or bedGra
 - `--binSize`: Resolution in base pairs (default: 50)
 - `--extendReads, -e`: Extend reads to fragment length (recommended for ChIP-seq, NOT for RNA-seq)
 - `--centerReads`: Center reads at fragment length for sharper signals
-- `--ignoreDuplicates`: Count identical reads only once
+- `--samFlagExclude 1024`: skip reads marked as PCR duplicates (deepTools 4.0 removed `--ignoreDuplicates` from bamCoverage)
 - `--minMappingQuality`: Filter reads below quality threshold
 - `--minFragmentLength / --maxFragmentLength`: Fragment length filtering
 - `--smoothLength`: Window averaging for noise reduction
@@ -80,7 +80,7 @@ Converts BAM alignment files into normalized coverage tracks in bigWig or bedGra
 **Important Notes:**
 - For RNA-seq: Do NOT use --extendReads (would extend over splice junctions)
 - For ChIP-seq: Use --extendReads with smaller bin sizes
-- Never apply --ignoreDuplicates after GC bias correction
+- Do not filter duplicates after GC-bias correction — `correctGCBias` adds reads to under-represented regions, and removing duplicates then throws exactly those away
 
 **Common Usage:**
 ```bash
@@ -89,7 +89,7 @@ bamCoverage --bam input.bam --outFileName coverage.bw --normalizeUsing RPKM
 
 # ChIP-seq with extension
 bamCoverage --bam chip.bam --outFileName chip_coverage.bw \
-    --binSize 10 --extendReads 200 --ignoreDuplicates
+    --binSize 10 --extendReads 200 --samFlagExclude 1024
 
 # Strand-specific RNA-seq
 bamCoverage --bam rnaseq.bam --outFileName forward.bw \
@@ -129,7 +129,7 @@ Compares two BAM files by generating bigWig or bedGraph files, normalizing for s
 - `--binSize`: Bin width for output (default: 50bp)
 - `--pseudocount`: Avoid division by zero (default: 1)
 - `--extendReads`: Extend reads to fragment length
-- `--ignoreDuplicates`: Count identical reads once
+- `--samFlagExclude 1024`: skip reads marked as PCR duplicates (deepTools 4.0 removed `--ignoreDuplicates` from bamCompare)
 - `--minMappingQuality`: Quality threshold
 - `--numberOfProcessors, -p`: Parallelization
 
@@ -165,7 +165,7 @@ bamCompare -b1 treatment.bam -b2 control.bam -o difference.bw \
 - `--GCbiasFrequenciesFile`: Frequencies from computeGCBias
 - `--correctedFile, -o`: Output corrected BAM
 
-**Important:** Never use --ignoreDuplicates after GC bias correction
+**Important:** do not filter duplicates on a GC-corrected BAM — the correction works by duplicating reads in under-represented regions, so duplicate removal undoes it
 
 ---
 

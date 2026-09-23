@@ -60,8 +60,9 @@ adata_subset = filtered.to_memory()
 subset = adata[0:100, :]
 print(subset.is_view)  # True
 
-# Views don't copy data (memory efficient)
-# But modifications can affect original
+# Views don't copy data (memory efficient). Since anndata 0.13 they are
+# copy-on-write: assigning into a view materializes a copy instead of
+# writing through to the parent object.
 
 # Check if object is a view
 if adata.is_view:
@@ -329,16 +330,16 @@ adata.uns['neighbors'] = {
 
 ### Version tracking
 ```python
-import anndata
-import scanpy
-import numpy
+import sys
 
-# Store versions
+# anndata.__version__ is deprecated in 0.13 — read versions from the metadata API
+from importlib.metadata import version
+
 adata.uns['versions'] = {
-    'anndata': anndata.__version__,
-    'scanpy': scanpy.__version__,
-    'numpy': numpy.__version__,
-    'python': sys.version
+    'anndata': version('anndata'),
+    'scanpy': version('scanpy'),
+    'numpy': version('numpy'),
+    'python': sys.version,
 }
 ```
 
@@ -425,15 +426,16 @@ for batch in dataloader:
 
 ## Common Pitfalls
 
-### Pitfall 1: Modifying views
+### Pitfall 1: Expecting writes to a view to reach the parent
 ```python
-# Wrong: Modifying view can affect original
+# anndata >= 0.13: .X is copy-on-write like layers/obsm, so this does NOT
+# change adata.X — the view silently materializes its own copy instead.
 subset = adata[:100, :]
-subset.X = new_data  # May modify adata.X!
+subset.X = new_data          # parent untouched (older versions could propagate)
 
-# Correct: Copy before modifying
-subset = adata[:100, :].copy()
-subset.X = new_data  # Independent copy
+# Be explicit about which object you mean to modify:
+subset = adata[:100, :].copy()   # independent copy
+adata.X[:100] = new_data         # or write into the parent's array directly
 ```
 
 ### Pitfall 2: Index misalignment

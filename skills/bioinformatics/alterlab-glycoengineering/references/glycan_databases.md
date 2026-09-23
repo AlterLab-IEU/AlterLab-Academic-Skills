@@ -3,41 +3,49 @@
 ## Primary Databases
 
 ### GlyTouCan
-- **URL**: https://glytoucan.org/
+- **URL**: https://glytoucan.org/ — a structure page is
+  `https://glytoucan.org/Structures/Glycans/<GTC_ID>`
 - **Content**: Unique accession numbers (GTC IDs) for glycan structures
 - **Use**: Standardized glycan identification across databases
 - **Format**: GlycoCT, WURCS, IUPAC
 
+`api.glytoucan.org/glycan/<id>` is **not** a lookup route (verified 2026-09: it 301s to a
+registration endpoint). For scripted access to a GlyTouCan accession, go through GlyGen,
+which returns the structure plus cross-references as plain JSON:
+
 ```python
 import requests
 
-def lookup_glytoucan(glytoucan_id: str) -> dict:
-    """Fetch glycan details from GlyTouCan."""
-    url = f"https://api.glytoucan.org/glycan/{glytoucan_id}"
-    response = requests.get(url, headers={"Accept": "application/json"})
-    return response.json() if response.ok else {}
+def lookup_glycan(glytoucan_id: str) -> dict:
+    """Fetch glycan details (mass, IUPAC/WURCS, xrefs) by GlyTouCan accession."""
+    r = requests.get(f"https://api.glygen.org/glycan/detail/{glytoucan_id}/", timeout=30)
+    return r.json() if r.ok else {}
+
+# lookup_glycan("G17689DH") -> {'glytoucan': {...}, 'mass': 2368.84, 'iupac': '...', ...}
 ```
 
-### GlyConnect
-- **URL**: https://glyconnect.expasy.org/
-- **Content**: Protein glycosylation database with site-specific glycan profiles
-- **Integration**: Links UniProt proteins to experimentally verified glycosylation
-- **Use**: Look up known glycosylation for your target protein
+The GlycoSMOS format converter (`api.glycosmos.org/glycanformatconverter/...`) is a working
+option for WURCS ↔ IUPAC conversion.
+
+### GlyConnect / GlyGen
+- **GlyConnect URL**: https://glyconnect.expasy.org/ — curated protein glycosylation with
+  site-specific glycan profiles, linked to UniProt. Excellent to browse, but its public REST
+  routes are unreliable: verified 2026-09, `/api/proteins/uniprot/{acc}` returns HTTP 500 and
+  the Swagger spec 404s. Treat GlyConnect as a **web resource**, not an API.
+- **GlyGen URL**: https://www.glygen.org/ with a working REST API at `api.glygen.org`.
 
 ```python
 import requests
 
-def get_glycoprotein_info(uniprot_id: str) -> dict:
-    """Get glycosylation data for a protein from GlyConnect."""
-    base_url = "https://glyconnect.expasy.org/api"
-    response = requests.get(f"{base_url}/proteins/uniprot/{uniprot_id}")
-    return response.json() if response.ok else {}
+def get_glycoprotein_info(uniprot_canonical_ac: str) -> dict:
+    """Glycosylation and annotation for a protein (accession is canonical, e.g. 'P00533-1')."""
+    r = requests.get(f"https://api.glygen.org/protein/detail/{uniprot_canonical_ac}/", timeout=30)
+    return r.json() if r.ok else {}
 
-def get_glycan_compositions(glyconnect_protein_id: int) -> list:
-    """Get all glycan compositions for a GlyConnect protein entry."""
-    base_url = "https://glyconnect.expasy.org/api"
-    response = requests.get(f"{base_url}/compositions/protein/{glyconnect_protein_id}")
-    return response.json().get("data", []) if response.ok else []
+def get_glycan_detail(glytoucan_ac: str) -> dict:
+    """Glycan record by GlyTouCan accession (mass, composition, IUPAC/WURCS, xrefs)."""
+    r = requests.get(f"https://api.glygen.org/glycan/detail/{glytoucan_ac}/", timeout=30)
+    return r.json() if r.ok else {}
 ```
 
 ### UniCarbKB
