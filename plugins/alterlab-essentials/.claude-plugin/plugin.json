@@ -2,7 +2,7 @@
   "$schema": "https://www.schemastore.org/claude-code-plugin-manifest.json",
   "name": "alterlab-essentials",
   "description": "Faculty starter kit — installs the core research-to-publication pipeline, the multi-agent research workflows, research tools, writing tools, methodology gates, and scientific-database connectors in one step",
-  "version": "2.7.0",
+  "version": "3.0.0",
   "author": {
     "name": "AlterLab @ Izmir University of Economics",
     "url": "https://github.com/AlterLab-IEU"
