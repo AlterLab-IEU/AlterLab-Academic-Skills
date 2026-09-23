@@ -187,8 +187,8 @@ Every AlterLab skill (240) across 18 domains, with a one-line summary. The `alte
 - **`alterlab-latchbio`** — Builds and deploys bioinformatics pipelines on the LatchBio platform using the Latch SDK — author workflows with @workflow/@task decorators, handle LatchFile/LatchDir I/O, register serverless workflows, configure CPU/GPU task resources, organize data in the Latch Registry, and wrap Nextflow/Snakemake pipelines
 - **`alterlab-omero`** — Manages microscopy image data on an OMERO server via the OMERO Python API (BlitzGateway) — access images, retrieve datasets, read pixel data, manage ROIs and annotations, and batch-process
 - **`alterlab-opentrons`** — Writes liquid-handling protocols for Opentrons OT-2 and Flex robots using the official Opentrons Protocol API v2, with full access to v2 features for production-grade, officially compatible protocols
-- **`alterlab-protocolsio`** — Manages scientific protocols through the protocols.io API v3 — search, create, update, and publish protocols (with DOI), manage steps and materials, handle protocol/step discussions and comments, organize team workspaces, and upload/manage workspace files
-- **`alterlab-pylabrobot`** — Programs lab automation with PyLabRobot, a vendor-agnostic Python framework that unifies control across Hamilton, Tecan, Opentrons, plate readers, and pumps, with simulation support
+- **`alterlab-protocolsio`** — Works with protocols.io through its REST API (v3 and v4 endpoints) and official MCP server — search and retrieve protocols by keyword, URI, or DOI; create private protocols, edit their metadata and steps, and publish them with a DOI; manage protocol and step discussions, workspaces, file-manager items, file uploads, experiment records, and organization exports
+- **`alterlab-pylabrobot`** — Programs lab automation with PyLabRobot, a vendor-agnostic async Python framework that drives Hamilton STAR/Vantage, Tecan EVO, and Opentrons OT-2 liquid handlers plus plate readers, heater shakers, incubators, centrifuges, pumps, scales, and thermocyclers, with a chatterbox simulator and browser visualizer
 
 ## Domain-Specific — `domain-specific` (18)
 

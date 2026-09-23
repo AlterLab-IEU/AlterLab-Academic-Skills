@@ -3938,8 +3938,8 @@
       "domain": "lab-integrations",
       "description": "Integrates the Benchling R&D platform via its REST API and SDK — access the registry (DNA, proteins), inventory, ELN entries and workflows, build Benchling Apps, and query the Benchling Data Warehouse. Use when automating Benchling lab data management, syncing sample registry or inventory records, scripting ELN entries/workflows, or running SQL against the Benchling Data Warehouse. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires a Benchling account and API key",
+      "version": "1.1.0",
+      "compatibility": "Requires a Benchling tenant with API access plus an API key or OAuth app credentials; benchling-sdk 1.x (current 1.25.0, Python >=3.9)",
       "allowed_tools": [
         "Read",
         "Write",
@@ -3949,7 +3949,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 499,
+      "body_lines": 472,
       "references": [
         "api_endpoints.md",
         "authentication.md",
@@ -3961,8 +3961,8 @@
       "domain": "lab-integrations",
       "description": "Develops and runs genomics pipelines on the DNAnexus cloud platform using the dxpy Python SDK and dx CLI — build apps/applets, write dxapp.json, upload/download data, and execute jobs/workflows over FASTQ/BAM/VCF files. Use when building or running a DNAnexus app, applet, or workflow, writing dxapp.json, using dx-app-wizard or dx build, calling dxpy (find_data_objects, DXApplet.run, upload_local_file), or uploading/downloading sequencing data on DNAnexus. For LatchBio (Latch SDK @workflow/@task, LatchFile) use alterlab-latchbio instead; for Benchling LIMS use alterlab-benchling. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires a DNAnexus account",
+      "version": "1.0.1",
+      "compatibility": "Requires a DNAnexus account and the dxpy SDK/dx CLI (dxpy, current 0.415.0 as of 2026-09; Python >=3.8)",
       "allowed_tools": [
         "Read",
         "Write",
@@ -3975,7 +3975,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 349,
+      "body_lines": 360,
       "references": [
         "app-development.md",
         "configuration.md",
@@ -3989,8 +3989,8 @@
       "domain": "lab-integrations",
       "description": "Submits and manages protocols on Ginkgo Bioworks Cloud Lab (cloud.ginkgo.bio), a web-based interface for autonomous lab execution on Reconfigurable Automation Carts (RACs), covering protocol selection, input preparation, pricing, and ordering workflows. Use when running cell-free protein expression (validation or optimization), generating fluorescent pixel art, or interacting with Ginkgo Cloud Lab services. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires a Ginkgo Cloud Lab account (cloud.ginkgo.bio); account creation or institutional access may be needed to submit and order protocols",
+      "version": "1.1.0",
+      "compatibility": "Requires a Ginkgo Cloud Lab account (cloud.ginkgo.bio); account creation or institutional access may be needed to submit and order protocols. Ordering is through the web interface; there is no documented public API.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -4000,7 +4000,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 53,
+      "body_lines": 78,
       "references": [
         "cell-free-protein-expression-optimization.md",
         "cell-free-protein-expression-validation.md",
@@ -4012,8 +4012,8 @@
       "domain": "lab-integrations",
       "description": "Integrates the LabArchives electronic lab notebook (ELN) via its REST API — access notebooks, manage entries and attachments, back up notebooks, and bridge to Protocols.io, Jupyter, and REDCap. Use when automating LabArchives ELN workflows, programmatically reading/writing notebook entries or attachments, backing up a LabArchives notebook, or syncing it with Protocols.io, Jupyter, or REDCap. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires a LabArchives account plus API credentials (access key ID and password) and the labarchivespy client",
+      "version": "1.1.0",
+      "compatibility": "Requires a LabArchives account with API access (institutional access key ID + password, plus the user's LA App authentication token). Python clients - labapi (PyPI, current 1.2.0, Python >=3.10) or the git-only labarchives-py wrapper used by the bundled scripts.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -4023,7 +4023,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 260,
+      "body_lines": 198,
       "references": [
         "api_reference.md",
         "authentication_guide.md",
@@ -4035,8 +4035,8 @@
       "domain": "lab-integrations",
       "description": "Builds and deploys bioinformatics pipelines on the LatchBio platform using the Latch SDK — author workflows with @workflow/@task decorators, handle LatchFile/LatchDir I/O, register serverless workflows, configure CPU/GPU task resources, organize data in the Latch Registry, and wrap Nextflow/Snakemake pipelines. Use when developing or deploying a Latch SDK workflow, sizing task resources, working with the Registry, or porting a Nextflow/Snakemake bioinformatics pipeline onto LatchBio. Not for DNAnexus (dxpy/dx CLI) or generic Flyte. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires a LatchBio account and workspace plus the Latch SDK (`uv pip install latch`, latch>=2.x, Python 3.9+); deploying workflows needs Docker running and `latch login`",
+      "version": "1.0.1",
+      "compatibility": "Requires a LatchBio account and workspace plus the Latch SDK (`uv pip install latch`; latch 2.x, current 2.77.1, Python >=3.9); deploying workflows needs Docker running and `latch login`",
       "allowed_tools": [
         "Read",
         "Write",
@@ -4046,7 +4046,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 277,
+      "body_lines": 288,
       "references": [
         "data-management.md",
         "resource-configuration.md",
@@ -4059,17 +4059,18 @@
       "domain": "lab-integrations",
       "description": "Manages microscopy image data on an OMERO server via the OMERO Python API (BlitzGateway) — access images, retrieve datasets, read pixel data, manage ROIs and annotations, and batch-process. Use when connecting to an OMERO server, pulling microscopy images or datasets, analyzing pixels, managing ROIs/annotations, or running high-content screening and microscopy workflows. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires a reachable OMERO server (host, port, credentials) and the omero-py client (uv pip install omero-py) for BlitzGateway access",
+      "version": "1.0.1",
+      "compatibility": "Requires a reachable OMERO server (host, port, credentials) and omero-py (current 5.23.0; Python >=3.10) with the ZeroC Ice 3.6 Python bindings installed first",
       "allowed_tools": [
-        "Read,",
-        "Write,",
-        "Edit,",
-        "Bash(uv:*)"
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(uv:*)",
+        "Bash(python:*)"
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 244,
+      "body_lines": 258,
       "references": [
         "advanced.md",
         "connection.md",
@@ -4086,8 +4087,8 @@
       "domain": "lab-integrations",
       "description": "Writes liquid-handling protocols for Opentrons OT-2 and Flex robots using the official Opentrons Protocol API v2, with full access to v2 features for production-grade, officially compatible protocols. Use when authoring or running protocols specifically for Opentrons hardware. For multi-vendor automation or broader equipment control use pylabrobot instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires the opentrons Python package (pip install opentrons); protocols simulate locally via opentrons_simulate, execution needs an Opentrons OT-2 or Flex robot",
+      "version": "1.1.0",
+      "compatibility": "Requires the opentrons Python package (current 9.1.2; Python >=3.10) to simulate locally with opentrons_simulate; execution needs an Opentrons OT-2 or Flex robot whose software supports the protocol's apiLevel (robot software 9.1.1+ accepts up to 2.29)",
       "allowed_tools": [
         "Read",
         "Write",
@@ -4097,7 +4098,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 382,
+      "body_lines": 395,
       "references": [
         "api_reference.md",
         "hardware_modules.md",
@@ -4107,10 +4108,10 @@
     {
       "name": "alterlab-protocolsio",
       "domain": "lab-integrations",
-      "description": "Manages scientific protocols through the protocols.io API v3 — search, create, update, and publish protocols (with DOI), manage steps and materials, handle protocol/step discussions and comments, organize team workspaces, and upload/manage workspace files. Use when discovering, developing, publishing, or citing protocols.io protocols, collaborating on protocol steps/materials, recording experiment runs, or integrating protocols.io into lab documentation. Not for general ELN entries/notebooks (use alterlab-benchling or alterlab-labarchive) or lab-instrument/liquid-handler control. Part of the AlterLab Academic Skills suite.",
+      "description": "Works with protocols.io through its REST API (v3 and v4 endpoints) and official MCP server — search and retrieve protocols by keyword, URI, or DOI; create private protocols, edit their metadata and steps, and publish them with a DOI; manage protocol and step discussions, workspaces, file-manager items, file uploads, experiment records, and organization exports. Use when discovering, drafting, publishing, or citing protocols.io protocols, recording protocol runs, or wiring protocols.io into lab documentation. Not for general ELN notebooks (use alterlab-benchling or alterlab-labarchive) or for driving liquid-handling robots. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires a protocols.io access token — a personal CLIENT_ACCESS_TOKEN for personal content or an OAUTH_ACCESS_TOKEN via the OAuth flow",
+      "version": "1.1.0",
+      "compatibility": "Requires a protocols.io access token — a CLIENT_ACCESS_TOKEN from https://www.protocols.io/developers (your own plus public content) or an OAUTH_ACCESS_TOKEN from the OAuth 2.0 flow (another user's content, with their consent). The official remote MCP server at https://www.protocols.io/mcp accepts the same tokens.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -4120,7 +4121,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 419,
+      "body_lines": 223,
       "references": [
         "additional_features.md",
         "authentication.md",
@@ -4133,10 +4134,10 @@
     {
       "name": "alterlab-pylabrobot",
       "domain": "lab-integrations",
-      "description": "Programs lab automation with PyLabRobot, a vendor-agnostic Python framework that unifies control across Hamilton, Tecan, Opentrons, plate readers, and pumps, with simulation support. Use when controlling multiple equipment types or needing unified cross-vendor programming for complex, multi-vendor liquid-handling workflows. For Opentrons-only protocols with the official API, alterlab-opentrons may be simpler. Part of the AlterLab Academic Skills suite.",
+      "description": "Programs lab automation with PyLabRobot, a vendor-agnostic async Python framework that drives Hamilton STAR/Vantage, Tecan EVO, and Opentrons OT-2 liquid handlers plus plate readers, heater shakers, incubators, centrifuges, pumps, scales, and thermocyclers, with a chatterbox simulator and browser visualizer. Use when writing or simulating liquid-handling protocols in Python, controlling several instrument types from one script, or porting a protocol between robot vendors. For Opentrons-only protocols written with the official Opentrons API, use alterlab-opentrons instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
-      "compatibility": "Requires the pylabrobot Python package (pip install pylabrobot); runs against the built-in simulator without hardware, real runs need supported devices (Hamilton, Tecan, Opentrons, plate readers, pumps)",
+      "version": "1.2.0",
+      "compatibility": "pylabrobot >=0.2 (current 0.2.2 as of 2026-09; Python >=3.9); install with uv pip install pylabrobot. The chatterbox backends simulate without hardware; real devices need the connection extra for their interface ([usb], [serial], [ftdi], [hid], [modbus], [opentrons], or [all]).",
       "allowed_tools": [
         "Read",
         "Write",
@@ -4146,7 +4147,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 193,
+      "body_lines": 158,
       "references": [
         "analytical-equipment.md",
         "hardware-backends.md",

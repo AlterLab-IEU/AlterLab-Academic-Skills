@@ -123,9 +123,14 @@ confusion is real). Highlights, by domain:
 - **research-tools** — OpenAlex's per-IP metering and API key, Parallel's GA endpoints (extract
   always failed), Perplexity citations that were never captured, research-ethics updates (EO
   14292 and the July 2026 US policy).
-- **finance-economics** — edgartools 5.x (SEC fair-access identity), FRED limits, denario 1.0,
-  Alpha Vantage and Treasury Fiscal Data refreshed.
-<!-- lab-integrations -->
+- **finance-economics** — edgartools 5.x (SEC fair-access identity; attributes that did not
+  exist), FRED's v2 bulk endpoint and retries, denario examples moved off retired default
+  models, Alpha Vantage error bodies that arrive with HTTP 200 now raise, Treasury Fiscal Data
+  pagination fixed.
+- **lab-integrations** — protocols.io endpoints that had been made up were rewritten from the
+  official API docs; PyLabRobot 0.2.2 snippets run on its simulator (27 `drop_tips()` calls
+  crashed); the LabArchives scripts called methods that do not exist and sent the access
+  password in plain text; the Opentrons templates run clean in `opentrons_simulate` 9.1.
 - **turkish-academia** — ÜAK Mart 2026 doçentlik rules (the ≥40 rule's scope, başlıca yazar),
   teşvik tables rebuilt from the Yönetmelik, TÜBİTAK 1001/1002-A forms and its generative-AI
   guide, TİTCK committee and permit routing, TR Dizin article requirements, KVKK transfer rules.

@@ -134,7 +134,9 @@ under the day-one-evals bar above.
 **Visualization**
 - `alterlab-ggplot2`, `alterlab-tikz-pgfplots`, `alterlab-figure-alt-text` (WCAG 2.2 and journal
   alt-text).
-<!-- roadmap-pending -->
+**Finance and lab**
+- An SDMX macro-data skill (IMF, OECD, ECB, Eurostat); an eLabFTW connector (open-source
+  electronic lab notebook); a connector for Emerald Cloud Lab or a similar cloud lab.
 
 ## Explicitly not scheduled here
 
