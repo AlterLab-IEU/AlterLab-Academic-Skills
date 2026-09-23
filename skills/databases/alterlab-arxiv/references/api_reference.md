@@ -12,9 +12,16 @@ https://export.arxiv.org/api/query
 
 (The docs historically show `http://`; the endpoint also serves HTTPS, which the script uses.)
 
+**Backend migration (2025-11-11).** arXiv moved this API to a new cloud implementation
+with the same URL and parameters. Visible differences: malformed queries now return
+**HTTP 400** with an Atom error entry instead of an empty 200; bare terms are
+auto-prefixed (`pineapple` → `all:pineapple`) unless you pass `raw=1`; abstracts are
+no longer hard-wrapped at 80 characters.
+
 ## Rate Limiting
 
-- Recommended: **1 request per 3 seconds**
+- Terms of use: **no more than one request every three seconds, one connection at a
+  time**, counted across all machines you control (https://info.arxiv.org/help/api/tou.html)
 - Aggressive crawling will result in temporary IP bans
 - Use `time.sleep(3)` between requests
 - Include a descriptive `User-Agent` header
@@ -39,7 +46,7 @@ https://export.arxiv.org/api/query
 | Prefix | Field | Example |
 |--------|-------|---------|
 | `ti:` | Title | `ti:transformer` |
-| `au:` | Author | `au:bengio` |
+| `au:` | Author name (not affiliation) | `au:bengio` |
 | `abs:` | Abstract | `abs:attention mechanism` |
 | `co:` | Comment | `co:accepted at NeurIPS` |
 | `jr:` | Journal Reference | `jr:Nature` |
@@ -63,7 +70,7 @@ Use parentheses for complex queries:
 
 ```
 (ti:sparse AND ti:autoencoder) AND cat:cs.LG
-au:anthropic AND (abs:interpretability OR abs:alignment)
+au:"Chris Olah" AND (abs:interpretability OR abs:alignment)
 (cat:cs.LG OR cat:cs.CL) AND ti:reinforcement learning
 ```
 
@@ -76,6 +83,21 @@ ti:"sparse autoencoder"
 au:"Yoshua Bengio"
 abs:"reinforcement learning from human feedback"
 ```
+
+### Date ranges
+
+`submittedDate` (and `lastUpdatedDate`) accept an inclusive range in GMT,
+`[YYYYMMDDTTTT TO YYYYMMDDTTTT]`:
+
+```
+cat:cs.LG AND submittedDate:[202501010000 TO 202501312359]
+```
+
+### Affiliations
+
+There is no affiliation field to search. `au:anthropic` returns nothing; `au:openai`
+only matches papers that list the organization as a collective author. Query a group
+through its members' names, or use OpenAlex's institution filter.
 
 ### Wildcards
 
@@ -90,7 +112,7 @@ GET http://export.arxiv.org/api/query?search_query=all:sparse+autoencoder&max_re
 
 ### Author + category
 ```
-GET http://export.arxiv.org/api/query?search_query=au:anthropic+AND+cat:cs.LG&max_results=50&sortBy=submittedDate
+GET http://export.arxiv.org/api/query?search_query=au:bengio+AND+cat:cs.LG&max_results=50&sortBy=submittedDate
 ```
 
 ### ID lookup
@@ -419,7 +441,7 @@ All formats are accepted by the API.
 1. **Boolean operators must be UPPERCASE**: `AND`, `OR`, `ANDNOT` (lowercase is treated as search terms)
 2. **URL encoding**: Spaces in queries must be encoded as `+` or `%20`
 3. **No full-text search**: The API only searches metadata (title, abstract, authors, etc.)
-4. **Empty result placeholder**: When no results are found, arXiv may return a single entry with an empty title and the id `http://arxiv.org/api/errors` - filter this out
+4. **Errors vs. empty results**: zero hits return a feed with `opensearch:totalResults` = 0 and no entries. Invalid queries or IDs return HTTP 400 with a single entry whose id starts with `https://arxiv.org/api/errors` and whose `<summary>` explains the problem (e.g. `Invalid query string: '(ti:sparse'`) — report it, don't treat it as "no papers"
 5. **Version numbering**: `published` date is v1 submission; `updated` is latest version date
 6. **Rate limiting**: Exceeding limits can result in 403 errors or temporary bans
 7. **Max 2000 per request**: `max_results` is capped at 2000 per call; retrieve more via `start`-based pagination (30000 total cap)
@@ -430,4 +452,5 @@ All formats are accepted by the API.
 - arXiv API user manual: https://info.arxiv.org/help/api/user-manual.html
 - arXiv bulk data access: https://info.arxiv.org/help/bulk_data.html
 - arXiv category taxonomy: https://arxiv.org/category_taxonomy
-- OAI-PMH interface (for bulk metadata): http://export.arxiv.org/oai2
+- OAI-PMH interface (for bulk metadata): https://oaipmh.arxiv.org/oai (the old `export.arxiv.org/oai2` URL now 301-redirects here)
+- API change announcements: https://groups.google.com/a/arxiv.org/g/api

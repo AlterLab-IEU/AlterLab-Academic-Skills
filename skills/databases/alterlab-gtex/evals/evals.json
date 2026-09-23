@@ -13,7 +13,7 @@
     {
       "id": "eqtl-for-gene",
       "prompt": "Find all significant eQTLs for PCSK9 in GTEx, and tell me which tissues and variants drive its expression.",
-      "expected_output": "Invokes alterlab-gtex. Calls /association/singleTissueEqtl with the PCSK9 GENCODE ID (gtex_v10), paginating through results, and returns the significant variant-tissue associations (snpId, tissue, slope, pval) ranked by p-value. Notes FDR < 0.05 significance.",
+      "expected_output": "Invokes alterlab-gtex. Calls /association/singleTissueEqtl with the PCSK9 GENCODE ID (ENSG00000169174.11 for gtex_v10), paginating through results, and returns the significant variant-tissue associations (snpId, tissueSiteDetailId, nes, pValue) ranked by p-value. Notes FDR < 0.05 significance.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "eQTL" }

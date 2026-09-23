@@ -1,12 +1,13 @@
 ---
 name: alterlab-sna
-description: "Applies social-network-analysis method discipline to relational data — degree/betweenness/closeness/eigenvector centrality and PageRank, community detection (Louvain and greedy-modularity native in networkx, Leiden via igraph), and inferential network models (ERGM) — choosing the measure that matches the substantive question and the right dependence assumptions, then routing computation to the existing networkx (and igraph/R) tooling. Use when the request mentions social network analysis, centrality, key players/brokerage, community or cluster detection in a network, ERGM, or modeling ties between nodes. For general graph algorithms and plotting prefer alterlab-networkx; for graph neural networks prefer alterlab-torch-geometric. Part of the AlterLab Academic Skills suite."
+description: "Applies social-network-analysis method discipline to relational data — degree/betweenness/closeness/eigenvector centrality and PageRank, community detection (Louvain, greedy-modularity, and — from networkx 3.7 — Leiden native in networkx; igraph/leidenalg for large graphs), and inferential network models (ERGM) — choosing the measure that matches the substantive question and the right dependence assumptions, then routing computation to the existing networkx (and igraph/R) tooling. Use when the request mentions social network analysis, centrality, key players/brokerage, community or cluster detection in a network, ERGM, or modeling ties between nodes. For general graph algorithms and plotting prefer alterlab-networkx; for graph neural networks prefer alterlab-torch-geometric. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Bash(python:*)
-compatibility: "Computation routes to networkx>=3.4 (centrality, native Louvain/greedy-modularity). Leiden and very large graphs -> python-igraph>=0.11. ERGM has no mature Python package -> R statnet/ergm via an R bridge (declare it). No API key; runs locally via `uv run python`."
+compatibility: "Computation routes to networkx>=3.4 (centrality, native Louvain/greedy-modularity; native Leiden needs networkx>=3.7, current 3.7). Very large graphs -> igraph>=0.11 (PyPI `igraph`, formerly `python-igraph`; current 1.0) or leidenalg. ERGM has no mature Python package -> R statnet/ergm via an R bridge (declare it). No API key; runs locally via `uv run python`."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
     depends_on: "alterlab-networkx (computation), alterlab-ssci-design-gate; audited by alterlab-ssci-inference-gate"
 ---
 
@@ -57,9 +58,13 @@ argument needs betweenness, not degree).
 - `nx.community.louvain_communities(G)` — **native** in networkx 3.x (no `python-louvain` needed).
 - `nx.community.greedy_modularity_communities(G)` — Clauset-Newman-Moore.
 - `nx.community.modularity(G, communities)` — score a partition.
-- **Leiden** (Traag et al.) is not in networkx; it guarantees well-connected communities and is the
-  recommended improvement over Louvain — route to `python-igraph`
-  (`ig.Graph.community_leiden(...)`) or `leidenalg`. Use igraph for large graphs generally.
+- **Leiden** (Traag et al.) guarantees well-connected communities and is the recommended
+  improvement over Louvain. networkx ≥ 3.7 ships it natively:
+  `nx.community.leiden_communities(G, metric="modularity", seed=...)` (on 3.5–3.6 the function
+  exists but is backend-only). For large graphs use igraph
+  `g.community_leiden(objective_function="modularity")` or `leidenalg`. Both networkx and igraph
+  default to the CPM objective, which at resolution 1 can return near-singleton partitions — pass
+  the modularity objective (or a deliberate CPM resolution) explicitly.
 
 ## Inference: ERGM (no mature Python — use R statnet)
 

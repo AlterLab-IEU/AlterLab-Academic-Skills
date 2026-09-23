@@ -4,7 +4,7 @@
     {
       "id": "search-protocols-by-keyword",
       "prompt": "Search protocols.io for public CRISPR protocols and pull back the title and DOI for the top 10 results.",
-      "expected_output": "Invokes alterlab-protocolsio. Uses the protocols.io API v3 GET /protocols with filter=public, a key/keyword, and page_size=10, sending the Bearer access token, and prints title and doi for each item.",
+      "expected_output": "Invokes alterlab-protocolsio (or the connected protocols.io MCP tools). Calls GET https://www.protocols.io/api/v3/protocols with filter=public, key=CRISPR, and page_size=10 using the Bearer access token, checks the JSON status_code (0 = success), and prints each item's title and DOI (turning the dx.doi.org/ prefix into https://doi.org/).",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "protocols.io" },
@@ -14,16 +14,17 @@
     {
       "id": "create-and-publish-with-doi",
       "prompt": "Create a new protocol on protocols.io titled 'CRISPR-Cas9 Gene Editing Protocol', add its steps and materials, then publish it to get a DOI.",
-      "expected_output": "Invokes alterlab-protocolsio. Uses POST /protocols to create, POST /protocols/{id}/steps to add steps and materials, then POST /protocols/{id}/publish to issue a DOI, following the create-and-publish workflow.",
+      "expected_output": "Invokes alterlab-protocolsio. Creates the protocol with POST /api/v3/protocols/<new GUID without dashes>, sets the title, description, and materials_text with PUT /api/v4/protocols/<guid>, adds steps with POST /api/v4/protocols/<guid>/steps chained by guid/previous_guid (first step previous_guid null), then issues the DOI with POST /api/v3/protocols/<uri>/publish (prepublish=1 to reserve the DOI without making it public), noting that publishing needs a title and an author and that a version with a DOI can no longer be edited.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "DOI" }
+        { "type": "output_contains", "value": "DOI" },
+        { "type": "behavior", "value": "Uses the v4 steps endpoint with guid/previous_guid ordering and the v3 publish endpoint; does not invent PATCH or /steps/reorder endpoints." }
       ]
     },
     {
       "id": "step-comments-collaboration",
       "prompt": "Review the step-level comments on protocol 12345 on protocols.io and post a threaded reply answering a reviewer's question.",
-      "expected_output": "Invokes alterlab-protocolsio. Routes to discussions/collaboration: GET the protocol comments, then create a threaded reply via the comments API, handling the discussion workflow.",
+      "expected_output": "Invokes alterlab-protocolsio. Lists the comments with GET /api/v3/protocols/<protocol_uri>/comments, picks out step-level ones by their non-zero step_id and discussion_id, decodes the Draft.js comment body, and posts the threaded reply with POST /api/v3/steps/<step_id>/discussions/<discussion_id>/comments/<parent_id> (body plus protocol_uri).",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "comment" }
@@ -32,10 +33,10 @@
     {
       "id": "workspace-file-upload",
       "prompt": "Upload my experimental results CSV into our protocols.io team workspace with tags so collaborators can find it.",
-      "expected_output": "Invokes alterlab-protocolsio. Uses the File Manager API (POST /workspaces/{id}/files/upload) with multipart/form-data, folder_id, description, and tags, sending the Bearer token.",
+      "expected_output": "Invokes alterlab-protocolsio. Uses the three-step upload: POST /api/v3/files with the filename to get S3 formData and a file_id, a multipart POST of the file to the returned S3 bucket, then PUT /api/v3/files/<file_id> to verify. Explains that the documented upload call has no workspace, folder, or tag fields, so the file is attached to a collection (collection_items, content_type_id 15) or organised in the web app.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Uploads the file via the protocols.io workspace File Manager endpoint with tags." }
+        { "type": "behavior", "value": "Uses POST /v3/files, the S3 form upload, and PUT /v3/files/{file_id}; says tags are not part of the documented upload API instead of inventing a tags field." }
       ]
     },
     {
@@ -54,6 +55,15 @@
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-labarchive" }
+      ]
+    },
+    {
+      "id": "near-miss-preprint-deposition",
+      "prompt": "Our methods paper is ready. Post the preprint to bioRxiv and get a DOI so we can cite it in the grant report.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-preprint-deposition. The user is depositing a manuscript preprint on bioRxiv, not publishing a protocol on protocols.io, even though both mint DOIs.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-preprint-deposition" }
       ]
     }
   ]

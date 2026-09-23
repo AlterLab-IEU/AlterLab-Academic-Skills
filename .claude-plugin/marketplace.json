@@ -1,26 +1,22 @@
 {
-  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
   "name": "alterlab-academic-skills",
-  "description": "239 Claude skills for academic research, organized by domain",
-  "version": "2.6.1",
+  "description": "240 Claude skills for academic research, organized by domain",
+  "version": "3.0.0",
   "owner": {
     "name": "AlterLab @ Izmir University of Economics",
     "email": "alterlab.ieu@gmail.com"
   },
   "metadata": {
-    "description": "239 Claude skills for academic research, organized by domain",
-    "version": "2.6.1",
-    "author": {
-      "name": "AlterLab @ Izmir University of Economics",
-      "url": "https://github.com/AlterLab-IEU"
-    }
+    "description": "240 Claude skills for academic research, organized by domain",
+    "version": "3.0.0"
   },
   "plugins": [
     {
       "name": "alterlab-bioinformatics",
       "source": "./skills/bioinformatics",
       "description": "Genomics, proteomics, and single-cell analysis (Scanpy, BioPython, pysam, ESM) (38 skills)",
-      "version": "2.6.1",
+      "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -81,7 +77,7 @@
       "name": "alterlab-cheminformatics",
       "source": "./skills/cheminformatics",
       "description": "Chemistry and drug discovery (RDKit, docking, ADMET, mass spec) (12 skills)",
-      "version": "2.6.1",
+      "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -116,7 +112,7 @@
       "name": "alterlab-clinical-research",
       "source": "./skills/clinical-research",
       "description": "Clinical decision support, medical imaging, and regulatory workflows (7 skills)",
-      "version": "2.6.1",
+      "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -145,7 +141,7 @@
       "name": "alterlab-core",
       "source": "./skills/core",
       "description": "Core research-to-publication pipeline plus teaching and thesis tools (10 skills)",
-      "version": "2.6.1",
+      "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -180,19 +176,77 @@
         "./alterlab-research-pipeline/commands"
       ],
       "agents": [
-        "./alterlab-deep-research/agents",
-        "./alterlab-paper-reviewer/agents",
-        "./alterlab-paper-writer/agents",
-        "./alterlab-research-pipeline/agents"
+        "./alterlab-deep-research/agents/bibliography_agent.md",
+        "./alterlab-deep-research/agents/devils_advocate_agent.md",
+        "./alterlab-deep-research/agents/editor_in_chief_agent.md",
+        "./alterlab-deep-research/agents/ethics_review_agent.md",
+        "./alterlab-deep-research/agents/meta_analysis_agent.md",
+        "./alterlab-deep-research/agents/monitoring_agent.md",
+        "./alterlab-deep-research/agents/report_compiler_agent.md",
+        "./alterlab-deep-research/agents/research_architect_agent.md",
+        "./alterlab-deep-research/agents/research_question_agent.md",
+        "./alterlab-deep-research/agents/risk_of_bias_agent.md",
+        "./alterlab-deep-research/agents/socratic_mentor_agent.md",
+        "./alterlab-deep-research/agents/source_verification_agent.md",
+        "./alterlab-deep-research/agents/synthesis_agent.md",
+        "./alterlab-paper-reviewer/agents/devils_advocate_reviewer_agent.md",
+        "./alterlab-paper-reviewer/agents/domain_reviewer_agent.md",
+        "./alterlab-paper-reviewer/agents/editorial_synthesizer_agent.md",
+        "./alterlab-paper-reviewer/agents/eic_agent.md",
+        "./alterlab-paper-reviewer/agents/field_analyst_agent.md",
+        "./alterlab-paper-reviewer/agents/methodology_reviewer_agent.md",
+        "./alterlab-paper-reviewer/agents/perspective_reviewer_agent.md",
+        "./alterlab-paper-writer/agents/abstract_bilingual_agent.md",
+        "./alterlab-paper-writer/agents/argument_builder_agent.md",
+        "./alterlab-paper-writer/agents/citation_compliance_agent.md",
+        "./alterlab-paper-writer/agents/draft_writer_agent.md",
+        "./alterlab-paper-writer/agents/formatter_agent.md",
+        "./alterlab-paper-writer/agents/intake_agent.md",
+        "./alterlab-paper-writer/agents/literature_strategist_agent.md",
+        "./alterlab-paper-writer/agents/peer_reviewer_agent.md",
+        "./alterlab-paper-writer/agents/revision_coach_agent.md",
+        "./alterlab-paper-writer/agents/socratic_mentor_agent.md",
+        "./alterlab-paper-writer/agents/structure_architect_agent.md",
+        "./alterlab-paper-writer/agents/visualization_agent.md",
+        "./alterlab-research-pipeline/agents/integrity_verification_agent.md",
+        "./alterlab-research-pipeline/agents/pipeline_orchestrator_agent.md",
+        "./alterlab-research-pipeline/agents/state_tracker_agent.md"
       ],
-      "hooks": "./hooks/hooks.json",
-      "mcpServers": "./.mcp.json"
+      "mcpServers": "./.mcp.json",
+      "userConfig": {
+        "openalex_api_key": {
+          "type": "string",
+          "title": "OpenAlex API key (recommended)",
+          "description": "Free key from https://openalex.org/settings/api. OpenAlex meters usage per day (since February 2026); keyless requests share a small per-IP budget and fail with HTTP 429 once it is spent.",
+          "sensitive": true,
+          "default": ""
+        },
+        "zotero_api_key": {
+          "type": "string",
+          "title": "Zotero API key (optional)",
+          "description": "Read access key from https://www.zotero.org/settings/keys",
+          "sensitive": true,
+          "default": ""
+        },
+        "zotero_library_id": {
+          "type": "string",
+          "title": "Zotero library ID (optional)",
+          "description": "Numeric user or group library ID, shown at https://www.zotero.org/settings/keys",
+          "default": ""
+        },
+        "zotero_library_type": {
+          "type": "string",
+          "title": "Zotero library type",
+          "description": "Either 'user' (personal library) or 'group'.",
+          "default": "user"
+        }
+      }
     },
     {
       "name": "alterlab-data-science",
       "source": "./skills/data-science",
       "description": "Machine learning and statistics (scikit-learn, PyTorch, transformers, SHAP) (22 skills)",
-      "version": "2.6.1",
+      "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -237,7 +291,7 @@
       "name": "alterlab-databases",
       "source": "./skills/databases",
       "description": "Connectors to scientific databases (PubMed, ChEMBL, UniProt, GEO, and more) (39 skills)",
-      "version": "2.6.1",
+      "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -295,13 +349,41 @@
         "./alterlab-uspto",
         "./alterlab-zinc-db"
       ],
-      "mcpServers": "./.mcp.json"
+      "mcpServers": "./.mcp.json",
+      "userConfig": {
+        "openalex_api_key": {
+          "type": "string",
+          "title": "OpenAlex API key (recommended)",
+          "description": "Free key from https://openalex.org/settings/api. OpenAlex meters usage per day (since February 2026); keyless requests share a small per-IP budget and fail with HTTP 429 once it is spent.",
+          "sensitive": true,
+          "default": ""
+        },
+        "zotero_api_key": {
+          "type": "string",
+          "title": "Zotero API key (optional)",
+          "description": "Read access key from https://www.zotero.org/settings/keys",
+          "sensitive": true,
+          "default": ""
+        },
+        "zotero_library_id": {
+          "type": "string",
+          "title": "Zotero library ID (optional)",
+          "description": "Numeric user or group library ID, shown at https://www.zotero.org/settings/keys",
+          "default": ""
+        },
+        "zotero_library_type": {
+          "type": "string",
+          "title": "Zotero library type",
+          "description": "Either 'user' (personal library) or 'group'.",
+          "default": "user"
+        }
+      }
     },
     {
       "name": "alterlab-document-tools",
       "source": "./skills/document-tools",
       "description": "Document and Markdown conversion (MarkItDown, Open Notebook) (3 skills)",
-      "version": "2.6.1",
+      "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -325,7 +407,7 @@
       "name": "alterlab-domain-specific",
       "source": "./skills/domain-specific",
       "description": "Quantum computing, geospatial, materials, astronomy, and digital humanities (18 skills)",
-      "version": "2.6.1",
+      "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -366,7 +448,7 @@
       "name": "alterlab-faculty-life",
       "source": "./skills/faculty-life",
       "description": "Faculty research-lifecycle and academic administration (syllabus AI-policy, IRB/consent, post-award grant admin, recommendation letters, accreditation AoL) (6 skills)",
-      "version": "2.6.1",
+      "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -396,7 +478,7 @@
       "name": "alterlab-finance-economics",
       "source": "./skills/finance-economics",
       "description": "Economic and financial data (FRED, Alpha Vantage, SEC EDGAR, market research) (7 skills)",
-      "version": "2.6.1",
+      "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -426,7 +508,7 @@
       "name": "alterlab-lab-integrations",
       "source": "./skills/lab-integrations",
       "description": "Laboratory platforms (Benchling, DNAnexus, Opentrons, Protocols.io) (9 skills)",
-      "version": "2.6.1",
+      "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -457,7 +539,7 @@
       "name": "alterlab-methodology",
       "source": "./skills/methodology",
       "description": "Research methodology and rigor scaffolds (Iron Laws, rationalization tables, decision flowcharts, systematic-reasoning checklists) (3 skills)",
-      "version": "2.6.1",
+      "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -483,7 +565,7 @@
       "name": "alterlab-research-tools",
       "source": "./skills/research-tools",
       "description": "Search, discovery, Zotero, qualitative methods, ethics, and open science (14 skills)",
-      "version": "2.6.1",
+      "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -520,7 +602,7 @@
       "name": "alterlab-social-science-workflow",
       "source": "./skills/social-science-workflow",
       "description": "Stage-gated social-science methods spine — orchestrator + 5 validity gates (design/identifying-assumption, measurement, sampling/power, reflexivity, inference) and 11 analysis modules (causal inference, complex-survey analysis, SEM/psychometrics, multilevel models, QCA, SNA, ABM, text-as-data, qualitative analysis, meta-analysis, missing data) (17 skills)",
-      "version": "2.6.1",
+      "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -536,32 +618,13 @@
         "sampling",
         "power-analysis"
       ],
-      "strict": false,
-      "skills": [
-        "./alterlab-abm-mesa",
-        "./alterlab-causal-inference",
-        "./alterlab-meta-analysis",
-        "./alterlab-missing-data",
-        "./alterlab-multilevel-models",
-        "./alterlab-qca",
-        "./alterlab-qualitative-analysis",
-        "./alterlab-sem-psychometrics",
-        "./alterlab-sna",
-        "./alterlab-ssci-design-gate",
-        "./alterlab-ssci-inference-gate",
-        "./alterlab-ssci-measurement-gate",
-        "./alterlab-ssci-orchestrator",
-        "./alterlab-ssci-reflexivity-gate",
-        "./alterlab-ssci-sampling-gate",
-        "./alterlab-survey-analysis",
-        "./alterlab-text-as-data"
-      ]
+      "strict": true
     },
     {
       "name": "alterlab-turkish-academia",
       "source": "./skills/turkish-academia",
       "description": "Turkish academic system workflows (YÖK, ÜAK, DergiPark, YÖK-Tez, TÜBİTAK, doçentlik) (12 skills)",
-      "version": "2.6.1",
+      "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -597,7 +660,7 @@
       "name": "alterlab-visualization",
       "source": "./skills/visualization",
       "description": "Publication-quality plotting and schematics (Matplotlib, Seaborn, Plotly) (9 skills)",
-      "version": "2.6.1",
+      "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -626,10 +689,32 @@
       ]
     },
     {
+      "name": "alterlab-workflows",
+      "source": "./skills/workflows",
+      "description": "Runnable multi-agent research workflows for Claude Code (systematic-review screening, citation audit, independent review panel, claim stress-test, rebuttal, grant mock panel, literature map) plus the portable playbook skill (1 skill)",
+      "version": "3.0.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
+      "license": "MIT",
+      "category": "research",
+      "keywords": [
+        "workflows",
+        "multi-agent",
+        "systematic-review",
+        "peer-review",
+        "citation-audit",
+        "orchestration"
+      ],
+      "strict": true
+    },
+    {
       "name": "alterlab-writing-tools",
       "source": "./skills/writing-tools",
       "description": "Scientific writing, citations, grants, posters, and academic career (13 skills)",
-      "version": "2.6.1",
+      "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -660,6 +745,46 @@
         "./alterlab-scientific-writing",
         "./alterlab-venue-templates"
       ]
+    },
+    {
+      "name": "alterlab-complete",
+      "source": "./plugins/alterlab-complete",
+      "description": "The complete AlterLab Academic Skills suite — installs every domain plugin in one step",
+      "version": "3.0.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
+      "license": "MIT",
+      "category": "research",
+      "keywords": [
+        "bundle",
+        "complete",
+        "all-domains"
+      ],
+      "strict": true
+    },
+    {
+      "name": "alterlab-essentials",
+      "source": "./plugins/alterlab-essentials",
+      "description": "Faculty starter kit — installs the core research-to-publication pipeline, the multi-agent research workflows, research tools, writing tools, methodology gates, and scientific-database connectors in one step",
+      "version": "3.0.0",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
+      "license": "MIT",
+      "category": "research",
+      "keywords": [
+        "bundle",
+        "starter-kit",
+        "faculty",
+        "research",
+        "writing"
+      ],
+      "strict": true
     }
   ]
 }

@@ -177,6 +177,18 @@ communities = community.greedy_modularity_communities(G)
 modularity = community.modularity(G, communities)
 ```
 
+### Louvain and Leiden
+```python
+# Louvain (seed for reproducibility)
+communities = nx.community.louvain_communities(G, seed=42)
+
+# Leiden (native since NetworkX 3.7): guarantees well-connected communities.
+# Default metric='cpm' (Constant Potts Model); use metric='modularity' to
+# optimize modularity as Louvain does.
+communities = nx.community.leiden_communities(G, metric='modularity', seed=42)
+modularity = nx.community.modularity(G, communities)
+```
+
 ### Label Propagation
 ```python
 # Fast community detection
@@ -185,6 +197,8 @@ communities = community.label_propagation_communities(G)
 
 ### Girvan-Newman
 ```python
+import itertools
+
 # Hierarchical community detection via edge betweenness
 comp = community.girvan_newman(G)
 limited = itertools.takewhile(lambda c: len(c) <= 10, comp)
@@ -361,9 +375,10 @@ bfs_edges = list(nx.bfs_edges(G, source=1))
 # BFS tree
 bfs_tree = nx.bfs_tree(G, source=1)
 
-# BFS predecessors and successors
-bfs_pred = nx.bfs_predecessors(G, source=1)
+# BFS successors, and predecessors derived from the BFS edges
+# (nx.bfs_predecessors is deprecated in 3.7 and removed in 3.9)
 bfs_succ = nx.bfs_successors(G, source=1)
+bfs_pred = ((v, u) for u, v in nx.bfs_edges(G, source=1))
 ```
 
 ## Efficiency Considerations

@@ -86,6 +86,21 @@
           "value": "seaborn"
         }
       ]
+    },
+    {
+      "id": "near-miss-scientific-viz",
+      "prompt": "Format my three dose-response panels as a Cell-style static figure: single-column width, Okabe-Ito colors, panel letters A-C, and error bars with significance stars, exported as vector PDF.",
+      "expected_output": "Does NOT invoke alterlab-plotly. A static, journal-formatted multi-panel figure (column width, colorblind-safe palette, panel labels, significance annotations, vector export) is alterlab-scientific-viz territory; nothing here needs interactivity.",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-scientific-viz"
+        }
+      ]
     }
   ]
 }

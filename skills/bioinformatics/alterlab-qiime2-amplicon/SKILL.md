@@ -1,12 +1,13 @@
 ---
 name: alterlab-qiime2-amplicon
-description: 'Runs 16S/ITS amplicon (microbiome) analysis with the QIIME 2 amplicon distribution (2026.1; renamed to "qiime2" in 2026.4) in the correct order: manifest import, cutadapt trim-paired primer removal BEFORE dada2 denoise-paired (trunc-len chosen from the demux quality .qzv), feature-classifier classify-sklearn against a version-matched SILVA 138 or Greengenes2 classifier, and diversity core-metrics-phylogenetic — teaching the .qza/.qzv artifact-and-provenance model and the 2026.1 feature-table summarize change (the former summarize_plus). Use when the request mentions QIIME2, QIIME 2, qiime, 16S, 18S, ITS, amplicon, microbiome, ASV, DADA2 denoising, feature table, taxonomic classification, or core-metrics diversity. For downstream alpha/beta diversity, PCoA, and PERMANOVA on the exported feature table prefer alterlab-scikit-bio; this is conda-only (no pip install). Part of the AlterLab Academic Skills suite.'
+description: 'Runs 16S/ITS amplicon (microbiome) analysis with the QIIME 2 distribution (2026.7; the "amplicon" distribution was renamed "qiime2" in 2026.4) in the correct order: manifest import, cutadapt trim-paired primer removal BEFORE dada2 denoise-paired (trunc-len chosen from the demux quality .qzv), feature-classifier classify-sklearn against a version-matched SILVA 138 or Greengenes2 classifier, and diversity core-metrics-phylogenetic — teaching the .qza/.qzv artifact-and-provenance model and the 2026.1 feature-table summarize change (the former summarize_plus). Use when the request mentions QIIME2, QIIME 2, qiime, 16S, 18S, ITS, amplicon, microbiome, ASV, DADA2 denoising, feature table, taxonomic classification, or core-metrics diversity. For downstream alpha/beta diversity, PCoA, and PERMANOVA on the exported feature table prefer alterlab-scikit-bio; this is conda-only (no pip install). Part of the AlterLab Academic Skills suite.'
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*) Bash(qiime:*) Bash(conda:*)
-compatibility: "Requires the QIIME 2 amplicon conda environment (cannot be pip-installed); commands are run via the `qiime` CLI. Pretrained classifiers and reference data are downloaded from the QIIME 2 Library. The helper scripts in scripts/ are stdlib-only and run under `uv run python` without a QIIME 2 env."
+compatibility: "Requires the QIIME 2 conda environment (cannot be pip-installed); commands are run via the `qiime` CLI. Current release 2026.7 (2026-07-22); the distribution formerly called `amplicon` is named `qiime2` since 2026.4 and its env files carry the `rachis-` prefix. Pretrained classifiers and reference data are downloaded from the QIIME 2 Library. The helper scripts in scripts/ are stdlib-only and run under `uv run python` without a QIIME 2 env."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # QIIME 2 Amplicon — 16S/ITS Microbiome Pipeline (FASTQ → Feature Table → Taxonomy → Diversity)
@@ -18,9 +19,11 @@ things people get wrong most: **trimming primers BEFORE DADA2**, and the **.qza/
 provenance model**. It is the raw-data-to-result pipeline that hands a feature table off
 to in-memory analysis skills (see routing below).
 
-Pinned to **QIIME 2 2026.1** (the `amplicon` distribution). Forward-compat note: the
-distribution is **renamed `qiime2` in 2026.4** — the env name and channel URL change, the
-plugin commands below do not.
+Written against **QIIME 2 2026.7** (released 2026-07-22), the current release. The
+distribution formerly called `amplicon` was **renamed `qiime2` in 2026.4**, and its conda
+env files carry a `rachis-` prefix (the framework package was renamed `qiime2` -> `rachis`
+in 2026.1). Only the env name, channel path, and file names moved: every plugin command
+below is unchanged across those releases.
 
 ## When to Use This Skill
 
@@ -83,21 +86,25 @@ e.g. EMP-style — you can skip cutadapt, but verify, don't assume.)
 
 ### 0. Install / activate the environment (conda only — no pip)
 
-QIIME 2 **cannot be pip-installed**; it ships as a conda environment. For 2026.1
-(verified env files live in `qiime2/distributions`):
+QIIME 2 **cannot be pip-installed**; it ships as a conda environment. For 2026.7 (env files
+verified in `qiime2/distributions`):
 
 ```bash
-# macOS (Apple Silicon / Intel) — 2026.1 amplicon distribution
+# Linux — 2026.7 qiime2 distribution
 conda env create \
-  --name qiime2-amplicon-2026.1 \
-  --file https://raw.githubusercontent.com/qiime2/distributions/dev/2026.1/amplicon/released/qiime2-amplicon-macos-latest-conda.yml
-# Linux: swap the filename for qiime2-amplicon-ubuntu-latest-conda.yml
-conda activate qiime2-amplicon-2026.1
+  --name rachis-qiime2-2026.7 \
+  --file https://raw.githubusercontent.com/qiime2/distributions/refs/heads/dev/2026.7/qiime2/released/rachis-qiime2-linux-64-conda.yml
+# macOS: swap the filename for rachis-qiime2-osx-64-conda.yml
+conda activate rachis-qiime2-2026.7
 qiime info   # confirm version + installed plugins
 ```
 
-For **2026.4**, the official command uses the renamed distribution
-(`--name rachis-qiime2-2026.4`, file `rachis-qiime2-*-conda.yml`); see the QIIME 2
+The env file names encode the platform (`linux-64`, `osx-64`), not the OS-runner names used
+before 2026.4. Give each release its own environment — the classifier must match the running
+version, so parallel envs are the norm, not clutter.
+
+For other releases the same pattern applies with the version swapped in both the env name
+and the URL path; see the QIIME 2
 Library quickstart. Full install detail and the env-file matrix:
 [`references/installation.md`](references/installation.md).
 
@@ -241,15 +248,15 @@ sanity-checking that an artifact is what a downstream step expects.
   reasonable merge + non-chimeric retention?
 - Is the classifier **version-matched** to the running QIIME 2 release?
 - Is `--p-sampling-depth` justified from `table.qzv`, not guessed?
-- Did you call `feature-table summarize` (2026.1 = former `summarize_plus`), not a removed
-  action name?
+- Did you call `feature-table summarize` (since 2026.1 this is the former `summarize_plus`),
+  not a removed action name?
 
 ## References
 
-- [`references/installation.md`](references/installation.md) — conda env files (2026.1 / 2026.4 rename), `qiime info`, why no pip.
+- [`references/installation.md`](references/installation.md) — conda env files (2026.7 current; the 2026.4 `qiime2` rename), `qiime info`, why no pip.
 - [`references/import_and_manifest.md`](references/import_and_manifest.md) — manifest formats, single-end/EMP/ITS import.
 - [`references/pipeline_steps.md`](references/pipeline_steps.md) — per-step flags, primer sets by region, denoising QC reading.
 - [`references/classifiers.md`](references/classifiers.md) — SILVA 138 / Greengenes2 / UNITE, version-matching, train-your-own.
-- [`references/version_notes.md`](references/version_notes.md) — 2026.1 release deltas, 2026.4 `qiime2` rename, `summarize` change.
+- [`references/version_notes.md`](references/version_notes.md) — release deltas through 2026.7, the `qiime2` rename, the `summarize` change.
 
 Part of the AlterLab Academic Skills suite.

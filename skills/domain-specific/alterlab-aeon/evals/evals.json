@@ -55,6 +55,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-hypogenic" }
       ]
+    },
+    {
+      "id": "near-miss-timesfm",
+      "prompt": "I have monthly admissions counts for 40 hospitals and no time to train anything. I just want zero-shot forecasts with prediction intervals for the next 12 months from a pretrained foundation model.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-timesfm. The request is zero-shot forecasting with a pretrained time-series foundation model and prediction intervals, not fitting aeon forecasters (ARIMA/ETS/TCN) or other time series ML estimators to the series.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-timesfm" }
+      ]
     }
   ]
 }

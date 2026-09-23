@@ -130,7 +130,7 @@ KM = KanesMethod(N, [q], [u], kd)
 ### System Bodies and Inertias
 
 ```python
-from sympy.physics.mechanics import RigidBody, Inertia, Point, ReferenceFrame
+from sympy.physics.mechanics import RigidBody, inertia, Point, ReferenceFrame
 from sympy import symbols
 
 # Mass and inertia parameters
@@ -141,8 +141,9 @@ Ixx, Iyy, Izz = symbols('I_xx I_yy I_zz')
 A = ReferenceFrame('A')
 P = Point('P')
 
-# Define inertia dyadic
-I = Inertia(A, Ixx, Iyy, Izz)
+# Define inertia dyadic (lowercase inertia() builds the dyadic; the Inertia class
+# instead pairs a dyadic with a point, e.g. Inertia.from_inertia_scalars(P, A, Ixx, Iyy, Izz))
+I = inertia(A, Ixx, Iyy, Izz)
 
 # Create rigid body
 body = RigidBody('Body', P, A, m, (I, P))
@@ -151,17 +152,17 @@ body = RigidBody('Body', P, A, m, (I, P))
 ### Joints Framework
 
 ```python
-from sympy.physics.mechanics import Body, PinJoint, PrismaticJoint
+from sympy.physics.mechanics import RigidBody, PinJoint, PrismaticJoint
 
-# Create bodies
-parent = Body('P')
-child = Body('C')
+# Create bodies (the old Body class is deprecated; use RigidBody or Particle)
+parent = RigidBody('P')
+child = RigidBody('C')
 
 # Create pin (revolute) joint
 pin = PinJoint('pin', parent, child)
 
 # Create prismatic (sliding) joint
-slider = PrismaticJoint('slider', parent, child, axis=parent.frame.z)
+slider = PrismaticJoint('slider', parent, child, joint_axis=parent.frame.z)
 ```
 
 ### Linearization
@@ -297,14 +298,12 @@ force_in_newtons = convert_to(force, newton)
 ### Unit Systems
 
 ```python
-from sympy.physics.units import SI, gravitational_constant, speed_of_light
+from sympy.physics.units import gravitational_constant, speed_of_light, convert_to
+from sympy.physics.units import meter, second, kilogram
 
-# SI units
-print(SI._base_units)  # Base SI units
-
-# Physical constants
-G = gravitational_constant
-c = speed_of_light
+# Physical constants, expressed in SI base units
+convert_to(speed_of_light, [meter, second])                  # 299792458*meter/second
+convert_to(gravitational_constant, [meter, kilogram, second])
 ```
 
 ### Custom Units
@@ -320,12 +319,12 @@ parsec.set_global_relative_scale_factor(3.0857e16 * meter, meter)
 ### Dimensional Analysis
 
 ```python
-from sympy.physics.units import Dimension, length, time, mass
+from sympy.physics.units import meter, second
+from sympy.physics.units.systems.si import SI
 
-# Check dimensions
-from sympy.physics.units import convert_to, meter, second
+# Check dimensions (quantities have no .dimension attribute; ask the unit system)
 velocity = 10 * meter / second
-print(velocity.dimension)  # Dimension(length/time)
+print(SI.get_dimensional_expr(velocity))  # length/time
 ```
 
 ## Optics
@@ -359,9 +358,9 @@ from sympy.physics.optics import TWave
 # Plane wave
 wave = TWave(amplitude=1, frequency=5e14, phase=0)
 
-# Medium properties (refractive index, etc.)
+# Medium properties: give n, or any two of permittivity / permeability / n
 from sympy.physics.optics import Medium
-medium = Medium('glass', permittivity=2.25)
+medium = Medium('glass', n=1.5)
 ```
 
 ## Continuum Mechanics
@@ -378,12 +377,15 @@ length = 10
 
 beam = Beam(length, E, I)
 
+# Supports return their reaction-load symbols
+r0 = beam.apply_support(0, type='pin')
+r10 = beam.apply_support(length, type='roller')
+
 # Apply loads
-from sympy.physics.continuum_mechanics.beam import Beam
 beam.apply_load(-1000, 5, -1)  # Point load of -1000 at x=5
 
-# Calculate reactions
-beam.solve_for_reaction_loads()
+# Calculate reactions (pass the unknown reaction symbols)
+beam.solve_for_reaction_loads(r0, r10)
 
 # Get shear force, bending moment, deflection
 x = symbols('x')
@@ -403,8 +405,11 @@ truss = Truss()
 # Add nodes
 truss.add_node(('A', 0, 0), ('B', 4, 0), ('C', 2, 3))
 
-# Add members
-truss.add_member(('AB', 'A', 'B'), ('BC', 'B', 'C'))
+# Add members (three members make this triangle statically determinate)
+truss.add_member(('AB', 'A', 'B'), ('BC', 'B', 'C'), ('AC', 'A', 'C'))
+
+# Supports are required before solving
+truss.apply_support(('A', 'pinned'), ('B', 'roller'))
 
 # Apply loads
 truss.apply_load(('C', 1000, 270))  # 1000 N at 270° at node C
@@ -421,11 +426,12 @@ from sympy.physics.continuum_mechanics.cable import Cable
 # Create cable
 cable = Cable(('A', 0, 10), ('B', 10, 10))
 
-# Apply loads
-cable.apply_load(-1, 5)  # Distributed load
+# Apply a point load: order -1, (label, x, y, magnitude, direction in degrees)
+cable.apply_load(-1, ('P', 5, 8, 100, 270))
 
-# Solve for tension and shape
+# Solve for tension and reactions (point loads need no arguments)
 cable.solve()
+cable.tension
 ```
 
 ## Control Systems
@@ -439,17 +445,18 @@ from sympy.abc import s
 # Transfer function
 tf = TransferFunction(s + 1, s**2 + 2*s + 1, s)
 
-# State-space representation
-A = [[0, 1], [-1, -2]]
-B = [[0], [1]]
-C = [[1, 0]]
-D = [[0]]
+# State-space representation (matrices must be sympy Matrix objects)
+from sympy import Matrix
+A = Matrix([[0, 1], [-1, -2]])
+B = Matrix([[0], [1]])
+C = Matrix([[1, 0]])
+D = Matrix([[0]])
 
 ss = StateSpace(A, B, C, D)
 
-# Convert between representations
-ss_from_tf = tf.to_statespace()
-tf_from_ss = ss.to_TransferFunction()
+# Convert between representations with rewrite()
+ss_from_tf = tf.rewrite(StateSpace)
+tf_from_ss = ss.rewrite(TransferFunction)
 ```
 
 ### System Analysis
@@ -475,12 +482,17 @@ from sympy.physics.biomechanics import (
     MusculotendonDeGroote2016,
     FirstOrderActivationDeGroote2016
 )
+from sympy.physics.mechanics import LinearPathway, Point, ReferenceFrame, dynamicsymbols
 
-# Create musculotendon model
-mt = MusculotendonDeGroote2016('muscle')
+# A musculotendon needs a pathway (origin -> insertion) and activation dynamics
+N = ReferenceFrame('N')
+q = dynamicsymbols('q')
+origin, insertion = Point('pO'), Point('pI')
+insertion.set_pos(origin, q * N.x)
+pathway = LinearPathway(origin, insertion)
 
-# Activation dynamics
-activation = FirstOrderActivationDeGroote2016('muscle_activation')
+activation = FirstOrderActivationDeGroote2016.with_defaults('muscle')
+mt = MusculotendonDeGroote2016.with_defaults('muscle', pathway, activation)
 ```
 
 ## High Energy Physics
@@ -488,11 +500,12 @@ activation = FirstOrderActivationDeGroote2016('muscle_activation')
 ### Particle Physics
 
 ```python
-# Gamma matrices and Dirac equations
-from sympy.physics.hep.gamma_matrices import GammaMatrix
+# Gamma matrices and Dirac equations (GammaMatrix takes tensor indices, not integers)
+from sympy.physics.hep.gamma_matrices import GammaMatrix, LorentzIndex
+from sympy.tensor.tensor import tensor_indices
 
-gamma0 = GammaMatrix(0)
-gamma1 = GammaMatrix(1)
+mu, nu = tensor_indices('mu, nu', LorentzIndex)
+product = GammaMatrix(mu) * GammaMatrix(nu)
 ```
 
 ## Common Physics Patterns
@@ -562,16 +575,16 @@ from sympy import symbols
 E, I = symbols('E I', positive=True, real=True)
 beam = Beam(10, E, I)
 
-# Apply boundary conditions
-beam.apply_support(0, 'pin')
-beam.apply_support(10, 'roller')
+# Apply boundary conditions (each support returns its reaction symbol)
+r0 = beam.apply_support(0, 'pin')
+r10 = beam.apply_support(10, 'roller')
 
 # Apply loads
 beam.apply_load(-1000, 5, -1)  # Point load
 beam.apply_load(-50, 0, 0, 10)  # Distributed load
 
-# Solve
-beam.solve_for_reaction_loads()
+# Solve for the unknown reactions
+beam.solve_for_reaction_loads(r0, r10)
 
 # Get results at specific locations
 x = 5

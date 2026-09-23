@@ -118,8 +118,19 @@ def eval_skill_refs() -> dict[str, set[str]]:
     return refs
 
 
+def plugin_names() -> set[str]:
+    """Marketplace plugin names (``alterlab-<domain>``, bundles) — legitimate non-skill tokens.
+
+    Evals may mention a plugin (``/alterlab-workflows:citation-audit``, "install alterlab-core"),
+    which is not a skill name and must not be reported as a dangling deferral target."""
+    names = {f"alterlab-{d.name}" for d in SKILLS_DIR.iterdir() if d.is_dir()}
+    names |= {d.name for d in (REPO_ROOT / "plugins").glob("alterlab-*") if d.is_dir()}
+    return names
+
+
 def dangling_refs(known: set[str]) -> list[tuple[str, str]]:
-    """(eval_file, token) for every alterlab-* token in an eval that names no real skill."""
+    """(eval_file, token) for every alterlab-* token in an eval that names no real skill or plugin."""
+    known = known | plugin_names()
     out: list[tuple[str, str]] = []
     for ev in sorted(SKILLS_DIR.rglob("evals/evals.json")):
         try:

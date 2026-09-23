@@ -661,9 +661,11 @@ variants.
 - Monitor: https://blog.clinpgx.org/ for updates
 
 ### Migration from PharmGKB
-As of July 2025, PharmGKB URLs redirect to ClinPGx. Update references:
-- Old: `https://api.pharmgkb.org/`
-- New: `https://api.clinpgx.org/`
+As of July 2025, PharmGKB web URLs redirect to ClinPGx. The legacy API host
+`https://api.pharmgkb.org/` was **turned off on 2026-07-20** (it no longer answers), so
+update any old code:
+- Old: `https://api.pharmgkb.org/` (retired)
+- New: `https://api.clinpgx.org/` (same `/v1/data/...` paths)
 
 ### Future Changes
 - Watch for API v2 announcements

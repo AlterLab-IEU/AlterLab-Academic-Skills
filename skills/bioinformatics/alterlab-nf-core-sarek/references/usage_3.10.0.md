@@ -1,13 +1,19 @@
-# nf-core/sarek 3.8.1 — Usage Reference
+# nf-core/sarek 3.10.0 — Usage Reference
 
-Source: https://nf-co.re/sarek/3.8.1/docs/usage/ (pinned release `3.8.1`).
-Everything below is for that pinned version. Newer releases may rename or change
-defaults — keep `-r 3.8.1` unless the user explicitly asks to upgrade.
+Source: https://nf-co.re/sarek/3.10.0/docs/usage/ (pinned release `3.10.0`,
+"Aktse", released 2026-08-12). Everything below is for that pinned version.
+Newer releases may rename or change defaults — keep `-r 3.10.0` unless the user
+explicitly asks to upgrade.
+
+`3.10.0` declares `nextflowVersion = '!>=25.10.4'`, so an older Nextflow refuses
+to launch it. The release also completed the migration to topic channels and to
+Nextflow **strict syntax**, which becomes the parser in Nextflow 26.x — relevant
+if you maintain custom local modules or a `modules.config` alongside it.
 
 ## Minimal command
 
 ```bash
-nextflow run nf-core/sarek -r 3.8.1 \
+nextflow run nf-core/sarek -r 3.10.0 \
     -profile docker \
     --input samplesheet.csv \
     --outdir ./results \
@@ -15,7 +21,7 @@ nextflow run nf-core/sarek -r 3.8.1 \
     --tools haplotypecaller
 ```
 
-- `-r 3.8.1` — pins the pipeline revision. Required for reproducibility.
+- `-r 3.10.0` — pins the pipeline revision. Required for reproducibility.
 - `-profile` — **mandatory**, reflects the compute/software environment. Common
   values: `docker`, `singularity`, `apptainer`, `conda`. A `test` profile runs a
   tiny built-in dataset. Combine with institutional configs as needed.
@@ -31,7 +37,8 @@ nextflow run nf-core/sarek -r 3.8.1 \
 - `bwa-mem` — default.
 - `bwa-mem2` — faster, same algorithm family.
 - `dragmap` — DRAGEN-style mapper.
-- `parabricks` — GPU-accelerated; experimental, requires a GPU profile
+- `sentieon-bwamem` — Sentieon's BWA implementation (needs a Sentieon licence).
+- `parabricks` — GPU-accelerated; requires a GPU profile
   (e.g. `--aligner parabricks -profile docker,gpu`).
 
 The nf-core benchmark (Hanssen et al., 2024) reports BWA-MEM and BWA-MEM2 give
@@ -65,7 +72,7 @@ With the GATK genome key, sarek runs the GATK data-pre-processing chain:
 ### BQSR known-sites / GRCh38 resource bundle
 
 These reference resources ship with the GATK genome key and feed recalibration
-and calling (per the 3.8.1 reference table):
+and calling (per the 3.10.0 reference table):
 
 | Resource | Role | Used by (per docs) |
 |---|---|---|
@@ -76,11 +83,19 @@ Source bundle: the Broad GATK resource bundle for hg38
 (`genomics-public-data/resources/broad/hg38/v0/`), referenced by the pipeline as
 `GATKBundle`. With `--genome GATK.GRCh38` you do not supply these by hand.
 
-## Whole-exome (WES)
+## Whole-exome / panel (WES)
 
-There is **no `--wes` flag** in 3.8.1. Restrict calling to capture-kit targets by
-passing the exome BED via `--intervals targets.bed`. (`--intervals` also speeds
-WGS by parallelizing over interval lists.)
+Pass **both**:
+
+- `--wes` — a boolean that flips targeted-sequencing settings in the individual
+  tools ("Enable when exome or panel data is provided"), and
+- `--intervals targets.bed` — the capture-kit BED, so calling is restricted to the
+  targeted regions.
+
+They do different jobs: `--intervals` limits *where* calling happens; `--wes` tells
+the callers and QC modules that coverage is targeted rather than uniform. Running
+exome data without `--wes` produces results that look fine but carry WGS-tuned
+thresholds. (`--intervals` also speeds WGS by parallelizing over interval lists.)
 
 ## Joint germline
 

@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch WebSearch Bash(python:*)
 compatibility: No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-03-18"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
 ---
 
 # Open Science Practices
@@ -38,6 +38,16 @@ Use this skill when you need to:
 - Develop or contribute to open source research software
 - Comply with funder mandates for data sharing and open access
 - Understand and implement the TOP Guidelines (Transparency and Openness Promotion)
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| IRB applications, informed consent, GDPR/HIPAA compliance | `alterlab-research-ethics` |
+| Depositing one preprint (arXiv, bioRxiv, SSRN, OSF Preprints) and choosing its license | `alterlab-preprint-deposition` |
+| Holding an analysis to its frozen plan once data exist (HARKing, outcome switching) | `alterlab-preregistration-discipline` |
+| Writing the grant proposal narrative, aims, or budget | `alterlab-research-grants` |
+| KVKK-compliant data management plan for research in Turkey | `alterlab-kvkk-dmp` |
 
 ## Core Capabilities
 
@@ -127,8 +137,8 @@ The FAIR principles provide a framework for making data maximally useful for bot
 
 Most major funders now require a data management plan (DMP) as part of grant applications. A DMP describes how data will be collected, organized, stored, shared, and preserved.
 
-**NSF DMP requirements (2 pages):**
-1. Types of data produced
+**NSF Data Management and Sharing Plan (DMSP, max 2 pages):** since PAPPG 24-1 Supplement 2 (NSF 26-202; awards on or after 22 Jan 2026) the plan is written in a Research.gov tool (released 27 Apr 2026; earlier proposals uploaded a PDF), and data supporting NSF-funded publications must be shared at the time of publication, with any exceptions justified in the DMSP. Directorate-specific guidance applies; the plan typically covers:
+1. Types of data and other research products
 2. Data and metadata standards
 3. Policies for access and sharing
 4. Policies for re-use and redistribution
@@ -150,7 +160,7 @@ Open access (OA) removes paywalls so that anyone can read research without a sub
 
 **Gold OA:** Published in a fully open access journal. The author (or their funder/institution) pays an Article Processing Charge (APC). Examples: PLOS ONE, eLife, BMJ Open.
 
-**Green OA:** The author deposits a version of the paper (preprint or accepted manuscript) in a repository. The journal may impose an embargo period (typically 6-12 months). No APC required. Repositories include institutional repositories, PubMed Central, arXiv, and SSRN.
+**Green OA:** The author deposits a version of the paper (preprint or accepted manuscript) in a repository. The journal may impose an embargo period (typically 6-12 months), but major US funders now override it: the 2024 NIH Public Access Policy requires accepted manuscripts accepted on or after 1 July 2025 to be public in PubMed Central on the publication date, and NSF removed the 12-month embargo for NSF-PAR deposits for awards on or after 22 January 2026. No APC required. Repositories include institutional repositories, PubMed Central, arXiv, and SSRN.
 
 **Diamond OA (Platinum OA):** The journal is open access with no APC -- costs are covered by institutions, scholarly societies, or grants. Examples include many humanities journals, the Journal of Machine Learning Research, and some society journals.
 
@@ -158,13 +168,13 @@ Open access (OA) removes paywalls so that anyone can read research without a sub
 
 **Bronze OA:** Free to read on the publisher website but without an open license. The publisher can remove access at any time. Not true OA.
 
-**APC cost ranges (2025-2026):**
+**APC cost ranges (2026; prices change yearly, so check the journal's fee page):**
 
 | Publisher Tier | Typical APC |
 |---------------|-------------|
-| Mega journals (PLOS ONE) | $1,500-$2,000 |
+| Mega journals (PLOS ONE: $2,477) | $2,000-$2,600 |
 | Mid-tier specialty journals | $2,000-$4,000 |
-| High-impact journals (Nature, Science OA options) | $5,000-$11,000 |
+| High-impact journals with gold OA options (Nature now exceeds $12,000) | $5,000-$13,000 |
 | Diamond OA journals | $0 |
 
 **Rights retention strategy:** Many funders (including cOAlition S members) now support a Rights Retention Strategy where authors retain a CC-BY license on the Author Accepted Manuscript, regardless of publisher policy. This enables Green OA deposit immediately upon acceptance.
@@ -276,11 +286,11 @@ Choosing the right repository depends on your discipline, data type, and funder 
 
 | Repository | Max File Size | License | DOI | Preservation |
 |-----------|--------------|---------|-----|-------------|
-| Zenodo | 50 GB per dataset | Flexible | Yes | CERN long-term |
-| Dryad | No hard limit | CC0 required | Yes | Curated, long-term |
-| Figshare | 5 GB free, 20 GB institutional | Flexible | Yes | Long-term |
-| OSF | 5 GB per file, 50 GB per project | Flexible | Yes | Long-term |
-| Harvard Dataverse | 2.5 GB per file | Flexible | Yes | Long-term |
+| Zenodo | 50 GB per record (max 100 files) | Flexible | Yes | CERN long-term |
+| Dryad | 300 GB via web upload (larger by arrangement); Data Publishing Charge from $150 unless a member institution or journal covers it | CC0 required | Yes | Curated, long-term |
+| Figshare | 20 GB private storage and 20 GB per file (free figshare.com account); Figshare Plus for larger, for a fee | Flexible | Yes | Long-term |
+| OSF | 5 GB per file; 5 GB per private / 50 GB per public project or component | Flexible | Yes | Long-term |
+| Harvard Dataverse | 2.5 GB per file via browser upload | Flexible | Yes | Long-term |
 
 **Domain-specific repositories (selected):**
 
@@ -330,7 +340,7 @@ Research software is increasingly recognized as a first-class scholarly output. 
 2. **Use version control** -- Git with a public repository on GitHub/GitLab
 3. **Write documentation** -- README, installation instructions, usage examples, API reference
 4. **Add tests** -- Unit tests, integration tests, and regression tests
-5. **Use continuous integration** -- GitHub Actions, Travis CI, or similar
+5. **Use continuous integration** -- GitHub Actions, GitLab CI, or similar
 6. **Create releases with semantic versioning** -- v1.2.3 (major.minor.patch)
 7. **Publish a DOI** -- Zenodo-GitHub integration mints DOIs for each release
 8. **Write a software paper** -- Journal of Open Source Software (JOSS) publishes peer-reviewed software papers
@@ -355,6 +365,7 @@ A ready-to-adapt CITATION.cff example (authors, ORCID, version, DOI, license) is
 3. **Check publisher policies** -- Sherpa Romeo (sherpa.ac.uk/romeo) catalogs publisher self-archiving policies.
 4. **Budget for APCs** -- Include open access publication costs in your grant budget. Most funders allow this.
 5. **Negotiate with publishers** -- Use rights retention language in your cover letter if your funder requires it.
+6. **Check the journal's TOP level** -- TOP 2025 defines seven research practices (study registration, study protocol, analysis plan, materials, analysis code, data, and reporting transparency), each at three levels (disclose; share and cite; certify), plus verification practices (results transparency, computational reproducibility) and verification study types (replication, registered reports, multiverse, many analysts).
 
 ### Balancing Openness with Constraints
 
@@ -411,8 +422,8 @@ A ready-to-adapt CITATION.cff example (authors, ORCID, version, DOI, license) is
 - Open Science Collaboration. (2015). Estimating the reproducibility of psychological science. *Science*, 349(6251), aac4716.
 - Suber, P. (2012). *Open Access*. MIT Press.
 - Stodden, V., Leisch, F., & Peng, R. D. (Eds.). (2014). *Implementing Reproducible Research*. CRC Press.
-- Center for Open Science. (2026). *TOP Guidelines*. https://www.cos.io/initiatives/top-guidelines
+- Center for Open Science. (2025). *TOP 2025: Transparency and Openness Promotion Guidelines*. https://www.cos.io/initiatives/top-guidelines
 - Creative Commons. (2026). *About CC Licenses*. https://creativecommons.org/licenses/
-- FOSTER Open Science. (2026). *Open Science Training Handbook*. https://web.archive.org/web/2019/https://book.fosteropenscience.eu
+- Bezjak, S., Clyburne-Sherin, A., Conzett, P., et al. (2018). *Open Science Training Handbook*. Zenodo. https://doi.org/10.5281/zenodo.1212496
 
 Part of the AlterLab Academic Skills suite.

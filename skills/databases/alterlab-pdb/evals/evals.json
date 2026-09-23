@@ -33,7 +33,7 @@
     {
       "id": "structure-similarity-search",
       "prompt": "Find structures with 3D geometry similar to hemoglobin entry 4HHB.",
-      "expected_output": "Triggers the PDB skill. Uses rcsbapi.search StructSimilarityQuery with structure_search_type='entry' and entry_id='4HHB' to find structurally similar entries by 3D geometry, returning the result list.",
+      "expected_output": "Triggers the PDB skill. Uses rcsbapi.search StructSimilarityQuery with entry_id='4HHB' and an assembly_id (or chain_id), leaving structure_search_type at its default 'entry_id' ('entry' is not a valid value), to find structurally similar entries by 3D geometry, returning the result list.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Runs a structure (3D geometry) similarity search seeded by a PDB entry ID." }

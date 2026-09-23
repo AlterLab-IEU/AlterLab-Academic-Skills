@@ -32,7 +32,7 @@ OKABE_ITO_LIST = ['#E69F00', '#56B4E9', '#009E73', '#F0E442',
 WONG = ['#000000', '#E69F00', '#56B4E9', '#009E73',
         '#F0E442', '#0072B2', '#D55E00', '#CC79A7']
 
-# Paul Tol Palettes (https://personal.sron.nl/~pault/)
+# Paul Tol Palettes (source link in references/color_palettes.md)
 TOL_BRIGHT = ['#4477AA', '#EE6677', '#228833', '#CCBB44',
               '#66CCEE', '#AA3377', '#BBBBBB']
 

@@ -3,6 +3,8 @@ PyMC Hierarchical/Multilevel Model Template
 
 This template provides a complete workflow for Bayesian hierarchical models,
 useful for grouped/nested data (e.g., students within schools, patients within hospitals).
+Targets PyMC >= 6 with ArviZ >= 1.1: pm.sample() returns an xarray.DataTree and
+ArviZ plots return a PlotCollection (save with pc.savefig(...)).
 
 Customize the sections marked with # TODO
 """
@@ -72,8 +74,9 @@ with pm.Model(coords=coords) as hierarchical_model:
     mu_beta = pm.Normal('mu_beta', mu=0, sigma=10)
     sigma_beta = pm.HalfNormal('sigma_beta', sigma=5)
 
-    # Group-level parameters (non-centered parameterization)
-    # Non-centered parameterization improves sampling efficiency
+    # Group-level parameters (non-centered parameterization). With few
+    # observations per group the centered form produces funnel geometry that
+    # NUTS handles poorly (divergences); the non-centered form avoids it.
     alpha_offset = pm.Normal('alpha_offset', mu=0, sigma=1, dims='groups')
     alpha = pm.Deterministic('alpha', mu_alpha + sigma_alpha * alpha_offset, dims='groups')
 
@@ -101,12 +104,10 @@ print("\nRunning prior predictive check...")
 with hierarchical_model:
     prior_pred = pm.sample_prior_predictive(draws=500, random_seed=42)
 
-# Visualize prior predictions
-fig, ax = plt.subplots(figsize=(10, 6))
-az.plot_ppc(prior_pred, group='prior', num_pp_samples=100, ax=ax)
-ax.set_title('Prior Predictive Check')
-plt.tight_layout()
-plt.savefig('hierarchical_prior_check.png', dpi=300, bbox_inches='tight')
+# Visualize prior predictions (ArviZ 1.x: plot_ppc -> plot_ppc_dist)
+pc = az.plot_ppc_dist(prior_pred, group='prior_predictive', num_samples=100)
+pc.add_title('Prior Predictive Check')
+pc.savefig('hierarchical_prior_check.png')
 print("Prior predictive check saved to 'hierarchical_prior_check.png'")
 
 # =============================================================================
@@ -124,8 +125,10 @@ with hierarchical_model:
         chains=4,
         target_accept=0.95,  # Higher for better convergence
         random_seed=42,
-        idata_kwargs={'log_likelihood': True}
     )
+    # Pointwise log-likelihood for LOO model comparison (PyMC 6 deprecates
+    # idata_kwargs={'log_likelihood': True}).
+    pm.compute_log_likelihood(idata)
 
 print("Sampling complete!")
 
@@ -137,10 +140,13 @@ print("\n" + "="*60)
 print("DIAGNOSTICS")
 print("="*60)
 
-# Summary for key parameters
+# Summary for key parameters. ArviZ 1.x defaults to 89% equal-tailed
+# intervals (eti89_lb/eti89_ub); request 94% HDI columns explicitly.
 summary = az.summary(
     idata,
-    var_names=['mu_alpha', 'sigma_alpha', 'mu_beta', 'sigma_beta', 'sigma', 'alpha', 'beta']
+    var_names=['mu_alpha', 'sigma_alpha', 'mu_beta', 'sigma_beta', 'sigma', 'alpha', 'beta'],
+    ci_kind='hdi',
+    ci_prob=0.94,
 )
 print("\nParameter Summary:")
 print(summary)
@@ -170,15 +176,12 @@ if divergences > 0:
 else:
     print("\n✓ No divergences")
 
-# Trace plots for hyperparameters
-fig, axes = plt.subplots(5, 2, figsize=(12, 12))
-az.plot_trace(
+# Trace + density plots for hyperparameters (ArviZ 1.x: plot_trace -> plot_trace_dist)
+pc = az.plot_trace_dist(
     idata,
     var_names=['mu_alpha', 'sigma_alpha', 'mu_beta', 'sigma_beta', 'sigma'],
-    axes=axes
 )
-plt.tight_layout()
-plt.savefig('hierarchical_trace_plots.png', dpi=300, bbox_inches='tight')
+pc.savefig('hierarchical_trace_plots.png')
 print("\nTrace plots saved to 'hierarchical_trace_plots.png'")
 
 # =============================================================================
@@ -190,11 +193,9 @@ with hierarchical_model:
     pm.sample_posterior_predictive(idata, extend_inferencedata=True, random_seed=42)
 
 # Visualize fit
-fig, ax = plt.subplots(figsize=(10, 6))
-az.plot_ppc(idata, num_pp_samples=100, ax=ax)
-ax.set_title('Posterior Predictive Check')
-plt.tight_layout()
-plt.savefig('hierarchical_posterior_check.png', dpi=300, bbox_inches='tight')
+pc = az.plot_ppc_dist(idata, num_samples=100)
+pc.add_title('Posterior Predictive Check')
+pc.savefig('hierarchical_posterior_check.png')
 print("Posterior predictive check saved to 'hierarchical_posterior_check.png'")
 
 # =============================================================================
@@ -207,27 +208,14 @@ print("="*60)
 
 # Population-level estimates
 hyper_summary = summary.loc[['mu_alpha', 'sigma_alpha', 'mu_beta', 'sigma_beta', 'sigma']]
-print(hyper_summary[['mean', 'sd', 'hdi_3%', 'hdi_97%']])
+print(hyper_summary[['mean', 'sd', 'hdi94_lb', 'hdi94_ub']])
 
-# Forest plot for group-level parameters
-fig, axes = plt.subplots(1, 2, figsize=(14, 8))
-
-# Group intercepts
-az.plot_forest(idata, var_names=['alpha'], combined=True, ax=axes[0])
-axes[0].set_title('Group-Level Intercepts (α)')
-axes[0].set_yticklabels(group_names)
-axes[0].axvline(idata.posterior['mu_alpha'].mean().item(), color='red', linestyle='--', label='Population mean')
-axes[0].legend()
-
-# Group slopes
-az.plot_forest(idata, var_names=['beta'], combined=True, ax=axes[1])
-axes[1].set_title('Group-Level Slopes (β)')
-axes[1].set_yticklabels(group_names)
-axes[1].axvline(idata.posterior['mu_beta'].mean().item(), color='red', linestyle='--', label='Population mean')
-axes[1].legend()
-
-plt.tight_layout()
-plt.savefig('group_level_estimates.png', dpi=300, bbox_inches='tight')
+# Forest plot for group-level parameters (labels come from the 'groups' coords;
+# the population means are reported in the summary above)
+pc = az.plot_forest(idata, var_names=['alpha', 'beta'], combined=True,
+                    ci_kind='hdi', ci_probs=(0.5, 0.95))
+pc.add_title('Group-Level Intercepts (alpha) and Slopes (beta), 95% HDI')
+pc.savefig('group_level_estimates.png')
 print("\nGroup-level estimates saved to 'group_level_estimates.png'")
 
 # Shrinkage visualization
@@ -298,7 +286,7 @@ with hierarchical_model:
 
 y_pred_samples = idata.predictions['y_obs']
 y_pred_mean = y_pred_samples.mean(dim=['chain', 'draw']).values
-y_pred_hdi = az.hdi(y_pred_samples, hdi_prob=0.95)['y_obs'].values
+y_pred_hdi = az.hdi(idata, group='predictions', var_names=['y_obs'], prob=0.95)['y_obs'].values
 
 print(f"Predictions for existing groups:")
 print(f"{'Group':<10} {'X':<10} {'Mean':<15} {'95% HDI Lower':<15} {'95% HDI Upper':<15}")
@@ -306,19 +294,27 @@ print("-"*65)
 for i, g in enumerate(new_groups):
     print(f"{group_names[g]:<10} {new_X[i]:<10.2f} {y_pred_mean[i]:<15.3f} {y_pred_hdi[i, 0]:<15.3f} {y_pred_hdi[i, 1]:<15.3f}")
 
-# Predict for a new group (using population parameters)
-print(f"\nPrediction for a NEW group (using population-level parameters):")
+# Predict for a new group: draw that group's intercept/slope from the
+# population distribution, so between-group variability (sigma_alpha,
+# sigma_beta) is part of the uncertainty rather than ignored.
+print("\nPrediction for a NEW group (drawing group effects from the population):")
 new_X_newgroup = np.array([0.0])
 
-# Manually compute using population parameters
-mu_alpha_samples = idata.posterior['mu_alpha'].values.flatten()
-mu_beta_samples = idata.posterior['mu_beta'].values.flatten()
-sigma_samples = idata.posterior['sigma'].values.flatten()
+post = idata.posterior
+mu_alpha_samples = post['mu_alpha'].values.flatten()
+sigma_alpha_samples = post['sigma_alpha'].values.flatten()
+mu_beta_samples = post['mu_beta'].values.flatten()
+sigma_beta_samples = post['sigma_beta'].values.flatten()
 
-# Predicted mean for new group
-y_pred_newgroup = mu_alpha_samples + mu_beta_samples * new_X_newgroup[0]
+rng = np.random.default_rng(42)
+alpha_new = rng.normal(mu_alpha_samples, sigma_alpha_samples)
+beta_new = rng.normal(mu_beta_samples, sigma_beta_samples)
+
+# Expected outcome for the new group (add observation noise with
+# rng.normal(..., post['sigma'].values.flatten()) for a full predictive draw)
+y_pred_newgroup = alpha_new + beta_new * new_X_newgroup[0]
 y_pred_mean_newgroup = y_pred_newgroup.mean()
-y_pred_hdi_newgroup = az.hdi(y_pred_newgroup, hdi_prob=0.95)
+y_pred_hdi_newgroup = az.hdi(y_pred_newgroup, prob=0.95)
 
 print(f"X = {new_X_newgroup[0]:.2f}")
 print(f"Predicted mean: {y_pred_mean_newgroup:.3f}")
@@ -328,6 +324,8 @@ print(f"95% HDI: [{y_pred_hdi_newgroup[0]:.3f}, {y_pred_hdi_newgroup[1]:.3f}]")
 # 9. SAVE RESULTS
 # =============================================================================
 
+# NetCDF writing needs a backend ArviZ 1.x no longer installs by default:
+# uv pip install "arviz[h5netcdf]"
 idata.to_netcdf('hierarchical_model_results.nc')
 print("\nResults saved to 'hierarchical_model_results.nc'")
 

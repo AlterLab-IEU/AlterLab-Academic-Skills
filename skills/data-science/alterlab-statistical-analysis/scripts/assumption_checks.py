@@ -363,7 +363,7 @@ def detect_outliers(
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
 
         # Box plot
-        bp = ax1.boxplot(data_clean, vert=True, patch_artist=True)
+        bp = ax1.boxplot(data_clean, patch_artist=True)
         bp['boxes'][0].set_facecolor('steelblue')
         ax1.set_ylabel('Value')
         ax1.set_title(f'Box Plot: {name}')

@@ -189,8 +189,8 @@ This document provides a comprehensive reference of all filtering functions avai
 - Quality control filter
 - Returns None if peak count below threshold
 
-**require_minimum_number_of_high_peaks(spectrum, n_required=5, intensity_threshold=0.05)**
-- Removes spectra lacking high-intensity peaks
+**require_minimum_number_of_high_peaks(spectrum, no_peaks=5, intensity_percent=2.0)**
+- Removes spectra lacking high-intensity peaks (`intensity_percent` is a relative intensity in percent, 0-100)
 - Ensures data quality
 - Returns None if insufficient peaks above threshold
 
@@ -258,7 +258,7 @@ if spectrum is None:
     # Spectrum failed quality control
     pass
 spectrum = require_minimum_number_of_peaks(spectrum, n_required=10)
-spectrum = require_minimum_number_of_high_peaks(spectrum, n_required=5)
+spectrum = require_minimum_number_of_high_peaks(spectrum, no_peaks=5)
 ```
 
 ### Chemical Annotation Pipeline

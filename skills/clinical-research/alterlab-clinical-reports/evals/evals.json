@@ -58,6 +58,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-clinical-decision" }
       ]
+    },
+    {
+      "id": "near-miss-redcap-cdisc",
+      "prompt": "Set up the REDCap data dictionary for our phase II trial's adverse-event and vital-signs case report forms, and map the fields to CDISC SDTM AE and VS domains.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-redcap-cdisc. The task is designing data-capture instruments (REDCap data dictionary, validation, branching) and mapping them to CDISC CDASH/SDTM domains, not writing a clinical report such as an SAE narrative, CSR, or case report.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-redcap-cdisc" }
+      ]
     }
   ]
 }

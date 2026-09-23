@@ -1,12 +1,13 @@
 ---
 name: alterlab-phylogenetics
-description: Build phylogenetic trees end-to-end from raw sequences — MAFFT multiple sequence alignment, optional TrimAl trimming, IQ-TREE 2 maximum-likelihood inference with model selection and bootstraps, FastTree for large datasets, then visualize with ETE3 or FigTree. Use when reconstructing trees from sequences (FASTA) for evolutionary analysis, microbial genomics, viral phylodynamics, protein-family studies, or molecular-clock dating. For manipulating/comparing an EXISTING Newick tree (prune, root, Robinson-Foulds, duplication/speciation events) use alterlab-etetoolkit; for plain sequence parsing/translation use alterlab-biopython. Part of the AlterLab Academic Skills suite.
+description: Build phylogenetic trees end-to-end from raw sequences — MAFFT multiple sequence alignment, optional TrimAl trimming, IQ-TREE 3 maximum-likelihood inference with model selection and bootstraps, FastTree for large datasets, then visualize with ETE3 or FigTree. Use when reconstructing trees from sequences (FASTA) for evolutionary analysis, microbial genomics, viral phylodynamics, protein-family studies, or molecular-clock dating. For manipulating/comparing an EXISTING Newick tree (prune, root, Robinson-Foulds, duplication/speciation events) use alterlab-etetoolkit; for plain sequence parsing/translation use alterlab-biopython. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Needs external CLI tools (MAFFT, IQ-TREE 2, FastTree; optionally TrimAl) on PATH — install via bioconda or Homebrew, NOT pip/uv. Python parts (ETE3 for visualization) run under `uv run python`. No API key or account required."
+compatibility: "Needs external CLI tools (MAFFT, IQ-TREE 3, FastTree; optionally TrimAl) on PATH — install via bioconda or Homebrew, NOT pip/uv. Python parts (ETE3 for visualization) run under `uv run python`. No API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Phylogenetics
@@ -16,21 +17,28 @@ metadata:
 Phylogenetic analysis reconstructs the evolutionary history of biological sequences (genes, proteins, genomes) by inferring the branching pattern of descent. This skill covers the standard pipeline:
 
 1. **MAFFT** — Multiple sequence alignment
-2. **IQ-TREE 2** — Maximum likelihood tree inference with model selection
+2. **IQ-TREE 3** — Maximum likelihood tree inference with model selection
 3. **FastTree** — Fast approximate maximum likelihood (for large datasets)
 4. **ETE3** — Python library for tree manipulation and visualization
 
 **Installation:** The aligners and tree builders are compiled CLI tools (not on PyPI). Install the binaries via bioconda or Homebrew; install the Python visualization layer with uv.
 ```bash
 # CLI binaries — bioconda (cross-platform) ...
-conda install -c bioconda mafft iqtree fasttree trimal
+conda install -c bioconda mafft iqtree fasttree trimal   # iqtree is now IQ-TREE 3
 # ... or Homebrew on macOS (Apple Silicon): IQ-TREE/TrimAl live in the brewsci/bio tap
 brew install mafft fasttree
-brew tap brewsci/bio && brew install brewsci/bio/iqtree brewsci/bio/trimal  # iqtree formula ships the iqtree2 binary
+brew tap brewsci/bio && brew install brewsci/bio/iqtree brewsci/bio/trimal
 
 # Python visualization layer
 uv pip install "ete3==3.1.3"   # also needs numpy<2 and PyQt5 for rendering
 ```
+> **Binary name:** bioconda's `iqtree` package is now **IQ-TREE 3** (3.1.x) and installs the
+> executables `iqtree` and `iqtree3` — there is **no `iqtree2`** in it. Call `iqtree`, which
+> works on both the 2.x and 3.x packages; only reach for a versioned name when two releases
+> coexist on PATH. IQ-TREE 3 adds MixtureFinder, multi-tree mixture models (MAST), gene/site
+> concordance factors, and CMAPLE for very large pathogen datasets; the options below are
+> unchanged from 2.x.
+>
 > ETE3 (3.1.3) is the last ete3 release and can be fragile to install on Python ≥3.12 (pins old numpy/PyQt5). If `t.render()` fails, fall back to writing the Newick tree and viewing it in FigTree/iTOL, or use the maintained successor `ete4` (note: ete4 changed the `TreeStyle`/`render` API, so the snippets below are ete3-specific).
 
 ## When to Use This Skill
@@ -45,6 +53,16 @@ Use phylogenetics when:
 - **Molecular clock analysis**: Estimate divergence dates using temporal sampling
 - **GWAS companion**: Place variants in evolutionary context (e.g., SARS-CoV-2 variants)
 - **Microbiology**: Species phylogeny from 16S rRNA or core genome phylogeny
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Manipulating or comparing an **existing** Newick tree (prune, root, Robinson-Foulds, duplication/speciation) | `alterlab-etetoolkit` |
+| Plain sequence parsing, translation, or format conversion | `alterlab-biopython` |
+| Homology search to *find* the sequences before aligning them | `alterlab-blast` |
+| Diversity/ordination on a community feature table (UniFrac, PCoA, PERMANOVA) | `alterlab-scikit-bio` |
+| Running the 16S amplicon pipeline that produces the ASVs and tree | `alterlab-qiime2-amplicon` |
 
 ## Standard Workflow
 
@@ -124,14 +142,14 @@ def trim_alignment_trimal(aligned_fasta: str, output_fasta: str,
     return output_fasta
 ```
 
-### 3. IQ-TREE 2 — Maximum Likelihood Tree
+### 3. IQ-TREE 3 — Maximum Likelihood Tree
 
 ```python
 def run_iqtree(aligned_fasta: str, output_prefix: str,
                 model: str = "TEST", bootstrap: int = 1000,
                 n_threads: int = 4, extra_args: list = None) -> dict:
     """
-    Build a maximum likelihood tree with IQ-TREE 2.
+    Build a maximum likelihood tree with IQ-TREE 3.
 
     Args:
         aligned_fasta: Aligned FASTA file
@@ -146,7 +164,7 @@ def run_iqtree(aligned_fasta: str, output_prefix: str,
         Dict with paths to output files
     """
     cmd = [
-        "iqtree2",
+        "iqtree",
         "-s", aligned_fasta,
         "--prefix", output_prefix,
         "-m", model,
@@ -181,10 +199,11 @@ def run_iqtree(aligned_fasta: str, output_prefix: str,
     print(f"IQ-TREE: Tree saved to {output_files['tree']}")
     return output_files
 
-# IQ-TREE model selection guide:
-# DNA:     TEST → GTR+G, HKY+G, TrN+G
-# Protein: TEST → LG+G4, WAG+G, JTT+G, Q.pfam+G
-# Codon:   TEST → MG+F3X4
+# Model selection: ModelFinder Plus (-m MFP) is the DEFAULT — omitting -m runs it.
+# -m TEST is the narrower jModelTest/ProtTest-style search (no FreeRate models);
+# use it only when you need to match those tools.
+# Typical winners — DNA: GTR+F+I+G4, HKY+F+G4; Protein: LG+F+G4, Q.pfam+G4;
+# Codon: MG+F3X4.
 
 # For temporal (molecular clock) analysis, add:
 # extra_args = ["--date", "dates.txt", "--clock-test", "--date-CI", "95"]
@@ -388,13 +407,16 @@ def full_phylogenetic_analysis(
 | `Q.pfam+G4` | Pfam-trained (QMaker) | General protein families |
 | `Q.bird+G4` | Bird clade-specific (QMaker) | Bird proteins; siblings: Q.mammal, Q.insect, Q.yeast, Q.plant |
 
-**Tip:** Use `-m TEST` to let IQ-TREE automatically select the best model.
+**Tip:** IQ-TREE selects the model automatically by default (`-m MFP`); pass an explicit model
+only when you need to fix it.
 
 ## Best Practices
 
 - **Alignment quality first**: Poor alignment → unreliable trees; check alignment manually
 - **Use `linsi` for small (<200 seq), `fftns` or `auto` for large alignments**
-- **Model selection**: Always use `-m TEST` for IQ-TREE unless you have a specific reason
+- **Model selection**: ModelFinder Plus is IQ-TREE's default — just omit `-m` (or pass `-m MFP`).
+  `-m TEST` restricts the search to jModelTest/ProtTest-style models, so use it only to match
+  those tools
 - **Bootstrap**: Use ≥1000 ultrafast bootstraps (`-B 1000`) for branch support
 - **Root the tree**: Unrooted trees can be misleading; use outgroup or midpoint rooting
 - **FastTree for >5000 sequences**: IQ-TREE becomes slow; FastTree is 10–100× faster
@@ -404,7 +426,7 @@ def full_phylogenetic_analysis(
 ## Additional Resources
 
 - **MAFFT**: https://mafft.cbrc.jp/alignment/software/
-- **IQ-TREE 2**: http://www.iqtree.org/ | Tutorial: https://www.iqtree.org/workshop/molevol2022
+- **IQ-TREE 3**: http://www.iqtree.org/ | Tutorial: https://www.iqtree.org/workshop/molevol2022
 - **FastTree**: http://www.microbesonline.org/fasttree/
 - **ETE3**: http://etetoolkit.org/
 - **FigTree** (GUI visualization): https://tree.bio.ed.ac.uk/software/figtree/

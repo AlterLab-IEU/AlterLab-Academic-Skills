@@ -36,6 +36,7 @@ import json
 import re
 import sys
 import time
+import unicodedata
 from html.parser import HTMLParser
 from typing import Any, Optional
 
@@ -156,9 +157,17 @@ def _year(date: str) -> str:
     return m.group(1) if m else ""
 
 
+def _ascii_fold(text: str) -> str:
+    """Fold Turkish (and other Latin) diacritics to ASCII: Memiş -> Memis, Işık -> Isik."""
+    text = text.replace("ı", "i").replace("İ", "I")  # dotless ı has no NFKD decomposition
+    return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+
+
 def _cite_key(rec: dict[str, Any]) -> str:
-    first_author = (rec["authors"][0].split(",")[0] if rec["authors"] else "anon")
-    surname = re.sub(r"[^A-Za-z]", "", first_author) or "anon"
+    first = rec["authors"][0].strip() if rec["authors"] else ""
+    # "Soyad, Ad" -> text before the comma; "Ad Soyad" (DergiPark's usual form) -> last token
+    surname = first.split(",")[0] if "," in first else (first.split() or [""])[-1]
+    surname = re.sub(r"[^A-Za-z]", "", _ascii_fold(surname)) or "anon"
     return f"{surname.lower()}{_year(rec['date'])}"
 
 

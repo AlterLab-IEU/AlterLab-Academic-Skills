@@ -77,7 +77,7 @@ result = npa.analyze_unit_visually(
     api_client=client,
     # Per the ALTERLAB_MODEL convention (skills/core/shared/model_env.md), never hardcode a
     # bare model ID: read it from the environment with a dated default.
-    model=os.environ.get("ALTERLAB_MODEL", "claude-opus-4-8"),  # default reviewed 2026-06-06
+    model=os.environ.get("ALTERLAB_MODEL") or "claude-opus-5-5",  # default reviewed 2026-09-23
     task='quality_assessment'
 )
 
@@ -297,9 +297,9 @@ Currently supported APIs:
 
 | Provider | Client | Model Examples |
 |----------|--------|----------------|
-| Anthropic | `anthropic.Anthropic()` | via `ALTERLAB_MODEL` (default `claude-opus-4-8`, reviewed 2026-06-06) |
+| Anthropic | `anthropic.Anthropic()` | via `ALTERLAB_MODEL` (default `claude-opus-5-5`, reviewed 2026-09-23) |
 | OpenAI | `openai.OpenAI()` | gpt-4o (gpt-4-vision-preview is deprecated) |
-| Google | `google.genai` | gemini-2.x vision models |
+| Google | `google.genai` | Gemini 3.x vision models (e.g. `gemini-3.5-flash`); Gemini 2.5 is still served but is the previous generation |
 
 ### Anthropic Example
 

@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Pydicom
@@ -28,9 +29,18 @@ Use this skill when working with:
 - Multi-slice volume reconstruction
 - PACS (Picture Archiving and Communication System) integration
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Finding and downloading public cancer imaging collections (NCI Imaging Data Commons) | `alterlab-imaging-data-commons` |
+| Tiling or preprocessing whole-slide pathology images (H&E WSI) | `alterlab-histolab` |
+| Training ML models on clinical imaging or EHR datasets | `alterlab-pyhealth` |
+| Processing ECG/EEG/EDA physiological waveforms | `alterlab-neurokit2` |
+
 ## Installation
 
-Targets **pydicom 3.x** (3.0 reorganized the pixel APIs — see the version note below). Install pydicom and common dependencies:
+Targets **pydicom 3.x** (current release 3.0.2 as of 2026-09; Python >= 3.10). 3.0 reorganized the pixel APIs — see the version note below. Install pydicom and common dependencies:
 
 ```bash
 uv pip install "pydicom>=3.0"
@@ -42,9 +52,10 @@ uv pip install matplotlib  # For visualization
 For handling compressed DICOM files, additional packages may be needed:
 
 ```bash
-uv pip install pylibjpeg pylibjpeg-libjpeg pylibjpeg-openjpeg  # JPEG / JPEG 2000
-uv pip install python-gdcm  # Alternative compression handler
-uv pip install pyjpegls     # JPEG-LS encode/decode (replaces older JPEG-LS handlers)
+uv pip install pylibjpeg pylibjpeg-libjpeg pylibjpeg-openjpeg  # JPEG / JPEG 2000 decode; JPEG 2000 encode
+uv pip install pylibjpeg-rle  # faster RLE encode/decode (pydicom's own RLE codec also works)
+uv pip install python-gdcm  # Alternative decoder for most compressed syntaxes
+uv pip install pyjpegls     # JPEG-LS encode/decode
 ```
 
 ### pydicom 3.0 API changes (important)
@@ -54,6 +65,7 @@ uv pip install pyjpegls     # JPEG-LS encode/decode (replaces older JPEG-LS hand
 - `from pydicom.pixel_data_handlers.util import apply_voi_lut` → **`from pydicom.pixels import apply_voi_lut`** (same for `convert_color_space`).
 - `pydicom.encoders` → **`pydicom.pixels.encoders`**.
 - `ds.save_as(path, write_like_original=False)` → **`ds.save_as(path, enforce_file_format=True)`** (`write_like_original=True`, the default, became implicit and is no longer needed).
+- New helpers: `ds.set_pixel_data(arr, photometric_interpretation, bits_stored)` writes *Pixel Data* and the matching Image Pixel elements; `ds.compress()` / `ds.decompress()` convert between transfer syntaxes.
 
 All examples below use the 3.x APIs.
 
@@ -226,16 +238,22 @@ for tag in tags_to_anonymize:
         else:
             delattr(ds, tag)
 
-# Update dates to maintain temporal relationships
+# Vendor private tags frequently carry identifiers
+ds.remove_private_tags()
+
+# Replace dates consistently (e.g. one per-patient offset) to keep intervals meaningful
 if hasattr(ds, 'StudyDate'):
-    # Shift dates by a random offset
     ds.StudyDate = '20000101'
+
+ds.PatientIdentityRemoved = 'YES'
 
 # Keep pixel data intact
 ds.save_as('anonymized.dcm')
 ```
 
 Use the provided script: `python scripts/anonymize_dicom.py input.dcm output.dcm`
+
+A tag list like this is a starting point, not a complete de-identification. Identifiers also hide in other date/time elements, UIDs, accession numbers, nested sequences, free-text fields, and text burned into the pixels (check `BurnedInAnnotation` and inspect ultrasound/secondary-capture images). For data leaving your institution, apply a profile based on DICOM PS3.15 Annex E (Basic Application Level Confidentiality Profile) with a dedicated tool such as `deid` (pydicom project) or `dicognito`, and have the output reviewed before release — the same standard your IRB or data use agreement will expect.
 
 ### Writing DICOM Files
 
@@ -275,7 +293,8 @@ ds.BitsStored = 16
 ds.HighBit = 15
 ds.PixelRepresentation = 0
 
-# Create pixel data
+# Create pixel data (pydicom >= 3.0 alternative for the block above and this one:
+# ds.set_pixel_data(pixel_array, photometric_interpretation="MONOCHROME2", bits_stored=12))
 pixel_array = np.random.randint(0, 4096, (512, 512), dtype=np.uint16)
 ds.PixelData = pixel_array.tobytes()
 
@@ -307,11 +326,13 @@ print(f"Transfer Syntax Name: {ds.file_meta.TransferSyntaxUID.name}")
 ds.decompress()
 ds.save_as('uncompressed.dcm', enforce_file_format=True)
 
-# Or compress when saving (requires appropriate encoder)
+# Or compress (RLE Lossless works with numpy alone)
 ds_uncompressed = pydicom.dcmread('uncompressed.dcm')
-ds_uncompressed.compress(pydicom.uid.JPEGBaseline8Bit)
-ds_uncompressed.save_as('compressed_jpeg.dcm')
+ds_uncompressed.compress(pydicom.uid.RLELossless)
+ds_uncompressed.save_as('compressed_rle.dcm')
 ```
+
+pydicom 3.0 can **encode** only RLE Lossless (native, `pylibjpeg-rle`, or `gdcm`), JPEG-LS Lossless/Near-Lossless (`pyjpegls`), and JPEG 2000 Lossless/lossy (`pylibjpeg-openjpeg`). JPEG Baseline and JPEG Lossless are decode-only — `compress()` raises `NotImplementedError` for them.
 
 **Common transfer syntaxes:**
 - `ExplicitVRLittleEndian` - Uncompressed, most common
@@ -433,7 +454,7 @@ Detailed reference information is available in the `references/` directory:
 4. **Handle exceptions** when reading files from untrusted sources
 5. **Apply proper windowing** (VOI LUT) for medical image visualization
 6. **Maintain spatial information** (pixel spacing, slice thickness) when processing 3D volumes
-7. **Verify anonymization** thoroughly before sharing medical data
+7. **Verify anonymization** thoroughly before sharing medical data (private tags, burned-in text, UIDs, and dates included)
 8. **Use UIDs correctly** - generate new UIDs when creating new instances, preserve them when modifying
 
 ## Documentation
@@ -444,3 +465,4 @@ Official pydicom documentation (stable = current 3.x release): https://pydicom.g
 - API Reference: https://pydicom.github.io/pydicom/stable/reference/index.html
 - v3.0 release notes (API migration): https://pydicom.github.io/pydicom/stable/release_notes/v3.0.0.html
 
+Part of the AlterLab Academic Skills suite.

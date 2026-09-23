@@ -1,12 +1,13 @@
 ---
 name: alterlab-research-lookup
-description: Look up current research and scholarly papers by auto-routing each query to the best backend — the Parallel Web Systems Chat API (general research) or Perplexity sonar-pro-search (academic paper searches) — and save every result with citations to sources/. Use when finding papers, gathering research data, verifying scientific claims, or assembling citation lists and unsure which search backend fits. For plain general web search or extracting content from a known URL prefer alterlab-parallel-web instead (requires PARALLEL_API_KEY and OPENROUTER_API_KEY). Part of the AlterLab Academic Skills suite.
+description: Look up current research and scholarly papers by auto-routing each query to the best backend — the Parallel Web Systems Chat API (general research) or Perplexity sonar-pro-search via OpenRouter (academic paper searches) — and save every result with citations to sources/. Use when finding papers, gathering research data, verifying scientific claims, or assembling citation lists and unsure which search backend fits. For plain general web search or extracting content from a known URL prefer alterlab-parallel-web; to call Perplexity directly with a chosen Sonar model prefer alterlab-perplexity. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
-compatibility: PARALLEL_API_KEY and OPENROUTER_API_KEY required
+compatibility: At least one of PARALLEL_API_KEY (Parallel Chat API) or OPENROUTER_API_KEY (Perplexity via OpenRouter); both recommended. Python packages openai and requests; queries are sent to those services.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Research Information Lookup
@@ -15,7 +16,7 @@ metadata:
 
 This skill provides real-time research information lookup with **intelligent backend routing**:
 
-- **Parallel Chat API** (`core` model): Default backend for all general research queries. Provides comprehensive, multi-source research reports with inline citations via the OpenAI-compatible Chat API at `https://api.parallel.ai`.
+- **Parallel Chat API** (`core` model): Default backend for all general research queries. Provides comprehensive, multi-source research reports with inline citations via the OpenAI-compatible Chat API (Beta, `https://api.parallel.ai/v1beta/chat/completions`).
 - **Perplexity sonar-pro-search** (via OpenRouter): Used only for academic-specific paper searches where scholarly database access is critical.
 
 The skill automatically detects query type and routes to the optimal backend.
@@ -31,6 +32,16 @@ Use this skill when you need:
 - **Technical Documentation**: Look up specifications, protocols, or methodologies
 - **Market/Industry Data**: Current statistics, trends, competitive intelligence
 - **Recent Developments**: Emerging trends, breakthroughs, announcements
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| You specifically want Perplexity (choosing a Sonar model yourself), no routing | `alterlab-perplexity` |
+| Extracting or verifying the content of a known URL, or calling Parallel's Search/Task APIs directly | `alterlab-parallel-web` |
+| Structured per-paper experimental data (sample sizes, effect sizes, quality scores) | `alterlab-bgpt-search` |
+| Mapping the citation network around a seed paper | `alterlab-citation-graph` |
+| A systematic review with PRISMA screening and risk-of-bias assessment | `alterlab-literature-review` |
 
 ## Automatic Backend Selection
 
@@ -148,7 +159,7 @@ Query Examples:
 
 ## Paper Quality and Popularity Prioritization
 
-**CRITICAL**: When searching for papers, ALWAYS prioritize high-quality, influential papers.
+When searching for papers, favor high-quality, influential work, but treat citation counts and venue as rough proxies rather than measures of quality: they lag for recent papers, vary widely by field, and under-represent null results, regional journals, and non-English work. Judge each paper on its design and evidence (see `alterlab-scientific-thinking`), and include a lower-profile paper when it is the most direct evidence for the claim. The thresholds below are working heuristics, not established cut-offs.
 
 ### Citation-Based Ranking
 
@@ -163,7 +174,7 @@ Query Examples:
 
 ### Venue Quality Tiers
 
-**Tier 1 - Premier Venues** (Always prefer):
+**Tier 1 - Premier Venues** (prefer when relevant):
 - **General Science**: Nature, Science, Cell, PNAS
 - **Medicine**: NEJM, Lancet, JAMA, BMJ
 - **Field-Specific**: Nature Medicine, Nature Biotechnology, Nature Methods
@@ -183,53 +194,54 @@ Query Examples:
 ### Environment Variables
 
 ```bash
-# Primary backend (Parallel Chat API) - REQUIRED
+# Primary backend (Parallel Chat API)
 export PARALLEL_API_KEY="your_parallel_api_key"
 
-# Academic search backend (Perplexity) - REQUIRED for academic queries
+# Academic search backend (Perplexity via OpenRouter)
 export OPENROUTER_API_KEY="your_openrouter_api_key"
 ```
 
+At least one key is required; with only one, every query goes to that backend.
+
 ### API Specifications
 
-**Parallel Chat API:**
-- Endpoint: `https://api.parallel.ai` (OpenAI SDK compatible)
+**Parallel Chat API (Beta):**
+- Endpoint: `POST https://api.parallel.ai/v1beta/chat/completions` (OpenAI SDK with `base_url="https://api.parallel.ai/v1beta"`)
 - Model: `core` (60s-5min latency, complex multi-source synthesis)
 - Output: Markdown text with inline citations
 - Citations: Research basis with source URLs and excerpts
-- Rate limits: subject to your Parallel account tier (check the dashboard)
+- Rate limit: 300 requests/min by default
 - Python package: `openai`
 
 **Perplexity sonar-pro-search:**
-- Model: `perplexity/sonar-pro-search` (via OpenRouter)
-- Search mode: Academic (prioritizes peer-reviewed sources)
-- Search context: High (comprehensive research)
-- Response time: 5-15 seconds
+- Model: `perplexity/sonar-pro-search` (via OpenRouter; $3/$15 per million tokens plus $18 per 1,000 requests at 2026-09 list prices)
+- Sends `web_search_options.search_context_size: high` and Perplexity's `search_mode: academic`; OpenRouter may not forward the latter, so academic-only sourcing is best-effort
+- Sources come back as `url_citation` annotations and/or `citations`/`search_results` fields; the script merges and deduplicates them
+- The script waits up to 90 s per request
+- Python package: `requests`
 
 ### Command-Line Usage
 
 ```bash
-# Auto-routed research (recommended) — ALWAYS save to sources/
+# Auto-routed research (recommended)
 python scripts/research_lookup.py "your query" -o sources/research_YYYYMMDD_HHMMSS_<topic>.md
 
-# Force specific backend — ALWAYS save to sources/
+# Force specific backend
 python scripts/research_lookup.py "your query" --force-backend parallel -o sources/research_<topic>.md
 python scripts/research_lookup.py "your query" --force-backend perplexity -o sources/papers_<topic>.md
 
-# JSON output — ALWAYS save to sources/
+# JSON output
 python scripts/research_lookup.py "your query" --json -o sources/research_<topic>.json
 
-# Batch queries — ALWAYS save to sources/
+# Batch queries
 python scripts/research_lookup.py --batch "query 1" "query 2" "query 3" -o sources/batch_research_<topic>.md
 ```
 
 ---
 
-## MANDATORY: Save All Results to Sources Folder
+## Save All Results to the Sources Folder
 
-**Every research-lookup result MUST be saved to the project's `sources/` folder.**
-
-This is non-negotiable. Research results are expensive to obtain and critical for reproducibility.
+Save every research-lookup result to the project's `sources/` folder. Results cost money to obtain, and the saved file is what lets you (and reviewers) trace each citation back to the raw search output.
 
 ### Saving Rules
 
@@ -241,9 +253,7 @@ This is non-negotiable. Research results are expensive to obtain and critical fo
 
 ### How to Save
 
-**CRITICAL: Every call to `research_lookup.py` MUST include the `-o` flag pointing to the `sources/` folder.**
-
-**CRITICAL: Saved files MUST preserve all citations, source URLs, and DOIs.** The default text output automatically includes a `Sources` section (with title, date, URL for each source) and an `Additional References` section (with DOIs and academic URLs extracted from the response text). For maximum citation metadata, use `--json`.
+Pass `-o` pointing into `sources/` on every call, and keep the citations, source URLs, and DOIs in the saved file — they are the audit trail. The default text output already includes a `Sources` section (title, date, URL for each source) and an `Additional References` section (DOIs and academic URLs extracted from the response text); use `--json` for the full citation metadata.
 
 ```bash
 # General research — save to sources/ (includes Sources + Additional References sections)
@@ -316,25 +326,24 @@ When saving research results, always log:
 
 ## Integration with Scientific Writing
 
-This skill enhances scientific writing by providing:
+This skill supports scientific writing by providing (each result saved to `sources/`):
 
-1. **Literature Review Support**: Gather current research for introduction and discussion — **save to `sources/`**
-2. **Methods Validation**: Verify protocols against current standards — **save to `sources/`**
-3. **Results Contextualization**: Compare findings with recent similar studies — **save to `sources/`**
-4. **Discussion Enhancement**: Support arguments with latest evidence — **save to `sources/`**
-5. **Citation Management**: Provide properly formatted citations — **save to `sources/`**
+1. **Literature Review Support**: Gather current research for introduction and discussion
+2. **Methods Validation**: Verify protocols against current standards
+3. **Results Contextualization**: Compare findings with recent similar studies
+4. **Discussion Enhancement**: Support arguments with latest evidence
+5. **Citation Management**: Provide properly formatted citations
+
+Treat returned citations as leads: open and check any paper before citing it, because search-model answers can misattribute findings or garble bibliographic details (`alterlab-citation-verifier` checks that references exist).
 
 ## Complementary Tools
 
 | Task | Skill |
 |------|------|
-| General web search / URL content extraction | `alterlab-parallel-web` |
-| Direct single-backend Perplexity search | `alterlab-perplexity` |
-| Academic paper search (auto-routed) | `alterlab-research-lookup` (this skill) |
 | Scholarly index search (OpenAlex) | `alterlab-openalex` |
 | PubMed search | `alterlab-pubmed` |
 | Zotero library / DOI-to-BibTeX management | `alterlab-pyzotero` |
-| Per-paper experimental-data extraction | `alterlab-bgpt-search` |
+| Verify that the references you collected exist | `alterlab-citation-verifier` |
 
 ---
 
@@ -346,9 +355,9 @@ This skill enhances scientific writing by providing:
 - Both: Cannot access proprietary or restricted databases
 
 **Fallback Behavior:**
-- If the selected backend's API key is missing, tries the other backend
-- If both backends fail, returns structured error response
-- Rephrase queries for better results if initial response is insufficient
+- If the preferred backend's API key is missing (including a `--force-backend` choice), the query goes to the other backend
+- A call that fails is not retried on the other backend; the result carries `success: false` and the error — rerun with `--force-backend` to try the other one
+- Rephrase queries for better results if the initial response is insufficient
 
 Backend-key setup and specific error messages: see `references/troubleshooting.md`.
 
@@ -398,4 +407,6 @@ This skill serves as the primary research interface with intelligent dual-backen
 - **Perplexity sonar-pro-search**: Academic-specific paper searches only
 - **Automatic routing**: Detects academic queries and routes appropriately
 - **Manual override**: Force any backend when needed
-- **Complementary**: Works alongside `parallel-web` skill for web search and URL extraction
+- **Complementary**: Works alongside `alterlab-parallel-web` for web search and URL extraction
+
+Part of the AlterLab Academic Skills suite.

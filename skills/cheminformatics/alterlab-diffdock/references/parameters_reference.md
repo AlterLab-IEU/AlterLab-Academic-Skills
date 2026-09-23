@@ -118,13 +118,9 @@ This document provides comprehensive details on all DiffDock configuration param
   - Useful for monitoring long-running jobs
 
 ### Protein Structure
-- **`--chain_cutoff`**: Maximum number of protein chains to process
-  - Example: `--chain_cutoff 10`
-  - Useful for large multi-chain complexes
-
-- **`--esm_embeddings_path`**: Path to pre-computed ESM2 protein embeddings
-  - Speeds up inference by reusing embeddings
-  - Optional optimization
+- `--chain_cutoff` and `--esm_embeddings_path` belong to the **evaluation/training** scripts
+  (`evaluate.py`, benchmark replication), not to `python -m inference`, which rejects them.
+  Inference computes ESM2 embeddings itself for every complex in the CSV.
 
 ### Dataset Options
 - **`--split`**: Dataset split to use (train/test/val)
@@ -154,10 +150,11 @@ This document provides comprehensive details on all DiffDock configuration param
 
 ## Configuration File
 
-All parameters can be specified in a YAML configuration file (typically `default_inference_args.yaml`) or overridden via command line:
+All parameters can be specified in a YAML configuration file (typically `default_inference_args.yaml`) or on the command line — but **the YAML wins**: `inference.py` applies the config after parsing the CLI, overwriting any flag whose key is also in the YAML (`samples_per_complex`, `inference_steps`, `temp_*`, model dirs, ...). To change those, copy and edit the YAML:
 
 ```bash
-python -m inference --config default_inference_args.yaml --samples_per_complex 20
+cp default_inference_args.yaml my_args.yaml   # set samples_per_complex: 20 in the copy
+python -m inference --config my_args.yaml --protein_ligand_csv input.csv --out_dir results/
 ```
 
-Command-line arguments take precedence over configuration file values.
+Flags absent from the YAML (e.g. `--batch_size`, `--out_dir`, inputs) are honoured from the CLI.

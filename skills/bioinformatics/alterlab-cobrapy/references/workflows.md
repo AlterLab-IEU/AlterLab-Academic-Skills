@@ -226,7 +226,7 @@ print(comparison.sort_values("range_increase", ascending=False).head(10))
 
 # Step 6: Perform flux sampling
 print("\nPerforming flux sampling (1000 samples)...")
-samples = sample(model, n=1000, method="optgp", processes=4)
+samples = sample(model, n=1000, method="optgp", processes=4)  # or leave method="auto"
 
 # Step 7: Analyze sampling results for key reactions
 key_reactions = ["PFK", "FBA", "TPI", "GAPD", "PGK", "PGM", "ENO", "PYK"]

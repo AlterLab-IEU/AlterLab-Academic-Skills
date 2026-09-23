@@ -83,16 +83,19 @@ predictions = pipeline.predict(smiles_test)
 ### Comparing Multiple Featurizers
 
 ```python
+import numpy as np
+from molfeat.trans.pretrained import PretrainedHFTransformer
+
 featurizers = {
-    'ECFP': FPCalculator("ecfp"),
-    'MACCS': FPCalculator("maccs"),
-    'Descriptors': RDKitDescriptors2D(),
-    'ChemBERTa': PretrainedMolTransformer("ChemBERTa-77M-MLM")
+    'ECFP': MoleculeTransformer(FPCalculator("ecfp"), n_jobs=-1, dtype=np.float32),
+    'MACCS': MoleculeTransformer(FPCalculator("maccs"), n_jobs=-1, dtype=np.float32),
+    'Descriptors': MoleculeTransformer(RDKitDescriptors2D(), n_jobs=-1, dtype=np.float32),
+    # pretrained models are already transformers — don't wrap them in MoleculeTransformer
+    'ChemBERTa': PretrainedHFTransformer(kind="ChemBERTa-77M-MLM", notation="smiles", dtype=np.float32),
 }
 
 results = {}
-for name, feat in featurizers.items():
-    transformer = MoleculeTransformer(feat, n_jobs=-1)
+for name, transformer in featurizers.items():
     X = transformer(smiles)
     # Evaluate with your ML model
     score = evaluate_model(X, y)
@@ -136,7 +139,7 @@ class CustomTransformer(MoleculeTransformer):
         if isinstance(mol, str):
             mol = dm.to_mol(mol)
         mol = dm.standardize_mol(mol)
-        mol = dm.remove_salts(mol)
+        mol = dm.remove_salts_solvents(mol)   # datamol has no remove_salts()
         return mol
 
 transformer = CustomTransformer(FPCalculator("ecfp"), n_jobs=-1)
@@ -161,7 +164,7 @@ def featurize_in_chunks(smiles_list, transformer, chunk_size=10000):
 import pickle
 
 cache_file = "embeddings_cache.pkl"
-transformer = PretrainedMolTransformer("ChemBERTa-77M-MLM", n_jobs=-1)
+transformer = PretrainedHFTransformer(kind="ChemBERTa-77M-MLM", notation="smiles", dtype=np.float32)
 
 try:
     with open(cache_file, "rb") as f:

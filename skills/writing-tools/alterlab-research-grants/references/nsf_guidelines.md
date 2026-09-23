@@ -11,7 +11,7 @@
 **Key Characteristics**:
 - Supports all fields of fundamental science and engineering (except medical sciences)
 - Emphasis on education and workforce development
-- Strong commitment to diversity, equity, and inclusion
+- Broadening participation in STEM, which under NSF's April 2025 priorities statement (updated July 2026) must use activities open and available to all Americans and must not preference some groups at the expense of others (https://www.nsf.gov/updates-on-priorities)
 - Promotes open science and data sharing
 - Collaborative research across institutions encouraged
 
@@ -19,18 +19,18 @@
 
 1. **BIO** - Biological Sciences
 2. **CISE** - Computer and Information Science and Engineering
-3. **EHR** - Education and Human Resources
+3. **EDU** - STEM Education (formerly EHR)
 4. **ENG** - Engineering
 5. **GEO** - Geosciences
 6. **MPS** - Mathematical and Physical Sciences
 7. **SBE** - Social, Behavioral, and Economic Sciences
-8. **TIP** - Technology, Innovation, and Partnerships (formerly EDA)
+8. **TIP** - Technology, Innovation, and Partnerships
 9. **OPP** - Office of Polar Programs
 10. **OISE** - Office of International Science and Engineering
 
 ## Core Review Criteria
 
-NSF uses two equally weighted criteria for all proposals:
+NSF uses two merit review criteria for all proposals; both are given full consideration, and each is necessary but neither is sufficient on its own:
 
 ### Intellectual Merit
 
@@ -59,7 +59,7 @@ NSF uses two equally weighted criteria for all proposals:
 **Evaluation Questions**:
 - What is the potential for the proposed activity to:
   - Benefit society or advance desired societal outcomes?
-  - Broaden participation of underrepresented groups?
+  - Broaden participation in STEM (with activities open to all — see the April 2025 priorities statement)?
   - Enhance infrastructure for research and education?
   - Enhance scientific and technological understanding?
   - Foster partnerships between academia, industry, and others?
@@ -78,15 +78,18 @@ NSF uses two equally weighted criteria for all proposals:
 
    *Example*: "We will develop a 10-module online course on computational genomics, incorporating data from this project, to be offered to 500+ students annually across 15 partner institutions. Course materials will be open-access and include Jupyter notebooks for hands-on analysis."
 
-2. **Broaden participation of underrepresented groups (in STEM)**
-   - Partner with minority-serving institutions (HBCUs, HSIs, TCUs)
-   - Recruit students from underrepresented groups
+2. **Broaden participation in STEM**
+
+   > NSF's April 2025 priorities statement (updated July 2026): outreach, recruitment, and participatory activities must be open and available to all Americans and must not preference some groups at the expense of others; engagement with groups or institutions defined by protected characteristics is allowed only as part of broad engagement. NSF's current list of broader-impacts outcomes (nsf.gov/funding/learn/broader-impacts) no longer includes a group-specific participation outcome. Frame this pillar as broad access and check the solicitation's current language.
+
+   - Partner with a broad set of institutions, including community colleges and minority-serving institutions, as part of recruitment open to all
+   - Recruit widely (e.g. open calls, multiple institution types, first-generation and rural reach) rather than setting group quotas
    - Provide mentoring and support programs
    - Address systemic barriers to participation
    - Create inclusive research environments
    - Engage underrepresented communities in research
 
-   *Example*: "We will establish a summer research program for 8 undergraduates annually from 4 partner HBCUs, providing stipends, housing, and year-round mentoring. Program will include professional development workshops and pathways to graduate school."
+   *Example*: "We will run an openly advertised summer research program for 8 undergraduates annually, recruiting through partnerships with four regional institutions of different types (two community colleges, a minority-serving institution, and a rural comprehensive university), with stipends, housing, year-round mentoring, and pathways to graduate school."
 
 3. **Enhance infrastructure for research and education**
    - Develop shared instrumentation or facilities
@@ -179,9 +182,9 @@ NSF uses two equally weighted criteria for all proposals:
    - Broader impacts of prior work
    - Publications and products
 
-**Formatting Requirements**:
-- Font: 11-point or larger (Times Roman, Arial, Palatino, Computer Modern)
-- Margins: 1 inch all sides
+**Formatting Requirements** (PAPPG 24-1, Ch. II.D.2):
+- Fonts: Arial (not Arial Narrow), Courier New, or Palatino Linotype at 10 pt or larger; Times New Roman or Computer Modern at 11 pt or larger (smaller type is allowed in equations, figures, tables, and captions)
+- Margins: at least 1 inch all sides
 - Line spacing: No more than 6 lines per inch
 - Page size: 8.5 x 11 inches
 - No smaller fonts in figures (must be legible)
@@ -196,27 +199,22 @@ NSF uses two equally weighted criteria for all proposals:
 - Use consistent format (doesn't have to match specific style)
 - Sufficient information for reviewers to locate references
 
-### Biographical Sketch (3 pages max per person)
+### Biographical Sketch (Common Form, prepared in SciENcv; no page limit)
 
-**Required NSF Format** (as of 2023 PAPPG):
+Each senior/key person prepares, certifies, and submits the Biographical Sketch Common Form through SciENcv, certifying that it is accurate, current, and complete and that they are not party to a malign foreign talent recruitment program. PAPPG 24-1 sets no page or character limit except where noted in the form.
 
-**Section A: Professional Preparation**
-- Undergraduate, graduate, postdoctoral institutions
-- Majors and degrees with years
+- **Identifying information** (name, optional ORCID iD, position title) and **organization and location**
+- **Professional Preparation** — all degrees and postdoctoral/fellowship training, reverse chronological
+- **Appointments and Positions** — all academic, professional, or institutional appointments, paid or unpaid, reverse chronological
+- **Products** — up to 5 closely related to the proposal and up to 5 other significant products (publications, datasets, software, patents)
 
-**Section B: Appointments and Positions**
-- Last 5 positions, current first
+### Synergistic Activities (1 page per person)
 
-**Section C: Products** (up to 5 most relevant to proposal)
-- Publications, datasets, software, patents, etc.
-- Can include products in preparation
+A separate document of up to one page listing up to five distinct examples of the person's professional and scholarly activities with broader impact (formerly a biosketch section).
 
-**Section D: Synergistic Activities** (up to 5)
-- Service, teaching, mentoring, outreach
-- Demonstrates broader engagement beyond research
+### Current and Pending (Other) Support (no page limit; SciENcv)
 
-### Current and Pending Support (no page limit)
-
+- Prepared and certified in SciENcv by each senior/key person, including in-kind contributions and disclosures required under NSPM-33
 - All current and pending support for PI and co-PIs
 - Include project/proposal title, source, award amount, dates
 - Describe overlap with proposed project (if any)
@@ -231,7 +229,7 @@ NSF uses two equally weighted criteria for all proposals:
 
 ### Data Management and Sharing Plan (2 pages max)
 
-**Required for all proposals** (as of 2023 PAPPG)
+**Required for all proposals.** Under PAPPG 24-1 Supplement 2 (awards on or after 22 Jan 2026) the plan is created with the Research.gov DMSP tool (released 27 Apr 2026), collaborative proposals submit one combined plan, and data underlying NSF-funded publications must be shared at the time of publication.
 
 **Must address**:
 1. **Types of data**: What data will be generated?
@@ -247,9 +245,9 @@ NSF uses two equally weighted criteria for all proposals:
 - Justify any restrictions on data sharing
 - Plan for data preservation beyond project period
 
-### Postdoctoral Researcher Mentoring Plan (1 page max)
+### Mentoring Plan (1 page max)
 
-**Required if funding postdocs**
+**Required if the proposal requests funding for postdoctoral scholars or graduate students** (PAPPG 24-1)
 
 **Must address**:
 - Career development objectives
@@ -318,7 +316,7 @@ NSF uses two equally weighted criteria for all proposals:
 
 **Requirements**:
 - Urgent need justification
-- Up to $200,000
+- Up to $300,000 including indirect costs (raised from $200,000 by PAPPG 24-1 Supplement 1, Dec 2025)
 - Up to 1 year duration
 - Simplified review process (program officer discretion)
 - No preliminary data required
@@ -332,7 +330,7 @@ NSF uses two equally weighted criteria for all proposals:
 **Requirements**:
 - High-risk, high-reward research
 - Radically different approaches
-- Up to $300,000
+- Up to $400,000 including indirect costs (raised from $300,000 by PAPPG 24-1 Supplement 1, Dec 2025)
 - Up to 2 years
 - Program officer approval required before submission
 - No panel review (program officer decision)
@@ -488,15 +486,16 @@ NSF uses two equally weighted criteria for all proposals:
 
 ## Recent NSF Policy Updates
 
-### 2023-2024 Changes
+### Current Policy Framework (verified 2026-09)
 
-1. **Data Management and Sharing Plan**: Now required for all proposals (2 pages max)
-2. **Biographical Sketch Format**: Updated to include "Products" instead of "Publications"
-3. **Open Science**: Increased emphasis on open-access publications and data
-4. **Plan for Dissemination**: Some programs require explicit dissemination plans
-5. **Mentoring Plans**: Enhanced requirements for postdoc mentoring plans
+1. **PAPPG NSF 24-1** (effective 20 May 2024) remains in force; NSF deferred the planned NSF 26-1 and now issues supplements instead.
+2. **Supplement 1 (NSF 26-200, effective 8 Dec 2025)**: SBIR/STTR Project Pitch as a proposal type; higher caps for Planning ($200K/yr), RAPID ($300K), and EAGER ($400K) proposals; data supporting NSF-funded publications must be shared at publication; research misconduct now explicitly covers acts committed with AI-based tools.
+3. **Supplement 2 (awards on or after 22 Jan 2026)**: Research.gov DMSP tool, public-access deposit in NSF's Public Access Repository within 12 months, one combined DMSP for collaborative proposals.
+4. **Biosketch and Current and Pending (Other) Support** via SciENcv Common Forms; Synergistic Activities as a separate one-page document; Mentoring Plan covers graduate students as well as postdocs.
+5. **Generative AI**: proposers are encouraged to state in the project description whether and how generative AI was used, and remain responsible for accuracy; reviewers may not upload proposal content to non-approved AI tools (NSF notice, Dec 2023).
+6. **Priorities statement** (April 2025, updated July 2026): broadening-participation activities must be open to all Americans (https://www.nsf.gov/updates-on-priorities).
 
-### NSF Priorities (2024-2025)
+### NSF Priorities (historical snapshot, 2024-2025 — check current solicitations)
 
 - **Climate and Clean Energy**: Climate change mitigation and adaptation
 - **Quantum Information Science**: Quantum computing, sensing, networking
@@ -558,13 +557,13 @@ NSF uses two equally weighted criteria for all proposals:
 
 - **NSF Homepage**: https://www.nsf.gov
 - **Award Search**: https://www.nsf.gov/awardsearch/
-- **Proposal & Award Policies & Procedures Guide (PAPPG)**: https://www.nsf.gov/publications/pub_summ.jsp?ods_key=pappg
-- **FastLane**: https://www.fastlane.nsf.gov/
-- **Research.gov**: https://www.research.gov/
-- **Broader Impacts Resources**: https://www.nsf.gov/od/oia/special/broaderimpacts/
-- **NSF Funding Statistics**: https://www.nsf.gov/statistics/
+- **Proposal & Award Policies & Procedures Guide (PAPPG)**: https://www.nsf.gov/policies/pappg
+- **Research.gov** (proposal preparation and submission; FastLane was retired): https://www.research.gov/
+- **Broader Impacts Resources**: https://www.nsf.gov/funding/learn/broader-impacts
+- **NSF Priorities Statement**: https://www.nsf.gov/updates-on-priorities
+- **NSF Funding Statistics (NCSES)**: https://ncses.nsf.gov/
 
 ---
 
-**Key Takeaway**: NSF values both scientific excellence (Intellectual Merit) and societal benefit (Broader Impacts) equally. Successful proposals demonstrate innovative, feasible research that advances knowledge while contributing to education, diversity, infrastructure, or societal well-being in specific, measurable ways.
+**Key Takeaway**: NSF gives full consideration to both scientific excellence (Intellectual Merit) and societal benefit (Broader Impacts). Successful proposals demonstrate innovative, feasible research that advances knowledge while contributing to education, broad participation, infrastructure, or societal well-being in specific, measurable ways.
 

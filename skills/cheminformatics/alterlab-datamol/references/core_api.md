@@ -85,13 +85,13 @@ Generate molecular fingerprints for similarity calculations.
   - `'maccs'` - MACCS keys
   - `'topological'` - Topological fingerprints
   - `'atompair'` - Atom pair fingerprints
-- **Common parameters**: `n_bits`, `radius`
-- **Returns**: Numpy array or RDKit fingerprint object
+- **Common parameters**: `radius`, `fpSize` — extra kwargs are passed straight to RDKit's `rdFingerprintGenerator` (so `fpSize`, not `n_bits`/`nBits`); datamol's `ecfp` default is `radius=3` (ECFP6), `fpSize=2048`
+- **Returns**: Numpy array (default `as_array=True`) or RDKit fingerprint object
 
-### `pdist(mols, ...)`
+### `pdist(mols, n_jobs=1, squareform=True, **fp_args)`
 Calculate pairwise Tanimoto distances between all molecules in a list.
 - **Supports**: Parallel processing via `n_jobs` parameter
-- **Returns**: Distance matrix
+- **Returns**: Square N×N distance matrix by default; `squareform=False` gives the condensed vector
 
 ### `cdist(mols1, mols2, ...)`
 Calculate Tanimoto distances between two sets of molecules.
@@ -105,13 +105,15 @@ Cluster molecules using Butina clustering algorithm.
   - `feature_fn`: Custom function for molecular features
   - `n_jobs`: Parallelization (-1 for all cores)
 - **Important**: Builds full distance matrix - suitable for ~1000 structures, not for 10,000+
-- **Returns**: List of clusters (each cluster is a list of molecule indices)
+- **Returns**: A tuple `(cluster_indices, cluster_mols)` — one tuple of indices and one list of Mols per cluster
 
 ### `pick_diverse(mols, npick, ...)`
-Select diverse subset of molecules based on fingerprint diversity.
+Select diverse subset of molecules based on fingerprint diversity (MaxMin).
+- **Returns**: `(picked_indices, picked_mols)`
 
-### `pick_centroids(mols, npick, ...)`
-Select centroid molecules representing clusters.
+### `pick_centroids(mols, npick=0, threshold=0.5, method='sphere', ...)`
+Select centroid molecules representing clusters (sphere exclusion by default; `maxmin` or RDKit hierarchical methods also accepted).
+- **Returns**: `(centroid_indices, centroid_mols)`
 
 ## Graph Operations
 

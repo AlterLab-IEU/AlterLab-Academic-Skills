@@ -1,6 +1,6 @@
 # Ensembl REST API Endpoints Reference
 
-Comprehensive documentation of all 17 API endpoint categories available in the Ensembl REST API (Release 116, April 2026 — the final release served by `rest.ensembl.org`; see SKILL.md migration note).
+Comprehensive documentation of all 17 API endpoint categories available in the Ensembl REST API (Release 116, June 2026 — the final release served by `rest.ensembl.org`; see SKILL.md migration note).
 
 **Base URLs:**
 - Current assemblies: `https://rest.ensembl.org`
@@ -30,14 +30,16 @@ Access gene trees, genomic alignments, and homology data across species.
 - Retrieve gene tree for a gene family
 - Example: `/genetree/id/ENSGT00390000003602`
 
-**GET /genetree/member/id/:id**
-- Get gene tree by member gene ID
-- Example: `/genetree/member/id/ENSG00000139618`
+**GET /genetree/member/id/:species/:id**
+- Get gene tree by member gene ID (species segment required; the species-less form
+  returns 404). Responses are large — add `prune_species` / `prune_taxon` to trim them
+- Example: `/genetree/member/id/human/ENSG00000139618?prune_species=human;prune_species=mouse`
 
-**GET /homology/id/:id**
-- Find orthologs and paralogs for a gene
-- Parameters: `target_species`, `type` (orthologues, paralogues, all)
-- Example: `/homology/id/ENSG00000139618?target_species=mouse`
+**GET /homology/id/:species/:id**
+- Find orthologs and paralogs for a gene (the species segment is required; the older
+  `/homology/id/:id` form returns 404)
+- Parameters: `target_species`, `type` (orthologues, paralogues, all), `format` (full, condensed)
+- Example: `/homology/id/human/ENSG00000139618?target_species=mouse;type=orthologues`
 
 **GET /homology/symbol/:species/:symbol**
 - Find homologs by gene symbol

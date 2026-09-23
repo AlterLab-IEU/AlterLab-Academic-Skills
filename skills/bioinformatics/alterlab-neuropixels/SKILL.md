@@ -3,10 +3,11 @@ name: alterlab-neuropixels
 description: Analyze Neuropixels 1.0/2.0 extracellular electrophysiology with SpikeInterface — load SpikeGLX/Open Ephys recordings, preprocess and motion-correct, run Kilosort4 spike sorting, compute quality metrics, apply Allen/IBL curation, and do AI-assisted visual inspection. Use when working with neural recordings, spike sorting, or extracellular electrophysiology, or when the user mentions Neuropixels, SpikeGLX, Open Ephys, Kilosort, quality metrics, or unit curation. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for SpikeInterface 0.104/0.105 (current 0.105.0, released 2026-09-21), which requires Python >= 3.10. Kilosort4 needs a CUDA GPU; the internal CPU sorters do not."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Neuropixels Data Analysis
@@ -27,6 +28,16 @@ This skill should be used when:
 - Curating units using Allen/IBL criteria
 - Creating visualizations of neural data
 - Exporting results to Phy or NWB
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Single-cell or bulk **transcriptomics** rather than electrophysiology | `alterlab-scanpy` / `alterlab-rnaseq-quant` |
+| Flow/mass **cytometry** FCS files | `alterlab-flowio` |
+| Generic time-series statistics or ML on already-extracted spike features | `alterlab-statistical-analysis` / `alterlab-scikit-learn` |
+| Plotting an arbitrary figure from data you already have | `alterlab-matplotlib` / `alterlab-scientific-viz` |
+| Network/graph analysis of a connectivity matrix | `alterlab-networkx` |
 
 ## Supported Hardware & Formats
 
@@ -327,22 +338,53 @@ Comprehensive visualization guide for publication-quality figures.
 
 ```bash
 # Core packages
-pip install spikeinterface[full] probeinterface neo
+uv pip install "spikeinterface[full]" probeinterface neo
 
-# Spike sorters
-pip install kilosort          # Kilosort4 (GPU required)
-pip install spykingcircus     # SpykingCircus2 (CPU)
-pip install mountainsort5     # Mountainsort5 (CPU)
+# External sorters (separate packages, run via si.run_sorter)
+uv pip install kilosort            # Kilosort4 (CUDA GPU required)
+uv pip install mountainsort5       # Mountainsort5 (CPU)
+
+# Internal sorters ship INSIDE spikeinterface — install the extra, not a
+# standalone package. There is no `spykingcircus` package for SpykingCircus2.
+uv pip install "spikeinterface[spykingcircus2]"
+uv pip install "spikeinterface[tridesclous2]"
 
 # Our toolkit ships as local scripts (scripts/) — no pip install needed;
 # run them directly or import from scripts.neuropixels_pipeline
 
 # Optional: AI curation
-pip install anthropic
+uv pip install anthropic
 
 # Optional: IBL tools
-pip install ibl-neuropixel ibllib
+uv pip install ibl-neuropixel ibllib
 ```
+
+### SpikeInterface 0.105 — breaking changes worth knowing
+
+0.105.0 (2026-09-21) renamed a lot of surface area. Objects saved by older versions
+still load, but scripts written against 0.104 may not run:
+
+- **`peak_sign` is gone from the analysis API.** The main channel and peak sign are
+  now fixed when the `SortingAnalyzer` is created and stored as the `main_channel_id`
+  sorting property, so `compute_quality_metrics`, `compute_template_metrics`,
+  `compute_spike_amplitudes`, `compute_spike_locations` and `compute_unit_locations`
+  no longer accept it. `compute_snrs(..., peak_sign=, peak_mode=)` became
+  `compute_snrs(..., method=)`.
+- `get_template_extremum_channel()` -> `SortingAnalyzer.get_main_channels()` (old
+  names remain as deprecated shims).
+- `estimate_sparsity()` now defaults to `peak_sign="both"` instead of `"neg"` — a
+  silent change in results, not an error, so re-check sparsity-dependent output.
+- Probe handling: `set_probe()`/`set_probegroup()` act **in place** and return `None`;
+  use `select_channels_with_probe()` to get a new recording. `reset_probe()` ->
+  `remove_probe()`.
+- `ChunkRecordingExecutor` -> `TimeSeriesChunkExecutor`;
+  `BaseExtractor.load_from_folder()` removed in favour of `si.load()`.
+- New in 0.105: `dartsort` as an external sorter, `SortingAnalyzer` `lazy` and
+  `read_only` modes, `detect_and_remove_artifacts` preprocessing, and
+  `read_kilosort4_motion()` to build a `Motion` object from a Kilosort4 output folder.
+
+Pin the SpikeInterface version in any analysis you intend to reproduce, and record it
+in the methods section — metric definitions have changed across minor releases.
 
 ## Project Structure
 

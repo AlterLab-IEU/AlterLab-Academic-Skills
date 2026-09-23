@@ -53,7 +53,7 @@ with pm.Model(coords={'groups': group_names}) as hierarchical_model:
 
 **Use template:** `assets/hierarchical_model_template.py`
 
-**Critical:** Always use non-centered parameterization for hierarchical models to avoid divergences.
+Prefer the non-centered form when groups have few observations: the centered form then creates funnel geometry that NUTS explores poorly (divergences). With many observations per group the centered form can sample better, so switch if the non-centered model mixes slowly.
 
 ## Poisson Regression
 

@@ -18,19 +18,35 @@ Domains have NO nested ``skills/`` subdir, so default ``skills/`` auto-discovery
 finds nothing under the new root and the explicit array is the only thing loaded
 — scoping each install to one domain.
 
-## Surface beyond skills (commands / agents / hooks / mcpServers)
+## Surface beyond skills (commands / agents / workflows / hooks / mcpServers / userConfig)
 
 Some domains ship more than skills. This generator auto-discovers, relative to
 each domain's plugin root:
 
-* ``.mcp.json``            -> emits ``"mcpServers": "./.mcp.json"`` (also auto-discovered)
-* ``hooks/hooks.json``     -> emits ``"hooks": "./hooks/hooks.json"`` (also auto-discovered)
+* ``.mcp.json``            -> emits ``"mcpServers": "./.mcp.json"``, plus a ``userConfig``
+                              option for every ``${user_config.KEY}`` it references
+                              (specs live in ``USER_CONFIG_SPEC``; an unknown key is an error)
+* ``hooks/hooks.json``     -> not declared: auto-discovered at the plugin root (a marketplace
+                              entry rejects the file-path form of ``hooks``)
+* ``workflows/*.js``       -> emits ``"workflows": "./workflows/"`` (Claude Code dynamic
+                              workflows, run as ``/<plugin>:<meta.name>``)
 * ``<skill>/commands/``    -> emits ``"commands": [...]`` (REPLACES default; must be explicit)
-* ``<skill>/agents/``      -> emits ``"agents": [...]`` (REPLACES default; must be explicit)
+* ``<skill>/agents/*.md``  -> emits ``"agents": [...]`` as individual FILES (REPLACES default;
+                              the field rejects directory entries)
 
 ``commands`` and ``agents`` REPLACE the default ``commands/`` / ``agents/`` plugin-root
 folders (which do not exist here — the files are nested inside individual skill dirs),
 so they MUST be enumerated explicitly or they will not load.
+
+## Standalone domains (``STANDALONE_PLUGIN_DOMAINS``)
+
+Most entries are ``strict: false`` — the marketplace entry is the whole plugin definition.
+A standalone domain instead ships its own ``.claude-plugin/plugin.json`` (so the folder also
+works via ``claude --plugin-dir``); its marketplace entry is ``strict: true`` and carries only
+metadata, because a ``strict: false`` entry that declares components conflicts with a
+component-declaring ``plugin.json`` and the plugin fails to load.
+
+Validate the result with the real loader: ``claude plugin validate .``
 
 ## Versioning
 
@@ -60,6 +76,9 @@ PACKAGE_JSON = REPO / "package.json"
 SPIKE_DOC = REPO / "docs" / "design" / "scoping-spike.md"
 
 HOMEPAGE = "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills"
+# SchemaStore IDs (editor autocomplete only — Claude Code ignores `$schema` at load time).
+MARKETPLACE_SCHEMA = "https://www.schemastore.org/claude-code-marketplace.json"
+PLUGIN_SCHEMA = "https://www.schemastore.org/claude-code-plugin-manifest.json"
 AUTHOR = {"name": "AlterLab @ Izmir University of Economics", "url": "https://github.com/AlterLab-IEU"}
 
 # Human-facing one-liners per category (kept here, not derived, so the catalog reads well).
@@ -80,6 +99,7 @@ CATEGORY_BLURB = {
     "turkish-academia": "Turkish academic system workflows (YÖK, ÜAK, DergiPark, YÖK-Tez, TÜBİTAK, doçentlik)",
     "faculty-life": "Faculty research-lifecycle and academic administration (syllabus AI-policy, IRB/consent, post-award grant admin, recommendation letters, accreditation AoL)",
     "methodology": "Research methodology and rigor scaffolds (Iron Laws, rationalization tables, decision flowcharts, systematic-reasoning checklists)",
+    "workflows": "Runnable multi-agent research workflows for Claude Code (systematic-review screening, citation audit, independent review panel, claim stress-test, rebuttal, grant mock panel, literature map) plus the portable playbook skill",
     "social-science-workflow": "Stage-gated social-science methods spine — orchestrator + 5 validity gates (design/identifying-assumption, measurement, sampling/power, reflexivity, inference) and 11 analysis modules (causal inference, complex-survey analysis, SEM/psychometrics, multilevel models, QCA, SNA, ABM, text-as-data, qualitative analysis, meta-analysis, missing data)",
 }
 
@@ -101,6 +121,7 @@ CATEGORY_TAGS = {
     "turkish-academia": ("research", ["turkish-academia", "yok", "uak", "dergipark", "yok-tez", "tubitak"]),
     "faculty-life": ("productivity", ["faculty", "teaching", "irb", "grant-admin", "accreditation", "recommendation-letters"]),
     "methodology": ("research", ["methodology", "research-rigor", "systematic-reasoning", "checklists", "decision-flowcharts"]),
+    "workflows": ("research", ["workflows", "multi-agent", "systematic-review", "peer-review", "citation-audit", "orchestration"]),
     "social-science-workflow": ("research", ["social-science", "research-design", "causal-inference", "psychometrics", "sampling", "power-analysis"]),
 }
 
@@ -153,11 +174,158 @@ def _rel_dirs(skill_dir: Path, sub: str) -> list[str]:
     return []
 
 
+def _agent_files(skill_dir: Path) -> list[str]:
+    """Plugin-root-relative paths of every agent definition under skill_dir/agents/.
+
+    The `agents` component field takes agent FILES, not directories — a directory entry
+    fails `claude plugin validate` ("agents.0: Invalid input") and makes the whole plugin
+    uninstallable. So each `agents/*.md` is listed individually."""
+    d = skill_dir / "agents"
+    if not d.is_dir():
+        return []
+    return [f"./{skill_dir.name}/agents/{f.name}" for f in sorted(d.glob("*.md"))]
+
+
+# `${user_config.KEY}` placeholders used by a domain's `.mcp.json` must be declared as plugin
+# `userConfig` options, or Claude Code has nothing to prompt for and the MCP servers start with
+# unresolved credentials. Every key a `.mcp.json` references must have a spec here (checked in
+# `_user_config`). Strings default to "" so leaving an optional value blank substitutes cleanly.
+USER_CONFIG_SPEC: dict[str, dict] = {
+    "openalex_api_key": {
+        "type": "string",
+        "title": "OpenAlex API key (recommended)",
+        "description": (
+            "Free key from https://openalex.org/settings/api. OpenAlex meters usage per day "
+            "(since February 2026); keyless requests share a small per-IP budget and fail with "
+            "HTTP 429 once it is spent."
+        ),
+        "sensitive": True,
+        "default": "",
+    },
+    "zotero_library_id": {
+        "type": "string",
+        "title": "Zotero library ID (optional)",
+        "description": "Numeric user or group library ID, shown at https://www.zotero.org/settings/keys",
+        "default": "",
+    },
+    "zotero_library_type": {
+        "type": "string",
+        "title": "Zotero library type",
+        "description": "Either 'user' (personal library) or 'group'.",
+        "default": "user",
+    },
+    "zotero_api_key": {
+        "type": "string",
+        "title": "Zotero API key (optional)",
+        "description": "Read access key from https://www.zotero.org/settings/keys",
+        "sensitive": True,
+        "default": "",
+    },
+}
+
+_USER_CONFIG_RE = re.compile(r"\$\{user_config\.([A-Za-z_][A-Za-z0-9_]*)\}")
+
+
+def _user_config(cat_dir: Path) -> dict:
+    """`userConfig` options for every `${user_config.KEY}` in the domain's `.mcp.json`."""
+    mcp = cat_dir / ".mcp.json"
+    if not mcp.is_file():
+        return {}
+    keys = sorted(set(_USER_CONFIG_RE.findall(mcp.read_text(encoding="utf-8"))))
+    missing = [k for k in keys if k not in USER_CONFIG_SPEC]
+    if missing:
+        raise SystemExit(
+            f"error: {mcp.relative_to(REPO)} references undeclared user_config key(s) {missing}; "
+            "add them to USER_CONFIG_SPEC in scripts/gen_marketplace.py"
+        )
+    return {k: USER_CONFIG_SPEC[k] for k in keys}
+
+
+def _skill_dirs(cat_dir: Path) -> list[Path]:
+    return sorted(d for d in cat_dir.iterdir() if d.is_dir() and (d / "SKILL.md").is_file())
+
+
+def count_skills() -> int:
+    """Total skills across every domain (standalone entries carry no `skills` array)."""
+    return sum(len(_skill_dirs(d)) for d in SKILLS.iterdir() if d.is_dir())
+
+
+def _components(cat_dir: Path, skill_dirs: list[Path]) -> dict:
+    """Component fields (skills, commands, agents, workflows, hooks, MCP, userConfig) for a domain.
+
+    Paths are plugin-root-relative (the plugin root is the domain folder)."""
+    comp: dict = {"skills": [f"./{d.name}" for d in skill_dirs]}
+
+    # commands/ and agents/ are nested inside individual skill dirs. These fields REPLACE the
+    # (nonexistent) default plugin-root commands/ and agents/ folders, so they MUST be
+    # enumerated explicitly or they will not load.
+    commands: list[str] = []
+    agents: list[str] = []
+    for sd in skill_dirs:
+        commands += _rel_dirs(sd, "commands")
+        agents += _agent_files(sd)
+    if commands:
+        comp["commands"] = commands
+    if agents:
+        comp["agents"] = agents
+
+    # Claude Code dynamic-workflow scripts ship in a `workflows/` dir at the plugin root and run
+    # as `/<plugin>:<meta.name>`. Declared explicitly because a strict:false entry is the whole
+    # definition.
+    wf = cat_dir / "workflows"
+    if wf.is_dir() and any(wf.glob("*.js")):
+        comp["workflows"] = "./workflows/"
+
+    # hooks/hooks.json at the plugin root is auto-discovered in every mode, so it is NOT
+    # declared: a marketplace entry rejects the file-path form of `hooks` ("not yet supported in
+    # a marketplace entry"), and hooks merge across sources, so re-declaring the default file in
+    # a plugin.json would register them twice. .mcp.json is declared (path form is accepted and
+    # servers de-duplicate by name).
+    if (cat_dir / ".mcp.json").is_file():
+        comp["mcpServers"] = "./.mcp.json"
+    user_config = _user_config(cat_dir)
+    if user_config:
+        comp["userConfig"] = user_config
+    return comp
+
+
+# Domains that ship their own `.claude-plugin/plugin.json`, so the folder is a complete plugin
+# on its own (clone + `claude --plugin-dir skills/<domain>`), independent of the umbrella
+# marketplace. For these the plugin.json is the authority (`strict: true`) and the marketplace
+# entry carries only metadata: a strict:false entry that ALSO declares components conflicts with
+# a component-declaring plugin.json and the plugin fails to load.
+STANDALONE_PLUGIN_DOMAINS = {"social-science-workflow", "workflows"}
+
+# Other marketplace plugins a standalone domain needs at runtime (resolved by name within this
+# marketplace and installed alongside it). The workflows call alterlab-core's verifier/reviewer
+# skills, so installing alterlab-workflows pulls in alterlab-core. Bare names only: version
+# ranges would need per-plugin `{name}--v{version}` git tags, which this repo does not publish.
+PLUGIN_DEPENDENCIES = {"workflows": ["alterlab-core"]}
+
+# Dependency-only bundle plugins: installing one installs every plugin it lists, so users get a
+# curated set in one step instead of 18 separate installs. Emitted to plugins/<name>/.
+BUNDLES = {
+    "alterlab-essentials": {
+        "description": (
+            "Faculty starter kit — installs the core research-to-publication pipeline, the multi-agent "
+            "research workflows, research tools, writing tools, methodology gates, and scientific-database "
+            "connectors in one step"
+        ),
+        "domains": ["core", "workflows", "research-tools", "writing-tools", "methodology", "databases"],
+        "keywords": ["bundle", "starter-kit", "faculty", "research", "writing"],
+    },
+    "alterlab-complete": {
+        "description": "The complete AlterLab Academic Skills suite — installs every domain plugin in one step",
+        "domains": "*",
+        "keywords": ["bundle", "complete", "all-domains"],
+    },
+}
+PLUGINS_DIR = REPO / "plugins"
+
+
 def build_plugin_scoped(cat_dir: Path, version: str) -> dict | None:
     """Build one per-domain plugin entry in the v2.0 scoped shape (verdict == 'go')."""
-    skill_dirs = sorted(
-        d for d in cat_dir.iterdir() if d.is_dir() and (d / "SKILL.md").is_file()
-    )
+    skill_dirs = _skill_dirs(cat_dir)
     if not skill_dirs:
         return None
     cat = cat_dir.name
@@ -166,69 +334,87 @@ def build_plugin_scoped(cat_dir: Path, version: str) -> dict | None:
     entry: dict = {
         "name": f"alterlab-{cat}",
         # source = the domain folder => plugin root is <repo>/skills/<cat>/.
-        # No nested skills/ exists under it, so the explicit skills[] below is
-        # the only thing loaded => the install is scoped to this one domain.
+        # No nested skills/ exists under it, so the explicit skills[] is the only thing
+        # loaded => the install is scoped to this one domain.
         "source": f"./skills/{cat}",
-        "description": f"{CATEGORY_BLURB.get(cat, cat)} ({len(skill_dirs)} skills)",
+        "description": f"{CATEGORY_BLURB.get(cat, cat)} ({len(skill_dirs)} skill{'s' if len(skill_dirs) != 1 else ''})",
         "version": version,
         "author": AUTHOR,
         "homepage": HOMEPAGE,
         "license": "MIT",
         "category": category,
         "keywords": keywords,
-        "strict": False,
-        # Plugin-root-relative (NOT ./skills/<cat>/<skill>).
-        "skills": [f"./{d.name}" for d in skill_dirs],
     }
-
-    # --- extra surface, discovered relative to this domain's plugin root ---
-
-    # commands/ and agents/ are nested inside individual skill dirs. These fields
-    # REPLACE the (nonexistent) default plugin-root commands/ and agents/ folders,
-    # so they MUST be enumerated explicitly or they will not load.
-    commands: list[str] = []
-    agents: list[str] = []
-    for sd in skill_dirs:
-        commands += _rel_dirs(sd, "commands")
-        agents += _rel_dirs(sd, "agents")
-    if commands:
-        entry["commands"] = commands
-    if agents:
-        entry["agents"] = agents
-
-    # hooks/hooks.json and .mcp.json sit at the domain (plugin) root. They are
-    # auto-discovered there, but declaring them is explicit and survives the
-    # additive/replace subtleties.
-    if (cat_dir / "hooks" / "hooks.json").is_file():
-        entry["hooks"] = "./hooks/hooks.json"
-    if (cat_dir / ".mcp.json").is_file():
-        entry["mcpServers"] = "./.mcp.json"
-
+    if cat in STANDALONE_PLUGIN_DOMAINS:
+        # The domain's own plugin.json declares the components.
+        entry["strict"] = True
+        return entry
+    entry["strict"] = False
+    entry.update(_components(cat_dir, skill_dirs))
     return entry
-
-
-# Domains that ALSO ship a standalone `.claude-plugin/plugin.json`, so the folder can be
-# installed as its own plugin (clone + `claude --plugin-dir skills/<domain>`), independent of
-# the umbrella marketplace. plugin.json supports an explicit `skills` array (Claude Code plugins
-# reference), so no restructuring is needed. Add a domain name here to give it the same treatment.
-STANDALONE_PLUGIN_DOMAINS = {"social-science-workflow"}
 
 
 def build_domain_plugin_json(cat_dir: Path, version: str) -> dict | None:
     """Standalone `.claude-plugin/plugin.json` for a single domain (plugin root == the domain dir).
 
-    Reuses the scoped marketplace entry but drops the marketplace-only `source` / `strict` /
-    `category` fields. The `skills` array is already plugin-root-relative (`./<skill>`), which is
-    exactly right when the plugin root is the domain folder itself."""
+    Carries the same metadata as the marketplace entry (minus the marketplace-only `source` /
+    `strict` / `category` fields) plus the full component set. The `skills` array is
+    plugin-root-relative (`./<skill>`), which is exactly right when the plugin root is the domain
+    folder itself."""
+    skill_dirs = _skill_dirs(cat_dir)
     entry = build_plugin_scoped(cat_dir, version)
     if entry is None:
         return None
     drop = {"source", "strict", "category"}
     manifest = {
-        "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+        "$schema": PLUGIN_SCHEMA,
         **{k: v for k, v in entry.items() if k not in drop},
+        **_components(cat_dir, skill_dirs),
     }
+    if cat_dir.name in PLUGIN_DEPENDENCIES:
+        manifest["dependencies"] = PLUGIN_DEPENDENCIES[cat_dir.name]
     return manifest
+
+
+def _domain_names() -> list[str]:
+    return sorted(d.name for d in SKILLS.iterdir() if d.is_dir() and _skill_dirs(d))
+
+
+def build_bundle_manifest(name: str, version: str) -> dict:
+    """plugin.json for a dependency-only bundle plugin."""
+    spec = BUNDLES[name]
+    domains = _domain_names() if spec["domains"] == "*" else spec["domains"]
+    missing = [d for d in domains if not (SKILLS / d).is_dir()]
+    if missing:
+        raise SystemExit(f"error: bundle {name} lists unknown domain(s) {missing}")
+    return {
+        "$schema": PLUGIN_SCHEMA,
+        "name": name,
+        "description": spec["description"],
+        "version": version,
+        "author": AUTHOR,
+        "homepage": HOMEPAGE,
+        "license": "MIT",
+        "keywords": spec["keywords"],
+        "dependencies": [f"alterlab-{d}" for d in domains],
+    }
+
+
+def build_bundle_entry(name: str, version: str) -> dict:
+    """Marketplace entry for a bundle: metadata only; its plugin.json carries the dependencies."""
+    manifest = build_bundle_manifest(name, version)
+    return {
+        "name": name,
+        "source": f"./plugins/{name}",
+        "description": manifest["description"],
+        "version": version,
+        "author": AUTHOR,
+        "homepage": HOMEPAGE,
+        "license": "MIT",
+        "category": "research",
+        "keywords": manifest["keywords"],
+        "strict": True,
+    }
 
 
 def domain_plugin_paths(version: str) -> list[tuple[Path, str]]:
@@ -236,10 +422,16 @@ def domain_plugin_paths(version: str) -> list[tuple[Path, str]]:
     out = []
     for cat in sorted(STANDALONE_PLUGIN_DOMAINS):
         cat_dir = SKILLS / cat
+        if not cat_dir.is_dir():
+            continue
         manifest = build_domain_plugin_json(cat_dir, version)
         if manifest is None:
             continue
         path = cat_dir / ".claude-plugin" / "plugin.json"
+        out.append((path, json.dumps(manifest, indent=2, ensure_ascii=False) + "\n"))
+    for name in sorted(BUNDLES):
+        path = PLUGINS_DIR / name / ".claude-plugin" / "plugin.json"
+        manifest = build_bundle_manifest(name, version)
         out.append((path, json.dumps(manifest, indent=2, ensure_ascii=False) + "\n"))
     return out
 
@@ -281,10 +473,12 @@ def build(version: str, verdict: str) -> dict:
         entry = builder(cat_dir, version)
         if entry is not None:
             plugins.append(entry)
-    total = sum(len(p["skills"]) for p in plugins)
+    if verdict == "go":
+        plugins += [build_bundle_entry(name, version) for name in sorted(BUNDLES)]
+    total = count_skills()
     description = f"{total} Claude skills for academic research, organized by domain"
     return {
-        "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+        "$schema": MARKETPLACE_SCHEMA,
         "name": "alterlab-academic-skills",
         # Top-level description/version are the first-class marketplace fields per the
         # Claude Code plugin-marketplace spec; the metadata block below mirrors them for
@@ -295,24 +489,28 @@ def build(version: str, verdict: str) -> dict:
             "name": "AlterLab @ Izmir University of Economics",
             "email": "alterlab.ieu@gmail.com",
         },
+        # `metadata` mirrors description/version for backward compatibility; the marketplace
+        # schema has no `metadata.author` (the maintainer lives in `owner`).
         "metadata": {
             "description": description,
             "version": version,
-            # metadata.author advertises the marketplace maintainer (agentskills.io spec).
-            "author": AUTHOR,
         },
         "plugins": plugins,
     }
 
 
-def render_package_json(version: str) -> str:
-    """Return package.json with its top-level "version" set to `version`.
+def render_package_json(version: str, total: int) -> str:
+    """Return package.json with its "version" and skill-count description kept current.
 
     Preserves all other fields and formatting (2-space indent + trailing newline)
-    so the only diff is the version bump.
+    so the only diff is the version bump / count.
     """
     data = json.loads(PACKAGE_JSON.read_text(encoding="utf-8"))
     data["version"] = version
+    data["description"] = (
+        f"{total} Claude AI skills for faculty members and academic researchers "
+        "— organized by research domain"
+    )
     return json.dumps(data, indent=2, ensure_ascii=False) + "\n"
 
 
@@ -326,7 +524,7 @@ def main() -> int:
     verdict = scoping_verdict()
     data = build(version, verdict)
     rendered = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
-    pkg_rendered = render_package_json(version)
+    pkg_rendered = render_package_json(version, count_skills())
 
     domain_plugins = domain_plugin_paths(version)
 
@@ -337,7 +535,7 @@ def main() -> int:
             stale.append(".claude-plugin/marketplace.json")
         pkg_current = PACKAGE_JSON.read_text(encoding="utf-8") if PACKAGE_JSON.exists() else ""
         if pkg_current != pkg_rendered:
-            stale.append("package.json (version out of sync with pyproject.toml)")
+            stale.append("package.json (version/skill count out of sync)")
         for path, text in domain_plugins:
             cur = path.read_text(encoding="utf-8") if path.exists() else ""
             if cur != text:
@@ -361,7 +559,7 @@ def main() -> int:
     for path, text in domain_plugins:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
-    total = sum(len(p["skills"]) for p in data["plugins"])
+    total = count_skills()
     extra = f" + {len(domain_plugins)} standalone plugin.json" if domain_plugins else ""
     print(
         f"Wrote {OUT.relative_to(REPO)} + package.json{extra}: "

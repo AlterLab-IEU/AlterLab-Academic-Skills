@@ -146,6 +146,10 @@ Insider transactions, institutional holders, or fund portfolios.
 | `days` | Lookback for insider trades (default: 90) |
 | `limit` | Max results (default: 20) |
 
+### Other tools (edgartools 5.58)
+
+The 5.58 server also registers `edgar_read`, `edgar_text_search`, `edgar_notes`, `edgar_trends`, `edgar_screen`, `edgar_monitor`, `edgar_fund`, and `edgar_proxy`. Parameters change between releases, so list them from the connected client (or run `python -m edgar.ai --test`) rather than assuming a schema.
+
 ---
 
 ## Built-in AI Features

@@ -46,6 +46,7 @@ SKILLS_REF_PIN = "skills-ref@0.1.5"
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 NAME_MAX = 64
 DESCRIPTION_MAX = 1024
+COMPATIBILITY_MAX = 500  # optional field; skills-ref rejects longer values
 REFERENCES_MAX_DEPTH = 1  # references/<file> is depth 1; references/<sub>/<file> is depth 2.
 
 # Pull `references/...md` style relative citations out of the body for the depth check.
@@ -132,6 +133,11 @@ def check_native(skill_dir: Path) -> list[str]:
         problems.append("missing required frontmatter field: description")
     elif len(desc) > DESCRIPTION_MAX:
         problems.append(f"description exceeds {DESCRIPTION_MAX} chars ({len(desc)})")
+
+    # compatibility rule (optional field, but bounded when present)
+    compat = fields.get("compatibility", "")
+    if len(compat) > COMPATIBILITY_MAX:
+        problems.append(f"compatibility exceeds {COMPATIBILITY_MAX} chars ({len(compat)})")
 
     # references depth rule
     for citation in _REF_CITATION_RE.findall(body):

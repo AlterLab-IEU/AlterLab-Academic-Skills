@@ -24,22 +24,25 @@ import json
 import requests
 from typing import List, Dict
 
+TIMEOUT = 120  # seconds; analysis of long gene lists can take a while
+
 
 class ReactomeClient:
     """Client for interacting with Reactome REST APIs"""
 
+    # No timeout means a stalled connection hangs the script indefinitely.
     CONTENT_BASE = "https://reactome.org/ContentService"
     ANALYSIS_BASE = "https://reactome.org/AnalysisService"
 
     def get_version(self) -> str:
         """Get Reactome database version"""
-        response = requests.get(f"{self.CONTENT_BASE}/data/database/version")
+        response = requests.get(f"{self.CONTENT_BASE}/data/database/version", timeout=TIMEOUT)
         response.raise_for_status()
         return response.text.strip()
 
     def query_pathway(self, pathway_id: str) -> Dict:
         """Query pathway information by ID"""
-        response = requests.get(f"{self.CONTENT_BASE}/data/query/{pathway_id}")
+        response = requests.get(f"{self.CONTENT_BASE}/data/query/{pathway_id}", timeout=TIMEOUT)
         response.raise_for_status()
         return response.json()
 
@@ -50,7 +53,8 @@ class ReactomeClient:
         form returns 404 on the current Content Service.
         """
         response = requests.get(
-            f"{self.CONTENT_BASE}/data/participants/{pathway_id}/participatingPhysicalEntities"
+            f"{self.CONTENT_BASE}/data/participants/{pathway_id}/participatingPhysicalEntities",
+            timeout=TIMEOUT,
         )
         response.raise_for_status()
         return response.json()
@@ -64,6 +68,7 @@ class ReactomeClient:
         response = requests.get(
             f"{self.CONTENT_BASE}/search/query",
             params={"query": term, "types": "Pathway"},
+            timeout=TIMEOUT,
         )
         response.raise_for_status()
         payload = response.json()
@@ -78,14 +83,15 @@ class ReactomeClient:
         response = requests.post(
             f"{self.ANALYSIS_BASE}/identifiers/",
             headers={"Content-Type": "text/plain"},
-            data=data
+            data=data,
+            timeout=TIMEOUT,
         )
         response.raise_for_status()
         return response.json()
 
     def get_analysis_by_token(self, token: str) -> Dict:
         """Retrieve analysis results by token"""
-        response = requests.get(f"{self.ANALYSIS_BASE}/token/{token}")
+        response = requests.get(f"{self.ANALYSIS_BASE}/token/{token}", timeout=TIMEOUT)
         response.raise_for_status()
         return response.json()
 

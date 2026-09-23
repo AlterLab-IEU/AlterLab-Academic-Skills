@@ -1,19 +1,20 @@
 ---
 name: alterlab-scientific-thinking
-description: Evaluate scientific claims and evidence quality using evidence grading frameworks (GRADE, Cochrane Risk of Bias), assessing experimental design validity and identifying biases, confounders, statistical pitfalls, and logical fallacies. Use when judging evidence quality, grading certainty of evidence, spotting design or causal-inference flaws, identifying biases or confounders, naming statistical fallacies, or teaching critical analysis. For writing a formal submittable peer review use alterlab-peer-review; for a multi-reviewer mock panel verdict use alterlab-paper-reviewer; for IRB/consent/conflict-of-interest ethics use alterlab-research-ethics. Part of the AlterLab Academic Skills suite.
+description: Evaluate scientific claims and evidence quality using evidence grading frameworks (GRADE, Cochrane risk-of-bias tools such as RoB 2 and ROBINS-I), assessing experimental design validity and identifying biases, confounders, statistical pitfalls, and logical fallacies. Use when judging evidence quality, grading certainty of evidence, spotting design or causal-inference flaws, identifying biases or confounders, naming statistical fallacies, or teaching critical analysis. For writing a formal submittable peer review use alterlab-peer-review; for a multi-reviewer mock panel verdict use alterlab-paper-reviewer; for IRB/consent/conflict-of-interest ethics use alterlab-research-ethics. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 compatibility: No API key required. Guidance-focused skill; optional Python helpers run via `uv run python`.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Scientific Critical Thinking
 
 ## Overview
 
-Critical thinking is a systematic process for evaluating scientific rigor. Assess methodology, experimental design, statistical validity, biases, confounding, and evidence quality using GRADE and Cochrane ROB frameworks. Apply this skill for critical analysis of scientific claims.
+Critical thinking is a systematic process for evaluating scientific rigor. Assess methodology, experimental design, statistical validity, biases, confounding, and evidence quality using GRADE and the Cochrane risk-of-bias tools (RoB 2 for randomized trials, ROBINS-I for non-randomized studies of interventions). Apply this skill for critical analysis of scientific claims.
 
 ## When to Use This Skill
 
@@ -22,9 +23,19 @@ This skill should be used when:
 - Assessing statistical validity and evidence quality
 - Identifying biases and confounding in studies
 - Reviewing scientific claims and conclusions
-- Conducting systematic reviews or meta-analyses
+- Appraising included studies for a systematic review (risk of bias, GRADE certainty)
 - Applying GRADE or Cochrane risk of bias assessments
 - Providing critical analysis of research papers
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Writing a formal, submittable reviewer report for a journal or grant | `alterlab-peer-review` |
+| A multi-reviewer mock panel verdict on a whole manuscript | `alterlab-paper-reviewer` |
+| Rubric scores for a paper, thesis, or proposal | `alterlab-scholar-eval` |
+| Running the statistical test or model itself | `alterlab-statistical-analysis` |
+| Pooling effect sizes across studies (forest plots, heterogeneity, publication bias) | `alterlab-meta-analysis` |
 
 ## Core Capabilities
 
@@ -369,4 +380,6 @@ This skill includes comprehensive reference materials that provide detailed fram
 3. Recognize limitations and uncertainties
 4. Suggest improvements for future work
 5. Advance scientific understanding
+
+Part of the AlterLab Academic Skills suite.
 

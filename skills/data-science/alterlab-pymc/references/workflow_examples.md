@@ -63,8 +63,8 @@ with pm.Model(coords=coords) as model:
 with model:
     prior_pred = pm.sample_prior_predictive(draws=1000, random_seed=42)
 
-# Visualize
-az.plot_ppc(prior_pred, group='prior')
+# Visualize (ArviZ 1.x: plot_ppc -> plot_ppc_dist; plots return a PlotCollection)
+az.plot_ppc_dist(prior_pred, group='prior_predictive').show()
 ```
 
 **Check:**
@@ -86,16 +86,18 @@ with model:
         chains=4,
         target_accept=0.9,
         random_seed=42,
-        idata_kwargs={'log_likelihood': True}  # For model comparison
     )
+    # Pointwise log-likelihood for LOO comparison (PyMC 6 deprecates
+    # idata_kwargs={'log_likelihood': True})
+    pm.compute_log_likelihood(idata)
 ```
 
 **Key parameters:**
 - `draws=2000`: Number of samples per chain
-- `tune=1000`: Warmup samples (discarded)
+- `tune=1000`: Warmup samples (discarded). If omitted, the default depends on the sampler (1000 for PyMC's NUTS, 400 for nutpie, which PyMC 6 uses by default when installed)
 - `chains=4`: Run 4 chains for convergence checking
 - `target_accept=0.9`: Higher for difficult posteriors (0.95-0.99)
-- Include `log_likelihood=True` for model comparison
+- Call `pm.compute_log_likelihood(idata)` before LOO model comparison
 
 ## 5. Check Diagnostics
 
@@ -123,7 +125,7 @@ with model:
     pm.sample_posterior_predictive(idata, extend_inferencedata=True, random_seed=42)
 
 # Visualize
-az.plot_ppc(idata)
+az.plot_ppc_dist(idata).show()
 ```
 
 **Check:**
@@ -134,14 +136,15 @@ az.plot_ppc(idata)
 ## 7. Analyze Results
 
 ```python
-# Summary statistics
+# Summary statistics (ArviZ 1.x default: 89% equal-tailed interval columns
+# eti89_lb/eti89_ub; pass ci_kind='hdi', ci_prob=0.94 for the old HDI columns)
 print(az.summary(idata, var_names=['alpha', 'beta', 'sigma']))
 
-# Posterior distributions
-az.plot_posterior(idata, var_names=['alpha', 'beta', 'sigma'])
+# Posterior distributions (ArviZ 1.x: plot_posterior -> plot_dist)
+az.plot_dist(idata, var_names=['alpha', 'beta', 'sigma']).show()
 
 # Coefficient estimates
-az.plot_forest(idata, var_names=['beta'], combined=True)
+az.plot_forest(idata, var_names=['beta'], combined=True).show()
 ```
 
 ## 8. Make Predictions
@@ -162,5 +165,5 @@ with model:
 
 # Extract prediction intervals (predictions=True -> idata.predictions)
 y_pred_mean = idata.predictions['y_obs'].mean(dim=['chain', 'draw'])
-y_pred_hdi = az.hdi(idata.predictions, var_names=['y_obs'])
+y_pred_hdi = az.hdi(idata, group='predictions', var_names=['y_obs'], prob=0.95)
 ```

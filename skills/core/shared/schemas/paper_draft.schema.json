@@ -22,7 +22,16 @@
       "required": ["english"],
       "properties": {
         "english": { "type": "string" },
-        "chinese": { "type": "string", "description": "Required only if bilingual." }
+        "secondary": {
+          "type": "object",
+          "description": "Second-language abstract, written independently (not translated). Present when the paper is bilingual.",
+          "required": ["lang", "text"],
+          "properties": {
+            "lang": { "type": "string", "description": "BCP 47 tag, e.g. tr, zh-TW." },
+            "text": { "type": "string" }
+          }
+        },
+        "chinese": { "type": "string", "description": "Deprecated alias of secondary {lang: zh-TW}; kept so older drafts validate." }
       }
     },
     "authors": {
@@ -32,11 +41,19 @@
     },
     "keywords": {
       "type": "object",
-      "description": "Bilingual keywords (3-6 each).",
-      "required": ["en", "zh_tw"],
+      "description": "Keywords in English, plus the second language when the paper is bilingual (3-7 each; the journal's limit wins).",
+      "required": ["en"],
       "properties": {
-        "en": { "type": "array", "items": { "type": "string" }, "minItems": 3, "maxItems": 6 },
-        "zh_tw": { "type": "array", "items": { "type": "string" }, "minItems": 3, "maxItems": 6 }
+        "en": { "type": "array", "items": { "type": "string" }, "minItems": 3, "maxItems": 7 },
+        "secondary": {
+          "type": "object",
+          "required": ["lang", "terms"],
+          "properties": {
+            "lang": { "type": "string", "description": "BCP 47 tag, e.g. tr, zh-TW." },
+            "terms": { "type": "array", "items": { "type": "string" }, "minItems": 3, "maxItems": 7 }
+          }
+        },
+        "zh_tw": { "type": "array", "items": { "type": "string" }, "minItems": 3, "maxItems": 6, "description": "Deprecated alias of secondary {lang: zh-TW}." }
       }
     },
     "sections": {

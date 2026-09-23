@@ -95,14 +95,13 @@ M = M.row_insert(1, Matrix([[5, 6]]))
 #  [5, 6],
 #  [3, 4]]
 
-# Insert column
-M = M.col_insert(1, Matrix([7, 8]))
+# Insert column (the new column needs one entry per row — M now has 3 rows)
+M = M.col_insert(1, Matrix([7, 8, 9]))
 
-# Delete row
-M = M.row_del(0)
-
-# Delete column
-M = M.col_del(1)
+# Delete row / column: row_del and col_del modify a mutable Matrix IN PLACE
+# and return None, so do not reassign the result
+M.row_del(0)
+M.col_del(1)
 ```
 
 ## Basic Matrix Operations
@@ -164,8 +163,9 @@ M_inv = M.inv()
 # Verify
 M * M_inv  # Returns identity matrix
 
-# Check if invertible
-M.is_invertible()  # True or False
+# Check if invertible (Matrix has no is_invertible method)
+M.det() != 0                 # True for a square, non-singular matrix
+M.rank() == M.shape[0]       # equivalent rank check
 ```
 
 ## Advanced Linear Algebra
@@ -394,10 +394,10 @@ sol = linsolve((A, b), [x, y])
 ### Underdetermined and Overdetermined Systems
 
 ```python
-# Underdetermined (infinite solutions)
+# Underdetermined (infinite solutions): A.solve() raises NonInvertibleMatrixError here
 A = Matrix([[1, 2, 3]])
 b = Matrix([6])
-sol = A.solve(b)  # Returns parametric solution
+sol, params = A.gauss_jordan_solve(b)  # parametric solution in free symbols tau0, tau1
 
 # Overdetermined (least squares)
 A = Matrix([[1, 2], [3, 4], [5, 6]])

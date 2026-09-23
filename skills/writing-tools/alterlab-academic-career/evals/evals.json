@@ -47,6 +47,15 @@
       ]
     },
     {
+      "id": "near-miss-recommendation-letters",
+      "prompt": "A former postdoc of mine is going up for tenure at another university and their chair asked me for an external review letter. Can you help me draft it from their CV and the papers they sent?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-recommendation-letters. The user is writing an evaluative letter about someone else (an external tenure-review letter), not preparing their own CV, statement, or dossier, which is the scope of alterlab-academic-career.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-recommendation-letters" }
+      ]
+    },
+    {
       "id": "near-miss-venue-templates",
       "prompt": "I need the official LaTeX class and page-limit requirements to format my biosketch and proposal for an NSF submission. Where do I get the template?",
       "expected_output": "Does NOT invoke this skill; defers to alterlab-venue-templates. The user wants venue-specific LaTeX templates and formatting/page-limit requirements for an NSF submission, which is a formatting/template task, not the narrative career-document drafting this skill covers.",

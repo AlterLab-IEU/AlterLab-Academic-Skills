@@ -14,7 +14,7 @@
     {
       "id": "gene-constraint-scores",
       "prompt": "Is KCNQ2 loss-of-function intolerant? Give me its pLI and LOEUF from gnomAD.",
-      "expected_output": "Triggers the gnomAD skill. Calls the constraint query (gnomad_constraint) for the gene, reporting pLI (>0.9 = LoF intolerant) and LOEUF/oe_lof_upper (<0.35 = constrained), and interprets whether the gene tolerates protein-truncating variants. Prefers LOEUF over pLI per best practice.",
+      "expected_output": "Triggers the gnomAD skill. Calls the constraint query (gnomad_constraint) for the gene, reporting pLI (>0.9 = LoF intolerant) and LOEUF/oe_lof_upper (< 0.45 = constrained per gnomAD v4.1.1 guidance; < 0.35 was the v2-era cutoff), and interprets whether the gene tolerates protein-truncating variants. Prefers LOEUF over pLI per best practice.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "LOEUF" },

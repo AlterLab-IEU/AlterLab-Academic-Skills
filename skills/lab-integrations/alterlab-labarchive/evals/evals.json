@@ -4,7 +4,7 @@
     {
       "id": "backup-all-notebooks",
       "prompt": "I need to back up every one of my LabArchives notebooks, with attachments, as archives for our records. How do I script that?",
-      "expected_output": "Invokes alterlab-labarchive. Authenticates via the REST API (users/user_access_info to get the UID), lists notebooks, and uses scripts/notebook_operations.py backup (7z archive with attachments by default), or the backup-all path, against the correct regional api_url.",
+      "expected_output": "Invokes alterlab-labarchive. Authenticates via the REST API (users/user_access_info to get the UID), lists notebooks, and uses scripts/notebook_operations.py backup-all (or labapi notebook.backup()), which saves each notebook as a 7z archive with attachments by default, against the correct regional api_url; notes only the notebook owner can download a backup.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Obtains the UID via user_access_info and uses the notebook backup operation, defaulting to a 7z archive with attachments." }
@@ -12,17 +12,17 @@
     },
     {
       "id": "upload-attachment-to-entry",
-      "prompt": "Automate uploading a PDF results file as an attachment to a specific LabArchives notebook entry, with a comment timestamping the upload.",
-      "expected_output": "Invokes alterlab-labarchive. Uses scripts/entry_operations.py upload (uid, nbid, entry-id, file) to attach the PDF and adds a comment to the entry, following the entry/attachment management capability.",
+      "prompt": "Automate uploading a PDF results file as an attachment to a specific page of my LabArchives notebook, with a note timestamping the upload.",
+      "expected_output": "Invokes alterlab-labarchive. Attaches the PDF to the target page (nbid + page tree id pid) via entries/add_attachment — e.g. scripts/entry_operations.py upload --nbid ... --pid ... --file ... or labapi page.entries.create(AttachmentEntry, Attachment.from_file(...)) — with the timestamp recorded in the caption or a follow-up text entry (entries/add_entry). Signs requests with akid/expires/sig rather than sending the access password.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Uploads the attachment to a LabArchives entry and adds a timestamping comment via the REST API." }
+        { "type": "behavior", "value": "Uploads the PDF as an attachment entry on a LabArchives page (nbid + pid) and records the timestamp in the caption or a text entry, using signed requests." }
       ]
     },
     {
       "id": "jupyter-integration-sync",
       "prompt": "After I run a Jupyter notebook I want to push its HTML export into LabArchives as a new entry automatically. Walk me through wiring that up.",
-      "expected_output": "Invokes alterlab-labarchive. Routes to the third-party Jupyter integration: export the Jupyter notebook to HTML/PDF, upload it to a LabArchives notebook as an entry via entry_operations.py, and add a comment with execution timestamp and environment info.",
+      "expected_output": "Invokes alterlab-labarchive. Routes to the third-party Jupyter integration: export the Jupyter notebook to HTML/PDF, add it to a LabArchives page as a rich-text entry (entries/add_entry, e.g. via labapi or entry_operations.py) with the .ipynb as an attachment, and record the execution timestamp and environment info in a text entry.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "Jupyter" }
@@ -53,6 +53,15 @@
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-protocolsio" }
+      ]
+    },
+    {
+      "id": "near-miss-redcap-cdisc",
+      "prompt": "Build the REDCap data dictionary for our trial's baseline and follow-up visits, with branching logic and date validation, and map the fields to CDISC SDTM.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-redcap-cdisc. The task is designing REDCap instruments and CDISC mappings, not moving records into or out of a LabArchives notebook.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-redcap-cdisc" }
       ]
     }
   ]

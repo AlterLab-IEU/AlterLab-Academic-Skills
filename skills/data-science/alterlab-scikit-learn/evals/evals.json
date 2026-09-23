@@ -57,6 +57,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-umap" }
       ]
+    },
+    {
+      "id": "near-miss-scikit-survival",
+      "prompt": "I have patient follow-up data where many patients were still alive at the end of the study. I want to predict time to relapse, fit a random survival forest, and report the concordance index and integrated Brier score.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-scikit-survival. The outcome is a right-censored time-to-event variable that needs survival estimators (RandomSurvivalForest) and censoring-aware metrics (concordance index, integrated Brier score), not a standard scikit-learn regressor or classifier.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-scikit-survival" }
+      ]
     }
   ]
 }

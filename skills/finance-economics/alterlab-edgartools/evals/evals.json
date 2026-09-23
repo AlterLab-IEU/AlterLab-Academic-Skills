@@ -4,7 +4,7 @@
     {
       "id": "latest-10k-financials",
       "prompt": "I need Apple's most recent 10-K and its income statement, balance sheet, and cash flow statement pulled straight from SEC EDGAR for a financial-statement analysis assignment.",
-      "expected_output": "Triggers edgartools. Calls set_identity() first (SEC requires it), then Company(\"AAPL\"), get_filings(form=\"10-K\").latest(), and get_financials() to access income_statement(), balance_sheet(), and cashflow_statement(). Reminds the user that filing.financials does not exist and to use filing.obj().financials.",
+      "expected_output": "Triggers edgartools. Calls set_identity() first (SEC requires it), then Company(\"AAPL\"), get_filings(form=\"10-K\").latest(), and get_financials() to access income_statement(), balance_sheet(), and cash_flow_statement() (cashflow_statement() is a deprecated alias). Reminds the user that filing.financials does not exist and to use filing.obj().financials.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "set_identity"},
@@ -15,11 +15,11 @@
     {
       "id": "insider-form4",
       "prompt": "I'm studying insider trading signals. How do I extract Form 4 insider transactions for a given company from EDGAR using edgartools?",
-      "expected_output": "Triggers edgartools. Gets the company's Form 4 filings, calls filing.obj() to get the Form4 object, and reads its reporting_owner and transactions properties. Notes set_identity() is required.",
+      "expected_output": "Triggers edgartools. Gets the company's Form 4 filings, calls filing.obj() to get the Form4 object, and reads its reporting_owners/insider_name and market_trades (or to_dataframe()) for the transactions. Notes set_identity() is required.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "Form 4"},
-        {"type": "behavior", "value": "Maps Form 4 to the Form4 object via filing.obj() and reads transactions/reporting_owner."}
+        {"type": "behavior", "value": "Maps Form 4 to the Form4 object via filing.obj() and reads the trades (market_trades or to_dataframe()) and the reporting owners."}
       ]
     },
     {

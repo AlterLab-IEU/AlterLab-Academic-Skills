@@ -91,44 +91,48 @@ amplitude = nk.emg_amplitude(cleaned_emg, sampling_rate=1000)
 Detect periods of muscle activation (onsets and offsets).
 
 ```python
-activity, info = nk.emg_activation(emg_amplitude, sampling_rate=1000, method='threshold',
-                                   threshold='auto', duration_min=0.05)
+activity, info = nk.emg_activation(emg_amplitude=emg_amplitude, sampling_rate=1000,
+                                   method='threshold', threshold='default')
 ```
 
 **Methods:**
 
 **1. Threshold-based (default):**
 ```python
-activity = nk.emg_activation(amplitude, method='threshold', threshold='auto')
+activity, info = nk.emg_activation(emg_amplitude=amplitude, method='threshold', threshold='default')
 ```
 - Compares amplitude to threshold
-- `threshold='auto'`: Automatic based on signal statistics (e.g., mean + 1 SD)
-- `threshold=0.1`: Manual absolute threshold
+- `threshold='default'`: one tenth of the amplitude's standard deviation
+- `threshold=0.1`: Manual absolute threshold (must be below the amplitude maximum)
 - Simple, fast, widely used
 
 **2. Gaussian Mixture Model (GMM):**
 ```python
-activity = nk.emg_activation(amplitude, method='mixture', n_clusters=2)
+# threshold = minimum probability of belonging to the "active" component (default 0.33)
+activity, info = nk.emg_activation(emg_amplitude=amplitude, method='mixture', threshold=0.33)
 ```
 - Unsupervised clustering: active vs. rest
 - Adaptive to signal characteristics
 - More robust to varying baseline
 
-**3. Changepoint detection:**
+**3. Changepoint detection (PELT):**
 ```python
-activity = nk.emg_activation(amplitude, method='changepoint')
+# Works on the cleaned (or raw) EMG, not the amplitude envelope
+activity, info = nk.emg_activation(emg_cleaned=cleaned, sampling_rate=1000, method='pelt')
 ```
 - Detects abrupt transitions in signal properties
 - Identifies activation/deactivation points
 - Useful for complex temporal patterns
 
-**4. Bimodality (Silva et al., 2013):**
+**4. Silva et al. (2013) and BioSPPy onset detectors:**
 ```python
-activity = nk.emg_activation(amplitude, method='bimodal')
+activity, info = nk.emg_activation(emg_cleaned=cleaned, sampling_rate=1000, method='silva')
+activity, info = nk.emg_activation(emg_cleaned=cleaned, sampling_rate=1000, method='biosppy')
 ```
-- Tests for bimodal distribution (active vs. rest)
-- Determines optimal separation threshold
-- Statistically principled
+- Windowed onset detection on the cleaned EMG (`size` sets the window)
+- `silva` threshold defaults to 0.05; `biosppy` to 1.2 × the mean smoothed rectified signal
+
+In NeuroKit2 0.2.13 the valid `method` values are `'threshold'` (default), `'mixture'`, `'pelt'`, `'biosppy'`, and `'silva'`; `'threshold'` and `'mixture'` need `emg_amplitude=`, the others need `emg_cleaned=`.
 
 **Key parameters:**
 - `duration_min`: Minimum activation duration (seconds)
@@ -312,8 +316,8 @@ cleaned = nk.emg_clean(emg_raw, sampling_rate=1000)
 amplitude = nk.emg_amplitude(cleaned, sampling_rate=1000)
 
 # 3. Detect activation periods
-activity, info = nk.emg_activation(amplitude, sampling_rate=1000,
-                                   method='threshold', threshold='auto')
+activity, info = nk.emg_activation(emg_amplitude=amplitude, sampling_rate=1000,
+                                   method='threshold', threshold='default')
 
 # 4. Comprehensive processing (alternative)
 signals, info = nk.emg_process(emg_raw, sampling_rate=1000)

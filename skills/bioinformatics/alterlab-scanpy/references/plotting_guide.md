@@ -7,8 +7,35 @@ Comprehensive guide for creating publication-quality visualizations with scanpy.
 All scanpy plotting functions follow consistent patterns:
 - Functions in `sc.pl.*` mirror analysis functions in `sc.tl.*`
 - Most accept `color` parameter for gene names or metadata columns
-- Results are saved via `save` parameter
 - Multiple plots can be generated in a single call
+
+### Saving figures (Scanpy >= 1.12)
+
+The `save=` parameter of `sc.pl.*` is **deprecated as of Scanpy 1.12**. It still works but
+raises `FutureWarning: Argument 'save' is deprecated and will be removed in a future version.`
+It writes into `sc.settings.figdir` with the plot's name prepended, so `sc.pl.umap(...,
+save='_umap.pdf')` lands at `figures/umap_umap.pdf` — the doubled name is part of why it is
+being retired. The replacement is to suppress the automatic display and save the active
+Matplotlib figure:
+
+```python
+import matplotlib.pyplot as plt
+
+sc.pl.umap(adata, color='cell_type', show=False)
+plt.savefig('figures/umap_celltype.pdf', bbox_inches='tight')
+plt.close()
+```
+
+For the functions that return an object (`sc.pl.dotplot`, `matrixplot`, `stacked_violin`,
+`clustermap`), use `return_fig=True` and the object's own `savefig`:
+
+```python
+dp = sc.pl.dotplot(adata, var_names=genes, groupby='cell_type', return_fig=True)
+dp.savefig('figures/markers_dotplot.pdf', bbox_inches='tight')
+```
+
+The examples below still use `save=` for brevity; translate them to the pattern above when
+writing code a user will run.
 
 ## Essential Quality Control Plots
 

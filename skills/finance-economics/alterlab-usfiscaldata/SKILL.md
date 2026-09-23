@@ -1,12 +1,13 @@
 ---
 name: alterlab-usfiscaldata
-description: Queries the U.S. Treasury Fiscal Data API across 54 datasets and 182 data tables (no API key required) for federal financial data on national debt, government spending, revenue, interest rates, exchange rates, and savings bonds. Use when working with U.S. federal fiscal data, national debt tracking (Debt to the Penny), Daily Treasury Statements, Monthly Treasury Statements, Treasury securities auctions, interest rates on Treasury securities, foreign exchange rates, savings bonds, or any U.S. government financial statistics. Part of the AlterLab Academic Skills suite.
+description: Queries the U.S. Treasury Fiscal Data API across 50+ datasets and roughly 180 data tables (no API key required) for federal financial data on national debt, government spending, revenue, interest rates, exchange rates, and savings bonds. Use when working with U.S. federal fiscal data, national debt tracking (Debt to the Penny), Daily Treasury Statements, Monthly Treasury Statements, Treasury securities auctions, interest rates on Treasury securities, foreign exchange rates, savings bonds, or any U.S. government financial statistics. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: No API key or registration required. Queries the open U.S. Treasury Fiscal Data REST API; needs network access.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # U.S. Treasury Fiscal Data API
@@ -14,6 +15,24 @@ metadata:
 Free, open REST API from the U.S. Department of the Treasury for federal financial data. No API key or registration required.
 
 **Base URL:** `https://api.fiscaldata.treasury.gov/services/api/fiscal_service`
+
+The catalog held 56 datasets / 183 data tables when checked on 2026-09-23; browse https://fiscaldata.treasury.gov/datasets/ for the current list and each table's endpoint version (v1 or v2).
+
+## When to Use This Skill
+
+- Federal debt (Debt to the Penny, historical debt outstanding, schedules of federal debt)
+- Daily and Monthly Treasury Statements: operating cash balance, deposits/withdrawals, receipts, outlays, deficit
+- Treasury securities auctions (results and upcoming), average interest rates, interest expense
+- Treasury Reporting Rates of Exchange, savings bonds, I bond rates
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Market yields (DGS10), Fed funds, or macro series by FRED ID with transformations | `alterlab-fred` |
+| Market quotes or daily FX/crypto prices from a commercial feed | `alterlab-alpha-vantage` |
+| Hedge-fund leverage or repo-market aggregates (Form PF, FICC) | `alterlab-hedgefund-monitor` |
+| Company filings and financial statements from SEC EDGAR | `alterlab-edgartools` |
 
 ## Quick Start
 
@@ -55,7 +74,7 @@ None required. The API is fully open and free.
 | `filter=` | `filter=record_date:gte:2024-01-01` | Filter records |
 | `sort=` | `sort=-record_date` | Sort (prefix `-` for descending) |
 | `format=` | `format=json` | Output format: `json`, `csv`, `xml` |
-| `page[size]=` | `page[size]=100` | Records per page (default 100) |
+| `page[size]=` | `page[size]=100` | Records per page (default 100, max 10000) |
 | `page[number]=` | `page[number]=2` | Page index (starts at 1) |
 
 **Filter operators:** `lt`, `lte`, `gt`, `gte`, `eq`, `in`
@@ -131,12 +150,19 @@ None required. The API is fully open and free.
 
 ```python
 def fetch_all_pages(endpoint, params=None):
-    params = params or {}
-    params["page[size]"] = 10000  # max size to minimize requests
-    resp = requests.get(f"{BASE_URL}{endpoint}", params=params)
-    result = resp.json()
-    df = pd.DataFrame(result["data"])
-    return df
+    params = dict(params or {})
+    params["page[size]"] = 10000  # the API maximum; larger values return HTTP 400
+    params["page[number]"] = 1
+    rows = []
+    while True:
+        resp = requests.get(f"{BASE_URL}{endpoint}", params=params, timeout=60)
+        resp.raise_for_status()
+        result = resp.json()
+        rows.extend(result["data"])
+        if params["page[number]"] >= result["meta"]["total-pages"]:
+            break
+        params["page[number]"] += 1
+    return pd.DataFrame(rows)
 ```
 
 ### Aggregation (automatic sum)
@@ -160,3 +186,7 @@ resp = requests.get(f"{BASE_URL}/v1/accounting/dts/deposits_withdrawals_operatin
 - **[datasets-securities.md](references/datasets-securities.md)** — Treasury auctions, savings bonds, SLGS, buybacks
 - **[response-format.md](references/response-format.md)** — Response objects, error handling, pagination, response codes
 - **[examples.md](references/examples.md)** — Python, R, and pandas code examples for common use cases
+
+Cite the dataset name, table, and retrieval date (Fiscal Data values are revised; keep the `record_date` you used).
+
+Part of the AlterLab Academic Skills suite.

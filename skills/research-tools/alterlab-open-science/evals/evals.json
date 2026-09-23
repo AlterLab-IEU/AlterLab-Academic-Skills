@@ -37,7 +37,17 @@
       "expected_output": "Does NOT invoke alterlab-open-science; defers to alterlab-research-ethics. The ask is about human-subjects ethics approval and informed consent, not about open-science practices like preregistration, FAIR data sharing, or open access. Open-science guidance covers transparency/reproducibility, not IRB submissions.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-research-ethics" },
         { "type": "behavior", "value": "Routes IRB/informed-consent to the alterlab-research-ethics skill rather than treating it as an open-science transparency task." }
+      ]
+    },
+    {
+      "id": "near-miss-preprint-deposition",
+      "prompt": "My manuscript is ready to submit to a journal. Should it go on arXiv or SSRN first, which license should I pick for the preprint, and will the journal still accept it?",
+      "expected_output": "Does NOT invoke alterlab-open-science as the primary handler; defers to alterlab-preprint-deposition, which picks the preprint server, sets the preprint license, and checks the journal's preprint policy (e.g. via Sherpa Romeo). open-science covers data repositories, preregistration, and open-access strategy broadly, not the mechanics of depositing one preprint.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-preprint-deposition" }
       ]
     }
   ]

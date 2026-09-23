@@ -6,6 +6,7 @@ Copy and modify these configurations for your specific needs.
 """
 
 import lightning as L
+import torch
 from lightning.pytorch.callbacks import (
     ModelCheckpoint,
     EarlyStopping,
@@ -421,29 +422,42 @@ if __name__ == "__main__":
     print("2. Debug Trainer:")
     trainer = debug_trainer()
     print(f"   - Fast dev run: {trainer.fast_dev_run}")
-    print(f"   - Detect anomaly: {trainer.detect_anomaly}")
+    print("   - Detect anomaly: enabled via Trainer(detect_anomaly=True)")
     print()
+
+    # The remaining examples request GPUs; constructing them on a machine
+    # without enough CUDA devices raises a MisconfigurationException.
+    n_gpus = torch.cuda.device_count()
 
     # Example 3: Production single GPU
     print("3. Production Single GPU Trainer:")
-    trainer = production_single_gpu_trainer(max_epochs=100)
-    print(f"   - Max epochs: {trainer.max_epochs}")
-    print(f"   - Precision: {trainer.precision}")
-    print(f"   - Callbacks: {len(trainer.callbacks)}")
+    if n_gpus >= 1:
+        trainer = production_single_gpu_trainer(max_epochs=100)
+        print(f"   - Max epochs: {trainer.max_epochs}")
+        print(f"   - Precision: {trainer.precision}")
+        print(f"   - Callbacks: {len(trainer.callbacks)}")
+    else:
+        print("   - skipped (no CUDA GPU available)")
     print()
 
     # Example 4: Multi-GPU DDP
     print("4. Multi-GPU DDP Trainer:")
-    trainer = multi_gpu_ddp_trainer(num_gpus=4)
-    print(f"   - Strategy: {trainer.strategy}")
-    print(f"   - Devices: {trainer.num_devices}")
+    if n_gpus >= 4:
+        trainer = multi_gpu_ddp_trainer(num_gpus=4)
+        print(f"   - Strategy: {trainer.strategy}")
+        print(f"   - Devices: {trainer.num_devices}")
+    else:
+        print(f"   - skipped (needs 4 GPUs, found {n_gpus})")
     print()
 
     # Example 5: FSDP for large models
     print("5. FSDP Trainer for Large Models:")
-    trainer = large_model_fsdp_trainer(num_gpus=8)
-    print(f"   - Strategy: {trainer.strategy}")
-    print(f"   - Precision: {trainer.precision}")
+    if n_gpus >= 8:
+        trainer = large_model_fsdp_trainer(num_gpus=8)
+        print(f"   - Strategy: {trainer.strategy}")
+        print(f"   - Precision: {trainer.precision}")
+    else:
+        print(f"   - skipped (needs 8 GPUs, found {n_gpus})")
     print()
 
     print("\nTo use these configurations:")

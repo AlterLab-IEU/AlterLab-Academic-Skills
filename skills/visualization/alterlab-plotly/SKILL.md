@@ -1,17 +1,35 @@
 ---
 name: alterlab-plotly
-description: Builds INTERACTIVE charts with the Plotly Python library (plotly.express / graph_objects) — hover tooltips, zoom/pan, animations, rangesliders, 3D rotation, and standalone HTML/web-embeddable output. Use when a chart must be interactive or web-embedded, for dashboards (incl. Dash), exploratory data analysis, or rotatable 3D plots. For static publication figures defer to alterlab-matplotlib; for static statistical charts (heatmaps, distributions) defer to alterlab-seaborn; for diagrams/schematics defer to alterlab-scientific-viz. Part of the AlterLab Academic Skills suite.
+description: Builds INTERACTIVE charts with the Plotly Python library (plotly.express / graph_objects) — hover tooltips, zoom/pan, animations, rangesliders, 3D rotation, and standalone HTML/web-embeddable output. Use when a chart must be interactive or web-embedded, for dashboards (incl. Dash), exploratory data analysis, or rotatable 3D plots. For static publication figures defer to alterlab-matplotlib (or alterlab-scientific-viz for journal formatting); for static statistical charts (heatmaps, distributions) defer to alterlab-seaborn; for diagrams/schematics defer to alterlab-scientific-schematics or alterlab-mermaid. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
-compatibility: Requires the plotly Python library (pip install plotly); static image export (PNG/PDF/SVG) additionally needs kaleido
+compatibility: Requires the plotly Python library, version >= 6 (current 7.1 as of 2026-09) — uv pip install plotly; static image export (PNG/PDF/SVG) additionally needs kaleido >= 1 plus a Chrome/Chromium install (run plotly_get_chrome); Dash apps need dash
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Plotly
 
-Python graphing library for creating interactive, publication-quality visualizations with 40+ chart types.
+Python graphing library for creating interactive, publication-quality visualizations with 40+ chart types. Examples target plotly >= 6 and run on plotly 7.1 (plotly.js 4); see "Plotly 7 changes" below if you are upgrading older code.
+
+## When to Use This Skill
+
+Use this skill when the chart must be explored or shared interactively:
+- Hover tooltips, zoom/pan, legend toggling, rangesliders, dropdowns, or animation frames
+- Standalone HTML or web-embedded figures, and Dash dashboards
+- Rotatable 3D plots (surface, scatter3d, mesh, volume)
+- Exploratory analysis where readers need to inspect individual points
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Static, print-ready figure with no interactivity | `alterlab-matplotlib` |
+| Journal-formatted multi-panel figure (column widths, Okabe-Ito palette, significance stars) | `alterlab-scientific-viz` |
+| Quick static statistical plot from a DataFrame (heatmap, pair plot, distributions) | `alterlab-seaborn` |
+| Flowchart, pathway, or architecture diagram | `alterlab-scientific-schematics` / `alterlab-mermaid` |
 
 ## Quick Start
 
@@ -75,7 +93,7 @@ Plotly supports 40+ chart types organized into categories:
 
 **Financial Charts:** candlestick, OHLC, waterfall, funnel, time series
 
-**Maps:** scatter maps, choropleth, density maps (geographic, MapLibre-backed)
+**Maps:** scatter maps, choropleth, density maps (geographic, MapLibre-backed; the `*_mapbox` functions and traces were removed in plotly 7)
 
 **3D Charts:** scatter3d, surface, mesh, cone, volume
 
@@ -144,16 +162,19 @@ fig.write_html('chart.html')                       # Full standalone
 fig.write_html('chart.html', include_plotlyjs='cdn')  # Smaller file
 ```
 
-**Static Images (requires kaleido):**
+**Static Images (requires kaleido >= 1 and Chrome):**
 ```bash
 uv pip install kaleido
+plotly_get_chrome    # one-time: installs a Chrome build if the machine has none
 ```
 
 ```python
-fig.write_image('chart.png')   # PNG
-fig.write_image('chart.pdf')   # PDF
-fig.write_image('chart.svg')   # SVG
+fig.write_image('chart.png', scale=3)   # PNG (700x500 default size -> 2100x1500 px)
+fig.write_image('chart.pdf')            # PDF
+fig.write_image('chart.svg')            # SVG
 ```
+
+Without Chrome, `write_image` raises "Kaleido requires Google Chrome to be installed". Set export defaults with `plotly.io.defaults` (e.g. `pio.defaults.default_scale = 2`); the old `pio.kaleido.scope` settings no longer exist.
 
 For complete export options, see [references/export-interactivity.md](references/export-interactivity.md).
 
@@ -250,8 +271,17 @@ app.layout = html.Div([
     dcc.Graph(figure=fig)
 ])
 
-app.run(debug=True)  # Dash 3.x: run_server() was removed; use app.run()
+app.run(debug=True)  # Dash >= 3 (current 4.x): run_server() was removed; use app.run()
 ```
+
+## Plotly 7 changes (August 2026)
+
+Plotly 7.0 moved to plotly.js 4 and removed long-deprecated APIs. When older code fails:
+- `px.scatter_mapbox` / `density_mapbox` / `choropleth_mapbox` / `line_mapbox` and the `go.*mapbox` traces are gone — use `px.scatter_map`, `px.density_map`, `px.choropleth_map`, `px.line_map` (MapLibre, `map_style=`, no token).
+- Deprecated figure-factory functions were removed (`create_annotated_heatmap`, `create_distplot`, `create_gantt`, `create_facet_grid`, `create_scatterplotmatrix`, `create_violin`, `create_candlestick`, `create_ohlc`, and others). Use Plotly Express instead: `px.imshow(z, text_auto=True)`, `px.histogram(..., marginal='rug')`, `px.timeline`, `px.scatter_matrix`, `px.violin`, `go.Candlestick`/`go.Ohlc`. `ff.create_dendrogram`, `create_quiver`, `create_streamline`, `create_table`, `create_trisurf`, and `create_ternary_contour` remain.
+- Static export supports only Kaleido >= 1 (no Orca), and the `engine=` argument to `write_image`/`to_image` was removed.
+- Color strings: `rgb()`/`rgba()` with 0–1 fractional channels and `hsv()` are no longer supported; newer forms such as `rgba(255 0 0 / 0.5)`, `#ff0000aa`, and `oklch()` now work.
+- New `go.Quiver` trace for vector fields.
 
 ## Reference Files
 

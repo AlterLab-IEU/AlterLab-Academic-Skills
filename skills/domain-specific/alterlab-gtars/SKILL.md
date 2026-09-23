@@ -2,11 +2,12 @@
 name: alterlab-gtars
 description: Runs high-performance genomic interval analysis with gtars (databio), a Rust toolkit with Python bindings — the performance-critical backend for the geniml ML library. Use when computing overlaps/jaccard/coverage between BED region sets, indexing intervals with IGD, generating uniwig accumulation/coverage tracks, tokenizing genomic regions for ML, splitting single-cell fragments into pseudobulks, or computing GA4GH refget sequence digests. NOT for training region embeddings (use alterlab-geniml) or non-genomic spatial joins (use alterlab-geopandas). Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read, Write, Edit, Bash
-compatibility: No API key required. Python API runs locally via `uv run python` with the `gtars` package (PyPI, v0.8). The CLI is a separate Rust binary (`gtars-cli`, install via cargo).
+allowed-tools: Read Write Edit Bash(uv:*) Bash(python:*) Bash(gtars:*) Bash(cargo:*)
+compatibility: No API key required. Python API runs locally via `uv run python` with the `gtars` package (PyPI, verified 0.10.0). The CLI is a separate Rust binary (`gtars-cli` 0.10, install via cargo).
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.1.1"
+    last_updated: "2026-09-23"
 ---
 
 # Gtars: Genomic Tools and Algorithms in Rust
@@ -14,6 +15,8 @@ metadata:
 ## Overview
 
 Gtars (from databio, the lab behind `geniml`) is a high-performance Rust toolkit for manipulating, analyzing, and processing genomic interval data. Its primary purpose is to be the performance-critical backend for `geniml`, a Python library for machine learning on genomic intervals. It provides overlap/set operations, IGD overlap indexing, coverage (uniwig) tracks, region tokenization for ML, single-cell fragment pseudobulking, and GA4GH refget sequence-collection management.
+
+## When to Use This Skill
 
 Use this skill when working with:
 - Genomic interval files (BED) — overlaps, jaccard, set ops, coverage
@@ -23,7 +26,16 @@ Use this skill when working with:
 - Single-cell fragment files (split into pseudobulks by cluster)
 - Reference sequence digests and retrieval (refget)
 
-> Version note: examples are verified against the **`gtars` Python package v0.8** (PyPI). The Python API is exposed through submodules — `gtars.models`, `gtars.tokenizers`, `gtars.refget`, `gtars.utils` — NOT as flat top-level functions. There is no `gtars.igd` or `gtars.uniwig` Python submodule; IGD building and uniwig track generation are CLI-only.
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Training region / single-cell embeddings (Region2Vec, scEmbed, BEDspace) | `alterlab-geniml` |
+| Per-read BAM/CRAM/VCF access (CIGAR, MAPQ, pileups) | `alterlab-pysam` |
+| Normalized bigWig coverage from BAM, TSS heatmaps/profiles | `alterlab-deeptools` |
+| Geographic (non-genomic) spatial joins and overlaps | `alterlab-geopandas` |
+
+> Version note: examples are verified against the **`gtars` Python package 0.10.0** (PyPI, 2026-09; first written for 0.8 — the calls below are unchanged). The Python API is exposed through submodules — `gtars.models`, `gtars.tokenizers`, `gtars.refget`, `gtars.utils`, plus the newer `gtars.genomic_distributions`, `gtars.lola`, `gtars.vrs` — NOT as flat top-level functions. There is no `gtars.igd` or `gtars.uniwig` Python submodule; IGD building and uniwig track generation are CLI-only.
 
 ## Installation
 
@@ -33,7 +45,7 @@ Use this skill when working with:
 uv pip install gtars   # or: uv add gtars
 ```
 
-Import surface (verified, v0.8):
+Import surface (verified, 0.10.0):
 
 ```python
 from gtars.models import RegionSet, Region, RegionSetList
@@ -139,7 +151,7 @@ from gtars import refget
 collection = refget.digest_fasta("hg38.fa")
 
 # Or a one-off sequence digest
-d = refget.sha512t24u_digest("ACGTACGT")   # 'GS_...'-style truncated SHA-512/24
+d = refget.sha512t24u_digest("ACGTACGT")   # 32-char base64url GA4GH sha512t24u digest
 ```
 
 See `references/refget.md` for `RefgetStore` (load, store, and `get_substring`).
@@ -265,3 +277,4 @@ uv run python -c "from gtars import models, tokenizers, refget; print(dir(models
 gtars <command> --help
 ```
 
+Part of the AlterLab Academic Skills suite.

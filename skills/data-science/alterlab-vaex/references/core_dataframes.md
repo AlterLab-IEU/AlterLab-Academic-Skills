@@ -166,8 +166,8 @@ df.x.sum()
 df.x.count()
 
 # Quantiles
-df.x.quantile(0.5)   # Median
-df.x.quantile([0.25, 0.5, 0.75])  # Multiple quantiles
+df.percentile_approx(df.x, 50)            # Median (approximate)
+df.percentile_approx(df.x, [25, 50, 75])  # Multiple percentiles
 ```
 
 ### Viewing Data
@@ -217,9 +217,9 @@ print(df.get_column_names(virtual=True))   # All columns
 row_count = len(df)
 row_count = df.count()
 
-# Single row (returns dict)
-row = df.row(0)
-print(row['column_name'])
+# Single row (a list of values in column order)
+row = df[0]
+print(dict(zip(df.get_column_names(), row)))
 
 # Note: Iterating over rows is NOT recommended in Vaex
 # Use vectorized operations instead

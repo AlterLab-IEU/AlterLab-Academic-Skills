@@ -49,11 +49,18 @@ ETİK KURUL BAŞVURU FORMU / ETHICS COMMITTEE APPLICATION FORM
 10. Veri Yönetimi ve Gizlilik / Data Management & Confidentiality
     - (KVKK uyumu için ayrı plan → alterlab-kvkk-dmp / KVKK plan handled separately)
 
-11. Komite Türü / Committee Type
-    - [ ] Girişimsel Olmayan Etik Kurulu (non-interventional)
-    - [ ] TİTCK Klinik Araştırmalar Etik Kurulu + TİTCK izni (clinical + permit)
+11. Üretken Yapay Zekâ (ÜYZ) Kullanımı / Generative-AI Use
+    - Araç, sürüm, hangi aşamada ve ne amaçla / tool, version, stage, purpose
+      (YÖK ÜYZ Etik Rehberi, 2024) — kullanılmıyorsa "kullanılmayacaktır"
 
-12. Ekler / Annexes  (see annex checklist below)
+12. Komite Türü / Committee Type
+    - [ ] Girişimsel Olmayan / Bilimsel Araştırma Etik Kurulu (non-interventional)
+    - [ ] TİTCK-onaylı Klinik Araştırmalar Etik Kurulu (+ TİTCK izni; gözlemsel
+          ilaç çalışmasında izin gerekmez / no permit for observational drug studies)
+    - [ ] TİTCK-onaylı BY/BE Çalışmaları Etik Kurulu + TİTCK izni
+    - [ ] Kozmetik klinik araştırmalar etik kurulu + TİTCK Kozmetik Ürünler Dairesi izni
+
+13. Ekler / Annexes  (see annex checklist below)
 ```
 
 ---
@@ -120,8 +127,16 @@ Gönüllülük Beyanı / Voluntary Participation:
 [Klinik çalışmalar için ek / Clinical-track additions:
    Sigorta, alternatif tedaviler, sponsor/sorumlu araştırmacı bilgileri]
 
+Olur / Consent (TİTCK KAD-DD-13 wording):
+   "Bilgilendirilmiş gönüllü olur formundaki tüm açıklamaları okudum. [...]
+   Araştırmaya gönüllü olarak katıldığımı, istediğim zaman gerekçeli veya
+   gerekçesiz olarak araştırmadan ayrılabileceğimi biliyorum."
+   "Söz konusu araştırmaya, hiçbir baskı ve zorlama olmaksızın kendi rızamla
+   katılmayı kabul ediyorum."
+
 Gönüllü Ad-Soyad / Volunteer Name:  ____________   İmza/Signature: ______  Tarih: ____
 Araştırmacı Ad-Soyad / Researcher:  ____________   İmza/Signature: ______  Tarih: ____
+[Gerekiyorsa / if needed: Tanık / Witness; Veli veya kanuni temsilci / Parent or legal guardian]
 ```
 
 ---
@@ -136,5 +151,5 @@ Araştırmacı Ad-Soyad / Researcher:  ____________   İmza/Signature: ______  T
 - [ ] (Varsa) çocuk rızası / veli onamı formları / (if applicable) assent & guardian consent
 - [ ] KVKK veri yönetim planı (→ alterlab-kvkk-dmp) / KVKK data plan
 
-_Last verified: 2026-06-06. Field lists are illustrative skeletons; the binding
+_Last verified: 2026-09-23. Field lists are illustrative skeletons; the binding
 form is the one published by the researcher's own university ethics committee._

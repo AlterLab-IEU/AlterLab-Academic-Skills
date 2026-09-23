@@ -1,12 +1,13 @@
 ---
 name: alterlab-scientific-brainstorm
-description: Creative research ideation and exploration for open-ended brainstorming, surfacing interdisciplinary connections, challenging assumptions, and identifying research gaps. Use when starting early-stage research planning with no specific observations yet — for open-ended brainstorming sessions, exploring cross-disciplinary connections, or finding gaps. For formulating testable hypotheses from observations or data use hypothesis-gen; for grading evidence or spotting design flaws use scientific-thinking. Part of the AlterLab Academic Skills suite.
+description: Creative research ideation and exploration for open-ended brainstorming, surfacing interdisciplinary connections, challenging assumptions, and identifying research gaps. Use when starting early-stage research planning with no specific observations yet — for open-ended brainstorming sessions, exploring cross-disciplinary connections, or finding gaps. For formulating testable hypotheses from observations or data use alterlab-hypothesis-gen; for grading evidence or spotting design flaws use alterlab-scientific-thinking. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch WebSearch
 compatibility: No API key required. Guidance-focused, conversational skill; optionally uses WebFetch/WebSearch to pull cross-disciplinary analogies or check whether a research gap is already covered.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Scientific Brainstorming
@@ -25,6 +26,16 @@ This skill should be used when:
 - Identifying research gaps or opportunities
 - Overcoming creative blocks in problem-solving
 - Brainstorming experimental designs or study plans
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Turning specific observations or data into testable, falsifiable hypotheses | `alterlab-hypothesis-gen` |
+| Automated LLM-driven hypothesis generation and testing on a tabular dataset | `alterlab-hypogenic` |
+| Grading evidence, critiquing a study design, or naming biases and fallacies | `alterlab-scientific-thinking` |
+| Clarifying a vague research question through guided Socratic dialogue before a literature investigation | `alterlab-deep-research` (socratic mode) |
+| Checking systematically whether a candidate gap is already covered in the literature | `alterlab-literature-review` |
 
 ## Core Principles
 
@@ -141,9 +152,9 @@ Help crystallize insights and create concrete paths forward.
 - Capture key questions that emerged for future exploration
 - Identify resources or expertise that would be valuable
 
-**Close with encouragement:**
-- Acknowledge the creative work done
-- Reinforce the value of the ideas generated
+**Close constructively:**
+- Acknowledge the ideas that are genuinely promising, and say plainly which ones are long shots — honest calibration is more useful to a researcher than blanket praise
+- Note which gaps still need a literature check before anyone invests in them
 - Offer to continue the brainstorming in future sessions
 
 ## Adaptive Techniques
@@ -189,4 +200,6 @@ Consult this file when the scientist requests a specific methodology or when the
 - Be comfortable with silence—give space for thinking.
 - Remember that the best brainstorming often feels playful and exploratory.
 - The goal is not to solve everything, but to open new possibilities.
+
+Part of the AlterLab Academic Skills suite.
 

@@ -3,10 +3,11 @@ name: alterlab-shap
 description: Model interpretability and explainability with SHAP (SHapley Additive exPlanations) — feature importance and plots (waterfall, beeswarm, bar, scatter, force, heatmap). Use when explaining ML model predictions, computing feature importance, debugging models, analyzing bias or fairness, comparing models, or implementing explainable AI across tree-based models (XGBoost, LightGBM, Random Forest), deep learning (TensorFlow, PyTorch), linear models, and any black-box model. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the shap Python package.
+compatibility: No API key required. Runs locally via `uv run python`; requires shap >= 0.41 for the Explanation/`shap.plots` API (current 0.52 as of 2026-09, Python >= 3.12) plus matplotlib for plots.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # SHAP (SHapley Additive exPlanations)
@@ -37,6 +38,14 @@ SHAP works with all model types: tree-based models (XGBoost, LightGBM, CatBoost,
 - "Implement explainable AI" or "add explanations to my model"
 - "Understand feature interactions"
 - "Create model interpretation dashboard"
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Profiling a raw dataset (distributions, missingness, correlations) before any model exists | `alterlab-eda` |
+| Building, cross-validating, or tuning the model itself | `alterlab-scikit-learn` |
+| Estimating the causal effect of an intervention (SHAP describes model associations, not causes) | `alterlab-causal-inference` |
 
 ## Quick Start Guide
 
@@ -429,7 +438,7 @@ Load these on demand (via Read) for depth beyond this SKILL.md:
 
 ## Installation
 
-The modern API used throughout this skill — the callable `explainer(X)` returning an `Explanation` object, plus the `shap.plots.*` namespace — requires **shap >= 0.41**. Latest verified release is **0.52** (June 2026). Pin it in a uv project:
+The modern API used throughout this skill — the callable `explainer(X)` returning an `Explanation` object, plus the `shap.plots.*` namespace — requires **shap >= 0.41**. The current release is **0.52** (May 2026; requires Python ≥ 3.12 and NumPy ≥ 2), with 0.53 in release candidate as of 2026-09. Pin it in a uv project:
 
 ```bash
 # In a uv project (adds to pyproject.toml + uv.lock):
@@ -441,7 +450,7 @@ uv run --with "shap>=0.41" --with matplotlib python explain.py
 
 (`uv pip install` works only inside an already-activated venv; prefer `uv add` / `uv run --with` so the dependency is recorded.)
 
-**Dependencies**: numpy, pandas, scikit-learn, matplotlib, scipy (pulled in automatically).
+**Dependencies**: numpy, pandas, scikit-learn, scipy, and numba are pulled in automatically. matplotlib is optional (the `shap[plots]` extra), so install it explicitly as above before calling `shap.plots.*`.
 
 **Optional**: xgboost, lightgbm, catboost, tensorflow, torch (depending on model types).
 

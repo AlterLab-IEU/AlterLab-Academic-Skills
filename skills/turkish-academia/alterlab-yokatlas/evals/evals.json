@@ -4,7 +4,7 @@
     {
       "id": "taban-puan-basari-sirasi-turkish",
       "prompt": "YÖK Atlas'tan Boğaziçi Üniversitesi Bilgisayar Mühendisliği programının son yıllara ait taban puanını ve başarı sırasını çıkarır mısın? SAY puan türü.",
-      "expected_output": "Invokes alterlab-yokatlas: runs scripts/yokatlas_lookup.py search with --puan-turu SAY --universite \"boğaziçi\" --program \"bilgisayar\" through the keyless yokatlas-py wrapper, reads the JSON envelope, and reports the program's min_puan (taban puan) and basari_sirasi (başarı sırası) for each available year, naming the year and the SAY score type. Does not fabricate the numbers from memory; states they come from YÖK Atlas.",
+      "expected_output": "Invokes alterlab-yokatlas: runs scripts/yokatlas_lookup.py search with --puan-turu SAY --universite \"boğaziçi\" --program \"bilgisayar mühendisliği\" (the full program-group name — a fragment like \"bilgisayar\" resolves to a different group) through the keyless yokatlas-py wrapper, reads the JSON envelope, and reports the program's min_puan (taban puan) and basari_sirasi (başarı sırası) for each available year, naming the year and the SAY score type. Does not fabricate the numbers from memory; states they come from YÖK Atlas.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Reports taban puan (min_puan) and başarı sırası (basari_sirasi) per year for a real program via the yokatlas-py wrapper, naming the data year and that figures are from YÖK Atlas rather than inventing them." }
@@ -22,10 +22,10 @@
     {
       "id": "program-staff-counts",
       "prompt": "For the Hacettepe Elektrik-Elektronik Mühendisliği program, how many professors versus research assistants (araştırma görevlisi) are on staff? I need the academic-staff breakdown from YÖK Atlas.",
-      "expected_output": "Invokes alterlab-yokatlas: locates the program via scripts/yokatlas_lookup.py (search to find the kılavuz kodu, then program --kod), and reports the per-title academic-staff counts prof (profesör), doc (doçent), dou (doktor öğretim üyesi), ogr_gor (öğretim görevlisi), and ar_gor (araştırma görevlisi) from the returned statistics. Notes that v0.6.0 does not provide demographic breakdowns.",
+      "expected_output": "Invokes alterlab-yokatlas: locates the program via scripts/yokatlas_lookup.py (search to find the kılavuz kodu, then program --kod), and reports the per-title academic-staff counts prof (profesör), doc (doçent), dou (doktor öğretim üyesi), ogr_gor (öğretim görevlisi), and ar_gor (araştırma görevlisi) from the returned statistics. Notes that yokatlas-py (≥0.6.0) does not provide demographic breakdowns.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Reports the academic-staff title counts (prof/doc/dou/ogr_gor/ar_gor) for a real program from YÖK Atlas, and does not promise demographic (gender / high-school) breakdowns that v0.6.0 dropped." }
+        { "type": "behavior", "value": "Reports the academic-staff title counts (prof/doc/dou/ogr_gor/ar_gor) for a real program from YÖK Atlas, and does not promise demographic (gender / high-school) breakdowns that yokatlas-py has not provided since v0.6.0." }
       ]
     },
     {

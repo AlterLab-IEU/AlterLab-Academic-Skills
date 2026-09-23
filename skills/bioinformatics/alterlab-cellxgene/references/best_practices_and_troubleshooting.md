@@ -9,10 +9,15 @@ obs_value_filter="cell_type == 'B cell' and is_primary_data == True"
 ```
 
 ### Specify Census Version for Reproducibility
-Always specify the Census version in production analyses:
+Pin the Census version in anything you will report on, and record it in your methods:
 ```python
-census = cellxgene_census.open_soma(census_version="2023-07-25")
+census = cellxgene_census.open_soma(census_version="2025-11-08")  # an LTS build
 ```
+`"stable"` resolves to the most recent **LTS** release (2025-11-08 as of 2026-09) and
+`"latest"` to the weekly build, so both move under you. CZI commits to keeping LTS releases
+publicly available for at least five years; the LTS series so far is 2023-05-15, 2023-07-25,
+2023-12-15, 2024-07-01, 2025-01-30 and 2025-11-08. Cell counts differ between them — read
+`census["census_info"]["summary"]` for the build you actually opened.
 
 ### Estimate Query Size Before Loading
 For large queries, first check the number of cells to avoid memory issues:

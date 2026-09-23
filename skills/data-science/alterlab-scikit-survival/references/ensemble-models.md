@@ -49,9 +49,15 @@ Random Survival Forests extend the random forest algorithm to survival analysis 
 ```python
 from sksurv.ensemble import RandomSurvivalForest
 from sksurv.datasets import load_breast_cancer
+from sksurv.preprocessing import encode_categorical
+from sksurv.util import Surv
 
-# Load data
+# Load data: one-hot encode the categorical columns ('er', 'grade') and rename
+# the dataset-specific outcome fields ('e.tdm', 't.tdm') to event/time
 X, y = load_breast_cancer()
+X = encode_categorical(X)
+event_field, time_field = y.dtype.names
+y = Surv.from_arrays(event=y[event_field], time=y[time_field])
 
 # Fit Random Survival Forest
 rsf = RandomSurvivalForest(n_estimators=1000,

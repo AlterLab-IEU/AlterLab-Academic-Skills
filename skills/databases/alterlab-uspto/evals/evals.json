@@ -4,21 +4,21 @@
     {
       "id": "patent-search-by-assignee-cpc",
       "prompt": "Find me machine learning patents assigned to Google from 2023-2024 in the G06N classification — I want patent numbers, titles, and dates.",
-      "expected_output": "Triggers the USPTO skill. Uses the PatentSearch API (search.patentsview.org/api/v1/patent) via the PatentSearchClient with _text_* operators on the abstract, an assignee_organization filter for Google, a patent_date range, and a cpc_subclass_id of G06N, returning patent_number, patent_title, and patent_date.",
+      "expected_output": "Triggers the USPTO skill. Notes that the PatentsView PatentSearch API is offline since the March 2026 ODP migration and searches the ODP Patent File Wrapper instead (POST https://api.uspto.gov/api/v1/patent/applications/search, X-API-KEY) with an applicant/title query, a grantDate range filter for 2023-2024, and a cpcClassificationBag condition for G06N, returning application numbers, patent numbers, titles, and grant dates; flags that first-named applicant is not the same as current assignee.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "PatentSearch" },
-        { "type": "behavior", "value": "Searches granted patents by assignee, date range, and CPC classification via the PatentSearch API." }
+        { "type": "output_contains", "value": "Patent File Wrapper" },
+        { "type": "behavior", "value": "Searches granted patents by company, date range, and CPC classification via the ODP Patent File Wrapper search rather than the offline PatentSearch API." }
       ]
     },
     {
       "id": "examination-history-peds",
       "prompt": "Pull the prosecution history for application 16123456 — how many non-final and final rejections, and what's the current status and pendency?",
-      "expected_output": "Triggers the USPTO skill. Uses PEDS (PEDSHelper via uspto-opendata-python) to call analyze_prosecution and get_status_summary on the application number, reporting counts of CTNF (non-final) and CTFR (final) rejections, current status, filing date, and pendency in days.",
+      "expected_output": "Triggers the USPTO skill. Uses the ODP Patent File Wrapper (the successor to the retired PEDS; FileWrapperClient in scripts/peds_client.py) to call analyze_prosecution and get_status_summary on the application number — /transactions eventDataBag and /meta-data — reporting counts of CTNF (non-final) and CTFR (final) rejections, current status, filing date, and days since filing.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "PEDS" },
-        { "type": "behavior", "value": "Retrieves patent examination/prosecution history from PEDS including rejection counts and pendency." }
+        { "type": "output_contains", "value": "File Wrapper" },
+        { "type": "behavior", "value": "Retrieves patent examination/prosecution history from the ODP Patent File Wrapper including rejection counts and pendency." }
       ]
     },
     {
@@ -34,10 +34,10 @@
     {
       "id": "patent-assignment-history",
       "prompt": "Track the ownership/assignment history for patent 11234567 — who assigned it to whom and when?",
-      "expected_output": "Triggers the USPTO skill. Calls the Patent Assignment Search API (assignment-api.uspto.gov/patent/v1.4/assignment/patent/{number}), parses the returned XML for recordedDate, assignor, assignee, and conveyanceText, and reports the chain of ownership transfers.",
+      "expected_output": "Triggers the USPTO skill. Resolves the patent to its application via the ODP Patent File Wrapper, calls GET /api/v1/patent/applications/{app}/assignment (the old assignment-api.uspto.gov host no longer resolves), and reports assignmentRecordedDate, assignors, assignees, conveyanceText, and reel/frame for each recorded transfer.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Retrieves and parses patent assignment/ownership transfer records from the USPTO Assignment API." }
+        { "type": "behavior", "value": "Retrieves and parses patent assignment/ownership transfer records from the ODP Patent File Wrapper assignment endpoint." }
       ]
     },
     {

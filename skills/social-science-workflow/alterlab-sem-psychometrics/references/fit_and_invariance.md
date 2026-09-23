@@ -48,6 +48,12 @@ usual choice for ordinal Likert items).
 4. `FactorAnalyzer(n_factors=k, rotation="promax").fit(X)`; inspect `.loadings_` and
    `.get_factor_variance()`.
 
+Environment caveat (verified 2026-09): factor_analyzer 0.5.1 is its last release. `fit()` fails on
+scikit-learn ≥ 1.8 (`check_array(force_all_finite=...)` was removed) and the CFA spec parser fails
+on pandas 3 (copy-on-write arrays are read-only), so pin `scikit-learn<1.8` and `pandas<3` in an
+isolated env. The R equivalent is `psych::fa(X, nfactors = k, rotate = "promax")` with
+`psych::KMO()`, `psych::cortest.bartlett()`, and `psych::fa.parallel()` for retention.
+
 Then confirm the structure on fresh data with a CFA (semopy) — do not report EFA on the same
 sample as if it were confirmatory.
 

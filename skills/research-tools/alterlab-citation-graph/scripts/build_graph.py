@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build a citation/co-citation graph from a seed DOI using the free OpenAlex API.
 
-A free, key-less ResearchRabbit analog. Starting from one or more seed works
-(DOI, OpenAlex ID, or arXiv ID), this walks the OpenAlex citation graph in both
+A free ResearchRabbit analog. Starting from one or more seed works (DOI,
+OpenAlex ID, or arXiv ID), this walks the OpenAlex citation graph in both
 directions:
 
   - references  (works the seed *cites*, i.e. its backward edges), and
@@ -10,12 +10,16 @@ directions:
 
 It then ranks the discovered neighbourhood by **co-citation strength** — how many
 of the seed set a candidate work connects to — surfacing the papers most central
-to the seed's local literature, exactly like ResearchRabbit's "Similar Work" /
-"These authors" panels but with no account, no API key, and no rate-limit cost.
+to the seed's local literature, like ResearchRabbit's "Similar Work" panels but
+with no subscription.
 
-OpenAlex etiquette: this is the *polite pool*. Pass --mailto (or set the
-OPENALEX_MAILTO env var) so requests carry a `mailto=` parameter; OpenAlex then
-gives you faster, more reliable service. No API key exists or is required.
+OpenAlex access (policy since Feb 2026): the old mailto "polite pool" is gone and
+`mailto=` is ignored. Requests are metered against a daily budget: keyless calls
+share a small budget per IP address ($0.10/day), and a free API key from
+https://openalex.org/settings/api raises it to $1/day. Singleton lookups are free
+and list/filter calls cost $0.0001 each, so a typical walk costs a fraction of a
+cent — but on a shared network the keyless budget can already be spent (HTTP 429).
+Set OPENALEX_API_KEY (or --api-key); the key is sent as a Bearer header.
 
 Outputs:
   - GraphML (.graphml)  — open in Gephi / Cytoscape / yEd / networkx.
@@ -27,14 +31,13 @@ a bare `uv run python` with nothing installed.
 Examples
 --------
     # One seed DOI, default depth, write both formats next to a basename:
-    uv run python build_graph.py --seed 10.1038/nphys1170 \
-        --mailto alterlab.ieu@gmail.com --out graph/seed1
+    export OPENALEX_API_KEY=...        # free; recommended
+    uv run python build_graph.py --seed 10.1038/nphys1170 --out graph/seed1
 
     # Several seeds (mix DOI / OpenAlex / arXiv), deeper walk, more neighbours:
     uv run python build_graph.py \
         --seed 10.1038/nphys1170 --seed W2741809807 --seed arXiv:2310.06825 \
-        --depth 2 --per-seed 50 --top 40 --mailto alterlab.ieu@gmail.com \
-        --out graph/transformer
+        --depth 2 --per-seed 50 --top 40 --out graph/transformer
 
     # Offline / CI smoke test with no network:
     uv run python build_graph.py --self-test
@@ -56,8 +59,10 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 OPENALEX_BASE = "https://api.openalex.org/works"
-USER_AGENT = "alterlab-citation-graph/1.0 (https://github.com/AlterLab-IEU)"
+USER_AGENT = "alterlab-citation-graph/1.1 (https://github.com/AlterLab-IEU)"
 DEFAULT_TIMEOUT = 30
+# OpenAlex caps per_page (and OR-values per filter) at 100; 200 is deprecated legacy.
+MAX_PER_PAGE = 100
 
 
 # --------------------------------------------------------------------------- #
@@ -114,21 +119,24 @@ def normalize_seed(raw: str) -> str:
 
 @dataclass
 class OpenAlexClient:
-    mailto: Optional[str] = None
+    api_key: Optional[str] = None  # free key from openalex.org/settings/api
     timeout: int = DEFAULT_TIMEOUT
-    sleep: float = 0.0  # polite inter-request delay
+    sleep: float = 0.0  # optional inter-request delay (OpenAlex allows <=100 req/s)
     _fetch: Optional[Any] = None  # injectable for tests
 
-    def _params(self, extra: Dict[str, str]) -> str:
-        params = dict(extra)
-        if self.mailto:
-            params["mailto"] = self.mailto
-        return urllib.parse.urlencode(params)
+    @staticmethod
+    def _params(extra: Dict[str, str]) -> str:
+        return urllib.parse.urlencode(extra)
 
     def _get(self, url: str) -> Dict[str, Any]:
         if self._fetch is not None:  # test seam
             return self._fetch(url)
-        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        headers = {"User-Agent": USER_AGENT}
+        if self.api_key:
+            # Bearer header rather than ?api_key= so the key never shows up in
+            # logged or printed URLs.
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=self.timeout) as resp:
             payload = resp.read().decode("utf-8")
         if self.sleep:
@@ -136,23 +144,37 @@ class OpenAlexClient:
         return json.loads(payload)
 
     def get_work(self, selector: str) -> Dict[str, Any]:
-        """Fetch a single work by OpenAlex id / DOI url / arXiv url selector."""
+        """Fetch a single work by OpenAlex id / DOI url / arXiv url selector (free call)."""
         quoted = urllib.parse.quote(selector, safe=":/")
-        url = f"{OPENALEX_BASE}/{quoted}?{self._params({})}"
-        return self._get(url)
+        return self._get(f"{OPENALEX_BASE}/{quoted}")
 
     def cited_by(self, openalex_id: str, per_page: int) -> List[Dict[str, Any]]:
         """Forward edges: works that cite `openalex_id` (its cited_by set)."""
-        per_page = max(1, min(per_page, 200))
+        per_page = max(1, min(per_page, MAX_PER_PAGE))
         qs = self._params(
             {
                 "filter": f"cites:{openalex_id}",
-                "per-page": str(per_page),
+                "per_page": str(per_page),
                 "select": "id,doi,title,publication_year,cited_by_count,referenced_works",
             }
         )
         data = self._get(f"{OPENALEX_BASE}?{qs}")
         return data.get("results", [])
+
+    def get_many(self, ids: List[str]) -> List[Dict[str, Any]]:
+        """Batch-fetch metadata for W-ids: one OR-filter list call per 100 ids."""
+        out: List[Dict[str, Any]] = []
+        for start in range(0, len(ids), MAX_PER_PAGE):
+            chunk = ids[start:start + MAX_PER_PAGE]
+            qs = self._params(
+                {
+                    "filter": "openalex:" + "|".join(chunk),
+                    "per_page": str(len(chunk)),
+                    "select": "id,doi,title,publication_year,cited_by_count",
+                }
+            )
+            out.extend(self._get(f"{OPENALEX_BASE}?{qs}").get("results", []))
+        return out
 
 
 # --------------------------------------------------------------------------- #
@@ -263,7 +285,17 @@ def build_graph(
             # Forward edges: who cites this work.
             try:
                 citers = client.cited_by(wid, per_page=per_seed)
-            except urllib.error.URLError:
+            except urllib.error.HTTPError as exc:
+                if exc.code == 429:
+                    # Budget exhausted: stop instead of silently returning a graph
+                    # with no forward edges.
+                    raise
+                print(f"warning: OpenAlex HTTP {exc.code} fetching citers of {wid}; skipped",
+                      file=sys.stderr)
+                citers = []
+            except urllib.error.URLError as exc:
+                print(f"warning: network error fetching citers of {wid} ({exc.reason}); skipped",
+                      file=sys.stderr)
                 citers = []
             for citer in citers:
                 cnode = _mk_node(citer, "citation")
@@ -280,6 +312,27 @@ def build_graph(
         frontier = next_frontier
 
     return graph
+
+
+def hydrate(graph: Graph, ids: List[str], client: OpenAlexClient) -> int:
+    """Fill title/year/DOI/cited_by_count for nodes known only by their W-id.
+
+    Reference nodes come from ``referenced_works``, which lists bare ids, so
+    without this step the most co-cited works would print as untitled. Costs one
+    list call per 100 ids. Returns the number of nodes filled.
+    """
+    missing = [i for i in dict.fromkeys(ids) if i in graph.nodes and not graph.nodes[i].title]
+    filled = 0
+    for work in client.get_many(missing) if missing else []:
+        node = graph.nodes.get(_short_id(work.get("id", "")))
+        if node is None:
+            continue
+        node.title = work.get("title") or work.get("display_name") or node.title
+        node.year = work.get("publication_year") or node.year
+        node.doi = work.get("doi") or node.doi
+        node.cited_by_count = max(node.cited_by_count, work.get("cited_by_count") or 0)
+        filled += 1
+    return filled
 
 
 def _expand_work(work: Dict[str, Any], graph: Graph, mark_refs: str = "reference") -> None:
@@ -487,18 +540,31 @@ def _self_test() -> int:
         ]
     }
 
+    batch_index = {
+        "W10": {
+            "id": "https://openalex.org/W10",
+            "doi": "https://doi.org/10.1000/shared",
+            "title": "Shared reference",
+            "publication_year": 2015,
+            "cited_by_count": 500,
+        },
+    }
+
     def fake_fetch(url: str) -> Dict[str, Any]:
         if "filter=cites%3A" in url or "filter=cites:" in url:
             wid = re.search(r"cites%3A(W\d+)|cites:(W\d+)", url)
             key = (wid.group(1) or wid.group(2)) if wid else ""
             return {"results": cites_index.get(key, [])}
+        if "filter=openalex%3A" in url or "filter=openalex:" in url:
+            wanted = set(re.findall(r"W\d+", urllib.parse.unquote(url.split("filter=", 1)[1])))
+            return {"results": [w for k, w in batch_index.items() if k in wanted]}
         for selector, work in works.items():
             if url.startswith(selector):
                 return work
         # DOI/normalised selector path.
         return works["https://api.openalex.org/works/W1"]
 
-    client = OpenAlexClient(mailto="test@example.com", _fetch=fake_fetch)
+    client = OpenAlexClient(_fetch=fake_fetch)
     graph = build_graph(["10.1000/seed"], client, depth=1, per_seed=10)
 
     assert "W1" in graph.nodes, "seed missing"
@@ -511,6 +577,13 @@ def _self_test() -> int:
     # W10 is co-cited by W20 and W21 alongside the seed -> should rank.
     ranked_ids = {r["id"] for r in ranking}
     assert "W10" in ranked_ids, f"co-cited W10 missing from ranking: {ranked_ids}"
+
+    # Reference-only nodes arrive untitled; hydration fills them in one batch call.
+    assert graph.nodes["W10"].title == "", "reference node unexpectedly pre-titled"
+    assert hydrate(graph, [r["id"] for r in ranking], client) == 1, "hydration filled nothing"
+    assert graph.nodes["W10"].title == "Shared reference", "W10 title not hydrated"
+    ranking = cocitation_ranking(graph, ["W1"], top=10)
+    assert any(r["id"] == "W10" and r["title"] for r in ranking), "hydrated title not ranked"
 
     graphml = to_graphml(graph)
     parsed = ET.fromstring(graphml)
@@ -550,19 +623,22 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     )
     p.add_argument("--seed", action="append", default=[], metavar="DOI|W-id|arXiv",
                    help="seed work (repeatable): a DOI, OpenAlex W-id, or arXiv id.")
-    p.add_argument("--mailto", default=os.environ.get("OPENALEX_MAILTO"),
-                   help="contact email for the OpenAlex polite pool "
-                        "(or set OPENALEX_MAILTO). No API key exists.")
+    p.add_argument("--api-key", default=os.environ.get("OPENALEX_API_KEY"),
+                   help="OpenAlex API key (free at openalex.org/settings/api). Prefer the "
+                        "OPENALEX_API_KEY env var so the key stays out of shell history.")
+    p.add_argument("--mailto", default=None,
+                   help="deprecated no-op: OpenAlex has ignored mailto since Feb 2026, when "
+                        "API keys replaced the polite pool. Accepted so older commands still run.")
     p.add_argument("--depth", type=int, default=1,
                    help="how many citation hops to expand (default 1).")
     p.add_argument("--per-seed", type=int, default=25,
-                   help="max citing works fetched per work (default 25, OpenAlex max 200).")
+                   help="max citing works fetched per work (default 25, OpenAlex max 100).")
     p.add_argument("--top", type=int, default=25,
                    help="size of the co-citation ranking table (default 25).")
     p.add_argument("--out", default="citation_graph",
                    help="output basename; writes <out>.graphml and <out>.json.")
     p.add_argument("--sleep", type=float, default=0.0,
-                   help="seconds to sleep between API calls (politeness throttle).")
+                   help="seconds to sleep between API calls (throttle; OpenAlex allows <=100 req/s).")
     p.add_argument("--self-test", action="store_true",
                    help="run the offline self-test and exit (no network).")
     return p.parse_args(argv)
@@ -576,16 +652,24 @@ def main(argv: Optional[List[str]] = None) -> int:
     if not args.seed:
         print("error: at least one --seed is required (or use --self-test).", file=sys.stderr)
         return 2
-    if not args.mailto:
-        print("warning: no --mailto / OPENALEX_MAILTO set; using OpenAlex common pool "
-              "(slower, less reliable). Pass --mailto you@example.com to be polite.",
+    if args.mailto:
+        print("note: --mailto is ignored by OpenAlex since Feb 2026; set OPENALEX_API_KEY instead.",
               file=sys.stderr)
+    if not args.api_key:
+        print("note: no OPENALEX_API_KEY set. Keyless requests draw on a small daily budget "
+              "shared by everyone on your IP address and may fail with HTTP 429; a free key "
+              "(https://openalex.org/settings/api) gives 10x the budget.", file=sys.stderr)
 
-    client = OpenAlexClient(mailto=args.mailto, sleep=args.sleep)
+    client = OpenAlexClient(api_key=args.api_key, sleep=args.sleep)
     try:
         graph = build_graph(args.seed, client, depth=args.depth, per_seed=args.per_seed)
     except urllib.error.HTTPError as exc:
-        print(f"error: OpenAlex HTTP {exc.code} — {exc.reason}", file=sys.stderr)
+        if exc.code == 429:
+            print("error: OpenAlex HTTP 429 — daily budget exhausted or more than 100 "
+                  "requests/s. Set OPENALEX_API_KEY (free) or retry after midnight UTC.",
+                  file=sys.stderr)
+        else:
+            print(f"error: OpenAlex HTTP {exc.code} — {exc.reason}", file=sys.stderr)
         return 1
     except urllib.error.URLError as exc:
         print(f"error: network failure contacting OpenAlex — {exc.reason}", file=sys.stderr)
@@ -596,6 +680,14 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     seed_ids = [n.id for n in graph.nodes.values() if n.role == "seed"]
     ranking = cocitation_ranking(graph, seed_ids, top=args.top)
+    try:
+        # Reference nodes carry only W-ids; fetch titles for the ranked ones, then
+        # re-rank because hydrated cited_by_count values break ties.
+        if hydrate(graph, [r["id"] for r in ranking], client):
+            ranking = cocitation_ranking(graph, seed_ids, top=args.top)
+    except urllib.error.URLError as exc:  # includes HTTPError (e.g. 429)
+        print(f"warning: could not fetch titles for ranked works ({exc}); "
+              "writing W-ids only.", file=sys.stderr)
     graphml_path, json_path = write_outputs(graph, args.seed, ranking, args.out)
 
     print(f"nodes={len(graph.nodes)} edges={len(graph.edges)} ranked={len(ranking)}")

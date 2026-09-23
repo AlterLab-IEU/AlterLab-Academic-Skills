@@ -1,12 +1,13 @@
 ---
 name: alterlab-deepchem
-description: Runs molecular machine learning with DeepChem — diverse featurizers, pre-built MoleculeNet benchmark datasets, and pre-trained models (ChemBERTa, GROVER) for property prediction (ADMET, toxicity, solubility) via traditional ML or graph neural networks. Use when running end-to-end molecular ML experiments that need MoleculeNet benchmarks, scaffold splitting, or ready-made models with minimal setup; for building custom PyTorch graph architectures prefer alterlab-torchdrug, and for standalone molecule-to-feature-vector generation prefer alterlab-molfeat. Part of the AlterLab Academic Skills suite.
+description: Runs molecular machine learning with DeepChem — diverse featurizers, pre-built MoleculeNet benchmark datasets, and pre-trained models (ChemBERTa, GROVER) for property prediction (ADMET, toxicity, solubility) via traditional ML or graph neural networks. Use when running end-to-end molecular ML experiments that need MoleculeNet benchmarks, scaffold splitting, or ready-made models with minimal setup; for building custom PyTorch graph architectures prefer alterlab-torch-geometric, and for standalone molecule-to-feature-vector generation prefer alterlab-molfeat. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Self-contained, no API key or account. Use a dedicated environment: DeepChem 2.8.0 needs Python <= 3.11 (nightly --pre builds: <= 3.12, numpy<2, torch==2.2.1 with the [torch] extra)."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # DeepChem
@@ -24,9 +25,18 @@ This skill should be used when:
 - Using MoleculeNet benchmark datasets (Tox21, BBBP, Delaney, etc.)
 - Converting molecules to ML-ready features (fingerprints, graph representations, descriptors)
 - Implementing graph neural networks for molecules (GCN, GAT, MPNN, AttentiveFP)
-- Applying transfer learning with pretrained models (ChemBERTa, GROVER, MolFormer)
+- Applying transfer learning with pretrained models (ChemBERTa, GROVER; MoLFormer in nightly builds)
 - Predicting crystal/materials properties (bandgap, formation energy)
 - Analyzing protein or DNA sequences
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Designing a custom GNN architecture (own layers / message passing) in PyTorch | `alterlab-torch-geometric` (or `alterlab-torchdrug` for TorchDrug's task abstractions) |
+| Only fetching standardized ADMET/DTI benchmark datasets and official splits, no modeling | `alterlab-pytdc` |
+| Only turning molecules into feature matrices or pretrained embeddings for your own models | `alterlab-molfeat` |
+| Classical ML on an existing numeric feature table (pipelines, CV, tuning) | `alterlab-scikit-learn` |
 
 ## Core Capabilities
 
@@ -155,9 +165,9 @@ train, test = splitter.train_test_split(dataset)
 | < 1K samples | Any | SklearnModel (RandomForest) | CircularFingerprint |
 | 1K-100K | Classification/Regression | GBDTModel or MultitaskRegressor | CircularFingerprint |
 | > 100K | Molecular properties | GCNModel, AttentiveFPModel, DMPNNModel | MolGraphConvFeaturizer |
-| Any (small preferred) | Transfer learning | ChemBERTa, GROVER, MolFormer | Model-specific |
+| Any (small preferred) | Transfer learning | Chemberta, GroverModel (MoLFormer: nightly only) | Model-specific |
 | Crystal structures | Materials properties | CGCNNModel, MEGNetModel | Structure-based |
-| Protein sequences | Protein properties | ProtBERT | Sequence-based |
+| Protein sequences | Protein properties | ProtBERT (nightly builds only) | Sequence-based |
 
 #### Example: Traditional ML
 ```python
@@ -245,12 +255,21 @@ model = dc.models.Chemberta(
 )
 model.fit(train, nb_epoch=10)
 
-# GROVER (graph transformer pretrained on 10M molecules)
-model = dc.models.GroverModel(
-    task='regression',
-    n_tasks=1
-)
-model.fit(train, nb_epoch=20)
+# GROVER: DeepChem's GroverModel is NOT a one-line pretrained loader. task is
+# 'pretraining' | 'finetuning', mode is 'classification' | 'regression', and it needs
+# node/edge feature dims, atom/bond vocabularies built from your data, and inputs
+# featurized with dc.feat.GroverFeaturizer(features_generator=dc.feat.CircularFingerprint()).
+# No pretrained GROVER weights are downloaded — pretrain (task='pretraining') or restore
+# your own checkpoint. Full recipe: the GroverModel class docstring.
+from deepchem.feat.vocabulary_builders import (GroverAtomVocabularyBuilder,
+                                               GroverBondVocabularyBuilder)
+av, bv = GroverAtomVocabularyBuilder(), GroverBondVocabularyBuilder()
+av.build(smiles_dataset); bv.build(smiles_dataset)   # dataset built with DummyFeaturizer
+model = dc.models.GroverModel(node_fdim=151, edge_fdim=165, hidden_size=128,
+                              atom_vocab=av, bond_vocab=bv, features_dim=2048,
+                              functional_group_size=85, task='finetuning',
+                              mode='regression', n_tasks=1, model_dir='grover_ft')
+model.fit(grover_train, nb_epoch=20)   # grover_train featurized with GroverFeaturizer
 ```
 
 **When to use transfer learning**:
@@ -274,7 +293,7 @@ classification_metrics = [
 regression_metrics = [
     dc.metrics.Metric(dc.metrics.r2_score, name='R²'),
     dc.metrics.Metric(dc.metrics.mean_absolute_error, name='MAE'),
-    dc.metrics.Metric(dc.metrics.root_mean_squared_error, name='RMSE')
+    dc.metrics.Metric(dc.metrics.rms_score, name='RMSE')   # there is no root_mean_squared_error
 ]
 
 # Evaluate
@@ -344,15 +363,15 @@ python scripts/graph_neural_network.py \
 ```
 
 ### 3. `transfer_learning.py`
-Fine-tune pretrained models (ChemBERTa, GROVER) on molecular property prediction tasks.
+Fine-tune pretrained ChemBERTa on molecular property prediction tasks. (`--model grover` exits with setup guidance: GROVER needs the manual vocabulary/featurizer recipe shown above.)
 
 ```bash
 # Fine-tune ChemBERTa on BBBP
 python scripts/transfer_learning.py --model chemberta --dataset bbbp
 
-# Fine-tune GROVER on custom data
+# Fine-tune ChemBERTa on custom data
 python scripts/transfer_learning.py \
-    --model grover \
+    --model chemberta \
     --data small_dataset.csv \
     --target activity \
     --task-type classification \
@@ -406,22 +425,20 @@ Best-practice patterns (splitting, normalization, model progression, class balan
 
 ## Installation Notes
 
-Basic installation:
+Give DeepChem its own virtual environment — its pins conflict with current scientific stacks:
+
 ```bash
-uv pip install deepchem
+# Stable release 2.8.0 (Apr 2024; latest stable as of 2026-09) supports Python 3.7-3.11
+uv venv --python 3.11 && uv pip install deepchem
+
+# PyTorch-backed models (GCN, GAT, AttentiveFP, Chemberta, GroverModel, ...)
+uv pip install "deepchem[torch]"       # also: "deepchem[tensorflow]", "deepchem[jax]" — there is no [all] extra
+
+# Python 3.12 or newer model classes (MoLFormer, ProtBERT): nightly pre-releases
+uv pip install --pre "deepchem[torch]" # 2.8.1.devYYYYMMDD builds; Python <= 3.12
 ```
 
-For PyTorch models (GCN, GAT, etc.):
-```bash
-uv pip install deepchem[torch]
-```
-
-For all features:
-```bash
-uv pip install deepchem[all]
-```
-
-If import errors occur, the user may need specific dependencies. Check the DeepChem documentation for detailed installation instructions.
+The nightlies pin `numpy<2` and, with `[torch]`, `torch==2.2.1` and `dgl<2.2.1`, so they cannot share an environment with numpy 2.x / current PyTorch. The Hugging Face wrappers (`Chemberta`, `MoLFormer`, `ProtBERT`) also need `transformers`, which no extra installs.
 
 ## Additional Resources
 

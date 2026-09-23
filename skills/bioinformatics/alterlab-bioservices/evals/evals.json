@@ -21,18 +21,18 @@
       ]
     },
     {
-      "id": "ppi-psicquic-query",
-      "prompt": "I want all reported protein-protein interactions for ZAP70 in human from the MINT database. How do I query that programmatically?",
-      "expected_output": "Invokes alterlab-bioservices. Uses the PSICQUIC service: PSICQUIC().query('mint', 'ZAP70 AND species:9606') and references activeDBs to list available interaction databases. Querying PSICQUIC-federated interaction databases (MINT, IntAct, BioGRID) is a documented bioservices capability.",
+      "id": "ppi-string-query",
+      "prompt": "I want the reported protein-protein interaction partners of ZAP70 in human. How do I query that programmatically?",
+      "expected_output": "Invokes alterlab-bioservices. Uses the STRING service — STRING().get_interaction_partners('ZAP70', species=9606), or get_interactions for edges within a set — and notes that the old PSICQUIC and BioGRID wrappers were removed in bioservices 1.14, so PSICQUIC().query(...) no longer imports.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "PSICQUIC" }
+        { "type": "output_contains", "value": "STRING" }
       ]
     },
     {
       "id": "go-term-annotation",
       "prompt": "Pull the GO term definition for GO:0003824 and the GO annotations for UniProt P43403 in one go using QuickGO.",
-      "expected_output": "Invokes alterlab-bioservices. Uses the QuickGO service: g.Term('GO:0003824', frmt='obo') for the term definition and g.Annotation(protein='P43403', format='tsv') for annotations. Gene Ontology queries via QuickGO are an in-scope bioservices service.",
+      "expected_output": "Invokes alterlab-bioservices. Uses the QuickGO service: g.get_go_terms('GO:0003824') for the term and g.Annotation(geneProductId='UniProtKB:P43403', includeFields='goName', limit=100) for annotations, reading the 'results' list of the returned dict. Gene Ontology queries via QuickGO are an in-scope bioservices service.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "QuickGO" }

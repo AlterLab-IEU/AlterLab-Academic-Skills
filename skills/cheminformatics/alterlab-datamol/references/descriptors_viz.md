@@ -44,11 +44,12 @@ Compute multiple molecular properties for a single molecule.
   - `properties_fn`: Custom list of descriptor functions
   - `add_properties`: Include additional computed properties
 - **Returns**: Dictionary of descriptor name → value pairs (~22 keys)
-- **Default keys** (datamol's own names, verified on 0.12.x): `mw`, `fsp3`,
+- **Default keys** (datamol's own names, verified on 0.13.0): `mw`, `fsp3`,
   `n_lipinski_hba`, `n_lipinski_hbd`, `n_rings`, `n_hetero_atoms`,
   `n_heavy_atoms`, `n_rotatable_bonds`, `n_radical_electrons`, `tpsa`, `qed`,
   `clogp`, `sas`, plus aliphatic/aromatic/saturated carbocycle/heterocycle/ring
-  counts.
+  counts (`n_aromatic_heterocycles` etc. — 0.13 fixed the old `..._heterocyles`
+  misspelling, so the dict keys changed).
 - **Naming gotcha**: logP is `clogp`; H-bond donors/acceptors are
   `n_lipinski_hbd` / `n_lipinski_hba`. There is **no** `logp`, `hbd`, `hba`, or
   `n_aromatic_atoms` key (use the standalone `n_aromatic_atoms(mol)` function for
@@ -66,7 +67,7 @@ Compute descriptors for multiple molecules in parallel.
 - **Parameters**:
   - `mols`: List of molecules
   - `n_jobs`: Number of parallel jobs (-1 for all cores)
-  - `batch_size`: Chunk size for parallel processing
+  - `batch_size`: Chunk size for parallel processing — set it explicitly (e.g. `256`) whenever `n_jobs != 1`; the `None` default is rejected by joblib ≥ 1.6
   - `progress`: Show progress bar
 - **Returns**: Pandas DataFrame with one row per molecule
 - **Example**:
@@ -75,6 +76,7 @@ Compute descriptors for multiple molecules in parallel.
   df = dm.descriptors.batch_compute_many_descriptors(
       mols,
       n_jobs=-1,
+      batch_size=256,
       progress=True
   )
   ```
@@ -120,13 +122,13 @@ The viz module provides tools for rendering molecules and conformers as images.
 
 ### Main Visualization Function
 
-#### `dm.viz.to_image(mols, legends=None, n_cols=4, use_svg=False, mol_size=(200, 200), highlight_atom=None, highlight_bond=None, outfile=None, max_mols=None, copy=True, indices=False, ...)`
+#### `dm.viz.to_image(mols, legends=None, n_cols=4, use_svg=True, mol_size=(300, 300), highlight_atom=None, highlight_bond=None, outfile=None, max_mols=32, copy=True, indices=False, align=False, ...)`
 Generate image grid from molecules.
 - **Parameters**:
   - `mols`: Single molecule or list of molecules
   - `legends`: String or list of strings as labels (one per molecule)
   - `n_cols`: Number of molecules per row (default: 4)
-  - `use_svg`: Output SVG format (True) or PNG (False, default)
+  - `use_svg`: Output SVG (True, **default**) or PNG (False) — set `use_svg=False` when writing a `.png` file
   - `mol_size`: Tuple (width, height) or single int for square images
   - `highlight_atom`: Atom indices to highlight (list or dict)
   - `highlight_bond`: Bond indices to highlight (list or dict)
@@ -140,8 +142,8 @@ Generate image grid from molecules.
   # Basic grid
   dm.viz.to_image(mols[:10], legends=[dm.to_smiles(m) for m in mols[:10]])
 
-  # Save to file
-  dm.viz.to_image(mols, outfile="molecules.png", n_cols=5)
+  # Save to file (PNG needs use_svg=False; SVG is the default)
+  dm.viz.to_image(mols, outfile="molecules.png", n_cols=5, use_svg=False)
 
   # Highlight substructure
   dm.viz.to_image(mol, highlight_atom=[0, 1, 2], highlight_bond=[0, 1])

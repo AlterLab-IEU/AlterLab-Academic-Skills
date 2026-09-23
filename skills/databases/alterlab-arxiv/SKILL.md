@@ -6,7 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv:*)
 compatibility: Keyless arXiv Atom API (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # arXiv Database
@@ -28,10 +29,15 @@ Use this skill when:
 - Building literature review datasets for AI/ML research
 - Monitoring new submissions in a subfield
 
-Consider alternatives when:
-- Searching for biomedical literature specifically -> Use **pubmed-database** or **biorxiv-database**
-- You need citation counts or impact metrics -> Use **openalex-database**
-- You need peer-reviewed journal articles only -> Use **pubmed-database**
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Peer-reviewed, MeSH-indexed biomedical journal articles | `alterlab-pubmed` |
+| Life-science preprints (bioRxiv / medRxiv) | `alterlab-biorxiv` |
+| Citation counts, citation trajectories, or tracking an institution's / lab's output | `alterlab-openalex` |
+| Depositing your own preprint on arXiv (categories, license, versioning) | `alterlab-preprint-deposition` |
+| Multi-database systematic review with PRISMA screening | `alterlab-literature-review` |
 
 ## Core Search Capabilities
 
@@ -72,11 +78,16 @@ python scripts/arxiv_search.py \
 
 ### 2. Author Search
 
+`au:` matches **author names only** — the API cannot filter by affiliation, so
+`au:anthropic` or `au:deepmind` return nothing (or only papers where an organization
+is listed as a collective author). To follow a lab, query its members by name; to
+follow a whole institution, use `alterlab-openalex` (institution filter).
+
 ```bash
 python scripts/arxiv_search.py \
-  --author "Anthropic" \
+  --author "Yoshua Bengio" \
   --max-results 50 \
-  --output anthropic_papers.json
+  --output bengio_papers.json
 ```
 
 ```bash
@@ -197,8 +208,19 @@ cat:cs.LG ANDNOT cat:cs.CV
 **Grouping with parentheses:**
 ```
 (ti:sparse AND ti:autoencoder) AND cat:cs.LG
-au:anthropic AND (abs:interpretability OR abs:alignment)
+au:"Chris Olah" AND (abs:interpretability OR abs:alignment)
 ```
+
+**Date ranges** (GMT, `YYYYMMDDTTTT`, inclusive):
+```
+cat:cs.LG AND submittedDate:[202501010000 TO 202501312359]
+```
+
+**Validation (since the Nov 2025 backend migration):** malformed queries — unbalanced
+parentheses, empty prefixes like `au:`, nested field syntax — return **HTTP 400** with an
+Atom error entry (`<summary>Invalid query string: …</summary>`) instead of an empty 200.
+Bare terms are auto-prefixed (`pineapple` → `all:pineapple`); add `raw=1` to disable
+that rewriting. The script surfaces these errors instead of reporting zero results.
 
 **Examples:**
 ```python
@@ -215,7 +237,7 @@ results = searcher.search(
 
 # Specific author in specific field
 results = searcher.search(
-    query="au:neel nanda AND cat:cs.LG",
+    query='au:"Neel Nanda" AND cat:cs.LG',
     max_results=20
 )
 
@@ -286,18 +308,17 @@ print(df["primary_category"].value_counts().head(10))
 
 ### Track a Research Group
 
+arXiv has no affiliation search, so track a group through its members' names (or
+switch to `alterlab-openalex` and filter works by institution ID):
+
 ```python
 searcher = ArxivSearcher()
 
-groups = {
-    "anthropic": "au:anthropic AND (cat:cs.LG OR cat:cs.CL)",
-    "openai": "au:openai AND cat:cs.CL",
-    "deepmind": "au:deepmind AND cat:cs.LG",
-}
+members = ["Chris Olah", "Neel Nanda", "Tom Henighan"]  # the group's authors
+query = "(" + " OR ".join(f'au:"{m}"' for m in members) + ") AND (cat:cs.LG OR cat:cs.CL)"
 
-for name, query in groups.items():
-    results = searcher.search(query=query, max_results=50, sort_by="submittedDate")
-    print(f"{name}: {len(results)} recent papers")
+results = searcher.search(query=query, max_results=50, sort_by="submittedDate")
+print(f"{len(results)} recent papers")
 ```
 
 ### Monitor New Submissions
@@ -351,16 +372,18 @@ results = searcher.search(query=query, max_results=20)
 4. **Use `sort_by=submittedDate`** for recent papers, `relevance` for keyword searches.
 5. **Max 2000 results per call**: arXiv caps a single request at 2000 (the script clamps to this). For larger sets, paginate with the `start` parameter, up to a 30000 total cap.
 6. **arXiv IDs**: Use bare IDs (`2309.10668`), not full URLs, in programmatic code.
-7. **Combine with openalex-database**: For citation counts and impact metrics arXiv doesn't provide.
+7. **Combine with `alterlab-openalex`**: For citation counts and impact metrics arXiv doesn't provide.
 
 ## Limitations
 
 - **No full-text search**: Only searches metadata (title, abstract, authors, comments)
-- **No citation data**: Use openalex-database or Semantic Scholar for citations
+- **No citation data**: Use `alterlab-openalex` or Semantic Scholar for citations
+- **No affiliation search**: `au:` matches author names only
 - **Max 2000 results per call**: Use pagination (`start`) for larger sets, up to a 30000 total cap.
 - **Rate limited**: ~1 request per 3 seconds recommended
 - **Atom XML responses**: The script parses these into JSON automatically
 - **Search lag**: New papers may take hours to appear in API results
+- **Strict query validation**: invalid syntax returns HTTP 400 with an error entry (see Query Syntax)
 
 ## Reference Documentation
 

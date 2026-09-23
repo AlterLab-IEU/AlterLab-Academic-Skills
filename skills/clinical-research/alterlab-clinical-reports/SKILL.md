@@ -6,7 +6,8 @@ license: MIT
 compatibility: "Runs with Read/Write/Edit/Bash; producing PDF/report output requires a local LaTeX toolchain. No API key required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Clinical Report Writing
@@ -19,9 +20,12 @@ This skill covers four report families: **case reports** for journal publication
 **clinical trial reports** for regulatory submission (SAE, CSR), and **patient
 documentation** for medical records (SOAP, H&P, discharge).
 
-**Critical principle: clinical reports must be accurate, complete, objective, and
-compliant with applicable regulations (HIPAA, FDA, ICH-GCP).** Patient privacy and
-data integrity are paramount.
+Clinical reports have to be accurate, complete, objective, and compliant with the
+applicable regulations (HIPAA, FDA, ICH-GCP), because they feed patient care, regulatory
+decisions, and the published record. Use only clinical data the user provides — never
+invent findings, lab values, dates, or citations to fill a template — and mark anything
+unknown as a placeholder for the clinician to complete. Drafts are for review and
+sign-off by the responsible clinician or investigator.
 
 ## When to Use This Skill
 
@@ -32,6 +36,16 @@ Use when:
 - Writing SOAP notes, H&P, discharge summaries, or consult notes
 - Ensuring HIPAA compliance and proper de-identification
 - Validating clinical documentation for completeness and accuracy
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Group-level cohort analysis or GRADE-graded treatment recommendations | `alterlab-clinical-decision` |
+| A forward-looking care plan with SMART goals for one patient | `alterlab-treatment-plans` |
+| Designing CRFs/REDCap instruments or mapping trial data to CDISC SDTM | `alterlab-redcap-cdisc` |
+| An IMRaD research manuscript (e.g. an RCT results paper) rather than a case report or CSR | `alterlab-scientific-writing` |
+| IRB applications and informed-consent forms | `alterlab-research-ethics` |
 
 ## Core Workflow
 
@@ -62,7 +76,9 @@ Standards and lexicons (ACR, CAP, LOINC): `references/diagnostic_reports_standar
 SAE reports document serious adverse events with causality and expectedness, on
 strict regulatory timelines (7/15 days). CSRs follow the ICH-E3 section structure
 for regulatory submission. Protocol deviations are categorized (minor/major/violation)
-with CAPA documentation.
+with CAPA documentation. Journal reports of randomized trials follow CONSORT 2025
+(30-item checklist, April 2025; replaces CONSORT 2010), and trial protocols follow
+SPIRIT 2025.
 → Component-by-component structures: `references/clinical_trial_report_structures.md`.
 Regulatory framing (ICH-E3, CONSORT, timelines): `references/clinical_trial_reporting.md`.
 
@@ -79,8 +95,10 @@ Coding and documentation guidance: `references/patient_documentation.md`.
   identifiers) or Expert Determination; Business Associate Agreements for third parties.
 - **FDA**: 21 CFR Part 11 (e-records/signatures), Part 50 (consent), Part 56 (IRB),
   Part 312 (IND).
-- **ICH-GCP**: protocol adherence, consent documentation, source-document requirements,
-  audit trails, investigator responsibilities.
+- **ICH-GCP**: E6(R3) (ICH Step 4, 6 January 2025; in effect in the EU since 23 July
+  2025) — protocol adherence, consent documentation, source-document requirements,
+  audit trails, investigator responsibilities. Check which revision applied when a
+  given study was conducted.
 
 > **⚠️ Caveat — automated de-identification is NOT a compliance guarantee.** The bundled `scripts/check_deidentification.py` is a *pure regex* scan. Pattern matching has known, substantial false-negative rates: it misses unconventional name spellings, free-text dates, narrative addresses, rare identifiers, and anything outside its fixed patterns. It is a rough first-pass screen only — **not** a substitute for line-by-line manual review by a qualified person, and **not** a validated de-identification tool (e.g., Microsoft Presidio, Philter, or a certified Expert Determination). Passing this script does not establish HIPAA Safe Harbor compliance and must never be relied upon as a privacy guarantee. Always perform manual review before any disclosure or publication.
 
@@ -148,9 +166,10 @@ compliance, billing requirements) and the `scripts/` validators.
 
 ## Integration with Other Skills
 
-Pairs with scientific-writing (clear medical prose), peer-review (quality assessment),
-citation-mgmt (literature references), research-grants (protocol development), and
-literature-review (background sections).
+Pairs with `alterlab-scientific-writing` (clear medical prose), `alterlab-peer-review`
+(quality assessment), `alterlab-citation-mgmt` (literature references),
+`alterlab-research-grants` (protocol development), and `alterlab-literature-review`
+(background sections).
 
 ## Common Pitfalls
 
@@ -182,5 +201,7 @@ Before finalizing any clinical report, verify:
 - [ ] Signatures and dates present
 - [ ] Quality assurance review completed
 
-**Final note**: clinical report quality directly impacts patient safety, healthcare
-delivery, and medical knowledge. Always prioritize accuracy, privacy, and professionalism.
+Clinical report quality directly affects patient safety, healthcare delivery, and the
+medical literature, so accuracy and privacy take precedence over polish.
+
+Part of the AlterLab Academic Skills suite.

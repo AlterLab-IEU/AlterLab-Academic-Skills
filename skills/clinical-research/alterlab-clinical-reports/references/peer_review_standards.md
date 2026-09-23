@@ -152,11 +152,14 @@ Peer review ensures that clinical manuscripts meet standards for scientific rigo
 
 ### CONSORT Compliance
 
+Check against the CONSORT 2025 checklist (30 items; replaces CONSORT 2010 — see `clinical_trial_reporting.md`).
+
 **Verify:**
 - Title identifies as randomized trial
 - Structured abstract
 - Trial registration number provided
-- Protocol accessible
+- Protocol and statistical analysis plan accessible
+- Data-sharing statement (where de-identified data and code can be accessed)
 - CONSORT flow diagram included
 - Baseline characteristics table
 - All outcomes reported (not just significant ones)

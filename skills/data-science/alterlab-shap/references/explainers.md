@@ -157,10 +157,11 @@ shap_values = explainer.shap_values(X_test[:10])
 **Example**:
 ```python
 import shap
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.svm import SVC
 
-# Train model
-model = SVC(probability=True).fit(X_train, y_train)
+# Train model (scikit-learn 1.9 deprecates SVC(probability=True); calibrate explicitly)
+model = CalibratedClassifierCV(SVC(), ensemble=False).fit(X_train, y_train)
 
 # Create prediction function
 predict_fn = lambda x: model.predict_proba(x)[:, 1]

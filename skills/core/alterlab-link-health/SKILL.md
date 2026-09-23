@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: Targets lychee-based GitHub Actions link checkers (generalizes to markdown-link-check); no external API key or account required
 metadata:
   skill-author: AlterLab
-  version: "1.0"
-  last_updated: "2026-04-21"
+  version: "1.1"
+  last_updated: "2026-09-23"
   source_audit: "AlterLab-IEU/AlterLab-Academic-Skills PR #1 (merged 2026-04-21 as 93a72fe)"
 ---
 
@@ -40,29 +40,22 @@ Finalize the post-merge cleanup: resolve pending human-decision items, file foll
 
 ---
 
-## Trigger Conditions
-
-### Trigger Keywords
-
-**English**: link audit, dead links, link health, lychee, broken links, link checker, markdown link audit, link-health audit, 404 audit, check-links failing, CI link-check
-
-**繁體中文**: 連結健檢, 死鏈, 失效連結, 斷鏈檢查, 連結審計
-
-### When This Skill Applies
+## When to Use This Skill
 
 - A weekly `Check Links` (or similar lychee / markdown-link-check) workflow has been failing.
 - The user mentions a large error count (hundreds+) that they suspect is mostly config-driven false positives.
 - The user wants to refactor broken intra-repo file references across many skills / docs.
 - The user wants a reusable process for link debt maintenance going forward.
 
-### Non-Trigger Scenarios
+**Trigger keywords** — English: link audit, dead links, link health, lychee, broken links, link checker, markdown link audit, link-health audit, 404 audit, check-links failing, CI link-check. 繁體中文: 連結健檢, 死鏈, 失效連結, 斷鏈檢查, 連結審計.
 
-| Scenario | Skill / Tool to Use Instead |
-|----------|-----------------------------|
-| Fix a single broken link in a single file | Direct Edit — no pipeline needed |
-| Add a new URL to skill docs | `alterlab-scientific-writing` or the relevant domain skill |
-| Verify a bibliography actually exists (DOI/author resolution, fabricated/hallucinated citations) | `alterlab-citation-verifier` — it cross-checks Crossref/OpenAlex/Semantic Scholar/arXiv. Link-health only repairs broken hyperlinks in docs; it never validates that a cited work exists. |
-| Audit repo structure beyond links (schema, metadata) | Separate `schema-drift` audit (out of scope) |
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Verify that cited works exist (DOI/author resolution, fabricated or hallucinated references, retractions) | `alterlab-citation-verifier` — link-health only repairs hyperlinks; it never validates that a cited work exists |
+| Fix a single broken link in a single file | A direct edit — no pipeline needed |
+| Audit repo structure beyond links (schema, frontmatter, metadata) | A separate schema-drift audit (out of scope here) |
 
 ---
 
@@ -72,7 +65,7 @@ Each tier is a single reviewable commit. Run them in order — each unlocks the 
 
 | Tier | Scope | Typical Delta |
 |------|-------|---------------|
-| **1 — Config** | Introduce `.lychee.toml` with an additive accept set, a `.lycheeignore` for permanent noise hosts, and a hardened CI workflow. | Biggest single win — often -70% to -90% of errors. Fixes the "`--accept 403` replaces the default set" gotcha. |
+| **1 — Config** | Introduce `.lychee.toml` with an explicit accept set (it replaces lychee's defaults, so list `200..=299`), a `.lycheeignore` for permanent noise hosts, and a hardened CI workflow. | Biggest single win — often -70% to -90% of errors. Fixes the "`--accept 403` replaces the default set" gotcha. |
 | **2 — Intra-repo refs** | Repair `[ERROR] file://` entries: singular/plural directory typos, missing path prefixes, YAML frontmatter bugs. Wrap pedagogical placeholder paths as inline code. | Eliminates the bulk of real breakage — usually 200-400 entries collapse to zero. |
 | **3 — URL substitutions** | Replace MOVED external URLs with verified-live substitutes; replace DEAD_INFRA URLs with replacement resources. **Never substitute without verification.** | Reduces residuals to the low dozens. |
 | **4 — Exclusions** | Everything left that cannot be fixed: bot-hostile hosts, pedagogical placeholders, expired upstream infrastructure, chronically flaky academic sites. | Gets to 0 errors or stable single-digit residuals. |
@@ -83,7 +76,7 @@ See `references/tier1-config.md` through `references/tier4-exclusions.md` for th
 
 ## The Tier 3 Guardrail
 
-After any URL substitution pass, **re-run the link checker and diff against the baseline success set**. Any URL that returned 200 OK in baseline and is non-200 after substitution is a regression and MUST be reverted before commit.
+After any URL substitution pass, **re-run the link checker and diff against the baseline success set**. Any URL that returned 200 OK in baseline and is non-200 after substitution is a regression; revert it before committing.
 
 **Self-check:**
 
@@ -102,7 +95,7 @@ Full detail: `references/tier3-substitution.md`.
 
 ## The Verification-First Rule
 
-**DEFAULT to probe-verification before any URL substitution.** Unverified substitutions are how phantom URLs land in public skills. Before every `[old] → [new]` replacement:
+**Probe-verify before any URL substitution.** Unverified substitutions are how phantom URLs land in public skills. Before every `[old] → [new]` replacement:
 
 1. For GitHub repos: `gh api repos/owner/name` — status must be 200 (repo exists, not archived).
 2. For HTTP URLs: `curl -sSI -L --max-time 15 '<new>'` — final status must be 200 (after redirects).
@@ -155,3 +148,5 @@ This skill fixes *link health*. It does NOT:
 - Modify `.lychee.toml`'s accept list to mask real breakage. Flaky upstream 5xx / timeouts get excluded per-host with rationale, not blanket-accepted.
 
 Scope discipline keeps the PR reviewable and the link-check signal honest.
+
+Part of the AlterLab Academic Skills suite.

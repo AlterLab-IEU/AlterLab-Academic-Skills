@@ -28,8 +28,10 @@ makeblastdb -in seqs.fasta -dbtype {nucl|prot} -parse_seqids \
   stay clean for DIAMOND reuse. It cannot be added retroactively — rebuild if you
   forgot it.
 - `-dbtype nucl` for nucleotide subjects, `prot` for protein.
-- BLAST+ 2.17.0 can read **gzip- and zstd-compressed FASTA** input directly and
-  writes JSON DB metadata alongside the index.
+- BLAST+ **2.17.0** (released 21 July 2025) can read compressed FASTA input
+  directly — **gzip (`.gz`), bzip2 (`.bz2`) and zstd (`.zst`)** — choosing the
+  decompressor from the file extension of `-in`. Building from source needs the
+  matching zlib/bzip2/zstd libraries.
 - Multi-FASTA on stdin: `... -in - ...`.
 
 ### Retrieving sequences back out
@@ -115,12 +117,16 @@ blastp -query q.faa -db nr -negative_taxids 2      # exclude bacteria
 
 - `-num_threads N` — number of CPU threads.
 - `-mt_mode` (integer) controls *how* work is split across threads:
-  - `0` (default) — split by database volume; best for **few large** queries.
-  - `1` — split by query; set this when searching **many small** queries so all
-    threads stay saturated. The appendix describes mode 1 as the setting for
-    "a large number of queries … with multiple threads".
-- BLAST+ 2.15+ can auto-select the mode; set it explicitly for predictable
-  behavior on batch jobs.
+  - `0` (**default**) — BLAST selects the method for you from query size, database
+    size, program and task. Since the 2.15 release this auto-selection is what NCBI
+    recommends, and it is where the "2–10x faster with many queries against a small
+    database" speedup comes from.
+  - `1` — **ThreadByQuery**: each thread takes a batch of queries and searches the
+    whole database. Good for many queries against a relatively small database.
+  - `2` — **ThreadByDatabase**: split by database volume. Suits larger databases and
+    any number of queries.
+- Override the default only when you have measured a reason to; NCBI's manual
+  explicitly calls overriding "not recommended".
 
 ## Common e-value / filter flags
 

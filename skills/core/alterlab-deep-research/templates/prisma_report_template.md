@@ -165,7 +165,7 @@ Example: "The Effect of [Intervention] on [Outcome] in [Population]: A Systemati
 **13c. Tabulation/visualization**: [Methods for displaying individual study and synthesis results, e.g., forest plots, summary tables]
 
 **13d. Synthesis approach**: [Statistical model and software]
-- Model: [Fixed-effect / Random-effects (DerSimonian-Laird / REML)]
+- Model: [Fixed-effect / Random-effects (tau² estimator: REML / DerSimonian-Laird / other; CI method: Wald / Hartung-Knapp-Sidik-Jonkman)]
 - Software: [R metafor / RevMan / Stata]
 - OR if narrative: [SWiM approach, vote counting, effect direction plot]
 

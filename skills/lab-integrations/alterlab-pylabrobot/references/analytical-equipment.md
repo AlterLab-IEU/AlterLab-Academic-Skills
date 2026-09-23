@@ -1,462 +1,138 @@
 # Analytical Equipment in PyLabRobot
 
-## Overview
+Checked against pylabrobot 0.2.2 (2026-09). Every device follows the same pattern as the liquid handler: a front end (`PlateReader`, `Scale`) plus a backend for the specific instrument, `await device.setup()` before use and `await device.stop()` at the end. Swap the backend for its chatterbox (simulation) twin to test without hardware.
 
-PyLabRobot integrates with analytical equipment including plate readers, scales, and other measurement devices. This allows automated workflows that combine liquid handling with analytical measurements.
+## Plate readers
 
-## Plate Readers
+### Supported backends (all importable from `pylabrobot.plate_reading`)
 
-### BMG CLARIOstar (Plus)
+| Instrument | Backend |
+|------------|---------|
+| BMG Labtech CLARIOstar / CLARIOstar Plus | `CLARIOstarBackend(device_id=None)` |
+| Agilent BioTek Synergy H1 | `SynergyH1Backend()` |
+| Agilent BioTek Cytation (plate reading + imaging) | `CytationBackend()` (`Cytation5Backend` is a deprecated alias) |
+| Molecular Devices SpectraMax M5, 384 Plus, Gemini EM | `MolecularDevicesSpectraMaxM5Backend(port=...)`, `MolecularDevicesSpectraMax384PlusBackend(port=...)`, `MolecularDevicesSpectraMaxGeminiEMBackend(port=...)` |
+| Byonoy Absorbance 96 / Luminescence 96 Automate | `ByonoyAbsorbance96AutomateBackend()`, `ByonoyLuminescence96AutomateBackend()` |
+| Tecan Infinite 200 Pro, Spark 20M | `ExperimentalTecanInfinite200ProBackend`, `ExperimentalSparkBackend` (experimental) |
+| Simulation | `PlateReaderChatterboxBackend()` |
 
-The BMG Labtech CLARIOstar and CLARIOstar Plus are microplate readers that measure absorbance, luminescence, and fluorescence.
+The old import path `pylabrobot.plate_reading.clario_star_backend` still works in 0.2.2 but emits a deprecation warning; import from `pylabrobot.plate_reading` instead.
 
-#### Hardware Setup
+Hardware backends need the extra for their connection: `uv pip install "pylabrobot[ftdi]"` for the CLARIOstar and BioTek readers, `[serial]` for Molecular Devices, `[hid]` for Byonoy, `[usb]` for the Tecan readers (`[all]` installs every extra). Without it, constructing the backend raises an error naming the missing extra.
 
-**Physical Connections:**
-1. IEC C13 power cord to mains power
-2. USB-B cable to computer (with security screws on device end)
-3. Optional: RS-232 port for plate stacking units
+### Reading a plate
 
-**Communication:**
-- Serial connection through FTDI/USB-A at firmware level
-- Cross-platform support (Windows, macOS, Linux)
-
-#### Software Setup
-
-```python
-from pylabrobot.plate_reading import PlateReader
-from pylabrobot.plate_reading.clario_star_backend import CLARIOstarBackend
-
-# Create backend
-backend = CLARIOstarBackend()
-
-# Initialize plate reader
-pr = PlateReader(
-    name="CLARIOstar",
-    backend=backend,
-    size_x=0.0,    # Physical dimensions not critical for plate readers
-    size_y=0.0,
-    size_z=0.0
-)
-
-# Setup (initializes device)
-await pr.setup()
-
-# When done
-await pr.stop()
-```
-
-#### Basic Operations
-
-**Opening and Closing:**
+Reads act on the plate that is assigned to the reader, so assign the plate (or move it there with a robotic arm) before reading:
 
 ```python
-# Open loading tray
-await pr.open()
+import asyncio
 
-# (Load plate manually or robotically)
+from pylabrobot.plate_reading import PlateReader, PlateReaderChatterboxBackend
+from pylabrobot.resources import cor_96_wellplate_360uL_Fb
 
-# Close loading tray
-await pr.close()
-```
 
-**Temperature Control:**
-
-```python
-# Set temperature (in Celsius)
-await pr.set_temperature(37)
-
-# Note: Reaching temperature is slow
-# Set temperature early in protocol
-```
-
-**Reading Measurements:**
-
-```python
-# Absorbance reading
-data = await pr.read_absorbance(wavelength=450)  # nm
-
-# Luminescence reading
-data = await pr.read_luminescence(focal_height=10)
-
-# Fluorescence reading
-data = await pr.read_fluorescence(
-    excitation_wavelength=485,  # nm
-    emission_wavelength=535     # nm
-)
-```
-
-#### Data Format
-
-Plate reader methods return array data:
-
-```python
-import numpy as np
-
-# Read absorbance
-data = await pr.read_absorbance(wavelength=450)
-
-# data is typically a 2D array (8x12 for 96-well plate)
-print(f"Data shape: {data.shape}")
-print(f"Well A1: {data[0][0]}")
-print(f"Well H12: {data[7][11]}")
-
-# Convert to DataFrame for easier handling
-import pandas as pd
-df = pd.DataFrame(data)
-```
-
-#### Integration with Liquid Handler
-
-Combine plate reading with liquid handling:
-
-```python
-from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.liquid_handling.backends import STARBackend
-from pylabrobot.resources import STARLetDeck
-from pylabrobot.plate_reading import PlateReader
-from pylabrobot.plate_reading.clario_star_backend import CLARIOstarBackend
-
-# Initialize liquid handler
-lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
-await lh.setup()
-
-# Initialize plate reader
-pr = PlateReader(name="CLARIOstar", backend=CLARIOstarBackend(), size_x=0, size_y=0, size_z=0)
-await pr.setup()
-
-# Set temperature early
-await pr.set_temperature(37)
-
-try:
-    # Prepare samples with liquid handler
-    tip_rack = TIP_CAR_480_A00(name="tips")
-    reagent_plate = Cor_96_wellplate_360ul_Fb(name="reagents")
-    assay_plate = Cor_96_wellplate_360ul_Fb(name="assay")
-
-    lh.deck.assign_child_resource(tip_rack, rails=1)
-    lh.deck.assign_child_resource(reagent_plate, rails=10)
-    lh.deck.assign_child_resource(assay_plate, rails=15)
-
-    # Transfer samples
-    await lh.pick_up_tips(tip_rack["A1:H1"])
-    for col in range(1, 13):
-        await lh.aspirate(reagent_plate[f"A{col}:H{col}"], vols=[100] * 8)
-        await lh.dispense(assay_plate[f"A{col}:H{col}"], vols=[100] * 8)
-    await lh.drop_tips()
-
-    # Move plate to reader (manual or robotic arm)
-    print("Move assay plate to plate reader")
-    input("Press Enter when plate is loaded...")
-
-    # Read plate
-    await pr.open()
-    # (plate loaded here)
-    await pr.close()
-
-    data = await pr.read_absorbance(wavelength=450)
-    print(f"Absorbance data: {data}")
-
-finally:
-    await lh.stop()
-    await pr.stop()
-```
-
-#### Advanced Features
-
-**Development Status:**
-
-Some CLARIOstar features are under development:
-- Spectral scanning
-- Injector needle control
-- Detailed measurement parameter configuration
-- Well-specific reading patterns
-
-Check current documentation for latest feature support.
-
-#### Best Practices
-
-1. **Temperature Control**: Set temperature early as heating is slow
-2. **Plate Loading**: Ensure plate is properly seated before closing
-3. **Measurement Selection**: Choose appropriate wavelengths for your assay
-4. **Data Validation**: Check measurement quality and expected ranges
-5. **Error Handling**: Handle timeout and communication errors
-6. **Maintenance**: Keep optics clean per manufacturer guidelines
-
-#### Example: Complete Plate Reading Workflow
-
-```python
-async def run_plate_reading_assay():
-    """Complete workflow with sample prep and reading"""
-
-    # Initialize equipment
-    lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
-    pr = PlateReader(name="CLARIOstar", backend=CLARIOstarBackend(), size_x=0, size_y=0, size_z=0)
-
-    await lh.setup()
-    await pr.setup()
-
-    # Set plate reader temperature
-    await pr.set_temperature(37)
-
+async def main():
+    # Use CLARIOstarBackend(), SynergyH1Backend(), ... on real hardware.
+    reader = PlateReader(name="reader", size_x=0, size_y=0, size_z=0,
+                         backend=PlateReaderChatterboxBackend())
+    await reader.setup()
     try:
-        # Define resources
-        tip_rack = TIP_CAR_480_A00(name="tips")
-        samples = Cor_96_wellplate_360ul_Fb(name="samples")
-        assay_plate = Cor_96_wellplate_360ul_Fb(name="assay")
-        substrate = Trough_100ml(name="substrate")
+        await reader.open()
+        plate = cor_96_wellplate_360uL_Fb(name="assay_plate")
+        reader.assign_child_resource(plate)  # a plate must be in the reader before reading
+        await reader.close()
 
-        lh.deck.assign_child_resource(tip_rack, rails=1)
-        lh.deck.assign_child_resource(substrate, rails=5)
-        lh.deck.assign_child_resource(samples, rails=10)
-        lh.deck.assign_child_resource(assay_plate, rails=15)
-
-        # Transfer samples
-        await lh.pick_up_tips(tip_rack["A1:H1"])
-        for col in range(1, 13):
-            await lh.aspirate(samples[f"A{col}:H{col}"], vols=[50] * 8)
-            await lh.dispense(assay_plate[f"A{col}:H{col}"], vols=[50] * 8)
-        await lh.drop_tips()
-
-        # Add substrate
-        await lh.pick_up_tips(tip_rack["A2:H2"])
-        for col in range(1, 13):
-            await lh.transfer(
-                substrate["channel_1"],
-                assay_plate[f"A{col}:H{col}"],
-                source_vol=50
-            )
-        await lh.drop_tips()
-
-        # Incubate (if needed)
-        # await asyncio.sleep(300)  # 5 minutes
-
-        # Move to plate reader
-        print("Transfer assay plate to CLARIOstar")
-        input("Press Enter when ready...")
-
-        await pr.open()
-        input("Press Enter when plate is loaded...")
-        await pr.close()
-
-        # Read absorbance
-        data = await pr.read_absorbance(wavelength=450)
-
-        # Process results
-        import pandas as pd
-        df = pd.DataFrame(
-            data,
-            index=[f"{r}" for r in "ABCDEFGH"],
-            columns=[f"{c}" for c in range(1, 13)]
+        absorbance = await reader.read_absorbance(wavelength=450, use_new_return_type=True)
+        luminescence = await reader.read_luminescence(focal_height=13.0, use_new_return_type=True)
+        fluorescence = await reader.read_fluorescence(
+            excitation_wavelength=485, emission_wavelength=528, focal_height=7.5,
+            use_new_return_type=True,
         )
-
-        print("Absorbance Results:")
-        print(df)
-
-        # Save results
-        df.to_csv("plate_reading_results.csv")
-
-        return df
-
+        od450 = absorbance[0]["data"]  # 8 x 12 nested list for a 96-well plate
+        print(len(od450), len(od450[0]), luminescence[0]["data"][0][0], fluorescence[0]["data"][0][0])
     finally:
-        await lh.stop()
-        await pr.stop()
+        await reader.stop()
 
-# Run assay
-results = await run_plate_reading_assay()
+
+asyncio.run(main())
 ```
+
+- `size_x/size_y/size_z` are the reader's footprint in millimetres; they only matter when the reader sits on a deck or is reached by an arm.
+- `use_new_return_type=True` returns a list of dictionaries (one per measurement) with `wavelength`, `time`, `temperature`, and `data`; without it 0.2.2 logs a warning and returns only the first `data` grid. Set it now so code keeps working when the default changes.
+- Pass `wells=[...]` to read a subset of wells.
+- Focal heights and wavelength ranges are instrument specific; check the backend (for BioTek: `backend.focal_height_range`, `backend.abs_wavelength_range`).
+
+```python
+import pandas as pd
+
+rows = "ABCDEFGH"
+df = pd.DataFrame(od450, index=list(rows), columns=range(1, 13))
+```
+
+### Temperature control in the reader
+
+`PlateReader` itself has no temperature method. Readers that support it expose it on the backend:
+
+```python
+# BioTek (Synergy H1, Cytation): check support first
+if reader.backend.supports_heating:
+    await reader.backend.set_temperature(37)
+    print(await reader.backend.get_current_temperature())
+
+# Molecular Devices SpectraMax
+await reader.backend.set_temperature(37)
+```
+
+Heating takes minutes; start it early and wait for the reading to stabilise before measuring. Backend methods are instrument specific, so check the backend class before relying on them in a shared protocol.
 
 ## Scales
 
-### Mettler Toledo Scales
-
-PyLabRobot supports Mettler Toledo scales for mass measurements.
-
-#### Setup
+The Mettler Toledo WXS205SDU is supported through `MettlerToledoWXS205SDUBackend` (serial; needs `pylabrobot[serial]`). The older `MettlerToledoWXS205SDU` class now raises an error telling you to use the backend:
 
 ```python
-from pylabrobot.scales import Scale
-from pylabrobot.scales.mettler_toledo_backend import MettlerToledoBackend
+from pylabrobot.scales import MettlerToledoWXS205SDUBackend, Scale, ScaleChatterboxBackend
 
-# Create scale
-scale = Scale(
-    name="analytical_scale",
-    backend=MettlerToledoBackend()
-)
-
+backend = ScaleChatterboxBackend(dummy_weight=0.0)  # on hardware: MettlerToledoWXS205SDUBackend(port="/dev/ttyUSB0")
+scale = Scale(name="scale", size_x=0, size_y=0, size_z=0, backend=backend)
 await scale.setup()
+await scale.zero()                 # zero the empty pan
+await scale.tare()                 # tare with the vessel on the pan
+grams = await scale.read_weight()  # get_weight() is deprecated
+await scale.stop()
 ```
 
-#### Operations
+### Gravimetric check of a dispense
 
 ```python
-# Get weight measurement
-weight = await scale.get_weight()  # Returns weight in grams
-print(f"Weight: {weight} g")
-
-# Tare (zero) the scale
+water_density = 0.998  # g/mL at about 20 °C
 await scale.tare()
-
-# Get multiple measurements
-weights = []
-for i in range(5):
-    w = await scale.get_weight()
-    weights.append(w)
-    await asyncio.sleep(1)
-
-average_weight = sum(weights) / len(weights)
-print(f"Average weight: {average_weight} g")
+await lh.aspirate(reservoir["A1"], vols=[200])
+await lh.dispense(vessel_on_scale, vols=[200])
+measured_ul = await scale.read_weight() / water_density * 1000
+print(f"dispensed {measured_ul:.1f} uL (target 200 uL)")
 ```
 
-#### Integration with Liquid Handler
+Place the vessel on a site the pipette can reach; weigh several replicates and report mean and CV rather than a single value.
+
+## Combining a liquid handler and a reader
+
+A typical assay loop: dispense with the liquid handler, move the plate into the reader (manually, or with the robot's gripper via `lh.move_plate(plate, reader)` when the reader is modelled on the deck), read, and save the data with the plate name and timestamp.
 
 ```python
-# Weigh samples during protocol
-lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
-scale = Scale(name="scale", backend=MettlerToledoBackend())
+import datetime as dt
+import json
 
-await lh.setup()
-await scale.setup()
-
-try:
-    # Tare scale
-    await scale.tare()
-
-    # Dispense liquid
-    await lh.pick_up_tips(tip_rack["A1"])
-    await lh.aspirate(reagent["A1"], vols=[1000])
-
-    # (Move to scale position)
-
-    # Dispense and weigh
-    await lh.dispense(container, vols=[1000])
-    weight = await scale.get_weight()
-
-    print(f"Dispensed weight: {weight} g")
-
-    # Calculate actual volume (assuming density = 1 g/mL for water)
-    actual_volume = weight * 1000  # Convert g to µL
-    print(f"Actual volume: {actual_volume} µL")
-
-    await lh.drop_tips()
-
-finally:
-    await lh.stop()
-    await scale.stop()
+result = await reader.read_absorbance(wavelength=600, use_new_return_type=True)
+record = {"plate": plate.name, "read_at": dt.datetime.now().isoformat(), "result": result}
+with open(f"{plate.name}_od600.json", "w") as fh:
+    json.dump(record, fh)
 ```
 
-## Other Analytical Devices
+For kinetic reads, loop over reads with `asyncio.sleep` between them, or use the instrument's own kinetic mode through backend-specific arguments (for example the Molecular Devices `KineticSettings`).
 
-### Flow Cytometers
+## Good practice
 
-Some flow cytometer integrations are in development. Check current documentation for support status.
-
-### Spectrophotometers
-
-Additional spectrophotometer models may be supported. Check documentation for current device compatibility.
-
-## Multi-Device Workflows
-
-### Coordinating Multiple Devices
-
-```python
-async def multi_device_workflow():
-    """Coordinate liquid handler, plate reader, and scale"""
-
-    # Initialize all devices
-    lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
-    pr = PlateReader(name="CLARIOstar", backend=CLARIOstarBackend(), size_x=0, size_y=0, size_z=0)
-    scale = Scale(name="scale", backend=MettlerToledoBackend())
-
-    await lh.setup()
-    await pr.setup()
-    await scale.setup()
-
-    try:
-        # 1. Weigh reagent
-        await scale.tare()
-        # (place container on scale)
-        reagent_weight = await scale.get_weight()
-
-        # 2. Prepare samples with liquid handler
-        await lh.pick_up_tips(tip_rack["A1:H1"])
-        for col in range(1, 13):
-            await lh.aspirate(source[f"A{col}:H{col}"], vols=[100] * 8)
-            await lh.dispense(dest[f"A{col}:H{col}"], vols=[100] * 8)
-        await lh.drop_tips()
-
-        # 3. Read plate
-        await pr.open()
-        # (load plate)
-        await pr.close()
-        data = await pr.read_absorbance(wavelength=450)
-
-        return {
-            "reagent_weight": reagent_weight,
-            "absorbance_data": data
-        }
-
-    finally:
-        await lh.stop()
-        await pr.stop()
-        await scale.stop()
-```
-
-## Best Practices
-
-1. **Device Initialization**: Setup all devices at start of protocol
-2. **Error Handling**: Handle communication errors gracefully
-3. **Cleanup**: Always call `stop()` on all devices
-4. **Timing**: Account for device-specific timing (temperature equilibration, measurement time)
-5. **Calibration**: Follow manufacturer calibration procedures
-6. **Data Validation**: Verify measurements are within expected ranges
-7. **Documentation**: Record device settings and parameters
-8. **Integration Testing**: Test multi-device workflows thoroughly
-9. **Concurrent Operations**: Use async to overlap operations when possible
-10. **Data Storage**: Save raw data with metadata (timestamps, settings)
-
-## Common Patterns
-
-### Kinetic Plate Reading
-
-```python
-async def kinetic_reading(num_reads: int, interval: int):
-    """Perform kinetic plate reading"""
-
-    pr = PlateReader(name="CLARIOstar", backend=CLARIOstarBackend(), size_x=0, size_y=0, size_z=0)
-    await pr.setup()
-
-    try:
-        await pr.set_temperature(37)
-        await pr.open()
-        # (load plate)
-        await pr.close()
-
-        results = []
-        for i in range(num_reads):
-            data = await pr.read_absorbance(wavelength=450)
-            timestamp = time.time()
-            results.append({
-                "read_number": i + 1,
-                "timestamp": timestamp,
-                "data": data
-            })
-
-            if i < num_reads - 1:
-                await asyncio.sleep(interval)
-
-        return results
-
-    finally:
-        await pr.stop()
-
-# Read every 30 seconds for 10 minutes
-results = await kinetic_reading(num_reads=20, interval=30)
-```
-
-## Additional Resources
-
-- Plate Reading Documentation: https://docs.pylabrobot.org/user_guide/02_analytical/
-- BMG CLARIOstar Guide: https://docs.pylabrobot.org/user_guide/02_analytical/plate-reading/bmg-clariostar.html
-- API Reference: https://docs.pylabrobot.org/user_guide/index.html
-- Supported Equipment: https://docs.pylabrobot.org/user_guide/machines.html
+- Develop against the chatterbox backends, then switch one line to the hardware backend.
+- Always `stop()` devices in a `finally:` block so serial/USB connections are released after errors.
+- Record instrument, backend, pylabrobot version, wavelengths, focal height, and temperature with every data file.
+- Blank-correct absorbance with buffer-only wells on the same plate.

@@ -109,19 +109,24 @@ df = freq_encoder.transform(df)
 # Each category replaced by its frequency in the dataset
 ```
 
-### Target Encoder (Mean Encoder)
+### Target Encoder (Bayesian Mean Encoder)
 
 ```python
-# Encode category by target mean (for supervised learning)
-target_encoder = vaex.ml.TargetEncoder(
+# Encode category by a smoothed target mean (for supervised learning).
+# vaex.ml has no plain TargetEncoder; BayesianTargetEncoder shrinks each category
+# mean toward the global mean with `weight`.
+target_encoder = vaex.ml.BayesianTargetEncoder(
     features=['category'],
-    target='target_variable'
+    target='target_variable',
+    weight=100,
 )
 target_encoder.fit(df)
 df = target_encoder.transform(df)
 
-# Handles unseen categories with global mean
+# Creates: 'mean_encoded_category'; unseen categories get the global mean
 ```
+
+Fit target encoders on the training split only, then transform validation/test data, to avoid target leakage.
 
 ### Weight of Evidence Encoder
 
@@ -141,27 +146,25 @@ df = woe_encoder.transform(df)
 
 ```python
 # Bin continuous variable into discrete bins
-binner = vaex.ml.Discretizer(
+binner = vaex.ml.KBinsDiscretizer(
     features=['age'],
     n_bins=5,
-    strategy='uniform'  # or 'quantile'
+    strategy='uniform'  # or 'quantile' / 'kmeans'
 )
 binner.fit(df)
-df = binner.transform(df)
+df = binner.transform(df)  # creates 'binned_age'
 ```
 
 ### Cyclic Transformations
 
 ```python
-# Transform cyclic features (hour, day, month)
-cyclic = vaex.ml.CycleTransformer(
-    features=['hour', 'day_of_week'],
-    n=[24, 7]  # Period for each feature
-)
-cyclic.fit(df)
-df = cyclic.transform(df)
+# Transform cyclic features. `n` is a single int period, so use one transformer per period.
+hour_cycle = vaex.ml.CycleTransformer(features=['hour'], n=24)
+dow_cycle = vaex.ml.CycleTransformer(features=['day_of_week'], n=7)
+df = hour_cycle.fit_transform(df)
+df = dow_cycle.fit_transform(df)
 
-# Creates sin and cos components for each feature
+# Creates x/y (cos/sin) components, e.g. 'hour_x', 'hour_y'
 ```
 
 ### PCA (Principal Component Analysis)
@@ -185,12 +188,12 @@ print(pca.explained_variance_ratio_)
 
 ```python
 # Fast dimensionality reduction
-projector = vaex.ml.RandomProjection(
+projector = vaex.ml.RandomProjections(
     features=['x1', 'x2', 'x3', 'x4', 'x5'],
     n_components=3
 )
 projector.fit(df)
-df = projector.transform(df)
+df = projector.transform(df)  # creates 'random_projection_0', ...
 ```
 
 ## Clustering
@@ -198,8 +201,10 @@ df = projector.transform(df)
 ### K-Means
 
 ```python
-# Cluster data
-kmeans = vaex.ml.KMeans(
+# Cluster data (KMeans lives in vaex.ml.cluster)
+import vaex.ml.cluster
+
+kmeans = vaex.ml.cluster.KMeans(
     features=['feature1', 'feature2', 'feature3'],
     n_clusters=5,
     max_iter=100
@@ -207,10 +212,10 @@ kmeans = vaex.ml.KMeans(
 kmeans.fit(df)
 df = kmeans.transform(df)
 
-# Creates 'prediction' column with cluster labels
+# Creates 'prediction_kmeans' column with cluster labels
 
-# Access cluster centers
-print(kmeans.cluster_centers_)
+# Access cluster centers (no trailing underscore)
+print(kmeans.cluster_centers)
 ```
 
 ## Integration with External Libraries
@@ -219,11 +224,12 @@ print(kmeans.cluster_centers_)
 
 ```python
 from sklearn.ensemble import RandomForestClassifier
-import vaex.ml
+import vaex.ml.sklearn  # `import vaex.ml` alone does not load the sklearn/xgboost/... submodules
 
-# Prepare data
-train_df = df[df.split == 'train']
-test_df = df[df.split == 'test']
+# Prepare data. Use df['split'], not df.split: DataFrame.split is a method, so
+# df.split == 'train' silently compares the method, not the column.
+train_df = df[df['split'] == 'train']
+test_df = df[df['split'] == 'test']
 
 # Features and target
 features = ['feature1', 'feature2', 'feature3']
@@ -252,14 +258,7 @@ predictions = test_df.rf_prediction.values
 
 ```python
 import xgboost as xgb
-import vaex.ml
-
-# Create XGBoost booster
-booster = vaex.ml.xgboost.XGBoostModel(
-    features=features,
-    target=target,
-    prediction_name='xgb_pred'
-)
+import vaex.ml.xgboost
 
 # Configure parameters
 params = {
@@ -269,12 +268,17 @@ params = {
     'eval_metric': 'rmse'
 }
 
-# Train
-booster.fit(
-    df=train_df,
+# params and num_boost_round are constructor arguments, not fit() arguments
+booster = vaex.ml.xgboost.XGBoostModel(
+    features=features,
+    target=target,
     params=params,
-    num_boost_round=100
+    num_boost_round=100,
+    prediction_name='xgb_pred'
 )
+
+# Train (loads the training features into memory)
+booster.fit(train_df)
 
 # Predict
 test_df = booster.transform(test_df)
@@ -284,14 +288,7 @@ test_df = booster.transform(test_df)
 
 ```python
 import lightgbm as lgb
-import vaex.ml
-
-# Create LightGBM model
-lgb_model = vaex.ml.lightgbm.LightGBMModel(
-    features=features,
-    target=target,
-    prediction_name='lgb_pred'
-)
+import vaex.ml.lightgbm
 
 # Parameters
 params = {
@@ -301,12 +298,17 @@ params = {
     'learning_rate': 0.05
 }
 
-# Train
-lgb_model.fit(
-    df=train_df,
+# params and num_boost_round are constructor arguments
+lgb_model = vaex.ml.lightgbm.LightGBMModel(
+    features=features,
+    target=target,
     params=params,
-    num_boost_round=100
+    num_boost_round=100,
+    prediction_name='lgb_pred'
 )
+
+# Train
+lgb_model.fit(train_df)
 
 # Predict
 test_df = lgb_model.transform(test_df)
@@ -316,25 +318,27 @@ test_df = lgb_model.transform(test_df)
 
 ```python
 from catboost import CatBoostClassifier
-import vaex.ml
-
-# Create CatBoost model
-catboost_model = vaex.ml.catboost.CatBoostModel(
-    features=features,
-    target=target,
-    prediction_name='catboost_pred'
-)
+import vaex.ml.catboost
 
 # Parameters
 params = {
-    'iterations': 100,
     'depth': 6,
     'learning_rate': 0.1,
     'loss_function': 'Logloss'
 }
 
+# params / num_boost_round / prediction_type are constructor arguments
+catboost_model = vaex.ml.catboost.CatBoostModel(
+    features=features,
+    target=target,
+    params=params,
+    num_boost_round=100,
+    prediction_type='Probability',  # or 'Class' / 'RawFormulaVal'
+    prediction_name='catboost_pred'
+)
+
 # Train
-catboost_model.fit(train_df, **params)
+catboost_model.fit(train_df)
 
 # Predict
 test_df = catboost_model.transform(test_df)
@@ -342,36 +346,30 @@ test_df = catboost_model.transform(test_df)
 
 ### Keras/TensorFlow
 
+The wrapper lives in `vaex.ml.tensorflow` and only serves predictions: train the network with the
+Keras API (its `KerasModel.fit` raises `NotImplementedError`), streaming batches from Vaex.
+
 ```python
 from tensorflow import keras
-import vaex.ml
+import vaex.ml.tensorflow
 
-# Define Keras model
-def create_model(input_dim):
-    model = keras.Sequential([
-        keras.layers.Dense(64, activation='relu', input_shape=(input_dim,)),
-        keras.layers.Dense(32, activation='relu'),
-        keras.layers.Dense(1, activation='sigmoid')
-    ])
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-    return model
+# Stream training batches out of the Vaex DataFrame
+gen_train = train_df.ml.tensorflow.to_keras_generator(features=features, target=target, batch_size=10_000)
 
-# Wrap in Vaex
-keras_model = vaex.ml.keras.KerasModel(
+nn_model = keras.Sequential([
+    keras.layers.Dense(64, activation='relu'),
+    keras.layers.Dense(32, activation='relu'),
+    keras.layers.Dense(1, activation='sigmoid')
+])
+nn_model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+nn_model.fit(x=gen_train, epochs=10, steps_per_epoch=len(train_df) // 10_000)
+
+# Wrap the fitted model to get lazy predictions + state serialization
+keras_model = vaex.ml.tensorflow.KerasModel(
     features=features,
-    target=target,
-    model=create_model(len(features)),
+    model=nn_model,
     prediction_name='keras_pred'
 )
-
-# Train
-keras_model.fit(
-    train_df,
-    epochs=10,
-    batch_size=10000
-)
-
-# Predict
 test_df = keras_model.transform(test_df)
 ```
 
@@ -412,6 +410,7 @@ for step in pipeline:
 ```python
 import vaex
 import vaex.ml
+import vaex.ml.sklearn
 from sklearn.ensemble import RandomForestClassifier
 
 # Load data
@@ -462,9 +461,11 @@ print(f"Accuracy: {accuracy:.4f}")
 # Save the entire pipeline state
 train_df.state_write('pipeline_state.json')
 
-# In production: Load fresh data and apply transformations
+# In production: Load fresh data and apply transformations.
+# The state also stores train_df's row filter (e.g. split == 'train'); set_filter=False
+# keeps it from being applied to the new data.
 prod_df = vaex.open('new_data.hdf5')
-prod_df.state_load('pipeline_state.json')
+prod_df.state_load('pipeline_state.json', set_filter=False)
 
 # All transformations and models are applied
 predictions = prod_df.prediction.values
@@ -481,11 +482,12 @@ model.fit(train_df)
 # Save state
 train_df.state_write('model_state.json')
 
-# Apply to test data
-test_df.state_load('model_state.json')
+# Apply to test data. With the default set_filter=True, the training filter in the
+# state replaces test_df's own filter and you would silently evaluate on training rows.
+test_df.state_load('model_state.json', set_filter=False)
 
 # Apply to validation data
-val_df.state_load('model_state.json')
+val_df.state_load('model_state.json', set_filter=False)
 ```
 
 ### Exporting with Transformations
@@ -652,12 +654,13 @@ df_balanced = vaex.concat([majority, minority_oversampled])
 ```python
 import vaex
 import vaex.ml
+import vaex.ml.sklearn
 from sklearn.ensemble import RandomForestClassifier
 
 # Load and split
 df = vaex.open('data.hdf5')
-train = df[df.split == 'train']
-test = df[df.split == 'test']
+train = df[df['split'] == 'train']  # df.split is a method, so index the column
+test = df[df['split'] == 'test']
 
 # Preprocessing
 # Categorical encoding
@@ -677,12 +680,13 @@ model = vaex.ml.sklearn.Predictor(
     model=RandomForestClassifier(n_estimators=100)
 )
 model.fit(train)
+train = model.transform(train)  # adds the 'prediction' column, so the state carries the model
 
 # Save state
 train.state_write('production_pipeline.json')
 
-# Apply to test
-test.state_load('production_pipeline.json')
+# Apply to test (set_filter=False keeps test's own split filter)
+test.state_load('production_pipeline.json', set_filter=False)
 
 # Evaluate
 accuracy = (test.prediction == test.target).mean()

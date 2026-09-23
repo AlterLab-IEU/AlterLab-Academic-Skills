@@ -9,7 +9,7 @@
 **Best for:** Hierarchical data proportions, budget breakdowns, disk usage, portfolio composition
 **When NOT to use:** Simple flat proportions (use [Pie](pie.md)), flow-based hierarchy (use [Sankey](sankey.md))
 
-> ⚠️ **Accessibility:** Treemap diagrams do **not** support `accTitle`/`accDescr`. Always place a descriptive _italic_ Markdown paragraph directly above the code block.
+> ⚠️ **Accessibility:** Don't add `accTitle`/`accDescr` to treemaps — they are a parse error on older renderers (seen on Mermaid 11.12; accepted on 11.17 and 12.0). Place a descriptive _italic_ Markdown paragraph directly above the code block instead.
 >
 > ⚠️ **GitHub support:** Treemap is very new — verify it renders on your target GitHub version before using.
 

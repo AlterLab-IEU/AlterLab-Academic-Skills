@@ -4,7 +4,7 @@
     {
       "id": "submit-binding-experiment",
       "prompt": "I have 24 designed mini-binder sequences and I want to send them to Adaptyv to measure binding affinity against my target by biolayer interferometry. Can you set up the experiment submission?",
-      "expected_output": "Invokes alterlab-adaptyv: builds the API submission (POST to the experiments endpoint with Bearer ADAPTYV_API_KEY), sets experiment_type to binding, formats the sequences as FASTA in the request body, and returns the experiment_id for tracking. Notes the ~21-day turnaround and that binding is measured via biolayer interferometry.",
+      "expected_output": "Invokes alterlab-adaptyv: builds the API submission (POST /experiments with a Bearer ADAPTYV_API_KEY), sets experiment_spec.experiment_type to affinity (or screening) with method bli and a catalog target_id from GET /targets, passes the sequences as a {label: amino-acid string} map, creates the draft, submits it, and has the user review and confirm the quote before the run; returns the experiment_id for tracking. Notes that binding is measured by biolayer interferometry and that turnaround (several weeks) should be read from the quote.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "binding" },
@@ -23,7 +23,7 @@
     {
       "id": "track-and-download-results",
       "prompt": "I submitted an experiment to Adaptyv three weeks ago and have the experiment ID. How do I check whether it's done and pull the thermostability results?",
-      "expected_output": "Invokes alterlab-adaptyv: queries the Adaptyv API by experiment_id to check status, and once complete downloads/retrieves the result payload. Handles the thermostability assay type and reminds that results land in roughly 21 days.",
+      "expected_output": "Invokes alterlab-adaptyv: queries the Adaptyv API by experiment_id to check status, and once complete downloads/retrieves the result payload. Treats status 'done' (or results_status 'partial'/'all') as the signal to fetch GET /experiments/{id}/results, handles the thermostability (Tm) assay output, and notes that turnaround is several weeks.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "experiment" }
@@ -32,7 +32,7 @@
     {
       "id": "batch-enzyme-activity",
       "prompt": "I have a library of enzyme variants and need to submit them in batch for activity assays through the Adaptyv platform, then webhook me when each finishes.",
-      "expected_output": "Invokes alterlab-adaptyv: batches the variant library into experiment submissions with experiment_type enzyme activity, sets the webhook_url for completion callbacks, and tracks the returned experiment IDs. References the batch-processing examples and API auth.",
+      "expected_output": "Invokes alterlab-adaptyv: batches the variant library into experiment submissions with experiment_type enzyme_activity (no target_id or method), sets the webhook_url for completion callbacks, and tracks the returned experiment IDs. References the batch-processing examples and API auth.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Submits a batch of sequences for enzyme activity assays and configures a webhook callback for completion." }

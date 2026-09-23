@@ -6,7 +6,8 @@ allowed-tools: Read Bash(python:*)
 compatibility: "No API key required. A discipline-enforcing gate; coding execution is handed to alterlab-qualitative-analysis. Reads/writes the YAML Design Passport like the other ssci gates; the optional checklist linter runs locally via `uv run python` (standard library only)."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
     depends_on: "alterlab-ssci-orchestrator (pipeline), alterlab-qualitative-analysis (coding), alterlab-qualitative-methods (methodology); audited by alterlab-ssci-inference-gate"
 ---
 

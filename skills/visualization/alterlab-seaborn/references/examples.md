@@ -427,7 +427,8 @@ g = sns.jointplot(
     ratio=4,
     space=0.1,
     joint_kws={'alpha': 0.5, 's': 50},
-    marginal_kws={'kde': True, 'bins': 30}
+    # with hue=, the marginals are KDE plots, so histplot options (bins, kde) don't apply
+    marginal_kws={'fill': True, 'common_norm': False}
 )
 
 # Add reference lines

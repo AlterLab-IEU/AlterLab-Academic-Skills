@@ -1,428 +1,233 @@
 ---
 name: alterlab-protocolsio
-description: Manages scientific protocols through the protocols.io API v3 — search, create, update, and publish protocols (with DOI), manage steps and materials, handle protocol/step discussions and comments, organize team workspaces, and upload/manage workspace files. Use when discovering, developing, publishing, or citing protocols.io protocols, collaborating on protocol steps/materials, recording experiment runs, or integrating protocols.io into lab documentation. Not for general ELN entries/notebooks (use alterlab-benchling or alterlab-labarchive) or lab-instrument/liquid-handler control. Part of the AlterLab Academic Skills suite.
+description: Works with protocols.io through its REST API (v3 and v4 endpoints) and official MCP server — search and retrieve protocols by keyword, URI, or DOI; create private protocols, edit their metadata and steps, and publish them with a DOI; manage protocol and step discussions, workspaces, file-manager items, file uploads, experiment records, and organization exports. Use when discovering, drafting, publishing, or citing protocols.io protocols, recording protocol runs, or wiring protocols.io into lab documentation. Not for general ELN notebooks (use alterlab-benchling or alterlab-labarchive) or for driving liquid-handling robots. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
-compatibility: Requires a protocols.io access token — a personal CLIENT_ACCESS_TOKEN for personal content or an OAUTH_ACCESS_TOKEN via the OAuth flow
+compatibility: Requires a protocols.io access token — a CLIENT_ACCESS_TOKEN from https://www.protocols.io/developers (your own plus public content) or an OAUTH_ACCESS_TOKEN from the OAuth 2.0 flow (another user's content, with their consent). The official remote MCP server at https://www.protocols.io/mcp accepts the same tokens.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Protocols.io Integration
 
 ## Overview
 
-Protocols.io is a comprehensive platform for developing, sharing, and managing scientific protocols. This skill provides complete integration with the protocols.io API v3, enabling programmatic access to protocols, workspaces, discussions, file management, and collaboration features.
+protocols.io hosts versioned, citable scientific protocols (each published version gets a DOI under `10.17504/protocols.io.*`), plus team workspaces, experiment run records, and a file manager. It offers two programmatic routes:
+
+- **Official MCP server** — `https://www.protocols.io/mcp` (Streamable HTTP; OAuth 2.0 sign-in or a Bearer client token). It is also listed in Claude's connector directory as "protocols.io".
+- **REST API** — base `https://www.protocols.io/api`, split across versions: most endpoints are `v3`, while getting/updating protocols, protocol steps, run records, file-manager search, and organization exports use `v4`. The API reference is https://apidoc.protocols.io/.
 
 ## When to Use This Skill
 
-Use this skill when working with protocols.io in any of the following scenarios:
+- Searching protocols.io for protocols by keyword, author, or workspace, or resolving a protocol from its DOI or URI
+- Reading a protocol's steps and materials (as Markdown, HTML, or Draft.js JSON) to analyse, adapt, or compare it
+- Creating a private protocol, filling in its metadata and steps, and publishing it (or reserving a DOI) for citation in a paper
+- Reading or posting protocol comments and step discussions
+- Listing or joining workspaces, searching workspace files, uploading files, and exporting an organization's content
+- Creating and updating experiment run records for a protocol
 
-- **Protocol Discovery**: Searching for existing protocols by keywords, DOI, or category
-- **Protocol Management**: Creating, updating, or publishing scientific protocols
-- **Step Management**: Adding, editing, or organizing protocol steps and procedures
-- **Collaborative Development**: Working with team members on shared protocols
-- **Workspace Organization**: Managing lab or institutional protocol repositories
-- **Discussion & Feedback**: Adding or responding to protocol comments
-- **File Management**: Uploading data files, images, or documents to protocols
-- **Experiment Tracking**: Documenting protocol executions and results
-- **Data Export**: Backing up or migrating protocol collections
-- **Integration Projects**: Building tools that interact with protocols.io
+### Does NOT Trigger
 
-## Core Capabilities
+| Scenario | Use Instead |
+|----------|-------------|
+| Recording results in a general electronic lab notebook (entries, attachments, notebook backups) | `alterlab-labarchive` (LabArchives) or `alterlab-benchling` (Benchling) |
+| Turning a written protocol into a script for an Opentrons OT-2/Flex or a Hamilton/Tecan liquid handler | `alterlab-opentrons` or `alterlab-pylabrobot` |
+| Depositing a preprint or choosing a data/code repository (bioRxiv, OSF, Zenodo) | `alterlab-preprint-deposition` or `alterlab-open-science` |
+| Writing or polishing a manuscript's Methods section | `alterlab-scientific-writing` |
 
-This skill provides comprehensive guidance across five major capability areas:
+## Prefer the MCP Server When It Is Connected
 
-### 1. Authentication & Access
+If protocols.io tools are available in the session (connector or MCP server), use them for search, retrieval, and editing: they run on the user's own account, handle OAuth, and return live data. Fall back to the REST calls below for anything the tools do not cover, or when no connector is attached. To connect one, add `https://www.protocols.io/mcp` as a remote MCP server (or add "protocols.io" from Claude's connector directory) and sign in. Either way, cite the protocol DOI and the retrieval date when reporting protocol content.
 
-Manage API authentication using access tokens and OAuth flows. Includes both client access tokens (for personal content) and OAuth tokens (for multi-user applications).
+## Authentication
 
-**Key operations:**
-- Generate authorization links for OAuth flow
-- Exchange authorization codes for access tokens
-- Refresh expired tokens
-- Manage rate limits and permissions
+| Token | Where it comes from | Reaches |
+|-------|---------------------|---------|
+| `CLIENT_ACCESS_TOKEN` | https://www.protocols.io/developers | Public content + the private content of the user who created the client |
+| `OAUTH_ACCESS_TOKEN` | OAuth 2.0 authorization-code flow | Public content + the authorizing user's private content |
 
-**Reference:** Read `references/authentication.md` for detailed authentication procedures, OAuth implementation, and security best practices.
+Send it on every request as `Authorization: Bearer <token>`, and keep it in an environment variable (for example `PROTOCOLS_IO_TOKEN`), never in code or notebooks. OAuth tokens last about a year; the API warns a month before expiry and a refresh invalidates the old token pair. The authorization link, token exchange, and refresh calls are in `references/authentication.md`.
 
-### 2. Protocol Operations
+## Request Basics
 
-Complete protocol lifecycle management from creation to publication.
+**Identifiers.** Protocol endpoints accept an integer `id`, the protocol `uri` (slug such as `tree-mapping-for-leaf-collection-megantic-only-baaciaaw`), and — for the v4 get/steps endpoints — the DOI (`10.17504/protocols.io.baaciaaw` or `protocols.io.baaciaaw`). Append `/v1` for a specific version or `/latest` for the newest one. Write endpoints also accept the protocol `guid`.
 
-**Key operations:**
-- Search and discover protocols by keywords, filters, or DOI
-- Retrieve detailed protocol information with all steps
-- Create new protocols with metadata and tags
-- Update protocol information and settings
-- Manage protocol steps (create, update, delete, reorder)
-- Handle protocol materials and reagents
-- Publish protocols with DOI issuance
-- Bookmark protocols for quick access
-- Generate protocol PDFs
+**Content format.** v4 protocol, steps, and record reads take `content_format=json|html|markdown` for rich-text fields (description, guidelines, warnings, materials text, step text). `json` is Draft.js; request `markdown` when the text will be read or summarised.
 
-**Reference:** Read `references/protocols_api.md` for comprehensive protocol management guidance, including API endpoints, parameters, common workflows, and examples.
+**Pagination.** List endpoints take `page_id` (starting at 1) and `page_size` (1–100, default 10) and return a `pagination` object.
 
-### 3. Discussions & Collaboration
+**Errors are in the body.** Every response carries a JSON `status_code`, where `0` means success. Failures usually arrive as **HTTP 400** with `error_message` (v3) or `status_text` (v4) — a missing or bad token is `1218`, an expired OAuth token `1219` — so check `status_code`, not only the HTTP status.
 
-Enable community engagement through comments and discussions.
+**Rate limits.** 100 requests per minute per user; the PDF endpoint (`/view/<uri>.pdf`) allows 5 per minute signed in and 3 per minute signed out. Exceeding a limit returns HTTP 429.
 
-**Key operations:**
-- View protocol-level and step-level comments
-- Create new comments and threaded replies
-- Edit or delete your own comments
-- Analyze discussion patterns and feedback
-- Respond to user questions and issues
+## Endpoint Map
 
-**Reference:** Read `references/discussions.md` for discussion management, comment threading, and collaboration workflows.
+| Task | Call | Details |
+|------|------|---------|
+| Search protocols | `GET /v3/protocols?filter=public&key=...` | `references/protocols_api.md` |
+| A researcher's or workspace's protocols | `GET /v3/researchers/<username>/protocols`, `GET /v3/workspaces/<uri>/protocols` | `protocols_api.md`, `workspaces.md` |
+| Get a protocol (with steps and materials) | `GET /v4/protocols/<id-uri-or-doi>` | `protocols_api.md` |
+| Get steps / materials | `GET /v4/protocols/<id>/steps`, `GET /v3/protocols/<id>/materials` | `protocols_api.md` |
+| Create a protocol | `POST /v3/protocols/<new-guid>` | `protocols_api.md` |
+| Update metadata | `PUT /v4/protocols/<id>` (JSON) | `protocols_api.md` |
+| Add, change, or delete steps | `POST` / `DELETE /v4/protocols/<id>/steps` | `protocols_api.md` |
+| Publish or reserve a DOI | `POST /v3/protocols/<uri>/publish` (`prepublish=1` reserves) | `protocols_api.md` |
+| Bookmark | `POST` / `DELETE /v3/protocols/<uri>/bookmarks` | `protocols_api.md` |
+| PDF | `GET https://www.protocols.io/view/<id-or-uri>.pdf` | `protocols_api.md` |
+| Recently published | `GET /v3/publications?latest=N` or `?from=&to=` | `protocols_api.md` |
+| Comments and step discussions | `/v3/protocols/<uri>/comments`, `/v3/steps/<step_id>/discussions` | `references/discussions.md` |
+| Workspaces and membership | `/v3/workspaces`, `/v3/workspaces/<uri>/members` | `references/workspaces.md` |
+| File-manager search, trash, uploads | `/v4/filemanager/.../search`, `/v3/filemanager/trash`, `/v3/files` | `references/file_manager.md` |
+| Profile, run records, notifications, org export | `/v3/session/profile`, `/v3/records`, `/v3/researchers/notifications`, `/v4/organizations/<uri>/content/exports` | `references/additional_features.md` |
 
-### 4. Workspace Management
+All paths are relative to `https://www.protocols.io/api` except the PDF view. `https://protocols.io/...` redirects to the `www.` host; there is no `api.protocols.io` host.
 
-Organize protocols within team workspaces with role-based permissions.
+## Python Examples
 
-**Key operations:**
-- List and access user workspaces
-- Retrieve workspace details and member lists
-- Request access or join workspaces
-- List workspace-specific protocols
-- Create protocols within workspaces
-- Manage workspace permissions and collaboration
+The examples use `requests` and one helper that turns protocols.io's in-body errors into exceptions:
 
-**Reference:** Read `references/workspaces.md` for workspace organization, permission management, and team collaboration patterns.
+```python
+import os
+import time
+import uuid
 
-### 5. File Operations
+import requests
 
-Upload, organize, and manage files associated with protocols.
+BASE = "https://www.protocols.io/api"
+HEADERS = {"Authorization": f"Bearer {os.environ['PROTOCOLS_IO_TOKEN']}"}
 
-**Key operations:**
-- Search workspace files and folders
-- Upload files with metadata and tags
-- Download files and verify uploads
-- Organize files into folder hierarchies
-- Update file metadata
-- Delete and restore files
-- Manage storage and organization
 
-**Reference:** Read `references/file_manager.md` for file upload procedures, organization strategies, and storage management.
-
-### 6. Additional Features
-
-Supplementary functionality including profiles, notifications, and exports.
-
-**Key operations:**
-- Manage user profiles and settings
-- Query recently published protocols
-- Create and track experiment records
-- Receive and manage notifications
-- Export organization data for archival
-
-**Reference:** Read `references/additional_features.md` for profile management, publication discovery, experiment tracking, and data export.
-
-## Getting Started
-
-### Step 1: Authentication Setup
-
-Before using any protocols.io API functionality:
-
-1. Obtain an access token (CLIENT_ACCESS_TOKEN or OAUTH_ACCESS_TOKEN)
-2. Read `references/authentication.md` for detailed authentication procedures
-3. Store the token securely
-4. Include in all requests as: `Authorization: Bearer YOUR_TOKEN`
-
-### Step 2: Identify Your Use Case
-
-Determine which capability area addresses your needs:
-
-- **Working with protocols?** → Read `references/protocols_api.md`
-- **Managing team protocols?** → Read `references/workspaces.md`
-- **Handling comments/feedback?** → Read `references/discussions.md`
-- **Uploading files/data?** → Read `references/file_manager.md`
-- **Tracking experiments or profiles?** → Read `references/additional_features.md`
-
-### Step 3: Implement Integration
-
-Follow the guidance in the relevant reference files:
-
-- Each reference includes detailed endpoint documentation
-- API parameters and request/response formats are specified
-- Common use cases and workflows are provided with examples
-- Best practices and error handling guidance included
-
-## Base URL and Request Format
-
-All API requests use the base URL:
-```
-https://www.protocols.io/api/v3
+def call(method, path, retries=3, **kwargs):
+    """Send a request; back off on HTTP 429 and raise when the JSON status_code is not 0."""
+    for attempt in range(retries):
+        resp = requests.request(method, f"{BASE}{path}", headers=HEADERS, timeout=60, **kwargs)
+        if resp.status_code == 429 and attempt < retries - 1:
+            time.sleep(int(resp.headers.get("Retry-After", 30 * (attempt + 1))))
+            continue
+        try:
+            data = resp.json()
+        except ValueError:  # e.g. an HTML error page from a proxy
+            resp.raise_for_status()
+            raise
+        if data.get("status_code", 0) != 0:
+            message = data.get("error_message") or data.get("status_text")
+            raise RuntimeError(f"protocols.io {data.get('status_code')}: {message} (HTTP {resp.status_code})")
+        return data
+    raise RuntimeError("protocols.io rate limit: retries exhausted")
 ```
 
-The `www.` host is canonical. `https://protocols.io/api/v3` 301-redirects to it; the bare `api.protocols.io` host does not resolve — do not use it.
+### Search and cite
 
-All requests require the Authorization header:
+```python
+found = call("GET", "/v3/protocols", params={
+    "filter": "public", "key": "CRISPR", "order_field": "relevance", "page_size": 10,
+})
+for item in found["items"]:
+    doi = (item.get("doi") or "").removeprefix("dx.doi.org/")  # list items use a dx.doi.org/ prefix
+    print(item["title"], f"https://doi.org/{doi}" if doi else "(no DOI yet)")
 ```
-Authorization: Bearer YOUR_ACCESS_TOKEN
+
+Put the search phrase in double quotes inside `key` for an exact-match search.
+
+### Read a protocol by DOI, as Markdown
+
+```python
+data = call("GET", "/v4/protocols/10.17504/protocols.io.baaciaaw",
+            params={"content_format": "markdown"})
+protocol = data.get("payload") or data.get("protocol")  # current v4 responses use "payload"
+print(protocol["title"], protocol["url"])
+for number, step in enumerate(protocol.get("steps", []), start=1):
+    print(number, step.get("step"))
 ```
 
-Most endpoints support JSON request/response format with `Content-Type: application/json`.
+### Create, fill in, and publish a protocol
 
-### Response and error signaling
+```python
+guid = uuid.uuid4().hex.upper()  # new GUID without dashes, generated client-side
+created = call("POST", f"/v3/protocols/{guid}", data={"type_id": 1})  # 1 protocol, 3 collection, 4 document
+uri = created["protocol"]["uri"]
 
-protocols.io returns its own status in a JSON `status_code` field, where `0` means success. It does **not** map errors cleanly onto HTTP status codes — e.g. a bad/missing token comes back as **HTTP 400** with body `{"error_message": "...", "status_code": 1218}`, not HTTP 401. Check the JSON `status_code` (and `error_message`), not just the HTTP code, when deciding whether a call succeeded.
+call("PUT", f"/v4/protocols/{guid}", json={
+    "title": "CRISPR-Cas9 knockout in HEK293T cells",
+    "description": "RNP electroporation workflow with T7E1 validation.",
+    "materials_text": "SpCas9 nuclease; synthetic sgRNA; Neon electroporation kit",
+    "status_id": 2,  # 1 working, 2 still optimizing, 3 could not get it to work
+})
 
-## Content Format Options
+# Steps are ordered by previous_guid: the first step has previous_guid None.
+texts = ["Anneal and complex sgRNA with Cas9 (10 min, room temperature).",
+         "Electroporate 2e5 cells per reaction.",
+         "Harvest genomic DNA after 72 h and run the T7E1 assay."]
+steps, previous = [], None
+for text in texts:
+    step_guid = uuid.uuid4().hex.upper()
+    steps.append({"guid": step_guid, "previous_guid": previous, "step": text})
+    previous = step_guid
+call("POST", f"/v4/protocols/{guid}/steps", json={"steps": steps})
 
-Many endpoints support a `content_format` parameter to control how protocol content is returned:
+# Reserve a DOI without making it public (drop prepublish to publish openly).
+call("POST", f"/v3/protocols/{uri}/publish", params={"prepublish": 1})
+```
 
-- `json`: Draft.js JSON format (default)
-- `html`: HTML format
-- `markdown`: Markdown format
+Publishing needs a title and at least one author, and a version with a DOI can no longer be edited, so review the protocol in the web editor first. Published protocols accept only a subset of `PUT` fields (keywords, disclaimer, ethics statement, manuscript citation, references, funders, and the status/warning flags); content changes need a new version, which the API does not document, so create it in the web editor.
 
-Include as query parameter: `?content_format=html`
+### Upload a file
 
-## Rate Limiting
+Uploads are three calls: register the file, send the bytes to S3 with the returned policy, then confirm:
 
-Be aware of API rate limits:
+```python
+path = "results.csv"
+prep = call("POST", "/v3/files", data={"filename": os.path.basename(path)})
+form, meta = prep["formData"], prep["metaData"]
+fields = {"key": form["key"], "acl": form["acl"], "AWSAccessKeyId": form["AWSAccessKeyId"],
+          "Policy": form["Policy"], "Signature": form["Signature"], "Content-Type": form["ContentType"]}
+with open(path, "rb") as fh:  # the file must be the last form field
+    s3 = requests.post(f"https://{form['s3_bucket']}.s3.amazonaws.com/", data=fields,
+                       files={"file": (os.path.basename(path), fh)}, timeout=300)
+s3.raise_for_status()
+call("PUT", f"/v3/files/{meta['file_id']}")  # verify the upload
+```
 
-- **Standard endpoints**: 100 requests per minute per user
-- **PDF endpoint**: 5 requests/minute (signed-in), 3 requests/minute (unsigned)
-
-Implement exponential backoff for rate limit errors (HTTP 429).
+The documented upload call takes no folder, workspace, or tag fields. Attach the returned `file_id` to a collection (`collection_items` with `content_type_id` 15) or organise it in the web app. The S3 step follows the standard S3 POST-policy form, which the API docs do not spell out; try it with a small file first. See `references/file_manager.md`.
 
 ## Common Workflows
 
-### Workflow 1: Import and Analyze Protocol
+**Import and analyse an existing protocol.** Search (`GET /v3/protocols`), fetch the chosen one as Markdown (`GET /v4/protocols/<doi>`), read its comments (`GET /v3/protocols/<uri>/comments`) for reported fixes, and record the DOI and version you used.
 
-To analyze an existing protocol from protocols.io:
+**Draft and publish a lab protocol.** Create (`POST /v3/protocols/<guid>`), set metadata (`PUT /v4/protocols/<guid>`), add steps in order (`POST /v4/protocols/<guid>/steps`), review with co-authors in the web editor, then reserve a DOI with `prepublish=1` while the paper is under review and publish when it is accepted.
 
-1. **Search**: Use `GET /protocols` with keywords to find relevant protocols
-2. **Retrieve**: Get full details with `GET /protocols/{protocol_id}`
-3. **Extract**: Parse steps, materials, and metadata for analysis
-4. **Review discussions**: Check `GET /protocols/{id}/comments` for user feedback
-5. **Export**: Generate PDF if needed for offline reference
+**Document protocol runs.** Create a run record from the protocol (`POST /v3/records` with `protocol_uri`), then check off steps and add notes with `PUT /v3/records/<guid>` (see `references/additional_features.md`). Store raw data in your ELN or repository and cite the record or protocol there.
 
-**Reference files**: `protocols_api.md`, `discussions.md`
+**Team workspace.** List the user's workspaces (`GET /v3/workspaces?filter=my_groups`), list or search a workspace's protocols and files, and request to join a public workspace with `POST /v3/workspaces/<uri>/members` (see `references/workspaces.md`).
 
-### Workflow 2: Create and Publish Protocol
+**Institutional archive.** On an organization account, start a full content export (`POST https://<subdomain>.protocols.io/api/v4/organizations/<org_uri>/content/exports`) and poll it until `download_link` is set.
 
-To create a new protocol and publish with DOI:
+## Citing Protocols
 
-1. **Authenticate**: Ensure you have valid access token (see `authentication.md`)
-2. **Create**: Use `POST /protocols` with title and description
-3. **Add steps**: For each step, use `POST /protocols/{id}/steps`
-4. **Add materials**: Document reagents in step components
-5. **Review**: Verify all content is complete and accurate
-6. **Publish**: Issue DOI with `POST /protocols/{id}/publish`
-
-**Reference files**: `protocols_api.md`, `authentication.md`
-
-### Workflow 3: Collaborative Lab Workspace
-
-To set up team protocol management:
-
-1. **Create/join workspace**: Access or request workspace membership (see `workspaces.md`)
-2. **Organize structure**: Create folder hierarchy for lab protocols (see `file_manager.md`)
-3. **Create protocols**: Use `POST /workspaces/{id}/protocols` for team protocols
-4. **Upload files**: Add experimental data and images
-5. **Enable discussions**: Team members can comment and provide feedback
-6. **Track experiments**: Document protocol executions with experiment records
-
-**Reference files**: `workspaces.md`, `file_manager.md`, `protocols_api.md`, `discussions.md`, `additional_features.md`
-
-### Workflow 4: Experiment Documentation
-
-To track protocol executions and results:
-
-1. **Execute protocol**: Perform protocol in laboratory
-2. **Upload data**: Use File Manager API to upload results (see `file_manager.md`)
-3. **Create record**: Document execution with `POST /protocols/{id}/runs`
-4. **Link files**: Reference uploaded data files in experiment record
-5. **Note modifications**: Document any protocol deviations or optimizations
-6. **Analyze**: Review multiple runs for reproducibility assessment
-
-**Reference files**: `additional_features.md`, `file_manager.md`, `protocols_api.md`
-
-### Workflow 5: Protocol Discovery and Citation
-
-To find and cite protocols in research:
-
-1. **Search**: Query published protocols with `GET /publications`
-2. **Filter**: Use category and keyword filters for relevant protocols
-3. **Review**: Read protocol details and community comments
-4. **Bookmark**: Save useful protocols with `POST /protocols/{id}/bookmarks`
-5. **Cite**: Use protocol DOI in publications (proper attribution)
-6. **Export PDF**: Generate formatted PDF for offline reference
-
-**Reference files**: `protocols_api.md`, `additional_features.md`
-
-## Python Request Examples
-
-### Basic Protocol Search
-
-```python
-import requests
-
-token = "YOUR_ACCESS_TOKEN"
-headers = {"Authorization": f"Bearer {token}"}
-
-# Search for CRISPR protocols
-response = requests.get(
-    "https://www.protocols.io/api/v3/protocols",
-    headers=headers,
-    params={
-        "filter": "public",
-        "key": "CRISPR",
-        "page_size": 10,
-        "content_format": "html"
-    }
-)
-
-protocols = response.json()
-for protocol in protocols["items"]:
-    print(f"{protocol['title']} - {protocol['doi']}")
-```
-
-### Create New Protocol
-
-```python
-import requests
-
-token = "YOUR_ACCESS_TOKEN"
-headers = {
-    "Authorization": f"Bearer {token}",
-    "Content-Type": "application/json"
-}
-
-# Create protocol
-data = {
-    "title": "CRISPR-Cas9 Gene Editing Protocol",
-    "description": "Comprehensive protocol for CRISPR gene editing",
-    "tags": ["CRISPR", "gene editing", "molecular biology"]
-}
-
-response = requests.post(
-    "https://www.protocols.io/api/v3/protocols",
-    headers=headers,
-    json=data
-)
-
-protocol_id = response.json()["item"]["id"]
-print(f"Created protocol: {protocol_id}")
-```
-
-### Upload File to Workspace
-
-```python
-import requests
-
-token = "YOUR_ACCESS_TOKEN"
-headers = {"Authorization": f"Bearer {token}"}
-
-# Upload file
-with open("data.csv", "rb") as f:
-    files = {"file": f}
-    data = {
-        "folder_id": "root",
-        "description": "Experimental results",
-        "tags": "experiment,data,2025"
-    }
-
-    response = requests.post(
-        "https://www.protocols.io/api/v3/workspaces/12345/files/upload",
-        headers=headers,
-        files=files,
-        data=data
-    )
-
-file_id = response.json()["item"]["id"]
-print(f"Uploaded file: {file_id}")
-```
-
-## Error Handling
-
-Implement robust error handling for API requests:
-
-```python
-import requests
-import time
-
-def make_request_with_retry(url, headers, max_retries=3):
-    for attempt in range(max_retries):
-        try:
-            response = requests.get(url, headers=headers)
-
-            if response.status_code == 200:
-                return response.json()
-            elif response.status_code == 429:  # Rate limit
-                retry_after = int(response.headers.get('Retry-After', 60))
-                time.sleep(retry_after)
-                continue
-            elif response.status_code >= 500:  # Server error
-                time.sleep(2 ** attempt)  # Exponential backoff
-                continue
-            else:
-                response.raise_for_status()
-
-        except requests.exceptions.RequestException as e:
-            if attempt == max_retries - 1:
-                raise
-            time.sleep(2 ** attempt)
-
-    raise Exception("Max retries exceeded")
-```
-
-## Reference Files
-
-Load the appropriate reference file based on your task:
-
-- **`authentication.md`**: OAuth flows, token management, rate limiting
-- **`protocols_api.md`**: Protocol CRUD, steps, materials, publishing, PDFs
-- **`discussions.md`**: Comments, replies, collaboration
-- **`workspaces.md`**: Team workspaces, permissions, organization
-- **`file_manager.md`**: File upload, folders, storage management
-- **`additional_features.md`**: Profiles, publications, experiments, notifications
-
-To load a reference file, read the file from the `references/` directory when needed for specific functionality.
-
-## Best Practices
-
-1. **Authentication**: Store tokens securely, never in code or version control
-2. **Rate Limiting**: Implement exponential backoff and respect rate limits
-3. **Error Handling**: Handle all HTTP error codes appropriately
-4. **Data Validation**: Validate input before API calls
-5. **Documentation**: Document protocol steps thoroughly
-6. **Collaboration**: Use comments and discussions for team communication
-7. **Organization**: Maintain consistent naming and tagging conventions
-8. **Versioning**: Track protocol versions when making updates
-9. **Attribution**: Properly cite protocols using DOIs
-10. **Backup**: Regularly export important protocols and workspace data
-
-## Additional Resources
-
-- **Official API Documentation**: https://apidoc.protocols.io/
-- **Protocols.io Platform**: https://www.protocols.io/
-- **Support**: Contact protocols.io support for API access and technical issues
-- **Community**: Engage with protocols.io community for best practices
+Cite the version you actually used: `Author(s). Title. protocols.io. https://doi.org/10.17504/protocols.io.<id>`, keeping the version suffix (`/v1`, `/v2`, ...) when the DOI carries one. A version with a DOI cannot be edited, but `/latest` follows new versions, so pin the version in methods sections and data records.
 
 ## Troubleshooting
 
-**Authentication Issues:**
-- Verify token is valid and not expired
-- Check Authorization header format: `Bearer YOUR_TOKEN`
-- Ensure appropriate token type (CLIENT vs OAUTH)
+| Symptom | Likely cause and fix |
+|---------|----------------------|
+| HTTP 400 with `status_code` 1218 | Missing or malformed `Authorization: Bearer <token>` header |
+| `status_code` 1219 "token is expired" | Refresh the OAuth token (`grant_type=refresh_token`); the old pair stops working |
+| Private protocol returns not found or 132 access denied | Token belongs to a user without access; use an OAuth token for the owning user or ask to be added to the workspace |
+| 1905 on create | Workspace subscription limit reached |
+| Step POST rejected ("loop detected", "multiple first steps", "steps are not forming a complete sequence") | Fix `previous_guid` chaining; when inserting a step, also resend the following step with its new `previous_guid` |
+| 255 / 256 / 257 on publish | Already public / missing title / missing author |
+| HTTP 429 | Over 100 requests per minute (or 5 PDF requests per minute); back off and cache reads |
+| Mac `curl` prints binary output | Add `--compressed` |
 
-**Rate Limiting:**
-- Implement exponential backoff for 429 errors
-- Monitor request frequency
-- Consider caching frequent requests
+## Reference Files
 
-**Permission Errors:**
-- Verify workspace/protocol access permissions
-- Check user role in workspace
-- Ensure protocol is not private if accessing without permission
+- `references/authentication.md` — token types, OAuth authorization link, token exchange and refresh, MCP connection, limits
+- `references/protocols_api.md` — search, get, create, update, steps, materials, publish, bookmarks, PDF, publications, reagents
+- `references/discussions.md` — protocol comments, step discussions, run-record comments, direct messages
+- `references/workspaces.md` — workspace lists, details, membership, workspace protocols
+- `references/file_manager.md` — file-manager search, trash and restore, S3 file uploads
+- `references/additional_features.md` — profile, run records, notifications, organization content export
 
-**File Upload Failures:**
-- Check file size against workspace limits
-- Verify file type is supported
-- Ensure multipart/form-data encoding is correct
-
-For detailed troubleshooting guidance, refer to the specific reference files covering each capability area.
-
+Part of the AlterLab Academic Skills suite.

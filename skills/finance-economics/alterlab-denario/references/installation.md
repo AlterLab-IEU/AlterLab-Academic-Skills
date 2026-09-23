@@ -2,7 +2,7 @@
 
 ## System Requirements
 
-- **Python**: Version 3.12 or higher (required)
+- **Python**: 3.12 or 3.13 (denario 1.0.x declares `>=3.12,<3.14`; 3.14 is not supported)
 - **Operating System**: Linux, macOS, or Windows
 - **Virtual Environment**: Recommended for isolation
 - **LaTeX**: Required for paper generation (or use Docker)
@@ -141,7 +141,7 @@ The Docker image includes a complete LaTeX installation, eliminating manual setu
 
 ### Python Version Issues
 
-Ensure Python 3.12+:
+Ensure Python 3.12 or 3.13 (denario 1.0.x does not install on 3.14):
 ```bash
 python --version
 ```

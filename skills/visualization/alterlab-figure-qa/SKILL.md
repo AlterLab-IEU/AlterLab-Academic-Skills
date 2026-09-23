@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Runs under `uv run python` with the plotting stack already used to make the figure (Matplotlib and, for image/text-box checks, Pillow). No GPU, no account. Operates on a rendered figure plus the source data — it re-renders and inspects, it does not need network access."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Figure QA (render-then-verify)

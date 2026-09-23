@@ -39,7 +39,7 @@ search = catalog.search(
     query={"eo:cloud_cover": {"lt": 20}},
 )
 
-items = list(search.get_items())
+items = list(search.items())   # get_items() is deprecated
 print(f"Found {len(items)} items")
 
 # Load as xarray dataset

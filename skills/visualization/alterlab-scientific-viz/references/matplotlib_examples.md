@@ -447,7 +447,7 @@ fig.update_layout(
     )
 )
 
-# Save as static image (requires kaleido)
+# Save as static image (requires kaleido >= 1 and Chrome; run `plotly_get_chrome` once)
 fig.write_image('plotly_scatter.png', width=500, height=400, scale=3)  # scale=3 gives ~300 DPI
 fig.write_html('plotly_scatter.html')  # Interactive version
 
@@ -597,7 +597,7 @@ plt.show()
 
 ### Plotly
 - Great for interactive exploratory analysis
-- Export static images with `fig.write_image()` (requires kaleido package)
+- Export static images with `fig.write_image()` (requires kaleido >= 1 and a Chrome install; `plotly_get_chrome` sets one up)
 - Use `scale` parameter to control DPI (scale=3 ≈ 300 DPI)
 - Update layout extensively for publication quality
 

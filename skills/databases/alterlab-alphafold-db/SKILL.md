@@ -1,19 +1,20 @@
 ---
 name: alterlab-alphafold-db
-description: Access the AlphaFold DB of 200M+ AI-PREDICTED protein structures — retrieve models by UniProt accession, download PDB/mmCIF files, and analyze prediction confidence metrics (pLDDT, PAE). Use when a UniProt ID needs a computationally predicted 3D structure or when no experimental structure exists, for homology modeling, protein engineering, or structure-based drug discovery; for EXPERIMENTALLY determined structures (X-ray, cryo-EM, NMR) prefer alterlab-pdb, and for protein sequences, annotations, or accession ID mapping prefer alterlab-uniprot instead. Part of the AlterLab Academic Skills suite.
+description: Access the AlphaFold DB of 240M+ AI-PREDICTED protein structures (v6, plus precomputed homodimer/heterodimer complexes) — retrieve models by UniProt accession, download PDB/mmCIF files, and analyze prediction confidence metrics (pLDDT, PAE). Use when a UniProt ID needs a computationally predicted 3D structure or when no experimental structure exists, for homology modeling, protein engineering, or structure-based drug discovery; for EXPERIMENTALLY determined structures (X-ray, cryo-EM, NMR) prefer alterlab-pdb, to fold a NEW sequence or complex yourself prefer alterlab-alphafold, and for protein sequences, annotations, or accession ID mapping prefer alterlab-uniprot instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless AlphaFold DB (EBI) REST API; optional Google Cloud/BigQuery for bulk proteome downloads
+compatibility: Keyless AlphaFold DB (EBI) REST API (v6 models); EMBL-EBI FTP (v6) or Google Cloud/BigQuery (v4) for bulk proteome downloads
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.2.0"
+    last_updated: "2026-09-23"
 ---
 
 # AlphaFold Database
 
 ## Overview
 
-AlphaFold DB is a public repository of AI-predicted 3D protein structures for over 200 million proteins, maintained by DeepMind and EMBL-EBI. Access structure predictions with confidence metrics, download coordinate files, retrieve bulk datasets, and integrate predictions into computational workflows.
+AlphaFold DB is a public repository of AI-predicted 3D protein structures maintained by Google DeepMind and EMBL-EBI. Release v6 (October 2025, synced to UniProt 2025_03) holds ~241 million predictions, including ~40k isoforms and the input MSAs; since March 2026 it also serves precomputed homodimer and heterodimer complex predictions. Access structure predictions with confidence metrics, download coordinate files, retrieve bulk datasets, and integrate predictions into computational workflows.
 
 ## When to Use This Skill
 
@@ -22,11 +23,20 @@ This skill should be used when working with AI-predicted protein structures in s
 - Retrieving protein structure predictions by UniProt ID or protein name
 - Downloading PDB/mmCIF coordinate files for structural analysis
 - Analyzing prediction confidence metrics (pLDDT, PAE) to assess reliability
-- Accessing bulk proteome datasets via Google Cloud Platform
+- Accessing bulk proteome datasets (EMBL-EBI FTP or Google Cloud Platform)
 - Comparing predicted structures with experimental data
 - Performing structure-based drug discovery or protein engineering
 - Building structural models for proteins lacking experimental structures
 - Integrating AlphaFold predictions into computational pipelines
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Experimental X-ray / cryo-EM / NMR structure by PDB ID | `alterlab-pdb` |
+| Folding a new or mutated sequence, or a custom protein–protein complex, yourself (ColabFold / AF2-Multimer) | `alterlab-alphafold` |
+| Protein–ligand or protein–nucleic-acid co-folding | `alterlab-boltz` |
+| Protein sequence, functional annotation, or accession ID mapping only | `alterlab-uniprot` |
 
 ## Core Capabilities
 
@@ -40,8 +50,15 @@ Three entry points, in order of preference:
 
 - **Biopython** (recommended): `Bio.PDB.alphafold_db.get_predictions(accession)`,
   `download_cif_for(...)`, `get_structural_models_for(...)` — simplest path.
-- **Direct REST**: `GET https://alphafold.ebi.ac.uk/api/prediction/{uniprot_id}`;
-  the AlphaFold ID is `response[0]['entryId']`.
+- **Direct REST**: `GET https://alphafold.ebi.ac.uk/api/prediction/{uniprot_id}`.
+  The response is a list of every model for that accession — the canonical
+  sequence plus isoforms (`P00520-2`, …) and, for some entries, third-party
+  models — so select the record whose `uniprotAccession` equals your query
+  rather than trusting `[0]`. The model ID is `modelEntityId` (e.g.
+  `AF-P00520-F1`); `entryId` is the legacy name that passed its announced
+  2026-06-25 sunset, so don't build new code on it. Complex models are
+  excluded unless you pass `?include_complexes=true` (or call
+  `/api/complex/{id}`).
 - **Find accessions first via UniProt** when you only have a gene name or PDB ID —
   use the UniProt ID-mapping job API (`get_uniprot_ids` helper in
   `code_examples.md` §1; valid db names at
@@ -69,13 +86,19 @@ Download recipe (resolve URLs from the API, write bytes) in `code_examples.md` �
   (`pae[0]['predicted_aligned_error']`). Visualization recipe in
   `code_examples.md` §3.
 
-### 4. Bulk Data Access via Google Cloud
+### 4. Bulk Data Access (FTP v6 or Google Cloud v4)
 
-For proteome-scale work, pull from `gs://public-datasets-deepmind-alphafold-v4/`
-with `gsutil`, or query `bigquery-public-data.deepmind_alphafold.metadata` to
-filter by organism/confidence. The species-download helper validates the taxonomy
-ID and uses list-form `subprocess.run` (never `shell=True`). See
-`code_examples.md` §4 and `references/api_reference.md` (Google Cloud / BigQuery).
+- **Model organisms, global-health proteomes, Swiss-Prot (v6):** one tar per
+  proteome at `https://ftp.ebi.ac.uk/pub/databases/alphafold/latest/`
+  (e.g. `UP000005640_9606_HUMAN_v6.tar`; the index is `download_metadata.json`
+  in the parent directory). Lower-confidence complex predictions are bulk-only,
+  under `.../alphafold/collaborations/nvda/`.
+- **Any taxon (v4):** `gs://public-datasets-deepmind-alphafold-v4/proteomes/`
+  with `gsutil`, or query `bigquery-public-data.deepmind_alphafold.metadata` to
+  filter by organism/confidence. The species-download helper validates the
+  taxonomy ID and uses list-form `subprocess.run` (never `shell=True`).
+
+See `code_examples.md` §4 and `references/api_reference.md` (Bulk Downloads).
 
 ### 5. Parsing and Analyzing Structures
 
@@ -98,7 +121,7 @@ uv pip install google-cloud-bigquery gsutil   # optional: bulk GCP access
 
 **3D-Beacons alternative:** AlphaFold is also reachable via the 3D-Beacons
 federated API (`https://www.ebi.ac.uk/pdbe/pdbe-kb/3dbeacons/api/uniprot/summary/{id}.json`),
-filtering structures where `provider == 'AlphaFold DB'`. Recipe in
+filtering entries where `structures[i]['summary']['provider'] == 'AlphaFold DB'`. Recipe in
 `code_examples.md` (3D-Beacons section).
 
 ## Common Use Cases
@@ -131,13 +154,13 @@ filtering structures where `provider == 'AlphaFold DB'`. Recipe in
 
 **UniProt Accession:** Primary identifier for proteins (e.g., "P00520"). Required for querying AlphaFold DB.
 
-**AlphaFold ID:** Internal identifier format: `AF-[UniProt accession]-F[fragment number]` (e.g., "AF-P00520-F1").
+**AlphaFold model ID (`modelEntityId`):** `AF-[UniProt accession]-F[fragment number]` for DeepMind monomer models (e.g., "AF-P00520-F1"; isoforms look like "AF-P00520-2-F1"). Complex and third-party models use opaque numeric IDs (e.g., "AF-0000000365776990"); both forms are accepted by `/api/prediction/{id}`.
 
 **pLDDT (predicted Local Distance Difference Test):** Per-residue confidence metric (0-100). Higher values indicate more confident predictions.
 
 **PAE (Predicted Aligned Error):** Matrix indicating confidence in relative positions between residue pairs. Low values (<5 Å) suggest confident relative positioning.
 
-**Database Version:** The REST API currently serves v6 (the response reports `latestVersion` / `allVersions`); the bulk GCS/BigQuery datasets lag at v4. File URLs include a version suffix (e.g., `model_v6.cif`) — read them from the prediction response rather than hardcoding the suffix.
+**Database Version:** The REST API and the FTP `latest/` archives serve v6 (the response reports `latestVersion` / `allVersions`); the GCS/BigQuery datasets lag at v4. File URLs include a version suffix (e.g., `model_v6.cif`, while newer third-party models start at `_v1`) — read them from the prediction response rather than hardcoding the suffix.
 
 **Fragment Number:** Large proteins may be split into fragments. Fragment number appears in AlphaFold ID (e.g., F1, F2).
 
@@ -182,15 +205,16 @@ Consult this reference for detailed API information, bulk download strategies, o
 ### Data Usage and Attribution
 
 - AlphaFold DB is freely available under CC-BY-4.0 license
-- Cite: Jumper et al. (2021) Nature and Varadi et al. (2022) Nucleic Acids Research
+- Cite: Jumper et al. (2021) Nature, plus the AFDB paper for the release you used — Varadi et al. (2024) NAR for v4, Bertoni et al. (2026) NAR (doi:10.1093/nar/gkaf1226) for v6
 - Predictions are computational models, not experimental structures
 - Always assess confidence metrics before downstream analysis
 
 ### Version Management
 
-- REST API serves v6 (`latestVersion`); bulk GCS/BigQuery datasets lag at v4
+- REST API and FTP `latest/` serve v6 (`latestVersion`); GCS/BigQuery bulk datasets lag at v4
 - Read file URLs from the `/prediction` response — never hardcode the `_v{N}` suffix
-- Old `_v4` file URLs now 404; superseded versions are removed from `/files`
+- Old `_v4` file URLs now 404; superseded versions are removed from `/files` (older releases remain on the FTP site under `v1/`–`v6/`)
+- The v6 field renames (`entryId`→`modelEntityId`, `uniprotStart/End`→`sequenceStart/End`, `uniprotSequence`→`sequence`, `isReviewed`→`isUniProtReviewed`) passed their 2026-06-25 sunset; `paeImageUrl` is slated for removal — use `paeDocUrl`
 - Track which version a downloaded result came from
 
 ### Data Quality Considerations
@@ -199,12 +223,12 @@ Consult this reference for detailed API information, bulk download strategies, o
 - Low confidence regions may be disordered in vivo
 - PAE indicates relative domain confidence, not absolute positioning
 - Predictions lack ligands, post-translational modifications, and cofactors
-- Multi-chain complexes are not predicted (single chains only)
+- Default `/prediction` results are single chains. Precomputed complexes (≈1.7M high-confidence homodimers and ≈80k heterodimers, added March–May 2026) come back only with `include_complexes=true` or `/api/complex/{id}`; judge them by interface metrics (ipTM, pDockQ) as well as pLDDT. For a complex that is not in the DB, fold it yourself (`alterlab-alphafold`)
 
 ### Performance Tips
 
 - Use Biopython for simple single-protein access
-- Use Google Cloud for bulk downloads (much faster than individual files)
+- Use the FTP proteome tars or Google Cloud for bulk downloads (much faster than individual files)
 - Cache downloaded files locally to avoid repeated downloads
 - BigQuery free tier: 1 TB processed data per month
 - Consider network bandwidth for large-scale downloads
@@ -212,7 +236,8 @@ Consult this reference for detailed API information, bulk download strategies, o
 ## Additional Resources
 
 - **AlphaFold DB Website:** https://alphafold.ebi.ac.uk/
-- **API Documentation:** https://alphafold.ebi.ac.uk/api-docs
+- **API Documentation:** https://alphafold.ebi.ac.uk/api-docs (machine-readable spec: https://alphafold.ebi.ac.uk/api/openapi.json)
+- **Release notes / FTP changelog:** https://www.ebi.ac.uk/pdbe/news/alphafold-database-release-notes, https://ftp.ebi.ac.uk/pub/databases/alphafold/CHANGELOG.txt
 - **Google Cloud Dataset:** https://cloud.google.com/blog/products/ai-machine-learning/alphafold-protein-structure-database
 - **3D-Beacons API:** https://www.ebi.ac.uk/pdbe/pdbe-kb/3dbeacons/
 - **AlphaFold Papers:**

@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -93,7 +93,7 @@ jobs:
           echo "  … (per-skill zips: $(ls -1 dist/skill-*.zip | wc -l))"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           # On manual dispatch this creates the tag at the current commit; on a tag
           # push it is the tag that already triggered the run.

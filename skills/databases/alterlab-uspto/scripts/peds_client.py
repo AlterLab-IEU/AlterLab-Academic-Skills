@@ -1,285 +1,190 @@
 #!/usr/bin/env python3
 """
-USPTO Patent Examination Data System (PEDS) Helper
+USPTO examination history via the Open Data Portal (ODP) Patent File Wrapper API.
 
-Provides functions for retrieving patent examination data using the
-uspto-opendata-python library.
+PEDS (ped.uspto.gov) is retired — its host no longer resolves (verified
+2026-09) — and the `uspto-opendata-python` PEDS client no longer works. The
+file keeps its old name so existing references still resolve; `PEDSHelper` is
+an alias of `FileWrapperClient`.
 
-Requires:
-    - uspto-opendata-python: pip install uspto-opendata-python
-
-Note: This script provides a simplified interface to PEDS data.
-For full functionality, use the uspto-opendata-python library directly.
+Endpoints (GET, "X-API-KEY" header with an ODP key; env USPTO_ODP_API_KEY,
+falling back to USPTO_API_KEY):
+    https://api.uspto.gov/api/v1/patent/applications/{applicationNumberText}
+        .../meta-data  .../transactions  .../continuity  .../assignment
+        .../documents  .../adjustment  .../attorney  .../foreign-priority
+        .../associated-documents
+Coverage: applications filed on or after 2001-01-01, refreshed daily.
+Each response is {"count": n, "patentFileWrapperDataBag": [ {...} ]}; transactions
+are eventDataBag[] items of {eventCode, eventDescriptionText, eventDate}.
 """
 
-import sys
+import argparse
 import json
-from typing import Dict, List, Optional, Any
-from datetime import datetime
+import os
+import sys
+from datetime import date
+from typing import Any, Dict, List, Optional
 
-try:
-    from uspto.peds import PEDSClient as OriginalPEDSClient
-    HAS_USPTO_LIB = True
-except ImportError:
-    HAS_USPTO_LIB = False
-    print("Warning: uspto-opendata-python not installed.", file=sys.stderr)
-    print("Install with: pip install uspto-opendata-python", file=sys.stderr)
+import requests
+
+ODP_BASE = "https://api.uspto.gov/api/v1/patent/applications"
+
+# Transaction (event) codes as they appear in eventDataBag[].eventCode
+NON_FINAL_REJECTION = "CTNF"
+FINAL_REJECTION = "CTFR"
+NOTICE_OF_ALLOWANCE = "NOA"
+RESPONSE_FILED = "WRIT"
+ABANDONED = "ABND"
+OFFICE_ACTION_CODES = {NON_FINAL_REJECTION, FINAL_REJECTION, "AOPF", NOTICE_OF_ALLOWANCE}
 
 
-class PEDSHelper:
-    """Helper class for accessing PEDS data."""
+class FileWrapperClient:
+    """Application data, prosecution events, continuity, and assignments from ODP."""
 
-    def __init__(self):
-        """Initialize PEDS client."""
-        if not HAS_USPTO_LIB:
-            raise ImportError("uspto-opendata-python library required")
-        self.client = OriginalPEDSClient()
+    def __init__(self, api_key: Optional[str] = None, timeout: int = 60):
+        self.api_key = api_key or os.getenv("USPTO_ODP_API_KEY") or os.getenv("USPTO_API_KEY")
+        if not self.api_key:
+            raise ValueError(
+                "ODP API key required: set USPTO_ODP_API_KEY (key from data.uspto.gov, "
+                "APIs -> Getting Started) or pass api_key=."
+            )
+        self.headers = {"X-API-KEY": self.api_key, "Accept": "application/json"}
+        self.timeout = timeout
+
+    @staticmethod
+    def _normalize(application_number: str) -> str:
+        return application_number.replace("/", "").replace(",", "").replace(" ", "").strip()
+
+    def _get(self, application_number: str, section: str = "") -> Optional[Dict]:
+        url = f"{ODP_BASE}/{self._normalize(application_number)}"
+        if section:
+            url = f"{url}/{section}"
+        response = requests.get(url, headers=self.headers, timeout=self.timeout)
+        if response.status_code == 404:
+            return None
+        response.raise_for_status()
+        bag = response.json().get("patentFileWrapperDataBag") or []
+        return bag[0] if bag else None
 
     def get_application(self, application_number: str) -> Optional[Dict]:
-        """
-        Get patent application data by application number.
-
-        Args:
-            application_number: Application number (e.g., "16123456")
-
-        Returns:
-            Application data dictionary with:
-                - title: Application title
-                - filing_date: Filing date
-                - status: Current status
-                - transactions: List of prosecution events
-                - inventors: List of inventors
-                - assignees: List of assignees
-        """
-        try:
-            result = self.client.get_application(application_number)
-            return self._format_application_data(result)
-        except Exception as e:
-            print(f"Error retrieving application {application_number}: {e}", file=sys.stderr)
-            return None
+        """Full file-wrapper record (metadata, events, continuity, assignments...)."""
+        return self._get(application_number)
 
     def get_patent(self, patent_number: str) -> Optional[Dict]:
-        """
-        Get patent data by patent number.
-
-        Args:
-            patent_number: Patent number (e.g., "11234567")
-
-        Returns:
-            Patent data dictionary
-        """
-        try:
-            result = self.client.get_patent(patent_number)
-            return self._format_application_data(result)
-        except Exception as e:
-            print(f"Error retrieving patent {patent_number}: {e}", file=sys.stderr)
+        """Record for a granted patent number, found through the search endpoint."""
+        number = patent_number.upper().replace("US", "").replace(",", "").strip()
+        body = {"filters": [{"name": "applicationMetaData.patentNumber", "value": [number]}],
+                "pagination": {"offset": 0, "limit": 1}}
+        response = requests.post(f"{ODP_BASE}/search", headers=self.headers, json=body,
+                                 timeout=self.timeout)
+        if response.status_code == 404:
             return None
+        response.raise_for_status()
+        bag = response.json().get("patentFileWrapperDataBag") or []
+        return bag[0] if bag else None
 
     def get_transaction_history(self, application_number: str) -> List[Dict]:
-        """
-        Get transaction history for an application.
-
-        Args:
-            application_number: Application number
-
-        Returns:
-            List of transactions with date, code, and description
-        """
-        app_data = self.get_application(application_number)
-        if app_data and 'transactions' in app_data:
-            return app_data['transactions']
-        return []
+        record = self._get(application_number, "transactions") or {}
+        return record.get("eventDataBag") or []
 
     def get_office_actions(self, application_number: str) -> List[Dict]:
-        """
-        Get office actions for an application.
+        return [event for event in self.get_transaction_history(application_number)
+                if event.get("eventCode") in OFFICE_ACTION_CODES]
 
-        Args:
-            application_number: Application number
+    def get_continuity(self, application_number: str) -> Dict[str, List[Dict]]:
+        record = self._get(application_number, "continuity") or {}
+        return {"parents": record.get("parentContinuityBag") or [],
+                "children": record.get("childContinuityBag") or []}
 
-        Returns:
-            List of office actions with dates and types
-        """
-        transactions = self.get_transaction_history(application_number)
-
-        # Filter for office action transaction codes
-        oa_codes = ['CTNF', 'CTFR', 'AOPF', 'NOA']
-
-        office_actions = [
-            trans for trans in transactions
-            if trans.get('code') in oa_codes
-        ]
-
-        return office_actions
+    def get_assignments(self, application_number: str) -> List[Dict]:
+        record = self._get(application_number, "assignment") or {}
+        return record.get("assignmentBag") or []
 
     def get_status_summary(self, application_number: str) -> Dict[str, Any]:
-        """
-        Get a summary of application status.
-
-        Args:
-            application_number: Application number
-
-        Returns:
-            Dictionary with status summary:
-                - current_status: Current application status
-                - filing_date: Filing date
-                - status_date: Status date
-                - is_patented: Boolean indicating if patented
-                - patent_number: Patent number if granted
-                - pendency_days: Days since filing
-        """
-        app_data = self.get_application(application_number)
-        if not app_data:
-            return {}
-
-        filing_date = app_data.get('filing_date')
-        if filing_date:
-            filing_dt = datetime.strptime(filing_date, '%Y-%m-%d')
-            pendency_days = (datetime.now() - filing_dt).days
-        else:
-            pendency_days = None
-
+        record = self._get(application_number, "meta-data") or {}
+        meta = record.get("applicationMetaData") or {}
+        filing = meta.get("filingDate")
+        pendency = None
+        if filing:
+            try:
+                pendency = (date.today() - date.fromisoformat(filing[:10])).days
+            except ValueError:
+                pendency = None
         return {
-            'current_status': app_data.get('app_status'),
-            'filing_date': filing_date,
-            'status_date': app_data.get('app_status_date'),
-            'is_patented': app_data.get('patent_number') is not None,
-            'patent_number': app_data.get('patent_number'),
-            'issue_date': app_data.get('patent_issue_date'),
-            'pendency_days': pendency_days,
-            'title': app_data.get('title'),
-            'inventors': app_data.get('inventors', []),
-            'assignees': app_data.get('assignees', [])
+            "application": record.get("applicationNumberText"),
+            "title": meta.get("inventionTitle"),
+            "status": meta.get("applicationStatusDescriptionText"),
+            "status_date": meta.get("applicationStatusDate"),
+            "filing_date": filing,
+            "patent_number": meta.get("patentNumber"),
+            "grant_date": meta.get("grantDate"),
+            "is_patented": bool(meta.get("patentNumber")),
+            "first_applicant": meta.get("firstApplicantName"),
+            "first_inventor": meta.get("firstInventorName"),
+            "examiner": meta.get("examinerNameText"),
+            "art_unit": meta.get("groupArtUnitNumber"),
+            "days_since_filing": pendency,
         }
 
     def analyze_prosecution(self, application_number: str) -> Dict[str, Any]:
-        """
-        Analyze prosecution history.
-
-        Args:
-            application_number: Application number
-
-        Returns:
-            Dictionary with prosecution analysis:
-                - total_office_actions: Count of office actions
-                - rejections: Count of rejections
-                - allowance: Boolean if allowed
-                - response_count: Count of applicant responses
-                - examination_duration: Days from filing to allowance/abandonment
-        """
-        transactions = self.get_transaction_history(application_number)
-        app_summary = self.get_status_summary(application_number)
-
-        if not transactions:
-            return {}
-
-        analysis = {
-            'total_office_actions': 0,
-            'non_final_rejections': 0,
-            'final_rejections': 0,
-            'allowance': False,
-            'responses': 0,
-            'abandonment': False
+        events = self.get_transaction_history(application_number)
+        codes = [event.get("eventCode") for event in events]
+        return {
+            "events": len(events),
+            "non_final_rejections": codes.count(NON_FINAL_REJECTION),
+            "final_rejections": codes.count(FINAL_REJECTION),
+            "responses_filed": codes.count(RESPONSE_FILED),
+            "allowed": NOTICE_OF_ALLOWANCE in codes,
+            "abandoned": ABANDONED in codes,
+            "status": self.get_status_summary(application_number).get("status"),
         }
 
-        for trans in transactions:
-            code = trans.get('code', '')
-            if code == 'CTNF':
-                analysis['non_final_rejections'] += 1
-                analysis['total_office_actions'] += 1
-            elif code == 'CTFR':
-                analysis['final_rejections'] += 1
-                analysis['total_office_actions'] += 1
-            elif code in ['AOPF', 'OA']:
-                analysis['total_office_actions'] += 1
-            elif code == 'NOA':
-                analysis['allowance'] = True
-            elif code == 'WRIT':
-                analysis['responses'] += 1
-            elif code == 'ABND':
-                analysis['abandonment'] = True
 
-        analysis['status'] = app_summary.get('current_status')
-        analysis['pendency_days'] = app_summary.get('pendency_days')
-
-        return analysis
-
-    def _format_application_data(self, raw_data: Dict) -> Dict:
-        """Format raw PEDS data into cleaner structure."""
-        # This is a placeholder - actual implementation depends on
-        # the structure returned by uspto-opendata-python
-        return raw_data
+PEDSHelper = FileWrapperClient  # backwards-compatible name
 
 
-def main():
-    """Command-line interface for PEDS data."""
-    import argparse
-
+def main() -> int:
     parser = argparse.ArgumentParser(
-        description='Query USPTO Patent Examination Data System (PEDS)',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Get application data by application number
-  %(prog)s --application 16123456
-
-  # Get patent data by patent number
-  %(prog)s --patent 11234567
-
-  # Get status summary
-  %(prog)s --status 16123456
-
-  # Analyze prosecution history
-  %(prog)s --analyze 16123456
-
-  # Get transaction history
-  %(prog)s --transactions 16123456
-
-  # Get office actions
-  %(prog)s --office-actions 16123456
-        """
-    )
-
-    if not HAS_USPTO_LIB:
-        parser.error("uspto-opendata-python library not installed. Install with: pip install uspto-opendata-python")
-
-    # Main operation arguments (mutually exclusive)
+        description="USPTO examination data from the ODP Patent File Wrapper API (PEDS successor)")
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--application', '-a', help='Get application by application number')
-    group.add_argument('--patent', '-p', help='Get patent by patent number')
-    group.add_argument('--status', '-s', help='Get status summary for application')
-    group.add_argument('--analyze', help='Analyze prosecution history for application')
-    group.add_argument('--transactions', '-t', help='Get transaction history for application')
-    group.add_argument('--office-actions', '-o', help='Get office actions for application')
-
+    group.add_argument("--application", "-a", help="Full record for an application number")
+    group.add_argument("--patent", "-p", help="Full record for a granted patent number")
+    group.add_argument("--status", "-s", help="Status summary for an application")
+    group.add_argument("--analyze", help="Prosecution statistics for an application")
+    group.add_argument("--transactions", "-t", help="Transaction (event) history")
+    group.add_argument("--office-actions", "-o", help="Office-action events only")
+    group.add_argument("--continuity", help="Parent/child continuity data")
+    group.add_argument("--assignments", help="Recorded assignments (ownership)")
     args = parser.parse_args()
 
     try:
-        helper = PEDSHelper()
-
+        client = FileWrapperClient()
         if args.application:
-            result = helper.get_application(args.application)
+            result = client.get_application(args.application)
         elif args.patent:
-            result = helper.get_patent(args.patent)
+            result = client.get_patent(args.patent)
         elif args.status:
-            result = helper.get_status_summary(args.status)
+            result = client.get_status_summary(args.status)
         elif args.analyze:
-            result = helper.analyze_prosecution(args.analyze)
+            result = client.analyze_prosecution(args.analyze)
         elif args.transactions:
-            result = helper.get_transaction_history(args.transactions)
+            result = client.get_transaction_history(args.transactions)
         elif args.office_actions:
-            result = helper.get_office_actions(args.office_actions)
-
-        if result:
-            print(json.dumps(result, indent=2))
+            result = client.get_office_actions(args.office_actions)
+        elif args.continuity:
+            result = client.get_continuity(args.continuity)
         else:
-            print("No data found", file=sys.stderr)
-            sys.exit(1)
+            result = client.get_assignments(args.assignments)
+    except (ValueError, requests.RequestException) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
 
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+    if not result:
+        print("No data found", file=sys.stderr)
+        return 1
+    print(json.dumps(result, indent=2))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No API key required — generates KVKK data management plans from primary mevzuat (Law 6698) encoded in references/; the optional scaffold runs via `uv run python` on the standard library only
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-06-06"
+  version: "1.0.1"
+  last_updated: "2026-09-23"
   depends_on: "alterlab-tr-research-ethics (etik kurul routing), alterlab-aperta (TÜBİTAK open-science / VYP)"
 ---
 
@@ -104,8 +104,16 @@ A compliant plan answers these in order. Each maps to a specific article of Law
    Board or one of the enumerated safeguards (standard contracts, binding
    corporate rules, written undertakings, etc.). The Law 7499 amendment
    restructured Art. 9 around adequacy decisions and standard contracts — do not
-   reuse pre-2024 "explicit consent for every transfer" boilerplate. Flag any
-   non-Türkiye cloud.
+   reuse pre-2024 "explicit consent for every transfer" boilerplate. A standard
+   contract must be notified to the Board **within five business days** of
+   signature (Art. 9(5)); explicit consent is only a fallback for **incidental**
+   (*arızi*) transfers when no adequacy decision or safeguard exists, after telling
+   the subject the possible risks (Art. 9(6)(a)). The procedure is set by the
+   *Kişisel Verilerin Yurt Dışına Aktarılmasına İlişkin Usul ve Esaslar Hakkında
+   Yönetmelik* (RG 10 Jul 2024, No. 32598). Flag any non-Türkiye cloud — including
+   AI/LLM APIs hosted abroad that would receive personal data; YÖK's generative-AI
+   ethics guide (Mayıs 2024) adds that personal data must not be entered into such
+   systems unless anonymized or masked.
 
 6. **VERBIS registration (Art. 16).** Controllers must register with the **Veri
    Sorumluları Sicili** (VERBIS — Data Controllers' Registry) **before**
@@ -161,7 +169,8 @@ A worked walkthrough of all six on a sample survey + health-data project is in
 - **Verify against the current law before relying on an output.** Flag the Law
   7499 amendments (Art. 6, 9, 18) — adopted 2 Mar 2024, published in the Official
   Gazette 12 Mar 2024 (RG No. 32487), KVKK provisions effective 1 Jun 2024 — as
-  the most recent substantive change.
+  the most recent substantive change (still the latest amendment in the
+  consolidated text on mevzuat.gov.tr, checked 2026-09-23).
 - This skill produces compliance **scaffolding**, not legal advice; recommend a
   Veri Sorumlusu / KVKK officer (or counsel) sign-off for high-risk processing.
 
@@ -184,5 +193,6 @@ A worked walkthrough of all six on a sample survey + health-data project is in
 - By-Law on Erasure, Destruction or Anonymization of Personal Data — https://www.kvkk.gov.tr/Icerik/6636/By-Law-on-Erasure-Destruction-or-Anonymization-of-Personal-Data
 - VERBIS (Data Controllers' Registry) — https://www.kvkk.gov.tr/Icerik/2043/
 - Law 7499 — amendments to Art. 6, 9, 18 (adopted 2 Mar 2024; published in the Official Gazette 12 Mar 2024, RG No. 32487 — https://www.resmigazete.gov.tr/eskiler/2024/03/20240312-1.htm; KVKK provisions effective 1 Jun 2024)
+- Kişisel Verilerin Yurt Dışına Aktarılmasına İlişkin Usul ve Esaslar Hakkında Yönetmelik — Official Gazette 10 Jul 2024, No. 32598: https://www.resmigazete.gov.tr/eskiler/2024/07/20240710-2.htm
 
 Part of the AlterLab Academic Skills suite.

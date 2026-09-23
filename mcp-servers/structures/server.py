@@ -31,7 +31,10 @@ def _get_json(url: str) -> dict[str, Any]:
     req = urllib.request.Request(url, headers={"User-Agent": _UA, "Accept": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=_TIMEOUT) as resp:  # noqa: S310 (trusted hosts)
-            return json.loads(resp.read().decode("utf-8"))
+            data = json.loads(resp.read().decode("utf-8"))
+        # Tools return dict[str, Any]; MCP structured output rejects a bare top-level array,
+        # so wrap one (AlphaFold DB and Reactome, for example, answer with a list).
+        return data if isinstance(data, dict) else {"results": data}
     except urllib.error.HTTPError as exc:
         return {"error": f"HTTP {exc.code}", "url": url}
     except (urllib.error.URLError, TimeoutError) as exc:
@@ -62,10 +65,22 @@ def get_alphafold_prediction(uniprot_accession: str) -> dict[str, Any]:
     Args:
         uniprot_accession: UniProt accession (e.g. "P00520").
     Returns:
-        The AlphaFold DB prediction record(s) including model URLs and mean pLDDT, or an error.
+        {"accession", "models": [...]} with one compact record per model (canonical isoform
+        first): entry id, model version and date, mean pLDDT (globalMetricValue), and the
+        PDB/mmCIF/PAE file URLs — or an error object.
     """
     acc = uniprot_accession.strip().upper()
-    return _get_json(f"https://alphafold.ebi.ac.uk/api/prediction/{acc}")
+    data = _get_json(f"https://alphafold.ebi.ac.uk/api/prediction/{acc}")
+    if "error" in data:
+        return data
+    keep = (
+        "entryId", "uniprotAccession", "gene", "organismScientificName", "latestVersion",
+        "modelCreatedDate", "globalMetricValue", "sequenceStart", "sequenceEnd",
+        "pdbUrl", "cifUrl", "bcifUrl", "paeImageUrl", "paeDocUrl",
+    )
+    models = [{k: e[k] for k in keep if k in e} for e in data.get("results", []) if isinstance(e, dict)]
+    models.sort(key=lambda m: m.get("uniprotAccession") != acc)  # canonical isoform first
+    return {"accession": acc, "models": models}
 
 
 @mcp.tool()

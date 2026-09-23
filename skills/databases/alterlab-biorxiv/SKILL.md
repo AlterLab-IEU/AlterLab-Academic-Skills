@@ -6,7 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless bioRxiv API (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # bioRxiv Database
@@ -15,16 +16,16 @@ metadata:
 
 Python tooling over the keyless bioRxiv API for searching and retrieving **life-sciences preprints**. Searches by keyword, author, date range, and category, returning structured JSON (titles, abstracts, DOIs, authors, versions), and downloads full-text PDFs.
 
-For **published, peer-reviewed** literature use `alterlab-pubmed`; for **computer-science / physics / math** preprints use `alterlab-arxiv`. bioRxiv covers biology subjects only.
+For **published, peer-reviewed** literature use `alterlab-pubmed`; for **computer-science / physics / math** preprints use `alterlab-arxiv`. bioRxiv covers biology subjects only. The same API also serves **medRxiv** (swap `biorxiv` for `medrxiv` in the endpoint path, e.g. `/details/medrxiv/2025-03-21/2025-03-28?category=cardiovascular%20medicine`); the bundled script targets bioRxiv, so query medRxiv with `curl`/`requests` directly.
 
 ### How it works (and its limits)
 
-The bioRxiv `/details` endpoint has **no server-side keyword, author, or category filter** — it only returns preprints by date range, 30 records per page. So this tool:
+The bioRxiv `/details` endpoint returns preprints by date range, 30 records per page. It accepts a server-side **subject-category** filter (`?category=cell_biology`), but has **no keyword or author filter**. So this tool:
 
-1. Paginates the full date range (following the cursor until all records are retrieved), then
-2. Filters **client-side** by keyword (substring over title/abstract), author (substring over the author list), and category (exact match on each paper's `category` field).
+1. Paginates the date range (following the cursor until all records are retrieved), passing `--category` to the server so only that subject is fetched, then
+2. Filters **client-side** by keyword (substring over title/abstract) and author (substring over the author list).
 
-Implication: a wide date range means many API calls and a large download. Keep ranges as tight as the question allows, and prefer `--category` and `--limit` to bound the work.
+Implication: a wide date range means many API calls and a large download. Keep ranges as tight as the question allows, and use `--category` (cuts API calls) and `--limit` to bound the work.
 
 ## When to Use This Skill
 
@@ -36,6 +37,16 @@ Use this skill when:
 - Retrieving metadata for citation management
 - Downloading preprint PDFs for analysis
 - Filtering papers by bioRxiv subject categories
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Peer-reviewed, MeSH-indexed biomedical journal articles | `alterlab-pubmed` |
+| CS / physics / math / quantitative-biology preprints on arXiv | `alterlab-arxiv` |
+| Citation counts or cross-publisher bibliometrics for preprints | `alterlab-openalex` |
+| Depositing your own preprint (server choice, license, versioning) | `alterlab-preprint-deposition` |
+| Multi-database systematic review with PRISMA screening | `alterlab-literature-review` |
 
 ## Running the script
 
@@ -54,7 +65,7 @@ The `python scripts/biorxiv_search.py ...` invocations below are shorthand; subs
 Search for preprints containing specific keywords in titles, abstracts, or author lists.
 
 **Basic Usage:**
-```python
+```bash
 python scripts/biorxiv_search.py \
   --keywords "CRISPR" "gene editing" \
   --start-date 2024-01-01 \
@@ -63,7 +74,7 @@ python scripts/biorxiv_search.py \
 ```
 
 **With Category Filter:**
-```python
+```bash
 python scripts/biorxiv_search.py \
   --keywords "neural networks" "deep learning" \
   --days-back 180 \
@@ -73,7 +84,7 @@ python scripts/biorxiv_search.py \
 
 **Search Fields:**
 Keyword matching is a case-insensitive substring match, and a paper matches if **any** keyword is found (OR semantics, not AND). By default keywords are searched in both title and abstract. Customize with `--search-fields`:
-```python
+```bash
 python scripts/biorxiv_search.py \
   --keywords "AlphaFold" \
   --search-fields title \
@@ -85,7 +96,7 @@ python scripts/biorxiv_search.py \
 Find all papers by a specific author within a date range.
 
 **Basic Usage:**
-```python
+```bash
 python scripts/biorxiv_search.py \
   --author "Smith" \
   --start-date 2023-01-01 \
@@ -94,7 +105,7 @@ python scripts/biorxiv_search.py \
 ```
 
 **Recent Publications:**
-```python
+```bash
 # Last year by default if no dates specified
 python scripts/biorxiv_search.py \
   --author "Johnson" \
@@ -106,7 +117,7 @@ python scripts/biorxiv_search.py \
 Retrieve all preprints posted within a specific date range.
 
 **Basic Usage:**
-```python
+```bash
 python scripts/biorxiv_search.py \
   --start-date 2024-01-01 \
   --end-date 2024-01-31 \
@@ -114,7 +125,7 @@ python scripts/biorxiv_search.py \
 ```
 
 **With Category Filter:**
-```python
+```bash
 python scripts/biorxiv_search.py \
   --start-date 2024-06-01 \
   --end-date 2024-06-30 \
@@ -123,7 +134,7 @@ python scripts/biorxiv_search.py \
 ```
 
 **Days Back Shortcut:**
-```python
+```bash
 # Last 30 days
 python scripts/biorxiv_search.py \
   --days-back 30 \
@@ -132,19 +143,23 @@ python scripts/biorxiv_search.py \
 
 ### 4. Paper Details by DOI
 
-Retrieve detailed metadata for a specific preprint.
+Retrieve detailed metadata for a specific preprint. bioRxiv DOIs come in two prefixes:
+`10.1101/…` for older preprints and `10.64898/…` for preprints posted since the move to
+openRxiv (December 2025), e.g. `10.64898/2026.08.28.747819`. Both work with `/details/`
+and the `www.biorxiv.org/content/` URLs; the script normalizes DOIs, doi.org links, and
+content URLs regardless of prefix. Don't hard-code `10.1101` in regexes or validators.
 
 **Basic Usage:**
-```python
+```bash
 python scripts/biorxiv_search.py \
   --doi "10.1101/2024.01.15.123456" \
   --output paper_details.json
 ```
 
-**Full DOI URLs Accepted:**
-```python
+**Full DOI URLs Accepted (either prefix):**
+```bash
 python scripts/biorxiv_search.py \
-  --doi "https://doi.org/10.1101/2024.01.15.123456"
+  --doi "https://doi.org/10.64898/2026.08.28.747819"
 ```
 
 ### 5. PDF Downloads
@@ -152,7 +167,7 @@ python scripts/biorxiv_search.py \
 Download the full-text PDF of any preprint.
 
 **Basic Usage:**
-```python
+```bash
 python scripts/biorxiv_search.py \
   --doi "10.1101/2024.01.15.123456" \
   --download-pdf paper.pdf
@@ -248,7 +263,7 @@ All searches return structured JSON with the following format:
 ### Literature Review Workflow
 
 1. **Broad keyword search:**
-```python
+```bash
 python scripts/biorxiv_search.py \
   --keywords "organoids" "tissue engineering" \
   --start-date 2023-01-01 \
@@ -289,7 +304,7 @@ for doi in selected_dois:
 
 Track research trends by analyzing publication frequencies over time:
 
-```python
+```bash
 python scripts/biorxiv_search.py \
   --keywords "machine learning" \
   --start-date 2020-01-01 \
@@ -304,15 +319,14 @@ Then analyze the temporal distribution in the results.
 
 Monitor specific researchers' preprints:
 
-```python
-# Track multiple authors
-authors = ["Smith", "Johnson", "Williams"]
-
-for author in authors:
-    python scripts/biorxiv_search.py \
-      --author "{author}" \
-      --days-back 365 \
-      --output "{author}_papers.json"
+```bash
+# Track multiple authors (each run scans the whole window, so keep it short)
+for author in Smith Johnson Williams; do
+  python scripts/biorxiv_search.py \
+    --author "$author" \
+    --days-back 365 \
+    --output "${author}_papers.json"
+done
 ```
 
 ## Python API Usage
@@ -356,17 +370,19 @@ formatted = searcher.format_result(paper, include_abstract=True)
 
 1. **Keep date ranges tight**: Because filtering is client-side, the tool paginates the *entire* range (30 records/page) before filtering. A single busy week is ~800 preprints (~27 API calls); a full year is tens of thousands. Narrow the range, or use `--days-back` for recency.
 
-2. **Filter by category**: Use `--category` to cut the result set down (e.g. for trend analysis). It does not reduce the number of API calls — every paper in the range is still fetched, then filtered locally on the per-paper `category` field.
+2. **Filter by category**: Use `--category` whenever the subject is known. It is sent to the server (`?category=`), so it cuts both the result set and the number of API calls (one busy week: ~1,270 preprints overall vs. ~80 in cell biology).
 
 3. **Cap with `--limit`**: For pure date-range searches, `--limit` also stops pagination early, so it genuinely reduces API calls. For keyword/author searches the whole range must be scanned first, so `--limit` only trims the final list.
 
 4. **Respect rate limits**: The script sleeps 0.5s between requests. There is no documented hard rate limit, but for large collections add more delay and cache results to JSON.
 
-5. **Version tracking**: Preprints can have multiple versions. DOI lookups return the **latest** version; `download_pdf` resolves the latest version automatically (pass `version=` to override). PDF/HTML URLs embed the version number.
+5. **Version tracking**: Preprints can have multiple versions. DOI lookups return the **latest** version; `download_pdf` resolves the latest version automatically (pass `version=` to override). PDF/HTML URLs embed the version number. The `published` field of `/details/` carries the journal DOI once the preprint is published (or `NA`) — use it rather than the per-DOI `/pubs/` lookup, which returns nothing for `10.64898` DOIs.
 
-6. **Handle empty results**: Check `result_count`. Empty results usually mean the date range had no matching papers, an over-narrow category, or transient API connectivity issues — not a silent truncation (pagination retrieves the full range).
+6. **PDF downloads can be throttled**: PDFs come from `www.biorxiv.org`, which sits behind Cloudflare and may answer scripted requests with HTTP 429. Space downloads out, fall back to the `html_url`, and for bulk full text use bioRxiv's requester-pays text-mining bucket `s3://biorxiv-src-monthly` (MECA zip packages; see https://www.biorxiv.org/tdm).
 
-7. **Verbose mode for debugging**: Use `--verbose` to see each paginated API request and the reported `total`.
+7. **Handle empty results**: Check `result_count`. Empty results usually mean the date range had no matching papers, an over-narrow category, or transient API connectivity issues — not a silent truncation (pagination retrieves the full range).
+
+8. **Verbose mode for debugging**: Use `--verbose` to see each paginated API request and the reported `total`.
 
 ## Advanced Features
 
@@ -374,21 +390,22 @@ formatted = searcher.format_result(paper, include_abstract=True)
 
 ```python
 from datetime import datetime, timedelta
+from scripts.biorxiv_search import BioRxivSearcher
 
 # Last quarter
 end_date = datetime.now()
 start_date = end_date - timedelta(days=90)
 
-python scripts/biorxiv_search.py \
-  --start-date {start_date.strftime('%Y-%m-%d')} \
-  --end-date {end_date.strftime('%Y-%m-%d')}
+papers = BioRxivSearcher().search_by_date_range(
+    start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"), category="genomics"
+)
 ```
 
 ### Result Limiting
 
 Limit the number of results returned:
 
-```python
+```bash
 python scripts/biorxiv_search.py \
   --keywords "COVID-19" \
   --days-back 30 \
@@ -428,7 +445,7 @@ df = pd.DataFrame(data['results'])
 print(f"Total papers: {len(df)}")
 print(f"Date range: {df['date'].min()} to {df['date'].max()}")
 print(f"\nTop authors by paper count:")
-print(df['authors'].str.split(',').explode().str.strip().value_counts().head(10))
+print(df['authors'].str.split(';').explode().str.strip().value_counts().head(10))
 
 # Filter and export
 recent = df[df['date'] >= '2024-06-01']

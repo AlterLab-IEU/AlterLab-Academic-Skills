@@ -207,7 +207,7 @@ f = Function('f')
 
 # Approximate derivative using finite differences
 differentiate_finite(f(x), x)
-f(x).as_finite_difference()
+f(x).diff(x).as_finite_difference()  # as_finite_difference is a Derivative method
 ```
 
 ## Equation Solving

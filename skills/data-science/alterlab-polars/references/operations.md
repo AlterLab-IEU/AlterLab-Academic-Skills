@@ -275,10 +275,12 @@ df.with_columns(
 ```
 
 **explode:**
-Faster, groups rows together:
+Changes the row count (like `group_by().agg()` followed by `explode()`), so it only works
+in `select`, not `with_columns`; results come out grouped. Useful for per-group top-k:
 ```python
-df.with_columns(
-    group_mean=pl.col("value").mean().over("category", mapping_strategy="explode")
+df.select(
+    pl.col("category").head(2).over("category", mapping_strategy="explode"),
+    pl.col("value").sort(descending=True).head(2).over("category", mapping_strategy="explode"),
 )
 ```
 

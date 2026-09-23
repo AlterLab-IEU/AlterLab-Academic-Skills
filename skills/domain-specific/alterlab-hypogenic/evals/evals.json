@@ -4,12 +4,12 @@
     {
       "id": "hypogenic-data-driven-ai-content",
       "prompt": "I have a labeled dataset of human-written vs AI-generated text (train/val/test JSON). I want to automatically generate about 20 testable hypotheses purely from the data and then test their accuracy on the test set. No literature, just the data.",
-      "expected_output": "Triggers the hypogenic skill. Uses the HypoGeniC (data-driven) method: prepare the dataset in the required text_features/label format, write a config.yaml, run hypogenic_generation --method hypogenic --num_hypotheses 20, then hypogenic_inference on the test set. Should reference HypoGeniC and the generation/inference CLI or BaseTask API.",
+      "expected_output": "Triggers the hypogenic skill. Uses the HypoGeniC (data-driven) method: prepare the dataset in the required text_features/label format, write a config.yaml, run hypogenic_generation --task_config_path config.yaml --model_type/--model_name ... --max_num_hypotheses 20, then hypogenic_inference --hypothesis_file ... on the test set. Should reference HypoGeniC and the generation/inference CLI or BaseTask API.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "HypoGeniC"},
         {"type": "output_contains", "value": "config.yaml"},
-        {"type": "behavior", "value": "Selects the data-driven HypoGeniC method (not literature-integrated), sets num_hypotheses, and runs both generation and inference over the labeled dataset."}
+        {"type": "behavior", "value": "Selects the data-driven HypoGeniC method (not literature-integrated), sets the hypothesis-bank size (--max_num_hypotheses), and runs both generation and inference over the labeled dataset."}
       ]
     },
     {
@@ -26,7 +26,7 @@
     {
       "id": "union-method-diversity",
       "prompt": "For a mental stress detection task I already have a set of literature-derived hypotheses and a social-media post dataset. I want to mechanistically combine my literature hypotheses with data-driven ones while removing redundancy to maximize diversity. Which hypogenic method?",
-      "expected_output": "Triggers the hypogenic skill. Recommends a Union method (Literature ∪ HypoGeniC or Literature ∪ HypoRefine) to combine the existing literature hypotheses with framework-generated ones and deduplicate, e.g. hypogenic_generation --method union --literature_hypotheses. Should reference the Union method and diversity/deduplication.",
+      "expected_output": "Triggers the hypogenic skill. Recommends a Union method (Literature ∪ HypoGeniC or Literature ∪ HypoRefine) to combine the existing literature hypotheses with framework-generated ones and deduplicate, run via the repository's examples/union_generation.py script (the CLI has no union flag). Should reference the Union method and diversity/deduplication.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "Union"},

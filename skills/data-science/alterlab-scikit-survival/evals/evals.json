@@ -58,6 +58,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-scikit-learn" }
       ]
+    },
+    {
+      "id": "near-miss-alterlab-clinical-decision",
+      "prompt": "Prepare a clinical decision support document for our oncology team: a biomarker-stratified cohort analysis of PD-L1 high versus low patients with Kaplan-Meier curves, hazard ratios, GRADE evidence grading, and a treatment recommendation algorithm, delivered as a LaTeX PDF report.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-clinical-decision. The deliverable is a formatted clinical decision-support report (GRADE grading, cohort stratification, recommendation algorithm, LaTeX/PDF output), not fitting or evaluating survival models with scikit-survival.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-clinical-decision" }
+      ]
     }
   ]
 }

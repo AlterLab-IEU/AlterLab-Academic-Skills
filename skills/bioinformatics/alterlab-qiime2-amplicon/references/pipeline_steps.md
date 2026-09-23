@@ -82,7 +82,7 @@ qiime feature-table summarize \
   --o-summary table.qzv
 ```
 
-In 2026.1 this is the former `summarize_plus` (see `version_notes.md`). Use `table.qzv`
+Since 2026.1 this is the former `summarize_plus` (see `version_notes.md`). Use `table.qzv`
 to pick `--p-sampling-depth` for diversity: the "Interactive Sample Detail" /
 frequency-per-sample view shows how many samples you retain at each depth.
 

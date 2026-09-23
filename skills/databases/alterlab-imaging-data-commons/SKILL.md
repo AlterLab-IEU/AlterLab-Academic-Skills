@@ -3,9 +3,10 @@ name: alterlab-imaging-data-commons
 description: Query and download public cancer imaging data from the NCI Imaging Data Commons (IDC) using the idc-index Python package, filtering by metadata, visualizing in-browser, and checking licenses, with no authentication required. Use when obtaining large-scale radiology (CT, MR, PET) or digital pathology DICOM datasets for AI/ML training or cancer imaging research. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Requires the idc-index Python package (pinned to 0.12.3, IDC data release v24); keyless IDC data access (no authentication required)
+compatibility: Requires the idc-index Python package >= 0.12.5 (current 0.12.5 as of 2026-09; IDC data release v24; earlier 0.12.x pin pandas <= 2.2.4); keyless IDC data access (no authentication required)
 metadata:
-    version: "1.5.1"
+    version: "1.5.2"
+    last_updated: "2026-09-23"
     skill-author: AlterLab
     skill-source: https://github.com/ImagingDataCommons/idc-claude-skill
 ---
@@ -20,19 +21,19 @@ Use the `idc-index` Python package to query and download public cancer imaging d
 
 **Primary tool:** `idc-index` ([GitHub](https://github.com/imagingdatacommons/idc-index))
 
-**CRITICAL - Check package version and upgrade if needed (run this FIRST):**
+**Check the installed package version first.** Every IDC data release ships as a new `idc-index` version, so an old install silently queries stale data; and releases up to 0.12.4 pin `pandas<=2.2.4`, which conflicts with pandas 3 (0.12.5 relaxed this to `pandas<4`).
 
 ```python
 from importlib.metadata import version as _v
 from packaging.version import Version
 
-REQUIRED_VERSION = "0.12.3"  # Must match metadata.idc-index in this file
+REQUIRED_VERSION = "0.12.5"  # keep in sync with the compatibility field of this file
 installed = _v("idc-index")
 
 # Compare as versions, not strings ("0.9.0" < "0.11.0" is False as a string).
 if Version(installed) < Version(REQUIRED_VERSION):
     print(f"idc-index {installed} is older than {REQUIRED_VERSION}; upgrade with:")
-    print("    pip install --upgrade idc-index   # or: uv pip install --upgrade idc-index")
+    print("    uv pip install --upgrade idc-index   # or: pip install --upgrade idc-index")
     print("Then restart Python to load the new version.")
 else:
     print(f"idc-index {installed} meets requirement ({REQUIRED_VERSION})")
@@ -69,7 +70,7 @@ print(stats)
 
 ## Scripts
 
-`scripts/query_imaging_data_commons.py` — CLI wrapper over the `idc-index` package (JSON to stdout; `pip install --upgrade idc-index`):
+`scripts/query_imaging_data_commons.py` — CLI wrapper over the `idc-index` package (JSON to stdout; `uv pip install --upgrade idc-index`):
 
 ```bash
 python scripts/query_imaging_data_commons.py version                 # IDC data version
@@ -84,6 +85,15 @@ python scripts/query_imaging_data_commons.py sql "SELECT * FROM index LIMIT 5"  
 - Downloading DICOM data from IDC
 - Checking data licenses before use in research or commercial applications
 - Visualizing medical images in a browser without local DICOM viewer software
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Reading, anonymizing, or converting DICOM files you already have | `alterlab-pydicom` |
+| Whole-slide image tiling and tissue detection on local slides | `alterlab-histolab` |
+| Somatic mutations / copy number for TCGA or other cancer cohorts | `alterlab-cbioportal` |
+| Cancer mutation signatures and census genes | `alterlab-cosmic` |
 
 ## Quick Navigation
 
@@ -150,6 +160,10 @@ The `idc-index` package provides multiple metadata index tables, accessible via 
 | `ann_index` | 1 row = 1 DICOM ANN series | fetch_index() | Microscopy Bulk Simple Annotations series metadata; references annotated image series |
 | `ann_group_index` | 1 row = 1 annotation group | fetch_index() | Detailed annotation group metadata: graphic type, annotation count, property codes, algorithm |
 | `contrast_index` | 1 row = 1 series with contrast info | fetch_index() | Contrast agent metadata: agent name, ingredient, administration route (CT, MR, PT, XA, RF) |
+| `ct_index` / `mr_index` / `pt_index` | 1 row = 1 CT / MR / PET image series | fetch_index() | Modality-specific acquisition parameters (e.g. KVP, ConvolutionKernel; MagneticFieldStrength, EchoTime; Radiopharmaceutical, Units) |
+| `volume_geometry_index` | 1 row = 1 single-frame CT/MR/PT series | fetch_index() | Boolean checks for a regularly spaced 3D volume (`regularly_spaced_3d_volume`, orientation, spacing) — filter before building volumes |
+| `rtstruct_index` | 1 row = 1 RTSTRUCT series | fetch_index() | ROI names/counts, generation algorithms, `referenced_SeriesInstanceUID` |
+| `version_metadata_index` | 1 row = 1 IDC release | Auto | Release timestamps for each `idc_version` |
 
 **Auto** = loaded automatically when `IDCClient()` is instantiated
 **fetch_index()** = requires `client.fetch_index("table_name")` to load
@@ -230,22 +244,22 @@ See `references/dicomweb_guide.md` for endpoint URLs, code examples, supported o
 
 **Required (for basic access):**
 ```bash
-pip install --upgrade idc-index
+uv pip install --upgrade idc-index   # or: pip install --upgrade idc-index
 ```
 
 **Important:** New IDC data release will always trigger a new version of `idc-index`. Always use `--upgrade` flag while installing, unless an older version is needed for reproducibility.
 
-**IMPORTANT:** IDC data version v24 is current. Always verify your version:
+IDC data version v24 is current as of 2026-09. Verify your version at the start of a session:
 ```python
-print(client.get_idc_version())  # Should return "v24"
+print(client.get_idc_version())  # "v24"
 ```
-If you see an older version, upgrade with: `pip install --upgrade idc-index`
+If you see an older version, upgrade with: `uv pip install --upgrade idc-index`
 
-**Tested with:** idc-index 0.12.3 (IDC data version v24)
+**Tested with:** idc-index 0.12.5 with pandas 3.0 (IDC data version v24); reference files were written against 0.12.3 — same data release.
 
 **Optional (for data analysis):**
 ```bash
-pip install pandas numpy pydicom
+uv pip install pandas numpy pydicom
 ```
 
 ## Core Capabilities
@@ -343,7 +357,7 @@ See `references/use_cases.md` for complete end-to-end workflow examples includin
 
 ## Best Practices
 
-- **Verify IDC version before generating responses** - Always call `client.get_idc_version()` at the start of a session to confirm you're using the expected data version (currently v24). If using an older version, recommend `pip install --upgrade idc-index`
+- **Verify IDC version before generating responses** - Always call `client.get_idc_version()` at the start of a session to confirm you're using the expected data version (currently v24). If using an older version, recommend `uv pip install --upgrade idc-index`
 - **Check licenses before use** - Always query the `license_short_name` field and respect licensing terms (CC BY vs CC BY-NC)
 - **Generate citations for attribution** - Use `citations_from_selection()` to get properly formatted citations from `source_DOI` values; include these in publications
 - **Start with small queries** - Use `LIMIT` clause when exploring to avoid long downloads and understand data structure
@@ -359,7 +373,11 @@ See `references/use_cases.md` for complete end-to-end workflow examples includin
 
 **Issue: `ModuleNotFoundError: No module named 'idc_index'`**
 - **Cause:** idc-index package not installed
-- **Solution:** Install with `pip install --upgrade idc-index`
+- **Solution:** Install with `uv pip install --upgrade idc-index`
+
+**Issue: dependency resolver refuses idc-index next to pandas 3**
+- **Cause:** idc-index ≤ 0.12.4 pins `pandas<=2.2.4`
+- **Solution:** Upgrade to idc-index ≥ 0.12.5
 
 **Issue: Download fails with connection timeout**
 - **Cause:** Network instability or large download size
@@ -405,18 +423,18 @@ For segmentation and annotation details, also see `references/digital_pathology_
 The following skills complement IDC workflows for downstream analysis and visualization:
 
 ### DICOM Processing
-- **pydicom** - Read, write, and manipulate downloaded DICOM files. Use for extracting pixel data, reading metadata, anonymization, and format conversion. Essential for working with IDC radiology data (CT, MR, PET).
+- **`alterlab-pydicom`** - Read, write, and manipulate downloaded DICOM files. Use for extracting pixel data, reading metadata, anonymization, and format conversion. Essential for working with IDC radiology data (CT, MR, PET).
 
 ### Pathology and Slide Microscopy
 See `references/digital_pathology_guide.md` for DICOM-compatible tools (highdicom, wsidicom, TIA-Toolbox, Slim viewer).
 
 ### Metadata Visualization
-- **matplotlib** - Low-level plotting for full customization. Use for creating static figures summarizing IDC query results (bar charts of modalities, histograms of series counts, etc.).
-- **seaborn** - Statistical visualization with pandas integration. Use for quick exploration of IDC metadata distributions, relationships between variables, and categorical comparisons with attractive defaults.
-- **plotly** - Interactive visualization. Use when you need hover info, zoom, and pan for exploring IDC metadata, or for creating web-embeddable dashboards of collection statistics.
+- **`alterlab-matplotlib`** - Low-level plotting for full customization. Use for creating static figures summarizing IDC query results (bar charts of modalities, histograms of series counts, etc.).
+- **`alterlab-seaborn`** - Statistical visualization with pandas integration. Use for quick exploration of IDC metadata distributions, relationships between variables, and categorical comparisons with attractive defaults.
+- **`alterlab-plotly`** - Interactive visualization. Use when you need hover info, zoom, and pan for exploring IDC metadata, or for creating web-embeddable dashboards of collection statistics.
 
 ### Data Exploration
-- **exploratory-data-analysis** - Comprehensive EDA on scientific data files. Use after downloading IDC data to understand file structure, quality, and characteristics before analysis.
+- **`alterlab-eda`** - Comprehensive EDA on scientific data files. Use after downloading IDC data to understand file structure, quality, and characteristics before analysis.
 
 ## Resources
 

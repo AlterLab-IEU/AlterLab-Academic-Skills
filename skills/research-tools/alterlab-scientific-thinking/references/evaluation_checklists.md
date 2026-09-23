@@ -110,7 +110,7 @@ Operational, question-form review checklists relocated from SKILL.md for the Bia
    **Important:** Higher-level designs aren't always better quality. A well-designed observational study can be stronger than a poorly-conducted RCT.
 
 2. **Quality Within Design Type**
-   - Risk of bias assessment (use appropriate tool: Cochrane ROB, Newcastle-Ottawa, etc.)
+   - Risk of bias assessment (use appropriate tool: Cochrane RoB 2 for trials, ROBINS-I for non-randomized interventions, Newcastle-Ottawa, etc.)
    - Methodological rigor
    - Transparency and reporting completeness
    - Conflicts of interest

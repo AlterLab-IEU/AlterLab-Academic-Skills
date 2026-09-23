@@ -81,6 +81,63 @@ above the domain skills and enforces research-method correctness — pre-registr
 statistical-test selection guards, and results-reporting transparency. Sequenced last so it could
 codify patterns proven across the expanded corpus.
 
+## v3.1 candidates — gaps found in the September 2026 review
+
+The v3.0.0 refresh sent one reviewer through every domain; each was asked where the suite has no
+skill for something faculty routinely need. Their proposals, de-duplicated and grouped (a skill
+named by several reviewers independently is marked ★). None is scheduled yet; each would ship
+under the day-one-evals bar above.
+
+**Research integrity and disclosure**
+- ★ `alterlab-ai-use-disclosure` — AI-use statements for manuscripts, grants, and peer review,
+  per publisher and funder policy (ICMJE/COPE, NIH/NSF, EU AI Act, YÖK/TÜBİTAK guides). Proposed
+  by three reviewers.
+- `alterlab-reporting-checklist` — map a manuscript to CONSORT 2025, SPIRIT 2025, PRISMA 2020,
+  or TRIPOD+AI and flag missing items.
+- `alterlab-public-access-compliance` — PMC / NSF-PAR compliance, Plan S rights retention.
+- `alterlab-research-security-disclosure` — SciENcv Common Forms, foreign-talent certifications.
+- `alterlab-data-anonymization` — statistical disclosure control (k-anonymity, sdcMicro,
+  synthetic data) between the ethics and open-data skills.
+
+**Literature and publishing**
+- `alterlab-semantic-scholar` (Graph API: recommendations, citation contexts, embeddings),
+  `alterlab-europepmc` (full text and annotations), `alterlab-journal-selection` (scope fit,
+  WoS/Scopus/TR Dizin indexing, APCs, predatory-journal screening).
+
+**Funding and academic career (including the Turkish system)**
+- `alterlab-horizon-europe-proposal` (ERC, MSCA, Horizon Europe pre-award); TÜBİTAK BİDEB
+  fellowships and 3501; a YÖKSİS / academic-CV dossier consistency checker; the ÜAK doçentlik
+  scorer for every temel alan (only Sağlık is modelled); YÖKAK and regional accreditation
+  alongside AACSB/ABET.
+
+**Life sciences**
+- Structure and design: `alterlab-alphafold3`, Boltz-family binder design.
+- Single-cell and pipelines: `alterlab-cellrank` (scVelo is effectively frozen),
+  `alterlab-alevin-fry`, `alterlab-scenicplus`, `alterlab-nf-core-rnaseq`.
+- Variant and genomics resources: `alterlab-civic`, `alterlab-sra`, `alterlab-pgs-catalog`,
+  `alterlab-eqtl-catalogue`, Ensembl's new GraphQL platform.
+- Clinical and neuro: `alterlab-mne` (EEG/MEG), `alterlab-monai`, `alterlab-ohdsi-omop`.
+
+**Chemistry, materials, physics, earth science**
+- `alterlab-chemprop` (Chemprop 2.x), local docking with Vina/GNINA + Meeko + PoseBusters,
+  `alterlab-optimuskg` (PrimeKG's successor), `alterlab-ase` with ML interatomic potentials,
+  `alterlab-stim` (QEC / stabilizer simulation), ★ `alterlab-xarray-climate` (NetCDF/Zarr/CMIP; also proposed from the zarr/dask side).
+
+**Statistics and social science**
+- `alterlab-lifelines` (inferential survival analysis; scikit-survival is prediction-only),
+  `alterlab-optuna`, `alterlab-synthetic-control`, `alterlab-survey-experiments` (conjoint,
+  list, vignette), `alterlab-sequence-analysis`.
+- Machine learning: PEFT/TRL fine-tuning (LoRA/QLoRA, SFT/DPO) beyond the transformers
+  Trainer, and forecasting baselines (statsforecast/neuralforecast or sktime) to benchmark
+  TimesFM against.
+
+**Visualization**
+- `alterlab-ggplot2`, `alterlab-tikz-pgfplots`, `alterlab-figure-alt-text` (WCAG 2.2 and journal
+  alt-text).
+**Finance and lab**
+- An SDMX macro-data skill (IMF, OECD, ECB, Eurostat); an eLabFTW connector (open-source
+  electronic lab notebook); a connector for Emerald Cloud Lab or a similar cloud lab.
+
 ## Explicitly not scheduled here
 
 - **Verbatim re-import of upstream skills** — the relationship to

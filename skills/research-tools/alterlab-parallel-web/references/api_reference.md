@@ -6,42 +6,46 @@
 **Environment Variable:** `PARALLEL_API_KEY`
 
 > **What this skill's `scripts/parallel_web.py` actually wraps:**
-> - `search` and `research` commands → the **Chat API** (`base` / `core` models, via the OpenAI SDK). They do NOT call the raw Search API or Task API.
-> - `extract` command → the **Extract API** (via the `parallel` SDK).
+> - `search` and `research` commands → the **Chat API (Beta)** (`base` / `core` models, via the OpenAI SDK). They do NOT call the raw Search API or Task API.
+> - `extract` command → the **Extract API v1** (via the `parallel` SDK, `client.extract()`).
 >
-> The Search API and Task API sections below document Parallel's raw HTTP endpoints for reference only. The bundled script does not expose `search_queries`, `max_results`, `source_policy`, `mode`, or `processor` — those are raw-API parameters. To use them you must call the SDK/HTTP API directly.
+> The Search, Task, and Responses API sections below document Parallel's raw endpoints for reference only. The bundled script does not expose `search_queries`, `max_results`, `source_policy`, `mode`, or `processor` — to use them, call the SDK/HTTP API directly. Endpoints, prices, and limits were checked against docs.parallel.ai on 2026-09-23; re-check before quoting costs.
 
 ---
 
-## Search API (Beta)
+## Search API (v1, GA)
 
-**Endpoint:** `POST https://api.parallel.ai/v1beta/search`
-**Header:** `parallel-beta: search-extract-2025-10-10`
+**Endpoint:** `POST https://api.parallel.ai/v1/search` (the Beta `/v1beta/search` endpoint and `client.beta.search()` are legacy; `parallel-web` ≥ 1.0 removed the Beta method)
 
 ### Request
 
 ```json
 {
-  "objective": "Natural language search goal (max 5000 chars)",
+  "objective": "Natural language search goal (optional, up to 5000 chars)",
   "search_queries": ["keyword query 1", "keyword query 2"],
-  "max_results": 10,
-  "excerpts": {
-    "max_chars_per_result": 10000,
-    "max_chars_total": 50000
-  },
-  "source_policy": {
-    "allow_domains": ["example.com"],
-    "deny_domains": ["spam.com"],
-    "after_date": "2024-01-01"
+  "mode": "fast",
+  "max_chars_total": 50000,
+  "advanced_settings": {
+    "max_results": 10,
+    "excerpt_settings": {"max_chars_per_result": 10000},
+    "source_policy": {
+      "include_domains": ["example.com"],
+      "exclude_domains": ["spam.com"],
+      "after_date": "2024-01-01"
+    },
+    "location": "us"
   }
 }
 ```
+
+`search_queries` is required (at least one; 2-3 short queries work best). `mode` is `turbo`, `fast`, `basic`, or `advanced` (default `advanced`). `max_results` defaults to 10 and public modes cap it at 20.
 
 ### Response
 
 ```json
 {
   "search_id": "search_...",
+  "session_id": "...",
   "results": [
     {
       "url": "https://...",
@@ -49,7 +53,8 @@
       "publish_date": "2025-01-15",
       "excerpts": ["Relevant content..."]
     }
-  ]
+  ],
+  "warnings": null
 }
 ```
 
@@ -57,24 +62,23 @@
 
 ```python
 from parallel import Parallel
-client = Parallel(api_key="...")
-result = client.beta.search(
+client = Parallel()  # reads PARALLEL_API_KEY
+result = client.search(
     objective="...",
     search_queries=["..."],
-    max_results=10,
-    excerpts={"max_chars_per_result": 10000},
+    mode="fast",
+    advanced_settings={"max_results": 10, "excerpt_settings": {"max_chars_per_result": 10000}},
 )
 ```
 
-**Cost:** $5 per 1,000 requests (default 10 results each)
+**Cost:** $1 per 1,000 requests (`turbo`, `fast`) or $5 per 1,000 (`basic`, `advanced`), including 10 results; each additional result is $1 per 1,000
 **Rate Limit:** 600 requests/minute
 
 ---
 
-## Extract API (Beta)
+## Extract API (v1, GA)
 
-**Endpoint:** `POST https://api.parallel.ai/v1beta/extract`
-**Header:** `parallel-beta: search-extract-2025-10-10`
+**Endpoint:** `POST https://api.parallel.ai/v1/extract` (Beta `/v1beta/extract` and `client.beta.extract()` are legacy)
 
 ### Request
 
@@ -82,36 +86,43 @@ result = client.beta.search(
 {
   "urls": ["https://example.com/page"],
   "objective": "What to focus on",
-  "excerpts": true,
-  "full_content": false
+  "search_queries": ["optional keywords"],
+  "max_chars_total": 50000,
+  "advanced_settings": {
+    "excerpt_settings": {"max_chars_per_result": 5000},
+    "full_content": true
+  }
 }
 ```
+
+Up to 20 URLs per request. Excerpts are always returned; `advanced_settings.full_content` (`true` or `{"max_chars_per_result": N}`) adds the full page as markdown. `advanced_settings.fetch_policy` (e.g. `{"max_age_seconds": 3600}`) forces a live fetch when the cached copy is older.
 
 ### Response
 
 ```json
 {
   "extract_id": "extract_...",
+  "session_id": "...",
   "results": [
     {
       "url": "https://...",
       "title": "Page Title",
+      "publish_date": "2025-01-15",
       "excerpts": ["Focused content..."],
       "full_content": null
     }
   ],
-  "errors": []
+  "errors": [{"url": "https://...", "error_type": "...", "http_status_code": 403}]
 }
 ```
 
 ### Python SDK
 
 ```python
-result = client.beta.extract(
+result = client.extract(
     urls=["https://..."],
     objective="...",
-    excerpts=True,
-    full_content=False,
+    advanced_settings={"full_content": True},
 )
 ```
 
@@ -194,31 +205,56 @@ Standard (non-fast) processors have the same cost but higher latency and freshes
 
 ## Chat API (Beta)
 
-**Endpoint:** `POST https://api.parallel.ai/chat/completions`
-**Compatible with OpenAI SDK.**
+**Endpoint:** `POST https://api.parallel.ai/v1beta/chat/completions` — with the OpenAI SDK set `base_url="https://api.parallel.ai/v1beta"`.
+**Compatible with the OpenAI Chat Completions format.** `temperature`, `max_tokens`, and similar sampling fields are accepted but ignored.
 
 ### Models
 
-| Model | Latency (TTFT) | Cost/1000 | Use Case |
-|-------|----------------|-----------|----------|
-| `speed` | ~3s | $5 | Low-latency chat |
-| `lite` | 10-60s | $5 | Simple lookups with basis |
-| `base` | 15-100s | $10 | Standard research with basis |
-| `core` | 1-5min | $25 | Complex research with basis |
+| Model | Latency | Use Case |
+|-------|---------|----------|
+| `speed` | ~3s | Low-latency chat, no research basis |
+| `lite` | 10-60s | Simple lookups with basis |
+| `base` | 15-100s | Standard research with basis (citations, reasoning, excerpts) |
+| `core` | 1-5min | Complex research with basis |
+
+The research models return a `basis` field with per-claim citations, which the script turns into its sources list. Parallel's Chat API quickstart now redirects to the Responses API (below) and the pricing page no longer lists Chat API prices; the Chat API remains in the API reference with its own rate limit. If you start a new integration, evaluate the Responses API first.
 
 ### Python SDK (OpenAI-compatible)
 
 ```python
+import os
 from openai import OpenAI
 client = OpenAI(
-    api_key="PARALLEL_API_KEY",
-    base_url="https://api.parallel.ai",
+    api_key=os.environ["PARALLEL_API_KEY"],
+    base_url="https://api.parallel.ai/v1beta",
 )
 response = client.chat.completions.create(
-    model="speed",
+    model="base",
     messages=[{"role": "user", "content": "What is Parallel Web Systems?"}],
 )
 ```
+
+---
+
+## Responses API (not wrapped by the script)
+
+**Endpoint:** `POST https://api.parallel.ai/v1/responses` — OpenAI Responses-compatible (launched July 2026). One model id, `parallel`; `reasoning.effort` picks the tier:
+
+| `reasoning.effort` | Latency | Cost per 1,000 requests |
+|--------------------|---------|-------------------------|
+| `low` | ~5-10s | $10 |
+| `medium` (default) | ~15-20s | $50 |
+| `high` | ~30-60s | $250 |
+
+```python
+import os
+from openai import OpenAI
+client = OpenAI(api_key=os.environ["PARALLEL_API_KEY"], base_url="https://api.parallel.ai/v1")
+resp = client.responses.create(model="parallel", input="...", reasoning={"effort": "medium"})
+print(resp.output_text)  # URL citations arrive as annotations on the message content
+```
+
+It is synchronous only; for long-running or batch research use the Task API.
 
 ---
 
@@ -229,22 +265,24 @@ response = client.chat.completions.create(
 | Search | 600 req/min |
 | Extract | 600 req/min |
 | Chat | 300 req/min |
-| Task | Varies by processor |
+| Task / Task Group runs | 2,000 runs/min |
+
+Limits apply to POST requests that create resources; polling results with GET does not count.
 
 ---
 
 ## Source Policy
 
-Control which sources are used in searches:
+Control which sources are used (Search API: inside `advanced_settings`; Task API: top-level `source_policy`):
 
 ```json
 {
   "source_policy": {
-    "allow_domains": ["nature.com", "science.org"],
-    "deny_domains": ["unreliable-source.com"],
+    "include_domains": ["nature.com", "science.org"],
+    "exclude_domains": ["unreliable-source.com"],
     "after_date": "2024-01-01"
   }
 }
 ```
 
-Works with Search API and can be used to focus results on specific authoritative domains.
+`include_domains` is a hard allow-list (nothing else is searched) and can lower result quality; prefer steering through the `objective` unless the task must come from specific publishers. Entries may be domains, domain/path prefixes, or a bare extension such as `.gov`; the two lists together hold at most 200 entries.

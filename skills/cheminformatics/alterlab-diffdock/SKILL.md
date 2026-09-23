@@ -6,14 +6,15 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Requires a local DiffDock checkout (gcorso/DiffDock via conda or Docker) and a GPU for practical use; no API key or account. The skill's helper scripts (scripts/) run standalone under python/uv."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # DiffDock: Molecular Docking with Diffusion Models
 
 ## Overview
 
-DiffDock is a diffusion-based deep learning tool for molecular docking that predicts 3D binding poses of small molecule ligands to protein targets. It represents the state-of-the-art in computational docking, crucial for structure-based drug discovery and chemical biology.
+DiffDock is a diffusion-based deep learning tool for molecular docking that predicts 3D binding poses of small molecule ligands to protein targets. The repository's default model is DiffDock-L (Feb 2024); it is widely used for blind docking, though co-folding models (Boltz-2, Chai-1) and physics-based rescoring are now common complements, and predicted poses should be checked for physical validity (e.g. with PoseBusters).
 
 **Core Capabilities:**
 - Predict ligand binding poses with high accuracy using deep learning
@@ -35,6 +36,16 @@ This skill should be used when:
 - Structure-based drug design or lead optimization tasks
 - Tasks involving PDB files + SMILES strings or ligand structures
 - Batch docking of multiple protein-ligand pairs
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Binding affinity / docking score on a cloud platform (AutoDock Vina) | `alterlab-rowan` |
+| MD simulation of a complex, pose-stability / RMSD over a trajectory | `alterlab-molecular-dynamics` |
+| Protein–protein or protein–nucleic-acid complex structure prediction | `alterlab-boltz` or `alterlab-chai` |
+| Predicting the apo protein structure itself (no ligand) | `alterlab-alphafold` |
+| Looking up measured protein–ligand affinities for the target | `alterlab-bindingdb` |
 
 ## Installation and Environment Setup
 
@@ -153,20 +164,19 @@ python -m inference \
 
 **For Large Virtual Screening (>100 compounds):**
 
-Pre-compute protein embeddings for faster processing:
-```bash
-# Pre-compute embeddings
-python datasets/esm_embedding_preparation.py \
-  --protein_ligand_csv screening_input.csv \
-  --out_file protein_embeddings.pt
+Put every protein–ligand pair in one CSV and run a single `inference` call. At start-up
+`inference.py` computes the ESM2 (`esm2_t33_650M_UR50D`) embeddings for all complexes in the
+CSV in one batched pass and reuses them for the confidence model — there is no separate
+pre-computation step and no `--esm_embeddings_path` flag for inference.
+(`datasets/esm_embedding_preparation.py` / `esm_embeddings_to_pt.py` exist only for the
+training/evaluation benchmarks.) Split very large libraries into several CSVs if GPU memory
+or run time is a concern.
 
-# Run with pre-computed embeddings
-python -m inference \
-  --config default_inference_args.yaml \
-  --protein_ligand_csv screening_input.csv \
-  --esm_embeddings_path protein_embeddings.pt \
-  --out_dir results/screening/
-```
+**Config gotcha:** values in the `--config` YAML are applied *after* the CLI flags and
+override them. `samples_per_complex`, `inference_steps`, and the `temp_*` parameters are in
+`default_inference_args.yaml`, so passing e.g. `--samples_per_complex 20` alongside
+`--config default_inference_args.yaml` has no effect — edit a copy of the YAML instead
+(`--batch_size` is not in the default YAML, so the CLI flag works).
 
 ### Workflow 3: Analyzing Results
 
@@ -280,12 +290,13 @@ data = {
 pd.DataFrame(data).to_csv("ensemble_input.csv", index=False)
 ```
 
-Run docking with increased sampling:
+Run docking with increased sampling (set `samples_per_complex: 20` in a copy of the YAML —
+a `--samples_per_complex` flag would be overwritten by the default config):
 ```bash
+cp default_inference_args.yaml ensemble_args.yaml   # edit: samples_per_complex: 20
 python -m inference \
-  --config default_inference_args.yaml \
+  --config ensemble_args.yaml \
   --protein_ligand_csv ensemble_input.csv \
-  --samples_per_complex 20 \
   --out_dir results/ensemble/
 ```
 
@@ -372,8 +383,8 @@ python app/main.py
 # Navigate to http://localhost:7860
 ```
 
-Or use the online demo without installation:
-- https://huggingface.co/spaces/reginabarzilaygroup/DiffDock-Web
+Or try the online demo (https://huggingface.co/spaces/reginabarzilaygroup/DiffDock-Web),
+though the Space is often down — prefer a local or Docker install for reliable runs.
 
 ## Resources
 
@@ -483,4 +494,6 @@ ICLR 2023, arXiv:2210.01776
 - **Online Demo**: https://huggingface.co/spaces/reginabarzilaygroup/DiffDock-Web
 - **DiffDock-L Paper**: https://arxiv.org/abs/2402.18396
 - **Original Paper**: https://arxiv.org/abs/2210.01776
+
+Part of the AlterLab Academic Skills suite.
 

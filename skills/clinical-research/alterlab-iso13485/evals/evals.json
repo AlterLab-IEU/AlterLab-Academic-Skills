@@ -34,11 +34,11 @@
     {
       "id": "qmsr-transition",
       "prompt": "We need to update our QMS for the FDA QMSR harmonization that's replacing 21 CFR Part 820. What changes and how do we consolidate our DHF, DMR, and DHR?",
-      "expected_output": "Invokes alterlab-iso13485. Explains that 21 CFR Part 820 is harmonized with ISO 13485 as the QMSR (effective Feb 2, 2026), that the Medical Device File replaces the separate DHF/DMR/DHR, and provides a transition plan: update QSR references to QMSR, consolidate device history files into Medical Device Files per Clause 4.2.3, add any missing ISO 13485 requirements, and train personnel.",
+      "expected_output": "Invokes alterlab-iso13485. Explains that 21 CFR Part 820 is now the QMSR (in effect since Feb 2, 2026), incorporating ISO 13485:2016 by reference; that the DMR/DHF/DHR terms are retired and map to the Medical Device File (clause 4.2.3), the design and development file (7.3.10), and per-device/batch records (7.5.1); notes FDA-specific additions (820.10, 820.35, 820.45) and that management review/internal/supplier audit records are now inspectable; and provides a transition plan: re-cite QSR references, map or consolidate the files, add any missing ISO 13485 requirements, and train personnel.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "QMSR" },
-        { "type": "behavior", "value": "Explains the QMSR harmonization and consolidating DHF/DMR/DHR into the Medical Device File (Clause 4.2.3)." }
+        { "type": "behavior", "value": "Explains the QMSR and maps DHF/DMR/DHR to ISO 13485 clauses 7.3.10, 4.2.3, and 7.5.1 rather than claiming one file simply replaces all three." }
       ]
     },
     {
@@ -57,6 +57,15 @@
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-treatment-plans" }
+      ]
+    },
+    {
+      "id": "near-miss-fda-database",
+      "prompt": "Pull the 510(k) clearances and any Class I or II recalls from the last three years for continuous glucose monitors, with the manufacturer names and decision dates.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-fda. The ask is a data lookup against openFDA (510(k) clearances and device recalls), not preparing ISO 13485 / QMSR quality-system documentation or a gap analysis.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-fda" }
       ]
     }
   ]

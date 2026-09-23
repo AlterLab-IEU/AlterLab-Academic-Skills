@@ -12,7 +12,7 @@ This reference covers file formats used in microscopy, medical imaging, remote s
 - `tifffile`: `tifffile.imread('file.tif')` - Microscopy TIFF support
 - `PIL/Pillow`: `Image.open('file.tif')` - Basic TIFF
 - `scikit-image`: `io.imread('file.tif')`
-- `AICSImageIO`: Multi-format microscopy reader
+- `bioio` (+ format plugin, e.g. `bioio-ome-tiff`): Multi-format microscopy reader; successor to the maintenance-mode `AICSImageIO`
 **EDA Approach:**
 - Image dimensions and bit depth
 - Multi-page/z-stack analysis
@@ -28,9 +28,10 @@ This reference covers file formats used in microscopy, medical imaging, remote s
 **Typical Data:** Multi-dimensional microscopy (XYZCT)
 **Use Cases:** Nikon microscope data, confocal, widefield
 **Python Libraries:**
-- `nd2reader`: `ND2Reader('file.nd2')`
+- `nd2`: `nd2.imread('file.nd2')` or `with nd2.ND2File('file.nd2') as f: f.sizes, f.metadata, f.voxel_size()` (full metadata; NumPy, dask, or xarray output)
+- `nd2reader`: `ND2Reader('file.nd2')` (older, lighter reader)
 - `pims`: `pims.ND2_Reader('file.nd2')`
-- `AICSImageIO`: Universal reader
+- `bioio` + `bioio-nd2`: Universal reader
 **EDA Approach:**
 - Experiment metadata extraction
 - Channel configurations
@@ -47,7 +48,7 @@ This reference covers file formats used in microscopy, medical imaging, remote s
 **Use Cases:** Leica confocal and widefield data
 **Python Libraries:**
 - `readlif`: `readlif.LifFile('file.lif')`
-- `AICSImageIO`: LIF support
+- `bioio` + `bioio-lif`: LIF support
 - `python-bioformats`: Via Bio-Formats
 **EDA Approach:**
 - Multiple experiment detection
@@ -64,7 +65,7 @@ This reference covers file formats used in microscopy, medical imaging, remote s
 **Use Cases:** Zeiss confocal, lightsheet, widefield
 **Python Libraries:**
 - `czifile`: `czifile.CziFile('file.czi')`
-- `AICSImageIO`: CZI support
+- `bioio` + `bioio-czi`: CZI support
 - `pylibCZIrw`: Official Zeiss library
 **EDA Approach:**
 - Scene and position analysis
@@ -80,7 +81,7 @@ This reference covers file formats used in microscopy, medical imaging, remote s
 **Typical Data:** Confocal and multiphoton imaging
 **Use Cases:** Olympus FluoView data
 **Python Libraries:**
-- `AICSImageIO`: OIB/OIF support
+- `bioio` + `bioio-bioformats` (Java): OIB/OIF support
 - `python-bioformats`: Via Bio-Formats
 **EDA Approach:**
 - Directory structure validation (OIF)
@@ -96,7 +97,7 @@ This reference covers file formats used in microscopy, medical imaging, remote s
 **Use Cases:** Virtual microscopy, pathology
 **Python Libraries:**
 - `openslide-python`: `openslide.OpenSlide('file.vsi')`
-- `AICSImageIO`: VSI support
+- `bioio` + `bioio-bioformats` (Java): VSI support
 **EDA Approach:**
 - Pyramid level analysis
 - Tile structure and overlap
@@ -155,7 +156,7 @@ This reference covers file formats used in microscopy, medical imaging, remote s
 **Use Cases:** DeltaVision microscope data
 **Python Libraries:**
 - `mrc`: Can read DV (MRC-related)
-- `AICSImageIO`: DV support
+- `bioio` + `bioio-dv`: DV support
 **EDA Approach:**
 - Wave information (channels)
 - Extended header analysis
@@ -527,7 +528,7 @@ This reference covers file formats used in microscopy, medical imaging, remote s
 **Use Cases:** Bio-Formats compatible storage
 **Python Libraries:**
 - `tifffile`: OME-TIFF support
-- `AICSImageIO`: OME reading
+- `bioio` + `bioio-ome-tiff`: OME reading
 - `python-bioformats`: Bio-Formats integration
 **EDA Approach:**
 - OME-XML validation

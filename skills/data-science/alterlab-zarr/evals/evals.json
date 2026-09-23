@@ -54,6 +54,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-eda" }
       ]
+    },
+    {
+      "id": "near-miss-alterlab-anndata",
+      "prompt": "I have a single-cell dataset as an AnnData object and want to save it in zarr format, then later concatenate it with two other batches while keeping the obs cell annotations and var gene metadata aligned. How do I do that?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-anndata. The data is an AnnData annotated matrix (obs/var/X/layers), and writing it with AnnData's zarr I/O and concatenating batches with aligned annotations is AnnData data-structure work, not low-level Zarr array creation, chunking, or codec tuning.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-anndata" }
+      ]
     }
   ]
 }

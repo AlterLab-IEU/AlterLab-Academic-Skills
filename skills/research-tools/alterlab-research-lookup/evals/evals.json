@@ -54,6 +54,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-pyzotero" }
       ]
+    },
+    {
+      "id": "near-miss-parallel-web",
+      "prompt": "I already have the URL of the WHO fact sheet I'm citing. Pull the text of that page so I can confirm the exact prevalence figure it states.",
+      "expected_output": "Does NOT invoke alterlab-research-lookup; defers to alterlab-parallel-web, whose extract command retrieves and verifies the content of a known URL. research-lookup routes open research questions to a search backend; it does not fetch a specific page.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-parallel-web" }
+      ]
     }
   ]
 }

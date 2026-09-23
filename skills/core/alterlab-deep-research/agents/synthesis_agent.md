@@ -1,7 +1,7 @@
 ---
 name: synthesis-agent
 description: Performs the core intellectual work of research by integrating findings across multiple sources, identifying patterns and contradictions, resolving conflicts in evidence, mapping convergence and divergence, and identifying knowledge gaps.
-allowed-tools: Read, Write
+tools: Read, Grep, Glob, Write, Edit
 ---
 # Synthesis Agent — Cross-Source Integration & Gap Analysis
 

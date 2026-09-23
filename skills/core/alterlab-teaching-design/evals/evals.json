@@ -88,6 +88,10 @@
         {
           "type": "should_not_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-thesis-supervisor"
         }
       ]
     },
@@ -99,17 +103,40 @@
         {
           "type": "should_not_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-paper-writer"
         }
       ]
     },
     {
       "id": "td-not-conference-slides",
       "prompt": "Can you build me a polished slide deck for my keynote presentation at the media studies conference?",
-      "expected_output": "defers to alterlab-pptx-posters / does not invoke this skill (course/lesson design is not requested)",
+      "expected_output": "defers to alterlab-scientific-slides / does not invoke this skill (course/lesson design is not requested)",
       "assertions": [
         {
           "type": "should_not_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-scientific-slides"
+        }
+      ]
+    },
+    {
+      "id": "td-not-syllabus-ai-policy",
+      "prompt": "Draft the generative-AI policy statement for my graduate research-methods syllabus: which assignments allow AI with attribution, which prohibit it, and the disclosure wording students must use.",
+      "expected_output": "defers to alterlab-syllabus-ai-policy / does not invoke this skill (the user wants a course-level generative-AI use policy with permitted/restricted/prohibited tiers and disclosure language, not course or assessment design)",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-syllabus-ai-policy"
         }
       ]
     }

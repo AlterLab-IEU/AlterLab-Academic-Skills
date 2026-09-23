@@ -229,7 +229,7 @@ def run_benchmark(args):
     else:
         task = 'graph_classification'
 
-    print(f"\\nDataset: {args.dataset}")
+    print(f"\nDataset: {args.dataset}")
     print(f"Task: {task}")
     print(f"Models: {', '.join(args.models)}")
     print(f"Epochs: {args.epochs}")
@@ -240,7 +240,7 @@ def run_benchmark(args):
 
     # Run experiments
     for run in range(args.runs):
-        print(f"\\nRun {run + 1}/{args.runs}")
+        print(f"\nRun {run + 1}/{args.runs}")
         print("-" * 60)
 
         for model_name in args.models:
@@ -270,7 +270,7 @@ def run_benchmark(args):
                 print(f"Error: {e}")
 
     # Print summary
-    print("\\n" + "=" * 60)
+    print("\n" + "=" * 60)
     print("BENCHMARK RESULTS")
     print("=" * 60)
 
@@ -281,7 +281,7 @@ def run_benchmark(args):
         test_accs = [r['test_acc'] for r in results[model_name]]
         times = [r['train_time'] for r in results[model_name]]
 
-        print(f"\\n{model_name.upper()}")
+        print(f"\n{model_name.upper()}")
         print(f"  Test Accuracy: {np.mean(test_accs):.4f} ± {np.std(test_accs):.4f}")
         print(f"  Training Time: {np.mean(times):.2f} ± {np.std(times):.2f}s")
 

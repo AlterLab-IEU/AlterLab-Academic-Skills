@@ -224,20 +224,25 @@ class EnsemblAPIClient:
     def find_orthologs(
         self,
         ensembl_id: str,
-        target_species: Optional[str] = None
+        target_species: Optional[str] = None,
+        species: str = "human"
     ) -> Dict:
         """
         Find orthologs for a gene.
 
+        The endpoint is /homology/id/:species/:id — the species segment is
+        required (the old /homology/id/:id form returns 404).
+
         Args:
             ensembl_id: Source gene Ensembl ID
             target_species: Target species (optional, returns all if not specified)
+            species: Species of the source gene (default: human)
 
         Returns:
             Homology information dictionary
         """
-        endpoint = f"/homology/id/{ensembl_id}"
-        params = {}
+        endpoint = f"/homology/id/{species}/{ensembl_id}"
+        params = {"type": "orthologues", "format": "condensed"}
         if target_species:
             params["target_species"] = target_species
         return self._make_request(endpoint, params=params)
@@ -411,7 +416,8 @@ def main():
             print(f"Finding orthologs for: {args.orthologs}")
             result = client.find_orthologs(
                 args.orthologs,
-                target_species=args.target_species
+                target_species=args.target_species,
+                species=args.species
             )
             print(json.dumps(result, indent=2))
 

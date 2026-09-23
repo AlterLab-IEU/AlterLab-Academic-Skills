@@ -46,14 +46,28 @@ zot = Zotero('169947', 'group', 'ABC1234XYZ')
 
 **Important**: A `Zotero` instance is bound to a single library. To access multiple libraries, create multiple instances.
 
-## Local Mode (Read-Only)
+## Local Mode
 
-Connect to your local Zotero installation without an API key. Only supports read requests.
+Connect to the running Zotero desktop app instead of the web API (Zotero 7+, with "Allow other applications on this computer to communicate with Zotero" enabled under Settings > Advanced). Reads need no API key:
 
 ```python
-zot = Zotero(library_id='436', library_type='user', local=True)
+zot = Zotero(library_id='0', library_type='user', local=True)
 items = zot.items(limit=10)  # reads from local Zotero
 ```
+
+Local **writes** (pyzotero ≥ 1.15) need Zotero 10 or later and a local API key granted by the user in Zotero:
+
+```python
+zot = Zotero('0', 'user', local=True)
+auth = zot.authorize_local("My Application")  # Zotero shows Allow / Always Allow / Deny
+zot.create_items([template])
+```
+
+- "Allow" gives a single-use key: the first successful write consumes it and the next write raises `LocalAPIKeyRequiredError`.
+- "Always Allow" gives a persistent key; store it and pass it back later as `Zotero('0', 'user', local=True, local_api_key=key)`.
+- A denied dialog raises `LocalAPIDeniedError`; the authorize endpoint is rate-limited, so do not call it in a retry loop.
+- Keys and object versions are scoped to one Zotero instance (`zot.server_id`); local API keys are unrelated to zotero.org API keys.
+- The CLI equivalent is `pyzotero authorize`, which stores the key for the CLI write commands and the MCP server.
 
 ## Optional Parameters
 
@@ -62,9 +76,9 @@ zot = Zotero(
     library_id='436',
     library_type='user',
     api_key='ABC1234XYZ',
-    preserve_json_order=True,   # use OrderedDict for JSON responses
     locale='en-US',             # localise field names (e.g. 'fr-FR' for French)
 )
+# preserve_json_order is deprecated (dicts keep insertion order); omit it.
 ```
 
 ## Key Permissions

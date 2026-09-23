@@ -59,9 +59,13 @@ For HypoRefine/Union methods:
 Run hypothesis generation and inference using CLI or Python API:
 
 ```bash
-# CLI approach
-hypogenic_generation --config your_task/config.yaml --method hypogenic --num_hypotheses 20
-hypogenic_inference --config your_task/config.yaml --hypotheses output/hypotheses.json
+# CLI approach (data-driven HypoGeniC; flags from hypogenic 0.3.5)
+hypogenic_generation --task_config_path your_task/config.yaml \
+    --model_type gpt --model_name <provider-model-id> --max_num_hypotheses 20 \
+    --output_folder outputs/your_task
+hypogenic_inference --task_config_path your_task/config.yaml \
+    --hypothesis_file outputs/your_task/<hypotheses_*.json> \
+    --model_type gpt --model_name <provider-model-id>
 
 # Or use Python API (see references/python_api.md)
 ```

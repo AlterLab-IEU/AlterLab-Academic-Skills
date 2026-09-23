@@ -58,6 +58,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-clinical-reports" }
       ]
+    },
+    {
+      "id": "near-miss-meta-analysis",
+      "prompt": "I extracted hazard ratios and 95% CIs from 14 published RCTs of checkpoint inhibitors. Pool them with a random-effects model, report I-squared and tau-squared, and draw forest and funnel plots with Egger's test.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-meta-analysis. The task is quantitative pooling of effect sizes across published studies (random-effects model, heterogeneity statistics, publication-bias tests), not a biomarker-stratified cohort analysis or GRADE-graded treatment recommendation document.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-meta-analysis" }
+      ]
     }
   ]
 }

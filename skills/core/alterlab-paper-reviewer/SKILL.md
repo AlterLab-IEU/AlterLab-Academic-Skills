@@ -6,11 +6,11 @@ allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required
 metadata:
   skill-author: AlterLab
-  version: "1.4"
-  last_updated: "2026-03-08"
+  version: "1.5"
+  last_updated: "2026-09-23"
 ---
 
-# Academic Paper Reviewer v1.4 — Multi-Perspective Academic Paper Review Agent Team
+# Academic Paper Reviewer — Multi-Perspective Academic Paper Review Agent Team
 
 Simulates a complete international journal peer review process: automatically identifies the paper's field, dynamically configures 5 reviewers (Editor-in-Chief + 3 peer reviewers + Devil's Advocate) who review from four non-overlapping perspectives — methodology, domain expertise, cross-disciplinary viewpoints, and core argument challenges — ultimately producing a structured Editorial Decision and Revision Roadmap.
 
@@ -31,21 +31,23 @@ Review this paper: [paste paper or provide file]
 
 ---
 
-## Trigger Conditions
+## When to Use This Skill
 
 ### Trigger Keywords
 
 **English**: review paper, peer review, manuscript review, referee report, review my paper, critique paper, simulate review, editorial review
 
-### Non-Trigger Scenarios
+### Does NOT Trigger
 
-| Scenario | Skill to Use |
+| Scenario | Use Instead |
 |----------|-------------|
-| Need to write a paper (not review) | `alterlab-paper-writer` |
-| Need in-depth investigation of a research topic | `alterlab-deep-research` |
-| Need to revise a paper (already have review comments) | `alterlab-paper-writer` (revision mode) |
-| Want a single structured referee report (one reviewer, checklist-based) | `alterlab-peer-review` |
-| Want a rubric/grade-style numeric score of a paper or thesis | `alterlab-scholar-eval` |
+| Writing a paper, or revising it once review comments are in hand | `alterlab-paper-writer` (revision / revision-coach modes) |
+| In-depth investigation of a research topic | `alterlab-deep-research` |
+| A single structured referee report (one reviewer, checklist-based) | `alterlab-peer-review` |
+| A rubric/grade-style numeric score of a paper or thesis | `alterlab-scholar-eval` |
+| Checking that the manuscript's references exist and are not retracted | `alterlab-citation-verifier` |
+
+In Claude Code, a panel of genuinely independent reviewer agents (4–6 blind reviewers, each major concern re-read against the manuscript) is packaged as `/alterlab-workflows:review-panel` (see `alterlab-research-workflows`); offer it when the user wants independence at that scale.
 
 ### Quick Mode Selection Guide
 
@@ -455,7 +457,7 @@ Follows the paper's language. Academic terms remain in English. User can overrid
 |-------|-------------|
 | `alterlab-paper-writer` | Upstream (provides paper) + Downstream (receives revision roadmap) |
 | `alterlab-deep-research` | Upstream (provides research foundation) |
-| `tw-hei-intelligence` | Auxiliary (verifies higher education data accuracy) |
+| `alterlab-citation-verifier` | Auxiliary (existence and retraction check of the manuscript's references) |
 | `alterlab-research-pipeline` | Orchestrated by (Stage 3 + Stage 3') |
 
 ---
@@ -464,8 +466,10 @@ Follows the paper's language. Academic terms remain in English. User can overrid
 
 | Item | Content |
 |------|---------|
-| Skill Version | 1.4 |
-| Last Updated | 2026-03-08 |
+| Skill Version | 1.5 |
+| Last Updated | 2026-09-23 |
 | Maintainer | AlterLab |
 | Dependent Skills | alterlab-paper-writer v1.0+ (upstream/downstream integration) |
 | Role | Multi-perspective academic paper review simulator |
+
+Part of the AlterLab Academic Skills suite.

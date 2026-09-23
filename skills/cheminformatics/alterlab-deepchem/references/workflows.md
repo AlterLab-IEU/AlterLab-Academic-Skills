@@ -263,12 +263,15 @@ predictions = model.predict(test)
 
 ### Using GROVER
 ```python
-# GROVER: pre-trained on molecular graphs
-model = dc.models.GroverModel(
-    task='classification',
-    n_tasks=1,
-    model_dir='./grover_model'
-)
+# GROVER graph transformer.
+# GroverModel needs task='finetuning'|'pretraining', mode, feature dims, and
+# atom/bond vocabularies; inputs must come from dc.feat.GroverFeaturizer.
+# No pretrained weights are downloaded (see the GroverModel docstring for the full recipe).
+model = dc.models.GroverModel(node_fdim=151, edge_fdim=165, hidden_size=128,
+                              atom_vocab=atom_vocab, bond_vocab=bond_vocab,
+                              features_dim=2048, functional_group_size=85,
+                              task='finetuning', mode='classification', n_tasks=1,
+                              model_dir='./grover_model')
 
 # Fine-tune on your data
 model.fit(train_dataset, nb_epoch=20)
@@ -384,11 +387,14 @@ import deepchem as dc
 loader = dc.data.FASTALoader()
 dataset = loader.create_dataset('proteins.fasta')
 
-# Use ProtBERT
-model = dc.models.HuggingFaceModel(
-    model='Rostlab/prot_bert',
-    task='classification',
-    n_tasks=1
+# Use ProtBERT (dc.models.ProtBERT exists only in the 2.8.1.dev nightlies:
+# uv pip install --pre "deepchem[torch]" transformers). Generic
+# dc.models.HuggingFaceModel instead takes a transformers model object + tokenizer.
+model = dc.models.ProtBERT(
+    task='classification',          # or 'mlm', 'feature_extractor'
+    model_path='Rostlab/prot_bert',
+    n_tasks=1,
+    cls_name='LogReg'               # or 'FFN'
 )
 
 # Split and train

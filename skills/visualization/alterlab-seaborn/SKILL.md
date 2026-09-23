@@ -3,10 +3,11 @@ name: alterlab-seaborn
 description: Builds statistical plots with the seaborn Python library and pandas DataFrame integration, on attractive matplotlib-based defaults. Use for quick exploration of distributions, relationships, and categorical comparisons — box plots, violin plots, swarm/strip plots, KDE/histograms, pair plots, joint plots, regression plots, correlation heatmaps, and faceted small multiples (relplot/displot/catplot/lmplot). For interactive/hover/zoom charts defer to alterlab-plotly; for exact journal/manuscript styling (column widths, point fonts, CMYK, vector export) defer to alterlab-scientific-viz; for low-level custom matplotlib figures defer to alterlab-matplotlib (seaborn integrates with it for fine-tuning). Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
-compatibility: Requires the seaborn and pandas Python libraries (pip install seaborn pandas); no API key or external service needed
+compatibility: Requires seaborn >= 0.13 (current 0.13.2 as of 2026-09) and pandas — uv pip install seaborn pandas; verified on matplotlib 3.11 and pandas 3.0; no API key or external service needed
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Seaborn Statistical Visualization
@@ -17,11 +18,17 @@ Seaborn is a Python visualization library for creating publication-quality stati
 
 ## When to Use This Skill
 
-Use seaborn for quick, attractive statistical graphics straight from a pandas DataFrame: distributions, relationships, categorical comparisons, correlation heatmaps, and faceted small multiples. Route elsewhere when the need differs:
+Use seaborn for quick, attractive statistical graphics straight from a pandas DataFrame: distributions, relationships, categorical comparisons, correlation heatmaps, and faceted small multiples.
 
-- **Interactive charts** (hover, zoom, HTML dashboards) → `alterlab-plotly`
-- **Exact journal/manuscript styling** (column widths, point fonts, CMYK, vector export) → `alterlab-scientific-viz`
-- **Low-level custom plotting** → `alterlab-matplotlib` (seaborn integrates with it for fine-tuning)
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Interactive chart with hover, zoom, or an HTML dashboard | `alterlab-plotly` |
+| Exact journal/manuscript styling (column widths, point fonts, CMYK, vector export) | `alterlab-scientific-viz` |
+| Low-level control of individual artists or layouts beyond FacetGrid/PairGrid | `alterlab-matplotlib` (seaborn axes-level plots accept `ax=` for this) |
+| A full exploratory-data-analysis report on a data file (structure, quality, summary statistics) | `alterlab-eda` |
+| Choosing and running the statistical test behind a comparison | `alterlab-statistical-analysis` |
 
 ## Design Philosophy
 
@@ -33,7 +40,9 @@ Use seaborn for quick, attractive statistical graphics straight from a pandas Da
 
 ## Quick Start
 
-Examples target **seaborn ≥ 0.13** (verified on 0.13.2). Two API points that bite on this version: pass `palette=` only together with `hue=` (palette-without-hue is deprecated, removed in 0.14), and style error bars via `err_kws={...}` rather than the removed-in-0.15 `errcolor`/`errwidth`/`scale`/`join` keywords.
+Examples target **seaborn ≥ 0.13** (verified on 0.13.2, still the current release in September 2026). Two API points that bite on this version: pass `palette=` only together with `hue=` (palette-without-hue is deprecated and slated for removal in v0.14), and style error bars via `err_kws={...}` rather than the deprecated `errcolor`/`errwidth`/`scale`/`join` keywords (slated for removal in v0.15).
+
+With matplotlib 3.11 every plotting function still works, but `boxplot` (and `catplot(kind="box")`) emits a `vert` MatplotlibDeprecationWarning and `heatmap` a `set_bad` PendingDeprecationWarning. Both come from seaborn's internals and are harmless for now; matplotlib 3.13 is scheduled to remove `vert`, so pin `matplotlib<3.13` in environments that depend on `sns.boxplot` until a seaborn release addresses it.
 
 ```python
 import seaborn as sns

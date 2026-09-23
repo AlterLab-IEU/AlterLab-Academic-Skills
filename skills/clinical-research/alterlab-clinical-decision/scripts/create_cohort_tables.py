@@ -494,7 +494,7 @@ def main():
         
         latex_code = generate_latex_table(
             safety_table,
-            caption="Treatment-emergent adverse events by group (CTCAE v5.0)",
+            caption="Treatment-emergent adverse events by group (CTCAE grades; state the CTCAE version in the text)",
             label="safety"
         )
         with open(output_dir / 'table3_safety.tex', 'w') as f:

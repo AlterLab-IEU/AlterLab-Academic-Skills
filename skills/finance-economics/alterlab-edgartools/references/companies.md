@@ -54,15 +54,14 @@ company = Company("MSFT")
 company.name             # "Microsoft Corporation"
 company.cik              # 789019
 company.display_name     # "MSFT - Microsoft Corporation"
-company.ticker           # "MSFT"
+company.get_ticker()     # "MSFT" (primary ticker; there is no company.ticker attribute)
 company.tickers          # ["MSFT"] (list of all tickers)
 company.industry         # "SERVICES-PREPACKAGED SOFTWARE"
 company.sic              # "7372"
 company.fiscal_year_end  # "0630" (June 30)
-company.exchange         # "Nasdaq"
-company.website          # "https://www.microsoft.com"
-company.city             # "Redmond"
-company.state            # "WA"
+company.get_exchanges()  # ["Nasdaq"]
+company.data.website     # "https://www.microsoft.com" (EntityData)
+company.business_address().city  # "Redmond"
 company.shares_outstanding  # float (from SEC company facts)
 company.public_float        # float in dollars
 company.is_company          # True

@@ -1,5 +1,13 @@
 # ESM3 API Reference
 
+
+> **Check the console before relying on a model ID.** Biohub's current ESM3 model
+> table lists `esm3-small-2024-08` (1.4B), `esm3-medium-2024-08` (7B) and
+> `esm3-large-2024-03` (98B) as the flagship models, plus the 2024-03 "published"
+> replicas used in the paper. Other IDs (e.g. the experimental multimer model) may
+> or may not still be served — confirm in the developer console rather than
+> hard-coding them.
+
 ## Overview
 
 ESM3 is a frontier multimodal generative language model that reasons over the sequence, structure, and function of proteins. It uses iterative masked language modeling to simultaneously generate across these three modalities.

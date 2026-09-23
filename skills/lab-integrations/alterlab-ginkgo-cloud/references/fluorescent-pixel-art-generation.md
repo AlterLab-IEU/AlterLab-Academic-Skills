@@ -3,33 +3,28 @@
 **URL:** https://cloud.ginkgo.bio/protocols/fluorescent-pixel-art-generation
 **Status:** Beta
 **Price:** $25/plate
-**Turnaround:** 5-7 days
+**Turnaround:** up to 7 days
 
 ## Overview
 
-Transforms a digital image into a living, fluorescent bacterial artwork printed on an agar omni-tray. Customers submit a pixel art design and colors are mapped to distinct fluorescent E. coli strains. Overnight cultures are prepared from frozen glycerol stocks, diluted, and dispensed onto selective LB-chloramphenicol agar plates via Echo acoustic liquid handling at 50 nL per spot. Plates are incubated at 30 deg C for 16 hours, followed by 4 deg C for 12 hours to stabilize colony morphology and fluorescence. High-resolution photographs are captured under UV illumination and delivered digitally.
+Transforms a digital image into a living, fluorescent bacterial artwork printed on an agar omni-tray. Customers build the design in the Design Tool (upload an image or paint freehand) and colors are mapped automatically to the fluorescent E. coli palette. Overnight cultures are prepared from frozen glycerol stocks, diluted, and dispensed onto selective LB-chloramphenicol agar plates via Echo acoustic liquid handling at 50 nL per spot. Plates are incubated at 30 deg C for 16 hours, followed by 4 deg C for 12 hours to stabilize colony morphology and fluorescence. High-resolution photographs are captured under UV illumination and delivered digitally.
 
 ## Input
 
-- **Image file:** `.png` or `.svg` format
-- **Resolution:** 48x48 to 96x96 pixels
-- **Color mapping:** Match image colors to the fluorescent strain palette
+- **Design:** created in the Design Tool — upload an image or paint freehand; colors are mapped to the strain palette
+- **Plate layout:** Echo 1536 (32×48 wells, 1,536 dots); Echo 6144 (64×96) announced as coming soon
 - **Orientation:** Confirm plate orientation and multi-plate designs (identical vs. distinct)
 
-## Available Fluorescent E. coli Strains (11 colors)
+## Fluorescent E. coli Strain Palette (7 colors, as listed 2026-09-23)
 
 | Strain/Protein | Color |
 |---|---|
 | sfGFP | Green |
-| mRFP | Red |
+| mRFP1 | Red |
 | mKO2 | Orange |
-| Venus | Yellow |
-| Azurite | Blue |
-| mClover3 | Bright Green |
-| mJuniper | Dark Green |
+| Venus | Yellow-green |
 | mTurquoise2 | Cyan |
-| Electra2 | Electric Blue |
-| mWasabi | Light Green |
+| Electra2 | Blue |
 | mScarlet-I | Scarlet |
 
 ## Output

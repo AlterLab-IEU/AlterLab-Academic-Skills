@@ -1,12 +1,13 @@
 ---
 name: alterlab-scientific-schematics
-description: Creates publication-quality scientific diagrams with Nano Banana 2 AI and smart iterative refinement, using Gemini 3.1 Pro Preview for quality review and regenerating only when quality falls below the document-type threshold. Use when the request is for a technical or scientific diagram — neural-network architectures, system/block diagrams, flowcharts, biological pathways, circuits, or other complex scientific visuals. For general photos, illustrations, or artwork use generate-image, for text-based Mermaid diagrams use mermaid. Part of the AlterLab Academic Skills suite.
+description: Creates publication-quality scientific diagrams with Nano Banana 2 AI and smart iterative refinement, using Gemini 3.1 Pro Preview for quality review and regenerating only when quality falls below the document-type threshold. Use when the request is for a rendered technical or scientific diagram — CONSORT/PRISMA flowcharts, neural-network architectures, system/block diagrams, biological pathways, circuits, or other complex scientific visuals. For general photos, illustrations, or artwork use alterlab-generate-image; for infographics use alterlab-infographics; for editable text-based Mermaid diagrams use alterlab-mermaid. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
-compatibility: Requires an OpenRouter API key (OPENROUTER_API_KEY) for Nano Banana 2 generation and Gemini 3.1 Pro Preview quality review
+compatibility: Requires an OpenRouter API key (OPENROUTER_API_KEY) and the requests library for Nano Banana 2 generation (google/gemini-3.1-flash-image) and Gemini 3.1 Pro Preview quality review (google/gemini-3.1-pro-preview); override with ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Scientific Schematics and Diagrams
@@ -69,16 +70,20 @@ python scripts/generate_schematic.py "Complex circuit diagram with op-amp, resis
 - ✅ Faster turnaround for presentations/posters
 - ✅ Appropriate quality for each use case
 
-**Output**: Versioned images plus a detailed review log with quality scores, critiques, and early-stop information.
+**Output**: Versioned images plus a detailed review log with quality scores, critiques, and early-stop information. If the review call fails, the image is kept and the log records `"review_skipped": true` with a null score instead of inventing one.
+
+**Check the content yourself before submission.** The image model draws every label and number, so it can misspell a term or change a count (e.g. a CONSORT `n=`) even when the prompt was right, and the review model judges clarity and layout rather than checking values against your records. Compare every count, label, and arrow direction with your data and protocol before the figure goes into a manuscript.
 
 ### Configuration
 
-Set your OpenRouter API key:
+Set your OpenRouter API key (or put `OPENROUTER_API_KEY=...` in a `.env` file if `python-dotenv` is installed):
 ```bash
 export OPENROUTER_API_KEY='your_api_key_here'
 ```
 
 Get an API key at: https://openrouter.ai/keys
+
+Default models (verified on OpenRouter 2026-09-23): `google/gemini-3.1-flash-image` (Nano Banana 2) for generation and `google/gemini-3.1-pro-preview` for review. Override them with `ALTERLAB_IMAGE_MODEL` / `ALTERLAB_REVIEW_MODEL`.
 
 ### Data & privacy
 
@@ -104,6 +109,16 @@ This skill should be used when:
 - Generating network topologies and hierarchical structures
 - Illustrating conceptual frameworks and theoretical models
 - Designing block diagrams for technical papers
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Diagram that should stay editable text in a README or Markdown doc (renders on GitHub, diffs in git) | `alterlab-mermaid` |
+| Photo, illustration, artwork, or slide/poster hero image | `alterlab-generate-image` |
+| Infographic that presents statistics, a timeline, or a comparison for a general audience | `alterlab-infographics` |
+| Plot of measured data (scatter, bar, line, heatmap) | `alterlab-matplotlib` / `alterlab-scientific-viz` |
+| Network graph whose layout is computed from real node/edge data | `alterlab-networkx` |
 
 ## How to Use This Skill
 
@@ -211,11 +226,11 @@ Load these files for comprehensive information on specific topics:
 
 This skill works synergistically with:
 
-- **Scientific Writing** - Diagrams follow figure best practices
-- **Scientific Visualization** - Shares color palettes and styling
-- **LaTeX Posters** - Generate diagrams for poster presentations
-- **Research Grants** - Methodology diagrams for proposals
-- **Peer Review** - Evaluate diagram clarity and accessibility
+- **`alterlab-scientific-writing`** - Diagrams follow figure best practices
+- **`alterlab-scientific-viz`** - Shares color palettes and styling
+- **`alterlab-latex-posters`** - Generate diagrams for poster presentations
+- **`alterlab-research-grants`** - Methodology diagrams for proposals
+- **`alterlab-peer-review`** - Evaluate diagram clarity and accessibility
 
 ## Quick Reference Checklist
 

@@ -60,8 +60,8 @@ except ValueError as e:
 ```python
 import cirq_google
 
-# Get calibration metrics
-processor = cirq_google.get_engine().get_processor('weber')
+# Get calibration metrics (processor IDs come from engine.list_processors())
+processor = cirq_google.get_engine().get_processor('<processor_id>')
 calibration = processor.get_current_calibration()
 
 # Find qubits with lowest error rates
@@ -109,6 +109,12 @@ def select_connected_qubits(device, n_qubits):
 
 #### Setup
 
+Access to Google Quantum AI hardware through Quantum Engine is limited to approved
+research partners. Without access, use the Quantum Virtual Machine
+(`create_default_noisy_quantum_virtual_machine`, see `simulation.md`), which exposes the
+same processor/sampler interface for the bundled `rainbow`, `weber`, and `willow_pink`
+device models.
+
 ```python
 import cirq_google
 
@@ -130,8 +136,8 @@ for processor in processors:
 # Create circuit for Google device
 import cirq_google
 
-# Get processor
-processor = engine.get_processor('weber')
+# Get processor (ID from engine.list_processors())
+processor = engine.get_processor('<processor_id>')
 device = processor.get_device()
 
 # Create circuit on device qubits
@@ -142,13 +148,14 @@ circuit = cirq.Circuit(
     cirq.measure(*qubits, key='result')
 )
 
-# Validate and run
+# Validate and run. In cirq-google 1.7, run() requires a device configuration
+# name (list them with processor.list_configs()) and returns a cirq.Result directly.
 device.validate_circuit(circuit)
-job = processor.run(circuit, repetitions=1000)
+result = processor.run(circuit, device_config_name='<config_name>', repetitions=1000)
+print(result.histogram(key='result'))
 
-# Get results
-results = job.results()[0]
-print(results.histogram(key='result'))
+# Or, for sweeps and batches, use the processor's sampler
+sampler = processor.get_sampler(device_config_name='<config_name>')
 ```
 
 ### IonQ
@@ -209,10 +216,7 @@ job = service.create_job(circuit, repetitions=1000, target='qpu')
 status = job.status()
 print(f"Job status: {status}")
 
-# Wait for completion
-job.wait_until_complete()
-
-# Get results
+# Get results — results() polls until the job completes (timeout_seconds=7200 default)
 results = job.results()
 ```
 
@@ -260,27 +264,29 @@ result = service.run(
     target='ionq.simulator'
 )
 
-# Run on IonQ QPU
+# Run on an IonQ QPU (target names are system-specific, e.g. 'ionq.qpu.aria-1',
+# 'ionq.qpu.forte-1' — check service.targets() for what your workspace offers)
 result = service.run(
     circuit=circuit,
     repetitions=1000,
-    target='ionq.qpu'
+    target='ionq.qpu.forte-1'
 )
 ```
 
-#### Running on Azure Quantum (Honeywell Backend)
+#### Running on Azure Quantum (Quantinuum Backend)
+
+Honeywell Quantum Solutions became **Quantinuum** in 2021; the old `honeywell.*` target
+names are gone. Take the current `quantinuum.*` target name from `service.targets()`:
 
 ```python
-# Run on Honeywell System Model H1
+for target in service.targets():
+    print(target.name)          # e.g. quantinuum.sim.* / quantinuum.qpu.* entries
+
 result = service.run(
     circuit=circuit,
     repetitions=1000,
-    target='honeywell.hqs-lt-s1'
+    target='<quantinuum target name from the listing>'
 )
-
-# Check Honeywell-specific options
-target_info = service.get_target('honeywell.hqs-lt-s1')
-print(f"Target info: {target_info}")
 ```
 
 ### AQT (Alpine Quantum Technologies)
@@ -288,21 +294,28 @@ print(f"Target info: {target_info}")
 #### Setup
 
 ```python
+import os
 import cirq_aqt
 
 # Set API token
 # export AQT_TOKEN=your_token
 
-# Create service
-service = cirq_aqt.AQTSampler(
-    remote_host='https://gateway.aqt.eu',
-    access_token='your_token'
+# List the workspaces and resources (cloud simulators and QPUs) your token can use
+cirq_aqt.AQTSampler.print_resources(access_token=os.environ["AQT_TOKEN"])
+
+# A sampler is bound to one workspace + resource (AQT's ARNICA API is the default host)
+sampler = cirq_aqt.AQTSampler(
+    workspace='<workspace-id>',
+    resource='<resource-id>',
+    access_token=os.environ["AQT_TOKEN"],
 )
 ```
 
 #### Running on AQT
 
 ```python
+from cirq_aqt.aqt_target_gateset import AQTTargetGateset
+
 # Create circuit
 qubits = cirq.LineQubit.range(3)
 circuit = cirq.Circuit(
@@ -311,19 +324,11 @@ circuit = cirq.Circuit(
     cirq.measure(*qubits, key='result')
 )
 
-# Run on simulator
-result = service.run(
-    circuit,
-    repetitions=1000,
-    target='simulator'
-)
+# AQT executes only its native gates (PhasedX, Z, MS) — compile first
+circuit = cirq.optimize_for_target_gateset(circuit, gateset=AQTTargetGateset())
 
-# Run on device
-result = service.run(
-    circuit,
-    repetitions=1000,
-    target='device'
-)
+# Simulator vs. hardware is chosen by the `resource` the sampler was built with
+result = sampler.run(circuit, repetitions=1000)
 ```
 
 ### Pasqal
@@ -486,7 +491,7 @@ export IONQ_API_KEY=your_api_key
 **Azure Quantum:**
 ```python
 # Use Azure CLI or workspace connection string
-# See: https://docs.microsoft.com/azure/quantum/
+# See: https://learn.microsoft.com/azure/quantum/
 ```
 
 **AQT:**

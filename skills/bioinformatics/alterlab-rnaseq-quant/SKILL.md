@@ -1,13 +1,13 @@
 ---
 name: alterlab-rnaseq-quant
-description: Quantifies bulk RNA-seq transcript abundance with salmon (v1.11.4 selective alignment) and kallisto (v0.52.0, kb-python workflow), builds a decoy-aware gentrome index, runs quant with --validateMappings --gcBias -l A, then imports estimates via tximport/tximeta with a tx2gene map and hands differential expression to alterlab-pydeseq2. Warns that salmon's index format changed to SSHash (rebuild pre-v1.11.2 indices) and that 'salmon alevin' was REMOVED (single-cell now uses piscem + alevin-fry). Use when quantifying RNA-seq transcript abundance, running salmon or kallisto, building a decoy-aware index, or wiring tximport to DESeq2; for differential expression use alterlab-pydeseq2, for FASTQ-to-VCF variant calling use alterlab-nf-core-sarek. Part of the AlterLab Academic Skills suite.
+description: Quantifies bulk RNA-seq transcript abundance with salmon 2.x (the Rust rewrite; selective alignment or --sketch) and kallisto (v0.52.0, kb-python workflow), builds a decoy-aware gentrome index, runs quant with --gcBias -l A, then imports estimates via tximport/tximeta with a tx2gene map and hands differential expression to alterlab-pydeseq2. Warns that salmon 2.0 cannot read C++/pufferfish indices (rebuild every index), that --validateMappings is now accepted-but-ignored, and that 'salmon alevin' was REMOVED (single-cell now uses piscem + alevin-fry). Use when quantifying RNA-seq transcript abundance, running salmon or kallisto, building a decoy-aware index, or wiring tximport to DESeq2; for differential expression use alterlab-pydeseq2, for FASTQ-to-VCF variant calling use alterlab-nf-core-sarek. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*) Bash(salmon:*) Bash(kallisto:*) Bash(kb:*)
-compatibility: "Requires the salmon and/or kallisto CLI on PATH (conda/bioconda or a container). salmon v1.11.4 and kallisto v0.52.0 are the versions this skill targets; the tximport/tx2gene helper runs under `uv run python` with pure stdlib (no pandas needed). No API key or account required; all work is local."
+compatibility: "Requires the salmon and/or kallisto CLI on PATH (conda/bioconda or a container). This skill targets salmon 2.x (bioconda 2.7.0 as of 2026-09) and kallisto v0.52.0; salmon 2.x is a single portable Rust binary with no Boost/compiler dependency. The tximport/tx2gene helper runs under `uv run python` with pure stdlib (no pandas needed). No API key or account required; all work is local."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
-    last_updated: "2026-06-06"
+    version: "1.2.0"
+    last_updated: "2026-09-23"
     depends_on: "alterlab-pydeseq2 (downstream differential expression)"
 ---
 
@@ -43,7 +43,7 @@ gene abundance** with a lightweight quantifier:
 
 - "Quantify my RNA-seq with salmon / kallisto."
 - "Build a decoy-aware salmon index (gentrome + decoys.txt)."
-- "Run selective alignment with `--validateMappings --gcBias`."
+- "Run selective alignment with `--gcBias`." / "Use salmon's `--sketch` mode."
 - "I have `quant.sf` files — make me a gene-level count matrix for DESeq2."
 - "Set up `tximport` / `tximeta` with a tx2gene map."
 - "Use kb-python / `kb count` to pseudoalign these reads."
@@ -70,22 +70,32 @@ calling.
 
 ## Two Critical Correctness Traps (read before quantifying)
 
-These are the two failures most outdated RNA-seq instructions get wrong as of
-salmon **v1.11.4** (released 2026-03-11). Both are confirmed in the upstream
-release notes (see [references/tool_versions.md](references/tool_versions.md)).
+These are the three failures most outdated RNA-seq instructions get wrong now that
+salmon has moved to **2.x** (a from-scratch Rust rewrite; bioconda 2.7.0). All are
+confirmed in the upstream `MIGRATION.md` (see
+[references/tool_versions.md](references/tool_versions.md)).
 
-1. **The salmon index format changed to SSHash.** salmon switched from the
-   colored compacted de Bruijn graph index to a new SSHash-based k-mer index.
-   The release notes state **all previously built indices must be rebuilt**
-   before using v1.11.2+. If you reuse a pre-v1.11.2 index you will get an error
-   or silently wrong results — **always rebuild the index** with the same salmon
-   version you quantify with.
+1. **salmon 2.0 cannot read a C++ (pufferfish) index.** The index format changed
+   with the rewrite. Loading an old index — or pointing old salmon at a 2.x index —
+   is detected and rejected with a clear error, so this fails loudly rather than
+   silently. **Rebuild every index** with the same salmon version you quantify with.
+   `quant.sf` and the bootstrap/Gibbs outputs are unchanged, so tximport, tximeta,
+   fishpond and swish keep working on 2.x output with no changes.
 
-2. **`salmon alevin` was REMOVED.** Single-cell quantification is no longer part
-   of salmon. The release notes direct former `alevin` users to the
-   **piscem + alevin-fry** pipeline. Do **not** write `salmon alevin` commands.
-   If the user has single-cell / droplet data, route per the table above and see
+2. **`--validateMappings` no longer does anything.** Selective alignment is the
+   default (and only) alignment mode in 2.x, so the flag parses and logs a warning.
+   Copying it from a 2019-era tutorial is harmless but misleading; drop it. Several
+   other C++ flags now **error out**: `--mimicBT2`, `--mimicStrictBT2`,
+   `--minAssignedFrags`, `--numBiasSamples`, `--alternativeInitMode`.
+
+3. **`salmon alevin` was REMOVED.** Single-cell quantification is no longer part of
+   salmon; `salmon alevin …` prints a redirect and exits. Use the
+   **piscem + alevin-fry** ecosystem instead. If the user has single-cell / droplet
+   data, route per the table above and see
    [references/single_cell_alevin.md](references/single_cell_alevin.md).
+
+If you genuinely need the old behavior, the final C++ release (salmon 1.12.0) lives
+on the upstream `cpp` branch and is packaged separately as `salmon-cpp`.
 
 ---
 
@@ -105,7 +115,7 @@ grep "^>" genome.fa | sed 's/^>//; s/ .*//' > decoys.txt
 # 2. gentrome = transcripts FIRST, then genome (order matters)
 cat transcripts.fa genome.fa > gentrome.fa
 
-# 3. build the index (rebuild for v1.11.4 — see trap #1)
+# 3. build the index (rebuild under salmon 2.x — see trap #1)
 salmon index \
   -t gentrome.fa \
   -d decoys.txt \
@@ -126,7 +136,6 @@ salmon quant \
   -i salmon_index \
   -l A \
   -1 sampleA_R1.fastq.gz -2 sampleA_R2.fastq.gz \
-  --validateMappings \
   --gcBias \
   -p 8 \
   -o quants/sampleA
@@ -135,10 +144,20 @@ salmon quant \
 - **`-l A`** — auto-detect library type (strandedness). Let salmon infer it
   unless you have a documented protocol; verify the inferred type in
   `lib_format_counts.json`.
-- **`--validateMappings`** — enables selective alignment (the accurate default
-  mode; scores mappings rather than trusting raw pseudo-mappings).
+- **Selective alignment is the default** in salmon 2.x — there is no flag to turn
+  it on (`--validateMappings` is accepted and ignored). `--sketch` opts *out* of it
+  into faster alignment-free pseudoalignment; prefer the default when the
+  quantification feeds differential expression, and reserve `--sketch` for very
+  large screens where speed dominates.
 - **`--gcBias`** — corrects fragment-level GC bias; recommended for DE and cheap
   to enable. Add `--seqBias` for 5'/3' sequence-specific bias if needed.
+- **`--ignoreTxVersion`** (new in 2.x) — with `-g/--geneMap`, matches transcript
+  IDs ignoring the trailing `.N`, the way tximport's option of the same name does.
+  Needed for an Ensembl cDNA index against an Ensembl GTF. When transcripts fail to
+  match the gene map, 2.x writes the offending names to
+  `aux_info/genemap_unmatched_txps.json` and warns once with a count, instead of
+  C++ salmon's one warning per transcript — check for that file after any run that
+  used `-g`.
 - For single-end reads, pass `-r reads.fastq.gz` instead of `-1/-2`.
 
 Each sample produces `quants/<sample>/quant.sf` (transcript-level estimates) and
@@ -238,8 +257,8 @@ quantify samples in a loop.
 
 ## Self-Check Before Reporting
 
-- Did you **rebuild** the salmon index with the v1.11.4 you quantified with
-  (SSHash format — trap #1)? Never reuse a pre-v1.11.2 index.
+- Did you **rebuild** the salmon index with the same 2.x binary you quantified with
+  (trap #1)? A C++/pufferfish index is rejected outright.
 - Is the index **decoy-aware** (gentrome + `decoys.txt`) for salmon? Confirm the
   genome names made it into `decoys.txt`.
 - Did you let `-l A` infer strandedness, and did you sanity-check the inferred
@@ -254,8 +273,8 @@ quantify samples in a loop.
 ## References
 
 - [references/tool_versions.md](references/tool_versions.md) — pinned versions
-  (salmon v1.11.4, kallisto v0.52.0, kb-python, nf-core/rnaseq v3.26.0) and the
-  upstream release-note facts (SSHash index change, alevin removal).
+  (salmon 2.x, kallisto v0.52.0, kb-python, nf-core/rnaseq) and the upstream
+  release-note facts (the 2.0 rewrite and index break, alevin removal).
 - [references/decoy_index.md](references/decoy_index.md) — decoy-aware gentrome
   index construction, gotchas, and the `make_decoys.py` helper.
 - [references/salmon_quant.md](references/salmon_quant.md) — `salmon quant` flag

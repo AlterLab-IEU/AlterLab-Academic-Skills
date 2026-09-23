@@ -84,18 +84,13 @@ X, y = load_from_timeeval_csv_file("path/to/timeeval.csv")
 
 ### Writing Datasets
 
-**Write to .ts format**:
+**Write to .ts format** (aeon 1.6 ships a `.ts` writer only — there is no ARFF writer):
 ```python
-from aeon.datasets import write_to_ts_file
+from aeon.datasets import save_to_ts_file
 
-write_to_ts_file(X, "output.ts", y=y, problem_name="MyDataset")
-```
-
-**Write to ARFF format**:
-```python
-from aeon.datasets import write_to_arff_file
-
-write_to_arff_file(X, "output.arff", y=y)
+# Writes ./data/MyDataset_TRAIN.ts; label_type is required whenever y is given
+save_to_ts_file(X, y, label_type="classification", path="./data",
+                problem_name="MyDataset", file_suffix="_TRAIN")
 ```
 
 ## Built-in Datasets
@@ -128,9 +123,11 @@ Get information about datasets:
 ```python
 from aeon.datasets import get_dataset_meta_data
 
-metadata = get_dataset_meta_data("GunPoint")
+# Fetched from timeseriesclassification.com; returns a pandas DataFrame
+metadata = get_dataset_meta_data(["GunPoint"])
 print(metadata)
-# {'n_train': 50, 'n_test': 150, 'length': 150, 'n_classes': 2, ...}
+#     Dataset  TrainSize  TestSize  Length  NumberClasses Type  Channels
+#    GunPoint         50       150     150              2  HAR         1
 ```
 
 ## Benchmarking Tools
@@ -382,15 +379,17 @@ if p_values[0, 1] < 0.05:
 Find datasets matching criteria:
 
 ```python
-# List all available classification datasets
-from aeon.datasets import get_available_datasets
+# Names of the UCR (univariate) and UEA (multivariate) classification archives
+from aeon.datasets.tsc_datasets import univariate, multivariate
+from aeon.datasets import get_dataset_meta_data
 
-datasets = get_available_datasets("classification")
-print(f"Found {len(datasets)} classification datasets")
+print(f"{len(univariate)} univariate, {len(multivariate)} multivariate datasets")
 
-# Filter by properties
-univariate_datasets = [
-    d for d in datasets
-    if get_dataset_meta_data(d)['n_channels'] == 1
-]
+# Filter by properties using the metadata table (one row per dataset)
+meta = get_dataset_meta_data()
+small_univariate = meta[(meta["Channels"] == 1) & (meta["TrainSize"] < 100)]["Dataset"].tolist()
+
+# Datasets already downloaded locally
+from aeon.datasets.dataset_collections import get_available_tsc_datasets
+local = get_available_tsc_datasets()
 ```

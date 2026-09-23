@@ -25,24 +25,31 @@
 | `laml_tcga` | Acute Myeloid Leukemia | ~200 |
 | `acc_tcga` | Adrenocortical Carcinoma | ~90 |
 
-### TCGA Pan-Cancer
+The IDs above are the original "Firehose Legacy" studies. Most cancers also have a
+harmonized PanCancer Atlas version (`{cancer}_tcga_pan_can_atlas_2018`) and a GDC
+re-processed version (`{cancer}_tcga_gdc`); check `GET /studies` for the exact IDs.
 
-| Study ID | Description |
-|----------|-------------|
-| `tcga_pan_can_atlas_2018` | TCGA Pan-Cancer Atlas (32 cancer types, ~10K samples) |
+### TCGA PanCancer Atlas
+
+There is **no single combined pan-cancer study ID** — the PanCancer Atlas is published as
+32 per-cancer studies named `{cancer}_tcga_pan_can_atlas_2018` (e.g.
+`brca_tcga_pan_can_atlas_2018`, `luad_tcga_pan_can_atlas_2018`). For a pan-cancer query,
+loop over them (filter `GET /studies` on the `_tcga_pan_can_atlas_2018` suffix).
 
 ### MSK-IMPACT (Memorial Sloan Kettering)
 
-| Study ID | Description |
+| Study ID | Description (samples, 2026-09) |
 |----------|-------------|
-| `msk_impact_2017` | MSK-IMPACT clinical sequencing |
-| `mskcc_pd` | MSK pediatric solid tumors |
+| `msk_impact_2017` | MSK-IMPACT Clinical Sequencing Cohort (Nat Med 2017; ~11K) |
+| `msk_met_2021` | MSK MetTropism (Cell 2021; ~26K) |
+| `msk_chord_2024` | MSK-CHORD, genomics + clinical outcomes (Nature 2024; ~25K) |
+| `msk_impact_50k_2026` | MSK-IMPACT 50K Clinical Sequencing Cohort (Cancer Cell 2026; ~54K) |
 
 ### AACR Project GENIE
 
-| Study ID | Description |
-|----------|-------------|
-| `genie_14_1_public` | GENIE v14.1 (multi-center clinical sequencing) |
+The consortium releases are served from a separate portal, https://genie.cbioportal.org
+(its API requires a logged-in account); the public portal only carries individual
+GENIE-derived studies. For bulk GENIE data use the Synapse release files.
 
 ## Molecular Profile ID Naming Conventions
 

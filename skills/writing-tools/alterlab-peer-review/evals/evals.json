@@ -4,11 +4,12 @@
     {
       "id": "manuscript-review",
       "prompt": "I've been asked to peer review this clinical trial manuscript for a journal. Write me a structured, constructive review assessing the methodology, statistics, and reporting.",
-      "expected_output": "Invokes alterlab-peer-review: produces a structured, checklist-based review (initial assessment, methodology, statistical validity, reporting-standards compliance such as CONSORT, ethics, reproducibility), with constructive, actionable feedback and a recommendation.",
+      "expected_output": "Invokes alterlab-peer-review: checks that the journal's reviewer policy permits AI assistance with a confidential manuscript, then produces a structured, checklist-based review (initial assessment, methodology, statistical validity, reporting-standards compliance against CONSORT 2025, ethics, reproducibility), with constructive, actionable feedback and a recommendation.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "methodology" },
-        { "type": "behavior", "value": "Generates a structured peer review covering methods, statistics, and reporting-standards compliance with constructive feedback." }
+        { "type": "behavior", "value": "Generates a structured peer review covering methods, statistics, and reporting-standards compliance with constructive feedback." },
+        { "type": "behavior", "value": "Raises reviewer confidentiality and asks about, or notes, the journal's policy on AI use in peer review before working on the unpublished manuscript." }
       ]
     },
     {
@@ -28,6 +29,15 @@
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Produces a structured grant reviewer report assessing rigor and significance with constructive feedback." }
+      ]
+    },
+    {
+      "id": "near-miss-paper-reviewer",
+      "prompt": "Before I submit to a top journal, simulate the whole review panel on my manuscript — an editor plus three reviewers and a devil's advocate — and tell me whether they'd accept, ask for revisions, or reject, with a revision roadmap.",
+      "expected_output": "Does NOT invoke alterlab-peer-review; defers to alterlab-paper-reviewer. The user wants a simulated multi-reviewer panel with an editorial decision and revision roadmap, which is alterlab-paper-reviewer's mock-panel workflow, not a single checklist-based referee report.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-paper-reviewer" }
       ]
     },
     {

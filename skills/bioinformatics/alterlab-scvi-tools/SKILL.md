@@ -3,10 +3,11 @@ name: alterlab-scvi-tools
 description: Train deep generative models for single-cell omics with scvi-tools — probabilistic batch correction and integration (scVI), reference-mapping transfer learning (scArches), differential expression with uncertainty, and multimodal models (totalVI for CITE-seq, MultiVI for multiome). Use when correcting batch effects, integrating multimodal data, or doing advanced probabilistic single-cell modeling — for standard analysis pipelines use scanpy. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for scvi-tools 1.5 (current 1.5.1 as of 2026-09), which requires Python >= 3.12. A GPU is optional but makes training practical on large datasets."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # scvi-tools
@@ -26,6 +27,17 @@ Use this skill when:
 - Conducting cell type annotation or transfer learning tasks
 - Working with specialized single-cell modalities (methylation, cytometry, RNA velocity)
 - Building custom probabilistic models for single-cell analysis
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Standard QC -> normalize -> HVG -> PCA -> UMAP -> Leiden -> marker DE | `alterlab-scanpy` |
+| Reading, reshaping, or concatenating the `.h5ad` object itself | `alterlab-anndata` |
+| Zero-shot annotation or embeddings from a pretrained foundation model | `alterlab-scgpt` |
+| RNA velocity from spliced/unspliced counts (scVelo's EM/dynamical models) | `alterlab-scvelo` |
+| Spatial neighborhood statistics, Moran's I, ligand-receptor on a Visium/Xenium slide | `alterlab-squidpy-spatial` |
+| Bulk RNA-seq differential expression | `alterlab-pydeseq2` |
 
 ## Core Capabilities
 
@@ -179,9 +191,16 @@ See `references/theoretical-foundations.md` for detailed background on the mathe
 
 ```bash
 uv pip install scvi-tools
-# For GPU support
-uv pip install scvi-tools[cuda]
+uv pip install "scvi-tools[cuda]"      # CUDA 12; use [cuda13] for CUDA 13
+uv pip install "scvi-tools[metal]"     # Apple silicon (MPS)
+uv pip install "scvi-tools[autotune]"  # hyperparameter search (Ray Tune)
 ```
+
+Version note (2026-09): scvi-tools 1.5 dropped the JAX backend entirely, so `scvi.model.JaxSCVI`
+and the other Jax-prefixed models no longer exist — everything runs on PyTorch/Lightning (with an
+`mlxSCVI` variant for Apple silicon). `Tangram` also moved to a PyTorch backend in 1.5.0, so
+results can differ slightly from JAX-era runs; re-run rather than mixing old and new outputs in
+one comparison.
 
 ## Best Practices
 

@@ -28,10 +28,10 @@ from datacommons_client import DataCommonsClient
 
 client = DataCommonsClient()
 
-# Resolve by name
+# Resolve by description with an explicit relation expression
 response = client.resolve.fetch(
-    nodes=["California", "Texas"],
-    property="name"
+    node_ids=["California", "Texas"],
+    expression="<-description->dcid"
 )
 ```
 
@@ -58,9 +58,9 @@ response = client.resolve.fetch_dcids_by_name(
     entity_type="City"
 )
 
-# Access results
-for name, result in response.to_dict().items():
-    print(f"{name}: {result['candidates']}")
+# Access results: to_dict() -> {"entities": [{"node": ..., "candidates": [...]}]}
+for entity in response.to_dict()["entities"]:
+    print(f"{entity['node']}: {entity.get('candidates', [])}")
 ```
 
 ### 3. fetch_dcids_by_wikidata_id()
@@ -86,21 +86,22 @@ Geographic coordinate lookup to find the place at specific lat/long coordinates.
 - `latitude`: Latitude coordinate
 - `longitude`: Longitude coordinate
 
-**Returns:** Single DCID string for the place at those coordinates
+**Returns:** a `ResolveResponse` (like the other methods), with the places containing
+the point as candidates — not a bare DCID string
 
 **Example Usage:**
 ```python
-# Find place at coordinates
-dcid = client.resolve.fetch_dcid_by_coordinates(
-    latitude=37.7749,
-    longitude=-122.4194
+# Find places at coordinates (lat/long are passed as strings)
+response = client.resolve.fetch_dcid_by_coordinates(
+    latitude="37.7749",
+    longitude="-122.4194"
 )
-# Returns DCID for San Francisco
+candidates = response.to_dict()["entities"][0].get("candidates", [])
 ```
 
 ## Response Structure
 
-All methods (except `fetch_dcid_by_coordinates`) return a `ResolveResponse` object containing:
+All methods return a `ResolveResponse` object containing:
 - **node**: The search term provided
 - **candidates**: List of matching DCIDs with optional metadata
   - Each candidate may include `dominantType` field for disambiguation
@@ -114,15 +115,16 @@ All methods (except `fetch_dcid_by_coordinates`) return a `ResolveResponse` obje
 response = client.resolve.fetch_dcids_by_name(names=["Springfield"])
 
 # May return multiple candidates since many cities named Springfield exist
-# {
-#   "Springfield": {
-#     "candidates": [
+# response.to_dict():
+# {"entities": [
+#   {"node": "Springfield",
+#    "candidates": [
 #       {"dcid": "geoId/1767000", "dominantType": "City"},  # Springfield, IL
 #       {"dcid": "geoId/2567000", "dominantType": "City"},  # Springfield, MA
 #       ...
-#     ]
-#   }
-# }
+#    ]}
+# ]}
+# response.to_flat_dict() -> {"Springfield": ["geoId/1767000", "geoId/2567000", ...]}
 ```
 
 ## Common Use Cases
@@ -138,9 +140,9 @@ resolve_response = client.resolve.fetch_dcids_by_name(
 
 # Step 2: Extract DCIDs
 dcids = []
-for name, result in resolve_response.to_dict().items():
-    if result["candidates"]:
-        dcids.append(result["candidates"][0]["dcid"])
+for entity in resolve_response.to_dict()["entities"]:
+    if entity.get("candidates"):
+        dcids.append(entity["candidates"][0]["dcid"])
 
 # Step 3: Query data using DCIDs
 data_response = client.observation.fetch(
@@ -156,7 +158,7 @@ When multiple candidates exist, use `dominantType` or be more specific:
 ```python
 # Ambiguous name
 response = client.resolve.fetch_dcids_by_name(names=["Springfield"])
-candidates = response.to_dict()["Springfield"]["candidates"]
+candidates = response.to_dict()["entities"][0].get("candidates", [])
 
 # Filter by type or choose based on context
 city_candidates = [c for c in candidates if c.get("dominantType") == "City"]
@@ -183,9 +185,9 @@ response = client.resolve.fetch_dcids_by_name(names=places)
 
 # Build mapping of name to DCID
 name_to_dcid = {}
-for name, result in response.to_dict().items():
-    if result["candidates"]:
-        name_to_dcid[name] = result["candidates"][0]["dcid"]
+for entity in response.to_dict()["entities"]:
+    if entity.get("candidates"):
+        name_to_dcid[entity["node"]] = entity["candidates"][0]["dcid"]
 ```
 
 ### Use Case 4: Coordinate-Based Queries
@@ -193,11 +195,13 @@ for name, result in response.to_dict().items():
 Find the administrative place for a location:
 ```python
 # User provides coordinates, find the place
-latitude, longitude = 37.7749, -122.4194
-dcid = client.resolve.fetch_dcid_by_coordinates(
+latitude, longitude = "37.7749", "-122.4194"
+coord = client.resolve.fetch_dcid_by_coordinates(
     latitude=latitude,
     longitude=longitude
 )
+candidates = coord.to_dict()["entities"][0].get("candidates", [])
+dcid = candidates[0]["dcid"]  # check `candidates` is non-empty first
 
 # Now query data for that place
 response = client.observation.fetch(
@@ -221,9 +225,9 @@ response = client.resolve.fetch_dcids_by_wikidata_id(
 
 # Extract DCIDs for further queries
 dcids = []
-for wid, result in response.to_dict().items():
-    if result["candidates"]:
-        dcids.append(result["candidates"][0]["dcid"])
+for entity in response.to_dict()["entities"]:
+    if entity.get("candidates"):
+        dcids.append(entity["candidates"][0]["dcid"])
 ```
 
 ## Important Limitations

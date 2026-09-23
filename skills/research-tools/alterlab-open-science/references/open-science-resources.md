@@ -129,6 +129,12 @@ Is your funder Plan S / cOAlition S compliant?
     --> Option 2: Use Rights Retention Strategy + Green OA
   NO --> Continue to next question
 
+Is the work NIH-funded (manuscript accepted on/after 1 Jul 2025) or from an
+NSF award made on/after 22 Jan 2026?
+  YES --> Accepted manuscript must be public on the publication date
+    --> NIH: deposit in PubMed Central; NSF: deposit in NSF-PAR (no embargo)
+  NO --> Continue to next question
+
 Does your institution have OA mandates?
   YES --> Check specific requirements (may allow Green OA with embargo)
   NO --> Continue to next question
@@ -225,12 +231,12 @@ my-research-project/
 
 | Factor | Zenodo | Dryad | Figshare | OSF | ICPSR |
 |--------|--------|-------|----------|-----|-------|
-| Cost | Free | $150+ per submission | Free (basic) | Free | Free (depositor) |
+| Cost | Free | Data Publishing Charge from $150 (tiered by size) unless a member institution/journal covers it | Free (basic) | Free | Free (depositor) |
 | Curation | Minimal | Full curation | Minimal | Minimal | Full curation |
-| Max size | 50 GB | No limit | 5 GB (free) | 50 GB | No limit |
+| Max size | 50 GB per record (100 files) | 300 GB via web upload (larger by arrangement) | 20 GB per file / 20 GB storage (free) | 5 GB per file; 5 GB private / 50 GB public per project | No limit |
 | Versioning | Yes | Yes | Yes | Yes | Limited |
 | Embargo | Yes | Yes | Yes | Yes | Yes |
-| Access control | No | No | No | Yes | Yes |
+| Access control | Yes (restricted files; metadata stays public) | No | No | Yes | Yes |
 | GitHub integration | Yes (automatic DOI) | No | Yes | Yes | No |
 | Best for | Code + data bundles | Curated datasets | Mixed media | Collaborative projects | Social science |
 
@@ -283,12 +289,12 @@ my-research-project/
 
 ### Key Policy Documents
 - cOAlition S Plan S: https://www.coalition-s.org/
-- NIH Data Management and Sharing Policy: https://sharing.nih.gov/
-- NSF Public Access Plan: https://new.nsf.gov/public-access
+- NIH Data Management and Sharing Policy: https://sharing.nih.gov/ (redirects to grants.nih.gov)
+- NSF Public Access: https://www.nsf.gov/public-access
 - UKRI Open Access Policy: https://www.ukri.org/publications/ukri-open-access-policy/
 
 ### Training Resources
-- FOSTER Open Science Training: https://web.archive.org/web/2019/https://www.fosteropenscience.eu/
+- Open Science Training Handbook (FOSTER book sprint, 2018): https://doi.org/10.5281/zenodo.1212496
 - The Turing Way: https://the-turing-way.netlify.app/
 - Software Carpentry: https://software-carpentry.org/
 - Library Carpentry: https://librarycarpentry.org/

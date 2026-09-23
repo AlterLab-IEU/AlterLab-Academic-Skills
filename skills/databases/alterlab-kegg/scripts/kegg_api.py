@@ -7,9 +7,11 @@ All functions return raw response text which can be parsed as needed.
 API Base URL: https://rest.kegg.jp
 Documentation: https://www.kegg.jp/kegg/rest/keggapi.html
 
-IMPORTANT: KEGG API is made available only for academic use by academic users.
+KEGG API is made available only for academic use by academic users, and KEGG
+blocks clients that make more than 3 calls per second, so _fetch() throttles.
 """
 
+import time
 import urllib.request
 import urllib.parse
 import urllib.error
@@ -17,16 +19,23 @@ from typing import Optional, List, Union
 
 
 KEGG_BASE_URL = "https://rest.kegg.jp"
+MIN_INTERVAL_S = 0.35  # stay under KEGG's 3 calls/second limit
+_last_call = 0.0
 
 
-def _fetch(url: str) -> str:
+def _fetch(url: str, timeout: float = 60) -> str:
     """Fetch a KEGG REST URL and return the decoded body.
 
     Returns an 'Error: ...' string on HTTP errors (e.g. 400 bad request,
     404 not found) and on network/URL errors so callers always get text.
     """
+    global _last_call
+    wait = MIN_INTERVAL_S - (time.monotonic() - _last_call)
+    if wait > 0:
+        time.sleep(wait)
+    _last_call = time.monotonic()
     try:
-        with urllib.request.urlopen(url) as response:
+        with urllib.request.urlopen(url, timeout=timeout) as response:
             return response.read().decode("utf-8")
     except urllib.error.HTTPError as e:
         return f"Error: {e.code} - {e.reason}"
@@ -190,7 +199,8 @@ def kegg_link(target_db: str, source_db: str) -> str:
     Find related entries across KEGG databases.
 
     Args:
-        target_db: Target database (e.g., 'pathway', 'enzyme', 'genes')
+        target_db: Target database (e.g., 'pathway', 'enzyme', 'ko', or an
+                   organism code such as 'hsa' for genes; 'genes' gives HTTP 400)
         source_db: Source database or entry (e.g., 'hsa', 'pathway', 'hsa:10458')
 
     Returns:
@@ -200,8 +210,8 @@ def kegg_link(target_db: str, source_db: str) -> str:
         # Find pathways linked to human genes
         links = kegg_link('pathway', 'hsa')
 
-        # Find genes in a specific pathway
-        genes = kegg_link('genes', 'hsa00010')
+        # Find genes in a specific pathway (organism code as target)
+        genes = kegg_link('hsa', 'hsa00010')
 
         # Find pathways for a specific gene
         pathways = kegg_link('pathway', 'hsa:10458')

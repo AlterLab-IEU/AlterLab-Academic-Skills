@@ -91,6 +91,21 @@
           "value": "networkx"
         }
       ]
+    },
+    {
+      "id": "near-miss-alterlab-deepchem",
+      "prompt": "I want to benchmark solubility and toxicity prediction on the MoleculeNet datasets, comparing ECFP fingerprints with a pretrained ChemBERTa model and using scaffold splits. What's the quickest end-to-end setup?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-deepchem. The request is an end-to-end molecular ML benchmark (MoleculeNet loaders, featurizers such as ECFP, pretrained ChemBERTa, scaffold splitting), which DeepChem packages directly, rather than hand-building GNN layers and training loops in PyTorch Geometric.",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-deepchem"
+        }
+      ]
     }
   ]
 }

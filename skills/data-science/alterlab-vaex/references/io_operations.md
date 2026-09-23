@@ -30,7 +30,7 @@ df = vaex.open(['data_2020.hdf5', 'data_2021.hdf5', 'data_2022.hdf5'])
 **Advantages:**
 - Instant loading (memory-mapped, no data read into RAM)
 - Optimal performance for Vaex operations
-- Supports compression
+- Uncompressed by design: `export_hdf5` has no compression option, because contiguous arrays are what make memory-mapping possible
 - Random access patterns
 
 ### Apache Arrow Files
@@ -128,8 +128,8 @@ df.export_hdf5('output.hdf5', progress=True)
 # Export subset of columns
 df[['col1', 'col2', 'col3']].export_hdf5('subset.hdf5')
 
-# Export with compression
-df.export_hdf5('compressed.hdf5', compression='gzip')
+# export_hdf5 has no compression argument; for smaller files use
+# export_parquet(..., compression=...) or export_feather(..., compression='zstd')
 ```
 
 ### Export to Arrow
@@ -305,8 +305,10 @@ arrow_table = pa.table({
 })
 df = vaex.from_arrow_table(arrow_table)
 
-# From Arrow file
-arrow_table = pa.ipc.open_file('data.arrow').read_all()
+# From an Arrow IPC file (vaex.open('data.arrow') does this directly).
+# df.export_arrow() writes the IPC *stream* format by default (as_stream=True),
+# so such files need pa.ipc.open_stream; pa.ipc.open_file raises "Not an Arrow file".
+arrow_table = pa.ipc.open_stream('data.arrow').read_all()
 df = vaex.from_arrow_table(arrow_table)
 ```
 
@@ -437,15 +439,14 @@ for col in df.get_column_names():
 
 ## File Compression
 
-### HDF5 Compression
+### HDF5 (always uncompressed)
+
+`export_hdf5` has no `compression` argument: vaex writes contiguous, uncompressed arrays so the
+file can be memory-mapped. When disk size matters more than open time, use Parquet (below) or
+compressed Feather:
 
 ```python
-# Export with compression
-df.export_hdf5('compressed.hdf5', compression='gzip')
-df.export_hdf5('compressed.hdf5', compression='lzf')
-df.export_hdf5('compressed.hdf5', compression='blosc')
-
-# Trade-off: Smaller file size, slightly slower I/O
+df.export_feather('data.feather', compression='zstd')  # default codec is 'lz4'
 ```
 
 ### Parquet Compression
@@ -545,11 +546,11 @@ df_materialized.export_hdf5('output.hdf5')
 ### 4. Use Compression Wisely
 
 ```python
-# For archival or infrequently accessed data
-df.export_hdf5('archived.hdf5', compression='gzip')
+# For archival or infrequently accessed data: compressed Parquet
+df.export_parquet('archived.parquet', compression='zstd')
 
-# For active work (faster I/O)
-df.export_hdf5('working.hdf5')  # No compression
+# For active work (fastest open): uncompressed, memory-mapped HDF5
+df.export_hdf5('working.hdf5')
 ```
 
 ### 5. Checkpoint Long Pipelines
@@ -620,12 +621,14 @@ df_prod.state_load('production_state.json')
 ### Pattern: Archiving with Compression
 
 ```python
-# Archive old data with compression
+# Archive old data as compressed Parquet (vaex HDF5 exports are always uncompressed)
 df_2020 = vaex.open('data_2020.hdf5')
-df_2020.export_hdf5('archive_2020.hdf5', compression='gzip')
+df_2020.export_parquet('archive_2020.parquet', compression='zstd')
 
-# Remove uncompressed original
+# Remove the uncompressed original once the archive is verified
 import os
+assert len(vaex.open('archive_2020.parquet')) == len(df_2020)
+df_2020.close()
 os.remove('data_2020.hdf5')
 ```
 

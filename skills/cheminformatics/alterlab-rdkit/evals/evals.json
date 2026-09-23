@@ -40,6 +40,15 @@
         { "type": "output_contains", "value": "datamol" },
         { "type": "behavior", "value": "Recognizes that a simple high-level standard workflow is datamol's job and defers, reserving RDKit for low-level control." }
       ]
+    },
+    {
+      "id": "near-miss-pubchem",
+      "prompt": "What is the PubChem CID of caffeine, its canonical SMILES and XLogP, and which bioassays has it been active in?",
+      "expected_output": "Does NOT invoke alterlab-rdkit; defers to alterlab-pubchem. The user wants to look up a known compound's identifiers, catalogued properties, and bioassay records from PubChem, which is a database query (PUG-REST / PubChemPy), not local RDKit structure manipulation or descriptor computation.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-pubchem" }
+      ]
     }
   ]
 }

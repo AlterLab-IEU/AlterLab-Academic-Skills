@@ -1,289 +1,168 @@
 #!/usr/bin/env python3
 """
-USPTO PatentSearch API Helper
+USPTO patent search via the Open Data Portal (ODP) Patent File Wrapper API.
 
-Provides functions for searching and retrieving patent data using the USPTO
-PatentSearch API (ElasticSearch-based system, replaced legacy PatentsView in May 2025).
+Status (verified 2026-09): the PatentsView PatentSearch API
+(search.patentsview.org) paused when PatentsView migrated to the ODP on
+2026-03-20 and its hostname no longer resolves; USPTO has given no date for
+its return, and old PatentsView keys do not work on ODP. This client therefore
+searches the ODP Patent File Wrapper instead: bibliographic data for
+applications filed since 2001-01-01 (granted and pending), refreshed daily.
+It has no claims/abstract full text — use ODP bulk grant/pgpub XML for that.
 
-Requires:
-    - requests library: pip install requests
-    - USPTO API key from https://account.uspto.gov/api-manager/
+API:  POST https://api.uspto.gov/api/v1/patent/applications/search
+Auth: "X-API-KEY" header with an ODP key (data.uspto.gov -> APIs -> Getting
+      Started; a USPTO.gov account is required). Environment variable:
+      USPTO_ODP_API_KEY (USPTO_API_KEY is accepted as a fallback).
 
-Environment variables:
-    USPTO_API_KEY - Your USPTO API key
+Query body (all parts optional):
+    {"q": "applicationMetaData.inventionTitle:\"quantum computing\"",
+     "filters": [{"name": "applicationMetaData.applicationTypeLabelName", "value": ["Utility"]}],
+     "rangeFilters": [{"field": "applicationMetaData.grantDate",
+                       "valueFrom": "2024-01-01", "valueTo": "2024-12-31"}],
+     "sort": [{"field": "applicationMetaData.filingDate", "order": "desc"}],
+     "fields": ["applicationNumberText", "applicationMetaData"],
+     "pagination": {"offset": 0, "limit": 25}}
+Response: {"count": N, "patentFileWrapperDataBag": [{"applicationNumberText",
+           "applicationMetaData": {inventionTitle, patentNumber, filingDate, grantDate,
+           applicationStatusDescriptionText, firstApplicantName, firstInventorName,
+           cpcClassificationBag, ...}, ...}]}
 """
 
+import argparse
+import json
 import os
 import sys
-import json
-import requests
 from typing import Dict, List, Optional
+
+import requests
+
+ODP_BASE = "https://api.uspto.gov/api/v1/patent/applications"
 
 
 class PatentSearchClient:
-    """Client for USPTO PatentSearch API."""
+    """Bibliographic patent/application search on the ODP Patent File Wrapper."""
 
-    BASE_URL = "https://search.patentsview.org/api/v1"
-
-    def __init__(self, api_key: Optional[str] = None):
-        """
-        Initialize client with API key.
-
-        Args:
-            api_key: PatentsView API key (if not provided, uses PATENTSVIEW_API_KEY env var)
-        """
-        self.api_key = api_key or os.getenv("PATENTSVIEW_API_KEY")
+    def __init__(self, api_key: Optional[str] = None, timeout: int = 60):
+        self.api_key = api_key or os.getenv("USPTO_ODP_API_KEY") or os.getenv("USPTO_API_KEY")
         if not self.api_key:
-            raise ValueError("API key required. Set PATENTSVIEW_API_KEY environment variable or pass to constructor.")
+            raise ValueError(
+                "ODP API key required: set USPTO_ODP_API_KEY (key from data.uspto.gov, "
+                "APIs -> Getting Started) or pass api_key=."
+            )
+        self.headers = {"X-API-KEY": self.api_key, "Accept": "application/json"}
+        self.timeout = timeout
 
-        self.headers = {
-            "X-Api-Key": self.api_key,
-            "Content-Type": "application/json"
-        }
-
-    def _request(self, endpoint: str, query: Dict, fields: Optional[List[str]] = None,
-                 sort: Optional[List[Dict]] = None, options: Optional[Dict] = None) -> Dict:
-        """
-        Make a request to the PatentSearch API.
-
-        Args:
-            endpoint: API endpoint (e.g., "patent", "inventor")
-            query: Query dictionary
-            fields: List of fields to return
-            sort: Sort specification
-            options: Pagination and other options
-
-        Returns:
-            API response as dictionary
-        """
-        url = f"{self.BASE_URL}/{endpoint}"
-
-        data = {"q": query}
-        if fields:
-            data["f"] = fields
+    def search(self, q: Optional[str] = None, filters: Optional[List[Dict]] = None,
+               range_filters: Optional[List[Dict]] = None, sort: Optional[List[Dict]] = None,
+               fields: Optional[List[str]] = None, offset: int = 0, limit: int = 25) -> Dict:
+        """POST a Patent File Wrapper search; returns {"count", "patentFileWrapperDataBag"}."""
+        body: Dict = {"pagination": {"offset": offset, "limit": limit}}
+        if q:
+            body["q"] = q
+        if filters:
+            body["filters"] = filters
+        if range_filters:
+            body["rangeFilters"] = range_filters
         if sort:
-            data["s"] = sort
-        if options:
-            data["o"] = options
-
-        response = requests.post(url, headers=self.headers, json=data)
+            body["sort"] = sort
+        if fields:
+            body["fields"] = fields
+        response = requests.post(f"{ODP_BASE}/search", headers=self.headers, json=body,
+                                 timeout=self.timeout)
+        if response.status_code == 404:
+            # ODP signals an empty result with 404 "No matching records found"
+            return {"count": 0, "patentFileWrapperDataBag": []}
         response.raise_for_status()
-
         return response.json()
 
-    def search_patents(self, query: Dict, fields: Optional[List[str]] = None,
-                       sort: Optional[List[Dict]] = None, page: int = 1,
-                       per_page: int = 100) -> Dict:
-        """
-        Search for patents.
-
-        Args:
-            query: Query dictionary (see PatentSearch API docs for syntax)
-            fields: Fields to return (defaults to essential fields)
-            sort: Sort specification
-            page: Page number
-            per_page: Results per page (max 1000)
-
-        Returns:
-            Search results with patents array
-
-        Example:
-            # Search by keyword
-            results = client.search_patents({
-                "patent_abstract": {"_text_all": ["machine", "learning"]}
-            })
-
-            # Search by date range
-            results = client.search_patents({
-                "patent_date": {"_gte": "2024-01-01", "_lte": "2024-12-31"}
-            })
-        """
-        if fields is None:
-            fields = [
-                "patent_id", "patent_title", "patent_date",
-                "patent_abstract", "assignees",
-                "inventors"
-            ]
-
-        if sort is None:
-            sort = [{"patent_date": "desc"}]
-
-        options = {"page": page, "per_page": per_page}
-
-        return self._request("patent", query, fields, sort, options)
-
     def get_patent(self, patent_number: str) -> Optional[Dict]:
-        """
-        Get details for a specific patent by number.
+        """File-wrapper record for a granted patent number (e.g. "11234567")."""
+        number = patent_number.upper().replace("US", "").replace(",", "").strip()
+        result = self.search(
+            filters=[{"name": "applicationMetaData.patentNumber", "value": [number]}], limit=1
+        )
+        bag = result.get("patentFileWrapperDataBag") or []
+        return bag[0] if bag else None
 
-        Args:
-            patent_number: Patent number (with or without commas)
-
-        Returns:
-            Patent data dictionary or None if not found
-        """
-        # Remove commas from patent number
-        patent_number = patent_number.replace(",", "")
-
-        query = {"patent_number": patent_number}
-        fields = [
-            "patent_number", "patent_title", "patent_date", "patent_abstract",
-            "patent_type", "inventor_name", "assignee_organization",
-            "cpc_subclass_id", "cited_patent_number", "citedby_patent_number"
-        ]
-
-        result = self._request("patent", query, fields)
-
-        if result.get("patents"):
-            return result["patents"][0]
-        return None
+    def search_by_title(self, phrase: str, **kwargs) -> Dict:
+        return self.search(q=f'applicationMetaData.inventionTitle:"{phrase}"', **kwargs)
 
     def search_by_inventor(self, inventor_name: str, **kwargs) -> Dict:
-        """
-        Search patents by inventor name.
+        return self.search(q=f'applicationMetaData.firstInventorName:"{inventor_name}"', **kwargs)
 
-        Args:
-            inventor_name: Inventor name (use _text_phrase for exact match)
-            **kwargs: Additional search parameters
+    def search_by_applicant(self, applicant_name: str, **kwargs) -> Dict:
+        """First-named applicant. Current owners come from /{app}/assignment instead."""
+        return self.search(q=f'applicationMetaData.firstApplicantName:"{applicant_name}"', **kwargs)
 
-        Returns:
-            Search results
-        """
-        query = {"inventor_name": {"_text_phrase": inventor_name}}
-        return self.search_patents(query, **kwargs)
-
-    def search_by_assignee(self, assignee_name: str, **kwargs) -> Dict:
-        """
-        Search patents by assignee/company name.
-
-        Args:
-            assignee_name: Assignee/company name
-            **kwargs: Additional search parameters
-
-        Returns:
-            Search results
-        """
-        query = {"assignee_organization": {"_text_any": assignee_name.split()}}
-        return self.search_patents(query, **kwargs)
-
-    def search_by_classification(self, cpc_code: str, **kwargs) -> Dict:
-        """
-        Search patents by CPC classification code.
-
-        Args:
-            cpc_code: CPC subclass code (e.g., "H04N", "G06F")
-            **kwargs: Additional search parameters
-
-        Returns:
-            Search results
-        """
-        query = {"cpc_subclass_id": cpc_code}
-        return self.search_patents(query, **kwargs)
-
-    def search_by_date_range(self, start_date: str, end_date: str, **kwargs) -> Dict:
-        """
-        Search patents by date range.
-
-        Args:
-            start_date: Start date (YYYY-MM-DD)
-            end_date: End date (YYYY-MM-DD)
-            **kwargs: Additional search parameters
-
-        Returns:
-            Search results
-        """
-        query = {
-            "patent_date": {
-                "_gte": start_date,
-                "_lte": end_date
-            }
-        }
-        return self.search_patents(query, **kwargs)
-
-    def advanced_search(self, keywords: List[str], assignee: Optional[str] = None,
-                        start_date: Optional[str] = None, end_date: Optional[str] = None,
-                        cpc_codes: Optional[List[str]] = None, **kwargs) -> Dict:
-        """
-        Perform advanced search with multiple criteria.
-
-        Args:
-            keywords: List of keywords to search in abstract/title
-            assignee: Assignee/company name
-            start_date: Start date (YYYY-MM-DD)
-            end_date: End date (YYYY-MM-DD)
-            cpc_codes: List of CPC classification codes
-            **kwargs: Additional search parameters
-
-        Returns:
-            Search results
-        """
-        conditions = []
-
-        # Keyword search in abstract
-        if keywords:
-            conditions.append({
-                "patent_abstract": {"_text_all": keywords}
-            })
-
-        # Assignee filter
-        if assignee:
-            conditions.append({
-                "assignee_organization": {"_text_any": assignee.split()}
-            })
-
-        # Date range
-        if start_date and end_date:
-            conditions.append({
-                "patent_date": {"_gte": start_date, "_lte": end_date}
-            })
-
-        # CPC classification
-        if cpc_codes:
-            conditions.append({
-                "cpc_subclass_id": cpc_codes
-            })
-
-        query = {"_and": conditions} if len(conditions) > 1 else conditions[0]
-
-        return self.search_patents(query, **kwargs)
+    def search_by_date_range(self, start_date: str, end_date: str,
+                             date_field: str = "applicationMetaData.grantDate", **kwargs) -> Dict:
+        """Dates as YYYY-MM-DD; date_field may also be applicationMetaData.filingDate."""
+        return self.search(
+            range_filters=[{"field": date_field, "valueFrom": start_date, "valueTo": end_date}],
+            **kwargs,
+        )
 
 
-def main():
-    """Command-line interface for patent search."""
-    if len(sys.argv) < 2:
-        print("Usage:")
-        print("  python patent_search.py <patent_number>")
-        print("  python patent_search.py --inventor <name>")
-        print("  python patent_search.py --assignee <company>")
-        print("  python patent_search.py --keywords <word1> <word2> ...")
-        sys.exit(1)
+def _summarize(result: Dict) -> Dict:
+    rows = []
+    for record in result.get("patentFileWrapperDataBag") or []:
+        meta = record.get("applicationMetaData") or {}
+        rows.append({
+            "application": record.get("applicationNumberText"),
+            "patent": meta.get("patentNumber"),
+            "title": meta.get("inventionTitle"),
+            "filed": meta.get("filingDate"),
+            "granted": meta.get("grantDate"),
+            "status": meta.get("applicationStatusDescriptionText"),
+            "applicant": meta.get("firstApplicantName"),
+        })
+    return {"count": result.get("count", 0), "results": rows}
 
-    client = PatentSearchClient()
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Search US patents/applications via the USPTO ODP Patent File Wrapper API")
+    parser.add_argument("--q", help='Raw query, e.g. \'applicationMetaData.inventionTitle:"lidar"\'')
+    parser.add_argument("--title", help="Phrase in the invention title")
+    parser.add_argument("--inventor", help="First-named inventor")
+    parser.add_argument("--applicant", help="First-named applicant")
+    parser.add_argument("--patent", help="Look up one granted patent number")
+    parser.add_argument("--granted-from", help="Grant date lower bound (YYYY-MM-DD)")
+    parser.add_argument("--granted-to", help="Grant date upper bound (YYYY-MM-DD)")
+    parser.add_argument("--limit", type=int, default=25)
+    parser.add_argument("--raw", action="store_true", help="Print the full API response")
+    args = parser.parse_args()
 
     try:
-        if sys.argv[1] == "--inventor":
-            results = client.search_by_inventor(" ".join(sys.argv[2:]))
-        elif sys.argv[1] == "--assignee":
-            results = client.search_by_assignee(" ".join(sys.argv[2:]))
-        elif sys.argv[1] == "--keywords":
-            query = {"patent_abstract": {"_text_all": sys.argv[2:]}}
-            results = client.search_patents(query)
-        else:
-            # Assume patent number
-            patent = client.get_patent(sys.argv[1])
-            if patent:
-                results = {"patents": [patent], "count": 1, "total_hits": 1}
-            else:
-                print(f"Patent {sys.argv[1]} not found")
-                sys.exit(1)
-
-        # Print results
-        print(json.dumps(results, indent=2))
-
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        client = PatentSearchClient()
+        if args.patent:
+            print(json.dumps(client.get_patent(args.patent), indent=2))
+            return 0
+        clauses = []
+        if args.q:
+            clauses.append(f"({args.q})")
+        if args.title:
+            clauses.append(f'applicationMetaData.inventionTitle:"{args.title}"')
+        if args.inventor:
+            clauses.append(f'applicationMetaData.firstInventorName:"{args.inventor}"')
+        if args.applicant:
+            clauses.append(f'applicationMetaData.firstApplicantName:"{args.applicant}"')
+        ranges = None
+        if args.granted_from or args.granted_to:
+            ranges = [{"field": "applicationMetaData.grantDate",
+                       "valueFrom": args.granted_from or "1790-01-01",
+                       "valueTo": args.granted_to or "9999-12-31"}]
+        if not clauses and not ranges:
+            parser.error("give --q/--title/--inventor/--applicant, a grant-date range, or --patent")
+        result = client.search(q=" AND ".join(clauses) or None, range_filters=ranges,
+                               limit=args.limit)
+        print(json.dumps(result if args.raw else _summarize(result), indent=2))
+        return 0
+    except (ValueError, requests.RequestException) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

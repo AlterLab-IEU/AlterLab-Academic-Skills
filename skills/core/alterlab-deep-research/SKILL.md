@@ -1,13 +1,13 @@
 ---
 name: alterlab-deep-research
-description: "Runs a 13-agent deep research pipeline for rigorous academic work on any topic across 7 modes (full research, quick brief, paper review, lit-review, fact-check, Socratic guided research dialogue, and systematic review with optional meta-analysis), covering research-question formulation, Socratic mentoring, methodology design, systematic literature search, source verification, cross-source synthesis, risk-of-bias assessment, meta-analysis, APA 7.0 report compilation, editorial and devil's-advocate review, ethics review, and post-research literature monitoring. Use when the request mentions research, deep research, literature review, systematic review, meta-analysis, PRISMA, evidence synthesis, fact-check, guide my research, help me think through, or 研究, 深度研究, 文獻回顧, 文獻探討, 系統性回顧, 後設分析, 事實查核, 引導我的研究, 幫我釐清, 幫我想想, 我不確定要研究什麼, 研究方向, 研究主題. Part of the AlterLab Academic Skills suite."
+description: "Runs a 13-agent deep research pipeline for rigorous academic work on any topic across 7 modes (full research, quick brief, paper review, lit-review, fact-check, Socratic guided research dialogue, and systematic review with optional meta-analysis), covering research-question formulation, Socratic mentoring, methodology design, systematic literature search, source verification, cross-source synthesis, risk-of-bias assessment, meta-analysis, APA 7.0 report compilation, editorial and devil's-advocate review, ethics review, and post-research literature monitoring. Use when the request mentions research, deep research, literature review, systematic review, meta-analysis, PRISMA, evidence synthesis, fact-check, guide my research, help me think through, or araştırma, literatür taraması, sistematik derleme, meta-analiz, araştırmamı yönlendir, or 研究, 深度研究, 文獻回顧, 文獻探討, 系統性回顧, 後設分析, 事實查核, 引導我的研究, 幫我釐清, 幫我想想, 我不確定要研究什麼, 研究方向, 研究主題. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required
 metadata:
   skill-author: AlterLab
-  version: "2.3"
-  last_updated: "2026-03-08"
+  version: "2.4.0"
+  last_updated: "2026-09-23"
 ---
 
 # Deep Research — Universal Academic Research Agent Team
@@ -38,11 +38,13 @@ Guide my research on the impact of declining birth rates on private universities
 
 ---
 
-## Trigger Conditions
+## When to Use This Skill
 
 ### Trigger Keywords
 
 **English**: research, deep research, literature review, systematic review, meta-analysis, PRISMA, evidence synthesis, fact-check, methodology, APA report, academic analysis, policy analysis, guide my research, help me think through, monitor this topic, set up alerts
+
+**Türkçe**: araştırma, derinlemesine araştırma, literatür taraması, literatür incelemesi, sistematik derleme, meta-analiz, kanıt sentezi, doğruluk kontrolü, araştırmamı yönlendir, araştırma sorumu netleştir, araştırma konusu
 
 **繁體中文**: 研究, 深度研究, 文獻回顧, 文獻探討, 系統性回顧, 後設分析, 證據綜整, 事實查核, 研究方法, 學術分析, 政策分析, 引導我的研究, 幫我釐清, 監測這個主題, 設定追蹤
 
@@ -69,6 +71,10 @@ Activate `socratic` mode when the user's **intent** matches any of the following
 | Writing a paper (not researching) | `alterlab-paper-writer` |
 | Reviewing a paper (structured review) | `alterlab-paper-reviewer` |
 | Full research-to-paper pipeline | `alterlab-research-pipeline` |
+| Auditing whether the references in an existing bibliography exist or are retracted | `alterlab-citation-verifier` |
+| Pooling already-extracted effect sizes (random-effects model, forest/funnel plots, Egger's test) in Python or R | `alterlab-meta-analysis` |
+
+In Claude Code, dual-reviewer PRISMA screening of hundreds of records, a literature map, or a claim stress-test with independent agents is packaged as a workflow (`/alterlab-workflows:systematic-review-screening`, `literature-map`, `claim-stress-test`; see `alterlab-research-workflows`) — offer it before hand-building a fan-out.
 
 ### Quick Mode Selection Guide
 
@@ -307,10 +313,10 @@ See `alterlab-research-pipeline/SKILL.md` for the complete workflow.
 | `references/failure_paths.md` | 12 failure scenarios with triggers and recovery paths | all agents |
 | `references/mode_selection_guide.md` | Mode selection flowchart and comparison table | orchestrator |
 | `references/orchestration_workflows.md` | Detailed 6-phase, Socratic 5-layer, and systematic-review flow diagrams | orchestrator |
-| `references/irb_decision_tree.md` | IRB decision tree + Taiwan process + HE quick reference | ethics_review, research_architect |
+| `references/irb_decision_tree.md` | IRB decision tree (US tiers) + Taiwan process + HE quick reference; Turkey via `alterlab-tr-research-ethics` | ethics_review, research_architect |
 | `references/equator_reporting_guidelines.md` | EQUATOR reporting guideline mapping | research_architect, report_compiler |
 | `references/preregistration_guide.md` | Preregistration decision tree + platforms + checklist | research_architect |
-| `references/systematic_review_toolkit.md` | Cochrane v6.4, PRISMA 2020, RoB 2, ROBINS-I, I² guide, GRADE, protocol registration | risk_of_bias, meta_analysis, bibliography, report_compiler |
+| `references/systematic_review_toolkit.md` | Cochrane Handbook v6.5, PRISMA 2020, RoB 2, ROBINS-I (2016 and V2), I² guide, GRADE, protocol registration | risk_of_bias, meta_analysis, bibliography, report_compiler |
 | `references/literature_monitoring_strategies.md` | Google Scholar alerts, PubMed alerts, RSS feeds, Retraction Watch, citation tracking, monitoring cadence | monitoring_agent |
 
 ---
@@ -369,7 +375,7 @@ Unified definitions to prevent inconsistency across agents:
 | **CRITICAL severity** | Issue that, if unresolved, would invalidate a core conclusion or constitute academic misconduct. Requires immediate resolution before pipeline can proceed | All agents |
 | **Source Tier** | tier_1 = top-quartile peer-reviewed journal; tier_2 = other peer-reviewed; tier_3 = academic but not peer-reviewed; tier_4 = grey literature | bibliography_agent, source_verification_agent |
 | **Minimum Source Count** | full = 15+, quick = 5-8, lit-review = 25+, systematic-review = all eligible (no limit), fact-check = 3+ per claim | bibliography_agent |
-| **Verification Threshold** | 100% DOI check + 50% WebSearch spot-check | source_verification_agent, ethics_review_agent |
+| **Verification Threshold** | 100% of sources existence-checked before use (`verify_citations.py` verdicts, WebSearch fallback) + independent WebSearch spot-check of ≥50% of sources (all tier_3/tier_4 first) | bibliography_agent, source_verification_agent, ethics_review_agent |
 
 > **Cross-Skill Reference**: See `shared/handoff_schemas.md` for inter-stage data exchange formats.
 
@@ -391,8 +397,13 @@ alterlab-deep-research -> alterlab-research-pipeline              -> End-to-end 
 
 ## Version History
 
-Current: **v2.3** (see frontmatter `metadata.version`). Latest change: added the
-`systematic-review` mode (PRISMA 2020 pipeline with `risk_of_bias_agent` and
-`meta_analysis_agent`, PRISMA protocol/report templates, `systematic_review_toolkit`
-reference) and the optional post-pipeline `monitoring_agent`, bringing the team to
-13 agents and 7 modes.
+Current: **v2.4** (see frontmatter `metadata.version`). Latest change (2026-09):
+existence verification aligned across agents (every source is checked with
+`alterlab-citation-verifier` before use; no "unverifiable but kept" bucket), the
+Socratic stopping rules consolidated to one consistent set, and reporting standards
+brought current (Cochrane Handbook v6.5, ROBINS-I V2, CONSORT 2025, SPIRIT 2025,
+TRIPOD+AI). v2.3 added the `systematic-review` mode (PRISMA 2020 pipeline with
+`risk_of_bias_agent` and `meta_analysis_agent`) and the optional post-pipeline
+`monitoring_agent`, bringing the team to 13 agents and 7 modes.
+
+Part of the AlterLab Academic Skills suite.

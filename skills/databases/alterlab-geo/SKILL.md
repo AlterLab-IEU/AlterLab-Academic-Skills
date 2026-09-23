@@ -6,7 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(uv:*)
 compatibility: Keyless NCBI E-utilities REST API (email required by NCBI); optional NCBI API key raises rate limits
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # GEO Database
@@ -18,6 +19,16 @@ The Gene Expression Omnibus (GEO) is NCBI's public repository for high-throughpu
 ## When to Use This Skill
 
 Use this skill when searching for gene expression datasets, retrieving experimental data, downloading raw and processed files, querying expression profiles, or integrating GEO data into computational analysis workflows.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Raw FASTQ reads by SRA/ENA run accession | `alterlab-ena` |
+| Reference normal-tissue expression (median TPM, eQTLs) | `alterlab-gtex` |
+| Harmonized single-cell expression across studies (CELLxGENE Census) | `alterlab-cellxgene` |
+| Running differential expression on a count matrix you already have | `alterlab-pydeseq2` |
+| Tumor mutations / copy number in cancer cohorts | `alterlab-cbioportal` |
 
 ## Core Workflow
 
@@ -150,7 +161,7 @@ Entrez.api_key = "your_api_key_here"
 - **GEO Submission Guidelines:** https://www.ncbi.nlm.nih.gov/geo/info/submission.html
 - **GEOparse Documentation:** https://geoparse.readthedocs.io/
 - **E-utilities Documentation:** https://www.ncbi.nlm.nih.gov/books/NBK25501/
-- **GEO FTP Site:** ftp://ftp.ncbi.nlm.nih.gov/geo/
+- **GEO FTP Site:** https://ftp.ncbi.nlm.nih.gov/geo/ (same tree as ftp://ftp.ncbi.nlm.nih.gov/geo/)
 - **GEO2R Tool:** https://www.ncbi.nlm.nih.gov/geo/geo2r/
 - **NCBI API Keys:** https://ncbiinsights.ncbi.nlm.nih.gov/2017/11/02/new-api-keys-for-the-e-utilities/
 - **Biopython Tutorial:** https://biopython.org/DIST/docs/tutorial/Tutorial.html

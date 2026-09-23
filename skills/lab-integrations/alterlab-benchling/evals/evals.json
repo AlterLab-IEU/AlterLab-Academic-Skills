@@ -4,7 +4,7 @@
     {
       "id": "register-dna-sequences-sdk",
       "prompt": "I have a FASTA file of 40 plasmid constructs I need to load into our Benchling registry. Write a script that creates each as a circular DNA sequence in folder fld_abc123 and registers it.",
-      "expected_output": "Invokes alterlab-benchling. Uses the benchling-sdk Python client (Benchling + ApiKeyAuth) and benchling.dna_sequences.create with DnaSequenceCreate (bases, is_circular=True, folder_id), parsing the FASTA with Bio.SeqIO, and registers entities by setting registry_id plus a naming_strategy (NEW_IDS or IDS_FROM_NAMES). Should not pass both entity_registry_id and naming_strategy together.",
+      "expected_output": "Invokes alterlab-benchling. Uses the benchling-sdk Python client (Benchling + ApiKeyAuth) and benchling.dna_sequences.create with DnaSequenceCreate (bases, is_circular=True, folder_id), parsing the FASTA with Bio.SeqIO, and registers entities by setting registry_id plus a naming_strategy given as the NamingStrategy enum (NamingStrategy.NEW_IDS or NamingStrategy.IDS_FROM_NAMES), not a bare string. Should not pass both entity_registry_id and naming_strategy together.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "DnaSequenceCreate" },
@@ -14,7 +14,7 @@
     {
       "id": "inventory-container-audit",
       "prompt": "Can you script an audit of every container in box box_abc123 in our Benchling inventory, printing each container's name and barcode?",
-      "expected_output": "Invokes alterlab-benchling. Uses benchling.containers.list(parent_storage_id=...) and iterates the paginated generator (for page in ...: for container in page) printing container.name and container.barcode, following the inventory-management capability.",
+      "expected_output": "Invokes alterlab-benchling. Uses benchling.containers.list(ancestor_storage_id=...) (list() has no parent_storage_id filter) and iterates the paginated generator (for page in ...: for container in page) printing container.name and container.barcode, following the inventory-management capability.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Iterates the Benchling containers list generator page-by-page rather than assuming a flat list." }
@@ -32,7 +32,7 @@
     {
       "id": "eln-entry-and-workflow-task",
       "prompt": "Automate creating a Benchling ELN entry for today's experiment and open a PCR Amplification workflow task assigned to a teammate.",
-      "expected_output": "Invokes alterlab-benchling. Uses benchling.entries.create_entry with EntryCreate and benchling.workflow_tasks.create with WorkflowTaskCreate (workflow_id, assignee_id, fields), covering the notebook and workflow capabilities.",
+      "expected_output": "Invokes alterlab-benchling. Uses benchling.entries.create_entry with EntryCreate and benchling.workflow_tasks.create with WorkflowTaskCreate (workflow_task_group_id, assignee_id, fields), covering the notebook and workflow capabilities.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Creates an ELN entry and a workflow task via the benchling-sdk entries and workflow_tasks services." }
@@ -50,7 +50,7 @@
     {
       "id": "near-miss-protocolsio",
       "prompt": "Help me search protocols.io for a CRISPR-Cas9 protocol, create my own version with steps and materials, and publish it with a DOI.",
-      "expected_output": "Does NOT invoke this skill; defers to alterlab-protocolsio. The user is managing protocols on protocols.io (search, steps/materials, DOI publishing via the protocols.io API v3), not Benchling registry/inventory/ELN data.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-protocolsio. The user is managing protocols on protocols.io (search, steps/materials, DOI publishing via the protocols.io API v3/v4), not Benchling registry/inventory/ELN data.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-protocolsio" }

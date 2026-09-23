@@ -159,8 +159,8 @@ For recurrent networks and transformers:
 
 - **HuggingFaceModel**: General wrapper for HF transformers
 - **Chemberta**: Chemical BERT for molecular property prediction
-- **MoLFormer**: Molecular transformer architecture
-- **ProtBERT**: Protein sequence BERT
+- **MoLFormer**: Molecular transformer architecture (nightly 2.8.1.dev builds only; not in 2.8.0)
+- **ProtBERT**: Protein sequence BERT (nightly 2.8.1.dev builds only; not in 2.8.0)
 - **DeepAbLLM**: Antibody large language models
 
 ### Model Selection Guide
@@ -235,7 +235,7 @@ Common evaluation metrics available in `dc.metrics`:
 ### Regression Metrics
 - **mean_absolute_error**: MAE
 - **mean_squared_error**: MSE
-- **root_mean_squared_error**: RMSE
+- **rms_score**: RMSE (there is no `root_mean_squared_error` in `dc.metrics`)
 - **r2_score**: R² coefficient of determination
 - **pearson_r2_score**: Pearson correlation
 - **spearman_correlation**: Spearman rank correlation
@@ -297,7 +297,13 @@ model.fit(train)
 
 ### Pattern 3: Transfer Learning with Pretrained Models
 ```python
-model = dc.models.GroverModel(task='classification', n_tasks=1)
+# GroverModel needs task='finetuning'|'pretraining', mode, feature dims, and
+# atom/bond vocabularies; inputs must come from dc.feat.GroverFeaturizer.
+# No pretrained weights are downloaded (see the GroverModel docstring for the full recipe).
+model = dc.models.GroverModel(node_fdim=151, edge_fdim=165, hidden_size=128,
+                              atom_vocab=atom_vocab, bond_vocab=bond_vocab,
+                              features_dim=2048, functional_group_size=85,
+                              task='finetuning', mode='classification', n_tasks=1)
 model.fit(train_dataset)
 predictions = model.predict(test_dataset)
 ```

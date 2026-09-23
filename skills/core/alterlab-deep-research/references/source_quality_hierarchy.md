@@ -159,7 +159,7 @@ Not all fields use the same evidence hierarchy. Adjust expectations:
 - [ ] No retraction policy or ethics guidelines
 
 ### Verification Resources
-- Beall's List (unofficial, but useful starting point)
+- Beall's List — unmaintained since January 2017; archived copies are historical leads only, never a verdict on a journal today
 - Cabell's Predatory Reports (subscription-based)
 - DOAJ (whitelist of legitimate OA journals)
 - COPE member directory

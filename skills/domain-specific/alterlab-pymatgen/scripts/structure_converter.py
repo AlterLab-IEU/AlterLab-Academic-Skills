@@ -17,6 +17,7 @@ Examples:
 """
 
 import argparse
+import glob
 import sys
 from pathlib import Path
 from typing import List
@@ -24,7 +25,7 @@ from typing import List
 try:
     from pymatgen.core import Structure
 except ImportError:
-    print("Error: pymatgen is not installed. Install with: pip install pymatgen")
+    print("Error: pymatgen is not installed. Install with: uv pip install pymatgen")
     sys.exit(1)
 
 
@@ -52,7 +53,7 @@ def convert_structure(input_path: Path, output_path: Path = None, output_format:
             print("Error: Must specify either output_path or output_format")
             return False
 
-        # Write structure
+        # Write structure (format inferred from the output file name)
         struct.to(filename=str(output_path))
         print(f"✓ Wrote structure to {output_path}")
 
@@ -90,8 +91,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Supported formats:
-  Input:  CIF, POSCAR, CONTCAR, XYZ, PDB, JSON, YAML, and many more
-  Output: CIF, POSCAR, XYZ, PDB, JSON, YAML, XSF, and many more
+  Input:  CIF, POSCAR, CONTCAR, vasprun.xml, JSON, YAML, and many more
+  Output: CIF, POSCAR (.poscar/.vasp), JSON, YAML, XSF, CSSR, and more
+          (XYZ/PDB are molecule formats: use Molecule or Open Babel instead)
 
 Examples:
   %(prog)s POSCAR structure.cif
@@ -114,7 +116,7 @@ Examples:
 
     parser.add_argument(
         "--format", "-f",
-        help="Output format (e.g., cif, poscar, json, yaml, xyz)"
+        help="Output format (e.g., cif, poscar, json, yaml, xsf)"
     )
 
     parser.add_argument(
@@ -125,10 +127,15 @@ Examples:
 
     args = parser.parse_args()
 
-    # Expand wildcards and convert to Path objects
+    # argparse's greedy nargs="+" swallows the optional `output` positional, so recover the
+    # documented `input output` form: exactly two paths and no --format / --output-dir.
+    if args.output is None and len(args.input) == 2 and not args.format and not args.output_dir:
+        args.output = args.input.pop()
+
+    # Expand wildcards (relative or absolute) and convert to Path objects
     input_files = []
     for pattern in args.input:
-        matches = list(Path.cwd().glob(pattern))
+        matches = [Path(m) for m in glob.glob(pattern)]
         if matches:
             input_files.extend(matches)
         else:

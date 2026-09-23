@@ -6,6 +6,14 @@
 - Maximum 400 requests per minute
 - Maximum 300 seconds running time per minute
 
+PubChem tightens these limits dynamically when its servers are overloaded. Every response
+carries an `X-Throttling-Control` header, e.g.
+`Request Count status: Green (5%), Request Time status: Green (0%), Service status: Black (303%)`
+— statuses run Green → Yellow → Red → Black. Requests over the limit, or made while the
+service is saturated, get HTTP 503 with `{"Fault": {"Code": "PUGREST.ServerBusy"}}`; clients
+that keep exceeding the limits are blocked for a period. On 503, wait (seconds to minutes,
+growing with each retry) instead of hammering the endpoint.
+
 ## Best Practices
 
 1. **Use CIDs for repeated queries**: CIDs are more efficient than names or structures

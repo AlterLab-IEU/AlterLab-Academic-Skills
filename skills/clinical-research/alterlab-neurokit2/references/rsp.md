@@ -200,7 +200,9 @@ symmetry = nk.rsp_symmetry(cleaned_rsp, peaks)
 Respiratory Rate Variability - analogous to heart rate variability.
 
 ```python
-rrv_indices = nk.rsp_rrv(peaks, sampling_rate=100)
+# Pass the processed DataFrame from rsp_process (it holds RSP_Rate and RSP_Troughs),
+# or rsp_rrv(rsp_rate, troughs=peaks_info, sampling_rate=100)
+rrv_indices = nk.rsp_rrv(signals, sampling_rate=100)
 ```
 
 **Time-domain metrics:**
@@ -225,7 +227,8 @@ rrv_indices = nk.rsp_rrv(peaks, sampling_rate=100)
 Respiratory Volume per Time - fMRI confound regressor.
 
 ```python
-rvt = nk.rsp_rvt(cleaned_rsp, peaks, sampling_rate=100)
+# rsp_process already returns an "RSP_RVT" column; to recompute, pass the 1-D signal
+rvt = nk.rsp_rvt(cleaned_rsp, sampling_rate=100)
 ```
 
 **Calculation:**

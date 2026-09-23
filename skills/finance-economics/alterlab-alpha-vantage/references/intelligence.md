@@ -38,7 +38,7 @@ data = av_get("NEWS_SENTIMENT", topics="earnings,technology", time_from="2024010
 
 ## EARNINGS_CALL_TRANSCRIPT — Earnings Call Transcript
 
-Returns full earnings call transcripts (requires premium).
+Returns full earnings call transcripts with speaker-level segments (any quarter since 2010Q1).
 
 **Required:** `symbol`, `quarter` (format `YYYYQN`, e.g., `2023Q4`)
 
@@ -70,9 +70,10 @@ for l in data["top_losers"][:5]:
 
 ## INSIDER_TRANSACTIONS — Insider Trading Data
 
-Returns insider transactions (Form 4) for a given company (requires premium).
+Returns insider transactions (Form 4) for a given company.
 
-**Required:** `symbol`
+**Required:** `symbol`  
+**Optional:** `from` (`YYYY-MM-DD`; keep only transactions on or after this date)
 
 ```python
 data = av_get("INSIDER_TRANSACTIONS", symbol="AAPL")
@@ -95,7 +96,7 @@ for t in transactions[:5]:
 Returns mean return, variance, covariance, correlation, and alpha/beta for a set of tickers over a fixed historical window.
 
 **Required:**
-- `SYMBOLS` — comma-separated tickers (e.g., `AAPL,MSFT,IBM`)
+- `SYMBOLS` — comma-separated tickers (e.g., `AAPL,MSFT,IBM`); free keys may pass up to 5 symbols per request, premium keys up to 50
 - `RANGE` — date range format: `2year`, `6month`, `30day`, or `YYYY-MM-DD&YYYY-MM-DD`
 - `INTERVAL` — `DAILY`, `WEEKLY`, or `MONTHLY`
 - `OHLC` — `close`, `open`, `high`, or `low`

@@ -250,7 +250,7 @@ Classification: Progressive Disease (>20% AND ≥5 mm increase)
 
 ### Safety Endpoints
 
-**Adverse Events (CTCAE v5.0)**
+**Adverse Events (NCI CTCAE — v6.0 released 2025; many ongoing trials still use v5.0, so report the protocol's version)**
 
 **Grading**
 - **Grade 1**: Mild, asymptomatic or mild symptoms, clinical intervention not indicated

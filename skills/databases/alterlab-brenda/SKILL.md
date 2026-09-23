@@ -6,7 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Requires free BRENDA account credentials (BRENDA_EMAIL/BRENDA_PASSWORD) for the SOAP API
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # BRENDA Database
@@ -31,6 +32,15 @@ This skill should be used when:
 - Supporting metabolic pathway reconstruction and retrosynthesis
 - Performing enzyme engineering and optimization studies
 - Analyzing substrate specificity and cofactor requirements
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Metabolic pathway maps, KEGG Orthology, or compound-to-pathway mapping | `alterlab-kegg` |
+| Genome-scale flux simulation (FBA/FVA, knockouts) | `alterlab-cobrapy` |
+| Drug/compound bioactivity (IC50, Ki) against drug targets | `alterlab-chembl` |
+| Protein sequence, domains, or GO annotation of an enzyme | `alterlab-uniprot` |
 
 ## Core Capabilities
 
@@ -66,6 +76,16 @@ for entry in km_data:
 
 EC numbers must be fully qualified (e.g. `1.1.1.1`, not `1.1.1`). Wildcards (`*`) broaden
 searches. See `references/data_formats.md` for the response format and parsing helpers.
+
+**SOAP calling convention.** The `brenda_zeep.wsdl` operations take *separate* arguments in
+WSDL order — `client.service.getKmValue(email, sha256_pw, "ecNumber*1.1.1.1",
+"organism*Homo sapiens", "kmValue*", "kmValueMaximum*", "substrate*", "commentary*",
+"ligandStructureId*", "literature*")` — and return lists of typed objects. A single
+comma-joined string fails in zeep ("Missing element password"). `scripts/brenda_client.py`
+handles the argument order and converts results to `field*value#…` strings for the parsers.
+
+**Usage policy.** BRENDA asks clients to send at most one request per second (the client
+enforces this), and its data are licensed CC BY 4.0 — cite BRENDA in derived work.
 
 ## Installation Requirements
 

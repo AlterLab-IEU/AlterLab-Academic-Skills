@@ -92,7 +92,7 @@ Evidence from clinical precedence showing drugs targeting genes for disease indi
 - Drug-target-indication triplets with mechanism of action
 
 **Clinical Trial Information:**
-- `phase`: Maximum clinical trial phase (1, 2, 3, 4)
+- `maxClinicalStage` / `clinicalStage`: enum string (`APPROVAL`, `PHASE_3`, `PHASE_2_3`, `PHASE_2`, `PHASE_1_2`, `PHASE_1`, `EARLY_PHASE_1`, `IND`, `PRECLINICAL`, `UNKNOWN`) — not the old integer phase
 - `status`: Active, terminated, completed, withdrawn
 - `mechanismOfAction`: How drug affects target
 

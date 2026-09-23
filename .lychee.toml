@@ -39,7 +39,9 @@ max_retries = 5
 max_redirects = 10
 
 # Paths to skip entirely. Keeps CI focused on user-facing content.
-exclude_path = ["node_modules", ".git", ".github/ISSUE_TEMPLATE"]
+# Entries are regexes matched against the path: anchor them, or ".git" also matches
+# "digital-humanities" (any character + "git") and silently skips that skill.
+exclude_path = ["(^|/)node_modules/", "(^|/)\\.git/", "(^|/)\\.github/ISSUE_TEMPLATE/"]
 
 # Placeholder / example DOIs deliberately included in template files as
 # illustrative filler (e.g. doi.org/xxxxx, doi.org/10.xxxx). These are

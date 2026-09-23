@@ -148,31 +148,49 @@ Use this only if you want to route Gemini through Google Cloud Vertex AI instead
 
 ## Model Selection
 
-Models are chosen **per stage**, as method arguments — not on the `Denario` constructor. Each `get_*` method exposes per-agent model parameters (model names are strings/`LLM` objects from `denario`'s model registry). Verified defaults from the source:
+Models are chosen **per stage**, as method arguments — not on the `Denario` constructor. Each `get_*` method exposes per-agent model parameters; a string must be a key of `denario.models`, anything else is passed as an `LLM(name=..., max_output_tokens=..., temperature=...)` object (provider routing is by substring: `gemini` → Google, `gpt`/`o3` → OpenAI, `claude` → Anthropic).
+
+Defaults hard-coded in denario 1.0.1 (current release, checked 2026-09-23) and their provider status:
+
+| Parameter (stage) | Default | Status |
+| --- | --- | --- |
+| `llm` (`get_idea`/`get_method`, `mode="fast"`) | `gemini-2.0-flash` | **Retired** by Google on 2026-06-01 — always override |
+| `idea_maker_model`, `planner_model` (cmbagent) | `gpt-4o` (`gpt-4o-2024-11-20`) | Served |
+| `idea_hater_model`, `plan_reviewer_model`, `formatter_model`, `researcher_model` | `o3-mini` (`o3-mini-2025-01-31`) | OpenAI shutdown scheduled 2026-10-23 — override |
+| `orchestration_model`, `engineer_model` | `gpt-4.1` (`gpt-4.1-2025-04-14`) | Served |
+| `llm` (`get_paper`, `check_idea`, `referee`) | `gemini-2.5-flash` | Served, but Google limits Gemini 2.5 to existing users |
+| registry key `"gpt-4.5"` | `gpt-4.5-preview` | Retired 2025-07-14 — do not select |
 
 ```python
-# Fast path uses a single LLM (defaults to gemini-2.0-flash):
-den.get_idea(mode="fast", llm="gemini-2.0-flash")
+from denario import Denario, LLM
 
-# cmbagent path configures each agent (defaults shown):
+den = Denario(project_dir="./project")
+
+# Fast path: pass a live model explicitly
+den.get_idea(mode="fast", llm="gpt-4.1")
+den.get_idea(mode="fast", llm=LLM(name="gemini-3.6-flash", max_output_tokens=8192, temperature=0.7))
+
+# cmbagent path: replace the o3-mini roles
 den.get_idea(
     mode="cmbagent",
-    idea_maker_model="gpt-4o",
-    idea_hater_model="o3-mini",
-    planner_model="gpt-4o",
-    plan_reviewer_model="o3-mini",
+    idea_maker_model="gpt-4.1",
+    idea_hater_model="gpt-4.1",
+    planner_model="gpt-4.1",
+    plan_reviewer_model="gpt-4.1",
     orchestration_model="gpt-4.1",
-    formatter_model="o3-mini",
+    formatter_model="gpt-4.1",
 )
 
-# Results stage agents:
+# Results stage agents
 den.get_results(
     engineer_model="gpt-4.1",
-    researcher_model="o3-mini",
+    researcher_model="gpt-4.1",
+    plan_reviewer_model="gpt-4.1",
+    formatter_model="gpt-4.1",
 )
 ```
 
-Available model names depend on the installed `denario` version; consult `denario.llm.models` for the current registry.
+`gemini-3.6-flash` is Google's listed replacement for `gemini-2.0-flash`. Provider catalogs rotate quickly — confirm IDs against the provider's model list before a long run, and consult `denario.models` for the registry shipped with your installed version.
 
 ## Cost Management
 
@@ -185,8 +203,8 @@ Available model names depend on the installed `denario` version; consult `denari
 ### Cost Optimization Tips
 
 1. **Use appropriate model tiers**
-   - The faster `mode="fast"` path (default LLM `gemini-2.0-flash`) is cheaper for idea/method generation
-   - Reserve the heavier cmbagent defaults (`gpt-4o`, `gpt-4.1`, `o3-mini`) for the runs that need reliability
+   - The `mode="fast"` path with a small current model (e.g. `gpt-4.1-mini`, `gpt-5-mini`) is cheaper for idea/method generation
+   - Reserve the heavier cmbagent path for the runs that need reliability
 
 2. **Batch operations**
    - Process multiple research tasks in single sessions

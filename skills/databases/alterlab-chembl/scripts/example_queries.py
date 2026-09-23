@@ -94,11 +94,19 @@ def search_targets_by_name(target_name):
         List of matching targets
     """
     target = new_client.target
-    results = target.filter(
+    results = list(target.filter(
         target_type='SINGLE PROTEIN',
         pref_name__icontains=target_name
-    )
-    return list(results)
+    ))
+    if not results:
+        # Gene symbols such as 'EGFR' are stored as synonyms, not in pref_name
+        # (CHEMBL203 is "Epidermal growth factor receptor"). Substring matches
+        # can include related targets (e.g. VEGFR1-3), so check pref_name.
+        results = list(target.filter(
+            target_type='SINGLE PROTEIN',
+            target_synonym__icontains=target_name
+        ))
+    return results
 
 
 def get_bioactivity_data(target_chembl_id, activity_type='IC50', max_value=100):

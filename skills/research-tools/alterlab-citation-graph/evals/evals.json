@@ -4,11 +4,11 @@
     {
       "id": "seed-doi-map",
       "prompt": "I have one key paper, DOI 10.1038/nphys1170. Map the literature around it for me — I want to see what it cites and what cites it, as a network I can open in Gephi.",
-      "expected_output": "Invokes alterlab-citation-graph: runs build_graph.py with the seed DOI against the free OpenAlex API (polite mailto, no key), walks both directions of the citation network (the seed's referenced_works and its cited_by set), and exports a GraphML file (plus JSON) the user can open in Gephi.",
+      "expected_output": "Invokes alterlab-citation-graph: runs build_graph.py with the seed DOI against the free OpenAlex API (using OPENALEX_API_KEY when set; keyless calls work only while the shared per-IP budget lasts), walks both directions of the citation network (the seed's referenced_works and its cited_by set), and exports a GraphML file (plus JSON) the user can open in Gephi.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "OpenAlex" },
-        { "type": "behavior", "value": "Builds the graph from the seed DOI via OpenAlex with no API key and exports GraphML for Gephi." }
+        { "type": "behavior", "value": "Builds the graph from the seed DOI via OpenAlex, recommends a free OpenAlex API key rather than the retired mailto polite pool, and exports GraphML for Gephi." }
       ]
     },
     {
@@ -41,10 +41,10 @@
     {
       "id": "no-key-researchrabbit",
       "prompt": "Is there a free way to do what ResearchRabbit does — build a citation graph around a paper without paying or making an account? I just have a DOI.",
-      "expected_output": "Invokes alterlab-citation-graph, positioning itself as the free, account-free, key-less ResearchRabbit analog built on the open OpenAlex API, and builds the citation/co-citation graph from the user's DOI, exporting GraphML + JSON.",
+      "expected_output": "Invokes alterlab-citation-graph, positioning itself as the free, subscription-free ResearchRabbit analog built on the open OpenAlex API, notes that a free OpenAlex account/API key is recommended (keyless requests share a small per-IP daily budget), and builds the citation/co-citation graph from the user's DOI, exporting GraphML + JSON.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Frames itself as the free, no-account, no-key ResearchRabbit alternative and proceeds to build the graph from the DOI." }
+        { "type": "behavior", "value": "Frames itself as the free, no-subscription ResearchRabbit alternative, is accurate that a free OpenAlex API key is recommended, and proceeds to build the graph from the DOI." }
       ]
     },
     {
@@ -63,6 +63,15 @@
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-research-lookup" }
+      ]
+    },
+    {
+      "id": "near-miss-openalex",
+      "prompt": "Using OpenAlex, how many papers did my university publish on climate adaptation each year since 2015, and which of our authors are most cited in that area?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-openalex. The user wants bibliometric counts and author rankings from OpenAlex queries (filters, group_by), not a citation/co-citation network grown from a seed paper. citation-graph walks references and citers of seed works; institutional publication trends are the OpenAlex database skill's job.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-openalex" }
       ]
     }
   ]

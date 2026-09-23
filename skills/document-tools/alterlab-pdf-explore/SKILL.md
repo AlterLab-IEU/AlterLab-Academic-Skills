@@ -3,10 +3,11 @@ name: alterlab-pdf-explore
 description: Explore a single PDF in depth — parse it once, then answer questions across its sections, figures, tables, and appendices — comparing methods across sections, extracting every instance of a pattern within the document, and reading values off its charts and tables. Use when interrogating one paper or report end-to-end, pulling every occurrence of something inside a document, or reading data from a figure/table in a PDF, serving the literature-review and paper-review pipeline. To build a comparison table across MANY papers prefer alterlab-pdf-extract; to simply convert a PDF to Markdown prefer alterlab-markitdown; for reference/citation management prefer alterlab-pyzotero. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Runs under `uv run python` with a PDF parser (e.g. `pymupdf`/`pdfplumber` — TODO(verify) preferred pin) plus, for scanned pages, an OCR pass. No GPU or account required. Parses the PDF once into a section/figure/table index that later questions reuse; large scanned PDFs are slower due to OCR."
+compatibility: "Runs under `uv run python` with PyMuPDF (`pymupdf` >= 1.24; 1.28.x current as of 2026-09; AGPL-3.0 or commercial license) and/or pdfplumber (>= 0.11; MIT); scanned pages need an OCR pass (Tesseract via PyMuPDF or `ocrmypdf`). No GPU or account required. Parses the PDF once into a section/figure/table index that later questions reuse; large scanned PDFs are slower due to OCR."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # PDF Explore (deep single-document Q&A)
@@ -34,12 +35,13 @@ Use this skill when the user wants to:
 
 ### Does NOT Trigger
 
-| Scenario | Use instead |
+| Scenario | Use Instead |
 |----------|-------------|
 | Build a comparison table across **many** papers (one row per paper) | `alterlab-pdf-extract` |
 | **Convert** a PDF/DOCX to clean Markdown | `alterlab-markitdown` |
 | Manage references / DOIs / BibTeX | `alterlab-pyzotero` |
-| Work with a Jupyter notebook | `alterlab-open-notebook` |
+| Chat with a whole library of sources in a self-hosted NotebookLM-style workspace | `alterlab-open-notebook` |
+| A full multi-reviewer critique of a manuscript | `alterlab-paper-reviewer` |
 
 ## Core Capabilities
 
@@ -75,7 +77,8 @@ from one paper to a whole corpus table.
 
 ## Resources
 
-- `references/pdf_explore_usage.md` — parser choice, the section/figure index, OCR handling,
-  extract-every-instance patterns, and figure/table reading caveats. Loaded on demand.
+- `references/pdf_explore_usage.md` — parser choice and install line, a tested parse-once
+  index + extract-every-instance helper (PyMuPDF), OCR handling, and figure/table reading
+  caveats. Loaded on demand.
 
 Part of the AlterLab Academic Skills suite.

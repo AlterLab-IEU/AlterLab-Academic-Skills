@@ -5,13 +5,18 @@ AI-powered infographic generation using Nano Banana Pro.
 This script uses a smart iterative refinement approach:
 1. (Optional) Research phase - gather facts and data using Perplexity Sonar
 2. Generate initial infographic with Nano Banana Pro
-3. AI quality review using Gemini 3 Pro for infographic critique
+3. AI quality review using Gemini 3.1 Pro (Preview) for infographic critique
 4. Only regenerate if quality is below threshold for document type
 5. Repeat until quality meets standards (max iterations)
 
 Requirements:
-    - OPENROUTER_API_KEY environment variable
+    - OPENROUTER_API_KEY environment variable (or a .env file with python-dotenv installed)
     - requests library
+
+Models (override via ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL):
+    - google/gemini-3-pro-image (Nano Banana Pro) for generation
+    - google/gemini-3.1-pro-preview for quality review
+    - perplexity/sonar-pro for the optional --research phase
 
 Usage:
     python generate_infographic_ai.py "5 benefits of exercise" -o benefits.png --type list
@@ -33,6 +38,35 @@ try:
 except ImportError:
     print("Error: requests library not found. Install with: pip install requests")
     sys.exit(1)
+
+
+# Prefix of the critique returned when the quality-review call fails
+REVIEW_SKIPPED = "REVIEW SKIPPED"
+
+
+def _collect_sources(result: Dict[str, Any], message: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Return cited sources from an OpenRouter/Perplexity chat response.
+
+    OpenRouter normalizes web citations into ``message.annotations`` entries of type
+    ``url_citation``; the native Perplexity API uses top-level ``search_results`` /
+    ``citations``. Collect whichever is present, de-duplicated by URL.
+    """
+    sources: List[Dict[str, Any]] = []
+    seen = set()
+    for ann in message.get("annotations") or []:
+        cite = ann.get("url_citation") if isinstance(ann, dict) else None
+        if isinstance(cite, dict) and cite.get("url") and cite["url"] not in seen:
+            seen.add(cite["url"])
+            sources.append({"url": cite["url"], "title": cite.get("title", "")})
+    for item in result.get("search_results") or []:
+        if isinstance(item, dict) and item.get("url") and item["url"] not in seen:
+            seen.add(item["url"])
+            sources.append({"url": item["url"], "title": item.get("title", "")})
+    for url in result.get("citations") or []:
+        if isinstance(url, str) and url not in seen:
+            seen.add(url)
+            sources.append({"url": url, "title": ""})
+    return sources
 
 
 def _load_env_file():
@@ -271,7 +305,7 @@ PALETTE_PRESETS = {
 class InfographicGenerator:
     """Generate infographics using AI with smart iterative refinement.
     
-    Uses Gemini 3 Pro for quality review to determine if regeneration is needed.
+    Uses Gemini 3.1 Pro (Preview) for quality review to determine if regeneration is needed.
     Multiple passes only occur if the generated infographic doesn't meet the
     quality threshold for the target document type.
     """
@@ -356,11 +390,12 @@ IMPORTANT - NO META CONTENT:
         self._last_error = None
         self.base_url = "https://openrouter.ai/api/v1"
         # Model IDs follow the ALTERLAB_MODEL convention (skills/core/shared/model_env.md):
-        # read an env var, else a dated default constant (reviewed 2026-06-06). These slots
+        # read an env var, else a dated default constant (reviewed 2026-09-23). These slots
         # need Google image/vision models, so they use dedicated vars rather than the Claude
         # text default ALTERLAB_MODEL. Override via ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL.
-        # Nano Banana Pro for image generation
-        self.image_model = os.environ.get("ALTERLAB_IMAGE_MODEL") or "google/gemini-3.1-pro-image-preview"
+        # Nano Banana Pro (GA) for image generation; google/gemini-3-pro-image-preview was
+        # shut down by Google on 2026-06-25 (there is no "gemini-3.1-pro-image" model).
+        self.image_model = os.environ.get("ALTERLAB_IMAGE_MODEL") or "google/gemini-3-pro-image"
         # Gemini 3.1 Pro for quality review
         self.review_model = os.environ.get("ALTERLAB_REVIEW_MODEL") or "google/gemini-3.1-pro-preview"
         
@@ -444,7 +479,8 @@ Include citation hints where possible."""
                 "max_tokens": 2000,
                 "temperature": 0.1,
                 "search_mode": "academic",
-                "search_context_size": "high"
+                # OpenRouter takes the search context size inside web_search_options
+                "web_search_options": {"search_context_size": "high"}
             }
             
             response = requests.post(
@@ -461,10 +497,12 @@ Include citation hints where possible."""
             result = response.json()
             
             if "choices" in result and len(result["choices"]) > 0:
-                content = result["choices"][0].get("message", {}).get("content", "")
+                message = result["choices"][0].get("message", {})
+                content = message.get("content", "")
                 
-                # Extract any sources from the response
-                sources = result.get("search_results", [])
+                # Extract sources: OpenRouter returns them as url_citation annotations;
+                # search_results is the native Perplexity API field
+                sources = _collect_sources(result, message)
                 
                 self._log(f"Research complete: {len(content)} chars")
                 
@@ -542,11 +580,11 @@ Be concise and factual. Focus on information useful for an infographic."""
             result = response.json()
             
             if "choices" in result and len(result["choices"]) > 0:
-                content = result["choices"][0].get("message", {}).get("content", "")
+                message = result["choices"][0].get("message", {})
                 return {
                     "success": True,
-                    "content": content,
-                    "sources": result.get("search_results", [])
+                    "content": message.get("content", ""),
+                    "sources": _collect_sources(result, message)
                 }
             else:
                 return {"success": False, "error": "No response from search"}
@@ -642,7 +680,8 @@ Incorporate specific numbers, percentages, and dates from the research."""
                 
                 first_image = images[0]
                 if isinstance(first_image, dict):
-                    if first_image.get("type") == "image_url":
+                    # OpenRouter's schema does not guarantee a "type" key
+                    if "image_url" in first_image:
                         url = first_image.get("image_url", {})
                         if isinstance(url, dict):
                             url = url.get("url", "")
@@ -791,7 +830,7 @@ Incorporate specific numbers, percentages, and dates from the research."""
                     iteration: int, doc_type: str = "default",
                     max_iterations: int = 3) -> Tuple[str, float, bool]:
         """
-        Review generated infographic using Gemini 3 Pro for quality analysis.
+        Review generated infographic using Gemini 3.1 Pro (Preview) for quality analysis.
         
         Evaluates the infographic on multiple criteria specific to good
         infographic design and determines if regeneration is needed.
@@ -891,7 +930,7 @@ If score < {threshold}, mark as NEEDS_IMPROVEMENT with specific suggestions."""
             
             choices = response.get("choices", [])
             if not choices:
-                return "Image generated successfully", 7.5, False
+                raise RuntimeError("review model returned no choices")
             
             message = choices[0].get("message", {})
             content = message.get("content", "")
@@ -906,6 +945,9 @@ If score < {threshold}, mark as NEEDS_IMPROVEMENT with specific suggestions."""
                     if isinstance(block, dict) and block.get("type") == "text":
                         text_parts.append(block.get("text", ""))
                 content = "\n".join(text_parts)
+
+            if not content or not str(content).strip():
+                raise RuntimeError("review model returned no text")
             
             # Extract score
             score = 7.5
@@ -933,8 +975,10 @@ If score < {threshold}, mark as NEEDS_IMPROVEMENT with specific suggestions."""
                     score, 
                     needs_improvement)
         except Exception as e:
-            self._log(f"Review skipped: {str(e)}")
-            return "Image generated successfully (review skipped)", 7.5, False
+            # Don't block generation when the review call fails, but say so: the image
+            # is kept unreviewed and no quality score is invented for it.
+            print(f"⚠ Quality review skipped: {e}")
+            return f"{REVIEW_SKIPPED}: {e}", 0.0, False
     
     def improve_prompt(self, original_prompt: str, critique: str, 
                       infographic_type: Optional[str],
@@ -1103,12 +1147,16 @@ Generate an improved version that:
                 f.write(image_data)
             print(f"✓ Saved: {iter_path}")
             
-            # Review image using Gemini 3 Pro
-            print(f"Reviewing with Gemini 3 Pro...")
+            # Review image with the review model (Gemini 3.1 Pro by default)
+            print(f"Reviewing with {self.review_model}...")
             critique, score, needs_improvement = self.review_image(
                 str(iter_path), user_prompt, infographic_type, i, doc_type, iterations
             )
-            print(f"✓ Score: {score}/10 (threshold: {threshold}/10)")
+            review_skipped = critique.startswith(REVIEW_SKIPPED)
+            if review_skipped:
+                score = None  # no reviewer judgment exists for this image
+            else:
+                print(f"✓ Score: {score}/10 (threshold: {threshold}/10)")
             
             # Save iteration results
             iteration_result = {
@@ -1122,6 +1170,15 @@ Generate an improved version that:
             }
             results["iterations"].append(iteration_result)
             
+            # Review unavailable - keep this image, but record that it was never scored
+            if review_skipped:
+                print("\n⚠ Keeping this infographic without a quality review - inspect it manually")
+                results["final_image"] = str(iter_path)
+                results["final_score"] = None
+                results["success"] = True
+                results["review_skipped"] = True
+                break
+
             # Check if quality is acceptable
             if not needs_improvement:
                 print(f"\n✓ Quality meets threshold ({score} >= {threshold})")
@@ -1164,7 +1221,8 @@ Generate an improved version that:
         
         print(f"\n{'='*60}")
         print(f"Generation Complete!")
-        print(f"Final Score: {results['final_score']}/10")
+        final_score = results["final_score"]
+        print(f"Final Score: {'not reviewed' if final_score is None else f'{final_score}/10'}")
         if results["early_stop"]:
             iterations_used = len([r for r in results['iterations'] if r.get('success')])
             print(f"Iterations Used: {iterations_used}/{iterations} (early stop)")
@@ -1252,10 +1310,14 @@ Environment:
     
     args = parser.parse_args()
     
-    # Check for API key
+    # Check for API key: --api-key, then the environment, then a .env file
     api_key = args.api_key or os.getenv("OPENROUTER_API_KEY")
     if not api_key:
-        print("Error: OPENROUTER_API_KEY environment variable not set")
+        _load_env_file()
+        api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        print("Error: OPENROUTER_API_KEY not set (checked --api-key, the environment, and .env)")
+        print("Get a key at: https://openrouter.ai/keys")
         print("\nSet it with:")
         print("  export OPENROUTER_API_KEY='your_api_key'")
         print("\nOr provide via --api-key flag")
@@ -1277,7 +1339,9 @@ Environment:
         
         if results["success"]:
             print(f"\n✓ Success! Infographic saved to: {args.output}")
-            if results.get("early_stop"):
+            if results.get("review_skipped"):
+                print("  (quality review unavailable - the infographic was not scored; inspect it before use)")
+            elif results.get("early_stop"):
                 iterations_used = len([r for r in results['iterations'] if r.get('success')])
                 print(f"  (Completed in {iterations_used} iteration(s) - quality threshold met)")
             sys.exit(0)

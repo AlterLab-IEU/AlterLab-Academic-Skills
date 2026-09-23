@@ -1,412 +1,112 @@
-# File Manager API
+# File Manager and File Uploads
 
-## Overview
+Source: https://apidoc.protocols.io/ (checked 2026-09-23). Paths are relative to `https://www.protocols.io/api`; every call needs `Authorization: Bearer <token>` and returns a JSON `status_code` (0 = success).
 
-The File Manager API enables file operations within protocols.io workspaces, including uploading files, organizing folders, searching content, and managing file lifecycle. This is useful for attaching data files, images, documents, and other resources to protocols.
+The file manager lists everything a user can reach — protocols, folders, run records, and files — across personal space and workspaces. The current search endpoints are v4; the older v3 folder calls (`/v3/filemanager/folders?top`, `/v3/folders/<guid>/ids`, items-by-ids) are archived.
 
-## Base URL
+## Search
 
-All file manager endpoints use the base URL: `https://www.protocols.io/api/v3`
+| Scope | Call |
+|-------|------|
+| One folder | `GET /v4/filemanager/folders/<folder_guid>/search` |
+| One workspace | `GET /v4/filemanager/workspaces/<workspace_uri>/search` |
+| All workspaces | `GET /v4/filemanager/search` (requires `search_key`) |
 
-## Search and Browse
+Shared query parameters:
 
-### Search Workspace Files
+| Parameter | Notes |
+|-----------|-------|
+| `search_key` | Search text |
+| `content_types[]` | `1` protocols, `10` folders, `11` run records, `15` files (repeat the parameter for several) |
+| `protocol_types[]` | `1` protocol, `3` collection, `4` document |
+| `modified_after` / `modified_before` | Unix timestamps |
+| `sort_by`, `sort_dir` | Sort field and `ASC` / `DESC` |
+| `page_id`, `page_size` | Pagination |
 
-Search for files and folders within a workspace.
+Each result has `item_id` (unique across all content types), `content_id` (the protocol, folder, record, or file id), `type_id`, an `access` object (`can_view`, `can_edit`, `can_remove`, `can_publish`, `can_get_doi`, `can_share`, `can_move`, `can_download`, ...), `space` (`id`, `title`), `kind` (for example "Folder", "Private Protocol", "PDF File"), `in_trash`, `size` (bytes), and `created_on`. Protocol items add `uri`, `doi`, `public`, `is_unlisted` (pre-published), `is_doi_reserved`, `reserved_doi`, and version fields; run-record items add `guid`, `protocol_id`, `total_steps`, `finished_steps`, `is_locked`; folder items add `guid`, `parent_guid`, and `has_subfolders`.
 
-**Endpoint:** `GET /workspaces/{workspace_id}/files/search`
+```python
+import os
 
-**Path Parameters:**
-- `workspace_id`: The workspace's unique identifier
+import requests
 
-**Query Parameters:**
-- `query`: Search keywords (searches filenames and metadata)
-- `type`: Filter by type
-  - `file`: Files only
-  - `folder`: Folders only
-  - `all`: Both files and folders (default)
-- `folder_id`: Limit search to specific folder
-- `page_size`: Number of results per page (default: 20, max: 100)
-- `page_id`: Page number for pagination (starts at 0)
+BASE = "https://www.protocols.io/api"
+HEADERS = {"Authorization": f"Bearer {os.environ['PROTOCOLS_IO_TOKEN']}"}
 
-**Response includes:**
-- File/folder ID and name
-- File size and type
-- Creation and modification dates
-- File path in workspace
-- Download URL (for files)
-
-**Example Request:**
-```bash
-curl -H "Authorization: Bearer YOUR_TOKEN" \
-  "https://www.protocols.io/api/v3/workspaces/12345/files/search?query=microscopy&type=file"
+params = {"search_key": "qPCR", "content_types[]": [1, 15], "page_size": 50, "page_id": 1}
+data = requests.get(f"{BASE}/v4/filemanager/workspaces/my-lab/search",
+                    headers=HEADERS, params=params, timeout=60).json()
+if data.get("status_code") != 0:
+    raise RuntimeError(data.get("status_text") or data.get("error_message"))
+for item in data["items"]:
+    print(item["type_id"], item["kind"], item.get("title"), item.get("doi") or "")
 ```
 
-### List Folder Contents
+## Trash and restore
 
-Browse files and folders within a specific folder.
+| Action | Call | Body |
+|--------|------|------|
+| Move items to the trash | `PUT /v3/filemanager/trash` | `ids`: list of `item_id` values; returns `deleted` |
+| Restore items from the trash | `DELETE /v3/filemanager/trash` | `ids`: list of `item_id` values; returns `restored` |
 
-**Endpoint:** `GET /workspaces/{workspace_id}/folders/{folder_id}`
+Note the unusual verbs: `PUT` trashes and `DELETE` restores. Use `item_id` from a search result, not `content_id`.
 
-**Path Parameters:**
-- `workspace_id`: The workspace's unique identifier
-- `folder_id`: The folder's unique identifier (use `root` for workspace root)
+## Upload a file
 
-**Query Parameters:**
-- `order_by`: Sort field (`name`, `size`, `created`, `modified`)
-- `order_dir`: Sort direction (`asc`, `desc`)
-- `page_size`: Number of results per page
-- `page_id`: Page number for pagination
+Uploads go to Amazon S3 in three steps.
 
-**Example Request:**
-```bash
-curl -H "Authorization: Bearer YOUR_TOKEN" \
-  "https://www.protocols.io/api/v3/workspaces/12345/folders/root?order_by=modified&order_dir=desc"
+### 1. Prepare — `POST /v3/files`
+
+| Field | Notes |
+|-------|-------|
+| `filename` (required) | Original file name |
+| `original_file_id` | For a thumbnail: the id of the already uploaded original file |
+| `width`, `height`, `color` | Image width, height, and average colour (HEX), for images |
+
+The response contains `formData` (`key`, `s3_bucket`, `AWSAccessKeyId`, `Policy`, `Signature`, `ContentType`, `acl`) and `metaData` (`file_id`, `file_type`, `thumb_url`).
+
+### 2. Send the bytes to S3
+
+POST a multipart form to the bucket with the policy fields, followed by the file as the last field. The API reference does not show this request; the sketch below uses the standard S3 POST-policy form, so check it with a small test file first.
+
+```python
+path = "plate_reader_export.csv"
+prep = requests.post(f"{BASE}/v3/files", headers=HEADERS,
+                     data={"filename": os.path.basename(path)}, timeout=60).json()
+if prep.get("status_code") != 0:
+    raise RuntimeError(prep.get("error_message"))
+form, meta = prep["formData"], prep["metaData"]
+fields = {
+    "key": form["key"],
+    "acl": form["acl"],
+    "AWSAccessKeyId": form["AWSAccessKeyId"],
+    "Policy": form["Policy"],
+    "Signature": form["Signature"],
+    "Content-Type": form["ContentType"],
+}
+with open(path, "rb") as fh:
+    s3 = requests.post(f"https://{form['s3_bucket']}.s3.amazonaws.com/", data=fields,
+                       files={"file": (os.path.basename(path), fh)}, timeout=600)
+s3.raise_for_status()
 ```
 
-## File Upload
+### 3. Verify — `PUT /v3/files/<file_id>`
 
-### Upload File
-
-Upload a file to a workspace folder.
-
-**Endpoint:** `POST /workspaces/{workspace_id}/files/upload`
-
-**Request Format**: `multipart/form-data`
-
-**Form Parameters:**
-- `file` (required): The file to upload
-- `folder_id`: Target folder ID (omit or use `root` for workspace root)
-- `name`: Custom filename (optional, uses original filename if omitted)
-- `description`: File description
-- `tags`: Comma-separated tags
-
-**Example Request:**
-```bash
-curl -X POST \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -F "file=@/path/to/local/data.xlsx" \
-  -F "folder_id=67890" \
-  -F "description=Experimental results from trial #3" \
-  -F "tags=experiment,data,2025" \
-  "https://www.protocols.io/api/v3/workspaces/12345/files/upload"
+```python
+done = requests.put(f"{BASE}/v3/files/{meta['file_id']}", headers=HEADERS, timeout=60).json()
+if done.get("status_code") != 0:
+    raise RuntimeError(done.get("error_message"))
 ```
 
-### Upload Verification
+For an image thumbnail, upload the original first, then repeat the three steps for the thumbnail with `original_file_id` set to the original's `file_id`.
 
-After upload, verify the file was processed correctly.
+### Where the file ends up
 
-**Endpoint:** `GET /workspaces/{workspace_id}/files/{file_id}/status`
+The prepare call has no folder, workspace, tag, or description fields. To attach the file to content, add it to a private collection with `PUT /v4/protocols/<collection>` and `collection_items` (`{"content_id": <file_id>, "content_type_id": 15}`), or place and describe it in the web app.
 
-**Response includes:**
-- Upload status (`processing`, `complete`, `failed`)
-- File metadata
-- Any processing errors
+## Good practice
 
-## File Operations
-
-### Download File
-
-Download a file from the workspace.
-
-**Endpoint:** `GET /workspaces/{workspace_id}/files/{file_id}/download`
-
-**Path Parameters:**
-- `workspace_id`: The workspace's unique identifier
-- `file_id`: The file's unique identifier
-
-**Response**: Binary file data with appropriate Content-Type header
-
-**Example Request:**
-```bash
-curl -H "Authorization: Bearer YOUR_TOKEN" \
-  -o "downloaded_file.xlsx" \
-  "https://www.protocols.io/api/v3/workspaces/12345/files/67890/download"
-```
-
-### Get File Metadata
-
-Retrieve file information without downloading.
-
-**Endpoint:** `GET /workspaces/{workspace_id}/files/{file_id}`
-
-**Response includes:**
-- File name, size, and type
-- Upload date and author
-- Description and tags
-- File path and location
-- Download URL
-- Sharing permissions
-
-### Update File Metadata
-
-Update file description, tags, or other metadata.
-
-**Endpoint:** `PATCH /workspaces/{workspace_id}/files/{file_id}`
-
-**Request Body:**
-- `name`: New filename
-- `description`: Updated description
-- `tags`: Updated tags (comma-separated)
-- `folder_id`: Move to different folder
-
-**Example Request:**
-```bash
-curl -X PATCH \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "description": "Experimental results from trial #3 - REVISED",
-    "tags": "experiment,data,2025,revised"
-  }' \
-  "https://www.protocols.io/api/v3/workspaces/12345/files/67890"
-```
-
-### Delete File
-
-Move a file to trash (soft delete).
-
-**Endpoint:** `DELETE /workspaces/{workspace_id}/files/{file_id}`
-
-**Note**: Deleted files may be recoverable from trash for a limited time
-
-### Restore File
-
-Restore a deleted file from trash.
-
-**Endpoint:** `POST /workspaces/{workspace_id}/files/{file_id}/restore`
-
-## Folder Operations
-
-### Create Folder
-
-Create a new folder in the workspace.
-
-**Endpoint:** `POST /workspaces/{workspace_id}/folders`
-
-**Request Body:**
-- `name` (required): Folder name
-- `parent_folder_id`: Parent folder ID (omit for workspace root)
-- `description`: Folder description
-
-**Example Request:**
-```bash
-curl -X POST \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "2025 Experiments",
-    "parent_folder_id": "root",
-    "description": "All experimental data from 2025"
-  }' \
-  "https://www.protocols.io/api/v3/workspaces/12345/folders"
-```
-
-### Rename Folder
-
-**Endpoint:** `PATCH /workspaces/{workspace_id}/folders/{folder_id}`
-
-**Request Body:**
-- `name`: New folder name
-- `description`: Updated description
-
-### Delete Folder
-
-Delete a folder and optionally its contents.
-
-**Endpoint:** `DELETE /workspaces/{workspace_id}/folders/{folder_id}`
-
-**Query Parameters:**
-- `recursive`: Set to `true` to delete folder and all contents (default: `false`)
-
-**Warning**: Recursive deletion cannot be easily undone
-
-## Common Use Cases
-
-### 1. Protocol Data Attachment
-
-Attach experimental data files to protocols:
-
-1. Upload data files: `POST /workspaces/{id}/files/upload`
-2. Verify upload completion
-3. Reference file IDs in protocol steps
-4. Include download links in protocol description
-
-**Example Workflow:**
-```bash
-# Upload the data file
-curl -X POST \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -F "file=@results.csv" \
-  -F "description=Results from protocol execution" \
-  "https://www.protocols.io/api/v3/workspaces/12345/files/upload"
-
-# Note the file_id from response, then reference in protocol
-```
-
-### 2. Workspace Organization
-
-Organize files into logical folder structures:
-
-1. Create folder hierarchy: `POST /workspaces/{id}/folders`
-2. Upload files to appropriate folders
-3. Use consistent naming conventions
-4. Tag files for easy search
-
-**Example Structure:**
-```
-Workspace Root
-├── Protocols
-│   ├── Published
-│   └── Drafts
-├── Data
-│   ├── Raw
-│   └── Processed
-├── Images
-│   ├── Microscopy
-│   └── Gels
-└── Documents
-    ├── Papers
-    └── Presentations
-```
-
-### 3. File Search and Discovery
-
-Find files across workspace:
-
-1. Search by keywords: `GET /workspaces/{id}/files/search?query=keywords`
-2. Filter by type and date
-3. Download relevant files
-4. Update metadata for better organization
-
-### 4. Batch File Upload
-
-Upload multiple related files:
-
-1. Create target folder
-2. For each file:
-   - Upload file
-   - Verify upload status
-   - Add consistent tags
-3. Create index or manifest file listing all uploads
-
-### 5. Data Backup and Export
-
-Export workspace files for backup:
-
-1. List all folders: `GET /workspaces/{id}/folders/root`
-2. For each folder, list files
-3. Download all files: `GET /workspaces/{id}/files/{file_id}/download`
-4. Maintain folder structure locally
-5. Store metadata separately for restoration
-
-### 6. File Versioning
-
-Manage file versions manually:
-
-1. Upload new version with versioned name (e.g., `data_v2.csv`)
-2. Update previous version metadata to indicate superseded
-3. Maintain version history in folder structure
-4. Reference specific versions in protocols
-
-## Supported File Types
-
-Protocols.io supports various file types:
-
-**Data Files:**
-- Spreadsheets: `.xlsx`, `.xls`, `.csv`, `.tsv`
-- Statistical data: `.rds`, `.rdata`, `.sav`, `.dta`
-- Plain text: `.txt`, `.log`, `.json`, `.xml`
-
-**Images:**
-- Common formats: `.jpg`, `.jpeg`, `.png`, `.gif`, `.bmp`, `.tif`, `.tiff`
-- Scientific: `.czi`, `.nd2`, `.lsm` (may require special handling)
-
-**Documents:**
-- PDF: `.pdf`
-- Word: `.docx`, `.doc`
-- PowerPoint: `.pptx`, `.ppt`
-
-**Code and Scripts:**
-- Python: `.py`, `.ipynb`
-- R: `.r`, `.rmd`
-- Shell: `.sh`, `.bash`
-
-**Multimedia:**
-- Video: `.mp4`, `.avi`, `.mov`
-- Audio: `.mp3`, `.wav`
-
-**Archives:**
-- Compressed: `.zip`, `.tar.gz`, `.7z`
-
-**File Size Limits:**
-- Standard files: Check workspace limits (typically 100 MB - 1 GB)
-- Large files: May require chunked upload or special handling
-
-## Best Practices
-
-1. **File Naming**
-   - Use descriptive, consistent naming conventions
-   - Include dates in ISO format (YYYY-MM-DD)
-   - Avoid special characters and spaces (use underscores)
-   - Example: `experiment_results_2025-10-26.csv`
-
-2. **Organization**
-   - Create logical folder hierarchy
-   - Group related files together
-   - Separate raw data from processed results
-   - Keep protocol-specific files in dedicated folders
-
-3. **Metadata**
-   - Add detailed descriptions
-   - Tag files consistently
-   - Include version information
-   - Document processing steps
-
-4. **Storage Management**
-   - Regularly review and archive old files
-   - Delete unnecessary duplicates
-   - Compress large datasets
-   - Monitor workspace storage limits
-
-5. **Collaboration**
-   - Use clear file names for team members
-   - Document file purposes in descriptions
-   - Maintain consistent folder structures
-   - Communicate major organizational changes
-
-6. **Security**
-   - Avoid uploading sensitive data without proper permissions
-   - Be aware of workspace visibility settings
-   - Use appropriate access controls
-   - Regularly audit file access
-
-## Error Handling
-
-Common error responses:
-
-- `400 Bad Request`: Invalid file format or parameters
-- `401 Unauthorized`: Missing or invalid access token
-- `403 Forbidden`: Insufficient workspace permissions
-- `404 Not Found`: File or folder not found
-- `413 Payload Too Large`: File exceeds size limit
-- `422 Unprocessable Entity`: File validation failed
-- `429 Too Many Requests`: Rate limit exceeded
-- `507 Insufficient Storage`: Workspace storage limit reached
-
-## Performance Considerations
-
-1. **Large Files**
-   - Consider chunked upload for files > 100 MB
-   - Use compression for large datasets
-   - Upload during off-peak hours if possible
-
-2. **Batch Operations**
-   - Implement retry logic for failed uploads
-   - Use exponential backoff for rate limits
-   - Process uploads in parallel where possible
-
-3. **Download Optimization**
-   - Cache frequently accessed files locally
-   - Use streaming for large file downloads
-   - Implement resume capability for interrupted downloads
+- Keep raw data in a data repository or your ELN and link it from the protocol; protocols.io is best for the method, small supporting files, and figures.
+- Search before uploading to avoid duplicates, and use descriptive file names (date, instrument, sample set).
+- Always make the verify call and check its `status_code`; the API documents prepare and verify as the calls that begin and finish an upload.
+- Do not upload identifiable human-subject data to shared or public spaces.

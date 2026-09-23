@@ -4,14 +4,16 @@
 
 The liquid handling module (`pylabrobot.liquid_handling`) provides a unified interface for controlling liquid handling robots. The `LiquidHandler` class serves as the main interface for all pipetting operations, working across different hardware platforms through backend abstraction.
 
-## API Cheat Sheet (verified against current PyLabRobot)
+## API Cheat Sheet (checked against pylabrobot 0.2.2, 2026-09)
 
 These signatures are the common source of errors; the examples below follow them.
 
-- **Backends** live in `pylabrobot.liquid_handling.backends`: `STARBackend`, `VantageBackend`, `OpentronsOT2Backend`, `EVOBackend` (Tecan), and `LiquidHandlerChatterboxBackend` (no-hardware simulation). The bare `STAR` / `Vantage` / `EVO` names are kept as legacy aliases; prefer the `*Backend` form.
-- **`aspirate(resources, vols, ...)`** and **`dispense(resources, vols, ...)`**: `vols` is a **list** (one entry per channel/well), e.g. `vols=[100]` for one well, `vols=[100]*8` for a row. Per-call rate/height kwargs are also lists: `flow_rates=[...]`, `liquid_height=[...]`, `blow_out_air_volume=[...]`. There is no scalar `flow_rate`/`liquid_height`.
-- **`transfer(source, targets, source_vol=None, target_vols=None, ratios=None, ...)`**: distributes from **one** source well to **many** target wells. There is **no `dest=` and no `vols=`** keyword. Use `source_vol=` (same volume to each target) or `target_vols=[...]` (per-target). For a parallel column-to-column move, call `aspirate` + `dispense` directly.
-- **Labware is two-level**: a tip rack or plate is placed into a **carrier site** (`carrier[0] = rack`), and the *carrier* is assigned to a deck rail. `TIP_CAR_480_A00` and `PLT_CAR_L5AC_A00` are **carriers**, not racks — do not index them for wells/tips. Common labware classes: `hamilton_96_tiprack_1000uL_filter` (tips), `Cor_96_wellplate_360ul_Fb` (Corning 96-well plate).
+- **Backends** live in `pylabrobot.liquid_handling.backends`: `STARBackend`, `VantageBackend`, `OpentronsOT2Backend`, `EVOBackend` (Tecan), and `LiquidHandlerChatterboxBackend` (no-hardware simulation). The bare `STAR` / `Vantage` names are deprecated aliases that warn, and `EVO` now raises an error; use the `*Backend` names.
+- **`aspirate(resources, vols, ...)`** and **`dispense(resources, vols, ...)`**: `vols` is a **list** (one entry per channel/well), e.g. `vols=[100]` for one well, `vols=[100]*8` for a column of 8 wells. Per-call rate/height kwargs are also lists: `flow_rates=[...]`, `liquid_height=[...]`, `blow_out_air_volume=[...]`. There is no scalar `flow_rate`/`liquid_height`.
+- **`transfer(source, targets, source_vol=None, ratios=None, target_vols=None, ...)`**: one aspiration from a **single** source `Well` (`plate.get_well("A1")`, not `plate["A1"]`, which is a list), then one dispense per target with the channel-0 tip. `source_vol` is the **total** volume split across targets (equally or by `ratios`); `target_vols=[...]` sets each target's volume. There is **no `dest=` and no `vols=`** keyword. For a parallel column-to-column move, call `aspirate` + `dispense` directly.
+- **Indexing** returns lists: `plate["A1"]` is a one-element list, `plate["A1:H1"]` is column 1 (8 wells), `plate["A1:A12"]` is row A. Use `plate.get_well("A1")` / `tip_rack.get_item("A1")` for a single object (e.g. to reach `.tracker`).
+- **Tips**: `drop_tips(tip_spots)` needs target spots; `discard_tips()` sends tips to the deck's trash; `return_tips()` puts them back where they came from.
+- **Labware is two-level**: a tip rack or plate is placed into a **carrier site** (`carrier[0] = rack`), and the *carrier* is assigned to a deck rail. `TIP_CAR_480_A00` and `PLT_CAR_L5AC_A00` are **carriers**, not racks — do not index them for wells/tips. Common labware classes: `hamilton_96_tiprack_1000uL_filter` (tips), `cor_96_wellplate_360uL_Fb` (Corning 96-well plate).
 
 ## Basic Setup
 
@@ -55,18 +57,17 @@ lh = LiquidHandler(backend=LiquidHandlerChatterboxBackend(), deck=STARLetDeck())
 Picking up and dropping tips is fundamental to liquid handling operations:
 
 ```python
-# Pick up tips from specific positions
-await lh.pick_up_tips(tip_rack["A1"])           # Single tip
-await lh.pick_up_tips(tip_rack["A1:H1"])        # Row of 8 tips
-await lh.pick_up_tips(tip_rack["A1:A12"])       # Column of 12 tips
+await lh.pick_up_tips(tip_rack["A1"])       # one tip, on channel 0
+await lh.discard_tips()                     # into the deck's trash
 
-# Drop tips
-await lh.drop_tips()                             # Drop at current location
-await lh.drop_tips(waste)                        # Drop at specific location
+await lh.pick_up_tips(tip_rack["A2:H2"])    # "A2:H2" is column 2: 8 tips, one per channel
+await lh.drop_tips(tip_rack["A3:H3"])       # drop_tips needs explicit tip spots (or a Trash)
 
-# Return tips to original rack
-await lh.return_tips()
+await lh.pick_up_tips(tip_rack["A4:H4"])
+await lh.return_tips()                      # back to the spots they came from
 ```
+
+In a range, `"A1:H1"` is the 8 wells/tips of column 1 and `"A1:A12"` is the 12 of row A. An 8-channel head picks up at most 8 tips at a time, one per channel. `drop_tips()` always needs target spots; use `discard_tips()` for the trash.
 
 **Tip Tracking**: Enable automatic tip tracking to monitor tip usage:
 
@@ -80,15 +81,16 @@ set_tip_tracking(True)  # Enable globally
 Draw liquid from wells or containers:
 
 ```python
+# (assumes tips are already on the channels used)
 # Basic aspiration (vols is always a list, one entry per well/channel)
 await lh.aspirate(plate["A1"], vols=[100])        # 100 uL from A1
 
 # Multiple wells with same volume
 await lh.aspirate(plate["A1:H1"], vols=[100] * 8) # 100 uL from each of 8 wells
 
-# Multiple wells with different volumes
+# Multiple wells with different volumes (A1, B1, C1: one channel each)
 await lh.aspirate(
-    plate["A1:A3"],
+    plate["A1:C1"],
     vols=[100, 150, 200]                          # Different volumes
 )
 
@@ -115,7 +117,7 @@ await lh.dispense(plate["A1:H1"], vols=[100] * 8) # 100 uL to each of 8 wells
 
 # Different volumes
 await lh.dispense(
-    plate["A1:A3"],
+    plate["A1:C1"],
     vols=[100, 150, 200]
 )
 
@@ -131,30 +133,31 @@ await lh.dispense(
 
 ### Transferring Liquids
 
-`transfer` distributes from **one** source well to **many** target wells (positional `source, targets`; volume via `source_vol=` or `target_vols=`). It is not a parallel many-to-many move — for that, drive `aspirate`/`dispense` directly.
+`transfer(source, targets, ...)` aspirates once from **one** source well (a `Well`, e.g. `plate.get_well("A1")`) and dispenses into each target in turn with the tip on channel 0. `source_vol` is the **total** volume, split across the targets (equally, or by `ratios`); `target_vols` gives each target's volume explicitly. It is not a parallel many-to-many move — for that, drive `aspirate`/`dispense` directly.
 
 ```python
-# One source -> a row of targets, same volume to each
+# One source -> 8 targets, 100 uL each (800 uL aspirated in one go)
 await lh.pick_up_tips(tip_rack["A1"])
 await lh.transfer(
-    source_plate["A1"],          # single source well
-    dest_plate["A1:H1"],         # eight target wells
-    source_vol=100               # 100 uL split-equivalent dispense to each
+    source_plate.get_well("A1"),  # single source well
+    dest_plate["A1:H1"],          # eight target wells (column 1)
+    target_vols=[100] * 8,
 )
-await lh.drop_tips()
 
-# Per-target volumes
+# source_vol is split: 60 uL total, 2:1 between B2 and C2 (40 + 20 uL)
 await lh.transfer(
-    source_plate["A1"],
-    dest_plate["B1:D1"],
-    target_vols=[50, 100, 150]
+    source_plate.get_well("A1"),
+    dest_plate["B2:C2"],
+    source_vol=60,
+    ratios=[2, 1],
 )
+await lh.discard_tips()
 
 # Parallel many-to-many (column copy) is aspirate + dispense, not transfer:
-await lh.pick_up_tips(tip_rack["A1:H1"])
+await lh.pick_up_tips(tip_rack["A2:H2"])   # column 2: A1 was used above
 await lh.aspirate(source_plate["A1:H1"], vols=[100] * 8)
 await lh.dispense(dest_plate["A1:H1"], vols=[100] * 8)
-await lh.drop_tips()
+await lh.discard_tips()
 ```
 
 ## Advanced Techniques
@@ -164,12 +167,12 @@ await lh.drop_tips()
 Create serial dilutions across plate rows or columns:
 
 ```python
-# 2-fold serial dilution down column A (A1 -> A8)
+# 2-fold serial dilution along row A (A1 -> A8)
 
-# Add 50 uL diluent to A2..A8 (one buffer source -> many targets)
+# Add 50 uL diluent to each of A2..A8 (one buffer well -> seven targets)
 await lh.pick_up_tips(tip_rack["A1"])
-await lh.transfer(buffer["A1"], plate["A2:A8"], source_vol=50)
-await lh.drop_tips()
+await lh.transfer(buffer.get_well("A1"), plate["A2:A8"], target_vols=[50] * 7)
+await lh.discard_tips()
 
 # Perform serial dilution (single-channel aspirate/dispense, list vols)
 await lh.pick_up_tips(tip_rack["A2"])
@@ -179,7 +182,7 @@ for i in range(7):
     # Mix
     await lh.aspirate(plate[f"A{i+2}"], vols=[50])
     await lh.dispense(plate[f"A{i+2}"], vols=[50])
-await lh.drop_tips()
+await lh.discard_tips()
 ```
 
 ### Plate Replication
@@ -190,12 +193,14 @@ Copy an entire plate layout to another plate:
 # Setup tips
 await lh.pick_up_tips(tip_rack["A1:H1"])
 
-# Replicate 96-well plate column by column (parallel 8-channel)
+# Replicate 96-well plate column by column (parallel 8-channel). One set of tips
+# for all columns only suits a single shared reagent; use fresh tips per column
+# for distinct samples (next example).
 for col in range(1, 13):
     await lh.aspirate(source_plate[f"A{col}:H{col}"], vols=[100] * 8)
     await lh.dispense(dest_plate[f"A{col}:H{col}"], vols=[100] * 8)
 
-await lh.drop_tips()
+await lh.discard_tips()
 ```
 
 ### Multi-Channel Pipetting
@@ -203,18 +208,13 @@ await lh.drop_tips()
 Use multiple channels simultaneously for parallel operations:
 
 ```python
-# 8-channel move (entire row): aspirate then dispense with list vols
-await lh.pick_up_tips(tip_rack["A1:H1"])
-await lh.aspirate(source_plate["A1:H1"], vols=[100] * 8)
-await lh.dispense(dest_plate["A1:H1"], vols=[100] * 8)
-await lh.drop_tips()
-
-# Process entire plate with 8-channel, fresh tips per column
+# Process an entire plate with 8 channels (one column of wells per step),
+# fresh tips per column
 for col in range(1, 13):
     await lh.pick_up_tips(tip_rack[f"A{col}:H{col}"])
     await lh.aspirate(source_plate[f"A{col}:H{col}"], vols=[100] * 8)
     await lh.dispense(dest_plate[f"A{col}:H{col}"], vols=[100] * 8)
-    await lh.drop_tips()
+    await lh.discard_tips()
 ```
 
 ### Mixing Liquids
@@ -230,7 +230,7 @@ for _ in range(5):
     await lh.aspirate(plate["A1"], vols=[80])
     await lh.dispense(plate["A1"], vols=[80])
 
-await lh.drop_tips()
+await lh.discard_tips()
 ```
 
 ## Volume Tracking
@@ -243,15 +243,18 @@ from pylabrobot.resources import set_volume_tracking
 # Enable volume tracking globally
 set_volume_tracking(True)
 
-# Set initial volumes
-plate["A1"].tracker.set_liquids([(None, 200)])  # 200 µL
+# Set initial volumes (tracker lives on the Well object)
+plate.get_well("A1").tracker.set_liquids([(None, 200)])  # 200 uL
 
 # After aspirating 100 uL
+await lh.pick_up_tips(tip_rack["A1"])
 await lh.aspirate(plate["A1"], vols=[100])
-print(plate["A1"].tracker.get_volume())  # 100 uL
+print(plate.get_well("A1").tracker.get_used_volume())  # 100 uL
+await lh.dispense(plate["A1"], vols=[100])
+await lh.discard_tips()
 
-# Check remaining volume
-remaining = plate["A1"].tracker.get_volume()
+# Space left in the well
+free = plate.get_well("A1").tracker.get_free_volume()
 ```
 
 ## Liquid Classes
@@ -266,13 +269,13 @@ Handle errors in liquid handling operations:
 try:
     await lh.setup()
     await lh.pick_up_tips(tip_rack["A1"])
-    await lh.transfer(source["A1"], dest["A1"], source_vol=100)
-    await lh.drop_tips()
+    await lh.transfer(source.get_well("A1"), dest["A1"], source_vol=100)
+    await lh.discard_tips()
 except Exception as e:
     print(f"Error during liquid handling: {e}")
     # Attempt to drop tips if holding them
     try:
-        await lh.drop_tips()
+        await lh.discard_tips()
     except:
         pass
 finally:
@@ -301,7 +304,7 @@ from pylabrobot.liquid_handling import LiquidHandler
 from pylabrobot.liquid_handling.backends import STARBackend
 from pylabrobot.resources import (
     STARLetDeck, TIP_CAR_480_A00, PLT_CAR_L5AC_A00,
-    hamilton_96_tiprack_1000uL_filter, Cor_96_wellplate_360ul_Fb,
+    hamilton_96_tiprack_1000uL_filter, cor_96_wellplate_360uL_Fb,
     set_tip_tracking, set_volume_tracking,
 )
 
@@ -320,12 +323,12 @@ try:
     lh.deck.assign_child_resource(tip_car, rails=1)
 
     plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
-    plt_car[0] = source = Cor_96_wellplate_360ul_Fb(name="source")
-    plt_car[1] = dest = Cor_96_wellplate_360ul_Fb(name="dest")
+    plt_car[0] = source = cor_96_wellplate_360uL_Fb(name="source")
+    plt_car[1] = dest = cor_96_wellplate_360uL_Fb(name="dest")
     lh.deck.assign_child_resource(plt_car, rails=15)
 
     # Set initial volumes
-    for well in source.children:
+    for well in source.get_all_items():
         well.tracker.set_liquids([(None, 200)])
 
     # Execute protocol: parallel 8-channel column copy
@@ -333,7 +336,7 @@ try:
     for col in range(1, 13):
         await lh.aspirate(source[f"A{col}:H{col}"], vols=[100] * 8)
         await lh.dispense(dest[f"A{col}:H{col}"], vols=[100] * 8)
-    await lh.drop_tips()
+    await lh.discard_tips()
 
 finally:
     await lh.stop()
@@ -357,9 +360,7 @@ finally:
 
 ### Tecan EVO
 
-- Work-in-progress support
-- Similar capabilities to Hamilton STAR
-- Check current compatibility status in documentation
+- Partial support; check the documentation for the operations your EVO configuration supports before planning a protocol
 
 ## Additional Resources
 

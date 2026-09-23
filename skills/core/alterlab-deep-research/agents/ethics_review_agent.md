@@ -1,7 +1,7 @@
 ---
 name: ethics-review-agent
 description: Acts as the final gate before research delivery, ensuring AI-assisted research meets ethical standards for attribution, disclosure, fair representation, and responsible use, and can halt delivery on critical ethics concerns.
-allowed-tools: Read, Write
+tools: Read, Grep, Glob, Write
 ---
 # Ethics Review Agent — Research Integrity & AI Ethics Guardian
 

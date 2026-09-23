@@ -5,15 +5,15 @@ This document provides practical examples for common molfeat use cases.
 ## Installation
 
 ```bash
-uv pip install molfeat
+uv pip install molfeat                 # 1.0.0 (2026-09), Python >= 3.11
 
 # With all optional dependencies
 uv pip install "molfeat[all]"
 
 # With specific dependencies
-uv pip install "molfeat[dgl]"          # For GNN models
-uv pip install "molfeat[graphormer]"   # For Graphormer
-uv pip install "molfeat[transformer]"  # For ChemBERTa, ChemGPT
+uv pip install "molfeat[transformer]"  # For ChemBERTa, ChemGPT, MolT5
+uv pip install "molfeat[mordred]"      # For Mordred descriptors
+# molfeat 1.0 removed the DGL GIN and Graphormer models (no dgl/graphormer extras)
 ```
 
 ---
@@ -94,15 +94,15 @@ print(f"Mordred descriptors: {len(descriptors)}")
 ### Pharmacophore Calculators
 
 ```python
-from molfeat.calc import CATSCalculator
+from molfeat.calc import CATS
 
-# 2D CATS descriptors
-cats = CATSCalculator(mode="2D", scale="raw")
+# 2D CATS descriptors (topological distances)
+cats = CATS(scale="raw")
 descriptors = cats("CC(C)Cc1ccc(C)cc1C")  # Cymene
-print(f"CATS descriptors: {descriptors.shape}")  # (21,)
+print(f"CATS descriptors: {descriptors.shape}")  # (189,) with default settings
 
-# 3D CATS descriptors (requires conformer)
-cats3d = CATSCalculator(mode="3D", scale="num")
+# 3D CATS descriptors (Euclidean distances; requires a conformer)
+cats3d = CATS(use_3d_distances=True, scale="num")
 ```
 
 ---
@@ -149,36 +149,36 @@ transformer = MoleculeTransformer(
     FPCalculator("ecfp"),
     n_jobs=-1,
     verbose=True,           # Log errors
-    ignore_errors=True      # Continue on failure
 )
 
-features = transformer(smiles_with_errors)
-# Returns: array with None for failed molecules
+# ignore_errors belongs to the call/transform, not the constructor
+features, valid_ids = transformer(smiles_with_errors, ignore_errors=True)
+print(valid_ids)  # [0, 2] — only the valid molecules are returned
+
+# transform() keeps placeholders instead
+features = transformer.transform(smiles_with_errors, ignore_errors=True)
 print(features)  # [array(...), None, array(...), None]
 ```
 
 ### Concatenating Multiple Featurizers
 
 ```python
-from molfeat.trans import FeatConcat, MoleculeTransformer
-from molfeat.calc import FPCalculator
+import numpy as np
+from molfeat.trans import FeatConcat
+from molfeat.trans.fp import FPVecTransformer
 
+# FeatConcat accepts fingerprint names or FPVecTransformer objects (not FPCalculator)
 # Combine MACCS (167) + ECFP (2048) = 2215 dimensions
-concat_calc = FeatConcat([
-    FPCalculator("maccs"),
-    FPCalculator("ecfp", radius=3, fpSize=2048)
-])
-
-transformer = MoleculeTransformer(concat_calc, n_jobs=-1)
-features = transformer(smiles_list)
+concat = FeatConcat(["maccs", "ecfp"], params={"ecfp": {"length": 2048}}, dtype=np.float32)
+features = concat(smiles_list)
 print(f"Combined features shape: {features.shape}")  # (n, 2215)
 
-# Triple combination
+# Triple combination with explicit transformers
 triple_concat = FeatConcat([
-    FPCalculator("maccs"),
-    FPCalculator("ecfp"),
-    FPCalculator("rdkit")
-])
+    FPVecTransformer("maccs"),
+    FPVecTransformer("ecfp", length=2048),
+    FPVecTransformer("rdkit", length=2048),
+], dtype=np.float32)
 ```
 
 ### Saving and Loading Configurations
@@ -242,16 +242,17 @@ transformer = store.load("ChemBERTa-77M-MLM")
 ### ChemBERTa Embeddings
 
 ```python
-from molfeat.trans.pretrained import PretrainedMolTransformer
+import numpy as np
+from molfeat.trans.pretrained import PretrainedHFTransformer
 
-# Load ChemBERTa model
-chemberta = PretrainedMolTransformer("ChemBERTa-77M-MLM", n_jobs=-1)
+# Load ChemBERTa model (needs molfeat[transformer])
+chemberta = PretrainedHFTransformer(kind="ChemBERTa-77M-MLM", notation="smiles", dtype=np.float32)
 
 # Generate embeddings
 smiles = ["CCO", "CC(=O)O", "c1ccccc1"]
 embeddings = chemberta(smiles)
 print(f"ChemBERTa embeddings shape: {embeddings.shape}")
-# Output: (3, 768) - 768-dimensional embeddings
+# Output: (3, 384) - ChemBERTa-77M-MLM has hidden size 384
 
 # Use in ML pipeline
 from sklearn.ensemble import RandomForestClassifier
@@ -269,35 +270,35 @@ predictions = clf.predict(X_test)
 ### ChemGPT Models
 
 ```python
+# ChemGPT models were trained on SELFIES
 # Small model (4.7M parameters)
-chemgpt_small = PretrainedMolTransformer("ChemGPT-4.7M", n_jobs=-1)
+chemgpt_small = PretrainedHFTransformer(kind="ChemGPT-4.7M", notation="selfies", dtype=np.float32)
 
 # Medium model (19M parameters)
-chemgpt_medium = PretrainedMolTransformer("ChemGPT-19M", n_jobs=-1)
+chemgpt_medium = PretrainedHFTransformer(kind="ChemGPT-19M", notation="selfies", dtype=np.float32)
 
 # Large model (1.2B parameters)
-chemgpt_large = PretrainedMolTransformer("ChemGPT-1.2B", n_jobs=-1)
+chemgpt_large = PretrainedHFTransformer(kind="ChemGPT-1.2B", notation="selfies", dtype=np.float32)
 
 # Generate embeddings
 embeddings = chemgpt_small(smiles)
 ```
 
-### Graph Neural Network Models
+### Foundation-Model Embeddings (molfeat 1.x)
 
 ```python
-# GIN models with different pre-training objectives
-gin_masking = PretrainedMolTransformer("gin-supervised-masking", n_jobs=-1)
-gin_infomax = PretrainedMolTransformer("gin-supervised-infomax", n_jobs=-1)
-gin_edgepred = PretrainedMolTransformer("gin-supervised-edgepred", n_jobs=-1)
+from molfeat.trans.pretrained import CheMeleonTransformer, MolJEPATransformer
 
-# Generate graph embeddings
-embeddings = gin_masking(smiles)
-print(f"GIN embeddings shape: {embeddings.shape}")
+# CheMeleon: 2,048-d fingerprints; checkpoint downloaded from Zenodo and MD5-checked
+chemeleon = CheMeleonTransformer()
+embeddings = chemeleon(smiles)          # (3, 2048)
 
-# Graphormer (for quantum chemistry)
-graphormer = PretrainedMolTransformer("Graphormer-pcqm4mv2", n_jobs=-1)
-embeddings = graphormer(smiles)
+# Mol-JEPA: CC BY-NC 4.0 weights with custom model code — both flags are required
+moljepa = MolJEPATransformer(trust_remote_code=True, accept_noncommercial_license=True)
 ```
+
+The DGL GIN (`gin_supervised_*`) and Graphormer models used in older examples were removed in
+molfeat 1.0; reproduce them only in a separate `molfeat<1` environment (Python ≤ 3.10).
 
 ---
 
@@ -365,15 +366,11 @@ featurizers = {
     'MACCS': FPCalculator("maccs"),
     'RDKit': FPCalculator("rdkit"),
     'Descriptors': RDKitDescriptors2D(),
-    'Combined': FeatConcat([
-        FPCalculator("maccs"),
-        FPCalculator("ecfp")
-    ])
 }
 
 results = {}
 for name, calc in featurizers.items():
-    transformer = MoleculeTransformer(calc, n_jobs=-1)
+    transformer = MoleculeTransformer(calc, n_jobs=-1, dtype=np.float32)
     X_train = transformer(smiles_train)
     X_test = transformer(smiles_test)
 
@@ -467,8 +464,8 @@ class CustomTransformer(MoleculeTransformer):
         # Standardize
         mol = dm.standardize_mol(mol)
 
-        # Remove salts
-        mol = dm.remove_salts(mol)
+        # Remove salts / solvents (datamol has no remove_salts())
+        mol = dm.remove_salts_solvents(mol)
 
         return mol
 
@@ -486,8 +483,8 @@ from molfeat.calc import RDKitDescriptors3D
 # Generate conformers
 def prepare_3d_mol(smiles):
     mol = dm.to_mol(smiles)
-    mol = dm.add_hs(mol)
-    mol = dm.conform.generate_conformers(mol, n_confs=1)
+    # dm.conformers.generate adds hydrogens for embedding and returns a Mol with conformers
+    mol = dm.conformers.generate(mol, n_confs=1)
     return mol
 
 # 3D descriptors
@@ -525,11 +522,12 @@ for n_jobs in [1, 2, 4, -1]:
 ### Caching for Expensive Operations
 
 ```python
-from molfeat.trans.pretrained import PretrainedMolTransformer
+from molfeat.trans.pretrained import PretrainedHFTransformer
+import numpy as np
 import pickle
 
 # Load expensive pretrained model
-transformer = PretrainedMolTransformer("ChemBERTa-77M-MLM", n_jobs=-1)
+transformer = PretrainedHFTransformer(kind="ChemBERTa-77M-MLM", notation="smiles", dtype=np.float32)
 
 # Cache embeddings for reuse
 cache_file = "embeddings_cache.pkl"
@@ -662,18 +660,12 @@ for i, idx in enumerate(top_indices, 1):
 ### Handling Invalid Molecules
 
 ```python
-# Use ignore_errors to skip invalid molecules
-transformer = MoleculeTransformer(
-    FPCalculator("ecfp"),
-    ignore_errors=True,
-    verbose=True
-)
+# Use ignore_errors at call time to skip invalid molecules
+transformer = MoleculeTransformer(FPCalculator("ecfp"), verbose=True, dtype=np.float32)
 
-# Filter out None values after transformation
-features = transformer(smiles_list)
-valid_mask = [f is not None for f in features]
-valid_features = [f for f in features if f is not None]
-valid_smiles = [s for s, m in zip(smiles_list, valid_mask) if m]
+# Only valid rows are returned, plus their positions in the input
+valid_features, valid_ids = transformer(smiles_list, ignore_errors=True)
+valid_smiles = [smiles_list[i] for i in valid_ids]
 ```
 
 ### Memory Management for Large Datasets

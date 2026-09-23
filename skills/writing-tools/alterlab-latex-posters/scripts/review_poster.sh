@@ -44,9 +44,10 @@ if command_exists pdfinfo; then
     if [ -n "$PAGE_SIZE" ]; then
         echo "    $PAGE_SIZE"
         
-        # Extract dimensions and check common sizes
-        WIDTH=$(echo "$PAGE_SIZE" | awk '{print $3}')
-        HEIGHT=$(echo "$PAGE_SIZE" | awk '{print $5}')
+        # Extract dimensions (pdfinfo prints decimals, e.g. "2383.94 x 3370.39 pts (A0)")
+        # and round to whole points so the comparisons below can match.
+        WIDTH=$(echo "$PAGE_SIZE" | awk '{printf "%.0f", $3}')
+        HEIGHT=$(echo "$PAGE_SIZE" | awk '{printf "%.0f", $5}')
         
         # Check against common poster sizes (approximate)
         if [ "$WIDTH" = "2384" ] && [ "$HEIGHT" = "3370" ]; then
@@ -111,11 +112,13 @@ if command_exists pdffonts; then
         echo "    $line"
     done
     
-    # Check for non-embedded fonts
-    NON_EMBEDDED=$(echo "$FONT_OUTPUT" | tail -n +3 | awk '{if ($4 == "no") print $0}')
+    # Check for non-embedded fonts. The font "type" column can span several words
+    # ("Type 1", "CID Type 0C"), so read "emb" from the right: emb sub uni object-num gen.
+    NON_EMBEDDED=$(pdffonts "$POSTER_FILE" 2>/dev/null | tail -n +3 | awk 'NF >= 7 && $(NF-4) == "no" {print $0}')
     if [ -n "$NON_EMBEDDED" ]; then
         echo -e "    ${RED}✗ Some fonts are NOT embedded (printing may fail)${NC}"
-        echo -e "    ${BLUE}  Fix: Recompile with 'pdflatex -dEmbedAllFonts=true poster.tex'${NC}"
+        echo -e "    ${BLUE}  Usually from an included PDF figure; re-export that figure with fonts embedded, or re-embed:${NC}"
+        echo -e "    ${BLUE}  gs -o embedded.pdf -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -dEmbedAllFonts=true $POSTER_FILE${NC}"
     else
         echo -e "    ${GREEN}✓ All fonts appear to be embedded${NC}"
     fi

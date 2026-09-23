@@ -280,7 +280,7 @@ International ethical and scientific quality standard for designing, conducting,
 - Ensure credibility of clinical trial data
 
 **Regulatory adoption:**
-- FDA recognizes ICH-GCP (E6)
+- FDA recognizes ICH-GCP (E6); the current revision is E6(R3), adopted by ICH on 6 January 2025
 - Required for studies supporting regulatory submissions
 
 ### Principles of ICH-GCP

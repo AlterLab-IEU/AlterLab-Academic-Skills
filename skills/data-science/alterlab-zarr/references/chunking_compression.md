@@ -56,7 +56,7 @@ z = zarr.create_array(
     dtype='f4',
 )
 
-# Or let Zarr size the shards automatically:
+# Or let Zarr size the shards automatically (experimental in 3.x — zarr warns):
 z_auto = zarr.create_array(
     store='data2.zarr', shape=(100000, 100000),
     chunks=(100, 100), shards="auto", dtype='f4',
@@ -79,20 +79,20 @@ The `codecs=` keyword does **not** exist on `create_array` in Zarr v3.
 ### Configuring Compression
 
 ```python
-from zarr.codecs import BloscCodec, BloscShuffle, GzipCodec
+from zarr.codecs import BloscCodec, GzipCodec
 
 # Default (no compressors specified): Zstandard (ZstdCodec)
 z = zarr.create_array(store='default.zarr', shape=(1000, 1000),
                       chunks=(100, 100), dtype='f4')
 
-# Configure Blosc codec. shuffle accepts the BloscShuffle enum
-# (.noshuffle / .shuffle / .bitshuffle); the equivalent strings are also accepted.
+# Configure Blosc codec. Pass shuffle/cname as strings: 'noshuffle' | 'shuffle' | 'bitshuffle'.
+# (The BloscShuffle / BloscCname enums are deprecated since zarr 3.1 and emit DeprecationWarning.)
 z = zarr.create_array(
     store='data.zarr',
     shape=(1000, 1000),
     chunks=(100, 100),
     dtype='f4',
-    compressors=BloscCodec(cname='zstd', clevel=5, shuffle=BloscShuffle.shuffle),
+    compressors=BloscCodec(cname='zstd', clevel=5, shuffle='shuffle'),
 )
 
 # Available Blosc compressors (cname): 'blosclz', 'lz4', 'lz4hc', 'zlib', 'zstd'
@@ -126,7 +126,7 @@ z = zarr.create_array(
 
 ```python
 # Balanced default for numeric scientific data
-compressors=BloscCodec(cname='zstd', clevel=5, shuffle=BloscShuffle.shuffle)
+compressors=BloscCodec(cname='zstd', clevel=5, shuffle='shuffle')
 
 # Optimal for speed
 compressors=BloscCodec(cname='lz4', clevel=1)

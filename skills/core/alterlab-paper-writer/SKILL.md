@@ -1,13 +1,13 @@
 ---
 name: alterlab-paper-writer
-description: "Drafts and revises academic papers through a 12-agent pipeline with hardened LaTeX output (apa7 document class, justified text, table column-width formula, centered bilingual abstracts, standardized font stack, PDF compiled from LaTeX), supporting IMRaD, literature review, theoretical, case study, policy brief, and conference paper structures, APA 7.0 (default), Chicago, MLA, IEEE, and Vancouver citation formats, bilingual zh-TW plus EN abstracts, and multi-format output (LaTeX, DOCX, PDF, Markdown). Use when the request mentions write paper, academic paper, paper outline, write abstract, revise paper, check citations, convert to LaTeX, guide my paper, parse reviews, revision roadmap, or 寫論文, 學術論文, 論文大綱, 寫摘要, 修改論文, 檢查引用, 引導我寫論文, 帶我規劃論文, 逐章規劃, 論文架構, 審查意見, 修訂路線圖. Its citation-check mode formats and inserts citations while drafting; for a standalone anti-hallucination check that cited references actually exist prefer alterlab-citation-verifier instead. Part of the AlterLab Academic Skills suite."
+description: "Drafts and revises academic papers through a 12-agent pipeline with hardened LaTeX output (apa7 class, PDF compiled from LaTeX), supporting IMRaD, literature review, theoretical, case study, policy brief, and conference paper structures, APA 7.0 (default), Chicago, MLA, IEEE, and Vancouver citation formats, bilingual abstracts (English plus the author's language, e.g. Turkish or Traditional Chinese), and multi-format output (LaTeX, DOCX, PDF, Markdown). Use when the request mentions write paper, academic paper, paper outline, write abstract, revise paper, check citations, convert to LaTeX, guide my paper, parse reviews, revision roadmap, or makale yaz, akademik makale, özet yaz, makaleyi revize et, hakem yorumları, or 寫論文, 學術論文, 論文大綱, 寫摘要, 修改論文, 檢查引用, 引導我寫論文, 審查意見, 修訂路線圖. Its citation-check mode formats and inserts citations while drafting; for a standalone anti-hallucination check that cited references actually exist prefer alterlab-citation-verifier instead. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: Uses built-in Claude tools only; optional LaTeX toolchain (apa7 document class) required for PDF compilation; no external API key or account required
 metadata:
   skill-author: AlterLab
-  version: "2.4"
-  last_updated: "2026-03-08"
+  version: "2.6"
+  last_updated: "2026-09-23"
 ---
 
 # Academic Paper — Academic Paper Writing Agent Team
@@ -37,13 +37,15 @@ Write a paper on the impact of declining birth rates on private university manag
 
 ---
 
-## Trigger Conditions
+## When to Use This Skill
 
 ### Trigger Keywords
 
 **English**: write paper, academic paper, paper outline, write abstract, revise paper, literature review paper, check citations, convert to LaTeX, convert format, format paper, conference paper, journal article, thesis chapter, research paper, guide my paper, help me plan my paper, step by step paper, draft manuscript, write methodology, write discussion, parse reviews, revision roadmap, help me with my revision, I got reviewer comments, convert citations
 
-**繁體中文**: 寫論文, 學術論文, 論文大綱, 寫摘要, 修改論文, 文獻回顧論文, 檢查引用, 轉 LaTeX, 轉換格式, 研討會論文, 期刊文章, 學位論文, 研究論文, 引導我寫論文, 幫我規劃論文, 逐步寫論文, 寫方法論, 寫討論, 審查意見, 修訂路線圖, 幫我修改, 我收到審查意見, 轉換引用格式
+**Türkçe**: makale yaz, akademik makale, makale taslağı, özet yaz, makaleyi revize et, literatür taraması makalesi, atıfları kontrol et, LaTeX'e dönüştür, bildiri, dergi makalesi, tez bölümü, hakem yorumları, revizyon planı, makalemi planlamama yardım et
+
+**繁體中文**: 寫論文, 學術論文, 論文大綱, 寫摘要, 修改論文, 文獻回顧論文, 檢查引用, 轉 LaTeX, 轉換格式, 研討會論文, 期刊文章, 學位論文, 研究論文, 引導我寫論文, 幫我規劃論文, 逐章規劃, 論文架構, 逐步寫論文, 寫方法論, 寫討論, 審查意見, 修訂路線圖, 幫我修改, 我收到審查意見, 轉換引用格式
 
 ### Plan Mode Activation
 
@@ -69,6 +71,10 @@ Activate `plan` mode (Socratic chapter-by-chapter guidance) when the user's **in
 | Deep research / fact-checking (not paper writing) | `alterlab-deep-research` |
 | Reviewing a paper (structured review) | `alterlab-paper-reviewer` |
 | Full research-to-paper pipeline | `alterlab-research-pipeline` |
+| Checking that a draft's references exist and are not retracted (anti-hallucination audit) | `alterlab-citation-verifier` |
+| Turning one section's notes into polished prose without the configuration interview and agent pipeline | `alterlab-scientific-writing` |
+
+In Claude Code, a point-by-point response to reviewers (one drafting agent per comment plus a consistency pass) is packaged as `/alterlab-workflows:rebuttal` (see `alterlab-research-workflows`).
 
 ### Distinction from `alterlab-deep-research`
 
@@ -77,7 +83,7 @@ Activate `plan` mode (Socratic chapter-by-chapter guidance) when the user's **in
 | Primary output | Publishable paper draft | Research report |
 | Structure | Journal-ready (IMRaD, etc.) | APA 7.0 report |
 | Citation | Multi-format (APA/Chicago/MLA/IEEE/Vancouver) | APA 7.0 only |
-| Abstract | Bilingual (zh-TW + EN) | Single language |
+| Abstract | Bilingual (EN + the author's language) | Single language |
 | Peer review | Simulated 5-dimension review | Editorial review |
 | Output format | LaTeX/DOCX/PDF/Markdown | Markdown only |
 | Revision loop | Max 2 rounds with targeted feedback | Max 2 rounds |
@@ -94,7 +100,7 @@ Activate `plan` mode (Socratic chapter-by-chapter guidance) when the user's **in
 | 4 | `argument_builder_agent` | Argument construction, claim-evidence chains, logical flow, counter-argument handling; Plan mode argument stress test | Phase 3 / Plan Step 3 |
 | 5 | `draft_writer_agent` | Section-by-section full draft writing, discipline register adjustment, word count tracking | Phase 4 |
 | 6 | `citation_compliance_agent` | Citation format verification, reference list completeness, DOI checking | Phase 5a |
-| 7 | `abstract_bilingual_agent` | Bilingual abstract (zh-TW + EN), 5-7 keywords each | Phase 5b |
+| 7 | `abstract_bilingual_agent` | Bilingual abstract (EN + second language), keywords in each | Phase 5b |
 | 8 | `peer_reviewer_agent` | Simulated double-blind review, five-dimension scoring, revision suggestions (max 2 rounds) | Phase 6 |
 | 9 | `formatter_agent` | Convert to LaTeX/DOCX/PDF/Markdown, journal formatting, cover letter, citation format conversion (APA 7 / Chicago / MLA / IEEE / Vancouver) | Phase 7 |
 | 10 | `socratic_mentor_agent` | Plan mode Socratic mentor: chapter-by-chapter guidance, convergence criteria (4 signals), question taxonomy (4 types), INSIGHT extraction | Plan Step 0-3 |
@@ -129,8 +135,8 @@ User: "Write a paper on [topic]"
          - Target journal (optional)
          - Citation format (APA 7 / Chicago / MLA / IEEE / Vancouver)
          - Output format (LaTeX / DOCX / PDF / Markdown / Combined)
-         - Language (EN / zh-TW / bilingual sections)
-         - Bilingual abstract (Yes / EN-only / zh-TW-only)
+         - Language (EN / the author's language, e.g. TR or zh-TW / bilingual sections)
+         - Bilingual abstract (EN + second language, default: the user's language / EN-only)
          - Word count target
          - Existing materials (RQ, data, drafts, lit)
      |
@@ -185,9 +191,9 @@ User: "Write a paper on [topic]"
      |
      +-> [abstract_bilingual_agent] -> Bilingual Abstract + Keywords
          - English abstract (150-300 words, structured)
-         - Traditional Chinese abstract (300-500 characters, structured)
+         - Second-language abstract (structured; length per journal, e.g. TR Öz ~150-250 words)
          - EN keywords (5-7)
-         - zh-TW keywords (5-7)
+         - Second-language keywords (count per the journal)
          - Independent writing (not mechanical translation)
      |
 === Phase 6: PEER REVIEW ===
@@ -410,6 +416,7 @@ See `agents/intake_agent.md` for the complete field definitions of the Phase 0 c
 |-----------|---------|---------|
 | `references/apa7_extended_guide.md` | APA 7th extended guide (extends alterlab-deep-research version) | citation_compliance, draft_writer, formatter |
 | `references/apa7_chinese_citation_guide.md` | APA 7.0 Chinese citation complete specification (Taiwan academic conventions) | citation_compliance, draft_writer, formatter |
+| `alterlab-tr-academic-style` (turkish-academia) | Turkish-language academic style and TR Dizin article requirements (Öz/Abstract, statements, citation conventions) | draft_writer, abstract_bilingual, formatter |
 | `references/citation_format_switcher.md` | Multi-citation format switching rules (including Chinese formats) | citation_compliance, formatter |
 | `references/paper_structure_patterns.md` | 6 paper structure patterns | structure_architect, intake |
 | `references/academic_writing_style.md` | Academic writing style guide | draft_writer, peer_reviewer |
@@ -468,10 +475,10 @@ Also references from `alterlab-deep-research`:
 5. **Word count compliance** — within +/-10% of target
 
 ### Bilingual Abstract Quality
-6. **Independent writing** — zh-TW and EN abstracts are independently composed, NOT mechanical translations
+6. **Independent writing** — the two abstracts are independently composed, NOT mechanical translations
 7. **Structural alignment** — both abstracts cover the same key points in the same order
 8. **Keywords** — 5-7 per language, reflecting the paper's core concepts
-9. **Word count** — EN: 150-300 words; zh-TW: 300-500 characters
+9. **Length** — EN: 150-300 words; second language: the journal's limit (defaults in `agents/abstract_bilingual_agent.md`)
 
 ### Citation Quality
 10. **Format compliance** — 100% adherence to selected citation style
@@ -498,3 +505,5 @@ alterlab-paper-writer + alterlab-deep-research   -> Deep research phase -> paper
 alterlab-paper-writer + alterlab-paper-reviewer  -> Peer review -> revision loop
 alterlab-paper-writer + alterlab-research-pipeline -> Paper-writing stage within the full research-to-publication pipeline
 ```
+
+Part of the AlterLab Academic Skills suite.

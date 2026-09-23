@@ -54,6 +54,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-bgpt-search" }
       ]
+    },
+    {
+      "id": "near-miss-parallel-web",
+      "prompt": "Here is the URL of a policy brief I plan to cite. Pull the actual text of that page so I can check what it says about funding cuts before quoting it.",
+      "expected_output": "Does NOT invoke alterlab-perplexity; defers to alterlab-parallel-web, whose extract command retrieves the content of a known URL for citation verification. Perplexity answers questions from a web search; it is not a tool for fetching one specific page's text.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-parallel-web" }
+      ]
     }
   ]
 }

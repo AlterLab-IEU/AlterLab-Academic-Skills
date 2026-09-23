@@ -11,7 +11,7 @@ research integration detail, configuration, prompt-engineering tips, and trouble
 ┌─────────────────────────────────────────────────────┐
 │  1. Generate infographic with Nano Banana Pro       │
 │                    ↓                                │
-│  2. Review quality with Gemini 3 Pro                │
+│  2. Review quality with Gemini 3.1 Pro              │
 │                    ↓                                │
 │  3. Score >= threshold?                             │
 │       YES → DONE! (early stop)                      │
@@ -23,7 +23,7 @@ research integration detail, configuration, prompt-engineering tips, and trouble
 
 ### Quality Review Criteria
 
-Gemini 3 Pro evaluates each infographic on:
+Gemini 3.1 Pro (`google/gemini-3.1-pro-preview`, override with `ALTERLAB_REVIEW_MODEL`) evaluates each infographic on:
 
 1. **Visual Hierarchy & Layout** (0-2 points) — clear hierarchy, logical reading flow, balanced composition
 2. **Typography & Readability** (0-2 points) — readable text, bold headlines, no overlapping
@@ -105,7 +105,7 @@ python scripts/generate_infographic.py \
 ### Research Output
 
 When research is enabled, additional files are created:
-- `{name}_research.json` - Raw research data and sources
+- `{name}_research.json` - Raw research text plus a `sources` list of `{url, title}` entries taken from the search model's citations
 - Research content is automatically incorporated into the infographic prompt
 
 ## Command-Line Reference
@@ -124,6 +124,7 @@ Options:
   -b, --background COLOR    Background color (default: white)
   --doc-type TYPE           Document type for quality threshold
   --iterations N            Maximum refinement iterations (default: 3)
+  -r, --research            Gather facts and sources with Perplexity sonar-pro first
   --api-key KEY             OpenRouter API key
   -v, --verbose             Verbose output
   --list-options            List all available options
@@ -148,7 +149,7 @@ Get an API key at: https://openrouter.ai/keys
 
 ### Data & Privacy
 
-This skill sends your prompts and research/infographic content to a third-party API (OpenRouter) for generation and quality review. Avoid sending confidential, clinical, or unpublished material. The OpenRouter API key is read from the environment (`OPENROUTER_API_KEY`).
+This skill sends your prompts and research/infographic content to a third-party API (OpenRouter) for generation and quality review. Avoid sending confidential, clinical, or unpublished material. The OpenRouter API key is read from `--api-key`, the environment (`OPENROUTER_API_KEY`), or a `.env` file; the wrapper passes it to the generator through the environment rather than the command line.
 
 ## Prompt Engineering Tips
 

@@ -1,7 +1,7 @@
 # DergiPark Endpoints — Verified vs Unverified
 
-All "verified" rows below were observed live on **2026-06-06** by direct HTTP
-request against the production host. Treat anything in the UNVERIFIED section as
+All "verified" rows below were observed live on **2026-06-06** and re-checked on
+**2026-09-23** by direct HTTP request against the production host. Treat anything in the UNVERIFIED section as
 unconfirmed — do not present it to a user as fact, and re-check before relying on it.
 
 ## OAI-PMH (the primary, gate-free, machine-readable surface)
@@ -25,8 +25,12 @@ unconfirmed — do not present it to a user as fact, and re-check before relying
 
 - `?verb=Identify`
 - `?verb=ListMetadataFormats`
-- `?verb=ListSets` (paginates via `<resumptionToken>`)
-- `?verb=ListRecords&metadataPrefix=oai_dc&set={slug}` (paginates via `<resumptionToken>`)
+- `?verb=ListSets` — **returns only the first 100 sets and no `<resumptionToken>`**
+  (2026-09-23), so it cannot enumerate all journals any more. Take a journal's slug
+  from its URL (`/pub/{slug}`) instead.
+- `?verb=ListRecords&metadataPrefix=oai_dc&set={slug}` (100 records per page, paginates
+  via a multi-line `<resumptionToken>`; a full `mulkiye` harvest returned 1,352 records
+  on 2026-09-23)
 - `?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:dergipark.org.tr:article/{id}`
 
 ### oai_dc record shape (GetRecord on article/10)

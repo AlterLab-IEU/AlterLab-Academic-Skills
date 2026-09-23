@@ -3,10 +3,11 @@ name: alterlab-arboreto
 description: Infer gene regulatory networks (GRNs) from expression matrices using arboreto's scalable GRNBoost2 and GENIE3 tree-ensemble algorithms with Dask-distributed computation. Use when analyzing bulk or single-cell RNA-seq transcriptomics to map transcription-factor-to-target-gene regulatory interactions, build adjacency networks, or run the GRN-inference step of a SCENIC pipeline on large datasets. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Self-contained — runs under `uv run python` with `arboreto` installed (0.1.6, the current and last release, published Feb 2021); it pulls in `dask[complete]` and `distributed`. No API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Arboreto
@@ -17,12 +18,35 @@ Arboreto is a computational library for inferring gene regulatory networks (GRNs
 
 **Core capability**: Identify which transcription factors (TFs) regulate which target genes based on expression patterns across observations (cells, samples, conditions).
 
+## When to Use This Skill
+
+Use this skill when the user wants to:
+- Infer a TF → target-gene regulatory network from a bulk or single-cell expression matrix.
+- Run the GRN-inference step (step 1) of a SCENIC / pySCENIC pipeline.
+- Compare GRNBoost2 against GENIE3, or build a consensus network across random seeds.
+- Scale GRN inference across cores or a Dask cluster.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Differential expression between conditions (counts → padj) | `alterlab-pydeseq2` |
+| Clustering, UMAP, or QC of a single-cell dataset | `alterlab-scanpy` |
+| Deep-learning latent space / batch integration of scRNA-seq | `alterlab-scvi-tools` |
+| Generic graph analysis or centrality on an existing network | `alterlab-networkx` |
+| Tuning the Dask cluster itself rather than running GRN inference | `alterlab-dask` |
+
 ## Quick Start
 
 Install arboreto:
 ```bash
 uv pip install arboreto
 ```
+
+Arboreto 0.1.6 is from 2021 and its internals use `dask.delayed` plus
+`dask.dataframe.from_delayed`. Those APIs still exist in current dask, but if a run fails
+inside dask rather than inside arboreto, pin `dask`/`distributed` to a matching pair in an
+isolated env (pySCENIC's pins are a good reference) rather than editing arboreto.
 
 Basic GRN inference:
 ```python
@@ -40,7 +64,8 @@ if __name__ == '__main__':
     network.to_csv('network.tsv', sep='\t', index=False, header=False)
 ```
 
-**Critical**: Always use `if __name__ == '__main__':` guard because Dask spawns new processes.
+Wrap the entry point in `if __name__ == '__main__':` — Dask spawns worker processes that
+re-import the module, so unguarded top-level code runs again in every worker.
 
 ## Core Capabilities
 
@@ -251,3 +276,12 @@ if __name__ == '__main__':
 
 **Empty results**: Check data format (genes as columns), verify TF names match gene names
 
+
+## Resources
+
+- `references/basic_inference.md` — input preparation, running inference, output format
+- `references/algorithms.md` — GRNBoost2 vs GENIE3 parameters and selection guidance
+- `references/distributed_computing.md` — cluster setup and large-scale workflows
+- `scripts/basic_grn_inference.py` — runnable CLI wrapper for a standard GRNBoost2 run
+
+Part of the AlterLab Academic Skills suite.

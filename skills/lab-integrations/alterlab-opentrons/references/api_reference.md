@@ -12,6 +12,8 @@
 | `load_labware_on_adapter(name, adapter, label=None)` | Load labware on adapter | Labware object |
 | `load_labware_by_name(name, location, label=None, namespace=None, version=None)` | Alternative load method | Labware object |
 | `load_lid_stack(load_name, location, quantity=None)` | Load lid stack (Flex only) | Labware object |
+| `load_trash_bin(location)` | Load a trash bin (required on Flex before dropping tips; API 2.16+) | TrashBin object |
+| `load_waste_chute()` | Load the Flex waste chute (API 2.16+) | WasteChute object |
 
 ### Instrument Management
 
@@ -40,7 +42,7 @@
 | `delay(seconds=0, minutes=0, msg=None)` | Delay execution | None |
 | `comment(msg)` | Add comment to protocol log | None |
 | `home()` | Home all axes | None |
-| `set_rail_lights(on)` | Control rail lights (Flex only) | None |
+| `set_rail_lights(on)` | Control rail lights (OT-2 and Flex, API 2.5+) | None |
 
 ### Protocol Properties
 
@@ -161,16 +163,17 @@ Access via `pipette.flow_rate`:
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| `load_liquid(liquid, volume)` | Load liquid into well | None |
-| `load_empty()` | Mark well as empty | None |
+| `load_liquid(liquid, volume)` | Load liquid into this well (deprecated from API 2.22; use the Labware methods below) | None |
 | `from_center_cartesian(x, y, z)` | Get location from center | Location |
+
+Labware-level liquid methods (API 2.22+): `labware.load_liquid(wells, volume, liquid)`, `labware.load_liquid_by_well({well: volume}, liquid)`, `labware.load_empty(wells)`. There is no `Well.load_empty()`.
 
 ### Location Methods
 
 | Method | Description | Returns |
 |--------|-------------|---------|
-| `top(z=0)` | Get location at top of well | Location |
-| `bottom(z=0)` | Get location at bottom of well | Location |
+| `top(z=0)` | Location at the top rim of the well (+z above, -z below) | Location |
+| `bottom(z=0)` | Location at the well bottom itself (use z > 0 to stay clear) | Location |
 | `center()` | Get location at center of well | Location |
 
 ### Well Properties
@@ -243,7 +246,7 @@ Access via `pipette.flow_rate`:
 |--------|-------------|---------|
 | `open_lid()` | Open lid | None |
 | `close_lid()` | Close lid | None |
-| `set_lid_temperature(celsius)` | Set lid temperature | None |
+| `set_lid_temperature(temperature)` | Set lid temperature (37–110 °C) | None |
 | `deactivate_lid()` | Turn off lid heater | None |
 | `set_block_temperature(temperature, hold_time_seconds=0, hold_time_minutes=0, ramp_rate=None, block_max_volume=None)` | Set block temperature | None |
 | `deactivate_block()` | Turn off block | None |
@@ -361,16 +364,23 @@ with open(data_file) as f:
 
 API Level compatibility (selected feature-introduction levels; not exhaustive):
 
-| API Level | Feature introduced |
+| API Level | Feature introduced (robot software) |
 |-----------|--------------------|
-| 2.18 | Absorbance Plate Reader (`absorbanceReaderV1`) |
-| 2.16 | Flex partial tip pickup; `trashBin`/`wasteChute` load helpers |
+| 2.29 | Step groups (`group_steps()` etc.) — robot software 9.1.1 |
+| 2.28 | `Labware.set_empty()`, thermocycler `ramp_rate`, `opentrons_flex_96_tiprack_20ul` — 9.0.0 |
+| 2.27 | Concurrent module commands, `capture_image()` — 8.8.0 |
+| 2.25 | Flex Stacker (`FlexStackerContext`) — 8.6.0 |
+| 2.24 | Liquid classes (`transfer_with_liquid_class`, `define_liquid_class`) — 8.5.0 |
+| 2.22 | `Labware.load_liquid()`, `load_liquid_by_well()`, `load_empty()` — 8.3.0 |
+| 2.21 | Absorbance Plate Reader (`absorbanceReaderV1`) — 8.2.0 |
+| 2.20 | Liquid presence detection, CSV runtime parameters — 8.0.0 |
+| 2.16 | Flex partial tip pickup; `load_trash_bin()`/`load_waste_chute()` |
 | 2.15 | Flex support (minimum `apiLevel` for Flex protocols) |
 | 2.13 | Temperature Module GEN2 |
 | 2.0-2.12 | Core OT-2 functionality |
 
 The API level minor version increases whenever new functionality is added. The maximum
-level your robot accepts is tied to its installed app/robot-server version (current docs
-ship examples around 2.2x). Pin the level your hardware actually supports; do not assume a
-number higher than the robot's firmware accepts. Run `opentrons_simulate <protocol>.py` to
-confirm the level is accepted before committing to it.
+level your robot accepts is tied to its installed robot software (2.29 needs Flex robot
+software 9.1.1+; the `opentrons` 9.1.x Python package simulates up to 2.29). Use the lowest
+level that provides the features you need, put `apiLevel` in only one of `metadata` or
+`requirements`, and run `opentrons_simulate <protocol>.py` to confirm the level is accepted.

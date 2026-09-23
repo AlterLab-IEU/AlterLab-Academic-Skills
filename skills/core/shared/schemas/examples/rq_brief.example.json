@@ -6,11 +6,11 @@
     "What is the trade-off between feedback richness and cognitive load?"
   ],
   "finer_scores": {
-    "feasible": 8,
-    "interesting": 9,
-    "novel": 7,
-    "ethical": 9,
-    "relevant": 8
+    "feasible": 4,
+    "interesting": 5,
+    "novel": 4,
+    "ethical": 5,
+    "relevant": 4
   },
   "scope": {
     "in_scope": ["real-time LED-wall virtual production", "professional cinematographers"],

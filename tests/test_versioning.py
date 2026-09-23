@@ -60,7 +60,11 @@ def test_marketplace_lists_every_skill(repo_root: Path, skill_files: list[Path])
     listed: set[str] = set()
     for plugin in mkt["plugins"]:
         source = plugin["source"].lstrip("./").rstrip("/")  # e.g. skills/databases
-        for entry in plugin["skills"]:
+        # A strict:true entry defers its components to the domain's own plugin.json.
+        manifest = plugin
+        if plugin.get("strict", True):
+            manifest = _read_json(repo_root / source / ".claude-plugin" / "plugin.json")
+        for entry in manifest.get("skills", []):  # bundle plugins carry only dependencies
             skill = entry.lstrip("./").rstrip("/")           # e.g. alterlab-pubmed
             # Guard the scoping: entries must be plugin-root-relative, not re-prefixed.
             assert not skill.startswith("skills/"), (

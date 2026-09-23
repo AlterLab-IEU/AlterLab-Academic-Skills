@@ -401,61 +401,55 @@ Comprehensive set of tables and figures for efficacy and safety data.
 
 CONSORT guidelines promote transparent and complete reporting of randomized controlled trials.
 
-### CONSORT 2010 Checklist
+### CONSORT 2025 Checklist
+
+CONSORT 2025 (Hopewell et al., BMJ 2025;389:e081123, published 14 April 2025 simultaneously in BMJ, JAMA, Lancet, Nature Medicine, and PLOS Medicine) replaces CONSORT 2010. It has **30 items** — seven new, three revised, one deleted — with a new **Open science** section and items integrated from the CONSORT Harms, Outcomes, and Non-pharmacological Treatment extensions and from TIDieR. Download the official checklist and explanation-and-elaboration paper from https://www.consort-spirit.org/ and report the item numbers from the 2025 version.
 
 #### Title and Abstract
-- **1a. Title**: Identification as randomized trial in title
-- **1b. Abstract**: Structured summary covering trial design, methods, results, conclusions
+- **1a**: Identification as a randomised trial
+- **1b**: Structured summary of the trial design, methods, results, and conclusions
+
+#### Open Science
+- **2. Trial registration**: Registry name, identifying number (with URL), and registration date
+- **3. Protocol and SAP**: Where the trial protocol and statistical analysis plan can be accessed
+- **4. Data sharing**: Where and how de-identified participant data (with data dictionary), statistical code, and other materials can be accessed
+- **5a. Funding**: Sources of funding and other support, and the funders' role in design, conduct, analysis, and reporting
+- **5b. Conflicts of interest**: Financial and other conflicts of interest of the manuscript authors
 
 #### Introduction
-- **2a. Background**: Scientific background and explanation of rationale
-- **2b. Objectives**: Specific objectives or hypotheses
+- **6. Background and rationale**
+- **7. Objectives**: Specific objectives related to benefits and harms
 
-#### Methods - Participants
-- **3a. Eligibility**: Eligibility criteria for participants
-- **3b. Settings**: Settings and locations of data collection
+#### Methods
+- **8. Patient and public involvement** in design, conduct, and reporting
+- **9. Trial design**: Type (e.g., parallel group, crossover), allocation ratio, and framework (superiority, equivalence, non-inferiority, exploratory)
+- **10. Changes to trial protocol** after it commenced, including outcomes or analyses not prespecified, with reasons
+- **11. Trial setting**: Settings and locations
+- **12a / 12b. Eligibility**: Criteria for participants; if applicable, for sites and for individuals delivering the interventions
+- **13. Intervention and comparator**: Enough detail to allow replication, and where further materials can be accessed
+- **14. Outcomes**: Prespecified primary and secondary outcomes with measurement variable, analysis metric, method of aggregation, and time point
+- **15. Harms**: How harms were defined and assessed
+- **16a / 16b. Sample size**: How it was determined (with all assumptions); interim analyses and stopping guidelines
+- **17a / 17b. Sequence generation**: Who generated the allocation sequence and how; type of randomisation and any restriction (stratification, blocking and block size)
+- **18. Allocation concealment mechanism**
+- **19. Implementation**: Whether those enrolling and assigning participants had access to the allocation sequence
+- **20a / 20b. Blinding**: Who was blinded after assignment; how blinding was achieved and similarity of interventions
+- **21a–21d. Statistical methods**: Methods for primary and secondary outcomes including harms; who is included in each analysis; handling of missing data; additional analyses, distinguishing prespecified from post hoc
 
-#### Methods - Interventions
-- **4a. Interventions**: Details of interventions for each group
-- **4b. Details**: Sufficient details to allow replication
-
-#### Methods - Outcomes
-- **5. Outcomes**: Clearly defined primary and secondary outcome measures
-- **6a. Sample size**: How sample size was determined
-- **6b. Interim analyses**: When applicable, explanation of interim analyses
-
-#### Methods - Randomization
-- **7a. Sequence generation**: Method of random sequence generation
-- **7b. Allocation concealment**: Mechanism of allocation concealment
-- **8a. Implementation**: Who generated allocation, enrolled, and assigned participants
-- **8b. Blinding**: Whether participants, care providers, outcome assessors were blinded
-
-#### Methods - Statistical
-- **9. Statistical methods**: Methods for primary and secondary outcomes
-- **10. Additional analyses**: Subgroup or adjusted analyses
-
-#### Results - Participant Flow
-- **11a. Enrollment**: Numbers screened, randomized, allocated
-- **11b. Losses and exclusions**: For each group, losses and exclusions after randomization
-- **12. Recruitment**: Dates defining recruitment and follow-up periods
-- **13a. Baseline**: Baseline demographic and clinical characteristics
-- **13b. Baseline comparability**: Numbers analyzed in each group
-
-#### Results - Outcomes and Estimation
-- **14a. Outcomes**: For primary and secondary outcomes, results for each group
-- **14b. Binary outcomes**: For binary outcomes, effect sizes and confidence intervals
-- **15. Ancillary analyses**: Results of other analyses performed
-
-#### Results - Harms
-- **16. Harms**: All important harms or unintended effects in each group
+#### Results
+- **22a / 22b. Participant flow** (with flow diagram): numbers randomised, receiving the intended intervention, and analysed for the primary outcome; losses and exclusions with reasons
+- **23a / 23b. Recruitment**: Dates of recruitment and follow-up; why the trial ended or was stopped, if relevant
+- **24a / 24b. Intervention and comparator delivery**: As actually administered (adherence, fidelity); concomitant care in each group
+- **25. Baseline data**: Table of baseline demographic and clinical characteristics per group
+- **26. Numbers analysed, outcomes and estimation**: Per outcome and group — numbers analysed and with data, results, effect size with precision (e.g., 95% CI), and both absolute and relative effects for binary outcomes
+- **27. Harms**: All harms or unintended events in each group
+- **28. Ancillary analyses**: Other analyses, distinguishing prespecified from post hoc
 
 #### Discussion
-- **17a. Limitations**: Trial limitations, addressing biases, imprecision
-- **17b. Generalizability**: Generalizability (external validity) of trial findings
-- **18. Interpretation**: Interpretation consistent with results, balancing benefits and harms
-- **19. Registration**: Registration number and name of trial registry
-- **20. Protocol**: Where full trial protocol can be accessed
-- **21. Funding**: Sources of funding, role of funders
+- **29. Interpretation**: Consistent with results, balancing benefits and harms, and considering other relevant evidence
+- **30. Limitations**: Sources of bias, imprecision, generalisability, and multiplicity where relevant
+
+For trial **protocols**, use SPIRIT 2025 (34 items, published April 2025), which was updated in parallel so protocol and report items line up.
 
 ### CONSORT Flow Diagram
 

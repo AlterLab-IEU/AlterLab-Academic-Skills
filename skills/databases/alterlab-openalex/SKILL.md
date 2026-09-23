@@ -1,34 +1,51 @@
 ---
 name: alterlab-openalex
-description: Query and analyze scholarly literature using the OpenAlex API across 240M+ works, retrieving papers, authors, institutions, citations, and open access status. Use when searching academic papers, tracking citations, finding works by author or institution, analyzing research trends, discovering open access publications, or running bibliometric analysis. Part of the AlterLab Academic Skills suite.
+description: Query and analyze scholarly literature using the OpenAlex API across 300M+ works, retrieving papers, authors, institutions, citations, and open access status. Use when searching academic papers, tracking citations, finding works by author or institution, analyzing research trends, discovering open access publications, or running bibliometric analysis. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: OpenAlex REST API at api.openalex.org. Works keyless ($0.01/day credit); a free API key (openalex.org/settings/api) raises the free allowance to $1/day.
+compatibility: OpenAlex REST API at api.openalex.org. Keyless use draws on a $0.10/day budget shared by everyone on your IP; a free API key (openalex.org/settings/api; set OPENALEX_API_KEY) gives your own $1/day. Max 100 requests/s, per_page ≤ 100 (as of 2026-09).
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.2.0"
+    last_updated: "2026-09-23"
 ---
 
 # OpenAlex Database
 
 ## Overview
 
-OpenAlex is a comprehensive open catalog of 240M+ scholarly works, authors, institutions, topics, sources, publishers, and funders. This skill provides tools and workflows for querying the OpenAlex API to search literature, analyze research output, track citations, and conduct bibliometric studies.
+OpenAlex is a comprehensive open catalog of 300M+ scholarly works (the default "core" corpus; `corpus=all` adds roughly 60% more, mostly datasets and repository records), authors, institutions, topics, sources, publishers, and funders. This skill provides tools and workflows for querying the OpenAlex API to search literature, analyze research output, track citations, and conduct bibliometric studies.
+
+## When to Use This Skill
+
+- Searching the scholarly literature across all disciplines (keyword, semantic, or filtered by year, OA status, type)
+- Finding works by an author, institution, funder, or source via their OpenAlex/ORCID/ROR/ISSN IDs
+- Citation counts, citing works, and bibliometric or trend analysis (group_by aggregations)
+- Checking open-access status and locations of papers, or batch-resolving DOIs to metadata
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Biomedical literature search with MeSH terms, PMIDs, or PubMed Central full text | `alterlab-pubmed` |
+| Building a citation / co-citation map around seed papers | `alterlab-citation-graph` |
+| Checking that every reference in a bibliography exists or was retracted | `alterlab-citation-verifier` |
+| Managing a Zotero library (items, collections, attachments) | `alterlab-pyzotero` |
+| Writing a structured literature review from the papers found | `alterlab-literature-review` |
 
 ## Quick Start
 
 ### Basic Setup
 
-OpenAlex now runs on a credit model (see "Rate Limits & Cost" below). It still works with no credentials, but a **free API key** raises the daily free allowance from $0.01 to $1 — get one at `openalex.org/settings/api` and pass it to the client:
+OpenAlex runs on a daily cost budget (see "Rate Limits & Cost" below). It still answers with no credentials, but keyless calls share a $0.10/day budget with everyone on the same IP address — on university, VPN, or cloud networks that budget is often already spent, and every list or search call then returns HTTP 429 until midnight UTC. A **free API key** gives you your own $1/day — get one at `openalex.org/settings/api` and export it as `OPENALEX_API_KEY`; the client reads it and sends it as an `Authorization: Bearer` header, which keeps the key out of URLs and logs (`?api_key=` also works). The old mailto "polite pool" was retired in Feb 2026, so `mailto=` no longer buys anything.
 
 ```python
 from scripts.openalex_client import OpenAlexClient
 
-# Recommended: free API key (raises free allowance to $1/day)
-client = OpenAlexClient(api_key="YOUR_KEY")
+# Recommended: export OPENALEX_API_KEY=...  (free; own $1/day budget)
+client = OpenAlexClient()                 # or OpenAlexClient(api_key="...")
 
-# Keyless still works (lower $0.01/day allowance); mailto is optional/harmless
-client = OpenAlexClient(email="your-email@example.edu")
+# With no key set, the client still works on the shared keyless budget
 ```
 
 ### Installation Requirements
@@ -51,6 +68,13 @@ results = client.search_works(
     search="machine learning",
     per_page=100
 )
+
+# Semantic (embedding) search — matches meaning rather than words; accepts up to
+# 2,000 characters (e.g. a grant aim), returns at most 50 results, 1 request/second
+results = client._make_request('/works', {
+    'search.semantic': 'predicting drug toxicity from molecular structure',
+    'select': 'id,title,relevance_score',
+})
 
 # Search with filters
 results = client.search_works(
@@ -183,7 +207,7 @@ print(f"Top topics: {analysis['top_topics'][:5]}")
 dois = [
     "https://doi.org/10.1038/s41586-021-03819-2",
     "https://doi.org/10.1126/science.abc1234",
-    # ... up to 50 DOIs
+    # ... any number; sent in batches of 100 (the per-filter OR limit)
 ]
 
 works = client.batch_lookup(
@@ -225,7 +249,8 @@ work = client.get_entity('works', 'https://doi.org/10.1038/s41586-021-03819-2')
 import requests
 citing_response = requests.get(
     work['cited_by_api_url'],
-    params={**client.auth_params(), 'per-page': 200}
+    params={'per_page': 100},
+    headers=client.auth_headers(),   # Bearer key, if one is configured
 )
 citing_works = citing_response.json()['results']
 ```
@@ -254,7 +279,9 @@ for topic in topics[:10]:
 **Use for**: Downloading large datasets for analysis
 
 ```python
-# Paginate through all results
+# Paginate through all results (the client uses cursor paging, so it can go past
+# the 10,000-result limit of page-based paging; for whole-corpus pulls use the
+# free OpenAlex snapshot instead of the API)
 all_papers = client.paginate_all(
     endpoint='/works',
     params={
@@ -283,13 +310,13 @@ with open('papers.csv', 'w', newline='', encoding='utf-8') as f:
 ## Critical Best Practices
 
 ### Use a Free API Key to Raise the Daily Allowance
-Without credentials you get a $0.01/day free credit; a free API key raises it to $1/day. Pass the key to the client:
-```python
-client = OpenAlexClient(api_key="YOUR_KEY")  # free at openalex.org/settings/api
+Without credentials you share a $0.10/day budget with everyone on your IP; a free API key gives you your own $1/day. Pass the key to the client:
+```bash
+export OPENALEX_API_KEY=...   # free at openalex.org/settings/api; OpenAlexClient() picks it up
 ```
 
 ### Use Two-Step Pattern for Entity Lookups
-Never filter by entity names directly - always get ID first:
+Filter by IDs, not names — names are ambiguous ("Smith" is thousands of authors, "MIT" several institutions), so resolve the entity to its ID first:
 ```python
 # ✅ Correct
 # 1. Search for entity → get ID
@@ -300,18 +327,18 @@ Never filter by entity names directly - always get ID first:
 ```
 
 ### Use Maximum Page Size
-Always use `per-page=200` for efficient data retrieval:
+Use `per_page=100` (the supported maximum; `per_page=200` is deprecated legacy behavior that OpenAlex says will be removed). A list call costs the same whether it returns 1 or 100 results:
 ```python
-results = client.search_works(search="topic", per_page=200)
+results = client.search_works(search="topic", per_page=100)
 ```
 
 ### Batch Multiple IDs
 Use batch_lookup() for multiple IDs instead of individual requests:
 ```python
-# ✅ Correct - 1 request for 50 DOIs
+# ✅ Correct - 1 request per 100 DOIs
 works = client.batch_lookup('works', doi_list, 'doi')
 
-# ❌ Wrong - 50 separate requests
+# ❌ Wrong - one request per DOI
 for doi in doi_list:
     work = client.get_entity('works', doi)
 ```
@@ -337,49 +364,16 @@ results = client.search_works(
 
 ## Common Filter Patterns
 
-### Date Ranges
+`filter_params` entries are joined with commas (AND). Full syntax, operators, and field names: `references/api_guide.md` (Filter Syntax).
+
 ```python
-# Single year
-filter_params={"publication_year": "2023"}
-
-# After year
-filter_params={"publication_year": ">2020"}
-
-# Range
-filter_params={"publication_year": "2020-2024"}
-```
-
-### Multiple Filters (AND)
-```python
-# All conditions must match
-filter_params={
-    "publication_year": ">2020",
-    "is_oa": "true",
-    "cited_by_count": ">100"
-}
-```
-
-### Multiple Values (OR)
-```python
-# Any institution matches
-filter_params={
-    "authorships.institutions.id": "I136199984|I27837315"  # MIT or Harvard
-}
-```
-
-### Collaboration (AND within attribute)
-```python
-# Papers with authors from BOTH institutions
-filter_params={
-    "authorships.institutions.id": "I136199984+I27837315"  # MIT AND Harvard
-}
-```
-
-### Negation
-```python
-# Exclude type
-filter_params={
-    "type": "!paratext"
+filter_params = {
+    "publication_year": "2020-2024",        # also "2023", ">2020", "<2020"
+    "is_oa": "true",                        # several keys = AND
+    "cited_by_count": ">100",
+    "authorships.institutions.id": "I136199984|I27837315",   # | = OR (≤100 values): MIT or Harvard
+    # "authorships.institutions.id": "I136199984+I27837315", # + = AND within one attribute (co-authored)
+    "type": "!paratext",                    # ! = negation
 }
 ```
 
@@ -464,9 +458,9 @@ Use for common research queries with simplified interfaces.
 
 ### Daily Limit / Throttling (429)
 If encountering 429 (Too Many Requests) errors:
-1. Add a free API key to raise the daily allowance from $0.01 to $1 (`OpenAlexClient(api_key=...)`)
+1. Add a free API key for your own $1/day instead of the shared $0.10/day keyless budget (`export OPENALEX_API_KEY=...`). A 429 whose `Retry-After` is hours long means the daily budget is spent — retrying won't help until midnight UTC, and the client raises immediately in that case
 2. Reduce cost: prefer single-entity and list+filter calls over `search=` (search costs more credits per call); use `select=` to keep responses cheap
-3. Client automatically backs off and retries on 429/403/5xx
+3. Client automatically backs off and retries short throttles (429/403/5xx), e.g. exceeding 100 requests/second
 4. Inspect the `x-ratelimit-remaining-usd` / `x-ratelimit-cost-usd` response headers to see remaining budget
 
 ### Empty Results
@@ -477,19 +471,21 @@ If searches return no results:
 
 ### Timeout Errors
 For large queries:
-1. Use pagination with `per-page=200`
+1. Use pagination with `per_page=100`
 2. Use `select=` to limit returned fields
 3. Break into smaller queries if needed
 
 ## Rate Limits & Cost
 
-OpenAlex uses a daily cost (credit) model, not a fixed requests/second limit. Each call has a small USD cost; you get a free daily budget and pay only past it.
+OpenAlex uses a daily cost budget plus a hard ceiling of 100 requests/second. Each call has a small USD cost; you get a free daily budget and pay only past it (prepaid top-ups or annual plans).
 
-- **Keyless**: $0.01/day free budget.
-- **With a free API key** (`openalex.org/settings/api`): $1/day free budget. Recommended.
-- **Approximate costs per $1** (the bulk of the work): single-entity lookups are effectively free/unlimited; ~10,000 list+filter calls; ~1,000 `search=` calls; ~100 PDF/content downloads. So `search=` is ~10x more expensive than list+filter — filter when you can.
+- **Keyless**: $0.10/day, shared by everyone on your IP address.
+- **With a free API key** (`openalex.org/settings/api`, sent as `Authorization: Bearer <key>` or `?api_key=`): your own $1/day. Recommended. `mailto=` is ignored since the polite pool was retired (Feb 2026).
+- **Cost per 1,000 calls** (help.openalex.org, 2026-08): single-entity lookup by ID/DOI free; list+filter $0.10; `search=` $1; `search.semantic=` $1; content (PDF) download $10. So $1 buys ~10,000 filter calls (~1M results at `per_page=100`) or ~1,000 searches — filter when you can.
+- **Query limits**: `per_page` ≤ 100; page-based paging stops at 10,000 results (use `cursor=*`); ≤ 100 OR values per filter; `sample` ≤ 10,000.
+- Check your remaining budget with `GET /rate-limit?api_key=...`.
 - Live budget is reported in response headers: `x-ratelimit-limit-usd`, `x-ratelimit-remaining-usd`, `x-ratelimit-cost-usd` (and the response `meta.cost_usd`).
-- Exhausting the daily budget returns **429 Too Many Requests** (403 also signals "slow down"). The client backs off and retries on these.
+- Exhausting the daily budget returns **429 Too Many Requests** with a `Retry-After` counting down to midnight UTC; bursts above 100 requests/second also return 429 (short wait). 403 can also signal "slow down".
 
 ## Notes
 

@@ -4,21 +4,21 @@
     {
       "id": "hamilton-star-transfer",
       "prompt": "Program a liquid transfer on our Hamilton STAR using PyLabRobot: pick up tips, transfer 100 uL from a source 96-well plate to a destination plate, and drop tips.",
-      "expected_output": "Invokes alterlab-pylabrobot. Uses PyLabRobot's LiquidHandler with the STAR backend and a STARLetDeck, assigns resources, and runs the async protocol (await lh.setup(), pick_up_tips, transfer/aspirate+dispense, drop_tips).",
+      "expected_output": "Invokes alterlab-pylabrobot. Builds a LiquidHandler with STARBackend and a STARLetDeck (or STARDeck), places the tip rack and plates in carrier sites (TIP_CAR_480_A00, PLT_CAR_L5AC_A00) assigned to rails, awaits lh.setup(), picks up tips, moves 100 uL with aspirate/dispense list vols (or transfer from a single Well via plate.get_well with target_vols), then discards or returns the tips and stops the handler in a finally block. Suggests simulating first with LiquidHandlerChatterboxBackend.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "LiquidHandler" },
-        { "type": "behavior", "value": "Uses the STAR backend with a deck and awaits the async liquid-handling calls." }
+        { "type": "behavior", "value": "Awaits the async calls, passes vols as lists, and ends with discard_tips()/return_tips() (or drop_tips with explicit tip spots) rather than a bare drop_tips()." }
       ]
     },
     {
       "id": "cross-vendor-plate-reader-integration",
       "prompt": "I need one protocol that runs liquid handling and then reads absorbance on a BMG CLARIOstar plate reader, all from the same Python script.",
-      "expected_output": "Invokes alterlab-pylabrobot. Integrates analytical equipment: uses a PlateReader with the CLARIOstarBackend (await pr.setup, read_absorbance) alongside the LiquidHandler in one script, leveraging PyLabRobot's unified cross-device interface.",
+      "expected_output": "Invokes alterlab-pylabrobot. Imports PlateReader and CLARIOstarBackend from pylabrobot.plate_reading (installing pylabrobot[ftdi]), sets up the reader alongside the LiquidHandler in one async script, puts the plate in the reader (gripper move or assign_child_resource) before calling read_absorbance(wavelength=..., use_new_return_type=True), and stops both devices in a finally block.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "CLARIOstar" },
-        { "type": "behavior", "value": "Drives a PlateReader (CLARIOstarBackend, read_absorbance) and a LiquidHandler from the same async script." }
+        { "type": "behavior", "value": "Drives a PlateReader (CLARIOstarBackend, read_absorbance with a plate assigned to the reader) and a LiquidHandler from the same async script; does not call a non-existent PlateReader.set_temperature." }
       ]
     },
     {
@@ -34,10 +34,10 @@
     {
       "id": "multi-device-material-handling",
       "prompt": "Coordinate a workflow that uses a Hamilton heater-shaker and an Inheco incubator alongside the liquid handler, all controlled from one PyLabRobot script.",
-      "expected_output": "Invokes alterlab-pylabrobot. Routes to material handling: controls the heater-shaker and incubator (temperature/shaking) together with the liquid handler through PyLabRobot's unified multi-device interface and backend abstraction.",
+      "expected_output": "Invokes alterlab-pylabrobot. Uses HeaterShaker with HamiltonHeaterShakerBackend (through a HamiltonHeaterShakerBox or the STAR as interface) and an Inheco incubator from pylabrobot.storage (SCILABackend or the Inheco incubator-shaker stack), together with the LiquidHandler, calling set_temperature, shake(speed, duration), lock_plate, and the incubator's take_in_plate/fetch_plate_to_loading_tray.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Coordinates multiple device types (heater-shaker, incubator, liquid handler) through PyLabRobot's unified interface." }
+        { "type": "behavior", "value": "Coordinates heater-shaker, incubator, and liquid handler with the pylabrobot 0.2 modules (heating_shaking, storage) instead of outdated paths such as pylabrobot.incubation or set_shake_rate." }
       ]
     },
     {
@@ -47,6 +47,15 @@
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-opentrons" }
+      ]
+    },
+    {
+      "id": "near-miss-adaptyv",
+      "prompt": "We have 20 designed binder sequences. Send them to Adaptyv Bio for expression and BLI binding measurements against our target.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-adaptyv. The user is ordering assays from Adaptyv's foundry, not programming their own liquid handler with PyLabRobot.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-adaptyv" }
       ]
     }
   ]

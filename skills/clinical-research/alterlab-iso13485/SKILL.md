@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: "Self-contained — runs with Read/Write/Edit/Bash(python:*); no API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # ISO 13485 Certification Documentation Assistant
@@ -23,13 +24,33 @@ This skill helps medical device manufacturers prepare comprehensive documentatio
 - Identification of missing documentation
 - Compliance checklists
 
-**When to use this skill:**
-- Starting ISO 13485 certification process
+The output is documentation support. Certification decisions come from an accredited certification body, and regulatory strategy (FDA, EU notified bodies) needs review by qualified QA/RA staff, so present drafts and gap findings as inputs to that review rather than as compliance determinations.
+
+## When to Use This Skill
+
+- Starting the ISO 13485 certification process
 - Conducting gap analysis against ISO 13485
-- Creating or updating QMS documentation
-- Preparing for certification audit
-- Transitioning from FDA QSR to QMSR
-- Harmonizing with EU MDR requirements
+- Creating or updating QMS documentation (Quality Manual, SOPs, work instructions, Medical Device Files)
+- Preparing for a certification or surveillance audit
+- Updating a QSR-based QMS for the FDA QMSR (in effect since 2 February 2026)
+- Aligning QMS documentation with EU MDR/IVDR requirements
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Looking up 510(k)/PMA clearances, device recalls, or MAUDE adverse-event reports | `alterlab-fda` |
+| Writing a clinical study report, SAE narrative, or case report | `alterlab-clinical-reports` |
+| IRB/ethics applications and informed-consent documents for a device study | `alterlab-research-ethics` |
+| An individual patient's care or treatment plan | `alterlab-treatment-plans` |
+
+## Regulatory Status (checked September 2026)
+
+- **ISO 13485:2016** remains the current edition; ISO/TC 210's 2025 systematic review confirmed it without amendment. Documents written against the 2016 clauses need no edition change.
+- **FDA QMSR** (21 CFR Part 820, final rule published 2 February 2024) has been **in effect since 2 February 2026**. It incorporates ISO 13485:2016 by reference (plus ISO 9000:2015 clause 3 definitions) and adds FDA-specific requirements: UDI, traceability, MDR reporting, and corrections/removals links (§ 820.10), complaint, servicing, and UDI record content (§ 820.35), and labeling/packaging controls (§ 820.45). The DMR/DHF/DHR terms are gone — their content maps to ISO 13485 clauses 4.2.3 (medical device file), 7.3.10 (design and development file), and 7.5.1 (record per device or batch). Management review, internal audit, and supplier audit records are now open to FDA inspection (the old § 820.180(c) exception was not carried over), and FDA replaced QSIT with the Compliance Program 7382.850 inspection process. An ISO 13485 certificate does not exempt a site from FDA inspection.
+- **EU MDR/IVDR**: legacy-device transition periods run to 31 Dec 2027 / 31 Dec 2028 under the MDR (Regulation (EU) 2023/607, by risk class and subject to its conditions) and to 31 Dec 2027 / 2028 / 2029 for IVDR classes D / C / B and sterile A (Regulation (EU) 2024/1860). The Commission's December 2025 targeted-revision proposal (COM(2025) 1023) is still in the legislative process and not yet applicable. Check current EUR-Lex text before quoting deadlines.
+
+See `references/quick-reference.md` for the regional summary.
 
 ## Core Workflow
 
@@ -147,3 +168,4 @@ Follow the full creation process, priority order (Phases 1-6), and per-document 
 
 **Need help?** Start by describing your situation: what stage you're at, what you have, and what you need to create — then route via the guidance above.
 
+Part of the AlterLab Academic Skills suite.

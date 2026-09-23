@@ -69,27 +69,25 @@ protein_name:kinase NOT organism_name:mouse
 ### Sequence Properties
 - `length:[100 TO 500]` - Sequence length range
 - `mass:[50000 TO 100000]` - Molecular mass in Daltons
-- `sequence:MVLSPADKTNVK` - Exact sequence match
+- Exact/partial sequence matching is not a query field (`sequence:...` returns HTTP 400) — use UniProt BLAST or Peptide Search, or `alterlab-blast`
 - `fragment:false` - Exclude fragment sequences
 
 ### Gene Ontology (GO)
 - `go:0005515` - GO term ID (0005515 = protein binding)
-- `go_f:* ` - Any molecular function
-- `go_p:*` - Any biological process
-- `go_c:*` - Any cellular component
+- `go:kinase` - GO term text match
+- (`go_f`, `go_p`, `go_c` are **return** fields for `fields=`, not query fields — `go_f:*` returns HTTP 400)
 
 ### Annotations
-- `annotation:(type:signal)` - Has signal peptide annotation
-- `annotation:(type:transmem)` - Has transmembrane region
+- `ft_signal:*` - Has signal peptide annotation (legacy `annotation:(type:signal)` returns HTTP 400)
+- `ft_transmem:*` - Has transmembrane region
 - `cc_function:*` - Has function comment
 - `cc_interaction:*` - Has interaction comment
 - `ft_domain:*` - Has domain feature
 
 ### Database Cross-References
-- `xref:pdb` - Has PDB structure
-- `xref:ensembl` - Has Ensembl reference
-- `database:pdb` - Same as xref
-- `database:(type:pdb)` - Alternative syntax
+- `database:pdb` or `structure_3d:true` - Has a PDB structure
+- `database:ensembl` - Has an Ensembl cross-reference
+- `xref:pdb-4hhb` - Cross-reference to one specific record (`xref:` needs `<db>-<id>`; bare `xref:pdb` matches nothing)
 
 ### Protein Families and Domains
 - `family:"protein kinase"` - Protein family
@@ -102,13 +100,13 @@ protein_name:kinase NOT organism_name:mouse
 ```
 length:[100 TO 500]          # Between 100 and 500
 mass:[* TO 50000]            # Less than or equal to 50000
-created:[2023-01-01 TO *]   # Created after Jan 1, 2023
+date_created:[2023-01-01 TO *]   # Created after Jan 1, 2023
 ```
 
 ### Date Ranges
 ```
-created:[2023-01-01 TO 2023-12-31]
-modified:[2024-01-01 TO *]
+date_created:[2023-01-01 TO 2023-12-31]
+date_modified:[2024-01-01 TO *]      # plain created:/modified: return HTTP 400
 ```
 
 ## Wildcards
@@ -131,22 +129,22 @@ organism_name:Homo*
 ```
 cc_function:*              # Has any function annotation
 ft_domain:*                # Has any domain feature
-xref:pdb                   # Has PDB structure
+database:pdb               # Has PDB structure
 ```
 
 ### Combined Complex Queries
 ```
 # Human reviewed kinases with PDB structure
-(protein_name:kinase OR family:kinase) AND organism_id:9606 AND reviewed:true AND xref:pdb
+(protein_name:kinase OR family:kinase) AND organism_id:9606 AND reviewed:true AND database:pdb
 
 # Cancer-related proteins excluding mice
-(disease:cancer OR keyword:cancer) NOT organism_name:mouse
+(cc_disease:cancer OR keyword:cancer) NOT organism_name:mouse
 
 # Membrane proteins with signal peptides
-annotation:(type:transmem) AND annotation:(type:signal) AND reviewed:true
+ft_transmem:* AND ft_signal:* AND reviewed:true
 
 # Recently updated human proteins
-organism_id:9606 AND modified:[2024-01-01 TO *] AND reviewed:true
+organism_id:9606 AND date_modified:[2024-01-01 TO *] AND reviewed:true
 ```
 
 ## Field-Specific Examples
@@ -226,7 +224,7 @@ Test queries using:
 
 ### Find well-characterized proteins
 ```
-reviewed:true AND xref:pdb AND cc_function:*
+reviewed:true AND database:pdb AND cc_function:*
 ```
 
 ### Find disease-associated proteins
@@ -236,7 +234,7 @@ cc_disease:* AND organism_id:9606 AND reviewed:true
 
 ### Find proteins with experimental evidence
 ```
-existence:"Evidence at protein level" AND reviewed:true
+existence:1 AND reviewed:true     # 1 = evidence at protein level ... 5 = uncertain
 ```
 
 ### Find secreted proteins

@@ -7,11 +7,12 @@ This document provides comprehensive technical documentation for programmatic ac
 1. [REST API Endpoints](#rest-api-endpoints)
 2. [File Access Patterns](#file-access-patterns)
 3. [Data Schemas](#data-schemas)
-4. [Google Cloud Access](#google-cloud-access)
-5. [BigQuery Schema](#bigquery-schema)
-6. [Best Practices](#best-practices)
-7. [Error Handling](#error-handling)
-8. [Rate Limiting](#rate-limiting)
+4. [Bulk Downloads (FTP v6)](#bulk-downloads-ftp-v6)
+5. [Google Cloud Access](#google-cloud-access)
+6. [BigQuery Schema](#bigquery-schema)
+7. [Best Practices](#best-practices)
+8. [Error Handling](#error-handling)
+9. [Rate Limiting](#rate-limiting)
 
 ---
 
@@ -23,69 +24,108 @@ This document provides comprehensive technical documentation for programmatic ac
 https://alphafold.ebi.ac.uk/api/
 ```
 
-### 1. Get Prediction by UniProt Accession
+### 1. Get Predictions by UniProt Accession or Model ID
 
-**Endpoint:** `/prediction/{uniprot_id}`
+**Endpoint:** `/prediction/{qualifier}`
 
 **Method:** GET
 
-**Description:** Retrieve AlphaFold prediction metadata for a given UniProt accession.
+**Description:** Retrieve AlphaFold prediction metadata for a UniProt accession or a
+model ID. Returns a JSON **list** with one record per model: the canonical sequence,
+UniProt isoforms (`P00520-2`, …) and, for some accessions, third-party models (e.g.
+ColabFold models with `providerId` other than `GDM`).
 
 **Parameters:**
-- `uniprot_id` (required): UniProt accession (e.g., "P00520")
+- `qualifier` (path, required): UniProt accession (e.g. `P00520`) or model ID
+  (e.g. `AF-P00520-F1`, `AF-0000000365776990`)
+- `sequence_checksum` (query, optional): MD5 checksum of the UniProt sequence
+- `include_complexes` (query, optional, default `false`): also return complex models
 
 **Example Request:**
 ```bash
 curl https://alphafold.ebi.ac.uk/api/prediction/P00520
 ```
 
-**Example Response:**
+**Example Response** (canonical record, abridged; live response observed 2026-09):
 ```json
 [
   {
+    "modelEntityId": "AF-P00520-F1",
     "entryId": "AF-P00520-F1",
-    "gene": "ABL1",
+    "providerId": "GDM",
+    "toolUsed": "AlphaFold Monomer v2.0 pipeline",
+    "entityType": "protein",
+    "isComplex": false,
+    "chainId": "A",
+    "gene": "Abl1",
     "uniprotAccession": "P00520",
-    "uniprotId": "ABL1_HUMAN",
+    "uniprotId": "ABL1_MOUSE",
     "uniprotDescription": "Tyrosine-protein kinase ABL1",
-    "taxId": 9606,
-    "organismScientificName": "Homo sapiens",
-    "uniprotStart": 1,
-    "uniprotEnd": 1130,
-    "uniprotSequence": "MLEICLKLVGCKSKKGLSSSSSCYLEEALQRPVASDFEPQGLSEAARWNSKENLLAGPSENDPNLFVALYDFVASGDNTLSITKGEKLRVLGYNHNGEWCEAQTKNGQGWVPSNYITPVNSLEKHSWYHGPVSRNAAEYLLSSGINGSFLVRESESSPGQRSISLRYEGRVYHYRINTASDGKLYVSSESRFNTLAELVHHHSTVADGLITTLHYPAPKRNKPTVYGVSPNYDKWEMERTDITMKHKLGGGQYGEVYEGVWKKYSLTVAVKTLKEDTMEVEEFLKEAAVMKEIKHPNLVQLLGVCTREPPFYIITEFMTYGNLLDYLRECNRQEVNAVVLLYMATQISSAMEYLEKKNFIHRDLAARNCLVGENHLVKVADFGLSRLMTGDTYTAHAGAKFPIKWTAPESLAYNKFSIKSDVWAFGVLLWEIATYGMSPYPGIDLSQVYELLEKDYRMERPEGCPEKVYELMRACWQWNPSDRPSFAEIHQAFETMFQESSISDEVEKELGKQGVRGAVSTLLQAPELPTKTRTSRRAAEHRDTTDVPEMPHSKGQGESDPLDHEPAVSPLLPRKERGPPEGGLNEDERLLPKDKKTNLFSALIKKKKKTAPTPPKRSSSFREMDGQPERRGAGEEEGRDISNGALAFTPLDTADPAKSPKPSNGAGVPNGALRESGGSGFRSPHLWKKSSTLTSSRLATGEEEGGGSSSKRFLRSCSASCVPHGAKDTEWRSVTLPRDLQSTGRQFDSSTFGGHKSEKPALPRKRAGENRSDQVTRGTVTPPPRLVKKNEEAADEVFKDIMESSPGSSPPNLTPKPLRRQVTVAPASGLPHKEEAGKGSALGTPAAAEPVTPTSKAGSGAPGGTSKGPAEESRVRRHKHSSESPGRDKGKLSRLKPAPPPPPAASAGKAGGKPSQSPSQEAAGEAVLGAKTKATSLVDAVNSDAAKPSQPGEGLKKPVLPATPKPQSAKPSGTPISPAPVPSTLPSASSALAGDQPSSTAFIPLISTRVSLRKTRQPPERIASGAITKGVVLDSTEALCLAISRNSEQMASHSAVLEAGKNLYTFCVSYVDSIQQMRNKFAFREAINKLENNLRELQICPATAGSGPAATQDFSKLLSSVKEISDIVQR",
-    "modelCreatedDate": "2021-07-01",
+    "taxId": 10090,
+    "organismScientificName": "Mus musculus",
+    "sequenceStart": 1,
+    "sequenceEnd": 1123,
+    "sequence": "MLEIC...",
+    "globalMetricValue": 63.44,
+    "fractionPlddtVeryHigh": 0.374,
+    "modelCreatedDate": "2025-08-01T00:00:00Z",
     "latestVersion": 6,
     "allVersions": [1, 2, 3, 4, 5, 6],
     "cifUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v6.cif",
     "bcifUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v6.bcif",
     "pdbUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-model_v6.pdb",
     "plddtDocUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-confidence_v6.json",
-    "paeImageUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-predicted_aligned_error_v6.png",
-    "paeDocUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-predicted_aligned_error_v6.json"
-  }
+    "paeDocUrl": "https://alphafold.ebi.ac.uk/files/AF-P00520-F1-predicted_aligned_error_v6.json",
+    "msaUrl": "https://alphafold.ebi.ac.uk/files/msa/AF-P00520-F1-msa_v6.a3m"
+  },
+  { "modelEntityId": "AF-P00520-4-F1", "uniprotAccession": "P00520-4", "...": "..." }
 ]
 ```
 
 > **Always read the file URLs from this response** rather than hand-building a
 > `_v{N}` suffix: the version moves (now v6) and old `_v4` file URLs return 404.
+> **Select the record whose `uniprotAccession` equals your query** — the list also
+> contains isoforms, and its order is not documented.
 
-**Response Fields** (selected — the live response includes more):
-- `entryId`: AlphaFold internal identifier (format: AF-{uniprot}-F{fragment})
-- `gene`: Gene symbol
-- `uniprotAccession`: UniProt accession
-- `uniprotId`: UniProt entry name
-- `uniprotDescription`: Protein description
-- `taxId`: NCBI taxonomy identifier
-- `organismScientificName`: Species scientific name
-- `uniprotStart/uniprotEnd`: Residue range covered
-- `uniprotSequence`: Full protein sequence
-- `modelCreatedDate`: Initial prediction date
-- `latestVersion`: Current model version number
-- `allVersions`: List of available versions
-- `cifUrl/bcifUrl/pdbUrl`: Structure file download URLs
-- `plddtDocUrl`: Per-residue confidence (pLDDT) JSON URL
-- `paeImageUrl`: PAE visualization image URL
+**Response Fields** (selected — the live response includes more; the full schema is
+`NewEntrySummary` in https://alphafold.ebi.ac.uk/api/openapi.json):
+- `modelEntityId`: model identifier (format `AF-{uniprot}-F{fragment}` for DeepMind monomers)
+- `providerId` / `toolUsed`: who produced the model and with what pipeline
+- `isComplex`, `chainId`, `entityType`: complex flag and chain/entity info
+- `gene`, `uniprotAccession`, `uniprotId`, `uniprotDescription`: UniProt identity
+- `taxId`, `organismScientificName`: organism
+- `sequenceStart` / `sequenceEnd`: residue range covered; `sequence`: modelled sequence
+- `globalMetricValue`: mean pLDDT; `fractionPlddtVeryHigh|Confident|Low|VeryLow`: pLDDT bands
+- `modelCreatedDate`: prediction date
+- `latestVersion` / `allVersions`: version numbers for this model
+- `cifUrl` / `bcifUrl` / `pdbUrl`: structure file download URLs
+- `plddtDocUrl`: per-residue confidence (pLDDT) JSON URL
 - `paeDocUrl`: PAE data JSON URL
+- `msaUrl`: input multiple sequence alignment (A3M), new in v6
+
+**Renamed / deprecated fields (v6 API migration).** EMBL-EBI announced a 9-month
+dual-support period ending **2026-06-25**; legacy names may still appear in responses
+but should not be relied on:
+
+| Legacy field | Current field |
+|--------------|---------------|
+| `entryId` | `modelEntityId` |
+| `uniprotStart` / `uniprotEnd` | `sequenceStart` / `sequenceEnd` |
+| `uniprotSequence` | `sequence` |
+| `isReviewed` | `isUniProtReviewed` |
+| `isReferenceProteome` | `isUniProtReferenceProteome` |
+| `paeImageUrl` | removed — render the PAE yourself from `paeDocUrl` |
+
+Source: https://www.ebi.ac.uk/pdbe/news/breaking-changes-afdb-predictions-api
+
+### Other endpoints (from the OpenAPI spec)
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /complex/{qualifier}` | Complex models for an accession or model ID, with interface metrics (`complexPredictionAccuracy_ipTM`, `_ipSAE`, `_pDockQ`, `_pDockQ2`, `_LIS`), `oligomericState`, `assemblyType`, `complexComposition` |
+| `GET /uniprot/summary/{qualifier}.json` | 3D-Beacons-style summary of models for a UniProt residue range |
+| `GET /sequence/summary?id=...&type=sequence` | Look up models by sequence or checksum |
+| `GET /annotations/{qualifier}.json?type=MUTAGEN` | Residue-level AlphaMissense annotations for a UniProt accession |
 
 ### 2. 3D-Beacons Integration
 
@@ -102,10 +142,10 @@ url = f"https://www.ebi.ac.uk/pdbe/pdbe-kb/3dbeacons/api/uniprot/summary/{unipro
 response = requests.get(url)
 data = response.json()
 
-# Filter for AlphaFold structures
+# Each entry is {"summary": {...}}; filter for AlphaFold structures
 alphafold_structures = [
-    s for s in data['structures']
-    if s['provider'] == 'AlphaFold DB'
+    s['summary'] for s in data['structures']
+    if s['summary']['provider'] == 'AlphaFold DB'
 ]
 ```
 
@@ -294,14 +334,42 @@ AlphaFold stores per-residue confidence (pLDDT) in the B-factor field. This allo
 
 ---
 
+## Bulk Downloads (FTP v6)
+
+EMBL-EBI publishes the current (v6) bulk archives over HTTPS/FTP:
+
+```
+https://ftp.ebi.ac.uk/pub/databases/alphafold/
+├── latest/                  # v6 tars: 16 model-organism + 30 global-health proteomes,
+│                            #   swissprot_cif_v6.tar / swissprot_pdb_v6.tar
+├── download_metadata.json   # index: archive_name, species, reference_proteome, size_bytes, type
+├── accession_ids.csv        # every accession / model ID in the release
+├── sequences.fasta          # all modelled sequences
+├── CHANGELOG.txt            # release history
+├── v1/ … v6/                # frozen per-version archives
+└── collaborations/nvda/     # bulk complex predictions (incl. lower-confidence homo/heterodimers)
+```
+
+```bash
+# Human reference proteome, v6 (UP000005640, ~23.6k models)
+curl -O https://ftp.ebi.ac.uk/pub/databases/alphafold/latest/UP000005640_9606_HUMAN_v6.tar
+```
+
+Pick archive names from `download_metadata.json` rather than guessing them. For taxa
+that are not in `latest/`, use the per-taxon archives in the Google Cloud bucket
+below (v4).
+
+---
+
 ## Google Cloud Access
 
 AlphaFold DB is hosted on Google Cloud Platform for bulk access.
 
 > **Note:** The bulk GCS bucket and BigQuery dataset are versioned independently
 > of the REST API and currently lag at **v4** (bucket `...-alphafold-v4`, proteome
-> archives `..._v4.tar`). The per-protein REST API serves **v6**. Use the v4 paths
-> below for bulk access; do not "upgrade" them to v6.
+> archives `..._v4.tar`). The per-protein REST API and the FTP `latest/` directory
+> serve **v6**. Use the v4 paths below for GCS access; do not "upgrade" them to v6
+> (no `...-alphafold-v6` bucket exists as of 2026-09).
 
 ### Cloud Storage Bucket
 
@@ -318,8 +386,8 @@ gs://public-datasets-deepmind-alphafold-v4/
 ### Installing gsutil
 
 ```bash
-# Using pip
-pip install gsutil
+# Using uv (or pip)
+uv pip install gsutil
 ```
 
 Or install the Google Cloud SDK (which bundles `gsutil`) by following the
@@ -407,8 +475,8 @@ For processing many proteins, use concurrent downloads with appropriate rate lim
 ### 4. Version Management
 
 Read file URLs from the `/prediction` response rather than hardcoding a version
-suffix. The REST API currently serves **v6**; the bulk GCS/BigQuery datasets lag
-at **v4**. Track which version a result came from in your code.
+suffix. The REST API and FTP `latest/` currently serve **v6**; the GCS/BigQuery
+datasets lag at **v4**. Track which version a result came from in your code.
 
 ---
 
@@ -432,7 +500,7 @@ at **v4**. Track which version a result came from in your code.
 
 - Limit to **10 concurrent requests** maximum
 - Add **100-200ms delay** between sequential requests
-- Use Google Cloud for bulk downloads instead of REST API
+- Use the FTP archives or Google Cloud for bulk downloads instead of the REST API
 - Cache all downloaded data locally
 
 ---
@@ -449,17 +517,23 @@ at **v4**. Track which version a result came from in your code.
 The `/prediction` response reports `latestVersion` and `allVersions`; treat those
 as the source of truth rather than this list.
 
-- **v1** (2021): Initial release with ~350K structures
-- **v2** (2022): Expanded to 200M+ structures
-- **v3** (2023): Updated models and expanded coverage
-- **v4** (2024): Improved confidence metrics; still the version served by the bulk
+Dates below are from the FTP `CHANGELOG.txt` and the EMBL-EBI release notes:
+
+- **v1** (2021-07): Initial release — 21 model-organism proteomes (incl. human), ~365K structures
+- **v2** (2021-12 / 2022-01): Added Swiss-Prot, then global-health organisms — ~1M structures
+- **v3** (2022-07): UniProt 2021_04 — expanded to ~214M structures; ModelCIF-compliant files
+- **v4** (2022-11): Improved accuracy for ~4.4% of predictions; still the version in the
   GCS bucket and BigQuery dataset
-- **v5–v6**: Later model updates served by the REST API (`latestVersion` is 6 as
-  observed); bulk datasets had not been re-cut to these at time of writing
+- **v6** (2025-09/10): Synced to UniProt 2025_03 — 241,070,489 structures including
+  40,054 isoforms; per-entry MSAs (`msaUrl`); API field renames (see above). No
+  separate v5 entry appears in the changelog.
+- **Complexes** (2026-03, heterodimers extended 2026-05): ~1.7M high-confidence homodimers
+  and ~80k high-confidence heterodimers in the web/API, lower-confidence sets bulk-only
 
 ## Citation
 
 When using AlphaFold DB in publications, cite:
 
 1. Jumper, J. et al. Highly accurate protein structure prediction with AlphaFold. Nature 596, 583–589 (2021).
-2. Varadi, M. et al. AlphaFold Protein Structure Database in 2024: providing structure coverage for over 214 million protein sequences. Nucleic Acids Res. 52, D368–D375 (2024).
+2. Varadi, M. et al. AlphaFold Protein Structure Database in 2024: providing structure coverage for over 214 million protein sequences. Nucleic Acids Res. 52, D368–D375 (2024). https://doi.org/10.1093/nar/gkad1011
+3. Bertoni, D. et al. AlphaFold Protein Structure Database 2025: a redesigned interface and updated structural coverage. Nucleic Acids Res. 54, D358–D362 (2026). https://doi.org/10.1093/nar/gkaf1226 (cite for v6 data)

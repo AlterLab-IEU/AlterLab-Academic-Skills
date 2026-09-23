@@ -37,7 +37,7 @@ print(tt)
 # --- 4. Minimization: conservative, parsimonious, intermediate -----------
 sol_c <- minimize(tt, details = TRUE)
 sol_p <- minimize(tt, include = "?", details = TRUE)
-sol_i <- minimize(tt, include = "?", dir.exp = c(A = 1, B = 1, C = 1), details = TRUE)
+sol_i <- minimize(tt, include = "?", dir.exp = "A, B, C", details = TRUE)
 cat("\n--- CONSERVATIVE ---\n"); print(sol_c)
 cat("\n--- PARSIMONIOUS ---\n"); print(sol_p)
 cat("\n--- INTERMEDIATE ---\n"); print(sol_i)
@@ -54,6 +54,10 @@ cat("\n--- INTERMEDIATE ---\n"); print(sol_i)
 - **`minimize(input, include="", dir.exp=NULL, details=FALSE, all.sol=FALSE, row.dom=FALSE,
   method="CCubes", ...)`** — `input` a truthTable (preferred); `include="?"` adds logical
   remainders (parsimonious); `dir.exp` directional expectations produce the intermediate solution.
+  Write them as a sum-of-products expression — `dir.exp = "A, B, ~C"` or the unquoted
+  `dir.exp = c(A, B, ~C)` (`~` = absence expected; omit a condition for "don't care"). The QCA 2.x
+  numeric form `c(A = 1, B = 1, C = 1)` is still parsed, but its names are dropped and the values
+  are matched to `conditions` by position, so a reordered vector silently misassigns expectations.
 - **Fit parameters**: sufficiency → `inclS` (consistency), `PRI`, `covS` (raw coverage), `covU`
   (unique coverage); necessity → `inclN`, `RoN`. `pof(expression, outcome, data, relation=)` tests
   fit for a specific term.

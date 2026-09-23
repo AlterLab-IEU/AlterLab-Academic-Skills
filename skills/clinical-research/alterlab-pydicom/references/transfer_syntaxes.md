@@ -48,14 +48,11 @@ ds.file_meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
 - Most widely supported JPEG format
 - **Pydicom constant**: `pydicom.uid.JPEGBaseline8Bit`
 
-**Dependencies:** Requires `pylibjpeg` or `pillow`
+**Dependencies (decode only):** `pylibjpeg` + `pylibjpeg-libjpeg`, `python-gdcm`, or `pillow`. pydicom has no JPEG Baseline encoder — `ds.compress(JPEGBaseline8Bit)` raises `NotImplementedError`.
 
 **Usage:**
 ```python
-# Compress
-ds.compress(pydicom.uid.JPEGBaseline8Bit)
-
-# Decompress
+# Decompress to Explicit VR Little Endian
 ds.decompress()
 ```
 
@@ -76,18 +73,14 @@ ds.decompress()
 - Uses Process 14 Selection Value 1
 - **Pydicom constant**: `pydicom.uid.JPEGLosslessSV1`
 
-**Usage:**
-```python
-# Compress to JPEG Lossless
-ds.compress(pydicom.uid.JPEGLossless)
-```
+**Dependencies (decode only):** `pylibjpeg-libjpeg` or `python-gdcm`; pydicom cannot encode JPEG Lossless — use JPEG-LS Lossless, JPEG 2000 Lossless, or RLE Lossless when you need to write lossless compressed data.
 
 ### JPEG-LS Lossless (1.2.840.10008.1.2.4.80)
 - **Lossless** compression
 - Low complexity, good compression
 - **Pydicom constant**: `pydicom.uid.JPEGLSLossless`
 
-**Dependencies:** Requires `pylibjpeg-libjpeg` or `gdcm`
+**Dependencies:** decode with `pylibjpeg-libjpeg`, `python-gdcm`, or `pyjpegls`; encode (`ds.compress(...)`) with `pyjpegls` only
 
 ### JPEG-LS Lossy (Near-Lossless) (1.2.840.10008.1.2.4.81)
 - **Near-lossless** compression
@@ -102,11 +95,11 @@ ds.compress(pydicom.uid.JPEGLossless)
 - Better compression than JPEG Lossless
 - **Pydicom constant**: `pydicom.uid.JPEG2000Lossless`
 
-**Dependencies:** Requires `pylibjpeg-openjpeg`, `gdcm`, or `pillow`
+**Dependencies:** decode with `pylibjpeg-openjpeg`, `python-gdcm`, or `pillow`; encode with `pylibjpeg-openjpeg` only
 
 **Usage:**
 ```python
-# Compress to JPEG 2000 Lossless
+# Compress to JPEG 2000 Lossless (needs pylibjpeg + pylibjpeg-openjpeg)
 ds.compress(pydicom.uid.JPEG2000Lossless)
 ```
 
@@ -137,7 +130,7 @@ ds.compress(pydicom.uid.JPEG2000Lossless)
 - Good for images with repeated values
 - **Pydicom constant**: `pydicom.uid.RLELossless`
 
-**Dependencies:** Built into pydicom (no additional packages needed)
+**Dependencies:** Built into pydicom (needs only NumPy); `pylibjpeg-rle` or `python-gdcm` are faster optional backends
 
 **Usage:**
 ```python
@@ -254,11 +247,9 @@ ds.save_as('compressed_j2k.dcm')
 # Compress using RLE Lossless (no additional dependencies)
 ds.compress(pydicom.uid.RLELossless)
 ds.save_as('compressed_rle.dcm')
-
-# Compress using JPEG Baseline (lossy)
-ds.compress(pydicom.uid.JPEGBaseline8Bit)
-ds.save_as('compressed_jpeg.dcm')
 ```
+
+Encodable transfer syntaxes in pydicom 3.0: RLE Lossless, JPEG-LS Lossless/Near-Lossless (`pyjpegls`), and JPEG 2000 Lossless/lossy (`pylibjpeg-openjpeg`). JPEG Baseline/Extended/Lossless and HTJ2K are decode-only.
 
 ### Compression with a Specific Encoding Plugin
 ```python
@@ -280,25 +271,26 @@ Different transfer syntaxes require different Python packages:
 
 ### JPEG Baseline/Extended
 ```bash
-pip install pylibjpeg pylibjpeg-libjpeg
+uv pip install pylibjpeg pylibjpeg-libjpeg
 # Or
-pip install pillow
+uv pip install pillow
 ```
 
 ### JPEG Lossless/JPEG-LS
 ```bash
-pip install pylibjpeg pylibjpeg-libjpeg
+uv pip install pylibjpeg pylibjpeg-libjpeg   # decode
 # Or
-pip install python-gdcm
+uv pip install python-gdcm                   # decode
+uv pip install pyjpegls                      # JPEG-LS decode + encode
 ```
 
 ### JPEG 2000
 ```bash
-pip install pylibjpeg pylibjpeg-openjpeg
+uv pip install pylibjpeg pylibjpeg-openjpeg
 # Or
-pip install python-gdcm
+uv pip install python-gdcm
 # Or
-pip install pillow
+uv pip install pillow
 ```
 
 ### RLE
@@ -307,7 +299,7 @@ No additional packages needed - built into pydicom
 ### Comprehensive Installation
 ```bash
 # Install all common handlers
-pip install pylibjpeg pylibjpeg-libjpeg pylibjpeg-openjpeg python-gdcm
+uv pip install pylibjpeg pylibjpeg-libjpeg pylibjpeg-openjpeg python-gdcm
 ```
 
 ## Checking Available Decoder Plugins (pydicom 3.x)
@@ -331,7 +323,7 @@ print(f"Plugins found: {decoder.available_plugins}")  # e.g. ('pylibjpeg', 'gdcm
 3. **Use RLE Lossless** if you can't install additional dependencies
 4. **Check Transfer Syntax** before processing to ensure you have the right handlers
 5. **Test decompression** before deploying to ensure all required packages are installed
-6. **Preserve original** transfer syntax when possible using `write_like_original=True`
+6. **Preserve original** encoding with a plain `ds.save_as(path)` (the pydicom 3.x default; `write_like_original` is deprecated and removed in 4.0)
 7. **Consider file size** vs. quality tradeoffs when choosing lossy compression
 8. **Use lossless compression** for diagnostic images to maintain clinical quality
 

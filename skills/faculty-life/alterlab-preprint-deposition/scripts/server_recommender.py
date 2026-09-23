@@ -26,6 +26,7 @@ FIELD_TO_SERVER = {
     "eess": "arxiv", "ee": "arxiv", "econ": "arxiv", "economics": "arxiv",
     "q-bio": "arxiv", "q-fin": "arxiv",
     "biology": "biorxiv", "life-sciences": "biorxiv", "bio": "biorxiv",
+    "chemistry": "chemrxiv", "chem": "chemrxiv",
     "clinical": "medrxiv", "health": "medrxiv", "medicine": "medrxiv",
     "social-science": "ssrn", "law": "ssrn", "business": "ssrn",
     "humanities": "ssrn",
@@ -43,15 +44,23 @@ SERVER_LICENSES = {
                 "No reuse / All rights reserved"],
     "medrxiv": ["CC BY", "CC BY-NC", "CC BY-ND", "CC BY-NC-ND", "CC0",
                 "No reuse / All rights reserved"],
+    "chemrxiv": ["CC BY 4.0", "CC BY-NC 4.0", "CC BY-NC-ND 4.0"],
     "ssrn": ["Author-selected terms under SSRN posting agreement"],
-    "osf": ["No license", "CC0", "CC BY", "CC BY-NC-ND"],
+    "osf": ["CC BY 4.0", "CC0 1.0",
+            "(community servers such as PsyArXiv/SocArXiv set their own list, "
+            "e.g. 'No license' or NC/ND variants - check the provider)"],
 }
 
+# Checked 2026-09-23 (arXiv DOI help page; openRxiv DOI notice; Crossref prefixes).
 SERVER_DOI = {
-    "arxiv": "arXiv ID is canonical; no DOI by default (DataCite DOI available)",
-    "biorxiv": "DOI assigned on posting (Cold Spring Harbor Laboratory)",
-    "medrxiv": "DOI assigned on posting (CSHL/BMJ/Yale)",
-    "ssrn": "DOI behaviour varies by network/series",
+    "arxiv": "arXiv ID is canonical; every paper also gets a DataCite DOI "
+             "10.48550/arXiv.<id> automatically",
+    "biorxiv": "Crossref DOI on posting (openRxiv): prefix 10.64898 since "
+               "Dec 2025, 10.1101 before",
+    "medrxiv": "Crossref DOI on posting (openRxiv): prefix 10.64898 since "
+               "Dec 2025, 10.1101 before",
+    "chemrxiv": "Crossref DOI per version (10.26434/chemrxiv.<id>/v<n>)",
+    "ssrn": "Crossref DOI 10.2139/ssrn.<id>",
     "osf": "DOI via OSF",
 }
 
@@ -74,16 +83,33 @@ def recommend(field: str, needs_doi: bool, target_journal_known: bool,
         notes.append("Clinical/health content must go to medRxiv; do not post "
                      "identifiable patient data.")
 
+    # Economics: arXiv econ and SSRN both have a strong readership.
+    if key in ("econ", "economics"):
+        alternatives = ["ssrn"]
+        notes.append("Economics fits arXiv econ or SSRN; SSRN is the dominant "
+                     "social-science preprint culture, arXiv suits "
+                     "econometrics/theory read by quantitative fields.")
+
     # Computational-biology overlap.
     if key in ("q-bio", "bio", "biology"):
         alternatives = ["arxiv (q-bio)"] if server == "biorxiv" else ["biorxiv"]
         notes.append("Computational biology fits both arXiv q-bio and bioRxiv; "
                      "choose by target audience and DOI need.")
 
-    if needs_doi and server == "arxiv":
-        notes.append("You asked for an immediate DOI: arXiv issues an arXiv ID, "
-                     "not a DOI by default. bioRxiv/medRxiv/OSF mint a DOI on "
-                     "posting if a DOI is mandatory.")
+    if needs_doi:
+        notes.append("Every server listed here now issues a DOI on posting "
+                     "(arXiv via DataCite 10.48550), so DOI need no longer "
+                     "decides between them.")
+
+    if server == "arxiv":
+        notes.append("arXiv gatekeeping (2025-26): new submitters need an "
+                     "institutional email plus a claimed paper in the same "
+                     "endorsement domain, or a personal endorsement; CS "
+                     "review/position papers need proof of prior peer review; "
+                     "non-English papers need a full English version.")
+    if server in ("biorxiv", "medrxiv"):
+        notes.append("bioRxiv/medRxiv do not post manuscripts a journal has "
+                     "already accepted; post before or at submission.")
 
     licenses = list(SERVER_LICENSES.get(server, []))
     if funder_requires_cc_by:
@@ -106,7 +132,7 @@ def recommend(field: str, needs_doi: bool, target_journal_known: bool,
 
     return {
         "tool": "alterlab-preprint-deposition/server_recommender.py",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "input": {
             "field": field, "needs_doi": needs_doi,
             "target_journal_known": target_journal_known,
@@ -126,7 +152,7 @@ def recommend(field: str, needs_doi: bool, target_journal_known: bool,
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--field", required=True,
-                   help="e.g. cs, math, biology, clinical, economics, psychology")
+                   help="e.g. cs, math, biology, chemistry, clinical, economics, psychology")
     p.add_argument("--needs-doi", action="store_true",
                    help="A citable DOI is required immediately on posting.")
     p.add_argument("--target-journal-known", action="store_true",

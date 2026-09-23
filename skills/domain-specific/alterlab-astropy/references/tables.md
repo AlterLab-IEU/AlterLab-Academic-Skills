@@ -210,7 +210,8 @@ high_snr = t[np.abs(t['flux'] / t['error']) > 5]
 
 ### Supported Formats
 
-FITS, HDF5, ASCII (CSV, ECSV, IPAC, etc.), VOTable, Parquet, ASDF
+FITS, HDF5 (needs `h5py`), ASCII (CSV, ECSV, IPAC, etc.), VOTable, Parquet (needs
+`pyarrow`), ASDF (via the separate `asdf-astropy` package)
 
 ### Reading Files
 

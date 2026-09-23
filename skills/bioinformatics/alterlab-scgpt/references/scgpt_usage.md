@@ -1,13 +1,43 @@
 # scGPT — Usage Reference
 
-Deeper detail for `alterlab-scgpt`. Verify the API, checkpoints, and pin against the upstream
-`bowang-lab/scGPT` README (`TODO(verify)`) — the package API has evolved.
+Deeper detail for `alterlab-scgpt`. API and packaging below were checked against the upstream
+`bowang-lab/scGPT` repo (2026-09); PyPI `scgpt` is still 0.2.4 (March 2025).
 
 ## Install
 
-Install the `scgpt` package into a CUDA-enabled environment (PyTorch + flash-attn on some
-setups). Download a pretrained checkpoint (whole-human / organ-specific) per the repo. A GPU
-is strongly recommended.
+```bash
+# dedicated environment — scgpt's pins conflict with a current scverse stack
+uv venv .venv-scgpt && source .venv-scgpt/bin/activate
+uv pip install scgpt "flash-attn<1.0.5"   # flash-attn optional; needs CUDA to build
+```
+
+Upstream also documents `"orbax<0.1.8"` as a workaround for resolver failures. Poetry
+installation is documented as out of sync — use pip/uv.
+
+Then download a checkpoint folder (whole-human, continual-pretrained, or organ-specific) from
+the Drive links in the upstream README; each folder ships the paired gene-name→id vocabulary.
+A GPU is strongly recommended.
+
+## Zero-shot embedding API
+
+```python
+from scgpt.tasks import embed_data
+
+adata = embed_data(
+    adata_or_file,            # AnnData or path to .h5ad
+    model_dir="checkpoints/scGPT_human",
+    gene_col="feature_name",  # or "index" to use var_names
+    max_length=1200,          # genes per cell fed to the transformer
+    batch_size=64,
+    obs_to_save=["celltype"], # obs columns to carry through
+    device="cuda",
+    use_fast_transformer=True,  # False when flash-attn is absent
+    return_new_adata=False,     # False: writes adata.obsm["X_scGPT"] in place
+)
+```
+
+`scgpt.tasks` also exposes `get_batch_cell_embeddings` (the lower-level batched call) and
+`GeneEmbedding` (gene-embedding / GRN work).
 
 ## Typical tasks
 
@@ -18,8 +48,10 @@ is strongly recommended.
 - **Embeddings** — export cell/gene embeddings for clustering, UMAP, or gene-network analysis.
 - **Integration** — use the model representation to integrate batches/donors.
 
-Confirm the exact function/class names (embedding, annotation, fine-tune entry points) against
-your installed version.
+Annotation and perturbation fine-tuning are driven by the scripts and notebooks in the repo's
+`examples/` and `tutorials/` directories (e.g. `examples/finetune_integration.py`), not by a
+stable importable API — read the notebook matching your task rather than assuming a function
+name.
 
 ## scverse integration
 

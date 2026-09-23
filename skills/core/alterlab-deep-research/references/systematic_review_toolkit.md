@@ -6,9 +6,9 @@ Comprehensive reference for conducting systematic reviews and meta-analyses. Cov
 
 ---
 
-## 1. Cochrane Handbook v6.4 — Key Principles
+## 1. Cochrane Handbook v6.5 — Key Principles
 
-The Cochrane Handbook for Systematic Reviews of Interventions (v6.4, 2023) is the gold standard reference for systematic review methodology.
+The Cochrane Handbook for Systematic Reviews of Interventions (v6.5, August 2024; training.cochrane.org/handbook) is the standard reference for systematic review methodology. v6.5 updated Chapters 4, 10, and 13 without changing the MECIR conduct standards.
 
 ### Core Methodology Stages
 
@@ -205,6 +205,16 @@ The Cochrane Handbook for Systematic Reviews of Interventions (v6.4, 2023) is th
 - **Critical risk**: Study is too problematic to provide useful evidence
 - **No information**: Insufficient reporting
 
+### ROBINS-I V2 (cohort studies)
+
+Version 2 was released in November 2024 and revised in November 2025 (riskofbias.info; the developers still label it a draft). It is currently scoped to follow-up (cohort) studies and differs from the 2016 tool in ways that change results:
+
+- Six domains: confounding; classification of intervention; selection of participants into the study; missing data; measurement of the outcome; selection of the reported result.
+- Signalling questions use "strong" and "weak" yes/no responses, and domain judgements come from algorithms rather than holistic judgement.
+- Immortal-time and prevalent-user bias get dedicated signalling questions; the missing-data domain was redesigned.
+
+Use V2 for cohort studies and the 2016 version for other non-randomized designs until V2 extensions appear, and report which version was used. For studies of exposures rather than interventions, use ROBINS-E.
+
 ---
 
 ## 5. I² Interpretation Guide
@@ -304,8 +314,8 @@ Key sections:
 |------|----------|----------|---------------|
 | **metafor** (R) | R | Comprehensive meta-analysis (all models, diagnostics) | Viechtbauer (2010) |
 | **meta** (R) | R | User-friendly standard meta-analyses | Balduzzi et al. (2019) |
-| **dmetar** (R) | R | Companion to "Doing Meta-Analysis in R" textbook | Harrer et al. (2021) |
-| **RevMan** | Standalone | Cochrane reviews (required for Cochrane) | Cochrane Collaboration |
+| **dmetar** (R, GitHub-only) | R | Companion to "Doing Meta-Analysis in R" textbook | Harrer et al. (2021) |
+| **RevMan** (RevMan Web) | Web-based | Cochrane reviews (required for Cochrane) | Cochrane Collaboration |
 | **robvis** (R) | R | Risk of bias visualization (traffic-light plots) | McGuinness & Higgins (2020) |
 | **GRADE pro GDT** | Web-based | GRADE Summary of Findings tables | McMaster University |
 

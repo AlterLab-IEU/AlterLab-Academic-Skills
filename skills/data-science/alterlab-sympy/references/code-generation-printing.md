@@ -300,8 +300,8 @@ new_expr = expr.replace(sin(a), a**2)  # sin(x) -> x**2
 ### Display Math
 
 ```python
-from sympy import init_printing, display
-from IPython.display import display as ipy_display
+from sympy import init_printing
+from IPython.display import display
 
 # Initialize printing for Jupyter
 init_printing(use_latex='mathjax')  # or 'png', 'svg'
@@ -311,7 +311,7 @@ expr = Integral(sin(x)**2, x)
 display(expr)  # Renders as LaTeX in notebook
 
 # Multiple outputs
-ipy_display(expr1, expr2, expr3)
+display(expr1, expr2, expr3)
 ```
 
 ### Interactive Widgets

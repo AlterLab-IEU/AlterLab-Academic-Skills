@@ -1,5 +1,7 @@
 # Additional USPTO APIs Reference
 
+> **Status (verified 2026-09-23).** The old `developer.uspto.gov` DSAPI endpoints are retired (the host redirects to data.uspto.gov). The office-action datasets (text retrieval, citations, rejections, enriched citations) are now form-encoded POSTs on the Open Data Portal host — `https://api.uspto.gov/api/v1/patent/oa/oa_actions/v1/records`, `.../oa_citations/v2/records`, `.../oa_rejections/v2/records`, `.../enriched_cited_reference_metadata/v3/records` (fields `criteria` [Lucene syntax], `start`, `rows`; `X-API-KEY` ODP key). PTAB data is on ODP (`/api/v1/patent/trials/proceedings/search`, `/trials/decisions/search`, `/trials/documents/search`, `/appeals/decisions/search`). The Patent Assignment Search host `assignment-api.uspto.gov` no longer resolves — use `GET /api/v1/patent/applications/{app}/assignment`. The dataset descriptions below remain useful; endpoint URLs in older examples are historical.
+
 ## Overview
 
 Beyond patent search, PEDS, and trademarks, USPTO provides specialized APIs for citations, office actions, assignments, litigation, and other patent data.

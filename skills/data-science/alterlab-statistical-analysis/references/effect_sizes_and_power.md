@@ -452,6 +452,7 @@ result = pg.ttest(group1, group2, correction=False)
 
 **Python implementation**:
 ```python
+import math
 from statsmodels.stats.power import (
     tt_ind_solve_power,
     zt_ind_solve_power,
@@ -468,14 +469,15 @@ n_required = tt_ind_solve_power(
     alternative='two-sided'
 )
 
-# ANOVA power analysis
+# ANOVA power analysis — solve_power returns the TOTAL N (nobs) across k_groups
 anova_power = FTestAnovaPower()
-n_per_group = anova_power.solve_power(
+n_total = anova_power.solve_power(
     effect_size=0.25,  # Cohen's f
-    ngroups=3,
+    k_groups=3,
     alpha=0.05,
     power=0.80
 )
+n_per_group = math.ceil(n_total / 3)  # n_total ≈ 157.2 → 53 per group
 
 # Correlation power analysis
 from pingouin import power_corr

@@ -39,6 +39,15 @@
       ]
     },
     {
+      "id": "near-miss-deep-research",
+      "prompt": "I'm not sure what my research question should even be yet — something about social media and adolescent sleep. Can you guide me Socratically toward a focused question and then fact-check the claims people keep making about blue light?",
+      "expected_output": "Defers to alterlab-deep-research and does NOT invoke alterlab-literature-review: the user needs Socratic research-question formulation plus fact-checking of claims, which are deep-research modes (socratic, fact-check), not a script-driven multi-database search, PRISMA screening, and formatted review document.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-deep-research"}
+      ]
+    },
+    {
       "id": "near-miss-citation-mgmt",
       "prompt": "I just need a handful of DOIs converted to clean BibTeX and my references.bib validated for broken links — no review writing.",
       "expected_output": "Defers to alterlab-citation-mgmt and does NOT invoke alterlab-literature-review: this is narrow technical citation handling (DOI-to-BibTeX, validation), not a systematic search-screen-synthesize review.",

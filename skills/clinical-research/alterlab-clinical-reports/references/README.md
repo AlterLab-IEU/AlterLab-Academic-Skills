@@ -24,7 +24,7 @@ links, so the rest of that material is not duplicated here.
 
 - CARE Guidelines: https://www.care-statement.org/
 - ICH-E3 Guideline (CSR structure): https://database.ich.org/sites/default/files/E3_Guideline.pdf
-- CONSORT Statement: http://www.consort-statement.org/
+- CONSORT 2025 / SPIRIT 2025 statements: https://www.consort-spirit.org/
 - HIPAA (HHS): https://www.hhs.gov/hipaa/
 - ACR Practice Parameters: https://www.acr.org/Clinical-Resources/Practice-Parameters-and-Technical-Standards
 - CAP Cancer Protocols: https://www.cap.org/protocols-and-guidelines

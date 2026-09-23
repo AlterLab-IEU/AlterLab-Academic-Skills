@@ -7,7 +7,7 @@ This script performs a comprehensive protein analysis pipeline:
 2. FASTA sequence retrieval
 3. BLAST similarity search
 4. KEGG pathway discovery
-5. PSICQUIC interaction mapping
+5. STRING interaction mapping
 6. GO annotation retrieval
 
 Usage:
@@ -23,7 +23,7 @@ Note: BLAST searches can take several minutes. Use --skip-blast to skip this ste
 import sys
 import time
 import argparse
-from bioservices import UniProt, KEGG, NCBIblast, PSICQUIC, QuickGO
+from bioservices import UniProt, KEGG, NCBIblast, STRING, QuickGO
 
 
 def search_protein(query):
@@ -39,7 +39,7 @@ def search_protein(query):
     # Try direct retrieval first (if query looks like accession)
     if len(query) == 6 and query[0] in "OPQ":
         try:
-            entry = u.retrieve(query, frmt="tab")
+            entry = u.retrieve(query, frmt="txt")
             if entry:
                 uniprot_id = query
                 print(f"✓ Found UniProt entry: {uniprot_id}")
@@ -48,7 +48,12 @@ def search_protein(query):
             pass
 
     # Otherwise search
-    results = u.search(query, frmt="tab", columns="id,genes,organism,length,protein names", limit=5)
+    results = u.search(
+        query,
+        frmt="tsv",
+        columns="accession,gene_names,organism_name,length,protein_name",
+        limit=5,
+    )
 
     if not results:
         print("✗ No results found")
@@ -150,7 +155,7 @@ def run_blast(sequence, email, skip=False):
         start_time = time.time()
 
         while time.time() - start_time < max_wait:
-            status = s.getStatus(jobid)
+            status = s.get_status(jobid)
             elapsed = int(time.time() - start_time)
             print(f"  Status: {status} (elapsed: {elapsed}s)", end="\r")
 
@@ -158,7 +163,7 @@ def run_blast(sequence, email, skip=False):
                 print(f"\n✓ BLAST completed in {elapsed}s")
 
                 # Retrieve results
-                results = s.getResult(jobid, "out")
+                results = s.get_result(jobid, "out")
 
                 # Parse and display summary
                 lines = results.split("\n")
@@ -169,8 +174,8 @@ def run_blast(sequence, email, skip=False):
 
                 return results
 
-            elif status == "ERROR":
-                print(f"\n✗ BLAST job failed")
+            elif status in ("ERROR", "FAILURE", "NOT_FOUND"):
+                print(f"\n✗ BLAST job did not complete: {status}")
                 return None
 
             time.sleep(5)
@@ -190,15 +195,17 @@ def discover_pathways(uniprot, kegg, uniprot_id):
     print(f"{'='*70}")
 
     try:
-        # Map UniProt → KEGG
+        # Map UniProt → KEGG. mapping() returns UniProt's job payload:
+        # {"results": [{"from": ..., "to": ...}], "failedIds": [...]}
         print(f"Mapping {uniprot_id} to KEGG...")
-        kegg_mapping = uniprot.mapping(fr="UniProtKB_AC-ID", to="KEGG", query=uniprot_id)
+        job = uniprot.mapping(fr="UniProtKB_AC-ID", to="KEGG", query=uniprot_id)
 
-        if not kegg_mapping or uniprot_id not in kegg_mapping:
+        kegg_ids = [
+            row["to"] for row in (job or {}).get("results", []) if row["from"] == uniprot_id
+        ]
+        if not kegg_ids:
             print("✗ No KEGG mapping found")
             return []
-
-        kegg_ids = kegg_mapping[uniprot_id]
         print(f"✓ KEGG ID(s): {kegg_ids}")
 
         # Get pathways for first KEGG ID
@@ -214,24 +221,28 @@ def discover_pathways(uniprot, kegg, uniprot_id):
 
         print(f"✓ Found {len(pathways)} pathway(s):\n")
 
-        # Get pathway names
+        # get_pathway_by_gene returns the parsed PATHWAY block, which current
+        # bioservices gives as {pathway_id: name}; tolerate a plain sequence too.
+        if isinstance(pathways, dict):
+            pathway_pairs = list(pathways.items())
+        else:
+            pathway_pairs = [(pid, None) for pid in pathways]
+
         pathway_info = []
-        for pathway_id in pathways:
-            try:
-                entry = kegg.get(pathway_id)
+        for pathway_id, pathway_name in pathway_pairs:
+            if not pathway_name:
+                try:
+                    entry = kegg.get(pathway_id)
+                    pathway_name = "Unknown"
+                    for line in entry.split("\n"):
+                        if line.startswith("NAME"):
+                            pathway_name = line.replace("NAME", "").strip()
+                            break
+                except Exception:
+                    pathway_name = "[Error retrieving name]"
 
-                # Extract pathway name
-                pathway_name = "Unknown"
-                for line in entry.split("\n"):
-                    if line.startswith("NAME"):
-                        pathway_name = line.replace("NAME", "").strip()
-                        break
-
-                pathway_info.append((pathway_id, pathway_name))
-                print(f"  • {pathway_id}: {pathway_name}")
-
-            except Exception:
-                print(f"  • {pathway_id}: [Error retrieving name]")
+            pathway_info.append((pathway_id, pathway_name))
+            print(f"  • {pathway_id}: {pathway_name}")
 
         return pathway_info
 
@@ -241,43 +252,39 @@ def discover_pathways(uniprot, kegg, uniprot_id):
 
 
 def find_interactions(protein_query):
-    """Find protein-protein interactions via PSICQUIC."""
+    """Find protein-protein interactions via STRING."""
     print(f"\n{'='*70}")
     print("STEP 5: Protein-Protein Interactions")
     print(f"{'='*70}")
 
     try:
-        p = PSICQUIC()
+        s = STRING()
 
-        # Try querying MINT database
-        query = f"{protein_query} AND species:9606"
-        print(f"Querying MINT database...")
-        print(f"  Query: {query}")
+        # PSICQUIC and BioGRID were removed from bioservices in 1.14; STRING answers
+        # the same question. species is an NCBI taxid, required_score is 0-1000.
+        print("Querying STRING for human interaction partners...")
+        print(f"  Query: {protein_query} (taxid 9606, score >= 400)")
 
-        results = p.query("mint", query)
+        rows = s.get_interaction_partners(
+            protein_query, species=9606, required_score=400, limit=25
+        )
 
-        if not results:
-            print("✗ No interactions found in MINT")
+        if not rows:
+            print("✗ No interactions found in STRING")
             return []
 
-        # Parse PSI-MI TAB format
-        lines = results.strip().split("\n")
-        print(f"✓ Found {len(lines)} interaction(s):\n")
+        print(f"✓ Found {len(rows)} interaction(s):\n")
 
-        # Display first 10 interactions
         interactions = []
-        for i, line in enumerate(lines[:10], 1):
-            fields = line.split("\t")
-            if len(fields) >= 12:
-                protein_a = fields[4].split(":")[1] if ":" in fields[4] else fields[4]
-                protein_b = fields[5].split(":")[1] if ":" in fields[5] else fields[5]
-                interaction_type = fields[11]
+        for i, row in enumerate(rows[:10], 1):
+            protein_a = row.get("preferredName_A", "?")
+            protein_b = row.get("preferredName_B", "?")
+            score = row.get("score")
+            interactions.append((protein_a, protein_b, score))
+            print(f"  {i}. {protein_a} ↔ {protein_b} (score {score})")
 
-                interactions.append((protein_a, protein_b, interaction_type))
-                print(f"  {i}. {protein_a} ↔ {protein_b}")
-
-        if len(lines) > 10:
-            print(f"  ... and {len(lines)-10} more")
+        if len(rows) > 10:
+            print(f"  ... and {len(rows)-10} more")
 
         return interactions
 
@@ -296,26 +303,27 @@ def get_go_annotations(uniprot_id):
         g = QuickGO()
 
         print(f"Retrieving GO annotations for {uniprot_id}...")
-        annotations = g.Annotation(protein=uniprot_id, format="tsv")
+        # QuickGO REST parameters: geneProductId is prefixed and limit maxes out at 100.
+        annotations = g.Annotation(
+            geneProductId=f"UniProtKB:{uniprot_id}",
+            includeFields="goName",
+            limit=100,
+        )
 
-        if not annotations:
+        rows = (annotations or {}).get("results") if isinstance(annotations, dict) else None
+        if not rows:
             print("✗ No GO annotations found")
-            return []
+            return {}
 
-        lines = annotations.strip().split("\n")
-        print(f"✓ Found {len(lines)-1} annotation(s)\n")
+        print(f"✓ Found {annotations.get('numberOfHits', len(rows))} annotation(s)\n")
 
-        # Group by aspect
+        # Group by aspect; goAspect is spelled out (biological_process, ...)
+        aspect_keys = {"biological_process": "P", "molecular_function": "F", "cellular_component": "C"}
         aspects = {"P": [], "F": [], "C": []}
-        for line in lines[1:]:
-            fields = line.split("\t")
-            if len(fields) >= 9:
-                go_id = fields[6]
-                go_term = fields[7]
-                go_aspect = fields[8]
-
-                if go_aspect in aspects:
-                    aspects[go_aspect].append((go_id, go_term))
+        for row in rows:
+            key = aspect_keys.get(row.get("goAspect"))
+            if key:
+                aspects[key].append((row["goId"], row.get("goName", "")))
 
         # Display summary
         print(f"  Biological Process (P): {len(aspects['P'])} terms")

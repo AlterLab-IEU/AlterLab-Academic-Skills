@@ -71,7 +71,7 @@ tc_module.open_lid()
 tc_module.close_lid()
 
 # Set lid temperature
-tc_module.set_lid_temperature(celsius=105)
+tc_module.set_lid_temperature(temperature=105)  # takes `temperature`, not `celsius`
 
 # Set block temperature
 tc_module.set_block_temperature(
@@ -98,7 +98,7 @@ tc_module.deactivate_lid()
 tc_module.deactivate_block()
 ```
 
-## Absorbance Plate Reader (Flex)
+## Absorbance Plate Reader (Flex, API 2.21+)
 
 ```python
 # Load (lid must be closed to initialize, open to load/read labware)

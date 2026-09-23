@@ -3,10 +3,11 @@ name: alterlab-reactome
 description: Query the Reactome REST API for pathway analysis, over-representation/enrichment, gene-to-pathway mapping, disease pathways, molecular interactions, and expression analysis. Use when running pathway enrichment on a gene list, mapping genes to curated biological pathways, or exploring disease pathways for systems biology studies. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless Reactome REST API (no authentication required)
+compatibility: Keyless Reactome Content Service and Analysis Service REST APIs (no authentication required); verified against Reactome release 97 (2026-09)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Reactome Database
@@ -25,6 +26,16 @@ This skill should be used when:
 - Exploring disease-related pathways and mechanisms
 - Visualizing analysis results in the Reactome Pathway Browser
 - Conducting comparative pathway analysis across species
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| KEGG pathway maps, KO orthology, KEGG compound/drug IDs | `alterlab-kegg` |
+| Protein-protein interaction networks and STRING functional enrichment | `alterlab-string-db` |
+| Genome-scale metabolic models and flux balance analysis | `alterlab-cobrapy` |
+| Differential expression statistics from RNA-seq counts | `alterlab-pydeseq2` |
+| Target-disease evidence scoring for drug discovery | `alterlab-opentargets` |
 
 ## Core Capabilities
 
@@ -305,7 +316,7 @@ For comprehensive API endpoint documentation, see `references/api_reference.md` 
 
 ## Database Version
 
-Reactome ships quarterly releases; the live version (96 as of this writing,
+Reactome ships quarterly releases; the live version (97 as of 2026-09,
 verified via the API) is the source of truth — don't hardcode counts that go
 stale. Fetch the current release and per-type statistics at query time:
 

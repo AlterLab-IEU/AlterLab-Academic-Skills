@@ -174,8 +174,8 @@ filing.attachments.download("./downloads/")  # all
 exhibits = filing.exhibits
 
 for exhibit in exhibits:
-    print(f"Exhibit {exhibit.exhibit_number}: {exhibit.description}")
-    if exhibit.exhibit_number == "10.1":
+    print(f"{exhibit.document_type}: {exhibit.description}")   # e.g. "EX-10.1"
+    if exhibit.document_type == "EX-10.1":
         exhibit.download("./exhibits/")
 ```
 

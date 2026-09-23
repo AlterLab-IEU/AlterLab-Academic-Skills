@@ -1,12 +1,13 @@
 ---
 name: alterlab-paper-2-web
-description: Converts academic papers into promotional and presentation formats — interactive websites (Paper2Web), presentation videos (Paper2Video), and conference posters (Paper2Poster) from LaTeX or PDF sources. Use when disseminating a paper, preparing for a conference, building an explorable academic homepage, generating a video abstract, or producing a print-ready poster from a paper. Part of the AlterLab Academic Skills suite.
+description: Converts academic papers into promotional and presentation formats with the third-party Paper2All pipeline (LLM calls routed through OpenRouter/OpenAI) — interactive websites (Paper2Web), presentation videos (Paper2Video), and conference posters (Paper2Poster) from a paper PDF and its LaTeX sources. Use when disseminating a paper, preparing for a conference, building an explorable academic homepage, generating a video abstract, or auto-generating a print-ready poster from a finished paper. For a hand-built LaTeX poster use alterlab-latex-posters; for a talk deck use alterlab-scientific-slides. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
-compatibility: Requires an OPENAI_API_KEY (set in a .env file) for the generation pipelines; optional talking-head video needs an NVIDIA GPU (A6000 48GB)
+compatibility: Runs the third-party Paper2All repo (github.com/YuhangChen1/Paper2All). pipeline_all.py (website, poster, PR) requires OPENROUTER_API_KEY exported in the shell and sends paper content to OpenRouter-hosted models; Paper2Video and the sub-modules read OPENAI_API_KEY / OPENAI_API_BASE from a .env file. Needs LibreOffice and Poppler; the optional talking-head video needs an NVIDIA GPU (upstream recommends an A6000 48GB)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Paper2All: Academic Paper Transformation Pipeline
@@ -39,6 +40,15 @@ Use this skill when:
 - "Make an interactive homepage for my paper"
 - "Transform my paper into promotional materials"
 - "Generate a poster and video for my conference talk"
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Hand-building a LaTeX research poster (beamerposter, tikzposter, baposter) | `alterlab-latex-posters` |
+| A PowerPoint/PPTX or HTML poster the user will edit themselves | `alterlab-pptx-posters` |
+| Designing and delivering a slide deck for a live talk | `alterlab-scientific-slides` |
+| Posting the paper to arXiv, bioRxiv, medRxiv, or SSRN | `alterlab-preprint-deposition` |
 
 ## Visual Enhancement with Scientific Schematics
 
@@ -112,12 +122,19 @@ Creates print-ready academic posters with professional layouts and visual design
    ```
    Paper2Video runs in its own environment (`conda create -n p2v python=3.10`), and the optional talking-head module in a third (`conda create -n hallo python=3.10`).
 
-2. **Configure API Keys** (create `.env` file):
+2. **Configure API Keys**:
+   ```bash
+   # pipeline_all.py (website, poster, PR) reads only this variable, from the shell
+   # environment (it does not load .env) and exits if it is unset:
+   export OPENROUTER_API_KEY=sk-or-...
    ```
-   OPENAI_API_KEY=your_openai_api_key_here
-   OPENAI_API_BASE=https://api.openai.com/v1   # or https://openrouter.ai/api/v1 for OpenRouter
+   ```
+   # .env in the repo root — read by the sub-modules and Paper2Video
+   OPENAI_API_KEY=your_key_here
+   OPENAI_API_BASE=https://openrouter.ai/api/v1   # upstream-recommended; or https://api.openai.com/v1
    # Optional: GOOGLE_SEARCH_API_KEY and GOOGLE_SEARCH_ENGINE_ID for logo search
    ```
+   The AutoPR component has its own `AutoPR/.env` (copy `AutoPR/.env.example`). Paper content is sent to these third-party model providers — confirm that is acceptable for unpublished work.
 
 3. **Install System Dependencies**:
    - LibreOffice (document conversion)
@@ -130,7 +147,7 @@ Creates print-ready academic posters with professional layouts and visual design
 
 ### Basic Usage
 
-`pipeline_all.py` drives the website, poster, and PR-material modules. The `--model-choice` flag selects **which component** to run — it is NOT a model selector. Omit it to run all modules (with automatic PDF detection).
+`pipeline_all.py` drives the website, poster, and PR-material modules from a **PDF**. The `--model-choice` flag selects **which component(s)** to run (one or more of `1 2 3`) — it is NOT a model selector. Omit it to run all modules. The output flag is `--output_dir` (underscore): the upstream README shows a hyphenated `--output-dir`, which the script's argument parser rejects. `pipeline_all.py` processes only the first PDF it finds under `--input-dir` (a `paper.pdf` inside each subfolder, or a PDF directly in the folder); pass `--pdf-path` to choose one explicitly.
 
 | `--model-choice` | Component |
 |------------------|-----------|
@@ -143,22 +160,22 @@ Creates print-ready academic posters with professional layouts and visual design
 ```bash
 python pipeline_all.py \
   --input-dir "path/to/paper" \
-  --output-dir "path/to/output"
+  --output_dir "path/to/output"
 ```
 
 **Generate Website Only**:
 ```bash
 python pipeline_all.py \
   --input-dir "path/to/paper" \
-  --output-dir "path/to/output" \
+  --output_dir "path/to/output" \
   --model-choice 1
 ```
 
-**Generate Poster with Custom Size**:
+**Generate Poster with Custom Size** (default is 48 × 36 in landscape):
 ```bash
 python pipeline_all.py \
   --input-dir "path/to/paper" \
-  --output-dir "path/to/output" \
+  --output_dir "path/to/output" \
   --model-choice 2 \
   --poster-width-inches 60 \
   --poster-height-inches 40
@@ -221,27 +238,21 @@ paper_directory/
 - Selectable text (not scanned images)
 - High-resolution figures (300+ DPI preferred)
 
+Which input each tool takes: `pipeline_all.py` (website, poster, PR) reads the **PDF**; Paper2Video (`pipeline_light.py` / `pipeline.py`) reads the **LaTeX project** via `--paper_latex_root`. Keep both in the paper folder if you want every output.
+
 ### Input Organization
 
 **Single Paper**:
 ```bash
 input/
 └── paper_name/
-    ├── main.tex (or paper.pdf)
+    ├── paper.pdf          # read by pipeline_all.py
+    ├── main.tex           # LaTeX project root for Paper2Video
     ├── figures/
     └── bibliography.bib
 ```
 
-**Multiple Papers** (batch processing):
-```bash
-input/
-├── paper1/
-│   └── main.tex
-├── paper2/
-│   └── main.tex
-└── paper3/
-    └── main.tex
-```
+**Multiple Papers**: give each paper its own folder and run `pipeline_all.py` once per folder (see Batch Processing) — a single run only processes the first PDF it finds.
 
 ## Common Parameters
 
@@ -252,8 +263,10 @@ input/
 - (omit `--model-choice`): Run all modules
 
 ### Model Selection (video pipeline)
-- `--model_name_t`: Model for text/script generation (e.g. `gpt-4.1`)
-- `--model_name_v`: Model for visual/slide generation (e.g. `gpt-4.1`)
+- `--model_name_t`: Model for text/script generation (default `gpt-4.1`)
+- `--model_name_v`: Model for visual/slide generation (default `gpt-4.1`)
+
+These are Paper2Video aliases resolved in `wei_utils.get_agent_config` (e.g. `gpt-4.1`, `gpt-4.1-mini`, `4o`, `o3`, `gpt-5`); unrecognized names fall through to a generic OpenAI-compatible client.
 
 ### Poster Customization (`pipeline_all.py`)
 - `--poster-width-inches [width]`: Custom poster width
@@ -261,25 +274,16 @@ input/
 
 ## Output Structure
 
-Generated outputs are organized by paper and component:
+`pipeline_all.py` writes one subfolder per component under `--output_dir`; Paper2Video writes to its own `--result_dir`:
 
 ```
 output/
-└── paper_name/
-    ├── website/
-    │   ├── index.html
-    │   ├── styles.css
-    │   └── assets/
-    ├── poster/
-    │   ├── poster_final.pdf
-    │   ├── poster_final.png
-    │   └── poster_source/
-    └── video/
-        ├── final_video.mp4
-        ├── slides/
-        ├── audio/
-        └── subtitles/
+├── website/    # Paper2Web (PWAgent) site
+├── poster/     # Paper2Poster output copied from the module's generated_posters folder
+└── PR/         # AutoPR promotional copy
 ```
+
+Give each paper its own `--output_dir`, because the component folders are not namespaced by paper.
 
 ## Best Practices
 
@@ -290,9 +294,9 @@ output/
 4. **Clean LaTeX**: Remove compilation artifacts, ensure source compiles successfully
 
 ### Model Selection Strategy
-The LLM is configured via `OPENAI_API_KEY` / `OPENAI_API_BASE` in `.env` (point the base at OpenRouter to use Claude or other models). The video pipeline takes explicit `--model_name_t` / `--model_name_v` overrides:
-- **Stronger models (e.g. gpt-4.1)**: Best for production-quality outputs, conferences, publications
-- **Cheaper/faster models**: Fine for quick drafts, testing, or simple papers
+`pipeline_all.py` exposes no model flag: the website agent and the poster module call models hard-coded upstream and routed through OpenRouter (Qwen3/Qwen2.5-VL models for the website agent and GPT-4o for Paper2Poster at the time of writing — check the repo if this matters to you). Only the video pipeline takes explicit `--model_name_t` / `--model_name_v` overrides:
+- **Stronger models (e.g. the default `gpt-4.1`)**: best for production-quality videos
+- **Cheaper/faster aliases (e.g. `gpt-4.1-mini`)**: fine for quick drafts, testing, or simple papers
 
 ### Component Priority
 For tight deadlines, generate in this order:
@@ -309,6 +313,7 @@ Before finalizing outputs:
 ## Resource Requirements
 
 ### Processing Time
+Rough, unbenchmarked estimates — actual time depends on paper length, models, and hardware:
 - **Website**: 15-30 minutes per paper
 - **Poster**: 10-20 minutes per paper
 - **Video (no talking-head)**: 20-60 minutes per paper
@@ -320,11 +325,8 @@ Before finalizing outputs:
 - **GPU**: Optional for standard outputs, required for talking-head (NVIDIA A6000 48GB)
 - **Storage**: 1-5GB per paper depending on components and quality settings
 
-### API Costs (Approximate)
-- **Website**: $0.50-2.00 per paper (GPT-4)
-- **Poster**: $0.30-1.00 per paper (GPT-4)
-- **Video**: $1.00-3.00 per paper (GPT-4)
-- **Complete package**: $2.00-6.00 per paper (GPT-4)
+### API Costs
+Upstream publishes no cost figures, and cost depends on the models routed through OpenRouter/OpenAI and on paper length. Run one paper first and check usage in your provider dashboard before batch processing.
 
 ## Troubleshooting
 
@@ -351,7 +353,9 @@ Before finalizing outputs:
 - Ensure figures have appropriate resolution for poster size
 
 **API errors**:
-- Verify API keys in `.env` file
+- `pipeline_all.py` stops with "OPENROUTER_API_KEY environment variable not set" → `export OPENROUTER_API_KEY=...` in the same shell (it does not read `.env`)
+- "the following arguments are required: --output_dir" → use the underscore flag, not `--output-dir`
+- Verify the sub-module keys in `.env` (and `AutoPR/.env`)
 - Check API credit balance
 - Ensure no rate limiting (wait and retry)
 
@@ -413,24 +417,16 @@ Process multiple papers efficiently:
 for paper in paper1 paper2 paper3; do
     python pipeline_all.py \
       --input-dir input/$paper \
-      --output-dir output/$paper &
+      --output_dir output/$paper &
 done
 wait
 ```
 
 ### Custom Branding
-Apply institution or lab branding:
-- Provide logo files in paper directory
-- Specify color schemes in configuration
-- Use custom templates (advanced)
-- Match conference theme requirements
+Branding is not exposed as a pipeline flag. Paper2Web can discover logos automatically when the optional Google Search API keys are set; otherwise add logos, colors, and conference theming by editing the generated website files and poster sources.
 
-### Multi-Language Support
-Generate content in different languages:
-- Specify target language in configuration
-- System translates content appropriately
-- Selects appropriate voice for video narration
-- Adapts design conventions to culture
+### Language
+The AutoPR module writes English (Twitter/X) or Chinese (Xiaohongshu) promotional copy depending on the input folder name (see Platform-Specific Features). Other output languages are not a documented pipeline option — translate or edit the generated text yourself.
 
 ## References and Resources
 
@@ -444,12 +440,13 @@ This skill includes comprehensive reference documentation:
 
 **External Resources**:
 - GitHub Repository: https://github.com/YuhangChen1/Paper2All
+- Paper: Chen et al. (2025), "Paper2Web: Let's Make Your Paper Alive!", arXiv:2510.15842
 - Curated Dataset: Available on Hugging Face (13 research categories)
 - Benchmark Suite: Reference websites and evaluation metrics
 
 ## Evaluation and Quality Metrics
 
-The Paper2All system includes built-in quality assessment:
+Use these dimensions as a review checklist for generated outputs:
 
 ### Content Quality
 - **Completeness**: Coverage of paper content
@@ -469,5 +466,6 @@ The Paper2All system includes built-in quality assessment:
 - **Accessibility**: WCAG compliance, screen reader support
 - **Standards**: Valid HTML/CSS, print-ready PDFs
 
-All outputs undergo automated quality checks before generation completes.
+The Paper2Web paper (arXiv:2510.15842; benchmark on Hugging Face) scores generated sites on informativeness, aesthetics, QA accuracy, completeness, connectivity, and interactivity; the checklist above is broader. The pipeline does not guarantee that every output passes it, so review each output yourself.
 
+Part of the AlterLab Academic Skills suite.

@@ -136,7 +136,7 @@ bamCoverage \\
     --effectiveGenomeSize $GENOME_SIZE \\
     --binSize 10 \\
     --extendReads 200 \\
-    --ignoreDuplicates \\
+    --samFlagExclude 1024 \\
     --numberOfProcessors $THREADS
 
 bamCoverage \\
@@ -146,7 +146,7 @@ bamCoverage \\
     --effectiveGenomeSize $GENOME_SIZE \\
     --binSize 10 \\
     --extendReads 200 \\
-    --ignoreDuplicates \\
+    --samFlagExclude 1024 \\
     --numberOfProcessors $THREADS
 
 # Step 2: Create log2 ratio track
@@ -159,7 +159,7 @@ bamCompare \\
     --scaleFactorsMethod readCount \\
     --binSize 10 \\
     --extendReads 200 \\
-    --ignoreDuplicates \\
+    --samFlagExclude 1024 \\
     --numberOfProcessors $THREADS
 
 # Step 3: Compute matrix around TSS

@@ -6,18 +6,25 @@
 https://api.stlouisfed.org/fred/
 ```
 
-For GeoFRED endpoints:
+For GeoFRED (Maps API) endpoints:
 ```
 https://api.stlouisfed.org/geofred/
 ```
 
+API v2 (bulk release observations only):
+```
+https://api.stlouisfed.org/fred/v2/release/observations
+```
+
 ## Authentication
 
-All requests require an API key passed as a query parameter:
+API v1 requests (every endpoint except v2) pass the key as a query parameter:
 
 ```
 api_key=YOUR_32_CHARACTER_KEY
 ```
+
+API v2 expects it in a header instead: `Authorization: Bearer YOUR_32_CHARACTER_KEY`.
 
 ### Obtaining an API Key
 
@@ -27,9 +34,9 @@ api_key=YOUR_32_CHARACTER_KEY
 
 ### Rate Limits
 
-- API implements rate limiting
-- HTTP 429 (Too Many Requests) when exceeded
-- Contact FRED team for higher limits if needed
+- Up to 120 requests per minute per key; more returns HTTP 429 (Too Many Requests)
+- Not complying with the throttling can result in a temporary block
+- Cache results and use the v2 release endpoint for bulk pulls
 
 ## Response Formats
 
@@ -118,7 +125,8 @@ Many endpoints support sorting:
 | 400 | Bad Request - Invalid parameters |
 | 401 | Unauthorized - Invalid/missing API key |
 | 404 | Not Found - Invalid endpoint or resource |
-| 429 | Too Many Requests - Rate limit exceeded |
+| 423 | Locked |
+| 429 | Too Many Requests - Rate limit exceeded (over 120 requests/minute) |
 | 500 | Internal Server Error |
 
 ### Error Response Format

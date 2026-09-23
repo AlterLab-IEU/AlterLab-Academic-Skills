@@ -61,7 +61,7 @@ Pin `census_version` once and reuse the open handle:
 tissues = ["lung", "liver", "kidney", "heart"]
 results = {}
 
-with cellxgene_census.open_soma(census_version="2023-07-25") as census:
+with cellxgene_census.open_soma(census_version="2025-11-08") as census:
     for tissue in tissues:
         adata = cellxgene_census.get_anndata(
             census=census,

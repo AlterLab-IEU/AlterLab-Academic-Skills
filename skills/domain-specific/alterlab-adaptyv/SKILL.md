@@ -6,14 +6,30 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: Requires an Adaptyv Bio Foundry account and an ADAPTYV_API_KEY token for experiment submission; local protein-optimization steps (ESM, etc.) run via `uv run python` without a key.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Adaptyv
 
 Adaptyv Bio runs the **Foundry** cloud lab: submit protein sequences and a target, the lab runs the assay, and you retrieve experimental data (binding/affinity, thermostability, expression, fluorescence). The public **Foundry API** drives the full lifecycle programmatically. Turnaround is on the order of weeks; confirm the current estimate from the per-experiment quote rather than assuming a fixed number.
 
-> The exact request/response shapes evolve. This skill captures the verified API contract and conventions; for the authoritative spec see the OpenAPI doc at `https://foundry-api-public.adaptyvbio.com/api/v1/openapi.json` and `https://docs.adaptyvbio.com`.
+> The exact request/response shapes evolve. This skill captures the API contract as published in the OpenAPI doc (v0.0.2, checked 2026-09-23) at `https://foundry-api-public.adaptyvbio.com/api/v1/openapi.json`; that spec lists `https://devs.adaptyvbio.com` as the production base URL, and both hosts serve the same `/api/v1` routes. See also `https://docs.adaptyvbio.com`.
+
+## When to Use This Skill
+
+Use this skill to design → test → learn with Adaptyv's cloud lab: pick a catalog target,
+pre-screen and submit designed sequences, track experiments through quote and production,
+and pull binding, stability, expression, fluorescence, epitope-binning, or enzyme-activity data.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Designing sequences for a fixed backbone (inverse folding) before any wet-lab step | `alterlab-proteinmpnn` |
+| Protein language-model embeddings or generative design with ESM3 / ESM C | `alterlab-esm` |
+| Cell-free expression or other protocols on Ginkgo's cloud lab (RACs) | `alterlab-ginkgo-cloud` |
+| Recording constructs, plasmids, and results in an ELN/LIMS | `alterlab-benchling` |
 
 ## Prefer the official tooling first
 
@@ -50,7 +66,7 @@ uv pip install requests python-dotenv
 
 ### Basic Usage
 
-The API uses a **draft → submit** flow: create an experiment (it starts as a `draft`), then submit it. `sequences` is a `{label: amino_acid_string}` map (multi-chain constructs join chains with a colon, e.g. `"heavy:light"`).
+The API uses a **draft → submit → confirm quote** flow: create an experiment (it starts as `draft`), submit it (Adaptyv then generates a quote asynchronously; status `waiting_for_confirmation`), and confirm the quote to create the invoice. `sequences` is a `{label: amino_acid_string}` map (values may also be objects such as `{"aa_string": "...", "control": true}`; multi-chain constructs join chains with a colon, e.g. `"heavy:light"`).
 
 ```python
 import os
@@ -73,7 +89,7 @@ resp = requests.post(
     json={
         "name": "mini-binder round 1",
         "experiment_spec": {
-            "experiment_type": "affinity",   # screening|affinity|thermostability|fluorescence|expression
+            "experiment_type": "affinity",   # screening|affinity|thermostability|fluorescence|expression|epitope_binning|enzyme_activity
             "method": "bli",                 # bli|spr (for binding-type assays)
             "target_id": "<target uuid from GET /targets>",
             "sequences": {
@@ -86,8 +102,14 @@ resp = requests.post(
 resp.raise_for_status()
 experiment_id = resp.json()["experiment_id"]
 
-# 2. Submit it to the lab (after reviewing the quote — see reference/api_reference.md)
+# 2. Submit the reviewed draft; the quote is generated asynchronously afterwards
 requests.post(f"{base_url}/experiments/{experiment_id}/submit", headers=headers).raise_for_status()
+
+# 3. Poll GET /experiments/{id}/quote until it exists, review totals/expiry, then accept it
+#    (creates the invoice; the JSON body is required even when empty)
+quote = requests.get(f"{base_url}/experiments/{experiment_id}/quote", headers=headers)
+requests.post(f"{base_url}/experiments/{experiment_id}/quote/confirm",
+              headers=headers, json={}).raise_for_status()
 ```
 
 ## Available Experiment Types
@@ -97,6 +119,8 @@ Foundry supports these `experiment_type` values:
 - **thermostability** - Melting temperature (Tm) via DSF. No target required.
 - **fluorescence** - Fluorescence intensity. No target required.
 - **expression** - Protein yield quantification. No target required.
+- **epitope_binning** - Epitope grouping of binders; requires a target and 4–28 sequences in multiples of 4.
+- **enzyme_activity** - Enzyme activity assay. No target required.
 
 See `reference/experiments.md` for detailed information on each assay and its outputs.
 
@@ -125,9 +149,11 @@ For concrete code examples covering common use cases (experiment submission, sta
 
 ## Important Notes
 - The Foundry API is public but still evolving — treat the OpenAPI doc (`/api/v1/openapi.json`) as the source of truth and verify field names before relying on them.
-- Submission is two-step: create a `draft`, review the cost quote, then `POST .../submit`. Nothing is charged until you confirm the quote.
-- `affinity`/`screening` require a `target_id` from the catalog (`GET /targets`); `thermostability`, `fluorescence`, and `expression` do not.
+- Submission is staged: create a `draft` (optionally price it first with `POST /experiments/cost-estimate`), `POST .../submit`, then review and `POST .../quote/confirm`. Nothing is invoiced until the quote is confirmed. `skip_draft` / `auto_accept_quote` on create exist for pre-validated automated pipelines — use them only when the user has approved the spend.
+- `affinity`/`screening`/`epitope_binning` require a `target_id` from the catalog (`GET /targets`) and `affinity`/`screening` also a `method` (`bli`|`spr`); `thermostability`, `fluorescence`, `expression`, and `enzyme_activity` take neither.
+- Authentication is `Authorization: Bearer <token>`; `GET /whoami` confirms which organization a token acts for.
 - Turnaround is multiple weeks — read the estimate from the experiment/quote rather than assuming a fixed number.
 - Support and docs: support@adaptyvbio.com / `https://docs.adaptyvbio.com`.
 - Suitable for high-throughput AI-driven protein design workflows (closed-loop design → test → learn).
 
+Part of the AlterLab Academic Skills suite.

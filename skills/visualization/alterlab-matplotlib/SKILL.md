@@ -3,10 +3,11 @@ name: alterlab-matplotlib
 description: Builds plots with the matplotlib Python library (pyplot and the object-oriented Figure/Axes API) for full low-level customization, exporting to PNG/PDF/SVG. Use when fine-grained control over individual plot elements is needed — custom line/scatter/bar/histogram/heatmap/contour/box/violin/3D plots, rcParams and style-sheet tuning, or GridSpec subplot layouts inside a scientific Python workflow. Does NOT cover opinionated journal-ready multi-panel figure workflows (Nature/Science/Cell formatting, colorblind-safe palettes, significance annotations); for those prefer alterlab-scientific-viz instead. Part of the AlterLab Academic Skills suite.
 license: BSD-3-Clause
 allowed-tools: Read Write Edit Bash(python:*)
-compatibility: Requires the matplotlib Python library, version >= 3.9 (pip install 'matplotlib>=3.9'); examples also use numpy, and the histogram-fit example uses scipy. No API key or external service needed.
+compatibility: Requires the matplotlib Python library, version >= 3.9 (current 3.11.2 as of 2026-09; matplotlib 3.11 needs Python >= 3.11) — uv pip install 'matplotlib>=3.9'; examples also use numpy, and the histogram-fit example uses scipy. No API key or external service needed.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Matplotlib
@@ -26,6 +27,16 @@ This skill should be used when:
 - Building interactive plots or animations
 - Working with 3D visualizations
 - Integrating plots into Jupyter notebooks or GUI applications
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Quick statistical plot straight from a DataFrame (box/violin/pair/regression plots with automatic CIs) | `alterlab-seaborn` |
+| Interactive chart with hover/zoom, standalone HTML, or a Dash dashboard | `alterlab-plotly` |
+| Journal-ready figure: column widths, Okabe-Ito palette, panel labels, significance stars | `alterlab-scientific-viz` |
+| Proofing a finished figure for overlapping or clipped labels and 300-dpi export | `alterlab-figure-qa` |
+| Flowchart, pathway, or architecture diagram rather than a plot of data | `alterlab-scientific-schematics` |
 
 ## Core Concepts
 
@@ -364,6 +375,9 @@ Matplotlib integrates well with:
 3. **Memory issues with many figures**: Close figures explicitly with `plt.close(fig)`
 4. **Font warnings**: Install fonts or suppress warnings with `plt.rcParams['font.sans-serif']`
 5. **DPI confusion**: Remember that figsize is in inches, not pixels: `pixels = dpi * inches`
+6. **Reusing a figure number** (3.11+): `plt.subplots(num=1)` or `plt.subplot_mosaic(..., num=1)` raises `ValueError` if figure 1 exists — pass `clear=True`, or add axes with `fig.subplots()` / `fig.subplot_mosaic()`.
+7. **Removed in 3.11**: `matplotlib.cm.get_cmap` (use `matplotlib.colormaps[name]`), `plot_date` (call `plot` with datetime values), and boxplot `labels=` (use `tick_labels=`).
+8. **Deprecated in 3.11** (warn now, removal in 3.13 for `vert`): `vert=` on `boxplot`/`violinplot` (use `orientation='horizontal'`, available since 3.10), `clabel` on `contourf` output (overlay `contour` lines and label those), and in-place `Colormap.set_bad/set_under/set_over` (use `cmap.with_extremes(bad=..., under=..., over=...)`).
 
 ## Additional Resources
 

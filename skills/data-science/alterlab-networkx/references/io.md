@@ -105,11 +105,8 @@ nx.write_pajek(G, 'graph.net')
 
 ### LEDA Format
 ```python
-# Read LEDA format
+# Read LEDA format (read-only: NetworkX has read_leda / parse_leda but no LEDA writer)
 G = nx.read_leda('graph.leda')
-
-# Write LEDA format
-nx.write_leda(G, 'graph.leda')
 ```
 
 ## Working with Pandas

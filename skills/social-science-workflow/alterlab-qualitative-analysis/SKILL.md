@@ -6,7 +6,8 @@ allowed-tools: Read Bash(python:*)
 compatibility: "Requires (declare in-session, no runtime install on Anthropic API): Python krippendorff>=0.8, statsmodels>=0.14 (Fleiss/Cohen kappa via statsmodels.stats.inter_rater), pandas. For alpha with CIs use R irrCAC / icr, or the bundled stdlib nominal calculator. Optional LLM-assisted coding uses the platform's model. Runs locally via `uv run python`; no extra API key."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
     depends_on: "alterlab-qualitative-methods (methodology reference), alterlab-text-as-data (computational text), alterlab-ssci-reflexivity-gate (trustworthiness)"
 ---
 

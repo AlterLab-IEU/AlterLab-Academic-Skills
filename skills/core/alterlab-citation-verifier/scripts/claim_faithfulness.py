@@ -42,7 +42,7 @@ Usage
     # batch from JSON ([{"claim": "...", "doi": "..."}, ...]) -> JSON report
     uv run python claim_faithfulness.py --input pairs.json --json
 
-    # LLM-judge tier (uses $ALTERLAB_MODEL, default reviewed 2026-06-06)
+    # LLM-judge tier (uses $ALTERLAB_MODEL, default reviewed 2026-09-23)
     uv run python claim_faithfulness.py --input pairs.json --tier llm --json
 
     # offline self-test (no network) on a toy pair
@@ -66,11 +66,11 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 # --------------------------------------------------------------------------- #
-# Model convention — default reviewed 2026-06-06; override via ALTERLAB_MODEL.  #
+# Model convention — default reviewed 2026-09-23; override via ALTERLAB_MODEL.  #
 # See skills/core/shared/model_env.md before changing the default.             #
 # This is the ONLY place a model id literal may appear (rule 1 of model_env).  #
 # --------------------------------------------------------------------------- #
-DEFAULT_MODEL = "claude-opus-4-8"
+DEFAULT_MODEL = "claude-opus-5-5"
 
 
 def alterlab_model() -> str:
@@ -78,7 +78,9 @@ def alterlab_model() -> str:
     return os.environ.get("ALTERLAB_MODEL") or DEFAULT_MODEL
 
 
-# Polite-pool contact; OpenAlex/Crossref give better rate limits with a mailto.
+# Crossref routes requests that carry a mailto to its "polite" pool (higher limits).
+# OpenAlex has ignored mailto since Feb 2026, but the single-DOI lookups used here
+# are free without an API key, so no key is needed for abstract retrieval.
 CONTACT_EMAIL = os.environ.get("ALTERLAB_CONTACT_EMAIL", "alterlab.ieu@gmail.com")
 USER_AGENT = f"AlterLab-CitationVerifier/2.0 (mailto:{CONTACT_EMAIL})"
 

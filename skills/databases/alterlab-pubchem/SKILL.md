@@ -1,20 +1,21 @@
 ---
 name: alterlab-pubchem
-description: Query PubChem via the PUG-REST API and PubChemPy across 110M+ compounds, searching by name, CID, or SMILES and retrieving molecular properties, bioactivity, and similarity/substructure matches. Use when looking up a chemical compound, converting names/SMILES to CIDs, fetching physicochemical properties, or running cheminformatics structure searches. Part of the AlterLab Academic Skills suite.
+description: Query PubChem via the PUG-REST API and PubChemPy across 119M+ compounds, searching by name, CID, or SMILES and retrieving molecular properties, bioactivity, and similarity/substructure matches. Use when looking up a chemical compound, converting names/SMILES to CIDs, fetching physicochemical properties, or running cheminformatics structure searches. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless PubChem PUG-REST API; PubChemPy optional for Python (no authentication required)
+compatibility: Keyless PubChem PUG-REST API (≤5 requests/s, ≤400/min); PubChemPy >= 1.0.5 optional for Python (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # PubChem Database
 
 ## Overview
 
-PubChem is the world's largest freely available chemical database with 110M+ compounds and
-270M+ bioactivities. Query chemical structures by name, CID, or SMILES, retrieve molecular
+PubChem is the world's largest freely available chemical database — 119M+ compounds, 322M+
+substances, and 295M+ bioactivities per the PubChem 2025 update (Kim et al., NAR 2025). Query chemical structures by name, CID, or SMILES, retrieve molecular
 properties, perform similarity and substructure searches, and access bioactivity data using
 the PUG-REST API and PubChemPy.
 
@@ -28,6 +29,16 @@ This skill should be used when:
 - Accessing bioactivity data from screening assays
 - Converting between chemical identifier formats (CID, SMILES, InChI)
 - Batch processing multiple compounds for drug-likeness screening or property analysis
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Curated potency data (IC50/Ki) for targets and medicinal-chemistry series | `alterlab-chembl` |
+| Computing descriptors or fingerprints on your own molecules locally | `alterlab-rdkit` |
+| Human metabolite concentrations, biofluids, biomarker evidence | `alterlab-hmdb` |
+| Drug pharmacology, interactions, and approval details | `alterlab-drugbank` |
+| Purchasable compound libraries for virtual screening | `alterlab-zinc-db` |
 
 ## Core Capabilities
 
@@ -58,7 +69,10 @@ print(compound.smiles, compound.xlogp, compound.tpsa)
 
 Prefer CIDs for repeated queries (more efficient than names/structures). Similarity and
 substructure searches run asynchronously and may take 15-30 seconds; PubChemPy polls
-automatically. See `references/best_practices.md` for rate limits and error handling.
+automatically. PUG-REST answers HTTP 503 (`PUGREST.ServerBusy`) both when you exceed the
+limits and when PubChem itself is overloaded — read the `X-Throttling-Control` response
+header and back off rather than retrying immediately. See `references/best_practices.md`
+for rate limits and error handling.
 
 ## Installation Requirements
 

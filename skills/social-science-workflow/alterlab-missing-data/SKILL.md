@@ -6,7 +6,8 @@ allowed-tools: Read Bash(python:*)
 compatibility: "Requires (declare in-session, no runtime install on Anthropic API): Python statsmodels>=0.14 (statsmodels.imputation.mice), pandas; scikit-learn IterativeImputer only for single imputation (NOT Rubin pooling) — OR the field-standard R mice>=3.19 via Rscript (mice/with/pool). Runs locally via `uv run python` / `Rscript`; no API key."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
     depends_on: "alterlab-statistical-analysis (complete-data modeling), alterlab-sem-psychometrics (FIML for latent models); audited by alterlab-ssci-inference-gate"
 ---
 
@@ -60,6 +61,7 @@ and *between*-imputation variance (Rubin's rules), so it honestly reflects imput
 
 **Python — statsmodels MICE:**
 ```python
+import statsmodels.api as sm
 from statsmodels.imputation import mice
 imp = mice.MICEData(df)                                  # chained-equations imputer over the frame
 fit = mice.MICE("y ~ x1 + x2", sm.OLS, imp).fit(n_burnin=10, n_imputations=20)

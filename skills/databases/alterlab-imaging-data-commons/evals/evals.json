@@ -59,6 +59,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "datacommons" }
       ]
+    },
+    {
+      "id": "near-miss-pydicom",
+      "prompt": "I already have a folder of CT DICOM files from our hospital PACS. Help me anonymize the patient tags and convert the series to a NumPy volume.",
+      "expected_output": "Should NOT trigger Imaging Data Commons. The user is processing local DICOM files they already hold (de-identification and pixel-array conversion), not searching or downloading public IDC collections. Defers to alterlab-pydicom.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-pydicom" }
+      ]
     }
   ]
 }

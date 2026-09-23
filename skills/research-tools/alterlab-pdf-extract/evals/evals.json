@@ -49,6 +49,15 @@
         { "type": "output_contains", "value": "literature-review" },
         { "type": "behavior", "value": "Recognizes that database discovery plus prose synthesis is the literature-review skill's job, not a per-PDF table extraction." }
       ]
+    },
+    {
+      "id": "near-miss-pdf-explore",
+      "prompt": "I have one 60-page technical report as a PDF. Walk me through it: compare the methods described in chapters 2 and 5, list every place it mentions attrition, and read the values off Figure 4.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-pdf-explore. The user wants an in-depth interrogation of a single document (cross-section comparison, every occurrence of a pattern, reading a figure), not the same columns pulled from many papers into a one-row-per-paper table.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-pdf-explore" }
+      ]
     }
   ]
 }

@@ -110,7 +110,8 @@ Advantages:
 ```python
 from sqlalchemy import create_engine
 
-engine = create_engine('postgresql://user:password@host:port/database')
+# psycopg 3 driver; plain 'postgresql://' would select psycopg2
+engine = create_engine('postgresql+psycopg://user:password@host:port/database')
 
 # Read entire table
 gdf = gpd.read_postgis("SELECT * FROM table_name", con=engine, geom_col='geometry')
@@ -132,7 +133,8 @@ gdf.to_postgis("table_name", con=engine, if_exists='append')
 gdf.to_postgis("table_name", con=engine, if_exists='fail')
 ```
 
-Requires: `uv pip install psycopg2` or `uv pip install psycopg` and `uv pip install geoalchemy2`
+Requires: `uv pip install sqlalchemy "psycopg[binary]" geoalchemy2` (psycopg 3; with it use a
+`postgresql+psycopg://` URL — the bare `postgresql://` URL selects the older psycopg2 driver)
 
 ## File-like Objects
 

@@ -380,17 +380,17 @@ papers = searcher.search(
 
 ## Combining with Other Skills
 
-### With `research-lookup` (Academic Papers)
+### With `alterlab-research-lookup` (Academic Papers)
 
 ```python
 # Use parallel-web for general research
 researcher.research("Current state of quantum computing applications")
 
-# Use research-lookup for academic paper search (auto-routes to Perplexity)
-# python research_lookup.py "find papers on quantum error correction in Nature and Science"
+# Use alterlab-research-lookup for academic paper search (auto-routes to Perplexity)
+# python scripts/research_lookup.py "find papers on quantum error correction in Nature and Science"
 ```
 
-### With `citation-management` (BibTeX)
+### With `alterlab-citation-mgmt` (BibTeX)
 
 ```python
 # Step 1: Find paper with parallel search
@@ -399,11 +399,11 @@ result = searcher.search(objective="Vaswani et al Attention Is All You Need pape
 # Step 2: Get DOI from results
 doi = "10.48550/arXiv.1706.03762"
 
-# Step 3: Convert to BibTeX with citation-management skill
+# Step 3: Convert to BibTeX with the alterlab-citation-mgmt skill
 # python scripts/doi_to_bibtex.py 10.48550/arXiv.1706.03762
 ```
 
-### With `scientific-schematics` (Diagrams)
+### With `alterlab-scientific-schematics` (Diagrams)
 
 ```python
 # Step 1: Research a process

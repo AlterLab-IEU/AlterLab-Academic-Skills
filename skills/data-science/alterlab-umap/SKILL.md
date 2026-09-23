@@ -3,10 +3,11 @@ name: alterlab-umap
 description: Nonlinear dimensionality reduction with UMAP — fast manifold learning for 2D/3D visualization, clustering preprocessing (e.g., HDBSCAN), and supervised or parametric UMAP. Use when projecting high-dimensional data to low dimensions for visualization, embedding generation, or as a preprocessing step before clustering. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the umap-learn Python package.
+compatibility: No API key required. Runs locally via `uv run python`; requires umap-learn 0.5.x (current 0.5.12 as of 2026-09, which needs scikit-learn >= 1.6). Parametric UMAP additionally needs TensorFlow.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # UMAP-Learn
@@ -14,6 +15,22 @@ metadata:
 ## Overview
 
 UMAP (Uniform Manifold Approximation and Projection) is a dimensionality reduction technique for visualization and general non-linear dimensionality reduction. Apply this skill for fast, scalable embeddings that preserve local and global structure, supervised learning, and clustering preprocessing.
+
+## When to Use This Skill
+
+Use this skill when the user wants to:
+- Project high-dimensional features or embeddings to 2-D/3-D for visualization.
+- Reduce dimensionality before density-based clustering (HDBSCAN).
+- Fit supervised, semi-supervised, parametric, or aligned UMAP models, or transform new data with a fitted model.
+- Tune `n_neighbors`, `min_dist`, `n_components`, and `metric`, or make embeddings reproducible.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Single-cell workflows (`sc.pp.neighbors` → `sc.tl.umap` on AnnData) | `alterlab-scanpy` |
+| Linear reduction (PCA/TruncatedSVD) or general ML pipelines and model selection | `alterlab-scikit-learn` |
+| Topic modeling of documents with BERTopic (which uses UMAP internally) as a measurement design | `alterlab-text-as-data` |
 
 ## Quick Start
 
@@ -31,7 +48,7 @@ UMAP follows scikit-learn conventions and can be used as a drop-in replacement f
 import umap
 from sklearn.preprocessing import StandardScaler
 
-# Prepare data (standardization is essential)
+# Prepare data (put features on comparable scales)
 scaled_data = StandardScaler().fit_transform(data)
 
 # Method 1: Single step (fit and transform)
@@ -43,7 +60,7 @@ reducer.fit(scaled_data)
 embedding = reducer.embedding_  # Access the trained embedding
 ```
 
-**Critical preprocessing requirement:** Always standardize features to comparable scales before applying UMAP to ensure equal weighting across dimensions.
+**Preprocessing:** standardize features measured in different units before applying UMAP, because the distance metric otherwise weights dimensions by their raw scale. Skip it when raw scales are meaningful for the chosen metric (e.g. cosine on text or model embeddings, Jaccard on binary data).
 
 ### Typical Workflow
 
@@ -231,7 +248,8 @@ reducer = umap.UMAP(
 )
 embedding = reducer.fit_transform(scaled_data)
 
-# 3. Apply HDBSCAN clustering
+# 3. Apply HDBSCAN clustering (standalone `hdbscan` package; scikit-learn >= 1.3
+#    also ships sklearn.cluster.HDBSCAN with a similar interface)
 clusterer = hdbscan.HDBSCAN(
     min_cluster_size=15,
     min_samples=5,
@@ -479,3 +497,4 @@ Contains detailed API documentation:
 
 Load these references when detailed parameter information or advanced method usage is needed.
 
+Part of the AlterLab Academic Skills suite.

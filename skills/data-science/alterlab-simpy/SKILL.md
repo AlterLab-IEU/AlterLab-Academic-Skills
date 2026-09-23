@@ -3,10 +3,11 @@ name: alterlab-simpy
 description: Process-based discrete-event simulation in Python with SimPy — processes, queues, shared resources, and time-based events. Use when simulating systems where entities contend for shared resources over time, such as manufacturing systems, service operations, network traffic, or logistics. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the simpy Python package.
+compatibility: No API key required. Runs locally via `uv run python`; requires simpy 4.x (current 4.1.2 as of 2026-09; pure Python, no other dependencies).
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # SimPy - Discrete-Event Simulation
@@ -38,6 +39,15 @@ Use the SimPy skill when:
 - Continuous simulations with fixed time steps (consider SciPy ODE solvers)
 - Independent processes without resource sharing
 - Pure mathematical optimization (consider SciPy optimize)
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Agent-based models of social systems with heterogeneous agents on grids or networks (segregation, opinion dynamics, diffusion) | `alterlab-abm-mesa` |
+| Searching for Pareto-optimal designs or parameters (e.g. cost vs. waiting time) with evolutionary algorithms | `alterlab-pymoo` |
+| Fitting time-series or regression models to observed queue or throughput data | `alterlab-statsmodels` |
+| Training a reinforcement-learning agent to control a system | `alterlab-stable-baselines3` |
 
 ## Quick Start
 
@@ -429,4 +439,6 @@ Detailed guides, loaded on demand:
 - **Transportation**: Traffic flow, logistics, vehicle routing
 - **Service operations**: Call centers, retail checkout, appointment scheduling
 - **Computer systems**: CPU scheduling, memory management, I/O operations
+
+Part of the AlterLab Academic Skills suite.
 

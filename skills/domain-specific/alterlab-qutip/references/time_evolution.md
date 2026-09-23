@@ -349,8 +349,8 @@ loaded_result = qload("my_simulation")  # reads my_simulation.qu
 
 1. **Sparse matrices**: QuTiP automatically uses sparse matrices
 2. **Small Hilbert spaces**: Truncate when possible
-3. **Time-dependent terms**: String format is fastest (requires compilation)
-4. **Parallel trajectories**: mcsolve automatically parallelizes
+3. **Time-dependent terms**: String format is fastest (requires compilation: install `qutip[runtime-compilation]`, otherwise QuTiP falls back to `eval`)
+4. **Parallel trajectories**: mcsolve is serial by default in v5 — use `options={"map": "parallel"}` (or `"loky"`/`"mpi"`)
 5. **Convergence**: Check by varying `ntraj`, `nsteps`, tolerances
 6. **Solver selection**:
    - Pure states: Use `sesolve` (faster)

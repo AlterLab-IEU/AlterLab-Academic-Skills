@@ -4,22 +4,22 @@ The `datamol.io` module provides comprehensive file handling for molecular data 
 
 ## Reading Molecular Files
 
-### `dm.read_sdf(filename, sanitize=True, remove_hs=True, as_df=True, mol_column='mol', ...)`
+### `dm.read_sdf(urlpath, sanitize=True, as_df=False, smiles_column='smiles', mol_column=None, remove_hs=True, n_jobs=1, ...)`
 Read Structure-Data File (SDF) format.
 - **Parameters**:
   - `filename`: Path to SDF file (supports local and remote paths via fsspec)
   - `sanitize`: Apply sanitization to molecules
   - `remove_hs`: Remove explicit hydrogens
-  - `as_df`: Return as DataFrame (True) or list of molecules (False)
-  - `mol_column`: Name of molecule column in DataFrame
+  - `as_df`: Return a DataFrame (True) or a list of molecules (False, **default**)
+  - `mol_column`: Name of molecule column in the DataFrame (only with `as_df=True`)
   - `n_jobs`: Enable parallel processing
-- **Returns**: DataFrame or list of molecules
-- **Example**: `df = dm.read_sdf("compounds.sdf")`
+- **Returns**: List of molecules, or a DataFrame with `as_df=True`
+- **Example**: `mols = dm.read_sdf("compounds.sdf")`; `df = dm.read_sdf("compounds.sdf", as_df=True, mol_column="mol")`
 
-### `dm.read_smi(filename, smiles_column='smiles', mol_column='mol', as_df=True, ...)`
-Read SMILES file (space-delimited by default).
-- **Common format**: SMILES followed by molecule ID/name
-- **Example**: `df = dm.read_smi("molecules.smi")`
+### `dm.read_smi(urlpath)`
+Read a SMILES file (SMILES optionally followed by an ID/name).
+- **Returns**: List of molecules (no DataFrame option; wrap with `dm.to_df(mols)` if needed)
+- **Example**: `mols = dm.read_smi("molecules.smi")`
 
 ### `dm.read_csv(filename, smiles_column='smiles', mol_column=None, ...)`
 Read CSV file with optional automatic SMILES-to-molecule conversion.
@@ -73,12 +73,12 @@ Write molecules to SDF file.
 Write molecules to SMILES file with optional validation.
 - **Format**: SMILES strings with optional molecule names/IDs
 
-### `dm.to_xlsx(df, filename, mol_columns=None, ...)`
-Export DataFrame to Excel with rendered molecular images.
+### `dm.to_xlsx(mols, urlpath, smiles_column='smiles', mol_column='mol', mol_size=[300, 300])`
+Export molecules or a DataFrame to Excel with rendered molecular images.
 - **Parameters**:
-  - `mol_columns`: Columns containing molecules to render as images
+  - `mol_column`: The (single) column containing molecules to render as images
 - **Special feature**: Automatically renders molecules as images in Excel cells
-- **Example**: `dm.to_xlsx(df, "molecules.xlsx", mol_columns=["mol"])`
+- **Example**: `dm.to_xlsx(df, "molecules.xlsx", mol_column="mol")`
 
 ### `dm.to_molblock(mol, ...)`
 Convert molecule to MOL block string.
@@ -103,7 +103,7 @@ All I/O functions support remote file paths through fsspec integration:
 
 - **`sanitize`**: Apply molecule sanitization (default: True)
 - **`remove_hs`**: Remove explicit hydrogens (default: True)
-- **`as_df`**: Return DataFrame vs list (default: True for most functions)
-- **`n_jobs`**: Enable parallel processing (None = all cores, 1 = sequential)
+- **`as_df`**: Return DataFrame vs list (`read_sdf` defaults to a list, `as_df=False`)
+- **`n_jobs`**: Parallel processing (`-1` = all cores; `0`, `1`, or `None` = sequential)
 - **`mol_column`**: Name of molecule column in DataFrames
 - **`smiles_column`**: Name of SMILES column in DataFrames

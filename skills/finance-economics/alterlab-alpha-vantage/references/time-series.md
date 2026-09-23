@@ -44,10 +44,10 @@ data = av_get("TIME_SERIES_INTRADAY", symbol="IBM", interval="5min", month="2023
 
 **Required:** `symbol`
 
-**Optional:** `outputsize` (`compact`=100 points, `full`=20+ years), `datatype`
+**Optional:** `outputsize` (`compact`=latest 100 points, free; `full`=25+ years, **premium keys only**), `datatype`
 
 ```python
-data = av_get("TIME_SERIES_DAILY", symbol="IBM", outputsize="full")
+data = av_get("TIME_SERIES_DAILY", symbol="IBM", outputsize="compact")  # "full" needs a premium key
 ts = data["Time Series (Daily)"]
 # Key: "2024-01-15" → {"1. open", "2. high", "3. low", "4. close", "5. volume"}
 ```
@@ -147,7 +147,7 @@ for m in markets:
 ```python
 import pandas as pd
 
-data = av_get("TIME_SERIES_DAILY", symbol="AAPL", outputsize="full")
+data = av_get("TIME_SERIES_DAILY", symbol="AAPL", outputsize="compact")  # "full" (premium) for 25+ years
 ts = data["Time Series (Daily)"]
 df = pd.DataFrame.from_dict(ts, orient="index")
 df.columns = ["open", "high", "low", "close", "volume"]

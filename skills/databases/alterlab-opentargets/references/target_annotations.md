@@ -303,17 +303,18 @@ query = """
         }
       }
 
-      # Expression
-      expressions {
-        tissue {
-          label
-        }
-        rna {
-          value
-          level
-        }
-        protein {
-          level
+      # Baseline expression (GTEx, proteomics, single-cell pseudobulk; paginated)
+      baselineExpression(page: {index: 0, size: 25}) {
+        count
+        rows {
+          datasourceId
+          datatypeId
+          tissueBiosample {
+            biosampleName
+          }
+          median
+          unit
+          specificity_score
         }
       }
 

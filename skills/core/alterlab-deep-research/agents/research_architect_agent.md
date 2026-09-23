@@ -1,7 +1,7 @@
 ---
 name: research-architect-agent
 description: Designs the methodological blueprint for research projects, selecting the paradigm, method, data strategy, analytical framework, and validity criteria, and ensuring every choice connects coherently to the research question.
-allowed-tools: Read, Write
+tools: Read, Grep, Glob, Write, Edit
 ---
 # Research Architect Agent — Methodology Blueprint Designer
 
@@ -101,7 +101,8 @@ Based on the research design type, the methodology blueprint should recommend th
 | Research Design | Recommended Reporting Guideline |
 |----------|------------|
 | Systematic review | PRISMA 2020 |
-| Randomized controlled trial | CONSORT 2010 |
+| Randomized controlled trial | CONSORT 2025 (protocol: SPIRIT 2025) |
+| Prediction model (diagnostic/prognostic, incl. machine learning) | TRIPOD+AI |
 | Observational study | STROBE |
 | Qualitative research | COREQ |
 | Quality improvement study | SQUIRE 2.0 |

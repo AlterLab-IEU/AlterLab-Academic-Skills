@@ -6,12 +6,30 @@ allowed-tools: Read Write Edit Bash(uv:*) Bash(python:*)
 compatibility: No API key required for local geospatial work. Runs via `uv run python`; cloud-native STAC/Planetary Computer workflows need network access (and provider credentials where applicable).
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # GeoMaster
 
 Comprehensive geospatial science skill covering GIS, remote sensing, spatial analysis, and ML for Earth observation across 70+ topics with 500+ code examples in 8 programming languages.
+
+## When to Use This Skill
+
+Use this skill when the user wants to:
+- Process satellite or aerial imagery (Sentinel, Landsat, MODIS, SAR, hyperspectral) and compute spectral indices
+- Work with rasters and DEMs — terrain metrics, mosaics, reprojection, zonal statistics
+- Search and load cloud-native data (STAC, COG, Planetary Computer, Earth Engine, Copernicus Data Space)
+- Train or apply machine learning to earth-observation data, or run hydrological/marine/atmospheric spatial workflows
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Pure vector work — sjoin, buffer, overlay, dissolve, choropleths — with no raster/EO component | `alterlab-geopandas` |
+| Celestial coordinates, FITS images, sky WCS | `alterlab-astropy` |
+| Simulating the fluid dynamics itself (Navier-Stokes, shallow-water solvers) | `alterlab-fluidsim` |
+| Mapping historical sources or georeferencing archival maps for humanities research | `alterlab-digital-humanities` |
 
 ## Installation
 
@@ -33,7 +51,7 @@ uv pip install osmnx networkx folium keplergl
 uv pip install cartopy contextily mapclassify
 uv pip install xarray rioxarray dask-geopandas
 uv pip install pystac-client planetary-computer odc-stac rio-cogeo
-uv pip install laspy[lazrs] open3d        # PDAL: use conda (no pip wheel)
+uv pip install "laspy[lazrs]" open3d      # PDAL: use conda (no pip wheel)
 
 # Option B — conda env (best for PDAL / rsgislib / system GDAL tooling)
 conda install -c conda-forge gdal rasterio fiona shapely pyproj geopandas \
@@ -189,20 +207,26 @@ union = gpd.overlay(gdf1, gdf2, how='union')
 ### Terrain Analysis
 
 ```python
-def terrain_metrics(dem_path):
-    """Calculate slope, aspect, hillshade from DEM."""
+def terrain_metrics(dem_path, azimuth=315.0, altitude=45.0):
+    """Slope (deg), aspect (deg clockwise from north, downslope), hillshade [0, 1].
+
+    Assumes a projected, north-up DEM whose horizontal units match its elevation
+    units (reproject geographic DEMs first, or the gradients are meaningless).
+    """
     with rasterio.open(dem_path) as src:
-        dem = src.read(1)
+        dem = src.read(1).astype(float)
+        xres, yres = src.res                      # pixel size — gradients need it
 
-    dy, dx = np.gradient(dem)
-    slope = np.arctan(np.sqrt(dx**2 + dy**2)) * 180 / np.pi
-    aspect = (90 - np.arctan2(-dy, dx) * 180 / np.pi) % 360
+    dz_drow, dz_dx = np.gradient(dem, yres, xres)  # rows run north -> south
+    dz_dy = -dz_drow                               # northward gradient
+    slope = np.degrees(np.arctan(np.hypot(dz_dx, dz_dy)))
+    aspect = np.degrees(np.arctan2(-dz_dx, -dz_dy)) % 360
 
-    # Hillshade
-    az_rad, alt_rad = np.radians(315), np.radians(45)
-    hillshade = (np.sin(alt_rad) * np.sin(np.radians(slope)) +
-                 np.cos(alt_rad) * np.cos(np.radians(slope)) *
-                 np.cos(np.radians(aspect) - az_rad))
+    # Hillshade: cos(zenith)cos(slope) + sin(zenith)sin(slope)cos(azimuth - aspect)
+    zenith, az = np.radians(90.0 - altitude), np.radians(azimuth)
+    s, a = np.radians(slope), np.radians(aspect)
+    hillshade = np.clip(np.cos(zenith) * np.cos(s) +
+                        np.sin(zenith) * np.sin(s) * np.cos(az - a), 0, 1)
 
     return slope, aspect, hillshade
 ```
@@ -215,7 +239,7 @@ import networkx as nx
 
 # Download and analyze street network
 G = ox.graph_from_place('San Francisco, CA', network_type='drive')
-G = ox.add_edge_speeds(G).add_edge_travel_times(G)
+G = ox.add_edge_travel_times(ox.add_edge_speeds(G))  # both return the graph
 
 # Shortest path
 orig = ox.distance.nearest_nodes(G, -122.4, 37.7)
@@ -302,23 +326,23 @@ ndvi = (data.B08 - data.B04) / (data.B08 + data.B04)
 ```python
 import rasterio
 from rasterio.session import AWSSession
+from rasterio.windows import Window
 
-# Read COG directly from cloud (partial reads)
-session = AWSSession(aws_access_key_id=..., aws_secret_access_key=...)
-with rasterio.open('s3://bucket/path.tif', session=session) as src:
-    # Read only window of interest
-    window = ((1000, 2000), (1000, 2000))
-    subset = src.read(1, window=window)
+# Read a window of a cloud-hosted COG (HTTP range requests fetch only that window).
+# Credentials go on a rasterio.Env, not on rasterio.open; for public buckets use
+# AWSSession(aws_unsigned=True).
+with rasterio.Env(AWSSession(aws_access_key_id=..., aws_secret_access_key=...)):
+    with rasterio.open('s3://bucket/path.tif') as src:
+        subset = src.read(1, window=Window(col_off=1000, row_off=1000,
+                                           width=1000, height=1000))
 
-# Write COG
-with rasterio.open('output.tif', 'w', **profile,
-                   tiled=True, blockxsize=256, blockysize=256,
-                   compress='DEFLATE', predictor=2) as dst:
-    dst.write(data)
+# Write a valid COG (tiled + internal overviews + COG layout) with rio-cogeo;
+# a plain tiled GeoTIFF without overviews is not a COG
+from rio_cogeo.cogeo import cog_translate, cog_validate
+from rio_cogeo.profiles import cog_profiles
 
-# Validate COG
-from rio_cogeo.cogeo import cog_validate
-cog_validate('output.tif')
+cog_translate('input.tif', 'output_cog.tif', cog_profiles.get('deflate'))
+is_valid, errors, warnings = cog_validate('output_cog.tif')
 ```
 
 ## Performance Tips
@@ -379,3 +403,5 @@ rf = RandomForestClassifier(n_jobs=-1)  # All cores
 ---
 
 **GeoMaster covers everything from basic GIS operations to advanced remote sensing and machine learning.**
+
+Part of the AlterLab Academic Skills suite.

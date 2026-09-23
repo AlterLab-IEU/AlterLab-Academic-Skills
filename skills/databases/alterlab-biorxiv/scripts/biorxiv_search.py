@@ -5,15 +5,43 @@ A comprehensive Python tool for searching and retrieving preprints from bioRxiv.
 Supports keyword search, author search, date filtering, category filtering, and more.
 
 Note: This tool is focused exclusively on bioRxiv (life sciences preprints).
+
+DOIs: preprints posted since the move to openRxiv (Dec 2025) carry the prefix
+10.64898 (e.g. 10.64898/2026.08.28.747819); older ones keep 10.1101. Both work
+with /details/ and the www.biorxiv.org content URLs, so DOIs are handled
+prefix-agnostically (see normalize_doi).
 """
 
 import requests
 import json
 import argparse
+import re
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 import time
 import sys
+
+# bioRxiv/medRxiv DOI prefixes: 10.1101 (legacy) and 10.64898 (openRxiv, Dec 2025+).
+KNOWN_DOI_PREFIXES = ("10.1101", "10.64898")
+_DOI_RE = re.compile(r"(10\.\d{4,9}/[^\s?#]+)")
+
+
+def normalize_doi(doi: str) -> str:
+    """Return a bare DOI from a DOI, doi.org URL, 'doi:' string, or content URL.
+
+    Accepts both bioRxiv prefixes (10.1101/... and 10.64898/...) and strips a
+    trailing version suffix such as 'v2' or '.full.pdf' from content URLs.
+    """
+    m = _DOI_RE.search(doi.strip())
+    if not m:
+        raise ValueError(f"Not a DOI: {doi!r}")
+    bare = m.group(1)
+    bare = re.sub(r"(\.full(\.pdf)?|\.full-text)$", "", bare)
+    bare = re.sub(r"v\d+$", "", bare)
+    if not bare.startswith(KNOWN_DOI_PREFIXES):
+        print(f"[WARN] {bare} is not a bioRxiv/medRxiv DOI prefix "
+              f"({' or '.join(KNOWN_DOI_PREFIXES)})", file=sys.stderr)
+    return bare
 
 
 class BioRxivSearcher:
@@ -85,10 +113,12 @@ class BioRxivSearcher:
         total via messages[0]['total']; this method follows the cursor until the
         full result set (or max_results) is retrieved.
 
-        Category filtering is done CLIENT-SIDE: the /details endpoint does not
-        accept a category path segment, but every record carries a 'category'
-        field (lowercase with spaces, e.g. 'cell biology'). The hyphenated form
-        used elsewhere ('cell-biology') is normalized to match.
+        Category filtering is done SERVER-SIDE via the documented
+        `?category=cell_biology` query parameter (underscores for spaces), so
+        `total` and the number of API calls shrink to that category. Each
+        record's 'category' field (lowercase with spaces, e.g. 'cell biology')
+        is still checked client-side as a safety net; the hyphenated CLI form
+        ('cell-biology') is normalized to match.
 
         Args:
             start_date: Start date in YYYY-MM-DD format
@@ -102,6 +132,7 @@ class BioRxivSearcher:
         self._log(f"Searching bioRxiv from {start_date} to {end_date}")
 
         wanted_cat = self._normalize_category(category) if category else None
+        params = {"category": wanted_cat.replace(" ", "_")} if wanted_cat else None
         results: List[Dict] = []
         cursor = 0
         total = None
@@ -109,7 +140,7 @@ class BioRxivSearcher:
         while True:
             # Date-range form: details/biorxiv/{start}/{end}/{cursor}/json
             endpoint = f"details/biorxiv/{start_date}/{end_date}/{cursor}/json"
-            data = self._make_request(endpoint)
+            data = self._make_request(endpoint, params=params)
 
             messages = data.get("messages") or [{}]
             status = messages[0].get("status")
@@ -151,17 +182,20 @@ class BioRxivSearcher:
         format: str = "json"
     ) -> Dict:
         """
-        Retrieve preprints from a specific time interval.
+        Retrieve one page (30 records) of the most recent preprints.
 
         Args:
-            interval: Number of days back to search
-            cursor: Pagination cursor (0 for first page, then use returned cursor)
+            interval: "N" for the N most recent posts, or "Nd" for posts from
+                the last N days (e.g. "7d")
+            cursor: Pagination cursor (0, 30, 60, ...)
             format: Response format ('json' or 'xml')
 
         Returns:
             Dictionary with collection and pagination info
         """
-        endpoint = f"pubs/biorxiv/{interval}/{cursor}/{format}"
+        # /details serves preprints; /pubs would return journal-publication
+        # links instead, which is not what this method promises.
+        endpoint = f"details/biorxiv/{interval}/{cursor}/{format}"
         return self._make_request(endpoint)
 
     def get_paper_details(self, doi: str) -> Dict:
@@ -169,14 +203,14 @@ class BioRxivSearcher:
         Get detailed information about a specific paper by DOI.
 
         Args:
-            doi: The DOI of the paper (e.g., '10.1101/2021.01.01.123456')
+            doi: The DOI of the paper (e.g. '10.1101/2021.01.01.123456' or,
+                for preprints posted since Dec 2025, '10.64898/2026.08.28.747819');
+                doi.org / biorxiv.org URLs are accepted too
 
         Returns:
             Dictionary with paper details
         """
-        # Clean DOI if full URL was provided
-        if 'doi.org' in doi:
-            doi = doi.split('doi.org/')[-1]
+        doi = normalize_doi(doi)
 
         self._log(f"Fetching details for DOI: {doi}")
         # Documented DOI form: details/biorxiv/{doi}/na/json
@@ -196,28 +230,31 @@ class BioRxivSearcher:
         self,
         author_name: str,
         start_date: Optional[str] = None,
-        end_date: Optional[str] = None
+        end_date: Optional[str] = None,
+        category: Optional[str] = None
     ) -> List[Dict]:
         """
         Search for papers by author name.
 
         Args:
             author_name: Author name to search for
-            start_date: Optional start date (YYYY-MM-DD)
-            end_date: Optional end date (YYYY-MM-DD)
+            start_date: Optional start date (YYYY-MM-DD); defaults to one year back
+            end_date: Optional end date (YYYY-MM-DD); defaults to today
+            category: Optional category filter (applied server-side)
 
         Returns:
             List of matching preprints
         """
-        # If no date range specified, search last 3 years
+        # Every paper in the window is fetched before filtering, so default to
+        # the last year rather than a multi-year scan.
+        end_date = end_date or datetime.now().strftime("%Y-%m-%d")
         if not start_date:
-            end_date = datetime.now().strftime("%Y-%m-%d")
-            start_date = (datetime.now() - timedelta(days=1095)).strftime("%Y-%m-%d")
+            start_date = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
 
         self._log(f"Searching for author: {author_name}")
 
         # Get all papers in date range
-        papers = self.search_by_date_range(start_date, end_date)
+        papers = self.search_by_date_range(start_date, end_date, category)
 
         # Filter by author name (case-insensitive)
         author_lower = author_name.lower()
@@ -253,8 +290,8 @@ class BioRxivSearcher:
             List of matching preprints
         """
         # If no date range specified, search last year
+        end_date = end_date or datetime.now().strftime("%Y-%m-%d")
         if not start_date:
-            end_date = datetime.now().strftime("%Y-%m-%d")
             start_date = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%d")
 
         self._log(f"Searching for keywords: {keywords}")
@@ -294,9 +331,7 @@ class BioRxivSearcher:
         Returns:
             True if download successful, False otherwise
         """
-        # Clean DOI
-        if 'doi.org' in doi:
-            doi = doi.split('doi.org/')[-1]
+        doi = normalize_doi(doi)
 
         # Resolve the version so revised preprints get the right PDF.
         if version is None:
@@ -429,6 +464,11 @@ def main():
             return 1
 
         success = searcher.download_pdf(args.doi, args.download_pdf)
+        if not success:
+            print("Error: PDF download failed. www.biorxiv.org sits behind Cloudflare and "
+                  "may answer scripted requests with HTTP 429; retry later, open the "
+                  "html_url in a browser, or use the text-mining bucket "
+                  "s3://biorxiv-src-monthly for bulk full text.", file=sys.stderr)
         return 0 if success else 1
 
     elif args.doi:
@@ -440,7 +480,7 @@ def main():
     elif args.author:
         # Search by author
         results = searcher.search_by_author(
-            args.author, start_date, end_date
+            args.author, start_date, end_date, args.category
         )
 
     elif args.keywords:

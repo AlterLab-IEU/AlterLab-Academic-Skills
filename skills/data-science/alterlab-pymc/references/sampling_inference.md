@@ -6,21 +6,23 @@ This reference covers the sampling algorithms and inference methods available in
 
 ### Primary Sampling Function
 
-**`pm.sample(draws=1000, tune=1000, chains=4, **kwargs)`**
+**`pm.sample(draws=1000, tune=None, chains=None, **kwargs)`**
 
 The main interface for MCMC sampling in PyMC.
 
 **Key Parameters:**
 - `draws`: Number of samples to draw per chain (default: 1000)
-- `tune`: Number of tuning/warmup samples (default: 1000, discarded)
-- `chains`: Number of parallel chains (default: 4)
-- `cores`: Number of CPU cores to use (default: all available)
+- `tune`: Number of tuning/warmup samples, discarded (default depends on the sampler: 1000 for PyMC's NUTS, 400 for nutpie)
+- `chains`: Number of parallel chains (default: number of cores, at least 2 and at most 4)
+- `cores`: Number of CPU cores to use (default: all available, up to 4)
 - `target_accept`: Target acceptance rate for step size tuning (default: 0.8, increase to 0.9-0.95 for difficult posteriors)
+- `nuts_sampler`: `"pymc"`, `"nutpie"`, `"numpyro"`, or `"blackjax"`. PyMC 6 uses nutpie automatically when it is installed (`uv pip install "pymc[nutpie]"`); pass `nuts_sampler="pymc"` to force PyMC's own NUTS
+- `initvals`: Starting values (dict, or one dict per chain). The old `start=` keyword no longer works
 - `random_seed`: Random seed for reproducibility
-- `return_inferencedata`: Return ArviZ InferenceData object (default: True)
-- `idata_kwargs`: Additional kwargs for InferenceData creation (e.g., `{"log_likelihood": True}` for model comparison)
+- `return_inferencedata`: Return an `xarray.DataTree` (default: True; `False` returns a `MultiTrace`)
+- `idata_kwargs`: Extra conversion kwargs. Passing `{"log_likelihood": True}` is deprecated in PyMC 6; call `pm.compute_log_likelihood(idata)` after sampling instead
 
-**Returns:** InferenceData object containing posterior samples, sampling statistics, and diagnostics
+**Returns:** `xarray.DataTree` (ArviZ 1.x replaced `InferenceData`) with posterior, sample_stats, observed_data, and constant_data groups. Sample-stat names depend on the sampler (PyMC NUTS: `tree_depth`, `reached_max_treedepth`; nutpie: `depth`, `maxdepth_reached`; both have `diverging`)
 
 **Example:**
 ```python
@@ -50,8 +52,8 @@ with model:
 
 **When to adjust:**
 - Increase `target_accept` (0.9-0.99) if seeing divergences
-- Use `init='adapt_diag'` for faster initialization (default)
-- Use `init='jitter+adapt_diag'` for difficult initializations
+- The default `init='auto'` means `'jitter+adapt_diag'`
+- Use `init='advi+adapt_diag'` to initialize NUTS from an ADVI fit (`init` applies to PyMC's own NUTS only, so pass `nuts_sampler="pymc"` when nutpie is installed)
 
 #### Metropolis
 
@@ -103,7 +105,7 @@ PyMC automatically computes diagnostics. Check these before trusting results:
 
 Measures independent information in correlated samples.
 
-- **Rule of thumb**: ESS > 400 per chain (1600 total for 4 chains)
+- **Rule of thumb**: bulk-ESS and tail-ESS > 400 in total across chains (about 100 per chain with 4 chains; Vehtari et al., 2021)
 - Low ESS indicates high autocorrelation
 - Access via: `az.ess(idata)`
 
@@ -167,8 +169,8 @@ idata = pm.sample(cores=8, chains=8)
 
 # Use variational inference for initialization
 with model:
-    approx = pm.fit()  # Run ADVI
-    idata = pm.sample(start=approx.sample(return_inferencedata=False)[0])
+    idata = pm.sample(init='advi+adapt_diag', nuts_sampler='pymc')  # init is PyMC-NUTS only
+    # or: approx = pm.fit(); pm.sample(initvals=approx.sample(1, return_inferencedata=False)[0])
 ```
 
 #### High Autocorrelation
@@ -202,10 +204,10 @@ Approximates posterior with simpler distribution (typically mean-field Gaussian)
 ```python
 with model:
     approx = pm.fit(n=50000)
-    # Draw samples from approximation
+    # Draw samples from approximation (returns a DataTree)
     idata = approx.sample(1000)
-    # Or sample for MCMC initialization
-    start = approx.sample(return_inferencedata=False)[0]
+    # Or take one draw as MCMC starting values: pm.sample(initvals=start)
+    start = approx.sample(1, return_inferencedata=False)[0]
 ```
 
 **Trade-offs:**
@@ -252,8 +254,8 @@ Sample from the prior distribution (before seeing data).
 with model:
     prior_pred = pm.sample_prior_predictive(draws=1000)
 
-# Visualize prior predictions
-az.plot_ppc(prior_pred, group='prior')
+# Visualize prior predictions (ArviZ 1.x: plot_ppc -> plot_ppc_dist)
+az.plot_ppc_dist(prior_pred, group='prior_predictive').show()
 ```
 
 ### Posterior Predictive Sampling
@@ -277,7 +279,7 @@ with model:
     pm.sample_posterior_predictive(idata, extend_inferencedata=True)
 
 # Posterior predictive check
-az.plot_ppc(idata)
+az.plot_ppc_dist(idata).show()
 ```
 
 ### Predictions for New Data
@@ -338,7 +340,7 @@ with model:
 
 3. **Check diagnostics**:
    ```python
-   az.summary(idata, var_names=['~mu_log__'])  # Exclude transformed vars
+   az.summary(idata)  # r_hat, ess_bulk, ess_tail per parameter; '~name' in var_names excludes a variable
    ```
 
 4. **Sample posterior predictive**:
@@ -414,7 +416,7 @@ Provide starting values:
 ```python
 start = {'mu': 0, 'sigma': 1}
 with model:
-    idata = pm.sample(start=start)
+    idata = pm.sample(initvals=start)  # `start=` no longer works
 ```
 
 Or use MAP estimate:
@@ -422,5 +424,5 @@ Or use MAP estimate:
 ```python
 with model:
     start = pm.find_MAP()
-    idata = pm.sample(start=start)
+    idata = pm.sample(initvals=start)
 ```

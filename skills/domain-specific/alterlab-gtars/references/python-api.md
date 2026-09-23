@@ -1,10 +1,10 @@
 # Python API Reference
 
-Reference for the `gtars` Python bindings, verified against **v0.8**.
+Reference for the `gtars` Python bindings, verified against **0.10.0** (originally 0.8).
 
 > The public API lives in submodules, not flat on `gtars`:
 > `gtars.models` (intervals), `gtars.tokenizers`, `gtars.refget`, `gtars.utils`.
-> Method names below were confirmed by introspection on v0.8; confirm against your
+> Method names below were confirmed by introspection on 0.8 and re-checked on 0.10.0; confirm against your
 > installed version with `dir(...)` if a call is missing.
 
 ## Installation

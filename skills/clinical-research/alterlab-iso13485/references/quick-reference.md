@@ -40,14 +40,19 @@
 
 ## Key Regulatory Requirements
 
+*Status checked September 2026; confirm against the current official texts before quoting dates.*
+
 **FDA (United States):**
-- 21 CFR Part 820 (now QMSR) — harmonized with ISO 13485 as of Feb 2026
+- 21 CFR Part 820 (QMSR) — incorporates ISO 13485:2016 by reference; in effect since Feb 2, 2026 (final rule published Feb 2, 2024)
+- Retired terms: DMR → medical device file (4.2.3), DHF → design and development file (7.3.10), DHR → per-device/batch record (7.5.1)
+- Management review, internal audit, and supplier audit reports are inspectable; FDA inspects under CP 7382.850 (QSIT retired); an ISO 13485 certificate does not replace FDA inspection
 - Device classification determines requirements
 - Establishment registration and device listing required
 
 **EU (European Union):**
-- MDR 2017/745 (Medical Devices Regulation)
-- IVDR 2017/746 (In Vitro Diagnostic Regulation)
+- MDR 2017/745 (Medical Devices Regulation) — legacy devices may stay on the market until 31 Dec 2027 (class III and most class IIb implantables) or 31 Dec 2028 (other class IIb, IIa, class I sterile/measuring/up-classified) under Regulation (EU) 2023/607, if its conditions were met (MDR QMS and notified-body application by 26 May 2024, signed agreement by 26 Sep 2024)
+- IVDR 2017/746 (In Vitro Diagnostic Regulation) — transition to 31 Dec 2027 (class D), 31 Dec 2028 (class C), 31 Dec 2029 (class B and sterile class A) under Regulation (EU) 2024/1860, subject to its QMS (26 May 2025) and notified-body application deadlines
+- A Commission proposal for a targeted MDR/IVDR revision (COM(2025) 1023, Dec 2025) is before Parliament and Council and not yet applicable
 - Technical documentation requirements
 - CE marking requirements
 

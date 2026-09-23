@@ -4,7 +4,7 @@
     {
       "id": "schelling-segregation",
       "prompt": "Build an agent-based model of residential segregation where agents relocate if too few neighbors share their group, and show what emerges.",
-      "expected_output": "Invokes alterlab-abm-mesa: builds a Schelling-style Mesa 3 model (Agent + Model, super().__init__(seed=...), agents.shuffle_do('step'), a grid), collects the segregation outcome, and reports emergence across replications — using the current Mesa 3 API, not removed mesa.time schedulers.",
+      "expected_output": "Invokes alterlab-abm-mesa: builds a Schelling-style Mesa 3 model (Agent + Model, super().__init__(rng=...), agents.shuffle_do('step'), a grid), collects the segregation outcome, and reports emergence across replications — using the current Mesa 3 API, not removed mesa.time schedulers.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "Mesa" },
@@ -14,7 +14,7 @@
     {
       "id": "opinion-dynamics-sweep",
       "prompt": "I have an opinion-dynamics agent model on a network and want to sweep the influence parameter to find where consensus breaks down.",
-      "expected_output": "Invokes alterlab-abm-mesa: uses mesa.batch_run to sweep the parameter across iterations, and interprets the emergent consensus/polarization outcome as a function of the parameter (tipping point).",
+      "expected_output": "Invokes alterlab-abm-mesa: uses mesa.batch_run to sweep the parameter across seeded replicates (rng=range(n), not the deprecated iterations=), and interprets the emergent consensus/polarization outcome as a function of the parameter (tipping point).",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "batch_run" }

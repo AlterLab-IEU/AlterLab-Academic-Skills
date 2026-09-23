@@ -3,10 +3,11 @@ name: alterlab-hmdb
 description: Access the Human Metabolome Database (HMDB, 220K+ metabolites), searching by name, HMDB ID, or structure to retrieve chemical properties, biomarker data, NMR/MS reference spectra, and associated pathways. Use when identifying a human metabolite, looking up its biomarker or disease associations, matching NMR/MS spectra, or running metabolomics annotation. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: No public REST API; uses keyless web scraping plus bulk XML/SDF downloads (no authentication required)
+compatibility: No public REST API; keyless per-record XML (often blocked for scripted clients by a Cloudflare browser challenge), bulk XML/SDF downloads, and HMDB cross-references in PubChem/UniChem
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # HMDB Database
@@ -24,11 +25,21 @@ python scripts/query_hmdb.py HMDB0000001    # full accession
 python scripts/query_hmdb.py 1              # bare number (zero-padded automatically)
 ```
 
-Note: HMDB serves no public REST API and may rate-limit/block automated fetches; for bulk work download the XML/SDF dumps from https://www.hmdb.ca/downloads.
+Note: HMDB serves no public REST API. As of 2026-09 the whole site (including the `.xml` record URLs) sits behind a Cloudflare browser challenge, so scripted requests commonly get HTTP 403 — see "Programmatic Access" for the fallbacks. For bulk work download the XML/SDF dumps from https://www.hmdb.ca/downloads in a browser.
 
 ## When to Use This Skill
 
-This skill should be used when performing metabolomics research, clinical chemistry, biomarker discovery, or metabolite identification tasks.
+This skill should be used when performing metabolomics research, clinical chemistry, biomarker discovery, or metabolite identification tasks: identifying a human metabolite, reading its biofluid concentrations and disease/biomarker associations, or matching it against HMDB reference NMR/MS spectra.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Generic compound identifiers, properties, or bioassays for any small molecule | `alterlab-pubchem` |
+| Primary metabolomics study datasets, RefMet standardized names | `alterlab-metabolomics-wb` |
+| Pathway maps and KEGG compound/reaction IDs | `alterlab-kegg` |
+| Computing MS/MS spectral similarity on your own spectra files | `alterlab-matchms` |
+| Drug pharmacology, targets, and interactions | `alterlab-drugbank` |
 
 ## Database Contents
 
@@ -131,8 +142,9 @@ HMDB offers bulk data downloads at https://www.hmdb.ca/downloads in multiple for
 HMDB publishes **no documented public REST API**. Practical programmatic routes, in order of preference:
 
 - **Bulk downloads (preferred for any volume):** Parse the XML/SDF/CSV dumps from https://www.hmdb.ca/downloads locally. This is the only route that scales and won't get rate-limited.
-- **Per-record XML endpoint:** Each entry is served as XML at `https://www.hmdb.ca/metabolites/<ID>.xml` (used by `scripts/query_hmdb.py`). Undocumented and aggressively rate-limited/blocked (HTTP 403/429) for automated clients — fine for a handful of ad-hoc lookups, not for batch jobs. Send a descriptive User-Agent and back off on failures.
-- **R/Bioconductor `hmdbQuery`:** `BiocManager::install("hmdbQuery")` wraps the same web endpoints for R workflows.
+- **Per-record XML endpoint:** Each entry is served as XML at `https://www.hmdb.ca/metabolites/<ID>.xml` (used by `scripts/query_hmdb.py`). Undocumented, and in Sept 2026 it answered scripted clients with a Cloudflare challenge (HTTP 403) — usable only when your network is allowed through; never for batch jobs. When it is blocked, say so rather than filling fields from memory.
+- **Cross-references through open APIs (works when hmdb.ca blocks you):** PubChem indexes HMDB accessions as registry IDs — `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/xref/RegistryID/HMDB0000001/cids/JSON` returns CID 92105 (1-methylhistidine), after which structure and properties come from PubChem (`alterlab-pubchem`). UniChem maps HMDB (source 18) to ChEBI/ChEMBL/KEGG: `POST https://www.ebi.ac.uk/unichem/api/v1/compounds` with `{"type": "sourceID", "compound": "HMDB0000001", "sourceID": 18}`. These give identity and structure only — concentrations, biomarker evidence, and spectra still require HMDB itself.
+- **R/Bioconductor `hmdbQuery`:** deprecated and removed from current Bioconductor (last shipped in 3.21); don't build new workflows on it.
 - **Custom API:** For sanctioned bulk/commercial API access, contact the HMDB team (see Usage Requirements above for the listed address).
 
 ### 5. Common Research Workflows

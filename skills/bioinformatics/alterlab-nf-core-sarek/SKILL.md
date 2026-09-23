@@ -1,19 +1,19 @@
 ---
 name: alterlab-nf-core-sarek
-description: "Runs FASTQ-to-VCF germline and somatic variant calling via the Nextflow nf-core/sarek pipeline pinned to -r 3.8.1 — builds the samplesheet.csv (patient, sex, status, sample, lane, fastq_1, fastq_2), runs bwa-mem/bwa-mem2/dragmap alignment plus GATK4 MarkDuplicates and BQSR against the GATK GRCh38 resource bundle (dbSNP, Mills/1000G indels), and selects callers — explicitly correcting that sarek defaults to Strelka when --tools is unset (pass haplotypecaller for GATK best practice or deepvariant for CNN accuracy), with a non-Nextflow manual GATK4 fallback. Use when the user wants a variant-calling pipeline, FASTQ to VCF, germline or somatic SNV/indel calling, nf-core/sarek, GATK best-practices alignment-to-VCF, or BQSR/HaplotypeCaller/Mutect2/DeepVariant; annotate hits with alterlab-clinvar/alterlab-gnomad/alterlab-cosmic, parse VCFs with alterlab-pysam, store at scale with alterlab-tiledbvcf. Part of the AlterLab Academic Skills suite."
+description: "Runs FASTQ-to-VCF germline and somatic variant calling via the Nextflow nf-core/sarek pipeline pinned to -r 3.10.0 — builds the samplesheet.csv (patient, sex, status, sample, lane, fastq_1, fastq_2), runs bwa-mem/bwa-mem2/dragmap alignment plus GATK4 MarkDuplicates and BQSR against the GATK GRCh38 resource bundle (dbSNP, Mills/1000G indels), and selects callers — explicitly correcting that sarek defaults to Strelka when --tools is unset (pass haplotypecaller for GATK best practice or deepvariant for CNN accuracy), with a non-Nextflow manual GATK4 fallback. Use when the user wants a variant-calling pipeline, FASTQ to VCF, germline or somatic SNV/indel calling, nf-core/sarek, GATK best-practices alignment-to-VCF, or BQSR/HaplotypeCaller/Mutect2/DeepVariant; annotate hits with alterlab-clinvar/alterlab-gnomad/alterlab-cosmic, parse VCFs with alterlab-pysam, store at scale with alterlab-tiledbvcf. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*) Bash(nextflow:*)
-compatibility: "Requires Nextflow plus a container engine (Docker/Singularity/Apptainer) or conda; the pipeline pulls nf-core/sarek 3.8.1 and reference bundles over the network on first run. The manual GATK4 fallback needs bwa-mem2 + samtools + gatk4 (bioconda) and runs offline once references are local. No API key. Indexing, BQSR and variant calling are long, compute-heavy jobs — good candidates to run locally rather than through repeated API calls."
+compatibility: "Requires Nextflow >= 25.10.4 (declared by sarek 3.10.0) plus a container engine (Docker/Singularity/Apptainer) or conda; the pipeline pulls nf-core/sarek 3.10.0 and reference bundles over the network on first run. The manual GATK4 fallback needs bwa-mem2 + samtools + gatk4 (bioconda) and runs offline once references are local. No API key. Indexing, BQSR and variant calling are long, compute-heavy jobs — good candidates to run locally rather than through repeated API calls."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
-    last_updated: "2026-06-06"
+    version: "1.2.0"
+    last_updated: "2026-09-23"
 ---
 
 # nf-core/sarek — FASTQ-to-VCF Variant Calling
 
 The workflow-runner entry point for raw-reads-to-variants: drive the
-**Nextflow [nf-core/sarek](https://nf-co.re/sarek/3.8.1/) pipeline (pinned `-r 3.8.1`)**
+**Nextflow [nf-core/sarek](https://nf-co.re/sarek/3.10.0/) pipeline (pinned `-r 3.10.0`)**
 to take germline or somatic short-read FASTQ through alignment, GATK4 duplicate
 marking and base-quality recalibration, and SNV/indel calling, then hand the
 resulting VCFs to the suite's database and parsing skills for interpretation.
@@ -56,7 +56,7 @@ do **not** refuse — fall back to the **manual GATK4 recipe** (below /
 
 ## The #1 Correctness Trap: sarek's default caller is Strelka
 
-Per the [3.8.1 usage docs](https://nf-co.re/sarek/3.8.1/docs/usage/), **when
+Per the [3.10.0 usage docs](https://nf-co.re/sarek/3.10.0/docs/usage/), **when
 `--tools` is not set, sarek runs preprocessing and then Strelka only.** It does
 **not** default to GATK HaplotypeCaller or DeepVariant. Always set `--tools`
 explicitly to match the user's intent:
@@ -67,10 +67,14 @@ explicitly to match the user's intent:
 | Highest germline F1 (CNN) | `--tools deepvariant` |
 | Somatic, matched tumor/normal | `--tools mutect2` (often `mutect2,strelka`) |
 | Joint germline genotyping across a cohort | `--tools haplotypecaller --joint_germline` |
+| GPU-accelerated germline (needs an NVIDIA GPU profile) | `--tools parabricks_haplotypecaller` |
 
-`--tools` accepts (per the docs' tool matrix): `deepvariant`, `freebayes`,
-`haplotypecaller`, `mutect2`, `lofreq`, `mpileup`, `strelka` (and annotation
-tools). Caller choice materially changes precision/recall — see
+`--tools` accepts (per the 3.10.0 schema): `deepvariant`, `freebayes`,
+`haplotypecaller`, `parabricks_haplotypecaller`, `mutect2`, `lofreq`, `mpileup`,
+`muse`, `strelka`, `sentieon_*`, structural-variant callers (`manta`, `tiddit`,
+`indexcov`), CNV/purity tools (`ascat`, `cnvkit`, `controlfreec`), QC
+(`ngscheckmate`, `msisensorpro`), `varlociraptor`, and the annotation tools
+(`snpeff`, `vep`, `snpsift`, `bcfann`). Caller choice materially changes precision/recall — see
 `references/caller_accuracy.md` for the nf-core benchmark (Hanssen et al., 2024).
 
 ## Pipeline (how to run it)
@@ -98,7 +102,7 @@ re-entry rows, and a tumor-normal example.
 ### 2. Run the pipeline (pinned)
 
 ```bash
-nextflow run nf-core/sarek -r 3.8.1 \
+nextflow run nf-core/sarek -r 3.10.0 \
     -profile docker \
     --input samplesheet.csv \
     --outdir ./results \
@@ -107,21 +111,24 @@ nextflow run nf-core/sarek -r 3.8.1 \
     --aligner bwa-mem2
 ```
 
-- **Always keep `-r 3.8.1`** — unpinned runs drift to a different pipeline version.
+- **Always keep `-r 3.10.0`** — unpinned runs drift to a different pipeline version.
 - `-profile` is **mandatory**: `docker`, `singularity`, `apptainer`, or `conda`
   for the local environment (clusters add `test`, institutional configs, etc.).
 - `--genome GATK.GRCh38` selects the iGenomes/GATK GRCh38 reference and its
   bundled BQSR known-sites (dbSNP, Mills/1000G indels) automatically.
-- `--aligner` options: `bwa-mem` (default), `bwa-mem2`, `dragmap`.
-- For **WES**, pass `--intervals targets.bed` with the capture-kit BED (there is
-  no `--wes` flag in 3.8.1; restrict to target regions via `--intervals`).
+- `--aligner` options: `bwa-mem` (default), `bwa-mem2`, `dragmap`, `sentieon-bwamem`,
+  `parabricks` (GPU).
+- For **WES/panel**, pass **`--wes`** *and* `--intervals targets.bed`: `--intervals`
+  restricts where calling happens, while `--wes` switches the tools to
+  targeted-sequencing settings. Exome data run without `--wes` completes happily with
+  WGS-tuned thresholds.
 - Resume mid-pipeline with `--step` (`mapping` default, then `markduplicates`,
   `prepare_recalibration`, `recalibrate`, `variant_calling`, `annotate`) and
   Nextflow's `-resume`.
 
 Preprocessing follows GATK best practice: align → **MarkDuplicates** →
 **BaseRecalibrator/ApplyBQSR** (BQSR) → variant calling. Details and every flag:
-`references/usage_3.8.1.md`.
+`references/usage_3.10.0.md`.
 
 ### 3. Interpret the output VCFs
 
@@ -144,17 +151,19 @@ sequence and the resource-bundle paths are in `references/manual_gatk4.md`.
 
 - Is `--tools` set explicitly? Never let a run fall through to the **Strelka**
   default unless the user truly wants Strelka.
-- Is the version pinned (`-r 3.8.1`) and a `-profile` chosen?
+- Is the version pinned (`-r 3.10.0`), a `-profile` chosen, and is Nextflow
+  `>=25.10.4` (the version 3.10.0 requires)?
 - For somatic asks, does the samplesheet carry a `status 1` tumor **and** a
   `status 0` normal under the **same `patient`**?
-- For WES, was `--intervals` supplied with the capture BED?
+- For WES/panel, were **both** `--wes` and `--intervals <capture.bed>` supplied?
 - After the run, did you route VCF interpretation to the correct sibling skill
   rather than re-deriving variant meaning here?
 
 ## References
 
-- `references/usage_3.8.1.md` — pinned run command, profiles, `--step`/`--aligner`
-  options, BQSR preprocessing, sourced from the 3.8.1 usage docs.
+- `references/usage_3.10.0.md` — pinned run command, profiles, `--step`/`--aligner`
+  options, the `--wes` + `--intervals` pairing, BQSR preprocessing, sourced from the
+  3.10.0 usage docs.
 - `references/samplesheet_schema.md` — full CSV column spec, BAM/CRAM re-entry,
   tumor-normal worked example.
 - `references/caller_accuracy.md` — choosing `--tools`, summarizing the nf-core

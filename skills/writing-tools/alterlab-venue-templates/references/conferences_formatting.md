@@ -2,7 +2,7 @@
 
 Comprehensive formatting requirements and submission guidelines for major academic conferences across disciplines.
 
-**Last Updated**: 2024
+**Last Updated**: 2024; NeurIPS 2026, ICML 2026, ICLR 2027, CVPR 2026, CHI 2027, and ACL Rolling Review entries re-verified 2026-09. Style files and limits change every year — always confirm against the current call for papers.
 
 ---
 
@@ -15,8 +15,8 @@ Comprehensive formatting requirements and submission guidelines for major academ
 
 **Formatting Requirements**:
 - **Page Limit**: 
-  - Main paper: 8 pages (excluding references)
-  - References: Unlimited
+  - Main paper: 9 content pages including figures (NeurIPS 2026)
+  - References, acknowledgments, the mandatory paper checklist, and technical appendices: do not count
   - Appendix/Supplementary: Unlimited (optional, reviewed at discretion)
 - **Format**: Single-column (NeurIPS style; text block 5.5 in wide × 9 in tall)
 - **Font**: Times or Times New Roman, 10pt for body text (11pt leading)
@@ -34,7 +34,7 @@ Comprehensive formatting requirements and submission guidelines for major academ
   - Colorblind-friendly palettes recommended
 - **Tables**: Clear, readable at publication size
 - **Equations**: Numbered if referenced
-- **LaTeX Class**: `neurips_2024.sty` (updated annually)
+- **LaTeX Class**: `neurips_2026.sty` (updated annually; track options such as `main`, `position`, `eandd`, plus `final` / `preprint`)
 - **Supplementary Materials**: 
   - Code strongly encouraged (GitHub, anonymous repo for review)
   - Additional experiments, proofs
@@ -45,8 +45,8 @@ Comprehensive formatting requirements and submission guidelines for major academ
 **Submission Notes**:
 - Use official style file (changes yearly)
 - Paper ID on first page (auto-generated during submission)
-- Include "broader impact" statement (varies by year)
-- Reproducibility checklist required
+- The NeurIPS Paper Checklist (`checklist.tex`, included by the official template) is mandatory — submissions without it are desk-rejected; it covers reproducibility and broader impacts
+- Single PDF in the order: paper, optional technical appendices, checklist
 
 **Website**: https://neurips.cc/
 
@@ -59,9 +59,8 @@ Comprehensive formatting requirements and submission guidelines for major academ
 
 **Formatting Requirements**:
 - **Page Limit**: 
-  - Main paper: 8 pages (excluding references and appendix)
-  - References: Unlimited
-  - Appendix: Unlimited (optional)
+  - Main paper: 8 pages at submission; 9 pages in the camera-ready (ICML 2026)
+  - References, impact statement, and appendices: Unlimited, not counted
 - **Format**: Two-column
 - **Font**: Times, 10pt
 - **Line spacing**: Single-spaced
@@ -70,15 +69,15 @@ Comprehensive formatting requirements and submission guidelines for major academ
 - **Anonymization**: **Required** (double-blind)
 - **Citations**: Numbered or author-year (consistent style)
 - **Figures**: High resolution, colorblind-safe recommended
-- **LaTeX Class**: `icml2024.sty` (updated yearly)
+- **LaTeX Class**: `icml2026.sty` from `icml2026.zip` (`\usepackage[accepted]{icml2026}` for camera-ready)
 - **Supplementary**: Strongly encouraged (code, data, appendix)
 
-**LaTeX Template**: `assets/journals/icml_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Submission Notes**:
 - Must use official ICML style file
-- Checklist for reproducibility
-- Ethics statement if applicable
+- Impact statement mandatory for main-track papers (separate section before references; not counted)
+- Anonymize: refer to your prior work in the third person; no acknowledgments, grant numbers, or public code links at submission
 
 **Website**: https://icml.cc/
 
@@ -91,23 +90,25 @@ Comprehensive formatting requirements and submission guidelines for major academ
 
 **Formatting Requirements**:
 - **Page Limit**: 
-  - Main paper: 8 pages (excluding references, appendix, ethics statement)
+  - Main paper: 9 pages at submission; 10 pages during rebuttal/discussion and for camera-ready (ICLR 2027) — strictly enforced, over-length papers are desk-rejected
   - References: Unlimited
-  - Appendix: Unlimited
-- **Format**: Two-column
+  - Appendix: Unlimited (reviewers are not required to read it)
+- **Format**: Single-column
 - **Font**: Times, 10pt
 - **Anonymization**: **Required** (double-blind)
 - **Citations**: Numbered [1] or author-year
-- **LaTeX Class**: `iclr2024_conference.sty`
+- **LaTeX Class**: `iclr2027_conference.sty` (from `iclr-2027-style-files.zip`)
+- **Required statement**: AI use statement (does not count toward the limit); ethics and reproducibility statements recommended
+- **Author cap**: no author may appear on more than 20 submissions
 - **Supplementary**: Code and data encouraged (anonymous GitHub)
 - **Open Review**: Reviews and responses are public post-decision
 
-**LaTeX Template**: `assets/journals/iclr_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Unique Features**:
 - OpenReview platform (transparent review process)
 - Author-reviewer discussion during review
-- Camera-ready can exceed 8 pages
+- Camera-ready may use 10 pages
 
 **Website**: https://iclr.cc/
 
@@ -130,13 +131,13 @@ Comprehensive formatting requirements and submission guidelines for major academ
 - **Paper size**: US Letter
 - **Citations**: Numbered [1]
 - **Figures**: High resolution, can be color
-- **LaTeX Template**: CVPR official template (changes yearly)
+- **LaTeX Template**: CVPR official author kit (github.com/cvpr-org/author-kit; changes yearly) — papers not using it, or over 8 pages excluding references, are rejected without review
 - **Supplementary Material**: 
   - Video demonstrations encouraged
   - Additional results, code
   - 100 MB limit for all supplementary files
 
-**LaTeX Template**: `assets/journals/cvpr_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Website**: https://cvpr.thecvf.com/
 
@@ -159,7 +160,7 @@ Comprehensive formatting requirements and submission guidelines for major academ
 - **LaTeX Template**: AAAI official style
 - **Supplementary**: Optional appendix
 
-**LaTeX Template**: `assets/journals/aaai_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Website**: https://aaai.org/conference/aaai/
 
@@ -187,18 +188,16 @@ Comprehensive formatting requirements and submission guidelines for major academ
 **Frequency**: Annual (April/May)
 
 **Formatting Requirements**:
-- **Page Limit**: 
-  - Papers: 10 pages (excluding references)
-  - Late-Breaking Work: 4 pages
-- **Format**: Single-column ACM format
+- **Length** (CHI 2027 Papers): word-based, not page-based — 5,000-8,000 words encouraged (excluding references, figure/table captions, and appendices); submissions under 5,000 words count as short papers; over 12,000 words are desk-rejected unless justified; abstract 150 words or fewer
+- **Format**: Single-column for review (other formats, including two-column, may be desk-rejected)
 - **Font**: Depends on ACM template
-- **Anonymization**: **Required** for Papers track
-- **LaTeX Class**: `acmart` with CHI proceedings format
+- **Anonymization**: **Required** for Papers track (including supplements and linked repositories)
+- **LaTeX Class**: `acmart` — `\documentclass[manuscript,review,anonymous]{acmart}` for submission, `\documentclass[sigconf]{acmart}` for the final version (acmart v2.20 on CTAN as of Aug 2026)
 - **Citations**: ACM style (numbered or author-year)
 - **Figures**: High quality, accessibility considered
 - **Accessibility**: Alt text for figures encouraged
 
-**LaTeX Template**: `assets/journals/chi_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Website**: https://chi.acm.org/
 
@@ -220,7 +219,7 @@ Comprehensive formatting requirements and submission guidelines for major academ
 - **Citations**: ACM numbered style
 - **Supplementary**: Code and data encouraged
 
-**LaTeX Template**: `assets/journals/kdd_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Website**: https://kdd.org/
 
@@ -245,9 +244,9 @@ Comprehensive formatting requirements and submission guidelines for major academ
 - **LaTeX Template**: ACL/EMNLP official style
 - **Supplementary**: Appendix unlimited, code encouraged
 
-**LaTeX Template**: `assets/journals/emnlp_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
-**Website**: https://2024.emnlp.org/
+**Website**: https://www.aclweb.org/ (each year's EMNLP site; submissions go through ACL Rolling Review)
 
 ---
 
@@ -257,13 +256,14 @@ Comprehensive formatting requirements and submission guidelines for major academ
 **Frequency**: Annual (July)
 
 **Formatting Requirements**:
-- **Page Limit**: 8 pages (long), 4 pages (short), excluding references
+- **Page Limit**: 8 pages (long), 4 pages (short), excluding references and the required Limitations section (plus ethical considerations); papers without a Limitations section are desk-rejected
+- **Review**: via ACL Rolling Review (ARR) for ACL, EMNLP, NAACL, and EACL
 - **Format**: Two-column
 - **Font**: Times, 11pt
 - **Anonymization**: **Required**
-- **LaTeX Template**: ACL official style (acl.sty)
+- **LaTeX Template**: ACL official style (acl.sty from github.com/acl-org/acl-style-files; must not be modified)
 
-**LaTeX Template**: `assets/journals/acl_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 ---
 
@@ -283,7 +283,7 @@ Comprehensive formatting requirements and submission guidelines for major academ
 - **Citations**: Numbered
 - **Paper size**: US Letter
 
-**LaTeX Template**: `assets/journals/usenix_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Website**: https://www.usenix.org/conferences/byname/108
 
@@ -303,7 +303,7 @@ Comprehensive formatting requirements and submission guidelines for major academ
 - **Anonymization**: **Required**
 - **Citations**: ACM style
 
-**LaTeX Template**: `assets/journals/sigir_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 ---
 
@@ -326,7 +326,7 @@ Comprehensive formatting requirements and submission guidelines for major academ
 - **Figures**: High resolution, color acceptable
 - **Supplementary**: Encouraged for additional data/methods
 
-**LaTeX Template**: `assets/journals/ismb_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Website**: https://www.iscb.org/ismb2026
 
@@ -348,7 +348,7 @@ Comprehensive formatting requirements and submission guidelines for major academ
 - **Anonymization**: **Required** (double-blind)
 - **Supplementary**: Appendix can be submitted
 
-**LaTeX Template**: `assets/journals/recomb_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Website**: https://www.recomb.org/
 
@@ -369,7 +369,7 @@ Comprehensive formatting requirements and submission guidelines for major academ
 - **Figures**: Embedded in text
 - **LaTeX Template**: PSB official template
 
-**LaTeX Template**: `assets/journals/psb_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Website**: https://psb.stanford.edu/
 
@@ -388,7 +388,7 @@ Comprehensive formatting requirements and submission guidelines for major academ
 - **Anonymization**: **Required** for initial submission
 - **Video**: Optional video submissions encouraged
 
-**LaTeX Template**: `assets/journals/icra_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 ---
 
@@ -431,16 +431,16 @@ Comprehensive formatting requirements and submission guidelines for major academ
 
 | Conference | Pages | Format | Blind | Citations | Template |
 |------------|-------|--------|-------|-----------|----------|
-| **NeurIPS** | 8 + refs | Single-col | Double | [1] | `neurips_article.tex` |
-| **ICML** | 8 + refs | Two-col | Double | [1] | `icml_article.tex` |
-| **ICLR** | 8 + refs | Two-col | Double | [1] | `iclr_article.tex` |
-| **CVPR** | 8 + refs | Two-col | Double | [1] | `cvpr_article.tex` |
-| **AAAI** | 7 + refs | Two-col | Double | Various | `aaai_article.tex` |
-| **CHI** | 10 + refs | Single-col | Double | ACM | `chi_article.tex` |
-| **SIGKDD** | 9 + refs | Two-col | Double | ACM [1] | `kdd_article.tex` |
-| **EMNLP** | 8 + refs | Two-col | Double | Named | `emnlp_article.tex` |
-| **ISMB** | 7-8 pages | Two-col | Single | [1] | `ismb_article.tex` |
-| **RECOMB** | 12-15 pages | Single-col | Double | Springer | `recomb_article.tex` |
+| **NeurIPS** | 9 + refs (2026) | Single-col | Double | [1] | `neurips_article.tex` |
+| **ICML** | 8 + refs (9 camera-ready) | Two-col | Double | [1] | official kit |
+| **ICLR** | 9 + refs (10 camera-ready) | Single-col | Double | [1] | official kit |
+| **CVPR** | 8 + refs | Two-col | Double | [1] | official kit |
+| **AAAI** | 7 + refs | Two-col | Double | Various | official kit |
+| **CHI** | 5,000-8,000 words (2027) | Single-col (review) | Double | ACM | `acmart` manuscript,review |
+| **SIGKDD** | 9 + refs | Two-col | Double | ACM [1] | `acmart` sigconf |
+| **EMNLP** | 8 + refs | Two-col | Double | Named | acl.sty (ARR) |
+| **ISMB** | 7-8 pages | Two-col | Single | [1] | official kit |
+| **RECOMB** | 12-15 pages | Single-col | Double | Springer | official kit |
 
 ---
 
@@ -525,7 +525,7 @@ After acceptance:
 
 **Template Naming**:
 - Conferences often update templates yearly
-- Use the correct year's template (e.g., `neurips_2024.sty`)
+- Use the correct year's template (e.g., `neurips_2026.sty`)
 - Check for "camera-ready" vs. "submission" versions
 
 ---

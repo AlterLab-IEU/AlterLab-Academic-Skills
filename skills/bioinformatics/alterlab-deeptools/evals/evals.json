@@ -4,7 +4,7 @@
     {
       "id": "bam-to-bigwig-rpgc",
       "prompt": "I have a sorted, indexed ChIP-seq BAM for a human (hg38) sample. I want a normalized coverage bigWig track for genome browser viewing. Give me the deepTools command with sensible normalization and parameters.",
-      "expected_output": "Triggers the deepTools skill. Should use bamCoverage with --normalizeUsing RPGC (or CPM) and --effectiveGenomeSize 2913022398 for hg38, plus ChIP-seq-appropriate flags like --extendReads, --ignoreDuplicates, --binSize, and --numberOfProcessors. Output is a .bw bigWig file.",
+      "expected_output": "Triggers the deepTools skill. Should use bamCoverage with --normalizeUsing RPGC (or CPM) and --effectiveGenomeSize 2913022398 for hg38, plus ChIP-seq-appropriate flags like --extendReads, --samFlagExclude 1024 for marked duplicates (deepTools 4.0 removed --ignoreDuplicates from bamCoverage), --binSize, and --numberOfProcessors. Output is a .bw bigWig file.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "bamCoverage"},

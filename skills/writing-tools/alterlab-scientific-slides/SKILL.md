@@ -1,12 +1,13 @@
 ---
 name: alterlab-scientific-slides
-description: Builds slide decks for research talks in PowerPoint and LaTeX Beamer, providing slide structure, design templates, timing guidance, and visual validation. Use when making conference presentations, seminar talks, research presentations, thesis-defense slides, or any scientific talk deck. Part of the AlterLab Academic Skills suite.
+description: Builds slide decks for research talks as AI-generated slide images (Nano Banana Pro via OpenRouter), PowerPoint, or LaTeX Beamer, providing slide structure, design templates, timing guidance, and visual validation. Use when making conference presentations, seminar talks, research presentations, thesis-defense slides, or any scientific talk deck. For a research poster use alterlab-latex-posters or alterlab-pptx-posters; to auto-generate a narrated video from a paper use alterlab-paper-2-web. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
-compatibility: PowerPoint output uses python-pptx; LaTeX Beamer output needs a LaTeX distribution (pdflatex); slide-to-image validation helpers convert decks to PDF/PNG
+compatibility: AI slide-image generation needs OPENROUTER_API_KEY (slide prompts and attached figures are sent to Google Gemini models via OpenRouter); PowerPoint output uses python-pptx; LaTeX Beamer output needs a LaTeX distribution (pdflatex); validation helpers use pymupdf, pypdf, and Pillow to convert and check decks
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Scientific Slides
@@ -17,14 +18,12 @@ Scientific presentations are a critical medium for communicating research, shari
 
 **Key Focus**: Oral presentations for conferences, seminars, defenses, and professional talks.
 
-**CRITICAL DESIGN PHILOSOPHY**: Scientific presentations should be VISUALLY ENGAGING and RESEARCH-BACKED. Avoid dry, text-heavy slides at all costs. Great scientific presentations combine:
+**Design philosophy**: scientific presentations should be visually engaging and research-backed — audiences remember what they see far better than dense text, so avoid text-heavy slides. Great scientific presentations combine:
 - **Compelling visuals**: High-quality figures, images, diagrams (not just bullet points)
-- **Research context**: Proper citations from research-lookup establishing credibility
+- **Research context**: Proper citations (found with `alterlab-research-lookup`) establishing credibility
 - **Minimal text**: Bullet points as prompts, YOU provide the explanation verbally
 - **Professional design**: Modern color schemes, strong visual hierarchy, generous white space
 - **Story-driven**: Clear narrative arc, not just data dumps
-
-**Remember**: Boring presentations = forgotten science. Make your slides visually memorable while maintaining scientific rigor through proper citations.
 
 ## When to Use This Skill
 
@@ -37,6 +36,16 @@ This skill should be used when:
 - Giving research talks at institutions or companies
 - Teaching or tutorial presentations on scientific topics
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| A research poster with no format named, or any LaTeX poster | `alterlab-latex-posters` |
+| A poster explicitly in PowerPoint/PPTX or HTML | `alterlab-pptx-posters` |
+| Auto-generating a narrated presentation video, website, or poster from a finished paper | `alterlab-paper-2-web` |
+| A single standalone technical diagram or schematic for a slide | `alterlab-scientific-schematics` |
+| Reviewing or critiquing someone else's talk deck | `alterlab-peer-review` |
+
 ## Slide Generation with Nano Banana Pro
 
 **This skill uses Nano Banana Pro AI to generate stunning presentation slides automatically.** There are two workflows depending on output format:
@@ -47,7 +56,7 @@ This skill should be used when:
 Full step-by-step protocol (planning, formatting-consistency rules, citation/figure-attachment handling, example commands) is in `references/nano_banana_workflows.md`.
 
 **Key conventions (apply to every prompt):**
-- **Default author is "AlterLab"** unless another name is specified.
+- **Use the presenter's real name and affiliation** as the user gives them; if unknown, ask or leave a placeholder — never invent a speaker name.
 - Define a **FORMATTING GOAL** (colors, typography, layout) and repeat it in every prompt; **always `--attach` the previous slide** for visual continuity.
 - Include **citations** directly in the prompt text so they render on the slide; before results slides, list `figures/`/`results/` and `--attach` the actual data figures.
 
@@ -58,13 +67,13 @@ export OPENROUTER_API_KEY='your_api_key_here'
 # Get key at: https://openrouter.ai/keys
 ```
 
-The `generate_slide_image.py` script reads `OPENROUTER_API_KEY` (or accepts `--api-key`); a `.env` in the working dir or a parent also works. The image and quality-review models default to Google Gemini image/vision models routed through OpenRouter and can be overridden with `ALTERLAB_IMAGE_MODEL` / `ALTERLAB_REVIEW_MODEL`. Refinement is capped at 2 iterations. Full script options and prompt-writing templates are in `references/scripts_and_prompts.md`.
+The `generate_slide_image.py` script reads `OPENROUTER_API_KEY` (or accepts `--api-key`); a `.env` in the working dir or a parent also works. The image and quality-review models default to `google/gemini-3-pro-image` (Nano Banana Pro) and `google/gemini-3.1-pro-preview`, routed through OpenRouter (verified 2026-09), and can be overridden with `ALTERLAB_IMAGE_MODEL` / `ALTERLAB_REVIEW_MODEL`. Slide prompts and any `--attach`ed figures are sent to Google via OpenRouter, so keep unpublished data out of them unless that is acceptable. Refinement is capped at 2 iterations. Full script options and prompt-writing templates are in `references/scripts_and_prompts.md`.
 
 ### Minimal example
 
 ```bash
-# Title slide (establishes style — default author: AlterLab)
-python scripts/generate_slide_image.py "Title slide: 'Your Research Title'. Conference name, AlterLab. FORMATTING GOAL: [color scheme], minimal professional design, no decorative elements." -o slides/01_title.png
+# Title slide (establishes style; use the presenter's real name)
+python scripts/generate_slide_image.py "Title slide: 'Your Research Title'. Conference name, Presenter Name, Affiliation. FORMATTING GOAL: [color scheme], minimal professional design, no decorative elements." -o slides/01_title.png
 
 # Content slide (attach previous for consistency, include citations)
 python scripts/generate_slide_image.py "Slide titled 'Why This Matters'. Three key points with simple icons. CITATIONS: (Smith et al., 2023; Jones et al., 2024). FORMATTING GOAL: Match attached slide style exactly." -o slides/02_intro.png --attach slides/01_title.png
@@ -77,7 +86,7 @@ If a diagram or figure would aid comprehension, invoke the **alterlab-scientific
 
 ## Core Workflow
 
-1. **Plan** — define talk type, duration, audience, venue. Use the **research-lookup** skill to gather 8-15 papers for citations and outline the narrative arc (Hook → Context → Gap → Approach → Results [40-50% of time] → Implications → Closure).
+1. **Plan** — define talk type, duration, audience, venue. Use `alterlab-research-lookup` to gather 8-15 papers for citations and outline the narrative arc (Hook → Context → Gap → Approach → Results [40-50% of time] → Implications → Closure).
 2. **Choose implementation** — Nano Banana Pro PDF (default), PowerPoint via PPTX skill, or LaTeX Beamer (math-heavy).
 3. **Build visual-first** — every slide needs a strong visual; text is supporting (3-4 bullets, 4-6 words, 24-28pt body / 36-44pt titles). Modern palette, high contrast (7:1 preferred), 40-50% white space.
 4. **Validate visually** — convert to images with `pdf_to_images.py`, inspect for overflow/overlap/small fonts/contrast, iterate until clean. Run `validate_presentation.py --duration N` for slide-count-vs-duration, file-size, and (PPTX-only) font-size/bullet-count checks. Contrast is judged visually from the images, not by the script.
@@ -103,12 +112,14 @@ If a diagram or figure would aid comprehension, invoke the **alterlab-scientific
 ## Key Principles
 
 1. **Visual-First Design** — every slide needs a strong visual element; avoid text-only slides.
-2. **Research-Backed** — use research-lookup to find 8-15 papers, cite 3-5 in intro and 3-5 in discussion.
+2. **Research-Backed** — use `alterlab-research-lookup` to find 8-15 papers, cite 3-5 in intro and 3-5 in discussion; cite only papers you actually retrieved.
 3. **Modern Aesthetics** — contemporary palette matching topic, not default themes.
 4. **Minimal Text** — 3-4 bullets, 4-6 words each (24-28pt), let visuals tell the story.
 5. **Structure** — follow the story arc, spend 40-50% on results.
 6. **High Contrast** — 7:1 preferred for professional appearance.
 7. **Timing** — practice 3-5 times, ~1 slide/minute, never skip conclusions.
 
-**Remember:** Boring = Forgotten. Combine compelling visuals with research-backed context — slides are visual support, not a replacement for your talk.
+Combine compelling visuals with research-backed context — slides are visual support, not a replacement for your talk.
+
+Part of the AlterLab Academic Skills suite.
 

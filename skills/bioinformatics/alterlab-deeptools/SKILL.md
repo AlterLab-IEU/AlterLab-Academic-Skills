@@ -3,10 +3,11 @@ name: alterlab-deeptools
 description: Process and visualize deep-sequencing coverage with the deepTools CLI — convert BAM to bigWig (bamCoverage), build log2 ratio tracks (bamCompare), run QC (multiBamSummary correlation, PCA, plotFingerprint), apply the ATAC-seq Tn5 shift (alignmentSieve --ATACshift), and make TSS/peak heatmaps and profiles (computeMatrix, plotHeatmap, plotProfile). Use for coverage tracks, signal heatmaps/profiles, normalization (RPGC/CPM/RPKM), and effective-genome-size lookups for ChIP-seq, ATAC-seq, MNase-seq, or RNA-seq. NOT for per-read/CIGAR/MAPQ BAM record access — that is pysam. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Self-contained — runs under `uv run python` with deepTools installed (4.0.0 as of 2026-09, Python >= 3.12; bioconda also ships 4.0.0). No API key or account required. Version 4.0 rewrote five tools in Rust and changed some flags — see the note in the body."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # deepTools: NGS Data Analysis Toolkit
@@ -32,6 +33,16 @@ This skill should be used when:
 - **Sample comparison**: "compare treatment vs control", "correlate samples", "PCA analysis"
 - **Analysis workflows**: "analyze ChIP-seq data", "RNA-seq coverage", "ATAC-seq analysis", "complete workflow"
 - **Working with specific file types**: BAM files, bigWig files, BED region files in genomics context
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Per-read access: CIGAR strings, MAPQ, pileups, read filtering in Python | `alterlab-pysam` |
+| Interval arithmetic on BED/peak sets (overlaps, Jaccard) or region embeddings | `alterlab-gtars`, `alterlab-geniml` |
+| Scanning peaks for transcription-factor motifs | `alterlab-jaspar` |
+| Counting reads per gene for differential expression | `alterlab-rnaseq-quant` → `alterlab-pydeseq2` |
+| Variant calling from the same BAMs | `alterlab-nf-core-sarek` |
 
 ## Quick Start
 
@@ -72,8 +83,28 @@ See `assets/quick_reference.md` for frequently used commands and parameters.
 ## Installation
 
 ```bash
-uv pip install deeptools
+uv pip install deeptools          # 4.0.0 as of 2026-09 (needs Python >= 3.12)
+# or: conda install -c bioconda deeptools
 ```
+
+### What changed in deepTools 4.0
+
+`bamCoverage`, `bamCompare`, `computeMatrix`, `alignmentSieve` and `multiBamSummary` were
+rewritten with a Rust core (rayon threading, bigtools bigWig I/O). The old Python
+implementations remain for now as `bamCoverage_old`, `bamCompare_old`, `computeMatrix_old`,
+`alignmentSieve_old` and `multiBamSummary_old`, and are slated for removal.
+
+Flags that changed, and what to do instead:
+
+| Gone in 4.0 | Replacement |
+|-------------|-------------|
+| `--ignoreDuplicates` on **bamCoverage / bamCompare** | `--samFlagExclude 1024` (the BAM must have duplicates marked, e.g. by `samtools markdup`). The flag is still valid on `alignmentSieve`, `plotFingerprint`, `plotCoverage`, `multiBamSummary` and `estimateReadFiltering`. |
+| `--exactScaling` | removed — the new backend always scales exactly |
+| `--plotFileFormat plotly` and the plotly backend | matplotlib output only; `--ggplot` offers a ggplot-like theme |
+
+Also new: gzipped GTF/BED region and blacklist files are accepted by the Rust-backed tools,
+and `plotPCA` now uses a scipy/numpy SVD with correct `--transpose`, `--log2`/`--rowCenter`
+and `--ntop` handling.
 
 ## Core Workflows
 
@@ -118,7 +149,8 @@ For strand-specific RNA-seq coverage tracks:
 
 Use bamCoverage with `--filterRNAstrand` to separate forward and reverse strands.
 
-**Important:** NEVER use `--extendReads` for RNA-seq (would extend over splice junctions).
+**Important:** do not use `--extendReads` for RNA-seq — extension runs straight over splice
+junctions and invents coverage in introns.
 
 Use normalization: CPM for fixed bins, RPKM for gene-level analysis.
 
@@ -197,7 +229,8 @@ Many deepTools commands share these options:
 - `--region`: Process specific regions for testing (e.g., `chr1:1-1000000`)
 
 **Read Filtering:**
-- `--ignoreDuplicates`: Remove PCR duplicates (recommended for most analyses)
+- `--ignoreDuplicates`: skip reads flagged as PCR duplicates. **Not available on
+  bamCoverage/bamCompare in 4.0** — use `--samFlagExclude 1024` there
 - `--minMappingQuality`: Filter by alignment quality (e.g., `--minMappingQuality 10`)
 - `--minFragmentLength` / `--maxFragmentLength`: Fragment length bounds
 - `--samFlagInclude` / `--samFlagExclude`: SAM flag filtering
@@ -226,9 +259,12 @@ Many deepTools commands share these options:
 ### ChIP-seq Specific
 
 - **Always extend reads** for ChIP-seq: `--extendReads 200`
-- **Remove duplicates**: Use `--ignoreDuplicates` in most cases
+- **Remove duplicates**: on bamCoverage/bamCompare use `--samFlagExclude 1024` (4.0 dropped
+  `--ignoreDuplicates` there); `--ignoreDuplicates` still works on the QC tools
 - **Check enrichment first**: Run plotFingerprint before detailed analysis
-- **GC correction**: Only apply if significant bias detected; never use `--ignoreDuplicates` after GC correction
+- **GC correction**: Only apply if significant bias is detected, and do not filter duplicates
+  afterwards — `correctGCBias` adds reads to under-represented regions, so duplicate removal
+  on a corrected BAM discards exactly those synthetic reads and re-introduces the bias
 
 ### RNA-seq Specific
 
@@ -352,8 +388,11 @@ the command → explain the result.
 
 ## Key Reminders
 
+- **deepTools 4.0**: `--ignoreDuplicates`/`--exactScaling` are gone from bamCoverage and
+  bamCompare — filter duplicates with `--samFlagExclude 1024`
 - **Extend reads carefully**: `--extendReads` YES for ChIP-seq, NO for RNA-seq (would span splice junctions)
 - **Normalization is mutually exclusive in bamCompare**: RPGC is a `--normalizeUsing` value; `--scaleFactorsMethod` only takes readCount/SES/None
 - **RPGC requires `--effectiveGenomeSize`**; verify the assembly matches your BAM/BED genome build
 - **Check QC first** (plotFingerprint, correlation) before detailed analysis; test parameters on a `--region`
 
+Part of the AlterLab Academic Skills suite.

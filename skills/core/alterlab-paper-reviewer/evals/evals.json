@@ -92,6 +92,10 @@
         {
           "type": "should_not_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-paper-writer"
         }
       ]
     },
@@ -103,6 +107,10 @@
         {
           "type": "should_not_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-deep-research"
         }
       ]
     },
@@ -114,6 +122,10 @@
         {
           "type": "should_not_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-paper-writer"
         }
       ]
     },
@@ -125,6 +137,25 @@
         {
           "type": "should_not_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-peer-review"
+        }
+      ]
+    },
+    {
+      "id": "no-trigger-reference-existence-check",
+      "prompt": "Before I send this manuscript to the journal, check whether every one of its 60 references actually exists and flag any that have been retracted.",
+      "expected_output": "defers to alterlab-citation-verifier / does not invoke alterlab-paper-reviewer (the user wants a deterministic existence and retraction check of the reference list, not a multi-reviewer quality review with an editorial decision)",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-citation-verifier"
         }
       ]
     }

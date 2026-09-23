@@ -175,8 +175,10 @@ min_dist = gdf.geometry.distance(point).min()
 For accurate measurements, ensure proper CRS:
 
 ```python
-# Reproject to appropriate projected CRS for area/length calculations
-gdf_projected = gdf.to_crs(epsg=3857)  # Or appropriate UTM zone
+# Reproject to an appropriate projected CRS for area/length calculations
+# (local UTM here; use an equal-area CRS for large extents — not EPSG:3857,
+# whose areas and lengths are inflated away from the equator)
+gdf_projected = gdf.to_crs(gdf.estimate_utm_crs())
 
 # Calculate area (in CRS units, typically square meters)
 areas = gdf_projected.geometry.area

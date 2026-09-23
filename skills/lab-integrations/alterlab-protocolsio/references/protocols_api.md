@@ -1,294 +1,138 @@
 # Protocols API
 
-## Overview
+Source: https://apidoc.protocols.io/ (checked 2026-09-23). Paths are relative to `https://www.protocols.io/api` unless shown in full. Every request needs `Authorization: Bearer <token>`; private or shared protocols need a token for a user who can see them.
 
-The Protocols API is the core functionality of protocols.io, supporting the complete protocol lifecycle from creation to publication. This includes searching, creating, updating, managing steps, handling materials, bookmarking, and generating PDFs.
+## Identifiers
 
-## Base URL
+| Form | Example | Accepted by |
+|------|---------|-------------|
+| Integer id | `8503` | Most protocol endpoints |
+| URI (slug) | `tree-mapping-for-leaf-collection-megantic-only-baaciaaw` | Most protocol endpoints; required by publish, bookmarks, comments |
+| DOI | `10.17504/protocols.io.baaciaaw` or `protocols.io.baaciaaw` | v4 get protocol, v4 get steps |
+| GUID (no dashes) | `28C5E0F0D96211E9A8EB9746B7AE9660` | Create (client-generated), v4 update, v4 steps write/delete |
 
-All protocol endpoints use the base URL: `https://www.protocols.io/api/v3`
+Append `/v1`, `/v2`, ... to a DOI or URI for a specific version, or `/latest` for the newest version (for example `10.17504/protocols.io.baaciaaw/latest`).
 
-## Content Format Parameter
+## Search and list
 
-Many endpoints support a `content_format` parameter to specify how content is returned:
+### Search protocols — `GET /v3/protocols`
 
-- `json`: Draft.js JSON format (default)
-- `html`: HTML format
-- `markdown`: Markdown format
+| Parameter | Notes |
+|-----------|-------|
+| `filter` (required) | `public` (all public), `user_public` (your published), `user_private` (your private), `shared_with_user` (private, shared with you) |
+| `key` (required) | Searches title, description, and authors; wrap the phrase in double quotes for an exact match |
+| `order_field` | `activity` (default, popularity), `relevance`, `date`, `name`, `id` |
+| `order_dir` | `desc` (default) or `asc` |
+| `fields` | Comma-separated list of item fields to return |
+| `page_size` / `page_id` | 1–100 (default 10) / from 1 |
+| `peer_reviewed` | `1` only journal-peer-reviewed protocols, `0` only the others |
 
-Include this as a query parameter: `?content_format=html`
+Returns `items` (protocol objects: `id`, `title`, `doi` such as `dx.doi.org/10.17504/protocols.io.c4gytv`, `uri`, `published_on`, `creator`, `versions`, ...), `total`, `total_pages`, and `pagination`. For the `user_*` and `shared_with_user` filters, all versions of a protocol come back as one item; iterate its `versions` field if you need each one. Error `1302` means an unsupported `order_field`.
 
-## List and Search Operations
-
-### List Protocols
-
-Retrieve protocols with filtering and pagination.
-
-**Endpoint:** `GET /protocols`
-
-**Query Parameters:**
-- `filter`: Filter type
-  - `public`: Public protocols only
-  - `private`: Your private protocols
-  - `shared`: Protocols shared with you
-  - `user_public`: Another user's public protocols
-- `key`: Search keywords in protocol title, description, and content
-- `order_field`: Sort field (`activity`, `created_on`, `modified_on`, `name`, `id`)
-- `order_dir`: Sort direction (`desc`, `asc`)
-- `page_size`: Number of results per page (default: 10, max: 50)
-- `page_id`: Page number for pagination (starts at 0)
-- `fields`: Comma-separated list of fields to return
-- `content_format`: Content format (`json`, `html`, `markdown`)
-
-**Example Request:**
 ```bash
-curl -H "Authorization: Bearer YOUR_TOKEN" \
-  "https://www.protocols.io/api/v3/protocols?filter=public&key=CRISPR&page_size=20&content_format=html"
+curl -H "Authorization: Bearer $PROTOCOLS_IO_TOKEN" \
+  "https://www.protocols.io/api/v3/protocols?filter=public&key=%22golden%20gate%22&order_field=relevance&page_size=20"
 ```
 
-### Search by DOI
+### A researcher's protocols — `GET /v3/researchers/<username>/protocols`
 
-Retrieve a protocol by its DOI.
+`filter` is `user_all` or `user_public`; optional `key`, `order_field` (`activity`, `date`, `name`, `id`), `order_dir`, `page_size`, `page_id`.
 
-**Endpoint:** `GET /protocols/{doi}`
+### A workspace's protocols — `GET /v3/workspaces/<workspace_uri>/protocols`
 
-**Path Parameters:**
-- `doi`: The protocol DOI (e.g., `dx.doi.org/10.17504/protocols.io.xxxxx`)
+Optional `key`, `order_field`, `order_dir`, `page_size`, `page_id`. Error `132` means access denied (private workspace you are not a member of).
 
-## Retrieve Protocol Details
+### Recent publications — `GET /v3/publications`
 
-### Get Protocol by ID
+- `?latest=N` returns the N most recent publications (1–100).
+- `?from=<unix>&to=<unix>` returns publications in a window; windows longer than 10 days are cut to 10 days from `from`.
 
-**Endpoint:** `GET /protocols/{protocol_id}`
+## Read
 
-**Path Parameters:**
-- `protocol_id`: The protocol's unique identifier
+### Get a protocol — `GET /v4/protocols/<id>`
 
-**Query Parameters:**
-- `content_format`: Content format (`json`, `html`, `markdown`)
+`<id>` is an integer id, URI, or DOI (with optional version suffix). Query parameters: `last_version=1` (return the newest version), `content_format=json|html|markdown` (format of `description`, `before_start`, `guidelines`, `warning`, `materials_text`, and each `steps[i].step`; `json` is Draft.js).
 
-**Response includes:**
-- Protocol metadata (title, authors, description, DOI)
-- All protocol steps with content
-- Materials and reagents
-- Guidelines and warnings
-- Version information
-- Publication status
+The documented example response wraps the protocol in `payload` (`{"payload": {...}, "status_code": 0}`), while the parameter table calls the field `protocol`; read `payload` and fall back to `protocol`. The protocol object includes `title`, `authors`, `doi`, `uri`, `url`, `guid`, `steps`, `materials`, `units`, `versions`, `version_id`, `stats`, `access` (what the token may do: `can_edit`, `can_publish`, `can_get_doi`, ...), and `warning`.
 
-## Create and Update Protocols
+The v3 form (`GET /v3/protocols/<id>`) is archived; use v4.
 
-### Create New Protocol
+### Get steps — `GET /v4/protocols/<id>/steps`
 
-**Endpoint:** `POST /protocols`
+Same `id`, `last_version`, and `content_format` options. Each step has `id`, `guid`, `previous_id`, `previous_guid`, `modified_on`, the step text in `step`, and `components`. Order the list by following `previous_guid` from the step whose `previous_guid` is `null`.
 
-**Request Body Parameters:**
-- `title` (required): Protocol title
-- `description`: Protocol description
-- `tags`: Array of tag strings
-- `vendor_name`: Vendor/company name
-- `vendor_link`: Vendor website URL
-- `warning`: Warning or safety message
-- `guidelines`: Usage guidelines
-- `manuscript_citation`: Citation for related manuscript
-- `link`: External link to related resource
+### Get materials — `GET /v3/protocols/<id>/materials`
 
-**Example Request:**
+Returns `materials`, a list of reagent objects.
+
+### Search reagents — `GET /v3/reagents`
+
+`key` (required); `is_citeab` (`true` only CiteAb reagents, `false` exclude them, unset all); optional `from`/`to` timestamps, `page_id`, `page_size`.
+
+### PDF — `GET https://www.protocols.io/view/<id-or-uri>.pdf`
+
+Options: `compact_view`, and one of `only_materials`, `only_commands`, `only_steps` (mutually exclusive). Returns `application/pdf`; 401 not authorized, 404 not found, 429 over the limit (5 per minute signed in, 3 per minute signed out). Cache PDFs rather than re-downloading them.
+
+## Write
+
+Writes apply to protocols the token's user can edit. Plan the sequence: create → update metadata → write steps → review in the web editor → publish.
+
+### Create — `POST /v3/protocols/<guid>`
+
+`<guid>` is a new GUID without dashes that you generate (for example `uuid.uuid4().hex.upper()`). Form field `type_id`: `1` protocol (default), `3` collection, `4` document. Returns `{"status_code": 0, "protocol": {...}}` with the new private protocol (use its `id`, `uri`, `guid`). Error `1905`: workspace subscription limit reached.
+
+### Update metadata — `PUT /v4/protocols/<id-uri-or-guid>`
+
+JSON body; send only the fields to change. Returns `{"status_code": 0}` or an error with `status_text`.
+
+| Field | Editable on | Notes |
+|-------|-------------|-------|
+| `title`, `description`, `before_start`, `guidelines`, `warning`, `materials_text`, `link` | Private only | Plain strings |
+| `collection_items` | Private collections only | Full ordered list, e.g. `[{"content_id": 100, "content_type_id": 1}, {"content_id": 1000, "content_type_id": 15}]` (1 = protocol, 15 = file) |
+| `disclaimer`, `ethics_statement`, `manuscript_citation`, `protocol_references`, `keywords` | Private and public | Strings |
+| `is_content_confidential`, `is_content_warning`, `is_research` | Private and public | Booleans |
+| `status_id` | Private and public | `1` working, `2` still optimizing, `3` could not get it to work |
+| `funders` | Private and public | `[{"funder_name": "...", "grant_id": "..."}]` |
+
+Errors include `400 invalid status id`, `400 protocol is not a collection`, `401 you don't have access to edit this protocol`, `401 "<field>" can't be changed for public protocols`, and `404 protocol does not exist`.
+
 ```bash
-curl -X POST \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "CRISPR Gene Editing Protocol",
-    "description": "Comprehensive protocol for CRISPR-Cas9 mediated gene editing",
-    "tags": ["CRISPR", "gene editing", "molecular biology"]
-  }' \
-  "https://www.protocols.io/api/v3/protocols"
+curl -X PUT "https://www.protocols.io/api/v4/protocols/$PROTOCOL_GUID" \
+  -H "Authorization: Bearer $PROTOCOLS_IO_TOKEN" -H "Content-Type: application/json" \
+  --data '{"title": "Golden Gate assembly of MoClo level-1 constructs", "status_id": 2,
+           "funders": [{"funder_name": "Example Foundation", "grant_id": "EF-0000"}]}'
 ```
 
-### Update Protocol
+The archived v3 "save protocol changes" call (`PUT /v3/protocols/<guid>` with an `actions` array) is superseded by this endpoint.
 
-**Endpoint:** `PATCH /protocols/{protocol_id}`
+### Create or update steps — `POST /v4/protocols/<id>/steps`
 
-**Path Parameters:**
-- `protocol_id`: The protocol's unique identifier
+Private protocols only. JSON body `{"steps": [...]}` containing only the steps to add or change:
 
-**Request Body**: Same parameters as create, all optional
+| Field | Required | Notes |
+|-------|----------|-------|
+| `guid` | Yes | Step GUID (new for a new step) |
+| `previous_guid` | Yes | GUID of the preceding step; `null` for the first step (only one step may have `null`) |
+| `step` | Yes | Step text (plain text) |
+| `section`, `section_color` | No | Section name and HEX colour |
+| `is_substep` | No | `true` for a substep |
 
-## Protocol Steps Management
+To insert a step between steps 1 and 2, send the new step (with `previous_guid` = step 1's GUID) and step 2 (with `previous_guid` = the new step's GUID). The API validates the chain and rejects loops, multiple first steps, missing first steps, and broken sequences. Protocols that use step cases cannot be edited through this endpoint.
 
-### Create Protocol Step
+### Delete steps — `DELETE /v4/protocols/<id>/steps`
 
-**Endpoint:** `POST /protocols/{protocol_id}/steps`
+JSON body `{"steps": ["<guid1>", "<guid2>"]}`. Private protocols only; not supported for protocols with step cases. After removing a step from the middle, re-read the steps and repair the next step's `previous_guid` with the POST call if the chain is broken.
 
-**Request Body Parameters:**
-- `title` (required): Step title
-- `description`: Step description (HTML, Markdown, or Draft.js JSON)
-- `duration`: Step duration in seconds
-- `temperature`: Temperature setting
-- `components`: Array of materials/reagents used
-- `software`: Software or tools required
-- `commands`: Commands to execute
-- `expected_result`: Expected outcome description
+### Publish — `POST /v3/protocols/<protocol_uri>/publish`
 
-**Example Request:**
-```bash
-curl -X POST \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Prepare sgRNA",
-    "description": "Design and synthesize single guide RNA (sgRNA) targeting your gene of interest",
-    "duration": 3600,
-    "temperature": 25
-  }' \
-  "https://www.protocols.io/api/v3/protocols/12345/steps"
-```
+Issues a DOI and, unless `prepublish=1`, makes the protocol public. Optional parameters: `title` (sets the title while publishing) and `prepublish=1` (reserve a DOI without making the protocol public, e.g. while a paper is in review). The protocol needs a title and at least one author. Once a version has a DOI it cannot be edited. Errors: `101` not authorized, `255` already public, `256` title required, `257` at least one author required.
 
-### Update Protocol Step
+### Bookmarks
 
-**Endpoint:** `PATCH /protocols/{protocol_id}/steps/{step_id}`
+`POST /v3/protocols/<protocol_uri>/bookmarks` adds a bookmark; `DELETE` on the same path removes it.
 
-**Parameters**: Same as create step, all optional
+## Operational notes
 
-### Delete Protocol Step
-
-**Endpoint:** `DELETE /protocols/{protocol_id}/steps/{step_id}`
-
-### Reorder Steps
-
-**Endpoint:** `POST /protocols/{protocol_id}/steps/reorder`
-
-**Request Body:**
-- `step_order`: Array of step IDs in desired order
-
-## Materials and Reagents
-
-### Get Protocol Materials
-
-Retrieve all materials and reagents used in a protocol.
-
-**Endpoint:** `GET /protocols/{protocol_id}/materials`
-
-**Response includes:**
-- Reagent names and descriptions
-- Catalog numbers
-- Vendor information
-- Concentrations and amounts
-- Links to product pages
-
-## Publishing and DOI
-
-### Publish Protocol
-
-Issue a DOI and make the protocol publicly available.
-
-**Endpoint:** `POST /protocols/{protocol_id}/publish`
-
-**Request Body Parameters:**
-- `version_notes`: Description of changes in this version
-- `publish_type`: Publication type
-  - `new`: First publication
-  - `update`: Update to existing published protocol
-
-**Important Notes:**
-- Once published, protocols receive a permanent DOI
-- Published protocols cannot be deleted, only updated with new versions
-- Published protocols are publicly accessible
-
-**Example Request:**
-```bash
-curl -X POST \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "version_notes": "Initial publication",
-    "publish_type": "new"
-  }' \
-  "https://www.protocols.io/api/v3/protocols/12345/publish"
-```
-
-## Bookmarks
-
-### Add Bookmark
-
-Add a protocol to your bookmarks for quick access.
-
-**Endpoint:** `POST /protocols/{protocol_id}/bookmarks`
-
-### Remove Bookmark
-
-**Endpoint:** `DELETE /protocols/{protocol_id}/bookmarks`
-
-### List Bookmarked Protocols
-
-**Endpoint:** `GET /bookmarks`
-
-## PDF Export
-
-### Generate Protocol PDF
-
-Generate a formatted PDF version of a protocol.
-
-**Endpoint:** `GET /view/{protocol_uri}.pdf`
-
-**Query Parameters:**
-- `compact`: Set to `1` for compact view without large spacing
-
-**Rate Limits:**
-- Signed-in users: 5 requests per minute
-- Unsigned users: 3 requests per minute
-
-**Example:**
-```
-https://www.protocols.io/api/v3/view/crispr-protocol-abc123.pdf?compact=1
-```
-
-## Common Use Cases
-
-### 1. Import Existing Protocol
-
-To import and work with an existing protocol:
-
-1. Search for the protocol using keywords or DOI
-2. Retrieve full protocol details with `/protocols/{protocol_id}`
-3. Extract steps, materials, and metadata for local use
-
-### 2. Create New Protocol from Scratch
-
-To create a new protocol:
-
-1. Create protocol with title and description: `POST /protocols`
-2. Add steps sequentially: `POST /protocols/{id}/steps`
-3. Review and test the protocol
-4. Publish when ready: `POST /protocols/{id}/publish`
-
-### 3. Update Published Protocol
-
-To update an already-published protocol:
-
-1. Retrieve current version: `GET /protocols/{protocol_id}`
-2. Make necessary updates: `PATCH /protocols/{protocol_id}`
-3. Update or add steps as needed
-4. Publish new version: `POST /protocols/{protocol_id}/publish` with `publish_type: "update"`
-
-### 4. Clone and Modify Protocol
-
-To create a modified version of an existing protocol:
-
-1. Retrieve original protocol details
-2. Create new protocol with modified metadata
-3. Copy and modify steps from original
-4. Publish as new protocol
-
-## Error Handling
-
-Common error responses:
-
-- `400 Bad Request`: Invalid parameters or request format
-- `401 Unauthorized`: Missing or invalid access token
-- `403 Forbidden`: Insufficient permissions for the operation
-- `404 Not Found`: Protocol or resource not found
-- `429 Too Many Requests`: Rate limit exceeded
-- `500 Internal Server Error`: Server-side error
-
-Implement retry logic with exponential backoff for `429` and `500` errors.
+- Check the JSON `status_code` of every response (0 = success); errors typically come back as HTTP 400.
+- Stay under 100 requests per minute per user; batch reads with `page_size` up to 100 and cache protocol JSON locally.
+- Record the DOI and version of any protocol you use or adapt, and cite it as `https://doi.org/10.17504/protocols.io.<id>` with the version.

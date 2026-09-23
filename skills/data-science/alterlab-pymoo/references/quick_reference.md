@@ -131,11 +131,11 @@ See `references/operators.md` for the comprehensive operator reference.
 
 ## Common patterns
 
-- Always use `ElementwiseProblem` for custom problems
+- Subclass `ElementwiseProblem` to evaluate one solution at a time, or `Problem` to evaluate the whole population as a vectorized batch (faster when NumPy can vectorize)
 - Constraints formulated as `g(x) <= 0` and `h(x) = 0`
 - Reference directions required for NSGA-III
 - Normalize objectives before MCDM
-- Use appropriate termination: `('n_gen', N)` or `get_termination("f_tol", tol=0.001)`
+- Use appropriate termination: `('n_gen', N)`, `('n_evals', N)`, or tolerance-based `get_termination("moo", ftol=1e-3, n_max_gen=500)` (`"soo"` for single-objective). There is no `"f_tol"` key; `get_termination` raises `Termination not found`
 
 ## Installation and environment
 
@@ -143,5 +143,5 @@ See `references/operators.md` for the comprehensive operator reference.
 uv pip install pymoo
 ```
 
-**Dependencies:** NumPy, SciPy, matplotlib, autograd (optional for gradient-based).
-**Documentation:** https://pymoo.org/ — this skill is based on pymoo 0.6.x.
+**Dependencies:** NumPy, SciPy, matplotlib, autograd, cma (≥ 3.4, needed for CMA-ES under NumPy 2), and moocore, installed automatically.
+**Documentation:** https://pymoo.org/ — this skill is based on pymoo 0.6.x (current 0.6.2 as of 2026-09).

@@ -1,5 +1,7 @@
 # PatentSearch API Reference
 
+> **Status (verified 2026-09-23): offline.** The PatentsView PatentSearch API (`search.patentsview.org`) paused when PatentsView migrated to the USPTO Open Data Portal on 2026-03-20; the hostname no longer resolves and USPTO has not announced when API access returns. Previously issued PatentsView keys do not work with ODP APIs. PatentsView bulk tables are published through ODP. Keep this file for reading older code and for when the API is restored; for live searches use the ODP Patent File Wrapper search (`POST https://api.uspto.gov/api/v1/patent/applications/search`, `X-API-KEY` header) described in `SKILL.md` and `scripts/patent_search.py`.
+
 ## Overview
 
 The PatentSearch API is USPTO's modern ElasticSearch-based patent search system that replaced the legacy PatentsView API in May 2025. It provides access to patent data through June 30, 2025, with regular updates.

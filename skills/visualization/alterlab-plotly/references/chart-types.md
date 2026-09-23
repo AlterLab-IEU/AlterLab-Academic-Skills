@@ -253,8 +253,8 @@ fig.update_xaxes(
 # Geographic projection (globe/projection-based)
 fig = px.scatter_geo(df, lat='lat', lon='lon', color='value', size='size')
 
-# Tile map (MapLibre). NOTE: the *_mapbox functions are deprecated since
-# Plotly 5.24 — use scatter_map / density_map / choropleth_map and map_style.
+# Tile map (MapLibre). The *_mapbox functions were deprecated in Plotly 5.24 and
+# removed in Plotly 7 — use scatter_map / density_map / choropleth_map and map_style.
 fig = px.scatter_map(
     df, lat='lat', lon='lon',
     color='value',
@@ -468,8 +468,8 @@ fig = create_dendrogram(data_matrix)
 ### Annotated Heatmap
 
 ```python
-from plotly.figure_factory import create_annotated_heatmap
-fig = create_annotated_heatmap(z_matrix, x=x_labels, y=y_labels)
+# ff.create_annotated_heatmap was removed in Plotly 7; px.imshow writes the cell values
+fig = px.imshow(z_matrix, x=x_labels, y=y_labels, text_auto=True)
 ```
 
 ### Volcano Plot

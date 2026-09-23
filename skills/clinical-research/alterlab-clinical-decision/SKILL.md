@@ -6,7 +6,8 @@ license: MIT
 compatibility: "Runs with Read/Write/Edit/Bash; producing PDF output requires a local LaTeX toolchain (e.g. pdflatex/xelatex). No API key required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Clinical Decision Support Documents
@@ -18,7 +19,9 @@ Generate professional clinical decision support (CDS) documents for pharmaceutic
 1. **Patient Cohort Analysis** - Biomarker-stratified group analyses with statistical outcome comparisons
 2. **Treatment Recommendation Reports** - Evidence-based clinical guidelines with GRADE grading and decision algorithms
 
-All documents are generated as publication-ready LaTeX/PDF files optimized for pharmaceutical research, regulatory submissions, and clinical guideline development.
+All documents are generated as publication-ready LaTeX/PDF files for pharmaceutical research, regulatory-support analyses, and clinical guideline development.
+
+**Scope and safety:** these are decision-support documents for qualified clinicians, medical-affairs teams, and guideline panels — not orders for an individual patient. Every trial result, guideline recommendation, approval status, and grade must come from sources the user supplied or that you retrieved and cited in this session (e.g. via `alterlab-pubmed` or `alterlab-clinicaltrials`); never fill them in from memory, because a plausible but wrong hazard ratio or guideline category can propagate into prescribing decisions. Numbers in the examples below are illustrative placeholders. Include an AI-assistance disclosure and a "for expert review" notice in every document.
 
 **Note:** For individual patient treatment plans at the bedside, use the `alterlab-treatment-plans` skill instead. For single-patient case reports for journal submission (e.g. CARE-guideline cases), use `alterlab-clinical-reports`. This skill focuses on group-level analyses and evidence synthesis for pharmaceutical/research settings.
 
@@ -40,7 +43,7 @@ All documents are generated as publication-ready LaTeX/PDF files optimized for p
 
 **Treatment Recommendation Reports**
 - Evidence-based treatment guidelines for specific disease states
-- Strength of recommendation grading (GRADE system: 1A, 1B, 2A, 2B, 2C)
+- Strength of recommendation grading (GRADE, reported with ACCP-style codes 1A–2C)
 - Quality of evidence assessment (high, moderate, low, very low)
 - Treatment algorithm flowcharts with TikZ diagrams
 - Line-of-therapy sequencing based on biomarkers
@@ -52,10 +55,10 @@ All documents are generated as publication-ready LaTeX/PDF files optimized for p
 
 - **Biomarker Integration**: Genomic alterations (mutations, CNV, fusions), gene expression signatures, IHC markers, PD-L1 scoring
 - **Statistical Analysis**: Hazard ratios, p-values, confidence intervals, survival curves, Cox regression, log-rank tests
-- **Evidence Grading**: GRADE system (1A/1B/2A/2B/2C), Oxford CEBM levels, quality of evidence assessment
+- **Evidence Grading**: GRADE certainty (reported with ACCP-style 1A–2C codes), Oxford CEBM levels, quality of evidence assessment
 - **Clinical Terminology**: SNOMED-CT, LOINC, proper medical nomenclature, trial nomenclature
 - **Regulatory Compliance**: HIPAA de-identification, confidentiality headers, ICH-GCP alignment
-- **Professional Formatting**: Compact 0.5in margins, color-coded recommendations, publication-ready, suitable for regulatory submissions
+- **Professional Formatting**: Compact 0.5in margins, color-coded recommendations, publication-ready
 
 ## Pharmaceutical and Research Use Cases
 
@@ -65,7 +68,7 @@ This skill is specifically designed for pharmaceutical and clinical research app
 - **Phase 2/3 Trial Analyses**: Biomarker-stratified efficacy and safety analyses
 - **Subgroup Analyses**: Forest plots showing treatment effects across patient subgroups
 - **Companion Diagnostic Development**: Linking biomarkers to drug response
-- **Regulatory Submissions**: IND/NDA documentation with evidence summaries
+- **Regulatory Support**: Evidence summaries that feed IND/NDA documents (the submissions themselves follow sponsor templates and ICH M4/eCTD structure)
 
 **Medical Affairs**
 - **KOL Education Materials**: Evidence-based treatment algorithms for thought leaders
@@ -85,7 +88,7 @@ This skill is specifically designed for pharmaceutical and clinical research app
 - **Outcomes Research**: Long-term survival and safety in clinical practice
 - **Health Economics**: Cost-effectiveness analyses by biomarker subgroup
 
-## When to Use
+## When to Use This Skill
 
 Use this skill when you need to:
 
@@ -98,13 +101,19 @@ Use this skill when you need to:
 - **Synthesize evidence** from multiple trials or real-world data sources
 - **Create clinical decision algorithms** with flowcharts for treatment sequencing
 
-**Do NOT use this skill for:**
-- Individual patient treatment plans, bedside care documentation, or patient-specific protocols (use `alterlab-treatment-plans`)
-- Single-patient case reports for journal submission, e.g. CARE-guideline cases (use `alterlab-clinical-reports`)
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Individual patient treatment plan, bedside care documentation, or patient-specific protocol | `alterlab-treatment-plans` |
+| Single-patient case report for journal submission (CARE) | `alterlab-clinical-reports` |
+| Pooling effect sizes across published studies (random-effects model, I², funnel plot) | `alterlab-meta-analysis` |
+| Searching ClinicalTrials.gov for trials or pulling a trial record by NCT ID | `alterlab-clinicaltrials` |
+| Training a machine-learning risk-prediction model on EHR data | `alterlab-pyhealth` |
 
 ## Document Structure
 
-**CRITICAL REQUIREMENT: All clinical decision support documents MUST begin with a complete executive summary on page 1 that spans the entire first page before any table of contents or detailed sections.**
+Start every CDS document with a one-page executive summary, before the table of contents or detailed sections. Readers in medical affairs and guideline panels decide from page 1 whether and how to read on, so it has to carry the key results on its own.
 
 ### Page 1 Executive Summary Structure
 
@@ -137,7 +146,7 @@ The first page of every CDS document should contain ONLY the executive summary w
 - Use bullet points, not narrative paragraphs
 - End page 1 with `\newpage` before table of contents or detailed sections
 
-**Example First Page LaTeX Structure:**
+**Example First Page LaTeX Structure** (all values are illustrative placeholders):
 ```latex
 \maketitle
 \thispagestyle{empty}
@@ -224,7 +233,7 @@ The first page of every CDS document should contain ONLY the executive summary w
 
 ## Output Format
 
-**MANDATORY FIRST PAGE REQUIREMENT:**
+**Page layout:**
 - **Page 1**: Full-page executive summary with 3-5 colored tcolorbox elements
 - **Page 2**: Table of contents (optional)
 - **Page 3+**: Detailed sections with methods, results, figures, tables
@@ -232,7 +241,7 @@ The first page of every CDS document should contain ONLY the executive summary w
 **Document Specifications:**
 - **Primary**: LaTeX/PDF with 0.5in margins for compact, data-dense presentation
 - **Length**: Typically 5-15 pages (1 page executive summary + 4-14 pages detailed content)
-- **Style**: Publication-ready, pharmaceutical-grade, suitable for regulatory submissions
+- **Style**: Publication-ready, pharmaceutical-grade
 - **First Page**: Always a complete executive summary spanning entire page 1 (see Document Structure section)
 
 **Visual Elements:**
@@ -351,7 +360,7 @@ The compact letter codes used throughout (1A, 1B, 2A, 2B, 2C) are the **ACCP/Guy
    - Account for multiple comparisons when appropriate
 4. **Outcome Definitions**: Use standard criteria:
    - Response: RECIST 1.1, iRECIST for immunotherapy
-   - Adverse events: CTCAE version 5.0
+   - Adverse events: NCI CTCAE — v6.0 (released 2025; NCI-sponsored trials opening from January 2026) or whichever version the protocol specifies (many ongoing trials still use v5.0); state the version used
    - Performance status: ECOG or Karnofsky
 5. **Survival Data Presentation**:
    - Median OS/PFS with 95% CI
@@ -364,18 +373,18 @@ The compact letter codes used throughout (1A, 1B, 2A, 2B, 2C) are the **ACCP/Guy
 ### For Treatment Recommendation Reports
 
 1. **Evidence Grading Transparency**: 
-   - Use GRADE system consistently (1A, 1B, 2A, 2B, 2C)
+   - Use GRADE consistently, with ACCP-style codes (1A–2C) if a combined label is needed
    - Document rationale for each grade
    - Clearly state quality of evidence (high, moderate, low, very low)
 2. **Comprehensive Evidence Review**: 
    - Include phase 3 randomized trials as primary evidence
    - Supplement with phase 2 data for emerging therapies
    - Note real-world evidence and meta-analyses
-   - Cite trial names (e.g., KEYNOTE-189, CheckMate-227)
+   - Cite trial names (e.g., KEYNOTE-189, CheckMate-227) with a verifiable reference (PMID/DOI or registry ID)
 3. **Biomarker-Guided Recommendations**:
    - Link specific biomarkers to therapy recommendations
    - Specify testing methods and validated assays
-   - Include FDA/EMA approval status for companion diagnostics
+   - Include FDA/EMA approval status for companion diagnostics, checked against current labeling (approvals change)
 4. **Clinical Actionability**: Every recommendation should have clear implementation guidance
 5. **Decision Algorithm Clarity**: TikZ flowcharts should be unambiguous with clear yes/no decision points
 6. **Special Populations**: Address elderly, renal/hepatic impairment, pregnancy, drug interactions
@@ -384,8 +393,8 @@ The compact letter codes used throughout (1A, 1B, 2A, 2B, 2C) are the **ACCP/Guy
 
 ### General Best Practices
 
-1. **First Page Executive Summary (MANDATORY)**: 
-   - ALWAYS create a complete executive summary on page 1 that spans the entire first page
+1. **First Page Executive Summary**: 
+   - Create a complete executive summary that fills page 1
    - Use 3-5 colored tcolorbox elements to highlight key findings
    - No table of contents or detailed sections on page 1
    - Use `\thispagestyle{empty}` and end with `\newpage`
@@ -432,4 +441,4 @@ See the `scripts/` directory for analysis and visualization tools:
 - `biomarker_classifier.py` - Patient stratification algorithms by molecular subtype
 - `validate_cds_document.py` - Quality and compliance checks (HIPAA, statistical reporting standards)
 
-
+Part of the AlterLab Academic Skills suite.

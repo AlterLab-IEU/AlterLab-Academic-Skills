@@ -6,7 +6,8 @@ allowed-tools: Read Bash(Rscript:*)
 compatibility: "Requires R with the QCA package (install.packages('QCA'); optionally SetMethods). NO maintained Python QCA library exists, so this skill shells to R via Rscript — declare R as a dependency. No API key. On the Anthropic API (no runtime install) document the R requirement and degrade gracefully."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
     depends_on: "alterlab-ssci-design-gate (configurational vs net-effects), alterlab-qualitative-methods; audited by alterlab-ssci-inference-gate"
 ---
 
@@ -62,7 +63,8 @@ tt <- truthTable(df, outcome = "OUT", conditions = c("A","B","C"),
 #    conservative = no remainders; parsimonious = include "?"; intermediate = supply dir.exp.
 sol_c <- minimize(tt, details = TRUE)                       # conservative
 sol_p <- minimize(tt, include = "?", details = TRUE)        # parsimonious
-sol_i <- minimize(tt, include = "?", dir.exp = c(A=1,B=1,C=1), details = TRUE)  # intermediate
+sol_i <- minimize(tt, include = "?", dir.exp = "A, B, C", details = TRUE)  # intermediate
+#    dir.exp is an expression of expected conditions: "A, ~B" = A present, B absent expected.
 ```
 
 Fit parameters printed: **inclS** (sufficiency consistency), **PRI**, **covS** (raw coverage),

@@ -7,17 +7,20 @@ fetches are the only robust, reproducible paths. Run everything with `uv run`.
 
 ## 1. Find a journal's slug
 
-The slug is the `setSpec`. List every journal set:
+The slug is the `setSpec`, and it is part of every journal and article URL:
+`https://dergipark.org.tr/en/pub/{slug}` or `/en/pub/{slug}/article/{id}`. Ask the
+user for the journal's DergiPark link (or find it with a web search) and read the
+slug from it.
+
+`list-journals` still works but, as of 2026-09-23, DergiPark's `ListSets` returns only
+the first 100 sets with no resumption token, so most journals are missing from it; the
+script prints a warning to stderr when it hits that cap.
 
 ```bash
 uv run python scripts/dergipark_oai.py list-journals --tsv | head
 # mulkiye   Mülkiye Dergisi
-# yerblm    Cumhuriyet Yerbilimleri Dergisi
 # ...
 ```
-
-Filter locally for the title you want (the list is large; pipe to `rg`/`grep`).
-The slug also appears in any article URL: `/en/pub/{slug}/article/{id}`.
 
 ## 2. Harvest a whole journal's metadata
 

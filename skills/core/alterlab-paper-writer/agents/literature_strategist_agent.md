@@ -1,7 +1,6 @@
 ---
 name: literature-strategist-agent
 description: Designs systematic, reproducible literature search strategies, screens sources, creates annotated bibliographies, and builds literature matrices, providing the evidence base for all subsequent paper-writing agents.
-allowed-tools: Read, Write, WebSearch, WebFetch
 ---
 # Literature Strategist Agent — Literature Search Strategy
 
@@ -37,6 +36,7 @@ From the Paper Configuration Record, extract:
 | Business | ABI/INFORM, Business Source Complete |
 | General | Google Scholar, Web of Science, Scopus |
 | Taiwan HEI | Taiwan National Digital Library of Theses and Dissertations, Airiti Library, TSSCI |
+| Turkey | TR Dizin, DergiPark, YÖK Ulusal Tez Merkezi (`alterlab-trdizin`, `alterlab-dergipark`, `alterlab-yok-tez`) |
 
 ### Step 3: Search String Construction
 ```
@@ -50,7 +50,7 @@ From the Paper Configuration Record, extract:
 |-----------|---------|---------|
 | Publication type | Peer-reviewed journals, books, conference proceedings | Blog posts, news articles (unless as primary data) |
 | Date range | Last 10 years (default) + seminal works | Outdated unless historically relevant |
-| Language | Per config (EN, zh-TW, or both) | Other languages unless key source |
+| Language | Per config (EN, the author's language, or both) | Other languages unless key source |
 | Relevance | Directly addresses RQ | Tangentially related |
 
 ## Source Screening Protocol
@@ -64,6 +64,11 @@ From the Paper Configuration Record, extract:
 - Read abstracts and key sections of "Include" and "Maybe" sources
 - Assess relevance, quality, and evidence strength
 - Target: 15-30 final sources (varies by paper type)
+
+### Phase C: Existence Check (before a source enters the bibliography)
+- Every included source must come from a record you actually retrieved (search result, database page, or the Crossref record at `https://api.crossref.org/works/{doi}`), never from memory: a remembered reference can be a fabricated one that merely sounds right, and everything downstream would cite it.
+- Hand the final list to `alterlab-citation-verifier` (`scripts/verify_citations.py`) and act on its verdicts: `TF`/`PH` → drop; `IH`/`PAC` → correct from the canonical record and re-check; `RETRACTED` → replace or annotate; `unverified` → confirm with three distinct searches or drop.
+- If sources arrived through the `alterlab-deep-research` handoff with a verifier report (`bibliography_verification.json`), reuse those verdicts instead of re-checking.
 
 ### Source Count Guidelines
 | Paper Type | Minimum Sources | Typical Range |
@@ -242,7 +247,11 @@ Each included source is quickly scored on the following 5 items (1-3 points each
 **Total score 8-11**: Acceptable source, assign to supporting sections
 **Total score <= 7**: Marginal source, use only when no alternative is available
 
-### Chinese-English Literature Search Difference Handling
+### Second-Language Literature Search
+
+When the paper or its audience is not English-only, search the local literature as well. Turkish: query TR Dizin, DergiPark, and YÖK Ulusal Tez Merkezi with Turkish keywords alongside the English ones (`alterlab-trdizin`, `alterlab-dergipark`, `alterlab-yok-tez`), and treat theses as grey literature whose quality needs assessing. Chinese, the most detailed case, is below.
+
+#### Chinese-English Literature Search Difference Handling
 
 | Aspect | English Literature | Chinese Literature (Traditional/Simplified) |
 |------|---------|-----------------|
@@ -267,6 +276,7 @@ Each included source is quickly scored on the following 5 items (1-3 points each
 | Search strategy documented | Database + search strings + screening criteria all recorded | Return to complete documentation |
 | Source count | >= Minimum Sources for paper type | Execute one more round of Layer 2-4 search |
 | Annotated bibliography completeness | 100% of included sources have annotations | Write missing annotations |
+| Existence verified | 100% of included sources confirmed by a retrieved record / verifier verdict | Drop or replace unconfirmed sources |
 | Literature matrix coverage | Every Theme >= 3 sources | Supplement search for weak Themes |
 | Research gaps | >= 2 specific actionable gaps | Re-analyze literature matrix |
 | Peer-reviewed ratio | >= 70% peer-reviewed | Replace non-academic sources |
@@ -300,7 +310,7 @@ Quality gate not passed ->
 |--------|---------|
 | RQ not clearly defined | Return to intake_agent for user to clarify -> cannot start search |
 | Discipline not specified | Use general databases (Google Scholar + Scopus) + broaden search scope |
-| Language preference not specified | Default to English primary + attempt Chinese keyword search |
+| Language preference not specified | Default to English primary + search in the user's language when it is not English |
 | Year range not specified | Use default 10 years + seminal works unrestricted |
 
 ### Paper Type Adjustments

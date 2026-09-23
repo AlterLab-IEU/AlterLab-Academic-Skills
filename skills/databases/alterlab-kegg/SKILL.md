@@ -1,12 +1,13 @@
 ---
 name: alterlab-kegg
-description: Provide direct REST API access to KEGG (academic use only) for pathway analysis, gene-to-pathway and compound-to-pathway mapping, metabolic reactions, KEGG Orthology (KO), drug-drug interactions, and ID conversion. Use when querying KEGG pathways, mapping genes/compounds to metabolic maps, or running KEGG pathway enrichment via raw HTTP/REST; for protein-protein interaction networks prefer alterlab-string-db, for protein sequences and annotations prefer alterlab-uniprot, and for Python workflows spanning many databases prefer bioservices instead. Part of the AlterLab Academic Skills suite.
+description: Provide direct REST API access to KEGG (academic use only) for pathway analysis, gene-to-pathway and compound-to-pathway mapping, metabolic reactions, KEGG Orthology (KO), drug-drug interactions, and ID conversion. Use when querying KEGG pathways, mapping genes/compounds to metabolic maps, or running KEGG pathway enrichment via raw HTTP/REST; for protein-protein interaction networks prefer alterlab-string-db, for protein sequences and annotations prefer alterlab-uniprot, and for Python workflows spanning many databases prefer alterlab-bioservices instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(uv:*) Bash(python3:*)
-compatibility: Keyless KEGG REST API (academic use only; no authentication required)
+compatibility: Keyless KEGG REST API at rest.kegg.jp (academic use by academic users only; max 3 calls/second or access is blocked; no authentication)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # KEGG Database
@@ -15,11 +16,21 @@ metadata:
 
 KEGG (Kyoto Encyclopedia of Genes and Genomes) is a comprehensive bioinformatics resource for biological pathway analysis and molecular interaction networks.
 
-**Important**: KEGG API is made available only for academic use by academic users.
+**Important**: KEGG API is made available only for academic use by academic users; non-academic use needs a commercial license (via Pathway Solutions). KEGG asks clients to stay at or below 3 API calls per second and blocks clients that exceed it, so the helpers in `scripts/kegg_api.py` throttle themselves.
 
 ## When to Use This Skill
 
 This skill should be used when querying pathways, genes, compounds, enzymes, diseases, and drugs across multiple organisms using KEGG's REST API.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Protein-protein interaction networks and STRING enrichment | `alterlab-string-db` |
+| Protein sequences, function annotation, UniProt ID mapping | `alterlab-uniprot` |
+| Openly licensed curated pathways and over-representation analysis | `alterlab-reactome` |
+| One Python wrapper spanning KEGG, UniProt, ChEMBL and more | `alterlab-bioservices` |
+| Human metabolite concentrations, biofluids, biomarker evidence | `alterlab-hmdb` |
 
 ## Quick Start
 
@@ -175,20 +186,22 @@ from scripts.kegg_api import kegg_link
 # Find pathways linked to human genes
 pathways = kegg_link('pathway', 'hsa')
 
-# Get genes in a specific pathway
-genes = kegg_link('genes', 'hsa00010')  # Glycolysis genes
+# Get genes in a specific pathway: the target is the organism code
+# ('genes' as the target returns HTTP 400)
+genes = kegg_link('hsa', 'hsa00010')  # Glycolysis genes
 
 # Find pathways containing a specific gene
 gene_pathways = kegg_link('pathway', 'hsa:10458')
 
-# Find compounds in a pathway
-compounds = kegg_link('compound', 'hsa00010')
+# Find compounds in a pathway: compounds link to reference maps (map#####);
+# the organism-specific hsa00010 returns an empty body
+compounds = kegg_link('compound', 'map00010')
 
 # Map genes to KO (orthology) groups
 ko_groups = kegg_link('ko', 'hsa:10458')
 ```
 
-**Common links**: genes ↔ pathway, pathway ↔ compound, pathway ↔ enzyme, genes ↔ ko (orthology)
+**Common links**: genes ↔ pathway (use the organism code, e.g. `hsa`, as the gene-side database), reference pathway (`map`) ↔ compound, pathway ↔ enzyme, genes ↔ ko (orthology). Link output keeps prefixes (`path:hsa04010`, `cpd:C00022`) even though `list` output dropped them in 2023.
 
 ### 7. Drug-Drug Interactions (`kegg_ddi`)
 
@@ -235,17 +248,21 @@ for pathway_line in pathways.split('\n'):
 **Use case**: Getting all genes in organism pathways for enrichment analysis.
 
 ```python
+from collections import defaultdict
+
 from scripts.kegg_api import kegg_list, kegg_link
 
-# Step 1: List all human pathways
-pathways = kegg_list('pathway', 'hsa')
+# Step 1: pathway names (one call)
+names = dict(line.split('\t', 1) for line in kegg_list('pathway', 'hsa').splitlines() if line)
 
-# Step 2: For each pathway, get associated genes
-for pathway_line in pathways.split('\n'):
-    if pathway_line:
-        pathway_id = pathway_line.split('\t')[0]
-        genes = kegg_link('genes', pathway_id)
-        # Process genes for enrichment analysis
+# Step 2: every gene-pathway link for the organism in ONE call, instead of one
+# request per pathway (~370 calls would take minutes at KEGG's 3 calls/s limit)
+gene_sets = defaultdict(set)
+for line in kegg_link('pathway', 'hsa').splitlines():
+    gene, path = line.split('\t')           # 'hsa:10327', 'path:hsa00010'
+    gene_sets[path.removeprefix('path:')].add(gene)
+
+# gene_sets['hsa00010'] -> set of KEGG gene IDs for Glycolysis / Gluconeogenesis
 ```
 
 ### Workflow 3: Compound to Pathway Analysis
@@ -352,7 +369,7 @@ Respect these constraints when using the KEGG API:
 1. **Entry limits**: Maximum 10 entries per operation (except `image`/`image2x`/`kgml`: 1 entry only)
 2. **Academic use**: API is for academic use only; commercial use requires licensing
 3. **HTTP status codes**: Check for 200 (success), 400 (bad request), 404 (not found)
-4. **Rate limiting**: No explicit limit, but avoid rapid-fire requests
+4. **Rate limiting**: at most 3 calls per second — KEGG blocks clients that exceed it. Prefer bulk calls (`/link/pathway/hsa`, `/conv/ncbi-geneid/hsa`) over per-entry loops
 
 ## Detailed Reference
 

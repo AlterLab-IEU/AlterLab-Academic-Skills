@@ -1,13 +1,13 @@
 ---
 name: alterlab-yok-tez
-description: "Searches YÖK Ulusal Tez Merkezi (tez.yok.gov.tr/UlusalTezMerkezi), Turkey's mandatory national graduate-thesis repository, for literature-review discovery and pre-proposal özgünlük (originality) checks. Drives the detailed search form (Tez Adı/Yazar/Danışman/Konu/Anahtar Kelime/Özet, tez türü, year range, language, İzinli/İzinsiz permission status) via the saidsurucu/yoktez-mcp tool, applies Turkish auto-stemming and ve/veya/içermesin boolean operators, runs paired Turkish+English queries, and emits Türkçe APA-7 thesis citations mapping Tez No to the published Yayın No. Use when the user wants to search Turkish theses, ara YÖK tez, check thesis novelty before approving a proposal, find dissertations by advisor (danışman) or university, dedupe a topic against existing tezler, or cite a YÖK thesis; respects the 2000-results-per-search cap and online-view-only access. For non-thesis Turkish journals use alterlab-dergipark or alterlab-trdizin. Part of the AlterLab Academic Skills suite."
+description: "Searches YÖK Ulusal Tez Merkezi (tez.yok.gov.tr), Turkey's mandatory national graduate-thesis repository, for literature discovery and pre-proposal özgünlük (originality) checks via the saidsurucu/yoktez-mcp connector and YÖK's 2026 search: up to three terms joined by VE/VEYA in one field (Tez Adı, Yazar, Danışman, Konu, Anahtar Kelime, Özet or all), tez türü/year/language filters, İzinli/İzinsiz and Onaylandı/Hazırlanıyor status, anabilim dalı browsing and per-thesis details. Runs paired Turkish+English queries with stems that survive substring matching and emits Türkçe APA-7 citations mapping Tez No to Yayın No. Use when the user wants to search Turkish theses, ara YÖK tez, check thesis novelty before approving a proposal, find dissertations by advisor (danışman) or university, dedupe a topic against existing tezler, or cite a YÖK thesis. For Turkish journal articles use alterlab-dergipark or alterlab-trdizin. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) WebFetch
-compatibility: "No API key required — searches via the saidsurucu/yoktez-mcp connector (local `uvx` or hosted https://yoktezmcp.fastmcp.app/mcp) or by driving the public tez.yok.gov.tr Detaylı Tarama form; full-text is online-view-only, no bulk download"
+compatibility: "No API key required — searches via the saidsurucu/yoktez-mcp connector (hosted https://yoktezmcp.fastmcp.app/mcp, YokTezMCP 3.3.1 as of 2026-09-23, or local `uvx`) or the public tez.yok.gov.tr search screen; full text is online-view-only, no bulk download"
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-06-06"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
 ---
 
 # YÖK Ulusal Tez Merkezi — Turkish National Thesis Search
@@ -23,7 +23,7 @@ skill serves:
    review, by topic, *danışman* (advisor), university, or year.
 2. **Pre-proposal *özgünlük* (originality) checks** — before a supervisor
    approves a student's thesis topic, scanning whether the same work already
-   exists or is embargoed-but-registered.
+   exists, is restricted, or is registered as in preparation.
 
 This skill is **discovery + metadata harvesting + citation**, not bulk
 full-text download (full text is online-view-only — see access model below).
@@ -38,10 +38,9 @@ Cite this YÖK thesis in APA 7 (Turkish)
 Is this thesis topic novel, or has it already been done in Turkey?
 ```
 
-→ Construct a Detaylı Tarama (detailed search) query, run it through the
-`yoktez-mcp` connector (or drive the form), dedupe results into a
-`{Tez No, year, university, danışman, title, izin}` table, and — when asked —
-emit a Türkçe APA-7 citation.
+→ Build paired Turkish/English queries, run them through the `yoktez-mcp`
+connector, dedupe results into a `{thesis_no, year, university, danışman, title,
+izin, durum}` table, and — when asked — emit a Türkçe APA-7 citation.
 
 ### Does NOT Trigger — route these elsewhere
 
@@ -65,93 +64,103 @@ do I cite it?"* — it does not write the thesis, judge journals, or score caree
 
 ## The data path: yoktez-mcp
 
-There is **no official public API** for Ulusal Tez Merkezi. The maintained,
-verified community path is the **`saidsurucu/yoktez-mcp`** MCP server (MIT
-licensed). Prefer it over scraping.
+There is **no official public API** for Ulusal Tez Merkezi. The maintained
+community path is the **`saidsurucu/yoktez-mcp`** MCP server (MIT licensed);
+prefer it over scraping.
 
-**Install (uv-first, matches the local toolchain):**
+- **Hosted connector:** `https://yoktezmcp.fastmcp.app/mcp` (YokTezMCP 3.3.1 on
+  2026-09-23)
+- **Local:** `uvx --from git+https://github.com/saidsurucu/yoktez-mcp yoktez-mcp`
 
-```bash
-uvx --from git+https://github.com/saidsurucu/yoktez-mcp yoktez-mcp
-```
+YÖK **redesigned its search in 2026**: one field per query, up to three terms
+joined by VE/VEYA, and dropdown filters. The university / institute / department
+text filters and the thesis-number lookup are gone. The connector's six tools
+(live `tools/list`; the repo README still shows the older two):
 
-**Hosted connector:** `https://yoktezmcp.fastmcp.app/mcp`
+| Tool | Use it for |
+|------|-----------|
+| `search_yok_tez_detailed` | Topic, title, author or advisor search: `keyword` (+ `keyword_2`, `keyword_3`, `operator_1`/`operator_2` = `and`/`or`), `search_field`, `match_type`, and coded filters `thesis_type`, `permission_status`, `thesis_status`, `language`, `year_start`, `year_end` |
+| `list_yok_tez_anabilim_dali` → `search_yok_tez_by_anabilim_dali` | Narrow to departments (anabilim dalı codes, ≤ 15 per call) — the replacement for the dropped department filter |
+| `get_yok_tez_thesis_details` | Advisor, university → institute → department path, TR/EN abstracts and keywords, ready-made citation strings — without downloading the PDF |
+| `get_yok_tez_document_markdown` | One PDF page of an *İzinli* thesis as Markdown |
+| `list_recent_yok_tez` | Theses uploaded in the last 15 days, or this year's corpus (no keyword needed) |
 
-It exposes exactly two tools:
+Filter codes (verified live, full table in
+[`references/endpoints.md`](references/endpoints.md)): `search_field` `7` Tümü
+(default) / `1` Tez Adı / `2` Yazar / `3` Danışman / `4` Konu / `5` Anahtar
+Kelime / `6` Özet; `match_type` `2` contains (default) / `1` exact;
+`thesis_type` `1` Yüksek Lisans, `2` Doktora, `3` Tıpta Uzmanlık, `4` Sanatta
+Yeterlik, `5`–`7` specialty types; `permission_status` `0` Tümü / `1` İzinli /
+`2` İzinsiz; `thesis_status` `0` Tümü / `3` Onaylandı (the connector's default)
+/ `1` Hazırlanıyor.
 
-| Tool | Purpose | Key parameters |
-|------|---------|----------------|
-| `search_yok_tez_detailed` | Detailed search → paginated thesis summaries + total count | `thesis_title`, `author_name`, `advisor_name`, `university_name`, `institute_name`, `department_name`, `discipline_name`, `thesis_number`, `subject_headings`, `index_terms`, `abstract_text`, `thesis_type`, `permission_status`, `thesis_status`, `language`, `institute_group`, `year_start`, `year_end`, `page`, `results_per_page` |
-| `get_yok_tez_document_markdown` | Fetch a permitted thesis PDF as Markdown | `detail_page_url`, `page_number` |
+If the connector is unavailable, the search screen at
+`https://tez.yok.gov.tr/UlusalTezMerkezi/tarama.jsp` can be driven in a real
+browser. Don't invent a JSON/REST endpoint — none is published.
 
-These map one-to-one onto the public **Detaylı Tarama** form fields: *Tez Adı*
-(title), *Yazar* (author), *Danışman* (advisor), *Konu* (subject), *Anahtar
-Kelime* (keyword), *Özet* (abstract), *Tez No* (thesis number).
-
-If the connector is unavailable, the search form at
-`https://tez.yok.gov.tr/UlusalTezMerkezi/` can be driven directly (a real
-browser is required — see `references/endpoints.md` for the gated-viewer
-caveat). **Never invent a JSON/REST endpoint — none is published.**
-
-A small offline helper, `scripts/yok_tez_query.py`, builds a normalized query
-spec and the matching `search_yok_tez_detailed` argument dict from a plain
-description (handy for the stemming/boolean rules below) without any network
-call. See **Search craft**.
+`scripts/yok_tez_query.py` builds the connector arguments offline from a plain
+description (TR/EN topics, advisor, thesis type, years, originality mode) and
+formats citations; it makes no network call.
 
 ---
 
 ## Search craft (apply these automatically)
 
-The full rule set with worked examples is in
-[`references/search_syntax.md`](references/search_syntax.md). The essentials:
+Full rules with worked examples: [`references/search_syntax.md`](references/search_syntax.md).
 
-1. **Search Turkish roots, not inflected forms** — the engine auto-stems Turkish,
-   so query `sürdürülebilir` rather than `sürdürülebilirliğin`. Diacritics
-   (ç ğ ı İ ö ş ü) need **not** be normalized by the user.
-2. **Boolean operators are `ve` / `veya` / `içermesin`** (and / or / must-not-contain),
-   not `AND`/`OR`/`NOT`. Phrase-match by keeping words adjacent.
-3. **Run BOTH a Turkish and an English query.** English terms only hit the
-   *English* title/abstract/keyword fields, so an all-Turkish query silently
-   misses theses written/indexed in English, and vice-versa.
-4. **Search across `Konu`, `Tez Adı`, and `Özet`** for topic coverage — a title
-   may not name the concept the abstract develops.
+1. **Search stems that survive substring matching.** The default match is
+   *contains*, so `sürdürülebilir` finds every inflected form — but Turkish turns
+   a final k/ç/t/p into ğ/c/d/b before a suffix, so cut it: `okuryazarl` found
+   622 title hits where `okuryazarlık` found 277 (2025+, live check).
+2. **Up to three terms per call, joined by `and`/`or`** (the site's VE/VEYA). There
+   is no NOT operator — filter unwanted hits locally.
+3. **Run BOTH a Turkish and an English query.** English terms only hit the English
+   title/abstract/keyword fields, so an all-Turkish query silently misses theses
+   indexed in English, and vice-versa.
+4. **Pick the field deliberately.** `search_field` `7` (Tümü) for topic recall;
+   `1`/`6`/`4`/`5` for precision passes; `2`/`3` for authors and advisors.
 
 ---
 
 ## Originality / supervision check (the repeatable recipe)
 
-When a supervisor asks *"has this thesis topic already been done?"*, do **not**
-run a naive open-access-only search — that misses the most important
-near-duplicates. Instead:
+When a supervisor asks *"has this thesis topic already been done?"*:
 
-1. Build paired TR+EN queries (above) across `Konu`, `Tez Adı`, and `abstract_text`.
-2. Constrain `thesis_type` (e.g. *Doktora*) and a recent `year_start`–`year_end`
-   window if the user gave one.
-3. **Set `permission_status` to "Tümü" (All)** so *İzinsiz* (restricted,
-   abstract-only) theses still surface — embargoed work is exactly what a naive
-   search hides, and it is still prior art for a proposal.
-4. Return a **deduplicated table**: `{Tez No, year, university, danışman, title,
-   izin}`, sorted newest-first, for the supervisor to scan.
-5. State explicitly that this is *registry coverage*, not a plagiarism / text-
-   similarity score (that is iThenticate/Turnitin territory, out of scope here).
+1. Build paired TR + EN queries (stems, OR for synonyms) in `search_field` `7`.
+2. Constrain `thesis_type` (e.g. `2` Doktora) and a `year_start`–`year_end`
+   window only if the user asked for them.
+3. Set **`permission_status` `0`** (Tümü) so *İzinsiz* (restricted, abstract-only)
+   theses surface, and **`thesis_status` `0`** so *Hazırlanıyor* (in-preparation)
+   theses surface too — the connector defaults to approved theses only, and
+   restricted or in-progress work is exactly what a naive search hides.
+4. Return a **deduplicated table** — `{thesis_no, year, university, danışman,
+   title, izin, durum}`, newest first — fetching advisors with
+   `get_yok_tez_thesis_details` for the rows that matter.
+5. State explicitly that this is *registry coverage*, not a plagiarism /
+   text-similarity score (iThenticate/Turnitin territory, out of scope here).
+
+**Advisor at a given university:** search `search_field` `3` with the advisor's
+name (plus `thesis_type` if needed), keep the rows whose `university_info`
+matches, and confirm the advisor on each with `get_yok_tez_thesis_details` —
+names repeat across universities.
 
 ---
 
 ## Access model (set correct expectations)
 
 - **Full text is online-view-only** for *İzinli* (permitted) theses — viewable in
-  the browser, **no photocopy / bulk download**. The `get_yok_tez_document_markdown`
-  tool works only on permitted theses.
-- **Abstracts (*özet*) are always available**, even when full text is embargoed.
-- ***İzinsiz* (restricted) theses** show metadata + abstract only; the full text
-  is reachable in print via **TÜBESS** / inter-library loan through a university
-  library.
+  the browser, **no photocopy / bulk download**. `get_yok_tez_document_markdown`
+  works only on permitted theses.
+- **Abstracts (*özet*) are available** even when full text is restricted
+  (`get_yok_tez_thesis_details` returns both TR and EN abstracts).
+- ***İzinsiz* (restricted) theses** show metadata + abstract only; the print copy
+  is reachable via **TÜBESS** / inter-library loan through a university library.
 - **Pre-2006 closed theses** can be opened by the author submitting a *Tez
   Yayımlama İzin Belgesi* (thesis-publication permission document).
-- **Legal basis:** Law 7100 Art. 10 and Higher Education Law 2547 Additional Art.
-  40 — theses are electronically accessible by default unless an authorized
-  *gizlilik* (confidentiality) decision applies. YÖK's FAQ states **no fixed
-  maximum embargo length**; do not assert a "12-month cap."
+- **Legal basis:** 2547 sayılı Kanun Ek Madde 40 (added by Law 7100, Art. 10,
+  2018) — theses are made electronically accessible by YÖK Ulusal Tez Merkezi
+  unless an authorized *gizlilik* (confidentiality) decision applies. YÖK's FAQ
+  states **no fixed maximum embargo length**; do not assert a "12-month cap."
 
 Full detail in [`references/access_legal.md`](references/access_legal.md).
 
@@ -159,24 +168,21 @@ Full detail in [`references/access_legal.md`](references/access_legal.md).
 
 ## Caps and bulk harvest
 
-- **Hard cap: 2000 results per search.** For broad topics, split the query by
-  **year range**, **university**, or **institute** to stay under it, then merge
-  and dedupe locally.
-- For large/repeated harvests, the cleaned community mirror **tezara.org**
-  ("Tez Arama ve Metaveri Analizi Platformu") offers structured export and
-  sidesteps the per-search cap; see
-  [`references/endpoints.md`](references/endpoints.md) for what is and isn't
-  verified about it.
-- Bulk Turkish↔English query expansion, advisor-name normalization, and CSV
-  dedup are good fits to offload to a **local LLM** (qwen3-coder / gemma4) rather
-  than burning API calls — this work is bulky, repetitive, and privacy-neutral.
+- **~2,000 results per batch.** YÖK returns at most about 2,000 rows
+  (`results_in_batch`) even when `total_results_found` is larger. If a total is near
+  or above that, split by year range, thesis type, or department and merge locally.
+- The community mirror **tezara.org** may help with large metadata harvests, but its
+  export and cap-bypass claims are unverified — see
+  [`references/endpoints.md`](references/endpoints.md).
+- Bulk Turkish↔English query expansion, advisor-name normalization and CSV dedup are
+  repetitive, privacy-neutral work — a good fit for a local model or a short script.
 
 ---
 
 ## Citing a YÖK thesis (Türkçe APA-7)
 
 Map the YÖK **Tez No** directly to APA's **Yayın No.** (publication number).
-The `scripts/yok_tez_query.py --cite` mode formats both states; rules and more
+The `scripts/yok_tez_query.py cite` mode formats both states; rules and more
 examples in [`references/citation_apa7.md`](references/citation_apa7.md).
 
 - **Published / permitted** (has a Yayın No.):
@@ -185,19 +191,22 @@ examples in [`references/citation_apa7.md`](references/citation_apa7.md).
 - **Unpublished / restricted**:
   > Soyad, A. (Yıl). *Tez başlığı* [Yayımlanmamış tez türü tezi]. Üniversite Adı.
 
-Optionally also emit BibTeX `@phdthesis` / `@mastersthesis` with
+`get_yok_tez_thesis_details` also returns YÖK's own APA string (capitalised
+surname, "Tez No.") — convert it to the form above unless the journal asks for
+YÖK's. Optionally emit BibTeX `@phdthesis` / `@mastersthesis` with
 `note = {YÖK Ulusal Tez Merkezi, Tez No. NNNNNN}`.
 
 ---
 
 ## Self-check before reporting
 
-- Did you run **both** a Turkish and an English query? An all-Turkish search is
-  not complete.
-- For an originality check, did you set `permission_status = Tümü` so *İzinsiz*
-  theses surfaced? Restricted ≠ nonexistent.
-- Did any broad search hit the **2000 cap**? If `total` ≈ 2000, split and re-run —
-  you are almost certainly truncated.
+- Did you run **both** a Turkish and an English query, with stems that survive
+  substring matching?
+- For an originality check, did you set **`permission_status` `0` and
+  `thesis_status` `0`** so restricted and in-preparation theses surfaced?
+- Did any query approach the **~2,000 batch cap**? If so, split and re-run.
+- Did you filter university/advisor matches on the returned fields rather than
+  assume a filter the 2026 search no longer has?
 - Are citations using **Tez No → Yayın No.** with the correct
   *published* vs *unpublished* template?
 - Did you state that registry coverage ≠ a text-similarity / plagiarism score?
@@ -206,13 +215,14 @@ Optionally also emit BibTeX `@phdthesis` / `@mastersthesis` with
 
 ## References
 
-- [`references/endpoints.md`](references/endpoints.md) — verified vs. unverified
-  endpoints, the yoktez-mcp tool surface, the gated TezGoster viewer, tezara.org.
-- [`references/search_syntax.md`](references/search_syntax.md) — auto-stemming,
-  `ve`/`veya`/`içermesin`, TR+EN pairing, field-targeting, worked queries.
+- [`references/endpoints.md`](references/endpoints.md) — the 2026 search screen,
+  the live yoktez-mcp tool surface and filter codes, result shape, the batch cap,
+  tezara.org.
+- [`references/search_syntax.md`](references/search_syntax.md) — stems and
+  consonant alternation, and/or terms, TR+EN pairing, field choice, worked query.
 - [`references/access_legal.md`](references/access_legal.md) — İzinli/İzinsiz,
-  TÜBESS, pre-2006 opening, Law 7100 / 2547 legal basis, embargo facts.
+  TÜBESS, pre-2006 opening, 2547 Ek Madde 40 legal basis, embargo facts.
 - [`references/citation_apa7.md`](references/citation_apa7.md) — Türkçe APA-7
-  thesis templates and the Tez No → Yayın No. mapping.
+  thesis templates, the Tez No → Yayın No. mapping, YÖK's own citation strings.
 
 Part of the AlterLab Academic Skills suite.

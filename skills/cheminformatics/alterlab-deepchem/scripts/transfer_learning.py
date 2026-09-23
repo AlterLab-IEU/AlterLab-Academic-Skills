@@ -2,12 +2,13 @@
 """
 Transfer Learning Script for DeepChem
 
-Use pretrained models (ChemBERTa, GROVER) for molecular property prediction
-with transfer learning. Particularly useful for small datasets.
+Fine-tune pretrained ChemBERTa (dc.models.Chemberta) for molecular property
+prediction with transfer learning. Particularly useful for small datasets.
+`--model grover` prints the manual GroverModel setup DeepChem requires and exits.
 
 Usage:
     python transfer_learning.py --model chemberta --data my_data.csv --target activity
-    python transfer_learning.py --model grover --dataset bbbp
+    python transfer_learning.py --model chemberta --dataset bbbp
 """
 
 import argparse
@@ -24,10 +25,23 @@ PRETRAINED_MODELS = {
     },
     'grover': {
         'name': 'GROVER',
-        'description': 'Graph transformer pretrained on ~10M molecules',
+        'description': 'Graph transformer (needs a manual vocabulary/featurizer setup in DeepChem)',
         'tokenizer_path': None  # GROVER uses its own loading mechanism
     }
 }
+
+# DeepChem's GroverModel (2.8.x) is not a one-line pretrained loader, so this script
+# does not automate it. Printed when --model grover is requested.
+GROVER_NOTE = (
+    "GROVER is not automated by this script. In DeepChem 2.8, dc.models.GroverModel needs "
+    "task='finetuning' (or 'pretraining'), mode='classification'|'regression', node_fdim, "
+    "edge_fdim and hidden_size, atom/bond vocabularies built with "
+    "deepchem.feat.vocabulary_builders.GroverAtomVocabularyBuilder / "
+    "GroverBondVocabularyBuilder, and inputs featurized with "
+    "dc.feat.GroverFeaturizer(features_generator=dc.feat.CircularFingerprint()). "
+    "No pretrained GROVER weights are downloaded. Follow the GroverModel docstring "
+    "example, or use --model chemberta."
+)
 
 
 def train_chemberta(train_dataset, valid_dataset, test_dataset, task_type='classification', n_tasks=1, n_epochs=10):
@@ -98,61 +112,14 @@ def train_chemberta(train_dataset, valid_dataset, test_dataset, task_type='class
 
 def train_grover(train_dataset, test_dataset, task_type='classification', n_tasks=1, n_epochs=20):
     """
-    Fine-tune GROVER on a dataset.
+    Placeholder for GROVER fine-tuning.
 
-    Args:
-        train_dataset: Training dataset
-        test_dataset: Test dataset
-        task_type: 'classification' or 'regression'
-        n_tasks: Number of prediction tasks
-        n_epochs: Number of fine-tuning epochs
-
-    Returns:
-        Trained model and evaluation results
+    DeepChem's GroverModel cannot be built from (task_type, n_tasks) alone: it needs
+    task='pretraining'|'finetuning', mode, node_fdim/edge_fdim/hidden_size, atom/bond
+    vocabularies, and GroverFeaturizer inputs. Raise with guidance instead of failing
+    later with a confusing TypeError/AssertionError.
     """
-    print("=" * 70)
-    print("Fine-tuning GROVER")
-    print("=" * 70)
-    print("\nGROVER is a graph transformer pretrained on 10M molecules using")
-    print("self-supervised learning. It learns both node and graph-level")
-    print("representations through masked atom/bond prediction tasks.")
-
-    print(f"\nCreating GROVER model...")
-    model = dc.models.GroverModel(
-        task=task_type,
-        n_tasks=n_tasks,
-        model_dir='./grover_pretrained'
-    )
-
-    print(f"\nFine-tuning for {n_epochs} epochs...")
-    model.fit(train_dataset, nb_epoch=n_epochs)
-    print("Fine-tuning complete!")
-
-    # Evaluate
-    print("\n" + "=" * 70)
-    print("Model Evaluation")
-    print("=" * 70)
-
-    if task_type == 'classification':
-        metrics = [
-            dc.metrics.Metric(dc.metrics.roc_auc_score, name='ROC-AUC'),
-            dc.metrics.Metric(dc.metrics.accuracy_score, name='Accuracy'),
-        ]
-    else:
-        metrics = [
-            dc.metrics.Metric(dc.metrics.r2_score, name='R²'),
-            dc.metrics.Metric(dc.metrics.mean_absolute_error, name='MAE'),
-        ]
-
-    results = {}
-    for name, dataset in [('Train', train_dataset), ('Test', test_dataset)]:
-        print(f"\n{name} Set:")
-        scores = model.evaluate(dataset, metrics)
-        results[name] = scores
-        for metric_name, score in scores.items():
-            print(f"  {metric_name}: {score:.4f}")
-
-    return model, results
+    raise NotImplementedError(GROVER_NOTE)
 
 
 def load_molnet_dataset(dataset_name, model_type):
@@ -308,6 +275,10 @@ def main():
     if args.dataset and args.data:
         print("Error: Cannot specify both --dataset and --data", file=sys.stderr)
         return 1
+
+    if args.model == 'grover':
+        print(f"Error: {GROVER_NOTE}", file=sys.stderr)
+        return 2
 
     # Print model info
     model_info = PRETRAINED_MODELS[args.model]

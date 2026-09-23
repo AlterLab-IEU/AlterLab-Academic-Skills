@@ -3,21 +3,36 @@
 OpenAlex API Client with throttling and error handling.
 
 Provides a robust client for interacting with the OpenAlex API with:
-- Client-side request spacing (the API uses a daily USD cost budget, not a
-  fixed req/sec cap; spacing avoids transient 429/403 throttles)
-- Exponential backoff retry logic on 429/403/5xx
-- Pagination support
+- Client-side request spacing (hard ceiling is 100 requests/second)
+- Exponential backoff retry logic on short 429/403/5xx throttles
+- Cursor pagination (page-based paging stops at 10,000 results)
 - Batch operations support
 
-OpenAlex runs on a daily cost (credit) model: $0.01/day free keyless, or
-$1/day with a free API key from openalex.org/settings/api. Pass api_key= to
-raise the budget.
+OpenAlex runs on a daily cost budget: keyless calls share $0.10/day per IP
+address; a free API key from openalex.org/settings/api gives your own $1/day.
+Set OPENALEX_API_KEY (or pass api_key=); the key is sent as an
+"Authorization: Bearer" header so it never appears in URLs or logs. The old
+mailto "polite pool" was retired in Feb 2026 — mailto is ignored.
+per_page is capped at 100 (200 is deprecated legacy).
 """
 
+import os
+import random
 import time
 import requests
 from typing import Dict, List, Optional, Any
 from urllib.parse import urljoin
+
+MAX_PER_PAGE = 100  # OpenAlex maximum; per_page=200 is deprecated and slated for removal
+MAX_OR_VALUES = 100  # values allowed in one OR (|) filter
+BUDGET_EXHAUSTED_RETRY_AFTER_S = 120  # a longer Retry-After means the daily budget is spent
+
+
+def _retry_after_seconds(response: requests.Response) -> int:
+    try:
+        return int(float(response.headers.get("Retry-After", 0)))
+    except ValueError:
+        return 0
 
 
 class OpenAlexClient:
@@ -35,25 +50,30 @@ class OpenAlexClient:
         Initialize OpenAlex client.
 
         Args:
-            api_key: Free OpenAlex API key (openalex.org/settings/api). Raises the
-                free daily budget from $0.01 (keyless) to $1. Recommended.
-            email: Optional contact email. Harmless; no longer affects limits.
-            requests_per_second: Client-side request spacing cap (default: 10).
+            api_key: Free OpenAlex API key (openalex.org/settings/api); defaults to
+                the OPENALEX_API_KEY environment variable. Gives your own $1/day
+                instead of the $0.10/day keyless budget shared per IP.
+            email: Deprecated no-op, kept for backward compatibility — OpenAlex
+                has ignored mailto since the polite pool was retired (Feb 2026).
+            requests_per_second: Client-side request spacing cap (default: 10;
+                the API rejects more than 100/s).
         """
-        self.api_key = api_key
+        self.api_key = api_key or os.environ.get("OPENALEX_API_KEY")
         self.email = email
         self.requests_per_second = requests_per_second
         self.min_delay = 1.0 / requests_per_second
         self.last_request_time = 0
 
+    def auth_headers(self) -> Dict[str, str]:
+        """Return the Authorization header for direct requests (empty when keyless)."""
+        return {'Authorization': f'Bearer {self.api_key}'} if self.api_key else {}
+
     def auth_params(self) -> Dict[str, str]:
-        """Return auth query params (api_key and/or mailto) for direct requests."""
-        params: Dict[str, str] = {}
-        if self.api_key:
-            params['api_key'] = self.api_key
-        if self.email:
-            params['mailto'] = self.email
-        return params
+        """Query-param form of the key (?api_key=), for tools that cannot set headers.
+
+        Prefer auth_headers(): a key in the URL ends up in logs and error messages.
+        """
+        return {'api_key': self.api_key} if self.api_key else {}
 
     def _rate_limit(self):
         """Ensure requests don't exceed rate limit."""
@@ -83,21 +103,26 @@ class OpenAlexClient:
         if params is None:
             params = {}
 
-        # Add api_key / mailto for auth and the raised daily budget
-        params = {**params, **self.auth_params()}
-
         url = urljoin(self.BASE_URL, endpoint)
 
         for attempt in range(max_retries):
             try:
                 self._rate_limit()
-                response = requests.get(url, params=params, timeout=30)
+                response = requests.get(url, params=params, headers=self.auth_headers(), timeout=30)
 
                 if response.status_code == 200:
                     return response.json()
                 elif response.status_code in (429, 403):
-                    # Throttled / daily budget exhausted (429) or "slow down" (403)
-                    wait_time = 2 ** attempt
+                    retry_after = _retry_after_seconds(response)
+                    if response.status_code == 429 and retry_after > BUDGET_EXHAUSTED_RETRY_AFTER_S:
+                        # Daily budget spent: retrying cannot succeed before the reset.
+                        raise RuntimeError(
+                            f"OpenAlex daily budget exhausted (resets in {retry_after}s, at "
+                            "midnight UTC). Keyless calls share $0.10/day per IP address; pass "
+                            "api_key= (free at openalex.org/settings/api) for your own $1/day."
+                        )
+                    # Short throttle (e.g. >100 requests/second) or "slow down" (403)
+                    wait_time = max(2 ** attempt, retry_after)
                     print(f"Throttled ({response.status_code}). Waiting {wait_time}s before retry...")
                     time.sleep(wait_time)
                 elif response.status_code >= 500:
@@ -123,7 +148,7 @@ class OpenAlexClient:
         self,
         search: Optional[str] = None,
         filter_params: Optional[Dict] = None,
-        per_page: int = 200,
+        per_page: int = MAX_PER_PAGE,
         page: int = 1,
         sort: Optional[str] = None,
         select: Optional[List[str]] = None
@@ -134,7 +159,7 @@ class OpenAlexClient:
         Args:
             search: Full-text search query
             filter_params: Dictionary of filter parameters
-            per_page: Results per page (max: 200)
+            per_page: Results per page (max: 100)
             page: Page number
             sort: Sort parameter (e.g., 'cited_by_count:desc')
             select: List of fields to return
@@ -143,7 +168,7 @@ class OpenAlexClient:
             API response with meta and results
         """
         params = {
-            'per-page': min(per_page, 200),
+            'per_page': min(per_page, MAX_PER_PAGE),
             'page': page
         }
 
@@ -187,7 +212,7 @@ class OpenAlexClient:
 
         Args:
             entity_type: Type of entity ('works', 'authors', etc.)
-            ids: List of IDs (up to 50 per batch)
+            ids: List of IDs (sent in batches of 100, the OR-filter limit)
             id_field: ID field name ('openalex_id', 'doi', 'orcid', etc.)
 
         Returns:
@@ -195,14 +220,13 @@ class OpenAlexClient:
         """
         all_results = []
 
-        # Process in batches of 50
-        for i in range(0, len(ids), 50):
-            batch = ids[i:i+50]
+        for i in range(0, len(ids), MAX_OR_VALUES):
+            batch = ids[i:i + MAX_OR_VALUES]
             filter_value = '|'.join(batch)
 
             params = {
                 'filter': f"{id_field}:{filter_value}",
-                'per-page': 50
+                'per_page': MAX_PER_PAGE
             }
 
             response = self._make_request(f"/{entity_type}", params)
@@ -217,7 +241,11 @@ class OpenAlexClient:
         max_results: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """
-        Paginate through all results.
+        Paginate through all results with cursor paging.
+
+        Page-based paging stops at 10,000 results, so this follows
+        meta.next_cursor instead. For whole-corpus pulls use the OpenAlex
+        snapshot rather than the API.
 
         Args:
             endpoint: API endpoint
@@ -227,11 +255,11 @@ class OpenAlexClient:
         Returns:
             List of all results
         """
-        if params is None:
-            params = {}
-
-        params['per-page'] = 200  # Use maximum page size
-        params['page'] = 1
+        params = dict(params or {})
+        params.pop('per-page', None)
+        params.pop('page', None)
+        params['per_page'] = MAX_PER_PAGE
+        params['cursor'] = '*'
 
         all_results = []
 
@@ -240,19 +268,13 @@ class OpenAlexClient:
             results = response.get('results', [])
             all_results.extend(results)
 
-            # Check if we've hit max_results
             if max_results and len(all_results) >= max_results:
                 return all_results[:max_results]
 
-            # Check if there are more pages
-            meta = response.get('meta', {})
-            total_count = meta.get('count', 0)
-            current_count = len(all_results)
-
-            if current_count >= total_count:
+            next_cursor = response.get('meta', {}).get('next_cursor')
+            if not results or not next_cursor:
                 break
-
-            params['page'] += 1
+            params['cursor'] = next_cursor
 
         return all_results
 
@@ -273,45 +295,43 @@ class OpenAlexClient:
         Returns:
             List of sampled works
         """
-        params = {
-            'sample': min(sample_size, 10000),  # API limit per request
-            'per-page': 200
-        }
-
-        if seed is not None:
-            params['seed'] = seed
-
+        filter_str = None
         if filter_params:
             filter_str = ','.join([f"{k}:{v}" for k, v in filter_params.items()])
-            params['filter'] = filter_str
+        if seed is None:
+            # Paging through a sample needs a fixed seed, or each page is a new draw.
+            seed = random.randrange(1_000_000)
 
-        # For large samples, need multiple requests with different seeds
-        if sample_size > 10000:
-            all_samples = []
-            seen_ids = set()
-
-            for i in range((sample_size // 10000) + 1):
-                current_seed = seed + i if seed else i
-                params['seed'] = current_seed
-                params['sample'] = min(10000, sample_size - len(all_samples))
-
-                response = self._make_request('/works', params)
-                results = response.get('results', [])
-
-                # Deduplicate
-                for result in results:
-                    work_id = result.get('id')
-                    if work_id not in seen_ids:
-                        seen_ids.add(work_id)
-                        all_samples.append(result)
-
-                if len(all_samples) >= sample_size:
+        def fetch_sample(n: int, seed_value: int) -> List[Dict[str, Any]]:
+            """One sample of up to 10,000 works, paged per_page at a time."""
+            params = {'sample': n, 'seed': seed_value, 'per_page': MAX_PER_PAGE, 'page': 1}
+            if filter_str:
+                params['filter'] = filter_str
+            out: List[Dict[str, Any]] = []
+            while len(out) < n:
+                results = self._make_request('/works', params).get('results', [])
+                if not results:
                     break
+                out.extend(results)
+                params['page'] += 1
+            return out[:n]
 
-            return all_samples[:sample_size]
-        else:
-            response = self._make_request('/works', params)
-            return response.get('results', [])
+        if sample_size <= 10000:
+            return fetch_sample(sample_size, seed)
+
+        # Larger samples: several seeded draws (API max 10,000 each), deduplicated.
+        all_samples: List[Dict[str, Any]] = []
+        seen_ids = set()
+        for i in range((sample_size // 10000) + 1):
+            remaining = sample_size - len(all_samples)
+            for result in fetch_sample(min(10000, remaining), seed + i):
+                work_id = result.get('id')
+                if work_id not in seen_ids:
+                    seen_ids.add(work_id)
+                    all_samples.append(result)
+            if len(all_samples) >= sample_size:
+                break
+        return all_samples[:sample_size]
 
     def group_by(
         self,
@@ -343,8 +363,8 @@ class OpenAlexClient:
 
 
 if __name__ == "__main__":
-    # Example usage. Pass api_key="YOUR_KEY" for the $1/day budget; keyless also works.
-    client = OpenAlexClient(email="your-email@example.com")
+    # Example usage. Reads OPENALEX_API_KEY for the $1/day budget; keyless also works.
+    client = OpenAlexClient()
 
     # Search for works about machine learning
     results = client.search_works(

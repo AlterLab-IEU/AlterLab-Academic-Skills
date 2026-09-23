@@ -4,7 +4,7 @@
     {
       "id": "standardize-and-descriptors",
       "prompt": "I have a CSV of ~3000 vendor compounds with a SMILES column. Standardize them (disconnect metals, normalize, reionize), drop anything that fails to parse, and compute MW, logP, HBD, HBA and TPSA for the survivors so I can filter by Lipinski.",
-      "expected_output": "Invokes alterlab-datamol: reads the CSV with dm.read_csv, standardizes each molecule via dm.standardize_mol (disconnect_metals/normalize/reionize) while dropping None parses from dm.to_mol, then runs dm.descriptors.batch_compute_many_descriptors with n_jobs=-1 to get mw/logp/hbd/hba/tpsa, returning a clean DataFrame ready for a Rule-of-Five mask.",
+      "expected_output": "Invokes alterlab-datamol: reads the CSV with dm.read_csv, standardizes each molecule via dm.standardize_mol (disconnect_metals/normalize/reionize) while dropping None parses from dm.to_mol, then runs dm.descriptors.batch_compute_many_descriptors with n_jobs=-1 (and an explicit batch_size, which joblib >= 1.6 requires) to get datamol's keys mw/clogp/n_lipinski_hbd/n_lipinski_hba/tpsa, returning a clean DataFrame ready for a Rule-of-Five mask.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Uses datamol (dm.*) for parsing, standardization, and dm.descriptors.batch_compute_many_descriptors rather than raw RDKit, handles failed SMILES parses, and references the descriptors by datamol's own key names (clogp, n_lipinski_hbd, n_lipinski_hba) — not RDKit's logp/hbd/hba." }
@@ -13,7 +13,7 @@
     {
       "id": "butina-clustering-diversity",
       "prompt": "Cluster these 800 hits by structural similarity at a Tanimoto distance cutoff of 0.2, then pick the 50 most diverse representatives for follow-up.",
-      "expected_output": "Invokes alterlab-datamol: runs dm.cluster_mols with cutoff=0.2 and n_jobs=-1 (Butina clustering, noting it builds a full distance matrix suitable at this ~800 scale), reports cluster membership, and uses dm.pick_diverse / dm.pick_centroids to select 50 representatives.",
+      "expected_output": "Invokes alterlab-datamol: runs dm.cluster_mols with cutoff=0.2 and n_jobs=-1 (Butina clustering, noting it builds a full distance matrix suitable at this ~800 scale), unpacks its (cluster_indices, cluster_mols) return value to report cluster membership, and uses dm.pick_diverse / dm.pick_centroids (each returning (indices, mols)) to select 50 representatives.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Uses dm.cluster_mols (Butina) at the 0.2 cutoff and a datamol diversity picker, and notes the full-distance-matrix scale limit." }
@@ -31,7 +31,7 @@
     {
       "id": "conformers-and-viz",
       "prompt": "Generate 3D conformers for this molecule with ETKDGv3, minimize them, filter near-duplicates by RMSD, and save an aligned grid image of the molecules to a PNG.",
-      "expected_output": "Invokes alterlab-datamol: calls dm.conformers.generate (method='ETKDGv3', minimize_energy=True, rms_cutoff to drop duplicates), then renders with dm.viz.to_image (align=True, outfile PNG). 3D conformer embedding plus visualization are datamol's wheelhouse.",
+      "expected_output": "Invokes alterlab-datamol: calls dm.conformers.generate (method='ETKDGv3', minimize_energy=True, rms_cutoff to drop duplicates), then renders with dm.viz.to_image (align=True, outfile PNG with use_svg=False, since SVG is the default). 3D conformer embedding plus visualization are datamol's wheelhouse.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Uses dm.conformers.generate with ETKDGv3 and dm.viz.to_image to write the PNG grid." }
@@ -53,6 +53,15 @@
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-rdkit" }
+      ]
+    },
+    {
+      "id": "near-miss-medchem",
+      "prompt": "Before I order these 2,000 screening hits, flag PAINS and other structural alerts, apply the NIBR filters, and drop anything failing Rule of Five or Veber.",
+      "expected_output": "Does NOT invoke alterlab-datamol; defers to alterlab-medchem. Rule-based drug-likeness triage with PAINS / structural-alert catalogs and NIBR filters is medchem's job (RuleFilters, CommonAlertsFilters, NIBRFilters); datamol only supplies the underlying molecule handling and descriptors.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-medchem" }
       ]
     }
   ]

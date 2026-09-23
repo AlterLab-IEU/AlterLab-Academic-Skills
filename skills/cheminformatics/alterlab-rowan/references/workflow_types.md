@@ -1,5 +1,10 @@
 # Rowan Workflow Types Reference
 
+In the snippets below, `mol` is a 3D structure such as `mol = rowan.Molecule.from_smiles("CCO")`.
+Since rowan-python 3.x, geometry-based workflows reject a bare SMILES string (`ValueError`);
+only functions whose parameter is `initial_smiles` (e.g. macro-pKa, solubility), SMILES-based
+pKa methods, and default-settings conformer search take SMILES directly.
+
 ## Table of Contents
 
 1. [Property Prediction Workflows](#property-prediction-workflows)
@@ -18,9 +23,9 @@ Predict acid dissociation constants.
 
 ```python
 workflow = rowan.submit_pka_workflow(
-    "c1ccccc1O",
-    name="pKa calculation"
-)
+    rowan.Molecule.from_smiles("c1ccccc1O"),   # default gxtb_wagen2026 needs 3D;
+    name="pKa calculation"                     # pass a SMILES str only with
+)                                              # method="starling"/"chemprop_nevolianis2025"
 ```
 
 **Result (`pKaResult`):**
@@ -55,7 +60,8 @@ Predict aqueous and nonaqueous solubility.
 
 ```python
 workflow = rowan.submit_solubility_workflow(
-    mol,
+    "CC(=O)Nc1ccc(O)cc1",     # takes initial_smiles (a SMILES string), not a Molecule
+    method="fastsolv",        # default; also "kingfisher", "esol"
     name="solubility"
 )
 ```
@@ -71,7 +77,7 @@ Calculate H-bond acceptor strength.
 
 ```python
 workflow = rowan.submit_hydrogen_bond_basicity_workflow(
-    "CC(=O)C",
+    rowan.Molecule.from_smiles("CC(=O)C"),   # structure input (no SMILES str)
     name="H-bond basicity"
 )
 ```
@@ -344,9 +350,11 @@ workflow = rowan.submit_docking_workflow(
     pocket=[[10.0, 20.0, 30.0],     # center (Å)
             [20.0, 20.0, 20.0]],    # box size (Å)
     initial_molecule=mol,
-    executable="vina",              # "vina" or "qvina2"
-    scoring_function="vinardo",     # "vina" or "vinardo"
-    exhaustiveness=8,
+    docking_settings=rowan.VinaSettings(    # loose executable=/scoring_function=/
+        executable="vina",                  # exhaustiveness= kwargs are deprecated
+        scoring_function="vinardo",         # "vina" or "vinardo"
+        exhaustiveness=8,
+    ),
     do_csearch=False,               # conformer search before docking
     do_optimization=False,          # optimize conformers
     do_pose_refinement=True,        # refine poses (default True)
@@ -388,7 +396,7 @@ Predict protein-ligand complex structure using AI.
 workflow = rowan.submit_protein_cofolding_workflow(
     initial_protein_sequences=["MSKGEELFT..."],
     initial_smiles_list=["CCO"],
-    model="boltz_2",        # "chai_1r" | "boltz_1" | "boltz_2" | "openfold_3"
+    model="boltz_2",        # "chai_1r" | "boltz_1" | "boltz_2" | "boltz_2_1" | "openfold_3" | "decaf_boltz"
     use_msa_server=True,    # build an MSA (default True; improves accuracy)
     use_potentials=False,   # apply physical-potential refinement
     num_samples=None,       # number of predictions to generate
@@ -398,7 +406,7 @@ workflow = rowan.submit_protein_cofolding_workflow(
 )
 ```
 
-**Models:** `chai_1r`, `boltz_1`, `boltz_2` (recommended), `openfold_3`. There is no `boltz_1x`.
+**Models (rowan-python 3.2):** `chai_1r`, `boltz_1`, `boltz_2` (default), `boltz_2_1`, `openfold_3`, `decaf_boltz`. There is no `boltz_1x`.
 
 **Result (`ProteinCofoldingResult`):**
 - `result.predictions`: list of per-sample `CofoldingResult`

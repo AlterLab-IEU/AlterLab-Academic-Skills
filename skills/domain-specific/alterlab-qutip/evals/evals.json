@@ -24,7 +24,7 @@
     {
       "id": "monte-carlo-trajectories",
       "prompt": "I want individual quantum trajectories with quantum jumps for a decaying system, averaging over 500 trajectories, rather than the smooth density-matrix evolution. How do I do this in QuTiP?",
-      "expected_output": "Activates the QuTiP skill and uses mcsolve(H, psi0, tlist, c_ops, ntraj=500, e_ops=[...]) to generate Monte Carlo wavefunction trajectories with quantum jumps. Explains that mcsolve gives individual trajectories / photon-counting behavior versus the ensemble-averaged mesolve, and that it parallelizes over CPUs.",
+      "expected_output": "Activates the QuTiP skill and uses mcsolve(H, psi0, tlist, c_ops, ntraj=500, e_ops=[...]) to generate Monte Carlo wavefunction trajectories with quantum jumps. Explains that mcsolve gives individual trajectories / photon-counting behavior versus the ensemble-averaged mesolve, and that trajectories run serially by default in QuTiP 5 unless parallelized with options={\"map\": \"parallel\"} (or loky/mpi).",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "mcsolve"},

@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch WebSearch Bash(python:*)
 compatibility: No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-03-18"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
 ---
 
 # Mixed Methods Research Design
@@ -16,7 +16,7 @@ metadata:
 
 Mixed methods research is a methodology that combines quantitative and qualitative research approaches within a single study or program of inquiry. It goes beyond simply collecting both types of data — it requires intentional integration at one or more stages of the research process (design, methods, interpretation, reporting) to generate insights that neither approach could produce alone. This skill provides comprehensive guidance on designing, executing, and reporting mixed methods studies according to established frameworks, with particular emphasis on the Creswell & Plano Clark typology and the integration strategies that distinguish rigorous mixed methods from mere parallel data collection.
 
-Mixed methods emerged as a recognized "third methodological movement" in the early 2000s, though researchers had been combining approaches for decades. Its legitimacy rests on the philosophical position of pragmatism — selecting methods based on what works best to answer the research questions rather than adhering to a single paradigm. Today, mixed methods is a requirement or strong recommendation in many funding agencies (NIH, NSF, ESRC) and is increasingly expected in fields such as health sciences, education, evaluation research, and social policy.
+Mixed methods emerged as a recognized "third methodological movement" in the early 2000s, though researchers had been combining approaches for decades. Its legitimacy rests on the philosophical position of pragmatism — selecting methods based on what works best to answer the research questions rather than adhering to a single paradigm. Funders encourage it where a question needs both breadth and mechanism (NIH's Office of Behavioral and Social Sciences Research, for instance, publishes best-practice guidance for mixed methods in the health sciences), and it is increasingly expected in health sciences, education, evaluation research, and social policy.
 
 ## When to Use This Skill
 
@@ -34,11 +34,23 @@ Use this skill when:
 - Preparing a mixed methods study for IRB review with multiple data collection phases
 - Responding to reviewer critiques about the rationale for mixing methods
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Single-strand qualitative methodology or coding (thematic analysis, grounded theory, IPA) | `alterlab-qualitative-methods` |
+| Running the qualitative coding pipeline or computing inter-coder reliability | `alterlab-qualitative-analysis` |
+| Questionnaire items, Likert scales, or instrument validation mechanics | `alterlab-survey-design` |
+| Test selection, assumption checks, or power analysis for the quantitative strand | `alterlab-statistical-analysis` |
+| Coordinating a whole stage-gated social-science study (design → inference gates) | `alterlab-ssci-orchestrator` |
+
 ## Core Capabilities
 
 ### 1. Mixed Methods Design Typology
 
 The following designs represent the major archetypes. In practice, many studies adapt or combine these.
+
+Terminology note: since the 3rd edition (2018), Creswell & Plano Clark distinguish three *core* designs — convergent, explanatory sequential, exploratory sequential — from *complex applications* that embed a core design in a larger framework (experimental/intervention, case study, participatory–social justice, evaluation). The embedded, transformative, and multiphase labels used below are the older (2011) names for those applications and remain common in the literature; name whichever typology your target journal's reviewers will recognize, and cite its edition. The 4th edition (Sage, December 2025) covers seven designs in depth.
 
 #### Convergent Parallel Design (QUAL + QUAN)
 
@@ -155,7 +167,7 @@ Quantitative Phase:
   → Reliability testing → Validity evidence (convergent, discriminant, criterion)
 ```
 
-#### Embedded Design (QUAN[qual] or QUAL[quan])
+#### Embedded Design (QUAN(qual) or QUAL(quan))
 
 One strand is primary; the other is embedded within it to enhance the primary design.
 
@@ -193,10 +205,10 @@ Key principles:
   4. Integration explicitly examines how findings relate to structural inequity
   5. Results include action agendas and recommendations for change
 
-Notation adds a framework wrapper:
-  Transformative Framework [QUAL → QUAN]
-  or
-  Transformative Framework [QUAL + QUAN]
+Diagram: label the framework around the procedural diagram, e.g.
+  Transformative framework: QUAL → QUAN
+  Transformative framework: QUAL + QUAN
+(Square brackets are reserved for a project within a series of studies — see §2.)
 ```
 
 #### Multiphase Design
@@ -215,7 +227,7 @@ Example: Multi-year curriculum evaluation program
 
 ### 2. The Notation System
 
-The Creswell & Plano Clark notation system communicates design decisions concisely:
+The notation compiled by Creswell & Plano Clark (originating with Morse, 2003, and extended by Nastasi et al., 2007, and Morse & Niehaus, 2009) communicates design decisions concisely:
 
 ```
 Symbol Reference:
@@ -223,16 +235,17 @@ Symbol Reference:
   lowercase   = Secondary/supplementary strand (e.g., qual = qualitative is secondary)
   +           = Concurrent/simultaneous collection
   →           = Sequential collection (left happens before right)
-  ( )         = Embedded strand within a larger design
-  [ ]         = Framework wrapper (e.g., transformative, pragmatic)
-  { }         = Sometimes used for the integration/merging phase
+  ( )         = Strand embedded within a larger design, e.g. QUAN(qual)
+  →←          = Recursive/iterative strands (Nastasi et al., 2007)
+  [ ]         = A mixed methods project within a series of studies,
+                e.g. QUAL → QUAN → [QUAN + qual] (Morse & Niehaus, 2009)
+  =           = Purpose of the mixing, e.g. QUAN → qual = explain
 
 Common patterns:
   QUAN + QUAL      Convergent, equal weight
   QUAN → qual      Explanatory sequential, quantitative dominant
   qual → QUAN      Exploratory sequential, quantitative dominant
   QUAN(qual)       Embedded qualitative within quantitative
-  Trans[QUAL + QUAN]  Transformative convergent design
 
 Expanded notation (Morse, 2003):
   Uses + for simultaneous, → for sequential
@@ -395,8 +408,9 @@ Mixed methods questions take three structures: a single hybrid question, separat
 
 ## References
 
-- Creswell, J. W., & Plano Clark, V. L. (2018). *Designing and Conducting Mixed Methods Research* (3rd ed.). Sage.
+- Creswell, J. W., & Plano Clark, V. L. (2018). *Designing and Conducting Mixed Methods Research* (3rd ed.). Sage. (4th ed. published by Sage in December 2025.)
 - Teddlie, C., & Tashakkori, A. (2009). *Foundations of Mixed Methods Research*. Sage.
+- Morse, J. M., & Niehaus, L. (2009). *Mixed Method Design: Principles and Procedures*. Left Coast Press.
 - Morse, J. M. (2003). Principles of mixed methods and multimethod research design. In A. Tashakkori & C. Teddlie (Eds.), *Handbook of Mixed Methods in Social and Behavioral Research* (pp. 189-208). Sage.
 - Onwuegbuzie, A. J., & Johnson, R. B. (2006). The validity issue in mixed research. *Research in the Schools*, 13(1), 48-63.
 - Fetters, M. D., Curry, L. A., & Creswell, J. W. (2013). Achieving integration in mixed methods designs—principles and practices. *Health Services Research*, 48(6pt2), 2134-2156.

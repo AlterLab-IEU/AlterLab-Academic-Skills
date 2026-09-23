@@ -52,15 +52,17 @@ activity's oran from the table, then feed it in:
 
 | Activity (table cell) | Coefficients | oran (fraction of headline) | Type (headline) |
 |---|---|---|---|
-| Q1 SSCI research article, 2 authors (`k × p × 60`) | k=0.8, p=1.0 | 0.8·1.0·0.60 = **0.48** | Yayın (30) |
-| TÜBİTAK 1001 yürütücü, A1 alanı (`r × 80`) | r=1.0 | 1.0·0.80 = **0.80** | Proje (20) |
+| Q1 SSCI research article, 2 authors, A1 field e.g. Eğitim Bilimleri (`k × p × 60`) | k=0.8, p=1.0 | 0.8·1.0·0.60 = **0.48** | Yayın (30) |
+| Same article, A2 field e.g. Sosyal-Beşeri-İdari (`k × p × 80`) | k=0.8, p=1.0 | 0.8·1.0·0.80 = **0.64** | Yayın (30) |
+| TÜBİTAK 1001 yürütücü (`r × 80`, every column) | r=1.0 | 1.0·0.80 = **0.80** | Proje (20) |
 | Yurt içi araştırma, 6 months (`10 × ay`) | — | 0.10·6 = **0.60** | Araştırma (15) |
-| 1 citation in an SCI-indexed article (`8`) | — | **0.08** | Atıf (30) |
-| International full paper / tam bildiri (`20`) | — | **1.00** | Tebliğ (20) |
-| TÜBA Akademi Ödülü (`20`) | — | **1.00** | Ödül (20) |
+| 1 citation in an SCI/SSCI/AHCI article, A1 (`4`; A2/A4 `6`) | — | **0.04** | Atıf (30) |
+| International full paper / tam bildiri, single author (`k × 15`) | k=1 | **0.15** | Tebliğ (20) |
+| TÜBA Akademi Ödülü (`100`) | — | **1.00** | Ödül (20) |
 
 Note `count` multiplies an oran for repeated identical activities (e.g. twelve
-identical SCI citations → `oran 0.08, count 12`).
+identical SCI citations in an A1 field → `oran 0.04, count 12`). The full
+row-by-column table is in `tablo4.md`; always read the applicant's own column.
 
 ## The calculation pipeline
 
@@ -87,20 +89,24 @@ identical SCI citations → `oran 0.08, count 12`).
 
 ## Worked end-to-end example
 
-Activities (oranları derived from the table as above):
+Activities of an A1-field applicant (oranları derived from the table as above):
 
 - Q1 SSCI article, 2 authors → Yayın, oran 0.48 → türü puanı `0.48 × 30 = 14.40`.
-- TÜBİTAK 1001 yürütücü (A1) → Proje, oran 0.80 → `0.80 × 20 = 16.00`.
-- 12 SCI citations (oran 0.08 each) → Atıf, Σoran 0.96 → `0.96 × 30 = 28.80`.
-- International tam bildiri → Tebliğ, oran 1.00 → `1.00 × 20 = 20.00`.
+- TÜBİTAK 1001 yürütücü → Proje, oran 0.80 → `0.80 × 20 = 16.00`.
+- 12 citations in SCI/SSCI articles (oran 0.04 each) → Atıf, Σoran 0.48 →
+  `0.48 × 30 = 14.40`.
+- Single-author international tam bildiri → Tebliğ, oran 0.15 → `0.15 × 20 = 3.00`.
 - TÜBA Akademi Ödülü → Ödül, oran 1.00 → `1.00 × 20 = 20.00`.
 
 Totals:
 
-- Per-type puanları: Yayın 14.40, Proje 16.00, Atıf 28.80, Tebliğ 20.00,
+- Per-type puanları: Yayın 14.40, Proje 16.00, Atıf 14.40, Tebliğ 3.00,
   Ödül 20.00 — none exceeds its headline ceiling (MADDE 8/3 not binding here).
-- Sum = **99.20**; 99.20 < 100, so no cap.
-- Net-30 gate: 99.20 ≥ 30 → **payable**.
+- Sum = **67.80**; 67.80 < 100, so no cap.
+- Net-30 gate: 67.80 ≥ 30 → **payable**.
+
+For an A2-field applicant with the same record, the article becomes 0.64 × 30 =
+19.20 and the citations 12 × 0.06 = 0.72 → 21.60, so the total rises to 79.80.
 
 Now drop everything except the article: total 14.40 < 30 → **not payable**, even
 though the work is real. The gate is unforgiving by design. (A publication-heavy

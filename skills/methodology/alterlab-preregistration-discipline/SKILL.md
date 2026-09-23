@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No API key required. Judgment/discipline skill; the optional helper runs locally via `uv run python` (stdlib only). Defers all registration mechanics and statistics to the sibling skills it orchestrates.
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-06-06"
+  version: "1.0.1"
+  last_updated: "2026-09-23"
   depends_on: "alterlab-open-science, alterlab-statistical-analysis, alterlab-scientific-thinking"
 ---
 
@@ -70,7 +70,7 @@ everything mechanical away. Route adjacent requests as follows:
 | Whether a citation exists / supports a claim | `alterlab-citation-verifier` | Citation integrity, not analysis-plan integrity. |
 | Reporting completeness of an analysis already run (effect sizes, CIs, every test disclosed) | `alterlab-results-transparency` | That is the *reporting* gate downstream of CONFIRM/EXPLORE. |
 | Choosing among candidate tests for a borderline distribution before any peeking | `alterlab-test-selection-guard` | Locking the test choice is its own guard; this skill assumes the test is already in the frozen plan. |
-| Writing a TÜBİTAK / grant proposal's methods section | `alterlab-tubitak-proposal` / `alterlab-grant-reporting` | Proposal authoring, not pre-registration enforcement. |
+| Writing a TÜBİTAK / grant proposal's methods section | `alterlab-tubitak-proposal` / `alterlab-research-grants` | Proposal authoring, not pre-registration enforcement (`alterlab-grant-reporting` is post-award reporting). |
 | Research ethics approval / KVKK / data-management compliance | `alterlab-tr-research-ethics` / `alterlab-kvkk-dmp` | Ethics & data governance, distinct from analysis-plan freezing. |
 
 **REQUIRED BACKGROUND** (this skill orchestrates, it does not reimplement):

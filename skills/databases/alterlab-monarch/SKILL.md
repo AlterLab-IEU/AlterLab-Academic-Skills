@@ -3,10 +3,11 @@ name: alterlab-monarch
 description: Query the Monarch Initiative knowledge graph for disease-gene-phenotype associations across species, integrating OMIM, ORPHANET, HPO, ClinVar, and model organism databases. Use when discovering rare disease genes, mapping phenotypes to genes, modeling disease across species, or looking up HPO terms. Part of the AlterLab Academic Skills suite.
 license: CC0-1.0
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless Monarch Initiative REST API (no authentication required)
+compatibility: Keyless Monarch Initiative REST API v3 (no authentication required); verified against API 1.30.0 / KG release 2026-09-02 (GET /v3/api/version)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Monarch Initiative Database
@@ -48,6 +49,16 @@ Use Monarch when:
 - **Disease-phenotype mapping**: List all HPO terms associated with a specific disease
 - **Gene-phenotype associations**: What phenotypes are caused by variants in a gene?
 - **Ortholog-phenotype mapping**: Use animal model phenotypes to infer human gene function
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Clinical significance of a specific variant (ACMG, review stars) | `alterlab-clinvar` |
+| Population allele frequencies and gene constraint (pLI/LOEUF) | `alterlab-gnomad` |
+| Target-disease evidence scores and tractability for drug discovery | `alterlab-opentargets` |
+| GWAS trait associations for common variants | `alterlab-gwas` |
+| Pharmacogenomic gene-drug guidance | `alterlab-clinpgx` |
 
 ## Core Capabilities
 
@@ -222,6 +233,26 @@ similarity = compare_phenotype_sets(
 print(similarity["average_score"], similarity["best_score"])
 ```
 
+**Phenotype-profile search** ranks every gene or disease in a group against a
+whole HPO term set in one call — the similarity-based alternative to the
+per-term counting in §8. `GET /semsim/search/{termset}/{group}` takes a
+comma-separated termset and a group (`Human Genes`, `Human Diseases`,
+`Mouse Genes`, `Rat Genes`, `Zebrafish Genes`, `C. Elegans Genes`); `limit` ≤ 50.
+It returns a list of `{subject: {id, name, ...}, score, similarity}`.
+
+```python
+from urllib.parse import quote
+
+def semsim_search(hpo_ids, group="Human Diseases", metric="ancestor_information_content", limit=20):
+    termset = ",".join(hpo_ids)
+    url = f"{BASE_URL}/semsim/search/{termset}/{quote(group)}"
+    resp = requests.get(url, params={"metric": metric, "limit": limit}, timeout=60)
+    resp.raise_for_status()
+    return [(r["subject"]["id"], r["subject"].get("name"), r["score"]) for r in resp.json()]
+
+semsim_search(["HP:0001250", "HP:0004322", "HP:0001252", "HP:0000252", "HP:0001263"], "Human Genes")
+```
+
 ### 7. Cross-Species Orthologs
 
 ```python
@@ -369,5 +400,5 @@ print(candidates[["gene_name", "matching_phenotypes", "phenotype_overlap"]].to_s
 - **API v3 base**: https://api-v3.monarchinitiative.org/v3/api — **Swagger UI**: https://api-v3.monarchinitiative.org/v3/docs
 - **HPO browser**: https://hpo.jax.org/
 - **MONDO ontology**: https://mondo.monarchinitiative.org/
-- **Citation**: Shefchek KA et al. (2020) Nucleic Acids Research. PMID: 31701156
-- **Phenomizer** (HPO-based diagnosis): https://hpo.jax.org/
+- **Citation**: Putman TE et al. (2024) The Monarch Initiative in 2024: an analytic platform integrating phenotypes, genes and diseases across species. Nucleic Acids Research 52(D1):D938–D949. PMID: 38000386. DOI: 10.1093/nar/gkad1082
+- **KG releases and source versions**: `GET /v3/api/version`, `/v3/api/releases`, `/v3/api/sources/versions` — record the KG version you queried for reproducibility

@@ -82,9 +82,10 @@ with rasterio.open('large.tif') as src:
         block = src.read(1, window=window)
         # Process block...
 
-# Use Dask for very large files
-import dask.array as da
-dask_array = da.from_rasterio('large.tif', chunks=(1, 1024, 1024))
+# Use Dask for very large files (dask-backed xarray via rioxarray)
+import rioxarray
+dask_backed = rioxarray.open_rasterio('large.tif', chunks=(1, 1024, 1024))
+dask_array = dask_backed.data
 ```
 
 ### Geometry Validation Errors

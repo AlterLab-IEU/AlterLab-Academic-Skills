@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No API key and no network required — applies the regulation's tables offline via `uv run python`; the regulation PDF is on mevzuat.gov.tr for re-verification
 metadata:
   skill-author: AlterLab
-  version: "1.0.1"
-  last_updated: "2026-06-09"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
 ---
 
 # Akademik Teşvik — Annual Incentive Score Calculator
@@ -17,8 +17,11 @@ Computes the **akademik teşvik** (academic-incentive) puanı for a Turkish
 calendar year, and decides whether the incentive is payable. It applies the
 **Akademik Teşvik Ödeneği Yönetmeliği** (Academic Incentive Allowance
 Regulation; Bakanlar Kurulu 2018/11834, RG 27/6/2018 No. 30461, amended CK-2043
-of 2020) deterministically and offline, so the same activity list always yields
-the same score.
+of 2020 — still the only amendment as of 2026-09) deterministically and
+offline, so the same activity list always yields the same score. One court
+ruling changed the table since: the "tanınmış ulusal yayınevi" definition and
+its qualifier in the national book / chapter / book-citation rows were annulled
+by Danıştay (final 8/9/2025) — details in `references/tablo4.md`.
 
 This is an **annual** calculation distinct from **doçentlik** (associate-
 professorship) eligibility scoring: the two rule systems use different
@@ -84,8 +87,16 @@ multiplier like `k × p × 60`, `r × 80`, or `15 × ay` — which you express a
 - **p (journal quartile):** Q1 1, Q2 0.8, Q3 0.5, Q4 0.25 (AHCI uses p=0.5,
   MADDE 8/6).
 - **r (project role):** yürütücü (PI) 1, araştırmacı/bursiyer 0.5.
+- **Field column (A1–A4):** many rows differ by the applicant's bilim alanı —
+  A1 (Eğitim, Fen-Matematik, Mühendislik, Sağlık, Ziraat-Orman-Su), A2
+  (Filoloji, Hukuk, İlahiyat, Sosyal-Beşeri-İdari, Spor), A3 (Mimarlık-Planlama-
+  Tasarım), A4 (Güzel Sanatlar). An SCI/SSCI/AHCI research article is
+  `k × p × 60` in A1/A3 but `k × p × 80` in A2/A4; a citation in such an
+  article is `4` in A1/A3 and `6` in A2/A4. Ask for the field before deriving
+  an oran.
 
-The full calculation pipeline, the worked example, and the payout formula are in
+The full row-by-column table is in [`references/tablo4.md`](references/tablo4.md);
+the calculation pipeline, the worked example, and the payout formula are in
 [`references/hesaplama.md`](references/hesaplama.md).
 
 ## The Three Gates (do not skip any)
@@ -114,9 +125,9 @@ k/p/r/months:
 
 ```json
 [
-  {"type": "Yayın",  "oran": 0.48, "label": "Q1 SSCI, 2 authors → k0.8·p1.0·0.60"},
-  {"type": "Proje",  "oran": 0.80, "label": "TÜBİTAK 1001 yürütücü (A1) → r1.0·0.80"},
-  {"type": "Atıf",   "oran": 0.08, "count": 12, "label": "12 SCI citations → 0.08 each"}
+  {"type": "Yayın",  "oran": 0.48, "label": "Q1 SSCI, 2 authors, A1 field → k0.8·p1.0·0.60"},
+  {"type": "Proje",  "oran": 0.80, "label": "TÜBİTAK 1001 yürütücü → r1.0·0.80"},
+  {"type": "Atıf",   "oran": 0.04, "count": 12, "label": "12 SCI/SSCI citations, A1 field → 0.04 each"}
 ]
 ```
 
@@ -160,6 +171,8 @@ before quoting money.
   warn about an unknown type (then it was dropped)?
 - Did you apply the **headline ceilings (MADDE 8/3), the 100 cap, and the net-30
   gate (MADDE 10/3)** — and derive each `oran` from the table, not invent a base?
+- Did you read each `oran` from the applicant's own **A1–A4 column**? The A2/A4
+  article and citation rows are higher than A1/A3.
 - Are you reporting a **score**, not a fabricated TRY amount from a guessed
   salary coefficient?
 - Is this an **annual teşvik** question — or a **doçentlik** one that belongs to
@@ -171,8 +184,9 @@ before quoting money.
 
 ## References
 
-- [`references/tablo4.md`](references/tablo4.md) — verified ceilings and k/p/r
-  coefficient tables, with the regulation source and last-verified date.
+- [`references/tablo4.md`](references/tablo4.md) — verified ceilings, k/p/r
+  coefficient tables, the full Faaliyet Hesaplama Tablosu by A1–A4 column, the
+  court rulings reflected in it, and the last-verified date.
 - [`references/hesaplama.md`](references/hesaplama.md) — full calculation
   pipeline, worked example, the payout formula, and common pitfalls.
 - Regulation PDF: `https://www.mevzuat.gov.tr/MevzuatMetin/21.5.201811834.pdf`

@@ -2,7 +2,7 @@
 
 Comprehensive writing guide for ACL, EMNLP, NAACL (NLP), CHI, CSCW (HCI), SIGKDD, WWW, SIGIR (data mining/IR), and other major CS conferences.
 
-**Last Updated**: 2024
+**Last Updated**: 2024 (CHI format note re-verified 2026-09)
 
 ---
 
@@ -256,7 +256,7 @@ provide granular controls and make visibility mutual.
 ## CHI-Specific Notes
 
 - **Contribution types**: Empirical, artifact, methodological, theoretical
-- **ACM format**: `acmart` document class with `sigchi` option
+- **ACM format**: `acmart` — `\documentclass[manuscript,review,anonymous]{acmart}` (single-column) for submission, `sigconf` for the final version; length is word-based (CHI 2027: 5,000-8,000 words encouraged)
 - **Accessibility**: Alt text, inclusive language expected
 - **Contribution statement**: Required per-author contributions
 

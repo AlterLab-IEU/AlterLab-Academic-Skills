@@ -87,10 +87,10 @@ from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 # Check stationarity
 from statsmodels.tsa.stattools import adfuller
 
-adf_result = adfuller(y_series)
-print(f"ADF p-value: {adf_result[1]:.4f}")
+adf_result = adfuller(y_series, result_object=True)  # named fields; default from 0.16
+print(f"ADF p-value: {adf_result.pvalue:.4f}")
 
-if adf_result[1] > 0.05:
+if adf_result.pvalue > 0.05:
     # Series is non-stationary, difference it
     y_diff = y_series.diff().dropna()
 

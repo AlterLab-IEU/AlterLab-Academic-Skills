@@ -55,18 +55,19 @@ not_water = u.select_atoms("not (resname WAT HOH)")
 ```python
 from MDAnalysis.analysis import rms, align
 
-# Align trajectory to first frame
-align.AlignTraj(u, u, select='backbone', in_memory=True).run()
-
-# RMSD
+# RMSD does its own optimal superposition, so it does not need a pre-aligned trajectory.
 R = rms.RMSD(u, u, select='backbone', groupselections=['name CA'])
 R.run()
 # R.results.rmsd: shape (n_frames, 3) = [frame, time, RMSD]
 
-# RMSF (per-atom fluctuations)
+# RMSF does NOT superpose internally — align to the average structure first, or the
+# fluctuations pick up rigid-body motion. (Aligning to a single frame biases the result.)
 from MDAnalysis.analysis.rms import RMSF
+average = align.AverageStructure(u, u, select='backbone', ref_frame=0).run()
+align.AlignTraj(u, average.results.universe, select='backbone', in_memory=True).run()
 rmsf = RMSF(u.select_atoms('backbone')).run()
-# rmsf.results.rmsf: per-atom RMSF values in Angstroms
+# rmsf.results.rmsf: per-atom RMSF values in Angstroms, indexed by position within the
+# selection (not global atom index)
 ```
 
 ### Radius of Gyration

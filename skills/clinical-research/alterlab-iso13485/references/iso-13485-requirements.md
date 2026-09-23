@@ -594,11 +594,11 @@ Establish documented procedures for rework including:
 
 ## Key Regulatory Updates
 
-### FDA QMSR Harmonization (Effective February 2, 2026)
-- FDA 21 CFR Part 820 has been harmonized with ISO 13485:2016
-- Renamed to QMSR (Quality Management System Regulation)
-- Medical Device File (MDF) replaces separate DHF, DMR, and DHR
-- Organizations should prepare for transition to unified documentation approach
+### FDA QMSR (in effect since February 2, 2026)
+- FDA 21 CFR Part 820 now incorporates ISO 13485:2016 by reference and is titled the Quality Management System Regulation (QMSR); final rule published February 2, 2024
+- The terms DMR, DHF, and DHR are no longer used; FDA considers ISO 13485's record requirements substantively equivalent: the DMR maps to the medical device file (ISO 13485 clause 4.2.3), the DHF to the design and development file (7.3.10), and the DHR to the record kept for each device or batch (7.5.1)
+- FDA-specific additions remain: UDI, traceability, MDR reporting, and corrections/removals (§ 820.10), complaint/servicing/UDI record content (§ 820.35), labeling and packaging controls (§ 820.45)
+- Management review, internal audit, and supplier audit reports are now available to FDA investigators (the QSR § 820.180(c) exception was not retained); FDA inspects under Compliance Program 7382.850 instead of QSIT
 
 ## References and Resources
 

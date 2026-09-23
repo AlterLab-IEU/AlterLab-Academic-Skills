@@ -1,19 +1,52 @@
 ---
 name: alterlab-esm
-description: Run ESM protein language models — ESM3 for generative multimodal protein design across sequence, structure, and function, and ESM C for efficient embeddings and representations — locally or via the cloud Forge API. Use when working with protein sequences, structures, or function prediction, designing novel proteins, generating protein embeddings, performing inverse folding, or doing protein-engineering tasks. Part of the AlterLab Academic Skills suite.
+description: Run ESM protein language models — ESMC for embeddings and representations, ESMFold2 for structure prediction, and ESM3 for generative multimodal protein design across sequence, structure, and function — locally or through the hosted Biohub Platform API (formerly Forge). Use when working with protein sequences, structures, or function prediction, designing novel proteins, generating protein embeddings, performing inverse folding, or doing protein-engineering tasks. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Runs under `uv run python` with the `esm` package (pin `esm>=3.1,<3.2`; requires Python >=3.10). Local model weights run best on a CUDA GPU; CPU works for ESM C embeddings but is slow. The cloud Forge/Biohub API path requires an EvolutionaryScale token (ESM3ForgeInferenceClient)."
+compatibility: "Runs under `uv run python` with the `esm` package (3.4.1.post1 as of 2026-09; requires Python >= 3.12 and torch >= 2.11). Local weights come from Hugging Face (`huggingface_hub` login) and run best on a CUDA GPU; CPU works for small ESMC embeddings but is slow. The hosted path is the Biohub Platform (`https://biohub.ai`, formerly forge.evolutionaryscale.ai) and needs an API token, read from the `ESM_API_KEY` environment variable by default."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # ESM: Evolutionary Scale Modeling
 
 ## Overview
 
-ESM provides state-of-the-art protein language models for understanding, generating, and designing proteins. This skill enables working with two model families: ESM3 for generative protein design across sequence, structure, and function, and ESM C for efficient protein representation learning and embeddings.
+ESM provides state-of-the-art protein language models for understanding, generating, and designing proteins. Three families ship in the same `esm` package:
+
+- **ESMC** — the current representation model (300M / 600M open weights, 6B via the hosted
+  platform), used for embeddings, logits, and downstream ML features.
+- **ESMFold2** — structure prediction built on ESMC-6B, hosted via `esmfold2_client`.
+- **ESM3** — the generative multimodal model over sequence / structure / function tracks.
+
+### Naming and hosting changed — read this before copying old code
+
+EvolutionaryScale now operates as **Biohub**. The practical consequences:
+
+- The hosted API moved from `forge.evolutionaryscale.ai` to **`https://biohub.ai`**; every
+  client in `esm.sdk` defaults to that URL and reads the token from `ESM_API_KEY`. The
+  classes are still named `*ForgeInferenceClient` for backwards compatibility.
+- Model weights live under the **`biohub`** Hugging Face organisation (`biohub/ESMC-6B`,
+  `biohub/esm3-sm-open-v1`, `biohub/ESMFold2`).
+- ESMC and ESMFold2 are also available through Hugging Face Transformers v5.16+, which is
+  a different dependency stack from the `esm` package's optimized inference path.
+
+## When to Use This Skill
+
+Use this skill when the user wants protein embeddings or logits, a protein structure from
+an ESM model, inverse folding, or generative sequence design.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Fold a protein or complex with AlphaFold2/ColabFold | `alterlab-alphafold` |
+| Co-fold with a ligand, or predict binding affinity | `alterlab-boltz` |
+| Antibody–antigen or mixed multi-entity complexes | `alterlab-chai` |
+| Design a sequence for a fixed backbone (ProteinMPNN family) | `alterlab-proteinmpnn`, `alterlab-ligandmpnn` |
+| Generate a de-novo backbone to design onto | `alterlab-rfdiffusion` |
 
 ## Core Capabilities
 
@@ -44,16 +77,15 @@ protein = model.generate(protein, GenerationConfig(track="sequence", num_steps=8
 print(protein.sequence)
 ```
 
-**For remote/cloud usage via Forge API:**
+**For remote/cloud usage via the Biohub Platform:**
 
 ```python
-from esm.sdk.forge import ESM3ForgeInferenceClient
+import esm
 from esm.sdk.api import ESMProtein, GenerationConfig
 
-# Connect to Forge
-model = ESM3ForgeInferenceClient(model="esm3-medium-2024-08", url="https://forge.evolutionaryscale.ai", token="<token>")
+# url defaults to https://biohub.ai and token to os.environ["ESM_API_KEY"]
+model = esm.sdk.client("esm3-medium-2024-08")
 
-# Generate
 protein = model.generate(protein, GenerationConfig(track="sequence", num_steps=8))
 ```
 
@@ -112,7 +144,7 @@ Generate high-quality embeddings for downstream tasks like function prediction, 
 from esm.models.esmc import ESMC
 from esm.sdk.api import ESMProtein, LogitsConfig
 
-# Load ESM C model (note: local from_pretrained names use UNDERSCORES)
+# Load ESMC locally (local from_pretrained names use UNDERSCORES; default is esmc_600m)
 model = ESMC.from_pretrained("esmc_300m").to("cuda")
 
 # Encode, then request embeddings via the logits() API
@@ -190,67 +222,95 @@ config = GenerationConfig(track="function", num_steps=20)
 protein = model.generate(protein, config)
 ```
 
-### 6. Batch Processing with Forge API
+### 6. Batch processing against the hosted platform
 
-Process multiple proteins efficiently using Forge's async executor.
+The client exposes both an async API and a parallel executor that handles retries and a
+progress bar:
 
 ```python
-from esm.sdk.forge import ESM3ForgeInferenceClient
 import asyncio
+import esm
+from esm.sdk import parallel_executor
+from esm.sdk.api import ESMProtein, GenerationConfig
 
-client = ESM3ForgeInferenceClient(model="esm3-medium-2024-08", token="<token>")
-
-# Async batch processing
-async def batch_generate(proteins_list):
-    tasks = [
-        client.async_generate(protein, GenerationConfig(track="sequence"))
-        for protein in proteins_list
-    ]
-    return await asyncio.gather(*tasks)
-
-# Execute
+client = esm.sdk.client("esm3-medium-2024-08")   # token from ESM_API_KEY
 proteins = [ESMProtein(sequence=f"MPRT{'_' * 50}KEND") for _ in range(10)]
-results = asyncio.run(batch_generate(proteins))
+cfg = GenerationConfig(track="sequence", num_steps=8)
+
+# Option A: async fan-out
+async def run():
+    return await asyncio.gather(*(client.async_generate(p, cfg) for p in proteins))
+
+results = asyncio.run(run())
+
+# Option B: managed executor (retries + progress)
+with parallel_executor() as executor:
+    results = executor.execute_batch(client.generate, protein=proteins, config=cfg)
 ```
 
-See `references/forge-api.md` for detailed Forge API documentation, authentication, rate limits, and batch processing patterns.
+Also available: `client.batch_generate(...)` / `async_batch_generate(...)`, and
+`async_fold` / `async_inverse_fold` / `async_logits` for the other tracks.
+
+See `references/forge-api.md` for platform documentation, authentication, rate limits, and
+batch processing patterns.
 
 ## Model Selection Guide
 
 **ESM3 Models (Generative):**
-- `esm3-sm-open-v1` (1.4B) - Open weights, local usage, good for experimentation
-- `esm3-medium-2024-08` (7B) - Best balance of quality and speed (Forge only)
-- `esm3-large-2024-03` (98B) - Highest quality, slower (Forge only)
+- `esm3-sm-open-v1` (1.4B, aliases `esm3_sm_open_v1` / `esm3-open`) — open weights, local
+- `esm3-medium-2024-08` (7B) — balance of quality and speed (hosted only)
+- `esm3-large-2024-03` (98B) — highest quality, slower (hosted only)
 
-**ESM C Models (Embeddings):**
-- `esmc_300m` (30 layers) - Lightweight, fast inference; open weights, runs locally
-- `esmc_600m` (36 layers) - Balanced performance; open weights, runs locally
-- `esmc-6b-2024-12` (80 layers) - Maximum representation quality; Forge/Biohub API only
+**ESMC Models (Representations):**
+- `esmc_300m` — lightweight, fast; open weights, runs locally
+- `esmc_600m` — balanced; open weights, runs locally, and the `from_pretrained` default
+- `esmc_6b` / hosted `esmc-6b-2024-12` — maximum representation quality
 
-Naming gotcha: local `ESMC.from_pretrained(...)` names use **underscores** (`esmc_300m`, `esmc_600m`). The Forge/Biohub client strings use **hyphens with a date** (e.g. `esmc-6b-2024-12`).
+**ESMFold2 (Structure):** `esmfold2-fast-2026-05` (the `esmfold2_client` default),
+`esmfold2-2026-05`, `esmfold2-2026-05-cutoff-2025`.
+
+Naming gotcha: local `from_pretrained(...)` names use **underscores** (`esmc_300m`,
+`esmc_600m`, `esmc_6b`). Hosted client strings use **hyphens with a date**
+(`esmc-600m-2024-12`, `esm3-medium-2024-08`, `esmfold2-fast-2026-05`).
 
 **Selection criteria:**
-- **Local development/testing:** Use `esm3-sm-open-v1` or `esmc_300m`
-- **Production quality:** Use `esm3-medium-2024-08` via Forge
-- **Maximum accuracy:** Use `esm3-large-2024-03` or `esmc-6b-2024-12`
-- **High throughput:** Use Forge API with batch executor
-- **Cost optimization:** Use smaller models, implement caching strategies
+- **Local development/testing:** `esmc_300m` for embeddings, `esm3-sm-open-v1` for generation
+- **Production quality:** `esm3-medium-2024-08` or `esmc-6b-2024-12` via the Biohub Platform
+- **Structure prediction:** `esmfold2_client()` rather than the ESM3 structure track
+- **High throughput:** hosted clients plus `esm.sdk.parallel_executor` / batch client
+- **Cost optimization:** smaller models, cache embeddings
 
 ## Installation
 
-**Basic installation** (pin the major version — the SDK is alpha and API-unstable across minors):
+**Basic installation** (pin the minor — the SDK still changes across releases):
 
 ```bash
-uv pip install "esm>=3.1,<3.2"
+uv pip install "esm>=3.4,<3.5"     # 3.4.1.post1 as of 2026-09; needs Python >= 3.12
 ```
 
-**With Flash Attention (recommended for faster GPU inference):**
+**With Flash Attention (optional, faster GPU inference):**
 
 ```bash
 uv pip install flash-attn --no-build-isolation
 ```
 
-The Forge/Biohub client (`ESM3ForgeInferenceClient`) ships inside the `esm` package — no extra install. Obtain an API token at https://forge.evolutionaryscale.ai
+The hosted clients (`esm.sdk.client`, `esmc_client`, `esmfold2_client`) ship inside the
+`esm` package — no extra install. Create an API token in the Biohub developer console
+(`https://biohub.ai/developer-console/api-keys`) and export it as `ESM_API_KEY`. Local
+weights are pulled from Hugging Face, so run `huggingface_hub.login()` once with a
+read-scoped token.
+
+**ESMC through the Biohub Platform:**
+
+```python
+from esm.sdk import esmc_client
+from esm.sdk.api import ESMProtein, LogitsConfig
+
+model = esmc_client(model="esmc-600m-2024-12")       # url/token default as above
+out = model.logits(model.encode(ESMProtein(sequence="MPRTKEINDAGLIVHSP")),
+                   LogitsConfig(sequence=True, return_embeddings=True))
+print(out.logits, out.embeddings)
+```
 
 ## Common Workflows
 
@@ -287,23 +347,22 @@ These references contain detailed API specifications, parameter descriptions, an
 - Use appropriate model size based on downstream task requirements
 
 **For production deployment:**
-- Use Forge API for scalability and latest models
+- Use the hosted Biohub Platform for scalability and the largest models
 - Implement error handling and retry logic for API calls
 - Monitor token usage and implement rate limiting
 - Consider AWS SageMaker deployment for dedicated infrastructure
 
 ## Resources and Documentation
 
-- **GitHub Repository:** https://github.com/evolutionaryscale/esm
-- **Forge Platform:** https://forge.evolutionaryscale.ai
-- **Scientific Paper:** Hayes et al., Science (2025) - https://www.science.org/doi/10.1126/science.ads0018
-- **Blog Posts:**
-  - ESM3 Release: https://www.evolutionaryscale.ai/blog/esm3-release
-  - ESM C Launch: https://www.evolutionaryscale.ai/blog/esm-cambrian
-- **Community:** Slack community at https://bit.ly/3FKwcWd
-- **Model Weights:** HuggingFace EvolutionaryScale organization
+- **GitHub Repository:** https://github.com/Biohub/esm (ESM3 docs live in `_assets/ESM3_README.md`)
+- **Biohub Platform:** https://biohub.ai — API keys at https://biohub.ai/developer-console/api-keys
+- **ESM Atlas:** https://biohub.ai/esm/protein/atlas
+- **ESM3 paper:** Hayes et al., *Science* — https://www.science.org/doi/10.1126/science.ads0018
+- **Tutorials:** https://github.com/Biohub/esm/tree/main/cookbook/tutorials
+- **Model Weights:** Hugging Face `biohub` organization
 
 ## Responsible Use
 
-ESM is designed for beneficial applications in protein engineering, drug discovery, and scientific research. Follow the Responsible Biodesign Framework (https://responsiblebiodesign.ai/) when designing novel proteins. Consider biosafety and ethical implications of protein designs before experimental validation.
+ESM is designed for beneficial applications in protein engineering, drug discovery, and scientific research. Biohub publishes an Acceptable Use Policy and ran a biosafety/biosecurity risk assessment before release — follow that policy, and the Responsible Biodesign Framework (https://responsiblebiodesign.ai/), when designing novel proteins. Think through biosafety and dual-use implications before experimental validation, because a designed sequence leaves the computational realm the moment it is ordered.
 
+Part of the AlterLab Academic Skills suite.

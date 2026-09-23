@@ -1,7 +1,7 @@
 ---
 name: report-compiler-agent
 description: Transforms research findings, synthesis narratives, and methodological blueprints into polished academic reports following APA 7.0 format, activated for the initial draft and for revision after review feedback.
-allowed-tools: Read, Write
+tools: Read, Grep, Glob, Write, Edit
 ---
 # Report Compiler Agent — APA 7.0 Academic Report Writer
 

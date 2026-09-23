@@ -3,10 +3,11 @@ name: alterlab-pymoo
 description: Multi-objective optimization with pymoo — NSGA-II, NSGA-III, MOEA/D, Pareto-front computation, constraint handling, and standard benchmarks (ZDT, DTLZ). Use when solving multi-objective or constrained optimization problems, computing Pareto-optimal trade-offs, or tackling engineering design problems with competing objectives. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the pymoo Python package.
+compatibility: No API key required. Runs locally via `uv run python`; requires pymoo 0.6.x (current 0.6.2 as of 2026-09).
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Pymoo - Multi-Objective Optimization in Python
@@ -27,6 +28,14 @@ This skill should be used when:
 - Visualizing high-dimensional optimization results
 - Making decisions from multiple competing solutions
 - Handling binary, discrete, continuous, or mixed-variable problems
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Simulating queues or shared resources over time (discrete-event simulation) | `alterlab-simpy` |
+| Hyperparameter search for a machine-learning model (grid/random search, CV) | `alterlab-scikit-learn` |
+| Closed-form optimum of a formula via derivatives or symbolic solving | `alterlab-sympy` |
 
 ## Core Concepts
 
@@ -65,7 +74,7 @@ result = minimize(
 1. **Pick problem type** — single, multi (2-3 obj), many (4+ obj), or constrained.
 2. **Define or select the problem** — built-in via `get_problem(...)`, or subclass `ElementwiseProblem` for custom (objectives in `out["F"]`, inequality constraints `g(x) <= 0` in `out["G"]`, equality `h(x) = 0` in `out["H"]`).
 3. **Choose the algorithm** — NSGA-II for 2-3 objectives, NSGA-III (with reference directions) for 4+, GA/DE/PSO/CMA-ES for single-objective. See the selection tables in `references/quick_reference.md`.
-4. **Set termination** — `('n_gen', N)` or `get_termination("f_tol", tol=0.001)`.
+4. **Set termination** — `('n_gen', N)`, `('n_evals', N)`, or tolerance-based `get_termination("moo", ftol=1e-3, n_max_gen=500)` (`"soo"` for single-objective; there is no `"f_tol"` key).
 5. **Run** with `minimize(problem, algorithm, termination, seed=1, verbose=True)`.
 6. **Inspect** `result.X` / `result.F` / `result.G` (or `result.CV` for constraint violation).
 7. **Decide & visualize** — apply MCDM to pick a preferred Pareto solution, plot with `Scatter`/`PCP`/`Petal`.
@@ -94,5 +103,5 @@ Always set `seed` for reproducibility, normalize objectives when scales differ, 
 uv pip install pymoo
 ```
 
-Dependencies: NumPy, SciPy, matplotlib, autograd (optional). Docs: https://pymoo.org/ — this skill targets pymoo 0.6.x.
+Dependencies (installed automatically): NumPy, SciPy, matplotlib, autograd, cma, moocore. Docs: https://pymoo.org/ — this skill targets pymoo 0.6.x (current 0.6.2, June 2026, which restored CMA-ES under NumPy 2).
 

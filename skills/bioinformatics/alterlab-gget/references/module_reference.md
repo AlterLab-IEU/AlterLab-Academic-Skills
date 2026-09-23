@@ -465,3 +465,17 @@ Install/download dependencies for modules.
 - `gpt` - Configures OpenAI integration
 
 **Returns:** None (installs dependencies)
+
+## Modules added since this reference was first written
+
+Verified present in gget 0.30.8 (2026-09) — see `gget <module> --help` for parameters:
+
+- `virus` — download a filtered virus genome dataset from NCBI Virus (metadata filters are
+  applied before sequences are downloaded).
+- `g2p` — residue-level structural/functional annotations from the Genomics 2 Proteins
+  portal (`g2p.broadinstitute.org`). The variant overlays shown in the portal's web UI
+  (gnomAD, ClinVar, HGMD) are not exposed by its public API, so they are not returned here.
+- `gene_expression`, `psi_block`, `specificity` — 8cubeDB queries for normalized expression
+  and ψ/ζ tissue-specificity statistics, by gene symbol or Ensembl ID.
+
+`cbio` now also requires `gget setup cbio` before first use.

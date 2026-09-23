@@ -6,11 +6,17 @@ Provides functions for searching and retrieving trademark data using USPTO
 Trademark Status & Document Retrieval (TSDR) API.
 
 Requires:
-    - requests library: pip install requests
-    - USPTO API key from https://account.uspto.gov/api-manager/
+    - requests library: uv pip install requests
+    - TSDR API key from https://account.uspto.gov/api-manager/ (a separate key
+      from the Open Data Portal key), sent in the "USPTO-API-KEY" header.
+      Limits: 60 requests/minute per key; 4/minute for PDF and ZIP downloads.
 
 Environment variables:
-    USPTO_API_KEY - Your USPTO API key
+    USPTO_TSDR_API_KEY - TSDR API key (USPTO_API_KEY is accepted as a fallback)
+
+The old Trademark Assignment Search host (assignment-api.uspto.gov) no longer
+resolves (verified 2026-09); ownership changes are in the TSDR status record
+and in the USPTO trademark assignment bulk data on data.uspto.gov.
 """
 
 import os
@@ -24,20 +30,22 @@ class TrademarkClient:
     """Client for USPTO Trademark APIs."""
 
     TSDR_BASE_URL = "https://tsdrapi.uspto.gov/ts/cd"
-    ASSIGNMENT_BASE_URL = "https://assignment-api.uspto.gov/trademark"
+    TIMEOUT = 60
 
     def __init__(self, api_key: Optional[str] = None):
         """
         Initialize client with API key.
 
         Args:
-            api_key: USPTO API key (if not provided, uses USPTO_API_KEY env var)
+            api_key: TSDR API key (defaults to USPTO_TSDR_API_KEY, then USPTO_API_KEY)
         """
-        self.api_key = api_key or os.getenv("USPTO_API_KEY")
+        self.api_key = api_key or os.getenv("USPTO_TSDR_API_KEY") or os.getenv("USPTO_API_KEY")
         if not self.api_key:
-            raise ValueError("API key required. Set USPTO_API_KEY environment variable or pass to constructor.")
+            raise ValueError("API key required. Set USPTO_TSDR_API_KEY or pass api_key=.")
 
-        self.headers = {"X-Api-Key": self.api_key}
+        # TSDR reads the key from "USPTO-API-KEY"; an X-Api-Key header is ignored
+        # and the request is treated as keyless (HTTP 401).
+        self.headers = {"USPTO-API-KEY": self.api_key}
 
     def get_trademark_by_serial(self, serial_number: str) -> Optional[Dict]:
         """
@@ -49,10 +57,11 @@ class TrademarkClient:
         Returns:
             Trademark data dictionary or None if not found
         """
-        url = f"{self.TSDR_BASE_URL}/casedocs/sn{serial_number}/info.json"
+        # casestatus = case status record; casedocs would return the document list
+        url = f"{self.TSDR_BASE_URL}/casestatus/sn{serial_number}/info.json"
 
         try:
-            response = requests.get(url, headers=self.headers)
+            response = requests.get(url, headers=self.headers, timeout=self.TIMEOUT)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.HTTPError as e:
@@ -70,10 +79,10 @@ class TrademarkClient:
         Returns:
             Trademark data dictionary or None if not found
         """
-        url = f"{self.TSDR_BASE_URL}/casedocs/rn{registration_number}/info.json"
+        url = f"{self.TSDR_BASE_URL}/casestatus/rn{registration_number}/info.json"
 
         try:
-            response = requests.get(url, headers=self.headers)
+            response = requests.get(url, headers=self.headers, timeout=self.TIMEOUT)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.HTTPError as e:
@@ -254,7 +263,7 @@ Examples:
   %(prog)s --prosecution 87654321
 
 Environment:
-  Set USPTO_API_KEY environment variable with your API key from:
+  Set USPTO_TSDR_API_KEY (or USPTO_API_KEY) to your TSDR key from:
   https://account.uspto.gov/api-manager/
         """
     )
@@ -270,7 +279,7 @@ Environment:
     group.add_argument('--prosecution', '-p', help='Get prosecution history (serial or registration number)')
 
     # API key option
-    parser.add_argument('--api-key', '-k', help='USPTO API key (overrides USPTO_API_KEY env var)')
+    parser.add_argument('--api-key', '-k', help='TSDR API key (overrides USPTO_TSDR_API_KEY)')
 
     args = parser.parse_args()
 

@@ -55,16 +55,20 @@ Level 5: Indented, Bold Italic, Title Case, Ending With a Period.
 1. Notes-Bibliography (humanities): Footnotes/endnotes + bibliography
 2. Author-Date (sciences): Parenthetical citations + reference list
 
-### Notes-Bibliography Example
+### Notes-Bibliography Example (Chicago 18th ed., 2024)
 First citation (footnote):
-  1. Jane Smith, Title of Book (Place: Publisher, 2024), 45.
+  1. Jane Smith, Title of Book (Publisher, 2024), 45.
 
 Subsequent citations:
   2. Smith, Title of Book, 50.
   (or: Smith, 50. — if no ambiguity)
 
 Bibliography entry:
-  Smith, Jane. Title of Book. Place: Publisher, 2024.
+  Smith, Jane. Title of Book. Publisher, 2024.
+
+The 18th edition (September 2024) no longer requires the place of publication
+for books. Turabian's 9th edition (2018) still follows the 17th — if the
+graduate school mandates Turabian 9th, keep "Place: Publisher".
 
 ### Formatting
 - Margins: 1 inch (some universities require 1.5" left for binding)

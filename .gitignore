@@ -37,3 +37,6 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .venv/
+
+# Maintainer workflow output (.claude/workflows/skill-freshness-audit.js)
+freshness-report.md

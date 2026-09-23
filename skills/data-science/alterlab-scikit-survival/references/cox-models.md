@@ -32,15 +32,19 @@ Basic Cox proportional hazards model for survival analysis.
 ```python
 from sksurv.linear_model import CoxPHSurvivalAnalysis
 from sksurv.datasets import load_gbsg2
+from sksurv.preprocessing import encode_categorical
 
-# Load data
+# Load data (X has categorical columns such as 'horTh', 'menostat', 'tgrade';
+# y's fields are ('cens', 'time') for this dataset)
 X, y = load_gbsg2()
+X = encode_categorical(X)
 
 # Fit Cox model
 estimator = CoxPHSurvivalAnalysis()
 estimator.fit(X, y)
 
-# Get coefficients (log hazard ratios)
+# Get coefficients (log hazard ratios). No standard errors or p-values are
+# computed; use lifelines CoxPHFitter or statsmodels PHReg for inference.
 coefficients = estimator.coef_
 
 # Predict risk scores
@@ -58,7 +62,8 @@ Cox model with elastic net penalty for feature selection and regularization.
 - Require sparse models
 
 ### Penalty Types
-- **Ridge (L2)**: alpha_min_ratio=1.0, l1_ratio=0
+- **Ridge (L2)**: `CoxnetSurvivalAnalysis` requires `0 < l1_ratio ≤ 1`, so use
+  `CoxPHSurvivalAnalysis(alpha=...)` (ridge-penalized Cox) or a very small `l1_ratio`
   - Shrinks all coefficients
   - Good when all features are relevant
 
@@ -71,7 +76,7 @@ Cox model with elastic net penalty for feature selection and regularization.
   - Balances feature selection and grouping
 
 ### Key Parameters
-- `l1_ratio`: Balance between L1 and L2 penalty (0=Ridge, 1=Lasso)
+- `l1_ratio`: Balance between L1 and L2 penalty, in (0, 1] (1 = Lasso; values near 0 approach Ridge)
 - `alpha_min_ratio`: Ratio of smallest to largest penalty in regularization path
 - `n_alphas`: Number of alphas along regularization path
 - `fit_baseline_model`: Whether to fit unpenalized baseline model
@@ -84,9 +89,10 @@ from sksurv.linear_model import CoxnetSurvivalAnalysis
 estimator = CoxnetSurvivalAnalysis(l1_ratio=0.5, alpha_min_ratio=0.01)
 estimator.fit(X, y)
 
-# Access regularization path
+# Access regularization path: coef_ has shape (n_features, n_alphas),
+# one column per penalty in alphas_ (there is no coef_path_ attribute)
 alphas = estimator.alphas_
-coefficients_path = estimator.coef_path_
+coefficients_path = estimator.coef_
 
 # Predict with specific alpha
 risk_scores = estimator.predict(X, alpha=0.1)

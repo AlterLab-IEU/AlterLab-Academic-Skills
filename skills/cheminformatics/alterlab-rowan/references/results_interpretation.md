@@ -20,7 +20,7 @@ Use `workflow.result()` — it blocks, fetches, and returns a typed `WorkflowRes
 ```python
 import rowan
 
-workflow = rowan.submit_pka_workflow("c1ccccc1O", name="test")
+workflow = rowan.submit_pka_workflow(rowan.Molecule.from_smiles("c1ccccc1O"), name="test")
 
 try:
     result = workflow.result()        # blocks until done; raises on failure/stop
@@ -60,7 +60,7 @@ print(f"Credits used: {workflow.credits_charged}")
 ### pKa Results
 
 ```python
-workflow = rowan.submit_pka_workflow("c1ccccc1O", name="pKa")
+workflow = rowan.submit_pka_workflow(rowan.Molecule.from_smiles("c1ccccc1O"), name="pKa")
 result = workflow.result()                 # pKaResult
 
 strongest_acid = result.strongest_acid     # most acidic pKa
@@ -317,7 +317,7 @@ import rowan
 energies = {}
 for method in ["gfn2_xtb", "aimnet2_wb97md3"]:
     wf = rowan.submit_basic_calculation_workflow(
-        "c1ccccc1O",
+        rowan.Molecule.from_smiles("c1ccccc1O"),   # 3D input required
         tasks=["optimize"],
         method=method,
         name=f"opt_{method}",

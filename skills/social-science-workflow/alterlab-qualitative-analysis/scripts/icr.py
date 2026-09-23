@@ -55,7 +55,9 @@ def krippendorff_alpha_nominal(by_unit: list[list[str]]) -> float | None:
     sum_nc2 = sum(v * v for v in n_c.values())                         # sum n_c^2
     denom = n * n - sum_nc2
     if denom == 0:
-        return 1.0  # no expected disagreement possible → perfect
+        # Every code is the same category: expected disagreement is 0 and alpha is undefined
+        # (the krippendorff package raises here). Reporting 1.0 would overstate reliability.
+        return None
     # alpha = 1 - (n-1) * (observed off-diagonal) / (expected off-diagonal)
     return 1.0 - (n - 1) * (n - diag) / denom
 

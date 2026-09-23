@@ -5,10 +5,16 @@ ZINC22 query tool.
 Query the ZINC22 CartBlanche API for purchasable compounds. CartBlanche accepts
 form-encoded POST submissions and dispatches every search (ID lookup, SMILES,
 random sample) asynchronously: each call returns a JSON task handle
-({"task": "<uuid>"}). The result rows are assembled server-side and shown in the
-web UI at https://cartblanche22.docking.org (the task-retrieval route serves the
-single-page app, so there is no plain-text polling endpoint to scrape).
-Standard library only.
+({"task": "<uuid>"}). Poll GET /search/result/<task> for the rows: it answers
+{"status": "PENDING", "progress": ...} until the job finishes, then
+{"status": "SUCCESS", "result": {...}} with rows grouped by source (e.g.
+"zinc22", "zinc20") plus "missing"/"zinc22_missing" for unmatched queries.
+Pass --wait to poll automatically. Standard library only.
+
+Known issue (2026-09): smiles.txt jobs finish at once with
+zinc22_missing == [""] — the server does not receive the SMILES — so run
+similarity searches in the CartBlanche22 web UI or SmallWorld
+(https://sw.docking.org) until this is fixed.
 
 API base: https://cartblanche22.docking.org
 Docs:     https://wiki.docking.org/index.php/Zinc22:Searching
@@ -17,6 +23,7 @@ Docs:     https://wiki.docking.org/index.php/Zinc22:Searching
 import argparse
 import json
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -39,6 +46,26 @@ def _post(path, fields):
     )
     with urllib.request.urlopen(req, timeout=120) as resp:
         return resp.read().decode("utf-8")
+
+
+def fetch_result(task_id):
+    """Fetch the current state of an async task: PENDING/progress or SUCCESS + rows."""
+    req = urllib.request.Request(
+        f"{BASE_URL}/search/result/{task_id}",
+        headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def wait_for(task_id, timeout_s=300, interval_s=5):
+    """Poll /search/result/<task> until the job leaves PENDING or timeout_s passes."""
+    deadline = time.monotonic() + timeout_s
+    while True:
+        state = fetch_result(task_id)
+        if state.get("status") not in ("PENDING", "STARTED") or time.monotonic() > deadline:
+            return state
+        time.sleep(interval_s)
 
 
 def _parse(text):
@@ -103,6 +130,14 @@ def main():
     p_r.add_argument("--subset", help="lead-like | drug-like | fragment")
     p_r.add_argument("--fields", default="zinc_id,smiles,tranche", help="Output fields")
 
+    for p in (p_i, p_s, p_r):
+        p.add_argument("--wait", action="store_true",
+                       help="Poll /search/result/<task> and print the rows")
+        p.add_argument("--timeout", type=int, default=300, help="Max seconds to wait")
+
+    p_t = sub.add_parser("result", help="Fetch results for a task id")
+    p_t.add_argument("task_id", help="Task id returned by a search")
+
     args = parser.parse_args()
     try:
         if args.command == "id":
@@ -111,6 +146,11 @@ def main():
             result = by_smiles(args.smiles, args.dist, args.fields)
         elif args.command == "random":
             result = random(args.count, args.subset, args.fields)
+        else:
+            result = fetch_result(args.task_id)
+        task_id = result.get("task") if isinstance(result, dict) else None
+        if getattr(args, "wait", False) and task_id:
+            result = wait_for(task_id, args.timeout)
     except urllib.error.HTTPError as exc:
         print(f"HTTP error {exc.code}: {exc.reason}", file=sys.stderr)
         return 1

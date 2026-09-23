@@ -1,19 +1,20 @@
 ---
 name: alterlab-dergipark
-description: "Harvests article metadata, abstracts, and full-text PDFs from DergiPark (TÜBİTAK ULAKBİM's national journal-hosting platform, ~2,537 journals) via its verified platform-wide OAI-PMH endpoint (https://dergipark.org.tr/api/public/oai/; verbs Identify/ListSets/ListRecords/GetRecord; prefixes oai_dc/oai_mods/oai_marc/oai_etdms; setSpec=journal-slug), parses Highwire citation_* and DC.* meta tags on /pub/{slug}/article/{id} pages, pulls PDFs from the citation_pdf_url path, and emits BibTeX/RIS locally. Use when the user wants to harvest a Turkish journal, fetch DergiPark articles, list a journal archive, get BibTeX/RIS for a DergiPark paper, or read a journal aim-and-scope (öz/kapsam). For TR Dizin indexing status use alterlab-trdizin; for YÖK theses use alterlab-yok-tez; for academic profiles use alterlab-yok-akademik. Part of the AlterLab Academic Skills suite."
+description: "Harvests article metadata, abstracts, and full-text PDFs from DergiPark (TÜBİTAK ULAKBİM's national journal-hosting platform, 3,000+ journals) via its verified platform-wide OAI-PMH endpoint (https://dergipark.org.tr/api/public/oai/; verbs Identify/ListSets/ListRecords/GetRecord; prefixes oai_dc/oai_mods/oai_marc/oai_etdms; setSpec=journal-slug), parses Highwire citation_* and DC.* meta tags on /pub/{slug}/article/{id} pages, pulls PDFs from the citation_pdf_url path, and emits BibTeX/RIS locally. Use when the user wants to harvest a Turkish journal, fetch DergiPark articles, list a journal archive, get BibTeX/RIS for a DergiPark paper, or read a journal aim-and-scope (öz/kapsam). For TR Dizin indexing status use alterlab-trdizin; for YÖK theses use alterlab-yok-tez; for academic profiles use alterlab-yok-akademik. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash WebFetch
 compatibility: No API key required — harvests DergiPark's public OAI-PMH 2.0 endpoint and open article pages via `uv run python` (requests if present, else stdlib urllib); degrades gracefully offline by emitting a network_unavailable error rather than fabricating records
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-06-06"
+  version: "1.0.1"
+  last_updated: "2026-09-23"
 ---
 
 # DergiPark — National Journal Harvester (TÜBİTAK ULAKBİM)
 
 DergiPark (https://dergipark.org.tr) is **TÜBİTAK ULAKBİM's national
-journal-hosting platform** — ~2,537 Turkish scholarly journals on OJS-based
+journal-hosting platform** — 3,000+ Turkish scholarly journals (per its home page,
+2026-09) on OJS-based
 infrastructure. This skill harvests its metadata, abstracts, and full-text PDFs
 **reproducibly**, by going through the one stable machine surface: a platform-wide
 **OAI-PMH** (Open Archives Initiative Protocol for Metadata Harvesting) endpoint,
@@ -63,7 +64,8 @@ gotchas are in `references/oai-cookbook.md`; the verified endpoint table is in
 ### 1. `scripts/dergipark_oai.py` — OAI harvest (primary path)
 
 ```bash
-# Find a journal's slug (slug == OAI setSpec)
+# The slug (== OAI setSpec) is in the journal URL: dergipark.org.tr/en/pub/{slug}
+# list-journals only sees the first 100 sets — ListSets stopped paging (2026-09-23)
 uv run python scripts/dergipark_oai.py list-journals --tsv | rg -i "mülkiye"
 
 # Harvest a whole journal (follows resumptionToken paging automatically)

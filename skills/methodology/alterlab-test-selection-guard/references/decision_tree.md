@@ -26,6 +26,21 @@ The parametric branch is the default pre-specification; the non-parametric branc
 **only when the assumption-check gate (`references/assumption_gate.md`) sends you there** —
 never because the t-test returned a non-significant p-value.
 
+**Simplest defensible pre-specification for two independent groups: Welch's t-test
+unconditionally.** Welch controls the Type I error rate when variances are unequal and
+loses very little when they are equal, so many methodologists recommend it as the default
+rather than choosing between Student and Welch with a Levene test (Delacre, Lakens & Leys,
+2017, *International Review of Social Psychology* 30(1):92–101,
+https://doi.org/10.5334/irsp.82). A Levene pre-test followed by Student-or-Welch fails to
+protect the significance level in simulations, especially with unequal group sizes
+(Zimmerman, 2004, *Br J Math Stat Psychol* 57(1):173–181,
+https://doi.org/10.1348/000711004849222). A Shapiro-Wilk pre-test distorts the
+*conditional* error rates of the t-test or Mann-Whitney chosen after it, although the
+overall two-stage procedure stayed near the nominal level in Rochon, Gondan & Kieser's
+simulations (2012, *BMC Med Res Methodol* 12:81, https://doi.org/10.1186/1471-2288-12-81).
+Either route is compatible with this guard as long as it is fixed in the plan before any
+outcome is seen.
+
 ## 3. Three or more groups, continuous/ordinal outcome
 
 - **Independent + normal** → one-way ANOVA. Plan post-hoc comparisons (e.g. Tukey HSD) in

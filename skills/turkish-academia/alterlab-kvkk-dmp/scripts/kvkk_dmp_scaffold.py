@@ -73,14 +73,36 @@ def _v(value: str, default: str = "[doldurun / fill in]") -> str:
     return value if value else default
 
 
+def _cb_block(cb: str, lang: str) -> str:
+    """Section 7 bullet lines for the chosen Art. 9 mechanism (lang: "tr" or "en")."""
+    tr = lang == "tr"
+    if cb == "none":
+        lines = ["Yurt dışı aktarım yok (yalnızca Türkiye)" if tr
+                 else "No transfer abroad (Türkiye only)"]
+    else:
+        lines = [f"Mekanizma: {cb} (Madde 9)" if tr else f"Mechanism: {cb} (Art. 9)"]
+    if cb == "standard-contract":
+        lines.append(
+            "Standart sözleşme, imzaların tamamlanmasından itibaren 5 iş günü içinde "
+            "Kuruma bildirilir (Madde 9/5; Yönetmelik, RG 10/7/2024, No. 32598)" if tr
+            else "Notify the Board of the standard contract within 5 business days of "
+            "signature (Art. 9(5); Regulation, Official Gazette 10 Jul 2024, No. 32598)")
+    lines.append(
+        "Yurt dışında barındırılan bulut depolama ya da yapay zekâ (LLM) API'lerine "
+        "kişisel veri göndermek de yurt dışına aktarımdır; açık rıza yalnızca arızi "
+        "aktarımlar için dayanaktır (Madde 9/6)" if tr
+        else "Sending personal data to cloud storage or AI/LLM APIs hosted outside "
+        "Türkiye is also a transfer abroad; explicit consent covers only incidental "
+        "transfers (Art. 9(6))")
+    return "\n".join(f"- {line}" for line in lines)
+
+
 def build_tr(args: argparse.Namespace) -> str:
     basis_tr = BASIS_CHOICES[args.basis][0]
     sc = args.special_category
     sc_line = ("Yok" if sc == "none"
                else f"{sc} (Madde 6 — yeterli önlemler gerekli)")
-    cb = args.cross_border
-    cb_line = ("Yurt dışı aktarım yok (yalnızca Türkiye)" if cb == "none"
-               else f"Mekanizma: {cb} (Madde 9)")
+    cb_block = _cb_block(args.cross_border, "tr")
     return f"""# Veri Yönetim Planı (KVKK — 6698 sayılı Kanun)
 
 > Otomatik iskelet — hukuki görüş değildir. Veri sorumlusu / KVKK uyum
@@ -116,7 +138,7 @@ def build_tr(args: argparse.Namespace) -> str:
 - Yanıt süresi: en geç otuz (30) gün
 
 ## 7. Yurt dışı aktarım (Madde 9)
-- {cb_line}
+{cb_block}
 
 ## 8. VERBIS (Madde 16)
 - Durum: {args.verbis}
@@ -134,9 +156,7 @@ def build_en(args: argparse.Namespace) -> str:
     sc = args.special_category
     sc_line = ("None" if sc == "none"
                else f"{sc} (Art. 6 — adequate measures required)")
-    cb = args.cross_border
-    cb_line = ("No transfer abroad (Türkiye only)" if cb == "none"
-               else f"Mechanism: {cb} (Art. 9)")
+    cb_block = _cb_block(args.cross_border, "en")
     return f"""# Data Management Plan (KVKK — Law No. 6698)
 
 > Auto-generated skeleton — NOT legal advice. Requires veri sorumlusu / KVKK
@@ -172,7 +192,7 @@ def build_en(args: argparse.Namespace) -> str:
 - Response window: thirty (30) days at the latest
 
 ## 7. Cross-border transfer (Art. 9)
-- {cb_line}
+{cb_block}
 
 ## 8. VERBIS (Art. 16)
 - Status: {args.verbis}

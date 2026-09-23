@@ -360,7 +360,7 @@ Set up and analyze molecular dynamics simulations.
 
 ```python
 from pymatgen.core import Structure
-from pymatgen.io.vasp.sets import MVLRelaxSet
+from pymatgen.io.vasp.sets import MPMDSet
 from pymatgen.io.vasp.inputs import Incar
 
 # Read structure
@@ -371,8 +371,8 @@ from pymatgen.transformations.standard_transformations import SupercellTransform
 trans = SupercellTransformation([[2,0,0],[0,2,0],[0,0,2]])
 supercell = trans.apply_transformation(struct)
 
-# Set up VASP input
-md_input = MVLRelaxSet(supercell)
+# Set up VASP input (MPMDSet presets an NVT MD run; MVLNPTMDSet for NPT)
+md_input = MPMDSet(supercell, start_temp=300, end_temp=300, nsteps=1000)
 
 # Modify INCAR for MD
 incar = md_input.incar
@@ -396,6 +396,7 @@ Analyze ion diffusion from AIMD trajectories.
 
 ```python
 from pymatgen.io.vasp import Xdatcar
+# Separate package: uv pip install pymatgen-analysis-diffusion
 from pymatgen.analysis.diffusion.analyzer import DiffusionAnalyzer
 
 # Read trajectory from XDATCAR
@@ -407,8 +408,8 @@ analyzer = DiffusionAnalyzer.from_structures(
     structures,
     specie="Li",
     temperature=300,  # K
-    time_step=2,      # fs
-    step_skip=10      # Skip initial equilibration
+    time_step=2,      # fs (POTIM)
+    step_skip=10      # MD steps between saved frames (NBLOCK); not an equilibration cut
 )
 
 # Get diffusivity
@@ -532,13 +533,14 @@ from mp_api.client import MPRester
 from pymatgen.core import Structure
 import pandas as pd
 
-# Define screening criteria
+# Define screening criteria (voltage is not a summary property: formation energy is
+# negative and unrelated to voltage — query mpr.materials.insertion_electrodes.search(
+# working_ion="Li", average_voltage=(2.5, 4.5)) when you need voltages)
 def screen_material(material):
     """Screen for potential battery cathode materials"""
     criteria = {
-        "has_li": "Li" in material.composition.elements,
+        "has_li": "Li" in {el.symbol for el in material.composition.elements},
         "stable": material.energy_above_hull < 0.05,
-        "good_voltage": 2.5 < material.formation_energy_per_atom < 4.5,
         "electronically_conductive": material.band_gap < 0.5
     }
     return all(criteria.values()), criteria

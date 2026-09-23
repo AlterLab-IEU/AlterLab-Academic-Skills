@@ -1,7 +1,7 @@
 # Access model and legal basis
 
 Source: tr:yok-tez research findings (pre-verified) + key_resources legal cites +
-the verified İzinli/İzinsiz definitions from the live site (2026-06-06). Set
+the verified İzinli/İzinsiz definitions from the live site (re-checked 2026-09-23). Set
 correct expectations with the user; do not over-claim.
 
 ## İzinli vs. İzinsiz (the permission status)
@@ -13,7 +13,9 @@ correct expectations with the user; do not over-claim.
 
 **Abstracts (*özet*) are always available**, even when the full text is
 embargoed. This is why an originality check must include İzinsiz theses
-(`permission_status = Tümü`): the abstract alone establishes prior art.
+(`permission_status` `0` = Tümü, the connector default): the abstract alone
+establishes prior art. Include in-preparation (*Hazırlanıyor*) theses too with
+`thesis_status` `0` — the connector defaults to approved theses only.
 
 `get_yok_tez_document_markdown` (the full-text→Markdown tool) works **only on
 İzinli theses**.
@@ -26,7 +28,7 @@ after which the full text becomes accessible.
 
 ## Legal basis
 
-- **Law 7100, Art. 10** and **Higher Education Law 2547, Additional Art. 40** —
+- **Higher Education Law 2547, Ek Madde 40** (added by **Law 7100, Art. 10**, 22 Feb 2018) —
   theses are made **electronically accessible by default** unless an authorized
   *gizlilik* (confidentiality) decision is imposed.
 - **No fixed maximum embargo length.** YÖK's FAQ gives no official maximum

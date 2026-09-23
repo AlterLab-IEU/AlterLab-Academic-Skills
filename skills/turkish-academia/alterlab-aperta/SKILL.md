@@ -1,13 +1,13 @@
 ---
 name: alterlab-aperta
-description: "Drives TÜBİTAK Açık Bilim Politikası (Open Science Policy) compliance and deposition into Aperta — TÜBİTAK ULAKBİM's national open archive at aperta.ulakbim.gov.tr — encoding the binding mandates (green-road deposit of the accepted manuscript on acceptance; open access within 6 months for fen/mühendislik (STEM) and 12 months for sosyal/beşeri (SSH); İlke-6 documentation when data must stay closed for KVKK/privacy reasons) and scaffolding a TÜBİTAK Veri Yönetim Planı / VYP (data management plan) at grant-application time. Use when depositing to Aperta, complying with the TÜBİTAK açık bilim policy, preparing a TÜBİTAK data management plan (VYP), reporting open-access compliance in a final report, or documenting a justified data embargo. For Zenodo/Dryad/OSF and international DMPs prefer alterlab-open-science; for the KVKK lawful-basis/anonymisation plan prefer alterlab-kvkk-dmp. Part of the AlterLab Academic Skills suite."
+description: "Drives TÜBİTAK Açık Bilim Politikası (Open Science Policy) compliance and deposition into Aperta — TÜBİTAK ULAKBİM's national open archive at aperta.ulakbim.gov.tr — encoding its principles (İlke 1: deposit the accepted manuscript in Aperta on acceptance; İlke 2: open access at most 6 months after publication for STEM, 12 for SSH; İlke 6: document data that must stay closed, e.g. for KVKK; İlke 9: report compliance in the final report) and scaffolding the five-question TÜBİTAK Veri Yönetim Planı / VYP (data management plan) uploaded with ARDEB applications. Use when depositing to Aperta, complying with the TÜBİTAK açık bilim policy, preparing a TÜBİTAK data management plan (VYP), reporting open-access compliance in a final report, or documenting a justified data embargo. For Zenodo/Dryad/OSF and international DMPs prefer alterlab-open-science; for the KVKK lawful-basis/anonymisation plan prefer alterlab-kvkk-dmp. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) WebFetch
 compatibility: "No API key required. Guidance + scaffolding skill; uses WebFetch for live policy/repository checks and optional Python helpers via `uv run python` (stdlib-only, requests optional)."
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-06-06"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
   depends_on: "alterlab-kvkk-dmp (İlke-6 closed-data justification), alterlab-open-science (international repositories/DMPs)"
 ---
 
@@ -70,50 +70,58 @@ the KVKK decision (closed/anonymised?) and emits the İlke-6 justification.
 |----------|-------|
 | Operator | TÜBİTAK ULAKBİM (the national academic-IT centre) |
 | URL | `https://aperta.ulakbim.gov.tr/` |
-| Role | National open archive for TÜBİTAK-funded outputs, UBYT-incentivised works, TÜBİTAK-affiliated publications, and the research data behind TÜBİTAK academic-journal articles |
-| Platform | InvenioRDM-based research-data repository |
-| Identifiers | Assigns a **DOI** per record |
-| Access modes | Open, **restricted/embargoed**, and **versioned** records — supports keeping a record (or its data) closed while metadata stays open |
+| Role | The "TÜBİTAK Açık Arşivi" named by the policy: TÜBİTAK-supported outputs, UBYT-incentivised works, TÜBİTAK researchers' publications, and the research data behind TÜBİTAK academic-journal articles |
+| Platform | InvenioRDM |
+| Identifiers | A **DOI** per record under prefix `10.48623` |
+| Access modes | Open, **embargoed**, **restricted** and **versioned** records — metadata stays open while files are gated |
+| Machine access | Public records API `https://aperta.ulakbim.gov.tr/api/records?q=…` and OAI-PMH at `/oai2d` |
 
-Aperta scope and operator are confirmed by ULAKBİM's own page
-(`ulakbim.tubitak.gov.tr/en/turkey-open-archive-aperta/`). Full repository
-mechanics and the deposit workflow live in `references/aperta_repository.md`.
+Scope and operator come from ULAKBİM's page
+(`ulakbim.tubitak.gov.tr/en/turkey-open-archive-aperta/`); platform, DOI prefix and
+interfaces were checked live on 2026-09-23. Deposit mechanics live in
+`references/aperta_repository.md`.
 
 ## The Binding Mandates (summary)
 
-The **TÜBİTAK Açık Bilim Politikası** (in force 14 March 2019) imposes these on
-TÜBİTAK-funded research. Full citations, principle numbers, and the exact
-embargo wording are in `references/policy_mandates.md` — treat that file as the
-authority and cite it, not memory.
+The **TÜBİTAK Açık Bilim Politikası** (in force 14 March 2019) covers publications
+and research data produced wholly or partly with TÜBİTAK support (grants,
+scholarships, awards, incentives). Its principles, quoted in
+`references/policy_mandates.md` (verified 2026-09-23), are the authority — cite
+that file, not memory.
 
-1. **Green-road deposit, on acceptance.** Deposit the *kabul edilmiş makale*
-   (accepted manuscript / author-accepted version) into Aperta when the article
-   is accepted — not only after publication.
-2. **Open-access embargo ceilings.** The deposited work must be openly accessible
-   within **≤ 6 months** for *fen ve mühendislik bilimleri* (STEM) and
-   **≤ 12 months** for *sosyal ve beşeri bilimler* (SSH). These are **ceilings**:
-   immediate open access is always allowed and preferred.
-3. **VYP at application time.** A *Veri Yönetim Planı* (data management plan)
-   covering the full data lifecycle is prepared with the grant application.
-4. **İlke-6 closed-data documentation.** Where data must stay closed (e.g.
-   personal/clinical data under **KVKK**, commercial confidentiality, security),
-   the reason must be documented; the dataset can be deposited to Aperta under
-   **restricted access** with open metadata.
-5. **Report compliance in the final report.** Open-access/data deposition
-   compliance is reported in the project *sonuç raporu* (final report).
+1. **İlke 1 — deposit in Aperta, on acceptance.** Deposit the *kabul edilmiş
+   makale* (accepted manuscript) in the TÜBİTAK Açık Arşivi (Aperta) as soon as the
+   article is accepted; its metadata must be open and machine-readable from the
+   deposit date.
+2. **İlke 2 — open-access ceilings, counted from publication.** The full text must
+   be open on acceptance where possible, otherwise **no later than 6 months after
+   publication** for *Fen Bilimleri, Teknoloji, Mühendislik ve Matematik* (STEM)
+   and **12 months after publication** for *Sosyal ve Beşeri Bilimler* (SSH).
+3. **İlke 4 + ARDEB rule — VYP with the application.** The policy recommends a
+   *Veri Yönetim Planı*; ARDEB's VYP note requires uploading it to PBS with the
+   other application documents, on TÜBİTAK's five-question template.
+4. **İlke 6 — document closed data.** Where data cannot be opened, fully or for a
+   period (personal or sensitive data under **KVKK**, confidentiality, national
+   security, patent/registration periods), the reason must be documented and
+   stated explicitly; the dataset can sit in Aperta as a **restricted** record
+   with open metadata.
+5. **İlke 9 — report compliance.** The grantee reports policy compliance in the
+   project *sonuç raporu* (final report), and TÜBİTAK takes compliance into
+   account when assessing the grantee's future applications.
 
-> **Do not invent specifics.** Exact embargo start-points, the list of qualifying
-> exceptions, and any TRY/figure caps are NOT asserted here unless they are in
-> `references/policy_mandates.md`. If a fact is not in that file, omit it and tell
-> the user to confirm against the current policy PDF.
+> If a detail is not in `references/policy_mandates.md` (for example a
+> publisher's own embargo terms), say so and send the user to the policy PDF or
+> the publisher's self-archiving policy rather than filling the gap from memory.
 
 ## Workflows
 
 ### A. Deposit an accepted manuscript or dataset to Aperta
 
 1. Classify the object: *kabul edilmiş makale* vs dataset vs both.
-2. Determine the field bucket — STEM (≤ 6 mo) or SSH (≤ 12 mo) — to set the
-   embargo ceiling. Default to **immediate open** unless the user needs a delay.
+2. Determine the field bucket — STEM (≤ 6 months after publication) or SSH
+   (≤ 12 months after publication) — to set the latest open date. Default to
+   **immediate open** unless the user needs a delay; check the publisher's
+   self-archiving terms against the ceiling before the author signs.
 3. Decide access mode: open, or **restricted** if İlke-6 applies (see workflow C).
 4. Walk the deposit checklist in `references/aperta_repository.md` (record
    metadata, file upload, licence, DOI minting, version).
@@ -130,7 +138,7 @@ uv run python skills/turkish-academia/alterlab-aperta/scripts/vyp_scaffold.py \
     --out vyp.md
 ```
 
-- `--field stem|ssh` sets the embargo ceiling cited in the plan.
+- `--field stem|ssh` sets the publication open-access ceiling cited in the plan.
 - `--lang tr|en|both` emits a Turkish VYP, an English DMP, or both.
 - `--data-closed` + `--closed-reason kvkk|commercial|security|ethics` injects an
   İlke-6 justification stub. **If the reason is KVKK, hand the lawful-basis /
@@ -138,8 +146,9 @@ uv run python skills/turkish-academia/alterlab-aperta/scripts/vyp_scaffold.py \
   this skill records *that* data is closed and *why* at the funder level; it does
   not perform the KVKK analysis.
 
-The VYP section tree the generator follows is documented in
-`references/vyp_template.md`.
+The scaffold's eight sections map onto the official five-question ARDEB template
+(`veri_yonetim_plani.docx`, uploaded to PBS with the application); the mapping and
+the section tree are in `references/vyp_template.md`.
 
 ### C. Justify a closed dataset under İlke-6
 
@@ -156,15 +165,20 @@ The VYP section tree the generator follows is documented in
 
 ### D. Final-report open-access compliance check
 
-Produce a short compliance statement for the *sonuç raporu*: for each output,
-list the Aperta DOI, the access mode, and the open-access date, and confirm it
-meets the field embargo ceiling — or, if closed, cite the İlke-6 justification.
+Produce a short compliance statement for the *sonuç raporu* (İlke 9): for each
+output, list the Aperta DOI, the access mode, and the open-access date, and
+confirm it meets the İlke-2 ceiling — or, if closed, cite the İlke-6
+justification. The public records API confirms each deposit's DOI and
+`access_right` (recipe in `references/aperta_repository.md`). If generative AI
+helped draft the report, TÜBİTAK's 2025 ÜYZ guide asks for that use to be
+declared in the report as well.
 
 ## Live verification (optional)
 
 When the user needs the current policy or to confirm a repository feature, fetch:
 
 - Policy PDF: `https://tubitak.gov.tr/sites/default/files/tubitak_acik_bilim_politikasi_190316.pdf`
+- ARDEB VYP template: `https://tubitak.gov.tr/sites/default/files/2024-04/veri_yonetim_plani.docx`
 - ULAKBİM Aperta page: `https://ulakbim.tubitak.gov.tr/en/turkey-open-archive-aperta/`
 - The repository itself: `https://aperta.ulakbim.gov.tr/`
 
@@ -174,19 +188,19 @@ you can tell the user whether the live policy matches what this skill encodes
 
 ## Verify-Against-Current-Policy Disclaimer
 
-TÜBİTAK revises the Açık Bilim Politikası and Aperta's deposit flow over time.
-**Always close by telling the user to confirm the embargo ceilings, the deposit
-object, and the VYP template against the current policy PDF and the live Aperta
-submission form before they rely on this output.** Never present an embargo month
-count or a deposit rule as immutable.
+TÜBİTAK can revise the Açık Bilim Politikası, the VYP template and Aperta's
+deposit flow. Close by telling the user to confirm the open-access ceilings, the
+deposit object, and the VYP template against the current policy PDF, the live
+programme page and the Aperta submission form before relying on this output —
+a stale rule here would put their grant compliance at risk.
 
 ## References
 
-- `references/policy_mandates.md` — the TÜBİTAK Açık Bilim Politikası mandates
-  (deposit, 6/12-month ceilings, VYP, İlke-6), with sources and last-verified date.
-- `references/aperta_repository.md` — what Aperta is, its InvenioRDM features, and
-  the record-by-record deposit checklist.
-- `references/vyp_template.md` — the Veri Yönetim Planı / DMP section tree the
-  scaffold script emits, bilingual.
+- `references/policy_mandates.md` — the TÜBİTAK Açık Bilim Politikası principles
+  (İlke 1–9, quoted), with sources and last-verified date.
+- `references/aperta_repository.md` — what Aperta is, its InvenioRDM features and
+  interfaces, the record-by-record deposit checklist, and how to verify a deposit.
+- `references/vyp_template.md` — the official five-question VYP form, its mapping
+  to the scaffold, and the bilingual section tree the script emits.
 
 Part of the AlterLab Academic Skills suite.

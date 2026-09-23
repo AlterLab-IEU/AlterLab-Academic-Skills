@@ -3,10 +3,11 @@ name: alterlab-scikit-survival
 description: Survival analysis and time-to-event modeling in Python with scikit-survival. Use when working with censored survival data, fitting Cox models, Random Survival Forests, Gradient Boosting models, or Survival SVMs, evaluating predictions with concordance index or Brier score, handling competing risks, or implementing any time-to-event workflow. Part of the AlterLab Academic Skills suite.
 license: GPL-3.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the scikit-survival Python package.
+compatibility: No API key required. Runs locally via `uv run python`; requires scikit-survival >= 0.28 (current as of 2026-09), which needs scikit-learn >= 1.9.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # scikit-survival: Survival Analysis in Python
@@ -21,7 +22,7 @@ Survival analysis aims to establish connections between covariates and the time 
 
 Use this skill when:
 - Performing survival analysis or time-to-event modeling
-- Working with censored data (right-censored, left-censored, or interval-censored)
+- Working with right-censored data (scikit-survival's scope; left- or interval-censored data needs other tools)
 - Fitting Cox proportional hazards models (standard or penalized)
 - Building ensemble survival models (Random Survival Forests, Gradient Boosting)
 - Training Survival Support Vector Machines
@@ -30,6 +31,16 @@ Use this skill when:
 - Analyzing competing risks
 - Preprocessing survival data or handling missing values in survival datasets
 - Conducting any analysis using the scikit-survival library
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Binary outcome at a fixed follow-up with no censoring (logistic regression, odds ratios) | `alterlab-statsmodels` |
+| Standard regression or classification with no time-to-event outcome | `alterlab-scikit-learn` |
+| Writing a clinical decision-support report or biomarker-stratified cohort document with survival curves and hazard ratios | `alterlab-clinical-decision` |
+
+scikit-survival is prediction-oriented: `CoxPHSurvivalAnalysis` returns coefficients but no standard errors, confidence intervals, or p-values. When hazard ratios need inferential reporting, use lifelines' `CoxPHFitter` or statsmodels' `PHReg` (`statsmodels.duration.hazard_regression`).
 
 ## Core Capabilities
 
@@ -98,6 +109,16 @@ y = Surv.from_arrays(event=event_array, time=time_array)
 
 # From DataFrame
 y = Surv.from_dataframe('event', 'time', df)
+```
+
+**Built-in datasets use their own field names and categorical features.** `load_breast_cancer()` returns fields `('e.tdm', 't.tdm')`, `load_gbsg2()` `('cens', 'time')`, `load_whas500()` `('fstat', 'lenfol')`, and `load_veterans_lung_cancer()` `('Status', 'Survival_in_days')`, and their `X` contains pandas categorical columns that scalers and most estimators reject. Normalize both before reusing code that indexes `y['event']` / `y['time']`:
+
+```python
+from sksurv.preprocessing import encode_categorical
+
+X = encode_categorical(X)                          # one-hot encode categorical columns
+event_field, time_field = y.dtype.names
+y = Surv.from_arrays(event=y[event_field], time=y[time_field])   # fields 'event', 'time'
 ```
 
 #### Essential Preprocessing Steps
@@ -196,20 +217,27 @@ time, cumulative_hazard = nelson_aalen_estimator(y['event'], y['time'])
 from sksurv.datasets import load_breast_cancer
 from sksurv.linear_model import CoxPHSurvivalAnalysis
 from sksurv.metrics import concordance_index_ipcw
+from sksurv.preprocessing import encode_categorical
+from sksurv.util import Surv
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-# 1. Load and prepare data
+# 1. Load and prepare data (encode categoricals; rename outcome fields to event/time)
 X, y = load_breast_cancer()
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X = encode_categorical(X)
+event_field, time_field = y.dtype.names          # ('e.tdm', 't.tdm') for this dataset
+y = Surv.from_arrays(event=y[event_field], time=y[time_field])
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y['event'])
 
 # 2. Preprocess
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-# 3. Fit model
-estimator = CoxPHSurvivalAnalysis()
+# 3. Fit model (alpha > 0 adds a ridge penalty; unpenalized Cox fails when
+#    features are many relative to events, as in this 198-patient, 80-feature dataset)
+estimator = CoxPHSurvivalAnalysis(alpha=0.1)
 estimator.fit(X_train_scaled, y_train)
 
 # 4. Predict
@@ -224,25 +252,30 @@ print(f"C-index: {c_index:.3f}")
 
 The IPCW scorer wrappers (`as_concordance_index_ipcw_scorer`, `as_integrated_brier_score_scorer`, `as_cumulative_dynamic_auc_scorer`) WRAP the estimator and override its `.score()` method — they are NOT passed to `scoring=`. Pass the wrapped object as the GridSearchCV estimator and prefix tuned params with `estimator__`. There is no valid `scoring='concordance_index_ipcw'` string.
 
+`CoxnetSurvivalAnalysis` fits a whole regularization path: `coef_` has shape `(n_features, n_alphas)`, one column per penalty in `alphas_`. Tune a single penalty from that path, then read the non-zero coefficients of the chosen column.
+
 ```python
 import numpy as np
 from sksurv.linear_model import CoxnetSurvivalAnalysis
 from sklearn.model_selection import GridSearchCV
 from sksurv.metrics import as_concordance_index_ipcw_scorer
 
-# 1. Penalized Cox for feature selection (l1_ratio near 1 = lasso-like sparsity)
-estimator = CoxnetSurvivalAnalysis(l1_ratio=0.9, fit_baseline_model=True)
+# 1. Fit once to get the penalty path (l1_ratio near 1 = lasso-like sparsity)
+path = CoxnetSurvivalAnalysis(l1_ratio=0.9, alpha_min_ratio=0.01).fit(X_train_scaled, y_train)
 
-# 2. Wrap the estimator so .score() uses Uno's C-index, then tune.
+# 2. Wrap the estimator so .score() uses Uno's C-index, then tune one alpha per fit.
 #    tau caps the evaluation horizon to avoid unstable IPCW weights in the tail.
-wrapped = as_concordance_index_ipcw_scorer(estimator, tau=y['time'].max())
-param_grid = {'estimator__alpha_min_ratio': [0.01, 0.001]}
+wrapped = as_concordance_index_ipcw_scorer(
+    CoxnetSurvivalAnalysis(l1_ratio=0.9, fit_baseline_model=True), tau=y_train['time'].max())
+param_grid = {'estimator__alphas': [[a] for a in path.alphas_]}
+# With p >> n the smallest penalties can fail to converge; GridSearchCV reports them as
+# FitFailedWarning / NaN scores and still selects among the penalties that fit.
 cv = GridSearchCV(wrapped, param_grid, cv=5)
-cv.fit(X, y)
+cv.fit(X_train_scaled, y_train)
 
-# 3. Identify selected features (unwrap to reach the Coxnet estimator)
+# 3. Identify selected features (unwrap to reach the Coxnet estimator; coef_ is (n_features, 1))
 best_model = cv.best_estimator_.estimator_
-selected_features = np.where(best_model.coef_.ravel() != 0)[0]
+selected_features = X.columns[np.flatnonzero(best_model.coef_[:, 0])]
 ```
 
 ### Workflow 3: Ensemble Method for Maximum Performance
@@ -282,7 +315,7 @@ from sksurv.metrics import concordance_index_ipcw, integrated_brier_score
 
 # Define models
 models = {
-    'Cox': CoxPHSurvivalAnalysis(),
+    'Cox': CoxPHSurvivalAnalysis(alpha=0.1),
     'RSF': RandomSurvivalForest(n_estimators=100, random_state=42),
     'GBS': GradientBoostingSurvivalAnalysis(random_state=42),
     'SVM': FastSurvivalSVM(random_state=42)
@@ -353,6 +386,11 @@ cv.fit(X, y)
 6. **Using built-in feature importance for RSF** → Use permutation importance
 7. **Ignoring proportional hazards assumption** → Validate or use alternative models
 8. **Passing `as_concordance_index_ipcw_scorer()` to `scoring=`** → It WRAPS the estimator (overriding `.score()`); pass the wrapped object as the estimator and prefix params with `estimator__`
+
+## Version Notes
+
+- scikit-survival 0.28 (July 2026) requires scikit-learn ≥ 1.9, accepts polars DataFrames in all estimators, and removed the `criterion` parameter from `GradientBoostingSurvivalAnalysis`; 0.27 added pandas 3 support.
+- `CoxnetSurvivalAnalysis` requires `0 < l1_ratio ≤ 1`; for a pure ridge penalty use `CoxPHSurvivalAnalysis(alpha=...)`.
 
 ## Reference Files
 

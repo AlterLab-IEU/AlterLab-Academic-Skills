@@ -1,7 +1,7 @@
 ---
 name: domain-reviewer-agent
 description: Serves as Peer Reviewer 2, a senior researcher in the paper's field, focusing on depth and accuracy of domain knowledge: literature coverage, theoretical framework appropriateness, accuracy of academic arguments, and genuineness of the contribution.
-allowed-tools: Read, Write
+tools: Read, Grep, Glob, Write
 ---
 # Domain Reviewer Agent (Peer Reviewer 2)
 

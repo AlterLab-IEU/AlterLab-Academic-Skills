@@ -2,7 +2,7 @@
 
 ## Overview
 
-Fine-tune pre-trained models on custom datasets using the Trainer API. The Trainer handles training loops, gradient accumulation, mixed precision, logging, and checkpointing.
+Fine-tune pre-trained models on custom datasets using the Trainer API. The Trainer handles training loops, gradient accumulation, mixed precision, logging, and checkpointing. This page reflects transformers v5 (`TrainingArguments` lost `logging_dir` and `warmup_ratio`; `Trainer(tokenizer=...)` became `processing_class=`; `report_to` defaults to `"none"`).
 
 ## Basic Fine-Tuning Workflow
 
@@ -11,15 +11,15 @@ Fine-tune pre-trained models on custom datasets using the Trainer API. The Train
 ```python
 from datasets import load_dataset
 
-# Load dataset
-dataset = load_dataset("yelp_review_full")
+# Load dataset (canonical Hub datasets now live under an org namespace)
+dataset = load_dataset("Yelp/yelp_review_full")
 train_dataset = dataset["train"]
 eval_dataset = dataset["test"]
 
 # Tokenize
 from transformers import AutoTokenizer
 
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+tokenizer = AutoTokenizer.from_pretrained("google-bert/bert-base-uncased")
 
 def tokenize_function(examples):
     return tokenizer(
@@ -39,7 +39,7 @@ eval_dataset = eval_dataset.map(tokenize_function, batched=True)
 from transformers import AutoModelForSequenceClassification
 
 model = AutoModelForSequenceClassification.from_pretrained(
-    "bert-base-uncased",
+    "google-bert/bert-base-uncased",
     num_labels=5  # Number of classes
 )
 ```
@@ -72,8 +72,8 @@ training_args = TrainingArguments(
     per_device_eval_batch_size=8,
     num_train_epochs=3,
     weight_decay=0.01,
-    logging_dir="./logs",
     logging_steps=10,
+    report_to="tensorboard",  # v5 default is "none"
     load_best_model_at_end=True,
     metric_for_best_model="accuracy",
 )
@@ -89,6 +89,7 @@ trainer = Trainer(
     args=training_args,
     train_dataset=train_dataset,
     eval_dataset=eval_dataset,
+    processing_class=tokenizer,  # v5 name for the old `tokenizer=` argument
     compute_metrics=compute_metrics,
 )
 
@@ -103,11 +104,12 @@ print(results)
 ### Step 6: Save Model
 
 ```python
-trainer.save_model("./fine_tuned_model")
-tokenizer.save_pretrained("./fine_tuned_model")
+trainer.save_model("./fine_tuned_model")  # also saves processing_class (the tokenizer)
 
-# Or push to Hub
-trainer.push_to_hub("username/my-finetuned-model")
+# Or push to the Hub: the target repo comes from TrainingArguments(hub_model_id=...)
+# (default: the output_dir name under your account). The first positional argument
+# of Trainer.push_to_hub is the commit message, not the repo id.
+trainer.push_to_hub(commit_message="Fine-tuned on Yelp reviews")
 ```
 
 ## TrainingArguments Parameters
@@ -185,9 +187,9 @@ gradient_checkpointing=True  # Slower but uses less memory
 
 **optim**: Optimizer choice
 ```python
-optim="adamw_torch"  # Default
-optim="adamw_8bit"    # 8-bit Adam (requires bitsandbytes)
-optim="adafactor"     # Memory-efficient alternative
+optim="adamw_torch_fused"  # Default with torch >= 2.8 ("adamw_torch" otherwise)
+optim="adamw_8bit"         # 8-bit AdamW (alias of adamw_bnb_8bit; requires bitsandbytes)
+optim="adafactor"          # Memory-efficient alternative
 ```
 
 ### Learning Rate Scheduling
@@ -200,18 +202,18 @@ lr_scheduler_type="constant"     # No decay
 lr_scheduler_type="constant_with_warmup"
 ```
 
-**warmup_steps** or **warmup_ratio**: Warmup period
+**warmup_steps**: Warmup period — an int is a step count, a float in [0, 1) is a ratio of total steps (`warmup_ratio` was removed in v5)
 ```python
 warmup_steps=500
 # Or
-warmup_ratio=0.1  # 10% of total steps
+warmup_steps=0.1  # 10% of total steps
 ```
 
 ### Logging
 
-**logging_dir**: TensorBoard logs directory
-```python
-logging_dir="./logs"
+**TensorBoard log directory**: the `logging_dir` argument was removed in v5; set the environment variable instead
+```bash
+export TENSORBOARD_LOGGING_DIR=./logs
 ```
 
 **logging_steps**: Log every N steps
@@ -219,7 +221,7 @@ logging_dir="./logs"
 logging_steps=10
 ```
 
-**report_to**: Logging integrations
+**report_to**: Logging integrations (v5 default: `"none"`, so nothing is logged unless you set it)
 ```python
 report_to=["tensorboard"]
 report_to=["wandb"]
@@ -419,14 +421,14 @@ Common starting points:
 - **Learning rate**: 2e-5 to 5e-5 for BERT-like models, 1e-4 to 1e-3 for smaller models
 - **Batch size**: 8-32 depending on GPU memory
 - **Epochs**: 2-4 for fine-tuning, more for domain adaptation
-- **Warmup**: 10% of total steps
+- **Warmup**: 10% of total steps (`warmup_steps=0.1`)
 
 Use Optuna for hyperparameter search:
 
 ```python
 def model_init():
     return AutoModelForSequenceClassification.from_pretrained(
-        "bert-base-uncased",
+        "google-bert/bert-base-uncased",
         num_labels=5
     )
 
@@ -448,9 +450,9 @@ best_trial = trainer.hyperparameter_search(
 
 ### Monitoring Training
 
-Use TensorBoard:
+Use TensorBoard (with `report_to="tensorboard"`; logs go under `output_dir/runs` unless `TENSORBOARD_LOGGING_DIR` is set):
 ```bash
-tensorboard --logdir ./logs
+tensorboard --logdir ./results/runs
 ```
 
 Or Weights & Biases:

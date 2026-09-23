@@ -1,7 +1,7 @@
 # Coverage / Accumulation Tracks (uniwig)
 
 The `uniwig` module turns a sorted BED or BAM file into accumulation / coverage
-tracks. In v0.8 it is exposed through the **CLI only** (requires the `uniwig`
+tracks. As of 0.10 it is exposed through the **CLI only** (requires the `uniwig`
 feature); there is no `gtars.uniwig` Python module.
 
 ## CLI usage

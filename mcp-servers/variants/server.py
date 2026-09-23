@@ -35,7 +35,10 @@ def _get_json(url: str) -> dict[str, Any]:
     req = urllib.request.Request(url, headers={"User-Agent": _UA, "Accept": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=_TIMEOUT) as resp:  # noqa: S310
-            return json.loads(resp.read().decode("utf-8"))
+            data = json.loads(resp.read().decode("utf-8"))
+        # Tools return dict[str, Any]; MCP structured output rejects a bare top-level array,
+        # so wrap one (AlphaFold DB and Reactome, for example, answer with a list).
+        return data if isinstance(data, dict) else {"results": data}
     except urllib.error.HTTPError as exc:
         return {"error": f"HTTP {exc.code}", "url": url}
     except (urllib.error.URLError, TimeoutError) as exc:
@@ -53,7 +56,10 @@ def _gnomad_query(query: str, variables: dict[str, Any]) -> dict[str, Any]:
     )
     try:
         with urllib.request.urlopen(req, timeout=_TIMEOUT) as resp:  # noqa: S310
-            return json.loads(resp.read().decode("utf-8"))
+            data = json.loads(resp.read().decode("utf-8"))
+        # Tools return dict[str, Any]; MCP structured output rejects a bare top-level array,
+        # so wrap one (AlphaFold DB and Reactome, for example, answer with a list).
+        return data if isinstance(data, dict) else {"results": data}
     except urllib.error.HTTPError as exc:
         return {"error": f"HTTP {exc.code}", "api": _GNOMAD_API}
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:

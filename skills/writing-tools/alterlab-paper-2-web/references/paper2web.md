@@ -33,22 +33,22 @@ The system uses an iterative pipeline:
 ```bash
 python pipeline_all.py \
   --input-dir "path/to/papers" \
-  --output-dir "path/to/output" \
+  --output_dir "path/to/output" \
   --model-choice 1
 ```
 
 ### Parameters
 
-- `--input-dir`: Directory containing paper files (PDF or LaTeX)
-- `--output-dir`: Directory for generated website files
+- `--input-dir`: Directory containing the paper PDF (`paper.pdf` in a subfolder, or a PDF directly); only the first PDF found is processed — use `--pdf-path` to pick one
+- `--output_dir`: Output directory (underscore flag; the site lands in `<output_dir>/website/`)
 - `--model-choice 1`: Select the website (Paper2Web) component (2=poster, 3=PR materials; omit to run all)
 
 Logo discovery uses the optional `GOOGLE_SEARCH_API_KEY` / `GOOGLE_SEARCH_ENGINE_ID` credentials in `.env` (see `installation.md`).
 
 ### Input Format Requirements
 
-**Supported Input Formats:**
-1. **LaTeX source** (preferred for best results)
+**Supported Input Formats:** `pipeline_all.py` reads the **PDF**. Keep the LaTeX project alongside it if you also want a Paper2Video presentation.
+1. **LaTeX source** (used by Paper2Video)
    - Main file: `main.tex`
    - Include all referenced figures, tables, and bibliography files
    - Organize in a single directory per paper
@@ -162,7 +162,7 @@ When enabled with Google Search API:
 4. **High-quality figures**: Use vector formats (PDF, SVG) when available
 
 ### Model Selection
-The LLM is set via `OPENAI_API_KEY` / `OPENAI_API_BASE` in `.env` (point the base at OpenRouter to use Claude or other models). Stronger models give the best layout and content quality; cheaper models are fine for drafts of simple papers.
+The website agent's models are fixed upstream and routed through OpenRouter (`OPENROUTER_API_KEY` must be exported for `pipeline_all.py`); there is no command-line model override.
 
 ### Output Optimization
 1. Review generated content for accuracy

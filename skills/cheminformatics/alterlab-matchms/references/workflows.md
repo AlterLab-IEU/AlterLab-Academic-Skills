@@ -106,8 +106,8 @@ for spectrum in spectra:
 
     # Require high-quality peaks
     spectrum = require_minimum_number_of_high_peaks(spectrum,
-                                                     n_required=5,
-                                                     intensity_threshold=0.05)
+                                                     no_peaks=5,
+                                                     intensity_percent=5.0)  # percent, not fraction
     if spectrum is None:
         continue
 

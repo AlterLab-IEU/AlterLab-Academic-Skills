@@ -20,8 +20,12 @@ sc.read_csv(filename)                       # Read CSV file
 sc.read_excel(filename)                     # Read Excel file
 sc.read_loom(filename)                      # Read loom file
 sc.read_text(filename)                      # Read text file
-sc.read_visium(path)                        # Read Visium spatial data
+# sc.read_visium(path)                      # DEPRECATED (1.11) -> squidpy.read.visium()
 ```
+
+Other spatial entry points moved to Squidpy in Scanpy 1.11: `sc.datasets.visium_sge()` ->
+`squidpy.datasets.visium()`, `sc.pl.spatial()` -> `squidpy.pl.spatial_scatter()`. See
+`alterlab-squidpy-spatial`.
 
 ### Writing Functions
 
@@ -94,7 +98,7 @@ sc.tl.draw_graph(adata, layout='fa')             # Force-directed graph
 ```python
 # flavor='igraph' is the future default and far faster; bare leiden warns
 sc.tl.leiden(adata, resolution=0.5, flavor='igraph', n_iterations=2)  # recommended
-sc.tl.louvain(adata, resolution=0.5)             # Louvain clustering
+# sc.tl.louvain(adata, resolution=0.5)           # DEPRECATED in Scanpy 1.12 — use leiden
 ```
 
 ### Marker Genes and Differential Expression
@@ -244,7 +248,8 @@ sc.settings.n_jobs = 8                 # Number of parallel jobs
 ## Useful Utilities
 
 ```python
-sc.logging.print_versions()            # Print version information
+sc.logging.print_header()              # Versions of scanpy and key dependencies
+                                       # (print_versions() is deprecated)
 sc.logging.print_memory_usage()        # Print memory usage
 adata.copy()                           # Create a copy of AnnData object
 

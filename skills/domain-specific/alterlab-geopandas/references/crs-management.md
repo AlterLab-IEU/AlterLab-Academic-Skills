@@ -128,13 +128,16 @@ Area and distance calculations should use projected CRS:
 # Bad: area in degrees (meaningless)
 areas_degrees = gdf.geometry.area  # If CRS is EPSG:4326
 
-# Good: reproject to appropriate projected CRS first
-gdf_projected = gdf.to_crs("EPSG:3857")
-areas_meters = gdf_projected.geometry.area  # Square meters
+# Also bad: Web Mercator units are metres but areas are inflated by 1/cos²(latitude)
+# (a 1°x1° cell at 60°N comes out ~25,000 km² instead of ~6,100 km²)
+areas_wrong = gdf.to_crs("EPSG:3857").geometry.area
 
-# Better: use appropriate local UTM zone for accuracy
-gdf_utm = gdf.to_crs("EPSG:32633")  # UTM Zone 33N
-accurate_areas = gdf_utm.geometry.area
+# Good: local UTM zone (automatic) for regional data
+gdf_utm = gdf.to_crs(gdf.estimate_utm_crs())
+accurate_areas = gdf_utm.geometry.area          # m²
+
+# Good: an equal-area CRS for continental/global extents
+areas_equal_area = gdf.to_crs("EPSG:6933").geometry.area   # EASE-Grid 2.0, m²
 ```
 
 ## Choosing Appropriate CRS

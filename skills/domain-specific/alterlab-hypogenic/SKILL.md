@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(uv:*) Bash(python:*) Bash(hypogenic_generati
 compatibility: Requires the hypogenic Python package plus an LLM provider API key (e.g. OPENAI_API_KEY) for hypothesis generation. Runs via `uv run python`.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Hypogenic
@@ -20,21 +21,28 @@ Hypogenic provides automated hypothesis generation and testing using large langu
 Get started with Hypogenic in minutes:
 
 ```bash
-# Install the package
+# Install into its own environment: hypogenic 0.3.5 pins numpy~=1.26, pandas~=2.1,
+# torch~=2.4, transformers~=4.45, openai~=1.40 and anthropic~=0.32 (Python 3.10–3.12)
+uv venv .venv-hypogenic --python 3.10 && source .venv-hypogenic/bin/activate
 uv pip install hypogenic
 
 # Clone example datasets
 git clone https://github.com/ChicagoHAI/HypoGeniC-datasets.git ./data
 
-# Run basic hypothesis generation
-hypogenic_generation --config ./data/your_task/config.yaml --method hypogenic --num_hypotheses 20
+# Run data-driven hypothesis generation (model_type: gpt | claude | vllm | huggingface)
+hypogenic_generation --task_config_path ./data/your_task/config.yaml \
+    --model_type gpt --model_name <provider-model-id> \
+    --max_num_hypotheses 20 --output_folder ./outputs/your_task
 
-# Run inference on generated hypotheses
-hypogenic_inference --config ./data/your_task/config.yaml --hypotheses output/hypotheses.json
+# Run inference with a saved hypothesis bank
+hypogenic_inference --task_config_path ./data/your_task/config.yaml \
+    --hypothesis_file ./outputs/your_task/<hypotheses_*.json> \
+    --model_type gpt --model_name <provider-model-id>
 ```
 
-> Flag names below are illustrative. The upstream docs expose exact arguments only via
-> `hypogenic_generation --help` / `hypogenic_inference --help` — confirm there before scripting.
+> Flags verified against the `hypogenic` 0.3.5 console scripts (`hypogenic_cmd`). The CLI
+> covers data-driven HypoGeniC generation and inference; HypoRefine and Union runs are
+> driven by the example scripts (below). Run `--help` for the full option list.
 
 **Or use the example scripts** (the library ships runnable scripts under `examples/`; there is no one-line fluent `task.generate_hypotheses(...)` API — see "Python API Usage" below for the real classes):
 
@@ -51,6 +59,15 @@ Use this skill when working on:
 - Combining literature insights with empirical patterns
 - Accelerating research discovery through automated hypothesis ideation
 - Domains requiring hypothesis-driven analysis: deception detection, AI-generated content identification, mental health indicators, predictive modeling, or other empirical research
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Hand-formulating falsifiable hypotheses and predictions from observations (no LLM pipeline) | `alterlab-hypothesis-gen` |
+| Open-ended ideation or research-gap brainstorming with no dataset yet | `alterlab-scientific-brainstorm` |
+| Topic models, dictionaries, or supervised classifiers over text as social-science measurement | `alterlab-text-as-data` |
+| Testing one pre-specified hypothesis with a conventional statistical test | `alterlab-statistical-analysis` |
 
 ## Key Features
 
@@ -120,6 +137,9 @@ Install via pip:
 ```bash
 uv pip install hypogenic
 ```
+
+Because of the pinned dependency versions above, keep hypogenic out of your main analysis
+environment.
 
 **Optional dependencies:**
 - **Redis server** (port 6832): Enables caching of LLM responses to significantly reduce API costs during iterative hypothesis generation

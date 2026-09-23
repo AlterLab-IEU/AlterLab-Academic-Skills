@@ -6,7 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless openFDA REST API; optional API key raises rate limits
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # FDA Database Access
@@ -35,6 +36,15 @@ This skill should be used when working with:
 - **Regulatory analysis**: Approval pathways, enforcement actions, compliance tracking
 - **Pharmacovigilance**: Post-market surveillance, safety signal detection
 - **Scientific research**: Drug interactions, comparative safety, epidemiological studies
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Clinical trial registry records (NCT IDs, recruitment, eligibility) | `alterlab-clinicaltrials` |
+| Curated drug–target / DDI knowledge from DrugBank | `alterlab-drugbank` |
+| Compound bioactivity and mechanism data | `alterlab-chembl` |
+| Pharmacogenomic dosing guidance (CPIC/DPWG) | `alterlab-clinpgx` |
 
 ## Quick Start
 
@@ -160,8 +170,10 @@ device_info = fda.query("device", "udi",
 Access 2 food-related endpoints for safety monitoring and recalls.
 
 **Endpoints:**
-1. **Adverse Events** - Food, dietary supplement, and cosmetic events
+1. **Adverse Events** - Food and dietary-supplement events (CAERS; `food/event`)
 2. **Enforcement Reports** - Food product recalls
+
+Cosmetic adverse events now have their own endpoint, `cosmetic/event`.
 
 **Common use cases:**
 ```python
@@ -207,8 +219,13 @@ breed_query = fda.query("animalandveterinary", "event",
 Access molecular-level substance data with UNII codes, chemical structures, and relationships.
 
 **Endpoints:**
-1. **Substance Data** - UNII, CAS, chemical structures, relationships
-2. **NSDE** - Historical substance data (legacy)
+1. **Substance Data** (`other/substance`) - UNII, CAS, chemical structures, relationships
+2. **UNII** (`other/unii`) - UNII code ↔ substance name lookup
+3. **NSDE** (`other/nsde`) - Comprehensive NDC SPL Data Elements file
+4. **Historical documents** (`other/historicaldocument`) - archival FDA documents
+
+Also live (verified 2026-09): `transparency/crl` (published complete response letters)
+and `tobacco/problem` (tobacco product problem reports).
 
 **Common use cases:**
 ```python
@@ -236,6 +253,10 @@ Essentials to keep in mind:
   bare wildcards.
 - `FDAQuery` handles rate limiting (240/min, 120,000/day with key) and caching
   automatically.
+- `skip` is capped at 25,000 (`query_all` stops there); page deeper via the
+  `search_after` cursor in the `Link` response header, narrower date-range searches,
+  or the bulk downloads. `meta.last_updated` tells you how fresh each endpoint is —
+  FAERS (`drug/event`) lags by a quarter.
 - Use `exact=True` on `count_by_field` to count exact phrases (adds `.exact`).
 - All responses share the `{meta: {results: {total, ...}}, results: [...]}` shape;
   always check for `error` and empty `results`.

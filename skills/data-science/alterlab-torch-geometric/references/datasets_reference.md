@@ -506,14 +506,8 @@ dataset = ExplainerDataset(
 
 ## Materials Science
 
-### QM8
-**Usage**: Molecular property prediction
-**Description**: Electronic properties of small molecules
-
-```python
-from torch_geometric.datasets import QM8
-dataset = QM8(root='/tmp/QM8')
-```
+### QM8 (not in PyG)
+PyG ships no `QM8` dataset class (its quantum-chemistry sets are `QM7b` and `QM9`, listed above). Load QM8 through DeepChem's MoleculeNet loaders (`alterlab-deepchem`) and convert the molecules to `Data` objects if needed.
 
 ## Biological Networks
 

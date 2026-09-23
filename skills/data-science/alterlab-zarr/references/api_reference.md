@@ -18,7 +18,7 @@ forward their keyword arguments to `create_array`.
 
 **Key parameters:**
 - `shape`: Tuple defining array dimensions (e.g., `(1000, 1000)`)
-- `chunks`: Tuple defining chunk dimensions (e.g., `(100, 100)`), `'auto'`, or `None`
+- `chunks`: Tuple defining chunk dimensions (e.g., `(100, 100)`); omit it for automatic chunking. (The string `'auto'` is only accepted by `create_array` — `zeros`/`array` raise `ValueError` on it in zarr 3.4.)
 - `dtype`: NumPy data type (e.g., `'f4'`, `'i8'`, `'bool'`)
 - `store`: Storage location (string path, Store object, or mapping; `None` for in-memory)
 - `compressors`: codec, list of codecs, `'auto'` (Zstandard default), or `None` to disable
@@ -34,7 +34,7 @@ sharded storage.
 
 ### `zarr.array()`
 ```python
-zarr.array(data, *, chunks='auto', dtype=None, compressors='auto', store=None)
+zarr.array(data, *, chunks=None, dtype=None, compressors='auto', store=None)  # chunks=None → automatic
 ```
 Create array from existing data (NumPy array, list, etc.).
 
@@ -47,8 +47,8 @@ z = zarr.array(data, chunks=(100, 100), store='data.zarr')
 
 ### `zarr.open_array()` / `zarr.open()`
 ```python
-zarr.open_array(store, *, mode='a', shape=None, chunks='auto', dtype=None,
-                compressors='auto', fill_value=0)
+zarr.open_array(store, *, mode='a', shape=None, chunks=None, dtype=None,
+                compressors='auto', fill_value=0)  # chunks=None → automatic
 ```
 Open existing array or create new one.
 
@@ -113,12 +113,12 @@ Pass codecs through the `compressors=` keyword on `create_array` (not `codecs=`)
 
 ### Blosc Codec
 ```python
-from zarr.codecs import BloscCodec, BloscShuffle
+from zarr.codecs import BloscCodec
 
 codec = BloscCodec(
-    cname='zstd',                  # 'blosclz', 'lz4', 'lz4hc', 'zlib', 'zstd'
-    clevel=5,                      # Compression level: 0-9
-    shuffle=BloscShuffle.shuffle,  # .noshuffle / .shuffle / .bitshuffle (strings also accepted)
+    cname='zstd',       # 'blosclz', 'lz4', 'lz4hc', 'zlib', 'zstd'
+    clevel=5,           # Compression level: 0-9
+    shuffle='shuffle',  # 'noshuffle' | 'shuffle' | 'bitshuffle' (BloscShuffle enum deprecated since 3.1)
 )
 
 z = zarr.create_array(store='data.zarr', shape=(1000, 1000), chunks=(100, 100),
@@ -494,15 +494,20 @@ print(f"Chunk grid: {z.cdata_shape}")
 # Others
 'bool'     # Boolean
 'c8', 'c16'  # Complex: 64, 128-bit
-'S10'      # Fixed-length string (10 bytes)
-'U10'      # Unicode string (10 characters)
+'U10'      # Fixed-length Unicode string (10 characters)
+str        # Variable-length UTF-8 strings (preferred for text in Zarr v3)
+'S10'      # Fixed-length bytes — works, but has no Zarr v3 spec yet (zarr warns; other readers may not support it)
 ```
 
 ## Version Compatibility
 
 Zarr-Python version 3.x supports both:
-- **Zarr v2 format**: Legacy format, widely compatible
-- **Zarr v3 format**: New format with sharding, improved metadata
+- **Zarr v2 format**: Legacy format, widely compatible (`zarr_format=2`)
+- **Zarr v3 format**: New format with sharding, improved metadata (the default)
+
+zarr-python 3.2 removed the deprecated `zarr.convenience` / `zarr.creation` modules, the
+`zarr_version=` argument (use `zarr_format=`), and the `Group.array` / `create_dataset` /
+`require_dataset` methods.
 
 Check format version:
 ```python

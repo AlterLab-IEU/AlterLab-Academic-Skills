@@ -111,7 +111,7 @@ stitched = xbrls.statements
 
 income_stmt    = stitched.income_statement()
 balance_sheet  = stitched.balance_sheet()
-cashflow       = stitched.cashflow_statement()
+cashflow       = stitched.cash_flow_statement()
 equity_stmt    = stitched.statement_of_equity()
 comprehensive  = stitched.comprehensive_income()
 ```
@@ -222,10 +222,18 @@ df = statement.to_dataframe(
 - Metadata (always): `balance`, `weight`, `preferred_sign`
 - Optional: `dimension`, `unit`, `point_in_time`
 
-### Get Concept Value
+### Get a Line Item or Key Value
+`Statement` has no `get_concept_value()`; look up rendered line items by label, or use the
+`Financials` convenience getters, which try the common us-gaap concept aliases for you:
 ```python
-revenue = statement.get_concept_value("Revenue")
-net_income = statement.get_concept_value("NetIncomeLoss")
+item = statement["Total assets"]          # exact label match -> StatementLineItem or None
+matches = statement.search("revenue")     # fuzzy label search, best match first
+values = matches[0].values if matches else None
+
+from edgar import Financials
+financials = Financials(xbrl)             # or company.get_financials()
+revenue = financials.get_revenue()
+net_income = financials.get_net_income()
 ```
 
 ---
@@ -311,7 +319,7 @@ pivot = xbrl.facts.pivot_by_period([
 
 ### Cross-Company Comparison
 ```python
-from edgar import Company
+from edgar import Company, Financials
 from edgar.xbrl import XBRL
 
 companies = ["AAPL", "MSFT", "GOOGL"]
@@ -319,9 +327,8 @@ for ticker in companies:
     company = Company(ticker)
     filing = company.latest("10-K")
     xbrl = XBRL.from_filing(filing)
-    if xbrl and xbrl.statements.income_statement():
-        stmt = xbrl.statements.income_statement()
-        revenue = stmt.get_concept_value("Revenue")
+    revenue = Financials(xbrl).get_revenue() if xbrl else None
+    if revenue is not None:
         print(f"{ticker}: ${revenue/1e9:.1f}B")
 ```
 

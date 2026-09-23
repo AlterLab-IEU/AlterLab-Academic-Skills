@@ -1,11 +1,12 @@
 # Scientific Reporting Standards and Guidelines
 
-This document catalogs major reporting standards and guidelines across scientific disciplines. When reviewing manuscripts, verify that authors have followed the appropriate guidelines for their study type and discipline.
+This document catalogs major reporting standards and guidelines across scientific disciplines. When reviewing manuscripts, verify that authors have followed the appropriate guidelines for their study type and discipline — and the *current version*: several were updated recently (CONSORT and SPIRIT in 2025, TRIPOD in 2024). The EQUATOR Network (https://www.equator-network.org/) indexes current guidelines and extensions.
 
 ## Clinical Trials and Medical Research
 
 ### CONSORT (Consolidated Standards of Reporting Trials)
 **Purpose:** Randomized controlled trials (RCTs)
+**Current version:** CONSORT 2025 (published 14 April 2025 in BMJ, JAMA, Lancet, Nature Medicine, PLOS Medicine) — a 30-item checklist plus participant flow diagram, replacing CONSORT 2010. It adds a dedicated **open science** section (trial registration, protocol and statistical analysis plan access, data sharing, funding and conflicts of interest) and integrates items from key CONSORT extensions.
 **Key Requirements:**
 - Trial design, participants, and interventions clearly described
 - Primary and secondary outcomes specified
@@ -15,9 +16,9 @@ This document catalogs major reporting standards and guidelines across scientifi
 - Numbers analyzed in each group
 - Outcomes and estimation with confidence intervals
 - Adverse events
-- Trial registration number and protocol access
+- Trial registration number, protocol/statistical analysis plan access, and data-sharing statement
 
-**Reference:** http://www.consort-statement.org/
+**Reference:** https://www.consort-spirit.org/
 
 ### STROBE (Strengthening the Reporting of Observational Studies in Epidemiology)
 **Purpose:** Observational studies (cohort, case-control, cross-sectional)
@@ -37,6 +38,7 @@ This document catalogs major reporting standards and guidelines across scientifi
 
 ### PRISMA (Preferred Reporting Items for Systematic Reviews and Meta-Analyses)
 **Purpose:** Systematic reviews and meta-analyses
+**Current version:** PRISMA 2020 (Page et al., BMJ 2021;372:n71) — 27-item checklist and updated flow diagram; extensions include PRISMA-S (search reporting), PRISMA-ScR (scoping reviews), and PRISMA-P (protocols).
 **Key Requirements:**
 - Protocol registration
 - Systematic search strategy across multiple databases
@@ -50,10 +52,11 @@ This document catalogs major reporting standards and guidelines across scientifi
 - PRISMA flow diagram showing study selection
 - Summary of findings tables
 
-**Reference:** http://www.prisma-statement.org/
+**Reference:** https://www.prisma-statement.org/
 
 ### SPIRIT (Standard Protocol Items: Recommendations for Interventional Trials)
 **Purpose:** Clinical trial protocols
+**Current version:** SPIRIT 2025 (published April 2025, alongside CONSORT 2025) — a 34-item checklist plus schedule diagram, replacing SPIRIT 2013. It adds an open-science section, more emphasis on harms and on describing interventions and comparators, and an item on patient and public involvement.
 **Key Requirements:**
 - Administrative information (title, registration, funding)
 - Introduction (rationale, objectives)
@@ -61,7 +64,29 @@ This document catalogs major reporting standards and guidelines across scientifi
 - Ethics and dissemination
 - Trial schedule and assessments
 
-**Reference:** https://www.spirit-statement.org/
+**Reference:** https://www.consort-spirit.org/
+
+### STARD (Standards for Reporting of Diagnostic Accuracy Studies)
+**Purpose:** Diagnostic accuracy studies
+**Current version:** STARD 2015 (30 items; STARD for Abstracts available)
+**Key Requirements:**
+- Index test and reference standard described in enough detail to replicate
+- Participant eligibility, recruitment, and flow (with diagram)
+- Blinding of test readers to the reference standard and vice versa
+- Estimates of diagnostic accuracy with confidence intervals; handling of indeterminate results
+
+**Reference:** https://www.equator-network.org/reporting-guidelines/stard/
+
+### TRIPOD+AI (Transparent Reporting of a multivariable prediction model for Individual Prognosis Or Diagnosis)
+**Purpose:** Studies developing or validating clinical prediction models, whether built with regression or machine learning
+**Current version:** TRIPOD+AI (Collins et al., BMJ 2024;385:e078378) — 27-item checklist that supersedes TRIPOD 2015
+**Key Requirements:**
+- Data source, participants, outcome, and predictors defined; sample size justification
+- Model development, tuning, and internal/external validation described
+- Performance reported (discrimination and calibration) with uncertainty
+- Fairness, code and data availability, and model accessibility addressed
+
+**Reference:** https://www.tripod-statement.org/
 
 ### CARE (CAse REport guidelines)
 **Purpose:** Case reports
@@ -81,6 +106,7 @@ This document catalogs major reporting standards and guidelines across scientifi
 
 ### ARRIVE (Animal Research: Reporting of In Vivo Experiments)
 **Purpose:** Studies involving animal research
+**Current version:** ARRIVE 2.0 (2020) — the "Essential 10" minimum items plus the Recommended Set
 **Key Requirements:**
 - Title indicates study involves animals
 - Abstract provides accurate summary
@@ -113,7 +139,7 @@ This document catalogs major reporting standards and guidelines across scientifi
 - Raw and processed data availability
 - Database accession numbers
 
-**Reference:** http://fged.org/projects/miame/
+**Reference:** https://www.fged.org/projects/miame/
 
 ### MINSEQE (Minimum Information about a high-throughput Nucleotide Sequencing Experiment)
 **Purpose:** High-throughput sequencing (RNA-seq, ChIP-seq, etc.)
@@ -184,7 +210,7 @@ This document catalogs major reporting standards and guidelines across scientifi
 - ROI definitions
 - Data sharing (raw data, analysis scripts)
 
-**Reference:** https://www.humanbrainmapping.org/cobidas
+**Reference:** Nichols et al. (2017), "Best practices in data analysis and sharing in neuroimaging using MRI," *Nature Neuroscience* 20:299–303, doi:10.1038/nn.4500 (the OHBM COBIDAS report)
 
 ## Flow Cytometry
 

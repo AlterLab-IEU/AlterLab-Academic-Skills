@@ -1,12 +1,13 @@
 ---
 name: alterlab-literature-review
-description: Conducts comprehensive, systematic literature reviews across multiple academic databases (PubMed, arXiv, bioRxiv, Semantic Scholar), with PRISMA flow tracking, study screening (title/abstract and full-text), evidence-table extraction, and risk-of-bias assessment, producing professionally formatted markdown documents and PDFs with verified citations in multiple styles (APA, Nature, Vancouver). Use when running a systematic literature review, meta-analysis, research synthesis, or broad literature search, building a PRISMA flow diagram, screening studies, extracting an evidence table, or assessing risk-of-bias across biomedical, scientific, and technical domains. Part of the AlterLab Academic Skills suite.
+description: Conducts comprehensive, systematic literature reviews across multiple academic databases (PubMed, arXiv, bioRxiv, Semantic Scholar), with PRISMA 2020 flow tracking, study screening (title/abstract and full-text), evidence-table extraction, and risk-of-bias assessment (RoB 2, ROBINS-I, AMSTAR 2), producing professionally formatted markdown documents and PDFs with verified citations in multiple styles (APA, Nature, Vancouver). Use when running a systematic or scoping literature review, research synthesis, or broad literature search, building a PRISMA flow diagram, screening studies, extracting an evidence table, or assessing risk of bias across biomedical, scientific, and technical domains. For quantitative pooling of effect sizes (forest/funnel plots) use alterlab-meta-analysis; for an open-ended multi-agent investigation, fact-check, or Socratic research-question work use alterlab-deep-research. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
-compatibility: Needs network access to PubMed, arXiv, bioRxiv, and Semantic Scholar (biopython/arxiv clients); PDF output requires pandoc and xelatex (check with --check-deps)
+compatibility: Needs network access to PubMed, arXiv, bioRxiv, and Semantic Scholar (searches follow the Entrez/Biopython and REST snippets in the references); verify_citations.py needs requests; PDF output requires pandoc and xelatex (check with --check-deps)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Literature Review
@@ -15,7 +16,7 @@ metadata:
 
 Conduct systematic, comprehensive literature reviews following rigorous academic methodology. Search multiple literature databases, synthesize findings thematically, verify all citations for accuracy, and generate professional output documents in markdown and PDF formats.
 
-This skill integrates with multiple scientific skills for database access (gget, bioservices, datacommons-client) and provides specialized tools for citation verification, result aggregation, and document generation.
+This skill integrates with sibling skills for database access (`alterlab-pubmed`, `alterlab-biorxiv`, `alterlab-arxiv`, `alterlab-openalex`, `alterlab-gget`, `alterlab-bioservices`, `alterlab-datacommons`) and provides its own scripts for citation verification, result aggregation, and document generation.
 
 ## When to Use This Skill
 
@@ -27,6 +28,16 @@ Use this skill when:
 - Investigating the state of the art in a research domain
 - Identifying research gaps and future directions
 - Requiring verified citations and professional formatting
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Open-ended multi-agent investigation, a quick research brief, fact-checking claims, or Socratic help formulating the research question | `alterlab-deep-research` |
+| Pooling effect sizes quantitatively (random-effects model, heterogeneity, forest/funnel plots, publication bias) | `alterlab-meta-analysis` |
+| Writing the literature-review chapter of a thesis or dissertation with a supervisor-style workflow | `alterlab-thesis-supervisor` |
+| Mapping the citation/co-citation network around seed papers | `alterlab-citation-graph` |
+| Auditing whether every entry in a bibliography actually exists (hallucinated/retracted references) | `alterlab-citation-verifier` |
 
 ## Core Workflow
 
@@ -41,6 +52,7 @@ Literature reviews follow a structured, multi-phase workflow:
    - Define clear, specific research questions
    - Determine review type (narrative, systematic, scoping, meta-analysis)
    - Set boundaries (time period, geographic scope, study types)
+   - For a systematic review, write a protocol (PRISMA-P) and register it before screening — PROSPERO for health-related reviews, OSF Registries otherwise — so the eligibility criteria and outcomes are fixed in advance
 
 3. **Develop Search Strategy**:
    - Identify 2-4 main concepts from research question
@@ -62,9 +74,9 @@ Literature reviews follow a structured, multi-phase workflow:
    Select databases appropriate for the domain:
 
    **Biomedical & Life Sciences:**
-   - Search PubMed/PMC via NCBI E-utilities (Entrez esearch/efetch) — see scripts/search_databases.py / direct Entrez API
+   - Search PubMed/PMC via NCBI E-utilities (Entrez esearch/efetch) — see the Entrez/Biopython snippet in `references/database_search_guidance.md` (`scripts/search_databases.py` does not query databases; it aggregates, deduplicates, ranks, and formats exported results)
    - Search bioRxiv/medRxiv via the bioRxiv API (api.biorxiv.org) or Europe PMC
-   - Use `bioservices` skill for ChEMBL, KEGG, UniProt, etc.
+   - Use the `alterlab-bioservices` skill for ChEMBL, KEGG, UniProt, etc.
 
    **General Scientific Literature:**
    - Search arXiv via direct API (preprints in physics, math, CS, q-bio)
@@ -72,9 +84,8 @@ Literature reviews follow a structured, multi-phase workflow:
    - Use Google Scholar for comprehensive coverage (manual or careful scraping)
 
    **Specialized Databases:**
-   - Use `gget alphafold` for protein structures
-   - Use `gget cosmic` for cancer genomics
-   - Use `datacommons-client` for demographic/statistical data
+   - Use `alterlab-gget` (`gget alphafold`, `gget cosmic`) for protein structures and cancer genomics
+   - Use `alterlab-datacommons` for demographic/statistical data
    - Use specialized databases as appropriate for the domain
 
 2. **Document Search Parameters**:
@@ -100,7 +111,7 @@ Literature reviews follow a structured, multi-phase workflow:
    - Combine all results into a single file
    - Use `scripts/search_databases.py` for post-processing:
      ```bash
-     python search_databases.py combined_results.json \
+     python scripts/search_databases.py combined_results.json \
        --deduplicate \
        --format markdown \
        --output aggregated_results.md
@@ -110,7 +121,7 @@ Literature reviews follow a structured, multi-phase workflow:
 
 1. **Deduplication**:
    ```bash
-   python search_databases.py results.json --deduplicate --output unique_results.json
+   python scripts/search_databases.py results.json --deduplicate --format json --output unique_results.json
    ```
    - Removes duplicates by DOI (primary) or title (fallback)
    - Document number of duplicates removed
@@ -131,14 +142,16 @@ Literature reviews follow a structured, multi-phase workflow:
    - Document specific reasons for exclusion
    - Record final number of included studies
 
-5. **Create PRISMA Flow Diagram**:
+5. **Create PRISMA 2020 Flow Diagram** (Page et al., *BMJ* 2021;372:n71 — report counts at every stage and the reasons for full-text exclusions):
    ```
-   Initial search: n = X
-   ├─ After deduplication: n = Y
-   ├─ After title screening: n = Z
-   ├─ After abstract screening: n = A
-   └─ Included in review: n = B
+   Identification: records from databases (n per source) + registers
+     └─ removed before screening: duplicates (n), other (n)
+   Screening: records screened (n) → excluded (n)
+     └─ reports sought for retrieval (n) → not retrieved (n)
+     └─ reports assessed for eligibility (n) → excluded, with reasons (n per reason)
+   Included: studies (n) and reports (n) in the review
    ```
+   Report the full search strings per database following PRISMA-S; for scoping reviews use PRISMA-ScR.
 
 ### Phase 4: Data Extraction and Quality Assessment
 
@@ -150,12 +163,14 @@ Literature reviews follow a structured, multi-phase workflow:
    - Limitations noted by authors
    - Funding sources and conflicts of interest
 
-2. **Assess Study Quality**:
-   - **For RCTs**: Use Cochrane Risk of Bias tool
-   - **For observational studies**: Use Newcastle-Ottawa Scale
-   - **For systematic reviews**: Use AMSTAR 2
-   - Rate each study: High, Moderate, Low, or Very Low quality
-   - Consider excluding very low-quality studies
+2. **Assess Risk of Bias** (per study, with the tool that matches its design):
+   - **RCTs**: Cochrane RoB 2 — judgments per domain and overall: low risk / some concerns / high risk
+   - **Non-randomized studies of interventions**: ROBINS-I (V2 at riskofbias.info) — low / moderate / serious / critical
+   - **Other observational studies**: Newcastle-Ottawa Scale
+   - **Diagnostic accuracy studies**: QUADAS-2
+   - **Systematic reviews (umbrella reviews)**: AMSTAR 2
+   - Then rate the **certainty of the body of evidence per outcome** with GRADE (high / moderate / low / very low) — GRADE grades outcomes across studies, not individual studies
+   - Prefer sensitivity analyses over silently excluding high-risk studies, and report which studies were affected
 
 3. **Organize by Themes**:
    - Identify 3-5 major themes across studies
@@ -202,7 +217,7 @@ Literature reviews follow a structured, multi-phase workflow:
 
 ### Phase 6: Citation Verification
 
-**CRITICAL**: All citations must be verified for accuracy before final submission.
+Verify every citation before the review leaves your hands — a single wrong DOI or misattributed finding undermines the credibility of the whole synthesis.
 
 1. **Verify All DOIs**:
    ```bash
@@ -215,6 +230,8 @@ Literature reviews follow a structured, multi-phase workflow:
    - Retrieves metadata from CrossRef
    - Generates verification report
    - Outputs properly formatted citations
+
+   It checks DOIs only; for references without DOIs, or to screen a whole bibliography for fabricated or retracted entries, run `alterlab-citation-verifier`.
 
 2. **Review Verification Report**:
    - Check for any failed DOIs
@@ -238,7 +255,8 @@ Literature reviews follow a structured, multi-phase workflow:
    ```
 
    Options:
-   - `--citation-style`: apa, nature, chicago, vancouver, ieee
+   - `--output` / `-o`: output PDF path (default: the markdown filename with `.pdf`)
+   - `--citation-style`: a CSL style name such as apa, nature, ieee, chicago-author-date. It is applied only when a `.bib` with the same basename sits next to the markdown file, and pandoc must find `<style>.csl` (download it from the CSL styles repository at github.com/citation-style-language/styles into the working directory)
    - `--no-toc`: Disable table of contents
    - `--no-numbers`: Disable section numbering
    - `--check-deps`: Check if pandoc/xelatex are installed
@@ -319,4 +337,6 @@ This literature-review skill provides:
 7. **Reproducibility** through detailed documentation requirements
 
 Conduct thorough, rigorous literature reviews that meet academic standards and provide comprehensive synthesis of current knowledge in any domain.
+
+Part of the AlterLab Academic Skills suite.
 

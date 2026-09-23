@@ -32,8 +32,9 @@ salmon index -t gentrome.fa -d decoys.txt -i salmon_index -k 31 -p 8
 - **Header trimming.** Many genome FASTAs have headers like
   `>1 dna:chromosome ...`; the `sed 's/ .*//'` keeps only `1`. salmon matches on
   the first whitespace-delimited token, so trim consistently.
-- **Rebuild for v1.11.4.** The SSHash index format means any pre-v1.11.2 index is
-  invalid — rebuild (see ../references/tool_versions.md).
+- **Rebuild for salmon 2.x.** The Rust rewrite uses a new index format and rejects
+  C++/pufferfish indices outright — rebuild with the binary you will quantify with
+  (see tool_versions.md).
 - Use a transcriptome FASTA and genome from the **same assembly/annotation
   release** (e.g. matching Ensembl/GENCODE versions). Fetch references with
   `alterlab-gget` if needed.

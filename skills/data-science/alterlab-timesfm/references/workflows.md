@@ -202,7 +202,7 @@ for i in range(0, len(inputs), CHUNK):
 
 ## Integration with Other Skills
 
-### With `statsmodels`
+### With `statsmodels` (`alterlab-statsmodels`)
 
 Use `statsmodels` for classical models (ARIMA, SARIMAX) as a **comparison baseline**:
 
@@ -220,10 +220,10 @@ print(f"TimesFM MAE: {np.mean(np.abs(actual - tfm_point[0])):.2f}")
 print(f"ARIMA MAE:   {np.mean(np.abs(actual - arima_forecast)):.2f}")
 ```
 
-### With `matplotlib` / `scientific-visualization`
+### With `matplotlib` / `alterlab-scientific-viz`
 
 Plot forecasts with prediction intervals as publication-quality figures.
 
-### With `exploratory-data-analysis`
+### With `alterlab-eda`
 
 Run EDA on the time series before forecasting to understand trends, seasonality, and stationarity.

@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Runs under `uv run python`; the portable dispatcher (`scripts/dispatch.py`) is stdlib-only. SLURM paths need `sbatch`/`squeue`/`sacct` on PATH (an HPC login node); managed backends need the provider CLI/SDK and account credentials read from environment variables (never hardcoded). No GPU is needed to submit/poll — only the remote job itself uses one."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Remote Compute
@@ -54,8 +55,9 @@ model skill portable across an HPC allocation and a cloud GPU:
 3. **harvest(handle) → artifacts** — copy the declared output files back to a local `out/`
    directory (scp/rsync from HPC scratch; object-store download for cloud).
 
-`scripts/dispatch.py` implements this contract for the SLURM and a generic REST backend, and
-defines the status vocabulary so model skills can depend on it. Provider-specific command and
+`scripts/dispatch.py` implements submit and poll (plus cancel for SLURM) for the SLURM and a
+generic REST backend, and defines the status vocabulary so model skills can depend on it;
+harvest is a copy step (rsync/scp or object-store download) shown in `references/providers.md`. Provider-specific command and
 API detail lives in `references/providers.md` (loaded on demand).
 
 ## Core Capabilities
@@ -98,7 +100,7 @@ management and per-second GPU billing. This skill's role is only to treat a Moda
 ### 3. RunPod — on-demand GPU pods
 
 RunPod exposes GPU pods and a serverless endpoint API. Submit to a serverless endpoint and
-poll the returned job id; the API key is read from `RUNPOD_API_KEY`. Endpoint/run/status
+poll the returned job id; the API key is read from `RUNPOD_API_KEY` and sent as a bearer token. Endpoint/run/status
 paths and the pod vs. serverless trade-off are in `references/providers.md`.
 
 ### 4. GCP — Batch and Vertex AI
@@ -142,6 +144,6 @@ third-party dependencies, so it runs anywhere Python does.
 
 - `references/providers.md` — per-backend command/API detail (SLURM directives, RunPod
   endpoints, GCP Batch/Vertex, Modal cross-link) loaded on demand.
-- `scripts/dispatch.py` — stdlib-only `submit`/`poll`/`harvest` CLI for SLURM + generic REST.
+- `scripts/dispatch.py` — stdlib-only `submit`/`poll`/`cancel` CLI for SLURM + generic REST.
 
 Part of the AlterLab Academic Skills suite.

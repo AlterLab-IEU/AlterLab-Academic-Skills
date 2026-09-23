@@ -44,10 +44,19 @@
     {
       "id": "near-miss-local-torch",
       "prompt": "On my own Mac Studio I just want to train a small PyTorch model locally with the data already on disk, set the random seed, and pin my dependencies in a uv environment for reproducibility. No cloud, no deployment.",
-      "expected_output": "Should NOT activate the Modal skill. This is local-only PyTorch training with no cloud deployment, GPU provisioning, autoscaling, or serverless endpoint, so it belongs to the python-research reproducibility workflow rather than Modal. The response should not push the work to Modal's cloud.",
+      "expected_output": "Should NOT activate the Modal skill. This is local-only PyTorch training with no cloud deployment, GPU provisioning, autoscaling, or serverless endpoint, so it is ordinary local training (alterlab-pytorch-lightning if the user wants structured training loops) rather than Modal. The response should not push the work to Modal's cloud.",
       "assertions": [
         {"type": "should_not_trigger", "value": true},
         {"type": "behavior", "value": "Recognizes a purely local, on-disk PyTorch training and reproducibility task with no cloud/GPU-provisioning need, and does not route it to Modal."}
+      ]
+    },
+    {
+      "id": "near-miss-remote-compute",
+      "prompt": "Our lab has a SLURM allocation on the university cluster. I want a small wrapper that submits my AlphaFold job with sbatch, polls it with sacct until it finishes, and copies the output files back — ideally portable to RunPod later.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-remote-compute. The task is provider-agnostic batch dispatch (sbatch submit, sacct polling, artifact harvest) on an HPC scheduler with a possible RunPod backend, not deploying Modal serverless functions, images, or autoscaling endpoints.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-remote-compute"}
       ]
     }
   ]

@@ -255,7 +255,7 @@ To ensure reproducibility in analyses:
 
 2. **Error handling:**
    - Database structure changes may cause temporary failures
-   - Check GitHub issues: https://github.com/pachterlab/gget/issues
+   - Check GitHub issues: https://github.com/scverse/gget/issues (the project moved to the scverse org; the pachterlab URL redirects)
    - Update gget if errors occur
 
 3. **API rate limiting:**

@@ -17,33 +17,33 @@ requirementDiagram
 
     requirement high_availability {
         id: 1
-        text: System shall maintain 99.9 percent uptime
+        text: "System shall maintain 99.9 percent uptime"
         risk: high
         verifymethod: test
     }
 
     requirement data_encryption {
         id: 2
-        text: All data at rest shall be AES-256 encrypted
+        text: "All data at rest shall be AES-256 encrypted"
         risk: medium
         verifymethod: inspection
     }
 
     requirement session_timeout {
         id: 3
-        text: Sessions expire after 30 minutes idle
+        text: "Sessions expire after 30 minutes idle"
         risk: low
         verifymethod: test
     }
 
     element auth_service {
         type: service
-        docref: auth-service-v2
+        docref: "auth-service-v2"
     }
 
     element crypto_module {
         type: module
-        docref: crypto-lib-v3
+        docref: "crypto-lib-v3"
     }
 
     auth_service - satisfies -> high_availability
@@ -62,7 +62,8 @@ requirementDiagram
 - Use `element` for design components that satisfy requirements
 - Relationship types: `- satisfies ->`, `- traces ->`, `- contains ->`, `- derives ->`, `- refines ->`, `- copies ->`
 - Keep to **3–5 requirements** per diagram
-- Avoid special characters in text fields — spell out symbols (e.g., "99.9 percent" not "99.9%")
+- **Quote `text:` and `docref:` values** — an unquoted hyphen (e.g. `AES-256`, `auth-service-v2`) is read as a relationship arrow and the whole diagram fails to parse (checked on Mermaid 11.12, 11.17, and 12.0)
+- Avoid other special characters in text fields — spell out symbols (e.g., "99.9 percent" not "99.9%")
 - Use 4-space indentation inside `{ }` blocks
 
 ---
@@ -74,14 +75,14 @@ requirementDiagram
 
     requirement your_requirement {
         id: 1
-        text: The requirement statement here
+        text: "The requirement statement here"
         risk: medium
         verifymethod: test
     }
 
     element your_component {
         type: service
-        docref: component-ref
+        docref: "component-ref"
     }
 
     your_component - satisfies -> your_requirement

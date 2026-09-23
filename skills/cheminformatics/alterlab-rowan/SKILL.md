@@ -3,10 +3,11 @@ name: alterlab-rowan
 description: Drives the Rowan cloud quantum-chemistry platform via its Python API for computational chemistry — pKa prediction, geometry optimization, conformer searching, molecular property calculations, protein-ligand docking (AutoDock Vina), and AI protein cofolding (Chai-1, Boltz-1/2), with cloud compute and no local setup. Use when running DFT or semiempirical methods, neural network potentials (AIMNet2), molecular property or protein-ligand binding predictions, or automated computational chemistry pipelines. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: API required
+compatibility: "Requires a Rowan account and API key (ROWAN_API_KEY); jobs run on Rowan's cloud and consume credits, and submitted structures are sent to Rowan's servers. rowan-python >= 3.2, Python >= 3.12."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.2.0"
+    last_updated: "2026-09-23"
 ---
 
 # Rowan: Cloud-Based Quantum Chemistry Platform
@@ -29,14 +30,31 @@ Rowan is a cloud-based computational chemistry platform that provides programmat
 - Results viewable in web interface at labs.rowansci.com
 - Automatic resource scaling
 
+## When to Use This Skill
+
+Use this skill when the user wants to:
+- Predict pKa / macro-pKa, redox potentials, solubility, or other properties without local QM software
+- Run geometry optimizations, conformer searches, or single points with NNPs (AIMNet2, Egret), xTB, or DFT in the cloud
+- Dock ligands (Vina/GNINA) or co-fold protein–ligand complexes (Boltz, Chai-1, OpenFold3) as managed cloud jobs
+- Script and batch these jobs from Python (`rowan-python`), organized in folders with credit caps
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Running and analyzing a local OpenMM MD trajectory (RMSD/RMSF, contacts) | `alterlab-molecular-dynamics` |
+| Open-source, local diffusion docking with DiffDock (no cloud account) | `alterlab-diffdock` |
+| Running Boltz-2 or Chai-1 locally on your own GPU | `alterlab-boltz` or `alterlab-chai` |
+| Local conformers, descriptors, or RDKit force-field minimization | `alterlab-rdkit` |
+
 ## Installation and Authentication
 
 ### Installation
 
-Requires Python >= 3.12. This skill targets `rowan-python` 3.x (the current major version; v2 had a different result API).
+Requires Python >= 3.12. This skill targets `rowan-python` 3.x (current 3.2.0 as of 2026-09; v2 had a different result API).
 
 ```bash
-uv pip install "rowan-python>=3.0"
+uv pip install "rowan-python>=3.2"
 ```
 
 Installing `rowan-python` also pulls in `stjames` (molecule/result models) and `rdkit`.
@@ -74,15 +92,16 @@ print(f"Credits available: {user.credits}")
 Every `submit_*_workflow` returns a `Workflow`. Do NOT read `workflow.data[...]` by hand and do NOT call the deprecated `wait_for_result()`. The v3 idiom is a single call:
 
 ```python
-workflow = rowan.submit_pka_workflow("c1ccccc1O", name="phenol pKa")
+mol = rowan.Molecule.from_smiles("c1ccccc1O")   # 3D structure for the default 3D method
+workflow = rowan.submit_pka_workflow(mol, name="phenol pKa")
 result = workflow.result()        # blocks until done, returns a typed WorkflowResult
 print(result.strongest_acid)      # typed attribute access, not a dict key
 ```
 
 Key facts:
 - `workflow.result(wait=True, poll_interval=5)` blocks, fetches, and raises `rowan.WorkflowError` if the workflow failed or was stopped. Use `wait=False` to grab whatever is ready without blocking.
-- `workflow.status` is the **integer** enum `stjames.Status` (`QUEUED=0, RUNNING=1, COMPLETED_OK=2, FAILED=3, STOPPED=4`), not a string. Use `workflow.done()` / `workflow.is_finished()` rather than comparing to `"completed"`.
-- `submit_*` functions accept a SMILES string, an `stjames.Molecule`, or an RDKit `Mol` directly as `initial_molecule` — you rarely need to build a molecule first. `stjames.Molecule.from_smiles(smiles)` takes only the SMILES (no `charge=`/`multiplicity=` kwargs).
+- `workflow.status` is the **integer** enum `stjames.Status` (`QUEUED=0, RUNNING=1, COMPLETED_OK=2, FAILED=3, STOPPED=4, AWAITING_QUEUE=5, DRAFT=6, PREEMPTED=7`), not a string. Use `workflow.done()` / `workflow.is_finished()` rather than comparing to `"completed"`.
+- **Geometry-based workflows now reject a bare SMILES string.** As of rowan-python 3.x, `submit_basic_calculation_workflow`, `submit_docking_workflow`, and any 3D pKa/conformer method call `require_coordinates`, which raises `ValueError` on a SMILES with no coordinates. Build a 3D molecule first: `mol = rowan.Molecule.from_smiles("CCO")` (or `stjames.Molecule.from_smiles(...)`, which auto-generates coordinates), then pass `mol`. A SMILES string is still accepted by SMILES-based methods (`submit_macropka_workflow`, and pKa with `method="starling"`/`"chemprop_nevolianis2025"`). `Molecule.from_smiles(smiles)` takes only the SMILES (no `charge=`/`multiplicity=` kwargs).
 
 ## Core Workflows
 
@@ -93,12 +112,13 @@ Predict micro-pKa / acid dissociation constants:
 ```python
 import rowan
 
-# initial_molecule accepts a SMILES string directly
+# The default pKa method is now a 3D method, so build a molecule (bare SMILES is rejected).
 workflow = rowan.submit_pka_workflow(
-    "c1ccccc1O",  # Phenol
+    rowan.Molecule.from_smiles("c1ccccc1O"),   # Phenol
     name="phenol pKa calculation",
     pka_range=(2, 12),                  # default
-    method="aimnet2_wagen2024",         # default NNP-based pKa model
+    method="gxtb_wagen2026",            # default (g-xTB); "aimnet2_wagen2024" also 3D.
+                                        # "starling" / "chemprop_nevolianis2025" take a SMILES string.
 )
 
 result = workflow.result()
@@ -136,7 +156,7 @@ lowest = result.get_conformer(0)       # stjames.Molecule of the lowest-energy c
 import rowan
 
 workflow = rowan.submit_basic_calculation_workflow(
-    "CC(=O)O",  # Acetic acid
+    rowan.Molecule.from_smiles("CC(=O)O"),  # Acetic acid (needs 3D coords; SMILES is rejected)
     tasks=["optimize"],
     preset="organic_nnp",     # quick NNP preset; or set method=/basis_set= explicitly
     name="acetic acid optimization",
@@ -164,8 +184,11 @@ pocket = [[10.0, 20.0, 30.0],    # center (Å)
 workflow = rowan.submit_docking_workflow(
     protein=protein,             # Protein object or its .uuid
     pocket=pocket,
-    initial_molecule="Cc1ccc(NC(=O)c2ccc(CN3CCN(C)CC3)cc2)cc1",
-    scoring_function="vinardo",  # or "vina"
+    # 3D input required — a bare SMILES string raises ValueError
+    initial_molecule=rowan.Molecule.from_smiles("Cc1ccc(NC(=O)c2ccc(CN3CCN(C)CC3)cc2)cc1"),
+    # engine options go in docking_settings; the loose scoring_function=/exhaustiveness=
+    # kwargs are deprecated (rowan.GninaSettings selects GNINA instead of Vina)
+    docking_settings=rowan.VinaSettings(scoring_function="vinardo"),  # or "vina"
     name="EGFR docking",
 )
 
@@ -189,7 +212,7 @@ workflow = rowan.submit_protein_cofolding_workflow(
     initial_protein_sequences=[protein_seq],
     initial_smiles_list=[ligand],
     name="kinase-ligand cofolding",
-    model="chai_1r",   # or "boltz_1", "boltz_2", "openfold_3"
+    model="chai_1r",   # default is "boltz_2"; see note below for the full list
 )
 
 result = workflow.result()
@@ -198,7 +221,7 @@ print(f"pTM: {top.scores.ptm}")        # predicted TM score (0-1)
 print(f"interface pTM: {top.scores.iptm}")
 ```
 
-> Note: the cofolding model strings are `chai_1r`, `boltz_1`, `boltz_2`, `openfold_3` (there is no `boltz_1x`). Confidence lives on `result.scores` / each prediction's `.scores` as `.ptm` and `.iptm`.
+> Note: in rowan-python 3.2 the cofolding model strings are `chai_1r`, `boltz_1`, `boltz_2` (default), `boltz_2_1`, `openfold_3`, and `decaf_boltz` (there is no `boltz_1x`). Confidence lives on `result.scores` / each prediction's `.scores` as `.ptm` and `.iptm`.
 
 ## Workflow Management
 
@@ -221,13 +244,15 @@ workflow = rowan.retrieve_workflow("workflow-uuid")
 ### Batch Operations
 
 ```python
-# Submit many workflows of one type at once
+# Submit many workflows of one type at once. This is a thin loop over the generic
+# submit_workflow: it skips the per-type input checks the submit_*_workflow helpers do,
+# so pass workflow_data= for non-default settings.
 workflows = rowan.batch_submit_workflow(
     workflow_type="pka",
     initial_smileses=["CCO", "CC(=O)O", "c1ccccc1O"],
 )
 
-# Non-blocking status poll (returns a list of {uuid, status, ...} dicts)
+# Non-blocking status poll: returns {uuid: status_int} (stjames.Status values)
 statuses = rowan.batch_poll_status([wf.uuid for wf in workflows])
 ```
 
@@ -239,9 +264,9 @@ folder = rowan.create_folder(name="Drug Discovery Project")
 
 # Submit workflow to folder
 workflow = rowan.submit_pka_workflow(
-    "CCO",
+    rowan.Molecule.from_smiles("CCO"),
     name="compound pKa",
-    folder=folder,          # or folder_uuid=folder.uuid
+    folder=folder,          # or folder_uuid=folder.uuid (not both)
 )
 
 # List workflows in folder
@@ -286,8 +311,11 @@ import rowan
 
 smiles_list = ["CCO", "c1ccccc1O", "CC(=O)O"]
 
-# Submit all pKa calculations (SMILES strings are accepted directly)
-workflows = [rowan.submit_pka_workflow(smi, name=f"pKa: {smi}") for smi in smiles_list]
+# Submit all pKa calculations (default 3D method -> build molecules from the SMILES)
+workflows = [
+    rowan.submit_pka_workflow(rowan.Molecule.from_smiles(smi), name=f"pKa: {smi}")
+    for smi in smiles_list
+]
 
 # Collect results
 for wf in workflows:
@@ -347,7 +375,9 @@ print(f"Energy range: {energies[0]:.2f} to {energies[-1]:.2f} kcal/mol")
 ```python
 import rowan
 
-workflow = rowan.submit_pka_workflow("c1ccccc1O", name="calculation", max_credits=10)
+workflow = rowan.submit_pka_workflow(
+    rowan.Molecule.from_smiles("c1ccccc1O"), name="calculation", max_credits=10
+)   # input problems (e.g. a bare SMILES for a 3D method) raise ValueError at submit time
 
 try:
     result = workflow.result()       # blocks until done; raises on failure
@@ -365,3 +395,5 @@ except rowan.WorkflowError as e:
 - **Web Interface**: https://labs.rowansci.com
 - **Documentation**: https://docs.rowansci.com
 - **Tutorials**: https://docs.rowansci.com/tutorials
+
+Part of the AlterLab Academic Skills suite.

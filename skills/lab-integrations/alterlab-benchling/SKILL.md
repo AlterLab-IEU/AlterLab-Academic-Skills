@@ -3,10 +3,11 @@ name: alterlab-benchling
 description: Integrates the Benchling R&D platform via its REST API and SDK — access the registry (DNA, proteins), inventory, ELN entries and workflows, build Benchling Apps, and query the Benchling Data Warehouse. Use when automating Benchling lab data management, syncing sample registry or inventory records, scripting ELN entries/workflows, or running SQL against the Benchling Data Warehouse. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
-compatibility: Requires a Benchling account and API key
+compatibility: Requires a Benchling tenant with API access plus an API key or OAuth app credentials; benchling-sdk 1.x (current 1.25.0, Python >=3.9)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Benchling Integration
@@ -27,30 +28,40 @@ This skill should be used when:
 - Querying the Benchling Data Warehouse for analytics
 - Setting up event-driven integrations with AWS EventBridge
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| LabArchives notebooks, entries, attachments, or backups | `alterlab-labarchive` |
+| Finding, writing, or publishing protocols on protocols.io | `alterlab-protocolsio` |
+| FAIR dataset registries, ontology curation, and lineage with LaminDB | `alterlab-lamindb` |
+| Sequence parsing and manipulation outside Benchling (FASTA/GenBank I/O) | `alterlab-biopython` |
+| Running bioinformatics pipelines on DNAnexus or LatchBio | `alterlab-dnanexus` / `alterlab-latchbio` |
+
 ## Core Capabilities
 
 ### 1. Authentication & Setup
 
 **Python SDK Installation:**
 ```bash
-# Stable release (benchling-sdk 1.x; requires Python >= 3.8)
-uv add benchling-sdk
+# Stable release (benchling-sdk 1.x; current 1.25.0, requires Python >= 3.9)
+uv add "benchling-sdk>=1.25,<2"
 # or for a throwaway script env
 uv pip install benchling-sdk
 ```
-Pin a recent 1.x in production (e.g. `benchling-sdk>=1.23,<2`); the SDK follows
-SDK-level semver, not the API version, so check the changelog before bumping a major.
+The SDK follows SDK-level semver, not the API version, so check the changelog before bumping a major.
 
 **Authentication Methods:**
 
 API Key Authentication (recommended for scripts):
 ```python
+import os
 from benchling_sdk.benchling import Benchling
 from benchling_sdk.auth.api_key_auth import ApiKeyAuth
 
 benchling = Benchling(
     url="https://your-tenant.benchling.com",
-    auth_method=ApiKeyAuth("your_api_key")
+    auth_method=ApiKeyAuth(os.environ["BENCHLING_API_KEY"])
 )
 ```
 
@@ -60,7 +71,7 @@ from benchling_sdk.auth.client_credentials_oauth2 import ClientCredentialsOAuth2
 
 auth_method = ClientCredentialsOAuth2(
     client_id="your_client_id",
-    client_secret="your_client_secret"
+    client_secret=os.environ["BENCHLING_CLIENT_SECRET"]
 )
 benchling = Benchling(
     url="https://your-tenant.benchling.com",
@@ -70,7 +81,7 @@ benchling = Benchling(
 
 **Key Points:**
 - API keys are obtained from Profile Settings in Benchling
-- Store credentials securely (use environment variables or password managers)
+- Keep credentials in environment variables or a secret manager, never in code or notebooks
 - All API requests require HTTPS
 - Authentication permissions mirror user permissions in the UI
 
@@ -100,16 +111,20 @@ sequence = benchling.dna_sequences.create(
 **Registry Registration:**
 
 To register an entity directly upon creation, set `registry_id` (which registry
-to register into) plus a `naming_strategy` (how the registry ID is assigned):
+to register into) plus a `naming_strategy` (how the registry ID is assigned).
+`naming_strategy` must be the `NamingStrategy` enum — a plain string fails when
+the request is serialized:
 ```python
+from benchling_sdk.models import DnaSequenceCreate, NamingStrategy
+
 sequence = benchling.dna_sequences.create(
     DnaSequenceCreate(
         name="My Plasmid",
         bases="ATCGATCG",
         is_circular=True,
         folder_id="fld_abc123",
-        registry_id="src_abc123",       # registry to register into
-        naming_strategy="NEW_IDS",      # or "IDS_FROM_NAMES"
+        registry_id="src_abc123",                 # registry to register into
+        naming_strategy=NamingStrategy.NEW_IDS,   # or NamingStrategy.IDS_FROM_NAMES
     )
 )
 ```
@@ -137,8 +152,8 @@ Unspecified fields remain unchanged, allowing partial updates.
 
 **Listing and Pagination:**
 ```python
-# List all DNA sequences (returns a generator)
-sequences = benchling.dna_sequences.list()
+# List DNA sequences (a PageIterator that yields pages lazily)
+sequences = benchling.dna_sequences.list(schema_id="ts_abc123")  # server-side filters
 for page in sequences:
     for seq in page:
         print(f"{seq.name} ({seq.id})")
@@ -151,7 +166,7 @@ total = sequences.estimated_count()
 - Create: `benchling.<entity_type>.create(<CreateModel>)`
 - Read: `benchling.<entity_type>.get_by_id(<entity>_id=...)` or `.list(...)`
 - Update: `benchling.<entity_type>.update(<entity>_id=..., <entity>=<UpdateModel>)`
-- Archive: `benchling.<entity_type>.archive(<entity>_ids=[...], reason=<EntityArchiveReason>)` (bulk)
+- Archive: `benchling.<entity_type>.archive(<entity>_ids=[...], reason=EntityArchiveReason.MADE_IN_ERROR)` (bulk)
 
 Entity types: `dna_sequences`, `rna_sequences`, `aa_sequences`, `custom_entities`, `mixtures`
 
@@ -193,24 +208,19 @@ box = benchling.boxes.create(
 
 There is no `containers.transfer(...)` convenience method. Move contents between
 containers with `transfer_into_container` (single) or `transfer_into_containers`
-(bulk), passing a `ContainerTransfer` request object:
+(bulk, returns a `TaskHelper`), passing a `ContainerTransfer` request object:
 ```python
 from benchling_sdk.models import ContainerTransfer
 
 benchling.containers.transfer_into_container(
     destination_container_id="cont_xyz789",
-    transfer_request=ContainerTransfer(...),  # see API reference for transfer fields
+    transfer_request=ContainerTransfer(...),  # source_entity_id/source_container_id, transfer_quantity, ...
 )
 ```
 To relocate a container in storage instead (rather than transfer its contents),
-update its `parent_storage_id` via `containers.update(...)`.
-
-**Key Inventory Operations:**
-- Create containers, boxes, locations, plates
-- Update inventory item properties
-- Transfer items between locations
-- Check in/out items
-- Batch operations for bulk transfers
+update its `parent_storage_id` via `containers.update(...)`. Check-in/out are bulk
+calls: `containers.checkout(ContainersCheckout(container_ids=[...], assignee_id=...))`
+and `containers.checkin(ContainersCheckin(container_ids=[...]))`.
 
 ### 4. Notebook & Documentation
 
@@ -223,7 +233,7 @@ from benchling_sdk.helpers.serialization_helpers import fields
 
 entry = benchling.entries.create_entry(
     EntryCreate(
-        name="Experiment 2025-10-20",
+        name="Experiment 2026-09-23",
         folder_id="fld_abc123",
         schema_id="entry_schema_abc123",
         fields=fields({"objective": {"value": "Test gene expression"}})
@@ -233,33 +243,26 @@ entry = benchling.entries.create_entry(
 
 **Linking Entities to Entries:**
 
-There is no `entry_links` service. Entities are linked into an ELN entry through
-the entry's content/notes — by inserting an inline entity reference (an
-@-mention link to the entity, e.g. `id="seq_xyz789"`) into a note block of the
-entry body, then updating the entry with that content:
-```python
-from benchling_sdk.models import EntryUpdate
-
-# Build entry content (days/notes) containing an inline link to the entity,
-# then persist it via update_entry.
-benchling.entries.update_entry(
-    entry_id="entry_abc123",
-    entry=EntryUpdate(days=[...])  # notes containing the inline entity link
-)
-```
-Confirm the exact note/link model classes (for the inline link block) against
-your installed `benchling-sdk` version, since linking is expressed within entry
-content rather than via a standalone service.
+The v2 API cannot write note text or @-mentions into an existing entry:
+`EntryUpdate` changes metadata only (`name`, `folder_id`, `schema_id`, `fields`,
+`author_ids`). Associate entities with an entry in one of these ways:
+- Give the entry schema an entity-link field and set it:
+  `benchling.entries.update_entry(entry_id="entry_abc123", entry=EntryUpdate(fields=fields({"plasmid": {"value": "seq_xyz789"}})))`
+- Create the entry from a template and pre-fill its tables at creation time with
+  `EntryCreate(..., entry_template_id="TEMPLATE_ID", initial_tables=[InitialTable(template_table_id="TABLE_ID", csv_data="...")])`
+- Record assay results/runs against the entities (see `references/api_endpoints.md`)
 
 **Key Notebook Operations:**
-- Create and update lab notebook entries
-- Manage entry templates
-- Link entities and results to entries
+- Create and update lab notebook entries (`create_entry`, `update_entry`, `get_entry_by_id`, `list_entries`)
+- Manage entry templates (`list_entry_templates`, `update_entry_template`)
+- Link entities through schema fields or template tables
 - Export entries for documentation
 
 ### 5. Workflows & Automation
 
-Automate laboratory processes using Benchling's workflow system.
+Automate laboratory processes using Benchling's workflow system. In the v2 API a
+workflow is a **workflow task group**; tasks are created in a group and carry
+schema-defined fields.
 
 **Creating Workflow Tasks:**
 ```python
@@ -268,9 +271,8 @@ from benchling_sdk.helpers.serialization_helpers import fields
 
 task = benchling.workflow_tasks.create(
     WorkflowTaskCreate(
-        name="PCR Amplification",
-        workflow_id="wf_abc123",
-        assignee_id="user_abc123",
+        workflow_task_group_id="WORKFLOW_TASK_GROUP_ID",
+        assignee_id="USER_ID",            # optional
         fields=fields({"template": {"value": "seq_abc123"}})
     )
 )
@@ -281,9 +283,9 @@ task = benchling.workflow_tasks.create(
 from benchling_sdk.models import WorkflowTaskUpdate
 
 updated_task = benchling.workflow_tasks.update(
-    task_id="task_abc123",
+    workflow_task_id="WORKFLOW_TASK_ID",
     workflow_task=WorkflowTaskUpdate(
-        status_id="status_complete_abc123"
+        status_id="COMPLETE_STATUS_ID"
     )
 )
 ```
@@ -312,46 +314,20 @@ the helper hangs off the returned task object.
 
 ### 6. Events & Integration
 
-Subscribe to Benchling events for real-time integrations using AWS EventBridge.
-
-**Event Types:**
-- Entity creation, update, archive
-- Inventory transfers
-- Workflow task status changes
-- Entry creation and updates
-- Results registration
-
-**Integration Pattern:**
-1. Configure event routing to AWS EventBridge in Benchling settings
-2. Create EventBridge rules to filter events
-3. Route events to Lambda functions or other targets
-4. Process events and update external systems
-
-**Use Cases:**
-- Sync Benchling data to external databases
-- Trigger downstream processes on workflow completion
-- Send notifications on entity changes
-- Audit trail logging
-
-Refer to Benchling's event documentation for event schemas and configuration.
+Subscribe to Benchling events (entity create/update/archive, inventory transfers,
+workflow task status changes, entry changes, results registration) through AWS
+EventBridge: configure event routing in Benchling settings, create EventBridge
+rules to filter events, and route them to Lambda functions or other targets that
+update external systems (sync to databases, trigger downstream processes, notify,
+audit-log). See Benchling's event documentation for event schemas.
 
 ### 7. Data Warehouse & Analytics
 
-Query historical Benchling data using SQL through the Data Warehouse.
-
-**Access Method:**
-The Benchling Data Warehouse provides SQL access to Benchling data for analytics and reporting. Connect using standard SQL clients with provided credentials.
-
-**Common Queries:**
-- Aggregate experimental results
-- Analyze inventory trends
-- Generate compliance reports
-- Export data for external analysis
-
-**Integration with Analysis Tools:**
-- Jupyter notebooks for interactive analysis
-- BI tools (Tableau, Looker, PowerBI)
-- Custom dashboards
+The Benchling Data Warehouse provides read-only SQL access to tenant data for
+analytics and reporting (aggregate results, inventory trends, compliance reports,
+exports). Connect with a standard PostgreSQL client or BI tool (Jupyter, Tableau,
+Looker, Power BI) using warehouse credentials issued per user
+(`benchling.users.get_warehouse_logins(user_id)` lists them).
 
 ## Best Practices
 
@@ -366,7 +342,7 @@ from benchling_sdk.helpers.retry_helpers import RetryStrategy
 
 benchling = Benchling(
     url="https://your-tenant.benchling.com",
-    auth_method=ApiKeyAuth("your_api_key"),
+    auth_method=ApiKeyAuth(os.environ["BENCHLING_API_KEY"]),
     retry_strategy=RetryStrategy(max_tries=3)
 )
 ```
@@ -393,7 +369,7 @@ from benchling_sdk.helpers.serialization_helpers import fields
 
 custom_fields = fields({
     "concentration": {"value": "100 ng/μL"},
-    "date_prepared": {"value": "2025-10-20"},
+    "date_prepared": {"value": "2026-09-23"},
     "notes": {"value": "High quality prep"}
 })
 ```
@@ -407,11 +383,9 @@ The SDK handles unknown enum values and types gracefully:
 
 ### Security Considerations
 
-- Never commit API keys to version control
-- Use environment variables for credentials
-- Rotate keys if compromised
-- Grant minimal necessary permissions for apps
-- Use OAuth for multi-user scenarios
+- Rotate keys if compromised, and grant apps only the permissions they need
+- Prefer OAuth apps for multi-user or service integrations over personal API keys
+- Registry and notebook data can contain unpublished IP or regulated data; follow your institution's data-handling rules before exporting it
 
 ## Resources
 
@@ -449,9 +423,9 @@ task.wait_for_response()  # blocks until the bulk job finishes
 
 **2. Inventory Audit:**
 ```python
-# List all containers in a specific location
+# List all containers stored anywhere under a box or location
 containers = benchling.containers.list(
-    parent_storage_id="box_abc123"
+    ancestor_storage_id="box_abc123"
 )
 
 for page in containers:
@@ -461,11 +435,13 @@ for page in containers:
 
 **3. Workflow Automation:**
 ```python
-# Update all pending tasks for a workflow
+from benchling_sdk.models import WorkflowTaskUpdate
+
+# Update all pending tasks in a workflow task group.
 # Filter by status via status_ids (a list of status IDs, not a status name)
 tasks = benchling.workflow_tasks.list(
-    workflow_id="wf_abc123",
-    status_ids=["status_pending_abc123"]
+    workflow_task_group_ids=["WORKFLOW_TASK_GROUP_ID"],
+    status_ids=["PENDING_STATUS_ID"]
 )
 
 for page in tasks:
@@ -473,28 +449,25 @@ for page in tasks:
         # Perform automated checks
         if auto_validate(task):
             benchling.workflow_tasks.update(
-                task_id=task.id,
+                workflow_task_id=task.id,
                 workflow_task=WorkflowTaskUpdate(
-                    status_id="status_complete_abc123"
+                    status_id="COMPLETE_STATUS_ID"
                 )
             )
 ```
 
 **4. Data Export:**
 ```python
-# Export all sequences with specific properties
-sequences = benchling.dna_sequences.list()
+# Export all sequences of one schema (filtered server-side)
 export_data = []
-
-for page in sequences:
+for page in benchling.dna_sequences.list(schema_id="ts_target_schema"):
     for seq in page:
-        if seq.schema_id == "target_schema_id":
-            export_data.append({
-                "id": seq.id,
-                "name": seq.name,
-                "bases": seq.bases,
-                "length": len(seq.bases)
-            })
+        export_data.append({
+            "id": seq.id,
+            "name": seq.name,
+            "bases": seq.bases,
+            "length": seq.length,
+        })
 
 # Then write export_data to CSV/database as needed (e.g. csv.DictWriter).
 ```
@@ -504,5 +477,6 @@ for page in sequences:
 - **Official Documentation:** https://docs.benchling.com
 - **Python SDK Reference:** https://benchling.com/sdk-docs/
 - **API Reference:** https://benchling.com/api/reference
-- **Support:** [email protected]
+- **Help Center / Support:** https://help.benchling.com
 
+Part of the AlterLab Academic Skills suite.

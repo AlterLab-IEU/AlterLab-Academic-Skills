@@ -105,11 +105,18 @@ counts = ddf['category'].value_counts().compute()
 # GroupBy operations (may require shuffle)
 grouped = ddf.groupby('category')['value'].mean().compute()
 
-# Multiple aggregations
+# Multiple aggregations (dict-of-lists gives MultiIndex columns; fine in memory,
+# but flatten or use named aggregation before writing Parquet)
 agg_result = ddf.groupby('category').agg({
     'value': ['mean', 'sum', 'count'],
     'amount': 'sum'
 }).compute()
+
+# Named aggregation: flat, Parquet-safe column names
+agg_named = ddf.groupby('category').agg(
+    value_mean=('value', 'mean'),
+    amount_sum=('amount', 'sum'),
+)
 ```
 
 ### Joins and Merges
@@ -170,7 +177,7 @@ ddf = ddf.map_partitions(func, meta=pd.DataFrame({
 ```python
 # These operations are lazy (instant, no computation)
 filtered = ddf[ddf['value'] > 100]
-aggregated = filtered.groupby('category').mean()
+aggregated = filtered.groupby('category').mean(numeric_only=True)  # skip string columns
 final = aggregated[aggregated['value'] < 500]
 
 # Nothing has computed yet
@@ -195,8 +202,8 @@ result1, result2, result3 = dask.compute(
 ddf_cached = ddf.persist()
 
 # Now multiple operations on ddf_cached won't recompute
-result1 = ddf_cached.mean().compute()
-result2 = ddf_cached.sum().compute()
+result1 = ddf_cached.mean(numeric_only=True).compute()
+result2 = ddf_cached.sum(numeric_only=True).compute()
 ```
 
 ## Index Management
@@ -254,7 +261,7 @@ ddf = dd.read_parquet('data.parquet', columns=['col1', 'col2'])
 **2. Filter Before GroupBy**
 ```python
 # Better: Reduce data before expensive operations
-result = ddf[ddf['year'] == 2024].groupby('category').sum().compute()
+result = ddf[ddf['year'] == 2024].groupby('category').sum(numeric_only=True).compute()
 ```
 
 **3. Use Efficient File Formats**
@@ -286,11 +293,12 @@ ddf = ddf[ddf['status'] == 'valid']
 ddf['amount'] = ddf['amount'].astype('float64')
 ddf = ddf.dropna(subset=['important_col'])
 
-# Aggregate
-summary = ddf.groupby('category').agg({
-    'amount': ['sum', 'mean'],
-    'quantity': 'count'
-})
+# Aggregate (named aggregation keeps flat string column names, which Parquet requires)
+summary = ddf.groupby('category').agg(
+    amount_sum=('amount', 'sum'),
+    amount_mean=('amount', 'mean'),
+    quantity_count=('quantity', 'count'),
+)
 
 # Write results
 summary.to_parquet('output/summary.parquet')

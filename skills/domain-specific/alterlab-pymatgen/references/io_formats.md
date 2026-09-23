@@ -264,7 +264,8 @@ energy = pwout.final_energy
 ### ABINIT
 
 ```python
-from pymatgen.io.abinit import AbinitInput
+# AbinitInput now lives in abipy (pymatgen.io.abinit keeps only pseudopotential/netCDF helpers)
+from abipy.abio.inputs import AbinitInput
 
 abin = AbinitInput(struct, pseudos)
 abin.set_vars(ecut=10, nband=10)
@@ -287,10 +288,11 @@ cp2k_output = Cp2kOutput("cp2k.out")
 ### FEFF (XAS/XANES)
 
 ```python
-from pymatgen.io.feff import FeffInput
+from pymatgen.io.feff.sets import MPXANESSet
 
-feff_input = FeffInput(struct, absorbing_atom="Fe")
-feff_input.write_file("feff.inp")
+# FEFF inputs are built from input sets (MPXANESSet, MPEXAFSSet, MPELNESSet, ...)
+feff_set = MPXANESSet(absorbing_atom="Fe", structure=struct)
+feff_set.write_input("feff_xanes")   # writes feff.inp, ATOMS, POTENTIALS, HEADER, PARAMETERS
 ```
 
 ### LMTO (Stuttgart TB-LMTO-ASA)

@@ -6,7 +6,9 @@ Complete prompts and guidance for generating visualizations in market research r
 
 ## Overview
 
-This guide provides ready-to-use prompts for visuals that can strengthen a market research report. Figures are optional — choose the ones that genuinely clarify market structure, scale, competition, or risk. Hand the relevant prompt to the **alterlab-scientific-schematics** skill (charts, diagrams, matrices, timelines) or the **alterlab-generate-image** skill (infographics, conceptual illustrations).
+This guide provides ready-to-use prompts for visuals that can strengthen a market research report. Figures are optional — choose the ones that genuinely clarify market structure, scale, competition, or risk. Hand conceptual prompts to the **alterlab-scientific-schematics** skill (diagrams, matrices, timelines) or the **alterlab-generate-image** skill (cover art, conceptual illustrations).
+
+**Plot data charts; do not generate them.** Entries marked **Tool: plot** encode numbers (market size, shares, CAGR, projections). Build them with **alterlab-matplotlib** or **alterlab-plotly** from the sourced data table, treating the prompt text as the figure specification, and check them with **alterlab-figure-qa**. Image-generation models fabricate bar heights, labels, and axis values, so they must not draw these.
 
 ### Foundational Visuals
 
@@ -34,11 +36,11 @@ These can help when specific sections call for visual support:
 
 | Visual Type | Tool | Rationale |
 |-------------|------|-----------|
-| Charts (bar, line, pie) | scientific-schematics | Precise data representation |
+| Data charts (bar, line, pie, treemap, projections) | alterlab-matplotlib / alterlab-plotly | Values must come from the sourced data table |
 | Diagrams (flow, structure) | scientific-schematics | Clear technical layouts |
 | Matrices (2x2, positioning) | scientific-schematics | Strategic frameworks |
 | Timelines | scientific-schematics | Sequential information |
-| Infographics | generate-image | Creative visual synthesis |
+| Infographics | generate-image (numbers typed in from verified sources, then proofread) | Creative visual synthesis |
 | Conceptual illustrations | generate-image | Abstract concepts |
 
 ---
@@ -88,7 +90,7 @@ figures/
 
 ### Market Growth Trajectory Chart
 
-**Tool:** scientific-schematics
+**Tool:** plot (alterlab-matplotlib / alterlab-plotly, from the sourced data table)
 
 **Purpose:** Foundation visual showing historical and projected market size
 
@@ -241,7 +243,7 @@ Professional appearance.
 
 ### 5. Market Growth Trajectory Chart
 
-**Tool:** scientific-schematics
+**Tool:** plot (alterlab-matplotlib / alterlab-plotly, from the sourced data table)
 
 **Prompt:**
 ```
@@ -279,7 +281,7 @@ White background
 ```
 ### 7. Regional Market Breakdown
 
-**Tool:** scientific-schematics
+**Tool:** plot (alterlab-matplotlib / alterlab-plotly, from the sourced data table)
 
 **Prompt:**
 ```
@@ -297,7 +299,7 @@ Professional appearance
 ```
 ### 8. Segment Growth Comparison
 
-**Tool:** scientific-schematics
+**Tool:** plot (alterlab-matplotlib / alterlab-plotly, from the sourced data table)
 
 **Prompt:**
 ```
@@ -409,7 +411,7 @@ Professional appearance
 ```
 ### 13. Market Share Chart
 
-**Tool:** scientific-schematics
+**Tool:** plot (alterlab-matplotlib / alterlab-plotly, from the sourced data table)
 
 **Prompt:**
 ```
@@ -483,7 +485,7 @@ Clear company name labels
 
 ### 16. Customer Segmentation Breakdown
 
-**Tool:** scientific-schematics
+**Tool:** plot (alterlab-matplotlib / alterlab-plotly, from the sourced data table)
 
 **Prompt:**
 ```
@@ -748,7 +750,7 @@ Professional appearance
 
 ### 28. Financial Projections Chart
 
-**Tool:** scientific-schematics
+**Tool:** plot (alterlab-matplotlib / alterlab-plotly, from the sourced data table)
 
 **Prompt:**
 ```
@@ -769,7 +771,7 @@ Professional appearance
 ```
 ### 29. Scenario Analysis Comparison
 
-**Tool:** scientific-schematics
+**Tool:** plot (alterlab-matplotlib / alterlab-plotly, from the sourced data table)
 
 **Prompt:**
 ```

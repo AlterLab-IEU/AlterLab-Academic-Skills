@@ -1,7 +1,7 @@
 """
 Phylogenetic Analysis Pipeline
 ===============================
-Complete workflow: MAFFT alignment → IQ-TREE tree → ETE3 visualization.
+Complete workflow: MAFFT alignment → IQ-TREE 3 tree → ETE3 visualization.
 
 Requirements (CLI binaries are NOT on PyPI):
     conda install -c bioconda mafft iqtree fasttree   # or Homebrew: brew install mafft fasttree; brew install brewsci/bio/iqtree
@@ -17,19 +17,33 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from shutil import which
+
+# bioconda's `iqtree` package is IQ-TREE 3 and ships `iqtree` + `iqtree3`; the 2.x
+# package shipped `iqtree2`. Resolve whichever is on PATH instead of hardcoding one.
+IQTREE_CANDIDATES = ("iqtree", "iqtree3", "iqtree2")
+
+
+def find_iqtree():
+    """Return the first IQ-TREE executable on PATH, or None."""
+    for name in IQTREE_CANDIDATES:
+        if which(name) is not None:
+            return name
+    return None
 
 
 def check_dependencies(use_fasttree: bool = False):
     """Check that the required CLI tools are on PATH (binaries are not pip-installable)."""
-    from shutil import which
-
     tools = {"mafft": "conda install -c bioconda mafft  (or: brew install mafft)"}
     if use_fasttree:
         tools["FastTree"] = "conda install -c bioconda fasttree  (or: brew install fasttree)"
-    else:
-        tools["iqtree2"] = "conda install -c bioconda iqtree  (or: brew install brewsci/bio/iqtree)"
 
     missing = [f"  {tool}: {hint}" for tool, hint in tools.items() if which(tool) is None]
+    if not use_fasttree and find_iqtree() is None:
+        missing.append(
+            "  iqtree (or iqtree3/iqtree2): "
+            "conda install -c bioconda iqtree  (or: brew install brewsci/bio/iqtree)"
+        )
     if missing:
         print("Missing dependencies:")
         for m in missing:
@@ -78,14 +92,21 @@ def run_mafft(input_fasta: str, output_fasta: str, n_threads: int = 4,
 def run_iqtree(aligned_fasta: str, prefix: str, seq_type: str = "nt",
                 bootstrap: int = 1000, n_threads: int = 4,
                 outgroup: str = None) -> str:
-    """Run IQ-TREE 2 phylogenetic inference."""
-    print(f"IQ-TREE 2: Building maximum likelihood tree...")
+    """Run IQ-TREE phylogenetic inference (IQ-TREE 2 or 3, whichever is installed)."""
+    exe = find_iqtree()
+    if exe is None:
+        raise RuntimeError(
+            "No IQ-TREE executable found on PATH "
+            f"(looked for {', '.join(IQTREE_CANDIDATES)}). "
+            "Install with: conda install -c bioconda iqtree"
+        )
+    print(f"{exe}: Building maximum likelihood tree...")
 
     cmd = [
-        "iqtree2",
+        exe,
         "-s", aligned_fasta,
         "--prefix", prefix,
-        "-m", "TEST",           # Auto model selection
+        "-m", "MFP",            # ModelFinder Plus (IQ-TREE's default model search)
         "-B", str(bootstrap),   # Ultrafast bootstrap
         "-T", str(n_threads),
         "--redo",

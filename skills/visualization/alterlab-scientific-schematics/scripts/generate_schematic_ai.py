@@ -33,6 +33,10 @@ except ImportError:
     print("Error: requests library not found. Install with: pip install requests")
     sys.exit(1)
 
+# Prefix of the critique returned when the quality-review call fails
+REVIEW_SKIPPED = "REVIEW SKIPPED"
+
+
 # Try to load .env file from multiple potential locations
 def _load_env_file():
     """Load .env file from current directory, parent directories, or package directory.
@@ -172,11 +176,11 @@ IMPORTANT - NO FIGURE NUMBERS:
         self._last_error = None  # Track last error for better reporting
         self.base_url = "https://openrouter.ai/api/v1"
         # Model IDs follow the ALTERLAB_MODEL convention (skills/core/shared/model_env.md):
-        # read an env var, else a dated default constant (reviewed 2026-06-06). These slots
+        # read an env var, else a dated default constant (reviewed 2026-09-23). These slots
         # need Google image/vision models, so they use dedicated vars rather than the Claude
         # text default ALTERLAB_MODEL. Override via ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL.
-        # Nano Banana 2 - Google's advanced image generation model
-        self.image_model = os.environ.get("ALTERLAB_IMAGE_MODEL") or "google/gemini-3.1-flash-image-preview"
+        # Nano Banana 2 (GA) - the -preview ID was shut down by Google on 2026-06-25
+        self.image_model = os.environ.get("ALTERLAB_IMAGE_MODEL") or "google/gemini-3.1-flash-image"
         # Gemini 3.1 Pro Preview for quality review - excellent vision and reasoning
         self.review_model = os.environ.get("ALTERLAB_REVIEW_MODEL") or "google/gemini-3.1-pro-preview"
         
@@ -270,8 +274,8 @@ IMPORTANT - NO FIGURE NUMBERS:
                 # Get first image
                 first_image = images[0]
                 if isinstance(first_image, dict):
-                    # Extract image_url
-                    if first_image.get("type") == "image_url":
+                    # Extract image_url (OpenRouter's schema does not guarantee a "type" key)
+                    if "image_url" in first_image:
                         url = first_image.get("image_url", {})
                         if isinstance(url, dict):
                             url = url.get("url", "")
@@ -530,8 +534,7 @@ If score < {threshold}, mark as NEEDS_IMPROVEMENT with specific suggestions."""
             # Extract text response
             choices = response.get("choices", [])
             if not choices:
-                # No review content; assume acceptable so generation isn't blocked.
-                return "Image generated successfully (no review content)", 8.0, False
+                raise RuntimeError("review model returned no choices")
             
             message = choices[0].get("message", {})
             content = message.get("content", "")
@@ -548,7 +551,10 @@ If score < {threshold}, mark as NEEDS_IMPROVEMENT with specific suggestions."""
                     if isinstance(block, dict) and block.get("type") == "text":
                         text_parts.append(block.get("text", ""))
                 content = "\n".join(text_parts)
-            
+
+            if not content or not str(content).strip():
+                raise RuntimeError("review model returned no text")
+
             # Try to extract score
             score = 7.5  # Default score if extraction fails
             import re
@@ -577,9 +583,10 @@ If score < {threshold}, mark as NEEDS_IMPROVEMENT with specific suggestions."""
                     score, 
                     needs_improvement)
         except Exception as e:
-            self._log(f"Review skipped: {str(e)}")
-            # Don't fail the whole process if review fails - assume acceptable
-            return "Image generated successfully (review skipped)", 7.5, False
+            # Don't block generation when the review call fails, but say so: the image
+            # is kept unreviewed and no quality score is invented for it.
+            print(f"⚠ Quality review skipped: {e}")
+            return f"{REVIEW_SKIPPED}: {e}", 0.0, False
     
     def improve_prompt(self, original_prompt: str, critique: str, 
                       iteration: int) -> str:
@@ -688,11 +695,15 @@ Generate a publication-quality scientific diagram that meets all the guidelines 
             print(f"✓ Saved: {iter_path}")
             
             # Review image using Gemini 3.1 Pro Preview
-            print(f"Reviewing image with Gemini 3.1 Pro Preview...")
+            print(f"Reviewing image with {self.review_model}...")
             critique, score, needs_improvement = self.review_image(
                 str(iter_path), user_prompt, i, doc_type, iterations
             )
-            print(f"✓ Score: {score}/10 (threshold: {threshold}/10)")
+            review_skipped = critique.startswith(REVIEW_SKIPPED)
+            if review_skipped:
+                score = None  # no reviewer judgment exists for this image
+            else:
+                print(f"✓ Score: {score}/10 (threshold: {threshold}/10)")
             
             # Save iteration results
             iteration_result = {
@@ -706,6 +717,15 @@ Generate a publication-quality scientific diagram that meets all the guidelines 
             }
             results["iterations"].append(iteration_result)
             
+            # Review unavailable - keep this image, but record that it was never scored
+            if review_skipped:
+                print("\n⚠ Keeping this image without a quality review - inspect it manually")
+                results["final_image"] = str(iter_path)
+                results["final_score"] = None
+                results["success"] = True
+                results["review_skipped"] = True
+                break
+
             # Check if quality is acceptable - STOP EARLY if so
             if not needs_improvement:
                 print(f"\n✓ Quality meets {doc_type} threshold ({score} >= {threshold})")
@@ -746,7 +766,8 @@ Generate a publication-quality scientific diagram that meets all the guidelines 
         
         print(f"\n{'='*60}")
         print(f"Generation Complete!")
-        print(f"Final Score: {results['final_score']}/10")
+        final_score = results["final_score"]
+        print(f"Final Score: {'not reviewed' if final_score is None else f'{final_score}/10'}")
         if results["early_stop"]:
             print(f"Iterations Used: {len([r for r in results['iterations'] if r.get('success')])}/{iterations} (early stop)")
         print(f"{'='*60}\n")
@@ -807,10 +828,14 @@ Environment:
     
     args = parser.parse_args()
     
-    # Check for API key
+    # Check for API key: --api-key, then the environment, then a .env file
     api_key = args.api_key or os.getenv("OPENROUTER_API_KEY")
     if not api_key:
-        print("Error: OPENROUTER_API_KEY environment variable not set")
+        _load_env_file()
+        api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        print("Error: OPENROUTER_API_KEY not set (checked --api-key, the environment, and .env)")
+        print("Get a key at: https://openrouter.ai/keys")
         print("\nSet it with:")
         print("  export OPENROUTER_API_KEY='your_api_key'")
         print("\nOr provide via --api-key flag")
@@ -832,7 +857,9 @@ Environment:
         
         if results["success"]:
             print(f"\n✓ Success! Image saved to: {args.output}")
-            if results.get("early_stop"):
+            if results.get("review_skipped"):
+                print("  (quality review unavailable - the image was not scored; inspect it before use)")
+            elif results.get("early_stop"):
                 print(f"  (Completed in {len([r for r in results['iterations'] if r.get('success')])} iteration(s) - quality threshold met)")
             sys.exit(0)
         else:

@@ -406,7 +406,7 @@ def transit_service_area(stops_gdf, max_walk_distance=800, max_time=30):
 
         # Create polygon from reachable nodes
         reachable_nodes = ox.graph_to_gdfs(subgraph, edges=False)
-        service_area = reachable_nodes.geometry.unary_union.convex_hull
+        service_area = reachable_nodes.geometry.union_all().convex_hull
 
         service_areas.append({
             'stop_id': stop.stop_id,

@@ -46,6 +46,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "pyopenms" }
       ]
+    },
+    {
+      "id": "near-miss-hmdb",
+      "prompt": "Pull the HMDB record for caffeine (HMDB0001847): its normal blood concentrations, associated pathways, and the reference MS/MS spectra HMDB lists for it.",
+      "expected_output": "Does NOT invoke alterlab-matchms; defers to alterlab-hmdb. The user wants a database lookup of a known metabolite's HMDB record (concentrations, pathways, catalogued reference spectra), not local spectral preprocessing or similarity scoring with matchms.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-hmdb" }
+      ]
     }
   ]
 }

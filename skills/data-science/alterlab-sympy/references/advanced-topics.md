@@ -169,8 +169,9 @@ igcd(60, 48)  # 12 (integer version)
 lcm(60, 48)   # 240
 ilcm(60, 48)  # 240 (integer version)
 
-# Multiple arguments
-gcd(60, 48, 36)  # 12
+# Multiple arguments: pass a list to gcd (a third positional argument is read as a generator)
+gcd([60, 48, 36])    # 12
+igcd(60, 48, 36)     # 12
 ```
 
 ### Modular Arithmetic
@@ -251,7 +252,7 @@ from sympy.combinatorics import Permutation
 
 # Create permutation (cycle notation)
 p = Permutation([1, 2, 0, 3])  # Sends 0->1, 1->2, 2->0, 3->3
-p = Permutation(0, 1, 2)(3)    # Cycle notation: (0 1 2)(3)
+p = Permutation(0, 1, 2, size=4)  # Cycle notation (0 1 2), acting on 4 elements
 
 # Permutation operations
 p.order()       # Order of permutation
@@ -303,7 +304,7 @@ G = PermutationGroup(p1, p2)
 # Group properties
 G.order()        # Order of group
 G.is_abelian     # Check if abelian
-G.is_cyclic()    # Check if cyclic
+G.is_cyclic      # Check if cyclic (a property, like is_abelian)
 G.elements       # All group elements
 ```
 
@@ -424,7 +425,7 @@ r = roots(p)  # {1: 1, 2: 1, 3: 1}
 r = real_roots(p)
 
 # Count roots in interval
-count_roots(p, a, b)  # Number of roots in [a, b]
+count_roots(p, 0, Rational(5, 2))  # 2 (roots 1 and 2 lie in [0, 5/2])
 ```
 
 ### Polynomial GCD and Factorization
@@ -518,8 +519,9 @@ from sympy import symbols
 X = Normal('X', 0, 1)
 Y = Normal('Y', 0, 1)
 
-# Joint probability
-P((X > 0) & (Y > 0))  # 1/4
+# Joint probability of independent events: multiply the marginals
+# (P() cannot integrate a conjunction over this product space in SymPy 1.14)
+P(X > 0) * P(Y > 0)  # 1/4
 
 # Covariance
 from sympy.stats import covariance

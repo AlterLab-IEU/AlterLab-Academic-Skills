@@ -235,7 +235,7 @@ model_artifact = ln.Artifact(
 ).save()
 
 # Link W&B run ID
-model_artifact.features.add_values({"wandb_run_id": wandb.run.id})
+model_artifact.features.set_values({"wandb_run_id": wandb.run.id})
 
 ln.finish()
 wandb.finish()
@@ -546,7 +546,7 @@ artifact = ln.Artifact.from_dataframe(
     description="Data fetched from external API"
 ).save()
 
-artifact.features.add_values({"api_url": response.url})
+artifact.features.set_values({"api_url": response.url})
 
 ln.finish()
 ```

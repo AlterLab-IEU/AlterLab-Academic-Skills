@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(uv:*) Bash(python:*)
 compatibility: No API key required. Runs locally via `uv run python`; requires the astropy Python package.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Astropy
@@ -26,6 +27,15 @@ Use astropy when tasks involve:
 - Table operations (reading catalogs, cross-matching, filtering, joining)
 - WCS transformations between pixel and world coordinates
 - Astronomical constants and calculations
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Terrestrial GIS — shapefiles, map projections (EPSG), buffers, spatial joins | `alterlab-geopandas` |
+| Satellite / Earth-observation rasters, DEMs, spectral indices | `alterlab-geomaster` |
+| Symbolic derivations of physical formulas (no data or units handling) | `alterlab-sympy` |
+| Generic time-series ML (classification, forecasting) on light curves as plain arrays | `alterlab-aeon` |
 
 ## Quick Start
 
@@ -190,12 +200,19 @@ Robust statistical functions including sigma clipping and outlier rejection.
 ## Installation
 
 ```bash
-# Install astropy
+# Install astropy (8.x requires Python >= 3.11 and NumPy >= 2.0; current 8.0.x as of 2026-09)
 uv pip install astropy
 
-# With optional dependencies for full functionality
-uv pip install astropy[all]
+# Common optional dependencies (scipy, matplotlib, ...) or everything
+uv pip install "astropy[recommended]"
+uv pip install "astropy[all]"
 ```
+
+Astropy 8.0 notes: import cosmology classes from `astropy.cosmology` directly (the
+`astropy.cosmology.flrw` / `.core` / `.funcs` shim modules were removed), `astropy.samp`
+moved to `pyvo.samp`, the default CODATA constants are now 2022, and FITS string
+columns strip trailing spaces by default (`strip_spaces=False` restores the old behaviour).
+If you must stay on NumPy 1.x, pin `astropy<8` (the 7.2.x series).
 
 ## Common Workflows
 
@@ -318,6 +335,7 @@ print(f"Found {len(cat1_matched)} matches")
 - Official Astropy Documentation: https://docs.astropy.org/en/stable/
 - Tutorials: https://learn.astropy.org/
 - GitHub: https://github.com/astropy/astropy
+- What's new in 8.0: https://docs.astropy.org/en/stable/whatsnew/8.0.html
 
 ## Reference Files
 
@@ -330,3 +348,4 @@ For detailed information on specific modules:
 - `references/time.md` - Time formats, scales, and calculations
 - `references/wcs_and_other_modules.md` - WCS, NDData, modeling, visualization, constants, and utilities
 
+Part of the AlterLab Academic Skills suite.

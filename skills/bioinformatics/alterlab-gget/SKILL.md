@@ -3,10 +3,11 @@ name: alterlab-gget
 description: "Run fast one-liner queries to 20+ bioinformatics databases from the gget CLI or Python — gene info (Ensembl), BLAST, AlphaFold structures, Enrichr enrichment, and more. Use for quick interactive lookups of genes, sequences, structures, or pathways — for batch processing or advanced BLAST use biopython, for multi-database Python workflows use bioservices. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Install with `uv pip install gget`; core modules need no API key or account. cosmic needs a COSMIC account; gpt needs an OpenAI key; alphafold/cellxgene/elm/gpt need a one-time `gget setup`."
+compatibility: "Install with `uv pip install gget` (0.30.8 as of 2026-09; requires Python >= 3.12). Core modules need no API key or account. cosmic needs a COSMIC account; gpt needs an OpenAI key; alphafold, cellxgene, elm, gpt and cbio need a one-time `gget setup <module>`."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # gget
@@ -14,6 +15,8 @@ metadata:
 ## Overview
 
 gget is a command-line bioinformatics tool and Python package providing unified access to 20+ genomic databases and analysis methods. Query gene information, sequence analysis, protein structures, expression data, and disease associations through a consistent interface. All gget modules work both as command-line tools and as Python functions.
+
+**Project home:** development moved to the scverse organisation (`github.com/scverse/gget`); the manual stays at `pachterlab.github.io/gget`.
 
 **Important**: The databases queried by gget are continuously updated, which sometimes changes their structure. gget modules are tested automatically on a biweekly basis and updated to match new database structures when necessary.
 
@@ -76,19 +79,36 @@ examples and `references/module_reference.md` for the full parameter table.
 | `cbio` | Cancer genomics heatmaps | cBioPortal |
 | `cosmic` | Somatic cancer mutations (license/account) | COSMIC |
 | `mutate` | Generate mutated sequences | local |
+| `virus` | Download filtered virus genome datasets | NCBI Virus |
+| `g2p` | Residue-level structural/functional annotations | Genomics 2 Proteins portal |
+| `gene_expression` | Mean/variance of normalized expression per partition | 8cubeDB |
+| `psi_block` | ψ_block block-level specificity scores | 8cubeDB |
+| `specificity` | Gene-level ψ / ζ specificity statistics | 8cubeDB |
 | `gpt` | Natural-language text generation (setup req.) | OpenAI API |
 | `setup` | Install third-party deps for a module | local |
 
+`cbio` is exposed in Python as `gget.cbio_search()` and `gget.cbio_plot()`.
+
 **Setup-required modules** (`gget setup <module>` before first use):
 `alphafold` (~4GB params, needs `uv pip install openmm` first), `cellxgene`,
-`elm`, `gpt`.
+`elm`, `gpt`, and `cbio`.
 
-## Routing
+## When to Use This Skill
 
 - **Quick interactive lookup** (gene info, BLAST, one structure, one enrichment) →
   use gget directly; see `references/module_examples.md`.
 - **Batch processing / advanced BLAST** → use the **biopython** skill.
 - **Multi-database Python workflows** → use the **bioservices** skill.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Local BLAST+ database builds and large CLI searches | `alterlab-blast` |
+| Scripted Entrez/SeqIO pipelines and file parsing | `alterlab-biopython` |
+| One workflow spanning many web services in Python | `alterlab-bioservices` |
+| Serious CELLxGENE Census querying beyond a one-liner | `alterlab-cellxgene` |
+| Running AlphaFold properly (complexes, confidence analysis) | `alterlab-alphafold` |
 - **Chaining several gget modules into a pipeline** → see `references/workflows.md`
   and the ready-made `scripts/` (gene_analysis, batch_sequence_analysis,
   enrichment_pipeline).
@@ -121,3 +141,4 @@ For additional help:
 - GitHub issues: https://github.com/pachterlab/gget/issues
 - Citation: Luebbert, L. & Pachter, L. (2023). Efficient querying of genomic reference databases with gget. Bioinformatics. https://doi.org/10.1093/bioinformatics/btac836
 
+Part of the AlterLab Academic Skills suite.

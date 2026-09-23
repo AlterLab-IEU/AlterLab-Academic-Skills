@@ -38,6 +38,7 @@ DOMAIN_ORDER = [
     ("faculty-life", "Faculty Life"),
     ("methodology", "Methodology"),
     ("social-science-workflow", "Social-Science Workflow"),
+    ("workflows", "Research Workflows"),
 ]
 
 # Markers that begin the trigger/boilerplate tail of a description; the "what it does" is

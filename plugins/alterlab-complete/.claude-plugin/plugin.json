@@ -1,0 +1,37 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "alterlab-complete",
+  "description": "The complete AlterLab Academic Skills suite — installs every domain plugin in one step",
+  "version": "3.0.0",
+  "author": {
+    "name": "AlterLab @ Izmir University of Economics",
+    "url": "https://github.com/AlterLab-IEU"
+  },
+  "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
+  "license": "MIT",
+  "keywords": [
+    "bundle",
+    "complete",
+    "all-domains"
+  ],
+  "dependencies": [
+    "alterlab-bioinformatics",
+    "alterlab-cheminformatics",
+    "alterlab-clinical-research",
+    "alterlab-core",
+    "alterlab-data-science",
+    "alterlab-databases",
+    "alterlab-document-tools",
+    "alterlab-domain-specific",
+    "alterlab-faculty-life",
+    "alterlab-finance-economics",
+    "alterlab-lab-integrations",
+    "alterlab-methodology",
+    "alterlab-research-tools",
+    "alterlab-social-science-workflow",
+    "alterlab-turkish-academia",
+    "alterlab-visualization",
+    "alterlab-workflows",
+    "alterlab-writing-tools"
+  ]
+}

@@ -2,7 +2,7 @@
 
 How to get the best results from this skill's `search`/`research` commands, plus the raw Search API params for when you call the HTTP/SDK API directly.
 
-> **Scope:** `scripts/parallel_web.py search` wraps the **Chat API** (`base`/`core` models). Its only inputs are the `objective` string and `--model`. The `search_queries`, `max_results`, `source_policy`, and `mode` parameters in this doc belong to the **raw Search API** (`POST /v1beta/search`) and are NOT accepted by the script — examples using them are labeled "raw Search API". The objective-writing advice applies to both.
+> **Scope:** `scripts/parallel_web.py search` wraps the **Chat API** (`base`/`core` models). Its only inputs are the `objective` string and `--model`. The `search_queries`, `max_results`, `source_policy`, and `mode` parameters in this doc belong to the **raw Search API** (`POST /v1/search`, GA since Nov 2025; `parallel-web` ≥ 1.0 exposes it as `client.search()`) and are not accepted by the script — examples using them are labeled "raw Search API". The objective-writing advice applies to both.
 
 ---
 
@@ -29,19 +29,22 @@ python scripts/parallel_web.py search \
 python scripts/parallel_web.py search "Alzheimer's treatment"
 ```
 
-**Raw Search API** (direct SDK call, not the script) lets you pair the objective with explicit keyword queries:
+**Raw Search API** (direct SDK call, not the script) pairs the objective with explicit keyword queries — in v1, `search_queries` is required (2-3 short queries of 3-6 words work best):
 ```python
 # raw Search API — requires calling the SDK directly, not parallel_web.py
 from parallel import Parallel
-client = Parallel()
-client.beta.search(
+client = Parallel()  # reads PARALLEL_API_KEY
+result = client.search(
     objective="Find peer-reviewed clinical-trial results on amyloid-beta therapies (2024-2025).",
     search_queries=[
         "amyloid beta clinical trials 2024-2025",
         "lecanemab donanemab trial outcomes",
     ],
-    max_results=10,
+    mode="fast",
+    advanced_settings={"max_results": 10},
 )
+for r in result.results:
+    print(r.title, r.url, r.publish_date)
 ```
 
 ### Objective Writing Tips
@@ -85,49 +88,34 @@ from the past month."
 
 ## Search Modes (raw Search API only)
 
-These `mode`, `source_policy`, and `max_results` features belong to the raw Search API (`POST /v1beta/search`). They are NOT available through `parallel_web.py`; use them only when calling the SDK/HTTP API directly. Use the `mode` parameter to optimize for your workflow:
+The `mode`, `source_policy`, and `max_results` features belong to the raw Search API (`POST /v1/search`). They are not available through `parallel_web.py`; use them only when calling the SDK/HTTP API directly. v1 has four modes (checked 2026-09 against docs.parallel.ai; the Beta `one-shot`/`agentic` modes map to `fast`/`advanced`):
 
-| Mode | Best For | Excerpt Style | Latency |
-|------|----------|---------------|---------|
-| `one-shot` (default) | Direct queries, single-request workflows | Comprehensive, longer | Lower |
-| `agentic` | Multi-step reasoning loops, agent workflows | Concise, token-efficient | Slightly higher |
-| `fast` | Real-time applications, UI auto-complete | Minimal, speed-optimized | ~1 second |
+| Mode | What it does | Latency | Cost per 1,000 requests |
+|------|--------------|---------|-------------------------|
+| `turbo` | Lowest latency and cost; English and Japanese queries only | ~200 ms | $1 |
+| `fast` | High-quality, sub-second search; Parallel's recommended starting point for agents | ~700 ms | $1 |
+| `basic` | Extended snippets per result; works best with 2-3 good `search_queries` | ~1 s | $5 |
+| `advanced` (default) | Advanced retrieval and compression for multi-hop, quality-first work | ~3 s | $5 |
 
-### When to Use Each Mode
-
-**`one-shot`** (default):
-- Single research question that needs comprehensive answer
-- Writing a section of a paper and need full context
-- Background research before starting a document
-- Any case where you'll make only one search call
-
-**`agentic`**:
-- Multi-step research workflows (search → analyze → search again)
-- Agent loops where token efficiency matters
-- Iterative refinement of research queries
-- When integrating with other tools (search → extract → synthesize)
-
-**`fast`**:
-- Live autocomplete or suggestion systems
-- Quick fact-checking during writing
-- Real-time metadata lookups
-- Any latency-sensitive application
+Start with `fast`; use `advanced` for background research where depth matters more than latency, and `basic` when you want longer excerpts per source in one call.
 
 ---
 
 ## Source Policy (raw Search API only)
 
-Control which domains are included or excluded from results (direct SDK call, not `parallel_web.py`):
+Control which domains are included or excluded from results (direct SDK call, not `parallel_web.py`). In v1 the policy lives inside `advanced_settings`:
 
 ```python
 # raw Search API
-client.beta.search(
+client.search(
     objective="Find clinical trial results for new cancer immunotherapy drugs",
     search_queries=["checkpoint inhibitor clinical trials 2025"],
-    source_policy={
-        "allow_domains": ["clinicaltrials.gov", "nejm.org", "thelancet.com", "nature.com"],
-        "deny_domains": ["reddit.com", "quora.com"],
-        "after_date": "2024-01-01"
+    advanced_settings={
+        "source_policy": {
+            "include_domains": ["clinicaltrials.gov", "nejm.org", "thelancet.com", "nature.com"],
+            "exclude_domains": ["reddit.com", "quora.com"],
+            "after_date": "2024-01-01",
+        }
     },
 )
 ```
@@ -136,15 +124,17 @@ client.beta.search(
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `allow_domains` | list[str] | Only include results from these domains |
-| `deny_domains` | list[str] | Exclude results from these domains |
-| `after_date` | str (YYYY-MM-DD) | Only include content published after this date |
+| `include_domains` | list[str] | Hard allow-list: only these domains (or domain/path prefixes; a bare extension such as `.gov` also works) are searched |
+| `exclude_domains` | list[str] | Block these domains or path prefixes |
+| `after_date` | str (YYYY-MM-DD) | Only include content published on or after this date |
+
+`include_domains` and `exclude_domains` together may list at most 200 entries. Parallel warns that `include_domains` can sharply reduce result quality because the rest of the web is not searched; when you only want to steer toward good sources, say so in the `objective` ("prefer peer-reviewed journals") and reserve `include_domains` for tasks that must come from specific publishers.
 
 ### Domain Lists by Use Case
 
 **Academic Research:**
 ```python
-allow_domains = [
+include_domains = [
     "nature.com", "science.org", "cell.com", "thelancet.com",
     "nejm.org", "bmj.com", "pnas.org", "arxiv.org",
     "pubmed.ncbi.nlm.nih.gov", "scholar.google.com"
@@ -153,7 +143,7 @@ allow_domains = [
 
 **Technology/AI:**
 ```python
-allow_domains = [
+include_domains = [
     "arxiv.org", "openai.com", "anthropic.com", "deepmind.google",
     "huggingface.co", "pytorch.org", "tensorflow.org",
     "proceedings.neurips.cc", "proceedings.mlr.press"
@@ -162,7 +152,7 @@ allow_domains = [
 
 **Market Intelligence:**
 ```python
-deny_domains = [
+exclude_domains = [
     "reddit.com", "quora.com", "medium.com",
     "wikipedia.org"  # Good for facts, not for market data
 ]
@@ -170,8 +160,8 @@ deny_domains = [
 
 **Government/Policy:**
 ```python
-allow_domains = [
-    "gov", "europa.eu", "who.int", "worldbank.org",
+include_domains = [
+    ".gov", "europa.eu", "who.int", "worldbank.org",
     "imf.org", "oecd.org", "un.org"
 ]
 ```
@@ -182,9 +172,9 @@ allow_domains = [
 
 These knobs apply to the raw Search API, not `parallel_web.py`.
 
-### `max_results` Parameter
+### `max_results` (inside `advanced_settings`)
 
-- Range: 1-20 (default: 10)
+- Default 10; public modes cap it at 20 (larger values are reduced with a warning), and the API may return fewer
 - More results = broader coverage but more tokens to process
 - Fewer results = more focused but may miss relevant sources
 
@@ -197,9 +187,11 @@ These knobs apply to the raw Search API, not `parallel_web.py`.
 
 ```python
 # raw Search API
-client.beta.search(
+client.search(
     objective="...",
-    excerpts={"max_chars_per_result": 10000},  # Default: 10000
+    search_queries=["..."],
+    max_chars_total=50000,  # cap on excerpt characters across all results
+    advanced_settings={"excerpt_settings": {"max_chars_per_result": 10000}},
 )
 ```
 
@@ -270,9 +262,8 @@ To pin specific authoritative domains or a date floor, use `source_policy` via t
 ### Too Many Tokens in Results
 
 - **Reduce `max_results`**: From 10 to 5 or 3
-- **Reduce excerpt length**: Lower `max_chars_per_result`
-- **Use `agentic` mode**: More concise excerpts
-- **Use `fast` mode**: Minimal excerpts
+- **Reduce excerpt length**: Lower `max_chars_total` or `excerpt_settings.max_chars_per_result`
+- **Avoid `basic` mode**: it returns extended snippets; `fast` or `turbo` keep excerpts shorter
 
 ---
 

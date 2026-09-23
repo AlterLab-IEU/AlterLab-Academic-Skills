@@ -21,13 +21,13 @@ tenk.financials          # Financials object with all statements
 # Document sections
 tenk.risk_factors        # full risk factors text
 tenk.business            # business description
-tenk.mda                 # management discussion & analysis
+tenk.management_discussion  # MD&A (also tenk.sections['mda'])
 
-# Usage via Financials
+# Usage via Financials (these are methods on the Financials object)
 if tenk.financials:
-    income = tenk.financials.income_statement
-    balance = tenk.financials.balance_sheet
-    cashflow = tenk.financials.cash_flow_statement
+    income = tenk.financials.income_statement()
+    balance = tenk.financials.balance_sheet()
+    cashflow = tenk.financials.cash_flow_statement()
 ```
 
 **Note:** Always check `tenk.financials` before accessing — not all filings have XBRL data.
@@ -58,8 +58,10 @@ Common 8-K item codes:
 ```python
 form4 = filing.obj()
 
-form4.reporting_owner  # insider name
-form4.transactions     # buy/sell details with prices, shares, dates
+form4.insider_name          # reporting owner name(s)
+form4.reporting_owners      # ReportingOwners (names, positions)
+form4.market_trades         # open-market buys/sells with prices, shares, dates
+form4.to_dataframe()        # all transactions as a DataFrame
 
 # Get HTML table
 html = form4.to_html()
@@ -78,7 +80,8 @@ schedule = filing.obj()
 
 schedule.total_shares                          # aggregate beneficial ownership
 schedule.items.item4_purpose_of_transaction    # activist intent (13D only)
-schedule.items.item5_interest_in_securities    # ownership percentage
+schedule.items.item5_percentage_of_class       # ownership percentage (13D)
+schedule.total_percent                         # aggregate percent of class
 ```
 
 - **SC 13D**: Activist investors (5%+ with intent to influence)
@@ -108,7 +111,7 @@ print(f"Total AUM: ${thirteenf.total_value/1e9:.1f}B")
 proxy = filing.obj()
 
 proxy.executive_compensation  # pay tables (5-year DataFrame)
-proxy.proposals               # shareholder vote items
+proxy.voting_proposals        # shareholder vote items
 proxy.peo_name                # "Mr. Cook" (principal exec officer)
 proxy.peo_total_comp          # CEO total compensation
 ```
@@ -120,8 +123,9 @@ proxy.peo_total_comp          # CEO total compensation
 ```python
 formd = filing.obj()
 
-formd.offering    # offering details and amounts
-formd.recipients  # related persons
+formd.offering_data     # offering details and amounts
+formd.related_persons   # executives, directors, promoters
+formd.primary_issuer    # issuer details
 ```
 
 ---
@@ -142,8 +146,9 @@ formc.annual_report_disclosure   # issuer financials (C-AR)
 ```python
 form144 = filing.obj()
 
-form144.proposed_sale_amount  # shares to be sold
-form144.securities            # security details
+form144.units_to_be_sold      # units proposed for sale
+form144.market_value          # aggregate market value of the proposed sale
+form144.securities_to_be_sold # security-level details
 ```
 
 ---
@@ -153,7 +158,7 @@ form144.securities            # security details
 ```python
 npx = filing.obj()
 
-npx.votes  # vote records by proposal
+npx.proxy_votes  # vote records by proposal
 ```
 
 ---
@@ -174,7 +179,7 @@ ten_d.asset_data.summary()  # pool statistics
 
 ```python
 mai = filing.obj()
-mai.advisor_name  # advisor details
+mai.applicant  # applicant/advisor details (also mai.filer)
 ```
 
 ---
@@ -192,24 +197,24 @@ twentyf.financials  # financial data for foreign issuers
 
 | Form | Class | Key Attributes |
 |------|-------|----------------|
-| 10-K | TenK | `financials`, `income_statement`, `risk_factors`, `business` |
+| 10-K | TenK | `financials`, `income_statement`, `risk_factors`, `business`, `management_discussion` |
 | 10-Q | TenQ | `financials`, `income_statement`, `balance_sheet` |
 | 8-K | EightK | `items`, `press_releases` |
 | 20-F | TwentyF | `financials` |
 | 3 | Form3 | initial ownership |
-| 4 | Form4 | `reporting_owner`, `transactions` |
+| 4 | Form4 | `reporting_owners`, `market_trades`, `to_dataframe()` |
 | 5 | Form5 | annual ownership changes |
-| DEF 14A | ProxyStatement | `executive_compensation`, `proposals`, `peo_name` |
+| DEF 14A | ProxyStatement | `executive_compensation`, `voting_proposals`, `peo_name` |
 | 13F-HR | ThirteenF | `infotable`, `total_value` |
 | SC 13D | Schedule13D | `total_shares`, `items` |
 | SC 13G | Schedule13G | `total_shares` |
 | NPORT-P | FundReport | fund portfolio |
-| 144 | Form144 | `proposed_sale_amount`, `securities` |
-| N-PX | NPX | `votes` |
-| Form D | FormD | `offering`, `recipients` |
+| 144 | Form144 | `units_to_be_sold`, `market_value`, `securities_to_be_sold` |
+| N-PX | NPX | `proxy_votes` |
+| Form D | FormD | `offering_data`, `related_persons` |
 | Form C | FormC | `offering_information` |
 | 10-D | TenD | `loans`, `properties`, `asset_data` |
-| MA-I | MunicipalAdvisorForm | `advisor_name` |
+| MA-I | MunicipalAdvisorForm | `applicant`, `filer` |
 
 ---
 

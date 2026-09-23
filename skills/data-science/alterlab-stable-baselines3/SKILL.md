@@ -3,10 +3,11 @@ name: alterlab-stable-baselines3
 description: Trains single-agent reinforcement learning agents with Stable-Baselines3 — PPO, SAC, DQN, TD3, DDPG, and A2C behind a scikit-learn-like API. Use for standard single-agent RL experiments, quick prototyping, well-documented algorithm implementations on Gymnasium environments, or adding callbacks and evaluation. For high-throughput parallel training, multi-agent systems, or custom vectorized environments prefer alterlab-pufferlib. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the stable-baselines3 and gymnasium Python packages.
+compatibility: No API key required. Runs locally via `uv run python`; requires stable-baselines3 >= 2.0 (current 2.9.0 as of 2026-09, which needs Python >= 3.10, PyTorch >= 2.8, and gymnasium >= 0.29.1,<2.0; current gymnasium 1.3).
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Stable Baselines3
@@ -14,6 +15,23 @@ metadata:
 ## Overview
 
 Stable Baselines3 (SB3) is a PyTorch-based library providing reliable implementations of reinforcement learning algorithms. This skill provides comprehensive guidance for training RL agents, creating custom environments, implementing callbacks, and optimizing training workflows using SB3's unified API.
+
+## When to Use This Skill
+
+Use this skill when the user wants to:
+- Train and evaluate a single-agent RL policy (PPO, A2C, SAC, TD3, DDPG, DQN, HER) on a Gymnasium environment.
+- Wrap a research simulator as a custom `gymnasium.Env` and validate it with `check_env`.
+- Add evaluation, checkpointing, early stopping, or custom logging through callbacks.
+- Speed up training with vectorized environments, or save, load, and report trained agents reproducibly.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Millions of steps per second, native multi-agent environments, or PufferEnv/Atari-scale throughput | `alterlab-pufferlib` |
+| Supervised deep-learning training loops (LightningModule, multi-GPU strategies) | `alterlab-pytorch-lightning` |
+| Black-box or multi-objective optimization of parameters without a sequential decision process | `alterlab-pymoo` |
+| Simulating queues or resource contention without learning a policy | `alterlab-simpy` |
 
 ## Core Capabilities
 
@@ -202,7 +220,7 @@ mean_reward, std_reward = evaluate_policy(
 )
 ```
 
-**Video Recording:**
+**Video Recording** (the wrapped env must be created with `render_mode="rgb_array"`, and `moviepy` must be installed, e.g. `uv pip install "gymnasium[other]"`):
 ```python
 from stable_baselines3.common.vec_env import VecVideoRecorder
 
@@ -228,7 +246,13 @@ def linear_schedule(initial_value):
     return func
 
 model = PPO("MlpPolicy", env, learning_rate=linear_schedule(0.001))
+
+# Built-in equivalent (SB3 >= 2.7; replaces the deprecated get_linear_fn/constant_fn/get_schedule_fn)
+from stable_baselines3.common.utils import LinearSchedule
+model = PPO("MlpPolicy", env, learning_rate=LinearSchedule(1e-3, 0.0, 1.0))
 ```
+
+**N-step Returns (off-policy, SB3 >= 2.7):** SAC, TD3, DDPG, and DQN accept `n_steps=` to bootstrap from n-step returns (backed by `NStepReplayBuffer`).
 
 **Multi-Input Policies (Dict Observations):**
 ```python
@@ -292,7 +316,7 @@ model.learn(total_timesteps=10000)
 
 ## Installation
 
-Requires Python 3.10+ and PyTorch >= 2.3. The `[extra]` option pulls in Tensorboard, OpenCV, `ale-py` (Atari), pandas, and matplotlib.
+Requires Python 3.10+ and PyTorch >= 2.8 (SB3 2.9 raised the floor from 2.3). The `[extra]` option pulls in TensorBoard, OpenCV, `ale-py` (Atari), `pygame-ce`, tqdm/rich (progress bar), and — since 2.9 — pandas and matplotlib, which are no longer core dependencies (needed for `results_plotter`/`load_results`). Atari IDs such as `"PongNoFrameskip-v4"` or `"ALE/Pong-v5"` are registered when `ale_py` is imported (`import ale_py; gym.register_envs(ale_py)`).
 
 ```bash
 # Basic installation
@@ -302,3 +326,4 @@ uv pip install stable-baselines3
 uv pip install "stable-baselines3[extra]"
 ```
 
+Part of the AlterLab Academic Skills suite.

@@ -1,274 +1,187 @@
-# GWAS Catalog Query Examples
+# GWAS Catalog Query Examples (REST API v2)
 
-Code patterns for REST API access, the four canonical query examples, summary-statistics access, cross-referencing, and a complete paginated Python integration.
+Code patterns for the v2 REST API, the canonical query examples, summary-statistics access via FTP, cross-referencing, and a complete paginated Python integration.
 
 ## REST API Access
 
-The GWAS Catalog provides two REST APIs for programmatic access.
+**Base URL:** `https://www.ebi.ac.uk/gwas/rest/api/v2` (no key; throttled at 15 requests/second)
 
-**Base URLs:**
-- GWAS Catalog API: `https://www.ebi.ac.uk/gwas/rest/api`
-- Summary Statistics API: `https://www.ebi.ac.uk/gwas/summary-statistics/api`
+**Documentation:** https://www.ebi.ac.uk/gwas/rest/api/v2/docs (guide) and https://www.ebi.ac.uk/gwas/rest/api/v2/rest-api-doc.yaml (OpenAPI spec)
 
-**API Documentation:**
-- Main API docs: https://www.ebi.ac.uk/gwas/rest/docs/api
-- Summary stats docs: https://www.ebi.ac.uk/gwas/summary-statistics/docs/
+The legacy v1 paths (`/singleNucleotidePolymorphisms/{rs}/associations`, `/efoTraits/{id}/associations`, `projection=associationBySnp`, camelCase fields such as `pvalue`, `efoTraits`, `strongestRiskAlleles`) are deprecated. The Summary Statistics API (`/gwas/summary-statistics/api`) is retired and answers HTTP 410.
 
-**Core Endpoints:**
+**Core endpoints:**
 
-1. **Studies endpoint** - `/studies/{accessionID}`
+1. **Studies** — `/v2/studies/{accession_id}` or `/v2/studies?efo_id=...&full_pvalue_set=true`
    ```python
    import requests
 
-   # Get a specific study
-   url = "https://www.ebi.ac.uk/gwas/rest/api/studies/GCST001795"
-   response = requests.get(url, headers={"Content-Type": "application/json"})
-   study = response.json()
+   BASE = "https://www.ebi.ac.uk/gwas/rest/api/v2"
+   study = requests.get(f"{BASE}/studies/GCST001795", timeout=60).json()
+   print(study["disease_trait"], study["initial_sample_size"], study["full_summary_stats"])
    ```
 
-2. **Associations endpoint** - `/associations`
+2. **Associations** — `/v2/associations` with `rs_id`, `efo_id`, `efo_trait`, `mapped_gene`, `accession_id`, or `pubmed_id`
    ```python
-   # Find associations for a variant
-   variant = "rs7903146"
-   url = f"https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/{variant}/associations"
-   params = {"projection": "associationBySnp"}
-   response = requests.get(url, params=params, headers={"Content-Type": "application/json"})
-   associations = response.json()
+   r = requests.get(f"{BASE}/associations",
+                    params={"rs_id": "rs7903146", "sort": "p_value", "direction": "asc", "size": 50},
+                    timeout=120)
+   associations = r.json()["_embedded"]["associations"]
    ```
 
-3. **Variants endpoint** - `/singleNucleotidePolymorphisms/{rsID}`
+3. **Variants** — `/v2/single-nucleotide-polymorphisms/{rs_id}` (location, consequence, mapped genes)
    ```python
-   # Get variant details
-   url = "https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/rs7903146"
-   response = requests.get(url, headers={"Content-Type": "application/json"})
-   variant_info = response.json()
+   snp = requests.get(f"{BASE}/single-nucleotide-polymorphisms/rs7412", timeout=60).json()
+   loc = snp["locations"][0]
+   print(loc["chromosome_name"], loc["chromosome_position"], snp["most_severe_consequence"], snp["mapped_genes"])
    ```
 
-4. **Traits endpoint** - `/efoTraits/{shortForm}`
+4. **Traits** — `/v2/efo-traits?efo_trait=<free text>` to resolve names to `efo_id`
    ```python
-   # Get trait information (main REST API uses current short-forms, e.g. MONDO_0005148)
-   url = "https://www.ebi.ac.uk/gwas/rest/api/efoTraits/MONDO_0005148"
-   response = requests.get(url, headers={"Content-Type": "application/json"})
-   trait_info = response.json()
+   traits = requests.get(f"{BASE}/efo-traits", params={"efo_trait": "type 2 diabetes"}, timeout=60).json()
+   for t in traits["_embedded"]["efo_traits"]:
+       print(t["efo_id"], t["efo_trait"])   # MONDO_0005148  type 2 diabetes mellitus, ...
    ```
 
 ## Query Examples and Patterns
 
-**Example 1: Find all associations for a disease**
+**Example 1: Genome-wide significant associations for a disease**
 ```python
 import requests
 
-trait = "MONDO_0005148"  # Type 2 diabetes (main REST API short-form; legacy EFO_0001360 404s here)
-base_url = "https://www.ebi.ac.uk/gwas/rest/api"
+BASE = "https://www.ebi.ac.uk/gwas/rest/api/v2"
+params = {"efo_id": "MONDO_0005148",          # type 2 diabetes mellitus (legacy EFO_0001360 returns 0 rows)
+          "sort": "p_value", "direction": "asc", "size": 100}
+data = requests.get(f"{BASE}/associations", params=params, timeout=120).json()
 
-# Query associations for this trait
-url = f"{base_url}/efoTraits/{trait}/associations"
-response = requests.get(url, headers={"Content-Type": "application/json"})
-associations = response.json()
-
-# Process results — rsID and risk allele are nested, not top-level
-for assoc in associations.get('_embedded', {}).get('associations', []):
-    variant = (assoc.get('snps') or [{}])[0].get('rsId')
-    pvalue = assoc.get('pvalue')
-    risk_allele = ((assoc.get('loci') or [{}])[0]
-                   .get('strongestRiskAlleles') or [{}])[0].get('riskAlleleName')
-    print(f"{variant}: p={pvalue}, risk allele={risk_allele}")
+for a in data["_embedded"]["associations"]:
+    allele = a["snp_allele"][0] if a.get("snp_allele") else {}
+    # p_value underflows to 0.0 below ~1e-308; mantissa/exponent keep the exact value
+    p = f'{a["pvalue_mantissa"]}e{a["pvalue_exponent"]}'
+    # or_per_copy_num is numeric (or_value is the same as a string); beta is text such as
+    # "0.0356 unit decrease" and "-" when absent
+    print(allele.get("rs_id"), allele.get("effect_allele"), p, a.get("or_per_copy_num"), a.get("beta"), a["accession_id"])
 ```
 
-**Example 2: Get variant information and all trait associations**
+**Example 2: Pleiotropy — every trait reported for one variant**
 ```python
-import requests
-
-variant = "rs7903146"
-base_url = "https://www.ebi.ac.uk/gwas/rest/api"
-
-# Get variant details
-url = f"{base_url}/singleNucleotidePolymorphisms/{variant}"
-response = requests.get(url, headers={"Content-Type": "application/json"})
-variant_data = response.json()
-
-# Get all associations for this variant
-url = f"{base_url}/singleNucleotidePolymorphisms/{variant}/associations"
-params = {"projection": "associationBySnp"}
-response = requests.get(url, params=params, headers={"Content-Type": "application/json"})
-associations = response.json()
-
-# Extract trait names and p-values — trait name is nested under efoTraits[]
-for assoc in associations.get('_embedded', {}).get('associations', []):
-    trait = (assoc.get('efoTraits') or [{}])[0].get('trait')
-    pvalue = assoc.get('pvalue')
-    print(f"Trait: {trait}, p-value: {pvalue}")
+data = requests.get(f"{BASE}/associations",
+                    params={"rs_id": "rs7903146", "sort": "p_value", "direction": "asc", "size": 200},
+                    timeout=120).json()
+traits = {t["efo_trait"] for a in data["_embedded"]["associations"] for t in a["efo_traits"]}
+print(f'{data["page"]["totalElements"]} associations across {len(traits)} traits (first page)')
 ```
 
-**Example 3: Access summary statistics**
+**Example 3: Gene-centric lookup**
 ```python
-import requests
-
-# Query summary statistics API
-base_url = "https://www.ebi.ac.uk/gwas/summary-statistics/api"
-
-# Find associations by trait with p-value threshold.
-# Summary Statistics API keys on the legacy EFO id (the main REST API uses MONDO_0005148).
-trait = "EFO_0001360"  # Type 2 diabetes
-p_upper = "0.000000001"  # p < 1e-9
-url = f"{base_url}/traits/{trait}/associations"
-params = {
-    "p_upper": p_upper,
-    "size": 100  # Number of results
-}
-response = requests.get(url, params=params)
-results = response.json()
-
-# Process genome-wide significant hits
-for hit in results.get('_embedded', {}).get('associations', []):
-    variant_id = hit.get('variant_id')
-    chromosome = hit.get('chromosome')
-    position = hit.get('base_pair_location')
-    pvalue = hit.get('p_value')
-    print(f"{chromosome}:{position} ({variant_id}): p={pvalue}")
+# Default: genes the variant maps into or the nearest up/downstream genes (as on the website).
+# extended_geneset=true widens to all Ensembl/RefSeq genes near each variant (the v1 behaviour).
+data = requests.get(f"{BASE}/associations",
+                    params={"mapped_gene": "TCF7L2", "size": 100}, timeout=120).json()
 ```
 
-**Example 4: Query by chromosomal region**
+**Example 4: Curated variants in a chromosomal region (GRCh38)**
 ```python
-import requests
-
-# Find variants in a specific genomic region
-chromosome = "10"
-start_pos = 114000000
-end_pos = 115000000
-
-base_url = "https://www.ebi.ac.uk/gwas/rest/api"
-url = f"{base_url}/singleNucleotidePolymorphisms/search/findByChromBpLocationRange"
-params = {
-    "chrom": chromosome,
-    "bpStart": start_pos,
-    "bpEnd": end_pos
-}
-response = requests.get(url, params=params, headers={"Content-Type": "application/json"})
-variants_in_region = response.json()
+data = requests.get(f"{BASE}/single-nucleotide-polymorphisms",
+                    params={"chromosome": "10", "bp_start": 112_900_000, "bp_end": 113_200_000, "size": 100},
+                    timeout=120).json()
+rs_ids = [s["rs_id"] for s in data["_embedded"]["snps"]]
 ```
+This returns only variants with curated associations. For every tested variant in a region, use the harmonised summary statistics below.
 
 ## Working with Summary Statistics
 
-The GWAS Catalog hosts full summary statistics for many studies, providing access to all tested variants (not just genome-wide significant hits).
+The curated associations are top hits only. Full summary statistics (every tested variant) are distributed as files:
 
-**Access Methods:**
-1. **FTP download**: http://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics/
-2. **REST API**: Query-based access to summary statistics
-3. **Web interface**: Browse and download via the website
+1. **Find studies with full summary statistics** — `/v2/studies?efo_id=MONDO_0005148&full_pvalue_set=true`; each study's `full_summary_stats` field is its FTP directory.
+2. **Harmonised file layout** — `https://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics/GCST90475001-GCST90476000/GCST90475667/harmonised/GCST90475667.h.tsv.gz` plus `.tbi` index and `-meta.yaml`. The full list of harmonised files is in `https://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics/harmonised_list.txt` (updated nightly).
+3. **Format** — GWAS-SSF (v1.0 since 2023): `chromosome`, `base_pair_location`, `effect_allele`, `other_allele`, `beta` or `odds_ratio`, `standard_error`, `effect_allele_frequency`, `p_value`, `rsid`, `variant_id`, plus `hm_code` harmonisation flags. Coordinates are GRCh38; chromosomes are written without a `chr` prefix.
 
-**Summary Statistics API Features:**
-- Filter by chromosome, position, p-value
-- Query specific variants across studies
-- Retrieve effect sizes and allele frequencies
-- Access harmonized and standardized data
-
-**Example: Download summary statistics for a study**
 ```python
 import requests
-import gzip
 
-# Get available summary statistics
-base_url = "https://www.ebi.ac.uk/gwas/summary-statistics/api"
-url = f"{base_url}/studies/GCST001234"
-response = requests.get(url)
-study_info = response.json()
+BASE = "https://www.ebi.ac.uk/gwas/rest/api/v2"
+studies = requests.get(f"{BASE}/studies",
+                       params={"efo_id": "MONDO_0005148", "full_pvalue_set": "true", "size": 50},
+                       timeout=120).json()["_embedded"]["studies"]
 
-# Download link is provided in the response
-# Alternatively, use FTP:
-# ftp://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics/GCSTXXXXXX/
+def harmonised_url(study: dict) -> str:
+    acc = study["accession_id"]
+    ftp_dir = study["full_summary_stats"].replace("http://", "https://")
+    return f"{ftp_dir}/harmonised/{acc}.h.tsv.gz"
+
+url = harmonised_url(studies[0])
+```
+
+Region query without downloading the whole file (tabix reads the remote `.tbi`):
+```bash
+tabix -h "$URL" 10:112900000-113200000 > tcf7l2_region.tsv
+```
+```python
+import pysam  # uv pip install pysam
+with pysam.TabixFile(url) as tbx:
+    rows = [line.split("\t") for line in tbx.fetch("10", 112_900_000, 113_200_000)]
 ```
 
 ## Data Integration and Cross-referencing
 
-The GWAS Catalog provides links to external resources:
+- **Genomic:** Ensembl (VEP consequences, coordinates), dbSNP (rsID merges), gnomAD (population frequencies)
+- **Functional:** GTEx (eQTL/sQTL), Open Targets Platform (L2G, colocalisation, target-disease evidence), PGS Catalog (polygenic scores)
+- **Phenotype:** EFO / MONDO ontologies (trait hierarchy; `show_child_trait=true` includes descendant traits)
 
-**Genomic Databases:** Ensembl (gene annotations, variant consequences), dbSNP (variant IDs, population frequencies), gnomAD (population allele frequencies).
-
-**Functional Resources:** Open Targets (target-disease associations), PGS Catalog (polygenic risk scores), UCSC Genome Browser (genomic context).
-
-**Phenotype Resources:** EFO (standardized trait terms), OMIM (disease gene relationships), Disease Ontology (disease hierarchies).
-
-**Following Links in API Responses:**
+HAL links let you walk from an association to its locus and variant:
 ```python
-import requests
-
-# API responses include _links for related resources
-response = requests.get("https://www.ebi.ac.uk/gwas/rest/api/studies/GCST001234")
-study = response.json()
-
-# Follow link to associations
-associations_url = study['_links']['associations']['href']
-associations_response = requests.get(associations_url)
+a = data["_embedded"]["associations"][0]
+loci = requests.get(a["_links"]["loci"]["href"], timeout=60).json()["_embedded"]["loci"]
+risk = loci[0]["strongest_risk_alleles"][0]["risk_allele_name"]      # e.g. "rs7903146-T"
+snp = requests.get(a["_links"]["snp"]["href"], timeout=60).json()
 ```
 
 ## Complete Python Integration
 
-Paginated query and analysis of GWAS data into a DataFrame:
+Paginated query into a DataFrame, following `_links.next` and respecting the throttle:
 
 ```python
-import requests
+import time
+
 import pandas as pd
-from time import sleep
+import requests
 
-def query_gwas_catalog(trait_id, p_threshold=5e-8):
-    """
-    Query GWAS Catalog for trait associations
+BASE = "https://www.ebi.ac.uk/gwas/rest/api/v2"
 
-    Args:
-        trait_id: trait short-form for the main REST API (e.g. 'MONDO_0005148');
-                  legacy EFO ids such as EFO_0001360 404 on this API
-        p_threshold: P-value threshold for filtering
 
-    Returns:
-        pandas DataFrame with association results
-    """
-    base_url = "https://www.ebi.ac.uk/gwas/rest/api"
-    url = f"{base_url}/efoTraits/{trait_id}/associations"
+def query_gwas_catalog(efo_id: str, p_threshold: float = 5e-8, page_size: int = 200) -> pd.DataFrame:
+    """Curated associations for a trait short-form (e.g. 'MONDO_0005148'), filtered by p-value."""
+    url = f"{BASE}/associations"
+    params = {"efo_id": efo_id, "sort": "p_value", "direction": "asc", "size": page_size}
+    rows = []
+    while url:
+        data = requests.get(url, params=params, timeout=120).json()
+        params = None  # the next link already carries the query string
+        for a in data.get("_embedded", {}).get("associations", []):
+            p = float(f'{a["pvalue_mantissa"]}e{a["pvalue_exponent"]}')
+            if p > p_threshold:
+                return pd.DataFrame(rows)  # sorted ascending, so the rest are weaker
+            allele = a["snp_allele"][0] if a.get("snp_allele") else {}
+            rows.append({
+                "rs_id": allele.get("rs_id"),
+                "effect_allele": allele.get("effect_allele"),
+                "p_value": p,
+                "odds_ratio": a.get("or_per_copy_num"),
+                "beta": a.get("beta"),  # text incl. unit/direction; "-" when absent
+                "ci_lower": a.get("ci_lower"),
+                "ci_upper": a.get("ci_upper"),
+                "risk_frequency": a.get("risk_frequency"),
+                "trait": "; ".join(t["efo_trait"] for t in a["efo_traits"]),
+                "mapped_genes": ",".join(a.get("mapped_genes") or []),
+                "accession_id": a["accession_id"],
+                "pubmed_id": a.get("pubmed_id"),
+            })
+        url = data.get("_links", {}).get("next", {}).get("href")
+        time.sleep(0.1)  # stay well under 15 requests/second
+    return pd.DataFrame(rows)
 
-    headers = {"Content-Type": "application/json"}
-    results = []
-    page = 0
 
-    while True:
-        params = {"page": page, "size": 100}
-        response = requests.get(url, params=params, headers=headers)
-
-        if response.status_code != 200:
-            break
-
-        data = response.json()
-        associations = data.get('_embedded', {}).get('associations', [])
-
-        if not associations:
-            break
-
-        for assoc in associations:
-            pvalue = assoc.get('pvalue')
-            if pvalue and float(pvalue) <= p_threshold:
-                # rsID / allele / trait are nested, not top-level
-                rs = (assoc.get('snps') or [{}])[0].get('rsId')
-                allele = ((assoc.get('loci') or [{}])[0]
-                          .get('strongestRiskAlleles') or [{}])[0].get('riskAlleleName')
-                trait = (assoc.get('efoTraits') or [{}])[0].get('trait')
-                results.append({
-                    'variant': rs,
-                    'pvalue': pvalue,
-                    'risk_allele': allele,
-                    'or_beta': assoc.get('orPerCopyNum') or assoc.get('betaNum'),
-                    'trait': trait,
-                    # follow _links.study.href for accession + PubMed ID
-                    'study_href': assoc.get('_links', {}).get('study', {}).get('href'),
-                })
-
-        page += 1
-        sleep(0.1)  # Rate limiting
-
-    return pd.DataFrame(results)
-
-# Example usage
-df = query_gwas_catalog('MONDO_0005148')  # Type 2 diabetes (main REST API short-form)
-print(df.head())
-print(f"\nTotal associations: {len(df)}")
-print(f"Unique variants: {df['variant'].nunique()}")
+df = query_gwas_catalog("MONDO_0005148")
+print(len(df), df["rs_id"].nunique())
 ```

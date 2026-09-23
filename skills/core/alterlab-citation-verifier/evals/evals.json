@@ -4,7 +4,7 @@
     {
       "id": "verify-real-citation-passes",
       "prompt": "Before I add this to my reference list, can you confirm this paper actually exists and the metadata is right? Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, L., & Polosukhin, I. (2017). Attention is all you need. Advances in Neural Information Processing Systems, 30.",
-      "expected_output": "Invokes alterlab-citation-verifier in existence-check mode: runs scripts/verify_citations.py to resolve the citation against Crossref / OpenAlex / Semantic Scholar / arXiv, confirms title/author match above the 0.70 difflib SequenceMatcher ratio threshold, checks for retractions (Crossref update-to / OpenAlex is_retracted), and returns a VERIFIED verdict with the matched canonical record (DOI/arXiv ID and the source database that confirmed it). Does not fabricate a verdict from model memory.",
+      "expected_output": "Invokes alterlab-citation-verifier in existence-check mode: runs scripts/verify_citations.py to resolve the citation against Crossref / OpenAlex / Semantic Scholar / arXiv, confirms title/author match above the 0.70 difflib SequenceMatcher ratio threshold, checks for retractions (Crossref updated-by / update-to, including Retraction Watch data, and OpenAlex is_retracted), and returns a VERIFIED verdict with the matched canonical record (DOI/arXiv ID and the source database that confirmed it). Does not fabricate a verdict from model memory.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Reaches a VERIFIED verdict for a genuinely real paper and reports which authoritative source (Crossref/OpenAlex/Semantic Scholar/arXiv) confirmed it, rather than asserting existence from model memory." }
@@ -49,7 +49,7 @@
     {
       "id": "batch-bibliography-audit",
       "prompt": "Here's the full reference list from my literature review draft (24 entries, APA 7.0). Run a citation-existence audit over all of them and tell me which ones I can't trust before I submit.",
-      "expected_output": "Invokes alterlab-citation-verifier in batch / bibliography-audit mode: parses all 24 references, runs scripts/verify_citations.py against Crossref / OpenAlex / Semantic Scholar / arXiv for each (title+author difflib SequenceMatcher matching, DOI/arXiv resolution, retraction flag from Crossref update-to / OpenAlex is_retracted), and returns a per-entry verdict table mapping each problem to the TF/PAC/IH/PH/SH taxonomy with a VERIFIED/NOT_FOUND/MISMATCH status. Notes graceful degradation to WebSearch when an API or the network is unavailable, rather than silently passing unverifiable entries.",
+      "expected_output": "Invokes alterlab-citation-verifier in batch / bibliography-audit mode: parses all 24 references, runs scripts/verify_citations.py against Crossref / OpenAlex / Semantic Scholar / arXiv for each (title+author difflib SequenceMatcher matching, DOI/arXiv resolution, retraction flag from Crossref updated-by (including Retraction Watch data) / OpenAlex is_retracted), and returns a per-entry verdict table mapping each problem to the TF/PAC/IH/PH/SH taxonomy with a VERIFIED/NOT_FOUND/MISMATCH status. Reports entries the script could not check as unverified (naming the failing sources), runs the WebSearch fallback for them rather than silently passing them, and surfaces the retracted Wakefield (1998) entry.",
       "files": ["fixtures/bibliography_24_entries.md"],
       "assertions": [
         { "type": "should_trigger", "value": true },
@@ -72,6 +72,15 @@
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-paper-reviewer" }
+      ]
+    },
+    {
+      "id": "near-miss-alterlab-citation-mgmt",
+      "prompt": "Find me five recent peer-reviewed papers on retrieval-augmented generation in higher education and give me clean BibTeX entries for each so I can drop them into my .bib file.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-citation-mgmt. The user wants to discover papers and generate BibTeX metadata for new sources, not to audit an existing bibliography for fabricated, hijacked, or retracted references. alterlab-citation-verifier checks references the user already has.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-citation-mgmt" }
       ]
     }
   ]

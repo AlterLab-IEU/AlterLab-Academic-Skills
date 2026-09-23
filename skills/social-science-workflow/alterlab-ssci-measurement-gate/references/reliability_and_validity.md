@@ -36,9 +36,10 @@ multidimensional with a bifactor structure.
 **Recommended practice** (McNeish, 2018, *Psychological Methods*, "Thanks coefficient alpha, we'll
 take it from here"): report omega as the default; if you also report alpha, state the
 tau-equivalence assumption it rests on. Empirically the two often land close for well-constructed
-unidimensional scales — Warne (2025) finds a median underestimate on the order of ~4.5% — so the
-point is not that alpha is always badly wrong, but that you should not *assume* the gap is small
-without evidence.
+unidimensional scales — Warne (2025), comparing the two across 12 subtests of one cognitive test
+battery (the RIOT), found omega exceeded alpha by 4.5% on average — so the point is not that alpha
+is always badly wrong, but that you should not *assume* the gap is small without evidence. (That
+is a single-battery blog analysis, not a general benchmark; cite it as such.)
 
 ### The reliability checklist
 
@@ -117,5 +118,6 @@ constructs:
 
 - McNeish, D. (2018). Thanks coefficient alpha, we'll take it from here. *Psychological Methods*.
 - Hu, L., & Bentler, P. M. (1999). Cutoff criteria for fit indexes in covariance structure analysis.
-- Warne, R. T. (2025). On the empirical gap between coefficient alpha and omega.
+- Warne, R. T. (2025, April 13; edited April 17). Comparing Cronbach's alpha and McDonald's omega
+  reliability values [Blog post]. russellwarne.com.
 - Putnick, D. L., & Bornstein, M. H. (2016). Measurement invariance conventions and reporting.

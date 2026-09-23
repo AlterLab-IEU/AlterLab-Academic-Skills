@@ -19,13 +19,21 @@ modern estimator (pyfixest v0.60):
 
 ```python
 import pyfixest as pf
-# Sun & Abraham interaction-weighted event study inside a feols formula:
-m = pf.feols("y ~ sunab(cohort_year, year) | unit + year", data=df)
-m.iplot()                      # event-study coefficients
+# Saturated (cohort x event-time) event study; .aggregate() applies Sun & Abraham
+# interaction weights. gname = first treatment period (0 for never-treated units).
+es = pf.event_study(df, yname="y", idname="unit", tname="year", gname="cohort_year",
+                    estimator="saturated", att=False)
+es.aggregate()                 # Sun-Abraham-weighted event-time effects
+es.iplot_aggregate()           # event-study plot
+es.test_treatment_heterogeneity()
 # or Gardner (2021) two-stage:
-es = pf.did2s(df, yname="y", first_stage="~ 0 | unit + year",
-              second_stage="~ i(rel_year)", treatment="treated", cluster="unit")
+es2 = pf.did2s(df, yname="y", first_stage="~ 0 | unit + year",
+               second_stage="~ i(rel_year, ref=-1.0)", treatment="treated", cluster="unit")
 ```
+
+`sunab()` is R `fixest` formula syntax; pyfixest does not implement it (the formula fails with
+`NameError: name 'sunab' is not defined`). Verified on pyfixest 0.60; `estimator="saturated"`
+needs pyfixest ≥ 0.29.
 
 Diagnostic: inspect **pre-treatment** event-study coefficients (should be ~0). Refutation:
 placebo timing; drop the largest cohort.

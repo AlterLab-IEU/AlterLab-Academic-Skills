@@ -1,19 +1,20 @@
 ---
 name: alterlab-scholar-eval
-description: Evaluates scholarly work with the ScholarEval framework, producing structured assessment across research-quality dimensions (problem formulation, methodology, analysis, and writing) with quantitative rubric scores and actionable feedback. Use when scoring or grading a paper, thesis, or research output against rubric-style criteria, or benchmarking publication readiness across revisions. For checklist-based narrative reviewer reports prefer alterlab-peer-review; for evidence/claim quality and argument soundness use alterlab-scientific-thinking. Part of the AlterLab Academic Skills suite.
+description: Evaluates scholarly work with a ScholarEval-inspired eight-dimension rubric, producing structured assessment across research-quality dimensions (problem formulation, literature, methodology, data, analysis, results, writing, and citations) with quantitative 1-5 rubric scores, weighted aggregates, and actionable feedback. Use when scoring or grading a paper, thesis, or research output against rubric-style criteria, or benchmarking publication readiness across revisions. For checklist-based narrative reviewer reports prefer alterlab-peer-review; for evidence/claim quality and argument soundness use alterlab-scientific-thinking. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit
 compatibility: No external tools, API keys, or services required — scores work from the Read/Write/Edit tools alone
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Scholar Evaluation
 
 ## Overview
 
-Apply the ScholarEval framework to systematically evaluate scholarly and research work. This skill provides structured evaluation methodology based on peer-reviewed research assessment criteria, enabling comprehensive analysis of academic papers, research proposals, literature reviews, and scholarly writing across multiple quality dimensions.
+Systematically evaluate scholarly and research work with a structured, eight-dimension rubric that yields 1-5 scores, a weighted aggregate, and prioritized feedback for academic papers, research proposals, literature reviews, and theses. The rubric is this skill's own; it takes its name and its literature-grounded spirit from ScholarEval (Moussa et al., 2025), which evaluates research *ideas* on soundness and contribution — see the Citation section.
 
 ## When to Use This Skill
 
@@ -27,6 +28,15 @@ Use this skill when:
 - Benchmarking research quality against established criteria
 - Assessing publication readiness for target venues
 - Providing quantitative evaluation to complement qualitative peer review
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| A narrative, checklist-based referee report for a journal or grant panel | `alterlab-peer-review` |
+| A simulated multi-reviewer panel with an editorial accept/revise/reject decision | `alterlab-paper-reviewer` |
+| Judging whether specific claims are supported — evidence grading, biases, confounders | `alterlab-scientific-thinking` |
+| Designing grading rubrics for a course or assignment | `alterlab-teaching-design` |
 
 ## Evaluation Workflow
 
@@ -258,9 +268,13 @@ This skill integrates seamlessly with the scientific writer workflow:
 
 ## Citation
 
-This skill is based on the ScholarEval framework introduced in:
+The skill's name and literature-grounded approach come from ScholarEval, introduced in:
 
 **Moussa, H. N., Da Silva, P. Q., Adu-Ampratwum, D., East, A., Lu, Z., Puccetti, N., Xue, M., Sun, H., Majumder, B. P., & Kumar, S. (2025).** _ScholarEval: Research Idea Evaluation Grounded in Literature_. arXiv preprint arXiv:2510.16234. [https://arxiv.org/abs/2510.16234](https://arxiv.org/abs/2510.16234)
 
 **Abstract:** ScholarEval is a retrieval augmented evaluation framework that assesses research ideas based on two fundamental criteria: soundness (the empirical validity of proposed methods based on existing literature) and contribution (the degree of advancement made by the idea across different dimensions relative to prior research). The framework achieves significantly higher coverage of expert-annotated evaluation points and is consistently preferred over baseline systems in terms of evaluation actionability, depth, and evidence support.
+
+**How this skill relates:** the paper's system evaluates research *ideas* with literature retrieval. The eight-dimension, 1-5 rubric and the weights in `scripts/calculate_scores.py` are this skill's adaptation for scoring finished scholarly outputs; they are not the paper's published rubric, so cite ScholarEval only for the idea-evaluation method, and when scoring an early-stage research idea, ground soundness and contribution judgments in retrieved literature as the paper does.
+
+Part of the AlterLab Academic Skills suite.
 

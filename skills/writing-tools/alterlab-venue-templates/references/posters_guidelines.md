@@ -334,7 +334,7 @@ Use colorblind-friendly color combinations:
 - Steeper learning curve
 - Can be slow to compile
 
-**Template**: `assets/posters/tikzposter_research.tex`
+**Template**: not bundled here — start from the matching template in `alterlab-latex-posters`
 
 **Example Usage**:
 ```latex
@@ -358,7 +358,7 @@ Use colorblind-friendly color combinations:
 - Complex syntax
 - Less commonly used
 
-**Template**: `assets/posters/baposter_conference.tex`
+**Template**: not bundled here — start from the matching template in `alterlab-latex-posters`
 
 **Example Usage**:
 ```latex
@@ -594,8 +594,7 @@ Generate QR codes linking to:
 
 ### LaTeX Templates
 - `assets/posters/beamerposter_academic.tex`
-- `assets/posters/tikzposter_research.tex`
-- `assets/posters/baposter_conference.tex`
+- tikzposter and baposter starters: see `alterlab-latex-posters`
 
 ### Online Resources
 - Better Posters Blog: https://betterposters.blogspot.com/

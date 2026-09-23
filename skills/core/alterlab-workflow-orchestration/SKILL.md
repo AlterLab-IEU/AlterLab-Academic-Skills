@@ -1,13 +1,13 @@
 ---
 name: alterlab-workflow-orchestration
-description: "Composes existing AlterLab skills into multi-agent agentic workflows using current Claude Code subagent and Claude Agent SDK orchestration patterns: parallel subagent fan-out, sequential pipelines, judge panels, adversarial verification, and loop-until-clean review cycles. Maps each pattern onto real skills (alterlab-research-pipeline, alterlab-deep-research, alterlab-citation-verifier, alterlab-paper-reviewer, alterlab-peer-review) with copyable delegation prompts, agent-definition frontmatter, and SDK query() snippets. Use when the request mentions multi-agent, subagents, agent team, parallel agents, orchestration, pipeline of skills, judge panel, adversarial verification, devil's advocate, loop until clean, chaining skills, dispatching agents, or composing skills into a workflow. Part of the AlterLab Academic Skills suite."
+description: "Composes existing AlterLab skills into multi-agent agentic workflows using current Claude Code orchestration primitives — subagents (including nested subagents), dynamic workflow scripts, agent teams, forks, and the Claude Agent SDK: parallel fan-out, sequential pipelines, judge panels, adversarial verification, and loop-until-clean review cycles. Maps each pattern onto real skills (alterlab-research-pipeline, alterlab-deep-research, alterlab-citation-verifier, alterlab-paper-reviewer, alterlab-peer-review) with copyable delegation prompts, agent-definition frontmatter, workflow-script skeletons, and SDK query() snippets. Use when the request mentions multi-agent, subagents, agent team, dynamic workflow, workflow script, parallel agents, orchestration, pipeline of skills, judge panel, adversarial verification, devil's advocate, loop until clean, chaining skills, or composing skills into a custom workflow. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash
-compatibility: Patterns grounded in Claude Code subagents + Claude Agent SDK (verified against code.claude.com docs, 2026-06-08); uses built-in Claude tools only; agent teams and fork mode are gated behind experimental env vars noted inline; no external API key required for the Claude Code patterns
+compatibility: "Patterns grounded in Claude Code subagents, dynamic workflows, and the Claude Agent SDK (verified against code.claude.com docs on 2026-09-23, Claude Code v2.1.280). Dynamic workflows need a paid plan or API access; agent teams need CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1. No external API key required for the Claude Code patterns."
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-06-08"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
   depends_on: "alterlab-research-pipeline, alterlab-deep-research, alterlab-citation-verifier, alterlab-paper-reviewer, alterlab-peer-review"
 ---
 
@@ -46,6 +46,7 @@ Use this skill when the user wants to:
 | The user wants original research / a cited report | `alterlab-deep-research` |
 | The user wants one manuscript peer-reviewed | `alterlab-paper-reviewer` or `alterlab-peer-review` |
 | The user wants citations existence-checked | `alterlab-citation-verifier` |
+| The user wants to run one of the packaged AlterLab workflows (citation audit, review panel, PRISMA screening, rebuttal, grant panel, literature map) | `alterlab-research-workflows` |
 | The user asks about Claude API pricing / model ids / SDK billing | the `claude-api` skill |
 
 This skill is for **how to compose**; the named skills are **what to compose**.
@@ -53,37 +54,42 @@ If a single existing skill already does the job end to end, defer to it.
 
 ## Verified Orchestration Primitives (Claude Code + Agent SDK)
 
-All claims below are verified against `code.claude.com/docs` on 2026-06-08. See
-`references/claude-orchestration-primitives.md` for quotes and field tables.
+Verified against `code.claude.com/docs` on 2026-09-23 (Claude Code v2.1.280). See
+`references/claude-orchestration-primitives.md` for quotes, field tables, and version gates.
 
-- **Subagents** are Markdown + YAML files in `.claude/agents/` (project) or
-  `~/.claude/agents/` (user). Only `name` and `description` are required;
-  optional fields include `tools`, `disallowedTools`, `model`
-  (`sonnet`/`opus`/`haiku`/full id/`inherit`), `permissionMode`, `skills`, and
-  `background`. Each subagent runs in its **own context window** and returns only
-  a summary to the main conversation. Claude auto-delegates by matching the task
-  to the subagent's `description`.
-- **Subagents cannot spawn other subagents** (no nesting). For nested delegation,
-  chain from the main conversation or use Skills. Built-in subagents: **Explore**
-  (read-only, Haiku), **Plan** (read-only), **general-purpose** (all tools).
-- **Parallel fan-out**: ask the main agent to run independent investigations "in
-  parallel using separate subagents"; results return and the main agent
-  synthesizes. **Chaining**: ask it to use subagent A, then pass results to
-  subagent B.
-- **Background vs foreground**: background subagents run concurrently and
-  auto-deny prompts; foreground blocks and passes prompts through.
-- **Agent teams** (experimental, `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`,
-  v2.1.32+) differ from subagents: teammates have independent contexts, a shared
-  task list, and **message each other directly** — ideal for adversarial debate.
-  Recommended size 3–5; higher token cost.
-- **Forks** (`/fork`, `CLAUDE_CODE_FORK_SUBAGENT=1`, v2.1.117+): a subagent that
-  inherits the full conversation instead of starting fresh — cheap because it
-  reuses the parent prompt cache.
+- **Subagents** are Markdown + YAML files in `.claude/agents/` (project),
+  `~/.claude/agents/` (user), or a plugin's agents. Only `name` and `description` are
+  required; the tool allowlist field is `tools` (comma-separated or a YAML list), and
+  `model` accepts `sonnet`/`opus`/`haiku`/`fable`/a full ID/`inherit`. Each subagent runs
+  in its **own context window** and returns only a summary. Claude auto-delegates by
+  matching the task to the `description`.
+- **Subagents can nest** — by default up to three layers below the main conversation
+  (`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`; `1` turns nesting off). A reviewer can
+  dispatch one verifier per finding. Omit `Agent` from a subagent's `tools` to keep it
+  from spawning. Built-ins: **Explore** and **Plan** (read-only, inherit the main model),
+  **general-purpose** (all tools).
+- **Fork mode** is on by default in interactive sessions: Claude can spawn a `fork` that
+  inherits the whole conversation (and its prompt cache), and subagents run in the
+  background. Start one yourself with `/subtask`.
+- **Dynamic workflows** move the plan into a JavaScript script the runtime executes:
+  `agent()`, `parallel()`, `pipeline()`, `phase()`, `args`, with JSON-schema outputs and
+  intermediate results kept in script variables instead of Claude's context. Dozens to
+  hundreds of agents per run; resumable; saved to `.claude/workflows/` or shipped in a
+  plugin's `workflows/` folder and run as `/<name>` or `/<plugin>:<name>`.
+- **Agent teams** (experimental, `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`, interactive
+  sessions only): teammates have independent contexts, a shared task list, and **message
+  each other directly** — the right tool for sustained adversarial debate. Higher token cost.
 - **Claude Agent SDK** (Python `claude-agent-sdk`, TypeScript
-  `@anthropic-ai/claude-agent-sdk`) packages the same agent loop programmatically
-  via `query(...)` with `ClaudeAgentOptions`/`options`; define subagents through
-  the `agents` option (`AgentDefinition`), and capture/resume `session_id` for
-  multi-turn state. Use it to script the patterns below in CI or batch jobs.
+  `@anthropic-ai/claude-agent-sdk`) packages the same agent loop programmatically via
+  `query(...)`; define subagents with the `agents` option (`AgentDefinition`) and resume
+  by `session_id`. Use it to script the patterns below in CI or batch jobs.
+
+**Ready-made versions.** The `alterlab-workflows` plugin ships these patterns as runnable
+dynamic workflows (documented in `alterlab-research-workflows`): fan-out + adversarial
+verify → `citation-audit`; judge panel → `review-panel` and `grant-mock-panel`;
+adversarial verification → `claim-stress-test`; dual independent coding with
+adjudication → `systematic-review-screening`. Adapt one of those before writing a new
+workflow from scratch.
 
 ## The Five Patterns
 
@@ -173,8 +179,24 @@ until no unresolved comments remain or after at most 3 rounds, then stop and
 report the residual issues.
 ```
 
-Always set an explicit stop condition AND a max-iteration cap — open loops burn
-context and tokens. See recipe P5 in `references/composition-recipes.md`.
+Always set an explicit stop condition and a max-iteration cap — open loops burn
+context and tokens. As a dynamic workflow, the loop lives in the script:
+
+```javascript
+export const meta = { name: 'revise-until-clean', description: 'Review, revise, re-review until no unresolved comments or 3 rounds' }
+let open = []
+for (let round = 1; round <= 3; round++) {
+  const review = await agent(`Review draft.md (round ${round}); list unresolved comments only.`,
+    { schema: { type: 'object', required: ['comments'], properties: { comments: { type: 'array', items: { type: 'string' } } } } })
+  if (!review) break          // agent() returns null if the run is stopped or the agent fails
+  open = review.comments
+  if (!open.length) break
+  await agent(`Revise draft.md to resolve exactly these comments: ${JSON.stringify(open)}`)
+}
+return { unresolved: open }
+```
+
+See recipe P5 in `references/composition-recipes.md`.
 
 ## Choosing a Mechanism
 
@@ -184,6 +206,8 @@ context and tokens. See recipe P5 in `references/composition-recipes.md`.
 | Independent investigations, no cross-talk | **Parallel subagents** | Each explores alone; main agent synthesizes |
 | Side task that needs full current context | **Fork** (`/fork`) | Inherits conversation; reuses prompt cache |
 | Workers must debate / challenge each other | **Agent team** (experimental) | Shared task list + direct messaging |
+| Dozens+ of workers, votes, or a fixed loop you want to rerun | **Dynamic workflow** | Script holds the plan; results stay out of context; resumable |
+| A worker's task itself splits into parallel subtasks | **Nested subagents** | A reviewer dispatches a verifier per finding (depth ≤ 3 by default) |
 | Script the workflow in CI / batch | **Agent SDK** | `query()` + `agents` option, programmatic |
 | It's already one packaged flow | **Existing skill** | Don't rebuild `alterlab-research-pipeline` |
 
@@ -205,6 +229,6 @@ AUTHORING CHECKLIST (see CONTRIBUTING.md → Skill Quality Standards):
 - name == directory name, lowercase-hyphen, no 'claude'/'anthropic'
 - description: third person, leads with what + "Use when", suite label LAST, <=1024 chars (this one ~840)
 - body <500 lines; reference files exist and are one level deep
-- every factual orchestration claim verified against code.claude.com docs (2026-06-08)
+- every factual orchestration claim verified against code.claude.com docs (2026-09-23)
 - validate: uv run python scripts/check_spec.py --skill workflow-orchestration && uv run python scripts/audit_skills.py
 -->

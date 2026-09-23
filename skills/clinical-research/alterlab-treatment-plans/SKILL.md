@@ -6,7 +6,8 @@ license: MIT
 compatibility: "Runs with Read/Write/Edit/Bash; producing PDF output requires a local LaTeX toolchain (pdflatex/xelatex). No API key required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Treatment Plan Writing
@@ -15,8 +16,8 @@ metadata:
 
 Treatment plan writing is the systematic documentation of clinical care strategies designed to address patient health conditions through evidence-based interventions, measurable goals, and structured follow-up. This skill provides LaTeX templates and validation tools for creating **concise, focused** treatment plans (3-4 pages standard) across all medical specialties with full regulatory compliance.
 
-**Critical Principles:**
-1. **CONCISE & ACTIONABLE**: Treatment plans default to 3-4 pages maximum (1 page preferred for standard cases), focusing only on clinically essential information that impacts care decisions
+**Core Principles:**
+1. **Concise and actionable**: Treatment plans default to 3-4 pages maximum (1 page preferred for standard cases), focusing only on clinically essential information that impacts care decisions
 2. **Patient-Centered**: Plans must be evidence-based, measurable, and compliant with healthcare regulations (HIPAA, documentation standards)
 3. **Minimal Citations**: Use brief in-text citations only when needed; avoid extensive bibliographies (0-3 citations max in a 3-4 page plan)
 
@@ -34,6 +35,19 @@ Use this skill when:
 - Setting patient-centered goals using SMART criteria
 - Coordinating multidisciplinary care across specialties
 - Ensuring regulatory compliance in treatment documentation
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Population-level treatment recommendations or guidelines with GRADE grading, or a biomarker-stratified cohort analysis | `alterlab-clinical-decision` |
+| Documenting care that already happened (SOAP note, H&P, discharge summary) or a journal case report | `alterlab-clinical-reports` |
+| Pharmacogenomic dosing guidance (CPIC/DPWG) for a gene–drug pair | `alterlab-clinpgx` |
+| Looking up drug properties, targets, or drug–drug interactions | `alterlab-drugbank` |
+
+## Clinical Safety
+
+A treatment plan is a draft for the treating clinician to review, adapt, and sign — not an order. Build it only from the patient information the user provides, and mark missing items (allergies, renal function, current medications) as blanks to complete rather than guessing, because a plausible default dose or omitted interaction check can cause harm. Check every drug, dose, and monitoring interval against current labeling and guidelines the clinician can verify, cite guideline sources the user supplied or that you retrieved in this session, and never invent a citation. Include a short AI-assistance note in the document.
 
 ## Core Workflow
 
@@ -108,4 +122,6 @@ For the full styling guide — color scheme, every box environment with examples
 
 ## License
 
-Part of the Claude Scientific Writer project. See main LICENSE file.
+MIT; upstream attribution is recorded in the repository's NOTICE and PROVENANCE.md.
+
+Part of the AlterLab Academic Skills suite.

@@ -91,6 +91,21 @@
           "value": "torch-geometric"
         }
       ]
+    },
+    {
+      "id": "near-miss-sna",
+      "prompt": "For my sociology paper on a school friendship network, which centrality measure best captures brokerage between cliques, how should I justify it to reviewers, and should I fit an ERGM to test whether ties are driven by homophily or triadic closure?",
+      "expected_output": "Does NOT invoke alterlab-networkx directly; defers to alterlab-sna. The user needs social-network-analysis method choice and justification (brokerage measures, dependence assumptions, ERGM inference) for a social-science study, which alterlab-sna owns before routing any computation to NetworkX.",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-sna"
+        }
+      ]
     }
   ]
 }

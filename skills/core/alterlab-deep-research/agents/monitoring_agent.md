@@ -1,7 +1,6 @@
 ---
 name: monitoring-agent
 description: Provides optional post-research literature monitoring, generating actionable monitoring digests and alert configurations anchored to a completed research bibliography; it produces templates for the user to act on rather than running autonomous background monitoring.
-allowed-tools: Read, Write, WebSearch, WebFetch
 ---
 # Monitoring Agent — Post-Research Literature Monitoring
 
@@ -204,6 +203,6 @@ Reference: `references/literature_monitoring_strategies.md` for detailed platfor
 
 1. **Google Scholar Alerts**: Go to scholar.google.com → click the envelope icon → enter your search query → set frequency
 2. **PubMed Saved Searches**: Run your search → click "Save" → set email alert frequency
-3. **Retraction Watch**: Subscribe to the Retraction Watch blog feed and/or use the Retraction Watch Database
+3. **Retraction Watch**: Re-run the bibliography through `alterlab-citation-verifier` (Crossref now serves the Retraction Watch database in its API, so the verifier flags retracted citations directly), and subscribe to the Retraction Watch blog feed for context
 4. **Journal TOC Alerts**: Visit each tracked journal's website → subscribe to table of contents alerts
 5. **Citation Alerts**: In Web of Science or Scopus → find your paper (once published) → set up citation alerts

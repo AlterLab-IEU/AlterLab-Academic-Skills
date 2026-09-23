@@ -46,7 +46,7 @@ accDescr: One or two sentences explaining what this diagram shows and what insig
 - `accTitle` — 3–8 words, plain text, names the diagram
 - `accDescr` — 1–2 sentences on a **single line** (GitHub limitation), explains purpose and key structure
 
-**Diagram types that do NOT support `accTitle`/`accDescr`:** Mindmap, Timeline, Quadrant, Sankey, XY Chart, Block, Kanban, Packet, Architecture, Radar, Treemap. For these, place a descriptive _italic_ Markdown paragraph directly above the code block as the accessible description.
+**Diagram types that do NOT take `accTitle`/`accDescr`:** Mindmap, Sankey, and Block (the lines are a parse error), Treemap (parse error on older renderers such as Mermaid 11.12; accepted on 11.17 and 12.0), and Timeline and Kanban (accepted but not rendered). For these, place a descriptive _italic_ Markdown paragraph directly above the code block as the accessible description. Quadrant, XY Chart, Packet, Architecture, and Radar render `accTitle`/`accDescr` like flowcharts do (behaviour checked on Mermaid 11.12, 11.17, and 12.0).
 
 > **ZenUML note:** ZenUML requires an external plugin and may not render on GitHub. Prefer standard `sequenceDiagram` syntax.
 

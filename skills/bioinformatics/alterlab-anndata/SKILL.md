@@ -3,10 +3,11 @@ name: alterlab-anndata
 description: Build, slice, concatenate, read, and write AnnData annotated data matrices (obs, var, X, layers, obsm, uns) — the scverse data STRUCTURE, not an analysis pipeline. Use when creating or wrangling .h5ad/zarr files, managing cell and gene annotations, concatenating batches, or handling layers/obsm/backed-mode; for the QC, normalization, clustering, UMAP, and differential-expression analysis pipeline prefer alterlab-scanpy instead, and for RNA velocity from spliced/unspliced layers prefer alterlab-scvelo instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Runs under `uv run python` with `anndata` (>=0.11) installed in the project env; no API key or account required."
+compatibility: "Runs under `uv run python` with `anndata` >= 0.13 (current 0.13.4 as of 2026-09, requires Python >= 3.12, zarr >= 3.1) installed in the project env; no API key or account required. The 0.11/0.12 APIs still work except where flagged below."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # AnnData
@@ -26,14 +27,39 @@ Use this skill when:
 - Subsetting, filtering, or transforming annotated data
 - Integrating with scanpy, scvi-tools, or other scverse ecosystem tools
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| QC, normalization, HVG, clustering, UMAP, or marker genes | `alterlab-scanpy` |
+| RNA velocity from spliced/unspliced layers | `alterlab-scvelo` |
+| Deep generative models / batch integration (scVI, scANVI) | `alterlab-scvi-tools` |
+| Querying the public CELLxGENE Census for reference cells | `alterlab-cellxgene` |
+| Chunked n-dimensional arrays outside the AnnData model | `alterlab-zarr` |
+
 ## Installation
 
 ```bash
-uv pip install anndata          # 0.11+ (the API namespaces below assume >= 0.11)
+uv pip install anndata          # 0.13.x as of 2026-09; needs Python >= 3.12
 
-# Optional extra for Dask-backed lazy reads (ad.experimental.read_lazy)
-uv pip install 'anndata[dask]'
+# Lazy/backed reads (ad.experimental.read_lazy) need dask + xarray:
+uv pip install 'anndata[lazy]'   # or 'anndata[dask]' for dask-backed arrays only
 ```
+
+### What changed in 0.13 (breaking)
+
+These bite existing scripts, so check them before running older code:
+
+- **`AnnData.concatenate()` is gone** — use the module-level `ad.concat([...])`.
+- **`.X` is copy-on-write** like `layers`/`obsm`: writing into a subset (`view.X = 0`) no
+  longer propagates to the parent object. `.X` is now stored as `layers[None]`, so it shows
+  up in the repr and in `.layers.keys()`.
+- **The `dtype=` argument to the `AnnData` constructor was removed** — cast `X` yourself.
+- **zarr v3 only** (`zarr >= 3.1`); writing the v2 format is deprecated as of 0.13.4 and
+  goes away in 0.14. Stores are written sharded by default.
+- **`anndata.__version__` and the `adata.*_keys()` methods are deprecated** — use
+  `importlib.metadata.version("anndata")` and `sorted(adata.obs)` / `k in adata.uns`.
+- **Loom I/O is deprecated** (`ad.io.read_loom`, `adata.write_loom`) in favour of h5ad/zarr.
 
 ## Quick Start
 
@@ -72,14 +98,15 @@ adata = ad.read_h5ad('large_data.h5ad', backed='r')
 
 # Read other formats (these live under ad.io as of anndata 0.11)
 adata = ad.io.read_csv('data.csv')
-adata = ad.io.read_loom('data.loom')
+adata = ad.io.read_mtx('matrix.mtx')
 adata = sc.read_10x_h5('filtered_feature_bc_matrix.h5')
 ```
 
-> **API namespaces (anndata >= 0.11)**: all format readers/writers moved to the
+> **API namespaces (anndata >= 0.11)**: all format readers/writers live in the
 > `anndata.io` module (`ad.io.read_csv`, `ad.io.read_mtx`, `ad.io.read_loom`,
-> `ad.io.read_elem`, ...). The top-level `ad.read_csv`-style aliases still work
-> but emit a `DeprecationWarning`. **Exceptions**: `ad.read_h5ad`, `ad.read_zarr`,
+> `ad.io.read_elem`, ...). The top-level `ad.read_csv`-style aliases still resolve
+> but emit a `FutureWarning` (upgraded from `DeprecationWarning` in 0.12), and
+> `anndata.read` was removed in 0.12. **Exceptions**: `ad.read_h5ad`, `ad.read_zarr`,
 > `adata.write_h5ad`, and `adata.write_zarr` stay top-level with no warning.
 >
 > **10x readers** (`read_10x_h5`, `read_10x_mtx`) live in **scanpy**
@@ -94,8 +121,8 @@ adata.write_h5ad('output.h5ad')
 adata.write_h5ad('output.h5ad', compression='gzip')
 
 # Write other formats
-adata.write_zarr('output.zarr')
-adata.write_csvs('output_dir/')
+adata.write_zarr('output.zarr')                  # zarr v3, sharded by default
+adata.write_csvs('output_dir/', skip_data=False)  # skip_data defaults to True (obs/var only)
 ```
 
 ### Basic operations
@@ -178,13 +205,10 @@ adata = ad.concat(
 # Concatenate variables (combine modalities)
 adata = ad.concat([adata_rna, adata_protein], axis=1)
 
-# Lazy concatenation
+# Lazy concatenation — AnnCollection takes AnnData objects (open them backed), not paths
 from anndata.experimental import AnnCollection
-collection = AnnCollection(
-    ['data1.h5ad', 'data2.h5ad'],
-    join_obs='outer',
-    label='dataset'
-)
+adatas = {p: ad.read_h5ad(f'{p}.h5ad', backed='r') for p in ('data1', 'data2')}
+collection = AnnCollection(adatas, join_obs='outer', label='dataset')
 ```
 
 ### 4. Data Manipulation
@@ -211,7 +235,7 @@ hv_genes = adata[:, adata.var['highly_variable']]
 adata_T = adata.T
 
 # Copy vs view
-view = adata[0:100, :]  # View (lightweight reference)
+view = adata[0:100, :]  # View (lightweight reference; writes to it copy-on-write in 0.13+)
 copy = adata[0:100, :].copy()  # Independent copy
 
 # Convert strings to categoricals
@@ -394,3 +418,4 @@ adata.obs['new_col'] = external_data.set_index('cell_id').loc[adata.obs_names, '
 - **Scverse ecosystem**: https://scverse.org/
 - **GitHub repository**: https://github.com/scverse/anndata
 
+Part of the AlterLab Academic Skills suite.

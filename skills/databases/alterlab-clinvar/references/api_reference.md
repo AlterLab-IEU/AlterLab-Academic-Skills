@@ -40,7 +40,7 @@ curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=clinvar&term
 
 **Common Search Fields** (names come from the `einfo` field list; run `efilter -help` or `einfo -db clinvar` to see the full set). NCBI silently rewrites any unrecognized `[...]` tag to `[All Fields]`, so always confirm the `querytranslation` in the response:
 - `[gene]` - Gene symbol
-- `[Properties]` - Clinical-significance and other record properties: `clinsig_pathogenic`, `clinsig_likely_pathogenic`, `clinsig_uncertain`, `clinsig_likely_benign`, `clinsig_benign`, `clinsig_has_conflicts` (there is **no `[CLNSIG]` field**)
+- `[Properties]` - Clinical-significance and other record properties: `clinsig_pathogenic`, `clinsig_likely_pathogenic`, `clinsig_vus`, `clinsig_likely_benign`, `clinsig_benign`, `clinsig_has_conflicts` (there is **no `[CLNSIG]` field**, and `clinsig_uncertain` matches nothing — use `clinsig_vus`)
 - `[Review status]` - e.g. `"reviewed by expert panel"`, `"practice guideline"`, `"criteria provided, single submitter"` (there is **no `[RVSTAT]` field**)
 - `[Disease/Phenotype]` - Disease/condition name (not `[disorder]`)
 - `[Variant name]` - HGVS expression or variant name
@@ -68,9 +68,11 @@ curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=clinvar&id=
 ```
 
 **esummary Output Includes:**
-- Accession (RCV/VCV)
-- Clinical significance
-- Review status
+- Accession (VCV) and title
+- `germline_classification` — `{description, review_status, last_evaluated, trait_set}`
+  (the pre-2024 `clinical_significance` field no longer exists)
+- `clinical_impact_classification` and `oncogenicity_classification` — same shape,
+  empty strings when no somatic submission exists
 - Gene symbols
 - Variant type
 - Genomic locations (GRCh37 and GRCh38)
@@ -136,7 +138,7 @@ FETCH_URL="https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=clinvar&
 
 Install Entrez Direct for command-line access:
 ```bash
-sh -c "$(curl -fsSL ftp://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/install-edirect.sh)"
+sh -c "$(curl -fsSL https://ftp.ncbi.nlm.nih.gov/entrez/entrezdirect/install-edirect.sh)"
 ```
 
 ### Common Commands

@@ -4,7 +4,7 @@ Tokenizers map genomic regions onto a fixed vocabulary of discrete tokens for ML
 models — the preprocessing layer that `geniml` builds embeddings on top of.
 
 > The class is **`Tokenizer`** (in `gtars.tokenizers`). There is no `TreeTokenizer`.
-> Verified against v0.8.
+> Verified against 0.10.0 (originally written for 0.8).
 
 ## Building a tokenizer
 

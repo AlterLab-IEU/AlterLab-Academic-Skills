@@ -66,8 +66,17 @@ output.
 - The Law 7499 amendment (Official Gazette 12 Mar 2024, in force 1 Jun 2024)
   **restructured** Art. 9 around adequacy decisions and standard contracts. **Do
   not reuse pre-2024 "explicit consent for every overseas transfer" boilerplate.**
+- **Art. 9(5):** a standard contract is notified to the Board "imzalanmasından
+  itibaren beş iş günü içinde" (within five business days of signature).
+- **Art. 9(6):** without an adequacy decision or a safeguard, data may go abroad
+  only **incidentally** ("arızi olmak kaydıyla") and on a listed ground — first of
+  them (a) explicit consent after the subject is told the possible risks. Consent
+  is therefore not a basis for a planned, repeated research-data flow.
+- Procedure: *Kişisel Verilerin Yurt Dışına Aktarılmasına İlişkin Usul ve Esaslar
+  Hakkında Yönetmelik* (Official Gazette 10 Jul 2024, No. 32598).
 - **DMP consequence:** any cloud/storage outside Türkiye must name its Art. 9
-  mechanism. Flag US/EU cloud explicitly.
+  mechanism. Flag US/EU cloud explicitly — and AI/LLM APIs hosted abroad that would
+  receive personal data (send only anonymized or masked text).
 
 ## Art. 13 — Application to the data controller (veri sorumlusuna başvuru)
 

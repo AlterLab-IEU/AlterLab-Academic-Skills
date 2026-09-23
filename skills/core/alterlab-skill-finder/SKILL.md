@@ -1,12 +1,13 @@
 ---
 name: alterlab-skill-finder
-description: "The AlterLab front door and multi-agent launcher — routes a task to the right AlterLab skill(s) when the user invokes the suite without naming one, and for a multi-stage goal (or on the keyword 'alterflow', aliases 'alterresearch' / 'ultralab') it CLARIFIES the goal with a few questions, SELECTS the skills the task needs, and runs a dynamic multi-agent workflow composing them (via alterlab-workflow-orchestration, alterlab-research-pipeline, or alterlab-ssci-orchestrator). Triggers on 'use AlterLab skills', 'which AlterLab skill for X', 'is there an AlterLab skill for…', a multi-stage research goal, 'alterflow …', or any generic AlterLab request where the user does not know skill names. It always asks clarifying questions before executing a multi-step run. Use when someone references AlterLab generically, describes a multi-stage goal, or fires the alterflow keyword; when the user already names a specific skill, defer to that skill directly. Part of the AlterLab Academic Skills suite."
+description: "The AlterLab front door and multi-agent launcher — routes a task to the right AlterLab skill(s) when the user invokes the suite without naming one, and for a multi-stage goal (or on the keyword 'alterflow', aliases 'alterresearch' / 'ultralab') it clarifies the goal with a few questions before anything runs, selects the skills the task needs, and runs a multi-agent workflow composing them (a packaged alterlab-workflows workflow, alterlab-research-pipeline, alterlab-ssci-orchestrator, or a bespoke plan via alterlab-workflow-orchestration). Triggers on 'use AlterLab skills', 'which AlterLab skill for X', 'is there an AlterLab skill for…', a multi-stage research goal, 'alterflow …', or any generic AlterLab request where the user does not know skill names. Use when someone references AlterLab generically, describes a multi-stage goal, or fires the alterflow keyword; when the user already names a specific skill, defer to that skill directly. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Task
 compatibility: "No API key or network required. A routing + orchestration front-end: it reads the bundled skill index and hands off to the matching AlterLab skill(s). Multi-agent execution uses the host's subagent/Workflow tools where available (Claude Code, Cowork); on surfaces without them it decomposes the work into sequential phases."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
     depends_on: "dispatches to any AlterLab skill; composes multi-step runs via alterlab-research-pipeline, alterlab-workflow-orchestration, and alterlab-ssci-orchestrator"
 ---
 
@@ -80,22 +81,27 @@ executing — run this sequence:
    the subagent count to complexity and default low** (Anthropic's rule of thumb: simple fact-finding
    ≈ 1 agent; a focused comparison ≈ 2–4; only genuinely broad work ≈ 10+). Reuse the existing
    orchestrators rather than reinventing them:
+   - a packaged job — whole-manuscript citation audit, independent review panel, claim stress-test,
+     PRISMA dual screening, response to reviewers, grant mock panel, literature map →
+     **`alterlab-research-workflows`** (in Claude Code: `/alterlab-workflows:<name>`)
    - end-to-end research→publish → **`alterlab-research-pipeline`** (deep-research → paper-writer → paper-reviewer, revision loops)
    - a whole social-science study → **`alterlab-ssci-orchestrator`** (design → measurement/reflexivity → sampling → analysis module → inference)
    - a bespoke fan-out / judge-panel / adversarial-verify workflow → **`alterlab-workflow-orchestration`**
 4. **CONFIRM — plan *and its rough cost*.** Show the selected skills + the phases in a few lines,
    **plus an effort estimate** (≈ how many phases / subagents). Multi-agent runs spend far more tokens
    than a single pass, so let the user opt in knowingly; get a go-ahead (or incorporate a correction).
-5. **EXECUTE.** Run it as a multi-agent workflow — spawn subagents via the host's Task/Workflow tools
-   where available (Claude Code, Cowork); on surfaces without them, execute the phases sequentially and
-   keep the same hand-offs. **Give every spawned subagent a complete task spec** — an objective, an
+5. **EXECUTE.** The user's go-ahead in step 4 is their opt-in to a multi-agent run. In Claude Code
+   with dynamic workflows, launch a matching packaged workflow (`/alterlab-workflows:<name>`), or write
+   a workflow script for a bespoke plan that fans out beyond a handful of workers; for a few workers,
+   spawn subagents (Task). On surfaces without these tools, execute the phases sequentially and keep
+   the same hand-offs. **Give every spawned subagent a complete task spec** — an objective, an
    output format, which skills/tools/sources to use, and clear boundaries — or workers duplicate work
    and leave gaps (`alterlab-workflow-orchestration` models these specs). Carry each stage's artifact
    to the next (the pipelines define the hand-off contracts).
 
 The one rule: **questions before execution.** A short clarify step beats a wrong 20-agent run.
 
-## Domain routing map (17 domains)
+## Domain routing map (18 domains)
 
 | If the task is about… | Domain | Representative skills |
 |---|---|---|
@@ -116,6 +122,7 @@ The one rule: **questions before execution.** A short clarify step beats a wrong
 | Teaching, IRB, grant admin, accreditation, recommendation letters | **faculty-life** | `alterlab-syllabus-ai-policy`, `alterlab-irb-consent`, … |
 | Research-rigor gates (pre-registration, test choice, transparency) | **methodology** | `alterlab-test-selection-guard`, `alterlab-preregistration-discipline` |
 | Design/run a whole **social-science study** (survey, qualitative, causal, multilevel, meta, missing data) | **social-science-workflow** | `alterlab-ssci-orchestrator` (+ 16 gates & modules) |
+| Run a packaged **multi-agent job** — citation audit, review panel, PRISMA screening, rebuttal, grant mock panel, literature map, claim stress-test | **workflows** | `alterlab-research-workflows` (`/alterlab-workflows:<name>`) |
 
 Full per-domain listing of every skill with a one-liner: `references/skill_index.md`.
 

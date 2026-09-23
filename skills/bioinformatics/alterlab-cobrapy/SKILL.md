@@ -3,10 +3,11 @@ name: alterlab-cobrapy
 description: Build and analyze genome-scale constraint-based metabolic models with COBRApy — flux balance analysis (FBA), flux variability analysis (FVA), gene and reaction knockouts, flux sampling, and SBML model I/O. Use when simulating metabolic networks, predicting growth or knockout phenotypes, or running systems-biology and metabolic-engineering analyses on SBML genome-scale models. Part of the AlterLab Academic Skills suite.
 license: GPL-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Self-contained — runs under `uv run python` with `cobra` installed (0.32.1 as of 2026-09; depends on optlang, pandas < 3 and a solver). GLPK ships via swiglpk; CPLEX/Gurobi are optional and faster on big models. `load_model` and gapfilling from BiGG/BioModels need network access; everything else is offline."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # COBRApy - Constraint-Based Reconstruction and Analysis
@@ -15,13 +16,33 @@ metadata:
 
 COBRApy is a Python library for constraint-based reconstruction and analysis (COBRA) of metabolic models, essential for systems biology research. Work with genome-scale metabolic models, perform computational simulations of cellular metabolism, conduct metabolic engineering analyses, and predict phenotypic behaviors.
 
+## When to Use This Skill
+
+Use this skill when the user wants to:
+- Load a genome-scale metabolic model (SBML/JSON/YAML) and simulate growth with FBA/pFBA.
+- Predict knockout phenotypes, essential genes, or minimal media.
+- Explore flux space with FVA, flux sampling, or production envelopes.
+- Build, gapfill, or curate a constraint-based model.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Looking up a pathway or reaction annotation rather than simulating | `alterlab-kegg`, `alterlab-reactome` |
+| Enzyme kinetic parameters (kcat, Km) for a reaction | `alterlab-brenda` |
+| Graph analysis of the metabolic network (centrality, communities) rather than flux | `alterlab-networkx` |
+| Metabolomics measurements and their identification | `alterlab-metabolomics-wb`, `alterlab-hmdb` |
+| Multi-objective optimization that is not a flux-balance problem | `alterlab-pymoo` |
+
 ## Installation and Requirements
 
 ```bash
-uv pip install 'cobra>=0.29,<0.32'
+uv pip install cobra              # 0.32.x as of 2026-09
+uv pip install 'cobra[array]'     # scipy extra, for array-based model handling
+uv pip install 'cobra[chrr]'      # hopsy, enables the fast CHRR sampler
 ```
 
-**Requirements:** Python 3.8+; depends on optlang and a solver (GLPK ships by default via swiglpk; CPLEX/Gurobi optional). Optional for plots: matplotlib, seaborn, pandas (pandas is already a hard dependency). Flux sampling and parallel deletions use multiprocessing.
+**Requirements:** depends on optlang and a solver — GLPK ships by default via swiglpk, while CPLEX and Gurobi are optional and considerably faster on genome-scale models. pandas is a hard dependency (pinned `< 3`); matplotlib/seaborn only for plots. Flux sampling and parallel deletions use multiprocessing, so guard scripts with `if __name__ == "__main__":` on Windows/macOS spawn.
 
 > **Bundled model names.** `load_model` only recognizes three bundled aliases: `"textbook"` (the E. coli core model, `e_coli_core`), `"iJO1366"` (full E. coli genome-scale), and `"salmonella"`. Any other identifier (e.g. `"ecoli"`, `"e_coli_core"`) is not a bundled alias and triggers a remote lookup against BiGG/BioModels, which requires network access and may fail. Use `read_sbml_model("path.xml")` for your own models.
 
@@ -193,10 +214,13 @@ Sample the feasible flux space:
 ```python
 from cobra.sampling import sample
 
-# Sample using OptGP (default, supports parallel processing)
-samples = sample(model, n=1000, method="optgp", processes=4)
-
-# Sample using ACHR
+# method defaults to "auto" in current cobrapy; the three options are:
+#   "chrr"  - coordinate hit-and-run with rounding, via the C++ hopsy library
+#             (install with cobra[chrr]); usually the fastest and best-mixing
+#   "optgp" - parallel, wants large n (>1000) to be efficient
+#   "achr"  - artificial centering hit-and-run, better for small n
+samples = sample(model, n=1000)                              # auto
+samples = sample(model, n=1000, method="optgp", processes=4)  # explicit OptGP
 samples = sample(model, n=1000, method="achr")
 
 # Validate samples
@@ -479,3 +503,4 @@ For detailed workflows and API patterns, refer to:
 
 Official documentation: https://cobrapy.readthedocs.io/en/latest/
 
+Part of the AlterLab Academic Skills suite.

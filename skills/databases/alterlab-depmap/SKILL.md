@@ -6,7 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless DepMap public data downloads/API (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # DepMap — Cancer Dependency Map
@@ -24,7 +25,7 @@ The Cancer Dependency Map (DepMap) project, run by the Broad Institute, systemat
 - DepMap data downloads: https://depmap.org/portal/data_page/
 - Figshare deposits (programmatic, keyless): https://api.figshare.com/v2/articles/{article_id}
 
-**Access model — read this first.** DepMap has *no* documented, stable public REST API for gene-level queries (the internal `depmap.org/portal/api/...` paths are undocumented and return 404 for ad-hoc requests — do not script against them). The supported workflow is: download the release matrix CSVs, then analyse them locally with pandas. The keyless programmatic path to those files is the **Figshare API** (`/articles/{id}/files` lists `name` + `download_url`); `scripts/query_depmap.py` wraps this.
+**Access model — read this first.** DepMap has *no* documented, stable public REST API for gene-level queries, and the portal (including `depmap.org/portal/api/...` and the data page) now sits behind a Cloudflare browser-verification check that asks users not to scrape it — scripted requests get the verification page, not data. The supported workflow is: download the release matrix CSVs, then analyse them locally with pandas. The keyless programmatic path to those files is the **Figshare API** for releases up to 24Q4 (`/articles/{id}/files?page_size=1000` lists `name` + `download_url`; the endpoint is paginated, 10 files per page by default); `scripts/query_depmap.py` wraps this. Newer releases (25Q2 onward; latest 26Q1, April 2026) are downloaded in a browser from the data page. For Sanger's Project Score CRISPR screens there is a keyless JSON:API at `https://api.cellmodelpassports.sanger.ac.uk` (non-commercial use).
 
 ## When to Use This Skill
 
@@ -36,6 +37,15 @@ Use DepMap when:
 - **Drug sensitivity**: What cell line features predict response to a compound?
 - **Pan-cancer essentiality**: Is a gene broadly essential across all cancer types (bad target) or selectively essential?
 - **Correlation analysis**: Which pairs of genes have correlated dependency profiles (co-essentiality)?
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Mutation / CNA frequency in patient tumors (TCGA, MSK-IMPACT) and survival | `alterlab-cbioportal` |
+| Curated somatic mutation catalog, Cancer Gene Census | `alterlab-cosmic` |
+| Aggregated target–disease evidence, tractability, safety | `alterlab-opentargets` |
+| Compound potency (IC50/Ki) against purified targets | `alterlab-chembl` |
 
 ## Core Concepts
 
@@ -53,12 +63,15 @@ Use DepMap when:
 
 ### Cell Line Annotations
 
-Each cell line has:
-- `DepMap_ID`: unique identifier (e.g., `ACH-000001`)
-- `cell_line_name`: human-readable name
-- `primary_disease`: cancer type
-- `lineage`: broad tissue lineage
-- `lineage_subtype`: specific subtype
+`Model.csv` (current releases) has one row per model:
+- `ModelID`: unique identifier (e.g., `ACH-000001`) — the row index of every matrix
+- `CellLineName` (and `StrippedCellLineName`): human-readable name
+- `OncotreePrimaryDisease`: cancer type
+- `OncotreeLineage`: broad tissue lineage
+- `OncotreeSubtype`: specific subtype
+
+Pre-2023 releases shipped `sample_info.csv` with `DepMap_ID`, `cell_line_name`,
+`primary_disease`, `lineage`, `lineage_subtype`.
 
 ## Core Capabilities
 
@@ -72,8 +85,13 @@ import requests
 FIGSHARE = "https://api.figshare.com/v2"
 
 def list_release_files(article_id=27993248):
-    """List {name, download_url} for every file in a DepMap release."""
-    r = requests.get(f"{FIGSHARE}/articles/{article_id}/files", timeout=60)
+    """List {name, download_url} for every file in a DepMap release.
+
+    The endpoint is paginated (default 10 files/page); request a large page so
+    Model.csv and the Omics files are included.
+    """
+    r = requests.get(f"{FIGSHARE}/articles/{article_id}/files",
+                     params={"page_size": 1000}, timeout=60)
     r.raise_for_status()
     return {f["name"]: f["download_url"] for f in r.json()}
 
@@ -92,7 +110,7 @@ def download_depmap_file(name, article_id=27993248, out_path=None):
 # CLI equivalent: scripts/query_depmap.py (see end of file)
 ```
 
-Cell line metadata lives in `Model.csv` (current releases) — older releases used `sample_info.csv`. Column names also drifted across releases (e.g. `primary_disease` -> `OncotreePrimaryDisease`, `lineage` -> `OncotreeLineage`); inspect the header of the version you downloaded rather than assuming.
+Cell line metadata lives in `Model.csv` (current releases) — older releases used `sample_info.csv`. Column names also drifted across releases (`DepMap_ID` -> `ModelID`, `primary_disease` -> `OncotreePrimaryDisease`, `lineage` -> `OncotreeLineage`); inspect the header of the version you downloaded rather than assuming.
 
 ### 2. Load the Gene Effect Matrix
 
@@ -102,7 +120,7 @@ import pandas as pd
 def load_depmap_gene_effect(filepath="CRISPRGeneEffect.csv"):
     """
     Load DepMap CRISPR gene effect matrix.
-    Rows = cell lines (DepMap_ID), Columns = genes (Symbol (EntrezID))
+    Rows = cell lines (ModelID, e.g. ACH-000001), Columns = genes ("SYMBOL (EntrezID)")
     """
     df = pd.read_csv(filepath, index_col=0)
     # Rename columns to gene symbols only
@@ -131,14 +149,16 @@ def find_selective_dependencies(gene_effect_df, cell_line_info, target_gene,
     scores = gene_effect_df[target_gene].dropna()
     dependent = scores[scores <= threshold]
 
-    # Add cell line info
+    # Add cell line info (Model.csv column names; see Cell Line Annotations)
     result = pd.DataFrame({
-        "DepMap_ID": dependent.index,
+        "ModelID": dependent.index,
         "gene_effect": dependent.values
-    }).merge(cell_line_info[["DepMap_ID", "cell_line_name", "primary_disease", "lineage"]])
+    }).merge(cell_line_info[["ModelID", "CellLineName", "OncotreePrimaryDisease",
+                             "OncotreeLineage"]])
 
     if cancer_type:
-        result = result[result["primary_disease"].str.contains(cancer_type, case=False, na=False)]
+        result = result[result["OncotreePrimaryDisease"].str.contains(
+            cancer_type, case=False, na=False)]
 
     return result.sort_values("gene_effect")
 
@@ -160,7 +180,9 @@ def biomarker_analysis(gene_effect_df, mutation_df, target_gene, biomarker_gene)
 
     Args:
         gene_effect_df: CRISPR gene effect DataFrame
-        mutation_df: Binary mutation DataFrame (1 = mutated)
+        mutation_df: OmicsSomaticMutationsMatrixDamaging (0 = none, 1 = damaging,
+            2 = damaging with summed allele fraction > 0.95); rename its
+            "SYMBOL (EntrezID)" columns to symbols as for the gene-effect matrix
         target_gene: Gene to assess dependency of
         biomarker_gene: Gene whose mutation may predict dependency
     """
@@ -172,7 +194,8 @@ def biomarker_analysis(gene_effect_df, mutation_df, target_gene, biomarker_gene)
     scores = gene_effect_df.loc[common_lines, target_gene].dropna()
     mutations = mutation_df.loc[scores.index, biomarker_gene]
 
-    mutated = scores[mutations == 1]
+    # Treat 1 and 2 as mutant — "== 1" would drop the (near-)homozygous lines.
+    mutated = scores[mutations > 0]
     wt = scores[mutations == 0]
 
     stat, pval = stats.mannwhitneyu(mutated, wt, alternative='less')
@@ -238,7 +261,7 @@ def co_essentiality(gene_effect_df, target_gene, top_n=20):
 
 ### Workflow 3: Compound Sensitivity Analysis
 
-1. Download PRISM compound sensitivity data (`primary-screen-replicate-treatment-info.csv`)
+1. Download PRISM compound sensitivity data (a separate PRISM Repurposing dataset on the data page, not part of the quarterly CRISPR/Omics release)
 2. Correlate compound AUC/log2(fold-change) with genomic features
 3. Identify predictive biomarkers for compound sensitivity
 
@@ -247,15 +270,17 @@ def co_essentiality(gene_effect_df, target_gene, top_n=20):
 | File | Description |
 |------|-------------|
 | `CRISPRGeneEffect.csv` | CRISPR Chronos gene effect (primary dependency data) |
-| `CRISPRGeneEffectUnscaled.csv` | Unscaled CRISPR scores |
-| `RNAi_merged.csv` | DEMETER2 RNAi dependency |
+| `CRISPRGeneEffectUncorrected.csv` | Chronos scores without copy-number correction or scaling |
+| `CRISPRGeneDependency.csv` | Probability that each gene is a dependency in each line |
 | `Model.csv` | Cell line metadata (lineage, disease, etc.); older releases: `sample_info.csv` |
 | `OmicsExpressionProteinCodingGenesTPMLogp1.csv` | mRNA expression |
-| `OmicsSomaticMutationsMatrixDamaging.csv` | Damaging somatic mutations (binary) |
+| `OmicsSomaticMutationsMatrixDamaging.csv` | Damaging somatic mutations (0 none / 1 damaging / 2 damaging, summed AF > 0.95) |
 | `OmicsCNGene.csv` | Copy number per gene |
-| `PRISM_Repurposing_Primary_Screens_Data.csv` | Drug sensitivity (repurposing library) |
 
-File names vary slightly between releases — confirm against the inventory (`query_depmap.py list` or the portal data page) before scripting. Download from https://depmap.org/portal/data_page/ or via the Figshare API (Capability 1).
+Verified against the 24Q4 inventory (73 files). DEMETER2 RNAi and PRISM drug-sensitivity
+data are separate datasets on the data page, not part of the quarterly release. File
+names vary slightly between releases — confirm against the inventory
+(`query_depmap.py list` or the portal data page) before scripting.
 
 ## Best Practices
 

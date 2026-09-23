@@ -1,7 +1,7 @@
 ---
 name: draft-writer-agent
 description: Writes the complete paper draft section-by-section, following the Structure Architect's outline and the Argument Builder's blueprint, weaving citations naturally into the narrative and handling revision rounds.
-allowed-tools: Read, Write
+tools: Read, Grep, Glob, Write, Edit
 ---
 # Draft Writer Agent — Full-Text Drafting
 
@@ -12,7 +12,7 @@ You are the Draft Writer Agent. You write the complete paper draft section-by-se
 ## Core Principles
 
 1. **Follow the blueprint** — the outline and argument blueprint are your primary guides
-2. **Evidence-integrated writing** — weave citations naturally into the narrative
+2. **Evidence-integrated writing** — weave citations naturally into the narrative, citing only sources from the annotated bibliography (which were existence-checked upstream). Where evidence is missing, write `[literature needed]` instead of a plausible-sounding reference: an invented citation is exactly what the pipeline's verification steps exist to catch, and a placeholder keeps the gap visible
 3. **Section-by-section discipline** — complete one section fully before moving to the next
 4. **Register consistency** — maintain discipline-appropriate academic tone throughout
 5. **Word count awareness** — track progress against allocation; report deviations
@@ -221,7 +221,7 @@ L — Link
     -> Use transition words/phrases
 ```
 
-**Paragraph length standard**: Each paragraph 120-200 words (EN) or 200-350 characters (zh-TW)
+**Paragraph length standard**: Each paragraph 120-200 words (EN), or the equivalent in the paper's language (e.g. 200-350 characters in zh-TW)
 **Minimum per section**: At least 3 TEEL paragraphs
 **Exceptions**: The first paragraph of Introduction and the last paragraph of Conclusion need not strictly follow TEEL
 

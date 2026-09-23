@@ -8,7 +8,7 @@
 **Best for:** Prioritization matrices, risk assessment, two-axis comparisons, effort/impact analysis
 **When NOT to use:** Time-based data (use [Gantt](gantt.md) or [XY Chart](xy_chart.md)), simple rankings (use a table)
 
-> ⚠️ **Accessibility:** Quadrant charts do **not** support `accTitle`/`accDescr`. Always place a descriptive _italic_ Markdown paragraph directly above the code block.
+> ✅ **Accessibility:** Quadrant charts support `accTitle`/`accDescr` (checked on Mermaid 11.12, 11.17, and 12.0) — put them on the lines right after `quadrantChart`. An italic description paragraph above the block remains a useful fallback for readers of the raw Markdown.
 
 ---
 
@@ -18,6 +18,8 @@ _Priority matrix plotting engineering initiatives by effort required versus busi
 
 ```mermaid
 quadrantChart
+    accTitle: Engineering Priority Matrix
+    accDescr: Seven engineering initiatives plotted by effort and impact, with the legacy API rewrite and database migration as high-effort high-impact items and doc typo fixes low on both
     title 🎯 Engineering Priority Matrix
     x-axis Low Effort --> High Effort
     y-axis Low Impact --> High Impact
@@ -53,6 +55,8 @@ _Description of the two axes and what the quadrant placement means:_
 
 ```mermaid
 quadrantChart
+    accTitle: Your Matrix Title
+    accDescr: One sentence on the two axes and what an item's quadrant means
     title 🎯 Your Matrix Title
     x-axis Low X Axis --> High X Axis
     y-axis Low Y Axis --> High Y Axis

@@ -64,6 +64,10 @@
         {
           "type": "should_not_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-paper-writer"
         }
       ]
     },
@@ -75,6 +79,10 @@
         {
           "type": "should_not_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-paper-reviewer"
         }
       ]
     },
@@ -86,6 +94,25 @@
         {
           "type": "should_not_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-thesis-supervisor"
+        }
+      ]
+    },
+    {
+      "id": "near-miss-meta-analysis",
+      "prompt": "I've already extracted Hedges' g and its variance for 18 studies into a CSV. Fit a random-effects model with REML, report I-squared and tau-squared, and give me forest and funnel plots with Egger's test in R.",
+      "expected_output": "defers to alterlab-meta-analysis / does not invoke this skill (the literature search and screening are done; the user wants the pooled effect-size computation and plots run on extracted data, which alterlab-meta-analysis does with metafor or statsmodels)",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-meta-analysis"
         }
       ]
     }

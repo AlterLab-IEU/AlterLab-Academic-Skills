@@ -14,17 +14,17 @@ jobs:
     name: Agent Skills spec check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
 
       - name: Set up Node (for the pinned skills-ref validator)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "24"  # active LTS; Node 20 reached end-of-life in April 2026
 
       - name: Run spec conformance (pinned skills-ref + native rules)
         # check_spec.py runs every skill through the PINNED skills-ref reference

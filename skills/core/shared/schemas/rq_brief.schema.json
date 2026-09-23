@@ -29,11 +29,11 @@
       "type": "object",
       "required": ["feasible", "interesting", "novel", "ethical", "relevant"],
       "properties": {
-        "feasible": { "type": "integer", "minimum": 1, "maximum": 10 },
-        "interesting": { "type": "integer", "minimum": 1, "maximum": 10 },
-        "novel": { "type": "integer", "minimum": 1, "maximum": 10 },
-        "ethical": { "type": "integer", "minimum": 1, "maximum": 10 },
-        "relevant": { "type": "integer", "minimum": 1, "maximum": 10 }
+        "feasible": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "interesting": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "novel": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "ethical": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "relevant": { "type": "integer", "minimum": 1, "maximum": 5 }
       }
     },
     "scope": {

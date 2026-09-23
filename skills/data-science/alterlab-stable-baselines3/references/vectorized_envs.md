@@ -257,8 +257,11 @@ model = PPO.load("ppo_pendulum", env=env)
 Stacks observations from multiple consecutive frames.
 
 ```python
+import ale_py
+import gymnasium as gym
 from stable_baselines3.common.vec_env import VecFrameStack
 
+gym.register_envs(ale_py)  # Gymnasium >= 1.0: Atari IDs exist only after importing ale_py
 env = make_vec_env("PongNoFrameskip-v4", n_envs=8)
 
 # Stack 4 frames
@@ -282,7 +285,8 @@ Records videos of agent behavior.
 ```python
 from stable_baselines3.common.vec_env import VecVideoRecorder
 
-env = make_vec_env("CartPole-v1", n_envs=1)
+# VecVideoRecorder needs render_mode="rgb_array" and the moviepy package
+env = make_vec_env("CartPole-v1", n_envs=1, env_kwargs={"render_mode": "rgb_array"})
 
 # Record videos
 env = VecVideoRecorder(
@@ -325,8 +329,11 @@ model.learn(total_timesteps=10000)
 Transposes image observations from (height, width, channels) to (channels, height, width).
 
 ```python
+import ale_py
+import gymnasium as gym
 from stable_baselines3.common.vec_env import VecTransposeImage
 
+gym.register_envs(ale_py)
 env = make_vec_env("PongNoFrameskip-v4", n_envs=4)
 
 # Convert HWC to CHW format

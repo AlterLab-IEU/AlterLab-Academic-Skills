@@ -335,7 +335,7 @@ def service_area(G, facilities, max_distance=1000):
 
         # Create convex hull
         nodes = ox.graph_to_gdfs(subgraph, edges=False)
-        service_area = nodes.geometry.unary_union.convex_hull
+        service_area = nodes.geometry.union_all().convex_hull
 
         service_areas.append({
             'facility': facility,

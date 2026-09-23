@@ -6,7 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless ClinPGx (PharmGKB) API for basic access (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # ClinPGx Database
@@ -33,6 +34,15 @@ Use this skill for:
 - **Drug metabolism** — CYP450 and other pharmacogene functions
 - **Adverse drug reactions** — genetic risk factors for drug toxicity
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Germline/somatic variant pathogenicity or ClinVar review status | `alterlab-clinvar` |
+| Population allele frequencies for a variant (gnomAD v4) | `alterlab-gnomad` |
+| Drug–drug interactions or general pharmacology with no genetic component | `alterlab-drugbank` |
+| FDA adverse-event reports, recalls, or full-text label search | `alterlab-fda` |
+
 ## Setup and Access Essentials
 
 Only `requests` is needed. Run the helper script (or any snippet) with an
@@ -43,7 +53,9 @@ uv run --with requests python scripts/query_clinpgx.py
 # or, inside an existing project venv: uv pip install requests
 ```
 
-Base URL: `https://api.clinpgx.org/v1/data/`
+Base URL: `https://api.clinpgx.org/v1/data/` — the legacy `api.pharmgkb.org` host was
+turned off on 2026-07-20, so older PharmGKB scripts must switch hostnames (paths are
+unchanged).
 
 - **Resource addressing**: ClinPGx resources are addressed by ClinPGx accession
   IDs in the path (e.g. gene CYP2D6 = `PA128`, CYP2C9 = `PA126`), **not** by gene

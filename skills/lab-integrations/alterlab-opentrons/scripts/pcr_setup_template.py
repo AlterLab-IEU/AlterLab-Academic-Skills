@@ -11,13 +11,13 @@ from opentrons import protocol_api
 metadata = {
     'protocolName': 'PCR Setup with Thermocycler',
     'author': 'Opentrons',
-    'description': 'Automated PCR setup and cycling protocol',
-    'apiLevel': '2.19'
+    'description': 'Automated PCR setup and cycling protocol'
 }
 
+# apiLevel belongs in exactly one of metadata/requirements (opentrons rejects both)
 requirements = {
     'robotType': 'Flex',
-    'apiLevel': '2.19'
+    'apiLevel': '2.22'
 }
 
 def run(protocol: protocol_api.ProtocolContext):
@@ -30,7 +30,10 @@ def run(protocol: protocol_api.ProtocolContext):
     3. Runs PCR cycling program
     """
 
-    # Load thermocycler module
+    # Flex has no fixed trash: load one before any tip is dropped
+    protocol.load_trash_bin('A3')
+
+    # Load thermocycler module (occupies A1 + B1 on Flex)
     tc_mod = protocol.load_module('thermocyclerModuleV2')
     tc_plate = tc_mod.load_labware('nest_96_wellplate_100ul_pcr_full_skirt')
 
@@ -60,10 +63,9 @@ def run(protocol: protocol_api.ProtocolContext):
         display_color='#90EE90'
     )
 
-    # Load liquids
-    reagent_rack['A1'].load_liquid(liquid=master_mix, volume=1000)
-    for i in range(8):  # 8 samples
-        reagent_rack.wells()[i + 1].load_liquid(liquid=template_dna, volume=50)
+    # Load liquids (Labware.load_liquid needs API 2.22+)
+    reagent_rack.load_liquid(wells=['A1'], volume=1000, liquid=master_mix)
+    reagent_rack.load_liquid(wells=reagent_rack.wells()[1:9], volume=50, liquid=template_dna)  # 8 samples
 
     # PCR setup parameters
     num_samples = 8
@@ -105,7 +107,7 @@ def run(protocol: protocol_api.ProtocolContext):
     protocol.comment('Thermocycler lid closed')
 
     # Set lid temperature
-    tc_mod.set_lid_temperature(celsius=105)
+    tc_mod.set_lid_temperature(temperature=105)
     protocol.comment('Lid heating to 105°C')
 
     # Initial denaturation

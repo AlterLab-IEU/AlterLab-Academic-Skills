@@ -27,9 +27,10 @@ Modal supports the following GPUs:
 - `A100-40GB` - Specific 40GB variant
 - `A100-80GB` - Specific 80GB variant
 - `L40S` - 48 GB, excellent for inference
+- `RTX-PRO-6000` - Blackwell workstation-class GPU
 - `H100` / `H100!` - Top-tier Hopper architecture
 - `H200` - Improved Hopper with more memory
-- `B200` - Latest Blackwell architecture
+- `B200` / `B300` - Blackwell architecture (`B200+` lets Modal place you on either at B200 pricing)
 
 See https://modal.com/pricing for pricing.
 
@@ -45,7 +46,7 @@ def run_llama_405b():
 ```
 
 Supported counts:
-- B200, H200, H100, A100, L4, T4, L40S: up to 8 GPUs (up to 1,536 GB)
+- B300, B200, H200, H100, A100, L4, T4, L40S: up to 8 GPUs (up to 2,304 GB GPU RAM)
 - A10: up to 4 GPUs (up to 96 GB)
 
 Note: Requesting >2 GPUs may result in longer wait times.

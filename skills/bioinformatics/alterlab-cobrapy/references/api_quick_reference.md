@@ -236,7 +236,7 @@ from cobra.sampling import sample, OptGPSampler, ACHRSampler
 samples = sample(
     model,
     n,                  # Number of samples
-    method="optgp",     # or "achr"
+    method="optgp",     # default "auto"; also "achr" or "chrr" (needs cobra[chrr])
     thinning=100,       # Thinning factor (sample every n iterations)
     processes=1,        # Parallel processes (OptGP only)
     seed=None          # Random seed

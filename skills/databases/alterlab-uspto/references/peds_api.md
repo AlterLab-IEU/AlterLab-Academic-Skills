@@ -1,5 +1,7 @@
 # Patent Examination Data System (PEDS) API Reference
 
+> **Status (verified 2026-09-23): PEDS is retired.** USPTO switched it off on 2025-03-14 and `ped.uspto.gov` no longer resolves, so the `uspto-opendata-python` PEDS client below no longer works. Its data lives on in the Open Data Portal **Patent File Wrapper** API: `GET https://api.uspto.gov/api/v1/patent/applications/{applicationNumberText}` plus `/meta-data`, `/transactions` (`eventDataBag[]` of `eventCode`, `eventDescriptionText`, `eventDate`), `/continuity`, `/assignment`, `/documents`, with an `X-API-KEY` header (ODP key; coverage: applications filed from 2001-01-01). `scripts/peds_client.py` wraps those endpoints. The transaction-code, status, and analysis guidance below still applies; the library and field-name sections are historical.
+
 ## Overview
 
 The Patent Examination Data System (PEDS) provides access to USPTO patent application and filing status records. It contains bibliographic data, published document information, and patent term extension data.

@@ -1,7 +1,6 @@
 ---
 name: citation-compliance-agent
 description: Verifies all citations in the paper draft for format correctness, cross-references in-text citations against the reference list, checks DOIs and URLs, and auto-corrects detected errors for the selected citation style.
-allowed-tools: Read, Write
 ---
 # Citation Compliance Agent — Citation Format Compliance
 
@@ -24,7 +23,7 @@ Reference: `references/citation_format_switcher.md`
 | Format | Key Characteristics |
 |--------|-------------------|
 | **APA 7th** | Author-date, hanging indent, DOI as URL, sentence case titles |
-| **Chicago 17th** | Notes-Bibliography or Author-Date, full footnotes |
+| **Chicago 18th** | Notes-Bibliography or Author-Date, full footnotes |
 | **MLA 9th** | Author-page, Works Cited, containers model |
 | **IEEE** | Numbered brackets [1], in order of appearance |
 | **Vancouver** | Numbered superscript, in order of appearance |
@@ -102,7 +101,7 @@ For each reference:
 
 #### Retraction Watch Protocol
 For all journal article references:
-1. Cross-reference against Retraction Watch Database (http://retractionwatch.com)
+1. Take retraction status from the `alterlab-citation-verifier` report (`RETRACTED` / `EXPRESSION_OF_CONCERN` flags come from Crossref notices — which include the Retraction Watch database since 2025 — and OpenAlex). If no report exists, request a verifier run; do not judge retraction status from memory
 2. If a cited source has been retracted:
    - **Option A (Preferred)**: Remove the citation and find an alternative source
    - **Option B**: If the retracted paper is cited to discuss the retraction event itself, keep with explicit notation: "[Retracted]" after the citation
@@ -113,7 +112,7 @@ For all journal article references:
 Determine whether a citation issue can be auto-corrected or requires human review:
 
 ```
-Is the issue formatting-only (e.g., missing DOI, incorrect italics)?
+Is the issue formatting-only (e.g., dx.doi.org prefix, incorrect italics, "&" vs "and")?
 ├── YES -> Auto-correct silently
 └── NO -> Is the cited claim accurately represented?
     ├── YES, but wrong source -> Flag for human review (may be attribution error)
@@ -137,7 +136,7 @@ When errors are found:
 | "&" in narrative citation | Change to "and" |
 | "and" in parenthetical citation | Change to "&" |
 | Wrong alphabetical order in multi-cite | Reorder |
-| Missing DOI | Add if findable |
+| Missing DOI | Add only a DOI confirmed by a verifier or Crossref record; otherwise flag it. Never supply a DOI from memory — a plausible but wrong DOI is Identifier Hijacking (IH) |
 | dx.doi.org | Change to doi.org |
 | Period after DOI | Remove |
 | Title Case in article title | Change to sentence case |
@@ -206,12 +205,15 @@ Step 3: Format Compliance Check
     IF violation found -> auto-correct if rule is deterministic
                        -> flag for review if ambiguous
 
-Step 4: DOI/URL Check
+Step 4: DOI/URL Check (format only)
   FOR each item in RefList:
     IF doi exists -> verify format (https://doi.org/xxxxx)
-    IF doi missing -> flag "missing DOI"
+    IF doi missing -> flag "missing DOI" (fill it only from a verified record)
     IF url exists -> check completeness
     CHECK no trailing period after DOI/URL
+  Whether each reference exists and its DOI points to it is the job of
+  alterlab-citation-verifier (scripts/verify_citations.py) — run it or request
+  its report rather than judging existence here.
 
 Step 5: Additional Checks
   5.1 Self-citation ratio
@@ -248,7 +250,7 @@ Step 3: If unable to determine -> ask user; if user does not respond -> default 
 
 ### Core Verification Rules by Format
 
-| Check Item | APA 7th | Chicago 17th | MLA 9th | IEEE | Vancouver |
+| Check Item | APA 7th | Chicago 18th | MLA 9th | IEEE | Vancouver |
 |--------|---------|-------------|---------|------|-----------|
 | In-text format | (Author, Year) | Footnote or (Author Year) | (Author Page) | [N] | N (superscript) |
 | Multiple author threshold | 3+ -> et al. | 4+ -> et al. | 3+ -> et al. | 3+ -> et al. | 7+ -> et al. |
@@ -379,6 +381,7 @@ Quality gate not passed ->
 | Case study | Tolerate gray literature (policy documents, institutional reports) with non-standard citation formats |
 | Policy brief | Tolerate government reports without DOI; checking URL validity is more important |
 | Chinese paper | Enable Chinese citation special checks; check Chinese and English references separately for ordering |
+| Turkish paper | Apply the journal's Turkish APA conventions (often "ve" for "&", "vd." for "et al.", "s." for "p."); see `alterlab-tr-academic-style` |
 
 ## Collaboration Rules with Other Agents
 

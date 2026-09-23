@@ -1,225 +1,102 @@
-# Discussions API
+# Discussions, Comments, and Messages
 
-## Overview
+Source: https://apidoc.protocols.io/ (checked 2026-09-23). Paths are relative to `https://www.protocols.io/api`; every call needs `Authorization: Bearer <token>` and returns a JSON `status_code` (0 = success).
 
-The Discussions API enables collaborative commenting on protocols. Comments can be added at both the protocol level and the individual step level, with support for threaded replies, editing, and deletion.
+## How discussions are modelled
 
-## Base URL
+- **Protocol comments** belong to the protocol as a whole.
+- **Step discussions** hang off one step; each discussion has a first comment and threaded replies.
+- A comment object carries `comment_id`, `discussion_id`, `parent_id` (0 for top level), `step_id` (0 for protocol-level comments), `body`, `creator`, `created_on`/`changed_on` (Unix time), `comments` (replies), `can_edit`, `can_delete`, and `is_private`.
+- `body` is returned as a Draft.js JSON string. Parse it and join the `text` of its `blocks` to get plain text.
 
-All discussion endpoints use the base URL: `https://www.protocols.io/api/v3`
+## Protocol comments
 
-## Protocol-Level Comments
+| Action | Call | Body fields |
+|--------|------|-------------|
+| List comments | `GET /v3/protocols/<protocol_uri>/comments` | — (returns `comments`) |
+| Add a comment | `POST /v3/protocols/<protocol_uri>/comments` | `body` (required), `is_private` (optional, 1 = private) |
+| Reply to a comment | `POST /v3/protocols/<protocol_uri>/comments/<parent_comment_id>` | `body` |
 
-### List Protocol Comments
+## Step discussions
 
-Retrieve all comments for a protocol.
+| Action | Call | Body fields |
+|--------|------|-------------|
+| Start a discussion on a step | `POST /v3/steps/<step_id>/discussions` | `body`, `protocol_uri` (both required), `is_private` |
+| Comment in a discussion | `POST /v3/steps/<step_id>/discussions/<discussion_id>/comments` | `body`, `protocol_uri` |
+| Reply to a step comment | `POST /v3/steps/<step_id>/discussions/<discussion_id>/comments/<parent_id>` | `body`, `protocol_uri` |
 
-**Endpoint:** `GET /protocols/{protocol_id}/comments`
+Use the integer step `id` from `GET /v4/protocols/<id>/steps`. Comment objects carry `step_id` (0 for protocol-level comments, the step's id for step-level ones); use it to tell the two apart in listings.
 
-**Path Parameters:**
-- `protocol_id`: The protocol's unique identifier
+## Edit and delete
 
-**Query Parameters:**
-- `page_size`: Number of results per page (default: 10, max: 50)
-- `page_id`: Page number for pagination (starts at 0)
+| Action | Call | Notes |
+|--------|------|-------|
+| Edit a comment | `PUT /v3/discussions/comments/<comment_id>` | `body` required; error 5 if empty |
+| Edit a discussion | `PUT /v3/discussions/<discussion_id>` | `body` required |
+| Delete a comment | `DELETE /v3/discussions/comments/<comment_id>` | |
+| Delete a discussion | `DELETE /v3/discussions/<discussion_id>` | |
 
-**Response includes:**
-- Comment ID and content
-- Author information (name, affiliation, avatar)
-- Timestamp (created and modified)
-- Reply count and thread structure
+Only comments the token's user may edit or delete (see `can_edit` / `can_delete`) can be changed.
 
-### Create Protocol Comment
+## Run-record comments
 
-Add a new comment to a protocol.
+| Action | Call | Body fields |
+|--------|------|-------------|
+| List record comments | `GET /v3/records/<record_guid>/comments` | — |
+| Add a record comment | `POST /v3/records/<record_guid>/comments` | `body`, `is_private` |
+| Start a discussion on a record step | `POST /v3/records/steps/<step_id>/discussions` | `body`, `record_guid` |
+| Reply in a record step discussion | `POST /v3/records/steps/<step_id>/discussions/<discussion_id>/comments` | `body`, `record_guid` |
 
-**Endpoint:** `POST /protocols/{protocol_id}/comments`
+The reference lists the protocol-comment reply path (`POST /v3/protocols/<protocol_uri>/comments/<parent_comment_id>`) for replies to record comments; test it on a scratch record before relying on it.
 
-**Request Body:**
-- `body` (required): Comment text (supports HTML or Markdown)
-- `parent_comment_id` (optional): ID of parent comment for threaded replies
+## Direct messages
 
-**Example Request:**
-```bash
-curl -X POST \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "body": "This protocol worked excellently for our CRISPR experiments. We achieved 85% editing efficiency."
-  }' \
-  "https://www.protocols.io/api/v3/protocols/12345/comments"
+| Action | Call | Notes |
+|--------|------|-------|
+| List conversations | `GET /v3/conversations` | `page_id`, `page_size`, `key` |
+| Check for new messages | `GET /v3/conversations?new` | Returns `total` and conversation `guids` |
+| Read a conversation | `GET /v3/conversations/<conversation_guid>/messages` | |
+| Mark a message read | `PUT /v3/conversations/messages/<message_guid>` | |
+| Send a message | `POST /v3/conversations/<conversation_guid>/messages` | `guid` (new message GUID), `subject`, `body`, `username` (recipient); omit the conversation GUID to start a new conversation |
+| Delete a conversation | `DELETE /v3/conversations/<conversation_guid>` | |
+
+## Example: summarise open questions on a protocol
+
+```python
+import json
+import os
+
+import requests
+
+BASE = "https://www.protocols.io/api"
+HEADERS = {"Authorization": f"Bearer {os.environ['PROTOCOLS_IO_TOKEN']}"}
+
+
+def plain_text(body):
+    """Comment bodies are Draft.js JSON strings; fall back to the raw value."""
+    try:
+        return " ".join(block["text"] for block in json.loads(body)["blocks"])
+    except (TypeError, ValueError, KeyError):
+        return body or ""
+
+
+def walk(comments, depth=0):
+    for c in comments or []:
+        where = f"step {c['step_id']}" if c.get("step_id") else "protocol"
+        yield depth, where, c["creator"]["name"], plain_text(c["body"])
+        yield from walk(c.get("comments"), depth + 1)
+
+
+data = requests.get(f"{BASE}/v3/protocols/my-protocol-uri/comments", headers=HEADERS, timeout=60).json()
+if data.get("status_code") != 0:
+    raise RuntimeError(data.get("error_message"))
+for depth, where, author, text in walk(data["comments"]):
+    print("  " * depth + f"[{where}] {author}: {text[:120]}")
 ```
 
-### Create Threaded Reply
+## Good practice
 
-To reply to an existing comment, include the parent comment ID:
-
-```bash
-curl -X POST \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "body": "What cell type did you use?",
-    "parent_comment_id": 67890
-  }' \
-  "https://www.protocols.io/api/v3/protocols/12345/comments"
-```
-
-### Update Comment
-
-Edit your own comment.
-
-**Endpoint:** `PATCH /protocols/{protocol_id}/comments/{comment_id}`
-
-**Request Body:**
-- `body` (required): Updated comment text
-
-**Authorization**: Only the comment author can edit their comments
-
-### Delete Comment
-
-Remove a comment.
-
-**Endpoint:** `DELETE /protocols/{protocol_id}/comments/{comment_id}`
-
-**Authorization**: Only the comment author can delete their comments
-
-**Note**: Deleting a parent comment may affect the entire thread, depending on API implementation
-
-## Step-Level Comments
-
-### List Step Comments
-
-Retrieve all comments for a specific protocol step.
-
-**Endpoint:** `GET /protocols/{protocol_id}/steps/{step_id}/comments`
-
-**Path Parameters:**
-- `protocol_id`: The protocol's unique identifier
-- `step_id`: The step's unique identifier
-
-**Query Parameters:**
-- `page_size`: Number of results per page
-- `page_id`: Page number for pagination
-
-### Create Step Comment
-
-Add a comment to a specific step.
-
-**Endpoint:** `POST /protocols/{protocol_id}/steps/{step_id}/comments`
-
-**Request Body:**
-- `body` (required): Comment text
-- `parent_comment_id` (optional): ID of parent comment for replies
-
-**Example Request:**
-```bash
-curl -X POST \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "body": "At this step, we found that increasing the incubation time to 2 hours improved results significantly."
-  }' \
-  "https://www.protocols.io/api/v3/protocols/12345/steps/67890/comments"
-```
-
-### Update Step Comment
-
-**Endpoint:** `PATCH /protocols/{protocol_id}/steps/{step_id}/comments/{comment_id}`
-
-**Request Body:**
-- `body` (required): Updated comment text
-
-### Delete Step Comment
-
-**Endpoint:** `DELETE /protocols/{protocol_id}/steps/{step_id}/comments/{comment_id}`
-
-## Common Use Cases
-
-### 1. Discussion Thread Analysis
-
-To analyze discussions around a protocol:
-
-1. Retrieve protocol comments: `GET /protocols/{id}/comments`
-2. For each step, retrieve step-specific comments
-3. Build a discussion thread tree using `parent_comment_id`
-4. Analyze feedback patterns and common issues
-
-### 2. Collaborative Protocol Improvement
-
-To gather feedback on a protocol:
-
-1. Publish the protocol
-2. Monitor new comments: `GET /protocols/{id}/comments`
-3. Respond to questions with threaded replies
-4. Update protocol based on feedback
-5. Publish updated version with notes acknowledging contributors
-
-### 3. Community Engagement
-
-To engage with protocol users:
-
-1. Set up monitoring for new comments on your protocols
-2. Respond promptly to questions and issues
-3. Use step-level comments to provide detailed clarifications
-4. Create threaded discussions for complex topics
-
-### 4. Protocol Troubleshooting
-
-To document troubleshooting experiences:
-
-1. Identify problematic steps in a protocol
-2. Add step-level comments with specific issues encountered
-3. Document solutions or workarounds
-4. Create a discussion thread with other users experiencing similar issues
-
-## Comment Formatting
-
-Comments support rich text formatting:
-
-- **HTML**: Use standard HTML tags for formatting
-- **Markdown**: Use Markdown syntax for simpler formatting
-- **Links**: Include URLs to related resources or publications
-- **Mentions**: Reference other users (format may vary)
-
-**Example with Markdown:**
-```json
-{
-  "body": "## Important Note\n\nWe achieved better results with:\n\n- Increasing temperature to 37°C\n- Extending incubation to 2 hours\n- Using freshly prepared reagents\n\nSee our publication: [doi:10.xxxx/xxxxx](https://doi.org/...)"
-}
-```
-
-## Best Practices
-
-1. **Be specific**: When commenting on steps, reference specific parameters or conditions
-2. **Provide context**: Include relevant experimental details (cell type, reagent batch, equipment)
-3. **Use step-level comments**: Direct feedback to specific steps rather than protocol-level when appropriate
-4. **Engage constructively**: Respond to questions and feedback promptly
-5. **Update protocols**: Incorporate validated feedback into protocol updates
-6. **Thread related discussions**: Use reply functionality to keep related comments together
-7. **Document variations**: Share protocol modifications that worked in your hands
-
-## Permissions and Privacy
-
-- **Public protocols**: Anyone can comment on published public protocols
-- **Private protocols**: Only collaborators with access can comment
-- **Comment ownership**: Only comment authors can edit or delete their comments
-- **Moderation**: Protocol authors may have additional moderation capabilities
-
-## Error Handling
-
-Common error responses:
-
-- `400 Bad Request`: Invalid comment format or missing required fields
-- `401 Unauthorized`: Missing or invalid access token
-- `403 Forbidden`: Insufficient permissions (e.g., trying to edit another user's comment)
-- `404 Not Found`: Protocol, step, or comment not found
-- `429 Too Many Requests`: Rate limit exceeded
-
-## Notifications
-
-Comments may trigger notifications:
-
-- Protocol authors receive notifications for new comments
-- Comment authors receive notifications for replies
-- Users can manage notification preferences in their account settings
+- Reply in the existing thread (reply endpoints) instead of starting new top-level comments, so authors see the context.
+- Keep troubleshooting reports specific: reagent lot, instrument, deviation from the step, and outcome.
+- Use `is_private=1` for notes meant only for collaborators; public comments are visible to every reader of a public protocol.
+- Poll comments sparingly (well under 100 requests per minute) or rely on notifications (`GET /v3/researchers/notifications`).

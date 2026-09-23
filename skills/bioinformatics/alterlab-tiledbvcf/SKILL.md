@@ -3,10 +3,11 @@ name: alterlab-tiledbvcf
 description: Store and query genomic variant data at scale with TileDB-VCF — ingest VCF/BCF into compressed TileDB arrays, add samples incrementally, run fast parallel region/sample queries, and export back to VCF. Use when managing population-genomics variant datasets that are too large for flat VCF, building joint variant stores, or querying thousands of samples by region. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "tiledbvcf-py is distributed via the `tiledb` conda channel (not PyPI/conda-forge/bioconda); native osx-arm64 builds exist for Apple Silicon. Local VCF stores work offline. TileDB Cloud features require a TileDB Cloud account and TILEDB_REST_TOKEN."
+compatibility: "tiledbvcf-py is distributed via the `tiledb` conda channel (not PyPI/conda-forge/bioconda); current release 0.40.3 (2026-04), built for linux-64, osx-64 and osx-arm64 on Python 3.9-3.12 (no 3.13 build, no Windows, no linux-aarch64). Local VCF stores work offline. TileDB Cloud features require a TileDB Cloud account and TILEDB_REST_TOKEN."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # TileDB-VCF
@@ -25,11 +26,21 @@ This skill should be used when:
 - Working with variant data on cloud storage (S3, Azure, GCS) or TileDB Cloud
 - Prototyping or teaching scalable genomics-variant workflows
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Reading, filtering, or iterating a handful of VCF/BAM files in Python (pysam/htslib) | `alterlab-pysam` |
+| Producing the VCFs in the first place (FASTQ -> alignment -> variant calling) | `alterlab-nf-core-sarek` |
+| Clinical interpretation or population frequency of a specific variant | `alterlab-clinvar` / `alterlab-gnomad` |
+| General chunked array storage for non-variant data (images, tensors, matrices) | `alterlab-zarr` |
+| Out-of-core dataframe analytics on an exported table | `alterlab-polars` / `alterlab-dask` |
+
 ## Quick Start
 
 ### Installation
 
-**Preferred method: conda/mamba from the `tiledb` channel.** `tiledbvcf-py` is NOT on PyPI, conda-forge, or bioconda — it ships from the `tiledb` Anaconda channel, with native `osx-arm64` builds (no Rosetta/`CONDA_SUBDIR` workaround needed on Apple Silicon). Supports Python 3.9–3.12.
+**Preferred method: conda/mamba from the `tiledb` channel.** `tiledbvcf-py` is NOT on PyPI, conda-forge, or bioconda — it ships from the `tiledb` Anaconda channel, with native `osx-arm64` builds (no Rosetta/`CONDA_SUBDIR` workaround needed on Apple Silicon). The current release is **0.40.3** (April 2026), built for `linux-64`, `osx-64` and `osx-arm64` on **Python 3.9–3.12**. There is no 3.13 build, so pin the interpreter when creating the environment — a default `conda create` that resolves to a newer Python will report the package as unavailable rather than explaining why.
 ```bash
 # Native Apple Silicon (osx-arm64) — also works on osx-64 / linux-64
 conda create -n tiledb-vcf -c conda-forge -c tiledb \

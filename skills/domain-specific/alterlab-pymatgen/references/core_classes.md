@@ -290,10 +290,10 @@ Represents bonds in molecules.
 Represents charged ionic species with oxidation states.
 
 ```python
-from pymatgen.core import Ion
+from pymatgen.core.ion import Ion
 
-# Create Fe2+ ion
-fe2_ion = Ion.from_formula("Fe2+")
+# Create Fe2+ ion — put the charge in brackets: "Fe2+" parses as Fe2 with charge +1
+fe2_ion = Ion.from_formula("Fe[+2]")
 ```
 
 ### Interface

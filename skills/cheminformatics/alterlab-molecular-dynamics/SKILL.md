@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Molecular Dynamics
@@ -18,11 +19,11 @@ Molecular dynamics (MD) simulation computationally models the time evolution of 
 - **OpenMM** (https://openmm.org/): High-performance MD simulation engine with GPU support, Python API, and flexible force field support
 - **MDAnalysis** (https://mdanalysis.org/): Python library for reading, writing, and analyzing MD trajectories from all major simulation packages
 
-**Installation** (verified versions: OpenMM 8.x, MDAnalysis 2.x):
+**Installation** (verified as of 2026-09: OpenMM 8.6.1, MDAnalysis 2.10, pdbfixer 1.12):
 ```bash
-# uv (preferred) — both ship binary wheels for arm64 macOS, no conda needed
-uv add openmm "mdanalysis>=2.9" pdbfixer
-# pdbfixer is not on PyPI for all platforms; if the wheel is unavailable:
+# uv (preferred) — all three publish binary wheels on PyPI, no conda needed
+uv add openmm "mdanalysis>=2.10" pdbfixer
+# If a pdbfixer wheel is unavailable for your platform, install from source:
 uv pip install "pdbfixer @ git+https://github.com/openmm/pdbfixer.git"
 
 # conda-forge alternative (pulls CUDA builds on Linux):
@@ -43,6 +44,15 @@ Use molecular dynamics when:
 - **Free energy estimation**: Compute binding free energy or conformational free energy
 - **Membrane simulations**: Model proteins in lipid bilayers
 - **Intrinsically disordered proteins**: Study IDR conformational ensembles
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Predicting an initial protein–ligand binding pose (no dynamics) | `alterlab-diffdock` |
+| Quantum chemistry, pKa, or cloud AutoDock Vina docking scores | `alterlab-rowan` |
+| Predicting the protein structure to simulate (no experimental PDB) | `alterlab-alphafold` or `alterlab-boltz` |
+| Parameterizing a small-molecule force field only (OpenFF/GAFF), no simulation | `alterlab-rdkit` for structure prep, then OpenFF (below) |
 
 ## Core Workflow: OpenMM Simulation
 
@@ -123,8 +133,9 @@ def minimize_energy(modeller, system, output_pdb="minimized.pdb",
     Returns:
         simulation object with minimized positions
     """
-    # Set up integrator (doesn't matter for minimization)
-    integrator = LangevinMiddleIntegrator(300*kelvin, 1/picosecond, 0.004*picoseconds)
+    # This integrator is reused by the NVT/NPT stages below, so use 2 fs: with only
+    # HBonds constraints (no hydrogen mass repartitioning) a 4 fs step is unstable.
+    integrator = LangevinMiddleIntegrator(300*kelvin, 1/picosecond, 0.002*picoseconds)
 
     # Create simulation
     # Use GPU if available (CUDA or OpenCL), fall back to CPU
@@ -344,23 +355,21 @@ def compute_rmsf(u, selection="backbone", start_frame=0):
     Returns:
         resids, rmsf_values arrays
     """
-    # Select atoms
     atoms = u.select_atoms(selection)
 
-    # Compute RMSF
-    R = rms.RMSF(atoms)
-    R.run(start=start_frame)
+    # RMSF does no superposition of its own — align the trajectory to the average
+    # structure first, otherwise the fluctuations include rigid-body motion.
+    average = align.AverageStructure(u, u, select=selection, ref_frame=0).run()
+    align.AlignTraj(u, average.results.universe, select=selection, in_memory=True).run()
 
-    # Average by residue
-    resids = []
-    rmsf_per_res = []
-    for res in u.select_atoms(selection).residues:
-        res_atoms = res.atoms.intersection(atoms)
-        if len(res_atoms) > 0:
-            resids.append(res.resid)
-            rmsf_per_res.append(R.results.rmsf[res_atoms.indices].mean())
+    R = rms.RMSF(atoms).run(start=start_frame)
 
-    return np.array(resids), np.array(rmsf_per_res)
+    # R.results.rmsf is indexed by the atom's position WITHIN `atoms` (0..n-1),
+    # not by global atom index — use the group's per-atom residue indices to average.
+    resindices = atoms.resindices
+    unique_res = np.unique(resindices)
+    rmsf_per_res = np.array([R.results.rmsf[resindices == ri].mean() for ri in unique_res])
+    return u.residues[unique_res].resids, rmsf_per_res
 ```
 
 ### 4. Protein-Ligand Contacts
@@ -438,12 +447,14 @@ def fix_pdb(input_pdb, output_pdb, ph=7.0):
 ### Small-Molecule Parameterization (via OpenFF Toolkit)
 
 ```python
-# uv add openff-toolkit openff-interchange
-# openff-2.2.0.offxml is OpenFF "Sage" — a SMIRNOFF force field, NOT GAFF2.
-# (For actual GAFF2, parameterize with AmberTools antechamber/ACPYPE instead.)
+# conda/mamba install -c conda-forge openff-toolkit openff-interchange
+# (the .offxml files live in openff-forcefields, which is conda-only — not on PyPI,
+#  so a pip/uv-only install of openff-toolkit cannot load the Sage force field.)
+# openff-2.2.1.offxml is OpenFF "Sage" — a SMIRNOFF force field, NOT GAFF2 (the newest
+# Sage line is openff-2.3.0.offxml). For actual GAFF2, use AmberTools antechamber/ACPYPE.
 from openff.toolkit import Molecule, ForceField as OFFForceField
 
-def parameterize_ligand(smiles, ff_name="openff-2.2.0.offxml"):
+def parameterize_ligand(smiles, ff_name="openff-2.2.1.offxml"):
     """Generate OpenFF (Sage) parameters for a small molecule as an Interchange."""
     mol = Molecule.from_smiles(smiles)
     mol.generate_conformers(n_conformers=1)

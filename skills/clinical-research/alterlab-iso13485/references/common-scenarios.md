@@ -44,10 +44,10 @@ Worked approaches for the most common user situations. Match the user's request 
 **User request:** "We need to update our QMS for FDA QMSR harmonization."
 
 **Approach:**
-1. **Explain changes:** FDA 21 CFR Part 820 harmonized with ISO 13485; now called QMSR (effective Feb 2, 2026); key change: Medical Device File replaces DHF/DMR/DHR.
-2. **Review current documentation:** identify documents referencing QSR; find separate DHF, DMR, DHR structures; check for ISO 13485 compliance gaps.
-3. **Update strategy:** update references from QSR to QMSR; consolidate DHF/DMR/DHR into Medical Device Files; add any missing ISO 13485 requirements; maintain backward compatibility during transition.
-4. **Create transition plan:** update Quality Manual; update MDF procedure; reorganize device history files; train personnel on changes.
+1. **Explain changes:** 21 CFR Part 820 is now the QMSR (in effect since Feb 2, 2026), which incorporates ISO 13485:2016 by reference. The DMR/DHF/DHR terms are retired — the DMR maps to the medical device file (ISO 13485 clause 4.2.3), the DHF to the design and development file (7.3.10), and the DHR to the record kept for each device or batch (7.5.1). FDA-specific requirements remain (§ 820.10 UDI/traceability/MDR/corrections links, § 820.35 record content, § 820.45 labeling and packaging), and management review, internal audit, and supplier audit reports are now inspectable.
+2. **Review current documentation:** identify documents citing QSR sections (820.30, 820.181, 820.184, 820.198, ...); map each DHF/DMR/DHR element to its ISO 13485 clause; check for ISO 13485 gaps (e.g. risk-based approach, software validation, outsourced-process controls).
+3. **Update strategy:** re-cite QSR references to QMSR/ISO 13485 clauses; keep or restructure DHF/DMR/DHR files, as long as the mapping to 4.2.3 / 7.3.10 / 7.5.1 is explicit; add missing ISO 13485 requirements; prepare management review and audit records for FDA review.
+4. **Create transition plan:** update the Quality Manual and procedure cross-references; update the MDF procedure; train personnel, including on the CP 7382.850 inspection approach.
 
 ## Scenario 5: Preparing for Certification Audit
 

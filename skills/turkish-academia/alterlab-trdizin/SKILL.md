@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash WebFetch
 compatibility: No API key required — queries the keyless TR Dizin search API (https://search.trdizin.gov.tr/api/defaultSearch/) via `uv run python` (requests if present, else stdlib urllib); reports network failure rather than passing silently
 metadata:
   skill-author: AlterLab
-  version: "1.0.1"
-  last_updated: "2026-06-06"
+  version: "1.0.2"
+  last_updated: "2026-09-23"
   depends_on: "alterlab-dergipark (hosting vs indexing), alterlab-docentlik-eligibility, alterlab-akademik-tesvik"
 ---
 
@@ -91,8 +91,9 @@ Two facts to keep honest:
 - **`isActive` is not trustworthy on its own.** A journal can keep
   `isActive=true` while coverage stopped years ago and recent years are in
   `rejectYearList` (verified: *Eğitim Bilim Toplum*, ISSN 1303-9202 — active,
-  coverage→2019, rejected 2020–2025). The script therefore checks `rejectYearList`
-  against the latest coverage year **before** ever saying "currently indexed".
+  coverage→2019, rejected 2020–2023 and 2025; re-checked 2026-09-23). The script
+  therefore checks `rejectYearList` against the latest coverage year **before**
+  ever saying "currently indexed".
 
 ## Pipeline
 

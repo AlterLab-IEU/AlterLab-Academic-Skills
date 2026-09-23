@@ -24,10 +24,10 @@
     {
       "id": "author-tracking",
       "prompt": "Track the recent cs.LG preprints coming out of Anthropic — I want to monitor what their interpretability team is posting.",
-      "expected_output": "Triggers the arXiv skill. Builds an author search (au:anthropic) optionally combined with the cs.LG category and abstract terms like interpretability, sorted by submittedDate descending. Returns the recent preprint list. Uses arXiv query syntax with uppercase boolean operators.",
+      "expected_output": "Triggers the arXiv skill. Explains that the arXiv API's au: prefix matches author names only (au:anthropic returns nothing; affiliations are not searchable), so it builds an au:\"...\" OR query over the team's known author names, combined with cat:cs.LG and abstract terms like interpretability, sorted by submittedDate descending, and returns the recent preprint list. Uses arXiv query syntax with uppercase boolean operators and may point to alterlab-openalex for institution-level tracking.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Constructs an author-based arXiv query (au: prefix) to monitor a group's recent submissions." }
+        { "type": "behavior", "value": "Constructs an author-name arXiv query (au: prefix) for the group's members rather than an affiliation search, and flags that arXiv cannot filter by affiliation." }
       ]
     },
     {

@@ -6,7 +6,8 @@ allowed-tools: Read Bash(python:*)
 compatibility: No API key required. A discipline-enforcing claim-audit skill; the optional claim linter runs locally via `uv run python` (standard library only).
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
     depends_on: "consumes the Design Passport from alterlab-ssci-design-gate / alterlab-ssci-measurement-gate / alterlab-ssci-sampling-gate; hands clean claims to alterlab-paper-writer"
 ---
 

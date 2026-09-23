@@ -683,6 +683,6 @@ Choose a style appropriate for your organization:
 
 - ISO 13485:2016 - Medical devices — Quality management systems
 - ISO 14971 - Application of risk management to medical devices
-- FDA 21 CFR Part 820 - Quality System Regulation (QMSR)
+- FDA 21 CFR Part 820 - Quality Management System Regulation (QMSR)
 - EU MDR 2017/745 - Medical Devices Regulation
 - ISO/TR 14969 - Medical devices quality management systems - Guidance on ISO 13485

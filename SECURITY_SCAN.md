@@ -25,33 +25,35 @@ Every host the shipped skill code references, reduced to its registrable domain.
 
 | Domain | Category | Refs |
 |--------|----------|------|
-| `arxiv.org` | Preprints / literature | 11 |
+| `arxiv.org` | Preprints / literature | 12 |
 | `bindingdb.org` | Binding affinities | 3 |
 | `biorxiv.org` | Preprints / literature | 5 |
 | `brenda-enzymes.org` | Enzymes | 2 |
 | `broadinstitute.org` | Genomics | 3 |
 | `cbioportal.org` | Cancer genomics | 2 |
+| `chatgpt.com` | other (review) | 1 |
 | `clinicaltrials.gov` | Clinical trials | 2 |
 | `clinpgx.org` | Pharmacogenomics | 3 |
 | `crossref.org` | Scholarly metadata | 6 |
 | `datacommons.org` | Open data | 4 |
 | `depmap.org` | Cancer dependency | 1 |
-| `dergipark.org.tr` | Turkish journals (DergiPark) | 6 |
+| `dergipark.org.tr` | Turkish journals (DergiPark) | 7 |
 | `doaj.org` | Open-access journals | 2 |
 | `docking.org` | Compound libraries | 4 |
-| `doi.org` | DOI resolver | 26 |
+| `doi.org` | DOI resolver | 28 |
 | `drugbank.ca` | Drugs | 1 |
 | `ebi.ac.uk` | EMBL-EBI | 12 |
 | `elixir.no` | Bioinformatics infra | 3 |
 | `ensembl.org` | Genomics | 3 |
 | `example.com` | Placeholder (docs only) | 1 |
 | `fastmcp.app` | MCP infra | 1 |
-| `fda.gov` | Regulatory | 1 |
+| `fda.gov` | Regulatory | 2 |
 | `figshare.com` | Research data | 1 |
 | `github.com` | Source / infra | 23 |
 | `graphdrawing.org` | Standards | 1 |
 | `gtexportal.org` | Expression | 2 |
-| `hmdb.ca` | Metabolites | 4 |
+| `hmdb.ca` | Metabolites | 5 |
+| `jisc.ac.uk` | other (review) | 3 |
 | `jsdelivr.net` | CDN | 1 |
 | `kegg.jp` | Pathways | 3 |
 | `labarchives.com` | ELN | 3 |
@@ -61,24 +63,20 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `monarchinitiative.org` | Phenotypes | 3 |
 | `mygene.info` | Gene annotation | 1 |
 | `nf-co.re` | nf-core pipelines | 1 |
-| `nih.gov` | NCBI / NIH | 17 |
-| `openai.com` | LLM backend (user key) | 1 |
-| `openalex.org` | Scholarly index | 16 |
+| `nih.gov` | NCBI / NIH | 18 |
+| `openalex.org` | Scholarly index | 19 |
 | `openarchives.org` | OAI-PMH | 2 |
 | `openrouter.ai` | LLM backend (user key) | 19 |
 | `opentargets.org` | Target–disease | 1 |
 | `parallel.ai` | Research backend (user key) | 5 |
-| `patentsview.org` | Patents | 1 |
 | `pharmvar.org` | Pharmacogenomics | 3 |
 | `purl.org` | Persistent URLs | 1 |
 | `rcsb.org` | Protein structures | 7 |
 | `reactome.org` | Pathways | 4 |
 | `readthedocs.io` | Docs | 2 |
-| `sanger.ac.uk` | Wellcome Sanger | 1 |
+| `sanger.ac.uk` | Wellcome Sanger | 5 |
 | `scientific-writer.local` | Local (non-network) | 1 |
 | `semanticscholar.org` | Scholarly index | 3 |
-| `sherpa.ac.uk` | OA policies (SHERPA) | 4 |
-| `sron.nl` | Spectroscopy | 1 |
 | `stlouisfed.org` | FRED economics | 3 |
 | `store` | Placeholder (commented docs) | 1 |
 | `string-db.org` | Protein interactions | 4 |
@@ -88,12 +86,12 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `uak.gov.tr` | ÜAK (doçentlik) | 2 |
 | `ulakbim.gov.tr` | ULAKBİM | 2 |
 | `uniprot.org` | Proteins | 2 |
-| `uspto.gov` | Patents | 5 |
+| `uspto.gov` | Patents | 7 |
 | `w3.org` | Standards | 2 |
 | `wikipedia.org` | Reference | 1 |
 | `yok.gov.tr` | YÖK | 3 |
 
-_67 distinct domains._
+_65 distinct domains._
 
 ## Method
 

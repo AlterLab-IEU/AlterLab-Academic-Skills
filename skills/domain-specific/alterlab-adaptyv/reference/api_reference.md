@@ -37,18 +37,23 @@ out of version control, and load it from a gitignored `.env` in local developmen
 Experiments move through a state machine, roughly:
 
 ```
-Draft → WaitingForConfirmation → QuoteSent → WaitingForMaterials
-      → InQueue → InProduction → DataAnalysis → InReview → Done
+draft → waiting_for_confirmation → quote_sent → waiting_for_materials
+      → in_queue → in_production → data_analysis → in_review → done   (or canceled)
 ```
 
 The typical programmatic flow:
 
 1. `GET /targets` — find a `target_id` (only needed for binding-type assays).
-2. `POST /experiments` — create a **draft** with the sequences + spec.
-3. `GET /experiments/{id}/quote` (or `POST /experiments/cost-estimate`) — review cost.
-4. `POST /experiments/{id}/submit` — submit to the lab. Nothing is charged before this.
-5. Poll `GET /experiments/{id}` (or use a webhook) until `Done`.
-6. `GET /experiments/{id}/results` — retrieve data.
+2. `POST /experiments` — create a **draft** with the sequences + spec
+   (`POST /experiments/cost-estimate` prices a spec without creating anything).
+3. `POST /experiments/{id}/submit` — finalizes the draft; the quote is generated
+   asynchronously (status `waiting_for_confirmation`).
+4. Poll `GET /experiments/{id}/quote` until it exists, review totals and `expires_at`, then
+   `POST /experiments/{id}/quote/confirm` with a JSON body (`{}` is fine) to accept it and
+   create the invoice. Nothing is invoiced before this step.
+5. Poll `GET /experiments/{id}` (or use a webhook) until `done`.
+6. `GET /experiments/{id}/results` — retrieve data (available once `results_status` is
+   `partial` or `all`).
 
 ## Endpoints
 
@@ -76,7 +81,7 @@ binding (`screening` / `affinity`) experiments.
   "name": "mini-binder round 1",
   "webhook_url": "https://your-server.com/adaptyv-webhook",
   "experiment_spec": {
-    "experiment_type": "screening|affinity|thermostability|fluorescence|expression",
+    "experiment_type": "screening|affinity|thermostability|fluorescence|expression|epitope_binning|enzyme_activity",
     "method": "bli|spr",
     "target_id": "<uuid, required for screening/affinity>",
     "sequences": {
@@ -120,7 +125,8 @@ typically broken into assay and material costs. Use this to budget before commit
 
 `POST /experiments/{experiment_id}/submit`
 
-Submits a draft to the lab. After this the experiment advances through the lifecycle above.
+Finalizes a draft and triggers asynchronous quote generation (status
+`waiting_for_confirmation`). The run starts only after the quote is confirmed.
 
 #### Get Experiment Status
 
@@ -149,8 +155,11 @@ melting temperatures for `thermostability`, intensities for `fluorescence`, and 
 
 ### Quotes
 
-`GET /experiments/{experiment_id}/quote` — retrieve the quote for a draft.
-`POST /quotes/{quote_id}/confirm` — confirm a quote (pricing / invoicing).
+`GET /experiments/{experiment_id}/quote` — quote totals, currency, status, `expires_at`
+(poll after submit; it is generated asynchronously).
+`POST /experiments/{experiment_id}/quote/confirm` — accept the quote and create the invoice
+(same as `POST /quotes/{quote_id}/confirm`; send a JSON body, `{}` if no PO number/notes).
+`POST /quotes/{quote_id}/reject` — decline it.
 
 ## Webhooks
 
@@ -168,7 +177,7 @@ rather than retrying. See `reference/examples.md` for a reusable retry wrapper.
 ## Best Practices
 
 1. **Use the official SDK** (`adaptyvbio/adaptyv-sdk`) where possible; drop to raw `requests` only when needed.
-2. **Review the quote** before `submit` — nothing is charged until you confirm.
+2. **Review the quote** after `submit` and before `quote/confirm` — nothing is invoiced until you confirm.
 3. **Use webhooks** for long-running experiments instead of tight polling.
 4. **Validate sequences locally** (valid amino acids, correct colon-separated multi-chain format) before submission.
 5. **Tag experiments** with a clear `name` and meaningful labels for traceability.

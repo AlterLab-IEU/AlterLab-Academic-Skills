@@ -322,7 +322,10 @@ from torchdrug import core, data, models, tasks, datasets
 
 # 1. Load dataset
 dataset = datasets.BBBP("~/datasets/")
-train_set, valid_set, test_set = dataset.split()
+# BBBP (a MoleculeDataset) has no .split(); split explicitly
+lengths = [int(0.8 * len(dataset)), int(0.1 * len(dataset))]
+lengths += [len(dataset) - sum(lengths)]
+train_set, valid_set, test_set = data.ordered_scaffold_split(dataset, lengths)
 
 # 2. Create data loaders.
 #    Use torchdrug.data.DataLoader — its default graph_collate packs
@@ -337,7 +340,8 @@ model = models.GIN(input_dim=dataset.node_feature_dim,
 task = tasks.PropertyPrediction(model, task=dataset.tasks,
                                  criterion="bce", metric=["auroc", "auprc"])
 
-# 4. Setup optimizer
+# 4. Build the task head (core.Engine does this for you), then the optimizer
+task.preprocess(train_set, valid_set, test_set)
 optimizer = torch.optim.Adam(task.parameters(), lr=1e-3)
 
 # 5. Training loop

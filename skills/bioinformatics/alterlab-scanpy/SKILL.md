@@ -3,10 +3,11 @@ name: alterlab-scanpy
 description: Run the standard single-cell RNA-seq analysis pipeline with Scanpy on AnnData — QC filtering, normalization, dimensionality reduction (PCA, UMAP, t-SNE), Leiden/Louvain clustering, marker/differential expression, PAGA trajectories, and plotting. Use when analyzing scRNA-seq data through clustering, cell-type annotation, DE, or pseudotime workflows; for building or reading the .h5ad data structure itself (layers, obs/var, concatenation, backed mode) prefer alterlab-anndata instead, and for RNA velocity from spliced/unspliced counts prefer alterlab-scvelo instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for Scanpy 1.12 (current 1.12.4 as of 2026-09), which requires Python >= 3.12 and anndata >= 0.10."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Scanpy: Single-Cell Analysis
@@ -25,6 +26,16 @@ This skill should be used when:
 - Annotating cell types based on gene expression
 - Conducting trajectory inference or pseudotime analysis
 - Generating publication-quality single-cell plots
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Building, reading, or reshaping the `.h5ad` object itself (layers, obs/var, concatenation, backed/Dask mode) | `alterlab-anndata` |
+| RNA velocity from spliced/unspliced counts | `alterlab-scvelo` |
+| Probabilistic latent models — scVI/scANVI integration, model-based DE | `alterlab-scvi-tools` |
+| Spatial transcriptomics — Visium/Xenium/MERFISH neighborhood and image analysis | `alterlab-squidpy-spatial` |
+| Bulk RNA-seq differential expression from a count matrix | `alterlab-pydeseq2` |
 
 ## Quick Start
 
@@ -163,6 +174,11 @@ for res in [0.3, 0.5, 0.8, 1.0]:
 ```python
 # Find marker genes for each cluster
 sc.tl.rank_genes_groups(adata, 'leiden', method='wilcoxon')
+# Scanpy >=1.12 warns here on purpose: the clusters were derived from the same
+# counts being tested, so the p-values are anti-conservative ("double dipping").
+# Treat the ranking as a marker-discovery heuristic, and get real p-values from an
+# independent grouping (condition, donor, genotype) or a pseudobulk test
+# (`alterlab-pydeseq2`) before reporting significance.
 
 # Visualize results
 sc.pl.rank_genes_groups(adata, n_genes=25, sharey=False)
@@ -212,27 +228,29 @@ adata.var.to_csv('results/gene_metadata.csv')
 ### Creating Publication-Quality Plots
 
 ```python
+import matplotlib.pyplot as plt
+
 # Set high-quality defaults
 sc.settings.set_figure_params(dpi=300, frameon=False, figsize=(5, 5))
-sc.settings.file_format_figs = 'pdf'
 
-# UMAP with custom styling
+# The `save=` parameter of every sc.pl.* function is deprecated as of Scanpy 1.12.
+# Pass show=False and save the current figure yourself — this also gives you control
+# over bbox/dpi and lets you compose panels.
 sc.pl.umap(adata, color='cell_type',
            palette='Set2',
            legend_loc='on data',
            legend_fontsize=12,
            legend_fontoutline=2,
            frameon=False,
-           save='_publication.pdf')
+           show=False)
+plt.savefig('figures/umap_publication.pdf', bbox_inches='tight')
+plt.close()
 
 # Heatmap of marker genes
 sc.pl.heatmap(adata, var_names=genes, groupby='cell_type',
-              swap_axes=True, show_gene_labels=True,
-              save='_markers.pdf')
-
-# Dot plot
-sc.pl.dotplot(adata, var_names=genes, groupby='cell_type',
-              save='_dotplot.pdf')
+              swap_axes=True, show_gene_labels=True, show=False)
+plt.savefig('figures/markers_heatmap.pdf', bbox_inches='tight')
+plt.close()
 ```
 
 Refer to `references/plotting_guide.md` for comprehensive visualization examples.
@@ -303,7 +321,7 @@ sc.pp.combat(adata, key='batch')
 
 1. **Always save raw counts**: `adata.raw = adata` before filtering genes
 2. **Check QC plots carefully**: Adjust thresholds based on dataset quality
-3. **Use Leiden with `flavor='igraph'`**: The future default and far faster than Louvain or the legacy `leidenalg` backend — `pip`/`uv` install the `igraph` package (not bundled with scanpy)
+3. **Use Leiden with `flavor='igraph'`**: Far faster than the legacy `leidenalg` backend, and `sc.tl.louvain()` is deprecated as of Scanpy 1.12 — `uv pip install igraph` (not bundled with scanpy)
 4. **Try multiple clustering resolutions**: Find optimal granularity
 5. **Validate cell type annotations**: Use multiple marker genes
 6. **Use `use_raw=True` for gene expression plots**: Shows original counts

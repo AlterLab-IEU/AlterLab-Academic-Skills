@@ -21,7 +21,7 @@ Consuming agents should validate input and request re-generation if schema viola
 |-------|------|-------------|
 | `research_question` | string | The finalized research question (single sentence, interrogative form) |
 | `sub_questions` | list[string] | 2-5 decomposed sub-questions |
-| `finer_scores` | object | `{feasible: 1-10, interesting: 1-10, novel: 1-10, ethical: 1-10, relevant: 1-10}` |
+| `finer_scores` | object | `{feasible: 1-5, interesting: 1-5, novel: 1-5, ethical: 1-5, relevant: 1-5}` |
 | `scope` | object | `{in_scope: list[string], out_of_scope: list[string], domain: string, timeframe: string, geography: string, population: string}` |
 | `methodology_type` | enum | `"qualitative"` / `"quantitative"` / `"mixed"` |
 | `theoretical_framework` | string | Name of the selected or emergent theoretical framework |
@@ -49,7 +49,7 @@ Consuming agents should validate input and request re-generation if schema viola
 2. What measurable learning outcome improvements have been documented?
 3. What student and faculty perceptions exist regarding AI-assisted assessment?
 
-**FINER Scores**: Feasible: 8, Interesting: 9, Novel: 7, Ethical: 9, Relevant: 10
+**FINER Scores**: Feasible: 4, Interesting: 5, Novel: 4, Ethical: 5, Relevant: 5
 
 **Scope**:
 - In scope: AI-assisted formative assessment, STEM undergraduate courses, Taiwan HEIs, 2018-2025
@@ -202,9 +202,9 @@ AI-assisted assessment's primary advantage lies in the immediacy of feedback, re
 | Field | Type | Description |
 |-------|------|-------------|
 | `title` | string | Paper title |
-| `abstract` | object | `{english: string, chinese: string}` (chinese is required only if bilingual) |
+| `abstract` | object | `{english: string, secondary?: {lang, text}}` — second-language abstract when bilingual (`lang` is a BCP 47 tag such as `tr` or `zh-TW`; the old `chinese` key is still accepted) |
 | `authors` | list[Author] | Author information with CRediT roles |
-| `keywords` | object | `{en: list[string], zh_tw: list[string]}` bilingual keywords (3-6 each) |
+| `keywords` | object | `{en: list[string], secondary?: {lang, terms: list[string]}}` (3-7 each; the old `zh_tw` key is still accepted) |
 | `sections` | list[Section] | Ordered paper sections |
 | `references` | list[Reference] | Full reference list with cross-referencing |
 | `total_word_count` | integer | Total word count (excluding references) |

@@ -250,7 +250,7 @@ ln.Feature(name="treatment", dtype=str).save()
 
 ```python
 # Single values
-artifact.features.add_values({
+artifact.features.set_values({
     "gc_content": 0.55,
     "experiment_date": "2025-10-31"
 })

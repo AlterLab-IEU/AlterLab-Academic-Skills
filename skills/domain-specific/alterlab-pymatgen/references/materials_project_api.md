@@ -11,7 +11,7 @@ The Materials Project is a comprehensive database of computed materials properti
 The Materials Project API client is now in a separate package:
 
 ```bash
-pip install mp-api
+uv pip install mp-api
 ```
 
 ### Getting an API Key
@@ -114,8 +114,13 @@ with MPRester() as mpr:
     # Get structure
     structure = mpr.get_structure_by_material_id("mp-149")
 
-    # Get multiple structures
-    structures = mpr.get_structures(["mp-149", "mp-510", "mp-19017"])
+    # Get multiple structures by ID in one query. (get_structures() takes a chemical
+    # system or formula such as "Li-Fe-O" or "Fe2O3", NOT a list of material IDs.)
+    docs = mpr.materials.summary.search(
+        material_ids=["mp-149", "mp-510", "mp-19017"],
+        fields=["material_id", "structure"],
+    )
+    structures = {doc.material_id: doc.structure for doc in docs}
 ```
 
 ### All Structures for a Formula
@@ -143,10 +148,12 @@ with MPRester() as mpr:
         band_gap=(1.0, 3.0),           # Semiconducting
     )
 
-    # Magnetic materials
+    # Magnetic materials (summary search has no is_magnetic filter; filter on the
+    # ordering enum or on total_magnetization instead)
+    from pymatgen.analysis.magnetism import Ordering
     materials = mpr.materials.summary.search(
         elements=["Fe"],
-        is_magnetic=True
+        magnetic_ordering=Ordering.FM
     )
 
     # Metals only
@@ -160,10 +167,11 @@ with MPRester() as mpr:
 
 ```python
 with MPRester() as mpr:
-    # Get most stable materials
+    # Get most stable materials (the sort parameter is the underscored `_sort_fields`,
+    # a string; prefix "-" for descending)
     materials = mpr.materials.summary.search(
         chemsys="Li-Fe-O",
-        sort_fields=["energy_above_hull"],
+        _sort_fields="energy_above_hull",
         num_chunks=1,
         chunk_size=10  # Limit to 10 results
     )
@@ -268,14 +276,17 @@ with MPRester() as mpr:
 
 ```python
 with MPRester() as mpr:
-    # Search for materials with elastic data
-    materials = mpr.materials.elasticity.search(
+    # Elastic data by chemical system: the summary endpoint accepts chemsys and the
+    # Voigt-Reuss-Hill bulk modulus range (k_vrh, GPa); the elasticity endpoint itself
+    # filters only by material_ids and moduli
+    materials = mpr.materials.summary.search(
         chemsys="Fe-O",
-        bulk_modulus_vrh=(100, 300)  # GPa
+        k_vrh=(100, 300),
+        fields=["material_id", "formula_pretty", "bulk_modulus"],
     )
 
     for mat in materials:
-        print(f"{mat.material_id}: K = {mat.bulk_modulus_vrh} GPa")
+        print(f"{mat.material_id}: K_VRH = {mat.bulk_modulus['vrh']} GPa")
 ```
 
 ## Dielectric Properties
@@ -401,7 +412,11 @@ with MPRester() as mpr:
 
 # Good: Single batch query
 with MPRester() as mpr:
-    structs = mpr.get_structures(["mp-149", "mp-510", "mp-19017"])  # 1 API call
+    docs = mpr.materials.summary.search(
+        material_ids=["mp-149", "mp-510", "mp-19017"],
+        fields=["material_id", "structure"],
+    )  # 1 API call
+    structs = [doc.structure for doc in docs]
 ```
 
 ### Caching Results

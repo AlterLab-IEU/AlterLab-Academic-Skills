@@ -12,11 +12,11 @@ All endpoints accept GET requests. Responses are JSON. No authentication require
 
 | Parameter | Description | Example |
 |-----------|-------------|---------|
-| `gencodeId` | GENCODE gene ID with version | `ENSG00000130203.10` |
-| `geneSymbol` | Gene symbol | `APOE` |
+| `gencodeId` | Versioned GENCODE gene ID (required by expression/QTL endpoints; symbols are not accepted) | `ENSG00000130203.10` |
+| `geneId` | Symbol or (un)versioned GENCODE ID — `/reference/gene` only | `APOE` |
 | `variantId` | GTEx variant ID | `chr17_45413693_C_T_b38` |
 | `tissueSiteDetailId` | Tissue identifier | `Whole_Blood` |
-| `datasetId` | Dataset version | `gtex_v10` |
+| `datasetId` | Dataset version — pass it explicitly; several endpoints still default to `gtex_v8` | `gtex_v10` |
 | `itemsPerPage` | Results per page | `250` |
 | `page` | Page number (0-indexed) | `0` |
 
@@ -131,11 +131,16 @@ GET /reference/gene?geneId=PCSK9&gencodeVersion=v39&genomeBuild=GRCh38/hg38
 
 ### Variant Endpoints
 
-#### `GET /variant/variantPage`
+#### `GET /dataset/variant`
 
-Variant metadata and lookup.
+Variant metadata and rsID → GTEx ID lookup.
 
-**Parameters:** `snpId` (rsID) OR `variantId`
+**Parameters:** `snpId` (rsID) OR `variantId` (or `chromosome` + `pos`), `datasetId` (defaults to `gtex_v8`)
+
+```
+GET /dataset/variant?snpId=rs7412&datasetId=gtex_v10
+  -> variantId "chr19_44908822_C_T_b38", b37VariantId "19_45412079_C_T_b37", ref, alt, maf01
+```
 
 ## Tissue IDs Reference (Common Tissues)
 

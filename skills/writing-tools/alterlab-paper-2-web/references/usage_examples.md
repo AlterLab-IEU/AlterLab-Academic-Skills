@@ -1,5 +1,10 @@
 # Usage Examples and Workflows
 
+> Throughout these examples, `pipeline_all.py` (website, poster, PR) reads the compiled
+> **PDF** in the paper folder (`paper.pdf`) and requires `OPENROUTER_API_KEY` exported in
+> the shell, while Paper2Video (`pipeline_light.py` / `pipeline.py`) reads the **LaTeX
+> project** via `--paper_latex_root`. "LaTeX paper" examples assume both are in the folder.
+
 ## Complete Workflow Examples
 
 ### Example 1: Conference Presentation Package
@@ -13,7 +18,8 @@
 ```bash
 # Step 1: Organize paper files
 mkdir -p input/neurips2025_paper
-cp main.tex input/neurips2025_paper/
+cp paper.pdf input/neurips2025_paper/      # pipeline_all.py reads the PDF
+cp main.tex input/neurips2025_paper/       # Paper2Video reads the LaTeX project
 cp -r figures/ input/neurips2025_paper/
 cp -r tables/ input/neurips2025_paper/
 cp bibliography.bib input/neurips2025_paper/
@@ -21,7 +27,7 @@ cp bibliography.bib input/neurips2025_paper/
 # Step 2a: Generate website + poster + PR materials (omit --model-choice for all modules)
 python pipeline_all.py \
   --input-dir input/neurips2025_paper \
-  --output-dir output/ \
+  --output_dir output/ \
   --poster-width-inches 48 \
   --poster-height-inches 36
 
@@ -59,7 +65,7 @@ ls -R output/neurips2025_paper/
 # Using PDF input (LaTeX not available)
 python pipeline_all.py \
   --input-dir papers/genomics_preprint/ \
-  --output-dir output/genomics_web/ \
+  --output_dir output/genomics_web/ \
   --model-choice 1
 
 # Deploy to GitHub Pages or personal server
@@ -116,13 +122,17 @@ python pipeline_light.py \
 # Organize papers
 mkdir -p batch_input/
 # Create subdirectories: paper1/, paper2/, paper3/, paper4/, paper5/
-# Each with their LaTeX sources
+# Each with its paper.pdf
 
-# Batch process (website only; --input-dir accepts multiple paper subdirectories)
-python pipeline_all.py \
-  --input-dir batch_input/ \
-  --output-dir batch_output/ \
-  --model-choice 1
+# Batch process (website only). One pipeline_all.py run handles only the first PDF
+# it finds, so loop over the papers with a separate output folder for each.
+for paper in batch_input/*/; do
+  name=$(basename "$paper")
+  python pipeline_all.py \
+    --input-dir "$paper" \
+    --output_dir "batch_output/$name" \
+    --model-choice 1
+done
 
 # Creates:
 # batch_output/paper1/website/
@@ -152,7 +162,7 @@ python pipeline_all.py \
 # Generate the poster (--model-choice 2 = poster component)
 python pipeline_all.py \
   --input-dir papers/ismb_submission/ \
-  --output-dir output/ismb_poster/ \
+  --output_dir output/ismb_poster/ \
   --model-choice 2 \
   --poster-width-inches 48 \
   --poster-height-inches 36
@@ -214,7 +224,7 @@ python pipeline_light.py \
 # Website + poster + PR materials (all pipeline_all modules)
 python pipeline_all.py \
   --input-dir [latex_dir] \
-  --output-dir [output_dir]
+  --output_dir [output_dir]
 
 # Video (separate p2v environment)
 python pipeline_light.py \
@@ -234,7 +244,7 @@ python pipeline_light.py \
 ```bash
 python pipeline_all.py \
   --input-dir [pdf_dir] \
-  --output-dir [output_dir] \
+  --output_dir [output_dir] \
   --model-choice 1
 ```
 
@@ -250,7 +260,7 @@ python pipeline_all.py \
 ```bash
 python pipeline_all.py \
   --input-dir [latex_dir] \
-  --output-dir [output_dir] \
+  --output_dir [output_dir] \
   --model-choice 2 \
   --poster-width-inches [width] \
   --poster-height-inches [height]
@@ -364,7 +374,7 @@ mkdir -p input/xhs_genomics/
 # at a cheaper model/provider for simple papers, then generate only what you need:
 python pipeline_all.py \
   --input-dir [paper_dir] \
-  --output-dir [output_dir] \
+  --output_dir [output_dir] \
   --model-choice 1   # website only (1=website, 2=poster, 3=PR materials)
 
 # Skip the GPU-heavy talking-head video to save the most.

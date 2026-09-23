@@ -1,7 +1,7 @@
 ---
 name: intake-agent
 description: Conducts a structured configuration interview to establish all parameters for the paper-writing pipeline, producing a Paper Configuration Record that downstream agents reference and auto-importing materials from alterlab-deep-research when present.
-allowed-tools: Read, Write
+tools: Read, Grep, Glob, Write, Edit
 ---
 # Intake Agent — Paper Configuration Interview
 
@@ -137,7 +137,7 @@ Default: IMRaD (for empirical research) or Literature Review (for synthesis topi
 | Format | Default Disciplines |
 |--------|-------------------|
 | **APA 7th** (default) | Education, Psychology, Social Sciences |
-| **Chicago 17th** | History, Humanities, some Social Sciences |
+| **Chicago 18th** | History, Humanities, some Social Sciences |
 | **MLA 9th** | Literature, Languages, Cultural Studies |
 | **IEEE** | Engineering, Computer Science, Technology |
 | **Vancouver** | Medicine, Biomedical Sciences, Nursing |
@@ -153,8 +153,8 @@ Auto-suggest based on discipline; user can override.
 
 ### Step 6: Language & Abstract
 - Detect user's language from input
-- Ask about paper body language: EN / zh-TW / bilingual
-- Ask about abstract: Bilingual (default) / EN only / zh-TW only
+- Ask about paper body language: EN / the user's language (e.g. TR, zh-TW) / bilingual
+- Ask about abstract: Bilingual (default: EN + the user's language, or the journal's required pair) / EN only / second language only
 
 ### Step 7: Word Count
 - Auto-suggest based on paper type (see table above)
@@ -207,10 +207,10 @@ Reference: `references/funding_statement_guide.md`
 | **Paper Type** | [IMRaD / Literature Review / Theoretical / Case Study / Policy Brief / Conference] |
 | **Discipline** | [discipline + sub-field] |
 | **Target Journal** | [journal name or "General"] |
-| **Citation Format** | [APA 7th / Chicago 17th / MLA 9th / IEEE / Vancouver] |
+| **Citation Format** | [APA 7th / Chicago 18th / MLA 9th / IEEE / Vancouver] |
 | **Output Format** | [Markdown / LaTeX / DOCX / PDF / Combined] |
-| **Body Language** | [EN / zh-TW / Bilingual] |
-| **Abstract** | [Bilingual / EN-only / zh-TW-only] |
+| **Body Language** | [EN / TR / zh-TW / other / Bilingual] |
+| **Abstract** | [Bilingual (EN + language) / EN-only / second-language-only] |
 | **Word Count Target** | [number] words |
 | **Existing Materials** | [list of provided materials] |
 | **Co-Authors** | [single-author / number of co-authors + corresponding author + brief contribution notes] |

@@ -4,7 +4,7 @@
     {
       "id": "gi-concept-illustration",
       "prompt": "I need a conceptual illustration for my immunotherapy paper — a microscopic view of cancer cells being attacked by immunotherapy agents, in a clean scientific illustration style. Can you generate it for figures/?",
-      "expected_output": "Invokes alterlab-generate-image: uses scripts/generate_image.py with the descriptive prompt and a figures/ output path, defaulting to google/gemini-3.1-flash-image-preview, and checks for the OPENROUTER_API_KEY in a .env file before running.",
+      "expected_output": "Invokes alterlab-generate-image: uses scripts/generate_image.py with the descriptive prompt and a figures/ output path, defaulting to google/gemini-3.1-flash-image (or $ALTERLAB_IMAGE_MODEL), and confirms OPENROUTER_API_KEY is set in the environment or a .env file before running.",
       "assertions": [
         {
           "type": "should_trigger",
@@ -30,7 +30,7 @@
     {
       "id": "gi-edit-existing-photo",
       "prompt": "I have a portrait headshot (portrait.png) for my lab website. Can you edit it to add sunglasses to the person and save the result as cleaned.png?",
-      "expected_output": "Invokes alterlab-generate-image in edit mode: runs generate_image.py with --input portrait.png and --output cleaned.png, choosing a model that supports editing (gemini-3.1-flash-image-preview or flux.2-pro).",
+      "expected_output": "Invokes alterlab-generate-image in edit mode: runs generate_image.py with --input portrait.png and --output cleaned.png, choosing a model that supports editing (gemini-3.1-flash-image or flux.2-pro).",
       "assertions": [
         {
           "type": "should_trigger",
@@ -80,6 +80,21 @@
         {
           "type": "output_contains",
           "value": "matplotlib"
+        }
+      ]
+    },
+    {
+      "id": "near-miss-infographics",
+      "prompt": "Make a timeline infographic of our department's research milestones from 2015 to 2026, with key numbers highlighted, for the annual report.",
+      "expected_output": "Does NOT invoke alterlab-generate-image. A designed infographic that lays out dates and statistics is alterlab-infographics' job (type presets, colorblind-safe palettes, quality-reviewed iteration), not a free-form illustration.",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-infographics"
         }
       ]
     }

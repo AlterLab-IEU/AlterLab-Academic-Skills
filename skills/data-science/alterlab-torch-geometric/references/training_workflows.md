@@ -91,7 +91,8 @@ for epoch in range(100):
 
 ## Large-Scale Graphs with Neighbor Sampling
 
-For large graphs, use `NeighborLoader` to sample subgraphs:
+For large graphs, use `NeighborLoader` to sample subgraphs (requires the optional `pyg-lib`
+or `torch-sparse` package; without either it raises `ImportError`):
 
 ```python
 from torch_geometric.loader import NeighborLoader

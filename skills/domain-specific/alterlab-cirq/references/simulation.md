@@ -231,7 +231,7 @@ QVM simulates realistic quantum hardware with device-specific constraints and no
 # Use a virtual Google device
 import cirq_google
 
-# Get virtual device (a cirq.GridDevice)
+# Get virtual device (a cirq_google.GridDevice)
 device = cirq_google.Sycamore
 
 # Build a circuit on device qubits. Note: the `device=` argument to cirq.Circuit
@@ -246,17 +246,34 @@ device.validate_circuit(circuit)
 ### Noisy Virtual Hardware
 
 ```python
-# Simulate with device noise
-processor = cirq_google.get_engine().get_processor('weber')
-noise_props = processor.get_device_specification()
+import cirq_google
+from cirq_google.engine import (
+    create_default_noisy_quantum_virtual_machine,
+    load_device_noise_properties,
+)
 
-# Create realistic noisy simulator
+# Bundled median calibrations exist for 'rainbow', 'weber', and 'willow_pink'
+# (list them with cirq_google.engine.list_virtual_processors()).
+noise_props = load_device_noise_properties("willow_pink")   # GoogleNoiseProperties
+
+# Option A: a noisy simulator (circuit must use that device's qubits and gates)
 noisy_sim = cirq.DensityMatrixSimulator(
     noise=cirq_google.NoiseModelFromGoogleNoiseProperties(noise_props)
 )
-
 result = noisy_sim.run(circuit, repetitions=1000)
+
+# Option B: the full Quantum Virtual Machine — an engine-like processor with the
+# device's qubit graph, gate validation, and noise
+engine = create_default_noisy_quantum_virtual_machine(
+    processor_id="willow_pink", simulator_class=cirq.Simulator
+)
+sampler = engine.get_processor("willow_pink").get_sampler()
+result = sampler.run(circuit, repetitions=1000)
 ```
+
+`processor.get_device_specification()` returns a device-spec proto, not noise
+properties — do not pass it to `NoiseModelFromGoogleNoiseProperties`. With real
+hardware calibration data, convert it via `cirq_google.noise_properties_from_calibration`.
 
 ## Advanced Simulation Techniques
 

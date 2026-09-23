@@ -230,7 +230,7 @@ from qiskit.visualization import plot_gate_map
 from qiskit_ibm_runtime import QiskitRuntimeService
 
 service = QiskitRuntimeService()
-backend = service.backend("ibm_brisbane")
+backend = service.least_busy(operational=True, simulator=False)
 
 # Show qubit connectivity
 plot_gate_map(backend)

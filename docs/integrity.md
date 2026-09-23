@@ -94,7 +94,7 @@ The prompt instructs the judge that it sees **only the abstract**, that non-cove
 `unsupported` (not `contradict`), and to return a single minified JSON object.
 
 - **No model id is ever hardcoded.** The only literal lives in the one `DEFAULT_MODEL` constant
-  (reviewed 2026-06-06, currently `claude-opus-4-8`), per `model_env.md` rule 1. Override at
+  (reviewed 2026-09-23, currently `claude-opus-5-5`), per `model_env.md` rule 1. Override at
   runtime with `ALTERLAB_MODEL`; an empty value is treated as unset.
 - **Graceful degradation.** If the `claude` CLI is absent, the call fails, or the model returns
   unparseable output, the tier **falls back to the heuristic** and relabels the result's tier as

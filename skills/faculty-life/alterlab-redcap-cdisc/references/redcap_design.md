@@ -104,14 +104,27 @@ Column 6 (`Choices, Calculations, OR Slider Labels`) is **required** for
 
 ## Text validation types
 
-Column 8 applies only to `text` (and slider display). Legal validation values:
+Column 8 applies to `text` fields (and slider display). Built-in validation
+values, as enumerated by the REDCapR and redcapAPI R packages (CRAN, 2026):
 
-`date_ymd`, `date_mdy`, `datetime_ymd`, `time`, `integer`, `number`, `email`,
-`phone`, `zipcode`.
+| Family | Values |
+|--------|--------|
+| Date | `date_ymd`, `date_mdy`, `date_dmy` |
+| Date-time | `datetime_ymd`, `datetime_mdy`, `datetime_dmy`, `datetime_seconds_ymd`, `datetime_seconds_mdy`, `datetime_seconds_dmy` |
+| Time | `time` (HH:MM), `time_hh_mm_ss`, `time_mm_ss` |
+| Numbers | `integer`, `number`, `number_1dp`…`number_4dp`, `number_comma_decimal`, `number_1dp_comma_decimal`…`number_4dp_comma_decimal` |
+| Contact / ID | `email`, `phone`, `phone_australia`, `zipcode`, `postalcode_australia`, `postalcode_canada`, `postalcode_french`, `postalcode_germany`, `ssn`, `mrn_10d`, `mrn_generic`, `vmrn` |
+| Text | `alpha_only` |
+
+Two values attach to other field types: `autocomplete` on a `dropdown` field
+(type-ahead search) and `signature` on a `file` field (draw-a-signature). An
+administrator can disable any type on an instance, so confirm with a test import.
 
 - For `integer` / `number`, also set `Text Validation Min` / `Max` (columns 9–10)
   to bound the value.
-- For dates, prefer `date_ymd` (ISO-ordered, sorts and exports cleanly).
+- For dates, pick the entry order your data-entry staff use (`date_dmy` is the
+  norm in Europe and Türkiye); REDCap stores dates as YYYY-MM-DD whichever
+  display format you choose.
 - A `slider` field's column 8 should be `NA` (hide the number) or `number`.
 
 ---
@@ -125,7 +138,9 @@ Syntax mirrors REDCap's logic engine:
 - Checkbox options: `[symptoms(3)] = "1"` (option code 3 is checked).
 - Operators: `=`, `<>`, `>`, `>=`, `<`, `<=`, combined with `and` / `or` and
   parentheses.
-- Longitudinal event-specific reference: `[visit_1][weight_kg] > "100"`.
+- Longitudinal event-specific reference: prefix the unique event name, e.g.
+  `[visit_1_arm_1][weight_kg] > "100"` (the linter treats the first bracket of an
+  adjacent pair as the event, not a field).
 
 Example — show a pregnancy question only for female participants:
 
@@ -213,7 +228,10 @@ Notes on the example:
   support materials (e.g. University of Illinois "How to Use a REDCap Data
   Dictionary", 2021; University of Chicago CRI Data Dictionary handout).
 - Field-type and `text_validation_type` machine values per the
-  Sage-Bionetworks/`redcapdd` data-dictionary tooling documentation.
+  Sage-Bionetworks/`redcapdd` data-dictionary tooling documentation, cross-checked
+  (2026-09-23) against the validation-type lists in the REDCapR
+  (`R/redcap-metadata-coltypes.R`) and redcapAPI (`REDCAP_METADATA_VALIDATION_TYPE`,
+  v2.12.0) CRAN packages.
 
 REDCap is developed by Vanderbilt University. Field/validation conventions above
 reflect the data-dictionary import format; exact behavior can vary by instance

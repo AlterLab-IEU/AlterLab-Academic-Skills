@@ -235,7 +235,8 @@ results = nk.eda_intervalrelated(signals, sampling_rate=100)
 Derive sympathetic nervous system activity from frequency band (0.045-0.25 Hz).
 
 ```python
-sympathetic = nk.eda_sympathetic(signals, sampling_rate=100, method='posada',
+# Pass the EDA vector (raw or signals["EDA_Clean"]), not the processed DataFrame
+sympathetic = nk.eda_sympathetic(signals["EDA_Clean"], sampling_rate=100, method='posada',
                                   show=False)
 ```
 

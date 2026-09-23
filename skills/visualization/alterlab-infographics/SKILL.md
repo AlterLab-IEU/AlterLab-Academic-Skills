@@ -1,25 +1,26 @@
 ---
 name: alterlab-infographics
-description: "Creates professional infographics with Nano Banana Pro AI and smart iterative refinement, using Gemini 3 Pro for automated quality review and an optional Perplexity Sonar research phase for accurate, sourced data — supports 10 infographic types, 8 industry styles, and colorblind-safe palettes. Use when the request is for an infographic, data-story graphic, statistical poster, comparison chart, timeline, process/how-to visual, or list/social graphic that pairs a designed layout with figures. Use alterlab-scientific-schematics instead for technical flowcharts, CONSORT/PRISMA, pathways, or architecture diagrams; alterlab-generate-image for non-infographic illustrations. Part of the AlterLab Academic Skills suite."
+description: "Creates professional infographics with Nano Banana Pro AI and smart iterative refinement, using Gemini 3.1 Pro for automated quality review and an optional Perplexity Sonar research phase for sourced data — supports 10 infographic types, 8 industry styles, and colorblind-safe palettes. Use when the request is for an infographic, data-story graphic, statistical poster, comparison chart, timeline, process/how-to visual, or list/social graphic that pairs a designed layout with figures. Use alterlab-scientific-schematics instead for technical flowcharts, CONSORT/PRISMA, pathways, or architecture diagrams; alterlab-generate-image for non-infographic illustrations; alterlab-matplotlib for exact plots of a dataset. Part of the AlterLab Academic Skills suite."
 license: MIT
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 allowed-tools: Read Write Edit Bash
-compatibility: Requires an OpenRouter API key (OPENROUTER_API_KEY) for Nano Banana Pro generation and Gemini 3 Pro quality review
+compatibility: Requires an OpenRouter API key (OPENROUTER_API_KEY) and the requests library for Nano Banana Pro generation (google/gemini-3-pro-image), Gemini 3.1 Pro quality review, and optional Perplexity sonar-pro research; models can be overridden with ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL
 ---
 
 # Infographics
 
 ## Overview
 
-Infographics are visual representations of information, data, or knowledge designed to present complex content quickly and clearly. **This skill uses Nano Banana Pro AI for infographic generation with Gemini 3 Pro quality review and Perplexity Sonar for research.**
+Infographics are visual representations of information, data, or knowledge designed to present complex content quickly and clearly. **This skill uses Nano Banana Pro AI for infographic generation with Gemini 3.1 Pro quality review and Perplexity Sonar for research.**
 
 **How it works:**
 - (Optional) **Research phase**: Gather accurate facts and statistics using Perplexity Sonar
 - Describe your infographic in natural language
 - Nano Banana Pro generates publication-quality infographics automatically
-- **Gemini 3 Pro reviews quality** against document-type thresholds
+- **Gemini 3.1 Pro reviews quality** against document-type thresholds
 - **Smart iteration**: Only regenerates if quality is below threshold
 - Professional-ready output in minutes; no design skills required
 
@@ -46,11 +47,14 @@ Use the **infographics** skill when:
 - Building hierarchical or organizational charts
 - Designing social media content or marketing materials
 
-**Use scientific-schematics instead for:**
-- Technical flowcharts and circuit diagrams
-- Biological pathways and molecular diagrams
-- Neural network architecture diagrams
-- CONSORT/PRISMA methodology diagrams
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Technical flowchart, CONSORT/PRISMA diagram, biological pathway, circuit, or neural-network architecture | `alterlab-scientific-schematics` |
+| Photo, illustration, concept art, or hero image with no data layout | `alterlab-generate-image` |
+| Exact chart of a dataset (every value must match the data) for a paper or report | `alterlab-matplotlib` / `alterlab-scientific-viz` |
+| Full research poster for a conference session | `alterlab-latex-posters` |
 
 ## Quick Start
 
@@ -81,11 +85,13 @@ python scripts/generate_infographic.py \
 **What happens behind the scenes:**
 1. **(Optional) Research**: Perplexity Sonar gathers accurate facts, statistics, and data
 2. **Generation 1**: Nano Banana Pro creates the initial infographic
-3. **Review 1**: **Gemini 3 Pro** evaluates quality against the document-type threshold
+3. **Review 1**: **Gemini 3.1 Pro** evaluates quality against the document-type threshold
 4. **Decision**: quality >= threshold → **DONE** (early stop); below threshold → improve prompt and regenerate
 5. **Repeat** until quality meets threshold OR max iterations reached
 
-**Output**: Versioned images plus a detailed JSON review log with quality scores, critiques, and early-stop info.
+**Output**: Versioned images plus a detailed JSON review log with quality scores, critiques, and early-stop info. With `--research`, a `_research.json` file also records the gathered facts and the source URLs returned by the search model.
+
+**Check the numbers before you publish.** The image model draws every figure and label itself, so it can misspell words or alter digits even when the prompt was correct, and the review model scores design quality, not factual accuracy. Compare each statistic in the finished graphic against your data or the `_research.json` sources, and cite those sources wherever the infographic is used. If the review call fails, the script keeps the image and records `"review_skipped": true` with a null score in the log instead of inventing one.
 
 ## Core Workflow
 
@@ -97,11 +103,13 @@ python scripts/generate_infographic.py \
 
 ## Configuration
 
-Set the OpenRouter API key (read from the environment):
+Set the OpenRouter API key in the environment, or in a `.env` file if `python-dotenv` is installed:
 
 ```bash
 export OPENROUTER_API_KEY='your_api_key_here'   # https://openrouter.ai/keys
 ```
+
+Default models (verified on OpenRouter 2026-09-23): `google/gemini-3-pro-image` (Nano Banana Pro) for generation, `google/gemini-3.1-pro-preview` for review, and `perplexity/sonar-pro` for research. Override the first two with `ALTERLAB_IMAGE_MODEL` / `ALTERLAB_REVIEW_MODEL`.
 
 **Data & privacy:** prompts and research/infographic content are sent to a third-party API (OpenRouter) for generation and quality review. Avoid sending confidential, clinical, or unpublished material.
 
@@ -115,4 +123,4 @@ export OPENROUTER_API_KEY='your_api_key_here'   # https://openrouter.ai/keys
 | [`references/color_palettes.md`](references/color_palettes.md) | Full palette specifications |
 | [`references/infographic_types.md`](references/infographic_types.md) | Extended layout templates for all types |
 
-Use this skill to create professional, accessible, and visually compelling infographics using Nano Banana Pro AI with intelligent Gemini 3 Pro quality review.
+Use this skill to create professional, accessible, and visually compelling infographics using Nano Banana Pro AI with intelligent Gemini 3.1 Pro quality review.

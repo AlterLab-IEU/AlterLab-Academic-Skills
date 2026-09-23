@@ -20,7 +20,11 @@ import os
 import sys
 import json
 import argparse
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
+
+# Perplexity models on OpenRouter (checked against openrouter.ai/api/v1/models on
+# 2026-09-23). `sonar-reasoning` was retired upstream; use `sonar-reasoning-pro`.
+MODELS = ["sonar-pro", "sonar-pro-search", "sonar", "sonar-reasoning-pro"]
 
 
 def check_dependencies():
@@ -117,9 +121,9 @@ def search_with_perplexity(
             }
         }
 
-        # Check if citations are available in the response
-        if hasattr(response.choices[0].message, 'citations'):
-            result["citations"] = response.choices[0].message.citations
+        citations = _collect_citations(response)
+        if citations:
+            result["citations"] = citations
 
         return result
 
@@ -130,6 +134,39 @@ def search_with_perplexity(
             "query": query,
             "model": model
         }
+
+
+def _collect_citations(response: Any) -> List[Dict[str, str]]:
+    """Gather source URLs from wherever LiteLLM/OpenRouter put them.
+
+    OpenRouter returns Perplexity sources as OpenAI-style `url_citation`
+    annotations on the message, and may also pass through Perplexity's top-level
+    `citations` (URL strings) and `search_results` lists, which LiteLLM exposes as
+    attributes on the response. Deduplicated by URL; empty if none were returned.
+    """
+    found: List[Dict[str, str]] = []
+    seen = set()
+
+    def add(url: Optional[str], title: Optional[str] = "") -> None:
+        if url and url not in seen:
+            seen.add(url)
+            found.append({"url": url, "title": title or ""})
+
+    def field(obj: Any, name: str) -> Any:
+        return obj.get(name) if isinstance(obj, dict) else getattr(obj, name, None)
+
+    message = response.choices[0].message
+    for ann in field(message, "annotations") or []:
+        cite = field(ann, "url_citation") or ann
+        add(field(cite, "url"), field(cite, "title"))
+    for item in getattr(response, "search_results", None) or []:
+        add(field(item, "url"), field(item, "title"))
+    for item in getattr(response, "citations", None) or []:
+        if isinstance(item, str):
+            add(item)
+        else:
+            add(field(item, "url"), field(item, "title"))
+    return found
 
 
 def main():
@@ -145,7 +182,7 @@ Examples:
   # Use Sonar Pro Search for deeper analysis
   python perplexity_search.py "Compare mRNA and viral vector vaccines" --model sonar-pro-search
 
-  # Use Sonar Reasoning for complex queries
+  # Use Sonar Reasoning Pro for multi-step reasoning
   python perplexity_search.py "Explain quantum entanglement" --model sonar-reasoning-pro
 
   # Save output to file
@@ -158,26 +195,20 @@ Available Models:
   - sonar-pro (default): General-purpose search with good balance
   - sonar-pro-search: Most advanced agentic search with multi-step reasoning
   - sonar: Standard model for basic searches
-  - sonar-reasoning-pro: Advanced reasoning capabilities
-  - sonar-reasoning: Basic reasoning model
+  - sonar-reasoning-pro: Search with explicit reasoning
         """
     )
 
     parser.add_argument(
         "query",
-        help="The search query"
+        nargs="?",
+        help="The search query (not needed with --check-setup)"
     )
 
     parser.add_argument(
         "--model",
         default=os.environ.get("DEFAULT_MODEL", "sonar-pro"),
-        choices=[
-            "sonar-pro",
-            "sonar-pro-search",
-            "sonar",
-            "sonar-reasoning-pro",
-            "sonar-reasoning"
-        ],
+        choices=MODELS,
         help="Perplexity model to use (default: sonar-pro, or $DEFAULT_MODEL)"
     )
 
@@ -213,6 +244,10 @@ Available Models:
     )
 
     args = parser.parse_args()
+    # argparse does not validate defaults, so a stale $DEFAULT_MODEL (e.g. the
+    # retired sonar-reasoning) would otherwise reach OpenRouter and fail there.
+    if args.model not in MODELS:
+        parser.error(f"unsupported model {args.model!r} (from $DEFAULT_MODEL?); choose from {MODELS}")
 
     # Check setup if requested
     if args.check_setup:
@@ -226,6 +261,9 @@ Available Models:
         else:
             print("\n✗ Setup incomplete. Please fix the issues above.")
             return 1
+
+    if not args.query:
+        parser.error("a search query is required (or use --check-setup)")
 
     # Check dependencies
     if not check_dependencies():
@@ -266,8 +304,8 @@ Available Models:
 
     # Save to file if requested
     if args.output:
-        with open(args.output, 'w') as f:
-            json.dump(result, f, indent=2)
+        with open(args.output, 'w', encoding='utf-8') as f:
+            json.dump(result, f, indent=2, ensure_ascii=False, default=str)
         print(f"\n✓ Results saved to {args.output}", file=sys.stderr)
 
     return 0

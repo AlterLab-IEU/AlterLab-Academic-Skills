@@ -221,7 +221,7 @@ Examples:
   %(prog)s --id 672 --format json
 
   # Complex search query
-  %(prog)s --search "insulin[gene] AND diabetes[disease]"
+  %(prog)s --search "INS[sym] AND diabetes[Disease/Phenotype]" --organism human
 
   # Multiple gene IDs
   %(prog)s --id 672,7157,5594

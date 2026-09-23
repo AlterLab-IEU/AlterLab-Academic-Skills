@@ -49,10 +49,11 @@ print(f"Durbin-Watson: {dw_stat:.4f}")
 ```python
 from statsmodels.stats.diagnostic import acorr_breusch_godfrey
 
-bg_test = acorr_breusch_godfrey(results, nlags=5)
-lm_stat, lm_pval, f_stat, f_pval = bg_test
+# result_object=True returns a named result (default from statsmodels 0.16;
+# 0.15 still returns the legacy tuple with a FutureWarning)
+bg_test = acorr_breusch_godfrey(results, nlags=5, result_object=True)
 
-print(f"LM statistic: {lm_stat:.4f}, p-value: {lm_pval:.4f}")
+print(f"LM statistic: {bg_test.lm:.4f}, p-value: {bg_test.lmpval:.4f}")
 # H0: No autocorrelation up to lag k
 ```
 
@@ -88,10 +89,9 @@ print(f"White test p-value: {lm_pval:.4f}")
 ```python
 from statsmodels.stats.diagnostic import het_arch
 
-arch_test = het_arch(residuals, nlags=5)
-lm_stat, lm_pval, f_stat, f_pval = arch_test
+arch_test = het_arch(residuals, nlags=5, result_object=True)
 
-print(f"ARCH test p-value: {lm_pval:.4f}")
+print(f"ARCH test p-value: {arch_test.lmpval:.4f}")
 # H0: No ARCH effects
 # If significant, consider GARCH model
 ```
@@ -461,9 +461,9 @@ print(f"p-value: {p_value:.4f}")
 ```python
 from statsmodels.stats.descriptivestats import sign_test
 
-# H0: Median = m0
-result = sign_test(data, m0=0)
-print(result)
+# H0: Median = mu0; returns (M statistic, p-value)
+m_stat, p_value = sign_test(data, mu0=0)
+print(m_stat, p_value)
 ```
 
 ### ANOVA
@@ -736,7 +736,7 @@ plt.show()
 
 ```python
 def cohens_d(group1, group2):
-    \"\"\"Calculate Cohen's d for independent samples\"\"\"
+    """Calculate Cohen's d for independent samples"""
     n1, n2 = len(group1), len(group2)
     var1, var2 = np.var(group1, ddof=1), np.var(group2, ddof=1)
 
@@ -813,14 +813,14 @@ print(f"p-value: {result.pvalue:.4f}")
 **Propensity score matching**:
 
 ```python
-from statsmodels.treatment import propensity_score
-
-# Estimate propensity scores
+# Estimate propensity scores with a logit model
 ps_model = sm.Logit(treatment, X).fit()
 propensity_scores = ps_model.predict(X)
 
-# Use for matching or weighting
-# (manual implementation of matching needed)
+# Use for matching or weighting (matching must be implemented manually).
+# For IPW / AIPW / regression-adjustment ATE estimates, statsmodels provides
+# statsmodels.treatment.treatment_effects.TreatmentEffect; see alterlab-causal-inference
+# for a full causal-inference workflow.
 ```
 
 **Difference-in-differences**:

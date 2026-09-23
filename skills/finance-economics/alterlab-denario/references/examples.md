@@ -1,5 +1,12 @@
 # Denario Examples
 
+> **Model arguments.** denario 1.0.1 ships retired default models (`gemini-2.0-flash` for the fast path; `o3-mini`, retiring 2026-10-23, in the cmbagent/results agents). Every example below passes live models via these two names — define them once per session (see `llm_configuration.md` for choices):
+>
+> ```python
+> LLM_FAST = "gpt-4.1"  # any live denario.models key, or an LLM(...) object
+> RESULTS_MODELS = dict(researcher_model="gpt-4.1", plan_reviewer_model="gpt-4.1", formatter_model="gpt-4.1")
+> ```
+
 ## Complete End-to-End Research Example
 
 This example demonstrates a full research pipeline from data to publication.
@@ -42,12 +49,12 @@ Known characteristics: Strong autocorrelation, seasonal patterns, missing data p
 
 ```python
 # Generate research idea
-den.get_idea()
+den.get_idea(llm=LLM_FAST)
 # Output: "Quantify the rate of global temperature increase using
 # linear regression and assess acceleration in warming trends"
 
 # Develop methodology
-den.get_method()
+den.get_method(llm=LLM_FAST)
 # Output: Creates methodology including:
 # - Time-series preprocessing
 # - Linear trend analysis
@@ -56,7 +63,7 @@ den.get_method()
 # - Visualization of trends
 
 # Execute analysis
-den.get_results()
+den.get_results(**RESULTS_MODELS)
 # Output: Runs the analysis, generates:
 # - Computed trend: +0.18°C per decade
 # - Statistical tests: p < 0.001
@@ -129,7 +136,7 @@ Data characteristics:
 - Batch effects corrected
 """)
 
-den.get_idea()
+den.get_idea(llm=LLM_FAST)
 # Now generates more specific and relevant research ideas
 ```
 
@@ -182,7 +189,7 @@ Research interests: Market prediction, sentiment analysis, causal inference
 """)
 
 # Generate multiple ideas (conceptual - depends on denario API)
-den.get_idea()
+den.get_idea(llm=LLM_FAST)
 
 # Review the generated idea in idea.md
 # Decide whether to proceed or regenerate
@@ -277,7 +284,7 @@ den.get_paper(journal=Journal.APS)
 
 ## Fast vs. cmbagent Mode
 
-`get_idea` and `get_method` accept `mode="fast"` (default; LangGraph backend, faster, less reliable, default LLM `gemini-2.0-flash`) or `mode="cmbagent"` (cmbagent backend, slower, more reliable, OpenAI model defaults).
+`get_idea` and `get_method` accept `mode="fast"` (default; LangGraph backend, faster, less reliable) or `mode="cmbagent"` (cmbagent backend, slower, more reliable, OpenAI model defaults). The fast-mode default LLM `gemini-2.0-flash` was retired on 2026-06-01, so pass `llm=` explicitly.
 
 ### Example: Rapid Prototyping (fast mode)
 
@@ -290,19 +297,21 @@ Goal: Identify seasonal patterns and forecast next quarter
 Tools: pandas, Prophet
 """)
 
-# Fast path (default). Pass an explicit llm to override the default gemini-2.0-flash.
-den.get_idea(mode="fast")
-den.get_method(mode="fast")
-den.get_results()
+# Fast path (default). Pass a live llm: the built-in gemini-2.0-flash default is retired.
+den.get_idea(mode="fast", llm="gpt-4.1")
+den.get_method(mode="fast", llm="gpt-4.1")
+den.get_results(researcher_model="gpt-4.1", plan_reviewer_model="gpt-4.1", formatter_model="gpt-4.1")
 den.get_paper()  # defaults to Journal.NONE
 ```
 
 ### Example: Reliable run (cmbagent mode)
 
 ```python
-den.get_idea(mode="cmbagent")     # uses OpenAI agent defaults (gpt-4o, o3-mini, gpt-4.1)
-den.get_method(mode="cmbagent")
-den.get_results()
+# OpenAI agent defaults are gpt-4o, o3-mini, gpt-4.1; swap out o3-mini (retiring 2026-10-23)
+o3_free = dict(plan_reviewer_model="gpt-4.1", formatter_model="gpt-4.1")
+den.get_idea(mode="cmbagent", idea_hater_model="gpt-4.1", **o3_free)
+den.get_method(mode="cmbagent", **o3_free)
+den.get_results(researcher_model="gpt-4.1", **o3_free)
 den.get_paper(journal=Journal.APS)
 ```
 
@@ -331,10 +340,10 @@ to identify diagnostic regions
 """)
 
 # Let denario develop the methodology
-den.get_method()
+den.get_method(llm=LLM_FAST)
 
 # Review methodology, then execute
-den.get_results()
+den.get_results(**RESULTS_MODELS)
 
 # Generate paper
 den.get_paper(journal=Journal.APS)
@@ -368,12 +377,12 @@ Data characteristics:
 - Non-stationary (unit root)
 """)
 
-den.get_idea()
+den.get_idea(llm=LLM_FAST)
 # Might generate: "Develop a SARIMAX model incorporating economic indicators
 # as exogenous variables to forecast unemployment with confidence intervals"
 
-den.get_method()
-den.get_results()
+den.get_method(llm=LLM_FAST)
+den.get_results(**RESULTS_MODELS)
 den.get_paper(journal=Journal.APS)
 ```
 
@@ -406,16 +415,16 @@ Goals:
 - Achieve >85% AUC-ROC
 """)
 
-den.get_idea()
+den.get_idea(llm=LLM_FAST)
 # Might generate: "Develop an ensemble model combining XGBoost and Random Forest
 # with SMOTE oversampling, and use SHAP values to identify interpretable
 # churn risk factors"
 
-den.get_method()
+den.get_method(llm=LLM_FAST)
 # Will include: train/test split, cross-validation, hyperparameter tuning,
 # performance metrics, feature importance analysis
 
-den.get_results()
+den.get_results(**RESULTS_MODELS)
 # Executes full ML pipeline, generates:
 # - Model performance metrics
 # - ROC curves
@@ -446,14 +455,14 @@ Review and refine at each stage:
 
 ```python
 # Generate
-den.get_idea()
+den.get_idea(llm=LLM_FAST)
 
 # Review input_files/idea.md
 # If needed, refine:
 den.set_idea("Refined version of the idea")
 
 # Continue
-den.get_method()
+den.get_method(llm=LLM_FAST)
 # Review input_files/methods.md
 # Refine if needed, then proceed
 ```
@@ -470,9 +479,9 @@ from denario import Denario, Journal
 
 den = Denario(project_dir="./project")
 den.set_data_description("...")
-den.get_idea()
-den.get_method()
-den.get_results()
+den.get_idea(llm=LLM_FAST)
+den.get_method(llm=LLM_FAST)
+den.get_results(**RESULTS_MODELS)
 den.get_paper(journal=Journal.APS)
 """)
 ```

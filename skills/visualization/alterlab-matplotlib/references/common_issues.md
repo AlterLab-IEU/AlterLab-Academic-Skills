@@ -160,8 +160,9 @@ ax.plot(x, y, rasterized=True)
 # Solution 3: Use vector format for simple plots
 plt.savefig('figure.pdf')  # or .svg
 
-# Solution 4: Compress PNG
-plt.savefig('figure.png', dpi=300, optimize=True)
+# Solution 4: Compress PNG (Pillow options go through pil_kwargs; a bare
+# optimize=True raises TypeError on current matplotlib)
+plt.savefig('figure.png', dpi=300, pil_kwargs={'optimize': True})
 ```
 
 ### Issue: Slow Plotting with Large Datasets

@@ -24,13 +24,13 @@ try:
     from pymatgen.core import Composition
     from pymatgen.analysis.phase_diagram import PhaseDiagram, PDPlotter
 except ImportError:
-    print("Error: pymatgen is not installed. Install with: pip install pymatgen")
+    print("Error: pymatgen is not installed. Install with: uv pip install pymatgen")
     sys.exit(1)
 
 try:
     from mp_api.client import MPRester
 except ImportError:
-    print("Error: mp-api is not installed. Install with: pip install mp-api")
+    print("Error: mp-api is not installed. Install with: uv pip install mp-api")
     sys.exit(1)
 
 
@@ -91,13 +91,13 @@ def generate_phase_diagram(chemsys: str, args):
         try:
             comp = Composition(args.analyze)
 
-            # Find closest entry
-            closest_entry = None
-            _min_distance = float('inf')
-            for entry in entries:
-                if entry.composition.reduced_formula == comp.reduced_formula:
-                    closest_entry = entry
-                    break
+            # Use the lowest-energy polymorph of this formula (the first match may be
+            # an unstable polymorph, which would misreport the composition's stability)
+            matches = [
+                entry for entry in entries
+                if entry.composition.reduced_formula == comp.reduced_formula
+            ]
+            closest_entry = min(matches, key=lambda e: e.energy_per_atom) if matches else None
 
             if closest_entry:
                 # Calculate energy above hull
@@ -105,22 +105,25 @@ def generate_phase_diagram(chemsys: str, args):
                 print(f"Energy above hull:    {e_above_hull:.4f} eV/atom")
 
                 if e_above_hull < 0.001:
-                    print(f"Status:               STABLE (on convex hull)")
+                    print("Status:               STABLE (on convex hull)")
+                    if closest_entry in pd.stable_entries:
+                        # Energy relative to the hull without this phase (<= 0)
+                        rxn_energy = pd.get_equilibrium_reaction_energy(closest_entry)
+                        print(f"Equilibrium reaction energy: {rxn_energy:.4f} eV/atom")
                 elif e_above_hull < 0.05:
-                    print(f"Status:               METASTABLE (nearly stable)")
+                    print("Status:               METASTABLE (nearly stable)")
                 else:
-                    print(f"Status:               UNSTABLE")
+                    print("Status:               UNSTABLE")
 
-                    # Get decomposition
+                    # Get decomposition; for an unstable phase the decomposition
+                    # energy is its energy above hull (get_equilibrium_reaction_energy
+                    # only accepts stable entries)
                     decomp = pd.get_decomposition(comp)
-                    print(f"\nDecomposes to:")
+                    print("\nDecomposes to:")
                     for entry, fraction in decomp.items():
                         formula = entry.composition.reduced_formula
                         print(f"  {fraction:.3f} × {formula}")
-
-                    # Get reaction energy
-                    rxn_energy = pd.get_equilibrium_reaction_energy(closest_entry)
-                    print(f"\nDecomposition energy: {rxn_energy:.4f} eV/atom")
+                    print(f"\nDecomposition energy: {e_above_hull:.4f} eV/atom")
 
             else:
                 print(f"No entry found for composition {args.analyze}")
@@ -139,15 +142,19 @@ def generate_phase_diagram(chemsys: str, args):
     # Get chemical potentials
     if args.chemical_potentials:
         print("\n--- CHEMICAL POTENTIALS ---")
-        print("(at stability regions)")
-        try:
-            chempots = pd.get_all_chempots()
-            for element, potentials in chempots.items():
-                print(f"\n{element}:")
-                for potential in potentials[:5]:  # Show first 5
-                    print(f"  {potential:.4f} eV")
-        except Exception as e:
-            print(f"Could not calculate chemical potentials: {e}")
+        if not args.analyze:
+            print("Pass --analyze <formula> to list the chemical potentials at that composition")
+        else:
+            try:
+                # {facet name: {Element: mu (eV/atom)}} for each hull facet containing the
+                # composition; get_all_chempots requires a composition argument
+                chempots = pd.get_all_chempots(Composition(args.analyze))
+                for facet, mus in list(chempots.items())[:5]:  # show first 5 facets
+                    print(f"\n{facet}:")
+                    for element, mu in mus.items():
+                        print(f"  mu({element}) = {mu:.4f} eV")
+            except Exception as e:
+                print(f"Could not calculate chemical potentials: {e}")
 
     # Plot phase diagram
     print("\n--- GENERATING PLOT ---")
@@ -172,7 +179,7 @@ def main():
         epilog="""
 Requirements:
   - Materials Project API key (set MP_API_KEY environment variable)
-  - mp-api package: pip install mp-api
+  - mp-api package: uv pip install mp-api
 
 Examples:
   %(prog)s Li-Fe-O

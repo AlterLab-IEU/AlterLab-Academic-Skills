@@ -81,10 +81,11 @@ from statsmodels.tsa.stattools import adfuller
 
 # ADF test for stationarity
 def check_stationarity(series):
-    result = adfuller(series)
-    print(f"ADF Statistic: {result[0]:.4f}")
-    print(f"p-value: {result[1]:.4f}")
-    if result[1] <= 0.05:
+    # result_object=True: named fields (default from 0.16; 0.15 warns without it)
+    result = adfuller(series, result_object=True)
+    print(f"ADF Statistic: {result.statistic:.4f}")
+    print(f"p-value: {result.pvalue:.4f}")
+    if result.pvalue <= 0.05:
         print("Series is stationary")
         return True
     else:
@@ -300,8 +301,8 @@ from statsmodels.tsa.stattools import grangercausalitytests
 # Requires 2D array [series2, series1]
 test_data = df_multivariate[['series2', 'series1']]
 
-# Test up to max_lag (the verbose= argument is deprecated; read the
-# returned dict instead of relying on printed output)
+# Test up to max_lag (the verbose= argument was removed in statsmodels 0.15;
+# read the returned dict instead of relying on printed output)
 max_lag = 5
 results = grangercausalitytests(test_data, max_lag)
 
@@ -465,20 +466,20 @@ from statsmodels.tsa.stattools import adfuller, kpss
 
 # Augmented Dickey-Fuller (ADF) test
 # H0: unit root (non-stationary)
-adf_result = adfuller(y, autolag='AIC')
-print(f"ADF Statistic: {adf_result[0]:.4f}")
-print(f"p-value: {adf_result[1]:.4f}")
-if adf_result[1] <= 0.05:
+adf_result = adfuller(y, autolag='AIC', result_object=True)
+print(f"ADF Statistic: {adf_result.statistic:.4f}")
+print(f"p-value: {adf_result.pvalue:.4f}")
+if adf_result.pvalue <= 0.05:
     print("Reject H0: Series is stationary")
 else:
     print("Fail to reject H0: Series is non-stationary")
 
 # KPSS test
 # H0: stationary (opposite of ADF)
-kpss_result = kpss(y, regression='c', nlags='auto')
-print(f"KPSS Statistic: {kpss_result[0]:.4f}")
-print(f"p-value: {kpss_result[1]:.4f}")
-if kpss_result[1] <= 0.05:
+kpss_result = kpss(y, regression='c', nlags='auto', result_object=True)  # nlags=None now raises
+print(f"KPSS Statistic: {kpss_result.statistic:.4f}")
+print(f"p-value: {kpss_result.pvalue:.4f}")  # table-interpolated; bounded to [0.01, 0.10]
+if kpss_result.pvalue <= 0.05:
     print("Reject H0: Series is non-stationary")
 else:
     print("Fail to reject H0: Series is stationary")
@@ -511,9 +512,9 @@ plt.show()
 from statsmodels.stats.diagnostic import het_arch
 
 # ARCH test for heteroskedasticity
-arch_test = het_arch(results.resid, nlags=10)
-print(f"ARCH test statistic: {arch_test[0]:.4f}")
-print(f"p-value: {arch_test[1]:.4f}")
+arch_test = het_arch(results.resid, nlags=10, result_object=True)
+print(f"ARCH test statistic: {arch_test.lm:.4f}")
+print(f"p-value: {arch_test.lmpval:.4f}")
 
 # If significant, consider GARCH model
 ```
@@ -653,8 +654,8 @@ Bridges univariate and multivariate time series.
 from statsmodels.tsa.ardl import ARDL
 
 # ARDL(p, q) model
-# y depends on its own lags and lags of X
-model = ARDL(y, lags=2, exog=X, exog_lags=2)
+# y depends on its own lags and lags of X (`order` sets the exog lag length)
+model = ARDL(y, lags=2, exog=X, order=2)
 results = model.fit()
 ```
 

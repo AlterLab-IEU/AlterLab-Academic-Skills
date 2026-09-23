@@ -52,7 +52,7 @@ stmt = facts.balance_sheet(as_of=date(2024, 12, 31))  # point-in-time
 
 # Cash flow
 stmt = facts.cash_flow()
-stmt = facts.cashflow_statement(periods=5, annual=True)
+stmt = facts.cash_flow_statement(periods=5, annual=True)
 
 # Parameters:
 # periods (int): number of periods (default: 4)
@@ -357,11 +357,11 @@ latest_revenue = facts.query()\
 ### Error Handling
 
 ```python
-from edgar.entity.core import NoCompanyFactsFound
+from edgar import CompanyFactsNotFoundError  # was NoCompanyFactsFound (deprecated alias)
 
 try:
     facts = company.get_facts()
-except NoCompanyFactsFound:
+except CompanyFactsNotFoundError:
     print("No facts available")
 
 # Methods return None gracefully

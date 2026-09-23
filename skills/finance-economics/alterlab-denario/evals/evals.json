@@ -4,7 +4,7 @@
     {
       "id": "end-to-end-pipeline",
       "prompt": "I have a time-series dataset and want an AI system to take it all the way from generating a research idea through running the analysis to producing a LaTeX paper. Can you set up that automated pipeline?",
-      "expected_output": "Triggers Denario. Initializes a Denario(project_dir=...) project, calls set_data_description, then the four-stage pipeline get_idea() -> get_method() -> get_results() -> get_paper(journal=Journal.APS). Notes Denario is a multiagent system built on AG2/LangGraph and that LLM API keys (e.g. Vertex AI or OpenAI) must be configured.",
+      "expected_output": "Triggers Denario. Initializes a Denario(project_dir=...) project, calls set_data_description, then the four-stage pipeline get_idea() -> get_method() -> get_results() -> get_paper(journal=Journal.APS). Notes Denario is a multiagent system built on AG2/LangGraph, that LLM API keys (e.g. OpenAI, Gemini) must be configured, and that model IDs should be passed explicitly because denario 1.0.1's built-in defaults include retired models (gemini-2.0-flash, o3-mini).",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "Denario"},
@@ -51,6 +51,16 @@
         {"type": "output_contains", "value": "cmbagent"},
         {"type": "output_contains", "value": "Journal.NeurIPS"},
         {"type": "behavior", "value": "Names the mode=\"fast\"/\"cmbagent\" trade-off on get_idea/get_method and confirms NeurIPS is a supported Journal enum value passed to get_paper."}
+      ]
+    },
+    {
+      "id": "near-miss-research-pipeline",
+      "prompt": "I've finished my own study and have the data analyzed. Take me through the literature review, drafting the manuscript, a mock peer review, and one revision round before submission.",
+      "expected_output": "Should NOT trigger Denario. The researcher owns the study and wants a staged research -> write -> review -> revise workflow for their manuscript, not an autonomous AI system that generates the idea, runs the analysis, and writes the paper itself. Defer to the alterlab-research-pipeline skill.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-research-pipeline"},
+        {"type": "behavior", "value": "Recognizes a researcher-led research-to-publication workflow and routes to the research pipeline rather than Denario's autonomous data-to-paper agents."}
       ]
     },
     {

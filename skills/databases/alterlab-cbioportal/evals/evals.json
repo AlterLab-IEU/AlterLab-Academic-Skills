@@ -4,12 +4,12 @@
     {
       "id": "mutation-frequency-tcga",
       "prompt": "What fraction of TCGA breast cancer samples carry a TP53 mutation? I want the percentage and a breakdown of the mutation types (missense, nonsense, frameshift).",
-      "expected_output": "Triggers the cBioPortal skill. Resolves TP53 to its Entrez ID (7157) via POST /genes/fetch, then fetches mutations from the brca_tcga_mutations molecular profile (POST molecular-profiles/{id}/mutations/fetch) against the study's all-cases sample list, computes the mutated-patient fraction over total samples, and tabulates mutationType counts (Missense_Mutation, Nonsense_Mutation, Frame_Shift_Del, etc.). Uses the public REST API at https://www.cbioportal.org/api with no API key.",
+      "expected_output": "Triggers the cBioPortal skill. Resolves TP53 to its Entrez ID (7157) via POST /genes/fetch?geneIdType=HUGO_GENE_SYMBOL, then fetches mutations from the brca_tcga_mutations molecular profile (POST molecular-profiles/{id}/mutations/fetch), computes the mutated-sample fraction over the samples profiled for mutations (the all_cases_with_mutation_data / brca_tcga_sequenced list, not every sample in the study), and tabulates mutationType counts (Missense_Mutation, Nonsense_Mutation, Frame_Shift_Del, etc.). Uses the public REST API at https://www.cbioportal.org/api with no API key.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "cbioportal" },
         { "type": "behavior", "value": "Resolves the gene symbol to an Entrez ID via /genes/fetch and queries a study mutation molecular profile rather than guessing a frequency." },
-        { "type": "behavior", "value": "Computes alteration frequency as mutated patients over total samples in the study's all-cases sample list." }
+        { "type": "behavior", "value": "Computes alteration frequency as mutated samples over the samples sequenced for mutations (all_cases_with_mutation_data sample list)." }
       ]
     },
     {
@@ -25,7 +25,7 @@
     {
       "id": "pan-cancer-alteration",
       "prompt": "Show me the mutation frequency of PIK3CA across multiple cancer types in cBioPortal so I can see which tumors are most dependent on it.",
-      "expected_output": "Triggers cBioPortal. Iterates across multiple studies (e.g. via GET /studies, filtering TCGA studies), computes per-study PIK3CA mutation frequency, and returns a ranked pan-cancer table sorted by mutation percentage. Notes that the API uses Entrez IDs and that frequencies are patient-level over each study's sample list.",
+      "expected_output": "Triggers cBioPortal. Iterates across multiple studies (e.g. via GET /studies, filtering the per-cancer TCGA PanCancer Atlas studies ending in _tcga_pan_can_atlas_2018), computes per-study PIK3CA mutation frequency, and returns a ranked pan-cancer table sorted by mutation percentage. Notes that the API uses Entrez IDs and that frequencies are computed over each study's sequenced-sample list.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Loops over multiple cancer studies and returns a ranked pan-cancer mutation-frequency comparison rather than a single study result." }
@@ -34,7 +34,7 @@
     {
       "id": "survival-by-mutation",
       "prompt": "In TCGA lung adenocarcinoma, do KEAP1-mutant patients have worse overall survival than KEAP1 wild-type? Get me the OS_MONTHS and OS_STATUS split by mutation status.",
-      "expected_output": "Triggers cBioPortal. Fetches KEAP1 mutations for luad_tcga to define the mutant patient set, pulls clinical data (GET /clinical-data/fetch) for OS_MONTHS and OS_STATUS, joins on patientId, and returns survival data split by mutation status ready for Kaplan-Meier analysis. Notes that the skill provides the data extraction and downstream KM/log-rank is performed separately.",
+      "expected_output": "Triggers cBioPortal. Fetches KEAP1 mutations for luad_tcga to define the mutant patient set, pulls patient clinical data for OS_MONTHS and OS_STATUS (per-study GET /studies/{studyId}/clinical-data, or POST /clinical-data/fetch — that endpoint is POST-only), splits OS_STATUS like '1:DECEASED' into an event flag, joins on patientId, and returns survival data split by mutation status ready for Kaplan-Meier analysis. Notes that the skill provides the data extraction and downstream KM/log-rank is performed separately.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "OS_STATUS" },

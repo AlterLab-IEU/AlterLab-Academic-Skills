@@ -180,9 +180,9 @@ Multivariate distributions define joint probability distributions over vector-va
 - Parameters: `n` (number of trials), `p` (probability vector)
 - Common uses: Count data across multiple categories
 
-**`pm.MvStudentT(name, nu, mu, cov)`**
+**`pm.MvStudentT(name, nu, mu, scale)`**
 - Multivariate Student's t-distribution
-- Parameters: `nu` (degrees of freedom), `mu` (location), `cov` (scale matrix)
+- Parameters: `nu` (degrees of freedom), `mu` (location), `scale` (scale matrix; or `chol` / `tau`). `cov=` is a deprecated alias for `scale` (FutureWarning)
 - Common uses: Robust multivariate modeling
 
 ### Specialized Multivariate Distributions
@@ -192,8 +192,6 @@ Multivariate distributions define joint probability distributions over vector-va
 **`pm.LKJCholeskyCov(name, n, eta, sd_dist)`** - LKJ prior with Cholesky decomposition
 
 **`pm.Wishart(name, nu, V)`** - Wishart distribution (for covariance matrices)
-
-**`pm.InverseWishart(name, nu, V)`** - Inverse Wishart distribution
 
 **`pm.MatrixNormal(name, mu, rowcov, colcov)`** - Matrix normal distribution
 

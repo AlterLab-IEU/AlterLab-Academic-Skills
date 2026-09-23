@@ -3,10 +3,11 @@ name: alterlab-datacommons
 description: Query Google Data Commons for public statistical data aggregated from global sources, resolving geographic entities and pulling time-series statistics. Use when working with demographic data, economic indicators, health statistics, or environmental data — population counts, GDP figures, unemployment rates, disease prevalence — or when resolving places to DCIDs and exploring relationships between statistical entities. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Requires a Data Commons API key
+compatibility: Requires a free Data Commons API key for observation/node queries (resolve works keyless); datacommons-client >= 2.1 (current 2.1.6)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Data Commons Client
@@ -15,7 +16,23 @@ metadata:
 
 Provides comprehensive access to the Data Commons Python API v2 for querying statistical observations, exploring the knowledge graph, and resolving entity identifiers. Data Commons aggregates data from census bureaus, health organizations, environmental agencies, and other authoritative sources into a unified knowledge graph.
 
-Verified against `datacommons-client` 2.x (the current major). This is the V2 client (package `datacommons_client`), not the legacy `datacommons` (V1) package — the two have different APIs; do not mix them.
+Verified against `datacommons-client` 2.1.6 (current as of 2026-09; Python ≥ 3.10). This is the V2 client (package `datacommons_client`), not the legacy `datacommons` (V1) package — the two have different APIs; do not mix them. Keyword names matter: the place-hierarchy helpers take `place_dcids`, `fetch_entity_names` takes `entity_dcids`, and `fetch_property_values` takes `properties` — passing `node_dcids` to them raises `TypeError`.
+
+## When to Use This Skill
+
+- Pulling population, economic, health, education, or environmental statistics for places (countries, states, counties, cities)
+- Building cross-place or time-series comparisons from harmonized public sources (census, BLS, WHO, World Bank, EPA, …)
+- Resolving place names, coordinates, or Wikidata IDs to Data Commons DCIDs
+- Exploring the Data Commons knowledge graph (place hierarchies, properties, statistical-variable definitions)
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| A specific FRED economic series (GDP, CPI, interest rates) with vintage/revision data | `alterlab-fred` |
+| U.S. Treasury fiscal data (debt, spending, revenue) | `alterlab-usfiscaldata` |
+| NCI Imaging Data Commons (CT/MR/pathology images) — a different "Data Commons" | `alterlab-imaging-data-commons` |
+| Spatial joins, buffers, or mapping of geometries | `alterlab-geopandas` |
 
 ## Installation
 
@@ -92,14 +109,15 @@ labels = client.node.fetch_property_labels(
     out=True
 )
 
-# Navigate hierarchy
+# Navigate hierarchy (dict: DCID -> list of {"dcid", "name", "types"})
 children = client.node.fetch_place_children(
-    node_dcids=["country/USA"]
+    place_dcids="country/USA",
+    children_type="State",
 )
 
-# Get entity names
+# Get entity names (dict: DCID -> Name(value=..., language=...))
 names = client.node.fetch_entity_names(
-    node_dcids=["geoId/06", "geoId/48"]
+    entity_dcids=["geoId/06", "geoId/48"]
 )
 ```
 
@@ -121,10 +139,10 @@ response = client.resolve.fetch_dcids_by_name(
     entity_type="State"
 )
 
-# Resolve by coordinates
-dcid = client.resolve.fetch_dcid_by_coordinates(
-    latitude=37.7749,
-    longitude=-122.4194
+# Resolve by coordinates (returns a ResolveResponse, not a bare DCID)
+coord_response = client.resolve.fetch_dcid_by_coordinates(
+    latitude="37.7749",
+    longitude="-122.4194"
 )
 
 # Resolve Wikidata IDs
@@ -140,11 +158,14 @@ Most Data Commons queries follow this pattern:
 1. **Resolve entities** (if starting with names):
    ```python
    resolve_response = client.resolve.fetch_dcids_by_name(
-       names=["California", "Texas"]
+       names=["California", "Texas"], entity_type="State"
    )
-   dcids = [r["candidates"][0]["dcid"]
-            for r in resolve_response.to_dict().values()
-            if r["candidates"]]
+   # to_dict() -> {"entities": [{"node": "California", "candidates": [{"dcid": ...}]}, ...]}
+   dcids = [e["candidates"][0]["dcid"]
+            for e in resolve_response.to_dict()["entities"]
+            if e.get("candidates")]
+   # or: resolve_response.to_flat_dict() -> {"California": "geoId/06", ...}
+   #     (a list of DCIDs when the name is ambiguous)
    ```
 
 2. **Discover available variables** (optional):
@@ -168,8 +189,10 @@ Most Data Commons queries follow this pattern:
    # As dictionary
    data = response.to_dict()
 
-   # As flat records (list of dataclasses: date, entity, variable, value + facet)
-   records = response.to_observations_as_records()
+   # As flat records (date, entity, variable, value + facet metadata).
+   # to_observation_records() returns a pydantic model — dump it before
+   # building a DataFrame, or the columns come out as 0..N.
+   records = response.to_observation_records().model_dump()
    df = pd.DataFrame(records)
    ```
 
@@ -228,8 +251,21 @@ pivot = df.pivot_table(
 )
 ```
 
-If you already have a response object, flatten it with `to_observations_as_records()`
-(note the method name) and wrap in a DataFrame:
+For every entity of a type under a parent place, pass `entity_dcids="all"` with
+`entity_type` and `parent_entity`:
+
+```python
+df = client.observations_dataframe(
+    variable_dcids=["Median_Income_Household"],
+    date="latest",
+    entity_dcids="all",
+    entity_type="County",
+    parent_entity="geoId/06",
+)
+```
+
+If you already have a response object, flatten it with `to_observation_records()`
+(singular "observation"; there is no `to_observations_as_records`) and dump it:
 
 ```python
 response = client.observation.fetch(
@@ -237,13 +273,14 @@ response = client.observation.fetch(
     entity_dcids=["geoId/06", "geoId/48"],
     date="all",
 )
-df = pd.DataFrame(response.to_observations_as_records())
+df = pd.DataFrame(response.to_observation_records().model_dump())
 ```
 
 ## API Authentication
 
 **For datacommons.org (default):**
-- An API key is required
+- An API key is required for observation and node queries (unauthenticated calls return
+  HTTP 401 `UNAUTHENTICATED`); name resolution currently answers without one
 - Set via environment variable: `export DC_API_KEY="your_key"`
 - Or pass when initializing: `client = DataCommonsClient(api_key="your_key")`
 - Request keys at: https://apikeys.datacommons.org/

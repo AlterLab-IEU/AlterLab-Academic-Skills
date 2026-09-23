@@ -147,7 +147,7 @@ Patient cohort analysis involves systematically studying groups of patients to i
 ### Safety and Tolerability
 
 **Adverse Events (AEs)**
-- **Grading**: CTCAE v5.0 (Grade 1-5)
+- **Grading**: NCI CTCAE, Grade 1-5 (state the version: v6.0 for studies opened from 2026, v5.0 in many ongoing trials)
 - **Attribution**: Related vs unrelated to treatment
 - **Serious AEs (SAEs)**: Death, life-threatening, hospitalization, disability
 - **Reporting**: Incidence, severity, time to onset, resolution
@@ -388,11 +388,11 @@ Treatment discontinuation  6 (12%)  8 (18%)   -        -
 
 ### Reporting Standards
 
-- **CONSORT**: Randomized controlled trials
+- **CONSORT 2025**: Randomized controlled trials (replaces CONSORT 2010)
 - **STROBE**: Observational studies  
 - **REMARK**: Tumor marker prognostic studies
 - **STARD**: Diagnostic accuracy studies
-- **TRIPOD**: Prediction model development/validation
+- **TRIPOD+AI** (2024): Prediction model development/validation, including machine-learning models
 
 ## Clinical Interpretation
 

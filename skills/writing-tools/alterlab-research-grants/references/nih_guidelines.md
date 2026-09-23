@@ -35,9 +35,22 @@
 
 **Plus**: NIBIB, NIDCD, NIDCR, NINR, FIC, NLM, and others
 
+## 2025-2026 Policy Changes (verified 2026-09 — re-check grants.nih.gov before submitting)
+
+- **Simplified Review Framework** (applications due on or after 25 Jan 2025) for most research project grants — R01, R03, R15, R16, R21, R33, R34, R36, R61, RC1/2/4, RF1, RL1/2, U01, U34, U3R, UA5, UC1/2/4, UF1, UG3, UH2/3/5 and phased awards. The five criteria below are regrouped into three factors:
+  - **Factor 1 — Importance of the Research** (Significance + Innovation): scored 1-9
+  - **Factor 2 — Rigor and Feasibility** (Approach, plus inclusion plans and clinical-trial study timeline): scored 1-9
+  - **Factor 3 — Expertise and Resources** (Investigators + Environment): rated only *sufficient* or *not sufficient* (with an explanation), judged relative to career stage
+  - Reviewers still give an **Overall Impact** score. Human subjects, vertebrate animals, biohazards, and resubmission/renewal/revision remain additional review criteria; budget and authentication of key resources are unscored considerations; foreign-organization, select-agent, and resource-sharing plans moved to NIH administrative review. See https://grants.nih.gov/policy-and-compliance/policy-topics/peer-review/simplifying-review.
+- **AI-generated applications and the application cap** (NOT-OD-25-132, effective 25 Sept 2025): NIH will not consider applications "substantially developed by AI", or containing sections substantially developed by AI, to be the applicants' original ideas; AI use detected post-award may be referred to the Office of Research Integrity and can lead to cost disallowance, suspension, or termination. NIH accepts at most **six** new, renewal, resubmission, or revision applications per PI/PD or MPI per calendar year (all activity codes except T and R13).
+- **Reviewers may not use generative AI** to analyze applications or formulate critiques, and may not upload application content to AI tools (NOT-OD-23-149).
+- **Common Forms** (NOT-OD-26-018): for due dates on or after 25 Jan 2026, the Biographical Sketch Common Form (+ NIH Biographical Sketch Supplement: Personal Statement, Contributions to Science) and Current and Pending (Other) Support Common Form must be generated and certified in SciENcv, with each person's ORCID iD linked to eRA Commons. There is no page limit for the combined biosketch output.
+- **Unified Funding Strategy**: since the January 2026 council round, ICs no longer use paylines; funding decisions weigh the full peer-review record with IC priorities and budget.
+- **Salary cap**: $228,000 (Executive Level II) from 1 Jan 2026 (NOT-OD-26-034, corrected by NOT-OD-26-038).
+
 ## Core Review Criteria
 
-NIH proposals are evaluated using **scored criteria** (1-9 scale, 1 = exceptional, 9 = poor) and **additional review considerations** (not scored but discussed).
+NIH proposals are evaluated using **scored criteria** (1-9 scale, 1 = exceptional, 9 = poor) and **additional review considerations** (not scored but discussed). For research project grants under the Simplified Review Framework (above), these five criteria are grouped into the three factors and only Factors 1 and 2 are scored; the guidance below on what reviewers look for within each criterion still applies. Fellowships, career development, training, and other non-RPG mechanisms keep their own criteria — check the funding opportunity.
 
 ### Scored Criteria (Overall Impact Score)
 
@@ -488,10 +501,10 @@ NIH requires explicit discussion of:
 - List all personnel with roles, effort (% calendar months)
 - Typical: PI (2-3 months = 16-25%), postdoc (12 months), grad student, tech
 - Justify effort for each person
-- Note: Salary cap applies (~$221,900 for 2024)
+- Note: Salary cap applies ($228,000 for 2026; updated each January)
 
 **Consortium/Contractual Costs**:
-- F&A typically limited to 8% of total costs for subcontracts
+- Subaward F&A is charged at the subrecipient's negotiated rate and is not counted toward the $250K direct-cost limit that decides whether the modular format can be used (the familiar 8% F&A rate belongs to other award types, such as career development and institutional training awards, not to domestic subawards)
 
 **Other Costs**:
 - Describe significant equipment, animals, patient costs, etc.
@@ -516,7 +529,7 @@ NIH requires explicit discussion of:
 ### NIH Salary Cap
 
 **Annual Update**: NIH sets maximum salary for grants
-- 2024 Level: ~$221,900 (Executive Level II)
+- 2026 Level: $228,000 (Executive Level II, effective 1 Jan 2026)
 - Applies to all personnel
 - Fringe benefits calculated on capped salary
 
@@ -633,12 +646,12 @@ NIH requires explicit discussion of:
   - 41-50: Very good (may be fundable)
   - 51+: Less competitive
 
-**Individual Criterion Scores**: Also scored 1-9
-- Significance
-- Investigator(s)
-- Innovation
-- Approach
-- Environment
+**Individual Scores** (Simplified Review Framework, most RPGs):
+- Factor 1, Importance of the Research (Significance + Innovation): 1-9
+- Factor 2, Rigor and Feasibility (Approach): 1-9
+- Factor 3, Expertise and Resources (Investigators + Environment): sufficient / not sufficient only
+
+Mechanisms outside the framework (e.g. fellowships, K awards) still score their own individual criteria.
 
 ### Percentile Ranking
 
@@ -759,13 +772,15 @@ We have addressed these concerns as follows:
 7. **Refocus innovation**: Clarify what's novel and why it matters
 
 **Timing**:
-- Can resubmit at any of the next 3 deadlines (36 months after initial submission)
+- The A1 must be submitted within 37 months of the original (A0) submission; after that NIH treats it as a new application
 - Use time wisely to generate new data
 - Don't rush resubmission with minor changes
 
-## NIH Funding Trends and Priorities (2024-2025)
+## NIH Funding Trends and Priorities (historical snapshot, 2024-2025)
 
-### Current Priorities
+> NIH and IC priorities shifted substantially in 2025-2026. Treat the lists and numbers below as historical context only, and check the current NIH and Institute strategic plans and notices of special interest before positioning an application.
+
+### Priorities as of 2024-2025
 
 - **Health Disparities and Health Equity**: Addressing disparities in disease burden
 - **Alzheimer's Disease and Dementia**: Prevention, treatment, care
@@ -795,7 +810,7 @@ We have addressed these concerns as follows:
 
 **Varies by IC**: Each Institute sets own funding priorities
 
-**Example Paylines (FY2023)**:
+**Example Paylines (FY2023, historical)** — under the Unified Funding Strategy (January 2026 council round onward) ICs no longer use paylines:
 - NIGMS: ~23rd percentile
 - NCI: ~12th percentile (highly competitive)
 - NHLBI: ~11th percentile
@@ -841,9 +856,10 @@ We have addressed these concerns as follows:
 - **Grants & Funding**: https://grants.nih.gov
 - **eRA Commons**: https://commons.era.nih.gov
 - **ASSIST**: https://public.era.nih.gov/assist
-- **Application Forms and Instructions**: https://grants.nih.gov/grants/how-to-apply-application-guide.html
-- **NIH Data Sharing Policy**: https://sharing.nih.gov
-- **Rigor and Reproducibility**: https://grants.nih.gov/reproducibility/index.htm
+- **Application Forms and Instructions**: https://grants.nih.gov/grants-process/write-application/how-to-apply-application-guide
+- **Simplified Review Framework**: https://grants.nih.gov/policy-and-compliance/policy-topics/peer-review/simplifying-review
+- **NIH Data Sharing Policy**: https://grants.nih.gov/policy-and-compliance/policy-topics/sharing-policies
+- **Rigor and Reproducibility**: https://grants.nih.gov/policy-and-compliance/policy-topics/reproducibility
 
 ---
 

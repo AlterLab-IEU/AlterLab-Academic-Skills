@@ -426,8 +426,8 @@ print(view.is_view)  # True
 # Views allow read access
 data = view.X
 
-# Modifying view data affects original
-# (Be careful!)
+# Writing into a view is copy-on-write in anndata >= 0.13: the view
+# materializes its own copy and the parent object is left unchanged.
 
 # Convert view to independent copy
 independent = view.copy()

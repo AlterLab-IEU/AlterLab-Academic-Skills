@@ -15,7 +15,7 @@ This document provides practical examples for common research queries using Open
 from scripts.openalex_client import OpenAlexClient
 from scripts.query_helpers import find_author_works
 
-client = OpenAlexClient(email="your-email@example.edu")
+client = OpenAlexClient()  # reads OPENALEX_API_KEY if set
 works = find_author_works("Albert Einstein", client, limit=100)
 
 for work in works:
@@ -150,7 +150,7 @@ dois = [
     "https://doi.org/10.1371/journal.pone.0266781",
     "https://doi.org/10.1371/journal.pone.0267149",
     "https://doi.org/10.1038/s41586-021-03819-2",
-    # ... up to 50 DOIs
+    # ... any number; batch_lookup sends 100 per request
 ]
 
 works = client.batch_lookup(
@@ -194,13 +194,13 @@ print(f"Got {len(works)} random papers from 2023")
 # First, get institution IDs
 mit_response = client._make_request(
     '/institutions',
-    params={'search': 'MIT', 'per-page': 1}
+    params={'search': 'MIT', 'per_page': 1}
 )
 mit_id = mit_response['results'][0]['id'].split('/')[-1]
 
 stanford_response = client._make_request(
     '/institutions',
-    params={'search': 'Stanford', 'per-page': 1}
+    params={'search': 'Stanford', 'per_page': 1}
 )
 stanford_id = stanford_response['results'][0]['id'].split('/')[-1]
 
@@ -226,7 +226,7 @@ print(f"Found {works['meta']['count']} collaborative papers")
 # Step 1: Find journal source ID
 source_response = client._make_request(
     '/sources',
-    params={'search': 'Nature', 'per-page': 1}
+    params={'search': 'Nature', 'per_page': 1}
 )
 source = source_response['results'][0]
 source_id = source['id'].split('/')[-1]
@@ -239,7 +239,7 @@ works = client.search_works(
         "primary_location.source.id": source_id,
         "publication_year": "2023"
     },
-    per_page=200
+    per_page=100
 )
 
 print(f"Found {works['meta']['count']} papers from Nature in 2023")
@@ -256,7 +256,7 @@ print(f"Found {works['meta']['count']} papers from Nature in 2023")
 # Get MIT ID
 inst_response = client._make_request(
     '/institutions',
-    params={'search': 'MIT', 'per-page': 1}
+    params={'search': 'MIT', 'per_page': 1}
 )
 mit_id = inst_response['results'][0]['id'].split('/')[-1]
 
@@ -352,7 +352,7 @@ inst_ids = []
 for inst_name in top_institutions:
     response = client._make_request(
         '/institutions',
-        params={'search': inst_name, 'per-page': 1}
+        params={'search': inst_name, 'per_page': 1}
     )
     if response['results']:
         inst_id = response['results'][0]['id'].split('/')[-1]
@@ -371,7 +371,7 @@ works = client.search_works(
         "authorships.institutions.id": inst_filter
     },
     sort="cited_by_count:desc",
-    per_page=200
+    per_page=100
 )
 
 print(f"Found {works['meta']['count']} papers matching criteria")

@@ -29,7 +29,7 @@ These responses are decided in advance, by the assumption verdict — not by the
 | Normality, mild + n > 30/group | Proceed (parametric tests are robust at that n). |
 | Normality, moderate | Move to the pre-specified non-parametric fallback. |
 | Normality, severe | Transform, or use the non-parametric fallback. |
-| Homogeneity (t-test) | Use Welch's t-test. |
+| Homogeneity (t-test) | Use Welch's t-test (or pre-specify Welch for every two-group comparison and skip this branch — see `decision_tree.md` §2). |
 | Homogeneity (ANOVA) | Welch's ANOVA or Brown-Forsythe. |
 | Linearity (regression) | Polynomial terms, transform, or GAM. |
 

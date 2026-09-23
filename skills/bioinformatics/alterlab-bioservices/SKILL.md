@@ -3,17 +3,32 @@ name: alterlab-bioservices
 description: Query 40+ bioinformatics web services through one consistent Python API with bioservices (UniProt, KEGG, ChEMBL, Reactome, Ensembl, NCBI and more). Use when a workflow must hit multiple databases together, map identifiers across services, or run cross-database analyses — for quick single-database lookups use gget, for sequence and file manipulation use biopython. Part of the AlterLab Academic Skills suite.
 license: GPL-3.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Self-contained — runs under `uv run python` with `bioservices` installed (1.16.0 as of 2026-09, Python 3.9–3.14); no API key or account required, though several wrapped services want a contact email."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # BioServices
 
 ## Overview
 
-BioServices is a Python package providing programmatic access to approximately 40 bioinformatics web services and databases. Retrieve biological data, perform cross-database queries, map identifiers, analyze sequences, and integrate multiple biological resources in Python workflows. The package handles both REST and SOAP/WSDL protocols transparently.
+BioServices is a Python package providing programmatic access to roughly 40 bioinformatics web services and databases. Retrieve biological data, perform cross-database queries, map identifiers, analyze sequences, and integrate multiple biological resources in Python workflows.
+
+**Recent changes that break old scripts** (verified against bioservices 1.16.0):
+
+- **SOAP/WSDL support was removed in 1.15** — every active service is REST now, and the
+  `WSDLService` class and its `suds` dependency are gone.
+- **`PSICQUIC` and `BioGRID` were removed in 1.14.** For protein interactions use the
+  `STRING` class (added in 1.14) or `IntactComplex`; `from bioservices import PSICQUIC`
+  raises `ImportError`.
+- **`UniProt.mapping()` returns the raw UniProt job payload** —
+  `{"results": [{"from": ..., "to": ...}, ...], "failedIds": [...]}` — not a
+  `{source_id: [target_ids]}` dict. See "Identifier Mapping" below.
+- **NCBIblast methods are snake_case** (`get_status`, `get_result`, `get_result_types`,
+  `wait`); the old `getStatus`/`getResult` camelCase names are gone. 1.16 also adds
+  `ncbiblastapi.NCBIBlastAPI`, which submits to NCBI directly instead of EBI.
 
 ## When to Use This Skill
 
@@ -24,9 +39,19 @@ This skill should be used when:
 - Converting identifiers between different biological databases (KEGG↔UniProt, compound IDs)
 - Running sequence similarity searches (BLAST, MUSCLE alignment)
 - Querying gene ontology terms (QuickGO, GO annotations)
-- Accessing protein-protein interaction data (PSICQUIC, IntactComplex)
+- Accessing protein-protein interaction data (STRING, IntactComplex)
 - Mining genomic data (BioMart, ArrayExpress, ENA)
 - Integrating data from multiple bioinformatics resources in a single workflow
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| A single quick lookup (one gene, one structure, one enrichment) | `alterlab-gget` |
+| Parsing sequence/structure files or scripting Entrez directly | `alterlab-biopython` |
+| Local BLAST+ / `makeblastdb` / DIAMOND on your own database | `alterlab-blast` |
+| Deep work in one database (full KEGG, UniProt, or ChEMBL feature set) | `alterlab-kegg`, `alterlab-uniprot`, `alterlab-chembl` |
+| Cheminformatics on the retrieved structures (descriptors, fingerprints) | `alterlab-rdkit` |
 
 ## Core Capabilities
 
@@ -39,20 +64,23 @@ from bioservices import UniProt
 
 u = UniProt(verbose=False)
 
-# Search for protein by name
-results = u.search("ZAP70_HUMAN", frmt="tab", columns="id,genes,organism")
+# Search for protein by name. frmt is one of xlsx/fasta/json/gff/tsv — "tab" was
+# retired with the June-2022 UniProt API and now raises.
+results = u.search("ZAP70_HUMAN", frmt="tsv", columns="accession,gene_names,organism_name")
 
-# Retrieve FASTA sequence
-sequence = u.retrieve("P43403", "fasta")
+# Retrieve FASTA sequence (frmt defaults to json)
+sequence = u.retrieve("P43403", frmt="fasta")
 
-# Map identifiers between databases
-kegg_ids = u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query="P43403")
+# Map identifiers between databases -> {"results": [{"from": ..., "to": ...}], "failedIds": [...]}
+job = u.mapping(fr="UniProtKB_AC-ID", to="KEGG", query="P43403")
+kegg_ids = [r["to"] for r in job["results"]]
 ```
 
 **Key methods:**
-- `search()`: Query UniProt with flexible search terms
-- `retrieve()`: Get protein entries in various formats (FASTA, XML, tab)
-- `mapping()`: Convert identifiers between databases
+- `search()`: Query UniProt with flexible search terms (`frmt="tsv"`, `columns` as UniProt
+  return-field names such as `accession`, `gene_names`, `organism_name`, `length`)
+- `retrieve()`: Get protein entries in various formats (json, txt, xml, rdf, gff, fasta)
+- `mapping()`: Submit an ID-mapping job and return its results payload
 
 Reference: `references/services_reference.md` for complete UniProt API details.
 
@@ -104,8 +132,8 @@ from bioservices import KEGG
 
 k = KEGG()
 
-# Search compounds by name
-results = k.find("compound", "Geldanamycin")  # Returns cpd:C11222
+# Search compounds by name — the tab-separated result rows are "C11222\tGeldanamycin"
+results = k.find("compound", "Geldanamycin")
 
 # Get compound information with database links
 compound_info = k.get("cpd:C11222")  # Includes ChEBI links
@@ -132,21 +160,25 @@ from bioservices import NCBIblast
 
 s = NCBIblast(verbose=False)
 
-# Run BLASTP against UniProtKB
+# Run BLASTP against UniProtKB via the EBI job service
 jobid = s.run(
     program="blastp",
     sequence=protein_sequence,
     stype="protein",
     database="uniprotkb",
-    email="your.email@example.com"  # Required by NCBI
+    email="your.email@example.com"  # a real address is required; jobs are killed without one
 )
 
-# Check job status and retrieve results
-s.getStatus(jobid)
-results = s.getResult(jobid, "out")
+# Poll, then fetch. Method names are snake_case since the API refresh.
+s.wait(jobid)                    # blocks until the job leaves RUNNING
+status = s.get_status(jobid)     # RUNNING | FINISHED | ERROR | FAILURE | NOT_FOUND
+results = s.get_result(jobid, "out")
+print(s.get_result_types(jobid))  # what formats this job can return
 ```
 
-**Note:** BLAST jobs are asynchronous. Check status before retrieving results.
+BLAST jobs are asynchronous — check the status (or call `wait`) before retrieving results.
+For jobs submitted to NCBI rather than EBI, bioservices 1.16 adds
+`from bioservices import NCBIBlastAPI` with the same run/get_status/get_result shape.
 
 ### 5. Identifier Mapping
 
@@ -157,14 +189,23 @@ from bioservices import UniProt, KEGG
 
 # UniProt mapping (many database pairs supported)
 u = UniProt()
-results = u.mapping(
+job = u.mapping(
     fr="UniProtKB_AC-ID",  # Source database
     to="KEGG",              # Target database
-    query="P43403"          # Identifier(s) to convert
+    query="P43403"          # Identifier(s) to convert; a list is also accepted
 )
 
-# KEGG gene ID → UniProt
-kegg_to_uniprot = u.mapping(fr="KEGG", to="UniProtKB_AC-ID", query="hsa:7535")
+# The payload is {"results": [{"from": ..., "to": ...}], "failedIds": [...]}.
+# Collapse it yourself when you want a per-source-ID dict:
+from collections import defaultdict
+
+mapped = defaultdict(list)
+for row in job["results"]:
+    mapped[row["from"]].append(row["to"])
+
+# KEGG gene ID -> UniProt. Non-UniProt sources may only map *to* UniProtKB,
+# so "KEGG" -> "UniProtKB" is valid while "KEGG" -> "UniProtKB_AC-ID" is not.
+kegg_to_uniprot = u.mapping(fr="KEGG", to="UniProtKB", query="hsa:7535")
 
 # For compounds, map KEGG → ChEBI via KEGG.conv
 # (KEGG → ChEMBL has no direct API; obtain ChEMBL IDs separately
@@ -191,30 +232,47 @@ from bioservices import QuickGO
 
 g = QuickGO(verbose=False)
 
-# Retrieve GO term information
-term_info = g.Term("GO:0003824", frmt="obo")
+# Retrieve GO term information (returns parsed JSON from the QuickGO REST API)
+term_info = g.get_go_terms("GO:0003824")
+ancestors = g.get_go_ancestors("GO:0003824")
 
-# Search annotations
-annotations = g.Annotation(protein="P43403", format="tsv")
+# Annotations: the parameters follow the QuickGO REST API, not the old
+# protein=/format= signature. geneProductId is prefixed, limit is capped at 100.
+annotations = g.Annotation(
+    geneProductId="UniProtKB:P43403",
+    includeFields="goName",
+    limit=100,
+    page=1,
+)
+for row in annotations["results"][:5]:
+    print(row["goId"], row["goName"], row["goAspect"])
 ```
+
+`Annotation` returns a dict with `numberOfHits` and `results`; page through it rather than
+raising `limit` (values above 100 raise a `TypeError`).
 
 ### 7. Protein-Protein Interactions
 
-Query interaction databases via PSICQUIC:
+PSICQUIC and BioGRID were removed from bioservices in 1.14. Use the STRING service (or
+`IntactComplex` for curated complexes):
 
 ```python
-from bioservices import PSICQUIC
+from bioservices import STRING
 
-s = PSICQUIC(verbose=False)
+s = STRING()
 
-# Query specific database (e.g., MINT)
-interactions = s.query("mint", "ZAP70 AND species:9606")
+# Functional + physical partners of a protein
+partners = s.get_interaction_partners("ZAP70", species=9606, limit=20)
 
-# List available interaction databases
-databases = s.activeDBs
+# Interactions within a given set of proteins
+network = s.get_interactions(["ZAP70", "CD247", "LCK"], species=9606)
+
+for row in partners:
+    print(row["preferredName_A"], row["preferredName_B"], row["score"])
 ```
 
-**Available databases:** MINT, IntAct, BioGRID, DIP, and 30+ others.
+`network_type="physical"` restricts to physical complexes; `required_score` (0–1000) sets
+the confidence floor. STRING scores are 0–1 in the JSON output.
 
 ## Multi-Service Integration Workflows
 
@@ -233,7 +291,7 @@ This script demonstrates:
 2. FASTA sequence retrieval
 3. BLAST similarity search
 4. KEGG pathway discovery
-5. PSICQUIC interaction mapping
+5. STRING interaction mapping
 
 ### Pathway Network Analysis
 
@@ -363,3 +421,4 @@ For detailed API documentation and advanced features, refer to:
 - Source code: https://github.com/cokelaer/bioservices
 - Service-specific references in `references/services_reference.md`
 
+Part of the AlterLab Academic Skills suite.

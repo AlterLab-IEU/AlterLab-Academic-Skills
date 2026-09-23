@@ -1,4 +1,4 @@
-# Turkish name normalization for YOK Akademik matching
+# Turkish name normalization for YÖK Akademik matching
 
 Turkish-character handling is a **first-class correctness concern** here: a naive
 ASCII fold silently misses the right academic, and Turkish casing is not the same as

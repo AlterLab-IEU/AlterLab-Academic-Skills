@@ -14,8 +14,8 @@
     },
     {
       "id": "transpile-for-ibm-hardware",
-      "prompt": "I want to run my circuit on ibm_brisbane via Qiskit Runtime. Transpile it with optimization level 3 for that backend and submit a SamplerV2 job for 1024 shots.",
-      "expected_output": "Triggers the qiskit skill. Uses QiskitRuntimeService to get the ibm_brisbane backend, transpiles with optimization_level=3 targeting that backend, then runs SamplerV2 (Sampler) for 1024 shots and retrieves the result. Should reference qiskit_ibm_runtime and transpile.",
+      "prompt": "I want to run my circuit on our IBM Heron QPU via Qiskit Runtime. Transpile it with optimization level 3 for that backend and submit a SamplerV2 job for 1024 shots.",
+      "expected_output": "Triggers the qiskit skill. Uses QiskitRuntimeService to get the backend (service.backend(name) from service.backends(), or service.least_busy(operational=True, simulator=False)), transpiles to an ISA circuit with optimization_level=3 targeting that backend (transpile or generate_preset_pass_manager), then runs SamplerV2 constructed with mode=backend for 1024 shots and retrieves the result. Should reference qiskit_ibm_runtime and transpile, and must not use the removed session=/backend= keywords or retired QPUs such as ibm_brisbane.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "transpile"},
@@ -26,7 +26,7 @@
     {
       "id": "vqe-estimator-session",
       "prompt": "Set up a VQE loop in Qiskit Runtime: I have a parameterized ansatz and a Hamiltonian, and I want to use an Estimator inside a Session with COBYLA minimizing the expectation value.",
-      "expected_output": "Triggers the qiskit skill. Opens a Session on the backend, creates an EstimatorV2, defines a cost_function that assigns parameters, transpiles, and runs the estimator to return result[0].data.evs, then minimizes with scipy.optimize.minimize method='COBYLA'. Should reference Estimator, Session, and the VQE pattern.",
+      "expected_output": "Triggers the qiskit skill. Transpiles the ansatz once to the backend ISA, maps the Hamiltonian onto the transpiled layout with apply_layout, opens a Session on the backend (noting Open Plan users need Batch instead), creates EstimatorV2(mode=session), defines a cost_function that runs the estimator on an (ansatz_isa, hamiltonian_isa, params) PUB and returns result[0].data.evs, then minimizes with scipy.optimize.minimize method='COBYLA'. Should reference Estimator, Session, and the VQE pattern.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "Estimator"},

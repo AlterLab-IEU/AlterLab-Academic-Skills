@@ -1,8 +1,16 @@
-# Forge API Reference
+# Biohub Platform (Forge) API Reference
+
+> **Rebrand, verified 2026-09.** EvolutionaryScale now operates as **Biohub**, and the
+> hosted API moved from `forge.evolutionaryscale.ai` to **`https://biohub.ai`**. The SDK
+> classes kept their `*ForgeInferenceClient` names, every client defaults to the new URL,
+> and the token is read from the `ESM_API_KEY` environment variable when not passed
+> explicitly. Prefer the helpers `esm.sdk.client(...)` (ESM3), `esm.sdk.esmc_client(...)`
+> (ESMC) and `esm.sdk.esmfold2_client(...)` (ESMFold2) over constructing the classes
+> directly. Model weights live under the Hugging Face `biohub` organisation.
 
 ## Overview
 
-Forge is EvolutionaryScale's cloud platform for scalable protein design and inference. It provides API access to the full ESM3 model family, including large models not available for local execution.
+The Biohub Platform is the hosted service for scalable protein design and inference. It provides API access to the full ESM model families, including large models not available for local execution.
 
 **Key Benefits:**
 - Access to all ESM3 models including 98B parameter version
@@ -16,7 +24,12 @@ Forge is EvolutionaryScale's cloud platform for scalable protein design and infe
 
 ### 1. Obtain API Token
 
-Sign up and get your API token at: https://forge.evolutionaryscale.ai
+Create an API token in the developer console: https://biohub.ai/developer-console/api-keys
+Then export it so the SDK picks it up automatically:
+
+```bash
+export ESM_API_KEY="<your-token>"
+```
 
 ### 2. Install ESM SDK
 
@@ -29,15 +42,15 @@ The Forge client is included in the standard ESM package.
 ### 3. Basic Connection
 
 ```python
-from esm.sdk.forge import ESM3ForgeInferenceClient
+import esm
 from esm.sdk.api import ESMProtein, GenerationConfig
 
-# Initialize client
-client = ESM3ForgeInferenceClient(
-    model="esm3-medium-2024-08",
-    url="https://forge.evolutionaryscale.ai",
-    token="<your-token-here>"
-)
+# url defaults to https://biohub.ai, token to os.environ["ESM_API_KEY"]
+client = esm.sdk.client("esm3-medium-2024-08")
+
+# Equivalent explicit form:
+# from esm.sdk.forge import ESM3ForgeInferenceClient
+# client = ESM3ForgeInferenceClient("esm3-medium-2024-08", url="https://biohub.ai", token="<token>")
 
 # Test connection
 protein = ESMProtein(sequence="MPRT___KEND")
@@ -53,6 +66,14 @@ print(result.sequence)
 | `esm3-medium-2024-08` | 7B | Fast | Excellent | Production, most applications |
 | `esm3-large-2024-03` | 98B | Slower | Best | Research, critical designs |
 | `esm3-medium-multimer-2024-09` | 7B | Fast | Experimental | Protein complexes |
+
+
+> **Check the console before relying on a model ID.** Biohub's current ESM3 model
+> table lists `esm3-small-2024-08` (1.4B), `esm3-medium-2024-08` (7B) and
+> `esm3-large-2024-03` (98B) as the flagship models, plus the 2024-03 "published"
+> replicas used in the paper. Other IDs (e.g. the experimental multimer model) may
+> or may not still be served — confirm in the developer console rather than
+> hard-coding them.
 
 **Model Selection Guidelines:**
 
@@ -601,7 +622,7 @@ For dedicated infrastructure and enterprise use:
 
 **More Information:**
 - AWS Marketplace: https://aws.amazon.com/marketplace/seller-profile?id=seller-iw2nbscescndm
-- Contact EvolutionaryScale for enterprise licensing
+- Contact Biohub for enterprise licensing
 
 ## Best Practices Summary
 
@@ -651,7 +672,7 @@ def validate_token(token):
 
 ## Additional Resources
 
-- **Forge Platform**: https://forge.evolutionaryscale.ai
+- **Biohub Platform**: https://biohub.ai
 - **API Documentation**: Check Forge dashboard for latest API specs
 - **Community Support**: Slack community at https://bit.ly/3FKwcWd
-- **Enterprise Contact**: Contact EvolutionaryScale for custom deployments
+- **Enterprise Contact**: Contact Biohub for custom deployments

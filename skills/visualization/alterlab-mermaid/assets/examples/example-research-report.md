@@ -185,10 +185,12 @@ Full GUIDE-seq data available in supplementary data package (GEO accession pendi
 
 ### Comparison with published benchmarks
 
-_Radar chart comparing three CRISPR delivery methods across five performance dimensions. Note: Radar charts do not support `accTitle`/`accDescr` — description provided above._
+_Radar chart comparing three CRISPR delivery methods across five performance dimensions._
 
 ```mermaid
 radar-beta
+accTitle: Delivery Method Performance Radar
+accDescr: Scores this study's RNP plus lipofection protocol against published plasmid Cas9 and electroporation RNP methods on efficiency, specificity, delivery ease, cost, and cell viability
 title Performance vs. Published Methods
 axis eff["Efficiency"], spec["Specificity"], del["Delivery ease"], cost["Cost"], viab["Cell viability"]
 curve this_study["This study (RNP + Lipo)"]{78, 95, 80, 85, 90}
@@ -214,7 +216,7 @@ showLegend true
 
 [^1]: Ran, F.A. et al. (2013). "Genome engineering using the CRISPR-Cas9 system." _Nature Protocols_, 8(11), 2281–2308. https://doi.org/10.1038/nprot.2013.143
 
-[^2]: ATCC. (2024). "Cell Line Authentication and Quality Control." https://www.atcc.org/resources/cell-line-authentication-testing-service
+[^2]: ATCC. "Cell Authentication." https://www.atcc.org/services/cell-authentication
 
 [^3]: Moreno-Mateos, M.A. et al. (2015). "CRISPRscan: designing highly efficient sgRNAs for CRISPR-Cas9 targeting in vivo." _Nature Methods_, 12(10), 982–988. https://doi.org/10.1038/nmeth.3543
 

@@ -1,5 +1,12 @@
 # Research Pipeline API Reference
 
+> **Model arguments.** denario 1.0.1 ships retired default models (`gemini-2.0-flash` for the fast path; `o3-mini`, retiring 2026-10-23, in the cmbagent/results agents). Every example below passes live models via these two names — define them once per session (see `llm_configuration.md` for choices):
+>
+> ```python
+> LLM_FAST = "gpt-4.1"  # any live denario.models key, or an LLM(...) object
+> RESULTS_MODELS = dict(researcher_model="gpt-4.1", plan_reviewer_model="gpt-4.1", formatter_model="gpt-4.1")
+> ```
+
 ## Core Classes
 
 ### Denario
@@ -47,12 +54,12 @@ Research interest: Identifying seasonal patterns and long-term trends
 Generate research hypotheses based on the data description.
 
 ```python
-den.get_idea(mode="fast")  # or mode="cmbagent"
+den.get_idea(mode="fast", llm=LLM_FAST)  # or mode="cmbagent" with per-agent models
 ```
 
 **Parameters:**
 - `mode` (str): `"fast"` (default) uses the LangGraph backend — faster, less reliable; `"cmbagent"` uses the cmbagent backend — slower, more reliable.
-- `llm` (str | LLM): model for the fast path (default `gemini-2.0-flash`).
+- `llm` (str | LLM): model for the fast path. The built-in default `gemini-2.0-flash` was retired by Google on 2026-06-01, so always pass a live model (e.g. `llm="gpt-4.1"`).
 - `idea_maker_model`, `idea_hater_model`, `planner_model`, `plan_reviewer_model`, `orchestration_model`, `formatter_model`: per-agent models for cmbagent mode (OpenAI defaults).
 
 **Returns:** Research idea/hypothesis (stored internally in project directory)
@@ -61,7 +68,7 @@ den.get_idea(mode="fast")  # or mode="cmbagent"
 
 **Example:**
 ```python
-den.get_idea()
+den.get_idea(llm=LLM_FAST)
 # Generates ideas like: "Investigate the correlation between seasonal temperature
 # variations and long-term warming trends using time-series decomposition"
 ```
@@ -89,12 +96,12 @@ den.set_idea("Analyze the impact of El Niño events on regional temperature anom
 Develop a research methodology based on the idea and data description.
 
 ```python
-den.get_method(mode="fast")  # or mode="cmbagent"
+den.get_method(mode="fast", llm=LLM_FAST)  # or mode="cmbagent" with per-agent models
 ```
 
 **Parameters:**
 - `mode` (str): `"fast"` (default, LangGraph) or `"cmbagent"`, same trade-off as `get_idea`.
-- `llm` (str | LLM): model for the fast path (default `gemini-2.0-flash`).
+- `llm` (str | LLM): model for the fast path (pass a live model; the `gemini-2.0-flash` default is retired).
 - `method_generator_model`, `planner_model`, `plan_reviewer_model`, `orchestration_model`, `formatter_model`: per-agent models for cmbagent mode.
 
 **Returns:** Methodology document (stored internally in project directory)
@@ -107,7 +114,7 @@ den.get_method(mode="fast")  # or mode="cmbagent"
 
 **Example:**
 ```python
-den.get_method()
+den.get_method(llm=LLM_FAST)
 # Generates methodology: "Apply seasonal decomposition, compute correlation coefficients,
 # perform statistical significance tests, generate visualization plots..."
 ```
@@ -143,12 +150,12 @@ den.set_method("methodology.md")
 Execute the methodology, perform computations, and generate results. This stage runs the cmbagent analysis backend (engineer + researcher agents) and can write/execute code.
 
 ```python
-den.get_results()
+den.get_results(**RESULTS_MODELS)
 ```
 
 **Key parameters (all optional):**
 - `involved_agents` (list[str]): agents employed, default `['engineer', 'researcher']`.
-- `engineer_model` (default `gpt-4.1`), `researcher_model` (default `o3-mini`), plus `planner_model`, `plan_reviewer_model`, `orchestration_model`, `formatter_model`.
+- `engineer_model` (default `gpt-4.1`), `researcher_model` (default `o3-mini`), plus `planner_model`, `plan_reviewer_model`, `orchestration_model`, `formatter_model`. Override the three `o3-mini` defaults (`researcher_model`, `plan_reviewer_model`, `formatter_model`); OpenAI retires `o3-mini` on 2026-10-23.
 - `hardware_constraints` (str | None): hardware limits passed to the agents.
 - `max_n_attempts` (int, default 10): retries per step on code-execution failure.
 - `max_n_steps` (int, default 6): maximum workflow steps.
@@ -164,7 +171,7 @@ den.get_results()
 
 **Example:**
 ```python
-den.get_results()
+den.get_results(**RESULTS_MODELS)
 # Executes the methodology, runs analyses, creates plots, compiles findings
 ```
 
@@ -275,9 +282,9 @@ Goal: Anomaly detection in sensor networks
 """)
 
 # Automate entire pipeline
-den.get_idea()        # Generate research idea
-den.get_method()      # Develop methodology
-den.get_results()     # Execute analysis
+den.get_idea(llm=LLM_FAST)        # Generate research idea
+den.get_method(llm=LLM_FAST)      # Develop methodology
+den.get_results(**RESULTS_MODELS)     # Execute analysis
 den.get_paper(journal=Journal.APS)  # Create paper
 ```
 
@@ -294,8 +301,8 @@ den.set_data_description("Dataset: Financial time-series data...")
 den.set_idea("Investigate predictive models for stock market volatility using LSTM networks")
 
 # Automated execution
-den.get_method()
-den.get_results()
+den.get_method(llm=LLM_FAST)
+den.get_results(**RESULTS_MODELS)
 den.get_paper(journal=Journal.APS)
 ```
 
@@ -325,9 +332,9 @@ den = Denario(project_dir="./iterative")
 
 # Initial run
 den.set_data_description("Dataset description...")
-den.get_idea()
-den.get_method()
-den.get_results()
+den.get_idea(llm=LLM_FAST)
+den.get_method(llm=LLM_FAST)
+den.get_results(**RESULTS_MODELS)
 
 # Refine methodology after reviewing results
 den.set_method("""
@@ -338,7 +345,7 @@ Revised methodology:
 """)
 
 # Re-run only downstream stages
-den.get_results()  # Re-execute with new method
+den.get_results(**RESULTS_MODELS)  # Re-execute with new method
 den.get_paper(journal=Journal.APS)
 ```
 
@@ -401,7 +408,7 @@ All stages produce structured outputs saved to the project directory:
 
 `check_idea(mode='semantic_scholar' | 'futurehouse')` checks a generated or supplied idea against existing literature to assess originality. `semantic_scholar` mode can use `SEMANTIC_SCHOLAR_KEY`; citation search uses `PERPLEXITY_API_KEY`. There is no standalone keyword-search method — novelty checking is idea-driven via `check_idea`. See `examples.md`.
 
-Other public helpers worth knowing: `enhance_data_description()`, `get_keywords()`, `referee()` (AI-referee feedback on the paper), `research_pilot()` (run the full pipeline in one call), and `show_*()` to print intermediate artifacts.
+Other public helpers worth knowing: `enhance_data_description()`, `get_keywords()`, `referee()` (AI-referee feedback on the paper), `research_pilot()` (runs set_data_description → get_idea → get_method → get_results → get_paper with the built-in default models, so in denario 1.0.1 it hits the retired `gemini-2.0-flash` default — call the stages individually with explicit models instead), and `show_*()` to print intermediate artifacts.
 
 ## Error Handling
 
@@ -444,7 +451,7 @@ den.set_data_description("Temperature data from weather stations")
 Review generated methodologies before executing:
 
 ```python
-den.get_method()
+den.get_method(llm=LLM_FAST)
 # Review input_files/methods.md in project_dir
 # If needed, refine with set_method()
 ```
@@ -456,15 +463,15 @@ Build the research pipeline incrementally:
 ```python
 # Stage 1: Validate idea generation
 den.set_data_description("...")
-den.get_idea()
+den.get_idea(llm=LLM_FAST)
 # Review input_files/idea.md, adjust if needed
 
 # Stage 2: Validate methodology
-den.get_method()
+den.get_method(llm=LLM_FAST)
 # Review input_files/methods.md, adjust if needed
 
 # Stage 3: Execute and validate results
-den.get_results()
+den.get_results(**RESULTS_MODELS)
 # Review input_files/results.md and input_files/plots/
 
 # Stage 4: Generate paper

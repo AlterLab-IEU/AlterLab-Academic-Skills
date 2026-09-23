@@ -58,6 +58,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-eda" }
       ]
+    },
+    {
+      "id": "near-miss-alterlab-scanpy",
+      "prompt": "I have a 10x Genomics single-cell RNA-seq dataset loaded as an AnnData object. After QC and normalization I want to compute neighbors, run Leiden clustering, and show the clusters on a UMAP plot colored by marker genes.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-scanpy. The request is the standard single-cell workflow on AnnData (sc.pp.neighbors, sc.tl.leiden, sc.tl.umap, sc.pl.umap colored by genes), where UMAP is one step of the scanpy pipeline rather than a standalone umap-learn embedding task.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-scanpy" }
+      ]
     }
   ]
 }

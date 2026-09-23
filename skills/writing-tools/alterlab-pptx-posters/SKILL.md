@@ -6,16 +6,15 @@ license: MIT
 compatibility: Authors HTML/CSS posters with no external service; exporting to PDF or PPTX requires a headless Chrome browser (and python-pptx for PPTX)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # PPTX Research Posters (HTML-Based)
 
 ## Overview
 
-**⚠️ USE THIS SKILL ONLY WHEN USER EXPLICITLY REQUESTS PPTX/POWERPOINT POSTER FORMAT.**
-
-For standard research posters, use the **latex-posters** skill instead, which provides better typographic control and is the default for academic conferences.
+Use this skill only when the user explicitly asks for a PowerPoint/PPTX or HTML poster. For a standard research poster, `alterlab-latex-posters` is the default: it gives better typographic control and is what most academic conferences expect.
 
 This skill creates research posters using HTML/CSS, which can then be exported to PDF or converted to PowerPoint format. The web-based approach offers:
 - Modern, responsive layouts
@@ -26,16 +25,21 @@ This skill creates research posters using HTML/CSS, which can then be exported t
 
 ## When to Use This Skill
 
-**ONLY use this skill when:**
-- User explicitly requests "PPTX poster", "PowerPoint poster", or "PPT poster"
-- User specifically asks for HTML-based poster
-- User needs to edit poster in PowerPoint after creation
-- LaTeX is not available or user requests non-LaTeX solution
+Use this skill when:
+- The user explicitly requests a "PPTX poster", "PowerPoint poster", or "PPT poster"
+- The user specifically asks for an HTML-based poster
+- The user needs to edit the poster in PowerPoint after creation
+- LaTeX is not available, or the user asks for a non-LaTeX solution
 
-**DO NOT use this skill when:**
-- User asks for a "poster" without specifying format → Use latex-posters
-- User asks for "research poster" or "conference poster" → Use latex-posters
-- User mentions LaTeX, tikzposter, beamerposter, or baposter → Use latex-posters
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| A "poster", "research poster", or "conference poster" with no format named | `alterlab-latex-posters` |
+| Any mention of LaTeX, tikzposter, beamerposter, or baposter | `alterlab-latex-posters` |
+| A slide deck for an oral talk | `alterlab-scientific-slides` |
+| Auto-generating a poster (plus website/video) directly from a finished paper | `alterlab-paper-2-web` |
+| A single infographic or data-story graphic rather than a full poster | `alterlab-infographics` |
 
 ## Visual Element Generation
 
@@ -80,13 +84,11 @@ POSTER FORMAT GUIDELINES:
 
 ---
 
-### CRITICAL: Preventing Content Overflow
+### Preventing Content Overflow
 
-**⚠️ POSTERS MUST NOT HAVE TEXT OR CONTENT CUT OFF AT EDGES.**
+Text or figures cut off at the poster edges is the most common defect and is easy to miss on screen, so budget sections and words up front and check all four edges after export.
 
-**Prevention Rules:**
-
-**1. Limit Content Sections (MAXIMUM 5-6 sections):**
+**1. Limit content sections (5-6 at most):**
 ```
 ✅ GOOD - 5 sections with room to breathe:
    - Title/Header
@@ -98,10 +100,10 @@ POSTER FORMAT GUIDELINES:
 ❌ BAD - 8+ sections crammed together
 ```
 
-**2. Word Count Limits:**
-- **Per section**: 50-100 words maximum
-- **Total poster**: 300-800 words MAXIMUM
-- **If you have more content**: Cut it or make a handout
+**2. Word count limits:**
+- **Per section**: 50-100 words
+- **Total poster**: 300-800 words
+- **If you have more content**: cut it or move it to a handout
 
 ---
 
@@ -182,7 +184,7 @@ Generate figures via **alterlab-scientific-schematics** (diagrams) or **alterlab
 
 ### Stage 2: Generate Visual Elements (AI-Powered)
 
-**CRITICAL: Generate SIMPLE figures with MINIMAL content.**
+Keep each generated figure simple — one message, few elements — because dense graphics turn into unreadable text at poster viewing distance.
 
 ```bash
 mkdir -p figures
@@ -378,7 +380,7 @@ body {
 This skill works with:
 - **alterlab-scientific-schematics**: poster diagrams and flowcharts
 - **alterlab-generate-image**: hero images and stylized graphics
-- **alterlab-latex-posters**: DEFAULT skill for poster creation (use it instead unless PPTX/PowerPoint or HTML is explicitly requested)
+- **alterlab-latex-posters**: the default skill for poster creation (use it instead unless PPTX/PowerPoint or HTML is explicitly requested)
 
 ---
 
@@ -397,3 +399,4 @@ Available in `references/` directory:
 - `poster_design_principles.md`: Typography, color theory, and visual hierarchy
 - `poster_layout_design.md`: Layout principles and grid systems
 
+Part of the AlterLab Academic Skills suite.

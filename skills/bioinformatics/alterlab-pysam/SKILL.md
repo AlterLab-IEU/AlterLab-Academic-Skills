@@ -3,10 +3,11 @@ name: alterlab-pysam
 description: Read and write genomic alignment and variant files in Python with pysam (htslib bindings) — SAM/BAM/CRAM alignments, VCF/BCF variants, and FASTA/FASTQ sequences, plus region extraction and per-base coverage/pileup. Use when scripting NGS data-processing pipelines that parse, filter, index, or compute coverage over BAM/CRAM/VCF files. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for pysam 0.24.x (current 0.24.1 as of 2026-09), which wraps htslib/samtools/bcftools 1.24 and supports Python 3.9-3.15. Wheels bundle htslib, so no separate samtools install is needed."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Pysam
@@ -26,6 +27,16 @@ This skill should be used when:
 - Implementing bioinformatics analysis pipelines
 - Quality control of sequencing data
 - Variant calling and annotation workflows
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Running a whole variant-calling pipeline (alignment -> GATK/DeepVariant -> annotation) | `alterlab-nf-core-sarek` |
+| Storing and querying many samples' variants as a queryable array | `alterlab-tiledbvcf` |
+| Coverage tracks, bigWig generation, and deepTools-style BAM summaries | `alterlab-deeptools` |
+| Sequence-record parsing, translation, alignment objects (no BAM/VCF) | `alterlab-biopython` |
+| Transcript-level quantification from RNA-seq FASTQ | `alterlab-rnaseq-quant` |
 
 ## Quick Start
 
@@ -193,6 +204,27 @@ Specify format when opening files:
 - `"w"` - Write SAM
 - `"wc"` - Write CRAM
 
+### CRAM: two behaviour changes since pysam 0.24 / htslib 1.22
+
+These bite quietly, so check them before blaming your data.
+
+1. **The default output CRAM version is now 3.1, not 3.0.** Files written with `"wc"` may not be
+   readable by older samtools or by downstream tools pinned to an older htslib. Write 3.0
+   explicitly when the consumer is out of your control:
+
+   ```python
+   out = pysam.AlignmentFile("out.cram", "wc", header=src.header,
+                             reference_filename="ref.fa",
+                             format_options=["version=3.0"])
+   ```
+
+   `format_options` takes a list of `str` (it accepted `bytes` in older pysam).
+
+2. **CRAM reference sequences are no longer fetched from EBI automatically.** CRAM stores reads
+   relative to a reference, so reading one without the matching FASTA now fails instead of
+   silently downloading it. Pass `reference_filename=` when opening, or set the `REF_PATH` /
+   `REF_CACHE` environment variables to a local cache.
+
 ### Performance Considerations
 
 1. **Always use indexed files** for random access operations
@@ -211,9 +243,10 @@ Specify format when opening files:
 4. **Unbounded pileup:** `pileup(chrom, start, stop)` yields columns for every position spanned by overlapping reads, not just `start..stop`—pass `truncate=True` to restrict to the requested window
 5. **Silent base-quality drop:** `count_coverage()` defaults to `quality_threshold=15`, so low-quality bases are omitted; set `quality_threshold=0` to count all
 6. **Iterator scope:** Keep pileup iterator references alive to avoid "PileupProxy accessed after iterator finished" errors
-5. **Quality score editing:** Cannot modify `query_qualities` in place after changing `query_sequence`—create a copy first
-6. **Stream limitations:** Only stdin/stdout are supported for streaming, not arbitrary Python file objects
-7. **Thread safety:** While GIL is released during I/O, comprehensive thread-safety hasn't been fully validated
+7. **Quality score editing:** Cannot modify `query_qualities` in place after changing `query_sequence`—create a copy first
+8. **Stream limitations:** Only stdin/stdout are supported for streaming, not arbitrary Python file objects
+9. **Thread safety:** While GIL is released during I/O, comprehensive thread-safety hasn't been fully validated
+10. **CRAM without a reference:** see the CRAM note above—`reference_filename=` or `REF_PATH` is now required
 
 ## Command-Line Tools
 

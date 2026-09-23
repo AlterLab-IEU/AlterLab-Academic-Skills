@@ -3,10 +3,11 @@ name: alterlab-pathml
 description: Run full computational-pathology workflows with PathML — whole-slide-image (WSI) analysis across 160+ slide formats, multiplexed immunofluorescence (CODEX, Vectra, MERFISH), nucleus segmentation/classification (HoVer-Net, HACTNet), tissue- and cell-graph construction, HDF5 dataset management, and deep-learning model training on pathology data. Use when the user builds end-to-end deep-learning pathology pipelines, analyzes multiplexed or spatial-proteomics slides, or segments nuclei. For lightweight H&E slide preprocessing, tissue masking, or plain Random/Grid/Score tile extraction prefer alterlab-histolab instead. Part of the AlterLab Academic Skills suite.
 license: GPL-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Runs under `uv run python`, but not in a shared environment: PathML 3.0.x (current 3.0.8, released 2026-08) hard-pins an older scientific stack (numpy<2, pandas<=2.1.4, scanpy==1.9.6, anndata<=0.10.3, torch==2.12.0) and needs native OpenSlide plus a JDK for Bio-Formats. Give it a dedicated environment. No API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # PathML
@@ -27,6 +28,16 @@ Apply this skill for:
 - Quantifying marker expression from multiplex immunofluorescence
 - Managing large-scale pathology datasets with HDF5 storage
 - Tile-based analysis and stitching operations
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Lightweight H&E preprocessing, tissue masking, Random/Grid/Score tile extraction | `alterlab-histolab` |
+| Spatial transcriptomics neighborhood stats on Visium/Xenium/MERFISH tables | `alterlab-squidpy-spatial` |
+| Single-cell expression analysis of the resulting cell x marker matrix | `alterlab-scanpy` |
+| Training a general vision model with no pathology-specific I/O or transforms | `alterlab-pytorch-lightning` |
+| Graph neural networks on a graph you already built | `alterlab-torch-geometric` |
 
 ## Core Capabilities
 
@@ -82,10 +93,29 @@ Efficiently store and manage large pathology datasets using HDF5 format. PathML 
 
 ### Installation
 
-PathML pins specific versions of OpenSlide, Bio-Formats (via JPype/JVM), and DeepCell. The maintainers recommend a conda environment; pure-pip installs frequently fail on the OpenSlide/Java native deps. Verify the supported Python version against the PathML README before pinning.
+PathML needs native dependencies present first — **OpenSlide** and a **JDK** (Bio-Formats is
+driven through JPype/javabridge) — so the maintainers recommend a conda environment; pure-pip
+installs commonly fail on those native deps.
+
+Give PathML its own environment, because 3.0.8 pins much of the scientific stack to exact or
+upper-bounded versions:
+
+| Pinned by PathML 3.0.8 | Current elsewhere |
+|---|---|
+| `numpy<2` | 2.5.x |
+| `pandas<=2.1.4` | 3.0.x |
+| `scanpy==1.9.6`, `anndata<=0.10.3` | scanpy 1.12.x, anndata 0.13.x |
+| `scikit-image<=0.22.0`, `networkx<=3.2.1`, `h5py==3.10.0` | all newer |
+| `torch==2.12.0`, `torch-geometric==2.8.0` | torch 2.14.x |
+
+Installing PathML next to `alterlab-scanpy` or `alterlab-squidpy-spatial` will either fail to
+resolve or silently downgrade those skills' stack. Move results between environments as files
+(HDF5/AnnData written by PathML, read by a current-scanpy env) rather than trying to satisfy
+both pin sets.
 
 ```bash
-# PathML expects its native deps (OpenSlide, a JDK for Bio-Formats) present first.
+# In a dedicated env, with OpenSlide and a JDK already installed.
+uv venv .venv-pathml && source .venv-pathml/bin/activate
 uv pip install pathml
 ```
 

@@ -3,10 +3,11 @@ name: alterlab-torch-geometric
 description: Graph Neural Networks with PyTorch Geometric (PyG) — node and graph classification, link prediction, GCN, GAT, and GraphSAGE layers, heterogeneous graphs, and molecular property prediction. Use when building or training GNNs for geometric deep learning on graph-structured data. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the torch and torch-geometric Python packages (GPU optional).
+compatibility: No API key required. Runs locally via `uv run python`; requires torch and torch-geometric (current 2.8.0.post1 as of 2026-09; Python >= 3.10; release notes list PyTorch 2.9-2.12). Neighbor sampling and knn/radius graph ops additionally need the optional pyg-lib wheel. GPU optional.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # PyTorch Geometric (PyG)
@@ -26,11 +27,27 @@ This skill should be used when working with:
 - **Heterogeneous graphs**: Multi-type nodes and edges (e.g., knowledge graphs)
 - **Large-scale graph learning**: Neighbor sampling, distributed training
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Classical graph algorithms, centrality, shortest paths, or network visualization without learning | `alterlab-networkx` |
+| Social-network-analysis designs (centrality, community detection, ERGMs) for substantive social-science claims | `alterlab-sna` |
+| End-to-end molecular property prediction with MoleculeNet featurizers and pretrained chemistry models | `alterlab-deepchem` |
+| Projects built on TorchDrug's datasets and tasks (GearNet, retrosynthesis, molecule generation) | `alterlab-torchdrug` |
+
 ## Quick Start
 
 ```bash
 uv pip install torch_geometric
+# Optional compiled ops (neighbor sampling, knn/radius graphs, fps): pick TORCH/CUDA to match your install
+uv pip install pyg-lib -f https://data.pyg.org/whl/torch-${TORCH}+${CUDA}.html
 ```
+
+PyG 2.8 folded `torch-cluster` and `torch-spline-conv` into `pyg-lib` (>= 0.7), so those two
+packages are no longer needed. `NeighborLoader` raises `ImportError` unless `pyg-lib` (or
+`torch-sparse`) is installed; for current PyTorch (2.13/2.14) data.pyg.org publishes only
+`pyg-lib` wheels, not `torch-scatter`/`torch-sparse`.
 
 Graphs are `torch_geometric.data.Data` objects: `x` (node features `[N, F]`), `edge_index`
 (connectivity in COO `[2, E]`), optional `edge_attr`, `y`, `pos`, and any custom attribute
@@ -93,4 +110,6 @@ Execute scripts directly or read them for implementation patterns.
 - **GitHub**: https://github.com/pyg-team/pytorch_geometric
 - **Tutorials**: https://pytorch-geometric.readthedocs.io/en/latest/get_started/introduction.html
 - **Examples**: https://github.com/pyg-team/pytorch_geometric/tree/master/examples
+
+Part of the AlterLab Academic Skills suite.
 

@@ -84,7 +84,7 @@ Types of assessment evidence (GRASPS for performance tasks):
 
 ---
 
-## 3. Constructive Alignment (Biggs & Tang, 2011)
+## 3. Constructive Alignment (Biggs et al., 2022)
 
 ### The SOLO Taxonomy
 
@@ -138,7 +138,14 @@ Fink's taxonomy is non-hierarchical and interactive. Six categories of significa
 
 > **Version note:** CAST released **UDL Guidelines 3.0** on 2024-07-30, superseding 2.2. The three principles below (Engagement / Representation / Action & Expression) are stable across versions, but 3.0 reorganized and relabeled the underlying guidelines/checkpoints and added an explicit focus on removing barriers rooted in bias and exclusion. The numbered checkpoints listed here follow the **2.2** structure; confirm the current labels at https://udlguidelines.cast.org before quoting checkpoint numbers in formal materials.
 
-### UDL Guidelines (2.2 structure)
+### UDL Guidelines 3.0 (current)
+
+- **Design Multiple Means of Engagement**: Welcoming Interests & Identities (7); Sustaining Effort & Persistence (8); Emotional Capacity (9)
+- **Design Multiple Means of Representation**: Perception (1); Language & Symbols (2); Building Knowledge (3)
+- **Design Multiple Means of Action & Expression**: Interaction (4); Expression & Communication (5); Strategy Development (6)
+- **Goal**: learner agency that is purposeful & reflective, resourceful & authentic, strategic & action-oriented (2.2 framed this as "expert learners")
+
+### UDL Guidelines (2.2 structure, for checkpoint-level detail)
 
 **Engagement (Affective Networks — the WHY)**
 - Provide options for recruiting interest (7)
@@ -206,7 +213,7 @@ Key components of PCK:
 ## Key References
 
 - Anderson, L. W., & Krathwohl, D. R. (Eds.). (2001). *A taxonomy for learning, teaching, and assessing*. Longman.
-- Biggs, J., & Tang, C. (2011). *Teaching for quality learning at university* (4th ed.). Open University Press.
+- Biggs, J., Tang, C., & Kennedy, G. (2022). *Teaching for quality learning at university* (5th ed.). Open University Press.
 - CAST. (2024). *Universal Design for Learning Guidelines version 3.0*. https://udlguidelines.cast.org (version 2.2, 2018, remains available on the site's Downloads page)
 - Fink, L. D. (2013). *Creating significant learning experiences* (2nd ed.). Jossey-Bass.
 - Shulman, L. S. (1986). Those who understand: Knowledge growth in teaching. *Educational Researcher*, 15(2), 4-14.

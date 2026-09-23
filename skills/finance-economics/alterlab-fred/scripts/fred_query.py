@@ -68,30 +68,50 @@ class FREDQuery:
             if time.time() - timestamp < self.cache_ttl:
                 return data
 
-        # Make request with retry
+        # Make request with retry. FRED allows ~120 requests/minute; 429 and 5xx
+        # responses are retried with backoff, other 4xx errors are returned at once.
+        last_error: Dict[str, Any] = {"code": 500, "message": "Max retries exceeded"}
         for attempt in range(self.max_retries):
             try:
                 response = requests.get(url, params=params, timeout=30)
-
-                if response.status_code == 429:
-                    # Rate limited - wait and retry
-                    wait_time = self.retry_delay * (2 ** attempt)
-                    time.sleep(wait_time)
-                    continue
-
-                response.raise_for_status()
-                data = response.json()
-
-                # Cache successful response
-                self._cache[cache_key] = (time.time(), data)
-                return data
-
             except requests.exceptions.RequestException as e:
-                if attempt == self.max_retries - 1:
-                    return {"error": {"code": 500, "message": str(e)}}
-                time.sleep(self.retry_delay * (2 ** attempt))
+                last_error = {"code": 500, "message": str(e)}
+                self._backoff(attempt)
+                continue
 
-        return {"error": {"code": 500, "message": "Max retries exceeded"}}
+            if response.status_code == 429 or response.status_code >= 500:
+                last_error = self._error_from(response)
+                self._backoff(attempt)
+                continue
+
+            if response.status_code >= 400:
+                # Bad series ID, bad parameter, missing key: retrying cannot help.
+                return {"error": self._error_from(response)}
+
+            data = response.json()
+
+            # Cache successful response
+            self._cache[cache_key] = (time.time(), data)
+            return data
+
+        return {"error": last_error}
+
+    def _backoff(self, attempt: int) -> None:
+        """Sleep before the next retry (no sleep after the final attempt)."""
+        if attempt < self.max_retries - 1:
+            time.sleep(self.retry_delay * (2 ** attempt))
+
+    @staticmethod
+    def _error_from(response: requests.Response) -> Dict[str, Any]:
+        """Normalize FRED's JSON error body ({"error_code", "error_message"})."""
+        try:
+            body = response.json()
+            return {
+                "code": body.get("error_code", response.status_code),
+                "message": body.get("error_message", response.text[:200]),
+            }
+        except ValueError:
+            return {"code": response.status_code, "message": response.text[:200]}
 
     # ========== Series Endpoints ==========
 

@@ -3,10 +3,11 @@ name: alterlab-pdf-extract
 description: Free Elicit-columns analog — ingest N PDFs (or any MarkItDown-supported document) and build a per-paper evidence table with user-defined columns, one row per paper and one column per attribute/question you want pulled from every source. Use when extracting structured data across many papers into a comparison table or data-extraction sheet (sample size, methods, main finding, effect, population/intervention/outcome, limitations), screening a corpus into a spreadsheet, or pulling the same fields from a stack of PDFs into CSV/Markdown. Routes conversion through MarkItDown; offline heuristic backend by default, optional LLM backend for precise answers. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
-compatibility: markitdown (uv pip install 'markitdown[all]') required for conversion; optional llm backend needs the openai client + OPENROUTER_API_KEY (or OPENAI_API_KEY/OPENAI_BASE_URL)
+compatibility: markitdown >= 0.1 (uv pip install 'markitdown[all]') required for conversion; optional llm backend needs the openai client + OPENROUTER_API_KEY (or OPENAI_API_KEY with OPENAI_BASE_URL) and sends paper text to that endpoint
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # PDF Extract — User-Defined Evidence Tables
@@ -23,7 +24,7 @@ Every input is normalized to clean Markdown via Microsoft **MarkItDown** (see th
 `alterlab-markitdown` skill) before any column is extracted, so PDF, DOCX, PPTX, HTML, and
 the other MarkItDown formats all work.
 
-## When to Use
+## When to Use This Skill
 
 - Extracting the **same fields from many papers** into a comparison table or spreadsheet.
 - Building a data-extraction sheet for a review (sample size, design, intervention,
@@ -31,10 +32,18 @@ the other MarkItDown formats all work.
 - Screening a folder of PDFs into a CSV you can sort/filter.
 - Any "make me a table where each row is a paper and each column is X" request.
 
-**Not for:** searching databases to *find* papers, or synthesizing a narrative review.
-Discovering literature and writing the prose synthesis is `alterlab-literature-review`'s
-job — this skill operates on PDFs you already have and produces a structured table, not
-prose. Use it *after* you have the papers.
+This skill operates on documents you already have and produces a structured table, not
+prose — use it *after* you have the papers.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Searching databases to find papers, or writing the narrative synthesis | `alterlab-literature-review` |
+| Interrogating one PDF in depth (every section, figure, table, appendix) | `alterlab-pdf-explore` |
+| Just converting a document to Markdown | `alterlab-markitdown` |
+| Structured experimental data for papers you do not have on disk | `alterlab-bgpt-search` |
+| Managing the PDFs and their references in a Zotero library | `alterlab-pyzotero` |
 
 ## Quick Start
 
@@ -86,11 +95,15 @@ specs that need an explicit question. Both combine; duplicate labels are rejecte
   `cohort`, `n=`). Quantitative questions also get a small ranking bonus for sentences
   containing digits when the question itself contains a digit or `%`. When you only have
   generic labels, use the `llm` backend instead.
-- **llm** (optional, precise): sends the converted Markdown plus all column questions to an
-  OpenAI-compatible endpoint (OpenRouter by default) for a concise per-column answer
-  (`N/A` when the paper is silent). The model ID follows the **ALTERLAB_MODEL** convention
-  (`skills/core/shared/model_env.md`): `$ALTERLAB_MODEL`, else the dated default. Override
-  per-run with `--model`.
+- **llm** (optional, precise): sends the converted Markdown (first 24,000 characters) plus all
+  column questions to an OpenAI-compatible endpoint for a concise per-column answer (`N/A`
+  when the paper is silent). With `OPENROUTER_API_KEY` set, requests go to OpenRouter;
+  otherwise `OPENAI_API_KEY` is sent to `OPENAI_BASE_URL` (or the OpenAI default) — each key
+  only ever goes to its own endpoint. The model ID follows the **ALTERLAB_MODEL** convention
+  (`skills/core/shared/model_env.md`): `$ALTERLAB_MODEL`, else the dated default; override
+  per-run with `--model` (on a non-OpenRouter endpoint, pass a model ID it serves). Spot-check
+  LLM answers against the PDFs before they enter a review, since a confident wrong number
+  looks the same as a right one in the table.
 
 ## Output
 
@@ -114,3 +127,5 @@ yields an `ERROR` row so the table stays aligned.
 - `scripts/extract_to_table.py` — the CLI. `--help` lists every flag; `--columns` /
   `--column` define the table; `--backend`, `--format`, `--model`, `-o` control extraction
   and output.
+
+Part of the AlterLab Academic Skills suite.

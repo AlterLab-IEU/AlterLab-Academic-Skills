@@ -3,10 +3,11 @@ name: alterlab-histolab
 description: Extract and preprocess tiles from whole-slide images (WSI) with histolab — OpenSlide-backed slide loading, tissue detection and masks, Random/Grid/Score tile extraction, and image/morphological filters for H&E preprocessing. Use when the user needs lightweight WSI slide preprocessing — building tile datasets for ML training, tissue segmentation, or quick tile-based inspection of histopathology slides. For end-to-end computational-pathology, deep-learning model training, nucleus segmentation, or multiplexed/spatial-proteomics (CODEX, Vectra) pipelines prefer alterlab-pathml instead. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Runs under `uv run python` with histolab 0.7.0 (still the latest release, Feb 2024) in a **dedicated environment**: it requires Python >= 3.8, < 3.12 and pins numpy <= 1.24.4, scipy < 1.10.1, scikit-image < 0.19.4 and openslide-python 1.3.1 — it will not co-install with a modern numpy 2.x / Python 3.12+ stack. The OpenSlide C library must also be present (`uv pip install openslide-bin`, or `brew install openslide` / `apt install libopenslide0`). No API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Histolab
@@ -17,18 +18,38 @@ Histolab is a Python library for processing whole slide images (WSI) in digital 
 
 ## When to Use This Skill
 
-Use histolab for lightweight WSI tile pipelines: tissue detection, building tile datasets for ML training, H&E stain handling, and quick tile-based analysis of histopathology slides. For advanced spatial proteomics, multiplexed imaging, or full deep-learning pathology pipelines, use `pathml` instead.
+Use histolab for lightweight WSI tile pipelines: tissue detection, building tile datasets for ML training, H&E stain handling, and quick tile-based analysis of histopathology slides. For advanced spatial proteomics, multiplexed imaging, or full deep-learning pathology pipelines, use `alterlab-pathml` instead.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| End-to-end computational pathology, nucleus segmentation, multiplexed imaging (CODEX/Vectra) | `alterlab-pathml` |
+| Training the downstream classifier on the extracted tiles | `alterlab-pytorch-lightning` |
+| DICOM whole-slide or radiology images rather than SVS/NDPI | `alterlab-pydicom`, `alterlab-imaging-data-commons` |
+| Spatial transcriptomics on tissue sections | `alterlab-squidpy-spatial` |
+| Managing/versioning the slide collection itself | `alterlab-omero`, `alterlab-lamindb` |
 
 ## Installation
 
 ```bash
-uv pip install "histolab==0.7.0"
+# histolab 0.7.0 needs Python >= 3.8, < 3.12 and numpy 1.x — give it its own env
+uv venv --python 3.11 .venv-histolab
+uv pip install --python .venv-histolab "histolab==0.7.0" openslide-bin
 ```
 
-histolab wraps the **OpenSlide** C library, which is not bundled with the pip
-package. On macOS install it with `brew install openslide`; without it, any
-`import histolab.slide` fails with `Couldn't locate OpenSlide dylib`. The
-examples below are pinned to histolab 0.7.0; the API differs in older releases.
+Two constraints that bite in a 2026 toolchain:
+
+1. **Pinned scientific stack.** 0.7.0 (Feb 2024, still the latest release) requires
+   `numpy <= 1.24.4`, `scipy < 1.10.1`, `scikit-image < 0.19.4` and
+   `openslide-python 1.3.1`. It cannot share an environment with a numpy 2.x / Python
+   3.12+ project — resolve this with a separate venv rather than by loosening pins.
+2. **OpenSlide is a C library**, not bundled with the wheel. The simplest fix is the
+   `openslide-bin` wheel (prebuilt binaries); otherwise `brew install openslide` on macOS
+   or `apt install libopenslide0` on Debian/Ubuntu. Without it, `import histolab.slide`
+   fails with `Couldn't locate OpenSlide dylib`.
+
+The examples below target histolab 0.7.0; the API differs in older releases.
 
 ## Core Workflow
 
@@ -148,3 +169,5 @@ multi-slide comparison, and exporting high-resolution figures / PDF reports.
 
 Load the specific reference file you need for detailed implementation guidance,
 troubleshooting, or advanced features.
+
+Part of the AlterLab Academic Skills suite.

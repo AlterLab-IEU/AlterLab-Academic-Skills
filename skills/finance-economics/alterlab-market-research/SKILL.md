@@ -6,7 +6,8 @@ license: MIT
 compatibility: No API key of its own; orchestrates other AlterLab skills (research-lookup, generate-image) whose own credentials apply. Requires a LaTeX toolchain for PDF output.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Market Research Reports
@@ -39,6 +40,20 @@ This skill should be used when:
 - Analyzing regulatory and policy impacts on markets
 - Building business cases for new product launches
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| One focused, source-cited research question with no report or frameworks | `alterlab-deep-research` |
+| Raw price, fundamentals, or macro data points from an API | `alterlab-alpha-vantage` / `alterlab-fred` |
+| Company financials straight from SEC filings (10-K, XBRL) | `alterlab-edgartools` |
+| A standalone infographic or one-page data story | `alterlab-infographics` |
+| A grant proposal's significance/market section for NSF/NIH-style funders | `alterlab-research-grants` |
+
+## Data Integrity (read before writing)
+
+Every market size, CAGR, share, price, or forecast in the report must come from a source you retrieved and cite (analyst report, industry association, government statistics, company filing), with its year and geography. When no source supports a number, say so and show the estimate you built instead — label it as an estimate, give the assumptions and arithmetic (see the TAM/SAM/SOM templates in `references/data_analysis_patterns.md`), and never present it as a sourced figure. Where sources disagree, report the range and which source says what. The numbers in this skill's templates and examples are placeholders, not market data; do not carry them into a report.
+
 ## Visual Enhancement
 
 Well-chosen visuals make a market research report far easier to navigate. Add figures where they clarify market structure, scale, competition, or risk — not as a quota. A handful of strong, accurate visuals beats a wall of decorative ones.
@@ -47,9 +62,10 @@ Well-chosen visuals make a market research report far easier to navigate. Add fi
 
 If a diagram or figure would aid comprehension, invoke the **alterlab-scientific-schematics** skill (diagrams/schematics) or the **alterlab-generate-image** skill (images). Figures are optional — add them only where they improve clarity.
 
+**Charts that encode numbers are plotted, not generated.** Market-size trajectories, regional/segment breakdowns, share charts, and financial projections must be drawn from your sourced data table with **alterlab-matplotlib** or **alterlab-plotly** (and checked with **alterlab-figure-qa**), because image-generation models invent bar heights, labels, and axis values. Use the AI diagram/image skills only for conceptual visuals whose content you specify completely (framework diagrams, matrices with qualitative placement, timelines, cover art).
+
 **Diagrams/schematics work well for:**
-- Market growth trajectory charts
-- TAM/SAM/SOM breakdown diagrams (concentric circles)
+- TAM/SAM/SOM breakdown diagrams (concentric circles, labels from your sourced/estimated values)
 - Porter's Five Forces diagrams
 - Competitive positioning matrices
 - Market segmentation charts
@@ -115,7 +131,7 @@ queries across each dimension of the analysis, for example:
 - **Competitive landscape**: "Who are the top 10 competitors in the [MARKET] market? What
   is their market share and competitive positioning?"
 - **Industry trends**: "What are the major trends and growth drivers in the [MARKET]
-  industry for 2024-2030?"
+  industry over the next five to ten years?"
 - **Regulatory environment**: "What are the key regulations and policy changes affecting
   the [MARKET] industry?"
 
@@ -149,7 +165,7 @@ For each framework, conduct structured analysis:
 
 Decide which figures genuinely aid the report, then generate them. Useful candidates and the kind of content each conveys:
 
-- **Market growth trajectory** — bar chart of market size 2020–2034, historical vs. projected bars, with a CAGR annotation.
+- **Market growth trajectory** — bar chart of sourced historical vs. projected market size with a CAGR annotation (plot it from the data table; do not generate it).
 - **TAM/SAM/SOM breakdown** — concentric circles for Total / Serviceable Addressable / Serviceable Obtainable Market, each labeled.
 - **Porter's Five Forces** — center "Competitive Rivalry" box with the four surrounding forces, color-coded by rating.
 - **Competitive positioning matrix** — 2x2 with axes such as Market Focus (Niche↔Broad) and Solution Approach (Product↔Platform), competitors plotted as sized circles.
@@ -236,8 +252,8 @@ Summing the per-section page targets in the Report Structure table yields ~43 pa
 
 ### Data Quality Requirements
 
-- **Currency**: Data no older than 2 years (prefer current year)
-- **Sourcing**: All statistics attributed to specific sources
+- **Currency**: Data no older than 2 years (prefer current year); state each figure's base year
+- **Sourcing**: All statistics attributed to specific sources — no unsourced numbers (see Data Integrity)
 - **Validation**: Cross-reference multiple sources when possible
 - **Assumptions**: All projections state underlying assumptions
 - **Limitations**: Acknowledge data limitations and gaps
@@ -267,24 +283,26 @@ The `market_research.sty` package provides professional formatting. Include it i
 
 Use colored boxes to highlight key content:
 
+Values in `[brackets]` are placeholders — fill each from a cited source (or a labelled estimate).
+
 ```latex
 % Key insight box (blue)
 \begin{keyinsightbox}[Key Finding]
-The market is projected to grow at 15.3% CAGR through 2030.
+The market is projected to grow at [X.X]\% CAGR through [YEAR] ([Source, year]).
 \end{keyinsightbox}
 
 % Market data box (green)
 \begin{marketdatabox}[Market Snapshot]
 \begin{itemize}
-    \item Market Size (2024): \$45.2B
-    \item Projected Size (2030): \$98.7B
-    \item CAGR: 15.3%
+    \item Market Size ([YEAR]): \$[XX.X]B ([Source])
+    \item Projected Size ([YEAR]): \$[XX.X]B ([Source])
+    \item CAGR: [X.X]\%
 \end{itemize}
 \end{marketdatabox}
 
 % Risk box (orange/warning)
 \begin{riskbox}[Critical Risk]
-Regulatory changes could impact 40% of market participants.
+[Regulatory change] could affect [share or count, with source] of market participants.
 \end{riskbox}
 
 % Recommendation box (purple)
@@ -304,7 +322,7 @@ TAM (Total Addressable Market) represents the total revenue opportunity.
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.9\textwidth]{../figures/market_growth.png}
-\caption{Market Growth Trajectory (2020-2030). Source: Industry analysis, company data.}
+\caption{Market Growth Trajectory ([START]--[END]). Source: [named sources, retrieval year].}
 \label{fig:market_growth}
 \end{figure}
 ```
@@ -314,17 +332,17 @@ TAM (Total Addressable Market) represents the total revenue opportunity.
 ```latex
 \begin{table}[htbp]
 \centering
-\caption{Market Size by Region (2024)}
+\caption{Market Size by Region ([YEAR]). Source: [named sources].}
 \begin{tabular}{@{}lrrr@{}}
 \toprule
 \textbf{Region} & \textbf{Size (USD)} & \textbf{Share} & \textbf{CAGR} \\
 \midrule
-North America & \$18.2B & 40.3\% & 12.5\% \\
-\rowcolor{tablealt} Europe & \$12.1B & 26.8\% & 14.2\% \\
-Asia-Pacific & \$10.5B & 23.2\% & 18.7\% \\
-\rowcolor{tablealt} Rest of World & \$4.4B & 9.7\% & 11.3\% \\
+North America & \$[X.X]B & [XX.X]\% & [X.X]\% \\
+\rowcolor{tablealt} Europe & \$[X.X]B & [XX.X]\% & [X.X]\% \\
+Asia-Pacific & \$[X.X]B & [XX.X]\% & [X.X]\% \\
+\rowcolor{tablealt} Rest of World & \$[X.X]B & [XX.X]\% & [X.X]\% \\
 \midrule
-\textbf{Total} & \textbf{\$45.2B} & \textbf{100\%} & \textbf{15.3\%} \\
+\textbf{Total} & \textbf{\$[XX.X]B} & \textbf{100\%} & \textbf{[X.X]\%} \\
 \bottomrule
 \end{tabular}
 \label{tab:market_by_region}
@@ -351,44 +369,11 @@ Route elsewhere when the ask is narrower: a single source-cited research questio
 
 ## Example Prompts
 
-### Market Overview Section
+Section-level prompts work best when they name the market, the frameworks, and the visuals, e.g.:
 
-```
-Write a comprehensive market overview section for the [Electric Vehicle Charging Infrastructure] market. Include:
-- Clear market definition and scope
-- Industry ecosystem with key stakeholders
-- Value chain analysis
-- Historical evolution of the market
-- Current market dynamics
-
-Generate 2 supporting visuals using scientific-schematics.
-```
-
-### Competitive Landscape Section
-
-```
-Analyze the competitive landscape for the [Cloud Computing] market. Include:
-- Porter's Five Forces analysis with High/Medium/Low ratings
-- Top 10 competitors with market share
-- Competitive positioning matrix
-- Strategic group mapping
-- Barriers to entry analysis
-
-Generate 4 supporting visuals including Porter's Five Forces diagram and positioning matrix.
-```
-
-### Strategic Recommendations Section
-
-```
-Develop strategic recommendations for entering the [Renewable Energy Storage] market. Include:
-- 5-7 prioritized recommendations
-- Opportunity sizing for each
-- Implementation considerations
-- Risk factors and mitigations
-- Success criteria
-
-Generate 3 supporting visuals including opportunity matrix and priority framework.
-```
+- "Write the market overview for [MARKET]: definition and scope, ecosystem and value chain, historical evolution, current dynamics; 2 supporting diagrams."
+- "Analyze the competitive landscape for [MARKET]: Porter's Five Forces with High/Medium/Low ratings, top competitors with sourced market shares, positioning matrix, barriers to entry."
+- "Develop 5-7 prioritized recommendations for entering [MARKET] with opportunity sizing (sourced or labelled estimates), risks and mitigations, and success criteria."
 
 ---
 
@@ -486,5 +471,7 @@ Load these files for detailed guidance:
 
 ---
 
-Use this skill to create comprehensive, visually-rich market research reports that rival top consulting firm deliverables. The combination of deep research, structured frameworks, and extensive visualization produces documents that inform strategic decisions and demonstrate analytical rigor.
+Disclose AI assistance in the report's methodology appendix, and keep the `sources/` notes so every figure can be traced.
+
+Part of the AlterLab Academic Skills suite.
 

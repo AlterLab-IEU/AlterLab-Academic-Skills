@@ -3,10 +3,11 @@ name: alterlab-flowio
 description: Parse and write FCS (Flow Cytometry Standard) files v2.0-3.1 with FlowIO — extract event data as NumPy arrays, read $-keyword metadata and channel/parameter definitions, and convert events to CSV or pandas DataFrame. Use when loading raw .fcs flow-cytometry files, inspecting channels and metadata, or preprocessing cytometry data for downstream gating and analysis. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Self-contained — runs under `uv run python` with `flowio` installed (1.4.0 as of 2026-09; Python 3.9+, NumPy is the only dependency). No API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # FlowIO: Flow Cytometry Standard File Handler
@@ -30,16 +31,27 @@ Use this skill when:
 - Cytometry files need validation or inspection
 - Pre-processing is needed before advanced analysis
 
-**Related tool:** For advanced analysis (compensation, gating, FlowJo/GatingML
-support), recommend the **FlowKit** library as a companion to FlowIO.
+**Related tool:** For advanced analysis (compensation, transformation, gating,
+FlowJo 10 workspace import), recommend the **FlowKit** library (1.3.2 as of 2026-09),
+which is built on FlowIO by the same author.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Compensation, transforms, gating, or FlowJo/GatingML workspaces | FlowKit (companion library, not a skill in this suite) |
+| Clustering / dimensionality reduction of cytometry events | `alterlab-scanpy`, `alterlab-umap` |
+| Statistical comparison of populations across samples | `alterlab-statistical-analysis` |
+| Mass-cytometry or imaging-based spatial single-cell data | `alterlab-squidpy-spatial` |
+| Registering and versioning the FCS files themselves | `alterlab-lamindb` |
 
 ## Installation
 
 ```bash
-uv pip install flowio
+uv pip install flowio     # 1.4.0 as of 2026-09
 ```
 
-Requires Python 3.9 or later.
+Requires Python 3.9 or later; NumPy is the only runtime dependency.
 
 ## Quick Start
 
@@ -116,3 +128,5 @@ FlowIO provides essential FCS file handling for flow cytometry workflows — use
 it for parsing, metadata extraction, and file creation. For simple file
 operations and data extraction, FlowIO alone is sufficient; for complex analysis
 (compensation, gating), integrate with FlowKit or other specialized tools.
+
+Part of the AlterLab Academic Skills suite.

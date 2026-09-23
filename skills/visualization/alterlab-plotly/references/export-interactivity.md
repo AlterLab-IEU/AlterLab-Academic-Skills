@@ -10,7 +10,14 @@ Static image export requires Kaleido:
 uv pip install kaleido
 ```
 
-Kaleido v1+ requires Chrome/Chromium on your system.
+Kaleido v1+ requires Chrome/Chromium on your system. If none is installed, run the helper that
+ships with plotly once:
+
+```bash
+plotly_get_chrome        # add -y to skip the prompt
+```
+
+Plotly 7 supports only Kaleido >= 1 (Orca and the `engine=` argument were removed).
 
 ### Supported Formats
 
@@ -65,10 +72,11 @@ fig.write_image(
 ```python
 import plotly.io as pio
 
-pio.kaleido.scope.default_format = 'png'
-pio.kaleido.scope.default_width = 800
-pio.kaleido.scope.default_height = 600
-pio.kaleido.scope.default_scale = 2
+# plotly >= 6.1; pio.kaleido.scope no longer exists in plotly 7
+pio.defaults.default_format = 'png'
+pio.defaults.default_width = 800
+pio.defaults.default_height = 600
+pio.defaults.default_scale = 2
 ```
 
 ### Exporting Multiple Figures
@@ -196,7 +204,7 @@ fig = px.scatter(
 For web applications, use Dash or FigureWidget for click handling:
 
 ```python
-# With FigureWidget in Jupyter
+# With FigureWidget in Jupyter (plotly >= 6 builds it on anywidget: uv pip install anywidget)
 import plotly.graph_objects as go
 
 fig = go.FigureWidget(data=[go.Scatter(x=[1, 2, 3], y=[4, 5, 6])])

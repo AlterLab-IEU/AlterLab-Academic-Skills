@@ -74,18 +74,19 @@ labels = client.node.fetch_property_labels(
 
 Obtain specific property values with optional filters.
 
-**Parameters:**
+**Parameters** (datacommons-client 2.1.x):
 - `node_dcids`: Node identifier(s)
-- `property`: Property name to query
+- `properties`: Property name or list of names to query (note the plural)
+- `constraints`: Optional filter expression on the connected nodes
 - `out`: Direction (True for outgoing, False for incoming)
-- `limit`: Maximum number of values to return
+- `all_pages` / `next_token`: Pagination controls
 
 **Example Usage:**
 ```python
 # Get name property for California
 values = client.node.fetch_property_values(
     node_dcids=["geoId/06"],
-    property="name",
+    properties="name",
     out=True
 )
 ```
@@ -104,41 +105,48 @@ classes = client.node.fetch_all_classes()
 Look up entity names by DCID in selected languages.
 
 **Parameters:**
-- `node_dcids`: Entity identifier(s)
-- `language`: Language code (default: "en")
+- `entity_dcids`: Entity identifier(s) (not `node_dcids`)
+- `language`: Language code (default: "en"); `fallback_language` optional
 
 **Example Usage:**
 ```python
 names = client.node.fetch_entity_names(
-    node_dcids=["geoId/06", "country/USA"],
+    entity_dcids=["geoId/06", "country/USA"],
     language="en"
 )
-# Returns: {"geoId/06": "California", "country/USA": "United States"}
+# Returns a dict of Name objects:
+# {"geoId/06": Name(value="California", language="en", property=...), ...}
+print(names["geoId/06"].value)  # "California"
 ```
 
 ### 6. Place Hierarchy Methods
 
-These methods navigate geographic relationships:
+These methods navigate geographic relationships. They take `place_dcids` (not
+`node_dcids`) and return plain dicts keyed by the input DCID; each child/parent is a
+dict with `dcid`, `name`, and `types` (pass `as_dict=False` for `Node` objects).
 
 #### fetch_place_children()
-Get direct child places.
+Get direct child places; filter with `children_type`.
 
 **Example Usage:**
 ```python
 # Get all states in USA
 children = client.node.fetch_place_children(
-    node_dcids=["country/USA"]
+    place_dcids="country/USA",
+    children_type="State",
 )
+state_dcids = [c["dcid"] for c in children["country/USA"]]
 ```
 
 #### fetch_place_descendants()
-Retrieve full child hierarchies (recursive).
+Retrieve full child hierarchies (recursive); filter with `descendants_type`.
 
 **Example Usage:**
 ```python
-# Get all descendants of California (counties, cities, etc.)
+# All counties anywhere under California
 descendants = client.node.fetch_place_descendants(
-    node_dcids=["geoId/06"]
+    place_dcids="geoId/06",
+    descendants_type="County",
 )
 ```
 
@@ -149,18 +157,18 @@ Get direct parent places.
 ```python
 # Get parent of San Francisco
 parents = client.node.fetch_place_parents(
-    node_dcids=["geoId/0667000"]
+    place_dcids="geoId/0667000"
 )
 ```
 
 #### fetch_place_ancestors()
-Retrieve complete parent lineages.
+Retrieve complete parent lineages (`as_tree=True` returns a nested tree).
 
 **Example Usage:**
 ```python
 # Get all ancestors of San Francisco (CA, USA, etc.)
 ancestors = client.node.fetch_place_ancestors(
-    node_dcids=["geoId/0667000"]
+    place_dcids="geoId/0667000"
 )
 ```
 
@@ -171,7 +179,7 @@ Access constraint properties for statistical variables—useful for understandin
 **Example Usage:**
 ```python
 constraints = client.node.fetch_statvar_constraints(
-    node_dcids=["Count_Person"]
+    variable_dcids=["Count_Person_Female"]
 )
 ```
 
@@ -222,14 +230,12 @@ print(labels)  # Shows all outgoing properties like 'name', 'latitude', etc.
 ### Use Case 2: Navigate Geographic Hierarchies
 
 ```python
-# Get all counties in California
+# Get all counties in California (server-side type filter)
 counties = client.node.fetch_place_children(
-    node_dcids=["geoId/06"]
+    place_dcids="geoId/06",
+    children_type="County",
 )
-
-# Filter for specific type if needed
-county_dcids = [child for child in counties["geoId/06"]
-                if "County" in child]
+county_dcids = [child["dcid"] for child in counties["geoId/06"]]
 ```
 
 ### Use Case 3: Build Entity Relationships

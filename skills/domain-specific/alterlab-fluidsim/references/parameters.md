@@ -62,7 +62,7 @@ params.time_stepping.it_end = 100  # or maximum iterations
 
 params.time_stepping.deltat0 = 0.01  # initial time step
 params.time_stepping.USE_CFL = True  # adaptive CFL-based time step
-params.time_stepping.CFL = 0.5  # CFL number (if USE_CFL=True)
+params.time_stepping.cfl_coef = 0.5  # CFL coefficient (if USE_CFL=True)
 
 params.time_stepping.type_time_scheme = "RK4"  # or "RK2", "Euler"
 ```
@@ -81,7 +81,7 @@ params.init_fields.type = "noise"  # initialization method
 
 ```python
 params.init_fields.type = "from_file"
-params.init_fields.from_file.path = "path/to/state_file.h5"
+params.init_fields.from_file.path = "path/to/state_phys_t010.000.nc"
 ```
 
 #### In Script
@@ -93,14 +93,17 @@ params.init_fields.type = "in_script"
 sim = Simul(params)
 
 # Build physical-space fields
-X, Y = sim.oper.get_XY_loc()
-vx = np.sin(X) * np.cos(Y)
-vy = -np.cos(X) * np.sin(Y)
+X, Y = sim.oper.XX, sim.oper.YY  # local physical grid
+ux = np.sin(X) * np.cos(Y)
+uy = -np.cos(X) * np.sin(Y)
+rot = 2 * np.sin(X) * np.sin(Y)   # vorticity d(uy)/dx - d(ux)/dy
 
 # Set the physical state, then compute spectral FROM physical.
 # (statephys_from_statespect goes the OTHER way and would overwrite
 # the fields you just set with the empty spectral state.)
-sim.state.init_statephys_from(vx=vx, vy=vy)
+# ns2d keys are ux, uy, rot; the solver's spectral state is rot_fft, which
+# statespect_from_statephys computes from `rot` — so rot must be set too
+sim.state.init_statephys_from(ux=ux, uy=uy, rot=rot)
 sim.state.statespect_from_statephys()
 
 # Run simulation
@@ -141,7 +144,7 @@ params.output.periods_plot.phys_fields = 2.0  # plot every 2.0 time units
 
 # Must also enable the output module
 params.output.ONLINE_PLOT_OK = True
-params.output.phys_fields.field_to_plot = "vorticity"  # or "vx", "vy", etc.
+params.output.phys_fields.field_to_plot = "rot"  # ns2d keys: "rot", "ux", "uy" (+ "b" for ns2d.strat)
 ```
 
 ### Forcing (`params.forcing`)

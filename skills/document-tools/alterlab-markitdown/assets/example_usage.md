@@ -107,7 +107,7 @@ client = OpenAI(
 )
 md = MarkItDown(
     llm_client=client,
-    llm_model=os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8",
+    llm_model="anthropic/claude-opus-5.5",  # OpenRouter slug of the ALTERLAB_MODEL default (skills/core/shared/model_env.md)
     llm_prompt="Describe this scientific slide, focusing on data and key findings"
 )
 
@@ -151,7 +151,7 @@ Be technical and precise.
 # Model via the ALTERLAB_MODEL convention (skills/core/shared/model_env.md).
 md = MarkItDown(
     llm_client=client,
-    llm_model=os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8",
+    llm_model="anthropic/claude-opus-5.5",  # OpenRouter slug of the ALTERLAB_MODEL default (skills/core/shared/model_env.md)
     llm_prompt=scientific_prompt
 )
 
@@ -174,7 +174,7 @@ client = OpenAI(
 )
 
 # Same model (ALTERLAB_MODEL convention), different prompts per file type.
-model = os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8"
+model = "anthropic/claude-opus-5.5"  # OpenRouter slug of the ALTERLAB_MODEL default (skills/core/shared/model_env.md)
 
 # Scientific papers - prompt for technical figure analysis
 scientific_md = MarkItDown(

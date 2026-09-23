@@ -21,7 +21,7 @@ fabricates statistics.
 uv run --with yokatlas-py python .../yokatlas_lookup.py universities
 ```
 
-Use the returned `universiteId` / `universiteAdi` pairs to disambiguate a fuzzy
+Use the returned `universite_id` / `universite_adi` pairs to disambiguate a fuzzy
 name before a program search.
 
 ## 2. Program search with filters
@@ -29,7 +29,7 @@ name before a program search.
 ```bash
 # Boğaziçi computer-engineering-type programs, SAY score type
 uv run --with yokatlas-py python .../yokatlas_lookup.py search \
-  --puan-turu SAY --universite "boğaziçi" --program "bilgisayar" --size 20
+  --puan-turu SAY --universite "boğaziçi" --program "bilgisayar mühendisliği" --size 20
 ```
 
 ```bash
@@ -46,6 +46,9 @@ uv run --with yokatlas-py python .../yokatlas_lookup.py search \
 
 `--puan-turu` accepts `SAY SÖZ EA DİL TYT` (diacritics preserved).
 `--universite-turu` accepts `DEVLET` or `VAKIF`. `--il` filters by province.
+`--program` takes a **program-group** name: a fragment resolves to the first group
+containing it (see `api_endpoints.md` → *Name resolution*), so if a search returns
+`count: 0` with a `note`, retry with the full group name.
 
 ## 3. One program by guide code (kılavuz kodu)
 

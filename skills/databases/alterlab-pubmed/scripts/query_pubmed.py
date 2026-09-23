@@ -4,7 +4,11 @@ PubMed query tool.
 
 Query PubMed via the NCBI E-utilities REST API: search (ESearch) returns PMIDs,
 fetch (EFetch) returns abstracts, summary (ESummary) returns metadata. Supports
-an optional API key for higher rate limits. Standard library only.
+an optional API key for higher rate limits (--api-key or the NCBI_API_KEY
+environment variable, as used by EDirect). Standard library only.
+
+PubMed ESearch only reaches the first 9,999 records of a query (retstart <= 9998,
+also through the history server); split larger queries by date range.
 
 API base: https://eutils.ncbi.nlm.nih.gov/entrez/eutils
 Docs:     https://www.ncbi.nlm.nih.gov/books/NBK25501/
@@ -12,6 +16,7 @@ Docs:     https://www.ncbi.nlm.nih.gov/books/NBK25501/
 
 import argparse
 import json
+import os
 import sys
 import urllib.error
 import urllib.parse
@@ -56,12 +61,15 @@ def fetch(pmids, api_key=None):
 
 def main():
     parser = argparse.ArgumentParser(description="Query PubMed via NCBI E-utilities")
-    parser.add_argument("--api-key", help="NCBI API key (raises rate limit to 10 req/s)")
+    parser.add_argument("--api-key", default=os.environ.get("NCBI_API_KEY"),
+                        help="NCBI API key (raises rate limit to 10 req/s); "
+                             "defaults to $NCBI_API_KEY")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_s = sub.add_parser("search", help="ESearch: PMIDs for a query")
     p_s.add_argument("term", help='Query, e.g. "diabetes[tiab] AND 2024[dp]"')
-    p_s.add_argument("--retmax", type=int, default=20, help="Max PMIDs")
+    p_s.add_argument("--retmax", type=int, default=20,
+                     help="Max PMIDs (PubMed serves at most the first 9,999)")
 
     p_m = sub.add_parser("summary", help="ESummary: metadata for PMIDs")
     p_m.add_argument("pmids", nargs="+", help="One or more PMIDs")

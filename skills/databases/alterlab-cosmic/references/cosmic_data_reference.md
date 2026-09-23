@@ -5,28 +5,36 @@
 COSMIC (Catalogue of Somatic Mutations in Cancer) is the world's largest and most comprehensive resource for exploring the impact of somatic mutations in human cancer. Maintained by the Wellcome Sanger Institute, it catalogs millions of mutations across thousands of cancer types.
 
 **Website**: https://cancer.sanger.ac.uk/cosmic
-**Releases**: Roughly one to two releases per year; use "latest" in file paths for the most recent, or check the [release notes](https://cancer.sanger.ac.uk/cosmic/release_notes) for the current version number
+**Releases**: Two per year (May and November). Current: **v104**, released 2026-05-19 (v103: 2025-11-18). Check the [release notes](https://cancer.sanger.ac.uk/cosmic/release_notes) for newer versions.
 
 ## Data Access
 
 ### Authentication
 - **Academic users**: Free access (registration required)
-- **Commercial users**: License required (contact QIAGEN)
+- **Commercial users**: Commercial licence required (commercial R&D, products/services,
+  patient services/clinical reporting) — https://www.cosmickb.org/licensing
 - **Registration**: https://cancer.sanger.ac.uk/cosmic/register
 
 ### Download Methods
-1. **Web Browser**: Interactive search at https://cancer.sanger.ac.uk/cosmic
-2. **File Downloads**: Programmatic access via download API
-3. **Data Files**: TSV, CSV, and VCF formats
+From https://cancer.sanger.ac.uk/cosmic/download/cosmic, pick a release and product and
+click the file name; three options appear:
+1. **Download in browser** — the whole `.tar` (gzipped TSV/VCF + README of all columns)
+2. **Scripted download** — two-step API: `GET https://cancer.sanger.ac.uk/api/mono/products/v1/downloads/scripted?path=<archive path>&bucket=downloads`
+   with HTTP Basic auth (email:password) → JSON `{"url": <signed URL>}` → fetch that URL
+   without auth. `path` and `bucket` are both required (HTTP 400 otherwise); bad
+   credentials give 401. `scripts/download_cosmic.py` implements this.
+3. **Filtered download** — a subset by gene symbol, primary site, or sample name
 
 ## Available Data Types
 
 ### 1. Core Mutation Data
-**Main Files**:
-- `CosmicMutantExport.tsv.gz` - Complete coding mutations
-- `CosmicCodingMuts.vcf.gz` - Mutations in VCF format
-- `CosmicNonCodingVariants.vcf.gz` - Non-coding variants
-- `CosmicMutantExportCensus.tsv.gz` - Mutations in Cancer Gene Census genes only
+**Main archives** (`grch38/cosmic/v104/…`; legacy names in brackets):
+- `Cosmic_GenomeScreensMutant_Tsv_v104_GRCh38.tar` - Coding mutations from genome-wide screens (WGS/WES)
+- `Cosmic_CompleteTargetedScreensMutant_Tsv_v104_GRCh38.tar` - Coding mutations from targeted screens
+  (together these replace `CosmicMutantExport.tsv.gz`)
+- `VCF/Cosmic_GenomeScreensMutant_Vcf_v104_GRCh38.tar` (also `…_VcfNormal_…` normalized) - VCF [`CosmicCodingMuts.vcf.gz`]
+- `VCF/Cosmic_NonCodingVariants_Vcf_v104_GRCh38.tar` - Non-coding variants [`CosmicNonCodingVariants.vcf.gz`]
+- `Cosmic_MutantCensus_Tsv_v104_GRCh38.tar` - Coding mutations in Cancer Gene Census genes [`CosmicMutantExportCensus.tsv.gz`]
 
 **Content**:
 - Point mutations (SNVs)
@@ -37,7 +45,8 @@ COSMIC (Catalogue of Somatic Mutations in Cancer) is the world's largest and mos
 - Tumor type associations
 
 ### 2. Cancer Gene Census
-**File**: `cancer_gene_census.csv`
+**File**: `Cosmic_CancerGeneCensus_Tsv_v104_GRCh38.tar` [legacy `cancer_gene_census.csv`];
+hallmarks in `Cosmic_CancerGeneCensusHallmarksOfCancer_Tsv_v104_GRCh38.tar`
 
 **Content**:
 - Expert-curated list of cancer genes
@@ -48,13 +57,13 @@ COSMIC (Catalogue of Somatic Mutations in Cancer) is the world's largest and mos
 - Molecular genetics information
 
 ### 3. Mutational Signatures
-**Files**: Available in `signatures/` directory
-- `signatures.tsv` - Signature definitions
-- Single Base Substitution (SBS) signatures
-- Doublet Base Substitution (DBS) signatures
-- Insertion/Deletion (ID) signatures
+**Where**: https://cancer.sanger.ac.uk/signatures/downloads/ (a separate site; not part of
+the product archives above)
+- Single Base Substitution (SBS), Doublet Base Substitution (DBS), Insertion/Deletion (ID),
+  Copy Number (CN), and Structural Variant (SV) reference signatures
+- Matrices per reference genome (GRCh37, GRCh38, mouse builds)
 
-**Current Version**: v3.4 (released in COSMIC v98)
+**Current Version**: v3.6 (May 2026)
 
 **Content**:
 - Signature profiles (96-channel, 78-channel, 83-channel)
@@ -62,7 +71,8 @@ COSMIC (Catalogue of Somatic Mutations in Cancer) is the world's largest and mos
 - Reference signatures for signature analysis
 
 ### 4. Structural Variants
-**File**: `CosmicStructExport.tsv.gz`
+**Files**: `Cosmic_StructuralVariants_Tsv_v104_GRCh38.tar`, `Cosmic_Breakpoints_Tsv_v104_GRCh38.tar`,
+fusions in `Cosmic_Fusion_Tsv_v104_GRCh38.tar` [legacy `CosmicStructExport.tsv.gz`, `CosmicFusionExport.tsv.gz`]
 
 **Content**:
 - Gene fusions
@@ -72,7 +82,7 @@ COSMIC (Catalogue of Somatic Mutations in Cancer) is the world's largest and mos
 - Complex rearrangements
 
 ### 5. Copy Number Variations
-**File**: `CosmicCompleteCNA.tsv.gz`
+**File**: `Cosmic_CompleteCNA_Tsv_v104_GRCh38.tar` [legacy `CosmicCompleteCNA.tsv.gz`]
 
 **Content**:
 - Copy number gains and losses
@@ -81,7 +91,7 @@ COSMIC (Catalogue of Somatic Mutations in Cancer) is the world's largest and mos
 - Gene-level annotations
 
 ### 6. Gene Expression
-**File**: `CosmicCompleteGeneExpression.tsv.gz`
+**File**: `Cosmic_CompleteGeneExpression_Tsv_v104_GRCh38.tar` [legacy `CosmicCompleteGeneExpression.tsv.gz`]
 
 **Content**:
 - Over/under-expression data
@@ -89,7 +99,7 @@ COSMIC (Catalogue of Somatic Mutations in Cancer) is the world's largest and mos
 - Tissue-specific expression patterns
 
 ### 7. Resistance Mutations
-**File**: `CosmicResistanceMutations.tsv.gz`
+**File**: `Cosmic_ResistanceMutations_Tsv_v104_GRCh38.tar` [legacy `CosmicResistanceMutations.tsv.gz`]
 
 **Content**:
 - Drug resistance mutations
@@ -106,7 +116,8 @@ COSMIC (Catalogue of Somatic Mutations in Cancer) is the world's largest and mos
 - Microsatellite instability status
 
 ### 9. Sample Information
-**File**: `CosmicSample.tsv.gz`
+**Files**: `Cosmic_Sample_Tsv_v104_GRCh38.tar`, tumour classification in
+`Cosmic_Classification_Tsv_v104_GRCh38.tar` [legacy `CosmicSample.tsv.gz`]
 
 **Content**:
 - Sample metadata
@@ -120,14 +131,13 @@ All genomic data is available for two reference genomes:
 - **GRCh37** (hg19) - Legacy assembly
 - **GRCh38** (hg38) - Current assembly (recommended)
 
-File paths use the pattern: `{assembly}/cosmic/{version}/{filename}`
+Archive paths use the pattern: `{assembly lower-case}/cosmic/{version}/[VCF/]Cosmic_{Product}_{Tsv|Vcf|VcfNormal}_{version}_{Assembly}.tar`
 
 ## File Formats
 
-### TSV/CSV Format
-- Tab or comma-separated values
-- Column headers included
-- Gzip compressed (.gz)
+### TSV Format
+- Delivered inside a `.tar` together with a README that documents every column
+- Tab-separated, gzip compressed (.gz), column headers included
 - Can be read with pandas, awk, or standard tools
 
 ### VCF Format
@@ -138,41 +148,39 @@ File paths use the pattern: `{assembly}/cosmic/{version}/{filename}`
 
 ## Common File Paths
 
-Using `latest` for the most recent version:
+Release v104 (the download service lists only explicit-version paths):
 
 ```
-# Coding mutations (TSV)
-GRCh38/cosmic/latest/CosmicMutantExport.tsv.gz
+# Coding mutations (TSV): genome-wide and targeted screens
+grch38/cosmic/v104/Cosmic_GenomeScreensMutant_Tsv_v104_GRCh38.tar
+grch38/cosmic/v104/Cosmic_CompleteTargetedScreensMutant_Tsv_v104_GRCh38.tar
 
 # Coding mutations (VCF)
-GRCh38/cosmic/latest/VCF/CosmicCodingMuts.vcf.gz
+grch38/cosmic/v104/VCF/Cosmic_GenomeScreensMutant_Vcf_v104_GRCh38.tar
 
 # Cancer Gene Census
-GRCh38/cosmic/latest/cancer_gene_census.csv
+grch38/cosmic/v104/Cosmic_CancerGeneCensus_Tsv_v104_GRCh38.tar
 
-# Structural variants
-GRCh38/cosmic/latest/CosmicStructExport.tsv.gz
-
-# Copy number alterations
-GRCh38/cosmic/latest/CosmicCompleteCNA.tsv.gz
-
-# Gene fusions
-GRCh38/cosmic/latest/CosmicFusionExport.tsv.gz
-
-# Gene expression
-GRCh38/cosmic/latest/CosmicCompleteGeneExpression.tsv.gz
+# Structural variants / fusions / copy number / expression
+grch38/cosmic/v104/Cosmic_StructuralVariants_Tsv_v104_GRCh38.tar
+grch38/cosmic/v104/Cosmic_Fusion_Tsv_v104_GRCh38.tar
+grch38/cosmic/v104/Cosmic_CompleteCNA_Tsv_v104_GRCh38.tar
+grch38/cosmic/v104/Cosmic_CompleteGeneExpression_Tsv_v104_GRCh38.tar
 
 # Resistance mutations
-GRCh38/cosmic/latest/CosmicResistanceMutations.tsv.gz
+grch38/cosmic/v104/Cosmic_ResistanceMutations_Tsv_v104_GRCh38.tar
 
-# Mutational signatures
-signatures/signatures.tsv
-
-# Sample information
-GRCh38/cosmic/latest/CosmicSample.tsv.gz
+# Samples and tumour classification
+grch38/cosmic/v104/Cosmic_Sample_Tsv_v104_GRCh38.tar
+grch38/cosmic/v104/Cosmic_Classification_Tsv_v104_GRCh38.tar
 ```
 
 ## Key Data Fields
+
+> The fields below are described by their meaning. The current TSVs use upper-case
+> column names (e.g. `GENE_SYMBOL`, `SAMPLE_NAME`) that differ from the legacy exports
+> (e.g. `Gene name`, `Primary site`); read the README bundled with each archive for the
+> exact names before writing filters.
 
 ### Mutation Data Fields
 - **Gene name** - HGNC gene symbol
@@ -200,7 +208,7 @@ GRCh38/cosmic/latest/CosmicSample.tsv.gz
 
 ## Data Updates
 
-COSMIC is updated quarterly with new releases. Each release includes:
+COSMIC publishes two releases a year (May and November). Each release includes:
 - New mutation data from literature and databases
 - Updated Cancer Gene Census annotations
 - Revised mutational signatures if applicable
@@ -216,4 +224,4 @@ Sondka Z, Dhir NB, Carvalho-Silva D, et al. COSMIC: a curated database of somati
 - **Documentation**: https://cancer.sanger.ac.uk/cosmic/help
 - **Release Notes**: https://cancer.sanger.ac.uk/cosmic/release_notes
 - **Contact**: cosmic@sanger.ac.uk
-- **Licensing**: cosmic-translation@sanger.ac.uk
+- **Licensing**: https://www.cosmickb.org/licensing

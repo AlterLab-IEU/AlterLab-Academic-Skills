@@ -60,9 +60,9 @@ MIN_TRIGGERS = 3
 MIN_NEGATIVES = 1
 
 # --- Model convention -------------------------------------------------------------------
-# AlterLab model convention — default reviewed 2026-06-06; override via ALTERLAB_MODEL.
-# See skills/core/shared/model_env.md before changing the default. NEVER inline a bare id.
-DEFAULT_MODEL = "claude-opus-4-8"
+# AlterLab model convention — default reviewed 2026-09-23; override via ALTERLAB_MODEL.
+# See skills/core/shared/model_env.md before changing the default. Never inline a bare id.
+DEFAULT_MODEL = "claude-opus-5-5"
 
 
 def alterlab_model() -> str:

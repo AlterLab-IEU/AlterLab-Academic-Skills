@@ -6,8 +6,8 @@ allowed-tools: Read Bash(python:*)
 compatibility: No API key required. A discipline-enforcing guidance skill; the optional decision-tree helper runs locally via `uv run python` (standard library only).
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
-    last_updated: "2026-06-06"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
     depends_on: "alterlab-statistical-analysis (executes the chosen test + assumption checks), alterlab-statsmodels, alterlab-preregistration-discipline"
 ---
 
@@ -264,7 +264,8 @@ Do **not** run test #4 to find p < .05. Correction math and family definition:
 
 ## References
 
-- `references/decision_tree.md` — full branch logic, edge cases, Welch/post-hoc notes.
+- `references/decision_tree.md` — full branch logic, edge cases, Welch/post-hoc notes
+  (including the case for pre-specifying Welch's t-test instead of a Levene pre-test).
 - `references/assumption_gate.md` — the pre-interpretation check order and fallback rules.
 - `references/rationalizations.md` — extended Excuse-vs-Reality table with counters.
 - `references/multiplicity.md` — Bonferroni / Benjamini-Hochberg FDR, defining the test family.

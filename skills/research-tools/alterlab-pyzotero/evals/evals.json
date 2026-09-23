@@ -34,11 +34,11 @@
     {
       "id": "local-read-only-mode",
       "prompt": "I don't want to set up an API key right now — can I read my local Zotero library with pyzotero without one?",
-      "expected_output": "Explains pyzotero local mode: Zotero(library_id, library_type, local=True) provides read-only access to the local Zotero instance without an API key, and then zot.items() works as usual. Should note it is read-only.",
+      "expected_output": "Explains pyzotero local mode: Zotero(library_id, library_type, local=True) reads the running Zotero desktop app (Zotero 7+, local API access enabled) without any web API key, and then zot.items() works as usual. Should note that reads are keyless while writes additionally need Zotero 10+ and a local key granted via zot.authorize_local() (or `pyzotero authorize`).",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "local=True"},
-        {"type": "behavior", "value": "Describes pyzotero local read-only mode that needs no API key."}
+        {"type": "behavior", "value": "Describes keyless local-mode reads and correctly notes that local writes require Zotero 10+ plus authorize_local() consent, rather than claiming local mode is strictly read-only."}
       ]
     },
     {
@@ -49,6 +49,15 @@
         {"type": "should_not_trigger", "value": true},
         {"type": "output_contains", "value": "research-lookup"},
         {"type": "behavior", "value": "Recognizes that searching external scholarly databases is not a Zotero-API task and defers to a literature-search skill."}
+      ]
+    },
+    {
+      "id": "near-miss-citation-mgmt",
+      "prompt": "I don't use Zotero. Just turn these 12 DOIs into a clean BibTeX file I can drop into my LaTeX paper.",
+      "expected_output": "Does NOT invoke alterlab-pyzotero; defers to alterlab-citation-mgmt, which converts DOIs to BibTeX and validates the metadata without any reference manager. pyzotero only makes sense when the references live in (or should go into) a Zotero library.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-citation-mgmt"}
       ]
     }
   ]

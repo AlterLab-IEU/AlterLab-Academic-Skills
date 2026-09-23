@@ -2,7 +2,7 @@
 
 `gtars.refget` implements the GA4GH refget / sequence-collections protocol:
 compute sequence digests, build a local store, and retrieve sequences.
-Verified against v0.8.
+Verified against 0.10.0 (originally written for 0.8).
 
 ## Module-level digest functions
 

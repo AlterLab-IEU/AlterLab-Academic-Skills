@@ -3,10 +3,11 @@ name: alterlab-scikit-learn
 description: Classical machine learning in Python with scikit-learn — algorithms, preprocessing, pipelines, and best-practice reference documentation. Use when working with supervised learning (classification, regression), unsupervised learning (clustering, dimensionality reduction), model evaluation, hyperparameter tuning, feature preprocessing, or building ML pipelines. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the scikit-learn Python package.
+compatibility: No API key required. Runs locally via `uv run python`; requires scikit-learn >= 1.8 (current 1.9 as of 2026-09).
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Scikit-learn
@@ -41,6 +42,16 @@ Use the scikit-learn skill when:
 - Comparing different algorithms for a task
 - Working with both structured (tabular) and text data
 - Need interpretable, classical machine learning approaches
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Bayesian models with posteriors, credible intervals, or MCMC diagnostics | `alterlab-pymc` |
+| Censored time-to-event outcomes (Cox models, survival forests, C-index) | `alterlab-scikit-survival` |
+| UMAP embeddings with `n_neighbors` / `min_dist` tuning | `alterlab-umap` |
+| Explaining a fitted model's predictions with SHAP values and plots | `alterlab-shap` |
+| Coefficient tables, p-values, and residual diagnostics for inference | `alterlab-statsmodels` |
 
 ## Quick Start
 
@@ -131,7 +142,8 @@ Transform raw data into formats suitable for machine learning.
 **Encoding categorical variables:**
 - OneHotEncoder (nominal categories)
 - OrdinalEncoder (ordered categories)
-- LabelEncoder (target encoding)
+- LabelEncoder (encodes the target labels `y`, not features)
+- TargetEncoder (encodes high-cardinality categorical features with cross-fitted target means)
 
 **Handling missing values:**
 - SimpleImputer (mean, median, most frequent)
@@ -257,6 +269,13 @@ This skill includes comprehensive reference files for deep dives into specific t
 - **Clustering analysis:** `StandardScaler` → silhouette sweep over `k` to pick `optimal_k` → fit `KMeans` → `PCA(n_components=2)` projection for visualization.
 
 **See `references/worked_examples.md`** for the numbered, copy-paste version of each workflow.
+
+## Version notes (scikit-learn 1.8–1.9)
+
+- `LogisticRegression(penalty=...)` is deprecated (removed in 1.10): use `l1_ratio` (0 = L2, 1 = L1, in between = elastic net) and `C=np.inf` for no penalty.
+- `SVC(probability=True)` is deprecated (removed in 1.11): wrap the model as `CalibratedClassifierCV(SVC(), ensemble=False)` when probabilities are needed.
+- `MDS(metric=True/False)` became `metric_mds=`; `HDBSCAN` warns unless `copy` is set explicitly.
+- `mean_squared_error(..., squared=False)` is gone; use `root_mean_squared_error`.
 
 ## Best Practices (essentials)
 

@@ -1,12 +1,13 @@
 ---
 name: alterlab-statistical-analysis
-description: Guided statistical analysis with hypothesis-test selection, assumption checking, power analysis, and APA-formatted reporting. Use when choosing the appropriate statistical test for data, verifying test assumptions, computing power/sample size, or producing APA-style results for academic research. For implementing specific models programmatically prefer statsmodels. Part of the AlterLab Academic Skills suite.
+description: Guided statistical analysis with hypothesis-test selection, assumption checking, effect sizes, power analysis, and APA-formatted reporting using scipy.stats, statsmodels, and pingouin (Bayesian alternatives with PyMC). Use when choosing and running the appropriate statistical test for data, verifying test assumptions, computing power/sample size, or producing APA-style results for academic research. For implementing specific models programmatically prefer alterlab-statsmodels. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`. Core deps are scipy, statsmodels, and pingouin>=0.6 (0.6 renamed output columns, e.g. p-val to p_val, CI95% to CI95, cohen-d to cohen_d); Bayesian examples additionally need pymc and arviz.
+compatibility: No API key required. Runs locally via `uv run python`. Core deps are scipy, statsmodels (>= 0.14; current 0.15), and pingouin>=0.6 (current 0.6.1; 0.6 renamed output columns, e.g. p-val to p_val, CI95% to CI95, cohen-d to cohen_d); Bayesian examples additionally need pymc and arviz.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Statistical Analysis
@@ -26,6 +27,16 @@ Use when:
 - Checking statistical assumptions and diagnostics
 - Calculating effect sizes and conducting power analyses
 - Reporting statistical results in APA format
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Fitting a specific model class (OLS/GLM/mixed/ARIMA) with coefficient tables and residual diagnostics | `alterlab-statsmodels` |
+| Policing test choice: switching tests after seeing p-values, test-shopping, uncorrected families of tests | `alterlab-test-selection-guard` |
+| Full Bayesian or hierarchical modelling workflows (custom priors, NUTS diagnostics, LOO model comparison) | `alterlab-pymc` |
+| Pooling effect sizes across studies (random-effects meta-analysis, heterogeneity, funnel plots) | `alterlab-meta-analysis` |
+| Complex-sample survey data needing weights, strata, and design-based standard errors | `alterlab-survey-analysis` |
 
 ## Core Capabilities
 
@@ -69,7 +80,7 @@ Bayes Factors, and the ability to support the null. See `references/bayesian_sta
 
 ## Assumption Checking
 
-**ALWAYS check assumptions before interpreting results.** Use the bundled
+Check assumptions before interpreting results, because a violated assumption can make the reported p-value and CI wrong. Use the bundled
 `scripts/assumption_checks.py` (`comprehensive_assumption_check()` and targeted functions —
 code in `references/code_examples.md`). It performs outlier detection (IQR + z-score),
 normality testing (Shapiro-Wilk + Q-Q), homogeneity of variance (Levene + box plots), and
@@ -180,3 +191,5 @@ non-significant results.
 Key textbooks: Cohen (1988), Field (2013), Gelman & Hill (2006), Kruschke (2014).
 Online: APA Style Guide (https://apastyle.apa.org/), Cross Validated
 (stats.stackexchange.com).
+
+Part of the AlterLab Academic Skills suite.

@@ -2,7 +2,7 @@
 
 Comprehensive requirements and formatting guidelines for major federal and private foundation grant programs.
 
-**Last Updated**: 2024
+**Last Updated**: 2024; NSF and NIH biosketch, plan, and review-criteria rows updated 2026-09 (PAPPG 24-1 with 2025-2026 supplements; NIH NOT-OD-26-018, Simplified Review Framework)
 
 ---
 
@@ -26,11 +26,13 @@ Comprehensive requirements and formatting guidelines for major federal and priva
 | **Project Summary** | 1 page | Any readable, 10pt+ | Any |
 | **Project Description** | 15 pages | Times Roman 11pt or similar | Single |
 | **References Cited** | No limit | Times Roman 11pt | Single |
-| **Biographical Sketch** | 3 pages per person | Times Roman 11pt | Single |
+| **Biographical Sketch** | No page limit (Common Form, generated and certified in SciENcv) | SciENcv output | — |
+| **Synergistic Activities** | 1 page per person | PAPPG fonts | Single |
 | **Budget Justification** | 3-5 pages | Any readable | Any |
 | **Current & Pending Support** | No limit | Times Roman 11pt | Single |
 | **Facilities, Equipment** | 2 pages | Any readable | Any |
-| **Data Management Plan** | 2 pages | Any readable | Any |
+| **Data Management and Sharing Plan** | 2 pages (Research.gov DMSP tool since 2026) | PAPPG fonts | Any |
+| **Mentoring Plan** | 1 page (if funding postdocs or graduate students) | PAPPG fonts | Any |
 
 **Margins**: 1 inch (2.54 cm) on all sides (strictly enforced)
 
@@ -57,7 +59,7 @@ Comprehensive requirements and formatting guidelines for major federal and priva
 **Format**: Can be full-page text or sectioned  
 **Audience**: Non-specialists (broad scientific community)
 
-**Template**: `assets/grants/nsf_project_summary.tex`
+**Template**: not bundled — use the funder's current instructions and forms
 
 ---
 
@@ -97,18 +99,17 @@ Comprehensive requirements and formatting guidelines for major federal and priva
 
 ---
 
-### NSF Biographical Sketch (3 pages)
+### NSF Biographical Sketch (Common Form via SciENcv; no page limit)
 
 **Required Sections**:
 1. **Professional Preparation**: Institutions, degrees, fields
-2. **Appointments**: Current and previous positions
-3. **Products**: Up to 5 most relevant, up to 5 other significant products
+2. **Appointments and Positions**: All academic, professional, and institutional appointments
+3. **Products**: Up to 5 closely related to the proposal, up to 5 other significant products
    - Can include publications, datasets, software, patents
-4. **Synergistic Activities**: Up to 5 examples of impact beyond research
 
 **Format**:
-- NSF template must be used (SciENcv or NSF-approved format)
-- No longer uses "Publications" but "Products"
+- Must be prepared, certified, and submitted through SciENcv (PAPPG 24-1)
+- Synergistic Activities is now a separate one-page document per senior/key person
 
 ---
 
@@ -190,11 +191,11 @@ Comprehensive requirements and formatting guidelines for major federal and priva
 ### NSF LaTeX Templates
 
 - **Full Proposal**: `assets/grants/nsf_proposal_template.tex`
-- **Project Summary**: `assets/grants/nsf_project_summary.tex`
-- **Biographical Sketch**: Use NSF SciENcv or template
+- **Project Summary**: not bundled — see the NSF Project Summary rules in the PAPPG (`alterlab-research-grants` has a Markdown template)
+- **Biographical Sketch**: Prepare and certify in SciENcv (required)
 
 **Resources**: 
-- NSF PAPPG: https://www.nsf.gov/publications/pub_summ.jsp?ods_key=pappg
+- NSF PAPPG: https://www.nsf.gov/policies/pappg
 - NSF Fastlane: https://www.fastlane.nsf.gov/
 
 ---
@@ -224,7 +225,7 @@ Comprehensive requirements and formatting guidelines for major federal and priva
 | - Innovation | Part of 12 | | |
 | - Approach | Part of 12 | | |
 | **Bibliography** | No limit | Arial 11pt | |
-| **Biographical Sketch** | 5 pages per person | Arial 11pt | |
+| **Biographical Sketch** | No page limit (Common Form + NIH Supplement via SciENcv, due dates on/after 25 Jan 2026) | SciENcv output | |
 
 **Margins**: 0.5 inch minimum (all sides)  
 **Paper Size**: Letter (8.5 × 11 inches)
@@ -306,26 +307,24 @@ Comprehensive requirements and formatting guidelines for major federal and priva
 
 ---
 
-### NIH Biographical Sketch (5 pages)
+### NIH Biographical Sketch (Common Form via SciENcv; no page limit)
 
-**Sections** (NIH format):
-1. **Personal Statement** (4 sentences explaining why you're suited)
-2. **Positions, Honors, and Scientific Appointments**
-3. **Contributions to Science** (Up to 5 contributions, up to 4 pubs each)
-4. **Research Support** (current and completed grants, overlap checked)
+For due dates on or after 25 Jan 2026 (NOT-OD-26-018), each senior/key person generates and certifies two forms in SciENcv, with their ORCID iD linked to eRA Commons:
 
-**Format**: Must use NIH template (fillable PDF or format page)
+1. **Biographical Sketch Common Form**: Professional Preparation; Appointments and Positions; Products (up to 5 most closely related to the project, up to 5 other significant products)
+2. **NIH Biographical Sketch Supplement**: Personal Statement (no citations, 3,500 characters); Honors (up to 15 entries); Contributions to Science (up to 5 narratives, 2,000 characters each, no citations)
+
+Current and Pending (Other) Support uses its own Common Form, also certified in SciENcv.
 
 ---
 
 ### NIH Review Criteria
 
-**Scored Criteria** (1-9 scale, 1=best):
-1. **Significance**: Importance, impact
-2. **Investigator(s)**: Qualifications, track record
-3. **Innovation**: Novel concepts, methods
-4. **Approach**: Feasibility, rigor, design
-5. **Environment**: Institutional support, resources
+**Simplified Review Framework** (most research project grants due on or after 25 Jan 2025):
+- **Factor 1 — Importance of the Research** (Significance + Innovation): scored 1-9
+- **Factor 2 — Rigor and Feasibility** (Approach): scored 1-9
+- **Factor 3 — Expertise and Resources** (Investigator(s) + Environment): sufficient / not sufficient
+- Reviewers also give an Overall Impact score (1-9, 1=best)
 
 **Additional Considerations** (not scored but noted):
 - Vertebrate animals
@@ -384,12 +383,12 @@ Comprehensive requirements and formatting guidelines for major federal and priva
 
 ### NIH LaTeX Templates
 
-- **R01 Full Proposal**: `assets/grants/nih_r01_template.tex`
+- **R01 Full Proposal**: not bundled — use the NIH application guide and forms
 - **Specific Aims**: `assets/grants/nih_specific_aims.tex`
-- **Biographical Sketch**: Use NIH fillable PDF or format page
+- **Biographical Sketch**: Generate and certify the Common Form + NIH Supplement in SciENcv
 
 **Resources**:
-- NIH Application Guide: https://grants.nih.gov/grants/how-to-apply-application-guide.html
+- NIH Application Guide: https://grants.nih.gov/grants-process/write-application/how-to-apply-application-guide
 - SF424 Forms: https://grants.nih.gov/grants/how-to-apply-application-guide/forms-e/general-forms-e.pdf
 
 ---
@@ -492,7 +491,7 @@ Comprehensive requirements and formatting guidelines for major federal and priva
 
 ### DOE LaTeX Template
 
-**Template**: `assets/grants/doe_proposal_template.tex`
+**Template**: not bundled — use the funder's current instructions and forms
 
 **Resources**:
 - DOE Office of Science Funding: https://science.osti.gov/grants
@@ -608,7 +607,7 @@ Comprehensive requirements and formatting guidelines for major federal and priva
 
 ### DARPA LaTeX Template
 
-**Template**: `assets/grants/darpa_baa_response.tex`
+**Template**: not bundled — use the funder's current instructions and forms
 
 **Resources**:
 - DARPA Opportunities: https://www.darpa.mil/work-with-us/opportunities
@@ -691,10 +690,10 @@ Comprehensive requirements and formatting guidelines for major federal and priva
 | Agency | Typical Award | Duration | Key Criteria | Template |
 |--------|--------------|----------|--------------|----------|
 | **NSF** | $100K-500K/yr | 3-5 yrs | Intellectual Merit + Broader Impacts | `nsf_proposal_template.tex` |
-| **NIH R01** | $250K-500K/yr | 5 yrs | Significance, Innovation, Approach | `nih_r01_template.tex` |
-| **NIH R21** | $275K total | 2 yrs | Exploratory, high-risk | `nih_r21_template.tex` |
-| **DOE** | $200K-1M/yr | 3 yrs | Energy relevance, TRLs | `doe_proposal_template.tex` |
-| **DARPA** | $500K-5M/yr | 2-4 yrs | Transformative, Heilmeier | `darpa_baa_response.tex` |
+| **NIH R01** | $250K-500K/yr | 5 yrs | Importance of the Research; Rigor and Feasibility (Simplified Review Framework) | `nih_specific_aims.tex` (Aims page only) |
+| **NIH R21** | $275K total | 2 yrs | Exploratory, high-risk | official forms |
+| **DOE** | $200K-1M/yr | 3 yrs | Energy relevance, TRLs | official FOA instructions |
+| **DARPA** | $500K-5M/yr | 2-4 yrs | Transformative, Heilmeier | BAA instructions |
 
 ---
 

@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # NeuroKit2
@@ -26,6 +27,16 @@ Apply this skill when working with:
 - **Eye tracking**: EOG, blink detection and analysis
 - **Multi-modal integration**: Processing multiple physiological signals simultaneously
 - **Complexity analysis**: Entropy measures, fractal dimensions, nonlinear dynamics
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| "EDA" meaning exploratory data analysis of a dataset, not electrodermal activity | `alterlab-eda` |
+| Training clinical prediction models on EHR or sleep/EEG datasets (MIMIC, SleepEDF) | `alterlab-pyhealth` |
+| Spike sorting and extracellular electrophysiology (Neuropixels, Kilosort) | `alterlab-neuropixels` |
+| Reading or converting DICOM medical images | `alterlab-pydicom` |
+| General time-series classification, clustering, or forecasting models | `alterlab-aeon` |
 
 ## Core Capabilities
 
@@ -120,8 +131,9 @@ signals, info = nk.eda_process(eda_signal, sampling_rate=100)
 # Analyze EDA data
 analysis = nk.eda_analyze(signals, sampling_rate=100)
 
-# Sympathetic nervous system activity
-sympathetic = nk.eda_sympathetic(signals, sampling_rate=100)
+# Sympathetic nervous system activity: pass the EDA vector (raw or signals["EDA_Clean"]),
+# not the processed DataFrame; the default 'posada' method needs > 64 s of signal
+sympathetic = nk.eda_sympathetic(eda_signal, sampling_rate=100)
 ```
 
 ### 5. Respiratory Signal Processing (RSP)
@@ -139,11 +151,12 @@ Analyze breathing patterns and respiratory variability. See `references/rsp.md` 
 # Complete RSP processing
 signals, info = nk.rsp_process(rsp_signal, sampling_rate=100)
 
-# Respiratory rate variability
+# Respiratory rate variability (accepts the processed DataFrame)
 rrv = nk.rsp_rrv(signals, sampling_rate=100)
 
-# Respiratory volume per time
-rvt = nk.rsp_rvt(signals, sampling_rate=100)
+# Respiratory volume per time: rsp_process already adds an "RSP_RVT" column;
+# to recompute, pass the 1-D respiration vector (a DataFrame raises ValueError)
+rvt = nk.rsp_rvt(rsp_signal, sampling_rate=100)
 ```
 
 ### 6. Electromyography (EMG)
@@ -152,11 +165,13 @@ Process muscle activity signals for activation detection and amplitude analysis.
 
 **Key functions:**
 ```python
-# Complete EMG processing
+# Complete EMG processing (adds EMG_Amplitude, EMG_Activity, EMG_Onsets, EMG_Offsets)
 signals, info = nk.emg_process(emg_signal, sampling_rate=1000)
 
-# Muscle activation detection
-activation = nk.emg_activation(signals, sampling_rate=1000, method='threshold')
+# Re-run activation detection with other settings: pass the amplitude vector, not the DataFrame
+activity, activation_info = nk.emg_activation(
+    emg_amplitude=signals["EMG_Amplitude"], sampling_rate=1000, method="threshold"
+)
 ```
 
 ### 7. Electrooculography (EOG)
@@ -165,11 +180,12 @@ Analyze eye movement and blink patterns. See `references/eog.md` for workflows.
 
 **Key functions:**
 ```python
-# Complete EOG processing
-signals, info = nk.eog_process(eog_signal, sampling_rate=500)
+# Complete EOG processing. Blink detection defaults to method="mne" (requires
+# `uv pip install mne`); method="neurokit" avoids the MNE dependency
+signals, info = nk.eog_process(eog_signal, sampling_rate=500, method="neurokit")
 
-# Extract blink features
-features = nk.eog_features(signals, sampling_rate=500)
+# Extract blink features: needs the cleaned signal and the blink peak indices
+features = nk.eog_features(signals["EOG_Clean"], info["EOG_Blinks"], sampling_rate=500)
 ```
 
 ### 8. General Signal Processing
@@ -212,10 +228,11 @@ Compute nonlinear dynamics, fractal dimensions, and information-theoretic measur
 # Multiple complexity metrics at once (note: complexity() takes no sampling_rate)
 complexity_indices, info = nk.complexity(signal)
 
-# Specific measures
-apen = nk.entropy_approximate(signal)
-dfa = nk.fractal_dfa(signal)
-lyap = nk.complexity_lyapunov(signal, sampling_rate=1000)
+# Specific measures: entropy_*, fractal_*, and complexity_* functions return a
+# (value, info) tuple, so unpack them
+apen, _ = nk.entropy_approximate(signal)
+dfa, _ = nk.fractal_dfa(signal)
+lle, _ = nk.complexity_lyapunov(signal, delay=1, dimension=2)
 ```
 
 ### 10. Event-Related Analysis
@@ -282,8 +299,10 @@ Most `*_analyze()` functions automatically choose the appropriate mode.
 uv pip install neurokit2
 ```
 
-Function signatures in this skill are verified against **neurokit2 0.2.13**. If you need
-a reproducible env, pin it: `uv pip install "neurokit2==0.2.13"`.
+Function signatures in this skill are verified against **neurokit2 0.2.13** (current release
+as of 2026-09; requires Python >= 3.10). If you need a reproducible env, pin it:
+`uv pip install "neurokit2==0.2.13"`. EEG helpers (`mne_*`, source localization) and the
+default EOG blink detector also need MNE-Python: `uv pip install mne`.
 
 For development version:
 ```bash
@@ -363,3 +382,4 @@ Load specific reference files as needed using the Read tool to access detailed f
 - GitHub Repository: https://github.com/neuropsychology/NeuroKit
 - Publication: Makowski et al. (2021). NeuroKit2: A Python toolbox for neurophysiological signal processing. Behavior Research Methods. https://doi.org/10.3758/s13428-020-01516-y
 
+Part of the AlterLab Academic Skills suite.

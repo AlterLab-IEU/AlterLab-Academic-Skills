@@ -14,7 +14,7 @@
     {
       "id": "power-analysis-sample-size",
       "prompt": "I'm planning a three-group experiment and need to know how many participants per group I need to detect a medium effect (f = 0.25) with 80% power at alpha = .05 before I start collecting data.",
-      "expected_output": "Invokes alterlab-statistical-analysis for an a priori power analysis: uses statsmodels FTestAnovaPower().solve_power with effect_size=0.25, ngroups=3, alpha=0.05, power=0.80 to return the required n per group. Frames it as study planning (a priori, not post-hoc), and may mention Cohen's f benchmarks for ANOVA effect sizes.",
+      "expected_output": "Invokes alterlab-statistical-analysis for an a priori power analysis: uses statsmodels FTestAnovaPower().solve_power with effect_size=0.25, k_groups=3, alpha=0.05, power=0.80, noting that it returns the TOTAL sample size (about 157), which is divided by the 3 groups and rounded up to about 53 per group. Frames it as study planning (a priori, not post-hoc), and may mention Cohen's f benchmarks for ANOVA effect sizes.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "power" },
@@ -57,6 +57,15 @@
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-scikit-learn" }
+      ]
+    },
+    {
+      "id": "near-miss-alterlab-test-selection-guard",
+      "prompt": "My t-test came out p = 0.08, so I'm thinking of switching to a Mann-Whitney test or dropping a couple of outliers to see if it becomes significant. Is that okay to do?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-test-selection-guard. The user is proposing to switch tests or trim data after seeing the p-value (test-shopping), which is the discipline the test-selection guard enforces (no test chosen after seeing the p-value, pre-specified choice, correction or exploratory labelling), rather than a request to run and report a planned analysis.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-test-selection-guard" }
       ]
     }
   ]

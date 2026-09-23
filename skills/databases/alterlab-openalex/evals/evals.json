@@ -4,7 +4,7 @@
     {
       "id": "search-recent-highly-cited",
       "prompt": "Find the most highly cited papers on quantum computing published since 2020. I want the top influential works, sorted by citations.",
-      "expected_output": "Triggers the OpenAlex skill. Initializes OpenAlexClient (a free api_key raises the daily budget but keyless also works) and uses client.search_works (or find_highly_cited_recent_papers) with search='quantum computing', filter publication_year:>2020, sort='cited_by_count:desc', per_page up to 200. Returns a ranked list.",
+      "expected_output": "Triggers the OpenAlex skill. Initializes OpenAlexClient (a free api_key raises the daily budget but keyless also works) and uses client.search_works (or find_highly_cited_recent_papers) with search='quantum computing', filter publication_year:>2020, sort='cited_by_count:desc', per_page up to 100 (the API maximum). Returns a ranked list.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "openalex" },
@@ -33,7 +33,7 @@
     {
       "id": "batch-doi-lookup",
       "prompt": "I have a list of about 40 DOIs from my reference manager. Look them all up in OpenAlex efficiently and give me their citation counts and OA status.",
-      "expected_output": "Triggers OpenAlex. Uses client.batch_lookup(entity_type='works', ids=doi_list, id_field='doi') to resolve up to 50 DOIs in a single batched request rather than 40 individual get_entity calls, returning cited_by_count and open_access.oa_status per work. Reflects the batch-over-loop best practice.",
+      "expected_output": "Triggers OpenAlex. Uses client.batch_lookup(entity_type='works', ids=doi_list, id_field='doi') to resolve the DOIs in a single batched OR-filter request (up to 100 per call) rather than 40 individual get_entity calls, returning cited_by_count and open_access.oa_status per work. Reflects the batch-over-loop best practice.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "batch_lookup" },

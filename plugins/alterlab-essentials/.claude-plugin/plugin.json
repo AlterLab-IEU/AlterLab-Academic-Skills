@@ -1,0 +1,27 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "alterlab-essentials",
+  "description": "Faculty starter kit — installs the core research-to-publication pipeline, the multi-agent research workflows, research tools, writing tools, methodology gates, and scientific-database connectors in one step",
+  "version": "3.0.0",
+  "author": {
+    "name": "AlterLab @ Izmir University of Economics",
+    "url": "https://github.com/AlterLab-IEU"
+  },
+  "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
+  "license": "MIT",
+  "keywords": [
+    "bundle",
+    "starter-kit",
+    "faculty",
+    "research",
+    "writing"
+  ],
+  "dependencies": [
+    "alterlab-core",
+    "alterlab-workflows",
+    "alterlab-research-tools",
+    "alterlab-writing-tools",
+    "alterlab-methodology",
+    "alterlab-databases"
+  ]
+}

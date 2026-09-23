@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.2.0"
+    last_updated: "2026-09-23"
 ---
 
 # Medchem
@@ -15,7 +16,7 @@ metadata:
 
 Medchem (`datamol-io/medchem`) is a Python library for molecular filtering and prioritization in drug-discovery workflows: medicinal-chemistry rules, structural alerts (ChEMBL/NIBR/PAINS), chemical-group detection, complexity metrics, and a query DSL. Rules and filters are context-specific guidelines, not hard truth — combine with domain expertise.
 
-**Verified against `medchem==2.0.5` (RDKit 2026.3.x, Python 3.12).** API names below are checked against this version; earlier docs/blog posts described a different surface.
+**Verified against `medchem==2.1.0` (current as of 2026-09; Python ≥ 3.11, RDKit 2026.03).** API names below are checked against this version; earlier docs/blog posts described a different surface.
 
 ## When to Use This Skill
 
@@ -27,6 +28,15 @@ This skill should be used when:
 - Detecting reactive or problematic functional groups
 - Calculating molecular complexity metrics
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Just computing descriptors (MW, cLogP, TPSA, HBD/HBA) or standardizing structures, no rule/alert filtering | `alterlab-datamol` |
+| Writing custom SMARTS queries or substructure logic outside the curated catalogs | `alterlab-rdkit` |
+| Fetching a labeled toxicity/ADMET benchmark (e.g. hERG, AMES) with scaffold splits | `alterlab-pytdc` |
+| Retrieving measured bioactivity (IC50/Ki) for compounds or targets | `alterlab-chembl` |
+
 ## Installation
 
 ```bash
@@ -34,7 +44,7 @@ uv pip install medchem    # PyPI; pulls rdkit + datamol
 ```
 
 Two features need extra native deps that PyPI cannot provide:
-- **Lilly demerits** (`lilly_demerit_filter`) shells out to compiled binaries — install via conda: `mamba install -c conda-forge lilly-medchem-rules`. Without them, the call raises `ImportError`.
+- **Lilly demerits** (`lilly_demerit_filter`) shells out to the compiled Lilly MedChem Rules tools. Since medchem 2.1, `medchem install-lilly` downloads the checksum-pinned upstream release (2.1.0) and builds it next to the active Python — it needs `make`, a C++ compiler, and zlib (plus Ruby for the regression tests, or pass `--no-test`), and native Windows is unsupported (use WSL). The old conda-forge `lilly-medchem-rules` 1.0.1 build is obsolete. Without the tools, the call raises `ImportError`. 2.1 also changed the default Lilly atom-count limits (soft 25 / hard 40 / minimum 7; previously 30 / 50 / 1).
 - The ChemAxon rule (`rule_of_chemaxon_druglikeness`) needs a licensed ChemAxon install.
 
 Everything else (RuleFilters, CommonAlerts, NIBR, complexity, groups, query) works from the PyPI wheel alone.
@@ -56,9 +66,9 @@ mc.rules.basic_rules.rule_of_veber(smi)  # -> True
 mc.rules.basic_rules.rule_of_cns(smi)
 ```
 
-Available rules (subset; full list via `mc.rules.RuleFilters.list_available_rules()`): `rule_of_five`, `rule_of_five_beyond`, `rule_of_four`, `rule_of_three`, `rule_of_three_extended`, `rule_of_two`, `rule_of_ghose`, `rule_of_veber`, `rule_of_reos`, `rule_of_egan`, `rule_of_pfizer_3_75`, `rule_of_gsk_4_400`, `rule_of_oprea`, `rule_of_xu`, `rule_of_cns`, `rule_of_respiratory`, `rule_of_zinc`, `rule_of_leadlike_soft`, `rule_of_druglike_soft`, `rule_of_generative_design`, `rule_of_chemaxon_druglikeness` (needs ChemAxon).
+Available rules (full list via `mc.rules.RuleFilters.list_available_rules()`): `rule_of_five`, `rule_of_five_beyond`, `rule_of_four`, `rule_of_three`, `rule_of_three_extended`, `rule_of_two`, `rule_of_ghose`, `rule_of_veber`, `rule_of_reos`, `rule_of_egan`, `rule_of_pfizer_3_75`, `rule_of_gsk_4_400`, `rule_of_oprea`, `rule_of_xu`, `rule_of_cns`, `rule_of_respiratory`, `rule_of_zinc`, `rule_of_leadlike_soft`, `rule_of_druglike_soft`, `rule_of_generative_design`, `rule_of_generative_design_strict`, `rule_of_chemaxon_druglikeness` (needs ChemAxon).
 
-> There is **no** `rule_of_drug`, `rule_of_leadlike_strict`, `golden_triangle`, or `pains_filter` function in 2.0.5. PAINS lives in the alert system (`HASALERT("pains")` or `CommonAlertsFilters(alerts_set=["PAINS"])`). For lead-likeness use `rule_of_leadlike_soft` or `rule_of_oprea`.
+> There is **no** `rule_of_drug`, `rule_of_leadlike_strict`, `golden_triangle`, or `pains_filter` function (checked in 2.1.0). PAINS lives in the alert system (`HASALERT("pains")` or `CommonAlertsFilters(alerts_set=["PAINS"])`). For lead-likeness use `rule_of_leadlike_soft` or `rule_of_oprea`.
 
 **Multiple rules** — `RuleFilters` returns a DataFrame with columns `mol`, `pass_all`, `pass_any`, and one boolean column per rule:
 
@@ -112,7 +122,7 @@ mc.functional.complexity_filter(mol_list, complexity_metric="bertz", limit="99",
 mc.functional.chemical_group_filter(mol_list, chemical_group=mc.groups.ChemicalGroup(groups=["hinge_binders"]))
 ```
 
-**Lilly demerits** — requires the external Lilly binaries (see Installation); raises `ImportError` if missing. Molecules above `max_demerits` (default 160) are rejected:
+**Lilly demerits** — requires the Lilly tools (`medchem install-lilly`, see Installation); raises `ImportError` if missing. Molecules above `max_demerits` (default 160) are rejected:
 
 ```python
 keep = mc.functional.lilly_demerit_filter(mol_list, max_demerits=160, n_jobs=-1)  # NumPy bool array
@@ -145,7 +155,7 @@ mc.catalogs.catalog_from_smarts(...)   # build a catalog from custom SMARTS
 
 ### 6. Molecular Complexity — `medchem.complexity`
 
-`ComplexityFilter` flags molecules whose complexity exceeds a percentile threshold derived from a reference set (default ZINC). It is **called per molecule** and returns a bool (`True` = within limit / keep). Metrics: `bertz`, `whitlock` (`WhitlockCT`), `barone` (`BaroneCT`), `smcm` (`SMCM`), `twc` (`TWC`).
+`ComplexityFilter` flags molecules whose complexity exceeds a percentile threshold derived from a reference set (default ZINC). It is **called per molecule** and returns a bool (`True` = within limit / keep). Metrics: `bertz`, `whitlock` (`WhitlockCT`), `barone` (`BaroneCT`), `smcm` (`SMCM`), `twc` (`TWC`), plus `sas`/`qed`/`clogp`. New in 2.1: `mc.complexity.SPS(mol)` (normalized SpacialScore, Krzyzanowski et al., J. Med. Chem. 2023); as a `ComplexityFilter` metric (`"spacialscore"`) it needs your own `threshold_stats_file`.
 
 ```python
 import medchem as mc
@@ -265,10 +275,12 @@ Batch filtering CLI. Supports CSV/TSV, SDF, and plain-SMILES `.txt` input, confi
 uv run python scripts/filter_molecules.py input.csv \
     --rules rule_of_five,rule_of_cns --nibr --output filtered.csv
 ```
-Flags are individual switches (`--nibr`, `--common-alerts`, `--lilly`, `--pains`), not `--alerts <name>`. `--lilly` needs the external Lilly binaries.
+Flags are individual switches (`--nibr`, `--common-alerts`, `--lilly`, `--pains`), not `--alerts <name>`. `--lilly` needs the Lilly tools (`medchem install-lilly`).
 
 ## Documentation
 
 Official documentation: https://medchem-docs.datamol.io/
 GitHub repository: https://github.com/datamol-io/medchem
+
+Part of the AlterLab Academic Skills suite.
 

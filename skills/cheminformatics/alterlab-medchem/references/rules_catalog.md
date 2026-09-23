@@ -4,7 +4,7 @@ Background and selection guidance for medicinal-chemistry rules, structural aler
 The rule criteria and literature references below are conceptual background; for the exact
 implementation and the canonical name list use `mc.rules.RuleFilters.list_available_rules()`.
 
-> **Verified against `medchem==2.0.5`.** Not every rule below is shipped as a named medchem
+> **Verified against `medchem==2.1.0`.** Not every rule below is shipped as a named medchem
 > function (e.g. Rule of Drug, strict lead-likeness, and Golden Triangle have no dedicated
 > function in this version — see notes). Apply those criteria via `RuleFilters` of the available
 > rules plus property windows (`mc.rules.in_range`) or the query DSL.
@@ -77,7 +77,7 @@ mc.rules.basic_rules.rule_of_veber(mol)
 - Passes Veber rules
 - Does not contain PAINS substructures
 
-**There is no `rule_of_drug` function in medchem 2.0.5.** Compose it explicitly, e.g. with the query DSL:
+**There is no `rule_of_drug` function in medchem 2.1.0.** Compose it explicitly, e.g. with the query DSL:
 ```python
 qf = mc.query.QueryFilter(
     'MATCHRULE("rule_of_five") AND MATCHRULE("rule_of_veber") AND NOT HASALERT("pains")'
@@ -116,7 +116,7 @@ mc.rules.basic_rules.rule_of_reos(mol)
 - 200 ≤ MW ≤ 50 × LogP + 400
 - LogP: -2 to 5
 
-**No `golden_triangle` function in medchem 2.0.5.** Implement with computed `mw`/`clogp`
+**No `golden_triangle` function in medchem 2.1.0.** Implement with computed `mw`/`clogp`
 descriptors and `mc.rules.in_range`, or a custom callable passed to `RuleFilters(rule_list=[...])`.
 
 **Notes:**
@@ -173,7 +173,7 @@ mc.rules.basic_rules.rule_of_leadlike_soft(mol)
 - Rotatable Bonds ≤ 7
 - Number of Rings: 1-3
 
-**medchem 2.0.5 ships only `rule_of_leadlike_soft`** (there is no `rule_of_leadlike_strict`).
+**medchem 2.1.0 ships only `rule_of_leadlike_soft`** (there is no `rule_of_leadlike_strict`).
 For stricter lead-likeness, combine `rule_of_oprea` with tighter property windows
 (`mc.rules.in_range`) or `HASPROP` queries.
 
@@ -304,7 +304,7 @@ df = alert_filter(mols=mol_list, n_jobs=-1, progress=True)
 | `status`      | `"ok"` or `"exclude"`                                |
 | `reasons`     | `;`-joined matched alert names (`NaN` when clean)    |
 
-(There is no `check_mol` method in 2.0.5.) Discover the available alert sets with
+(There is no `check_mol` method in 2.1.0.) Discover the available alert sets with
 `mc.structural.CommonAlertsFilters.list_default_available_alerts()`.
 
 ---
@@ -340,11 +340,12 @@ keep = mc.functional.nibr_filter(mol_list, max_severity=10, n_jobs=-1)
 **Mechanism:**
 - Each matched pattern adds demerits; molecules above a demerit ceiling are rejected.
 - The original paper rejects at >100 demerits; medchem exposes this as the `max_demerits`
-  argument (**default 160** in 2.0.5 — set `max_demerits=100` to match the paper).
+  argument (**default 160** in 2.1.0 — set `max_demerits=100` to match the paper).
 - High-severity patterns can hard-reject; lower-severity patterns accumulate.
 
-**Requires external binaries** (`mamba install -c conda-forge lilly-medchem-rules`); the call
-raises `ImportError` if they are missing. The class lives at
+**Requires the Lilly MedChem Rules tools** (`medchem install-lilly`, medchem ≥ 2.1; the
+conda-forge `lilly-medchem-rules` 1.0.1 build is obsolete); the call raises `ImportError` if they
+are missing. The class lives at
 `medchem.structural.lilly_demerits.LillyDemeritsFilters`; use the functional entry point:
 
 ```python
@@ -375,7 +376,7 @@ keep = mc.functional.chemical_group_filter(mol_list, chemical_group=group)  # ba
 ```
 
 > `phosphate_binders`, `michael_acceptors`, and `reactive_groups` are **not** default catalog
-> names in 2.0.5. For Michael acceptors / reactive electrophiles, use the alert filters
+> names in 2.1.0. For Michael acceptors / reactive electrophiles, use the alert filters
 > (`alert_filter`, `CommonAlertsFilters`) or a custom SMARTS catalog (below). For covalent
 > warheads, use `electrophilic_warheads_for_kinases` / `common_warhead_covalent_inhibitors`.
 
@@ -422,7 +423,7 @@ Recommended filters:
 ```python
 rfilter = mc.rules.RuleFilters(rule_list=["rule_of_oprea"])
 nibr = mc.structural.NIBRFilters()
-# Lilly via the functional API (requires lilly-medchem-rules binaries):
+# Lilly via the functional API (requires the tools from `medchem install-lilly`):
 # keep_lilly = mc.functional.lilly_demerit_filter(mols, n_jobs=-1)
 ```
 

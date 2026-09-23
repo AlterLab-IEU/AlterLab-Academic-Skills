@@ -1,13 +1,13 @@
 ---
 name: alterlab-redcap-cdisc
-description: "Designs validated research data-capture instruments and aligns them to CDISC submission standards. Builds REDCap projects from a requirements spec: instrument and field design, the 18-column data dictionary (Variable/Field Name, Form Name, Field Type, Choices, Branching Logic, Text Validation, Identifier?), field validation (date_ymd, integer, number, email, phone), branching/show-field logic, longitudinal events and survey settings, and lints a data dictionary for common errors. Maps a study to CDISC: CDASH collection fields, SDTM domain mapping (DM, AE, VS, LB, EX, CM, MH across Interventions/Events/Findings classes), and NCI-EVS controlled terminology. Use when the user wants to build a REDCap project, write or lint a data dictionary, set up branching logic or validation, or map a study to CDISC SDTM/CDASH/CDISC CT. For LabArchives ELN bridging use alterlab-labarchive; for Likert/sampling/reliability use alterlab-survey-design. Part of the AlterLab Academic Skills suite."
+description: "Designs validated research data-capture instruments and aligns them to CDISC submission standards. Builds REDCap projects from a requirements spec: instrument and field design, the 18-column data dictionary (Variable/Field Name, Form Name, Field Type, Choices, Branching Logic, Text Validation, Identifier?), field validation (date_ymd, integer, number, email, phone), branching/show-field logic, longitudinal events and survey settings, and lints a data dictionary for common errors. Maps a study to CDISC: CDASH collection fields, SDTM domain mapping (special-purpose DM; Events AE, MH; Findings VS, LB; Interventions EX, CM), and NCI-EVS controlled terminology. Use when the user wants to build a REDCap project, write or lint a data dictionary, set up branching logic or validation, or map a study to CDISC SDTM/CDASH/CDISC CT. For LabArchives ELN bridging use alterlab-labarchive; for Likert/sampling/reliability use alterlab-survey-design. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash WebSearch WebFetch
 compatibility: No API key required — designs REDCap data dictionaries as offline CSV and maps to CDISC standards from local rules; the bundled linter is stdlib-only `uv run python`. Pushing a dictionary into a live REDCap instance (the REDCap API) is out of scope and delegated to the instance owner.
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-06-06"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
   depends_on: "alterlab-labarchive (ELN bridge), alterlab-survey-design (psychometrics)"
 ---
 
@@ -106,8 +106,13 @@ in a fixed order**. Authoring or repairing this CSV is the core deliverable.
 **Field Type values:** `text`, `notes`, `dropdown`, `radio`, `checkbox`,
 `calc`, `sql`, `descriptive`, `slider`, `yesno`, `truefalse`, `file`.
 
-**Text Validation Type values:** `date_ymd`, `date_mdy`, `datetime_ymd`,
-`time`, `integer`, `number`, `email`, `phone`, `zipcode`.
+**Text Validation Type values (built-ins):** dates `date_ymd` / `date_mdy` /
+`date_dmy`, the matching `datetime_*` and `datetime_seconds_*` forms, `time`,
+`time_hh_mm_ss`, `time_mm_ss`, `integer`, `number` and `number_1dp`…`number_4dp`
+(plus `*_comma_decimal` variants), `email`, `phone`, `zipcode`, `alpha_only`, and
+a few locale/ID formats (full list in the reference). `autocomplete` belongs on
+`dropdown` fields and `signature` on `file` fields. Admins can disable types per
+instance, so confirm with a test import.
 
 Deeper field-by-field rules, the choice-string grammar, branching-logic
 operators, longitudinal/repeating-instrument design, and a worked dictionary are
@@ -123,9 +128,10 @@ uv run python skills/faculty-life/alterlab-redcap-cdisc/scripts/lint_data_dictio
 The linter is **stdlib-only** (no network, no REDCap account). It checks the
 18-column header, field-name syntax, field-type/validation legality, that choice
 fields carry a choices string, that `calc`/branching fields reference variables
-that exist, duplicate variable names, and PII fields left unflagged as
-`Identifier?`. It exits non-zero and emits a JSON report when issues are found.
-It is a **structural** linter — it does not validate against a live REDCap
+that exist (an event prefix such as `[visit_1_arm_1][weight_kg]` is allowed),
+duplicate variable names, and PII fields left unflagged as `Identifier?`. It
+exits non-zero and emits a JSON report when issues are found. It is a
+**structural** linter — it does not validate against a live REDCap
 server, so always tell the user a clean lint still needs a test import.
 
 ---
@@ -142,20 +148,25 @@ its collected data is regulator- and reuse-ready.
 | **Controlled Terminology** | Codelists of valid values (NCI-EVS). | Coded values tied to the right codelist. |
 
 **SDTM observation classes:** Interventions, Events, Findings, and Findings
-About. Common domains and their two-letter codes: **DM** Demographics, **AE**
-Adverse Events, **VS** Vital Signs, **LB** Laboratory, **EX** Exposure, **CM**
-Concomitant Medications, **MH** Medical History.
+About, plus special-purpose domains such as **DM** Demographics. Common domains
+and their two-letter codes: **AE** Adverse Events, **VS** Vital Signs, **LB**
+Laboratory, **EX** Exposure, **CM** Concomitant Medications, **MH** Medical
+History.
 
 **Controlled Terminology** is maintained with NCI's Enterprise Vocabulary
 Services (NCI-EVS) and **updated quarterly**; do not invent codelist values —
 cite the codelist and tell the user to pull the current quarterly release.
 
-Versions are real but move — the skill records the latest it verified
-(**SDTM v2.1**, 2024-06-10; **SDTMIG v3.4**, 2021-11-29; **CDASHIG v2.3**,
-2023-09-28, referencing CDASH Model v1.3). **Confirm the current version with the
-user / cdisc.org before asserting one in a deliverable**, because these are
-re-released. The mapping recipe, the CDASH↔SDTM traceability idea, and the
-worked AE/VS examples are in
+Versions are real but move — the skill records the latest it verified on
+cdisc.org (2026-09-23): **SDTMIG v3.4** (2021-11-29), which is built on **SDTM
+v2.0**; **SDTM v2.1** (2024-06-10) is the newest model release and accompanies
+the Tobacco Implementation Guide; **CDASHIG v2.3** (2023-09-28, CDASH Model
+v1.3); Controlled Terminology **2026-03-27** is the current quarterly release.
+New SDTMIG domains are in public review (comments due 2 Oct 2026). **Confirm the
+current version with the user / cdisc.org and the regulator's data-standards
+catalog before asserting one in a deliverable**, because these are re-released.
+The mapping recipe, the CDASH↔SDTM traceability idea, and the worked AE/VS
+examples are in
 **[references/cdisc_mapping.md](references/cdisc_mapping.md)**.
 
 ---

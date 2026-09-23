@@ -3,10 +3,11 @@ name: alterlab-drugbank
 description: Access and analyze drug information from the DrugBank database — drug properties, interactions, targets, pathways, chemical structures, and pharmacology data. Use when working with pharmaceutical data, drug discovery research, drug-drug interaction analysis, target identification, chemical similarity searches, ADMET predictions, or any task needing detailed drug and drug-target records from DrugBank. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Requires a licensed DrugBank account and credentials for data access
+compatibility: Requires a DrugBank account with an approved academic (CC BY-NC 4.0) or commercial license for XML downloads (academic downloads paused as of 2026-09), or a commercial API key for the Clinical API; drugbank-downloader >= 0.2 (Python >= 3.10)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # DrugBank Database
@@ -14,6 +15,33 @@ metadata:
 ## Overview
 
 DrugBank is a comprehensive bioinformatics and cheminformatics database containing detailed information on drugs and drug targets. This skill enables programmatic access to DrugBank data: thousands of drug entries (FDA-approved small molecules, biotech/biologic drugs, nutraceuticals, and experimental compounds) with 200+ data fields per entry. Exact counts grow with each release — derive them from the version you download rather than quoting a fixed number (the 5.0-era figure was ~9,591 entries).
+
+**Access status (checked 2026-09-23).** The current downloadable release is **5.1.22**
+(2026-06-27). DrugBank's releases page states that *all academic dataset downloads are
+temporarily paused* while it changes how data are distributed, and every download link
+(including the CC0 "Open Data" vocabulary and structures) shows "Temporarily
+unavailable" — scripted downloads return HTTP 403. Until access resumes, work from a
+copy you already downloaded (pin and cite its version), check
+https://go.drugbank.com/releases/latest, or route the question to an open source listed
+under "Does NOT Trigger". Academic data are licensed CC BY-NC 4.0; commercial use and
+the Clinical API (`https://api.drugbank.com/v1/`, API-key header) need a paid license.
+
+## When to Use This Skill
+
+- Parsing a DrugBank XML release you have access to (drug records, targets, enzymes, transporters, pathways)
+- Drug–drug interaction extraction and polypharmacy screening from DrugBank data
+- Drug–target mapping and repurposing via shared targets or structural similarity
+- Pulling DrugBank cross-references (UniProt, ChEMBL, PubChem, KEGG) for integration
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| FDA drug labels, FAERS adverse events, recalls, approvals (open data) | `alterlab-fda` |
+| Compound bioactivity (IC50/Ki), mechanisms, and indications from open data | `alterlab-chembl` |
+| Genotype-guided dosing / pharmacogene–drug pairs (CPIC, DPWG) | `alterlab-clinpgx` |
+| KEGG DRUG entries, drug–pathway maps, KEGG drug–drug interactions | `alterlab-kegg` |
+| Compound identifiers and properties by name/CID/SMILES | `alterlab-pubchem` |
 
 ## Core Capabilities
 
@@ -150,9 +178,11 @@ uv pip install scikit-learn         # ML/clustering (for chemical space)
 ```
 
 ### Account Setup
-1. Create free account at go.drugbank.com
-2. Accept license agreement (free for academic use)
-3. Obtain username and password credentials
+1. Create an account at go.drugbank.com
+2. Apply for the Academic License (free for eligible, non-commercial academic research;
+   data under CC BY-NC 4.0) or obtain a commercial license
+3. Use your account email and password as download credentials (academic downloads
+   were paused as of 2026-09 — see Access status above)
 4. Configure credentials as documented in `references/data-access.md`
 
 ## Data Version and Reproducibility
@@ -161,7 +191,7 @@ Always specify the DrugBank version for reproducible research:
 
 ```python
 from drugbank_downloader import download_drugbank
-path = download_drugbank(version='5.1.10')  # Specify exact version
+path = download_drugbank(version='5.1.22')  # Pin an exact version (5.1.22 = 2026-06-27)
 ```
 
 Document the version used in publications and analysis scripts.

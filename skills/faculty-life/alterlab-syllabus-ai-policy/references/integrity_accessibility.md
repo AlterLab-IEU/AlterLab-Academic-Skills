@@ -61,8 +61,10 @@ Checklist the lint and the author should run:
 If asked to lean the policy on an "AI detector":
 
 - State that detector outputs are **probabilistic**, carry false-positive and
-  false-negative rates, and are documented to disadvantage some groups (e.g.
-  non-native English writers). They should inform, not decide.
+  false-negative rates, and are documented to disadvantage some groups — e.g.
+  detectors flagged non-native English writers' essays as AI-generated far more
+  often (Liang et al., 2023, *Patterns* 4(7):100779,
+  https://doi.org/10.1016/j.patter.2023.100779). They should inform, not decide.
 - The syllabus states **process** (how a suspected case is reviewed under the
   integrity code), it does not pronounce guilt. A detector score alone is not a
   finding.

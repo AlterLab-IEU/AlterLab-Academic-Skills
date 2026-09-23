@@ -136,15 +136,21 @@ the way to SDTM. Note this reshaping in the mapping deliverable.
 ## Verified versions
 
 Versions are real but periodically re-released; **confirm the current version
-with the user or cdisc.org before stating one in a deliverable.** Latest values
-verified for this skill (as of 2026-06-06, from cdisc.org):
+with the user or cdisc.org before stating one in a deliverable**, and check the
+regulator's data-standards catalog (e.g. the FDA Data Standards Catalog) for which
+versions a submission may use. Latest values verified for this skill (re-checked
+2026-09-23 on cdisc.org and the NCI-EVS file site):
 
-| Standard | Version | Released |
-|----------|---------|----------|
-| SDTM | v2.1 | 10 June 2024 |
-| SDTMIG | v3.4 | 29 November 2021 |
-| CDASHIG | v2.3 | 28 September 2023 (references CDASH Model v1.3) |
-| CDISC Controlled Terminology | quarterly | latest release noted 27 March 2026 |
+| Standard | Version | Released | Note |
+|----------|---------|----------|------|
+| SDTMIG | v3.4 | 29 November 2021 | Built on **SDTM v2.0** (29 Nov 2021) — cite v2.0 as the model for an SDTMIG v3.4 package |
+| SDTM | v2.1 | 10 June 2024 | Newest model release; accompanies the Tobacco Implementation Guide |
+| CDASHIG | v2.3 | 28 September 2023 | References CDASH Model v1.3 |
+| CDISC Controlled Terminology | 2026-03-27 | 27 March 2026 | Current NCI-EVS release as of 2026-09-23; publication is scheduled quarterly |
+
+Also in flight: CDISC has new SDTMIG domains (LC, AU, ED, HM, IG) in public review
+with comments due 2 October 2026, and the 2026-03-27 CT release retired the CDISC
+Protocol terminology in favour of the ICH M11 protocol terminology.
 
 ---
 

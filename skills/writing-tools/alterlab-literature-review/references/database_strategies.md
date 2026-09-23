@@ -83,7 +83,8 @@ This document provides comprehensive guidance for searching multiple literature 
 ### Citation & Reference Management
 
 #### OpenAlex
-- **Access**: Direct API (free, no key required)
+- **Access**: Direct API (free; a free API key from openalex.org/settings/api is recommended —
+  since February 2026 keyless calls share a small per-IP daily budget and can return HTTP 429)
 - **Coverage**: 250M+ works, comprehensive metadata
 - **Best for**: Citation analysis, author disambiguation, institutional research
 - **Features**: Open access, excellent for bibliometrics
@@ -199,7 +200,8 @@ Search at least 3 complementary databases:
 
 ### Phase 5: Quality Assessment
 1. Assess study quality using appropriate tools:
-   - **RCTs**: Cochrane Risk of Bias tool
+   - **RCTs**: Cochrane RoB 2
+   - **Non-randomized studies of interventions**: ROBINS-I (V2)
    - **Observational**: Newcastle-Ottawa Scale
    - **Systematic reviews**: AMSTAR 2
 2. Grade quality of evidence (high, moderate, low, very low)
@@ -419,4 +421,4 @@ See references/citation_styles.md in this skill
 
 ### PRISMA Guidelines
 Preferred Reporting Items for Systematic Reviews and Meta-Analyses:
-http://www.prisma-statement.org/
+https://www.prisma-statement.org/

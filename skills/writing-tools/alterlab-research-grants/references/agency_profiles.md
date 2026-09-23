@@ -11,9 +11,9 @@ Taiwan NSTC. For full agency-specific requirements and formatting, see the per-a
 **Mission**: Promote the progress of science and advance national health, prosperity, and welfare
 
 **Key Features**:
-- Intellectual Merit + Broader Impacts (equally weighted)
+- Intellectual Merit + Broader Impacts (both given full consideration)
 - 15-page project description limit (most programs)
-- Emphasis on education, diversity, and societal benefit
+- Emphasis on education, workforce, and societal benefit; broadening-participation activities must be open to all (NSF priorities statement, April 2025)
 - Collaborative research encouraged
 - Open data and open science emphasis
 - Merit review process with panel + ad hoc reviewers
@@ -23,11 +23,12 @@ Taiwan NSTC. For full agency-specific requirements and formatting, see the per-a
 
 **Key Features**:
 - Specific Aims (1 page) + Research Strategy (12 pages for R01)
-- Significance, Innovation, Approach as core review criteria
+- Simplified Review Framework for most research project grants (Importance of the Research and Rigor and Feasibility scored; Expertise and Resources rated sufficient or not)
 - Preliminary data typically required for R01s
 - Emphasis on rigor, reproducibility, and clinical relevance
-- Modular budgets ($250K increments) for most R01s
-- Multiple resubmission opportunities
+- Modular budgets ($25K modules, up to $250K direct costs/year) for most R01s
+- One resubmission (A1) allowed, within 37 months of the original submission
+- At most six applications per PI per calendar year; applications substantially developed by AI are not considered original (NOT-OD-25-132)
 
 ### DOE (Department of Energy)
 **Mission**: Ensure America's security and prosperity through energy, environmental, and nuclear challenges
@@ -74,18 +75,20 @@ Understanding how proposals are evaluated is critical for writing competitive ap
 - Is there sufficient access to resources?
 - How well-qualified is the individual, team, or institution to conduct proposed activities?
 
-**Broader Impacts** (equally important):
+**Broader Impacts** (given full consideration alongside Intellectual Merit):
 - What is the potential for the proposed activity to benefit society?
 - To what extent does the proposal address broader impacts in meaningful ways?
 
 **Additional Considerations**:
 - Integration of research and education
-- Diversity and inclusion
+- Broadening participation, framed as activities open and available to all (NSF April 2025 priorities statement)
 - Results from prior NSF support (if applicable)
 
 ### NIH Review Criteria
 
-**Scored Criteria** (1-9 scale, 1 = exceptional, 9 = poor):
+**Simplified Review Framework** (most research project grants due on or after 25 Jan 2025): Factor 1 *Importance of the Research* = Significance + Innovation (scored 1-9); Factor 2 *Rigor and Feasibility* = Approach (scored 1-9); Factor 3 *Expertise and Resources* = Investigators + Environment (sufficient / not sufficient). The criterion descriptions below still define what reviewers look for inside each factor.
+
+**Criteria** (1-9 scale, 1 = exceptional, 9 = poor):
 
 1. **Significance**
    - Addresses important problem or critical barrier
@@ -158,8 +161,8 @@ For detailed, agency-specific review criteria refer to the agency guideline file
 - **Standard Research Proposals**: Most common, up to $500K and 5 years
 - **CAREER Awards**: Early career faculty, integrated research/education, $400-500K over 5 years
 - **Collaborative Research**: Multiple institutions, separately submitted, shared research plan
-- **RAPID**: Urgent research opportunities, up to $200K, no preliminary data required
-- **EAGER**: High-risk, high-reward exploratory research, up to $300K
+- **RAPID**: Urgent research opportunities, up to $300K (since Dec 2025), no preliminary data required
+- **EAGER**: High-risk, high-reward exploratory research, up to $400K (since Dec 2025)
 - **EArly-concept Grants for Exploratory Research (EAGER)**: Early-stage exploratory work
 
 ### NIH Award Mechanisms

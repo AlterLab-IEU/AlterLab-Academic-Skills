@@ -4,11 +4,11 @@
     {
       "id": "mortality-prediction-mimic4",
       "prompt": "I want to predict ICU mortality on MIMIC-IV. Load the dataset, set up the mortality task, split by patient, and train an interpretable RETAIN model monitoring AUPRC since the outcome is rare.",
-      "expected_output": "Invokes alterlab-pyhealth. Loads MIMIC4Dataset (with tables=[...]), sets the MortalityPredictionMIMIC4() task class, uses split_by_patient to prevent leakage, builds get_dataloader loaders, initializes RETAIN with feature_keys + label_key='mortality' in binary mode, trains with Trainer(metrics=[...]) monitoring pr_auc (AUPRC for imbalance), and evaluates. Recommends RETAIN for interpretability.",
+      "expected_output": "Invokes alterlab-pyhealth. Loads MIMIC-IV with MIMIC4EHRDataset(root=..., tables=[...]) (or MIMIC4Dataset(ehr_root=..., ehr_tables=[...])), sets the MortalityPredictionMIMIC4() task class, uses split_by_patient to prevent leakage, builds get_dataloader loaders, initializes RETAIN(dataset=sample_dataset, ...) whose inputs, 'mortality' label, and binary mode come from the task schema (no feature_keys/label_key/mode arguments in PyHealth 2.x), trains with Trainer(metrics=[...]) monitoring pr_auc (AUPRC for imbalance), and evaluates. Recommends RETAIN for interpretability.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "split_by_patient" },
-        { "type": "behavior", "value": "Uses MIMIC4Dataset, a mortality task class instance, split_by_patient, RETAIN, and the Trainer monitoring AUPRC (pr_auc)." }
+        { "type": "behavior", "value": "Uses a MIMIC-IV dataset loader, a mortality task class instance, split_by_patient, RETAIN built from the sample dataset (no 1.x feature_keys/label_key arguments), and the Trainer monitoring AUPRC (pr_auc)." }
       ]
     },
     {
@@ -57,6 +57,15 @@
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-clinical-decision" }
+      ]
+    },
+    {
+      "id": "near-miss-scikit-survival",
+      "prompt": "I have a CSV of 800 colorectal cancer patients with time-to-recurrence, a censoring flag, age, stage, and treatment arm. Fit a Cox proportional hazards model and a random survival forest and compare them by concordance index.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-scikit-survival. The task is classical time-to-event modeling on a flat tabular dataset (CoxPHSurvivalAnalysis, RandomSurvivalForest, concordance index), not a PyHealth EHR pipeline with dataset loaders, task classes, and deep clinical models.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-scikit-survival" }
       ]
     }
   ]

@@ -21,8 +21,9 @@ Be respectful of the API:
 
 ### 1. Details by Date Range
 
-Retrieve preprints posted within a specific date range. **There is no server-side
-category filter on this endpoint** — see the note below.
+Retrieve preprints posted within a specific date range, optionally restricted to one
+subject category with the `?category=` query parameter (see the note below). The same
+paths work for medRxiv by replacing `biorxiv` with `medrxiv`.
 
 **Endpoint:**
 ```
@@ -42,17 +43,22 @@ GET /details/biorxiv/{start_date}/{end_date}/{cursor}/{format}
 and `total` (records in the whole range). To retrieve everything, loop the cursor
 by 30 until `cursor >= total`.
 
-**Category filtering:** the `category` cannot be passed as a path segment here —
-e.g. `/details/biorxiv/{start}/{end}/neuroscience` returns an empty body. Filter
-client-side on each record's `category` field instead. Note that in records the
-category is **lowercase with spaces** (e.g. `cell biology`), whereas the input
-form used in URLs elsewhere is **hyphenated** (e.g. `cell-biology`); normalize
-between the two when filtering.
+**Category filtering:** pass the subject as a **query-string parameter**, with
+underscores (or `%20`) for spaces — `?category=cell_biology`. It is applied
+server-side, so `messages[0].total` and the number of pages shrink to that subject
+(one week in March 2025: 1,267 preprints overall vs. 77 in cell biology). A category
+path segment (`/details/biorxiv/{start}/{end}/neuroscience`) does **not** work. In
+records the category is **lowercase with spaces** (e.g. `cell biology`), whereas the
+script's CLI form is **hyphenated** (e.g. `cell-biology`); normalize between the two.
+
+Other interval forms: `/details/biorxiv/{N}` (the N most recent posts) and
+`/details/biorxiv/{N}d` (posts from the last N days).
 
 **Example:**
 ```
 GET https://api.biorxiv.org/details/biorxiv/2024-01-01/2024-01-31/0/json
 GET https://api.biorxiv.org/details/biorxiv/2024-01-01/2024-01-31/30/json
+GET https://api.biorxiv.org/details/biorxiv/2025-03-21/2025-03-28/0/json?category=cell_biology
 ```
 
 **Response:**
@@ -61,9 +67,12 @@ GET https://api.biorxiv.org/details/biorxiv/2024-01-01/2024-01-31/30/json
   "messages": [
     {
       "status": "ok",
+      "category": "all",
       "interval": "2024-01-01:2024-01-31",
+      "funder": "all",
       "cursor": 0,
       "count": 30,
+      "count_new_papers": "590",
       "total": "801"
     }
   ],
@@ -81,14 +90,18 @@ GET https://api.biorxiv.org/details/biorxiv/2024-01-01/2024-01-31/30/json
       "category": "neuroscience",
       "jatsxml": "https://www.biorxiv.org/content/...",
       "abstract": "This is the abstract...",
-      "published": ""
+      "funder": "NA",
+      "published": "NA",
+      "server": "bioRxiv"
     }
   ]
 }
 ```
 
 Note: `authors` is **semicolon-separated** (`"Smith, J.; Doe, J."`), not
-comma-separated. `total` may be returned as a string.
+comma-separated. `total` and `count_new_papers` may be returned as strings.
+`published` holds the journal DOI once the preprint has been published, else `NA`.
+(Values above are illustrative; field names match the live API as of 2026-09.)
 
 ### 2. Details by DOI
 
@@ -102,19 +115,25 @@ GET /details/biorxiv/{doi}/na/{format}
 ```
 
 **Parameters:**
-- `doi`: The DOI of the preprint (e.g., `10.1101/2024.01.15.123456`)
+- `doi`: The DOI of the preprint — `10.1101/…` (e.g. `10.1101/2024.01.15.123456`) for
+  older preprints, `10.64898/…` (e.g. `10.64898/2026.08.28.747819`) for those posted
+  since the move to openRxiv in December 2025. Accept both prefixes in any DOI
+  validation or regex.
 - `format`: `json` or `xml`
 
 **Example:**
 ```
 GET https://api.biorxiv.org/details/biorxiv/10.1101/2024.01.15.123456/na/json
+GET https://api.biorxiv.org/details/biorxiv/10.64898/2026.08.28.747819/na/json
 ```
 
 ### 3. Published-Article Metadata (Pubs)
 
 Retrieve metadata for the **published (journal) version** of bioRxiv preprints
 that have subsequently been published. Useful for linking a preprint to its
-peer-reviewed DOI; it is not a feed of arbitrary preprints.
+peer-reviewed DOI; it is not a feed of arbitrary preprints. The per-DOI form
+(`/pubs/biorxiv/{doi}/na/json`) returns nothing for `10.64898` preprint DOIs (checked
+2026-09) — read the `published` field from `/details/` instead.
 
 **Endpoint:**
 ```
@@ -206,7 +225,11 @@ Each paper in the `collection` array contains:
 
 ### PDF Download
 
-PDFs can be downloaded directly (not through API):
+PDFs can be downloaded directly (not through the API). `www.biorxiv.org` is behind
+Cloudflare and may return **HTTP 429** to scripted clients; space requests out and
+treat a 429 as "retry later", not "missing". For bulk full text use the requester-pays
+text-mining bucket `s3://biorxiv-src-monthly` (us-east-1; `.meca` zip packages with
+PDF + JATS XML; https://www.biorxiv.org/tdm).
 
 ```
 https://www.biorxiv.org/content/{doi}v{version}.full.pdf
@@ -242,8 +265,16 @@ Full structured XML is available via the `jatsxml` field in the API response.
 
 ### Recent Papers by Category
 
-1. Use the `/details` date-range endpoint over a recent window (e.g. the last N days)
-2. Paginate the full range, then filter client-side on each paper's `category` field
+1. Use the `/details` date-range endpoint over a recent window with `?category=<subject_with_underscores>`
+2. Paginate with the cursor until `cursor >= total`
+
+### Papers by Funder (since 2025-04-10)
+
+`GET /funder/{server}/{start}/{end}/{ROR_ID_suffix}/{cursor}/{format}` returns preprints
+whose funding declaration names that funder (ROR ID suffix, e.g. `00k4n6c32` for the
+European Commission); 100 records per page, also accepts `?category=`. Funder metadata
+starts on 2025-04-10, so earlier dates return nothing. Records from `/details` carry a
+`funder` field as well.
 
 ## Error Handling
 
@@ -268,7 +299,7 @@ Always check the `messages` array in the response:
 
 1. **Cache results**: Store retrieved papers to avoid repeated API calls
 2. **Use appropriate date ranges**: Smaller date ranges return faster
-3. **Filter by category**: Reduces data transfer and processing time
+3. **Filter by category**: Pass `?category=` so the server does the filtering (fewer pages)
 4. **Batch processing**: When downloading multiple PDFs, add delays between requests
 5. **Error handling**: Always check response status and handle errors gracefully
 6. **Version tracking**: Note that papers can have multiple versions
@@ -305,5 +336,6 @@ searcher.download_pdf("10.1101/2024.01.15.123456", "paper.pdf")
 ## External Resources
 
 - bioRxiv homepage: https://www.biorxiv.org/
-- API documentation: https://api.biorxiv.org/
+- API documentation: https://api.biorxiv.org/ (also covers `/pubs`, `/publisher`, `/funder`, `/sum`, `/usage`)
+- Text and data mining (bulk full text): https://www.biorxiv.org/tdm
 - JATS XML specification: https://jats.nlm.nih.gov/

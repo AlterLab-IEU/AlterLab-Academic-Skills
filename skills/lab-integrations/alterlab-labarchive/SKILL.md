@@ -3,267 +3,206 @@ name: alterlab-labarchive
 description: Integrates the LabArchives electronic lab notebook (ELN) via its REST API — access notebooks, manage entries and attachments, back up notebooks, and bridge to Protocols.io, Jupyter, and REDCap. Use when automating LabArchives ELN workflows, programmatically reading/writing notebook entries or attachments, backing up a LabArchives notebook, or syncing it with Protocols.io, Jupyter, or REDCap. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
-compatibility: Requires a LabArchives account plus API credentials (access key ID and password) and the labarchivespy client
+compatibility: Requires a LabArchives account with API access (institutional access key ID + password, plus the user's LA App authentication token). Python clients - labapi (PyPI, current 1.2.0, Python >=3.10) or the git-only labarchives-py wrapper used by the bundled scripts.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # LabArchives Integration
 
 ## Overview
 
-LabArchives is an electronic lab notebook platform for research documentation and data management. Access notebooks, manage entries and attachments, generate reports, and integrate with third-party tools programmatically via REST API.
+LabArchives is an electronic lab notebook platform for research documentation and data management. Its REST API (XML responses, HMAC-signed requests) exposes notebooks, the page tree, entries, attachments, and backups.
 
 ## When to Use This Skill
 
 This skill should be used when:
-- Working with LabArchives REST API for notebook automation
+- Working with the LabArchives REST API for notebook automation
 - Backing up notebooks programmatically
-- Creating or managing notebook entries and attachments
-- Generating site reports and analytics
+- Creating text entries or uploading attachments to notebook pages
 - Integrating LabArchives with third-party tools (Protocols.io, Jupyter, REDCap)
 - Automating data upload to electronic lab notebooks
-- Managing user access and permissions programmatically
+- Generating institutional (Enterprise) usage reports
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Benchling registry, inventory, ELN entries, or workflow tasks | `alterlab-benchling` |
+| Searching, writing, or publishing protocols on protocols.io | `alterlab-protocolsio` |
+| Designing REDCap instruments/data dictionaries or CDISC mapping | `alterlab-redcap-cdisc` |
+| Choosing a data repository (Zenodo, Dryad, OSF) or FAIR data-sharing plan | `alterlab-open-science` |
 
 ## Core Capabilities
 
-### 1. Authentication and Configuration
+### 1. Clients and Authentication
 
-Set up API access credentials and regional endpoints for LabArchives API integration.
+Two Python clients exist; pick by task:
+
+| Client | Install | Use for |
+|--------|---------|---------|
+| **labapi** (NIMH DSST; PyPI, current 1.2.0, Python >=3.10) | `uv pip install "labapi[dotenv]"` | Recommended for new work: signing, XML parsing, page-tree navigation, text entries, attachments, backups |
+| **labarchives-py** (`labarchivespy` import; git-only) | `uv pip install "git+https://github.com/mcmero/labarchives-py"` | Minimal signed **GET** wrapper (`make_call`); used by the bundled scripts |
 
 **Prerequisites:**
-- Enterprise LabArchives license with API access enabled
-- API access key ID and password from LabArchives administrator
-- User authentication credentials: email plus the **LA App authentication** password token (LabArchives → click your name, top-right → "LA App authentication"). This token is the `password` passed to `user_access_info`; it is not your normal login password.
+- API access enabled for your institution (Enterprise license); the access key ID and password come from your LabArchives administrator or support@labarchives.com
+- The user's email plus the **LA App authentication** token (LabArchives → click your name, top-right → "LA App authentication"). The token is the `password` for `users/user_access_info`, not your login password.
 
-**Configuration setup:**
+**Regional API endpoints** (labarchives-py `api_url`; labapi's `API_URL` omits the trailing `/api`):
+- US/International: `https://api.labarchives.com/api`
+- Australia: `https://auapi.labarchives.com/api`
+- UK: `https://ukapi.labarchives.com/api`
 
-Use the `scripts/setup_config.py` script to create a configuration file:
-
-```bash
-python3 scripts/setup_config.py
-```
-
-This creates a `config.yaml` file with the following structure:
+Create the bundled scripts' `config.yaml` with `python3 scripts/setup_config.py` (prompts for secrets without echoing them and writes the file with mode 600):
 
 ```yaml
 api_url: https://api.labarchives.com/api  # or regional endpoint
 access_key_id: YOUR_ACCESS_KEY_ID
 access_password: YOUR_ACCESS_PASSWORD
+user_email: researcher@university.edu
+user_external_password: YOUR_LA_APP_AUTH_TOKEN
 ```
 
-**Regional API endpoints:**
-- US/International: `https://api.labarchives.com/api`
-- Australia: `https://auapi.labarchives.com/api`
-- UK: `https://ukapi.labarchives.com/api`
+Every call is signed: the client appends `akid`, `expires` (ms timestamp), and `sig` = base64 HMAC of `akid + method name + expires` keyed by the access password, so the password itself is never sent. For detailed setup and troubleshooting, see `references/authentication_guide.md`.
 
-For detailed authentication instructions and troubleshooting, refer to `references/authentication_guide.md`.
+### 2. User and Notebook Discovery
 
-### 2. User Information Retrieval
-
-Obtain user ID (UID) and access information required for subsequent API operations.
-
-**Workflow:**
-
-1. Call the `users/user_access_info` API method with login credentials
-2. Parse the XML/JSON response to extract the user ID (UID)
-3. Use the UID to retrieve detailed user information via `users/user_info_via_id`
-
-**Example using Python wrapper:**
+`users/user_access_info` returns the user ID (UID) and the notebooks the user can open (`<notebook>` elements with `<id>`, `<name>`, `<is-default>`):
 
 ```python
+# labapi
+import os
+from labapi import Client
+
+with Client() as client:  # reads API_URL, ACCESS_KEYID, ACCESS_PWD
+    user = client.login(os.environ["LA_EMAIL"], os.environ["LA_APP_TOKEN"])
+    print(list(user.notebooks))                       # notebook names
+    page = user.notebooks["Lab Notebook"].traverse("Experiments/2026/Run-12")
+```
+
+```python
+# labarchives-py (signed GET)
+import xml.etree.ElementTree as ET
 from labarchivespy.client import Client
 
-# Initialize client
 client = Client(api_url, access_key_id, access_password)
-
-# Get user access info
-login_params = {'login_or_email': user_email, 'password': auth_token}
-response = client.make_call('users', 'user_access_info', params=login_params)
-
-# Extract UID from response
-import xml.etree.ElementTree as ET
-uid = ET.fromstring(response.content)[0].text
-
-# Get detailed user info
-params = {'uid': uid}
-user_info = client.make_call('users', 'user_info_via_id', params=params)
+response = client.make_call('users', 'user_access_info',
+                            params={'login_or_email': user_email, 'password': auth_token})
+root = ET.fromstring(response.content)
+uid = root[0].text
+notebooks = [(nb.findtext('id'), nb.findtext('name')) for nb in root.iter('notebook')]
 ```
 
-### 3. Notebook Operations
+The labarchives-py wrapper does not URL-encode parameter values, so pass only simple values through `make_call` (or use labapi).
 
-Manage notebook access, backup, and metadata retrieval.
+### 3. Notebook Backup
 
-**Key operations:**
-
-- **List notebooks:** Retrieve all notebooks accessible to a user
-- **Backup notebooks:** Download complete notebook data with optional attachment inclusion
-- **Get notebook IDs:** Retrieve institution-defined notebook identifiers for integration with grants/project management systems
-- **Get notebook members:** List all users with access to a specific notebook
-- **Get notebook settings:** Retrieve configuration and permissions for notebooks
-
-**Notebook backup example:**
-
-Use the `scripts/notebook_operations.py` script:
+`notebooks/notebook_backup` (params `uid`, `nbid`, optional `json=true`, `no_attachments=true`) returns the notebook as a 7-Zip archive; only the notebook **owner** can download it (error 4547 otherwise).
 
 ```bash
-# Backup with attachments (default, creates 7z archive)
-python3 scripts/notebook_operations.py backup --uid USER_ID --nbid NOTEBOOK_ID
+# Back up one notebook (credentials come from config.yaml)
+python3 scripts/notebook_operations.py backup --nbid NOTEBOOK_ID
 
-# Backup without attachments, JSON format
-python3 scripts/notebook_operations.py backup --uid USER_ID --nbid NOTEBOOK_ID --json --no-attachments
+# Without attachments, JSON data inside the archive
+python3 scripts/notebook_operations.py backup --nbid NOTEBOOK_ID --json --no-attachments
+
+# List notebooks, or back up every notebook you can open
+python3 scripts/notebook_operations.py list
+python3 scripts/notebook_operations.py backup-all --output backups/
 ```
 
-**API endpoint format:**
-```
-https://<api_url>/notebooks/notebook_backup?uid=<UID>&nbid=<NOTEBOOK_ID>&json=true&no_attachments=false
-```
+With labapi: `user.notebooks["Lab Notebook"].backup("backups/lab_notebook.7z")`.
 
-For comprehensive API method documentation, refer to `references/api_reference.md`.
+For the API method reference, see `references/api_reference.md`.
 
-### 4. Entry and Attachment Management
+### 4. Entries and Attachments
 
-Create, modify, and manage notebook entries and file attachments.
+Entries live on **pages** of the notebook tree, so writes need the notebook ID (`nbid`) and the page tree ID (`pid`):
 
-> **Wrapper limitation (verified):** `labarchivespy.client.Client.make_call` is GET-only — it builds an HMAC-signed query URL (`akid` + method + `expires` → `sig`) and calls `requests.get`. It cannot POST bodies or multipart files. The wrapper's README only exercises `users/user_access_info`, `users/user_info_via_id`, `utilities/institutional_login_urls`, and `notebooks/notebook_backup`; those are confirmed working. Write operations (create entry, comment, attachment upload) are **not** provided by the wrapper and must be issued as your own signed requests — the bundled scripts use raw `requests.post` for uploads and you must replicate the `akid`/`expires`/`sig` signing the wrapper does internally. Treat the `entries/*` and `site_reports/*` method names below as the documented API surface to confirm against your institution's API docs, not as wrapper helpers.
-
-**Entry operations:**
-- Create new entries in notebooks
-- Add comments to existing entries
-- Create entry parts/components
-- Upload file attachments to entries
-
-**Attachment workflow:**
-
-Use the `scripts/entry_operations.py` script:
-
-```bash
-# Upload attachment to an entry
-python3 scripts/entry_operations.py upload --uid USER_ID --nbid NOTEBOOK_ID --entry-id ENTRY_ID --file /path/to/file.pdf
-
-# Create a new entry with text content
-python3 scripts/entry_operations.py create --uid USER_ID --nbid NOTEBOOK_ID --title "Experiment Results" --content "Results from today's experiment..."
-```
-
-**Supported file types:**
-- Documents (PDF, DOCX, TXT)
-- Images (PNG, JPG, TIFF)
-- Data files (CSV, XLSX, HDF5)
-- Scientific formats (CIF, MOL, PDB)
-- Archives (ZIP, 7Z)
-
-### 5. Site Reports and Analytics
-
-Generate institutional reports on notebook usage, activity, and compliance (Enterprise feature).
-
-**Available reports:**
-- Detailed Usage Report: User activity metrics and engagement statistics
-- Detailed Notebook Report: Notebook metadata, member lists, and settings
-- PDF/Offline Notebook Generation Report: Export tracking for compliance
-- Notebook Members Report: Access control and collaboration analytics
-- Notebook Settings Report: Configuration and permission auditing
-
-**Report generation:**
+| Operation | API method | Notes |
+|-----------|-----------|-------|
+| Create a page or folder | `tree_tools/insert_node` | `parent_tree_id`, `display_text`, `is_folder` |
+| Add a text entry | `entries/add_entry` (POST) | form field `entry_data`; `part_type` = `text entry` (HTML), `plain text entry`, or `heading` |
+| Add an attachment | `entries/add_attachment` (POST) | raw file bytes as the body; `filename`, `caption`, `change_description` |
+| Update a text entry | `entries/update_entry` (POST) | `eid` + `entry_data` |
+| List a page's entries | `tree_tools/get_entries_for_page` | |
 
 ```python
-# Generate detailed usage report
-response = client.make_call('site_reports', 'detailed_usage_report',
-                           params={'start_date': '2025-01-01', 'end_date': '2025-10-20'})
+# labapi: text entry + attachment on a page
+from labapi import Attachment, AttachmentEntry, TextEntry
+
+page.entries.create(TextEntry, "<p>Run 12 complete; see attached plate map.</p>")
+page.entries.create(AttachmentEntry, Attachment.from_file("plate_map.pdf"))
 ```
+
+```bash
+# Bundled script (labarchives-py signing, POSTs issued by the script)
+python3 scripts/entry_operations.py create --nbid NOTEBOOK_ID --pid PAGE_ID --content "Results from today's experiment..."
+python3 scripts/entry_operations.py upload --nbid NOTEBOOK_ID --pid PAGE_ID --file /path/to/file.pdf --caption "Raw data"
+python3 scripts/entry_operations.py batch-upload --nbid NOTEBOOK_ID --pid PAGE_ID --directory ./experiment_data/
+```
+
+Comments are not covered by either client; look up the comment method in the LabArchives API notebook before scripting it. Record provenance (instrument, software version, timestamp) in the attachment caption or a text entry instead. Check the per-file size limit (`users/max_file_size`) before large uploads.
+
+### 5. Site Reports (Enterprise)
+
+LabArchives documents institution-level reports (detailed usage, notebook inventory, PDF/offline generation, members, settings) under a `site_reports` class for Enterprise administrators. The method names in `references/api_reference.md` are unverified here — confirm them in your institution's API documentation before use.
 
 ### 6. Third-Party Integrations
 
-LabArchives integrates with numerous scientific software platforms. This skill provides guidance on leveraging these integrations programmatically.
-
-**Supported integrations:**
-- **Protocols.io:** Export protocols directly to LabArchives notebooks
-- **GraphPad Prism:** Export analyses and figures (Version 8+)
-- **SnapGene:** Direct molecular biology workflow integration
-- **Geneious:** Bioinformatics analysis export
-- **Jupyter:** Embed Jupyter notebooks as entries
-- **REDCap:** Clinical data capture integration
-- **Qeios:** Research publishing platform
-- **SciSpace:** Literature management
-
-**OAuth authentication:**
-LabArchives now uses OAuth for all new integrations. Legacy integrations may use API key authentication.
-
-For detailed integration setup instructions and use cases, refer to `references/integrations.md`.
+LabArchives integrates with Protocols.io, GraphPad Prism (8+), SnapGene, Geneious, Jupyter, REDCap, Qeios, and SciSpace, mostly through in-app export features; newer integrations use OAuth. Programmatic bridges (Jupyter → entry, REDCap export → entry, protocol import) are in `references/integrations.md`.
 
 ## Common Workflows
 
-### Complete notebook backup workflow
+### Complete notebook backup
 
-1. Authenticate and obtain user ID
-2. List all accessible notebooks
-3. Iterate through notebooks and backup each one
-4. Store backups with timestamp metadata
+1. Configure credentials (`scripts/setup_config.py`)
+2. `python3 scripts/notebook_operations.py backup-all --output backups/`
+3. Verify each archive opens (7-Zip) and store it with its timestamp; repeat on a schedule
 
-```bash
-# Complete backup script
-python3 scripts/notebook_operations.py backup-all --email user@example.edu --password AUTH_TOKEN
-```
+### Automated data upload
 
-### Automated data upload workflow
+1. Resolve the target page (`notebook.traverse("Experiments/2026/Run-12")` in labapi, or its tree ID)
+2. Upload the data files as attachments
+3. Add a text entry describing provenance (instrument, software version, parameters, timestamp)
 
-1. Authenticate with LabArchives API
-2. Identify target notebook and entry
-3. Upload experimental data files
-4. Add metadata comments to entries
-5. Generate activity report
+### Jupyter → LabArchives
 
-### Integration workflow example (Jupyter → LabArchives)
-
-1. Export Jupyter notebook to HTML or PDF
-2. Use entry_operations.py to upload to LabArchives
-3. Add comment with execution timestamp and environment info
-4. Tag entry for easy retrieval
-
-## Python Package Installation
-
-The `labarchives-py` wrapper (provides the `labarchivespy` import) is git-only — there is no PyPI release, so pin to a commit if you need reproducibility:
-
-```bash
-uv pip install "git+https://github.com/mcmero/labarchives-py"
-```
-
-The wrapper handles request signing and the authenticated GET calls (`user_access_info`, `user_info_via_id`, `notebook_backup`). For anything it does not cover (entry/comment creation, attachment upload), issue your own `requests` calls with the same `akid`/`expires`/`sig` signing.
+1. Export the executed notebook to HTML (nbconvert)
+2. Add the HTML as a text entry and the `.ipynb` as an attachment on the experiment page
+3. Include environment details (`requirements.txt`/`environment.yml`) as a second attachment
 
 ## Best Practices
 
-1. **Rate limiting:** Implement appropriate delays between API calls to avoid throttling
-2. **Error handling:** Always wrap API calls in try-except blocks with appropriate logging
-3. **Authentication security:** Store credentials in environment variables or secure config files (never in code)
-4. **Backup verification:** After notebook backup, verify file integrity and completeness
-5. **Incremental operations:** For large notebooks, use pagination and batch processing
-6. **Regional endpoints:** Use the correct regional API endpoint for optimal performance
+1. **Credentials:** keep access passwords and app tokens in environment variables or a mode-600 config file, never in code or notebooks
+2. **Rate limiting:** add short delays in batch loops and back off on errors; LabArchives does not publish a fixed quota here
+3. **Backup verification:** open and spot-check archives after each backup
+4. **Regional endpoints:** use the API host of your LabArchives region
+5. **Compliance:** ELN records may be regulated (21 CFR Part 11, HIPAA); avoid uploading identifiable patient data unless your notebook is approved for it
 
 ## Troubleshooting
 
-**Common issues:**
-
-- **401 Unauthorized:** Verify access key ID and password are correct; check API access is enabled for your account
-- **404 Not Found:** Confirm notebook ID (nbid) exists and user has access permissions
-- **403 Forbidden:** Check user permissions for the requested operation
-- **Empty response:** Ensure required parameters (uid, nbid) are provided correctly
-- **Attachment upload failures:** Verify file size limits and format compatibility
+- **401 / signature errors:** check the access key ID/password and that the machine clock is correct (signatures expire)
+- **4547 on backup:** only the notebook owner can download a backup
+- **404 / empty response:** confirm `nbid`/`pid` exist and the user can open the notebook
+- **Upload failures:** check `users/max_file_size` and the file type
 
 For additional support, contact LabArchives at support@labarchives.com.
 
 ## Resources
 
-This skill includes bundled resources to support LabArchives API integration:
-
 ### scripts/
 
-- `setup_config.py`: Interactive configuration file generator for API credentials
-- `notebook_operations.py`: Utilities for listing, backing up, and managing notebooks
-- `entry_operations.py`: Tools for creating entries and uploading attachments
+- `setup_config.py`: interactive configuration file generator (hidden secret prompts, mode 600)
+- `notebook_operations.py`: list notebooks and back them up (single or all)
+- `entry_operations.py`: add text entries and upload attachments to a page
 
 ### references/
 
-- `api_reference.md`: Comprehensive API endpoint documentation with parameters and examples
-- `authentication_guide.md`: Detailed authentication setup and configuration instructions
-- `integrations.md`: Third-party integration setup guides and use cases
+- `api_reference.md`: API classes, methods, and parameters
+- `authentication_guide.md`: authentication setup and configuration
+- `integrations.md`: third-party integration setup guides and code
 
+Part of the AlterLab Academic Skills suite.

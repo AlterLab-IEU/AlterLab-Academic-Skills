@@ -3,10 +3,11 @@ name: alterlab-latchbio
 description: Builds and deploys bioinformatics pipelines on the LatchBio platform using the Latch SDK — author workflows with @workflow/@task decorators, handle LatchFile/LatchDir I/O, register serverless workflows, configure CPU/GPU task resources, organize data in the Latch Registry, and wrap Nextflow/Snakemake pipelines. Use when developing or deploying a Latch SDK workflow, sizing task resources, working with the Registry, or porting a Nextflow/Snakemake bioinformatics pipeline onto LatchBio. Not for DNAnexus (dxpy/dx CLI) or generic Flyte. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
-compatibility: Requires a LatchBio account and workspace plus the Latch SDK (`uv pip install latch`, latch>=2.x, Python 3.9+); deploying workflows needs Docker running and `latch login`
+compatibility: Requires a LatchBio account and workspace plus the Latch SDK (`uv pip install latch`; latch 2.x, current 2.77.1, Python >=3.9); deploying workflows needs Docker running and `latch login`
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # LatchBio Integration
@@ -36,7 +37,7 @@ The Latch platform provides four main areas of functionality:
 ### 3. Resource Configuration
 - Pre-configured task decorators (@small_task, @large_task, @small_gpu_task, @large_gpu_task)
 - Custom resource specifications (CPU, memory, GPU, storage)
-- GPU support (K80, V100, A100)
+- GPU nodes: NVIDIA T4 (`@small_gpu_task`, g4dn.2xlarge), A10G (`@large_gpu_task`, g5.16xlarge), V100 (`@v100_x1/x4/x8_task`), L40S (`@g6e_*_task`)
 - Timeout and storage configuration
 - Cost optimization strategies
 
@@ -119,6 +120,16 @@ This skill should be used when encountering any of the following scenarios:
 - "Use DESeq2 for differential expression"
 - "Available pre-built workflows"
 - Using `latch.verified` module
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| DNAnexus apps/applets, dxapp.json, dxpy or the dx CLI | `alterlab-dnanexus` |
+| Running nf-core/sarek variant calling directly (outside Latch) | `alterlab-nf-core-sarek` |
+| Generic serverless Python/GPU jobs with no Latch workflow | `alterlab-modal` |
+| SLURM/HPC or cloud batch job submission and polling | `alterlab-remote-compute` |
+| Dataset registries, ontology validation, and lineage in LaminDB | `alterlab-lamindb` |
 
 ## Detailed Documentation
 
@@ -284,3 +295,4 @@ def registry_workflow(sample_name: str, table_id: str) -> str:
 - GitHub Repository (verify current API/decorator names here): https://github.com/latchbio/latch
 - Support: support@latch.bio
 
+Part of the AlterLab Academic Skills suite.

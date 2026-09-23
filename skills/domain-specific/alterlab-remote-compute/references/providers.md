@@ -49,16 +49,17 @@ rsync -a "login-node:$SCRATCH/out/" ./out/
 ## RunPod
 
 Serverless endpoints expose run/status/cancel over REST. The API key is read from
-`RUNPOD_API_KEY` (never hardcode it).
+`RUNPOD_API_KEY` (never hardcode it) and sent as a bearer token. The request body must
+wrap the worker's parameters in an `input` object, e.g. `{"input": {"fasta": "..."}}`.
 
 ```bash
 # Submit
-curl -s -H "Authorization: $RUNPOD_API_KEY" -H "Content-Type: application/json" \
+curl -s -H "Authorization: Bearer $RUNPOD_API_KEY" -H "Content-Type: application/json" \
   -d @spec.json "https://api.runpod.ai/v2/<ENDPOINT_ID>/run"
 # → {"id": "<job-id>", "status": "IN_QUEUE"}
 
 # Poll
-curl -s -H "Authorization: $RUNPOD_API_KEY" \
+curl -s -H "Authorization: Bearer $RUNPOD_API_KEY" \
   "https://api.runpod.ai/v2/<ENDPOINT_ID>/status/<job-id>"
 ```
 
@@ -70,13 +71,20 @@ a workload needs a long-lived box rather than a per-request endpoint.
 
 - **Batch**: containerized batch jobs with GPU allocation. Auth via Application Default
   Credentials (`gcloud auth application-default login`). Submit a job, poll the job state,
-  read outputs from a GCS bucket (`GCS_OUTPUT_BUCKET`).
+  read outputs from a GCS bucket (`GCS_OUTPUT_BUCKET`):
+
+  ```bash
+  gcloud batch jobs submit fold-001 --location us-central1 --config job.json
+  gcloud batch jobs describe fold-001 --location us-central1 --format='value(status.state)'
+  gcloud storage cp -r "gs://$GCS_OUTPUT_BUCKET/fold-001/" ./out/
+  ```
 - **Vertex AI custom jobs**: managed ML training/inference jobs; state polled via the job
   resource; artifacts written to a staging bucket.
 
 Both map to submit → poll (`QUEUED/SCHEDULED → PENDING`, `RUNNING → RUNNING`,
-`SUCCEEDED → SUCCEEDED`, `FAILED → FAILED`) → harvest (GCS download). Verify exact resource
-names against the current `gcloud`/SDK version — `TODO(verify)` before pinning a command.
+`SUCCEEDED → SUCCEEDED`, `FAILED → FAILED`) → harvest (GCS download). Vertex AI job states
+carry a `JOB_STATE_` prefix (e.g. `JOB_STATE_SUCCEEDED`); check the current
+`gcloud ai custom-jobs` reference before scripting it.
 
 ## Modal
 

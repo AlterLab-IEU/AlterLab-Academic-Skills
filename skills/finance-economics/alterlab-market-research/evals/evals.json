@@ -15,7 +15,7 @@
     {
       "id": "competitive-landscape-section",
       "prompt": "Write the competitive landscape chapter for a cloud-computing market report: Porter's Five Forces with High/Medium/Low ratings, the top 10 competitors with market share, a competitive positioning matrix, and barriers to entry.",
-      "expected_output": "Triggers market-research. Writes the Competitive Landscape chapter applying Porter's Five Forces (rating each force High/Medium/Low), profiling top players with market share, and producing a 2x2 competitive positioning matrix and strategic group map via scientific-schematics. Uses research-lookup for competitor data.",
+      "expected_output": "Triggers market-research. Writes the Competitive Landscape chapter applying Porter's Five Forces (rating each force High/Medium/Low), profiling top players with market share, and producing a 2x2 competitive positioning matrix and strategic group map; market shares are cited to sources. Uses research-lookup for competitor data.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "Five Forces"},
@@ -25,12 +25,12 @@
     {
       "id": "market-sizing",
       "prompt": "I'm evaluating a market-entry opportunity in renewable energy storage. Build me the market-size-and-growth analysis with TAM, SAM, SOM, historical CAGR, and a growth trajectory chart.",
-      "expected_output": "Triggers market-research. Produces the Market Size & Growth chapter computing TAM -> SAM -> SOM with stated assumptions, historical and projected CAGR, and a market growth trajectory chart plus a TAM/SAM/SOM concentric-circles diagram. Sources figures via research-lookup and cites them.",
+      "expected_output": "Triggers market-research. Produces the Market Size & Growth chapter computing TAM -> SAM -> SOM with stated assumptions, historical and projected CAGR, a growth trajectory chart plotted from the sourced data (matplotlib/plotly, not an image model), and a TAM/SAM/SOM concentric-circles diagram. Sources figures via research-lookup and cites them; any figure without a source is presented as a labelled estimate with its arithmetic, never as market data.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "SAM"},
         {"type": "output_contains", "value": "CAGR"},
-        {"type": "behavior", "value": "Works TAM->SAM->SOM with explicit assumptions, computes CAGR, and specifies a growth-trajectory and TAM/SAM/SOM visual."}
+        {"type": "behavior", "value": "Works TAM->SAM->SOM with explicit assumptions, computes CAGR, cites a source for every market figure or labels it as an estimate, and specifies a growth-trajectory and TAM/SAM/SOM visual."}
       ]
     },
     {

@@ -3,10 +3,11 @@ name: alterlab-opentargets
 description: Query the Open Targets Platform GraphQL API for target-disease associations, tractability and safety data, genetics/omics evidence, and known drugs. Use when identifying or prioritizing therapeutic drug targets, assessing target druggability/safety, or gathering target-disease evidence for drug discovery. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless Open Targets GraphQL API (no authentication required)
+compatibility: Keyless Open Targets Platform GraphQL API v4 (no authentication required); queries verified against data release 26.06 (API 26.6.3) — the schema changes between quarterly releases
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Open Targets Database
@@ -38,6 +39,16 @@ This skill should be used when:
 - **Mechanism research:** Investigating biological pathways and gene functions
 - **Biomarker discovery:** Finding genes differentially expressed in disease
 - **Safety assessment:** Identifying potential toxicity concerns for drug targets
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Raw curated SNP-trait associations or GWAS study metadata | `alterlab-gwas` |
+| Compound bioactivity (IC50/Ki) and assay data | `alterlab-chembl` |
+| Drug pharmacology, interactions, dosing, and label details | `alterlab-drugbank` |
+| Searching trial registrations (status, eligibility, endpoints) | `alterlab-clinicaltrials` |
+| CRISPR/RNAi cancer cell-line dependency scores | `alterlab-depmap` |
 
 ## Core Workflow
 
@@ -178,9 +189,10 @@ drugs = get_known_drugs_for_disease("MONDO_0004975")
 
 **Clinical stage** is an enum string (not an integer):
 - `APPROVAL`: Approved drug (the former Phase 4)
-- `PHASE_3`: Late-stage clinical trials
-- `PHASE_2`: Mid-stage trials
-- `PHASE_1`: Early safety trials
+- `PHASE_3`, `PHASE_2_3`: Late-stage clinical trials
+- `PHASE_2`, `PHASE_1_2`: Mid-stage trials
+- `PHASE_1`, `EARLY_PHASE_1`: Early safety trials
+- `IND`, `PRECLINICAL`: Pre-clinical / investigational new drug
 - `UNKNOWN`: Stage not recorded
 
 ### 6. Get Drug Information
@@ -193,7 +205,7 @@ from scripts.query_opentargets import get_drug_info
 drug_info = get_drug_info("CHEMBL25")
 
 # Access:
-# - name, synonyms: Drug identifiers
+# - name; synonyms: list of {label, source} objects (since release 26.06)
 # - drugType: Small molecule, antibody, etc.
 # - maximumClinicalStage: Development stage (enum string, e.g. "APPROVAL")
 # - mechanismsOfAction.rows: Target(s) and action type

@@ -6,13 +6,13 @@ allowed-tools: Read Write Edit WebFetch WebSearch
 compatibility: Uses built-in Claude tools only (Read/Write/Edit/WebFetch/WebSearch); no external API key or account required
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-03-18"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
 ---
 
 # Thesis Supervisor — Dissertation & Thesis Supervision Agent
 
-A comprehensive thesis and dissertation supervision tool for faculty advisors and graduate students. Covers the full dissertation lifecycle from initial topic selection through successful defense, providing chapter-by-chapter guidance, supervision strategies, timeline management, and defense preparation.
+A comprehensive thesis and dissertation supervision tool for faculty supervisors and advisors, and for the work they do with their graduate students. Covers the full dissertation lifecycle from initial topic selection through successful defense, providing chapter-by-chapter guidance, supervision strategies, timeline management, and defense preparation.
 
 ## Overview
 
@@ -32,16 +32,17 @@ This skill should be used when:
 - Giving feedback on student drafts
 - Preparing students for committee meetings
 - Troubleshooting common thesis problems (writer's block, scope creep, data issues)
-- Teaching thesis writing seminars or workshops
+- Preparing thesis-writing guidance or a workshop for your own supervisees (designing a full seminar course with outcomes and rubrics belongs to `alterlab-teaching-design`)
 
 ### Does NOT Trigger
 
 | Scenario | Use Instead |
 |----------|-------------|
-| Writing a journal article (not thesis) | `alterlab-paper-writer` |
-| Statistical analysis of thesis data | Data science skills |
-| Literature search strategy | `alterlab-deep-research` |
+| Writing a journal article (not thesis), including one derived from a dissertation | `alterlab-paper-writer` |
+| Statistical analysis of thesis data | `alterlab-statistical-analysis` |
+| Systematic literature search strategy (PRISMA screening) | `alterlab-deep-research` |
 | Survey/instrument design for thesis | `alterlab-survey-design` |
+| Designing a thesis-writing seminar course (learning outcomes, rubrics, syllabus) | `alterlab-teaching-design` |
 
 ---
 
@@ -304,10 +305,12 @@ Full APA 7 and Chicago/Turabian formatting checklists: see `references/formattin
 
 - Bolker, J. (1998). *Writing your dissertation in fifteen minutes a day: A guide to starting, revising, and finishing your doctoral thesis*. Holt.
 - Dunleavy, P. (2003). *Authoring a PhD: How to plan, draft, write, and finish a doctoral thesis or dissertation*. Palgrave Macmillan.
-- Murray, R. (2011). *How to write a thesis* (3rd ed.). Open University Press.
+- Hyatt, L., & Roberts, C. (2023). *The dissertation journey: A practical and comprehensive guide to planning, writing, and defending your dissertation* (4th ed.). Corwin.
+- Murray, R. (2025). *How to write a thesis* (5th ed.). Open University Press.
 - Paltridge, B., & Starfield, S. (2020). *Thesis and dissertation writing in a second language: A handbook for students and their supervisors* (2nd ed.). Routledge.
-- Roberts, C. M. (2010). *The dissertation journey: A practical and comprehensive guide to planning, writing, and defending your dissertation* (2nd ed.). Corwin.
 - Turabian, K. L. (2018). *A manual for writers of research papers, theses, and dissertations* (9th ed.). University of Chicago Press.
 - Wisker, G. (2012). *The good supervisor: Supervising postgraduate and undergraduate research for doctoral theses and dissertations* (2nd ed.). Palgrave Macmillan.
 
 See also: `references/thesis-guidelines.md` for expanded formatting and process details.
+
+Part of the AlterLab Academic Skills suite.

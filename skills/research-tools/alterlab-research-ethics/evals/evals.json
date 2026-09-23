@@ -70,6 +70,15 @@
         {"type": "output_contains", "value": "alterlab-tr-research-ethics"},
         {"type": "behavior", "value": "Recognizes a Turkish etik kurul application is Turkey-specific and defers to alterlab-tr-research-ethics rather than giving a US-style IRB walkthrough."}
       ]
+    },
+    {
+      "id": "near-miss-open-science",
+      "prompt": "Our ethics approval came through. Before we start collecting data, help me preregister the hypotheses and analysis plan on OSF and choose where to deposit the anonymized dataset afterwards.",
+      "expected_output": "Does NOT invoke alterlab-research-ethics as the primary handler; defers to alterlab-open-science for OSF preregistration, FAIR data sharing, and repository choice. Ethics approval is already done; the remaining work is transparency and open-data practice, not an IRB application or consent drafting.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-open-science"}
+      ]
     }
   ]
 }

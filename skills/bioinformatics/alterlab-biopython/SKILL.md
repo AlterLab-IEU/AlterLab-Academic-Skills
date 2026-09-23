@@ -3,19 +3,39 @@ name: alterlab-biopython
 description: Manipulate biological sequences, parse FASTA/GenBank/PDB files, run phylogenetics, and access NCBI/PubMed programmatically via Biopython (Bio.SeqIO, Bio.Entrez, Bio.PDB, Bio.Blast). Use when scripting custom bioinformatics pipelines, batch-processing sequence files, automating BLAST, or fetching records from Entrez — for quick one-off database lookups use gget, for unified multi-service integration use bioservices. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with Biopython installed. NCBI Entrez access needs a contact email; an NCBI API key is optional (raises the rate limit from 3 to 10 req/s)."
+compatibility: "Self-contained — runs under `uv run python` with Biopython installed (1.88 as of 2026-08; supports Python 3.10–3.14, with 3.10 support deprecated). NCBI Entrez access needs a contact email; an NCBI API key is optional (raises the rate limit from 3 to 10 req/s)."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Biopython: Computational Molecular Biology in Python
 
 ## Overview
 
-Biopython is a comprehensive set of freely available Python tools for biological computation. It provides functionality for sequence manipulation, file I/O, database access, structural bioinformatics, phylogenetics, and many other bioinformatics tasks. The current version is **Biopython 1.87**, which supports Python 3 and requires NumPy.
+Biopython is a comprehensive set of freely available Python tools for biological computation. It provides functionality for sequence manipulation, file I/O, database access, structural bioinformatics, phylogenetics, and many other bioinformatics tasks. The current version is **Biopython 1.88** (August 2026), which supports Python 3.10–3.14 and requires NumPy.
 
-> **Version note (1.78+):** The command-line application wrappers in `Bio.Blast.Applications` (`Ncbiblastn/p/x...Commandline`, `NcbimakeblastdbCommandline`) and `Bio.Align.Applications` (`ClustalOmegaCommandline`, `MuscleCommandline`) were deprecated in 1.78 and **removed** — they no longer import. Call BLAST+/aligner executables via `subprocess` instead (see `references/blast.md` and `references/alignment.md`). `Bio.pairwise2` is deprecated; use `Bio.Align.PairwiseAligner`.
+> **Removed / changed APIs to watch for**
+>
+> - **Command-line wrappers are gone.** `Bio.Application` and everything built on it —
+>   `Bio.Blast.Applications` (`Ncbiblastn/p/x…Commandline`, `NcbimakeblastdbCommandline`) and
+>   `Bio.Align.Applications` (`ClustalOmegaCommandline`, `MuscleCommandline`) — were
+>   deprecated in 1.78 and **removed in 1.86**. Call the executables through `subprocess`
+>   (see `references/blast.md` and `references/alignment.md`).
+> - **PairwiseAligner gap scores changed in 1.86.** The default gap score is now **-1**
+>   (was 0), so an aligner left at defaults returns far fewer, non-degenerate alignments.
+>   The gap attributes were also renamed to insertion/deletion forms
+>   (`open_internal_insertion_score`, …); the `*_gap_score` names still work as
+>   meta-attributes. The `alphabet` attribute is deprecated and unused.
+> - **`Bio.pairwise2` is deprecated** — use `Bio.Align.PairwiseAligner`.
+> - **`Bio.Blast.NCBIXML` is declared obsolete** as of the 1.89 development line in favour
+>   of the `Bio.Blast` parser added in 1.84 (`Blast.parse`/`Blast.read`, `Blast.qblast`).
+>   It still ships and works in 1.88; prefer the new API for new code.
+> - **Security fixes worth upgrading for:** 1.87 fixed CVE-2025-68463 in
+>   `Bio.Entrez.Parser`, and 1.88 removed an `eval` in the `Bio.Nexus` parser that allowed
+>   code execution from a malicious NEXUS file. Treat downloaded records as untrusted input
+>   and keep Biopython current.
 
 ## When to Use This Skill
 
@@ -33,6 +53,16 @@ Use this skill when:
 - Performing structural bioinformatics tasks
 - Working with population genetics data
 - Any other computational molecular biology task
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Running local BLAST+ / `makeblastdb` from the command line, or DIAMOND | `alterlab-blast` |
+| A one-line lookup of a gene, sequence, or structure | `alterlab-gget` |
+| One call across many web services (UniProt + KEGG + ChEMBL in a pipeline) | `alterlab-bioservices` |
+| SAM/BAM/CRAM record access, pileups, and read filtering | `alterlab-pysam` |
+| Building an ML phylogeny from unaligned sequences (MAFFT + IQ-TREE) | `alterlab-phylogenetics` |
 
 ## Core Capabilities
 
@@ -152,17 +182,17 @@ Use for:
 - Filtering results by E-value or identity
 - Extracting hit sequences
 
-**Quick example:**
+**Quick example** (the `Bio.Blast` API introduced in 1.84 — NCBI requires a contact email):
 ```python
-from Bio.Blast import NCBIWWW, NCBIXML
+from Bio import Blast
 
-# Run BLAST search
-result_handle = NCBIWWW.qblast("blastn", "nt", "ATCGATCGATCG")
-blast_record = NCBIXML.read(result_handle)
+Blast.email = "your.email@example.com"
+result_stream = Blast.qblast("blastn", "nt", "ATCGATCGATCG")
+blast_record = Blast.read(result_stream)
 
-# Display top hits
-for alignment in blast_record.alignments[:5]:
-    print(f"{alignment.title}: E-value={alignment.hsps[0].expect}")
+# Each hit's alignments are Bio.Align objects; scores live in .annotations
+for hit in blast_record[:5]:
+    print(f"{hit.target.id}: E-value={hit[0].annotations['evalue']}")
 ```
 
 ### 5. Structural Bioinformatics (Bio.PDB)
@@ -339,17 +369,16 @@ for record in SeqIO.parse("sequences.fasta", "fasta"):
 ### Pattern 3: BLAST and Fetch Top Hits
 
 ```python
-from Bio.Blast import NCBIWWW, NCBIXML
-from Bio import Entrez, SeqIO
+from Bio import Blast, Entrez, SeqIO
 
-Entrez.email = "your.email@example.com"
+Entrez.email = Blast.email = "your.email@example.com"
 
-# Run BLAST
-result_handle = NCBIWWW.qblast("blastn", "nt", sequence)
-blast_record = NCBIXML.read(result_handle)
+# Run BLAST (Bio.Blast API, Biopython >= 1.84)
+result_stream = Blast.qblast("blastn", "nt", sequence)
+blast_record = Blast.read(result_stream)
 
-# Get top hit accessions
-accessions = [aln.accession for aln in blast_record.alignments[:5]]
+# Get top hit accessions (hit.target is a SeqRecord)
+accessions = [hit.target.name for hit in blast_record[:5]]
 
 # Fetch sequences
 for acc in accessions:
@@ -448,3 +477,4 @@ Biopython provides comprehensive tools for computational molecular biology. When
 
 The modular reference documentation ensures detailed, searchable information for every major Biopython capability.
 
+Part of the AlterLab Academic Skills suite.

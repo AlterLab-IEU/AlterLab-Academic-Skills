@@ -34,7 +34,7 @@
     {
       "id": "reproducible-census-version",
       "prompt": "I'm writing the methods section of a paper that uses Census data. How do I make sure my exact same query is reproducible months from now when the Census has been updated?",
-      "expected_output": "Invokes alterlab-cellxgene: advises pinning the release by passing census_version (e.g. open_soma(census_version='2023-07-25')) so the analysis is reproducible across Census updates, and recording that version in the methods.",
+      "expected_output": "Invokes alterlab-cellxgene: advises pinning the release by passing census_version (e.g. open_soma(census_version='2025-11-08'), the current LTS build) so the analysis is reproducible across Census updates, and recording that version in the methods.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "census_version" },

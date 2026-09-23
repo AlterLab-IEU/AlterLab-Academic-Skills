@@ -1,22 +1,22 @@
 ---
 name: alterlab-tubitak-proposal
-description: "Scaffolds TÜBİTAK ARDEB national research proposals (1001 Bilimsel ve Teknolojik Araştırma Projeleri and 1002-A Hızlı Destek Modülü) against the official .doc form trees: 1. ÖZGÜN DEĞER (konunun önemi/özgün değer, araştırma sorusu/hipotezi, amaç ve hedefler), 2. YÖNTEM, 3. PROJE YÖNETİMİ (iş-zaman çizelgesi/iş paketleri + B-Planı, araştırma olanakları), 4. YAYGIN ETKİ, EK-1 Kaynaklar, EK-2 Bütçe ve Gerekçesi. Enforces the 600-word TR/EN özet (abstract) caps, program caps (1001 <=36 months/3,000,000 TRY for 2026-1; 1002-A <=12 months/150,000 TRY, rolling), and the four panel review dimensions; submission via PBS (ardeb-pbs.tubitak.gov.tr) with ARBİS prerequisite. Delegates generic grant craft to alterlab-research-grants. Use when the user wants to write a TÜBİTAK 1001 or 1002-A proposal, draft özgün değer or yaygın etki sections, scaffold a Turkish national grant, or map broader-impacts framing to TÜBİTAK terms. Part of the AlterLab Academic Skills suite."
+description: "Scaffolds TÜBİTAK ARDEB national research proposals: 1001 against the official .doc form tree (TR/EN özet ≤600 words each, 1. ÖZGÜN DEĞER, 2. YÖNTEM, 3. PROJE YÖNETİMİ with iş paketleri and B Planı, 4. YAYGIN ETKİ, EK-1 Kaynaklar, EK-2 Bütçe; ≤25 pages), and 1002-A Hızlı Destek, now typed into PBS screens with per-section word ranges. Checks program caps (1001 ≤36 months, 3,000,000 TRY burs dahil; 1002-A ≤12 months, 150,000 TRY/year, rolling), drafts to the panel weights (özgün değer 35, yöntem 25, proje yönetimi 20, yaygın etki 20) and applies TÜBİTAK's generative-AI (ÜYZ) disclosure rules; submission via PBS with an ARBİS prerequisite. Delegates generic grant craft to alterlab-research-grants. Use when the user wants to write a TÜBİTAK 1001 or 1002-A proposal, draft özgün değer or yaygın etki sections, scaffold a Turkish national grant, or map broader-impacts framing to TÜBİTAK terms. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) WebFetch
-compatibility: No API key required — generates proposal scaffolds offline; the structure checker runs via `uv run python` on stdlib only. Program caps/forms change each call period; WebFetch the live PBS/guide pages to confirm before submission.
+compatibility: No API key required — generates proposal scaffolds offline; the structure checker runs via `uv run python` on stdlib only. Program caps/forms change by call period; WebFetch the live program pages to confirm before submission.
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-06-06"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
   depends_on: "alterlab-research-grants (generic grant-craft this skill delegates to)"
 ---
 
 # TÜBİTAK ARDEB Proposal Scaffolder — 1001 & 1002-A
 
 Scaffolds a TÜBİTAK ARDEB (Araştırma Destek Programları Başkanlığı — the Research
-Support Programmes directorate) proposal against the **verified official form tree**,
-in the directorate's own Turkish section order, then maps the researcher's content into
-each heading and checks the hard caps the panel rejects on. It owns the **Turkish-specific
+Support Programmes directorate) proposal against the **official form structure**, in the
+directorate's own Turkish section order, then maps the researcher's content into each
+heading and checks the limits a proposal is returned on. It owns the **Turkish-specific
 form structure, terminology, and program rules** only — generic grant-craft (broader-impacts
 argumentation, feasibility narrative, Gantt aesthetics) is delegated to
 `alterlab-research-grants`.
@@ -24,9 +24,12 @@ argumentation, feasibility narrative, Gantt aesthetics) is delegated to
 Two variants:
 
 - **1001** — *Bilimsel ve Teknolojik Araştırma Projelerini Destekleme Programı* (Support
-  Programme for Scientific and Technological Research Projects). The heavy, full-form program.
-- **1002-A** — *Hızlı Destek Modülü* (Fast Support Module). The light, short-form, low-budget,
-  rolling-application variant.
+  Programme for Scientific and Technological Research Projects). The full program: an uploaded
+  .doc form, two calls a year, panel evaluation.
+- **1002-A** — *Hızlı Destek Modülü* (Fast Support Module). Short, small-budget, rolling. Since
+  the 2025 redesign there is **no .doc template**: the applicant types each section into the PBS
+  screens (with word ranges) and the system generates the form. It also funds needs arising in an
+  accepted doctoral thesis, with the doctoral student as PI.
 
 ## Quick Start
 
@@ -38,9 +41,9 @@ Turn my NSF broader-impacts paragraph into a TÜBİTAK yaygın etki section
 ```
 
 → Pick the variant, generate the section tree (`scripts/scaffold_proposal.py`), draft each
-heading from the user's material, then run the cap/structure check
-(`scripts/scaffold_proposal.py --check`) before reporting. Always print the
-**verify-current-call** disclaimer — caps and forms change every application period.
+heading from the user's material, then run the structure check
+(`scripts/scaffold_proposal.py --check`) before reporting. Include the **verify-current-call**
+note every time — caps, forms and word ranges change by call period.
 
 ## When to Use This Skill
 
@@ -69,71 +72,101 @@ does **not** check journal indexing, compute career points, or write a non-Turki
 
 ---
 
-## The Verified Form Tree
+## The Form Trees
 
-Both forms share the same backbone; 1002-A is the trimmed variant. Section names below are the
-directorate's own headings (see `references/form_structure.md` for the full annotated tree and
-the per-section drafting briefs).
+Section names are the directorate's own headings; `references/form_structure.md` has the full
+annotated trees and a drafting brief per heading.
 
-| # | Section (TR) | English gloss | 1001 | 1002-A |
-|---|--------------|---------------|------|--------|
-| Özet | ÖZET (TR) + ABSTRACT (EN) | Abstract as **two separate blocks** (TR + EN), each with Anahtar Kelimeler / Keywords | ✅ | ✅ |
-| 1 | **ÖZGÜN DEĞER** | Original value / significance | ✅ | ✅ |
-| 1.1 | Konunun Önemi ve Özgün Değer | Importance & original value of the topic | ✅ | ✅ |
-| 1.2 | Araştırma Sorusu / Hipotezi | Research question / hypothesis | ✅ | ✅ |
-| 1.3 | Amaç ve Hedefler | Aim & objectives | ✅ | ✅ |
-| 2 | **YÖNTEM** | Method | ✅ | ✅ |
-| 3 | **PROJE YÖNETİMİ** | Project management | ✅ | (light) |
-| 3.1 | İş-Zaman Çizelgesi ve İş Paketleri (+ **B-Planı**) | Work–time chart & work packages (+ contingency plan) | ✅ | ✅ |
-| 3.2 | Araştırma Olanakları | Research facilities/resources | ✅ | ✅ |
-| 4 | **YAYGIN ETKİ** | Broader impact / dissemination | ✅ | (light) |
-| 4.1 | Öngörülen Çıktılar | Expected outputs | ✅ | ✅ |
-| 4.2 | Öngörülen Etkiler / Bilim İletişimi | Expected impacts / science communication | ✅ | ✅ |
-| EK-1 | Kaynaklar | References (cited literature) | ✅ | ✅ |
-| EK-2 | Bütçe ve Gerekçesi | Budget & its justification | ✅ | ✅ |
-| EK-3 | Diğer Projeler / TÜBİTAK Destekleri | Other projects & prior TÜBİTAK support | ✅ | (if applicable) |
+**1001 (official .doc form)**
 
-**Map, don't invent.** The directorate evaluates against *these* headings; never silently
-restructure them into an IMRaD paper. The özgün değer section is the single most weighted part
-of a 1001 — it is where the panel decides novelty.
+| # | Section (TR) | English gloss |
+|---|--------------|---------------|
+| Özet | ÖZET (TR) + ABSTRACT (EN), each with keywords | Two separate blocks, **≤ 600 words each** |
+| 1 | **ÖZGÜN DEĞER** — 1.1 Konunun Önemi ve Projenin Özgün Değeri; 1.2 Araştırma Sorusu ve/veya Hipotezi; 1.3 Amaç ve Hedefler | Original value; research question; aim & measurable objectives |
+| 2 | **YÖNTEM** | Method (carries feasibility / yapılabilirlik) |
+| 3 | **PROJE YÖNETİMİ** — 3.1 Yönetim Düzeni: İş-Zaman Çizelgesi (önem % totalling 100) ve İş Paketleri (başarı ölçütü, ara çıktılar, risk yönetimi + **B Planı**); 3.2 Araştırma Olanakları | Work–time chart, work packages, contingency, facilities |
+| 4 | **YAYGIN ETKİ** — 4.1 Öngörülen Çıktılar; 4.2 Öngörülen Etkiler; 4.3 Yayılım ve Bilim İletişimi Faaliyet Planı | Outputs, impacts, dissemination plan |
+| EK-1 / EK-2 | Kaynaklar; Bütçe ve Gerekçesi | References; budget & justification |
+| EK-3 | Proje Ekibinin Diğer Projeleri ve Güncel Yayınları | Generated by PBS — nothing to draft |
+
+**1002-A (PBS entry screens, word ranges from the Dec-2025 Başvuru İçeriği Bilgi Notu)**
+
+| # | Section (TR) | Words |
+|---|--------------|-------|
+| 1 | **BİLİMSEL NİTELİK** — Konunun Önemi ve Projenin Bilimsel Niteliği (incl. research question/hypotheses); Amaç ve Hedefler | 1,000–3,500; 100–1,000 |
+| 2 | **YÖNTEM** | 750–3,000 |
+| 3 | **PROJE YÖNETİMİ** — built from the İş Paketleri step (başarı ölçütü, önem %, risks + B Planı) | — |
+| 4 | **ÇIKTI, ETKİ VE KAZANIMLAR** | 100–400 |
+| – | Belirtmek İstediğiniz Diğer Konular (optional) | ≤ 250 |
+| EK-1 / EK-2 | Kaynakça step (DOI where one exists); budget steps | — |
+
+**Map, don't invent.** Evaluators score against *these* headings; never silently restructure
+them into an IMRaD paper. In both variants literature review, report writing, dissemination,
+article writing and procurement are **not** work packages.
 
 ---
 
-## The Hard Caps (panel rejects on these)
+## The Hard Limits
 
-These are **administrative-eligibility** filters: a proposal that violates them can be returned
-without scientific review. Pin them with `scripts/scaffold_proposal.py --check`; see
-`references/program_profiles.md` for the full table with as-of dates.
+A proposal that breaks these can be returned without scientific review. The checker pins them;
+`references/program_profiles.md` has the full table with sources, read on 2026-09-23.
 
 | Item | 1001 | 1002-A |
 |------|------|--------|
-| Özet word cap (TR & EN each) | **600 words** | **600 words** |
-| Project duration | **≤ 36 months** | **≤ 12 months** |
-| Budget upper limit (PTİ/burs hariç) | **3,000,000 TRY** (2026-1 period) | **150,000 TRY/yr** (incl. burs, as of 2026-02-01) |
-| Application window | Periodic call (çağrı) | **Rolling / year-round (sürekli)** |
-| Form length | per current rehber (guide) | **≤ 12 pages** excl. annexes |
-| PI (Yürütücü) requirement | Doctorate + eligible affiliation | per current rehber |
+| Duration | **≤ 36 months** | **≤ 12 months** |
+| Budget upper limit | **3,000,000 TRY**, burs dahil, PTİ and kurum hissesi hariç, no annual sub-limit (from the 2026-1 period) | **150,000 TRY per year**, burs dahil, no PTİ (from 2026-02-01) |
+| Format | .doc form, Arial 9, unchanged template, **≤ 25 pages excl. EK-1/EK-2**, one file ≤ 20 MB, no content behind external links | PBS text fields within the word ranges above |
+| Özet | TR and EN, ≤ 600 words each | Not stated in the bilgi notu — check the PBS "Proje Bilgileri" step |
+| Window | Two calls a year (2026-2: 29 Jul – 14 Sep 2026, closed; next call on the program page) | Rolling, year-round; e-imza within 15 days of approving the application |
+| PI | Doctorate + kadrolu/tam zamanlı staff of the executing institution | Doctorate (university/hospital) or qualified doctoral/uzmanlık/sanatta yeterlik student applying for their thesis needs |
 
-> **Verify-current-call disclaimer (always print).** Every TRY figure, page limit, and
-> duration above is dated and *changes each application period*. Before the user submits,
-> WebFetch the live program page and the current başvuru rehberi (application guide) listed in
-> `references/program_profiles.md` and reconcile. Caps observed for the 2026-1 (1001) and
-> 2026-02-01 (1002-A) periods; TÜBİTAK has announced major 1002 program changes, so treat
-> 1002-A caps as especially volatile.
+> **Verify-current-call note (include it every time).** Every TRY figure, page limit, word range
+> and duration is dated. Before the user submits, WebFetch the live program page (and, for 1002-A,
+> the current Başvuru İçeriği Bilgi Notu) listed in `references/program_profiles.md` and reconcile.
 
 ---
 
-## The Four Review Dimensions
+## How Proposals Are Scored
 
-ARDEB panels score against four axes. Draft each section *to* its axis; the mapping below is
-the lens the panelist (hakem) uses. Full criteria in `references/review_criteria.md`.
+**1001** goes to a panel with these weights (official panel evaluation form); draft each section
+to its criterion. Full criteria in `references/review_criteria.md`.
 
-| Dimension (TR) | English | Carried mainly by |
-|----------------|---------|-------------------|
-| **Bilimsel/Teknolojik Nitelik ve Özgün Değer** | Scientific quality & original value | Özet, §1 ÖZGÜN DEĞER, EK-1 |
-| **Yöntem** | Method & feasibility (yapılabilirlik) | §2 YÖNTEM |
-| **Proje Yönetimi ve Araştırma Olanakları** | Project management & resources | §3 (iş paketleri, B-Planı, §3.2) |
-| **Yaygın Etki** | Broader impact & dissemination | §4 YAYGIN ETKİ, EK-2 |
+| Criterion (TR) | Weight | Carried mainly by |
+|----------------|--------|-------------------|
+| **Özgün Değer** | 35% | Özet, §1 ÖZGÜN DEĞER, EK-1 |
+| **Yöntem** | 25% | §2 YÖNTEM |
+| **Proje Yönetimi** | 20% | §3 (iş paketleri, B Planı, §3.2) |
+| **Yaygın Etki** | 20% | §4 YAYGIN ETKİ, EK-2 |
+
+**1002-A** goes to external advisors (dış danışman) on three criteria: Bilimsel Nitelik, Proje
+Yönetimi, Çıktı-Etki-Kazanımlar.
+
+---
+
+## Generative-AI Use — TÜBİTAK ÜYZ Rehberi (Eylül 2025)
+
+TÜBİTAK's *Destek Süreçlerinde Üretken Yapay Zekânın (ÜYZ) Sorumlu ve Güvenilir Kullanımı
+Rehberi* (`tubitak.gov.tr/sites/default/files/2025-09/uyz_rehberi_ardeb.pdf`) applies to every
+TÜBİTAK application and to progress/final reports. Because this skill *is* generative-AI help,
+tell the user what the guide asks of them:
+
+- **Declare significant use.** Drafting any section, generating code or figures, or producing
+  content that supports the main arguments counts as significant (plain spelling/grammar checks
+  do not). The declaration goes in the section PBS provides for it and names the tool and
+  version, the sections or stages where it was used, and the nature of the use (first draft,
+  editing, code, translation).
+- **The applicant stays fully responsible.** Treat drafts from this skill as a starting point to
+  rewrite in the applicant's own words, and verify every claim and reference (run
+  `alterlab-citation-verifier` on EK-1) — fabricated references or data count as research
+  misconduct under TÜBİTAK's AYEK regulation.
+- **Keep confidential material out of AI tools.** The guide says not to enter unpublished data or
+  ideas that are confidential, personal data under KVKK (e.g. team CVs), or third parties'
+  confidential information, and to check the tool's privacy and data-use terms first. Work from
+  what the user chooses to share, suggest placeholders for sensitive details, and remind them of
+  this rule when they paste such material.
+- **Evaluators may not use generative AI at all.** If the user is a TÜBİTAK panelist, hakem,
+  danışman or izleyici asking for help assessing someone else's proposal or report, explain
+  that the guide forbids this (Bölüm 2) and do not process the proposal text.
 
 ---
 
@@ -144,10 +177,10 @@ Full glossary in `references/terminology_bridge.md`.
 
 | International term | TÜBİTAK term | Note |
 |-------------------|--------------|------|
-| Significance / innovation / intellectual merit | **Özgün değer** | The most weighted axis; lead with what is genuinely new |
-| Broader impacts | **Yaygın etki** | Split into çıktılar (outputs), etkiler (impacts), bilim iletişimi (sci-comm) |
+| Significance / innovation / intellectual merit | **Özgün değer** (1002-A: *Bilimsel nitelik*) | The most weighted criterion; lead with what is genuinely new |
+| Broader impacts | **Yaygın etki** (1002-A: *Çıktı, etki ve kazanımlar*) | Split into çıktılar, etkiler, yayılım / bilim iletişimi |
 | Feasibility | **Yapılabilirlik** | Lives inside §2 YÖNTEM + §3 management |
-| Contingency / risk plan | **B-Planı** | A *required* sub-element of the work-package section, not optional |
+| Contingency / risk plan | **B Planı** | Part of the work-package tables; must not drift from the core aims |
 | Work package / Gantt | **İş paketi / İş-Zaman Çizelgesi** | Gantt aesthetics → delegate to `alterlab-research-grants` |
 | Aims & objectives | **Amaç ve Hedefler** | Hedefler should be measurable, tied to work packages |
 
@@ -164,69 +197,76 @@ uv run python skills/turkish-academia/alterlab-tubitak-proposal/scripts/scaffold
     --out proposal_scaffold.md
 ```
 
-`--program` accepts `1001` or `1002a`. The script emits the full Markdown section tree with the
-TR heading, its English gloss, the panel dimension each section serves, and a short drafting
-brief per heading. Use `--lang tr` (default) or `--lang both` for bilingual headings.
+`--program` accepts `1001` or `1002a`. The script emits the Markdown section tree with the TR
+heading, its English gloss, the evaluation criterion each section serves, a short drafting brief,
+and (1002-A) the word range. Use `--lang tr` (default) or `--lang both` for bilingual headings.
 
 ### 2. Draft each section from the user's material
 
 Fill the scaffold from what the user provides. Keep the directorate's ordering. For özgün değer,
 state the *gap* and the *new contribution* explicitly. For yaygın etki, populate all three
-sub-parts (çıktılar / etkiler / bilim iletişimi). Pull literature into EK-1 Kaynaklar — and have
-`alterlab-citation-verifier` existence-check the bibliography before submission.
+sub-parts (çıktılar / etkiler / yayılım ve bilim iletişimi). Pull literature into EK-1 — and have
+`alterlab-citation-verifier` existence-check the bibliography before submission. For 1002-A,
+remind the user that the text goes into the PBS fields, section by section.
 
-### 3. Check the caps and structure
+### 3. Check the limits and structure
 
 ```bash
 uv run python skills/turkish-academia/alterlab-tubitak-proposal/scripts/scaffold_proposal.py \
     --check proposal_scaffold.md --program 1001
 ```
 
-The checker reports: missing required sections, TR/EN özet word counts vs the 600-word cap,
-whether duration/budget statements (if present) exceed the program ceilings, and whether a
-B-Planı sub-section exists. It is **advisory** — it never edits the proposal and it always
-restates the verify-current-call disclaimer because the ceilings are period-specific.
+The checker reports missing sections, word counts against each section's limit (1001: TR and EN
+özet ≤ 600; 1002-A: the min–max ranges), stated durations/budgets above the ceiling, and whether
+a B Planı is present. It is **advisory** — it never edits the proposal, and it always restates the
+verify-current-call note because the ceilings are period-specific.
 
 ### 4. Hand off and disclaim
 
-- Budget detail / VYP-style data plan → name the sibling (`alterlab-kvkk-dmp`,
-  `alterlab-aperta`); do not draft compliance text here.
-- Always tell the user to confirm the live caps in the current rehberi before submission.
+- Veri Yönetim Planı (uploaded to PBS with the application) → `alterlab-aperta` for the TÜBİTAK
+  template and `alterlab-kvkk-dmp` for the KVKK analysis; ethics → `alterlab-tr-research-ethics`.
+  For 1002-A the etik kurul approval or legal/special permit is requested only once the project
+  is selected for funding, within a set deadline, and the project does not start without it —
+  so tell the user to start those applications early.
+- Remind the user of the AI-use declaration and to confirm the live caps before submission.
 
 ---
 
 ## Submission Surface (read-only facts)
 
 - **PBS** — Proje Başvuru Sistemi at `ardeb-pbs.tubitak.gov.tr`. Proposals are entered and
-  submitted here.
-- **ARBİS** — Araştırmacı Bilgi Sistemi at `arbis.tubitak.gov.tr`. A current ARBİS record is a
-  prerequisite; the PI/personnel CVs flow from it. Tell the user to refresh ARBİS *before*
-  starting the PBS entry.
+  submitted here and signed with a qualified **e-imza** by the team and institution officials.
+- **ARBİS** — Araştırmacı Bilgi Sistemi at `arbis.tubitak.gov.tr`. A current ARBİS record
+  (personal, education, experience, expertise keywords, publications) is a prerequisite; tell
+  the user to refresh it *before* starting the PBS entry.
 
-This skill does **not** automate or log into either system — it produces the document content
-the researcher pastes/uploads.
+This skill does **not** automate or log into either system — it produces the content the
+researcher pastes or uploads.
 
 ---
 
 ## Self-Check Before Reporting
 
-- Did you use the **directorate's section order and Turkish headings**, not an IMRaD remap?
-- Is the **özet within 600 words in BOTH** Turkish and English?
-- Did you state duration/budget **only with the verify-current-call disclaimer**, never as a
+- Did you use the **directorate's section order and Turkish headings** for the right variant?
+- 1001: is the **özet within 600 words in BOTH** Turkish and English? 1002-A: is every section
+  inside its word range?
+- Did you state duration/budget **only with the verify-current-call note**, never as a
   guaranteed cap?
-- Does §3 contain a **B-Planı**, and §4 all three yaygın-etki sub-parts?
-- Did you **route** budget-compliance, ethics, indexing, and reporting asks to the correct
-  siblings rather than answering them here?
+- Does every risky work package have a **B Planı**, and does §4 (or 1002-A §4) cover outputs,
+  impacts and dissemination?
+- Did you tell the user how to **declare the AI assistance** and to verify every reference?
+- Did you **route** data-plan, ethics, indexing, and reporting asks to the correct siblings?
 
 ---
 
 ## References
 
-- `references/form_structure.md` — the full annotated 1001 & 1002-A section tree with a drafting
-  brief per heading and the 1001-vs-1002-A delta.
-- `references/program_profiles.md` — per-program caps (duration, budget, window, form length)
-  with as-of dates and the live verification URLs.
-- `references/review_criteria.md` — the four panel dimensions and how each section is scored.
+- `references/form_structure.md` — the annotated 1001 form tree and the 1002-A PBS screens, with
+  a drafting brief per heading and the 1001-vs-1002-A delta.
+- `references/program_profiles.md` — per-program caps (duration, budget, window, format,
+  eligibility) with dates and the live verification URLs.
+- `references/review_criteria.md` — the 1001 panel criteria and weights, the 1002-A criteria,
+  and common rejection patterns.
 - `references/terminology_bridge.md` — international ↔ TÜBİTAK concept glossary.
 
 Part of the AlterLab Academic Skills suite.

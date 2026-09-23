@@ -16,7 +16,7 @@ Stdlib only. Run via uv:
         --lang both --data-closed --closed-reason kvkk --out vyp.md
 
 Always remind the user to verify the current required VYP structure and the
-embargo ceilings against the live TÜBİTAK application before submission.
+open-access ceilings against the live TÜBİTAK application before submission.
 """
 from __future__ import annotations
 
@@ -24,12 +24,15 @@ import argparse
 import datetime
 import sys
 
-# Embargo ceilings from the TÜBİTAK Open Science Policy (see
-# references/policy_mandates.md). These are *upper bounds*; immediate open access
-# is always allowed and preferred.
+# Publication open-access ceilings from the TÜBİTAK Open Science Policy, İlke 2
+# (see references/policy_mandates.md). They are *upper bounds* counted from
+# publication; open access on acceptance is preferred. They apply to publication
+# full texts — closed *data* is justified under İlke 6 instead.
 EMBARGO = {
-    "stem": ("Fen ve mühendislik bilimleri (STEM)", "6 ay / 6 months"),
-    "ssh": ("Sosyal ve beşeri bilimler (SSH)", "12 ay / 12 months"),
+    "stem": ("Fen Bilimleri, Teknoloji, Mühendislik ve Matematik (STEM)",
+             "yayından sonra en geç 6 ay / at most 6 months after publication"),
+    "ssh": ("Sosyal ve Beşeri Bilimler (SSH)",
+            "yayından sonra en geç 12 ay / at most 12 months after publication"),
 }
 
 # İlke-6 closed-data justification stubs (the *reason*, not a KVKK analysis).
@@ -71,8 +74,11 @@ SECTIONS = [
      "KVKK lawful basis, personal/special-category data, ethics approval, consent. "
      "(Get the decision from alterlab-kvkk-dmp and alterlab-tr-research-ethics.)"),
     (5, "Veri Paylaşımı ve Erişim", "Sharing & Access",
-     "Hangi veri açık, hangisi kısıtlı paylaşılacak? Depo: Aperta. Ambargo tavanı: {embargo}.",
-     "What is shared openly vs restricted. Repository: Aperta. Embargo ceiling: {embargo}."),
+     "Hangi veri açık, hangisi kısıtlı paylaşılacak? Depo: Aperta. Yayınların tam metni için "
+     "açık erişim tavanı (İlke 2): {embargo}; açılamayan veriler İlke 6'ya göre gerekçelendirilir.",
+     "What is shared openly vs restricted. Repository: Aperta. Open-access ceiling for "
+     "publication full texts (Principle 2): {embargo}; data that cannot be opened is "
+     "justified under Principle 6."),
     (6, "Kapalı Veri Gerekçesi (İlke-6)", "Closed-Data Justification (Principle 6)",
      "Kapalı kalan veri varsa belgelenmiş gerekçe, kısıtlı erişim planı, kimlerin erişebileceği.",
      "If any data stays closed: documented reason, restricted-access plan, who may request access."),
@@ -85,12 +91,12 @@ SECTIONS = [
 ]
 
 DISCLAIMER_TR = (
-    "> Bu bir taslaktır. Ambargo tavanlarını ve gerekli VYP yapısını başvurudan "
+    "> Bu bir taslaktır. Açık erişim tavanlarını ve gerekli VYP yapısını başvurudan "
     "önce güncel TÜBİTAK Açık Bilim Politikası ve canlı başvuru sistemiyle "
     "doğrulayın."
 )
 DISCLAIMER_EN = (
-    "> This is a scaffold. Verify the embargo ceilings and the required VYP "
+    "> This is a scaffold. Verify the open-access ceilings and the required VYP "
     "structure against the current TÜBİTAK Open Science Policy and the live "
     "application system before submitting."
 )
@@ -116,8 +122,11 @@ def build(project: str, field: str, lang: str, data_closed: bool,
     out.append("")
     out.append(f"- **Proje / Project:** {project}")
     out.append(f"- **Alan / Field:** {field_label}")
-    out.append(f"- **Ambargo tavanı / Embargo ceiling:** {embargo} (üst sınır / upper bound)")
-    out.append(f"- **Depo / Repository:** Aperta — https://aperta.ulakbim.gov.tr/")
+    out.append(f"- **Yayın açık erişim tavanı / Publication OA ceiling:** {embargo}")
+    out.append("- **Depo / Repository:** Aperta — https://aperta.ulakbim.gov.tr/")
+    out.append("- **Resmî form / Official form:** ARDEB veri_yonetim_plani.docx (5 soru / "
+               "5 questions) — bu bölümleri forma aktarın / map these sections onto it "
+               "(references/vyp_template.md)")
     out.append(f"- **Tarih / Date:** {today}")
     out.append("")
 
@@ -163,7 +172,7 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--project", required=True, help="Project name / Proje adı")
     p.add_argument("--field", choices=["stem", "ssh"], default="stem",
-                   help="Field bucket; sets the embargo ceiling (6 mo STEM / 12 mo SSH)")
+                   help="Field bucket; sets the publication OA ceiling (6 / 12 months after publication)")
     p.add_argument("--lang", choices=["tr", "en", "both"], default="both",
                    help="Output language")
     p.add_argument("--data-closed", action="store_true",

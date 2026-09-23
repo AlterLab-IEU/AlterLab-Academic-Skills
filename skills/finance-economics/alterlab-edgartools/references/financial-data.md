@@ -39,7 +39,7 @@ financials = company.get_financials()
 
 income     = financials.income_statement()
 balance    = financials.balance_sheet()
-cashflow   = financials.cashflow_statement()   # note: no underscore
+cashflow   = financials.cash_flow_statement()  # cashflow_statement() is a deprecated alias (removed in 6.0)
 equity     = financials.statement_of_equity()
 comprehensive = financials.comprehensive_income()
 ```
@@ -48,7 +48,7 @@ comprehensive = financials.comprehensive_income()
 |--------|-------------|
 | `income_statement()` | Revenue, COGS, operating income, net income |
 | `balance_sheet()` | Assets, liabilities, equity |
-| `cashflow_statement()` | Operating, investing, financing cash flows |
+| `cash_flow_statement()` | Operating, investing, financing cash flows |
 | `statement_of_equity()` | Changes in stockholders' equity |
 | `comprehensive_income()` | Net income + other comprehensive income |
 
@@ -159,7 +159,7 @@ income = xbrls.statements.income_statement()
 income_detailed = xbrls.statements.income_statement(view="detailed")
 
 balance = xbrls.statements.balance_sheet()
-cashflow = xbrls.statements.cashflow_statement()
+cashflow = xbrls.statements.cash_flow_statement()
 
 # Convert to DataFrame (periods as columns)
 df = income.to_dataframe()
@@ -208,7 +208,7 @@ large_items = xbrl.facts.query()\
 |--------|-------------|
 | `financials.income_statement()` | Income statement |
 | `financials.balance_sheet()` | Balance sheet |
-| `financials.cashflow_statement()` | Cash flow |
+| `financials.cash_flow_statement()` | Cash flow |
 | `financials.get_revenue()` | Revenue scalar |
 | `financials.get_net_income()` | Net income scalar |
 | `financials.get_total_assets()` | Total assets scalar |

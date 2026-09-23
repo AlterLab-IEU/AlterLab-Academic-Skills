@@ -120,14 +120,15 @@ results = generator.generate_iterative(
     iterations=2
 )
 
-# Access results
-print(f"Final score: {results['final_score']}/10")
+# Access results (final_score is None when the review call failed and the image is unreviewed)
+print(f"Final score: {results['final_score']}")
 print(f"Final image: {results['final_image']}")
 
-# Review individual iterations
+# Review individual iterations (failed generation attempts have success=False and no score)
 for iteration in results['iterations']:
-    print(f"Iteration {iteration['iteration']}: {iteration['score']}/10")
-    print(f"Critique: {iteration['critique']}")
+    if iteration.get('success'):
+        print(f"Iteration {iteration['iteration']}: {iteration['score']}/10")
+        print(f"Critique: {iteration['critique']}")
 ```
 
 ### Command-Line Options

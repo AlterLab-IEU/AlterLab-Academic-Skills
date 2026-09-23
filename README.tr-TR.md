@@ -2,9 +2,9 @@
 <img src=".github/header-banner.svg" width="100%" alt="AlterLab Akademik Beceriler">
 <br>
 
-<a href="skills/"><img src="https://img.shields.io/badge/Beceri-239-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Beceriler"></a>
-<a href="skills/"><img src="https://img.shields.io/badge/Alan-17-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Alanlar"></a>
-<a href="docs/evals.md"><img src="https://img.shields.io/badge/Eval-239%2F239-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Eval kapsamı"></a>
+<a href="skills/"><img src="https://img.shields.io/badge/Beceri-240-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Beceriler"></a>
+<a href="skills/"><img src="https://img.shields.io/badge/Alan-18-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Alanlar"></a>
+<a href="docs/evals.md"><img src="https://img.shields.io/badge/Eval-240%2F240-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Eval kapsamı"></a>
 <a href="https://www.anthropic.com"><img src="https://img.shields.io/badge/Claude-AI%20Destekli-F97316?style=for-the-badge&logo=anthropic&logoColor=white" alt="Claude AI"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/Lisans-MIT-10B981?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="MIT Lisansı"></a>
 <a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases"><img src="https://img.shields.io/github/v/release/AlterLab-IEU/AlterLab-Academic-Skills?style=for-the-badge&logo=github&color=8B5CF6&logoColor=white&label=Sürüm" alt="Sürüm"></a>
@@ -29,11 +29,12 @@
 
 <br><br>
 
-<h3>🧬 Fakülte üyeleri, araştırmacılar ve akademisyenler için özel olarak tasarlanmış 239 Claude AI becerisi</h3>
-<p><em>17 araştırma alanına yayılmış — Türk akademisinden biyoinformatiğe, dijital beşeri bilimlere</em></p>
-<p><em>239/239 beceri çalıştırılabilir eval ile gelir · deterministik atıf-doğrulayıcı · claude.ai için alan paketleri</em></p>
+<h3>🧬 Fakülte üyeleri, araştırmacılar ve akademisyenler için özel olarak tasarlanmış 240 Claude AI becerisi</h3>
+<p><em>18 araştırma alanına yayılmış — Türk akademisinden biyoinformatiğe, dijital beşeri bilimlere</em></p>
+<p><em>240/240 beceri çalıştırılabilir eval ile gelir · deterministik atıf-doğrulayıcı · claude.ai için alan paketleri</em></p>
 
-<p>🧭 <b>v2.6'da yeni — hangi beceri gerektiğini bilmiyor musunuz?</b> Sadece <b>"AlterLab becerilerini kullan"</b> deyin, Claude sizin için seçsin · <b><code>alterflow</code></b> yazarak tam çok-ajanlı bir iş akışı başlatın</p>
+<p>🧩 <b>v3.0'da yeni — Claude Code için çalıştırılabilir çok-ajanlı araştırma iş akışları:</b> <code>/alterlab-workflows:citation-audit</code>, <code>review-panel</code>, PRISMA çift tarama, hakem yanıtı, hibe paneli simülasyonu · <b>Claude Opus 5.5</b> için ayarlandı</p>
+<p>🧭 Hangi beceri gerektiğini bilmiyor musunuz? Sadece <b>"AlterLab becerilerini kullan"</b> deyin, Claude sizin için seçsin · <b><code>alterflow</code></b> yazarak netleştirilmiş çok-ajanlı bir koşu başlatın</p>
 
 <p>
 <b>Araştırma Hattı</b> · <b>Bilimsel Veritabanları</b> · <b>Biyoinformatik</b> · <b>Veri Bilimi</b> · <b>Görselleştirme</b> · <b>Klinik Araştırma</b> · <b>ve daha fazlası</b>
@@ -121,6 +122,14 @@ flowchart LR
 
 > Yürütmeden önce sorular — asla kör bir 20-ajanlı koşu başlatmaz; basit görevler tek-beceri kalır. Anthropic'in **yönlendirme** ve **orkestratör-işçi** desenleri üzerine kurulu.
 
+**Paketlenmiş iş akışları — tek komut, çok sayıda bağımsız ajan (Claude Code):**
+
+> 💬 `/alterlab-workflows:citation-audit tez/main.tex`
+> 🧩 → her kaynak Crossref / OpenAlex / Semantic Scholar / arXiv'e karşı çözümlenir, her atıflı iddia kaynağıyla karşılaştırılır ve her bayrak rapora girmeden önce **iki bağımsız ajan** tarafından yeniden denetlenir.
+
+> 💬 *"Hemşirelerde tükenmişlik sorum için records.ris üzerinde AlterLab systematic-review-screening iş akışını çalıştır."*
+> 🧩 → kodlama kılavuzu → tekilleştirme → **kayıt başına iki kör tarayıcı** → hakemlik → kodla hesaplanan PRISMA 2020 akışı + Cohen κ.
+
 <br>
 
 ## 📋 İçindekiler
@@ -130,14 +139,14 @@ flowchart LR
 <br>
 
 - [⚡ Hemen Deneyin — Tek Satır, Doğru Beceri](#-hemen-deneyin--tek-satır-doğru-beceri)
-- [🚀 Sürüm 2.2.0'da Yenilikler](#-sürüm-220da-yenilikler)
+- [🚀 Sürüm 3.0.0'da Yenilikler](#-sürüm-300da-yenilikler)
 - [🎯 Bu Proje Nedir?](#-bu-proje-nedir)
 - [✨ Öne Çıkan Özellikler](#-öne-çıkan-özellikler)
 - [🆕 Sürüm 2.0'da Yenilikler](#-sürüm-20da-yenilikler)
 - [🗂️ Alan Genel Bakışı](#%EF%B8%8F-alan-genel-bakışı)
 - [🚀 Hızlı Başlangıç](#-hızlı-başlangıç)
 - [⚡ Çekirdek Hat — 10 Beceri](#-çekirdek-hat--10-beceri)
-- [📚 239 Becerinin Tamamı](#-239-becerinin-tamamı)
+- [📚 240 Becerinin Tamamı](#-240-becerinin-tamamı)
 - [🏗️ Proje Yapısı](#%EF%B8%8F-proje-yapısı)
 - [⚙️ Beceriler Nasıl Çalışır?](#%EF%B8%8F-beceriler-nasıl-çalışır)
 - [💡 Kullanım Örnekleri](#-kullanım-örnekleri)
@@ -150,7 +159,31 @@ flowchart LR
 
 <br>
 
-## 🚀 Sürüm 2.2.0'da Yenilikler
+## 🚀 Sürüm 3.0.0'da Yenilikler
+
+- 🧩 **Yeni eklenti — `alterlab-workflows`: yedi çalıştırılabilir çok-ajanlı araştırma iş akışı.** Claude Code artık *dinamik iş akışlarını* — çok sayıda alt ajanı yöneten betikleri — çalıştırabiliyor ve eklentiler bu betikleri dağıtabiliyor. AlterLab yedi iş akışı sunuyor; her biri görevinin gerektirdiği bağımsızlık ve karşıt denetimlerle çalışır, sayımlar, oylar ve uyum istatistikleri kodla hesaplanır: **`citation-audit`** (tüm makalede kaynak varlığı + iddia sadakati; her bayrak iki bağımsız yeniden denetimden geçer), **`review-panel`** (makaleye göre seçilmiş kör hakemler; her büyük eleştiri metne karşı yeniden okunur), **`claim-stress-test`**, **`systematic-review-screening`** (PRISMA 2020 çift tarama + κ), **`rebuttal`** (madde madde hakem yanıtı; asla sonuç uydurmaz), **`grant-mock-panel`** (fon kuruluşunun kendi ölçütleri ve puan ölçeği — NIH, NSF, ERC, TÜBİTAK) ve **`literature-map`**. Taşınabilir bir beceri, aynı aşamaları claude.ai'de adım adım yürütür.
+- 📦 **Tek adımda kurulum** — `alterlab-essentials` (altı eklentilik fakülte başlangıç paketi) ve `alterlab-complete` (tüm alanlar) bağımlılık paketleridir: tek bir `/plugin install` gerisini kurar.
+- 🔧 **Eklenti kurulum düzeltmeleri** — v2.6.x'te `alterlab-core` pazardan kurulamıyordu (bildirimde ajan dizinleri vardı) ve `alterlab-social-science-workflow` kuruluyor ama yüklenemiyordu (çakışan bildirimler). İkisi de düzeltildi, `claude plugin validate` ve gerçek kurulumlarla doğrulandı ve yeni testlerle sabitlendi. Paketlenmiş OpenAlex / Crossref / Zotero MCP sunucuları kimlik bilgilerini `userConfig` üzerinden soruyor, başladığı doğrulanmış sürümlere sabitlendi ve isteğe bağlı bir **OpenAlex API anahtarı** alıyor — OpenAlex artık anahtarsız kullanımı IP başına kotalıyor ve eski mailto'yu yok sayıyor. Yeni bir `mcp` sürümüyle açılışta çöken ve e-posta olmadan başlamayan üçüncü taraf PubMed sunucusu kaldırıldı; PubMed, NCBI'ye doğrudan bağlanan `alterlab-pubmed` becerisiyle kullanılmaya devam ediyor.
+- 🧠 **Claude Opus 5.5 için ayarlandı** — `ALTERLAB_MODEL` varsayılanı `claude-opus-5-5`; OpenRouter kimlikleri bundan türetiliyor (eski `anthropic/claude-opus-4-8` geçerli bir kimlik değildi); betikler güncel istek biçimini izliyor (uyarlanabilir düşünme, açık effort ayarı, örnekleme parametresi yok, prefill yok, zorunlu araç seçimi yok); yönergeler, talimatları harfiyen izleyen modeller için normal tonda yeniden yazıldı.
+- 🔬 **Her beceri Eylül 2026 sürümlerine karşı yeniden doğrulandı** — kütüphane sürümleri, kaldırılan API'ler, taşınan uç noktalar, standartlar ve fon kuruluşu kuralları birincil kaynaklardan ve kod çalıştırılarak denetlendi. Bu geçiş gerçek hatalar buldu: ele geçirilmiş DOI'leri ve uydurma kaynakları geçiren bir atıf doğrulayıcı, sonuçları sessizce kesen ya da yanlış sayı üreten betikler (gnomAD LOEUF eşiği, DepMap mutasyon kodlaması, Web Mercator'da ölçülen alanlar, yanlış birimdeki PennyLane enerjileri) ve taşınan ya da kapanan servisler (USPTO, GWAS Catalog, COSMIC, Sherpa Romeo). Her becerinin artık bir *Tetiklemez* yönlendirme tablosu var. → [CHANGELOG](CHANGELOG.md)
+- 🌍 **Dilden bağımsız araştırma hattı** — iki dilli özetler artık sabit zh-TW yerine İngilizce + yazarın dili (Türkçe, Geleneksel Çince, …); literatür stratejisti TR Dizin, DergiPark ve YÖK Tez'de de arıyor; Türkçe tetikleyici ifadeler doğru beceriye yönleniyor.
+- 🧭 **Orkestrasyon belgeleri güncellendi** — `alterlab-workflow-orchestration`'da iç içe alt ajanlar, fork modu ve dinamik iş akışları; `alterlab-skill-finder` uygun bir paketlenmiş iş akışı varsa onu başlatıyor. Bakımcılar için bu yeniden doğrulama geçişini tekrarlayan `/skill-freshness-audit` iş akışı eklendi.
+- 📈 **18 alanda 240 beceri**, 240 / 240 çalıştırılabilir eval; denetim temiz, test paketinin tamamı yeşil.
+
+<details>
+<summary><b>Önceki sürümler — 2.3.0 → 2.6.0</b></summary>
+<br>
+
+- **2.6** — Ön kapı `alterlab-skill-finder` ve `alterflow` anahtar kelimesiyle önce-netleştir çok-ajanlı başlatıcı; her zaman güncel beceri dizini; beceri başına tek tıkla kurulum zip dosyaları.
+- **2.5** — Sosyal Bilim İş Akışı dengelendi (11 → 17 beceri): karmaşık örneklemli anket analizi, nitel analiz ve refleksivite kapısı, çok-düzeyli modeller, meta-analiz, eksik veri.
+- **2.4** — 17. alan: aşamalı sosyal bilim yöntem omurgası (orkestratör + geçerlilik kapıları + analiz modülleri).
+- **2.3** — Güven bildirimi (`SECURITY_SCAN.md`), aktivasyon ve çakışma ölçümleri, karışabilir 42 açıklamada netleştirilmiş yönlendirme, taşınabilirlik haritası.
+
+</details>
+
+<details>
+<summary><b>Önceki — Sürüm 2.2.0'da Yenilikler</b></summary>
+<br>
 
 - 🧠 **191 becerinin araştırma-temelli yükseltilmesi** — önceden var olan tüm becerilerde doğruluk ve derinlik geçişi: düzeltilmiş mevzuat/API ayrıntıları, `references/` içine inceltilen gövdeler ve sürüm artışları. 
 - 🧩 **Yeni çekirdek beceri: İş Akışı Orkestrasyonu** (`alterlab-workflow-orchestration`) — AlterLab becerilerini çok-ajanlı iş akışlarına dönüştürür; koleksiyon **210 beceriye** yükseldi. → [Çekirdek Hat](#-çekirdek-hat--10-beceri)
@@ -161,11 +194,13 @@ flowchart LR
 - 🧬 **Biyoinformatik 25 → 30'a çıktı** — üretim hatları: nf-core/sarek varyant çağırma, QIIME 2 amplikon, salmon/kallisto RNA-seq nicelleme, NCBI BLAST+ ve Squidpy uzamsal transkriptomik. → [Biyoinformatik](#-biyoinformatik--genomik-proteomik-ve-moleküler-biyoloji-30-beceri)
 - ✅ **26 yeni becerinin tamamında ilk günden eval** — kapsam **210 / 210** olarak kalır; şema + kapsam denetimi her PR'da CI'da çalışır, davranışsal eval geçişi ise istek üzerine (`workflow_dispatch`) yürütülür. → [`docs/evals.md`](docs/evals.md)
 
+</details>
+
 <br>
 
 ## 🎯 Bu Proje Nedir?
 
-Fakülte üyeleri, akademisyenler ve araştırmacılar için tasarlanmış, **özel amaçlı 239 Claude AI becerisinden** oluşan kapsamlı bir paket — akademik araştırma yaşam döngüsünün tamamını kapsayacak şekilde **17 alan kategorisine** ayrılmıştır.
+Fakülte üyeleri, akademisyenler ve araştırmacılar için tasarlanmış, **özel amaçlı 240 Claude AI becerisinden** oluşan kapsamlı bir paket — akademik araştırma yaşam döngüsünün tamamını kapsayacak şekilde **17 alan kategorisine** ayrılmıştır.
 
 Her beceri, Claude'u akademik araştırma, bilimsel hesaplama ve akademik yayıncılık iş akışlarına göre uyarlanmış **alana özgü bir uzman asistana** dönüştürür.
 
@@ -194,7 +229,7 @@ Sürüm 2.0, koleksiyonu bir beceri listesinden **denetlenmiş, doğrulanmış v
 
 | | Özellik | Açıklama |
 |:---:|:---|:---|
-| ✅ | **Davranışsal Eval Kapsamı** | 239 becerinin **tamamı** (%100) Anthropic'in tetikleme/tetiklememe biçimini izleyen `evals/evals.json` dosyalarıyla gelir; `scripts/run_evals.py` ile çalıştırılır |
+| ✅ | **Davranışsal Eval Kapsamı** | 240 becerinin **tamamı** (%100) Anthropic'in tetikleme/tetiklememe biçimini izleyen `evals/evals.json` dosyalarıyla gelir; `scripts/run_evals.py` ile çalıştırılır |
 | 🔎 | **Atıf Doğrulayıcı** | Yeni `alterlab-citation-verifier` becerisi, bir kaynakçadaki her girdinin **gerçekten var olduğunu** dört anahtarsız bilimsel API (Crossref, OpenAlex, Semantic Scholar, arXiv) üzerinden çapraz kontrol ederek doğrular |
 | 📦 | **Alan Paketleri (Domain Packs)** | Tüm alanlar, bağımsız olarak kurulabilen Claude Code eklentileri olarak paketlenir — yalnızca ihtiyacınız olanı kurun, tüm depoyu değil |
 | 🔌 | **MCP Öncelikli Veri** | Beceriler, ilgili MCP araçları (PubMed, Scholar Gateway, Clinical Trials, Hugging Face) mevcut olduğunda eğitim verisi yerine **canlı veriyi** tercih eder ve kaynağı + erişim tarihini gösterir |
@@ -202,7 +237,7 @@ Sürüm 2.0, koleksiyonu bir beceri listesinden **denetlenmiş, doğrulanmış v
 | 🔁 | **Genişletilmiş Çekirdek Hat** | Çekirdek hat artık **10 beceri** içeriyor — atıf doğrulama, bağlantı sağlığı denetimi ve *"AlterLab becerilerini kullan"* isteğini doğru beceriye çeviren `alterlab-skill-finder` ön kapı yönlendiricisi de dahil |
 
 > [!NOTE]
-> Eval kapsamı artık tüm koleksiyonu kapsar (239 / 239). Tam değişiklik geçmişi için [CHANGELOG.md](CHANGELOG.md) dosyasına bakın.
+> Eval kapsamı artık tüm koleksiyonu kapsar (240 / 240). Tam değişiklik geçmişi için [CHANGELOG.md](CHANGELOG.md) dosyasına bakın.
 
 ### 🚀 v2.0'deki ek yenilikler
 
@@ -211,7 +246,7 @@ Yukarıdaki tabloyu tamamlayan, v2.0 ile gelen başlıca sayfa eklentileri:
 | | Yenilik | Ayrıntı |
 |:---:|:---|:---|
 | 🌐 | **Canlı Katalog** | 210 becerinin tamamı, gözatılabilir bir web kataloğunda yayımlanır: [alterlab-ieu.github.io/AlterLab-Academic-Skills](https://alterlab-ieu.github.io/AlterLab-Academic-Skills/) — kurulum yapmadan tüm koleksiyonu inceleyin |
-| 🤖 | **Kayıtlı Alt-Ajanlar** | Çekirdek hat, `core` eklentisiyle birlikte kaydedilen özelleşmiş alt-ajanlar olarak gelir; eğik çizgi komutları (`/research-pipeline`, `/lit-review`, `/review-paper`, `/cite-check`) ve birlikte paketlenen akademik MCP (PubMed / OpenAlex / Crossref / Zotero) ile sürülür |
+| 🤖 | **Kayıtlı Alt-Ajanlar** | Çekirdek hat, `core` eklentisiyle birlikte kaydedilen özelleşmiş alt-ajanlar olarak gelir; eğik çizgi komutları (`/research-pipeline`, `/lit-review`, `/review-paper`, `/cite-check`) ve birlikte paketlenen akademik MCP (OpenAlex / Crossref / Zotero) ile sürülür |
 | 🗂️ | **Üretilen Katalog** | Makine okunabilir [`skills.json`](skills.json), beceri frontmatter'ından otomatik üretilir; bir CI kapısı bu README'deki her sayımı doğrular ve dürüst tutar |
 | 📜 | **Dürüst Köken** | Bu depo, MIT lisanslı [K-Dense `scientific-agent-skills`](https://github.com/K-Dense-AI/scientific-agent-skills) projesinden içerik çatallamasıdır; köken [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md), [`PROVENANCE.md`](PROVENANCE.md) ve [`CITATION.cff`](CITATION.cff) dosyalarında açıkça belgelenir |
 
@@ -226,21 +261,22 @@ Yukarıdaki tabloyu tamamlayan, v2.0 ile gelen başlıca sayfa eklentileri:
 |:---:|:---|:---:|:---|
 | 🔄 | **Çekirdek Hat** | **10** | Çok-ajanlı araştır → yaz → değerlendir → yayınla hattı + öğretim + tez + bütünlük araçları + iş akışı orkestrasyonu + beceri bulucu yönlendirici |
 | 🗄️ | **Veritabanları** | **39** | Bilimsel veritabanı bağlayıcıları — PubMed, ChEMBL, UniProt, ClinicalTrials.gov, COSMIC ve daha fazlası |
-| 🧬 | **Biyoinformatik** | **30** | Genomik, proteomik, moleküler biyoloji — Scanpy, BioPython, ESM, tek hücre analizi, nf-core/sarek, QIIME 2, RNA-seq nicelleme |
+| 🧬 | **Biyoinformatik** | **38** | Genomik, proteomik, moleküler biyoloji — Scanpy, BioPython, ESM, tek hücre analizi, nf-core/sarek, QIIME 2, RNA-seq nicelleme |
 | ⚗️ | **Kemoinformatik** | **12** | Kimya ve ilaç keşfi — RDKit, moleküler dinamik, docking, ADMET |
 | 🏥 | **Klinik Araştırma** | **7** | Klinik karar desteği, tedavi planlaması, tıbbi görüntüleme, regülasyon |
 | 📊 | **Veri Bilimi** | **22** | ML/istatistik — scikit-learn, PyTorch Lightning, SHAP, transformerlar |
-| 📈 | **Görselleştirme** | **8** | Bilimsel grafik — Matplotlib, Seaborn, Plotly, şematikler, infografikler |
+| 📈 | **Görselleştirme** | **9** | Bilimsel grafik — Matplotlib, Seaborn, Plotly, şematikler, infografikler |
 | ✍️ | **Akademik Yazım** | **13** | Bilimsel yazım, atıflar, hibeler, posterler, akademik kariyer |
 | 🔧 | **Laboratuvar Entegrasyonları** | **9** | Laboratuvar platformları — Benchling, DNAnexus, Opentrons, Protocols.io |
-| 🌍 | **Alan-Spesifik** | **17** | Kuantum hesaplama, jeo-uzamsal, malzeme bilimi, sosyal bilim yöntemleri, dijital beşeri bilimler |
-| 📄 | **Doküman Araçları** | **2** | Markdown ve belge dönüştürme — MarkItDown, Open Notebook |
+| 🌍 | **Alan-Spesifik** | **18** | Kuantum hesaplama, jeo-uzamsal, malzeme bilimi, sosyal bilim yöntemleri, dijital beşeri bilimler |
+| 📄 | **Doküman Araçları** | **3** | Markdown ve belge dönüştürme — MarkItDown, Open Notebook, PDF keşfi |
 | 🔍 | **Araştırma Araçları** | **14** | Arama, keşif, Zotero, nitel yöntemler, etik, anketler, açık bilim, atıf grafiği |
 | 💰 | **Finans & Ekonomi** | **7** | FRED, Alpha Vantage, SEC EDGAR, piyasa araştırması |
 | 🇹🇷 | **Türk Akademisi** | **12** | Ulusal platformlar & akademik iş akışı — DergiPark, TR Dizin, YÖK Tez/Akademik, YÖKATLAS, TÜBİTAK önerileri, doçentlik, teşvik, KVKK, Aperta |
 | 🎓 | **Fakülte Yaşamı** | **6** | Öğretim, hizmet & akademik kariyer — müfredat YZ politikası, hibe raporlama, tavsiye mektupları, akreditasyon, REDCap/CDISC, ön baskılar |
 | 🧪 | **Metodoloji** | **3** | Araştırma-titizliği disiplin kapıları — ön kayıt, test-seçim koruması, sonuç-raporlama şeffaflığı |
 | 🧭 | **Sosyal Bilim İş Akışı** | **17** | Aşamalı yöntem omurgası — orkestratör + 5 geçerlilik kapısı (tasarım, ölçüm, örnekleme, refleksivite, çıkarım) + 11 analiz modülü (nedensel çıkarım, anket-analizi, YEM/psikometri, çok-düzeyli modeller, QCA, SNA, ABM, metin-veri, nitel-analiz, meta-analiz, eksik-veri) |
+| 🧩 | **Araştırma İş Akışları** | **1 + 7 iş akışı** | Claude Code için çalıştırılabilir çok-ajanlı görevler — atıf denetimi, hakem paneli, iddia stres testi, PRISMA çift tarama, hakem yanıtı, hibe paneli simülasyonu, literatür haritası — ve taşınabilir adım adım kılavuzlar |
 <br>
 
 ## 🚀 Hızlı Başlangıç
@@ -290,13 +326,29 @@ Pazarı bir kez ekleyin, ardından yalnızca ihtiyacınız olan alanları kurun:
 /reload-plugins
 ```
 
+**Tek tek kurmak yerine tek adım:** `alterlab-essentials` fakülte başlangıç paketini kurar (çekirdek hat,
+araştırma iş akışları, araştırma araçları, akademik yazım, metodoloji kapıları, veritabanı bağlayıcıları);
+`alterlab-complete` tüm alanları kurar.
+
+```bash
+/plugin install alterlab-essentials@alterlab-academic-skills
+```
+
+**Çok-ajanlı iş akışları** (dinamik iş akışları açık Claude Code — ücretli planlar veya API erişimi)
+kendi eklentisindedir ve `alterlab-core`'u da kurar:
+
+```bash
+/plugin install alterlab-workflows@alterlab-academic-skills
+/alterlab-workflows:citation-audit makale/metin.md
+```
+
 Bir klon üzerinde yerel geliştirme için Claude Code'u doğrudan dizine yönlendirin:
 
 ```bash
 claude --plugin-dir /path/to/AlterLab-Academic-Skills
 ```
 
-Mevcut alan eklentileri (17): `alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`, `alterlab-turkish-academia`, `alterlab-faculty-life`, `alterlab-methodology`, `alterlab-social-science-workflow`.
+Mevcut alan eklentileri (18): `alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`, `alterlab-turkish-academia`, `alterlab-faculty-life`, `alterlab-methodology`, `alterlab-social-science-workflow`, `alterlab-workflows` — ayrıca `alterlab-essentials` ve `alterlab-complete` paketleri.
 
 ### 📁 Seçenek 3 — Kişisel veya Proje Kurulumu (elle)
 
@@ -351,7 +403,7 @@ derin-araştırma (sokratik/tam)
 
 ---
 
-## 📚 239 Becerinin Tamamı
+## 📚 240 Becerinin Tamamı
 
 ### 🗄️ Veritabanları — Bilimsel Veritabanı Bağlayıcıları (39 Beceri)
 
@@ -403,7 +455,7 @@ derin-araştırma (sokratik/tam)
 
 </details>
 
-### 🧬 Biyoinformatik — Genomik, Proteomik ve Moleküler Biyoloji (30 Beceri)
+### 🧬 Biyoinformatik — Genomik, Proteomik ve Moleküler Biyoloji (38 Beceri)
 
 <details>
 <summary><b>Tam biyoinformatik beceri listesini görmek için tıklayın</b></summary>
@@ -518,7 +570,7 @@ derin-araştırma (sokratik/tam)
 
 </details>
 
-### 📈 Görselleştirme — Bilimsel Grafik ve Çizim (8 Beceri)
+### 📈 Görselleştirme — Bilimsel Grafik ve Çizim (9 Beceri)
 
 <details>
 <summary><b>Tam görselleştirme beceri listesini görmek için tıklayın</b></summary>
@@ -581,7 +633,7 @@ derin-araştırma (sokratik/tam)
 
 </details>
 
-### 🌍 Alan-Spesifik — Kuantum, Jeo-uzamsal, Malzeme, Sosyal Bilim ve Daha Fazlası (17 Beceri)
+### 🌍 Alan-Spesifik — Kuantum, Jeo-uzamsal, Malzeme, Sosyal Bilim ve Daha Fazlası (18 Beceri)
 
 <details>
 <summary><b>Tam alan-spesifik beceri listesini görmek için tıklayın</b></summary>
@@ -609,7 +661,7 @@ derin-araştırma (sokratik/tam)
 
 </details>
 
-### 📄 Doküman Araçları — Markdown ve Belge Dönüştürme (2 Beceri)
+### 📄 Doküman Araçları — Markdown ve Belge Dönüştürme (3 Beceri)
 
 <details>
 <summary><b>Tam doküman araçları beceri listesini görmek için tıklayın</b></summary>
@@ -719,6 +771,56 @@ derin-araştırma (sokratik/tam)
 
 </details>
 
+### 🧭 Sosyal Bilim İş Akışı — Aşamalı Yöntem Omurgası (17 Beceri)
+
+<details>
+<summary><b>Tam sosyal bilim iş akışı beceri listesini görmek için tıklayın</b></summary>
+<br>
+
+Aşamalı bir yöntem omurgası: orkestratör bir **Tasarım Pasaportu** tutar, beş kapının her biri kendi disiplini sağlanmadan ilerlemeye izin vermez, on bir analiz modülü tasarıma ve veriye göre çağrılır. Ölçüm aşaması paradigmaya göre seçilir (nicel ölçüm kapısı ya da nitel refleksivite kapısı).
+
+| # | Beceri | Ne Yapar |
+|:---:|:---|:---|
+| 1 | **SSci Orkestratör** | İnce hat koordinatörü — Tasarım Pasaportunu tutar, kapı sırasını PASS / WARN / BLOCK ile uygular, doğru modülü çağırır (kendisi analiz yapmaz) |
+| 2 | **SSci Tasarım Kapısı** | Çalışmayı tasarım ailesine yönlendirir ve nedensel iddianın dayandığı **tanımlayıcı varsayımı** analizden önce sabitler |
+| 3 | **SSci Ölçüm Kapısı** | *Güvenirlik ≠ geçerlik* ilkesini uygular — tek başına alfa değil omega, dört geçerlik türü ve grup karşılaştırmasından önce ölçüm değişmezliği |
+| 4 | **SSci Örnekleme Kapısı** | **Örneklem büyüklüğü mantığını çıkarıma** (güç / kesinlik / doygunluk), genelleme iddiasını örneklem türüne eşler |
+| 5 | **SSci Refleksivite Kapısı** | Ölçüm kapısının **nitel karşılığı** — konumsallık + Lincoln & Guba güvenilirlik ölçütleri; dayanaksız yorumsamacı iddialara kapalı |
+| 6 | **SSci Çıkarım Kapısı** | Son denetçi — tasarımın ötesinde nedensel iddia yok, p-değeri/GA yanlış okuması yok, çerçevenin ötesinde genelleme yok |
+| 7 | **Nedensel Çıkarım** | statsmodels, linearmodels, pyfixest, DoWhy, EconML, rdrobust ile FF / AD / RDD / panel SE / PSM / CATE — varsayımı adlandırır, kestirir, sonra çürütmeyi dener |
+| 8 | **Anket Analizi** | Karmaşık örneklemli anketlerde tasarıma dayalı çıkarım (ağırlık/tabaka/PSU/FPC, tekrar ağırlıklı SH, raking) — svy (samplics arşivlendi) ya da R survey+srvyr |
+| 9 | **YEM & Psikometri** | semopy ve factor_analyzer ile DFA / YEM / AFA / MTK / ölçüm değişmezliği; standart kütüphaneyle McDonald omega hesaplayıcısı |
+| 10 | **Çok-Düzeyli Modeller** | Karma etkiler / hiyerarşik modeller (statsmodels MixedLM, R lme4/glmmTMB/brms); az raporlanan LMM raporlama kontrol listesini uygular |
+| 11 | **QCA** | csQCA / mvQCA / fsQCA (kalibrasyon → doğruluk tablosu → indirgeme) — bakımı süren bir Python kütüphanesi olmadığından **R'nin QCA paketini** çağırır |
+| 12 | **SAA** | Merkezilik, topluluk tespiti (Louvain/Leiden) ve ERGM — networkx / igraph / R statnet üzerinde ağ analizi disiplini |
+| 13 | **ABM (Mesa)** | **Güncel Mesa 3 AgentSet API**'siyle ajan tabanlı modelleme; tekrar + parametre taraması + desen odaklı doğrulama |
+| 14 | **Veri Olarak Metin** | Konu modelleme (BERTopic / LDA), gömmeler, sözlük yöntemleri — amaca göre seçilir, konu güvenirliği prosedürüyle |
+| 15 | **Nitel Analiz** | Kodlayıcılar arası güvenirlik (Krippendorff α + bootstrap GA), kod kılavuzu-refleksif ayrımı, insan↔LLM çift kodlama |
+| 16 | **Meta-Analiz** | Rastgele etkiler birleştirmesi, I²/τ² heterojenlik, orman/huni grafikleri, Egger + trim-and-fill (statsmodels / R metafor), PRISMA |
+| 17 | **Eksik Veri** | MCAR/MAR/MNAR + **Rubin kurallarıyla birleştirilen** MICE / FIML (statsmodels, R mice); tekli atama tuzağını işaretler |
+
+</details>
+
+### 🧩 Araştırma İş Akışları — Çalıştırılabilir Çok-Ajanlı Görevler (1 Beceri + 7 İş Akışı)
+
+<details>
+<summary><b>Araştırma iş akışlarını görmek için tıklayın</b></summary>
+<br>
+
+Claude Code **dinamik iş akışları**, çok sayıda alt ajanı yöneten ve ara sonuçları sohbetinizin dışında tutan betiklerdir. `alterlab-workflows` eklentisi yedi iş akışı sunar; her biri mevcut AlterLab becerilerini görevin gerektirdiği bağımsızlık ve karşıt denetimlerle birleştirir; sayımlar, oylar, κ ve puan dağılımları kodla hesaplanır. claude.ai ve diğer ortamlarda **`alterlab-research-workflows`** becerisi aynı aşamaları adım adım yürütür. Kurulum: `/plugin install alterlab-workflows@alterlab-academic-skills` (`alterlab-core`'u da kurar).
+
+| # | Komut | Ne Yapar |
+|:---:|:---|:---|
+| 1 | `/alterlab-workflows:citation-audit` | Her kaynak Crossref / OpenAlex / Semantic Scholar / arXiv'e karşı çözümlenir, her atıflı iddia kaynağıyla karşılaştırılır; her bayrak **iki bağımsız yeniden denetimden** geçmelidir (TF / PAC / IH / PH / SH raporu) |
+| 2 | `/alterlab-workflows:review-panel` | Makalenin alanına ve tasarımına göre seçilmiş 4–6 **kör** hakem; editör karar vermeden önce her büyük eleştiri metne karşı yeniden okunur |
+| 3 | `/alterlab-workflows:claim-stress-test` | Her ana iddia için üç şüpheci (karşı kanıt, atıf desteği, çıkarım); çoğunluk derecelendirmesi ve kalibre edilmiş yeniden yazımlar |
+| 4 | `/alterlab-workflows:systematic-review-screening` | PRISMA 2020 başlık/özet taraması — kodlama kılavuzu, isteğe bağlı veritabanı araması, tekilleştirme, **kayıt başına iki kör tarayıcı**, hakemlik, Cohen κ |
+| 5 | `/alterlab-workflows:rebuttal` | Yanıtlar arası tutarlılık denetimiyle madde madde hakem yanıtı; uydurulmuş sonuç yerine `[AUTHORS: …]` yer tutucuları |
+| 6 | `/alterlab-workflows:grant-mock-panel` | Fon kuruluşunun kendi ölçütleri ve ölçeğiyle panel simülasyonu (NIH, NSF, ERC, Horizon Europe, TÜBİTAK 1001/1002); puan dağılımı hesaplanır; özet değerlendirme |
+| 7 | `/alterlab-workflows:literature-map` | Paralel akademik veritabanı taramaları → temalar, dönüm noktası çalışmalar ve mevcut yanıt aramasından sağ çıkan araştırma boşlukları |
+
+</details>
+
 <br>
 
 ---
@@ -728,22 +830,26 @@ derin-araştırma (sokratik/tam)
 ```
 AlterLab-Academic-Skills/
 ├── 📁 skills/
-│   ├── 🔄 core/                # 8 hat + öğretim + tez + bütünlük becerisi
+│   ├── 🔄 core/                # 10: hat + atıf doğrulayıcı + öğretim + tez + beceri bulucu
 │   ├── 🗄️ databases/           # 39 veritabanı bağlayıcısı
-│   ├── 🧬 bioinformatics/      # 30 biyo/genomik araç
+│   ├── 🧬 bioinformatics/      # 38 biyo/genomik araç
 │   ├── ⚗️ cheminformatics/     # 12 kimya/ilaç keşfi
 │   ├── 🏥 clinical-research/   # 7 klinik/tıbbi araç
 │   ├── 📊 data-science/        # 22 ML/istatistik aracı
-│   ├── 📈 visualization/       # 8 grafik/çizim aracı
+│   ├── 📈 visualization/       # 9 grafik/çizim aracı
 │   ├── ✍️ writing-tools/       # 13 bilimsel yazım & kariyer aracı
 │   ├── 🔧 lab-integrations/    # 9 laboratuvar platformu bağlayıcısı
-│   ├── 🌍 domain-specific/     # 17 özelleşmiş alan aracı
-│   ├── 📄 document-tools/      # 2 dosya biçimi aracı
+│   ├── 🌍 domain-specific/     # 18 özelleşmiş alan aracı
+│   ├── 📄 document-tools/      # 3 dosya biçimi aracı
 │   ├── 🔍 research-tools/      # 14 arama, yöntem & etik aracı
 │   ├── 💰 finance-economics/   # 7 finansal/ekonomik araç
 │   ├── 🇹🇷 turkish-academia/    # 12 Türk ulusal-platform & iş akışı becerisi
 │   ├── 🎓 faculty-life/        # 6 öğretim, hizmet & kariyer becerisi
-│   └── 🧪 methodology/         # 3 araştırma-titizliği disiplin kapısı
+│   ├── 🧪 methodology/         # 3 araştırma-titizliği disiplin kapısı
+│   ├── 🧭 social-science-workflow/  # 17: orkestratör + 5 kapı + 11 analiz modülü
+│   └── 🧩 workflows/            # 7 dinamik iş akışı betiği + taşınabilir kılavuz becerisi
+├── 📁 plugins/                 # bağımlılık paketleri: alterlab-essentials, alterlab-complete
+├── 📁 .claude/workflows/       # bakımcı iş akışı: /skill-freshness-audit
 ├── 📁 scripts/
 │   ├── audit_skills.py         # SKILL.md şema denetleyicisi
 │   ├── gen_catalog.py          # skills.json katalog üreteci
@@ -888,7 +994,7 @@ Her becerinin kapsadığı aracın ayrı bir lisansı olabilir — ilgili SKILL.
 
 <br><br>
 
-<b>239 beceri · 17 alan · 239'i çalıştırılabilir eval ile · uzman düzeyinde araştırmaya 1 komut uzaklıkta</b>
+<b>240 beceri · 18 alan · 240'ı çalıştırılabilir eval ile · uzman düzeyinde araştırmaya 1 komut uzaklıkta</b>
 
 <br><br>
 

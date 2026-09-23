@@ -6,17 +6,17 @@ The reactions module enables programmatic application of chemical transformation
 
 ### Applying Chemical Reactions
 
-#### `dm.reactions.apply_reaction(rxn, reactants, as_smiles=False, sanitize=True, single_product_group=True, rm_attach=True, product_index=0)`
+#### `dm.reactions.apply_reaction(rxn, reactants, product_index=None, single_product_group=False, as_smiles=False, rm_attach=False, sanitize=True)`
 Apply a chemical reaction to reactant molecules.
 - **Parameters**:
   - `rxn`: Reaction object (from SMARTS pattern)
   - `reactants`: Tuple of reactant molecules
   - `as_smiles`: Return SMILES strings (True) or molecule objects (False)
   - `sanitize`: Sanitize product molecules
-  - `single_product_group`: Return single product (True) or all product groups (False)
-  - `rm_attach`: Remove attachment point markers
-  - `product_index`: Which product to return from reaction
-- **Returns**: Product molecule(s) or SMILES
+  - `single_product_group`: Return one product set (True) or all product sets (False, default)
+  - `rm_attach`: Remove attachment point markers (default False)
+  - `product_index`: Which product to return from each set (default None = all)
+- **Returns**: With the defaults, a list of product lists; with `single_product_group=True, product_index=0`, a single Mol (or SMILES with `as_smiles=True`)
 - **Example**:
   ```python
   from rdkit import Chem
@@ -29,7 +29,8 @@ Apply a chemical reaction to reactant molecules.
   # Apply to reactants
   alcohol = dm.to_mol("CCO")
   acid = dm.to_mol("CC(=O)O")
-  product = dm.reactions.apply_reaction(rxn, (alcohol, acid))
+  product = dm.reactions.apply_reaction(rxn, (alcohol, acid),
+                                        single_product_group=True, product_index=0)
   ```
 
 ### Creating Reactions
@@ -96,6 +97,8 @@ for acid in acids:
         product = dm.reactions.apply_reaction(
             rxn,
             (acid,),  # Single reactant as tuple
+            single_product_group=True,
+            product_index=0,
             sanitize=True
         )
         acid_chlorides.append(product)
@@ -182,8 +185,8 @@ mols = df['mol'].tolist()
 # Test descriptor calculation
 descriptors_df = dm.descriptors.batch_compute_many_descriptors(mols)
 
-# Test clustering
-clusters = dm.cluster_mols(mols, cutoff=0.3)
+# Test clustering (returns (cluster_indices, cluster_mols))
+cluster_idx, cluster_mols = dm.cluster_mols(mols, cutoff=0.3)
 ```
 
 **For learning workflows**:

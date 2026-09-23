@@ -6,6 +6,158 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [3.0.0] — 2026-09-23
+
+September 2026 refresh for Claude Opus 5.5 and current Claude Code. It fixes two plugins that
+could not be installed or loaded in v2.6.x, adds a **workflows** domain whose plugin ships seven
+Claude Code dynamic workflows (**1 new skill**, corpus **239 → 240**, **17 → 18** domains), and
+re-verifies every skill against the libraries, APIs, standards, and funder rules current on
+2026-09-23. Each domain was reviewed by an independent agent that checked claims against the live
+package or upstream source and ran code where it could; findings that could not be verified are
+left unchanged and listed as such, not guessed.
+
+**Why 3.0.0.** A few changes can break existing setups:
+
+- The bundled **PubMed MCP server is removed**, along with its `ncbi_email` / `ncbi_api_key` plugin
+  settings. PubMed stays available through the `alterlab-pubmed` skill, which calls NCBI
+  E-utilities directly (optional `NCBI_API_KEY`).
+- **Core subagents' tool lists are now enforced**: agents that used to run with every tool run
+  only with the tools their role declares.
+- The **paper-draft handoff schema** no longer requires `zh_tw` keywords; bilingual fields moved
+  to a generic `secondary {lang, …}` (the old keys stay accepted as deprecated aliases). The RQ
+  Brief's FINER scores are now on a 1-5 scale.
+- `ALTERLAB_MODEL` defaults to `claude-opus-5-5`, and scripts use the request shape current
+  models require.
+
+### Fixed — plugins and connectors
+
+- **`alterlab-core` could not be installed** from the marketplace: its entry listed agent
+  *directories*, which the loader rejects. `agents` now lists the 35 agent files.
+- **`alterlab-social-science-workflow` installed but failed to load**: a `strict: false` entry
+  declaring components conflicted with the domain's own `plugin.json`. Standalone domains now get
+  metadata-only `strict: true` entries. Hook files are auto-discovered instead of declared (the
+  file-path form is rejected in marketplace entries).
+- **Bundled MCP servers**: the third-party PubMed server died at startup for every user (an
+  unpinned `mcp` 2.x broke `mcp-simple-pubmed`'s FastMCP import) and refused to start without a
+  contact email, so it is removed (see *Why 3.0.0*). `openalex-mcp` never read the
+  `OPENALEX_MAILTO` we set, and OpenAlex retired its mailto pool — plugins gain an optional,
+  sensitive **`openalex_api_key`** setting passed as `OPENALEX_BEARER_TOKEN`. Credentials are
+  prompted through `userConfig`; the OpenAlex, Crossref, and Zotero servers are pinned to versions
+  verified on 2026-09-23, and a real install shows all three connecting.
+- **`mcp-servers/`**: every tool whose upstream API returns a JSON array (AlphaFold DB, Reactome,
+  …) failed under FastMCP 4 ("structured_content must be a dict"); arrays are now wrapped, and
+  `get_alphafold_prediction` returns a compact per-model summary. All 13 tools pass live calls.
+- **Core subagents ran with every tool.** All 35 declared `allowed-tools:`, a skill field that
+  subagents ignore. They now declare `tools:` per role — reviewers get no `Edit`, so they cannot
+  rewrite the manuscript in place — while the seven agents that query scholarly MCP servers keep
+  inheriting all tools.
+- New loader-contract tests (`tests/test_plugin_manifest.py`) pin all of the above; each fix was
+  also verified with `claude plugin validate` and real installs.
+
+### Added
+
+- **`alterlab-workflows` plugin** — seven Claude Code dynamic workflows, run as
+  `/alterlab-workflows:<name>`: `citation-audit`, `review-panel`, `claim-stress-test`,
+  `systematic-review-screening` (dual blinded screening, Cohen's kappa computed in code),
+  `rebuttal`, `grant-mock-panel`, `literature-map`. Independent agents, adversarial re-checks of
+  every flag, tallies in code rather than in a model's head.
+- **`alterlab-research-workflows`** (240th skill) — documents the workflows and runs the same
+  stages as staged playbooks wherever the Workflow runtime is unavailable (claude.ai, the API).
+- **Bundles** — `alterlab-essentials` (core, workflows, research-tools, writing-tools,
+  methodology, databases) and `alterlab-complete` (everything), dependency-only plugins in
+  `plugins/`.
+- **`scripts/workflow_dryrun.mjs`** — validates a workflow's `meta` literal and runs its whole
+  control flow against a mocked runtime in three fake-data modes; `tests/test_workflows.py` and a
+  CI step (Node 24) dry-run every script.
+- **`/skill-freshness-audit`** (`.claude/workflows/`) — a report-only maintainer workflow that
+  finds stale versions, removed APIs, moved endpoints, and retired model IDs, re-verifying each
+  finding before reporting it.
+
+### Changed
+
+- **Model convention** — `ALTERLAB_MODEL` defaults to `claude-opus-5-5` (reviewed 2026-09-23).
+  `skills/core/shared/model_env.md` documents `openrouter_slug()` (gateway scripts derive
+  `anthropic/claude-opus-5.5` instead of storing a second literal) and the request shape current
+  models require: adaptive thinking, explicit effort, no sampling parameters, no prefill, no
+  forced tool choice.
+- **Core orchestration** — `alterlab-workflow-orchestration` 1.1.0 documents the primitives as
+  verified on 2026-09-23 (subagent `tools` field, three-level nesting, fork mode, dynamic
+  workflows, agent teams); `alterlab-skill-finder` 1.1.0 routes multi-agent jobs to the packaged
+  workflows; `alterlab-research-pipeline` 2.7.0 has language-neutral stages and constraints that
+  state their reasons instead of shouting.
+- **CI** — Actions at current majors on the Node 24 runtime; Spec Conformance now also enforces
+  the 500-character `compatibility` limit offline (`check_spec --no-external`); the weekly link
+  check no longer skips `alterlab-digital-humanities` (an unanchored `.git` exclude regex matched it).
+- **Docs** — README (EN + TR; the Turkish README gained the missing social-science section),
+  project instructions, catalog site, and `CITATION.cff` (stale since 2.1.0) updated.
+
+### Re-verified — every domain
+
+Every skill gained a routing table naming real sibling skills (and near-miss evals where the
+confusion is real). Highlights, by domain:
+
+- **core** — `verify_citations.py` 1.1.0 no longer passes a hijacked DOI (a full reference was
+  parsed as a bare DOI), a fabricated title-only reference, or a retraction recorded in
+  Crossref's `updated-by`; rate limits now yield `unverified`, never a false TF. Subagent tool
+  lists take effect (`tools:`, not the ignored `allowed-tools:`), the FINER scale is one 1-5
+  scale, and bilingual abstracts are English plus the author's language (Turkish, Traditional
+  Chinese, …) instead of hard-wired zh-TW.
+- **databases** — follows retired and moved services (USPTO PEDS/PatentsView → Open Data
+  Portal, GWAS Catalog REST v2, COSMIC's scripted downloads, ClinVar's 2025 XML, AlphaFold DB v6
+  fields, the retired PharmGKB API host) and fixes silent wrong answers: gnomAD's LOEUF cutoff is
+  < 0.45, DepMap's 0/1/2 mutation coding, truncated cBioPortal/FDA/PubMed results, and UniProt,
+  JASPAR, and Entrez queries that returned nothing. BRENDA's SOAP calls and the USPTO TSDR key
+  header had never worked.
+- **bioinformatics** — anndata 0.13, biopython 1.88, deeptools 4.0 (Rust rewrite, removed
+  flags), CELLxGENE Census LTS 2025-11-08, ESM at Biohub, AlphaFold 3, boltz 2.2, chai_lab 0.6,
+  lamindb 2.10; unverified TODO blocks resolved against upstream; the bioservices workflow no
+  longer crashes at import.
+- **cheminformatics** — rdkit 2026.03, datamol 0.13, molfeat 1.0, deepchem 2.8, PrimeKG's
+  successor OptimusKG; descriptors and metrics that do not exist are gone, and the molecular
+  dynamics examples no longer crash or reuse a 4 fs timestep for production.
+- **clinical-research** — CONSORT 2025, SPIRIT 2025, ICH E6(R3), CTCAE v6.0, and the FDA QMSR in
+  force since 2 Feb 2026; the DICOM anonymizer kept private tags and missed PHI tags.
+- **data-science** — pymc 6.3 on ArviZ 1.x (scripts rewritten; model weights were misaligned
+  with model names), scikit-learn 1.9, dask 2026.8, polars 1.44 with the 2.0 changes, networkx
+  3.7, lightning 2.6.
+  Batch B: TimesFM 2.5/3.0 (examples ported off the removed 1.x API and re-run; intervals were
+  mislabeled), transformers 5 (TensorFlow removed), zarr 3.4, statsmodels 0.15, torch-geometric
+  2.8, stable-baselines3 2.9; vaex examples silently scored training rows as test data.
+- **visualization** — matplotlib 3.11, plotly 7.1, Mermaid 12; image-model IDs that returned 404
+  replaced (checked against OpenRouter's live list); a failed image review was logged as a
+  made-up passing score, and an API key was visible in `ps`.
+- **writing-tools** — NIH and NSF 2026 rules, NeurIPS 2026 / ICML 2026 / ICLR 2027 venue
+  changes, CONSORT/SPIRIT 2025; about 35 references to template files that never existed
+  removed; paper-2-web's documented flags did not parse.
+- **domain-specific** — examples that gave wrong numbers fixed (PennyLane's H2 energy in Bohr
+  units, geopandas areas in Web Mercator, swapped hillshade trigonometry); Qiskit 2.5, cirq 1.7,
+  PennyLane 0.45, astropy 8.0, pymatgen, aeon 1.6.
+- **document-tools** — markitdown 0.1.8 (API reference rewritten from the 0.0.x interface),
+  open-notebook v1.14 payloads, a valid OpenRouter slug in the snippets.
+- **research-tools** — OpenAlex's per-IP metering and API key, Parallel's GA endpoints (extract
+  always failed), Perplexity citations that were never captured, research-ethics updates (EO
+  14292 and the July 2026 US policy).
+- **finance-economics** — edgartools 5.x (SEC fair-access identity; attributes that did not
+  exist), FRED's v2 bulk endpoint and retries, denario examples moved off retired default
+  models, Alpha Vantage error bodies that arrive with HTTP 200 now raise, Treasury Fiscal Data
+  pagination fixed.
+- **lab-integrations** — protocols.io endpoints that had been made up were rewritten from the
+  official API docs; PyLabRobot 0.2.2 snippets run on its simulator (27 `drop_tips()` calls
+  crashed); the LabArchives scripts called methods that do not exist and sent the access
+  password in plain text; the Opentrons templates run clean in `opentrons_simulate` 9.1.
+- **turkish-academia** — ÜAK Mart 2026 doçentlik rules (the ≥40 rule's scope, başlıca yazar),
+  teşvik tables rebuilt from the Yönetmelik, TÜBİTAK 1001/1002-A forms and its generative-AI
+  guide, TİTCK committee and permit routing, TR Dizin article requirements, KVKK transfer rules.
+- **faculty-life** — AACSB 2026 standards, the January 2026 NIH RPPR guide, Sherpa Romeo → Jisc
+  Open Policy Finder, bioRxiv/medRxiv's new DOI prefix 10.64898; NIH report due dates came out up
+  to three days late.
+- **methodology** — TOP 2025, CONSORT 2025, Welch's t-test by default; routing fix.
+- **social-science-workflow** — the 17-skill spine re-verified against current releases
+  (Mesa 3.5 among them) with helper-script fixes.
+
+Unverifiable items were left unchanged and noted; proposed new skills from the review are in
+[`ROADMAP.md`](ROADMAP.md).
+
 ## [2.6.1] — 2026-07-02
 
 ### Added

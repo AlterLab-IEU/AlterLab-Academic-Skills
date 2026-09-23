@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-03-18"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
 ---
 
 # Teaching Design — Course & Curriculum Design Agent
@@ -20,7 +20,7 @@ Teaching design is the systematic process of creating educational experiences th
 
 The skill integrates three foundational frameworks:
 1. **Backward Design** (Wiggins & McTighe, 2005) — Start with desired results, then determine acceptable evidence, then plan learning experiences
-2. **Constructive Alignment** (Biggs & Tang, 2011) — Align intended learning outcomes, teaching/learning activities, and assessment tasks
+2. **Constructive Alignment** (Biggs et al., 2022) — Align intended learning outcomes, teaching/learning activities, and assessment tasks
 3. **Bloom's Revised Taxonomy** (Anderson & Krathwohl, 2001) — Classify cognitive complexity of learning outcomes across six levels
 
 ## When to Use This Skill
@@ -36,17 +36,18 @@ This skill should be used when:
 - Transitioning a face-to-face course to online or hybrid format
 - Conducting curriculum mapping across a program
 - Implementing inclusive and accessible pedagogy
-- Preparing for course accreditation reviews
+- Preparing course-level evidence for accreditation reviews
 - Mentoring junior faculty on teaching practices
 
 ### Does NOT Trigger
 
 | Scenario | Use Instead |
 |----------|-------------|
-| Writing an academic paper | `alterlab-paper-writer` |
-| Reviewing a research paper | `alterlab-paper-reviewer` |
-| Statistical analysis of student/grade data | a `data-science/` skill (e.g. `alterlab-statistical-analysis`) |
-| Creating presentation slides | `alterlab-pptx-posters` |
+| Writing a course's generative-AI use policy or syllabus AI statement | `alterlab-syllabus-ai-policy` |
+| Program-level assurance of learning for AACSB or ABET (outcome maps, closing the loop) | `alterlab-accreditation-aol` |
+| Writing an academic paper, including a SoTL paper about a course | `alterlab-paper-writer` |
+| Statistical analysis of student/grade data | `alterlab-statistical-analysis` |
+| Building a slide deck for a talk or lecture | `alterlab-scientific-slides` |
 
 ---
 
@@ -166,7 +167,7 @@ O — Organize. Sequence for maximum coherence and engagement.
 
 ### 3. Constructive Alignment
 
-Constructive alignment (Biggs & Tang, 2011) ensures that what you teach, how you teach it, and how you assess it are all pointing in the same direction.
+Constructive alignment (Biggs et al., 2022) ensures that what you teach, how you teach it, and how you assess it are all pointing in the same direction.
 
 **Alignment Audit Template:**
 
@@ -282,13 +283,15 @@ The full Community of Inquiry diagram and a complete Online Module Design Checkl
 
 Inclusive teaching ensures that all students, regardless of background, identity, ability, or prior preparation, have equitable opportunities to learn.
 
-**Universal Design for Learning (UDL) — Three Principles:**
+**Universal Design for Learning (UDL Guidelines 3.0, CAST 2024) — Three Principles:**
 
-| Principle | Guideline | Implementation Examples |
-|-----------|-----------|----------------------|
-| **Multiple Means of Engagement** (the WHY of learning) | Provide options for self-regulation, sustaining effort, and recruiting interest | Choice in assignment topics; varied assessment formats; relevance to diverse experiences |
-| **Multiple Means of Representation** (the WHAT of learning) | Provide options for perception, language/symbols, and comprehension | Videos with captions; diagrams with alt text; glossaries; multiple examples from different contexts |
-| **Multiple Means of Action & Expression** (the HOW of learning) | Provide options for physical action, expression/communication, and executive function | Write or record; individual or group; scaffolded milestones; flexible deadlines with structure |
+| Principle | Guidelines (3.0) | Implementation Examples |
+|-----------|------------------|----------------------|
+| **Design Multiple Means of Engagement** (the WHY of learning) | Welcoming interests & identities; sustaining effort & persistence; emotional capacity | Choice in assignment topics; varied assessment formats; relevance to diverse experiences |
+| **Design Multiple Means of Representation** (the WHAT of learning) | Perception; language & symbols; building knowledge | Videos with captions; diagrams with alt text; glossaries; multiple examples from different contexts |
+| **Design Multiple Means of Action & Expression** (the HOW of learning) | Interaction; expression & communication; strategy development | Write or record; individual or group; scaffolded milestones; flexible deadlines with structure |
+
+Version 3.0 (July 2024) replaced 2.2's goal of "expert learners" with learner agency (purposeful & reflective, resourceful & authentic, strategic & action-oriented) and treats learners' identities as part of variability; confirm current checkpoint labels at udlguidelines.cast.org before quoting them.
 
 **Inclusive Assessment Strategies:**
 
@@ -380,11 +383,14 @@ Curriculum mapping ensures coherence across an entire program of study.
 ## References
 
 - Anderson, L. W., & Krathwohl, D. R. (Eds.). (2001). *A taxonomy for learning, teaching, and assessing: A revision of Bloom's taxonomy of educational objectives*. Longman.
-- Biggs, J., & Tang, C. (2011). *Teaching for quality learning at university* (4th ed.). Open University Press.
+- Biggs, J., Tang, C., & Kennedy, G. (2022). *Teaching for quality learning at university* (5th ed.). Open University Press.
+- CAST. (2024). *Universal Design for Learning Guidelines version 3.0*. https://udlguidelines.cast.org
 - Fink, L. D. (2013). *Creating significant learning experiences: An integrated approach to designing college courses* (2nd ed.). Jossey-Bass.
 - Garrison, D. R., Anderson, T., & Archer, W. (2000). Critical inquiry in a text-based environment: Computer conferencing in higher education. *The Internet and Higher Education*, 2(2-3), 87-105.
 - Meyer, A., Rose, D. H., & Gordon, D. (2014). *Universal design for learning: Theory and practice*. CAST Professional Publishing.
-- Nilson, L. B. (2016). *Teaching at its best: A research-based resource for college instructors* (4th ed.). Jossey-Bass.
+- Zakrajsek, T. D., & Nilson, L. B. (2023). *Teaching at its best: A research-based resource for college instructors* (5th ed.). Jossey-Bass.
 - Wiggins, G., & McTighe, J. (2005). *Understanding by design* (2nd ed.). ASCD.
 
 See also: `references/teaching-frameworks.md` for expanded framework details.
+
+Part of the AlterLab Academic Skills suite.

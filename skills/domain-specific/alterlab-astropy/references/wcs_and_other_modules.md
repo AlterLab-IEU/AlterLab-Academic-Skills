@@ -352,10 +352,11 @@ with ProgressBar(len(data_list)) as bar:
 
 ## SAMP (Simple Application Messaging Protocol)
 
-Interoperability with other astronomy tools.
+Interoperability with other astronomy tools. `astropy.samp` is deprecated as of Astropy
+8.0; the module now lives in PyVO (`uv pip install "pyvo>=1.9"`), with the same API.
 
 ```python
-from astropy.samp import SAMPIntegratedClient
+from pyvo.samp import SAMPIntegratedClient
 
 # Connect to SAMP hub
 client = SAMPIntegratedClient()

@@ -3,7 +3,7 @@
 The gtars CLI is the `gtars-cli` crate (binary name `gtars`), separate from the
 Python package. Subcommand availability depends on the Cargo features compiled in,
 and exact flag sets evolve across versions — **always confirm with
-`gtars <command> --help`**. Subcommand names below verified against the v0.8 CLI.
+`gtars <command> --help`**. Subcommand names below were verified against the 0.8 CLI; the 0.10 crate ships the same feature flags (plus `refget`), but re-check names with `--help`.
 
 ## Installation
 

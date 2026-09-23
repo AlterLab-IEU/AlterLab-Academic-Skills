@@ -39,6 +39,15 @@
         { "type": "output_contains", "value": "seaborn" },
         { "type": "behavior", "value": "Recognizes quick exploratory plotting as seaborn's job, not publication-grade figure orchestration, and defers." }
       ]
+    },
+    {
+      "id": "near-miss-figure-qa",
+      "prompt": "My Figure 3 is finished. Before I submit, check that it plots every row of the data, that no labels overlap or get clipped, and that the export really is 300 dpi.",
+      "expected_output": "Does NOT invoke alterlab-scientific-viz; defers to alterlab-figure-qa. The figure already exists and the ask is a render-then-verify QA pass (data fidelity, bounding-box collisions, resolution), not building or restyling a publication figure.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-figure-qa" }
+      ]
     }
   ]
 }

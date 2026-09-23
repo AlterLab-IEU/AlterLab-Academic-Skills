@@ -1,7 +1,8 @@
 # salmon quant — flags, library type, QC
 
-Targets salmon **v1.11.4** (selective alignment). See ../references/tool_versions.md
-for the version facts (SSHash index rebuild requirement; `salmon alevin` removed).
+Targets salmon **2.x** (the Rust rewrite; selective alignment by default). See
+tool_versions.md for the version facts (2.0 cannot read C++/pufferfish indices;
+`salmon alevin` removed; `--validateMappings` accepted but ignored).
 
 ## Mapping-based quant command
 
@@ -10,7 +11,6 @@ salmon quant \
   -i salmon_index \
   -l A \
   -1 sampleA_R1.fastq.gz -2 sampleA_R2.fastq.gz \
-  --validateMappings \
   --gcBias \
   -p 8 \
   -o quants/sampleA
@@ -21,11 +21,19 @@ salmon quant \
 | `-i` | path to the (decoy-aware, freshly built) index |
 | `-l A` | **auto-detect** library type / strandedness; verify the result afterwards |
 | `-1` / `-2` | paired-end read files (use `-r` for single-end) |
-| `--validateMappings` | enable **selective alignment** — score mappings instead of trusting raw pseudo-mappings (accurate mode) |
 | `--gcBias` | correct fragment-level GC bias (recommended for DE) |
 | `--seqBias` | optional: correct 5'/3' sequence-specific bias |
+| `--posBias` | optional: correct positional (5'/3' coverage) bias |
+| `--sketch` | opt **out** of selective alignment into faster alignment-free pseudoalignment (2.x) |
+| `--ignoreTxVersion` | with `-g/--geneMap`, match transcript IDs ignoring the trailing `.N` (2.x) |
+| `--numBootstraps` / `--numGibbsSamples` | inferential replicates, written in the same format fishpond/swish expect |
 | `-p` | threads |
 | `-o` | per-sample output directory |
+
+Selective alignment is the default in 2.x, so there is no flag that enables it.
+`--validateMappings` parses and warns; `--mimicBT2`, `--mimicStrictBT2`,
+`--minAssignedFrags`, `--numBiasSamples` and `--alternativeInitMode` are removed and
+now error.
 
 ## Outputs (per sample)
 
@@ -58,7 +66,7 @@ that should share a protocol, investigate before proceeding.
 
 ```bash
 salmon quant -i salmon_index -l A -r sampleA.fastq.gz \
-  --validateMappings --gcBias -p 8 -o quants/sampleA
+  --gcBias -p 8 -o quants/sampleA
 ```
 
 For SE data salmon cannot empirically learn the fragment-length distribution;

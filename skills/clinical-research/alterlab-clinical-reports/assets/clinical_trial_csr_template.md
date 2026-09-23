@@ -149,7 +149,7 @@ Secondary Endpoints:
 ## 2.2 Ethical Conduct of the Study
 
 This study was conducted in accordance with:
-- ICH Good Clinical Practice (GCP) E6(R2)
+- ICH Good Clinical Practice (GCP) E6(R3) [or E6(R2), whichever was in force for this study when it was conducted]
 - Declaration of Helsinki (current version)
 - Applicable regulatory requirements
 - Sponsor Standard Operating Procedures

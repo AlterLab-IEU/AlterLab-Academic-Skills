@@ -4,7 +4,7 @@
     {
       "id": "cancer-gene-census",
       "prompt": "I want the expert-curated Cancer Gene Census from COSMIC so I can filter my variant list down to known cancer genes and split them into oncogenes vs tumor suppressors.",
-      "expected_output": "Invokes alterlab-cosmic: downloads cancer_gene_census.csv via download_cosmic_file (authenticated), then uses the 'Role in Cancer' field to separate oncogenes from TSGs from the ~700+ curated cancer genes.",
+      "expected_output": "Invokes alterlab-cosmic: downloads the Cancer Gene Census archive (grch38/cosmic/v104/Cosmic_CancerGeneCensus_Tsv_v104_GRCh38.tar, via get_common_file_path('gene_census') and download_cosmic_file with COSMIC credentials), extracts the TSV, and uses the role-in-cancer field to separate oncogenes from TSGs among the ~700+ curated cancer genes. Does not use the retired cancer_gene_census.csv name.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "Cancer Gene Census" }
@@ -13,7 +13,7 @@
     {
       "id": "somatic-mutations-by-gene",
       "prompt": "Download the COSMIC coding mutations file (GRCh38) and pull all the recurrent somatic TP53 mutations for my cancer cohort analysis.",
-      "expected_output": "Invokes alterlab-cosmic: downloads CosmicMutantExport.tsv.gz for GRCh38 via download_cosmic_file, reads it with pandas, and filters by Gene name == 'TP53' to extract somatic mutations.",
+      "expected_output": "Invokes alterlab-cosmic: downloads the GRCh38 coding-mutation archive (Cosmic_GenomeScreensMutant_Tsv_v104_GRCh38.tar, optionally plus the targeted-screens file) via download_cosmic_file, reads the extracted TSV with pandas, and filters GENE_SYMBOL == 'TP53' (or uses the web Filtered download for one gene) to extract somatic mutations. Does not rely on the retired CosmicMutantExport.tsv.gz.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Retrieves somatic coding mutations from a downloaded COSMIC export (GRCh38) and filters to the named gene, with authentication." }
@@ -22,7 +22,7 @@
     {
       "id": "mutational-signatures",
       "prompt": "I need the COSMIC SBS mutational signature definitions to run signature decomposition on my whole-genome tumor samples.",
-      "expected_output": "Invokes alterlab-cosmic: downloads the mutational signature profiles (SBS/DBS/ID definitions) from COSMIC's signatures path, suitable for feeding into signature-analysis tools like SigProfiler or deconstructSigs.",
+      "expected_output": "Invokes alterlab-cosmic: points to the COSMIC mutational signatures download site (https://cancer.sanger.ac.uk/signatures/downloads/, reference set v3.6) for the SBS/DBS/ID signature matrices matching the genome build, suitable for feeding into signature-analysis tools like SigProfiler or deconstructSigs.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "signature" }
@@ -31,7 +31,7 @@
     {
       "id": "resistance-mutations",
       "prompt": "Get me COSMIC's drug resistance mutation data so I can annotate which variants in my samples confer known resistance.",
-      "expected_output": "Invokes alterlab-cosmic: downloads CosmicResistanceMutations.tsv.gz via the resistance_mutations shortcut and surfaces the clinically annotated drug-resistance variants.",
+      "expected_output": "Invokes alterlab-cosmic: downloads the resistance-mutations archive (Cosmic_ResistanceMutations_Tsv_v104_GRCh38.tar) via the resistance_mutations shortcut and surfaces the clinically annotated drug-resistance variants.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Downloads the COSMIC resistance mutations file specifically, not generic mutation data." }

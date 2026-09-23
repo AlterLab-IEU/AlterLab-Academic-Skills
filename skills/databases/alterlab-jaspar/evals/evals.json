@@ -23,7 +23,7 @@
     {
       "id": "search-tf-profiles",
       "prompt": "Find all the human homeobox transcription factor binding profiles in the JASPAR CORE collection.",
-      "expected_output": "Triggers the JASPAR skill. Calls the JASPAR REST API matrix search with tf_class='Homeodomain', species='9606', collection='CORE', returning the matching profiles (matrix_id, name, class/family). Uses the CORE collection per best practice.",
+      "expected_output": "Triggers the JASPAR skill. Calls the JASPAR REST API matrix search with the exact TFClass name tf_class='Homeo domain factors' (a bare 'Homeodomain' returns 0 rows), the organism sent as tax_id=9606 (the API ignores species=), collection='CORE', and version=latest, returning the matching profiles (matrix_id, name, class/family).",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "CORE" },
@@ -33,7 +33,7 @@
     {
       "id": "fetch-matrix-pfm",
       "prompt": "Get me the JASPAR matrix MA0139.1 — I want the PFM and the consensus sequence.",
-      "expected_output": "Triggers the JASPAR skill. Calls get_matrix('MA0139.1') against the REST API and returns the PFM (A/C/G/T counts), consensus, length, and metadata (name, class, family, species). Treats MA0139.1 as a JASPAR matrix ID.",
+      "expected_output": "Triggers the JASPAR skill. Calls get_matrix('MA0139.1') against the REST API and returns the PFM (A/C/G/T counts) and metadata (name, class, family, species), deriving motif length from len(pfm['A']) and the consensus from the most frequent base per column (the API returns neither field). Treats MA0139.1 as a JASPAR matrix ID and may note that MA0139.2 is the latest CTCF version.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "MA0139.1" },

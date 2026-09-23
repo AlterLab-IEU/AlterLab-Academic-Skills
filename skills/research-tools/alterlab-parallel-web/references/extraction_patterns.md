@@ -1,6 +1,6 @@
 # Extraction Patterns
 
-Guide to using Parallel's Extract API for converting web pages into clean, LLM-optimized content.
+Guide to using Parallel's Extract API (`POST /v1/extract`; `client.extract()` in `parallel-web` ≥ 1.0) for converting web pages into clean, LLM-optimized content. The examples use this skill's `ParallelExtract` wrapper from `scripts/parallel_web.py`.
 
 ---
 
@@ -37,7 +37,7 @@ The Extract API converts any public URL into clean markdown. It handles JavaScri
 
 ### Excerpt Mode (Default)
 
-Returns focused content aligned to your objective. Smaller token footprint, higher relevance.
+Returns focused content aligned to your objective. Smaller token footprint, higher relevance. In the v1 API excerpts are always returned; you only choose whether to add full content.
 
 ```python
 extractor = ParallelExtract()
@@ -45,9 +45,7 @@ extractor = ParallelExtract()
 result = extractor.extract(
     urls=["https://arxiv.org/abs/2301.12345"],
     objective="Key methodology and experimental results",
-    excerpts=True,     # Default
-    full_content=False  # Default
-)
+)  # excerpts only (full_content=False is the default)
 ```
 
 **Best for:**
@@ -58,13 +56,12 @@ result = extractor.extract(
 
 ### Full Content Mode
 
-Returns the complete page content as clean markdown.
+Returns the complete page content as clean markdown, alongside the excerpts.
 
 ```python
 result = extractor.extract(
     urls=["https://docs.example.com/api-reference"],
     objective="Complete API documentation",
-    excerpts=False,
     full_content=True,
 )
 ```
@@ -77,13 +74,12 @@ result = extractor.extract(
 
 ### Both Modes
 
-You can request both excerpts and full content:
+Requesting full content always gives you both, so one call serves focused analysis and complete reference:
 
 ```python
 result = extractor.extract(
     urls=["https://example.com/report"],
     objective="Executive summary and key recommendations",
-    excerpts=True,
     full_content=True,
 )
 
@@ -163,7 +159,7 @@ result = extractor.extract(
     objective="Key findings, sample sizes, and statistical results from each study",
 )
 
-# Results are returned in the same order as input URLs
+# Match results back to inputs by URL; failed URLs are listed in result["errors"]
 for r in result["results"]:
     print(f"=== {r['title']} ===")
     print(f"URL: {r['url']}")
@@ -172,8 +168,8 @@ for r in result["results"]:
 ```
 
 **Batch limits:**
-- No hard limit on number of URLs per request
-- Each URL counts as one extraction unit for billing
+- Up to 20 URLs per request in the v1 API (split larger lists)
+- Each URL counts as one extraction unit for billing ($1 per 1,000 URLs)
 - Large batches may take longer to process
 - Failed URLs are reported in the `errors` field without blocking successful ones
 

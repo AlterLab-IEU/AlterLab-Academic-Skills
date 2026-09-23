@@ -1,8 +1,8 @@
 # Affiliation verification — why YÖKSİS, and how to disambiguate
 
-## Why YOK Akademik is the authoritative TR affiliation source
+## Why YÖK Akademik is the authoritative TR affiliation source
 
-YOK Akademik is backed by **YÖKSİS** (the national Higher-Education Information
+YÖK Akademik is backed by **YÖKSİS** (the national Higher-Education Information
 System). When a Turkish academic moves, changes title, or is appointed, the official
 record flows through YÖKSİS — so the portal reflects the **current, official** kurum
 (institution), fakülte/bölüm, and unvan (title).
@@ -16,10 +16,10 @@ strings**, which:
   diacritic variants), and
 - often show a *past* affiliation from an old paper rather than the person's current post.
 
-So: for **"where does this person officially work right now?"** → YOK Akademik. For
+So: for **"where does this person officially work right now?"** → YÖK Akademik. For
 **"what has this person published, with which DOIs and co-authors?"** →
 `alterlab-openalex` (richer, deduped publication metadata). The two are complementary;
-use YOK Akademik for the affiliation ground truth and OpenAlex for the bibliography.
+use YÖK Akademik for the affiliation ground truth and OpenAlex for the bibliography.
 
 ## When you actually need this
 
@@ -39,7 +39,7 @@ use YOK Akademik for the affiliation ground truth and OpenAlex for the bibliogra
    many people. A bare name match is *not* a confirmation.
 4. **Cross-check the unvan against the claim**: if the user calls someone "Professor"
    but YÖKSİS shows *Dr. Öğr. Üyesi*, surface the discrepancy rather than smoothing it.
-5. **Report with provenance**: "Per YOK Akademik (YÖKSİS), as of <date>: <Unvan>,
+5. **Report with provenance**: "Per YÖK Akademik (YÖKSİS), as of <date>: <Unvan>,
    <Bölüm>, <Fakülte>, <Üniversite>." People move — the date matters.
 6. **If the portal failed** (302/500, markup change, no match), say so and fall back to
    WebFetch on the search page. **Never** fabricate an affiliation, title, or authorId.

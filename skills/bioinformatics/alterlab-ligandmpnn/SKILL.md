@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Runs LigandMPNN (`dauparas/LigandMPNN`, PyTorch) under `uv run python` via its `run.py`. Model checkpoints download once (small; no account). CPU works for typical sizes; a GPU only speeds large batches. Input is a structure containing the protein PLUS the ligand/metal/nucleic-acid atoms (e.g. a PDB with the HETATM records)."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # LigandMPNN (ligand-aware sequence design)
@@ -45,16 +46,23 @@ Use this skill when the user wants to:
 ### 1. Ligand-aware pocket design
 
 ```bash
-# dauparas/LigandMPNN CLI — TODO(verify) flags/checkpoint names against your checkout
+# dauparas/LigandMPNN — clone, fetch weights once, then run run.py
+git clone https://github.com/dauparas/LigandMPNN && cd LigandMPNN
+bash get_model_params.sh "./model_params"
+
 python run.py \
   --model_type ligand_mpnn \
+  --checkpoint_ligand_mpnn "./model_params/ligandmpnn_v_32_010_25.pt" \
   --pdb_path complex_with_ligand.pdb \
   --out_folder out/ \
-  --number_of_batches 8
+  --seed 111 \
+  --batch_size 8 --number_of_batches 4
 ```
 
 The input PDB must contain the ligand/metal atoms (HETATM). LigandMPNN designs pocket residues
-that fit that context; supply a fixed-positions/redesign spec to target only the site.
+that fit that context; use `--redesigned_residues`/`--fixed_residues` to target only the site.
+Output FASTA headers carry `overall_confidence` and `ligand_confidence` (0–1, higher = more
+confident), averaged over the redesigned residues only.
 
 ### 2. Metal-site and nucleic-acid context
 
@@ -64,8 +72,11 @@ on it — critical for metalloenzyme and DNA/RNA-binding designs.
 ### 3. Site-focused redesign
 
 Restrict design to the residues within a shell of the ligand (redesign the pocket, keep the
-scaffold), analogous to ProteinMPNN's fixed-positions workflow. Verify the exact argument names
-for your version (`TODO(verify)`).
+scaffold). Residues are named directly by chain+index — `--redesigned_residues "A23 A24 B42D"`
+or the complement, `--fixed_residues "C1 C2 …"`. Insertion codes are preserved (`B42D`), because
+LigandMPNN parses structures with ProDy and keeps the original numbering rather than
+renumbering. Add `--ligand_mpnn_use_side_chain_context 1` to condition on the side-chain atoms
+of the fixed residues as well as the backbone.
 
 ### 4. In the design pipeline
 

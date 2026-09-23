@@ -1,40 +1,51 @@
 ---
 name: alterlab-cirq
-description: Builds, simulates, and runs quantum circuits with Cirq, Google Quantum AI's framework for NISQ hardware, noise-aware low-level circuit design, and noise characterization. Use when targeting Google Quantum AI processors (Sycamore/Weber), designing noise-aware NISQ circuits, or running characterization experiments (randomized benchmarking, XEB). For IBM Quantum hardware and Qiskit Runtime prefer alterlab-qiskit; for gradient-trained quantum ML and hybrid quantum-classical models prefer alterlab-pennylane; for open-system Lindblad/master-equation dynamics prefer alterlab-qutip. Part of the AlterLab Academic Skills suite.
+description: Builds, simulates, and runs quantum circuits with Cirq, Google Quantum AI's framework for NISQ hardware, noise-aware low-level circuit design, and noise characterization. Use when targeting Google Quantum AI processors or their Quantum Virtual Machine models (Willow, Sycamore-class Rainbow/Weber), IonQ/AQT/Pasqal via Cirq plugins, designing noise-aware NISQ circuits, or running characterization experiments (randomized benchmarking, XEB). For IBM Quantum hardware and Qiskit Runtime prefer alterlab-qiskit; for gradient-trained quantum ML and hybrid quantum-classical models prefer alterlab-pennylane; for open-system Lindblad/master-equation dynamics prefer alterlab-qutip. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No API key required for local simulation. Runs via `uv run python`; requires the cirq Python package. Google Quantum AI hardware access needs separate credentials.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Cirq - Quantum Computing with Python
 
 Cirq is Google Quantum AI's open-source framework for designing, simulating, and running quantum circuits on quantum computers and simulators.
 
+## When to Use This Skill
+
+Use this skill when the user wants to:
+- Build and simulate circuits in Cirq (state-vector, density-matrix, parameter sweeps)
+- Model Google hardware noise or run on the Quantum Virtual Machine (`willow_pink`, `weber`, `rainbow`)
+- Submit Cirq circuits to Google Quantum Engine (approved partners), IonQ, AQT, Pasqal, or Azure Quantum
+- Run characterization experiments (randomized benchmarking, XEB) or ReCirq-style studies
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| IBM Quantum hardware, Qiskit Runtime primitives, or Qiskit transpilation | `alterlab-qiskit` |
+| Gradient-trained quantum ML / hybrid models with autodiff | `alterlab-pennylane` |
+| Lindblad master equations, decoherence, or cavity-QED dynamics (no circuits) | `alterlab-qutip` |
+
 ## Installation
 
 ```bash
-uv pip install cirq
+uv pip install cirq          # Python ≥ 3.11; current 1.7.x as of 2026-09
 ```
 
-For hardware integration:
+The `cirq` package is a meta-package that already pulls in `cirq-core`, `cirq-google`,
+`cirq-ionq`, `cirq-aqt`, `cirq-pasqal`, and `cirq-web`; install `cirq-core` alone for a
+lightweight simulation-only environment. Optional extras:
+
 ```bash
-# Google Quantum Engine
-uv pip install cirq-google
+# OpenQASM import (cirq.contrib.qasm_import needs `ply`), quimb tensor-network tools
+uv pip install "cirq-core[contrib]"
 
-# IonQ
-uv pip install cirq-ionq
-
-# AQT (Alpine Quantum Technologies)
-uv pip install cirq-aqt
-
-# Pasqal
-uv pip install cirq-pasqal
-
-# Azure Quantum
-uv pip install azure-quantum cirq
+# Azure Quantum — its `cirq` extra pins cirq-core 1.6.x, so use a separate environment
+uv pip install "azure-quantum[cirq]"
 ```
 
 ## Quick Start
@@ -138,10 +149,10 @@ For information about running circuits on real quantum hardware from various pro
 - **[references/hardware.md](references/hardware.md)** - Complete guide to hardware integration
 
 Supported providers:
-- **Google Quantum AI** (cirq-google) - Sycamore, Weber processors
+- **Google Quantum AI** (cirq-google) - Quantum Engine for approved partners; Quantum Virtual Machine models `willow_pink`, `weber`, `rainbow` for everyone
 - **IonQ** (cirq-ionq) - Trapped ion quantum computers
-- **Azure Quantum** (azure-quantum) - IonQ and Honeywell backends
-- **AQT** (cirq-aqt) - Alpine Quantum Technologies
+- **Azure Quantum** (azure-quantum) - IonQ and Quantinuum targets
+- **AQT** (cirq-aqt) - Alpine Quantum Technologies (ARNICA API; workspace + resource IDs)
 - **Pasqal** (cirq-pasqal) - Neutral atom quantum computers
 
 Topics include device representation, qubit selection, authentication, job management, and circuit optimization for hardware.
@@ -218,28 +229,33 @@ result = variational_algorithm(my_ansatz, my_cost, [0.0, 0.0])
 ### Hardware Execution Template
 
 ```python
-def run_on_hardware(circuit, provider='google', device_name='weber', repetitions=1000):
+def run_on_hardware(circuit, provider='google', device_name='<processor_id>',
+                    device_config='<config_name>', target='ionq.simulator',
+                    repetitions=1000):
     """Template for running on quantum hardware."""
 
     if provider == 'google':
+        # Approved Quantum Engine users only; otherwise use the Quantum Virtual Machine
+        # (cirq_google.engine.create_default_noisy_quantum_virtual_machine).
         import cirq_google
-        engine = cirq_google.get_engine()
+        engine = cirq_google.get_engine()          # uses GOOGLE_CLOUD_PROJECT
         processor = engine.get_processor(device_name)
-        job = processor.run(circuit, repetitions=repetitions)
-        return job.results()[0]
+        # cirq-google 1.7: device_config_name is required (see processor.list_configs())
+        # and run() returns a cirq.Result directly.
+        return processor.run(circuit, device_config_name=device_config,
+                             repetitions=repetitions)
 
     elif provider == 'ionq':
         import cirq_ionq
-        service = cirq_ionq.Service()
-        result = service.run(circuit, repetitions=repetitions, target='qpu')
-        return result
+        service = cirq_ionq.Service()              # reads IONQ_API_KEY
+        return service.run(circuit, repetitions=repetitions, target='qpu')
 
     elif provider == 'azure':
         from azure.quantum.cirq import AzureQuantumService
         # Setup workspace...
         service = AzureQuantumService(workspace)
-        result = service.run(circuit, repetitions=repetitions, target='ionq.qpu')
-        return result
+        # Target names are system-specific (e.g. 'ionq.qpu.forte-1'); see service.targets()
+        return service.run(circuit, repetitions=repetitions, target=target)
 
     else:
         raise ValueError(f"Unknown provider: {provider}")
@@ -322,7 +338,7 @@ results = noise_comparison_study(circuit, noise_levels)
 - **Official Documentation**: https://quantumai.google/cirq
 - **API Reference**: https://quantumai.google/reference/python/cirq
 - **Tutorials**: https://quantumai.google/cirq/tutorials
-- **Examples**: https://github.com/quantumlib/Cirq/tree/master/examples
+- **Examples**: https://github.com/quantumlib/Cirq/tree/main/examples
 - **ReCirq**: https://github.com/quantumlib/ReCirq
 
 ## Common Issues
@@ -339,6 +355,8 @@ results = noise_comparison_study(circuit, noise_levels)
 - Check qubit connectivity with device.metadata.nx_graph
 - Decompose gates to device-native gateset
 - See `hardware.md` for device-specific compilation
+
+Part of the AlterLab Academic Skills suite.
 
 **Noisy simulation too slow:**
 - Density matrix simulation is O(2^2n) - consider reducing qubits

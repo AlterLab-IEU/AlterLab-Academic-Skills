@@ -1,12 +1,13 @@
 ---
 name: alterlab-scientific-writing
-description: Writes scientific manuscripts in full flowing paragraphs (never bullet points) via a two-stage process — section outlines with key points using research-lookup, then conversion to prose — applying IMRAD structure, citations (APA/AMA/Vancouver), figures/tables, and reporting guidelines (CONSORT/STROBE/PRISMA). Use when drafting or revising research papers, journal submissions, or any manuscript section (abstract, introduction, methods, results, discussion), or professional/technical reports. For a specific venue's LaTeX template and house style use alterlab-venue-templates; to build a BibTeX bibliography or verify reference metadata use alterlab-citation-mgmt. Part of the AlterLab Academic Skills suite.
+description: Writes scientific manuscripts in full flowing paragraphs (never bullet points) via a two-stage process — section outlines with key points using alterlab-research-lookup, then conversion to prose — applying IMRAD structure, citations (APA/AMA/Vancouver), figures/tables, and current reporting guidelines (CONSORT 2025, STROBE, PRISMA 2020, TRIPOD+AI). Use when drafting or revising a research paper section by section (abstract, introduction, methods, results, discussion), tightening scientific prose, or writing professional/technical reports. For the end-to-end multi-agent paper pipeline (APA 7 LaTeX/DOCX output, bilingual abstracts, reviewer-driven revision roadmap) use alterlab-paper-writer; for a specific venue's LaTeX template and house style use alterlab-venue-templates; to build a BibTeX bibliography use alterlab-citation-mgmt. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 compatibility: No API key or external service required for drafting; optional professional-report formatting with scientific_report.sty needs a LaTeX distribution (XeLaTeX/LuaLaTeX)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Scientific Writing
@@ -15,7 +16,7 @@ metadata:
 
 Scientific writing communicates research with precision and clarity. Write manuscripts using IMRAD structure, citations (APA/AMA/Vancouver), figures/tables, and reporting guidelines (CONSORT/STROBE/PRISMA). Apply this skill for research papers and journal submissions. Ground claims in literature gathered via the **alterlab-research-lookup** skill, and verify every citation against its source.
 
-**Critical Principle: Always write in full paragraphs with flowing prose. Never submit bullet points in the final manuscript.** Use a two-stage process: first create section outlines with key points using research-lookup, then convert those outlines into complete paragraphs.
+**Core principle: the final manuscript is written in full paragraphs of flowing prose, not bullet points** — reviewers and editors read bullets as unfinished thinking, and the logical connections between findings live in the transitions that lists omit. Use a two-stage process: first create section outlines with key points using `alterlab-research-lookup`, then convert those outlines into complete paragraphs.
 
 ## When to Use This Skill
 
@@ -30,6 +31,16 @@ This skill should be used when:
 - Improving writing clarity, conciseness, and precision
 - Ensuring proper use of field-specific terminology and nomenclature
 - Addressing reviewer comments and revising manuscripts
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| End-to-end paper production through the multi-agent pipeline — APA 7 LaTeX/DOCX/PDF output, bilingual abstracts, or a full revision roadmap from reviewer letters | `alterlab-paper-writer` |
+| A specific journal's or conference's LaTeX template, page limits, and house style | `alterlab-venue-templates` |
+| Building or cleaning the BibTeX bibliography itself | `alterlab-citation-mgmt` |
+| Thesis or dissertation chapters with a supervisor-style workflow | `alterlab-thesis-supervisor` |
+| A manuscript for a Turkish journal (TR Dizin rules, Turkish APA 7, bilingual öz) | `alterlab-tr-academic-style` |
 
 ## Figures and Visual Elements (Optional)
 
@@ -132,17 +143,17 @@ Create effective data visualizations that enhance comprehension. For detailed be
 
 Ensure completeness and transparency by following established reporting standards. For comprehensive guideline details, refer to `references/reporting_guidelines.md`.
 
-**Key Guidelines:**
-- **CONSORT**: Randomized controlled trials
+**Key Guidelines** (current versions as of 2026-09; check equator-network.org for extensions):
+- **CONSORT 2025**: Randomized controlled trials (30 items, new open-science section)
 - **STROBE**: Observational studies (cohort, case-control, cross-sectional)
-- **PRISMA**: Systematic reviews and meta-analyses
-- **STARD**: Diagnostic accuracy studies
-- **TRIPOD**: Prediction model studies
-- **ARRIVE**: Animal research
+- **PRISMA 2020**: Systematic reviews and meta-analyses
+- **STARD 2015**: Diagnostic accuracy studies
+- **TRIPOD+AI (2024)**: Prediction model studies, regression or machine learning (supersedes TRIPOD 2015)
+- **ARRIVE 2.0**: Animal research
 - **CARE**: Case reports
-- **SQUIRE**: Quality improvement studies
-- **SPIRIT**: Study protocols for clinical trials
-- **CHEERS**: Economic evaluations
+- **SQUIRE 2.0**: Quality improvement studies
+- **SPIRIT 2025**: Study protocols for clinical trials (34 items)
+- **CHEERS 2022**: Economic evaluations
 
 Each guideline provides checklists ensuring all critical methodological elements are reported.
 
@@ -176,7 +187,7 @@ Apply fundamental scientific writing principles. For detailed guidance, refer to
 
 ### 7. Writing Process: From Outline to Full Paragraphs
 
-**CRITICAL: Always write in full paragraphs, never submit bullet points in scientific papers.** Use a two-stage process for every section:
+Write every section in full paragraphs using the same two-stage process:
 
 1. **Outline (planning only)** — use research-lookup to gather literature, then jot bullet points marking the main arguments, key studies to cite, and data to include. These are scaffolding, not the manuscript.
 2. **Convert to prose** — expand each bullet into complete sentences with natural transitions and citations integrated into the text, varying sentence structure and ensuring logical flow.
@@ -187,7 +198,7 @@ For the full worked example (outline → prose), the outline-vs-final comparison
 
 ### 8. Professional Report Formatting (Non-Journal Documents)
 
-For research reports, technical reports, white papers, grant/progress reports, and other professional documents that are NOT journal manuscripts, use the `scientific_report.sty` LaTeX style package (Helvetica typography, colored box environments, professional tables, and scientific-notation commands for p-values/effect sizes/CIs). Journal manuscripts and conference papers should instead use the **venue-templates** skill; theses use institutional templates.
+For research reports, technical reports, white papers, grant/progress reports, and other professional documents that are NOT journal manuscripts, use the `scientific_report.sty` LaTeX style package (Helvetica typography, colored box environments, professional tables, and scientific-notation commands for p-values/effect sizes/CIs). Journal manuscripts and conference papers should instead use `alterlab-venue-templates`; theses use institutional templates.
 
 Box environments, table formatting, notation commands, the getting-started preamble, and XeLaTeX/LuaLaTeX compilation are documented in `references/professional_report_quickref.md`, with the full guide in `references/professional_report_formatting.md` and the package itself plus template in `assets/`.
 
@@ -197,7 +208,7 @@ Adapt manuscripts to journal requirements:
 - Follow author guidelines for structure, length, and format
 - Apply journal-specific citation styles
 - Meet figure/table specifications (resolution, file formats, dimensions)
-- Include required statements (funding, conflicts of interest, data availability, ethical approval)
+- Include required statements (funding, conflicts of interest, data availability, ethical approval, and a disclosure of any generative-AI assistance in preparing the manuscript — ICMJE and most publishers require it, and AI tools cannot be listed as authors)
 - Adhere to word limits for each section
 - Format according to template requirements when provided
 
@@ -248,7 +259,7 @@ For per-discipline conventions (biomedical/clinical, molecular biology and genet
 7. Craft Abstract (synthesizing the complete story)
 8. Create Title (concise and descriptive)
 
-**Remember**: Bullet points are for planning only—the final manuscript must be in complete paragraphs.
+Bullet points are planning scaffolds only; convert them to paragraphs before the draft leaves your hands.
 
 **Stage 3: Revision**
 1. Check logical flow and "red thread" throughout
@@ -275,7 +286,7 @@ Use this skill for the general scientific-writing craft (IMRAD, clarity, prose, 
 - **alterlab-citation-mgmt** — building/validating a BibTeX bibliography and pulling reference metadata (this skill applies citation *styles* in text but does not build the reference library).
 - **alterlab-scientific-schematics** / **alterlab-generate-image** — diagrams/schematics and images when a figure would aid clarity.
 
-**Formatting routing**: Journal manuscripts and conference papers use the `venue-templates` skill. Research reports, white papers, technical reports, and grant/progress reports use `scientific_report.sty` (this skill, §8). Theses use institutional templates.
+**Formatting routing**: Journal manuscripts and conference papers use `alterlab-venue-templates`. Research reports, white papers, technical reports, and grant/progress reports use `scientific_report.sty` (this skill, §8). Theses use institutional templates.
 
 ## References
 
@@ -308,4 +319,6 @@ This skill includes LaTeX style packages and templates for professional report f
 - Professional headers and footers
 
 Load these references as needed when working on specific aspects of scientific writing.
+
+Part of the AlterLab Academic Skills suite.
 

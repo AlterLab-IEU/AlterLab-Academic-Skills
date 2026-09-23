@@ -156,16 +156,11 @@ df.to_csv("screening_input.csv", index=False)
 ### Run Screening
 
 ```bash
-# Pre-compute ESM embeddings for faster screening
-python datasets/esm_embedding_preparation.py \
-  --protein_ligand_csv screening_input.csv \
-  --out_file protein_embeddings.pt
-
-# Run docking with pre-computed embeddings
+# One CSV, one run: inference.py computes the ESM2 embeddings for every complex in the
+# CSV once at start-up (there is no --esm_embeddings_path flag for inference).
 python -m inference \
   --config default_inference_args.yaml \
   --protein_ligand_csv screening_input.csv \
-  --esm_embeddings_path protein_embeddings.pt \
   --out_dir results/virtual_screening/ \
   --batch_size 32
 ```
@@ -236,11 +231,11 @@ pd.DataFrame(data).to_csv("ensemble_input.csv", index=False)
 ### Run Ensemble Docking
 
 ```bash
+# samples_per_complex: 20 set in a copy of the YAML (the YAML overrides CLI flags)
 python -m inference \
-  --config default_inference_args.yaml \
+  --config ensemble_args.yaml \
   --protein_ligand_csv ensemble_input.csv \
-  --out_dir results/ensemble_docking/ \
-  --samples_per_complex 20  # More samples per conformation
+  --out_dir results/ensemble_docking/
 ```
 
 ## Workflow 6: Integration with Downstream Analysis
@@ -317,8 +312,9 @@ Navigate to `http://localhost:7860` in web browser
 - Download predictions directly
 
 ### Online Alternative
-Use the Hugging Face Spaces demo without local installation:
-- URL: https://huggingface.co/spaces/reginabarzilaygroup/DiffDock-Web
+The Hugging Face Spaces demo (https://huggingface.co/spaces/reginabarzilaygroup/DiffDock-Web)
+is frequently down (its runtime has been erroring; last Space update Feb 2024). Treat it as
+best-effort and prefer a local/Docker install for reliable runs.
 
 ## Advanced Configuration
 
@@ -376,15 +372,14 @@ print(torch.cuda.is_available())  # Should return True
 
 **Solution**: Increase sampling diversity
 ```bash
-python -m inference ... --samples_per_complex 40 --temp_sampling_tor 9.0
+# in a copy of the YAML: samples_per_complex: 40, temp_sampling_tor: 9.0
+python -m inference --config my_args.yaml ...
 ```
 
 ### Issue: Protein with Many Chains
 
-**Solution**: Limit chains or isolate binding site
-```bash
-python -m inference ... --chain_cutoff 4
-```
+**Solution**: Isolate the relevant chains / binding-site region in the input PDB before
+docking (`--chain_cutoff` exists only in the evaluation scripts, not in `inference`).
 
 Or pre-process PDB to include only relevant chains.
 
