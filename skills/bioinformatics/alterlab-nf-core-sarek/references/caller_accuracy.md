@@ -2,12 +2,12 @@
 
 ## The default trap
 
-In nf-core/sarek 3.8.1, **when `--tools` is not specified, the pipeline runs
-preprocessing and then Strelka only** (https://nf-co.re/sarek/3.8.1/docs/usage/).
+In nf-core/sarek 3.10.0, **when `--tools` is not specified, the pipeline runs
+preprocessing and then Strelka only** (https://nf-co.re/sarek/3.10.0/docs/usage/).
 It does not silently run GATK HaplotypeCaller or DeepVariant. Always set
 `--tools` to match intent.
 
-## Tool/assay matrix (from the 3.8.1 docs)
+## Tool/assay matrix (from the 3.10.0 docs)
 
 Which callers apply to which assay and analysis type:
 

@@ -1,6 +1,6 @@
-# nf-core/sarek 3.8.1 — Samplesheet (`--input`) Schema
+# nf-core/sarek 3.10.0 — Samplesheet (`--input`) Schema
 
-Source: https://nf-co.re/sarek/3.8.1/docs/usage/. The input is a comma-separated
+Source: https://nf-co.re/sarek/3.10.0/docs/usage/. The input is a comma-separated
 CSV with a header row. Columns depend on the `--step` you start from.
 
 ## Columns for `--step mapping` (FASTQ entry)
@@ -55,7 +55,7 @@ by alignment columns and you pick the matching `--step`:
   `fastq_1`/`fastq_2`.
 - **VCF re-entry** (`--step annotate`): provide a `vcf` column.
 
-Consult the 3.8.1 usage docs for the exact column set required by each step; the
+Consult the 3.10.0 usage docs for the exact column set required by each step; the
 helper script (`scripts/make_samplesheet.py`) writes the FASTQ-entry sheet for
 `--step mapping`, which is the common starting point.
 

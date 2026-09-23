@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Runs `protein_mpnn_run.py` from `dauparas/ProteinMPNN` (PyTorch) under `uv run python`. The model is small — it runs on CPU and does not require a GPU (a GPU only speeds large batches). Network weights ship with the repo (no download/account). Input is a backbone PDB; output is a FASTA of designed sequences with scores."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # ProteinMPNN (fixed-backbone sequence design)
@@ -43,12 +44,17 @@ Use this skill when the user wants to:
 ### 1. Basic inverse folding
 
 ```bash
-# Parse the PDB, then design sequences (dauparas/ProteinMPNN CLI — TODO(verify) flags/version).
-# The parser lives in the repo's helper_scripts directory; run it by name:
-python parse_multiple_chains.py --input_path=pdbs/ --output_path=parsed.jsonl
+# Parse the PDB(s), then design sequences (dauparas/ProteinMPNN), from the repo
+# root. HS points at the repo's helper_scripts directory.
+HS=./helper_scripts
+python "$HS"/parse_multiple_chains.py --input_path=pdbs/ --output_path=parsed.jsonl
 python protein_mpnn_run.py \
   --jsonl_path parsed.jsonl --out_folder out/ \
-  --num_seq_per_target 8 --sampling_temp "0.1"
+  --num_seq_per_target 8 --sampling_temp "0.1" --seed 37
+
+# Single structure, no parsing step:
+python protein_mpnn_run.py --pdb_path backbone.pdb --pdb_path_chains A \
+  --out_folder out/ --num_seq_per_target 8 --sampling_temp "0.1"
 ```
 
 Lower `--sampling_temp` (e.g. 0.1) gives conservative, high-confidence designs; higher
@@ -57,9 +63,11 @@ better) and sequence recovery.
 
 ### 2. Fixed positions and chains
 
-Supply a fixed-positions spec (JSONL from the helper scripts) to keep catalytic/known
-residues while redesigning the rest, and a chain spec to design only some chains. Verify the
-exact helper-script names against your checkout (`TODO(verify)`).
+Supply a fixed-positions spec (JSONL from `make_fixed_positions_dict.py`, in the repo's
+`helper_scripts` directory alongside the parser above) to keep catalytic/known residues while
+redesigning the rest, and `assign_fixed_chains.py` from the same directory to design only some
+chains. Add `--use_soluble_model` to load the soluble-only weights, and
+`--ca_only` for CA-only backbones (it switches to the CA model set).
 
 ### 3. Symmetry / tied positions
 

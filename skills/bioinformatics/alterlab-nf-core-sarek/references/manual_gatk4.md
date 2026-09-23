@@ -8,7 +8,7 @@ yourself — prefer the pipeline when available.
 Sources: GATK Best Practices "Data pre-processing for variant discovery"
 (https://gatk.broadinstitute.org/hc/en-us/articles/360035535912) and the
 germline short-variant discovery best-practice (HaplotypeCaller in GVCF mode →
-GenotypeGVCFs). The known-sites resources match those the sarek 3.8.1 GATK genome
+GenotypeGVCFs). The known-sites resources match those the sarek 3.10.0 GATK genome
 key uses (dbSNP + Mills/1000G gold-standard indels).
 
 ## Tools needed (bioconda)

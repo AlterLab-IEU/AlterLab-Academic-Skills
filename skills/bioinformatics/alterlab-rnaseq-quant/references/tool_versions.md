@@ -3,19 +3,40 @@
 All version-specific claims in this skill trace to the upstream release pages
 below. Re-verify against the linked release notes before changing a pin.
 
-## salmon — v1.11.4
+## salmon — 2.x (the Rust rewrite)
 
-- Source: COMBINE-lab/salmon releases — https://github.com/COMBINE-lab/salmon/releases
-- Latest release at authoring time: **v1.11.4** (released 2026-03-11).
-- **SSHash index format change.** salmon adopted a new SSHash-based k-mer index,
-  replacing the prior colored compacted de Bruijn graph index. Upstream release
-  notes: *"all users must rebuild their salmon indices before using v1.11.2."*
-  → Practical rule: rebuild any index built before v1.11.2 with the same salmon
-  version you quantify with.
-- **`salmon alevin` removed.** Release notes: *"`salmon alevin` has been
-  removed."* Former alevin users are directed to the **piscem + alevin-fry**
-  pipeline (https://github.com/COMBINE-lab/piscem,
-  https://github.com/COMBINE-lab/alevin-fry).
+- Source: COMBINE-lab/salmon — https://github.com/COMBINE-lab/salmon, with the
+  breaking changes catalogued in the repo's `MIGRATION.md`.
+- Version in bioconda at review time (2026-09-23): **2.7.0** (uploaded 2026-08-30).
+- **salmon 2.0 is a from-scratch Rust rewrite.** Same workflow
+  (`salmon index` -> `salmon quant` -> `quant.sf`), same downstream output formats,
+  single portable binary with no Boost/compiler dependency. The final C++ release is
+  salmon **1.12.0**, kept on the upstream `cpp` branch and packaged as `salmon-cpp`.
+- **Index break.** 2.0 uses a new index format and *cannot read C++ (pufferfish)
+  indices*; the mismatch is detected and rejected with a clear error in both
+  directions. Rebuild with the binary you quantify with.
+- **Outputs are stable.** `quant.sf` is unchanged, and inferential replicates
+  (`aux_info/bootstrap/...` from `--numBootstraps` and `--numGibbsSamples`) keep the
+  C++ format, so tximport / tximeta / fishpond / swish work unmodified. The bias
+  diagnostic dumps in `aux_info/` moved to a documented Rust format; no standard R
+  package reads them.
+- **Removed subcommand:** `salmon alevin`. It prints a redirect and exits. Single-cell
+  moved to the **piscem + alevin-fry** ecosystem
+  (https://github.com/COMBINE-lab/piscem, https://github.com/COMBINE-lab/alevin-fry).
+- **Removed options (now error):** `--features` (index); `--mimicBT2`,
+  `--mimicStrictBT2`, `--minAssignedFrags`, `--alternativeInitMode`,
+  `--bootstrapReproject`, `--noGammaDraw`, `--numBiasSamples` (quant);
+  `--auxTargetFile`, `--writeOrphanLinks` (quant -a).
+- **Accepted but ignored (parse + warn):** `--validateMappings` (selective alignment is
+  the default), `--eqclasses`, `--noFragLengthDist`, `--noSingleFragProb`,
+  `--mismatchSeedSkip`, `--disableChainingHeuristic`, `--hitFilterPolicy`,
+  `--maxRecoverReadOcc`, `--filterSize` (index), and several `quant -a` options.
+- **New in 2.0:** `--sketch` (alignment-free pseudoalignment mode),
+  `--sketchStrictOrphans`, `--allowDovetail` honored in sketch mode, and
+  `--ignoreTxVersion` for `-g/--geneMap` matching. With `-g`, unmatched transcripts are
+  still emitted as single-transcript genes (nothing is dropped), but 2.x warns once
+  with a count and writes the names to `aux_info/genemap_unmatched_txps.json` instead
+  of warning per transcript.
 
 ## kallisto — v0.52.0
 

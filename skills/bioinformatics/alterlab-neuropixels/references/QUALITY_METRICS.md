@@ -118,9 +118,13 @@ Estimates fraction of spikes below detection threshold.
 
 ```python
 analyzer.compute('quality_metrics',
-                 metric_names=['amplitude_cutoff'],
-                 peak_sign='neg')  # 'neg', 'pos', or 'both'
+                 metric_names=['amplitude_cutoff'])
 ```
+
+`peak_sign` is **not** a parameter here in SpikeInterface 0.105+: the peak sign and
+main channel are decided once, when the `SortingAnalyzer` is created, and stored as
+the `main_channel_id` sorting property. On 0.104 and earlier the same call took
+`peak_sign='neg'`; passing it on 0.105 raises.
 
 | Value | Interpretation |
 |-------|---------------|

@@ -10,7 +10,12 @@ Usage:
 """
 
 import argparse
-import scanpy as sc
+
+import matplotlib
+
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  # noqa: E402
+import scanpy as sc  # noqa: E402
 
 
 def calculate_qc_metrics(adata, mt_threshold=5, min_genes=200, min_cells=3):
@@ -65,19 +70,26 @@ def generate_qc_plots(adata, output_prefix='qc'):
     import os
     os.makedirs('figures', exist_ok=True)
 
+    def _save(name):
+        # scanpy's own `save=` argument is deprecated as of 1.12; save the
+        # active matplotlib figure instead.
+        plt.savefig(f'figures/{output_prefix}_{name}.pdf', bbox_inches='tight')
+        plt.close('all')
+
     # Violin plots for QC metrics
     sc.pl.violin(adata, ['n_genes_by_counts', 'total_counts', 'pct_counts_mt'],
-                 jitter=0.4, multi_panel=True, save=f'_{output_prefix}_violin.pdf')
+                 jitter=0.4, multi_panel=True, show=False)
+    _save('violin')
 
     # Scatter plots
-    sc.pl.scatter(adata, x='total_counts', y='pct_counts_mt',
-                  save=f'_{output_prefix}_mt_scatter.pdf')
-    sc.pl.scatter(adata, x='total_counts', y='n_genes_by_counts',
-                  save=f'_{output_prefix}_genes_scatter.pdf')
+    sc.pl.scatter(adata, x='total_counts', y='pct_counts_mt', show=False)
+    _save('mt_scatter')
+    sc.pl.scatter(adata, x='total_counts', y='n_genes_by_counts', show=False)
+    _save('genes_scatter')
 
     # Highest expressing genes
-    sc.pl.highest_expr_genes(adata, n_top=20,
-                              save=f'_{output_prefix}_highest_expr.pdf')
+    sc.pl.highest_expr_genes(adata, n_top=20, show=False)
+    _save('highest_expr')
 
     print(f"\nQC plots saved to figures/ directory with prefix '{output_prefix}'")
 

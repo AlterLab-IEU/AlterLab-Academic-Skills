@@ -1,7 +1,10 @@
-# Version notes — QIIME 2 2026.1 and the 2026.4 rename
+# Version notes — QIIME 2 2026.1 -> 2026.7
 
-Pin this skill to **QIIME 2 2026.1** (the `amplicon` distribution). Facts below are from
-the official 2026.1 release announcement
+The current release is **QIIME 2 2026.7** (announced 2026-07-22,
+https://qiime2.org/news/qiime-2-2026-7-is-now-available-34255/). The amplicon pipeline
+commands this skill teaches are unchanged across 2026.1 -> 2026.7; what moved is the
+distribution name, the env files, and some plugin boundaries on the shotgun side. Facts
+about the `summarize` change below come from the official 2026.1 release announcement
 (https://qiime2.org/news/qiime-2-2026-1-is-now-available-33935/, announced 2026-01-28).
 
 ## Breaking change: `feature-table summarize`
@@ -20,16 +23,17 @@ sample-frequency artifacts in addition to the `.qzv`. Consequences for workflows
 - Practically, keep using `qiime feature-table summarize` and read `table.qzv`; that *is*
   the plus behavior now.
 
-## Distribution rename in 2026.4
+## Distribution rename, shipped in 2026.4
 
-The 2026.1 notes announce: *"in our next release (2026.4) we will be renaming the amplicon
+The 2026.1 notes announced: *"in our next release (2026.4) we will be renaming the amplicon
 distribution to qiime2, since this is the historical collection of packages that our user
-base is familiar with in the context of the qiime2 namespace."*
+base is familiar with in the context of the qiime2 namespace."* This shipped as planned and
+holds in 2026.7.
 
 Implications:
 
-- The conda **env file name and channel path change** (e.g. `rachis-qiime2-*-conda.yml`
-  under a `2026.4/qiime2/released/` path; see `installation.md`).
+- The conda **env file name and channel path change** (`rachis-qiime2-<platform>-conda.yml`
+  under `<release>/qiime2/released/`; see `installation.md`).
 - The **plugin commands do not change** — `qiime tools import`,
   `qiime cutadapt trim-paired`, `qiime dada2 denoise-paired`,
   `qiime feature-classifier classify-sklearn`,
@@ -48,12 +52,23 @@ named `rachis-qiime2-*`.)
 - `q2-boots`: improved memory efficiency in medoid calculations.
 - `q2-types`: added formats for genomic data and taxonomy-to-contig mappings.
 
+## Plugin moves in 2026.7
+
+These affect the shotgun-metagenomics side, not the amplicon pipeline, but they break older
+command lines:
+
+- Binning / MAG actions moved out of `q2-annotate` into a new **`q2-mag`** plugin.
+- Pangenome filtering actions moved into **`q2-quality-control`**.
+- `da-barplot` was replaced by **`ancombc2-visualizer`**, which took over the old name.
+- `q2view` now shows annotations in the provenance DAG.
+
 ## How to stay current
 
 When running a different release, **verify command names and install files from the
 official sources** rather than trusting this file:
 
-- Release announcement: https://qiime2.org/news/qiime-2-2026-1-is-now-available-33935/
+- Latest announcement: https://qiime2.org/news/qiime-2-2026-7-is-now-available-34255/
+- 2026.1 announcement: https://qiime2.org/news/qiime-2-2026-1-is-now-available-33935/
 - Amplicon docs: https://amplicon-docs.qiime2.org/
 - Library quickstart (install): https://library.qiime2.org/quickstart/amplicon
 - In the active env: `qiime info` and `qiime <plugin> <action> --help`.

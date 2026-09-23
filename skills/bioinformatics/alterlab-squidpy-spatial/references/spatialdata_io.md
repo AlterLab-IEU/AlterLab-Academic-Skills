@@ -1,6 +1,6 @@
 # Reading Modern Platforms with spatialdata-io
 
-Squidpy 1.8 requires `spatialdata>=0.7.1` and accepts `SpatialData` objects, which
+Squidpy 1.8 requires `spatialdata>=0.7.2` and accepts `SpatialData` objects, which
 is the recommended representation for single-cell-resolution platforms (Xenium,
 Visium HD) that carry images, shapes, and points alongside the expression table.
 Squidpy's own `sq.read` module covers `visium`, `vizgen`, and `nanostring` only —

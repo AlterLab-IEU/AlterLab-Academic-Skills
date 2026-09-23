@@ -2,7 +2,7 @@
 
 ## The change
 
-As of salmon **v1.11.x**, **`salmon alevin` has been removed** (upstream release
+As of salmon **2.x**, **`salmon alevin` has been removed** (upstream release
 notes; see ../references/tool_versions.md). Single-cell / droplet RNA-seq
 quantification is no longer a salmon subcommand. Any instruction that writes
 `salmon alevin ...` is outdated and will fail.

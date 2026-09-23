@@ -3,10 +3,11 @@ name: alterlab-squidpy-spatial
 description: "Analyzes spatial transcriptomics with squidpy (1.8.x) on AnnData and SpatialData objects, routing platforms correctly: Visium spots use spatial_neighbors(coord_type='grid') and pair with deconvolution, while Xenium/MERFISH single-cell data use coord_type='generic'/Delaunay neighbors and spatialdata-io readers (xenium, visium_hd, merscope). Runs sq.gr.spatial_neighbors, nhood_enrichment, co_occurrence, spatial_autocorr (Moran's I for spatially variable genes), ripley, and ligrec. Use when the user wants spatial transcriptomics, squidpy, Visium/Xenium/MERFISH analysis, neighborhood enrichment, co-occurrence, or spatially variable genes; QC/clustering uses alterlab-scanpy and spot deconvolution (destVI/Tangram) uses alterlab-scvi-tools. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with squidpy (1.8.x, needs spatialdata>=0.7.1, scanpy>=1.9.3, anndata>=0.9, Python>=3.11) installed; no API key or account required."
+compatibility: "Self-contained — runs under `uv run python` with squidpy (1.8.x, current 1.8.3 as of 2026-09; needs spatialdata>=0.7.2, spatialdata-plot>=0.3.3, scanpy>=1.9.3, anndata>=0.9, Python>=3.12) installed; no API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Squidpy: Spatial Transcriptomics
@@ -29,6 +30,8 @@ Use when the request involves:
   **centrality scores**.
 - Finding **spatially variable genes** via Moran's I (`spatial_autocorr`) or Sepal.
 - **Ligand-receptor** analysis in a spatial context (`ligrec`).
+- Identifying **spatial niches / tissue domains** (`calculate_niche_*`: neighborhood
+  profile, UTAG, CellCharter, SpatialLeiden).
 - Reading platform output into AnnData/SpatialData and choosing the right
   `coord_type` for the platform.
 
@@ -66,6 +69,10 @@ the squidpy 1.8 `sq.gr.spatial_neighbors` API.)
 - `delaunay=True` is only used when `coord_type="generic"`; it builds the graph from
   a Delaunay triangulation instead of k-nearest spots. `n_rings` is only used for
   `coord_type="grid"`.
+- Squidpy 1.8 also exposes the builders directly — `sq.gr.spatial_neighbors_grid`,
+  `_knn`, `_radius`, `_delaunay` — each with only the parameters that apply to it.
+  Prefer them when you know the geometry: `sq.gr.spatial_neighbors(..., delaunay=True)`
+  silently ignores `n_neighs`, which is a common source of "my k did nothing".
 
 ## Loading Data (pick the reader for the platform)
 
@@ -126,10 +133,27 @@ svgs = adata.uns["moranI"].head(20)   # ranked by Moran's I
 sq.gr.ligrec(adata, cluster_key="leiden")
 ```
 
+```python
+# 6. Spatial niches / tissue domains — cluster cells by their neighborhood, not
+#    just their own expression. Requires a spatial graph (step 1) already built.
+sq.gr.calculate_niche_neighborhood(adata, groups="leiden", resolutions=[0.5, 1.0])
+# other flavors: calculate_niche_utag, calculate_niche_cellcharter,
+#                calculate_niche_spatialleiden
+```
+
+The generic `sq.gr.calculate_niche(..., flavor=...)` dispatcher still works but is
+deprecated for removal in squidpy 1.9 — call the flavor-specific function, whose
+signature only carries the parameters that flavor actually uses. Niches answer a
+different question from `nhood_enrichment`: enrichment asks *which labelled cell types
+sit together on average*, niches assign *each cell to a recurring tissue
+microenvironment*.
+
 Other graph statistics: `sq.gr.interaction_matrix`, `sq.gr.centrality_scores`,
 `sq.gr.ripley` (clustering/dispersion vs. CSR), and `sq.gr.sepal` (an alternative
 spatially-variable-gene test). Visualize tissue with `sq.pl.spatial_scatter`
-(spot/point) or `sq.pl.spatial_segment` (segmented cells). For image features on
+(spot/point) or `sq.pl.spatial_segment` (segmented cells);
+`sq.pl.nhood_enrichment_dotplot` and `sq.pl.var_by_distance` (expression as a function
+of distance to an anchor) are the other two plots worth knowing. For image features on
 H&E/IF, the `sq.im` module (`process`, `segment`, `calculate_image_features`)
 operates on an `ImageContainer`.
 

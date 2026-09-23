@@ -3,10 +3,11 @@ name: alterlab-scikit-bio
 description: Analyze biological data with scikit-bio — sequence analysis and alignments, phylogenetic trees, alpha/beta diversity metrics (including UniFrac), ordination (PCoA), PERMANOVA statistics, and FASTA/Newick I/O. Use for microbiome and community-ecology analysis — computing diversity, distance matrices, and ordination from feature tables. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for scikit-bio 0.7.x (current 0.7.4, released 2026-09-21), which requires Python >= 3.10."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # scikit-bio
@@ -28,6 +29,16 @@ This skill should be used when the user:
 - Analyzes microbiome or community ecology data
 - Works with protein embeddings from language models
 - Needs to manipulate biological data tables
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Running the full amplicon pipeline (demux -> DADA2 -> taxonomy -> diversity) as QIIME 2 artifacts | `alterlab-qiime2-amplicon` |
+| Inferring a phylogeny with a substitution model (IQ-TREE/RAxML, bootstrap support) | `alterlab-phylogenetics` |
+| General sequence record parsing, BLAST parsing, Entrez retrieval | `alterlab-biopython` |
+| Single-cell or bulk expression analysis rather than community ecology | `alterlab-scanpy` / `alterlab-pydeseq2` |
+| Generic multivariate statistics on non-compositional data | `alterlab-statistical-analysis` |
 
 ## Core Capabilities
 
@@ -78,6 +89,9 @@ Perform pairwise and multiple sequence alignments using dynamic programming algo
 - Configurable scoring (match/mismatch tuple, named substitution matrix, affine gap costs)
 - CIGAR string handling via `PairAlignPath`
 - Multiple sequence alignment storage and manipulation with `TabularMSA`
+- Progressive multiple sequence alignment with `multi_align` (and the `multi_align_nucl` /
+  `multi_align_prot` wrappers), added in 0.7.4 — previously `TabularMSA` could only hold an
+  alignment produced elsewhere
 
 **Common patterns:**
 ```python
@@ -103,6 +117,10 @@ consensus = msa.consensus()
 - `pair_align` returns a named tuple `(score, paths, matrices)`; `paths` is a list of `PairAlignPath` objects (up to `max_paths`).
 - `sub_score` accepts a `(match, mismatch)` tuple, a named matrix string (e.g. `'BLOSUM62'`), or a `SubstitutionMatrix`; `gap_cost` takes a single value (linear) or `(open, extend)` tuple (affine — recommended for biological sequences).
 - The older `local_pairwise_align_ssw`, `StripedSmithWaterman`, and `*_pairwise_align`/`AlignScorer` interfaces were removed/deprecated in 0.6–0.7; use `pair_align*` instead.
+- For more than two sequences, `multi_align(seqs)` (0.7.4+) builds a progressive alignment and
+  returns a `TabularMSA`. It is a convenience implementation, not a MAFFT/MUSCLE replacement —
+  for large or publication-critical alignments still use a dedicated aligner
+  (`alterlab-phylogenetics` covers that path).
 
 ### 3. Phylogenetic Trees
 
@@ -249,6 +267,22 @@ print(f"Correlation: {mantel_results[0]}, p-value: {mantel_results[1]}")
 - Use 999+ permutations for robust p-values
 - PERMANOVA sensitive to dispersion differences; pair with PERMDISP
 - Mantel tests assess matrix correlation (e.g., geographic vs genetic distance)
+- `permanova`, `mantel`, `permdisp`, `pcoa` and the UniFrac metrics accept `engine="fast"`
+  (0.7.4+), which uses Numba when installed and Cython otherwise; `skbio.get_config()` shows the
+  current settings and the global `compute_engine` option sets them in one place. Defaults are
+  unchanged, so results do not shift when you opt in — only the runtime.
+
+### 6b. Differential abundance (compositional data)
+
+`skbio.stats.composition` carries the compositional-data toolkit: `clr` / `ilr` / `rclr` (and
+`rclr_inv`) transforms, `ancom`, `ancombc`, `ancombc2` (0.7.4+, with global, pairwise, Dunnett
+and trend post-hoc tests), `dirmult_ttest` and `dirmult_lme`.
+
+Two 0.7.4 changes to watch for, because old code keeps running and returns something different:
+`ancombc` now returns an `ANCOMBCResult` rather than a DataFrame (the primary table is
+`.result`, and the global test moved to `ANCOMBCResult.global_test()` after a correctness fix),
+and its `Log2(FC)` column was renamed `Log(FC)` because the values were always natural-log.
+Anything that read `Log2(FC)` or exponentiated base-2 was misreporting effect sizes.
 
 ### 7. File I/O and Format Conversion
 
@@ -400,7 +434,8 @@ ord_results = embed_vec_to_ordination(vecs)             # OrdinationResults (PCo
 
 ### Installation
 ```bash
-uv pip install "scikit-bio>=0.7,<0.8"   # examples here target the 0.7 API
+uv pip install "scikit-bio>=0.7,<0.8"   # examples here target the 0.7 API (current 0.7.4)
+uv pip install numba                    # optional: enables engine="fast" / GPU paths
 ```
 The 0.6→0.7 line renamed several interfaces (`otu_ids`→`taxa`, `observed_otus`→`observed_features`, `robinson_foulds`→`compare_rfd`) and replaced the old pairwise-alignment functions with `pair_align*`. Pin if you depend on these.
 

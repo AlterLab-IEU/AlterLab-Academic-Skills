@@ -3,10 +3,11 @@ name: alterlab-pydeseq2
 description: Run differential gene expression analysis on bulk RNA-seq count matrices with PyDESeq2, the Python port of DESeq2 — size-factor normalization, dispersion estimation, Wald tests, FDR (Benjamini-Hochberg) correction, and volcano/MA plots. Use when identifying differentially expressed genes between conditions from raw bulk RNA-seq counts. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for PyDESeq2 0.5.x (current 0.5.4 as of 2026-09), which requires Python >= 3.11."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # PyDESeq2
@@ -25,13 +26,26 @@ Use this skill when:
 - Integrating differential expression analysis into Python-based pipelines
 - Users mention "DESeq2", "differential expression", "RNA-seq analysis", or "PyDESeq2"
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Single-cell differential expression or cluster marker genes | `alterlab-scanpy` (markers) or `alterlab-scvi-tools` (model-based DE) |
+| Turning FASTQ into the count matrix (salmon/kallisto/STAR quantification, tximport) | `alterlab-rnaseq-quant` |
+| Generic regression / GLM / mixed models on non-count data | `alterlab-statsmodels` |
+| Somatic or germline variant calling from sequencing reads | `alterlab-nf-core-sarek` |
+| Microbiome feature-table differential abundance | `alterlab-qiime2-amplicon` |
+
 ## Installation and Requirements
 
 ```bash
 uv pip install "pydeseq2>=0.5,<0.6"
 ```
 
-**System requirements (pydeseq2 0.5.x):** Python ≥3.11; numpy ≥2.0, pandas ≥2.2, scipy ≥1.12, scikit-learn ≥1.4, anndata ≥0.11, formulaic ≥1.0.2 (parses the `~` design formula), matplotlib ≥3.9. These are pulled in automatically as dependencies.
+**System requirements (pydeseq2 0.5.x, current 0.5.4):** Python ≥3.11; numpy ≥2.0, pandas ≥2.2,
+scipy ≥1.12, scikit-learn ≥1.4, anndata ≥0.11, formulaic ≥1.0.2 and formulaic-contrasts ≥0.2
+(parse the `~` design formula and build contrast vectors), matplotlib ≥3.9. These are pulled in
+automatically as dependencies.
 
 **API note (0.4+):** parallelism is configured through an `inference` object, not a bare `n_cpus=` kwarg:
 
@@ -95,8 +109,18 @@ It handles data loading/validation, gene+sample filtering, the full DESeq2 pipel
 4. **Design formula order:** adjustment variables before the variable of interest (`"~batch + condition"`).
 5. **LFC shrinkage timing:** shrink after testing, for visualization/ranking only — p-values stay unshrunken.
 6. **Significance:** use `padj < 0.05` (Benjamini-Hochberg FDR), not raw p-values.
-7. **Contrast format:** `[variable, test_level, reference_level]`.
+7. **Contrast format:** `[variable, test_level, reference_level]`. `contrast` also accepts a raw
+   numpy contrast vector over the design matrix columns for comparisons a three-element list
+   cannot express (e.g. interaction terms, averaging several levels).
 8. **Save intermediates:** pickle the DeseqDataSet to avoid re-running the expensive fit.
+9. **Test against a fold-change threshold, not just zero:** `DeseqStats(..., lfc_null=1.0,
+   alt_hypothesis="greaterAbs")` asks "is |LFC| > 1?" inside the model. That is the statistically
+   correct way to demand an effect size — filtering a `lfc_null=0` result on `abs(log2FoldChange)
+   > 1` afterwards does not control the FDR for that claim.
+10. **Zero-heavy or sparse counts:** `DeseqDataSet(..., size_factors_fit_type="poscounts")` uses
+   the positive-counts estimator instead of the median-of-ratios default, which fails when no gene
+   is detected in every sample. `control_genes=` restricts size-factor estimation to spike-ins or
+   housekeeping genes.
 
 ## Reference Index
 

@@ -1,8 +1,10 @@
 # RFdiffusion — Usage Reference
 
-Deeper detail for `alterlab-rfdiffusion`. Verify config keys, the contig grammar, and weights
-against the upstream `RosettaCommons/RFdiffusion` README (`TODO(verify)`) — RFdiffusion uses a
-Hydra config and the syntax is version-specific.
+Deeper detail for `alterlab-rfdiffusion`. Config keys and contig grammar below were checked
+against the upstream `RosettaCommons/RFdiffusion` README (2026-09). RFdiffusion uses a Hydra
+config, so keys are version-specific — `configs/inference/base.yml` in your checkout is the
+authoritative list. For RFdiffusion2 and RFdiffusion3 (separate repos with different
+interfaces) see the version table in SKILL.md.
 
 ## Install
 
@@ -15,20 +17,23 @@ GPU is required for practical generation.
 `contigmap.contigs` is the core control:
 
 - `'[100-100]'` — a single 100-residue chain (unconditional).
-- ranges + fixed segments — mix generated lengths with fixed motif residues from an input PDB
-  for **motif scaffolding**.
-- multiple chains / symmetry blocks — for complexes and symmetric assemblies.
+- `'[5-15/A10-25/30-40]'` — generated 5–15 residues, then fixed motif A10-25 from the input PDB,
+  then generated 30–40: **motif scaffolding**. Ranges are resampled per design unless you pin the
+  total with `contigmap.length=55-55`.
+- `/0 ` (trailing space) — a chain break, e.g. `'[B1-100/0 100-100]'` = keep target chain B,
+  generate a 100-residue binder as a second chain.
 
-Confirm the exact contig grammar and symmetry keys for your version.
-
-## Common modes (verify keys per version)
+## Common modes
 
 | Mode | Config sketch |
 |------|---------------|
-| Unconditional | `contigmap.contigs=[N-N]`, `inference.num_designs=K` |
-| Motif scaffolding | fixed motif ranges + generated segments; `inference.input_pdb` |
-| Binder design | target PDB + `ppi.hotspot_res=[...]` |
-| Symmetric | symmetry config (cyclic/dihedral) |
+| Unconditional | `'contigmap.contigs=[N-N]' inference.num_designs=K` |
+| Motif scaffolding | `inference.input_pdb=…` + fixed ranges in the contig (+ `contigmap.length`) |
+| Binder design | target chain in the contig + `'ppi.hotspot_res=[A30,A33,A34]'` |
+| Partial diffusion | `diffuser.partial_T=20` — re-noise an existing design instead of starting from noise. `diffuser.T` defaults to 50, so scale `partial_T` against that (older papers quoting ~80 assumed T=200) |
+| Symmetric | `--config-name symmetry inference.symmetry=c4` (or `d2`, `tetrahedral`) — a separate config file, not just a flag |
+| Fold-conditioned / scaffold-guided | `scaffoldguided.scaffoldguided=True` + `scaffoldguided.scaffold_dir=…` |
+| Auxiliary potentials | `potentials.guiding_potentials=[…]`, `potentials.guide_scale`, `potentials.guide_decay` — nudge packing/oligomer contacts during denoising |
 
 ## Outputs
 

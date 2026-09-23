@@ -3,10 +3,11 @@ name: alterlab-scvelo
 description: Run RNA velocity analysis with scVelo on single-cell RNA-seq data — estimate cell-state transitions from spliced/unspliced mRNA dynamics, infer trajectory direction, compute latent time, and identify driver genes. Use when adding directionality to trajectories or studying differentiation dynamics from spliced/unspliced layers (velocyto/STARsolo output); for the general QC, clustering, UMAP, and differential-expression analysis pipeline prefer alterlab-scanpy instead, and for .h5ad data-structure I/O and layer wrangling prefer alterlab-anndata instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. scVelo 0.3.4 (released 2026-02) is the current and effectively final upstream release; it is minimally maintained, so pin it and validate results rather than expecting fixes."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # scVelo — RNA Velocity Analysis
@@ -15,7 +16,18 @@ metadata:
 
 scVelo is the leading Python package for RNA velocity analysis in single-cell RNA-seq data. It infers cell state transitions by modeling the kinetics of mRNA splicing — using the ratio of unspliced (pre-mRNA) to spliced (mature mRNA) abundances to determine whether a gene is being upregulated or downregulated in each cell. This allows reconstruction of developmental trajectories and identification of cell fate decisions without requiring time-course data.
 
-**Installation:** `uv pip install "scvelo==0.3.4"` (latest as of mid-2025). Gotcha: scVelo's deps declare `numpy>=1.17` with no upper bound, but the stack breaks under **numpy 2.x** — if you hit cryptic `np.float_`/dtype errors on import or in plotting, pin `numpy<2` (e.g. `numpy==1.26.4`). pandas 2.x is fine on 0.3.x.
+**Installation:** `uv pip install "scvelo==0.3.4"` — 0.3.4 (uploaded 2026-02-24) is the
+current release and the package is now only minimally maintained: its published release
+notes stop at 0.2.5, upstream CI still targets Python 3.9/3.10, and its dependency
+declarations (`numpy>=1.17`, `scanpy>=1.5`, `anndata>=0.7.5`) have no upper bounds, so pip
+will happily build an environment scVelo was never tested against.
+
+Practical consequence: install it in its own environment with a pinned NumPy rather than
+into a current scverse stack. If you hit dtype or scalar-assignment errors under NumPy 2 —
+most often in `mode="stochastic"`, whose second-moment regression assigns a one-element
+least-squares result to a scalar — pin `numpy<2` (e.g. `numpy==1.26.4`) and re-run. Check
+velocity results for silent breakage rather than assuming they are fine: compare the
+stochastic and dynamical modes, and confirm the streamlines agree with known biology.
 
 **Key resources:**
 - Documentation: https://scvelo.readthedocs.io/
@@ -32,6 +44,16 @@ Use scVelo when:
 - **Developmental biology**: Model hematopoiesis, neurogenesis, epithelial-to-mesenchymal transitions
 - **Latent time estimation**: Order cells along a pseudotime derived from splicing dynamics
 - **Complement to Scanpy**: Add directional information to UMAP embeddings
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| QC, normalization, PCA/UMAP, Leiden clustering, marker genes (no velocity) | `alterlab-scanpy` |
+| Reading/wrangling the `.h5ad` object, layers, and concatenation | `alterlab-anndata` |
+| Probabilistic integration / batch correction / model-based DE (scVI, scANVI, veloVI) | `alterlab-scvi-tools` |
+| Producing the spliced/unspliced count layers from FASTQ in the first place | `alterlab-rnaseq-quant` |
+| Inferring a gene-regulatory network from expression | `alterlab-arboreto` |
 
 ## Prerequisites
 
@@ -322,5 +344,7 @@ After running the workflow, the following fields are added:
 - **GitHub**: https://github.com/theislab/scvelo
 - **Paper**: Bergen V et al. (2020) Nature Biotechnology. PMID: 32747759
 - **velocyto** (preprocessing): http://velocyto.org/
-- **CellRank** (fate prediction, extends scVelo): https://cellrank.readthedocs.io/
+- **CellRank 2** (fate prediction; consumes a velocity kernel but also works without RNA
+  velocity, via pseudotime / real-time / metabolic-labelling kernels — the actively
+  maintained route for fate probabilities): https://cellrank.readthedocs.io/
 - **dynamo** (metabolic labeling alternative): https://dynamo-release.readthedocs.io/

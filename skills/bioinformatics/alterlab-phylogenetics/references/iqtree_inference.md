@@ -1,9 +1,13 @@
-# IQ-TREE 2 Phylogenetic Inference Reference
+# IQ-TREE Phylogenetic Inference Reference
+
+> Commands below call `iqtree`. bioconda's `iqtree` package is IQ-TREE 3 (3.1.x) and installs
+> `iqtree` and `iqtree3`; the older 2.x package installed `iqtree2`. The options here are the
+> same on both.
 
 ## Basic Command Syntax
 
 ```bash
-iqtree2 -s alignment.fasta --prefix output -m TEST -B 1000 -T AUTO --redo
+iqtree -s alignment.fasta --prefix output -B 1000 -T AUTO --redo   # -m MFP is the default
 ```
 
 ## Key Parameters
@@ -24,35 +28,35 @@ iqtree2 -s alignment.fasta --prefix output -m TEST -B 1000 -T AUTO --redo
 
 ```bash
 # Full model testing (automatically selects best model)
-iqtree2 -s alignment.fasta -m TEST --prefix test_run -B 1000 -T 4
+iqtree -s alignment.fasta -m TEST --prefix test_run -B 1000 -T 4
 
 # Specify model explicitly
-iqtree2 -s alignment.fasta -m GTR+G4 --prefix gtr_run -B 1000
+iqtree -s alignment.fasta -m GTR+G4 --prefix gtr_run -B 1000
 
 # Protein sequences
-iqtree2 -s protein.fasta -m TEST --prefix prot_tree -B 1000
+iqtree -s protein.fasta -m TEST --prefix prot_tree -B 1000
 
 # Codon-based analysis
-iqtree2 -s codon.fasta -m GY --prefix codon_tree -B 1000
+iqtree -s codon.fasta -m GY --prefix codon_tree -B 1000
 ```
 
 ## Bootstrapping Methods
 
 ### Ultrafast Bootstrap (UFBoot, recommended)
 ```bash
-iqtree2 -s alignment.fasta -B 1000  # 1000 replicates
+iqtree -s alignment.fasta -B 1000  # 1000 replicates
 # Values ≥95 are reliable
 # ~10× faster than standard bootstrap
 ```
 
 ### Standard Bootstrap
 ```bash
-iqtree2 -s alignment.fasta -b 100  # 100 replicates (very slow)
+iqtree -s alignment.fasta -b 100  # 100 replicates (very slow)
 ```
 
 ### SH-aLRT Test (fast alternative)
 ```bash
-iqtree2 -s alignment.fasta -alrt 1000 -B 1000  # Both SH-aLRT and UFBoot
+iqtree -s alignment.fasta -alrt 1000 -B 1000  # Both SH-aLRT and UFBoot
 # SH-aLRT ≥80 AND UFBoot ≥95 = well-supported branch
 ```
 
@@ -83,7 +87,7 @@ iqtree2 -s alignment.fasta -alrt 1000 -B 1000  # Both SH-aLRT and UFBoot
 
 ```bash
 # Temporal analysis with sampling dates
-iqtree2 -s alignment.fasta -m GTR+G \
+iqtree -s alignment.fasta -m GTR+G \
         --date dates.tsv \           # Tab-separated: taxon_name  YYYY-MM-DD
         --clock-test \               # Test for clock-like evolution
         --date-CI 95 \              # 95% CI for node dates
@@ -94,7 +98,7 @@ iqtree2 -s alignment.fasta -m GTR+G \
 
 ```bash
 # Gene concordance factor (gCF) - requires multiple gene alignments
-iqtree2 --gcf gene_trees.nwk \
+iqtree --gcf gene_trees.nwk \
         --tree main_tree.treefile \
         --cf-verbose \
         --prefix cf_analysis
@@ -103,7 +107,7 @@ iqtree2 --gcf gene_trees.nwk \
 ### Ancestral Sequence Reconstruction
 
 ```bash
-iqtree2 -s alignment.fasta -m LG+G4 \
+iqtree -s alignment.fasta -m LG+G4 \
         -asr \                      # Marginal ancestral state reconstruction
         --prefix anc_tree
 # Output: {prefix}.state (ancestral sequences per node)
@@ -116,7 +120,7 @@ iqtree2 -s alignment.fasta -m LG+G4 \
 # DNA, gene1 = 1-500
 # DNA, gene2 = 501-1000
 
-iqtree2 -s concat_alignment.fasta \
+iqtree -s concat_alignment.fasta \
         -p partitions.txt \
         -m TEST \
         -B 1000 \

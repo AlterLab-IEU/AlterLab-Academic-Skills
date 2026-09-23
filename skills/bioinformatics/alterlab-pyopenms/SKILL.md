@@ -3,10 +3,11 @@ name: alterlab-pyopenms
 description: Build complete mass-spectrometry workflows with pyOpenMS — feature detection, peptide identification, protein quantification, and full LC-MS/MS pipelines across many MS file formats (mzML, mzXML) and algorithms. Use for comprehensive proteomics and MS data processing — for simple spectral comparison and metabolite identification use matchms. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for pyOpenMS 3.x (current 3.5.0 as of 2026-09); wheels ship the compiled OpenMS library, so no separate OpenMS install is needed."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.2.0"
+    last_updated: "2026-09-23"
 ---
 
 # PyOpenMS
@@ -34,6 +35,28 @@ print(pyopenms.__version__)
 > `FeatureFinderAlgorithmPicked` (the former `"centroided"` algorithm) or, for
 > metabolomics, the `MassTraceDetection` → `ElutionPeakDetection` →
 > `FeatureFindingMetabo` chain. See `references/feature_detection.md`.
+
+## When to Use This Skill
+
+Use this skill when the user wants to:
+- Read, convert, or inspect MS file formats (mzML, mzXML, idXML, featureXML, consensusXML, mzTab).
+- Process raw spectra — smoothing, baseline removal, centroiding/peak picking, normalization.
+- Run **feature detection** and label-free quantification on LC-MS runs.
+- Do **peptide/protein identification** and FDR control (search-engine adapters, PeptideIndexer,
+  FalseDiscoveryRate) or build a full LC-MS/MS pipeline.
+- Do untargeted **metabolomics** feature finding (MassTraceDetection -> ElutionPeakDetection ->
+  FeatureFindingMetabo) and adduct/formula work.
+- Drive OpenMS algorithms programmatically with `Param` objects instead of TOPP command lines.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Spectral similarity scoring / library matching of small-molecule MS/MS | `alterlab-matchms` |
+| Cheminformatics on the identified molecules (descriptors, substructures, SMILES) | `alterlab-rdkit` |
+| Statistics on an already-quantified abundance matrix (tests, PCA, clustering) | `alterlab-statistical-analysis` |
+| Protein sequence/structure work rather than the mass spectra | `alterlab-biopython` or `alterlab-alphafold` |
+| Transcript quantification from RNA-seq reads | `alterlab-rnaseq-quant` |
 
 ## Core Capabilities
 

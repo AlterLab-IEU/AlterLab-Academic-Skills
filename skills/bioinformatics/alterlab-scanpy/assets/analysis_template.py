@@ -6,6 +6,15 @@ This template provides a complete workflow for single-cell RNA-seq analysis
 using scanpy, from data loading through clustering and cell type annotation.
 
 Customize the parameters and sections as needed for your specific dataset.
+
+Figure saving: the `save=` argument used below is deprecated as of Scanpy 1.12 (it still
+works, with a warning, writing into `sc.settings.figdir` with the plot name prepended).
+When adapting this template, prefer:
+
+    sc.pl.umap(adata, color="leiden", show=False)
+    plt.savefig("figures/umap_leiden.pdf", bbox_inches="tight"); plt.close()
+
+Requires Scanpy >= 1.12 (Python >= 3.12).
 """
 
 import scanpy as sc
