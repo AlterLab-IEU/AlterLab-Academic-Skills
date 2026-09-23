@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # RDKit Cheminformatics Toolkit
@@ -15,9 +16,21 @@ metadata:
 
 RDKit is a comprehensive cheminformatics library providing Python APIs for molecular analysis and manipulation. This skill provides guidance for reading/writing molecular structures, calculating descriptors, fingerprinting, substructure searching, chemical reactions, 2D/3D coordinate generation, and molecular visualization. Use this skill for drug discovery, computational chemistry, and cheminformatics research tasks.
 
-## When to Use
+**Version:** install with `uv pip install rdkit` (current release 2026.03.6 as of 2026-09; examples assume ≥ 2024.09). In 2026.03 the legacy fingerprint helpers (`AllChem.GetMorganFingerprintAsBitVect`, `rdkit.Chem.AtomPairs.Pairs.*`, `Torsions.*`) and `Atom.GetImplicitValence()` / `GetExplicitValence()` still run but log `DEPRECATION WARNING`s — use the `rdFingerprintGenerator` API and `atom.GetValence(Chem.ValenceType.IMPLICIT | EXPLICIT)` in new code.
+
+## When to Use This Skill
 
 Reach for this skill when you need fine-grained molecular control: custom sanitization, specialized fingerprints or descriptors, reaction enumeration, conformer generation, or programmatic drawing. For standard, high-level workflows with a simpler interface, prefer **datamol** (a wrapper around RDKit).
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Standard pandas-friendly pipelines (load → standardize → descriptors → cluster) with minimal code | `alterlab-datamol` |
+| Turning a molecule set into ML feature matrices or pretrained embeddings | `alterlab-molfeat` |
+| Drug-likeness rule sets and PAINS / structural-alert triage of a library | `alterlab-medchem` |
+| Looking up a compound's structure, properties, or bioactivity by name or ID | `alterlab-pubchem` or `alterlab-chembl` |
+| Protein–ligand docking / binding-pose prediction | `alterlab-diffdock` |
 
 ## Core Capabilities
 
@@ -243,7 +256,7 @@ with open('molecules.pkl', 'wb') as f:
     pickle.dump(mols, f)   # load side is much faster than reparsing SMILES/SDF
 
 mfpgen = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=2048)
-fps = [mfpgen.GetFingerprint(mol) for mol in mols]
+fps = mfpgen.GetFingerprints(mols, numThreads=4)   # batched, multithreaded
 similarities = DataStructs.BulkTanimotoSimilarity(fps[0], fps[1:])
 ```
 

@@ -189,10 +189,10 @@ Descriptors.NumRotatableBonds(mol)
 
 ## Aromatic Atoms
 
-### NumAromaticAtoms
-Number of aromatic atoms.
+### Aromatic atom count
+RDKit has no `NumAromaticAtoms` descriptor (only ring counts such as `NumAromaticRings`); count atoms directly.
 ```python
-Descriptors.NumAromaticAtoms(mol)
+sum(atom.GetIsAromatic() for atom in mol.GetAtoms())
 ```
 
 ## Fraction Descriptors
@@ -244,14 +244,11 @@ Descriptors.Kappa3(mol)
 
 Molecular connectivity indices.
 
-### Chi0, Chi1, Chi2, Chi3, Chi4
-Simple chi connectivity indices.
+### Chi0, Chi1
+Simple chi connectivity indices (RDKit provides only orders 0 and 1 in the unmodified form; higher orders exist as the `n`/`v` variants below).
 ```python
 Descriptors.Chi0(mol)
 Descriptors.Chi1(mol)
-Descriptors.Chi2(mol)
-Descriptors.Chi3(mol)
-Descriptors.Chi4(mol)
 ```
 
 ### Chi0n, Chi1n, Chi2n, Chi3n, Chi4n
@@ -392,11 +389,11 @@ Descriptors.SMR_VSA1(mol)
 
 LogP VSA descriptors.
 
-### SLogP_VSA1 through SLogP_VSA12
-MOE-type descriptors using LogP contributions and surface area.
+### SlogP_VSA1 through SlogP_VSA12
+MOE-type descriptors using LogP contributions and surface area (note RDKit's spelling: `SlogP`, lowercase "l").
 ```python
-Descriptors.SLogP_VSA1(mol)
-# ... through SLogP_VSA12
+Descriptors.SlogP_VSA1(mol)
+# ... through SlogP_VSA12
 ```
 
 ## EState VSA Descriptors
@@ -591,6 +588,6 @@ def molecular_complexity(mol):
 1. **Use batch calculation** for multiple descriptors to avoid redundant computations
 2. **Check for None** - some descriptors may return None for invalid molecules
 3. **Normalize descriptors** for machine learning applications
-4. **Select relevant descriptors** - not all 200+ descriptors are useful for every task
+4. **Select relevant descriptors** - not all ~217 descriptors (`len(Descriptors._descList)` in 2026.03) are useful for every task
 5. **Consider 3D descriptors** separately (require 3D coordinates)
 6. **Validate ranges** - check if descriptor values are in expected ranges

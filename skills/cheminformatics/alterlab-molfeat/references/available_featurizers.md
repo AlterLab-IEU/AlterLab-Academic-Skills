@@ -2,6 +2,11 @@
 
 This document provides a comprehensive catalog of all featurizers available in molfeat, organized by category.
 
+> **molfeat 1.0 (2026-09) removed the DGL-based pretrained GNNs (GIN variants, JTVAE) and Graphormer.**
+> Their model-store cards still list them, but loading fails in 1.x; they are kept below only as
+> legacy entries (usable with `molfeat<1`, Python ≤ 3.10). 1.0 added the foundation-model
+> featurizers `CheMeleonTransformer` and `MolJEPATransformer` (see "Foundation Models").
+
 ## Transformer-Based Language Models
 
 Pre-trained transformer models for molecular embeddings using SMILES/SELFIES representations.
@@ -20,7 +25,12 @@ Pre-trained transformer models for molecular embeddings using SMILES/SELFIES rep
 ### Specialized Transformer Models
 - **MolT5** - Self-supervised framework for molecule captioning and text-based generation
 
-## Graph Neural Networks (GNNs)
+## Foundation Models (molfeat 1.x)
+
+- **CheMeleonTransformer** — CheMeleon descriptor-foundation-model fingerprints (2,048-d); weights downloaded from the authors' Zenodo record and MD5-verified (`from molfeat.trans.pretrained import CheMeleonTransformer`)
+- **MolJEPATransformer** — Mol-JEPA embeddings from the authors' Hugging Face checkpoint (CC BY-NC 4.0, custom model code); requires `trust_remote_code=True` and `accept_noncommercial_license=True`; uses the `transformer` + `pyg` extras
+
+## Graph Neural Networks (GNNs) — legacy, removed in molfeat 1.0
 
 Pre-trained graph neural network models operating on molecular graph structures.
 
@@ -114,7 +124,8 @@ Binary or count-based fixed-length vectors representing molecular substructures.
 ### MinHashed Fingerprints
 - **map4** - MinHashed Atom-Pair fingerprint up to 4 bonds
   - Combines atom-pair and ECFP concepts
-  - Default: 1024 dimensions
+  - Default: 2048 dimensions in molfeat 1.0 (`FPCalculator("map4")`)
+  - Needs the `map4` package from https://github.com/reymond-group/map4 (not on PyPI)
   - Fast and efficient for large datasets
 - **secfp** - SMILES Extended Connectivity Fingerprint
   - Operates directly on SMILES strings
@@ -133,14 +144,14 @@ Features based on pharmacologically relevant functional groups and their spatial
 - **cats2D** - 2D CATS descriptors
   - Pharmacophore point pair distributions
   - Distance based on shortest path
-  - 21 descriptors by default
+  - Calculator class `molfeat.calc.CATS` (189 values with default 2D settings)
 - **cats3D** - 3D CATS descriptors
   - Euclidean distance based
   - Requires conformer generation
 - **cats2D_pharm** / **cats3D_pharm** - Pharmacophore variants
 
 ### Gobbi Pharmacophores
-- **gobbi2D** - 2D pharmacophore fingerprints
+- **pharm2D-gobbi** - 2D pharmacophore fingerprints (`Pharmacophore2D(factory="gobbi")`; there is no `FPCalculator("gobbi2D")`)
   - 8 pharmacophore feature types:
     - Hydrophobic
     - Aromatic
@@ -216,7 +227,7 @@ Access to transformer models through HuggingFace hub:
 - MolT5
 - Custom uploaded models
 
-### DGL-LifeSci Models
+### DGL-LifeSci Models (legacy — removed in molfeat 1.0)
 Pre-trained GNN models from DGL-Life:
 - GIN variants with different pre-training tasks
 - AttentiveFP models
@@ -225,7 +236,7 @@ Pre-trained GNN models from DGL-Life:
 ### FCD (Fréchet ChemNet Distance)
 - **fcd** - Pre-trained CNN for molecular generation evaluation
 
-### Graphormer Models
+### Graphormer Models (legacy — removed in molfeat 1.0)
 - Graph transformers from Microsoft Research
 - Pre-trained on quantum chemistry datasets
 
@@ -240,8 +251,8 @@ Pre-trained GNN models from DGL-Life:
 
 **For deep learning:**
 - Use **ChemBERTa** or **ChemGPT** for transformer embeddings
-- Use **gin-supervised-*** for graph neural network embeddings
-- Consider **Graphormer** for quantum property predictions
+- Use **CheMeleonTransformer** for descriptor-pretrained foundation-model fingerprints
+- (GIN / Graphormer embeddings are legacy: only available with `molfeat<1`)
 
 **For similarity searching:**
 - **ecfp** - General purpose, most popular
@@ -252,7 +263,7 @@ Pre-trained GNN models from DGL-Life:
 **For pharmacophore-based approaches:**
 - **fcfp** - Functional group based
 - **cats2D/3D** - Pharmacophore pair distributions
-- **gobbi2D** - Explicit pharmacophore features
+- **pharm2D-gobbi** - Explicit pharmacophore features
 
 **For interpretability:**
 - **desc2D** / **mordred** - Named descriptors
@@ -263,12 +274,13 @@ Pre-trained GNN models from DGL-Life:
 
 Some featurizers require optional dependencies:
 
-- **DGL models** (gin-*, jtvae): `pip install "molfeat[dgl]"`
-- **Graphormer**: `pip install "molfeat[graphormer]"`
-- **Transformers** (ChemBERTa, ChemGPT, MolT5): `pip install "molfeat[transformer]"`
-- **FCD**: `pip install "molfeat[fcd]"`
-- **MAP4**: `pip install "molfeat[map4]"`
-- **All dependencies**: `pip install "molfeat[all]"`
+- **Transformers** (ChemBERTa, ChemGPT, MolT5): `uv pip install "molfeat[transformer]"`
+- **Mordred**: `uv pip install "molfeat[mordred]"`
+- **FCD**: `uv pip install "molfeat[fcd]"`
+- **Mol-JEPA**: `uv pip install "molfeat[transformer,pyg]"`
+- **MAP4**: install the `map4` package from https://github.com/reymond-group/map4 (no molfeat extra)
+- **All dependencies**: `uv pip install "molfeat[all]"`
+- DGL (gin-*, jtvae) and Graphormer models: removed in molfeat 1.0 (no `dgl`/`graphormer` extras)
 
 ### Accessing All Available Models
 
@@ -319,9 +331,9 @@ fingerprints = [m for m in all_models if "fingerprint" in m.tags]
 - usrcat (60)
 
 **Medium (200-2000 dims):**
-- desc2D (~200)
+- desc2D (223 in molfeat 1.0)
 - ecfp (2048 default, configurable)
-- map4 (1024 default)
+- map4 (2048 default in molfeat 1.0)
 
 **High (> 2000 dims):**
 - mordred (1800+)
@@ -329,5 +341,5 @@ fingerprints = [m for m in all_models if "fingerprint" in m.tags]
 - Some transformer embeddings
 
 **Variable:**
-- Transformer models (typically 768-1024)
-- GNN models (depends on architecture)
+- Transformer models (e.g. 384 for ChemBERTa-77M-MLM; larger models 768-1024)
+- CheMeleon (2048); Mol-JEPA (512 for the default `cls` output)

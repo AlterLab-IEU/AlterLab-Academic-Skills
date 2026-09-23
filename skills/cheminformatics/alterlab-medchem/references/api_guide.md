@@ -1,6 +1,6 @@
 # Medchem API Reference
 
-Verified against `medchem==2.0.5`. For the authoritative, always-current API, run
+Verified against `medchem==2.1.0`. For the authoritative, always-current API, run
 `mc.rules.RuleFilters.list_available_rules()`,
 `mc.structural.CommonAlertsFilters.list_default_available_alerts()`,
 `mc.groups.list_default_chemical_groups()`, and
@@ -83,9 +83,10 @@ Returns DataFrame including `mol`, `pass_filter`, `severity`, `status`, `reasons
 ### Lilly demerits
 
 The class is `medchem.structural.lilly_demerits.LillyDemeritsFilters` (not exported at
-`medchem.structural` top level) and **requires external compiled binaries**
-(`mamba install -c conda-forge lilly-medchem-rules`); importing it without them raises
-`ImportError`. Prefer the functional entry point (below).
+`medchem.structural` top level) and **requires the compiled Lilly MedChem Rules tools**
+(`medchem install-lilly` in medchem ≥ 2.1 builds the pinned upstream release; needs `make`,
+a C++ compiler and zlib; not native Windows). Running it without them raises `ImportError`.
+Prefer the functional entry point (below).
 
 ---
 

@@ -419,7 +419,7 @@ for smiles in hit_compounds:
     workflow = rowan.submit_docking_workflow(
         protein=protein.uuid,
         pocket=pocket,
-        initial_molecule=smiles,    # SMILES accepted directly
+        initial_molecule=rowan.Molecule.from_smiles(smiles),  # 3D required; bare SMILES raises
         name=f"Dock: {smiles[:20]}",
         folder_uuid=hit_folder.uuid
     )
@@ -494,7 +494,7 @@ print(f"Available credits: {user.credits}")
 
 # Cap spend per workflow (max_credits is an int)
 workflow = rowan.submit_pka_workflow(
-    "c1ccccc1O",
+    rowan.Molecule.from_smiles("c1ccccc1O"),
     name="pKa calculation",
     max_credits=10,
 )

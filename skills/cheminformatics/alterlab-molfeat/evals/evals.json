@@ -13,7 +13,7 @@
     {
       "id": "compare-representations",
       "prompt": "I want to compare ECFP, MACCS, RDKit 2D descriptors, and ChemBERTa embeddings as input representations for the same property-prediction task. Set up all four featurizers.",
-      "expected_output": "Invokes alterlab-molfeat: instantiates FPCalculator('ecfp'), FPCalculator('maccs'), RDKitDescriptors2D(), and PretrainedMolTransformer('ChemBERTa-77M-MLM'), wraps each in a MoleculeTransformer, and produces feature matrices to benchmark the representations head-to-head.",
+      "expected_output": "Invokes alterlab-molfeat: instantiates FPCalculator('ecfp'), FPCalculator('maccs'), and RDKitDescriptors2D() wrapped in MoleculeTransformer (with a dtype so each returns an array), plus PretrainedHFTransformer(kind='ChemBERTa-77M-MLM', notation='smiles') used directly (not wrapped), and produces feature matrices to benchmark the representations head-to-head.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "ChemBERTa" }
@@ -22,7 +22,7 @@
     {
       "id": "chemberta-embeddings",
       "prompt": "Generate ChemBERTa embeddings for my 50k SMILES for transfer learning, and cache them so I don't recompute.",
-      "expected_output": "Invokes alterlab-molfeat: uses PretrainedMolTransformer('ChemBERTa-77M-MLM', n_jobs=-1) to produce 768-dim embeddings, processes large input in chunks, and caches the resulting array (e.g. pickle) to avoid recomputation on reruns.",
+      "expected_output": "Invokes alterlab-molfeat: uses PretrainedHFTransformer(kind='ChemBERTa-77M-MLM', notation='smiles') (molfeat[transformer]; PretrainedMolTransformer is only the abstract base class) to produce 384-dim embeddings, processes large input in chunks, and caches the resulting array (e.g. pickle) to avoid recomputation on reruns.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Uses molfeat's pretrained ChemBERTa transformer for embeddings and caches the result for reuse." }
@@ -31,7 +31,7 @@
     {
       "id": "concat-featurizers-screen",
       "prompt": "For virtual screening I want a combined feature vector that concatenates MACCS and ECFP fingerprints, then trains a classifier to rank a 1M compound library.",
-      "expected_output": "Invokes alterlab-molfeat: uses FeatConcat([FPCalculator('maccs'), FPCalculator('ecfp')]) to build the combined 167+2048 representation, featurizes train and library with a MoleculeTransformer (n_jobs=-1), fits a classifier, and ranks the library by predicted probability.",
+      "expected_output": "Invokes alterlab-molfeat: uses FeatConcat(['maccs', 'ecfp'], params={'ecfp': {'length': 2048}}) (FeatConcat takes fingerprint names / FPVecTransformer objects, not FPCalculator) to build the combined 167+2048 representation, featurizes train and library with it, fits a classifier, and ranks the library by predicted probability.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Uses FeatConcat to combine MACCS and ECFP into one feature vector for the screening classifier." }

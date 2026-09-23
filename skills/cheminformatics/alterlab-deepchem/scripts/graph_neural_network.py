@@ -147,7 +147,7 @@ def train_on_molnet(dataset_name, model_type, n_epochs=50):
         metrics = [
             dc.metrics.Metric(dc.metrics.r2_score, name='R²'),
             dc.metrics.Metric(dc.metrics.mean_absolute_error, name='MAE'),
-            dc.metrics.Metric(dc.metrics.root_mean_squared_error, name='RMSE'),
+            dc.metrics.Metric(dc.metrics.rms_score, name='RMSE'),
         ]
 
     results = {}

@@ -4,7 +4,7 @@
     {
       "id": "custom-gin-property-prediction",
       "prompt": "I want to build a GIN graph neural network in TorchDrug for blood-brain-barrier penetration on BBBP, defining the PropertyPrediction task myself and training it with a plain PyTorch loop. Can you scaffold that?",
-      "expected_output": "Invokes alterlab-torchdrug. Loads datasets.BBBP, splits it, builds models.GIN with explicit hidden_dims/readout, wraps it in tasks.PropertyPrediction (criterion bce, metrics auroc/auprc), and trains with a native torch.optim.Adam loop over a DataLoader. Emphasizes the PyTorch-native, custom-architecture workflow with scaffold splitting.",
+      "expected_output": "Invokes alterlab-torchdrug. Loads datasets.BBBP, splits it explicitly (data.ordered_scaffold_split / torch random_split — BBBP has no .split()), builds models.GIN with explicit hidden_dims/readout, wraps it in tasks.PropertyPrediction (criterion bce, metrics auroc/auprc), calls task.preprocess(train, valid, test) to build the prediction head before creating the optimizer, and trains with a native torch.optim.Adam loop over torchdrug.data.DataLoader (or core.Engine). Emphasizes the PyTorch-native, custom-architecture workflow with scaffold splitting.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "TorchDrug" },
@@ -56,6 +56,15 @@
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-pytdc" }
+      ]
+    },
+    {
+      "id": "near-miss-torch-geometric",
+      "prompt": "I'm starting a fresh project on Python 3.12 with torch 2.x and want to build a custom message-passing GNN for molecular property prediction from scratch. What's the best-maintained library for defining my own layers?",
+      "expected_output": "Does NOT invoke alterlab-torchdrug; defers to alterlab-torch-geometric. TorchDrug is unmaintained and pinned to Python < 3.11, so a new custom-GNN project on current Python/torch belongs in PyTorch Geometric. TorchDrug is only worth it when the user specifically needs its task/dataset abstractions.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-torch-geometric" }
       ]
     }
   ]

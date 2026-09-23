@@ -103,7 +103,7 @@ def train_solubility_model(data_path=None, smiles_col='smiles', target_col='meas
     metrics = [
         dc.metrics.Metric(dc.metrics.r2_score, name='R²'),
         dc.metrics.Metric(dc.metrics.mean_absolute_error, name='MAE'),
-        dc.metrics.Metric(dc.metrics.root_mean_squared_error, name='RMSE'),
+        dc.metrics.Metric(dc.metrics.rms_score, name='RMSE'),
     ]
 
     for dataset_name, dataset in [('Train', train), ('Valid', valid), ('Test', test)]:

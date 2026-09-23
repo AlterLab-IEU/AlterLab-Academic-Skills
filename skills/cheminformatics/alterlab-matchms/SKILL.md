@@ -1,12 +1,13 @@
 ---
 name: alterlab-matchms
-description: Computes mass-spectral similarity and identifies compounds for metabolomics with matchms — comparing mass spectra, scoring similarity (cosine, modified cosine), and searching spectral libraries to annotate unknowns. Use when matching MS/MS spectra, identifying metabolites, or library searching; for full LC-MS/MS proteomics pipelines use pyopenms. Part of the AlterLab Academic Skills suite.
+description: Computes mass-spectral similarity and identifies compounds for metabolomics with matchms — comparing mass spectra, scoring similarity (cosine, modified cosine), and searching spectral libraries to annotate unknowns. Use when matching MS/MS spectra, identifying metabolites, or library searching; for full LC-MS/MS proteomics pipelines use alterlab-pyopenms. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Matchms
@@ -14,6 +15,23 @@ metadata:
 ## Overview
 
 Matchms is an open-source Python library for mass spectrometry data processing and analysis. Import spectra from various formats, standardize metadata, filter peaks, calculate spectral similarities, and build reproducible analytical workflows.
+
+## When to Use This Skill
+
+Use this skill when the user wants to:
+- Load, clean, and harmonize MS/MS spectra (MGF, MSP, mzML, mzXML, JSON, USI) and their metadata
+- Score spectral similarity (cosine, modified cosine, neutral-loss cosine) between queries and a reference library
+- Annotate unknown metabolites by library matching, or derive InChI/InChIKey/fingerprints from spectrum metadata
+- Build reproducible preprocessing pipelines (`SpectrumProcessor`) for metabolomics spectra
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Full LC-MS/MS proteomics or feature-detection pipelines (peptide ID, quantification, raw-file processing) | `alterlab-pyopenms` |
+| Looking up a metabolite's reference record, pathways, or published spectra in HMDB | `alterlab-hmdb` |
+| Querying Metabolomics Workbench studies, RefMet names, or m/z mass searches | `alterlab-metabolomics-wb` |
+| Structure-level cheminformatics on the annotated compounds (substructure, descriptors) | `alterlab-rdkit` |
 
 ## Core Capabilities
 
@@ -168,9 +186,11 @@ spectrum.plot_against(reference_spectrum)
 Standardize and harmonize spectrum metadata:
 
 ```python
-# Metadata is automatically harmonized
-spectrum.set("Precursor_mz", 250.5)  # Gets harmonized to lowercase key
-print(spectrum.get("precursor_mz"))   # Returns 250.5
+# Metadata keys are automatically harmonized
+spectrum.set("Compound_Name", "caffeine")   # stored under 'compound_name'
+print(spectrum.get("compound_name"))        # 'caffeine'
+# Setting a variant spelling of a key that already exists (e.g. "Precursor_mz" when
+# "precursor_mz" is set) raises ValueError — update it with the canonical key instead.
 
 # Derive chemical information
 from matchms.filtering import derive_inchi_from_smiles, derive_inchikey_from_inchi
@@ -232,4 +252,6 @@ Detailed reference documentation is available in the `references/` directory:
 - `workflows.md` - Common analysis patterns and examples
 
 Load these references as needed for detailed information about specific matchms capabilities.
+
+Part of the AlterLab Academic Skills suite.
 

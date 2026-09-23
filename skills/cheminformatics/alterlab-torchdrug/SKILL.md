@@ -1,12 +1,13 @@
 ---
 name: alterlab-torchdrug
-description: Builds PyTorch-native graph neural networks with TorchDrug for molecules and proteins, exposing custom GNN architectures, task/dataset abstractions, molecular generation, retrosynthesis planning, and knowledge-graph reasoning. Use when developing custom graph model layers, predicting protein properties from sequence or structure, or building retrosynthesis and drug-repurposing pipelines; for ready-made featurizers, MoleculeNet benchmarks, and pre-trained models with less code prefer alterlab-deepchem. Part of the AlterLab Academic Skills suite.
+description: Builds PyTorch-native graph neural networks with TorchDrug for molecules and proteins, exposing custom GNN architectures, task/dataset abstractions, molecular generation, retrosynthesis planning, and knowledge-graph reasoning. Use when a project specifically needs TorchDrug's datasets and tasks — GearNet protein-structure models, center-identification/synthon-completion retrosynthesis, or Hetionet knowledge-graph baselines. TorchDrug has had no release since 0.2.1 (July 2023) and needs Python < 3.11, so for new custom GNN work prefer alterlab-torch-geometric, and for ready-made featurizers, MoleculeNet benchmarks, and pre-trained models prefer alterlab-deepchem. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs locally, no API key or account required. TorchDrug 0.2.1 requires Python >=3.7,<3.11 (use `uv venv --python 3.10`)."
+compatibility: "Self-contained — runs locally, no API key or account required. TorchDrug 0.2.1 (unmaintained, last release July 2023) requires Python >=3.7,<3.11 (use `uv venv --python 3.10`) plus torch-scatter/torch-cluster built for the installed torch and a C++ toolchain for its JIT extensions."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # TorchDrug
@@ -41,6 +42,16 @@ This skill should be used when working with:
 - Compatible with PyTorch and PyTorch Lightning
 - Integrates with AlphaFold and ESM for proteins
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Building a general custom GNN today (active library, current Python/torch) | `alterlab-torch-geometric` |
+| Ready-made featurizers, MoleculeNet benchmarks, and pretrained models with less code | `alterlab-deepchem` |
+| Only turning molecules into feature matrices for your own models | `alterlab-molfeat` |
+| Only sourcing a labeled benchmark dataset (ADMET/DTI) with official splits | `alterlab-pytdc` |
+| Querying an existing biomedical knowledge graph rather than training a KG model | `alterlab-primekg` |
+
 ## Getting Started
 
 ### Installation
@@ -49,13 +60,19 @@ This skill should be used when working with:
 # TorchDrug 0.2.1 (last release, Jul 2023) requires Python >=3.7,<3.11 and
 # torch >=1.8. It will NOT solve on Python 3.11+ — pin an older interpreter:
 uv venv --python 3.10
-uv pip install torchdrug==0.2.1 torch
+uv pip install torch                        # install torch first (see below)
+# torch-scatter / torch-cluster ship only as sdists, so they compile against the
+# installed torch — either install from the PyG wheel index or ensure a C++ toolchain:
+uv pip install torch-scatter torch-cluster \
+  --find-links "https://data.pyg.org/whl/torch-${TORCH_VERSION}+${CUDA}.html"  # e.g. cpu, cu121
+uv pip install torchdrug==0.2.1
 ```
 
 Gotchas:
-- Install `torch` first if the solver struggles; TorchDrug builds graph ops against the installed torch.
+- Install `torch` first; TorchDrug and `torch-scatter`/`torch-cluster` build graph ops against the installed torch, and mismatched builds fail at import.
 - TorchDrug vendors its own `data.DataLoader`, `data.Graph`, and `core.Engine` — reach for those, not the bare PyTorch equivalents (see the loop below).
-- It is unmaintained as of 2025; for new Python/torch stacks consider `alterlab-torch-geometric` or `alterlab-deepchem`. Use this skill when you specifically need TorchDrug's task/dataset abstractions.
+- TorchDrug depends on `rdkit-pypi`, which has no wheels past 2022.09 (Python ≤ 3.11) — another reason the stack is pinned to an older interpreter.
+- It is unmaintained (no release since 0.2.1, July 2023); for new Python/torch stacks prefer `alterlab-torch-geometric` or `alterlab-deepchem`. Use this skill when you specifically need TorchDrug's task/dataset abstractions (e.g. GearNet, its retrosynthesis pipeline).
 
 ### Quick Example
 
@@ -63,9 +80,13 @@ Gotchas:
 import torch
 from torchdrug import data, datasets, models, tasks
 
-# Load molecular dataset
+# Load molecular dataset. MoleculeNet-style datasets such as BBBP have no .split()
+# method (only datasets with predefined splits do) — split explicitly:
 dataset = datasets.BBBP("~/molecule-datasets/")
-train_set, valid_set, test_set = dataset.split()
+lengths = [int(0.8 * len(dataset)), int(0.1 * len(dataset))]
+lengths += [len(dataset) - sum(lengths)]
+train_set, valid_set, test_set = data.ordered_scaffold_split(dataset, lengths)
+# (or torch.utils.data.random_split(dataset, lengths) for a random split)
 
 # Define GNN model
 model = models.GIN(
@@ -85,6 +106,10 @@ task = tasks.PropertyPrediction(
 )
 
 # Train with a native PyTorch loop.
+# preprocess() builds the task's MLP prediction head (and label statistics) — core.Engine
+# calls it for you; in a manual loop call it BEFORE creating the optimizer, or the head
+# is missing and its parameters are never optimized.
+task.preprocess(train_set, valid_set, test_set)
 # NOTE: use torchdrug.data.DataLoader (NOT torch.utils.data.DataLoader) — its
 # default graph_collate packs data.Graph objects; the stock PyTorch collate cannot.
 optimizer = torch.optim.Adam(task.parameters(), lr=1e-3)
@@ -363,15 +388,17 @@ graph = graph_construction_model(data.Protein.pack([protein]))
 
 Wrap tasks for Lightning training:
 ```python
-import pytorch_lightning as pl
+import torch
+import pytorch_lightning as pl   # or: import lightning.pytorch as pl
 
 class LightningTask(pl.LightningModule):
     def __init__(self, torchdrug_task):
         super().__init__()
-        self.task = torchdrug_task
+        self.task = torchdrug_task      # call task.preprocess(...) before training
 
     def training_step(self, batch, batch_idx):
-        return self.task(batch)
+        loss, metric = self.task(batch)  # forward returns (loss, metric)
+        return loss
 
     def validation_step(self, batch, batch_idx):
         pred = self.task.predict(batch)

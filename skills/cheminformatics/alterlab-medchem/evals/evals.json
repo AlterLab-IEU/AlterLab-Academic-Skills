@@ -13,7 +13,7 @@
     {
       "id": "pains-flagging",
       "prompt": "Before I trust these screening hits, flag any PAINS or reactive Michael-acceptor groups so I don't chase assay artifacts.",
-      "expected_output": "Invokes alterlab-medchem: applies PAINS filtering (via rules / common alerts) and uses mc.groups.ChemicalGroup to detect Michael acceptors / reactive groups, returning per-molecule flags so the user can deprioritize likely assay-interference artifacts.",
+      "expected_output": "Invokes alterlab-medchem: applies PAINS filtering (CommonAlertsFilters with the PAINS set, or HASALERT(\"pains\") in the query DSL) and flags reactive/Michael-acceptor motifs via the structural-alert sets (common alerts / NIBR) or the electrophilic-warhead ChemicalGroup catalogs (there is no 'michael_acceptors' group), returning per-molecule flags so the user can deprioritize likely assay-interference artifacts.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "PAINS" }
@@ -22,7 +22,7 @@
     {
       "id": "lilly-nibr-lead-opt",
       "prompt": "For lead optimization, run the NIBR filter set and Lilly demerits on my candidate list and tell me which ones exceed 100 demerits.",
-      "expected_output": "Invokes alterlab-medchem: applies mc.structural.NIBRFilters and the Lilly demerits filter (mc.functional.lilly_demerit_filter, which needs the external lilly-medchem-rules binaries) with max_demerits=100 to honor the user's threshold (noting medchem's default ceiling is 160), reporting which molecules are rejected, for stricter lead-optimization triage.",
+      "expected_output": "Invokes alterlab-medchem: applies mc.structural.NIBRFilters and the Lilly demerits filter (mc.functional.lilly_demerit_filter, which needs the Lilly MedChem Rules tools installed via `medchem install-lilly`) with max_demerits=100 to honor the user's threshold (noting medchem's default ceiling is 160), reporting which molecules are rejected, for stricter lead-optimization triage.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Uses NIBRFilters plus the Lilly demerit filter (via medchem.functional.lilly_demerit_filter, flagging the external-binary requirement) and applies the 100-demerit threshold the user asked for." }

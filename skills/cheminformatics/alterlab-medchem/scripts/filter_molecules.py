@@ -5,7 +5,7 @@ Batch molecular filtering using medchem library.
 This script provides a production-ready workflow for filtering compound libraries
 using medchem rules, structural alerts, and custom constraints.
 
-Verified against medchem==2.0.5.
+Verified against medchem==2.1.0.
 
 Usage:
     python filter_molecules.py input.csv --rules rule_of_five,rule_of_cns --nibr --output filtered.csv
@@ -134,12 +134,13 @@ def apply_structural_alerts(mols: List[Chem.Mol], alert_type: str, n_jobs: int) 
         })
 
     elif alert_type == "lilly":
-        # Requires external Lilly binaries (conda: lilly-medchem-rules).
+        # Requires the Lilly MedChem Rules tools (medchem >= 2.1: `medchem install-lilly`).
         try:
             keep = mc.functional.lilly_demerit_filter(mols, n_jobs=n_jobs, progress=True)
         except ImportError:
-            print("Error: Lilly demerits need the 'lilly-medchem-rules' binaries "
-                  "(mamba install -c conda-forge lilly-medchem-rules). Skipping --lilly.")
+            print("Error: Lilly demerits need the Lilly MedChem Rules tools. "
+                  "Install them with `medchem install-lilly` (needs make, a C++ compiler "
+                  "and zlib), then re-run with --lilly.")
             sys.exit(1)
         df_results = pd.DataFrame({"passes_lilly": np.asarray(keep, dtype=bool)})
 

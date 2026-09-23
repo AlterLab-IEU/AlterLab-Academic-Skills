@@ -90,7 +90,7 @@ workflow.submit_draft()  # start a workflow submitted with is_draft=True
 
 ### Molecule input
 
-Anywhere a function takes `initial_molecule`, you may pass a SMILES `str`, an `stjames.Molecule`, or an RDKit `Chem.Mol`/`RWMol` — the library converts for you. (Some functions, e.g. `submit_macropka_workflow`, take `initial_smiles` instead.)
+`initial_molecule` accepts a `rowan.Molecule`, an `stjames.Molecule`, or an RDKit `Chem.Mol`/`RWMol`. **Geometry-based workflows (basic calculation, docking, 3D pKa methods, most others) require 3D coordinates**: a bare SMILES `str` — or an RDKit mol without a conformer — raises `ValueError` at submit time, so build one with `rowan.Molecule.from_smiles(smi)` (embeds 3D). SMILES strings are accepted only where the method builds geometry itself: pKa with `method="starling"` / `"chemprop_nevolianis2025"`, conformer search with the default OpenConf/ETKDG generator, and functions whose parameter is `initial_smiles` (e.g. `submit_macropka_workflow`, `submit_solubility_workflow`).
 
 ### Generic Submission
 
@@ -117,9 +117,10 @@ All functions return a `Workflow` object. All accept `initial_molecule` as SMILE
 ```python
 # pKa calculation (micro-pKa)
 rowan.submit_pka_workflow(
-    initial_molecule,                # SMILES / stjames / RDKit
+    initial_molecule,                # 3D Molecule for 3D methods; SMILES str for SMILES methods
     pka_range: tuple = (2, 12),
-    method: str = "aimnet2_wagen2024",   # also: "gxtb_wagen2026", "chemprop_nevolianis2025", "starling"
+    method: str = "gxtb_wagen2026",  # default (3D); "aimnet2_wagen2024" (3D);
+                                     # "chemprop_nevolianis2025", "starling" (SMILES)
     solvent: str | None = "water",
 )
 
@@ -177,10 +178,10 @@ rowan.submit_irc_workflow(initial_molecule, ...)
 rowan.submit_docking_workflow(
     protein: str | Protein,          # UUID or Protein object
     pocket: list[list[float]],       # [[cx, cy, cz], [sx, sy, sz]]
-    initial_molecule,
-    executable: str = "vina",        # "vina" or "qvina2"
-    scoring_function: str = "vinardo",  # "vina" or "vinardo"
-    exhaustiveness: float = 8,
+    initial_molecule,                # 3D structure required (SMILES str raises ValueError)
+    docking_settings=None,           # rowan.VinaSettings(executable=, scoring_function=,
+                                     #   exhaustiveness=, max_poses=) or rowan.GninaSettings(...)
+    # executable= / scoring_function= / exhaustiveness= / max_poses= still accepted but deprecated
     do_csearch: bool = False,
     do_optimization: bool = False,
     do_pose_refinement: bool = True,
@@ -191,8 +192,8 @@ rowan.submit_batch_docking_workflow(
     smiles_list: list[str],
     protein: str | Protein,
     pocket: list[list[float]],
-    executable: str = "qvina2",
-    scoring_function: str = "vina",
+    executable: str = "vina",        # rowan-python 3.2 defaults
+    scoring_function: str = "vinardo",
     exhaustiveness: float = 8,
 )
 
@@ -208,7 +209,7 @@ rowan.submit_protein_cofolding_workflow(
     num_samples: int | None = None,
     compute_strain: bool = False,
     do_pose_refinement: bool = False,
-    model: str = "boltz_2",          # "chai_1r" | "boltz_1" | "boltz_2" | "openfold_3"
+    model: str = "boltz_2",          # "chai_1r" | "boltz_1" | "boltz_2" | "boltz_2_1" | "openfold_3" | "decaf_boltz"
 )
 ```
 
@@ -253,7 +254,7 @@ workflows = rowan.list_workflows(
 workflows = rowan.batch_submit_workflow(
     workflow_type: str,                 # workflow type for all
     workflow_data: dict | None = None,
-    initial_molecules: list | None = None,   # stjames.Molecule / RDKit / SMILES
+    initial_molecules: list | None = None,   # Molecule / stjames.Molecule / RDKit (3D) or dicts
     initial_smileses: list[str] | None = None,
     names: list[str] | None = None,
     folder_uuid: str | Folder | None = None,
@@ -263,7 +264,7 @@ workflows = rowan.batch_submit_workflow(
 # Poll status of multiple workflows (non-blocking)
 statuses = rowan.batch_poll_status(
     uuids: list                 # List of workflow UUIDs
-) -> list[dict]                 # one dict per workflow (includes uuid + status)
+) -> dict[str, int]             # {uuid: stjames.Status int}
 ```
 
 ---
@@ -318,7 +319,7 @@ import rowan
 import requests
 
 try:
-    workflow = rowan.submit_pka_workflow("c1ccccc1O", name="test")
+    workflow = rowan.submit_pka_workflow(rowan.Molecule.from_smiles("c1ccccc1O"), name="test")
     result = workflow.result()        # raises WorkflowError if it failed/stopped
     print(result.strongest_acid)
 except rowan.WorkflowError as e:
@@ -337,7 +338,7 @@ except requests.HTTPError as e:
 import rowan
 import time
 
-workflows = [rowan.submit_pka_workflow(smi) for smi in smiles_list]
+workflows = [rowan.submit_pka_workflow(rowan.Molecule.from_smiles(smi)) for smi in smiles_list]
 
 # Poll until all finished (non-blocking)
 while not all(wf.done() for wf in workflows):
@@ -362,7 +363,7 @@ lead_folder = rowan.create_folder("Lead Compounds", parent_uuid=project.uuid)
 
 # Submit to a specific folder
 workflow = rowan.submit_pka_workflow(
-    "c1ccccc1O",
+    rowan.Molecule.from_smiles("c1ccccc1O"),
     name="Lead 1 pKa",
     folder=lead_folder,          # or folder_uuid=lead_folder.uuid
 )

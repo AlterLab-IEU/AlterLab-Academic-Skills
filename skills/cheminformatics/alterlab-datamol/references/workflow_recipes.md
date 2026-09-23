@@ -8,8 +8,8 @@ End-to-end, copy-ready pipelines and multi-step recipes extracted from the skill
 import datamol as dm
 import pandas as pd
 
-# 1. Load molecules
-df = dm.read_sdf("compounds.sdf")
+# 1. Load molecules (read_sdf returns a list unless as_df=True)
+df = dm.read_sdf("compounds.sdf", as_df=True, mol_column="mol")
 
 # 2. Standardize
 df['mol'] = df['mol'].apply(lambda m: dm.standardize_mol(m) if m else None)
@@ -19,6 +19,7 @@ df = df[df['mol'].notna()]  # Remove failed molecules
 desc_df = dm.descriptors.batch_compute_many_descriptors(
     df['mol'].tolist(),
     n_jobs=-1,
+    batch_size=256,   # required with n_jobs != 1 under joblib >= 1.6
     progress=True
 )
 
@@ -32,17 +33,18 @@ druglike = (
 )
 filtered_df = df[druglike.values]
 
-# 5. Cluster and select diverse subset
-diverse_mols = dm.pick_diverse(
+# 5. Cluster and select diverse subset (returns (indices, mols))
+diverse_idx, diverse_mols = dm.pick_diverse(
     filtered_df['mol'].tolist(),
     npick=100
 )
 
-# 6. Visualize results
+# 6. Visualize results (PNG output needs use_svg=False)
 dm.viz.to_image(
     diverse_mols,
     legends=[dm.to_smiles(m) for m in diverse_mols],
     outfile="diverse_compounds.png",
+    use_svg=False,
     n_cols=10
 )
 ```
@@ -153,17 +155,20 @@ test_mols = [mol for scaf in test_scaffolds for mol in scaffold_to_mols[scaf]]
 # Find common fragments across compound library
 from collections import Counter
 
+def brics_smiles(mol):
+    # brics() returns Mol objects (parent first); compare fragments as SMILES
+    return {dm.to_smiles(f) for f in dm.fragment.brics(mol, remove_parent=True, fix=False)}
+
 all_fragments = []
 for mol in mols:
-    frags = dm.fragment.brics(mol)
-    all_fragments.extend(frags)
+    all_fragments.extend(brics_smiles(mol))
 
 fragment_counts = Counter(all_fragments)
 common_frags = fragment_counts.most_common(20)
 
 # Fragment-based scoring
 def fragment_score(mol, reference_fragments):
-    mol_frags = dm.fragment.brics(mol)
+    mol_frags = brics_smiles(mol)
     overlap = mol_frags.intersection(reference_fragments)
     return len(overlap) / len(mol_frags) if mol_frags else 0
 ```
@@ -175,7 +180,7 @@ def fragment_score(mol, reference_fragments):
 X = np.array([dm.to_fp(mol) for mol in mols])
 
 # Or descriptors
-desc_df = dm.descriptors.batch_compute_many_descriptors(mols, n_jobs=-1)
+desc_df = dm.descriptors.batch_compute_many_descriptors(mols, n_jobs=-1, batch_size=256)
 X = desc_df.values
 
 # Train model

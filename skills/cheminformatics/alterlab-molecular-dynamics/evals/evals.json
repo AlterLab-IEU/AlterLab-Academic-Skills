@@ -47,6 +47,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-rowan" }
       ]
+    },
+    {
+      "id": "near-miss-diffdock",
+      "prompt": "I have a protein PDB and a ligand SMILES and just need the predicted binding pose — where does the ligand sit in the pocket? No simulation.",
+      "expected_output": "Does NOT invoke alterlab-molecular-dynamics; defers to alterlab-diffdock. The user wants an initial binding-pose prediction from a PDB + SMILES, which is DiffDock's diffusion-docking job, not setting up or analyzing an MD trajectory.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-diffdock" }
+      ]
     }
   ]
 }

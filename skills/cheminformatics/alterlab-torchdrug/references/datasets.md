@@ -270,16 +270,22 @@ dataset = datasets.FB15k237("~/kg-datasets/")
 ### Data Splitting
 
 ```python
+import torch
+from torchdrug import data
+
+# Split sizes are integer counts, not fractions
+lengths = [int(0.8 * len(dataset)), int(0.1 * len(dataset))]
+lengths += [len(dataset) - sum(lengths)]
+
 # Random split
-train, valid, test = dataset.split([0.8, 0.1, 0.1])
+train, valid, test = torch.utils.data.random_split(dataset, lengths)
 
-# Scaffold split (for molecules)
-from torchdrug import utils
-train, valid, test = dataset.split(
-    utils.scaffold_split(dataset, [0.8, 0.1, 0.1])
-)
+# Scaffold split (for molecules) — functions live in torchdrug.data
+train, valid, test = data.scaffold_split(dataset, lengths)          # randomized
+train, valid, test = data.ordered_scaffold_split(dataset, lengths)  # deterministic
 
-# Predefined splits (some datasets)
+# Predefined splits — only datasets that ship them (e.g. EnzymeCommission,
+# BetaLactamase, USPTO50k, FB15k); MoleculeNet sets like BBBP have no .split()
 train, valid, test = dataset.split()
 ```
 

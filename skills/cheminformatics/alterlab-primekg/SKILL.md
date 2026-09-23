@@ -1,19 +1,22 @@
 ---
 name: alterlab-primekg
-description: Queries the Precision Medicine Knowledge Graph (PrimeKG) for multiscale biomedical relationships across genes, drugs, diseases, phenotypes, pathways, and biological processes. Use when exploring drug-disease or gene-disease links, building disease-centric knowledge subgraphs, or sourcing relations for drug repurposing and precision-medicine analyses. Part of the AlterLab Academic Skills suite.
+description: Queries the Precision Medicine Knowledge Graph (PrimeKG) for multiscale biomedical relationships across genes, drugs, diseases, phenotypes, pathways, and biological processes. Use when exploring drug-disease or gene-disease links, building disease-centric knowledge subgraphs, or sourcing relations for drug repurposing and precision-medicine analyses; also points to OptimusKG, the maintainers' successor graph, for new work. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Runs under `uv run python` with pandas installed and the PrimeKG `kg.csv` available locally (set `PRIMEKG_DATA_PATH`); no API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # PrimeKG Knowledge Graph Skill
 
 ## Overview
 
-PrimeKG (Chandak, Huang & Zitnik, *Scientific Data* 2023; mims-harvard/PrimeKG) is a precision medicine knowledge graph integrating 20 primary resources. It contains 129,375 nodes and 4,050,249 edges across 30 edge types and 10 node types, including drug-target, disease-gene, and disease-phenotype associations.
+PrimeKG (Chandak, Huang & Zitnik, *Scientific Data* 2023; mims-harvard/PrimeKG) is a precision medicine knowledge graph integrating 20 primary resources. It contains 129,375 nodes and 4,050,249 edges across 30 edge types and 10 node types, including drug-target, disease-gene, and disease-phenotype associations. The published Dataverse files are a fixed 2022 snapshot.
+
+> **Superseded upstream.** The PrimeKG maintainers now state that PrimeKG has been superseded by **OptimusKG** (same lab; a superset with more current data — 190,531 nodes, 21.8M edges, 26 relation types) and recommend it for almost all new work. Use OptimusKG for new analyses (`uv pip install optimuskg`, Python ≥ 3.12; `import optimuskg; nodes, edges = optimuskg.load_graph(lcc=True)` or `G = optimuskg.load_networkx(lcc=True)`; data: Harvard Dataverse doi:10.7910/DVN/IYNGEV, docs: https://optimuskg.ai). Keep this PrimeKG workflow for reproducing or comparing against published PrimeKG results and benchmarks.
 
 **Key capabilities:**
 - Search for nodes (genes, proteins, drugs, diseases, phenotypes)
@@ -32,6 +35,15 @@ This skill should be used when:
 - **Phenotype analysis:** Understanding how symptoms/phenotypes relate to diseases and genes.
 - **Multiscale biology:** Bridging the gap between molecular targets (genes) and clinical outcomes (diseases).
 - **Network pharmacology:** Investigating the broader network effects of drug-target interactions.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Scored target–disease evidence, tractability, and known drugs for a target | `alterlab-opentargets` |
+| Cross-species disease–gene–phenotype associations (HPO, OMIM, Orphanet) | `alterlab-monarch` |
+| A drug's full record: pharmacology, interactions, targets, labels | `alterlab-drugbank` |
+| Training knowledge-graph embedding models (TransE/RotatE) for link prediction | `alterlab-torchdrug` |
 
 ## Core Workflow
 
@@ -128,6 +140,8 @@ phenotypes use `effect/phenotype` (not `phenotype`).
 - `scripts/query_primekg.py`: Core functions — `search_nodes`, `get_neighbors`, `find_paths`, `get_disease_context`.
 
 ### Data Path
-- Data: `kg.csv` (set `PRIMEKG_DATA_PATH`; default `../data/kg.csv`), from Harvard Dataverse (mims-harvard/PrimeKG).
+- Data: `kg.csv` (set `PRIMEKG_DATA_PATH`; default `../data/kg.csv`), from Harvard Dataverse (doi:10.7910/DVN/IXA7BM). Download: `wget -O kg.csv https://dataverse.harvard.edu/api/access/datafile/6180620`. Alternatively PyTDC ships a loader (`from tdc.resource import PrimeKG`).
 - 129,375 nodes, 4,050,249 edges; 10 node types, 30 edge types.
-- Loaded with pandas (`pd.read_csv`, `low_memory=True`). kg.csv is ~3 GB+ uncompressed — each function reloads it; for repeated queries, cache the DataFrame or use a real graph store.
+- Loaded with pandas (`pd.read_csv`, `low_memory=True`). kg.csv is ~0.98 GB (981,751,236 bytes) — each function reloads it; for repeated queries, cache the DataFrame or use a real graph store.
+
+Part of the AlterLab Academic Skills suite.

@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Datamol Cheminformatics Skill
@@ -27,6 +28,23 @@ Datamol is a Python library that provides a lightweight, Pythonic abstraction la
 - Batch processing with parallelization
 - Cloud storage support via fsspec
 
+## When to Use This Skill
+
+Use this skill when the user wants to:
+- Load, standardize, and de-duplicate molecule tables (CSV/SDF/Excel/Parquet, local or cloud) with little boilerplate
+- Compute datamol's descriptor set, fingerprints, and Tanimoto distance matrices for a compound set
+- Cluster, pick diverse subsets, extract Murcko scaffolds, or fragment (BRICS/RECAP) a library
+- Generate and cluster 3D conformers, or render aligned molecule grids for SAR review
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Low-level control: custom sanitization flags, atom-mapped reaction details, specialised fingerprint/descriptor algorithms | `alterlab-rdkit` |
+| ML-ready feature matrices, pretrained embeddings, or featurizer benchmarking | `alterlab-molfeat` |
+| Drug-likeness rule sets, PAINS / structural-alert and complexity filtering | `alterlab-medchem` |
+| Downloading curated ADMET/DTI benchmark datasets with scaffold or cold splits | `alterlab-pytdc` |
+
 ## Installation and Setup
 
 Guide users to install datamol:
@@ -35,7 +53,7 @@ Guide users to install datamol:
 uv pip install datamol
 ```
 
-Examples here are verified against **datamol 0.12.x** (pulls in RDKit automatically). The descriptor key names below are stable in this line; pin if you depend on them: `uv pip install 'datamol>=0.12,<0.13'`.
+Examples here are verified against **datamol 0.13.0** (current as of 2026-09; requires Python ≥ 3.11 and pulls in RDKit). 0.13 fixed the misspelled heterocycle descriptors: the `compute_many_descriptors` keys are now `n_aromatic_heterocycles` / `n_aliphatic_heterocycles` / `n_saturated_heterocycles` (formerly `..._heterocyles`; the old function names survive only as deprecated aliases). Pin `'datamol>=0.13'` if you depend on those keys.
 
 **Import convention**:
 ```python
@@ -76,17 +94,18 @@ Full conversion, sanitization, and standardization API: see `references/core_api
 
 ```python
 # Read (open_df auto-detects .sdf/.csv/.xlsx/.parquet/.json)
-df = dm.read_sdf("compounds.sdf", mol_column='mol')
+mols = dm.read_sdf("compounds.sdf")                              # default: list of Mols
+df = dm.read_sdf("compounds.sdf", as_df=True, mol_column="mol")  # DataFrame instead
 df = dm.read_csv("data.csv", smiles_column="SMILES", mol_column="mol")
 df = dm.open_df("file.sdf")
 
 # Write
 dm.to_sdf(mols, "output.sdf")               # or dm.to_sdf(df, "output.sdf", mol_column="mol")
 dm.to_smi(mols, "output.smi")
-dm.to_xlsx(df, "output.xlsx", mol_columns=["mol"])   # renders molecule images in cells
+dm.to_xlsx(df, "output.xlsx", mol_column="mol")   # renders molecule images in cells
 
 # Remote paths work everywhere via fsspec (S3, GCS, HTTP)
-df = dm.read_sdf("s3://bucket/compounds.sdf")
+mols = dm.read_sdf("s3://bucket/compounds.sdf")
 dm.to_sdf(mols, "s3://bucket/output.sdf")
 ```
 
@@ -102,8 +121,11 @@ desc = dm.descriptors.compute_many_descriptors(mol)
 # Gotcha: logP is 'clogp'; donors/acceptors are 'n_lipinski_hbd'/'n_lipinski_hba'.
 # There is no 'logp', 'hbd', 'hba', or 'n_aromatic_atoms' key in this dict.
 
-# Batch (parallel) -> DataFrame with the same keys
-desc_df = dm.descriptors.batch_compute_many_descriptors(mols, n_jobs=-1, progress=True)
+# Batch (parallel) -> DataFrame with the same keys. Pass an explicit batch_size
+# when n_jobs != 1: the default batch_size=None is rejected by joblib >= 1.6
+# ("batch_size must be 'auto' or a positive integer").
+desc_df = dm.descriptors.batch_compute_many_descriptors(mols, n_jobs=-1, batch_size=256,
+                                                        progress=True)
 
 # Standalone descriptors not in the dict above
 dm.descriptors.n_aromatic_atoms(mol)
@@ -124,16 +146,17 @@ Full descriptor catalog, RDKit descriptor access, and ADME examples: see `refere
 ### 4. Molecular Fingerprints and Similarity
 
 ```python
-# Fingerprints (ECFP/Morgan is the default)
-fp       = dm.to_fp(mol, fp_type='ecfp', radius=2, n_bits=2048)
+# Fingerprints (ECFP/Morgan is the default; datamol's ecfp default is radius=3, i.e. ECFP6)
+# Extra kwargs go straight to RDKit's rdFingerprintGenerator: use fpSize, not n_bits/nBits.
+fp       = dm.to_fp(mol, fp_type='ecfp', radius=2, fpSize=2048)
 fp_maccs = dm.to_fp(mol, fp_type='maccs')
-# Also available: 'topological', 'atompair', 'fcfp'
+# Also available: 'topological', 'atompair', 'fcfp', 'rdkit', '*-count' variants
+# (full list: dm.list_supported_fingerprints())
 
 # Similarity as Tanimoto distance (distance = 1 - similarity; lower = more similar)
-distance_matrix = dm.pdist(mols, n_jobs=-1)                       # within one set
-distances       = dm.cdist(query_mols, library_mols, n_jobs=-1)  # between two sets
-from scipy.spatial.distance import squareform
-dist_matrix = squareform(dm.pdist(mols))                         # square form
+dist_matrix = dm.pdist(mols, n_jobs=-1)          # square N x N matrix (squareform=True default)
+condensed   = dm.pdist(mols, squareform=False)   # condensed vector, SciPy-style
+distances   = dm.cdist(query_mols, library_mols, n_jobs=-1)  # between two sets
 ```
 
 Fingerprint types and `pdist` / `cdist` details: see `references/core_api.md`.
@@ -141,14 +164,15 @@ Fingerprint types and `pdist` / `cdist` details: see `references/core_api.md`.
 ### 5. Clustering and Diversity Selection
 
 ```python
-# Butina clustering (cutoff = Tanimoto distance; each cluster is a list of indices)
-clusters = dm.cluster_mols(mols, cutoff=0.2, n_jobs=-1)
-for i, cluster in enumerate(clusters):
-    cluster_mols = [mols[idx] for idx in cluster]
+# Butina clustering (cutoff = Tanimoto distance). Returns a TUPLE:
+# (cluster_indices, cluster_mols) — one tuple of indices / list of Mols per cluster.
+cluster_idx, cluster_mols = dm.cluster_mols(mols, cutoff=0.2, n_jobs=-1)
+for i, members in enumerate(cluster_idx):
+    print(i, len(members))
 
-# Diversity / representative selection
-diverse   = dm.pick_diverse(mols, npick=100)
-centroids = dm.pick_centroids(mols, npick=50)
+# Diversity / representative selection — both return (indices, mols)
+diverse_idx, diverse = dm.pick_diverse(mols, npick=100)
+centroid_idx, centroids = dm.pick_centroids(mols, npick=50)
 ```
 
 **Scale note**: Butina builds a full distance matrix — fine for ~1,000 molecules, not 10,000+. Clustering parameters: see `references/core_api.md`.
@@ -166,10 +190,13 @@ Scaffold frequency counting, scaffold-to-molecule grouping, and scaffold-based t
 ### 7. Molecular Fragmentation
 
 ```python
-# BRICS (16 bond types) and RECAP (11 bond types) both return SMILES with
-# attachment points like '[1*]CCN'
-frags_brics = dm.fragment.brics(mol)
-frags_recap = dm.fragment.recap(mol)
+# BRICS (16 bond types) and RECAP (11 bond types) return lists of RDKit Mol
+# fragments, parent molecule first unless remove_parent=True. The default
+# fix=True caps the dummy atoms; pass fix=False to keep attachment points
+# such as '[1*]C(C)=O' in the SMILES.
+frags_brics = dm.fragment.brics(mol, remove_parent=True, fix=False)
+frag_smiles = {dm.to_smiles(f) for f in frags_brics}
+frags_recap = dm.fragment.recap(mol, remove_parent=True)
 ```
 
 Cross-library fragment frequency analysis and fragment-overlap scoring recipes: see `references/workflow_recipes.md`. MMPA fragmentation and a method comparison table: see `references/fragments_scaffolds.md`.
@@ -177,16 +204,17 @@ Cross-library fragment frequency analysis and fragment-overlap scoring recipes: 
 ### 8. 3D Conformer Generation
 
 ```python
-# Generate 3D conformers (ETKDGv3 recommended; UFF minimization on by default)
+# Generate 3D conformers (ETKDGv3 is the default method; minimize_energy defaults
+# to False — pass True for UFF minimization)
 mol_3d = dm.conformers.generate(mol, n_confs=50, rms_cutoff=0.5,
                                 minimize_energy=True, method='ETKDGv3')
 mol_3d.GetNumConformers()
 conf = mol_3d.GetConformer(0)
 positions = conf.GetPositions()          # Nx3 array of atom coordinates
 
-# Cluster conformers by RMSD and take representatives
-clusters  = dm.conformers.cluster(mol_3d, rms_cutoff=1.0, centroids=False)
-centroids = dm.conformers.return_centroids(mol_3d, clusters)
+# Cluster conformers by RMSD (Butina on symmetry-aware pairwise RMS)
+centroid_mol = dm.conformers.cluster(mol_3d, rms_cutoff=1.0)       # one Mol holding the centroid conformers
+per_cluster  = dm.conformers.cluster(mol_3d, rms_cutoff=1.0, centroids=False)  # list of Mols, one per cluster
 
 # Solvent accessible surface area
 sasa_values = dm.conformers.sasa(mol_3d, n_jobs=-1)
@@ -198,11 +226,12 @@ Embedding methods, RMSD matrices, and low-level coordinate manipulation: see `re
 ### 9. Visualization
 
 ```python
-# Grid image (PNG by default; use_svg=True for publications)
+# Grid image (SVG by default: use_svg=True). For a PNG file pass use_svg=False —
+# otherwise SVG markup is written into the .png file.
 dm.viz.to_image(mols[:20], legends=[dm.to_smiles(m) for m in mols[:20]],
                 n_cols=5, mol_size=(300, 300))
-dm.viz.to_image(mols, outfile="molecules.png")
-dm.viz.to_image(mols, outfile="molecules.svg", use_svg=True)
+dm.viz.to_image(mols, outfile="molecules.png", use_svg=False)
+dm.viz.to_image(mols, outfile="molecules.svg")
 
 # Align by MCS for SAR series; highlight atoms/bonds; render conformers
 dm.viz.to_image(similar_mols, align=True, legends=activity_labels, n_cols=4)
@@ -217,10 +246,13 @@ Full `to_image` / `conformers` / `circle_grid` parameters and best practices: se
 ```python
 from rdkit.Chem import rdChemReactions
 
-# Build a reaction from SMARTS, then apply it to a reactant tuple
+# Build a reaction from SMARTS, then apply it to a reactant tuple. By default
+# apply_reaction returns every product set (list of lists); ask for one Mol:
 rxn = rdChemReactions.ReactionFromSmarts('[C:1](=[O:2])[OH:3]>>[C:1](=[O:2])[Cl:3]')
-product = dm.reactions.apply_reaction(rxn, (dm.to_mol("CC(=O)O"),), sanitize=True)
-product_smiles = dm.to_smiles(product)
+product = dm.reactions.apply_reaction(rxn, (dm.to_mol("CC(=O)O"),),
+                                      single_product_group=True, product_index=0,
+                                      sanitize=True)
+product_smiles = dm.to_smiles(product)   # 'CC(=O)Cl' (or pass as_smiles=True)
 ```
 
 Batch reaction application, common reaction templates (amide, Suzuki, esterification), and the toy `datamol.data` datasets: see `references/reactions_data.md`.
@@ -234,7 +266,7 @@ Datamol includes built-in parallelization for many operations. Use `n_jobs` para
 
 **Functions supporting parallelization**:
 - `dm.read_sdf(..., n_jobs=-1)`
-- `dm.descriptors.batch_compute_many_descriptors(..., n_jobs=-1)`
+- `dm.descriptors.batch_compute_many_descriptors(..., n_jobs=-1, batch_size=256)` (explicit `batch_size` needed with joblib ≥ 1.6)
 - `dm.cluster_mols(..., n_jobs=-1)`
 - `dm.pdist(..., n_jobs=-1)`
 - `dm.conformers.sasa(..., n_jobs=-1)`
@@ -268,7 +300,7 @@ For detailed API documentation, consult these reference files:
    ```python
    mol = dm.to_mol(smiles)
    if mol is None:
-       # Handle invalid SMILES
+       ...  # log and skip the invalid SMILES
    ```
 
 3. **Use parallel processing** for large datasets:

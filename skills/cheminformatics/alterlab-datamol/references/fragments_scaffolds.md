@@ -74,14 +74,14 @@ Molecular fragmentation breaks molecules into smaller pieces based on chemical r
 Fragment molecule using BRICS (Breaking Retrosynthetically Interesting Chemical Substructures).
 - **Method**: Dissects based on 16 chemically meaningful bond types
 - **Consideration**: Considers chemical environment and surrounding substructures
-- **Returns**: Set of fragment SMILES strings
+- **Returns**: List of RDKit `Mol` fragments — the parent molecule comes first unless `remove_parent=True`; the default `fix=True` caps dummy atoms, so pass `fix=False` to keep attachment points
 - **Use case**: Retrosynthetic analysis, fragment-based design
 - **Example**:
   ```python
   mol = dm.to_mol("c1ccccc1CCN")
-  fragments = dm.fragment.brics(mol)
-  # Returns fragments like: '[1*]CCN', '[1*]c1ccccc1', etc.
-  # [1*] represents attachment points
+  fragments = dm.fragment.brics(mol, remove_parent=True, fix=False)
+  frag_smiles = {dm.to_smiles(f) for f in fragments}
+  # e.g. '[4*]CCN', '[16*]c1ccccc1' — [n*] marks attachment points
   ```
 
 ### RECAP Fragmentation
@@ -92,7 +92,7 @@ Fragment molecule using RECAP (Retrosynthetic Combinatorial Analysis Procedure).
 - **Rules**:
   - Leaves alkyl groups smaller than 5 carbons intact
   - Preserves cyclic bonds
-- **Returns**: Set of fragment SMILES strings
+- **Returns**: List of RDKit `Mol` fragments (parent first unless `remove_parent=True`; `fix=False` keeps `*` attachment points)
 - **Use case**: Combinatorial library design
 - **Example**:
   ```python
@@ -130,11 +130,11 @@ mol = dm.to_mol("CC(=O)Oc1ccccc1C(=O)O")  # Aspirin
 brics_frags = dm.fragment.brics(mol)
 recap_frags = dm.fragment.recap(mol)
 
-# 2. Analyze fragment frequency across library
+# 2. Analyze fragment frequency across library (count SMILES, not Mol objects)
 all_fragments = []
 for mol in molecule_library:
-    frags = dm.fragment.brics(mol)
-    all_fragments.extend(frags)
+    frags = dm.fragment.brics(mol, remove_parent=True, fix=False)
+    all_fragments.extend(dm.to_smiles(f) for f in frags)
 
 # 3. Identify common fragments
 from collections import Counter
@@ -143,25 +143,28 @@ common_fragments = fragment_counts.most_common(20)
 
 # 4. Convert fragments back to molecules (remove attachment points)
 def clean_fragment(frag_smiles):
-    # Remove [1*], [2*], etc. attachment point markers
-    clean = frag_smiles.replace('[1*]', '[H]')
+    # Cap every [n*] / * attachment point with hydrogen
+    import re
+    clean = re.sub(r"\[\d*\*\]|\*", "[H]", frag_smiles)
     return dm.to_mol(clean)
 ```
 
 ### Advanced: Fragment-Based Virtual Screening
 
 ```python
-# Build fragment library from known actives
+# Build fragment library from known actives (as canonical SMILES)
+def brics_smiles(mol):
+    return {dm.to_smiles(f) for f in dm.fragment.brics(mol, remove_parent=True, fix=False)}
+
 active_fragments = set()
 for active_mol in active_compounds:
-    frags = dm.fragment.brics(active_mol)
-    active_fragments.update(frags)
+    active_fragments.update(brics_smiles(active_mol))
 
 # Screen compounds for presence of active fragments
 def score_by_fragments(mol, fragment_set):
-    mol_frags = dm.fragment.brics(mol)
+    mol_frags = brics_smiles(mol)
     overlap = mol_frags.intersection(fragment_set)
-    return len(overlap) / len(mol_frags)
+    return len(overlap) / len(mol_frags) if mol_frags else 0.0
 
 # Score screening library
 scores = [score_by_fragments(mol, active_fragments) for mol in screening_lib]

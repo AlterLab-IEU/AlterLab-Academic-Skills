@@ -1,12 +1,13 @@
 ---
 name: alterlab-molfeat
-description: Featurizes molecules for machine learning with molfeat (100+ featurizers) — ECFP/MACCS/MAP4 fingerprints, RDKit and Mordred physicochemical descriptors, and pretrained embeddings (ChemBERTa, ChemGPT, GIN) exposed as scikit-learn transformers that convert SMILES into feature vectors. Use when turning molecules into ML-ready feature matrices for QSAR/QSPR or virtual screening, or benchmarking fingerprint against descriptor and embedding representations; for training models and MoleculeNet benchmarks on those features prefer alterlab-deepchem, and for low-level fingerprint or descriptor primitives prefer alterlab-rdkit. Part of the AlterLab Academic Skills suite.
+description: Featurizes molecules for machine learning with molfeat — ECFP/MACCS/MAP4 fingerprints, RDKit and Mordred physicochemical descriptors, pharmacophore and shape descriptors, and pretrained embeddings (ChemBERTa, ChemGPT, CheMeleon) exposed as scikit-learn transformers that convert SMILES into feature vectors. Use when turning molecules into ML-ready feature matrices for QSAR/QSPR or virtual screening, or benchmarking fingerprint against descriptor and embedding representations; for training models and MoleculeNet benchmarks on those features prefer alterlab-deepchem, and for low-level fingerprint or descriptor primitives prefer alterlab-rdkit. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Molfeat - Molecular Featurization Hub
@@ -26,21 +27,29 @@ This skill should be used when working with:
 - **Featurization pipelines**: Converting SMILES to ML-ready representations
 - **Cheminformatics**: Any task requiring molecular feature extraction
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Training/evaluating models end-to-end on MoleculeNet benchmarks with built-in loaders and GNNs | `alterlab-deepchem` |
+| Sourcing a labeled benchmark dataset with scaffold/cold splits | `alterlab-pytdc` |
+| Low-level fingerprint or descriptor primitives, custom sanitization, SMARTS | `alterlab-rdkit` |
+| Standardizing and cleaning molecule tables before featurization | `alterlab-datamol` |
+
 ## Installation
 
 ```bash
-uv pip install molfeat
+uv pip install molfeat            # molfeat 1.0.0 (current as of 2026-09); Python >= 3.11, pulls torch + datamol
 
-# With all optional dependencies
+# Optional extras (molfeat 1.x)
+uv pip install "molfeat[transformer]"   # Hugging Face models: ChemBERTa, ChemGPT, MolT5, ...
+uv pip install "molfeat[mordred]"       # Mordred descriptors (mordredcommunity)
+uv pip install "molfeat[fcd]"           # FCD / ChemNet embeddings
+uv pip install "molfeat[pyg]"           # PyTorch Geometric (used by Mol-JEPA)
 uv pip install "molfeat[all]"
 ```
 
-**Optional dependencies for specific featurizers:**
-- `molfeat[dgl]` - GNN models (GIN variants)
-- `molfeat[graphormer]` - Graphormer models
-- `molfeat[transformer]` - ChemBERTa, ChemGPT, MolT5
-- `molfeat[fcd]` - FCD descriptors
-- `molfeat[map4]` - MAP4 fingerprints
+**molfeat 1.0 breaking changes.** The DGL-based pretrained GNNs (`gin_supervised_*`, `jtvae_zinc_no_kl`), Graphormer, and the protein featurizers were removed, along with the `dgl` and `graphormer` extras (there has never been a `map4` extra); loading those model-store entries now fails. New foundation-model featurizers are `CheMeleonTransformer` (2,048-d, weights fetched from Zenodo and checksum-verified) and `MolJEPATransformer` (CC BY-NC 4.0; requires `trust_remote_code=True` and `accept_noncommercial_license=True`). If you must reproduce legacy GIN/Graphormer embeddings, pin `molfeat<1` (0.11.x requires Python ≤ 3.10) in a separate environment. MAP4 needs the `map4` package from https://github.com/reymond-group/map4 (not on PyPI).
 
 ## Core Concepts
 
@@ -74,11 +83,12 @@ Scikit-learn compatible transformers that wrap calculators for batch processing 
 
 **Example:**
 ```python
+import numpy as np
 from molfeat.trans import MoleculeTransformer
 from molfeat.calc import FPCalculator
 
-transformer = MoleculeTransformer(FPCalculator("ecfp"), n_jobs=-1)
-features = transformer(smiles_list)  # Parallel processing
+transformer = MoleculeTransformer(FPCalculator("ecfp"), n_jobs=-1, dtype=np.float32)
+features = transformer(smiles_list)  # (n_mols, 2048) array; without dtype you get a list of arrays
 ```
 
 ### 3. Pretrained Transformers (`molfeat.trans.pretrained`)
@@ -90,12 +100,13 @@ Specialized transformers for deep learning models with batched inference and cac
 - Transfer learning from large chemical datasets
 - Deep learning feature extraction
 
-**Example:**
+**Example** (`PretrainedMolTransformer` is the abstract base class — instantiate a concrete subclass):
 ```python
-from molfeat.trans.pretrained import PretrainedMolTransformer
+import numpy as np
+from molfeat.trans.pretrained import PretrainedHFTransformer
 
-transformer = PretrainedMolTransformer("ChemBERTa-77M-MLM", n_jobs=-1)
-embeddings = transformer(smiles_list)  # Deep learning embeddings
+transformer = PretrainedHFTransformer(kind="ChemBERTa-77M-MLM", notation="smiles", dtype=np.float32)
+embeddings = transformer(smiles_list)  # (n_mols, 384) mean-pooled embeddings
 ```
 
 ## Quick Start Workflow
@@ -103,16 +114,16 @@ embeddings = transformer(smiles_list)  # Deep learning embeddings
 ### Basic Featurization
 
 ```python
-import datamol as dm
+import numpy as np
 from molfeat.calc import FPCalculator
 from molfeat.trans import MoleculeTransformer
 
 # Load molecular data
 smiles = ["CCO", "CC(=O)O", "c1ccccc1", "CC(C)O"]
 
-# Create calculator and transformer
+# Create calculator and transformer (dtype makes the output a single array)
 calc = FPCalculator("ecfp", radius=3)
-transformer = MoleculeTransformer(calc, n_jobs=-1)
+transformer = MoleculeTransformer(calc, n_jobs=-1, dtype=np.float32)
 
 # Featurize molecules
 features = transformer(smiles)
@@ -132,16 +143,13 @@ loaded = MoleculeTransformer.from_state_yaml_file("featurizer_config.yml")
 ### Handle Errors Gracefully
 
 ```python
-# Process dataset with potentially invalid SMILES
-transformer = MoleculeTransformer(
-    calc,
-    n_jobs=-1,
-    ignore_errors=True,  # Continue on failures
-    verbose=True          # Log error details
-)
+# ignore_errors is an argument of the CALL, not the constructor
+# (a constructor kwarg is silently swallowed and the call still raises)
+transformer = MoleculeTransformer(calc, n_jobs=-1, dtype=np.float32, verbose=True)
 
-features = transformer(smiles_with_errors)
-# Returns None for failed molecules
+features, valid_ids = transformer(smiles_with_errors, ignore_errors=True)
+# features: rows for the molecules that featurized; valid_ids: their input positions
+# transformer.transform(smiles_with_errors, ignore_errors=True) instead keeps None placeholders
 ```
 
 ## Choosing the Right Featurizer
@@ -156,7 +164,7 @@ FPCalculator("ecfp", radius=3, fpSize=2048)
 # MACCS - Fast, good for scaffold hopping
 FPCalculator("maccs")
 
-# MAP4 - Efficient for large-scale screening
+# MAP4 - Efficient for large-scale screening (needs the map4 package from GitHub)
 FPCalculator("map4")
 ```
 
@@ -171,14 +179,16 @@ from molfeat.calc import MordredDescriptors
 MordredDescriptors()
 ```
 
-**Combine multiple featurizers:**
+**Combine multiple featurizers** (`FeatConcat` takes fingerprint names or `FPVecTransformer` objects, not `FPCalculator`s):
 ```python
 from molfeat.trans import FeatConcat
 
-concat = FeatConcat([
-    FPCalculator("maccs"),      # 167 dimensions
-    FPCalculator("ecfp")         # 2048 dimensions
-])  # Result: 2215-dimensional combined features
+concat = FeatConcat(
+    ["maccs", "ecfp"],                    # 167 + 2048 dimensions
+    params={"ecfp": {"length": 2048}},    # FPVecTransformer's ecfp default length is 2000
+    dtype=np.float32,
+)
+X = concat(smiles)                        # (n_mols, 2215); concat.length == 2215
 ```
 
 ### For Deep Learning
@@ -186,21 +196,21 @@ concat = FeatConcat([
 **Transformer-based embeddings:**
 ```python
 # ChemBERTa - Pre-trained on 77M PubChem compounds
-PretrainedMolTransformer("ChemBERTa-77M-MLM")
+PretrainedHFTransformer(kind="ChemBERTa-77M-MLM", notation="smiles")
 
-# ChemGPT - Autoregressive language model
-PretrainedMolTransformer("ChemGPT-1.2B")
+# ChemGPT - Autoregressive language model (SELFIES input)
+PretrainedHFTransformer(kind="ChemGPT-1.2B", notation="selfies")
 ```
 
-**Graph neural networks:**
+**Foundation-model embeddings (molfeat 1.x):**
 ```python
-# GIN models with different pre-training objectives
-PretrainedMolTransformer("gin-supervised-masking")
-PretrainedMolTransformer("gin-supervised-infomax")
+from molfeat.trans.pretrained import CheMeleonTransformer, MolJEPATransformer
 
-# Graphormer for quantum chemistry
-PretrainedMolTransformer("Graphormer-pcqm4mv2")
+CheMeleonTransformer()                    # 2,048-d descriptor-foundation-model fingerprints
+MolJEPATransformer(trust_remote_code=True,
+                   accept_noncommercial_license=True)   # CC BY-NC 4.0 weights
 ```
+The legacy DGL GIN (`gin_supervised_*`) and Graphormer models were removed in molfeat 1.0.
 
 ### For Similarity Searching
 
@@ -225,12 +235,13 @@ USRDescriptors()
 # FCFP - Functional group based
 FPCalculator("fcfp")
 
-# CATS - Pharmacophore pair distributions
-from molfeat.calc import CATSCalculator
-CATSCalculator(mode="2D")
+# CATS - Pharmacophore pair distributions (189-d in 2D)
+from molfeat.calc import CATS
+CATS()                      # CATS(use_3d_distances=True) for the 3D variant
 
-# Gobbi - Explicit pharmacophore features
-FPCalculator("gobbi2D")
+# Gobbi - Explicit 2D pharmacophore features
+from molfeat.calc import Pharmacophore2D
+Pharmacophore2D(factory="gobbi")
 ```
 
 ## Common Workflows and Advanced Patterns
@@ -256,11 +267,11 @@ Full copy-ready workflow and advanced-pattern recipes: see `references/workflows
 |------------|------|------------|-------|----------|
 | `ecfp` | Fingerprint | 2048 | Fast | General purpose |
 | `maccs` | Fingerprint | 167 | Very fast | Scaffold similarity |
-| `desc2D` | Descriptors | 200+ | Fast | Interpretable models |
+| `desc2D` | Descriptors | 223 | Fast | Interpretable models |
 | `mordred` | Descriptors | 1800+ | Medium | Comprehensive features |
-| `map4` | Fingerprint | 1024 | Fast | Large-scale screening |
-| `ChemBERTa-77M-MLM` | Deep learning | 768 | Slow* | Transfer learning |
-| `gin-supervised-masking` | GNN | Variable | Slow* | Graph-based models |
+| `map4` | Fingerprint | 2048 | Fast | Large-scale screening |
+| `ChemBERTa-77M-MLM` | Deep learning | 384 | Slow* | Transfer learning |
+| `CheMeleonTransformer` | Foundation model | 2048 | Slow* | Descriptor-pretrained embeddings |
 
 *First run is slow; subsequent runs benefit from caching
 
@@ -281,7 +292,7 @@ Complete API documentation covering:
 ### references/available_featurizers.md
 Comprehensive catalog of all 100+ featurizers organized by category:
 - Transformer-based language models (ChemBERTa, ChemGPT)
-- Graph neural networks (GIN, Graphormer)
+- Graph neural networks (GIN, Graphormer — legacy, removed in molfeat 1.0)
 - Molecular descriptors (RDKit, Mordred)
 - Fingerprints (ECFP, MACCS, MAP4, and 15+ others)
 - Pharmacophore descriptors (CATS, Gobbi)
@@ -327,9 +338,10 @@ Process in chunks or use streaming approaches for datasets > 100K molecules.
 ### Pretrained Model Dependencies
 Some models require additional packages. Install specific extras:
 ```bash
-uv pip install "molfeat[transformer]"  # For ChemBERTa/ChemGPT
-uv pip install "molfeat[dgl]"          # For GIN models
+uv pip install "molfeat[transformer]"  # For ChemBERTa/ChemGPT/MolT5
+uv pip install "molfeat[pyg]"          # For Mol-JEPA (with the transformer extra)
 ```
+There is no `dgl` extra in molfeat 1.x — the DGL GIN models were removed.
 
 ### Reproducibility
 Save exact configurations and document versions:
@@ -345,4 +357,6 @@ print(f"molfeat version: {molfeat.__version__}")
 - **GitHub Repository**: https://github.com/datamol-io/molfeat
 - **PyPI Package**: https://pypi.org/project/molfeat/
 - **Tutorial**: https://portal.valencelabs.com/datamol/post/types-of-featurizers-b1e8HHrbFMkbun6
+
+Part of the AlterLab Academic Skills suite.
 

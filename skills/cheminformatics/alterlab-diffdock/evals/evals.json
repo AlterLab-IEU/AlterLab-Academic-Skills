@@ -13,10 +13,10 @@
     {
       "id": "virtual-screening-batch",
       "prompt": "I have 300 candidate SMILES and one kinase PDB. Set up a batch virtual screening run and pre-compute the protein embeddings so it's faster.",
-      "expected_output": "Invokes alterlab-diffdock: builds/validates a batch CSV via prepare_batch_csv.py (complex_name, protein_path, ligand_description, protein_sequence), pre-computes ESM embeddings with datasets/esm_embedding_preparation.py, then runs inference with --protein_ligand_csv and --esm_embeddings_path, and analyzes ranked confidence scores across complexes.",
+      "expected_output": "Invokes alterlab-diffdock: builds/validates a batch CSV via prepare_batch_csv.py (complex_name, protein_path, ligand_description, protein_sequence) and runs a single inference call with --protein_ligand_csv, explaining that inference.py already computes the ESM2 embeddings for all complexes once at start-up (there is no --esm_embeddings_path flag for inference; the esm_embedding_preparation.py script is for training/evaluation benchmarks), then analyzes ranked confidence scores across complexes.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Uses a batch CSV plus pre-computed ESM embeddings for the >100-compound screen rather than 300 separate single runs." }
+        { "type": "behavior", "value": "Uses one batch CSV / single inference run for the >100-compound screen rather than 300 separate runs, and corrects the premise that embeddings need a separate pre-computation step." }
       ]
     },
     {
@@ -53,6 +53,15 @@
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-molecular-dynamics" }
+      ]
+    },
+    {
+      "id": "near-miss-boltz",
+      "prompt": "I only have the kinase's amino-acid sequence and a ligand SMILES. Co-fold the protein-ligand complex with Boltz-2 and give me its predicted binding affinity too.",
+      "expected_output": "Does NOT invoke alterlab-diffdock; defers to alterlab-boltz. The user explicitly wants Boltz-2 co-folding of the complex from sequence plus its affinity head, which is the Boltz skill's job; DiffDock docks into a given structure and reports pose confidence, not affinity.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-boltz" }
       ]
     }
   ]

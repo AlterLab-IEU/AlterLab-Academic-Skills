@@ -317,17 +317,22 @@ Fingerprint similarity and operations.
 - `DataStructs.TanimotoDistance(fp1, fp2)` - 1 - Tanimoto
 - `DataStructs.DiceDistance(fp1, fp2)` - 1 - Dice
 
-## rdkit.Chem.AtomPairs
+## rdkit.Chem.AtomPairs (legacy)
+
+> **Deprecated:** in RDKit 2026.03 these helpers still work but log
+> `DEPRECATION WARNING: please use AtomPairGenerator` / `TopologicalTorsionGenerator`.
+> Prefer `rdFingerprintGenerator.GetAtomPairGenerator(...)` and
+> `rdFingerprintGenerator.GetTopologicalTorsionGenerator(...)` (see below).
 
 Atom pair fingerprints.
 
 - `Pairs.GetAtomPairFingerprint(mol, minLength=1, maxLength=30)` - Atom pair fingerprint
-- `Pairs.GetAtomPairFingerprintAsBitVect(mol, minLength=1, maxLength=30, nBits=2048)` - As bit vector
+- `Pairs.GetAtomPairFingerprintAsBitVect(mol)` - As bit vector (takes no length/size keywords)
 - `Pairs.GetHashedAtomPairFingerprint(mol, nBits=2048, minLength=1, maxLength=30)` - Hashed version
 
-## rdkit.Chem.Torsions
+## rdkit.Chem.AtomPairs.Torsions (legacy)
 
-Topological torsion fingerprints.
+Topological torsion fingerprints (same deprecation as above).
 
 - `Torsions.GetTopologicalTorsionFingerprint(mol, targetSize=4)` - Torsion fingerprint
 - `Torsions.GetTopologicalTorsionFingerprintAsIntVect(mol, targetSize=4)` - As int vector

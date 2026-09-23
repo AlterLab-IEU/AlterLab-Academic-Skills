@@ -39,12 +39,12 @@
       ]
     },
     {
-      "id": "near-miss-torchdrug",
+      "id": "near-miss-torch-geometric",
       "prompt": "I want to design my own custom message-passing GNN architecture from scratch in pure PyTorch, defining my own layers and forward pass for a molecular property task.",
-      "expected_output": "Does NOT invoke this skill; defers to alterlab-torchdrug. DeepChem is for pre-built models and extensive featurizers, whereas building a custom PyTorch-native GNN architecture with hand-written layers is torchdrug's graph-first territory.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-torch-geometric. DeepChem is for pre-built models and extensive featurizers, whereas designing a custom PyTorch GNN with hand-written message-passing layers is PyTorch Geometric's territory (alterlab-torchdrug only if the user specifically needs TorchDrug's task abstractions — it is unmaintained and requires Python < 3.11).",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
-        { "type": "output_contains", "value": "alterlab-torchdrug" }
+        { "type": "output_contains", "value": "alterlab-torch-geometric" }
       ]
     },
     {

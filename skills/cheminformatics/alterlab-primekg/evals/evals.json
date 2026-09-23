@@ -39,6 +39,15 @@
         { "type": "output_contains", "value": "rdkit" },
         { "type": "behavior", "value": "Recognizes molecular descriptor/fingerprint work as RDKit territory, not knowledge-graph querying, and defers." }
       ]
+    },
+    {
+      "id": "near-miss-opentargets",
+      "prompt": "For the gene LRRK2, pull the Open Targets association scores across diseases, its tractability assessment, and the known drugs in clinical development.",
+      "expected_output": "Does NOT invoke alterlab-primekg; defers to alterlab-opentargets. The user wants Open Targets Platform evidence scores, tractability, and known-drug data via its GraphQL API, not traversal of the static PrimeKG knowledge-graph CSV.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-opentargets" }
+      ]
     }
   ]
 }

@@ -1,12 +1,13 @@
 ---
 name: alterlab-pytdc
-description: Loads Therapeutics Data Commons (TDC, PyTDC) AI-ready drug-discovery datasets and benchmarks — ADME, toxicity, drug-target interaction (DTI), scaffold splits, and molecular oracles for therapeutic ML and pharmacological prediction. Use when fetching a standardized benchmark dataset, applying scaffold or cold-split evaluation, or sourcing labeled molecules for ADMET, toxicity, or DTI modeling. Sources data, splits, and oracles only — defer molecular featurization (ECFP/fingerprints), model training, and transformers to a molecular-ML skill (e.g. deepchem). Part of the AlterLab Academic Skills suite.
+description: Loads Therapeutics Data Commons (TDC, PyTDC) AI-ready drug-discovery datasets and benchmarks — ADME, toxicity, drug-target interaction (DTI), scaffold splits, and molecular oracles for therapeutic ML and pharmacological prediction. Use when fetching a standardized benchmark dataset, applying scaffold or cold-split evaluation, or sourcing labeled molecules for ADMET, toxicity, or DTI modeling. Sources data, splits, and oracles only — defer molecular featurization (ECFP/fingerprints), model training, and transformers to alterlab-deepchem or alterlab-molfeat. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: "Self-contained, no API key or account. PyTDC 1.1.15 needs its own environment on Python 3.10-3.12 (pins numpy<2, pandas<3, rdkit<2024.3.1, transformers<4.51); datasets download from the TDC servers on first use."
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # PyTDC (Therapeutics Data Commons)
@@ -26,24 +27,25 @@ This skill should be used when:
 - Accessing curated datasets with proper train/test splits (scaffold, cold-split)
 - Using molecular oracles for property optimization
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Featurizing the loaded molecules and training/evaluating models | `alterlab-deepchem` (models) or `alterlab-molfeat` (features) |
+| Pulling raw bioactivity records (IC50/Ki) for a target beyond TDC's curated sets | `alterlab-chembl` |
+| Measured binding affinities for a protein target | `alterlab-bindingdb` |
+| Querying the PrimeKG knowledge graph itself (drug–disease paths) | `alterlab-primekg` |
+
 ## Installation & Setup
 
-Install PyTDC using pip:
+Give PyTDC its own virtual environment:
 
 ```bash
-uv pip install PyTDC
+uv venv --python 3.12        # PyTDC 1.1.15 resolves on Python 3.10-3.12, not 3.13
+uv pip install PyTDC         # 1.1.15 is the latest release (Mar 2025)
 ```
 
-To upgrade to the latest version:
-
-```bash
-uv pip install PyTDC --upgrade
-```
-
-Core dependencies (automatically installed):
-- numpy, pandas, tqdm, seaborn, scikit_learn, fuzzywuzzy
-
-Additional packages are installed automatically as needed for specific features.
+PyTDC 1.1.15 hard-pins an older stack — `numpy<2`, `pandas<3`, `rdkit<2024.3.1`, `transformers<4.51`, `datasets<2.20` — and pulls heavy extras such as `cellxgene-census` and `tiledbsoma`, so it cannot share an environment with current RDKit 2026.x, numpy 2.x, pandas 3.x, or transformers 5.x. Export the splits to CSV/Parquet and featurize/train in a separate environment if you need newer libraries.
 
 ## Quick Start
 
@@ -467,4 +469,6 @@ This skill includes bundled resources for common TDC workflows:
 - **Documentation**: https://tdc.readthedocs.io
 - **GitHub**: https://github.com/mims-harvard/TDC
 - **Paper**: NeurIPS 2021 - "Therapeutics Data Commons: Machine Learning Datasets and Tasks for Drug Discovery and Development"
+
+Part of the AlterLab Academic Skills suite.
 

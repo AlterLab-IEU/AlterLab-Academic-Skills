@@ -83,6 +83,6 @@ model = dc.models.GCNModel(batch_size=32)  # Instead of 128
 uv pip install deepchem
 # For PyTorch models
 uv pip install deepchem[torch]
-# For all features
-uv pip install deepchem[all]
+# Other backends
+uv pip install "deepchem[tensorflow]"   # or [jax]; there is no [all] extra
 ```

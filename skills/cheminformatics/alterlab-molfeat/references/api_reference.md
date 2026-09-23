@@ -119,19 +119,20 @@ RDKit's 2D pharmacophore fingerprint generation.
 **Pharmacophore3D**
 Consensus pharmacophore fingerprints from multiple conformers.
 
-**CATSCalculator**
+**CATS**
 Computes Chemically Advanced Template Search (CATS) descriptors - pharmacophore point pair distributions.
+(The class is `CATS`; there is no `CATSCalculator`.)
 
-**Parameters:**
-- `mode` - "2D" or "3D" distance calculations
-- `dist_bins` - Distance bins for pair distributions
+**Parameters** (`CATS(max_dist=None, bins=None, scale="raw", use_3d_distances=False)`):
+- `use_3d_distances` - use 3D conformer distances instead of topological (2D) distances
+- `max_dist`, `bins` - distance range and bins for the pair distributions
 - `scale` - Scaling mode: "raw", "num", or "count"
 
 ```python
-from molfeat.calc import CATSCalculator
+from molfeat.calc import CATS
 
-calc = CATSCalculator(mode="2D", scale="raw")
-cats = calc("CCO")  # Returns 21 descriptors by default
+calc = CATS(scale="raw")
+cats = calc("CCO")  # 189 values with the default 2D settings (molfeat 1.0)
 ```
 
 ### Shape Descriptors
@@ -184,7 +185,10 @@ Scikit-learn compatible transformer for batch molecular featurization.
 - `n_jobs` (int) - Number of parallel jobs (-1 for all cores)
 - `dtype` - Output data type (numpy float32/64, torch tensors)
 - `verbose` (bool) - Enable verbose logging
-- `ignore_errors` (bool) - Continue on failures (returns None for failed molecules)
+- `ignore_errors` is **not** a constructor argument: pass it to the call —
+  `feats, ids = transformer(mols, ignore_errors=True)` returns only the valid rows plus their
+  input indices, while `transformer.transform(mols, ignore_errors=True)` keeps `None` placeholders.
+  Without `dtype`, calls return a list of per-molecule arrays.
 
 **Essential Methods:**
 - `transform(mols)` - Processes batches and returns representations
@@ -224,18 +228,17 @@ transformer = MoleculeTransformer.from_state_yaml_file("ecfp_config.yml")
 Concatenates multiple featurizers into unified representations.
 
 ```python
+import numpy as np
 from molfeat.trans import FeatConcat
-from molfeat.calc import FPCalculator
 
-# Combine multiple fingerprints
-concat = FeatConcat([
-    FPCalculator("maccs"),      # 167 dimensions
-    FPCalculator("ecfp")         # 2048 dimensions
-])
-
-# Result: 2215-dimensional features (167 + 2048)
-transformer = MoleculeTransformer(concat, n_jobs=-1)
-features = transformer(smiles)
+# Combine multiple fingerprints. FeatConcat only accepts FPVecTransformer objects or
+# fingerprint names (it rejects FPCalculator instances) and is itself callable.
+concat = FeatConcat(
+    ["maccs", "ecfp"],
+    params={"ecfp": {"length": 2048}},   # FPVecTransformer's ecfp default length is 2000
+    dtype=np.float32,
+)
+features = concat(smiles)   # (n_mols, 2215) = 167 + 2048; concat.length == 2215
 ```
 
 ### PretrainedMolTransformer
@@ -244,19 +247,22 @@ Subclass of `MoleculeTransformer` for pre-trained deep learning models.
 
 **Unique Features:**
 - `_embed()` - Batched inference for neural networks
-- `_convert()` - Transforms SMILES/molecules into model-compatible formats
-  - SELFIES strings for language models
-  - DGL graphs for graph neural networks
+- `_convert()` - Transforms SMILES/molecules into model-compatible formats (e.g. SELFIES strings for language models)
 - Integrated caching system for efficient storage
+
+It is an abstract base class; instantiate a concrete subclass (molfeat 1.x ships
+`PretrainedHFTransformer`, `FCDTransformer`, `CheMeleonTransformer`, `MolJEPATransformer`;
+the DGL GIN and Graphormer transformers were removed in 1.0).
 
 **Usage:**
 ```python
-from molfeat.trans.pretrained import PretrainedMolTransformer
+import numpy as np
+from molfeat.trans.pretrained import PretrainedHFTransformer
 
-# Load pretrained model
-transformer = PretrainedMolTransformer("ChemBERTa-77M-MLM", n_jobs=-1)
+# Load pretrained model (Hugging Face backbone; needs molfeat[transformer])
+transformer = PretrainedHFTransformer(kind="ChemBERTa-77M-MLM", notation="smiles", dtype=np.float32)
 
-# Generate embeddings
+# Generate embeddings -> (n_mols, 384)
 embeddings = transformer(smiles)
 ```
 
@@ -322,16 +328,11 @@ transformer = store.load("ChemBERTa-77M-MLM")
 ### Error Handling
 
 ```python
-# Enable error tolerance
-featurizer = MoleculeTransformer(
-    calc,
-    n_jobs=-1,
-    verbose=True,
-    ignore_errors=True
-)
+# Enable error tolerance at call time (not in the constructor)
+featurizer = MoleculeTransformer(calc, n_jobs=-1, verbose=True, dtype=np.float32)
 
-# Failed molecules return None
-features = featurizer(smiles_with_errors)
+# Only valid molecules are returned, with their input positions
+features, valid_ids = featurizer(smiles_with_errors, ignore_errors=True)
 ```
 
 ### Data Type Control
@@ -425,4 +426,4 @@ loader = DataLoader(dataset, batch_size=32)
 2. **Batch Processing**: Process multiple molecules at once instead of loops
 3. **Caching**: Leverage built-in caching for pretrained models
 4. **Data Types**: Use float32 instead of float64 when precision allows
-5. **Error Handling**: Set `ignore_errors=True` for large datasets with potential invalid molecules
+5. **Error Handling**: Call with `ignore_errors=True` (it returns `(features, valid_ids)`) for large datasets with potential invalid molecules

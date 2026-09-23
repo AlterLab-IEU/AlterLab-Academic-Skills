@@ -4,18 +4,18 @@ The `datamol.conformers` module provides tools for generating and analyzing 3D m
 
 ## Conformer Generation
 
-### `dm.conformers.generate(mol, n_confs=None, rms_cutoff=None, minimize_energy=True, method='ETKDGv3', add_hs=True, ...)`
+### `dm.conformers.generate(mol, n_confs=None, rms_cutoff=None, minimize_energy=False, method=None, add_hs=True, ...)`
 Generate 3D molecular conformers.
 - **Parameters**:
   - `mol`: Input molecule
   - `n_confs`: Number of conformers to generate (auto-determined based on rotatable bonds if None)
   - `rms_cutoff`: RMS threshold in Ångströms for filtering similar conformers (removes duplicates)
-  - `minimize_energy`: Apply UFF energy minimization (default: True)
+  - `minimize_energy`: Apply UFF energy minimization (default: **False** — pass `True` to minimize)
   - `method`: Embedding method - options:
     - `'ETDG'` - Experimental Torsion Distance Geometry
     - `'ETKDG'` - ETDG with additional basic knowledge
     - `'ETKDGv2'` - Enhanced version 2
-    - `'ETKDGv3'` - Enhanced version 3 (default, recommended)
+    - `'ETKDGv3'` - Enhanced version 3 (used when `method=None`; recommended)
   - `add_hs`: Add hydrogens before embedding (default: True, critical for quality)
   - `random_seed`: Set for reproducibility
 - **Returns**: Molecule with embedded conformers
@@ -28,19 +28,19 @@ Generate 3D molecular conformers.
 
 ## Conformer Clustering
 
-### `dm.conformers.cluster(mol, rms_cutoff=1.0, already_aligned=False, centroids=False)`
+### `dm.conformers.cluster(mol, rms_cutoff=1.0, already_aligned=False, centroids=True)`
 Group conformers by RMS distance.
 - **Parameters**:
   - `rms_cutoff`: Clustering threshold in Ångströms (default: 1.0)
   - `already_aligned`: Whether conformers are pre-aligned
-  - `centroids`: Return centroid conformers (True) or cluster groups (False)
+  - `centroids`: Return centroid conformers (True, default) or cluster groups (False)
 - **Returns**: Cluster information or centroid conformers
 - **Use case**: Identify distinct conformational families
 
 ### `dm.conformers.return_centroids(mol, conf_clusters, centroids=True)`
 Extract representative conformers from clusters.
 - **Parameters**:
-  - `conf_clusters`: Sequence of cluster indices from `cluster()`
+  - `conf_clusters`: Sequence of index clusters (e.g. from RDKit `Butina.ClusterData`); `cluster()` calls this internally and already returns its result
   - `centroids`: Return single molecule (True) or list of molecules (False)
 - **Returns**: Centroid conformer(s)
 
