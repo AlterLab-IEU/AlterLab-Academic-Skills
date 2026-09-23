@@ -81,9 +81,9 @@ above the domain skills and enforces research-method correctness — pre-registr
 statistical-test selection guards, and results-reporting transparency. Sequenced last so it could
 codify patterns proven across the expanded corpus.
 
-## v2.8 candidates — gaps found in the September 2026 review
+## v3.1 candidates — gaps found in the September 2026 review
 
-The v2.7.0 refresh sent one reviewer through every domain; each was asked where the suite has no
+The v3.0.0 refresh sent one reviewer through every domain; each was asked where the suite has no
 skill for something faculty routinely need. Their proposals, de-duplicated and grouped (a skill
 named by several reviewers independently is marked ★). None is scheduled yet; each would ship
 under the day-one-evals bar above.

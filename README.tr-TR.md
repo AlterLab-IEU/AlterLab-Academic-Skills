@@ -33,7 +33,7 @@
 <p><em>18 araştırma alanına yayılmış — Türk akademisinden biyoinformatiğe, dijital beşeri bilimlere</em></p>
 <p><em>240/240 beceri çalıştırılabilir eval ile gelir · deterministik atıf-doğrulayıcı · claude.ai için alan paketleri</em></p>
 
-<p>🧩 <b>v2.7'de yeni — Claude Code için çalıştırılabilir çok-ajanlı araştırma iş akışları:</b> <code>/alterlab-workflows:citation-audit</code>, <code>review-panel</code>, PRISMA çift tarama, hakem yanıtı, hibe paneli simülasyonu · <b>Claude Opus 5.5</b> için ayarlandı</p>
+<p>🧩 <b>v3.0'da yeni — Claude Code için çalıştırılabilir çok-ajanlı araştırma iş akışları:</b> <code>/alterlab-workflows:citation-audit</code>, <code>review-panel</code>, PRISMA çift tarama, hakem yanıtı, hibe paneli simülasyonu · <b>Claude Opus 5.5</b> için ayarlandı</p>
 <p>🧭 Hangi beceri gerektiğini bilmiyor musunuz? Sadece <b>"AlterLab becerilerini kullan"</b> deyin, Claude sizin için seçsin · <b><code>alterflow</code></b> yazarak netleştirilmiş çok-ajanlı bir koşu başlatın</p>
 
 <p>
@@ -139,7 +139,7 @@ flowchart LR
 <br>
 
 - [⚡ Hemen Deneyin — Tek Satır, Doğru Beceri](#-hemen-deneyin--tek-satır-doğru-beceri)
-- [🚀 Sürüm 2.7.0'da Yenilikler](#-sürüm-270da-yenilikler)
+- [🚀 Sürüm 3.0.0'da Yenilikler](#-sürüm-300da-yenilikler)
 - [🎯 Bu Proje Nedir?](#-bu-proje-nedir)
 - [✨ Öne Çıkan Özellikler](#-öne-çıkan-özellikler)
 - [🆕 Sürüm 2.0'da Yenilikler](#-sürüm-20da-yenilikler)
@@ -159,11 +159,11 @@ flowchart LR
 
 <br>
 
-## 🚀 Sürüm 2.7.0'da Yenilikler
+## 🚀 Sürüm 3.0.0'da Yenilikler
 
 - 🧩 **Yeni eklenti — `alterlab-workflows`: yedi çalıştırılabilir çok-ajanlı araştırma iş akışı.** Claude Code artık *dinamik iş akışlarını* — çok sayıda alt ajanı yöneten betikleri — çalıştırabiliyor ve eklentiler bu betikleri dağıtabiliyor. AlterLab yedi iş akışı sunuyor; her biri görevinin gerektirdiği bağımsızlık ve karşıt denetimlerle çalışır, sayımlar, oylar ve uyum istatistikleri kodla hesaplanır: **`citation-audit`** (tüm makalede kaynak varlığı + iddia sadakati; her bayrak iki bağımsız yeniden denetimden geçer), **`review-panel`** (makaleye göre seçilmiş kör hakemler; her büyük eleştiri metne karşı yeniden okunur), **`claim-stress-test`**, **`systematic-review-screening`** (PRISMA 2020 çift tarama + κ), **`rebuttal`** (madde madde hakem yanıtı; asla sonuç uydurmaz), **`grant-mock-panel`** (fon kuruluşunun kendi ölçütleri ve puan ölçeği — NIH, NSF, ERC, TÜBİTAK) ve **`literature-map`**. Taşınabilir bir beceri, aynı aşamaları claude.ai'de adım adım yürütür.
 - 📦 **Tek adımda kurulum** — `alterlab-essentials` (altı eklentilik fakülte başlangıç paketi) ve `alterlab-complete` (tüm alanlar) bağımlılık paketleridir: tek bir `/plugin install` gerisini kurar.
-- 🔧 **Eklenti kurulum düzeltmeleri** — v2.6.x'te `alterlab-core` pazardan kurulamıyordu (bildirimde ajan dizinleri vardı) ve `alterlab-social-science-workflow` kuruluyor ama yüklenemiyordu (çakışan bildirimler). İkisi de düzeltildi, `claude plugin validate` ve gerçek kurulumlarla doğrulandı ve yeni testlerle sabitlendi. Paketlenmiş PubMed / OpenAlex / Crossref / Zotero MCP sunucuları artık kimlik bilgilerini `userConfig` üzerinden soruyor, başladığı doğrulanmış sürümlere sabitlendi (PubMed, yeni bir `mcp` sürümü yüzünden herkeste açılışta çöküyordu) ve isteğe bağlı bir **OpenAlex API anahtarı** alıyor — OpenAlex artık anahtarsız kullanımı IP başına kotalıyor ve eski mailto'yu yok sayıyor.
+- 🔧 **Eklenti kurulum düzeltmeleri** — v2.6.x'te `alterlab-core` pazardan kurulamıyordu (bildirimde ajan dizinleri vardı) ve `alterlab-social-science-workflow` kuruluyor ama yüklenemiyordu (çakışan bildirimler). İkisi de düzeltildi, `claude plugin validate` ve gerçek kurulumlarla doğrulandı ve yeni testlerle sabitlendi. Paketlenmiş OpenAlex / Crossref / Zotero MCP sunucuları kimlik bilgilerini `userConfig` üzerinden soruyor, başladığı doğrulanmış sürümlere sabitlendi ve isteğe bağlı bir **OpenAlex API anahtarı** alıyor — OpenAlex artık anahtarsız kullanımı IP başına kotalıyor ve eski mailto'yu yok sayıyor. Yeni bir `mcp` sürümüyle açılışta çöken ve e-posta olmadan başlamayan üçüncü taraf PubMed sunucusu kaldırıldı; PubMed, NCBI'ye doğrudan bağlanan `alterlab-pubmed` becerisiyle kullanılmaya devam ediyor.
 - 🧠 **Claude Opus 5.5 için ayarlandı** — `ALTERLAB_MODEL` varsayılanı `claude-opus-5-5`; OpenRouter kimlikleri bundan türetiliyor (eski `anthropic/claude-opus-4-8` geçerli bir kimlik değildi); betikler güncel istek biçimini izliyor (uyarlanabilir düşünme, açık effort ayarı, örnekleme parametresi yok, prefill yok, zorunlu araç seçimi yok); yönergeler, talimatları harfiyen izleyen modeller için normal tonda yeniden yazıldı.
 - 🔬 **Her beceri Eylül 2026 sürümlerine karşı yeniden doğrulandı** — kütüphane sürümleri, kaldırılan API'ler, taşınan uç noktalar, standartlar ve fon kuruluşu kuralları birincil kaynaklardan ve kod çalıştırılarak denetlendi. Bu geçiş gerçek hatalar buldu: ele geçirilmiş DOI'leri ve uydurma kaynakları geçiren bir atıf doğrulayıcı, sonuçları sessizce kesen ya da yanlış sayı üreten betikler (gnomAD LOEUF eşiği, DepMap mutasyon kodlaması, Web Mercator'da ölçülen alanlar, yanlış birimdeki PennyLane enerjileri) ve taşınan ya da kapanan servisler (USPTO, GWAS Catalog, COSMIC, Sherpa Romeo). Her becerinin artık bir *Tetiklemez* yönlendirme tablosu var. → [CHANGELOG](CHANGELOG.md)
 - 🌍 **Dilden bağımsız araştırma hattı** — iki dilli özetler artık sabit zh-TW yerine İngilizce + yazarın dili (Türkçe, Geleneksel Çince, …); literatür stratejisti TR Dizin, DergiPark ve YÖK Tez'de de arıyor; Türkçe tetikleyici ifadeler doğru beceriye yönleniyor.
@@ -246,7 +246,7 @@ Yukarıdaki tabloyu tamamlayan, v2.0 ile gelen başlıca sayfa eklentileri:
 | | Yenilik | Ayrıntı |
 |:---:|:---|:---|
 | 🌐 | **Canlı Katalog** | 210 becerinin tamamı, gözatılabilir bir web kataloğunda yayımlanır: [alterlab-ieu.github.io/AlterLab-Academic-Skills](https://alterlab-ieu.github.io/AlterLab-Academic-Skills/) — kurulum yapmadan tüm koleksiyonu inceleyin |
-| 🤖 | **Kayıtlı Alt-Ajanlar** | Çekirdek hat, `core` eklentisiyle birlikte kaydedilen özelleşmiş alt-ajanlar olarak gelir; eğik çizgi komutları (`/research-pipeline`, `/lit-review`, `/review-paper`, `/cite-check`) ve birlikte paketlenen akademik MCP (PubMed / OpenAlex / Crossref / Zotero) ile sürülür |
+| 🤖 | **Kayıtlı Alt-Ajanlar** | Çekirdek hat, `core` eklentisiyle birlikte kaydedilen özelleşmiş alt-ajanlar olarak gelir; eğik çizgi komutları (`/research-pipeline`, `/lit-review`, `/review-paper`, `/cite-check`) ve birlikte paketlenen akademik MCP (OpenAlex / Crossref / Zotero) ile sürülür |
 | 🗂️ | **Üretilen Katalog** | Makine okunabilir [`skills.json`](skills.json), beceri frontmatter'ından otomatik üretilir; bir CI kapısı bu README'deki her sayımı doğrular ve dürüst tutar |
 | 📜 | **Dürüst Köken** | Bu depo, MIT lisanslı [K-Dense `scientific-agent-skills`](https://github.com/K-Dense-AI/scientific-agent-skills) projesinden içerik çatallamasıdır; köken [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md), [`PROVENANCE.md`](PROVENANCE.md) ve [`CITATION.cff`](CITATION.cff) dosyalarında açıkça belgelenir |
 

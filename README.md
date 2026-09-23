@@ -33,7 +33,7 @@
 <p><em>Organized across 18 research domains — from Turkish academia to bioinformatics to digital humanities</em></p>
 <p><em>240/240 ship executable evals · deterministic citation-existence verifier · per-domain bundles for claude.ai</em></p>
 
-<p>🧩 <b>New in v2.7 — runnable multi-agent research workflows</b> for Claude Code: <code>/alterlab-workflows:citation-audit</code>, <code>review-panel</code>, PRISMA dual screening, rebuttal, grant mock panel · tuned for <b>Claude Opus 5.5</b></p>
+<p>🧩 <b>New in v3.0 — runnable multi-agent research workflows</b> for Claude Code: <code>/alterlab-workflows:citation-audit</code>, <code>review-panel</code>, PRISMA dual screening, rebuttal, grant mock panel · tuned for <b>Claude Opus 5.5</b></p>
 <p>🧭 Don't know which skill? Just say <b>"use AlterLab skills"</b> and Claude picks it for you · type <b><code>alterflow</code></b> to launch a clarified multi-agent run</p>
 
 <p>
@@ -132,11 +132,11 @@ flowchart LR
 
 <br>
 
-## 🚀 What's New in v2.7.0
+## 🚀 What's New in v3.0.0
 
 - 🧩 **New plugin — `alterlab-workflows`: seven runnable multi-agent research workflows.** Claude Code can now run *dynamic workflows* — scripts that orchestrate many subagents — and plugins can ship them. AlterLab now ships seven, each with the independence and adversarial checks its task needs and with counts, votes, and agreement statistics computed in code: **`citation-audit`** (whole-manuscript existence + claim-faithfulness, every flag re-checked twice), **`review-panel`** (blind reviewers chosen for the paper, each major concern re-read against the text), **`claim-stress-test`**, **`systematic-review-screening`** (PRISMA 2020 dual screening + κ), **`rebuttal`** (point-by-point, never invents results), **`grant-mock-panel`** (the funder's own criteria and scale — NIH, NSF, ERC, TÜBİTAK), and **`literature-map`**. A portable skill runs the same stages as playbooks on claude.ai. → [Research Workflows](#-research-workflows--runnable-multi-agent-jobs-1-skill--7-workflows)
 - 📦 **One-step installs** — `alterlab-essentials` (a six-plugin faculty starter kit) and `alterlab-complete` (every domain) are dependency bundles: one `/plugin install` pulls in the rest.
-- 🔧 **Plugin install fixes** — in v2.6.x `alterlab-core` could not be installed from the marketplace (agent directories in its manifest) and `alterlab-social-science-workflow` installed but failed to load (conflicting manifests). Both are fixed, verified with `claude plugin validate` and real installs, and pinned by new tests. The bundled PubMed / OpenAlex / Crossref / Zotero MCP servers now prompt for their credentials through `userConfig`, are pinned to versions verified to start (PubMed crashed at launch for everyone under a new `mcp` release), and take an optional **OpenAlex API key** — OpenAlex now meters keyless use per IP and ignores the old mailto.
+- 🔧 **Plugin install fixes** — in v2.6.x `alterlab-core` could not be installed from the marketplace (agent directories in its manifest) and `alterlab-social-science-workflow` installed but failed to load (conflicting manifests). Both are fixed, verified with `claude plugin validate` and real installs, and pinned by new tests. The bundled OpenAlex / Crossref / Zotero MCP servers prompt for their credentials through `userConfig`, are pinned to versions verified to start, and take an optional **OpenAlex API key** — OpenAlex now meters keyless use per IP and ignores the old mailto. The third-party PubMed server, which crashed at launch under a new `mcp` release and refused to start without an email, is gone; PubMed stays available through the `alterlab-pubmed` skill, which calls NCBI directly.
 - 🧠 **Tuned for Claude Opus 5.5** — the `ALTERLAB_MODEL` default is `claude-opus-5-5`; OpenRouter slugs are derived from it (the old `anthropic/claude-opus-4-8` literal was not a valid slug); scripts follow the current request shape (adaptive thinking, explicit effort, no sampling parameters, no prefill, no forced tool choice); prompts are restated at normal volume for models that follow instructions literally.
 - 🔬 **Every skill re-verified against September 2026 releases** — library versions, removed APIs, moved endpoints, standards, and funder rules, checked at primary sources and by running the code. The pass found real bugs: a citation verifier that let hijacked DOIs and fabricated references through, scripts that silently truncated results or computed wrong numbers (gnomAD's LOEUF cutoff, DepMap's mutation coding, areas measured in Web Mercator, PennyLane energies in the wrong unit), and services that moved or retired (USPTO, GWAS Catalog, COSMIC, Sherpa Romeo). Every skill now carries a *Does NOT Trigger* routing table. → [CHANGELOG](CHANGELOG.md)
 - 🌍 **Language-neutral research pipeline** — bilingual abstracts are English plus the author's language (Turkish, Traditional Chinese, …) instead of a hard-wired zh-TW; the literature strategist also searches TR Dizin, DergiPark, and YÖK Tez; Turkish trigger phrases route to the right skill.
@@ -214,7 +214,7 @@ flowchart LR
 - 🔎 **Deterministic citation-existence verifier** that catches hallucinated references against Crossref / OpenAlex / Semantic Scholar / arXiv — no LLM guesswork in the gate. → [Headline feature](#-headline-feature--alterlab-citation-verifier)
 - 📦 **Per-domain `claude.ai` bundles on every Release** — each `dist/<domain>.zip` clears the 200-file / 30 MB caps. → [Releases](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases)
 - 🌐 **Live searchable catalog** to browse every skill in the browser. → [Browse the Catalog](#-browse-the-catalog)
-- 🤖 **35 registered subagents + slash commands + a bundled academic MCP** wiring PubMed / OpenAlex / Crossref / Zotero. → [MCP & Slash Commands](#-mcp--slash-commands)
+- 🤖 **35 registered subagents + slash commands + a bundled academic MCP** wiring OpenAlex / Crossref / Zotero. → [MCP & Slash Commands](#-mcp--slash-commands)
 - 📜 **Honest provenance** — upstream K-Dense fork credited in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) and a machine-readable [`CITATION.cff`](CITATION.cff). → [Cite This Repository](#-cite-this-repository)
 
 </details>
@@ -228,7 +228,7 @@ flowchart LR
 <br>
 
 - [⚡ Try It — One Line, the Right Skill](#-try-it--one-line-the-right-skill)
-- [🚀 What's New in v2.6.0](#-whats-new-in-v260)
+- [🚀 What's New in v3.0.0](#-whats-new-in-v300)
 - [🎯 What Is This?](#-what-is-this)
 - [🆕 v2.0 Highlights](#-v20-highlights)
 - [✨ Key Features](#-key-features)
@@ -270,7 +270,7 @@ Each skill transforms Claude into a **domain-specific expert assistant** tailore
 | ✅ | **Executable evals across the corpus** | **240 / 240** skills ship `evals/evals.json` on the canonical [agentskills.io](https://agentskills.io) schema, validated in CI. See [`docs/evals.md`](docs/evals.md). |
 | 🔎 | **Citation-existence verifier** | New core skill `alterlab-citation-verifier` — a **deterministic** gate that checks every reference actually exists against four keyless scholarly APIs (Crossref, OpenAlex, Semantic Scholar, arXiv), flags retractions, and maps claim-faithfulness verdicts. See below. |
 | 📦 | **Per-domain bundles for claude.ai** | `dist/<domain>.zip` bundles (one per domain) attached to each [Release](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases) — each clears claude.ai's 200-file / 30 MB caps and vendors the shared handoff contracts. |
-| 🔌 | **Bundled academic MCP** | The `core` and `databases` plugins ship a `.mcp.json` wiring PubMed / OpenAlex / Crossref / Zotero, with a documented `requests/` fallback when no MCP is available. |
+| 🔌 | **Bundled academic MCP** | The `core` and `databases` plugins ship a `.mcp.json` wiring OpenAlex / Crossref / Zotero, with a documented `requests/` fallback when no MCP is available. |
 | ⌨️ | **Slash commands** | `/lit-review`, `/review-paper`, `/cite-check`, `/research-pipeline` — drive the core pipeline directly. |
 | 🗂️ | **Generated catalog** | A machine-readable [`skills.json`](skills.json) is generated from skill frontmatter; a CI gate keeps every count in this README honest. |
 | 📜 | **Honest provenance** | Upstream K-Dense fork credited in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) + [`PROVENANCE.md`](PROVENANCE.md) / [`CITATION.cff`](CITATION.cff). |
@@ -471,7 +471,7 @@ Then restart your agent to load them.
 
 ### 🔌 MCP & Slash Commands
 
-The `core` and `databases` plugins ship a `.mcp.json` that wires the **PubMed / OpenAlex / Crossref / Zotero** academic MCP servers (Claude Code prompts for the optional contact email and API keys when you enable the plugin; change them later with `/plugin configure`), with a documented `requests/` fallback when no MCP host is available — so the citation verifier and database skills work online or offline. Install either plugin (Option 2) to pick the MCP up automatically.
+The `core` and `databases` plugins ship a `.mcp.json` that wires the **OpenAlex / Crossref / Zotero** academic MCP servers (Claude Code prompts for the optional API keys when you enable the plugin; change them later with `/plugin configure`; PubMed goes through the `alterlab-pubmed` skill, which calls NCBI E-utilities directly), with a documented `requests/` fallback when no MCP host is available — so the citation verifier and database skills work online or offline. Install either plugin (Option 2) to pick the MCP up automatically.
 
 Installing the `core` plugin also registers these slash commands:
 

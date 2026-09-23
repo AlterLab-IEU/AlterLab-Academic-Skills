@@ -6,7 +6,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-## [2.7.0] — 2026-09-23
+## [3.0.0] — 2026-09-23
 
 September 2026 refresh for Claude Opus 5.5 and current Claude Code. It fixes two plugins that
 could not be installed or loaded in v2.6.x, adds a **workflows** domain whose plugin ships seven
@@ -16,6 +16,19 @@ re-verifies every skill against the libraries, APIs, standards, and funder rules
 package or upstream source and ran code where it could; findings that could not be verified are
 left unchanged and listed as such, not guessed.
 
+**Why 3.0.0.** A few changes can break existing setups:
+
+- The bundled **PubMed MCP server is removed**, along with its `ncbi_email` / `ncbi_api_key` plugin
+  settings. PubMed stays available through the `alterlab-pubmed` skill, which calls NCBI
+  E-utilities directly (optional `NCBI_API_KEY`).
+- **Core subagents' tool lists are now enforced**: agents that used to run with every tool run
+  only with the tools their role declares.
+- The **paper-draft handoff schema** no longer requires `zh_tw` keywords; bilingual fields moved
+  to a generic `secondary {lang, …}` (the old keys stay accepted as deprecated aliases). The RQ
+  Brief's FINER scores are now on a 1-5 scale.
+- `ALTERLAB_MODEL` defaults to `claude-opus-5-5`, and scripts use the request shape current
+  models require.
+
 ### Fixed — plugins and connectors
 
 - **`alterlab-core` could not be installed** from the marketplace: its entry listed agent
@@ -24,12 +37,13 @@ left unchanged and listed as such, not guessed.
   declaring components conflicted with the domain's own `plugin.json`. Standalone domains now get
   metadata-only `strict: true` entries. Hook files are auto-discovered instead of declared (the
   file-path form is rejected in marketplace entries).
-- **Bundled MCP servers**: PubMed died at startup for every user (an unpinned `mcp` 2.x broke
-  `mcp-simple-pubmed`'s FastMCP import) — now `uvx --with "mcp<2" mcp-simple-pubmed@0.1.16`;
-  `openalex-mcp` never read the `OPENALEX_MAILTO` we set, and OpenAlex retired its mailto pool —
-  plugins gain an optional, sensitive **`openalex_api_key`** setting passed as
-  `OPENALEX_BEARER_TOKEN`. Credentials are prompted through `userConfig`; all four servers are
-  pinned to versions verified on 2026-09-23.
+- **Bundled MCP servers**: the third-party PubMed server died at startup for every user (an
+  unpinned `mcp` 2.x broke `mcp-simple-pubmed`'s FastMCP import) and refused to start without a
+  contact email, so it is removed (see *Why 3.0.0*). `openalex-mcp` never read the
+  `OPENALEX_MAILTO` we set, and OpenAlex retired its mailto pool — plugins gain an optional,
+  sensitive **`openalex_api_key`** setting passed as `OPENALEX_BEARER_TOKEN`. Credentials are
+  prompted through `userConfig`; the OpenAlex, Crossref, and Zotero servers are pinned to versions
+  verified on 2026-09-23, and a real install shows all three connecting.
 - **`mcp-servers/`**: every tool whose upstream API returns a JSON array (AlphaFold DB, Reactome,
   …) failed under FastMCP 4 ("structured_content must be a dict"); arrays are now wrapped, and
   `get_alphafold_prediction` returns a compact per-model summary. All 13 tools pass live calls.
