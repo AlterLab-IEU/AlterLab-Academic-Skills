@@ -127,6 +127,8 @@ left unchanged and listed as such, not guessed.
 - **CI** — Actions at current majors on the Node 24 runtime; Spec Conformance now also enforces
   the 500-character `compatibility` limit offline (`check_spec --no-external`); the weekly link
   check no longer skips `alterlab-digital-humanities` (an unanchored `.git` exclude regex matched it).
+  Release pages now carry the version's CHANGELOG section (`scripts/release_notes.py`, tested)
+  instead of a generic blurb.
 - **Docs** — README (EN + TR; the Turkish README gained the missing social-science section),
   project instructions, catalog site, and `CITATION.cff` (stale since 2.1.0) updated.
 - **`alterlab-docentlik-eligibility` 2.2.0 covers every ÜAK temel alan** (it modelled only

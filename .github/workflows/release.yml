@@ -92,6 +92,31 @@ jobs:
           ls -1 dist/ | head -20
           echo "  … (per-skill zips: $(ls -1 dist/skill-*.zip | wc -l))"
 
+      - name: Compose release notes
+        # The body carries this version's CHANGELOG section (re-flowed, links made
+        # absolute by scripts/release_notes.py); a missing section fails the release
+        # rather than publishing empty notes. GitHub appends the merged-PR list.
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+          TAG: ${{ steps.ver.outputs.tag }}
+          TOTAL: ${{ steps.count.outputs.total }}
+        run: |
+          {
+            echo "## AlterLab Academic Skills ${TAG}"
+            echo
+            echo "This release includes **${TOTAL}** academic skills."
+            echo
+            echo "**Attached bundles:**"
+            echo "- \`skill-<name>-${VERSION}.zip\` — one zip per individual skill, ready to drop into the Claude app (**Customize ▸ Skills → Upload a skill**) — no terminal needed."
+            echo "- \`alterlab-<domain>-${VERSION}.zip\` — one zip per domain plugin."
+            echo "- \`alterlab-academic-skills-${VERSION}.zip\` — the full collection."
+            echo
+            echo "## What's new in ${VERSION}"
+            echo
+            python3 scripts/release_notes.py "$VERSION" --repo "$GITHUB_REPOSITORY" --ref "$TAG"
+          } > release-notes.md
+          wc -c release-notes.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
@@ -100,17 +125,7 @@ jobs:
           tag_name: ${{ steps.ver.outputs.tag }}
           generate_release_notes: true
           files: dist/*.zip
-          body: |
-            ## AlterLab Academic Skills ${{ steps.ver.outputs.tag }}
-
-            This release includes **${{ steps.count.outputs.total }}** academic skills.
-
-            **Attached bundles:**
-            - `skill-<name>-${{ steps.ver.outputs.version }}.zip` — one zip per individual skill, ready to drop into the Claude app (**Customize ▸ Skills → Upload a skill**) — no terminal needed.
-            - `alterlab-<domain>-${{ steps.ver.outputs.version }}.zip` — one zip per domain plugin.
-            - `alterlab-academic-skills-${{ steps.ver.outputs.version }}.zip` — the full collection.
-
-            See the auto-generated changelog below for details.
+          body_path: release-notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
