@@ -3,15 +3,32 @@ name: alterlab-pyzotero
 description: Interact with Zotero reference management libraries using the pyzotero Python client — retrieve, create, update, and delete items, collections, tags, and attachments via the Zotero Web API v3. Use when working with Zotero libraries programmatically, managing bibliographic references, exporting citations, searching library contents, uploading PDF attachments, or building research automation workflows that integrate with Zotero. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
-compatibility: Requires a Zotero account and ZOTERO_API_KEY (plus library ID) for the Web API; local read-only mode needs no key. Runs via `uv run python`.
+compatibility: pyzotero >= 1.15 (Python >= 3.10). Requires a Zotero account and ZOTERO_API_KEY (plus library ID) for the Web API; local mode reads a running Zotero 7+ desktop app with no key, and local writes need Zotero 10+ plus a locally authorized key. Runs via `uv run python`.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Pyzotero
 
-Pyzotero is a Python wrapper for the [Zotero API v3](https://www.zotero.org/support/dev/web_api/v3/start). Use it to programmatically manage Zotero libraries: read items and collections, create and update references, upload attachments, manage tags, and export citations.
+Pyzotero is a Python wrapper for the [Zotero API v3](https://www.zotero.org/support/dev/web_api/v3/start) (current release 1.15.x as of 2026-09). Use it to programmatically manage Zotero libraries: read items and collections, create and update references, upload attachments, manage tags, and export citations. It also ships an optional CLI and MCP server for a local Zotero library.
+
+## When to Use This Skill
+
+- Reading, searching, or bulk-editing items, collections, and tags in a Zotero library from code
+- Creating items from templates, attaching PDFs, or exporting BibTeX / CSL-JSON / formatted bibliographies
+- Automating research workflows that sync with Zotero (web library or the local desktop app)
+- Scripting the local Zotero library from the terminal (`pyzotero` CLI) or exposing it to an AI client (MCP server)
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Discovering new papers in scholarly databases | `alterlab-research-lookup` or `alterlab-openalex` |
+| Converting DOIs to BibTeX or searching Google Scholar/PubMed without a Zotero library | `alterlab-citation-mgmt` |
+| Checking that every bibliography entry exists / spotting hallucinated references | `alterlab-citation-verifier` |
+| Building an evidence table from a folder of PDFs | `alterlab-pdf-extract` |
 
 ## Authentication Setup
 
@@ -33,8 +50,10 @@ See [references/authentication.md](references/authentication.md) for full setup 
 
 ```bash
 uv add pyzotero
-# or with CLI support:
+# or with CLI support (local library search, writes, collection management):
 uv add "pyzotero[cli]"
+# or the MCP server (read-only unless started with --enable-writes):
+uv add "pyzotero[mcp]"
 ```
 
 ## Quick Start
@@ -106,8 +125,12 @@ bibtex = zot.top(limit=50)
 print(bibtex.entries)
 ```
 
-### Local mode (read-only, no API key needed)
+### Local mode (no web API key)
+Talks to the running Zotero desktop app (Zotero 7+, with "Allow other applications on this computer to communicate with Zotero" enabled in Settings > Advanced). Reads need no key:
 ```python
-zot = Zotero(library_id='123456', library_type='user', local=True)
+zot = Zotero(library_id='0', library_type='user', local=True)
 items = zot.items()
 ```
+Writes to the local library are possible only with Zotero 10 or later and the user's consent: `zot.authorize_local("My script")` makes Zotero show an Allow / Always Allow / Deny dialog. "Allow" yields a single-use key; "Always Allow" yields a key you can store and pass back as `Zotero(..., local=True, local_api_key=...)`. Local API keys are unrelated to zotero.org API keys. Details: [references/authentication.md](references/authentication.md).
+
+Part of the AlterLab Academic Skills suite.

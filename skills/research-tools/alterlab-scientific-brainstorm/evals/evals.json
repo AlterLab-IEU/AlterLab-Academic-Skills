@@ -41,11 +41,20 @@
     {
       "id": "near-miss-hypothesis-generation",
       "prompt": "I already have a dataset showing that sleep duration correlates with exam scores. Help me formulate specific, testable hypotheses I can actually run statistical tests on.",
-      "expected_output": "This is formulating testable hypotheses from an existing dataset/observation, which the skill's description explicitly routes elsewhere ('For formulating testable hypotheses from observations or data use hypothesis-gen'). Defers to the hypothesis-gen skill rather than running an open-ended brainstorming session, since there is already a specific observation rather than a blank-slate ideation need.",
+      "expected_output": "This is formulating testable hypotheses from an existing dataset/observation, which the skill's description explicitly routes elsewhere ('For formulating testable hypotheses from observations or data use alterlab-hypothesis-gen'). Defers to the alterlab-hypothesis-gen skill rather than running an open-ended brainstorming session, since there is already a specific observation rather than a blank-slate ideation need.",
       "assertions": [
         {"type": "should_not_trigger", "value": true},
         {"type": "output_contains", "value": "hypothesis-gen"},
         {"type": "behavior", "value": "Recognizes that formulating testable hypotheses from a dataset belongs to the hypothesis-gen skill and defers there rather than starting free-form brainstorming."}
+      ]
+    },
+    {
+      "id": "near-miss-scientific-thinking",
+      "prompt": "Here's a published RCT on a mindfulness app for anxiety. Critique its design: randomization, blinding, attrition, and whether the conclusions follow from the data.",
+      "expected_output": "Does NOT invoke alterlab-scientific-brainstorm; defers to alterlab-scientific-thinking, which evaluates an existing study's design validity, biases, and claim-evidence fit. The user wants critical appraisal of finished work, not open-ended generation of new research ideas.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-scientific-thinking"}
       ]
     }
   ]

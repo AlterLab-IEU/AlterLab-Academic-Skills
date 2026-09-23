@@ -52,6 +52,15 @@
         {"type": "output_contains", "value": "alterlab-qualitative-methods"},
         {"type": "behavior", "value": "Recognizes there is no integration of two strands here and defers single-strand qualitative coding to the qualitative-methods skill."}
       ]
+    },
+    {
+      "id": "near-miss-survey-design",
+      "prompt": "The quantitative strand of my study is a questionnaire on research self-efficacy. Can you help me write the Likert items, decide on 5 vs 7 points, and plan the pilot and Cronbach's alpha check?",
+      "expected_output": "Does NOT invoke alterlab-mixed-methods as the primary handler; defers to alterlab-survey-design. The request is about item writing, response scales, piloting, and reliability for one instrument, not about how the qualitative and quantitative strands are sequenced, integrated, or turned into meta-inferences.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-survey-design"}
+      ]
     }
   ]
 }

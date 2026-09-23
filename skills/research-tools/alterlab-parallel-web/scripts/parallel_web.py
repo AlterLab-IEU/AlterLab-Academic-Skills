@@ -5,8 +5,10 @@ Parallel Web Systems API Client
 Provides web search, URL content extraction, and deep research capabilities
 using the Parallel Web Systems APIs (https://docs.parallel.ai).
 
-Primary interface: Parallel Chat API (OpenAI-compatible) for search and research.
-Secondary interface: Extract API for URL verification and special cases.
+Primary interface: Parallel Chat API (Beta, OpenAI-compatible,
+POST /v1beta/chat/completions) for search and research.
+Secondary interface: Extract API v1 (POST /v1/extract, `client.extract()` in
+parallel-web >= 1.0) for URL verification and special cases.
 
 Main classes:
   - ParallelChat:         Core Chat API client (base/core models)
@@ -44,8 +46,8 @@ def _get_extract_client():
         from parallel import Parallel
     except ImportError:
         raise ImportError(
-            "The 'parallel-web' package is required for extract. Install it with:\n"
-            "  pip install parallel-web"
+            "The 'parallel-web' package (>= 1.0) is required for extract. Install it with:\n"
+            "  uv pip install parallel-web"
         )
     return Parallel(api_key=_get_api_key())
 
@@ -59,9 +61,12 @@ class ParallelChat:
     Models:
       - base  : Standard research, factual queries (15-100s latency)
       - core  : Complex research, multi-source synthesis (60s-5min latency)
+
+    The OpenAI SDK appends /chat/completions to base_url, so this targets the
+    documented POST /v1beta/chat/completions endpoint.
     """
 
-    CHAT_BASE_URL = "https://api.parallel.ai"
+    CHAT_BASE_URL = "https://api.parallel.ai/v1beta"
 
     def __init__(self):
         try:
@@ -69,7 +74,7 @@ class ParallelChat:
         except ImportError:
             raise ImportError(
                 "The 'openai' package is required. Install it with:\n"
-                "  pip install openai"
+                "  uv pip install openai"
             )
 
         self.client = OpenAI(
@@ -239,29 +244,30 @@ class ParallelExtract:
         excerpts: bool = True,
         full_content: bool = False,
     ) -> Dict[str, Any]:
-        """Extract content from one or more URLs.
+        """Extract content from one or more URLs (Extract API v1, up to 20 URLs per call).
 
         Args:
             urls: List of URLs to extract content from.
             objective: Optional objective to focus extraction.
-            excerpts: Whether to return focused excerpts (default True).
-            full_content: Whether to return full page content (default False).
+            excerpts: Kept for backward compatibility and ignored: the v1 API
+                always returns focused excerpts.
+            full_content: Also return the full page as markdown (default False).
 
         Returns:
             Dict with 'results' list containing url, title, excerpts/content.
         """
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        kwargs = {
-            "urls": urls,
-            "excerpts": excerpts,
-            "full_content": full_content,
-        }
+        kwargs: Dict[str, Any] = {"urls": urls}
         if objective:
             kwargs["objective"] = objective
+        if full_content:
+            kwargs["advanced_settings"] = {"full_content": True}
 
         try:
-            response = self.client.beta.extract(**kwargs)
+            # parallel-web >= 1.0 exposes GA Extract as client.extract();
+            # the old client.beta.extract() no longer exists.
+            response = self.client.extract(**kwargs)
 
             results = []
             if hasattr(response, "results") and response.results:

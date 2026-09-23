@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch WebSearch Bash(python:*)
 compatibility: No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.
 metadata:
   skill-author: AlterLab
-  version: "1.1.0"
-  last_updated: "2026-06-09"
+  version: "1.2.0"
+  last_updated: "2026-09-23"
 ---
 
 # Research Ethics — Ethics, Compliance & Integrity Agent
@@ -40,12 +40,13 @@ This skill should be used when:
 
 | Scenario | Use Instead |
 |----------|-------------|
-| Legal advice on data protection | Consult institutional legal counsel |
 | Turkish etik kurul application / committee routing | `alterlab-tr-research-ethics` |
 | KVKK (Turkish data-protection) data management plan | `alterlab-kvkk-dmp` |
-| Survey instrument design | `alterlab-survey-design` |
-| Qualitative methodology | `alterlab-qualitative-methods` |
-| Clinical trial design / clinical reporting | `clinical-research` skills (e.g. `alterlab-clinical-reports`) |
+| The open-data side of a DMP: FAIR sharing, repository choice, preregistration | `alterlab-open-science` |
+| Clinical study reports, SAE narratives, or other clinical trial documents | `alterlab-clinical-reports` |
+| Survey instrument wording and validation | `alterlab-survey-design` |
+
+Formal legal determinations (for example, whether a specific cross-border transfer is lawful) belong with institutional counsel or the data protection officer; this skill prepares the analysis and the questions to ask them.
 
 ---
 
@@ -91,13 +92,17 @@ Four principles:
 Does your study involve...
 │
 ├── Human participants (interviews, surveys, experiments, observations)?
-│   └── YES → Full or expedited review required
+│   └── YES → Review required: exempt, expedited, or full board depending
+│             on risk (under 45 CFR 46 many minimal-risk surveys/interviews
+│             are exempt, but the IRB office, not the researcher, makes
+│             that determination)
 │
 ├── Human data (medical records, educational records, social media data)?
 │   └── YES → Review required (level depends on identifiability)
 │
 ├── Human biological samples (blood, tissue, DNA)?
-│   └── YES → Full review required
+│   └── YES → Review required (level depends on identifiability and how
+│             samples are collected; genetic data often draws extra scrutiny)
 │
 ├── Animal subjects?
 │   └── YES → IACUC/animal ethics review required
@@ -111,8 +116,9 @@ Does your study involve...
 └── None of the above?
     └── NO ethical review likely required
 
-WHEN IN DOUBT: Submit to your ethics board for a determination.
-Always apply BEFORE collecting data.
+When in doubt, submit to your ethics board for a determination, and apply
+before collecting any data: boards generally cannot approve research
+retroactively, and data gathered without approval may be unusable.
 ```
 
 #### IRB Application Template
@@ -311,7 +317,9 @@ PLAGIARISM
 
 Research that could be directly misapplied to pose a significant threat to public health, agriculture, plants, animals, the environment, or national security.
 
-**DURC Screening Questions:**
+**Which policy applies (US, as of September 2026).** The agent and experiment lists below come from the 2012/2014 US Government DURC policies and remain a practical first screen. The broader 2024 USG Policy for Oversight of DURC and Pathogens with Enhanced Pandemic Potential (DURC/PEPP), due to take effect on 6 May 2025, was ordered revised or replaced by Executive Order 14292 (5 May 2025). The policy issued under that order, the *U.S. Government Policy for Stopping High-Risk Life Sciences Research* (released 28 July 2026), bars federal funding for dangerous gain-of-function research (DGOFR) and certain international research of concern, sends potential DGOFR to independent review, and requires institutions to identify, review, and where necessary halt covered work, with full compliance expected by January 2027. Because this area is changing quickly, confirm the policy in force with your Institutional Biosafety Committee or institutional review entity before relying on the screen; outside the US, follow your national biosecurity framework.
+
+**DURC Screening Questions (2012/2014 lists):**
 
 ```markdown
 Does your research involve any of these agents or toxins?
@@ -334,7 +342,8 @@ Does your research involve any of these experimental effects?
 6. Enhance susceptibility of a host population
 7. Generate or reconstitute an eradicated or extinct agent
 
-If YES to both an agent AND an effect → Institutional DURC review required
+If YES to both an agent AND an effect → flag for institutional DURC /
+high-risk research review before the work starts
 ```
 
 ---
@@ -389,6 +398,7 @@ If YES to both an agent AND an effect → Institutional DURC review required
 - Office for Human Research Protections (OHRP). (2018). *45 CFR 46 (Common Rule)*. https://www.hhs.gov/ohrp/regulations-and-policy/regulations/45-cfr-46/
 - Resnik, D. B. (2020). *The ethics of research with human subjects: Protecting people, advancing science, promoting trust*. Springer.
 - Steneck, N. H. (2007). *ORI introduction to the responsible conduct of research*. Government Printing Office.
+- The White House. (2026). *United States Government Policy for Stopping High-Risk Life Sciences Research*. https://www.whitehouse.gov/wp-content/uploads/2026/07/USG-Policy-for-Stopping-High-Risk-Life-Sciences-Research_July-2026.pdf
 - World Medical Association. (2024). *Declaration of Helsinki — Ethical principles for medical research involving human participants* (2024 revision). https://www.wma.net/policies-post/wma-declaration-of-helsinki/
 
 See also: `references/ethics-guidelines.md` for expanded regulatory details.

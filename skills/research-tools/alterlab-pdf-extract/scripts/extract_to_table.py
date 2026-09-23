@@ -57,15 +57,31 @@ from io import StringIO
 from pathlib import Path
 from typing import Optional
 
-# AlterLab model convention — default reviewed 2026-06-06; override via ALTERLAB_MODEL.
-# See skills/core/shared/model_env.md before changing the default. OpenRouter needs
-# the "provider/" prefix, so the default is the dated Anthropic ID with that prefix.
-DEFAULT_MODEL = "anthropic/claude-opus-4-8"
+# AlterLab model convention — default reviewed 2026-09-23; override via ALTERLAB_MODEL.
+# See skills/core/shared/model_env.md before changing the default. ALTERLAB_MODEL holds an
+# Anthropic model ID; openrouter_slug() derives the gateway slug at call time.
+DEFAULT_MODEL = "claude-opus-5-5"
 
 
 def alterlab_model() -> str:
     """Return the model ID: $ALTERLAB_MODEL if set/non-empty, else the dated default."""
     return os.environ.get("ALTERLAB_MODEL") or DEFAULT_MODEL
+
+
+def openrouter_slug(model: str) -> str:
+    """Map an Anthropic model ID to its OpenRouter slug; pass anything else through.
+
+    OpenRouter names Claude models with a provider prefix and a dotted version
+    (claude-opus-5-5 -> anthropic/claude-opus-5.5). IDs that already carry a provider
+    prefix ("anthropic/...", "google/...") are returned unchanged.
+    """
+    if "/" in model:
+        return model
+    m = re.fullmatch(r"claude-([a-z]+)-(\d+)(?:-(\d{1,2}))?(?:-\d{8})?", model)
+    if not m:
+        return model
+    family, major, minor = m.groups()
+    return f"anthropic/claude-{family}-{major}" + (f".{minor}" if minor else "")
 
 
 _STOPWORDS = {
@@ -120,7 +136,9 @@ def convert_to_markdown(path: Path) -> str:
 
     md = MarkItDown()
     result = md.convert(str(path))
-    return result.text_content or ""
+    # `.markdown` is the current attribute (markitdown >= 0.1); `.text_content`
+    # is a soft-deprecated alias kept for older releases.
+    return getattr(result, "markdown", None) or result.text_content or ""
 
 
 def _split_sentences(markdown: str) -> list[str]:
@@ -169,8 +187,10 @@ def extract_heuristic(markdown: str, column: Column, max_chars: int = 240) -> st
 def extract_llm(markdown: str, columns: list[Column], *, model: str, source: str) -> dict[str, str]:
     """Ask an LLM (OpenAI-compatible endpoint) to fill every column at once.
 
-    Imported lazily. Requires OPENROUTER_API_KEY (or OPENAI_API_KEY + OPENAI_BASE_URL).
-    Returns {label: answer}. Falls back to "" for any column the model omits.
+    Imported lazily. Requires OPENROUTER_API_KEY (sent to OpenRouter), or
+    OPENAI_API_KEY for an OpenAI-compatible endpoint (OPENAI_BASE_URL, else the
+    SDK default). Returns {label: answer}. Falls back to "" for any column the
+    model omits.
     """
     try:
         from openai import OpenAI
@@ -179,12 +199,19 @@ def extract_llm(markdown: str, columns: list[Column], *, model: str, source: str
             "The llm backend needs the openai client: uv pip install openai"
         ) from exc
 
-    api_key = os.environ.get("OPENROUTER_API_KEY") or os.environ.get("OPENAI_API_KEY")
+    # Pair each key with its own endpoint so a key is never sent to the wrong
+    # provider (an OpenAI key must not default to OpenRouter, and vice versa).
+    openrouter_key = os.environ.get("OPENROUTER_API_KEY")
+    if openrouter_key:
+        api_key: Optional[str] = openrouter_key
+        base_url: Optional[str] = "https://openrouter.ai/api/v1"
+    else:
+        api_key = os.environ.get("OPENAI_API_KEY")
+        base_url = os.environ.get("OPENAI_BASE_URL")  # None -> the SDK's default endpoint
     if not api_key:
         raise SystemExit(
             "The llm backend needs OPENROUTER_API_KEY (or OPENAI_API_KEY) in the environment."
         )
-    base_url = os.environ.get("OPENAI_BASE_URL") or "https://openrouter.ai/api/v1"
 
     client = OpenAI(api_key=api_key, base_url=base_url)
 
@@ -198,10 +225,15 @@ def extract_llm(markdown: str, columns: list[Column], *, model: str, source: str
         "Reply as 'Label: answer' lines, one per column, nothing else.\n\n"
         f"Columns:\n{questions}\n\nPaper ({source}):\n{body}"
     )
+    # Gateway slugs only make sense for OpenRouter; other endpoints get the ID as given.
+    slug = openrouter_slug(model) if openrouter_key else model
+    # Claude models from Opus 4.7 onward reject sampling parameters; keep temperature=0
+    # only for other providers, where it still makes extraction more repeatable.
+    sampling = {} if "claude" in slug else {"temperature": 0}
     resp = client.chat.completions.create(
-        model=model,
+        model=slug,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0,
+        **sampling,
     )
     text = resp.choices[0].message.content or ""
     return _parse_llm_answers(text, columns)

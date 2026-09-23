@@ -44,11 +44,11 @@
     {
       "id": "platform-selection",
       "prompt": "I need to choose between Qualtrics, REDCap, and Google Forms for a clinical health survey that has to be HIPAA compliant and needs advanced skip logic. Which fits best?",
-      "expected_output": "Compares the platforms on HIPAA compliance and skip-logic capability, recommending REDCap (designed for clinical/health research, HIPAA compliant, advanced skip logic) or Qualtrics (HIPAA via BAA, advanced logic) over Google Forms (not HIPAA compliant, only basic skip logic). Grounds the recommendation in the platform comparison table.",
+      "expected_output": "Compares the platforms on HIPAA compliance and skip-logic capability, recommending REDCap (designed for clinical/health research, HIPAA compliant, advanced skip logic) or Qualtrics (HIPAA via BAA, advanced logic) over Google Forms (HIPAA-eligible only under a signed Google Workspace BAA on paid plans, never on free accounts, and only basic skip logic). Grounds the recommendation in the platform comparison table.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "REDCap"},
-        {"type": "behavior", "value": "Recommends a HIPAA-compliant platform with advanced skip logic (REDCap/Qualtrics) and explains why Google Forms is unsuitable."}
+        {"type": "behavior", "value": "Recommends a HIPAA-compliant platform with advanced skip logic (REDCap/Qualtrics) and explains why Google Forms is a poor fit (BAA-only HIPAA eligibility, basic skip logic)."}
       ]
     },
     {
@@ -59,6 +59,15 @@
         {"type": "should_not_trigger", "value": true},
         {"type": "output_contains", "value": "alterlab-research-ethics"},
         {"type": "behavior", "value": "Recognizes IRB/consent work as ethics territory and defers to alterlab-research-ethics."}
+      ]
+    },
+    {
+      "id": "near-miss-survey-analysis",
+      "prompt": "I downloaded the 2024 General Social Survey with its weights, strata, and PSU variables. How do I estimate the weighted share of adults who trust science, with correct standard errors?",
+      "expected_output": "Does NOT invoke alterlab-survey-design; defers to alterlab-survey-analysis, which declares the complex survey design (weights, strata, PSUs) and computes design-based estimates and standard errors. survey-design covers building questionnaires and sampling plans, not analyzing an existing weighted survey.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-survey-analysis"}
       ]
     }
   ]

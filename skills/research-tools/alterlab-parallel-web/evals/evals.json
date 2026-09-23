@@ -51,6 +51,15 @@
         {"type": "output_contains", "value": "research-lookup"},
         {"type": "behavior", "value": "Recognizes this as academic-paper search territory and defers to research-lookup/Perplexity rather than Parallel web search."}
       ]
+    },
+    {
+      "id": "near-miss-market-research",
+      "prompt": "Produce a 50-page consulting-style market analysis of the EV battery sector for our board — Porter's Five Forces, SWOT, TAM/SAM/SOM sizing, and a professionally formatted LaTeX PDF.",
+      "expected_output": "Does NOT invoke alterlab-parallel-web as the primary handler; defers to alterlab-market-research, which produces the framework-driven, LaTeX-formatted consulting report (it may call web research for data along the way). parallel-web returns cited search results and research reports, not a formatted 50-page strategic deliverable.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-market-research"}
+      ]
     }
   ]
 }

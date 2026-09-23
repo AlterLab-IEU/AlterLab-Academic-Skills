@@ -54,6 +54,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-research-ethics" }
       ]
+    },
+    {
+      "id": "near-miss-meta-analysis",
+      "prompt": "I've extracted means, SDs, and sample sizes from 14 trials. Pool them into Hedges' g under a random-effects model, give me a forest plot and I-squared, and test for publication bias.",
+      "expected_output": "Does NOT invoke alterlab-scientific-thinking as the primary handler; defers to alterlab-meta-analysis, which computes and pools effect sizes, quantifies heterogeneity, draws forest/funnel plots, and tests publication bias. scientific-thinking appraises evidence quality and claims; it does not run the quantitative synthesis.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-meta-analysis" }
+      ]
     }
   ]
 }

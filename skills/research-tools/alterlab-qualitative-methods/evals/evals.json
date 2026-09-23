@@ -54,6 +54,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-survey-design" }
       ]
+    },
+    {
+      "id": "near-miss-qualitative-analysis",
+      "prompt": "Two of us and an LLM independently coded 300 open-ended survey responses with our codebook. Compute Krippendorff's alpha with confidence intervals for each pair and tell me whether the LLM coding is reliable enough to use.",
+      "expected_output": "Does NOT invoke alterlab-qualitative-methods as the primary handler; defers to alterlab-qualitative-analysis, the pipeline module that computes inter-coder reliability (Krippendorff's alpha with bootstrap CIs, kappa) and checks LLM coding against a human standard. qualitative-methods guides methodology choice and analytic practice rather than running reliability statistics.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-qualitative-analysis" }
+      ]
     }
   ]
 }

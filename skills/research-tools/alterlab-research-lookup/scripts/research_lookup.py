@@ -6,9 +6,9 @@ Routes research queries to the best backend:
   - Parallel Chat API (core model): Default for all general research queries
   - Perplexity sonar-pro-search (via OpenRouter): Academic-specific paper searches
 
-Environment variables:
-  PARALLEL_API_KEY    - Required for Parallel Chat API (primary backend)
-  OPENROUTER_API_KEY  - Required for Perplexity academic searches (fallback)
+Environment variables (at least one is required; both recommended):
+  PARALLEL_API_KEY    - Parallel Chat API (primary backend)
+  OPENROUTER_API_KEY  - Perplexity academic searches via OpenRouter (fallback)
 """
 
 import os
@@ -56,7 +56,9 @@ class ResearchLookup:
         "Prioritize authoritative and recent sources."
     )
 
-    CHAT_BASE_URL = "https://api.parallel.ai"
+    # The OpenAI SDK appends /chat/completions, giving the documented
+    # POST /v1beta/chat/completions endpoint of Parallel's Chat API (Beta).
+    CHAT_BASE_URL = "https://api.parallel.ai/v1beta"
 
     def __init__(self, force_backend: Optional[str] = None):
         """Initialize the research lookup tool.
@@ -110,7 +112,7 @@ class ResearchLookup:
             except ImportError:
                 raise ImportError(
                     "The 'openai' package is required for Parallel Chat API.\n"
-                    "Install it with: pip install openai"
+                    "Install it with: uv pip install openai"
                 )
             self._chat_client = OpenAI(
                 api_key=os.getenv("PARALLEL_API_KEY"),
@@ -243,8 +245,11 @@ class ResearchLookup:
             "messages": messages,
             "max_tokens": 8000,
             "temperature": 0.1,
+            # Perplexity-specific academic filter; OpenRouter may not forward it,
+            # so treat academic-only sourcing as best-effort.
             "search_mode": "academic",
-            "search_context_size": "high",
+            # OpenRouter's documented way to request a larger search context.
+            "web_search_options": {"search_context_size": "high"},
         }
 
         try:
@@ -347,6 +352,17 @@ Remember: Quality over quantity. Prioritize influential, highly-cited papers fro
                 citation["snippet"] = result["snippet"]
             citations.append(citation)
 
+        # OpenRouter normalizes web sources to OpenAI-style url_citation annotations.
+        for ann in choice.get("message", {}).get("annotations") or []:
+            cite = ann.get("url_citation", ann) if isinstance(ann, dict) else {}
+            if cite.get("url"):
+                citations.append({
+                    "type": "source",
+                    "url": cite["url"],
+                    "title": cite.get("title", ""),
+                    "date": "",
+                })
+
         legacy_citations = (
             response.get("citations")
             or choice.get("citations")
@@ -365,7 +381,14 @@ Remember: Quality over quantity. Prioritize influential, highly-cited papers fro
                     "date": url.get("date", ""),
                 })
 
-        return citations
+        # The same source can arrive via several fields; keep the first (richest) entry.
+        deduped: List[Dict[str, str]] = []
+        seen = set()
+        for cit in citations:
+            if cit["url"] and cit["url"] not in seen:
+                seen.add(cit["url"])
+                deduped.append(cit)
+        return deduped
 
     def _extract_citations_from_text(self, text: str) -> List[Dict[str, str]]:
         """Extract DOIs and academic URLs from response text as fallback."""

@@ -50,7 +50,9 @@ def create_env_file(api_key: str, env_file: str = ".env") -> bool:
                 f.write('\n')
             f.write(f'OPENROUTER_API_KEY={api_key}\n')
 
-        print(f"✓ API key saved to {env_file}")
+        # The file holds a secret: keep it readable by the owner only.
+        os.chmod(env_path, 0o600)
+        print(f"✓ API key saved to {env_file} (permissions 600; keep it out of version control)")
         return True
 
     except Exception as e:
@@ -151,10 +153,10 @@ Get your OpenRouter API key from:
         if create_env_file(args.api_key, args.env_file):
             print()
             print("Next steps:")
-            print(f"1. Load the environment variables:")
-            print(f"   source {args.env_file}")
+            print("1. Export the variables into your shell (plain `source` does not export them):")
+            print(f"   set -a; source {args.env_file}; set +a")
             print("2. Or export directly:")
-            print(f"   export OPENROUTER_API_KEY={args.api_key}")
+            print("   export OPENROUTER_API_KEY=<your key>")
             print("3. Test the setup:")
             print("   python perplexity_search.py --check-setup")
             print()

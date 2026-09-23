@@ -399,7 +399,7 @@ If a key is compromised:
 
 **Q: How much does it cost to use Perplexity via OpenRouter?**
 
-A: Pricing varies by model. Sonar is cheapest (~$0.001-0.002 per query), Sonar Pro is moderate (~$0.002-0.005), and Sonar Pro Search is most expensive (~$0.02-0.05+ per query). See https://openrouter.ai/perplexity for exact pricing.
+A: Pricing varies by model. Every request pays a per-request search fee (from $5 per 1,000 requests; $18 per 1,000 for Sonar Pro Search) plus token costs, so Sonar runs about $0.005 per short query, Sonar Pro roughly $0.01-0.02, and Sonar Pro Search about $0.04 or more (OpenRouter list prices, 2026-09). See https://openrouter.ai/perplexity for current pricing.
 
 **Q: Do I need a separate Perplexity API key?**
 

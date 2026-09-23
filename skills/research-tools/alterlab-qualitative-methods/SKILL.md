@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch WebSearch Bash(python:*)
 compatibility: No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-03-18"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
 ---
 
 # Qualitative Methods — Qualitative Research Design & Analysis Agent
@@ -38,10 +38,11 @@ This skill should be used when:
 
 | Scenario | Use Instead |
 |----------|-------------|
-| Statistical analysis | Data science skills |
-| Survey design and validation | `alterlab-survey-design` |
-| Writing the full paper | `alterlab-paper-writer` |
-| Systematic review / meta-analysis | `alterlab-deep-research` |
+| Computing inter-coder reliability (Krippendorff's alpha, kappa) or running a codebook-coding pipeline, including human-vs-LLM double coding | `alterlab-qualitative-analysis` |
+| A pass/fail trustworthiness and reflexivity check before writing up findings | `alterlab-ssci-reflexivity-gate` |
+| Integrating a qualitative strand with a quantitative one (convergent/sequential designs, joint displays) | `alterlab-mixed-methods` |
+| Questionnaire items, Likert scales, or instrument validation | `alterlab-survey-design` |
+| Discourse or conversation analysis, QCA, process tracing (`alterlab-social-science-methods`); topic models or text classification (`alterlab-text-as-data`) | `alterlab-social-science-methods` / `alterlab-text-as-data` |
 
 ---
 
@@ -99,10 +100,10 @@ What is your primary research interest?
 | Philosophical roots | Flexible (realist to constructionist) | Pragmatism / symbolic interactionism | Phenomenology, hermeneutics, idiography | Cultural anthropology | Pragmatism | Dewey's experiential philosophy |
 | Sample size | Flexible (6-30+) | 20-60 (theoretical saturation) | 3-10 (homogeneous) | 1 setting (extended) | 1-10 cases | 1-5 participants |
 | Data types | Interviews, focus groups, documents, any text | Interviews, observations, documents | In-depth interviews (2-3 per participant) | Fieldwork, observations, interviews, artifacts | Multiple sources (triangulation required) | Interviews, journals, life documents |
-| Analysis | 6-phase coding | Open → axial → selective coding | Line-by-line → emergent themes → superordinate themes | Thick description, cultural themes | Within-case and cross-case analysis | Restorying, narrative structure |
+| Analysis | 6-phase coding | Open → axial → selective coding | Line-by-line → experiential statements → personal/group experiential themes (2009 terms: emergent → superordinate themes) | Thick description, cultural themes | Within-case and cross-case analysis | Restorying, narrative structure |
 | Output | Theme map with evidence | Substantive or formal theory | Rich account of lived experience | Cultural portrait / ethnographic account | Case description and themes | Narrative retelling and interpretation |
 | Time investment | Moderate | High | High per participant | Very high | Moderate to high | Moderate |
-| Key reference | Braun & Clarke (2006, 2019) | Strauss & Corbin (1998); Charmaz (2014) | Smith, Flowers & Larkin (2009) | Hammersley & Atkinson (2019) | Yin (2018); Stake (1995) | Clandinin & Connelly (2000) |
+| Key reference | Braun & Clarke (2006, 2019, 2022) | Strauss & Corbin (1998); Charmaz (2014) | Smith, Flowers & Larkin (2009; 2nd ed. 2022) | Hammersley & Atkinson (2019) | Yin (2018); Stake (1995) | Clandinin & Connelly (2000) |
 
 ### 2. Thematic Analysis (Braun & Clarke)
 
@@ -232,7 +233,9 @@ Initial data collection (purposive sampling)
 
 IPA explores how individuals make sense of significant life experiences. It is idiographic, phenomenological, and hermeneutic.
 
-**IPA Analysis Steps (Smith, Flowers & Larkin, 2009):**
+**Terminology (2nd ed., 2022):** Smith, Flowers & Larkin renamed the analytic units — emergent themes are now *experiential statements*, superordinate themes are *personal experiential themes* (PETs), and cross-case master themes are *group experiential themes* (GETs). The steps below use the 2009 labels with the 2022 names in brackets; follow whichever edition you cite, and use the 2022 terms for new work, since reviewers familiar with IPA expect them.
+
+**IPA Analysis Steps (Smith, Flowers & Larkin, 2009; 2022):**
 
 ```
 Step 1: Reading and Re-reading
@@ -252,13 +255,13 @@ Step 2: Initial Noting
 │   Linguistic: Metaphor of physical barrier — sudden, painful, solid
 │   Conceptual: Sense of helplessness? Unexpected nature of the barrier?
 │
-Step 3: Developing Emergent Themes
+Step 3: Developing Emergent Themes [2022: experiential statements]
 │   Transform notes into concise themes
 │   Themes capture psychological essence, not just content
 │   Balance participant's words with analyst's interpretation
 │   (The hermeneutic circle: part ↔ whole)
 │
-Step 4: Searching for Connections Across Themes
+Step 4: Searching for Connections Across Themes [2022: personal experiential themes, PETs]
 │   Organize emergent themes:
 │   - Abstraction: Group similar themes under superordinate theme
 │   - Subsumption: One theme becomes superordinate, absorbs others
@@ -271,7 +274,7 @@ Step 5: Moving to the Next Case
 │   Bracket (as much as possible) findings from previous cases
 │   Repeat Steps 1-4 for each participant individually
 │
-Step 6: Looking for Patterns Across Cases
+Step 6: Looking for Patterns Across Cases [2022: group experiential themes, GETs]
     Identify recurrent themes across participants
     Note convergence and divergence
     Create a master table of themes
@@ -446,11 +449,13 @@ Reflexive journal prompts spanning before, during, and after data collection and
 
 - Braun, V., & Clarke, V. (2006). Using thematic analysis in psychology. *Qualitative Research in Psychology*, 3(2), 77-101.
 - Braun, V., & Clarke, V. (2019). Reflecting on reflexive thematic analysis. *Qualitative Research in Sport, Exercise and Health*, 11(4), 589-597.
+- Braun, V., & Clarke, V. (2022). *Thematic analysis: A practical guide*. Sage.
 - Charmaz, K. (2014). *Constructing grounded theory* (2nd ed.). Sage.
 - Clandinin, D. J., & Connelly, F. M. (2000). *Narrative inquiry: Experience and story in qualitative research*. Jossey-Bass.
 - Creswell, J. W., & Poth, C. N. (2018). *Qualitative inquiry and research design: Choosing among five approaches* (4th ed.). Sage.
 - Lincoln, Y. S., & Guba, E. G. (1985). *Naturalistic inquiry*. Sage.
 - Smith, J. A., Flowers, P., & Larkin, M. (2009). *Interpretative phenomenological analysis: Theory, method, and research*. Sage.
+- Smith, J. A., Flowers, P., & Larkin, M. (2022). *Interpretative phenomenological analysis: Theory, method and research* (2nd ed.). Sage.
 - Strauss, A., & Corbin, J. (1998). *Basics of qualitative research: Techniques and procedures for developing grounded theory* (2nd ed.). Sage.
 - Yin, R. K. (2018). *Case study research and applications: Design and methods* (6th ed.). Sage.
 

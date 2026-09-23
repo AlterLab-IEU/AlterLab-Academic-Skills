@@ -4,8 +4,12 @@ Guide to different Perplexity models available through OpenRouter and when to us
 
 ## Available Models
 
-All Perplexity models are accessed through OpenRouter using the format:
+All Perplexity models are accessed through OpenRouter using the LiteLLM format:
 `openrouter/perplexity/[model-name]`
+
+Lineup and list prices below were checked against OpenRouter's live model list
+(`https://openrouter.ai/api/v1/models`) on 2026-09-23. Each request pays token prices plus a
+per-request search fee. Re-check before quoting costs; OpenRouter updates prices without notice.
 
 ### Sonar Pro Search
 
@@ -30,10 +34,10 @@ All Perplexity models are accessed through OpenRouter using the format:
 - "Compare quantum computing approaches for drug discovery with traditional computational methods across multiple metrics"
 - Research questions requiring synthesis from many sources
 
-**Pricing** (approximate):
+**Pricing** (OpenRouter list price):
 - Input: $3/million tokens
 - Output: $15/million tokens
-- Request fee: $18 per 1000 requests
+- Search fee: $18 per 1,000 requests
 
 **Context window**: 200K tokens
 
@@ -62,9 +66,9 @@ All Perplexity models are accessed through OpenRouter using the format:
 - Standard literature searches
 - Technical documentation queries
 
-**Pricing** (approximate):
-- Lower cost than Pro Search
-- Good cost-performance ratio
+**Pricing** (OpenRouter list price):
+- Input: $3/million tokens; output: $15/million tokens
+- Search fee: from $5 per 1,000 requests
 
 **Context window**: 200K tokens
 
@@ -93,11 +97,11 @@ All Perplexity models are accessed through OpenRouter using the format:
 - Simple fact verification
 - Basic information retrieval
 
-**Pricing** (approximate):
-- Lowest cost option
-- Best for high-volume simple queries
+**Pricing** (OpenRouter list price):
+- Input and output: $1/million tokens
+- Search fee: from $5 per 1,000 requests — usually the largest part of a short query's cost
 
-**Context window**: 200K tokens
+**Context window**: ~127K tokens
 
 ### Sonar Reasoning Pro
 
@@ -124,39 +128,24 @@ All Perplexity models are accessed through OpenRouter using the format:
 - Technical troubleshooting with multiple steps
 - Logical analysis of complex systems
 
-**Pricing** (approximate):
-- Higher cost due to reasoning capabilities
-- Worth it for complex analytical tasks
+**Pricing** (OpenRouter list price):
+- Input: $2/million tokens; output: $8/million tokens (reasoning tokens count as output)
+- Search fee: from $5 per 1,000 requests
 
-**Context window**: 200K tokens
+**Context window**: 128K tokens
 
-### Sonar Reasoning
+### Retired: Sonar Reasoning
 
-**Model ID**: `openrouter/perplexity/sonar-reasoning`
+`perplexity/sonar-reasoning` is no longer listed on OpenRouter (checked 2026-09-23), and the
+CLI no longer accepts it. Use `sonar-reasoning-pro` for reasoning-style queries, or `sonar` when
+cost matters more than explicit reasoning.
 
-**Best for:**
-- Basic reasoning tasks
-- Cost-effective analytical queries
-- Simpler logical problems
-- Step-by-step explanations
+### Also available: Sonar Deep Research
 
-**Characteristics:**
-- Basic reasoning capabilities
-- More affordable than Reasoning Pro
-- Good for moderate complexity tasks
-- Shows logical thinking process
-
-**Use cases:**
-- "Explain the logic behind vaccine efficacy calculations"
-- "Walk through basic statistical analysis steps"
-- Simple analytical questions
-- Educational explanations
-
-**Pricing** (approximate):
-- Lower cost than Reasoning Pro
-- Good balance for basic reasoning
-
-**Context window**: 200K tokens
+`perplexity/sonar-deep-research` (128K context; $2/$8 per million tokens plus search fees) runs
+long, multi-search research reports. The CLI does not offer it because runs are slow and costly;
+call `search_with_perplexity(model="openrouter/perplexity/sonar-deep-research", ...)` directly
+when you need it.
 
 ## Model Selection Guide
 
@@ -168,7 +157,7 @@ Is your query complex and requiring deep multi-step analysis?
 └─ NO → Continue
 
 Does your query require explicit step-by-step reasoning?
-├─ YES → Use Sonar Reasoning Pro (complex) or Sonar Reasoning (simple)
+├─ YES → Use Sonar Reasoning Pro
 └─ NO → Continue
 
 Is this a standard research or information query?
@@ -226,9 +215,8 @@ Is this a simple fact-finding or basic lookup?
 **Fastest to Slowest:**
 1. Sonar (fastest)
 2. Sonar Pro
-3. Sonar Reasoning
-4. Sonar Reasoning Pro
-5. Sonar Pro Search (slowest, due to multi-step processing)
+3. Sonar Reasoning Pro
+4. Sonar Pro Search (slowest, due to multi-step processing)
 
 **Considerations:**
 - For time-sensitive queries, use Sonar or Sonar Pro
@@ -241,15 +229,12 @@ Is this a simple fact-finding or basic lookup?
 1. Sonar Pro Search
 2. Sonar Reasoning Pro
 3. Sonar Pro
-4. Sonar Reasoning
-5. Sonar
+4. Sonar
 
-**Cost Hierarchy** (most to least expensive):
+**Cost Hierarchy** (most to least expensive per typical query):
 1. Sonar Pro Search
-2. Sonar Reasoning Pro
-3. Sonar Pro
-4. Sonar Reasoning
-5. Sonar
+2. Sonar Pro / Sonar Reasoning Pro (similar; depends on answer and reasoning length)
+3. Sonar
 
 **Recommendation**: Start with Sonar Pro as the default. Upgrade to Pro Search for complex queries, downgrade to Sonar for simple lookups.
 
@@ -270,10 +255,9 @@ Is this a simple fact-finding or basic lookup?
 
 ### Context Window
 
-All models support 200K token context windows:
-- Sufficient for most queries
-- Can handle long documents or multiple sources
-- Consider chunking very large analyses
+Sonar Pro and Sonar Pro Search offer 200K-token context windows; Sonar, Sonar Reasoning Pro,
+and Sonar Deep Research offer about 128K. Either is sufficient for most queries; chunk very
+large analyses.
 
 ### Temperature Settings
 
@@ -313,26 +297,29 @@ OpenRouter enforces rate limits:
 
 ### Query: "Explain CRISPR-Cas9 gene editing"
 
+Rough per-query costs below are computed from the list prices above (search fee + tokens) and
+will vary with answer length and search context size.
+
 **Sonar:**
 - Quick overview
 - Basic mechanism explanation
 - ~200-300 tokens
 - 1-2 sources cited
-- Cost: $0.001
+- Cost: ~$0.005
 
 **Sonar Pro:**
 - Detailed explanation
 - Multiple mechanisms covered
 - ~500-800 tokens
 - 3-5 sources cited
-- Cost: $0.003
+- Cost: ~$0.01-0.02
 
 **Sonar Reasoning Pro:**
 - Step-by-step mechanism breakdown
 - Logical flow of editing process
-- ~800-1200 tokens
+- ~800-1200 answer tokens plus reasoning tokens
 - Shows reasoning steps
-- Cost: $0.005
+- Cost: ~$0.01-0.02
 
 **Sonar Pro Search:**
 - Comprehensive analysis
@@ -341,7 +328,7 @@ OpenRouter enforces rate limits:
 - Recent developments covered
 - ~1500-2000 tokens
 - 10+ sources explored
-- Cost: $0.020+
+- Cost: ~$0.04+
 
 ### Query: "What is 2+2?"
 

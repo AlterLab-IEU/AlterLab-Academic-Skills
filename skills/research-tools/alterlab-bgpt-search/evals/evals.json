@@ -47,6 +47,15 @@
       ]
     },
     {
+      "id": "near-miss-pdf-extract",
+      "prompt": "I've already downloaded the 18 trial PDFs for my review into a folder. Build me a spreadsheet with one row per paper and columns for sample size, intervention, and primary outcome.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-pdf-extract. The user already has the PDFs locally and wants a per-paper extraction table built from those files. BGPT searches its own database of papers; turning documents the user already holds into a user-defined evidence table is pdf-extract's job.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-pdf-extract" }
+      ]
+    },
+    {
       "id": "near-miss-pyzotero",
       "prompt": "I already have 40 PDFs in my Zotero library. Can you organize them into collections, fix the metadata, and export a BibTeX file for my paper?",
       "expected_output": "Does NOT invoke this skill; defers to alterlab-pyzotero (citation/library management). The user wants to manage an existing Zotero reference library and export citations, not search a database for structured experimental data from papers.",

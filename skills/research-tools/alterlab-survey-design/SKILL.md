@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch WebSearch Bash(python:*)
 compatibility: No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-03-18"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
 ---
 
 # Survey Design — Survey & Instrument Design Agent
@@ -39,12 +39,13 @@ This skill should be used when:
 
 | Scenario | Use Instead |
 |----------|-------------|
-| Qualitative data analysis (coding, themes, focus group/interview analysis) | `alterlab-qualitative-methods` |
-| Integrating qual + quant strands (convergent/sequential designs, joint displays) | `alterlab-mixed-methods` |
-| Hypothesis-test selection, assumption checks, power analysis beyond validation | `alterlab-statistical-analysis` |
-| Specialized social-science methods (Delphi, Q-methodology, QCA) | `alterlab-social-science-methods` |
-| Writing the research paper | `alterlab-paper-writer` |
+| Analyzing collected survey data with weights, strata, or clusters (design-based estimates) | `alterlab-survey-analysis` |
+| Analyzing interview or focus-group transcripts (coding, themes) | `alterlab-qualitative-methods` |
+| CFA/SEM, measurement invariance, or IRT on the finished scale; a go/no-go check on whether a scale can be trusted | `alterlab-sem-psychometrics` / `alterlab-ssci-measurement-gate` |
+| Delphi panels, Q-methodology, or other specialized social-science designs | `alterlab-social-science-methods` |
 | Ethics/IRB applications, informed consent for survey research | `alterlab-research-ethics` |
+
+For combining the survey with a qualitative strand use `alterlab-mixed-methods`; for hypothesis-test selection and power analysis beyond the instrument itself use `alterlab-statistical-analysis`.
 
 ---
 
@@ -171,7 +172,7 @@ Full phase-by-phase protocol with probe scripts and the quantitative-pilot check
 
 ### 8. Instrument Validation
 
-Assess **reliability** (Cronbach's alpha per subscale, corrected item-total correlations — flag items < 0.30) and **validity** across the evidence types below. Use exploratory factor analysis (Bartlett's test, KMO, eigenvalues, rotated loadings) to check internal structure.
+Assess **reliability** (Cronbach's alpha per subscale, corrected item-total correlations — flag items < 0.30) and **validity** across the evidence types below. Use exploratory factor analysis (Bartlett's test, KMO, eigenvalues, rotated loadings) to check internal structure. Report McDonald's omega alongside alpha: alpha assumes equal loadings (tau-equivalence) and understates reliability when they differ, which is why methodologists recommend omega (McNeish, 2018); `alterlab-ssci-measurement-gate` covers that check and `alterlab-sem-psychometrics` computes omega from a fitted factor model.
 
 | Type | Question | Method |
 |------|----------|--------|
@@ -195,7 +196,7 @@ Runnable Python for Cronbach's alpha, item-total correlations, EFA, and the thre
 | Randomization | Yes (items, blocks) | Limited | No | Yes |
 | Piping | Yes | Yes | No | Yes |
 | Offline data collection | Yes (app) | Yes (app) | No | Yes |
-| HIPAA compliant | Yes (BAA available) | Yes (designed for it) | No | Self-hosted: yes |
+| HIPAA compliant | Yes (BAA available) | Yes (designed for it) | Only under a signed Google Workspace BAA (paid plans); never on free accounts | Self-hosted: yes |
 | API access | Yes | Yes | Limited | Yes |
 | Data export | CSV, SPSS, Excel | CSV, Excel, SPSS, SAS, R, Stata | CSV, Excel | CSV, Excel, SPSS, R |
 | Multi-language | Yes | Yes | Manual | Yes |
@@ -270,7 +271,10 @@ Full back-translation flow diagram and ISPOR step list: see `references/qualitat
 - Fowler, F. J. (2014). *Survey research methods* (5th ed.). Sage.
 - Groves, R. M., Fowler, F. J., Couper, M. P., Lepkowski, J. M., Singer, E., & Tourangeau, R. (2009). *Survey methodology* (2nd ed.). Wiley.
 - Krosnick, J. A., & Presser, S. (2010). Question and questionnaire design. In P. V. Marsden & J. D. Wright (Eds.), *Handbook of survey research* (2nd ed., pp. 263-313). Emerald.
+- McNeish, D. (2018). Thanks coefficient alpha, we'll take it from here. *Psychological Methods*, 23(3), 412-433.
 - Podsakoff, P. M., MacKenzie, S. B., Lee, J. Y., & Podsakoff, N. P. (2003). Common method biases in behavioral research. *Journal of Applied Psychology*, 88(5), 879-903.
 - Willis, G. B. (2005). *Cognitive interviewing: A tool for improving questionnaire design*. Sage.
 
 See also: `references/survey-methodology.md` for expanded methodology details.
+
+Part of the AlterLab Academic Skills suite.
