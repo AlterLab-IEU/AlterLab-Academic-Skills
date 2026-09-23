@@ -74,7 +74,7 @@ Drive the end-to-end research → write → review → revise → finalize workf
 
 | Agent | Purpose |
 |-------|---------|
-| `abstract-bilingual-agent` | Writes high-quality bilingual abstracts (English and Traditional Chinese) with keywords for academic papers, composing each language version independently rathe… |
+| `abstract-bilingual-agent` | Writes bilingual abstracts with keywords — English plus a second language (by default the language the user writes in, e.g. Turkish or Traditional Chinese) — co… |
 | `argument-builder-agent` | Constructs the paper's argumentative backbone (central thesis, sub-arguments, claim-evidence-reasoning chains, counter-arguments, and logical flow) and produces… |
 | `citation-compliance-agent` | Verifies all citations in the paper draft for format correctness, cross-references in-text citations against the reference list, checks DOIs and URLs, and auto-… |
 | `draft-writer-agent` | Writes the complete paper draft section-by-section, following the Structure Architect's outline and the Argument Builder's blueprint, weaving citations naturall… |

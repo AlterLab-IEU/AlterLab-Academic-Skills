@@ -1436,7 +1436,7 @@
     {
       "name": "alterlab-deep-research",
       "domain": "core",
-      "description": "Runs a 13-agent deep research pipeline for rigorous academic work on any topic across 7 modes (full research, quick brief, paper review, lit-review, fact-check, Socratic guided research dialogue, and systematic review with optional meta-analysis), covering research-question formulation, Socratic mentoring, methodology design, systematic literature search, source verification, cross-source synthesis, risk-of-bias assessment, meta-analysis, APA 7.0 report compilation, editorial and devil's-advocate review, ethics review, and post-research literature monitoring. Use when the request mentions research, deep research, literature review, systematic review, meta-analysis, PRISMA, evidence synthesis, fact-check, guide my research, help me think through, or 研究, 深度研究, 文獻回顧, 文獻探討, 系統性回顧, 後設分析, 事實查核, 引導我的研究, 幫我釐清, 幫我想想, 我不確定要研究什麼, 研究方向, 研究主題. Part of the AlterLab Academic Skills suite.",
+      "description": "Runs a 13-agent deep research pipeline for rigorous academic work on any topic across 7 modes (full research, quick brief, paper review, lit-review, fact-check, Socratic guided research dialogue, and systematic review with optional meta-analysis), covering research-question formulation, Socratic mentoring, methodology design, systematic literature search, source verification, cross-source synthesis, risk-of-bias assessment, meta-analysis, APA 7.0 report compilation, editorial and devil's-advocate review, ethics review, and post-research literature monitoring. Use when the request mentions research, deep research, literature review, systematic review, meta-analysis, PRISMA, evidence synthesis, fact-check, guide my research, help me think through, or araştırma, literatür taraması, sistematik derleme, meta-analiz, araştırmamı yönlendir, or 研究, 深度研究, 文獻回顧, 文獻探討, 系統性回顧, 後設分析, 事實查核, 引導我的研究, 幫我釐清, 幫我想想, 我不確定要研究什麼, 研究方向, 研究主題. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
       "version": "2.4.0",
       "compatibility": "Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required",
@@ -1450,7 +1450,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 397,
+      "body_lines": 399,
       "references": [
         "apa7_style_guide.md",
         "equator_reporting_guidelines.md",
@@ -1524,9 +1524,9 @@
     {
       "name": "alterlab-paper-writer",
       "domain": "core",
-      "description": "Drafts and revises academic papers through a 12-agent pipeline with hardened LaTeX output (apa7 document class, justified text, table column-width formula, centered bilingual abstracts, standardized font stack, PDF compiled from LaTeX), supporting IMRaD, literature review, theoretical, case study, policy brief, and conference paper structures, APA 7.0 (default), Chicago, MLA, IEEE, and Vancouver citation formats, bilingual zh-TW plus EN abstracts, and multi-format output (LaTeX, DOCX, PDF, Markdown). Use when the request mentions write paper, academic paper, paper outline, write abstract, revise paper, check citations, convert to LaTeX, guide my paper, parse reviews, revision roadmap, or 寫論文, 學術論文, 論文大綱, 寫摘要, 修改論文, 檢查引用, 引導我寫論文, 帶我規劃論文, 逐章規劃, 論文架構, 審查意見, 修訂路線圖. Its citation-check mode formats and inserts citations while drafting; for a standalone anti-hallucination check that cited references actually exist prefer alterlab-citation-verifier instead. Part of the AlterLab Academic Skills suite.",
+      "description": "Drafts and revises academic papers through a 12-agent pipeline with hardened LaTeX output (apa7 class, PDF compiled from LaTeX), supporting IMRaD, literature review, theoretical, case study, policy brief, and conference paper structures, APA 7.0 (default), Chicago, MLA, IEEE, and Vancouver citation formats, bilingual abstracts (English plus the author's language, e.g. Turkish or Traditional Chinese), and multi-format output (LaTeX, DOCX, PDF, Markdown). Use when the request mentions write paper, academic paper, paper outline, write abstract, revise paper, check citations, convert to LaTeX, guide my paper, parse reviews, revision roadmap, or makale yaz, akademik makale, özet yaz, makaleyi revize et, hakem yorumları, or 寫論文, 學術論文, 論文大綱, 寫摘要, 修改論文, 檢查引用, 引導我寫論文, 審查意見, 修訂路線圖. Its citation-check mode formats and inserts citations while drafting; for a standalone anti-hallucination check that cited references actually exist prefer alterlab-citation-verifier instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "2.5",
+      "version": "2.6",
       "compatibility": "Uses built-in Claude tools only; optional LaTeX toolchain (apa7 document class) required for PDF compilation; no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -1538,7 +1538,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 496,
+      "body_lines": 499,
       "references": [
         "abstract_writing_guide.md",
         "academic_writing_style.md",
@@ -2238,10 +2238,10 @@
     {
       "name": "alterlab-alphafold-db",
       "domain": "databases",
-      "description": "Access the AlphaFold DB of 200M+ AI-PREDICTED protein structures — retrieve models by UniProt accession, download PDB/mmCIF files, and analyze prediction confidence metrics (pLDDT, PAE). Use when a UniProt ID needs a computationally predicted 3D structure or when no experimental structure exists, for homology modeling, protein engineering, or structure-based drug discovery; for EXPERIMENTALLY determined structures (X-ray, cryo-EM, NMR) prefer alterlab-pdb, and for protein sequences, annotations, or accession ID mapping prefer alterlab-uniprot instead. Part of the AlterLab Academic Skills suite.",
+      "description": "Access the AlphaFold DB of 240M+ AI-PREDICTED protein structures (v6, plus precomputed homodimer/heterodimer complexes) — retrieve models by UniProt accession, download PDB/mmCIF files, and analyze prediction confidence metrics (pLDDT, PAE). Use when a UniProt ID needs a computationally predicted 3D structure or when no experimental structure exists, for homology modeling, protein engineering, or structure-based drug discovery; for EXPERIMENTALLY determined structures (X-ray, cryo-EM, NMR) prefer alterlab-pdb, to fold a NEW sequence or complex yourself prefer alterlab-alphafold, and for protein sequences, annotations, or accession ID mapping prefer alterlab-uniprot instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
-      "compatibility": "Keyless AlphaFold DB (EBI) REST API; optional Google Cloud/BigQuery for bulk proteome downloads",
+      "version": "1.2.0",
+      "compatibility": "Keyless AlphaFold DB (EBI) REST API (v6 models); EMBL-EBI FTP (v6) or Google Cloud/BigQuery (v4) for bulk proteome downloads",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2250,7 +2250,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 224,
+      "body_lines": 248,
       "references": [
         "api_reference.md",
         "code_examples.md"
@@ -2261,7 +2261,7 @@
       "domain": "databases",
       "description": "Search and retrieve preprints from arXiv via the Atom API by keywords, authors, arXiv IDs, date ranges, or subject categories. Use when finding or fetching papers in physics, mathematics, computer science, quantitative biology, quantitative finance, statistics, electrical engineering, or economics, or resolving an arXiv ID to its metadata and PDF. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Keyless arXiv Atom API (no authentication required)",
       "allowed_tools": [
         "Read",
@@ -2272,7 +2272,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 358,
+      "body_lines": 380,
       "references": [
         "api_reference.md"
       ]
@@ -2282,7 +2282,7 @@
       "domain": "databases",
       "description": "Query BindingDB for measured protein-ligand binding affinities (Ki, Kd, IC50, EC50) via its keyless REST API or the full TSV download, searching by target (UniProt ID), compound (SMILES), or pathogen. Use when looking up experimental binding constants, profiling inhibitors of a protein target, doing lead optimization, polypharmacology analysis, or structure-activity relationship (SAR) studies; for curated bioactivity mining or drug-like compound library screening at scale prefer alterlab-chembl instead. Part of the AlterLab Academic Skills suite.",
       "license": "CC-BY-3.0",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Keyless public BindingDB web services (no authentication required)",
       "allowed_tools": [
         "Read",
@@ -2292,7 +2292,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 337,
+      "body_lines": 354,
       "references": [
         "affinity_queries.md"
       ]
@@ -2302,7 +2302,7 @@
       "domain": "databases",
       "description": "Search the bioRxiv preprint server and retrieve paper metadata or download PDFs via its API. Use when finding life sciences preprints by keywords, authors, DOI, date ranges, or categories, or when conducting a biology literature review of not-yet-peer-reviewed work. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Keyless bioRxiv API (no authentication required)",
       "allowed_tools": [
         "Read",
@@ -2312,7 +2312,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 440,
+      "body_lines": 456,
       "references": [
         "api_reference.md"
       ]
@@ -2322,7 +2322,7 @@
       "domain": "databases",
       "description": "Access the BRENDA enzyme database via its SOAP API to retrieve kinetic parameters (Km, kcat, Ki), reaction equations, organism data, and substrate-specific enzyme information indexed by EC number. Use when looking up enzyme kinetics, turnover numbers, or substrate specificity for biochemical research and metabolic pathway analysis. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Requires free BRENDA account credentials (BRENDA_EMAIL/BRENDA_PASSWORD) for the SOAP API",
       "allowed_tools": [
         "Read",
@@ -2332,7 +2332,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 109,
+      "body_lines": 128,
       "references": [
         "api_reference.md",
         "capabilities.md",
@@ -2346,7 +2346,7 @@
       "domain": "databases",
       "description": "Query cBioPortal via its keyless REST API for cancer genomics across TCGA, GENIE, MSK-IMPACT and hundreds of studies — somatic mutations, copy-number alterations (GISTIC), mRNA/protein expression, structural variants, and patient-level clinical/survival data. Use when asked how often a gene is mutated/amplified/deleted in a tumor type, to profile oncogenes or tumor suppressors across cancers (pan-cancer alteration frequency), to pull patient-level mutations joined to OS/clinical outcomes, or to validate a cancer target from cohort genomics. For germline variant pathogenicity use alterlab-clinvar; for mutational-signature (SBS) decomposition use alterlab-cosmic; for CRISPR/RNAi gene-dependency use alterlab-depmap; for aggregated target-disease evidence use alterlab-opentargets. Part of the AlterLab Academic Skills suite.",
       "license": "LGPL-3.0",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Keyless cBioPortal REST API for public data (no authentication required)",
       "allowed_tools": [
         "Read",
@@ -2356,7 +2356,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 394,
+      "body_lines": 415,
       "references": [
         "study_exploration.md"
       ]
@@ -2366,7 +2366,7 @@
       "domain": "databases",
       "description": "Query ChEMBL via the chembl_webresource_client Python client for curated bioactive molecules and drug-like compound libraries at scale — search compounds by structure or physicochemical properties, retrieve bioactivity measurements (IC50, Ki, EC50), and find inhibitors of a target. Use when screening chemical libraries, mining curated bioactivity for a protein, running SAR studies, or sourcing medicinal-chemistry data; for measured protein-ligand binding affinities (Ki/Kd/IC50) prefer alterlab-bindingdb instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Keyless ChEMBL REST API (no authentication required)",
       "allowed_tools": [
         "Read",
@@ -2379,7 +2379,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 381,
+      "body_lines": 400,
       "references": [
         "api_reference.md"
       ]
@@ -2389,7 +2389,7 @@
       "domain": "databases",
       "description": "Query ClinicalTrials.gov via its API v2 to search trials by condition, drug, location, recruitment status, or phase and retrieve trial details by NCT ID. Use when finding interventional or observational studies, checking trial status and eligibility for patient matching, or exporting clinical trial records for research. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Keyless ClinicalTrials.gov API v2 (no authentication required)",
       "allowed_tools": [
         "Read",
@@ -2399,7 +2399,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 488,
+      "body_lines": 487,
       "references": [
         "api_reference.md"
       ]
@@ -2409,7 +2409,7 @@
       "domain": "databases",
       "description": "Access ClinPGx pharmacogenomics data (the successor to PharmGKB) to query gene-drug interactions, CPIC/DPWG dosing guidelines, drug labels, and pharmacogene records. Use when interpreting pharmacogenes (CYP2D6, CYP2C19, TPMT, DPYD, SLCO1B1), looking up genotype-guided drug dosing, checking PGx drug-safety associations (e.g. HLA-B*57:01 and abacavir), or supporting precision medicine and clinical pharmacogenomics decisions. For star-allele definitions/frequencies see PharmVar; for germline/somatic variant pathogenicity see alterlab-clinvar. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Keyless ClinPGx (PharmGKB) API for basic access (no authentication required)",
       "allowed_tools": [
         "Read",
@@ -2419,7 +2419,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 142,
+      "body_lines": 153,
       "references": [
         "api_reference.md",
         "endpoints-and-capabilities.md",
@@ -2432,7 +2432,7 @@
       "domain": "databases",
       "description": "Query NCBI ClinVar via the E-utilities API or FTP for the clinical significance (pathogenicity) of human germline genetic variants, searching by gene, variant, condition, or genomic position and interpreting ACMG/AMP classifications and review-status star ratings. Use when assessing whether a variant is pathogenic, likely pathogenic, VUS, likely benign, or benign, resolving conflicting interpretations, or annotating a VCF with ClinVar clinical significance. For population allele frequencies by ancestry use alterlab-gnomad; for somatic cancer mutation frequencies use alterlab-cosmic. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Keyless NCBI E-utilities REST API; optional NCBI API key raises rate limits",
       "allowed_tools": [
         "Read",
@@ -2442,7 +2442,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 367,
+      "body_lines": 394,
       "references": [
         "api_reference.md",
         "clinical_significance.md",
@@ -2454,8 +2454,8 @@
       "domain": "databases",
       "description": "Access the COSMIC catalogue of somatic mutations in cancer to query somatic mutations, the Cancer Gene Census, mutational signatures, and gene fusions (authentication required). Use when curating known cancer driver genes, looking up recurrent somatic mutations in a gene, or interpreting mutational signatures for cancer research and precision oncology. Not for germline pathogenicity calls (use alterlab-clinvar) or interactive cohort visualization like OncoPrints and survival from study data (use alterlab-cbioportal). Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires a free COSMIC account (registration) for data downloads",
+      "version": "1.1.0",
+      "compatibility": "Requires a free academic COSMIC account (registration) for data downloads; commercial or clinical use needs a COSMIC licence",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2464,7 +2464,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 252,
+      "body_lines": 292,
       "references": [
         "cosmic_data_reference.md"
       ]
@@ -2474,8 +2474,8 @@
       "domain": "databases",
       "description": "Query Google Data Commons for public statistical data aggregated from global sources, resolving geographic entities and pulling time-series statistics. Use when working with demographic data, economic indicators, health statistics, or environmental data — population counts, GDP figures, unemployment rates, disease prevalence — or when resolving places to DCIDs and exploring relationships between statistical entities. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires a Data Commons API key",
+      "version": "1.1.0",
+      "compatibility": "Requires a free Data Commons API key for observation/node queries (resolve works keyless); datacommons-client >= 2.1 (current 2.1.6)",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2484,7 +2484,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 280,
+      "body_lines": 316,
       "references": [
         "getting_started.md",
         "node.md",
@@ -2497,7 +2497,7 @@
       "domain": "databases",
       "description": "Query the Cancer Dependency Map (DepMap) for cancer cell line gene dependency scores (CRISPR Chronos), drug sensitivity data, and gene effect profiles. Use when identifying cancer-specific genetic vulnerabilities, finding synthetic lethal interactions, checking whether a gene is essential in given cell lines, or validating oncology drug targets. Part of the AlterLab Academic Skills suite.",
       "license": "CC-BY-4.0",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Keyless DepMap public data downloads/API (no authentication required)",
       "allowed_tools": [
         "Read",
@@ -2507,7 +2507,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 276,
+      "body_lines": 300,
       "references": [
         "dependency_analysis.md"
       ]
@@ -2517,8 +2517,8 @@
       "domain": "databases",
       "description": "Access and analyze drug information from the DrugBank database — drug properties, interactions, targets, pathways, chemical structures, and pharmacology data. Use when working with pharmaceutical data, drug discovery research, drug-drug interaction analysis, target identification, chemical similarity searches, ADMET predictions, or any task needing detailed drug and drug-target records from DrugBank. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires a licensed DrugBank account and credentials for data access",
+      "version": "1.1.0",
+      "compatibility": "Requires a DrugBank account with an approved academic (CC BY-NC 4.0) or commercial license for XML downloads (academic downloads paused as of 2026-09), or a commercial API key for the Clinical API; drugbank-downloader >= 0.2 (Python >= 3.10)",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2527,7 +2527,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 182,
+      "body_lines": 211,
       "references": [
         "chemical-analysis.md",
         "data-access.md",
@@ -2541,7 +2541,7 @@
       "domain": "databases",
       "description": "Access the European Nucleotide Archive (ENA) via its API and FTP to retrieve DNA/RNA sequences, raw sequencing reads (FASTQ), and genome assemblies by accession, with support for multiple formats. Use when downloading reads or sequences for a study, run, or sample accession, or when sourcing nucleotide data for genomics and bioinformatics pipelines. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Keyless ENA API and FTP for data retrieval (no authentication required)",
       "allowed_tools": [
         "Read",
@@ -2551,7 +2551,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 210,
+      "body_lines": 221,
       "references": [
         "api_reference.md"
       ]
@@ -2561,7 +2561,7 @@
       "domain": "databases",
       "description": "Query the Ensembl genome database REST API across 250+ species for gene lookups, sequence retrieval, variant analysis, comparative genomics, orthologs, and Variant Effect Predictor (VEP) annotations. Use when mapping gene IDs or coordinates, fetching genomic sequence, finding orthologs across species, or predicting variant consequences for genomic research. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Keyless Ensembl REST API (no authentication required)",
       "allowed_tools": [
         "Read",
@@ -2571,7 +2571,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 323,
+      "body_lines": 341,
       "references": [
         "api_endpoints.md"
       ]
@@ -2581,7 +2581,7 @@
       "domain": "databases",
       "description": "Query the openFDA API for drugs, medical devices, adverse event reports, recalls, regulatory submissions (510k, PMA), and substance identification (UNII). Use when searching FDA safety data, pharmacovigilance and adverse-event signals, device clearances, drug labels, or recall records for regulatory data analysis and safety research. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Keyless openFDA REST API; optional API key raises rate limits",
       "allowed_tools": [
         "Read",
@@ -2591,7 +2591,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 298,
+      "body_lines": 318,
       "references": [
         "animal_veterinary.md",
         "api_basics.md",
@@ -2607,7 +2607,7 @@
       "domain": "databases",
       "description": "Query NCBI Gene via the E-utilities and Datasets APIs, searching by gene symbol or Gene ID and retrieving gene information (RefSeqs, GO terms, genomic locations, associated phenotypes) including batch lookups. Use when resolving gene symbols to IDs, annotating gene lists, or pulling functional and positional gene metadata for downstream analysis. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Keyless NCBI E-utilities/Datasets REST APIs; optional NCBI API key raises rate limits",
       "allowed_tools": [
         "Read",
@@ -2617,7 +2617,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 174,
+      "body_lines": 190,
       "references": [
         "api_reference.md",
         "common_workflows.md"
@@ -2628,7 +2628,7 @@
       "domain": "databases",
       "description": "Access NCBI GEO (Gene Expression Omnibus) for gene expression and functional genomics data — search and download microarray and RNA-seq datasets by GSE, GSM, GPL, or GDS accession and retrieve SOFT, MINiML, and series matrix files. Use when locating public expression datasets, fetching processed expression matrices, downloading a study's supplementary files, or sourcing per-study transcriptomics data for differential-expression analysis. For raw FASTQ sequencing reads by SRA/ENA run accession use alterlab-ena; for reference tissue-expression baselines (median TPM across human tissues) use alterlab-gtex; for cancer cohort somatic mutations and copy-number use alterlab-cbioportal. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Keyless NCBI E-utilities REST API (email required by NCBI); optional NCBI API key raises rate limits",
       "allowed_tools": [
         "Read",
@@ -2638,7 +2638,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 156,
+      "body_lines": 166,
       "references": [
         "data_access.md",
         "expression_analysis.md",
@@ -2652,7 +2652,7 @@
       "domain": "databases",
       "description": "Query gnomAD (Genome Aggregation Database) for population allele frequencies and gene constraint scores (pLI, LOEUF) reflecting loss-of-function intolerance. Use when checking how common a variant is across populations, filtering rare-disease candidate variants, assessing variant pathogenicity, or identifying loss-of-function intolerant genes. Part of the AlterLab Academic Skills suite.",
       "license": "CC0-1.0",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Keyless gnomAD GraphQL API (no authentication required)",
       "allowed_tools": [
         "Read",
@@ -2662,7 +2662,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 411,
+      "body_lines": 426,
       "references": [
         "graphql_queries.md",
         "variant_interpretation.md"
@@ -2673,8 +2673,8 @@
       "domain": "databases",
       "description": "Query the GTEx (Genotype-Tissue Expression) portal v2 REST API for tissue-specific gene expression (median TPM across 54 human tissues), expression QTLs (eQTLs), and splicing QTLs (sQTLs). Use when checking which tissues express a gene, finding which gene a non-coding/GWAS variant regulates via eQTLs, or interpreting variant regulatory effects across tissues. NOT for curated trait-variant associations (use alterlab-gwas), population allele frequencies or variant constraint (use alterlab-gnomad), or gene/transcript structure and ID mapping (use alterlab-ensembl). Part of the AlterLab Academic Skills suite.",
       "license": "CC-BY-4.0",
-      "version": "1.0.0",
-      "compatibility": "Keyless GTEx portal REST API (no authentication required)",
+      "version": "1.0.1",
+      "compatibility": "Keyless GTEx Portal REST API v2 (no authentication required); datasets gtex_v10 (GENCODE v39) and gtex_v8 (GENCODE v26)",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2683,7 +2683,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 321,
+      "body_lines": 335,
       "references": [
         "api_reference.md"
       ]
@@ -2691,10 +2691,10 @@
     {
       "name": "alterlab-gwas",
       "domain": "databases",
-      "description": "Query the NHGRI-EBI GWAS Catalog REST API for SNP-trait associations, retrieving variants by rs ID, disease/trait, or gene along with p-values and summary statistics. Use when investigating genome-wide association study hits, mapping a SNP or rsID to traits, building polygenic risk scores, or doing genetic epidemiology lookups. Part of the AlterLab Academic Skills suite.",
+      "description": "Query the NHGRI-EBI GWAS Catalog REST API v2 for curated SNP-trait associations, retrieving variants by rs ID, disease/trait (EFO/MONDO), gene, or study (GCST) with p-values, effect sizes, and ancestry, and locate full harmonised summary statistics on the FTP site. Use when investigating genome-wide association study hits, mapping a SNP or rsID to traits, selecting GWAS for polygenic risk scores or fine-mapping, or doing genetic epidemiology lookups. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Keyless NHGRI-EBI GWAS Catalog REST API (no authentication required)",
+      "version": "1.1.0",
+      "compatibility": "Keyless NHGRI-EBI GWAS Catalog REST API v2 (no authentication; 15 requests/s throttle); summary statistics via FTP (the Summary Statistics API is retired)",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2703,7 +2703,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 86,
+      "body_lines": 98,
       "references": [
         "api_reference.md",
         "data_fields_and_best_practices.md",
@@ -2716,8 +2716,8 @@
       "domain": "databases",
       "description": "Access the Human Metabolome Database (HMDB, 220K+ metabolites), searching by name, HMDB ID, or structure to retrieve chemical properties, biomarker data, NMR/MS reference spectra, and associated pathways. Use when identifying a human metabolite, looking up its biomarker or disease associations, matching NMR/MS spectra, or running metabolomics annotation. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "No public REST API; uses keyless web scraping plus bulk XML/SDF downloads (no authentication required)",
+      "version": "1.0.1",
+      "compatibility": "No public REST API; keyless per-record XML (often blocked for scripted clients by a Cloudflare browser challenge), bulk XML/SDF downloads, and HMDB cross-references in PubChem/UniChem",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2726,7 +2726,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 193,
+      "body_lines": 204,
       "references": [
         "hmdb_data_fields.md"
       ]
@@ -2736,8 +2736,8 @@
       "domain": "databases",
       "description": "Query and download public cancer imaging data from the NCI Imaging Data Commons (IDC) using the idc-index Python package, filtering by metadata, visualizing in-browser, and checking licenses, with no authentication required. Use when obtaining large-scale radiology (CT, MR, PET) or digital pathology DICOM datasets for AI/ML training or cancer imaging research. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.5.1",
-      "compatibility": "Requires the idc-index Python package (pinned to 0.12.3, IDC data release v24); keyless IDC data access (no authentication required)",
+      "version": "1.5.2",
+      "compatibility": "Requires the idc-index Python package >= 0.12.5 (current 0.12.5 as of 2026-09; IDC data release v24; earlier 0.12.x pin pandas <= 2.2.4); keyless IDC data access (no authentication required)",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2746,7 +2746,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 442,
+      "body_lines": 459,
       "references": [
         "bigquery_guide.md",
         "cli_guide.md",
@@ -2765,8 +2765,8 @@
       "domain": "databases",
       "description": "Query the EMBL-EBI InterPro REST API for protein family, domain, and functional-site annotations integrated from member databases (Pfam, PANTHER, PRINTS, SMART, SUPERFAMILY, CDD, ProSite, NCBIfam, and others). Use when predicting protein function, analyzing or comparing domain architecture, classifying a protein by family or homologous superfamily, resolving a Pfam/InterPro accession, or mapping a protein's signatures to GO terms. Not for raw UniProt entry/FASTA retrieval or AlphaFold 3D structures. Part of the AlterLab Academic Skills suite.",
       "license": "CC0-1.0",
-      "version": "1.0.0",
-      "compatibility": "Keyless InterPro REST API (no authentication required)",
+      "version": "1.0.1",
+      "compatibility": "Keyless InterPro REST API (no authentication required); verified against InterPro 110.0 / Pfam 38.2 (2026-09)",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2775,7 +2775,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 347,
+      "body_lines": 357,
       "references": [
         "domain_analysis.md"
       ]
@@ -2785,8 +2785,8 @@
       "domain": "databases",
       "description": "Query JASPAR for transcription factor binding site (TFBS) profiles (PWMs/PFMs), searching by TF name, species, or class, scanning DNA sequences for binding sites, and comparing matrices. Use when doing motif analysis, regulatory genomics, transcription factor binding prediction, or interpreting regulatory/non-coding GWAS variants. Part of the AlterLab Academic Skills suite.",
       "license": "CC0-1.0",
-      "version": "1.0.0",
-      "compatibility": "Keyless JASPAR REST API (no authentication required)",
+      "version": "1.1.0",
+      "compatibility": "Keyless JASPAR REST API v1 (no authentication required); serves the JASPAR 2026 release (2,633 CORE profiles, verified 2026-09)",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2795,7 +2795,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 360,
+      "body_lines": 379,
       "references": [
         "api_reference.md"
       ]
@@ -2803,10 +2803,10 @@
     {
       "name": "alterlab-kegg",
       "domain": "databases",
-      "description": "Provide direct REST API access to KEGG (academic use only) for pathway analysis, gene-to-pathway and compound-to-pathway mapping, metabolic reactions, KEGG Orthology (KO), drug-drug interactions, and ID conversion. Use when querying KEGG pathways, mapping genes/compounds to metabolic maps, or running KEGG pathway enrichment via raw HTTP/REST; for protein-protein interaction networks prefer alterlab-string-db, for protein sequences and annotations prefer alterlab-uniprot, and for Python workflows spanning many databases prefer bioservices instead. Part of the AlterLab Academic Skills suite.",
+      "description": "Provide direct REST API access to KEGG (academic use only) for pathway analysis, gene-to-pathway and compound-to-pathway mapping, metabolic reactions, KEGG Orthology (KO), drug-drug interactions, and ID conversion. Use when querying KEGG pathways, mapping genes/compounds to metabolic maps, or running KEGG pathway enrichment via raw HTTP/REST; for protein-protein interaction networks prefer alterlab-string-db, for protein sequences and annotations prefer alterlab-uniprot, and for Python workflows spanning many databases prefer alterlab-bioservices instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Keyless KEGG REST API (academic use only; no authentication required)",
+      "version": "1.0.1",
+      "compatibility": "Keyless KEGG REST API at rest.kegg.jp (academic use by academic users only; max 3 calls/second or access is blocked; no authentication)",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2816,7 +2816,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 373,
+      "body_lines": 389,
       "references": [
         "kegg_reference.md"
       ]
@@ -2824,9 +2824,9 @@
     {
       "name": "alterlab-metabolomics-wb",
       "domain": "databases",
-      "description": "Access the NIH Metabolomics Workbench via its REST API (4,200+ studies), querying metabolites, RefMet standardized nomenclature, MS/NMR data, m/z mass searches, and study metadata. Use when retrieving public metabolomics study data, standardizing metabolite names with RefMet, running m/z lookups, or doing biomarker discovery. Part of the AlterLab Academic Skills suite.",
+      "description": "Access the NIH Metabolomics Workbench via its REST API (4,500+ public studies), querying metabolites, RefMet standardized nomenclature, MS/NMR data, m/z mass searches, and study metadata. Use when retrieving public metabolomics study data, standardizing metabolite names with RefMet, running m/z lookups, or doing biomarker discovery. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Keyless Metabolomics Workbench REST API (no authentication required)",
       "allowed_tools": [
         "Read",
@@ -2836,7 +2836,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 271,
+      "body_lines": 281,
       "references": [
         "api_reference.md"
       ]
@@ -2846,8 +2846,8 @@
       "domain": "databases",
       "description": "Query the Monarch Initiative knowledge graph for disease-gene-phenotype associations across species, integrating OMIM, ORPHANET, HPO, ClinVar, and model organism databases. Use when discovering rare disease genes, mapping phenotypes to genes, modeling disease across species, or looking up HPO terms. Part of the AlterLab Academic Skills suite.",
       "license": "CC0-1.0",
-      "version": "1.0.0",
-      "compatibility": "Keyless Monarch Initiative REST API (no authentication required)",
+      "version": "1.1.0",
+      "compatibility": "Keyless Monarch Initiative REST API v3 (no authentication required); verified against API 1.30.0 / KG release 2026-09-02 (GET /v3/api/version)",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2856,7 +2856,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 364,
+      "body_lines": 394,
       "references": [
         "phenotype_ontology.md"
       ]
@@ -2864,10 +2864,10 @@
     {
       "name": "alterlab-openalex",
       "domain": "databases",
-      "description": "Query and analyze scholarly literature using the OpenAlex API across 240M+ works, retrieving papers, authors, institutions, citations, and open access status. Use when searching academic papers, tracking citations, finding works by author or institution, analyzing research trends, discovering open access publications, or running bibliometric analysis. Part of the AlterLab Academic Skills suite.",
+      "description": "Query and analyze scholarly literature using the OpenAlex API across 300M+ works, retrieving papers, authors, institutions, citations, and open access status. Use when searching academic papers, tracking citations, finding works by author or institution, analyzing research trends, discovering open access publications, or running bibliometric analysis. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
-      "compatibility": "OpenAlex REST API at api.openalex.org. Works keyless ($0.01/day credit); a free API key (openalex.org/settings/api) raises the free allowance to $1/day.",
+      "version": "1.2.0",
+      "compatibility": "OpenAlex REST API at api.openalex.org. Keyless use draws on a $0.10/day budget shared by everyone on your IP; a free API key (openalex.org/settings/api; set OPENALEX_API_KEY) gives your own $1/day. Max 100 requests/s, per_page ≤ 100 (as of 2026-09).",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2876,7 +2876,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 492,
+      "body_lines": 487,
       "references": [
         "api_guide.md",
         "common_queries.md"
@@ -2887,8 +2887,8 @@
       "domain": "databases",
       "description": "Query the Open Targets Platform GraphQL API for target-disease associations, tractability and safety data, genetics/omics evidence, and known drugs. Use when identifying or prioritizing therapeutic drug targets, assessing target druggability/safety, or gathering target-disease evidence for drug discovery. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Keyless Open Targets GraphQL API (no authentication required)",
+      "version": "1.0.1",
+      "compatibility": "Keyless Open Targets Platform GraphQL API v4 (no authentication required); queries verified against data release 26.06 (API 26.6.3) — the schema changes between quarterly releases",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2897,7 +2897,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 372,
+      "body_lines": 383,
       "references": [
         "api_reference.md",
         "evidence_types.md",
@@ -2909,8 +2909,8 @@
       "domain": "databases",
       "description": "Access the RCSB Protein Data Bank (PDB) for EXPERIMENTALLY determined 3D structures (X-ray, cryo-EM, NMR) of proteins and nucleic acids — searching by text, sequence, or structure similarity and downloading coordinates in PDB/mmCIF format with metadata. Use when retrieving a structure by PDB ID, running sequence or structure similarity searches, or obtaining experimental coordinates for structural biology and drug discovery; for AI-PREDICTED structures of proteins lacking experimental data prefer alterlab-alphafold-db, and for protein sequences, annotations, or accession ID mapping prefer alterlab-uniprot instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Keyless RCSB PDB REST API (no authentication required)",
+      "version": "1.0.1",
+      "compatibility": "Keyless RCSB PDB Search API v2, Data API (REST v1 + GraphQL), and file downloads (no authentication required); Python examples use rcsb-api >= 1.7 (current 1.7.3 as of 2026-09)",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2919,7 +2919,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 339,
+      "body_lines": 356,
       "references": [
         "api_reference.md"
       ]
@@ -2927,10 +2927,10 @@
     {
       "name": "alterlab-pubchem",
       "domain": "databases",
-      "description": "Query PubChem via the PUG-REST API and PubChemPy across 110M+ compounds, searching by name, CID, or SMILES and retrieving molecular properties, bioactivity, and similarity/substructure matches. Use when looking up a chemical compound, converting names/SMILES to CIDs, fetching physicochemical properties, or running cheminformatics structure searches. Part of the AlterLab Academic Skills suite.",
+      "description": "Query PubChem via the PUG-REST API and PubChemPy across 119M+ compounds, searching by name, CID, or SMILES and retrieving molecular properties, bioactivity, and similarity/substructure matches. Use when looking up a chemical compound, converting names/SMILES to CIDs, fetching physicochemical properties, or running cheminformatics structure searches. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Keyless PubChem PUG-REST API; PubChemPy optional for Python (no authentication required)",
+      "version": "1.0.1",
+      "compatibility": "Keyless PubChem PUG-REST API (≤5 requests/s, ≤400/min); PubChemPy >= 1.0.5 optional for Python (no authentication required)",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2939,7 +2939,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 89,
+      "body_lines": 102,
       "references": [
         "api_reference.md",
         "best_practices.md",
@@ -2953,8 +2953,8 @@
       "domain": "databases",
       "description": "Provide direct REST API access to PubMed via the NCBI E-utilities API, supporting advanced Boolean/MeSH queries, batch processing, and citation management. Use when searching biomedical literature by MeSH terms, retrieving abstracts or PMIDs in bulk, or scripting custom PubMed queries over raw HTTP/REST — for Python workflows prefer biopython (Bio.Entrez) instead, use this for direct REST work or custom API implementations. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Keyless NCBI E-utilities REST API; optional NCBI API key raises rate limits",
+      "version": "1.0.1",
+      "compatibility": "Keyless NCBI E-utilities REST API (3 requests/s per IP); an optional NCBI API key (NCBI_API_KEY) raises this to 10 requests/s",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2963,7 +2963,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 325,
+      "body_lines": 335,
       "references": [
         "api_reference.md",
         "common_queries.md",
@@ -2975,8 +2975,8 @@
       "domain": "databases",
       "description": "Query the Reactome REST API for pathway analysis, over-representation/enrichment, gene-to-pathway mapping, disease pathways, molecular interactions, and expression analysis. Use when running pathway enrichment on a gene list, mapping genes to curated biological pathways, or exploring disease pathways for systems biology studies. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Keyless Reactome REST API (no authentication required)",
+      "version": "1.0.1",
+      "compatibility": "Keyless Reactome Content Service and Analysis Service REST APIs (no authentication required); verified against Reactome release 97 (2026-09)",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -2985,7 +2985,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 309,
+      "body_lines": 319,
       "references": [
         "api_reference.md"
       ]
@@ -2993,10 +2993,10 @@
     {
       "name": "alterlab-string-db",
       "domain": "databases",
-      "description": "Query the STRING API for protein-protein interactions (59M proteins, 20B interactions across 5000+ species), building interaction networks, discovering functional partners, and running GO/KEGG/Pfam enrichment on protein lists. Use when constructing a protein-protein interaction network, expanding from seed proteins to functional partners, or running PPI-based enrichment for systems biology; for curated metabolic pathway maps and reactions prefer alterlab-kegg, and for protein sequences, annotations, or accession ID mapping prefer alterlab-uniprot instead. Part of the AlterLab Academic Skills suite.",
+      "description": "Query the STRING API for protein-protein interactions (59M proteins, 20B+ interactions across 12,500+ organisms), building interaction networks, discovering functional partners, and running GO/KEGG/Pfam enrichment on protein lists. Use when constructing a protein-protein interaction network, expanding from seed proteins to functional partners, or running PPI-based enrichment for systems biology; for curated metabolic pathway maps and reactions prefer alterlab-kegg, and for protein sequences, annotations, or accession ID mapping prefer alterlab-uniprot instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Keyless STRING REST API (no authentication required)",
+      "version": "1.0.1",
+      "compatibility": "Keyless STRING REST API (no authentication required); default API serves STRING v12.0 as of 2026-09 — pin with STRING_BASE_URL=https://version-12-0.string-db.org/api",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -3005,7 +3005,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 123,
+      "body_lines": 138,
       "references": [
         "analysis-workflows.md",
         "operations.md",
@@ -3015,10 +3015,10 @@
     {
       "name": "alterlab-uniprot",
       "domain": "databases",
-      "description": "Provide direct REST API access to UniProt (Swiss-Prot/TrEMBL) for protein sequence searches, FASTA retrieval, functional annotations (GO terms, domains), and cross-database ID mapping. Use when looking up a protein entry, fetching a protein FASTA sequence, or mapping accessions between databases over raw HTTP/REST; for EXPERIMENTAL 3D structures prefer alterlab-pdb, for AI-PREDICTED 3D structures prefer alterlab-alphafold-db, for protein-protein interaction networks prefer alterlab-string-db, and for Python workflows spanning many databases prefer bioservices instead. Part of the AlterLab Academic Skills suite.",
+      "description": "Provide direct REST API access to UniProt (Swiss-Prot/TrEMBL) for protein sequence searches, FASTA retrieval, functional annotations (GO terms, domains), and cross-database ID mapping. Use when looking up a protein entry, fetching a protein FASTA sequence, or mapping accessions between databases over raw HTTP/REST; for EXPERIMENTAL 3D structures prefer alterlab-pdb, for AI-PREDICTED 3D structures prefer alterlab-alphafold-db, for protein-protein interaction networks prefer alterlab-string-db, and for Python workflows spanning many databases prefer alterlab-bioservices instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Keyless UniProt REST API (no authentication required)",
+      "version": "1.0.1",
+      "compatibility": "Keyless UniProt REST API at rest.uniprot.org (no authentication required); verified against UniProt release 2026_03",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -3027,7 +3027,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 191,
+      "body_lines": 204,
       "references": [
         "api_examples.md",
         "api_fields.md",
@@ -3038,10 +3038,10 @@
     {
       "name": "alterlab-uspto",
       "domain": "databases",
-      "description": "Access USPTO APIs for patent and trademark searches, examination history (PEDS), assignments, citations, office actions, and trademark status (TSDR). Use when searching patents or trademarks, conducting prior art searches, retrieving patent examination or assignment records, or doing intellectual property (IP) analysis. Part of the AlterLab Academic Skills suite.",
+      "description": "Access USPTO patent and trademark data through the Open Data Portal (ODP) APIs — Patent File Wrapper search, examination history (the PEDS successor), continuity, assignments, office actions, PTAB decisions — and trademark status via TSDR. Use when searching patents or trademarks, conducting prior art searches, retrieving patent examination or assignment records, or doing intellectual property (IP) analysis. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires a USPTO API key (free registration)",
+      "version": "1.1.0",
+      "compatibility": "Requires free keys — an ODP API key (data.uspto.gov, USPTO.gov account; X-API-KEY header) for patent data and a TSDR key (account.uspto.gov/api-manager; USPTO-API-KEY header) for trademarks. PEDS, the Assignment Search API, and the PatentsView PatentSearch API are offline as of 2026-09.",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -3050,7 +3050,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 266,
+      "body_lines": 218,
       "references": [
         "additional_apis.md",
         "patentsearch_api.md",
@@ -3064,8 +3064,8 @@
       "domain": "databases",
       "description": "Access the ZINC database of 230M+ commercially available (purchasable) compounds, searching by ZINC ID or SMILES, running similarity searches, and downloading 3D-ready structures. Use when assembling a compound library for virtual screening, finding purchasable analogs, or obtaining docking-ready 3D structures for drug discovery. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Keyless public ZINC database (no authentication required)",
+      "version": "1.1.0",
+      "compatibility": "Keyless ZINC22 CartBlanche22 API and files.docking.org repository (no authentication required); zinc.docking.org / ZINC20 / ZINC15 web pages now sit behind a captcha",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -3074,7 +3074,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 422,
+      "body_lines": 444,
       "references": [
         "api_reference.md"
       ]
@@ -4838,7 +4838,7 @@
       "domain": "turkish-academia",
       "description": "Computes the annual Turkish academic-incentive (akademik teşvik) score for Devlet (state) university öğretim elemanı (academic staff) from a classified activity list, applying the verified Akademik Teşvik Ödeneği Yönetmeliği (2018/11834) Faaliyet Hesaplama Tablosu headline puanları (Proje 20, Araştırma 15, Yayın 30, Patent 30, Atıf 30, Tebliğ 20, Ödül 20) with the k (author-count), p (Q1 1/Q2 0.8/Q3 0.5/Q4 0.25), and r (project-role) coefficients via türü puanı = Σ(faaliyet oranları) × headline (MADDE 8/2), then enforcing the per-type headline ceilings, the 100 cap (MADDE 8/3), and the net-30 payment gate (MADDE 10/3) in a deterministic scripts/tesvik_score.py. Use when the user wants to calculate akademik teşvik puanı, check the en az 30 (net-30) threshold, apply TABLO 4 ceilings, or estimate teşvik eligibility; keeps its coefficients separate from doçentlik scoring. For doçentlik point eligibility prefer alterlab-docentlik-eligibility. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.1",
+      "version": "1.1.0",
       "compatibility": "No API key and no network required — applies the regulation's tables offline via `uv run python`; the regulation PDF is on mevzuat.gov.tr for re-verification",
       "allowed_tools": [
         "Read",
@@ -4848,7 +4848,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 171,
+      "body_lines": 185,
       "references": [
         "hesaplama.md",
         "tablo4.md"
@@ -4857,9 +4857,9 @@
     {
       "name": "alterlab-aperta",
       "domain": "turkish-academia",
-      "description": "Drives TÜBİTAK Açık Bilim Politikası (Open Science Policy) compliance and deposition into Aperta — TÜBİTAK ULAKBİM's national open archive at aperta.ulakbim.gov.tr — encoding the binding mandates (green-road deposit of the accepted manuscript on acceptance; open access within 6 months for fen/mühendislik (STEM) and 12 months for sosyal/beşeri (SSH); İlke-6 documentation when data must stay closed for KVKK/privacy reasons) and scaffolding a TÜBİTAK Veri Yönetim Planı / VYP (data management plan) at grant-application time. Use when depositing to Aperta, complying with the TÜBİTAK açık bilim policy, preparing a TÜBİTAK data management plan (VYP), reporting open-access compliance in a final report, or documenting a justified data embargo. For Zenodo/Dryad/OSF and international DMPs prefer alterlab-open-science; for the KVKK lawful-basis/anonymisation plan prefer alterlab-kvkk-dmp. Part of the AlterLab Academic Skills suite.",
+      "description": "Drives TÜBİTAK Açık Bilim Politikası (Open Science Policy) compliance and deposition into Aperta — TÜBİTAK ULAKBİM's national open archive at aperta.ulakbim.gov.tr — encoding its principles (İlke 1: deposit the accepted manuscript in Aperta on acceptance; İlke 2: open access at most 6 months after publication for STEM, 12 for SSH; İlke 6: document data that must stay closed, e.g. for KVKK; İlke 9: report compliance in the final report) and scaffolding the five-question TÜBİTAK Veri Yönetim Planı / VYP (data management plan) uploaded with ARDEB applications. Use when depositing to Aperta, complying with the TÜBİTAK açık bilim policy, preparing a TÜBİTAK data management plan (VYP), reporting open-access compliance in a final report, or documenting a justified data embargo. For Zenodo/Dryad/OSF and international DMPs prefer alterlab-open-science; for the KVKK lawful-basis/anonymisation plan prefer alterlab-kvkk-dmp. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key required. Guidance + scaffolding skill; uses WebFetch for live policy/repository checks and optional Python helpers via `uv run python` (stdlib-only, requests optional).",
       "allowed_tools": [
         "Read",
@@ -4870,7 +4870,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 181,
+      "body_lines": 195,
       "references": [
         "aperta_repository.md",
         "policy_mandates.md",
@@ -4880,9 +4880,9 @@
     {
       "name": "alterlab-dergipark",
       "domain": "turkish-academia",
-      "description": "Harvests article metadata, abstracts, and full-text PDFs from DergiPark (TÜBİTAK ULAKBİM's national journal-hosting platform, ~2,537 journals) via its verified platform-wide OAI-PMH endpoint (https://dergipark.org.tr/api/public/oai/; verbs Identify/ListSets/ListRecords/GetRecord; prefixes oai_dc/oai_mods/oai_marc/oai_etdms; setSpec=journal-slug), parses Highwire citation_* and DC.* meta tags on /pub/{slug}/article/{id} pages, pulls PDFs from the citation_pdf_url path, and emits BibTeX/RIS locally. Use when the user wants to harvest a Turkish journal, fetch DergiPark articles, list a journal archive, get BibTeX/RIS for a DergiPark paper, or read a journal aim-and-scope (öz/kapsam). For TR Dizin indexing status use alterlab-trdizin; for YÖK theses use alterlab-yok-tez; for academic profiles use alterlab-yok-akademik. Part of the AlterLab Academic Skills suite.",
+      "description": "Harvests article metadata, abstracts, and full-text PDFs from DergiPark (TÜBİTAK ULAKBİM's national journal-hosting platform, 3,000+ journals) via its verified platform-wide OAI-PMH endpoint (https://dergipark.org.tr/api/public/oai/; verbs Identify/ListSets/ListRecords/GetRecord; prefixes oai_dc/oai_mods/oai_marc/oai_etdms; setSpec=journal-slug), parses Highwire citation_* and DC.* meta tags on /pub/{slug}/article/{id} pages, pulls PDFs from the citation_pdf_url path, and emits BibTeX/RIS locally. Use when the user wants to harvest a Turkish journal, fetch DergiPark articles, list a journal archive, get BibTeX/RIS for a DergiPark paper, or read a journal aim-and-scope (öz/kapsam). For TR Dizin indexing status use alterlab-trdizin; for YÖK theses use alterlab-yok-tez; for academic profiles use alterlab-yok-akademik. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "No API key required — harvests DergiPark's public OAI-PMH 2.0 endpoint and open article pages via `uv run python` (requests if present, else stdlib urllib); degrades gracefully offline by emitting a network_unavailable error rather than fabricating records",
       "allowed_tools": [
         "Read",
@@ -4894,7 +4894,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 119,
+      "body_lines": 121,
       "references": [
         "endpoints.md",
         "indexing.md",
@@ -4904,9 +4904,9 @@
     {
       "name": "alterlab-docentlik-eligibility",
       "domain": "turkish-academia",
-      "description": "Runs a PARTIAL pre-screen of a Turkish associate-professorship (doçentlik) publication list against the ÜAK (Üniversitelerarası Kurul) Sağlık Bilimleri TABLO 10 criteria, applying the author-share rule (full; 0.8 + 0.5; lead-author half-the-rest split) and pass-fail checking the four computable minimums (≥100 total, ≥90 post-doctorate, ≥40 SCIE/SSCI article points, ≥3 lead-author Q1–Q4 articles). It deliberately does NOT emit an ELIGIBLE verdict — it lists the unmodelled mandatory minimums (TR Dizin/national article, citation, congress, teaching, per-category caps) for the user to verify. Use when the user wants to estimate doçentlik eligibility, calculate ÜAK points, or audit lead-author (başlıca yazar) requirements; resolve a journal's live TR Dizin status with alterlab-trdizin first, and compute the akademik teşvik (academic-incentive) score with alterlab-akademik-tesvik. Always verify the full live TABLO 10 — criteria change each term and differ per field. Part of the AlterLab Academic Skills suite.",
+      "description": "Runs a PARTIAL pre-screen of a Turkish associate-professorship (doçentlik) publication list against the ÜAK Sağlık Bilimleri TABLO 10 criteria (2026 Mart term), applying the author-share rule (full; 0.8/0.5; lead author takes half) and pass-fail checking the four computable minimums (≥100 total, ≥90 post-doctorate, ≥40 post-doctorate international-article points from SCIE/SSCI, AHCI and ESCI/Scopus, ≥3 post-doctorate lead-author Q1–Q4 articles). It deliberately does NOT emit an ELIGIBLE verdict — it lists the unmodelled mandatory minimums (TR Dizin/national article, thesis-derived publication, citation, congress, teaching, per-category caps) for the user to verify. Use when the user wants to estimate doçentlik eligibility, calculate ÜAK points, or audit lead-author (başlıca yazar) requirements; resolve a journal's live TR Dizin status with alterlab-trdizin first, and compute the akademik teşvik (academic-incentive) score with alterlab-akademik-tesvik. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "compatibility": "No API key required — pure offline PARTIAL pre-screen (stdlib Python) over a bundled, dated ÜAK criteria table; never emits an ELIGIBLE verdict; live journal-index status is delegated to alterlab-trdizin",
       "allowed_tools": [
         "Read",
@@ -4916,7 +4916,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 294,
+      "body_lines": 314,
       "references": [
         "scoring_rules.md",
         "uak_criteria.md"
@@ -4927,7 +4927,7 @@
       "domain": "turkish-academia",
       "description": "Produces KVKK-compliant (Law 6698, as amended by Law 7499 — published in the Official Gazette 12 Mar 2024, KVKK provisions effective 1 Jun 2024) data management plans for Turkish research, encoding the açık rıza (explicit consent) default basis, the Art. 28(1)(b) anonymization exemption as the primary compliance lever, the Art. 6 special-category regime for health/genetic/biometric data, Art. 7 deletion/destruction/anonymization at purpose-end, the Art. 13 thirty-day data-subject response window, Art. 9 cross-border adequacy-decision rules for cloud/overseas data, and Art. 16 VERBIS pre-processing registration, with a KVKK-vs-GDPR crosswalk. Use when the user needs a KVKK data management plan, to anonymize a research dataset under Turkish law, a VERBIS check, or to fix EU DMP boilerplate for Turkey; for pure GDPR/HIPAA use alterlab-research-ethics. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "No API key required — generates KVKK data management plans from primary mevzuat (Law 6698) encoded in references/; the optional scaffold runs via `uv run python` on the standard library only",
       "allowed_tools": [
         "Read",
@@ -4937,7 +4937,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 177,
+      "body_lines": 187,
       "references": [
         "anonymization_methods.md",
         "dmp_walkthrough.md",
@@ -4948,9 +4948,9 @@
     {
       "name": "alterlab-tr-academic-style",
       "domain": "turkish-academia",
-      "description": "Formats manuscripts for Turkish journals: TR Dizin submission rules (TR Dizin mandates a set abstract word limit, two referees from different institutions, Latin script for non-Latin-alphabet articles, and only suggests a second-language abstract; bilingual oz/abstract ~200-250 words and 3-5 keywords are common journal house conventions to confirm against the journal's yazim kurallari) and the Turkish adaptation of APA-7 (ve ark./vd. for multi-author cites, ampersand only in the reference list, s. for page, Cev. for translator, t.y. for no date, aktaran for as-cited-in, Turkish capitalization). Use when writing for a Turkish/Turkce journal, preparing a TR Dizin submission, needing Turkce APA 7 in-text or reference formatting, or formatting a bilingual oz. For English-language citation styles prefer alterlab-citation-mgmt or alterlab-venue-templates; for live TR Dizin index status use alterlab-trdizin. Part of the AlterLab Academic Skills suite.",
+      "description": "Formats manuscripts for Turkish journals: TR Dizin submission rules (TR Dizin mandates a set abstract word limit, two referees from different institutions, Latin script for non-Latin-alphabet articles, and only suggests a second-language abstract; bilingual öz/abstract ~200-250 words and 3-5 keywords are common journal house conventions to confirm against the journal's yazım kuralları; article-end Katkı Oranı and Çatışma statements) and the Turkish adaptation of APA-7 (ve ark./vd. for multi-author cites, ampersand only in the reference list, s. for page, Çev. for translator, t.y. for no date, aktaran for as-cited-in, Turkish capitalization). Use when writing for a Turkish/Türkçe journal, preparing a TR Dizin submission, needing Türkçe APA 7 in-text or reference formatting, or formatting a bilingual öz. For English-language citation styles prefer alterlab-citation-mgmt or alterlab-venue-templates; for live TR Dizin index status use alterlab-trdizin. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key or network required — applies the official TR Dizin evaluation criteria (and flags journal house conventions separately) plus the Turkish APA-7 adaptation offline; the linter in scripts/ runs on stdlib only",
       "allowed_tools": [
         "Read",
@@ -4960,7 +4960,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 163,
+      "body_lines": 182,
       "references": [
         "trdizin_manuscript.md",
         "turkce_apa7.md"
@@ -4969,9 +4969,9 @@
     {
       "name": "alterlab-tr-research-ethics",
       "domain": "turkish-academia",
-      "description": "Scaffolds Turkish human-subjects etik kurul (ethics committee) applications and routes a study to the correct committee using the TR Dizin/ULAKBIM 2020 trigger rule: survey, interview, focus-group, observation, or experiment data collection requires a university Girisimsel Olmayan Etik Kurulu (non-interventional committee); drug, device, cosmetic, stem-cell, or BA-BE clinical studies also require a TITCK-approved Klinik Arastirmalar Etik Kurulu plus a separate TITCK permit. Generates bilingual (TR/EN) Etik Kurul Basvuru Formu, basvuru dilekcesi (cover petition), and Bilgilendirilmis Gonullu Olur Formu (informed consent), and lints a consent draft against the TITCK 2023 minimum-content checklist. Use when the user needs a Turkish etik kurul basvurusu, an onam/olur (consent) formu, asks which ethics committee a study requires, or needs TITCK approval guidance. For non-Turkey IRB/Belmont/GDPR use alterlab-research-ethics; for KVKK data plans use alterlab-kvkk-dmp. Part of the AlterLab Academic Skills suite.",
+      "description": "Scaffolds Turkish human-subjects etik kurul (ethics committee) applications and routes a study to the right committee. Survey, interview, focus-group, observation, or experiment studies go to a university non-interventional committee (Girişimsel Olmayan / Bilimsel Araştırma Etik Kurulu; TR Dizin rule). Drug, medical-device, stem-cell, or tissue/cell-product trials need a TİTCK-approved Klinik Araştırmalar Etik Kurulu plus a TİTCK permit; BA/BE studies a BY/BE Etik Kurulu; cosmetics their own regulation; observational drug studies the clinical committee only (no permit). Generates bilingual (TR/EN) Etik Kurul Başvuru Formu, başvuru dilekçesi, and Bilgilendirilmiş Gönüllü Olur Formu, and lints a consent draft against TİTCK's minimum-content list. Use for a Turkish etik kurul başvurusu, an onam/olur formu, which committee a study needs, or TİTCK approval questions. For non-Turkey IRB/GDPR use alterlab-research-ethics; for KVKK data plans use alterlab-kvkk-dmp. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key required. Guidance + offline scaffolder; the consent linter (scripts/consent_form_check.py) runs locally via `uv run python` with the Python standard library only.",
       "allowed_tools": [
         "Read",
@@ -4981,7 +4981,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 194,
+      "body_lines": 224,
       "references": [
         "consent_minimum_contents.md",
         "dossier_templates.md",
@@ -4993,7 +4993,7 @@
       "domain": "turkish-academia",
       "description": "Searches TR Dizin (TÜBİTAK ULAKBİM national citation index) and verifies a journal's current national-index status through its confirmed unauthenticated REST/Elasticsearch API at https://search.trdizin.gov.tr/api/defaultSearch/{publication|journal|author|institution}/ (params q, order e.g. relevance-DESC, page), parsing hits.hits[]._source plus faceted aggregations, and derives indexing status from a journal record's isActive + journalYear coverage vs rejectYearList. Use when the user wants to search TR Dizin, check if a journal is TR Dizin indexed (TR Dizin'de var mı / taranıyor mu), find Turkish-indexed publications, verify national-index status before submitting, or audit doçentlik-eligible venues. For DergiPark hosting prefer alterlab-dergipark; for doçentlik points prefer alterlab-docentlik-eligibility; for teşvik scoring prefer alterlab-akademik-tesvik. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "compatibility": "No API key required — queries the keyless TR Dizin search API (https://search.trdizin.gov.tr/api/defaultSearch/) via `uv run python` (requests if present, else stdlib urllib); reports network failure rather than passing silently",
       "allowed_tools": [
         "Read",
@@ -5005,7 +5005,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 158,
+      "body_lines": 159,
       "references": [
         "api_reference.md",
         "journal_status.md"
@@ -5014,10 +5014,10 @@
     {
       "name": "alterlab-tubitak-proposal",
       "domain": "turkish-academia",
-      "description": "Scaffolds TÜBİTAK ARDEB national research proposals (1001 Bilimsel ve Teknolojik Araştırma Projeleri and 1002-A Hızlı Destek Modülü) against the official .doc form trees: 1. ÖZGÜN DEĞER (konunun önemi/özgün değer, araştırma sorusu/hipotezi, amaç ve hedefler), 2. YÖNTEM, 3. PROJE YÖNETİMİ (iş-zaman çizelgesi/iş paketleri + B-Planı, araştırma olanakları), 4. YAYGIN ETKİ, EK-1 Kaynaklar, EK-2 Bütçe ve Gerekçesi. Enforces the 600-word TR/EN özet (abstract) caps, program caps (1001 <=36 months/3,000,000 TRY for 2026-1; 1002-A <=12 months/150,000 TRY, rolling), and the four panel review dimensions; submission via PBS (ardeb-pbs.tubitak.gov.tr) with ARBİS prerequisite. Delegates generic grant craft to alterlab-research-grants. Use when the user wants to write a TÜBİTAK 1001 or 1002-A proposal, draft özgün değer or yaygın etki sections, scaffold a Turkish national grant, or map broader-impacts framing to TÜBİTAK terms. Part of the AlterLab Academic Skills suite.",
+      "description": "Scaffolds TÜBİTAK ARDEB national research proposals: 1001 against the official .doc form tree (TR/EN özet ≤600 words each, 1. ÖZGÜN DEĞER, 2. YÖNTEM, 3. PROJE YÖNETİMİ with iş paketleri and B Planı, 4. YAYGIN ETKİ, EK-1 Kaynaklar, EK-2 Bütçe; ≤25 pages), and 1002-A Hızlı Destek, now typed into PBS screens with per-section word ranges. Checks program caps (1001 ≤36 months, 3,000,000 TRY burs dahil; 1002-A ≤12 months, 150,000 TRY/year, rolling), drafts to the panel weights (özgün değer 35, yöntem 25, proje yönetimi 20, yaygın etki 20) and applies TÜBİTAK's generative-AI (ÜYZ) disclosure rules; submission via PBS with an ARBİS prerequisite. Delegates generic grant craft to alterlab-research-grants. Use when the user wants to write a TÜBİTAK 1001 or 1002-A proposal, draft özgün değer or yaygın etki sections, scaffold a Turkish national grant, or map broader-impacts framing to TÜBİTAK terms. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "No API key required — generates proposal scaffolds offline; the structure checker runs via `uv run python` on stdlib only. Program caps/forms change each call period; WebFetch the live PBS/guide pages to confirm before submission.",
+      "version": "1.1.0",
+      "compatibility": "No API key required — generates proposal scaffolds offline; the structure checker runs via `uv run python` on stdlib only. Program caps/forms change by call period; WebFetch the live program pages to confirm before submission.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5027,7 +5027,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 221,
+      "body_lines": 261,
       "references": [
         "form_structure.md",
         "program_profiles.md",
@@ -5038,10 +5038,10 @@
     {
       "name": "alterlab-yok-akademik",
       "domain": "turkish-academia",
-      "description": "Looks up a Turkish academic's official YOKSIS-backed profile, current affiliation, unvan (academic title), publications, research projects, and supervised theses on the YOK Akademik portal (akademik.yok.gov.tr/AkademikArama/), a server-rendered JSP app with no public JSON API, by scraping its verified endpoints (AkademisyenArama POST search, viewAuthor.jsp profile, AkademisyenProjeBilgileri, AkademisyenYonTezBilgileri) keyed by an opaque authorId, with Turkish-character (Iı Şş Ğğ Çç Öö Üü) normalization for name matching. Use when the request is to verify a Turkish academic's current institution, find a researcher on YOK Akademik, confirm affiliation for authorship or a recommendation letter, or list someone's supervised theses or projects. For admission statistics (kontenjan, taban puan) use alterlab-yokatlas; for the national thesis full-text archive use alterlab-yok-tez; for publication metadata enrichment use alterlab-openalex. Part of the AlterLab Academic Skills suite.",
+      "description": "Looks up a Turkish academic's official YÖKSİS-backed profile, current affiliation, unvan (academic title), publications, research projects, and supervised theses on the YÖK Akademik portal (akademik.yok.gov.tr/AkademikArama/), a server-rendered JSP app with no public JSON API, by scraping its verified endpoints (AkademisyenArama POST search, viewAuthor.jsp profile, AkademisyenProjeBilgileri, AkademisyenYonTezBilgileri) keyed by an opaque authorId, with Turkish-character (Iı Şş Ğğ Çç Öö Üü) normalization for name matching. Use when the request is to verify a Turkish academic's current institution, find a researcher on YÖK Akademik, confirm affiliation for authorship or a recommendation letter, or list someone's supervised theses or projects. For admission statistics (kontenjan, taban puan) use alterlab-yokatlas; for the national thesis full-text archive use alterlab-yok-tez; for publication metadata enrichment use alterlab-openalex. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "No API key required — scrapes the public YOK Akademik JSP portal (akademik.yok.gov.tr/AkademikArama/) via `uv run python` (requests + BeautifulSoup, stdlib fallback) and WebFetch; there is NO official public JSON API",
+      "version": "1.0.1",
+      "compatibility": "No API key required — scrapes the public YÖK Akademik JSP portal (akademik.yok.gov.tr/AkademikArama/) via `uv run python` (requests + BeautifulSoup, stdlib fallback) and WebFetch; there is NO official public JSON API",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5062,10 +5062,10 @@
     {
       "name": "alterlab-yok-tez",
       "domain": "turkish-academia",
-      "description": "Searches YÖK Ulusal Tez Merkezi (tez.yok.gov.tr/UlusalTezMerkezi), Turkey's mandatory national graduate-thesis repository, for literature-review discovery and pre-proposal özgünlük (originality) checks. Drives the detailed search form (Tez Adı/Yazar/Danışman/Konu/Anahtar Kelime/Özet, tez türü, year range, language, İzinli/İzinsiz permission status) via the saidsurucu/yoktez-mcp tool, applies Turkish auto-stemming and ve/veya/içermesin boolean operators, runs paired Turkish+English queries, and emits Türkçe APA-7 thesis citations mapping Tez No to the published Yayın No. Use when the user wants to search Turkish theses, ara YÖK tez, check thesis novelty before approving a proposal, find dissertations by advisor (danışman) or university, dedupe a topic against existing tezler, or cite a YÖK thesis; respects the 2000-results-per-search cap and online-view-only access. For non-thesis Turkish journals use alterlab-dergipark or alterlab-trdizin. Part of the AlterLab Academic Skills suite.",
+      "description": "Searches YÖK Ulusal Tez Merkezi (tez.yok.gov.tr), Turkey's mandatory national graduate-thesis repository, for literature discovery and pre-proposal özgünlük (originality) checks via the saidsurucu/yoktez-mcp connector and YÖK's 2026 search: up to three terms joined by VE/VEYA in one field (Tez Adı, Yazar, Danışman, Konu, Anahtar Kelime, Özet or all), tez türü/year/language filters, İzinli/İzinsiz and Onaylandı/Hazırlanıyor status, anabilim dalı browsing and per-thesis details. Runs paired Turkish+English queries with stems that survive substring matching and emits Türkçe APA-7 citations mapping Tez No to Yayın No. Use when the user wants to search Turkish theses, ara YÖK tez, check thesis novelty before approving a proposal, find dissertations by advisor (danışman) or university, dedupe a topic against existing tezler, or cite a YÖK thesis. For Turkish journal articles use alterlab-dergipark or alterlab-trdizin. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "No API key required — searches via the saidsurucu/yoktez-mcp connector (local `uvx` or hosted https://yoktezmcp.fastmcp.app/mcp) or by driving the public tez.yok.gov.tr Detaylı Tarama form; full-text is online-view-only, no bulk download",
+      "version": "1.1.0",
+      "compatibility": "No API key required — searches via the saidsurucu/yoktez-mcp connector (hosted https://yoktezmcp.fastmcp.app/mcp, YokTezMCP 3.3.1 as of 2026-09-23, or local `uvx`) or the public tez.yok.gov.tr search screen; full text is online-view-only, no bulk download",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5075,7 +5075,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 208,
+      "body_lines": 218,
       "references": [
         "access_legal.md",
         "citation_apa7.md",
@@ -5086,10 +5086,10 @@
     {
       "name": "alterlab-yokatlas",
       "domain": "turkish-academia",
-      "description": "Retrieves Türkiye higher-education program and admission statistics from YÖK Atlas (yokatlas.yok.gov.tr) — quotas (kontenjan), placements (yerleşen), minimum admission scores (taban puan), success ranks (başarı sırası), and per-title academic-staff counts — via the keyless yokatlas-py (>=0.6.0, MIT) wrapper over the JSON API at /api/tercih-kilavuz/ (search, universiteler, universite-programlar), with SearchFilters for puan türü (SAY/SÖZ/EA/DİL/TYT), university type (DEVLET/VAKIF), province, and success-rank ranges. Use when the request mentions YÖK Atlas, program statistics, kontenjan/quota data, taban puan/minimum admission score, başarı sırası/success rank, placement counts, or program staff counts for institutional research, program benchmarking, or student advising. For an academic's CV/profile/affiliation prefer alterlab-yok-akademik; for theses prefer alterlab-yok-tez. Legacy PHP endpoints are dead post-April-2026; only the JSON API is used. Part of the AlterLab Academic Skills suite.",
+      "description": "Retrieves Türkiye higher-education program and admission statistics from YÖK Atlas (yokatlas.yok.gov.tr) — quotas (kontenjan), placements (yerleşen), minimum admission scores (taban puan), success ranks (başarı sırası), and per-title academic-staff counts — via the keyless yokatlas-py wrapper (≥0.6.0; 0.7.0 current, MIT) over the JSON API at /api/tercih-kilavuz/ (search plus university, program-group and province lookups), with SearchFilters for puan türü (SAY/SÖZ/EA/DİL/TYT), university type (DEVLET/VAKIF), province, and success-rank ranges. Use when the request mentions YÖK Atlas, program statistics, kontenjan/quota data, taban puan/minimum admission score, başarı sırası/success rank, placement counts, or program staff counts for institutional research, benchmarking, or advising. For an academic's CV/profile/affiliation prefer alterlab-yok-akademik; for theses prefer alterlab-yok-tez. Legacy PHP pages are dead since April 2026. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "No API key required — wraps the keyless YÖK Atlas JSON API (/api/tercih-kilavuz/) through yokatlas-py v0.6.0 (MIT, Python >=3.10) run via `uv run --with yokatlas-py python`; degrades to a documented manual lookup when offline",
+      "version": "1.1.0",
+      "compatibility": "No API key required — wraps the keyless YÖK Atlas JSON API (/api/tercih-kilavuz/) through yokatlas-py ≥0.6.0 (0.7.0 current as of 2026-09; MIT, Python ≥3.10) run via `uv run --with yokatlas-py python`; degrades to a documented manual lookup when offline",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5100,7 +5100,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 167,
+      "body_lines": 181,
       "references": [
         "api_endpoints.md",
         "query_recipes.md"
