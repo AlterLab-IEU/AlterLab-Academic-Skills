@@ -12,9 +12,11 @@
   names them): `alterlab-databases` (PubMed, OpenAlex, arXiv skills), `alterlab-writing-tools`
   (literature review, grants), `alterlab-social-science-workflow` (meta-analysis),
   `alterlab-turkish-academia` (TÜBİTAK).
-- Network access for the scholarly APIs. Setting the core plugin's contact email
-  (`/plugin configure alterlab-core@alterlab-academic-skills`) puts the Crossref/OpenAlex/NCBI calls
-  in their polite pools.
+- Network access for the scholarly APIs. Configure the core plugin
+  (`/plugin configure alterlab-core@alterlab-academic-skills`): the contact email identifies NCBI
+  calls, and a free OpenAlex API key gives OpenAlex calls their own daily budget — keyless calls
+  share a small per-IP budget and fail with HTTP 429 once it is spent (the verifier then reports
+  UNVERIFIED, never fabricated).
 
 ## Launching
 

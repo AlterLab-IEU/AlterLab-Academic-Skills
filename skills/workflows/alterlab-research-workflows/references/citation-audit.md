@@ -8,7 +8,7 @@ source says. **Default output:** `alterlab-citation-audit.md`.
 | Field | Default | Meaning |
 |---|---|---|
 | `path` (or the string argument) | required | manuscript: `.md`, `.tex` (+ its `.bib`), `.docx`, or `.pdf` |
-| `mailto` | none | contact email for the Crossref/OpenAlex polite pool |
+| `mailto` | none | contact email for Crossref's polite pool (OpenAlex ignores mailto since Feb 2026 — set `OPENALEX_API_KEY` instead) |
 | `out` | `alterlab-citation-audit.md` | report path |
 
 ## Stages and acceptance rules

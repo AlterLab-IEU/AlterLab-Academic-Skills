@@ -19,14 +19,15 @@ if (!input.path) {
 const OUT = input.out || 'alterlab-citation-audit.md'
 const REF_BATCH = 12
 const CLAIM_BATCH = 8
-const CONTACT = input.mailto ? ` Pass ${input.mailto} as the polite-pool contact (--mailto).` : ''
+const CONTACT = input.mailto ? ` Pass ${input.mailto} as the Crossref polite-pool contact (--mailto).` : ''
 
 const TOOLING =
   'Use the alterlab-citation-verifier skill (alterlab-core plugin): scripts/verify_citations.py for existence and ' +
   'metadata, scripts/claim_faithfulness.py for claim support. If that skill is not installed, query the Crossref, ' +
   'OpenAlex, Semantic Scholar, and arXiv public APIs directly. Judge only from what those sources return, never from ' +
   'memory: the model that may have invented a citation shares its training data with you, so a plausible fabrication ' +
-  'would pass a memory check.' + CONTACT
+  'would pass a memory check. The verifier uses OPENALEX_API_KEY and S2_API_KEY from the environment when they are ' +
+  'set; keyless OpenAlex and Semantic Scholar calls share a small per-IP budget.' + CONTACT
 
 // ---------------------------------------------------------------- schemas
 const EXTRACT = {
