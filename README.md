@@ -2,9 +2,9 @@
 <img src=".github/header-banner.svg" width="100%" alt="AlterLab Academic Skills">
 <br>
 
-<a href="skills/"><img src="https://img.shields.io/badge/Skills-239-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Skills"></a>
-<a href="skills/"><img src="https://img.shields.io/badge/Domains-17-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Domains"></a>
-<a href="docs/evals.md"><img src="https://img.shields.io/badge/Eval%20coverage-239%2F239-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Eval coverage"></a>
+<a href="skills/"><img src="https://img.shields.io/badge/Skills-240-7C3AED?style=for-the-badge&logo=bookstack&logoColor=white" alt="Skills"></a>
+<a href="skills/"><img src="https://img.shields.io/badge/Domains-18-2563EB?style=for-the-badge&logo=databricks&logoColor=white" alt="Domains"></a>
+<a href="docs/evals.md"><img src="https://img.shields.io/badge/Eval%20coverage-240%2F240-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Eval coverage"></a>
 <a href="https://www.anthropic.com"><img src="https://img.shields.io/badge/Claude-AI%20Powered-F97316?style=for-the-badge&logo=anthropic&logoColor=white" alt="Claude AI"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-10B981?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="MIT License"></a>
 <a href="https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases"><img src="https://img.shields.io/github/v/release/AlterLab-IEU/AlterLab-Academic-Skills?style=for-the-badge&logo=github&color=8B5CF6&logoColor=white&label=Release" alt="Release"></a>
@@ -29,11 +29,12 @@
 
 <br><br>
 
-<h3>🧬 239 purpose-built Claude AI skills for faculty, researchers & academicians</h3>
-<p><em>Organized across 17 research domains — from Turkish academia to bioinformatics to digital humanities</em></p>
-<p><em>239/239 ship executable evals · deterministic citation-existence verifier · per-domain bundles for claude.ai</em></p>
+<h3>🧬 240 purpose-built Claude AI skills for faculty, researchers & academicians</h3>
+<p><em>Organized across 18 research domains — from Turkish academia to bioinformatics to digital humanities</em></p>
+<p><em>240/240 ship executable evals · deterministic citation-existence verifier · per-domain bundles for claude.ai</em></p>
 
-<p>🧭 <b>New in v2.6 — don't know which skill?</b> Just say <b>"use AlterLab skills"</b> and Claude picks it for you · type <b><code>alterflow</code></b> to launch a full multi-agent workflow</p>
+<p>🧩 <b>New in v2.7 — runnable multi-agent research workflows</b> for Claude Code: <code>/alterlab-workflows:citation-audit</code>, <code>review-panel</code>, PRISMA dual screening, rebuttal, grant mock panel · tuned for <b>Claude Opus 5.5</b></p>
+<p>🧭 Don't know which skill? Just say <b>"use AlterLab skills"</b> and Claude picks it for you · type <b><code>alterflow</code></b> to launch a clarified multi-agent run</p>
 
 <p>
 <b>Research Pipeline</b> · <b>Scientific Databases</b> · <b>Bioinformatics</b> · <b>Data Science</b> · <b>Visualization</b> · <b>Clinical Research</b> · <b>and more</b>
@@ -121,14 +122,37 @@ flowchart LR
 
 > Questions before execution — it never starts a 20-agent run blind, and simple tasks stay single-skill. Built on Anthropic's **routing** and **orchestrator-workers** patterns.
 
+**Packaged workflows — one command, many independent agents (Claude Code):**
+
+> 💬 `/alterlab-workflows:citation-audit thesis/main.tex`
+> 🧩 → every reference resolved against Crossref / OpenAlex / Semantic Scholar / arXiv, every cited claim checked against its source, and every flag re-checked by **two independent agents** before it reaches the report.
+
+> 💬 *"Run the AlterLab systematic-review-screening workflow on records.ris for my question on nurse burnout."*
+> 🧩 → codebook → de-duplication → **two blinded screeners per record** → adjudication → PRISMA 2020 flow + Cohen's κ computed in code.
+
 <br>
 
-## 🚀 What's New in v2.6.0
+## 🚀 What's New in v2.7.0
+
+- 🧩 **New plugin — `alterlab-workflows`: seven runnable multi-agent research workflows.** Claude Code can now run *dynamic workflows* — scripts that orchestrate many subagents — and plugins can ship them. AlterLab now ships seven, each with the independence and adversarial checks its task needs and with counts, votes, and agreement statistics computed in code: **`citation-audit`** (whole-manuscript existence + claim-faithfulness, every flag re-checked twice), **`review-panel`** (blind reviewers chosen for the paper, each major concern re-read against the text), **`claim-stress-test`**, **`systematic-review-screening`** (PRISMA 2020 dual screening + κ), **`rebuttal`** (point-by-point, never invents results), **`grant-mock-panel`** (the funder's own criteria and scale — NIH, NSF, ERC, TÜBİTAK), and **`literature-map`**. A portable skill runs the same stages as playbooks on claude.ai. → [Research Workflows](#-research-workflows--runnable-multi-agent-jobs-1-skill--7-workflows)
+- 📦 **One-step installs** — `alterlab-essentials` (a six-plugin faculty starter kit) and `alterlab-complete` (every domain) are dependency bundles: one `/plugin install` pulls in the rest.
+- 🔧 **Plugin install fixes** — in v2.6.x `alterlab-core` could not be installed from the marketplace (agent directories in its manifest) and `alterlab-social-science-workflow` installed but failed to load (conflicting manifests). Both are fixed, verified with `claude plugin validate` and real installs, and pinned by new tests. The bundled PubMed / OpenAlex / Crossref / Zotero MCP servers now prompt for their credentials through `userConfig`.
+- 🧠 **Tuned for Claude Opus 5.5** — the `ALTERLAB_MODEL` default is `claude-opus-5-5`; OpenRouter slugs are derived from it (the old `anthropic/claude-opus-4-8` literal was not a valid slug); scripts follow the current request shape (adaptive thinking, explicit effort, no sampling parameters, no prefill, no forced tool choice); prompts are restated at normal volume for models that follow instructions literally.
+- 🔬 **Every skill re-verified against September 2026 releases** — library versions, removed APIs, moved endpoints, and third-party model IDs, checked at primary sources (PyPI, CRAN, bioconda, official docs) by domain; skills that lacked a *Does NOT Trigger* routing table got one.
+- 🧭 **Orchestration docs brought current** — nested subagents, fork mode, and dynamic workflows in `alterlab-workflow-orchestration`; `alterlab-skill-finder` launches a packaged workflow when one fits. Maintainers get `/skill-freshness-audit`, a workflow that repeats this re-verification pass.
+- 📈 **240 skills across 18 domains**, 240 / 240 with executable evals; audit clean, full test suite green.
+
+<details>
+<summary><b>Previously — What's New in v2.6.0</b></summary>
+<br>
+
 
 - 🧭 **New front door — `alterlab-skill-finder`** — most users don't know 239 skill names by heart, so this router turns *"use AlterLab skills for this"* into the right skill(s). It classifies the task, maps it across all 17 domains, names the concrete skill(s) it picked (and why), and applies them — no name-memorization required. → [Core Pipeline](#-core-pipeline--10-skills)
 - ⚡ **`alterflow` keyword → clarify-first multi-agent orchestration** — say **`alterflow`** (aliases `alterresearch` / `ultralab`) and the router first asks a few scoping questions, then **selects** the skills the goal needs and launches a **dynamic multi-agent workflow** composing them (via `alterlab-research-pipeline`, `alterlab-ssci-orchestrator`, or `alterlab-workflow-orchestration`). Questions before execution — it never starts blind.
 - 🗂️ **Always-current skill index** — a generated [`skill_index.md`](skills/core/alterlab-skill-finder/references/skill_index.md) lists every skill grouped by domain with a one-line "use when"; a new CI test (`test_skill_index.py`) fails the build if a skill is added or renamed and the index is not regenerated (`scripts/gen_skill_index.py --check`).
 - 📈 **239 skills across 17 domains**, 239 / 239 with executable evals; audit clean (0 errors, 0 warnings), full test suite green.
+
+</details>
 
 <details>
 <summary><b>Previously — What's New in v2.5.0</b></summary>
@@ -211,7 +235,7 @@ flowchart LR
 - [🔎 Browse the Catalog](#-browse-the-catalog)
 - [🚀 Quick Start](#-quick-start)
 - [⚡ Core Pipeline — 10 Skills](#-core-pipeline--10-skills)
-- [📚 All 239 Skills](#-all-239-skills)
+- [📚 All 240 Skills](#-all-240-skills)
 - [🏗️ Project Structure](#%EF%B8%8F-project-structure)
 - [⚙️ How Skills Work](#%EF%B8%8F-how-skills-work)
 - [💡 Usage Examples](#-usage-examples)
@@ -227,7 +251,7 @@ flowchart LR
 
 ## 🎯 What Is This?
 
-A comprehensive suite of **239 purpose-built Claude AI skills** for faculty members, academicians, and researchers — organized into **17 domain categories** spanning the full academic research lifecycle.
+A comprehensive suite of **240 purpose-built Claude AI skills** for faculty members, academicians, and researchers — organized into **18 domain categories** spanning the full academic research lifecycle.
 
 Each skill transforms Claude into a **domain-specific expert assistant** tailored to academic research, scientific computing, and scholarly publishing workflows.
 
@@ -242,7 +266,7 @@ Each skill transforms Claude into a **domain-specific expert assistant** tailore
 
 | | What | Detail |
 |:---:|:---|:---|
-| ✅ | **Executable evals across the corpus** | **239 / 239** skills ship `evals/evals.json` on the canonical [agentskills.io](https://agentskills.io) schema, validated in CI. See [`docs/evals.md`](docs/evals.md). |
+| ✅ | **Executable evals across the corpus** | **240 / 240** skills ship `evals/evals.json` on the canonical [agentskills.io](https://agentskills.io) schema, validated in CI. See [`docs/evals.md`](docs/evals.md). |
 | 🔎 | **Citation-existence verifier** | New core skill `alterlab-citation-verifier` — a **deterministic** gate that checks every reference actually exists against four keyless scholarly APIs (Crossref, OpenAlex, Semantic Scholar, arXiv), flags retractions, and maps claim-faithfulness verdicts. See below. |
 | 📦 | **Per-domain bundles for claude.ai** | `dist/<domain>.zip` bundles (one per domain) attached to each [Release](https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/releases) — each clears claude.ai's 200-file / 30 MB caps and vendors the shared handoff contracts. |
 | 🔌 | **Bundled academic MCP** | The `core` and `databases` plugins ship a `.mcp.json` wiring PubMed / OpenAlex / Crossref / Zotero, with a documented `requests/` fallback when no MCP is available. |
@@ -265,7 +289,7 @@ and degrades gracefully to plain `requests` / WebSearch when no MCP or network i
 
 ### 🧭 Headline feature — `alterlab-skill-finder` (the front door)
 
-No one memorizes **239** skill names. `alterlab-skill-finder` is the **front door**: say *"use AlterLab skills for this"* and it classifies your task, maps it across all **17 domains**, and applies the right skill(s) — telling you which it picked and why. For a goal that spans stages, the **`alterflow`** keyword turns it into a **launcher**:
+No one memorizes **240** skill names. `alterlab-skill-finder` is the **front door**: say *"use AlterLab skills for this"* and it classifies your task, maps it across all **18 domains**, and applies the right skill(s) — telling you which it picked and why. For a goal that spans stages, the **`alterflow`** keyword turns it into a **launcher**:
 
 - **CLARIFY** — asks 2–4 scoping questions *before* doing anything,
 - **SELECT & PLAN** — picks the skills the goal needs and lays out a dynamic multi-agent workflow, scaling the agent count to complexity,
@@ -296,21 +320,22 @@ Built on Anthropic's documented **routing** and **orchestrator-workers** pattern
 |:---:|:---|:---:|:---|
 | 🔄 | **Core Pipeline** | **10** | Multi-agent research → write → review → publish pipeline + citation verifier + teaching + thesis + workflow orchestration + skill-finder router (the `alterflow` launcher) |
 | 🗄️ | **Databases** | **39** | Connectors to scientific databases — PubMed, ChEMBL, UniProt, ClinicalTrials.gov, COSMIC, and more |
-| 🧬 | **Bioinformatics** | **30** | Genomics, proteomics, molecular biology — Scanpy, BioPython, ESM, single-cell analysis, nf-core/sarek, QIIME 2, RNA-seq quant |
+| 🧬 | **Bioinformatics** | **38** | Genomics, proteomics, molecular biology — Scanpy, BioPython, ESM, single-cell analysis, nf-core/sarek, QIIME 2, RNA-seq quant |
 | ⚗️ | **Cheminformatics** | **12** | Chemistry and drug discovery — RDKit, molecular dynamics, docking, ADMET |
 | 🏥 | **Clinical Research** | **7** | Clinical decision support, treatment planning, medical imaging, regulatory |
 | 📊 | **Data Science** | **22** | ML/statistics — scikit-learn, PyTorch Lightning, SHAP, transformers |
-| 📈 | **Visualization** | **8** | Scientific plotting — Matplotlib, Seaborn, Plotly, schematics, infographics |
+| 📈 | **Visualization** | **9** | Scientific plotting — Matplotlib, Seaborn, Plotly, schematics, infographics |
 | ✍️ | **Writing Tools** | **13** | Scientific writing, citations, grants, posters, academic career |
 | 🔧 | **Lab Integrations** | **9** | Laboratory platforms — Benchling, DNAnexus, Opentrons, Protocols.io |
-| 🌍 | **Domain-Specific** | **17** | Quantum computing, geospatial, materials science, social science methods, digital humanities |
-| 📄 | **Document Tools** | **2** | Markdown & document conversion — MarkItDown, Open Notebook |
+| 🌍 | **Domain-Specific** | **18** | Quantum computing, geospatial, materials science, social science methods, digital humanities |
+| 📄 | **Document Tools** | **3** | Markdown & document conversion — MarkItDown, Open Notebook, PDF exploration |
 | 🔍 | **Research Tools** | **14** | Search, discovery, Zotero, citation graphs, PDF evidence tables, qualitative methods, ethics, surveys, open science |
 | 💰 | **Finance & Economics** | **7** | FRED, Alpha Vantage, SEC EDGAR, market research |
 | 🇹🇷 | **Turkish Academia** | **12** | National platforms & scholarly workflow — DergiPark, TR Dizin, YÖK Tez/Akademik, YÖKATLAS, TÜBİTAK proposals, doçentlik, teşvik, KVKK, Aperta |
 | 🎓 | **Faculty Life** | **6** | Teaching, service & the academic career — syllabus AI policy, grant reporting, recommendation letters, accreditation, REDCap/CDISC, preprints |
 | 🧪 | **Methodology** | **3** | Research-rigor discipline gates — pre-registration, test-selection guard, results-reporting transparency |
 | 🧭 | **Social-Science Workflow** | **17** | Stage-gated methods spine — orchestrator + 5 validity gates (design, measurement, sampling, reflexivity, inference) + 11 analysis modules (causal-inference, SEM/psychometrics, QCA, SNA, ABM, text-as-data, survey-analysis, qualitative-analysis, multilevel-models, meta-analysis, missing-data) |
+| 🧩 | **Research Workflows** | **1 + 7 workflows** | Runnable multi-agent jobs for Claude Code — citation audit, review panel, claim stress-test, PRISMA dual screening, rebuttal, grant mock panel, literature map — plus portable playbooks |
 <br>
 
 ## 🔎 Browse the Catalog
@@ -319,7 +344,7 @@ Built on Anthropic's documented **routing** and **orchestrator-workers** pattern
 
 <a href="https://alterlab-ieu.github.io/AlterLab-Academic-Skills/"><img src="https://img.shields.io/badge/Browse%20the%20Catalog-Live%20%26%20Searchable-7C3AED?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Browse the live searchable catalog"></a>
 
-<em>Search all 239 skills by name, domain, or keyword — no install required.</em>
+<em>Search all 240 skills by name, domain, or keyword — no install required.</em>
 
 </div>
 
@@ -372,6 +397,22 @@ Add the marketplace once, then install only the domains you need:
 /reload-plugins
 ```
 
+**One step instead of many:** `alterlab-essentials` installs the faculty starter kit (core pipeline,
+research workflows, research tools, writing tools, methodology gates, database connectors);
+`alterlab-complete` installs every domain.
+
+```bash
+/plugin install alterlab-essentials@alterlab-academic-skills
+```
+
+**Multi-agent workflows** (Claude Code with dynamic workflows — paid plans or API access) come in
+their own plugin, which also installs `alterlab-core`:
+
+```bash
+/plugin install alterlab-workflows@alterlab-academic-skills
+/alterlab-workflows:citation-audit path/to/paper.md
+```
+
 Each domain is its **own installable plugin** — install only what you need. For example, the full
 social-science methods spine (17 skills: orchestrator + 5 validity gates + 11 analysis modules):
 
@@ -387,7 +428,7 @@ For local development against a clone, point Claude Code at the directory direct
 claude --plugin-dir /path/to/AlterLab-Academic-Skills
 ```
 
-Available domain plugins (17): `alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`, `alterlab-turkish-academia`, `alterlab-faculty-life`, `alterlab-methodology`, `alterlab-social-science-workflow`.
+Available domain plugins (18): `alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`, `alterlab-turkish-academia`, `alterlab-faculty-life`, `alterlab-methodology`, `alterlab-social-science-workflow`, `alterlab-workflows` — plus the bundles `alterlab-essentials` and `alterlab-complete`.
 
 ### 📁 Option 3 — Personal or Project Install (manual)
 
@@ -429,7 +470,7 @@ Then restart your agent to load them.
 
 ### 🔌 MCP & Slash Commands
 
-The `core` and `databases` plugins ship a `.mcp.json` that wires the **PubMed / OpenAlex / Crossref / Zotero** academic MCP servers, with a documented `requests/` fallback when no MCP host is available — so the citation verifier and database skills work online or offline. Install either plugin (Option 2) to pick the MCP up automatically.
+The `core` and `databases` plugins ship a `.mcp.json` that wires the **PubMed / OpenAlex / Crossref / Zotero** academic MCP servers (Claude Code prompts for the optional contact email and API keys when you enable the plugin; change them later with `/plugin configure`), with a documented `requests/` fallback when no MCP host is available — so the citation verifier and database skills work online or offline. Install either plugin (Option 2) to pick the MCP up automatically.
 
 Installing the `core` plugin also registers these slash commands:
 
@@ -443,7 +484,7 @@ Installing the `core` plugin also registers these slash commands:
 <br>
 
 > [!NOTE]
-> **239 / 239 skills ship executable evals** on the canonical [agentskills.io](https://agentskills.io) schema. Schema and trigger-coverage are validated in CI on every PR; the behavioral pass (claude CLI + LLM judge) runs on demand via `workflow_dispatch` **and nightly over a rotating 1/7 shard**, so the whole corpus is behaviorally judged across each week. An [`--activation`](docs/evals.md) harness additionally measures auto-selection rate against Anthropic's 90% bar, and [`scripts/confusion_matrix.py`](scripts/confusion_matrix.py) statically ranks cross-firing risk between sibling skills. See [`docs/evals.md`](docs/evals.md).
+> **240 / 240 skills ship executable evals** on the canonical [agentskills.io](https://agentskills.io) schema. Schema and trigger-coverage are validated in CI on every PR; the behavioral pass (claude CLI + LLM judge) runs on demand via `workflow_dispatch` **and nightly over a rotating 1/7 shard**, so the whole corpus is behaviorally judged across each week. An [`--activation`](docs/evals.md) harness additionally measures auto-selection rate against Anthropic's 90% bar, and [`scripts/confusion_matrix.py`](scripts/confusion_matrix.py) statically ranks cross-firing risk between sibling skills. See [`docs/evals.md`](docs/evals.md).
 >
 > **Trust & portability signals** (all generated + CI-enforced): [`SECURITY_SCAN.md`](SECURITY_SCAN.md) — outbound-host allowlist + a no-shell-pipe / no-`eval`-on-input / no-hardcoded-secrets attestation; [`docs/portability.md`](docs/portability.md) — what transfers to Codex/Cursor/Gemini vs. Claude-Code-specific; [`docs/agents-and-teams.md`](docs/agents-and-teams.md) — the 35 pipeline subagents and the teams they compose.
 
@@ -472,7 +513,7 @@ Installing the `core` plugin also registers these slash commands:
 
 ---
 
-## 📚 All 239 Skills
+## 📚 All 240 Skills
 
 ### 🗄️ Databases — Scientific Database Connectors (39 Skills)
 
@@ -524,7 +565,7 @@ Installing the `core` plugin also registers these slash commands:
 
 </details>
 
-### 🧬 Bioinformatics — Genomics, Proteomics & Molecular Biology (30 Skills)
+### 🧬 Bioinformatics — Genomics, Proteomics & Molecular Biology (38 Skills)
 
 <details>
 <summary><b>Click to expand full bioinformatics skills list</b></summary>
@@ -639,7 +680,7 @@ Installing the `core` plugin also registers these slash commands:
 
 </details>
 
-### 📈 Visualization — Scientific Plotting & Graphics (8 Skills)
+### 📈 Visualization — Scientific Plotting & Graphics (9 Skills)
 
 <details>
 <summary><b>Click to expand full visualization skills list</b></summary>
@@ -702,7 +743,7 @@ Installing the `core` plugin also registers these slash commands:
 
 </details>
 
-### 🌍 Domain-Specific — Quantum, Geospatial, Materials, Social Science & More (17 Skills)
+### 🌍 Domain-Specific — Quantum, Geospatial, Materials, Social Science & More (18 Skills)
 
 <details>
 <summary><b>Click to expand full domain-specific skills list</b></summary>
@@ -730,7 +771,7 @@ Installing the `core` plugin also registers these slash commands:
 
 </details>
 
-### 📄 Document Tools — Markdown & Document Conversion (2 Skills)
+### 📄 Document Tools — Markdown & Document Conversion (3 Skills)
 
 <details>
 <summary><b>Click to expand full document tools skills list</b></summary>
@@ -857,7 +898,7 @@ A stage-gated methods spine: an orchestrator holds a **Design Passport**, five g
 | 5 | **SSci Reflexivity Gate** | The **qualitative analog** of the measurement gate — positionality + Lincoln & Guba trustworthiness, fail-closed against ungrounded interpretivist claims |
 | 6 | **SSci Inference Gate** | The terminal auditor — no causal claim beyond the design, no p-value/CI misreading, no generalization beyond the frame |
 | 7 | **Causal Inference** | DiD / IV / RDD / panel FE / PSM / CATE via statsmodels, linearmodels, pyfixest, DoWhy, EconML, rdrobust — names the assumption, estimates, then refutes |
-| 8 | **Survey Analysis** | Design-based inference for complex-sample surveys (weights/strata/PSU/FPC, replicate SEs, raking) — samplics/svy or R survey+srvyr |
+| 8 | **Survey Analysis** | Design-based inference for complex-sample surveys (weights/strata/PSU/FPC, replicate SEs, raking) — svy (samplics is archived) or R survey+srvyr |
 | 9 | **SEM & Psychometrics** | CFA / SEM / EFA / IRT / measurement invariance via semopy & factor_analyzer, with a stdlib McDonald's-omega calculator |
 | 10 | **Multilevel Models** | Mixed-effects / hierarchical (statsmodels MixedLM, R lme4/glmmTMB/brms) enforcing the under-reported LMM reporting checklist |
 | 11 | **QCA** | csQCA / mvQCA / fsQCA (calibrate → truth table → minimize) — **shells to R's QCA package** since no maintained Python library exists |
@@ -870,6 +911,26 @@ A stage-gated methods spine: an orchestrator holds a **Design Passport**, five g
 
 </details>
 
+### 🧩 Research Workflows — Runnable Multi-Agent Jobs (1 Skill + 7 Workflows)
+
+<details>
+<summary><b>Click to expand the research workflows</b></summary>
+<br>
+
+Claude Code **dynamic workflows** are scripts that orchestrate many subagents and keep their intermediate results out of your conversation. The `alterlab-workflows` plugin ships seven, each composing existing AlterLab skills with the independence and adversarial checks its task needs; counts, votes, κ, and score spreads are computed in code. On claude.ai and other surfaces, the **`alterlab-research-workflows`** skill runs the same stages as staged playbooks. Install: `/plugin install alterlab-workflows@alterlab-academic-skills` (also installs `alterlab-core`).
+
+| # | Command | What It Does |
+|:---:|:---|:---|
+| 1 | `/alterlab-workflows:citation-audit` | Every reference resolved against Crossref / OpenAlex / Semantic Scholar / arXiv, every cited claim checked against its source; each flag must survive **two independent re-checks** (TF / PAC / IH / PH / SH report) |
+| 2 | `/alterlab-workflows:review-panel` | 4–6 **blind** reviewers chosen for the paper's field and design; every major concern re-read against the manuscript before the editor decides |
+| 3 | `/alterlab-workflows:claim-stress-test` | Three skeptics per headline claim (counter-evidence, citation support, inference); majority rating and calibrated rewrites |
+| 4 | `/alterlab-workflows:systematic-review-screening` | PRISMA 2020 title/abstract screening — codebook, optional database search, de-duplication, **two blinded screeners per record**, adjudication, Cohen's κ |
+| 5 | `/alterlab-workflows:rebuttal` | Point-by-point response to reviewers with a cross-response consistency pass; `[AUTHORS: …]` placeholders instead of invented results |
+| 6 | `/alterlab-workflows:grant-mock-panel` | Mock study section on the funder's own criteria and scale (NIH, NSF, ERC, Horizon Europe, TÜBİTAK 1001/1002); score spread computed; summary statement |
+| 7 | `/alterlab-workflows:literature-map` | Parallel scholarly-database sweeps → themes, landmark works, and research gaps that survive a search for existing answers |
+
+</details>
+
 <br>
 
 ---
@@ -878,7 +939,7 @@ A stage-gated methods spine: an orchestrator holds a **Design Passport**, five g
 
 ```
 AlterLab-Academic-Skills/
-├── 📁 skills/                       # 239 skills across 17 domains
+├── 📁 skills/                       # 240 skills across 18 domains
 │   ├── 🔄 core/                # 10 pipeline + citation-verifier + teaching + thesis + skill-finder
 │   ├── 🗄️ databases/           # 39 database connectors
 │   ├── 🧬 bioinformatics/      # 38 bio/genomics tools
@@ -895,7 +956,10 @@ AlterLab-Academic-Skills/
 │   ├── 🇹🇷 turkish-academia/    # 12 Turkish national-platform & workflow skills
 │   ├── 🎓 faculty-life/        # 6 teaching, service & career skills
 │   ├── 🧪 methodology/         # 3 research-rigor discipline gates
-│   └── 🧭 social-science-workflow/  # 17: orchestrator + 5 gates + 11 analysis modules
+│   ├── 🧭 social-science-workflow/  # 17: orchestrator + 5 gates + 11 analysis modules
+│   └── 🧩 workflows/            # 7 dynamic-workflow scripts + the portable playbook skill
+├── 📁 plugins/                       # dependency-only bundles: alterlab-essentials, alterlab-complete
+├── 📁 .claude/workflows/             # maintainer workflow: /skill-freshness-audit
 ├── 📁 dist/                          # per-domain .zip bundles for claude.ai (built on release)
 ├── 📁 scripts/                       # install.sh, gen_catalog.py, run_evals.py, audit_skills.py …
 ├── 📁 docs/                          # evals, integrity & design docs
@@ -963,8 +1027,8 @@ Skills activate automatically based on user intent:
 
 | | **AlterLab Academic Skills** | **K-Dense scientific-agent-skills** | **anthropics/skills** |
 |:---|:---:|:---:|:---:|
-| **Skills** | 239 | 138 *(self-reported)* | General-purpose examples |
-| **Executable evals** | 239 / 239 shipped; coverage CI-gated, behavioral on demand | Not shipped as an eval harness | Not the project's focus |
+| **Skills** | 240 | 138 *(self-reported)* | General-purpose examples |
+| **Executable evals** | 240 / 240 shipped; coverage CI-gated, behavioral on demand | Not shipped as an eval harness | Not the project's focus |
 | **License** | MIT | MIT | MIT |
 | **Academic focus** | Built for the research lifecycle | Scientific tooling | General / reference |
 | **Bundles / marketplace** | Per-domain `claude.ai` bundles + Claude Code marketplace | — | — |
@@ -1048,7 +1112,7 @@ MIT License — Copyright (c) 2026 AlterLab Creative Technologies Laboratory
 
 <br><br>
 
-<b>239 skills · 17 domains · 239 with executable evals · 1 prompt away from expert-level research</b>
+<b>240 skills · 18 domains · 240 with executable evals · 1 prompt away from expert-level research</b>
 
 <br><br>
 

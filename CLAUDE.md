@@ -1,15 +1,15 @@
 # AlterLab Academic Skills — by AlterLab Creative Technologies Laboratory
 
-> **Project**: AlterLab Academic Skills — 239 Claude AI skills for faculty and researchers
+> **Project**: AlterLab Academic Skills — 240 Claude AI skills for faculty and researchers
 > **Owner**: AlterLab Creative Technologies Laboratory
 
 ---
 
 ## Project Overview
 
-This project provides **239 professional Claude AI skills** organized into 17 domain categories for faculty members, academicians, and researchers. Each skill transforms Claude into a domain-specific expert assistant tailored to academic research, scientific computing, and scholarly publishing workflows.
+This project provides **240 professional Claude AI skills** organized into 18 domain categories for faculty members, academicians, and researchers. Each skill transforms Claude into a domain-specific expert assistant tailored to academic research, scientific computing, and scholarly publishing workflows.
 
-The repo is installable as a Claude Code plugin marketplace named `alterlab-academic-skills`, with 17 domain plugins (`alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`, `alterlab-turkish-academia`, `alterlab-faculty-life`, `alterlab-methodology`, `alterlab-social-science-workflow`).
+The repo is installable as a Claude Code plugin marketplace named `alterlab-academic-skills`, with 18 domain plugins (`alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`, `alterlab-turkish-academia`, `alterlab-faculty-life`, `alterlab-methodology`, `alterlab-social-science-workflow`, `alterlab-workflows`) plus two dependency-only bundles (`alterlab-essentials`, `alterlab-complete`, in `plugins/`). `alterlab-workflows` also ships seven Claude Code dynamic-workflow scripts in `skills/workflows/workflows/`, validated by `node scripts/workflow_dryrun.mjs`.
 
 ### Audience
 - Faculty members and academic researchers
@@ -43,8 +43,9 @@ The repo is installable as a Claude Code plugin marketplace named `alterlab-acad
 | Faculty Life | `skills/faculty-life/` | 6 | Faculty research-lifecycle and academic administration |
 | Methodology | `skills/methodology/` | 3 | Research methodology and rigor scaffolds |
 | Social-Science Workflow | `skills/social-science-workflow/` | 17 | Stage-gated methods spine: orchestrator + 5 validity gates (design, measurement, sampling, reflexivity, inference) + 11 analysis modules (causal-inference, SEM/psychometrics, QCA, SNA, ABM, text-as-data, survey-analysis, qualitative-analysis, multilevel-models, meta-analysis, missing-data) |
+| Research Workflows | `skills/workflows/` | 1 | Portable playbook skill for the 7 packaged dynamic workflows (citation audit, review panel, claim stress-test, PRISMA screening, rebuttal, grant mock panel, literature map) |
 
-**Total: 239 skills across 17 categories**
+**Total: 240 skills across 18 categories**
 
 ---
 
@@ -120,7 +121,9 @@ When MCP tools are available, skills should prefer them over simulated responses
 |---------|---------|
 | `python scripts/audit_skills.py` | Audit skills (frontmatter, naming, counts) |
 | `pytest tests/` | Run the validation test suite |
-| `python scripts/gen_marketplace.py` | Regenerate the `alterlab-academic-skills` marketplace + 17 domain plugins |
+| `python scripts/gen_marketplace.py` | Regenerate the `alterlab-academic-skills` marketplace, the 18 domain plugins, and the bundles |
+| `claude plugin validate .` | Validate the marketplace with the real Claude Code loader |
+| `node scripts/workflow_dryrun.mjs <script.js> '<args-json>'` | Dry-run a dynamic-workflow script against a mocked runtime |
 
 ---
 

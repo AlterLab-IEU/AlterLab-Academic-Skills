@@ -19,6 +19,11 @@
 2. **Multi-step workflow -> pipeline**: If the user describes a full research-to-publication goal, activate `alterlab-research-pipeline`.
 3. **Unclear scope -> ask**: If ambiguous whether the user wants one skill or the full pipeline, ask before proceeding.
 4. **Socratic modes**: When the user's question is vague or exploratory, prefer Socratic modes (socratic for research, plan for writing, guided for review) to help them clarify intent.
+5. **Packaged multi-agent jobs -> workflows**: whole-manuscript citation audit, independent review panel, claim stress-test, PRISMA dual screening, response to reviewers, grant mock panel, and literature mapping are packaged as Claude Code dynamic workflows (`/alterlab-workflows:<name>`, documented by `alterlab-research-workflows`). Offer the matching one — with its rough agent count — before hand-building a fan-out.
+
+### Model convention
+
+Scripts and agents that need a Claude model ID read `ALTERLAB_MODEL` (default `claude-opus-5-5`, reviewed 2026-09-23) — see `skills/core/shared/model_env.md`, which also lists the request shape current models require (adaptive thinking, explicit effort, no sampling parameters, no prefill, no forced tool choice). Never add a bare model literal to a script.
 
 ---
 
