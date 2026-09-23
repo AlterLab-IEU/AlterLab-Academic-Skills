@@ -210,6 +210,13 @@ class FDAQuery:
         skip = 0
 
         while len(all_results) < max_results:
+            if skip > 25000:
+                # openFDA rejects skip > 25000; deeper paging needs the
+                # search_after cursor from the Link header, narrower searches
+                # (e.g. date ranges), or the bulk downloads.
+                print("Stopped at openFDA's 25,000-record skip limit; split the "
+                      "search (e.g. by date range) or use https://open.fda.gov/data/downloads/")
+                break
             data = self.query(
                 category=category,
                 endpoint=endpoint,

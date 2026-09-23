@@ -5,8 +5,16 @@
 ### Account Creation
 DrugBank requires user authentication to access data:
 1. Create account at go.drugbank.com
-2. Accept the license agreement (free for academic use, paid for commercial)
-3. Obtain username and password credentials
+2. Apply for the Academic License (free for eligible non-commercial research; data
+   under CC BY-NC 4.0) — commercial use needs a paid license
+3. Use your account email and password as credentials
+
+> **Status 2026-09-23:** the releases page says all academic dataset downloads are
+> temporarily paused while DrugBank updates its distribution program; every download
+> link (including the CC0 Open Data vocabulary/structures) shows "Temporarily
+> unavailable" and scripted requests return HTTP 403. The manual equivalent of the
+> downloader, when access returns, is
+> `curl -Lfv -o drugbank.zip -u EMAIL:PASSWORD https://go.drugbank.com/releases/5-1-22/downloads/all-full-database`.
 
 ### Credential Management
 
@@ -38,7 +46,7 @@ Primary tool for programmatic access:
 uv pip install drugbank-downloader
 ```
 
-**Requirements:** Python >=3.9
+**Requirements:** Python >=3.10 (drugbank-downloader 0.2.1, current as of 2026-09)
 
 ### Optional Dependencies
 ```bash
@@ -130,7 +138,7 @@ if drugbank_dir.exists():
 ```
 
 ### Version History
-DrugBank has released the 5.1.x series and a 6.x line; entry counts grow with each release. Don't hardcode "the latest" — resolve it at runtime with `bioversions` (or check go.drugbank.com/releases), then pin that exact version for reproducibility.
+Downloadable releases are numbered 5.1.x (latest **5.1.22**, 2026-06-27); "DrugBank 6.0" is the name of the 2024 knowledgebase paper, not a separate download series. Entry counts grow with each release. Don't hardcode "the latest" — resolve it at runtime with `bioversions` (or check go.drugbank.com/releases), then pin that exact version for reproducibility.
 
 ```python
 import bioversions
@@ -142,15 +150,20 @@ Notable schema additions over time: interactions and ADMET fields (5.0+ era), tr
 ## API Access
 
 ### REST API Endpoints
+The Clinical API is a separate, commercially licensed product (it is not covered by the
+academic download license). Base URL `https://api.drugbank.com/v1/`, optionally
+region-scoped (e.g. `/v1/us/`); the API key goes in the `Authorization` header as-is
+(the old `go.drugbank.com/drugs/{id}.json` + `Bearer` pattern returns 403).
 ```python
+import os
 import requests
 
 # Query by DrugBank ID
 drug_id = "DB00001"
-url = f"https://go.drugbank.com/drugs/{drug_id}.json"
-headers = {"Authorization": "Bearer YOUR_API_KEY"}
+url = f"https://api.drugbank.com/v1/drugs/{drug_id}"
+headers = {"Authorization": os.environ["DRUGBANK_API_KEY"]}
 
-response = requests.get(url, headers=headers)
+response = requests.get(url, headers=headers, timeout=30)
 if response.status_code == 200:
     drug_data = response.json()
 ```

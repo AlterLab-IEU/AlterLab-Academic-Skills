@@ -33,12 +33,12 @@ resolve_response = client.resolve.fetch_dcids_by_name(
     entity_type="State"
 )
 
-# Extract DCIDs
+# Extract DCIDs (to_dict() -> {"entities": [{"node": ..., "candidates": [...]}, ...]})
 dcids = []
-for name, result in resolve_response.to_dict().items():
-    if result["candidates"]:
-        dcids.append(result["candidates"][0]["dcid"])
-        print(f"{name}: {result['candidates'][0]['dcid']}")
+for entity in resolve_response.to_dict()["entities"]:
+    if entity.get("candidates"):
+        dcids.append(entity["candidates"][0]["dcid"])
+        print(f"{entity['node']}: {entity['candidates'][0]['dcid']}")
 
 # Step 2: Query population data
 response = client.observation.fetch(
@@ -47,12 +47,9 @@ response = client.observation.fetch(
     date="latest"
 )
 
-# Step 3: Display results
-data = response.to_dict()
-for variable, entities in data.items():
-    for entity, observations in entities.items():
-        for obs in observations:
-            print(f"{entity}: {obs['value']:,} people ({obs['date']})")
+# Step 3: Display results (flat records: date, entity, variable, value, facet...)
+for rec in response.to_observation_records().model_dump():
+    print(f"{rec['entity']}: {rec['value']:,.0f} people ({rec['date']})")
 ```
 
 ## Example 2: Time Series Analysis
@@ -73,7 +70,7 @@ response = client.observation.fetch(
 )
 
 # Convert to DataFrame
-df = pd.DataFrame(response.to_observations_as_records())
+df = pd.DataFrame(response.to_observation_records().model_dump())
 
 # Plot
 df = df.sort_values('date')
@@ -101,14 +98,14 @@ response = client.observation.fetch(
 )
 
 # Convert to DataFrame and sort
-df = pd.DataFrame(response.to_observations_as_records())
+df = pd.DataFrame(response.to_observation_records().model_dump())
 
 # Get county names
 county_dcids = df['entity'].unique().tolist()
-names = client.node.fetch_entity_names(node_dcids=county_dcids)
+names = client.node.fetch_entity_names(entity_dcids=county_dcids)
 
-# Add names to dataframe
-df['name'] = df['entity'].map(names)
+# Add names to dataframe (values are Name objects; take .value)
+df['name'] = df['entity'].map({dcid: n.value for dcid, n in names.items()})
 
 # Display top 10 by income
 top_counties = df.nlargest(10, 'value')[['name', 'value']]
@@ -132,11 +129,11 @@ resolve_response = client.resolve.fetch_dcids_by_name(names=places)
 
 dcids = []
 name_map = {}
-for name, result in resolve_response.to_dict().items():
-    if result["candidates"]:
-        dcid = result["candidates"][0]["dcid"]
+for entity in resolve_response.to_dict()["entities"]:
+    if entity.get("candidates"):
+        dcid = entity["candidates"][0]["dcid"]
         dcids.append(dcid)
-        name_map[dcid] = name
+        name_map[dcid] = entity["node"]
 
 # Query multiple variables
 variables = [
@@ -153,7 +150,7 @@ response = client.observation.fetch(
 )
 
 # Convert to DataFrame
-df = pd.DataFrame(response.to_observations_as_records())
+df = pd.DataFrame(response.to_observation_records().model_dump())
 
 # Add readable names
 df['state'] = df['entity'].map(name_map)
@@ -179,15 +176,17 @@ client = DataCommonsClient()
 # User provides coordinates (e.g., from GPS)
 latitude, longitude = 37.7749, -122.4194  # San Francisco
 
-# Step 1: Resolve coordinates to place
-dcid = client.resolve.fetch_dcid_by_coordinates(
-    latitude=latitude,
-    longitude=longitude
+# Step 1: Resolve coordinates to place (returns a ResolveResponse)
+coord = client.resolve.fetch_dcid_by_coordinates(
+    latitude=str(latitude),
+    longitude=str(longitude),
 )
+candidates = coord.to_dict()["entities"][0].get("candidates", [])
+dcid = candidates[0]["dcid"]  # check `candidates` is non-empty first
 
 # Step 2: Get place name
-name = client.node.fetch_entity_names(node_dcids=[dcid])
-print(f"Location: {name[dcid]}")
+name = client.node.fetch_entity_names(entity_dcids=[dcid])
+print(f"Location: {name[dcid].value}")
 
 # Step 3: Check available variables
 available_vars = client.observation.fetch_available_statistical_variables(
@@ -205,7 +204,7 @@ response = client.observation.fetch(
 )
 
 # Display results
-df = pd.DataFrame(response.to_observations_as_records())
+df = pd.DataFrame(response.to_observation_records().model_dump())
 print("\nStatistics:")
 for _, row in df.iterrows():
     print(f"{row['variable']}: {row['value']}")
@@ -226,7 +225,7 @@ response = client.observation.fetch(
     filter_facet_domains=["census.gov"]  # Only US Census data
 )
 
-df = pd.DataFrame(response.to_observations_as_records())
+df = pd.DataFrame(response.to_observation_records().model_dump())
 print(f"Found {len(df)} observations from census.gov")
 
 # Compare with all sources
@@ -236,7 +235,7 @@ response_all = client.observation.fetch(
     date="all"
 )
 
-df_all = pd.DataFrame(response_all.to_observations_as_records())
+df_all = pd.DataFrame(response_all.to_observation_records().model_dump())
 print(f"Found {len(df_all)} observations from all sources")
 ```
 
@@ -271,7 +270,7 @@ print(in_props[entity])
 # Step 2: Get specific property values
 name_response = client.node.fetch_property_values(
     node_dcids=[entity],
-    property="name",
+    properties="name",
     out=True
 )
 
@@ -279,16 +278,12 @@ print(f"\nName property value:")
 print(name_response.to_dict())
 
 # Step 3: Explore hierarchy
-children = client.node.fetch_place_children(node_dcids=[entity])
+children = client.node.fetch_place_children(place_dcids=entity)
 print(f"\nNumber of child places: {len(children[entity])}")
 
-# Get names for first 5 children
-if children[entity]:
-    child_sample = children[entity][:5]
-    child_names = client.node.fetch_entity_names(node_dcids=child_sample)
-    print("\nSample child places:")
-    for dcid, name in child_names.items():
-        print(f"  {name}")
+# Children are dicts with dcid / name / types
+for child in children[entity][:5]:
+    print(f"  {child.get('name')} ({child['dcid']})")
 ```
 
 ## Example 8: Batch Processing Multiple Queries
@@ -318,11 +313,11 @@ resolve_response = client.resolve.fetch_dcids_by_name(
 # Build mapping
 city_dcids = []
 dcid_to_name = {}
-for name, result in resolve_response.to_dict().items():
-    if result["candidates"]:
-        dcid = result["candidates"][0]["dcid"]
+for entity in resolve_response.to_dict()["entities"]:
+    if entity.get("candidates"):
+        dcid = entity["candidates"][0]["dcid"]
         city_dcids.append(dcid)
-        dcid_to_name[dcid] = name
+        dcid_to_name[dcid] = entity["node"]
 
 # Query multiple variables at once
 variables = [
@@ -338,7 +333,7 @@ response = client.observation.fetch(
 )
 
 # Process into a comparison table
-df = pd.DataFrame(response.to_observations_as_records())
+df = pd.DataFrame(response.to_observation_records().model_dump())
 df['city'] = df['entity'].map(dcid_to_name)
 
 # Create comparison table
@@ -392,7 +387,8 @@ client = DataCommonsClient()
 
 # Always check for candidates
 resolve_response = client.resolve.fetch_dcids_by_name(names=["Unknown Place"])
-result = resolve_response.to_dict()["Unknown Place"]
+result = resolve_response.to_dict()["entities"][0]
+result.setdefault("candidates", [])
 
 if not result["candidates"]:
     print("No matches found - try a more specific name")

@@ -137,38 +137,39 @@ params = {
 }
 ```
 
-### 2. NSDE (National Substance Database Entry)
+### 2. NSDE (Comprehensive NDC SPL Data Elements File)
 
 **Endpoint**: `https://api.fda.gov/other/nsde.json`
 
-**Purpose**: Access historical substance data from legacy National Drug Code (NDC) directory entries. This endpoint provides substance information as it appears in historical drug product listings.
+**Purpose**: Package-level NDC data elements extracted from Structured Product Labeling
+(SPL) — one record per package NDC, including marketing start/end dates and
+inactivation/reactivation dates. Use it to map 10-/11-digit package NDCs to products and
+to check whether an NDC is (or was) marketed. It is **not** a substance database; use
+the Substance Data endpoint (or `other/unii`) for substance-level information.
 
-**Note**: This database is primarily for historical reference. For current substance information, use the Substance Data endpoint.
-
-**Key Fields**:
-- `proprietary_name` - Product proprietary name
-- `nonproprietary_name` - Nonproprietary name
+**Key Fields** (verified 2026-09):
+- `package_ndc` - Package NDC (10-digit, hyphenated)
+- `package_ndc11` - Package NDC (11-digit, no hyphens — the billing format)
+- `proprietary_name` - Product proprietary (brand) name
+- `product_type` - e.g. `HUMAN PRESCRIPTION DRUG`, `HUMAN OTC DRUG`
+- `marketing_category` - e.g. `NDA`, `ANDA`, `BLA`, `OTC MONOGRAPH ...`
+- `application_number_or_citation` - e.g. `NDA201803`
 - `dosage_form` - Dosage form
-- `route` - Route of administration
-- `company_name` - Company name
-- `substance_name` - Substance name
-- `active_numerator_strength` - Active ingredient strength (numerator)
-- `active_ingred_unit` - Active ingredient unit
-- `pharm_classes` - Pharmacological classes
-- `dea_schedule` - DEA controlled substance schedule
+- `marketing_start_date`, `marketing_end_date` - YYYYMMDD
+- `inactivation_date`, `reactivation_date` - YYYYMMDD
+- `billing_unit` - Billing unit (e.g. `EA`, `ML`, `GM`) when present
 
 **Common Use Cases**:
-- Historical drug formulation research
-- Legacy system integration
-- Historical substance name mapping
-- Pharmaceutical history research
+- Normalizing 10-digit NDCs to the 11-digit billing format (and back)
+- Checking marketing status / discontinuation of a package NDC
+- Linking claims or EHR NDCs to proprietary names and application numbers
 
 **Example Queries**:
 ```python
-# Search by substance name
+# All packages for a brand name (quote multi-word or case-sensitive values)
 params = {
     "api_key": api_key,
-    "search": "substance_name:ibuprofen",
+    "search": 'proprietary_name:"Advil"',
     "limit": 20
 }
 
@@ -176,11 +177,11 @@ response = requests.get("https://api.fda.gov/other/nsde.json", params=params)
 ```
 
 ```python
-# Find controlled substances by DEA schedule
+# Look up one package by its 11-digit NDC
 params = {
     "api_key": api_key,
-    "search": "dea_schedule:CII",
-    "limit": 50
+    "search": "package_ndc11:00573013391",
+    "limit": 1
 }
 ```
 

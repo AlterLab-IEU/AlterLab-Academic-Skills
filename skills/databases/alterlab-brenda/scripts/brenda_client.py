@@ -11,6 +11,19 @@ Authentication:
     (BRENDA_EMAIL / BRENDA_PASSWORD) or environment variables. The password is
     SHA-256 hashed before being sent, per the BRENDA SOAP specification.
 
+Calling convention (brenda_zeep.wsdl):
+    Every operation takes SEPARATE string arguments in WSDL order —
+    email, password-hash, then "field*value" tokens — i.e.
+    ``client.service.getKmValue(email, pw_hash, "ecNumber*1.1.1.1", ...)``.
+    Passing one comma-joined string (the pre-zeep SOAPpy style) fails in zeep
+    with "Missing element password". Results come back as lists of typed
+    objects; split_entries() renders each one as the legacy
+    "field*value#field*value" string that the parsers in brenda_queries expect.
+
+Usage policy:
+    BRENDA asks for at most one request per second; call_brenda() enforces it.
+    Data are licensed CC BY 4.0 — cite BRENDA when you use them.
+
 Installation:
     uv pip install zeep requests
 
@@ -23,6 +36,7 @@ Usage:
 
 import hashlib
 import os
+import time
 from pathlib import Path
 from typing import List
 
@@ -32,6 +46,8 @@ from zeep.transports import Transport
 WSDL_URL = "https://www.brenda-enzymes.org/soap/brenda_zeep.wsdl"
 
 _CLIENT = None  # singleton zeep Client
+_MIN_INTERVAL = 1.0  # seconds between calls (BRENDA: max one request per second)
+_last_call = 0.0
 
 
 def load_env_from_file(path: str = ".env") -> None:
@@ -85,36 +101,62 @@ def _get_client() -> Client:
     return _CLIENT
 
 
-def call_brenda(action: str, parameters: List[str]) -> str:
+def call_brenda(action: str, parameters: List[str]):
     """Execute a BRENDA SOAP action.
 
     Args:
         action: SOAP method name, e.g. "getKmValue" or "getReaction".
-        parameters: Ordered field tokens such as
-            ["ecNumber*1.1.1.1", "organism*Homo sapiens", "substrate*ethanol"].
+        parameters: Field tokens in the operation's WSDL order, such as
+            ["ecNumber*1.1.1.1", "organism*Homo sapiens", "kmValue*", ...].
             Email and the SHA-256-hashed password are prepended automatically.
 
     Returns:
-        The raw response string from BRENDA.
+        The raw zeep response (usually a list of typed result objects).
     """
+    global _last_call
     email, password = _get_credentials()
     hashed = _hash_password(password)
     client = _get_client()
-    payload = ",".join([email, hashed, *parameters])
+    wait = _MIN_INTERVAL - (time.monotonic() - _last_call)
+    if wait > 0:
+        time.sleep(wait)
     method = getattr(client.service, action)
-    return method(payload)
+    try:
+        # zeep maps positional arguments onto the WSDL message parts in order.
+        return method(email, hashed, *parameters)
+    finally:
+        _last_call = time.monotonic()
+
+
+def _entry_to_string(item) -> str:
+    """Render one zeep result object as a legacy 'field*value#field*value' string."""
+    from zeep.helpers import serialize_object
+
+    data = serialize_object(item)
+    if not isinstance(data, dict):
+        return str(data)
+    parts = []
+    for key, value in data.items():
+        if value is None:
+            value = ""
+        elif isinstance(value, (list, tuple)):
+            value = ", ".join(str(v) for v in value)
+        parts.append(f"{key}*{value}")
+    return "#".join(parts)
 
 
 def split_entries(return_text) -> List[str]:
     """Normalize a BRENDA response into a list of entry strings.
 
-    BRENDA separates records with '!'. Handles raw strings as well as list/
-    object responses, returning an empty list for empty input.
+    The zeep WSDL returns a list of typed objects; each is rendered as the
+    legacy "field*value#field*value" string. Plain-string responses (older
+    SOAP clients) separate records with '!'. Returns [] for empty input.
     """
     if not return_text:
         return []
     if isinstance(return_text, (list, tuple)):
-        return [str(item) for item in return_text if str(item).strip()]
+        entries = [_entry_to_string(item) for item in return_text]
+        return [entry for entry in entries if entry.strip()]
     return [entry for entry in str(return_text).split("!") if entry.strip()]
 
 
@@ -129,12 +171,14 @@ def get_km_values(ec_number: str, organism: str = "*", substrate: str = "*") -> 
     Returns:
         List of raw BRENDA Km data entries.
     """
+    # WSDL order: ecNumber, organism, kmValue, kmValueMaximum, substrate,
+    # commentary, ligandStructureId, literature.
     parameters = [
         f"ecNumber*{ec_number}",
         f"organism*{'' if organism == '*' else organism}",
-        f"substrate*{'' if substrate == '*' else substrate}",
         "kmValue*",
         "kmValueMaximum*",
+        f"substrate*{'' if substrate == '*' else substrate}",
         "commentary*",
         "ligandStructureId*",
         "literature*",

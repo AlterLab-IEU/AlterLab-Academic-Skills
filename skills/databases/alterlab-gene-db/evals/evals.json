@@ -4,7 +4,7 @@
     {
       "id": "symbol-to-id",
       "prompt": "What is the NCBI Gene ID for BRCA1 in human? I keep mixing it up with other species.",
-      "expected_output": "Triggers the NCBI Gene skill. Runs scripts/query_gene.py with E-utilities ESearch using an organism-qualified query (e.g. 'BRCA1[gene name] AND human[organism]' or symbol BRCA1 with --organism human) to resolve the symbol to its Gene ID (672). Emphasizes specifying organism to avoid cross-species ambiguity.",
+      "expected_output": "Triggers the NCBI Gene skill. Runs scripts/query_gene.py with E-utilities ESearch using an organism-qualified query (e.g. 'BRCA1[sym] AND human[organism]' or symbol BRCA1 with --organism human) to resolve the symbol to its Gene ID (672). Emphasizes specifying organism to avoid cross-species ambiguity.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Uses ESearch via query_gene.py with an organism-qualified query to resolve the symbol to a Gene ID, not a guessed number." },
@@ -34,7 +34,7 @@
     {
       "id": "search-by-phenotype",
       "prompt": "Which genes does NCBI associate with muscular dystrophy? I'd start from dystrophin and related phenotype matches.",
-      "expected_output": "Triggers NCBI Gene. Uses E-utilities via query_gene.py with biological-context query syntax such as 'dystrophin[gene name] AND muscular dystrophy[disease]' or a phenotype/GO-term filter, returning matching Gene IDs. Demonstrates the search-by-biological-context workflow with organism filtering.",
+      "expected_output": "Triggers NCBI Gene. Uses E-utilities via query_gene.py with biological-context query syntax such as 'dystrophin[Gene Full Name] AND \"muscular dystrophy\"[Disease/Phenotype]' (valid Gene field tags; [disease] would silently fall back to [All Fields]) or a phenotype/GO-term filter, returning matching Gene IDs. Demonstrates the search-by-biological-context workflow with organism filtering.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Constructs an E-utilities query combining gene/phenotype/disease field tags to find associated genes." }

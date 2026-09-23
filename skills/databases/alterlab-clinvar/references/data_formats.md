@@ -8,7 +8,7 @@ ClinVar provides bulk data downloads in multiple formats to support different re
 
 ### Base URL
 ```
-ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/
+https://ftp.ncbi.nlm.nih.gov/pub/clinvar/     (also reachable as ftp://)
 ```
 
 ### Update Schedule
@@ -27,13 +27,13 @@ ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/
 
 ```
 pub/clinvar/
-├── xml/                          # XML data files
-│   ├── clinvar_variation/       # VCV files (variant-centric)
-│   │   ├── weekly_release/      # Weekly updates
-│   │   └── archive/             # Monthly archives
-│   └── RCV/                     # RCV files (variant-condition pairs)
-│       ├── weekly_release/
-│       └── archive/
+├── xml/                          # XML data files (current format since 2025-08-07)
+│   ├── ClinVarVCVRelease_YYYY-MM.xml.gz   # VCV monthly files (+ _00-latest symlink)
+│   ├── weekly_release/          # Weekly VCV updates (cleared at each monthly release)
+│   ├── archive/                 # Previous years' monthly VCV files
+│   ├── RCV_release/             # RCV files (variant-condition pairs), same layout
+│   ├── VCV_xml_old_format/      # Frozen ClinVarVariationRelease files (unsupported)
+│   └── RCV_xml_old_format/      # Frozen ClinVarFullRelease files (unsupported)
 ├── vcf_GRCh37/                  # VCF files (GRCh37/hg19)
 ├── vcf_GRCh38/                  # VCF files (GRCh38/hg38)
 ├── tab_delimited/               # Tab-delimited summary files
@@ -51,36 +51,41 @@ XML provides the most comprehensive data with full submission details, evidence,
 
 #### VCV (Variation) Files
 - **Purpose**: Variant-centric aggregation
-- **Location**: `xml/clinvar_variation/`
+- **Location**: `xml/` (monthly `ClinVarVCVRelease_YYYY-MM.xml.gz`)
 - **Accession format**: VCV000000001.1
 - **Best for**: Queries focused on specific variants regardless of condition
-- **File naming**: `ClinVarVariationRelease_YYYY-MM-DD.xml.gz`
+- **Format change (2025-08-07)**: the current XML carries separate germline, somatic
+  clinical impact, and oncogenicity classifications; the old single-element
+  `ClinVarVariationRelease` format is frozen in `xml/VCV_xml_old_format/`
 
-**VCV Record Structure:**
+**VCV Record Structure (current format, abridged):**
 ```xml
-<VariationArchive VariationID="12345" VariationType="single nucleotide variant">
-  <VariationName>NM_000059.3(BRCA2):c.1310_1313del (p.Lys437fs)</VariationName>
-  <InterpretedRecord>
-    <Interpretations>
-      <InterpretedConditionList>
-        <InterpretedCondition>Breast-ovarian cancer, familial 2</InterpretedCondition>
-      </InterpretedConditionList>
-      <ClinicalSignificance>Pathogenic</ClinicalSignificance>
-      <ReviewStatus>reviewed by expert panel</ReviewStatus>
-    </Interpretations>
-  </InterpretedRecord>
-  <ClinicalAssertionList>
-    <!-- Individual submissions -->
-  </ClinicalAssertionList>
-</VariationArchive>
+<ClinVarVariationRelease>
+  <VariationArchive VariationID="91629" VariationName="NM_007294.4(BRCA1):c.4357+2T&gt;G"
+                    Accession="VCV000091629" Version="19" RecordType="classified">
+    <ClassifiedRecord>
+      <SimpleAllele>...</SimpleAllele>
+      <RCVList>...</RCVList>                    <!-- per-condition classifications -->
+      <Classifications>
+        <GermlineClassification DateLastEvaluated="2023-05-19" NumberOfSubmitters="6">
+          <ReviewStatus>criteria provided, multiple submitters, no conflicts</ReviewStatus>
+          <Description>Pathogenic/Likely pathogenic</Description>
+        </GermlineClassification>
+        <!-- SomaticClinicalImpact / OncogenicityClassification when submitted -->
+      </Classifications>
+      <ClinicalAssertionList>...</ClinicalAssertionList>  <!-- individual SCVs -->
+    </ClassifiedRecord>
+  </VariationArchive>
+</ClinVarVariationRelease>
 ```
+A real example is at `xml/sample_xml/VCV_XML_VCV000091629.xml` on the FTP site.
 
 #### RCV (Record) Files
 - **Purpose**: Variant-condition pair aggregation
-- **Location**: `xml/RCV/`
+- **Location**: `xml/RCV_release/`
 - **Accession format**: RCV000000001.1
 - **Best for**: Queries focused on variant-disease relationships
-- **File naming**: `ClinVarRCVRelease_YYYY-MM-DD.xml.gz`
+- **File naming**: `ClinVarRCVRelease_YYYY-MM.xml.gz` (+ `ClinVarRCVRelease_00-latest.xml.gz`)
 
 **Key differences from VCV:**
 - One RCV per variant-condition combination
@@ -115,8 +120,11 @@ Key INFO fields in ClinVar VCF:
 | Field | Description |
 |-------|-------------|
 | **ALLELEID** | ClinVar allele identifier |
-| **CLNSIG** | Clinical significance |
-| **CLNREVSTAT** | Review status |
+| **CLNSIG** | Aggregate germline classification |
+| **CLNREVSTAT** | Review status of the germline classification |
+| **CLNSIGCONF** | Conflicting germline classifications (when present) |
+| **ONC** / **ONCREVSTAT** | Aggregate oncogenicity classification / review status |
+| **SCI** / **SCIREVSTAT** | Aggregate somatic clinical impact / review status |
 | **CLNDN** | Condition name(s) |
 | **CLNVC** | Variant type (SNV, deletion, etc.) |
 | **CLNVCSO** | Sequence ontology term |
@@ -146,7 +154,8 @@ Primary summary file with selected metadata for all genome-mapped variants.
 - `Name` - Variant name (typically HGVS)
 - `GeneID` - NCBI Gene ID
 - `GeneSymbol` - Gene symbol
-- `ClinicalSignificance` - Classification
+- `ClinicalSignificance` - Aggregate germline classification
+- `SomaticClinicalImpact`, `Oncogenicity` - Somatic classifications (with their own review-status columns)
 - `ReviewStatus` - Star rating level
 - `LastEvaluated` - Date of last review
 - `RS# (dbSNP)` - dbSNP rsID if available
@@ -237,20 +246,22 @@ Database cross-references with modification dates.
 import gzip
 import xml.etree.ElementTree as ET
 
-with gzip.open('ClinVarVariationRelease.xml.gz', 'rt') as f:
+with gzip.open('ClinVarVCVRelease_00-latest.xml.gz', 'rt') as f:
     for event, elem in ET.iterparse(f, events=('end',)):
         if elem.tag == 'VariationArchive':
-            # Process variant
             variation_id = elem.attrib.get('VariationID')
-            # Extract data
+            germline = elem.find('ClassifiedRecord/Classifications/GermlineClassification')
+            if germline is not None:
+                classification = germline.findtext('Description')
+                review_status = germline.findtext('ReviewStatus')
             elem.clear()  # Free memory
 ```
 
 **Command-line with xmllint:**
 ```bash
 # Extract pathogenic variants
-zcat ClinVarVariationRelease.xml.gz | \
-  xmllint --xpath "//VariationArchive[.//ClinicalSignificance[text()='Pathogenic']]" -
+zcat ClinVarVCVRelease_00-latest.xml.gz | \
+  xmllint --xpath "//VariationArchive[ClassifiedRecord/Classifications/GermlineClassification/Description='Pathogenic']" -
 ```
 
 ### VCF Processing
@@ -286,8 +297,9 @@ for rec in vcf:
 ```python
 import pandas as pd
 
-# Read variant summary
-df = pd.read_csv('variant_summary.txt.gz', sep='\t', compression='gzip')
+# Read variant summary (one row per variant per assembly — keep one build)
+df = pd.read_csv('variant_summary.txt.gz', sep='\t', compression='gzip', low_memory=False)
+df = df[df['Assembly'] == 'GRCh38']
 
 # Filter pathogenic variants
 pathogenic = df[df['ClinicalSignificance'].str.contains('Pathogenic', na=False)]
@@ -321,12 +333,12 @@ gene_counts = pathogenic.groupby('GeneSymbol').size().sort_values(ascending=Fals
 #!/bin/bash
 # Download latest ClinVar monthly XML release
 
-BASE_URL="ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/clinvar_variation"
+BASE_URL="https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml"
 
-# Get latest file
+# Get latest file (or simply use ClinVarVCVRelease_00-latest.xml.gz)
 LATEST=$(curl -s ${BASE_URL}/ | \
-         grep -oP 'ClinVarVariationRelease_\d{4}-\d{2}\.xml\.gz' | \
-         tail -1)
+         grep -oP 'ClinVarVCVRelease_\d{4}-\d{2}\.xml\.gz' | \
+         sort -u | tail -1)
 
 # Download
 wget ${BASE_URL}/${LATEST}
@@ -338,10 +350,10 @@ wget ${BASE_URL}/${LATEST}
 #!/bin/bash
 # Download ClinVar in all formats
 
-FTP_BASE="ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar"
+FTP_BASE="https://ftp.ncbi.nlm.nih.gov/pub/clinvar"
 
-# XML
-wget ${FTP_BASE}/xml/clinvar_variation/ClinVarVariationRelease_00-latest.xml.gz
+# XML (VCV; RCV lives in xml/RCV_release/)
+wget ${FTP_BASE}/xml/ClinVarVCVRelease_00-latest.xml.gz
 
 # VCF (both assemblies)
 wget ${FTP_BASE}/vcf_GRCh37/clinvar.vcf.gz

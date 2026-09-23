@@ -6,7 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless ENA API and FTP for data retrieval (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # ENA Database
@@ -27,6 +28,15 @@ This skill should be used when:
 - Integrating ENA data into bioinformatics pipelines
 - Performing cross-reference searches to related databases
 - Bulk downloading datasets via FTP or Aspera
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Processed expression series (GSE/GSM, series matrix) rather than raw reads | `alterlab-geo` |
+| Gene-centric annotation (symbols, RefSeq, GO) from NCBI Gene | `alterlab-gene-db` |
+| Genome annotation, VEP, orthologs, or coordinate lookups | `alterlab-ensembl` |
+| Running BLAST locally against a custom database | `alterlab-blast` |
 
 ## Core Capabilities
 
@@ -75,7 +85,7 @@ ENA provides multiple REST APIs for data access. Consult `references/api_referen
 - Endpoint: https://www.ebi.ac.uk/ena/cram/
 - Query by MD5 or SHA1 checksums
 
-**Rate Limiting**: All APIs have a rate limit of 50 requests per second. Exceeding this returns HTTP 429 (Too Many Requests).
+**Rate Limiting**: ENA caps programmatic access at 50 requests per second; exceeding it returns HTTP 429 (Too Many Requests).
 
 ### 3. Searching and Retrieving Data
 
@@ -148,9 +158,11 @@ url = f"https://www.ebi.ac.uk/ena/portal/api/search?result=sample&query=study_ac
 
 **Find assemblies for a specific organism:**
 ```python
-# Search assemblies by taxonomy
-organism = "Escherichia coli"
-url = f"https://www.ebi.ac.uk/ena/portal/api/search?result=assembly&query=tax_tree({organism})&format=json"
+# Search assemblies by taxonomy. tax_tree()/tax_eq() take a numeric NCBI taxon ID —
+# tax_tree(Escherichia coli) returns HTTP 400. Resolve names via the taxonomy API first.
+taxon_id = 562  # Escherichia coli
+url = ("https://www.ebi.ac.uk/ena/portal/api/search?result=assembly"
+       f"&query=tax_tree({taxon_id})&fields=accession,scientific_name&format=json")
 ```
 
 **Get taxonomic lineage:**

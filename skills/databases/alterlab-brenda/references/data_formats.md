@@ -35,9 +35,8 @@ def extract_multiple_values(data, field_name):
 ## API Rate Limits and Best Practices
 
 **Rate Limits**:
-- BRENDA API has moderate rate limiting
-- Recommended: 1 request per second for sustained usage
-- Maximum: 5 requests per 10 seconds
+- BRENDA asks for no more than one request per second (the client enforces it)
+- Faster clients may be identified as bots and blocked
 
 **Best Practices**:
 1. **Cache results**: Store frequently accessed enzyme data locally

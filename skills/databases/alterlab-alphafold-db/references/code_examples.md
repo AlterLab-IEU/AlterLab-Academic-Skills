@@ -33,15 +33,25 @@ Query predictions using REST endpoints:
 ```python
 import requests
 
-# Get prediction metadata for a UniProt accession
-uniprot_id = "P00520"
-api_url = f"https://alphafold.ebi.ac.uk/api/prediction/{uniprot_id}"
-response = requests.get(api_url)
-prediction_data = response.json()
+def get_canonical_prediction(uniprot_id):
+    """Return the prediction record for exactly this accession.
 
-# Extract AlphaFold ID
-alphafold_id = prediction_data[0]['entryId']
-print(f"AlphaFold ID: {alphafold_id}")
+    /prediction/{id} returns a list that also contains isoform records
+    (e.g. P00520-2) and possibly third-party models, in no documented order,
+    so match on uniprotAccession instead of taking [0].
+    """
+    r = requests.get(f"https://alphafold.ebi.ac.uk/api/prediction/{uniprot_id}", timeout=30)
+    r.raise_for_status()
+    records = r.json()
+    for rec in records:
+        if rec.get("uniprotAccession") == uniprot_id:
+            return rec
+    return records[0] if records else None
+
+rec = get_canonical_prediction("P00520")
+# modelEntityId is the current field; entryId is the pre-v6 legacy alias.
+alphafold_id = rec.get("modelEntityId") or rec.get("entryId")
+print(f"AlphaFold model ID: {alphafold_id}")  # AF-P00520-F1
 ```
 
 ### Using UniProt to Find Accessions
@@ -94,9 +104,10 @@ prediction record carries the exact, version-stamped URLs:
 ```python
 import requests
 
-# Resolve the current file URLs from the prediction metadata.
-rec = requests.get("https://alphafold.ebi.ac.uk/api/prediction/P00520").json()[0]
-alphafold_id = rec["entryId"]  # e.g. "AF-P00520-F1"
+# Resolve the current file URLs from the prediction metadata
+# (get_canonical_prediction from §1 picks the canonical, non-isoform record).
+rec = get_canonical_prediction("P00520")
+alphafold_id = rec["modelEntityId"]  # e.g. "AF-P00520-F1"
 
 # Model coordinates (mmCIF) — write bytes, never decode/re-encode text.
 r = requests.get(rec["cifUrl"])
@@ -129,7 +140,7 @@ AlphaFold predictions include confidence estimates critical for interpretation:
 import requests
 
 # Resolve the confidence-JSON URL from the prediction metadata (version-stamped).
-rec = requests.get("https://alphafold.ebi.ac.uk/api/prediction/P00520").json()[0]
+rec = get_canonical_prediction("P00520")
 confidence = requests.get(rec["plddtDocUrl"]).json()
 
 # Extract pLDDT scores (keys: residueNumber, confidenceScore, confidenceCategory)
@@ -173,11 +184,22 @@ plt.savefig(f'{alphafold_id}_pae.png', dpi=300, bbox_inches='tight')
 # High PAE values (>15 Å) suggest uncertain domain arrangements
 ```
 
-## 4. Bulk Data Access via Google Cloud
+## 4. Bulk Data Access
 
-For large-scale analyses, use Google Cloud datasets:
+**EMBL-EBI FTP (current v6 release)** — one tar per model-organism or global-health
+proteome, plus Swiss-Prot:
 
-**Google Cloud Storage:**
+```bash
+# Index of archives (archive_name, species, reference_proteome, size_bytes, type)
+curl -s https://ftp.ebi.ac.uk/pub/databases/alphafold/download_metadata.json -o download_metadata.json
+
+# Human reference proteome, v6
+curl -O https://ftp.ebi.ac.uk/pub/databases/alphafold/latest/UP000005640_9606_HUMAN_v6.tar
+```
+
+For any other taxon, fall back to the per-taxon archives on Google Cloud (still v4):
+
+**Google Cloud Storage (v4):**
 
 ```bash
 # Install gsutil
@@ -325,9 +347,11 @@ for uniprot_id in uniprot_ids:
             f"https://alphafold.ebi.ac.uk/api/prediction/{uniprot_id}"
         ).json()
 
-        if preds:
-            rec = preds[0]
-            alphafold_id = rec['entryId']
+        # Pick the canonical record; the list also carries isoforms.
+        rec = next((p for p in preds if p.get('uniprotAccession') == uniprot_id),
+                   preds[0] if preds else None)
+        if rec:
+            alphafold_id = rec['modelEntityId']
 
             # Download structure coordinates
             cif = requests.get(rec['cifUrl'])
@@ -370,6 +394,9 @@ url = f"https://www.ebi.ac.uk/pdbe/pdbe-kb/3dbeacons/api/uniprot/summary/{unipro
 response = requests.get(url)
 data = response.json()
 
-# Filter for AlphaFold structures
-af_structures = [s for s in data['structures'] if s['provider'] == 'AlphaFold DB']
+# Each entry is {"summary": {...}}; filter for AlphaFold DB models
+af_structures = [
+    s['summary'] for s in data['structures']
+    if s['summary']['provider'] == 'AlphaFold DB'
+]
 ```

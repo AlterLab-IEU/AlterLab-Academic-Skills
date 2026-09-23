@@ -55,6 +55,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "chembl" }
       ]
+    },
+    {
+      "id": "near-miss-fda-label",
+      "prompt": "Pull the current FDA drug label for apixaban and summarize the boxed warning and the adverse-event reports for bleeding submitted to FAERS since 2024.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-fda. Official US labels (SPL boxed warnings) and FAERS adverse-event counts come from the openFDA drug label and drug/event endpoints, not from DrugBank's curated drug records.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-fda" }
+      ]
     }
   ]
 }

@@ -108,7 +108,8 @@ All response objects support:
 - `to_json()`: Format as JSON string
 - `to_dict()`: Return as dictionary
 - `get_data_by_entity()`: Reorganize by entity instead of variable
-- `to_observations_as_records()`: Flatten into individual records
+- `to_observation_records()`: Flatten into individual records (a pydantic model — call
+  `.model_dump()` before `pd.DataFrame(...)`)
 
 ## Common Use Cases
 
@@ -161,7 +162,7 @@ response = client.observation.fetch(
 
 The API integrates seamlessly with Pandas. Install with Pandas support:
 ```bash
-pip install "datacommons-client[pandas]"
+uv pip install "datacommons-client[pandas]"
 ```
 
 The client exposes a dedicated `observations_dataframe()` accessor that mirrors
@@ -175,15 +176,15 @@ df = client.observations_dataframe(
 # Columns: date, entity, variable, value (plus facet/provenance columns)
 ```
 
-Alternatively, flatten an existing response with `to_observations_as_records()` (which
-returns a list of flat records, not a DataFrame) and wrap it yourself:
+Alternatively, flatten an existing response with `to_observation_records()` (which
+returns a records model, not a DataFrame) and wrap its dump yourself:
 ```python
 response = client.observation.fetch(
     variable_dcids=["Count_Person"],
     entity_dcids=["geoId/06", "geoId/48"],
     date="all",
 )
-df = pd.DataFrame(response.to_observations_as_records())
+df = pd.DataFrame(response.to_observation_records().model_dump())
 ```
 
 ## Important Notes

@@ -22,7 +22,7 @@
     {
       "id": "ortholog-cross-species",
       "prompt": "Find the mouse ortholog of human BRCA2 (ENSG00000139618) so I can compare the gene across species.",
-      "expected_output": "Invokes alterlab-ensembl for comparative genomics using the homology endpoint (homology_ensemblgene with target_species mouse), returning the mouse ortholog of the human gene.",
+      "expected_output": "Invokes alterlab-ensembl for comparative genomics using the species-scoped homology endpoint (GET /homology/id/human/<ENSG id> or /homology/symbol/human/<symbol> with target_species=mouse, type=orthologues), returning the mouse ortholog of the human gene. Does not rely on the retired /homology/id/:id path (ensembl_rest's homology_ensemblgene), which now returns 404.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Uses the Ensembl homology/comparative-genomics endpoint to return the mouse ortholog of the human gene." }

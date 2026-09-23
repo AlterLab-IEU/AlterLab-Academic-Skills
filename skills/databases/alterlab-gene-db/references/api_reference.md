@@ -45,9 +45,11 @@ Search for genes matching a text query.
 - Gene symbol: `BRCA1[gene]` or `BRCA1[gene name]`
 - Organism: `human[organism]` or `9606[taxid]`
 - Combine terms: `BRCA1[gene] AND human[organism]`
-- Disease: `muscular dystrophy[disease]`
-- Chromosome: `17q21[chromosome]`
-- GO terms: `GO:0006915[biological process]`
+- Disease: `"muscular dystrophy"[Disease/Phenotype]` (or `[dis]`; `[disease]` is not a Gene field)
+- Chromosome number: `17[chromosome]`; cytogenetic band: `17q21[Default Map Location]`
+- GO terms (by name, not ID): `"apoptotic process"[Gene Ontology]`
+- Unknown tags fall back to `[All Fields]` — check `querytranslation`, or list valid
+  fields with `einfo.fcgi?db=gene&retmode=json`
 
 **Example Request:**
 

@@ -7,9 +7,14 @@ files (name + download_url) per release article. This helper lists those files
 and resolves a download URL by name so you can fetch the matrix CSVs and analyse
 them locally with pandas (see SKILL.md and references/dependency_analysis.md).
 
-Article IDs (Figshare hosting stopped after 24Q4; newer releases are portal-only
-at https://depmap.org/portal/data_page/):
+Article IDs (Figshare hosting stopped after 24Q4; newer releases such as 26Q1
+are portal-only at https://depmap.org/portal/data_page/, which sits behind a
+browser verification check):
     24Q4 -> 27993248   24Q2 -> 25880521   23Q4 -> 24667905
+
+The Figshare files endpoint is paginated (10 files per page by default; a
+release has ~70 files), so list_files() requests page_size=1000 and follows
+pages — otherwise Model.csv and the Omics matrices are silently missing.
 
 Smoke test (the --article option goes before the subcommand):
     uv run --with requests python query_depmap.py --article 27993248 list
@@ -24,14 +29,25 @@ FIGSHARE_API = "https://api.figshare.com/v2"
 DEFAULT_ARTICLE = 27993248  # DepMap 24Q4 Public
 
 
-def list_files(article_id: int) -> list[dict]:
-    """Return [{name, download_url, size}, ...] for a Figshare release article."""
-    r = requests.get(f"{FIGSHARE_API}/articles/{article_id}/files", timeout=60)
-    r.raise_for_status()
-    return [
-        {"name": f["name"], "download_url": f["download_url"], "size": f.get("size")}
-        for f in r.json()
-    ]
+def list_files(article_id: int, page_size: int = 1000) -> list[dict]:
+    """Return [{name, download_url, size}, ...] for every file in a release article."""
+    files: list[dict] = []
+    page = 1
+    while True:
+        r = requests.get(
+            f"{FIGSHARE_API}/articles/{article_id}/files",
+            params={"page": page, "page_size": page_size},
+            timeout=60,
+        )
+        r.raise_for_status()
+        batch = r.json()
+        files += [
+            {"name": f["name"], "download_url": f["download_url"], "size": f.get("size")}
+            for f in batch
+        ]
+        if len(batch) < page_size:
+            return files
+        page += 1
 
 
 def resolve_url(filename: str, article_id: int) -> str:

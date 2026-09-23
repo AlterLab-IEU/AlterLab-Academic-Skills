@@ -4,7 +4,7 @@
     {
       "id": "population-timeseries",
       "prompt": "Pull the full population time series for California and Texas from Data Commons so I can plot how they've grown since 2000.",
-      "expected_output": "Triggers the Data Commons skill. Resolves the place names to DCIDs (geoId/06 for California, geoId/48 for Texas) via client.resolve.fetch_dcids_by_name, then queries client.observation.fetch with variable_dcids=['Count_Person'] and date='all', and converts the response to a Pandas DataFrame (via client.observations_dataframe or response.to_observations_as_records, then pivot on date) for plotting. Uses the datacommons-client Python API v2.",
+      "expected_output": "Triggers the Data Commons skill. Resolves the place names to DCIDs (geoId/06 for California, geoId/48 for Texas) via client.resolve.fetch_dcids_by_name, then queries client.observation.fetch with variable_dcids=['Count_Person'] and date='all', and converts the response to a Pandas DataFrame (via client.observations_dataframe or response.to_observation_records().model_dump(), then pivot on date) for plotting. Uses the datacommons-client Python API v2.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "Count_Person" },
@@ -25,7 +25,7 @@
     {
       "id": "resolve-coordinates",
       "prompt": "I have a GPS coordinate (37.7749, -122.4194) and a couple of Wikidata IDs (Q30, Q99). What Data Commons entities do they map to?",
-      "expected_output": "Triggers Data Commons. Uses the resolve endpoint: client.resolve.fetch_dcid_by_coordinates(latitude=37.7749, longitude=-122.4194) for the GPS point and client.resolve.fetch_dcids_by_wikidata_id(wikidata_ids=['Q30','Q99']) for the Wikidata IDs, returning the corresponding DCIDs. Demonstrates entity identification rather than statistical retrieval.",
+      "expected_output": "Triggers Data Commons. Uses the resolve endpoint: client.resolve.fetch_dcid_by_coordinates(latitude='37.7749', longitude='-122.4194') for the GPS point and client.resolve.fetch_dcids_by_wikidata_id(wikidata_ids=['Q30','Q99']) for the Wikidata IDs, reading the DCIDs from each ResolveResponse (to_dict()['entities'][i]['candidates'] or to_flat_dict()). Demonstrates entity identification rather than statistical retrieval.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "DCID" },

@@ -6,14 +6,15 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(uv run:*) Bash(uv pip:*)
 compatibility: Keyless ChEMBL REST API (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # ChEMBL Database
 
 ## Overview
 
-ChEMBL is a manually curated database of bioactive molecules maintained by the European Bioinformatics Institute (EBI), containing over 2 million compounds, 19 million bioactivity measurements, 13,000+ drug targets, and data on approved drugs and clinical candidates. Access and query this data programmatically using the ChEMBL Python client for drug discovery and medicinal chemistry research.
+ChEMBL is a manually curated database of bioactive molecules maintained by the European Bioinformatics Institute (EBI). Release ChEMBL 37 (May 2026) holds ~2.9 million distinct compounds, ~24.5 million bioactivity measurements, ~18,500 targets, and data on approved drugs and clinical candidates (live counts: `https://www.ebi.ac.uk/chembl/api/data/status.json`). Access and query this data programmatically using the ChEMBL Python client for drug discovery and medicinal chemistry research.
 
 ## When to Use This Skill
 
@@ -27,6 +28,16 @@ This skill should be used when:
 - **Cheminformatics**: Analyzing molecular properties and drug-likeness
 - **Target-ligand relationships**: Exploring compound-target interactions
 - **Drug discovery**: Identifying inhibitors, agonists, or bioactive molecules
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Measured binding constants (Ki/Kd) from BindingDB, or its full TSV dump | `alterlab-bindingdb` |
+| General compound lookup, name↔CID/SMILES conversion, PubChem BioAssay | `alterlab-pubchem` |
+| Drug–drug interactions, drug labels, detailed pharmacology records | `alterlab-drugbank` |
+| Purchasable compounds / docking-ready 3D libraries | `alterlab-zinc-db` |
+| Computing descriptors or fingerprints locally from structures | `alterlab-rdkit` |
 
 ## Installation and Setup
 
@@ -156,10 +167,18 @@ indications = drug_indication.filter(molecule_chembl_id='CHEMBL25')
 
 ### Workflow 1: Finding Inhibitors for a Target
 
-1. **Identify the target** by searching by name:
+1. **Identify the target** — most reliably by UniProt accession, because name
+   search is fuzzy (`pref_name__icontains='EGFR'` returns chimeras and
+   protein–protein-interaction targets first, and CHEMBL203's `pref_name` is
+   "Epidermal growth factor receptor", so gene symbols only match synonyms):
    ```python
-   targets = new_client.target.filter(pref_name__icontains='EGFR')
-   target_id = targets[0]['target_chembl_id']
+   targets = new_client.target.filter(
+       target_components__accession='P00533',  # human EGFR
+       target_type='SINGLE PROTEIN',
+   )
+   target_id = targets[0]['target_chembl_id']  # CHEMBL203
+   # By symbol instead: target_synonym__icontains='EGFR' plus organism='Homo sapiens',
+   # then check pref_name — substring matches also hit VEGFR1/2/3.
    ```
 
 2. **Query bioactivity data** for that target:
@@ -300,8 +319,9 @@ for kinase in kinases[:5]:  # First 5 kinases
 ### Explore Drug Repurposing
 
 ```python
-# Get approved drugs
-drugs = new_client.drug.filter()
+# Get approved drugs (the drug endpoint also lists clinical candidates,
+# so filter on max_phase=4; ~3,000 approved of ~16,000 drug records)
+drugs = new_client.drug.filter(max_phase=4)
 
 # For each drug, find all targets
 for drug in drugs[:10]:

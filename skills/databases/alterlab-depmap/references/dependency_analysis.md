@@ -76,9 +76,10 @@ def compute_selectivity(gene_effect_df, cell_info, target_gene, cancer_lineage,
 
 | Dataset | Description | Recommended |
 |---------|-------------|-------------|
-| `CRISPRGeneEffect` | Chronos-corrected gene effect | Yes (current) |
+| `CRISPRGeneEffect` | Chronos gene effect (copy-number corrected, scaled) | Yes (current) |
+| `CRISPRGeneEffectUncorrected` | Chronos without CN correction/scaling | Diagnostics |
 | `Achilles_gene_effect` | Older CERES algorithm | Legacy only |
-| `RNAi_merged` | DEMETER2 RNAi | For cross-validation |
+| DEMETER2 RNAi (separate dataset on the data page) | RNAi dependency | For cross-validation |
 
 ## Quality Metrics
 
@@ -115,9 +116,11 @@ def find_synthetic_lethal(gene_effect_df, mutation_df, biomarker_gene,
     if biomarker_gene not in mutation_df.columns:
         return pd.DataFrame()
 
-    # Get mutant vs WT cell lines
+    # Get mutant vs WT cell lines. OmicsSomaticMutationsMatrixDamaging codes
+    # 0 = none, 1 = damaging, 2 = damaging with summed AF > 0.95, so use > 0;
+    # "== 1" would put the (near-)homozygous mutants in the WT group.
     common = gene_effect_df.index.intersection(mutation_df.index)
-    is_mutant = mutation_df.loc[common, biomarker_gene] == 1
+    is_mutant = mutation_df.loc[common, biomarker_gene] > 0
 
     mutant_lines = common[is_mutant]
     wt_lines = common[~is_mutant]
@@ -164,7 +167,7 @@ def load_prism_data(filepath="primary-screen-replicate-collapsed-logfold-change.
     """
     return pd.read_csv(filepath, index_col=0)
 
-# Available datasets:
-# primary-screen: 4,518 compounds at single dose
-# secondary-screen: ~8,000 compounds at multiple doses (AUC available)
+# Available datasets (PRISM Repurposing, Corsello et al. 2020):
+# primary-screen: 4,518 compounds at a single dose (2.5 µM)
+# secondary-screen: 1,448 active compounds x 499 cell lines at 8 doses (AUC available)
 ```

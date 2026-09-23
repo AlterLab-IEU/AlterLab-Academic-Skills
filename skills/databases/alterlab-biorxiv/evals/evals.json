@@ -22,7 +22,7 @@
     {
       "id": "doi-details-pdf-download",
       "prompt": "Pull the full metadata for bioRxiv preprint 10.1101/2024.01.15.123456 and download its PDF for me.",
-      "expected_output": "Invokes alterlab-biorxiv to fetch paper details by DOI and download the full-text PDF (e.g. --doi with --download-pdf, or BioRxivSearcher.get_paper_details/download_pdf), returning the structured record plus the saved PDF path.",
+      "expected_output": "Invokes alterlab-biorxiv to fetch paper details by DOI and download the full-text PDF (e.g. --doi with --download-pdf, or BioRxivSearcher.get_paper_details/download_pdf), returning the structured record plus the saved PDF path. Handles DOIs with either bioRxiv prefix (10.1101/... or the post-Dec-2025 10.64898/...) and resolves the latest version before building the PDF URL.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "doi" }

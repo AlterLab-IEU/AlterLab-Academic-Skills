@@ -21,8 +21,28 @@ All BRENDA API calls require authentication using email and password:
 
 **Authentication Process:**
 1. Password is hashed using SHA-256 before transmission
-2. Email and hashed password are included as the first two parameters in every API call
+2. Email and hashed password are the first two arguments of every call
 3. Legacy support for `BRENDA_EMIAL` environment variable (note the typo)
+
+**Calling convention (zeep).** Pass each value as a separate positional argument in the
+WSDL's part order (listed per action below), exactly as BRENDA's own example does:
+
+```python
+from zeep import Client, Settings
+import hashlib
+
+client = Client("https://www.brenda-enzymes.org/soap/brenda_zeep.wsdl",
+                settings=Settings(strict=False))
+pw = hashlib.sha256("myPassword".encode("utf-8")).hexdigest()
+result = client.service.getKmValue("j.doe@example.edu", pw, "ecNumber*1.1.1.1",
+                                   "organism*Homo sapiens", "kmValue*", "kmValueMaximum*",
+                                   "substrate*", "commentary*", "ligandStructureId*",
+                                   "literature*")
+```
+
+A single comma-joined string (the older SOAPpy style) raises
+`ValidationError: Missing element password` in zeep. Inspect any operation's order with
+`client.service._binding._operations["getKmValue"].input.signature()`.
 
 ## Available SOAP Actions
 
@@ -46,7 +66,9 @@ Retrieves Michaelis constant (Km) values for enzymes.
 - `*`: Matches any sequence
 - Can be used with partial EC numbers (e.g., "1.1.*")
 
-**Response Format:**
+**Response Format:** zeep returns a list of `kmValueObject` records (fields below;
+`literature` is a list of BRENDA reference IDs). `brenda_client.split_entries()` renders
+each as the legacy delimited string used by the parsers:
 ```
 organism*Escherichia coli#substrate*glucose#kmValue*0.12#kmValueMaximum*#commentary*pH 7.4, 25°C#ligandStructureId*#literature*
 ```
@@ -179,9 +201,9 @@ Reactions use standard biochemical notation:
 
 ### API Rate Limits
 
-- **Maximum**: 5 requests per second
-- **Sustained**: 1 request per second recommended
-- **Daily quota**: Varies by account type
+- BRENDA's SOAP page asks users not to send **more than one request per second**
+  (faster clients may be treated as bots); `brenda_client.call_brenda()` enforces this
+- Registration is required; data are licensed **CC BY 4.0**
 
 ### Best Practices
 
@@ -231,12 +253,13 @@ Reactions use standard biochemical notation:
 - **Parameters**: `password` - Plain text password
 - **Returns**: Hexadecimal SHA-256 hash
 
-**`call_brenda(action: str, parameters: List[str]) -> str`**
-- **Purpose**: Execute BRENDA SOAP action
+**`call_brenda(action: str, parameters: List[str])`**
+- **Purpose**: Execute BRENDA SOAP action (throttled to one call per second)
 - **Parameters**:
   - `action` - SOAP action name (e.g., "getKmValue")
-  - `parameters` - List of parameters in correct order
-- **Returns**: Raw response string from BRENDA
+  - `parameters` - `field*value` tokens in the operation's WSDL order
+- **Returns**: Raw zeep response (list of typed result objects); pass it through
+  `split_entries()` for `field*value#…` strings
 
 #### Convenience Functions
 

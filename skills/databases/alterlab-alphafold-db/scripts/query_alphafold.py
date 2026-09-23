@@ -2,12 +2,16 @@
 """Query the AlphaFold DB public REST API (no API key required).
 
 Endpoints (https://alphafold.ebi.ac.uk/api/):
-  - prediction/{uniprot}   -> prediction metadata (entryId, file URLs, sequence)
+  - prediction/{uniprot}   -> prediction metadata (modelEntityId, file URLs, sequence)
 
 The prediction metadata carries the exact, version-stamped file URLs
 (cifUrl / pdbUrl / bcifUrl / plddtDocUrl / paeDocUrl). This script reads those
 URLs from the response rather than hand-building a `_v{N}` suffix, so it keeps
 working as the DB version advances (currently v6; old `_v4` file URLs now 404).
+
+The endpoint returns a list that also includes isoform records (e.g. P00520-2)
+and possibly third-party models, so the script picks the record whose
+uniprotAccession matches the query instead of blindly taking the first one.
 
 Smoke test:
     uv run python query_alphafold.py prediction P00520
@@ -34,9 +38,13 @@ def get_prediction(uniprot: str) -> list:
 
 
 def _first_record(uniprot: str) -> dict:
+    """Return the record for exactly this accession (canonical, not an isoform)."""
     preds = get_prediction(uniprot)
     if not preds:
         sys.exit(f"No AlphaFold prediction for {uniprot}")
+    for rec in preds:
+        if rec.get("uniprotAccession") == uniprot or rec.get("modelEntityId") == uniprot:
+            return rec
     return preds[0]
 
 

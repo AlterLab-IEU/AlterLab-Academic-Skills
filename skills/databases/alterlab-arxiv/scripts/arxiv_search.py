@@ -115,17 +115,34 @@ class ArxivSearcher:
             "abs_url": abs_url or f"https://arxiv.org/abs/{arxiv_id}",
         }
 
+    def _error_summary(self, response: requests.Response) -> Optional[str]:
+        """Return the message of an arXiv API error entry, if the feed holds one."""
+        try:
+            root = ET.fromstring(response.text)
+        except ET.ParseError:
+            return None
+        for entry in root.findall(f"{self.ATOM_NS}entry"):
+            id_el = entry.find(f"{self.ATOM_NS}id")
+            if id_el is not None and id_el.text and "/api/errors" in id_el.text:
+                summary = entry.find(f"{self.ATOM_NS}summary")
+                return (summary.text or "").strip() if summary is not None else id_el.text
+        return None
+
     def _fetch(self, params: Dict) -> List[Dict]:
-        """Execute API request and parse results."""
+        """Execute API request and parse results.
+
+        Raises ValueError when arXiv rejects the query: since the Nov 2025 backend
+        migration, malformed queries return HTTP 400 with an Atom error entry
+        (previously an empty 200), and that must not be reported as "0 results".
+        """
         self._rate_limit()
         self._log(f"Query params: {params}")
 
-        try:
-            response = self.session.get(self.BASE_URL, params=params, timeout=30)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            self._log(f"Request error: {e}")
-            return []
+        response = self.session.get(self.BASE_URL, params=params, timeout=30)
+        error = self._error_summary(response)
+        if error:
+            raise ValueError(f"arXiv rejected the query: {error}")
+        response.raise_for_status()
 
         root = ET.fromstring(response.text)
         entries = root.findall(f"{self.ATOM_NS}entry")
@@ -134,7 +151,7 @@ class ArxivSearcher:
         results = []
         for entry in entries:
             parsed = self._parse_entry(entry)
-            # Skip the "no results" placeholder entry arXiv returns
+            # Skip any empty placeholder entry
             if not parsed["title"] or parsed["arxiv_id"] == "":
                 continue
             results.append(parsed)
@@ -286,7 +303,7 @@ def main():
         epilog="""
 Examples:
   %(prog)s --keywords "sparse autoencoder" --category cs.LG --max-results 20
-  %(prog)s --author "Anthropic" --max-results 50
+  %(prog)s --author "Yoshua Bengio" --max-results 50
   %(prog)s --ids 2309.10668 2406.04093
   %(prog)s --query "ti:GRPO AND cat:cs.LG" --sort-by submittedDate
   %(prog)s --ids 2309.10668 --download-pdf papers/
@@ -313,8 +330,8 @@ Examples:
     filter_group.add_argument(
         "--sort-by",
         choices=ArxivSearcher.VALID_SORT_BY,
-        default="relevance",
-        help="Sort order (default: relevance)",
+        default=None,
+        help="Sort field (default: relevance; submittedDate when browsing a category)",
     )
     filter_group.add_argument(
         "--sort-order",
@@ -348,7 +365,7 @@ Examples:
         results = searcher.search(
             query=query,
             max_results=args.max_results,
-            sort_by=args.sort_by,
+            sort_by=args.sort_by or "relevance",
             sort_order=args.sort_order,
         )
         query_desc = query
@@ -364,7 +381,7 @@ Examples:
         results = searcher.search(
             query=query,
             max_results=args.max_results,
-            sort_by=args.sort_by,
+            sort_by=args.sort_by or "relevance",
             sort_order=args.sort_order,
         )
         query_desc = query
@@ -378,7 +395,7 @@ Examples:
         results = searcher.search(
             query=query,
             max_results=args.max_results,
-            sort_by=args.sort_by,
+            sort_by=args.sort_by or "relevance",
             sort_order=args.sort_order,
         )
         query_desc = query
@@ -419,4 +436,8 @@ Examples:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except (ValueError, requests.exceptions.RequestException) as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(2)

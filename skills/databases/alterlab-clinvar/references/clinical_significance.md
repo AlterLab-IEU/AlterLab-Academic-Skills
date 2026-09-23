@@ -92,6 +92,7 @@ ClinVar assigns review status ratings to indicate the strength of evidence behin
 | ★★★ | **Expert Panel Review** | Reviewed by expert panel (e.g., ClinGen) | High |
 | ★★ | **Multiple Submitters, No Conflicts** | ≥2 submitters with same classification | Moderate |
 | ★ | **Criteria Provided, Single Submitter** | One submitter with supporting evidence | Standard |
+| ★ | **Criteria Provided, Conflicting Classifications** | Submitters with criteria disagree | Standard — resolve manually |
 | ☆ | **No Assertion Criteria** | Classification without documented criteria | Lowest |
 | ☆ | **No Assertion Provided** | No classification submitted | None |
 
@@ -115,7 +116,7 @@ As of June 2022, conflicts are reported between:
 ### Conflict Resolution
 
 When conflicts exist, ClinVar reports:
-- **"Conflicting interpretations of pathogenicity"** - Disagreement on clinical significance
+- **"Conflicting classifications of pathogenicity"** (called "Conflicting interpretations of pathogenicity" before 2024) - Disagreement on clinical significance
 - Individual submissions are displayed so users can evaluate evidence
 - Higher review status (more stars) carries more weight
 - More recent submissions may reflect updated evidence
@@ -140,7 +141,7 @@ When all submitters agree (within the same category):
 
 ### With Conflicts
 When submitters disagree:
-- Display: "Conflicting interpretations of pathogenicity"
+- Display: "Conflicting classifications of pathogenicity"
 - Details: All individual submissions shown
 - Resolution: Users must evaluate evidence themselves
 
@@ -174,7 +175,7 @@ Be cautious with variants that have:
 
 ## Common Query Patterns
 
-> **Field-tag note:** ClinVar's E-utilities index has **no `[CLNSIG]` or `[RVSTAT]` field**. Pathogenicity is filtered through the `[Properties]` field (`clinsig_pathogenic`, `clinsig_likely_pathogenic`, `clinsig_benign`, `clinsig_likely_benign`, `clinsig_uncertain`, `clinsig_has_conflicts`) and review status through the `[Review status]` field. Unknown tags fall back to `[All Fields]` and silently stop filtering — check `querytranslation` in the response.
+> **Field-tag note:** ClinVar's E-utilities index has **no `[CLNSIG]` or `[RVSTAT]` field**. Pathogenicity is filtered through the `[Properties]` field (`clinsig_pathogenic`, `clinsig_likely_pathogenic`, `clinsig_benign`, `clinsig_likely_benign`, `clinsig_vus`, `clinsig_has_conflicts` — VUS is `clinsig_vus`; `clinsig_uncertain` returns zero hits) and review status through the `[Review status]` field. Unknown tags fall back to `[All Fields]` and silently stop filtering — check `querytranslation` in the response.
 
 ### Search for High-Confidence Pathogenic Variants
 

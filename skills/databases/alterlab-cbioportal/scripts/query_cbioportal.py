@@ -22,7 +22,7 @@ HEADERS = {"Accept": "application/json", "Content-Type": "application/json"}
 
 def get_studies(name_filter: str | None = None) -> list:
     """List public cancer studies (optionally filter by substring in studyId)."""
-    r = requests.get(f"{BASE}/studies", params={"pageSize": 1000},
+    r = requests.get(f"{BASE}/studies", params={"pageSize": 100000},
                      headers=HEADERS, timeout=60)
     r.raise_for_status()
     studies = r.json()

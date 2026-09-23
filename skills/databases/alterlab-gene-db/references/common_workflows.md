@@ -25,14 +25,14 @@ Identify genes associated with a specific disease or phenotype.
 
 ```bash
 # Find genes associated with Alzheimer's disease
-python scripts/query_gene.py --search "Alzheimer disease[disease]" --organism human --max-results 50
+python scripts/query_gene.py --search "Alzheimer disease[Disease/Phenotype]" --organism human --max-results 50
 ```
 
 2. **Filter by chromosome location**
 
 ```bash
 # Find genes on chromosome 17 associated with breast cancer
-python scripts/query_gene.py --search "breast cancer[disease] AND 17[chromosome]" --organism human
+python scripts/query_gene.py --search "breast cancer[Disease/Phenotype] AND 17[chromosome]" --organism human
 ```
 
 3. **Retrieve detailed information**
@@ -43,7 +43,7 @@ import json
 from scripts.query_gene import esearch, esummary
 
 # Search for genes
-query = "diabetes[disease] AND human[organism]"
+query = "diabetes[Disease/Phenotype] AND human[organism]"
 gene_ids = esearch(query, retmax=100, api_key="YOUR_KEY")
 
 # Get summaries
@@ -188,14 +188,14 @@ Identify genes involved in specific biological pathways or processes.
 
 ```bash
 # Find genes involved in apoptosis
-python scripts/query_gene.py --search "GO:0006915[biological process]" --organism human --max-results 100
+python scripts/query_gene.py --search '"apoptotic process"[Gene Ontology]' --organism human --max-results 100
 ```
 
 2. **Search by pathway name**
 
 ```bash
 # Find genes in insulin signaling pathway
-python scripts/query_gene.py --search "insulin signaling pathway[pathway]" --organism human
+python scripts/query_gene.py --search '"insulin receptor signaling pathway"[Gene Ontology]' --organism human
 ```
 
 3. **Get pathway-related genes**
@@ -206,7 +206,7 @@ import urllib.request
 import json
 
 # Search for pathway genes
-query = "MAPK signaling pathway[pathway] AND human[organism]"
+query = '"MAPK cascade"[Gene Ontology] AND human[organism]'  # Gene has no [pathway] field
 url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=gene&term={query}&retmode=json&retmax=200"
 
 with urllib.request.urlopen(url) as response:
@@ -358,7 +358,7 @@ print(f"Gene {gene_id} has {len(pmids)} publications")
 # Example: Find genes at intersection of multiple criteria
 def find_genes_multi_criteria(organism='human'):
     # Criteria 1: Disease association
-    disease_genes = set(esearch("diabetes[disease] AND human[organism]"))
+    disease_genes = set(esearch("diabetes[Disease/Phenotype] AND human[organism]"))
 
     # Criteria 2: Chromosome location
     chr_genes = set(esearch("11[chromosome] AND human[organism]"))

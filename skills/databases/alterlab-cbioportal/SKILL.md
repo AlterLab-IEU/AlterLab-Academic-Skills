@@ -6,7 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless cBioPortal REST API for public data (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # cBioPortal Database
@@ -34,6 +35,15 @@ Use cBioPortal when:
 - **Pan-cancer analysis**: Compare alteration frequencies across cancer types
 - **Clinical associations**: Link genomic alterations to clinical variables (stage, grade, treatment response)
 - **TCGA/GENIE exploration**: Systematic access to TCGA and clinical sequencing datasets
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Germline variant pathogenicity / clinical significance | `alterlab-clinvar` |
+| COSMIC Cancer Gene Census, mutational signatures (SBS), curated somatic catalog | `alterlab-cosmic` |
+| CRISPR/RNAi gene-dependency (essentiality) in cancer cell lines | `alterlab-depmap` |
+| Aggregated target–disease association evidence and tractability | `alterlab-opentargets` |
 
 ## Core Capabilities
 
@@ -66,23 +76,30 @@ def cbioportal_post(endpoint, body):
 
 ```python
 def get_all_studies():
-    """List all available cancer studies."""
-    return cbioportal_get("studies", {"pageSize": 500})
+    """List all available cancer studies.
+
+    The public portal hosts 540+ studies (2026-09), so a pageSize of 500 would
+    silently truncate the list; ask for more than you expect.
+    """
+    return cbioportal_get("studies", {"pageSize": 100000})
 
 # Each study has:
 # studyId: unique identifier (e.g., "brca_tcga")
 # name: human-readable name
 # description: dataset description
 # cancerTypeId: cancer type abbreviation
-# referenceGenome: GRCh37 or GRCh38
-# pmid: associated publication
+# referenceGenome: hg19 or hg38
+# allSampleCount: samples in the study
+# (pass projection=DETAILED to also get pmid, citation, sequencedSampleCount, ...)
 
 studies = get_all_studies()
 print(f"Total studies: {len(studies)}")
 
-# Common TCGA study IDs:
-# brca_tcga, luad_tcga, coadread_tcga, gbm_tcga, prad_tcga,
-# skcm_tcga, blca_tcga, hnsc_tcga, lihc_tcga, stad_tcga
+# Common TCGA study IDs — each cancer has several versions:
+#   *_tcga                     original TCGA Firehose Legacy (e.g. brca_tcga)
+#   *_tcga_pan_can_atlas_2018  harmonized PanCancer Atlas (preferred for pan-cancer work)
+#   *_tcga_gdc                 GDC re-processed data
+# e.g. brca_tcga, luad_tcga, coadread_tcga, gbm_tcga, prad_tcga, skcm_tcga
 
 # Filter for TCGA studies
 tcga_studies = [s for s in studies if "tcga" in s["studyId"]]
@@ -128,17 +145,18 @@ def get_mutations(molecular_profile_id, entrez_gene_ids, sample_list_id=None):
 mutations = get_mutations("brca_tcga_mutations", entrez_gene_ids=[7157])  # TP53
 
 # Each mutation record contains:
-# patientId, sampleId, entrezGeneId, gene.hugoGeneSymbol
+# patientId, sampleId, entrezGeneId (the nested gene.hugoGeneSymbol only
+#   appears with ?projection=DETAILED on the fetch URL)
 # mutationType (Missense_Mutation, Nonsense_Mutation, Frame_Shift_Del, etc.)
-# proteinChange (e.g., "R175H")
-# variantClassification, variantType
+# proteinChange (e.g., "R175H"), variantType
 # ncbiBuild, chr, startPosition, endPosition, referenceAllele, variantAllele
 # mutationStatus (Somatic/Germline)
-# alleleFreqT (tumor VAF)
+# tumorAltCount, tumorRefCount (read counts — there is no VAF field; derive it)
 
 import pandas as pd
 df = pd.DataFrame(mutations)
-print(df[["patientId", "mutationType", "proteinChange", "alleleFreqT"]].head())
+df["vaf"] = df["tumorAltCount"] / (df["tumorAltCount"] + df["tumorRefCount"])
+print(df[["patientId", "mutationType", "proteinChange", "vaf"]].head())
 print(f"\nMutation types:\n{df['mutationType'].value_counts()}")
 ```
 
@@ -175,16 +193,18 @@ def get_alteration_frequency(study_id, gene_symbols, alteration_types=None):
     """Compute alteration frequencies for genes across a cancer study."""
     import requests, pandas as pd
 
-    # Get sample list
+    # Denominator = samples profiled for mutations (cBioPortal's own convention).
+    # 'all_cases_in_study' also counts unsequenced samples and deflates the
+    # frequency (brca_tcga: 1,108 samples in study vs 982 sequenced).
     samples = requests.get(
         f"{BASE_URL}/studies/{study_id}/sample-lists",
         headers=HEADERS
     ).json()
-    all_samples_id = next(
-        (s["sampleListId"] for s in samples if s["category"] == "all_cases_in_study"), None
-    )
+    by_category = {s["category"]: s["sampleListId"] for s in samples}
+    sample_list_id = (by_category.get("all_cases_with_mutation_data")
+                      or by_category.get("all_cases_in_study"))
     total_samples = len(requests.get(
-        f"{BASE_URL}/sample-lists/{all_samples_id}/sample-ids",
+        f"{BASE_URL}/sample-lists/{sample_list_id}/sample-ids",
         headers=HEADERS
     ).json())
 
@@ -202,11 +222,12 @@ def get_alteration_frequency(study_id, gene_symbols, alteration_types=None):
 
     # Get mutations
     mutation_profile = f"{study_id}_mutations"
-    mutations = get_mutations(mutation_profile, entrez_ids, all_samples_id)
+    mutations = get_mutations(mutation_profile, entrez_ids, sample_list_id)
 
     freq = {}
     for g_symbol, e_id in entrez_by_symbol.items():
-        mutated = len(set(m["patientId"] for m in mutations if m["entrezGeneId"] == e_id))
+        # Count samples (not patients) so numerator and denominator match.
+        mutated = len(set(m["sampleId"] for m in mutations if m["entrezGeneId"] == e_id))
         freq[g_symbol] = mutated / total_samples * 100
 
     return freq
@@ -369,17 +390,18 @@ def survival_by_mutation(study_id, gene_symbol):
 
 - **Know your study IDs**: Use the Swagger UI or `GET /studies` to find the correct study ID
 - **Use sample lists**: Each study has an `all` sample list and subsets; always specify the appropriate one
-- **TCGA vs. GENIE**: TCGA data is comprehensive but older; GENIE has more recent clinical sequencing data
+- **TCGA vs. GENIE**: TCGA data is comprehensive but older; GENIE has more recent clinical sequencing data, but its consortium releases live on the separate https://genie.cbioportal.org portal (login required), not on the keyless public API
 - **Entrez gene IDs**: The API uses Entrez IDs — convert from symbols with `POST /genes/fetch?geneIdType=HUGO_GENE_SYMBOL`. The body must be a **plain JSON array** (`["TP53","KRAS"]`); the object form `[{"hugoGeneSymbol":...}]` returns HTTP 400, and omitting `geneIdType` silently returns `[]` for symbols. Response order is not guaranteed — map results back by `hugoGeneSymbol`.
 - **Handle 404s**: Some molecular profiles may not exist for all studies
 - **Rate limiting**: Add delays for bulk queries; consider downloading data files for large-scale analyses
 
 ## Data Downloads
 
-For large-scale analyses, download study data directly:
+For large-scale analyses, download study data directly (the older
+`cbioportal-datahub.s3.amazonaws.com` links now return 403):
 ```bash
-# Download TCGA BRCA data
-wget https://cbioportal-datahub.s3.amazonaws.com/brca_tcga.tar.gz
+# Download TCGA BRCA (PanCancer Atlas) data
+wget https://datahub.assets.cbioportal.org/brca_tcga_pan_can_atlas_2018.tar.gz
 ```
 
 ## Additional Resources

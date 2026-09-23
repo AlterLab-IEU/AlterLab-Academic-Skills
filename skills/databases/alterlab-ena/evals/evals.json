@@ -4,7 +4,7 @@
     {
       "id": "download-reads-by-run",
       "prompt": "I need the raw FASTQ reads for ENA run accession ERR123456 to feed into my alignment pipeline. How do I retrieve them?",
-      "expected_output": "Invokes alterlab-ena. Retrieves the run record (Browser API by accession), locates the FASTQ file URLs, and recommends FTP/Aspera (or enaBrowserTools) for the actual download. Notes the 50 req/sec rate limit and citing the study accession.",
+      "expected_output": "Invokes alterlab-ena. Uses the Portal API filereport endpoint (result=read_run, fields fastq_ftp/fastq_md5) to locate the FASTQ file URLs for the run, and recommends FTP/Aspera (or enaBrowserTools) for the actual download with MD5 verification. Notes the 50 req/sec rate limit and citing the study accession.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "FASTQ" }
@@ -22,10 +22,10 @@
     {
       "id": "assemblies-by-organism",
       "prompt": "I want all genome assemblies in ENA for Escherichia coli. Can you build the query and list what's available?",
-      "expected_output": "Invokes alterlab-ena. Uses the Portal API with result=assembly and a tax_tree(Escherichia coli) query to find assemblies for the organism, returning available assembly records.",
+      "expected_output": "Invokes alterlab-ena. Uses the Portal API with result=assembly and a taxonomy filter on the numeric taxon ID — tax_tree(562) for Escherichia coli, resolved via the taxonomy API if needed (tax_tree(Escherichia coli) is rejected with HTTP 400) — to find assemblies for the organism, returning available assembly records.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Constructs an ENA Portal API assembly query filtered by taxonomy for the organism." }
+        { "type": "behavior", "value": "Constructs an ENA Portal API assembly query filtered by the organism's numeric taxon ID (tax_tree/tax_eq)." }
       ]
     },
     {

@@ -6,16 +6,17 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless Ensembl REST API (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Ensembl Database
 
 ## Overview
 
-Access and query the Ensembl genome database, a comprehensive resource for vertebrate genomic data maintained by EMBL-EBI. The database provides gene annotations, sequences, variants, regulatory information, and comparative genomics data for over 250 species. Current release is 116 (April 2026).
+Access and query the Ensembl genome database, a comprehensive resource for vertebrate genomic data maintained by EMBL-EBI. The database provides gene annotations, sequences, variants, regulatory information, and comparative genomics data for over 250 species. The classic REST API serves release 116 (released 9 June 2026; `GET /info/software` → `{"release": 116}`).
 
-**Heads-up (verified June 2026):** Release 116 is the final release served by the classic REST API at `https://rest.ensembl.org`. The endpoint stays online with no announced sunset date but receives no further data updates; Ensembl's new platform replaces it with GraphQL and GA4GH refget for sequence access. For current research the REST API documented here still works; plan migration for long-lived pipelines.
+**Heads-up (verified 2026-09-23):** Release 116 is the final release on the classic platform. `https://rest.ensembl.org` (and `grch37.rest.ensembl.org`) stay online with no announced sunset date but receive no further data updates; the classic website lives on as the archive `https://jun2026.archive.ensembl.org`. New data now appear on the new Ensembl platform at `https://www.ensembl.org` (formerly beta.ensembl.org, 5,200+ genomes), whose programmatic access is **GraphQL** (`POST https://www.ensembl.org/data/graphql`) plus GA4GH **refget** for sequences. The REST API documented here still works and is the simplest route for GRCh38/GRCh37 human work; use GraphQL for genomes or annotation updates added after release 116, and plan migration for long-lived pipelines.
 
 ## When to Use This Skill
 
@@ -29,6 +30,16 @@ This skill should be used when:
 - Converting coordinates between genome assemblies (e.g., GRCh37 to GRCh38)
 - Performing comparative genomics analyses
 - Integrating Ensembl data into genomic research pipelines
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| NCBI Gene records, RefSeq accessions, Entrez gene IDs | `alterlab-gene-db` |
+| Population allele frequencies / constraint (gnomAD v4) | `alterlab-gnomad` |
+| Clinical significance of a variant (ClinVar) | `alterlab-clinvar` |
+| Raw reads or assemblies by ENA/SRA accession | `alterlab-ena` |
+| Quick one-liner gene lookups from a CLI | `alterlab-gget` |
 
 ## Core Capabilities
 
@@ -137,13 +148,20 @@ Perform cross-species comparisons to identify orthologs, paralogs, and evolution
 
 **Example:**
 ```python
-# Find orthologs for a human gene
-orthologs = client.homology_ensemblgene(
-    id='ENSG00000139618',  # Human BRCA2
-    target_species='mouse'
-)
+import requests
 
-# Get gene tree
+# Find orthologs for a human gene. The species segment is required:
+# GET /homology/id/:species/:id (the old /homology/id/:id path now returns 404,
+# and so does ensembl_rest's homology_ensemblgene(), which still calls it).
+orthologs = requests.get(
+    "https://rest.ensembl.org/homology/id/human/ENSG00000139618",  # Human BRCA2
+    params={"target_species": "mouse", "type": "orthologues", "format": "condensed"},
+    headers={"Content-Type": "application/json"},
+    timeout=60,
+).json()
+# -> data[0]["homologies"][0]["id"] == "ENSMUSG00000041147" (ortholog_one2one)
+
+# Get gene tree (GET /genetree/member/symbol/:species/:symbol; large and slow)
 gene_tree = client.genetree_member_symbol(
     species='human',
     symbol='BRCA2'
@@ -256,7 +274,7 @@ The `ensembl_rest` package (Ad115/EnsemblRest) wraps the REST endpoints, but it 
 | `GET /info/species` | `species` |
 | `GET /vep/:species/hgvs/...` | `vep_hgvs_get` (POST batch: `vep_hgvs_post`) |
 | `GET /sequence/id/...` | `sequence_id` |
-| `GET /homology/id/...` | `homology_ensemblgene` |
+| `GET /homology/id/:species/:id` | none that works — `homology_ensemblgene` calls the retired `/homology/id/:id` (404); use `requests` or `homology_symbol` |
 
 When unsure, prefer the direct REST call — the path is unambiguous.
 
@@ -327,6 +345,7 @@ Common species identifiers:
 - **Official Documentation:** https://rest.ensembl.org/documentation
 - **Python Package Docs:** https://ensemblrest.readthedocs.io
 - **EBI Training:** https://www.ebi.ac.uk/training/online/courses/ensembl-rest-api/
-- **Ensembl Browser:** https://useast.ensembl.org
+- **Ensembl (new platform):** https://www.ensembl.org — GraphQL help: https://www.ensembl.org/help/articles/getting-started-with-ensembl-graph-ql-services
+- **Release 116 archive (classic browser):** https://jun2026.archive.ensembl.org
 - **GitHub Examples:** https://github.com/Ensembl/ensembl-rest/wiki
 

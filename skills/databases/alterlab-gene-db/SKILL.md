@@ -6,7 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless NCBI E-utilities/Datasets REST APIs; optional NCBI API key raises rate limits
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Gene Database
@@ -18,6 +19,16 @@ NCBI Gene is a comprehensive database integrating gene information from diverse 
 ## When to Use This Skill
 
 This skill should be used when working with gene data including searching by gene symbol or ID, retrieving gene sequences and metadata, analyzing gene functions and pathways, or performing batch gene lookups.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Ensembl IDs, VEP consequences, orthologs, or GRCh37↔GRCh38 mapping | `alterlab-ensembl` |
+| Protein-level function, domains, PTMs, or UniProt ID mapping | `alterlab-uniprot` |
+| Variant clinical significance | `alterlab-clinvar` |
+| Pathway membership / enrichment for a gene list | `alterlab-reactome` |
+| Quick one-off gene lookups from a CLI across databases | `alterlab-gget` |
 
 ## Quick Start
 
@@ -38,10 +49,14 @@ To search for genes by symbol or name across organisms:
 2. Specify the gene symbol and organism (e.g., "BRCA1 in human")
 3. The script returns matching Gene IDs
 
-Example query patterns:
-- Gene symbol: `insulin[gene name] AND human[organism]`
-- Gene with disease: `dystrophin[gene name] AND muscular dystrophy[disease]`
-- Chromosome location: `human[organism] AND 17q21[chromosome]`
+Example query patterns (tags checked against `einfo.fcgi?db=gene`; an unknown tag such
+as `[disease]`, `[phenotype]`, or `[pathway]` is silently rewritten to `[All Fields]` —
+always read `querytranslation` in the ESearch response):
+- Gene symbol: `INS[sym] AND human[organism]` (`[gene]`/`[sym]` match symbols, so
+  `insulin[gene name]` finds nothing — use `insulin[Gene Full Name]` for names)
+- Gene with disease: `dystrophin[Gene Full Name] AND "muscular dystrophy"[Disease/Phenotype]`
+- Cytogenetic location: `human[organism] AND 17q21[Default Map Location]`
+  (`[chromosome]` holds chromosome numbers only, e.g. `17[chromosome]`)
 
 ### Retrieve Gene Information by ID
 
@@ -85,9 +100,11 @@ To find genes associated with specific biological functions or phenotypes:
 3. Filter by organism, chromosome, or other attributes
 
 Example searches:
-- By GO term: `GO:0006915[biological process]` (apoptosis)
-- By phenotype: `diabetes[phenotype] AND mouse[organism]`
-- By pathway: `insulin signaling pathway[pathway]`
+- By GO term (term names are indexed, GO IDs are not): `"apoptotic process"[Gene Ontology] AND human[organism]`
+- By disease/phenotype: `diabetes[Disease/Phenotype] AND mouse[organism]`
+- By pathway: Gene has no pathway field — use the matching GO process
+  (`"insulin receptor signaling pathway"[Gene Ontology]`) or a pathway database
+  (`alterlab-reactome`, `alterlab-kegg`)
 
 ### API Access Patterns
 
@@ -115,7 +132,7 @@ Query NCBI Gene using E-utilities (ESearch, ESummary, EFetch).
 ```bash
 python scripts/query_gene.py --search "BRCA1" --organism "human"
 python scripts/query_gene.py --id 672 --format json
-python scripts/query_gene.py --search "insulin[gene] AND diabetes[disease]"
+python scripts/query_gene.py --search "INS[sym] AND diabetes[Disease/Phenotype]" --organism human
 ```
 
 ### fetch_gene_data.py

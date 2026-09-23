@@ -254,7 +254,13 @@ params = {
 
 ### Skip Parameter
 
-For pagination, skip the first N results:
+`skip` is capped at **25,000** — larger values return `BAD_REQUEST: Skip value must
+25000 or less.` To page deeper, follow the `Link: <...search_after=...>; rel="next"`
+response header (openFDA's cursor), split the search into date ranges
+(e.g. `receivedate:[20240101 TO 20240630]`), or use the bulk files at
+https://open.fda.gov/data/downloads/.
+
+For pagination within that window, skip the first N results:
 ```python
 # Get results 101-200
 params = {
@@ -272,7 +278,7 @@ def get_all_results(url, search_query, api_key, max_results=5000):
     skip = 0
     limit = 100
 
-    while len(all_results) < max_results:
+    while len(all_results) < max_results and skip <= 25000:  # openFDA skip cap
         params = {
             "api_key": api_key,
             "search": search_query,

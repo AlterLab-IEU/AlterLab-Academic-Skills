@@ -6,7 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless NCBI E-utilities REST API; optional NCBI API key raises rate limits
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # ClinVar Database
@@ -27,6 +28,24 @@ This skill should be used when:
 - Resolving conflicting variant interpretations
 - Annotating variant call sets with clinical significance
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Population allele frequency / ancestry-specific AF, gnomAD constraint | `alterlab-gnomad` |
+| Somatic cancer mutation catalog, Cancer Gene Census, mutational signatures | `alterlab-cosmic` |
+| How often a gene is mutated in tumor cohorts (TCGA, MSK-IMPACT) | `alterlab-cbioportal` |
+| Pharmacogenomic gene–drug dosing (CPIC/DPWG) | `alterlab-clinpgx` |
+
+**Three classification types (since 2024).** ClinVar now keeps separate aggregate
+classifications for **germline** pathogenicity (ACMG/AMP), **somatic clinical impact**
+(AMP/ASCO/CAP tiers), and **oncogenicity** (ClinGen/CGC/VICC). APIs and files expose them
+separately: esummary JSON has `germline_classification`, `clinical_impact_classification`,
+and `oncogenicity_classification` objects (each with `description` and `review_status`;
+there is no longer a `clinical_significance` field); the VCF has `CLNSIG`/`CLNREVSTAT`
+(germline), `ONC`/`ONCREVSTAT`, and `SCI`/`SCIREVSTAT`; `variant_summary.txt` has
+`ClinicalSignificance` (germline) plus `SomaticClinicalImpact` and `Oncogenicity` columns.
+
 ## Core Capabilities
 
 ### 1. Search and Query ClinVar
@@ -37,7 +56,7 @@ Search ClinVar using the web interface at https://www.ncbi.nlm.nih.gov/clinvar/
 
 **Common search patterns** (field tags verified against the live `einfo` field list — there is **no `[CLNSIG]` or `[RVSTAT]` field**; using them silently falls back to `[All Fields]` and does NOT filter):
 - By gene: `BRCA1[gene]`
-- By clinical significance: `clinsig_pathogenic[Properties]` (also `clinsig_likely_pathogenic`, `clinsig_benign`, `clinsig_likely_benign`, `clinsig_uncertain`, `clinsig_has_conflicts`)
+- By clinical significance: `clinsig_pathogenic[Properties]` (also `clinsig_likely_pathogenic`, `clinsig_benign`, `clinsig_likely_benign`, `clinsig_vus`, `clinsig_has_conflicts` — note VUS is `clinsig_vus`; `clinsig_uncertain` matches nothing)
 - By review status: `"reviewed by expert panel"[Review status]`, `"practice guideline"[Review status]`, `"criteria provided, single submitter"[Review status]`
 - By condition: `"breast cancer"[Disease/Phenotype]`
 - By variant: `"c.1310_1313del"[Variant name]`
@@ -82,8 +101,8 @@ ClinVar uses standardized terminology for variant classifications. Refer to `ref
 - ★★★★ Practice guideline - Highest confidence
 - ★★★ Expert panel review (e.g., ClinGen) - High confidence
 - ★★ Multiple submitters, no conflicts - Moderate confidence
-- ★ Single submitter with criteria - Standard weight
-- ☆ No assertion criteria - Low confidence
+- ★ Criteria provided, single submitter — or criteria provided, conflicting classifications
+- ☆ No assertion criteria / no classification provided - Low confidence
 
 **Critical considerations:**
 - Always check review status - prefer ★★★ or ★★★★ ratings
@@ -95,7 +114,7 @@ ClinVar uses standardized terminology for variant classifications. Refer to `ref
 
 #### Access ClinVar FTP Site
 
-Download complete datasets from `ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/`
+Download complete datasets from `https://ftp.ncbi.nlm.nih.gov/pub/clinvar/` (same tree over HTTPS or FTP)
 
 Refer to `references/data_formats.md` for comprehensive documentation on file formats and processing.
 
@@ -105,9 +124,10 @@ Refer to `references/data_formats.md` for comprehensive documentation on file fo
 
 #### Available Formats
 
-**XML files** (most comprehensive):
-- VCV (Variation) files: `xml/clinvar_variation/` - Variant-centric aggregation
-- RCV (Record) files: `xml/RCV/` - Variant-condition pairs
+**XML files** (most comprehensive; current format since 2025-08-07, with separate germline / somatic elements):
+- VCV (Variation) files: `xml/ClinVarVCVRelease_YYYY-MM.xml.gz` (+ `_00-latest` symlink) - Variant-centric aggregation
+- RCV (Record) files: `xml/RCV_release/ClinVarRCVRelease_YYYY-MM.xml.gz` - Variant-condition pairs
+- The old `ClinVarVariationRelease` / `ClinVarFullRelease` formats (single classification element) are frozen in `xml/VCV_xml_old_format/` and `xml/RCV_xml_old_format/` and no longer supported
 - Include full submission details, evidence, and metadata
 
 **VCF files** (for genomic pipelines):
@@ -122,11 +142,11 @@ Refer to `references/data_formats.md` for comprehensive documentation on file fo
 
 **Example download:**
 ```bash
-# Download latest monthly XML release
-wget ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/clinvar_variation/ClinVarVariationRelease_00-latest.xml.gz
+# Download latest monthly VCV XML release
+wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/ClinVarVCVRelease_00-latest.xml.gz
 
 # Download VCF for GRCh38
-wget ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz
+wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz
 ```
 
 ### 4. Process and Analyze ClinVar Data
@@ -140,11 +160,15 @@ Process XML files to extract variant details, classifications, and evidence.
 import gzip
 import xml.etree.ElementTree as ET
 
-with gzip.open('ClinVarVariationRelease.xml.gz', 'rt') as f:
+with gzip.open('ClinVarVCVRelease_00-latest.xml.gz', 'rt') as f:
     for event, elem in ET.iterparse(f, events=('end',)):
         if elem.tag == 'VariationArchive':
             variation_id = elem.attrib.get('VariationID')
-            # Extract clinical significance, review status, etc.
+            # Aggregate germline call lives under ClassifiedRecord/Classifications
+            germline = elem.find('ClassifiedRecord/Classifications/GermlineClassification')
+            if germline is not None:
+                classification = germline.findtext('Description')      # e.g. "Pathogenic/Likely pathogenic"
+                review_status = germline.findtext('ReviewStatus')
             elem.clear()  # Free memory
 ```
 
@@ -186,8 +210,10 @@ Use pandas or command-line tools for rapid filtering and analysis.
 ```python
 import pandas as pd
 
-# Load variant summary
-df = pd.read_csv('variant_summary.txt.gz', sep='\t', compression='gzip')
+# Load variant summary (one row per variant *per assembly* — keep one build,
+# or every count is doubled)
+df = pd.read_csv('variant_summary.txt.gz', sep='\t', compression='gzip', low_memory=False)
+df = df[df['Assembly'] == 'GRCh38']
 
 # Filter pathogenic variants in specific gene
 pathogenic_brca = df[
@@ -201,15 +227,16 @@ sig_counts = df['ClinicalSignificance'].value_counts()
 
 **Using command-line tools:**
 ```bash
-# Extract pathogenic variants for specific gene
+# Extract pathogenic TP53 variants (GRCh38 rows). Columns: 3 Name, 5 GeneSymbol,
+# 7 ClinicalSignificance (germline), 17 Assembly, 25 ReviewStatus, 31 VariationID
 zcat variant_summary.txt.gz | \
-  awk -F'\t' '$7=="TP53" && $13~"Pathogenic"' | \
-  cut -f1,5,7,13,14
+  awk -F'\t' '$5=="TP53" && $7~/Pathogenic/ && $17=="GRCh38"' | \
+  cut -f3,5,7,25,31
 ```
 
 ### 5. Handle Conflicting Interpretations
 
-When multiple submitters provide different classifications for the same variant, ClinVar reports "Conflicting interpretations of pathogenicity."
+When multiple submitters provide different classifications for the same variant, ClinVar reports "Conflicting classifications of pathogenicity" (renamed from "Conflicting interpretations" in 2024; VCF value `Conflicting_classifications_of_pathogenicity`, review status "criteria provided, conflicting classifications").
 
 **Resolution strategy:**
 1. Check review status (star rating) - higher ratings carry more weight
@@ -278,8 +305,8 @@ Contact: clinvar@ncbi.nlm.nih.gov for submission account setup.
 **Steps:**
 1. Download appropriate ClinVar VCF (match genome build: GRCh37 or GRCh38):
    ```bash
-   wget ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz
-   wget ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz.tbi
+   wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz
+   wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz.tbi
    ```
 2. Annotate using bcftools:
    ```bash
@@ -314,7 +341,8 @@ Contact: clinvar@ncbi.nlm.nih.gov for submission account setup.
 **Steps:**
 1. Download monthly release for reproducibility:
    ```bash
-   wget ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/clinvar_variation/ClinVarVariationRelease_YYYY-MM.xml.gz
+   wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/ClinVarVCVRelease_YYYY-MM.xml.gz
+   # previous years' monthly files move to xml/archive/<year>/
    ```
 2. Parse XML and load into database (PostgreSQL, MySQL, MongoDB)
 3. Index by gene, position, clinical significance, review status

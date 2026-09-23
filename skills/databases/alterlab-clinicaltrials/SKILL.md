@@ -6,7 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless ClinicalTrials.gov API v2 (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # ClinicalTrials.gov Database
@@ -27,6 +28,15 @@ This skill should be used when working with clinical trial data in scenarios suc
 - **Data export** - Extracting clinical trial data for further analysis or reporting
 - **Trial monitoring** - Tracking status updates or results for specific trials
 - **Eligibility screening** - Reviewing inclusion/exclusion criteria for trials
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Published trial results, RCT papers, or meta-analysis literature | `alterlab-pubmed` |
+| FDA approvals, drug labels, adverse-event (FAERS) or recall data | `alterlab-fda` |
+| Writing a CSR, SAE narrative, or other trial report document | `alterlab-clinical-reports` |
+| Evidence-graded treatment recommendations / decision algorithms | `alterlab-clinical-decision` |
 
 ## Quick Start
 
@@ -214,6 +224,9 @@ Filter trials by recruitment or completion status using the `filter.overallStatu
 - `TERMINATED` - Stopped prematurely
 - `COMPLETED` - Study has concluded
 - `WITHDRAWN` - Withdrawn prior to enrollment
+- Expanded-access records use `AVAILABLE`, `NO_LONGER_AVAILABLE`,
+  `TEMPORARILY_NOT_AVAILABLE`, `APPROVED_FOR_MARKETING`; `WITHHELD` and `UNKNOWN`
+  also occur (full list: `GET /api/v2/studies/enums`)
 
 **Example: Find recently completed trials with results**
 
@@ -449,22 +462,9 @@ The API response has a nested structure. Key paths to common information:
 
 ### Error Handling
 
-Always implement proper error handling for network requests:
-
-```python
-import requests
-
-try:
-    response = requests.get(url, params=params, timeout=30)
-    response.raise_for_status()
-    data = response.json()
-except requests.exceptions.HTTPError as e:
-    print(f"HTTP error: {e.response.status_code}")
-except requests.exceptions.RequestException as e:
-    print(f"Request failed: {e}")
-except ValueError as e:
-    print(f"JSON decode error: {e}")
-```
+Use a `timeout` on every request and treat HTTP 400 as a query bug, not "no trials":
+the API rejects unknown parameters (e.g. `filter.phase`) and malformed Essie
+expressions with 400.
 
 ### Handling Missing Data
 
@@ -487,10 +487,10 @@ if 'resultsSection' in study:
 - **Authentication**: Not required (public API)
 - **Rate Limit**: ~50 requests/minute per IP
 - **Response Formats**: JSON (default), CSV
-- **Max Page Size**: 1000 studies per request
+- **Max Page Size**: 1000 studies per request (larger values are coerced down to 1000)
 - **Date Format**: ISO 8601
 - **Text Format**: CommonMark Markdown for rich text fields
-- **API Version**: 2.0 (released March 2024)
+- **API Version**: 2.x (v2.0 released March 2024; `GET /api/v2/version` reports the current build, 2.0.5 as of 2026-09, plus the data timestamp)
 - **API Specification**: OpenAPI 3.0
 
 For complete technical details, see `references/api_reference.md`.

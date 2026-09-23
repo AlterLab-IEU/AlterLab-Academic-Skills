@@ -6,14 +6,15 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless public BindingDB web services (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # BindingDB Database
 
 ## Overview
 
-BindingDB (https://www.bindingdb.org/) is the primary public database of measured drug-protein binding affinities. It contains roughly 3.2 million binding data records for ~1.4 million compounds tested against ~11,400 protein targets, curated from scientific literature and patent literature. BindingDB stores quantitative binding measurements (Ki, Kd, IC50, EC50) essential for drug discovery, pharmacology, and computational chemistry research.
+BindingDB (https://www.bindingdb.org/) is the primary public database of measured drug-protein binding affinities. It contains roughly 3.2 million binding data records for ~1.4 million compounds tested against ~11,500 protein targets (homepage figures, 2026-09), curated from scientific literature and patent literature. BindingDB stores quantitative binding measurements (Ki, Kd, IC50, EC50) essential for drug discovery, pharmacology, and computational chemistry research.
 
 **Key resources:**
 - BindingDB website: https://www.bindingdb.org/
@@ -31,6 +32,15 @@ Use BindingDB when:
 - **Repurposing analysis**: Does an approved drug bind to an unintended target?
 - **Competitive analysis**: What is the best reported affinity for a target class?
 - **Fragment screening**: Find validated binding data for fragments against a target
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Curated bioactivity mining at scale, assay metadata, drug mechanisms | `alterlab-chembl` |
+| Compound identifiers/properties by name or CID, PubChem BioAssay | `alterlab-pubchem` |
+| Purchasable analogs or docking-ready 3D libraries | `alterlab-zinc-db` |
+| Docking a ligand into a receptor structure | `alterlab-diffdock` |
 
 ## Core Capabilities
 
@@ -73,6 +83,14 @@ def get_ligands_for_target(uniprot_id, cutoff=10000):
 
 # Example: Get all compounds binding ABL1 (imatinib target) at <=100 nM
 ligands = get_ligands_for_target("P00519", cutoff=100)
+
+# Response shape (verified 2026-09): one top-level key, spelled
+# "getLindsByUniprotResponse" (sic — getTargetByCompound uses the same key),
+# holding "bdb.hit" (count, as a string) and "bdb.affinities": a list of
+# {"bdb.monomerid", "bdb.smile", "bdb.affinity_type", "bdb.affinity"}.
+# Affinities are strings, may carry leading spaces or ">"/"<" qualifiers.
+resp = next(iter(ligands.values()))
+rows = resp.get("bdb.affinities", [])
 ```
 
 ### 3. Query by SMILES (structural similarity)
@@ -332,7 +350,7 @@ def prepare_ml_dataset(df, uniprot_ids, affinity_col="IC50 (nM)",
 - **BindingDB website**: https://www.bindingdb.org/
 - **Data downloads**: https://www.bindingdb.org/rwd/bind/chemsearch/marvin/Download.jsp
 - **REST API documentation**: https://www.bindingdb.org/rwd/bind/BindingDBRESTfulAPI.jsp (REST base: https://bindingdb.org/rest)
-- **Citation**: Gilson MK et al. "BindingDB in 2015." Nucleic Acids Research 2016;44(D1):D1045-53. PMID: 26481362, doi:10.1093/nar/gkv1072
+- **Citation**: Liu T et al. "BindingDB in 2024: a FAIR knowledgebase of protein-small molecule binding data." Nucleic Acids Research 2025;53(D1):D1633-D1644. doi:10.1093/nar/gkae1075 (earlier: Gilson MK et al., NAR 2016;44(D1):D1045-53, doi:10.1093/nar/gkv1072)
 - **Related resources**: ChEMBL (https://www.ebi.ac.uk/chembl/), PubChem BioAssay
 
 ## Scripts

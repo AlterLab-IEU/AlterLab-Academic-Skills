@@ -6,14 +6,15 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless gnomAD GraphQL API (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # gnomAD Database
 
 ## Overview
 
-The Genome Aggregation Database (gnomAD) is the largest publicly available collection of human genetic variation, aggregated from large-scale sequencing projects. gnomAD v4 contains exome sequences from 730,947 individuals and genome sequences from 76,215 individuals across diverse ancestries. It provides population allele frequencies, variant consequence annotations, and gene-level constraint metrics that are essential for interpreting the clinical significance of genetic variants.
+The Genome Aggregation Database (gnomAD) is the largest publicly available collection of human genetic variation, aggregated from large-scale sequencing projects. gnomAD v4 contains exome sequences from 730,947 individuals and genome sequences from 76,215 individuals across diverse ancestries. The current release is **v4.1.1** (30 March 2026), which updated gene constraint (Bayesian LOEUF, chrX/chrY coverage) and LOFTEE flags; the API dataset ID is still `gnomad_r4`. It provides population allele frequencies, variant consequence annotations, and gene-level constraint metrics that are essential for interpreting the clinical significance of genetic variants.
 
 **Key resources:**
 - gnomAD browser: https://gnomad.broadinstitute.org/
@@ -32,6 +33,16 @@ Use gnomAD when:
 - **ClinVar/ACMG variant classification**: gnomAD frequency data feeds into BA1/BS1 evidence codes for variant classification
 - **Constraint analysis**: Identifying genes depleted of missense or loss-of-function variation (z-scores, pLI, LOEUF)
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Clinical significance / ACMG classification submitted for a variant | `alterlab-clinvar` |
+| Somatic mutation frequency in tumors | `alterlab-cbioportal` |
+| Variant consequence prediction (VEP) or gene/transcript models | `alterlab-ensembl` |
+| GWAS associations for a trait or variant | `alterlab-gwas` |
+| Tissue expression or eQTLs for a gene | `alterlab-gtex` |
+
 ## Core Capabilities
 
 ### 1. gnomAD GraphQL API
@@ -39,11 +50,16 @@ Use gnomAD when:
 gnomAD uses a GraphQL API accessible at `https://gnomad.broadinstitute.org/api`. Most queries fetch variants by gene or specific genomic position.
 
 **Datasets available** (values of the `DatasetId` enum):
-- `gnomad_r4` — gnomAD v4, GRCh38 (recommended default; returns both `exome` and `genome` blocks per variant — there is no separate `gnomad_r4_genomes` id)
-- `gnomad_r3` — gnomAD v3 genomes, GRCh38
-- `gnomad_r2_1` — gnomAD v2, GRCh37 (use only for GRCh37 compatibility)
+- `gnomad_r4` — gnomAD v4 (currently v4.1.1), GRCh38 (recommended default; returns both `exome` and `genome` blocks per variant — there is no separate `gnomad_r4_genomes` id)
+- `gnomad_r4_non_ukb` — v4 excluding UK Biobank samples
+- `gnomad_r3` — gnomAD v3 genomes, GRCh38 (subsets: `gnomad_r3_non_cancer`, `_non_neuro`, `_non_topmed`, `_non_v2`, `_controls_and_biobanks`)
+- `gnomad_r2_1` — gnomAD v2, GRCh37 (use only for GRCh37 compatibility; subsets `_controls`, `_non_neuro`, `_non_cancer`, `_non_topmed`)
+- `exac` — legacy ExAC
 
-Structural and copy-number variants use separate enums: `structural_variants(dataset: gnomad_sv_r4)` and `copy_number_variants(dataset: gnomad_cnv_r4)`.
+(Verified by introspecting the `DatasetId` enum on 2026-09-23; re-check with
+`{ __type(name: "DatasetId") { enumValues { name } } }`.)
+
+Structural and copy-number variants use separate enums: `structural_variants(dataset: gnomad_sv_r4)` (v2 SVs: `gnomad_sv_r2_1`) and `copy_number_variants(dataset: gnomad_cnv_r4)`.
 
 **Reference genomes:**
 - `GRCh38` — default for v3/v4
@@ -251,7 +267,7 @@ constraint = gene["gnomad_constraint"]
 
 print(f"Gene: {gene['symbol']}")
 print(f"  pLI:   {constraint['pLI']:.3f}  (>0.9 = LoF intolerant)")
-print(f"  LOEUF: {constraint['oe_lof_upper']:.3f}  (<0.35 = highly constrained)")
+print(f"  LOEUF: {constraint['oe_lof_upper']:.3f}  (<0.45 = constrained, v4.1.1 guidance)")
 print(f"  Obs/Exp LoF: {constraint['oe_lof']:.3f}")
 print(f"  Missense Z:  {constraint['mis_z']:.3f}")
 ```
@@ -260,7 +276,7 @@ print(f"  Missense Z:  {constraint['mis_z']:.3f}")
 | Score | Range | Meaning |
 |-------|-------|---------|
 | `pLI` | 0–1 | Probability of LoF intolerance; >0.9 = highly intolerant |
-| `LOEUF` | 0–∞ | LoF observed/expected upper bound; <0.35 = constrained |
+| `LOEUF` | 0–∞ | LoF observed/expected upper bound; <0.45 = constrained in v4.1.1 (the older <0.35 cutoff was calibrated on v2 and is too strict for v4) |
 | `oe_lof` | 0–∞ | Observed/expected ratio for LoF variants |
 | `mis_z` | −∞ to ∞ | Missense constraint z-score; >3.09 = constrained |
 | `syn_z` | −∞ to ∞ | Synonymous z-score (control; should be near 0) |
@@ -373,7 +389,7 @@ def query_gnomad_sv(gene_symbol):
 ### Workflow 2: Gene Prioritization in Rare Disease
 
 1. Query constraint scores for candidate genes
-2. Filter for pLI > 0.9 (haploinsufficient) or LOEUF < 0.35
+2. Filter for LOEUF < 0.45 (gnomAD v4.1.1 recommendation) — or pLI > 0.9 if you must match older literature
 3. Cross-reference with observed LoF variants in the gene
 4. Integrate with ClinVar and disease databases
 
@@ -391,7 +407,7 @@ def query_gnomad_sv(gene_symbol):
 - **Distinguish exome vs. genome data**: Genome data has more uniform coverage; exome data is larger but may have coverage gaps
 - **Rate limit GraphQL queries**: Add delays between requests; batch queries when possible
 - **Homozygous counts** (`ac_hom`) are relevant for recessive disease analysis
-- **LOEUF is preferred over pLI** for gene constraint (less sensitive to sample size)
+- **LOEUF is preferred over pLI** for gene constraint (less sensitive to sample size); v4.1.1 computes it in a Bayesian (Gamma-posterior) framework and extends constraint to chrX/chrY, so values differ from v4.1 — record which version you used
 
 ## Data Access
 
