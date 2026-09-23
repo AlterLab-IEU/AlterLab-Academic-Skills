@@ -6,7 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: No API key or registration required. Queries the open OFR Hedge Fund Monitor REST API; needs network access.
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.1.1"
+    last_updated: "2026-09-23"
 ---
 
 # OFR Hedge Fund Monitor API
@@ -14,6 +15,21 @@ metadata:
 Free, open REST API from the U.S. Office of Financial Research (OFR) providing aggregated hedge fund time series data. No API key or registration required.
 
 **Base URL:** `https://data.financialresearch.gov/hf/v1`
+
+## When to Use This Skill
+
+- Aggregate hedge-fund size, leverage, liquidity, counterparty, or stress-test statistics (SEC Form PF via OFR)
+- CFTC Traders in Financial Futures positioning, FICC sponsored-repo volumes, or FRB SCOOS dealer-financing terms
+- Systemic-risk or financial-stability research that needs these series as clean time series
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| A single filer's raw Form PF/13F/13D documents or holdings line by line | `alterlab-edgartools` |
+| Treasury yields, Fed policy rates, or financial-conditions indices | `alterlab-fred` |
+| Treasury debt, auctions, or Daily Treasury Statement cash balances | `alterlab-usfiscaldata` |
+| Security prices or fund NAV/price histories | `alterlab-alpha-vantage` |
 
 ## Quick Start
 
@@ -95,7 +111,7 @@ The HFM organizes data into six categories (each downloadable as CSV):
 | Full single | `GET /series/full?mnemonic=` | Data + metadata for one series |
 | Multi full | `GET /series/multifull?mnemonics=A,B` | Data + metadata for multiple series |
 | Dataset | `GET /series/dataset?dataset=fpf` | All series in a dataset |
-| Category CSV | `GET /categories?category=leverage` | CSV download for a category |
+| Category CSV | `GET /categories?category=leverage` | CSV download for a category (returned HTTP 502 when checked on 2026-09-23; fall back to `/series/multifull`) |
 | Spread | `GET /calc/spread?x=MNE1&y=MNE2` | Difference between two series |
 
 ## Common Parameters
@@ -142,3 +158,7 @@ mnemonics = [
 - **[references/datasets.md](references/datasets.md)** — Dataset descriptions (fpf, tff, scoos, ficc) and dataset-specific notes
 - **[references/parameters.md](references/parameters.md)** — Complete parameter reference with periodicity codes, how values
 - **[references/examples.md](references/examples.md)** — Python examples: discovery, bulk download, spread analysis, DataFrame workflows
+
+Cite the OFR Hedge Fund Monitor, the dataset (e.g. SEC Form PF), the mnemonic, and the retrieval date for every series used.
+
+Part of the AlterLab Academic Skills suite.

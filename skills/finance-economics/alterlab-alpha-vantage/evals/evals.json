@@ -4,12 +4,12 @@
     {
       "id": "daily-ohlcv-and-rsi",
       "prompt": "I'm building a momentum study. Pull the daily OHLCV for AAPL over the last 20+ years and compute the 14-day RSI on the close. What endpoints do I hit?",
-      "expected_output": "Triggers Alpha Vantage. Uses the TIME_SERIES_DAILY function with outputsize=full (compact only returns the last 100 points) for two decades of OHLCV, and the RSI technical-indicator endpoint with interval=daily, time_period=14, series_type=close. Reads the 'Time Series (Daily)' object from the JSON and reminds the user to set ALPHAVANTAGE_API_KEY.",
+      "expected_output": "Triggers Alpha Vantage. Uses the TIME_SERIES_DAILY function with outputsize=full for two decades of OHLCV, noting that outputsize=full requires a premium key (free keys get compact = the last 100 points), and the RSI technical-indicator endpoint with interval=daily, time_period=14, series_type=close. Reads the 'Time Series (Daily)' object from the JSON and reminds the user to set ALPHAVANTAGE_API_KEY.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "TIME_SERIES_DAILY"},
         {"type": "output_contains", "value": "RSI"},
-        {"type": "behavior", "value": "Specifies outputsize=full for the 20+ year request and parameterizes RSI with time_period=14 and series_type=close."}
+        {"type": "behavior", "value": "Specifies outputsize=full for the 20+ year request while flagging that it is premium-only, and parameterizes RSI with time_period=14 and series_type=close."}
       ]
     },
     {
@@ -26,12 +26,12 @@
     {
       "id": "crypto-and-forex",
       "prompt": "I want the daily Bitcoin price in USD and the current EUR/USD exchange rate for a cross-asset volatility note. Which Alpha Vantage functions and how do I handle the free-tier limits?",
-      "expected_output": "Triggers Alpha Vantage. Uses DIGITAL_CURRENCY_DAILY with symbol=BTC, market=USD for the crypto series and CURRENCY_EXCHANGE_RATE (from_currency/to_currency) for spot EUR/USD. Warns about the 25 requests/day free-tier limit, the HTTP 429 / 'Note' rate-limit response, and adding a time.sleep delay between calls.",
+      "expected_output": "Triggers Alpha Vantage. Uses DIGITAL_CURRENCY_DAILY with symbol=BTC, market=USD for the crypto series and CURRENCY_EXCHANGE_RATE (from_currency/to_currency) for spot EUR/USD. Warns about the 25 requests/day free-tier limit, that limit hits come back as HTTP 200 with an 'Information' (or older 'Note') key rather than an HTTP error, and recommends budgeting/caching calls.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "DIGITAL_CURRENCY_DAILY"},
         {"type": "output_contains", "value": "CURRENCY_EXCHANGE_RATE"},
-        {"type": "behavior", "value": "Mentions the free-tier rate limit (25 requests/day) and recommends spacing requests or handling the 429/Note response."}
+        {"type": "behavior", "value": "Mentions the free-tier rate limit (25 requests/day) and recommends budgeting or caching requests and checking the JSON body for the Information/Note key."}
       ]
     },
     {
@@ -73,6 +73,16 @@
         {"type": "should_not_trigger", "value": true},
         {"type": "output_contains", "value": "alterlab-edgartools"},
         {"type": "behavior", "value": "Distinguishes raw SEC filing/XBRL retrieval from Alpha Vantage's pre-computed fundamentals and defers to edgartools."}
+      ]
+    },
+    {
+      "id": "near-miss-usfiscaldata",
+      "prompt": "For a sovereign-debt paper I need the U.S. Treasury's own auction results (high yield, bid-to-cover) and the Debt to the Penny series straight from the Treasury Fiscal Data API.",
+      "expected_output": "Should NOT trigger Alpha Vantage. Although Alpha Vantage has a TREASURY_YIELD indicator, the request is for Treasury Fiscal Data datasets (auctions_query, debt_to_penny). Defer to the alterlab-usfiscaldata skill, which queries api.fiscaldata.treasury.gov without a key.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-usfiscaldata"},
+        {"type": "behavior", "value": "Distinguishes Treasury Fiscal Data auction/debt datasets from Alpha Vantage's TREASURY_YIELD indicator and routes to the usfiscaldata skill."}
       ]
     }
   ]

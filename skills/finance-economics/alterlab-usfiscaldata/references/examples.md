@@ -254,6 +254,6 @@ for field, label in meta["labels"].items():
 
 ## Finding Datasets
 
-Browse the full list of 54 datasets and 182 endpoints at:
+Browse the full list of datasets and endpoints (56 datasets / 183 tables as of 2026-09) at:
 - `https://fiscaldata.treasury.gov/datasets/` — searchable dataset catalog
 - `https://fiscaldata.treasury.gov/api-documentation/#list-of-endpoints-table` — full endpoint table

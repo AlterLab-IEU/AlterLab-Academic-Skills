@@ -72,6 +72,16 @@
         {"type": "output_contains", "value": "alterlab-usfiscaldata"},
         {"type": "behavior", "value": "Identifies Debt to the Penny and the Daily Treasury Statement as Treasury Fiscal Data endpoints and defers to the usfiscaldata skill."}
       ]
+    },
+    {
+      "id": "near-miss-datacommons",
+      "prompt": "Resolve every EU member state to its Data Commons DCID and pull population, life expectancy, and GDP per capita for each so I can build a cross-country panel.",
+      "expected_output": "Should NOT trigger FRED. The request is place resolution to Data Commons DCIDs plus demographic and health statistics aggregated across global sources, which is Google Data Commons territory rather than FRED series IDs. Defer to the alterlab-datacommons skill.",
+      "assertions": [
+        {"type": "should_not_trigger", "value": true},
+        {"type": "output_contains", "value": "alterlab-datacommons"},
+        {"type": "behavior", "value": "Recognizes DCID place resolution and multi-domain public statistics as a Data Commons task and routes there instead of FRED."}
+      ]
     }
   ]
 }

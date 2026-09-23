@@ -3,10 +3,11 @@ name: alterlab-fred
 description: Queries the FRED (Federal Reserve Economic Data) API for 800,000+ economic time series from 100+ sources, covering GDP, unemployment, inflation, interest rates, exchange rates, housing, and regional data. Use for macroeconomic analysis, financial research, policy studies, economic forecasting, fetching U.S. or international economic indicators by FRED series ID, and academic research requiring historical economic time series. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Requires a free FRED_API_KEY from a FRED account (fredaccount.stlouisfed.org) and network access to the FRED API.
+compatibility: Requires a free FRED_API_KEY from a FRED account (fredaccount.stlouisfed.org) and network access to the FRED API (up to 120 requests/minute per key). Bundled scripts need requests; pandas for DataFrame examples.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # FRED Economic Data Access
@@ -22,6 +23,24 @@ Access comprehensive economic data through FRED (Federal Reserve Economic Data),
 - Retrieve release schedules and data publication dates
 - Map regional economic data with GeoFRED
 - Apply data transformations (percent change, log, etc.)
+- Bulk-download every series in a release (API v2)
+
+## When to Use This Skill
+
+- Fetching U.S. or international macro/financial series by FRED series ID (GDPC1, UNRATE, CPIAUCSL, DGS10, ...)
+- Server-side transformations (`pc1`, `pch`, `log`) or frequency aggregation before analysis
+- Real-time (vintage) data from ALFRED to avoid look-ahead bias in forecasting studies
+- Release calendars, series discovery by keyword/tag/category, and state/county data for maps
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Stock/ETF prices, OHLCV bars, or technical indicators (RSI, MACD) | `alterlab-alpha-vantage` |
+| Debt to the Penny, Daily/Monthly Treasury Statements, or auction results from the Treasury | `alterlab-usfiscaldata` |
+| Company-level financial statements from SEC filings | `alterlab-edgartools` |
+| Place-resolved public statistics (demographics, health, non-FRED global indicators) | `alterlab-datacommons` |
+| Econometric modelling (ARIMA, VAR, regressions) of series you already downloaded | `alterlab-statsmodels` |
 
 ## API Key Setup
 
@@ -227,6 +246,26 @@ shapes = fred.get_shapes("state")
 
 **Reference:** See `references/geofred.md` for all 4 GeoFRED endpoints
 
+### Bulk Release Download (API v2)
+
+FRED API v2 has one endpoint, `fred/v2/release/observations`, which returns every series in a release (all history) in one paginated call. Unlike v1 it takes the key in a header:
+
+```python
+import os
+import requests
+
+url = "https://api.stlouisfed.org/fred/v2/release/observations"
+headers = {"Authorization": f"Bearer {os.environ['FRED_API_KEY']}"}
+params = {"release_id": 53, "limit": 500000}  # 53 = GDP release; limit max 500,000 observations
+series = []
+while True:
+    page = requests.get(url, headers=headers, params=params, timeout=120).json()
+    series.extend(page["series"])  # each series carries its observations
+    if not page.get("has_more"):
+        break
+    params["next_cursor"] = page["next_cursor"]  # omit on the first request
+```
+
 ## Data Transformations
 
 Apply transformations when fetching observations:
@@ -388,10 +427,9 @@ else:
 
 ## Rate Limits
 
-- API implements rate limiting
-- HTTP 429 returned when exceeded
-- Use caching for frequently accessed data
-- The FREDQuery class includes automatic retry with backoff
+- FRED allows up to **120 requests per minute** per key; beyond that it returns HTTP 429, and ignoring the throttling can get the key temporarily blocked.
+- Cache repeated queries (FREDQuery keeps an in-memory cache, default TTL 1 hour) and prefer one v2 release download over hundreds of per-series calls.
+- FREDQuery retries 429/5xx responses with exponential backoff and returns other errors immediately as `{"error": {"code": ..., "message": ...}}` (FRED's own `error_code`/`error_message`).
 
 ## Reference Documentation
 
@@ -409,10 +447,12 @@ For detailed endpoint documentation:
 ### `scripts/fred_query.py`
 
 Main query module with `FREDQuery` class providing:
-- Unified interface to all FRED endpoints
-- Automatic rate limiting and caching
-- Error handling and retry logic
+- Unified interface to the v1 FRED and GeoFRED (Maps API) endpoints
+- In-memory response caching
+- Retry with backoff on 429/5xx; FRED error messages surfaced for other failures
 - Type hints and documentation
+
+The community `fredapi` package (`uv pip install fredapi`; `Fred(api_key=...).get_series("GDP")` returns a pandas Series) is a lighter alternative for plain series pulls; it has had no release since 0.5.2 (2024-05).
 
 ### `scripts/fred_examples.py`
 
@@ -435,3 +475,7 @@ uv run python scripts/fred_examples.py
 - **GeoFRED Maps**: https://geofred.stlouisfed.org/
 - **ALFRED (Vintage Data)**: https://alfred.stlouisfed.org/
 - **Terms of Use**: https://fred.stlouisfed.org/legal/
+
+Cite FRED (series ID, source agency, and retrieval date) for every series used in a paper.
+
+Part of the AlterLab Academic Skills suite.

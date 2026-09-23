@@ -2,6 +2,8 @@
 
 Quick reference for using the `market_research.sty` style package.
 
+All numbers in the examples below are `[placeholders]`. Replace each with a figure from a cited source (or a clearly labelled estimate with its assumptions) — never ship a placeholder or an invented value. In LaTeX body text, write percentages as `\%`; a bare `%` starts a comment and silently drops the rest of the line.
+
 ## Color Palette
 
 ### Primary Colors
@@ -38,8 +40,8 @@ For major findings, insights, and important discoveries.
 
 ```latex
 \begin{keyinsightbox}[Custom Title]
-The market is projected to grow at 15.3% CAGR through 2030, driven by
-increasing enterprise adoption and favorable regulatory conditions.
+The market is projected to grow at [X.X]\% CAGR through [YEAR] ([Source]),
+driven by [sourced growth drivers].
 \end{keyinsightbox}
 ```
 
@@ -49,9 +51,9 @@ For market statistics, metrics, and data highlights.
 ```latex
 \begin{marketdatabox}[Market Snapshot]
 \begin{itemize}
-    \item \textbf{Market Size (2024):} \marketsize{45.2 billion}
-    \item \textbf{Projected Size (2030):} \marketsize{98.7 billion}
-    \item \textbf{CAGR:} \growthrate{15.3}
+    \item \textbf{Market Size ([YEAR]):} \marketsize{[XX.X] billion}
+    \item \textbf{Projected Size ([YEAR]):} \marketsize{[XX.X] billion}
+    \item \textbf{CAGR:} \growthrate{[X.X]}
 \end{itemize}
 \end{marketdatabox}
 ```
@@ -61,8 +63,8 @@ For risk factors, warnings, and cautions.
 
 ```latex
 \begin{riskbox}[Market Risk]
-Regulatory changes in the European Union could impact 40% of market
-participants within the next 18 months.
+[Regulatory change] could affect [share, with source]\% of market
+participants within [timeframe].
 \end{riskbox}
 ```
 
@@ -71,8 +73,8 @@ For high-severity or critical risks.
 
 ```latex
 \begin{criticalriskbox}[Critical: Supply Chain Disruption]
-A major supply chain disruption could result in 6-12 month delays
-and 30% cost increases.
+A major supply chain disruption could result in [duration] delays
+and [X]\% cost increases ([source or stated scenario assumption]).
 \end{criticalriskbox}
 ```
 
@@ -95,7 +97,7 @@ For definitions, notes, and supplementary information.
 ```latex
 \begin{calloutbox}[Definition: TAM]
 Total Addressable Market (TAM) represents the total revenue opportunity
-available if 100% market share was achieved.
+available if 100\% market share was achieved.
 \end{calloutbox}
 ```
 
@@ -113,8 +115,8 @@ For opportunities and positive findings.
 
 ```latex
 \begin{opportunitybox}[Growth Opportunity]
-The Asia-Pacific market represents a \$15 billion opportunity
-growing at 22% CAGR.
+The [region] market represents a \$[XX] billion opportunity
+growing at [XX]\% CAGR ([Source]).
 \end{opportunitybox}
 ```
 
@@ -141,8 +143,7 @@ For highlighting important statistics or quotes.
 
 ```latex
 \begin{pullquote}
-"The convergence of AI and healthcare represents a \$199 billion
-opportunity by 2034."
+"[Quoted statement with its figure], [Source, year]."
 \end{pullquote}
 ```
 
@@ -154,9 +155,9 @@ For highlighting key statistics (use in rows of 3).
 
 ```latex
 \begin{center}
-\statbox{\$45.2B}{Market Size 2024}
-\statbox{15.3\%}{CAGR 2024-2030}
-\statbox{23\%}{Market Leader Share}
+\statbox{\$[XX.X]B}{Market Size [YEAR]}
+\statbox{[X.X]\%}{CAGR [YEAR]-[YEAR]}
+\statbox{[XX]\%}{Market Leader Share}
 \end{center}
 ```
 
@@ -171,12 +172,12 @@ For highlighting key statistics (use in rows of 3).
 
 ### Market Size Formatting
 ```latex
-\marketsize{45.2 billion}   % Outputs: $45.2 billion in green
+\marketsize{[XX.X] billion}  % Outputs: $[XX.X] billion in green
 ```
 
 ### Growth Rate Formatting
 ```latex
-\growthrate{15.3}           % Outputs: 15.3% in green
+\growthrate{[X.X]}          % Outputs: [X.X]% in green
 ```
 
 ### Risk Indicators
@@ -211,12 +212,12 @@ For highlighting key statistics (use in rows of 3).
 \toprule
 \textbf{Region} & \textbf{Size} & \textbf{Share} & \textbf{CAGR} \\
 \midrule
-North America & \$18.2B & 40.3\% & 12.5\% \\
-\rowcolor{tablealt} Europe & \$12.1B & 26.8\% & 14.2\% \\
-Asia-Pacific & \$10.5B & 23.2\% & 18.7\% \\
-\rowcolor{tablealt} Rest of World & \$4.4B & 9.7\% & 11.3\% \\
+North America & \$[X.X]B & [XX.X]\% & [X.X]\% \\
+\rowcolor{tablealt} Europe & \$[X.X]B & [XX.X]\% & [X.X]\% \\
+Asia-Pacific & \$[X.X]B & [XX.X]\% & [X.X]\% \\
+\rowcolor{tablealt} Rest of World & \$[X.X]B & [XX.X]\% & [X.X]\% \\
 \midrule
-\textbf{Total} & \textbf{\$45.2B} & \textbf{100\%} & \textbf{15.3\%} \\
+\textbf{Total} & \textbf{\$[XX.X]B} & \textbf{100\%} & \textbf{[X.X]\%} \\
 \bottomrule
 \end{tabular}
 \label{tab:regional}
@@ -229,9 +230,9 @@ Asia-Pacific & \$10.5B & 23.2\% & 18.7\% \\
 \toprule
 \textbf{Company} & \textbf{Revenue} & \textbf{Share} & \textbf{Trend} \\
 \midrule
-Company A & \$5.2B & 15.3\% & \trendup{} +12\% \\
-Company B & \$4.8B & 14.1\% & \trenddown{} -3\% \\
-Company C & \$4.2B & 12.4\% & \trendflat{} +1\% \\
+Company A & \$[X.X]B & [XX.X]\% & \trendup{} +[X]\% \\
+Company B & \$[X.X]B & [XX.X]\% & \trenddown{} -[X]\% \\
+Company C & \$[X.X]B & [XX.X]\% & \trendflat{} +[X]\% \\
 \bottomrule
 \end{tabular}
 ```
@@ -333,11 +334,11 @@ Content that appears in table of contents...
 ```latex
 \begin{marketdatabox}[Market Snapshot]
 \begin{itemize}
-    \item \textbf{Current Market Size:} \marketsize{45.2 billion}
-    \item \textbf{Projected Size (2030):} \marketsize{98.7 billion}
-    \item \textbf{CAGR:} \growthrate{15.3}
-    \item \textbf{Largest Segment:} Enterprise (42\% share)
-    \item \textbf{Fastest Growing Region:} APAC (\growthrate{22.1} CAGR)
+    \item \textbf{Current Market Size:} \marketsize{[XX.X] billion}
+    \item \textbf{Projected Size ([YEAR]):} \marketsize{[XX.X] billion}
+    \item \textbf{CAGR:} \growthrate{[X.X]}
+    \item \textbf{Largest Segment:} [Segment] ([XX]\% share)
+    \item \textbf{Fastest Growing Region:} [Region] (\growthrate{[X.X]} CAGR)
 \end{itemize}
 \end{marketdatabox}
 ```

@@ -14,7 +14,7 @@ Templates and frameworks for conducting rigorous market analysis.
 ```
 TAM = Total Industry Revenue (from market research reports)
 
-Example:
+Worked example (hypothetical numbers that illustrate the arithmetic, not market data):
 - Global AI Software Market (2024): $184 billion
 - Source: Gartner, IDC, or similar
 ```
@@ -23,7 +23,7 @@ Example:
 ```
 TAM = Number of Potential Customers × Average Revenue per Customer
 
-Example:
+Worked example (hypothetical numbers that illustrate the arithmetic, not market data):
 - Number of enterprises globally: 400 million
 - Target segment (large enterprises): 50,000
 - Average annual spend on solution: $500,000
@@ -35,7 +35,7 @@ Example:
 ```
 SAM = TAM × Applicable Segment %
 
-Example:
+Worked example (hypothetical numbers that illustrate the arithmetic, not market data):
 - TAM: $25 billion
 - Geographic constraint (North America only): 40%
 - Product fit (enterprise only): 60%
@@ -47,7 +47,7 @@ Example:
 ```
 SOM = SAM × Achievable Market Share %
 
-Example:
+Worked example (hypothetical numbers that illustrate the arithmetic, not market data):
 - SAM: $6 billion
 - Conservative market share (5%): $300 million
 - Base case market share (10%): $600 million
@@ -62,7 +62,7 @@ CAGR = (End Value / Start Value)^(1/n) - 1
 
 Where n = number of years
 
-Example:
+Worked example (hypothetical numbers that illustrate the arithmetic, not market data):
 - 2020 market size: $10 billion
 - 2024 market size: $18 billion
 - n = 4 years
@@ -73,7 +73,7 @@ Example:
 ```
 YoY Growth = (Current Year - Previous Year) / Previous Year × 100
 
-Example:
+Worked example (hypothetical numbers that illustrate the arithmetic, not market data):
 - 2023: $15 billion
 - 2024: $18 billion
 - YoY Growth = (18-15)/15 × 100 = 20%
