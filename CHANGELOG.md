@@ -6,6 +6,32 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [3.0.1] — 2026-09-23
+
+A patch release so installed plugins pick up a routing fix: Claude Code refreshes a plugin only
+when its version changes, so the fix merged after v3.0.0 reached no existing install.
+
+### Fixed
+
+- **`alterlab-skill-finder` 1.2.0** — tested against the published v3.0.0 plugin with headless
+  Claude Code: *"use AlterLab skills"* and `alterflow` routed correctly, but when the best-fit
+  skill's plugin was not installed (for example `alterlab-kvkk-dmp` with only
+  `alterlab-essentials`), the router called it, got *Unknown skill*, and searched for tools until
+  it ran out of turns. It now checks the skill is installed and otherwise names the plugin with
+  its install command (`/plugin install alterlab-<domain>@alterlab-academic-skills`, then
+  `/reload-plugins`) or the release zip for the Claude app, and offers an installed stopgap.
+- The router's domain map named three skills that do not exist (`alterlab-grant-writer`,
+  `alterlab-sec-edgar`, `alterlab-irb-consent`); it now names `alterlab-research-grants`,
+  `alterlab-edgartools`, and `alterlab-research-ethics`, and lists the skills added in v3.0.0.
+  `tests/test_skill_name_refs.py` fails on any backticked `alterlab-*` name in a SKILL.md that is
+  not a real skill or plugin.
+
+### Upgrading
+
+`claude plugin marketplace update alterlab-academic-skills`, then
+`claude plugin update alterlab-core@alterlab-academic-skills` (or re-upload
+`skill-alterlab-skill-finder-3.0.1.zip` in the Claude app).
+
 ## [3.0.0] — 2026-09-23
 
 September 2026 refresh for Claude Opus 5.5 and current Claude Code. It fixes two plugins that
@@ -121,10 +147,8 @@ left unchanged and listed as such, not guessed.
   forced tool choice.
 - **Core orchestration** — `alterlab-workflow-orchestration` 1.1.0 documents the primitives as
   verified on 2026-09-23 (subagent `tools` field, three-level nesting, fork mode, dynamic
-  workflows, agent teams); `alterlab-skill-finder` 1.2.0 routes multi-agent jobs to the packaged
-  workflows, says which plugin to install (or which zip to upload) when the best-fit skill is
-  not installed instead of failing on an unknown skill, and no longer names three skills that do
-  not exist (a new test checks every skill name a SKILL.md mentions); `alterlab-research-pipeline` 2.7.0 has language-neutral stages and constraints that
+  workflows, agent teams); `alterlab-skill-finder` 1.1.0 routes multi-agent jobs to the packaged
+  workflows; `alterlab-research-pipeline` 2.7.0 has language-neutral stages and constraints that
   state their reasons instead of shouting.
 - **CI** — Actions at current majors on the Node 24 runtime; Spec Conformance now also enforces
   the 500-character `compatibility` limit offline (`check_spec --no-external`); the weekly link
