@@ -121,12 +121,15 @@ under the day-one-evals bar above.
 **Chemistry, materials, physics, earth science**
 - `alterlab-chemprop` (Chemprop 2.x), local docking with Vina/GNINA + Meeko + PoseBusters,
   `alterlab-optimuskg` (PrimeKG's successor), `alterlab-ase` with ML interatomic potentials,
-  `alterlab-stim` (QEC / stabilizer simulation), `alterlab-xarray-climate` (NetCDF/Zarr/CMIP).
+  `alterlab-stim` (QEC / stabilizer simulation), ★ `alterlab-xarray-climate` (NetCDF/Zarr/CMIP; also proposed from the zarr/dask side).
 
 **Statistics and social science**
 - `alterlab-lifelines` (inferential survival analysis; scikit-survival is prediction-only),
   `alterlab-optuna`, `alterlab-synthetic-control`, `alterlab-survey-experiments` (conjoint,
   list, vignette), `alterlab-sequence-analysis`.
+- Machine learning: PEFT/TRL fine-tuning (LoRA/QLoRA, SFT/DPO) beyond the transformers
+  Trainer, and forecasting baselines (statsforecast/neuralforecast or sktime) to benchmark
+  TimesFM against.
 
 **Visualization**
 - `alterlab-ggplot2`, `alterlab-tikz-pgfplots`, `alterlab-figure-alt-text` (WCAG 2.2 and journal

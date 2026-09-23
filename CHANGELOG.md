@@ -106,7 +106,9 @@ confusion is real). Highlights, by domain:
 - **data-science** — pymc 6.3 on ArviZ 1.x (scripts rewritten; model weights were misaligned
   with model names), scikit-learn 1.9, dask 2026.8, polars 1.44 with the 2.0 changes, networkx
   3.7, lightning 2.6.
-<!-- data-science-b -->
+  Batch B: TimesFM 2.5/3.0 (examples ported off the removed 1.x API and re-run; intervals were
+  mislabeled), transformers 5 (TensorFlow removed), zarr 3.4, statsmodels 0.15, torch-geometric
+  2.8, stable-baselines3 2.9; vaex examples silently scored training rows as test data.
 - **visualization** — matplotlib 3.11, plotly 7.1, Mermaid 12; image-model IDs that returned 404
   replaced (checked against OpenRouter's live list); a failed image review was logged as a
   made-up passing score, and an API key was visible in `ps`.
@@ -121,7 +123,9 @@ confusion is real). Highlights, by domain:
 - **research-tools** — OpenAlex's per-IP metering and API key, Parallel's GA endpoints (extract
   always failed), Perplexity citations that were never captured, research-ethics updates (EO
   14292 and the July 2026 US policy).
-<!-- finance-lab -->
+- **finance-economics** — edgartools 5.x (SEC fair-access identity), FRED limits, denario 1.0,
+  Alpha Vantage and Treasury Fiscal Data refreshed.
+<!-- lab-integrations -->
 - **turkish-academia** — ÜAK Mart 2026 doçentlik rules (the ≥40 rule's scope, başlıca yazar),
   teşvik tables rebuilt from the Yönetmelik, TÜBİTAK 1001/1002-A forms and its generative-AI
   guide, TİTCK committee and permit routing, TR Dizin article requirements, KVKK transfer rules.
