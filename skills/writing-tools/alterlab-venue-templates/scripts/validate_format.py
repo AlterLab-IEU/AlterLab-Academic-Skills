@@ -23,7 +23,7 @@ VENUE_REQUIREMENTS = {
         "line_spacing": "double"
     },
     "neurips": {
-        "page_limit": 8,  # Excluding refs
+        "page_limit": 9,  # Content pages, NeurIPS 2026 (refs/appendix/checklist excluded)
         "margins": {"top": 2.54, "bottom": 2.54, "left": 2.54, "right": 2.54},  # cm (1 inch)
         "font_size": 10,
         "font_family": "Times",
@@ -94,7 +94,13 @@ def check_page_count(pdf_path, venue_reqs):
     if pages <= limit:
         return {"status": "pass", "message": f"✓ Page count OK: {pages}/{limit} pages"}
     else:
-        return {"status": "fail", "message": f"✗ Page count exceeded: {pages}/{limit} pages"}
+        # pdfinfo counts every page, but most limits exclude references, appendices,
+        # and checklists — so flag the overage and ask for a main-text count.
+        return {"status": "fail", "message": (
+            f"✗ PDF has {pages} pages vs a {limit}-page limit. If references, appendices, "
+            "or a checklist follow the main text (usually not counted), verify the main-text "
+            "page count manually."
+        )}
 
 def check_margins(pdf_path, venue_reqs):
     """Check if margins meet requirements."""

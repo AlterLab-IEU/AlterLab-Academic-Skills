@@ -4,18 +4,18 @@
 
 Visual review is a critical quality assurance step for presentations, allowing you to identify and fix layout issues, text overflow, element overlap, and design problems before presenting. This guide covers converting presentations to images, systematic visual inspection, common issues, and iterative improvement strategies.
 
-## ⚠️ CRITICAL RULE: NEVER READ PDF PRESENTATIONS DIRECTLY
+## Review Rendered Images, Not Extracted PDF Text
 
-**MANDATORY: Always convert presentation PDFs to images FIRST, then review the images.**
+Convert presentation PDFs to images first, then review the images.
 
-### Why This Rule Exists
+### Why
 
-- **Buffer Overflow Prevention**: Presentation PDFs (especially multi-slide decks) cause "JSON message exceeded maximum buffer size" errors when read directly
-- **Visual Accuracy**: Images show exactly what the audience will see, including rendering issues
+- **Visual Accuracy**: Images show exactly what the audience will see, including rendering issues — text extraction hides overflow, overlap, contrast, and font-size problems
+- **Size**: Large multi-slide decks can exceed tool limits when read in one pass; per-slide images keep each review step small
 - **Performance**: Image-based review is faster and more reliable than PDF text extraction
 - **Consistency**: Ensures uniform review process for all presentations
 
-### The ONLY Correct Workflow for Presentations
+### Workflow for Presentations
 
 1. ✅ Generate PDF from PowerPoint/Beamer source
 2. ✅ **Convert PDF to images** using the pdf_to_images.py script
@@ -26,8 +26,8 @@ Visual review is a critical quality assurance step for presentations, allowing y
 
 ### What NOT To Do
 
-- ❌ NEVER use read_file tool on presentation PDFs
-- ❌ NEVER attempt to read PDF slides as text
+- ❌ Reviewing a deck from its extracted text alone
+- ❌ Reading a whole multi-slide PDF in one pass instead of per-slide images
 - ❌ NEVER skip the image conversion step
 - ❌ NEVER assume PDF is "small enough" to read directly
 

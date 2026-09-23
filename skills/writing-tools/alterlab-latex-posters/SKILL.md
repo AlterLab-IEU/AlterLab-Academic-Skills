@@ -1,10 +1,11 @@
 ---
 name: alterlab-latex-posters
-description: "Creates professional research posters in LaTeX using beamerposter, tikzposter, or baposter — handles layout design, color schemes, multi-column formats, figure integration, and poster-specific visual-communication best practices. Use when building a conference or academic poster in LaTeX. For PowerPoint/PPTX poster output prefer pptx-posters instead. Part of the AlterLab Academic Skills suite."
+description: "Creates professional research posters in LaTeX using beamerposter, tikzposter, or baposter — handles layout design, color schemes, multi-column formats, figure integration, and poster-specific visual-communication best practices. Use when building a conference or academic poster in LaTeX (the default for a research poster when no format is named). For PowerPoint/PPTX or HTML poster output prefer alterlab-pptx-posters; to auto-generate a poster, website, or video straight from a finished paper use alterlab-paper-2-web. Part of the AlterLab Academic Skills suite."
 license: MIT
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 allowed-tools: Read Write Edit Bash
 compatibility: Requires a LaTeX distribution (pdflatex/xelatex/lualatex) with beamerposter or tikzposter installed (or baposter.cls placed alongside the .tex) to compile posters
 ---
@@ -26,6 +27,15 @@ Use this skill when:
 - Building template posters for a research group or department
 - Designing posters to specific size requirements (A0, A1, 36×48", etc.)
 - Building complex multi-column layouts that integrate figures, tables, equations, and citations
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| The user explicitly wants a PowerPoint/PPTX or HTML poster, or will edit it in PowerPoint | `alterlab-pptx-posters` |
+| Auto-generating a poster (plus website/video) directly from a finished paper PDF with an LLM pipeline | `alterlab-paper-2-web` |
+| A slide deck for an oral talk rather than a poster | `alterlab-scientific-slides` |
+| A single stand-alone infographic or data-story graphic | `alterlab-infographics` |
 
 ## Reference Files
 
@@ -168,8 +178,9 @@ is available at `scripts/review_poster.sh`.
 # TeX Live (Linux/Mac) — beamerposter and tikzposter are on CTAN
 tlmgr install beamerposter tikzposter
 
-# Additional recommended packages
-tlmgr install qrcode graphicx xcolor tcolorbox subcaption
+# Additional recommended packages (graphicx ships in the "graphics" package and
+# subcaption in "caption" — tlmgr installs by package name, not .sty name)
+tlmgr install qrcode graphics xcolor tcolorbox caption
 
 # MiKTeX (Windows) typically auto-installs packages on first use.
 ```
@@ -183,3 +194,5 @@ tlmgr install qrcode graphicx xcolor tcolorbox subcaption
 Helper scripts in `scripts/`:
 
 - `review_poster.sh` — automated PDF quality check (page size, fonts, file size, page count).
+
+Part of the AlterLab Academic Skills suite.

@@ -2,7 +2,7 @@
 
 Comprehensive writing guide for NeurIPS, ICML, ICLR, CVPR, ECCV, ICCV, and other major machine learning and computer vision conferences.
 
-**Last Updated**: 2024
+**Last Updated**: 2024 (venue page limits in the Venue-Specific Notes re-verified 2026-09)
 
 ---
 
@@ -470,27 +470,27 @@ Self-contained captions that explain:
 
 ### NeurIPS
 
-- **8 pages** main + unlimited appendix/references
-- **Broader Impact** section sometimes required
-- **Reproducibility checklist** mandatory
-- OpenReview submission, public reviews
+- **9 pages** main (NeurIPS 2026) + unlimited references/appendix
+- **NeurIPS Paper Checklist** mandatory (desk rejection without it); it covers reproducibility and broader impacts
+- OpenReview submission
 
 ### ICML
 
-- **8 pages** main + unlimited appendix/references
+- **8 pages** main at submission, 9 at camera-ready (ICML 2026) + unlimited references/appendix
+- **Impact statement** mandatory for main-track papers (not counted)
 - Strong emphasis on **theory + experiments**
-- Reproducibility statement encouraged
 
 ### ICLR
 
-- **8 pages** main (camera-ready can exceed)
+- **9 pages** main at submission, 10 during rebuttal and camera-ready (ICLR 2027)
+- **AI use statement** required; ethics and reproducibility statements recommended
 - OpenReview with **public reviews and discussion**
 - Author response period is interactive
 - Strong emphasis on **novelty and insight**
 
 ### CVPR/ICCV/ECCV
 
-- **8 pages** main including references
+- **8 pages** main excluding references (CVPR 2026); ICCV and ECCV set their own limits — check each call
 - **Supplementary video** encouraged
 - Heavy emphasis on **visual results**
 - Benchmark performance critical

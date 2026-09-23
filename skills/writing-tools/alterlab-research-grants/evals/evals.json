@@ -4,7 +4,7 @@
     {
       "id": "nih-specific-aims-r01",
       "prompt": "I'm putting together an R01 on gut-microbiome modulation of chemotherapy response. Help me draft the one-page Specific Aims and make sure it hits NIH's Significance, Innovation, and Approach review criteria.",
-      "expected_output": "Should trigger the research-grants skill. Drafts a one-page NIH Specific Aims page (hook, gap, central hypothesis, 2-3 aims with payoffs), explicitly aligns to NIH's Significance/Innovation/Approach review criteria, and reflects R01 conventions. May reference the specific aims guide.",
+      "expected_output": "Should trigger the research-grants skill. Drafts a one-page NIH Specific Aims page (hook, gap, central hypothesis, 2-3 aims with payoffs), explicitly aligns to NIH's Significance/Innovation/Approach criteria as grouped in the Simplified Review Framework (Factor 1 Importance of the Research, Factor 2 Rigor and Feasibility), builds on the PI's own ideas rather than generating the application wholesale (NIH AI-originality policy), and reflects R01 conventions. May reference the specific aims guide.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Produces an NIH Specific Aims page aligned to the Significance, Innovation, and Approach review criteria with R01-appropriate structure." }
@@ -13,7 +13,7 @@
     {
       "id": "nsf-broader-impacts",
       "prompt": "My NSF proposal's Broader Impacts section is weak. Can you strengthen it so it stands on equal footing with Intellectual Merit, including concrete education and diversity activities?",
-      "expected_output": "Should trigger. Strengthens the NSF Broader Impacts section, treating it as equally weighted with Intellectual Merit per NSF merit review, and proposes concrete, assessable activities (education, broadening participation/diversity, societal benefit). May reference NSF guidelines / broader_impacts guidance.",
+      "expected_output": "Should trigger. Strengthens the NSF Broader Impacts section, treating it as given full consideration alongside Intellectual Merit per NSF merit review, and proposes concrete, assessable activities (education, broadening participation framed as activities open to all per NSF's April 2025 priorities statement, societal benefit). May reference NSF guidelines / broader_impacts guidance.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Improves an NSF Broader Impacts section with concrete education/diversity/societal-benefit activities, treating it as co-equal with Intellectual Merit." }
@@ -63,6 +63,15 @@
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "peer-review" }
+      ]
+    },
+    {
+      "id": "near-miss-grant-reporting",
+      "prompt": "My NIH R01 is in year 3 and the annual RPPR is due next month. Help me write the accomplishments section and a budget-variance explanation for eRA Commons.",
+      "expected_output": "Should NOT trigger research-grants; defers to alterlab-grant-reporting. The user needs a post-award progress report (NIH RPPR accomplishments and budget-variance narrative), not a new or resubmitted proposal.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-grant-reporting" }
       ]
     },
     {

@@ -15,12 +15,17 @@ import subprocess
 from pathlib import Path
 from typing import Dict, Optional
 
-# Try to import PyPDF2 for PDF analysis
+# Try to import pypdf (the maintained successor of the deprecated PyPDF2) for PDF
+# analysis; fall back to PyPDF2 for older environments. Both expose PdfReader.
 try:
-    import PyPDF2
+    import pypdf as PyPDF2
     HAS_PYPDF2 = True
 except ImportError:
-    HAS_PYPDF2 = False
+    try:
+        import PyPDF2
+        HAS_PYPDF2 = True
+    except ImportError:
+        HAS_PYPDF2 = False
 
 # Try to import python-pptx for PowerPoint analysis
 try:
@@ -98,7 +103,7 @@ class PresentationValidator:
         """Validate PDF presentation."""
         if not HAS_PYPDF2:
             self.warnings.append(
-                "PyPDF2 not installed. Install with: pip install PyPDF2"
+                "pypdf not installed. Install with: uv pip install pypdf"
             )
             return
         
@@ -147,7 +152,7 @@ class PresentationValidator:
         """Validate PowerPoint presentation."""
         if not HAS_PPTX:
             self.warnings.append(
-                "python-pptx not installed. Install with: pip install python-pptx"
+                "python-pptx not installed. Install with: uv pip install python-pptx"
             )
             return
         

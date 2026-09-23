@@ -29,7 +29,7 @@ TEMPLATES = {
             "file": "neurips_article.tex",
             "full_name": "NeurIPS (Neural Information Processing Systems)",
             "description": "Top-tier machine learning conference",
-            "page_limit": "8 pages + unlimited refs",
+            "page_limit": "9 pages + unlimited refs/appendix/checklist (NeurIPS 2026)",
             "citation_style": "Numbered [1]",
             "format": "Single column",
             "anonymization": "Required (double-blind)"

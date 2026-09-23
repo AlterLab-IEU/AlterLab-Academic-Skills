@@ -1,12 +1,13 @@
 ---
 name: alterlab-hypothesis-gen
-description: Formulates structured, testable hypotheses from experimental observations using a scientific-method framework — derives predictions, proposes mechanisms, and designs experiments to test them, then renders a LaTeX report. Use when turning observations or data into falsifiable, mechanistic hypotheses, competing-explanation sets, testable predictions, or experimental designs. For a standalone systematic literature review or evidence synthesis (not a means to hypotheses) use alterlab-literature-review; to evaluate an existing manuscript use alterlab-peer-review. Part of the AlterLab Academic Skills suite.
+description: Formulates structured, testable hypotheses from experimental observations using a scientific-method framework — derives predictions, proposes mechanisms, and designs experiments to test them, then renders a LaTeX report. Use when turning observations or data into falsifiable, mechanistic hypotheses, competing-explanation sets, testable predictions, or experimental designs. For a standalone systematic literature review or evidence synthesis (not a means to hypotheses) use alterlab-literature-review; for open-ended brainstorming before any specific observation use alterlab-scientific-brainstorm; to evaluate an existing manuscript use alterlab-peer-review. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash WebSearch WebFetch
 license: MIT
 compatibility: Hypothesis reasoning runs with the Read/Write/Edit/Bash tools alone; the literature-grounding step uses WebSearch/WebFetch (skip it if offline). Rendering the LaTeX report requires a local XeLaTeX/LuaLaTeX install (e.g. TeX Live) — optional, the analysis stands without it.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Scientific Hypothesis Generation
@@ -24,6 +25,16 @@ This skill should be used when:
 - Formulating testable predictions for research
 - Conducting literature-based hypothesis generation
 - Planning mechanistic studies across scientific domains
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Open-ended, blue-sky ideation with no specific observation to explain yet | `alterlab-scientific-brainstorm` |
+| Automated LLM-driven hypothesis generation and testing over a tabular dataset (HypoGeniC) | `alterlab-hypogenic` |
+| A standalone systematic review or PRISMA evidence synthesis as the deliverable | `alterlab-literature-review` |
+| Grading the evidence quality or design flaws of existing claims | `alterlab-scientific-thinking` |
+| Freezing hypotheses and the analysis plan in a pre-registration before data collection | `alterlab-preregistration-discipline` |
 
 ## Workflow
 
@@ -132,62 +143,48 @@ Generate a professional LaTeX document using the template in `assets/hypothesis_
 
 **Document Structure:**
 
-**Main Text (Maximum 4 pages):**
-1. **Executive Summary** - Brief overview in summary box (0.5-1 page)
-2. **Competing Hypotheses** - Each hypothesis in its own colored box with brief mechanistic explanation and key evidence (2-2.5 pages for 3-5 hypotheses)
-   - **IMPORTANT:** Use `\newpage` before each hypothesis box to prevent content overflow
-   - Each box should be ≤0.6 pages maximum
-3. **Testable Predictions** - Key predictions in amber boxes (0.5-1 page)
-4. **Critical Comparisons** - Priority comparison boxes (0.5-1 page)
+**Main Text (about 4 pages):**
+1. **Executive Summary** — brief overview in `summarybox` (0.5-1 page)
+2. **Competing Hypotheses** — each hypothesis in its own colored box with a brief mechanistic explanation and key evidence (2-2.5 pages for 3-5 hypotheses)
+3. **Testable Predictions** — key predictions in `predictionbox` (0.5-1 page)
+4. **Critical Comparisons** — priority comparisons in `comparisonbox` (0.5-1 page)
 
-Keep main text highly concise - only the most essential information. All details go to appendices.
-
-**Page Break Strategy:**
-- Always use `\newpage` before hypothesis boxes to ensure they start on fresh pages
-- This prevents content from overflowing off page boundaries
-- LaTeX boxes (tcolorbox) do not automatically break across pages
-
-**Appendices (Comprehensive, Detailed):**
+Keep the main text to the essentials; everything else goes to the appendices:
 - **Appendix A:** Comprehensive literature review with extensive citations
 - **Appendix B:** Detailed experimental designs with full protocols
 - **Appendix C:** Quality assessment tables and detailed evaluations
 - **Appendix D:** Supplementary evidence and analogous systems
 
-**Colored Box Usage:**
+**Colored Box Usage** (environments from `hypothesis_generation.sty`):
+- `hypothesisbox1` through `hypothesisbox5` — one per competing hypothesis (blue, green, purple, teal, orange)
+- `predictionbox` — testable predictions (amber)
+- `comparisonbox` — critical comparisons (steel gray)
+- `evidencebox` — supporting-evidence highlights (light blue)
+- `summarybox` — executive summary (blue)
 
-Use the custom box environments from `hypothesis_generation.sty`:
-
-- `hypothesisbox1` through `hypothesisbox5` - For each competing hypothesis (blue, green, purple, teal, orange)
-- `predictionbox` - For testable predictions (amber)
-- `comparisonbox` - For critical comparisons (steel gray)
-- `evidencebox` - For supporting evidence highlights (light blue)
-- `summarybox` - For executive summary (blue)
-
-**Each hypothesis box should contain (keep concise for 4-page limit):**
-- **Mechanistic Explanation:** 1-2 brief paragraphs (6-10 sentences max) explaining HOW and WHY
+**Each hypothesis box contains:**
+- **Mechanistic Explanation:** 1-2 brief paragraphs (6-10 sentences) explaining how and why
 - **Key Supporting Evidence:** 2-3 bullet points with citations (most important evidence only)
 - **Core Assumptions:** 1-2 critical assumptions
 
-All detailed explanations, additional evidence, and comprehensive discussions belong in the appendices.
+**Page overflow.** The boxes in `hypothesis_generation.sty` are not `breakable` tcolorboxes, so a box taller than the space left on the page runs off the bottom and the PDF becomes unreadable. Keep each hypothesis box to about 0.6 page (15-20 lines); move longer mechanism detail and extra evidence to Appendix A. Before each box, start a fresh page with `\newpage` if less than ~0.6 page remains, and put `\newpage` between major appendix sections.
 
-**Critical Overflow Prevention:**
-- Insert `\newpage` before each hypothesis box to start it on a fresh page
-- Keep each complete hypothesis box to ≤0.6 pages (approximately 15-20 lines of content)
-- If content exceeds this, move additional details to Appendix A
-- Never let boxes overflow off page boundaries - this creates unreadable PDFs
+```latex
+\newpage
+\begin{hypothesisbox1}[Hypothesis 1: Title]
+% mechanistic explanation, 2-3 evidence bullets, 1-2 assumptions
+\end{hypothesisbox1}
+```
 
 **Citation Requirements:**
+- **Main text:** 10-15 key citations for the most important evidence only
+- **Appendix A:** comprehensive coverage of the relevant literature (typically 40-70 citations for a well-studied phenomenon)
 
-Aim for extensive citation to support all claims:
-- **Main text:** 10-15 key citations for most important evidence only (keep concise for 4-page limit)
-- **Appendix A:** 40-70+ comprehensive citations covering all relevant literature
-- **Total target:** 50+ references in bibliography
-
-Main text citations should be selective - cite only the most critical papers. All comprehensive citation and detailed literature discussion belongs in the appendices. Use `\citep{author2023}` for parenthetical citations.
+Cite only sources you actually retrieved and checked during the literature search — never invent or pad references to reach a target, because a fabricated citation undermines the whole report. For a sparse literature, fewer verified citations are the right answer. Use `\citep{author2023}` for parenthetical citations.
 
 **LaTeX Compilation:**
 
-The template requires XeLaTeX or LuaLaTeX for proper rendering:
+The template requires XeLaTeX or LuaLaTeX (it loads `fontspec`):
 
 ```bash
 xelatex hypothesis_report.tex
@@ -196,36 +193,7 @@ xelatex hypothesis_report.tex
 xelatex hypothesis_report.tex
 ```
 
-**Required packages:** The `hypothesis_generation.sty` style package must be in the same directory or LaTeX path. It requires: tcolorbox, xcolor, fontspec, fancyhdr, titlesec, enumitem, booktabs, natbib.
-
-**Page Overflow Prevention:**
-
-To prevent content from overflowing on pages, follow these critical guidelines:
-
-1. **Monitor Box Content Length:** Each hypothesis box should fit comfortably on a single page. If content exceeds ~0.7 pages, it will likely overflow.
-
-2. **Use Strategic Page Breaks:** Insert `\newpage` before boxes that contain substantial content:
-   ```latex
-   \newpage
-   \begin{hypothesisbox1}[Hypothesis 1: Title]
-   % Long content here
-   \end{hypothesisbox1}
-   ```
-
-3. **Keep Main Text Boxes Concise:** For the 4-page main text limit:
-   - Each hypothesis box: Maximum 0.5-0.6 pages
-   - Mechanistic explanation: 1-2 brief paragraphs only (6-10 sentences max)
-   - Key evidence: 2-3 bullet points only
-   - Core assumptions: 1-2 items only
-   - If content is longer, move details to appendices
-
-4. **Break Long Content:** If a hypothesis requires extensive explanation, split across main text and appendix:
-   - Main text box: Brief mechanistic overview + 2-3 key evidence points
-   - Appendix A: Detailed mechanism explanation, comprehensive evidence, extended discussion
-
-5. **Test Page Boundaries:** Before each new box, consider if remaining page space is sufficient. If less than 0.6 pages remain, use `\newpage` to start the box on a fresh page.
-
-6. **Appendix Page Management:** In appendices, use `\newpage` between major sections to avoid overflow in detailed content areas.
+**Required packages:** `hypothesis_generation.sty` must be in the same directory or on the LaTeX path. It requires tcolorbox, xcolor, fontspec, fancyhdr, titlesec, enumitem, booktabs, and natbib.
 
 **Quick Reference:** See `assets/FORMATTING_GUIDE.md` for detailed examples of all box types, color schemes, and common formatting patterns.
 
@@ -259,3 +227,4 @@ Ensure all generated hypotheses meet these standards:
 - **alterlab-venue-templates** — for venue-specific LaTeX templates and submission formatting when turning a hypothesis report into a manuscript.
 - **alterlab-scientific-writing** — for drafting the resulting manuscript in flowing IMRAD prose.
 
+Part of the AlterLab Academic Skills suite.

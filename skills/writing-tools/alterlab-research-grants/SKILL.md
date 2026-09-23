@@ -1,12 +1,13 @@
 ---
 name: alterlab-research-grants
-description: Writes competitive research grant proposals for NSF, NIH, DOE, DARPA, and Taiwan NSTC — applies agency-specific formatting and review criteria, prepares budgets, and drafts broader-impacts, significance statements, and innovation narratives that comply with submission requirements. Use when drafting or revising a grant proposal, aligning a proposal to a funding agency's review criteria, or preparing grant budgets and compliance sections. For Turkey's TÜBİTAK 1001/1002-A national proposals use alterlab-tubitak-proposal; to write a reviewer's critique of someone else's proposal use alterlab-peer-review; for a journal manuscript use alterlab-scientific-writing. Part of the AlterLab Academic Skills suite.
+description: Writes competitive research grant proposals for NSF, NIH, DOE, DARPA, and Taiwan NSTC — applies agency-specific formatting and current review criteria (NIH Simplified Review Framework, NSF Intellectual Merit and Broader Impacts under PAPPG 24-1), prepares budgets and justifications, drafts Specific Aims, broader-impacts, significance, and innovation narratives, and checks compliance, including funder rules on AI-assisted applications. Use when drafting or revising a grant proposal or resubmission, aligning it to an agency's review criteria, or preparing budgets, biosketches, and compliance sections. For Turkey's TÜBİTAK 1001/1002-A national proposals use alterlab-tubitak-proposal; for post-award progress or final reports (RPPR, NSF annual reports) use alterlab-grant-reporting; to critique someone else's proposal use alterlab-peer-review; for a journal manuscript use alterlab-scientific-writing. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 compatibility: No external tools, API keys, or services required — ships no helper scripts and works from the Read/Write/Edit/Bash tools alone
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Research Grant Writing
@@ -15,7 +16,7 @@ metadata:
 
 Research grant writing is the process of developing competitive funding proposals for federal agencies and foundations. Master agency-specific requirements, review criteria, narrative structure, budget preparation, and compliance for NSF (National Science Foundation), NIH (National Institutes of Health), DOE (Department of Energy), DARPA (Defense Advanced Research Projects Agency), and Taiwan's NSTC (National Science and Technology Council) submissions.
 
-**Critical Principle: Grants are persuasive documents that must simultaneously demonstrate scientific rigor, innovation, feasibility, and broader impact.** Each agency has distinct priorities, review criteria, formatting requirements, and strategic goals that must be addressed.
+**Core principle:** a grant is a persuasive document that has to demonstrate scientific rigor, innovation, feasibility, and broader impact at the same time. Each agency has distinct priorities, review criteria, formatting requirements, and strategic goals, and reviewers score against those — so write to the agency's criteria, not to a generic template.
 
 ## When to Use This Skill
 
@@ -30,6 +31,26 @@ This skill should be used when:
 - Planning multi-institutional collaborative proposals
 - Writing preliminary data or feasibility sections
 - Preparing biosketches, CVs, or facilities descriptions
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| A TÜBİTAK 1001 or 1002-A proposal (özgün değer, yaygın etki, PBS submission) | `alterlab-tubitak-proposal` |
+| Post-award deliverables: NIH RPPR, NSF annual/final or Project Outcomes Report, no-cost extension | `alterlab-grant-reporting` |
+| Reviewing or critiquing someone else's proposal as a panelist | `alterlab-peer-review` |
+| The FAIR data-sharing and repository content of a data management plan | `alterlab-open-science` |
+| A recommendation or support letter for another applicant | `alterlab-recommendation-letters` |
+
+## Current Funder Policies (verified 2026-09; re-check before each submission)
+
+- **AI-assisted writing.** NIH will not consider applications "substantially developed by AI" (or containing sections that are) to be the applicants' original ideas; AI use detected after award can be referred to the Office of Research Integrity (NOT-OD-25-132, effective 25 Sept 2025). NSF encourages proposers to state in the project description whether and how generative AI was used and holds them responsible for accuracy, and PAPPG 24-1 Supplement 1 (NSF 26-200, effective 8 Dec 2025) extends research misconduct to acts committed with AI-based tools. So work with the PI's own aims, data, and ideas: structure, critique, tighten, and check compliance — do not generate a proposal wholesale for submission.
+- **NIH application cap.** NIH accepts at most six new, renewal, resubmission, or revision applications per PI (including MPIs) per calendar year, excluding T activity codes and R13 (NOT-OD-25-132).
+- **NIH peer review.** For most research project grants (R01, R21, R03, R15, R34, U01, and others) due on or after 25 Jan 2025, the Simplified Review Framework scores Factor 1 *Importance of the Research* (Significance + Innovation) and Factor 2 *Rigor and Feasibility* (Approach) on 1-9, and rates Factor 3 *Expertise and Resources* (Investigators + Environment) only as sufficient or not, alongside the Overall Impact score.
+- **NIH forms and funding.** Biosketches and Current and Pending (Other) Support use the Common Forms generated and certified in SciENcv, with an ORCID iD linked to eRA Commons, for due dates on or after 25 Jan 2026 (NOT-OD-26-018). From the January 2026 council round NIH's Unified Funding Strategy stopped relying on paylines, so a percentile no longer maps to a published cutoff. The 2026 salary cap (Executive Level II) is $228,000.
+- **NSF.** PAPPG NSF 24-1 remains in force (NSF deferred NSF 26-1), amended by Supplement 1 (8 Dec 2025) and Supplement 2 (22 Jan 2026). Biosketches and Current and Pending (Other) Support are prepared and certified in SciENcv; Synergistic Activities is a separate one-page document; a one-page Mentoring Plan is required when requesting support for postdoctoral scholars or graduate students; the Data Management and Sharing Plan (two pages) is created with the Research.gov DMSP tool. NSF's April 2025 priorities statement (updated July 2026) requires broadening-participation activities to be open to all Americans and not to preference some groups over others.
+
+Details and sources are in `references/nih_guidelines.md` and `references/nsf_guidelines.md`.
 
 ## Visual Communication in Proposals
 
@@ -51,8 +72,8 @@ If a diagram or figure would aid comprehension, invoke the **alterlab-scientific
 
 | Agency | Core structure | Primary review focus |
 |--------|----------------|----------------------|
-| **NSF** | 15-page project description; 1-page project summary | Intellectual Merit + Broader Impacts (equal weight) |
-| **NIH** | 1-page Specific Aims + 12-page Research Strategy (R01) | Significance, Investigators, Innovation, Approach, Environment |
+| **NSF** | 15-page project description; 1-page project summary | Intellectual Merit + Broader Impacts (both given full consideration) |
+| **NIH** | 1-page Specific Aims + 12-page Research Strategy (R01) | Simplified framework: Importance of the Research, Rigor and Feasibility (scored); Expertise and Resources (sufficient/insufficient) |
 | **DOE** | Project narrative; often cost-sharing | Technical merit, mission relevance, often national-lab collaboration |
 | **DARPA** | Technical volume by phase; BAA-driven | DARPA-hard impact (Heilmeier Catechism), transition paths |
 | **NSTC (Taiwan)** | CM03 form; bilingual abstract; architecture diagram | Innovation, Feasibility, PI Capability, Value |
@@ -72,7 +93,7 @@ and writing strategy for each — plus discipline-specific method guidance — a
 1. **Executive Summary / Abstract** — standalone hook + significance + approach + impact.
 2. **Project Description / Research Strategy** — the core technical narrative (structure varies by agency).
 3. **Specific Aims / Objectives** — 2-4 testable, complementary goals (see `references/specific_aims_guide.md`).
-4. **Broader Impacts / Significance** — societal/educational value; NSF weights this equally (see `references/broader_impacts.md`).
+4. **Broader Impacts / Significance** — societal/educational value; NSF gives it full consideration alongside Intellectual Merit (see `references/broader_impacts.md`).
 5. **Innovation** — conceptual, methodological, integrative, translational, or scale novelty.
 6. **Approach and Methods** — design, power, analysis, alternatives, rigor (see `references/research_methods.md`).
 7. **Preliminary Data and Feasibility** — proof-of-concept that de-risks the proposal.
@@ -120,5 +141,7 @@ This skill ships no helper scripts; handle these tasks directly:
 ---
 
 **Final Note**: Grant writing is both an art and a science. Success requires not only excellent research ideas but also clear communication, strategic positioning, and meticulous attention to detail. Start early, seek feedback, and remember that even the best researchers face rejection—persistence and revision are key to funding success.
+
+Part of the AlterLab Academic Skills suite.
 
 

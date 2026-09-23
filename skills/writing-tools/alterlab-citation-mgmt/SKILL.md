@@ -1,12 +1,13 @@
 ---
 name: alterlab-citation-mgmt
-description: Manages citations for academic research — searches Google Scholar and PubMed for papers, extracts accurate metadata, validates citations, and generates properly formatted BibTeX entries. Use when finding papers, verifying citation information, converting DOIs to BibTeX, checking reference accuracy in scientific writing, or building a bibliography. Part of the AlterLab Academic Skills suite.
+description: "Manages citations for academic research — searches Google Scholar and PubMed for papers, extracts complete metadata from DOIs, PMIDs, and arXiv IDs (CrossRef, doi.org content negotiation, NCBI E-utilities, arXiv API), validates BibTeX entries for required fields, format, and duplicates, and generates or cleans properly formatted BibTeX. Use when finding papers, converting DOIs to BibTeX, cleaning or deduplicating a .bib file, checking reference metadata in scientific writing, or building a bibliography. To prove that cited references actually exist or to flag fabricated or retracted citations prefer alterlab-citation-verifier; for Zotero library operations use alterlab-pyzotero. Part of the AlterLab Academic Skills suite."
 allowed-tools: Read Write Edit Bash
 license: MIT
-compatibility: No API key required. Needs network access to Google Scholar and PubMed; helper scripts use the scholarly, biopython, bibtexparser, crossref-commons, and pylatexenc Python packages
+compatibility: No API key required (an optional NCBI_API_KEY raises the PubMed E-utilities limit from 3 to 10 requests/s). Needs network access to CrossRef, doi.org, NCBI E-utilities, arXiv, and Google Scholar; the helper scripts need requests, plus scholarly for Google Scholar search
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Citation Management
@@ -17,7 +18,7 @@ Manage citations systematically across the research and writing process: search
 academic databases (Google Scholar, PubMed), extract accurate metadata from multiple
 sources (CrossRef, PubMed, arXiv, DataCite), validate citation information, and
 generate properly formatted BibTeX. Critical for citation accuracy, avoiding reference
-errors, and reproducible research. Integrates with the `literature-review` skill.
+errors, and reproducible research. Integrates with `alterlab-literature-review`.
 
 ## When to Use This Skill
 
@@ -29,6 +30,16 @@ Use when:
 - Cleaning, sorting, and formatting BibTeX files
 - Finding highly cited / seminal papers in a field
 - Building a bibliography for a manuscript or thesis
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Proving each reference actually exists, catching hallucinated/fabricated citations, or retraction checks | `alterlab-citation-verifier` |
+| Reading or editing a Zotero library (items, collections, tags, attachments) | `alterlab-pyzotero` |
+| A full systematic review — multi-database search, PRISMA screening, thematic synthesis | `alterlab-literature-review` |
+| Mapping a citation/co-citation network around seed papers | `alterlab-citation-graph` |
+| Writing manuscript prose around the references | `alterlab-scientific-writing` |
 
 ## Core Workflow
 
@@ -48,7 +59,9 @@ Operators, MeSH/field tags, complex queries, and high-impact-paper heuristics:
 
 ### Phase 2 — Metadata extraction
 Convert any identifier (DOI, PMID, arXiv ID, URL) to complete metadata. CrossRef is the
-primary DOI source; PubMed E-utilities, arXiv, and DataCite cover the rest.
+primary DOI source (`extract_metadata.py`); PubMed E-utilities and the arXiv API cover PMIDs
+and arXiv IDs. `doi_to_bibtex.py` uses doi.org content negotiation, which also resolves
+DataCite DOIs (datasets, software).
 
 ```bash
 python scripts/doi_to_bibtex.py 10.1038/s41586-021-03819-2     # quick single DOI
@@ -84,8 +97,10 @@ Validation Checks summary in `references/search_strategy_reference.md`.
 
 ### Phase 5 — Integration with writing
 Export validated BibTeX into a LaTeX manuscript (`\bibliography{final_references}`).
-Pairs with `literature-review` (search/synthesis), `scientific-writing` (manuscript
-references), and `venue-templates` (style-specific formatting).
+Pairs with `alterlab-literature-review` (search/synthesis), `alterlab-scientific-writing`
+(manuscript references), and `alterlab-venue-templates` (style-specific formatting). Before
+submission, run `alterlab-citation-verifier` on the final `.bib` to confirm every entry exists —
+this skill checks fields and formatting, not existence.
 
 End-to-end worked examples (build a bibliography, convert a DOI list, clean a messy
 `.bib`, find seminal papers): `references/example_workflows.md`.
@@ -148,11 +163,14 @@ manually review critical citations.
 ## Dependencies
 
 ```bash
-# Core
-pip install requests bibtexparser biopython
-# Optional: Google Scholar access, advanced validation, LaTeX char handling
-pip install scholarly selenium crossref-commons pylatexenc
+# All network scripts (CrossRef, doi.org, E-utilities, arXiv)
+uv pip install requests
+# Optional: Google Scholar search (search_google_scholar.py). scholarly scrapes Scholar,
+# which has no official API and rate-limits or CAPTCHAs automated traffic.
+uv pip install scholarly
 ```
+`format_bibtex.py` and `validate_citations.py` (without `--check-dois`) need only the
+standard library. Set `NCBI_EMAIL` (and optionally `NCBI_API_KEY`) for PubMed.
 
 ## Summary
 

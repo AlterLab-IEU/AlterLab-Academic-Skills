@@ -127,7 +127,7 @@ python scripts/generate_pdf.py crispr_sickle_cell_review.md \
 
 ### Required Python Packages
 ```bash
-pip install requests  # For citation verification
+uv pip install requests  # For citation verification
 ```
 
 ### Required System Tools
@@ -149,7 +149,7 @@ python scripts/generate_pdf.py --check-deps
 ## External Resources
 
 **Guidelines:**
-- PRISMA (Systematic Reviews): http://www.prisma-statement.org/
+- PRISMA 2020 (Systematic Reviews): https://www.prisma-statement.org/
 - Cochrane Handbook: https://training.cochrane.org/handbook
 - AMSTAR 2 (Review Quality): https://amstar.ca/
 

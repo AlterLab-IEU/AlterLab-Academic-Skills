@@ -58,7 +58,7 @@ To ensure unified formatting across all slides in a presentation:
    - Creates visual continuity throughout the deck
    - Ensures consistent colors, fonts, and design language
 
-3. **Default author is "AlterLab"** unless another name is specified
+3. **Use the presenter's real name and affiliation** as given by the user; if they are unknown, ask or leave a placeholder rather than inventing one
 
 4. **Include citations directly in the prompt** for slides that reference research:
    - Add citations in the prompt text so they appear on the generated slide
@@ -86,7 +86,7 @@ To ensure unified formatting across all slides in a presentation:
 
 ```bash
 # Title slide (first slide - establishes the style)
-python scripts/generate_slide_image.py "Title slide for presentation: 'Machine Learning: From Theory to Practice'. Subtitle: 'AI Conference 2025'. Speaker: AlterLab. FORMATTING GOAL: Dark blue background (#1a237e), white text, gold accents (#ffc107), minimal design, sans-serif fonts, generous margins, no decorative elements." -o slides/01_title.png
+python scripts/generate_slide_image.py "Title slide for presentation: 'Machine Learning: From Theory to Practice'. Subtitle: 'AI Conference 2025'. Speaker: Dr. Jane Doe, Example University. FORMATTING GOAL: Dark blue background (#1a237e), white text, gold accents (#ffc107), minimal design, sans-serif fonts, generous margins, no decorative elements." -o slides/01_title.png
 
 # Content slide with citations (attach previous slide for consistency)
 python scripts/generate_slide_image.py "Presentation slide titled 'Why Machine Learning Matters'. Three key points with simple icons: 1) Industry adoption, 2) Breakthrough applications, 3) Future potential. CITATIONS: Include at bottom in small text: (LeCun et al., 2015; Goodfellow et al., 2016). FORMATTING GOAL: Match attached slide style - dark blue background, white text, gold accents, minimal professional design, no visual clutter." -o slides/02_intro.png --attach slides/01_title.png

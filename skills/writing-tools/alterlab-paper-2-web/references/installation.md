@@ -52,7 +52,13 @@ brew install libreoffice poppler
 
 ## API Configuration
 
-Create a `.env` file in the project root with the following credentials:
+`pipeline_all.py` (website, poster, PR materials) does not read `.env`: it requires `OPENROUTER_API_KEY` exported in the shell and exits if it is missing:
+
+```bash
+export OPENROUTER_API_KEY=sk-or-your-openrouter-key-here
+```
+
+The sub-modules and Paper2Video read a `.env` file in the project root with the following credentials (the AutoPR component uses its own `AutoPR/.env`, copied from `AutoPR/.env.example`):
 
 ### Required API Keys
 
@@ -62,7 +68,7 @@ OPENAI_API_KEY=your_openai_api_key_here
 OPENAI_API_BASE=https://api.openai.com/v1
 ```
 
-**Option 2: OpenRouter API** (alternative to OpenAI — reuses the same variable names, just repoint the base URL)
+**Option 2: OpenRouter API** (upstream-recommended — reuses the same variable names, just repoint the base URL)
 ```
 OPENAI_API_KEY=sk-or-your-openrouter-key-here
 OPENAI_API_BASE=https://openrouter.ai/api/v1
@@ -78,16 +84,10 @@ GOOGLE_SEARCH_ENGINE_ID=your_search_engine_id_here
 
 ## Model Configuration
 
-The system supports multiple LLM backends. The model is selected by the API base URL plus the credentials in `.env`:
-
-### Supported Models
-- OpenAI models (e.g. GPT-4.1) via `OPENAI_API_BASE=https://api.openai.com/v1`
-- Claude and other models via OpenRouter (`OPENAI_API_BASE=https://openrouter.ai/api/v1`)
-
 ### Model Selection
 
-- For `pipeline_all.py` (website/poster/PR): the model comes from the `.env` configuration. The `--model-choice` flag selects the **output component** (1=website, 2=poster, 3=PR materials), not the model.
-- For the video pipelines (`pipeline_light.py` / `pipeline.py`): pass explicit models via `--model_name_t` (text/script) and `--model_name_v` (visual/slides).
+- For `pipeline_all.py` (website/poster/PR): there is no model flag. The website agent and the poster module use models hard-coded upstream and routed through OpenRouter (Qwen3/Qwen2.5-VL for the website agent, GPT-4o for Paper2Poster at the time of writing). The `--model-choice` flag selects the **output component(s)** (1=website, 2=poster, 3=PR materials), not the model.
+- For the video pipelines (`pipeline_light.py` / `pipeline.py`): pass models via `--model_name_t` (text/script) and `--model_name_v` (visual/slides). Both default to `gpt-4.1`; the values are Paper2Video aliases (`gpt-4.1`, `gpt-4.1-mini`, `4o`, `o3`, `gpt-5`, …) mapped in `wei_utils.get_agent_config`, and OpenAI-platform aliases use `OPENAI_API_KEY`.
 
 ## Verification
 

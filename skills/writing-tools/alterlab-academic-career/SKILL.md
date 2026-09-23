@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit
 compatibility: No external tools, API keys, or services required — produces documents from the Read/Write/Edit tools alone
 metadata:
   skill-author: AlterLab
-  version: "1.0.1"
-  last_updated: "2026-06-09"
+  version: "1.0.2"
+  last_updated: "2026-09-23"
 ---
 
 # Academic Career Documents and Professional Development
@@ -18,7 +18,26 @@ Academic career advancement depends on a portfolio of carefully crafted document
 
 The academic job market operates on distinct norms: CVs can be 20+ pages, statements are read by committees with diverse disciplinary expertise, and evaluation criteria vary dramatically across institution types (R1, SLAC, community college, professional school). Mastering these documents is not about self-promotion but about clearly communicating the significance, trajectory, and potential of your scholarly work.
 
-This skill covers *personal career documents* — the narratives a scholar writes about themselves. For adjacent tasks, defer to the right sibling: substantive grant content (Specific Aims, significance/innovation/approach) → `alterlab-research-grants`; venue LaTeX classes and page-limit/formatting rules → `alterlab-venue-templates`; full manuscript drafting → `alterlab-scientific-writing`.
+This skill covers *personal career documents* — the narratives a scholar writes about themselves.
+
+## When to Use This Skill
+
+Use this skill when a faculty member or researcher is preparing documents about their own career:
+- Building, restructuring, or tailoring an academic CV (R1, PUI/SLAC, teaching-focused, professional school)
+- Research statements, teaching philosophies, diversity or "contributions to community" statements, mentorship statements
+- Faculty-position cover letters and application-packet tailoring
+- Tenure or promotion dossiers and the candidate's narrative
+- Professional development: academic web presence and ORCID, framing impact metrics honestly, conference networking
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Writing a recommendation, reference, or external tenure-review letter *for someone else* | `alterlab-recommendation-letters` |
+| Grant-proposal content — Specific Aims, significance/innovation/approach, broader impacts, or an agency biosketch (NIH/NSF via SciENcv) | `alterlab-research-grants` |
+| Designing a course, syllabus, or assessment rubric (rather than describing your teaching in a statement) | `alterlab-teaching-design` |
+| Venue LaTeX classes, page limits, or funder formatting rules | `alterlab-venue-templates` |
+| Computing Turkish doçentlik (ÜAK) or akademik teşvik points | `alterlab-docentlik-eligibility` / `alterlab-akademik-tesvik` |
 
 ## Core Capabilities
 

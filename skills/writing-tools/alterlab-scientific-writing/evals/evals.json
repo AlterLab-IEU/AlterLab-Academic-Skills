@@ -39,6 +39,15 @@
       ]
     },
     {
+      "id": "near-miss-paper-writer",
+      "prompt": "Take my research notes and produce the whole paper end to end — an APA 7 LaTeX manuscript compiled to PDF plus a DOCX copy, with bilingual Chinese and English abstracts.",
+      "expected_output": "Should NOT trigger scientific-writing; defers to alterlab-paper-writer. End-to-end paper production through the multi-agent pipeline with APA 7 LaTeX/PDF and DOCX output and bilingual zh-TW/EN abstracts is alterlab-paper-writer's scope; scientific-writing drafts and tightens individual manuscript sections in IMRAD prose.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-paper-writer" }
+      ]
+    },
+    {
       "id": "near-miss-venue-templates",
       "prompt": "I'm submitting to NeurIPS this year — give me the official LaTeX template, the page-limit and formatting rules, and the venue's house style for the abstract.",
       "expected_output": "Should NOT trigger scientific-writing. Supplying a specific venue's LaTeX template, formatting/page-limit rules, and house style is the alterlab-venue-templates skill's territory. Per this skill's own guidance, venue-specific formatting and style should defer to venue-templates; scientific-writing covers general IMRAD/clarity/citation principles, not venue boilerplate.",

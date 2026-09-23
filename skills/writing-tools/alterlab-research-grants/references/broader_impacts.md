@@ -52,9 +52,11 @@ NSF evaluates broader impacts across five main areas. **You don't need to addres
 
 *Example*: "We will host annual 3-day workshops for 25 community college faculty, providing training in genome editing techniques. Participants will receive hands-on experience with CRISPR methods developed in this project, complete teaching modules for their courses, and ongoing support through a virtual learning community."
 
-### 2. Broaden Participation of Underrepresented Groups
+### 2. Broaden Participation in STEM
 
-**What This Means**: Increase participation of groups underrepresented in STEM, including women, racial/ethnic minorities, persons with disabilities, and those from economically disadvantaged backgrounds.
+> **Current NSF guidance (verify before submitting):** NSF's April 2025 priorities statement (updated July 2026, https://www.nsf.gov/updates-on-priorities) requires outreach, recruitment, and participatory activities to be open and available to all Americans, and says broadening-participation efforts must not preference some groups at the expense of others; engagement with groups or institutions defined by protected characteristics is allowed only as part of broad engagement. Write this pillar as broad access — open calls, many institution types, removal of practical barriers — and avoid group quotas or exclusive eligibility. Other funders and private foundations may use different framing; follow the solicitation.
+
+**What This Means**: Widen access to STEM research and education — for example for students at institutions with limited research infrastructure, first-generation and rural students, community-college transfers, and people with disabilities — through activities open to all.
 
 **Effective Strategies**:
 
@@ -72,7 +74,7 @@ NSF evaluates broader impacts across five main areas. **You don't need to addres
 - Bridge programs for community college transfers
 - Retention support (mentoring, peer networks, professional development)
 
-*Example*: "We will recruit 50% of summer undergraduate researchers from groups underrepresented in computer science through partnerships with SACNAS and the National Society of Black Engineers. Participants will receive mentoring from graduate students with similar backgrounds, attend professional development workshops, and join our diversity-in-computing learning community that provides year-round support and networking."
+*Example*: "We will advertise our summer undergraduate research positions openly and nationally, including through professional-society conferences and partner institutions without large research programs, and select applicants against published criteria. All participants receive graduate-student mentoring, professional development workshops, and membership in a year-round learning community."
 
 **Culturally Relevant Engagement**:
 - Research addressing community-identified needs
@@ -241,7 +243,7 @@ NSF evaluates broader impacts across five main areas. **You don't need to addres
 "This research will train the next generation of scientists."
 
 **Specific** ✅:
-"This project will support 3 PhD students, 2 postdocs, and 12 undergraduate researchers over 5 years. Undergraduates will be recruited through our partnership with the Louis Stokes Alliance for Minority Participation, with a goal of 50% participation from underrepresented groups. Students will receive training in advanced microscopy, data analysis, and scientific communication, and will present their research at the annual Emerging Researchers National Conference."
+"This project will support 3 PhD students, 2 postdocs, and 12 undergraduate researchers over 5 years. Undergraduates will be recruited through an open call circulated to a regional consortium of community colleges and primarily undergraduate institutions, with selection against published criteria. Students will receive training in advanced microscopy, data analysis, and scientific communication, and will present their research at the annual Emerging Researchers National Conference."
 
 ### Include Timelines and Milestones
 
@@ -319,9 +321,9 @@ These are baseline expectations, not broader impacts.
 
 ### Mistake 3: No Assessment
 
-❌ "We will run a summer camp for underrepresented students."
+❌ "We will run a summer camp for local students."
 
-✅ "We will run a 4-week summer camp for 30 students (60% from underrepresented groups). We will assess impact through pre/post content knowledge tests, science identity surveys, and tracking of STEM course enrollment. We expect 80% of participants to enroll in advanced science courses the following year."
+✅ "We will run a 4-week summer camp for 30 students recruited through an open call to the district's high schools. We will assess impact through pre/post content knowledge tests, science identity surveys, and tracking of STEM course enrollment. We expect 80% of participants to enroll in advanced science courses the following year."
 
 ### Mistake 4: Unrealistic Scope
 

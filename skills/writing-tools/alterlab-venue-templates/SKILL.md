@@ -6,7 +6,8 @@ license: MIT
 compatibility: Requires a LaTeX distribution (pdflatex/latexmk) to compile the bundled templates; helper scripts (query/customize/validate) are stdlib Python. validate_format.py needs pdfinfo (poppler) for PDF checks.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Venue Templates
@@ -15,7 +16,19 @@ metadata:
 
 LaTeX templates, formatting requirements, and writing-style guidance for academic journals, conferences, posters, and grants. Provides ready-to-use templates plus references that cover many more venues than are bundled.
 
-Use this skill when you need venue-specific **formatting** (templates, page/word limits, citation style, figure specs, anonymization rules) or **style** (tone, abstract format, reviewer priorities). Hand off substantive prose development to `alterlab-scientific-writing` and grant argumentation strategy to `alterlab-research-grants`.
+## When to Use This Skill
+
+Use this skill when you need venue-specific **formatting** (templates, page/word limits, citation style, figure specs, anonymization rules, mandatory checklists and statements) or **style** (tone, abstract format, reviewer priorities) for a journal, conference, poster session, or funder.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Drafting or tightening the manuscript's prose itself | `alterlab-scientific-writing` |
+| Grant argumentation — Specific Aims, significance, broader impacts strategy | `alterlab-research-grants` |
+| Designing and laying out the poster itself in LaTeX | `alterlab-latex-posters` |
+| Turkish journal / TR Dizin formatting and Turkish APA 7 | `alterlab-tr-academic-style` |
+| Building or cleaning the bibliography (.bib) | `alterlab-citation-mgmt` |
 
 ## What's Bundled
 
@@ -93,7 +106,11 @@ python scripts/validate_format.py --file proposal.pdf --venue "NSF" --report val
 | Nature Article | ~5 pp | ~3000 words excluding refs |
 | Science Report | ~5 pp | figures count toward limit |
 | PLOS ONE | none | unlimited length |
-| NeurIPS / ICML | 8 pp | + unlimited refs/appendix (recent years allow 9–10) |
+| NeurIPS 2026 | 9 pp | + unlimited refs/appendix; paper checklist mandatory (desk reject without it) |
+| ICML 2026 | 8 pp | 9 pp camera-ready; impact statement mandatory (not counted) |
+| ICLR 2027 | 9 pp | 10 pp in rebuttal and camera-ready; AI-use statement required |
+| CVPR 2026 | 8 pp | excluding references; official author kit required |
+| CHI 2027 | 5,000-8,000 words | word-based; single-column `acmart` manuscript format for review |
 | NSF | 15 pp | project description only |
 | NIH R01 | 12 pp | research strategy |
 
@@ -117,7 +134,7 @@ python scripts/validate_format.py --file proposal.pdf --venue "NSF" --report val
 | IEEE | 300+ dpi | EPS, PDF | RGB or grayscale |
 
 ### NeurIPS at a glance
-Single-column (text block 5.5 × 9 in), Times 10pt, 8-page main text (+ unlimited refs/appendix), numbered bracket citations, **anonymization required** for the double-blind initial submission, colorblind-safe figures recommended. Official style file (`neurips_<year>.sty`) changes annually.
+Single-column (text block 5.5 × 9 in), Times 10pt, 9-page main text for 2026 (+ unlimited refs/appendix), numbered bracket citations, **anonymization required** for the double-blind initial submission, and the **NeurIPS Paper Checklist** appended after the appendices (missing checklist = desk rejection). Official style file (`neurips_2026.sty` for 2026) changes annually; colorblind-safe figures recommended.
 
 ## Why Style Matters
 
@@ -135,13 +152,16 @@ The same results read very differently across venues. Load the matching guide be
 - **Use the official style file** where one exists; don't tweak margins/fonts (grounds for desk rejection at many venues).
 - **Preserve required structure**: don't remove required sections or packages when customizing.
 - **Check page limits and anonymization** before submission; remove identifying info for double-blind venues.
+- **Check required statements**: many venues now require a checklist, impact statement, limitations section, or AI-use disclosure (e.g. NeurIPS checklist, ICML impact statement, ACL Limitations section, ICLR AI-use statement).
 
 ### External author guidelines
 - Nature: https://www.nature.com/nature/for-authors
 - Science: https://www.science.org/content/page/instructions-authors
 - PLOS: https://plos.org/resources/
 - Cell Press: https://www.cell.com/author-guidelines
-- NeurIPS: https://neurips.cc/ · ICML: https://icml.cc/ · CVPR: https://cvpr.thecvf.com/
-- NSF PAPPG: https://www.nsf.gov/publications/pub_summ.jsp?ods_key=pappg
-- NIH: https://grants.nih.gov/grants/how-to-apply-application-guide.html
+- NeurIPS: https://neurips.cc/ · ICML: https://icml.cc/ · ICLR: https://iclr.cc/ · CVPR: https://cvpr.thecvf.com/ · ACL Rolling Review: https://aclrollingreview.org/
+- NSF PAPPG: https://www.nsf.gov/policies/pappg
+- NIH: https://grants.nih.gov/grants-process/write-application/how-to-apply-application-guide
 - DOE: https://science.osti.gov/grants
+
+Part of the AlterLab Academic Skills suite.

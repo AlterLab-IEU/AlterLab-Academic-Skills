@@ -36,7 +36,7 @@ Paper2Poster automatically generates professional academic posters from research
 ```bash
 python pipeline_all.py \
   --input-dir "path/to/papers" \
-  --output-dir "path/to/output" \
+  --output_dir "path/to/output" \
   --model-choice 2
 ```
 
@@ -45,7 +45,7 @@ python pipeline_all.py \
 ```bash
 python pipeline_all.py \
   --input-dir "path/to/papers" \
-  --output-dir "path/to/output" \
+  --output_dir "path/to/output" \
   --model-choice 2 \
   --poster-width-inches 60 \
   --poster-height-inches 40
@@ -54,15 +54,15 @@ python pipeline_all.py \
 ### Parameters
 
 **Basic Configuration:**
-- `--input-dir`: Directory containing paper files
-- `--output-dir`: Directory for generated posters
+- `--input-dir`: Directory containing the paper PDF (only the first PDF found is processed; `--pdf-path` picks one)
+- `--output_dir`: Output directory (underscore flag; the poster lands in `<output_dir>/poster/`)
 - `--model-choice 2`: Select the poster (Paper2Poster) component
 
 **Poster Dimensions:**
-- `--poster-width-inches`: Width in inches
-- `--poster-height-inches`: Height in inches
+- `--poster-width-inches`: Width in inches (default 48)
+- `--poster-height-inches`: Height in inches (default 36)
 
-The LLM is configured via `.env` (`OPENAI_API_KEY` / `OPENAI_API_BASE`); see `installation.md`.
+The poster module is invoked with a fixed OpenRouter-routed GPT-4o model (`openrouter_4o`), so `OPENROUTER_API_KEY` must be exported; see `installation.md`.
 
 ## Standard Poster Sizes
 
@@ -82,12 +82,9 @@ The system supports any custom dimensions. Specify using:
 ## Input Requirements
 
 ### Supported Input Formats
-1. **LaTeX source** (preferred)
-   - Main `.tex` file with complete paper
-   - All figures and tables referenced
-   - Compiled successfully
+`pipeline_all.py` builds the poster from the **PDF**:
 
-2. **PDF**
+1. **PDF**
    - High-quality PDF with embedded fonts
    - Selectable text (not scanned)
    - High-resolution figures

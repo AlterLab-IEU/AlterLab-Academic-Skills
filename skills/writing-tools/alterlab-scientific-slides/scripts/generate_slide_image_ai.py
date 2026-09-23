@@ -111,7 +111,7 @@ TYPOGRAPHY:
 - High contrast text (dark on light or light on dark)
 - Bullet points or key phrases, NOT paragraphs
 - Maximum 5-6 lines of text content
-- Default author/presenter: "AlterLab" (use this unless another name is specified)
+- Author/presenter names: use only names given in the request; never invent one
 
 VISUAL ELEMENTS:
 - Use GENERIC, simple images and icons - avoid overly specific or detailed imagery
@@ -194,11 +194,12 @@ STYLE:
         self._last_error = None
         self.base_url = "https://openrouter.ai/api/v1"
         # Model IDs follow the ALTERLAB_MODEL convention (skills/core/shared/model_env.md):
-        # read an env var, else a dated default constant (reviewed 2026-06-06). These slots
+        # read an env var, else a dated default constant (reviewed 2026-09-23). These slots
         # need Google image/vision models, so they use dedicated vars rather than the Claude
         # text default ALTERLAB_MODEL. Override via ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL.
-        # Nano Banana Pro for image generation
-        self.image_model = os.environ.get("ALTERLAB_IMAGE_MODEL") or "google/gemini-3.1-pro-image-preview"
+        # Nano Banana Pro (Gemini 3 Pro Image, GA on OpenRouter) for image generation; the
+        # previous default "google/gemini-3.1-pro-image-preview" is not an OpenRouter model ID.
+        self.image_model = os.environ.get("ALTERLAB_IMAGE_MODEL") or "google/gemini-3-pro-image"
         # Gemini 3.1 Pro for quality review
         self.review_model = os.environ.get("ALTERLAB_REVIEW_MODEL") or "google/gemini-3.1-pro-preview"
 

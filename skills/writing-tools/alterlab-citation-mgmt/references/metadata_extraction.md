@@ -120,10 +120,10 @@ math.ST  # Mathematics - Statistics
 
 **Base URL**: `https://api.crossref.org/works/`
 
-**No API key required**, but polite pool recommended:
-- Add email to User-Agent
-- Gets better service
-- No rate limits
+**No API key required**, but the polite pool is recommended:
+- Add a contact email to the User-Agent (or a `mailto=` parameter)
+- Polite requests get higher rate and concurrency limits than anonymous ones
+- Back off on HTTP 429 and honour the `x-rate-limit-*` response headers
 
 #### Basic DOI Lookup
 
@@ -279,7 +279,7 @@ Key fields:
 
 **Preprints in physics, math, CS, q-bio** - Free, open access.
 
-**Base URL**: `http://export.arxiv.org/api/query`
+**Base URL**: `https://export.arxiv.org/api/query`
 
 **No API key required**
 
@@ -287,7 +287,7 @@ Key fields:
 
 **Request**:
 ```
-GET http://export.arxiv.org/api/query?id_list=2103.14030
+GET https://export.arxiv.org/api/query?id_list=2103.14030
 ```
 
 **Response**: Atom XML

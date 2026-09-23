@@ -59,7 +59,7 @@ Comprehensive formatting requirements and submission guidelines for major scient
 - **Tables**: Same requirements as Nature
 - **Open Access**: All articles are open access (APC applies)
 
-**LaTeX Template**: `assets/journals/nature_communications.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 ---
 
@@ -103,7 +103,7 @@ Comprehensive formatting requirements and submission guidelines for major scient
 - **Tables**: Include in main text or as separate files
 - **Supplementary Materials**: Extensive materials allowed
 
-**LaTeX Template**: `assets/journals/science_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Author Guidelines**: https://www.science.org/content/page/instructions-authors
 
@@ -124,7 +124,7 @@ Comprehensive formatting requirements and submission guidelines for major scient
 - **Figures**: Same as Science
 - **Open Access**: All articles open access
 
-**LaTeX Template**: `assets/journals/science_advances.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 ---
 
@@ -200,7 +200,7 @@ Comprehensive formatting requirements and submission guidelines for major scient
 - **eTOC Blurb**: 30-50 word summary required
 - **Graphical Abstract**: Required
 
-**LaTeX Template**: `assets/journals/cell_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Author Guidelines**: https://www.cell.com/cell/authors
 
@@ -241,7 +241,7 @@ Comprehensive formatting requirements and submission guidelines for major scient
 - **Tables**: LaTeX table environment, positioned at top/bottom
 - **Equations**: Numbered consecutively
 
-**LaTeX Template**: `assets/journals/ieee_trans.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Author Guidelines**: https://journals.ieeeauthorcenter.ieee.org/
 
@@ -257,7 +257,7 @@ Comprehensive formatting requirements and submission guidelines for major scient
 - **Open Access**: All articles open access
 - **Rapid publication**: Faster review than Transactions
 
-**LaTeX Template**: `assets/journals/ieee_access.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 ---
 
@@ -282,7 +282,7 @@ Comprehensive formatting requirements and submission guidelines for major scient
 - **CCS Concepts**: Required (ACM Computing Classification System)
 - **Keywords**: Required
 
-**LaTeX Template**: `assets/journals/acm_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Author Guidelines**: https://www.acm.org/publications/authors
 
@@ -305,9 +305,9 @@ Comprehensive formatting requirements and submission guidelines for major scient
   - Author-year: Author AA, Author BB (Year) Title. Journal vol:pages
 - **Figures**: TIFF, EPS, PDF; 300+ dpi
 - **Tables**: Editable format
-- **Document Class**: `svjour3` for many Springer journals
+- **Document Class**: `sn-jnl` (the Springer Nature LaTeX template, also on Overleaf); the older `svjour3` is legacy — follow the specific journal's instructions
 
-**LaTeX Template**: `assets/journals/springer_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Author Guidelines**: Varies by specific journal
 
@@ -331,7 +331,7 @@ Comprehensive formatting requirements and submission guidelines for major scient
 - **Tables**: Editable format
 - **Document Class**: `elsarticle` LaTeX class
 
-**LaTeX Template**: `assets/journals/elsevier_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Author Guidelines**: https://www.elsevier.com/authors (select specific journal)
 
@@ -356,7 +356,7 @@ Comprehensive formatting requirements and submission guidelines for major scient
 - **Open Access**: All BMC journals are open access
 - **Data Availability**: Statement required
 
-**LaTeX Template**: `assets/journals/bmc_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Author Guidelines**: https://www.biomedcentral.com/getpublished
 
@@ -383,7 +383,7 @@ Comprehensive formatting requirements and submission guidelines for major scient
 - **Open Access**: All Frontiers journals are open access
 - **Figure Legends**: Detailed, 350 words max per figure
 
-**LaTeX Template**: `assets/journals/frontiers_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 **Author Guidelines**: https://www.frontiersin.org/guidelines/author-guidelines
 
@@ -403,7 +403,7 @@ Comprehensive formatting requirements and submission guidelines for major scient
 - **References**: PNAS style
 - **LaTeX Class**: `pnas-new`
 
-**LaTeX Template**: `assets/journals/pnas_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 ---
 
@@ -419,7 +419,7 @@ Comprehensive formatting requirements and submission guidelines for major scient
 - **References**: APS style
 - **Document Class**: `revtex4-2`
 
-**LaTeX Template**: `assets/journals/prl_article.tex`
+**LaTeX Template**: not bundled — download the current official template from the venue's author guidelines
 
 ---
 
@@ -453,14 +453,14 @@ Comprehensive formatting requirements and submission guidelines for major scient
 | Journal | Max Length | Format | Citations | Template |
 |---------|-----------|--------|-----------|----------|
 | **Nature** | ~3,000 words | Single col | Superscript | `nature_article.tex` |
-| **Science** | 2,500 words | Single col | (1) brackets | `science_article.tex` |
+| **Science** | 2,500 words | Single col | (1) brackets | official kit |
 | **PLOS ONE** | Unlimited | Single col | [1] Vancouver | `plos_one.tex` |
-| **Cell** | ~5,000 words | Double sp | (Author, year) | `cell_article.tex` |
-| **IEEE Trans** | 8-12 pages | Two col | [1] IEEE | `ieee_trans.tex` |
-| **ACM Trans** | Variable | Two col | [1] or author-yr | `acm_article.tex` |
-| **Springer** | Variable | Single col | Numbered/author-yr | `springer_article.tex` |
-| **BMC** | Unlimited | Single col | [1] Vancouver | `bmc_article.tex` |
-| **Frontiers** | ~12 pages | Single col | Numbered | `frontiers_article.tex` |
+| **Cell** | ~5,000 words | Double sp | (Author, year) | official kit |
+| **IEEE Trans** | 8-12 pages | Two col | [1] IEEE | official kit |
+| **ACM Trans** | Variable | Two col | [1] or author-yr | official kit |
+| **Springer** | Variable | Single col | Numbered/author-yr | official kit |
+| **BMC** | Unlimited | Single col | [1] Vancouver | official kit |
+| **Frontiers** | ~12 pages | Single col | Numbered | official kit |
 
 ---
 
@@ -480,7 +480,7 @@ Many journals provide official LaTeX templates:
 - **IEEE**: IEEEtran class (widely available)
 - **ACM**: acmart class (CTAN)
 - **Elsevier**: elsarticle class (CTAN)
-- **Springer**: svjour3 class (journal website)
+- **Springer**: sn-jnl class (Springer Nature LaTeX template; svjour3 is legacy)
 
 Check journal's "For Authors" or "Submit" page for the most current templates.
 

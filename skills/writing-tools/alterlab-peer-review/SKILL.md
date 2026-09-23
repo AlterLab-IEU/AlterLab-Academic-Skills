@@ -1,12 +1,13 @@
 ---
 name: alterlab-peer-review
-description: Writes structured, checklist-based manuscript and grant peer reviews — assesses methodology, statistical validity, reporting-standards compliance (CONSORT/STROBE/PRISMA), and gives constructive feedback. Use when writing a formal reviewer report, responding to a journal/grant review invitation, or revising a manuscript against reviewer criteria. For evaluating claims/evidence quality prefer alterlab-scientific-thinking; for a multi-reviewer mock-panel verdict use alterlab-paper-reviewer; for quantitative rubric scoring use alterlab-scholar-eval. Part of the AlterLab Academic Skills suite.
+description: Writes structured, checklist-based single-reviewer reports for manuscripts and grant proposals — assesses methodology, statistical validity, reporting-standards compliance (CONSORT 2025, SPIRIT 2025, STROBE, PRISMA 2020, ARRIVE 2.0), reproducibility, and ethics, and gives constructive, prioritized feedback while respecting reviewer confidentiality and AI-use rules. Use when writing a formal referee report, responding to a journal or grant review invitation, or self-auditing a manuscript against reviewer criteria before submission. For evaluating claims/evidence quality prefer alterlab-scientific-thinking; for a multi-reviewer mock-panel verdict use alterlab-paper-reviewer; for quantitative rubric scoring use alterlab-scholar-eval; to revise a paper in response to reviews use alterlab-paper-writer. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
 compatibility: No external tools, API keys, or services required — produces reviews from the Read/Write/Edit/Bash tools alone
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Manuscript and Grant Peer Review
@@ -26,10 +27,25 @@ This skill should be used when:
 - Checking compliance with reporting guidelines (CONSORT, STROBE, PRISMA)
 - Providing constructive feedback on scientific writing
 
-**Defer to a sibling skill when the task is:**
-- Grading evidence quality / spotting biases, confounders, or causal-inference flaws → `alterlab-scientific-thinking`
-- Producing a multi-reviewer mock-panel verdict (accept/reject decision from several simulated reviewers) → `alterlab-paper-reviewer`
-- Scoring or ranking work on a numeric weighted rubric → `alterlab-scholar-eval`
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| A simulated multi-reviewer panel with an editor's accept/minor/major/reject decision and revision roadmap | `alterlab-paper-reviewer` |
+| Grading evidence quality or spotting biases, confounders, or causal-inference flaws in claims | `alterlab-scientific-thinking` |
+| Scoring or ranking work on a numeric weighted rubric | `alterlab-scholar-eval` |
+| Revising your own manuscript or drafting the response-to-reviewers letter | `alterlab-paper-writer` |
+| Checking that a reference list is real (fabricated or retracted citations) | `alterlab-citation-verifier` |
+
+## Confidentiality and AI Use
+
+Manuscripts and proposals under review are confidential, and several funders and publishers restrict generative-AI use by reviewers. Before processing someone else's unpublished work, ask which venue the review is for and follow its policy:
+
+- **NIH** prohibits reviewers from using generative AI to analyze or formulate peer-review critiques, and from uploading application content to AI tools (NOT-OD-23-149).
+- **NSF** prohibits reviewers from uploading proposal content or review records to non-approved generative-AI tools (Notice to the research community, December 2023).
+- **Publishers**: Springer Nature asks reviewers not to upload manuscripts into generative-AI tools and to declare any AI support in the report; Elsevier says reviewers should not upload a manuscript or any part of it into an AI tool, allowing AI only in a supportive role (e.g. polishing the report's language) with disclosure. Many journals and conferences (e.g. ICML, NeurIPS, ICLR) publish their own reviewer LLM policies.
+
+Where AI assistance is prohibited, do not ingest the confidential text: offer the review framework below as a template the reviewer completes, or discuss only the reviewer's own notes. Where it is permitted, keep the reviewer's judgment in charge and remind them to disclose the assistance as the venue requires. Self-review of the user's own manuscript is unaffected.
 
 ## Peer Review Workflow
 
@@ -165,7 +181,7 @@ Assess whether the research meets modern standards for reproducibility and open 
 - Are protocols detailed in sufficient depth?
 
 **Reporting Standards:**
-- Does the manuscript follow discipline-specific reporting guidelines (CONSORT, PRISMA, ARRIVE, MIAME, MINSEQE, etc.)?
+- Does the manuscript follow the current discipline-specific reporting guideline (CONSORT 2025 for trials, SPIRIT 2025 for trial protocols, PRISMA 2020 for systematic reviews, STROBE, STARD 2015, TRIPOD+AI, ARRIVE 2.0, MIAME, MINSEQE, etc.)? The EQUATOR Network (equator-network.org) indexes them.
 - See `references/reporting_standards.md` for common guidelines
 - Are all elements of the appropriate checklist addressed?
 
@@ -360,7 +376,7 @@ Maintain a constructive, professional, and collegial tone throughout the review.
 
 ### Presentations and Slide Decks
 
-**⚠️ CRITICAL: For presentations (PowerPoint, Beamer, slide decks), NEVER read the PDF directly — it causes buffer overflows and misses visual formatting issues. ALWAYS convert to images first**, using:
+For presentations (PowerPoint, Beamer, slide decks), review rendered slide images rather than the PDF's extracted text: text extraction hides exactly the problems that matter in a talk — overflow, overlap, contrast, and font size. Convert the deck to images first, using the helper from `alterlab-scientific-slides`:
 
 ```bash
 python skills/writing-tools/alterlab-scientific-slides/scripts/pdf_to_images.py presentation.pdf review/slide --dpi 150
@@ -402,3 +418,4 @@ Before finalizing the review, verify:
 - [ ] Review is thorough but proportionate to manuscript scope
 - [ ] Recommendation is consistent with identified issues
 
+Part of the AlterLab Academic Skills suite.

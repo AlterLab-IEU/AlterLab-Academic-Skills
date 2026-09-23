@@ -220,7 +220,8 @@ class MetadataExtractor:
         Returns:
             Metadata dictionary or None
         """
-        url = 'http://export.arxiv.org/api/query'
+        # arXiv serves the API over HTTPS; plain http:// answers with a 301 redirect.
+        url = 'https://export.arxiv.org/api/query'
         params = {
             'id_list': arxiv_id,
             'max_results': 1

@@ -128,9 +128,10 @@ def check_dependencies():
 def main():
     """Command-line interface."""
     if len(sys.argv) < 2:
-        print("Usage: python generate_pdf.py <markdown_file> [output_pdf] [--citation-style STYLE]")
+        print("Usage: python generate_pdf.py <markdown_file> [output_pdf] [--output PDF] [--citation-style STYLE]")
         print("\nOptions:")
-        print("  --citation-style STYLE    Citation style (default: apa)")
+        print("  --output, -o PDF          Output PDF path (same as the positional output_pdf)")
+        print("  --citation-style STYLE    CSL style; needs STYLE.csl locally and a same-named .bib (default: apa)")
         print("  --no-toc                  Disable table of contents")
         print("  --no-numbers              Disable section numbering")
         print("  --check-deps              Check if dependencies are installed")
@@ -149,7 +150,15 @@ def main():
     toc = True
     number_sections = True
 
-    # Parse optional flags
+    # Parse optional flags. --output/-o is what the SKILL.md examples use; without this
+    # branch it was silently ignored and the PDF landed next to the markdown file.
+    for flag in ('--output', '-o'):
+        if flag in sys.argv:
+            idx = sys.argv.index(flag)
+            if idx + 1 < len(sys.argv):
+                output_pdf = sys.argv[idx + 1]
+            break
+
     if '--citation-style' in sys.argv:
         idx = sys.argv.index('--citation-style')
         if idx + 1 < len(sys.argv):

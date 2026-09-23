@@ -52,9 +52,10 @@
     {
       "id": "near-miss-open-ended-brainstorming",
       "prompt": "I want to brainstorm wide-open, blue-sky research directions for our lab on AI in virtual production over the next five years. Just throw out lots of creative ideas, no need for testable mechanisms yet.",
-      "expected_output": "Should NOT trigger hypothesis-generation. This is open-ended, divergent ideation ('blue-sky', 'no testable mechanisms yet') rather than formulating falsifiable, mechanistic hypotheses from a specific observation. The correct response engages in wide-open idea generation rather than forcing the structured competing-hypotheses / experimental-design workflow this skill is built for.",
+      "expected_output": "Should NOT trigger hypothesis-generation; defers to alterlab-scientific-brainstorm. This is open-ended, divergent ideation ('blue-sky', 'no testable mechanisms yet') rather than formulating falsifiable, mechanistic hypotheses from a specific observation. The correct response engages in wide-open idea generation rather than forcing the structured competing-hypotheses / experimental-design workflow this skill is built for.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-scientific-brainstorm" },
         { "type": "behavior", "value": "Does not impose the structured competing-hypotheses, predictions, and experimental-design workflow; instead offers open-ended, divergent research directions as requested." }
       ]
     }

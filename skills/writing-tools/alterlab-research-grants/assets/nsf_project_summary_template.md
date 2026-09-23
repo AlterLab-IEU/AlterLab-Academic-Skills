@@ -18,7 +18,7 @@
 This should be accessible to a broad audience including non-scientists. Avoid jargon.]
 
 **Example:**
-This project investigates how coastal wetlands respond to rising sea levels and increased storm intensity caused by climate change. Using a combination of field observations, remote sensing, and computer modeling across 20 sites along the Atlantic coast, we will determine whether wetlands can migrate inland fast enough to keep pace with sea level rise. Results will inform coastal management policies and help predict the fate of critical ecosystems that protect shorelines and support fisheries. This work will train 5 graduate students and 10 undergraduates, with priority recruitment from underrepresented groups through partnerships with minority-serving institutions.
+This project investigates how coastal wetlands respond to rising sea levels and increased storm intensity caused by climate change. Using a combination of field observations, remote sensing, and computer modeling across 20 sites along the Atlantic coast, we will determine whether wetlands can migrate inland fast enough to keep pace with sea level rise. Results will inform coastal management policies and help predict the fate of critical ecosystems that protect shorelines and support fisheries. This work will train 5 graduate students and 10 undergraduates recruited through open calls, including at partner institutions with limited research capacity.
 
 ---
 
@@ -44,7 +44,7 @@ This research addresses a critical gap in understanding coastal wetland resilien
 
 Must address at least one of NSF's five broader impacts areas with specific, measurable activities:
 1. Advance discovery while promoting teaching, training, and learning
-2. Broaden participation of underrepresented groups
+2. Broaden participation in STEM (activities open to all — see NSF's April 2025 priorities statement)
 3. Enhance infrastructure for research and education  
 4. Broadly disseminate to enhance scientific understanding
 5. Benefit society
@@ -54,7 +54,7 @@ Be SPECIFIC with concrete activities, timelines, and assessment plans.]
 **Example:**
 This project will generate significant broader impacts through three integrated activities:
 
-**1. Education and Training**: We will train 5 PhD students and 10 undergraduates in interdisciplinary coastal science, emphasizing field methods, remote sensing, and quantitative modeling. Undergraduates will participate through summer research internships (10 weeks, $5,000 stipends) with mentorship from graduate students. We will recruit 50% of undergraduates from groups underrepresented in STEM through partnerships with 4 historically Black colleges and universities (HBCUs). Students will present results at the Annual Biogeographical Research Conference and co-author peer-reviewed publications.
+**1. Education and Training**: We will train 5 PhD students and 10 undergraduates in interdisciplinary coastal science, emphasizing field methods, remote sensing, and quantitative modeling. Undergraduates will participate through summer research internships (10 weeks, $5,000 stipends) with mentorship from graduate students. Positions will be advertised through an open call, including at 4 partner institutions with limited research infrastructure (among them community colleges and minority-serving institutions), with selection against published criteria. Students will present results at the Annual Biogeographical Research Conference and co-author peer-reviewed publications.
 
 **2. Stakeholder Engagement and Policy Impact**: We will partner with 5 state coastal management agencies and The Nature Conservancy to translate research findings into management tools. Annual workshops will bring together 30 coastal managers, conservation practitioners, and researchers to co-develop decision-support frameworks. Results will inform state sea level rise adaptation plans, wetland restoration prioritization, and land acquisition strategies affecting 500,000 acres of coastal habitat.
 
