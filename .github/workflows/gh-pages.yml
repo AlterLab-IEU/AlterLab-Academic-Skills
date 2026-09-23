@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Assemble site (page + catalog as siblings)
         run: |
@@ -57,9 +57,11 @@ jobs:
           ls -la _site
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: _site
+          # v4+ drops dotfiles unless asked; keep .nojekyll in the artifact as before.
+          include-hidden-files: true
 
   deploy:
     name: Deploy to GitHub Pages
@@ -71,7 +73,7 @@ jobs:
     steps:
       - name: Deploy
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
         with:
           # Pages deployments queued for >10 min on 2026-07-02 and the action's
           # default timeout (600000 ms) aborted them. Wait up to 20 minutes.
@@ -86,7 +88,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Poll the live skills.json until it equals the repo's
         # Success = the live JSON parses to exactly the committed catalog (not

@@ -24,12 +24,26 @@ jobs:
     name: lint, compile, schema + eval
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
+
+      - name: Install Node.js (dynamic-workflow dry runs)
+        # tests/test_workflows.py executes every workflow script against a mocked runtime and
+        # skips without Node, so provision it explicitly instead of relying on the runner image.
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Dry-run every dynamic workflow
+        run: |
+          set -euo pipefail
+          for f in skills/*/workflows/*.js .claude/workflows/*.js; do
+            node scripts/workflow_dryrun.mjs "$f" '{"path":"paper.md","question":"q","topic":"t","manuscript":"m.docx","reviews":"r.pdf","funder":"NIH"}' mixed
+          done
 
       - name: Byte-compile all skill Python
         # Catches syntax errors in every shipped skill script + the MCP connectors.
@@ -53,10 +67,10 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
 
@@ -77,10 +91,10 @@ jobs:
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
 
@@ -103,10 +117,10 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.2.0
         with:
           enable-cache: true
 
