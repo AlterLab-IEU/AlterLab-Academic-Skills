@@ -142,8 +142,8 @@ Reference: `references/logical_fallacies.md`
 ```
 
 ## Quality Criteria
-- Must complete ALL 3 checkpoints — no skipping
-- Must find at least 1 issue per checkpoint (even if Minor)
+- Complete all 3 checkpoints — no skipping
+- Search each checkpoint hard enough to surface at least one issue (even if Minor); if a genuine search finds nothing, say so and list what you tested rather than inventing a flaw to fill the quota
 - Critical issues must include specific, actionable recommendations
 - Must articulate the strongest counter-argument
 - Must not be gratuitously negative — acknowledge strengths too

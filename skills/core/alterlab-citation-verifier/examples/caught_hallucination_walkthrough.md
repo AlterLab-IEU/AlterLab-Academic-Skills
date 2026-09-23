@@ -1,7 +1,7 @@
 ---
 scenario: A real, existing paper is cited to support a claim it does not make (Frankenstein / Semantic Hallucination)
 mode: existence check (verify_citations.py) + claim faithfulness (claim_faithfulness.py)
-demonstrates: Why "the citation is real" and "the citation supports the claim" are two separate verdicts, and how the SH verdict is reached deterministically
+demonstrates: Why "the citation is real" and "the citation supports the claim" are two separate verdicts, and how the SH verdict is grounded in the retrieved source
 taxonomy_hit: SH (Semantic Hallucination)
 ---
 
@@ -18,10 +18,11 @@ and keeps their verdicts separate:
 
 1. `scripts/verify_citations.py` — *does this work exist?* (Crossref / OpenAlex / Semantic
    Scholar / arXiv resolution, title+author similarity >= 0.70 via difflib `SequenceMatcher`,
-   DOI/arXiv-ID resolution, retraction flag from Crossref `update-to` / OpenAlex `is_retracted`).
+   DOI/arXiv-ID resolution, retraction flag from Crossref `updated-by` / `update-to` —
+   including Retraction Watch data — and OpenAlex `is_retracted`).
 2. `scripts/claim_faithfulness.py` — *does this work support the claim?* (compares the user's
-   sentence against the source's actual content, mapping the result to the
-   TF / PAC / IH / PH / SH taxonomy).
+   sentence against the cited work's retrieved abstract and returns `support` /
+   `contradict` / `unsupported`; `contradict` maps to SH).
 
 A reference can PASS check 1 and FAIL check 2. That is exactly what happens here.
 
@@ -48,22 +49,16 @@ becomes "so the citation must be fine."
 ## Step 1 — Existence Check (`verify_citations.py`)
 
 ```
-$ echo "Mueller, P. A., & Oppenheimer, D. M. (2014). The pen is mightier than the keyboard:
-  Advantages of longhand over laptop note taking. Psychological Science, 25(6), 1159-1168." \
-  | uv run python skills/core/alterlab-citation-verifier/scripts/verify_citations.py - \
-      --format freeform --mailto alterlab.ieu@gmail.com
+$ echo "Mueller, P. A., & Oppenheimer, D. M. (2014). The pen is mightier than the keyboard: Advantages of longhand over laptop note taking. Psychological Science, 25(6), 1159-1168. https://doi.org/10.1177/0956797614524581" \
+  | uv run python skills/core/alterlab-citation-verifier/scripts/verify_citations.py -
 
-Resolving against Crossref / OpenAlex / Semantic Scholar / arXiv...
-
-  Crossref:          MATCH   doi:10.1177/0956797614524581
-  OpenAlex:          MATCH   W2relevant-id
-  Semantic Scholar:  MATCH   corpusId confirmed
-  Title ratio:       1.00  (exact; difflib SequenceMatcher)
-  Author match:      Mueller, P. A. / Oppenheimer, D. M.  -> exact
-  Retraction flag:   none (Crossref update-to / OpenAlex is_retracted)
-  Year / venue:      2014 / Psychological Science 25(6), 1159-1168  -> confirmed
-
-EXISTENCE VERDICT: VERIFIED
+# Summary of the JSON entry:
+  verdict:        verified   (severity NONE)
+  detail:         Matched in crossref, openalex, semanticscholar.
+  source_status:  crossref=record  openalex=record  semanticscholar=record  arxiv=no_record
+  title_ratio:    1.0   (Crossref stores the subtitle separately; the script rejoins it)
+  author_overlap: 1.0   (Mueller, Oppenheimer)
+  retracted:      false (no retraction notice in Crossref updated-by / OpenAlex is_retracted)
 ```
 
 So far, **everything is green.** The paper is real, the DOI resolves, the metadata matches,
@@ -77,43 +72,49 @@ verifier does not return a final PASS on existence alone when the user has suppl
 
 ## Step 2 — Claim Faithfulness (`claim_faithfulness.py`)
 
-The verifier now compares the **claim** against what the source actually says.
+The verifier now compares the **claim** against what the source actually says. The default
+heuristic tier runs first:
 
 ```
 $ uv run python skills/core/alterlab-citation-verifier/scripts/claim_faithfulness.py \
-    --claim "smartphone note-taking apps improve undergraduate exam scores by 31% compared to handwriting" \
-    --doi 10.1177/0956797614524581 --json
+    --claim "Randomized controlled trials have shown that smartphone note-taking apps improve undergraduate exam scores by 31% compared to handwriting" \
+    --doi 10.1177/0956797614524581
 
-Fetching cited work's abstract (Crossref primary, OpenAlex fallback)...
-
-Claim asserts:
-  - intervention:  smartphone note-taking APPS
-  - comparator:    handwriting
-  - design:        randomized controlled trials
-  - effect:        +31% exam scores
-
-Source abstract reports:
-  - intervention:  LAPTOP note-taking
-  - comparator:    LONGHAND (handwriting)
-  - design:        three lab studies (not RCTs of apps)
-  - direction:     LONGHAND OUTPERFORMS laptop on conceptual questions
-  - effect size:   NO "31%" exam-score figure in the abstract
-
-Mismatch analysis (abstract_only: true):
-  - intervention swapped (smartphone apps  <->  laptops) ......... MISMATCH
-  - effect direction inverted (claim implies digital helps;
-      abstract asserts handwriting helps) ....................... CONTRADICTION
-  - "31%" statistic ............................................. NOT IN ABSTRACT (fabricated)
-
-tool verdict:  contradict   (abstract asserts the opposite of the claim)
-mapped verdict: MAJOR_DISTORTION / SH (Semantic Hallucination)
+verdict=unsupported  taxonomy=UNVERIFIABLE  conf=0.20  tier=heuristic  source=crossref
+  why: Lexical overlap 0% is below the support threshold and no clear contradiction signal.
+       Heuristic abstains: the abstract does not establish the claim (this is non-coverage,
+       not refutation). Use the llm tier or full text to resolve.
 ```
 
-> Note on tool honesty: the heuristic tier abstains to `unsupported` (UNVERIFIABLE) whenever
-> the abstract merely fails to mention a claim — it does NOT cry "contradiction" on silence.
-> Here the abstract actively asserts the opposite direction (handwriting wins), so the signal
-> is a genuine `contradict`, which the integrity gate maps to SH. The verdict carries
-> `abstract_only: true`, so no one mistakes an abstract-level check for full-text verification.
+That abstention is the heuristic doing its job: word overlap cannot tell a swapped intervention
+or an inverted effect from mere silence, so it refuses to guess `support`. An `unsupported`
+claim still cannot be cited as-is, so the check escalates to the LLM-judge tier, which reads
+the same retrieved abstract (the output below is illustrative; the rationale wording varies
+by run):
+
+```
+$ uv run python skills/core/alterlab-citation-verifier/scripts/claim_faithfulness.py \
+    --claim "Randomized controlled trials have shown that smartphone note-taking apps improve undergraduate exam scores by 31% compared to handwriting" \
+    --doi 10.1177/0956797614524581 --tier llm
+
+verdict=contradict  taxonomy=MAJOR_DISTORTION/SH  tier=llm  source=crossref
+  why: The abstract reports three laptop-vs-longhand studies in which laptop note-takers did
+       worse on conceptual questions; it tests no smartphone apps and reports no 31% figure.
+```
+
+Reading the claim against the abstract:
+
+| Claim asserts | Abstract reports |
+|---------------|------------------|
+| smartphone note-taking **apps** | **laptop** note-taking |
+| randomized controlled trials of apps | "three studies" of laptop vs. longhand note-taking |
+| digital note-taking **improves** exam scores | **longhand outperforms** laptops on conceptual questions |
+| a **31%** improvement | no such figure |
+
+> Note on tool honesty: both tiers see only the abstract (`abstract_only: true`), so no one
+> mistakes an abstract-level check for full-text verification. The heuristic never cries
+> "contradiction" on silence; here the abstract actively asserts the opposite direction
+> (handwriting wins), which is what makes `contradict` — and therefore SH — the right call.
 
 The claim is a **Frankenstein**: a real, recognizable citation stitched onto a statistic the
 source never reports, in a direction the source actively contradicts. The source is about
@@ -153,8 +154,9 @@ Do NOT cite Mueller & Oppenheimer (2014) for this sentence. Either:
       actually reports it — this paper is not it.
 
 ## Audit trail
-- verify_citations.py: Crossref/OpenAlex/Semantic Scholar all MATCH; title ratio 1.00; no retraction flag.
-- claim_faithfulness.py: intervention mismatch, effect-direction contradiction, "31%" absent from source.
+- verify_citations.py: verified in Crossref/OpenAlex/Semantic Scholar; title ratio 1.00; no retraction flag.
+- claim_faithfulness.py: heuristic tier abstained (unsupported, 0% overlap); llm tier returned contradict —
+  intervention mismatch, effect-direction contradiction, "31%" absent from the abstract (abstract_only: true).
 ```
 
 ---
@@ -166,7 +168,7 @@ Bibliography-only checks — and most human reviewers — answer only the first.
 hallucinations of 2024-2026 increasingly pass the first check: the model attaches a famous,
 real paper to a claim that paper never made. Separating the two verdicts is the whole point.
 
-### 2. The SH verdict is reached deterministically, not from memory
+### 2. The SH verdict is grounded in the retrieved abstract, not in memory
 The verifier never relies on the model "knowing" what Mueller & Oppenheimer found. It
 resolves the DOI, fetches the cited work's abstract (Crossref/OpenAlex), and compares that
 retrieved text against the claim. Same-source hallucination (the verifier and the writer

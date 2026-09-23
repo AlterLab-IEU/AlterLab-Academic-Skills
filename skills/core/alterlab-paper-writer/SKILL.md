@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: Uses built-in Claude tools only; optional LaTeX toolchain (apa7 document class) required for PDF compilation; no external API key or account required
 metadata:
   skill-author: AlterLab
-  version: "2.4"
-  last_updated: "2026-03-08"
+  version: "2.5"
+  last_updated: "2026-09-23"
 ---
 
 # Academic Paper — Academic Paper Writing Agent Team
@@ -37,7 +37,7 @@ Write a paper on the impact of declining birth rates on private university manag
 
 ---
 
-## Trigger Conditions
+## When to Use This Skill
 
 ### Trigger Keywords
 
@@ -69,6 +69,10 @@ Activate `plan` mode (Socratic chapter-by-chapter guidance) when the user's **in
 | Deep research / fact-checking (not paper writing) | `alterlab-deep-research` |
 | Reviewing a paper (structured review) | `alterlab-paper-reviewer` |
 | Full research-to-paper pipeline | `alterlab-research-pipeline` |
+| Checking that a draft's references exist and are not retracted (anti-hallucination audit) | `alterlab-citation-verifier` |
+| Turning one section's notes into polished prose without the configuration interview and agent pipeline | `alterlab-scientific-writing` |
+
+In Claude Code, a point-by-point response to reviewers (one drafting agent per comment plus a consistency pass) is packaged as `/alterlab-workflows:rebuttal` (see `alterlab-research-workflows`).
 
 ### Distinction from `alterlab-deep-research`
 
@@ -498,3 +502,5 @@ alterlab-paper-writer + alterlab-deep-research   -> Deep research phase -> paper
 alterlab-paper-writer + alterlab-paper-reviewer  -> Peer review -> revision loop
 alterlab-paper-writer + alterlab-research-pipeline -> Paper-writing stage within the full research-to-publication pipeline
 ```
+
+Part of the AlterLab Academic Skills suite.

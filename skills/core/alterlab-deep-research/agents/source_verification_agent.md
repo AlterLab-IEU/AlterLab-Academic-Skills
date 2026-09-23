@@ -36,7 +36,7 @@ Reference: `references/source_quality_hierarchy.md`
 ### 1. Publication Venue Assessment
 
 - [ ] Is the journal indexed in Scopus/Web of Science?
-- [ ] Check against Beall's List and Cabell's Predatory Reports
+- [ ] Check predatory-publisher signals: Cabell's Predatory Reports (subscription), DOAJ listing, Think. Check. Submit. criteria. Beall's List has not been maintained since January 2017 — treat archived copies as historical leads only, never as a verdict
 - [ ] Verify publisher legitimacy (COPE membership, DOAJ listing)
 - [ ] Check impact factor / CiteScore (context-appropriate, not absolute threshold)
 - [ ] Verify ISSN validity
@@ -65,21 +65,21 @@ Reference: `references/source_quality_hierarchy.md`
 
 ### Reference Existence Verification
 
-A hybrid verification strategy to catch hallucinated or fabricated references:
+Existence is settled by external records, not recall: the model that drafted a reference and the model checking it share training data, so a fabricated reference that "feels right" passes a memory check (same-source hallucination). Two layers catch it:
 
-#### Tier 1: Automated DOI Verification (100% coverage)
-- Every source with a DOI → verify via `https://doi.org/{doi}` resolution
-- Check: DOI resolves to a real page, title matches, authors match
-- Auto-flag: DOI returns 404 or title mismatch > 3 words
+#### Tier 1: Existence verdicts (100% coverage)
+- Read `bibliography_verification.json`, the `verify_citations.py` report produced by `bibliography_agent`. Every source used as evidence needs a `verified` verdict there (or a PAC/IH that was corrected and re-verified).
+- A source with no verdict (e.g., added during synthesis) goes back to `bibliography_agent` for a verifier run, or you check it yourself: WebFetch the JSON record at `https://api.crossref.org/works/{doi}` and compare title, authors, and year. Publisher landing pages behind `https://doi.org/{doi}` often block automated fetches, so a failed landing page is not evidence of fabrication.
+- Auto-flag: DOI not registered, a record whose title is unrelated to the cited one (Identifier Hijacking), or metadata that disagrees with the record.
 
-#### Tier 2: WebSearch Spot-Check (50% coverage)
-- Randomly select 50% of sources for WebSearch verification
+#### Tier 2: WebSearch Spot-Check (at least 50% of sources)
+- An independent second look: select at least 50% of sources for WebSearch verification
 - Search: `"{exact title}" {first author last name} {year}`
 - Verify: source exists, is published in the claimed venue, year matches
-- Priority sampling: verify ALL tier_3 and tier_4 sources first, then sample from tier_1/tier_2
+- Priority sampling: verify all tier_3 and tier_4 sources first, then sample from tier_1/tier_2
 
 #### Red Flags for Hallucinated References
-Flag immediately if ANY of:
+Flag immediately if any of:
 - [ ] Journal name does not exist (not indexed in Scopus/WoS/DOAJ)
 - [ ] Publication date is in the future
 - [ ] Author name does not appear in any publication in the claimed venue
@@ -88,10 +88,10 @@ Flag immediately if ANY of:
 - [ ] The source is suspiciously perfect (exactly supports the claim with no caveats)
 
 #### Verification Outcome
-- `VERIFIED`: DOI resolves + metadata matches
-- `PLAUSIBLE`: No DOI but WebSearch confirms existence
-- `UNVERIFIABLE`: Cannot confirm existence through any method → flag for human review
-- `FABRICATED`: Evidence of non-existence (404 DOI + no WebSearch results) → CRITICAL, must remove
+- `VERIFIED`: an authoritative record (verifier verdict or Crossref record) confirms the source and its metadata
+- `PLAUSIBLE`: no DOI, but WebSearch confirms the work (title + author + venue/year match) — typical for books and grey literature; record which pages confirmed it
+- `UNVERIFIABLE`: the checks could not be run (tools or network unavailable) → the source stays out of the evidence base until it is checked, and is listed under Verification Limitations. It is never kept as "probably real".
+- `FABRICATED`: evidence of non-existence (verifier `TF`, an unregistered DOI, or no trace after three distinct searches) → Critical, remove
 
 ### 5. Currency Assessment
 

@@ -96,6 +96,10 @@
         {
           "type": "should_not_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-deep-research"
         }
       ]
     },
@@ -107,6 +111,10 @@
         {
           "type": "should_not_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-paper-reviewer"
         }
       ]
     },
@@ -118,6 +126,40 @@
         {
           "type": "should_not_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-research-pipeline"
+        }
+      ]
+    },
+    {
+      "id": "near-miss-citation-verifier",
+      "prompt": "My co-author wrote the literature review with an AI assistant. Before we submit, check whether every reference in this .bib file actually exists, whether any DOIs point to the wrong paper, and whether anything was retracted.",
+      "expected_output": "defers to alterlab-citation-verifier / does not invoke this skill (the user wants an anti-hallucination existence, identifier, and retraction audit of the bibliography, not drafting, formatting, or citation-style checking)",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-citation-verifier"
+        }
+      ]
+    },
+    {
+      "id": "near-miss-scientific-writing",
+      "prompt": "Here are my bullet-point notes for the Results section with all the statistics. Just turn this one section into flowing IMRAD-style paragraphs — no need for any setup questions or the rest of the paper.",
+      "expected_output": "defers to alterlab-scientific-writing / does not invoke this skill (the user wants a single section converted from notes to prose, not the configuration interview and multi-agent paper pipeline)",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-scientific-writing"
         }
       ]
     }

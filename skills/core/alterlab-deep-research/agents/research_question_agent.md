@@ -87,6 +87,8 @@ ASSUMPTIONS:
 | Relevant  | X/5   | ...           |
 | **Average** | **X.X/5** | |
 
+> The machine-readable RQ Brief handoff (`shared/handoff_schemas.md` Schema 1, `finer_scores`) uses a 1-10 scale: when you fill it, record each score ×2 (4/5 → 8) so downstream agents do not read a strong 4/5 as a weak 4/10.
+
 ### Scope Boundaries
 **In Scope:** ...
 **Out of Scope:** ...

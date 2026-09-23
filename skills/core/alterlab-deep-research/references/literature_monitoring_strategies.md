@@ -97,14 +97,14 @@ RSS (Really Simple Syndication) allows you to subscribe to content updates from 
 
 ### Retraction Watch Database
 
-- **URL**: [retractiondatabase.org](http://retractiondatabase.org)
-- **Coverage**: 40,000+ retracted or corrected papers
-- **Searchable by**: author, journal, subject, reason, date
+- **Web search**: [retractiondatabase.org](https://retractiondatabase.org) — searchable by author, journal, subject, reason, date
+- **Open data**: Crossref acquired the database in 2023 and opened it. Since January 2025 its entries appear in the Crossref REST API (`updated-by` on the retracted work, `source: "retraction-watch"`), and a daily CSV is published at `gitlab.com/crossref/retraction-watch-data`
+- **Coverage**: tens of thousands of retractions, corrections, and expressions of concern, updated every working day
 
 ### Monitoring Workflow
 
-1. **Baseline check**: Search all cited authors and paper titles in the Retraction Watch Database
-2. **Ongoing monitoring**: Subscribe to Retraction Watch blog RSS feed
+1. **Baseline check**: Run the cited bibliography through `alterlab-citation-verifier` (`scripts/verify_citations.py`), which flags every entry that Crossref (publisher or Retraction Watch notices) or OpenAlex marks as retracted — faster and more complete than searching titles one by one
+2. **Ongoing monitoring**: Subscribe to the Retraction Watch blog RSS feed for news and context
 3. **Periodic re-check**: Every 3-6 months, re-run the baseline check for cited sources
 
 ### Retraction Reasons to Watch For
@@ -236,6 +236,6 @@ Run this checklist every monitoring cycle:
 1. **Google Scholar** (5 min): Create 3-5 keyword alerts matching your original search strategy
 2. **PubMed** (5 min): Save your search and set weekly email alerts (if your field is indexed)
 3. **RSS** (5 min): Subscribe to RSS feeds for your top 5 cited journals in Feedly or Inoreader
-4. **Retraction Watch** (5 min): Run baseline check on all cited authors; subscribe to RSS feed
+4. **Retraction Watch** (5 min): Run the bibliography through `alterlab-citation-verifier` for retraction flags; subscribe to the RSS feed
 5. **Citation tracking** (5 min): Set up citation alerts for your 5 most-cited sources in Google Scholar or Scopus
 6. **Preprints** (5 min): Subscribe to relevant arXiv/SSRN/bioRxiv categories if applicable to your field

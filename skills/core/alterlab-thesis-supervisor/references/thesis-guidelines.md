@@ -336,9 +336,9 @@ What is your analytical goal?
 - APA. (2020). *Publication manual of the American Psychological Association* (7th ed.). American Psychological Association.
 - Bolker, J. (1998). *Writing your dissertation in fifteen minutes a day*. Holt.
 - Dunleavy, P. (2003). *Authoring a PhD*. Palgrave Macmillan.
-- Murray, R. (2011). *How to write a thesis* (3rd ed.). Open University Press.
+- Hyatt, L., & Roberts, C. (2023). *The dissertation journey* (4th ed.). Corwin.
+- Murray, R. (2025). *How to write a thesis* (5th ed.). Open University Press.
 - Paltridge, B., & Starfield, S. (2020). *Thesis and dissertation writing in a second language* (2nd ed.). Routledge.
-- Roberts, C. M. (2010). *The dissertation journey* (2nd ed.). Corwin.
 - Turabian, K. L. (2018). *A manual for writers* (9th ed.). University of Chicago Press.
-- University of Chicago Press. (2017). *The Chicago manual of style* (17th ed.). University of Chicago Press.
+- University of Chicago Press. (2024). *The Chicago manual of style* (18th ed.). University of Chicago Press.
 - Wisker, G. (2012). *The good supervisor* (2nd ed.). Palgrave Macmillan.

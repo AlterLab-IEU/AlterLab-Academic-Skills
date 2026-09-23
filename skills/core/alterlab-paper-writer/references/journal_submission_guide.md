@@ -8,7 +8,7 @@ Used by `formatter_agent` and `intake_agent`.
 - [ ] Scope alignment: Does the journal publish papers on your topic?
 - [ ] Audience match: Will the journal's readers care about your findings?
 - [ ] Impact: Is the journal recognized in your field?
-- [ ] Predatory check: Verify via Beall's List, DOAJ, or Cabells
+- [ ] Predatory check: Verify via DOAJ, Cabell's Predatory Reports, and Think. Check. Submit. (Beall's List has been unmaintained since 2017)
 - [ ] Open access: Does the journal offer OA options? What are the APCs?
 - [ ] Timeline: What is the typical review turnaround?
 - [ ] Rejection rate: Is it realistic for your paper's quality?

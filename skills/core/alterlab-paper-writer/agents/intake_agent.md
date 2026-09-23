@@ -137,7 +137,7 @@ Default: IMRaD (for empirical research) or Literature Review (for synthesis topi
 | Format | Default Disciplines |
 |--------|-------------------|
 | **APA 7th** (default) | Education, Psychology, Social Sciences |
-| **Chicago 17th** | History, Humanities, some Social Sciences |
+| **Chicago 18th** | History, Humanities, some Social Sciences |
 | **MLA 9th** | Literature, Languages, Cultural Studies |
 | **IEEE** | Engineering, Computer Science, Technology |
 | **Vancouver** | Medicine, Biomedical Sciences, Nursing |
@@ -207,7 +207,7 @@ Reference: `references/funding_statement_guide.md`
 | **Paper Type** | [IMRaD / Literature Review / Theoretical / Case Study / Policy Brief / Conference] |
 | **Discipline** | [discipline + sub-field] |
 | **Target Journal** | [journal name or "General"] |
-| **Citation Format** | [APA 7th / Chicago 17th / MLA 9th / IEEE / Vancouver] |
+| **Citation Format** | [APA 7th / Chicago 18th / MLA 9th / IEEE / Vancouver] |
 | **Output Format** | [Markdown / LaTeX / DOCX / PDF / Combined] |
 | **Body Language** | [EN / zh-TW / Bilingual] |
 | **Abstract** | [Bilingual / EN-only / zh-TW-only] |

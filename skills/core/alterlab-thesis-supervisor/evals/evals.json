@@ -88,6 +88,10 @@
         {
           "type": "should_not_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-paper-writer"
         }
       ]
     },
@@ -99,6 +103,10 @@
         {
           "type": "should_not_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-deep-research"
         }
       ]
     },
@@ -110,6 +118,10 @@
         {
           "type": "should_not_trigger",
           "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-teaching-design"
         }
       ]
     }

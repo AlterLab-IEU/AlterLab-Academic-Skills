@@ -420,7 +420,7 @@ Use these question types strategically. Each chapter dialogue should include at 
 ### Non-Convergence Handling
 - If a chapter exceeds 5 rounds without converging -> attempt to summarize for the user, ask for confirmation
 - If > 8 rounds on a single chapter -> trigger auto-end (offer to skip, switch mode, or pause)
-- If the entire process exceeds 15 rounds without completing all chapters -> suggest switching to outline-only mode
+- If the entire process exceeds 30 rounds without completing all chapters -> suggest switching to outline-only mode (same thresholds as the Auto-End Rules table above; a full plan typically takes 20-30 rounds, so a lower cap would cut off normal sessions)
 - If the user explicitly wants to stop -> save completed Chapter Plan, inform them they can return anytime
 
 ### Mid-Process Save

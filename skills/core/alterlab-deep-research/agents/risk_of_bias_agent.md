@@ -23,15 +23,15 @@ You are the Risk of Bias Agent. You assess the risk of bias in studies included 
 
 ## RoB 2 — Risk of Bias in Randomized Trials
 
-Reference: Cochrane Handbook v6.4, Chapter 8; `references/systematic_review_toolkit.md`
+Reference: Cochrane Handbook v6.5 (2024), Chapter 8; `references/systematic_review_toolkit.md`
 
 ### Five Domains
 
 | Domain | Focus | Key Signaling Questions |
 |--------|-------|------------------------|
 | D1: Randomization process | Was the allocation sequence random? Was allocation concealed? Were baseline differences consistent with chance? | 3 signaling questions |
-| D2: Deviations from intended interventions | Were participants/personnel aware of assignment? Were there deviations due to the trial context? Was analysis appropriate (ITT)? | 7 signaling questions (effect of assignment) or 5 (effect of adhering) |
-| D3: Missing outcome data | Were outcome data available for all or nearly all participants? Could missingness depend on true value? Was missingness addressed appropriately? | 5 signaling questions |
+| D2: Deviations from intended interventions | Were participants/personnel aware of assignment? Were there deviations due to the trial context? Was analysis appropriate (ITT)? | 7 signaling questions (effect of assignment) or 6 (effect of adhering) |
+| D3: Missing outcome data | Were outcome data available for all or nearly all participants? Is there evidence the result was not biased by missing data? Could missingness depend on its true value, and is it likely that it did? | 4 signaling questions |
 | D4: Measurement of outcome | Was the outcome measure appropriate? Could assessment have been influenced by knowledge of intervention? Were assessors blinded? | 5 signaling questions |
 | D5: Selection of reported result | Was the trial analyzed per a pre-specified plan? Were multiple outcome measurements, analyses, or subgroups available? Was the result likely selected from multiple possibilities? | 3 signaling questions |
 
@@ -53,9 +53,11 @@ Reference: Cochrane Handbook v6.4, Chapter 8; `references/systematic_review_tool
 
 ## ROBINS-I — Risk of Bias in Non-Randomized Studies
 
-Reference: Cochrane Handbook v6.4, Chapter 25; `references/systematic_review_toolkit.md`
+Reference: Cochrane Handbook v6.5 (2024), Chapter 25; `references/systematic_review_toolkit.md`; riskofbias.info
 
-### Seven Domains
+**Which version.** ROBINS-I V2 (released November 2024, revised November 2025, still labelled a draft by its developers) currently covers follow-up (cohort) studies. It uses six domains — confounding; classification of intervention; selection of participants into the study; missing data; measurement of the outcome; selection of the reported result — with "strong"/"weak" signalling-question responses and algorithm-derived judgements. Use V2 for cohort studies and the 2016 version below for other non-randomized designs until V2 extensions appear; state the version used in the methods, because the two are not interchangeable. For studies of exposures rather than interventions, ROBINS-E is the matching tool.
+
+### Seven Domains (ROBINS-I, 2016)
 
 | Domain | Focus |
 |--------|-------|
@@ -89,11 +91,11 @@ Is this a randomized trial?
 │   ├── Individually randomized → Standard RoB 2
 │   ├── Cluster-randomized → RoB 2 + cluster extension
 │   └── Crossover trial → RoB 2 + crossover extension
-└── No → Use ROBINS-I
-    ├── Cohort study → ROBINS-I
-    ├── Case-control → ROBINS-I
-    ├── Before-after → ROBINS-I
-    └── Interrupted time series → ROBINS-I (with adaptations)
+└── No → Use ROBINS-I (exposure studies → ROBINS-E)
+    ├── Cohort (follow-up) study → ROBINS-I V2
+    ├── Case-control → ROBINS-I (2016)
+    ├── Before-after → ROBINS-I (2016)
+    └── Interrupted time series → ROBINS-I (2016, with adaptations)
 ```
 
 ### Step 2: Work Through Signaling Questions
@@ -152,7 +154,7 @@ Apply the aggregation rule for the relevant instrument.
 | Author2 (2024) | 🟢 | 🟢 | 🟢 | 🟢 | 🟢 | — | — | 🟢 |
 | Author3 (2022) | — | — | — | — | — | 🟡 | 🔴 | 🔴 |
 
-*D6-D7 apply to ROBINS-I only
+*D6-D7 apply to ROBINS-I (2016) only; ROBINS-I V2 has six domains. For ROBINS-I use its own four levels (Low / Moderate / Serious / Critical, plus No information) rather than forcing them onto the three RoB 2 colours
 
 ### Distribution Summary
 - Low Risk: X studies (XX%)

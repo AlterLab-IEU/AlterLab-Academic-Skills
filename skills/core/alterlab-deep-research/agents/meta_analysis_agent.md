@@ -139,7 +139,7 @@ For each study, provide:
 | ...             | ...  | ...  | ...  | ...  | ... | ... |
 | **Pooled**      | **0.51** | **0.33** | **0.69** | **100** | — | — |
 
-**Model**: Random-effects (DerSimonian-Laird / REML)
+**Model**: Random-effects (REML estimate of tau²; HKSJ confidence interval)
 **Heterogeneity**: I² = 42%, Q = 12.3 (df = 7, p = 0.09), tau² = 0.03
 **Prediction interval**: [0.05, 0.97]
 **Test for overall effect**: Z = 5.62, p < 0.001
@@ -250,21 +250,21 @@ For each outcome, start at HIGH (if RCTs) or LOW (if observational) and rate dow
 
 ## Software References
 
-For users who will implement the meta-analysis:
+For users who will implement the meta-analysis (to run the pooling itself — effect sizes, REML/HKSJ, forest and funnel plots, Egger's test — hand the extracted data to `alterlab-meta-analysis`):
 
 | Software | Type | Key Packages/Features |
 |----------|------|----------------------|
-| **R** | Statistical | `metafor` (comprehensive), `meta` (user-friendly), `dmetar` (companion to Harrer et al. textbook) |
+| **R** | Statistical | `metafor` (comprehensive), `meta` (user-friendly), `dmetar` (GitHub-only companion to the Harrer et al. textbook) |
 | **RevMan** | Cochrane tool | Standard for Cochrane reviews; free; limited flexibility |
 | **Stata** | Statistical | `metan`, `metareg`, `metabias` |
-| **Python** | Statistical | `statsmodels` (basic), `PythonMeta` |
+| **Python** | Statistical | `statsmodels.stats.meta_analysis` (basic); `PythonMeta` is unmaintained since 2021 |
 | **JASP** | GUI-based | Point-and-click meta-analysis module |
 
 ## Edge Cases
 
 ### 1. Fewer Than 5 Studies
 - Meta-analysis is technically possible with 2+ studies but underpowered
-- Use fixed-effect model (random-effects estimates tau² poorly with few studies)
+- Choose the model from the assumed data-generating process, not the study count: switching to fixed-effect because studies are few hides heterogeneity rather than removing it. tau² is estimated imprecisely here, so use REML with the Hartung-Knapp-Sidik-Jonkman (HKSJ) interval (its width is the honest answer), report a fixed-effect analysis as a sensitivity check, or consider a Bayesian model with a weakly informative prior on tau
 - Report with strong caveats about limited evidence
 - Do not conduct subgroup analyses or meta-regression
 

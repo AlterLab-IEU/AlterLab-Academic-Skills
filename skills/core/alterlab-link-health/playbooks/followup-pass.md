@@ -24,7 +24,7 @@ Classify each residual into one of three buckets:
 |-------|----------|----------------|
 | **Substitution regressions** | `/v3/docsdocs`, `/api/swagger-ui/index.htmlswagger-ui/...`, over-greedy prefix rewrites | Tier 3 sed bugs — concatenation, double-append, chain-substitution overreach. |
 | **Genuinely dead / flaky infra** | Upstream docs sites that 404'd a page, hosts with consistent CI-side failures, SSL/OCSP issues | Need either a better substitute (verify!) or an exclusion with rationale. |
-| **Config-fixable** | GraphQL endpoints returning 400, hosts that need a specific status in `accept` | Add the status to `.lychee.toml`'s `accept` array with a comment. |
+| **Config-fixable** | Flaky-but-live hosts that need more retries or a longer timeout; one endpoint that answers GET with 400 (e.g. a POST-only GraphQL URL) | Tune `max_retries` / `timeout`, or exclude that exact URL in `.lycheeignore` with a comment. Widen `accept` only for statuses that are benign on every host (403/429) — never 400 or 5xx. |
 
 ## Parallel agent dispatch (3 subagents)
 

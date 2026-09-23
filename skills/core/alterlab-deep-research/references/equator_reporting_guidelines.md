@@ -10,12 +10,13 @@ Quick reference for EQUATOR Network (Enhancing the QUAlity and Transparency Of h
 | Research Design | Primary Reporting Guideline | Applicable Scenario |
 |----------|------------|---------|
 | Systematic review / Meta-analysis | **PRISMA** | Literature review integrating multiple studies |
-| Randomized controlled trial (RCT) | **CONSORT** | Intervention experiments with random assignment |
+| Randomized controlled trial (RCT) | **CONSORT** | Intervention experiments with random assignment (CONSORT 2025) |
+| Trial protocol | SPIRIT | Protocols of randomized trials (SPIRIT 2025, 34 items) |
 | Observational study (cohort, case-control, cross-sectional) | **STROBE** | Non-interventional quantitative observational research |
 | Qualitative research | **COREQ** | Interviews, focus groups, observation |
 | Quality improvement study | **SQUIRE** | Systematic quality improvement project reports |
 | Diagnostic accuracy study | STARD | Diagnostic tool evaluation |
-| Prognostic study | TRIPOD | Prediction model development and validation |
+| Prediction model study (diagnostic or prognostic, regression or machine learning) | TRIPOD+AI | Prediction model development and validation (TRIPOD+AI, 2024, supersedes TRIPOD 2015) |
 | Case report | CARE | Single or small number of in-depth case reports |
 | Economic evaluation | CHEERS | Cost-effectiveness analysis |
 | Mixed methods research | GRAMMS | Mixed qualitative-quantitative designs |
@@ -80,9 +81,11 @@ Studies included in review (n = )
 ## 3. CONSORT — Randomized Controlled Trial Condensed Checklist
 
 **Full Name**: Consolidated Standards of Reporting Trials
-**Version**: CONSORT 2010 + extensions
+**Version**: CONSORT 2025 (published April 2025 in BMJ, JAMA, Lancet, Nature Medicine, and PLOS Medicine; supersedes CONSORT 2010) + extensions
 
-### Core Reporting Items
+CONSORT 2025 is a 30-item checklist plus a participant flow diagram. Relative to 2010 it adds seven items, revises three, deletes one, folds in items from key CONSORT extensions, and adds a new open-science section. The condensed list below is a teaching summary — cite and number items from the official checklist at consort-spirit.org. Trial protocols follow SPIRIT 2025 (34 items), updated alongside it.
+
+### Core Reporting Items (condensed)
 
 | # | Item | Description |
 |---|------|------|
@@ -101,7 +104,7 @@ Studies included in review (n = )
 | 13 | **Results** | Results per group, effect sizes and precision (CI) |
 | 14 | **Harms** | Adverse events or side effects |
 | 15 | **Limitations** | Sources of bias, imprecision, multiple comparisons |
-| 16 | **Registration** | Trial registration number |
+| 16 | **Open science** | Trial registration, where the protocol and statistical analysis plan can be accessed, data sharing (a dedicated section in CONSORT 2025) |
 
 ### Higher Education Research Application Notes
 
@@ -258,7 +261,7 @@ What is your research type?
 │   └── Meta-analysis → PRISMA + MOOSE
 │
 ├── Intervention experiment → CONSORT
-│   ├── Individual randomization → CONSORT 2010
+│   ├── Individual randomization → CONSORT 2025
 │   ├── Class/school randomization → CONSORT-Cluster
 │   └── Social/psychological intervention → CONSORT-SPI
 │

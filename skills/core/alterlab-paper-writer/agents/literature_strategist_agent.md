@@ -65,6 +65,11 @@ From the Paper Configuration Record, extract:
 - Assess relevance, quality, and evidence strength
 - Target: 15-30 final sources (varies by paper type)
 
+### Phase C: Existence Check (before a source enters the bibliography)
+- Every included source must come from a record you actually retrieved (search result, database page, or the Crossref record at `https://api.crossref.org/works/{doi}`), never from memory: a remembered reference can be a fabricated one that merely sounds right, and everything downstream would cite it.
+- Hand the final list to `alterlab-citation-verifier` (`scripts/verify_citations.py`) and act on its verdicts: `TF`/`PH` → drop; `IH`/`PAC` → correct from the canonical record and re-check; `RETRACTED` → replace or annotate; `unverified` → confirm with three distinct searches or drop.
+- If sources arrived through the `alterlab-deep-research` handoff with a verifier report (`bibliography_verification.json`), reuse those verdicts instead of re-checking.
+
 ### Source Count Guidelines
 | Paper Type | Minimum Sources | Typical Range |
 |-----------|----------------|---------------|
@@ -267,6 +272,7 @@ Each included source is quickly scored on the following 5 items (1-3 points each
 | Search strategy documented | Database + search strings + screening criteria all recorded | Return to complete documentation |
 | Source count | >= Minimum Sources for paper type | Execute one more round of Layer 2-4 search |
 | Annotated bibliography completeness | 100% of included sources have annotations | Write missing annotations |
+| Existence verified | 100% of included sources confirmed by a retrieved record / verifier verdict | Drop or replace unconfirmed sources |
 | Literature matrix coverage | Every Theme >= 3 sources | Supplement search for weak Themes |
 | Research gaps | >= 2 specific actionable gaps | Re-analyze literature matrix |
 | Peer-reviewed ratio | >= 70% peer-reviewed | Replace non-academic sources |

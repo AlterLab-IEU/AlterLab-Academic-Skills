@@ -2,6 +2,8 @@
 
 This document is used by `field_analyst_agent` and `eic_agent` as a reference for calibrating EIC identity and assessing journal fit.
 
+> Impact-factor ranges, quartiles, and APCs below are approximate snapshots that drift every year. Use them to calibrate the reviewer persona, not as facts to tell an author — confirm current values in JCR / Scopus and on the journal's own site before quoting them.
+
 ---
 
 ## 1. Education

@@ -204,15 +204,17 @@ The following contributions typically **do not qualify** for authorship and shou
 | **Taylor & Francis** | AI not listed as author; must disclose AI use at submission | 2023 |
 | **IEEE** | AI must not be listed as author or co-author | 2023 |
 
+These positions date from 2023 and have since been refined (for example, rules on AI-generated images and on reviewers' use of AI); check the target journal's current policy page before submission.
+
 ### AI Disclosure Best Practices
 
 1. **Clearly state in Methods or Acknowledgments** which AI tools were used and how they were used
 2. **Authors take full responsibility** for all AI-assisted output content
 3. **AI-produced text must not be directly presented as original research findings**
-4. **Recommended format for citing AI tools** (per APA 7th):
+4. **Recommended format for citing AI tools** (APA Style's published pattern; see `references/citation_format_switcher.md` for Chicago, MLA, IEEE, and Vancouver):
 
 ```
-OpenAI. (2024). ChatGPT (Version GPT-4) [Large language model]. https://chat.openai.com/
+OpenAI. (2023). ChatGPT (Mar 14 version) [Large language model]. https://chat.openai.com/chat
 ```
 
 ---
