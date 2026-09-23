@@ -2,7 +2,7 @@
 
 ## Overview
 
-Tokenizers convert text into numerical representations (tokens) that models can process. They handle special tokens, padding, truncation, and attention masks.
+Tokenizers convert text into numerical representations (tokens) that models can process. They handle special tokens, padding, truncation, and attention masks. In transformers v5 each model has a single tokenizer class backed by the Rust 🤗 `tokenizers` library (`TokenizersBackend`), with SentencePiece/Python backends only where required — the v4 "slow vs fast" split is gone.
 
 ## Loading Tokenizers
 
@@ -46,6 +46,10 @@ print(text)  # "hello, how are you?"
 # Skip special tokens
 text = tokenizer.decode(token_ids, skip_special_tokens=True)
 print(text)  # "hello, how are you?"
+
+# v5: decode() also accepts a batch (list of lists or a 2-D tensor) and returns a list of strings;
+# batch_decode() still works as a backward-compatible alias
+texts = tokenizer.decode([[7592, 1010], [2129, 2024, 2017]], skip_special_tokens=True)
 ```
 
 ## The `__call__` Method
@@ -74,13 +78,10 @@ inputs = tokenizer(texts, padding=True, truncation=True)
 
 ### Return Tensors
 
-**return_tensors**: Output format ("pt", "tf", "np")
+**return_tensors**: Output format — `"pt"`, `"np"`, or `"mlx"` (TensorFlow `"tf"` was removed in v5)
 ```python
 # PyTorch tensors
 inputs = tokenizer("text", return_tensors="pt")
-
-# TensorFlow tensors
-inputs = tokenizer("text", return_tensors="tf")
 
 # NumPy arrays
 inputs = tokenizer("text", return_tensors="np")
@@ -184,12 +185,14 @@ inputs = tokenizer(text, add_special_tokens=False)
 ### Custom Special Tokens
 
 ```python
+# v5 key is "extra_special_tokens" ("additional_special_tokens" is still accepted and converted)
 special_tokens_dict = {
-    "additional_special_tokens": ["<CUSTOM>", "<SPECIAL>"]
+    "extra_special_tokens": ["<CUSTOM>", "<SPECIAL>"]
 }
 
 num_added = tokenizer.add_special_tokens(special_tokens_dict)
 print(f"Added {num_added} tokens")
+print(tokenizer.extra_special_tokens)  # v5 replacement for additional_special_tokens
 
 # Resize model embeddings after adding tokens
 model.resize_token_embeddings(len(tokenizer))
@@ -225,27 +228,21 @@ for i in range(len(texts)):
     attention_mask = batch["attention_mask"][i]
 ```
 
-## Fast Tokenizers
+## Tokenizer Backends
 
-Use Rust-based tokenizers for speed:
+v5 consolidates the old slow/fast pair into one class per model. `AutoTokenizer` picks the backend automatically from the files and dependencies available (preferring the Rust `tokenizers` backend) and **ignores `use_fast=`**:
 
 ```python
 from transformers import AutoTokenizer
 
-# Automatically loads Fast version if available
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-
-# Check if Fast
-print(tokenizer.is_fast)  # True
-
-# Force Fast tokenizer
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased", use_fast=True)
-
-# Force slow (Python) tokenizer
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased", use_fast=False)
+print(type(tokenizer).__name__)  # BertTokenizer — backed by TokenizersBackend
+print(tokenizer.is_fast)         # True for the tokenizers backend
 ```
 
-### Fast Tokenizer Features
+`PreTrainedTokenizerFast` remains importable as an alias of `TokenizersBackend`; `PreTrainedTokenizer` is the Python backend (`PythonBackend`).
+
+### Rust-Backend Features
 
 **Offset mapping** (character positions):
 ```python
@@ -304,7 +301,7 @@ sequence_ids = encoding.sequence_ids()
 
 ### Custom Preprocessing
 
-`AutoTokenizer` is a factory (`from_pretrained` returns a concrete `PreTrainedTokenizerFast`), so you cannot subclass it directly. Wrap the loaded tokenizer instead:
+`AutoTokenizer` is a factory (`from_pretrained` returns a concrete model-specific tokenizer class), so you cannot subclass it directly. Wrap the loaded tokenizer instead:
 
 ```python
 from transformers import AutoTokenizer
@@ -336,13 +333,16 @@ messages = [
     {"role": "user", "content": "How are you?"}
 ]
 
-# Apply chat template
-text = tokenizer.apply_chat_template(messages, tokenize=False)
+# Render to a string (inspect the prompt format)
+text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
 print(text)
 
-# Tokenize directly
-inputs = tokenizer.apply_chat_template(messages, tokenize=True, return_tensors="pt")
+# Tokenize directly — v5 returns a BatchEncoding (input_ids + attention_mask), not a bare tensor
+inputs = tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt")
+outputs = model.generate(**inputs, max_new_tokens=100)
 ```
+
+`add_generation_prompt=True` appends the assistant header so the model answers rather than continuing the user turn. Pass `return_dict=False` only if you really need the bare `input_ids`.
 
 ## Common Patterns
 
@@ -387,9 +387,9 @@ prompt = "Once upon a time"
 
 inputs = tokenizer(prompt, return_tensors="pt")
 
-# Generate
+# Generate — unpack so the attention mask is passed too
 outputs = model.generate(
-    inputs["input_ids"],
+    **inputs,
     max_new_tokens=50,
     pad_token_id=tokenizer.eos_token_id
 )
@@ -418,7 +418,7 @@ tokenized_dataset = dataset.map(tokenize_function, batched=True)
 1. **Always specify return_tensors**: For model input
 2. **Use padding and truncation**: For batch processing
 3. **Set max_length explicitly**: Prevent memory issues
-4. **Use Fast tokenizers**: When available for speed
+4. **Batch generation with decoder-only models**: load with `padding_side="left"`
 5. **Handle pad_token**: Set to eos_token if None for generation
 6. **Add special tokens**: Leave enabled (default) unless specific reason
 7. **Resize embeddings**: After adding custom tokens

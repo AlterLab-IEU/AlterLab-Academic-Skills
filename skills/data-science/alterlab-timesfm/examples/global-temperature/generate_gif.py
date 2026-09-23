@@ -88,7 +88,7 @@ def create_frame(
     )
 
     # ========== FOREGROUND LAYER: Current forecast (bright) ==========
-    # 90% CI (outer)
+    # 80% prediction interval, q10-q90 (outer)
     ax.fill_between(
         forecast_dates,
         step_data["q10"],
@@ -98,7 +98,7 @@ def create_frame(
         zorder=5,
     )
     
-    # 80% CI (inner)
+    # 60% prediction interval, q20-q80 (inner)
     ax.fill_between(
         forecast_dates,
         step_data["q20"],

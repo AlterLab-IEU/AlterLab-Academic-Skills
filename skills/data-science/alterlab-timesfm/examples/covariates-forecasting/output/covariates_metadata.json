@@ -48,8 +48,8 @@
     "price": "-20 units per $1 above base price"
   },
   "xreg_modes": {
-    "xreg + timesfm": "Regression on TimesFM residuals (default)",
-    "timesfm + xreg": "TimesFM on regression residuals"
+    "xreg + timesfm": "TimesFM on regression residuals (default)",
+    "timesfm + xreg": "Regression on TimesFM residuals"
   },
   "bug_fixes_history": [
     "v1: Variable-shadowing -- all stores had identical covariates",

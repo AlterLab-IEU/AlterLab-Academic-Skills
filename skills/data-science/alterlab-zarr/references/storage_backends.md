@@ -77,7 +77,9 @@ z = zarr.open_array("s3://my-bucket/path/to/array.zarr", mode='r')
 ```
 
 A plain fsspec mapping (`s3fs.S3Map(root=..., s3=...)`) is still accepted as a store, but
-`FsspecStore.from_url` is preferred in v3.
+`FsspecStore.from_url` is preferred in v3. `zarr.storage.ObjectStore` wraps an
+[obstore](https://pypi.org/project/obstore/) store (`obstore.store.S3Store`, `GCSStore`, …) for
+faster cloud I/O; it is marked experimental in zarr 3.x, so pin versions if you adopt it.
 
 **Cloud Storage Best Practices**:
 - Consolidate metadata to cut round-trips: `zarr.consolidate_metadata(store)`, then read with `zarr.open_consolidated(store)`

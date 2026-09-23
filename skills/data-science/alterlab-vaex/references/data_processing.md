@@ -36,11 +36,11 @@ count_high_earners = df.count(selection='high_earners')
 # Combine selections
 df.select((df.age > 30) & (df.salary > 100000), name='adult_high_earners')
 
-# List all selections
-print(df.selection_names())
+# Check whether a named selection is set
+print(df.has_selection('adults'))
 
-# Drop selection
-df.select_drop('adults')
+# Clear a named selection
+df.select_nothing(name='adults')
 ```
 
 ### Advanced Filtering
@@ -58,8 +58,8 @@ df_filtered = df[df.age.notna()]     # Remove missing
 # Value membership
 df_filtered = df[df.category.isin(['A', 'B', 'C'])]
 
-# Range filtering
-df_filtered = df[df.age.between(25, 65)]
+# Range filtering (expressions have no .between(); combine comparisons)
+df_filtered = df[(df.age >= 25) & (df.age <= 65)]
 ```
 
 ## Virtual Columns and Expressions
@@ -101,8 +101,8 @@ df.angle.arcsin()
 
 # Rounding
 df.x.round(2)       # Round to 2 decimals
-df.x.floor()        # Round down
-df.x.ceil()         # Round up
+df.x // 1           # Round down (expressions have no .floor())
+-(-df.x // 1)       # Round up (no .ceil())
 
 # Type conversion
 df.x.astype('int64')
@@ -121,10 +121,8 @@ df['grade'] = (df.score >= 90).where('A',
               (df.score >= 80).where('B',
               (df.score >= 70).where('C', 'F')))
 
-# Using searchsorted for binning
-bins = [0, 18, 65, 100]
-labels = ['minor', 'adult', 'senior']
-df['age_group'] = df.age.searchsorted(bins).where(...)
+# Binning with digitize + map (0: <18, 1: 18-64, 2: >=65)
+df['age_group'] = df.age.digitize([18, 65]).map({0: 'minor', 1: 'adult', 2: 'senior'})
 ```
 
 ## String Operations
@@ -163,8 +161,9 @@ df['name_length'] = df.name.str.len()
 # Replacing
 df['clean_text'] = df.text.str.replace('bad', 'good')
 
-# Splitting (returns first part)
-df['first_name'] = df.full_name.str.split(' ')[0]
+# First token. str.split() returns a list column, and indexing it with [0]
+# raises NotImplementedError in vaex 4.19, so strip everything after the first space.
+df['first_name'] = df.full_name.str.replace(r'\s.*$', '', regex=True)
 
 # Concatenation
 df['full_name'] = df.first_name + ' ' + df.last_name
@@ -230,7 +229,7 @@ mean_val, std_val = mean.get(), std.get()
 ```python
 # Central tendency
 df.x.mean()
-df.x.median_approx()  # Approximate median (fast)
+df.median_approx(df.x)  # Approximate median (fast; a DataFrame method)
 
 # Dispersion
 df.x.std()           # Standard deviation
@@ -243,13 +242,12 @@ df.x.minmax()        # Both min and max
 df.count()           # Total rows
 df.x.count()         # Non-missing values
 
-# Sum and product
+# Sum
 df.x.sum()
-df.x.prod()
 
-# Percentiles
-df.x.quantile(0.5)           # Median
-df.x.quantile([0.25, 0.75])  # Quartiles
+# Percentiles (approximate, binned; expressions have no .quantile())
+df.percentile_approx(df.x, 50)          # Median
+df.percentile_approx(df.x, [25, 75])    # Quartiles
 
 # Correlation
 df.correlation(df.x, df.y)
@@ -344,7 +342,7 @@ edges = np.linspace(df.value.min(), df.value.max(), 11)  # 10 bins -> 11 edges
 df['value_bin'] = df.value.digitize(edges)
 
 # Quantile-based bins
-quantiles = df.value.quantile([0.25, 0.5, 0.75])
+quantiles = df.percentile_approx(df.value, [25, 50, 75])
 df['value_quartile'] = df.value.digitize(quantiles)
 ```
 
@@ -406,9 +404,6 @@ Vaex distinguishes between:
 ```python
 # Check which missing type
 df.is_masked('column_name')  # True if uses Arrow null (NA)
-
-# Convert between types
-df['col_masked'] = df.col.as_masked()  # Convert to NA representation
 ```
 
 ## Sorting
@@ -461,8 +456,8 @@ import numpy as np
 new_data = np.random.rand(len(df))
 df['random'] = new_data
 
-# Constant value
-df['constant'] = 42
+# Constant value (a bare scalar raises ValueError; vconstant is a lazy, zero-memory column)
+df['constant'] = vaex.vconstant(42, len(df))
 ```
 
 ### Removing Columns
@@ -510,7 +505,7 @@ df['revenue'] = df.price * df.quantity * (1 - df.discount)
 # Clean and standardize text
 df['email_clean'] = df.email.str.lower().str.strip()
 df['has_valid_email'] = df.email_clean.str.contains('@')
-df['domain'] = df.email_clean.str.split('@')[1]
+df['domain'] = df.email_clean.str.replace(r'^.*@', '', regex=True)  # split('@')[1] is not implemented
 ```
 
 ### Pattern: Time-based Analysis

@@ -57,11 +57,11 @@ def main() -> None:
         label="Historical (NOAA GISTEMP)",
     )
 
-    # Plot 90% CI (outer band)
-    ax.fill_between(dates, q10, q90, alpha=0.2, color="#dc2626", label="90% CI")
+    # Plot 80% prediction interval (q10-q90, outer band)
+    ax.fill_between(dates, q10, q90, alpha=0.2, color="#dc2626", label="80% PI (q10-q90)")
 
-    # Plot 80% CI (inner band)
-    ax.fill_between(dates, q20, q80, alpha=0.3, color="#dc2626", label="80% CI")
+    # Plot 60% prediction interval (q20-q80, inner band)
+    ax.fill_between(dates, q20, q80, alpha=0.3, color="#dc2626", label="60% PI (q20-q80)")
 
     # Plot point forecast
     ax.plot(

@@ -4,7 +4,7 @@ The hard-won correctness rules for this skill. Read before declaring a TimesFM t
 
 ## Common Pitfalls
 
-1. **Not running system check** → model load crashes on low-RAM machines. Always run `check_system.py` first.
+1. **Not running system check** → model load can exhaust RAM on small machines. Run `check_system.py` before the first load.
 2. **Forgetting `model.compile()`** → `RuntimeError: Model is not compiled`. Must call `compile()` before `forecast()`.
 3. **Not setting `normalize_inputs=True`** → unstable forecasts for series with large values.
 4. **Using v1/v2 on machines with < 32 GB RAM** → use TimesFM 2.5 (200M params) instead.
@@ -25,7 +25,7 @@ Run this checklist after every TimesFM task before declaring success:
 - [ ] **Series length** -- context must be >= 32 data points (model minimum). Warn if shorter.
 - [ ] **No NaN** -- `np.isnan(point_fc).any()` should be False. Check input series for gaps first.
 - [ ] **Visualization axes** -- if multiple panels share data, use `sharex=True`. All time axes must cover the same span.
-- [ ] **Binary outputs in Git LFS** -- PNG and GIF files must be tracked via `.gitattributes` (repo root already configured).
+- [ ] **Large binary outputs** -- keep big PNG/GIF/HTML artifacts out of version control unless the project tracks them deliberately (e.g. Git LFS).
 - [ ] **No large datasets committed** -- any real dataset > 1 MB should be downloaded to `tempfile.mkdtemp()` and annotated in code.
 - [ ] **`matplotlib.use('Agg')`** -- must appear before any pyplot import when running headless.
 - [ ] **`infer_is_positive`** -- set `False` for temperature anomalies, financial returns, or any series that can be negative.
@@ -50,13 +50,15 @@ These bugs have appeared in this skill's examples. Learn from them:
 
 4. **`tight_layout()` warning with `sharex=True`** -- Harmless; suppress with `plt.tight_layout(rect=[0, 0, 1, 0.97])` or ignore.
 
-5. **TimesFM 2.5 required for `forecast_with_covariates()`** -- TimesFM 1.0 does NOT have this method. Install `pip install timesfm[xreg]` and use checkpoint `google/timesfm-2.5-200m-pytorch`.
+5. **TimesFM 2.5 required for `forecast_with_covariates()`** -- TimesFM 1.0 does NOT have this method. Install `uv pip install "timesfm[torch,xreg]"`, use checkpoint `google/timesfm-2.5-200m-pytorch`, and compile with `return_backcast=True`. (TimesFM 3.0 takes covariates directly in `predict()`.)
 
 6. **Future covariates must span the full horizon** -- Dynamic covariates (price, promotions, holidays) must have values for BOTH the context AND the forecast horizon. You cannot pass context-only arrays.
 
 7. **Anomaly thresholds must be defined once** -- Define `CRITICAL_Z = 3.0`, `WARNING_Z = 2.0` as module-level constants. Never hardcode `3` or `2` inline.
 
 8. **Context anomaly detection uses residuals, not raw values** -- Always detrend first (`np.polyfit` linear, or seasonal decomposition), then Z-score the residuals. Raw-value Z-scores are misleading on trending data.
+
+9. **Mixing up quantile layouts** -- TimesFM 2.5 returns 10 columns (0 = mean, 1–9 = q10–q90); TimesFM 3.0 returns 9 columns (q10–q90, median at index 4). Re-check indices when switching models.
 
 ## Validation & Verification
 

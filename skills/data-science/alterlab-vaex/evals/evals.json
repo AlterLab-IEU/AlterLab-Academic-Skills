@@ -4,7 +4,7 @@
     {
       "id": "out-of-core-aggregations-single-machine",
       "prompt": "I have a single 300 GB HDF5 file of tabular sensor readings on one workstation with 48 GB of RAM. I want fast groupby aggregations and overall statistics without loading it all into memory, and no cluster to set up.",
-      "expected_output": "Invokes alterlab-vaex for out-of-core single-machine analytics: vaex.open on the HDF5 file (memory-mapped, instant), df.describe()/df.x.mean() and df.groupby(...).agg(...) computed lazily over the full dataset without loading into RAM. Leverages lazy evaluation and stays on one machine with no cluster.",
+      "expected_output": "Invokes alterlab-vaex for out-of-core single-machine analytics: vaex.open on the HDF5 file (memory-mapped, instant), df.describe()/df.x.mean() and df.groupby(...).agg(...) computed lazily over the full dataset without loading into RAM. Leverages lazy evaluation and stays on one machine with no cluster. Notes that Vaex is in minimal-maintenance mode and needs a pinned Python <= 3.12 / pandas < 3 environment.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "vaex.open" },
@@ -24,7 +24,7 @@
     {
       "id": "csv-to-hdf5-conversion-bigdata-viz",
       "prompt": "I keep re-reading a huge multi-gigabyte CSV and it's painfully slow, and I also want a density heatmap of two columns across the whole billion-row dataset. What's the efficient workflow?",
-      "expected_output": "Invokes alterlab-vaex for I/O and big-data visualization: convert the slow CSV once via vaex.from_csv then export_hdf5 so future vaex.open loads are near-instant, and produce a 2D density heatmap with df.plot(df.x, df.y, limits='99.7%') over the full dataset. Recommends HDF5/Arrow over CSV for repeated access.",
+      "expected_output": "Invokes alterlab-vaex for I/O and big-data visualization: convert the slow CSV once via vaex.from_csv (e.g. convert=True) or export_hdf5 so future vaex.open loads are near-instant, and produce a 2D density heatmap with df.viz.heatmap(df.x, df.y, limits='99.7%') over the full dataset (df.plot is a deprecated alias; 2-D plots need matplotlib < 3.9). Recommends HDF5/Arrow over CSV for repeated access.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "export_hdf5" },
@@ -54,6 +54,15 @@
       "id": "near-miss-polars",
       "prompt": "I have a 4 GB Parquet file that fits easily in my 48 GB RAM and I just want the fastest in-memory groupby and joins with a modern lazy query API. No out-of-core needed.",
       "expected_output": "Does NOT invoke this skill; defers to alterlab-polars. The data fits in memory and the user explicitly wants maximum in-memory speed with a modern DataFrame/lazy-query API and no out-of-core processing, which is polars' niche rather than Vaex's out-of-core focus.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-polars" }
+      ]
+    },
+    {
+      "id": "near-miss-polars-new-out-of-core-project",
+      "prompt": "I'm starting a new analysis project on Python 3.13 with pandas 3. I have about 200 GB of Parquet files and a 32 GB laptop, and I need out-of-core filtering and groupby aggregations. Which DataFrame library should I build this on?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-polars. This is a new larger-than-RAM project on Python 3.13 with pandas 3, where Vaex cannot be installed (vaex-core 4.19 supports only Python <= 3.12 and pandas < 3) and is in minimal-maintenance mode; Polars lazy scans (pl.scan_parquet) collected with the streaming engine are the recommended out-of-core route.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-polars" }

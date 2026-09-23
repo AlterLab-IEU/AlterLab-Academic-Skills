@@ -1,12 +1,13 @@
 ---
 name: alterlab-timesfm
-description: Zero-shot univariate time-series forecasting with Google's TimesFM foundation model, producing point forecasts and prediction intervals from CSV/DataFrame/array inputs, with a preflight system checker for RAM/GPU. Use to forecast any univariate series (sales, sensors, energy, vitals, weather) without training a custom model. Part of the AlterLab Academic Skills suite.
+description: Forecasts time series zero-shot with Google's TimesFM foundation models — TimesFM 2.5 (200M, Apache-2.0 weights; ForecastConfig API, XReg covariates) and TimesFM 3.0 (~330M, multivariate with native past/future covariates; non-commercial weights) — producing point forecasts and quantile prediction intervals from CSV/DataFrame/array inputs, with a preflight system checker for RAM/GPU. Use when forecasting univariate or multivariate series (sales, sensors, energy, vitals, weather) without training a custom model, batch-forecasting many series, or flagging anomalies against forecast intervals. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: Apache-2.0
-compatibility: No API key required. Runs locally via `uv run python`; requires the timesfm Python package (downloads the TimesFM model weights on first use; GPU optional).
+compatibility: No API key required. Runs locally via `uv run python`; requires timesfm >= 2.0 for the TimesFM 2.5 API and >= 3.0 for TimesFM 3.0 (current 3.0.2 as of 2026-09; Python >= 3.10; PyTorch backend, or MLX on Apple silicon). Weights download from Hugging Face on first use (~0.9 GB for 2.5, ~1.3 GB for 3.0); TimesFM 3.0 weights are licensed for non-commercial, non-production use only. GPU optional.
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
 ---
 
 # TimesFM Forecasting
@@ -15,16 +16,24 @@ metadata:
 
 TimesFM (Time Series Foundation Model) is a pretrained decoder-only foundation model
 developed by Google Research for time-series forecasting. It works **zero-shot** — feed it
-any univariate time series and it returns point forecasts with calibrated quantile
-prediction intervals, no training required.
+a time series and it returns point forecasts with quantile prediction intervals, no
+training required. The `timesfm` package (current 3.0.2) ships two model APIs:
+
+- **TimesFM 2.5** (200M, Apache-2.0 weights) — `timesfm.TimesFM_2p5_200M_torch` with
+  `ForecastConfig`; univariate, optional covariates via XReg. The default in this skill and
+  the only choice for commercial or production use.
+- **TimesFM 3.0** (~330M, released Aug 2026) — `timesfm3.TimesFM3Forecaster`; univariate
+  *and* multivariate forecasting with native past-only and past-and-future covariates.
+  Its weights are under `timesfm-non-commercial-license-v1.0`, so use it only for
+  non-commercial research and tell the user about the restriction.
 
 This skill wraps TimesFM for safe, agent-friendly local inference. It includes a
 **mandatory preflight system checker** that verifies RAM, GPU memory, and disk space
 before the model is ever loaded so the agent never crashes a user's machine.
 
-> **Key numbers**: TimesFM 2.5 uses 200M parameters (~800 MB on disk, ~1.5 GB in RAM on
-> CPU, ~1 GB VRAM on GPU). The archived v1/v2 500M-parameter model needs ~32 GB RAM.
-> Always run the system checker first.
+> **Key numbers**: TimesFM 2.5 uses 200M parameters (0.93 GB safetensors); TimesFM 3.0 uses
+> ~330M (1.3 GB). Run the system checker before the first load so an under-resourced machine
+> fails fast instead of swapping or crashing.
 
 ## When to Use This Skill
 
@@ -36,21 +45,26 @@ Use this skill when:
 - You have time series of **any length** (the model handles 1–16,384 context points)
 - You need to **batch-forecast** hundreds or thousands of series efficiently
 - You want a **foundation model** approach instead of hand-tuning ARIMA/ETS parameters
+- You have **related channels or known future drivers** (TimesFM 3.0 multivariate + covariates, or TimesFM 2.5 XReg)
 
-Do **not** use this skill when:
+### Does NOT Trigger
 
-- You need classical statistical models with coefficient interpretation → use `statsmodels`
-- You need time series classification or clustering → use `aeon`
-- You need multivariate vector autoregression or Granger causality → use `statsmodels`
-- Your data is tabular (not temporal) → use `scikit-learn`
+| Scenario | Use Instead |
+|----------|-------------|
+| Classical models with interpretable coefficients (ARIMA/SARIMAX tables), VAR, or Granger causality tests | `alterlab-statsmodels` |
+| Time-series classification, clustering, segmentation, or similarity search | `alterlab-aeon` |
+| Exploring a time-series file's structure and quality before any forecasting | `alterlab-eda` |
+| Tabular (non-temporal) prediction | `alterlab-scikit-learn` |
 
 > **Note on Anomaly Detection**: TimesFM does not have built-in anomaly detection, but you can
 > use the **quantile forecasts as prediction intervals** — values outside the 80% CI (q10–q90)
 > are statistically unusual. See the `examples/anomaly-detection/` directory for a full example.
 
-## ⚠️ Mandatory Preflight: System Requirements Check
+## Preflight: System Requirements Check
 
-**CRITICAL — ALWAYS run the system checker before loading the model for the first time.**
+Run the system checker before loading a model for the first time on a machine: loading
+downloads ~1 GB of weights and allocates several GB of RAM, and the checker stops early with
+a clear message instead of letting the load crash or swap.
 
 ```bash
 python scripts/check_system.py
@@ -102,12 +116,17 @@ flowchart TD
 
 | Model | Parameters | RAM (CPU) | VRAM (GPU) | Disk | Context |
 | ----- | ---------- | --------- | ---------- | ---- | ------- |
-| **TimesFM 2.5** (recommended) | 200M | ≥ 4 GB | ≥ 2 GB | ~800 MB | up to 16,384 |
+| TimesFM 3.0 (non-commercial weights) | ~330M | ≥ 6 GB | ≥ 4 GB | ~1.3 GB | up to 15,360 |
+| **TimesFM 2.5** (default) | 200M | ≥ 4 GB | ≥ 2 GB | ~0.9 GB | up to 16,384 |
 | TimesFM 2.0 (archived) | 500M | ≥ 16 GB | ≥ 8 GB | ~2 GB | up to 2,048 |
 | TimesFM 1.0 (archived) | 200M | ≥ 8 GB | ≥ 4 GB | ~800 MB | up to 2,048 |
 
-> **Recommendation**: Always use TimesFM 2.5 unless you have a specific reason to use an
-> older checkpoint. It is smaller, faster, and supports 8× longer context.
+> **Recommendation**: Use TimesFM 2.5 by default (smallest, Apache-2.0, full `ForecastConfig`
+> control). Use TimesFM 3.0 for multivariate targets or native covariates when the
+> non-commercial license fits the project. The 1.0/2.0 checkpoints need `timesfm==1.3.0`
+> and are only worth it for reproducing old results. Measured peak CPU memory for 32 series ×
+> 1,024 context (timesfm 3.0.2): ~2.0 GB for 2.5 and ~2.7 GB for 3.0; the thresholds above
+> leave headroom. Check 3.0 with `python scripts/check_system.py --model v3.0`.
 
 ## 🔧 Installation
 
@@ -120,35 +139,29 @@ python scripts/check_system.py
 ### Step 2: Install TimesFM
 
 ```bash
-# Using uv (recommended by this repo)
-uv pip install timesfm[torch]
-
-# Or using pip
-pip install timesfm[torch]
-
-# For JAX/Flax backend (faster on TPU/GPU)
-uv pip install timesfm[flax]
+uv pip install "timesfm[torch]"          # TimesFM 2.5 + 3.0, PyTorch backend
+uv pip install "timesfm[torch,xreg]"     # + XReg covariates for TimesFM 2.5 (adds JAX, scikit-learn)
+uv pip install "timesfm[mlx]"            # TimesFM 3.0 on Apple silicon without PyTorch
+uv pip install "timesfm[flax]"           # TimesFM 2.5 JAX/Flax backend
 ```
 
 ### Step 3: Install PyTorch for Your Hardware
 
 ```bash
-# CUDA 12.1 (NVIDIA GPU)
-pip install torch>=2.0.0 --index-url https://download.pytorch.org/whl/cu121
+# CPU-only wheels (small download, no CUDA libraries)
+uv pip install torch --index-url https://download.pytorch.org/whl/cpu
 
-# CPU only
-pip install torch>=2.0.0 --index-url https://download.pytorch.org/whl/cpu
-
-# Apple Silicon (MPS)
-pip install torch>=2.0.0  # MPS support is built-in
+# NVIDIA GPU: take the CUDA-specific index URL from https://pytorch.org/get-started/locally/
+# Apple Silicon: the default PyPI wheel already includes MPS support
+uv pip install torch
 ```
 
 ### Step 4: Verify Installation
 
 ```python
-import timesfm
-import numpy as np
-print(f"TimesFM version: {timesfm.__version__}")
+from importlib.metadata import version
+import timesfm  # noqa: F401  (import check)
+print(f"TimesFM version: {version('timesfm')}")  # the package defines no __version__
 print("Installation OK")
 ```
 
@@ -176,6 +189,29 @@ point, quantiles = model.forecast(horizon=24, inputs=[
 # point.shape == (1, 24)        — median forecast
 # quantiles.shape == (1, 24, 10) — 10th–90th percentile bands
 ```
+
+### TimesFM 3.0 (multivariate, native covariates)
+
+```python
+import numpy as np
+from timesfm3 import TimesFM3Forecaster  # non-commercial weights — see license note above
+
+forecaster = TimesFM3Forecaster.from_pretrained("google/timesfm-3.0-pytorch", device="cpu")  # or "cuda"
+
+out = forecaster.predict(np.sin(np.linspace(0, 40, 512)).astype(np.float32),
+                         horizon=24, return_quantiles=True)
+# out.forecast.shape == (24,)      — median forecast
+# out.quantiles.shape == (24, 9)   — q10..q90; index 4 is the median (no mean column)
+
+# Two target channels plus one known-future covariate (context 256, horizon 32)
+target = np.stack([np.sin(np.linspace(0, 24, 256)), np.cos(np.linspace(0, 24, 256))]).astype(np.float32)
+future_cov = np.sin(np.linspace(0, 30, 256 + 32))[None, :].astype(np.float32)
+out = forecaster.predict(target, horizon=32, past_future_covariates=future_cov, return_quantiles=True)
+# out.forecast.shape == (2, 32); out.quantiles.shape == (2, 32, 9)
+```
+
+Full parameter list (`predict_batch`, `past_only_covariates`, `make_positive`, …):
+`references/api_reference.md`.
 
 ### Forecast from CSV
 
@@ -205,10 +241,17 @@ for i, col in enumerate(df.columns):
 
 ### Forecast with Covariates (XReg)
 
-TimesFM 2.5+ supports exogenous variables through `forecast_with_covariates()`. Requires `timesfm[xreg]`.
+TimesFM 2.5 supports exogenous variables through `forecast_with_covariates()`. It requires
+`timesfm[xreg]` and a model compiled with `return_backcast=True` (otherwise it raises
+`ValueError`). TimesFM 3.0 takes covariates directly in `predict()` (see above).
 
 ```python
-# Requires: uv pip install timesfm[xreg]
+# Requires: uv pip install "timesfm[torch,xreg]"
+model.compile(timesfm.ForecastConfig(
+    max_context=1024, max_horizon=256, normalize_inputs=True,
+    use_continuous_quantile_head=True, fix_quantile_crossing=True,
+    return_backcast=True,
+))
 point, quantiles = model.forecast_with_covariates(
     inputs=inputs,
     dynamic_numerical_covariates={"price": price_arrays},
@@ -216,6 +259,7 @@ point, quantiles = model.forecast_with_covariates(
     static_categorical_covariates={"region": region_labels},
     xreg_mode="xreg + timesfm",  # or "timesfm + xreg"
 )
+# point / quantiles: one array per series — (horizon,) and (horizon, 10)
 ```
 
 | Covariate Type | Description | Example |
@@ -226,8 +270,8 @@ point, quantiles = model.forecast_with_covariates(
 | `static_categorical` | Per-series categorical | store type, region, product category |
 
 **XReg Modes:**
-- `"xreg + timesfm"` (default): TimesFM forecasts first, then XReg adjusts residuals
-- `"timesfm + xreg"`: XReg fits first, then TimesFM forecasts residuals
+- `"xreg + timesfm"` (default): fit an in-context linear regression on the covariates first, then TimesFM forecasts the regression residuals
+- `"timesfm + xreg"`: TimesFM forecasts first, then a linear regression on the covariates fits TimesFM's residuals
 
 > See `examples/covariates-forecasting/` for a complete example with synthetic retail data.
 
@@ -265,8 +309,10 @@ is_critical = anomalies  # outside 80% CI
 The output structure and full `ForecastConfig` reference are in
 **[`references/output_and_config.md`](references/output_and_config.md)**.
 
-> **Critical:** `quantile_forecast` has shape `(batch, horizon, 10)`. Index 0 is the **mean**;
-> q10 = index 1, q50 (median) = index 5, q90 = index 9. The 80% PI is `q[:,:,1]`–`q[:,:,9]`.
+> **Quantile layout (TimesFM 2.5):** `quantile_forecast` has shape `(batch, horizon, 10)`.
+> Index 0 is the **mean**; q10 = index 1, q50 (median) = index 5, q90 = index 9, so the 80% PI
+> is `q[:,:,1]`–`q[:,:,9]`. **TimesFM 3.0** returns 9 columns (q10–q90) with the median at
+> index 4 — re-check indices when switching models.
 
 Copy-paste workflows (single-series, batch, accuracy evaluation), GPU/memory performance
 tuning, and integration with `statsmodels` / `matplotlib` / EDA are in
@@ -311,18 +357,23 @@ timeline
         TimesFM 2.0 : 500M params, 2K context, PyTorch + JAX
     section 2025
         TimesFM 2.5 : 200M params, 16K context, quantile head, no frequency indicator
+    section 2026
+        TimesFM 3.0 : ~330M params, 15K context, multivariate + covariates, non-commercial weights
 ```
 
 | Version | Params | Context | Quantile Head | Frequency Flag | Status |
 | ------- | ------ | ------- | ------------- | -------------- | ------ |
-| **2.5** | 200M | 16,384 | ✅ Continuous (30M) | ❌ Removed | **Latest** |
+| 3.0 | ~330M | 15,360 | ✅ 9 deciles | ❌ | Latest (non-commercial weights) |
+| **2.5** | 200M | 16,384 | ✅ Continuous (30M) | ❌ Removed | Default (Apache-2.0) |
 | 2.0 | 500M | 2,048 | ✅ Fixed buckets | ✅ Required | Archived |
 | 1.0 | 200M | 2,048 | ✅ Fixed buckets | ✅ Required | Archived |
 
 **Hugging Face checkpoints:**
 
-- `google/timesfm-2.5-200m-pytorch` (recommended)
+- `google/timesfm-3.0-pytorch` (TimesFM 3.0; non-commercial license)
+- `google/timesfm-2.5-200m-pytorch` (default)
 - `google/timesfm-2.5-200m-flax`
+- `google/timesfm-2.5-200m-transformers` (🤗 Transformers port, `TimesFm2_5ModelForPrediction`)
 - `google/timesfm-2.0-500m-pytorch` (archived)
 - `google/timesfm-1.0-200m-pytorch` (archived)
 
@@ -336,24 +387,24 @@ timeline
 
 ## Examples
 
-Three fully-working reference examples live in `examples/`. Use them as ground truth for correct API usage and expected output shape.
+Three reference examples live in `examples/`; all use the TimesFM 2.5 API (outputs regenerated with timesfm 3.0.2 in 2026-09). Use them as ground truth for correct API usage and expected output shape.
 
 | Example | Directory | What It Demonstrates | When To Use It |
 | ------- | --------- | -------------------- | -------------- |
-| **Global Temperature Forecast** | `examples/global-temperature/` | Basic `model.forecast()` call, CSV -> PNG -> GIF pipeline, 36-month NOAA context | Starting point; copy-paste baseline for any univariate series |
+| **Global Temperature Forecast** | `examples/global-temperature/` | Basic `model.forecast()` call, CSV -> PNG -> GIF pipeline, 36-month NOAA context, 60%/80% prediction intervals | Starting point; copy-paste baseline for any univariate series |
 | **Anomaly Detection** | `examples/anomaly-detection/` | Two-phase detection: linear detrend + Z-score on context, quantile PI on forecast; 2-panel viz | Any task requiring outlier detection on historical + forecasted data |
 | **Covariates (XReg)** | `examples/covariates-forecasting/` | `forecast_with_covariates()` API (TimesFM 2.5), covariate decomposition, 2x2 shared-axis viz | Retail, energy, or any series with known exogenous drivers |
 
 ### Running the Examples
 
 ```bash
-# Global temperature (no TimesFM 2.5 needed)
+# Global temperature (TimesFM 2.5)
 cd examples/global-temperature && python run_forecast.py && python visualize_forecast.py
 
-# Anomaly detection (uses TimesFM 1.0)
+# Anomaly detection (TimesFM 2.5)
 cd examples/anomaly-detection && python detect_anomalies.py
 
-# Covariates (API demo -- requires TimesFM 2.5 + timesfm[xreg] for real inference)
+# Covariates (data + API walkthrough; real inference needs timesfm[torch,xreg])
 cd examples/covariates-forecasting && python demo_covariates.py
 ```
 
@@ -371,4 +422,6 @@ Before declaring any task done, run the post-task **quality checklist**, review 
 **known mistakes** (quantile off-by-one, covariate-horizon coverage, residual-based anomaly
 detection, etc.), and run the **regression-baseline verification** snippets — all in
 **[`references/pitfalls_and_validation.md`](references/pitfalls_and_validation.md)**.
+
+Part of the AlterLab Academic Skills suite.
 

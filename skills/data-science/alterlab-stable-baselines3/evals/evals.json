@@ -91,6 +91,21 @@
           "value": "pufferlib"
         }
       ]
+    },
+    {
+      "id": "near-miss-alterlab-pytorch-lightning",
+      "prompt": "I have 50,000 labelled microscopy images and want to train a ResNet classifier across 4 GPUs with mixed precision, checkpointing, and early stopping on validation loss. How should I structure the training code?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-pytorch-lightning. This is supervised deep learning on a fixed labelled dataset with a multi-GPU training loop, not reinforcement learning with an environment, rewards, and an agent policy.",
+      "assertions": [
+        {
+          "type": "should_not_trigger",
+          "value": true
+        },
+        {
+          "type": "output_contains",
+          "value": "alterlab-pytorch-lightning"
+        }
+      ]
     }
   ]
 }

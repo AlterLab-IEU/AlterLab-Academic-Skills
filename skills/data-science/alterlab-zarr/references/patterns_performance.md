@@ -132,10 +132,11 @@ with h5py.File('data.h5', 'r') as h5:
                    chunks=(1000, 1000),
                    store='data.zarr')
 
-# NumPy to Zarr
+# NumPy to Zarr (create_array chooses chunks automatically when `chunks` is omitted;
+# note zarr.array(..., chunks='auto') raises ValueError in zarr 3.4)
 import numpy as np
 data = np.load('data.npy')
-z = zarr.array(data, chunks='auto', store='data.zarr')
+z = zarr.create_array(store='data.zarr', data=data)
 
 # Zarr to NetCDF (via Xarray)
 import xarray as xr

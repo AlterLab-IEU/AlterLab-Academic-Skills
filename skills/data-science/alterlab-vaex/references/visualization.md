@@ -13,6 +13,13 @@ Vaex excels at visualizing datasets with billions of rows through efficient binn
 - Integration with matplotlib
 - Interactive widgets for Jupyter
 
+**API note (vaex 4.19):** plots live on the `df.viz` accessor — `df.viz.histogram(...)` and
+`df.viz.heatmap(...)`. The older `df.plot1d(...)` / `df.plot(...)` / `df.scatter(...)` are
+deprecated aliases (removal announced for 5.x) that forward the same arguments. `df.viz.heatmap`
+calls `matplotlib.cm.get_cmap`, which matplotlib removed in 3.9, so 2-D plots need
+`matplotlib<3.9` in the Vaex environment; alternatively compute the grid yourself with
+`df.count(binby=[df.x, df.y], limits=..., shape=...)` and draw it with `plt.imshow`.
+
 ## Basic Plotting
 
 ### 1D Histograms
@@ -24,15 +31,15 @@ import matplotlib.pyplot as plt
 df = vaex.open('data.hdf5')
 
 # Simple histogram
-df.plot1d(df.age)
+df.viz.histogram(df.age)
 
 # With customization
-df.plot1d(df.age,
-          limits=[0, 100],
-          shape=50,              # Number of bins
-          figsize=(10, 6),
-          xlabel='Age',
-          ylabel='Count')
+df.viz.histogram(df.age,
+                 limits=[0, 100],
+                 shape=50,              # Number of bins
+                 figsize=(10, 6),
+                 xlabel='Age',
+                 ylabel='Count')
 
 plt.show()
 ```
@@ -41,19 +48,19 @@ plt.show()
 
 ```python
 # Basic 2D plot
-df.plot(df.x, df.y)
+df.viz.heatmap(df.x, df.y)
 
 # With limits
-df.plot(df.x, df.y, limits=[[0, 10], [0, 10]])
+df.viz.heatmap(df.x, df.y, limits=[[0, 10], [0, 10]])
 
 # Auto limits using percentiles
-df.plot(df.x, df.y, limits='99.7%')  # 3-sigma limits
+df.viz.heatmap(df.x, df.y, limits='99.7%')  # 3-sigma limits
 
 # Customize shape (resolution)
-df.plot(df.x, df.y, shape=(512, 512))
+df.viz.heatmap(df.x, df.y, shape=(512, 512))
 
 # Logarithmic color scale
-df.plot(df.x, df.y, f='log')
+df.viz.heatmap(df.x, df.y, f='log')
 ```
 
 ### Scatter Plots (Small Data)
@@ -62,9 +69,9 @@ df.plot(df.x, df.y, f='log')
 # For smaller datasets or samples
 df_sample = df.sample(n=1000)
 
-df_sample.scatter(df_sample.x, df_sample.y,
-                  alpha=0.5,
-                  s=10)  # Point size
+df_sample.viz.scatter(df_sample.x, df_sample.y,
+                      alpha=0.5,
+                      s=10)  # extra kwargs go to plt.scatter
 
 plt.show()
 ```
@@ -75,47 +82,47 @@ plt.show()
 
 ```python
 # Linear scale (default)
-df.plot(df.x, df.y, f='identity')
+df.viz.heatmap(df.x, df.y, f='identity')
 
 # Logarithmic scale
-df.plot(df.x, df.y, f='log')
-df.plot(df.x, df.y, f='log10')
+df.viz.heatmap(df.x, df.y, f='log')
+df.viz.heatmap(df.x, df.y, f='log10')
 
 # Square root scale
-df.plot(df.x, df.y, f='sqrt')
+df.viz.heatmap(df.x, df.y, f='sqrt')
 
 # Custom colormap
-df.plot(df.x, df.y, colormap='viridis')
-df.plot(df.x, df.y, colormap='plasma')
-df.plot(df.x, df.y, colormap='hot')
+df.viz.heatmap(df.x, df.y, colormap='viridis')
+df.viz.heatmap(df.x, df.y, colormap='plasma')
+df.viz.heatmap(df.x, df.y, colormap='hot')
 ```
 
 ### Limits and Ranges
 
 ```python
 # Manual limits
-df.plot(df.x, df.y, limits=[[xmin, xmax], [ymin, ymax]])
+df.viz.heatmap(df.x, df.y, limits=[[xmin, xmax], [ymin, ymax]])
 
 # Percentile-based limits
-df.plot(df.x, df.y, limits='99.7%')  # 3-sigma
-df.plot(df.x, df.y, limits='95%')
-df.plot(df.x, df.y, limits='minmax')  # Full range
+df.viz.heatmap(df.x, df.y, limits='99.7%')  # 3-sigma
+df.viz.heatmap(df.x, df.y, limits='95%')
+df.viz.heatmap(df.x, df.y, limits='minmax')  # Full range
 
 # Mixed limits
-df.plot(df.x, df.y, limits=[[0, 100], 'minmax'])
+df.viz.heatmap(df.x, df.y, limits=[[0, 100], 'minmax'])
 ```
 
 ### Resolution Control
 
 ```python
 # Higher resolution (more bins)
-df.plot(df.x, df.y, shape=(1024, 1024))
+df.viz.heatmap(df.x, df.y, shape=(1024, 1024))
 
 # Lower resolution (faster)
-df.plot(df.x, df.y, shape=(128, 128))
+df.viz.heatmap(df.x, df.y, shape=(128, 128))
 
 # Different resolutions per axis
-df.plot(df.x, df.y, shape=(512, 256))
+df.viz.heatmap(df.x, df.y, shape=(512, 256))
 ```
 
 ## Statistical Visualizations
@@ -124,19 +131,19 @@ df.plot(df.x, df.y, shape=(512, 256))
 
 ```python
 # Mean on a grid
-df.plot(df.x, df.y, what=df.z.mean(),
+df.viz.heatmap(df.x, df.y, what='mean(z)',
         limits=[[0, 10], [0, 10]],
         shape=(100, 100),
         colormap='viridis')
 
 # Standard deviation
-df.plot(df.x, df.y, what=df.z.std())
+df.viz.heatmap(df.x, df.y, what='std(z)')
 
 # Sum
-df.plot(df.x, df.y, what=df.z.sum())
+df.viz.heatmap(df.x, df.y, what='sum(z)')
 
 # Count (default)
-df.plot(df.x, df.y, what='count')
+df.viz.heatmap(df.x, df.y, what='count(*)')
 ```
 
 ### Multiple Statistics
@@ -146,23 +153,23 @@ df.plot(df.x, df.y, what='count')
 fig, axes = plt.subplots(2, 2, figsize=(12, 10))
 
 # Count
-df.plot(df.x, df.y, what='count',
-        ax=axes[0, 0], show=False)
+plt.sca(axes[0, 0])
+df.viz.heatmap(df.x, df.y, what='count(*)', show=False)
 axes[0, 0].set_title('Count')
 
 # Mean
-df.plot(df.x, df.y, what=df.z.mean(),
-        ax=axes[0, 1], show=False)
+plt.sca(axes[0, 1])
+df.viz.heatmap(df.x, df.y, what='mean(z)', show=False)
 axes[0, 1].set_title('Mean of z')
 
 # Std
-df.plot(df.x, df.y, what=df.z.std(),
-        ax=axes[1, 0], show=False)
+plt.sca(axes[1, 0])
+df.viz.heatmap(df.x, df.y, what='std(z)', show=False)
 axes[1, 0].set_title('Std of z')
 
 # Min
-df.plot(df.x, df.y, what=df.z.min(),
-        ax=axes[1, 1], show=False)
+plt.sca(axes[1, 1])
+df.viz.heatmap(df.x, df.y, what='min(z)', show=False)
 axes[1, 1].set_title('Min of z')
 
 plt.tight_layout()
@@ -184,28 +191,23 @@ df.select(df.category == 'A', name='group_a')
 df.select(df.category == 'B', name='group_b')
 
 # Plot both selections
-df.plot1d(df.value, selection='group_a', label='Group A')
-df.plot1d(df.value, selection='group_b', label='Group B')
+df.viz.histogram(df.value, selection='group_a', label='Group A')
+df.viz.histogram(df.value, selection='group_b', label='Group B')
 plt.legend()
 plt.show()
 
 # 2D plot with selection
-df.plot(df.x, df.y, selection='group_a')
+df.viz.heatmap(df.x, df.y, selection='group_a')
 ```
 
 ### Overlay Multiple Selections
 
 ```python
-# Create base plot
-fig, ax = plt.subplots(figsize=(10, 8))
+# heatmap blends several selections in one call (None = the full dataset);
+# it has no alpha= or ax= parameters.
+df.viz.heatmap(df.x, df.y, selection=[None, 'group_a', 'group_b'])
 
-# Plot each selection with different colors
-df.plot(df.x, df.y, selection='group_a',
-        ax=ax, show=False, colormap='Reds', alpha=0.5)
-df.plot(df.x, df.y, selection='group_b',
-        ax=ax, show=False, colormap='Blues', alpha=0.5)
-
-ax.set_title('Overlaid Selections')
+plt.title('Overlaid Selections')
 plt.show()
 ```
 
@@ -224,7 +226,8 @@ variables = ['x', 'y', 'z', 'a', 'b', 'c']
 for idx, var in enumerate(variables):
     row = idx // 3
     col = idx % 3
-    df.plot1d(df[var], ax=axes[row, col], show=False)
+    plt.sca(axes[row, col])
+    df.viz.histogram(df[var], show=False)
     axes[row, col].set_title(f'Distribution of {var}')
 
 plt.tight_layout()
@@ -241,8 +244,8 @@ fig, axes = plt.subplots(1, len(categories), figsize=(15, 5))
 
 for idx, cat in enumerate(categories):
     df_cat = df[df.category == cat]
-    df_cat.plot(df_cat.x, df_cat.y,
-                ax=axes[idx], show=False)
+    plt.sca(axes[idx])
+    df_cat.viz.heatmap(df_cat.x, df_cat.y, show=False)
     axes[idx].set_title(f'Category {cat}')
 
 plt.tight_layout()
@@ -260,18 +263,12 @@ Create interactive visualizations in Jupyter notebooks:
 df.widget.selection_expression()
 ```
 
-### Histogram Widget
+### Heatmap Widget
 
 ```python
-# Interactive histogram with selection
-df.plot_widget(df.x, df.y)
-```
-
-### Scatter Widget
-
-```python
-# Interactive scatter plot
-df.scatter_widget(df.x, df.y)
+# Interactive 2-D heatmap with selection (requires vaex-jupyter widgets in a notebook).
+# df.plot_widget() is deprecated in favour of the df.widget accessor.
+df.widget.heatmap(df.x, df.y)
 ```
 
 ## Customization
@@ -284,11 +281,12 @@ import matplotlib.pyplot as plt
 # Create plot with custom styling
 fig, ax = plt.subplots(figsize=(12, 8))
 
-df.plot(df.x, df.y,
+plt.sca(ax)
+df.viz.heatmap(df.x, df.y,
         limits='99%',
         shape=(256, 256),
         colormap='plasma',
-        ax=ax,
+        colorbar_label='Density',   # heatmap draws its own colorbar
         show=False)
 
 # Customize axes
@@ -297,8 +295,6 @@ ax.set_ylabel('Y Variable', fontsize=14, fontweight='bold')
 ax.set_title('Custom Density Plot', fontsize=16, fontweight='bold')
 ax.grid(alpha=0.3)
 
-# Add colorbar
-plt.colorbar(ax.collections[0], ax=ax, label='Density')
 
 plt.tight_layout()
 plt.show()
@@ -307,10 +303,9 @@ plt.show()
 ### Figure Size and DPI
 
 ```python
-# High-resolution plot
-df.plot(df.x, df.y,
-        figsize=(12, 10),
-        dpi=300)
+# High-resolution plot (heatmap has no dpi= argument; set it when saving)
+df.viz.heatmap(df.x, df.y, figsize=(12, 10))
+plt.savefig('density.png', dpi=300)
 ```
 
 ## Specialized Visualizations
@@ -369,7 +364,8 @@ X, Y = np.meshgrid(x, y)
 fig, ax = plt.subplots(figsize=(10, 8))
 
 # Base heatmap
-df.plot(df.x, df.y, ax=ax, show=False)
+plt.sca(ax)
+df.viz.heatmap(df.x, df.y, show=False)
 
 # Vector overlay
 ax.quiver(X, Y, mean_vx.T, mean_vy.T, alpha=0.7, color='white')
@@ -383,13 +379,13 @@ plt.show()
 
 ```python
 # For very large datasets, reduce shape
-df.plot(df.x, df.y, shape=(256, 256))  # Fast
+df.viz.heatmap(df.x, df.y, shape=(256, 256))  # Fast
 
 # For publication quality
-df.plot(df.x, df.y, shape=(1024, 1024))  # Higher quality
+df.viz.heatmap(df.x, df.y, shape=(1024, 1024))  # Higher quality
 
 # Balance quality and performance
-df.plot(df.x, df.y, shape=(512, 512))  # Good balance
+df.viz.heatmap(df.x, df.y, shape=(512, 512))  # Good balance
 ```
 
 ### Caching Visualization Data
@@ -418,7 +414,7 @@ plt.show()
 
 ```python
 # Save as PNG
-df.plot(df.x, df.y)
+df.viz.heatmap(df.x, df.y)
 plt.savefig('plot.png', dpi=300, bbox_inches='tight')
 
 # Save as PDF (vector)
@@ -436,7 +432,7 @@ variables = ['x', 'y', 'z']
 
 for var in variables:
     plt.figure(figsize=(10, 6))
-    df.plot1d(df[var])
+    df.viz.histogram(df[var])
     plt.title(f'Distribution of {var}')
     plt.savefig(f'plot_{var}.png', dpi=300, bbox_inches='tight')
     plt.close()
@@ -454,33 +450,40 @@ fig = plt.figure(figsize=(16, 12))
 
 # 1D histograms
 ax1 = plt.subplot(3, 3, 1)
-df.plot1d(df.x, ax=ax1, show=False)
+plt.sca(ax1)
+df.viz.histogram(df.x, show=False)
 ax1.set_title('X Distribution')
 
 ax2 = plt.subplot(3, 3, 2)
-df.plot1d(df.y, ax=ax2, show=False)
+plt.sca(ax2)
+df.viz.histogram(df.y, show=False)
 ax2.set_title('Y Distribution')
 
 ax3 = plt.subplot(3, 3, 3)
-df.plot1d(df.z, ax=ax3, show=False)
+plt.sca(ax3)
+df.viz.histogram(df.z, show=False)
 ax3.set_title('Z Distribution')
 
 # 2D plots
 ax4 = plt.subplot(3, 3, 4)
-df.plot(df.x, df.y, ax=ax4, show=False)
+plt.sca(ax4)
+df.viz.heatmap(df.x, df.y, show=False)
 ax4.set_title('X vs Y')
 
 ax5 = plt.subplot(3, 3, 5)
-df.plot(df.x, df.z, ax=ax5, show=False)
+plt.sca(ax5)
+df.viz.heatmap(df.x, df.z, show=False)
 ax5.set_title('X vs Z')
 
 ax6 = plt.subplot(3, 3, 6)
-df.plot(df.y, df.z, ax=ax6, show=False)
+plt.sca(ax6)
+df.viz.heatmap(df.y, df.z, show=False)
 ax6.set_title('Y vs Z')
 
 # Statistics on grids
 ax7 = plt.subplot(3, 3, 7)
-df.plot(df.x, df.y, what=df.z.mean(), ax=ax7, show=False)
+plt.sca(ax7)
+df.viz.heatmap(df.x, df.y, what='mean(z)', show=False)
 ax7.set_title('Mean Z on X-Y grid')
 
 plt.tight_layout()
@@ -501,13 +504,13 @@ for idx, cat in enumerate(categories):
     df.select(df.category == cat, name=f'cat_{cat}')
 
     # 1D histogram
-    df.plot1d(df.value, selection=f'cat_{cat}',
-              ax=axes[idx, 0], show=False)
+    plt.sca(axes[idx, 0])
+    df.viz.histogram(df.value, selection=f'cat_{cat}', show=False)
     axes[idx, 0].set_title(f'Category {cat} - Distribution')
 
     # 2D plot
-    df.plot(df.x, df.y, selection=f'cat_{cat}',
-            ax=axes[idx, 1], show=False)
+    plt.sca(axes[idx, 1])
+    df.viz.heatmap(df.x, df.y, selection=f'cat_{cat}', show=False)
     axes[idx, 1].set_title(f'Category {cat} - X vs Y')
 
 plt.tight_layout()
@@ -559,7 +562,7 @@ import matplotlib.pyplot as plt
 sns.set_style('darkgrid')
 sns.set_palette('husl')
 
-df.plot1d(df.value)
+df.viz.histogram(df.value)
 plt.show()
 ```
 
@@ -579,31 +582,31 @@ plt.show()
 
 ```python
 # Problem: Limits don't match data range
-df.plot(df.x, df.y, limits=[[0, 10], [0, 10]])
+df.viz.heatmap(df.x, df.y, limits=[[0, 10], [0, 10]])
 
 # Solution: Use automatic limits
-df.plot(df.x, df.y, limits='minmax')
-df.plot(df.x, df.y, limits='99%')
+df.viz.heatmap(df.x, df.y, limits='minmax')
+df.viz.heatmap(df.x, df.y, limits='99%')
 ```
 
 ### Issue: Plot Too Slow
 
 ```python
 # Problem: Too high resolution
-df.plot(df.x, df.y, shape=(2048, 2048))
+df.viz.heatmap(df.x, df.y, shape=(2048, 2048))
 
 # Solution: Reduce shape
-df.plot(df.x, df.y, shape=(512, 512))
+df.viz.heatmap(df.x, df.y, shape=(512, 512))
 ```
 
 ### Issue: Can't See Low-Density Regions
 
 ```python
 # Problem: Linear scale overwhelmed by high-density areas
-df.plot(df.x, df.y, f='identity')
+df.viz.heatmap(df.x, df.y, f='identity')
 
 # Solution: Use logarithmic scale
-df.plot(df.x, df.y, f='log')
+df.viz.heatmap(df.x, df.y, f='log')
 ```
 
 ## Related Resources

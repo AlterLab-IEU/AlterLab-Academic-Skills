@@ -76,7 +76,7 @@ Approximate RAM usage during inference:
 
 | Component | TimesFM 2.5 (200M) | TimesFM 2.0 (500M) |
 | --------- | ------------------- | ------------------- |
-| Model weights | ~800 MB | ~2 GB |
+| Model weights | ~0.9 GB | ~2 GB |
 | Runtime overhead | ~500 MB | ~1 GB |
 | Input/output buffers | ~200 MB per 1000 series | ~500 MB per 1000 series |
 | **Total (small batch)** | **~1.5 GB** | **~3.5 GB** |
@@ -88,7 +88,7 @@ Approximate RAM usage during inference:
 
 | Component | TimesFM 2.5 (200M) |
 | --------- | ------------------- |
-| Model weights | ~800 MB |
+| Model weights | ~0.9 GB |
 | KV cache + activations | ~200–500 MB (scales with context) |
 | Batch buffers | ~100 MB per 100 series at context=1024 |
 | **Total (batch=32)** | **~1.2 GB** |
@@ -99,9 +99,10 @@ Approximate RAM usage during inference:
 
 | Item | Size |
 | ---- | ---- |
-| TimesFM 2.5 safetensors | ~800 MB |
+| TimesFM 2.5 safetensors | ~0.93 GB (925 MB) |
+| TimesFM 3.0 safetensors | ~1.3 GB (fp32, ~330M params) |
 | Hugging Face cache overhead | ~200 MB |
-| **Total download** | **~1 GB** |
+| **Total download (2.5 only)** | **~1.1 GB** |
 
 Model weights are downloaded once from Hugging Face Hub and cached in
 `~/.cache/huggingface/` (or `$HF_HOME`).
@@ -138,16 +139,16 @@ Works on any CPU with sufficient RAM. Expect 5–20× slower than GPU.
 | Python | 3.10 | 3.12+ |
 | numpy | 1.26.4 | latest |
 | torch | 2.0.0 | latest |
-| huggingface_hub | 0.23.0 | latest |
+| huggingface_hub | 0.28.0 | latest |
 | safetensors | 0.5.3 | latest |
 
 ### Optional Dependencies
 
 | Package | Purpose | Install |
 | ------- | ------- | ------- |
-| jax | Flax backend | `pip install jax[cuda]` |
-| flax | Flax backend | `pip install flax` |
-| scikit-learn | XReg covariates | `pip install scikit-learn` |
+| flax + jax | Flax backend for TimesFM 2.5 | `uv pip install "timesfm[flax]"` |
+| jax + scikit-learn | XReg covariates (TimesFM 2.5) | `uv pip install "timesfm[xreg]"` |
+| mlx | TimesFM 3.0 on Apple silicon without PyTorch | `uv pip install "timesfm[mlx]"` |
 
 ## Operating System Compatibility
 

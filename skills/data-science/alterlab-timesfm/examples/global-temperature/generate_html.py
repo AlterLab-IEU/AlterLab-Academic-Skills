@@ -210,13 +210,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 </div>
                 <div class="legend-item">
                     <div class="legend-color" style="background: rgba(239, 68, 68, 0.25);"></div>
-                    <span>80% CI</span>
+                    <span>60% / 80% PI</span>
                 </div>
             </div>
         </div>
         
         <footer>
-            <p>TimesFM 1.0 (200M) PyTorch • <a href="https://github.com/google-research/timesfm">Google Research</a></p>
+            <p>TimesFM 2.5 (200M) PyTorch • <a href="https://github.com/google-research/timesfm">Google Research</a></p>
         </footer>
     </div>
 
@@ -295,7 +295,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                             order: 10,
                         }},
                         {{
-                            label: '90% CI Lower',
+                            label: '80% PI Lower (q10)',
                             data: [],
                             borderColor: 'transparent',
                             backgroundColor: 'rgba(239, 68, 68, 0.08)',
@@ -305,7 +305,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                             order: 5,
                         }},
                         {{
-                            label: '90% CI Upper',
+                            label: '80% PI Upper (q90)',
                             data: [],
                             borderColor: 'transparent',
                             backgroundColor: 'rgba(239, 68, 68, 0.08)',
@@ -315,7 +315,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                             order: 5,
                         }},
                         {{
-                            label: '80% CI Lower',
+                            label: '60% PI Lower (q20)',
                             data: [],
                             borderColor: 'transparent',
                             backgroundColor: 'rgba(239, 68, 68, 0.2)',
@@ -325,7 +325,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                             order: 6,
                         }},
                         {{
-                            label: '80% CI Upper',
+                            label: '60% PI Upper (q80)',
                             data: [],
                             borderColor: 'transparent',
                             backgroundColor: 'rgba(239, 68, 68, 0.2)',

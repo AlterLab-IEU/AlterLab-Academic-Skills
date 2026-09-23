@@ -58,6 +58,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-timesfm" }
       ]
+    },
+    {
+      "id": "near-miss-alterlab-causal-inference",
+      "prompt": "States adopted a minimum-wage increase in different years between 2010 and 2020. Using my state-year panel, I want to estimate the policy's effect on teen employment with a staggered difference-in-differences design and an event-study plot of pre-trends. How should I set this up?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-causal-inference. The request is a quasi-experimental causal design (staggered-adoption difference-in-differences with an event study and pre-trend checks), which needs the causal-inference workflow and estimators robust to staggered timing, not just fitting a statsmodels regression class.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-causal-inference" }
+      ]
     }
   ]
 }

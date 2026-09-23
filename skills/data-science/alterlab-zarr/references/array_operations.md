@@ -74,7 +74,7 @@ Attach custom metadata to arrays and groups using attributes:
 
 ```python
 # Add attributes to array
-z = zarr.zeros((1000, 1000), chunks=(100, 100))
+z = zarr.zeros((1000, 1000), chunks=(100, 100), store='temperature.zarr')
 z.attrs['description'] = 'Temperature data in Kelvin'
 z.attrs['units'] = 'K'
 z.attrs['created'] = '2024-01-15'
@@ -83,13 +83,14 @@ z.attrs['processing_version'] = 2.1
 # Attributes are stored as JSON
 print(z.attrs['units'])  # Output: K
 
-# Add attributes to groups
-root = zarr.group('data.zarr')
+# Add attributes to groups (a store path holds either one array or a group hierarchy —
+# creating a group where an array already exists raises ContainsArrayError)
+root = zarr.group('project.zarr')
 root.attrs['project'] = 'Climate Analysis'
 root.attrs['institution'] = 'Research Institute'
 
 # Attributes persist with the array/group
-z2 = zarr.open('data.zarr')
+z2 = zarr.open_array('temperature.zarr')
 print(z2.attrs['description'])
 ```
 
@@ -179,6 +180,7 @@ root = zarr.open_consolidated('data.zarr')
 - Speeds up `tree()` operations and group traversal
 
 **Cautions**:
+- Consolidated metadata is a zarr-python convention that is not (yet) part of the Zarr v3 spec; zarr emits a warning and other implementations may ignore it
 - Metadata can become stale if arrays update without re-consolidation
 - Not suitable for frequently-updated datasets
 - Multi-writer scenarios may have inconsistent reads

@@ -22,7 +22,7 @@
     {
       "id": "covariates-forecast",
       "prompt": "Forecast my retail demand but use price and a holiday flag as known future drivers — both vary over time and I know their future values for the horizon.",
-      "expected_output": "Invokes alterlab-timesfm: uses TimesFM 2.5 forecast_with_covariates() (requires timesfm[xreg]), passing dynamic_numerical_covariates for price and dynamic_categorical_covariates for the holiday flag, notes that the covariates must span both context and the full horizon, and selects an xreg_mode.",
+      "expected_output": "Invokes alterlab-timesfm: uses TimesFM 2.5 forecast_with_covariates() (requires timesfm[xreg] and a model compiled with return_backcast=True), passing dynamic_numerical_covariates for price and dynamic_categorical_covariates for the holiday flag, notes that the covariates must span both context and the full horizon, and selects an xreg_mode. May alternatively offer TimesFM 3.0's native past_future_covariates, flagging its non-commercial weight license.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "covariates" }
@@ -35,6 +35,16 @@
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Uses the quantile prediction intervals (60% PI for warning, 80% PI for critical) to assign severity rather than claiming a built-in anomaly detector." }
+      ]
+    },
+    {
+      "id": "multivariate-timesfm3",
+      "prompt": "For my research project I have hourly readings from four related air-quality sensors plus a temperature forecast for the next 48 hours. Can I forecast all four sensors jointly with a foundation model and use the known future temperature?",
+      "expected_output": "Invokes alterlab-timesfm and uses TimesFM 3.0 (timesfm3.TimesFM3Forecaster.from_pretrained('google/timesfm-3.0-pytorch')) with a (4, T) target array and the temperature as past_future_covariates of length T + 48, calling predict(..., horizon=48, return_quantiles=True); explains the output shapes ((4, 48) forecast, (4, 48, 9) deciles with the median at index 4) and states that the TimesFM 3.0 weights are licensed for non-commercial, non-production use only, pointing to TimesFM 2.5 with XReg as the Apache-2.0 alternative.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "TimesFM 3" },
+        { "type": "behavior", "value": "Uses TimesFM 3.0 multivariate forecasting with past-and-future covariates and flags the non-commercial weight license." }
       ]
     },
     {
@@ -53,6 +63,15 @@
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-eda" }
+      ]
+    },
+    {
+      "id": "near-miss-alterlab-aeon",
+      "prompt": "I have 2,000 labelled ECG segments and want to train a classifier that tells normal from arrhythmic beats, comparing ROCKET and a shapelet-based method. Which time-series library should I use?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-aeon. The task is supervised time-series classification (ROCKET, shapelets) on labelled segments, not forecasting future values with a foundation model.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-aeon" }
       ]
     }
   ]

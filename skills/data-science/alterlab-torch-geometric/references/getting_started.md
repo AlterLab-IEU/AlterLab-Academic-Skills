@@ -8,10 +8,20 @@ Installation, basic graph creation, the `Data` structure, edge-index format, and
 uv pip install torch_geometric
 ```
 
-For additional dependencies (sparse operations, clustering):
+PyG 2.8 (current 2.8.0.post1) needs Python >= 3.10; its release notes list PyTorch 2.9–2.12.
+
+Optional compiled extensions — `pyg-lib` provides neighbor sampling (`NeighborLoader`),
+`knn_graph`/`radius_graph`, `fps`, and segment ops. Since PyG 2.8 it also replaces
+`torch-cluster` and `torch-spline-conv`, which are no longer used:
 ```bash
-uv pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-${TORCH}+${CUDA}.html
+# TORCH = your torch version (e.g. 2.12.0), CUDA = cpu | cu126 | cu128 | cu130 | cu132
+uv pip install pyg-lib -f https://data.pyg.org/whl/torch-${TORCH}+${CUDA}.html
+
+# torch-scatter / torch-sparse are optional and only published for older torch builds
+# (up to 2.12 as of 2026-09):
+uv pip install torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-${TORCH}+${CUDA}.html
 ```
+Check what was picked up with `torch_geometric.typing.WITH_PYG_LIB` (and `WITH_TORCH_SPARSE`).
 
 ## Basic Graph Creation
 

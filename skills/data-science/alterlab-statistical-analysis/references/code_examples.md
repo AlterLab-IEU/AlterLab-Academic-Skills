@@ -193,15 +193,17 @@ n_required = tt_ind_solve_power(
 )
 print(f"Required n per group: {n_required:.0f}")
 
-# ANOVA: What n is needed to detect f = 0.25?
+# ANOVA: What n is needed to detect f = 0.25 with 3 groups?
+# FTestAnovaPower works with the TOTAL sample size (nobs) and takes k_groups
+import math
 anova_power = FTestAnovaPower()
-n_per_group = anova_power.solve_power(
+n_total = anova_power.solve_power(
     effect_size=0.25,
-    ngroups=3,
+    k_groups=3,
     alpha=0.05,
     power=0.80
 )
-print(f"Required n per group: {n_per_group:.0f}")
+print(f"Required N total: {math.ceil(n_total)}; per group: {math.ceil(n_total / 3)}")
 ```
 
 Sensitivity analysis (post-study) — determine the smallest detectable effect:

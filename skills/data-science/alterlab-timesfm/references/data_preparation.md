@@ -155,14 +155,17 @@ inputs = [clean_series(df[col].values) for col in cols]
 | 256–512 | Daily data, ~1 year | Good balance |
 | 512–1024 | Daily data, ~2-3 years | Standard production |
 | 1024–4096 | Hourly data, weekly patterns | More context = better |
-| 4096–16384 | High-frequency, long patterns | TimesFM 2.5 maximum |
+| 4096–16384 | High-frequency, long patterns | TimesFM 2.5 maximum (context + horizon ≤ 16,384; TimesFM 3.0: 15,360) |
 
 **Rule of thumb**: Provide at least 3–5 full cycles of the dominant pattern
 (e.g., for weekly seasonality with daily data, provide at least 21–35 days).
 
 ## Covariates (XReg)
 
-TimesFM 2.5 supports exogenous variables through the `forecast_with_covariates()` API.
+TimesFM 2.5 supports exogenous variables through the `forecast_with_covariates()` API
+(requires `timesfm[xreg]` and a model compiled with `ForecastConfig(..., return_backcast=True)`).
+TimesFM 3.0 takes covariates natively instead: `predict(..., past_only_covariates=...,
+past_future_covariates=...)` — see `api_reference.md`.
 
 ### Types of Covariates
 
@@ -212,8 +215,8 @@ point, quantiles = model.forecast_with_covariates(
 
 | Mode | Description |
 | ---- | ----------- |
-| `"xreg + timesfm"` | Covariates processed first, then combined with TimesFM forecast |
-| `"timesfm + xreg"` | TimesFM forecast first, then adjusted by covariates |
+| `"xreg + timesfm"` (default) | Fit an in-context linear regression of the target on the covariates, then TimesFM forecasts the regression residuals; final = regression + residual forecast |
+| `"timesfm + xreg"` | TimesFM forecasts first, then a linear regression on the covariates fits TimesFM's residuals; final = TimesFM forecast + regression adjustment |
 
 ## Common Data Issues
 

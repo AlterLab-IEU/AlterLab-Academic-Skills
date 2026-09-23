@@ -53,6 +53,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-pymoo" }
       ]
+    },
+    {
+      "id": "near-miss-alterlab-abm-mesa",
+      "prompt": "I want to model how a rumor spreads through a town where each resident has their own trust level and friends network, and see how the share of believers evolves when I change the trust distribution. What framework should I build this in?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-abm-mesa. The request is an agent-based social model (heterogeneous residents on a network, opinion/rumor diffusion, parameter sweeps over agent attributes), which is Mesa's territory rather than SimPy's process/resource-contention discrete-event simulation.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-abm-mesa" }
+      ]
     }
   ]
 }

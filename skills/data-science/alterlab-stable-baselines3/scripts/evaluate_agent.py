@@ -11,6 +11,7 @@ This template demonstrates:
 import gymnasium as gym
 from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
+from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv, VecVideoRecorder, VecNormalize
 import os
 
@@ -24,6 +25,7 @@ def evaluate_agent(
     record_video=False,
     video_folder="./videos/",
     vec_normalize_path=None,
+    algorithm=PPO,
 ):
     """
     Evaluate a trained RL agent.
@@ -37,6 +39,7 @@ def evaluate_agent(
         record_video: Record videos of the agent
         video_folder: Folder to save videos
         vec_normalize_path: Path to VecNormalize statistics (if used during training)
+        algorithm: SB3 algorithm class the model was trained with (PPO, SAC, DQN, ...)
 
     Returns:
         mean_reward: Mean episode reward
@@ -44,16 +47,20 @@ def evaluate_agent(
     """
     # Load the trained model
     print(f"Loading model from {model_path}...")
-    model = PPO.load(model_path)
+    model = algorithm.load(model_path)
 
-    # Create evaluation environment
-    if render:
-        env = gym.make(env_id, render_mode="human")
+    # Create evaluation environment. VecVideoRecorder requires render_mode="rgb_array"
+    # (and the moviepy package); Monitor keeps reported episode rewards/lengths exact.
+    if record_video:
+        render_mode = "rgb_array"
+    elif render:
+        render_mode = "human"
     else:
-        env = gym.make(env_id)
+        render_mode = None
+    base_env = Monitor(gym.make(env_id, render_mode=render_mode))
 
     # Wrap in DummyVecEnv for consistency
-    env = DummyVecEnv([lambda: env])
+    env = DummyVecEnv([lambda: base_env])
 
     # Load VecNormalize statistics if they were used during training
     if vec_normalize_path and os.path.exists(vec_normalize_path):
@@ -68,8 +75,8 @@ def evaluate_agent(
         env = VecVideoRecorder(
             env,
             video_folder,
-            record_video_trigger=lambda x: x == 0,  # Record all episodes
-            video_length=1000,  # Max video length
+            record_video_trigger=lambda x: x == 0,  # start one clip at the first step
+            video_length=1000,  # clip length in steps (may span several episodes)
             name_prefix=f"eval-{env_id}",
         )
         print(f"Recording videos to {video_folder}...")
@@ -99,6 +106,7 @@ def watch_agent(
     n_episodes=5,
     deterministic=True,
     vec_normalize_path=None,
+    algorithm=PPO,
 ):
     """
     Watch a trained agent play (with rendering).
@@ -109,10 +117,11 @@ def watch_agent(
         n_episodes: Number of episodes to watch
         deterministic: Use deterministic actions
         vec_normalize_path: Path to VecNormalize statistics (if used during training)
+        algorithm: SB3 algorithm class the model was trained with
     """
     # Load the trained model
     print(f"Loading model from {model_path}...")
-    model = PPO.load(model_path)
+    model = algorithm.load(model_path)
 
     # Create environment with rendering
     env = gym.make(env_id, render_mode="human")

@@ -4,7 +4,8 @@ TimesFM Covariates (XReg) Example
 
 Demonstrates the TimesFM covariate API using synthetic retail sales data.
 TimesFM 1.0 does NOT support forecast_with_covariates(); that requires
-TimesFM 2.5 + `pip install timesfm[xreg]`.
+TimesFM 2.5 + `uv pip install "timesfm[torch,xreg]"` (the xreg extra pulls in JAX
+and scikit-learn for the in-context linear regression).
 
 This script:
   1. Generates synthetic 3-store weekly retail data (24-week context, 12-week horizon)
@@ -408,12 +409,15 @@ def demonstrate_api() -> None:
     print("=" * 70)
     print("""
 # Installation
-pip install timesfm[xreg]
+uv pip install "timesfm[torch,xreg]"
 
 import timesfm
-hparams   = timesfm.TimesFmHparams(backend="cpu", per_core_batch_size=32, horizon_len=12)
-ckpt      = timesfm.TimesFmCheckpoint(huggingface_repo_id="google/timesfm-2.5-200m-pytorch")
-model     = timesfm.TimesFm(hparams=hparams, checkpoint=ckpt)
+model = timesfm.TimesFM_2p5_200M_torch.from_pretrained("google/timesfm-2.5-200m-pytorch")
+model.compile(timesfm.ForecastConfig(
+    max_context=512, max_horizon=128, normalize_inputs=True,
+    use_continuous_quantile_head=True, fix_quantile_crossing=True,
+    return_backcast=True,   # required by forecast_with_covariates
+))
 
 point_fc, quant_fc = model.forecast_with_covariates(
     inputs=[sales_a, sales_b, sales_c],
@@ -423,8 +427,9 @@ point_fc, quant_fc = model.forecast_with_covariates(
     xreg_mode="xreg + timesfm",
     normalize_xreg_target_per_input=True,
 )
-# point_fc:  (num_series, horizon_len)
-# quant_fc:  (num_series, horizon_len, 10)
+# point_fc:  list of num_series arrays, each (horizon_len,)
+# quant_fc:  list of num_series arrays, each (horizon_len, 10)
+# horizon_len is inferred from the dynamic covariates (context + horizon values)
 """)
 
 
@@ -434,16 +439,16 @@ def explain_xreg_modes() -> None:
     print("=" * 70)
     print("""
 "xreg + timesfm" (DEFAULT)
-  1. TimesFM makes baseline forecast
-  2. Fit regression on residuals (actual - baseline) ~ covariates
-  3. Final = TimesFM baseline + XReg adjustment
-  Best when: covariates explain residual variation (e.g. promotions)
+  1. Fit a linear regression: target ~ covariates (in context)
+  2. TimesFM forecasts the regression residuals
+  3. Final = XReg prediction + TimesFM residual forecast
+  Best when: covariates explain the main signal (e.g. temperature, price)
 
 "timesfm + xreg"
-  1. Fit regression: target ~ covariates
-  2. TimesFM forecasts the residuals
-  3. Final = XReg prediction + TimesFM residual forecast
-  Best when: covariates explain the main signal (e.g. temperature)
+  1. TimesFM makes a baseline forecast
+  2. Fit a linear regression on its residuals (actual - baseline) ~ covariates
+  3. Final = TimesFM baseline + XReg adjustment
+  Best when: covariates explain residual variation (e.g. promotions)
 """)
 
 
@@ -531,8 +536,8 @@ def main() -> None:
             "price": "-20 units per $1 above base price",
         },
         "xreg_modes": {
-            "xreg + timesfm": "Regression on TimesFM residuals (default)",
-            "timesfm + xreg": "TimesFM on regression residuals",
+            "xreg + timesfm": "TimesFM on regression residuals (default)",
+            "timesfm + xreg": "Regression on TimesFM residuals",
         },
         "bug_fixes_history": [
             "v1: Variable-shadowing -- all stores had identical covariates",

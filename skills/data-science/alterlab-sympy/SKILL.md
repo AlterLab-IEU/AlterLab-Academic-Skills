@@ -3,10 +3,11 @@ name: alterlab-sympy
 description: Symbolic mathematics in Python with SymPy — solve equations algebraically, perform calculus (derivatives, integrals, limits), manipulate algebraic expressions, work with symbolic matrices, and generate executable code from formulas. Use when exact symbolic results are needed rather than numerical approximations, or for physics, number-theory, and geometry computations involving variables and parameters. Part of the AlterLab Academic Skills suite.
 license: BSD-3-Clause
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the sympy Python package.
+compatibility: No API key required. Runs locally via `uv run python`; requires sympy (current 1.14.0 as of 2026-09).
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # SymPy - Symbolic Mathematics in Python
@@ -28,6 +29,15 @@ Use this skill when:
 - Converting mathematical expressions to executable code (Python, C, Fortran)
 - Generating LaTeX or other formatted mathematical output
 - Needing exact mathematical results (e.g., `sqrt(2)` not `1.414...`)
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Fitting statistical models or running hypothesis tests on data | `alterlab-statistical-analysis` |
+| Numerical multi-objective or constrained optimization (Pareto fronts, NSGA-II) | `alterlab-pymoo` |
+| Numerically simulating open quantum systems (master equations, Lindblad dynamics) | `alterlab-qutip` |
+| Unit-aware astronomy calculations (coordinates, cosmology, FITS) | `alterlab-astropy` |
 
 ## Core Capabilities
 
@@ -216,7 +226,9 @@ latex_str = latex(expr)  # Convert to LaTeX for documents
 
 ## Working with SymPy: Best Practices
 
-### 1. Always Define Symbols First
+### 1. Define Symbols First
+
+SymPy only treats names created with `symbols()` (or `Symbol`) as mathematical variables; an undefined name raises `NameError`.
 
 ```python
 from sympy import symbols
@@ -407,7 +419,7 @@ from sympy import N, nsimplify, simplify, S, Rational
 5. **Simplification not working as expected**
    - Try different simplification functions: `simplify`, `factor`, `expand`, `trigsimp`
    - Add assumptions to symbols (e.g., `positive=True`)
-   - Use `simplify(expr, force=True)` for aggressive simplification
+   - `powsimp`, `expand_log`, and `logcombine` accept `force=True` to ignore assumptions (`simplify` has no `force` option)
 
 ## Additional Resources
 
@@ -415,4 +427,6 @@ from sympy import N, nsimplify, simplify, S, Rational
 - Tutorial: https://docs.sympy.org/latest/tutorials/intro-tutorial/index.html
 - API Reference: https://docs.sympy.org/latest/reference/index.html
 - Examples: https://github.com/sympy/sympy/tree/master/doc/src/modules
+
+Part of the AlterLab Academic Skills suite.
 

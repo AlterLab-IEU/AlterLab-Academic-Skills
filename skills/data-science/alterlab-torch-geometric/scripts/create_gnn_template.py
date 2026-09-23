@@ -469,7 +469,7 @@ def generate_template(model_type: str, task: str, output_path: str):
 
     print(f"✓ Generated {model_type.upper()} template for {task}")
     print(f"  Saved to: {output_path}")
-    print(f"\\nTo run the template:")
+    print("\nTo run the template:")
     print(f"  python {output_path}")
 
 
@@ -478,7 +478,7 @@ def list_templates():
     print("Available GNN Templates")
     print("=" * 50)
     for task, models in TEMPLATES.items():
-        print(f"\\n{task.upper()}")
+        print(f"\n{task.upper()}")
         print("-" * 50)
         for model in models.keys():
             print(f"  - {model}")
@@ -514,7 +514,7 @@ Examples:
 
     if not args.model or not args.task:
         parser.print_help()
-        print("\\n" + "=" * 50)
+        print("\n" + "=" * 50)
         list_templates()
         return
 
@@ -522,7 +522,7 @@ Examples:
         generate_template(args.model, args.task, args.output)
     except ValueError as e:
         print(f"Error: {e}")
-        print("\\nUse --list to see available templates")
+        print("\nUse --list to see available templates")
 
 
 if __name__ == '__main__':

@@ -8,6 +8,7 @@ installation so the agent never crashes a user's machine.
 Usage:
     python check_system.py
     python check_system.py --model v2.5   # default
+    python check_system.py --model v3.0   # TimesFM 3.0 (~330M, non-commercial weights)
     python check_system.py --model v2.0   # archived 500M model
     python check_system.py --model v1.0   # archived 200M model
     python check_system.py --json         # machine-readable output
@@ -31,6 +32,19 @@ from typing import Any
 # ---------------------------------------------------------------------------
 
 MODEL_PROFILES: dict[str, dict[str, Any]] = {
+    # TimesFM 3.0: 1.3 GB fp32 weights; measured peak RSS ~2.7 GB on CPU for
+    # 32 series x 1,024 context (timesfm 3.0.2). Thresholds keep the same
+    # headroom ratio as the v2.5 profile (measured ~2.0 GB).
+    "v3.0": {
+        "name": "TimesFM 3.0 (~330M)",
+        "params": "330M",
+        "min_ram_gb": 3.0,
+        "recommended_ram_gb": 6.0,
+        "min_vram_gb": 3.0,
+        "recommended_vram_gb": 6.0,
+        "disk_gb": 3.0,  # model weights + overhead
+        "hf_repo": "google/timesfm-3.0-pytorch",
+    },
     "v2.5": {
         "name": "TimesFM 2.5 (200M)",
         "params": "200M",
@@ -358,7 +372,14 @@ def check_package(pkg_name: str, import_name: str | None = None) -> CheckResult:
     import_name = import_name or pkg_name
     try:
         mod = __import__(import_name)
-        version = getattr(mod, "__version__", "unknown")
+        version = getattr(mod, "__version__", None)
+        if version is None:  # e.g. timesfm >= 2.0 defines no __version__
+            from importlib.metadata import PackageNotFoundError, version as dist_version
+
+            try:
+                version = dist_version(pkg_name)
+            except PackageNotFoundError:
+                version = "unknown"
         return CheckResult(
             name=pkg_name,
             status="pass",
