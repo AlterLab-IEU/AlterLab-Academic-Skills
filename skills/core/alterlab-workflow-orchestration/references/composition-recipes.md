@@ -12,6 +12,14 @@ real and present in this suite:
 - `alterlab-paper-reviewer` — 5-reviewer panel (core)
 - `alterlab-peer-review` — peer-review skill (writing-tools)
 
+**Packaged as dynamic workflows.** Four of these recipes also ship ready to run in the
+`alterlab-workflows` plugin (Claude Code): P1 + P4 → `/alterlab-workflows:citation-audit`,
+P3 → `/alterlab-workflows:review-panel`, P4 → `/alterlab-workflows:claim-stress-test`, and
+the dual-coder variant of P3 → `/alterlab-workflows:systematic-review-screening`. Their
+scripts (`skills/workflows/workflows/*.js`) are readable starting points when a recipe needs
+to become a rerunnable workflow; use the prompts below when a few subagents in one
+conversation are enough.
+
 ## Table of Contents
 
 - [P1 — Parallel fan-out: batch citation verification](#p1--parallel-fan-out-batch-citation-verification)

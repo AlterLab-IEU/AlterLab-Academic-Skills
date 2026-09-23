@@ -6,12 +6,12 @@ allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: Orchestrates alterlab-deep-research, alterlab-paper-writer, and alterlab-paper-reviewer; uses built-in Claude tools only; no external API key or account required
 metadata:
   skill-author: AlterLab
-  version: "2.6"
-  last_updated: "2026-03-08"
+  version: "2.7.0"
+  last_updated: "2026-09-23"
   depends_on: "alterlab-deep-research, alterlab-paper-writer, alterlab-paper-reviewer"
 ---
 
-# Academic Pipeline v2.6 — Full Academic Research Workflow Orchestrator
+# Academic Pipeline — Full Academic Research Workflow Orchestrator
 
 A lightweight orchestrator that manages the complete academic pipeline from research exploration to final manuscript. It does not perform substantive work — it only detects stages, recommends modes, dispatches skills, manages transitions, and tracks state.
 
@@ -290,7 +290,7 @@ Standardized-workflow guarantee table and the full end-of-pipeline audit-trail t
 **Trigger**: After Stage 5 (FINALIZE) completion
 **Purpose**: Document the complete human-AI collaboration history for the paper creation process, for user sharing, reporting, or reflection
 
-Workflow: ask language preference (zh / en / both) -> review session history and compile user quotes, per-stage decisions, iteration details, and pipeline statistics -> generate Markdown (`paper_creation_process.md` / `_en.md`) -> convert to LaTeX and compile PDF via tectonic (Chinese uses xeCJK + Source Han Serif TC VF). The record ends with a **mandatory Collaboration Quality Evaluation** — a `/insight`-style final chapter scoring the user 1-100 across six dimensions (Direction Setting, Intellectual Contribution, Quality Gatekeeping, Iteration Discipline, Delegation Efficiency, Meta-Learning) with honest, evidence-based, constructive analysis (What Worked Well / Missed Opportunities / Recommendations / Human vs AI Value-Add / Claude self-reflection).
+Workflow: ask language preference (English, the user's other working language — e.g. Turkish — or both) -> review session history and compile user quotes, per-stage decisions, iteration details, and pipeline statistics -> generate Markdown (`paper_creation_process.md` / `_en.md`) -> convert to LaTeX and compile PDF via tectonic (xeCJK plus a CJK font such as Source Han Serif only when the summary contains Chinese, Japanese, or Korean text). The record ends with a **mandatory Collaboration Quality Evaluation** — a `/insight`-style final chapter scoring the user 1-100 across six dimensions (Direction Setting, Intellectual Contribution, Quality Gatekeeping, Iteration Discipline, Delegation Efficiency, Meta-Learning) with honest, evidence-based, constructive analysis (What Worked Well / Missed Opportunities / Recommendations / Human vs AI Value-Add / Claude self-reflection).
 
 Full workflow steps, required-content table, six-dimension score card, scoring-criteria bands, required subsections, evaluation principles, and output specifications: see `references/process_summary_protocol.md`.
 
@@ -410,7 +410,7 @@ Stage 5: alterlab-paper-writer (format-convert mode)
   - Step 2: Auto-produce MD + DOCX
   - Step 3: Produce LaTeX (using corresponding document class, e.g., apa7 class for APA 7.0)
   - Step 4: After user confirms content is correct, tectonic compiles PDF (final version)
-  - Fonts: Times New Roman (English) + Source Han Serif TC VF (Chinese) + Courier New (monospace)
+  - Fonts: Times New Roman (Latin scripts, including Turkish) + Courier New (monospace); add a CJK font such as Source Han Serif only when the paper contains Chinese, Japanese, or Korean text
   - PDF must be compiled from LaTeX (HTML-to-PDF is prohibited)
 ```
 
@@ -426,27 +426,6 @@ Stage 5: alterlab-paper-writer (format-convert mode)
 
 ---
 
-## Version Info
+## Version History
 
-| Item | Content |
-|------|---------|
-| Skill Version | 2.6 |
-| Last Updated | 2026-03-08 |
-| Maintainer | AlterLab |
-| Dependent Skills | alterlab-deep-research v2.0+, alterlab-paper-writer v2.0+, alterlab-paper-reviewer v1.1+ |
-| Role | Full academic research workflow orchestrator |
-
----
-
-## Changelog
-
-| Version | Date | Changes |
-|---------|------|---------|
-| 2.6 | 2026-03-08 | **Handoff Data Schema**: Enhanced `shared/handoff_schemas.md` with 9 comprehensive schemas (RQ Brief, Bibliography, Synthesis, Paper Draft, Integrity Report, Review Report, Revision Roadmap, Response to Reviewers, Material Passport) with full field definitions, type constraints, and validation rules; orchestrator validates output against schemas before each transition. **Adaptive Checkpoint System**: Replaced static checkpoint template with 3-tier system (FULL/SLIM/MANDATORY) based on stage criticality and user engagement; FULL checkpoints include decision dashboard with metrics; SLIM auto-continues for experienced users; MANDATORY cannot be bypassed at integrity/review/finalization boundaries; awareness guard after 4+ auto-continues. **Mode Advisor**: New `references/mode_advisor.md` with unified cross-skill decision tree, common misconceptions table, user archetype recommendations, decision flowchart, and anti-patterns guide. **Team Collaboration Protocol**: New `references/team_collaboration_protocol.md` with 5 role definitions, per-transition handoff procedures, git branching/tagging strategy, conflict resolution matrix, and communication templates; state tracker extended with `assigned_to`, `approval_gate`, `team_notes` per stage and `schema_validation_log`. **Phase E Claim Verification**: New `references/claim_verification_protocol.md` with E1 claim extraction, E2 source tracing, E3 cross-referencing; verdict taxonomy (VERIFIED / MINOR_DISTORTION / MAJOR_DISTORTION / UNVERIFIABLE / UNVERIFIABLE_ACCESS); severity mapping (MAJOR_DISTORTION -> SERIOUS, UNVERIFIABLE -> SERIOUS, MINOR_DISTORTION -> MINOR, UNVERIFIABLE_ACCESS -> MEDIUM); integrated into integrity_verification_agent Mode 1 (30% spot-check) and Mode 2 (100%); pass/fail criteria updated to include Phase E verdicts. **Mid-Entry Material Passport Check**: Pipeline orchestrator now validates Material Passport on mid-entry; decision tree checks verification_status, freshness (< 24 hours), and content modification (version_label comparison); offers skip/spot-check/full re-verify options for Stage 2.5 when passport is valid; passport freshness validation rules added to `shared/handoff_schemas.md` |
-| 2.5 | 2026-03-08 | External Review Protocol: structured intake of real journal reviewer feedback (text/PDF/DOCX); 4-step workflow (parse -> strategic coaching -> revise + Response to Reviewers -> completeness check); differentiated behavior from internal simulated review (no default "accept all", risk assessment per comment, user confirmation of parsed items); explicit capability boundaries (AI verification ≠ reviewer satisfaction) |
-| 2.4 | 2026-03-08 | Stage 6 PROCESS SUMMARY: post-pipeline paper creation process record; asks user preferred language (zh/en/both); generates structured MD summarizing full human-AI collaboration history with user quotes, key decisions, iteration details, and lessons learned; mandatory final chapter: **Collaboration Quality Evaluation** (6 dimensions scored 1-100, bar chart visualization, What Worked Well / Missed Opportunities / Recommendations / Human vs AI Value-Add / Claude's Self-Reflection); compiles to PDF via LaTeX + tectonic; outputs `paper_creation_process_zh.pdf` + `paper_creation_process_en.pdf` |
-| 2.3 | 2026-03-08 | Stage 5 FINALIZE: mandatory formatting style prompt (APA 7.0 / Chicago / IEEE); PDF must compile from LaTeX via tectonic (no HTML-to-PDF); APA 7.0 uses `apa7` document class (`man` mode) with XeCJK for bilingual support; font stack: Times New Roman + Source Han Serif TC VF + Courier New |
-| 2.2 | 2025-03-05 | Checkpoint confirmation semantics (6 user commands with precise actions); mode switching rules (safe/dangerous/prohibited matrix); skill failure fallback matrix (per-stage degradation strategies); state ownership protocol (single source of truth with write access control); material version control (versioned artifacts with audit trail); cross-skill reference to `shared/handoff_schemas.md` |
-| 2.1 | 2026-03 | Added plagiarism detection protocol (Phase D); enhanced integrity_verification_agent with originality verification (D1 WebSearch, D2 self-plagiarism); updated both verification modes |
-| 2.0 | 2026-02 | Added Stage 2.5/4.5 integrity checks, two-stage review, mandatory checkpoints, Devil's Advocate, reproducibility guarantees, integrity_verification_agent |
-| 1.0 | 2026-02 | Initial version: 5+1 stage pipeline |
+Version 2.7 (2026-09-23). Earlier changes: `references/changelog.md`.

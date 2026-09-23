@@ -12,8 +12,8 @@ Complete workflow, required content, and the mandatory Collaboration Quality Eva
 ```
 1. Ask user language preference:
    "Which language version of the process record would you like to generate first?"
-   - Chinese (Traditional Chinese)
    - English
+   - The user's other working language (for example Turkish)
    - Both (default: generate the user's primary conversation language first)
 
 2. Review session history and compile the following:
@@ -25,13 +25,14 @@ Complete workflow, required content, and the mandatory Collaboration Quality Eva
    - Quality requirement evolution (e.g., formatting, tone adjustments)
    - Pipeline statistics (stage count, review rounds, integrity verification count, etc.)
 
-3. Generate Markdown version (paper_creation_process.md / paper_creation_process_en.md)
+3. Generate Markdown version (paper_creation_process_<lang>.md, e.g. _en / _tr)
 
 4. Convert to LaTeX and compile PDF:
    - pandoc MD -> LaTeX body
    - Package complete LaTeX document (with cover page, table of contents, headers/footers)
    - tectonic compile PDF
-   - Chinese version requires xeCJK + Source Han Serif TC VF
+   - Latin-script languages (English, Turkish, …) compile with Times New Roman; a Chinese, Japanese,
+     or Korean version additionally needs xeCJK and a CJK font such as Source Han Serif
 ```
 
 ### Required Content in Process Record
@@ -111,9 +112,9 @@ The final chapter of the process record is a "Collaboration Quality Evaluation" 
 
 ### Output Specifications
 
-- **Filename**: `paper_creation_process.md` (Chinese) / `paper_creation_process_en.md` (English)
-- **PDF**: `paper_creation_process_zh.pdf` / `paper_creation_process_en.pdf`
-- **LaTeX template**: `article` class, 12pt, A4, Times New Roman + Source Han Serif TC VF
+- **Filename**: `paper_creation_process_<lang>.md` using the ISO 639-1 code (`_en`, `_tr`, …)
+- **PDF**: `paper_creation_process_<lang>.pdf`
+- **LaTeX template**: `article` class, 12pt, A4, Times New Roman (plus xeCJK + a CJK font only for CJK languages)
 - **Includes table of contents**: `\tableofcontents`
 - **Header**: left = document title (italic), right = date
 - **Compilation**: tectonic (same toolchain as Stage 5)
