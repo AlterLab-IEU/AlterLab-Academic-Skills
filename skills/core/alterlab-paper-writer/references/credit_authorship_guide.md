@@ -211,11 +211,14 @@ These positions date from 2023 and have since been refined (for example, rules o
 1. **Clearly state in Methods or Acknowledgments** which AI tools were used and how they were used
 2. **Authors take full responsibility** for all AI-assisted output content
 3. **AI-produced text must not be directly presented as original research findings**
-4. **Recommended format for citing AI tools** (APA Style's published pattern; see `references/citation_format_switcher.md` for Chicago, MLA, IEEE, and Vancouver):
+4. **Recommended format for citing AI tools** (APA Style's September 2025 guidance, which replaced the 2023 "Mar 14 version" example; see `references/citation_format_switcher.md` for Chicago, MLA, IEEE, and Vancouver):
 
 ```
-OpenAI. (2023). ChatGPT (Mar 14 version) [Large language model]. https://chat.openai.com/chat
+OpenAI. (2025). ChatGPT (GPT-5) [Large language model]. https://chatgpt.com/
+AI Company. (Year, Month Day). Title of chat [Generative AI chat]. Tool name/model. URL of shared chat
 ```
+
+The first form cites the tool; the second cites one shared conversation. `alterlab-ai-use-disclosure` drafts the matching disclosure statement against the target venue's current policy.
 
 ---
 
