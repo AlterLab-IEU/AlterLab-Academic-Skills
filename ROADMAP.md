@@ -85,13 +85,13 @@ codify patterns proven across the expanded corpus.
 
 The v3.0.0 refresh sent one reviewer through every domain; each was asked where the suite has no
 skill for something faculty routinely need. Their proposals, de-duplicated and grouped (a skill
-named by several reviewers independently is marked ★). None is scheduled yet; each would ship
-under the day-one-evals bar above.
+named by several reviewers independently is marked ★). Three shipped in v3.0.0 itself (marked
+✅); the rest are not scheduled yet, and each would ship under the day-one-evals bar above.
 
 **Research integrity and disclosure**
-- ★ `alterlab-ai-use-disclosure` — AI-use statements for manuscripts, grants, and peer review,
+- ✅ ★ `alterlab-ai-use-disclosure` — AI-use statements for manuscripts, grants, and peer review,
   per publisher and funder policy (ICMJE/COPE, NIH/NSF, EU AI Act, YÖK/TÜBİTAK guides). Proposed
-  by three reviewers.
+  by three reviewers; **shipped in v3.0.0**.
 - `alterlab-reporting-checklist` — map a manuscript to CONSORT 2025, SPIRIT 2025, PRISMA 2020,
   or TRIPOD+AI and flag missing items.
 - `alterlab-public-access-compliance` — PMC / NSF-PAR compliance, Plan S rights retention.
@@ -105,10 +105,11 @@ under the day-one-evals bar above.
   WoS/Scopus/TR Dizin indexing, APCs, predatory-journal screening).
 
 **Funding and academic career (including the Turkish system)**
-- `alterlab-horizon-europe-proposal` (ERC, MSCA, Horizon Europe pre-award); TÜBİTAK BİDEB
-  fellowships and 3501; a YÖKSİS / academic-CV dossier consistency checker; the ÜAK doçentlik
-  scorer for every temel alan (only Sağlık is modelled); YÖKAK and regional accreditation
-  alongside AACSB/ABET.
+- `alterlab-horizon-europe-proposal` (ERC, MSCA, Horizon Europe pre-award); a YÖKSİS /
+  academic-CV dossier consistency checker; YÖKAK and regional accreditation alongside AACSB/ABET.
+- ✅ **Shipped in v3.0.0:** TÜBİTAK BİDEB fellowships (`alterlab-tubitak-bideb`), 3501 (in
+  `alterlab-tubitak-proposal`), and the ÜAK doçentlik scorer for every temel alan (in
+  `alterlab-docentlik-eligibility`).
 
 **Life sciences**
 - Structure and design: `alterlab-alphafold3`, Boltz-family binder design.

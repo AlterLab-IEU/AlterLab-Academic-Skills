@@ -10,8 +10,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 September 2026 refresh for Claude Opus 5.5 and current Claude Code. It fixes two plugins that
 could not be installed or loaded in v2.6.x, adds a **workflows** domain whose plugin ships seven
-Claude Code dynamic workflows (**1 new skill**, corpus **239 → 240**, **17 → 18** domains), and
-re-verifies every skill against the libraries, APIs, standards, and funder rules current on
+Claude Code dynamic workflows, adds skills for AI-use disclosure and TÜBİTAK BİDEB fellowships
+(**3 new skills**, corpus **239 → 242**, **17 → 18** domains), corrects the licence of the four
+skills derived from a non-commercial upstream, and re-verifies every skill against the libraries, APIs, standards, and funder rules current on
 2026-09-23. Each domain was reviewed by an independent agent that checked claims against the live
 package or upstream source and ran code where it could; findings that could not be verified are
 left unchanged and listed as such, not guessed.
@@ -28,6 +29,11 @@ left unchanged and listed as such, not guessed.
   Brief's FINER scores are now on a 1-5 scale.
 - `ALTERLAB_MODEL` defaults to `claude-opus-5-5`, and scripts use the request shape current
   models require.
+- **Licence correction:** `alterlab-deep-research`, `alterlab-paper-writer`,
+  `alterlab-paper-reviewer`, and `alterlab-research-pipeline` now declare `CC-BY-NC-4.0`, the
+  licence of the upstream they adapt (they wrongly said MIT), and the `alterlab-core` plugin
+  declares `MIT AND CC-BY-NC-4.0`. Commercial use of those four skills needs the upstream
+  author's permission.
 
 ### Upgrading from 2.x
 
@@ -44,6 +50,9 @@ left unchanged and listed as such, not guessed.
 - **Scripts:** set `ALTERLAB_MODEL` to pin a model other than `claude-opus-5-5`.
 - **Claude app (no terminal):** download the new per-skill zips from the v3.0.0 release and
   re-upload the skills you use.
+- **Commercial users:** the four core pipeline skills above are CC-BY-NC 4.0; see
+  [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). The other 238 skills keep their own
+  licences (MIT for most).
 
 ### Fixed — plugins and connectors
 
@@ -79,6 +88,20 @@ left unchanged and listed as such, not guessed.
   every flag, tallies in code rather than in a model's head.
 - **`alterlab-research-workflows`** (240th skill) — documents the workflows and runs the same
   stages as staged playbooks wherever the Workflow runtime is unavailable (claude.ai, the API).
+- **`alterlab-ai-use-disclosure`** (writing-tools) — drafts generative-AI disclosure statements
+  in English and Turkish for manuscripts, grant proposals, peer review, theses, and figures. A
+  venue → policy → placement decision tree covers policies read on 2026-09-23: ICMJE, Springer
+  Nature, Elsevier, Wiley, Taylor & Francis, Sage, IEEE, PLOS, arXiv; NIH (NOT-OD-25-132,
+  NOT-OD-23-149), NSF, UKRI, ERC, TÜBİTAK; YÖK's 2024 ethics guide; EU AI Act Article 50.
+  `scripts/disclosure_builder.py` emits the statement and exits non-zero when a venue forbids
+  the declared use (for example, NIH reviewers using AI on applications).
+- **`alterlab-tubitak-bideb`** (turkish-academia) — matches researchers to TÜBİTAK BİDEB
+  programmes (2219, 2218, 2221, 2232-A/B, 2236-A, 2224-A, 2223-B) from calls read on
+  2026-09-23, pre-screens the computable gates (PhD window, age, months in Türkiye, language
+  score, call periods) with a stdlib script, and builds the document checklist, a research-plan
+  scaffold weighted to the published criteria, and TÜBİTAK's generative-AI disclosure.
+- **Dependabot** — weekly GitHub Actions updates and monthly uv dev-tooling updates, grouped
+  into one PR each.
 - **Bundles** — `alterlab-essentials` (core, workflows, research-tools, writing-tools,
   methodology, databases) and `alterlab-complete` (everything), dependency-only plugins in
   `plugins/`.
@@ -106,6 +129,30 @@ left unchanged and listed as such, not guessed.
   check no longer skips `alterlab-digital-humanities` (an unanchored `.git` exclude regex matched it).
 - **Docs** — README (EN + TR; the Turkish README gained the missing social-science section),
   project instructions, catalog site, and `CITATION.cff` (stale since 2.1.0) updated.
+- **`alterlab-docentlik-eligibility` 2.2.0 covers every ÜAK temel alan** (it modelled only
+  Sağlık): TABLO 1–6 and 8–13 of the 2026 Mart term, the latest with per-field criteria, are
+  transcribed from ÜAK's own PDFs with verbatim rule quotes and SHA-256 hashes. `--alan` applies
+  each field's author-share rule (an equal split in six fields; a narrower *başlıca yazar* in
+  Fen, Mühendislik, and Ziraat), the 100/90 totals, the article minimums with their alternative
+  routes, and item caps; the remaining minimums come back as a manual checklist. Ambiguous
+  wording is flagged, never resolved silently, and the scorer still never issues an ELIGIBLE
+  verdict. Sağlık stays the default and reproduces v2.1 results.
+- **`alterlab-tubitak-proposal` 1.2.0 adds 3501** (Kariyer Geliştirme): the ≤7-year post-PhD
+  window, doçent-or-below, 1,500,000 TL and 36-month caps, and the five evaluation criteria,
+  checked against TÜBİTAK's call page on 2026-09-23.
+- **`alterlab-paper-writer` 2.6.2** — the AI-tool citation examples follow APA's September 2025
+  and MLA's August 2025 guidance instead of the 2023 ChatGPT examples.
+
+### Fixed — licensing
+
+- The four `core/` skills adapted from Imbad0202/academic-research-skills (CC-BY-NC 4.0)
+  declared `license: MIT`. They now declare `CC-BY-NC-4.0` (added to the audit's licence
+  vocabulary), and `gen_marketplace.py` derives each plugin's licence from its skills instead of
+  hard-coding MIT. `THIRD_PARTY_NOTICES.md` and `NOTICE` describe the corrected state, and the
+  per-skill licence table is regenerated.
+- `alterlab-mermaid` is Apache-2.0 (it ports SuperiorByteWorks-LLC/agent-project), but its
+  attribution section said the files were MIT; the notice now matches, and the source is
+  credited in `THIRD_PARTY_NOTICES.md`.
 
 ### Re-verified — every domain
 

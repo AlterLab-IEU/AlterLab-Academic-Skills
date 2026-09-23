@@ -64,8 +64,8 @@ SOFTWARE.
 
 **Scope of the derivative.** At fork time, **42 skill bodies were byte-identical** to their
 K-Dense counterparts; the remainder were already diverging and the collection has since been
-substantially restructured, audited, corrected, and extended into the 180-skill AlterLab suite
-(13 research domains). The systematic deltas — added executable evals, license/citation audits,
+substantially restructured, audited, corrected, and extended into the 242-skill AlterLab suite
+(18 research domains). The systematic deltas — added executable evals, license/citation audits,
 script-correctness fixes, progressive-disclosure refactors, the academic-faculty framing, and
 the bilingual (EN/TR) documentation — are narrated in [`PROVENANCE.md`](PROVENANCE.md). This is
 a derivative of an MIT-licensed work, not a verbatim redistribution.
@@ -136,20 +136,21 @@ data resource's terms before use in research or redistribution.
 ## Per-skill license distribution
 
 Each skill declares the license appropriate to its own content in its `SKILL.md`
-frontmatter. Current distribution across the 209 skills:
+frontmatter. Current distribution across the 242 skills:
 
 | License | Skills |
 |---|---:|
-| MIT | 175 |
-| Apache-2.0 | 17 |
-| GPL-3.0 | 4 |
+| MIT | 202 |
+| Apache-2.0 | 19 |
+| CC-BY-NC-4.0 | 4 |
 | CC0-1.0 | 4 |
-| GPL-2.0 | 2 |
-| CC-BY-4.0 | 2 |
+| GPL-3.0 | 4 |
 | BSD-3-Clause | 2 |
-| LGPL-3.0 | 1 |
-| CeCILL-2.1 | 1 |
+| CC-BY-4.0 | 2 |
+| GPL-2.0 | 2 |
 | CC-BY-3.0 | 1 |
+| CeCILL-2.1 | 1 |
+| LGPL-3.0 | 1 |
 
 Regenerate this table after license changes; the source of truth is each skill's
 frontmatter (`python scripts/audit_skills.py` reports the canonical value per skill).
