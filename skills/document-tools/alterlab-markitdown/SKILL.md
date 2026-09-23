@@ -118,10 +118,9 @@ import os
 from markitdown import MarkItDown
 from openai import OpenAI
 
-# Model ID follows the ALTERLAB_MODEL convention (skills/core/shared/model_env.md):
-# read $ALTERLAB_MODEL, else the dated default (reviewed 2026-06-06). OpenRouter needs
-# the "provider/" prefix, so the default is the dated Anthropic ID with that prefix.
-model = os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8"
+# OpenRouter takes the dotted slug of an Anthropic model ID (claude-opus-5-5 -> anthropic/claude-opus-5.5);
+# scripts/convert_with_ai.py derives it from $ALTERLAB_MODEL (skills/core/shared/model_env.md).
+model = "anthropic/claude-opus-5.5"
 
 # Initialize OpenRouter client (OpenAI-compatible API)
 client = OpenAI(
@@ -258,9 +257,9 @@ import os
 from markitdown import MarkItDown
 from openai import OpenAI
 
-# Model ID via the ALTERLAB_MODEL convention (skills/core/shared/model_env.md):
-# $ALTERLAB_MODEL, else the dated default (reviewed 2026-06-06), with OpenRouter prefix.
-model = os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8"
+# OpenRouter takes the dotted slug of an Anthropic model ID (claude-opus-5-5 -> anthropic/claude-opus-5.5);
+# scripts/convert_with_ai.py derives it from $ALTERLAB_MODEL (skills/core/shared/model_env.md).
+model = "anthropic/claude-opus-5.5"
 
 # Use OpenRouter for access to multiple AI models
 client = OpenAI(
@@ -368,7 +367,7 @@ import os
 from openai import OpenAI
 
 # Model ID via the ALTERLAB_MODEL convention (skills/core/shared/model_env.md).
-model = os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8"
+model = "anthropic/claude-opus-5.5"  # OpenRouter slug of the ALTERLAB_MODEL default (skills/core/shared/model_env.md)
 
 client = OpenAI(
     api_key=os.environ["OPENROUTER_API_KEY"],

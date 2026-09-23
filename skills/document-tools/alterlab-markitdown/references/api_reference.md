@@ -25,7 +25,7 @@ md = MarkItDown(
 | `enable_plugins` | bool | `False` | Load converters from installed plugins (entry point group `markitdown.plugin`) |
 | `enable_builtins` | bool | `True` | Register the built-in converters |
 | `llm_client` | OpenAI client | `None` | OpenAI-compatible client for AI image descriptions (image files and PPTX pictures) |
-| `llm_model` | str | `None` | Model name for image descriptions; use the `ALTERLAB_MODEL` convention (dated default `anthropic/claude-opus-4-8`, see skills/core/shared/model_env.md) |
+| `llm_model` | str | `None` | Model name for image descriptions; through OpenRouter, a dotted slug such as `anthropic/claude-opus-5.5` — the slug of the `ALTERLAB_MODEL` default; `scripts/convert_with_ai.py` derives it from `ALTERLAB_MODEL` (see skills/core/shared/model_env.md) |
 | `llm_prompt` | str | `None` | Custom prompt for image description |
 | `docintel_endpoint` | str | `None` | Azure Document Intelligence endpoint (`docintel_credential`, `docintel_file_types`, `docintel_api_version` refine it) |
 | `cu_endpoint` | str | `None` | Azure Content Understanding endpoint (`cu_credential`, analyzer options) |
@@ -173,10 +173,10 @@ def register_converters(markitdown: MarkItDown, **kwargs):
 from markitdown import MarkItDown
 from openai import OpenAI
 
-# Model ID via the ALTERLAB_MODEL convention (skills/core/shared/model_env.md):
-# $ALTERLAB_MODEL, else the dated default (reviewed 2026-06-06), with OpenRouter prefix.
+# OpenRouter takes the dotted slug of an Anthropic model ID (claude-opus-5-5 -> anthropic/claude-opus-5.5);
+# scripts/convert_with_ai.py derives it from $ALTERLAB_MODEL (skills/core/shared/model_env.md).
 import os
-model = os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8"
+model = "anthropic/claude-opus-5.5"
 
 # Initialize OpenRouter client (OpenAI-compatible API)
 client = OpenAI(
@@ -198,7 +198,7 @@ result = md.convert("presentation.pptx")
 ### Available Models via OpenRouter
 
 Popular models with vision support:
-- `anthropic/claude-opus-4-8` - **Recommended for scientific vision** (the dated default behind `ALTERLAB_MODEL`)
+- `anthropic/claude-opus-5.5` - **Recommended for scientific vision** (the OpenRouter slug of the `ALTERLAB_MODEL` default, `claude-opus-5-5`)
 - A current Google Gemini Pro Vision model - alternative vision backend
 
 Prefer the `ALTERLAB_MODEL` env-var convention (skills/core/shared/model_env.md) over
@@ -219,7 +219,7 @@ Be precise and technical.
 
 md = MarkItDown(
     llm_client=client,
-    llm_model=os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8",
+    llm_model="anthropic/claude-opus-5.5",  # OpenRouter slug of the ALTERLAB_MODEL default (skills/core/shared/model_env.md)
     llm_prompt=scientific_prompt
 )
 ```

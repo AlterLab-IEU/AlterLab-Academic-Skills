@@ -118,7 +118,7 @@ import os
 from openai import OpenAI
 
 client = OpenAI(api_key=os.environ["OPENROUTER_API_KEY"], base_url="https://openrouter.ai/api/v1")
-md = MarkItDown(llm_client=client, llm_model=os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8")
+md = MarkItDown(llm_client=client, llm_model="anthropic/claude-opus-5.5")  # OpenRouter slug of the ALTERLAB_MODEL default (skills/core/shared/model_env.md)
 result = md.convert("presentation.pptx")
 ```
 
@@ -199,7 +199,7 @@ from openai import OpenAI
 client = OpenAI(api_key=os.environ["OPENROUTER_API_KEY"], base_url="https://openrouter.ai/api/v1")
 md = MarkItDown(
     llm_client=client,
-    llm_model=os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8",
+    llm_model="anthropic/claude-opus-5.5",  # OpenRouter slug of the ALTERLAB_MODEL default (skills/core/shared/model_env.md)
     llm_prompt="Describe this scientific diagram in detail"
 )
 result = md.convert("graph.png")
@@ -466,7 +466,7 @@ result = md.convert("message.msg")
 
 1. **Use AI for visual content** (model via the `ALTERLAB_MODEL` convention):
    ```python
-   md = MarkItDown(llm_client=client, llm_model=os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8")
+   md = MarkItDown(llm_client=client, llm_model="anthropic/claude-opus-5.5")  # OpenRouter slug of the ALTERLAB_MODEL default (skills/core/shared/model_env.md)
    ```
 
 2. **Check speaker notes** - they're included in output
@@ -489,7 +489,7 @@ result = md.convert("message.msg")
    ```python
    md = MarkItDown(
        llm_client=client,
-       llm_model=os.environ.get("ALTERLAB_MODEL") or "anthropic/claude-opus-4-8",
+       llm_model="anthropic/claude-opus-5.5",  # OpenRouter slug of the ALTERLAB_MODEL default (skills/core/shared/model_env.md)
        llm_prompt="Describe this scientific figure in detail"
    )
    ```
