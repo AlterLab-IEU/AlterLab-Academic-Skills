@@ -30,6 +30,16 @@
       ]
     },
     {
+      "id": "observational-drug-study-routing",
+      "prompt": "Ruhsatlı bir antidiyabetik ilacı zaten kullanan hastaları 12 ay boyunca izleyeceğimiz prospektif gözlemsel bir çalışma planlıyoruz; tedaviye hiçbir müdahale yok. Hangi etik kurula başvurmalıyız, TİTCK izni gerekir mi?",
+      "expected_output": "Invokes alterlab-tr-research-ethics. Classifies this as an observational (non-interventional) study of a medicinal product: only a TİTCK-approved Klinik Araştırmalar Etik Kurulu may approve it (no other committee's approval is valid), and no TİTCK permit is needed, per TİTCK's Klinik Araştırmalar SSS 8 and Yönetmelik Art. 61/11. Contrasts it with a drug trial (committee + TİTCK permit) and with a retrospective chart review or survey, which a clinical committee may not review. Tells the user to check TİTCK's approved-committee list before submitting.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Klinik Araştırmalar Etik Kurulu" },
+        { "type": "behavior", "value": "Routes the observational drug study to a Klinik Araştırmalar Etik Kurulu only and states that no TİTCK permit is required, instead of demanding a permit or sending it to the university non-interventional committee." }
+      ]
+    },
+    {
       "id": "near-miss-international-irb",
       "prompt": "I'm submitting to my US university's IRB under the Common Rule and need help drafting the informed consent and addressing Belmont Report principles and HIPAA for a clinical data study.",
       "expected_output": "Does NOT invoke this skill; defers to alterlab-research-ethics. The request is a non-Turkey IRB / Belmont Report / HIPAA submission, which is the international ethics sibling's territory. alterlab-tr-research-ethics is scoped to the Turkish etik kurul system (TR Dizin trigger, TİTCK clinical committees, Turkish consent rules) and does not handle US IRB / Common Rule / Belmont / HIPAA workflows.",

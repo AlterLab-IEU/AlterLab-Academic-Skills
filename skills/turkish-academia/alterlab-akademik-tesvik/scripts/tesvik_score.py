@@ -17,7 +17,7 @@ REGULATION ALGORITHM (MADDE 8/2). The official method has TWO steps and NO
 dynamic "rescale each type to 30% of the gross" pass:
 
   8/2(a) Per activity, the regulation row supplies an `oran` (a percentage-style
-         multiplier, e.g. a Q1 SSCI research article = k x p x 0.60; a TÜBİTAK
+         multiplier, e.g. an A1-field Q1 SSCI research article = k x p x 0.60; a TÜBİTAK
          1001 yürütücü = r x 0.80; yurt içi araştırma = 0.10 x months). Each
          activity TYPE's puanı = (Σ of that type's faaliyet oranları) x the
          type's headline puan ("akademik faaliyet türü için belirlenmiş puan").
@@ -42,15 +42,17 @@ each activity supply:
          the value of cells like "k x p x 60" / "r x 80" / "15 x ay" EXPRESSED
          AS A FRACTION OF THE HEADLINE PUAN. Concretely: take the table cell,
          treat the trailing integer as a percentage, and apply k/p/r/months.
-         Examples (headline puan in parentheses):
-           Q1 SSCI research article, 2 authors  -> k=0.8, p=1.0, cell=60
+         Examples (headline puan in parentheses; A1-A4 = applicant's field
+         column, see ../references/tablo4.md):
+           Q1 SSCI research article, 2 authors, A1 -> k=0.8, p=1.0, cell=60
                 oran = 0.8 * 1.0 * 0.60 = 0.48            (YAYIN, 30 puan)
-           TÜBİTAK 1001 yürütücü (A1)            -> r=1.0, cell=80
+                (A2/A4 column: cell=80 -> oran 0.64)
+           TÜBİTAK 1001 yürütücü                 -> r=1.0, cell=80
                 oran = 1.0 * 0.80 = 0.80                  (PROJE, 20 puan)
            Yurt içi araştırma, 6 months         -> cell = "10 x ay"
                 oran = 0.10 * 6 = 0.60                    (ARAŞTIRMA, 15 puan)
-           1 citation in an SCI article         -> cell = 8
-                oran = 0.08                               (ATIF, 30 puan)
+           1 citation in an SCI article, A1     -> cell = 4 (A2/A4: 6)
+                oran = 0.04                               (ATIF, 30 puan)
   count  (optional) integer multiplier for identical repeated activities
          (e.g. number of citations of the same kind). Default 1.
   label  (optional) human description (passed through to the report).

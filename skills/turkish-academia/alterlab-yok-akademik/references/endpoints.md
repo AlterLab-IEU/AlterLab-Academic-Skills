@@ -1,8 +1,8 @@
-# YOK Akademik — endpoint map
+# YÖK Akademik — endpoint map
 
 Base: `https://akademik.yok.gov.tr/AkademikArama/`
 
-YOK Akademik is a **server-rendered Java/JSP application**. It has **no official
+YÖK Akademik is a **server-rendered Java/JSP application**. It has **no official
 public JSON API**. Every "endpoint" below is an HTML/JSP page; the only programmatic
 route is polite HTML scraping. Treat the field list as the *visible* schema of the
 rendered page, not a stable API contract — markup can change without notice.
@@ -14,6 +14,10 @@ rendered page, not a stable API contract — markup can change without notice.
 > **session** (JSESSIONID, set by GETting the portal root) is mandatory — a session-less
 > search POST returns HTTP 500. Re-confirm against a live run before relying on any
 > exact field; the JSP markup itself can change without notice.
+>
+> **2026-09-23:** not re-checked — the host reset the connection from the review
+> environment, so nothing above was re-confirmed that day. If the script reports
+> `network_unavailable`, say so and do not fall back to remembered affiliations.
 
 ## 0. Session priming (mandatory)
 

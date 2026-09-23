@@ -1,20 +1,20 @@
 ---
 name: alterlab-tr-academic-style
-description: "Formats manuscripts for Turkish journals: TR Dizin submission rules (TR Dizin mandates a set abstract word limit, two referees from different institutions, Latin script for non-Latin-alphabet articles, and only suggests a second-language abstract; bilingual oz/abstract ~200-250 words and 3-5 keywords are common journal house conventions to confirm against the journal's yazim kurallari) and the Turkish adaptation of APA-7 (ve ark./vd. for multi-author cites, ampersand only in the reference list, s. for page, Cev. for translator, t.y. for no date, aktaran for as-cited-in, Turkish capitalization). Use when writing for a Turkish/Turkce journal, preparing a TR Dizin submission, needing Turkce APA 7 in-text or reference formatting, or formatting a bilingual oz. For English-language citation styles prefer alterlab-citation-mgmt or alterlab-venue-templates; for live TR Dizin index status use alterlab-trdizin. Part of the AlterLab Academic Skills suite."
+description: "Formats manuscripts for Turkish journals: TR Dizin submission rules (TR Dizin mandates a set abstract word limit, two referees from different institutions, Latin script for non-Latin-alphabet articles, and only suggests a second-language abstract; bilingual öz/abstract ~200-250 words and 3-5 keywords are common journal house conventions to confirm against the journal's yazım kuralları; article-end Katkı Oranı and Çatışma statements) and the Turkish adaptation of APA-7 (ve ark./vd. for multi-author cites, ampersand only in the reference list, s. for page, Çev. for translator, t.y. for no date, aktaran for as-cited-in, Turkish capitalization). Use when writing for a Turkish/Türkçe journal, preparing a TR Dizin submission, needing Türkçe APA 7 in-text or reference formatting, or formatting a bilingual öz. For English-language citation styles prefer alterlab-citation-mgmt or alterlab-venue-templates; for live TR Dizin index status use alterlab-trdizin. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No API key or network required — applies the official TR Dizin evaluation criteria (and flags journal house conventions separately) plus the Turkish APA-7 adaptation offline; the linter in scripts/ runs on stdlib only
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-06-06"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
   depends_on: "alterlab-trdizin (live index-status check), alterlab-citation-mgmt + alterlab-venue-templates (English citation styles)"
 ---
 
 # Turkish APA-7 and TR Dizin Style
 
 Applies Turkish academic-writing conventions to a manuscript: the **TR Dizin**
-(TUBITAK ULAKBIM's national citation index — *Türkiye'nin ulusal atıf dizini*)
+(TÜBİTAK ULAKBİM's national citation index — *Türkiye'nin ulusal atıf dizini*)
 manuscript-formatting rules, and the **Türkçe APA 7** (the Turkish-language
 adaptation of APA 7th edition) for in-text citations and the reference list.
 This is the *style/formatting* skill for the Turkish track — it does not check
@@ -75,6 +75,21 @@ DergiPark hosting — hosting on DergiPark does not imply TR Dizin indexing.
   script.
 - **At least two referees per article, from different institutions**
   (*farklı kurumlardan hakem*); a manuscript should arrive review-ready.
+- **Article-level statements** (criteria added in 2021). At the end of the
+  article: "Araştırmacıların Katkı Oranı beyanı, varsa Destek ve Teşekkür Beyanı,
+  Çatışma Beyanı". On the first page, preferably at the bottom: submission and
+  acceptance dates, every author's institution and contact details, and ORCID.
+- **Ethics-approval statement.** For research that needs ethics approval, give the
+  committee name, date, and decision number in the method section and again on the
+  first or last page; for case reports, state that the signed consent form was
+  obtained. (The application itself is `alterlab-tr-research-ethics`.)
+- **References** in the Latin alphabet, in an international style (APA, MLA, AIP,
+  NLM, AMA, ACS, …) that the journal's *Makale Yazım Kuralları* names.
+
+Separately, YÖK's generative-AI ethics guide (*Üretken Yapay Zekâ Kullanımına Dair
+Etik Rehber*, Mayıs 2024) requires that parts of the work produced with generative
+AI be explained in the method section ("ÜYZ kullanılan bölümlerin yöntem kısmında
+açıklanması gereklidir"); not declaring AI use is listed as a breach.
 
 **Common Turkish-journal house conventions** (widespread, but the *journal's*
 rules — confirm against its *yazım kuralları*, do not attribute to TR Dizin):
@@ -92,8 +107,8 @@ Full criteria detail, the verbatim TR Dizin wording, and source links live in
 in TR Dizin right now?") do not guess — defer to `alterlab-trdizin`.
 
 > Verify current TR Dizin criteria against the official page before a real
-> submission — ULAKBIM revises them periodically. Source of record:
-> https://trdizin.gov.tr/?p=456
+> submission — ULAKBİM revises them periodically. Source of record (checked
+> 2026-09-23): https://trdizin.gov.tr/kriterler/
 
 ## Türkçe APA 7 — the deltas from English APA 7
 
@@ -138,8 +153,11 @@ thesis, translated work, secondary citation) are in
    each, 3-5 keywords each) but tell the user these are the *journal's*
    convention — TR Dizin itself only requires a word limit be set — so they must
    confirm the figures against the journal's *yazım kuralları*. Keep the
-   metadata in proper Latin Turkish letters with diacritics. See the TR Dizin
-   section.
+   metadata in proper Latin Turkish letters with diacritics. Add the first-page
+   block (submission/acceptance dates, affiliations, ORCID), the ethics-approval
+   line where it applies, the article-end Katkı Oranı / Destek ve Teşekkür /
+   Çatışma statements, and an AI-use note in the method section if generative AI
+   was used. See the TR Dizin section.
 3. **Convert citations.** Rewrite in-text citations and the reference list into
    Türkçe APA 7 using the delta table; preserve all diacritics.
 4. **Lint.** Run the citation linter to catch the common mechanical errors
@@ -161,6 +179,7 @@ thesis, translated work, secondary citation) are in
 
 - Did you present 200-250 words / 3-5 keywords / mandatory-bilingual as the journal's house convention (to confirm against its *yazım kuralları*), not as a TR Dizin index rule?
 - Did you scope TR Dizin's own requirements correctly (word limit set; 2 referees from different institutions; second-language abstract *suggested*; Latin script mandated for non-Latin-alphabet articles)?
+- Are the TR Dizin article statements in place (first-page dates/affiliations/ORCID; ethics committee name, date, and number where needed; article-end Katkı Oranı, Destek ve Teşekkür, Çatışma), plus an AI-use note in the method section if AI was used?
 - Is `&` confined to the reference list and parenthetical cites (never narrative prose)?
 - Is `ve ark.`/`vd.` consistent throughout?
 - Are all Turkish diacritics intact in names and titles?

@@ -1,12 +1,15 @@
 # ÜAK Doçentlik Criteria — Bundled Table (Sağlık Bilimleri)
 
-> **last_verified: 2026-06-08** — Sağlık Bilimleri (Health Sciences) TABLO 10,
-> re-verified against the primary ÜAK source and multiple corroborating
-> summaries of the **2025 Mart dönemi** criteria on this date.
+> **last_verified: 2026-09-23** — transcribed from the primary ÜAK PDF
+> "TABLO 10. SAĞLIK BİLİMLERİ TEMEL ALANI" published for the **2026 Mart**
+> term. That PDF is byte-identical to the ones ÜAK posted for the 2025 Mart and
+> 2025 Ekim terms, so the Sağlık table has not changed since March 2025. On the
+> verification date the **2026 Ekim** section of the ÜAK page listed only the
+> *Bilim Alanları ve Anahtar Kelimeler* file (no per-field criteria PDFs yet).
 >
-> **These numbers change every application term (başvuru dönemi).** Always
-> re-confirm the live criteria for the candidate's own field and term before
-> relying on any output — see *Primary sources* below.
+> **ÜAK republishes the criteria for every application term.** Re-confirm the
+> live table for the candidate's own field and term before relying on any
+> output — see *Primary sources* below.
 
 ## Contents
 
@@ -14,6 +17,7 @@
 - Mandatory minimums — MODELLED by the scorer
 - Mandatory minimums — NOT modelled (verify by hand)
 - Per-index point table — Sağlık Bilimleri TABLO 10
+- Başlıca yazar (lead author) — Sağlık definition
 - Why this skill is a PARTIAL pre-screen
 - Other fields
 - Primary sources (re-verify here)
@@ -23,10 +27,10 @@
 **Doçentlik** is the Turkish associate-professorship title, awarded through a
 national procedure run by **ÜAK** (Üniversitelerarası Kurul / the Inter-University
 Council). Eligibility to *apply* is gated by an objective, points-based
-publication threshold plus several category-specific mandatory minimums; the
+publication threshold plus several item-specific mandatory minimums; the
 bundled table and minimums below encode that gate for the **Sağlık Bilimleri
-(Health Sciences)** field only. Applications open twice a year (15 March and
-15 October per the Doçentlik Yönetmeliği).
+(Health Sciences)** field only. Applications run twice a year, in the March and
+October terms (başvuru dönemleri) announced by ÜAK.
 
 ## Mandatory minimums — MODELLED by the scorer
 
@@ -34,66 +38,100 @@ bundled table and minimums below encode that gate for the **Sağlık Bilimleri
 checks each. **All four must pass** before the scorer returns its non-green
 `PRESCREEN_PASS_VERIFY_REMAINING` status (it never returns "ELIGIBLE").
 
-| Check | Threshold | Notes |
+| Check | Threshold | TABLO 10 source |
 |---|---|---|
-| Total points | **≥ 100** | Sum of all scored work (pre- and post-doctorate). |
-| Post-doctorate points | **≥ 90** | Points from work after the doctorate / uzmanlık (doktora/uzmanlık sonrası). |
-| International SCIE/SSCI article points | **≥ 40** | Points from SCIE/SSCI **Q1–Q4** articles, post-doctorate. |
-| Lead-author Q-indexed articles | **≥ 3** | Q1–Q4 (SCIE/SSCI) articles where the candidate is **başlıca yazar**; **Q4 counts** ("Q4'ler dahil"). |
+| Total points | **≥ 100** | "asgari yüz (100) puanın sağlanmış olması" |
+| Post-doctorate points | **≥ 90** | "en az doksan (90) puanın doktora veya ... uzmanlık ünvanının alınmasından sonra ... elde edilmiş olması" (item-3 thesis-derived points excluded) |
+| International-article points (item 1), post-doctorate | **≥ 40** | Item 1 note: "doktora ... sonra, a bendinden en az üç makalede başlıca yazar olmak kaydıyla en az 40 puan almak zorunludur" — counted over all of item 1 (1a SCIE/SSCI Q1–Q4, 1b AHCI, 1c ESCI/Scopus, …) |
+| Lead-author item-1a articles, post-doctorate | **≥ 3** | Same note: the three başlıca-yazar articles must come from **1a** (SCIE/SSCI, Q1–Q4; **Q4 counts**) |
 
 ## Mandatory minimums — NOT modelled (verify by hand)
 
 The live TABLO 10 also imposes the following mandatory minimums (asgari
 koşullar). The scorer **does not** compute these because a bare publication list
 does not carry the needed inputs (citation counts, congress papers, teaching,
-sub-category tags). They are **verified to exist** in the criteria and are
-emitted in every report under `summary.unmodelled_minimums` so the output can
-never be mistaken for a complete eligibility decision. Confirm the exact
-thresholds and wording against the live source for the candidate's term.
+thesis-derivation, sub-category tags). They are emitted in every report under
+`summary.unmodelled_minimums`, so the output can never be mistaken for a
+complete eligibility decision.
 
-| Requirement | Threshold (as captured) | Why not modelled |
+| Requirement | Threshold (2026 Mart TABLO 10) | Why not modelled |
 |---|---|---|
-| National / TR Dizin articles | ≥ 3 ulusal makale, ≥ 2 in TR Dizin, candidate başlıca yazar in ≥ 2 (post-doctorate) | Needs ulusal-vs-TR-Dizin status + a per-article lead-author count; resolve TR Dizin status with `alterlab-trdizin` first. |
-| Citation (atıf) | ≥ 5 points (post-doctorate) | Citation counts are not in the publication list. |
-| Scientific meeting (bilimsel toplantı / bildiri) | ≥ 5 points | Congress papers are a separate category, not in the article list. |
-| Education / teaching (eğitim-öğretim) | ≥ 2 points | Teaching activity is not a publication. |
-| Per-category point caps | thesis-derived ≤ 20, books ≤ 20, citation ≤ 10, project ≤ 20, thesis supervision ≤ 10, patent ≤ 20, award ≤ 25 (verify) | Caps need each item tagged with its TABLO 10 sub-category, which the input does not carry; an uncapped raw total can therefore overstate the usable total. |
+| National articles (item 2) | Post-doctorate: ≥ 3 publications, ≥ 2 of them TR Dizin articles (2a), candidate başlıca yazar in ≥ 2. Foreign nationals and foreign-doçentlik-equivalence applicants may substitute the same number of 1a/1b/1c articles. | Needs national-vs-TR-Dizin status and a per-article lead-author count; resolve TR Dizin status with `alterlab-trdizin` first. |
+| Thesis-derived publication (item 3) | ≥ 1 publication from item 3 (a–h). Item 3 is capped at 20 points, its points do not count toward the 90, and a thesis-derived work is scored only here (never also as an item 1/2 article). | The input does not flag thesis-derived work. |
+| Citation (item 5) | ≥ 5 points from post-doctorate publications; self-citations excluded; several citations of the same work inside one citing publication count once. | Citation counts are not in the publication list. |
+| Scientific meeting (item 8) | ≥ 5 post-doctorate points; at most one paper per meeting. | Congress papers are a separate category. |
+| Education / teaching (item 9) | ≥ 2 points (2 years as kadrolu öğretim elemanı after the doctorate counts as 2). | Teaching activity is not a publication. |
 
-> The cap values above come from a single secondary summary and are **not**
-> independently primary-source-confirmed at the value level. Treat them as a
-> checklist of caps that EXIST, not as authoritative numbers — verify each
-> against the live TABLO 10 PDF.
+### Per-item point caps (2026 Mart TABLO 10)
+
+| Item | Cap |
+|---|---|
+| 3. Lisansüstü tezlerden üretilmiş yayın | 20 (g/h bentleri together ≤ 5) |
+| 4. Kitap | 20 (c/d bentleri together ≤ 5) |
+| 5. Atıf | 10 |
+| 6. Lisansüstü tez danışmanlığı | 10 |
+| 7. Bilimsel araştırma projesi | 20 |
+| 8. Bilimsel toplantı | 10 |
+| 9. Eğitim-öğretim | 6 |
+| 10. Patent / faydalı model | no cap stated |
+| 11. Ödül | 25 |
+| 12. Editörlük | 4 |
+| 13. Diğer (WoS h-index ≥ 5; ≥ 6 months abroad at a top-300 university) | 10 |
+
+Items 1 and 2 (articles) are uncapped. The scorer applies none of these caps
+because the input does not tag items by sub-category — a raw total can
+therefore overstate the usable total.
 
 ## Per-index point table — Sağlık Bilimleri TABLO 10
 
-| Index tier | Code | Points |
-|---|---|---|
-| SCI-E / SSCI, 1st quartile | `Q1` | 30 |
-| 2nd quartile | `Q2` | 20 |
-| 3rd quartile | `Q3` | 15 |
-| 4th quartile | `Q4` | 10 |
-| Arts & Humanities Citation Index | `AHCI` | 20 |
-| Emerging Sources Citation Index | `ESCI` | 10 |
-| TR Dizin (ULAKBİM national index) | `TRDizin` | 10 |
+| Index tier | Code | Points | Item |
+|---|---|---|---|
+| SCIE / SSCI, 1st quartile (Web of Science JIF quartile) | `Q1` | 30 | 1a |
+| 2nd quartile | `Q2` | 20 | 1a |
+| 3rd quartile | `Q3` | 15 | 1a |
+| 4th quartile | `Q4` | 10 | 1a |
+| Arts & Humanities Citation Index | `AHCI` | 20 | 1b |
+| Emerging Sources Citation Index | `ESCI` | 10 | 1c |
+| Scopus | `Scopus` | 10 | 1c |
+| TR Dizin (ULAKBİM national index) | `TRDizin` | 10 | 2a |
+
+Rows **not** bundled (items with these tiers are reported as unscored): other
+international indexes (1d) 5; letter to the editor / research note / abstract /
+book review in a 1a–1d journal (1e) 3; case report in a 1a journal (1f) 5; other
+peer-reviewed national journal (2b) 4; letter/note/abstract/review in a
+peer-reviewed national journal (2c) 2.
 
 **Index tier glossary**
 
-- **Q1–Q4** — journal quartile within its Web of Science subject category
-  (Q1 = top 25%). Resolve from the candidate's own JCR/index records. For Sağlık,
-  Q1–Q4 all count toward both the ≥40 international-points floor and the ≥3
-  lead-author minimum.
-- **AHCI / ESCI** — Web of Science indexes without quartile ranking; they score a
-  flat value and do **not** count toward the SCIE/SSCI ≥40 floor or the
-  lead-author *Q-article* minimum.
-- **TR Dizin** — TÜBİTAK ULAKBİM's national citation index. Whether a journal is
-  *currently* TR Dizin-indexed is a live status — confirm with `alterlab-trdizin`
-  before scoring; DergiPark hosting does **not** imply TR Dizin indexing.
+- **Q1–Q4** — the journal's Web of Science Journal Impact Factor quartile. Resolve
+  from the candidate's own JCR records.
+- **AHCI / ESCI / Scopus** — score a flat value; they count toward the item-1
+  ≥ 40 floor but **not** toward the ≥ 3 lead-author 1a articles.
+- **TR Dizin** — TÜBİTAK ULAKBİM's national citation index (item 2). Whether a
+  journal is *currently* TR Dizin-indexed is a live status — confirm with
+  `alterlab-trdizin` before scoring; DergiPark hosting does **not** imply TR
+  Dizin indexing.
+
+## Başlıca yazar (lead author) — Sağlık definition
+
+TABLO 10's *Tanımlar* section defines the candidate as başlıca yazar of:
+
+- (a) a single-author article;
+- (b) an article where they are the **first-listed author**;
+- (c) an article written with the graduate student(s) they supervise (several
+  students and a second advisor may appear, but the **second advisor** is not
+  başlıca yazar).
+
+Corresponding authorship is **not** in the Sağlık definition. TABLO 10 adds
+that where no başlıca yazar is indicated on an article with two or more
+authors, the points are split equally among the authors; the scorer does not
+model that case (it applies the lead / non-lead split from the declared flag).
 
 ## Why this skill is a PARTIAL pre-screen
 
 The scorer models 4 of the TABLO 10 mandatory minimums but not the national /
-citation / congress / education minimums or the per-category caps (above).
-Clearing the modelled checks is **necessary but not sufficient** for
+thesis-derived / citation / congress / education minimums or the per-item caps
+(above). Clearing the modelled checks is **necessary but not sufficient** for
 eligibility. Accordingly the scorer's verdict vocabulary is deliberately
 **FAIL_MODELLED_CHECK** / **PRESCREEN_PASS_VERIFY_REMAINING** — it has **no
 "ELIGIBLE" state** and structurally cannot emit a green eligibility verdict. The
@@ -101,18 +139,23 @@ official decision is the doçentlik jury's.
 
 ## Other fields
 
-Other ÜAK fields (Fen ve Mühendislik / Sciences & Engineering, Sosyal ve Beşeri /
-Social Sciences & Humanities, Güzel Sanatlar / Fine Arts, Hukuk / Law, İlahiyat /
-Theology, …) each have their **own** point table with **different** values and
-different category-specific minimums (each is a separate TABLO). The bundled
-table here is Sağlık only. To score another field, supply that field's table
-from the live ÜAK source — never reuse the Sağlık numbers.
+Other ÜAK temel alanlar (Eğitim, Fen Bilimleri ve Matematik, Filoloji, Güzel
+Sanatlar, Hukuk, İlahiyat, Mimarlık-Planlama-Tasarım, Mühendislik, Sosyal-
+Beşeri-İdari, Spor, Ziraat-Orman-Su Ürünleri) each have their **own** table with
+different values, minimums and lead-author definitions. The bundled table here
+is Sağlık only. To score another field, supply that field's table from the live
+ÜAK source — never reuse the Sağlık numbers.
 
 ## Primary sources (re-verify here)
 
-- **ÜAK** — Doçentlik başvuru şartları and the per-field criteria tables:
+- **ÜAK** — Doçentlik başvuru şartları, per term and per field:
   <https://www.uak.gov.tr/page/docentlik-basvuru-sartlari-kLPHX>
-  (Sağlık Bilimleri TABLO 10 PDF: `uak.gov.tr/documents/documents/688340614375c.pdf`).
+  - 2026 Mart Sağlık TABLO 10: `uak.gov.tr/documents/documents/69affdf9bb4a6.pdf`
+  - identical earlier copies: 2025 Ekim `68da32f147b67.pdf`, 2025 Mart
+    `688340614375c.pdf`
+  - The uak.gov.tr server omits its intermediate TLS certificate, so some HTTP
+    clients fail with "unable to get local issuer certificate"; a browser loads
+    it normally.
 - **Doçentlik Yönetmeliği** — the binding regulation (Resmî Gazete 15/4/2018,
   No. 30392), on the official legislation portal:
   `mevzuat.gov.tr/mevzuat?MevzuatNo=24519&MevzuatTur=7&MevzuatTertip=5`
@@ -120,10 +163,3 @@ from the live ÜAK source — never reuse the Sağlık numbers.
   Note: `mevzuat.gov.tr/MevzuatMetin/21.5.201811834.pdf` is a *different*
   regulation — the **Akademik Teşvik Ödeneği Yönetmeliği** (see
   `alterlab-akademik-tesvik`), not the doçentlik binding regulation.
-
-> The point values and the existence of each mandatory minimum above were
-> re-verified on the `last_verified` date against the ÜAK TABLO 10 source and
-> corroborating summaries of the 2025 Mart term. ÜAK can revise them between
-> terms without notice in this file; the primary ÜAK PDF is authoritative.
-> Where a value is single-source (the per-category caps), it is flagged as such
-> above — do not present it as confirmed.

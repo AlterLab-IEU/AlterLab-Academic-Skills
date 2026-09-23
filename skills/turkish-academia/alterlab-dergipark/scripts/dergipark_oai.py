@@ -20,7 +20,11 @@ find articles by publication year, harvest then filter on dc:date locally; do no
 rely on from/until selective-harvest for publication-date queries.
 
 Subcommands:
-  list-journals                       -> ListSets, prints slug<TAB>name pairs
+  list-journals                       -> ListSets, prints slug<TAB>name pairs. As of
+                                         2026-09-23 DergiPark returns only the first 100
+                                         sets and no resumptionToken, so this list is
+                                         partial; read the slug from the journal URL
+                                         (/pub/{slug}) instead.
   harvest SLUG [--prefix oai_dc]      -> ListRecords&set=SLUG with resumptionToken paging
   get RECORD_ID [--prefix oai_dc]     -> GetRecord for oai:dergipark.org.tr:article/{id}
 
@@ -112,6 +116,10 @@ def _check_oai_error(root: ET.Element) -> None:
     if err is not None:
         code = err.get("code", "unknown")
         raise OAIError(f"OAI error [{code}]: {(err.text or '').strip()}")
+
+
+# DergiPark's ListSets stopped paging: one response of 100 sets, no resumptionToken (2026-09-23).
+LISTSETS_CAP = 100
 
 
 def list_journals() -> list[dict[str, str]]:
@@ -249,6 +257,13 @@ def main(argv: Optional[list[str]] = None) -> int:
     try:
         if args.cmd == "list-journals":
             sets = list_journals()
+            if len(sets) == LISTSETS_CAP:
+                print(
+                    f"note: ListSets returned exactly {LISTSETS_CAP} sets and no resumptionToken "
+                    "(DergiPark cap observed 2026-09-23); the journal list is partial. Take the "
+                    "slug from the journal URL: https://dergipark.org.tr/en/pub/{slug}",
+                    file=sys.stderr,
+                )
             if args.tsv and not args.out:
                 for s in sets:
                     print(f"{s['slug']}\t{s['name']}")

@@ -1,13 +1,13 @@
 ---
 name: alterlab-yokatlas
-description: "Retrieves Türkiye higher-education program and admission statistics from YÖK Atlas (yokatlas.yok.gov.tr) — quotas (kontenjan), placements (yerleşen), minimum admission scores (taban puan), success ranks (başarı sırası), and per-title academic-staff counts — via the keyless yokatlas-py (>=0.6.0, MIT) wrapper over the JSON API at /api/tercih-kilavuz/ (search, universiteler, universite-programlar), with SearchFilters for puan türü (SAY/SÖZ/EA/DİL/TYT), university type (DEVLET/VAKIF), province, and success-rank ranges. Use when the request mentions YÖK Atlas, program statistics, kontenjan/quota data, taban puan/minimum admission score, başarı sırası/success rank, placement counts, or program staff counts for institutional research, program benchmarking, or student advising. For an academic's CV/profile/affiliation prefer alterlab-yok-akademik; for theses prefer alterlab-yok-tez. Legacy PHP endpoints are dead post-April-2026; only the JSON API is used. Part of the AlterLab Academic Skills suite."
+description: "Retrieves Türkiye higher-education program and admission statistics from YÖK Atlas (yokatlas.yok.gov.tr) — quotas (kontenjan), placements (yerleşen), minimum admission scores (taban puan), success ranks (başarı sırası), and per-title academic-staff counts — via the keyless yokatlas-py wrapper (≥0.6.0; 0.7.0 current, MIT) over the JSON API at /api/tercih-kilavuz/ (search plus university, program-group and province lookups), with SearchFilters for puan türü (SAY/SÖZ/EA/DİL/TYT), university type (DEVLET/VAKIF), province, and success-rank ranges. Use when the request mentions YÖK Atlas, program statistics, kontenjan/quota data, taban puan/minimum admission score, başarı sırası/success rank, placement counts, or program staff counts for institutional research, benchmarking, or advising. For an academic's CV/profile/affiliation prefer alterlab-yok-akademik; for theses prefer alterlab-yok-tez. Legacy PHP pages are dead since April 2026. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash WebFetch
-compatibility: No API key required — wraps the keyless YÖK Atlas JSON API (/api/tercih-kilavuz/) through yokatlas-py v0.6.0 (MIT, Python >=3.10) run via `uv run --with yokatlas-py python`; degrades to a documented manual lookup when offline
+compatibility: No API key required — wraps the keyless YÖK Atlas JSON API (/api/tercih-kilavuz/) through yokatlas-py ≥0.6.0 (0.7.0 current as of 2026-09; MIT, Python ≥3.10) run via `uv run --with yokatlas-py python`; degrades to a documented manual lookup when offline
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-06-06"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
   depends_on: "alterlab-yok-akademik (academic profiles), alterlab-research-lookup (publication enrichment)"
 ---
 
@@ -88,18 +88,28 @@ program or university?"** — nothing about an individual scholar's output.
 
 | Surface | What it returns |
 |---------|-----------------|
-| `/api/tercih-kilavuz/universiteler` | the university list (`{universiteAdi, universiteId}`) — verified live |
-| `/api/tercih-kilavuz/universite-iller` | provinces (il) |
-| `/api/tercih-kilavuz/universite-programlar` | programs per university |
+| `/api/tercih-kilavuz/universiteler` | the university list (`{universiteAdi, universiteId}`, 228 on 2026-09-23) |
+| `/api/tercih-kilavuz/universite-programlar` | the **program-group** list (`{birimGrupId, birimGrupAdi, puanTuru}`, 611) — not per-university programs |
+| `/api/tercih-kilavuz/universite-iller` | provinces (`{ilAdi, ilKodu}`) |
 | `/api/tercih-kilavuz/search` | program search with `SearchFilters` |
 
-`yokatlas-py` (MIT, Python >=3.10) exposes these as module-level functions
-`search_programs(filters_dict, size=…)`, `get_program(kilavuz_kodu)`, and
-`list_universities()` (227 records on the 2026-06-06 live check; plus a
-`YokAtlasClient` / `SearchFilters` / `Program` object API). It normalizes
-Turkish characters (İ/ı, Ş/ş, Ğ/ğ, Ç/ç, Ö/ö, Ü/ü)
-for fuzzy matching, so `"boğaziçi"` and `"bogazici"` both resolve. Full filter
-and field reference: `references/api_endpoints.md`.
+`yokatlas-py` (MIT, Python ≥3.10; 0.7.0 released 2026-07-23) exposes these as
+module-level functions `search_programs(filters_dict, size=…)`,
+`get_program(kilavuz_kodu)`, `list_universities()`, and — new in 0.7.0 —
+`list_program_groups()`, `list_cities()` and `search_netler()` (average nets per
+test section, `/api/netler/search`); plus a `YokAtlasClient` / `SearchFilters` /
+`Program` object API. It normalizes Turkish characters (İ/ı, Ş/ş, Ğ/ğ, Ç/ç,
+Ö/ö, Ü/ü), so `"boğaziçi"` and `"bogazici"` both resolve. Full filter and field
+reference: `references/api_endpoints.md`.
+
+> **Name resolution gotcha.** `universite`, `program` and `il` are resolved to
+> ONE lookup entry each: exact name first, then the *first* entry that contains
+> the text, then a close match — otherwise the call fails. A fragment like
+> `program="bilgisayar"` silently resolves to the group "Bilgisayar Bilimleri"
+> and returns nothing for Boğaziçi; use the full group name ("bilgisayar
+> mühendisliği") or `birim_grup_id`. Abbreviations such as "odtü" do not resolve
+> ("orta doğu teknik" does). An empty page means "no match for this group", not
+> "no such program" — check the resolved name before reporting.
 
 ### Pipeline
 
@@ -114,7 +124,7 @@ and field reference: `references/api_endpoints.md`.
    ```bash
    uv run --with yokatlas-py python \
      skills/turkish-academia/alterlab-yokatlas/scripts/yokatlas_lookup.py \
-     search --puan-turu SAY --universite "boğaziçi" --program "bilgisayar" --size 20
+     search --puan-turu SAY --universite "boğaziçi" --program "bilgisayar mühendisliği" --size 20
    ```
 
    Other subcommands:
@@ -127,15 +137,17 @@ and field reference: `references/api_endpoints.md`.
    uv run --with yokatlas-py python .../yokatlas_lookup.py program --kod 102210277
    ```
 
-   The script prints a JSON envelope (`{"tool", "operation", "count", "results"}`).
-   If `yokatlas-py` or the network is unavailable it prints a structured
-   `{"error": …, "manual_instructions": …}` and exits non-zero — it never
-   fabricates statistics.
+   The script prints a JSON envelope (`{"tool", "operation", "count", "results"}`;
+   searches add `total_elements`, `data_year`, and a `note` when nothing
+   matched). If `yokatlas-py` or the network is unavailable it prints a
+   structured `{"error": …, "manual_instructions": …}` and exits non-zero — it
+   never fabricates statistics.
 
 4. **Read the JSON and report.** For each program surface the year, `kontenjan`,
    `yerlesen`, `min_puan`, `basari_sirasi`, and (when asked) the staff counts.
-   Each `Program` carries up to four years (`current` + `history`); state which
-   year a number is from.
+   Each `Program` carries up to four years (`current` + `history`; on
+   2026-09-23 `current` was the 2026 placement year); state which year a number
+   is from — some history years carry only scores, with quota fields empty.
 
 5. **Cross-link if the user drifts.** If they then ask about a person's CV or
    publications, hand off to `alterlab-yok-akademik`; for theses,
@@ -155,11 +167,13 @@ More query recipes: `references/query_recipes.md`.
 
 ## Caveats & Self-Check
 
-- **Pin the wrapper.** `yokatlas-py` is pinned to **>=0.6.0**; the upstream JSON
-  API changed once (April 2026) and broke every legacy scraper. If results look
-  empty or malformed, re-verify the package version before reporting.
-- **v0.6.0 dropped demographic breakdowns** (gender / high-school-type splits).
-  Do not promise those fields — only the staff/quota/score fields above are returned.
+- **Pin the wrapper.** Use `yokatlas-py` **≥0.6.0** (0.7.0 current); the upstream
+  JSON API changed once (April 2026) and broke every legacy scraper. If results
+  look malformed, re-verify the package version before reporting; if they are
+  merely empty, check the name-resolution gotcha above first.
+- **No demographic breakdowns since v0.6.0** (gender / high-school-type splits),
+  still absent in 0.7.0. Do not promise those fields — only the staff/quota/score
+  fields above (and 0.7.0's nets) are returned.
 - **Score type matters.** A program's `min_puan` is only meaningful next to its
   `puan_turu`; always report them together.
 - **Data year.** Numbers are historical (latest plus three prior years). Never

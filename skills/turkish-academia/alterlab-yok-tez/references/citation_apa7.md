@@ -58,6 +58,14 @@ Demir, B. (2019). Etkileşimli medyada izleyici deneyimi
 Use `@mastersthesis` for a *yüksek lisans* thesis. Preserve Turkish diacritics in
 all author/title/institution strings.
 
+## YÖK's own citation strings
+
+`get_yok_tez_thesis_details` returns ready-made APA/IEEE/MLA/Chicago/Harvard strings. Its
+APA string follows YÖK's house form — surname in capitals and "(Tez No. …)", e.g.
+`ÇELİK, A. G. (2026). <i>Başlık</i> (Tez No. 1009868) [Yüksek lisans tezi, …]` — so
+convert it to the Türkçe APA-7 form above (surname in title case, **Yayın No.**, italic
+title instead of `<i>` tags) unless the target journal asks for YÖK's form.
+
 ## Reminders
 
 - Take the **Tez No, year, author, university, and type directly from the YÖK

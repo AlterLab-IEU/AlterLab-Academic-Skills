@@ -1,19 +1,19 @@
 ---
 name: alterlab-yok-akademik
-description: "Looks up a Turkish academic's official YOKSIS-backed profile, current affiliation, unvan (academic title), publications, research projects, and supervised theses on the YOK Akademik portal (akademik.yok.gov.tr/AkademikArama/), a server-rendered JSP app with no public JSON API, by scraping its verified endpoints (AkademisyenArama POST search, viewAuthor.jsp profile, AkademisyenProjeBilgileri, AkademisyenYonTezBilgileri) keyed by an opaque authorId, with Turkish-character (Iı Şş Ğğ Çç Öö Üü) normalization for name matching. Use when the request is to verify a Turkish academic's current institution, find a researcher on YOK Akademik, confirm affiliation for authorship or a recommendation letter, or list someone's supervised theses or projects. For admission statistics (kontenjan, taban puan) use alterlab-yokatlas; for the national thesis full-text archive use alterlab-yok-tez; for publication metadata enrichment use alterlab-openalex. Part of the AlterLab Academic Skills suite."
+description: "Looks up a Turkish academic's official YÖKSİS-backed profile, current affiliation, unvan (academic title), publications, research projects, and supervised theses on the YÖK Akademik portal (akademik.yok.gov.tr/AkademikArama/), a server-rendered JSP app with no public JSON API, by scraping its verified endpoints (AkademisyenArama POST search, viewAuthor.jsp profile, AkademisyenProjeBilgileri, AkademisyenYonTezBilgileri) keyed by an opaque authorId, with Turkish-character (Iı Şş Ğğ Çç Öö Üü) normalization for name matching. Use when the request is to verify a Turkish academic's current institution, find a researcher on YÖK Akademik, confirm affiliation for authorship or a recommendation letter, or list someone's supervised theses or projects. For admission statistics (kontenjan, taban puan) use alterlab-yokatlas; for the national thesis full-text archive use alterlab-yok-tez; for publication metadata enrichment use alterlab-openalex. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash WebFetch
-compatibility: No API key required — scrapes the public YOK Akademik JSP portal (akademik.yok.gov.tr/AkademikArama/) via `uv run python` (requests + BeautifulSoup, stdlib fallback) and WebFetch; there is NO official public JSON API
+compatibility: No API key required — scrapes the public YÖK Akademik JSP portal (akademik.yok.gov.tr/AkademikArama/) via `uv run python` (requests + BeautifulSoup, stdlib fallback) and WebFetch; there is NO official public JSON API
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-06-06"
+  version: "1.0.1"
+  last_updated: "2026-09-23"
   depends_on: "alterlab-yokatlas (admission stats), alterlab-yok-tez (thesis full text), alterlab-openalex (publication metadata)"
 ---
 
-# YOK Akademik — Official Turkish Academic Profile & Affiliation Lookup
+# YÖK Akademik — Official Turkish Academic Profile & Affiliation Lookup
 
-**YOK Akademik** (Yükseköğretim Kurulu Akademik — the Turkish Council of Higher
+**YÖK Akademik** (Yükseköğretim Kurulu Akademik — the Turkish Council of Higher
 Education's academic search portal) is the **authoritative source for a Turkish
 academic's official current affiliation**. It is YÖKSİS-backed (the national
 higher-education information system), so for Turkish institutions it is more
@@ -35,7 +35,7 @@ Use this skill when the request is to:
 
 - **Verify a Turkish academic's current institution / affiliation** (for authorship
   bylines, a recommendation letter, a grant team, an editorial-board check).
-- **Find / look up a researcher on YOK Akademik** by name.
+- **Find / look up a researcher on YÖK Akademik** by name.
 - **Read someone's official unvan** (title) and faculty/department.
 - **List the theses someone has supervised** (master's / doctorate), with student,
   year, and institution.
@@ -56,7 +56,7 @@ Route these adjacent asks to the correct sibling skill — do **not** answer the
 | Computing **doçentlik** (associate-professorship) eligibility points from a publication list | `alterlab-docentlik-eligibility` |
 | Computing the **akademik teşvik** (academic-incentive) score | `alterlab-akademik-tesvik` |
 
-YOK Akademik answers **"who is this academic, officially, and where are they now?"**
+YÖK Akademik answers **"who is this academic, officially, and where are they now?"**
 It does **not** judge research quality, compute career-progression points, or fetch
 thesis full text.
 
@@ -127,7 +127,7 @@ uv run python .../scripts/yok_akademik.py pubs     --author-id <authorId>
 
 ### 4. Report — and state provenance
 
-When you report an affiliation, say it came from **YOK Akademik (YÖKSİS)** and give
+When you report an affiliation, say it came from **YÖK Akademik (YÖKSİS)** and give
 the date, because people move. If the scrape failed or the portal returned a 302/500
 (it does so intermittently), say so and fall back to WebFetch on the search page —
 **never** invent an affiliation, authorId, title, or thesis from memory.
@@ -148,7 +148,7 @@ The portal is a public service with no API; scrape gently.
 
 - Did a **live search** return the `authorId` I'm using, or did I guess it? (Never guess.)
 - Did I **disambiguate** when more than one candidate matched the name?
-- Is the affiliation I'm reporting attributed to **YOK Akademik / YÖKSİS** with a date?
+- Is the affiliation I'm reporting attributed to **YÖK Akademik / YÖKSİS** with a date?
 - Did the request actually want admission stats (`alterlab-yokatlas`) or thesis full
   text (`alterlab-yok-tez`) instead? Re-check the "Does NOT Trigger" table.
 - If the portal failed, did I say so plainly rather than filling the gap from memory?

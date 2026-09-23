@@ -1,50 +1,55 @@
 # ARDEB 1001 & 1002-A Form Structure (annotated)
 
-The section tree below is the directorate's own heading order, as carried by the official
-TÜBİTAK ARDEB application forms (the `.doc` templates and their `başvuru rehberi` guides). Draft
-**to these headings, in this order** — ARDEB hakem (referee) panels score against this structure,
-not against an IMRaD paper. Keep the Turkish heading; the English in parentheses is a gloss for
-the drafter, not a section to add.
+The section trees below follow the directorate's own heading order: the official 1001 `.doc`
+form, and — for 1002-A — the PBS entry steps described in the *1002-A Hızlı Destek Modülü
+Başvuru İçeriği Bilgi Notu* (both read on 2026-09-23). Draft **to these headings, in this order**
+— ARDEB evaluators score against this structure, not against an IMRaD paper. Keep the Turkish
+heading; the English in parentheses is a gloss for the drafter, not a section to add.
 
-Authoritative form/guide sources (verify the current period before relying on caps):
+Authoritative sources (verify the current period before relying on caps):
 
 - 1001 form: `https://tubitak.gov.tr/sites/default/files/2024-04/1001_basvuru_formu.doc`
 - 1001 guide: `https://tubitak.gov.tr/sites/default/files/2024-04/ardeb_1001_basvuru_rehberi.pdf`
-- 1002-A form: `https://tubitak.gov.tr/sites/default/files/20689/1002_a_basvuru_formu.doc`
-  (a newer dated form also exists, e.g. `…/2025-04/1002_a_basvuru_formu_2025.doc`)
-- 1002-A guide: `https://tubitak.gov.tr/sites/default/files/2024-04/1002_a_programi_basvuru_rehberi.pdf`
+- 1002-A content note: `https://tubitak.gov.tr/sites/default/files/2025-12/1002_a_basvuru_icerigi_bilginotu.doc`
 
-> The exact wording of sub-headings is revised between periods. Treat the tree as the stable
-> skeleton; reconcile sub-heading labels and any numbering shifts against the current rehber.
+> Sub-heading wording is revised between periods. Treat the trees as the stable skeleton and
+> reconcile labels against the current form / note.
 
 ---
+
+# Part A — 1001 (official .doc form)
+
+Form rules from the form header and program page: **Arial 9**, keep the format unchanged,
+**≤ 25 pages excluding EK-1 and EK-2**, one file; content shared through links to external
+storage is returned without scientific review; no tracked changes or comments.
 
 ## ÖZET (TR) + ABSTRACT (EN)
 
 - Written as **two separate blocks** — ÖZET (Turkish) and ABSTRACT (English) — each **≤ 600
-  words** counted *independently* (see `program_profiles.md`). Keep them as distinct headings so
-  the per-language cap can actually be measured; don't merge them into one block.
+  words** counted *independently*. Keep them as distinct headings so the per-language cap can be
+  measured; don't merge them into one block.
 - Each is followed by its **Anahtar Kelimeler / Keywords**.
-- This is the panel's first read. State the gap, the aim, the method in one breath, and the
-  expected yaygın etki (broader impact). Do not exceed the word cap — it is an eligibility filter.
+- The form asks the özet to cover (a) özgün değer, (b) yöntem, (c) yönetim and (d) yaygın etki,
+  and suggests writing it last. It is the panel's first read.
 
 ## 1. ÖZGÜN DEĞER (Original Value / Significance)
 
-The most heavily weighted block of a 1001. This is where novelty is decided.
+The most heavily weighted block of a 1001 (35% of the panel score). This is where novelty is
+decided.
 
-- **1.1 Konunun Önemi ve Özgün Değer** (Importance & original value of the topic) — situate the
-  problem in the literature, name the specific gap, and state what is *genuinely new* in the
-  proposal. Cite into EK-1.
-- **1.2 Araştırma Sorusu / Hipotezi** (Research question / hypothesis) — explicit, falsifiable,
-  tied to the aim.
-- **1.3 Amaç ve Hedefler** (Aim & objectives) — one aim; several **measurable** hedefler
-  (objectives) that map one-to-one onto work packages in §3.
+- **1.1 Konunun Önemi ve Projenin Özgün Değeri** — situate the problem through a critical reading
+  of the literature (supported with qualitative/quantitative evidence), name the specific gap,
+  and state the conceptual, theoretical and/or methodological contribution. Cite into EK-1.
+- **1.2 Araştırma Sorusu ve/veya Hipotezi** — explicit, falsifiable, tied to the aim.
+- **1.3 Amaç ve Hedefler** — one aim; several **measurable** hedefler (objectives) that map onto
+  work packages in §3.
 
 ## 2. YÖNTEM (Method)
 
-- Research design, materials, data-collection and analysis methods, sample/dataset, statistical
-  or computational approach.
-- This section carries **yapılabilirlik** (feasibility): show the method is appropriate *and*
+- Research design, dependent/independent variables, data-collection instruments, analysis and
+  statistical methods, each justified with references; report any preliminary work; a flow
+  diagram may be added.
+- This section carries **yapılabilirlik** (feasibility): show the method suits the aims *and* is
   achievable with the stated resources and timeline.
 - If human/animal subjects or personal data are involved, state that ethics approval / data
   governance is handled — and route the actual etik kurul form to `alterlab-tr-research-ethics`
@@ -52,56 +57,91 @@ The most heavily weighted block of a 1001. This is where novelty is decided.
 
 ## 3. PROJE YÖNETİMİ (Project Management)
 
-- **3.1 İş-Zaman Çizelgesi ve İş Paketleri** (Work–time chart & work packages) — break the
-  project into iş paketleri (work packages, WPs); each WP has objectives, tasks, responsible
-  personnel, success criteria, and a deliverable. Include the **İş-Zaman Çizelgesi** (a
-  Gantt-style work–time chart). **A B-Planı (contingency/risk plan) is required** — identify the
-  riskiest WPs and the fallback path. (Gantt rendering/aesthetics → delegate to
-  `alterlab-research-grants`.)
-- **3.2 Araştırma Olanakları** (Research facilities/resources) — institutional infrastructure,
-  equipment, lab access, and any collaborators' resources that make the project feasible.
+- **3.1 Yönetim Düzeni: İş-Zaman Çizelgesi ve İş Paketleri**
+  - **3.1.1 İş-Zaman Çizelgesi** — per work package (İP): number, name, **Projenin Başarısındaki
+    Önemi (%)** (the column must total 100), who carries it out, and its months.
+    **Literature review, progress/final report writing, dissemination, article writing and
+    procurement are not work packages.**
+  - **3.1.2 İş Paketleri** — one table per İP: hedef, tasks, people and their contribution,
+    **Başarı Ölçütü** (measurable, trackable success criterion), **Ara Çıktılar** (interim
+    outputs that evidence the criterion), and **Risk Yönetimi** with the **B Planı** — the
+    measures that keep the project on track if the risk occurs. A B plan must not drift from
+    the core aims or özgün değer; if it changes the method, say how. (Gantt rendering →
+    `alterlab-research-grants`.)
+- **3.2 Araştırma Olanakları** — infrastructure and equipment at the executing/partner
+  institutions, with what each is used for.
 
 ## 4. YAYGIN ETKİ (Broader Impact / Dissemination)
 
 Populate **all three** sub-parts; a thin yaygın etki is a common weakness flagged by panels.
 
-- **4.1 Öngörülen Çıktılar** (Expected outputs) — concrete deliverables: publications, theses,
-  datasets, software, patents, prototypes.
-- **4.2 Öngörülen Etkiler** (Expected impacts) — scientific, economic/commercial, and societal
-  effects.
-- **Bilim İletişimi / Yayılım** (Science communication / dissemination) — how results reach the
-  scientific community and the public.
+- **4.1 Öngörülen Çıktılar** — a table of outputs with their expected timing (0–12 months,
+  12–18 months, after the project, …) in three categories: scientific/academic (articles, books,
+  chapters, papers); economic/commercial/social (prototype, product, patent, utility model,
+  registration, archive, database, spin-off …); researcher training and new projects (theses,
+  new national/international projects). Name the organisations that will use them, if any.
+- **4.2 Öngörülen Etkiler** — *Öngörülen Uygulama Alanları* (application areas and links to end
+  users such as policy makers, civil society, industry) and *Sosyo-ekonomik/Kültürel Katkı*;
+  the form recommends relating these to the targets of higher policy documents, above all the
+  On İkinci Kalkınma Planı (2024–2028), with citations.
+- **4.3 Proje Sonuçlarının Yayılımı ve Bilim İletişimi Kapsamında Gerçekleştirilecek Faaliyet
+  Planı** — Hedef Kitle, Hedefler ve Beklenen Kazanımlar, Kullanılacak Araçlar, Zamanlama.
+- **Belirtmek İstediğiniz Diğer Konular** (optional) — only material that helps the evaluation.
 
 ## EK-1. Kaynaklar (References)
 
-Cited literature for §1–§4. Have `alterlab-citation-verifier` existence-check the bibliography
-before submission — fabricated/AI-hallucinated references are a credibility risk in front of a
-panel.
+Cited literature for §1–§4, formatted per TÜBİTAK's bibliographic guidance. Have
+`alterlab-citation-verifier` existence-check the bibliography before submission —
+fabricated/AI-hallucinated references are a credibility risk in front of a panel.
 
 ## EK-2. Bütçe ve Gerekçesi (Budget & Justification)
 
-Itemized budget (equipment/makine-teçhizat, consumables/sarf, travel/seyahat, service
-procurement/hizmet alımı, personnel/burs) **with a justification per line tied to the work
-packages**. The total must respect the program budget ceiling (see `program_profiles.md`),
-excluding the items the program excludes (e.g. PTİ/proje teşvik ikramiyesi and kurum hissesi for
-1001). For KVKK/Aperta data-management costs and plans, route to `alterlab-kvkk-dmp` /
+Itemized budget (makine-teçhizat, sarf, seyahat, hizmet alımı, burs) **with a justification per
+line tied to the work packages**, on the official EK-2 table. The total must respect the program
+ceiling — for 1001 that ceiling includes scholarships and excludes PTİ and kurum hissesi (see
+`program_profiles.md`). For data-management plans route to `alterlab-kvkk-dmp` /
 `alterlab-aperta`.
 
-## EK-3. Diğer Projeler / TÜBİTAK Destekleri (Other Projects & Prior Support)
+## EK-3. Proje Ekibinin Diğer Projeleri ve Güncel Yayınları
 
-The PI's and team's other ongoing/recent projects and prior TÜBİTAK support, for workload and
-duplication checks.
+Generated automatically by PBS from the information entered in the system — nothing to draft,
+but keep the team's ARBİS records current.
+
+---
+
+# Part B — 1002-A (PBS entry screens)
+
+Since the 2025 redesign, 1002-A has **no .doc template**. The applicant types each section into
+the PBS screen; the system builds the application form, EK-1 and EK-2. Word ranges are enforced
+per section:
+
+| # | Section (TR) | Words (min–max) | Notes |
+|---|--------------|-----------------|-------|
+| 1 | **BİLİMSEL NİTELİK** — Konunun Önemi ve Projenin Bilimsel Niteliği | 1,000–3,500 | Scope, limits and importance; the literature gap and how the project closes it; the research question and hypotheses |
+| 1 | Amaç ve Hedefler | 100–1,000 | Clear, measurable, realistic, achievable within the project |
+| 2 | **YÖNTEM** | 750–3,000 | Methods and techniques with references; design, variables, statistics |
+| 3 | **PROJE YÖNETİMİ** | (built from the "Proje İş Paketleri" step) | Per İP: who and when, **Başarı Ölçütü**, **Projenin Başarısındaki Önemi (%)** totalling 100, and risks with a **B Planı** under "Risk Bilgileri" (a risk for every İP is not mandatory). Enter "Proje Personeli" and "Yardımcı Personel" first. Literature review, reporting, dissemination, article writing and procurement are not work packages. ≤ 12 months |
+| 4 | **ÇIKTI, ETKİ VE KAZANIMLAR** | 100–400 | Outputs (scientific, economic, social, researcher training, new projects), impacts, gains, and who benefits how |
+| – | Belirtmek İstediğiniz Diğer Konular | ≤ 250 (optional) | Only material that helps the evaluation |
+| EK-1 | Kaynakça step | — | Every source cited in the text; **DOI mandatory where one exists** |
+| EK-2 | Budget steps | — | Justify each line; total must equal "Önerilen Destek Miktarı"; no proforma at application; no foreign travel or foreign field work |
+
+Content pasted from elsewhere should be cleaned with the editor's "remove format" tool; images
+must be .jpg/.jpeg/.png. The bilgi notu does not state an özet word limit for 1002-A — check the
+"Proje Bilgileri" step in PBS.
 
 ---
 
 ## 1001 vs 1002-A — the delta
 
-1002-A (**Hızlı Destek Modülü** / Fast Support Module) is the **trimmed** variant:
-
-- Same backbone (Özgün Değer → Yöntem → İş Paketleri → Yaygın Etki → Kaynaklar → Bütçe) but
-  **lighter** — less depth expected in project-management and yaygın-etki blocks.
-- Hard **≤ 12-page** form limit (excluding annexes); much shorter than a 1001.
-- Lower budget ceiling and shorter duration (see `program_profiles.md`).
-- **Rolling / year-round (sürekli)** submission, not a periodic çağrı (call).
-- Aimed at short-term, low-budget, non-urgent R&D. (The separate **1002-B Acil Destek Modülü**
-  is for *urgent* needs and is out of scope for this skill.)
+- **Format:** 1001 = uploaded .doc (≤ 25 pages excl. EK-1/EK-2); 1002-A = PBS text fields with
+  word ranges.
+- **Headings:** 1002-A's first block is *Bilimsel Nitelik* (not *Özgün Değer*) and its last is
+  *Çıktı, Etki ve Kazanımlar* (not *Yaygın Etki*); there is no separate Araştırma Olanakları or
+  EK-3 block to draft.
+- **Evaluation:** 1001 = panel (özgün değer 35%, yöntem 25%, proje yönetimi 20%, yaygın etki
+  20%); 1002-A = external advisors on Bilimsel Nitelik, Proje Yönetimi, Çıktı-Etki-Kazanımlar.
+- **Money and time:** 1002-A has a much lower budget ceiling and ≤ 12 months (see
+  `program_profiles.md`), with **rolling** submission instead of a periodic call.
+- 1002-A also serves needs arising in an accepted doctoral thesis (the doctoral student can be
+  PI). The separate **1002-B Acil Destek Modülü** is for *urgent* needs and is out of scope.

@@ -1,4 +1,4 @@
-# Bilgilendirilmiş Gönüllü Olur Formu — Minimum Content (TİTCK, 29 Mar 2023)
+# Bilgilendirilmiş Gönüllü Olur Formu — Minimum Content (TİTCK KAD-DD-13)
 
 The participant-facing informed-consent form (*Bilgilendirilmiş Gönüllü Olur
 Formu*; also called *onam formu* / *olur formu*) must carry, at minimum, the
@@ -19,8 +19,8 @@ consent; *parafe* = initials.
 
 | # | Element (TR) | Element (EN) | What it requires |
 |---|--------------|--------------|------------------|
-| 1 | Tarih, versiyon ve sayfa numarası | Date, version, page numbers | Every page carries a date, a version, and page numbering. |
-| 2 | Gönüllü parafe alanı | Volunteer initials per page | (Clinical track) the participant initials each page. |
+| 1 | Tarih, versiyon ve sayfa numarası | Date, version, page numbers | Every page carries a date, a version, and a page number out of the total ("sayfa 2/5"). |
+| 2 | Gönüllü parafe alanı | Volunteer initials per page | (Clinical track) the participant initials every page except the signature page. |
 | 3 | Çalışmanın amacı (sade dil) | Purpose, in plain language | Why the study is done, stated without jargon. |
 | 4 | İşlemler ve süre | Procedures and duration | What the participant will do and how long it takes. |
 | 5 | Öngörülen riskler / rahatsızlıklar | Foreseeable risks / discomforts | Honest statement of risks and burdens. |
@@ -41,6 +41,35 @@ regulation requires:
 - **Sponsor / sorumlu araştırmacı** — sponsor and responsible-investigator
   contact chain.
 
+### Also in KAD-DD-13 — check by hand (the linter does not test these)
+
+KAD-DD-13 lists further headings for the clinical BGOF. Check them manually:
+
+- Araştırmanın adı; **the fact that the study is research**; estimated number of
+  volunteers; treatments given and, if any, the chance of random assignment to groups.
+- All procedures, including invasive ones; the experimental parts of the study.
+- Risks to an embryo, fetus, or breast-fed infant when pregnant or breast-feeding
+  women take part; a statement when no clinical benefit to the volunteer is expected.
+- Compensation (sigorta) and/or treatment where the legislation requires it;
+  payments for travel, meals, and similar costs; the volunteer's responsibilities.
+- That monitors, auditors, the ethics committee, and health authorities may see the
+  original medical records in confidence, and that signing the form permits this.
+- Timely notice of new information that may change the wish to continue; the
+  conditions for ending a volunteer's participation; post-study access to the
+  investigational product; what biological samples are taken, why, and where they
+  are analysed (including any transfer abroad).
+- **Signature block**: statements equivalent to "Bilgilendirilmiş gönüllü olur
+  formundaki tüm açıklamaları okudum … istediğim zaman gerekçeli veya gerekçesiz
+  olarak araştırmadan ayrılabileceğimi biliyorum" and "Söz konusu araştırmaya,
+  hiçbir baskı ve zorlama olmaksızın kendi rızamla katılmayı kabul ediyorum"; the
+  name, signature, and date of the volunteer, of the researcher who gave the
+  information, and, where needed, of a witness and of the parent(s) or legal guardian.
+- The form may not contain wording that waives the volunteer's legal rights or
+  releases the researcher, institution, or sponsor from liability for negligence.
+- Future use of samples needs a separate consent section or form; paediatric studies
+  need age-appropriate assent (written assent from age 9; written where possible
+  for ages 3–8) and fresh consent when a participant turns 18 during the study.
+
 ---
 
 ## Notes for Drafting
@@ -58,10 +87,16 @@ regulation requires:
 
 ## Source
 
-- TİTCK informed-consent minimum contents, updated **29 March 2023**.
+- TİTCK, KAD-DD-13 "BGOF'de Bulunması Gereken Asgari Bilgiler" (Word document
+  linked from https://www.titck.gov.tr/faaliyetalanlari/ilac/klinik-arastirmalar;
+  read 2026-09-23). The file sits in TİTCK's 2019 archive folder and carries no
+  revision date; an earlier version of this skill cited an update of 29 Mar 2023,
+  which could not be confirmed.
 - *Beşeri Tıbbi Ürünlerin Klinik Araştırmaları Hakkında Yönetmelik* —
-  mevzuat.gov.tr MevzuatNo 40207 (R.G. 27/5/2023, No. 32203) for the clinical-track
+  mevzuat.gov.tr MevzuatNo 40207 (R.G. 27/5/2023, No. 32203; amended R.G.
+  29/12/2023, No. 32414 and R.G. 5/6/2025, No. 32921) for the clinical-track
   consent requirements.
 
-_Last verified: 2026-06-06. The minimum-content list is periodically updated by
-TİTCK — re-verify against the current TİTCK document before finalizing a form._
+_Last verified: 2026-09-23. KAD-DD-13 is written for clinical research; for a
+non-interventional study, the university committee's own consent template governs.
+Re-verify against the current TİTCK document before finalizing a form._

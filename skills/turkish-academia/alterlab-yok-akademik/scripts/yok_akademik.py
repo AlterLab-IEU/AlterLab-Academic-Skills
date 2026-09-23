@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""yok_akademik.py — Look up an official Turkish academic profile on YOK Akademik.
+"""yok_akademik.py — Look up an official Turkish academic profile on YÖK Akademik.
 
-YOK Akademik (akademik.yok.gov.tr/AkademikArama/) is the Turkish Council of Higher
+YÖK Akademik (akademik.yok.gov.tr/AkademikArama/) is the Turkish Council of Higher
 Education's academic search portal — a server-rendered Java/JSP app, YÖKSİS-backed,
 and the authoritative source for a Turkish academic's official CURRENT affiliation
 (more reliable than ORCID/OpenAlex for TR institutions). There is **no official
@@ -249,7 +249,7 @@ def _http_request(
         except Exception as exc:  # noqa: BLE001
             last_err = exc
             continue
-    raise NetworkUnavailable(f"YOK Akademik unreachable for {url}: {last_err}")
+    raise NetworkUnavailable(f"YÖK Akademik unreachable for {url}: {last_err}")
 
 
 # --------------------------------------------------------------------------- #
@@ -388,7 +388,7 @@ def _envelope(status: str, command: str, **extra: Any) -> dict[str, Any]:
     env = {
         "tool": "alterlab-yok-akademik/yok_akademik.py",
         "version": "1.0.0",
-        "source": "YOK Akademik (akademik.yok.gov.tr) — YÖKSİS-backed; no public API",
+        "source": "YÖK Akademik (akademik.yok.gov.tr) — YÖKSİS-backed; no public API",
         "retrieved_at": _now(),
         "command": command,
         "status": status,
@@ -541,7 +541,7 @@ def cmd_profile(author_id: str) -> dict[str, Any]:
         raw_text_excerpt=text[:1200],
         note="Affiliation fields (kurum/fakülte/bölüm) come from YÖKSİS but the exact "
         "selectors are unverified — read kurum/fakülte/bölüm from raw_text_excerpt and "
-        "confirm. Report provenance as 'YOK Akademik (YÖKSİS), as of <date>'.",
+        "confirm. Report provenance as 'YÖK Akademik (YÖKSİS), as of <date>'.",
     )
 
 

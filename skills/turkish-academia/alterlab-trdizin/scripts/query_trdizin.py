@@ -192,10 +192,10 @@ def journal_status(s: dict[str, Any]) -> dict[str, Any]:
     isActive=true while its coverage stopped years ago and recent years sit in
     rejectYearList. Verified live: "Eğitim Bilim Toplum" (ISSN 1303-9202) is
     isActive=true with journalYear coverage ending 2019 and rejectYearList
-    2020–2025 — it is NOT currently indexed. So we evaluate rejectYearList vs
-    the latest coverage year BEFORE declaring "currently indexed": if the most
-    recent reject year is newer than the last covered year, the journal is no
-    longer indexed regardless of isActive.
+    2020–2023 and 2025 (re-checked 2026-09-23) — it is NOT currently indexed.
+    So we evaluate rejectYearList vs the latest coverage year BEFORE declaring
+    "currently indexed": if the most recent reject year is newer than the last
+    covered year, the journal is no longer indexed regardless of isActive.
 
     NOTE: firstIndexDate / indexDate on this endpoint are populated at query time
     (they equal "today"), so they are NOT a reliable index-history signal and are
@@ -223,8 +223,9 @@ def journal_status(s: dict[str, Any]) -> dict[str, Any]:
     # CRITICAL: isActive alone is unreliable. A journal can carry isActive=true
     # while coverage stopped years ago and recent years are in rejectYearList
     # (e.g. "Eğitim Bilim Toplum", ISSN 1303-9202: active, coverage→2019,
-    # rejected 2020–2025). Reject years more recent than the last coverage year
-    # mean it is NO LONGER indexed — never report "currently indexed" then.
+    # rejected 2020–2023 and 2025). Reject years more recent than the last
+    # coverage year mean it is NO LONGER indexed — never report "currently
+    # indexed" then.
     rejected_after_coverage = latest_reject is not None and (
         latest_year is None or latest_reject > latest_year
     )

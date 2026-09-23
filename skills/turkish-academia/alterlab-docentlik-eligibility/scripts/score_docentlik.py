@@ -11,8 +11,9 @@ publication list.
 IMPORTANT — this is a PARTIAL PRE-SCREEN, not an eligibility scorer.
   The live Sağlık Bilimleri TABLO 10 imposes SEVERAL mandatory minimums
   (asgari koşullar) beyond raw point totals — a national-article / TR Dizin
-  minimum, a citation (atıf) minimum, a scientific-meeting (bilimsel toplantı)
-  minimum, an education (eğitim-öğretim) minimum, and per-category point caps.
+  minimum, a thesis-derived-publication minimum, a citation (atıf) minimum, a
+  scientific-meeting (bilimsel toplantı) minimum, an education (eğitim-öğretim)
+  minimum, and per-category point caps.
   Those depend on inputs this scorer does NOT collect, so it CANNOT confirm
   eligibility. By design it NEVER emits an "ELIGIBLE" verdict: the best a
   candidate can reach here is `PRESCREEN_PASS_VERIFY_REMAINING`, meaning every
@@ -37,16 +38,22 @@ Author-share rule (paylaşım kuralı), Sağlık TABLO 10:
   >=3, lead author      -> 0.5  x face points
   >=3, non-lead         -> (0.5 / (N - 1)) x face points
 
-Modelled mandatory minimums (verified — see ../references/uak_criteria.md):
-  total points              >= 100   (all scored work)
-  post-doctorate points     >=  90   (items with post_doc == true)
-  international SCIE/SSCI pts >=  40   (Q1-Q4 article points, post-doctorate)
-  lead-author Q articles    >=   3   (Q1-Q4 articles where candidate is lead)
+Modelled mandatory minimums (primary source: ÜAK TABLO 10, 2026 Mart term —
+see ../references/uak_criteria.md):
+  total points                >= 100   (all scored work)
+  post-doctorate points       >=  90   (items with post_doc == true)
+  international-article pts   >=  40   (item 1 "Uluslararası Makale", post-
+                                        doctorate: SCIE/SSCI Q1-Q4 + AHCI +
+                                        ESCI/Scopus)
+  lead-author Q articles      >=   3   (item 1a: SCIE/SSCI Q1-Q4 articles where
+                                        the candidate is başlıca yazar)
 
 NOT modelled here (require inputs this scorer does not collect — verify by hand):
   national / TR Dizin articles    (>=3 ulusal, >=2 TR Dizin, >=2 başlıca yazar)
+  thesis-derived publication      (>=1 item-3 publication; item 3 capped at 20
+                                   and excluded from the 90 post-doc points)
   citation (atıf) points          (>= 5, post-doctorate)
-  scientific-meeting (bildiri)    (>= 5)
+  scientific-meeting (bildiri)    (>= 5, post-doctorate)
   education / teaching            (>= 2)
   per-category point caps         (thesis-derived, books, citation, project, ...)
 
@@ -77,17 +84,18 @@ from datetime import datetime, timezone
 # (https://www.uak.gov.tr/) before relying on any output.                       #
 # --------------------------------------------------------------------------- #
 
-VERSION = "2.0.0"
-TABLE_LAST_VERIFIED = "2026-06-08"
+VERSION = "2.1.0"
+TABLE_LAST_VERIFIED = "2026-09-23"
 
-# Index tiers that count as quartile-ranked "Q articles" for the lead-author
-# minimum AND as SCIE/SSCI international-article points for the >=40 floor.
-# Sağlık: Q1-Q4 all qualify (Q4 included) — verified against the live ÜAK Sağlık
-# Bilimleri TABLO 10 (2025 March term): the >=40 international-article points
-# come from SCIE/SSCI Q1-Q4 articles, of which >=3 must have the candidate as
-# başlıca yazar ("Q4'ler dahil"). Source: uak.gov.tr TABLO 10 + multi-source
-# corroboration in ../references/uak_criteria.md.
-Q_TIERS = ("Q1", "Q2", "Q3", "Q4")
+# Primary source: ÜAK "TABLO 10. SAĞLIK BİLİMLERİ TEMEL ALANI", 2026 Mart term
+# (uak.gov.tr/documents/documents/69affdf9bb4a6.pdf — byte-identical to the
+# 2025 Mart and 2025 Ekim PDFs). Item 1 ("Uluslararası Makale") mandates, post-
+# doctorate, "a bendinden en az üç makalede başlıca yazar olmak kaydıyla en az
+# 40 puan": the >=40 is counted over the whole of item 1 (1a SCIE/SSCI Q1-Q4,
+# 1b AHCI, 1c ESCI/Scopus, ...), while the >=3 lead-author articles must come
+# from 1a (SCIE/SSCI, Q1-Q4 — Q4 included).
+Q_TIERS = ("Q1", "Q2", "Q3", "Q4")                     # item 1a
+INTL_TIERS = Q_TIERS + ("AHCI", "ESCI", "Scopus")     # item 1a + 1b + 1c
 
 # field -> {index tier -> face points}
 FIELD_TABLES: dict[str, dict[str, int]] = {
@@ -97,8 +105,9 @@ FIELD_TABLES: dict[str, dict[str, int]] = {
         "Q3": 15,
         "Q4": 10,
         "AHCI": 20,
-        "ESCI": 10,
-        "TRDizin": 10,
+        "ESCI": 10,     # 1c "ESCI veya Scopus kapsamındaki dergide ... makale"
+        "Scopus": 10,   # same row as ESCI
+        "TRDizin": 10,  # 2a (national article)
     },
 }
 
@@ -106,29 +115,45 @@ FIELD_TABLES: dict[str, dict[str, int]] = {
 # list; all must pass before the pre-screen can return PASS-pending). Verified
 # values — see ../references/uak_criteria.md. Do NOT add a threshold here
 # without a verified source.
-MIN_TOTAL = 100        # asgari toplam puan
-MIN_POST_DOC = 90      # doktora/uzmanlık sonrası asgari puan
-MIN_INTL_SCIE = 40     # uluslararası SCIE/SSCI makale asgari puanı (Q1-Q4)
-MIN_LEAD_Q = 3         # en az 3 makalede başlıca yazar (Q1-Q4)
+MIN_TOTAL = 100          # asgari toplam puan
+MIN_POST_DOC = 90        # doktora/uzmanlık sonrası asgari puan
+MIN_INTL_ARTICLE = 40    # 1. madde (uluslararası makale), doktora sonrası
+MIN_LEAD_Q = 3           # 1a bendinden en az 3 makalede başlıca yazar
 
 # Mandatory minimums the live TABLO 10 also requires but this scorer does NOT
 # model (they need inputs a bare publication list does not carry). These are
 # emitted in every report so the verdict can never be mistaken for a complete
-# eligibility decision. Verified to EXIST in the criteria; exact thresholds are
-# stated where multi-source-corroborated, otherwise flagged for hand-verify.
+# eligibility decision. Thresholds transcribed from the 2026 Mart TABLO 10.
 UNMODELLED_MINIMUMS = [
     {
         "id": "national_trdizin_articles",
         "label_tr": "Ulusal makale / TR Dizin asgari koşulu",
         "requirement": (
-            "Post-doctorate national articles: at least 3 ulusal makale, of "
-            "which at least 2 in TR Dizin, with the candidate başlıca yazar in "
-            "at least 2 — verify exact wording against the live TABLO 10."
+            "Post-doctorate national publications (item 2): at least 3, of "
+            "which at least 2 are TR Dizin articles (2a), with the candidate "
+            "başlıca yazar in at least 2. Foreign nationals and foreign-"
+            "doçentlik-equivalence applicants may substitute the same number of "
+            "item 1a/1b/1c articles."
         ),
         "why_unmodelled": (
             "Requires distinguishing ulusal vs. TR Dizin status and a "
             "başlıca-yazar count per national article; resolve TR Dizin status "
             "with alterlab-trdizin first."
+        ),
+    },
+    {
+        "id": "thesis_derived_publication",
+        "label_tr": "Lisansüstü tezlerden üretilmiş yayın asgari koşulu",
+        "requirement": (
+            "At least 1 publication derived from the candidate's own graduate "
+            "thesis (item 3, a-h). Item 3 is capped at 20 points and its points "
+            "do not count toward the 90 post-doctorate points; a thesis-derived "
+            "article is scored only under item 3, never also as an item 1/2 "
+            "article."
+        ),
+        "why_unmodelled": (
+            "The input does not flag thesis-derived work; leave such articles "
+            "out of the publication list and check item 3 by hand."
         ),
     },
     {
@@ -140,7 +165,10 @@ UNMODELLED_MINIMUMS = [
     {
         "id": "scientific_meeting_bildiri",
         "label_tr": "Bilimsel toplantı (congress) asgari koşulu",
-        "requirement": "At least 5 points from scientific-meeting papers (bildiri).",
+        "requirement": (
+            "At least 5 points from post-doctorate scientific-meeting papers "
+            "(bildiri); at most one paper per meeting is scored."
+        ),
         "why_unmodelled": "Congress papers are a separate category not in the article list.",
     },
     {
@@ -153,10 +181,12 @@ UNMODELLED_MINIMUMS = [
         "id": "category_point_caps",
         "label_tr": "Kategori puan üst sınırları (caps)",
         "requirement": (
-            "Per-category point ceilings apply (e.g. thesis-derived publications, "
-            "books, citations, projects, theses supervised, patents, awards). "
-            "Verify each cap against the live TABLO 10 — this scorer does not "
-            "apply them, so a raw point total here may overstate the usable total."
+            "Per-item ceilings in the 2026 Mart TABLO 10: thesis-derived "
+            "publications 20, books 20, citations 10, thesis supervision 10, "
+            "projects 20, scientific meetings 10, education 6, awards 25, "
+            "editorship 4, other (h-index / abroad) 10; patents carry no cap. "
+            "This scorer does not apply them, so a raw total here may overstate "
+            "the usable total."
         ),
         "why_unmodelled": (
             "Caps need each item tagged with its TABLO 10 sub-category; the "
@@ -169,8 +199,9 @@ DISCLAIMER = (
     "PARTIAL PRE-SCREEN — NOT an eligibility decision. This tool models only "
     "the point-total / international-article / lead-author minimums that are "
     "computable from a publication list; it does NOT model the national-article "
-    "(TR Dizin), citation, scientific-meeting, education, and per-category-cap "
-    "minimums that the live Sağlık Bilimleri TABLO 10 also requires (see "
+    "(TR Dizin), thesis-derived-publication, citation, scientific-meeting, "
+    "education, and per-category-cap minimums that the live Sağlık Bilimleri "
+    "TABLO 10 also requires (see "
     "summary.unmodelled_minimums). It therefore NEVER returns 'ELIGIBLE'. ÜAK "
     "doçentlik criteria change each application term and differ per field — "
     "verify the full TABLO 10 for your field and term at https://www.uak.gov.tr/ "
@@ -213,7 +244,8 @@ def score_publication(pub: dict, table: dict[str, int]) -> dict:
         authors = 1
     if authors < 1:
         authors = 1
-    is_lead = bool(pub.get("is_lead", False))
+    # A single-author article is başlıca yazar by definition (TABLO 10 tanım a).
+    is_lead = bool(pub.get("is_lead", False)) or authors == 1
     post_doc = bool(pub.get("post_doc", False))
 
     if index not in table:
@@ -229,6 +261,7 @@ def score_publication(pub: dict, table: dict[str, int]) -> dict:
             "scaled": 0.0,
             "counts_lead_q": False,
             "is_scie_ssci": False,
+            "is_intl_article": False,
             "note": "unknown index tier — resolve and re-run (do not guess)",
         }
 
@@ -236,7 +269,8 @@ def score_publication(pub: dict, table: dict[str, int]) -> dict:
     factor = share_factor(authors, is_lead)
     scaled = face * factor
     is_scie_ssci = index in Q_TIERS
-    counts_lead_q = is_lead and is_scie_ssci
+    # The >=3 lead-author articles, like the >=40 points, are post-doctorate.
+    counts_lead_q = is_lead and is_scie_ssci and post_doc
     return {
         "title": title,
         "index": index,
@@ -249,6 +283,7 @@ def score_publication(pub: dict, table: dict[str, int]) -> dict:
         "scaled": scaled,
         "counts_lead_q": counts_lead_q,
         "is_scie_ssci": is_scie_ssci,
+        "is_intl_article": index in INTL_TIERS,
     }
 
 
@@ -269,10 +304,10 @@ def score(data: dict, table: dict[str, int], field: str) -> dict:
 
     total = sum(p["scaled"] for p in scored)
     post_doc_total = sum(p["scaled"] for p in scored if p["post_doc"])
-    # International SCIE/SSCI article points (Q1-Q4), counted post-doctorate only
-    # — the >=40 floor is a doktora/uzmanlık-sonrası requirement.
-    intl_scie_total = sum(
-        p["scaled"] for p in scored if p["is_scie_ssci"] and p["post_doc"]
+    # International-article points (item 1: SCIE/SSCI Q1-Q4 + AHCI + ESCI/Scopus),
+    # counted post-doctorate only — the >=40 floor is doktora/uzmanlık-sonrası.
+    intl_article_total = sum(
+        p["scaled"] for p in scored if p["is_intl_article"] and p["post_doc"]
     )
     lead_q = sum(1 for p in scored if p["counts_lead_q"])
     unscored = [p["title"] for p in scored if not p["scorable"]]
@@ -280,7 +315,7 @@ def score(data: dict, table: dict[str, int], field: str) -> dict:
     checks = {
         "total_ge_100": _check(total, MIN_TOTAL),
         "post_doc_ge_90": _check(post_doc_total, MIN_POST_DOC),
-        "intl_scie_ge_40": _check(intl_scie_total, MIN_INTL_SCIE),
+        "intl_article_ge_40": _check(intl_article_total, MIN_INTL_ARTICLE),
         "lead_q_articles_ge_3": _check(lead_q, MIN_LEAD_Q),
     }
     all_modelled_pass = all(c["pass"] for c in checks.values())
@@ -296,7 +331,7 @@ def score(data: dict, table: dict[str, int], field: str) -> dict:
     verdict_meaning = {
         "FAIL_MODELLED_CHECK": (
             "At least one modelled minimum (total / post-doctorate / "
-            "international SCIE/SSCI / lead-author Q) fails — not eligible "
+            "international-article / lead-author Q) fails — not eligible "
             "regardless of the unmodelled checks."
         ),
         "PRESCREEN_PASS_VERIFY_REMAINING": (
@@ -320,7 +355,7 @@ def score(data: dict, table: dict[str, int], field: str) -> dict:
             "all_modelled_checks_pass": all_modelled_pass,
             "total_points": round(total, 1),
             "post_doc_points": round(post_doc_total, 1),
-            "intl_scie_points": round(intl_scie_total, 1),
+            "intl_article_points": round(intl_article_total, 1),
             "lead_q_articles": lead_q,
             "unscored_count": len(unscored),
             "checks": checks,

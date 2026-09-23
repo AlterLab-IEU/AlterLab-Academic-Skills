@@ -3,9 +3,10 @@
 
 Bilgilendirilmiş Gönüllü Olur Formu (informed-consent / onam / olur formu) linter.
 Given a draft consent form (Turkish or English, plain text / Markdown), this scans
-for each element TİTCK requires (minimum contents updated 29 Mar 2023, see
+for each core element of TİTCK's BGOF minimum-content list (KAD-DD-13, see
 references/consent_minimum_contents.md) and reports PASS / MISSING per element plus
-an overall verdict.
+an overall verdict. KAD-DD-13 has further headings this linter does not test; the
+reference lists them for a manual check.
 
 IMPORTANT: a PASS means the checklist *elements are present*, not that the wording
 satisfies the committee. This is a completeness aid, never a legal sign-off — the
@@ -35,7 +36,7 @@ from typing import List
 # --- Element checklist -------------------------------------------------------
 # Each element carries Turkish + English keyword variants. An element PASSES when
 # at least one variant (ASCII-folded, lowercased substring) is found in the draft.
-# Source: references/consent_minimum_contents.md (TİTCK, updated 29 Mar 2023).
+# Source: references/consent_minimum_contents.md (TİTCK KAD-DD-13).
 
 @dataclass
 class Element:

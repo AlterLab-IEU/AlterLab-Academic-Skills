@@ -4,19 +4,19 @@
     {
       "id": "originality-check-turkish",
       "prompt": "Bir yüksek lisans öğrencim \"sanal prodüksiyonun sinemada kullanımı\" üzerine doktora yapmak istiyor. YÖK Ulusal Tez Merkezi'nde daha önce benzer bir tez yapılmış mı, danışman olarak onaylamadan önce kontrol eder misin?",
-      "expected_output": "Invokes alterlab-yok-tez in originality-check mode: builds paired Turkish AND English Detaylı Tarama queries across Konu/Tez Adı/Özet (subject_headings, thesis_title, abstract_text), constrains thesis_type to Doktora, and CRUCIALLY sets permission_status to Tümü (All) so İzinsiz (restricted, abstract-only) theses still surface as prior art. Runs them via the saidsurucu/yoktez-mcp search_yok_tez_detailed tool, merges and dedupes on Tez No, and returns a newest-first table of {Tez No, year, university, danışman, title, izin}. States explicitly that this is registry/prior-art coverage, not a plagiarism or text-similarity score.",
+      "expected_output": "Invokes alterlab-yok-tez in originality-check mode: builds paired Turkish AND English queries for the saidsurucu/yoktez-mcp search_yok_tez_detailed tool (keyword/keyword_2 joined by or for synonyms, search_field 7 = all fields, stems that survive substring matching), constrains thesis_type to 2 (Doktora) if asked, and CRUCIALLY sets permission_status to 0 (Tümü) so İzinsiz (restricted, abstract-only) theses surface and thesis_status to 0 so in-preparation (Hazırlanıyor) theses surface — the connector defaults to approved theses only. Merges and dedupes on thesis_no and returns a newest-first table of {thesis_no, year, university, danışman, title, izin, durum}. States explicitly that this is registry/prior-art coverage, not a plagiarism or text-similarity score.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Sets permission_status=Tümü so restricted (İzinsiz) theses surface, runs both a Turkish and an English query, and frames the result as registry prior-art coverage rather than an originality/plagiarism verdict." }
+        { "type": "behavior", "value": "Includes restricted (İzinsiz) and in-preparation (Hazırlanıyor) theses by setting permission_status and thesis_status to Tümü (0), runs both a Turkish and an English query, and frames the result as registry prior-art coverage rather than an originality/plagiarism verdict." }
       ]
     },
     {
       "id": "advisor-dissertation-discovery",
       "prompt": "I need every doctoral dissertation supervised by Prof. Ayşe Yılmaz at İzmir Ekonomi Üniversitesi for a department report. Can you pull them from the national thesis center?",
-      "expected_output": "Invokes alterlab-yok-tez for advisor-based discovery: queries YÖK Ulusal Tez Merkezi via search_yok_tez_detailed with advisor_name (Danışman) set to the supervisor, university_name set to the institution, and thesis_type Doktora. Handles Turkish-name diacritic variants when matching, and returns the deduplicated thesis list with Tez No, title, year, and permission status.",
+      "expected_output": "Invokes alterlab-yok-tez for advisor-based discovery: queries YÖK Ulusal Tez Merkezi via search_yok_tez_detailed with the supervisor's name in search_field 3 (Danışman) and thesis_type 2 (Doktora). Because YÖK's 2026 search no longer filters by university text, it keeps only rows whose university_info matches İzmir Ekonomi Üniversitesi (or narrows by department with the anabilim dalı tools) and confirms the advisor with get_yok_tez_thesis_details, handling Turkish-name diacritic variants. Returns the deduplicated thesis list with thesis number, title, year, and permission status.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Searches by advisor_name (danışman) + university on YÖK Ulusal Tez Merkezi and returns the supervised-thesis list, accounting for Turkish diacritic variants in the name." }
+        { "type": "behavior", "value": "Searches the Danışman field for the supervisor, filters the results to the named university locally (not via a university filter YÖK no longer offers), confirms advisors on the detail records, and accounts for Turkish diacritic variants in the name." }
       ]
     },
     {
@@ -32,10 +32,10 @@
     {
       "id": "topic-thesis-literature-discovery",
       "prompt": "I'm writing a literature review and want to find existing Turkish master's and doctoral theses on sustainable architecture. Search the national thesis repository and give me what's there.",
-      "expected_output": "Invokes alterlab-yok-tez for topic literature discovery: builds paired Turkish (e.g. 'sürdürülebilir mimari', using the root form for auto-stemming) and English ('sustainable architecture') queries across Konu/Tez Adı/Özet, runs them through search_yok_tez_detailed, and returns a deduplicated thesis list. Notes the 2000-results-per-search cap and the split-by-year/university workaround if the topic is broad.",
+      "expected_output": "Invokes alterlab-yok-tez for topic literature discovery: builds paired Turkish (e.g. 'sürdürülebilir' + 'mimar', stems that the default contains-match extends to inflected forms) and English ('sustainable architecture') queries in search_field 7 (all fields), runs them through search_yok_tez_detailed, and returns a deduplicated thesis list. Notes the ~2,000-result batch cap and the split-by-year/thesis-type/department workaround if the topic is broad.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Runs both Turkish (root-form) and English queries across subject/title/abstract fields and warns about the 2000-result-per-search cap for broad topics." }
+        { "type": "behavior", "value": "Runs both Turkish (stem-based) and English queries across all fields and warns about the ~2,000-result batch cap for broad topics." }
       ]
     },
     {

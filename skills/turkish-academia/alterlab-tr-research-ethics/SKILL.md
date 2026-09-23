@@ -1,13 +1,13 @@
 ---
 name: alterlab-tr-research-ethics
-description: "Scaffolds Turkish human-subjects etik kurul (ethics committee) applications and routes a study to the correct committee using the TR Dizin/ULAKBIM 2020 trigger rule: survey, interview, focus-group, observation, or experiment data collection requires a university Girisimsel Olmayan Etik Kurulu (non-interventional committee); drug, device, cosmetic, stem-cell, or BA-BE clinical studies also require a TITCK-approved Klinik Arastirmalar Etik Kurulu plus a separate TITCK permit. Generates bilingual (TR/EN) Etik Kurul Basvuru Formu, basvuru dilekcesi (cover petition), and Bilgilendirilmis Gonullu Olur Formu (informed consent), and lints a consent draft against the TITCK 2023 minimum-content checklist. Use when the user needs a Turkish etik kurul basvurusu, an onam/olur (consent) formu, asks which ethics committee a study requires, or needs TITCK approval guidance. For non-Turkey IRB/Belmont/GDPR use alterlab-research-ethics; for KVKK data plans use alterlab-kvkk-dmp. Part of the AlterLab Academic Skills suite."
+description: "Scaffolds Turkish human-subjects etik kurul (ethics committee) applications and routes a study to the right committee. Survey, interview, focus-group, observation, or experiment studies go to a university non-interventional committee (Girişimsel Olmayan / Bilimsel Araştırma Etik Kurulu; TR Dizin rule). Drug, medical-device, stem-cell, or tissue/cell-product trials need a TİTCK-approved Klinik Araştırmalar Etik Kurulu plus a TİTCK permit; BA/BE studies a BY/BE Etik Kurulu; cosmetics their own regulation; observational drug studies the clinical committee only (no permit). Generates bilingual (TR/EN) Etik Kurul Başvuru Formu, başvuru dilekçesi, and Bilgilendirilmiş Gönüllü Olur Formu, and lints a consent draft against TİTCK's minimum-content list. Use for a Turkish etik kurul başvurusu, an onam/olur formu, which committee a study needs, or TİTCK approval questions. For non-Turkey IRB/GDPR use alterlab-research-ethics; for KVKK data plans use alterlab-kvkk-dmp. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No API key required. Guidance + offline scaffolder; the consent linter (scripts/consent_form_check.py) runs locally via `uv run python` with the Python standard library only.
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-06-06"
+  version: "1.1.0"
+  last_updated: "2026-09-23"
   depends_on: "alterlab-research-ethics (international IRB/ethics sibling), alterlab-kvkk-dmp (data-protection plans)"
 ---
 
@@ -74,21 +74,39 @@ any study collecting data **from participants** via **survey (anket), interview
 (görüşme), focus group (odak grup), observation (gözlem), or experiment (deney)**
 needs ethics-committee approval. For non-clinical social/behavioral/education
 research this is the researcher's own university non-interventional committee.
+Two rules keep studies out of the wrong door: a study with no direct intervention
+**still needs** ethics approval (TİTCK SSS 72, citing Helsinki), and a TİTCK Klinik
+Araştırmalar Etik Kurulu **may not** review surveys, retrospective record studies,
+or other non-interventional work outside its remit (Yönetmelik Art. 61/11; TİTCK
+SSS 70). Those go to the university committee (TİTCK SSS 73: "müdahalesiz
+çalışmalar etik kurulu, bilimsel araştırmalar etik kurulu vb.").
 
-**Door 2 — TİTCK-onaylı Klinik Araştırmalar Etik Kurulu + ayrı TİTCK izni.**
-Studies on **human medicinal products, medical devices, cosmetics, stem cells,
-or bioavailability/bioequivalence (BA/BE)** require a committee **approved by
-TİTCK** *and* a **separate TİTCK start permit**. Per TİTCK, clinical research is
-conducted "TİTCK tarafından onay verilen Etik Kurulların onayı ve Sağlık
-Bakanlığının izni ile." **A decision from a committee not approved by TİTCK is
-legally void for clinical research** — verify the committee's TİTCK accreditation
-before you submit.
+**Door 2 — TİTCK-regulated research: a designated committee, usually plus a permit.**
+Per TİTCK, clinical research is conducted "TİTCK tarafından onay verilen Etik
+Kurulların onayı ve Sağlık Bakanlığının izni ile." Which committee and which permit
+depend on the product (Yönetmelik Art. 61/11–12; TİTCK Klinik Araştırmalar SSS 2, 8, 70):
+
+| Study | Ethics committee | Permit |
+|-------|------------------|--------|
+| Drug (beşeri tıbbi ürün) clinical trial or low-risk scientific study | TİTCK-approved Klinik Araştırmalar Etik Kurulu | TİTCK Klinik Araştırmalar Dairesi |
+| Observational study of a medicinal product | Klinik Araştırmalar Etik Kurulu **only** | **None** — no TİTCK permit |
+| Medical-device clinical investigation or post-market study (R.G. 8/7/2022, No. 31890) | Klinik Araştırmalar Etik Kurulu | TİTCK Tıbbi Cihaz Onaylanmış Kuruluş ve Klinik Araştırmalar Dairesi |
+| Stem cells (SHGM Genelge 2018/10) or human tissue/cell products (R.G. 4/9/2025, No. 33007) | Klinik Araştırmalar Etik Kurulu | TİTCK for tissue/cell products; confirm the stem-cell permit route |
+| Bioavailability/bioequivalence (BA/BE) | TİTCK-approved BY/BE Çalışmaları Etik Kurulu **only** | TİTCK Klinik Araştırmalar Dairesi |
+| Cosmetics tested on people (R.G. 20/9/2015, No. 29481) | A committee on TİTCK's Kozmetik Klinik Etik Kurul list | TİTCK Kozmetik Ürünler Dairesi |
+
+**Only a committee on TİTCK's approved list can approve these studies**: TİTCK calls
+BA/BE decisions from any other committee void ("geçersizdir"), and observational drug
+studies cannot be approved by any committee other than a Klinik Araştırmalar Etik
+Kurulu. Check TİTCK's "Etik Kurul Faaliyet Durumu" list before you submit.
 
 Governing instrument: *Beşeri Tıbbi Ürünlerin Klinik Araştırmaları Hakkında
 Yönetmelik* (Regulation on Clinical Research of Human Medicinal Products),
-mevzuat.gov.tr MevzuatNo 40207. See `references/etik_kurul_routing.md` for the
-full decision tree, edge cases (retrospective record review, secondary data,
-minors/vulnerable groups), and source citations.
+mevzuat.gov.tr MevzuatNo 40207 (R.G. 27/5/2023, No. 32203; amended by R.G.
+29/12/2023, No. 32414 and R.G. 5/6/2025, No. 32921). See
+`references/etik_kurul_routing.md` for the full decision tree, edge cases
+(retrospective record review, secondary data, minors/vulnerable groups), and
+source citations.
 
 > Some studies hit **both** doors (e.g. a device trial that also runs a patient
 > survey). When in doubt, the clinical track governs and you escalate to Door 2.
@@ -115,13 +133,14 @@ overrides this skeleton** where the two differ.
 
 ---
 
-## Consent-Form Minimum Content (TİTCK, updated 29 Mar 2023)
+## Consent-Form Minimum Content (TİTCK KAD-DD-13)
 
 The Bilgilendirilmiş Gönüllü Olur Formu must, at minimum, carry the elements in
-`references/consent_minimum_contents.md`. Headline items:
+`references/consent_minimum_contents.md`, taken from TİTCK's "BGOF'de Bulunması
+Gereken Asgari Bilgiler" (KAD-DD-13). Headline items:
 
-- **Date, version, and page numbering on every page** (and volunteer initials per
-  page for clinical-track forms).
+- **Date, version, and "page X of Y" numbering on every page** (and, for
+  clinical-track forms, volunteer initials on every page except the signature page).
 - **Plain-language** statement of purpose, procedures, expected duration, and
   what participation involves.
 - **Foreseeable risks/discomforts and benefits**, stated honestly.
@@ -131,6 +150,8 @@ The Bilgilendirilmiş Gönüllü Olur Formu must, at minimum, carry the elements
 - An explicit **no-coercion** statement.
 - For clinical-track studies: insurance, alternative treatments, and the
   sponsor/contact chain as the regulation requires.
+- A **signature block** with the volunteer's and the informing researcher's name,
+  signature, and date (plus witness / parent or legal guardian where needed).
 
 ### Lint a draft consent form
 
@@ -155,11 +176,16 @@ MISSING items to the user with the exact element name.
    non-interventional committee" or "tests a medical device → TİTCK clinical
    committee + permit").
 2. **Flag the clinical-track gate** when Door 2 applies: remind the user to
-   confirm the committee is TİTCK-approved and that a separate TİTCK permit is
-   required.
+   confirm the committee is on TİTCK's approved list for that study type and
+   whether a TİTCK permit is required (yes for trials and BA/BE; no for
+   observational drug studies).
 3. **Scaffold the dossier** from `references/dossier_templates.md`, filled with
    the study's specifics; keep Turkish as the primary language with an English
-   gloss.
+   gloss. If generative AI (ÜYZ) is used anywhere in the study, the application must
+   say so: YÖK's *Üretken Yapay Zekâ Kullanımına Dair Etik Rehber* (Mayıs 2024) asks
+   for the tool, its version, and when and at which stage it is used, and states that
+   AI must not stand in for real participants ("Gerçek katılımcılar yerine ÜYZ
+   kullanılması doğru değildir").
 4. **Build & lint the consent form** against the TİTCK checklist; run
    `scripts/consent_form_check.py` and surface MISSING elements.
 5. **Hand off** the data-protection half to `alterlab-kvkk-dmp` and (if funded /
@@ -173,14 +199,17 @@ MISSING items to the user with the exact element name.
 
 ## Self-Check Before Reporting
 
-- Did I name the **specific committee type** (non-interventional vs TİTCK
-  clinical) and the trigger that put the study there?
+- Did I name the **specific committee type** (non-interventional, Klinik
+  Araştırmalar, BY/BE, or cosmetics) and the trigger that put the study there, and
+  did I say whether a TİTCK permit is needed (not for observational drug studies)?
 - For any clinical-track study, did I flag the **TİTCK-approval + separate permit**
   requirement and the "non-approved committee = legally void" rule?
 - Did I run the consent linter and report **MISSING** elements by name, not just a
   pass/fail?
 - Did I route data-protection to `alterlab-kvkk-dmp` rather than improvising KVKK
   advice here?
+- If the study uses generative AI, does the dossier state the tool, version, stage,
+  and purpose (YÖK ÜYZ Etik Rehberi, 2024)?
 - Did I state that institutional forms override the skeleton and that figures/rules
   must be verified against current sources?
 
@@ -197,9 +226,10 @@ MISSING items to the user with the exact element name.
 
 ### Primary sources
 
-- TİTCK — Klinik Araştırmalar. https://www.titck.gov.tr/faaliyetalanlari/ilac/klinik-arastirmalar
-- *Beşeri Tıbbi Ürünlerin Klinik Araştırmaları Hakkında Yönetmelik* — mevzuat.gov.tr MevzuatNo 40207 (R.G. 27/5/2023, No. 32203).
-- TİTCK informed-consent minimum contents, updated 29 Mar 2023.
-- TR Dizin (TÜBİTAK ULAKBİM) research-and-publication-ethics criteria — ethics-committee approval mandatory for participant data collection in publications from 2020. https://trdizin.gov.tr/
+- TİTCK — Klinik Araştırmalar, incl. the SSS (FAQ) and approved-committee lists. https://www.titck.gov.tr/faaliyetalanlari/ilac/klinik-arastirmalar
+- *Beşeri Tıbbi Ürünlerin Klinik Araştırmaları Hakkında Yönetmelik* — mevzuat.gov.tr MevzuatNo 40207 (R.G. 27/5/2023, No. 32203; amended R.G. 29/12/2023, No. 32414 and R.G. 5/6/2025, No. 32921).
+- TİTCK KAD-DD-13, "BGOF'de Bulunması Gereken Asgari Bilgiler" (informed-consent minimum contents), linked from the TİTCK clinical-research page.
+- YÖK, *Yükseköğretim Kurumları Bilimsel Araştırma ve Yayın Faaliyetlerinde Üretken Yapay Zekâ Kullanımına Dair Etik Rehber* (Mayıs 2024).
+- TR Dizin (TÜBİTAK ULAKBİM) research-and-publication-ethics criteria — ethics-committee approval mandatory for participant data collection in publications from 2020; the article must give the committee name, date, and decision number in the method section and on the first or last page. https://trdizin.gov.tr/kriterler/
 
 Part of the AlterLab Academic Skills suite.

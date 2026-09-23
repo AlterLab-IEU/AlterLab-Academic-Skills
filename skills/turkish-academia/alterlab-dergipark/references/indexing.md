@@ -14,7 +14,7 @@ quality or status.
 | Role | Journal **hosting** platform (OJS-based) | National **citation index** |
 | URL | `https://dergipark.org.tr` | `https://trdizin.gov.tr` / search at `https://search.trdizin.gov.tr` |
 | Entry bar | Open hosting; **no quality gate** | **Separate application** + evaluation each period |
-| Scale (2024, as reported in prior research) | ~2,537 journals, 728k+ articles | ~1,741 journals |
+| Scale | 3,000+ journals, 800k+ articles (DergiPark home page, 2026-09) | ~1,741 journals (2024 figure, not re-checked) |
 | Implication | Being on DergiPark says **nothing** about quality or indexing | Indexing gates career mechanics (see below) |
 
 **Hosting on DergiPark does NOT imply TR Dizin indexing.** A journal can be on

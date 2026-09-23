@@ -11,14 +11,14 @@ JSON API and normalizes Turkish characters (İ/ı, Ş/ş, Ğ/ğ, Ç/ç, Ö/ö, �
 fuzzy matching, so we depend on it instead of hand-rolling brittle requests.
 
 Subcommands:
-  universities                 list all universities ({universiteAdi, universiteId})
+  universities                 list all universities ({universite_id, universite_adi})
   search   [filters]           search programs (SearchFilters)
   program  --kod KILAVUZKODU   fetch one program's multi-year statistics
 
 Run keyless via uv (no global install):
   uv run --with yokatlas-py python yokatlas_lookup.py universities
   uv run --with yokatlas-py python yokatlas_lookup.py search \
-      --puan-turu SAY --universite "boğaziçi" --program "bilgisayar" --size 20
+      --puan-turu SAY --universite "boğaziçi" --program "bilgisayar mühendisliği" --size 20
   uv run --with yokatlas-py python yokatlas_lookup.py program --kod 102210277
 
 Output: a JSON envelope on stdout —
@@ -63,14 +63,21 @@ def _fail(operation: str, error: str, hint: str) -> int:
     return 1
 
 
-def _ok(operation: str, results: Any) -> int:
-    count = len(results) if isinstance(results, list) else (0 if results is None else 1)
-    json.dump(
-        {"tool": TOOL, "operation": operation, "count": count, "results": results},
-        sys.stdout,
-        ensure_ascii=False,
-        indent=2,
-    )
+def _ok(operation: str, results: Any, note: str | None = None) -> int:
+    envelope: dict[str, Any] = {"tool": TOOL, "operation": operation}
+    if isinstance(results, dict) and isinstance(results.get("content"), list):
+        # A SearchPage: count the programs on this page, not the page object.
+        envelope["count"] = len(results["content"])
+        envelope["total_elements"] = results.get("total_elements")
+        envelope["data_year"] = results.get("yil")
+    elif isinstance(results, list):
+        envelope["count"] = len(results)
+    else:
+        envelope["count"] = 0 if results is None else 1
+    if note:
+        envelope["note"] = note
+    envelope["results"] = results
+    json.dump(envelope, sys.stdout, ensure_ascii=False, indent=2)
     sys.stdout.write("\n")
     return 0
 
@@ -177,7 +184,17 @@ def cmd_search(args: argparse.Namespace) -> int:
             f"YÖK Atlas search failed: {exc}",
             f"Verify filters and connectivity to {ATLAS_URL}; ensure yokatlas-py >=0.6.0.",
         )
-    return _ok(op, _jsonable(page))
+    result = _jsonable(page)
+    note = None
+    if isinstance(result, dict) and not result.get("content") and args.program:
+        note = (
+            "No programs matched. --program is resolved to ONE YÖK Atlas program group "
+            "(birim_grup_adi): a fragment such as 'bilgisayar' silently picks the first "
+            "group containing it ('Bilgisayar Bilimleri'), not 'Bilgisayar Mühendisliği'. "
+            "Retry with the full group name; list groups with "
+            "yokatlas_py.list_program_groups() (yokatlas-py >= 0.7.0)."
+        )
+    return _ok(op, result, note)
 
 
 def cmd_program(args: argparse.Namespace) -> int:
@@ -217,7 +234,7 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("search", help="search programs with SearchFilters")
     s.add_argument("--puan-turu", choices=PUAN_TURU, help="score type")
     s.add_argument("--universite", help="university name (fuzzy, Turkish-aware)")
-    s.add_argument("--program", help="program name (fuzzy)")
+    s.add_argument("--program", help="program-group name, e.g. 'bilgisayar mühendisliği'")
     s.add_argument("--il", help="province (il) name")
     s.add_argument("--universite-turu", choices=UNIVERSITE_TURU, help="DEVLET or VAKIF")
     s.add_argument("--min-basari-sirasi", type=int, help="lower bound of success rank")

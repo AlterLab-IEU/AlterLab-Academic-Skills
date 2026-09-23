@@ -41,35 +41,40 @@ co-author's factor is `0.5 / (N − 1)`.
 ## Lead author — başlıca yazar
 
 A publication counts toward the **≥ 3 lead-author Q-article** minimum only when
-both hold:
+all three hold:
 
-1. The journal index tier is one of **Q1, Q2, Q3, Q4** (SCIE/SSCI
-   quartile-ranked). **Q4 counts** — for Sağlık Bilimleri the ≥3 başlıca-yazar
-   articles may be in any of Q1–Q4 (verified against the live ÜAK Sağlık
-   criteria, 2025 March term: "SCIE/SSCI kapsamındaki dergilerden (Q1, Q2, Q3
-   veya Q4) … en az 3 makalede başlıca yazar"). AHCI, ESCI and TR Dizin articles
-   do **not** qualify for *this* minimum, even though they still earn points
-   toward the 100/90 totals.
-2. The candidate is the **başlıca yazar (lead author)** — defined by ÜAK as the
-   first author, the corresponding author, or the sole supervising (advisor)
-   author of a student-derived article.
+1. The journal index tier is one of **Q1, Q2, Q3, Q4** (item 1a, SCIE/SSCI
+   quartile-ranked). **Q4 counts.** AHCI, ESCI/Scopus and TR Dizin articles do
+   **not** qualify for *this* minimum, even though they still earn points.
+2. The candidate is the **başlıca yazar (lead author)**. The Sağlık TABLO 10
+   definition covers (a) a single-author article, (b) the first-listed author,
+   and (c) the advisor on an article written with their own graduate
+   student(s) — a second advisor is not başlıca yazar. Corresponding
+   authorship alone does **not** qualify in Sağlık.
+3. The article is **post-doctorate** (published after the doktora/uzmanlık).
 
-> **The SCIE/SSCI ≥40-point minimum IS now checked (scorer v2.0.0).** The live
-> Sağlık criteria pair the "≥3 başlıca-yazar articles" rule with a **≥40 points
-> from SCIE/SSCI (Q1–Q4) articles** floor. This is now modelled as the
-> `intl_scie_ge_40` check (post-doctorate Q1–Q4 article points), alongside the
-> ≥3 lead-author count. However, **additional field-specific minimums are still
-> NOT modelled** — a TR Dizin national-article requirement, a citation (atıf)
-> minimum, a scientific-meeting minimum, an education minimum, and per-category
-> point caps (see `uak_criteria.md` → *Mandatory minimums — NOT modelled*). So
-> passing all four modelled checks is **necessary but not sufficient**: the
-> scorer returns `PRESCREEN_PASS_VERIFY_REMAINING`, never "ELIGIBLE". Re-verify
-> the full TABLO 10 checklist against the live ÜAK source for the candidate's
-> term.
+### The item-1 ≥ 40 floor (scorer v2.1.0)
 
-The candidate declares `is_lead` per item. The scorer **trusts** that flag but
-echoes it in the per-item output so a reviewer can audit each claim against the
-actual byline. The scorer does not adjudicate authorship disputes.
+TABLO 10 item 1 ("Uluslararası Makale") says: *"doktora veya … uzmanlık
+ünvanının alınmasından sonra, a bendinden en az üç makalede başlıca yazar
+olmak kaydıyla en az 40 puan almak zorunludur."* The 40 points are counted over
+the **whole of item 1** — 1a SCIE/SSCI Q1–Q4, 1b AHCI, 1c ESCI/Scopus — from
+post-doctorate work; only the three başlıca-yazar articles are restricted to
+1a. The scorer models this as `intl_article_ge_40` (post-doctorate `Q1`–`Q4`,
+`AHCI`, `ESCI`, `Scopus` points). Versions before 2.1.0 counted only Q1–Q4
+toward the 40, which understated candidates with AHCI/ESCI/Scopus work.
+
+Additional minimums are still **not** modelled — the TR Dizin national-article
+requirement, the thesis-derived-publication requirement, the citation (atıf),
+scientific-meeting and education minimums, and the per-item caps (see
+`uak_criteria.md` → *Mandatory minimums — NOT modelled*). So passing all four
+modelled checks is **necessary but not sufficient**: the scorer returns
+`PRESCREEN_PASS_VERIFY_REMAINING`, never "ELIGIBLE".
+
+The candidate declares `is_lead` per item. The scorer treats a single-author
+item as lead automatically, otherwise **trusts** the flag, and echoes it in the
+per-item output so a reviewer can audit each claim against the actual byline.
+The scorer does not adjudicate authorship disputes.
 
 ## Post-doctorate points
 
@@ -96,4 +101,13 @@ If an item's `index` is not in the field table (or is empty/unknown), the scorer
 does **not** guess a value. It marks the item `scorable: false`, contributes
 **0** points from it, and lists it under `unscored` so the user resolves the tier
 (via `alterlab-trdizin` for TR Dizin status, or the candidate's JCR records for a
-quartile) and re-runs. Guessing a tier would fabricate points — never do it.
+quartile) and re-runs. Guessing a tier would fabricate points, so the scorer
+leaves the gap visible instead.
+
+## Thesis-derived articles
+
+An article produced from the candidate's own graduate thesis is scored only
+under TABLO 10 item 3 (SCIE/SSCI/AHCI 20, ESCI/Scopus 10, TR Dizin 8, …; item
+capped at 20) and never also under items 1–2; item-3 points do not count toward
+the 90 post-doctorate points. Leave such articles out of the scorer's input and
+handle item 3 by hand.

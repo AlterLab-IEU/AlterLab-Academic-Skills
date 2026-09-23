@@ -1,102 +1,128 @@
 # TÜBİTAK Açık Bilim Politikası — Binding Mandates
 
-> **Last verified: 2026-06-06.** TÜBİTAK revises this policy. Re-confirm every
-> figure and rule against the current policy PDF before a researcher relies on it.
+> **Last verified: 2026-09-23** against the policy PDF and the ARDEB *Veri Yönetim Planı
+> Bilgi Notu*. TÜBİTAK can revise the policy; re-confirm before a researcher relies on it.
 
 ## Source documents
 
 - **TÜBİTAK Açık Bilim Politikası** (Open Science Policy) PDF —
   `https://tubitak.gov.tr/sites/default/files/tubitak_acik_bilim_politikasi_190316.pdf`
-  (in force **14 March 2019**).
+  (accepted by the TÜBİTAK Board on 14 March 2019; in force from that date, piloted and then
+  extended to all programmes within a year — İlke 11).
+- **ARDEB Veri Yönetim Planı** template and note —
+  `https://tubitak.gov.tr/sites/default/files/2024-04/veri_yonetim_plani.docx`,
+  `https://tubitak.gov.tr/sites/default/files/2024-04/veri_yonetim_plani_bilgi_notu.pdf`
 - **ULAKBİM — Türkiye Açık Arşivi / Aperta** —
   `https://ulakbim.tubitak.gov.tr/en/turkey-open-archive-aperta/`
 - Aperta repository: `https://aperta.ulakbim.gov.tr/`
 
-The mandates below are the binding rules verified from the Open Science Policy.
-Anything not stated here is intentionally omitted — do not fabricate principle
-numbers, exact embargo start-points, or monetary figures.
+Scope (policy "Kapsam"): publications (peer-reviewed articles etc.) and research data produced
+wholly or partly with **TÜBİTAK support** — which the policy defines broadly as scholarships,
+awards, incentives and grants — plus the publications and data of TÜBİTAK's own researchers.
 
-## Mandate 1 — Green-road deposit of the accepted manuscript, on acceptance
+The policy has eleven numbered principles (İlkeler). The ones that bind researchers are below,
+with the policy's own wording.
 
-TÜBİTAK-funded research outputs must be deposited via the **green road** (self-
-archiving). The object to deposit is the **kabul edilmiş makale** (accepted
-manuscript / author-accepted version), and the trigger is **acceptance**, not
-publication. Deposit goes to **Aperta** (or another compliant open archive).
+## İlke 1 — Green-road deposit in Aperta, on acceptance
 
-Glossary: *yeşil yol* = green road / self-archiving; *kabul edilmiş makale* =
-author-accepted manuscript (post-peer-review, pre-typesetting version).
+> "TÜBİTAK Yeşil Yol Açık Erişim ile tümüyle ya da kısmen TÜBİTAK desteğiyle üretilmiş hakemli
+> makalelerin yayına kabul edilmiş sürümüne ait bir kopyanın TÜBİTAK Açık Arşivinde
+> depolanmasını zorunlu kılar. (Depolama, materyal yayına kabul edilir edilmez yapılmalı ve
+> depolama tarihinden itibaren tüm üst veriler tamamıyla açık taranabilir ve makine tarafından
+> okunabilir olmalıdır.)"
 
-## Mandate 2 — Open-access embargo ceilings (field-dependent)
+- **What:** the **kabul edilmiş makale** (accepted manuscript / author-accepted version) of every
+  peer-reviewed article produced wholly or partly with TÜBİTAK support.
+- **Where:** the **TÜBİTAK Açık Arşivi — Aperta** (the policy names it; another repository does
+  not satisfy this principle).
+- **When:** as soon as the article is accepted — not after publication.
+- **Metadata:** fully open, crawlable and machine-readable from the deposit date, even while the
+  full text is embargoed.
 
-The deposited output must become **openly accessible** within a maximum embargo
-period that depends on the discipline:
+## İlke 2 — When the full text must become open (field-dependent)
 
-| Field bucket (Turkish) | English | Embargo ceiling |
-|------------------------|---------|-----------------|
-| Fen ve mühendislik bilimleri | STEM (science & engineering) | **≤ 6 months** |
-| Sosyal ve beşeri bilimler | SSH (social sciences & humanities) | **≤ 12 months** |
+> "TÜBİTAK, yayınların tam metinlerinin mümkünse yayına kabul edilir edilmez, değilse Fen
+> Bilimleri, Teknoloji, Mühendislik ve Matematik alanları için yayınlanmasından sonra 6 aydan
+> geç olmamak üzere, Sosyal ve Beşeri Bilimler için de yayınlanmasından sonra 12 aydan geç
+> olmamak üzere, erişime açılmasını zorunlu kılar."
 
-These are **upper bounds**. Immediate open access on deposit is always permitted
-and is the preferred outcome. The embargo is the *latest* the work may become
-open, not a required waiting period.
+| Field bucket (policy wording) | Latest open-access date |
+|-------------------------------|-------------------------|
+| Fen Bilimleri, Teknoloji, Mühendislik ve Matematik (STEM) | **6 months after publication** |
+| Sosyal ve Beşeri Bilimler (SSH) | **12 months after publication** |
 
-> The exact clock start (acceptance date vs publication date) is governed by the
-> policy text and any publisher agreement. If a user needs the precise start
-> point, direct them to the policy PDF and the publisher's self-archiving terms;
-> do not assert it from memory.
+- The preferred outcome is open access **on acceptance**; the 6/12 months are ceilings.
+- The clock starts at **publication** (*yayınlanmasından sonra*), while the deposit itself is due
+  at acceptance (İlke 1). Set the Aperta embargo end date from the publication date.
+- A publisher embargo longer than the ceiling conflicts with the policy — flag it before the
+  author signs the copyright form.
 
-## Mandate 3 — Veri Yönetim Planı (VYP) at application time
+## İlke 3 — Gold OA, copyright retention, open licences (recommended)
 
-A **Veri Yönetim Planı / VYP** (data management plan) covering the **full data
-lifecycle** is prepared **at grant-application time**. It describes what data the
-project will create/collect, formats and standards, storage and preservation,
-sharing/access, and the legal/ethical constraints on the data.
+TÜBİTAK recommends publishing in open-access venues (altın yol) where there is no conflict of
+interest, encourages authors to keep their copyright and transfer only the rights needed for
+publication, and recommends licensing for the widest access (a widely used open-access licence
+model may be chosen).
 
-The VYP is the funder-facing data plan. For projects handling personal data it
-should be developed alongside the **KVKK** compliance analysis — see
-`alterlab-kvkk-dmp` for the lawful-basis and anonymisation decision that feeds the
-"why is data open/closed" part of the VYP.
+## İlke 4 — Data management plan at application time
 
-## Mandate 4 — İlke-6: documenting closed data
+> "TÜBİTAK, … yayınlara ilişkin araştırma verilerine açık erişim için, destek başvuru sürecinde
+> araştırma verileri yönetim planının hazırlanmasını önerir."
 
-Where research data **cannot be opened**, the reason must be **documented**. Valid
-grounds include:
+The policy itself *recommends* a VYP; for **ARDEB programmes** the *VYP Bilgi Notu* makes it a
+submission item: the Veri Yönetim Planı "diğer başvuru belgeleriniz ile birlikte Proje Başvuru
+Sistemi'ne yüklenmesi gerekmektedir." The note accepts that not every section can be answered at
+the start — some answers can be completed later, and the long-term preservation section can be
+updated in progress and final reports. The official template is the five-question form mapped in
+`vyp_template.md`. The note also recommends sharing project data in Aperta.
 
-- **KVKK** (Law 6698) — personal data or special-category (health/genetic/
-  biometric) data that cannot be shared even after the project ends, where
-  anonymisation is not achievable without destroying research value;
-- **commercial/IP confidentiality**;
-- **security/national-interest** restrictions;
-- an **etik kurul** (ethics committee) restriction on data sharing.
+## İlke 5 — Open access to publications and their data (recommended)
 
-The compliant pattern in Aperta is a **restricted (embargoed) record with open
-metadata**: the dataset stays discoverable and citable (DOI + metadata) while
-access to the files is gated. The documented justification (the "İlke-6
-justification") is carried into both the VYP and the project's final report.
+TÜBİTAK recommends open access for publications and the research data behind them.
 
-Bridge to KVKK: a dataset claimed as "anonymised" only qualifies for open release
-if it is **genuinely non-re-identifiable**. Re-identifiable pseudonymised data is
-still personal data under KVKK and must be treated as closed/restricted. Get this
-determination from `alterlab-kvkk-dmp`, not from this skill.
+## İlke 6 — Documenting data that cannot be open
 
-## Mandate 5 — Report compliance in the final report
+> "TÜBİTAK, veriler yasal, mahremiyet veya diğer kaygılar nedeniyle tamamen veya belirli bir
+> süre açık olamazsa (örneğin kişisel veya hassas veriler, gizlilik, ulusal güvenlik, sınai
+> mülkiyet haklarına ilişkin tescil süreleri vb.) bu durumun belgelenmesini ve açıkça ifade
+> edilmesini zorunlu kılar."
 
-Open-access and data-deposition compliance is **reported in the project sonuç
-raporu** (final report). The report should, per output, state the Aperta DOI, the
-access mode (open/restricted), the open-access date, and — for any closed data —
-reference the İlke-6 justification.
+Valid grounds named or covered by the policy: personal or sensitive data (**KVKK**, Law 6698 —
+health, genetic, biometric data included), confidentiality, national security, industrial-property
+registration periods (e.g. a pending patent), and other legal or privacy concerns such as an
+**etik kurul** restriction. Closure can be total or **temporary** ("belirli bir süre").
+
+The compliant Aperta pattern is a **restricted (or embargoed) record with open metadata**: the
+dataset stays discoverable and citable (DOI + metadata) while file access is gated. The written
+justification is carried into both the VYP and the final report.
+
+Bridge to KVKK: a dataset claimed as "anonymised" only qualifies for open release if it is
+**genuinely non-re-identifiable**. Re-identifiable pseudonymised data is still personal data under
+KVKK and must stay closed/restricted. Get this determination from `alterlab-kvkk-dmp`.
+
+## İlke 7 and 8 — Templates, legality, citation
+
+TÜBİTAK prepares VYP templates and guides (İlke 7). Archiving electronic copies of scholarly work
+with the author's permission is lawful, and anyone reusing material from the Archive must cite
+the source (İlke 8).
+
+## İlke 9 — Compliance is reported and has consequences
+
+> "TÜBİTAK, hak sahibinin araştırma performansını ve gelecekteki destek başvurularını
+> değerlendirirken bu politikaya uygun davranma durumunu göz önüne alacaktır. Hak sahibi,
+> TÜBİTAK Açık Bilim Politikasına uyacağını kabul eder ve proje sonuç raporunda politikaya
+> uygunluğunu raporlar."
+
+- The grantee reports policy compliance in the project **sonuç raporu** (final report): per
+  output, the Aperta DOI, access mode, open-access date, and — for closed data — the İlke-6
+  justification.
+- Non-compliance can count against the grantee's future TÜBİTAK applications.
 
 ## What is deliberately NOT encoded here
 
-To avoid fabrication, this file does **not** assert:
-
-- specific numbered principle labels beyond "İlke-6 = closed-data documentation"
-  as named in the project plan;
-- any TRY budget cap, application deadline, or program-specific rule (those belong
-  to `alterlab-tubitak-proposal`);
-- a fixed maximum embargo for data (the 6/12-month ceilings above apply to the
-  publication open-access requirement);
-- exact clause numbers of the policy PDF.
-
-If a researcher needs any of the above, instruct them to read the current policy
-PDF directly and confirm before submission.
+- Any TRY budget cap, application deadline or program-specific rule (those belong to
+  `alterlab-tubitak-proposal`).
+- A fixed maximum embargo for **data**: the 6/12-month ceilings in İlke 2 apply to publication
+  full texts; data closure follows İlke 6 (documented, possibly temporary).
+- Publisher-specific self-archiving terms — check the journal's policy (e.g. via Sherpa
+  Romeo) against the İlke 2 ceiling.
