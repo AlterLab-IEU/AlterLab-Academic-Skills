@@ -1,5 +1,5 @@
 {
-  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
   "name": "alterlab-academic-skills",
   "description": "239 Claude skills for academic research, organized by domain",
   "version": "2.6.1",
@@ -9,11 +9,7 @@
   },
   "metadata": {
     "description": "239 Claude skills for academic research, organized by domain",
-    "version": "2.6.1",
-    "author": {
-      "name": "AlterLab @ Izmir University of Economics",
-      "url": "https://github.com/AlterLab-IEU"
-    }
+    "version": "2.6.1"
   },
   "plugins": [
     {
@@ -180,13 +176,77 @@
         "./alterlab-research-pipeline/commands"
       ],
       "agents": [
-        "./alterlab-deep-research/agents",
-        "./alterlab-paper-reviewer/agents",
-        "./alterlab-paper-writer/agents",
-        "./alterlab-research-pipeline/agents"
+        "./alterlab-deep-research/agents/bibliography_agent.md",
+        "./alterlab-deep-research/agents/devils_advocate_agent.md",
+        "./alterlab-deep-research/agents/editor_in_chief_agent.md",
+        "./alterlab-deep-research/agents/ethics_review_agent.md",
+        "./alterlab-deep-research/agents/meta_analysis_agent.md",
+        "./alterlab-deep-research/agents/monitoring_agent.md",
+        "./alterlab-deep-research/agents/report_compiler_agent.md",
+        "./alterlab-deep-research/agents/research_architect_agent.md",
+        "./alterlab-deep-research/agents/research_question_agent.md",
+        "./alterlab-deep-research/agents/risk_of_bias_agent.md",
+        "./alterlab-deep-research/agents/socratic_mentor_agent.md",
+        "./alterlab-deep-research/agents/source_verification_agent.md",
+        "./alterlab-deep-research/agents/synthesis_agent.md",
+        "./alterlab-paper-reviewer/agents/devils_advocate_reviewer_agent.md",
+        "./alterlab-paper-reviewer/agents/domain_reviewer_agent.md",
+        "./alterlab-paper-reviewer/agents/editorial_synthesizer_agent.md",
+        "./alterlab-paper-reviewer/agents/eic_agent.md",
+        "./alterlab-paper-reviewer/agents/field_analyst_agent.md",
+        "./alterlab-paper-reviewer/agents/methodology_reviewer_agent.md",
+        "./alterlab-paper-reviewer/agents/perspective_reviewer_agent.md",
+        "./alterlab-paper-writer/agents/abstract_bilingual_agent.md",
+        "./alterlab-paper-writer/agents/argument_builder_agent.md",
+        "./alterlab-paper-writer/agents/citation_compliance_agent.md",
+        "./alterlab-paper-writer/agents/draft_writer_agent.md",
+        "./alterlab-paper-writer/agents/formatter_agent.md",
+        "./alterlab-paper-writer/agents/intake_agent.md",
+        "./alterlab-paper-writer/agents/literature_strategist_agent.md",
+        "./alterlab-paper-writer/agents/peer_reviewer_agent.md",
+        "./alterlab-paper-writer/agents/revision_coach_agent.md",
+        "./alterlab-paper-writer/agents/socratic_mentor_agent.md",
+        "./alterlab-paper-writer/agents/structure_architect_agent.md",
+        "./alterlab-paper-writer/agents/visualization_agent.md",
+        "./alterlab-research-pipeline/agents/integrity_verification_agent.md",
+        "./alterlab-research-pipeline/agents/pipeline_orchestrator_agent.md",
+        "./alterlab-research-pipeline/agents/state_tracker_agent.md"
       ],
-      "hooks": "./hooks/hooks.json",
-      "mcpServers": "./.mcp.json"
+      "mcpServers": "./.mcp.json",
+      "userConfig": {
+        "ncbi_api_key": {
+          "type": "string",
+          "title": "NCBI API key (optional)",
+          "description": "Raises the PubMed E-utilities rate limit. Create one under Account settings at https://www.ncbi.nlm.nih.gov/account/",
+          "sensitive": true,
+          "default": ""
+        },
+        "ncbi_email": {
+          "type": "string",
+          "title": "Contact email for scholarly APIs",
+          "description": "Sent as the polite-pool contact to NCBI E-utilities (PubMed), OpenAlex, and Crossref. Recommended; leave blank to skip.",
+          "default": ""
+        },
+        "zotero_api_key": {
+          "type": "string",
+          "title": "Zotero API key (optional)",
+          "description": "Read access key from https://www.zotero.org/settings/keys",
+          "sensitive": true,
+          "default": ""
+        },
+        "zotero_library_id": {
+          "type": "string",
+          "title": "Zotero library ID (optional)",
+          "description": "Numeric user or group library ID, shown at https://www.zotero.org/settings/keys",
+          "default": ""
+        },
+        "zotero_library_type": {
+          "type": "string",
+          "title": "Zotero library type",
+          "description": "Either 'user' (personal library) or 'group'.",
+          "default": "user"
+        }
+      }
     },
     {
       "name": "alterlab-data-science",
@@ -295,7 +355,41 @@
         "./alterlab-uspto",
         "./alterlab-zinc-db"
       ],
-      "mcpServers": "./.mcp.json"
+      "mcpServers": "./.mcp.json",
+      "userConfig": {
+        "ncbi_api_key": {
+          "type": "string",
+          "title": "NCBI API key (optional)",
+          "description": "Raises the PubMed E-utilities rate limit. Create one under Account settings at https://www.ncbi.nlm.nih.gov/account/",
+          "sensitive": true,
+          "default": ""
+        },
+        "ncbi_email": {
+          "type": "string",
+          "title": "Contact email for scholarly APIs",
+          "description": "Sent as the polite-pool contact to NCBI E-utilities (PubMed), OpenAlex, and Crossref. Recommended; leave blank to skip.",
+          "default": ""
+        },
+        "zotero_api_key": {
+          "type": "string",
+          "title": "Zotero API key (optional)",
+          "description": "Read access key from https://www.zotero.org/settings/keys",
+          "sensitive": true,
+          "default": ""
+        },
+        "zotero_library_id": {
+          "type": "string",
+          "title": "Zotero library ID (optional)",
+          "description": "Numeric user or group library ID, shown at https://www.zotero.org/settings/keys",
+          "default": ""
+        },
+        "zotero_library_type": {
+          "type": "string",
+          "title": "Zotero library type",
+          "description": "Either 'user' (personal library) or 'group'.",
+          "default": "user"
+        }
+      }
     },
     {
       "name": "alterlab-document-tools",
@@ -536,26 +630,7 @@
         "sampling",
         "power-analysis"
       ],
-      "strict": false,
-      "skills": [
-        "./alterlab-abm-mesa",
-        "./alterlab-causal-inference",
-        "./alterlab-meta-analysis",
-        "./alterlab-missing-data",
-        "./alterlab-multilevel-models",
-        "./alterlab-qca",
-        "./alterlab-qualitative-analysis",
-        "./alterlab-sem-psychometrics",
-        "./alterlab-sna",
-        "./alterlab-ssci-design-gate",
-        "./alterlab-ssci-inference-gate",
-        "./alterlab-ssci-measurement-gate",
-        "./alterlab-ssci-orchestrator",
-        "./alterlab-ssci-reflexivity-gate",
-        "./alterlab-ssci-sampling-gate",
-        "./alterlab-survey-analysis",
-        "./alterlab-text-as-data"
-      ]
+      "strict": true
     },
     {
       "name": "alterlab-turkish-academia",
