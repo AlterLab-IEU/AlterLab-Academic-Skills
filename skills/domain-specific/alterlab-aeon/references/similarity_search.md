@@ -1,187 +1,149 @@
 # Similarity Search
 
-Aeon provides tools for finding similar patterns within and across time series, including subsequence search, motif discovery, and approximate nearest neighbors.
+Aeon provides tools for finding similar patterns within and across time series:
+subsequence search (a query window against every position of a collection) and
+whole-series search (a query series against every series in a collection), plus an
+approximate index for large collections.
 
-## Subsequence Nearest Neighbors (SNN)
+API verified against aeon 1.6.0. The 0.x/early-1.x classes `MassSNN`, `DummySNN`,
+`StompMotif`, and `RandomProjectionIndexANN` (and the `aeon.similarity_search.series` /
+`.collection` modules) no longer exist — use the estimators below.
 
-Find most similar subsequences within a time series.
+## Common Contract
 
-### MASS Algorithm
-- `MassSNN` - Mueen's Algorithm for Similarity Search
-  - Fast normalized cross-correlation for similarity
-  - Computes distance profile efficiently
-  - **Use when**: Need exact nearest neighbor distances, large series
+All searchers are **fitted on a collection** shaped `(n_cases, n_channels, n_timepoints)`
+and queried with `predict(X, k=...)`, where `X` is one series shaped
+`(n_channels, n_timepoints)`. `predict` returns `(indexes, distances)`:
 
-### STOMP-Based Motif Discovery
-- `StompMotif` - Discovers recurring patterns (motifs)
-  - Finds top-k most similar subsequence pairs
-  - Based on matrix profile computation
-  - **Use when**: Want to discover repeated patterns
+- **Subsequence search**: `indexes` has shape `(n_matches, 2)` — `(case, timestamp)` pairs.
+- **Whole-series search**: `indexes` has shape `(n_matches,)` — case indices.
 
-### Brute Force Baseline
-- `DummySNN` - Exhaustive distance computation
-  - Computes all pairwise distances
-  - **Use when**: Small series, need exact baseline
+Extra search options (`dist_threshold`, `inverse_distance`, `allow_trivial_matches`,
+`exclusion_factor`, `X_index`) are passed as keyword arguments to `predict`; which ones
+apply differs per estimator, so check its docstring.
 
-## Collection-Level Search
+## Subsequence Search (`aeon.similarity_search.subsequence`)
 
-Find similar time series across collections.
-
-### Approximate Nearest Neighbors (ANN)
-- `RandomProjectionIndexANN` - Locality-sensitive hashing
-  - Uses random projections with cosine similarity
-  - Builds index for fast approximate search
-  - **Use when**: Large collection, speed more important than exactness
-
-## Quick Start: Motif Discovery
+- `MASS(length, normalize=False)` - Mueen's Algorithm for Similarity Search
+  - FFT-based distance profile, O(n log n) per series
+  - **Use when**: Exact Euclidean nearest-neighbour windows in long series
+- `NaiveSubsequenceSearch(length, normalize=False, distance="squared", distance_params=None)`
+  - Brute-force distance profile with any aeon distance
+  - **Use when**: Small data, exact baseline, or a non-Euclidean distance
 
 ```python
 import numpy as np
-from aeon.similarity_search.series.motifs import StompMotif
+from aeon.similarity_search.subsequence import MASS
 
-# Create time series with repeated patterns
-pattern = np.sin(np.linspace(0, 2*np.pi, 50))
+# A series with the same sine pattern embedded twice
+rng = np.random.default_rng(0)
+pattern = np.sin(np.linspace(0, 2 * np.pi, 50))
 y = np.concatenate([
-    pattern + np.random.normal(0, 0.1, 50),
-    np.random.normal(0, 1, 100),
-    pattern + np.random.normal(0, 0.1, 50),
-    np.random.normal(0, 1, 100)
+    pattern + rng.normal(0, 0.1, 50),
+    rng.normal(0, 1, 100),
+    pattern + rng.normal(0, 0.1, 50),
+    rng.normal(0, 1, 100),
 ])
 
-# Find top-3 motifs
-motif_finder = StompMotif(window_size=50, k=3)
-motifs = motif_finder.fit_predict(y)
+X = y.reshape(1, 1, -1)          # collection of one univariate series
+query = pattern.reshape(1, -1)   # (n_channels, length); length must equal `length`
 
-# motifs contains indices of motif occurrences
-for i, (idx1, idx2) in enumerate(motifs):
-    print(f"Motif {i+1} at positions {idx1} and {idx2}")
+searcher = MASS(length=50, normalize=True).fit(X)
+indexes, distances = searcher.predict(query, k=3)
+# indexes -> [[0, 0], [0, 150], ...]: both embedded occurrences are found first
 ```
 
-## Quick Start: Subsequence Search
+## Whole-Series Search (`aeon.similarity_search.whole_series`)
+
+- `NaiveSeriesSearch(normalize=False, distance="squared", distance_params=None)`
+  - Exact k-NN over whole series with any aeon distance (e.g. `"dtw"`)
+- `SimHashIndexANN(n_tables=20, n_bits_per_table=8, random_state=None, normalize=True)`
+  - Locality-sensitive hashing index; approximate, fast on large collections
+
+```python
+from aeon.datasets import load_classification
+from aeon.similarity_search.whole_series import NaiveSeriesSearch, SimHashIndexANN
+
+X_train, _ = load_classification("GunPoint", split="train")
+
+exact = NaiveSeriesSearch(distance="dtw").fit(X_train)
+idx, dist = exact.predict(X_train[0], k=3)        # idx[0] == 0 (the query itself)
+
+ann = SimHashIndexANN(random_state=0).fit(X_train)
+idx_ann, dist_ann = ann.predict(X_train[0], k=5)  # approximate neighbours
+```
+
+## Matrix Profile, Motifs, and Discords
+
+aeon 1.6 has no dedicated motif-discovery estimator. Compute the matrix profile with
+`MatrixProfileTransformer` (a thin wrapper over `stumpy.stump`; install `stumpy`):
 
 ```python
 import numpy as np
-from aeon.similarity_search.series.neighbors import MassSNN
+from aeon.transformations.series import MatrixProfileTransformer
 
-# Time series to search within
-y = np.sin(np.linspace(0, 20, 500))
+mp = MatrixProfileTransformer(window_length=50).fit_transform(y)
 
-# Query subsequence
-query = np.sin(np.linspace(0, 2, 50))
-
-# Find nearest subsequences
-searcher = MassSNN()
-distances = searcher.fit_transform(y, query)
-
-# Find best match
-best_match_idx = np.argmin(distances)
-print(f"Best match at index {best_match_idx}")
+motif_start = int(np.argmin(mp))     # window with the closest non-trivial match
+discord_start = int(np.argmax(mp))   # most isolated window (anomaly candidate)
 ```
 
-## Quick Start: Approximate NN on Collections
+- **Distance profile**: distances from one query to all subsequences
+- **Matrix profile**: each subsequence's distance to its nearest non-trivial neighbour
+- **Motif**: pair of subsequences with minimum matrix-profile distance
+- **Discord**: subsequence with maximum matrix-profile distance (anomaly)
 
-```python
-from aeon.similarity_search.collection.neighbors import RandomProjectionIndexANN
-from aeon.datasets import load_classification
-
-# Load time series collection
-X_train, _ = load_classification("GunPoint", split="train")
-
-# Build index
-ann = RandomProjectionIndexANN(n_projections=8, n_bits=4)
-ann.fit(X_train)
-
-# Find approximate nearest neighbors
-query = X_train[0]
-neighbors, distances = ann.kneighbors(query, k=5)
-```
-
-## Matrix Profile
-
-The matrix profile is a fundamental data structure for many similarity search tasks:
-
-- **Distance Profile**: Distances from a query to all subsequences
-- **Matrix Profile**: Minimum distance for each subsequence to any other
-- **Motif**: Pair of subsequences with minimum distance
-- **Discord**: Subsequence with maximum minimum distance (anomaly)
-
-```python
-from aeon.similarity_search.series.motifs import StompMotif
-
-# Compute matrix profile and find motifs/discords
-mp = StompMotif(window_size=50)
-mp.fit(y)
-
-# Access matrix profile
-profile = mp.matrix_profile_
-profile_indices = mp.matrix_profile_index_
-
-# Find discords (anomalies)
-discord_idx = np.argmax(profile)
-```
+For discord-based anomaly scoring as an estimator, use `STOMP` from
+`aeon.anomaly_detection.series.distance_based` (see `anomaly_detection.md`). For
+full motif sets (top-k motifs with all their occurrences), `stumpy.motifs` is the
+reference implementation.
 
 ## Algorithm Selection
 
-- **Exact subsequence search**: MassSNN
-- **Motif discovery**: StompMotif
-- **Anomaly detection**: Matrix profile (see anomaly_detection.md)
-- **Fast approximate search**: RandomProjectionIndexANN
-- **Small data**: DummySNN for exact results
+- **Exact subsequence search**: `MASS`
+- **Subsequence search with DTW or other elastic distance**: `NaiveSubsequenceSearch`
+- **Exact whole-series k-NN**: `NaiveSeriesSearch`
+- **Fast approximate whole-series search**: `SimHashIndexANN`
+- **Motifs / discords**: `MatrixProfileTransformer` (+ `stumpy`), or `STOMP` for discords
 
 ## Use Cases
 
 ### Pattern Matching
-Find where a pattern occurs in a long series:
+Find where a template occurs in a long recording:
 
 ```python
-# Find heartbeat pattern in ECG data
-searcher = MassSNN()
-distances = searcher.fit_transform(ecg_data, heartbeat_pattern)
-occurrences = np.where(distances < threshold)[0]
-```
-
-### Motif Discovery
-Identify recurring patterns:
-
-```python
-# Find repeated behavioral patterns
-motif_finder = StompMotif(window_size=100, k=5)
-motifs = motif_finder.fit_predict(activity_data)
+searcher = MASS(length=len(heartbeat_template), normalize=True)
+searcher.fit(ecg.reshape(1, 1, -1))
+indexes, distances = searcher.predict(heartbeat_template.reshape(1, -1), k=20)
+onsets = indexes[distances < threshold][:, 1]
 ```
 
 ### Time Series Retrieval
-Find similar time series in database:
+Find the most similar series in a database:
 
 ```python
-# Build searchable index
-ann = RandomProjectionIndexANN()
-ann.fit(time_series_database)
-
-# Query for similar series
-neighbors = ann.kneighbors(query_series, k=10)
+index = SimHashIndexANN(random_state=0).fit(time_series_database)
+neighbours, distances = index.predict(query_series, k=10)
 ```
 
 ## Best Practices
 
 1. **Window size**: Critical parameter for subsequence methods
-   - Too small: Captures noise
-   - Too large: Misses fine-grained patterns
-   - Rule of thumb: 10-20% of series length
+   - Too small: captures noise
+   - Too large: misses fine-grained patterns
+   - Rule of thumb: roughly one period of the pattern you care about
 
-2. **Normalization**: Most methods assume z-normalized subsequences
-   - Handles amplitude variations
-   - Focus on shape similarity
+2. **Normalization**: Set `normalize=True` for shape matching regardless of amplitude
+   and offset; leave it off when absolute level matters.
 
-3. **Distance metrics**: Different metrics for different needs
-   - Euclidean: Fast, shape-based
-   - DTW: Handles temporal warping
-   - Cosine: Scale-invariant
+3. **Distance metrics**: Euclidean (MASS) is fastest; DTW (`NaiveSubsequenceSearch`
+   / `NaiveSeriesSearch` with `distance="dtw"`) tolerates temporal warping at much
+   higher cost.
 
-4. **Exclusion zone**: For motif discovery, exclude trivial matches
-   - Typically set to 0.5-1.0 × window_size
-   - Prevents finding overlapping occurrences
+4. **Trivial matches**: when the query comes from the fitted data, its own position
+   (and overlapping neighbours) will rank first — use the estimator's
+   `exclusion_factor` / `allow_trivial_matches` options or discard overlapping hits.
 
 5. **Performance**:
-   - MASS is O(n log n) vs O(n²) brute force
-   - ANN trades accuracy for speed
-   - GPU acceleration available for some methods
+   - MASS is O(n log n) per series vs O(n·m) for the naive search
+   - The ANN index trades exactness for speed on large collections

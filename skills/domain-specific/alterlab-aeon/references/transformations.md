@@ -85,12 +85,12 @@ Data preparation and normalization:
 
 Advanced analysis methods:
 
-- `MatrixProfile` - Computes distance profiles for pattern discovery
+- `MatrixProfileTransformer` - Matrix profile for motif/discord discovery (needs `stumpy`)
 - `DWTTransformer` - Discrete Wavelet Transform
 - `AutocorrelationFunctionTransformer` - ACF computation
 - `Dobin` - Distance-based Outlier BasIs using Neighbors
 - `SignatureTransformer` - Path signature methods
-- `PLATransformer` - Piecewise Linear Approximation
+- `PLASeriesTransformer` - Piecewise Linear Approximation
 
 ### Class Imbalance Handling
 
@@ -117,6 +117,9 @@ Transform individual time series (e.g., for preprocessing in forecasting).
 
 ### Smoothing and Filtering
 
+Import the smoothers from `aeon.transformations.series.smoothing` (`BKFilter` is in
+`aeon.transformations.series`):
+
 - `ExponentialSmoothing` - Exponentially weighted moving average
 - `MovingAverage` - Simple or weighted moving average
 - `SavitzkyGolayFilter` - Polynomial smoothing
@@ -129,7 +132,7 @@ Transform individual time series (e.g., for preprocessing in forecasting).
 ### Dimensionality Reduction
 
 - `PCASeriesTransformer` - Principal component analysis
-- `PlASeriesTransformer` - Piecewise Linear Approximation
+- `PLASeriesTransformer` - Piecewise Linear Approximation
 
 ### Transformations
 
@@ -181,7 +184,7 @@ X_transformed = pipeline.fit_transform(X_train)
 ## Quick Start: Series Smoothing
 
 ```python
-from aeon.transformations.series import MovingAverage
+from aeon.transformations.series.smoothing import MovingAverage
 
 # Smooth individual time series
 smoother = MovingAverage(window_size=5)

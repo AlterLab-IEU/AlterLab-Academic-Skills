@@ -22,7 +22,8 @@ VQE finds the minimum eigenvalue of a Hamiltonian using a hybrid quantum-classic
 
 **Implementation:**
 ```python
-from qiskit import QuantumCircuit, transpile
+from qiskit.circuit.library import efficient_su2
+from qiskit.transpiler import generate_preset_pass_manager
 from qiskit_ibm_runtime import QiskitRuntimeService, EstimatorV2 as Estimator, Session
 from qiskit.quantum_info import SparsePauliOp
 from scipy.optimize import minimize
@@ -38,23 +39,20 @@ def vqe_algorithm(hamiltonian, ansatz, backend, initial_params):
         backend: Quantum backend
         initial_params: Initial parameter values
     """
+    # Transpile ONCE to the backend's ISA, then lay the observable out on the same
+    # physical qubits — an un-mapped observable has the wrong width for an ISA circuit.
+    pm = generate_preset_pass_manager(backend=backend, optimization_level=3)
+    ansatz_isa = pm.run(ansatz)
+    hamiltonian_isa = hamiltonian.apply_layout(ansatz_isa.layout)
 
+    # Session mode needs a paid plan; on the Open Plan use Batch(backend=...) or mode=backend.
     with Session(backend=backend) as session:
-        estimator = Estimator(session=session)
+        estimator = Estimator(mode=session)
 
         def cost_function(params):
-            # Bind parameters to circuit
-            bound_circuit = ansatz.assign_parameters(params)
-
-            # Transpile for hardware
-            qc_isa = transpile(bound_circuit, backend=backend, optimization_level=3)
-
-            # Compute expectation value
-            job = estimator.run([(qc_isa, hamiltonian)])
-            result = job.result()
-            energy = result[0].data.evs
-
-            return energy
+            # Parameters are bound inside the PUB — no re-transpilation per iteration
+            job = estimator.run([(ansatz_isa, hamiltonian_isa, params)])
+            return float(job.result()[0].data.evs)
 
         # Classical optimization
         result = minimize(
@@ -66,20 +64,22 @@ def vqe_algorithm(hamiltonian, ansatz, backend, initial_params):
 
     return result.fun, result.x
 
-# Example: H2 molecule Hamiltonian
+# Toy 4-qubit Hamiltonian (illustrative coefficients, not a real molecule —
+# build molecular Hamiltonians with Qiskit Nature, below)
 hamiltonian = SparsePauliOp(
     ["IIII", "ZZII", "IIZZ", "ZZZI", "IZZI"],
     coeffs=[-0.8, 0.17, 0.17, -0.24, 0.17]
 )
 
-# Create ansatz
-qc = QuantumCircuit(4)
-# ... define ansatz structure ...
+# Hardware-efficient ansatz (function form; the EfficientSU2 class is deprecated)
+ansatz = efficient_su2(hamiltonian.num_qubits, reps=1)
 
 service = QiskitRuntimeService()
-backend = service.backend("ibm_brisbane")
+backend = service.least_busy(operational=True, simulator=False)
 
-energy, params = vqe_algorithm(hamiltonian, qc, backend, np.random.rand(10))
+energy, params = vqe_algorithm(
+    hamiltonian, ansatz, backend, np.random.rand(ansatz.num_parameters)
+)
 print(f"Ground state energy: {energy}")
 ```
 
@@ -223,9 +223,10 @@ qc_grover = grover_algorithm(marked, iterations)
 
 ### Molecular Ground State Energy
 
-**Install Qiskit Nature:**
+**Install Qiskit Nature** (community-maintained; 0.8.x supports Qiskit 1.4–2.x). `PySCFDriver`
+needs `pyscf` itself (Linux/macOS); `qiskit-nature-pyscf` is only an optional solver plugin:
 ```bash
-uv pip install qiskit-nature qiskit-nature-pyscf
+uv pip install qiskit-nature pyscf
 ```
 
 **Example: H2 Molecule**
@@ -300,11 +301,17 @@ ham_bk = bk_mapper.map(problem.hamiltonian.second_q_op())
 ### Excited States
 
 ```python
-from qiskit_nature.second_q.algorithms import QEOM
+from qiskit.primitives import StatevectorEstimator
+from qiskit_algorithms import VQE
+from qiskit_algorithms.optimizers import SLSQP
+from qiskit_nature.second_q.algorithms import GroundStateEigensolver, QEOM
 
-# Quantum Equation of Motion for excited states
-qeom = QEOM(estimator, ansatz, 'sd')  # Singles and doubles excitations
+# qEOM wraps a ground-state solver: QEOM(ground_state_solver, estimator, excitations)
+estimator = StatevectorEstimator()
+gse = GroundStateEigensolver(mapper, VQE(estimator, ansatz, SLSQP()))
+qeom = QEOM(gse, estimator, "sd")  # singles and doubles excitations
 excited_states = qeom.solve(problem)
+print(excited_states.total_energies)  # H2/STO-3G: about -1.137, -0.525, -0.163 Ha
 ```
 
 ## Machine Learning
@@ -321,16 +328,18 @@ uv pip install qiskit-machine-learning
 **Example: Classification with Quantum Kernel**
 ```python
 from qiskit_machine_learning.kernels import FidelityQuantumKernel
-from qiskit_algorithms.state_fidelities import ComputeUncompute
-from qiskit.circuit.library import ZZFeatureMap
+from qiskit_machine_learning.state_fidelities import ComputeUncompute
+from qiskit.circuit.library import zz_feature_map
+from qiskit.primitives import StatevectorSampler
 from sklearn.svm import SVC
 import numpy as np
 
-# Create feature map
+# Create feature map (function form; the ZZFeatureMap class is deprecated since Qiskit 2.1)
 num_features = 2
-feature_map = ZZFeatureMap(feature_dimension=num_features, reps=2)
+feature_map = zz_feature_map(feature_dimension=num_features, reps=2)
 
-# Create quantum kernel
+# Create quantum kernel (swap in a Runtime SamplerV2 for hardware)
+sampler = StatevectorSampler()
 fidelity = ComputeUncompute(sampler=sampler)
 qkernel = FidelityQuantumKernel(fidelity=fidelity, feature_map=feature_map)
 
@@ -355,18 +364,19 @@ predictions = svc.predict(kernel_test)
 
 ```python
 from qiskit_machine_learning.algorithms import VQC
-from qiskit.circuit.library import RealAmplitudes
+from qiskit_machine_learning.optimizers import COBYLA
+from qiskit.circuit.library import real_amplitudes, zz_feature_map
 
 # Create feature map and ansatz
-feature_map = ZZFeatureMap(2)
-ansatz = RealAmplitudes(2, reps=1)
+feature_map = zz_feature_map(2)
+ansatz = real_amplitudes(2, reps=1)
 
-# Create VQC
+# Create VQC (optimizer is an Optimizer object, not a string)
 vqc = VQC(
     sampler=sampler,
     feature_map=feature_map,
     ansatz=ansatz,
-    optimizer='COBYLA'
+    optimizer=COBYLA(maxiter=100)
 )
 
 # Train
@@ -406,7 +416,8 @@ qnn = SamplerQNN(
     weight_params=params
 )
 
-# Use with PyTorch or TensorFlow for training
+# Train with PyTorch via qiskit_machine_learning.connectors.TorchConnector
+# (TensorFlow is not supported)
 ```
 
 ## Algorithm Libraries
@@ -420,11 +431,14 @@ uv pip install qiskit-algorithms
 ```
 
 **Available Algorithms:**
-- Amplitude Estimation
-- Phase Estimation
-- Shor's Algorithm
-- Quantum Fourier Transform
-- HHL (Linear systems)
+- Amplitude estimation (canonical, iterative, maximum-likelihood, faster)
+- Phase estimation (standard, iterative, Hamiltonian)
+- Grover / amplitude amplification
+- Minimum-eigensolvers and eigensolvers (VQE, SamplingVQE, AdaptVQE, QAOA, VQD)
+- Time evolution (TrotterQRTE, VarQRTE/VarQITE, PVQD)
+
+Shor's algorithm and HHL are no longer shipped; the QFT is a circuit-library gate
+(`qiskit.circuit.library.QFTGate`), not an algorithm class.
 
 **Example: Quantum Phase Estimation**
 
@@ -459,32 +473,29 @@ uv pip install qiskit-optimization
 - Linear programming
 - Constraint satisfaction
 
-**Example: Portfolio Optimization**
+**Example: MaxCut with QAOA**
+
+qiskit-optimization ≥ 0.7 ships its own `QAOA`/`SamplingVQE` and optimizers, so it no
+longer needs `qiskit-algorithms`. Portfolio optimization lived in `qiskit-finance`,
+which has had no release since early 2024 — formulate such problems directly as a
+`QuadraticProgram` instead.
+
 ```python
-from qiskit_optimization.applications import PortfolioOptimization
+import networkx as nx
+from qiskit.primitives import StatevectorSampler
+from qiskit_optimization.applications import Maxcut
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
-from qiskit_algorithms import QAOA
+from qiskit_optimization.minimum_eigensolvers import QAOA
+from qiskit_optimization.optimizers import COBYLA
 
-# Define portfolio problem
-returns = [0.1, 0.15, 0.12]  # Expected returns
-covariances = [[1, 0.5, 0.3], [0.5, 1, 0.4], [0.3, 0.4, 1]]
-budget = 2  # Number of assets to select
+# Define the problem and convert it to a quadratic program
+graph = nx.Graph([(0, 1), (1, 2), (2, 3), (3, 0)])
+qp = Maxcut(graph).to_quadratic_program()
 
-portfolio = PortfolioOptimization(
-    expected_returns=returns,
-    covariances=covariances,
-    budget=budget
-)
-
-# Convert to quadratic program
-qp = portfolio.to_quadratic_program()
-
-# Solve with QAOA
-qaoa = QAOA(sampler=sampler, optimizer='COBYLA', reps=2)
-optimizer = MinimumEigenOptimizer(qaoa)
-
-result = optimizer.solve(qp)
-print(f"Optimal portfolio: {result.x}")
+# Solve with QAOA (optimizer is an object, not a string)
+qaoa = QAOA(sampler=StatevectorSampler(), optimizer=COBYLA(maxiter=100), reps=2)
+result = MinimumEigenOptimizer(qaoa).solve(qp)
+print(f"Cut: {result.x}, value: {result.fval}")   # e.g. [1. 0. 1. 0.], 4.0
 ```
 
 ## Physics Simulations
@@ -602,10 +613,10 @@ with open(f'checkpoint_{iteration}.json', 'w') as f:
 ## Resources and Further Reading
 
 **Official Documentation:**
-- [Qiskit Textbook](https://qiskit.org/learn)
-- [Qiskit Nature Documentation](https://qiskit.org/ecosystem/nature)
-- [Qiskit Machine Learning Documentation](https://qiskit.org/ecosystem/machine-learning)
-- [Qiskit Optimization Documentation](https://qiskit.org/ecosystem/optimization)
+- [Qiskit Textbook](https://quantum.cloud.ibm.com/learning)
+- [Qiskit Nature Documentation](https://qiskit-community.github.io/qiskit-nature/)
+- [Qiskit Machine Learning Documentation](https://qiskit-community.github.io/qiskit-machine-learning/)
+- [Qiskit Optimization Documentation](https://qiskit-community.github.io/qiskit-optimization/)
 
 **Research Papers:**
 - VQE: Peruzzo et al., Nature Communications (2014)

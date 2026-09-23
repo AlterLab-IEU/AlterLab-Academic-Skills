@@ -157,15 +157,17 @@ def measure_probabilities():
 ### Samples and Counts
 
 ```python
-@qml.qnode(dev)
-def measure_samples(shots=1000):
+# Sample-based measurements need finite shots, set on the QNode
+# (a `shots=` function argument or device-level shots are deprecated patterns)
+@qml.qnode(dev, shots=1000)
+def measure_samples():
     qml.Hadamard(wires=0)
 
     # Raw samples
     return qml.sample(qml.PauliZ(0))
 
-@qml.qnode(dev)
-def measure_counts(shots=1000):
+@qml.qnode(dev, shots=1000)
+def measure_counts():
     qml.Hadamard(wires=0)
     qml.CNOT(wires=[0, 1])
 

@@ -81,7 +81,7 @@ problem = driver.run()
 
 # Map to qubit Hamiltonian
 mapper = JordanWignerMapper()
-hamiltonian = mapper.map(problem.hamiltonian)
+hamiltonian = mapper.map(problem.hamiltonian.second_q_op())
 ```
 
 **Optimization: QAOA Circuit**
@@ -171,7 +171,7 @@ Run ISA circuits on quantum hardware using primitives.
 from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2 as Sampler
 
 service = QiskitRuntimeService()
-backend = service.backend("ibm_brisbane")
+backend = service.least_busy(operational=True, simulator=False)
 
 # Transpile first
 qc_isa = transpile(qc, backend=backend, optimization_level=3)
@@ -194,7 +194,7 @@ from qiskit_ibm_runtime import EstimatorV2 as Estimator
 from qiskit.quantum_info import SparsePauliOp
 
 service = QiskitRuntimeService()
-backend = service.backend("ibm_brisbane")
+backend = service.least_busy(operational=True, simulator=False)
 
 # Transpile
 qc_isa = transpile(qc, backend=backend, optimization_level=3)
@@ -217,7 +217,7 @@ expectation_value = result[0].data.evs
 from qiskit_ibm_runtime import Session
 
 with Session(backend=backend) as session:
-    sampler = Sampler(session=session)
+    sampler = Sampler(mode=session)
 
     # Multiple iterations
     for iteration in range(max_iterations):
@@ -236,7 +236,7 @@ with Session(backend=backend) as session:
 from qiskit_ibm_runtime import Batch
 
 with Batch(backend=backend) as batch:
-    sampler = Sampler(session=batch)
+    sampler = Sampler(mode=batch)
 
     # Submit all jobs at once
     jobs = []
@@ -392,32 +392,27 @@ def create_ansatz(num_qubits):
 
     return qc, params
 
-# Define Hamiltonian (example: H2 molecule)
+# Define Hamiltonian (toy 4-qubit example with illustrative coefficients;
+# build real molecular Hamiltonians with Qiskit Nature — see algorithms.md)
 hamiltonian = SparsePauliOp(["IIZZ", "ZZII", "XXII", "IIXX"], coeffs=[0.3, 0.3, 0.1, 0.1])
 
-# 2. OPTIMIZE: Connect and prepare
+# 2. OPTIMIZE: Connect, transpile ONCE, and map the observable onto the ISA layout
 service = QiskitRuntimeService()
-backend = service.backend("ibm_brisbane")
+backend = service.least_busy(operational=True, simulator=False)
 
 ansatz, param_names = create_ansatz(num_qubits=4)
+ansatz_isa = transpile(ansatz, backend=backend, optimization_level=3)
+hamiltonian_isa = hamiltonian.apply_layout(ansatz_isa.layout)
 
-# 3. EXECUTE: Run VQE
+# 3. EXECUTE: Run VQE (parameter values ride in the PUB; no per-iteration transpile)
 def cost_function(params):
-    # Bind parameters
-    bound_circuit = ansatz.assign_parameters({param_names[i]: params[i] for i in range(len(params))})
-
-    # Transpile
-    qc_isa = transpile(bound_circuit, backend=backend, optimization_level=3)
-
-    # Execute
-    job = estimator.run([(qc_isa, hamiltonian)])
+    job = estimator.run([(ansatz_isa, hamiltonian_isa, params)])
     result = job.result()
-    energy = result[0].data.evs
+    return float(result[0].data.evs)
 
-    return energy
-
+# Session mode needs a paid plan; on the Open Plan use Batch(backend=backend) instead.
 with Session(backend=backend) as session:
-    estimator = Estimator(session=session)
+    estimator = Estimator(mode=session)
 
     # Classical optimization loop
     initial_params = np.random.random(len(param_names)) * 2 * np.pi
@@ -503,7 +498,7 @@ result = job.result()
 qc_isa = transpile(parameterized_circuit, backend=backend)
 
 with Batch(backend=backend) as batch:
-    sampler = Sampler(session=batch)
+    sampler = Sampler(mode=batch)
     results = []
 
     for param_set in parameter_sweep:
@@ -516,7 +511,7 @@ with Batch(backend=backend) as batch:
 ```python
 # Map → (Optimize → Execute → Post-process) repeated
 with Session(backend=backend) as session:
-    estimator = Estimator(session=session)
+    estimator = Estimator(mode=session)
 
     for iteration in range(max_iter):
         qc = update_circuit(params)
@@ -532,7 +527,7 @@ with Session(backend=backend) as session:
 qc_isa = transpile(qc, backend=backend)
 
 observables = [obs1, obs2, obs3, obs4]
-jobs = [(qc_isa, obs) for obs in observables]
+jobs = [(qc_isa, obs.apply_layout(qc_isa.layout)) for obs in observables]
 
 estimator = Estimator(backend)
 result = estimator.run(jobs).result()

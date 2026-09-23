@@ -13,7 +13,7 @@
     {
       "id": "reproject-area-calc",
       "prompt": "My country boundaries are in EPSG:4326 and I'm getting nonsense when I compute polygon areas in square meters. How do I fix this in GeoPandas?",
-      "expected_output": "Invokes alterlab-geopandas: explains that area must be computed in a projected CRS, reprojects with to_crs to a metric/projected EPSG (e.g., 3857 or a regional UTM/equal-area CRS), then computes geometry.area. Reinforces the best practice of using a projected CRS for area and distance calculations.",
+      "expected_output": "Invokes alterlab-geopandas: explains that area must be computed in a projected CRS, reprojects with to_crs to an equal-area CRS (e.g., EPSG:6933 or a regional Albers/LAEA, since country-scale extents span several UTM zones) or a local UTM via estimate_utm_crs() for small regions, then computes geometry.area. Warns that Web Mercator (EPSG:3857) is not suitable because it inflates areas away from the equator.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "CRS" }

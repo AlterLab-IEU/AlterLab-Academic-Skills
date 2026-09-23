@@ -24,7 +24,7 @@
     {
       "id": "terrain-slope-aspect-dem",
       "prompt": "From a DEM GeoTIFF I need slope, aspect, and a hillshade layer for a terrain analysis. Can you derive those with numpy gradients?",
-      "expected_output": "Activates the GeoMaster skill and reads the DEM with rasterio, uses np.gradient to get dx/dy, computes slope via arctan(sqrt(dx^2+dy^2)), aspect from arctan2, and a hillshade from a sun azimuth/altitude. Produces terrain metrics suitable for further GIS/raster work.",
+      "expected_output": "Activates the GeoMaster skill and reads the DEM with rasterio, uses np.gradient scaled by the pixel size (src.res) to get dx/dy, computes slope via arctan(sqrt(dx^2+dy^2)), aspect from arctan2 as the downslope compass direction, and a hillshade from a sun azimuth/altitude (cos(zenith)cos(slope) + sin(zenith)sin(slope)cos(azimuth - aspect)). Produces terrain metrics suitable for further GIS/raster work.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "slope"},

@@ -87,7 +87,9 @@ def _rest_key() -> str:
 
 def _rest_request(url: str, data: bytes | None = None) -> dict:
     req = urllib.request.Request(url, data=data, method="POST" if data else "GET")
-    req.add_header("Authorization", _rest_key())
+    key = _rest_key()
+    # RunPod (and most job APIs) expect a bearer token; keep a pre-formatted value as-is.
+    req.add_header("Authorization", key if key.lower().startswith("bearer ") else f"Bearer {key}")
     req.add_header("Content-Type", "application/json")
     try:
         with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310 (trusted endpoint)

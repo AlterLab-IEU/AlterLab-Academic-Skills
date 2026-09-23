@@ -489,9 +489,10 @@ def mitigate_readout_errors(results, confusion_matrix):
 ```python
 import cirq_google
 
-# Get calibration data
-processor = cirq_google.get_engine().get_processor('weber')
-noise_props = processor.get_device_specification()
+# Noise properties from a bundled median calibration (no hardware access needed).
+# With a real processor's calibration, use
+# cirq_google.noise_properties_from_calibration(processor.get_current_calibration()).
+noise_props = cirq_google.engine.load_device_noise_properties("willow_pink")
 
 # Create noise model from calibration
 noise_model = cirq_google.NoiseModelFromGoogleNoiseProperties(noise_props)

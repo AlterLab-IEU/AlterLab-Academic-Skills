@@ -57,6 +57,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-pennylane" }
       ]
+    },
+    {
+      "id": "near-miss-rdkit",
+      "prompt": "I have 5,000 drug-like SMILES strings. I need Morgan fingerprints, Lipinski descriptors, and a Tanimoto similarity search against a reference inhibitor.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-rdkit. The request is small-molecule cheminformatics on SMILES (fingerprints, drug-likeness descriptors, similarity search), not crystal structures, periodic materials, phase diagrams, or Materials Project data handled by pymatgen.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-rdkit" }
+      ]
     }
   ]
 }

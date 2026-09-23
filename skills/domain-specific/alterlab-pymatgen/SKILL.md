@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: Runs locally via `uv run python`; requires the pymatgen Python package. Materials Project database queries need a free MP_API_KEY.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Pymatgen - Python Materials Genomics
@@ -32,13 +33,22 @@ Use when:
 - Setting up high-throughput computational workflows
 - Working with VASP, Gaussian, Quantum ESPRESSO, or other codes
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Small organic molecules — SMILES, fingerprints, descriptors, substructure search | `alterlab-rdkit` |
+| Running DFT / conformer searches / pKa in a managed cloud quantum-chemistry service | `alterlab-rowan` |
+| Classical molecular dynamics of proteins or ligands (OpenMM, trajectories) | `alterlab-molecular-dynamics` |
+| Variational quantum circuits for molecular ground states (VQE) | `alterlab-pennylane` |
+
 ## Quick Start
 
 ```bash
-uv pip install pymatgen           # core
-uv pip install pymatgen mp-api    # + Materials Project API access
-uv pip install pymatgen[analysis] # extended analysis tools
-uv pip install pymatgen[vis]      # visualization tools
+uv pip install pymatgen                # core (Python >= 3.11)
+uv pip install pymatgen mp-api         # + Materials Project API access
+uv pip install "pymatgen[optional]"    # extra analysis deps (phonopy, seekpath, ase, ...)
+uv pip install "pymatgen[vis]"         # VTK structure visualization
 ```
 
 ```python
@@ -127,7 +137,7 @@ Integrates with ASE, Phonopy, BoltzTraP, Atomate/Fireworks, AiiDA, Zeo++, and Op
 
 ## Troubleshooting
 
-- **Import errors**: `uv pip install pymatgen[analysis,vis]`
+- **Import errors**: `uv pip install "pymatgen[optional,vis]"` (there is no `[analysis]` extra)
 - **API key not found**: `export MP_API_KEY="your_key_here"`
 - **Structure read failures**: try explicit format, e.g. `Structure.from_file("file.txt", fmt="cif")`
 - **Symmetry analysis fails**: increase tolerance, e.g. `SpacegroupAnalyzer(struct, symprec=0.1)`
@@ -136,10 +146,15 @@ Integrates with ASE, Phonopy, BoltzTraP, Atomate/Fireworks, AiiDA, Zeo++, and Op
 
 Docs: https://pymatgen.org/ · Materials Project: https://materialsproject.org/ ·
 GitHub: https://github.com/materialsproject/pymatgen · Forum: https://matsci.org/ ·
-Example notebooks: https://matgenb.materialsvirtuallab.org/
+Example notebooks: https://github.com/materialsvirtuallab/matgenb
 
 ## Version Notes
 
-Designed for pymatgen 2024.x and later. For the Materials Project API, use the `mp-api`
-package (separate from legacy `pymatgen.ext.matproj`). Requirements: Python ≥ 3.10,
-pymatgen ≥ 2023.x, mp-api (for Materials Project access).
+Designed for pymatgen 2024.x and later (current 2026.9.x as of 2026-09; calendar
+versioning). Since 2026 the `pymatgen` distribution is a thin package on top of
+`pymatgen-core`; imports (`pymatgen.core`, `pymatgen.io.vasp`, …) are unchanged. For the
+Materials Project API use the `mp-api` package (current 0.46.x; `from mp_api.client import
+MPRester`) rather than the legacy `pymatgen.ext.matproj` client. Requirements: Python ≥ 3.11,
+pymatgen ≥ 2024.x, mp-api for Materials Project access.
+
+Part of the AlterLab Academic Skills suite.

@@ -79,7 +79,6 @@ Extract features from random or supervised intervals:
 Identify discriminative subsequences (shapelets):
 
 - `ShapeletTransformClassifier` - Discovers and uses discriminative shapelets
-- `LearningShapeletClassifier` - Learns shapelets via gradient descent
 - `SASTClassifier` - Scalable approximate shapelet transform
 - `RDSTClassifier` - Random dilated shapelet transform
 
@@ -116,7 +115,7 @@ Handle ordered class labels:
 Build custom pipelines and ensembles:
 
 - `ClassifierPipeline` - Chain transformers with classifiers
-- `WeightedEnsembleClassifier` - Weighted combination of classifiers
+- `ClassifierEnsemble` - Weighted/majority-vote combination of classifiers
 - `SklearnClassifierWrapper` - Adapt sklearn classifiers for time series
 
 ## Quick Start

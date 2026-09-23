@@ -76,15 +76,18 @@ params.init_fields.type = "in_script"
 sim = Simul(params)
 
 # Get coordinate arrays
-X, Y = sim.oper.get_XY_loc()
+X, Y = sim.oper.XX, sim.oper.YY  # local physical grid
 
 # Define velocity fields (Taylor-Green vortex)
-vx = np.sin(X) * np.cos(Y)
-vy = -np.cos(X) * np.sin(Y)
+ux = np.sin(X) * np.cos(Y)
+uy = -np.cos(X) * np.sin(Y)
+rot = 2 * np.sin(X) * np.sin(Y)   # vorticity d(uy)/dx - d(ux)/dy
 
 # Set the physical state, then compute the spectral state FROM it.
 # Note the direction: statespect_from_statephys (spectral from physical).
-sim.state.init_statephys_from(vx=vx, vy=vy)
+# ns2d keys are ux, uy, rot; the solver's spectral state is rot_fft, which
+# statespect_from_statephys computes from `rot` — so rot must be set too
+sim.state.init_statephys_from(ux=ux, uy=uy, rot=rot)
 sim.state.statespect_from_statephys()
 
 # Run simulation
@@ -105,7 +108,7 @@ params.init_fields.type = "in_script"
 sim = Simul(params)
 
 # Define dense layer
-X, Y = sim.oper.get_XY_loc()
+X, Y = sim.oper.XX, sim.oper.YY  # local physical grid
 b = sim.state.state_phys.get_var("b")  # buoyancy field
 
 # Gaussian density anomaly
@@ -323,7 +326,7 @@ Display fields during simulation:
 ```python
 params.output.ONLINE_PLOT_OK = True
 params.output.periods_plot.phys_fields = 1.0  # plot every 1.0 time units
-params.output.phys_fields.field_to_plot = "vorticity"
+params.output.phys_fields.field_to_plot = "rot"
 
 sim = Simul(params)
 sim.time_stepping.start()
@@ -353,7 +356,7 @@ sim.output.phys_fields.save()
 ```python
 params = Simul.create_default_params()
 params.init_fields.type = "from_file"
-params.init_fields.from_file.path = "simulation_dir/state_phys_t5.000.h5"
+params.init_fields.from_file.path = "simulation_dir/state_phys_t005.000.nc"
 params.time_stepping.t_end = 20.0  # extend simulation
 
 sim = Simul(params)
@@ -391,7 +394,7 @@ os.environ["FLUIDSIM_TYPE_FFT3D"] = "fft3d.with_fftw"
 ```python
 # Use adaptive time stepping
 params.time_stepping.USE_CFL = True
-params.time_stepping.CFL = 0.8  # slightly larger CFL for faster runs
+params.time_stepping.cfl_coef = 0.8  # slightly larger CFL for faster runs
 
 # Use efficient time scheme
 params.time_stepping.type_time_scheme = "RK4"  # 4th order Runge-Kutta

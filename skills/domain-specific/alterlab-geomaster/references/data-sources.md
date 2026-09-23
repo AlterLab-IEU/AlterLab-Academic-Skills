@@ -13,20 +13,25 @@ Comprehensive catalog of satellite imagery, vector data, and APIs for geospatial
 | **Sentinel-3** | 300m-1km | Global | https://dataspace.copernicus.eu/ |
 | **Sentinel-5P** | Various | Global | https://dataspace.copernicus.eu/ |
 
+The Copernicus Open Access Hub (DHuS) closed in 2023, and `sentinelsat` (last release
+2023) does not work with its successor, the Copernicus Data Space Ecosystem (CDSE).
+Search CDSE through its STAC API; downloading the `s3://eodata/...` assets needs CDSE
+credentials (S3 keys or an OAuth token). For anonymous COG access use Earth Search or
+Planetary Computer (below).
+
 ```python
-# Access via Sentinelsat
-from sentinelsat import SentinelAPI, read_geojson, geojson_to_wkt
+import pystac_client
 
-api = SentinelAPI('user', 'password', 'https://dataspace.copernicus.eu/dhus')
+catalog = pystac_client.Client.open("https://stac.dataspace.copernicus.eu/v1/")
 
-# Search
-products = api.query(geojson_to_wkt(aoi_geojson),
-                     date=('20230101', '20231231'),
-                     platformname='Sentinel-2',
-                     cloudcoverpercentage=(0, 20))
-
-# Download
-api.download_all(products)
+search = catalog.search(
+    collections=["sentinel-2-l2a"],
+    bbox=[12.4, 41.8, 12.6, 42.0],
+    datetime="2023-01-01/2023-12-31",
+    query={"eo:cloud_cover": {"lt": 20}},
+)
+items = search.item_collection()
+print(len(items), list(items[0].assets)[:6])   # e.g. 'B02_10m', 'B03_10m', ...
 ```
 
 ### Landsat (USGS/NASA)
@@ -125,7 +130,7 @@ gdf = ox.geocode_to_gdf('San Francisco, CA')
 G = ox.graph_from_place('San Francisco, CA', network_type='drive')
 
 # Download building footprints
-buildings = ox.geometries_from_place('San Francisco, CA', tags={'building': True})
+buildings = ox.features_from_place('San Francisco, CA', tags={'building': True})  # OSMnx 2.x
 
 # Via Overpass API
 import requests
@@ -230,7 +235,7 @@ search = catalog.search(
     query={"eo:cloud_cover": {"lt": 20}}
 )
 
-items = search.get_all_items()
+items = search.item_collection()   # get_all_items() is deprecated
 ```
 
 ### Planetary Computer
@@ -244,61 +249,58 @@ catalog = pystac_client.Client.open(
     modifier=planetary_computer.sign_inplace
 )
 
-# Search and sign items
-items = catalog.search(...)
-signed_items = [planetary_computer.sign(item) for item in items]
+# Search; the sign_inplace modifier already signs every returned item
+items = catalog.search(...).item_collection()
 ```
 
 ## Download Scripts
 
 ### Automated Download Script
 
+Anonymous, cloud-optimized Sentinel-2 L2A COGs via Earth Search (AWS Open Data) —
+no account needed, and only the pixels you read are transferred:
+
 ```python
-from sentinelsat import SentinelAPI
+import numpy as np
+import pystac_client
 import rasterio
-from rasterio.warp import calculate_default_transform, reproject, Resampling
-import os
+from rasterio.windows import from_bounds
+from rasterio.warp import transform_bounds
 
-def download_and_process_sentinel2(aoi, date_range, output_dir):
-    """
-    Download and process Sentinel-2 imagery.
-    """
-    # Initialize API
-    api = SentinelAPI('user', 'password', 'https://dataspace.copernicus.eu/dhus')
-
-    # Search
-    products = api.query(
-        aoi,
-        date=date_range,
-        platformname='Sentinel-2',
-        processinglevel='Level-2A',
-        cloudcoverpercentage=(0, 20)
+def download_sentinel2_rgb(bbox, date_range, output_dir, max_cloud=20, max_items=5):
+    """Clip RGB (+NIR) from Sentinel-2 L2A COGs to a lon/lat bbox and save GeoTIFFs."""
+    catalog = pystac_client.Client.open("https://earth-search.aws.element84.com/v1")
+    search = catalog.search(
+        collections=["sentinel-2-l2a"],
+        bbox=bbox,
+        datetime=date_range,                       # e.g. "2023-06-01/2023-06-30"
+        query={"eo:cloud_cover": {"lt": max_cloud}},
+        max_items=max_items,
     )
 
-    # Download
-    api.download_all(products, directory_path=output_dir)
-
-    # Process each product
-    for product in products:
-        product_path = f"{output_dir}/{product['identifier']}.SAFE"
-        processed = process_sentinel2_product(product_path)
-        save_rgb_composite(processed, f"{output_dir}/{product['identifier']}_rgb.tif")
-
-def process_sentinel2_product(product_path):
-    """Process Sentinel-2 L2A product."""
-    # Find 10m bands (B02, B03, B04, B08)
-    bands = {}
-    for band_id in ['B02', 'B03', 'B04', 'B08']:
-        band_path = find_band_file(product_path, band_id, resolution='10m')
-        with rasterio.open(band_path) as src:
-            bands[band_id] = src.read(1)
-            profile = src.profile
-
-    # Stack bands
-    stacked = np.stack([bands['B04'], bands['B03'], bands['B02']])  # RGB
-
-    return stacked, profile
+    for item in search.items():
+        bands, profile = [], None
+        for key in ["red", "green", "blue", "nir"]:   # Earth Search asset keys (B04, B03, B02, B08)
+            with rasterio.open(item.assets[key].href) as src:
+                window = from_bounds(*transform_bounds("EPSG:4326", src.crs, *bbox),
+                                     transform=src.transform)
+                bands.append(src.read(1, window=window))
+                if profile is None:
+                    profile = src.profile | {
+                        "count": 4,
+                        "height": bands[-1].shape[0],
+                        "width": bands[-1].shape[1],
+                        "transform": src.window_transform(window),
+                        "driver": "GTiff",
+                    }
+        with rasterio.open(f"{output_dir}/{item.id}_rgbn.tif", "w", **profile) as dst:
+            dst.write(np.stack(bands))
 ```
+
+For the full `.SAFE` products, use the Copernicus Data Space Ecosystem (account
+required): search with the CDSE STAC API shown above and download the `s3://eodata/...`
+assets with your CDSE S3 credentials. The retired DHuS / `sentinelsat` workflow no
+longer works.
 
 ## Data Quality Assessment
 

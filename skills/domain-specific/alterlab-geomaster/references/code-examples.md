@@ -448,7 +448,7 @@ from shapely.geometry import box
 bbox = box(minx, miny, maxx, maxy)
 
 # 84. Convex hull
-hull = points.geometry.unary_union.convex_hull
+hull = points.geometry.union_all().convex_hull
 
 # 85. Voronoi diagram
 from scipy.spatial import Voronoi

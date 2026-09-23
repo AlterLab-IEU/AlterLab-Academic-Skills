@@ -230,8 +230,8 @@ def vqe(hamiltonian, ansatz, n_qubits):
 from pennylane import qchem
 
 symbols = ['H', 'H']
-coords = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.74])
-H, n_qubits = qchem.molecular_hamiltonian(symbols, coords)
+coords = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.74])   # Å
+H, n_qubits = qchem.molecular_hamiltonian(symbols, coords, unit="angstrom")  # default unit is Bohr
 
 def simple_ansatz(params, wires):
     qml.BasisState(qchem.hf_state(2, n_qubits), wires=wires)

@@ -6,17 +6,17 @@ FluidSim automatically saves several types of output during simulations.
 
 ### Physical Fields
 
-**File format**: HDF5 (`.h5`)
+**File format**: NetCDF-4 / HDF5 (`.nc`)
 
-**Location**: `simulation_dir/state_phys_t*.h5`
+**Location**: `simulation_dir/state_phys_t*.nc`
 
 **Contents**: Velocity, vorticity, and other physical space fields at specific times
 
 **Access**:
 ```python
 sim.output.phys_fields.plot()
-sim.output.phys_fields.plot("vorticity")
-sim.output.phys_fields.plot("vx")
+sim.output.phys_fields.plot("rot")
+sim.output.phys_fields.plot("ux")
 sim.output.phys_fields.plot("div")  # check divergence
 
 # Save manually
@@ -49,7 +49,7 @@ spatial_means_data = sim.output.spatial_means
 
 **File format**: HDF5 (`.h5`)
 
-**Location**: `simulation_dir/spectra_*.h5`
+**Location**: `simulation_dir/spectra1D.h5`, `simulation_dir/spectra2D.h5`
 
 **Contents**: Energy and enstrophy spectra vs wavenumber
 
@@ -66,7 +66,7 @@ spectra = sim.output.spectra.load2d_mean()
 
 **File format**: HDF5 (`.h5`)
 
-**Location**: `simulation_dir/spect_energy_budg_*.h5`
+**Location**: `simulation_dir/spect_energy_budg.h5`
 
 **Contents**: Energy transfer between scales
 
@@ -99,7 +99,7 @@ Use this for quick visualization and analysis. Does not initialize full simulati
 ```python
 from fluidsim import load_state_phys_file
 
-sim = load_state_phys_file("simulation_dir/state_phys_t10.000.h5")
+sim = load_state_phys_file("simulation_dir/state_phys_t010.000.nc")
 
 # Can continue simulation
 sim.time_stepping.start()
@@ -113,8 +113,8 @@ FluidSim provides basic plotting through matplotlib:
 
 ```python
 # Physical fields
-sim.output.phys_fields.plot("vorticity")
-sim.output.phys_fields.animate("vorticity")
+sim.output.phys_fields.plot("rot")
+sim.output.phys_fields.animate("rot")
 
 # Time series
 sim.output.spatial_means.plot()
@@ -127,9 +127,9 @@ sim.output.spectra.plot1d()
 
 For publication-quality or 3D visualization:
 
-**ParaView**: Open `.h5` files directly
+**ParaView**: Open the NetCDF state files directly
 ```bash
-paraview simulation_dir/state_phys_t*.h5
+paraview simulation_dir/state_phys_t*.nc
 ```
 
 **VisIt**: Similar to ParaView for large datasets
@@ -139,13 +139,13 @@ paraview simulation_dir/state_phys_t*.h5
 import h5py
 import matplotlib.pyplot as plt
 
-# Load field manually
-with h5py.File("state_phys_t10.000.h5", "r") as f:
-    vx = f["state_phys"]["vx"][:]
-    vy = f["state_phys"]["vy"][:]
+# Load field manually (state files are NetCDF-4, i.e. HDF5, so h5py reads them)
+with h5py.File("state_phys_t010.000.nc", "r") as f:
+    ux = f["state_phys"]["ux"][:]
+    uy = f["state_phys"]["uy"][:]
 
 # Custom plotting
-plt.contourf(vx)
+plt.contourf(ux)
 plt.show()
 ```
 
@@ -235,9 +235,8 @@ sim = load_sim_for_plot("simulation_dir")
 sim.output.phys_fields.set_of_phys_files.update_times()
 times = sim.output.phys_fields.set_of_phys_files.times
 
-# Load field at specific time
-field_file = sim.output.phys_fields.get_field_to_plot(time=5.0)
-vorticity = field_file.get_var("rot")
+# Load field at specific time — returns (array, actual_time_of_file)
+vorticity, t_file = sim.output.phys_fields.get_field_to_plot(key="rot", time=5.0)
 
 # Compute derived quantities
 import numpy as np
@@ -251,11 +250,11 @@ vorticity_max = np.max(np.abs(vorticity))
 simulation_dir/
 ├── params_simul.xml         # Simulation parameters
 ├── stdout.txt               # Standard output log
-├── state_phys_t*.h5         # Physical fields at different times
+├── state_phys_t*.nc         # Physical fields at different times (NetCDF-4/HDF5)
 ├── spatial_means.txt        # Time series of spatial averages
-├── spectra_*.h5            # Spectral data
-├── spect_energy_budg_*.h5  # Energy budget data
-└── info_solver.txt         # Solver information
+├── spectra1D.h5, spectra2D.h5  # Spectral data
+├── spect_energy_budg.h5     # Energy budget data
+└── info_solver.xml          # Solver information
 ```
 
 ## Performance Monitoring
@@ -278,9 +277,9 @@ import h5py
 import numpy as np
 
 # Export to numpy array
-with h5py.File("state_phys_t10.000.h5", "r") as f:
-    vx = f["state_phys"]["vx"][:]
-    np.save("vx.npy", vx)
+with h5py.File("state_phys_t010.000.nc", "r") as f:
+    ux = f["state_phys"]["ux"][:]
+    np.save("ux.npy", ux)
 
 # Export to CSV (load() yields a dict of arrays; wrap in a DataFrame first)
 import pandas as pd

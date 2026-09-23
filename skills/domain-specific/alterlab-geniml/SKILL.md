@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(uv:*) Bash(python:*) Bash(geniml:*)
 compatibility: No API key required. Runs locally via `uv run python` / the `geniml` CLI; requires the geniml Python package (verified against geniml 0.8.4). Tokenization and universe building also need the external `bedtools` and `uniwig` binaries; BEDspace needs StarSpace.
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.1.1"
+    last_updated: "2026-09-23"
 ---
 
 # Geniml: Genomic Interval Machine Learning
@@ -15,9 +16,24 @@ metadata:
 
 Geniml is a Python package for building machine learning models on genomic interval data from BED files. It provides unsupervised methods for learning embeddings of genomic regions, single cells, and metadata labels, enabling similarity searches, clustering, and downstream ML tasks.
 
+## When to Use This Skill
+
+Use this skill for ML over genomic intervals: training or applying Region2Vec / scEmbed /
+BEDspace embeddings, building consensus universes for tokenization, clustering scATAC-seq
+cells from region tokens, or BEDshift null models and BBClient caching.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Plain interval arithmetic — overlaps, jaccard, IGD, uniwig tracks, refget digests | `alterlab-gtars` |
+| Standard scRNA-seq QC → clustering → marker pipeline | `alterlab-scanpy` |
+| Deep generative single-cell integration (scVI / MultiVI / PeakVI) | `alterlab-scvi-tools` |
+| Normalized coverage tracks, TSS heatmaps from BAM | `alterlab-deeptools` |
+
 ## Installation
 
-Verified against **geniml 0.8.4**. Install with uv (prefer `uv run --with` for one-off runs so nothing leaks into the project env):
+Verified against **geniml 0.8.4** (still the current release as of 2026-09; it resolves `gtars` 0.10). Install with uv (prefer `uv run --with` for one-off runs so nothing leaks into the project env):
 
 ```bash
 uv pip install 'geniml[ml]'        # [ml] pulls torch/gensim; needed for region2vec/scembed
@@ -27,7 +43,7 @@ scEmbed and scATAC-seq examples also need scanpy: `uv pip install scanpy`. Unive
 
 Development version: `uv pip install git+https://github.com/databio/geniml.git`
 
-### Import paths (IMPORTANT — verified gotcha)
+### Import paths (verified gotcha)
 
 geniml's subpackage `__init__.py` files do **not** re-export their internals, so the obvious short imports fail with `ImportError`. Import from the concrete module instead:
 
@@ -296,3 +312,4 @@ Geniml is part of the BEDbase ecosystem:
 
 For detailed troubleshooting and method-specific issues, consult the appropriate reference file.
 
+Part of the AlterLab Academic Skills suite.

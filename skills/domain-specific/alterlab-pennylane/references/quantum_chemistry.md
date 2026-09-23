@@ -10,6 +10,11 @@
 
 ## Molecular Hamiltonians
 
+> **Units:** `qchem.molecular_hamiltonian(symbols, coordinates, ...)` and `qchem.Molecule`
+> interpret coordinates in **Bohr** unless you pass `unit="angstrom"`. H2 at 0.74 given as
+> Bohr is a badly compressed molecule (exact STO-3G energy ≈ −0.896 Ha instead of
+> ≈ −1.137 Ha at 0.74 Å), so always state the unit explicitly.
+
 ### Building Molecular Hamiltonians
 
 ```python
@@ -28,7 +33,8 @@ hamiltonian, n_qubits = qchem.molecular_hamiltonian(
     charge=0,
     mult=1,  # Spin multiplicity
     basis='sto-3g',
-    method='dhf'  # Dirac-Hartree-Fock
+    method='dhf',       # PennyLane's built-in differentiable Hartree-Fock
+    unit='angstrom',    # coordinates above are in Å (default is Bohr)
 )
 
 print(f"Hamiltonian: {hamiltonian}")
@@ -58,7 +64,8 @@ qubit_op = qml.jordan_wigner(a_0 * a_1)
 hamiltonian, n_qubits = qchem.molecular_hamiltonian(
     symbols,
     coordinates,
-    mapping='bravyi_kitaev'
+    mapping='bravyi_kitaev',
+    unit='angstrom',
 )
 
 # Or map a fermionic operator manually with the top-level function:
@@ -210,9 +217,13 @@ def adaptive_vqe(hamiltonian, n_qubits, max_gates=10):
 ### Defining Molecules
 
 ```python
+# Coordinates below are in Å, so convert once to Bohr (PennyLane's default unit) —
+# or pass unit='angstrom' to every molecular_hamiltonian / Molecule call.
+ANGSTROM_TO_BOHR = 1.8897259886
+
 # Simple diatomic
 h2_symbols = ['H', 'H']
-h2_coords = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.74])
+h2_coords = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.74]) * ANGSTROM_TO_BOHR
 
 # Water molecule
 h2o_symbols = ['O', 'H', 'H']
@@ -220,9 +231,9 @@ h2o_coords = np.array([
     0.0, 0.0, 0.0,      # O
     0.757, 0.586, 0.0,  # H
    -0.757, 0.586, 0.0   # H
-])
+]) * ANGSTROM_TO_BOHR
 
-# From XYZ format
+# From XYZ format (read_structure returns coordinates already in Bohr)
 molecule = qchem.read_structure('molecule.xyz')
 symbols, coords = molecule
 ```
@@ -275,7 +286,7 @@ def dissociation_curve(symbols, axis=2, distances=None):
         coords[axis] = d  # Set bond length
 
         H, n_qubits = qchem.molecular_hamiltonian(
-            symbols, coords, basis='sto-3g'
+            symbols, coords, basis='sto-3g', unit='angstrom'   # d is in Å
         )
 
         energy = run_vqe(H, n_qubits)
@@ -354,8 +365,9 @@ H_parity, n_q_parity = qchem.molecular_hamiltonian(
     symbols, coords, mapping='parity'
 )
 
-print(f"Jordan-Wigner terms: {len(H_jw.ops)}")
-print(f"Bravyi-Kitaev terms: {len(H_bk.ops)}")
+# molecular_hamiltonian returns a Sum operator: count terms via .terms()
+print(f"Jordan-Wigner terms: {len(H_jw.terms()[0])}")
+print(f"Bravyi-Kitaev terms: {len(H_bk.terms()[0])}")
 ```
 
 ## Excited States
@@ -456,10 +468,10 @@ def full_chemistry_workflow(symbols, coords, basis='sto-3g'):
 
     print(f"   Molecule: {' '.join(symbols)}")
     print(f"   Qubits: {n_qubits}")
-    print(f"   Hamiltonian terms: {len(H.ops)}")
+    print(f"   Hamiltonian terms: {len(H.terms()[0])}")
 
     print("\n2. Preparing Hartree-Fock state...")
-    n_electrons = sum(qchem.atomic_numbers[s] for s in symbols)
+    n_electrons = qchem.Molecule(symbols, np.asarray(coords).reshape(-1, 3)).n_electrons
     hf_state = qchem.hf_state(n_electrons, n_qubits)
 
     print("\n3. Running VQE...")
@@ -491,8 +503,10 @@ def compute_molecular_properties(symbols, coords, vqe_params):
     H, n_qubits = qchem.molecular_hamiltonian(symbols, coords)
     energy = vqe_circuit(vqe_params)
 
-    # Dipole moment
-    dipole_obs = qchem.dipole_moment(symbols, coords)
+    # Dipole moment operators (x, y, z). dipole_moment takes a Molecule (geometry
+    # shaped (n_atoms, 3)) and returns a function of its differentiable parameters.
+    mol = qchem.Molecule(symbols, np.asarray(coords).reshape(-1, 3))
+    dipole_obs = qchem.dipole_moment(mol)()
 
     @qml.qnode(dev)
     def dipole_circuit(axis):

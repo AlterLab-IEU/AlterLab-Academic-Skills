@@ -9,10 +9,10 @@ PennyLane is a cross-platform Python library for quantum computing, quantum mach
 Install PennyLane using uv:
 
 ```bash
-uv pip install pennylane
+uv pip install pennylane      # Python >= 3.11; current 0.45.x as of 2026-09
 ```
 
-For specific device plugins (IBM, Amazon Braket, Google, Rigetti, etc.):
+For specific device plugins (IBM, Amazon Braket, Cirq simulators, IonQ):
 
 ```bash
 # IBM Qiskit
@@ -21,12 +21,15 @@ uv pip install pennylane-qiskit
 # Amazon Braket
 uv pip install amazon-braket-pennylane-plugin
 
-# Google Cirq
+# Cirq simulators
 uv pip install pennylane-cirq
 
-# Rigetti
-uv pip install pennylane-rigetti
+# IonQ
+uv pip install pennylane-ionq
 ```
+
+`pennylane-rigetti` is unmaintained (pins `pyquil<4`); reach Rigetti QPUs through the
+Amazon Braket plugin.
 
 ## Core Concepts
 
@@ -53,7 +56,7 @@ def circuit(params):
 
 Devices execute quantum circuits. PennyLane supports:
 - **Simulators**: `default.qubit`, `default.mixed`, `lightning.qubit`
-- **Hardware**: Access through plugins (IBM, Amazon Braket, Rigetti, etc.)
+- **Hardware**: Access through plugins (IBM, Amazon Braket — IonQ/IQM/Rigetti/AQT —, IonQ)
 
 ```python
 # Local simulator
@@ -145,8 +148,9 @@ def circuit_simulator(x):
     qml.RX(x, wires=0)
     return qml.expval(qml.PauliZ(0))
 
-# Switch to hardware (if available; backend is a concrete object from QiskitRuntimeService)
-@qml.qnode(qml.device('qiskit.remote', wires=2, backend=backend))
+# Switch to hardware (if available; backend is a concrete object from QiskitRuntimeService).
+# Hardware needs finite shots, set on the QNode.
+@qml.qnode(qml.device('qiskit.remote', wires=2, backend=backend), shots=1024)
 def circuit_hardware(x):
     qml.RX(x, wires=0)
     return qml.expval(qml.PauliZ(0))

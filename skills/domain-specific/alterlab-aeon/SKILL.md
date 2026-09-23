@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(uv run python:*) Bash(uv pip install:*)
 compatibility: No API key required. Runs locally via `uv run python`; requires the aeon Python package.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Aeon Time Series Machine Learning
@@ -26,16 +27,28 @@ Apply this skill when:
 - Comparing time series with specialized distance metrics
 - Extracting features from temporal data
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Zero-shot forecasting with a pretrained foundation model, no training | `alterlab-timesfm` |
+| ARIMA/SARIMAX with coefficient tables, residual diagnostics, and econometric inference | `alterlab-statsmodels` |
+| Plain tabular features (no temporal ordering) for classification/regression | `alterlab-scikit-learn` |
+| Physiological signal processing (ECG/EEG/EDA peaks, HRV) | `alterlab-neurokit2` |
+
 ## Installation
 
 ```bash
-uv pip install "aeon>=1.4"
+uv pip install "aeon>=1.6"     # core; Python 3.11–3.14
+uv pip install "aeon[dl]"      # + TensorFlow/Keras for the deep-learning estimators
+uv pip install stumpy          # soft dependency of MatrixProfileTransformer
 ```
 
-Module layout below targets aeon 1.x. Import paths changed across the 0.x→1.x
-reorg (e.g. forecasters moved under `aeon.forecasting.stats`, series anomaly
-detectors under `aeon.anomaly_detection.series.*`); if an import fails, check the
-current API reference rather than assuming an older path.
+Examples are verified against aeon 1.6.0 (current as of 2026-09). The 1.x line
+reorganised modules — forecasters live under `aeon.forecasting.stats`, series anomaly
+detectors under `aeon.anomaly_detection.series.*`, similarity search under
+`aeon.similarity_search.subsequence` / `.whole_series` — so if an import fails, check
+the current API reference rather than assuming an older path.
 
 ## Core Capabilities
 
@@ -110,8 +123,10 @@ from aeon.forecasting.stats import ARIMA
 forecaster = ARIMA(p=1, d=1, q=1)
 forecaster.fit(y_train)
 
-# predict() / forecast() return ONE value: self.horizon steps ahead (default 1).
-next_step = forecaster.predict()
+# predict(y) takes the series to forecast from and returns ONE float,
+# `horizon` steps past the end of y (default 1). Calling predict() with no
+# series raises TypeError in aeon 1.6.
+next_step = forecaster.predict(y_train)
 
 # For a multi-step path, use iterative_forecast (returns a 1D ndarray):
 y_pred = forecaster.iterative_forecast(y_train, prediction_horizon=5)
@@ -152,12 +167,19 @@ Find similar patterns within or across time series. See `references/similarity_s
 
 **Quick Start:**
 ```python
-from aeon.similarity_search.series.motifs import StompMotif
+from aeon.similarity_search.subsequence import MASS
 
-# Find recurring patterns
-motif_finder = StompMotif(window_size=50, k=3)
-motifs = motif_finder.fit_predict(y)
+# Searchers are fitted on a collection shaped (n_cases, n_channels, n_timepoints)
+X = y.reshape(1, 1, -1)
+query = X[0, :, 100:150]                  # (n_channels, length) — length must match
+
+searcher = MASS(length=50, normalize=True).fit(X)
+indexes, distances = searcher.predict(query, k=3)   # rows are (case, timestamp)
 ```
+
+aeon 1.6 no longer ships a `StompMotif` estimator. For motifs/discords compute a
+matrix profile with `aeon.transformations.series.MatrixProfileTransformer`
+(needs `stumpy`): its minima mark motifs and its maxima discords.
 
 ## Feature Extraction and Transformations
 
@@ -223,7 +245,8 @@ clf = KNeighborsTimeSeriesClassifier(
 
 ## Deep Learning Networks
 
-Neural architectures for time series. See `references/networks.md`.
+Neural architectures for time series. See `references/networks.md`. These estimators
+need the `aeon[dl]` extra (TensorFlow ≥ 2.14 / Keras 3, Python < 3.14).
 
 **Architectures:**
 - Convolutional: `FCNClassifier`, `ResNetClassifier`, `InceptionTimeClassifier`

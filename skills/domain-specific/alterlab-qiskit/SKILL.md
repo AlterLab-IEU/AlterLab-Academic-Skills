@@ -6,16 +6,38 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No API key required for local simulation. Runs via `uv run python`; requires the qiskit Python package. IBM Quantum hardware/Runtime needs an IBM Quantum account and API token.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Qiskit
 
 ## Overview
 
-Qiskit is an open-source quantum computing framework. Build quantum circuits, optimize for hardware, execute on simulators or real quantum computers, and analyze results. Supports IBM Quantum (100+ qubit systems), IonQ, Amazon Braket, and other providers.
+Qiskit is an open-source quantum computing framework. Build quantum circuits, optimize for hardware, execute on simulators or real quantum computers, and analyze results. Supports IBM Quantum (100+ qubit Heron and Nighthawk systems), IonQ, Amazon Braket, and other providers.
 
-**Version note:** Examples target Qiskit SDK 2.x (`qiskit>=2,<3`, Python 3.10+) and `qiskit-ibm-runtime` 0.30+. Two breaking changes drive the patterns below: Qiskit 2.0 removed `qiskit.pulse` and Qiskit 1.0 removed `qiskit.tools.jupyter`, and the legacy `qiskit_ibm_runtime.Options` class plus the `channel="ibm_quantum"` value are both gone (use V2 options + `channel="ibm_quantum_platform"`).
+**Version note:** Examples target Qiskit SDK 2.x (`qiskit>=2,<3`, Python 3.10+; current 2.5.x as of 2026-09) and `qiskit-ibm-runtime` ≥ 0.40 (current 0.49). Older tutorials break on these changes, so check any snippet you adapt against them:
+- **Qiskit 1.0 removed** `execute()`, `BasicAer`, `qiskit.tools` (incl. `tools.jupyter`, `job_monitor`) and `bind_parameters` — use primitives, `qiskit.providers.basic_provider.BasicSimulator`, and `assign_parameters`.
+- **Qiskit 2.0 removed** `qiskit.pulse`, `BackendV1`, the V1 reference primitives (`qiskit.primitives.Sampler`/`Estimator`) and `Instruction.c_if` (use `with qc.if_test(...)`).
+- **Qiskit 2.1 deprecated** the class forms of library circuits (`RealAmplitudes`, `EfficientSU2`, `TwoLocal`, `ZZFeatureMap`, `QFT`, …; removal in 3.0) — use `real_amplitudes()`, `efficient_su2()`, `n_local()`, `zz_feature_map()`, `QFTGate`.
+- **Runtime V2 primitives** take `mode=` (a backend, `Session`, or `Batch`); the old `session=`/`backend=` keywords raise `TypeError`. The `Options` class and `channel="ibm_quantum"` are gone — the platform is now quantum.cloud.ibm.com (API key + instance CRN, channel `"ibm_quantum_platform"`).
+
+## When to Use This Skill
+
+Use this skill when the user wants to:
+- Build, transpile, and run gate-model circuits on IBM Quantum hardware or local simulators
+- Use Qiskit Runtime primitives (SamplerV2 / EstimatorV2) in job, batch, or session mode
+- Apply error suppression/mitigation (twirling, dynamical decoupling, TREX, ZNE)
+- Run variational or textbook algorithms (VQE, QAOA, Grover, QPE) with the Qiskit ecosystem (Nature, Machine Learning, Optimization)
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Google Quantum AI processors, Cirq-native circuits, or XEB/RB characterization in Cirq | `alterlab-cirq` |
+| Gradient-trained hybrid quantum-classical models with PyTorch/JAX autodiff | `alterlab-pennylane` |
+| Open-system dynamics — Lindblad master equations, decoherence, cavity QED | `alterlab-qutip` |
+| Classical quantum-chemistry (DFT, conformers, pKa) with no quantum circuits | `alterlab-rowan` |
 
 **Key Features:**
 - Configurable transpilation with multiple optimization levels
@@ -213,7 +235,8 @@ Topics covered:
 ### Hardware Execution
 
 - Check backend status before submitting
-- Use least_busy() for testing
+- Use `least_busy()` or list `service.backends()` rather than hard-coding a QPU name — QPUs are retired over time (all 127-qubit Eagle systems, e.g. `ibm_brisbane`, are gone)
+- Session mode needs a paid plan; Open Plan users run in job or batch mode
 - Save job IDs for later retrieval
 - Apply error mitigation — `resilience_level` on the **Estimator** (Sampler has no `resilience_level`; use `twirling` / `dynamical_decoupling`)
 - Start with fewer shots, increase for final runs
@@ -240,16 +263,18 @@ counts = result[0].data.meas.get_counts()
 
 ```python
 from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2 as Sampler
-from qiskit import transpile
+from qiskit.transpiler import generate_preset_pass_manager
 
 service = QiskitRuntimeService()
-backend = service.backend("ibm_brisbane")
+backend = service.least_busy(operational=True, simulator=False)
 
-qc_optimized = transpile(qc, backend=backend, optimization_level=3)
+# Hardware only accepts ISA circuits (native gates + connectivity)
+pm = generate_preset_pass_manager(backend=backend, optimization_level=3)
+qc_isa = pm.run(qc)
 
-sampler = Sampler(backend)
-job = sampler.run([qc_optimized], shots=1024)
-result = job.result()
+sampler = Sampler(mode=backend)          # job mode; pass a Session/Batch for other modes
+job = sampler.run([qc_isa], shots=1024)
+counts = job.result()[0].data.meas.get_counts()
 ```
 
 ### Pattern 3: Variational Algorithm (VQE)
@@ -258,22 +283,29 @@ result = job.result()
 from qiskit_ibm_runtime import Session, EstimatorV2 as Estimator
 from scipy.optimize import minimize
 
-with Session(backend=backend) as session:
-    estimator = Estimator(session=session)
+# Transpile once, then lay the observable out on the same physical qubits —
+# an un-mapped observable does not match the ISA circuit's width.
+ansatz_isa = pm.run(ansatz)
+hamiltonian_isa = hamiltonian.apply_layout(ansatz_isa.layout)
+
+with Session(backend=backend) as session:      # paid plans; use Batch on the Open Plan
+    estimator = Estimator(mode=session)
 
     def cost_function(params):
-        bound_qc = ansatz.assign_parameters(params)
-        qc_isa = transpile(bound_qc, backend=backend)
-        result = estimator.run([(qc_isa, hamiltonian)]).result()
-        return result[0].data.evs
+        # parameter values travel in the PUB — no re-transpiling per iteration
+        result = estimator.run([(ansatz_isa, hamiltonian_isa, params)]).result()
+        return float(result[0].data.evs)
 
     result = minimize(cost_function, initial_params, method='COBYLA')
 ```
 
 ## Additional Resources
 
-- **Official Docs**: https://quantum.ibm.com/docs
-- **Qiskit Textbook**: https://qiskit.org/learn
-- **API Reference**: https://docs.quantum.ibm.com/api/qiskit
+- **Official Docs**: https://quantum.cloud.ibm.com/docs
+- **IBM Quantum Learning** (successor to the Qiskit Textbook): https://quantum.cloud.ibm.com/learning
+- **API Reference**: https://quantum.cloud.ibm.com/docs/en/api/qiskit
 - **Patterns Guide**: https://quantum.cloud.ibm.com/docs/en/guides/intro-to-patterns
+- **Community packages**: [Nature](https://qiskit-community.github.io/qiskit-nature/), [Machine Learning](https://qiskit-community.github.io/qiskit-machine-learning/), [Optimization](https://qiskit-community.github.io/qiskit-optimization/)
+
+Part of the AlterLab Academic Skills suite.
 

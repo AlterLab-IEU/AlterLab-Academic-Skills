@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No API key required. Guidance-focused skill; optional NLP/OCR Python tooling (spaCy, NLTK, Tesseract) runs locally via `uv run python`.
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-03-18"
+  version: "1.0.1"
+  last_updated: "2026-09-23"
 ---
 
 # Digital Humanities Methods and Tools
@@ -38,6 +38,16 @@ Use this skill when you need to:
 - Apply distant reading methods to analyze literary trends across large corpora
 - Conduct cultural analytics on visual media, social media, or digital culture
 - Work with Python NLP tools (spaCy, NLTK) for humanities text analysis
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Text as social-science measurement (validated topic/dictionary/classifier pipelines on survey or media data) | `alterlab-text-as-data` |
+| Discourse analysis, conversation analysis, or quantitative content analysis designs | `alterlab-social-science-methods` |
+| Programmatic vector GIS on modern data — spatial joins, buffers, reprojection | `alterlab-geopandas` |
+| Converting modern PDFs/Office files to text rather than OCR of historical scans | `alterlab-markitdown` |
+| Graph algorithms at scale with no humanities source criticism (centrality, communities) | `alterlab-networkx` |
 
 ## Core Capabilities
 
@@ -144,3 +154,5 @@ spaCy (industrial NLP: NER, POS, dependency parsing, lemmatization), NLTK (educa
 - Burnard, L., & Bauman, S. (Eds.). (2023). *TEI P5 Guidelines*. TEI Consortium.
 
 Full bibliography in `references/methods-and-examples.md`.
+
+Part of the AlterLab Academic Skills suite.

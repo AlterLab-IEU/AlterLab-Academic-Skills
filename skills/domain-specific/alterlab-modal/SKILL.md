@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: Requires a Modal account and `modal token` authentication. Runs via `uv run python`; cloud execution incurs Modal usage.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Modal
@@ -27,6 +28,15 @@ Use Modal for:
 - Building serverless APIs that need automatic scaling
 - Scientific computing requiring distributed compute or specialized hardware
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Provider-agnostic job dispatch to SLURM/HPC, RunPod, or GCP Batch (submit → poll → harvest) | `alterlab-remote-compute` |
+| Local PyTorch training structure, multi-GPU strategies, checkpointing — no serverless deployment | `alterlab-pytorch-lightning` |
+| Bioinformatics workflows on the Latch platform | `alterlab-latchbio` |
+| Genomics apps/applets on DNAnexus | `alterlab-dnanexus` |
+
 ## Authentication and Setup
 
 Modal requires authentication via API token.
@@ -34,7 +44,7 @@ Modal requires authentication via API token.
 ### Initial Setup
 
 ```bash
-# Install Modal
+# Install Modal (SDK 1.x; current 1.5.x as of 2026-09)
 uv pip install modal
 
 # Authenticate (opens browser for login)
@@ -80,7 +90,7 @@ app = modal.App("ml-app", image=image)
 **Common patterns:**
 - Install Python packages: `.uv_pip_install("pandas", "scikit-learn")`
 - Install system packages: `.apt_install("ffmpeg", "git")`
-- Use existing Docker images: `modal.Image.from_registry("nvidia/cuda:12.1.0-base")`
+- Use existing Docker images: `modal.Image.from_registry("nvidia/cuda:12.8.1-devel-ubuntu24.04", add_python="3.12")` (use a full tag — NVIDIA publishes no bare `12.x.y-base` tags)
 - Add local code: `.add_local_python_source("my_module")`
 
 See `references/images.md` for comprehensive image building documentation.
@@ -126,8 +136,9 @@ def train_model():
 - `T4`, `L4` - Cost-effective inference
 - `A10`, `A100`, `A100-80GB` - Standard training/inference
 - `L40S` - Excellent cost/performance balance (48GB)
-- `H100`, `H200` - High-performance training
-- `B200` - Flagship performance (most powerful)
+- `H100`, `H200` - High-performance training (`H100!` pins H100; plain `H100` may be upgraded to H200 at the same price)
+- `RTX-PRO-6000` - Blackwell workstation-class GPU
+- `B200`, `B300` - Flagship Blackwell (`B200+` accepts either at B200 pricing)
 
 **Request multiple GPUs:**
 ```python
@@ -273,15 +284,20 @@ See `references/scheduled-jobs.md` for cron syntax, timezone configuration, and 
 ```python
 import modal
 
-# Define dependencies
-image = modal.Image.debian_slim().uv_pip_install("torch", "transformers")
-app = modal.App("llm-inference", image=image)
+MODEL_ID = "distilbert/distilbert-base-uncased-finetuned-sst-2-english"
 
-# Download model at build time
-@app.function()
 def download_model():
-    from transformers import AutoModel
-    AutoModel.from_pretrained("bert-base-uncased")
+    from transformers import pipeline
+    pipeline("text-classification", model=MODEL_ID)  # fills the HF cache
+
+# Define dependencies; run_function executes once at image build, so the weights
+# are baked into the image instead of downloaded on every cold start
+image = (
+    modal.Image.debian_slim()
+    .uv_pip_install("torch", "transformers")
+    .run_function(download_model)
+)
+app = modal.App("llm-inference", image=image)
 
 # Serve model
 @app.cls(gpu="L40S")
@@ -289,7 +305,7 @@ class Model:
     @modal.enter()
     def load_model(self):
         from transformers import pipeline
-        self.pipe = pipeline("text-classification", device="cuda")
+        self.pipe = pipeline("text-classification", model=MODEL_ID, device="cuda")
 
     @modal.method()
     def predict(self, text: str):
@@ -382,3 +398,5 @@ Detailed documentation for specific features:
 
 For additional help, see Modal documentation at https://modal.com/docs or join Modal Slack community.
 
+
+Part of the AlterLab Academic Skills suite.

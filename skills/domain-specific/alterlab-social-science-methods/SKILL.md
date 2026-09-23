@@ -1,13 +1,13 @@
 ---
 name: alterlab-social-science-methods
-description: "Guides advanced social science research methods — discourse analysis (Fairclough CDA, Gee), conversation analysis, quantitative content analysis, Qualitative Comparative Analysis (QCA), process tracing, archival research, participatory/community-based research (PAR, CBPR), Delphi and Q methodology, social network analysis (SNA), bibliometrics and scientometrics, systematic mapping reviews, and program/policy evaluation. Use when designing or conducting any of these studies — choosing a specialized method, building a coding scheme, establishing causal mechanisms in case studies, mapping relational or subjective data, or applying an evaluation framework. For interpretive/qualitative coding (thematic analysis, grounded theory, IPA, ethnography, qualitative content analysis) use alterlab-qualitative-methods; for combining qual+quant strands use alterlab-mixed-methods. Part of the AlterLab Academic Skills suite."
+description: "Guides advanced social science research methods — discourse analysis (Fairclough CDA, Gee), conversation analysis, quantitative content analysis, Qualitative Comparative Analysis (QCA), process tracing, archival research, participatory/community-based research (PAR, CBPR), Delphi and Q methodology, social network analysis (SNA), bibliometrics and scientometrics, systematic mapping reviews, and program/policy evaluation. Use when designing or conducting any of these studies — choosing a specialized method, building a coding scheme, establishing causal mechanisms in case studies, mapping relational or subjective data, or applying an evaluation framework. For interpretive coding (thematic analysis, grounded theory, IPA, ethnography) use alterlab-qualitative-methods; for qual+quant integration use alterlab-mixed-methods; to run QCA, SNA, or text-as-data analyses on data use alterlab-qca, alterlab-sna, or alterlab-text-as-data. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No API key required. Guidance-focused skill; optional Python helpers run via `uv run python`.
 metadata:
   skill-author: AlterLab
-  version: "1.0.0"
-  last_updated: "2026-03-18"
+  version: "1.0.1"
+  last_updated: "2026-09-23"
 ---
 
 # Social Science Research Methods
@@ -38,6 +38,19 @@ Use this skill when you need to:
 - Design a systematic mapping review (as distinct from a systematic review)
 - Plan a program evaluation using established frameworks
 - Conduct policy analysis using structured analytical approaches
+
+This skill is the method-selection and design guide. Once the design is settled and the
+data are in hand, hand execution to the matching analysis module.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Calibrating conditions and running truth-table minimization on case data (R `QCA`) | `alterlab-qca` |
+| Computing centralities, communities, or ERGMs on a relational dataset | `alterlab-sna` |
+| Topic models, dictionaries, or supervised classifiers as text measurement | `alterlab-text-as-data` |
+| Thematic/grounded-theory coding or computing intercoder reliability on coded data | `alterlab-qualitative-analysis` |
+| Coordinating a whole study through the stage-gated design → inference pipeline | `alterlab-ssci-orchestrator` |
 
 ## Method Families at a Glance
 
@@ -131,3 +144,5 @@ Detailed procedures, worked examples, reference tables, and code blocks live in 
 - Aria, M., & Cuccurullo, C. (2017). bibliometrix: An R-tool for comprehensive science mapping analysis. *Journal of Informetrics*, 11(4), 959-975.
 - Patton, M. Q. (2010). *Developmental Evaluation: Applying Complexity Concepts to Enhance Innovation and Use*. Guilford Press.
 - Bardach, E., & Patashnik, E. M. (2019). *A Practical Guide for Policy Analysis* (6th ed.). CQ Press.
+
+Part of the AlterLab Academic Skills suite.

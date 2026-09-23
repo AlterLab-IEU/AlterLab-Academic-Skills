@@ -2,7 +2,7 @@
 
 > Prefer the official SDK (`github.com/adaptyvbio/adaptyv-sdk`, decorator-based
 > `@lab.experiment(target=...)`) when it fits. The raw-`requests` recipes below are for when
-> you need explicit control over the draft → quote → submit lifecycle. Response field names
+> you need explicit control over the draft → submit → quote-confirm lifecycle. Response field names
 > shown here are illustrative — confirm against the live API / OpenAPI doc.
 
 ## Setup and Authentication
@@ -53,8 +53,9 @@ uv pip install requests python-dotenv
 
 ## Experiment Submission
 
-Submission is two steps: create a **draft**, then **submit** it (after reviewing the cost
-quote). `sequences` is a `{label: amino_acid_string}` map; multi-chain constructs join chains
+Submission is staged: create a **draft**, **submit** it (a quote is then generated
+asynchronously), and **confirm the quote** (`POST /experiments/{id}/quote/confirm`) to start
+the run and create the invoice. `sequences` is a `{label: amino_acid_string}` map; multi-chain constructs join chains
 with a colon (`"HEAVY:LIGHT"`).
 
 ### Create a Draft Experiment
@@ -123,8 +124,10 @@ draft = create_experiment(
     target_id="<uuid from GET /targets>",
     webhook_url="https://your-server.com/adaptyv-webhook",
 )
-# review draft['costs'] / GET /experiments/{id}/quote, then:
+# (optional) price the spec first with POST /experiments/cost-estimate, then:
 submit_experiment(draft["experiment_id"])
+# then poll GET /experiments/{id}/quote and accept it with
+# POST /experiments/{id}/quote/confirm (json={}) once the user approves the cost
 ```
 
 ### Cost Estimate Before Committing
@@ -190,7 +193,9 @@ def list_experiments(status_filter=None, limit=50):
     List experiments with optional status filtering
 
     Args:
-        status_filter: Filter by status (submitted, processing, completed, failed)
+        status_filter: One of draft, waiting_for_confirmation, quote_sent,
+            waiting_for_materials, in_queue, in_production, data_analysis,
+            in_review, done, canceled
         limit: Maximum number of results
 
     Returns:
@@ -199,7 +204,7 @@ def list_experiments(status_filter=None, limit=50):
 
     params = {"limit": limit}
     if status_filter:
-        params["status"] = status_filter
+        params["filter"] = f"eq(status,{status_filter})"   # s-expression filter syntax
 
     response = requests.get(
         f"{BASE_URL}/experiments",
@@ -208,16 +213,16 @@ def list_experiments(status_filter=None, limit=50):
     )
 
     response.raise_for_status()
-    result = response.json()
+    result = response.json()   # paginated: {"items": [...], "total", "count", "offset"}
 
     print(f"Found {result['total']} experiments")
-    for exp in result['experiments']:
-        print(f"  {exp['experiment_id']}: {exp['status']} ({exp['experiment_type']})")
+    for exp in result['items']:
+        print(f"  {exp['id']} {exp['code']}: {exp['status']} ({exp.get('experiment_type')})")
 
-    return result['experiments']
+    return result['items']
 
-# Example - list all completed experiments
-completed_experiments = list_experiments(status_filter="completed")
+# Example - list all finished experiments
+completed_experiments = list_experiments(status_filter="done")
 ```
 
 ### Poll Until Complete
@@ -242,9 +247,12 @@ def wait_for_completion(experiment_id, check_interval=3600):
     while True:
         status = check_experiment_status(experiment_id)
 
-        if status['status'] == 'Done':
+        # API statuses are lowercase snake_case ('done', 'canceled', ...)
+        if status['status'] == 'done':
             print("✓ Experiment done!")
             return status
+        if status['status'] == 'canceled':
+            raise RuntimeError(f"Experiment {experiment_id} was canceled")
 
         print(f"  Status: {status['status']} - checking again in {check_interval}s")
         time.sleep(check_interval)
@@ -453,11 +461,12 @@ def complete_affinity_workflow(sequences_dict, target_id, name):
     with open(f"{experiment_id}_info.json", 'w') as f:
         json.dump(experiment, f, indent=2)
 
-    # Inspect experiment['costs'] / GET /experiments/{id}/quote before this:
     submit_experiment(experiment_id)
+    # Next: poll GET /experiments/{id}/quote, get the user's approval, then
+    # POST /experiments/{id}/quote/confirm to start the run
     print("  Results arrive in weeks - poll status or use a webhook")
 
-    # Later, once status == 'Done':
+    # Later, once status == 'done':
     # results = download_results(experiment_id)
     # df = parse_binding_results(results)
     # return df
@@ -523,7 +532,7 @@ def optimization_and_testing_pipeline(initial_sequences, experiment_type="expres
         sequences_dict=sequences_to_test,
         experiment_type=experiment_type,  # e.g. "expression" (no target needed)
     )
-    submit_experiment(experiment['experiment_id'])  # after reviewing the quote
+    submit_experiment(experiment['experiment_id'])  # then review + confirm the quote
 
     print(f"✓ Pipeline complete")
     print(f"  Experiment ID: {experiment['experiment_id']}")

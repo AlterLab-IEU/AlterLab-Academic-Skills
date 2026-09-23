@@ -32,33 +32,28 @@ result = joined.compute()
 ### Dask for Raster Processing
 
 ```python
+import numpy as np
 import dask.array as da
-import rasterio
+import rioxarray
 
-# Create lazy-loaded raster array
-def lazy_raster(path, chunks=(1, 1024, 1024)):
-    with rasterio.open(path) as src:
-        profile = src.profile
-        # Create dask array
-        raster = da.from_rasterio(src, chunks=chunks)
+# Lazy, chunked read: rioxarray returns a dask-backed DataArray (band, y, x).
+# (dask.array has no from_rasterio; xarray.open_rasterio was removed in favour of rioxarray.)
+raster = rioxarray.open_rasterio('very_large.tif', chunks=(1, 1024, 1024))
 
-    return raster, profile
+# Calculate NDVI (lazy operation); band positions depend on your file
+nir = raster.isel(band=3).astype('float32')
+red = raster.isel(band=2).astype('float32')
+ndvi = (nir - red) / (nir + red + 1e-8)
 
-# Process large raster
-raster, profile = lazy_raster('very_large.tif')
-
-# Calculate NDVI (lazy operation)
-ndvi = (raster[3] - raster[2]) / (raster[3] + raster[2] + 1e-8)
-
-# Apply function to each chunk
+# Apply a function to each chunk of the underlying dask array
+# (per-chunk min/max — use global statistics if blocks must be comparable)
 def process_chunk(chunk):
-    return (chunk - chunk.min()) / (chunk.max() - chunk.min())
+    return (chunk - chunk.min()) / (chunk.max() - chunk.min() + 1e-8)
 
-normalized = da.map_blocks(process_chunk, ndvi, dtype=np.float32)
+normalized = ndvi.copy(data=da.map_blocks(process_chunk, ndvi.data, dtype=np.float32))
 
-# Compute and save
-with rasterio.open('output.tif', 'w', **profile) as dst:
-    dst.write(normalized.compute())
+# Compute and save (rioxarray carries the CRS and transform)
+normalized.rio.to_raster('output.tif', compress='DEFLATE')
 ```
 
 ### Dask Distributed Cluster
@@ -151,7 +146,7 @@ search = catalog.search(
     datetime="2020-01-01/2023-12-31",
 )
 
-items = list(search.get_items())
+items = list(search.items())   # get_items() is deprecated
 
 # Load as xarray dataset
 data = odc.stac.load(
@@ -159,8 +154,7 @@ data = odc.stac.load(
     bands=["image"],
     crs="EPSG:32611",
     resolution=1.0,
-    chunkx=1024,
-    chunky=1024,
+    chunks={"x": 1024, "y": 1024},   # dask chunking
 )
 
 # Compute statistics lazily
@@ -185,12 +179,10 @@ bucket = client.bucket('my-bucket')
 blob = bucket.blob('geospatial/data.tif')
 blob.upload_from_filename('local_data.tif')
 
-# Read directly from GCS
-with rasterio.open(
-    'gs://my-bucket/geospatial/data.tif',
-    session=GSSession()
-) as src:
-    data = src.read()
+# Read directly from GCS (sessions are attached via rasterio.Env, not rasterio.open)
+with rasterio.Env(GSSession()):
+    with rasterio.open('gs://my-bucket/geospatial/data.tif') as src:
+        data = src.read()
 
 # Use with Rioxarray
 import rioxarray

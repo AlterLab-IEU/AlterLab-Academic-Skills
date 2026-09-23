@@ -33,7 +33,7 @@
     {
       "id": "taylor-green-validation",
       "prompt": "I want to validate my setup against the Taylor-Green vortex by seeding the analytic velocity field and checking that the energy decays correctly over time.",
-      "expected_output": "Invokes alterlab-fluidsim for a validation run. Uses the ns2d solver with init_fields.type='in_script', seeds vx=sin(X)cos(Y), vy=-cos(X)sin(Y) via sim.oper.get_XY_loc(), sets the physical state (e.g. sim.state.init_statephys_from(vx=vx, vy=vy)) then computes the spectral state with sim.state.statespect_from_statephys(), runs, and loads sim.output.spatial_means (a dict of arrays keyed by 't','E') to compare energy decay against the analytical Taylor-Green solution.",
+      "expected_output": "Invokes alterlab-fluidsim for a validation run. Uses the ns2d solver with init_fields.type='in_script', seeds ux=sin(X)cos(Y), uy=-cos(X)sin(Y) on the grid from sim.oper.XX / sim.oper.YY, sets the physical state including the vorticity (e.g. sim.state.init_statephys_from(ux=ux, uy=uy, rot=2*sin(X)*sin(Y)), since ns2d evolves rot_fft) or uses sim.state.init_from_rotfft, then computes the spectral state with sim.state.statespect_from_statephys(), runs, and loads sim.output.spatial_means (a dict of arrays keyed by 't','E') to compare the energy decay E(t) = E0*exp(-4*nu*t) against the analytical Taylor-Green solution.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Seeds the analytic Taylor-Green field via in_script initial conditions and validates energy decay using spatial_means output." }

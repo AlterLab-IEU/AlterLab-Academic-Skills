@@ -6,18 +6,41 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No API key required. Runs locally via `uv run python`; requires the geopandas Python package.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # GeoPandas
 
 GeoPandas extends pandas to enable spatial operations on geometric types. It combines the capabilities of pandas and shapely for geospatial data analysis.
 
+## When to Use This Skill
+
+Use this skill when the user wants to:
+- Read, write, or convert vector data (Shapefile, GeoJSON, GeoPackage, GeoParquet, PostGIS)
+- Run spatial joins, overlays, buffers, dissolves, clipping, or nearest-neighbour joins
+- Reproject between coordinate reference systems and measure areas/lengths/distances correctly
+- Make static or interactive (folium) choropleth maps from tabular vector data
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Raster, satellite imagery, DEMs, spectral indices, STAC/COG, or EO machine learning | `alterlab-geomaster` |
+| Network/graph analysis of relationships with no geometry (centrality, communities) | `alterlab-networkx` |
+| Genomic interval overlaps (BED files) — "spatial" joins along a chromosome | `alterlab-gtars` |
+| Celestial coordinates, FITS/WCS sky positions | `alterlab-astropy` |
+
 ## Installation
 
 ```bash
-uv pip install geopandas
+uv pip install geopandas   # 1.x (current 1.1.x as of 2026-09); shapely 2 + pyogrio
 ```
+
+GeoPandas 1.x requires shapely ≥ 2 and reads/writes through **pyogrio** by default
+(fiona is optional). Removed or deprecated in the 1.x line: `sjoin(op=...)` (use
+`predicate=`), `unary_union` (use `union_all()`), and the bundled `geopandas.datasets`
+files (use the `geodatasets` package).
 
 ### Optional Dependencies
 
@@ -31,9 +54,8 @@ uv pip install mapclassify
 # For faster I/O operations (2-4x speedup)
 uv pip install pyarrow
 
-# For PostGIS database support
-uv pip install psycopg2
-uv pip install geoalchemy2
+# For PostGIS database support (SQLAlchemy engine + driver; geoalchemy2 for to_postgis)
+uv pip install sqlalchemy "psycopg[binary]" geoalchemy2
 
 # For basemaps
 uv pip install contextily
@@ -58,10 +80,11 @@ print(gdf.geometry.geom_type)
 # Simple plot
 gdf.plot()
 
-# Reproject to different CRS
-gdf_projected = gdf.to_crs("EPSG:3857")
+# Reproject to a metric CRS suited to the data (local UTM zone)
+gdf_projected = gdf.to_crs(gdf.estimate_utm_crs())
 
-# Calculate area (use projected CRS for accuracy)
+# Calculate area in m² (use an equal-area CRS such as EPSG:6933 for continental extents;
+# never Web Mercator EPSG:3857 — it inflates areas ~4x at 60° latitude)
 gdf_projected['area'] = gdf_projected.geometry.area
 
 # Save to file
@@ -99,7 +122,8 @@ Always check and manage CRS for accurate spatial operations:
 # Check CRS
 print(gdf.crs)
 
-# Reproject (transforms coordinates)
+# Reproject (transforms coordinates). EPSG:3857 (Web Mercator) is for web tiles only;
+# measure in a local UTM (gdf.estimate_utm_crs()) or an equal-area CRS
 gdf_projected = gdf.to_crs("EPSG:3857")
 
 # Set CRS (only when metadata missing)
@@ -184,9 +208,9 @@ See [visualization.md](references/visualization.md) for mapping techniques.
 # 1. Load data
 gdf = gpd.read_file("data.shp")
 
-# 2. Check and transform CRS
+# 2. Check and transform CRS (metric, local UTM zone)
 print(gdf.crs)
-gdf = gdf.to_crs("EPSG:3857")
+gdf = gdf.to_crs(gdf.estimate_utm_crs())
 
 # 3. Perform analysis
 gdf['area'] = gdf.geometry.area
@@ -204,11 +228,11 @@ buffered.to_file("results.gpkg", layer='buffered')
 # Join points to polygons
 points_in_polygons = gpd.sjoin(points_gdf, polygons_gdf, predicate='within')
 
-# Aggregate by polygon
-aggregated = points_in_polygons.groupby('index_right').agg({
-    'value': 'sum',
-    'count': 'size'
-})
+# Aggregate by polygon (named aggregation: total value and number of points)
+aggregated = points_in_polygons.groupby('index_right').agg(
+    value_sum=('value', 'sum'),
+    n_points=('value', 'size'),
+)
 
 # Merge back to polygons
 result = polygons_gdf.merge(aggregated, left_index=True, right_index=True)
@@ -237,16 +261,18 @@ buildings_near_roads = buildings[buildings.geometry.distance(roads.union_all()) 
 3. **Use Arrow for I/O**: Add `use_arrow=True` for 2-4x faster reading/writing
 4. **Simplify geometries**: Use `.simplify()` to reduce complexity when precision isn't critical
 5. **Batch operations**: Vectorized operations are much faster than iterating rows
-6. **Use appropriate CRS**: Projected CRS for area/distance, geographic for visualization
+6. **Use appropriate CRS**: Equal-area CRS for areas, local UTM for distances/buffers, geographic for storage
 
 ## Best Practices
 
 1. **Always check CRS** before spatial operations
-2. **Use projected CRS** for area and distance calculations
+2. **Use a suitable projected CRS** for measurements — equal-area (e.g. EPSG:6933, or a regional Albers) for areas, `estimate_utm_crs()` for distances; never EPSG:3857
 3. **Match CRS** before spatial joins or overlays
 4. **Validate geometries** with `.is_valid` before operations
 5. **Use `.copy()`** when modifying geometry columns to avoid side effects
 6. **Preserve topology** when simplifying for analysis
 7. **Use GeoPackage** format for modern workflows (better than Shapefile)
 8. **Set max_distance** in sjoin_nearest for better performance
+
+Part of the AlterLab Academic Skills suite.
 

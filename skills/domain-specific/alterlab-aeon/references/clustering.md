@@ -8,7 +8,7 @@ Standard k-means/k-medoids adapted for time series:
 
 - `TimeSeriesKMeans` - K-means with temporal distance metrics (DTW, Euclidean, etc.)
 - `TimeSeriesKMedoids` - Uses actual time series as cluster centers
-- `TimeSeriesKShape` - Shape-based clustering algorithm
+- `KShape` - Shape-based clustering algorithm
 - `TimeSeriesKernelKMeans` - Kernel-based variant for nonlinear patterns
 
 **Use when**: Known number of clusters, spherical cluster shapes expected.

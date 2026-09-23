@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No API key required. Runs locally via `uv run python`; requires the fluidsim Python package.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # FluidSim
@@ -14,6 +15,21 @@ metadata:
 ## Overview
 
 FluidSim is an object-oriented Python framework for high-performance computational fluid dynamics (CFD) simulations. It provides solvers for periodic-domain equations using pseudospectral methods with FFT, delivering performance comparable to Fortran/C++ while maintaining Python's ease of use.
+
+## When to Use This Skill
+
+Use this skill when the user wants to run or analyze periodic-domain pseudospectral CFD
+with FluidSim: 2D/3D Navier-Stokes turbulence, stratified or rotating flows, shallow-water
+dynamics, energy spectra and spatial means, parametric sweeps, or MPI runs on a cluster.
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| ML on an already-recorded time series (anomalies, classification, forecasting) | `alterlab-aeon` |
+| Remote-sensing / satellite retrievals of ocean or atmospheric fields | `alterlab-geomaster` |
+| Submitting the finished job script to SLURM or a cloud GPU queue | `alterlab-remote-compute` |
+| Discrete-event or queueing simulation rather than PDE-based CFD | `alterlab-simpy` |
 
 **Key strengths**:
 - Multiple solvers: 2D/3D Navier-Stokes, shallow water, stratified flows
@@ -80,7 +96,7 @@ sim.time_stepping.start()
 
 **Step 5**: Analyze results
 ```python
-sim.output.phys_fields.plot("vorticity")
+sim.output.phys_fields.plot("rot")
 sim.output.spatial_means.plot()
 ```
 
@@ -134,12 +150,12 @@ params.nu_4 = 0     # hyperviscosity (optional)
 ```python
 params.time_stepping.t_end = 10.0
 params.time_stepping.USE_CFL = True  # adaptive time step
-params.time_stepping.CFL = 0.5
+params.time_stepping.cfl_coef = 0.5
 ```
 
 **Initial conditions**:
 ```python
-params.init_fields.type = "noise"  # or "dipole", "vortex", "from_file", "in_script"
+params.init_fields.type = "noise"  # or "dipole", "jet", "constant", "from_file", "from_simul", "in_script"
 ```
 
 **Output settings**:
@@ -157,10 +173,11 @@ See `references/parameters.md` for comprehensive parameter documentation.
 
 FluidSim produces multiple output types automatically saved during simulation:
 
-**Physical fields**: Velocity, vorticity in HDF5 format
+**Physical fields**: Velocity and vorticity saved as `state_phys_t*.nc` (NetCDF-4/HDF5;
+ns2d keys `ux`, `uy`, `rot`, plus `b` for `ns2d.strat`)
 ```python
-sim.output.phys_fields.plot("vorticity")
-sim.output.phys_fields.plot("vx")
+sim.output.phys_fields.plot("rot")
+sim.output.phys_fields.plot("ux")
 ```
 
 **Spatial means**: Time series of volume-averaged quantities
@@ -181,7 +198,7 @@ sim = load_sim_for_plot("simulation_dir")
 sim.output.phys_fields.plot()
 ```
 
-**Advanced visualization**: Open `.h5` files in ParaView or VisIt for 3D visualization.
+**Advanced visualization**: Open the `state_phys_t*.nc` files in ParaView or VisIt for 3D visualization.
 
 See `references/output_analysis.md` for detailed analysis workflows, parametric study analysis, and data export.
 
@@ -198,9 +215,9 @@ params.forcing.forcing_rate = 1.0
 ```python
 params.init_fields.type = "in_script"
 sim = Simul(params)
-X, Y = sim.oper.get_XY_loc()
-vx = sim.state.state_phys.get_var("vx")
-vx[:] = sin(X) * cos(Y)
+X, Y = sim.oper.XX, sim.oper.YY  # local physical grid
+rot = np.sin(X) * np.sin(Y)          # ns2d evolves the vorticity "rot"
+sim.state.init_from_rotfft(sim.oper.fft2(rot))  # sets rot_fft and derives ux, uy
 sim.time_stepping.start()
 ```
 
@@ -261,7 +278,7 @@ params.time_stepping.t_end = 20.0
 # Initialize with dense layer
 params.init_fields.type = "in_script"
 sim = Simul(params)
-X, Y = sim.oper.get_XY_loc()
+X, Y = sim.oper.XX, sim.oper.YY  # local physical grid
 b = sim.state.state_phys.get_var("b")
 b[:] = np.exp(-((X - 3.14)**2 + (Y - 3.14)**2) / 0.5)
 # Sync spectral state FROM the physical field just set (not the reverse)
@@ -306,11 +323,14 @@ params.time_stepping.t_end = 10.0
 params.init_fields.type = "in_script"
 
 sim = Simul(params)
-X, Y = sim.oper.get_XY_loc()
-vx = np.sin(X) * np.cos(Y)
-vy = -np.cos(X) * np.sin(Y)
+X, Y = sim.oper.XX, sim.oper.YY  # local physical grid
+ux = np.sin(X) * np.cos(Y)
+uy = -np.cos(X) * np.sin(Y)
+rot = 2 * np.sin(X) * np.sin(Y)   # vorticity d(uy)/dx - d(ux)/dy
 # Set the physical state, then compute the spectral state FROM it
-sim.state.init_statephys_from(vx=vx, vy=vy)
+# ns2d keys are ux, uy, rot; the solver's spectral state is rot_fft, which
+# statespect_from_statephys computes from `rot` — so rot must be set too
+sim.state.init_statephys_from(ux=ux, uy=uy, rot=rot)
 sim.state.statespect_from_statephys()
 
 sim.time_stepping.start()
@@ -336,13 +356,13 @@ t, E = data["t"], data["E"]
 
 **Run simulation**: `sim = Simul(params); sim.time_stepping.start()`
 
-**Plot results**: `sim.output.phys_fields.plot("vorticity")`
+**Plot results**: `sim.output.phys_fields.plot("rot")`
 
 **Load simulation**: `sim = load_sim_for_plot("path/to/sim")`
 
 ## Resources
 
-**Documentation**: https://fluidsim.readthedocs.io/
+**Documentation**: https://fluidsim.readthedocs.io/ (verified against fluidsim 0.9.0; Python ≥ 3.11)
 
 **Reference files**:
 - `references/installation.md`: Complete installation instructions
@@ -352,3 +372,4 @@ t, E = data["t"], data["E"]
 - `references/output_analysis.md`: Output types and analysis methods
 - `references/advanced_features.md`: Forcing, MPI, parametric studies, custom solvers
 
+Part of the AlterLab Academic Skills suite.

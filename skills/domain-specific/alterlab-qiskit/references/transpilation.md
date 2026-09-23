@@ -221,7 +221,7 @@ Some backends support gates beyond {CX, RZ, SX, X}:
 
 ```python
 # Check available basis gates
-print(backend.configuration().basis_gates)
+print(backend.operation_names)
 ```
 
 ### 3. Minimize Two-Qubit Gates
@@ -248,16 +248,20 @@ qc_test = transpile(qc, backend=sim_backend, optimization_level=3)
 from qiskit_ibm_runtime import QiskitRuntimeService
 
 service = QiskitRuntimeService()
-backend = service.backend("ibm_brisbane")
+backend = service.least_busy(operational=True, simulator=False)
 qc_transpiled = transpile(qc, backend=backend)
 ```
 
 ### IonQ
 
 ```python
-# IonQ has all-to-all connectivity, different basis gates
-basis_gates = ['gpi', 'gpi2', 'ms']
-qc_transpiled = transpile(qc, basis_gates=basis_gates)
+# IonQ is all-to-all. Its backends accept standard gates and compile to the native
+# GPI/GPI2/MS set server-side, so transpile against the IonQ backend itself — Qiskit
+# has no built-in 'gpi'/'ms' gates to pass as basis_gates.
+from qiskit_ionq import IonQProvider
+
+ionq_backend = IonQProvider("YOUR_IONQ_API_TOKEN").get_backend("ionq_simulator")
+qc_transpiled = transpile(qc, backend=ionq_backend)
 ```
 
 ### Amazon Braket

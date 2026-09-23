@@ -5,7 +5,7 @@ Two ways to detect overlaps in gtars:
 1. **`RegionSet` overlap methods (Python)** — best for one or a few region-set
    comparisons in an analysis pipeline.
 2. **IGD indexing (CLI)** — best when you query one large reference database many
-   times. IGD (Integrated Genome Database) is a Rust data structure; in v0.8 it is
+   times. IGD (Integrated Genome Database) is a Rust data structure; as of 0.10 it is
    exposed through the **CLI only** (`gtars igd ...`), not a `gtars.igd` Python module.
 
 ## Python: RegionSet overlaps

@@ -63,6 +63,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-deep-research" }
       ]
+    },
+    {
+      "id": "near-miss-qca",
+      "prompt": "My fuzzy-set calibration for 28 programs is done (anchors already set). Please build the truth table, apply a 0.80 consistency cutoff, and give me the conservative, parsimonious, and intermediate solutions with consistency and coverage.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-qca. The design choice is already made and the user wants the analysis executed (truth table, consistency threshold, Boolean minimization into conservative/parsimonious/intermediate solutions via R's QCA package), which is the QCA analysis module's job rather than method-selection and design guidance.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-qca" }
+      ]
     }
   ]
 }

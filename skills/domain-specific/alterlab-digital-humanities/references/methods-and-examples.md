@@ -99,6 +99,8 @@ topic_model.visualize_topics_over_time(topics_over_time)
 import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
+nltk.download("vader_lexicon")   # one-time; VADER raises LookupError without it
+
 # Initialize VADER
 sid = SentimentIntensityAnalyzer()
 
@@ -594,6 +596,12 @@ for token in doc:
 import nltk
 from nltk.corpus import gutenberg
 from nltk import FreqDist, ConditionalFreqDist
+
+# Corpora ship separately from the library: fetch once. word_tokenize additionally
+# needs "punkt_tab" (NLTK >= 3.9 replaced the pickled "punkt" models). Behind an
+# institutional proxy, NLTK 3.10 refuses proxied downloads unless you trust the proxy
+# and set NLTK_ALLOW_PROXIED_URLOPEN=1.
+nltk.download("gutenberg")
 
 # Load a Gutenberg text
 text = gutenberg.words("austen-emma.txt")

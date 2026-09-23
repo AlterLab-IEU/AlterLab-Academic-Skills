@@ -13,7 +13,7 @@
     {
       "id": "vqe-ground-state",
       "prompt": "I need to compute the ground-state energy of the H2 molecule with a variational quantum eigensolver. Set up the Hamiltonian and the optimization loop.",
-      "expected_output": "Invokes alterlab-pennylane quantum chemistry/VQE: builds the molecular Hamiltonian with qchem.molecular_hamiltonian, prepares the Hartree-Fock state and a UCCSD ansatz in a QNode returning qml.expval(H), and optimizes parameters with AdamOptimizer via step_and_cost, reporting energy in Hartree per step.",
+      "expected_output": "Invokes alterlab-pennylane quantum chemistry/VQE: builds the molecular Hamiltonian with qchem.molecular_hamiltonian with the geometry unit stated explicitly (e.g. qchem.Molecule(..., unit='angstrom'), since the default is Bohr), prepares the Hartree-Fock state and a UCCSD ansatz in a QNode returning qml.expval(H), and optimizes parameters with AdamOptimizer via step_and_cost, reporting energy in Hartree per step.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "VQE" }
@@ -31,7 +31,7 @@
     {
       "id": "run-on-ibm-hardware",
       "prompt": "I've validated my circuit on a simulator. Now I want to run the same PennyLane circuit on real IBM quantum hardware. How do I switch the device?",
-      "expected_output": "Invokes alterlab-pennylane device management: installs/uses the pennylane-qiskit plugin, creates a qiskit.remote device backed by a QiskitRuntimeService backend, and runs the same QNode by swapping the device. Advises switching gradients to parameter-shift for hardware and validating on default.qubit first.",
+      "expected_output": "Invokes alterlab-pennylane device management: installs/uses the pennylane-qiskit plugin, creates a qiskit.remote device backed by a QiskitRuntimeService backend, and runs the same QNode by swapping the device, with finite shots set on the QNode (qml.qnode(dev, shots=...) or qml.set_shots, not device-level shots). Advises switching gradients to parameter-shift for hardware and validating on default.qubit first.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Swaps the PennyLane device to IBM hardware via the pennylane-qiskit plugin and notes parameter-shift gradients are needed off-simulator." }

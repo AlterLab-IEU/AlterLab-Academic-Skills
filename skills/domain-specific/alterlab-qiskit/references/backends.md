@@ -10,9 +10,9 @@ Qiskit is backend-agnostic and supports execution on simulators and real quantum
 - Perfect for development and testing
 
 ### Cloud-Based Hardware
-- IBM Quantum (100+ qubit systems)
+- IBM Quantum (100+ qubit Heron / Nighthawk systems; the 127-qubit Eagle family was retired in 2025–26)
 - IonQ (trapped ion)
-- Amazon Braket (Rigetti, IonQ, Oxford Quantum Circuits)
+- Amazon Braket (IonQ, IQM, Rigetti, plus managed simulators)
 - Other providers via plugins
 
 ## IBM Quantum Backends
@@ -22,10 +22,12 @@ Qiskit is backend-agnostic and supports execution on simulators and real quantum
 ```python
 from qiskit_ibm_runtime import QiskitRuntimeService
 
-# First time: save credentials (legacy channel="ibm_quantum" was removed)
+# First time: save credentials. The legacy channel="ibm_quantum" is gone; the default
+# channel is "ibm_quantum_platform" (API key + instance CRN from quantum.cloud.ibm.com).
 QiskitRuntimeService.save_account(
-    channel="ibm_quantum_platform",
-    token="YOUR_IBM_QUANTUM_TOKEN"
+    token="<your-api-key>",
+    instance="<instance CRN>",   # optional
+    set_as_default=True,
 )
 
 # Subsequent sessions: load credentials
@@ -41,17 +43,20 @@ for backend in backends:
     print(f"{backend.name}: {backend.num_qubits} qubits")
 
 # Filter by minimum qubits
-backends_127q = service.backends(min_num_qubits=127)
+large_backends = service.backends(min_num_qubits=100, operational=True)
 
-# Get specific backend
-backend = service.backend("ibm_brisbane")
-backend = service.least_busy()  # Get least busy backend
+# Get a specific backend by name — QPUs are retired over time, so take the
+# name from the listing above rather than hard-coding an old one
+backend = service.backend(large_backends[0].name)
+
+# Or let Runtime pick the least busy operational QPU
+backend = service.least_busy(operational=True, simulator=False)
 ```
 
 ### Backend Properties
 
 ```python
-backend = service.backend("ibm_brisbane")
+backend = service.least_busy(operational=True, simulator=False)
 
 # Basic info
 print(f"Name: {backend.name}")
@@ -63,7 +68,7 @@ print(f"Status: {backend.status()}")
 print(backend.coupling_map)
 
 # Basis gates
-print(backend.configuration().basis_gates)
+print(backend.operation_names)
 
 # Qubit properties
 print(backend.qubit_properties(0))  # Properties of qubit 0
@@ -87,7 +92,7 @@ from qiskit import QuantumCircuit, transpile
 from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2 as Sampler
 
 service = QiskitRuntimeService()
-backend = service.backend("ibm_brisbane")
+backend = service.least_busy(operational=True, simulator=False)
 
 # Create and transpile circuit
 qc = QuantumCircuit(2)
@@ -118,7 +123,7 @@ job = sampler.run([qc], shots=1024)
 job_id = job.job_id()
 print(f"Job ID: {job_id}")
 
-# Check job status
+# Check job status (a plain string for Runtime V2 jobs: "QUEUED", "RUNNING", "DONE", ...)
 print(job.status())
 
 # Wait for completion
@@ -133,9 +138,9 @@ result = retrieved_job.result()
 ### Job Queuing
 
 ```python
-# Check queue position
-job_status = job.status()
-print(f"Queue position: {job.queue_position()}")
+# Runtime V2 jobs expose status() but no queue position; watch pending jobs in
+# the IBM Quantum Platform dashboard
+print(job.status())
 
 # Cancel job if needed
 job.cancel()
@@ -143,16 +148,18 @@ job.cancel()
 
 ## Session Mode
 
-Use sessions for iterative algorithms (VQE, QAOA) to reduce queue time:
+Use sessions for iterative algorithms (VQE, QAOA) to reduce queue time. Sessions
+require a paid plan — Open Plan users cannot submit session jobs, so use batch or
+job mode (`mode=backend`) there:
 
 ```python
 from qiskit_ibm_runtime import Session, SamplerV2 as Sampler
 
 service = QiskitRuntimeService()
-backend = service.backend("ibm_brisbane")
+backend = service.least_busy(operational=True, simulator=False)
 
 with Session(backend=backend) as session:
-    sampler = Sampler(session=session)
+    sampler = Sampler(mode=session)
 
     # Multiple iterations in same session
     for iteration in range(10):
@@ -178,10 +185,10 @@ Use batch mode for independent parallel jobs:
 from qiskit_ibm_runtime import Batch, SamplerV2 as Sampler
 
 service = QiskitRuntimeService()
-backend = service.backend("ibm_brisbane")
+backend = service.least_busy(operational=True, simulator=False)
 
 with Batch(backend=backend) as batch:
-    sampler = Sampler(session=batch)
+    sampler = Sampler(mode=batch)
 
     # Submit multiple independent jobs
     jobs = []
@@ -215,7 +222,7 @@ from qiskit_ibm_runtime import SamplerV2 as Sampler
 simulator = AerSimulator()
 
 # Simulate with backend noise model
-backend = service.backend("ibm_brisbane")
+backend = service.least_busy(operational=True, simulator=False)
 noisy_simulator = AerSimulator.from_backend(backend)
 
 # Run simulation
@@ -262,8 +269,9 @@ provider = BraketProvider()
 # List available devices
 backends = provider.backends()
 
-# Use specific device
-backend = provider.get_backend("Rigetti")
+# Use a specific device by its Braket name (e.g. the managed "SV1" simulator;
+# list QPUs with provider.backends())
+backend = provider.get_backend("SV1")
 job = backend.run(qc, shots=1024)
 result = job.result()
 ```
@@ -319,7 +327,7 @@ print(service.usage())
 ```python
 from qiskit_ibm_runtime import EstimatorV2 as Estimator
 
-backend = service.backend("ibm_brisbane")
+backend = service.least_busy(operational=True, simulator=False)
 
 # Estimate job cost
 estimator = Estimator(backend)
@@ -368,12 +376,13 @@ shots_final = 10000
 backend = service.least_busy(min_num_qubits=5)
 
 # For production: Use backend matching requirements
-backend = service.backend("ibm_brisbane")  # 127 qubits
+backend = service.least_busy(operational=True, simulator=False)
 ```
 
 ### 5. Use Sessions for Variational Algorithms
 
-Sessions are ideal for VQE, QAOA, and other iterative algorithms.
+Sessions are ideal for VQE, QAOA, and other iterative algorithms (paid plans only;
+on the Open Plan, use batch mode).
 
 ### 6. Monitor Job Status
 
@@ -382,8 +391,9 @@ import time
 
 job = sampler.run([qc], shots=1024)
 
-while job.status().name not in ['DONE', 'ERROR', 'CANCELLED']:
-    print(f"Status: {job.status().name}")
+# RuntimeJobV2.status() returns a plain string, not an enum — no `.name`
+while not job.in_final_state():
+    print(f"Status: {job.status()}")
     time.sleep(10)
 
 result = job.result()
@@ -399,10 +409,10 @@ print([b.name for b in service.backends()])
 
 ### Issue: "Invalid credentials"
 ```python
-# Re-save credentials
+# Re-save credentials (API key from quantum.cloud.ibm.com; old quantum.ibm.com
+# tokens no longer work)
 QiskitRuntimeService.save_account(
-    channel="ibm_quantum_platform",
-    token="YOUR_TOKEN",
+    token="<your-api-key>",
     overwrite=True
 )
 ```
@@ -426,7 +436,6 @@ qc_opt = transpile(qc, backend=backend, optimization_level=3)
 
 | Provider | Connectivity | Gate Set | Notes |
 |----------|-------------|----------|--------|
-| IBM Quantum | Limited | CX, RZ, SX, X | 100+ qubit systems, high quality |
+| IBM Quantum | Heavy-hex (Heron) / square lattice (Nighthawk) | CZ, RZ, SX, X | 100+ qubit systems; check `backend.operation_names` |
 | IonQ | All-to-all | GPI, GPI2, MS | Trapped ion, low error rates |
 | Rigetti | Limited | CZ, RZ, RX | Superconducting qubits |
-| Oxford Quantum Circuits | Limited | ECR, RZ, SX | Coaxmon technology |

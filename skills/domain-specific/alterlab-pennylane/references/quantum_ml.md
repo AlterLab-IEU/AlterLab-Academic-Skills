@@ -136,52 +136,11 @@ for i in range(100):
     weights = weights - 0.01 * grads
 ```
 
-### TensorFlow Integration
+### TensorFlow / Keras
 
-```python
-import tensorflow as tf
-import pennylane as qml
-
-dev = qml.device('default.qubit', wires=2)
-
-@qml.qnode(dev, interface='tf')
-def quantum_circuit(inputs, weights):
-    qml.RY(inputs[0], wires=0)
-    qml.RY(inputs[1], wires=1)
-    qml.RX(weights[0], wires=0)
-    qml.RX(weights[1], wires=1)
-    qml.CNOT(wires=[0, 1])
-    return qml.expval(qml.PauliZ(0))
-
-# Keras layer
-class QuantumLayer(tf.keras.layers.Layer):
-    def __init__(self, n_qubits):
-        super().__init__()
-        self.n_qubits = n_qubits
-        weight_init = tf.random_uniform_initializer()
-        self.weights = tf.Variable(
-            initial_value=weight_init(shape=(n_qubits,), dtype=tf.float32),
-            trainable=True
-        )
-
-    def call(self, inputs):
-        return tf.stack([quantum_circuit(x, self.weights) for x in inputs])
-
-# Keras model
-model = tf.keras.Sequential([
-    tf.keras.layers.Dense(2, activation='relu'),
-    QuantumLayer(2),
-    tf.keras.layers.Dense(2, activation='softmax')
-])
-
-model.compile(
-    optimizer=tf.keras.optimizers.Adam(0.01),
-    loss='sparse_categorical_crossentropy',
-    metrics=['accuracy']
-)
-
-model.fit(x_train, y_train, epochs=100, batch_size=32)
-```
+TensorFlow is no longer supported: `qml.qnn.KerasLayer` was removed in v0.42 and the
+`tf` interface was dropped in v0.44. Port Keras models to PyTorch (`qml.qnn.TorchLayer`,
+above) or JAX, or pin an old PennyLane release in a legacy environment.
 
 ## Quantum Neural Networks
 

@@ -14,7 +14,7 @@
     {
       "id": "google-hardware-execution",
       "prompt": "I have an approved Google Quantum AI project and want to run my circuit on the Weber processor. How do I get the engine, pick good qubits from calibration, and submit the job with cirq-google?",
-      "expected_output": "Activates the Cirq skill and gives a cirq-google hardware path: cirq_google.get_engine(), engine.get_processor('weber'), selecting qubits using device/calibration data, compiling the circuit to the device gateset, and submitting via processor.run(...). Mentions validating against device constraints and testing on a simulator first.",
+      "expected_output": "Activates the Cirq skill and gives a cirq-google hardware path: cirq_google.get_engine(), engine.get_processor('weber'), selecting qubits using device/calibration data, compiling the circuit to the device gateset, and submitting via processor.run(circuit, device_config_name=..., repetitions=...), which returns a cirq.Result directly (config names from processor.list_configs()). Mentions validating against device constraints and testing first on a simulator or the noisy Quantum Virtual Machine.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "cirq_google"},

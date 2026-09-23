@@ -6,7 +6,8 @@ allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No API key required. Runs locally via `uv run python`; requires the qutip Python package.
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.2.0"
+    last_updated: "2026-09-23"
 ---
 
 # QuTiP: Quantum Toolbox in Python
@@ -15,13 +16,35 @@ metadata:
 
 QuTiP provides comprehensive tools for simulating and analyzing quantum mechanical systems. It handles both closed (unitary) and open (dissipative) quantum systems with multiple solvers optimized for different scenarios.
 
+## When to Use This Skill
+
+Use this skill when the user wants to:
+- Solve Lindblad master equations, quantum trajectories, or Schrödinger dynamics (`mesolve`, `mcsolve`, `sesolve`)
+- Model decoherence, dissipation, cavity QED, or driven/periodic systems (Floquet, Bloch-Redfield, HEOM)
+- Compute steady states, correlation functions, spectra, entanglement, or phase-space distributions
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Gate-based circuits on IBM hardware, transpilation, Runtime primitives | `alterlab-qiskit` |
+| Cirq circuits, Google hardware / Quantum Virtual Machine, XEB/RB | `alterlab-cirq` |
+| Training variational circuits with autodiff (quantum ML, differentiable VQE) | `alterlab-pennylane` |
+| Symbolic derivation of operators or commutators without numerics | `alterlab-sympy` |
+
 ## Installation
 
 ```bash
 uv pip install qutip
 ```
 
-This skill targets **QuTiP 5.x** (verified against 5.3.0). Key v5 API changes from v4: solver options are a plain `dict` (the old `Options`/`solver.Options` class is gone), stochastic solvers use `heterodyne=True/False` instead of a `noise` code, and `progress_bar` takes a string (`'text'`/`'tqdm'`/`''`) rather than `True`.
+This skill targets **QuTiP 5.x** (verified against 5.3.1, current as of 2026-09; Python ≥ 3.11). Key v5 API changes from v4: solver options are a plain `dict` (the old `Options`/`solver.Options` class is gone), stochastic solvers use `heterodyne=True/False` instead of a `noise` code, `progress_bar` takes a string (`'text'`/`'tqdm'`/`''`) rather than `True`, `mcsolve` runs trajectories serially unless you pass `options={"map": "parallel"}`, and the standalone `floquet_modes()` family is deprecated in favour of `FloquetBasis`.
+
+String-format time dependence (`'cos(w*t)'`) is compiled with Cython only when the `runtime-compilation` extra is installed; otherwise QuTiP warns and falls back to slower `eval`:
+
+```bash
+uv pip install "qutip[runtime-compilation]"   # Cython + setuptools + filelock
+```
 
 Optional packages for additional functionality:
 
@@ -161,9 +184,11 @@ matrix_histogram(H.full())  # 3D bars
 Specialized techniques for complex scenarios:
 
 ```python
-# Floquet theory (periodic Hamiltonians)
+# Floquet theory (periodic Hamiltonians); floquet_modes() is deprecated in v5
 T = 2 * np.pi / w_drive
-f_modes, f_energies = floquet_modes(H, T, args)
+fbasis = FloquetBasis(H, T, args=args)
+f_energies = fbasis.e_quasi   # quasi-energies
+f_modes = fbasis.mode(0)      # Floquet modes at t = 0
 result = fmmesolve(H, psi0, tlist, c_ops, T=T, args=args)
 
 # HEOM (non-Markovian, strong coupling)
@@ -285,10 +310,10 @@ plt.show()
 
 1. **Truncate Hilbert spaces**: Use smallest dimension that captures dynamics
 2. **Choose appropriate solver**: `sesolve` for pure states is faster than `mesolve`
-3. **Time-dependent terms**: String format (e.g., `'cos(w*t)'`) is fastest
+3. **Time-dependent terms**: String format (e.g., `'cos(w*t)'`) is fastest once compiled (needs `qutip[runtime-compilation]`)
 4. **Store only needed data**: Use `e_ops` instead of storing all states
 5. **Adjust tolerances**: Balance accuracy with computation time via the `options` dict (`atol`/`rtol`/`nsteps`)
-6. **Parallel trajectories**: `mcsolve` automatically uses multiple CPUs
+6. **Parallel trajectories**: `mcsolve` is serial by default in v5 — pass `options={"map": "parallel", "num_cpus": 4}` (or `"loky"` / `"mpi"`)
 7. **Check convergence**: Vary `ntraj`, Hilbert space size, and tolerances
 
 ## Troubleshooting
@@ -317,4 +342,6 @@ This skill includes detailed reference documentation:
 - Tutorials: https://qutip.org/qutip-tutorials/
 - API Reference: https://qutip.readthedocs.io/en/stable/apidoc/apidoc.html
 - GitHub: https://github.com/qutip/qutip
+
+Part of the AlterLab Academic Skills suite.
 

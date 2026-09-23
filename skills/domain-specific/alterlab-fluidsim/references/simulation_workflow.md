@@ -42,7 +42,7 @@ params.time_stepping.deltat0 = 0.01  # initial time step
 params.time_stepping.USE_CFL = True  # adaptive time step
 
 # Initial conditions
-params.init_fields.type = "noise"  # or "dipole", "vortex", etc.
+params.init_fields.type = "noise"  # or "dipole", "jet", "constant", "in_script", ...
 
 # Output settings
 params.output.periods_save.phys_fields = 1.0  # save every 1.0 time units
@@ -75,7 +75,7 @@ The simulation runs until `t_end` or specified number of iterations.
 ```python
 # Plot physical fields
 sim.output.phys_fields.plot()
-sim.output.phys_fields.plot("vorticity")
+sim.output.phys_fields.plot("rot")
 sim.output.phys_fields.plot("div")
 
 # Plot spatial means
@@ -105,7 +105,7 @@ Fast loading without full state initialization. Use for post-processing.
 ```python
 from fluidsim import load_state_phys_file
 
-sim = load_state_phys_file("path/to/state_file.h5")
+sim = load_state_phys_file("path/to/state_phys_t010.000.nc")
 sim.time_stepping.start()  # continue simulation
 ```
 
@@ -118,7 +118,7 @@ To restart from a saved state:
 ```python
 params = Simul.create_default_params()
 params.init_fields.type = "from_file"
-params.init_fields.from_file.path = "path/to/state_file.h5"
+params.init_fields.from_file.path = "path/to/state_phys_t010.000.nc"
 
 # Optionally modify parameters for the continuation
 params.time_stepping.t_end = 20.0  # extend simulation
@@ -167,6 +167,6 @@ sim = Simul(params)
 sim.time_stepping.start()
 
 # Analyze results
-sim.output.phys_fields.plot("vorticity")
+sim.output.phys_fields.plot("rot")
 sim.output.spatial_means.plot()
 ```

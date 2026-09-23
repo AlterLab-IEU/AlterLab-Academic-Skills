@@ -45,10 +45,11 @@ plotter.write_image("phase_diagram.png")
 ### Chemical Potential Diagrams
 
 ```python
-from pymatgen.analysis.phase_diagram import ChemicalPotentialDiagram
+from pymatgen.analysis.chempot_diagram import ChemicalPotentialDiagram
+from pymatgen.core import Element
 
-# Create chemical potential diagram
-cpd = ChemicalPotentialDiagram(entries, limits={"O": (-10, 0)})
+# Create chemical potential diagram (limits are keyed by Element, not str)
+cpd = ChemicalPotentialDiagram(entries, limits={Element("O"): (-10, 0)})
 
 # Get domains (stability regions)
 domains = cpd.domains
@@ -140,7 +141,7 @@ from pymatgen.analysis.local_env import (
     VoronoiNN,           # Voronoi tessellation
     CrystalNN,           # Crystal-based
     MinimumDistanceNN,   # Distance cutoff
-    BrunnerNN_real,      # Brunner method
+    BrunnerNNReal,      # Brunner method
 )
 
 # Voronoi nearest neighbors
@@ -440,17 +441,19 @@ energy = rxn.calculated_reaction_energy  # eV per formula unit
 ### Reaction Path Finding
 
 ```python
-from pymatgen.analysis.path_finder import ChgcarPotential, NEBPathfinder
+# Moved out of core pymatgen: uv pip install pymatgen-analysis-diffusion
+from pymatgen.analysis.diffusion.neb.pathfinder import ChgcarPotential, NEBPathfinder
+from pymatgen.io.vasp import Chgcar
 
-# Read charge density
-chgcar_potential = ChgcarPotential.from_file("CHGCAR")
+# Static potential from the charge density
+potential = ChgcarPotential(Chgcar.from_file("CHGCAR")).get_v()
 
-# Find diffusion path
+# Find diffusion path (the path is interpolated and relaxed on construction)
 neb_path = NEBPathfinder(
     start_struct,
     end_struct,
     relax_sites=[i for i in range(len(start_struct))],
-    v=chgcar_potential
+    v=potential
 )
 
 images = neb_path.images  # Interpolated structures for NEB
@@ -503,12 +506,12 @@ xas.normalize()
 ### Grain Boundaries
 
 ```python
-from pymatgen.analysis.gb.grain import GrainBoundaryGenerator
+from pymatgen.core.interface import GrainBoundaryGenerator
 
 gb_gen = GrainBoundaryGenerator(struct)
-gb_structures = gb_gen.generate_grain_boundaries(
-    rotation_axis=[0, 0, 1],
-    rotation_angle=36.87,  # degrees
+gb = gb_gen.gb_from_parameters(
+    rotation_axis=(0, 0, 1),
+    rotation_angle=36.87,  # degrees (Σ5 twist for a cubic lattice)
 )
 ```
 

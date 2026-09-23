@@ -25,7 +25,7 @@ Neural architectures for end-to-end temporal regression:
 - `RecurrentRegressor` - RNN/LSTM/GRU variants
 - `MLPRegressor` - Multi-layer perceptron
 - `EncoderRegressor` - Generic encoder wrapper
-- `LITERegressor` - Lightweight inception time ensemble
+- `LITETimeRegressor` - Lightweight inception time ensemble
 - `DisjointCNNRegressor` - Specialized CNN architecture
 
 **Use when**: Large datasets, complex patterns, or need feature learning.
