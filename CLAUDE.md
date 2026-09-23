@@ -1,13 +1,13 @@
 # AlterLab Academic Skills — by AlterLab Creative Technologies Laboratory
 
-> **Project**: AlterLab Academic Skills — 240 Claude AI skills for faculty and researchers
+> **Project**: AlterLab Academic Skills — 242 Claude AI skills for faculty and researchers
 > **Owner**: AlterLab Creative Technologies Laboratory
 
 ---
 
 ## Project Overview
 
-This project provides **240 professional Claude AI skills** organized into 18 domain categories for faculty members, academicians, and researchers. Each skill transforms Claude into a domain-specific expert assistant tailored to academic research, scientific computing, and scholarly publishing workflows.
+This project provides **242 professional Claude AI skills** organized into 18 domain categories for faculty members, academicians, and researchers. Each skill transforms Claude into a domain-specific expert assistant tailored to academic research, scientific computing, and scholarly publishing workflows.
 
 The repo is installable as a Claude Code plugin marketplace named `alterlab-academic-skills`, with 18 domain plugins (`alterlab-core`, `alterlab-databases`, `alterlab-bioinformatics`, `alterlab-cheminformatics`, `alterlab-clinical-research`, `alterlab-data-science`, `alterlab-visualization`, `alterlab-writing-tools`, `alterlab-lab-integrations`, `alterlab-domain-specific`, `alterlab-document-tools`, `alterlab-research-tools`, `alterlab-finance-economics`, `alterlab-turkish-academia`, `alterlab-faculty-life`, `alterlab-methodology`, `alterlab-social-science-workflow`, `alterlab-workflows`) plus two dependency-only bundles (`alterlab-essentials`, `alterlab-complete`, in `plugins/`). `alterlab-workflows` also ships seven Claude Code dynamic-workflow scripts in `skills/workflows/workflows/`, validated by `node scripts/workflow_dryrun.mjs`.
 
@@ -33,19 +33,19 @@ The repo is installable as a Claude Code plugin marketplace named `alterlab-acad
 | Clinical Research | `skills/clinical-research/` | 7 | Clinical decision support, medical tools |
 | Data Science | `skills/data-science/` | 22 | ML, statistics, data analysis |
 | Visualization | `skills/visualization/` | 9 | Scientific plotting and graphics |
-| Writing Tools | `skills/writing-tools/` | 13 | Scientific writing, citations, posters |
+| Writing Tools | `skills/writing-tools/` | 14 | Scientific writing, citations, posters, AI-use disclosure |
 | Lab Integrations | `skills/lab-integrations/` | 9 | Laboratory platform connectors |
 | Domain-Specific | `skills/domain-specific/` | 18 | Quantum, geospatial, materials science |
 | Document Tools | `skills/document-tools/` | 3 | Markdown conversion, notebook handling |
 | Research Tools | `skills/research-tools/` | 14 | Search, discovery, reference management |
 | Finance & Economics | `skills/finance-economics/` | 7 | Financial data and analysis |
-| Turkish Academia | `skills/turkish-academia/` | 12 | Turkish academic system workflows (YÖK, ÜAK, DergiPark, TÜBİTAK) |
+| Turkish Academia | `skills/turkish-academia/` | 13 | Turkish academic system workflows (YÖK, ÜAK, DergiPark, TÜBİTAK proposals & BİDEB) |
 | Faculty Life | `skills/faculty-life/` | 6 | Faculty research-lifecycle and academic administration |
 | Methodology | `skills/methodology/` | 3 | Research methodology and rigor scaffolds |
 | Social-Science Workflow | `skills/social-science-workflow/` | 17 | Stage-gated methods spine: orchestrator + 5 validity gates (design, measurement, sampling, reflexivity, inference) + 11 analysis modules (causal-inference, SEM/psychometrics, QCA, SNA, ABM, text-as-data, survey-analysis, qualitative-analysis, multilevel-models, meta-analysis, missing-data) |
 | Research Workflows | `skills/workflows/` | 1 | Portable playbook skill for the 7 packaged dynamic workflows (citation audit, review panel, claim stress-test, PRISMA screening, rebuttal, grant mock panel, literature map) |
 
-**Total: 240 skills across 18 categories**
+**Total: 242 skills across 18 categories**
 
 ---
 

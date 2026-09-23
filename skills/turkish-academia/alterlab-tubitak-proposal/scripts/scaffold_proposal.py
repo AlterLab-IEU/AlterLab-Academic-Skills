@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scaffold and cap-check a TÜBİTAK ARDEB 1001 / 1002-A research proposal.
+"""Scaffold and cap-check a TÜBİTAK ARDEB 1001 / 1002-A / 3501 research proposal.
 
 Two modes, both offline and dependency-free (Python standard library only):
 
@@ -11,11 +11,15 @@ Two modes, both offline and dependency-free (Python standard library only):
       - 1002-A: the PBS entry screens that replaced the .doc form (1 BİLİMSEL NİTELİK →
         2 YÖNTEM → 3 PROJE YÖNETİMİ → 4 ÇIKTI, ETKİ VE KAZANIMLAR → EK-1 → EK-2), each
         with the min–max word range from the 1002-A Başvuru İçeriği Bilgi Notu.
+      - 3501: the PBS entry screens of the Kariyer Geliştirme Programı (Tez Bilgileri →
+        1 ÖZGÜN DEĞER → 2 YÖNTEM → 3 PROJE YÖNETİMİ → 4 KARİYER GELİŞTİRME POTANSİYELİ →
+        5 YAYGIN ETKİ → EK-1 → EK-2), with the word ranges from the 3501 Başvuru İçeriği
+        Bilgi Notu.
 
   * **--check FILE** — read an existing draft (Markdown) and report, advisory-only:
       - which required sections are missing,
       - word counts against each section's limits (1001: TR and EN özet ≤ 600 words;
-        1002-A: the per-section min–max ranges),
+        1002-A and 3501: the per-section min–max ranges),
       - whether any stated duration / budget exceeds the program ceiling,
       - whether a B Planı (contingency plan) is present.
     It never edits the draft and always restates the verify-current-call disclaimer,
@@ -29,6 +33,7 @@ page before submission.
 Usage:
     uv run python scaffold_proposal.py --program 1001 --title "My project" --out scaffold.md
     uv run python scaffold_proposal.py --program 1002a --lang both
+    uv run python scaffold_proposal.py --program 3501 --title "My project"
     uv run python scaffold_proposal.py --check scaffold.md --program 1001
 """
 
@@ -43,8 +48,8 @@ from dataclasses import dataclass
 DISCLAIMER = (
     "VERIFY CURRENT CALL: every TRY figure, page limit, word range and duration below is dated "
     "and changes by call period. Before submission, fetch the live program page (and, for "
-    "1002-A, the current Başvuru İçeriği Bilgi Notu) and reconcile. Values read on 2026-09-23: "
-    "1001 caps from the 2026-1 period, 1002-A caps from 2026-02-01."
+    "1002-A and 3501, the current Başvuru İçeriği Bilgi Notu) and reconcile. Values read on "
+    "2026-09-23: 1001 caps from the 2026-1 period, 1002-A and 3501 caps from 2026-02-01."
 )
 
 # Program ceilings — see ../references/program_profiles.md. Dated, period-specific.
@@ -71,6 +76,19 @@ PROGRAMS = {
         "format_note": (
             "content typed into the PBS screens (no .doc template); the system generates the "
             "form, EK-1 and EK-2"
+        ),
+    },
+    "3501": {
+        "name": "3501 - Kariyer Geliştirme Programı",
+        "gloss": "Career Development Programme (early-career PIs)",
+        "max_months": 36,
+        "budget_cap_try": 1_500_000,
+        "budget_note": "burs dahil; PTİ ve kurum hissesi hariç; no annual sub-limit; "
+                       "from 2026-02-01",
+        "window": "rolling / year-round; e-imza within 15 days of approving the application",
+        "format_note": (
+            "content typed into the PBS screens (no .doc template); the system generates the "
+            "form, EK-1 and EK-2; content behind external links is returned without review"
         ),
     },
 }
@@ -183,8 +201,86 @@ SECTIONS_1002A: list[Section] = [
             "Justify every line; total = Önerilen Destek Miktarı; no foreign travel."),
 ]
 
-SECTIONS = {"1001": SECTIONS_1001, "1002a": SECTIONS_1002A}
-OPTIONAL_KEYS = {"diger"}   # may legitimately be absent from a draft
+# 3501 — the PBS entry steps (../references/form_structure.md, Part C), with the word
+# ranges from the 3501 Kariyer Geliştirme Programı Başvuru İçeriği Bilgi Notu (2026-05
+# upload). Numbering follows the 3501 evaluation form. The form publishes no weights.
+SECTIONS_3501: list[Section] = [
+    Section("tez", "", "PROJE YÜRÜTÜCÜSÜNÜN TEZ BİLGİLERİ", "PI's thesis information",
+            "Kariyer Geliştirme Potansiyeli",
+            "Thesis titles and their dissemination (papers, chapters, books)."),
+    Section("tez_yl", "", "Yüksek Lisans Tezi: Başlık ve Yaygın Etkisi",
+            "Master's thesis: title and dissemination (≤ 150 words; only if any)",
+            "Kariyer Geliştirme Potansiyeli", "Papers, chapters, books from the thesis.",
+            level=3, max_words=150),
+    Section("tez_dr", "", "Doktora / Tıpta Uzmanlık Tezi: Başlık ve Yaygın Etkisi",
+            "Doctoral / specialty thesis: title and dissemination (50–350 words)",
+            "Kariyer Geliştirme Potansiyeli", "Papers, chapters, books from the thesis.",
+            level=3, min_words=50, max_words=350, markers=("doktora / tıpta",)),
+    Section("ozgun_deger", "1", "ÖZGÜN DEĞER", "Original value", "Özgün Değer",
+            "Three PBS text fields follow."),
+    Section("konu_onemi", "", "Konunun Önemi, Projenin Özgün Değeri",
+            "Importance of the topic & original value (1,000–4,000 words)", "Özgün Değer",
+            "Critical literature review with qualitative/quantitative support; the gap and "
+            "the conceptual/theoretical/methodological contribution.",
+            level=3, min_words=1000, max_words=4000),
+    Section("soru_hipotez", "", "Araştırma Sorusu veya Hipotezi",
+            "Research question or hypothesis (100–400 words)", "Özgün Değer",
+            "The problem(s), research question and/or hypothesis, stated plainly.",
+            level=3, min_words=100, max_words=400),
+    Section("amac_hedefler", "", "Amaç ve Hedefler", "Aim & objectives (150–500 words)",
+            "Özgün Değer", "Clear, measurable, realistic, achievable within ≤ 36 months.",
+            level=3, min_words=150, max_words=500),
+    Section("yontem", "2", "YÖNTEM", "Method (1,000–3,750 words)", "Yöntem",
+            "Methods and techniques with the reasons for choosing them (data collection, "
+            "analysis), design, variables, statistics; preliminary work.",
+            min_words=1000, max_words=3750),
+    Section("proje_yonetimi", "3", "PROJE YÖNETİMİ (İş Paketleri adımı)",
+            "Project management — built from the PBS work-package step", "Proje Yönetimi",
+            "Per İP: who/when, Başarı Ölçütü, önem % totalling 100, Ara Çıktılar, risks with "
+            "a B Planı; no literature-review/reporting/article-writing/procurement İPs."),
+    Section("olanaklar", "", "Araştırma Olanakları", "Research facilities",
+            "Proje Yönetimi", "Infrastructure/equipment and what each is used for.", level=3),
+    Section("kariyer", "4", "KARİYER GELİŞTİRME POTANSİYELİ",
+            "Career-development potential (250–700 words)", "Kariyer Geliştirme Potansiyeli",
+            "How the master's/doctoral work relates to the proposal; new skills, "
+            "interdisciplinary capability, career contribution.",
+            min_words=250, max_words=700, markers=("kariyer geliştirme potansiyeli",)),
+    Section("yaygin_etki", "5", "YAYGIN ETKİ", "Broader impact", "Yaygın Etki",
+            "Outputs, impacts and the dissemination plan."),
+    Section("ciktilar", "5.1", "Öngörülen Çıktılar", "Expected outputs", "Yaygın Etki",
+            "Outputs by category with measurable targets, timing and users.", level=3),
+    Section("etkiler", "5.2", "Öngörülen Etkiler", "Expected impacts (50–400 words)",
+            "Yaygın Etki", "Application areas, end users, socio-economic/cultural "
+            "contribution; link to the On İkinci Kalkınma Planı.",
+            level=3, min_words=50, max_words=400),
+    Section("yayilim", "5.3",
+            "Proje Sonuçlarının Yayılımı ve Bilim İletişimi Kapsamında Gerçekleştirilecek "
+            "Faaliyet Planı", "Dissemination & science-communication plan", "Yaygın Etki",
+            "Four short PBS fields follow.", level=3),
+    Section("hedef_kitle", "", "Hedef Kitle", "Target audience (10–125 words)", "Yaygın Etki",
+            "Who benefits and how they will be reached.", level=4, min_words=10,
+            max_words=125),
+    Section("hedefler_kazanim", "", "Hedefler ve Beklenen Kazanımlar",
+            "Goals and expected gains (10–125 words)", "Yaygın Etki",
+            "Awareness/knowledge goals and why sharing matters.", level=4, min_words=10,
+            max_words=125),
+    Section("araclar", "", "Kullanılacak Araçlar", "Tools and channels (5–100 words)",
+            "Yaygın Etki", "Channels and why they suit the audience.", level=4, min_words=5,
+            max_words=100),
+    Section("zamanlama", "", "Zamanlama", "Timing (5–75 words)", "Yaygın Etki",
+            "When and for how long.", level=4, min_words=5, max_words=75),
+    Section("diger", "", "Belirtmek İstediğiniz Diğer Konular",
+            "Other remarks (optional, ≤ 500 words)", "—",
+            "Only material that helps the evaluation; may be left empty.", max_words=500),
+    Section("kaynaklar", "EK-1", "Kaynaklar", "References (PBS 'Kaynakça' step)",
+            "Özgün Değer", "Every source cited in the text; DOI mandatory where one exists."),
+    Section("butce", "EK-2", "Bütçe ve Gerekçesi", "Budget & justification (PBS budget steps)",
+            "Proje Yönetimi",
+            "Justify every line; total = Önerilen Destek Miktarı; no proforma at application."),
+]
+
+SECTIONS = {"1001": SECTIONS_1001, "1002a": SECTIONS_1002A, "3501": SECTIONS_3501}
+OPTIONAL_KEYS = {"diger", "tez_yl"}   # may legitimately be absent from a draft
 
 
 def _limits(sec: Section) -> str:
@@ -228,7 +324,7 @@ def build_scaffold(program: str, title: str, lang: str) -> str:
         out.append("_…_")
         out.append("")
     out.append("---")
-    if program == "1001":
+    if program in ("1001", "3501"):
         out.append(
             "EK-3 (Proje Ekibinin Diğer Projeleri ve Güncel Yayınları) is generated by PBS from "
             "the entered data — keep the team's ARBİS records current."
@@ -236,7 +332,7 @@ def build_scaffold(program: str, title: str, lang: str) -> str:
     out.append(
         "AI-use disclosure: if generative AI drafted or substantially shaped any section, "
         "declare the tool/version, the sections and the nature of use in the PBS section "
-        "provided (TÜBİTAK ÜYZ Rehberi, Eylül 2025)."
+        "provided (TÜBİTAK ÜYZ Rehberi; current edition v04, Ocak 2026)."
     )
     out.append(
         "Handoffs: data plan (Veri Yönetim Planı) → alterlab-kvkk-dmp / alterlab-aperta; ethics → "
@@ -251,6 +347,14 @@ def build_scaffold(program: str, title: str, lang: str) -> str:
 _WORD_RE = re.compile(r"\b[\wçğıöşüÇĞİÖŞÜ’'-]+\b", re.UNICODE)
 _COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 _PLACEHOLDER_RE = re.compile(r"^\s*_…_\s*$", re.MULTILINE)
+
+
+def _fold(text: str) -> str:
+    # str.lower() turns Turkish "İ" into "i" + U+0307 (combining dot) and ASCII "I" into
+    # "i" (not "ı"), so "KARİYER"/"Kariyer" and "YAYGIN"/"Yaygın" would not match. Dropping
+    # the combining dot and folding "ı" to "i" makes heading matching case-insensitive for
+    # Turkish text. Used only for matching, never for output.
+    return text.lower().replace("̇", "").replace("ı", "i")
 
 
 def _word_count(text: str) -> int:
@@ -272,7 +376,7 @@ def _extract_block(body: str, *markers: str) -> str | None:
     start = None
     for m in markers:
         for i, ln in enumerate(lines):
-            if ln.lstrip().startswith("#") and m.lower() in ln.lower():
+            if ln.lstrip().startswith("#") and _fold(m) in _fold(ln):
                 start = i + 1
                 break
         if start is not None:
@@ -289,7 +393,9 @@ def _extract_block(body: str, *markers: str) -> str | None:
 
 def _markers(sec: Section) -> tuple[str, ...]:
     # Explicit markers, else a short distinctive substring of the Turkish heading.
-    return sec.markers or (sec.tr.split("(")[0].strip().lower()[:18],)
+    if sec.markers:
+        return tuple(_fold(m) for m in sec.markers)
+    return (_fold(sec.tr.split("(")[0].strip())[:18],)
 
 
 def check_draft(path: str, program: str) -> dict:
@@ -297,7 +403,7 @@ def check_draft(path: str, program: str) -> dict:
     with open(path, encoding="utf-8") as fh:
         body = fh.read()
     # Content checks ignore the scaffold's own <!-- brief --> annotations.
-    low = _COMMENT_RE.sub(" ", body).lower()
+    low = _fold(_COMMENT_RE.sub(" ", body))
 
     findings: list[dict] = []
 
@@ -369,9 +475,70 @@ def check_draft(path: str, program: str) -> dict:
     }
 
 
+def run_self_test() -> int:
+    """Offline checks: every scaffold passes its own structure check, and a mixed-case 3501
+    draft is parsed with the right word counts and cap findings."""
+    import os
+    import tempfile
+
+    ok = True
+
+    def expect(name: str, got: object, want: object) -> None:
+        nonlocal ok
+        passed = got == want
+        ok = ok and passed
+        print(f"[{'PASS' if passed else 'FAIL'}] {name}: got={got!r} want={want!r}")
+
+    def run_check(text: str, program: str) -> dict:
+        fd, path = tempfile.mkstemp(suffix=".md")
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(text)
+        try:
+            return check_draft(path, program)
+        finally:
+            os.remove(path)
+
+    for program in SECTIONS:
+        report = run_check(build_scaffold(program, "T", "tr"), program)
+        codes = {f["code"] for f in report["findings"]}
+        expect(f"{program} scaffold has every required section",
+               "missing-sections" in codes, False)
+    expect("fold KARİYER == Kariyer", _fold("KARİYER"), _fold("Kariyer"))
+    expect("fold YAYGIN == Yaygın", _fold("YAYGIN"), _fold("Yaygın"))
+
+    def words(n: int) -> str:
+        return " ".join(["kelime"] * n)
+
+    draft = "\n".join([
+        "# Taslak", "## Proje Yürütücüsünün Tez Bilgileri",
+        "### Doktora / Tıpta Uzmanlık Tezi", words(60),
+        "## 1. Özgün Değer", "### Konunun Önemi, Projenin Özgün Değeri", words(1200),
+        "### Araştırma Sorusu veya Hipotezi", words(120), "### Amaç ve Hedefler", words(90),
+        "## 2. Yöntem", words(1100), "## 3. Proje Yönetimi",
+        "Proje süresi 48 ay. B Planı: alternatif veri seti.",
+        "### Araştırma Olanakları", words(20),
+        "## 4. Kariyer Geliştirme Potansiyeli", words(300), "## 5. Yaygın Etki",
+        "### Öngörülen Çıktılar", words(30), "### Öngörülen Etkiler", words(100),
+        "### Proje Sonuçlarının Yayılımı", "#### Hedef Kitle", words(40),
+        "#### Hedefler ve Beklenen Kazanımlar", words(40), "#### Kullanılacak Araçlar",
+        words(30), "#### Zamanlama", words(20), "## EK-1. Kaynaklar", "x",
+        "## EK-2. Bütçe ve Gerekçesi", "Toplam 1.800.000 TL.",
+    ])
+    report = run_check(draft, "3501")
+    levels = {f["code"]: f["level"] for f in report["findings"]}
+    expect("3501 mixed-case headings all found", "missing-sections" in levels, False)
+    expect("3501 amaç ve hedefler below 150 words", levels.get("words-amac_hedefler"), "fail")
+    expect("3501 kariyer section counted", levels.get("words-kariyer"), "ok")
+    expect("3501 48 months over the cap", levels.get("duration-over"), "fail")
+    expect("3501 1.8M TL over the cap", levels.get("budget-over"), "fail")
+    expect("3501 B Planı detected", "b-plani-missing" in levels, False)
+    print("\nSELF-TEST:", "OK" if ok else "FAILED")
+    return 0 if ok else 1
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--program", choices=["1001", "1002a"], default="1001",
+    ap.add_argument("--program", choices=["1001", "1002a", "3501"], default="1001",
                     help="ARDEB program variant (default: 1001)")
     ap.add_argument("--title", default="", help="Project title to stamp into the scaffold")
     ap.add_argument("--lang", choices=["tr", "en", "both"], default="tr",
@@ -380,7 +547,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--check", metavar="FILE",
                     help="Check an existing draft against the form structure and caps")
     ap.add_argument("--json", action="store_true", help="(--check) print JSON instead of text")
+    ap.add_argument("--self-test", action="store_true", help="run the offline self-test")
     args = ap.parse_args(argv)
+
+    if args.self_test:
+        return run_self_test()
 
     if args.check:
         report = check_draft(args.check, args.program)

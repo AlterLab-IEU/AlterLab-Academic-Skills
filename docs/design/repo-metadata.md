@@ -13,9 +13,9 @@
 
 ## 📝 Repository description
 
-> 183 evaluated academic Claude/agent skills across 13 research domains — bioinformatics, cheminformatics, data science, databases, clinical & more. Every skill ships an executable eval (agentskills.io schema). Deterministic citation verifier + research→write→review→publish pipeline. Works in Claude Code, Cursor, Codex, Gemini CLI & Copilot.
+> 242 evaluated academic Claude/agent skills across 18 research domains — bioinformatics, cheminformatics, data science, databases, clinical, social science, Turkish academia & more. Every skill ships an executable eval. Citation verifier, research→write→review pipeline, 7 multi-agent workflows. Claude Code plugins; also Cursor, Codex, Gemini CLI.
 
-<sub>341 characters (under GitHub's 350 cap). Leads with **183 evaluated academic Claude/agent skills**; every claim is grounded in `skills.json` (`summary.total = 183`, `summary.eval_coverage = 183/183`, 13 domains) and `CHANGELOG.md` `[2.0.0]`.</sub>
+<sub>347 characters (under GitHub's 350 cap). Leads with **242 evaluated academic Claude/agent skills**; every claim is grounded in `skills.json` (`summary.total = 242`, `summary.eval_coverage = 242/242`, 18 domains) and `CHANGELOG.md` `[3.0.0]` (the seven workflows ship in the `alterlab-workflows` plugin).</sub>
 
 <br>
 
@@ -36,17 +36,17 @@ All lowercase-kebab, ordered by discovery value. Anchored in the suite's real do
 | 7 | `academic-research` | Core audience intent |
 | 8 | `research-tools` | Real domain (14 skills) + generic search term |
 | 9 | `scientific-computing` | Cross-domain umbrella for the corpus |
-| 10 | `bioinformatics` | Largest scientific domain (25 skills) |
+| 10 | `bioinformatics` | Real domain (38 skills) |
 | 11 | `cheminformatics` | Real domain (12 skills) |
 | 12 | `data-science` | Real domain (22 skills) |
 | 13 | `clinical-research` | Real domain (7 skills) |
-| 14 | `data-visualization` | Real domain (8 skills) |
-| 15 | `scientific-writing` | Writing-tools domain (13 skills) |
-| 16 | `model-context-protocol` | Bundled academic MCP (`.mcp.json`) |
+| 14 | `data-visualization` | Real domain (9 skills) |
+| 15 | `scientific-writing` | Writing-tools domain (14 skills) |
+| 16 | `model-context-protocol` | Bundled OpenAlex / Crossref / Zotero MCP servers (`.mcp.json`) |
 | 17 | `reproducible-research` | Evals + provenance + figure-stamp positioning |
 | 18 | `citation` | Headline deterministic citation verifier |
 | 19 | `prompt-engineering` | High-traffic adjacent discovery term |
-| 20 | `turkish-academia` | Maintainer/audience niche (EN/TR parity) |
+| 20 | `turkish-academia` | Real domain (13 skills) + maintainer/audience niche (EN/TR parity) |
 
 </div>
 
@@ -73,7 +73,7 @@ https://alterlab-ieu.github.io/AlterLab-Academic-Skills/
 REPO="AlterLab-IEU/AlterLab-Academic-Skills"
 
 gh repo edit "$REPO" \
-  --description "183 evaluated academic Claude/agent skills across 13 research domains — bioinformatics, cheminformatics, data science, databases, clinical & more. Every skill ships an executable eval (agentskills.io schema). Deterministic citation verifier + research→write→review→publish pipeline. Works in Claude Code, Cursor, Codex, Gemini CLI & Copilot." \
+  --description "242 evaluated academic Claude/agent skills across 18 research domains — bioinformatics, cheminformatics, data science, databases, clinical, social science, Turkish academia & more. Every skill ships an executable eval. Citation verifier, research→write→review pipeline, 7 multi-agent workflows. Claude Code plugins; also Cursor, Codex, Gemini CLI." \
   --homepage "https://alterlab-ieu.github.io/AlterLab-Academic-Skills/" \
   --add-topic claude \
   --add-topic claude-skills \
@@ -141,6 +141,6 @@ Expected: description set, `homepageUrl` = the Pages URL, exactly 20 topics, and
 
 <div align="center">
 
-<sub>Grounded in <code>skills.json</code>, <code>CHANGELOG.md</code> <code>[2.0.0]</code>, and <code>.github/workflows/gh-pages.yml</code> · AlterLab Creative Technologies Laboratory</sub>
+<sub>Grounded in <code>skills.json</code>, <code>CHANGELOG.md</code> <code>[3.0.0]</code>, and <code>.github/workflows/gh-pages.yml</code> · AlterLab Creative Technologies Laboratory</sub>
 
 </div>

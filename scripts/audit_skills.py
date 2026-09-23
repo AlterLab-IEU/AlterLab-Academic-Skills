@@ -69,6 +69,7 @@ LICENSE_VOCAB = {
     "BSD-3-Clause",
     "CC-BY-3.0",
     "CC-BY-4.0",
+    "CC-BY-NC-4.0",
     "CC0-1.0",
     "CeCILL-2.1",
     "Proprietary",
@@ -76,6 +77,8 @@ LICENSE_VOCAB = {
 
 # Aliases from current repo state → canonical vocabulary
 LICENSE_ALIASES = {
+    "cc-by-nc 4.0": "CC-BY-NC-4.0",
+    "cc-by-nc-4.0": "CC-BY-NC-4.0",
     "mit": "MIT",
     "mit license": "MIT",
     "apache license, version 2.0": "Apache-2.0",

@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use AlterLab Academic Skills in your research or teaching, please cite it as below."
 title: "AlterLab Academic Skills"
 abstract: >-
-  A suite of 240 Agent Skills across 18 research domains that turn an AI agent into a
+  A suite of 242 Agent Skills across 18 research domains that turn an AI agent into a
   domain-specific academic research assistant, with executable evals, citation and integrity
   audits, and bilingual (English/Turkish) documentation. A content fork of K-Dense-AI's
   scientific-agent-skills, re-aimed at the academic faculty and research-lifecycle audience.

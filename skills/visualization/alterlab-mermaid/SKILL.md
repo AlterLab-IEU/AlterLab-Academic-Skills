@@ -7,7 +7,7 @@ compatibility: No API key, network, or runtime dependencies. Authoring is pure M
 metadata:
   skill-author: AlterLab
   skill-source: https://github.com/SuperiorByteWorks-LLC/agent-project
-  version: "1.1.0"
+  version: "1.1.1"
   last_updated: "2026-09-23"
   skill-contributors:
     - name: Clayton Young
@@ -328,7 +328,7 @@ All style guides, diagram type guides, and document templates in this skill are 
 - **Author**: Clayton Young / Superior Byte Works, LLC (@borealBytes)
 - **License**: Apache-2.0
 
-This skill (as part of claude-scientific-skills) is distributed under the MIT License. The included Apache-2.0 content is compatible for downstream use with attribution retained, as preserved in the file headers throughout this skill.
+This skill is licensed **Apache-2.0** (its frontmatter `license`) because most of its content is ported from the Apache-2.0 source above; the AlterLab Academic Skills repository as a whole is MIT-licensed (see `THIRD_PARTY_NOTICES.md`). Keep the attribution headers in the ported files, and include the Apache-2.0 license text when redistributing this skill on its own. Changes made here are recorded in the repository's CHANGELOG.
 
 ---
 

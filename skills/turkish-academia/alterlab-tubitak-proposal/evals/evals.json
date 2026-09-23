@@ -49,6 +49,34 @@
       ]
     },
     {
+      "id": "scaffold-3501-turkish",
+      "prompt": "Doktoramı Mart 2020'de aldım, dr. öğretim üyesiyim ve daha önce 3501 desteği almadım. 3501 Kariyer Geliştirme projesi için bölüm başlıklarını, kelime sınırlarını ve bütçe üst limitini çıkarır mısın? Değerlendirmede hangi kriterler ve ağırlıklar var?",
+      "expected_output": "Invokes alterlab-tubitak-proposal in scaffold mode for the 3501 variant (scripts/scaffold_proposal.py --program 3501). Confirms the career-stage gates from the 3501 page — for 2026 applications the doctorate must be dated 01.01.2019 or later (one year added per birth), the PI must be doçent or lower and must never have received 3501 — so a March 2020 doctorate and a dr. öğretim üyesi title fit. Emits the PBS-screen structure with the bilgi notu word ranges: Tez Bilgileri (master's ≤150, doctoral 50-350), 1 ÖZGÜN DEĞER (Konunun Önemi 1,000-4,000; Araştırma Sorusu 100-400; Amaç ve Hedefler 150-500), 2 YÖNTEM 1,000-3,750, 3 PROJE YÖNETİMİ from the İş Paketleri step with başarı ölçütü, önem % totalling 100 and a B Planı, 4 KARİYER GELİŞTİRME POTANSİYELİ 250-700, 5 YAYGIN ETKİ (Öngörülen Etkiler 50-400 and the four dissemination fields), Diğer ≤500, EK-1 with DOIs, EK-2. States the caps with the verify-current-call note (≤36 months; 1,500,000 TL burs dahil, PTİ and kurum hissesi hariç, from 1 Feb 2026; rolling submission) and the five criteria (Özgün Değer, Yöntem, Proje Yönetimi, Kariyer Geliştirme Potansiyeli, Yaygın Etki) rated on a six-level scale, explicitly noting that the form publishes no weights rather than reusing 1001's 35/25/20/20.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "3501" },
+        { "type": "behavior", "value": "Produces the 3501 PBS section tree with its word ranges and the 1,500,000 TL / 36-month caps, checks the 7-year window and title rule, and says the 3501 form publishes no criterion weights instead of borrowing 1001's." }
+      ]
+    },
+    {
+      "id": "choose-3501-or-1001",
+      "prompt": "I'm an assistant professor with a PhD from 2017 and no TÜBİTAK funding yet. Should I apply to 3501 or 1001 this year, and how are the two applications different?",
+      "expected_output": "Invokes alterlab-tubitak-proposal: explains that for 2026 applications a 3501 PI's doctorate must be dated 01.01.2019 or later (one year added per birth), so a 2017 PhD falls outside the 3501 window unless birth extensions apply, and points to 1001 instead. Contrasts the two from the program pages: 3501 is rolling with PBS text fields and word ranges, a Kariyer Geliştirme Potansiyeli section and a 1,500,000 TL cap; 1001 has two calls a year (the 2026-2 call closed on 14 Sep 2026), an uploaded .doc form of at most 25 pages, a 3,000,000 TL cap and panel weights of 35/25/20/20. Adds the verify-current-call note.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Applies the 3501 doctorate-date cut-off (01.01.2019 for 2026, +1 year per birth) to rule 3501 out for a 2017 PhD unless extensions apply, and contrasts the 1001 and 3501 formats, caps and calendars with dated figures." }
+      ]
+    },
+    {
+      "id": "near-miss-bideb-2219",
+      "prompt": "2219 yurt dışı doktora sonrası bursu için araştırma önerisi hazırlıyorum. Ev sahibi üniversitenin sıralamasını ve danışmanın FWCI değerini nasıl göstermeliyim, önerinin bölümleri neler?",
+      "expected_output": "Does NOT invoke alterlab-tubitak-proposal; defers to alterlab-tubitak-bideb. 2219 is a BİDEB postdoctoral fellowship with its own call, eligibility (host ranking or advisor CNCI/FWCI condition), research-proposal form and evaluation weights, not an ARDEB project proposal.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-tubitak-bideb" }
+      ]
+    },
+    {
       "id": "near-miss-research-grants",
       "prompt": "Help me sharpen the broader-impacts argument and feasibility narrative in my NSF CAREER proposal, and make the Gantt chart look professional.",
       "expected_output": "Does NOT invoke this skill; defers to alterlab-research-grants. The request is a generic US/international grant-craft task (NSF CAREER narrative quality, feasibility argumentation, Gantt aesthetics) with no TÜBİTAK ARDEB form, 1001/1002-A structure, or Turkish-terminology mapping involved. alterlab-tubitak-proposal owns only the Turkish-specific ARDEB form structure, caps, and terminology; broader-impacts argumentation and Gantt rendering belong to alterlab-research-grants.",

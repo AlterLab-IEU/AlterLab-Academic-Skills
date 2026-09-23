@@ -64,8 +64,8 @@ SOFTWARE.
 
 **Scope of the derivative.** At fork time, **42 skill bodies were byte-identical** to their
 K-Dense counterparts; the remainder were already diverging and the collection has since been
-substantially restructured, audited, corrected, and extended into the 180-skill AlterLab suite
-(13 research domains). The systematic deltas — added executable evals, license/citation audits,
+substantially restructured, audited, corrected, and extended into the 242-skill AlterLab suite
+(18 research domains). The systematic deltas — added executable evals, license/citation audits,
 script-correctness fixes, progressive-disclosure refactors, the academic-faculty framing, and
 the bilingual (EN/TR) documentation — are narrated in [`PROVENANCE.md`](PROVENANCE.md). This is
 a derivative of an MIT-licensed work, not a verbatim redistribution.
@@ -102,22 +102,20 @@ skill (upstream versions current at verification):
 **License-compatibility notice — IMPORTANT.** CC-BY-NC 4.0 is a **NonCommercial** license and is
 **not** a permissive MIT-family license. Unlike the K-Dense MIT material, CC-BY-NC works **cannot be
 sublicensed or relicensed under MIT**, and the NonCommercial restriction follows the derivative.
-The four skills above currently declare `license: MIT` in their own SKILL.md frontmatter; that
-frontmatter value does **not** override the upstream's terms and is, for these four skills,
-inaccurate with respect to their lineage. This notice records the accurate upstream license so the
-attribution and use restrictions are not lost. Anyone redistributing or using these four skills
-must:
+Since v3.0.0 the four skills above declare `license: CC-BY-NC-4.0` in their own SKILL.md
+frontmatter, matching their lineage (earlier releases wrongly declared `MIT`). Anyone
+redistributing or using these four skills must:
 
 1. retain the attribution string above and a link to the upstream;
 2. honor the **NonCommercial** restriction (no commercial use of these four skills or their
    derivatives without separate permission from Cheng-I Wu); and
-3. treat CC-BY-NC 4.0 — not MIT — as the governing license for these four skills until their
-   per-skill frontmatter is corrected or the material is independently re-implemented.
+3. treat CC-BY-NC 4.0 — not MIT — as the governing license for these four skills, including
+   when they are installed through the `alterlab-core` plugin (whose manifest declares
+   `MIT AND CC-BY-NC-4.0`).
 
 The CC-BY-NC 4.0 legal text is available at
-<https://creativecommons.org/licenses/by-nc/4.0/legalcode>. This per-skill frontmatter correction
-is tracked as follow-up work and is intentionally **not** made here (this change touches only the
-notices, per the editing scope); see the NOTICE file for the condensed attribution record.
+<https://creativecommons.org/licenses/by-nc/4.0/legalcode>; see the NOTICE file for the condensed
+attribution record.
 
 ## Tools, libraries, and databases the skills describe
 
@@ -129,32 +127,36 @@ access agreements such as KEGG's academic-use terms, UniProt, COSMIC's Sanger
 registration, and API providers' terms). Always review the upstream tool's license and a
 data resource's terms before use in research or redistribution.
 
+## Other third-party content
+
+| Source | Author / © | License | Where it is used |
+|---|---|---|---|
+| [SuperiorByteWorks-LLC/agent-project](https://github.com/SuperiorByteWorks-LLC/agent-project) | Clayton Young / Superior Byte Works, LLC | Apache-2.0 | `visualization/alterlab-mermaid` — style guides, diagram-type guides, and document templates (each ported file keeps its attribution header; the skill is marked `license: Apache-2.0`) |
+
 ## Per-skill license distribution
 
 Each skill declares the license appropriate to its own content in its `SKILL.md`
-frontmatter. Current distribution across the 209 skills:
+frontmatter. Current distribution across the 242 skills:
 
 | License | Skills |
 |---|---:|
-| MIT | 175 |
-| Apache-2.0 | 17 |
-| GPL-3.0 | 4 |
+| MIT | 202 |
+| Apache-2.0 | 19 |
+| CC-BY-NC-4.0 | 4 |
 | CC0-1.0 | 4 |
-| GPL-2.0 | 2 |
-| CC-BY-4.0 | 2 |
+| GPL-3.0 | 4 |
 | BSD-3-Clause | 2 |
-| LGPL-3.0 | 1 |
-| CeCILL-2.1 | 1 |
+| CC-BY-4.0 | 2 |
+| GPL-2.0 | 2 |
 | CC-BY-3.0 | 1 |
+| CeCILL-2.1 | 1 |
+| LGPL-3.0 | 1 |
 
 Regenerate this table after license changes; the source of truth is each skill's
 frontmatter (`python scripts/audit_skills.py` reports the canonical value per skill).
 
-**Caveat.** This table reflects the `license:` value *as declared in frontmatter*. For the four
-`core/` skills derived from the CC-BY-NC 4.0 upstream (see "Upstream 2" above), the frontmatter
-declares `MIT` but the **governing** license is CC-BY-NC 4.0; the table over-counts MIT by four
-until that frontmatter is corrected. Treat the Provenance section and [`NOTICE`](NOTICE) as
-authoritative over this count where they conflict.
+The four `core/` skills derived from the CC-BY-NC 4.0 upstream (see "Upstream 2" above) are
+counted under `CC-BY-NC-4.0`, and `alterlab-mermaid` under `Apache-2.0`.
 
 ## Note on removed material
 

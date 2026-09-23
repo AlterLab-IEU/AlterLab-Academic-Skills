@@ -22,7 +22,7 @@
     {
       "id": "audit-lead-author-q-minimum",
       "prompt": "Forget the total points for a second — I just want to know whether I meet the başlıca yazar requirement. Of my journal articles, how many are Q1–Q4 ones where I'm the lead author, and am I short of the minimum?",
-      "expected_output": "Invokes alterlab-docentlik-eligibility focused on the lead-author Q-article minimum: counts only post-doctorate Q1–Q4 (SCIE/SSCI) articles where the candidate is başlıca yazar — single author, first author, or advisor of the student co-authors, not merely corresponding author (AHCI/ESCI/Scopus/TR Dizin excluded from this count), compares against the ≥3 threshold, and reports the count plus the shortfall if any. Notes that the candidate's declared lead-author flag is trusted but echoed per item for review, that this is one of several mandatory minimums (so meeting it does not confirm eligibility), and appends the current-period disclaimer.",
+      "expected_output": "Invokes alterlab-docentlik-eligibility focused on the lead-author article minimum. Because that minimum and the başlıca-yazar definition differ by temel alan and the prompt names none, it first confirms the field (or states that it is applying the Sağlık default, TABLO 10). For Sağlık it counts only post-doctorate Q1–Q4 (SCIE/SSCI) articles where the candidate is başlıca yazar — single author, first author, or advisor of the student co-authors, not merely corresponding author (AHCI/ESCI/Scopus/TR Dizin excluded from this count), compares against the ≥3 threshold, and reports the count plus the shortfall if any. Notes that the candidate's declared lead-author flag is trusted but echoed per item for review, that this is one of several mandatory minimums (so meeting it does not confirm eligibility), and appends the current-period disclaimer.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "lead-author" }
@@ -35,6 +35,42 @@
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Even though every computable check passes, the response explicitly refuses to confirm eligibility, frames the pass as a partial pre-screen, enumerates the unmodelled mandatory minimums the candidate must still verify, and points to the live ÜAK TABLO 10. It never states the candidate is eligible." }
+      ]
+    },
+    {
+      "id": "sosyal-iletisim-turkish",
+      "prompt": "İletişim fakültesinde Dr. Öğr. Üyesiyim; Sosyal, Beşeri ve İdari Bilimler temel alanında İletişim Çalışmaları bilim alanından doçentliğe başvurmayı düşünüyorum. Yayın listem ekte: 2 SSCI makale (biri Q3 ve iki yazarlı), 1 tek yazarlı ESCI makale, 6 TR Dizin makale (4'ü tek yazarlı) ve bir BKCI kitap bölümü. ÜAK puanımı hesaplayıp hangi asgari koşulları sağladığımı, nerede eksiğim olduğunu söyler misin?",
+      "expected_output": "Invokes alterlab-docentlik-eligibility with --alan sosyal (TABLO 11, 2026 Mart) and bilim alanı İletişim Çalışmaları. Applies the equal author split (not the Sağlık başlıca-yazar rule), checks the 100-point total and 90 post-doctorate points, the ≥10 post-doctorate points from items 1a–1d, and the national-article minimum (≥5 post-doctorate TR Dizin publications, 3 of them single-author, or the alternative of ≥3 item 1a/1b publications with one single-author); enters the BKCI chapter under other_items so the item-4 cap applies; reports every check with its shortfall. Lists the manual checks with the Sosyal numbers — thesis-derived publication, book (≥1 book or 2 chapters after the doctorate), citation ≥5, congress ≥5, teaching ≥2, the communication-field requirement of ≥10 points from item 13 c–e, and the 'farklı dergilerde' (different journals) condition. Answers in Turkish, never says the candidate is 'yeterli'/eligible, and ends with the verify-against-current-ÜAK-term disclaimer (the 2026 Ekim criteria were not yet published on 2026-09-23).",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Uses the Sosyal, Beşeri ve İdari Bilimler TABLO 11 rules (equal split, ≥10 points from 1a–1d, ≥5 TR Dizin with 3 single-author) instead of Sağlık numbers, surfaces the item-13 c–e requirement for communication bilim alanları, presents the result as a partial pre-screen in Turkish, and does not declare eligibility." }
+      ]
+    },
+    {
+      "id": "mimarlik-architecture-english",
+      "prompt": "I teach at an architecture faculty and plan to apply for doçentlik under Mimarlık, Planlama ve Tasarım. Since my PhD I have three ESCI/Scopus papers (first author on two, three authors each), one Q3 SSCI paper written with my PhD student, two TR Dizin papers and two architectural competition awards. Which ÜAK minimums do I meet and what am I missing?",
+      "expected_output": "Invokes alterlab-docentlik-eligibility with --alan mimarlik (TABLO 8, 2026 Mart). Applies the başlıca-yazar split (in this field a single author, the first author, or the advisor on a paper with their own graduate student counts as başlıca yazar), checks ≥20 post-doctorate item-1 points with başlıca yazar in at least one item 1a–1c article, ≥10 post-doctorate TR Dizin points, and the 100/90 totals. Explains that competition awards belong to item 13 (Yarışma, Proje ve Yazılım: 15 points each, at least 15 points mandatory, no cap stated) and are entered under other_items and verified by hand, and lists the other manual minimums (thesis-derived publication, citation ≥5, congress ≥5, teaching ≥2, caps such as projects ≤30). Explains any interpretation flag, never declares eligibility, and includes the verify-against-current-term disclaimer.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Yarışma" }
+      ]
+    },
+    {
+      "id": "muhendislik-first-author-lead",
+      "prompt": "Mühendislik temel alanından doçentliğe başvuracağım. Q1 ve Q2 dergilerdeki makalelerimin çoğunda ilk yazarım ama bunları öğrencilerimle değil meslektaşlarımla yazdım. Bu makalelerde başlıca yazar sayılıyor muyum ve uluslararası makale için 40 puan şartını sağlıyor muyum?",
+      "expected_output": "Invokes alterlab-docentlik-eligibility with --alan muhendislik (TABLO 9) and explains that in Mühendislik başlıca yazar means only (a) the author of a single-author article or (b) the advisor on an article written with their own graduate student(s) — first authorship alone does not qualify, unlike Sağlık, Mimarlık and Spor. Scores such papers as non-lead (or with has_lead: false, an equal split, when nobody on the paper is başlıca yazar), checks the ≥40 post-doctorate item-1 points with başlıca yazar in at least one item 1a Q1–Q3 article and the ≥10 TR Dizin points, and reports any shortfall. Answers in Turkish, lists the manual minimums, never declares eligibility, and appends the current-term disclaimer.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "States that first authorship alone does not make a başlıca yazar in Mühendislik (only a single author or the advisor with own graduate students), applies that when checking the 40-point item-1 minimum, and does not declare eligibility." }
+      ]
+    },
+    {
+      "id": "guzel-sanatlar-ozel-sartlar",
+      "prompt": "Güzel Sanatlar Fakültesi'nde grafik tasarım alanında öğretim üyesiyim. Doçentlik için yayın puanım yetiyor mu, sergilerim ne kadar önemli? Listemde doktora sonrası 2 ESCI makale, 1 tek yazarlı TR Dizin makale, 3 kişisel sergi ve 4 karma sergi var.",
+      "expected_output": "Invokes alterlab-docentlik-eligibility with --alan guzel_sanatlar (TABLO 4): equal author split; checks ≥10 post-doctorate/sanatta-yeterlik points from items 1a–1d, ≥1 single-author TR Dizin publication and the 100/90 totals. Explains that TABLO 4's 'Genel' and 'Özel Başvuru Şartları' must be met together: for the Geleneksel Türk Sanatları / Plastik Sanatlar / Tasarım / Sinema group, ≥40 points from items a–c (a solo exhibition with at least 15 original works is 20) and ≥10 from items d–e (group exhibitions 5 each), with f–h capped at 10 — checked by hand, with the user confirming which group their sanat alanı falls under — and that TABLO 4 does not say whether Özel points count toward the 100. Lists the other manual minimums (citation ≥2, congress ≥5 with one paper presented personally, a book or chapter, thesis-derived publication, teaching ≥2), answers in Turkish, never declares eligibility, and includes the current-term disclaimer.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Applies the Güzel Sanatlar TABLO 4 general rules and flags the Özel Başvuru Şartları (exhibition minimums) as a separate mandatory requirement that the scorer cannot check, without declaring eligibility." }
       ]
     },
     {

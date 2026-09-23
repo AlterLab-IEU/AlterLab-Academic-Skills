@@ -1,0 +1,90 @@
+{
+  "skill": "alterlab-ai-use-disclosure",
+  "evals": [
+    {
+      "id": "elsevier-declaration-mixed-uses",
+      "prompt": "I'm submitting to an Elsevier journal next week. I used ChatGPT to polish the English in the Introduction and Discussion, and Claude wrote most of the R code for our mixed-effects models. What exactly do I have to declare, and where does it go in the manuscript?",
+      "expected_output": "Invokes alterlab-ai-use-disclosure. Applies Elsevier's generative-AI policy (updated June 2026): basic grammar/spelling/punctuation checks need no declaration, but language polishing that changes sentence structure does. That use goes in a separate section titled 'Declaration of generative AI and AI-assisted technologies in the manuscript preparation process' at the end of the manuscript, immediately before the references. AI-written research code belongs in the Methods section with tool name, version and developer. Drafts both blocks (declaration + Methods paragraph), asks for versions/dates and how the code was verified, reminds the user that the journal's own guide can be stricter, and can run scripts/disclosure_builder.py. Does not list AI as an author.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Declaration of generative AI" },
+        { "type": "behavior", "value": "Separates writing assistance (declaration section before the references) from AI-generated research code (Methods, with tool, version and developer), and notes that basic grammar checks alone are exempt at Elsevier." }
+      ]
+    },
+    {
+      "id": "turkish-thesis-yok",
+      "prompt": "Doktora tezimin literatür bölümünü hazırlarken ChatGPT'yi kaynakları özetlemek için, İngilizce özeti yazarken de çeviri için kullandım. YÖK'ün üretken yapay zekâ etik rehberine göre bunu tezde nerede ve nasıl beyan etmem gerekiyor? Türkçe bir beyan metni yazar mısın?",
+      "expected_output": "Invokes alterlab-ai-use-disclosure and answers in Turkish. Cites YÖK's 'Yükseköğretim Kurumları Bilimsel Araştırma ve Yayın Faaliyetlerinde Üretken Yapay Zekâ Kullanımına Dair Etik Rehber' (Mayıs 2024): the parts where ÜYZ was used must be explained in the method (yöntem) section, stating which tool and version, when, and at which stage/place; not declaring can lead to disciplinary responsibility; ÜYZ cannot be an author; translation/language control is allowed but the final text must be checked by the author. Notes the guide has no thesis-specific clause and that the graduate institute's thesis guide may add requirements (not verified). Drafts a Turkish method-section statement with correct Turkish characters and warns that AI-suggested sources must be verified.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "yöntem" },
+        { "type": "behavior", "value": "Places the disclosure in the thesis method section per the YÖK 2024 guide, asks for tool version and dates, and writes the statement in Turkish." }
+      ]
+    },
+    {
+      "id": "nih-study-section-ai",
+      "prompt": "I'm serving on an NIH study section next month. Is it OK to use an LLM to summarize the applications assigned to me, or at least to clean up the wording of my critiques before I submit them?",
+      "expected_output": "Invokes alterlab-ai-use-disclosure. States that both uses are prohibited: NIH NOT-OD-23-149 bars peer reviewers from using generative AI to analyze or formulate critiques and says uploading or sharing application or critique content with online generative AI tools violates confidentiality; reviewers certify this in the confidentiality agreement. Mentions the only exception (accessibility technologies, cleared with the Designated Federal Officer before use) and offers the 'no AI used' reviewer declaration. Contrasts briefly with journals that allow limited language help, without suggesting it applies to NIH.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "NOT-OD-23-149" },
+        { "type": "behavior", "value": "Says clearly that neither summarising applications nor polishing critiques with generative AI is allowed at NIH, citing NOT-OD-23-149, and notes the accessibility exception via the DFO." }
+      ]
+    },
+    {
+      "id": "tubitak-proposal-declaration",
+      "prompt": "We're submitting a TÜBİTAK 1001 proposal. Gemini drafted the first version of our literature summary and generated the Python code described in the methods section. Do we have to declare this, and what exactly goes in the declaration?",
+      "expected_output": "Invokes alterlab-ai-use-disclosure. Applies TÜBİTAK's 'Destek Süreçlerinde Üretken Yapay Zekânın (ÜYZ) Sorumlu ve Güvenilir Kullanımı Rehberi' (first issued Eylül 2025; current v04 Ocak 2026): declaration is mandatory for significant use (beyond basic grammar/spelling), made in the dedicated section of the online application system, stating tool name and version, the stages/sections where it was used, and the nature and scope of use; AI drafts must never be taken as final text; entering confidential proposal details, unpublished data or KVKK personal data into AI tools is prohibited; the same rules apply to progress/final reports. Drafts the declaration fields (Turkish and/or English).",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "States the declaration is mandatory and goes in the application system's dedicated section with tool+version, stages/sections and nature/scope, and warns against entering confidential or personal data into AI tools." }
+      ]
+    },
+    {
+      "id": "ai-figures-graphical-abstract",
+      "prompt": "Can I use Midjourney to make the graphical abstract and a schematic of our signalling pathway for a paper going to an Elsevier journal? A co-author also wants to use an AI tool to clean up the background of our western blot images. Is any of this allowed, and how do I label it?",
+      "expected_output": "Invokes alterlab-ai-use-disclosure. Per Elsevier's policy: general-purpose generative AI image tools must not be used to create graphical abstracts; an explanatory schematic is permitted if the authors verify it, with disclosure in the figure caption and the AI declaration; AI must not be used to create or alter primary research images such as western blots, including brightness/contrast/colour adjustments. Advises against the blot edit, suggests dedicated scientific illustration tools, drafts a caption sentence for the schematic, and notes other publishers' image rules (e.g. Wiley, Springer Nature) if the venue changes.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Rejects the AI graphical abstract and the AI-edited western blot under Elsevier's image policy, while allowing the explanatory schematic with caption plus declaration disclosure." }
+      ]
+    },
+    {
+      "id": "eu-ai-act-article-50",
+      "prompt": "Does the EU AI Act mean I now have to label text I wrote with ChatGPT in my journal articles, and what about AI-generated images I use in outreach talks?",
+      "expected_output": "Invokes alterlab-ai-use-disclosure. Explains Article 50 precisely: providers must mark synthetic outputs (Art. 50(2)); deployers must disclose deep fakes and AI-generated text published to inform the public on matters of public interest, unless the text underwent human review or editorial control with someone holding editorial responsibility (Art. 50(4)); Article 50 applies from 2 August 2026, and the Digital Omnibus (Reg. 2026/1744) gives providers of systems already on the market until 2 December 2026 for Art. 50(2). Makes clear that journal/funder disclosure rules still apply regardless, that photorealistic AI images of real people or places in outreach should be labelled, and that edge cases need legal advice; does not overstate the Act.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "Article 50" },
+        { "type": "behavior", "value": "Distinguishes provider marking duties from deployer disclosure duties, states the editorial-review exception and the 2 August 2026 application date, and says publisher AI policies apply independently." }
+      ]
+    },
+    {
+      "id": "near-miss-syllabus-ai-policy",
+      "prompt": "I'm teaching an undergraduate research methods course this fall. Can you write the AI-use policy section of my syllabus, saying which assignments students may use ChatGPT on and how they should disclose it?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-syllabus-ai-policy. The request is a course-level teaching policy (per-assignment permitted/restricted/prohibited tiers and student disclosure clauses), not a researcher's disclosure to a journal, funder, reviewer or thesis committee. alterlab-ai-use-disclosure covers faculty and researchers' own AI use in scholarly outputs.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-syllabus-ai-policy" }
+      ]
+    },
+    {
+      "id": "near-miss-apa-chatgpt-citation",
+      "prompt": "How do I cite a ChatGPT conversation in APA 7 style in my reference list? I need the exact reference format and the in-text citation.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-syllabus-ai-policy, which owns the current APA (September 2025) and MLA generative-AI citation templates (company as author, shared-chat vs tool references). Formatting a reference-list entry is a citation-style question, not a policy-compliance disclosure; this skill only notes that several policies (e.g. ICMJE) do not accept AI output as a primary source.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-syllabus-ai-policy" }
+      ]
+    },
+    {
+      "id": "near-miss-research-ethics",
+      "prompt": "Our team wants to run interview transcripts from human participants through ChatGPT for transcription and first-pass coding. What do we need from our IRB, and what should the consent form say about it?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-research-ethics. The question is about human-subjects ethics (IRB review, informed consent, de-identification, data protection) before the research is done, not about how to word an AI-use disclosure in a publication or grant. The eventual methods-section disclosure could come back to alterlab-ai-use-disclosure later.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-research-ethics" }
+      ]
+    }
+  ]
+}

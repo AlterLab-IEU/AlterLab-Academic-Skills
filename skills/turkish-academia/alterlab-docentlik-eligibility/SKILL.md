@@ -1,325 +1,341 @@
 ---
 name: alterlab-docentlik-eligibility
-description: "Runs a PARTIAL pre-screen of a Turkish associate-professorship (doçentlik) publication list against the ÜAK Sağlık Bilimleri TABLO 10 criteria (2026 Mart term), applying the author-share rule (full; 0.8/0.5; lead author takes half) and pass-fail checking the four computable minimums (≥100 total, ≥90 post-doctorate, ≥40 post-doctorate international-article points from SCIE/SSCI, AHCI and ESCI/Scopus, ≥3 post-doctorate lead-author Q1–Q4 articles). It deliberately does NOT emit an ELIGIBLE verdict — it lists the unmodelled mandatory minimums (TR Dizin/national article, thesis-derived publication, citation, congress, teaching, per-category caps) for the user to verify. Use when the user wants to estimate doçentlik eligibility, calculate ÜAK points, or audit lead-author (başlıca yazar) requirements; resolve a journal's live TR Dizin status with alterlab-trdizin first, and compute the akademik teşvik (academic-incentive) score with alterlab-akademik-tesvik. Part of the AlterLab Academic Skills suite."
+description: "Runs a PARTIAL pre-screen of a Turkish associate-professorship (doçentlik) publication list against bundled ÜAK criteria (2026 Mart term) for all 12 temel alanlar: Eğitim, Fen Bilimleri ve Matematik, Filoloji, Güzel Sanatlar, Hukuk, İlahiyat, Mimarlık-Planlama-Tasarım, Mühendislik, Sağlık, Sosyal-Beşeri-İdari Bilimler, Spor, Ziraat-Orman-Su Ürünleri. It applies each field's author-share rule (equal split or başlıca yazar 0.8/0.5/half), checks the 100-point and 90 post-doctorate totals and the field's international/national-article minimums, caps other items entered, and lists the remaining mandatory minimums (thesis-derived work, book, citation, congress, teaching, art/competition items) as a manual checklist; it never emits an ELIGIBLE verdict. Use when the user wants to estimate doçentlik eligibility, compute ÜAK points or audit başlıca yazar rules; resolve TR Dizin status with alterlab-trdizin first; prefer alterlab-akademik-tesvik for the teşvik score. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
-compatibility: No API key required — pure offline PARTIAL pre-screen (stdlib Python) over a bundled, dated ÜAK criteria table; never emits an ELIGIBLE verdict; live journal-index status is delegated to alterlab-trdizin
+allowed-tools: Read Write Edit Bash WebFetch
+compatibility: "No API key required — offline PARTIAL pre-screen (stdlib Python, run with uv) over bundled, dated ÜAK 2026 Mart criteria for all 12 temel alanlar; never emits an ELIGIBLE verdict. Checking the live ÜAK page for a newer term needs web access; live journal-index status is delegated to alterlab-trdizin."
 metadata:
   skill-author: AlterLab
-  version: "2.1.0"
+  version: "2.2.0"
   last_updated: "2026-09-23"
   depends_on: "alterlab-trdizin (live TR Dizin status feeds scoring), alterlab-akademik-tesvik (separate incentive score)"
 ---
 
-# Doçentlik Eligibility — PARTIAL Pre-Screen Against the ÜAK Criteria
+# Doçentlik Eligibility — PARTIAL Pre-Screen Against the ÜAK Criteria (all 12 temel alanlar)
 
-Pre-screens a candidate's publication list against the **doçentlik** (associate
-professorship) point gate set by **ÜAK** (Üniversitelerarası Kurul / the
-Inter-University Council) for the **Sağlık Bilimleri (Health Sciences)** field.
-Given a publication list with each item's index tier and author role, it applies
-the per-field point table, the **author-share rule** (paylaşım kuralı), and
-pass-fail-checks the **four mandatory minimums it can compute from a publication
-list** — reporting the exact shortfall on any that fail.
+## Identity
 
-> **This is a PARTIAL pre-screen, not an eligibility decision — and it never
-> outputs an "ELIGIBLE" verdict.** The live TABLO 10 imposes several more
-> mandatory minimums (a TR Dizin / national-article requirement, a
-> thesis-derived-publication requirement, a citation minimum, a
-> scientific-meeting minimum, an education minimum, and per-category point caps)
-> that depend on inputs a bare publication list does not carry. The
-> scorer lists those unmodelled minimums in every report and the best status it
-> can return is `PRESCREEN_PASS_VERIFY_REMAINING` — "all computable checks pass;
-> a human must still verify the rest against the live ÜAK source." A failed
-> computable check returns `FAIL_MODELLED_CHECK`.
+A deterministic, offline pre-screen for faculty preparing a **doçentlik** (associate
+professorship) application to **ÜAK** (Üniversitelerarası Kurul, the Inter-University
+Council). It holds the 2026 Mart criteria tables of all twelve ÜAK temel alanlar — TABLO 1–6
+and 8–13, each transcribed from ÜAK's own PDF on 2026-09-23 — and turns a publication list
+into the points, author shares and pass/fail checks that the candidate's own table defines.
 
-This is a **deterministic offline tool**: the same input always yields the same
-status. It does **not** decide the *quality* of a candidate's work — that is the
-doçentlik jury's role — and it does **not** look up a journal's live index
-status (use `alterlab-trdizin` for that, then feed the result in).
+## Core Mission
+
+1. **Use the right table.** Every temel alan has its own minimums, author-share rule and
+   başlıca-yazar (lead author) definition; the Sağlık numbers are wrong for Sosyal, and so on.
+2. **Compute only what a list can prove.** The 100-point total, the 90 post-doctorate points
+   and the field's item-1 (international) and item-2 (national) article minimums are checked;
+   every other mandatory minimum is handed back as a verify-by-hand checklist.
+3. **Never declare eligibility.** The best status is `PRESCREEN_PASS_VERIFY_REMAINING`; the
+   decision belongs to the doçentlik jury.
+
+> **This is a PARTIAL pre-screen, not an eligibility decision — it never outputs
+> "ELIGIBLE".** A green result means only that the modelled checks pass; the thesis-derived,
+> book, citation, congress, teaching and field-specific minimums still need a human. A failed
+> modelled check returns `FAIL_MODELLED_CHECK` with the exact shortfall.
 
 ## Quick Start
 
 ```
-Am I eligible for doçentlik? Here is my publication list with indexes and author roles.
-Doçentlik için yeterli puanım var mı? Yayın listem ekte (Q tier + yazar sırası ile).
-Calculate my ÜAK doçentlik points for the Sağlık (Health) field.
-Do I meet the ≥3 lead-author Q-article requirement, or am I short?
+Doçentlik için yeterli puanım var mı? Sosyal, Beşeri ve İdari Bilimler; yayın listem ekte.
+I'm in architecture (Mimarlık, Planlama ve Tasarım) — do I meet the ÜAK article minimums?
+Mühendislikte ilk yazar olduğum makaleler başlıca yazar sayılıyor mu?
+Calculate my ÜAK doçentlik points for the Sağlık field.
 ```
 
-→ **Run** `scripts/score_docentlik.py` over the list (JSON), read the
-`summary.verdict`, then present the score breakdown, every failed computable
-minimum, the **unmodelled mandatory minimums the user must still verify**, and
-the **verify-against-current-period** disclaimer below. Never restate the
-`PRESCREEN_PASS_VERIFY_REMAINING` status as "eligible" — it is not.
-
----
+→ Identify the temel alan (and the bilim alanı where it matters), run
+`scripts/score_docentlik.py --alan <code>` over the list, then present the report with the
+template below. Never restate `PRESCREEN_PASS_VERIFY_REMAINING` as "eligible".
 
 ## Verify Against the Current ÜAK Term
 
-ÜAK republishes the doçentlik criteria for **each application term** (başvuru
-dönemi, March and October), per field. The bundled numbers are the **Sağlık
-Bilimleri (Health Sciences)** TABLO 10 of the **2026 Mart** term, transcribed
-from the ÜAK PDF on 2026-09-23 (byte-identical to the 2025 Mart and 2025 Ekim
-PDFs). As of that date the **2026 Ekim** section of the ÜAK page lists only the
-*Bilim Alanları ve Anahtar Kelimeler* file, so an October-2026 applicant should
-re-check the page before relying on the numbers.
-
-Because a stale table produces a confident but wrong answer, tell the candidate
-to confirm the live criteria for their own field and term at
-<https://www.uak.gov.tr/page/docentlik-basvuru-sartlari-kLPHX>. The binding
-regulation is the **Doçentlik Yönetmeliği** (RG 15/4/2018 No. 30392), at
-<https://www.mevzuat.gov.tr/mevzuat?MevzuatNo=24519&MevzuatTur=7&MevzuatTertip=5>.
-End every output with this disclaimer, and never present a verdict as the
-official decision.
-
----
+ÜAK republishes the criteria for **each application term** (Mart and Ekim), per temel alan.
+On **2026-09-23** the ÜAK page listed per-field criteria PDFs only up to the **2026 Mart**
+term; its **2026 Ekim** section held just the *Bilim Alanları ve Anahtar Kelimeler* file. That
+Ekim file already renames "Filoloji" to "Dil Bilimi ve Filoloji" — a sign the Ekim criteria
+may change. Tell every candidate, especially an Ekim applicant, to confirm their own field's
+live table at <https://www.uak.gov.tr/page/docentlik-basvuru-sartlari-kLPHX> (fetch it with
+WebFetch when available). End every output with the verify-against-current-term disclaimer.
 
 ## When to Use This Skill
 
-Use it when the request is about **scoring a publication list for the doçentlik
-point gate** — total points, post-doctorate points, the lead-author Q-article
-minimum, or the co-author share calculation.
+Use it when the request is about **scoring a publication list for the doçentlik point gate**
+in any temel alan: total or post-doctorate points, the international/national article
+minimums, the author-share calculation, whether a role counts as başlıca yazar, or which
+other minimums remain.
 
 ### Does NOT Trigger
 
 | The user actually wants… | Route to |
 |---|---|
-| The **akademik teşvik** (academic-incentive) annual score — different table, k·r·p coefficients, 30% rule, 100-point cap | `alterlab-akademik-tesvik` |
-| To check whether a target journal is **currently TR Dizin-indexed** (status feeds this scorer) | `alterlab-trdizin` |
-| To check a journal's DergiPark hosting / scope / self-declared indexing | `alterlab-dergipark` |
-| Broader Turkish career-track planning (Dr. Öğr. Üyesi → Doçent → Profesör, YÖKSİS dossier) | `alterlab-academic-career` |
+| The **akademik teşvik** (academic-incentive) annual score — different table, k·r·p coefficients, 30% rule | `alterlab-akademik-tesvik` |
+| Whether a journal is **currently TR Dizin-indexed** (status feeds this scorer) | `alterlab-trdizin` |
+| A journal's DergiPark hosting, scope or self-declared indexing | `alterlab-dergipark` |
+| Broader career planning (Dr. Öğr. Üyesi → Doçent → Profesör, YÖKSİS dossier) | `alterlab-academic-career` |
 | TÜBİTAK ARDEB 1001/1002-A proposal scaffolding | `alterlab-tubitak-proposal` |
-| Whether a study needed **etik kurul** (ethics committee) approval | `alterlab-tr-research-ethics` |
-| Turkish APA-7 / TR Dizin reference style for a manuscript | `alterlab-tr-academic-style` |
-| Verifying that cited references actually **exist** (hallucination check) | `alterlab-citation-verifier` |
+| Whether a study needed **etik kurul** approval | `alterlab-tr-research-ethics` |
+| Turkish APA-7 / TR Dizin reference style | `alterlab-tr-academic-style` |
+| Checking that cited references actually **exist** | `alterlab-citation-verifier` |
 | Finding a Turkish graduate **thesis** (tez) | `alterlab-yok-tez` |
-| An academic's official current **affiliation / CV** (YÖK Akademik) | `alterlab-yok-akademik` |
+| An academic's official affiliation or CV (YÖK Akademik) | `alterlab-yok-akademik` |
 
 ---
+
+## Fields Covered (ÜAK 2026 Mart)
+
+| TABLO | Temel alan | `--alan` | Author share | Item-1 minimum (post-doc) | Item-2 minimum (post-doc) |
+|---|---|---|---|---|---|
+| 1 | Eğitim Bilimleri | `egitim` | equal | ≥ 30 pts from 1a Q1–Q3 | ≥ 2 national pubs, ≥ 1 TR Dizin |
+| 2 | Fen Bilimleri ve Matematik | `fen` | başlıca | 40 (Biyoloji, Fizik, Kimya, MBG) / 20 (Matematik, İstatistik) pts, lead in a Q1–Q3 article | ≥ 10 TR Dizin pts |
+| 3 | Filoloji | `filoloji` | equal | — | ≥ 6 TR Dizin (4 single-author, 3 in different journals) and ≥ 50 pts; or ≥ 2 from 1a–1c (1 single-author) and ≥ 50 pts |
+| 4 | Güzel Sanatlar | `guzel_sanatlar` | equal | ≥ 10 pts from 1a–1d | ≥ 1 single-author TR Dizin |
+| 5 | Hukuk | `hukuk` | equal | — | as Filoloji |
+| 6 | İlahiyat | `ilahiyat` | equal | — | ≥ 5 TR Dizin (3 single-author, 2 in different journals) and ≥ 50 pts; or the Filoloji alternative |
+| 8 | Mimarlık, Planlama ve Tasarım | `mimarlik` | başlıca | ≥ 20 pts, lead in a 1a–1c article | ≥ 10 TR Dizin pts |
+| 9 | Mühendislik | `muhendislik` | başlıca | 40 pts, lead in a Q1–Q3 article | ≥ 10 TR Dizin pts |
+| 10 | Sağlık Bilimleri | `saglik` | başlıca | ≥ 40 pts, lead in ≥ 3 1a articles | manual (≥ 3 national, ≥ 2 TR Dizin, lead in ≥ 2) |
+| 11 | Sosyal, Beşeri ve İdari Bilimler | `sosyal` | equal | ≥ 10 pts from 1a–1d | ≥ 5 TR Dizin (3 single-author) in different journals; or ≥ 3 from 1a/1b (1 single-author) |
+| 12 | Ziraat, Orman ve Su Ürünleri | `ziraat` | başlıca | ≥ 30 pts from 1a, and ≥ 20 pts with lead in a Q1–Q3 article | ≥ 20 TR Dizin pts |
+| 13 | Spor Bilimleri | `spor` | başlıca | ≥ 30 pts, lead in a 1a/1b article | ≥ 3 national pubs, ≥ 2 TR Dizin |
+
+All twelve: total ≥ 100, of which ≥ 90 after the doctorate (item 3 excluded). ÜAK posts no
+TABLO 7. Full comparison (books, citations, congress, caps): `references/uak_criteria.md`;
+verbatim rule quotes and PDF hashes: `references/field_tables.md`.
 
 ## The Scoring Model
 
-### Modelled checks (the four this tool computes — all must pass)
+### Modelled checks (pass/fail)
 
-1. **Total points ≥ 100** across all scored work.
-2. **Post-doctorate points ≥ 90** — points earned from work published *after*
-   the candidate received the doctorate / uzmanlık (doktora-uzmanlık sonrası).
-   Pre-doctorate work still counts toward the 100 total but not toward this 90.
-3. **International-article points ≥ 40, post-doctorate** — the whole of item 1
-   ("Uluslararası Makale"): SCIE/SSCI **Q1–Q4** plus **AHCI** and
-   **ESCI/Scopus** article points (the `intl_article_ge_40` check). TR Dizin
-   articles belong to item 2 and do not count here.
-4. **At least 3 post-doctorate lead-author Q articles** — item 1a articles in a
-   Q1–Q4 SCIE/SSCI journal where the candidate is the **başlıca yazar** (lead
-   author). **Q4 counts**; AHCI/ESCI/Scopus articles do not. TABLO 10 words the
-   last two together: *"a bendinden en az üç makalede başlıca yazar olmak
-   kaydıyla en az 40 puan"*.
+- `total_ge_100` and `post_doc_ge_90` — publications plus any capped `other_items`.
+- The field's item-1 and item-2 checks from the table above, with ids such as
+  `intl_points_a_to_d_ge_10`, `national_articles`, `lead_q1_q3_articles_ge_1`,
+  `trdizin_points_ge_10`. Sağlık keeps its v2.1 set (`intl_article_ge_40`,
+  `lead_q_articles_ge_3`); its item-2 minimum stays a manual check.
 
-Passing all four returns `PRESCREEN_PASS_VERIFY_REMAINING` (not "eligible").
-Failing any returns `FAIL_MODELLED_CHECK` with the exact shortfall.
+### Author-share rules
 
-### Mandatory minimums this tool does NOT model — the user must verify these
+- **Equal split** (Eğitim, Filoloji, Güzel Sanatlar, Hukuk, İlahiyat, Sosyal): every author
+  gets 1/N; `is_lead` does not change points.
+- **Başlıca-yazar split** (Fen, Mimarlık, Mühendislik, Sağlık, Spor, Ziraat): single author
+  1.0; two authors 0.8 (başlıca yazar) / 0.5 (other); three or more: başlıca yazar 0.5, others
+  share the other half; an article with **no** başlıca yazar (`has_lead: false`) is split
+  equally.
+- **Başlıca yazar differs by field.** Sağlık, Mimarlık, Spor: single author, first author, or
+  advisor with own graduate students. **Fen, Mühendislik, Ziraat: single author or advisor
+  only — first authorship does not count.** Pass `lead_basis` (`single`/`first`/`advisor`) and
+  the scorer rejects a basis the field does not accept.
+- Letters, notes, abstracts, reviews and case reports in başlıca-yazar fields get the smaller
+  of the two shares (the tables do not say which applies).
 
-The live Sağlık Bilimleri TABLO 10 also requires the following, which a bare
-publication list cannot supply. The scorer **lists every one of them** in
-`summary.unmodelled_minimums` and cannot clear them:
+Worked examples and the rounding convention: `references/scoring_rules.md`.
 
-- **National / TR Dizin articles** — ≥3 post-doctorate national publications,
-  ≥2 of them TR Dizin articles, başlıca yazar in ≥2 (resolve TR Dizin status
-  with `alterlab-trdizin` first).
-- **Thesis-derived publication** — ≥1 publication from the candidate's own
-  graduate thesis (item 3). Item 3 is capped at 20 points and excluded from the
-  90 post-doctorate points, and a thesis-derived article is never also scored
-  as an item 1/2 article — so leave such articles out of the scorer's input.
-- **Citation (atıf)** — ≥5 post-doctorate citation points.
-- **Scientific meeting (bilimsel toplantı / bildiri)** — ≥5 post-doctorate points.
-- **Education / teaching (eğitim-öğretim)** — ≥2 points.
-- **Per-category point caps** — thesis-derived 20, books 20, citation 10, thesis
-  supervision 10, project 20, scientific meeting 10, education 6, award 25,
-  editorship 4, other 10; patents have no cap.
+### Ambiguous wording — fail only when every reading fails
 
-> **Why no ELIGIBLE verdict.** Because these minimums are unmodelled, a green
-> pass on the four computable checks is **necessary but not sufficient**. The
-> tool therefore structurally cannot output "eligible" — re-verify the full
-> TABLO 10 checklist against the live ÜAK source for the candidate's term. Full
-> detail and provenance: `references/uak_criteria.md`.
+Some rules tie the sub-item restriction to the lead article rather than to the points (e.g.
+Mühendislik "a bendinden Q1, Q2 veya Q3 dergilerde yayımlanmış makalelerden en az birinde
+başlıca yazar olmak kaydıyla 40 puan"). The scorer counts all item-1 points (as v2.1 did for
+Sağlık), reports the named-sub-item value beside it, and adds an `interpretation_flags`
+entry when only the broader reading passes. Alternative routes whose sentence omits "doktora
+ünvanının alınmasından sonra" are counted over all dates, again with a flag if needed.
 
-### Per-field point table (bundled, dated)
+### Mandatory minimums NOT modelled — the manual checklist
 
-The point a publication earns depends on the **field** (alan) and the journal's
-**index tier**. This skill bundles the **Sağlık Bilimleri TABLO 10** values
-(2026 Mart term):
+Every report lists them under `summary.unmodelled_minimums`, with the field's own numbers:
+thesis-derived publication (all fields); book (Filoloji, Güzel Sanatlar, Hukuk, İlahiyat,
+Sosyal, Spor); citation (≥ 5, Güzel Sanatlar ≥ 2); scientific meeting (≥ 5; Güzel Sanatlar
+and Hukuk need one paper presented personally); teaching (≥ 2); per-item caps; the
+predatory-journal rule (ÜAK S.S.S. Q20); relevance to the bilim alanı; and field-specific
+items — Güzel Sanatlar *Özel Başvuru Şartları*, Sosyal communication bilim alanları (≥ 10
+from item 13 c–e), Mimarlık item 13 (Yarışma, Proje ve Yazılım ≥ 15), İlahiyat Dinî Musiki
+(≥ 10 from item 13 a–d), Sağlık national articles. Conditions no list can show (e.g.
+TR Dizin articles "in different journals") appear under `summary.to_verify`.
 
-| Index tier (input code) | Points | TABLO 10 item |
-|---|---|---|
-| Q1 (SCIE / SSCI, 1st quartile, JIF) | 30 | 1a |
-| Q2 | 20 | 1a |
-| Q3 | 15 | 1a |
-| Q4 | 10 | 1a |
-| AHCI (Arts & Humanities Citation Index) | 20 | 1b |
-| ESCI (Emerging Sources Citation Index) | 10 | 1c |
-| Scopus | 10 | 1c |
-| TRDizin (ULAKBİM national index) | 10 | 2a |
+### Other items and caps
 
-Other rows (other international indexes 5, letters/notes/abstracts 3, SCIE
-case reports 5, other peer-reviewed national journals 4) are not bundled; an
-item with such a tier is reported as unscored so the user can add it by hand.
-Other fields (Fen, Sosyal, Mühendislik, …) use **different** tables — the script
-accepts a field selector but only ships the verified Sağlık table. For another
-field, supply that field's table from the live ÜAK source; do **not** reuse the
-Sağlık numbers. Full table and provenance: `references/uak_criteria.md`.
-
-### Author-share rule (paylaşım kuralı)
-
-A publication's face points are scaled by the candidate's authorship role:
-
-- **Single author** → full points (×1.0).
-- **Two authors** → the **lead author (başlıca yazar)** gets **0.8**; the
-  **non-lead** second author gets **0.5** (the two are *not* scored equally).
-- **Three or more authors** → the **lead author (başlıca yazar)** takes
-  **half** the points; the remaining half is split **equally** among all
-  remaining authors.
-
-The script computes the candidate's scaled contribution per item from the author
-count and the candidate's role. Worked numeric examples and the exact rounding
-convention are in `references/scoring_rules.md`.
-
-> **başlıca yazar (lead author)** — per the Sağlık TABLO 10 definition: the
-> author of a single-author article, the **first author**, or the advisor on an
-> article written with the graduate student(s) they supervise (a second advisor
-> does not count). Corresponding authorship alone does **not** make a Sağlık
-> candidate başlıca yazar (some other fields' tables define it differently). The
-> candidate declares this per item; the scorer treats single-author items as
-> lead automatically, trusts the flag otherwise, and echoes it for audit.
+Points for items 3 and above (books, citations, projects, congress papers, teaching,
+exhibitions under item 13, …) are not publications. The user may enter self-computed shares
+under `other_items` (`{"item": "4c", "points": 5, "post_doc_points": 5}`); the scorer applies
+the field's item and sub-item caps and adds them to the totals (item 3 never counts toward
+the 90). Without them, the totals cover publications only — say so when a total fails.
 
 ---
 
-## Pipeline (how to run it)
+## Pipeline
 
-### 1. Capture the publication list
+### 1. Identify the temel alan and bilim alanı
 
-Each item needs: a title (free text), the **field**, the **index tier** (one of
-`Q1 Q2 Q3 Q4 AHCI ESCI Scopus TRDizin`), the **author count**, whether the
-candidate is **lead author**, and whether it is **post-doctorate**. Leave out
-articles derived from the candidate's own graduate thesis — TABLO 10 scores
-them only under item 3 (see the unmodelled minimums). Example JSON:
+Ask for the temel alan if it is not stated. `--bilim-alani` is **required for `fen`** (the
+item-1 threshold is 40 or 20) and tailors the Sosyal communication and İlahiyat Dinî Musiki
+checks. A field the tool does not bundle is refused — send the user to the ÜAK page.
+
+### 2. Capture the publication list
+
+Each item needs a title, the **index tier** (`Q1`–`Q4`, `AHCI`, `ESCI`, `Scopus`,
+`OtherIntl`, `IntlNote`, `TRDizin`, `OtherNational`, `NationalNote`; `CaseReport` in Sağlık,
+`SPORTDiscus` in Spor), the **author count**, whether the candidate is **başlıca yazar**, and
+whether it is **post-doctorate**. Leave thesis-derived articles out (they belong to item 3).
 
 ```json
 {
-  "field": "saglik",
+  "alan": "sosyal",
+  "bilim_alani": "İletişim Çalışmaları",
   "publications": [
-    {"title": "Article A", "index": "Q1", "authors": 3, "is_lead": true,  "post_doc": true},
-    {"title": "Article B", "index": "Q2", "authors": 1, "is_lead": true,  "post_doc": true},
-    {"title": "Article C", "index": "TRDizin", "authors": 2, "is_lead": false, "post_doc": false}
-  ]
+    {"title": "Article A", "index": "Q2", "authors": 2, "post_doc": true},
+    {"title": "Makale B", "index": "TRDizin", "authors": 1, "post_doc": true}
+  ],
+  "other_items": [{"item": "4a", "points": 20, "post_doc_points": 20}]
 }
 ```
 
-If a journal's index tier is uncertain, resolve it first: for TR Dizin status
-run `alterlab-trdizin`; for quartile, check the candidate's records. Do **not**
-guess a tier — an unknown tier must be flagged, not scored.
+Resolve an uncertain tier first — `alterlab-trdizin` for TR Dizin status, the candidate's JCR
+record for a quartile. Do **not** guess a tier; an unknown one is reported as unscored.
 
-### 2. Run the scorer
+### 3. Run the scorer
 
 ```bash
 uv run python skills/turkish-academia/alterlab-docentlik-eligibility/scripts/score_docentlik.py \
-    publications.json \
-    --out docentlik_report.json
+    publications.json --alan sosyal --bilim-alani "İletişim Çalışmaları" --out report.json
 ```
 
-- The input path may be `-` (stdin) or inline JSON.
-- `--field saglik` (default) selects the bundled table; other fields require a
-  supplied table file and the script refuses to invent one.
-- Omit `--out` to print the JSON report to stdout.
+- Input may be a file, `-` (stdin) or inline JSON; omit `--out` to print the report.
+- `--alan` accepts codes or Turkish/English names; omitted → the input's `alan`/`field`,
+  else `saglik` (v2.1 default). `--field` still works as an alias.
+- `--list-alanlar` prints the bundled tables; `--self-test` runs hand-computed worked cases
+  for all twelve tables offline.
+- Pure stdlib — no network, no third-party dependencies, same input → same output.
 
-The script is **pure stdlib** — no network, no third-party deps — so it runs in a
-bare `uv` environment and is fully reproducible offline.
+### 4. Read the report and present it
 
-### 3. Read the report and present it
+Parse `summary.verdict` (`FAIL_MODELLED_CHECK` / `PRESCREEN_PASS_VERIFY_REMAINING`; there is
+**no** `ELIGIBLE`), then fill in the template below.
 
-Parse `summary.verdict` (`FAIL_MODELLED_CHECK` / `PRESCREEN_PASS_VERIFY_REMAINING`
-— there is **no** `ELIGIBLE` value) and present:
+## Output Template (user-facing answer)
 
-1. The **headline status** and the four computable check results
-   (`total_points`, `post_doc_points`, `intl_article_points`, `lead_q_articles`)
-   against their thresholds (100 / 90 / 40 / 3).
-2. A **per-publication table** with each item's face points, the applied share
-   factor, and its scaled contribution.
-3. For every **failed** minimum, the exact shortfall (e.g. "82 / 100 points — 18
-   short" or "2 / 3 lead-author Q articles — 1 short").
-4. The **unmodelled mandatory minimums** from `summary.unmodelled_minimums` as a
-   checklist the user must verify by hand — make clear the tool could **not**
-   check these and that a `PRESCREEN_PASS_VERIFY_REMAINING` is **not** an
-   eligibility confirmation.
-5. Any items with an **unknown index tier**, flagged as unscored.
-6. The **verify-against-current-period disclaimer**, always.
+```
+**Doçentlik pre-screen — {TABLO n} {temel alan} ({term}), bilim alanı: {…}**
+Status: {verdict} — {one-line meaning; never "eligible"}
 
----
+| Check | Value | Threshold | Result |
+|---|---|---|---|
+| Total points | … | 100 | pass / FAIL (short …) |
+| Post-doctorate points | … | 90 | … |
+| {field item-1 / item-2 checks} | … | … | … |
 
-## Output Shape (excerpt)
+Per-publication points: {title — tier, authors, share factor, points}
+Other items counted (after caps): {item — declared → counted}
+Unscored items: {titles + what to resolve}
+Interpretation flags: {each flag, in plain words}
+Still to verify by hand: {to_verify + unmodelled_minimums, with the field's numbers}
+Disclaimer: partial pre-screen, criteria of {term}, verify at the ÜAK page; the jury decides.
+```
+
+Answer in the user's language (Turkish prompt → Turkish answer with correct ç ğ ı İ ö ş ü).
+
+## Output Shape (JSON excerpt)
 
 ```json
 {
   "tool": "alterlab-docentlik-eligibility/score_docentlik.py",
-  "version": "2.1.0",
-  "field": "saglik",
+  "version": "2.2.0",
+  "field": "sosyal", "alan": "sosyal", "table": "TABLO 11", "term": "2026 Mart",
+  "source_pdf": "https://www.uak.gov.tr/documents/documents/69affdf9bdbcc.pdf",
   "table_last_verified": "2026-09-23",
   "prescreen_only": true,
   "summary": {
-    "verdict": "FAIL_MODELLED_CHECK",
-    "verdict_meaning": "At least one modelled minimum ... fails — not eligible ...",
-    "all_modelled_checks_pass": false,
-    "total_points": 95.0,
-    "post_doc_points": 85.0,
-    "intl_article_points": 60.0,
-    "lead_q_articles": 2,
+    "verdict": "PRESCREEN_PASS_VERIFY_REMAINING",
+    "total_points": 113.5, "post_doc_points": 105.5,
     "checks": {
-      "total_ge_100":         {"pass": false, "value": 95.0, "threshold": 100, "short": 5.0},
-      "post_doc_ge_90":       {"pass": false, "value": 85.0, "threshold": 90,  "short": 5.0},
-      "intl_article_ge_40":   {"pass": true,  "value": 60.0, "threshold": 40},
-      "lead_q_articles_ge_3": {"pass": false, "value": 2,    "threshold": 3,   "short": 1}
+      "total_ge_100": {"pass": true, "value": 113.5, "threshold": 100},
+      "intl_points_a_to_d_ge_10": {"pass": true, "value": 17.5, "threshold": 10, "rule_tr": "…"},
+      "national_articles": {"pass": true, "passed_route": "primary", "routes": {"…": "…"}}
     },
-    "unmodelled_minimums": [
-      {"id": "national_trdizin_articles", "label_tr": "Ulusal makale / TR Dizin asgari koşulu", "requirement": "...", "why_unmodelled": "..."}
-    ]
+    "interpretation_flags": [],
+    "to_verify": ["national_articles: farklı dergilerde — …"],
+    "unmodelled_minimums": [{"id": "book_kitap", "requirement": "…", "why_unmodelled": "…"}]
   },
-  "publications": [
-    {"title": "Article A", "index": "Q1", "face_points": 30, "share_factor": 0.5, "scaled": 15.0, "counts_lead_q": true, "is_scie_ssci": true, "is_intl_article": true}
-  ],
-  "disclaimer": "PARTIAL PRE-SCREEN — NOT an eligibility decision. ... It therefore NEVER returns 'ELIGIBLE'. ÜAK doçentlik criteria change each application term ... verify the full TABLO 10 at https://www.uak.gov.tr/ ..."
+  "publications": [{"title": "…", "index": "TRDizin", "share_factor": 1.0, "scaled": 10.0}],
+  "other_items": [{"item": 4, "declared": 13.0, "counted": 13.0, "cap": 20}],
+  "disclaimer": "PARTIAL PRE-SCREEN — NOT an eligibility decision. … NEVER returns 'ELIGIBLE' …"
 }
 ```
 
-> The only two `verdict` values are `FAIL_MODELLED_CHECK` and
-> `PRESCREEN_PASS_VERIFY_REMAINING`. There is **no** `ELIGIBLE` value by design.
+## Quality Standards
 
----
+- **Right table, stated:** 100% of outputs name the TABLO, temel alan, term (2026 Mart) and
+  `table_last_verified`; a result for one field is never offered for another.
+- **Complete check reporting:** every modelled check is shown, passing or failing, with value,
+  threshold and (if failing) the exact shortfall.
+- **Zero invented numbers:** no point value, threshold or tier appears that is not in the
+  bundled tables or the user's input; unknown tiers are listed as unscored.
+- **Zero eligibility claims:** the words "eligible"/"yeterli" are never used as a verdict.
+- **Manual checklist delivered:** every `unmodelled_minimums` and `to_verify` item appears,
+  and every interpretation flag is explained.
+- **Reproducible:** `--self-test` passes (worked cases for all twelve tables) before the
+  script is changed or a new term's data is added.
+
+## Error Handling & Edge Cases
+
+| Situation | What to do |
+|---|---|
+| Temel alan unknown / not bundled | The script exits 2 — ask the user, or send them to the ÜAK page; never borrow another field's numbers |
+| `fen` without a bilim alanı | Exit 2 listing the six bilim alanları and their 40/20 thresholds — ask which applies |
+| Ekim 2026 (or later) applicant | Run on 2026 Mart data but lead with the warning that the term's criteria must be checked live |
+| Tier missing, "SSCI" without quartile, or TR Dizin status unknown | Item is unscored — resolve (JCR record, `alterlab-trdizin`) and re-run |
+| First-author "lead" claim in Fen, Mühendislik or Ziraat | Scored as non-lead; explain the field's definition; ask about advisor–student co-authorship |
+| Article with no başlıca yazar (başlıca-yazar fields) | Set `has_lead: false` → equal split |
+| Thesis-derived article in the list | Remove it from `publications`; enter it under `other_items` as item 3 |
+| Total fails but books/projects/citations were not entered | Say the totals are incomplete and offer to add `other_items` |
+| Pass that relies on a broader reading (flag) | Present it as uncertain; suggest confirming with ÜAK or the institution |
+| Q4 journal that charges fees | Warn: yağmacı/şaibeli rule (S.S.S. Q20) may exclude it — the scorer cannot tell |
+| Güzel Sanatlar candidate | Stress that the Özel Başvuru Şartları (exhibitions, films, concerts…) must also be met |
+
+## AI Disclosure & Ethics
+
+- State that the pre-screen was produced with AI assistance from ÜAK's published tables and
+  that it is not an official ÜAK or jury decision.
+- The tool models counts, not quality: it cannot judge scientific merit, originality or
+  relevance to the bilim alanı — the jury does.
+- Treat publication lists as personal data: do not store or share them beyond the task.
+- Do not help inflate or misstate authorship roles, index tiers or dates to reach a
+  threshold. ÜAK cancels an application that does not meet the asgari başvuru şartları (e.g.
+  declared works outside the bilim alanı; a corrected application is possible next term), and
+  a candidate found to have committed a research/publication-ethics violation may reapply only
+  from the third following term (ÜAK S.S.S. Q13–Q14).
 
 ## Self-Check Before Reporting
 
-- Did you state the **field** and the table's `last_verified` date? A Sağlık
-  result must not be presented as valid for another field.
-- Are all **four** modelled checks reported (total / post-doc / international
-  article / lead-author Q), even the ones that pass?
-- Did you present the **unmodelled mandatory minimums** as a verify-by-hand
-  checklist, and make clear the tool did NOT check them?
-- Did you avoid calling a `PRESCREEN_PASS_VERIFY_REMAINING` result "eligible"?
-  It is **not** an eligibility confirmation.
-- Did any item have an **unknown index tier**? Those are unscored — say so, do
-  not silently drop or guess them.
-- Is the headline `verdict` consistent with the checks (any failed modelled
-  minimum → `FAIL_MODELLED_CHECK`)?
-- Did you include the **verify-against-current-period disclaimer**?
-
----
+- Did you name the field, TABLO, term and `table_last_verified`?
+- Is every modelled check reported, with shortfalls for failures?
+- Did you present the manual checklist, `to_verify` items and interpretation flags?
+- Did you avoid calling `PRESCREEN_PASS_VERIFY_REMAINING` "eligible"?
+- Were unknown tiers flagged, not dropped or guessed?
+- For Fen/Mühendislik/Ziraat, did you check first-author lead claims?
+- Did you include the verify-against-current-term disclaimer?
 
 ## References
 
-- `references/uak_criteria.md` — the bundled, dated Sağlık Bilimleri TABLO 10
-  point table, the four MODELLED minimums, the mandatory minimums NOT modelled
-  (verify by hand), and the primary ÜAK source links.
-- `references/scoring_rules.md` — the author-share rule with worked numeric
-  examples, the lead-author definition, the international-article ≥40 floor,
-  and the rounding convention.
+- `references/uak_criteria.md` — term status, the 12 tables side by side (share rule,
+  item-1/item-2 minimums, other minimums, caps), what is modelled vs manual, sources.
+- `references/field_tables.md` — verbatim rule quotes for each TABLO with PDF URL and
+  SHA-256, common point values, Güzel Sanatlar Özel Başvuru Şartları.
+- `references/scoring_rules.md` — input schema, both author-share rules with worked examples,
+  başlıca-yazar handling, `other_items` caps, ambiguous-wording policy, verdicts, rounding.
+- `scripts/score_docentlik.py` — the data-driven scorer (`--alan`, `--list-alanlar`,
+  `--self-test`).
+
+## Sources
+
+- ÜAK, *Doçentlik Başvuru Şartları* (term sections and the 12 per-field PDFs of the 2026 Mart
+  term): <https://www.uak.gov.tr/page/docentlik-basvuru-sartlari-kLPHX> — retrieved
+  2026-09-23; per-PDF URLs and SHA-256 in `references/field_tables.md`.
+- ÜAK, *2026 Mart Dönemi Sıkça Sorulan Sorular ve Cevapları*:
+  <https://www.uak.gov.tr/documents/documents/6a07202a2ea5f.pdf> — retrieved 2026-09-23.
+- ÜAK, *Bilim/Sanat Alanları ve Anahtar Kelimeler*, 2026 Mart
+  (<https://www.uak.gov.tr/documents/documents/69b0017962c56.pdf>) and 2026 Ekim
+  (<https://www.uak.gov.tr/documents/documents/6aa40cd9e0ea1.pdf>) — retrieved 2026-09-23.
+- Doçentlik Yönetmeliği — UNVERIFIED in this revision (the legislation hosts timed out on
+  2026-09-23); see `references/uak_criteria.md`.
 
 Part of the AlterLab Academic Skills suite.

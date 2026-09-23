@@ -1,17 +1,17 @@
 ---
 name: alterlab-tubitak-proposal
-description: "Scaffolds TÜBİTAK ARDEB national research proposals: 1001 against the official .doc form tree (TR/EN özet ≤600 words each, 1. ÖZGÜN DEĞER, 2. YÖNTEM, 3. PROJE YÖNETİMİ with iş paketleri and B Planı, 4. YAYGIN ETKİ, EK-1 Kaynaklar, EK-2 Bütçe; ≤25 pages), and 1002-A Hızlı Destek, now typed into PBS screens with per-section word ranges. Checks program caps (1001 ≤36 months, 3,000,000 TRY burs dahil; 1002-A ≤12 months, 150,000 TRY/year, rolling), drafts to the panel weights (özgün değer 35, yöntem 25, proje yönetimi 20, yaygın etki 20) and applies TÜBİTAK's generative-AI (ÜYZ) disclosure rules; submission via PBS with an ARBİS prerequisite. Delegates generic grant craft to alterlab-research-grants. Use when the user wants to write a TÜBİTAK 1001 or 1002-A proposal, draft özgün değer or yaygın etki sections, scaffold a Turkish national grant, or map broader-impacts framing to TÜBİTAK terms. Part of the AlterLab Academic Skills suite."
+description: "Scaffolds TÜBİTAK ARDEB proposals in the directorate's own section order: 1001 against the official .doc form (TR/EN özet ≤600 words each, ÖZGÜN DEĞER, YÖNTEM, PROJE YÖNETİMİ with iş paketleri and B Planı, YAYGIN ETKİ, EK-1/EK-2; ≤25 pages), and the PBS-typed 1002-A Hızlı Destek and 3501 Kariyer Geliştirme forms with per-section word ranges. Checks program caps (1001 ≤36 months, 3,000,000 TRY; 1002-A ≤12 months, 150,000 TRY/year; 3501 ≤36 months, 1,500,000 TRY, PI ≤7 years post-PhD, doçent or below), drafts to each program's criteria (1001 panel 35/25/20/20; 3501 adds kariyer geliştirme potansiyeli) and applies TÜBİTAK's generative-AI (ÜYZ) disclosure rules; submission via PBS after ARBİS. Delegates generic grant craft to alterlab-research-grants and BİDEB fellowships to alterlab-tubitak-bideb. Use when the user wants to write a TÜBİTAK 1001, 1002-A or 3501 proposal, draft özgün değer or yaygın etki sections, or map broader-impacts framing to TÜBİTAK terms. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) WebFetch
 compatibility: No API key required — generates proposal scaffolds offline; the structure checker runs via `uv run python` on stdlib only. Program caps/forms change by call period; WebFetch the live program pages to confirm before submission.
 metadata:
   skill-author: AlterLab
-  version: "1.1.0"
+  version: "1.2.0"
   last_updated: "2026-09-23"
   depends_on: "alterlab-research-grants (generic grant-craft this skill delegates to)"
 ---
 
-# TÜBİTAK ARDEB Proposal Scaffolder — 1001 & 1002-A
+# TÜBİTAK ARDEB Proposal Scaffolder — 1001, 1002-A & 3501
 
 Scaffolds a TÜBİTAK ARDEB (Araştırma Destek Programları Başkanlığı — the Research
 Support Programmes directorate) proposal against the **official form structure**, in the
@@ -21,7 +21,7 @@ form structure, terminology, and program rules** only — generic grant-craft (b
 argumentation, feasibility narrative, Gantt aesthetics) is delegated to
 `alterlab-research-grants`.
 
-Two variants:
+Three variants:
 
 - **1001** — *Bilimsel ve Teknolojik Araştırma Projelerini Destekleme Programı* (Support
   Programme for Scientific and Technological Research Projects). The full program: an uploaded
@@ -30,6 +30,11 @@ Two variants:
   the 2025 redesign there is **no .doc template**: the applicant types each section into the PBS
   screens (with word ranges) and the system generates the form. It also funds needs arising in an
   accepted doctoral thesis, with the doctoral student as PI.
+- **3501** — *Kariyer Geliştirme Programı* (Career Development Programme). Project support for
+  early-career PIs: within 7 years of the doctorate (for 2026 applications, degree dated
+  01.01.2019 or later; +1 year per birth), doçent or lower, never funded by 3501 before. Rolling,
+  typed into PBS screens with word ranges like 1002-A, and adds a **Kariyer Geliştirme
+  Potansiyeli** section and the PI's thesis information.
 
 ## Quick Start
 
@@ -37,6 +42,7 @@ Two variants:
 Write me a TÜBİTAK 1001 proposal outline for <topic>
 Draft the özgün değer (original value) section for my ARDEB 1001
 Scaffold a 1002-A Hızlı Destek başvurusu
+3501 Kariyer Geliştirme projemin başlıklarını ve kelime sınırlarını çıkar
 Turn my NSF broader-impacts paragraph into a TÜBİTAK yaygın etki section
 ```
 
@@ -48,9 +54,10 @@ note every time — caps, forms and word ranges change by call period.
 ## When to Use This Skill
 
 Use this skill when the request is to **author, outline, or section-map a TÜBİTAK ARDEB
-1001 or 1002-A proposal**, draft a specific Turkish section (özgün değer = original value;
-yaygın etki = broader impact/dissemination; yöntem = method; iş paketi = work package), or
-translate international broader-impacts framing into TÜBİTAK terminology.
+1001, 1002-A or 3501 proposal**, check a 3501 PI's career-stage eligibility, draft a specific
+Turkish section (özgün değer = original value; yaygın etki = broader impact/dissemination;
+yöntem = method; iş paketi = work package; kariyer geliştirme potansiyeli = career-development
+potential), or translate international broader-impacts framing into TÜBİTAK terminology.
 
 ### Does NOT Trigger
 
@@ -60,6 +67,7 @@ does **not** check journal indexing, compute career points, or write a non-Turki
 | The request is really about… | Route to |
 |------------------------------|----------|
 | Generic grant-craft / NSF / NIH / ERC narrative, broader-impacts argumentation in the abstract | `alterlab-research-grants` |
+| A **BİDEB** fellowship, bursary, visiting-scientist or event support (2218, 2219, 2221, 2232-A/B, 2236-A, 2224-A, 2223-B) | `alterlab-tubitak-bideb` |
 | Interim/final progress report (gelişme/sonuç raporu) for an **awarded** TÜBİTAK project | `alterlab-grant-reporting` |
 | Is a target journal in **TR Dizin** (national index)? | `alterlab-trdizin` |
 | Does a candidate clear **doçentlik** (associate-professor) point thresholds? | `alterlab-docentlik-eligibility` |
@@ -100,8 +108,21 @@ annotated trees and a drafting brief per heading.
 | – | Belirtmek İstediğiniz Diğer Konular (optional) | ≤ 250 |
 | EK-1 / EK-2 | Kaynakça step (DOI where one exists); budget steps | — |
 
+**3501 (PBS entry screens, word ranges from the 3501 Başvuru İçeriği Bilgi Notu, 2026-05 upload)**
+
+| # | Section (TR) | Words |
+|---|--------------|-------|
+| – | **PROJE YÜRÜTÜCÜSÜNÜN TEZ BİLGİLERİ** — master's thesis title + yaygın etki (if any); doctoral/uzmanlık thesis title + yaygın etki | ≤ 150; 50–350 |
+| 1 | **ÖZGÜN DEĞER** — Konunun Önemi, Projenin Özgün Değeri; Araştırma Sorusu veya Hipotezi; Amaç ve Hedefler | 1,000–4,000; 100–400; 150–500 |
+| 2 | **YÖNTEM** | 1,000–3,750 |
+| 3 | **PROJE YÖNETİMİ** — İş Paketleri step (başarı ölçütü, önem % totalling 100, ara çıktılar, risks + B Planı); Araştırma Olanakları | — |
+| 4 | **KARİYER GELİŞTİRME POTANSİYELİ** | 250–700 |
+| 5 | **YAYGIN ETKİ** — 5.1 Öngörülen Çıktılar; 5.2 Öngörülen Etkiler; 5.3 Yayılım ve Bilim İletişimi (Hedef Kitle, Hedefler ve Beklenen Kazanımlar, Kullanılacak Araçlar, Zamanlama) | —; 50–400; 10–125, 10–125, 5–100, 5–75 |
+| – | Belirtmek İstediğiniz Diğer Konular (optional) | ≤ 500 |
+| EK-1 / EK-2 | Kaynaklar (DOI mandatory where one exists); Bütçe ve Gerekçesi | — |
+
 **Map, don't invent.** Evaluators score against *these* headings; never silently restructure
-them into an IMRaD paper. In both variants literature review, report writing, dissemination,
+them into an IMRaD paper. In every variant literature review, report writing, dissemination,
 article writing and procurement are **not** work packages.
 
 ---
@@ -111,18 +132,19 @@ article writing and procurement are **not** work packages.
 A proposal that breaks these can be returned without scientific review. The checker pins them;
 `references/program_profiles.md` has the full table with sources, read on 2026-09-23.
 
-| Item | 1001 | 1002-A |
-|------|------|--------|
-| Duration | **≤ 36 months** | **≤ 12 months** |
-| Budget upper limit | **3,000,000 TRY**, burs dahil, PTİ and kurum hissesi hariç, no annual sub-limit (from the 2026-1 period) | **150,000 TRY per year**, burs dahil, no PTİ (from 2026-02-01) |
-| Format | .doc form, Arial 9, unchanged template, **≤ 25 pages excl. EK-1/EK-2**, one file ≤ 20 MB, no content behind external links | PBS text fields within the word ranges above |
-| Özet | TR and EN, ≤ 600 words each | Not stated in the bilgi notu — check the PBS "Proje Bilgileri" step |
-| Window | Two calls a year (2026-2: 29 Jul – 14 Sep 2026, closed; next call on the program page) | Rolling, year-round; e-imza within 15 days of approving the application |
-| PI | Doctorate + kadrolu/tam zamanlı staff of the executing institution | Doctorate (university/hospital) or qualified doctoral/uzmanlık/sanatta yeterlik student applying for their thesis needs |
+| Item | 1001 | 1002-A | 3501 |
+|------|------|--------|------|
+| Duration | **≤ 36 months** | **≤ 12 months** | **≤ 36 months** |
+| Budget upper limit | **3,000,000 TRY**, burs dahil, PTİ and kurum hissesi hariç, no annual sub-limit (from the 2026-1 period) | **150,000 TRY per year**, burs dahil, no PTİ (from 2026-02-01) | **1,500,000 TRY**, burs dahil, PTİ and kurum hissesi hariç, no annual sub-limit (from 2026-02-01); no infrastructure projects |
+| Format | .doc form, Arial 9, unchanged template, **≤ 25 pages excl. EK-1/EK-2**, one file ≤ 20 MB, no content behind external links | PBS text fields within the word ranges above | PBS text fields within the word ranges above; no content behind external links |
+| Özet | TR and EN, ≤ 600 words each | Not stated in the bilgi notu — check the PBS "Proje Bilgileri" step | Not stated in the bilgi notu — check the PBS "Proje Bilgileri" step |
+| Window | Two calls a year (2026-2: 29 Jul – 14 Sep 2026, closed; next call on the program page) | Rolling, year-round; e-imza within 15 days of approving the application | Rolling, year-round; e-imza within 15 days of approving the application |
+| PI | Doctorate + kadrolu/tam zamanlı staff of the executing institution | Doctorate (university/hospital) or qualified doctoral/uzmanlık/sanatta yeterlik student applying for their thesis needs | As 1001, plus: ≤ 7 years after the doctorate (2026: degree dated 01.01.2019 or later; +1 year per birth), doçent or lower, no earlier 3501; professors cannot join as researchers |
 
 > **Verify-current-call note (include it every time).** Every TRY figure, page limit, word range
-> and duration is dated. Before the user submits, WebFetch the live program page (and, for 1002-A,
-> the current Başvuru İçeriği Bilgi Notu) listed in `references/program_profiles.md` and reconcile.
+> and duration is dated. Before the user submits, WebFetch the live program page (and, for 1002-A
+> and 3501, the current Başvuru İçeriği Bilgi Notu) listed in `references/program_profiles.md` and
+> reconcile.
 
 ---
 
@@ -141,14 +163,23 @@ to its criterion. Full criteria in `references/review_criteria.md`.
 **1002-A** goes to external advisors (dış danışman) on three criteria: Bilimsel Nitelik, Proje
 Yönetimi, Çıktı-Etki-Kazanımlar.
 
+**3501** is scored on five criteria — **Özgün Değer, Yöntem, Proje Yönetimi, Kariyer Geliştirme
+Potansiyeli, Yaygın Etki** — each question rated on a six-level scale (Çok iyi … Çok yetersiz).
+The 3501 evaluation form **publishes no weights**: never apply 1001's 35/25/20/20 to a 3501
+draft. The career criterion asks how the PI's master's/doctoral work relates to the proposal and
+what new skills or interdisciplinary capability the project brings — so fill the thesis step and
+§4 with specifics, not a CV summary.
+
 ---
 
-## Generative-AI Use — TÜBİTAK ÜYZ Rehberi (Eylül 2025)
+## Generative-AI Use — TÜBİTAK ÜYZ Rehberi (Eylül 2025; v04, Ocak 2026)
 
 TÜBİTAK's *Destek Süreçlerinde Üretken Yapay Zekânın (ÜYZ) Sorumlu ve Güvenilir Kullanımı
-Rehberi* (`tubitak.gov.tr/sites/default/files/2025-09/uyz_rehberi_ardeb.pdf`) applies to every
-TÜBİTAK application and to progress/final reports. Because this skill *is* generative-AI help,
-tell the user what the guide asks of them:
+Rehberi* (`tubitak.gov.tr/sites/default/files/2025-09/uyz_rehberi_ardeb.pdf`, still linked from
+the ARDEB forms) applies to every TÜBİTAK application and to progress/final reports. The guide
+page (`tubitak.gov.tr/tr/kurumsal/hakkimizda/uretken-yapay-zeka-rehberi`) now serves **v04, Ocak
+2026** (`2026-01/UYZ_Rehberi_v04_TR.pdf`, read 2026-09-23), which keeps the rules below. Because
+this skill *is* generative-AI help, tell the user what the guide asks of them:
 
 - **Declare significant use.** Drafting any section, generating code or figures, or producing
   content that supports the main arguments counts as significant (plain spelling/grammar checks
@@ -183,6 +214,7 @@ Full glossary in `references/terminology_bridge.md`.
 | Contingency / risk plan | **B Planı** | Part of the work-package tables; must not drift from the core aims |
 | Work package / Gantt | **İş paketi / İş-Zaman Çizelgesi** | Gantt aesthetics → delegate to `alterlab-research-grants` |
 | Aims & objectives | **Amaç ve Hedefler** | Hedefler should be measurable, tied to work packages |
+| Career-development plan | **Kariyer Geliştirme Potansiyeli** (3501 §4) | Relate the PI's theses to the project; name the new skills it builds |
 
 ---
 
@@ -197,17 +229,21 @@ uv run python skills/turkish-academia/alterlab-tubitak-proposal/scripts/scaffold
     --out proposal_scaffold.md
 ```
 
-`--program` accepts `1001` or `1002a`. The script emits the Markdown section tree with the TR
+`--program` accepts `1001`, `1002a` or `3501`. The script emits the Markdown section tree with the TR
 heading, its English gloss, the evaluation criterion each section serves, a short drafting brief,
-and (1002-A) the word range. Use `--lang tr` (default) or `--lang both` for bilingual headings.
+and (1002-A, 3501) the word range. Use `--lang tr` (default) or `--lang both` for bilingual
+headings.
 
 ### 2. Draft each section from the user's material
 
 Fill the scaffold from what the user provides. Keep the directorate's ordering. For özgün değer,
 state the *gap* and the *new contribution* explicitly. For yaygın etki, populate all three
 sub-parts (çıktılar / etkiler / yayılım ve bilim iletişimi). Pull literature into EK-1 — and have
-`alterlab-citation-verifier` existence-check the bibliography before submission. For 1002-A,
-remind the user that the text goes into the PBS fields, section by section.
+`alterlab-citation-verifier` existence-check the bibliography before submission. For 1002-A and
+3501, remind the user that the text goes into the PBS fields, section by section. For 3501, check
+the PI's eligibility first (7-year window, title, no earlier 3501), then make the thesis step and
+§4 Kariyer Geliştirme Potansiyeli concrete: what the theses established, what this project adds,
+which new skills it builds.
 
 ### 3. Check the limits and structure
 
@@ -217,17 +253,20 @@ uv run python skills/turkish-academia/alterlab-tubitak-proposal/scripts/scaffold
 ```
 
 The checker reports missing sections, word counts against each section's limit (1001: TR and EN
-özet ≤ 600; 1002-A: the min–max ranges), stated durations/budgets above the ceiling, and whether
+özet ≤ 600; 1002-A and 3501: the min–max ranges), stated durations/budgets above the ceiling, and whether
 a B Planı is present. It is **advisory** — it never edits the proposal, and it always restates the
-verify-current-call note because the ceilings are period-specific.
+verify-current-call note because the ceilings are period-specific. Heading matching is
+case-insensitive for Turkish (İ/ı), and `--self-test` runs the offline checks for all three
+variants.
 
 ### 4. Hand off and disclaim
 
 - Veri Yönetim Planı (uploaded to PBS with the application) → `alterlab-aperta` for the TÜBİTAK
   template and `alterlab-kvkk-dmp` for the KVKK analysis; ethics → `alterlab-tr-research-ethics`.
-  For 1002-A the etik kurul approval or legal/special permit is requested only once the project
-  is selected for funding, within a set deadline, and the project does not start without it —
-  so tell the user to start those applications early.
+  For 1002-A and 3501 the etik kurul approval or legal/special permit is requested only once the
+  project is selected for funding, within a set deadline, and the project does not start without
+  it — so tell the user to start those applications early. For 3501 the Veri Yönetim Planı is
+  generated by PBS from the entered information.
 - Remind the user of the AI-use declaration and to confirm the live caps before submission.
 
 ---
@@ -248,8 +287,11 @@ researcher pastes or uploads.
 ## Self-Check Before Reporting
 
 - Did you use the **directorate's section order and Turkish headings** for the right variant?
-- 1001: is the **özet within 600 words in BOTH** Turkish and English? 1002-A: is every section
-  inside its word range?
+- 1001: is the **özet within 600 words in BOTH** Turkish and English? 1002-A and 3501: is every
+  section inside its word range?
+- 3501: is the PI within the **7-year window** (2026: doctorate dated 01.01.2019 or later, +1 year
+  per birth), doçent or lower, with no earlier 3501 — and is no professor listed as a researcher?
+  Did you avoid applying 1001's weights to 3501?
 - Did you state duration/budget **only with the verify-current-call note**, never as a
   guaranteed cap?
 - Does every risky work package have a **B Planı**, and does §4 (or 1002-A §4) cover outputs,
@@ -261,12 +303,12 @@ researcher pastes or uploads.
 
 ## References
 
-- `references/form_structure.md` — the annotated 1001 form tree and the 1002-A PBS screens, with
-  a drafting brief per heading and the 1001-vs-1002-A delta.
+- `references/form_structure.md` — the annotated 1001 form tree and the 1002-A and 3501 PBS
+  screens, with a drafting brief per heading and the 1001-vs-1002-A and 1001-vs-3501 deltas.
 - `references/program_profiles.md` — per-program caps (duration, budget, window, format,
-  eligibility) with dates and the live verification URLs.
+  eligibility) with dates and the live verification URLs, and a 3501-vs-1001 table.
 - `references/review_criteria.md` — the 1001 panel criteria and weights, the 1002-A criteria,
-  and common rejection patterns.
+  the five 3501 criteria (no published weights), and common rejection patterns.
 - `references/terminology_bridge.md` — international ↔ TÜBİTAK concept glossary.
 
 Part of the AlterLab Academic Skills suite.
