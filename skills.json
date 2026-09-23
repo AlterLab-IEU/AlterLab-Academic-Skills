@@ -1,8 +1,8 @@
 {
   "summary": {
     "version": "2.6.1",
-    "generated_at": "2026-09-04",
-    "total": 239,
+    "generated_at": "2026-09-23",
+    "total": 240,
     "per_domain": {
       "bioinformatics": 38,
       "cheminformatics": 12,
@@ -20,12 +20,13 @@
       "social-science-workflow": 17,
       "turkish-academia": 12,
       "visualization": 9,
+      "workflows": 1,
       "writing-tools": 13
     },
     "eval_coverage": {
-      "with_evals": 239,
+      "with_evals": 240,
       "without_evals": 0,
-      "total": 239,
+      "total": 240,
       "fraction": 1.0
     }
   },
@@ -489,7 +490,7 @@
       "domain": "bioinformatics",
       "description": "Design protein sequences around bound ligands, metals, and nucleic acids with LigandMPNN (Dauparas 2023) — inverse folding that conditions on non-protein context, so binding-pocket and metal-site residues are chosen to fit the actual ligand. Use when designing a small-molecule or metal binding pocket, redesigning residues that contact a ligand/ion/nucleic acid, or doing enzyme active-site design where the substrate matters. For backbone sequence design with NO ligand/metal context prefer alterlab-proteinmpnn; to GENERATE a backbone or scaffold a functional site prefer alterlab-rfdiffusion; to validate a design by refolding prefer alterlab-alphafold; to co-fold or dock the ligand prefer alterlab-boltz or alterlab-diffdock. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Runs LigandMPNN (`dauparas/LigandMPNN`, PyTorch) under `uv run python` via its `run.py`. Model checkpoints download once (small; no account). CPU works for typical sizes; a GPU only speeds large batches. Input is a structure containing the protein PLUS the ligand/metal/nucleic-acid atoms (e.g. a PDB with the HETATM records).",
       "allowed_tools": [
         "Read",
@@ -500,7 +501,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 73,
+      "body_lines": 83,
       "references": [
         "ligandmpnn_usage.md"
       ]
@@ -510,8 +511,8 @@
       "domain": "bioinformatics",
       "description": "Analyze Neuropixels 1.0/2.0 extracellular electrophysiology with SpikeInterface — load SpikeGLX/Open Ephys recordings, preprocess and motion-correct, run Kilosort4 spike sorting, compute quality metrics, apply Allen/IBL curation, and do AI-assisted visual inspection. Use when working with neural recordings, spike sorting, or extracellular electrophysiology, or when the user mentions Neuropixels, SpikeGLX, Open Ephys, Kilosort, quality metrics, or unit curation. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for SpikeInterface 0.104/0.105 (current 0.105.0, released 2026-09-21), which requires Python >= 3.10. Kilosort4 needs a CUDA GPU; the internal CPU sorters do not.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -521,7 +522,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 368,
+      "body_lines": 409,
       "references": [
         "AI_CURATION.md",
         "ANALYSIS.md",
@@ -538,10 +539,10 @@
     {
       "name": "alterlab-nf-core-sarek",
       "domain": "bioinformatics",
-      "description": "Runs FASTQ-to-VCF germline and somatic variant calling via the Nextflow nf-core/sarek pipeline pinned to -r 3.8.1 — builds the samplesheet.csv (patient, sex, status, sample, lane, fastq_1, fastq_2), runs bwa-mem/bwa-mem2/dragmap alignment plus GATK4 MarkDuplicates and BQSR against the GATK GRCh38 resource bundle (dbSNP, Mills/1000G indels), and selects callers — explicitly correcting that sarek defaults to Strelka when --tools is unset (pass haplotypecaller for GATK best practice or deepvariant for CNN accuracy), with a non-Nextflow manual GATK4 fallback. Use when the user wants a variant-calling pipeline, FASTQ to VCF, germline or somatic SNV/indel calling, nf-core/sarek, GATK best-practices alignment-to-VCF, or BQSR/HaplotypeCaller/Mutect2/DeepVariant; annotate hits with alterlab-clinvar/alterlab-gnomad/alterlab-cosmic, parse VCFs with alterlab-pysam, store at scale with alterlab-tiledbvcf. Part of the AlterLab Academic Skills suite.",
+      "description": "Runs FASTQ-to-VCF germline and somatic variant calling via the Nextflow nf-core/sarek pipeline pinned to -r 3.10.0 — builds the samplesheet.csv (patient, sex, status, sample, lane, fastq_1, fastq_2), runs bwa-mem/bwa-mem2/dragmap alignment plus GATK4 MarkDuplicates and BQSR against the GATK GRCh38 resource bundle (dbSNP, Mills/1000G indels), and selects callers — explicitly correcting that sarek defaults to Strelka when --tools is unset (pass haplotypecaller for GATK best practice or deepvariant for CNN accuracy), with a non-Nextflow manual GATK4 fallback. Use when the user wants a variant-calling pipeline, FASTQ to VCF, germline or somatic SNV/indel calling, nf-core/sarek, GATK best-practices alignment-to-VCF, or BQSR/HaplotypeCaller/Mutect2/DeepVariant; annotate hits with alterlab-clinvar/alterlab-gnomad/alterlab-cosmic, parse VCFs with alterlab-pysam, store at scale with alterlab-tiledbvcf. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires Nextflow plus a container engine (Docker/Singularity/Apptainer) or conda; the pipeline pulls nf-core/sarek 3.8.1 and reference bundles over the network on first run. The manual GATK4 fallback needs bwa-mem2 + samtools + gatk4 (bioconda) and runs offline once references are local. No API key. Indexing, BQSR and variant calling are long, compute-heavy jobs — good candidates to run locally rather than through repeated API calls.",
+      "version": "1.2.0",
+      "compatibility": "Requires Nextflow >= 25.10.4 (declared by sarek 3.10.0) plus a container engine (Docker/Singularity/Apptainer) or conda; the pipeline pulls nf-core/sarek 3.10.0 and reference bundles over the network on first run. The manual GATK4 fallback needs bwa-mem2 + samtools + gatk4 (bioconda) and runs offline once references are local. No API key. Indexing, BQSR and variant calling are long, compute-heavy jobs — good candidates to run locally rather than through repeated API calls.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -552,12 +553,12 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 154,
+      "body_lines": 163,
       "references": [
         "caller_accuracy.md",
         "manual_gatk4.md",
         "samplesheet_schema.md",
-        "usage_3.8.1.md"
+        "usage_3.10.0.md"
       ]
     },
     {
@@ -565,8 +566,8 @@
       "domain": "bioinformatics",
       "description": "Run full computational-pathology workflows with PathML — whole-slide-image (WSI) analysis across 160+ slide formats, multiplexed immunofluorescence (CODEX, Vectra, MERFISH), nucleus segmentation/classification (HoVer-Net, HACTNet), tissue- and cell-graph construction, HDF5 dataset management, and deep-learning model training on pathology data. Use when the user builds end-to-end deep-learning pathology pipelines, analyzes multiplexed or spatial-proteomics slides, or segments nuclei. For lightweight H&E slide preprocessing, tissue masking, or plain Random/Grid/Score tile extraction prefer alterlab-histolab instead. Part of the AlterLab Academic Skills suite.",
       "license": "GPL-2.0",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Runs under `uv run python`, but not in a shared environment: PathML 3.0.x (current 3.0.8, released 2026-08) hard-pins an older scientific stack (numpy<2, pandas<=2.1.4, scanpy==1.9.6, anndata<=0.10.3, torch==2.12.0) and needs native OpenSlide plus a JDK for Bio-Formats. Give it a dedicated environment. No API key or account required.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -576,7 +577,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 144,
+      "body_lines": 173,
       "references": [
         "data_management.md",
         "graphs.md",
@@ -589,10 +590,10 @@
     {
       "name": "alterlab-phylogenetics",
       "domain": "bioinformatics",
-      "description": "Build phylogenetic trees end-to-end from raw sequences — MAFFT multiple sequence alignment, optional TrimAl trimming, IQ-TREE 2 maximum-likelihood inference with model selection and bootstraps, FastTree for large datasets, then visualize with ETE3 or FigTree. Use when reconstructing trees from sequences (FASTA) for evolutionary analysis, microbial genomics, viral phylodynamics, protein-family studies, or molecular-clock dating. For manipulating/comparing an EXISTING Newick tree (prune, root, Robinson-Foulds, duplication/speciation events) use alterlab-etetoolkit; for plain sequence parsing/translation use alterlab-biopython. Part of the AlterLab Academic Skills suite.",
+      "description": "Build phylogenetic trees end-to-end from raw sequences — MAFFT multiple sequence alignment, optional TrimAl trimming, IQ-TREE 3 maximum-likelihood inference with model selection and bootstraps, FastTree for large datasets, then visualize with ETE3 or FigTree. Use when reconstructing trees from sequences (FASTA) for evolutionary analysis, microbial genomics, viral phylodynamics, protein-family studies, or molecular-clock dating. For manipulating/comparing an EXISTING Newick tree (prune, root, Robinson-Foulds, duplication/speciation events) use alterlab-etetoolkit; for plain sequence parsing/translation use alterlab-biopython. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Needs external CLI tools (MAFFT, IQ-TREE 2, FastTree; optionally TrimAl) on PATH — install via bioconda or Homebrew, NOT pip/uv. Python parts (ETE3 for visualization) run under `uv run python`. No API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Needs external CLI tools (MAFFT, IQ-TREE 3, FastTree; optionally TrimAl) on PATH — install via bioconda or Homebrew, NOT pip/uv. Python parts (ETE3 for visualization) run under `uv run python`. No API key or account required.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -602,7 +603,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 404,
+      "body_lines": 425,
       "references": [
         "iqtree_inference.md"
       ]
@@ -612,7 +613,7 @@
       "domain": "bioinformatics",
       "description": "Design protein sequences for a fixed backbone with ProteinMPNN (Dauparas 2022) — message-passing inverse folding that outputs sequences predicted to fold to a given structure, with fixed positions, tied/symmetric chains, amino-acid bias, and a soluble-model variant. Use when inverse-folding a backbone PDB into sequences, redesigning selected positions, imposing symmetry across chains, or generating the sequence step of a design→fold→score loop. For pocket/interface design WITH a bound ligand, metal, or nucleic acid prefer alterlab-ligandmpnn; to GENERATE a new backbone prefer alterlab-rfdiffusion; to refold and validate a design prefer alterlab-alphafold; for generative multimodal design prefer alterlab-esm. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Runs `protein_mpnn_run.py` from `dauparas/ProteinMPNN` (PyTorch) under `uv run python`. The model is small — it runs on CPU and does not require a GPU (a GPU only speeds large batches). Network weights ship with the repo (no download/account). Input is a backbone PDB; output is a FASTA of designed sequences with scores.",
       "allowed_tools": [
         "Read",
@@ -623,7 +624,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 75,
+      "body_lines": 82,
       "references": [
         "proteinmpnn_usage.md"
       ]
@@ -633,8 +634,8 @@
       "domain": "bioinformatics",
       "description": "Run differential gene expression analysis on bulk RNA-seq count matrices with PyDESeq2, the Python port of DESeq2 — size-factor normalization, dispersion estimation, Wald tests, FDR (Benjamini-Hochberg) correction, and volcano/MA plots. Use when identifying differentially expressed genes between conditions from raw bulk RNA-seq counts. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for PyDESeq2 0.5.x (current 0.5.4 as of 2026-09), which requires Python >= 3.11.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -644,7 +645,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 104,
+      "body_lines": 127,
       "references": [
         "api_reference.md",
         "interpretation_and_plots.md",
@@ -657,8 +658,8 @@
       "domain": "bioinformatics",
       "description": "Build complete mass-spectrometry workflows with pyOpenMS — feature detection, peptide identification, protein quantification, and full LC-MS/MS pipelines across many MS file formats (mzML, mzXML) and algorithms. Use for comprehensive proteomics and MS data processing — for simple spectral comparison and metabolite identification use matchms. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.2.0",
+      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for pyOpenMS 3.x (current 3.5.0 as of 2026-09); wheels ship the compiled OpenMS library, so no separate OpenMS install is needed.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -668,7 +669,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 225,
+      "body_lines": 247,
       "references": [
         "data_structures.md",
         "feature_detection.md",
@@ -683,8 +684,8 @@
       "domain": "bioinformatics",
       "description": "Read and write genomic alignment and variant files in Python with pysam (htslib bindings) — SAM/BAM/CRAM alignments, VCF/BCF variants, and FASTA/FASTQ sequences, plus region extraction and per-base coverage/pileup. Use when scripting NGS data-processing pipelines that parse, filter, index, or compute coverage over BAM/CRAM/VCF files. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for pysam 0.24.x (current 0.24.1 as of 2026-09), which wraps htslib/samtools/bcftools 1.24 and supports Python 3.9-3.15. Wheels bundle htslib, so no separate samtools install is needed.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -694,7 +695,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 259,
+      "body_lines": 291,
       "references": [
         "alignment_files.md",
         "common_workflows.md",
@@ -705,10 +706,10 @@
     {
       "name": "alterlab-qiime2-amplicon",
       "domain": "bioinformatics",
-      "description": "Runs 16S/ITS amplicon (microbiome) analysis with the QIIME 2 amplicon distribution (2026.1; renamed to \"qiime2\" in 2026.4) in the correct order: manifest import, cutadapt trim-paired primer removal BEFORE dada2 denoise-paired (trunc-len chosen from the demux quality .qzv), feature-classifier classify-sklearn against a version-matched SILVA 138 or Greengenes2 classifier, and diversity core-metrics-phylogenetic — teaching the .qza/.qzv artifact-and-provenance model and the 2026.1 feature-table summarize change (the former summarize_plus). Use when the request mentions QIIME2, QIIME 2, qiime, 16S, 18S, ITS, amplicon, microbiome, ASV, DADA2 denoising, feature table, taxonomic classification, or core-metrics diversity. For downstream alpha/beta diversity, PCoA, and PERMANOVA on the exported feature table prefer alterlab-scikit-bio; this is conda-only (no pip install). Part of the AlterLab Academic Skills suite.",
+      "description": "Runs 16S/ITS amplicon (microbiome) analysis with the QIIME 2 distribution (2026.7; the \"amplicon\" distribution was renamed \"qiime2\" in 2026.4) in the correct order: manifest import, cutadapt trim-paired primer removal BEFORE dada2 denoise-paired (trunc-len chosen from the demux quality .qzv), feature-classifier classify-sklearn against a version-matched SILVA 138 or Greengenes2 classifier, and diversity core-metrics-phylogenetic — teaching the .qza/.qzv artifact-and-provenance model and the 2026.1 feature-table summarize change (the former summarize_plus). Use when the request mentions QIIME2, QIIME 2, qiime, 16S, 18S, ITS, amplicon, microbiome, ASV, DADA2 denoising, feature table, taxonomic classification, or core-metrics diversity. For downstream alpha/beta diversity, PCoA, and PERMANOVA on the exported feature table prefer alterlab-scikit-bio; this is conda-only (no pip install). Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires the QIIME 2 amplicon conda environment (cannot be pip-installed); commands are run via the `qiime` CLI. Pretrained classifiers and reference data are downloaded from the QIIME 2 Library. The helper scripts in scripts/ are stdlib-only and run under `uv run python` without a QIIME 2 env.",
+      "version": "1.1.0",
+      "compatibility": "Requires the QIIME 2 conda environment (cannot be pip-installed); commands are run via the `qiime` CLI. Current release 2026.7 (2026-07-22); the distribution formerly called `amplicon` is named `qiime2` since 2026.4 and its env files carry the `rachis-` prefix. Pretrained classifiers and reference data are downloaded from the QIIME 2 Library. The helper scripts in scripts/ are stdlib-only and run under `uv run python` without a QIIME 2 env.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -720,7 +721,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 246,
+      "body_lines": 252,
       "references": [
         "classifiers.md",
         "import_and_manifest.md",
@@ -734,7 +735,7 @@
       "domain": "bioinformatics",
       "description": "Generate de-novo protein backbones with RFdiffusion (Watson 2023) — a diffusion model for unconditional monomer generation, motif scaffolding, binder design against a target, and symmetric oligomers. Use when generating a new protein backbone from scratch, scaffolding a functional motif into a fold, designing a binder backbone to a target surface, or building symmetric assemblies; RFdiffusion produces the STRUCTURE, then alterlab-proteinmpnn designs its sequence and alterlab-alphafold validates it. For sequence design of an existing backbone prefer alterlab-proteinmpnn (or alterlab-ligandmpnn with a ligand); to fold a known sequence prefer alterlab-alphafold; for generative multimodal design prefer alterlab-esm. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Runs RFdiffusion (`RosettaCommons/RFdiffusion`, PyTorch + SE(3)-transformer) under `uv run python` via `run_inference.py`. Requires a CUDA GPU for practical generation; model weights download once and cache (several GB; no account). Outputs backbone PDBs (no sequence) — pair with alterlab-proteinmpnn then alterlab-alphafold. Dispatch runs via alterlab-remote-compute.",
       "allowed_tools": [
         "Read",
@@ -745,7 +746,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 75,
+      "body_lines": 110,
       "references": [
         "rfdiffusion_usage.md"
       ]
@@ -753,10 +754,10 @@
     {
       "name": "alterlab-rnaseq-quant",
       "domain": "bioinformatics",
-      "description": "Quantifies bulk RNA-seq transcript abundance with salmon (v1.11.4 selective alignment) and kallisto (v0.52.0, kb-python workflow), builds a decoy-aware gentrome index, runs quant with --validateMappings --gcBias -l A, then imports estimates via tximport/tximeta with a tx2gene map and hands differential expression to alterlab-pydeseq2. Warns that salmon's index format changed to SSHash (rebuild pre-v1.11.2 indices) and that 'salmon alevin' was REMOVED (single-cell now uses piscem + alevin-fry). Use when quantifying RNA-seq transcript abundance, running salmon or kallisto, building a decoy-aware index, or wiring tximport to DESeq2; for differential expression use alterlab-pydeseq2, for FASTQ-to-VCF variant calling use alterlab-nf-core-sarek. Part of the AlterLab Academic Skills suite.",
+      "description": "Quantifies bulk RNA-seq transcript abundance with salmon 2.x (the Rust rewrite; selective alignment or --sketch) and kallisto (v0.52.0, kb-python workflow), builds a decoy-aware gentrome index, runs quant with --gcBias -l A, then imports estimates via tximport/tximeta with a tx2gene map and hands differential expression to alterlab-pydeseq2. Warns that salmon 2.0 cannot read C++/pufferfish indices (rebuild every index), that --validateMappings is now accepted-but-ignored, and that 'salmon alevin' was REMOVED (single-cell now uses piscem + alevin-fry). Use when quantifying RNA-seq transcript abundance, running salmon or kallisto, building a decoy-aware index, or wiring tximport to DESeq2; for differential expression use alterlab-pydeseq2, for FASTQ-to-VCF variant calling use alterlab-nf-core-sarek. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires the salmon and/or kallisto CLI on PATH (conda/bioconda or a container). salmon v1.11.4 and kallisto v0.52.0 are the versions this skill targets; the tximport/tx2gene helper runs under `uv run python` with pure stdlib (no pandas needed). No API key or account required; all work is local.",
+      "version": "1.2.0",
+      "compatibility": "Requires the salmon and/or kallisto CLI on PATH (conda/bioconda or a container). This skill targets salmon 2.x (bioconda 2.7.0 as of 2026-09) and kallisto v0.52.0; salmon 2.x is a single portable Rust binary with no Boost/compiler dependency. The tximport/tx2gene helper runs under `uv run python` with pure stdlib (no pandas needed). No API key or account required; all work is local.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -769,7 +770,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 259,
+      "body_lines": 278,
       "references": [
         "decoy_index.md",
         "kallisto_kb.md",
@@ -784,8 +785,8 @@
       "domain": "bioinformatics",
       "description": "Run the standard single-cell RNA-seq analysis pipeline with Scanpy on AnnData — QC filtering, normalization, dimensionality reduction (PCA, UMAP, t-SNE), Leiden/Louvain clustering, marker/differential expression, PAGA trajectories, and plotting. Use when analyzing scRNA-seq data through clustering, cell-type annotation, DE, or pseudotime workflows; for building or reading the .h5ad data structure itself (layers, obs/var, concatenation, backed mode) prefer alterlab-anndata instead, and for RNA velocity from spliced/unspliced counts prefer alterlab-scvelo instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for Scanpy 1.12 (current 1.12.4 as of 2026-09), which requires Python >= 3.12 and anndata >= 0.10.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -795,7 +796,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 380,
+      "body_lines": 397,
       "references": [
         "api_reference.md",
         "plotting_guide.md",
@@ -807,8 +808,8 @@
       "domain": "bioinformatics",
       "description": "Apply the scGPT single-cell foundation model (Cui 2024) to annotate and embed cells — zero-shot and fine-tuned cell-type annotation, gene/cell embeddings, batch integration, and gene-regulatory / perturbation inference from AnnData. Use when annotating cell types with a pretrained foundation model, generating scGPT embeddings, integrating batches with a transformer, or running zero-shot single-cell inference on an h5ad. For probabilistic latent models (scVI/scANVI) prefer alterlab-scvi-tools; for the standard QC→cluster→UMAP→DE pipeline prefer alterlab-scanpy; for the AnnData data structure itself prefer alterlab-anndata; for protein language models prefer alterlab-esm. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Runs the scGPT model (`bowang-lab/scGPT`; install `scgpt` — TODO(verify) exact pin) under `uv run python`. Pretrained checkpoints download once and cache (GB-scale); a CUDA GPU is strongly recommended (CPU is impractical for large datasets). Input/output is AnnData (`.h5ad`) in the scverse ecosystem. Dispatch heavy fine-tuning via alterlab-remote-compute.",
+      "version": "1.1.0",
+      "compatibility": "Runs the scGPT model (`bowang-lab/scGPT`; PyPI `scgpt`, latest 0.2.4 released 2025-03, unchanged as of 2026-09) under `uv run python`. Its dependency pins are old (`scvi-tools<1.0`, `scanpy<2.0`, `torchtext`) and conflict with a current scverse stack, so install it in a dedicated environment rather than alongside alterlab-scanpy/alterlab-scvi-tools. Pretrained checkpoints are downloaded manually from the repo's Drive links (GB-scale); a CUDA GPU is strongly recommended. Input/output is AnnData (`.h5ad`). Dispatch heavy fine-tuning via alterlab-remote-compute.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -818,7 +819,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 71,
+      "body_lines": 98,
       "references": [
         "scgpt_usage.md"
       ]
@@ -828,8 +829,8 @@
       "domain": "bioinformatics",
       "description": "Analyze biological data with scikit-bio — sequence analysis and alignments, phylogenetic trees, alpha/beta diversity metrics (including UniFrac), ordination (PCoA), PERMANOVA statistics, and FASTA/Newick I/O. Use for microbiome and community-ecology analysis — computing diversity, distance matrices, and ordination from feature tables. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for scikit-bio 0.7.x (current 0.7.4, released 2026-09-21), which requires Python >= 3.10.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -839,7 +840,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 431,
+      "body_lines": 465,
       "references": [
         "api_reference.md"
       ]
@@ -849,8 +850,8 @@
       "domain": "bioinformatics",
       "description": "Run RNA velocity analysis with scVelo on single-cell RNA-seq data — estimate cell-state transitions from spliced/unspliced mRNA dynamics, infer trajectory direction, compute latent time, and identify driver genes. Use when adding directionality to trajectories or studying differentiation dynamics from spliced/unspliced layers (velocyto/STARsolo output); for the general QC, clustering, UMAP, and differential-expression analysis pipeline prefer alterlab-scanpy instead, and for .h5ad data-structure I/O and layer wrangling prefer alterlab-anndata instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. scVelo 0.3.4 (released 2026-02) is the current and effectively final upstream release; it is minimally maintained, so pin it and validate results rather than expecting fixes.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -860,7 +861,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 317,
+      "body_lines": 340,
       "references": [
         "velocity_models.md"
       ]
@@ -870,8 +871,8 @@
       "domain": "bioinformatics",
       "description": "Train deep generative models for single-cell omics with scvi-tools — probabilistic batch correction and integration (scVI), reference-mapping transfer learning (scArches), differential expression with uncertainty, and multimodal models (totalVI for CITE-seq, MultiVI for multiome). Use when correcting batch effects, integrating multimodal data, or doing advanced probabilistic single-cell modeling — for standard analysis pipelines use scanpy. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required. Written for scvi-tools 1.5 (current 1.5.1 as of 2026-09), which requires Python >= 3.12. A GPU is optional but makes training practical on large datasets.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -881,7 +882,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 186,
+      "body_lines": 204,
       "references": [
         "differential-expression.md",
         "models-atac-seq.md",
@@ -898,8 +899,8 @@
       "domain": "bioinformatics",
       "description": "Analyzes spatial transcriptomics with squidpy (1.8.x) on AnnData and SpatialData objects, routing platforms correctly: Visium spots use spatial_neighbors(coord_type='grid') and pair with deconvolution, while Xenium/MERFISH single-cell data use coord_type='generic'/Delaunay neighbors and spatialdata-io readers (xenium, visium_hd, merscope). Runs sq.gr.spatial_neighbors, nhood_enrichment, co_occurrence, spatial_autocorr (Moran's I for spatially variable genes), ripley, and ligrec. Use when the user wants spatial transcriptomics, squidpy, Visium/Xenium/MERFISH analysis, neighborhood enrichment, co-occurrence, or spatially variable genes; QC/clustering uses alterlab-scanpy and spot deconvolution (destVI/Tangram) uses alterlab-scvi-tools. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with squidpy (1.8.x, needs spatialdata>=0.7.1, scanpy>=1.9.3, anndata>=0.9, Python>=3.11) installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Self-contained — runs under `uv run python` with squidpy (1.8.x, current 1.8.3 as of 2026-09; needs spatialdata>=0.7.2, spatialdata-plot>=0.3.3, scanpy>=1.9.3, anndata>=0.9, Python>=3.12) installed; no API key or account required.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -909,7 +910,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 158,
+      "body_lines": 181,
       "references": [
         "analysis_recipes.md",
         "platform_routing.md",
@@ -921,8 +922,8 @@
       "domain": "bioinformatics",
       "description": "Store and query genomic variant data at scale with TileDB-VCF — ingest VCF/BCF into compressed TileDB arrays, add samples incrementally, run fast parallel region/sample queries, and export back to VCF. Use when managing population-genomics variant datasets that are too large for flat VCF, building joint variant stores, or querying thousands of samples by region. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "tiledbvcf-py is distributed via the `tiledb` conda channel (not PyPI/conda-forge/bioconda); native osx-arm64 builds exist for Apple Silicon. Local VCF stores work offline. TileDB Cloud features require a TileDB Cloud account and TILEDB_REST_TOKEN.",
+      "version": "1.1.0",
+      "compatibility": "tiledbvcf-py is distributed via the `tiledb` conda channel (not PyPI/conda-forge/bioconda); current release 0.40.3 (2026-04), built for linux-64, osx-64 and osx-arm64 on Python 3.9-3.12 (no 3.13 build, no Windows, no linux-aarch64). Local VCF stores work offline. TileDB Cloud features require a TileDB Cloud account and TILEDB_REST_TOKEN.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -932,7 +933,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 325,
+      "body_lines": 335,
       "references": []
     },
     {
@@ -1560,7 +1561,7 @@
       "domain": "core",
       "description": "Orchestrates the full academic research pipeline (research, write, integrity check, review, revise, re-review, re-revise, final integrity check, finalize), coordinating alterlab-deep-research, alterlab-paper-writer, and alterlab-paper-reviewer into a seamless 10-stage workflow with mandatory integrity verification, two-stage peer review, and reproducible quality gates. Use when the request mentions academic pipeline, research to paper, full paper workflow, paper pipeline, end-to-end paper, research-to-publication, or complete paper workflow. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "2.6",
+      "version": "2.7.0",
       "compatibility": "Orchestrates alterlab-deep-research, alterlab-paper-writer, and alterlab-paper-reviewer; uses built-in Claude tools only; no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -1572,8 +1573,9 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 441,
+      "body_lines": 420,
       "references": [
+        "changelog.md",
         "claim_verification_protocol.md",
         "external_review_protocol.md",
         "integrity_and_review_protocols.md",
@@ -1589,9 +1591,9 @@
     {
       "name": "alterlab-skill-finder",
       "domain": "core",
-      "description": "The AlterLab front door and multi-agent launcher — routes a task to the right AlterLab skill(s) when the user invokes the suite without naming one, and for a multi-stage goal (or on the keyword 'alterflow', aliases 'alterresearch' / 'ultralab') it CLARIFIES the goal with a few questions, SELECTS the skills the task needs, and runs a dynamic multi-agent workflow composing them (via alterlab-workflow-orchestration, alterlab-research-pipeline, or alterlab-ssci-orchestrator). Triggers on 'use AlterLab skills', 'which AlterLab skill for X', 'is there an AlterLab skill for…', a multi-stage research goal, 'alterflow …', or any generic AlterLab request where the user does not know skill names. It always asks clarifying questions before executing a multi-step run. Use when someone references AlterLab generically, describes a multi-stage goal, or fires the alterflow keyword; when the user already names a specific skill, defer to that skill directly. Part of the AlterLab Academic Skills suite.",
+      "description": "The AlterLab front door and multi-agent launcher — routes a task to the right AlterLab skill(s) when the user invokes the suite without naming one, and for a multi-stage goal (or on the keyword 'alterflow', aliases 'alterresearch' / 'ultralab') it clarifies the goal with a few questions before anything runs, selects the skills the task needs, and runs a multi-agent workflow composing them (a packaged alterlab-workflows workflow, alterlab-research-pipeline, alterlab-ssci-orchestrator, or a bespoke plan via alterlab-workflow-orchestration). Triggers on 'use AlterLab skills', 'which AlterLab skill for X', 'is there an AlterLab skill for…', a multi-stage research goal, 'alterflow …', or any generic AlterLab request where the user does not know skill names. Use when someone references AlterLab generically, describes a multi-stage goal, or fires the alterflow keyword; when the user already names a specific skill, defer to that skill directly. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key or network required. A routing + orchestration front-end: it reads the bundled skill index and hands off to the matching AlterLab skill(s). Multi-agent execution uses the host's subagent/Workflow tools where available (Claude Code, Cowork); on surfaces without them it decomposes the work into sequential phases.",
       "allowed_tools": [
         "Read",
@@ -1599,7 +1601,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 127,
+      "body_lines": 133,
       "references": [
         "skill_index.md"
       ]
@@ -1654,10 +1656,10 @@
     {
       "name": "alterlab-workflow-orchestration",
       "domain": "core",
-      "description": "Composes existing AlterLab skills into multi-agent agentic workflows using current Claude Code subagent and Claude Agent SDK orchestration patterns: parallel subagent fan-out, sequential pipelines, judge panels, adversarial verification, and loop-until-clean review cycles. Maps each pattern onto real skills (alterlab-research-pipeline, alterlab-deep-research, alterlab-citation-verifier, alterlab-paper-reviewer, alterlab-peer-review) with copyable delegation prompts, agent-definition frontmatter, and SDK query() snippets. Use when the request mentions multi-agent, subagents, agent team, parallel agents, orchestration, pipeline of skills, judge panel, adversarial verification, devil's advocate, loop until clean, chaining skills, dispatching agents, or composing skills into a workflow. Part of the AlterLab Academic Skills suite.",
+      "description": "Composes existing AlterLab skills into multi-agent agentic workflows using current Claude Code orchestration primitives — subagents (including nested subagents), dynamic workflow scripts, agent teams, forks, and the Claude Agent SDK: parallel fan-out, sequential pipelines, judge panels, adversarial verification, and loop-until-clean review cycles. Maps each pattern onto real skills (alterlab-research-pipeline, alterlab-deep-research, alterlab-citation-verifier, alterlab-paper-reviewer, alterlab-peer-review) with copyable delegation prompts, agent-definition frontmatter, workflow-script skeletons, and SDK query() snippets. Use when the request mentions multi-agent, subagents, agent team, dynamic workflow, workflow script, parallel agents, orchestration, pipeline of skills, judge panel, adversarial verification, devil's advocate, loop until clean, chaining skills, or composing skills into a custom workflow. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Patterns grounded in Claude Code subagents + Claude Agent SDK (verified against code.claude.com docs, 2026-06-08); uses built-in Claude tools only; agent teams and fork mode are gated behind experimental env vars noted inline; no external API key required for the Claude Code patterns",
+      "version": "1.1.0",
+      "compatibility": "Patterns grounded in Claude Code subagents, dynamic workflows, and the Claude Agent SDK (verified against code.claude.com docs on 2026-09-23, Claude Code v2.1.280). Dynamic workflows need a paid plan or API access; agent teams need CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1. No external API key required for the Claude Code patterns.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1666,7 +1668,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 199,
+      "body_lines": 223,
       "references": [
         "claude-orchestration-primitives.md",
         "composition-recipes.md"
@@ -4523,17 +4525,17 @@
     {
       "name": "alterlab-abm-mesa",
       "domain": "social-science-workflow",
-      "description": "Builds agent-based models of social systems with Mesa 3 — the current AgentSet API (model.agents.shuffle_do('step'), auto-assigned unique_id, mandatory super().__init__(seed=...)), cell spaces (mesa.discrete_space OrthogonalMooreGrid / classic mesa.space grids), the DataCollector, batch_run parameter sweeps, and SolaraViz — for emergence, segregation, diffusion, opinion dynamics, and cooperation models. It uses the Mesa 3.x API (the old mesa.time schedulers like RandomActivation are removed) and treats the model as a generative theory to be validated, not just run. Use when the request mentions an agent-based model, Mesa, simulating interacting agents, or emergent macro behavior from micro rules. For discrete-event (queueing/process) simulation prefer alterlab-simpy; for reinforcement learning prefer alterlab-stable-baselines3. Part of the AlterLab Academic Skills suite.",
+      "description": "Builds agent-based models of social systems with Mesa 3 — the current AgentSet API (model.agents.shuffle_do('step'), auto-assigned unique_id, mandatory super().__init__(rng=...)), cell spaces (mesa.discrete_space OrthogonalMooreGrid / classic mesa.space grids), the DataCollector, batch_run parameter sweeps, and SolaraViz — for emergence, segregation, diffusion, opinion dynamics, and cooperation models. It uses the Mesa 3.x API (the old mesa.time schedulers like RandomActivation are removed) and treats the model as a generative theory to be validated, not just run. Use when the request mentions an agent-based model, Mesa, simulating interacting agents, or emergent macro behavior from micro rules. For discrete-event (queueing/process) simulation prefer alterlab-simpy; for reinforcement learning prefer alterlab-stable-baselines3. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires mesa>=3 (pip; API changed substantially from Mesa 2 — mesa.time schedulers removed). Optional SolaraViz for interactive visualization. No API key; runs locally via `uv run python`. On the Anthropic API (no runtime install) declare mesa as a dependency.",
+      "version": "1.0.1",
+      "compatibility": "Requires mesa>=3.4 (current 3.5.1 as of 2026-09; Mesa 4.0 is still alpha). API changed substantially from Mesa 2 — mesa.time schedulers removed; Mesa 3.5 deprecates Model(seed=) for Model(rng=). Optional SolaraViz via `uv pip install 'mesa[rec]'`. No API key; runs locally via `uv run python`. On the Anthropic API (no runtime install) declare mesa as a dependency.",
       "allowed_tools": [
         "Read",
         "Bash(python:*)"
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 103,
+      "body_lines": 106,
       "references": [
         "mesa_patterns.md"
       ]
@@ -4543,8 +4545,8 @@
       "domain": "social-science-workflow",
       "description": "Estimates causal effects from observational and quasi-experimental data — difference-in-differences, instrumental variables, regression discontinuity, panel fixed effects, propensity-score / doubly-robust methods, and heterogeneous treatment effects (CATE) — using the verified Python stack: statsmodels and linearmodels (PanelOLS, IV2SLS), pyfixest (feols, event studies, Sun-Abraham, did2s), DoWhy (identify -> estimate -> refute), EconML (LinearDML, CausalForestDML, DRLearner), and rdrobust for RD. It names the identifying assumption before estimating and runs a refutation/robustness check after. Use when the request mentions difference-in-differences, instrumental variables, regression discontinuity, fixed effects / panel causal estimation, propensity scores, or treatment-effect estimation from non-randomized data. For choosing the design first prefer alterlab-ssci-design-gate; for plain regression or descriptive stats prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): statsmodels, linearmodels>=6, pyfixest>=0.25, dowhy>=0.12, econml>=0.15, rdrobust>=1.3 (pip). Runs locally via `uv run python`; no API key.",
+      "version": "1.0.1",
+      "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): statsmodels, linearmodels>=6, pyfixest>=0.29 (saturated event study; current 0.60), dowhy>=0.12, econml>=0.15, rdrobust>=1.3 (pip). Runs locally via `uv run python`; no API key.",
       "allowed_tools": [
         "Read",
         "Bash(python:*)"
@@ -4579,7 +4581,7 @@
       "domain": "social-science-workflow",
       "description": "Handles missing data with principled methods — forces an explicit MCAR / MAR / MNAR mechanism statement, then applies multiple imputation by chained equations (MICE) with Rubin's-rules pooling of estimates and standard errors, or full-information maximum likelihood (FIML) where a likelihood/SEM model applies. Uses statsmodels MICE / MICEData in Python or the field-standard R mice via Rscript, and warns that single (mean/regression) imputation and scikit-learn's IterativeImputer return one completed dataset without Rubin's-rules pooling, so they understate standard errors if used as multiple imputation. Use when a dataset has missing values, when choosing an imputation strategy, or when reporting how missingness was handled. For general modeling on complete data prefer alterlab-statistical-analysis; for latent-variable models with FIML prefer alterlab-sem-psychometrics. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): Python statsmodels>=0.14 (statsmodels.imputation.mice), pandas; scikit-learn IterativeImputer only for single imputation (NOT Rubin pooling) — OR the field-standard R mice>=3.19 via Rscript (mice/with/pool). Runs locally via `uv run python` / `Rscript`; no API key.",
       "allowed_tools": [
         "Read",
@@ -4587,7 +4589,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 100,
+      "body_lines": 101,
       "references": [
         "mechanisms_and_pooling.md"
       ]
@@ -4615,7 +4617,7 @@
       "domain": "social-science-workflow",
       "description": "Runs Qualitative Comparative Analysis — crisp-set (csQCA), multi-value (mvQCA), and fuzzy-set (fsQCA) — for small-to-medium-N configurational research: calibrating raw data into set membership, building and refining a truth table, and Boolean minimization into conservative / parsimonious / intermediate solutions with consistency and coverage. Because there is no maintained Python QCA library, it shells out to R's QCA package (calibrate, truthTable, minimize) via Rscript and documents that dependency honestly rather than faking a Python API. Use when the request mentions QCA, fsQCA, csQCA, configurational or set-theoretic analysis, necessary/sufficient conditions, truth tables, or calibration of conditions. For net-effect estimation of a single treatment prefer alterlab-causal-inference; for interpretive analysis prefer alterlab-qualitative-methods. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Requires R with the QCA package (install.packages('QCA'); optionally SetMethods). NO maintained Python QCA library exists, so this skill shells to R via Rscript — declare R as a dependency. No API key. On the Anthropic API (no runtime install) document the R requirement and degrade gracefully.",
       "allowed_tools": [
         "Read",
@@ -4623,7 +4625,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 91,
+      "body_lines": 92,
       "references": [
         "qca_in_r.md"
       ]
@@ -4633,7 +4635,7 @@
       "domain": "social-science-workflow",
       "description": "Analyzes qualitative data as a dispatched pipeline module — codebook development, thematic / framework / content analysis, and inter-coder reliability computed correctly (Krippendorff's alpha as primary via the krippendorff package or a bundled stdlib nominal calculator with bootstrap CIs; Cohen's / Fleiss' kappa via statsmodels) with 95% CIs and thresholds (alpha >= .80 reliable, .667-.80 tentative). It BRANCHES by design: coefficient-based ICR for codebook / content-analytic coding, versus consensus-and-reflexivity for reflexive thematic analysis where a statistic is not the right criterion. Supports human-vs-LLM double-coding with an alpha check against a human gold standard. Use when coding interviews or open-ended text, building a codebook, or reporting intercoder reliability. For topic modeling / embeddings / supervised text classification prefer alterlab-text-as-data; for the reflexivity gate prefer alterlab-ssci-reflexivity-gate. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): Python krippendorff>=0.8, statsmodels>=0.14 (Fleiss/Cohen kappa via statsmodels.stats.inter_rater), pandas. For alpha with CIs use R irrCAC / icr, or the bundled stdlib nominal calculator. Optional LLM-assisted coding uses the platform's model. Runs locally via `uv run python`; no extra API key.",
       "allowed_tools": [
         "Read",
@@ -4652,15 +4654,15 @@
       "domain": "social-science-workflow",
       "description": "Fits and evaluates measurement models — confirmatory factor analysis, full structural equation models, exploratory factor analysis, item response theory, and multi-group measurement invariance — using the verified Python stack: semopy (model syntax =~ / ~ / ~~, Model.fit, inspect(std_est=True), calc_stats for CFI/TLI/RMSEA), factor_analyzer (EFA, KMO, Bartlett, ConfirmatoryFactorAnalyzer), and pingouin/girth, computing McDonald's omega from standardized loadings and judging fit against Hu & Bentler cutoffs. Use when the request mentions confirmatory factor analysis, structural equation modeling, a latent variable or construct model, factor loadings, IRT, or measurement invariance across groups. For deciding whether a scale is trustworthy at all prefer alterlab-ssci-measurement-gate; for plain regression prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): semopy>=2.3, factor_analyzer>=0.5, pingouin>=0.5, optionally girth (IRT) (pip). SRMR and omega are not returned by semopy — compute omega with the bundled script; IRT beyond 2PL is often better in R mirt. Runs locally via `uv run python`; no API key.",
+      "version": "1.0.1",
+      "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): semopy>=2.3, factor_analyzer>=0.5 (0.5.1 is the last release and needs scikit-learn<1.8 and pandas<3 — isolate it, or run EFA in R psych), pingouin>=0.5, optionally girth (IRT) (pip). SRMR and omega are not returned by semopy — compute omega with the bundled script; IRT beyond 2PL is often better in R mirt. Runs locally via `uv run python`; no API key.",
       "allowed_tools": [
         "Read",
         "Bash(python:*)"
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 101,
+      "body_lines": 108,
       "references": [
         "fit_and_invariance.md"
       ]
@@ -4668,17 +4670,17 @@
     {
       "name": "alterlab-sna",
       "domain": "social-science-workflow",
-      "description": "Applies social-network-analysis method discipline to relational data — degree/betweenness/closeness/eigenvector centrality and PageRank, community detection (Louvain and greedy-modularity native in networkx, Leiden via igraph), and inferential network models (ERGM) — choosing the measure that matches the substantive question and the right dependence assumptions, then routing computation to the existing networkx (and igraph/R) tooling. Use when the request mentions social network analysis, centrality, key players/brokerage, community or cluster detection in a network, ERGM, or modeling ties between nodes. For general graph algorithms and plotting prefer alterlab-networkx; for graph neural networks prefer alterlab-torch-geometric. Part of the AlterLab Academic Skills suite.",
+      "description": "Applies social-network-analysis method discipline to relational data — degree/betweenness/closeness/eigenvector centrality and PageRank, community detection (Louvain, greedy-modularity, and — from networkx 3.7 — Leiden native in networkx; igraph/leidenalg for large graphs), and inferential network models (ERGM) — choosing the measure that matches the substantive question and the right dependence assumptions, then routing computation to the existing networkx (and igraph/R) tooling. Use when the request mentions social network analysis, centrality, key players/brokerage, community or cluster detection in a network, ERGM, or modeling ties between nodes. For general graph algorithms and plotting prefer alterlab-networkx; for graph neural networks prefer alterlab-torch-geometric. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Computation routes to networkx>=3.4 (centrality, native Louvain/greedy-modularity). Leiden and very large graphs -> python-igraph>=0.11. ERGM has no mature Python package -> R statnet/ergm via an R bridge (declare it). No API key; runs locally via `uv run python`.",
+      "version": "1.0.1",
+      "compatibility": "Computation routes to networkx>=3.4 (centrality, native Louvain/greedy-modularity; native Leiden needs networkx>=3.7, current 3.7). Very large graphs -> igraph>=0.11 (PyPI `igraph`, formerly `python-igraph`; current 1.0) or leidenalg. ERGM has no mature Python package -> R statnet/ergm via an R bridge (declare it). No API key; runs locally via `uv run python`.",
       "allowed_tools": [
         "Read",
         "Bash(python:*)"
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 90,
+      "body_lines": 94,
       "references": [
         "sna_methods.md"
       ]
@@ -4706,7 +4708,7 @@
       "domain": "social-science-workflow",
       "description": "Audits final inferential claims against the design, sample, and uncertainty before they are written or published — refuses causal language unless the design's identifying assumption is defended (else downgrades to associational), corrects p-value and confidence-interval misreadings (a p-value is not the probability the null is true, non-significance is not proof of no effect, a 95% CI is not a 95% probability the parameter is inside it), demands effect sizes with intervals rather than significance stars, flags uncorrected multiple comparisons and optional stopping / HARKing, and scopes generalization to the sampling frame. Use when writing or checking a results or discussion section, interpreting a p-value or confidence interval, or deciding whether a finding supports a causal or population claim. For choosing the statistical test prefer alterlab-test-selection-guard; to execute the analysis prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "No API key required. A discipline-enforcing claim-audit skill; the optional claim linter runs locally via `uv run python` (standard library only).",
       "allowed_tools": [
         "Read",
@@ -4724,7 +4726,7 @@
       "domain": "social-science-workflow",
       "description": "Gates measurement quality before a scale or instrument is trusted — checks that each construct is defined and operationalized, that reliability is evidenced with McDonald omega (not Cronbach alpha alone, which assumes tau-equivalence and is only a lower bound), that reliability is not confused with validity (content, criterion, convergent/discriminant construct validity), and that measurement invariance is tested before comparing groups. Use when asking whether a scale or survey instrument is valid, reporting a Cronbach alpha, building or adopting a multi-item measure, or comparing a latent construct across groups. For designing the questionnaire items prefer alterlab-survey-design; for running the confirmatory factor analysis prefer alterlab-sem-psychometrics; to execute basic statistics prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "No API key required. A discipline-enforcing measurement-quality skill; reliability/CFA execution is handed to sibling skills that run locally via `uv run python`.",
       "allowed_tools": [
         "Read",
@@ -4732,7 +4734,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 98,
+      "body_lines": 99,
       "references": [
         "reliability_and_validity.md"
       ]
@@ -4760,7 +4762,7 @@
       "domain": "social-science-workflow",
       "description": "Gates trustworthiness before qualitative or interpretivist claims are written — the qualitative analog of the measurement gate. Checks that researcher positionality and role are stated, that the four Lincoln & Guba trustworthiness criteria are addressed (credibility via triangulation / member-checking / prolonged engagement, transferability via thick description, dependability via an audit trail, confirmability via reflexive bracketing), and that reflexivity is evidenced rather than asserted. Fail-closed: interpretivist generalizing or causal language is refused without the corresponding warrant. Use when a study is qualitative / ethnographic / interpretivist, when reviewing trustworthiness or reflexivity, or before writing up thematic or grounded-theory findings. For quantitative measurement validity prefer alterlab-ssci-measurement-gate; for running the coding prefer alterlab-qualitative-analysis; for the final claim audit prefer alterlab-ssci-inference-gate. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "No API key required. A discipline-enforcing gate; coding execution is handed to alterlab-qualitative-analysis. Reads/writes the YAML Design Passport like the other ssci gates; the optional checklist linter runs locally via `uv run python` (standard library only).",
       "allowed_tools": [
         "Read",
@@ -4794,17 +4796,17 @@
     {
       "name": "alterlab-survey-analysis",
       "domain": "social-science-workflow",
-      "description": "Analyzes complex-sample survey data with design-based inference — declares a survey design (weights, strata, PSUs/clusters, FPC) before estimating means, totals, proportions, ratios, and quantiles, computes design-adjusted standard errors via Taylor linearization or replicate weights (BRR, Jackknife, Bootstrap), calibrates with post-stratification / raking / GREG, and fits design-adjusted GLMs (linear, logistic, Poisson). Uses samplics (stable Python), the emerging svy successor, or the field-standard R survey + srvyr via Rscript. Use when analyzing GSS/ANES/ESS/DHS/Eurobarometer or any weighted/stratified/clustered survey, when a dataset ships survey weights, or when someone quotes unweighted percentages from a complex survey. For questionnaire and sampling-plan DESIGN prefer alterlab-survey-design; for the sampling-adequacy gate prefer alterlab-ssci-sampling-gate; for causal identification prefer alterlab-causal-inference. Part of the AlterLab Academic Skills suite.",
+      "description": "Analyzes complex-sample survey data with design-based inference — declares a survey design (weights, strata, PSUs/clusters, FPC) before estimating means, totals, proportions, ratios, and quantiles, computes design-adjusted standard errors via Taylor linearization or replicate weights (BRR, Jackknife, Bootstrap), calibrates with post-stratification / raking / GREG, and fits design-adjusted GLMs (linear, logistic, Poisson). Uses svy in Python (the maintained successor to the now-archived samplics) or the field-standard R survey + srvyr via Rscript. Use when analyzing GSS/ANES/ESS/DHS/Eurobarometer or any weighted/stratified/clustered survey, when a dataset ships survey weights, or when someone quotes unweighted percentages from a complex survey. For questionnaire and sampling-plan DESIGN prefer alterlab-survey-design; for the sampling-adequacy gate prefer alterlab-ssci-sampling-gate; for causal identification prefer alterlab-causal-inference. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): Python samplics>=0.6 (stable; TaylorEstimator) — or svy>=0.18 (samplics' successor; API still maturing, pin + re-verify) — OR the field-standard R survey>=4.5 + srvyr>=1.3 via Rscript (csSampling+brms for Bayesian design-based models). Runs locally via `uv run python` / `Rscript`; no API key.",
+      "version": "1.1.0",
+      "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): Python svy>=0.29 (samplics' maintained successor; beta, takes a polars DataFrame — pin the version) + polars; samplics 0.6 is archived (FutureWarning on import) and is for legacy code only — OR the field-standard R survey>=4.5 + srvyr>=1.3 via Rscript (GitHub-only csSampling + brms for Bayesian design-based models). Runs locally via `uv run python` / `Rscript`; no API key.",
       "allowed_tools": [
         "Read",
         "Bash(python:*)"
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 106,
+      "body_lines": 110,
       "references": [
         "design_and_variance.md",
         "python_vs_r.md"
@@ -4815,7 +4817,7 @@
       "domain": "social-science-workflow",
       "description": "Analyzes text as social-science data — topic modeling (BERTopic with embeddings + class-based TF-IDF, LDA/NMF via scikit-learn or gensim), document embeddings (sentence-transformers), dictionary/lexicon methods, and supervised text classification — choosing the method that matches the inferential goal (discovery vs measurement vs prediction) and validating topic reliability rather than trusting one stochastic run. It uses the verified stack (BERTopic, scikit-learn, gensim CoherenceModel, spaCy, sentence-transformers) with pinned patterns. Use when the request mentions topic modeling, text as data, computational text analysis, document embeddings, dictionary/sentiment lexicons, or classifying a corpus. For training or fine-tuning transformer models prefer alterlab-transformers; for humanities close-reading corpora prefer alterlab-digital-humanities. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Requires (declare in-session, no runtime install on Anthropic API): bertopic>=0.16, scikit-learn>=1.3, gensim>=4.3, spacy>=3.7 (+ a model like en_core_web_sm), sentence-transformers>=2.2 (pip). Runs locally via `uv run python`; no API key.",
       "allowed_tools": [
         "Read",
@@ -5331,6 +5333,36 @@
         "function_reference.md",
         "objects_interface.md",
         "plotting_functions.md"
+      ]
+    },
+    {
+      "name": "alterlab-research-workflows",
+      "domain": "workflows",
+      "description": "Runs AlterLab's packaged multi-agent academic workflows — citation audit, independent peer-review panel, claim stress-test, PRISMA dual-screening for systematic reviews, point-by-point rebuttal, grant mock panel, and literature map. In Claude Code they run as dynamic workflows (/alterlab-workflows:<name>) with genuinely independent agents, adversarial re-checks, and tallies computed in code; on claude.ai, the API, or anywhere without the Workflow runtime this skill runs the same stages as a staged playbook. Use when a research task needs many independent readers or a second, adversarial opinion at scale — auditing every citation in a manuscript, dual-screening hundreds of records, simulating a review panel or study section, drafting a response to reviewers, or mapping a field before a proposal. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "Claude Code with dynamic workflows (paid plans or API access; v2.1.203+) runs the /alterlab-workflows:* commands; installing this plugin also installs alterlab-core, whose skills the workflows call. Other surfaces use the staged playbooks in references/. Database-backed stages use public scholarly APIs (Crossref, OpenAlex, PubMed, arXiv) and need network access.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "WebFetch",
+        "WebSearch",
+        "Task"
+      ],
+      "has_scripts": false,
+      "has_evals": true,
+      "body_lines": 135,
+      "references": [
+        "citation-audit.md",
+        "claim-stress-test.md",
+        "grant-mock-panel.md",
+        "literature-map.md",
+        "rebuttal.md",
+        "review-panel.md",
+        "running-workflows.md",
+        "systematic-review-screening.md"
       ]
     },
     {
