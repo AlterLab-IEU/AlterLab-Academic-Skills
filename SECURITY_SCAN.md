@@ -31,6 +31,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `brenda-enzymes.org` | Enzymes | 2 |
 | `broadinstitute.org` | Genomics | 3 |
 | `cbioportal.org` | Cancer genomics | 2 |
+| `chatgpt.com` | other (review) | 1 |
 | `clinicaltrials.gov` | Clinical trials | 2 |
 | `clinpgx.org` | Pharmacogenomics | 3 |
 | `crossref.org` | Scholarly metadata | 6 |
@@ -39,7 +40,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `dergipark.org.tr` | Turkish journals (DergiPark) | 6 |
 | `doaj.org` | Open-access journals | 2 |
 | `docking.org` | Compound libraries | 4 |
-| `doi.org` | DOI resolver | 26 |
+| `doi.org` | DOI resolver | 27 |
 | `drugbank.ca` | Drugs | 1 |
 | `ebi.ac.uk` | EMBL-EBI | 12 |
 | `elixir.no` | Bioinformatics infra | 3 |
@@ -52,6 +53,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `graphdrawing.org` | Standards | 1 |
 | `gtexportal.org` | Expression | 2 |
 | `hmdb.ca` | Metabolites | 4 |
+| `jisc.ac.uk` | other (review) | 3 |
 | `jsdelivr.net` | CDN | 1 |
 | `kegg.jp` | Pathways | 3 |
 | `labarchives.com` | ELN | 3 |
@@ -62,8 +64,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `mygene.info` | Gene annotation | 1 |
 | `nf-co.re` | nf-core pipelines | 1 |
 | `nih.gov` | NCBI / NIH | 17 |
-| `openai.com` | LLM backend (user key) | 1 |
-| `openalex.org` | Scholarly index | 16 |
+| `openalex.org` | Scholarly index | 19 |
 | `openarchives.org` | OAI-PMH | 2 |
 | `openrouter.ai` | LLM backend (user key) | 19 |
 | `opentargets.org` | Target–disease | 1 |
@@ -77,8 +78,6 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `sanger.ac.uk` | Wellcome Sanger | 1 |
 | `scientific-writer.local` | Local (non-network) | 1 |
 | `semanticscholar.org` | Scholarly index | 3 |
-| `sherpa.ac.uk` | OA policies (SHERPA) | 4 |
-| `sron.nl` | Spectroscopy | 1 |
 | `stlouisfed.org` | FRED economics | 3 |
 | `store` | Placeholder (commented docs) | 1 |
 | `string-db.org` | Protein interactions | 4 |
@@ -93,7 +92,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `wikipedia.org` | Reference | 1 |
 | `yok.gov.tr` | YÖK | 3 |
 
-_67 distinct domains._
+_66 distinct domains._
 
 ## Method
 

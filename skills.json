@@ -36,8 +36,8 @@
       "domain": "bioinformatics",
       "description": "Predict protein 3D structures with AlphaFold2 via ColabFold — MMseqs2-accelerated MSAs, monomer and AlphaFold2-Multimer complex folding, and confidence-based validation (pLDDT, pTM/ipTM, PAE). Use when folding a protein sequence or complex from FASTA, generating a predicted structure with confidence metrics, ranking models, or checking self-consistency of a design. For co-folding a protein WITH a small-molecule ligand or predicting binding affinity prefer alterlab-boltz; for antibody–antigen or one-FASTA multi-entity complexes prefer alterlab-chai; to LOOK UP an already-computed structure prefer alterlab-alphafold-db; for ESM embeddings or inverse folding prefer alterlab-esm. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Runs via ColabFold (`colabfold_batch`; install `colabfold[alphafold]` — TODO(verify) exact pin) under `uv run python`. Requires a CUDA GPU for folding (JAX/CUDA); the MSA step uses the hosted MMseqs2 API by default or a local database. AF2 network weights are downloaded once and cached (~several GB). Dispatch heavy runs via alterlab-remote-compute.",
+      "version": "1.1.0",
+      "compatibility": "Runs via ColabFold (`colabfold_batch`) — install `colabfold[alphafold,openmm]` plus a CUDA-matched JAX (current release 1.6.3 as of 2026-09). Requires a CUDA GPU for folding (JAX/CUDA); the MSA step uses the hosted MMseqs2 API by default or a local database. AF2 network weights download once and cache (~several GB). Dispatch heavy runs via alterlab-remote-compute.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -47,7 +47,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 90,
+      "body_lines": 109,
       "references": [
         "colabfold_usage.md"
       ]
@@ -57,8 +57,8 @@
       "domain": "bioinformatics",
       "description": "Build, slice, concatenate, read, and write AnnData annotated data matrices (obs, var, X, layers, obsm, uns) — the scverse data STRUCTURE, not an analysis pipeline. Use when creating or wrangling .h5ad/zarr files, managing cell and gene annotations, concatenating batches, or handling layers/obsm/backed-mode; for the QC, normalization, clustering, UMAP, and differential-expression analysis pipeline prefer alterlab-scanpy instead, and for RNA velocity from spliced/unspliced layers prefer alterlab-scvelo instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Runs under `uv run python` with `anndata` (>=0.11) installed in the project env; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Runs under `uv run python` with `anndata` >= 0.13 (current 0.13.4 as of 2026-09, requires Python >= 3.12, zarr >= 3.1) installed in the project env; no API key or account required. The 0.11/0.12 APIs still work except where flagged below.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -68,7 +68,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 387,
+      "body_lines": 411,
       "references": [
         "best_practices.md",
         "concatenation.md",
@@ -82,8 +82,8 @@
       "domain": "bioinformatics",
       "description": "Infer gene regulatory networks (GRNs) from expression matrices using arboreto's scalable GRNBoost2 and GENIE3 tree-ensemble algorithms with Dask-distributed computation. Use when analyzing bulk or single-cell RNA-seq transcriptomics to map transcription-factor-to-target-gene regulatory interactions, build adjacency networks, or run the GRN-inference step of a SCENIC pipeline on large datasets. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Self-contained — runs under `uv run python` with `arboreto` installed (0.1.6, the current and last release, published Feb 2021); it pulls in `dask[complete]` and `distributed`. No API key or account required.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -93,7 +93,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 244,
+      "body_lines": 277,
       "references": [
         "algorithms.md",
         "basic_inference.md",
@@ -105,8 +105,8 @@
       "domain": "bioinformatics",
       "description": "Manipulate biological sequences, parse FASTA/GenBank/PDB files, run phylogenetics, and access NCBI/PubMed programmatically via Biopython (Bio.SeqIO, Bio.Entrez, Bio.PDB, Bio.Blast). Use when scripting custom bioinformatics pipelines, batch-processing sequence files, automating BLAST, or fetching records from Entrez — for quick one-off database lookups use gget, for unified multi-service integration use bioservices. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with Biopython installed. NCBI Entrez access needs a contact email; an NCBI API key is optional (raises the rate limit from 3 to 10 req/s).",
+      "version": "1.1.0",
+      "compatibility": "Self-contained — runs under `uv run python` with Biopython installed (1.88 as of 2026-08; supports Python 3.10–3.14, with 3.10 support deprecated). NCBI Entrez access needs a contact email; an NCBI API key is optional (raises the rate limit from 3 to 10 req/s).",
       "allowed_tools": [
         "Read",
         "Write",
@@ -116,7 +116,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 441,
+      "body_lines": 470,
       "references": [
         "advanced.md",
         "alignment.md",
@@ -132,8 +132,8 @@
       "domain": "bioinformatics",
       "description": "Query 40+ bioinformatics web services through one consistent Python API with bioservices (UniProt, KEGG, ChEMBL, Reactome, Ensembl, NCBI and more). Use when a workflow must hit multiple databases together, map identifiers across services, or run cross-database analyses — for quick single-database lookups use gget, for sequence and file manipulation use biopython. Part of the AlterLab Academic Skills suite.",
       "license": "GPL-3.0",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Self-contained — runs under `uv run python` with `bioservices` installed (1.16.0 as of 2026-09, Python 3.9–3.14); no API key or account required, though several wrapped services want a contact email.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -143,7 +143,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 356,
+      "body_lines": 414,
       "references": [
         "identifier_mapping.md",
         "services_reference.md",
@@ -155,7 +155,7 @@
       "domain": "bioinformatics",
       "description": "Runs NCBI BLAST+ 2.17.0 sequence searches from the command line: makeblastdb (with -parse_seqids), blastn/blastp/blastx/tblastn with tabular -outfmt 6/7 for parsing, correct -task choice (megablast vs blastn vs blastn-short), -taxids/-negative_taxids taxonomic scoping, and -mt_mode multithreading; plus a DIAMOND blastp --ultra-sensitive path for large protein searches. Warns that -max_target_seqs is a heuristic keep-count, not a top-N best-hits filter. Use when the user wants command-line BLAST, makeblastdb, a local BLAST database, blastn/blastp/blastx/tblastn searches, or DIAMOND protein search. For the Bio.Blast web NCBIWWW API prefer alterlab-biopython; for quick one-liner database lookups prefer alterlab-gget. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Requires NCBI BLAST+ 2.17.0 binaries on PATH (conda: `bioconda::blast`; or Homebrew `blast`); no API key or account needed for local searches. DIAMOND (`bioconda::diamond`) is optional and only used for the large-protein fast path. Parsing/QC helper runs under `uv run python` with the standard library only.",
       "allowed_tools": [
         "Read",
@@ -172,7 +172,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 165,
+      "body_lines": 166,
       "references": [
         "blast_cli.md",
         "diamond.md"
@@ -183,8 +183,8 @@
       "domain": "bioinformatics",
       "description": "Co-fold biomolecular complexes with Boltz-2, an open AlphaFold3-style model — predict protein + ligand (SMILES/CCD), protein + nucleic-acid, and multi-chain structures in one pass, with binding-affinity prediction. Use when folding a protein together with a small-molecule ligand, predicting a holo (ligand-bound) complex or its binding affinity, or co-folding protein–DNA/RNA assemblies. For protein-only or protein–protein folding without ligands prefer alterlab-alphafold; for antibody–antigen complexes prefer alterlab-chai; to dock a ligand into a FIXED receptor structure prefer alterlab-diffdock; to look up an existing structure prefer alterlab-pdb. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Runs the Boltz-2 model (`jwohlwend/boltz`; install the `boltz` package — TODO(verify) exact pin) under `uv run python`. Requires a CUDA GPU; model weights download once and cache (several GB). Inputs are a FASTA or a YAML spec listing chains + ligands (SMILES/CCD). Dispatch heavy runs via alterlab-remote-compute.",
+      "version": "1.1.0",
+      "compatibility": "Runs the Boltz-2 model (`jwohlwend/boltz`; `uv pip install 'boltz[cuda]'`, 2.2.1 as of 2026-09, Python 3.10–3.12) under `uv run python`. A CUDA GPU is strongly recommended — CPU works but is far slower; model weights download once and cache under `~/.boltz` (override with `BOLTZ_CACHE`). Inputs are a YAML spec listing chains + ligands (SMILES/CCD); FASTA input is deprecated. Code and weights are MIT-licensed. Dispatch heavy runs via alterlab-remote-compute.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -194,7 +194,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 77,
+      "body_lines": 103,
       "references": [
         "boltz_usage.md"
       ]
@@ -204,8 +204,8 @@
       "domain": "bioinformatics",
       "description": "Predict genome-wide functional genomics tracks from DNA sequence with Borzoi (Linder 2025) — a sequence-to-function model outputting RNA-seq, CAGE, ATAC, and ChIP coverage across long context, used to score non-coding and regulatory variant effects. Use when predicting functional tracks from a DNA sequence, scoring a non-coding/regulatory variant's effect on expression or chromatin, or doing in-silico mutagenesis of a locus. To LOOK UP a variant's population frequency prefer alterlab-gnomad; for its clinical significance prefer alterlab-clinvar; for protein-structure effects prefer alterlab-alphafold; for single-cell foundation models prefer alterlab-scgpt. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.0.0",
-      "compatibility": "Runs Borzoi (`calico/borzoi`; install per repo — TODO(verify) exact pin) under `uv run python`. Model weights download once and cache; a CUDA GPU is recommended (the model takes long DNA context and is heavy on CPU). Inputs are DNA sequences (FASTA / genome coordinates + a reference); outputs are multi-track coverage arrays. Dispatch large scans via alterlab-remote-compute.",
+      "version": "1.1.0",
+      "compatibility": "Reference TensorFlow code (`calico/borzoi` + `calico/baskerville` from git, TF 2.15.x) or the PyTorch port `borzoi-pytorch` (0.5.1 as of 2026-09, Hugging Face weights), under `uv run python`. Weights cache after first download; a CUDA GPU is strongly recommended (~500 kb DNA context). Input: DNA (FASTA or coordinates + reference); output: multi-track coverage arrays. Dispatch large scans via alterlab-remote-compute.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -215,7 +215,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 70,
+      "body_lines": 78,
       "references": [
         "borzoi_usage.md"
       ]
@@ -223,10 +223,10 @@
     {
       "name": "alterlab-cellxgene",
       "domain": "bioinformatics",
-      "description": "Query the CZ CELLxGENE Census (61M+ cells) programmatically via cellxgene-census and TileDB-SOMA, slicing expression by tissue, disease, or cell type and returning AnnData. Use when pulling reference single-cell RNA-seq data from the largest curated public atlas, running population-scale queries, or benchmarking your data against a reference — for analyzing your own dataset use scanpy or scvi-tools. Part of the AlterLab Academic Skills suite.",
+      "description": "Query the CZ CELLxGENE Census (200M+ cells) programmatically via cellxgene-census and TileDB-SOMA, slicing expression by tissue, disease, or cell type and returning AnnData. Use when pulling reference single-cell RNA-seq data from the largest curated public atlas, running population-scale queries, or benchmarking your data against a reference — for analyzing your own dataset use scanpy or scvi-tools. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Self-contained — runs under `uv run python` with `cellxgene-census` installed (1.18.0 as of 2026-09; it pulls in tiledbsoma). Reads are anonymous over the public S3 bucket, so no API key or account is required, but a network connection and several GB of scratch are.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -236,7 +236,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 64,
+      "body_lines": 76,
       "references": [
         "best_practices_and_troubleshooting.md",
         "census_schema.md",
@@ -250,8 +250,8 @@
       "domain": "bioinformatics",
       "description": "Predict biomolecular complexes with Chai-1, an open AlphaFold3-style model that folds multi-entity assemblies (proteins, ligands, nucleic acids) from a single typed FASTA — strong on antibody–antigen and protein–ligand complexes, with optional MSA and restraint inputs. Use when predicting an antibody–antigen complex, folding a mixed protein/ligand/nucleic-acid assembly described in one FASTA, or generating a complex with experimental restraints. For binding-affinity prediction or a ligand-focused co-fold prefer alterlab-boltz; for protein-only or protein–protein folding prefer alterlab-alphafold; to dock into a fixed receptor prefer alterlab-diffdock. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.0.0",
-      "compatibility": "Runs the Chai-1 model (`chaidiscovery/chai-lab`; install the `chai_lab` package — TODO(verify) exact pin) under `uv run python`. Requires a CUDA GPU; weights download once and cache (several GB). Input is a single FASTA with typed records (protein/ligand/RNA/DNA); MSAs and restraints are optional. Dispatch heavy runs via alterlab-remote-compute.",
+      "version": "1.1.0",
+      "compatibility": "Chai-1 (`chaidiscovery/chai-lab`; `uv pip install chai_lab==0.6.1`, current as of 2026-09) under `uv run python`. Needs Linux, Python >= 3.10 and a CUDA GPU with bfloat16 (A100/H100/L40S recommended; A10/A30/RTX 4090 for smaller complexes). Weights download on first run (relocate with CHAI_DOWNLOADS_DIR). Input: one typed FASTA; MSAs, templates, restraints optional. Apache-2.0 code and weights. Dispatch heavy runs via alterlab-remote-compute.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -261,7 +261,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 82,
+      "body_lines": 100,
       "references": [
         "chai_usage.md"
       ]
@@ -271,8 +271,8 @@
       "domain": "bioinformatics",
       "description": "Build and analyze genome-scale constraint-based metabolic models with COBRApy — flux balance analysis (FBA), flux variability analysis (FVA), gene and reaction knockouts, flux sampling, and SBML model I/O. Use when simulating metabolic networks, predicting growth or knockout phenotypes, or running systems-biology and metabolic-engineering analyses on SBML genome-scale models. Part of the AlterLab Academic Skills suite.",
       "license": "GPL-2.0",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Self-contained — runs under `uv run python` with `cobra` installed (0.32.1 as of 2026-09; depends on optlang, pandas < 3 and a solver). GLPK ships via swiglpk; CPLEX/Gurobi are optional and faster on big models. `load_model` and gapfilling from BiGG/BioModels need network access; everything else is offline.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -282,7 +282,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 472,
+      "body_lines": 496,
       "references": [
         "api_quick_reference.md",
         "workflows.md"
@@ -293,8 +293,8 @@
       "domain": "bioinformatics",
       "description": "Process and visualize deep-sequencing coverage with the deepTools CLI — convert BAM to bigWig (bamCoverage), build log2 ratio tracks (bamCompare), run QC (multiBamSummary correlation, PCA, plotFingerprint), apply the ATAC-seq Tn5 shift (alignmentSieve --ATACshift), and make TSS/peak heatmaps and profiles (computeMatrix, plotHeatmap, plotProfile). Use for coverage tracks, signal heatmaps/profiles, normalization (RPGC/CPM/RPKM), and effective-genome-size lookups for ChIP-seq, ATAC-seq, MNase-seq, or RNA-seq. NOT for per-read/CIGAR/MAPQ BAM record access — that is pysam. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Self-contained — runs under `uv run python` with deepTools installed (4.0.0 as of 2026-09, Python >= 3.12; bioconda also ships 4.0.0). No API key or account required. Version 4.0 rewrote five tools in Rust and changed some flags — see the note in the body.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -304,7 +304,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 350,
+      "body_lines": 388,
       "references": [
         "effective_genome_sizes.md",
         "normalization_methods.md",
@@ -316,10 +316,10 @@
     {
       "name": "alterlab-esm",
       "domain": "bioinformatics",
-      "description": "Run ESM protein language models — ESM3 for generative multimodal protein design across sequence, structure, and function, and ESM C for efficient embeddings and representations — locally or via the cloud Forge API. Use when working with protein sequences, structures, or function prediction, designing novel proteins, generating protein embeddings, performing inverse folding, or doing protein-engineering tasks. Part of the AlterLab Academic Skills suite.",
+      "description": "Run ESM protein language models — ESMC for embeddings and representations, ESMFold2 for structure prediction, and ESM3 for generative multimodal protein design across sequence, structure, and function — locally or through the hosted Biohub Platform API (formerly Forge). Use when working with protein sequences, structures, or function prediction, designing novel proteins, generating protein embeddings, performing inverse folding, or doing protein-engineering tasks. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Runs under `uv run python` with the `esm` package (pin `esm>=3.1,<3.2`; requires Python >=3.10). Local model weights run best on a CUDA GPU; CPU works for ESM C embeddings but is slow. The cloud Forge/Biohub API path requires an EvolutionaryScale token (ESM3ForgeInferenceClient).",
+      "version": "1.1.0",
+      "compatibility": "Runs under `uv run python` with the `esm` package (3.4.1.post1 as of 2026-09; requires Python >= 3.12 and torch >= 2.11). Local weights come from Hugging Face (`huggingface_hub` login) and run best on a CUDA GPU; CPU works for small ESMC embeddings but is slow. The hosted path is the Biohub Platform (`https://biohub.ai`, formerly forge.evolutionaryscale.ai) and needs an API token, read from the `ESM_API_KEY` environment variable by default.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -329,7 +329,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 300,
+      "body_lines": 358,
       "references": [
         "esm-c-api.md",
         "esm3-api.md",
@@ -342,8 +342,8 @@
       "domain": "bioinformatics",
       "description": "Manipulate, annotate, and render phylogenetic trees programmatically with the ETE Toolkit (ete3) — parse and edit Newick/NHX, detect duplication/speciation events, infer orthology and paralogy, query NCBI taxonomy, and export PDF/SVG figures. Use when traversing or reformatting tree files, doing phylogenomic comparative analysis, or producing publication tree graphics in Python. Part of the AlterLab Academic Skills suite.",
       "license": "GPL-3.0",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Self-contained — runs under `uv run python`. Examples target **ete3 3.1.3** (the last ete3 release, May 2023); `Tree.render()`/`show()` additionally need PyQt5. The maintained line is **ete4 4.4.0**, whose API differs (see the version note in the body). NCBITaxa downloads a ~300MB taxonomy database on first use. No API key or account required.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -353,7 +353,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 85,
+      "body_lines": 115,
       "references": [
         "api_reference.md",
         "newick_and_best_practices.md",
@@ -368,8 +368,8 @@
       "domain": "bioinformatics",
       "description": "Parse and write FCS (Flow Cytometry Standard) files v2.0-3.1 with FlowIO — extract event data as NumPy arrays, read $-keyword metadata and channel/parameter definitions, and convert events to CSV or pandas DataFrame. Use when loading raw .fcs flow-cytometry files, inspecting channels and metadata, or preprocessing cytometry data for downstream gating and analysis. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.0.1",
+      "compatibility": "Self-contained — runs under `uv run python` with `flowio` installed (1.4.0 as of 2026-09; Python 3.9+, NumPy is the only dependency). No API key or account required.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -379,7 +379,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 109,
+      "body_lines": 122,
       "references": [
         "api_reference.md",
         "error-handling-and-troubleshooting.md",
@@ -392,8 +392,8 @@
       "domain": "bioinformatics",
       "description": "Run fast one-liner queries to 20+ bioinformatics databases from the gget CLI or Python — gene info (Ensembl), BLAST, AlphaFold structures, Enrichr enrichment, and more. Use for quick interactive lookups of genes, sequences, structures, or pathways — for batch processing or advanced BLAST use biopython, for multi-database Python workflows use bioservices. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Install with `uv pip install gget`; core modules need no API key or account. cosmic needs a COSMIC account; gpt needs an OpenAI key; alphafold/cellxgene/elm/gpt need a one-time `gget setup`.",
+      "version": "1.1.0",
+      "compatibility": "Install with `uv pip install gget` (0.30.8 as of 2026-09; requires Python >= 3.12). Core modules need no API key or account. cosmic needs a COSMIC account; gpt needs an OpenAI key; alphafold, cellxgene, elm, gpt and cbio need a one-time `gget setup <module>`.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -403,7 +403,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 114,
+      "body_lines": 134,
       "references": [
         "database_info.md",
         "module_examples.md",
@@ -416,8 +416,8 @@
       "domain": "bioinformatics",
       "description": "Analyze and engineer protein glycosylation — scan sequences for N-glycosylation sequons (N-X-S/T), predict O-glycosylation hotspots, and reach curated glycoengineering tools (NetOGlyc, GlycoShield, GlycoWorkbench). Use when identifying or designing glycosylation sites, optimizing therapeutic-antibody or biologic glycoforms, or doing glycoprotein engineering and vaccine-design work. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Sequon scanning and mutation helpers are pure-Python stdlib (re, typing) — run them under `uv run python` directly. The optional database/prediction helpers need `requests` (and the batch example needs `pandas`); external web services (NetOGlyc, GlyConnect) need network access but no API key or account.",
+      "version": "1.1.0",
+      "compatibility": "Sequon scanning and mutation helpers are pure-Python stdlib (re, typing) — run them under `uv run python` directly. The optional database helpers need `requests` (and the batch example needs `pandas`); external web services (NetNGlyc/NetOGlyc, GlyGen, GlyTouCan) need network access but no API key or account. Endpoint status verified 2026-09.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -427,7 +427,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 320,
+      "body_lines": 331,
       "references": [
         "glycan_databases.md"
       ]
@@ -437,8 +437,8 @@
       "domain": "bioinformatics",
       "description": "Extract and preprocess tiles from whole-slide images (WSI) with histolab — OpenSlide-backed slide loading, tissue detection and masks, Random/Grid/Score tile extraction, and image/morphological filters for H&E preprocessing. Use when the user needs lightweight WSI slide preprocessing — building tile datasets for ML training, tissue segmentation, or quick tile-based inspection of histopathology slides. For end-to-end computational-pathology, deep-learning model training, nucleus segmentation, or multiplexed/spatial-proteomics (CODEX, Vectra) pipelines prefer alterlab-pathml instead. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Runs under `uv run python` with histolab 0.7.0 (still the latest release, Feb 2024) in a **dedicated environment**: it requires Python >= 3.8, < 3.12 and pins numpy <= 1.24.4, scipy < 1.10.1, scikit-image < 0.19.4 and openslide-python 1.3.1 — it will not co-install with a modern numpy 2.x / Python 3.12+ stack. The OpenSlide C library must also be present (`uv pip install openslide-bin`, or `brew install openslide` / `apt install libopenslide0`). No API key or account required.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -448,7 +448,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 141,
+      "body_lines": 163,
       "references": [
         "best_practices.md",
         "filters_preprocessing.md",
@@ -464,8 +464,8 @@
       "domain": "bioinformatics",
       "description": "Manage, annotate, and trace biological data with LaminDB, an open-source FAIR data framework that makes datasets queryable, versioned, and reproducible. Use when registering or querying biological datasets (scRNA-seq, spatial, flow cytometry), validating and curating data against ontologies (genes, cell types, diseases, tissues), tracking data lineage and computational workflows, building data lakehouses, or wiring integrations with Nextflow, Snakemake, W&B, or MLflow. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Runs under `uv run python` with `lamindb` installed (2.10.0 as of 2026-09, Python >= 3.10; `lamindb` is a meta-package over `lamindb-core[full]`). A local SQLite instance works offline after `lamin init`; `lamin login` and cloud/Postgres instances need a Lamin account and network access.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -475,7 +475,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 382,
+      "body_lines": 405,
       "references": [
         "annotation-validation.md",
         "core-concepts.md",
@@ -809,7 +809,7 @@
       "description": "Apply the scGPT single-cell foundation model (Cui 2024) to annotate and embed cells — zero-shot and fine-tuned cell-type annotation, gene/cell embeddings, batch integration, and gene-regulatory / perturbation inference from AnnData. Use when annotating cell types with a pretrained foundation model, generating scGPT embeddings, integrating batches with a transformer, or running zero-shot single-cell inference on an h5ad. For probabilistic latent models (scVI/scANVI) prefer alterlab-scvi-tools; for the standard QC→cluster→UMAP→DE pipeline prefer alterlab-scanpy; for the AnnData data structure itself prefer alterlab-anndata; for protein language models prefer alterlab-esm. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
       "version": "1.1.0",
-      "compatibility": "Runs the scGPT model (`bowang-lab/scGPT`; PyPI `scgpt`, latest 0.2.4 released 2025-03, unchanged as of 2026-09) under `uv run python`. Its dependency pins are old (`scvi-tools<1.0`, `scanpy<2.0`, `torchtext`) and conflict with a current scverse stack, so install it in a dedicated environment rather than alongside alterlab-scanpy/alterlab-scvi-tools. Pretrained checkpoints are downloaded manually from the repo's Drive links (GB-scale); a CUDA GPU is strongly recommended. Input/output is AnnData (`.h5ad`). Dispatch heavy fine-tuning via alterlab-remote-compute.",
+      "compatibility": "Runs scGPT (`bowang-lab/scGPT`; PyPI `scgpt` 0.2.4, unchanged since 2025-03) under `uv run python`. Its old pins (`scvi-tools<1.0`, `scanpy<2.0`, `torchtext`) conflict with a current scverse stack, so use a dedicated environment, not one shared with alterlab-scanpy/alterlab-scvi-tools. Checkpoints (GB-scale) download manually from the repo's Drive links; a CUDA GPU is strongly recommended. I/O is AnnData (`.h5ad`); dispatch heavy fine-tuning via alterlab-remote-compute.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -941,7 +941,7 @@
       "domain": "cheminformatics",
       "description": "Wraps RDKit in a high-level, pandas-friendly datamol interface with sensible defaults for everyday drug discovery — SMILES/SDF loading into DataFrames, molecule standardization, descriptors, fingerprints, Butina clustering, 3D conformer generation, scaffold analysis, and parallel batch processing, returning native rdkit.Chem.Mol objects. Use when running standard cheminformatics pipelines on molecule tables with minimal boilerplate; for low-level control, custom sanitization, or specialized algorithms prefer alterlab-rdkit. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
       "allowed_tools": [
         "Read",
@@ -952,7 +952,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 308,
+      "body_lines": 339,
       "references": [
         "conformers_module.md",
         "core_api.md",
@@ -966,10 +966,10 @@
     {
       "name": "alterlab-deepchem",
       "domain": "cheminformatics",
-      "description": "Runs molecular machine learning with DeepChem — diverse featurizers, pre-built MoleculeNet benchmark datasets, and pre-trained models (ChemBERTa, GROVER) for property prediction (ADMET, toxicity, solubility) via traditional ML or graph neural networks. Use when running end-to-end molecular ML experiments that need MoleculeNet benchmarks, scaffold splitting, or ready-made models with minimal setup; for building custom PyTorch graph architectures prefer alterlab-torchdrug, and for standalone molecule-to-feature-vector generation prefer alterlab-molfeat. Part of the AlterLab Academic Skills suite.",
+      "description": "Runs molecular machine learning with DeepChem — diverse featurizers, pre-built MoleculeNet benchmark datasets, and pre-trained models (ChemBERTa, GROVER) for property prediction (ADMET, toxicity, solubility) via traditional ML or graph neural networks. Use when running end-to-end molecular ML experiments that need MoleculeNet benchmarks, scaffold splitting, or ready-made models with minimal setup; for building custom PyTorch graph architectures prefer alterlab-torch-geometric, and for standalone molecule-to-feature-vector generation prefer alterlab-molfeat. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.1.0",
+      "compatibility": "Self-contained, no API key or account. Use a dedicated environment: DeepChem 2.8.0 needs Python <= 3.11 (nightly --pre builds: <= 3.12, numpy<2, torch==2.2.1 with the [torch] extra).",
       "allowed_tools": [
         "Read",
         "Write",
@@ -979,7 +979,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 425,
+      "body_lines": 441,
       "references": [
         "api_reference.md",
         "best_practices.md",
@@ -992,7 +992,7 @@
       "domain": "cheminformatics",
       "description": "Predicts protein-ligand binding poses with DiffDock diffusion-based molecular docking from PDB structures and SMILES, producing pose confidence scores for virtual screening and structure-based drug design. Use when docking ligands into a protein, generating binding poses, or screening compounds against a target; not for binding affinity prediction. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Requires a local DiffDock checkout (gcorso/DiffDock via conda or Docker) and a GPU for practical use; no API key or account. The skill's helper scripts (scripts/) run standalone under python/uv.",
       "allowed_tools": [
         "Read",
@@ -1003,7 +1003,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 477,
+      "body_lines": 489,
       "references": [
         "confidence_and_limitations.md",
         "parameters_reference.md",
@@ -1013,9 +1013,9 @@
     {
       "name": "alterlab-matchms",
       "domain": "cheminformatics",
-      "description": "Computes mass-spectral similarity and identifies compounds for metabolomics with matchms — comparing mass spectra, scoring similarity (cosine, modified cosine), and searching spectral libraries to annotate unknowns. Use when matching MS/MS spectra, identifying metabolites, or library searching; for full LC-MS/MS proteomics pipelines use pyopenms. Part of the AlterLab Academic Skills suite.",
+      "description": "Computes mass-spectral similarity and identifies compounds for metabolomics with matchms — comparing mass spectra, scoring similarity (cosine, modified cosine), and searching spectral libraries to annotate unknowns. Use when matching MS/MS spectra, identifying metabolites, or library searching; for full LC-MS/MS proteomics pipelines use alterlab-pyopenms. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
       "allowed_tools": [
         "Read",
@@ -1026,7 +1026,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 226,
+      "body_lines": 247,
       "references": [
         "filtering.md",
         "importing_exporting.md",
@@ -1039,7 +1039,7 @@
       "domain": "cheminformatics",
       "description": "Applies medicinal-chemistry filters with the medchem library — drug-likeness rules (Lipinski, Veber), PAINS filters, structural alerts, and molecular complexity metrics for compound prioritization and library cleanup. Use when filtering or triaging a compound library, flagging PAINS or reactive groups, or assessing drug-likeness of candidate molecules. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
       "allowed_tools": [
         "Read",
@@ -1050,7 +1050,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 265,
+      "body_lines": 276,
       "references": [
         "api_guide.md",
         "rules_catalog.md"
@@ -1061,7 +1061,7 @@
       "domain": "cheminformatics",
       "description": "Runs and analyzes molecular dynamics simulations with OpenMM and MDAnalysis — setting up protein and small-molecule systems, assigning force fields, running energy minimization and production MD, and analyzing trajectories (RMSD, RMSF, contact maps, free energy surfaces). Use when simulating protein or ligand dynamics, equilibrating a system, or computing trajectory metrics for structural biology, drug binding, or biophysics. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
       "allowed_tools": [
         "Read",
@@ -1072,7 +1072,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 468,
+      "body_lines": 478,
       "references": [
         "mdanalysis_analysis.md"
       ]
@@ -1080,9 +1080,9 @@
     {
       "name": "alterlab-molfeat",
       "domain": "cheminformatics",
-      "description": "Featurizes molecules for machine learning with molfeat (100+ featurizers) — ECFP/MACCS/MAP4 fingerprints, RDKit and Mordred physicochemical descriptors, and pretrained embeddings (ChemBERTa, ChemGPT, GIN) exposed as scikit-learn transformers that convert SMILES into feature vectors. Use when turning molecules into ML-ready feature matrices for QSAR/QSPR or virtual screening, or benchmarking fingerprint against descriptor and embedding representations; for training models and MoleculeNet benchmarks on those features prefer alterlab-deepchem, and for low-level fingerprint or descriptor primitives prefer alterlab-rdkit. Part of the AlterLab Academic Skills suite.",
+      "description": "Featurizes molecules for machine learning with molfeat — ECFP/MACCS/MAP4 fingerprints, RDKit and Mordred physicochemical descriptors, pharmacophore and shape descriptors, and pretrained embeddings (ChemBERTa, ChemGPT, CheMeleon) exposed as scikit-learn transformers that convert SMILES into feature vectors. Use when turning molecules into ML-ready feature matrices for QSAR/QSPR or virtual screening, or benchmarking fingerprint against descriptor and embedding representations; for training models and MoleculeNet benchmarks on those features prefer alterlab-deepchem, and for low-level fingerprint or descriptor primitives prefer alterlab-rdkit. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
       "allowed_tools": [
         "Read",
@@ -1093,7 +1093,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 339,
+      "body_lines": 352,
       "references": [
         "api_reference.md",
         "available_featurizers.md",
@@ -1104,9 +1104,9 @@
     {
       "name": "alterlab-primekg",
       "domain": "cheminformatics",
-      "description": "Queries the Precision Medicine Knowledge Graph (PrimeKG) for multiscale biomedical relationships across genes, drugs, diseases, phenotypes, pathways, and biological processes. Use when exploring drug-disease or gene-disease links, building disease-centric knowledge subgraphs, or sourcing relations for drug repurposing and precision-medicine analyses. Part of the AlterLab Academic Skills suite.",
+      "description": "Queries the Precision Medicine Knowledge Graph (PrimeKG) for multiscale biomedical relationships across genes, drugs, diseases, phenotypes, pathways, and biological processes. Use when exploring drug-disease or gene-disease links, building disease-centric knowledge subgraphs, or sourcing relations for drug repurposing and precision-medicine analyses; also points to OptimusKG, the maintainers' successor graph, for new work. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Runs under `uv run python` with pandas installed and the PrimeKG `kg.csv` available locally (set `PRIMEKG_DATA_PATH`); no API key or account required.",
       "allowed_tools": [
         "Read",
@@ -1117,16 +1117,16 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 124,
+      "body_lines": 137,
       "references": []
     },
     {
       "name": "alterlab-pytdc",
       "domain": "cheminformatics",
-      "description": "Loads Therapeutics Data Commons (TDC, PyTDC) AI-ready drug-discovery datasets and benchmarks — ADME, toxicity, drug-target interaction (DTI), scaffold splits, and molecular oracles for therapeutic ML and pharmacological prediction. Use when fetching a standardized benchmark dataset, applying scaffold or cold-split evaluation, or sourcing labeled molecules for ADMET, toxicity, or DTI modeling. Sources data, splits, and oracles only — defer molecular featurization (ECFP/fingerprints), model training, and transformers to a molecular-ML skill (e.g. deepchem). Part of the AlterLab Academic Skills suite.",
+      "description": "Loads Therapeutics Data Commons (TDC, PyTDC) AI-ready drug-discovery datasets and benchmarks — ADME, toxicity, drug-target interaction (DTI), scaffold splits, and molecular oracles for therapeutic ML and pharmacological prediction. Use when fetching a standardized benchmark dataset, applying scaffold or cold-split evaluation, or sourcing labeled molecules for ADMET, toxicity, or DTI modeling. Sources data, splits, and oracles only — defer molecular featurization (ECFP/fingerprints), model training, and transformers to alterlab-deepchem or alterlab-molfeat. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
+      "version": "1.0.1",
+      "compatibility": "Self-contained, no API key or account. PyTDC 1.1.15 needs its own environment on Python 3.10-3.12 (pins numpy<2, pandas<3, rdkit<2024.3.1, transformers<4.51); datasets download from the TDC servers on first use.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1136,7 +1136,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 461,
+      "body_lines": 464,
       "references": [
         "datasets.md",
         "oracles.md",
@@ -1148,7 +1148,7 @@
       "domain": "cheminformatics",
       "description": "Provides the RDKit cheminformatics toolkit for low-level, fine-grained molecular primitives — SMILES/SDF parsing, descriptors (MW, LogP, TPSA), fingerprints, substructure/SMARTS search, 2D/3D coordinate generation, similarity, and reaction handling. Use when custom sanitization, specialized fingerprint or descriptor algorithms, reaction enumeration, or conformer generation demand direct API control; for a high-level pandas-friendly wrapper over RDKit prefer alterlab-datamol, and for turning molecules into ML feature vectors prefer alterlab-molfeat. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
       "allowed_tools": [
         "Read",
@@ -1159,7 +1159,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 291,
+      "body_lines": 303,
       "references": [
         "api_reference.md",
         "code_recipes.md",
@@ -1172,8 +1172,8 @@
       "domain": "cheminformatics",
       "description": "Drives the Rowan cloud quantum-chemistry platform via its Python API for computational chemistry — pKa prediction, geometry optimization, conformer searching, molecular property calculations, protein-ligand docking (AutoDock Vina), and AI protein cofolding (Chai-1, Boltz-1/2), with cloud compute and no local setup. Use when running DFT or semiempirical methods, neural network potentials (AIMNet2), molecular property or protein-ligand binding predictions, or automated computational chemistry pipelines. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
-      "compatibility": "API required",
+      "version": "1.2.0",
+      "compatibility": "Requires a Rowan account and API key (ROWAN_API_KEY); jobs run on Rowan's cloud and consume credits, and submitted structures are sent to Rowan's servers. rowan-python >= 3.2, Python >= 3.12.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1183,7 +1183,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 358,
+      "body_lines": 389,
       "references": [
         "api_reference.md",
         "molecule_handling.md",
@@ -1195,10 +1195,10 @@
     {
       "name": "alterlab-torchdrug",
       "domain": "cheminformatics",
-      "description": "Builds PyTorch-native graph neural networks with TorchDrug for molecules and proteins, exposing custom GNN architectures, task/dataset abstractions, molecular generation, retrosynthesis planning, and knowledge-graph reasoning. Use when developing custom graph model layers, predicting protein properties from sequence or structure, or building retrosynthesis and drug-repurposing pipelines; for ready-made featurizers, MoleculeNet benchmarks, and pre-trained models with less code prefer alterlab-deepchem. Part of the AlterLab Academic Skills suite.",
+      "description": "Builds PyTorch-native graph neural networks with TorchDrug for molecules and proteins, exposing custom GNN architectures, task/dataset abstractions, molecular generation, retrosynthesis planning, and knowledge-graph reasoning. Use when a project specifically needs TorchDrug's datasets and tasks — GearNet protein-structure models, center-identification/synthon-completion retrosynthesis, or Hetionet knowledge-graph baselines. TorchDrug has had no release since 0.2.1 (July 2023) and needs Python < 3.11, so for new custom GNN work prefer alterlab-torch-geometric, and for ready-made featurizers, MoleculeNet benchmarks, and pre-trained models prefer alterlab-deepchem. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.0.0",
-      "compatibility": "Self-contained — runs locally, no API key or account required. TorchDrug 0.2.1 requires Python >=3.7,<3.11 (use `uv venv --python 3.10`).",
+      "version": "1.1.0",
+      "compatibility": "Self-contained — runs locally, no API key or account required. TorchDrug 0.2.1 (unmaintained, last release July 2023) requires Python >=3.7,<3.11 (use `uv venv --python 3.10`) plus torch-scatter/torch-cluster built for the installed torch and a C++ toolchain for its JIT extensions.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1208,7 +1208,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 459,
+      "body_lines": 485,
       "references": [
         "core_concepts.md",
         "datasets.md",
@@ -1225,7 +1225,7 @@
       "domain": "clinical-research",
       "description": "Generates professional clinical decision support (CDS) documents for pharmaceutical and clinical research settings — biomarker-stratified patient cohort analyses with outcomes and evidence-based treatment recommendation reports with decision algorithms, supporting GRADE evidence grading, statistical analysis (hazard ratios, survival curves, waterfall plots), biomarker integration, and regulatory compliance, output as publication-ready LaTeX/PDF. Use when building a CDS document, cohort analysis, or treatment recommendation report for drug development, clinical research, or evidence synthesis, or when GRADE grading, hazard ratios, survival/waterfall plots, or biomarker stratification are requested. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Runs with Read/Write/Edit/Bash; producing PDF output requires a local LaTeX toolchain (e.g. pdflatex/xelatex). No API key required.",
       "allowed_tools": [
         "Read",
@@ -1235,7 +1235,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 426,
+      "body_lines": 434,
       "references": [
         "README.md",
         "biomarker_classification.md",
@@ -1251,7 +1251,7 @@
       "domain": "clinical-research",
       "description": "Writes comprehensive clinical reports — case reports (CARE guidelines), diagnostic reports (radiology, pathology, lab), clinical trial reports (ICH-E3, SAE, CSR), and patient documentation (SOAP notes, H&P, discharge summaries) — with templates, regulatory compliance (HIPAA, FDA, ICH-GCP), and validation tools. Use when drafting a case report for journal publication, a radiology/pathology/lab diagnostic report, an ICH-E3 clinical study report (CSR) or SAE narrative, or SOAP/H&P/discharge patient records needing regulatory-compliant formatting. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Runs with Read/Write/Edit/Bash; producing PDF/report output requires a local LaTeX toolchain. No API key required.",
       "allowed_tools": [
         "Read",
@@ -1261,7 +1261,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 177,
+      "body_lines": 197,
       "references": [
         "README.md",
         "care_report_sections.md",
@@ -1283,7 +1283,7 @@
       "domain": "clinical-research",
       "description": "Prepares ISO 13485 certification documentation for medical device Quality Management Systems (QMS) — gap analysis of existing documentation, Quality Manuals, required procedures and work instructions, and Medical Device Files. Use for ISO 13485 QMS documentation, conducting a documentation gap analysis, drafting a Quality Manual or SOP/work instruction, assembling a Medical Device File, identifying missing documentation for medical device certification, or when medical device regulations, QMS certification, FDA QMSR, or EU MDR are mentioned. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Self-contained — runs with Read/Write/Edit/Bash(python:*); no API key or account required.",
       "allowed_tools": [
         "Read",
@@ -1293,7 +1293,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 140,
+      "body_lines": 161,
       "references": [
         "best-practices.md",
         "common-scenarios.md",
@@ -1310,7 +1310,7 @@
       "domain": "clinical-research",
       "description": "Processes and analyzes physiological biosignals with the NeuroKit2 Python toolkit — ECG, EEG, EDA, RSP, PPG, EMG, and EOG signals. Use when processing cardiovascular signals, brain activity, electrodermal responses, respiratory patterns, muscle activity, or eye movements, or when computing heart rate variability (HRV), event-related potentials, complexity measures, autonomic nervous system assessment, or multi-modal physiological signal integration for psychophysiology research. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
       "allowed_tools": [
         "Read",
@@ -1320,7 +1320,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 356,
+      "body_lines": 375,
       "references": [
         "bio_module.md",
         "complexity.md",
@@ -1341,7 +1341,7 @@
       "domain": "clinical-research",
       "description": "Reads, writes, and manipulates DICOM (Digital Imaging and Communications in Medicine) medical imaging files with the pydicom Python library. Use when reading/writing/modifying DICOM data, extracting pixel data from CT, MRI, X-ray, or ultrasound images, anonymizing DICOM files, working with DICOM metadata and tags, converting DICOM to other formats, handling compressed DICOM, or processing medical imaging datasets for PACS systems, radiology workflows, and healthcare imaging applications. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required.",
       "allowed_tools": [
         "Read",
@@ -1351,7 +1351,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 437,
+      "body_lines": 458,
       "references": [
         "common_tags.md",
         "transfer_syntaxes.md"
@@ -1360,10 +1360,10 @@
     {
       "name": "alterlab-pyhealth",
       "domain": "clinical-research",
-      "description": "Develops, tests, and deploys clinical machine learning models with the PyHealth healthcare AI toolkit. Use when working with electronic health records (EHR), clinical prediction tasks (mortality, readmission, drug recommendation), medical coding systems (ICD, NDC, ATC), physiological signals (EEG, ECG), healthcare datasets (MIMIC-III/IV, eICU, OMOP), or implementing deep learning models for healthcare (RETAIN, SafeDrug, Transformer, GNN). Part of the AlterLab Academic Skills suite.",
+      "description": "Develops, tests, and validates clinical machine learning models with the PyHealth 2.x healthcare AI toolkit. Use when working with electronic health records (EHR), clinical prediction tasks (mortality, readmission, length of stay, drug recommendation), medical coding systems (ICD, NDC, ATC, CCS), physiological signals (EEG, ECG), healthcare datasets (MIMIC-III/IV, eICU, OMOP), or implementing deep learning models for healthcare (RETAIN, SafeDrug, GAMENet, Transformer, GAT/GCN). Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.1",
-      "compatibility": "Self-contained — runs under `uv run python` with PyHealth 2.0.1 installed; no API key or account required.",
+      "version": "1.2.0",
+      "compatibility": "Self-contained — runs under `uv run python` with PyHealth >= 2.0.2 (Python 3.12-3.13) in its own environment; no API key required. MIMIC-III/IV and eICU data need the user's own PhysioNet credentialed access.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1372,7 +1372,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 500,
+      "body_lines": 360,
       "references": [
         "datasets.md",
         "medical_coding.md",
@@ -1387,7 +1387,7 @@
       "domain": "clinical-research",
       "description": "Generates concise (3-4 page), focused medical treatment plans in LaTeX/PDF format across all clinical specialties — general medical treatment, rehabilitation therapy, mental health care, chronic disease management, perioperative care, and pain management — using SMART goal frameworks, evidence-based interventions with minimal citations, HIPAA compliance, and professional formatting. Use when drafting a brief, actionable patient treatment or care plan with measurable SMART goals and structured follow-up for any specialty. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Runs with Read/Write/Edit/Bash; producing PDF output requires a local LaTeX toolchain (pdflatex/xelatex). No API key required.",
       "allowed_tools": [
         "Read",
@@ -1397,7 +1397,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 102,
+      "body_lines": 117,
       "references": [
         "README.md",
         "document_formats.md",
@@ -3082,10 +3082,10 @@
     {
       "name": "alterlab-markitdown",
       "domain": "document-tools",
-      "description": "Convert files and Office documents to clean, LLM-friendly Markdown with Microsoft MarkItDown (markitdown CLI/Python), supporting PDF, DOCX, PPTX, XLSX, images (EXIF + OCR), audio (transcription), HTML, CSV, JSON, XML, ZIP archives, EPUB e-books, and YouTube transcript URLs, with optional AI image descriptions. Use when converting a document, PDF, slide deck, spreadsheet, scanned image, audio file, web page, or e-book into Markdown text for ingestion or LLM processing, extracting text via OCR, transcribing audio, or batch-converting mixed file formats to token-efficient Markdown. Part of the AlterLab Academic Skills suite.",
+      "description": "Converts files and Office documents to clean, LLM-friendly Markdown with Microsoft MarkItDown (markitdown CLI, Python API, and markitdown-mcp server), supporting PDF, DOCX, PPTX, XLSX/XLS, images (EXIF metadata, LLM descriptions), audio (transcription), HTML, CSV, JSON, XML, ZIP archives, EPUB e-books, Outlook MSG, Jupyter notebooks, and YouTube transcript URLs, with OCR through the markitdown-ocr plugin or Azure Document Intelligence. Use when converting a document, PDF, slide deck, spreadsheet, scanned image, audio file, web page, or e-book into Markdown text for ingestion or LLM processing, extracting text from scans via OCR, transcribing audio, or batch-converting mixed file formats to token-efficient Markdown. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "markitdown CLI/library required (uv pip install 'markitdown[all]'); format extras gate support (pdf, docx, pptx, audio, etc.); optional AI image descriptions need an LLM API key (OPENAI_API_KEY or OPENROUTER_API_KEY)",
+      "version": "1.1.0",
+      "compatibility": "markitdown >= 0.1.8 (Python 3.10-3.14; uv pip install 'markitdown[all]'); format extras gate support (pdf, docx, pptx, audio, etc.); AI image descriptions and the markitdown-ocr plugin need an OpenAI-compatible LLM client and key (OPENAI_API_KEY or OPENROUTER_API_KEY); Azure Document Intelligence / Content Understanding need an Azure endpoint.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -3094,7 +3094,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 464,
+      "body_lines": 420,
       "references": [
         "api_reference.md",
         "file_formats.md"
@@ -3103,10 +3103,10 @@
     {
       "name": "alterlab-open-notebook",
       "domain": "document-tools",
-      "description": "Run Open Notebook, a self-hosted open-source alternative to Google NotebookLM with a full REST API, for AI-powered research and document analysis. Use when organizing research materials into notebooks, ingesting diverse content sources (PDFs, videos, audio, web pages, Office documents), generating AI-powered notes and summaries, creating multi-speaker podcasts from research, chatting with documents using context-aware AI, searching across materials with full-text and vector search, or running custom content transformations. Supports 18+ AI providers including OpenAI, Anthropic, Google, Ollama, LM Studio, Groq, and Mistral with complete data privacy through self-hosting. For a one-shot file-to-Markdown conversion (no notebook, chat, or search), use alterlab-markitdown instead. Part of the AlterLab Academic Skills suite.",
+      "description": "Runs and scripts Open Notebook, a self-hosted open-source alternative to Google NotebookLM with a full REST API, for AI-powered research and document analysis. Use when organizing research materials into notebooks, ingesting diverse content sources (PDFs, videos, audio, web pages, Office documents), generating AI-powered notes and summaries, creating multi-speaker podcasts from research, chatting with documents using context-aware AI, searching across materials with full-text and vector search, or running custom content transformations. Supports 18+ AI providers including OpenAI, Anthropic, Google, Ollama, LM Studio, Groq, and Mistral, with data kept on your own infrastructure through self-hosting. For a one-shot file-to-Markdown conversion (no notebook, chat, or search), use alterlab-markitdown instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires a self-hosted Open Notebook instance (Docker Compose) plus an AI provider API key (OpenAI/Anthropic/Google/Groq/Mistral) or a local Ollama; set OPEN_NOTEBOOK_ENCRYPTION_KEY and OPEN_NOTEBOOK_PASSWORD",
+      "version": "1.1.0",
+      "compatibility": "Requires a self-hosted Open Notebook 1.x instance (Docker Compose; UI on :8502, REST API on :5055) plus an AI provider API key (OpenAI/Anthropic/Google/Groq/Mistral/...) or a local Ollama/LM Studio server. OPEN_NOTEBOOK_ENCRYPTION_KEY is required; OPEN_NOTEBOOK_PASSWORD is optional (enables Bearer auth on the API).",
       "allowed_tools": [
         "Read",
         "Write",
@@ -3115,7 +3115,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 281,
+      "body_lines": 321,
       "references": [
         "api_reference.md",
         "architecture.md",
@@ -3128,8 +3128,8 @@
       "domain": "document-tools",
       "description": "Explore a single PDF in depth — parse it once, then answer questions across its sections, figures, tables, and appendices — comparing methods across sections, extracting every instance of a pattern within the document, and reading values off its charts and tables. Use when interrogating one paper or report end-to-end, pulling every occurrence of something inside a document, or reading data from a figure/table in a PDF, serving the literature-review and paper-review pipeline. To build a comparison table across MANY papers prefer alterlab-pdf-extract; to simply convert a PDF to Markdown prefer alterlab-markitdown; for reference/citation management prefer alterlab-pyzotero. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Runs under `uv run python` with a PDF parser (e.g. `pymupdf`/`pdfplumber` — TODO(verify) preferred pin) plus, for scanned pages, an OCR pass. No GPU or account required. Parses the PDF once into a section/figure/table index that later questions reuse; large scanned PDFs are slower due to OCR.",
+      "version": "1.0.1",
+      "compatibility": "Runs under `uv run python` with PyMuPDF (`pymupdf` >= 1.24; 1.28.x current as of 2026-09; AGPL-3.0 or commercial license) and/or pdfplumber (>= 0.11; MIT); scanned pages need an OCR pass (Tesseract via PyMuPDF or `ocrmypdf`). No GPU or account required. Parses the PDF once into a section/figure/table index that later questions reuse; large scanned PDFs are slower due to OCR.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -3139,7 +3139,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 72,
+      "body_lines": 74,
       "references": [
         "pdf_explore_usage.md"
       ]
@@ -3616,9 +3616,9 @@
     {
       "name": "alterlab-accreditation-aol",
       "domain": "faculty-life",
-      "description": "Scaffolds program-level Assurance-of-Learning (AoL) documentation for AACSB (2020 Standard 5) and ABET (Criterion 3 Student Outcomes, Criterion 4 Continuous Improvement) accreditation — program learning outcomes / competency goals, curriculum-to-outcome mapping matrices, direct- and indirect-assessment plans, rubric design, and closing-the-loop continuous-improvement narratives — and validates the structure of an outcome-mapping matrix with scripts/aol_matrix.py. Use when the user needs AACSB or ABET assurance-of-learning material, a program-learning-outcomes set, a curriculum/outcome map or coverage matrix, a direct/indirect assessment plan, a closing-the-loop report, or accreditation self-study text. For single-course design or course rubrics prefer alterlab-teaching-design; for post-award grant reports prefer alterlab-grant-reporting. Part of the AlterLab Academic Skills suite.",
+      "description": "Scaffolds program-level Assurance-of-Learning (AoL) documentation for AACSB (Standard 5 in the 2020 standards and the 2026 Global Standards) and ABET (Criterion 3 Student Outcomes, Criterion 4 Continuous Improvement) accreditation — program learning outcomes / competency goals, curriculum-to-outcome mapping matrices, direct- and indirect-assessment plans, rubric design, and closing-the-loop continuous-improvement narratives — and validates the structure of an outcome-mapping matrix with scripts/aol_matrix.py. Use when the user needs AACSB or ABET assurance-of-learning material, a program-learning-outcomes set, a curriculum/outcome map or coverage matrix, a direct/indirect assessment plan, a closing-the-loop report, or accreditation self-study text. For single-course design or course rubrics prefer alterlab-teaching-design; for post-award grant reports prefer alterlab-grant-reporting. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key, account, or network required — accreditation-format guidance plus a stdlib-only outcome-mapping-matrix validator (scripts/aol_matrix.py). The school still submits its self-study through AACSB myAccreditation or the ABET portal; this skill drafts text and checks structure, it does not file or accredit.",
       "allowed_tools": [
         "Read",
@@ -3629,7 +3629,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 197,
+      "body_lines": 213,
       "references": [
         "accreditor_standards.md",
         "aol_templates.md",
@@ -3639,9 +3639,9 @@
     {
       "name": "alterlab-grant-reporting",
       "domain": "faculty-life",
-      "description": "Drafts post-award grant deliverables across funder formats — NIH RPPR (Annual/Interim/Final via eRA Commons), NSF annual/final project reports and the public Project Outcomes Report (Research.gov), and Horizon Europe / ERC periodic and final reports (technical Part A/B + financial statements on the EU Funding & Tenders Portal) — plus milestone and deliverable tracking, budget-vs-actual variance narratives, no-cost-extension and rebudgeting justifications, and effort/closeout reporting. Computes report due dates from the award period with scripts/report_deadlines.py. Use when the user needs a grant progress or final report, post-award reporting, an RPPR, a periodic report, a no-cost-extension request, milestone tracking, or a budget-variance narrative. For writing new proposals prefer alterlab-research-grants; for TÜBİTAK proposals prefer alterlab-tubitak-proposal. Part of the AlterLab Academic Skills suite.",
+      "description": "Drafts post-award grant deliverables across funder formats — NIH RPPR (Annual, multi-year-funded, Interim, Final via eRA Commons), NSF annual/final project reports and the public Project Outcomes Report (Research.gov), and Horizon Europe / ERC periodic and final reports (technical Part A/B + financial statements on the EU Funding & Tenders Portal) — plus milestone and deliverable tracking, budget-vs-actual variance narratives, no-cost-extension and rebudgeting justifications, and effort/closeout reporting. Computes report due dates from the award period with scripts/report_deadlines.py. Use when the user needs a grant progress or final report, post-award reporting, an RPPR, a periodic report, a no-cost-extension request, milestone tracking, or a budget-variance narrative. For writing new proposals prefer alterlab-research-grants; for TÜBİTAK proposals prefer alterlab-tubitak-proposal. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key, account, or network required — report-format guidance plus a stdlib-only deadline calculator (scripts/report_deadlines.py); the user still submits through the funder's own portal (eRA Commons / Research.gov / EU Funding & Tenders Portal)",
       "allowed_tools": [
         "Read",
@@ -3652,7 +3652,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 168,
+      "body_lines": 196,
       "references": [
         "budget_variance.md",
         "funder_formats.md",
@@ -3662,10 +3662,10 @@
     {
       "name": "alterlab-preprint-deposition",
       "domain": "faculty-life",
-      "description": "Drives preprint deposition across servers (arXiv, bioRxiv, medRxiv, SSRN, OSF Preprints): picks the right server by field, prepares submission metadata, sets the license (arXiv offers CC BY/BY-SA/BY-NC-SA/BY-NC-ND 4.0, the arXiv non-exclusive license, or CC0; bioRxiv/medRxiv offer CC BY/BY-NC/BY-ND/BY-NC-ND/CC0 or No-reuse), maps arXiv category taxonomy, handles immutable versioning and preprint DOIs, checks a journal's preprint/self-archiving policy via the Sherpa Romeo v2 API, and links the posted preprint to the published article. Reuses alterlab-arxiv and alterlab-biorxiv for metadata and alterlab-open-science for data-repository choice. Use when depositing a preprint, choosing a preprint server, preparing an arXiv or bioRxiv submission, setting a preprint license, or checking journal preprint policy; for Zenodo/Dryad/Figshare data deposition prefer alterlab-open-science, for TÜBİTAK Aperta prefer alterlab-aperta. Part of the AlterLab Academic Skills suite.",
+      "description": "Drives preprint deposition across servers (arXiv, bioRxiv, medRxiv, ChemRxiv, SSRN, Research Square, OSF Preprints): picks the server by field, prepares submission metadata and arXiv categories, sets the license from each server's real option set (arXiv non-exclusive license or CC BY/BY-SA/BY-NC-SA/BY-NC-ND/CC0; bioRxiv/medRxiv CC variants or No-reuse) against funder mandates (NIH, NSF, Gates, Plan S), handles immutable versioning and preprint DOIs, checks a journal's preprint policy via the Jisc Open Policy Finder API (formerly Sherpa Romeo), and links the preprint to the published article. Reuses alterlab-arxiv and alterlab-biorxiv for metadata. Use when depositing a preprint, choosing a preprint server, preparing an arXiv, bioRxiv, or medRxiv submission, setting a preprint license, or checking journal preprint policy; for Zenodo/Dryad/Figshare data deposition prefer alterlab-open-science, for TÜBİTAK Aperta prefer alterlab-aperta. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "No API key required for the deposition workflow itself. Optional Python helpers run via `uv run python` (stdlib-only, requests optional). The journal-policy check uses the Sherpa Romeo v2 API, which requires a free registered api-key; the bioRxiv/medRxiv preprint-to-publication check uses the keyless api.biorxiv.org content API.",
+      "version": "1.1.0",
+      "compatibility": "No API key required for the deposition workflow itself. Optional Python helpers run via `uv run python` (stdlib-only, requests optional). The journal-policy check uses the Jisc Open Policy Finder API (successor to the Sherpa Romeo v2 API, which was switched off in 2026), which needs a free non-commercial API key sent as an x-api-key header; the bioRxiv/medRxiv preprint-to-publication check uses the keyless api.biorxiv.org content API.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -3675,7 +3675,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 196,
+      "body_lines": 230,
       "references": [
         "journal_policy.md",
         "licensing.md",
@@ -3688,7 +3688,7 @@
       "domain": "faculty-life",
       "description": "Drafts evidence-anchored academic reference and recommendation letters across types — graduate admission, faculty hiring, tenure/promotion external review, fellowship, and award nomination — from a structured prompt of candidate accomplishments, role context, evaluator relationship, and audience, calibrating specificity and register to the letter type and running a no-fabrication guard that flags unsupported superlatives, unanchored rankings, and claims with no evidence in the supplied dossier. Ships scripts/letter_scaffold.py to emit a typed section skeleton and scripts/claim_guard.py to lint a draft for evidence-free assertions. Use when the request is to write a recommendation or reference letter for a student or colleague, a tenure or promotion external-review letter, a fellowship or award nomination, or to check a letter draft for unsupported claims. For a candidate writing their own CV, research statement, or career narrative prefer alterlab-academic-career. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key, account, or network required — generates letters from the supplied dossier via the Read/Write/Edit tools plus two stdlib-only helpers (scripts/letter_scaffold.py, scripts/claim_guard.py) run through `uv run python`. The recommender always reviews, signs, and submits the final letter themselves.",
       "allowed_tools": [
         "Read",
@@ -3699,7 +3699,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 194,
+      "body_lines": 219,
       "references": [
         "evidence_and_specificity.md",
         "intake_checklist.md",
@@ -3709,9 +3709,9 @@
     {
       "name": "alterlab-redcap-cdisc",
       "domain": "faculty-life",
-      "description": "Designs validated research data-capture instruments and aligns them to CDISC submission standards. Builds REDCap projects from a requirements spec: instrument and field design, the 18-column data dictionary (Variable/Field Name, Form Name, Field Type, Choices, Branching Logic, Text Validation, Identifier?), field validation (date_ymd, integer, number, email, phone), branching/show-field logic, longitudinal events and survey settings, and lints a data dictionary for common errors. Maps a study to CDISC: CDASH collection fields, SDTM domain mapping (DM, AE, VS, LB, EX, CM, MH across Interventions/Events/Findings classes), and NCI-EVS controlled terminology. Use when the user wants to build a REDCap project, write or lint a data dictionary, set up branching logic or validation, or map a study to CDISC SDTM/CDASH/CDISC CT. For LabArchives ELN bridging use alterlab-labarchive; for Likert/sampling/reliability use alterlab-survey-design. Part of the AlterLab Academic Skills suite.",
+      "description": "Designs validated research data-capture instruments and aligns them to CDISC submission standards. Builds REDCap projects from a requirements spec: instrument and field design, the 18-column data dictionary (Variable/Field Name, Form Name, Field Type, Choices, Branching Logic, Text Validation, Identifier?), field validation (date_ymd, integer, number, email, phone), branching/show-field logic, longitudinal events and survey settings, and lints a data dictionary for common errors. Maps a study to CDISC: CDASH collection fields, SDTM domain mapping (special-purpose DM; Events AE, MH; Findings VS, LB; Interventions EX, CM), and NCI-EVS controlled terminology. Use when the user wants to build a REDCap project, write or lint a data dictionary, set up branching logic or validation, or map a study to CDISC SDTM/CDASH/CDISC CT. For LabArchives ELN bridging use alterlab-labarchive; for Likert/sampling/reliability use alterlab-survey-design. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key required — designs REDCap data dictionaries as offline CSV and maps to CDISC standards from local rules; the bundled linter is stdlib-only `uv run python`. Pushing a dictionary into a live REDCap instance (the REDCap API) is out of scope and delegated to the instance owner.",
       "allowed_tools": [
         "Read",
@@ -3724,7 +3724,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 197,
+      "body_lines": 208,
       "references": [
         "cdisc_mapping.md",
         "redcap_design.md"
@@ -3733,9 +3733,9 @@
     {
       "name": "alterlab-syllabus-ai-policy",
       "domain": "faculty-life",
-      "description": "Drafts course-level generative-AI use policies and syllabus statements: assigns each graded task a permitted/restricted/prohibited tier (modeled on Cornell's prohibit/allow-with-attribution/encourage framework), writes the disclosure clause with a verbatim APA (OpenAI, 2023) or MLA Works Cited citation template for ChatGPT, and adds assessment-integrity, accessibility, and equity language bound to the institution's own academic-integrity code. Ships scripts/policy_builder.py to emit a paste-ready statement and scripts/policy_lint.py to flag a vague or self-contradicting draft. Use when the request mentions a syllabus AI policy, a course statement on ChatGPT or generative AI, an academic-integrity clause for AI tools, an AI-disclosure rule, or per-assignment permitted/prohibited AI tiers. For full course/backward design, syllabus, or rubrics use alterlab-teaching-design; for human-subjects AI-tool ethics use alterlab-research-ethics. Part of the AlterLab Academic Skills suite.",
+      "description": "Drafts course-level generative-AI use policies and syllabus statements: assigns each graded task a permitted/restricted/prohibited tier (modeled on Cornell's prohibit/allow-with-attribution/encourage framework), writes the disclosure clause with current APA (2025: cite the shared chat or the tool) and MLA generative-AI citation templates, and adds assessment-integrity, accessibility, and equity language bound to the institution's own academic-integrity code. Ships scripts/policy_builder.py to emit a paste-ready statement and scripts/policy_lint.py to flag a vague or self-contradicting draft. Use when the request mentions a syllabus AI policy, a course statement on ChatGPT or generative AI, an academic-integrity clause for AI tools, an AI-disclosure rule, or per-assignment permitted/prohibited AI tiers. For full course/backward design, syllabus, or rubrics use alterlab-teaching-design; for human-subjects AI-tool ethics use alterlab-research-ethics. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key or network required — emits institution-parameterized policy text from local templates via `uv run python`; WebFetch is used only to read a linked institutional academic-integrity code when the user supplies its URL",
       "allowed_tools": [
         "Read",
@@ -3746,7 +3746,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 202,
+      "body_lines": 212,
       "references": [
         "disclosure_and_citation.md",
         "integrity_accessibility.md",
@@ -4158,7 +4158,7 @@
       "domain": "methodology",
       "description": "Enforces pre-registration discipline with the Iron Law NO DATA ANALYSIS WITHOUT A PRE-REGISTERED ANALYSIS PLAN FIRST, a spirit-vs-letter line, an Excuse-vs-Reality rationalization table, and a Red-Flags-STOP list (HARKing, optional stopping, post-hoc covariates, outlier-dropping, test-shopping). Runs a PLAN/COLLECT/CONFIRM/EXPLORE workflow that freezes hypotheses, tests, exclusions, and stopping rules before data, then forces unplanned findings to be labeled exploratory (their p-values lose confirmatory status, per COS confirmatory/exploratory model). Orchestrates, not replaces, alterlab-open-science (OSF/AsPredicted registration), alterlab-statistical-analysis (test selection, assumptions), and alterlab-scientific-thinking (bias grading). Use when analyzing data without a frozen plan, switching the primary outcome or adding covariates after seeing results, weighing early stopping, dropping outliers post-hoc, pre-registering a study, or rationalizing deviation. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "No API key required. Judgment/discipline skill; the optional helper runs locally via `uv run python` (stdlib only). Defers all registration mechanics and statistics to the sibling skills it orchestrates.",
       "allowed_tools": [
         "Read",
@@ -4179,7 +4179,7 @@
       "domain": "methodology",
       "description": "Enforces results-reporting transparency as a discipline gate built on the Iron Law \"NO RESULTS CLAIM WITHOUT REPORTING EVERY ANALYSIS RUN\" — a numbered Gate Function (IDENTIFY the claim, LIST every test actually run including the ones that did not \"work\", CHECK assumptions were reported, CHECK effect size with 95% CI is present, CHECK pre-registration deviations are disclosed, ONLY THEN write the sentence), plus an Excuse-vs-Reality table and Red-Flags-STOP list for selective reporting, cherry-picking, and bare p-values. Use when writing up Results, claiming a finding from a subset of analyses, reporting a p-value without an effect size or confidence interval, dropping outliers post hoc, or omitting analyses that did not pan out. Orchestrates alterlab-statistical-analysis (tests, effect sizes), alterlab-preregistration-discipline (the frozen plan), and alterlab-open-science (TOP, disclosure); it does not run the tests itself. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "No API key required. Judgment/discipline skill; the optional reporting-gate helper runs locally via `uv run python` (stdlib only).",
       "allowed_tools": [
         "Read",
@@ -4198,7 +4198,7 @@
       "domain": "methodology",
       "description": "Enforces statistical-test selection as a discipline, holding the Iron Law NO TEST CHOSEN AFTER SEEING THE P-VALUE: routes the choice through a fixed decision tree (outcome type -> groups -> paired? -> normality) terminating in named tests (t-test, Mann-Whitney U, ANOVA, Kruskal-Wallis, Wilcoxon, Friedman, chi-square, Pearson/Spearman, regression), gates interpretation behind a mandatory Shapiro-Wilk/Levene/linearity assumption check, blocks test-shopping with an Excuse-vs-Reality table and Red-Flags-STOP list, and applies a 3+-tests escalation gate forcing Bonferroni/FDR correction or an exploratory label. Use when choosing or switching a statistical test, asking which test to run, dropping a test after a non-significant result, or running many tests hunting for significance. For executing the chosen test prefer alterlab-statistical-analysis or alterlab-statsmodels; for the broader frozen-plan discipline see alterlab-preregistration-discipline. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "No API key required. A discipline-enforcing guidance skill; the optional decision-tree helper runs locally via `uv run python` (standard library only).",
       "allowed_tools": [
         "Read",
@@ -4206,7 +4206,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 262,
+      "body_lines": 263,
       "references": [
         "assumption_gate.md",
         "decision_tree.md",
@@ -4217,25 +4217,25 @@
     {
       "name": "alterlab-bgpt-search",
       "domain": "research-tools",
-      "description": "Search scientific papers and retrieve structured experimental data extracted from full-text studies via the BGPT MCP server, returning 25+ fields per paper (methods, results, sample sizes, quality scores, conclusions). Use when running a literature review or evidence synthesis, or when needing experimental details (sample sizes, effect sizes, methods, quality scores) that abstracts alone do not provide. Part of the AlterLab Academic Skills suite.",
+      "description": "Search scientific papers and retrieve structured experimental evidence extracted from full-text studies via the BGPT MCP server (`search_papers`, plus `lookup_paper` by DOI), returning 25+ fields per paper (methods, results, sample sizes, quality scores, limitations, conclusions). Use when running a literature review or evidence synthesis, or when needing experimental details (sample sizes, effect sizes, methods, quality scores) that abstracts alone do not provide. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.1",
-      "compatibility": "Connects to the BGPT MCP server. Free tier allows 50 free results with no API key; higher volume needs a BGPT API key from bgpt.pro/mcp. Requires network access.",
+      "version": "1.1.0",
+      "compatibility": "Connects to the remote BGPT MCP server (SSE or Streamable HTTP). The first 50 results are free with no API key; after that a paid BGPT key from bgpt.pro/mcp ($0.02 per result returned). Requires network access.",
       "allowed_tools": [
         "Bash"
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 70,
+      "body_lines": 96,
       "references": []
     },
     {
       "name": "alterlab-citation-graph",
       "domain": "research-tools",
-      "description": "Free, key-less ResearchRabbit analog — builds a citation and co-citation graph around one or more seed papers using the OpenAlex API. Walks both directions of the citation network (works the seed cites and works that cite the seed), ranks the discovered neighbourhood by co-citation strength and bibliographic coupling to surface the papers most central to a topic's literature, and exports the network as GraphML (Gephi / Cytoscape / yEd) and JSON. Use when mapping a literature landscape, finding seminal or highly co-cited papers from a seed DOI, snowballing a reference network, building a citation map / co-citation analysis, or visualizing how a research area's papers connect — no API key required (polite mailto only). Part of the AlterLab Academic Skills suite.",
+      "description": "Free ResearchRabbit / Connected Papers analog — builds a citation and co-citation graph around one or more seed papers using the OpenAlex API. Walks both directions of the citation network (works the seed cites and works that cite the seed), ranks the discovered neighbourhood by co-citation strength and bibliographic coupling to surface the papers most central to a topic's literature, and exports the network as GraphML (Gephi / Cytoscape / yEd) and JSON. Use when mapping a literature landscape, finding seminal or highly co-cited papers from a seed DOI, snowballing a reference network, building a citation map / co-citation analysis, or visualizing how a research area's papers connect — no subscription needed (a free OpenAlex API key is recommended). Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "No API key required. Optional OPENALEX_MAILTO (or --mailto) for the OpenAlex polite pool. Needs network access to api.openalex.org. Stdlib-only — runs under bare `uv run python`.",
+      "version": "1.1.0",
+      "compatibility": "Free OpenAlex API key recommended (OPENALEX_API_KEY or --api-key; openalex.org/settings/api) — keyless requests share a small per-IP daily budget and can hit HTTP 429. Needs network access to api.openalex.org. Stdlib-only — runs under bare `uv run python`.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -4244,7 +4244,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 134,
+      "body_lines": 154,
       "references": []
     },
     {
@@ -4252,7 +4252,7 @@
       "domain": "research-tools",
       "description": "Mixed methods research design and integration strategies for combining qualitative and quantitative approaches. Use when planning convergent, explanatory sequential, exploratory sequential, embedded, transformative, or multiphase designs; when integrating diverse data sources through merging, connecting, or embedding; when constructing joint displays or meta-inferences; or when evaluating quality criteria specific to mixed methods research. Covers Creswell & Plano Clark frameworks, notation systems, and software tools for integration. For single-strand qualitative coding (thematic analysis, grounded theory, saturation, inter-coder reliability) use alterlab-qualitative-methods; for questionnaire/Likert/instrument-validation mechanics use alterlab-survey-design. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.",
       "allowed_tools": [
         "Read",
@@ -4262,7 +4262,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 402,
+      "body_lines": 416,
       "references": [
         "joint_display_templates.md",
         "mixed-methods-frameworks.md",
@@ -4274,7 +4274,7 @@
       "domain": "research-tools",
       "description": "Guidance for open science practices — preregistration (OSF Registries, AsPredicted, PROSPERO, ClinicalTrials.gov), open data and FAIR principles, repository choice (Zenodo, Dryad, Figshare), open access routes (Green/Gold/Diamond), Creative Commons licensing, reproducible computational workflows (Docker, Binder, Code Ocean), registered reports, open peer review, and TOP Guidelines. Use when preregistering a study, writing the FAIR data-sharing and repository section of a grant data management plan (NSF, NIH, ERC, UKRI), choosing a data repository, navigating open access, or building reproducible analyses. For human-subjects ethics, IRB applications, informed consent, or GDPR/HIPAA compliance, defer to alterlab-research-ethics. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.",
       "allowed_tools": [
         "Read",
@@ -4284,7 +4284,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 408,
+      "body_lines": 419,
       "references": [
         "data_sharing_and_dmp.md",
         "open-science-resources.md",
@@ -4295,10 +4295,10 @@
     {
       "name": "alterlab-parallel-web",
       "domain": "research-tools",
-      "description": "Search the web, run deep research, and extract content from known URLs via the Parallel Web Systems Chat API (OpenAI-compatible) and Extract API, returning synthesized summaries with inline citations. Use when running general web searches, current-events/market/technical lookups, broad information gathering, comprehensive research reports, or verifying a specific URL's content (requires PARALLEL_API_KEY). For scholarly paper retrieval or dual-backend academic lookup that auto-routes to Perplexity prefer alterlab-research-lookup instead. Part of the AlterLab Academic Skills suite.",
+      "description": "Search the web, run deep research, and extract content from known URLs via Parallel Web Systems — the Chat API (Beta, OpenAI-compatible `base`/`core` research models) for synthesized answers with inline citations and the Extract API v1 for URL content — with notes on the raw Search, Task, and Responses APIs. Use when running general web searches, current-events/market/technical lookups, broad information gathering, comprehensive research reports, or verifying a specific URL's content (requires PARALLEL_API_KEY). For scholarly paper retrieval or dual-backend academic lookup that auto-routes to Perplexity prefer alterlab-research-lookup instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "PARALLEL_API_KEY required",
+      "version": "1.1.0",
+      "compatibility": "PARALLEL_API_KEY required. Python packages openai (Chat API) and parallel-web >= 1.0 (Extract API v1); sends queries and URLs to api.parallel.ai.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -4307,7 +4307,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 298,
+      "body_lines": 282,
       "references": [
         "api_reference.md",
         "deep_research_guide.md",
@@ -4321,8 +4321,8 @@
       "domain": "research-tools",
       "description": "Free Elicit-columns analog — ingest N PDFs (or any MarkItDown-supported document) and build a per-paper evidence table with user-defined columns, one row per paper and one column per attribute/question you want pulled from every source. Use when extracting structured data across many papers into a comparison table or data-extraction sheet (sample size, methods, main finding, effect, population/intervention/outcome, limitations), screening a corpus into a spreadsheet, or pulling the same fields from a stack of PDFs into CSV/Markdown. Routes conversion through MarkItDown; offline heuristic backend by default, optional LLM backend for precise answers. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "markitdown (uv pip install 'markitdown[all]') required for conversion; optional llm backend needs the openai client + OPENROUTER_API_KEY (or OPENAI_API_KEY/OPENAI_BASE_URL)",
+      "version": "1.0.1",
+      "compatibility": "markitdown >= 0.1 (uv pip install 'markitdown[all]') required for conversion; optional llm backend needs the openai client + OPENROUTER_API_KEY (or OPENAI_API_KEY with OPENAI_BASE_URL) and sends paper text to that endpoint",
       "allowed_tools": [
         "Read",
         "Write",
@@ -4331,16 +4331,16 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 107,
+      "body_lines": 121,
       "references": []
     },
     {
       "name": "alterlab-perplexity",
       "domain": "research-tools",
-      "description": "Run AI web searches with real-time, citation-grounded answers using Perplexity Sonar models (sonar, sonar-pro, sonar-pro-search agentic search, sonar-reasoning, sonar-reasoning-pro) via LiteLLM and a single OpenRouter API key. Use when searching for current information or recent scientific literature, getting answers grounded in cited web sources, verifying a claim against current evidence, or reaching information beyond the model's training cutoff. Requires an OpenRouter API key. This is the direct single-backend Perplexity tool: for automatic routing between Perplexity and other backends use alterlab-research-lookup, and for structured per-paper experimental-data extraction (sample sizes, effect sizes, quality scores) use alterlab-bgpt-search. Part of the AlterLab Academic Skills suite.",
+      "description": "Run AI web searches with real-time, citation-grounded answers using Perplexity Sonar models (sonar, sonar-pro, sonar-pro-search agentic search, sonar-reasoning-pro) via LiteLLM and a single OpenRouter API key. Use when searching for current information or recent scientific literature, getting answers grounded in cited web sources, verifying a claim against current evidence, or reaching information beyond the model's training cutoff. Requires an OpenRouter API key. This is the direct single-backend Perplexity tool: for automatic routing between Perplexity and other backends use alterlab-research-lookup, and for structured per-paper experimental-data extraction (sample sizes, effect sizes, quality scores) use alterlab-bgpt-search. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "An OpenRouter API key is required to use Perplexity search",
+      "version": "1.1.0",
+      "compatibility": "An OpenRouter API key (OPENROUTER_API_KEY) is required; uses the litellm Python package and sends queries to OpenRouter/Perplexity.",
       "allowed_tools": [
         "Read",
         "WebFetch",
@@ -4349,7 +4349,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 102,
+      "body_lines": 112,
       "references": [
         "model_comparison.md",
         "openrouter_setup.md",
@@ -4361,8 +4361,8 @@
       "domain": "research-tools",
       "description": "Interact with Zotero reference management libraries using the pyzotero Python client — retrieve, create, update, and delete items, collections, tags, and attachments via the Zotero Web API v3. Use when working with Zotero libraries programmatically, managing bibliographic references, exporting citations, searching library contents, uploading PDF attachments, or building research automation workflows that integrate with Zotero. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires a Zotero account and ZOTERO_API_KEY (plus library ID) for the Web API; local read-only mode needs no key. Runs via `uv run python`.",
+      "version": "1.1.0",
+      "compatibility": "pyzotero >= 1.15 (Python >= 3.10). Requires a Zotero account and ZOTERO_API_KEY (plus library ID) for the Web API; local mode reads a running Zotero 7+ desktop app with no key, and local writes need Zotero 10+ plus a locally authorized key. Runs via `uv run python`.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -4371,7 +4371,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 104,
+      "body_lines": 126,
       "references": [
         "authentication.md",
         "cli.md",
@@ -4393,7 +4393,7 @@
       "domain": "research-tools",
       "description": "Comprehensive qualitative research methods assistant supporting thematic analysis (Braun & Clarke), grounded theory (Strauss & Corbin; Charmaz), interpretative phenomenological analysis (IPA), content analysis, narrative inquiry, ethnography, case study methodology (Yin), coding techniques (open/axial/selective), NVivo-style workflows with Python alternatives, trustworthiness criteria (Lincoln & Guba), reflexivity, and member checking. Use when designing or analyzing qualitative research — thematic analysis, grounded theory, coding data, phenomenology, IPA, ethnography, case study, narrative inquiry, content analysis, qualitative coding, NVivo, trustworthiness, member checking, reflexivity, interview analysis, or focus group analysis. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.",
       "allowed_tools": [
         "Read",
@@ -4403,7 +4403,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 448,
+      "body_lines": 453,
       "references": [
         "python_workflows.md",
         "qualitative-frameworks.md",
@@ -4415,7 +4415,7 @@
       "domain": "research-tools",
       "description": "International research ethics and compliance assistant supporting IRB/ethics board applications, informed consent drafting, data management plans, Belmont Report principles, Declaration of Helsinki (2024), GDPR compliance for research, HIPAA considerations, vulnerable populations protocols, deception research, confidentiality and anonymity, research integrity (fabrication/falsification/plagiarism), conflict of interest disclosure, and dual-use research oversight. Use when preparing an IRB or ethics board application, drafting informed consent, writing a data management plan, addressing GDPR/HIPAA in research, protecting human subjects or vulnerable populations, handling animal ethics, or disclosing conflicts of interest. For Turkey-specific etik kurul use alterlab-tr-research-ethics; for KVKK data plans alterlab-kvkk-dmp; for survey wording alterlab-survey-design; for qualitative methodology alterlab-qualitative-methods. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "compatibility": "No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.",
       "allowed_tools": [
         "Read",
@@ -4425,7 +4425,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 388,
+      "body_lines": 398,
       "references": [
         "data_management_plan_template.md",
         "ethics-guidelines.md",
@@ -4436,10 +4436,10 @@
     {
       "name": "alterlab-research-lookup",
       "domain": "research-tools",
-      "description": "Look up current research and scholarly papers by auto-routing each query to the best backend — the Parallel Web Systems Chat API (general research) or Perplexity sonar-pro-search (academic paper searches) — and save every result with citations to sources/. Use when finding papers, gathering research data, verifying scientific claims, or assembling citation lists and unsure which search backend fits. For plain general web search or extracting content from a known URL prefer alterlab-parallel-web instead (requires PARALLEL_API_KEY and OPENROUTER_API_KEY). Part of the AlterLab Academic Skills suite.",
+      "description": "Look up current research and scholarly papers by auto-routing each query to the best backend — the Parallel Web Systems Chat API (general research) or Perplexity sonar-pro-search via OpenRouter (academic paper searches) — and save every result with citations to sources/. Use when finding papers, gathering research data, verifying scientific claims, or assembling citation lists and unsure which search backend fits. For plain general web search or extracting content from a known URL prefer alterlab-parallel-web; to call Perplexity directly with a chosen Sonar model prefer alterlab-perplexity. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "PARALLEL_API_KEY and OPENROUTER_API_KEY required",
+      "version": "1.1.0",
+      "compatibility": "At least one of PARALLEL_API_KEY (Parallel Chat API) or OPENROUTER_API_KEY (Perplexity via OpenRouter); both recommended. Python packages openai and requests; queries are sent to those services.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -4448,7 +4448,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 392,
+      "body_lines": 402,
       "references": [
         "troubleshooting.md"
       ]
@@ -4456,9 +4456,9 @@
     {
       "name": "alterlab-scientific-brainstorm",
       "domain": "research-tools",
-      "description": "Creative research ideation and exploration for open-ended brainstorming, surfacing interdisciplinary connections, challenging assumptions, and identifying research gaps. Use when starting early-stage research planning with no specific observations yet — for open-ended brainstorming sessions, exploring cross-disciplinary connections, or finding gaps. For formulating testable hypotheses from observations or data use hypothesis-gen; for grading evidence or spotting design flaws use scientific-thinking. Part of the AlterLab Academic Skills suite.",
+      "description": "Creative research ideation and exploration for open-ended brainstorming, surfacing interdisciplinary connections, challenging assumptions, and identifying research gaps. Use when starting early-stage research planning with no specific observations yet — for open-ended brainstorming sessions, exploring cross-disciplinary connections, or finding gaps. For formulating testable hypotheses from observations or data use alterlab-hypothesis-gen; for grading evidence or spotting design flaws use alterlab-scientific-thinking. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "No API key required. Guidance-focused, conversational skill; optionally uses WebFetch/WebSearch to pull cross-disciplinary analogies or check whether a research gap is already covered.",
       "allowed_tools": [
         "Read",
@@ -4467,7 +4467,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 183,
+      "body_lines": 195,
       "references": [
         "brainstorming_methods.md"
       ]
@@ -4475,9 +4475,9 @@
     {
       "name": "alterlab-scientific-thinking",
       "domain": "research-tools",
-      "description": "Evaluate scientific claims and evidence quality using evidence grading frameworks (GRADE, Cochrane Risk of Bias), assessing experimental design validity and identifying biases, confounders, statistical pitfalls, and logical fallacies. Use when judging evidence quality, grading certainty of evidence, spotting design or causal-inference flaws, identifying biases or confounders, naming statistical fallacies, or teaching critical analysis. For writing a formal submittable peer review use alterlab-peer-review; for a multi-reviewer mock panel verdict use alterlab-paper-reviewer; for IRB/consent/conflict-of-interest ethics use alterlab-research-ethics. Part of the AlterLab Academic Skills suite.",
+      "description": "Evaluate scientific claims and evidence quality using evidence grading frameworks (GRADE, Cochrane risk-of-bias tools such as RoB 2 and ROBINS-I), assessing experimental design validity and identifying biases, confounders, statistical pitfalls, and logical fallacies. Use when judging evidence quality, grading certainty of evidence, spotting design or causal-inference flaws, identifying biases or confounders, naming statistical fallacies, or teaching critical analysis. For writing a formal submittable peer review use alterlab-peer-review; for a multi-reviewer mock panel verdict use alterlab-paper-reviewer; for IRB/consent/conflict-of-interest ethics use alterlab-research-ethics. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "No API key required. Guidance-focused skill; optional Python helpers run via `uv run python`.",
       "allowed_tools": [
         "Read",
@@ -4487,7 +4487,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 363,
+      "body_lines": 375,
       "references": [
         "common_biases.md",
         "evaluation_checklists.md",
@@ -4503,7 +4503,7 @@
       "domain": "research-tools",
       "description": "Comprehensive survey and instrument design assistant supporting questionnaire construction, Likert scale design, question types (open/closed/matrix), response bias mitigation, sampling strategies (probability/non-probability), pilot testing, instrument validation (Cronbach's alpha, factor analysis), online survey tools (Qualtrics, REDCap, Google Forms), interview protocol development, focus group facilitation, mixed-mode surveys, and cultural adaptation of instruments. Use when designing a survey or questionnaire, building Likert scales, planning a sampling strategy, pilot testing, validating an instrument (Cronbach's alpha, factor analysis), developing an interview protocol, improving response rates, or working in Qualtrics or REDCap. For analyzing interview/focus-group data use alterlab-qualitative-methods; for qual+quant integration alterlab-mixed-methods; for test selection/power analysis alterlab-statistical-analysis; for IRB/consent alterlab-research-ethics. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.",
       "allowed_tools": [
         "Read",
@@ -4513,7 +4513,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 266,
+      "body_lines": 270,
       "references": [
         "item_writing_and_scales.md",
         "pilot_and_validation.md",
@@ -5108,7 +5108,7 @@
       "domain": "visualization",
       "description": "Verify publication figures with a render-then-check QA pass — data-fidelity against every underlying row, axis/label floor-and-ceiling legibility, bounding-box collision detection for overlapping text/markers, and 300-dpi print-readiness. Use when proofing or auditing a finished figure for correctness and print quality, catching mislabeled or overlapping elements, or confirming a plot faithfully represents its data before submission. For CREATING the plot prefer alterlab-matplotlib (or alterlab-seaborn / alterlab-plotly); for multi-panel publication layout prefer alterlab-scientific-viz; for schematic diagrams prefer alterlab-scientific-schematics. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Runs under `uv run python` with the plotting stack already used to make the figure (Matplotlib and, for image/text-box checks, Pillow). No GPU, no account. Operates on a rendered figure plus the source data — it re-renders and inspects, it does not need network access.",
       "allowed_tools": [
         "Read",
@@ -5127,10 +5127,10 @@
     {
       "name": "alterlab-generate-image",
       "domain": "visualization",
-      "description": "Generates or edits raster images via AI models (FLUX.2, Gemini 3.1 Flash Image / \"Nano Banana 2\") through an OpenRouter API key. Use when the request is to generate or edit a photo, illustration, artwork, concept art, poster hero image, or presentation/slide visual asset — anything that is not a technical diagram or a data chart. For flowcharts, circuits, pathways, neural-net architectures, and technical/methodology diagrams use alterlab-scientific-schematics; for plotting numeric data (scatter, bar, line) use alterlab-matplotlib instead. Part of the AlterLab Academic Skills suite.",
+      "description": "Generates or edits raster images via AI models (FLUX.2, Gemini 3.1 Flash Image / \"Nano Banana 2\") through an OpenRouter API key. Use when the request is to generate or edit a photo, illustration, artwork, concept art, poster hero image, or presentation/slide visual asset — anything that is not a technical diagram, an infographic, or a data chart. For flowcharts, circuits, pathways, neural-net architectures, and technical/methodology diagrams use alterlab-scientific-schematics; for infographics that lay out statistics or timelines use alterlab-infographics; for plotting numeric data (scatter, bar, line) use alterlab-matplotlib instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires an OpenRouter API key",
+      "version": "1.1.0",
+      "compatibility": "Requires an OpenRouter API key (OPENROUTER_API_KEY) and the requests library; the default model can be overridden with ALTERLAB_IMAGE_MODEL",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5139,16 +5139,16 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 103,
+      "body_lines": 104,
       "references": []
     },
     {
       "name": "alterlab-infographics",
       "domain": "visualization",
-      "description": "Creates professional infographics with Nano Banana Pro AI and smart iterative refinement, using Gemini 3 Pro for automated quality review and an optional Perplexity Sonar research phase for accurate, sourced data — supports 10 infographic types, 8 industry styles, and colorblind-safe palettes. Use when the request is for an infographic, data-story graphic, statistical poster, comparison chart, timeline, process/how-to visual, or list/social graphic that pairs a designed layout with figures. Use alterlab-scientific-schematics instead for technical flowcharts, CONSORT/PRISMA, pathways, or architecture diagrams; alterlab-generate-image for non-infographic illustrations. Part of the AlterLab Academic Skills suite.",
+      "description": "Creates professional infographics with Nano Banana Pro AI and smart iterative refinement, using Gemini 3.1 Pro for automated quality review and an optional Perplexity Sonar research phase for sourced data — supports 10 infographic types, 8 industry styles, and colorblind-safe palettes. Use when the request is for an infographic, data-story graphic, statistical poster, comparison chart, timeline, process/how-to visual, or list/social graphic that pairs a designed layout with figures. Use alterlab-scientific-schematics instead for technical flowcharts, CONSORT/PRISMA, pathways, or architecture diagrams; alterlab-generate-image for non-infographic illustrations; alterlab-matplotlib for exact plots of a dataset. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires an OpenRouter API key (OPENROUTER_API_KEY) for Nano Banana Pro generation and Gemini 3 Pro quality review",
+      "version": "1.1.0",
+      "compatibility": "Requires an OpenRouter API key (OPENROUTER_API_KEY) and the requests library for Nano Banana Pro generation (google/gemini-3-pro-image), Gemini 3.1 Pro quality review, and optional Perplexity sonar-pro research; models can be overridden with ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5157,7 +5157,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 109,
+      "body_lines": 116,
       "references": [
         "cli_and_workflow.md",
         "color_palettes.md",
@@ -5171,8 +5171,8 @@
       "domain": "visualization",
       "description": "Builds plots with the matplotlib Python library (pyplot and the object-oriented Figure/Axes API) for full low-level customization, exporting to PNG/PDF/SVG. Use when fine-grained control over individual plot elements is needed — custom line/scatter/bar/histogram/heatmap/contour/box/violin/3D plots, rcParams and style-sheet tuning, or GridSpec subplot layouts inside a scientific Python workflow. Does NOT cover opinionated journal-ready multi-panel figure workflows (Nature/Science/Cell formatting, colorblind-safe palettes, significance annotations); for those prefer alterlab-scientific-viz instead. Part of the AlterLab Academic Skills suite.",
       "license": "BSD-3-Clause",
-      "version": "1.0.0",
-      "compatibility": "Requires the matplotlib Python library, version >= 3.9 (pip install 'matplotlib>=3.9'); examples also use numpy, and the histogram-fit example uses scipy. No API key or external service needed.",
+      "version": "1.1.0",
+      "compatibility": "Requires the matplotlib Python library, version >= 3.9 (current 3.11.2 as of 2026-09; matplotlib 3.11 needs Python >= 3.11) — uv pip install 'matplotlib>=3.9'; examples also use numpy, and the histogram-fit example uses scipy. No API key or external service needed.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5181,7 +5181,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 365,
+      "body_lines": 378,
       "references": [
         "api_reference.md",
         "common_issues.md",
@@ -5192,10 +5192,10 @@
     {
       "name": "alterlab-mermaid",
       "domain": "visualization",
-      "description": "Writes Markdown documents and text-based Mermaid diagrams (flowcharts, sequence, class, ER, gantt, state, and more) with full style guides, 24 diagram-type references, and 9 document templates. Use when authoring a scientific document, report, analysis, or README, or when a diagram should be expressed as version-controllable Mermaid/Markdown text rather than a rendered image. For AI-rendered publication schematics use scientific-schematics instead. Part of the AlterLab Academic Skills suite.",
+      "description": "Writes Markdown documents and text-based Mermaid diagrams (flowcharts, sequence, class, ER, gantt, state, and more) with full style guides, 24 diagram-type references, and 9 document templates. Use when a diagram or technical document should live as version-controllable Markdown/Mermaid text rather than a rendered image — READMEs, methods and pipeline diagrams, analysis or status reports, ADRs, and project docs that render natively on GitHub and GitLab. For AI-rendered publication schematics use alterlab-scientific-schematics; for manuscript prose use alterlab-scientific-writing; for plots of numeric data use alterlab-matplotlib. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.0.0",
-      "compatibility": "No API key, network, or runtime dependencies. Authoring is pure Markdown/Mermaid text; diagrams render natively on GitHub, GitLab, Notion, VS Code, and any Mermaid-aware viewer.",
+      "version": "1.1.0",
+      "compatibility": "No API key, network, or runtime dependencies. Authoring is pure Markdown/Mermaid text; diagrams render natively on GitHub, GitLab, Notion, VS Code, and any Mermaid-aware viewer. Syntax checked against Mermaid 11.12 and 12.0 (current 12.0.0 as of 2026-09).",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5204,7 +5204,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 311,
+      "body_lines": 319,
       "references": [
         "diagrams_architecture.md",
         "diagrams_block.md",
@@ -5237,10 +5237,10 @@
     {
       "name": "alterlab-plotly",
       "domain": "visualization",
-      "description": "Builds INTERACTIVE charts with the Plotly Python library (plotly.express / graph_objects) — hover tooltips, zoom/pan, animations, rangesliders, 3D rotation, and standalone HTML/web-embeddable output. Use when a chart must be interactive or web-embedded, for dashboards (incl. Dash), exploratory data analysis, or rotatable 3D plots. For static publication figures defer to alterlab-matplotlib; for static statistical charts (heatmaps, distributions) defer to alterlab-seaborn; for diagrams/schematics defer to alterlab-scientific-viz. Part of the AlterLab Academic Skills suite.",
+      "description": "Builds INTERACTIVE charts with the Plotly Python library (plotly.express / graph_objects) — hover tooltips, zoom/pan, animations, rangesliders, 3D rotation, and standalone HTML/web-embeddable output. Use when a chart must be interactive or web-embedded, for dashboards (incl. Dash), exploratory data analysis, or rotatable 3D plots. For static publication figures defer to alterlab-matplotlib (or alterlab-scientific-viz for journal formatting); for static statistical charts (heatmaps, distributions) defer to alterlab-seaborn; for diagrams/schematics defer to alterlab-scientific-schematics or alterlab-mermaid. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires the plotly Python library (pip install plotly); static image export (PNG/PDF/SVG) additionally needs kaleido",
+      "version": "1.1.0",
+      "compatibility": "Requires the plotly Python library, version >= 6 (current 7.1 as of 2026-09) — uv pip install plotly; static image export (PNG/PDF/SVG) additionally needs kaleido >= 1 plus a Chrome/Chromium install (run plotly_get_chrome); Dash apps need dash",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5249,7 +5249,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 260,
+      "body_lines": 289,
       "references": [
         "chart-types.md",
         "export-interactivity.md",
@@ -5261,10 +5261,10 @@
     {
       "name": "alterlab-scientific-schematics",
       "domain": "visualization",
-      "description": "Creates publication-quality scientific diagrams with Nano Banana 2 AI and smart iterative refinement, using Gemini 3.1 Pro Preview for quality review and regenerating only when quality falls below the document-type threshold. Use when the request is for a technical or scientific diagram — neural-network architectures, system/block diagrams, flowcharts, biological pathways, circuits, or other complex scientific visuals. For general photos, illustrations, or artwork use generate-image, for text-based Mermaid diagrams use mermaid. Part of the AlterLab Academic Skills suite.",
+      "description": "Creates publication-quality scientific diagrams with Nano Banana 2 AI and smart iterative refinement, using Gemini 3.1 Pro Preview for quality review and regenerating only when quality falls below the document-type threshold. Use when the request is for a rendered technical or scientific diagram — CONSORT/PRISMA flowcharts, neural-network architectures, system/block diagrams, biological pathways, circuits, or other complex scientific visuals. For general photos, illustrations, or artwork use alterlab-generate-image; for infographics use alterlab-infographics; for editable text-based Mermaid diagrams use alterlab-mermaid. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires an OpenRouter API key (OPENROUTER_API_KEY) for Nano Banana 2 generation and Gemini 3.1 Pro Preview quality review",
+      "version": "1.1.0",
+      "compatibility": "Requires an OpenRouter API key (OPENROUTER_API_KEY) and the requests library for Nano Banana 2 generation (google/gemini-3.1-flash-image) and Gemini 3.1 Pro Preview quality review (google/gemini-3.1-pro-preview); override with ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5273,7 +5273,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 237,
+      "body_lines": 251,
       "references": [
         "QUICK_REFERENCE.md",
         "README.md",
@@ -5290,8 +5290,8 @@
       "domain": "visualization",
       "description": "Orchestrates matplotlib, seaborn, and plotly with opinionated publication styles to produce journal-ready figures. Use when preparing journal-submission figures that need multi-panel layouts with bold panel labels, statistical significance annotations, error bars, colorblind-safe palettes (Okabe-Ito), or specific journal formatting (Nature, Science, Cell). Does NOT cover raw low-level plotting or fine-grained control of individual plot elements; for building custom plots from scratch or tuning every artist and rcParam prefer alterlab-matplotlib instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires the matplotlib, seaborn, and plotly Python libraries (pip install matplotlib seaborn plotly); no API key or external service needed",
+      "version": "1.1.0",
+      "compatibility": "Requires the matplotlib (>= 3.9, current 3.11.2), seaborn (>= 0.13), and plotly Python libraries — uv pip install matplotlib seaborn plotly; plotly static export also needs kaleido >= 1 and a Chrome install (plotly_get_chrome); no API key or external service needed",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5300,7 +5300,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 350,
+      "body_lines": 360,
       "references": [
         "color_palettes.md",
         "common_tasks.md",
@@ -5315,8 +5315,8 @@
       "domain": "visualization",
       "description": "Builds statistical plots with the seaborn Python library and pandas DataFrame integration, on attractive matplotlib-based defaults. Use for quick exploration of distributions, relationships, and categorical comparisons — box plots, violin plots, swarm/strip plots, KDE/histograms, pair plots, joint plots, regression plots, correlation heatmaps, and faceted small multiples (relplot/displot/catplot/lmplot). For interactive/hover/zoom charts defer to alterlab-plotly; for exact journal/manuscript styling (column widths, point fonts, CMYK, vector export) defer to alterlab-scientific-viz; for low-level custom matplotlib figures defer to alterlab-matplotlib (seaborn integrates with it for fine-tuning). Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires the seaborn and pandas Python libraries (pip install seaborn pandas); no API key or external service needed",
+      "version": "1.1.0",
+      "compatibility": "Requires seaborn >= 0.13 (current 0.13.2 as of 2026-09) and pandas — uv pip install seaborn pandas; verified on matplotlib 3.11 and pandas 3.0; no API key or external service needed",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5325,7 +5325,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 84,
+      "body_lines": 92,
       "references": [
         "best_practices_and_troubleshooting.md",
         "data_palettes_theming.md",
@@ -5370,7 +5370,7 @@
       "domain": "writing-tools",
       "description": "Prepares academic career documents and professional-development materials for faculty and researchers. Use when drafting academic CVs, research statements, teaching philosophies, diversity statements, faculty-position cover letters, tenure dossiers, promotion narratives, academic portfolios, or mentorship statements, and when planning conference-networking strategy, building academic web presence, setting up ORCID profiles, or understanding impact metrics. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "compatibility": "No external tools, API keys, or services required — produces documents from the Read/Write/Edit tools alone",
       "allowed_tools": [
         "Read",
@@ -5379,7 +5379,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 408,
+      "body_lines": 427,
       "references": [
         "career-templates.md",
         "cv_structure.md",
@@ -5389,10 +5389,10 @@
     {
       "name": "alterlab-citation-mgmt",
       "domain": "writing-tools",
-      "description": "Manages citations for academic research — searches Google Scholar and PubMed for papers, extracts accurate metadata, validates citations, and generates properly formatted BibTeX entries. Use when finding papers, verifying citation information, converting DOIs to BibTeX, checking reference accuracy in scientific writing, or building a bibliography. Part of the AlterLab Academic Skills suite.",
+      "description": "Manages citations for academic research — searches Google Scholar and PubMed for papers, extracts complete metadata from DOIs, PMIDs, and arXiv IDs (CrossRef, doi.org content negotiation, NCBI E-utilities, arXiv API), validates BibTeX entries for required fields, format, and duplicates, and generates or cleans properly formatted BibTeX. Use when finding papers, converting DOIs to BibTeX, cleaning or deduplicating a .bib file, checking reference metadata in scientific writing, or building a bibliography. To prove that cited references actually exist or to flag fabricated or retracted citations prefer alterlab-citation-verifier; for Zotero library operations use alterlab-pyzotero. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "No API key required. Needs network access to Google Scholar and PubMed; helper scripts use the scholarly, biopython, bibtexparser, crossref-commons, and pylatexenc Python packages",
+      "version": "1.0.1",
+      "compatibility": "No API key required (an optional NCBI_API_KEY raises the PubMed E-utilities limit from 3 to 10 requests/s). Needs network access to CrossRef, doi.org, NCBI E-utilities, arXiv, and Google Scholar; the helper scripts need requests, plus scholarly for Google Scholar search",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5401,7 +5401,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 153,
+      "body_lines": 170,
       "references": [
         "bibtex_formatting.md",
         "citation_validation.md",
@@ -5416,9 +5416,9 @@
     {
       "name": "alterlab-hypothesis-gen",
       "domain": "writing-tools",
-      "description": "Formulates structured, testable hypotheses from experimental observations using a scientific-method framework — derives predictions, proposes mechanisms, and designs experiments to test them, then renders a LaTeX report. Use when turning observations or data into falsifiable, mechanistic hypotheses, competing-explanation sets, testable predictions, or experimental designs. For a standalone systematic literature review or evidence synthesis (not a means to hypotheses) use alterlab-literature-review; to evaluate an existing manuscript use alterlab-peer-review. Part of the AlterLab Academic Skills suite.",
+      "description": "Formulates structured, testable hypotheses from experimental observations using a scientific-method framework — derives predictions, proposes mechanisms, and designs experiments to test them, then renders a LaTeX report. Use when turning observations or data into falsifiable, mechanistic hypotheses, competing-explanation sets, testable predictions, or experimental designs. For a standalone systematic literature review or evidence synthesis (not a means to hypotheses) use alterlab-literature-review; for open-ended brainstorming before any specific observation use alterlab-scientific-brainstorm; to evaluate an existing manuscript use alterlab-peer-review. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Hypothesis reasoning runs with the Read/Write/Edit/Bash tools alone; the literature-grounding step uses WebSearch/WebFetch (skip it if offline). Rendering the LaTeX report requires a local XeLaTeX/LuaLaTeX install (e.g. TeX Live) — optional, the analysis stands without it.",
       "allowed_tools": [
         "Read",
@@ -5430,7 +5430,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 252,
+      "body_lines": 220,
       "references": [
         "experimental_design_patterns.md",
         "hypothesis_quality_criteria.md",
@@ -5440,9 +5440,9 @@
     {
       "name": "alterlab-latex-posters",
       "domain": "writing-tools",
-      "description": "Creates professional research posters in LaTeX using beamerposter, tikzposter, or baposter — handles layout design, color schemes, multi-column formats, figure integration, and poster-specific visual-communication best practices. Use when building a conference or academic poster in LaTeX. For PowerPoint/PPTX poster output prefer pptx-posters instead. Part of the AlterLab Academic Skills suite.",
+      "description": "Creates professional research posters in LaTeX using beamerposter, tikzposter, or baposter — handles layout design, color schemes, multi-column formats, figure integration, and poster-specific visual-communication best practices. Use when building a conference or academic poster in LaTeX (the default for a research poster when no format is named). For PowerPoint/PPTX or HTML poster output prefer alterlab-pptx-posters; to auto-generate a poster, website, or video straight from a finished paper use alterlab-paper-2-web. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Requires a LaTeX distribution (pdflatex/xelatex/lualatex) with beamerposter or tikzposter installed (or baposter.cls placed alongside the .tex) to compile posters",
       "allowed_tools": [
         "Read",
@@ -5452,7 +5452,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 176,
+      "body_lines": 188,
       "references": [
         "README.md",
         "compilation_and_qc.md",
@@ -5469,10 +5469,10 @@
     {
       "name": "alterlab-literature-review",
       "domain": "writing-tools",
-      "description": "Conducts comprehensive, systematic literature reviews across multiple academic databases (PubMed, arXiv, bioRxiv, Semantic Scholar), with PRISMA flow tracking, study screening (title/abstract and full-text), evidence-table extraction, and risk-of-bias assessment, producing professionally formatted markdown documents and PDFs with verified citations in multiple styles (APA, Nature, Vancouver). Use when running a systematic literature review, meta-analysis, research synthesis, or broad literature search, building a PRISMA flow diagram, screening studies, extracting an evidence table, or assessing risk-of-bias across biomedical, scientific, and technical domains. Part of the AlterLab Academic Skills suite.",
+      "description": "Conducts comprehensive, systematic literature reviews across multiple academic databases (PubMed, arXiv, bioRxiv, Semantic Scholar), with PRISMA 2020 flow tracking, study screening (title/abstract and full-text), evidence-table extraction, and risk-of-bias assessment (RoB 2, ROBINS-I, AMSTAR 2), producing professionally formatted markdown documents and PDFs with verified citations in multiple styles (APA, Nature, Vancouver). Use when running a systematic or scoping literature review, research synthesis, or broad literature search, building a PRISMA flow diagram, screening studies, extracting an evidence table, or assessing risk of bias across biomedical, scientific, and technical domains. For quantitative pooling of effect sizes (forest/funnel plots) use alterlab-meta-analysis; for an open-ended multi-agent investigation, fact-check, or Socratic research-question work use alterlab-deep-research. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Needs network access to PubMed, arXiv, bioRxiv, and Semantic Scholar (biopython/arxiv clients); PDF output requires pandoc and xelatex (check with --check-deps)",
+      "version": "1.1.0",
+      "compatibility": "Needs network access to PubMed, arXiv, bioRxiv, and Semantic Scholar (searches follow the Entrez/Biopython and REST snippets in the references); verify_citations.py needs requests; PDF output requires pandoc and xelatex (check with --check-deps)",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5481,7 +5481,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 313,
+      "body_lines": 332,
       "references": [
         "citation_styles.md",
         "database_search_guidance.md",
@@ -5493,10 +5493,10 @@
     {
       "name": "alterlab-paper-2-web",
       "domain": "writing-tools",
-      "description": "Converts academic papers into promotional and presentation formats — interactive websites (Paper2Web), presentation videos (Paper2Video), and conference posters (Paper2Poster) from LaTeX or PDF sources. Use when disseminating a paper, preparing for a conference, building an explorable academic homepage, generating a video abstract, or producing a print-ready poster from a paper. Part of the AlterLab Academic Skills suite.",
+      "description": "Converts academic papers into promotional and presentation formats with the third-party Paper2All pipeline (LLM calls routed through OpenRouter/OpenAI) — interactive websites (Paper2Web), presentation videos (Paper2Video), and conference posters (Paper2Poster) from a paper PDF and its LaTeX sources. Use when disseminating a paper, preparing for a conference, building an explorable academic homepage, generating a video abstract, or auto-generating a print-ready poster from a finished paper. For a hand-built LaTeX poster use alterlab-latex-posters; for a talk deck use alterlab-scientific-slides. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "Requires an OPENAI_API_KEY (set in a .env file) for the generation pipelines; optional talking-head video needs an NVIDIA GPU (A6000 48GB)",
+      "version": "1.1.0",
+      "compatibility": "Runs the third-party Paper2All repo (github.com/YuhangChen1/Paper2All). pipeline_all.py (website, poster, PR) requires OPENROUTER_API_KEY exported in the shell and sends paper content to OpenRouter-hosted models; Paper2Video and the sub-modules read OPENAI_API_KEY / OPENAI_API_BASE from a .env file. Needs LibreOffice and Poppler; the optional talking-head video needs an NVIDIA GPU (upstream recommends an A6000 48GB)",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5505,7 +5505,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 464,
+      "body_lines": 461,
       "references": [
         "installation.md",
         "paper2poster.md",
@@ -5517,9 +5517,9 @@
     {
       "name": "alterlab-peer-review",
       "domain": "writing-tools",
-      "description": "Writes structured, checklist-based manuscript and grant peer reviews — assesses methodology, statistical validity, reporting-standards compliance (CONSORT/STROBE/PRISMA), and gives constructive feedback. Use when writing a formal reviewer report, responding to a journal/grant review invitation, or revising a manuscript against reviewer criteria. For evaluating claims/evidence quality prefer alterlab-scientific-thinking; for a multi-reviewer mock-panel verdict use alterlab-paper-reviewer; for quantitative rubric scoring use alterlab-scholar-eval. Part of the AlterLab Academic Skills suite.",
+      "description": "Writes structured, checklist-based single-reviewer reports for manuscripts and grant proposals — assesses methodology, statistical validity, reporting-standards compliance (CONSORT 2025, SPIRIT 2025, STROBE, PRISMA 2020, ARRIVE 2.0), reproducibility, and ethics, and gives constructive, prioritized feedback while respecting reviewer confidentiality and AI-use rules. Use when writing a formal referee report, responding to a journal or grant review invitation, or self-auditing a manuscript against reviewer criteria before submission. For evaluating claims/evidence quality prefer alterlab-scientific-thinking; for a multi-reviewer mock-panel verdict use alterlab-paper-reviewer; for quantitative rubric scoring use alterlab-scholar-eval; to revise a paper in response to reviews use alterlab-paper-writer. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No external tools, API keys, or services required — produces reviews from the Read/Write/Edit/Bash tools alone",
       "allowed_tools": [
         "Read",
@@ -5529,7 +5529,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 395,
+      "body_lines": 411,
       "references": [
         "common_issues.md",
         "presentation_review.md",
@@ -5541,7 +5541,7 @@
       "domain": "writing-tools",
       "description": "Creates research posters in HTML/CSS with responsive layouts and easy visual integration, exportable to PDF or PPTX. Use ONLY when the user explicitly requests a PowerPoint/PPTX/PPT poster, an HTML/web-based poster, or a poster they will edit in PowerPoint, or when LaTeX is unavailable. For a standard/conference research poster with no format named, use alterlab-latex-posters instead; for a slide deck/oral-talk presentation, use alterlab-scientific-slides. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Authors HTML/CSS posters with no external service; exporting to PDF or PPTX requires a headless Chrome browser (and python-pptx for PPTX)",
       "allowed_tools": [
         "Read",
@@ -5551,7 +5551,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 390,
+      "body_lines": 392,
       "references": [
         "poster_content_guide.md",
         "poster_design_principles.md",
@@ -5561,9 +5561,9 @@
     {
       "name": "alterlab-research-grants",
       "domain": "writing-tools",
-      "description": "Writes competitive research grant proposals for NSF, NIH, DOE, DARPA, and Taiwan NSTC — applies agency-specific formatting and review criteria, prepares budgets, and drafts broader-impacts, significance statements, and innovation narratives that comply with submission requirements. Use when drafting or revising a grant proposal, aligning a proposal to a funding agency's review criteria, or preparing grant budgets and compliance sections. For Turkey's TÜBİTAK 1001/1002-A national proposals use alterlab-tubitak-proposal; to write a reviewer's critique of someone else's proposal use alterlab-peer-review; for a journal manuscript use alterlab-scientific-writing. Part of the AlterLab Academic Skills suite.",
+      "description": "Writes competitive research grant proposals for NSF, NIH, DOE, DARPA, and Taiwan NSTC — applies agency-specific formatting and current review criteria (NIH Simplified Review Framework, NSF Intellectual Merit and Broader Impacts under PAPPG 24-1), prepares budgets and justifications, drafts Specific Aims, broader-impacts, significance, and innovation narratives, and checks compliance, including funder rules on AI-assisted applications. Use when drafting or revising a grant proposal or resubmission, aligning it to an agency's review criteria, or preparing budgets, biosketches, and compliance sections. For Turkey's TÜBİTAK 1001/1002-A national proposals use alterlab-tubitak-proposal; for post-award progress or final reports (RPPR, NSF annual reports) use alterlab-grant-reporting; to critique someone else's proposal use alterlab-peer-review; for a journal manuscript use alterlab-scientific-writing. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No external tools, API keys, or services required — ships no helper scripts and works from the Read/Write/Edit/Bash tools alone",
       "allowed_tools": [
         "Read",
@@ -5573,7 +5573,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 115,
+      "body_lines": 137,
       "references": [
         "agency_profiles.md",
         "broader_impacts.md",
@@ -5595,9 +5595,9 @@
     {
       "name": "alterlab-scholar-eval",
       "domain": "writing-tools",
-      "description": "Evaluates scholarly work with the ScholarEval framework, producing structured assessment across research-quality dimensions (problem formulation, methodology, analysis, and writing) with quantitative rubric scores and actionable feedback. Use when scoring or grading a paper, thesis, or research output against rubric-style criteria, or benchmarking publication readiness across revisions. For checklist-based narrative reviewer reports prefer alterlab-peer-review; for evidence/claim quality and argument soundness use alterlab-scientific-thinking. Part of the AlterLab Academic Skills suite.",
+      "description": "Evaluates scholarly work with a ScholarEval-inspired eight-dimension rubric, producing structured assessment across research-quality dimensions (problem formulation, literature, methodology, data, analysis, results, writing, and citations) with quantitative 1-5 rubric scores, weighted aggregates, and actionable feedback. Use when scoring or grading a paper, thesis, or research output against rubric-style criteria, or benchmarking publication readiness across revisions. For checklist-based narrative reviewer reports prefer alterlab-peer-review; for evidence/claim quality and argument soundness use alterlab-scientific-thinking. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "No external tools, API keys, or services required — scores work from the Read/Write/Edit tools alone",
       "allowed_tools": [
         "Read",
@@ -5606,7 +5606,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 257,
+      "body_lines": 270,
       "references": [
         "evaluation_framework.md"
       ]
@@ -5614,10 +5614,10 @@
     {
       "name": "alterlab-scientific-slides",
       "domain": "writing-tools",
-      "description": "Builds slide decks for research talks in PowerPoint and LaTeX Beamer, providing slide structure, design templates, timing guidance, and visual validation. Use when making conference presentations, seminar talks, research presentations, thesis-defense slides, or any scientific talk deck. Part of the AlterLab Academic Skills suite.",
+      "description": "Builds slide decks for research talks as AI-generated slide images (Nano Banana Pro via OpenRouter), PowerPoint, or LaTeX Beamer, providing slide structure, design templates, timing guidance, and visual validation. Use when making conference presentations, seminar talks, research presentations, thesis-defense slides, or any scientific talk deck. For a research poster use alterlab-latex-posters or alterlab-pptx-posters; to auto-generate a narrated video from a paper use alterlab-paper-2-web. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "PowerPoint output uses python-pptx; LaTeX Beamer output needs a LaTeX distribution (pdflatex); slide-to-image validation helpers convert decks to PDF/PNG",
+      "version": "1.0.1",
+      "compatibility": "AI slide-image generation needs OPENROUTER_API_KEY (slide prompts and attached figures are sent to Google Gemini models via OpenRouter); PowerPoint output uses python-pptx; LaTeX Beamer output needs a LaTeX distribution (pdflatex); validation helpers use pymupdf, pypdf, and Pillow to convert and check decks",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5626,7 +5626,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 105,
+      "body_lines": 115,
       "references": [
         "beamer_guide.md",
         "core_capabilities.md",
@@ -5643,9 +5643,9 @@
     {
       "name": "alterlab-scientific-writing",
       "domain": "writing-tools",
-      "description": "Writes scientific manuscripts in full flowing paragraphs (never bullet points) via a two-stage process — section outlines with key points using research-lookup, then conversion to prose — applying IMRAD structure, citations (APA/AMA/Vancouver), figures/tables, and reporting guidelines (CONSORT/STROBE/PRISMA). Use when drafting or revising research papers, journal submissions, or any manuscript section (abstract, introduction, methods, results, discussion), or professional/technical reports. For a specific venue's LaTeX template and house style use alterlab-venue-templates; to build a BibTeX bibliography or verify reference metadata use alterlab-citation-mgmt. Part of the AlterLab Academic Skills suite.",
+      "description": "Writes scientific manuscripts in full flowing paragraphs (never bullet points) via a two-stage process — section outlines with key points using alterlab-research-lookup, then conversion to prose — applying IMRAD structure, citations (APA/AMA/Vancouver), figures/tables, and current reporting guidelines (CONSORT 2025, STROBE, PRISMA 2020, TRIPOD+AI). Use when drafting or revising a research paper section by section (abstract, introduction, methods, results, discussion), tightening scientific prose, or writing professional/technical reports. For the end-to-end multi-agent paper pipeline (APA 7 LaTeX/DOCX output, bilingual abstracts, reviewer-driven revision roadmap) use alterlab-paper-writer; for a specific venue's LaTeX template and house style use alterlab-venue-templates; to build a BibTeX bibliography use alterlab-citation-mgmt. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key or external service required for drafting; optional professional-report formatting with scientific_report.sty needs a LaTeX distribution (XeLaTeX/LuaLaTeX)",
       "allowed_tools": [
         "Read",
@@ -5655,7 +5655,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 302,
+      "body_lines": 314,
       "references": [
         "citation_styles.md",
         "field_terminology.md",
@@ -5673,7 +5673,7 @@
       "domain": "writing-tools",
       "description": "Provides LaTeX templates, formatting requirements, and submission guidelines for major scientific venues (Nature, Science, PLOS, IEEE, ACM, Cell Press), conferences (NeurIPS, ICML, ICLR, CVPR, CHI), research posters, and grant proposals (NSF, NIH, DOE, DARPA). Also covers venue-specific writing style (tone, abstract format, what reviewers prioritize). Use when preparing a manuscript, conference paper, poster, or grant proposal and you need the right template, page/word limits, citation style, figure specs, or venue conventions. For substantive prose/content development defer to alterlab-scientific-writing; for grant argumentation defer to alterlab-research-grants. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Requires a LaTeX distribution (pdflatex/latexmk) to compile the bundled templates; helper scripts (query/customize/validate) are stdlib Python. validate_format.py needs pdfinfo (poppler) for PDF checks.",
       "allowed_tools": [
         "Read",
@@ -5683,7 +5683,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 138,
+      "body_lines": 157,
       "references": [
         "cell_press_style.md",
         "conferences_formatting.md",
