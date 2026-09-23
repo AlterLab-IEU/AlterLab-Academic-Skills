@@ -1,0 +1,72 @@
+{
+  "skill": "alterlab-research-workflows",
+  "evals": [
+    {
+      "id": "thesis-wide-citation-audit",
+      "prompt": "My PhD thesis has 214 references across six chapters and I used an AI assistant for parts of the literature review. Before I submit, I want every single reference and every cited claim checked — existence, metadata, and whether the source actually says what I claim. Can you run that across the whole thesis?",
+      "expected_output": "Invokes alterlab-research-workflows and selects the citation-audit workflow: in Claude Code, /alterlab-workflows:citation-audit with the thesis path (plus an optional mailto); elsewhere, the staged playbook. Explains the stages — extract references and claim-citation pairs, verify existence/metadata with alterlab-citation-verifier, check claim faithfulness, two independent re-checks before any flag stands — and the TF/PAC/IH/PH/SH taxonomy. States the expected scale/cost for 214 references and offers to start with one chapter; notes UNVERIFIED lookups are not accusations of fabrication.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "citation-audit" },
+        { "type": "behavior", "value": "Chooses the citation-audit workflow, describes the two independent re-checks that each flag must survive, and gives a cost/scale note or a smaller first slice before a whole-thesis run." }
+      ]
+    },
+    {
+      "id": "dual-screening-prisma",
+      "prompt": "We exported 640 records from PubMed and Scopus for a systematic review on mindfulness interventions for nurse burnout. We need title/abstract screening done by two independent screeners with conflicts resolved, and the PRISMA flow numbers plus inter-rater agreement at the end.",
+      "expected_output": "Invokes alterlab-research-workflows and runs the systematic-review-screening workflow with the export as records (skipping the search stage): codebook from the question and criteria, deterministic de-duplication, two blinded screeners per batch, third-reviewer adjudication of every conflict, and a PRISMA 2020 flow table with percent agreement and Cohen's kappa computed in code. Says unsure records go forward to full text and that the team must verify decisions; points to alterlab-literature-review / alterlab-meta-analysis for full-text and pooling.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "systematic-review-screening" },
+        { "type": "behavior", "value": "Uses dual independent screening with adjudication and reports PRISMA flow numbers with Cohen's kappa computed deterministically rather than estimated." }
+      ]
+    },
+    {
+      "id": "nih-mock-study-section",
+      "prompt": "Our R01 resubmission is due in five weeks. Could you simulate an NIH study section on it — a few independent reviewers scoring it on the actual review criteria — and tell me what to fix first?",
+      "expected_output": "Invokes alterlab-research-workflows and selects grant-mock-panel with funder NIH and mechanism R01: loads the current NIH review criteria and 1–9 scale (lower is better) from the official source via alterlab-research-grants, runs primary/secondary/tertiary reviewers plus a skeptic independently, checks each major weakness against the proposal, computes per-criterion means and spread, and writes a summary statement with a prioritized revision plan. States clearly that it is a simulation, not a funding prediction.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "grant-mock-panel" },
+        { "type": "behavior", "value": "Runs a mock panel on the funder's current published criteria and scale with independent reviewers, and labels the result a simulation rather than a prediction." }
+      ]
+    },
+    {
+      "id": "response-to-reviewers",
+      "prompt": "We got a major revision from the journal with three reviewers and about 45 comments in total. Help me draft a point-by-point response letter, but don't make up any new results — some comments need analyses we still have to run.",
+      "expected_output": "Invokes alterlab-research-workflows and selects the rebuttal workflow with the manuscript and the decision letter: splits the reviews into atomic numbered comments, drafts one response and manuscript change per comment, runs a consistency pass across all drafts, and compiles a response letter, change log, and an author-actions list. Uses [AUTHORS: ...] placeholders for analyses the authors must run and never invents results; does not edit the manuscript itself.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "rebuttal" },
+        { "type": "behavior", "value": "Produces a point-by-point plan with placeholders for author-only results and a cross-response consistency check, without fabricating analyses." }
+      ]
+    },
+    {
+      "id": "near-miss-single-bibliography",
+      "prompt": "I have a .bib file with 18 entries for a conference paper. Can you just check that each DOI resolves and the titles match?",
+      "expected_output": "Should NOT trigger alterlab-research-workflows; defers to alterlab-citation-verifier, which checks a single bibliography's existence and metadata directly with verify_citations.py. An 18-entry DOI/title check does not need a multi-agent workflow.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-citation-verifier" }
+      ]
+    },
+    {
+      "id": "near-miss-custom-orchestration",
+      "prompt": "I want to design my own multi-agent setup where one agent drafts a methods section and three critic agents with different lenses review it in a loop until they stop finding issues. How should I structure the subagents and the stop condition?",
+      "expected_output": "Should NOT trigger alterlab-research-workflows; defers to alterlab-workflow-orchestration, which teaches how to compose custom patterns (judge panels, loop-until-clean with a turn cap) from Claude Code subagents, dynamic workflows, or the Agent SDK. The user is hand-designing orchestration, not running one of the packaged workflows.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-workflow-orchestration" }
+      ]
+    },
+    {
+      "id": "near-miss-full-pipeline",
+      "prompt": "Take my research question on remote-work productivity from literature search all the way to a finished, reviewed and revised paper.",
+      "expected_output": "Should NOT trigger alterlab-research-workflows; defers to alterlab-research-pipeline, the end-to-end research → write → integrity check → review → revise orchestrator. The packaged workflows are single-purpose steps (audit, panel, screening), not the full publication pipeline.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-research-pipeline" }
+      ]
+    }
+  ]
+}

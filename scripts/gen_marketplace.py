@@ -304,6 +304,32 @@ def _components(cat_dir: Path, skill_dirs: list[Path]) -> dict:
 # a component-declaring plugin.json and the plugin fails to load.
 STANDALONE_PLUGIN_DOMAINS = {"social-science-workflow", "workflows"}
 
+# Other marketplace plugins a standalone domain needs at runtime (resolved by name within this
+# marketplace and installed alongside it). The workflows call alterlab-core's verifier/reviewer
+# skills, so installing alterlab-workflows pulls in alterlab-core. Bare names only: version
+# ranges would need per-plugin `{name}--v{version}` git tags, which this repo does not publish.
+PLUGIN_DEPENDENCIES = {"workflows": ["alterlab-core"]}
+
+# Dependency-only bundle plugins: installing one installs every plugin it lists, so users get a
+# curated set in one step instead of 18 separate installs. Emitted to plugins/<name>/.
+BUNDLES = {
+    "alterlab-essentials": {
+        "description": (
+            "Faculty starter kit — installs the core research-to-publication pipeline, the multi-agent "
+            "research workflows, research tools, writing tools, methodology gates, and scientific-database "
+            "connectors in one step"
+        ),
+        "domains": ["core", "workflows", "research-tools", "writing-tools", "methodology", "databases"],
+        "keywords": ["bundle", "starter-kit", "faculty", "research", "writing"],
+    },
+    "alterlab-complete": {
+        "description": "The complete AlterLab Academic Skills suite — installs every domain plugin in one step",
+        "domains": "*",
+        "keywords": ["bundle", "complete", "all-domains"],
+    },
+}
+PLUGINS_DIR = REPO / "plugins"
+
 
 def build_plugin_scoped(cat_dir: Path, version: str) -> dict | None:
     """Build one per-domain plugin entry in the v2.0 scoped shape (verdict == 'go')."""
@@ -319,7 +345,7 @@ def build_plugin_scoped(cat_dir: Path, version: str) -> dict | None:
         # No nested skills/ exists under it, so the explicit skills[] is the only thing
         # loaded => the install is scoped to this one domain.
         "source": f"./skills/{cat}",
-        "description": f"{CATEGORY_BLURB.get(cat, cat)} ({len(skill_dirs)} skills)",
+        "description": f"{CATEGORY_BLURB.get(cat, cat)} ({len(skill_dirs)} skill{'s' if len(skill_dirs) != 1 else ''})",
         "version": version,
         "author": AUTHOR,
         "homepage": HOMEPAGE,
@@ -348,10 +374,54 @@ def build_domain_plugin_json(cat_dir: Path, version: str) -> dict | None:
     if entry is None:
         return None
     drop = {"source", "strict", "category"}
-    return {
+    manifest = {
         "$schema": PLUGIN_SCHEMA,
         **{k: v for k, v in entry.items() if k not in drop},
         **_components(cat_dir, skill_dirs),
+    }
+    if cat_dir.name in PLUGIN_DEPENDENCIES:
+        manifest["dependencies"] = PLUGIN_DEPENDENCIES[cat_dir.name]
+    return manifest
+
+
+def _domain_names() -> list[str]:
+    return sorted(d.name for d in SKILLS.iterdir() if d.is_dir() and _skill_dirs(d))
+
+
+def build_bundle_manifest(name: str, version: str) -> dict:
+    """plugin.json for a dependency-only bundle plugin."""
+    spec = BUNDLES[name]
+    domains = _domain_names() if spec["domains"] == "*" else spec["domains"]
+    missing = [d for d in domains if not (SKILLS / d).is_dir()]
+    if missing:
+        raise SystemExit(f"error: bundle {name} lists unknown domain(s) {missing}")
+    return {
+        "$schema": PLUGIN_SCHEMA,
+        "name": name,
+        "description": spec["description"],
+        "version": version,
+        "author": AUTHOR,
+        "homepage": HOMEPAGE,
+        "license": "MIT",
+        "keywords": spec["keywords"],
+        "dependencies": [f"alterlab-{d}" for d in domains],
+    }
+
+
+def build_bundle_entry(name: str, version: str) -> dict:
+    """Marketplace entry for a bundle: metadata only; its plugin.json carries the dependencies."""
+    manifest = build_bundle_manifest(name, version)
+    return {
+        "name": name,
+        "source": f"./plugins/{name}",
+        "description": manifest["description"],
+        "version": version,
+        "author": AUTHOR,
+        "homepage": HOMEPAGE,
+        "license": "MIT",
+        "category": "research",
+        "keywords": manifest["keywords"],
+        "strict": True,
     }
 
 
@@ -366,6 +436,10 @@ def domain_plugin_paths(version: str) -> list[tuple[Path, str]]:
         if manifest is None:
             continue
         path = cat_dir / ".claude-plugin" / "plugin.json"
+        out.append((path, json.dumps(manifest, indent=2, ensure_ascii=False) + "\n"))
+    for name in sorted(BUNDLES):
+        path = PLUGINS_DIR / name / ".claude-plugin" / "plugin.json"
+        manifest = build_bundle_manifest(name, version)
         out.append((path, json.dumps(manifest, indent=2, ensure_ascii=False) + "\n"))
     return out
 
@@ -407,6 +481,8 @@ def build(version: str, verdict: str) -> dict:
         entry = builder(cat_dir, version)
         if entry is not None:
             plugins.append(entry)
+    if verdict == "go":
+        plugins += [build_bundle_entry(name, version) for name in sorted(BUNDLES)]
     total = count_skills()
     description = f"{total} Claude skills for academic research, organized by domain"
     return {

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "alterlab-workflows",
+  "description": "Runnable multi-agent research workflows for Claude Code (systematic-review screening, citation audit, independent review panel, claim stress-test, rebuttal, grant mock panel, literature map) plus the portable playbook skill (1 skill)",
+  "version": "2.6.1",
+  "author": {
+    "name": "AlterLab @ Izmir University of Economics",
+    "url": "https://github.com/AlterLab-IEU"
+  },
+  "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
+  "license": "MIT",
+  "keywords": [
+    "workflows",
+    "multi-agent",
+    "systematic-review",
+    "peer-review",
+    "citation-audit",
+    "orchestration"
+  ],
+  "skills": [
+    "./alterlab-research-workflows"
+  ],
+  "workflows": "./workflows/",
+  "dependencies": [
+    "alterlab-core"
+  ]
+}

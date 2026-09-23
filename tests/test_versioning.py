@@ -64,7 +64,7 @@ def test_marketplace_lists_every_skill(repo_root: Path, skill_files: list[Path])
         manifest = plugin
         if plugin.get("strict", True):
             manifest = _read_json(repo_root / source / ".claude-plugin" / "plugin.json")
-        for entry in manifest["skills"]:
+        for entry in manifest.get("skills", []):  # bundle plugins carry only dependencies
             skill = entry.lstrip("./").rstrip("/")           # e.g. alterlab-pubmed
             # Guard the scoping: entries must be plugin-root-relative, not re-prefixed.
             assert not skill.startswith("skills/"), (

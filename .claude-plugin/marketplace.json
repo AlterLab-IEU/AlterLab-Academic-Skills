@@ -1,14 +1,14 @@
 {
   "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
   "name": "alterlab-academic-skills",
-  "description": "239 Claude skills for academic research, organized by domain",
+  "description": "240 Claude skills for academic research, organized by domain",
   "version": "2.6.1",
   "owner": {
     "name": "AlterLab @ Izmir University of Economics",
     "email": "alterlab.ieu@gmail.com"
   },
   "metadata": {
-    "description": "239 Claude skills for academic research, organized by domain",
+    "description": "240 Claude skills for academic research, organized by domain",
     "version": "2.6.1"
   },
   "plugins": [
@@ -701,6 +701,28 @@
       ]
     },
     {
+      "name": "alterlab-workflows",
+      "source": "./skills/workflows",
+      "description": "Runnable multi-agent research workflows for Claude Code (systematic-review screening, citation audit, independent review panel, claim stress-test, rebuttal, grant mock panel, literature map) plus the portable playbook skill (1 skill)",
+      "version": "2.6.1",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
+      "license": "MIT",
+      "category": "research",
+      "keywords": [
+        "workflows",
+        "multi-agent",
+        "systematic-review",
+        "peer-review",
+        "citation-audit",
+        "orchestration"
+      ],
+      "strict": true
+    },
+    {
       "name": "alterlab-writing-tools",
       "source": "./skills/writing-tools",
       "description": "Scientific writing, citations, grants, posters, and academic career (13 skills)",
@@ -735,6 +757,46 @@
         "./alterlab-scientific-writing",
         "./alterlab-venue-templates"
       ]
+    },
+    {
+      "name": "alterlab-complete",
+      "source": "./plugins/alterlab-complete",
+      "description": "The complete AlterLab Academic Skills suite — installs every domain plugin in one step",
+      "version": "2.6.1",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
+      "license": "MIT",
+      "category": "research",
+      "keywords": [
+        "bundle",
+        "complete",
+        "all-domains"
+      ],
+      "strict": true
+    },
+    {
+      "name": "alterlab-essentials",
+      "source": "./plugins/alterlab-essentials",
+      "description": "Faculty starter kit — installs the core research-to-publication pipeline, the multi-agent research workflows, research tools, writing tools, methodology gates, and scientific-database connectors in one step",
+      "version": "2.6.1",
+      "author": {
+        "name": "AlterLab @ Izmir University of Economics",
+        "url": "https://github.com/AlterLab-IEU"
+      },
+      "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
+      "license": "MIT",
+      "category": "research",
+      "keywords": [
+        "bundle",
+        "starter-kit",
+        "faculty",
+        "research",
+        "writing"
+      ],
+      "strict": true
     }
   ]
 }
