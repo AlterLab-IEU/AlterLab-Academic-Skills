@@ -119,12 +119,17 @@ def eval_skill_refs() -> dict[str, set[str]]:
 
 
 def plugin_names() -> set[str]:
-    """Marketplace plugin names (``alterlab-<domain>``, bundles) — legitimate non-skill tokens.
+    """Marketplace plugin names (``alterlab-<domain>``, bundles) and the marketplace's own name —
+    legitimate non-skill tokens.
 
-    Evals may mention a plugin (``/alterlab-workflows:citation-audit``, "install alterlab-core"),
-    which is not a skill name and must not be reported as a dangling deferral target."""
+    Evals may mention a plugin (``/alterlab-workflows:citation-audit``, "install alterlab-core") or
+    an install command (``alterlab-core@alterlab-academic-skills``); neither names a skill, so
+    neither must be reported as a dangling deferral target."""
     names = {f"alterlab-{d.name}" for d in SKILLS_DIR.iterdir() if d.is_dir()}
     names |= {d.name for d in (REPO_ROOT / "plugins").glob("alterlab-*") if d.is_dir()}
+    manifest = REPO_ROOT / ".claude-plugin" / "marketplace.json"
+    if manifest.exists():
+        names.add(json.loads(manifest.read_text(encoding="utf-8"))["name"])
     return names
 
 
