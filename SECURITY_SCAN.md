@@ -2,7 +2,7 @@
 
 > **Generated** — do not edit by hand. Regenerate with `python3 scripts/gen_security_scan.py`; CI fails if this file is stale (`--check`) or if the attestation is violated (`--strict`).
 
-This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **250 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
+This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **252 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
 
 ## Attestation
 
@@ -82,7 +82,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `string-db.org` | Protein interactions | 4 |
 | `tdcommons.ai` | Therapeutics benchmarks | 1 |
 | `trdizin.gov.tr` | TR Dizin index | 4 |
-| `tubitak.gov.tr` | TÜBİTAK | 2 |
+| `tubitak.gov.tr` | TÜBİTAK | 5 |
 | `uak.gov.tr` | ÜAK (doçentlik) | 2 |
 | `ulakbim.gov.tr` | ULAKBİM | 2 |
 | `uniprot.org` | Proteins | 2 |

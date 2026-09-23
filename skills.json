@@ -2,7 +2,7 @@
   "summary": {
     "version": "3.0.0",
     "generated_at": "2026-09-23",
-    "total": 240,
+    "total": 242,
     "per_domain": {
       "bioinformatics": 38,
       "cheminformatics": 12,
@@ -18,15 +18,15 @@
       "methodology": 3,
       "research-tools": 14,
       "social-science-workflow": 17,
-      "turkish-academia": 12,
+      "turkish-academia": 13,
       "visualization": 9,
       "workflows": 1,
-      "writing-tools": 13
+      "writing-tools": 14
     },
     "eval_coverage": {
-      "with_evals": 240,
+      "with_evals": 242,
       "without_evals": 0,
-      "total": 240,
+      "total": 242,
       "fraction": 1.0
     }
   },
@@ -1437,8 +1437,8 @@
       "name": "alterlab-deep-research",
       "domain": "core",
       "description": "Runs a 13-agent deep research pipeline for rigorous academic work on any topic across 7 modes (full research, quick brief, paper review, lit-review, fact-check, Socratic guided research dialogue, and systematic review with optional meta-analysis), covering research-question formulation, Socratic mentoring, methodology design, systematic literature search, source verification, cross-source synthesis, risk-of-bias assessment, meta-analysis, APA 7.0 report compilation, editorial and devil's-advocate review, ethics review, and post-research literature monitoring. Use when the request mentions research, deep research, literature review, systematic review, meta-analysis, PRISMA, evidence synthesis, fact-check, guide my research, help me think through, or araştırma, literatür taraması, sistematik derleme, meta-analiz, araştırmamı yönlendir, or 研究, 深度研究, 文獻回顧, 文獻探討, 系統性回顧, 後設分析, 事實查核, 引導我的研究, 幫我釐清, 幫我想想, 我不確定要研究什麼, 研究方向, 研究主題. Part of the AlterLab Academic Skills suite.",
-      "license": "MIT",
-      "version": "2.4.0",
+      "license": "CC-BY-NC-4.0",
+      "version": "2.4.1",
       "compatibility": "Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -1499,8 +1499,8 @@
       "name": "alterlab-paper-reviewer",
       "domain": "core",
       "description": "Simulates a full multi-reviewer journal review PANEL — 5 personas (Editor-in-Chief + 3 peer reviewers + a Devil's Advocate) debate a manuscript and produce a consensus Editorial Decision (accept/minor/major/reject) plus a prioritized Revision Roadmap. Modes: full, re-review (verify revisions addressed prior comments), quick, methodology-focus, Socratic guided. Use for: simulate peer review, mock review panel, editorial review before submission, multiple reviewer perspectives, re-review of a revised manuscript, or 'critique my paper hard'. For a single-reviewer referee report use alterlab-peer-review; for rubric/grade scoring use alterlab-scholar-eval; to write/revise the paper use alterlab-paper-writer. Part of the AlterLab Academic Skills suite.",
-      "license": "MIT",
-      "version": "1.5",
+      "license": "CC-BY-NC-4.0",
+      "version": "1.5.1",
       "compatibility": "Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -1525,8 +1525,8 @@
       "name": "alterlab-paper-writer",
       "domain": "core",
       "description": "Drafts and revises academic papers through a 12-agent pipeline with hardened LaTeX output (apa7 class, PDF compiled from LaTeX), supporting IMRaD, literature review, theoretical, case study, policy brief, and conference paper structures, APA 7.0 (default), Chicago, MLA, IEEE, and Vancouver citation formats, bilingual abstracts (English plus the author's language, e.g. Turkish or Traditional Chinese), and multi-format output (LaTeX, DOCX, PDF, Markdown). Use when the request mentions write paper, academic paper, paper outline, write abstract, revise paper, check citations, convert to LaTeX, guide my paper, parse reviews, revision roadmap, or makale yaz, akademik makale, özet yaz, makaleyi revize et, hakem yorumları, or 寫論文, 學術論文, 論文大綱, 寫摘要, 修改論文, 檢查引用, 引導我寫論文, 審查意見, 修訂路線圖. Its citation-check mode formats and inserts citations while drafting; for a standalone anti-hallucination check that cited references actually exist prefer alterlab-citation-verifier instead. Part of the AlterLab Academic Skills suite.",
-      "license": "MIT",
-      "version": "2.6",
+      "license": "CC-BY-NC-4.0",
+      "version": "2.6.2",
       "compatibility": "Uses built-in Claude tools only; optional LaTeX toolchain (apa7 document class) required for PDF compilation; no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -1560,8 +1560,8 @@
       "name": "alterlab-research-pipeline",
       "domain": "core",
       "description": "Orchestrates the full academic research pipeline (research, write, integrity check, review, revise, re-review, re-revise, final integrity check, finalize), coordinating alterlab-deep-research, alterlab-paper-writer, and alterlab-paper-reviewer into a seamless 10-stage workflow with mandatory integrity verification, two-stage peer review, and reproducible quality gates. Use when the request mentions academic pipeline, research to paper, full paper workflow, paper pipeline, end-to-end paper, research-to-publication, or complete paper workflow. Part of the AlterLab Academic Skills suite.",
-      "license": "MIT",
-      "version": "2.7.0",
+      "license": "CC-BY-NC-4.0",
+      "version": "2.7.1",
       "compatibility": "Orchestrates alterlab-deep-research, alterlab-paper-writer, and alterlab-paper-reviewer; uses built-in Claude tools only; no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -4905,20 +4905,22 @@
     {
       "name": "alterlab-docentlik-eligibility",
       "domain": "turkish-academia",
-      "description": "Runs a PARTIAL pre-screen of a Turkish associate-professorship (doçentlik) publication list against the ÜAK Sağlık Bilimleri TABLO 10 criteria (2026 Mart term), applying the author-share rule (full; 0.8/0.5; lead author takes half) and pass-fail checking the four computable minimums (≥100 total, ≥90 post-doctorate, ≥40 post-doctorate international-article points from SCIE/SSCI, AHCI and ESCI/Scopus, ≥3 post-doctorate lead-author Q1–Q4 articles). It deliberately does NOT emit an ELIGIBLE verdict — it lists the unmodelled mandatory minimums (TR Dizin/national article, thesis-derived publication, citation, congress, teaching, per-category caps) for the user to verify. Use when the user wants to estimate doçentlik eligibility, calculate ÜAK points, or audit lead-author (başlıca yazar) requirements; resolve a journal's live TR Dizin status with alterlab-trdizin first, and compute the akademik teşvik (academic-incentive) score with alterlab-akademik-tesvik. Part of the AlterLab Academic Skills suite.",
+      "description": "Runs a PARTIAL pre-screen of a Turkish associate-professorship (doçentlik) publication list against bundled ÜAK criteria (2026 Mart term) for all 12 temel alanlar: Eğitim, Fen Bilimleri ve Matematik, Filoloji, Güzel Sanatlar, Hukuk, İlahiyat, Mimarlık-Planlama-Tasarım, Mühendislik, Sağlık, Sosyal-Beşeri-İdari Bilimler, Spor, Ziraat-Orman-Su Ürünleri. It applies each field's author-share rule (equal split or başlıca yazar 0.8/0.5/half), checks the 100-point and 90 post-doctorate totals and the field's international/national-article minimums, caps other items entered, and lists the remaining mandatory minimums (thesis-derived work, book, citation, congress, teaching, art/competition items) as a manual checklist; it never emits an ELIGIBLE verdict. Use when the user wants to estimate doçentlik eligibility, compute ÜAK points or audit başlıca yazar rules; resolve TR Dizin status with alterlab-trdizin first; prefer alterlab-akademik-tesvik for the teşvik score. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "2.1.0",
-      "compatibility": "No API key required — pure offline PARTIAL pre-screen (stdlib Python) over a bundled, dated ÜAK criteria table; never emits an ELIGIBLE verdict; live journal-index status is delegated to alterlab-trdizin",
+      "version": "2.2.0",
+      "compatibility": "No API key required — offline PARTIAL pre-screen (stdlib Python, run with uv) over bundled, dated ÜAK 2026 Mart criteria for all 12 temel alanlar; never emits an ELIGIBLE verdict. Checking the live ÜAK page for a newer term needs web access; live journal-index status is delegated to alterlab-trdizin.",
       "allowed_tools": [
         "Read",
         "Write",
         "Edit",
-        "Bash(python:*)"
+        "Bash",
+        "WebFetch"
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 314,
+      "body_lines": 330,
       "references": [
+        "field_tables.md",
         "scoring_rules.md",
         "uak_criteria.md"
       ]
@@ -5013,11 +5015,34 @@
       ]
     },
     {
+      "name": "alterlab-tubitak-bideb",
+      "domain": "turkish-academia",
+      "description": "Matches researchers to TÜBİTAK BİDEB (Bilim İnsanı Destek Programları Başkanlığı) support programmes and prepares the application, from calls read on 2026-09-23: 2219 postdoc abroad, 2218 domestic postdoc, 2221 visiting or sabbatical scientist, 2232-A/2232-B international leading and young researchers moving to Türkiye, 2236-A CoCirculation3, 2224-A conference travel abroad, 2223-B organising an event in Türkiye. Pre-screens computable eligibility gates (PhD window, age, months in Türkiye, language score, Tablo 1 points, call periods) with a stdlib script, then builds the document checklist, a research-plan scaffold weighted to the published criteria, the reporting plan and TÜBİTAK's generative-AI disclosure. Use when the user asks which TÜBİTAK fellowship, bursary or travel support fits them, or wants to prepare a 2219, 2218, 2221, 2232, 2236, 2224-A or 2223-B application. For ARDEB project grants (1001, 1002-A, 3501) prefer alterlab-tubitak-proposal. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key required. The chooser and the eligibility/timing pre-screen run offline via `uv run python` on the standard library only. Every amount, date and rule is dated to TÜBİTAK programme pages and call documents read on 2026-09-23 and changes with each call, so WebFetch the live tubitak.gov.tr programme page before quoting figures.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(python:*)",
+        "Bash(uv:*)",
+        "WebFetch"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 311,
+      "references": [
+        "form_structures.md",
+        "program_profiles.md"
+      ]
+    },
+    {
       "name": "alterlab-tubitak-proposal",
       "domain": "turkish-academia",
-      "description": "Scaffolds TÜBİTAK ARDEB national research proposals: 1001 against the official .doc form tree (TR/EN özet ≤600 words each, 1. ÖZGÜN DEĞER, 2. YÖNTEM, 3. PROJE YÖNETİMİ with iş paketleri and B Planı, 4. YAYGIN ETKİ, EK-1 Kaynaklar, EK-2 Bütçe; ≤25 pages), and 1002-A Hızlı Destek, now typed into PBS screens with per-section word ranges. Checks program caps (1001 ≤36 months, 3,000,000 TRY burs dahil; 1002-A ≤12 months, 150,000 TRY/year, rolling), drafts to the panel weights (özgün değer 35, yöntem 25, proje yönetimi 20, yaygın etki 20) and applies TÜBİTAK's generative-AI (ÜYZ) disclosure rules; submission via PBS with an ARBİS prerequisite. Delegates generic grant craft to alterlab-research-grants. Use when the user wants to write a TÜBİTAK 1001 or 1002-A proposal, draft özgün değer or yaygın etki sections, scaffold a Turkish national grant, or map broader-impacts framing to TÜBİTAK terms. Part of the AlterLab Academic Skills suite.",
+      "description": "Scaffolds TÜBİTAK ARDEB proposals in the directorate's own section order: 1001 against the official .doc form (TR/EN özet ≤600 words each, ÖZGÜN DEĞER, YÖNTEM, PROJE YÖNETİMİ with iş paketleri and B Planı, YAYGIN ETKİ, EK-1/EK-2; ≤25 pages), and the PBS-typed 1002-A Hızlı Destek and 3501 Kariyer Geliştirme forms with per-section word ranges. Checks program caps (1001 ≤36 months, 3,000,000 TRY; 1002-A ≤12 months, 150,000 TRY/year; 3501 ≤36 months, 1,500,000 TRY, PI ≤7 years post-PhD, doçent or below), drafts to each program's criteria (1001 panel 35/25/20/20; 3501 adds kariyer geliştirme potansiyeli) and applies TÜBİTAK's generative-AI (ÜYZ) disclosure rules; submission via PBS after ARBİS. Delegates generic grant craft to alterlab-research-grants and BİDEB fellowships to alterlab-tubitak-bideb. Use when the user wants to write a TÜBİTAK 1001, 1002-A or 3501 proposal, draft özgün değer or yaygın etki sections, or map broader-impacts framing to TÜBİTAK terms. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "compatibility": "No API key required — generates proposal scaffolds offline; the structure checker runs via `uv run python` on stdlib only. Program caps/forms change by call period; WebFetch the live program pages to confirm before submission.",
       "allowed_tools": [
         "Read",
@@ -5028,7 +5053,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 261,
+      "body_lines": 303,
       "references": [
         "form_structure.md",
         "program_profiles.md",
@@ -5198,7 +5223,7 @@
       "domain": "visualization",
       "description": "Writes Markdown documents and text-based Mermaid diagrams (flowcharts, sequence, class, ER, gantt, state, and more) with full style guides, 24 diagram-type references, and 9 document templates. Use when a diagram or technical document should live as version-controllable Markdown/Mermaid text rather than a rendered image — READMEs, methods and pipeline diagrams, analysis or status reports, ADRs, and project docs that render natively on GitHub and GitLab. For AI-rendered publication schematics use alterlab-scientific-schematics; for manuscript prose use alterlab-scientific-writing; for plots of numeric data use alterlab-matplotlib. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "compatibility": "No API key, network, or runtime dependencies. Authoring is pure Markdown/Mermaid text; diagrams render natively on GitHub, GitLab, Notion, VS Code, and any Mermaid-aware viewer. Syntax checked against Mermaid 11.12 and 12.0 (current 12.0.0 as of 2026-09).",
       "allowed_tools": [
         "Read",
@@ -5388,6 +5413,31 @@
         "career-templates.md",
         "cv_structure.md",
         "professional_development.md"
+      ]
+    },
+    {
+      "name": "alterlab-ai-use-disclosure",
+      "domain": "writing-tools",
+      "description": "Helps faculty and researchers disclose generative-AI use and comply with the rules for manuscripts, grant proposals, peer review, theses and figures. Walks a venue → policy → placement decision tree over policies verified on 2026-09-23 (ICMJE, Springer Nature/Nature, Elsevier, Wiley, Taylor & Francis, Sage, IEEE, PLOS, arXiv; NIH NOT-OD-25-132 and NOT-OD-23-149, NSF, UKRI, ERC, TÜBİTAK; YÖK's 2024 ethics guide; EU AI Act Article 50), drafts English and Turkish statements, and ships scripts/disclosure_builder.py to emit a statement plus warnings where a policy forbids the use. Use when the request mentions an AI or ChatGPT disclosure or declaration, whether and where AI use must be declared, AI in peer review or grant review, AI-generated figures, AI rules for a thesis, or 'yapay zekâ kullanım beyanı'. For course AI policies and APA/MLA citations of ChatGPT prefer alterlab-syllabus-ai-policy; for writing the paper itself prefer alterlab-scientific-writing. Part of the AlterLab Academic Skills suite.",
+      "license": "MIT",
+      "version": "1.0.0",
+      "compatibility": "No API key or network needed for the core workflow. scripts/disclosure_builder.py is stdlib-only, deterministic, offline Python (run via uv run python) with policy rules dated 2026-09-23. WebFetch/WebSearch are optional and only re-read a venue's live policy page, because publisher and funder rules change without notice.",
+      "allowed_tools": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash",
+        "WebFetch",
+        "WebSearch"
+      ],
+      "has_scripts": true,
+      "has_evals": true,
+      "body_lines": 431,
+      "references": [
+        "funders_peer_review.md",
+        "publisher_policies.md",
+        "statement_templates.md",
+        "turkey_eu.md"
       ]
     },
     {

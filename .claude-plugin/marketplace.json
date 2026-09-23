@@ -1,14 +1,14 @@
 {
   "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
   "name": "alterlab-academic-skills",
-  "description": "240 Claude skills for academic research, organized by domain",
+  "description": "242 Claude skills for academic research, organized by domain",
   "version": "3.0.0",
   "owner": {
     "name": "AlterLab @ Izmir University of Economics",
     "email": "alterlab.ieu@gmail.com"
   },
   "metadata": {
-    "description": "240 Claude skills for academic research, organized by domain",
+    "description": "242 Claude skills for academic research, organized by domain",
     "version": "3.0.0"
   },
   "plugins": [
@@ -22,7 +22,7 @@
         "url": "https://github.com/AlterLab-IEU"
       },
       "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
-      "license": "MIT",
+      "license": "MIT AND Apache-2.0 AND GPL-2.0 AND GPL-3.0",
       "category": "science",
       "keywords": [
         "genomics",
@@ -83,7 +83,7 @@
         "url": "https://github.com/AlterLab-IEU"
       },
       "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
-      "license": "MIT",
+      "license": "MIT AND Apache-2.0",
       "category": "science",
       "keywords": [
         "chemistry",
@@ -147,7 +147,7 @@
         "url": "https://github.com/AlterLab-IEU"
       },
       "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
-      "license": "MIT",
+      "license": "MIT AND CC-BY-NC-4.0",
       "category": "research",
       "keywords": [
         "research",
@@ -252,7 +252,7 @@
         "url": "https://github.com/AlterLab-IEU"
       },
       "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
-      "license": "MIT",
+      "license": "MIT AND Apache-2.0 AND BSD-3-Clause AND GPL-3.0",
       "category": "data",
       "keywords": [
         "machine-learning",
@@ -297,7 +297,7 @@
         "url": "https://github.com/AlterLab-IEU"
       },
       "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
-      "license": "MIT",
+      "license": "MIT AND CC-BY-3.0 AND CC-BY-4.0 AND CC0-1.0 AND LGPL-3.0",
       "category": "data",
       "keywords": [
         "database",
@@ -413,7 +413,7 @@
         "url": "https://github.com/AlterLab-IEU"
       },
       "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
-      "license": "MIT",
+      "license": "MIT AND Apache-2.0 AND CeCILL-2.1",
       "category": "science",
       "keywords": [
         "quantum",
@@ -484,7 +484,7 @@
         "url": "https://github.com/AlterLab-IEU"
       },
       "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
-      "license": "MIT",
+      "license": "MIT AND GPL-3.0",
       "category": "data",
       "keywords": [
         "finance",
@@ -623,7 +623,7 @@
     {
       "name": "alterlab-turkish-academia",
       "source": "./skills/turkish-academia",
-      "description": "Turkish academic system workflows (YÖK, ÜAK, DergiPark, YÖK-Tez, TÜBİTAK, doçentlik) (12 skills)",
+      "description": "Turkish academic system workflows (YÖK, ÜAK, DergiPark, YÖK-Tez, TÜBİTAK, doçentlik) (13 skills)",
       "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
@@ -650,6 +650,7 @@
         "./alterlab-tr-academic-style",
         "./alterlab-tr-research-ethics",
         "./alterlab-trdizin",
+        "./alterlab-tubitak-bideb",
         "./alterlab-tubitak-proposal",
         "./alterlab-yok-akademik",
         "./alterlab-yok-tez",
@@ -666,7 +667,7 @@
         "url": "https://github.com/AlterLab-IEU"
       },
       "homepage": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills",
-      "license": "MIT",
+      "license": "MIT AND Apache-2.0 AND BSD-3-Clause",
       "category": "productivity",
       "keywords": [
         "plotting",
@@ -713,7 +714,7 @@
     {
       "name": "alterlab-writing-tools",
       "source": "./skills/writing-tools",
-      "description": "Scientific writing, citations, grants, posters, and academic career (13 skills)",
+      "description": "Scientific writing, citations, grants, posters, and academic career (14 skills)",
       "version": "3.0.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
@@ -732,6 +733,7 @@
       "strict": false,
       "skills": [
         "./alterlab-academic-career",
+        "./alterlab-ai-use-disclosure",
         "./alterlab-citation-mgmt",
         "./alterlab-hypothesis-gen",
         "./alterlab-latex-posters",
