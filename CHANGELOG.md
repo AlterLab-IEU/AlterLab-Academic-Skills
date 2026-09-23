@@ -29,6 +29,22 @@ left unchanged and listed as such, not guessed.
 - `ALTERLAB_MODEL` defaults to `claude-opus-5-5`, and scripts use the request shape current
   models require.
 
+### Upgrading from 2.x
+
+- **Claude Code plugins:** `claude plugin marketplace update alterlab-academic-skills`, then
+  `claude plugin update <plugin>@alterlab-academic-skills` for each installed plugin (or use
+  `/plugin` inside Claude Code). Add a free OpenAlex API key with
+  `/plugin configure alterlab-core@alterlab-academic-skills`; the old `ncbi_email` /
+  `ncbi_api_key` values are simply no longer read.
+- **PubMed:** if you used the bundled `pubmed` MCP tools, use the `alterlab-pubmed` skill
+  (optionally `export NCBI_API_KEY=...` for 10 requests/second) or a host's PubMed connector.
+- **Handoff JSON:** code that writes paper drafts should move `keywords.zh_tw` / `abstract.chinese`
+  to `keywords.secondary` / `abstract.secondary` `{lang, …}` (the old keys still validate); RQ
+  Brief FINER scores are 1-5.
+- **Scripts:** set `ALTERLAB_MODEL` to pin a model other than `claude-opus-5-5`.
+- **Claude app (no terminal):** download the new per-skill zips from the v3.0.0 release and
+  re-upload the skills you use.
+
 ### Fixed — plugins and connectors
 
 - **`alterlab-core` could not be installed** from the marketplace: its entry listed agent
