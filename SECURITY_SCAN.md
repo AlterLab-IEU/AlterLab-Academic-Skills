@@ -25,7 +25,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 
 | Domain | Category | Refs |
 |--------|----------|------|
-| `arxiv.org` | Preprints / literature | 11 |
+| `arxiv.org` | Preprints / literature | 12 |
 | `bindingdb.org` | Binding affinities | 3 |
 | `biorxiv.org` | Preprints / literature | 5 |
 | `brenda-enzymes.org` | Enzymes | 2 |
@@ -40,7 +40,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `dergipark.org.tr` | Turkish journals (DergiPark) | 6 |
 | `doaj.org` | Open-access journals | 2 |
 | `docking.org` | Compound libraries | 4 |
-| `doi.org` | DOI resolver | 27 |
+| `doi.org` | DOI resolver | 28 |
 | `drugbank.ca` | Drugs | 1 |
 | `ebi.ac.uk` | EMBL-EBI | 12 |
 | `elixir.no` | Bioinformatics infra | 3 |

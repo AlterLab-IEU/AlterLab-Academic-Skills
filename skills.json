@@ -1415,10 +1415,10 @@
     {
       "name": "alterlab-citation-verifier",
       "domain": "core",
-      "description": "Verifies that every entry in a bibliography ACTUALLY EXISTS by cross-checking it against four keyless public scholarly APIs (Crossref, OpenAlex, Semantic Scholar, arXiv) with a polite mailto identifier, resolving DOI/arXiv IDs, fuzzy-matching title and authors (difflib SequenceMatcher ratio >=0.70), flagging retractions marked in Crossref (update-to) or OpenAlex (is_retracted), and emitting per-entry JSON verdicts mapped to the AlterLab citation-hallucination taxonomy (TF/PAC/IH/PH/SH). Accepts BibTeX, a DOI/arXiv ID list, or free-form references; degrades gracefully offline by emitting 'unverified' verdicts and never silently passing. Use when the request mentions verify citations, check references, fabricated or hallucinated references, fake DOI, retraction check, bibliography audit, or reference existence check. Does NOT write or draft papers — for authoring a manuscript (whose citation-check mode inserts citations) prefer alterlab-paper-writer instead. Part of the AlterLab Academic Skills suite.",
+      "description": "Verifies that every bibliography entry actually exists by cross-checking Crossref, OpenAlex, Semantic Scholar, and arXiv (no API key required) plus doi.org DOI registration, fuzzy-matching title and authors (difflib ratio >= 0.70), flagging retractions recorded by Crossref (including Retraction Watch data) or OpenAlex, and emitting per-entry JSON verdicts in the AlterLab citation-hallucination taxonomy (TF/PAC/IH/PH/SH); a companion script scores whether a cited abstract supports a claim (SH). Accepts BibTeX, DOI/arXiv lists, or pasted references, and reports unverified instead of passing anything it could not check. Use when the request mentions verify citations, check references, fabricated or hallucinated references, fake DOI, retraction check, bibliography audit, reference existence check, or whether a source supports a claim. For drafting a manuscript prefer alterlab-paper-writer; for dead hyperlinks prefer alterlab-link-health. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "No API key required — cross-checks four keyless public scholarly APIs (Crossref, OpenAlex, Semantic Scholar, arXiv) via WebFetch and `uv run python`; degrades gracefully offline to 'unverified' verdicts",
+      "version": "1.1.0",
+      "compatibility": "No API key required — stdlib Python (`requests` optional) via `uv run python` against Crossref, OpenAlex, Semantic Scholar, arXiv, and the doi.org Handle API; optional OPENALEX_API_KEY / S2_API_KEY only raise rate limits; offline runs return 'unverified' verdicts",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1430,7 +1430,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 222,
+      "body_lines": 316,
       "references": []
     },
     {
@@ -1438,7 +1438,7 @@
       "domain": "core",
       "description": "Runs a 13-agent deep research pipeline for rigorous academic work on any topic across 7 modes (full research, quick brief, paper review, lit-review, fact-check, Socratic guided research dialogue, and systematic review with optional meta-analysis), covering research-question formulation, Socratic mentoring, methodology design, systematic literature search, source verification, cross-source synthesis, risk-of-bias assessment, meta-analysis, APA 7.0 report compilation, editorial and devil's-advocate review, ethics review, and post-research literature monitoring. Use when the request mentions research, deep research, literature review, systematic review, meta-analysis, PRISMA, evidence synthesis, fact-check, guide my research, help me think through, or 研究, 深度研究, 文獻回顧, 文獻探討, 系統性回顧, 後設分析, 事實查核, 引導我的研究, 幫我釐清, 幫我想想, 我不確定要研究什麼, 研究方向, 研究主題. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "2.3",
+      "version": "2.4.0",
       "compatibility": "Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -1450,7 +1450,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 388,
+      "body_lines": 397,
       "references": [
         "apa7_style_guide.md",
         "equator_reporting_guidelines.md",
@@ -1474,7 +1474,7 @@
       "domain": "core",
       "description": "Audits and repairs Markdown link health across a skills repo via a four-tier pipeline (config hardening, intra-repo file-ref fixes, external URL substitutions, residual exclusions) and enforces a Tier 3 substitution guardrail that prevents regressions of previously-passing links; designed for lychee-based GitHub Actions link checkers but generalizes to markdown-link-check and similar tools. Use when the request mentions link audit, dead links, link health, lychee, broken links, link checker, markdown link audit, link-health audit, 404 audit, check-links failing, CI link-check, or 連結健檢, 死鏈, 失效連結, 斷鏈檢查. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0",
+      "version": "1.1",
       "compatibility": "Targets lychee-based GitHub Actions link checkers (generalizes to markdown-link-check); no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -1486,7 +1486,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 146,
+      "body_lines": 141,
       "references": [
         "known-debt-template.md",
         "tier1-config.md",
@@ -1500,7 +1500,7 @@
       "domain": "core",
       "description": "Simulates a full multi-reviewer journal review PANEL — 5 personas (Editor-in-Chief + 3 peer reviewers + a Devil's Advocate) debate a manuscript and produce a consensus Editorial Decision (accept/minor/major/reject) plus a prioritized Revision Roadmap. Modes: full, re-review (verify revisions addressed prior comments), quick, methodology-focus, Socratic guided. Use for: simulate peer review, mock review panel, editorial review before submission, multiple reviewer perspectives, re-review of a revised manuscript, or 'critique my paper hard'. For a single-reviewer referee report use alterlab-peer-review; for rubric/grade scoring use alterlab-scholar-eval; to write/revise the paper use alterlab-paper-writer. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.4",
+      "version": "1.5",
       "compatibility": "Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -1512,7 +1512,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 461,
+      "body_lines": 465,
       "references": [
         "editorial_decision_standards.md",
         "quality_rubrics.md",
@@ -1526,7 +1526,7 @@
       "domain": "core",
       "description": "Drafts and revises academic papers through a 12-agent pipeline with hardened LaTeX output (apa7 document class, justified text, table column-width formula, centered bilingual abstracts, standardized font stack, PDF compiled from LaTeX), supporting IMRaD, literature review, theoretical, case study, policy brief, and conference paper structures, APA 7.0 (default), Chicago, MLA, IEEE, and Vancouver citation formats, bilingual zh-TW plus EN abstracts, and multi-format output (LaTeX, DOCX, PDF, Markdown). Use when the request mentions write paper, academic paper, paper outline, write abstract, revise paper, check citations, convert to LaTeX, guide my paper, parse reviews, revision roadmap, or 寫論文, 學術論文, 論文大綱, 寫摘要, 修改論文, 檢查引用, 引導我寫論文, 帶我規劃論文, 逐章規劃, 論文架構, 審查意見, 修訂路線圖. Its citation-check mode formats and inserts citations while drafting; for a standalone anti-hallucination check that cited references actually exist prefer alterlab-citation-verifier instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "2.4",
+      "version": "2.5",
       "compatibility": "Uses built-in Claude tools only; optional LaTeX toolchain (apa7 document class) required for PDF compilation; no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -1538,7 +1538,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 490,
+      "body_lines": 496,
       "references": [
         "abstract_writing_guide.md",
         "academic_writing_style.md",
@@ -1611,7 +1611,7 @@
       "domain": "core",
       "description": "Designs courses and teaching materials using backward design (Wiggins & McTighe), constructive alignment (Biggs), and Bloom's taxonomy alignment, generating rubrics, formative and summative assessments, syllabi, lesson plans, inclusive-pedagogy guidance, and online/hybrid course architecture. Use when the request mentions course design, syllabus, learning outcomes, rubric, assessment design, lesson plan, backward design, constructive alignment, Bloom's taxonomy, curriculum mapping, course redesign, inclusive pedagogy, hybrid course, or online course design. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -1623,7 +1623,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 380,
+      "body_lines": 386,
       "references": [
         "course_design_templates.md",
         "teaching-frameworks.md"
@@ -1634,7 +1634,7 @@
       "domain": "core",
       "description": "Supervises theses and dissertations end to end — structure guidance from proposal through defense, chapter-by-chapter writing support (introduction, literature review, methodology, results, discussion), supervision strategies, committee management, defense and viva voce preparation, timeline planning, feedback integration, examiner-expectation guidance, and formatting (APA 7, Chicago, university styles). Use when the request mentions thesis, dissertation, supervision, defense preparation, viva, proposal defense, thesis structure, thesis chapter, literature review chapter, methodology chapter, results chapter, discussion chapter, thesis timeline, committee, thesis formatting, or dissertation proposal. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Uses built-in Claude tools only (Read/Write/Edit/WebFetch/WebSearch); no external API key or account required",
       "allowed_tools": [
         "Read",
@@ -1645,7 +1645,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 303,
+      "body_lines": 306,
       "references": [
         "chapter_writing_guides.md",
         "defense_preparation.md",
@@ -1679,8 +1679,8 @@
       "domain": "data-science",
       "description": "Scales pandas/NumPy workflows beyond memory with Dask distributed computing — parallel DataFrames, arrays, delayed task graphs, and cluster execution. Use when existing pandas/NumPy code must run on larger-than-RAM data or across clusters, for parallel file processing, distributed ML, or integration with existing pandas code. For out-of-core analytics on a single machine prefer vaex; for in-memory speed prefer polars. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "No API key required. Runs locally via `uv run python`; requires the dask Python package (optional distributed scheduler for cluster execution).",
+      "version": "1.0.1",
+      "compatibility": "No API key required. Runs locally via `uv run python`; requires dask >= 2025.1 (current 2026.8 as of 2026-09; install `dask[complete]` for DataFrames, arrays, and the distributed scheduler).",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1690,7 +1690,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 448,
+      "body_lines": 469,
       "references": [
         "arrays.md",
         "bags.md",
@@ -1705,12 +1705,12 @@
       "domain": "data-science",
       "description": "Exploratory data analysis (EDA) on a scientific data file — auto-detects the format, runs structure/quality/statistics checks, and writes a markdown EDA report with downstream recommendations. Use when asked to \"explore\", \"analyze\", \"summarize\", \"profile\", or \"QC\" a data file, or to understand its structure/content/quality before deciding what analysis to run. Covers tabular (.csv .tsv .xlsx .parquet), arrays (.npy .npz .hdf5 .h5 .mat .fits), sequence/genomics (.fasta .fastq .sam .bam .vcf .bed .gff .gtf .h5ad), microscopy (.tif .nd2 .czi .lif .ims .dcm .nii), spectroscopy/MS (.mzML .mzXML .mgf .fid .jdx), chemistry (.pdb .cif .mol .sdf .xyz .gro), and proteomics/metabolomics (.pepXML .mzid .mzTab). For zero-shot forecasting of a series use alterlab-timesfm; to create/configure a chunked cloud array store use alterlab-zarr. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "No API key required. Run scripts via `uv run python` (this machine is uv-first); install format-specific parsers with `uv pip install <pkg>` on demand.",
+      "version": "1.0.1",
+      "compatibility": "No API key required. Run scripts via `uv run python` (this machine is uv-first); install format-specific parsers with `uv pip install <pkg>` on demand. Tabular analysis assumes pandas >= 2 (pandas 3 string-dtype defaults are handled).",
       "allowed_tools": [],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 326,
+      "body_lines": 335,
       "references": [
         "bioinformatics_genomics_formats.md",
         "chemistry_molecular_formats.md",
@@ -1725,8 +1725,8 @@
       "domain": "data-science",
       "description": "Creates, analyzes, and visualizes complex networks and graphs in Python with NetworkX. Use when working with network/graph data structures, analyzing relationships between entities, computing graph algorithms (shortest paths, centrality, clustering), detecting communities, generating synthetic networks, or visualizing topologies — applicable to social, biological, transportation, citation, and any pairwise-relationship networks. This is classical graph analytics, not deep learning — for training graph neural networks (GCN/message passing, node/edge/graph classification on Cora-style data) use alterlab-torch-geometric instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "No API key required. Runs locally via `uv run python`; requires the networkx Python package.",
+      "version": "1.0.1",
+      "compatibility": "No API key required. Runs locally via `uv run python`; requires networkx >= 3.4 (current 3.7 as of 2026-09; native Leiden needs 3.7).",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1736,7 +1736,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 434,
+      "body_lines": 448,
       "references": [
         "algorithms.md",
         "generators.md",
@@ -1750,8 +1750,8 @@
       "domain": "data-science",
       "description": "Fast in-memory DataFrame analytics with Polars — lazy evaluation, parallel execution, and an Apache Arrow backend for datasets that fit in RAM. Use when pandas is too slow but data still fits in memory, for 1-100GB datasets, ETL pipelines, or a faster pandas replacement. For larger-than-RAM data prefer dask or vaex. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "No API key required. Runs locally via `uv run python`; requires the polars Python package.",
+      "version": "1.0.1",
+      "compatibility": "No API key required. Runs locally via `uv run python`; requires polars >= 1.0 (current 1.44 as of 2026-09; 2.0 is in release candidate).",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1761,7 +1761,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 389,
+      "body_lines": 411,
       "references": [
         "best_practices.md",
         "core_concepts.md",
@@ -1776,8 +1776,8 @@
       "domain": "data-science",
       "description": "Scales reinforcement learning with PufferLib — high-throughput parallel training (PuffeRL), vectorized environments, and native multi-agent systems achieving 2-10x speedups over standard implementations. Use when scaling RL to millions of steps per second, running vectorized or multi-agent setups, building custom PufferEnv tasks, or integrating game environments (Atari, Procgen, NetHack, PettingZoo). For standard single-agent algorithm implementations (PPO/SAC/DQN) or quick prototyping prefer alterlab-stable-baselines3. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "No API key required. Runs locally via `uv run python`; requires the pufferlib Python package (GPU optional for faster training). Targets PufferLib 3.0.x (the current PyPI release); the dev `4.0` branch has a different, unstable API.",
+      "version": "1.0.1",
+      "compatibility": "No API key required. Runs locally via `uv run python`; requires the pufferlib Python package (GPU optional for faster training). Targets PufferLib 3.0.x, still the latest PyPI release as of 2026-09 (3.0.0, June 2025); upstream's default branch is now 5.0, a from-source C/CUDA rewrite with a different API.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1787,7 +1787,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 457,
+      "body_lines": 475,
       "references": [
         "environments.md",
         "integration.md",
@@ -1799,10 +1799,10 @@
     {
       "name": "alterlab-pymc",
       "domain": "data-science",
-      "description": "Bayesian modeling and probabilistic programming with PyMC — hierarchical models, MCMC (NUTS) sampling, variational inference, LOO/WAIC model comparison, and posterior predictive checks. Use when fitting Bayesian or hierarchical models, estimating posteriors and credible intervals, running probabilistic inference, or comparing models with LOO/WAIC. Part of the AlterLab Academic Skills suite.",
+      "description": "Bayesian modeling and probabilistic programming with PyMC 6 and ArviZ 1.x — hierarchical models, MCMC (NUTS via PyMC, nutpie, NumPyro, or BlackJAX), variational inference, PSIS-LOO model comparison, and prior/posterior predictive checks. Use when fitting Bayesian or hierarchical models, estimating posteriors and credible intervals, diagnosing divergences, R-hat, or ESS, running probabilistic inference, or comparing models with LOO (WAIC was removed from ArviZ 1.x). Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.0.0",
-      "compatibility": "No API key required. Runs locally via `uv run python`; requires the pymc Python package.",
+      "version": "1.1.0",
+      "compatibility": "No API key required. Runs locally via `uv run python`; requires pymc >= 6 (current 6.3 as of 2026-09) with ArviZ >= 1.1 and PyTensor 3; nutpie optional but used by default when installed.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1812,7 +1812,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 162,
+      "body_lines": 188,
       "references": [
         "distribution_selection.md",
         "distributions.md",
@@ -1828,8 +1828,8 @@
       "domain": "data-science",
       "description": "Multi-objective optimization with pymoo — NSGA-II, NSGA-III, MOEA/D, Pareto-front computation, constraint handling, and standard benchmarks (ZDT, DTLZ). Use when solving multi-objective or constrained optimization problems, computing Pareto-optimal trade-offs, or tackling engineering design problems with competing objectives. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.0.0",
-      "compatibility": "No API key required. Runs locally via `uv run python`; requires the pymoo Python package.",
+      "version": "1.0.1",
+      "compatibility": "No API key required. Runs locally via `uv run python`; requires pymoo 0.6.x (current 0.6.2 as of 2026-09).",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1839,7 +1839,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 89,
+      "body_lines": 97,
       "references": [
         "algorithms.md",
         "constraints_mcdm.md",
@@ -1855,8 +1855,8 @@
       "domain": "data-science",
       "description": "Scalable deep-learning training with PyTorch Lightning — organize PyTorch code into LightningModules, configure Trainers for multi-GPU/TPU, build data pipelines and callbacks, log to W&B or TensorBoard, and run distributed training (DDP, FSDP, DeepSpeed). Use when structuring PyTorch training loops, scaling neural-network training across GPUs/TPUs, or adding checkpointing, logging, and distributed strategies. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.0.0",
-      "compatibility": "No API key required. Runs locally via `uv run python`; requires the pytorch-lightning and torch Python packages (multi-GPU/TPU optional, W&B token optional for logging).",
+      "version": "1.1.0",
+      "compatibility": "No API key required. Runs locally via `uv run python`; requires the `lightning` package (>= 2.5; current 2.6 as of 2026-09, imported as `import lightning as L`) and torch (multi-GPU/TPU optional, W&B token optional for logging).",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1866,7 +1866,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 166,
+      "body_lines": 182,
       "references": [
         "best_practices.md",
         "callbacks.md",
@@ -1882,8 +1882,8 @@
       "domain": "data-science",
       "description": "Classical machine learning in Python with scikit-learn — algorithms, preprocessing, pipelines, and best-practice reference documentation. Use when working with supervised learning (classification, regression), unsupervised learning (clustering, dimensionality reduction), model evaluation, hyperparameter tuning, feature preprocessing, or building ML pipelines. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "No API key required. Runs locally via `uv run python`; requires the scikit-learn Python package.",
+      "version": "1.0.1",
+      "compatibility": "No API key required. Runs locally via `uv run python`; requires scikit-learn >= 1.8 (current 1.9 as of 2026-09).",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1893,7 +1893,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 267,
+      "body_lines": 285,
       "references": [
         "best_practices_and_troubleshooting.md",
         "model_evaluation.md",
@@ -1910,8 +1910,8 @@
       "domain": "data-science",
       "description": "Survival analysis and time-to-event modeling in Python with scikit-survival. Use when working with censored survival data, fitting Cox models, Random Survival Forests, Gradient Boosting models, or Survival SVMs, evaluating predictions with concordance index or Brier score, handling competing risks, or implementing any time-to-event workflow. Part of the AlterLab Academic Skills suite.",
       "license": "GPL-3.0",
-      "version": "1.0.0",
-      "compatibility": "No API key required. Runs locally via `uv run python`; requires the scikit-survival Python package.",
+      "version": "1.1.0",
+      "compatibility": "No API key required. Runs locally via `uv run python`; requires scikit-survival >= 0.28 (current as of 2026-09), which needs scikit-learn >= 1.9.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1921,7 +1921,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 403,
+      "body_lines": 440,
       "references": [
         "competing-risks.md",
         "cox-models.md",
@@ -1936,8 +1936,8 @@
       "domain": "data-science",
       "description": "Model interpretability and explainability with SHAP (SHapley Additive exPlanations) — feature importance and plots (waterfall, beeswarm, bar, scatter, force, heatmap). Use when explaining ML model predictions, computing feature importance, debugging models, analyzing bias or fairness, comparing models, or implementing explainable AI across tree-based models (XGBoost, LightGBM, Random Forest), deep learning (TensorFlow, PyTorch), linear models, and any black-box model. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
-      "compatibility": "No API key required. Runs locally via `uv run python`; requires the shap Python package.",
+      "version": "1.0.1",
+      "compatibility": "No API key required. Runs locally via `uv run python`; requires shap >= 0.41 for the Explanation/`shap.plots` API (current 0.52 as of 2026-09, Python >= 3.12) plus matplotlib for plots.",
       "allowed_tools": [
         "Read",
         "Write",
@@ -1947,7 +1947,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 447,
+      "body_lines": 455,
       "references": [
         "explainers.md",
         "plots.md",
@@ -3149,7 +3149,7 @@
       "domain": "domain-specific",
       "description": "Submits and tracks protein-testing experiments on the Adaptyv Bio Foundry cloud lab (wet-lab validation), and optimizes protein sequences before submission with computational tools (NetSolP, SoluProt, SolubleMPNN, ESM). Use when designing proteins that need wet-lab validation - binding/affinity screening, expression testing, thermostability, or fluorescence assays - or when submitting experiments to the Foundry API, browsing the target catalog, tracking experiment status, retrieving results, or pre-screening sequences for solubility/expression. Triggers on \"Adaptyv\", \"Foundry API\", \"cloud lab\", \"biolayer interferometry / BLI\", \"wet-lab validation\". Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Requires an Adaptyv Bio Foundry account and an ADAPTYV_API_KEY token for experiment submission; local protein-optimization steps (ESM, etc.) run via `uv run python` without a key.",
       "allowed_tools": [
         "Read",
@@ -3159,7 +3159,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 124,
+      "body_lines": 149,
       "references": []
     },
     {
@@ -3167,7 +3167,7 @@
       "domain": "domain-specific",
       "description": "Runs time series machine learning with the aeon library — classification, regression, clustering, forecasting, anomaly detection, segmentation, and similarity search via scikit-learn compatible APIs. Use when working with temporal data, sequential patterns, or time-indexed observations (univariate or multivariate) that need specialized algorithms beyond standard ML approaches. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key required. Runs locally via `uv run python`; requires the aeon Python package.",
       "allowed_tools": [
         "Read",
@@ -3182,7 +3182,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 379,
+      "body_lines": 401,
       "references": [
         "anomaly_detection.md",
         "classification.md",
@@ -3202,7 +3202,7 @@
       "domain": "domain-specific",
       "description": "Processes astronomy and astrophysics data with the Astropy Python library — celestial coordinates, physical units, FITS files, cosmological calculations, time systems, tables, and world coordinate systems (WCS). Use when tasks involve coordinate transformations, unit conversions, FITS file manipulation, cosmological distance calculations, time scale conversions, or general astronomical data analysis. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key required. Runs locally via `uv run python`; requires the astropy Python package.",
       "allowed_tools": [
         "Read",
@@ -3213,7 +3213,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 323,
+      "body_lines": 341,
       "references": [
         "coordinates.md",
         "cosmology.md",
@@ -3227,9 +3227,9 @@
     {
       "name": "alterlab-cirq",
       "domain": "domain-specific",
-      "description": "Builds, simulates, and runs quantum circuits with Cirq, Google Quantum AI's framework for NISQ hardware, noise-aware low-level circuit design, and noise characterization. Use when targeting Google Quantum AI processors (Sycamore/Weber), designing noise-aware NISQ circuits, or running characterization experiments (randomized benchmarking, XEB). For IBM Quantum hardware and Qiskit Runtime prefer alterlab-qiskit; for gradient-trained quantum ML and hybrid quantum-classical models prefer alterlab-pennylane; for open-system Lindblad/master-equation dynamics prefer alterlab-qutip. Part of the AlterLab Academic Skills suite.",
+      "description": "Builds, simulates, and runs quantum circuits with Cirq, Google Quantum AI's framework for NISQ hardware, noise-aware low-level circuit design, and noise characterization. Use when targeting Google Quantum AI processors or their Quantum Virtual Machine models (Willow, Sycamore-class Rainbow/Weber), IonQ/AQT/Pasqal via Cirq plugins, designing noise-aware NISQ circuits, or running characterization experiments (randomized benchmarking, XEB). For IBM Quantum hardware and Qiskit Runtime prefer alterlab-qiskit; for gradient-trained quantum ML and hybrid quantum-classical models prefer alterlab-pennylane; for open-system Lindblad/master-equation dynamics prefer alterlab-qutip. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key required for local simulation. Runs via `uv run python`; requires the cirq Python package. Google Quantum AI hardware access needs separate credentials.",
       "allowed_tools": [
         "Read",
@@ -3239,7 +3239,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 338,
+      "body_lines": 355,
       "references": [
         "building.md",
         "experiments.md",
@@ -3254,7 +3254,7 @@
       "domain": "domain-specific",
       "description": "Applies computational methods to humanities research — text mining and NLP (LDA/BERTopic topic modeling, sentiment, named entity recognition with spaCy/NLTK), corpus linguistics (concordance, collocation, keyness), digital archives (Dublin Core, TEI XML), GIS for history, network analysis, stylometry and authorship attribution, OCR (Tesseract, Kraken, Transkribus), and data visualization (Gephi, Palladio). Use when distant-reading a literary corpus, mapping historical events or trade networks, attributing disputed authorship, digitizing historical documents, or building digital scholarly editions. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "No API key required. Guidance-focused skill; optional NLP/OCR Python tooling (spaCy, NLTK, Tesseract) runs locally via `uv run python`.",
       "allowed_tools": [
         "Read",
@@ -3264,7 +3264,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 136,
+      "body_lines": 148,
       "references": [
         "dh-tools-guide.md",
         "methods-and-examples.md"
@@ -3275,7 +3275,7 @@
       "domain": "domain-specific",
       "description": "Runs computational fluid dynamics simulations with the FluidSim Python framework using pseudospectral FFT methods, with HPC support and output analysis. Use when simulating Navier-Stokes equations (2D/3D), shallow water equations, or stratified flows, or when analyzing turbulence, vortex dynamics, or geophysical flows. Part of the AlterLab Academic Skills suite.",
       "license": "CeCILL-2.1",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key required. Runs locally via `uv run python`; requires the fluidsim Python package.",
       "allowed_tools": [
         "Read",
@@ -3285,7 +3285,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 345,
+      "body_lines": 365,
       "references": [
         "advanced_features.md",
         "installation.md",
@@ -3300,7 +3300,7 @@
       "domain": "domain-specific",
       "description": "Machine learning on genomic interval data (BED files) with the geniml Python package — region embeddings (Region2Vec), joint region+metadata embeddings (BEDspace/StarSpace), single-cell ATAC-seq embeddings (scEmbed), consensus peak sets / universes (build-universe), tokenization, BEDshift randomization, and BBClient/BEDbase caching. Use when training or using region/cell embeddings, clustering scATAC-seq, building a tokenization universe from BED collections, or any ML/feature-learning task over genomic regions. NOT for plain interval arithmetic (overlap/intersect/merge counts) — that is gtars, not geniml. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "compatibility": "No API key required. Runs locally via `uv run python` / the `geniml` CLI; requires the geniml Python package (verified against geniml 0.8.4). Tokenization and universe building also need the external `bedtools` and `uniwig` binaries; BEDspace needs StarSpace.",
       "allowed_tools": [
         "Read",
@@ -3312,7 +3312,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 289,
+      "body_lines": 305,
       "references": [
         "bedspace.md",
         "consensus_peaks.md",
@@ -3326,7 +3326,7 @@
       "domain": "domain-specific",
       "description": "Covers geospatial science across remote sensing, GIS, spatial analysis, and machine learning for earth observation — satellite imagery processing (Sentinel, Landsat, MODIS, SAR, hyperspectral), raster and DEM operations, spectral indices (NDVI/EVI/NDWI), spatial statistics, point cloud processing, network analysis, and cloud-native workflows (STAC, COG, Planetary Computer), with examples across Python, R, Julia, JavaScript, C++, Java, Go, and Rust. Use for remote sensing workflows, satellite/raster image classification, terrain/slope/hillshade analysis, spatial ML on earth-observation data, hydrological modeling, marine spatial analysis, or atmospheric science. For pure tabular vector work with no raster/EO aspect (plain GeoPandas sjoin, buffer, overlay, dissolve, choropleths) prefer the geopandas skill; for celestial-sphere astronomy coordinates (ICRS/galactic, FITS, WCS) prefer the astropy skill. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key required for local geospatial work. Runs via `uv run python`; cloud-native STAC/Planetary Computer workflows need network access (and provider credentials where applicable).",
       "allowed_tools": [
         "Read",
@@ -3337,7 +3337,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 372,
+      "body_lines": 397,
       "references": [
         "advanced-gis.md",
         "big-data.md",
@@ -3360,7 +3360,7 @@
       "domain": "domain-specific",
       "description": "Reads, writes, and analyzes geospatial vector data with the GeoPandas Python library (shapefiles, GeoJSON, GeoPackage), with PostGIS support and integration with matplotlib, folium, and cartopy. Use for spatial analysis and geometric operations — buffer analysis, spatial joins and overlays between datasets, dissolving boundaries, clipping, calculating areas and distances, reprojecting coordinate systems, choropleth mapping, or converting between vector file formats. This is for tabular vector data; for raster/satellite/DEM work, spectral indices (NDVI), or spatial ML on earth observation prefer the geomaster skill. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key required. Runs locally via `uv run python`; requires the geopandas Python package.",
       "allowed_tools": [
         "Read",
@@ -3370,7 +3370,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 243,
+      "body_lines": 268,
       "references": [
         "crs-management.md",
         "data-io.md",
@@ -3385,17 +3385,20 @@
       "domain": "domain-specific",
       "description": "Runs high-performance genomic interval analysis with gtars (databio), a Rust toolkit with Python bindings — the performance-critical backend for the geniml ML library. Use when computing overlaps/jaccard/coverage between BED region sets, indexing intervals with IGD, generating uniwig accumulation/coverage tracks, tokenizing genomic regions for ML, splitting single-cell fragments into pseudobulks, or computing GA4GH refget sequence digests. NOT for training region embeddings (use alterlab-geniml) or non-genomic spatial joins (use alterlab-geopandas). Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
-      "compatibility": "No API key required. Python API runs locally via `uv run python` with the `gtars` package (PyPI, v0.8). The CLI is a separate Rust binary (`gtars-cli`, install via cargo).",
+      "version": "1.1.1",
+      "compatibility": "No API key required. Python API runs locally via `uv run python` with the `gtars` package (PyPI, verified 0.10.0). The CLI is a separate Rust binary (`gtars-cli` 0.10, install via cargo).",
       "allowed_tools": [
-        "Read,",
-        "Write,",
-        "Edit,",
-        "Bash"
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(uv:*)",
+        "Bash(python:*)",
+        "Bash(gtars:*)",
+        "Bash(cargo:*)"
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 258,
+      "body_lines": 270,
       "references": [
         "cli.md",
         "coverage.md",
@@ -3410,7 +3413,7 @@
       "domain": "domain-specific",
       "description": "Runs automated LLM-driven hypothesis generation and testing on tabular datasets with HypoGeniC, combining literature insights with data-driven testing. Use when systematically exploring hypotheses about patterns in empirical data (for example deception detection or content analysis). For manual hypothesis formulation use alterlab-hypothesis-gen; for open-ended creative ideation use alterlab-scientific-brainstorm. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Requires the hypogenic Python package plus an LLM provider API key (e.g. OPENAI_API_KEY) for hypothesis generation. Runs via `uv run python`.",
       "allowed_tools": [
         "Read",
@@ -3425,7 +3428,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 370,
+      "body_lines": 389,
       "references": [
         "config_template.yaml",
         "custom_tasks.md",
@@ -3440,7 +3443,7 @@
       "domain": "domain-specific",
       "description": "Runs Python code in the cloud with Modal — serverless containers, on-demand GPUs, and autoscaling. Use when deploying ML models, running batch processing jobs, scheduling compute-intensive tasks, or serving APIs that need GPU acceleration or dynamic scaling. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Requires a Modal account and `modal token` authentication. Runs via `uv run python`; cloud execution incurs Modal usage.",
       "allowed_tools": [
         "Read",
@@ -3450,7 +3453,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 375,
+      "body_lines": 392,
       "references": [
         "examples.md",
         "functions.md",
@@ -3468,9 +3471,9 @@
     {
       "name": "alterlab-pennylane",
       "domain": "domain-specific",
-      "description": "Trains and differentiates quantum circuits with PennyLane, a hardware-agnostic quantum machine-learning framework with automatic differentiation and PyTorch/JAX/TensorFlow integration. Use when training quantum circuits via gradients (parameter-shift, backprop, adjoint), building hybrid quantum-classical models or quantum neural networks, or running differentiable variational algorithms (VQE, QAOA). For IBM Quantum hardware and Qiskit Runtime prefer alterlab-qiskit; for Google Quantum AI or NISQ circuits prefer alterlab-cirq; for open-system Lindblad/master-equation dynamics prefer alterlab-qutip. Part of the AlterLab Academic Skills suite.",
+      "description": "Trains and differentiates quantum circuits with PennyLane, a hardware-agnostic quantum machine-learning framework with automatic differentiation and PyTorch/JAX integration. Use when training quantum circuits via gradients (parameter-shift, backprop, adjoint), building hybrid quantum-classical models or quantum neural networks, or running differentiable variational algorithms (VQE, QAOA). For IBM Quantum hardware and Qiskit Runtime prefer alterlab-qiskit; for Google Quantum AI or NISQ circuits prefer alterlab-cirq; for open-system Lindblad/master-equation dynamics prefer alterlab-qutip. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key required for local simulation. Runs via `uv run python`; requires the pennylane Python package. Remote hardware (IBM, IonQ, Rigetti) needs separate provider credentials.",
       "allowed_tools": [
         "Read",
@@ -3480,7 +3483,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 225,
+      "body_lines": 255,
       "references": [
         "advanced_features.md",
         "devices_backends.md",
@@ -3496,7 +3499,7 @@
       "domain": "domain-specific",
       "description": "Analyzes and manipulates materials with the pymatgen toolkit — crystal structures and molecules, phase diagrams and thermodynamic stability, electronic structure (band structures, DOS), surfaces and interfaces, and Materials Project database access. Use when working with crystal structures in materials science, converting between structure formats (CIF, POSCAR, XYZ), analyzing symmetry or space groups, computing phase diagrams, querying the Materials Project API, or handling VASP, Gaussian, or Quantum ESPRESSO output. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "Runs locally via `uv run python`; requires the pymatgen Python package. Materials Project database queries need a free MP_API_KEY.",
       "allowed_tools": [
         "Read",
@@ -3506,7 +3509,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 136,
+      "body_lines": 150,
       "references": [
         "analysis_modules.md",
         "common_workflows_code.md",
@@ -3522,7 +3525,7 @@
       "domain": "domain-specific",
       "description": "Builds, transpiles, and runs quantum circuits with Qiskit, IBM's quantum computing framework, including Qiskit Runtime primitives (Sampler/Estimator), circuit transpilation, and error mitigation on IBM Quantum hardware. Use when targeting IBM Quantum backends, transpiling circuits, running Runtime sessions or batches, or applying resilience/error mitigation. For Google Quantum AI hardware and NISQ circuits prefer alterlab-cirq; for gradient-trained quantum ML and hybrid quantum-classical models prefer alterlab-pennylane; for open-system Lindblad/master-equation dynamics prefer alterlab-qutip. Part of the AlterLab Academic Skills suite.",
       "license": "Apache-2.0",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "compatibility": "No API key required for local simulation. Runs via `uv run python`; requires the qiskit Python package. IBM Quantum hardware/Runtime needs an IBM Quantum account and API token.",
       "allowed_tools": [
         "Read",
@@ -3532,7 +3535,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 270,
+      "body_lines": 301,
       "references": [
         "algorithms.md",
         "backends.md",
@@ -3549,7 +3552,7 @@
       "domain": "domain-specific",
       "description": "Simulates open quantum systems with QuTiP, the Quantum Toolbox in Python, solving Lindblad master equations (mesolve), Monte Carlo trajectories (mcsolve), and unitary dynamics (sesolve). Use when studying master-equation or Lindblad dynamics, decoherence, dissipation, quantum optics, cavity QED, or open-system time evolution. NOT for circuit-based quantum computing or hardware execution — for IBM Quantum circuits prefer alterlab-qiskit, for Google Quantum AI or NISQ circuits prefer alterlab-cirq, and for gradient-trained quantum ML prefer alterlab-pennylane. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "compatibility": "No API key required. Runs locally via `uv run python`; requires the qutip Python package.",
       "allowed_tools": [
         "Read",
@@ -3559,7 +3562,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 311,
+      "body_lines": 337,
       "references": [
         "advanced.md",
         "analysis.md",
@@ -3573,7 +3576,7 @@
       "domain": "domain-specific",
       "description": "Dispatch long-running GPU/CPU jobs to remote compute with a provider-agnostic submit → poll → harvest pattern across SLURM/HPC (sbatch, squeue, sacct) and managed APIs (Modal, RunPod, GCP Batch / Vertex AI). Use when submitting a batch job to a cluster, polling job status, retrieving result artifacts from a scheduler or cloud GPU provider, or writing a portable job-submission wrapper; the foundation-model skills (alterlab-alphafold, alterlab-boltz, alterlab-rfdiffusion, and siblings) dispatch their GPU work through this pattern. For Modal-specific serverless container deployment and autoscaling prefer alterlab-modal instead. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "Runs under `uv run python`; the portable dispatcher (`scripts/dispatch.py`) is stdlib-only. SLURM paths need `sbatch`/`squeue`/`sacct` on PATH (an HPC login node); managed backends need the provider CLI/SDK and account credentials read from environment variables (never hardcoded). No GPU is needed to submit/poll — only the remote job itself uses one.",
       "allowed_tools": [
         "Read",
@@ -3584,7 +3587,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 138,
+      "body_lines": 139,
       "references": [
         "providers.md"
       ]
@@ -3592,9 +3595,9 @@
     {
       "name": "alterlab-social-science-methods",
       "domain": "domain-specific",
-      "description": "Guides advanced social science research methods — discourse analysis (Fairclough CDA, Gee), conversation analysis, quantitative content analysis, Qualitative Comparative Analysis (QCA), process tracing, archival research, participatory/community-based research (PAR, CBPR), Delphi and Q methodology, social network analysis (SNA), bibliometrics and scientometrics, systematic mapping reviews, and program/policy evaluation. Use when designing or conducting any of these studies — choosing a specialized method, building a coding scheme, establishing causal mechanisms in case studies, mapping relational or subjective data, or applying an evaluation framework. For interpretive/qualitative coding (thematic analysis, grounded theory, IPA, ethnography, qualitative content analysis) use alterlab-qualitative-methods; for combining qual+quant strands use alterlab-mixed-methods. Part of the AlterLab Academic Skills suite.",
+      "description": "Guides advanced social science research methods — discourse analysis (Fairclough CDA, Gee), conversation analysis, quantitative content analysis, Qualitative Comparative Analysis (QCA), process tracing, archival research, participatory/community-based research (PAR, CBPR), Delphi and Q methodology, social network analysis (SNA), bibliometrics and scientometrics, systematic mapping reviews, and program/policy evaluation. Use when designing or conducting any of these studies — choosing a specialized method, building a coding scheme, establishing causal mechanisms in case studies, mapping relational or subjective data, or applying an evaluation framework. For interpretive coding (thematic analysis, grounded theory, IPA, ethnography) use alterlab-qualitative-methods; for qual+quant integration use alterlab-mixed-methods; to run QCA, SNA, or text-as-data analyses on data use alterlab-qca, alterlab-sna, or alterlab-text-as-data. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "compatibility": "No API key required. Guidance-focused skill; optional Python helpers run via `uv run python`.",
       "allowed_tools": [
         "Read",
@@ -3604,7 +3607,7 @@
       ],
       "has_scripts": false,
       "has_evals": true,
-      "body_lines": 123,
+      "body_lines": 138,
       "references": [
         "comparative-and-case-methods.md",
         "discourse-and-conversation-analysis.md",
