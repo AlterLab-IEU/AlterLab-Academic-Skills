@@ -1100,6 +1100,8 @@ authors:
 
 This project is licensed under the **[MIT License](LICENSE)**.
 
+A few skills carry their upstream licence instead: the four core research-pipeline skills (`alterlab-deep-research`, `alterlab-paper-writer`, `alterlab-paper-reviewer`, `alterlab-research-pipeline`) derive from a **CC-BY-NC 4.0** (non-commercial) upstream, and `alterlab-mermaid` is **Apache-2.0**; each skill's `license:` field is authoritative. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ```
 MIT License — Copyright (c) 2026 AlterLab Creative Technologies Laboratory
 ```

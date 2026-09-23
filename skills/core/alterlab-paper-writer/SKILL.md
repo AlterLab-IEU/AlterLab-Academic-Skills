@@ -1,12 +1,12 @@
 ---
 name: alterlab-paper-writer
 description: "Drafts and revises academic papers through a 12-agent pipeline with hardened LaTeX output (apa7 class, PDF compiled from LaTeX), supporting IMRaD, literature review, theoretical, case study, policy brief, and conference paper structures, APA 7.0 (default), Chicago, MLA, IEEE, and Vancouver citation formats, bilingual abstracts (English plus the author's language, e.g. Turkish or Traditional Chinese), and multi-format output (LaTeX, DOCX, PDF, Markdown). Use when the request mentions write paper, academic paper, paper outline, write abstract, revise paper, check citations, convert to LaTeX, guide my paper, parse reviews, revision roadmap, or makale yaz, akademik makale, özet yaz, makaleyi revize et, hakem yorumları, or 寫論文, 學術論文, 論文大綱, 寫摘要, 修改論文, 檢查引用, 引導我寫論文, 審查意見, 修訂路線圖. Its citation-check mode formats and inserts citations while drafting; for a standalone anti-hallucination check that cited references actually exist prefer alterlab-citation-verifier instead. Part of the AlterLab Academic Skills suite."
-license: MIT
+license: CC-BY-NC-4.0
 allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: Uses built-in Claude tools only; optional LaTeX toolchain (apa7 document class) required for PDF compilation; no external API key or account required
 metadata:
   skill-author: AlterLab
-  version: "2.6"
+  version: "2.6.1"
   last_updated: "2026-09-23"
 ---
 

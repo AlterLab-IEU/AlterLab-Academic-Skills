@@ -1,12 +1,12 @@
 ---
 name: alterlab-research-pipeline
 description: "Orchestrates the full academic research pipeline (research, write, integrity check, review, revise, re-review, re-revise, final integrity check, finalize), coordinating alterlab-deep-research, alterlab-paper-writer, and alterlab-paper-reviewer into a seamless 10-stage workflow with mandatory integrity verification, two-stage peer review, and reproducible quality gates. Use when the request mentions academic pipeline, research to paper, full paper workflow, paper pipeline, end-to-end paper, research-to-publication, or complete paper workflow. Part of the AlterLab Academic Skills suite."
-license: MIT
+license: CC-BY-NC-4.0
 allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: Orchestrates alterlab-deep-research, alterlab-paper-writer, and alterlab-paper-reviewer; uses built-in Claude tools only; no external API key or account required
 metadata:
   skill-author: AlterLab
-  version: "2.7.0"
+  version: "2.7.1"
   last_updated: "2026-09-23"
   depends_on: "alterlab-deep-research, alterlab-paper-writer, alterlab-paper-reviewer"
 ---

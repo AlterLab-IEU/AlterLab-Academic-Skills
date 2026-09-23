@@ -41,7 +41,7 @@ Upstream 2: academic-research-skills
   IMPORTANT: CC-BY-NC 4.0 is a NonCommercial license and is NOT compatible with
   the permissive MIT license used by the rest of this repository. These four
   skills MAY NOT be used commercially without separate permission from the
-  upstream author, and CC-BY-NC 4.0 -- not MIT -- governs them, regardless of
-  the "license: MIT" value currently in their SKILL.md frontmatter. See
+  upstream author, and CC-BY-NC 4.0 -- not MIT -- governs them; since v3.0.0
+  their SKILL.md frontmatter declares "license: CC-BY-NC-4.0" accordingly. See
   THIRD_PARTY_NOTICES.md for details.
 -------------------------------------------------------------------------------

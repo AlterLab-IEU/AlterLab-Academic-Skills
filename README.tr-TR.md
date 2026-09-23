@@ -985,6 +985,8 @@ MIT License — Copyright (c) 2026 AlterLab Creative Technologies Laboratory
 
 Her becerinin kapsadığı aracın ayrı bir lisansı olabilir — ilgili SKILL.md frontmatter'ında veya araç dokümantasyonunda kontrol edin.
 
+Bazı beceriler kaynaklarının lisansını taşır: dört çekirdek araştırma hattı becerisi (`alterlab-deep-research`, `alterlab-paper-writer`, `alterlab-paper-reviewer`, `alterlab-research-pipeline`) **CC-BY-NC 4.0** (ticari olmayan) lisanslı bir kaynaktan türetilmiştir ve `alterlab-mermaid` **Apache-2.0** lisanslıdır; her becerinin `license:` alanı esastır. Ayrıntılar [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) dosyasında.
+
 <br>
 
 ## 🙏 Teşekkürler

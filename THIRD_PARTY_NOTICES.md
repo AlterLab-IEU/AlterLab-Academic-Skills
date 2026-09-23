@@ -102,22 +102,20 @@ skill (upstream versions current at verification):
 **License-compatibility notice — IMPORTANT.** CC-BY-NC 4.0 is a **NonCommercial** license and is
 **not** a permissive MIT-family license. Unlike the K-Dense MIT material, CC-BY-NC works **cannot be
 sublicensed or relicensed under MIT**, and the NonCommercial restriction follows the derivative.
-The four skills above currently declare `license: MIT` in their own SKILL.md frontmatter; that
-frontmatter value does **not** override the upstream's terms and is, for these four skills,
-inaccurate with respect to their lineage. This notice records the accurate upstream license so the
-attribution and use restrictions are not lost. Anyone redistributing or using these four skills
-must:
+Since v3.0.0 the four skills above declare `license: CC-BY-NC-4.0` in their own SKILL.md
+frontmatter, matching their lineage (earlier releases wrongly declared `MIT`). Anyone
+redistributing or using these four skills must:
 
 1. retain the attribution string above and a link to the upstream;
 2. honor the **NonCommercial** restriction (no commercial use of these four skills or their
    derivatives without separate permission from Cheng-I Wu); and
-3. treat CC-BY-NC 4.0 — not MIT — as the governing license for these four skills until their
-   per-skill frontmatter is corrected or the material is independently re-implemented.
+3. treat CC-BY-NC 4.0 — not MIT — as the governing license for these four skills, including
+   when they are installed through the `alterlab-core` plugin (whose manifest declares
+   `MIT AND CC-BY-NC-4.0`).
 
 The CC-BY-NC 4.0 legal text is available at
-<https://creativecommons.org/licenses/by-nc/4.0/legalcode>. This per-skill frontmatter correction
-is tracked as follow-up work and is intentionally **not** made here (this change touches only the
-notices, per the editing scope); see the NOTICE file for the condensed attribution record.
+<https://creativecommons.org/licenses/by-nc/4.0/legalcode>; see the NOTICE file for the condensed
+attribution record.
 
 ## Tools, libraries, and databases the skills describe
 
@@ -156,11 +154,8 @@ frontmatter. Current distribution across the 209 skills:
 Regenerate this table after license changes; the source of truth is each skill's
 frontmatter (`python scripts/audit_skills.py` reports the canonical value per skill).
 
-**Caveat.** This table reflects the `license:` value *as declared in frontmatter*. For the four
-`core/` skills derived from the CC-BY-NC 4.0 upstream (see "Upstream 2" above), the frontmatter
-declares `MIT` but the **governing** license is CC-BY-NC 4.0; the table over-counts MIT by four
-until that frontmatter is corrected. Treat the Provenance section and [`NOTICE`](NOTICE) as
-authoritative over this count where they conflict.
+The four `core/` skills derived from the CC-BY-NC 4.0 upstream (see "Upstream 2" above) are
+counted under `CC-BY-NC-4.0`, and `alterlab-mermaid` under `Apache-2.0`.
 
 ## Note on removed material
 

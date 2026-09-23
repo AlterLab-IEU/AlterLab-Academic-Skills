@@ -323,6 +323,23 @@ BUNDLES = {
 PLUGINS_DIR = REPO / "plugins"
 
 
+_LICENSE_RE = re.compile(r'(?m)^license:\s*"?([^"\n]+?)"?\s*$')
+
+
+def _plugin_license(skill_dirs: list[Path]) -> str:
+    """SPDX expression covering every skill a plugin bundles, from each SKILL.md `license`.
+
+    Most domains are all-MIT. A domain that bundles differently licensed skills (the core
+    pipeline's CC-BY-NC-4.0 skills, the Apache-2.0 Mermaid skill) must not advertise plain MIT.
+    """
+    found: set[str] = set()
+    for d in skill_dirs:
+        head = (d / "SKILL.md").read_text(encoding="utf-8").split("\n---", 1)[0]
+        m = _LICENSE_RE.search(head)
+        found.add(m.group(1).strip() if m else "MIT")
+    return " AND ".join(sorted(found, key=lambda s: (s != "MIT", s))) or "MIT"
+
+
 def build_plugin_scoped(cat_dir: Path, version: str) -> dict | None:
     """Build one per-domain plugin entry in the v2.0 scoped shape (verdict == 'go')."""
     skill_dirs = _skill_dirs(cat_dir)
@@ -341,7 +358,7 @@ def build_plugin_scoped(cat_dir: Path, version: str) -> dict | None:
         "version": version,
         "author": AUTHOR,
         "homepage": HOMEPAGE,
-        "license": "MIT",
+        "license": _plugin_license(skill_dirs),
         "category": category,
         "keywords": keywords,
     }
@@ -458,7 +475,7 @@ def build_plugin_legacy(cat_dir: Path, version: str) -> dict | None:
         "version": version,
         "author": AUTHOR,
         "homepage": HOMEPAGE,
-        "license": "MIT",
+        "license": _plugin_license(skill_dirs),
         "category": category,
         "keywords": keywords,
         "strict": False,

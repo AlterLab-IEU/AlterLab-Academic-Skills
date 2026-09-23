@@ -1,12 +1,12 @@
 ---
 name: alterlab-paper-reviewer
 description: "Simulates a full multi-reviewer journal review PANEL — 5 personas (Editor-in-Chief + 3 peer reviewers + a Devil's Advocate) debate a manuscript and produce a consensus Editorial Decision (accept/minor/major/reject) plus a prioritized Revision Roadmap. Modes: full, re-review (verify revisions addressed prior comments), quick, methodology-focus, Socratic guided. Use for: simulate peer review, mock review panel, editorial review before submission, multiple reviewer perspectives, re-review of a revised manuscript, or 'critique my paper hard'. For a single-reviewer referee report use alterlab-peer-review; for rubric/grade scoring use alterlab-scholar-eval; to write/revise the paper use alterlab-paper-writer. Part of the AlterLab Academic Skills suite."
-license: MIT
+license: CC-BY-NC-4.0
 allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required
 metadata:
   skill-author: AlterLab
-  version: "1.5"
+  version: "1.5.1"
   last_updated: "2026-09-23"
 ---
 
