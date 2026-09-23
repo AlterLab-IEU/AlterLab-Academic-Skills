@@ -129,6 +129,12 @@ access agreements such as KEGG's academic-use terms, UniProt, COSMIC's Sanger
 registration, and API providers' terms). Always review the upstream tool's license and a
 data resource's terms before use in research or redistribution.
 
+## Other third-party content
+
+| Source | Author / © | License | Where it is used |
+|---|---|---|---|
+| [SuperiorByteWorks-LLC/agent-project](https://github.com/SuperiorByteWorks-LLC/agent-project) | Clayton Young / Superior Byte Works, LLC | Apache-2.0 | `visualization/alterlab-mermaid` — style guides, diagram-type guides, and document templates (each ported file keeps its attribution header; the skill is marked `license: Apache-2.0`) |
+
 ## Per-skill license distribution
 
 Each skill declares the license appropriate to its own content in its `SKILL.md`
