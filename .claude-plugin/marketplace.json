@@ -2,21 +2,21 @@
   "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
   "name": "alterlab-academic-skills",
   "description": "240 Claude skills for academic research, organized by domain",
-  "version": "2.6.1",
+  "version": "2.7.0",
   "owner": {
     "name": "AlterLab @ Izmir University of Economics",
     "email": "alterlab.ieu@gmail.com"
   },
   "metadata": {
     "description": "240 Claude skills for academic research, organized by domain",
-    "version": "2.6.1"
+    "version": "2.7.0"
   },
   "plugins": [
     {
       "name": "alterlab-bioinformatics",
       "source": "./skills/bioinformatics",
       "description": "Genomics, proteomics, and single-cell analysis (Scanpy, BioPython, pysam, ESM) (38 skills)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -77,7 +77,7 @@
       "name": "alterlab-cheminformatics",
       "source": "./skills/cheminformatics",
       "description": "Chemistry and drug discovery (RDKit, docking, ADMET, mass spec) (12 skills)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -112,7 +112,7 @@
       "name": "alterlab-clinical-research",
       "source": "./skills/clinical-research",
       "description": "Clinical decision support, medical imaging, and regulatory workflows (7 skills)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -141,7 +141,7 @@
       "name": "alterlab-core",
       "source": "./skills/core",
       "description": "Core research-to-publication pipeline plus teaching and thesis tools (10 skills)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -259,7 +259,7 @@
       "name": "alterlab-data-science",
       "source": "./skills/data-science",
       "description": "Machine learning and statistics (scikit-learn, PyTorch, transformers, SHAP) (22 skills)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -304,7 +304,7 @@
       "name": "alterlab-databases",
       "source": "./skills/databases",
       "description": "Connectors to scientific databases (PubMed, ChEMBL, UniProt, GEO, and more) (39 skills)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -409,7 +409,7 @@
       "name": "alterlab-document-tools",
       "source": "./skills/document-tools",
       "description": "Document and Markdown conversion (MarkItDown, Open Notebook) (3 skills)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -433,7 +433,7 @@
       "name": "alterlab-domain-specific",
       "source": "./skills/domain-specific",
       "description": "Quantum computing, geospatial, materials, astronomy, and digital humanities (18 skills)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -474,7 +474,7 @@
       "name": "alterlab-faculty-life",
       "source": "./skills/faculty-life",
       "description": "Faculty research-lifecycle and academic administration (syllabus AI-policy, IRB/consent, post-award grant admin, recommendation letters, accreditation AoL) (6 skills)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -504,7 +504,7 @@
       "name": "alterlab-finance-economics",
       "source": "./skills/finance-economics",
       "description": "Economic and financial data (FRED, Alpha Vantage, SEC EDGAR, market research) (7 skills)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -534,7 +534,7 @@
       "name": "alterlab-lab-integrations",
       "source": "./skills/lab-integrations",
       "description": "Laboratory platforms (Benchling, DNAnexus, Opentrons, Protocols.io) (9 skills)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -565,7 +565,7 @@
       "name": "alterlab-methodology",
       "source": "./skills/methodology",
       "description": "Research methodology and rigor scaffolds (Iron Laws, rationalization tables, decision flowcharts, systematic-reasoning checklists) (3 skills)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -591,7 +591,7 @@
       "name": "alterlab-research-tools",
       "source": "./skills/research-tools",
       "description": "Search, discovery, Zotero, qualitative methods, ethics, and open science (14 skills)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -628,7 +628,7 @@
       "name": "alterlab-social-science-workflow",
       "source": "./skills/social-science-workflow",
       "description": "Stage-gated social-science methods spine — orchestrator + 5 validity gates (design/identifying-assumption, measurement, sampling/power, reflexivity, inference) and 11 analysis modules (causal inference, complex-survey analysis, SEM/psychometrics, multilevel models, QCA, SNA, ABM, text-as-data, qualitative analysis, meta-analysis, missing data) (17 skills)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -650,7 +650,7 @@
       "name": "alterlab-turkish-academia",
       "source": "./skills/turkish-academia",
       "description": "Turkish academic system workflows (YÖK, ÜAK, DergiPark, YÖK-Tez, TÜBİTAK, doçentlik) (12 skills)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -686,7 +686,7 @@
       "name": "alterlab-visualization",
       "source": "./skills/visualization",
       "description": "Publication-quality plotting and schematics (Matplotlib, Seaborn, Plotly) (9 skills)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -718,7 +718,7 @@
       "name": "alterlab-workflows",
       "source": "./skills/workflows",
       "description": "Runnable multi-agent research workflows for Claude Code (systematic-review screening, citation audit, independent review panel, claim stress-test, rebuttal, grant mock panel, literature map) plus the portable playbook skill (1 skill)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -740,7 +740,7 @@
       "name": "alterlab-writing-tools",
       "source": "./skills/writing-tools",
       "description": "Scientific writing, citations, grants, posters, and academic career (13 skills)",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -776,7 +776,7 @@
       "name": "alterlab-complete",
       "source": "./plugins/alterlab-complete",
       "description": "The complete AlterLab Academic Skills suite — installs every domain plugin in one step",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
@@ -795,7 +795,7 @@
       "name": "alterlab-essentials",
       "source": "./plugins/alterlab-essentials",
       "description": "Faculty starter kit — installs the core research-to-publication pipeline, the multi-agent research workflows, research tools, writing tools, methodology gates, and scientific-database connectors in one step",
-      "version": "2.6.1",
+      "version": "2.7.0",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",
         "url": "https://github.com/AlterLab-IEU"
