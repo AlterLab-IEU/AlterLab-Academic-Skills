@@ -3,10 +3,11 @@ name: alterlab-polars
 description: Fast in-memory DataFrame analytics with Polars — lazy evaluation, parallel execution, and an Apache Arrow backend for datasets that fit in RAM. Use when pandas is too slow but data still fits in memory, for 1-100GB datasets, ETL pipelines, or a faster pandas replacement. For larger-than-RAM data prefer dask or vaex. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the polars Python package.
+compatibility: No API key required. Runs locally via `uv run python`; requires polars >= 1.0 (current 1.44 as of 2026-09; 2.0 is in release candidate).
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Polars
@@ -15,14 +16,36 @@ metadata:
 
 Polars is a lightning-fast DataFrame library for Python and Rust built on Apache Arrow. Work with Polars' expression-based API, lazy evaluation framework, and high-performance data manipulation capabilities for efficient data processing, pandas migration, and data pipeline optimization.
 
+## When to Use This Skill
+
+- pandas code is too slow but the data (or the columns a lazy query touches) fits on one machine
+- Building ETL or feature pipelines with lazy scans (`scan_csv`, `scan_parquet`) and query optimization
+- Migrating pandas code to the Polars expression API
+- Window functions, joins, and group-by aggregations over large in-memory tables
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Distributed execution across a cluster, or scaling existing pandas/NumPy code with a task scheduler and dashboard | `alterlab-dask` |
+| Billion-row out-of-core exploration with memory-mapped HDF5/Arrow files and big-data plots | `alterlab-vaex` |
+| First look at an unfamiliar data file: structure, missingness, and quality report | `alterlab-eda` |
+
 ## Quick Start
 
 ### Installation and Basic Usage
 
 Pin a recent 1.x (examples here use the Polars 1.x API):
 ```bash
-uv add 'polars>=1.0'
+uv add 'polars>=1.0,<2'
 ```
+
+Polars 2.0 is in release candidate (2.0.0rc2, September 2026). Its upgrade guide lists changes
+that alter results silently: `LazyFrame.collect()` defaults to the streaming engine (row order
+of some joins/unpivots can change), `pl.concat(how="horizontal")` requires equal heights
+(`how="horizontal_extend"` pads), `explode()` drops empty lists instead of emitting a null row,
+`is_in` refuses lossy casts, `LazyFrame.profile()` is removed, and headerless CSV columns are
+named from `column_0`. Check https://docs.pola.rs/releases/upgrade/ before moving to 2.x.
 
 Basic DataFrame creation and operations:
 ```python
@@ -197,7 +220,7 @@ df.with_columns(
 
 **Mapping strategies:**
 - `group_to_rows` (default): Preserves original row order
-- `explode`: Faster but groups rows together
+- `explode`: Changes the row count (use in `select`, not `with_columns`); output is grouped
 - `join`: Creates list columns
 
 ## Data I/O

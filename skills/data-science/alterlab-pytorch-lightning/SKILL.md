@@ -3,10 +3,11 @@ name: alterlab-pytorch-lightning
 description: Scalable deep-learning training with PyTorch Lightning — organize PyTorch code into LightningModules, configure Trainers for multi-GPU/TPU, build data pipelines and callbacks, log to W&B or TensorBoard, and run distributed training (DDP, FSDP, DeepSpeed). Use when structuring PyTorch training loops, scaling neural-network training across GPUs/TPUs, or adding checkpointing, logging, and distributed strategies. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the pytorch-lightning and torch Python packages (multi-GPU/TPU optional, W&B token optional for logging).
+compatibility: No API key required. Runs locally via `uv run python`; requires the `lightning` package (>= 2.5; current 2.6 as of 2026-09, imported as `import lightning as L`) and torch (multi-GPU/TPU optional, W&B token optional for logging).
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # PyTorch Lightning
@@ -14,6 +15,12 @@ metadata:
 ## Overview
 
 PyTorch Lightning is a deep learning framework that organizes PyTorch code to eliminate boilerplate while maintaining full flexibility. Automate training workflows, multi-device orchestration, and implement best practices for neural network training and scaling across multiple GPUs/TPUs.
+
+```bash
+uv pip install lightning   # provides `import lightning as L` and `lightning.pytorch.*`
+```
+
+All code in this skill uses the unified `lightning` package. The separately published `pytorch-lightning` package installs the older `pytorch_lightning` namespace instead; do not mix the two namespaces in one project, because their classes are distinct (e.g. `lightning.Trainer.fit` rejects a `pytorch_lightning.LightningModule` with a `TypeError`).
 
 ## When to Use This Skill
 
@@ -24,6 +31,15 @@ This skill should be used when:
 - Implementing data pipelines with LightningDataModules
 - Working with callbacks, logging, and distributed training strategies (DDP, FSDP, DeepSpeed)
 - Structuring deep learning projects professionally
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Fine-tuning a pretrained Hugging Face model with the `transformers` Trainer / pipelines | `alterlab-transformers` |
+| Designing graph neural network layers or loading graph datasets (GCN, GAT, message passing) | `alterlab-torch-geometric` |
+| Reinforcement-learning agents trained on environments (PPO, SAC, DQN) | `alterlab-stable-baselines3` |
+| Classical ML on tabular data (random forests, gradient boosting, linear models) | `alterlab-scikit-learn` |
 
 ## Core Capabilities
 
@@ -85,12 +101,13 @@ Add custom functionality at specific training hooks without modifying your Light
 
 Integrate with multiple logging platforms:
 
-- TensorBoard (default)
+- TensorBoard (default when `tensorboard` is installed; otherwise CSV)
 - Weights & Biases (WandbLogger)
 - MLflow (MLFlowLogger)
-- Neptune (NeptuneLogger)
 - Comet (CometLogger)
 - CSV (CSVLogger)
+
+`NeptuneLogger` was removed in Lightning 2.6.4 after Neptune's hosted service shut down (March 2026).
 
 Log metrics using `self.log("metric_name", value)` in any LightningModule method.
 

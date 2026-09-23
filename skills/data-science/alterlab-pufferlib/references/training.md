@@ -217,11 +217,11 @@ model_path = trainer.save_checkpoint()
 There is no `trainer.load_checkpoint(path)`. Loading happens at policy-build time via config keys, then training resumes from the loaded weights:
 
 ```bash
-# Resume from the most recent local checkpoint
-puffer train puffer_breakout --train.load-model-path latest
+# Resume from the most recent local checkpoint (top-level flag, not in the [train] section)
+puffer train puffer_breakout --load-model-path latest
 
-# Or load a specific file / a logged W&B/Neptune run id
-puffer train puffer_breakout --train.load-model-path experiments/puffer_breakout_000400.pt
+# Or load a specific file, or a logged W&B/Neptune run with --load-id <run_id> --wandb
+puffer train puffer_breakout --load-model-path experiments/puffer_breakout_000400.pt
 ```
 
 ## Hyperparameter Tuning with Protein

@@ -52,8 +52,18 @@ from sksurv.datasets import (
 # Load dataset
 X, y = load_breast_cancer()
 
-# X is pandas DataFrame with features
-# y is structured array with 'event' and 'time'
+# X is a pandas DataFrame; categorical columns ('er', 'grade') must be encoded
+# before scaling or fitting. y is a structured array whose field names are
+# dataset-specific: ('e.tdm', 't.tdm') here, ('cens', 'time') for load_gbsg2,
+# ('fstat', 'lenfol') for load_whas500, ('Status', 'Survival_in_days') for
+# load_veterans_lung_cancer. Normalize them to 'event'/'time':
+from sksurv.preprocessing import encode_categorical
+from sksurv.util import Surv
+
+X = encode_categorical(X)
+event_field, time_field = y.dtype.names
+y = Surv.from_arrays(event=y[event_field], time=y[time_field])
+
 print(f"Features shape: {X.shape}")
 print(f"Number of events: {y['event'].sum()}")
 print(f"Censoring rate: {1 - y['event'].mean():.2%}")

@@ -64,7 +64,7 @@ model.fit(X_train, y_train)
 
 **Logistic Regression (`sklearn.linear_model.LogisticRegression`)**
 - Binary and multiclass classification
-- Key parameters: `C` (inverse regularization), `penalty` ('l1', 'l2', 'elasticnet')
+- Key parameters: `C` (inverse regularization; `C=np.inf` for no penalty), `l1_ratio` (0 = L2, 1 = L1, in between = elastic net). `penalty=` is deprecated since 1.8 and is removed in 1.10
 - Returns probability estimates
 - Use when: Need probabilistic predictions, interpretability
 - Example:
@@ -239,6 +239,7 @@ model.fit(X_train, y_train)
 - Use when: Want to ensemble different model types
 - Example:
 ```python
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.ensemble import VotingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
@@ -248,7 +249,8 @@ model = VotingClassifier(
     estimators=[
         ('lr', LogisticRegression()),
         ('dt', DecisionTreeClassifier()),
-        ('svc', SVC(probability=True))
+        # SVC(probability=True) is deprecated in 1.9; calibrate explicitly instead
+        ('svc', CalibratedClassifierCV(SVC(), ensemble=False))
     ],
     voting='soft'
 )

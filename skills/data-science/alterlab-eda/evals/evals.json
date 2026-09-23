@@ -22,7 +22,7 @@
     {
       "id": "nd2-microscopy-eda",
       "prompt": "Analyze cells.nd2 from the confocal — I need to know the dimensions, channels, and pixel calibration before I set up the image-analysis workflow.",
-      "expected_output": "Invokes alterlab-eda: recognizes .nd2 as a Nikon microscopy format, loads it with nd2reader, extracts multi-dimensional structure (XYZCT, channels, timepoints), pixel size/spatial calibration, and intensity statistics, then writes a markdown report with image-analysis recommendations.",
+      "expected_output": "Invokes alterlab-eda: recognizes .nd2 as a Nikon microscopy format, loads it with the nd2 package (nd2.ND2File / nd2.imread), extracts multi-dimensional structure (XYZCT, channels, timepoints), pixel size/spatial calibration, and intensity statistics, then writes a markdown report with image-analysis recommendations.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Reports image dimensions/channels and spatial calibration for the ND2 file and recommends suitable downstream image analysis." }

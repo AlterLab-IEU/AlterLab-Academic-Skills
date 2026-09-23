@@ -3,10 +3,11 @@ name: alterlab-pufferlib
 description: Scales reinforcement learning with PufferLib — high-throughput parallel training (PuffeRL), vectorized environments, and native multi-agent systems achieving 2-10x speedups over standard implementations. Use when scaling RL to millions of steps per second, running vectorized or multi-agent setups, building custom PufferEnv tasks, or integrating game environments (Atari, Procgen, NetHack, PettingZoo). For standard single-agent algorithm implementations (PPO/SAC/DQN) or quick prototyping prefer alterlab-stable-baselines3. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the pufferlib Python package (GPU optional for faster training). Targets PufferLib 3.0.x (the current PyPI release); the dev `4.0` branch has a different, unstable API.
+compatibility: No API key required. Runs locally via `uv run python`; requires the pufferlib Python package (GPU optional for faster training). Targets PufferLib 3.0.x, still the latest PyPI release as of 2026-09 (3.0.0, June 2025); upstream's default branch is now 5.0, a from-source C/CUDA rewrite with a different API.
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # PufferLib - High-Performance Reinforcement Learning
@@ -26,6 +27,14 @@ Use this skill when:
 - **Scaling RL** to millions of steps per second for faster experimentation
 - **Multi-agent RL** with native multi-agent environment support
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Quick single-agent prototype with a standard, well-documented PPO/SAC/DQN implementation | `alterlab-stable-baselines3` |
+| Supervised deep-learning training loops (classification, regression) with checkpointing and multi-GPU | `alterlab-pytorch-lightning` |
+| Agent-based simulation of social systems with rule-based agents and no learning | `alterlab-abm-mesa` |
+
 ## Core Capabilities
 
 ### 1. High-Performance Training (PuffeRL)
@@ -34,8 +43,10 @@ PuffeRL is PufferLib's optimized PPO trainer (CleanRL-derived, with optional LST
 
 **Recommended path — CLI / high-level helper.** Drive training from a config (an `.ini` in `pufferlib/config/`) rather than hand-wiring the trainer:
 ```bash
-# CLI: env name resolves to a registered config + Ocean env
+# CLI: env name resolves to a config in pufferlib/config/ + an Ocean env
 puffer train puffer_breakout --train.device cuda --train.learning-rate 0.015
+# Resume from a checkpoint (top-level flag, not a [train] key)
+puffer train puffer_breakout --load-model-path latest
 ```
 ```python
 import pufferlib.pufferl as pufferl
@@ -454,13 +465,21 @@ env = pufferlib.vector.make(
 
 ```bash
 # Pin the 3.0 line — the config-dict trainer API and import paths in this skill
-# target it. The dev 4.0 branch differs.
+# target it. PyPI ships only an sdist, so a C compiler is needed to build it.
 uv pip install "pufferlib==3.0.*"
 ```
 
+**PufferLib 5.0 is a different product.** The upstream default branch (5.0) is a C/CUDA
+trainer built from source via PufferTank (`./build.sh ENV`, `./puffer train`). It has no pip
+package, has dropped the third-party (Gymnasium/PettingZoo-style) integrations, and offers
+CPU evaluation but no CPU training, so do not assume the Python APIs in this skill (`PuffeRL`,
+`pufferlib.vector.make`, `pufferlib.emulation`) exist there. If a user is on 5.0, say so and
+point them to its docs rather than adapting 3.0 code.
+
 ## Documentation
 
-- Official docs: https://puffer.ai/docs.html
+- 3.0 source (matches this skill): https://github.com/PufferAI/PufferLib/tree/3.0
+- Current upstream docs (describe 5.0, not 3.0): https://puffer.ai/docs.html
 - GitHub: https://github.com/PufferAI/PufferLib
 - Discord: Community support available
 

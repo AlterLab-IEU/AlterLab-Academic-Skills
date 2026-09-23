@@ -33,10 +33,11 @@
     {
       "id": "near-miss-eda",
       "prompt": "Before I model anything, profile this raw dataset — show distributions, missingness, and pairwise correlations between the columns.",
-      "expected_output": "Does NOT invoke alterlab-shap; defers to an EDA / data-profiling skill. The ask is exploratory data analysis of a raw dataset (distributions, missingness, correlations), not explaining a trained model's predictions. SHAP requires a fitted model and explains its outputs; it is not a dataset-profiling tool.",
+      "expected_output": "Does NOT invoke alterlab-shap; defers to alterlab-eda. The ask is exploratory data analysis of a raw dataset (distributions, missingness, correlations), not explaining a trained model's predictions. SHAP requires a fitted model and explains its outputs; it is not a dataset-profiling tool.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
-        { "type": "behavior", "value": "Recognizes raw-dataset profiling as EDA territory (no model to explain) and defers rather than invoking SHAP." }
+        { "type": "output_contains", "value": "alterlab-eda" },
+        { "type": "behavior", "value": "Recognizes raw-dataset profiling as EDA territory (no model to explain) and defers to alterlab-eda rather than invoking SHAP." }
       ]
     }
   ]

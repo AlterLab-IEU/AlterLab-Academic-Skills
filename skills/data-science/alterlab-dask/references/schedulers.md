@@ -150,7 +150,7 @@ client = Client()  # Automatically uses all cores
 
 # Use distributed scheduler
 ddf = dd.read_csv('data.csv')
-result = ddf.groupby('category').mean().compute()
+result = ddf.groupby('category').mean(numeric_only=True).compute()
 
 # View dashboard
 print(client.dashboard_link)
@@ -371,7 +371,7 @@ import dask.dataframe as dd
 
 # Use threads for DataFrame operations
 ddf = dd.read_parquet('data.parquet')
-result1 = ddf.mean().compute(scheduler='threads')
+result1 = ddf.mean(numeric_only=True).compute(scheduler='threads')
 
 # Use processes for Python code
 import dask.bag as db

@@ -3,10 +3,11 @@ name: alterlab-networkx
 description: Creates, analyzes, and visualizes complex networks and graphs in Python with NetworkX. Use when working with network/graph data structures, analyzing relationships between entities, computing graph algorithms (shortest paths, centrality, clustering), detecting communities, generating synthetic networks, or visualizing topologies — applicable to social, biological, transportation, citation, and any pairwise-relationship networks. This is classical graph analytics, not deep learning — for training graph neural networks (GCN/message passing, node/edge/graph classification on Cora-style data) use alterlab-torch-geometric instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the networkx Python package.
+compatibility: No API key required. Runs locally via `uv run python`; requires networkx >= 3.4 (current 3.7 as of 2026-09; native Leiden needs 3.7).
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # NetworkX
@@ -26,6 +27,14 @@ Invoke this skill when tasks involve:
 - **Graph I/O**: Reading from or writing to various formats (edge lists, GraphML, JSON, CSV, adjacency matrices)
 - **Visualization**: Drawing and customizing network visualizations with matplotlib or interactive libraries
 - **Network comparison**: Checking isomorphism, computing graph metrics, analyzing structural properties
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Training graph neural networks (GCN/GAT, message passing, node classification on Cora-style data) | `alterlab-torch-geometric` |
+| Choosing and defending social-network measures or fitting ERGMs for a social-science study | `alterlab-sna` |
+| Building a citation / co-citation network around seed papers from OpenAlex | `alterlab-citation-graph` |
 
 ## Core Capabilities
 
@@ -86,6 +95,8 @@ from networkx.algorithms import community
 
 # Detect communities
 communities = community.greedy_modularity_communities(G)
+communities = community.louvain_communities(G, seed=42)
+communities = community.leiden_communities(G, metric='modularity', seed=42)  # NetworkX >= 3.7
 ```
 
 **Connectivity**:
@@ -257,10 +268,14 @@ plt.savefig('network.pdf', bbox_inches='tight')  # Vector format
 
 ### Installation
 
-Examples here target **NetworkX 3.x** (3.6+). Several APIs were removed in 3.0 —
+Examples here target **NetworkX 3.x** (current 3.7 as of 2026-09). Several APIs were removed in 3.0 —
 `nx.info`, `nx.write_gpickle`/`nx.read_gpickle`, `nx.read_shp`/`nx.write_shp`,
-`nx.graph_clique_number` — and `nx.random_tree` was renamed to
-`nx.random_labeled_tree`; the references note the replacements.
+`nx.graph_clique_number` — and `nx.random_tree` was replaced by
+`nx.random_labeled_tree`; the references note the replacements. NetworkX 3.7 adds native
+Leiden (`nx.community.leiden_communities`), makes `maximal_independent_set` return a set,
+and deprecates `bfs_predecessors` (removed in 3.9). Since 3.6, `node_link_data` writes
+edges under the key `"edges"` (the old `link=` keyword is gone; pass `edges="links"` to
+produce d3-style JSON).
 
 ```python
 # Check installed version

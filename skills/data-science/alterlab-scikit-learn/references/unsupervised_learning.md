@@ -74,7 +74,8 @@ print(f"Clusters: {n_clusters}, Noise points: {n_noise}")
 ```python
 from sklearn.cluster import HDBSCAN
 
-model = HDBSCAN(min_cluster_size=10, min_samples=5)
+# copy=True avoids modifying X in place (the default changes to True in 1.10)
+model = HDBSCAN(min_cluster_size=10, min_samples=5, copy=True)
 labels = model.fit_predict(X)
 ```
 
@@ -331,12 +332,13 @@ X_embedded = lle.fit_transform(X)
 
 **MDS (Multidimensional Scaling)**
 - Preserves pairwise distances
-- Key parameter: `n_components`, `metric` (True/False)
+- Key parameters: `n_components`, `metric_mds` (True = metric MDS, False = non-metric), `init`
+- scikit-learn ≥ 1.8 renamed the boolean `metric` to `metric_mds` (`metric` now names the distance, and `dissimilarity='precomputed'` became `metric='precomputed'`); passing `metric=True` warns and stops working in 1.10
 - Example:
 ```python
 from sklearn.manifold import MDS
 
-mds = MDS(n_components=2, metric=True, random_state=42)
+mds = MDS(n_components=2, metric_mds=True, init='classical_mds', random_state=42)
 X_embedded = mds.fit_transform(X)
 ```
 

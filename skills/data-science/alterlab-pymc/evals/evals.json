@@ -24,20 +24,20 @@
     {
       "id": "loo-waic-model-comparison",
       "prompt": "I've fit three competing Bayesian regression models for the same outcome and I want to compare them rigorously. Which one should I prefer, and how do I check the comparison is trustworthy?",
-      "expected_output": "Invokes alterlab-pymc for model comparison: ensures each idata was sampled with log_likelihood=True, runs compare_models with ic='loo' (or WAIC), interprets the elpd/Δloo differences (Δloo<2 similar, >10 strong evidence), and checks reliability via Pareto-k values (k>0.7 means switch to WAIC or k-fold CV). May mention model averaging when models are close.",
+      "expected_output": "Invokes alterlab-pymc for model comparison: adds the pointwise log-likelihood to each result with pm.compute_log_likelihood(idata), runs compare_models / az.compare (PSIS-LOO on the elpd scale; ArviZ 1.x has no WAIC or ic= argument), interprets elpd_diff against its standard error dse (|elpd_diff| < 4 means a small difference), and checks reliability via Pareto-k against the good_k threshold (high k: robust likelihood, reloo, or K-fold CV). May mention stacking-weight model averaging when models are close.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "LOO" },
-        { "type": "behavior", "value": "Uses LOO/WAIC for comparison and checks Pareto-k reliability before trusting the ranking." }
+        { "type": "behavior", "value": "Uses PSIS-LOO (az.compare) for comparison and checks Pareto-k reliability before trusting the ranking." }
       ]
     },
     {
       "id": "prior-posterior-predictive-checks",
       "prompt": "Before I trust my Bayesian Poisson count model I want to make sure my priors aren't generating absurd data and that the fitted model actually reproduces the observed distribution. What checks should I run in PyMC?",
-      "expected_output": "Invokes alterlab-pymc for the predictive-check workflow: pm.sample_prior_predictive before fitting with az.plot_ppc(group='prior') to confirm priors span plausible counts, then after sampling pm.sample_posterior_predictive(extend_inferencedata=True) with az.plot_ppc to verify the model captures observed patterns and to spot systematic misspecification (e.g. overdispersion suggesting NegativeBinomial).",
+      "expected_output": "Invokes alterlab-pymc for the predictive-check workflow: pm.sample_prior_predictive before fitting with az.plot_ppc_dist(prior_pred, group='prior_predictive') to confirm priors span plausible counts, then after sampling pm.sample_posterior_predictive(extend_inferencedata=True) with az.plot_ppc_dist to verify the model captures observed patterns and to spot systematic misspecification (e.g. overdispersion suggesting NegativeBinomial).",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Recommends both prior predictive and posterior predictive checks via sample_prior_predictive / sample_posterior_predictive and az.plot_ppc." }
+        { "type": "behavior", "value": "Recommends both prior predictive and posterior predictive checks via sample_prior_predictive / sample_posterior_predictive and az.plot_ppc_dist (ArviZ 1.x name for plot_ppc)." }
       ]
     },
     {
@@ -56,6 +56,15 @@
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-statsmodels" }
+      ]
+    },
+    {
+      "id": "near-miss-multilevel-models",
+      "prompt": "Fit a linear mixed model of reading scores with random intercepts for schools using lme4, and report the ICC, variance components, centering choices, and the full random-effects specification the way reviewers expect in a methods section.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-multilevel-models. The user wants a reporting-focused frequentist mixed-effects analysis in lme4 with ICC and variance-component reporting, not custom Bayesian model building, MCMC sampling, or posterior inference in PyMC.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-multilevel-models" }
       ]
     }
   ]

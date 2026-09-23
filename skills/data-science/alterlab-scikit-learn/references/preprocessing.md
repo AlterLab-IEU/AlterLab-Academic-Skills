@@ -145,13 +145,16 @@ y_decoded = le.inverse_transform(y_encoded)
 print(f"Classes: {le.classes_}")
 ```
 
-### Target Encoding (using category_encoders)
+### Target Encoding
+
+scikit-learn ships `TargetEncoder` (≥ 1.3). Its `fit_transform` uses internal cross-fitting
+so training rows are not encoded with their own target, which limits leakage; call
+`fit_transform` on training data and `transform` on test data.
 
 ```python
-# Install: uv pip install category-encoders
-from category_encoders import TargetEncoder
+from sklearn.preprocessing import TargetEncoder
 
-encoder = TargetEncoder()
+encoder = TargetEncoder()  # pass cv=KFold(..., shuffle=True, random_state=42) to control the split
 X_train_encoded = encoder.fit_transform(X_train_categorical, y_train)
 X_test_encoded = encoder.transform(X_test_categorical)
 ```
@@ -470,7 +473,8 @@ selected_features = selector.get_support()
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import SelectFromModel
 
-model = LogisticRegression(penalty='l1', solver='liblinear', C=0.1)
+# l1_ratio=1 is the L1 penalty (penalty='l1' is deprecated since scikit-learn 1.8)
+model = LogisticRegression(l1_ratio=1, solver='liblinear', C=0.1)
 selector = SelectFromModel(model)
 selector.fit(X_train, y_train)
 X_selected = selector.transform(X_train)

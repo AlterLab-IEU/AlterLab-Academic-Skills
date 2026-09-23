@@ -8,10 +8,11 @@ allowed-tools:
     - Edit
     - Bash(uv:*)
     - Bash(python:*)
-compatibility: No API key required. Run scripts via `uv run python` (this machine is uv-first); install format-specific parsers with `uv pip install <pkg>` on demand.
+compatibility: No API key required. Run scripts via `uv run python` (this machine is uv-first); install format-specific parsers with `uv pip install <pkg>` on demand. Tabular analysis assumes pandas >= 2 (pandas 3 string-dtype defaults are handled).
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Exploratory Data Analysis
@@ -21,7 +22,7 @@ metadata:
 Perform comprehensive exploratory data analysis (EDA) on scientific data files across multiple domains. This skill provides automated file type detection, format-specific analysis, data quality assessment, and generates detailed markdown reports suitable for documentation and downstream analysis planning.
 
 **Key Capabilities:**
-- Automatic detection and analysis of 88 scientific file formats
+- Automatic type detection for ~90 file extensions in the analyzer script (gzip/bz2/xz-compressed variants such as `.fastq.gz` included), with reference entries for 200+ formats
 - Comprehensive format-specific metadata extraction
 - Data quality and integrity assessment
 - Statistical summaries and distributions
@@ -38,6 +39,15 @@ Use this skill when:
 - User needs a comprehensive report of a dataset before analysis
 - User wants to assess data quality or completeness
 - User asks what type of analysis is appropriate for a file
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Forecasting a time series that has already been explored | `alterlab-timesfm` |
+| Creating or configuring a chunked Zarr array store (codecs, chunk layout, cloud storage) | `alterlab-zarr` |
+| Running a full single-cell workflow (QC filtering, normalization, clustering, markers) on an `.h5ad` | `alterlab-scanpy` |
+| Choosing and running a hypothesis test with assumption checks and APA reporting | `alterlab-statistical-analysis` |
 
 ## Supported File Categories
 
@@ -123,13 +133,13 @@ Use the `scripts/eda_analyzer.py` script OR implement custom analysis:
 ```bash
 uv run python scripts/eda_analyzer.py <filepath> [output.md]
 ```
-The script has built-in analyzers for tabular (`.csv`/`.tsv`), arrays (`.npy`/`.npz`/`.hdf5`), JSON, sequence (`.fasta`/`.fastq`), and basic imaging (`.tif`). For every other format it still detects the type and embeds the reference info, but you perform the data analysis yourself (Option B).
+The script has built-in analyzers for tabular (`.csv`/`.tsv`), arrays (`.npy`/`.npz`/`.hdf5`), JSON, sequence (`.fasta`/`.fastq`, also gzip/bz2/xz-compressed), and basic imaging (`.tif`). For every other format it still detects the type and embeds the reference info, but you perform the data analysis yourself (Option B).
 
 **Option B: Custom analysis in the conversation**
 Based on the format information from the reference file, perform appropriate analysis:
 
 For tabular data (CSV, TSV, Excel):
-- Load with pandas
+- Load with pandas (in pandas 3 text columns load as the `str` dtype; `select_dtypes(include='object')` still matches them but is deprecated, so use `exclude='number'`, which works in pandas 2 and 3)
 - Check dimensions, data types
 - Analyze missing values
 - Calculate summary statistics
@@ -272,7 +282,7 @@ The pattern is always: detect extension -> read the matching reference section -
 
 - **`reads.fastq`** -> bioinformatics. `from Bio import SeqIO; SeqIO.parse(path, 'fastq')`. Report read count, length distribution, per-read quality, GC content, then QC recommendations.
 - **`experiment_results.csv`** -> general scientific. `pd.read_csv`. Report shape, dtypes, missing-value patterns, summary stats, correlations, duplicates, outliers.
-- **`cells.nd2`** -> microscopy (Nikon). `from nd2reader import ND2Reader`. Report XYZCT dimensions, channels/timepoints, pixel size/calibration, intensity stats, then image-analysis recommendations.
+- **`cells.nd2`** -> microscopy (Nikon). `import nd2; f = nd2.ND2File(path)` (`f.sizes`, `f.metadata`, `f.voxel_size()`). Report XYZCT dimensions, channels/timepoints, pixel size/calibration, intensity stats, then image-analysis recommendations.
 
 ## Troubleshooting
 
@@ -285,7 +295,7 @@ Many scientific formats require specialized libraries:
 **Solution:** Install the parser with `uv pip install <pkg>` (do NOT use bare `pip` on this machine), then retry. Common requirements by category:
 - **Bioinformatics:** `biopython`, `pysam`, `pyBigWig`
 - **Chemistry:** `rdkit`, `mdanalysis`, `cclib`
-- **Microscopy:** `tifffile`, `nd2reader`, `aicsimageio`, `pydicom`
+- **Microscopy:** `tifffile`, `nd2`, `bioio` plus a format plugin such as `bioio-czi` or `bioio-lif` (successor to the maintenance-mode `aicsimageio`), `pydicom`
 - **Spectroscopy:** `nmrglue`, `pymzml`, `pyteomics`
 - **General:** `pandas`, `numpy`, `h5py`, `scipy`
 
@@ -314,7 +324,7 @@ uv run python scripts/eda_analyzer.py data.csv                 # report -> data_
 uv run python scripts/eda_analyzer.py data.csv output_report.md
 ```
 
-The script auto-detects the file type, loads the matching reference section, runs built-in analysis where available, and writes the markdown report. For formats without a built-in analyzer, prefer custom analysis in the conversation (Option B) for domain-specific insight. Note: for `.csv`/`.tsv` the script samples the first 10,000 rows, so report dimensions/missing counts as *sampled* unless you re-run on the full file.
+The script auto-detects the file type (looking through a trailing `.gz`/`.bz2`/`.xz`), loads the matching reference section, runs built-in analysis where available, and writes the markdown report. For formats without a built-in analyzer, prefer custom analysis in the conversation (Option B) for domain-specific insight. Note: for `.csv`/`.tsv` the script samples the first 10,000 rows, so report dimensions/missing counts as *sampled* unless you re-run on the full file.
 
 ## Advanced Usage
 

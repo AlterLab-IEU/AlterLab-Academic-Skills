@@ -48,10 +48,10 @@ with pm.Model(coords=coords) as model:
 with model:
     prior_pred = pm.sample_prior_predictive(draws=1000, random_seed=42)
 
-# Visualize prior predictions
-az.plot_ppc(prior_pred, group='prior', num_pp_samples=100)
-plt.title('Prior Predictive Check')
-plt.show()
+# Visualize prior predictions (ArviZ 1.x returns a PlotCollection)
+pc = az.plot_ppc_dist(prior_pred, group='prior_predictive', num_samples=100)
+pc.add_title('Prior Predictive Check')
+pc.show()
 
 # 4. FIT MODEL
 # ============
@@ -66,8 +66,8 @@ with model:
         chains=4,
         target_accept=0.9,
         random_seed=42,
-        idata_kwargs={'log_likelihood': True}  # For model comparison
     )
+    pm.compute_log_likelihood(idata)  # For LOO model comparison
 
 # 5. CHECK DIAGNOSTICS
 # ====================
@@ -86,10 +86,8 @@ if (summary['ess_bulk'] < 400).any():
 divergences = idata.sample_stats.diverging.sum().item()
 print(f"Number of divergences: {divergences}")
 
-# Trace plots
-az.plot_trace(idata, var_names=['alpha', 'beta', 'sigma'])
-plt.tight_layout()
-plt.show()
+# Trace + density plots
+az.plot_trace_dist(idata, var_names=['alpha', 'beta', 'sigma']).show()
 
 # 6. POSTERIOR PREDICTIVE CHECK
 # ==============================
@@ -97,21 +95,19 @@ with model:
     pm.sample_posterior_predictive(idata, extend_inferencedata=True, random_seed=42)
 
 # Visualize fit
-az.plot_ppc(idata, num_pp_samples=100)
-plt.title('Posterior Predictive Check')
-plt.show()
+pc = az.plot_ppc_dist(idata, num_samples=100)
+pc.add_title('Posterior Predictive Check')
+pc.show()
 
 # 7. ANALYZE RESULTS
 # ==================
 # Posterior distributions
-az.plot_posterior(idata, var_names=['alpha', 'beta', 'sigma'])
-plt.tight_layout()
-plt.show()
+az.plot_dist(idata, var_names=['alpha', 'beta', 'sigma']).show()
 
 # Forest plot for coefficients
-az.plot_forest(idata, var_names=['beta'], combined=True)
-plt.title('Coefficient Estimates')
-plt.show()
+pc = az.plot_forest(idata, var_names=['beta'], combined=True)
+pc.add_title('Coefficient Estimates')
+pc.show()
 
 # 8. PREDICTIONS FOR NEW DATA
 # ============================
@@ -133,7 +129,7 @@ with model:
 
 # Prediction intervals (predictions=True stores results in idata.predictions)
 y_pred_mean = idata.predictions['y_obs'].mean(dim=['chain', 'draw'])
-y_pred_hdi = az.hdi(idata.predictions, var_names=['y_obs'])
+y_pred_hdi = az.hdi(idata, group='predictions', var_names=['y_obs'], prob=0.95)
 
 # 9. SAVE RESULTS
 # ===============
@@ -349,7 +345,7 @@ print(f"Prior predictive range: {prior_pred.prior_predictive['y'].min():.2f} to 
 print(f"Observed range: {y_obs.min():.2f} to {y_obs.max():.2f}")
 
 # Visualize
-az.plot_ppc(prior_pred, group='prior')
+az.plot_ppc_dist(prior_pred, group='prior_predictive').show()
 ```
 
 ## Model Comparison Workflow
@@ -366,30 +362,32 @@ idatas = {}
 # Model 1: Simple linear
 with pm.Model() as models['linear']:
     # ... define model ...
-    idatas['linear'] = pm.sample(idata_kwargs={'log_likelihood': True})
+    idatas['linear'] = pm.sample()
+    pm.compute_log_likelihood(idatas['linear'])
 
 # Model 2: With interaction
 with pm.Model() as models['interaction']:
     # ... define model ...
-    idatas['interaction'] = pm.sample(idata_kwargs={'log_likelihood': True})
+    idatas['interaction'] = pm.sample()
+    pm.compute_log_likelihood(idatas['interaction'])
 
 # Model 3: Hierarchical
 with pm.Model() as models['hierarchical']:
     # ... define model ...
-    idatas['hierarchical'] = pm.sample(idata_kwargs={'log_likelihood': True})
+    idatas['hierarchical'] = pm.sample()
+    pm.compute_log_likelihood(idatas['hierarchical'])
 
-# Compare using LOO
-comparison = az.compare(idatas, ic='loo')
+# Compare using PSIS-LOO (ArviZ 1.x: no ic= argument, no WAIC; higher elpd is better)
+comparison = az.compare(idatas)
 print(comparison)
 
 # Visualize comparison
-az.plot_compare(comparison)
-plt.show()
+az.plot_compare(comparison).show()
 
-# Check LOO reliability
+# Check LOO reliability against the sample-size-dependent Pareto-k threshold
 for name, idata in idatas.items():
     loo = az.loo(idata, pointwise=True)
-    high_pareto_k = (loo.pareto_k > 0.7).sum().item()
+    high_pareto_k = int((loo.pareto_k > loo.good_k).sum())
     if high_pareto_k > 0:
         print(f"Warning: {name} has {high_pareto_k} observations with high Pareto-k")
 ```
@@ -397,22 +395,22 @@ for name, idata in idatas.items():
 ### Model Weights
 
 ```python
-# Get model weights (pseudo-BMA)
-weights = comparison['weight'].values
+# Model weights (az.compare defaults to stacking). The comparison table is
+# sorted by rank, so align weights to the dict order explicitly.
+weights = comparison.loc[list(idatas), 'weight'].to_numpy()
 
-print("Model probabilities:")
-for name, weight in zip(comparison.index, weights):
+print("Model weights:")
+for name, weight in zip(idatas, weights):
     print(f"  {name}: {weight:.2%}")
 
-# Model averaging (weighted predictions)
-def weighted_predictions(idatas, weights):
-    preds = []
-    for (name, idata), weight in zip(idatas.items(), weights):
-        pred = idata.posterior_predictive['y_obs'].mean(dim=['chain', 'draw'])
-        preds.append(weight * pred)
-    return sum(preds)
+# Weighted point prediction (posterior-predictive means)
+averaged_mean = sum(
+    w * idata.posterior_predictive['y_obs'].mean(dim=['chain', 'draw'])
+    for idata, w in zip(idatas.values(), weights)
+)
 
-averaged_pred = weighted_predictions(idatas, weights)
+# Full model-averaged predictive distribution: resample draws by weight
+averaged = az.weight_predictions(list(idatas.values()), weights=weights)
 ```
 
 ## Diagnostics and Troubleshooting
@@ -511,10 +509,11 @@ group_A = idata.posterior['alpha'].sel(groups='A')
 ## Saving and Loading Results
 
 ```python
-# Save InferenceData
+# Save the DataTree returned by pm.sample (needs h5netcdf or netCDF4:
+# uv pip install "arviz[h5netcdf]")
 idata.to_netcdf('results.nc')
 
-# Load InferenceData
+# Load it back as a DataTree
 loaded_idata = az.from_netcdf('results.nc')
 
 # Save model for later predictions

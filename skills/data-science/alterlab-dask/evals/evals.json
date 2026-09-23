@@ -4,7 +4,7 @@
     {
       "id": "scale-pandas-groupby-multifile",
       "prompt": "I have about 400 daily CSV files in data/2024-*.csv totalling roughly 200 GB. My pandas groupby-mean by category blows up memory on a single read. How do I run this so it doesn't load everything into RAM at once?",
-      "expected_output": "Invokes alterlab-dask using dask.dataframe: dd.read_csv on the glob pattern so Dask handles loading lazily (not pandas read_csv then from_pandas), builds the filter/groupby('category').mean() as a lazy task graph, and only triggers execution with .compute(). Mentions ~100 MB partition sizing and parquet over CSV for repeated access.",
+      "expected_output": "Invokes alterlab-dask using dask.dataframe: dd.read_csv on the glob pattern so Dask handles loading lazily (not pandas read_csv then from_pandas), builds the filter/groupby('category').mean(numeric_only=True) (or a selected numeric column, since string columns make a bare .mean() fail) as a lazy task graph, and only triggers execution with .compute(). Mentions ~100 MB partition sizing and parquet over CSV for repeated access.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "compute()" },

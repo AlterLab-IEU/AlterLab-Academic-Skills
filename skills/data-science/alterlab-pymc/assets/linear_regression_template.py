@@ -3,6 +3,8 @@ PyMC Linear Regression Template
 
 This template provides a complete workflow for Bayesian linear regression,
 including data preparation, model building, diagnostics, and predictions.
+Targets PyMC >= 6 with ArviZ >= 1.1: pm.sample() returns an xarray.DataTree and
+ArviZ plots return a PlotCollection (save with pc.savefig(...)).
 
 Customize the sections marked with # TODO
 """
@@ -10,7 +12,6 @@ Customize the sections marked with # TODO
 import pymc as pm
 import arviz as az
 import numpy as np
-import matplotlib.pyplot as plt
 
 # =============================================================================
 # 1. DATA PREPARATION
@@ -75,12 +76,10 @@ print("Running prior predictive check...")
 with linear_model:
     prior_pred = pm.sample_prior_predictive(draws=1000, random_seed=42)
 
-# Visualize prior predictions
-fig, ax = plt.subplots(figsize=(10, 6))
-az.plot_ppc(prior_pred, group='prior', num_pp_samples=100, ax=ax)
-ax.set_title('Prior Predictive Check')
-plt.tight_layout()
-plt.savefig('prior_predictive_check.png', dpi=300, bbox_inches='tight')
+# Visualize prior predictions (ArviZ 1.x: plot_ppc -> plot_ppc_dist)
+pc = az.plot_ppc_dist(prior_pred, group='prior_predictive', num_samples=100)
+pc.add_title('Prior Predictive Check')
+pc.savefig('prior_predictive_check.png')
 print("Prior predictive check saved to 'prior_predictive_check.png'")
 
 # =============================================================================
@@ -92,15 +91,18 @@ with linear_model:
     # Optional: Quick ADVI exploration
     # approx = pm.fit(n=20000, random_seed=42)
 
-    # MCMC sampling
+    # MCMC sampling (uses nutpie automatically if installed; pass
+    # nuts_sampler="pymc" to force PyMC's own NUTS)
     idata = pm.sample(
         draws=2000,
         tune=1000,
         chains=4,
         target_accept=0.9,
         random_seed=42,
-        idata_kwargs={'log_likelihood': True}
     )
+    # Pointwise log-likelihood for LOO model comparison. PyMC 6 deprecates
+    # idata_kwargs={'log_likelihood': True}; compute it explicitly instead.
+    pm.compute_log_likelihood(idata)
 
 print("Sampling complete!")
 
@@ -141,11 +143,9 @@ if divergences > 0:
 else:
     print("\n✓ No divergences")
 
-# Trace plots
-fig, axes = plt.subplots(len(['alpha', 'beta', 'sigma']), 2, figsize=(12, 8))
-az.plot_trace(idata, var_names=['alpha', 'beta', 'sigma'], axes=axes)
-plt.tight_layout()
-plt.savefig('trace_plots.png', dpi=300, bbox_inches='tight')
+# Trace + density plots (ArviZ 1.x: plot_trace -> plot_trace_dist)
+pc = az.plot_trace_dist(idata, var_names=['alpha', 'beta', 'sigma'])
+pc.savefig('trace_plots.png')
 print("\nTrace plots saved to 'trace_plots.png'")
 
 # =============================================================================
@@ -157,31 +157,27 @@ with linear_model:
     pm.sample_posterior_predictive(idata, extend_inferencedata=True, random_seed=42)
 
 # Visualize fit
-fig, ax = plt.subplots(figsize=(10, 6))
-az.plot_ppc(idata, num_pp_samples=100, ax=ax)
-ax.set_title('Posterior Predictive Check')
-plt.tight_layout()
-plt.savefig('posterior_predictive_check.png', dpi=300, bbox_inches='tight')
+pc = az.plot_ppc_dist(idata, num_samples=100)
+pc.add_title('Posterior Predictive Check')
+pc.savefig('posterior_predictive_check.png')
 print("Posterior predictive check saved to 'posterior_predictive_check.png'")
 
 # =============================================================================
 # 7. ANALYZE RESULTS
 # =============================================================================
 
-# Posterior distributions
-fig, axes = plt.subplots(1, 3, figsize=(15, 4))
-az.plot_posterior(idata, var_names=['alpha', 'beta', 'sigma'], ax=axes)
-plt.tight_layout()
-plt.savefig('posterior_distributions.png', dpi=300, bbox_inches='tight')
+# Posterior distributions (ArviZ 1.x: plot_posterior -> plot_dist)
+pc = az.plot_dist(idata, var_names=['alpha', 'beta', 'sigma'])
+pc.savefig('posterior_distributions.png')
 print("Posterior distributions saved to 'posterior_distributions.png'")
 
-# Forest plot for coefficients
-fig, ax = plt.subplots(figsize=(8, 6))
-az.plot_forest(idata, var_names=['beta'], combined=True, ax=ax)
-ax.set_title('Coefficient Estimates (95% HDI)')
-ax.set_yticklabels(predictor_names)
-plt.tight_layout()
-plt.savefig('coefficient_forest_plot.png', dpi=300, bbox_inches='tight')
+# Forest plot for coefficients. ArviZ 1.x defaults to 89% equal-tailed
+# intervals; request 50%/95% HDI explicitly. Labels come from the
+# 'predictors' coords, so no manual tick relabeling is needed.
+pc = az.plot_forest(idata, var_names=['beta'], combined=True,
+                    ci_kind='hdi', ci_probs=(0.5, 0.95))
+pc.add_title('Coefficient Estimates (95% HDI)')
+pc.savefig('coefficient_forest_plot.png')
 print("Forest plot saved to 'coefficient_forest_plot.png'")
 
 # Print coefficient estimates
@@ -191,7 +187,7 @@ print("="*60)
 beta_samples = idata.posterior['beta']
 for i, name in enumerate(predictor_names):
     mean = beta_samples.sel(predictors=name).mean().item()
-    hdi = az.hdi(beta_samples.sel(predictors=name), hdi_prob=0.95)
+    hdi = az.hdi(beta_samples.sel(predictors=name), prob=0.95)  # hdi_prob= in ArviZ < 1
     print(f"{name:20s}: {mean:7.3f}  [95% HDI: {hdi.values[0]:7.3f}, {hdi.values[1]:7.3f}]")
 
 # =============================================================================
@@ -224,7 +220,7 @@ with linear_model:
 # Extract predictions (predictions=True stores results in idata.predictions)
 y_pred_samples = idata.predictions['y_obs']
 y_pred_mean = y_pred_samples.mean(dim=['chain', 'draw']).values
-y_pred_hdi = az.hdi(y_pred_samples, hdi_prob=0.95)['y_obs'].values
+y_pred_hdi = az.hdi(idata, group='predictions', var_names=['y_obs'], prob=0.95)['y_obs'].values
 
 print("\n" + "="*60)
 print("PREDICTIONS FOR NEW DATA")
@@ -238,7 +234,8 @@ for i in range(len(X_new)):
 # 9. SAVE RESULTS
 # =============================================================================
 
-# Save InferenceData
+# Save the DataTree (reload with az.from_netcdf). NetCDF writing needs a backend
+# that ArviZ 1.x no longer installs by default: uv pip install "arviz[h5netcdf]"
 idata.to_netcdf('linear_regression_results.nc')
 print("\nResults saved to 'linear_regression_results.nc'")
 

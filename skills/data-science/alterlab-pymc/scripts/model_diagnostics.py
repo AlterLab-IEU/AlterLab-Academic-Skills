@@ -4,6 +4,12 @@ PyMC Model Diagnostics Script
 Comprehensive diagnostic checks for PyMC models.
 Run this after sampling to validate results before interpretation.
 
+Targets PyMC >= 6 / ArviZ >= 1.1: `idata` is the xarray.DataTree returned by
+pm.sample() (ArviZ 1.x replaced InferenceData), and ArviZ plots return a
+PlotCollection that is saved with pc.savefig(). Works with PyMC's own NUTS
+and with nutpie (PyMC 6's default NUTS sampler when installed), whose
+sample-stat names differ.
+
 Usage:
     from scripts.model_diagnostics import check_diagnostics, create_diagnostic_report
 
@@ -15,9 +21,16 @@ Usage:
 """
 
 import arviz as az
-import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
+
+# Sample-stat names differ between PyMC's NUTS and nutpie.
+_MAX_DEPTH_FLAGS = ('reached_max_treedepth', 'maxdepth_reached')
+_DEPTH_VARS = ('tree_depth', 'depth')
+
+
+def _first_present(stats, names):
+    return next((name for name in names if name in stats), None)
 
 
 def check_diagnostics(idata, var_names=None, ess_threshold=400, rhat_threshold=1.01):
@@ -26,8 +39,8 @@ def check_diagnostics(idata, var_names=None, ess_threshold=400, rhat_threshold=1
 
     Parameters
     ----------
-    idata : arviz.InferenceData
-        InferenceData object from pm.sample()
+    idata : xarray.DataTree
+        Result of pm.sample() (arviz.InferenceData in ArviZ < 1)
     var_names : list, optional
         Variables to check. If None, checks all model parameters
     ess_threshold : int
@@ -98,10 +111,11 @@ def check_diagnostics(idata, var_names=None, ess_threshold=400, rhat_threshold=1
     # 3. Check Divergences
     print("\n3. DIVERGENT TRANSITIONS")
     print("-" * 70)
-    divergences = idata.sample_stats.diverging.sum().item()
+    stats = idata.sample_stats
+    divergences = int(stats['diverging'].sum()) if 'diverging' in stats else 0
+    total_samples = idata.posterior.sizes['draw'] * idata.posterior.sizes['chain']
 
     if divergences > 0:
-        total_samples = len(idata.posterior.draw) * len(idata.posterior.chain)
         divergence_rate = divergences / total_samples * 100
 
         print(f"⚠️  WARNING: {divergences} divergent transitions ({divergence_rate:.2f}% of samples)")
@@ -121,14 +135,19 @@ def check_diagnostics(idata, var_names=None, ess_threshold=400, rhat_threshold=1
     # 4. Check Tree Depth
     print("\n4. TREE DEPTH")
     print("-" * 70)
-    tree_depth = idata.sample_stats.tree_depth
-    max_tree_depth = tree_depth.max().item()
+    flag_var = _first_present(stats, _MAX_DEPTH_FLAGS)
+    depth_var = _first_present(stats, _DEPTH_VARS)
+    max_tree_depth = int(stats[depth_var].max()) if depth_var else None
 
-    # Typical max_treedepth is 10 (default in PyMC)
-    hits_max = (tree_depth >= 10).sum().item()
+    if flag_var:
+        hits_max = int(stats[flag_var].sum())
+    elif depth_var:
+        # Default maximum tree depth is 10 for both PyMC NUTS and nutpie
+        hits_max = int((stats[depth_var] >= 10).sum())
+    else:
+        hits_max = 0  # not a NUTS run (e.g. SMC or Metropolis)
 
     if hits_max > 0:
-        total_samples = len(idata.posterior.draw) * len(idata.posterior.chain)
         hit_rate = hits_max / total_samples * 100
 
         print(f"⚠️  WARNING: Hit maximum tree depth {hits_max} times ({hit_rate:.2f}% of samples)")
@@ -138,11 +157,12 @@ def check_diagnostics(idata, var_names=None, ess_threshold=400, rhat_threshold=1
         print("   → Increase max_treedepth (if necessary)")
         results['issues'].append('max_treedepth')
     else:
-        print(f"✓ No maximum tree depth issues")
-        print(f"  Maximum tree depth reached: {max_tree_depth}")
+        print("✓ No maximum tree depth issues")
+        if max_tree_depth is not None:
+            print(f"  Maximum tree depth reached: {max_tree_depth}")
 
     # 5. Check Energy (if available)
-    if hasattr(idata.sample_stats, 'energy'):
+    if 'energy' in idata.sample_stats:
         print("\n5. ENERGY DIAGNOSTICS")
         print("-" * 70)
         print("✓ Energy statistics available")
@@ -174,8 +194,8 @@ def create_diagnostic_report(idata, var_names=None, output_dir='diagnostics/', s
 
     Parameters
     ----------
-    idata : arviz.InferenceData
-        InferenceData object from pm.sample()
+    idata : xarray.DataTree
+        Result of pm.sample() (arviz.InferenceData in ArviZ < 1)
     var_names : list, optional
         Variables to plot. If None, uses all model parameters
     output_dir : str
@@ -197,65 +217,23 @@ def create_diagnostic_report(idata, var_names=None, output_dir='diagnostics/', s
 
     print(f"\nGenerating diagnostic plots in '{output_dir}'...")
 
-    # 1. Trace plots
-    fig, axes = plt.subplots(
-        len(var_names) if var_names else 5,
-        2,
-        figsize=(12, 10)
-    )
-    az.plot_trace(idata, var_names=var_names, axes=axes)
-    plt.tight_layout()
-    plt.savefig(output_path / 'trace_plots.png', dpi=300, bbox_inches='tight')
-    print(f"  ✓ Saved trace plots")
-    if show:
-        plt.show()
-    else:
-        plt.close()
+    # ArviZ 1.x plotting functions return a PlotCollection; no ax=/axes= args.
+    plots = {
+        'trace_plots.png': lambda: az.plot_trace_dist(idata, var_names=var_names),
+        'rank_plots.png': lambda: az.plot_rank(idata, var_names=var_names),
+        'autocorr_plots.png': lambda: az.plot_autocorr(idata, var_names=var_names),
+        'ess_evolution.png': lambda: az.plot_ess_evolution(idata, var_names=var_names),
+    }
+    if 'energy' in idata.sample_stats:
+        plots['energy_plot.png'] = lambda: az.plot_energy(idata)
 
-    # 2. Rank plots (check mixing)
-    _fig = plt.figure(figsize=(12, 8))
-    az.plot_rank(idata, var_names=var_names)
-    plt.tight_layout()
-    plt.savefig(output_path / 'rank_plots.png', dpi=300, bbox_inches='tight')
-    print(f"  ✓ Saved rank plots")
-    if show:
-        plt.show()
-    else:
-        plt.close()
-
-    # 3. Autocorrelation plots
-    _fig = plt.figure(figsize=(12, 8))
-    az.plot_autocorr(idata, var_names=var_names, combined=True)
-    plt.tight_layout()
-    plt.savefig(output_path / 'autocorr_plots.png', dpi=300, bbox_inches='tight')
-    print(f"  ✓ Saved autocorrelation plots")
-    if show:
-        plt.show()
-    else:
-        plt.close()
-
-    # 4. Energy plot (if available)
-    if hasattr(idata.sample_stats, 'energy'):
-        _fig = plt.figure(figsize=(10, 6))
-        az.plot_energy(idata)
-        plt.tight_layout()
-        plt.savefig(output_path / 'energy_plot.png', dpi=300, bbox_inches='tight')
-        print(f"  ✓ Saved energy plot")
+    for filename, make_plot in plots.items():
+        pc = make_plot()
+        pc.savefig(output_path / filename)
+        print(f"  ✓ Saved {filename}")
         if show:
-            plt.show()
-        else:
-            plt.close()
-
-    # 5. ESS plot
-    _fig = plt.figure(figsize=(10, 6))
-    az.plot_ess(idata, var_names=var_names, kind='evolution')
-    plt.tight_layout()
-    plt.savefig(output_path / 'ess_evolution.png', dpi=300, bbox_inches='tight')
-    print(f"  ✓ Saved ESS evolution plot")
-    if show:
-        plt.show()
-    else:
-        plt.close()
+            pc.show()
+        plt.close('all')
 
     # Save summary to CSV
     results['summary'].to_csv(output_path / 'summary_statistics.csv')
@@ -272,57 +250,31 @@ def compare_prior_posterior(idata, prior_idata, var_names=None, output_path=None
 
     Parameters
     ----------
-    idata : arviz.InferenceData
-        InferenceData with posterior samples
-    prior_idata : arviz.InferenceData
-        InferenceData with prior samples
+    idata : xarray.DataTree
+        Result of pm.sample() with a posterior group
+    prior_idata : xarray.DataTree
+        Result of pm.sample_prior_predictive() with a prior group
     var_names : list, optional
         Variables to compare
     output_path : str, optional
-        If provided, save plot to this path
+        If provided, save plot to this path; otherwise show it
 
     Returns
     -------
-    None
+    PlotCollection
     """
-    fig, axes = plt.subplots(
-        len(var_names) if var_names else 3,
-        1,
-        figsize=(10, 8)
-    )
-
-    if not isinstance(axes, np.ndarray):
-        axes = [axes]
-
-    for idx, var in enumerate(var_names if var_names else list(idata.posterior.data_vars)[:3]):
-        # Plot prior
-        az.plot_dist(
-            prior_idata.prior[var].values.flatten(),
-            label='Prior',
-            ax=axes[idx],
-            color='blue',
-            alpha=0.3
-        )
-
-        # Plot posterior
-        az.plot_dist(
-            idata.posterior[var].values.flatten(),
-            label='Posterior',
-            ax=axes[idx],
-            color='green',
-            alpha=0.3
-        )
-
-        axes[idx].set_title(f'{var}: Prior vs Posterior')
-        axes[idx].legend()
-
-    plt.tight_layout()
+    # az.plot_prior_posterior needs both groups in one DataTree; merge a
+    # shallow copy so the caller's idata is left unchanged.
+    combined = idata.copy()
+    combined.update({'prior': prior_idata['prior']})
+    pc = az.plot_prior_posterior(combined, var_names=var_names)
 
     if output_path:
-        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        pc.savefig(output_path)
         print(f"Prior-posterior comparison saved to {output_path}")
     else:
-        plt.show()
+        pc.show()
+    return pc
 
 
 # Example usage
@@ -333,7 +285,7 @@ if __name__ == '__main__':
     import pymc as pm
     from scripts.model_diagnostics import check_diagnostics, create_diagnostic_report
 
-    # After sampling
+    # After sampling (idata is an xarray.DataTree in PyMC 6 / ArviZ 1.x)
     with pm.Model() as model:
         # ... define model ...
         idata = pm.sample()

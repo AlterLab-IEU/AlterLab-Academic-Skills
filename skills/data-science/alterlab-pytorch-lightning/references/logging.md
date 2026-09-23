@@ -2,7 +2,7 @@
 
 ## Overview
 
-PyTorch Lightning supports multiple logging integrations for experiment tracking and visualization. By default, Lightning uses TensorBoard, but you can easily switch to or combine multiple loggers.
+PyTorch Lightning supports multiple logging integrations for experiment tracking and visualization. With `logger=True` (the default) Lightning uses `TensorBoardLogger` when `tensorboard` is installed and falls back to `CSVLogger` otherwise; you can switch to or combine multiple loggers.
 
 ## Supported Loggers
 
@@ -12,7 +12,7 @@ Logs to local or remote file system in TensorBoard format.
 
 **Installation:**
 ```bash
-pip install tensorboard
+uv pip install tensorboard
 ```
 
 **Usage:**
@@ -40,7 +40,7 @@ Weights & Biases integration for cloud-based experiment tracking.
 
 **Installation:**
 ```bash
-pip install wandb
+uv pip install wandb
 ```
 
 **Usage:**
@@ -70,7 +70,7 @@ MLflow tracking integration.
 
 **Installation:**
 ```bash
-pip install mlflow
+uv pip install mlflow
 ```
 
 **Usage:**
@@ -92,7 +92,7 @@ Comet.ml experiment tracking.
 
 **Installation:**
 ```bash
-pip install comet-ml
+uv pip install comet-ml
 ```
 
 **Usage:**
@@ -100,35 +100,19 @@ pip install comet-ml
 from lightning.pytorch import loggers as pl_loggers
 
 comet_logger = pl_loggers.CometLogger(
-    api_key="YOUR_API_KEY",
-    project_name="my-project",
-    experiment_name="experiment-1"
+    api_key="YOUR_API_KEY",          # or configure once with `comet login`
+    project="my-project",            # `project_name=` is the pre-2.5 spelling
+    name="experiment-1",             # `experiment_name=` is deprecated
 )
 
 trainer = L.Trainer(logger=comet_logger)
 ```
 
-### NeptuneLogger
+### NeptuneLogger (removed)
 
-Neptune.ai integration.
-
-**Installation:**
-```bash
-pip install neptune
-```
-
-**Usage:**
-```python
-from lightning.pytorch import loggers as pl_loggers
-
-neptune_logger = pl_loggers.NeptuneLogger(
-    api_key="YOUR_API_KEY",
-    project="username/project-name",
-    name="experiment-1"
-)
-
-trainer = L.Trainer(logger=neptune_logger)
-```
+`NeptuneLogger` was removed in Lightning 2.6.4 because Neptune's hosted service shut down
+in March 2026 after its acquisition by OpenAI. Migrate existing projects to
+`WandbLogger`, `MLFlowLogger`, `CometLogger`, or a local `TensorBoardLogger`/`CSVLogger`.
 
 ### CSVLogger
 

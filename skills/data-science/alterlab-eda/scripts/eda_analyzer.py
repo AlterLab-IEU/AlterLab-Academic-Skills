@@ -4,11 +4,30 @@ Exploratory Data Analysis Analyzer
 Analyzes scientific data files and generates comprehensive markdown reports
 """
 
-import os
-import sys
-from pathlib import Path
-from datetime import datetime
+import bz2
+import gzip
 import json
+import lzma
+import os
+import re
+import sys
+from datetime import datetime
+from pathlib import Path
+
+# Compression suffixes that wrap another format (e.g. reads.fastq.gz)
+COMPRESSION_SUFFIXES = {'.gz', '.bz2', '.xz'}
+
+
+def _open_text(filepath):
+    """Open a text file for reading, transparently decompressing .gz/.bz2/.xz."""
+    suffix = Path(filepath).suffix.lower()
+    if suffix == '.gz':
+        return gzip.open(filepath, 'rt')
+    if suffix == '.bz2':
+        return bz2.open(filepath, 'rt')
+    if suffix == '.xz':
+        return lzma.open(filepath, 'rt')
+    return open(filepath, 'r')
 
 
 def detect_file_type(filepath):
@@ -19,8 +38,11 @@ def detect_file_type(filepath):
         tuple: (extension, file_category, reference_file)
     """
     file_path = Path(filepath)
-    extension = file_path.suffix.lower()
-    _name = file_path.name.lower()
+    suffixes = [suffix.lower() for suffix in file_path.suffixes]
+    if len(suffixes) > 1 and suffixes[-1] in COMPRESSION_SUFFIXES:
+        extension = suffixes[-2]  # reads.fastq.gz -> .fastq
+    else:
+        extension = file_path.suffix.lower()
     # Map extensions to categories and reference files
     extension_map = {
         # Chemistry/Molecular
@@ -190,20 +212,20 @@ def load_reference_info(category, extension):
     if not ref_file.exists():
         return None
 
-    # Parse the reference file for the specific extension
-    # This is a simplified parser - could be more sophisticated
+    # Headings look like "### .fastq / .fq - FASTQ Format". Match the extension as a
+    # whole token (so ".d" does not hit ".dcd") and stop at the next "##"/"###" heading.
     try:
-        with open(ref_file, 'r') as f:
-            content = f.read()
-
-        # Extract section for this file type
-        # Look for the extension heading
-        import re
-        pattern = rf'### \.{extension}[^#]*?(?=###|\Z)'
-        match = re.search(pattern, content, re.IGNORECASE | re.DOTALL)
+        content = ref_file.read_text(encoding='utf-8')
+        heading = re.compile(
+            rf'^### .*?(?<![\w.])\.{re.escape(extension)}(?![\w.]).*$',
+            re.IGNORECASE | re.MULTILINE,
+        )
+        match = heading.search(content)
 
         if match:
-            section = match.group(0)
+            rest = content[match.end():]
+            next_heading = re.search(r'^#{2,3} ', rest, re.MULTILINE)
+            section = content[match.start():match.end() + (next_heading.start() if next_heading else len(rest))]
             return {
                 'raw_section': section,
                 'reference_file': category_files[category]
@@ -284,6 +306,7 @@ def analyze_general_scientific(filepath, extension):
             import pandas as pd
             sep = '\t' if extension == 'tsv' else ','
             sample_rows = 10000
+            # compression is inferred from the suffix (.gz/.bz2/.xz)
             df = pd.read_csv(filepath, sep=sep, nrows=sample_rows)
             sampled = len(df) == sample_rows  # likely truncated; stats reflect the sample only
 
@@ -298,7 +321,7 @@ def analyze_general_scientific(filepath, extension):
             }
 
         elif extension in ['json']:
-            with open(filepath, 'r') as f:
+            with _open_text(filepath) as f:
                 data = json.load(f)
 
             results = {
@@ -345,7 +368,8 @@ def analyze_bioinformatics(filepath, extension):
     try:
         if extension in ['fasta', 'fa', 'fna']:
             from Bio import SeqIO
-            sequences = list(SeqIO.parse(filepath, 'fasta'))
+            with _open_text(filepath) as handle:
+                sequences = list(SeqIO.parse(handle, 'fasta'))
             lengths = [len(seq) for seq in sequences]
 
             results = {
@@ -360,10 +384,11 @@ def analyze_bioinformatics(filepath, extension):
         elif extension in ['fastq', 'fq']:
             from Bio import SeqIO
             sequences = []
-            for i, seq in enumerate(SeqIO.parse(filepath, 'fastq')):
-                sequences.append(seq)
-                if i >= 9999:  # Sample first 10k
-                    break
+            with _open_text(filepath) as handle:
+                for i, seq in enumerate(SeqIO.parse(handle, 'fastq')):
+                    sequences.append(seq)
+                    if i >= 9999:  # Sample first 10k
+                        break
 
             lengths = [len(seq) for seq in sequences]
             qualities = [sum(seq.letter_annotations['phred_quality']) / len(seq) for seq in sequences]
@@ -538,7 +563,10 @@ def main():
     # If no output path specified, use the input filename
     if output_path is None:
         input_path = Path(filepath)
-        output_path = input_path.parent / f"{input_path.stem}_eda_report.md"
+        name = input_path.name
+        if input_path.suffix.lower() in COMPRESSION_SUFFIXES:
+            name = Path(name).stem  # reads.fastq.gz -> reads.fastq
+        output_path = input_path.parent / f"{Path(name).stem}_eda_report.md"
 
     print(f"Analyzing: {filepath}")
     analysis = analyze_file(filepath)

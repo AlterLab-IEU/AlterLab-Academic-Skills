@@ -3,10 +3,11 @@ name: alterlab-dask
 description: Scales pandas/NumPy workflows beyond memory with Dask distributed computing — parallel DataFrames, arrays, delayed task graphs, and cluster execution. Use when existing pandas/NumPy code must run on larger-than-RAM data or across clusters, for parallel file processing, distributed ML, or integration with existing pandas code. For out-of-core analytics on a single machine prefer vaex; for in-memory speed prefer polars. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the dask Python package (optional distributed scheduler for cluster execution).
+compatibility: No API key required. Runs locally via `uv run python`; requires dask >= 2025.1 (current 2026.8 as of 2026-09; install `dask[complete]` for DataFrames, arrays, and the distributed scheduler).
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # Dask
@@ -29,6 +30,23 @@ This skill should be used when:
 - Process multiple files efficiently (CSVs, Parquet, JSON, text logs)
 - Build custom parallel workflows with task dependencies
 - Distribute workloads across multiple cores or machines
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Data fits in RAM and the goal is maximum single-machine DataFrame speed | `alterlab-polars` |
+| Billion-row out-of-core exploration and big-data plots on one machine, no cluster | `alterlab-vaex` |
+| Designing chunked, compressed Zarr stores and codecs (rather than computing on them) | `alterlab-zarr` |
+
+### Version notes
+
+Since 2025.1 the query-planning DataFrame (formerly `dask-expr`) is the only Dask DataFrame
+implementation and ships inside `dask`; `dask.config.set({"dataframe.query-planning": False})`
+no longer exists. Text columns load as a string dtype (PyArrow-backed in Dask; `str` in pandas 3)
+and reductions do not skip them silently: `ddf.mean()` raises `TypeError` and
+`ddf.groupby(...).mean()` raises `NotImplementedError` when non-numeric columns are present, so
+select columns or pass `numeric_only=True`.
 
 ## Core Capabilities
 
@@ -60,7 +78,7 @@ ddf = dd.read_csv('data/2024-*.csv')
 
 # Operations are lazy until compute()
 filtered = ddf[ddf['value'] > 100]
-result = filtered.groupby('category').mean().compute()
+result = filtered.groupby('category').mean(numeric_only=True).compute()
 ```
 
 **Key Points**:
@@ -212,7 +230,7 @@ import dask.dataframe as dd
 
 # Use threads for DataFrame (default, good for numeric)
 ddf = dd.read_csv('data.csv')
-result1 = ddf.mean().compute()  # Uses threads
+result1 = ddf.mean(numeric_only=True).compute()  # Uses threads
 
 # Use processes for Python-heavy work
 import dask.bag as db
@@ -302,8 +320,12 @@ ddf = ddf[ddf['status'] == 'valid']
 ddf['amount'] = ddf['amount'].astype('float64')
 ddf = ddf.dropna(subset=['important_col'])
 
-# Load: Aggregate and save
-summary = ddf.groupby('category').agg({'amount': ['sum', 'mean']})
+# Load: Aggregate and save. Named aggregation keeps flat string column names;
+# a dict-of-lists .agg() creates MultiIndex columns that Parquet rejects.
+summary = ddf.groupby('category').agg(
+    amount_sum=('amount', 'sum'),
+    amount_mean=('amount', 'mean'),
+)
 summary.to_parquet('output/summary.parquet')
 ```
 
@@ -318,7 +340,7 @@ bag = bag.filter(lambda x: x['status'] == 'valid')
 
 # Convert to DataFrame for structured analysis
 ddf = bag.to_dataframe()
-result = ddf.groupby('category').mean().compute()
+result = ddf.groupby('category').mean(numeric_only=True).compute()
 ```
 
 ### Large-Scale Array Computation

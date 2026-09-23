@@ -246,7 +246,7 @@ trainer.fit(model, datamodule=dm)
 ### Installation
 
 ```bash
-pip install deepspeed
+uv pip install deepspeed
 ```
 
 ### Basic Usage

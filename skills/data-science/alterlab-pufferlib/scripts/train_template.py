@@ -71,14 +71,14 @@ class Policy(nn.Module):
 def resolve_env_creator(env_name):
     """Map a CLI env name to an environment constructor (callable).
 
-    PufferLib has no string registry, so you maintain this mapping yourself.
-    Replace the body with your own lookup, e.g.:
+    Ocean environments resolve by name in PufferLib 3.0:
 
-        from pufferlib.ocean import Breakout, Snake
-        registry = {
-            'breakout': Breakout,
-            'snake': functools.partial(Snake, num_agents=4),
-        }
+        from pufferlib.ocean import env_creator
+        return env_creator(f'puffer_{env_name}')   # e.g. 'puffer_breakout'
+
+    For your own environments, maintain a mapping, e.g.:
+
+        registry = {'my_task': MyTask, 'my_task_4p': functools.partial(MyTask, num_agents=4)}
         return registry[env_name]
     """
     raise NotImplementedError(
@@ -93,7 +93,7 @@ def make_env():
     """
     # Option 1: A PufferEnv constructor (e.g. an Ocean environment).
     #   `env_creator` is a placeholder: replace it with the callable that
-    #   constructs your environment, e.g. `from pufferlib.ocean import ...`.
+    #   constructs your environment, e.g. pufferlib.ocean.env_creator('puffer_breakout').
     env_creator = None  # TODO: replace with your environment constructor (callable)
     return pufferlib.vector.make(env_creator, num_envs=256)
 
@@ -122,10 +122,10 @@ def train(args):
     torch.manual_seed(args.seed)
 
     # Create environment.
-    # PufferLib has no string registry -- pass an environment constructor
-    # (callable) to `pufferlib.vector.make`. Resolve the CLI name to a
-    # constructor here; `resolve_env_creator` is a placeholder you implement
-    # (e.g. a dict mapping names to PufferEnv classes / functools.partial).
+    # `pufferlib.vector.make` takes an environment constructor (callable).
+    # Resolve the CLI name to a constructor here; `resolve_env_creator` is a
+    # placeholder you implement (Ocean: pufferlib.ocean.env_creator('puffer_<name>');
+    # your own envs: a dict of PufferEnv classes / functools.partial).
     print(f"Creating environment with {args.num_envs} parallel environments...")
     env_creator = resolve_env_creator(args.env_name)
     env = pufferlib.vector.make(
