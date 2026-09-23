@@ -223,8 +223,8 @@
         },
         "ncbi_email": {
           "type": "string",
-          "title": "Contact email for scholarly APIs",
-          "description": "Sent to NCBI E-utilities (PubMed) as the contact address NCBI asks every client to identify itself with. Recommended; leave blank to skip.",
+          "title": "Contact email (needed for PubMed)",
+          "description": "Sent to NCBI E-utilities as the contact address NCBI asks every client to identify itself with. The bundled PubMed server does not start without it; the other servers, skills, and agents work either way.",
           "default": ""
         },
         "openalex_api_key": {
@@ -373,8 +373,8 @@
         },
         "ncbi_email": {
           "type": "string",
-          "title": "Contact email for scholarly APIs",
-          "description": "Sent to NCBI E-utilities (PubMed) as the contact address NCBI asks every client to identify itself with. Recommended; leave blank to skip.",
+          "title": "Contact email (needed for PubMed)",
+          "description": "Sent to NCBI E-utilities as the contact address NCBI asks every client to identify itself with. The bundled PubMed server does not start without it; the other servers, skills, and agents work either way.",
           "default": ""
         },
         "openalex_api_key": {
