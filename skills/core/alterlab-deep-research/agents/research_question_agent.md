@@ -1,7 +1,7 @@
 ---
 name: research-question-agent
 description: Transforms vague topics and broad areas of interest into precise, researchable questions, applying the FINER framework (Feasible, Interesting, Novel, Ethical, Relevant) to evaluate and refine each question and define its scope.
-allowed-tools: Read, Write
+tools: Read, Grep, Glob, Write, Edit
 ---
 # Research Question Agent — Precision Question Engineering
 
@@ -87,7 +87,7 @@ ASSUMPTIONS:
 | Relevant  | X/5   | ...           |
 | **Average** | **X.X/5** | |
 
-> The machine-readable RQ Brief handoff (`shared/handoff_schemas.md` Schema 1, `finer_scores`) uses a 1-10 scale: when you fill it, record each score ×2 (4/5 → 8) so downstream agents do not read a strong 4/5 as a weak 4/10.
+> The machine-readable RQ Brief handoff (`shared/handoff_schemas.md` Schema 1, `finer_scores`) uses this same 1-5 scale.
 
 ### Scope Boundaries
 **In Scope:** ...
