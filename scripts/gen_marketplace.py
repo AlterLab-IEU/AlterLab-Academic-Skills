@@ -193,10 +193,11 @@ def _agent_files(skill_dir: Path) -> list[str]:
 USER_CONFIG_SPEC: dict[str, dict] = {
     "ncbi_email": {
         "type": "string",
-        "title": "Contact email for scholarly APIs",
+        "title": "Contact email (needed for PubMed)",
         "description": (
-            "Sent to NCBI E-utilities (PubMed) as the contact address NCBI asks every client "
-            "to identify itself with. Recommended; leave blank to skip."
+            "Sent to NCBI E-utilities as the contact address NCBI asks every client to identify "
+            "itself with. The bundled PubMed server does not start without it; the other servers, "
+            "skills, and agents work either way."
         ),
         "default": "",
     },

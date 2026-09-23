@@ -43,8 +43,8 @@ and Claude Code prompts for them when the plugin is enabled — users never hand
   "userConfig": {
     "ncbi_email": {
       "type": "string",
-      "title": "Contact email for scholarly APIs",
-      "description": "Sent to NCBI E-utilities (PubMed) as the contact address NCBI asks every client to identify itself with. Recommended; leave blank to skip.",
+      "title": "Contact email (needed for PubMed)",
+      "description": "Sent to NCBI E-utilities as the contact address NCBI asks every client to identify itself with. The bundled PubMed server does not start without it; the other servers, skills, and agents work either way.",
       "default": ""
     },
     "ncbi_api_key": {
@@ -92,7 +92,7 @@ The manifests map them to server environment variables: `pubmed` gets
 ## Key acquisition
 
 ### NCBI email + API key (`pubmed`)
-1. **Email** — any valid contact email. NCBI requires it so they can reach you if a
+1. **Email** — any valid contact email; `mcp-simple-pubmed` exits at startup without one (Claude Code then lists `pubmed` as failed). NCBI requires it so they can reach you if a
    script misbehaves; the `pubmed` server sends it on every E-utilities request. The
    MCP servers do not send it to OpenAlex or Crossref.
 2. **API key (optional)** — sign in at <https://www.ncbi.nlm.nih.gov/account/>,
