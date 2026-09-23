@@ -3,7 +3,7 @@
 **URL:** https://cloud.ginkgo.bio/protocols/cell-free-protein-expression-optimization
 **Status:** Ginkgo Certified
 **Price:** $199/sample (default: $597 for 1 protein x 3 replicates = 3 samples)
-**Turnaround:** 6-11 days
+**Turnaround:** up to 11 days
 
 ## Overview
 
@@ -11,7 +11,7 @@ Design of Experiment (DoE) approach to expressing protein targets in a proprieta
 
 ## Input
 
-- **DNA sequence** in `.fasta` format
+- **Linear DNA sequence(s)** — `.fasta`, `.csv`, `.xlsx`, `.txt`, `.pdf`, or `.zip` upload
 
 ## Output
 

@@ -3,10 +3,11 @@ name: alterlab-opentrons
 description: Writes liquid-handling protocols for Opentrons OT-2 and Flex robots using the official Opentrons Protocol API v2, with full access to v2 features for production-grade, officially compatible protocols. Use when authoring or running protocols specifically for Opentrons hardware. For multi-vendor automation or broader equipment control use pylabrobot instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
-compatibility: Requires the opentrons Python package (pip install opentrons); protocols simulate locally via opentrons_simulate, execution needs an Opentrons OT-2 or Flex robot
+compatibility: Requires the opentrons Python package (current 9.1.2; Python >=3.10) to simulate locally with opentrons_simulate; execution needs an Opentrons OT-2 or Flex robot whose software supports the protocol's apiLevel (robot software 9.1.1+ accepts up to 2.29)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.1.0"
+    last_updated: "2026-09-23"
 ---
 
 # Opentrons Integration
@@ -27,6 +28,15 @@ This skill should be used when:
 - Working with multi-channel pipettes for 96-well plate operations
 - Simulating and testing protocols before robot execution
 
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| One script driving Hamilton/Tecan liquid handlers, plate readers, or mixed vendors | `alterlab-pylabrobot` |
+| Sending an experiment to a remote cloud lab (Ginkgo Cloud Lab RACs) | `alterlab-ginkgo-cloud` |
+| Protein expression/binding assays run by Adaptyv Bio's foundry | `alterlab-adaptyv` |
+| Publishing the written wet-lab protocol with a DOI | `alterlab-protocolsio` |
+
 ## Core Capabilities
 
 ### 1. Protocol Structure and Metadata
@@ -36,33 +46,33 @@ Every Opentrons protocol follows a standard structure:
 ```python
 from opentrons import protocol_api
 
-# Metadata
+# Metadata (descriptive only here; apiLevel lives in requirements)
 metadata = {
     'protocolName': 'My Protocol',
     'author': 'Name <email@example.com>',
     'description': 'Protocol description',
-    'apiLevel': '2.19'  # Pin to a level your robot's app/firmware accepts
 }
 
-# Requirements (optional). When present, apiLevel here takes precedence over the
-# value in metadata, and robotType is required for Flex.
+# apiLevel goes in exactly ONE of metadata/requirements: opentrons rejects a protocol
+# that sets it in both. robotType is required for Flex protocols.
 requirements = {
     'robotType': 'Flex',  # or 'OT-2'
-    'apiLevel': '2.19'
+    'apiLevel': '2.22'    # lowest level that has every feature you use (see below)
 }
 
 # Run function
 def run(protocol: protocol_api.ProtocolContext):
+    trash = protocol.load_trash_bin('A3')  # Flex: load a trash bin (or waste chute) before any drop_tip
     # Protocol commands go here
-    pass
 ```
 
 **Key elements:**
 - Import `protocol_api` from `opentrons`
-- Define `metadata` dict with protocolName, author, description, apiLevel
-- Optional `requirements` dict for robot type and API version
-- Implement `run()` function receiving `ProtocolContext` as parameter
-- All protocol logic goes inside the `run()` function
+- `metadata` for name/author/description; `requirements` for robotType + apiLevel
+- Implement `run()` receiving a `ProtocolContext`; all protocol logic goes inside it
+- Flex protocols (API 2.16+) have no fixed trash: call `protocol.load_trash_bin(slot)` or `protocol.load_waste_chute()` first, or `drop_tip()` fails with `NoTrashDefinedError`
+
+**Choosing `apiLevel`:** the latest is **2.29** (Flex robot software 9.1.1+; the `opentrons` 9.1.x package simulates up to it). Useful floors: 2.16 trash-bin/waste-chute loaders; 2.20 liquid-presence detection; 2.21 Absorbance Plate Reader; 2.22 `Labware.load_liquid()`/`load_empty()`; 2.24 liquid classes (`transfer_with_liquid_class`); 2.25 Flex Stacker; 2.27 concurrent module commands. Use the lowest level that covers your features so older robots can still run the protocol, and check it with `opentrons_simulate`.
 
 ### 2. Loading Hardware
 
@@ -242,13 +252,13 @@ wells_dict = plate.wells_by_name()  # {'A1': Well, 'A2': Well, ...}
 **Location Methods:**
 
 ```python
-# Top of well (default: 1mm below top)
-pipette.aspirate(100, well.top())
-pipette.aspirate(100, well.top(z=5))  # 5mm above top
+# Passing a Well aspirates 1 mm above its bottom by default
+pipette.aspirate(100, well)
 
-# Bottom of well (default: 1mm above bottom)
-pipette.aspirate(100, well.bottom())
-pipette.aspirate(100, well.bottom(z=2))  # 2mm above bottom
+# top()/bottom() are exact: z=0 is the top rim / the well bottom itself
+pipette.dispense(100, well.top())        # at the rim
+pipette.aspirate(100, well.top(z=-2))    # 2 mm below the rim
+pipette.aspirate(100, well.bottom(z=2))  # 2 mm above the bottom (z=0 would touch it)
 
 # Center of well
 pipette.aspirate(100, well.center())
@@ -279,16 +289,18 @@ sample = protocol.define_liquid(
 )
 ```
 
-**Load Liquids into Wells:**
+**Load Liquids into Wells (API 2.22+):**
 
 ```python
-# Load liquid into specific wells
-reservoir['A1'].load_liquid(liquid=water, volume=50000)  # µL
-plate['A1'].load_liquid(liquid=sample, volume=100)
+# Mark starting contents per labware (volumes in µL)
+reservoir.load_liquid(wells=['A1'], volume=50000, liquid=water)
+plate.load_liquid(wells=['A1', 'A2'], volume=100, liquid=sample)
+plate.load_liquid_by_well({'A3': 50, 'A4': 75}, liquid=sample)
 
 # Mark wells as empty
-plate['B1'].load_empty()
+plate.load_empty(['B1', 'B2'])
 ```
+`Well.load_liquid(liquid, volume)` still works but is deprecated from 2.22; there is no `Well.load_empty()`.
 
 ### 7. Protocol Control and Utilities
 
@@ -319,7 +331,7 @@ else:
     protocol.comment('Running on actual robot')
 ```
 
-**Rail Lights (Flex only):**
+**Rail Lights (OT-2 and Flex, API 2.5+):**
 
 ```python
 # Turn lights on
@@ -348,10 +360,11 @@ multi_pipette.transfer(
     dest=dest_plate['A1']       # Dispenses to entire column 1
 )
 
-# Use rows() for row-wise operations
-for row in plate.rows():
-    multi_pipette.transfer(100, reservoir['A1'], row[0])
+# Column-wise with an 8-channel: target the row-A well of each column
+for column_top in plate.rows()[0]:        # A1, A2, ... A12
+    multi_pipette.transfer(100, reservoir['A1'], column_top)
 ```
+With an 8-channel pipette, address row A wells only; targeting B1–H1 would put the other nozzles off the plate.
 
 ### 9. Common Protocol Patterns
 
@@ -361,7 +374,7 @@ Full worked-example protocols for each pattern: see `references/protocol_pattern
 
 ## Best Practices
 
-1. **Always specify API level**: Pin a stable `apiLevel` your robot's app/firmware supports (run `opentrons_simulate` to confirm); do not blindly use a number higher than the robot accepts
+1. **Always specify API level**: Pin the lowest `apiLevel` that covers the features you use and that your robot's software accepts (confirm with `opentrons_simulate`)
 2. **Use meaningful labels**: Label labware for easier identification in logs
 3. **Check tip availability**: Ensure sufficient tips for protocol completion
 4. **Add comments**: Use `protocol.comment()` for debugging and logging
@@ -389,3 +402,4 @@ For detailed API documentation, see `references/api_reference.md` in this skill 
 
 For example protocol templates, see `scripts/` directory.
 
+Part of the AlterLab Academic Skills suite.

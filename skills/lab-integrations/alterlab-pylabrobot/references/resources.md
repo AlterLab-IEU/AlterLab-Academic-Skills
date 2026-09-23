@@ -1,482 +1,189 @@
 # Resource Management in PyLabRobot
 
-## Overview
+Checked against pylabrobot 0.2.2 (2026-09). Every snippet below runs on the chatterbox backend.
 
-Resources in PyLabRobot represent laboratory equipment, labware, or components used in protocols. The resource system provides a hierarchical structure for managing plates, tip racks, troughs, tubes, carriers, and other labware with precise spatial positioning and state tracking.
+## The resource tree
 
-## Resource Basics
+Everything on a robot is a `Resource` with a `name` (unique on the deck), a size in millimetres (`size_x`, `size_y`, `size_z`), and a `location` relative to its parent. Resources form a tree: deck → carriers → plates/tip racks/troughs → wells/tip spots. Names must be unique across the whole deck.
 
-### What is a Resource?
+Coordinates are right-handed: x increases to the right, y toward the back, z upward, with the origin at the front-left-bottom corner of the parent.
 
-A resource represents:
-- A piece of labware (plate, tip rack, trough, tube)
-- Equipment (liquid handler, plate reader)
-- A part of labware (well, tip)
-- A container of labware (deck, carrier)
+### Labware definitions
 
-All resources inherit from the base `Resource` class and form a tree structure (arborescence) with parent-child relationships.
+`pylabrobot.resources` ships vendor labware as factory functions named `<vendor>_<count>_<kind>_<volume>_<bottom>`, for example `cor_96_wellplate_360uL_Fb` (Corning 96-well, 360 µL, flat bottom), `hamilton_96_tiprack_1000uL_filter`, `hamilton_1_trough_200mL_Vb`, `eppendorf_tube_1500uL_Vb`. Older capitalised names such as `Cor_96_wellplate_360ul_Fb` still exist in 0.2.2 but warn that they will be removed; use the lower-case names. Carriers keep Hamilton catalogue names (`TIP_CAR_480_A00`, `PLT_CAR_L5AC_A00`, `Trough_CAR_4R200_A00`, `Tube_CAR_24_A00`).
 
-### Resource Attributes
-
-Every resource requires:
-- **name**: Unique identifier for the resource
-- **size_x, size_y, size_z**: Dimensions in millimeters (cuboid representation)
-- **location**: Coordinate relative to parent's origin (optional, set when assigned)
+Search for a definition before writing your own:
 
 ```python
-from pylabrobot.resources import Resource
+import pylabrobot.resources as res
 
-# Create a basic resource
-resource = Resource(
-    name="my_resource",
-    size_x=127.76,  # mm
-    size_y=85.48,   # mm
-    size_z=14.5     # mm
-)
+print([n for n in dir(res) if "96_wellplate" in n and n[0].islower()])  # current (lower-case) names
 ```
 
-## Resource Types
-
-### Plates
-
-Microplates with wells for holding liquids. Labware names follow a
-`<vendor>_<wells>_<kind>_<volume>_<bottom>` convention; browse `pylabrobot.resources`
-(grouped by vendor: `corning`, `opentrons`, `hamilton`, ...) for the exact classes.
+## Plates and wells
 
 ```python
-from pylabrobot.resources import Cor_96_wellplate_360ul_Fb  # Corning 96-well, 360 uL, flat bottom
+from pylabrobot.resources import cor_96_wellplate_360uL_Fb
 
-# Create plate
-plate = Cor_96_wellplate_360ul_Fb(name="sample_plate")
+plate = cor_96_wellplate_360uL_Fb(name="sample_plate")
 
-# Access wells
-well_a1 = plate["A1"]                  # Single well
-row_a = plate["A1:H1"]                 # Entire row (A1-H1)
-col_1 = plate["A1:A12"]                # Entire column (A1-A12)
-range_wells = plate["A1:C3"]           # Range of wells
-all_wells = plate.children             # All wells as list
+a1 = plate.get_well("A1")          # one Well object
+column_1 = plate["A1:H1"]          # list of 8 wells: A1, B1, ..., H1
+row_a = plate["A1:A12"]            # list of 12 wells: A1, A2, ..., A12
+block = plate["A1:B2"]             # A1, A2, B1, B2
+some = plate.get_wells(["A1", "C3"])
+every_well = plate.get_all_items()
+print(plate.num_items_x, plate.num_items_y, a1.max_volume)
 ```
 
-### Tip Racks
+`plate["A1"]` returns a **list** containing one well. Liquid-handling calls such as `aspirate` and `dispense` take lists, so `plate["A1"]` works there, but calls that take a single well (`lh.transfer(source, ...)`) or attribute access (`.tracker`) need `plate.get_well("A1")`.
 
-A **tip rack** holds tips and is the resource you index for tips. Tip racks are not
-placed on rails directly — they sit in a **tip carrier** (`TIP_CAR_480_A00`), which is
-then assigned to a deck rail (see Carriers and Deck Management below).
+## Tip racks, carriers, and troughs
 
-```python
-from pylabrobot.resources import (
-    TIP_CAR_480_A00,                    # tip CARRIER (5 sites), NOT a rack
-    hamilton_96_tiprack_1000uL_filter,  # a 96-position filtered tip rack
-)
-from pylabrobot.resources import set_tip_tracking
-set_tip_tracking(True)
-
-tip_car = TIP_CAR_480_A00(name="tip_carrier")
-tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips_01")
-
-# Index the RACK (not the carrier) for tips
-tip_a1 = tip_rack["A1"]                # Single tip position
-tips_row = tip_rack["A1:H1"]           # Row of tips
-tips_col = tip_rack["A1:A12"]          # Column of tips
-
-has_tip = tip_rack["A1"].tracker.has_tip
-```
-
-### Troughs
-
-Reservoir containers for reagents:
-
-```python
-from pylabrobot.resources import Trough_100ml
-
-# Create trough
-trough = Trough_100ml(name="buffer")
-
-# Access channels
-channel_1 = trough["channel_1"]
-all_channels = trough.children
-```
-
-### Tubes
-
-Individual tubes or tube racks:
-
-```python
-from pylabrobot.resources import Tube, TubeRack
-
-# Create tube rack
-tube_rack = TubeRack(name="samples")
-
-# Access tubes
-tube_a1 = tube_rack["A1"]
-```
-
-### Carriers
-
-Platforms that hold plates, tips, or other labware:
-
-```python
-from pylabrobot.resources import (
-    PlateCarrier,
-    TipCarrier,
-    MFXCarrier
-)
-
-# Carriers provide positions for labware
-carrier = PlateCarrier(name="plate_carrier")
-
-# Assign plate to carrier
-plate = Cor_96_wellplate_360ul_Fb(name="plate")
-carrier.assign_child_resource(plate, location=(0, 0, 0))
-```
-
-## Deck Management
-
-### Working with Decks
-
-The deck represents the robot's work surface:
-
-```python
-from pylabrobot.resources import STARLetDeck, OTDeck
-
-# Hamilton STARlet deck
-deck = STARLetDeck()
-
-# Opentrons OT-2 deck
-deck = OTDeck()
-```
-
-### Assigning Resources to Deck
-
-Resources are assigned to specific deck positions using rails or coordinates:
+On Hamilton decks, labware sits in carrier **sites**, and carriers go on deck **rails**:
 
 ```python
 from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.resources import STARLetDeck, TIP_CAR_480_A00, Cor_96_wellplate_360ul_Fb
-
-lh = LiquidHandler(backend=backend, deck=STARLetDeck())
-
-# Assign using rail positions (Hamilton STAR)
-tip_rack = TIP_CAR_480_A00(name="tips")
-source_plate = Cor_96_wellplate_360ul_Fb(name="source")
-dest_plate = Cor_96_wellplate_360ul_Fb(name="dest")
-
-lh.deck.assign_child_resource(tip_rack, rails=1)
-lh.deck.assign_child_resource(source_plate, rails=10)
-lh.deck.assign_child_resource(dest_plate, rails=15)
-
-# Assign using coordinates (x, y, z in mm)
-lh.deck.assign_child_resource(
-    resource=tip_rack,
-    location=(100, 200, 0)
-)
-```
-
-### Unassigning Resources
-
-Remove resources from deck:
-
-```python
-# Unassign specific resource
-lh.deck.unassign_child_resource(tip_rack)
-
-# Access assigned resources
-all_resources = lh.deck.children
-resource_names = [r.name for r in lh.deck.children]
-```
-
-## Coordinate System
-
-PyLabRobot uses a right-handed Cartesian coordinate system:
-
-- **X-axis**: Left to right (increasing rightward)
-- **Y-axis**: Front to back (increasing toward back)
-- **Z-axis**: Down to up (increasing upward)
-- **Origin**: Bottom-front-left corner of parent
-
-### Location Calculations
-
-```python
-# Get absolute location (relative to deck/root)
-absolute_loc = plate.get_absolute_location()
-
-# Get location relative to another resource
-relative_loc = well.get_location_wrt(deck)
-
-# Get location relative to parent
-parent_relative = plate.location
-```
-
-## State Management
-
-### Tracking Liquid Volumes
-
-Track liquid volumes in wells and containers:
-
-```python
-from pylabrobot.resources import set_volume_tracking
-
-# Enable volume tracking globally
-set_volume_tracking(True)
-
-# Set liquid in well
-plate["A1"].tracker.set_liquids([
-    (None, 200)  # (liquid_type, volume_in_uL)
-])
-
-# Multiple liquids
-plate["A2"].tracker.set_liquids([
-    ("water", 100),
-    ("ethanol", 50)
-])
-
-# Get current volume
-volume = plate["A1"].tracker.get_volume()  # Returns total volume
-
-# Get liquids
-liquids = plate["A1"].tracker.get_liquids()  # Returns list of (type, vol) tuples
-```
-
-### Tracking Tip Presence
-
-Track which tips are present in tip racks:
-
-```python
-from pylabrobot.resources import set_tip_tracking
-
-# Enable tip tracking globally
-set_tip_tracking(True)
-
-# Check if tip is present
-has_tip = tip_rack["A1"].tracker.has_tip
-
-# Tips are automatically tracked when using pick_up_tips/drop_tips
-await lh.pick_up_tips(tip_rack["A1"])  # Marks tip as absent
-await lh.return_tips()                  # Marks tip as present
-```
-
-## Serialization
-
-### Saving and Loading Resources
-
-Save resource definitions and states to JSON:
-
-```python
-# Save resource definition
-plate.save("plate_definition.json")
-
-# Load resource from JSON
-from pylabrobot.resources import Plate
-plate = Plate.load_from_json_file("plate_definition.json")
-
-# Save deck layout
-lh.deck.save("deck_layout.json")
-
-# Load deck layout
-from pylabrobot.resources import Deck
-deck = Deck.load_from_json_file("deck_layout.json")
-```
-
-### State Serialization
-
-Save and restore resource states separately from definitions:
-
-```python
-# Save state (tip presence, liquid volumes)
-state = plate.serialize_state()
-with open("plate_state.json", "w") as f:
-    json.dump(state, f)
-
-# Load state
-with open("plate_state.json", "r") as f:
-    state = json.load(f)
-plate.load_state(state)
-
-# Save all states in hierarchy
-all_states = lh.deck.serialize_all_state()
-
-# Load all states
-lh.deck.load_all_state(all_states)
-```
-
-## Custom Resources
-
-### Defining Custom Labware
-
-Create custom labware when built-in resources don't match your equipment:
-
-```python
-from pylabrobot.resources import Plate, Well
-
-# Define custom plate
-class CustomPlate(Plate):
-    def __init__(self, name: str):
-        super().__init__(
-            name=name,
-            size_x=127.76,
-            size_y=85.48,
-            size_z=14.5,
-            num_items_x=12,  # 12 columns
-            num_items_y=8,   # 8 rows
-            dx=9.0,          # Well spacing X
-            dy=9.0,          # Well spacing Y
-            dz=0.0,          # Well spacing Z (usually 0)
-            item_dx=9.0,     # Distance between well centers X
-            item_dy=9.0      # Distance between well centers Y
-        )
-
-# Use custom plate
-custom_plate = CustomPlate(name="my_custom_plate")
-```
-
-### Custom Wells
-
-Define custom well geometry:
-
-```python
-from pylabrobot.resources import Well
-
-# Create custom well
-well = Well(
-    name="custom_well",
-    size_x=8.0,
-    size_y=8.0,
-    size_z=10.5,
-    max_volume=200,      # µL
-    bottom_shape="flat"  # or "v", "u"
-)
-```
-
-## Resource Discovery
-
-### Finding Resources
-
-Navigate the resource hierarchy:
-
-```python
-# Get all wells in a plate
-wells = plate.children
-
-# Find resource by name
-resource = lh.deck.get_resource("plate_name")
-
-# Iterate through resources
-for resource in lh.deck.children:
-    print(f"{resource.name}: {resource.get_absolute_location()}")
-
-# Get wells by pattern
-wells_a = [w for w in plate.children if w.name.startswith("A")]
-```
-
-### Resource Metadata
-
-Access resource information:
-
-```python
-# Resource properties
-print(f"Name: {plate.name}")
-print(f"Size: {plate.size_x} x {plate.size_y} x {plate.size_z} mm")
-print(f"Location: {plate.get_absolute_location()}")
-print(f"Parent: {plate.parent.name if plate.parent else None}")
-print(f"Children: {len(plate.children)}")
-
-# Type checking
-from pylabrobot.resources import Plate, TipRack
-if isinstance(resource, Plate):
-    print("This is a plate")
-elif isinstance(resource, TipRack):
-    print("This is a tip rack")
-```
-
-## Best Practices
-
-1. **Unique Names**: Use descriptive, unique names for all resources
-2. **Enable Tracking**: Turn on tip and volume tracking for accurate state management
-3. **Coordinate Validation**: Verify resource positions don't overlap on deck
-4. **State Serialization**: Save deck layouts and states for reproducible protocols
-5. **Resource Cleanup**: Unassign resources when no longer needed
-6. **Custom Resources**: Define custom labware when built-in options don't match
-7. **Documentation**: Document custom resource dimensions and properties
-8. **Type Checking**: Use isinstance() to verify resource types before operations
-9. **Hierarchy Navigation**: Use parent/children relationships to navigate resource tree
-10. **JSON Storage**: Store deck layouts in JSON for version control and sharing
-
-## Common Patterns
-
-### Complete Deck Setup
-
-```python
-from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.liquid_handling.backends import STARBackend
+from pylabrobot.liquid_handling.backends import LiquidHandlerChatterboxBackend
 from pylabrobot.resources import (
+    PLT_CAR_L5AC_A00,
     STARLetDeck,
     TIP_CAR_480_A00,
-    PLT_CAR_L5AC_A00,
+    Trough_CAR_4R200_A00,
+    cor_96_wellplate_360uL_Fb,
+    hamilton_1_trough_200mL_Vb,
     hamilton_96_tiprack_1000uL_filter,
-    Cor_96_wellplate_360ul_Fb,
-    set_tip_tracking,
-    set_volume_tracking,
 )
 
-# Enable tracking
-set_tip_tracking(True)
-set_volume_tracking(True)
-
-# Initialize liquid handler
-lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
+lh = LiquidHandler(backend=LiquidHandlerChatterboxBackend(), deck=STARLetDeck())
 await lh.setup()
 
-# Tip racks go into a tip carrier's sites (TIP_CAR_480_A00 holds 5 racks)
-tip_car = TIP_CAR_480_A00(name="tip_carrier")
-tip_car[0] = tip_rack_1 = hamilton_96_tiprack_1000uL_filter(name="tips_1")
-tip_car[1] = tip_rack_2 = hamilton_96_tiprack_1000uL_filter(name="tips_2")
+tip_car = TIP_CAR_480_A00(name="tip_carrier")                 # 5 tip-rack sites
+tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips_01")
 lh.deck.assign_child_resource(tip_car, rails=1)
 
-# Plates go into a plate carrier's sites
-plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
-plt_car[0] = source_plate = Cor_96_wellplate_360ul_Fb(name="source")
-plt_car[1] = dest_plate = Cor_96_wellplate_360ul_Fb(name="dest")
+trough_car = Trough_CAR_4R200_A00(name="trough_carrier")      # 4 trough sites
+trough_car[0] = buffer = hamilton_1_trough_200mL_Vb(name="buffer")
+lh.deck.assign_child_resource(trough_car, rails=8)
+
+plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")              # 5 plate sites
+plt_car[0] = source = cor_96_wellplate_360uL_Fb(name="source")
+plt_car[1] = dest = cor_96_wellplate_360uL_Fb(name="dest")
 lh.deck.assign_child_resource(plt_car, rails=15)
 
-# Set initial volumes
-for well in source_plate.children:
-    well.tracker.set_liquids([(None, 200)])
-
-# Save deck layout
-lh.deck.save("my_protocol_deck.json")
-
-# Save initial state
-import json
-with open("initial_state.json", "w") as f:
-    json.dump(lh.deck.serialize_all_state(), f)
+print(lh.deck.summary())
 ```
 
-### Loading Saved Deck
+Index the rack or plate, never the carrier: `tip_rack["A1:H1"]`, not `tip_car["A1:H1"]`. Rails that overlap an existing carrier raise an error, which catches layout mistakes before a run.
+
+Tubes work the same way: `Tube_CAR_24_A00(name=...)` holds 24 tubes such as `eppendorf_tube_1500uL_Vb(name=...)`.
+
+### Other decks
 
 ```python
-from pylabrobot.resources import Deck
+from pylabrobot.resources import EVO150Deck, OTDeck, STARDeck, VantageDeck, opentrons_96_tiprack_300ul
 
-# Load deck from file
-deck = Deck.load_from_json_file("my_protocol_deck.json")
+ot_deck = OTDeck()                                            # Opentrons OT-2: numbered slots 1-11
+ot_deck.assign_child_at_slot(opentrons_96_tiprack_300ul(name="ot_tips"), slot=1)
 
-# Load state
-import json
-with open("initial_state.json", "r") as f:
-    state = json.load(f)
-deck.load_all_state(state)
-
-# Use with liquid handler
-lh = LiquidHandler(backend=STARBackend(), deck=deck)
-await lh.setup()
-
-# Access resources by name
-source_plate = deck.get_resource("source")
-dest_plate = deck.get_resource("dest")
+star = STARDeck()                  # full-size STAR (STARLetDeck is the smaller STARlet)
+vantage = VantageDeck(size=1.3)    # Hamilton Vantage, 1.3 or 2.0 m
+evo = EVO150Deck()                 # Tecan EVO 150 (also EVO100Deck, EVO200Deck)
 ```
 
-## Additional Resources
+Any resource can also be placed at an explicit position with `deck.assign_child_resource(resource, location=Coordinate(x, y, z))`. Remove one with `deck.unassign_child_resource(resource)`.
 
-- Resource Documentation: https://docs.pylabrobot.org/resources/introduction.html
-- Custom Resources Guide: https://docs.pylabrobot.org/resources/introduction.html
-- API Reference: https://docs.pylabrobot.org/user_guide/index.html
-- Deck Layouts: https://github.com/PyLabRobot/pylabrobot/tree/main/pylabrobot/resources
+### Locations
+
+```python
+from pylabrobot.resources import Coordinate
+
+print(source.get_absolute_location())                # relative to the deck origin
+print(source.get_well("A1").get_location_wrt(lh.deck))
+print(source.location, source.get_size_x(), source.get_size_y(), source.get_size_z())
+```
+
+Sizes are read with `get_size_x()` / `get_size_y()` / `get_size_z()` (these account for rotation).
+
+## Tip and volume tracking
+
+Tracking lets PyLabRobot catch mistakes in simulation: picking up a tip that is not there, aspirating more than a well holds, or dispensing more than a tip contains.
+
+```python
+from pylabrobot.resources import set_tip_tracking, set_volume_tracking
+from pylabrobot.resources.liquid import Liquid
+
+set_tip_tracking(True)       # global switches, checked on every liquid-handling call
+set_volume_tracking(True)
+
+tracked_tips = hamilton_96_tiprack_1000uL_filter(name="tracked_tips")
+tip_car[1] = tracked_tips
+tracked_plate = cor_96_wellplate_360uL_Fb(name="tracked_plate")
+plt_car[2] = tracked_plate
+
+tracked_plate.get_well("A1").tracker.set_liquids([(Liquid.WATER, 200)])  # or (None, 200)
+print(tracked_plate.get_well("A1").tracker.get_used_volume())            # 200
+print(tracked_tips.get_item("A1").tracker.has_tip)                       # True
+
+await lh.pick_up_tips(tracked_tips["A1"])
+await lh.aspirate(tracked_plate["A1"], vols=[50])
+await lh.dispense(tracked_plate["A2"], vols=[50])
+await lh.return_tips()
+print(tracked_plate.get_well("A1").tracker.get_used_volume(),
+      tracked_plate.get_well("A2").tracker.get_used_volume())            # 150 50
+```
+
+Tracker methods: `set_liquids`, `set_volume`, `get_used_volume`, `get_free_volume`, `get_liquids` for wells; `has_tip` for tip spots. Tracking can be switched off per resource with `tracker.disable()`.
+
+## Saving layouts and state
+
+```python
+lh.deck.save("deck_layout.json")                    # layout: resource definitions and positions
+lh.deck.save_state_to_file("deck_state.json")       # state: tips present, liquid volumes
+
+from pylabrobot.resources import Deck
+
+deck = Deck.load_from_json_file("deck_layout.json")
+deck.load_state_from_file("deck_state.json")
+```
+
+`serialize()` / `Resource.deserialize(...)` and `serialize_all_state()` / `load_all_state(...)` give the same data as dictionaries. Commit the layout JSON with the protocol so every run uses the same deck.
+
+## Defining custom labware
+
+Build a plate from its measured geometry with `create_ordered_items_2d`:
+
+```python
+from pylabrobot.resources import (
+    CrossSectionType,
+    Plate,
+    Well,
+    WellBottomType,
+    create_ordered_items_2d,
+)
+
+
+def my_24_wellplate_3400uL_Fb(name: str) -> Plate:
+    """24-well plate; all dimensions in mm from the vendor drawing (check before use)."""
+    return Plate(
+        name=name,
+        size_x=127.76, size_y=85.48, size_z=20.0,
+        model="my_24_wellplate_3400uL_Fb",
+        ordered_items=create_ordered_items_2d(
+            Well,
+            num_items_x=6, num_items_y=4,
+            dx=9.0, dy=6.0, dz=1.0,          # offset of well A1's corner from the plate origin
+            item_dx=19.3, item_dy=19.3,      # well pitch
+            size_x=16.3, size_y=16.3, size_z=18.0,
+            bottom_type=WellBottomType.FLAT,
+            cross_section_type=CrossSectionType.CIRCLE,
+            max_volume=3400,
+        ),
+    )
+
+
+custom = my_24_wellplate_3400uL_Fb(name="custom_plate")
+print(custom.num_items_x, custom.num_items_y, custom.get_well("D6").max_volume)
+```
+
+Verify a new definition on the robot with a slow, liquid-free run (or the visualizer) before trusting it, and consider contributing tested definitions upstream.

@@ -2,8 +2,8 @@
 
 **URL:** https://cloud.ginkgo.bio/protocols/cell-free-protein-expression-validation
 **Status:** Ginkgo Certified
-**Price:** $39/sample (default: $936 for 8 proteins x 3 replicates = 24 samples)
-**Turnaround:** 5-10 days
+**Price:** $39/sample (the order form's example total was $117 = 3 samples on 2026-09-23)
+**Turnaround:** up to 10 days
 
 ## Overview
 
@@ -11,7 +11,7 @@ Fastest path from a protein sequence to a quantitative go/no-go readout on expre
 
 ## Input
 
-- **DNA sequence** in `.fasta` format
+- **Linear DNA sequence(s)** — `.fasta`, `.csv`, `.xlsx`, `.txt`, `.pdf`, or `.zip` upload
 - Sequences up to 1800 bp supported
 
 ## Output

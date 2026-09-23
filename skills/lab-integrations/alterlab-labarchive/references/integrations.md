@@ -6,6 +6,23 @@ LabArchives integrates with numerous scientific software platforms to streamline
 
 ## Integration Categories
 
+The programmatic examples below use `labapi` (PyPI, `uv pip install "labapi[dotenv]"`, Python >= 3.10), which signs requests and handles pages, entries, and attachments. Shared setup:
+
+```python
+import os
+from labapi import Attachment, AttachmentEntry, Client, HeaderEntry, TextEntry
+
+client = Client()  # API_URL, ACCESS_KEYID, ACCESS_PWD from the environment or .env
+user = client.login(os.environ["LA_EMAIL"], os.environ["LA_APP_TOKEN"])  # "LA App authentication" token
+notebook = user.notebooks["Lab Notebook"]
+
+def attach(page, path):
+    """Upload a local file as an attachment entry on a page."""
+    return page.entries.create(AttachmentEntry, Attachment.from_file(path))
+```
+
+The raw API equivalents are `tree_tools/insert_node` (new page), `entries/add_entry` (text), and `entries/add_attachment` (file) — see `api_reference.md`. Entry comments are not covered by either Python client.
+
 ### 1. Protocol Management
 
 #### Protocols.io Integration
@@ -27,31 +44,17 @@ Export protocols directly from Protocols.io to LabArchives notebooks.
 # Export Protocols.io protocol as HTML/PDF
 # Then upload to LabArchives via API
 
-def import_protocol_to_labarchives(client, uid, nbid, protocol_id):
-    """Import Protocols.io protocol to LabArchives entry"""
-    # 1. Fetch protocol from Protocols.io API
-    protocol_data = fetch_protocol_from_protocolsio(protocol_id)
+def import_protocol_to_labarchives(page, protocol_id):
+    """Record a protocols.io protocol on a LabArchives page"""
+    # 1. Fetch the protocol (v4 API) with your protocols.io token
+    protocol = fetch_protocol_from_protocolsio(protocol_id)  # see the alterlab-protocolsio skill
 
-    # 2. Create new entry in LabArchives
-    entry_params = {
-        'uid': uid,
-        'nbid': nbid,
-        'title': f"Protocol: {protocol_data['title']}",
-        'content': protocol_data['html_content']
-    }
-    response = client.make_call('entries', 'create_entry', params=entry_params)
+    # 2. Header + protocol body as a rich-text entry
+    page.entries.create(HeaderEntry, f"Protocol: {protocol['title']}")
+    page.entries.create(TextEntry, protocol["html_content"])
 
-    # 3. Add protocol metadata as comment
-    entry_id = extract_entry_id(response)
-    comment_params = {
-        'uid': uid,
-        'nbid': nbid,
-        'entry_id': entry_id,
-        'comment': f"Protocols.io ID: {protocol_id}<br>Version: {protocol_data['version']}"
-    }
-    client.make_call('entries', 'create_comment', params=comment_params)
-
-    return entry_id
+    # 3. Provenance as its own entry (the API has no client-supported comment call)
+    page.entries.create(TextEntry, f"<p>protocols.io DOI: {protocol['doi']}; version {protocol['version']}</p>")
 ```
 
 **Updated:** September 22, 2025
@@ -76,23 +79,9 @@ Export analyses, graphs, and figures directly from Prism to LabArchives.
 ```python
 # Upload Prism files to LabArchives via API
 
-def upload_prism_analysis(client, uid, nbid, entry_id, prism_file_path):
-    """Upload GraphPad Prism file to LabArchives entry"""
-    import requests
-
-    url = f'{client.api_url}/entries/upload_attachment'
-    files = {'file': open(prism_file_path, 'rb')}
-    params = {
-        'uid': uid,
-        'nbid': nbid,
-        'entry_id': entry_id,
-        'filename': os.path.basename(prism_file_path),
-        'access_key_id': client.access_key_id,
-        'access_password': client.access_password
-    }
-
-    response = requests.post(url, files=files, data=params)
-    return response
+def upload_prism_analysis(page, prism_file_path):
+    """Upload a GraphPad Prism project (and its exported figures) to a page"""
+    return attach(page, prism_file_path)
 ```
 
 **Supported file types:**
@@ -126,14 +115,11 @@ Direct integration for molecular biology workflows, plasmid maps, and sequence a
 
 **Programmatic workflow:**
 ```python
-def upload_snapgene_file(client, uid, nbid, entry_id, snapgene_file):
-    """Upload SnapGene file with preview image"""
-    # Upload main SnapGene file
-    upload_attachment(client, uid, nbid, entry_id, snapgene_file)
-
-    # Generate and upload preview image (requires SnapGene CLI)
-    preview_png = generate_snapgene_preview(snapgene_file)
-    upload_attachment(client, uid, nbid, entry_id, preview_png)
+def upload_snapgene_file(page, snapgene_file, preview_png=None):
+    """Upload a SnapGene file, plus an exported map image if you have one"""
+    attach(page, snapgene_file)
+    if preview_png:  # e.g. a PNG exported from SnapGene
+        attach(page, preview_png)
 ```
 
 #### Geneious Integration
@@ -171,40 +157,25 @@ Embed Jupyter notebooks as LabArchives entries for reproducible computational re
 **Workflow:**
 
 ```python
-def export_jupyter_to_labarchives(notebook_path, client, uid, nbid):
-    """Export Jupyter notebook to LabArchives"""
+def export_jupyter_to_labarchives(page, notebook_path):
+    """Export an executed Jupyter notebook to a LabArchives page"""
     import nbformat
     from nbconvert import HTMLExporter
 
-    # Load notebook
     with open(notebook_path, 'r') as f:
         nb = nbformat.read(f, as_version=4)
 
-    # Convert to HTML
-    html_exporter = HTMLExporter()
-    html_exporter.template_name = 'classic'
-    (body, resources) = html_exporter.from_notebook_node(nb)
+    body, _resources = HTMLExporter(template_name='classic').from_notebook_node(nb)
 
-    # Create entry in LabArchives
-    entry_params = {
-        'uid': uid,
-        'nbid': nbid,
-        'title': f"Jupyter Notebook: {os.path.basename(notebook_path)}",
-        'content': body
-    }
-    response = client.make_call('entries', 'create_entry', params=entry_params)
-
-    # Upload original .ipynb file as attachment
-    entry_id = extract_entry_id(response)
-    upload_attachment(client, uid, nbid, entry_id, notebook_path)
-
-    return entry_id
+    page.entries.create(HeaderEntry, f"Jupyter Notebook: {os.path.basename(notebook_path)}")
+    page.entries.create(TextEntry, body)   # rendered notebook
+    attach(page, notebook_path)            # original .ipynb
 ```
 
 **Best practices:**
 - Export with outputs included (Run All Cells before export)
 - Include environment.yml or requirements.txt as attachment
-- Add execution timestamp and system info in comments
+- Add execution timestamp and system info as a text entry on the same page
 
 ### 5. Clinical Research
 
@@ -224,22 +195,16 @@ Clinical data capture integration with LabArchives for research compliance and a
 
 **Example workflow:**
 ```python
-def sync_redcap_to_labarchives(redcap_api_token, client, uid, nbid):
-    """Sync REDCap data to LabArchives"""
-    # Fetch REDCap data
-    redcap_data = fetch_redcap_data(redcap_api_token)
+def sync_redcap_to_labarchives(page, redcap_api_token):
+    """Record a de-identified REDCap export on a LabArchives page"""
+    from datetime import datetime
 
-    # Create LabArchives entry
-    entry_params = {
-        'uid': uid,
-        'nbid': nbid,
-        'title': f"REDCap Data Export {datetime.now().strftime('%Y-%m-%d')}",
-        'content': format_redcap_data_html(redcap_data)
-    }
-    response = client.make_call('entries', 'create_entry', params=entry_params)
-
-    return response
+    redcap_data = fetch_redcap_data(redcap_api_token)  # de-identify before it leaves REDCap
+    page.entries.create(HeaderEntry, f"REDCap export {datetime.now():%Y-%m-%d}")
+    return page.entries.create(TextEntry, format_redcap_data_html(redcap_data))
 ```
+
+Only move identifiable participant data into a notebook that your IRB/privacy office has approved for it.
 
 **Compliance features:**
 - 21 CFR Part 11 compliance
@@ -296,52 +261,34 @@ For tools not officially supported, develop custom integrations:
 1. **Export data** from source application (API or file export)
 2. **Transform format** to HTML or supported file type
 3. **Authenticate** with LabArchives API
-4. **Create entry** or upload attachment
-5. **Add metadata** via comments for traceability
+4. **Create entry** or upload attachment on the target page
+5. **Add metadata** as a text entry for traceability
 
 ### Example: Custom Integration Template
 
 ```python
 class LabArchivesIntegration:
-    """Template for custom LabArchives integrations"""
+    """Template for custom LabArchives integrations (labapi)"""
 
-    def __init__(self, config_path):
-        self.client = self._init_client(config_path)
-        self.uid = self._authenticate()
+    def __init__(self, email, app_token, notebook_name):
+        from labapi import Client
+        self.client = Client()  # API_URL, ACCESS_KEYID, ACCESS_PWD from the environment
+        self.user = self.client.login(email, app_token)
+        self.notebook = self.user.notebooks[notebook_name]
 
-    def _init_client(self, config_path):
-        """Initialize LabArchives client"""
-        with open(config_path) as f:
-            config = yaml.safe_load(f)
-        return Client(config['api_url'],
-                     config['access_key_id'],
-                     config['access_password'])
-
-    def _authenticate(self):
-        """Get user ID"""
-        # Implementation from authentication_guide.md
-        pass
-
-    def export_data(self, source_data, nbid, title):
-        """Export data to LabArchives"""
-        # Transform data to HTML
-        html_content = self._transform_to_html(source_data)
-
-        # Create entry
-        params = {
-            'uid': self.uid,
-            'nbid': nbid,
-            'title': title,
-            'content': html_content
-        }
-        response = self.client.make_call('entries', 'create_entry', params=params)
-
-        return extract_entry_id(response)
+    def export_data(self, source_data, page_path, title):
+        """Write transformed data to a page, e.g. page_path='Experiments/2026/Run-12'"""
+        from labapi import HeaderEntry, TextEntry
+        page = self.notebook.traverse(page_path)
+        page.entries.create(HeaderEntry, title)
+        return page.entries.create(TextEntry, self._transform_to_html(source_data))
 
     def _transform_to_html(self, data):
         """Transform data to HTML format"""
-        # Custom transformation logic
-        pass
+        raise NotImplementedError
+
+    def close(self):
+        self.client.close()
 ```
 
 ## Integration Best Practices

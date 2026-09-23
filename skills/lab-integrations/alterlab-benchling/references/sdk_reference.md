@@ -6,7 +6,7 @@
 
 ```bash
 # Stable release (pin a 1.x range in production)
-uv add "benchling-sdk>=1.23,<2"
+uv add "benchling-sdk>=1.25,<2"
 
 # Throwaway / scratch env
 uv pip install benchling-sdk
@@ -16,7 +16,7 @@ uv pip install benchling-sdk --prerelease=allow
 ```
 
 ### Requirements
-- Python >= 3.8 (benchling-sdk 1.x; verify against your pinned version)
+- Python >= 3.9 (benchling-sdk 1.25.x declares `>=3.9,<4.0`)
 - API access enabled on your Benchling tenant
 
 ### The `fields()` helper (read first)
@@ -253,7 +253,7 @@ cell_line = benchling.custom_entities.create(
 # Update
 updated_cell_line = benchling.custom_entities.update(
     entity_id=cell_line.id,
-    custom_entity=CustomEntityUpdate(
+    entity=CustomEntityUpdate(
         fields=fields({
             "passage_number": {"value": "16"},
             "notes": {"value": "Expanded for experiment"},
@@ -267,8 +267,20 @@ updated_cell_line = benchling.custom_entities.update(
 Mixtures combine multiple components:
 
 ```python
-from benchling_sdk.models import MixtureCreate, IngredientCreate
+from benchling_sdk.models import (
+    IngredientMeasurementUnits,
+    IngredientWriteParams,
+    MixtureCreate,
+)
 from benchling_sdk.helpers.serialization_helpers import fields
+
+def ingredient(entity_id, amount, units):
+    # IngredientWriteParams takes every field; pass None for the ones you don't use
+    return IngredientWriteParams(
+        component_entity_id=entity_id, amount=amount, units=units,
+        catalog_identifier=None, component_lot_container_id=None,
+        component_lot_entity_id=None, component_lot_text=None, notes=None,
+    )
 
 mixture = benchling.mixtures.create(
     MixtureCreate(
@@ -276,10 +288,8 @@ mixture = benchling.mixtures.create(
         folder_id="fld_abc123",
         schema_id="ts_mixture_abc123",
         ingredients=[
-            # Confirm IngredientCreate's exact fields (amount/units, component id)
-            # against the API reference for your SDK version.
-            IngredientCreate(component_entity_id="ent_lb_base", ...),
-            IngredientCreate(component_entity_id="ent_ampicillin", ...),
+            ingredient("ent_lb_base", "25", IngredientMeasurementUnits.G),
+            ingredient("ent_ampicillin", "100", IngredientMeasurementUnits.MG),
         ],
         fields=fields({
             "pH": {"value": "7.0"},
@@ -294,7 +304,9 @@ mixture = benchling.mixtures.create(
 **Direct Registry Registration:**
 ```python
 # Register entity upon creation: registry_id selects the registry, naming_strategy
-# controls how the registry ID is assigned.
+# (a NamingStrategy enum, not a string) controls how the registry ID is assigned.
+from benchling_sdk.models import NamingStrategy
+
 registered_seq = benchling.dna_sequences.create(
     DnaSequenceCreate(
         name="Construct-001",
@@ -302,7 +314,7 @@ registered_seq = benchling.dna_sequences.create(
         is_circular=True,
         folder_id="fld_abc123",
         registry_id="src_abc123",
-        naming_strategy="NEW_IDS",  # or "IDS_FROM_NAMES"
+        naming_strategy=NamingStrategy.NEW_IDS,  # or NamingStrategy.IDS_FROM_NAMES
     )
 )
 print(f"Registry ID: {registered_seq.entity_registry_id}")
@@ -390,9 +402,9 @@ box = benchling.boxes.create(
     )
 )
 
-# List containers in box
+# List containers stored in the box (list() filters by ancestor_storage_id)
 containers = benchling.containers.list(
-    parent_storage_id=box.id
+    ancestor_storage_id=box.id
 )
 ```
 
@@ -404,6 +416,7 @@ from benchling_sdk.models import LocationCreate
 location = benchling.locations.create(
     LocationCreate(
         name="Freezer A - Shelf 2",
+        schema_id="loc_schema_abc123",   # required
         parent_storage_id="loc_freezer_a",
         barcode="LOC-A-S2"
     )
@@ -413,28 +426,21 @@ location = benchling.locations.create(
 ### Plates
 
 ```python
-from benchling_sdk.models import PlateCreate, WellCreate
+from benchling_sdk.models import PlateCreate
 
-# Create 96-well plate
+# Create a plate; the schema defines its layout (e.g. 96-well)
 plate = benchling.plates.create(
     PlateCreate(
         name="PCR-Plate-001",
         schema_id="plate_schema_abc123",
         barcode="PLATE001",
-        wells=[
-            WellCreate(
-                position="A1",
-                entity_id="sample_entity_abc"
-            ),
-            WellCreate(
-                position="A2",
-                entity_id="sample_entity_xyz"
-            )
-            # ... more wells
-        ]
+        parent_storage_id="loc_freezer_a",
     )
 )
 ```
+`PlateCreate.wells` only sets per-well barcodes (a `PlateCreateWells` mapping keyed
+by position); there is no `WellCreate`. Wells are containers, so put samples into
+them afterwards with `containers.transfer_into_container(destination_container_id=<well id>, ...)`.
 
 ## Notebook Operations
 
@@ -474,22 +480,29 @@ updated_entry = benchling.entries.update_entry(
 
 ### Linking Entities to Entries
 
-There is **no** `entry_links` service. Entities are linked into an ELN entry by
-embedding an inline entity reference (an @-mention link to the entity) inside a
-note block of the entry's content, then persisting it with `update_entry`. Build
-the entry's `days`/notes structure containing the inline link and pass it via
-`EntryUpdate`:
+There is **no** `entry_links` service, and the v2 API cannot write note text or
+@-mentions into an existing entry: `EntryUpdate` accepts only `name`, `folder_id`,
+`schema_id`, `fields`, and `author_ids`. Two supported patterns:
 ```python
-from benchling_sdk.models import EntryUpdate
+from benchling_sdk.models import EntryCreate, EntryUpdate, InitialTable
+from benchling_sdk.helpers.serialization_helpers import fields
 
+# 1. An entity-link field on the entry schema
 benchling.entries.update_entry(
     entry_id="entry_abc123",
-    entry=EntryUpdate(days=[...]),  # notes containing the inline entity link
+    entry=EntryUpdate(fields=fields({"plasmid": {"value": "seq_xyz789"}})),
+)
+
+# 2. Create the entry from a template and pre-fill its template tables
+entry = benchling.entries.create_entry(
+    EntryCreate(
+        name="Cloning run 12",
+        folder_id="fld_abc123",
+        entry_template_id="TEMPLATE_ID",
+        initial_tables=[InitialTable(template_table_id="TABLE_ID", csv_data="Plasmid\nseq_xyz789\n")],
+    )
 )
 ```
-Confirm the exact note/link block model classes against your installed
-`benchling-sdk` version, since linking is expressed within entry content rather
-than via a standalone service.
 
 ## Workflow Management
 
@@ -499,13 +512,12 @@ than via a standalone service.
 from benchling_sdk.models import WorkflowTaskCreate, WorkflowTaskUpdate
 from benchling_sdk.helpers.serialization_helpers import fields
 
-# Create task
+# Create task (WorkflowTaskCreate fields: workflow_task_group_id, assignee_id,
+# fields, scheduled_on — the task schema comes from its workflow task group)
 task = benchling.workflow_tasks.create(
     WorkflowTaskCreate(
-        name="PCR Amplification",
-        workflow_id="wf_abc123",
-        assignee_id="user_abc123",
-        schema_id="task_schema_abc123",
+        workflow_task_group_id="WORKFLOW_TASK_GROUP_ID",
+        assignee_id="USER_ID",
         fields=fields({
             "template": {"value": "seq_abc123"},
             "primers": {"value": "Forward: ATCG, Reverse: CGAT"},
@@ -516,9 +528,9 @@ task = benchling.workflow_tasks.create(
 
 # Update status
 completed_task = benchling.workflow_tasks.update(
-    task_id=task.id,
+    workflow_task_id=task.id,
     workflow_task=WorkflowTaskUpdate(
-        status_id="status_complete_abc123",
+        status_id="COMPLETE_STATUS_ID",
         fields=fields({
             "completion_date": {"value": "2025-10-20"},
             "yield": {"value": "500 ng"},
@@ -528,8 +540,8 @@ completed_task = benchling.workflow_tasks.update(
 
 # List tasks
 tasks = benchling.workflow_tasks.list(
-    workflow_id="wf_abc123",
-    status_ids=["status_pending", "status_in_progress"]
+    workflow_task_group_ids=["WORKFLOW_TASK_GROUP_ID"],
+    status_ids=["PENDING_STATUS_ID", "IN_PROGRESS_STATUS_ID"]
 )
 ```
 
@@ -577,23 +589,21 @@ print("Task completed successfully")
 ### Error Handling
 
 ```python
-from benchling_sdk.errors import (
-    BenchlingError,
-    NotFoundError,
-    ValidationError,
-    UnauthorizedError
-)
+from benchling_sdk.errors import BenchlingError
 
+# HTTP failures raise BenchlingError; branch on status_code (the NotFoundError /
+# ForbiddenError names in benchling_sdk.models are parsed error *bodies*, not exceptions)
 try:
     sequence = benchling.dna_sequences.get_by_id(dna_sequence_id="seq_invalid")
-except NotFoundError:
-    print("Sequence not found")
-except UnauthorizedError:
-    print("Insufficient permissions")
-except ValidationError as e:
-    print(f"Invalid data: {e}")
 except BenchlingError as e:
-    print(f"General Benchling error: {e}")
+    if e.status_code == 404:
+        print("Sequence not found")
+    elif e.status_code in (401, 403):
+        print("Insufficient permissions")
+    elif e.status_code == 400:
+        print(f"Invalid data: {e.message}")
+    else:
+        raise
 ```
 
 ### Retry Strategy
@@ -631,28 +641,26 @@ benchling = Benchling(
 For unsupported endpoints:
 
 ```python
-# GET request with model parsing
+# GET request with model parsing (url is relative, e.g. /api/v2/... or /api/v2-alpha/...)
 from benchling_sdk.models import DnaSequence
 
-response = benchling.api.get_modeled(
-    path="/api/v2/dna-sequences/seq_abc123",
-    response_type=DnaSequence
+sequence = benchling.api.get_modeled(
+    url="/api/v2/dna-sequences/seq_abc123",
+    target_type=DnaSequence,
 )
 
 # POST request
 from benchling_sdk.models import DnaSequenceCreate
 
-response = benchling.api.post_modeled(
-    path="/api/v2/dna-sequences",
-    request_body=DnaSequenceCreate(...),
-    response_type=DnaSequence
+created = benchling.api.post_modeled(
+    url="/api/v2/dna-sequences",
+    target_type=DnaSequence,
+    body=DnaSequenceCreate(...),
 )
 
-# Raw requests
-raw_response = benchling.api.get(
-    path="/api/v2/custom-endpoint",
-    params={"key": "value"}
-)
+# Raw JSON response (put query parameters in the url)
+raw = benchling.api.get_response(url="/api/v2/custom-endpoint?key=value")
+print(raw.status_code, raw.parsed)
 ```
 
 ### Batch Operations

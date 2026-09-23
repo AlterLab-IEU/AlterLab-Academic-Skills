@@ -11,13 +11,13 @@ from opentrons import protocol_api
 metadata = {
     'protocolName': 'Serial Dilution Template',
     'author': 'Opentrons',
-    'description': 'Serial dilution protocol for creating concentration gradients',
-    'apiLevel': '2.19'
+    'description': 'Serial dilution protocol for creating concentration gradients'
 }
 
+# apiLevel belongs in exactly one of metadata/requirements (opentrons rejects both)
 requirements = {
     'robotType': 'Flex',
-    'apiLevel': '2.19'
+    'apiLevel': '2.22'
 }
 
 def run(protocol: protocol_api.ProtocolContext):
@@ -30,13 +30,19 @@ def run(protocol: protocol_api.ProtocolContext):
     3. Performs serial dilutions across rows
     """
 
-    # Load labware
-    tips = protocol.load_labware('opentrons_flex_96_tiprack_200ul', 'D1')
+    # Flex has no fixed trash: load one before any tip is dropped
+    protocol.load_trash_bin('A3')
+
+    # Load labware: 104 tips are used (8 + 8 + 88), so load two 96-tip racks
+    tips = [
+        protocol.load_labware('opentrons_flex_96_tiprack_200ul', slot)
+        for slot in ('C1', 'D1')
+    ]
     reservoir = protocol.load_labware('nest_12_reservoir_15ml', 'D2', label='Reservoir')
     plate = protocol.load_labware('corning_96_wellplate_360ul_flat', 'D3', label='Dilution Plate')
 
     # Load pipette
-    p300 = protocol.load_instrument('flex_1channel_1000', 'left', tip_racks=[tips])
+    p300 = protocol.load_instrument('flex_1channel_1000', 'left', tip_racks=tips)
 
     # Define liquids (optional, for visualization)
     diluent = protocol.define_liquid(
@@ -51,9 +57,10 @@ def run(protocol: protocol_api.ProtocolContext):
         display_color='#FF6347'
     )
 
-    # Load liquids into wells
-    reservoir['A1'].load_liquid(liquid=diluent, volume=15000)
-    reservoir['A2'].load_liquid(liquid=stock, volume=5000)
+    # Load liquids into wells (Labware.load_liquid / load_empty need API 2.22+)
+    reservoir.load_liquid(wells=['A1'], volume=15000, liquid=diluent)
+    reservoir.load_liquid(wells=['A2'], volume=5000, liquid=stock)
+    plate.load_empty(plate.wells())
 
     # Protocol parameters
     dilution_factor = 2  # 1:2 dilution

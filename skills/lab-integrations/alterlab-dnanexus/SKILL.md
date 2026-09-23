@@ -3,10 +3,11 @@ name: alterlab-dnanexus
 description: Develops and runs genomics pipelines on the DNAnexus cloud platform using the dxpy Python SDK and dx CLI — build apps/applets, write dxapp.json, upload/download data, and execute jobs/workflows over FASTQ/BAM/VCF files. Use when building or running a DNAnexus app, applet, or workflow, writing dxapp.json, using dx-app-wizard or dx build, calling dxpy (find_data_objects, DXApplet.run, upload_local_file), or uploading/downloading sequencing data on DNAnexus. For LatchBio (Latch SDK @workflow/@task, LatchFile) use alterlab-latchbio instead; for Benchling LIMS use alterlab-benchling. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(dx:*) Bash(dx-app-wizard:*) Bash(dx-build-app:*) Bash(uv:*) Bash(python:*)
-compatibility: Requires a DNAnexus account
+compatibility: Requires a DNAnexus account and the dxpy SDK/dx CLI (dxpy, current 0.415.0 as of 2026-09; Python >=3.8)
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # DNAnexus Integration
@@ -25,6 +26,16 @@ This skill should be used when:
 - Setting up dxapp.json, managing dependencies, using Docker
 - Processing FASTQ, BAM, VCF, or other bioinformatics files
 - Managing projects, permissions, or platform resources
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Latch SDK workflows (`@workflow`/`@task`, LatchFile/LatchDir) on LatchBio | `alterlab-latchbio` |
+| Running the nf-core/sarek germline/somatic variant-calling pipeline itself | `alterlab-nf-core-sarek` |
+| Generic serverless GPU/CPU jobs or SLURM/HPC submission outside DNAnexus | `alterlab-modal` / `alterlab-remote-compute` |
+| Reading or filtering BAM/VCF records locally in Python | `alterlab-pysam` |
+| Registry, inventory, or ELN records in Benchling | `alterlab-benchling` |
 
 ## Core Capabilities
 
@@ -356,3 +367,4 @@ Load these references when you need detailed information about specific operatio
 - GitHub repository: https://github.com/dnanexus/dx-toolkit
 - Support: support@dnanexus.com
 
+Part of the AlterLab Academic Skills suite.

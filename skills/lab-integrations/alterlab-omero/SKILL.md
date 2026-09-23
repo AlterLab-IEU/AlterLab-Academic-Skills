@@ -2,11 +2,12 @@
 name: alterlab-omero
 description: Manages microscopy image data on an OMERO server via the OMERO Python API (BlitzGateway) — access images, retrieve datasets, read pixel data, manage ROIs and annotations, and batch-process. Use when connecting to an OMERO server, pulling microscopy images or datasets, analyzing pixels, managing ROIs/annotations, or running high-content screening and microscopy workflows. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read, Write, Edit, Bash(uv:*)
-compatibility: Requires a reachable OMERO server (host, port, credentials) and the omero-py client (uv pip install omero-py) for BlitzGateway access
+allowed-tools: Read Write Edit Bash(uv:*) Bash(python:*)
+compatibility: Requires a reachable OMERO server (host, port, credentials) and omero-py (current 5.23.0; Python >=3.10) with the ZeroC Ice 3.6 Python bindings installed first
 metadata:
     skill-author: AlterLab
-    version: "1.0.0"
+    version: "1.0.1"
+    last_updated: "2026-09-23"
 ---
 
 # OMERO Integration
@@ -26,6 +27,15 @@ This skill should be used when:
 - Storing measurement results in OMERO tables
 - Creating server-side scripts for batch processing
 - Performing high-content screening analysis
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Downloading public cancer radiology/pathology DICOM from NCI Imaging Data Commons | `alterlab-imaging-data-commons` |
+| Tiling or preprocessing whole-slide images from local files | `alterlab-histolab` |
+| End-to-end computational pathology models (segmentation, graphs, training) | `alterlab-pathml` |
+| Reading or anonymizing clinical DICOM files | `alterlab-pydicom` |
 
 ## Core Capabilities
 
@@ -122,13 +132,17 @@ Covers permissions, filesets, cross-group queries, delete operations, and other 
 ## Installation
 
 ```bash
+# 1. Install a prebuilt ZeroC Ice 3.6 wheel for your Python version and OS first
+#    (Glencoe Software builds; links on the OMERO.py page below)
+uv pip install /path/to/zeroc_ice-3.6.5-<python>-<platform>.whl
+# 2. Then OMERO.py
 uv pip install omero-py
 ```
 
-**Requirements (omero-py 5.22.x):**
-- Python 3.10+
-- Zeroc Ice: omero-py pins `zeroc-ice>=3.6.5,<3.7` — Ice 3.7 is NOT supported, so don't install a 3.7 wheel.
-- Access to an OMERO server (host, port, credentials)
+**Requirements (omero-py 5.23.x, current as of 2026-09):**
+- Python 3.10+ and NumPy 2
+- ZeroC Ice: omero-py pins `zeroc-ice>=3.6.5,<3.7`. PyPI only has 3.6.5 wheels for Python 2.7/3.7, so without a prebuilt wheel pip tries to compile Ice from source; Ice 3.7/3.8 are not supported. See https://omero.readthedocs.io/en/stable/developers/Python.html for the wheel list.
+- Access to an OMERO server (host, port, credentials); set `OMERODIR` if you use the `omero` CLI
 
 ## Quick Start
 
@@ -251,3 +265,4 @@ finally:
 - Use context managers for automatic resource management
 - Pixel data is returned as NumPy arrays for analysis
 
+Part of the AlterLab Academic Skills suite.

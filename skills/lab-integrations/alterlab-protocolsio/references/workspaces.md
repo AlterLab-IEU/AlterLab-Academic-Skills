@@ -1,293 +1,87 @@
-# Workspaces API
+# Workspaces
 
-## Overview
+Source: https://apidoc.protocols.io/ (checked 2026-09-23). Paths are relative to `https://www.protocols.io/api`; every call needs `Authorization: Bearer <token>` and returns a JSON `status_code` (0 = success).
 
-Workspaces in protocols.io enable team collaboration by organizing protocols, managing members, and controlling access permissions. The Workspaces API allows you to list workspaces, manage memberships, and access workspace-specific protocols.
+Workspaces are addressed by their string `uri` (for example `verve-net`), not by the integer `id`.
 
-## Base URL
+## Find workspaces
 
-All workspace endpoints use the base URL: `https://www.protocols.io/api/v3`
+### `GET /v3/workspaces`
 
-## Workspace Operations
+| Parameter | Notes |
+|-----------|-------|
+| `filter` | `all_public` (default; also used for unrecognised values), `my_groups` (workspaces the user is a confirmed member of, including private ones), `user_public` (public workspaces the user belongs to), `all_public_request` (public workspaces the user has not joined yet) |
+| `key` | Searches workspace name and description |
+| `page_size` / `page_id` | 1–100 (default 10) / from 1 |
 
-### List User Workspaces
+Use `filter=my_groups` to find the `uri` of a private workspace; the file-manager search endpoint takes that `uri`.
 
-Retrieve all workspaces the authenticated user has access to.
+### `GET /v3/researchers/<username>/workspaces`
 
-**Endpoint:** `GET /workspaces`
+A researcher's workspaces; optional `key`, `page_size`, `page_id`.
 
-**Query Parameters:**
-- `page_size`: Number of results per page (default: 10, max: 50)
-- `page_id`: Page number for pagination (starts at 0)
+### `GET /v3/workspaces/<uri>`
 
-**Response includes:**
-- Workspace ID and name
-- Workspace type (personal, group, institutional)
-- Member count
-- Access level (owner, admin, member, viewer)
-- Creation date
+Returns a `workspace` object:
 
-**Example Request:**
-```bash
-curl -H "Authorization: Bearer YOUR_TOKEN" \
-  "https://www.protocols.io/api/v3/workspaces"
+| Field | Meaning |
+|-------|---------|
+| `id`, `uri`, `title`, `description`, `research_interests`, `website`, `location`, `affiliation`, `image` | Profile |
+| `status.is_visible` | `true` for a public workspace |
+| `status.access_level` | `0` anyone can join, `1` users request to join, `2` invitation only |
+| `stats.files` | Counts of `publish`, `forks`, `shared`, `archived` items; `stats.total_members` |
+| `user_status` | The token user's `is_member`, `is_confimed` (sic), `is_invited`, `is_owner` flags |
+
+## Membership
+
+| Action | Call |
+|--------|------|
+| Request to join (or join an open workspace) | `POST /v3/workspaces/<uri>/members` |
+| Accept an invitation | `PUT /v3/workspaces/<uri>/members` |
+| Decline an invitation or leave | `DELETE /v3/workspaces/<uri>/members` |
+
+Each returns `user_status` with the user's new membership state. Adding or removing other members and changing roles are done in the web app; the API documents no endpoints for them.
+
+## Workspace content
+
+- **Protocols:** `GET /v3/workspaces/<uri>/protocols` with optional `key`, `order_field` (`activity`, `date`, `name`, `id`), `order_dir`, `page_size`, `page_id`. Error `132` means access denied.
+- **Protocols, folders, run records, and files together:** `GET /v4/filemanager/workspaces/<uri>/search` (see `file_manager.md`).
+- **New protocols:** the create call (`POST /v3/protocols/<guid>`) takes no workspace parameter; move or share the new protocol into the workspace from the web app. Error `1905` on create means the workspace's subscription limit is reached.
+- **Organization-wide export:** organization accounts can export all content with `POST https://<subdomain>.protocols.io/api/v4/organizations/<organization_uri>/content/exports` (see `additional_features.md`).
+
+## Example: list my workspaces and their protocol counts
+
+```python
+import os
+
+import requests
+
+BASE = "https://www.protocols.io/api"
+HEADERS = {"Authorization": f"Bearer {os.environ['PROTOCOLS_IO_TOKEN']}"}
+
+
+def get(path, **params):
+    data = requests.get(f"{BASE}{path}", headers=HEADERS, params=params, timeout=60).json()
+    if data.get("status_code") != 0:
+        raise RuntimeError(f"{data.get('status_code')}: {data.get('error_message')}")
+    return data
+
+
+page = 1
+while True:
+    data = get("/v3/workspaces", filter="my_groups", page_size=100, page_id=page)
+    for ws in data["items"]:
+        protocols = get(f"/v3/workspaces/{ws['uri']}/protocols", page_size=1)
+        print(ws["uri"], ws["title"], protocols.get("pagination", {}).get("total_results"))
+    if not data.get("pagination", {}).get("next_page"):
+        break
+    page += 1
 ```
 
-### Get Workspace Details
+The pagination object carries `current_page`, `total_pages`, `total_results`, `next_page` (a URL or null), `prev_page`, and `page_size`.
 
-Retrieve detailed information about a specific workspace.
+## Good practice
 
-**Endpoint:** `GET /workspaces/{workspace_id}`
-
-**Path Parameters:**
-- `workspace_id`: The workspace's unique identifier
-
-**Response includes:**
-- Complete workspace metadata
-- Member list with roles
-- Workspace settings and permissions
-- Protocol count and categories
-
-## Workspace Membership
-
-### List Workspace Members
-
-Retrieve all members of a workspace.
-
-**Endpoint:** `GET /workspaces/{workspace_id}/members`
-
-**Query Parameters:**
-- `page_size`: Number of results per page
-- `page_id`: Page number for pagination
-
-**Response includes:**
-- Member name and email
-- Role (owner, admin, member, viewer)
-- Join date
-- Activity status
-
-### Request Workspace Access
-
-Request to join a workspace.
-
-**Endpoint:** `POST /workspaces/{workspace_id}/join-request`
-
-**Request Body:**
-- `message` (optional): Message to workspace admins explaining the request
-
-**Example Request:**
-```bash
-curl -X POST \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "I am collaborating with Dr. Smith on the CRISPR project and would like to access the shared protocols."
-  }' \
-  "https://www.protocols.io/api/v3/workspaces/12345/join-request"
-```
-
-### Join Public Workspace
-
-Directly join a public workspace without approval.
-
-**Endpoint:** `POST /workspaces/{workspace_id}/join`
-
-**Note**: Only available for workspaces configured to allow public joining
-
-## Workspace Protocols
-
-### List Workspace Protocols
-
-Retrieve all protocols in a workspace.
-
-**Endpoint:** `GET /workspaces/{workspace_id}/protocols`
-
-**Query Parameters:**
-- `filter`: Filter protocols
-  - `all`: All protocols in the workspace
-  - `own`: Only protocols you created
-  - `shared`: Protocols shared with you
-- `key`: Search keywords
-- `order_field`: Sort field (`activity`, `created_on`, `modified_on`, `name`)
-- `order_dir`: Sort direction (`desc`, `asc`)
-- `page_size`: Number of results per page
-- `page_id`: Page number for pagination
-- `content_format`: Content format (`json`, `html`, `markdown`)
-
-**Example Request:**
-```bash
-curl -H "Authorization: Bearer YOUR_TOKEN" \
-  "https://www.protocols.io/api/v3/workspaces/12345/protocols?filter=all&order_field=modified_on&order_dir=desc"
-```
-
-### Create Protocol in Workspace
-
-Create a new protocol within a specific workspace.
-
-**Endpoint:** `POST /workspaces/{workspace_id}/protocols`
-
-**Request Body**: Same parameters as standard protocol creation (see protocols_api.md)
-
-**Note**: The protocol will be created within the workspace and inherit workspace permissions
-
-## Workspace Types and Permissions
-
-### Workspace Types
-
-1. **Personal Workspace**
-   - Default workspace for individual users
-   - Private by default
-   - Can share specific protocols
-
-2. **Group Workspace**
-   - Collaborative workspace for teams
-   - Shared access for all members
-   - Role-based permissions
-
-3. **Institutional Workspace**
-   - Organization-wide workspace
-   - Often includes branding
-   - Centralized protocol management
-
-### Permission Levels
-
-1. **Owner**
-   - Full workspace control
-   - Manage members and permissions
-   - Delete workspace
-
-2. **Admin**
-   - Manage protocols and members
-   - Configure workspace settings
-   - Cannot delete workspace
-
-3. **Member**
-   - Create and edit protocols
-   - View all workspace protocols
-   - Comment and collaborate
-
-4. **Viewer**
-   - View-only access
-   - Can comment on protocols
-   - Cannot create or edit
-
-## Common Use Cases
-
-### 1. Lab Protocol Repository
-
-Organize lab protocols in a shared workspace:
-
-1. Create or join lab workspace: `GET /workspaces`
-2. List existing protocols: `GET /workspaces/{id}/protocols`
-3. Create new protocols: `POST /workspaces/{id}/protocols`
-4. Invite lab members: Share workspace invitation
-5. Organize by categories or tags
-
-### 2. Collaborative Protocol Development
-
-Develop protocols with team members:
-
-1. Identify target workspace: `GET /workspaces`
-2. Create draft protocol in workspace
-3. Share with team members automatically via workspace
-4. Gather feedback through comments
-5. Iterate and publish final version
-
-### 3. Cross-Institutional Collaboration
-
-Work with external collaborators:
-
-1. Create or identify shared workspace
-2. Request access: `POST /workspaces/{id}/join-request`
-3. Once approved, access shared protocols
-4. Contribute new protocols or updates
-5. Maintain institutional protocol copies in personal workspace
-
-### 4. Protocol Migration
-
-Move protocols between workspaces:
-
-1. List source workspace protocols: `GET /workspaces/{source_id}/protocols`
-2. For each protocol, retrieve full details
-3. Create protocol in target workspace: `POST /workspaces/{target_id}/protocols`
-4. Copy all steps and metadata
-5. Update references and links
-
-### 5. Workspace Audit
-
-Review workspace activity and content:
-
-1. List all workspaces: `GET /workspaces`
-2. For each workspace, get member list
-3. Retrieve protocol lists with activity dates
-4. Identify inactive or outdated protocols
-5. Generate activity reports
-
-## Workspace Management Best Practices
-
-1. **Organization**
-   - Use consistent naming conventions
-   - Tag protocols by project or category
-   - Maintain workspace directory or index
-
-2. **Access Control**
-   - Review member list regularly
-   - Assign appropriate permission levels
-   - Remove inactive members
-
-3. **Protocol Standards**
-   - Establish workspace-wide protocol templates
-   - Define required metadata fields
-   - Implement quality review process
-
-4. **Collaboration**
-   - Communicate workspace guidelines to members
-   - Encourage protocol documentation
-   - Facilitate knowledge sharing
-
-5. **Backup and Archival**
-   - Regularly export workspace protocols
-   - Maintain protocol version history
-   - Archive completed projects
-
-## Organizations and Workspaces
-
-Organizations are higher-level entities that can contain multiple workspaces.
-
-### Export Organization Data
-
-**Endpoint:** `GET /organizations/{org_id}/export`
-
-**Use case**: Bulk export of all protocols and workspace data for institutional archives or backups
-
-## Notifications and Activity
-
-Workspace activity may trigger notifications:
-
-- New protocols added to workspace
-- Protocol updates by team members
-- New comments on workspace protocols
-- Member joins or leaves workspace
-- Permission changes
-
-Configure notification preferences in account settings.
-
-## Error Handling
-
-Common error responses:
-
-- `400 Bad Request`: Invalid workspace ID or parameters
-- `401 Unauthorized`: Missing or invalid access token
-- `403 Forbidden`: Insufficient workspace permissions
-- `404 Not Found`: Workspace not found or no access
-- `429 Too Many Requests`: Rate limit exceeded
-
-## Integration Considerations
-
-When integrating workspace functionality:
-
-1. **Cache workspace list**: Avoid repeated workspace list calls
-2. **Respect permissions**: Check user's role before attempting operations
-3. **Handle join requests**: Implement workflow for workspace access approval
-4. **Sync regularly**: Update local workspace data periodically
-5. **Support offline access**: Cache protocols for offline work with sync on reconnection
+- Keep lab protocols in a workspace rather than personal accounts so they survive staff turnover.
+- Agree on naming (method, organism, version) and on who publishes, since a published version with a DOI cannot be edited.
+- Use private workspaces for unpublished methods and check institutional rules before sharing controlled or proprietary procedures.

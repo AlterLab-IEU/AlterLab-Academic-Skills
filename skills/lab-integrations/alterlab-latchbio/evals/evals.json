@@ -48,6 +48,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-dnanexus" }
       ]
+    },
+    {
+      "id": "near-miss-modal",
+      "prompt": "Deploy my PyTorch protein-embedding function as an autoscaling serverless GPU endpoint that my lab's scripts can call over HTTP.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-modal. This is a generic serverless GPU deployment (a web endpoint with autoscaling), not a Latch SDK bioinformatics workflow with LatchFile inputs and a no-code UI.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-modal" }
+      ]
     }
   ]
 }

@@ -57,11 +57,13 @@ await lh.setup()
 vis = Visualizer(resource=lh)
 await vis.setup()
 
+# ... assign carriers with tip_rack and plate to lh.deck (see resources.md) ...
+
 # Now all operations are visualized in real-time
 await lh.pick_up_tips(tip_rack["A1:H1"])
 await lh.aspirate(plate["A1:H1"], vols=[100] * 8)
 await lh.dispense(plate["A2:H2"], vols=[100] * 8)
-await lh.drop_tips()
+await lh.discard_tips()
 ```
 
 ### Tracking Features
@@ -73,7 +75,7 @@ For the visualizer to display tips and liquids, enable tracking:
 ```python
 from pylabrobot.resources import set_tip_tracking, set_volume_tracking
 
-# Enable globally (before creating resources)
+# Enable globally (tracking is off by default; the flags are checked on every operation)
 set_tip_tracking(True)
 set_volume_tracking(True)
 ```
@@ -83,15 +85,17 @@ set_volume_tracking(True)
 Define initial liquid contents for visualization:
 
 ```python
+from pylabrobot.resources.liquid import Liquid
+
 # Set liquid in a single well
-plate["A1"].tracker.set_liquids([
-    (None, 200)  # (liquid_type, volume_in_µL)
+plate.get_well("A1").tracker.set_liquids([
+    (None, 200)  # (liquid: a Liquid member or None, volume in uL)
 ])
 
 # Set multiple liquids in one well
-plate["A2"].tracker.set_liquids([
-    ("water", 100),
-    ("ethanol", 50)
+plate.get_well("A2").tracker.set_liquids([
+    (Liquid.WATER, 100),
+    (Liquid.ETHANOL, 50)
 ])
 
 # Set liquids in multiple wells
@@ -99,8 +103,8 @@ for well in plate["A1:H1"]:
     well.tracker.set_liquids([(None, 200)])
 
 # Set liquids in entire plate
-for well in plate.children:
-    well.tracker.set_liquids([("sample", 150)])
+for well in plate.get_all_items():
+    well.tracker.set_liquids([(None, 150)])
 ```
 
 #### Visualizing Tip Presence
@@ -121,7 +125,7 @@ from pylabrobot.resources import (
     TIP_CAR_480_A00,
     PLT_CAR_L5AC_A00,
     hamilton_96_tiprack_1000uL_filter,
-    Cor_96_wellplate_360ul_Fb,
+    cor_96_wellplate_360uL_Fb,
     set_tip_tracking,
     set_volume_tracking
 )
@@ -148,20 +152,20 @@ tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips_01")
 lh.deck.assign_child_resource(tip_car, rails=1)
 
 plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
-plt_car[0] = source_plate = Cor_96_wellplate_360ul_Fb(name="source")
-plt_car[1] = dest_plate = Cor_96_wellplate_360ul_Fb(name="dest")
+plt_car[0] = source_plate = cor_96_wellplate_360uL_Fb(name="source")
+plt_car[1] = dest_plate = cor_96_wellplate_360uL_Fb(name="dest")
 lh.deck.assign_child_resource(plt_car, rails=15)
 
 # Set initial volumes
-for well in source_plate.children:
-    well.tracker.set_liquids([("sample", 200)])
+for well in source_plate.get_all_items():
+    well.tracker.set_liquids([(None, 200)])
 
 # Execute protocol with visualization (parallel 8-channel column copy)
 await lh.pick_up_tips(tip_rack["A1:H1"])
 for col in range(1, 13):
     await lh.aspirate(source_plate[f"A{col}:H{col}"], vols=[100] * 8)
     await lh.dispense(dest_plate[f"A{col}:H{col}"], vols=[100] * 8)
-await lh.drop_tips()
+await lh.discard_tips()
 
 # Keep visualizer open to inspect final state
 input("Press Enter to close visualizer...")
@@ -257,8 +261,8 @@ async def develop_protocol():
     try:
         # Develop and test protocol
         await lh.pick_up_tips(tip_rack["A1"])
-        await lh.transfer(plate["A1"], plate["A2"], source_vol=100)
-        await lh.drop_tips()
+        await lh.transfer(plate.get_well("A1"), plate["A2"], source_vol=100)
+        await lh.discard_tips()
 
         print("Protocol development complete!")
 
@@ -289,11 +293,11 @@ async def validate_protocol():
         lh.deck.assign_child_resource(tip_car, rails=1)
 
         plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
-        plt_car[0] = plate = Cor_96_wellplate_360ul_Fb(name="plate")
+        plt_car[0] = plate = cor_96_wellplate_360uL_Fb(name="plate")
         lh.deck.assign_child_resource(plt_car, rails=10)
 
         # Set initial state
-        for well in plate.children:
+        for well in plate.get_all_items():
             well.tracker.set_liquids([(None, 200)])
 
         # Execute protocol
@@ -305,14 +309,14 @@ async def validate_protocol():
             await lh.aspirate(plate[f"A{i+1}:H{i+1}"], vols=[vol] * 8)
             await lh.dispense(plate[f"A{i+4}:H{i+4}"], vols=[vol] * 8)
 
-        await lh.drop_tips()
+        await lh.discard_tips()
 
         # Validate volumes
         for i, vol in enumerate(test_volumes):
             for row in "ABCDEFGH":
-                well = plate[f"{row}{i+4}"]
-                actual_vol = well.tracker.get_volume()
-                assert actual_vol == vol, f"Volume mismatch in {well.name}"
+                well = plate.get_well(f"{row}{i+4}")
+                actual_vol = well.tracker.get_used_volume()
+                assert actual_vol == 200 + vol, f"Volume mismatch in {well.name}"  # 200 uL start + vol
 
         print("✓ Protocol validation passed!")
 
@@ -363,18 +367,20 @@ async def test_edge_cases():
 Use simulation for automated testing:
 
 ```python
-# test_protocols.py
+# test_protocols.py  (needs the pytest-asyncio plugin for @pytest.mark.asyncio)
 import pytest
 from pylabrobot.liquid_handling import LiquidHandler
 from pylabrobot.liquid_handling.backends import LiquidHandlerChatterboxBackend
 from pylabrobot.resources import (
     STARLetDeck, TIP_CAR_480_A00, PLT_CAR_L5AC_A00,
-    hamilton_96_tiprack_1000uL_filter, Cor_96_wellplate_360ul_Fb,
+    hamilton_96_tiprack_1000uL_filter, cor_96_wellplate_360uL_Fb,
+    set_volume_tracking,
 )
 
 @pytest.mark.asyncio
 async def test_transfer_protocol():
     """Test liquid transfer protocol"""
+    set_volume_tracking(True)  # otherwise the trackers are not updated
 
     lh = LiquidHandler(
         backend=LiquidHandlerChatterboxBackend(),
@@ -389,20 +395,20 @@ async def test_transfer_protocol():
         lh.deck.assign_child_resource(tip_car, rails=1)
 
         plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
-        plt_car[0] = plate = Cor_96_wellplate_360ul_Fb(name="plate")
+        plt_car[0] = plate = cor_96_wellplate_360uL_Fb(name="plate")
         lh.deck.assign_child_resource(plt_car, rails=10)
 
         # Set initial volumes
-        plate["A1"].tracker.set_liquids([(None, 200)])
+        plate.get_well("A1").tracker.set_liquids([(None, 200)])
 
         # Execute: one source well -> one target well
         await lh.pick_up_tips(tip_rack["A1"])
-        await lh.transfer(plate["A1"], plate["A2"], source_vol=100)
-        await lh.drop_tips()
+        await lh.transfer(plate.get_well("A1"), plate["A2"], source_vol=100)
+        await lh.discard_tips()
 
         # Assert
-        assert plate["A1"].tracker.get_volume() == 100
-        assert plate["A2"].tracker.get_volume() == 100
+        assert plate.get_well("A1").tracker.get_used_volume() == 100
+        assert plate.get_well("A2").tracker.get_used_volume() == 100
 
     finally:
         await lh.stop()
@@ -486,7 +492,7 @@ async def visual_verification():
         input("Press Enter to continue...")
 
         # Step 4
-        await lh.drop_tips()
+        await lh.discard_tips()
         input("Press Enter to finish...")
 
     finally:
@@ -506,7 +512,7 @@ async def visual_verification():
 ### Tracking Not Working
 
 ```python
-# Must enable tracking BEFORE creating resources
+# Tracking is off by default: switch it on before running operations
 set_tip_tracking(True)
 set_volume_tracking(True)
 
@@ -514,7 +520,7 @@ set_volume_tracking(True)
 tip_car = TIP_CAR_480_A00(name="tip_carrier")
 tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips_01")
 plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
-plt_car[0] = plate = Cor_96_wellplate_360ul_Fb(name="plate")
+plt_car[0] = plate = cor_96_wellplate_360uL_Fb(name="plate")
 ```
 
 ### Simulation Errors

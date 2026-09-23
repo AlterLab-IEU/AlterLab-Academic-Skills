@@ -4,7 +4,9 @@
 
 PyLabRobot uses a backend abstraction system that allows the same protocol code to run on different liquid handling robots and platforms. Backends handle device-specific communication while the `LiquidHandler` frontend provides a unified interface.
 
-**Current backend class names** (all from `pylabrobot.liquid_handling.backends`): `STARBackend`, `VantageBackend`, `OpentronsOT2Backend`, `EVOBackend` (Tecan EVO), and `LiquidHandlerChatterboxBackend` (no-hardware simulation). Bare `STAR`/`Vantage`/`EVO` remain as legacy aliases; prefer the `*Backend` names. Some examples below still show the short names — substitute the `*Backend` form.
+**Current backend class names** (all from `pylabrobot.liquid_handling.backends`, checked against pylabrobot 0.2.2): `STARBackend`, `VantageBackend`, `OpentronsOT2Backend`, `EVOBackend` (Tecan EVO), and `LiquidHandlerChatterboxBackend` (no-hardware simulation). The bare `STAR`/`Vantage` names are deprecated aliases that warn, and `EVO` raises an error; use the `*Backend` names.
+
+**Connection extras:** Hamilton STAR/Vantage and Tecan EVO talk over USB (`uv pip install "pylabrobot[usb]"`); the OT-2 backend needs `pylabrobot[opentrons]` (it uses the robot's HTTP API).
 
 ## Backend Architecture
 
@@ -19,7 +21,7 @@ PyLabRobot uses a backend abstraction system that allows the same protocol code 
 await lh.pick_up_tips(tip_rack["A1"])
 await lh.aspirate(plate["A1"], vols=[100])
 await lh.dispense(plate["A2"], vols=[100])
-await lh.drop_tips()
+await lh.discard_tips()
 
 # Works with any backend (STAR, Opentrons, simulation, etc.)
 ```
@@ -52,23 +54,9 @@ lh = LiquidHandler(backend=backend, deck=STARLetDeck())
 await lh.setup()
 ```
 
-**Platform Support:**
-- Windows ✅
-- macOS ✅
-- Linux ✅
-- Raspberry Pi ✅
+**Communication:** USB (libusb drivers; see the PLR installation docs for your OS), sending firmware commands directly, so Hamilton VENUS is not needed to run a protocol.
 
-**Communication:**
-- USB connection to robot
-- Direct firmware commands
-- No Hamilton software required
-
-**Features:**
-- Full liquid handling operations
-- CO-RE tip support
-- 96-channel head support (if equipped)
-- Temperature control
-- Carrier and rail-based positioning
+**Features:** single-channel and 96-channel head operations (if equipped), CO-RE tips, the iSWAP/CO-RE gripper for plate moves, and carrier/rail-based positioning.
 
 **Deck Types:**
 ```python
@@ -88,7 +76,7 @@ from pylabrobot.liquid_handling import LiquidHandler
 from pylabrobot.liquid_handling.backends import STARBackend
 from pylabrobot.resources import (
     STARLetDeck, TIP_CAR_480_A00, PLT_CAR_L5AC_A00,
-    hamilton_96_tiprack_1000uL_filter, Cor_96_wellplate_360ul_Fb,
+    hamilton_96_tiprack_1000uL_filter, cor_96_wellplate_360uL_Fb,
 )
 
 # Initialize
@@ -101,13 +89,13 @@ tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips")
 lh.deck.assign_child_resource(tip_car, rails=1)
 
 plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
-plt_car[0] = plate = Cor_96_wellplate_360ul_Fb(name="plate")
+plt_car[0] = plate = cor_96_wellplate_360uL_Fb(name="plate")
 lh.deck.assign_child_resource(plt_car, rails=10)
 
 # Execute protocol
 await lh.pick_up_tips(tip_rack["A1"])
-await lh.transfer(plate["A1"], plate["A2"], source_vol=100)
-await lh.drop_tips()
+await lh.transfer(plate.get_well("A1"), plate["A2"], source_vol=100)
+await lh.discard_tips()
 
 await lh.stop()
 ```
@@ -146,7 +134,8 @@ await lh.setup()
 - Coordinate-based positioning
 
 **Limitations:**
-- Uses older Opentrons HTTP API
+- Needs `pylabrobot[opentrons]` (a pinned Opentrons HTTP API client)
+- OT-2 only: pylabrobot 0.2.2 has no Opentrons Flex backend or deck, so write Flex protocols with the official Opentrons API (`alterlab-opentrons`)
 - Some features may be limited compared to STAR
 
 **Example:**
@@ -156,20 +145,20 @@ from pylabrobot.liquid_handling import LiquidHandler
 from pylabrobot.liquid_handling.backends import OpentronsOT2Backend
 from pylabrobot.resources import OTDeck, Deck
 
+# Load a layout saved earlier with lh.deck.save("opentrons_layout.json")
+deck = Deck.load_from_json_file("opentrons_layout.json")  # or build OTDeck() and assign labware to slots
+
 # Initialize with robot IP
-lh = LiquidHandler(
-    backend=OpentronsOT2Backend(host="192.168.1.100"),
-    deck=OTDeck()
-)
+lh = LiquidHandler(backend=OpentronsOT2Backend(host="192.168.1.100"), deck=deck)
 await lh.setup()
 
-# Load deck layout
-lh.deck = Deck.load_from_json_file("opentrons_layout.json")
+tip_rack = deck.get_resource("tips")   # look labware up by the names used in the layout
+plate = deck.get_resource("plate")
 
 # Execute protocol
 await lh.pick_up_tips(tip_rack["A1"])
-await lh.transfer(plate["A1"], plate["A2"], source_vol=100)
-await lh.drop_tips()
+await lh.transfer(plate.get_well("A1"), plate["A2"], source_vol=100)
+await lh.discard_tips()
 
 await lh.stop()
 ```
@@ -183,10 +172,10 @@ Support for Tecan EVO liquid handling robots is partial; check the docs for curr
 ```python
 from pylabrobot.liquid_handling import LiquidHandler
 from pylabrobot.liquid_handling.backends import EVOBackend
-from pylabrobot.resources import TecanDeck  # or EVO100Deck()/EVO150Deck()/EVO200Deck()
+from pylabrobot.resources import EVO150Deck  # also EVO100Deck, EVO200Deck
 
 backend = EVOBackend()
-lh = LiquidHandler(backend=backend, deck=TecanDeck())
+lh = LiquidHandler(backend=backend, deck=EVO150Deck())
 ```
 
 ### Hamilton Vantage
@@ -199,7 +188,7 @@ Hamilton Vantage has near-complete support.
 from pylabrobot.liquid_handling.backends import VantageBackend
 from pylabrobot.resources import VantageDeck
 
-lh = LiquidHandler(backend=VantageBackend(), deck=VantageDeck())
+lh = LiquidHandler(backend=VantageBackend(), deck=VantageDeck(size=1.3))  # 1.3 or 2.0 m deck
 ```
 
 **Features:**
@@ -247,7 +236,7 @@ from pylabrobot.liquid_handling import LiquidHandler
 from pylabrobot.liquid_handling.backends import LiquidHandlerChatterboxBackend
 from pylabrobot.resources import (
     STARLetDeck, TIP_CAR_480_A00, PLT_CAR_L5AC_A00,
-    hamilton_96_tiprack_1000uL_filter, Cor_96_wellplate_360ul_Fb,
+    hamilton_96_tiprack_1000uL_filter, cor_96_wellplate_360uL_Fb,
     set_tip_tracking, set_volume_tracking,
 )
 
@@ -268,22 +257,22 @@ tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips_01")
 lh.deck.assign_child_resource(tip_car, rails=1)
 
 plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
-plt_car[0] = plate = Cor_96_wellplate_360ul_Fb(name="plate")
+plt_car[0] = plate = cor_96_wellplate_360uL_Fb(name="plate")
 lh.deck.assign_child_resource(plt_car, rails=10)
 
 # Set initial volumes
-for well in plate.children:
+for well in plate.get_all_items():
     well.tracker.set_liquids([(None, 200)])
 
 # Run simulated protocol (parallel 8-channel move)
 await lh.pick_up_tips(tip_rack["A1:H1"])
 await lh.aspirate(plate["A1:H1"], vols=[100] * 8)
 await lh.dispense(plate["A2:H2"], vols=[100] * 8)
-await lh.drop_tips()
+await lh.discard_tips()
 
 # Check results
-print(f"A1 volume: {plate['A1'].tracker.get_volume()} uL")  # 100 uL
-print(f"A2 volume: {plate['A2'].tracker.get_volume()} uL")  # 100 uL
+print(f"A1 volume: {plate.get_well('A1').tracker.get_used_volume()} uL")  # 100 uL
+print(f"A2 volume: {plate.get_well('A2').tracker.get_used_volume()} uL")  # 300 uL (200 + 100)
 
 await lh.stop()
 ```
@@ -330,11 +319,12 @@ deck = get_deck(robot_type)
 
 lh = LiquidHandler(backend=backend, deck=deck)
 await lh.setup()
+# ... assign carriers and labware (tip_rack, plate) to lh.deck as in the examples above ...
 
 # Protocol code works with any backend
 await lh.pick_up_tips(tip_rack["A1"])
-await lh.transfer(plate["A1"], plate["A2"], source_vol=100)
-await lh.drop_tips()
+await lh.transfer(plate.get_well("A1"), plate["A2"], source_vol=100)
+await lh.discard_tips()
 ```
 
 ### Development Workflow
@@ -435,6 +425,9 @@ ot_backend = lh.backend
 import asyncio
 from typing import Literal
 
+from pylabrobot.liquid_handling import LiquidHandler
+from pylabrobot.resources import OTDeck, STARLetDeck
+
 async def run_protocol(
     robot_type: Literal["star", "opentrons", "simulation"],
     visualize: bool = False
@@ -460,13 +453,13 @@ async def run_protocol(
     await lh.setup()
 
     try:
-        # Load deck layout (backend-agnostic)
-        # lh.deck = Deck.load_from_json_file(f"{robot_type}_layout.json")
+        # Assign labware for this deck (layouts differ between robots), e.g. build it with
+        # a function that returns tip_rack and plate for the given deck
 
         # Execute protocol (backend-agnostic)
         await lh.pick_up_tips(tip_rack["A1"])
-        await lh.transfer(plate["A1"], plate["A2"], source_vol=100)
-        await lh.drop_tips()
+        await lh.transfer(plate.get_well("A1"), plate["A2"], source_vol=100)
+        await lh.discard_tips()
 
         print("Protocol completed successfully!")
 

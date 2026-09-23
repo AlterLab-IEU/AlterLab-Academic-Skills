@@ -4,11 +4,11 @@
     {
       "id": "serial-dilution-flex",
       "prompt": "Write an Opentrons Flex protocol that does a 12-point serial dilution across row A of a 96-well plate using a single-channel pipette.",
-      "expected_output": "Invokes alterlab-opentrons. Produces a Protocol API v2 protocol: metadata with apiLevel, requirements robotType 'Flex', a run(protocol) function, load_labware/load_instrument, adds diluent then a serial p300.transfer across plate.rows()[0] with mix_after and new_tip='always'.",
+      "expected_output": "Invokes alterlab-opentrons. Produces a Protocol API v2 protocol: requirements with robotType 'Flex' and an apiLevel (set in only one of metadata/requirements), a run(protocol) function that loads a trash bin (load_trash_bin) before dropping tips, load_labware/load_instrument with enough tip racks, adds diluent then a serial p300.transfer across plate.rows()[0] with mix_after and new_tip='always'.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "protocol_api" },
-        { "type": "behavior", "value": "Defines metadata with apiLevel, a run(protocol) function, and performs the serial dilution with transfer/mix_after." }
+        { "type": "behavior", "value": "Sets apiLevel once (not in both metadata and requirements), loads a Flex trash bin, defines a run(protocol) function, and performs the serial dilution with transfer/mix_after." }
       ]
     },
     {
@@ -32,7 +32,7 @@
     {
       "id": "multichannel-plate-replication",
       "prompt": "Write an Opentrons protocol to replicate a full 96-well plate to a second plate using an 8-channel pipette.",
-      "expected_output": "Invokes alterlab-opentrons. Loads a multi-channel pipette (e.g. p300_multi_gen2 on OT-2 or flex_8channel_1000 on Flex) and replicates the plate column-by-column, using a single-column reference per transfer with new_tip handling.",
+      "expected_output": "Invokes alterlab-opentrons. Loads a multi-channel pipette (e.g. p300_multi_gen2 on OT-2 or flex_8channel_1000 on Flex) and replicates the plate column-by-column, addressing the row-A well of each column (plate.rows()[0]) per transfer, with new_tip handling.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Uses a multi-channel pipette and replicates the plate using column references." }
@@ -45,6 +45,15 @@
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-pylabrobot" }
+      ]
+    },
+    {
+      "id": "near-miss-ginkgo-cloud",
+      "prompt": "We don't have a liquid handler. Can I just send my 24 constructs to Ginkgo's cloud lab for cell-free expression screening and get titers back?",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-ginkgo-cloud. The user wants a remote autonomous cloud-lab service (Ginkgo Cloud Lab cell-free expression protocols), not a protocol for their own Opentrons robot.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-ginkgo-cloud" }
       ]
     }
   ]

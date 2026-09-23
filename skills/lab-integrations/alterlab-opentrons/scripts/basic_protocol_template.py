@@ -12,14 +12,14 @@ from opentrons import protocol_api
 metadata = {
     'protocolName': 'Basic Protocol Template',
     'author': 'Your Name <email@example.com>',
-    'description': 'A basic protocol template for Opentrons',
-    'apiLevel': '2.19'
+    'description': 'A basic protocol template for Opentrons'
 }
 
 # Requirements
+# apiLevel belongs in exactly one of metadata/requirements (opentrons rejects both)
 requirements = {
     'robotType': 'Flex',  # or 'OT-2'
-    'apiLevel': '2.19'
+    'apiLevel': '2.22'
 }
 
 def run(protocol: protocol_api.ProtocolContext):
@@ -29,6 +29,9 @@ def run(protocol: protocol_api.ProtocolContext):
     Args:
         protocol: The protocol context provided by Opentrons
     """
+
+    # Flex has no fixed trash: load one before any tip is dropped
+    protocol.load_trash_bin('A3')
 
     # Load tip racks
     tips_200 = protocol.load_labware('opentrons_flex_96_tiprack_200ul', 'D1')

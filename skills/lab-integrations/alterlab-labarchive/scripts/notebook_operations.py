@@ -96,16 +96,20 @@ def list_notebooks(client, config, uid):
                 return []
 
             notebook_list = []
-            print(f"{'Notebook ID':<15} {'Name':<40} {'Role':<10}")
-            print("-" * 70)
+            print(f"{'Notebook ID':<24} {'Name':<40} {'Default':<8}")
+            print("-" * 74)
 
             for nb in notebooks:
-                nbid = nb.find('nbid').text if nb.find('nbid') is not None else 'N/A'
-                name = nb.find('name').text if nb.find('name') is not None else 'Unnamed'
-                role = nb.find('role').text if nb.find('role') is not None else 'N/A'
+                # Each <notebook> carries <id>, <name> and <is-default>
+                nbid = nb.findtext('id') or nb.findtext('nbid')
+                name = nb.findtext('name') or 'Unnamed'
+                is_default = nb.findtext('is-default') or ''
+                if not nbid:
+                    print(f"⚠️  Skipping notebook without an id: {name}")
+                    continue
 
-                notebook_list.append({'nbid': nbid, 'name': name, 'role': role})
-                print(f"{nbid:<15} {name:<40} {role:<10}")
+                notebook_list.append({'nbid': nbid, 'name': name, 'is_default': is_default})
+                print(f"{nbid:<24} {name:<40} {is_default:<8}")
 
             print(f"\nTotal notebooks: {len(notebooks)}")
             return notebook_list
@@ -140,14 +144,15 @@ def backup_notebook(client, uid, nbid, output_dir='backups', json_format=False,
         response = client.make_call('notebooks', 'notebook_backup', params=params)
 
         if response.status_code == 200:
-            # Determine file extension
+            # LabArchives returns backups as 7-Zip archives; detect by magic bytes
+            # rather than assuming a format from the flags.
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
-            if no_attachments:
-                ext = 'json' if json_format else 'xml'
-                filename = f"notebook_{nbid}_{timestamp}.{ext}"
+            if response.content[:6] == b"7z\xbc\xaf\x27\x1c":
+                ext = '7z'
             else:
-                filename = f"notebook_{nbid}_{timestamp}.7z"
+                ext = 'json' if json_format else 'xml'
+            filename = f"notebook_{nbid}_{timestamp}.{ext}"
 
             output_file = output_path / filename
 
@@ -163,7 +168,8 @@ def backup_notebook(client, uid, nbid, output_dir='backups', json_format=False,
 
         else:
             print(f"❌ Backup failed: HTTP {response.status_code}")
-            print(f"   Response: {response.content.decode('utf-8')[:200]}")
+            print(f"   Response: {response.content.decode('utf-8', 'replace')[:200]}")
+            print("   (LabArchives error 4547 means only the notebook owner can download its backup)")
             return None
 
     except Exception as e:

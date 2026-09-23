@@ -1,202 +1,168 @@
 ---
 name: alterlab-pylabrobot
-description: Programs lab automation with PyLabRobot, a vendor-agnostic Python framework that unifies control across Hamilton, Tecan, Opentrons, plate readers, and pumps, with simulation support. Use when controlling multiple equipment types or needing unified cross-vendor programming for complex, multi-vendor liquid-handling workflows. For Opentrons-only protocols with the official API, alterlab-opentrons may be simpler. Part of the AlterLab Academic Skills suite.
+description: Programs lab automation with PyLabRobot, a vendor-agnostic async Python framework that drives Hamilton STAR/Vantage, Tecan EVO, and Opentrons OT-2 liquid handlers plus plate readers, heater shakers, incubators, centrifuges, pumps, scales, and thermocyclers, with a chatterbox simulator and browser visualizer. Use when writing or simulating liquid-handling protocols in Python, controlling several instrument types from one script, or porting a protocol between robot vendors. For Opentrons-only protocols written with the official Opentrons API, use alterlab-opentrons instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
-compatibility: Requires the pylabrobot Python package (pip install pylabrobot); runs against the built-in simulator without hardware, real runs need supported devices (Hamilton, Tecan, Opentrons, plate readers, pumps)
+compatibility: "pylabrobot >=0.2 (current 0.2.2 as of 2026-09; Python >=3.9); install with uv pip install pylabrobot. The chatterbox backends simulate without hardware; real devices need the connection extra for their interface ([usb], [serial], [ftdi], [hid], [modbus], [opentrons], or [all])."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.2.0"
+    last_updated: "2026-09-23"
 ---
 
 # PyLabRobot
 
 ## Overview
 
-PyLabRobot is a hardware-agnostic, pure Python Software Development Kit for automated and autonomous laboratories. Use this skill to control liquid handling robots, plate readers, pumps, heater shakers, incubators, centrifuges, and other laboratory automation equipment through a unified Python interface that works across platforms (Windows, macOS, Linux).
+PyLabRobot (PLR) is a hardware-agnostic Python SDK for lab automation. Every device is a front end (`LiquidHandler`, `PlateReader`, `HeaterShaker`, ...) plus a backend for a specific instrument, so the same protocol code runs on a simulator, a Hamilton STAR, or an Opentrons OT-2 by swapping one backend line. All device calls are `async` and must be awaited inside an event loop (`asyncio.run(main())`, or directly in a Jupyter cell).
 
 ## When to Use This Skill
 
-Use this skill when:
-- Programming liquid handling robots (Hamilton STAR/STARlet, Opentrons OT-2, Tecan EVO)
-- Automating laboratory workflows involving pipetting, sample preparation, or analytical measurements
-- Managing deck layouts and laboratory resources (plates, tips, containers, troughs)
-- Integrating multiple lab devices (liquid handlers, plate readers, heater shakers, pumps)
-- Creating reproducible laboratory protocols with state management
-- Simulating protocols before running on physical hardware
-- Reading plates using BMG CLARIOstar or other supported plate readers
-- Controlling temperature, shaking, centrifugation, or other material handling operations
-- Working with laboratory automation in Python
+- Writing or debugging a liquid-handling protocol in Python for Hamilton STAR/STARlet/Vantage, Tecan EVO, or Opentrons OT-2
+- Simulating a protocol (chatterbox backend, tip/volume tracking, browser visualizer) before touching hardware
+- Defining deck layouts: carriers, tip racks, plates, troughs, tubes, and custom labware
+- Integrating plate readers, heater shakers, incubators, centrifuges, pumps, scales, or thermocyclers into one workflow
+- Porting a protocol from one robot vendor to another
+
+### Does NOT Trigger
+
+| Scenario | Use Instead |
+|----------|-------------|
+| Writing an Opentrons OT-2/Flex protocol with the official Opentrons Python API (`apiLevel`, `opentrons_simulate`) | `alterlab-opentrons` |
+| Sending work to a remote cloud lab instead of running your own robot | `alterlab-ginkgo-cloud` |
+| Ordering protein binding/expression assays from the Adaptyv Bio foundry | `alterlab-adaptyv` |
+| Finding, writing, or publishing a human-readable protocol with a DOI | `alterlab-protocolsio` |
 
 ## Core Capabilities
 
-PyLabRobot provides comprehensive laboratory automation through six main capability areas, each detailed in the references/ directory:
+| Area | What it covers | Reference |
+|------|----------------|-----------|
+| Liquid handling | `aspirate`, `dispense`, `transfer`, tips, multichannel moves, serial dilutions, error handling | `references/liquid-handling.md` |
+| Resources | Decks, carriers, plates, tip racks, troughs, indexing, tracking, saving layouts, custom labware | `references/resources.md` |
+| Hardware backends | STAR, Vantage, EVO, OT-2, chatterbox; switching backends | `references/hardware-backends.md` |
+| Analytical equipment | Plate readers (CLARIOstar, BioTek, SpectraMax, Byonoy), scales | `references/analytical-equipment.md` |
+| Material handling | Heater shakers, temperature controllers, incubators, centrifuges, pumps, thermocyclers | `references/material-handling.md` |
+| Visualization | Browser visualizer, simulation-driven testing | `references/visualization.md` |
 
-### 1. Liquid Handling (`references/liquid-handling.md`)
-
-Control liquid handling robots for aspirating, dispensing, and transferring liquids. Key operations include:
-- **Basic Operations**: Aspirate, dispense, transfer liquids between wells
-- **Tip Management**: Pick up, drop, and track pipette tips automatically
-- **Advanced Techniques**: Multi-channel pipetting, serial dilutions, plate replication
-- **Volume Tracking**: Automatic tracking of liquid volumes in wells
-- **Hardware Support**: Hamilton STAR/STARlet, Opentrons OT-2, Tecan EVO, and others
-
-### 2. Resource Management (`references/resources.md`)
-
-Manage laboratory resources in a hierarchical system:
-- **Resource Types**: Plates, tip racks, troughs, tubes, carriers, and custom labware
-- **Deck Layout**: Assign resources to deck positions with coordinate systems
-- **State Management**: Track tip presence, liquid volumes, and resource states
-- **Serialization**: Save and load deck layouts and states from JSON files
-- **Resource Discovery**: Access wells, tips, and containers through intuitive APIs
-
-### 3. Hardware Backends (`references/hardware-backends.md`)
-
-Connect to diverse laboratory equipment through backend abstraction:
-- **Liquid Handlers**: Hamilton STAR (full support), Opentrons OT-2, Tecan EVO
-- **Simulation**: ChatterboxBackend for protocol testing without hardware
-- **Platform Support**: Works on Windows, macOS, Linux, and Raspberry Pi
-- **Backend Switching**: Change robots by swapping backend without rewriting protocols
-
-### 4. Analytical Equipment (`references/analytical-equipment.md`)
-
-Integrate plate readers and analytical instruments:
-- **Plate Readers**: BMG CLARIOstar for absorbance, luminescence, fluorescence
-- **Scales**: Mettler Toledo integration for mass measurements
-- **Integration Patterns**: Combine liquid handlers with analytical equipment
-- **Automated Workflows**: Move plates between devices automatically
-
-### 5. Material Handling (`references/material-handling.md`)
-
-Control environmental and material handling equipment:
-- **Heater Shakers**: Hamilton HeaterShaker, Inheco ThermoShake
-- **Incubators**: Inheco and Thermo Fisher incubators with temperature control
-- **Centrifuges**: Agilent VSpin with bucket positioning and spin control
-- **Pumps**: Cole Parmer Masterflex for fluid pumping operations
-- **Temperature Control**: Set and monitor temperatures during protocols
-
-### 6. Visualization & Simulation (`references/visualization.md`)
-
-Visualize and simulate laboratory protocols:
-- **Browser Visualizer**: Real-time 3D visualization of deck state
-- **Simulation Mode**: Test protocols without physical hardware
-- **State Tracking**: Monitor tip presence and liquid volumes visually
-- **Deck Editor**: Graphical tool for designing deck layouts
-- **Protocol Validation**: Verify protocols before running on hardware
-
-## Quick Start
-
-To get started with PyLabRobot, install the package and initialize a liquid handler. PyLabRobot is async — all device calls are `await`ed and must run inside an event loop (`asyncio.run(...)` or a Jupyter cell).
+## Quick Start (simulation)
 
 ```python
-# uv pip install pylabrobot
+import asyncio
 
 from pylabrobot.liquid_handling import LiquidHandler
-from pylabrobot.liquid_handling.backends import STARBackend
+from pylabrobot.liquid_handling.backends import LiquidHandlerChatterboxBackend  # STARBackend() on a real STAR
 from pylabrobot.resources import (
+    PLT_CAR_L5AC_A00,                   # plate carrier (5 sites)
     STARLetDeck,
-    TIP_CAR_480_A00,            # tip CARRIER (holds racks at sites [0]..[4])
-    PLT_CAR_L5AC_A00,           # plate carrier
+    TIP_CAR_480_A00,                    # tip carrier (5 sites)
+    cor_96_wellplate_360uL_Fb,
     hamilton_96_tiprack_1000uL_filter,
-    Cor_96_wellplate_360ul_Fb,
+    set_tip_tracking,
+    set_volume_tracking,
 )
 
-lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
-await lh.setup()
 
-# Labware is two-level: a rack/plate goes into a carrier site, then the
-# carrier is assigned to a deck rail. Carriers are NOT indexed for wells/tips.
-tip_car = TIP_CAR_480_A00(name="tip_carrier")
-tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips_01")
-lh.deck.assign_child_resource(tip_car, rails=3)
+async def main():
+    set_tip_tracking(True)      # catch missing tips and over-aspiration in simulation
+    set_volume_tracking(True)
 
-plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
-plt_car[0] = plate = Cor_96_wellplate_360ul_Fb(name="plate_01")
-lh.deck.assign_child_resource(plt_car, rails=15)
+    lh = LiquidHandler(backend=LiquidHandlerChatterboxBackend(), deck=STARLetDeck())
+    await lh.setup()
+    try:
+        # Labware goes into carrier sites; carriers go on deck rails.
+        tip_car = TIP_CAR_480_A00(name="tip_carrier")
+        tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips_01")
+        lh.deck.assign_child_resource(tip_car, rails=3)
 
-# Basic operations
-await lh.pick_up_tips(tip_rack["A1:H1"])
-await lh.aspirate(plate["A1"], vols=[100])
-await lh.dispense(plate["A2"], vols=[100])
-await lh.drop_tips()
+        plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
+        plt_car[0] = source = cor_96_wellplate_360uL_Fb(name="source")
+        plt_car[1] = dest = cor_96_wellplate_360uL_Fb(name="dest")
+        lh.deck.assign_child_resource(plt_car, rails=15)
+
+        for well in source.get_all_items():
+            well.tracker.set_liquids([(None, 300)])
+
+        # 8-channel column copy: "A1:H1" is column 1 (8 wells), one tip per channel
+        await lh.pick_up_tips(tip_rack["A1:H1"])
+        await lh.aspirate(source["A1:H1"], vols=[100] * 8)
+        await lh.dispense(dest["A1:H1"], vols=[100] * 8)
+        await lh.discard_tips()         # to the deck's trash; return_tips() puts them back
+
+        print(dest.get_well("A1").tracker.get_used_volume())  # 100.0
+    finally:
+        await lh.stop()
+
+
+asyncio.run(main())
 ```
 
-## Working with References
+To run on hardware, replace the backend (`STARBackend()`, `VantageBackend()`, `EVOBackend()`, `OpentronsOT2Backend(host="<robot IP>")`) and the deck (`STARDeck()`, `VantageDeck(size=1.3)`, `EVO150Deck()`, `OTDeck()`); the protocol body stays the same apart from deck positions.
 
-Load the matching file in `references/` for task-specific examples and API patterns. The "Core Capabilities" list above maps each capability area to its reference file.
+## API Rules That Prevent Most Errors
 
-## Best Practices
-
-When creating laboratory automation protocols with PyLabRobot:
-
-1. **Start with Simulation**: Use ChatterboxBackend and the visualizer to test protocols before running on hardware
-2. **Enable Tracking**: Turn on tip tracking and volume tracking for accurate state management
-3. **Resource Naming**: Use clear, descriptive names for all resources (plates, tip racks, containers)
-4. **State Serialization**: Save deck layouts and states to JSON for reproducibility
-5. **Error Handling**: Implement proper async error handling for hardware operations
-6. **Temperature Control**: Set temperatures early as heating/cooling takes time
-7. **Modular Protocols**: Break complex workflows into reusable functions
-8. **Documentation**: Reference official docs at https://docs.pylabrobot.org for latest features
+- **Indexing returns lists.** `plate["A1"]` is a one-element list; `plate["A1:H1"]` is column 1 and `plate["A1:A12"]` is row A. Use `plate.get_well("A1")` or `tip_rack.get_item("A1")` for a single object (for example to reach `.tracker`).
+- **Volumes are lists.** `vols=[100]` for one channel, `vols=[100] * 8` for eight; per-channel options (`flow_rates`, `liquid_height`, `blow_out_air_volume`) are lists too.
+- **Tips.** `pick_up_tips(spots)`, then `discard_tips()` (trash), `return_tips()` (back to the rack), or `drop_tips(spots)` (explicit spots — it has no default).
+- **`transfer` is one-to-many.** `lh.transfer(source.get_well("A1"), dest["A1:H1"], target_vols=[50] * 8)` aspirates once and dispenses into each target with the channel-0 tip. `source_vol=` is the **total** volume, split across targets (equally or by `ratios`), not a per-target volume.
+- **Labware names.** Use the current lower-case factories (`cor_96_wellplate_360uL_Fb`); capitalised legacy names such as `Cor_96_wellplate_360ul_Fb` warn and will be removed.
+- **Always `stop()` in `finally:`** so USB/serial connections are released after an error.
 
 ## Common Workflows
 
-### Liquid Transfer Protocol
-
-`lh.transfer(source, targets, ...)` distributes from ONE source well to MANY target
-wells; it takes `source_vol` or `target_vols` (NOT `vols`, NOT `dest=`). For a
-parallel column-to-column move, drive `aspirate`/`dispense` directly with list `vols`.
+### One-to-many dispense and a serial dilution
 
 ```python
-# Setup
-lh = LiquidHandler(backend=STARBackend(), deck=STARLetDeck())
-await lh.setup()
+# 50 uL of diluent into each of A2..A5 from one source well (single channel)
+await lh.pick_up_tips(tip_rack["A2"])
+await lh.transfer(source.get_well("H12"), dest["A2:A5"], target_vols=[50] * 4)
+await lh.discard_tips()
 
-# Define carriers + labware (rack/plate -> carrier site -> deck rail)
-tip_car = TIP_CAR_480_A00(name="tip_carrier")
-tip_car[0] = tip_rack = hamilton_96_tiprack_1000uL_filter(name="tips_01")
-lh.deck.assign_child_resource(tip_car, rails=1)
-
-plt_car = PLT_CAR_L5AC_A00(name="plate_carrier")
-plt_car[0] = source = Cor_96_wellplate_360ul_Fb(name="source")
-plt_car[1] = dest = Cor_96_wellplate_360ul_Fb(name="dest")
-lh.deck.assign_child_resource(plt_car, rails=15)
-
-# One-to-many distribute: 100 uL from source A1 into the first column of dest
-await lh.pick_up_tips(tip_rack["A1"])
-await lh.transfer(source["A1"], dest["A1:H1"], source_vol=100)
-await lh.drop_tips()
-
-# Parallel 8-channel column copy via aspirate + dispense
-await lh.pick_up_tips(tip_rack["A1:H1"])
-await lh.aspirate(source["A1:H1"], vols=[100] * 8)
-await lh.dispense(dest["A1:H1"], vols=[100] * 8)
-await lh.drop_tips()
+# 2-fold dilution along row A (A1 -> A5): move 50 uL to the next well and mix
+await lh.pick_up_tips(tip_rack["A3"])
+for col in range(1, 5):
+    await lh.aspirate(dest[f"A{col}"], vols=[50])
+    await lh.dispense(dest[f"A{col + 1}"], vols=[50])
+    for _ in range(3):  # mix
+        await lh.aspirate(dest[f"A{col + 1}"], vols=[40])
+        await lh.dispense(dest[f"A{col + 1}"], vols=[40])
+await lh.discard_tips()
 ```
 
-### Plate Reading Workflow
+### Reading a plate
 
 ```python
-# Setup plate reader
-from pylabrobot.plate_reading import PlateReader
-from pylabrobot.plate_reading.clario_star_backend import CLARIOstarBackend
+from pylabrobot.plate_reading import CLARIOstarBackend, PlateReader
 
-pr = PlateReader(name="CLARIOstar", backend=CLARIOstarBackend(), size_x=0, size_y=0, size_z=0)
-await pr.setup()
-
-# Set temperature and read
-await pr.set_temperature(37)
-await pr.open()
-# (manually or robotically load plate)
-await pr.close()
-data = await pr.read_absorbance(wavelength=450)
+reader = PlateReader(name="clariostar", size_x=0, size_y=0, size_z=0,
+                     backend=CLARIOstarBackend())   # needs pylabrobot[ftdi]
+await reader.setup()
+await reader.open()
+reader.assign_child_resource(dest)                   # or move the plate there with the robot's gripper
+await reader.close()
+result = await reader.read_absorbance(wavelength=450, use_new_return_type=True)
+od450 = result[0]["data"]                            # 8 x 12 nested list
+await reader.stop()
 ```
 
-## Additional Resources
+`PlateReader` has no temperature method; readers that support heating expose it on the backend (for example `await reader.backend.set_temperature(37)` on BioTek and Molecular Devices backends). See `references/analytical-equipment.md` for other readers and for scales.
 
-- **Official Documentation**: https://docs.pylabrobot.org
-- **GitHub Repository**: https://github.com/PyLabRobot/pylabrobot
-- **Community Forum**: https://discuss.pylabrobot.org
-- **PyPI Package**: https://pypi.org/project/PyLabRobot/
+## Best Practices
 
-For detailed usage of specific capabilities, refer to the corresponding reference file in the `references/` directory.
+1. **Simulate first.** Run the whole protocol on `LiquidHandlerChatterboxBackend` with tip and volume tracking on, and watch it in the `Visualizer`, before the first hardware run.
+2. **Dry-run on hardware.** Do a first physical run with water or without liquid, at reduced volumes, and keep a hand near the stop button.
+3. **Keep layouts in files.** Save the deck with `lh.deck.save("deck.json")` and commit it with the protocol; record the pylabrobot version.
+4. **Check labware definitions.** Verify geometry for custom or rarely used labware before trusting aspiration heights.
+5. **Start slow devices early.** Heating and incubator set points take minutes; do liquid handling while they settle.
+6. **Official docs.** https://docs.pylabrobot.org (user guide and API), https://github.com/PyLabRobot/pylabrobot, forum https://discuss.pylabrobot.org.
 
+## Troubleshooting
+
+| Symptom | Likely cause |
+|---------|--------------|
+| `TypeError: Resources must be Containers, got [[Well(...)]]` | A list was passed where one well is expected (`transfer` source); use `plate.get_well("A1")` |
+| `TypeError: drop_tips() missing ... 'tip_spots'` | Use `discard_tips()` or pass explicit spots |
+| `NoTipError` / `HasTipError` with tracking on | The protocol reuses a tip spot or picks up while holding tips; check tip bookkeeping |
+| `RuntimeError: ... is not installed. Install with: pip install pylabrobot[...]` | Install the connection extra named in the message |
+| `ImportError` for `pylabrobot.temperature_control`, `pylabrobot.incubation`, `Trough_100ml` | Outdated names; see `references/material-handling.md` and `references/resources.md` for the 0.2.2 modules and labware |
+
+Part of the AlterLab Academic Skills suite.

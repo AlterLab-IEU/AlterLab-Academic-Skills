@@ -287,20 +287,20 @@ Use OAuth instead of API keys when multiple users interact through your app. Thi
 
 **Quick Test with curl:**
 ```bash
-# Test API key
+# Test API key (any cheap authenticated list call works; there is no /users/me endpoint in v2)
 curl -X GET \
-  https://your-tenant.benchling.com/api/v2/users/me \
+  "https://your-tenant.benchling.com/api/v2/projects?pageSize=1" \
   -u "your_api_key:" \
   -v
 
 # Test OAuth token
 curl -X GET \
-  https://your-tenant.benchling.com/api/v2/users/me \
+  "https://your-tenant.benchling.com/api/v2/projects?pageSize=1" \
   -H "Authorization: Bearer your_token" \
   -v
 ```
 
-The `/users/me` endpoint returns the authenticated user's information and is useful for verifying credentials.
+A 200 response confirms the credentials; 401 means a bad key/token, 403 means the credentials work but lack permission.
 
 **Python SDK Test:**
 ```python
@@ -313,9 +313,9 @@ try:
         auth_method=ApiKeyAuth("your_api_key")
     )
 
-    # Test authentication
-    user = benchling.users.get_me()
-    print(f"Authenticated as: {user.name} ({user.email})")
+    # Test authentication with one cheap authenticated call
+    first_page = next(iter(benchling.projects.list(page_size=1)), [])
+    print(f"Authenticated; can see {len(first_page)} project(s) on the first page")
 
 except Exception as e:
     print(f"Authentication failed: {e}")

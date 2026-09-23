@@ -1,11 +1,13 @@
 # Common Protocol Patterns
 
-Full worked-example protocols for the most common Opentrons workflows. Runnable `.py` versions of these templates live in the skill's `scripts/` directory.
+Full worked-example protocols for the most common Opentrons workflows. Runnable `.py` versions of these templates live in the skill's `scripts/` directory (they simulate cleanly with `opentrons_simulate` at `apiLevel` 2.22). Each snippet assumes a Flex protocol with `requirements = {'robotType': 'Flex', 'apiLevel': '2.22'}`; on Flex a trash bin must be loaded before tips are dropped.
 
 ## Serial Dilution
 
 ```python
 def run(protocol: protocol_api.ProtocolContext):
+    protocol.load_trash_bin('A3')  # Flex: required before dropping tips
+
     # Load labware
     tips = protocol.load_labware('opentrons_flex_96_tiprack_200ul', 'D1')
     reservoir = protocol.load_labware('nest_12_reservoir_15ml', 'D2')
@@ -31,6 +33,8 @@ def run(protocol: protocol_api.ProtocolContext):
 
 ```python
 def run(protocol: protocol_api.ProtocolContext):
+    protocol.load_trash_bin('A3')  # Flex: required before dropping tips
+
     # Load labware
     tips = protocol.load_labware('opentrons_flex_96_tiprack_1000ul', 'C1')
     source = protocol.load_labware('corning_96_wellplate_360ul_flat', 'D1')
@@ -52,6 +56,8 @@ def run(protocol: protocol_api.ProtocolContext):
 
 ```python
 def run(protocol: protocol_api.ProtocolContext):
+    protocol.load_trash_bin('A3')  # Flex: required before dropping tips
+
     # Load thermocycler
     tc_mod = protocol.load_module('thermocyclerModuleV2')
     tc_plate = tc_mod.load_labware('nest_96_wellplate_100ul_pcr_full_skirt')

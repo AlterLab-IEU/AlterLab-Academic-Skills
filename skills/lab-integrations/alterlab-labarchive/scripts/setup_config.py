@@ -6,8 +6,10 @@ This script helps create a config.yaml file with necessary credentials
 for LabArchives API access.
 """
 
-import yaml
+import getpass
 import os
+
+import yaml
 
 
 def get_regional_endpoint():
@@ -48,7 +50,7 @@ def get_credentials():
     # Institutional credentials
     print("Institutional Credentials:")
     access_key_id = input("  Access Key ID: ").strip()
-    access_password = input("  Access Password: ").strip()
+    access_password = getpass.getpass("  Access Password (hidden): ").strip()
 
     # User credentials
     print("\nUser Credentials:")
@@ -56,7 +58,7 @@ def get_credentials():
 
     print("\nLA App authentication token:")
     print("(In LabArchives: click your name, top-right -> 'LA App authentication')")
-    user_password = input("  LA App authentication token: ").strip()
+    user_password = getpass.getpass("  LA App authentication token (hidden): ").strip()
 
     return {
         'access_key_id': access_key_id,

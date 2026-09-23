@@ -46,6 +46,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-opentrons" }
       ]
+    },
+    {
+      "id": "near-miss-imaging-data-commons",
+      "prompt": "Find and download all CT series for the TCGA-LUAD collection from the NCI Imaging Data Commons for a deep-learning training set.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-imaging-data-commons. The data are public DICOM collections queried and downloaded with idc-index from IDC, not images managed on the user's own OMERO server.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-imaging-data-commons" }
+      ]
     }
   ]
 }

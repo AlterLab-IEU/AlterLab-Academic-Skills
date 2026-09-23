@@ -46,6 +46,15 @@
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-latchbio" }
       ]
+    },
+    {
+      "id": "near-miss-nf-core-sarek",
+      "prompt": "Build the samplesheet and run nf-core/sarek with Docker on our HPC to call germline variants with HaplotypeCaller against GRCh38 for 12 exomes.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-nf-core-sarek. The user wants to run the nf-core/sarek Nextflow pipeline on their own HPC (samplesheet, callers, reference bundle), not build or run a DNAnexus app/applet with dxpy.",
+      "assertions": [
+        { "type": "should_not_trigger", "value": true },
+        { "type": "output_contains", "value": "alterlab-nf-core-sarek" }
+      ]
     }
   ]
 }

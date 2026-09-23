@@ -351,36 +351,38 @@ Body:
 }
 ```
 
-**Transfer Container:**
+**Transfer Into a Container** (moves contents; the destination is in the path):
 ```http
-POST /api/v2/containers:transfer
+POST /api/v2/containers/{destinationContainerId}:transfer
 
 Body:
 {
-  "containerIds": ["cont_abc123"],
-  "destinationStorageId": "box_xyz789"
+  "sourceContainerId": "cont_abc123",
+  "transferQuantity": {"value": 10, "units": "uL"}
 }
 ```
+Use `sourceEntityId` or `sourceBatchId` instead of `sourceContainerId` to transfer from an entity or batch. To **relocate** a container instead, `PATCH /api/v2/containers/{containerId}` with `{"parentStorageId": "box_xyz789"}`.
 
-**Check Out Container:**
+**Check Out Containers:**
 ```http
-POST /api/v2/containers:checkout
+POST /api/v2/containers:check-out
 
 Body:
 {
   "containerIds": ["cont_abc123"],
+  "assigneeId": "USER_ID",
   "comment": "Taking to bench"
 }
 ```
 
-**Check In Container:**
+**Check In Containers:**
 ```http
-POST /api/v2/containers:checkin
+POST /api/v2/containers:check-in
 
 Body:
 {
   "containerIds": ["cont_abc123"],
-  "locationId": "bench_loc_abc"
+  "comments": "Returned to freezer"
 }
 ```
 
@@ -512,31 +514,32 @@ Body:
 
 ### Workflow Tasks
 
+Workflows are **workflow task groups**; `/api/v2/tasks/{taskId}` is the unrelated async-task status endpoint (see below).
+
 **List Workflow Tasks:**
 ```http
-GET /api/v2/tasks
+GET /api/v2/workflow-tasks
 
 Query Parameters:
-- workflowId: string
-- statusIds: string[] (comma-separated)
-- assigneeId: string
+- workflowTaskGroupIds: string (comma-separated)
+- statusIds: string (comma-separated)
+- assigneeIds: string (comma-separated)
+- schemaId: string
 ```
 
-**Get Task:**
+**Get Workflow Task:**
 ```http
-GET /api/v2/tasks/{taskId}
+GET /api/v2/workflow-tasks/{workflowTaskId}
 ```
 
-**Create Task:**
+**Create Workflow Task:**
 ```http
-POST /api/v2/tasks
+POST /api/v2/workflow-tasks
 
 Body:
 {
-  "name": "PCR Amplification",
-  "workflowId": "wf_abc123",
-  "assigneeId": "user_abc123",
-  "schemaId": "task_schema_abc",
+  "workflowTaskGroupId": "WORKFLOW_TASK_GROUP_ID",
+  "assigneeId": "USER_ID",
   "fields": {
     "template": {"value": "seq_abc123"},
     "priority": {"value": "High"}
@@ -544,18 +547,20 @@ Body:
 }
 ```
 
-**Update Task:**
+**Update Workflow Task:**
 ```http
-PATCH /api/v2/tasks/{taskId}
+PATCH /api/v2/workflow-tasks/{workflowTaskId}
 
 Body:
 {
-  "statusId": "status_complete_abc",
+  "statusId": "COMPLETE_STATUS_ID",
   "fields": {
-    "completion_date": {"value": "2025-10-20"}
+    "completion_date": {"value": "2026-09-23"}
   }
 }
 ```
+
+Workflow task groups themselves: `GET/POST /api/v2/workflow-task-groups`, `GET/PATCH /api/v2/workflow-task-groups/{id}`.
 
 ### Folders
 
@@ -599,10 +604,7 @@ GET /api/v2/projects/{projectId}
 
 ### Users
 
-**Get Current User:**
-```http
-GET /api/v2/users/me
-```
+There is no `/users/me` endpoint in API v2; to check credentials, make any cheap authenticated call (e.g. `GET /api/v2/projects?pageSize=1`).
 
 **List Users:**
 ```http
@@ -628,17 +630,14 @@ GET /api/v2/teams/{teamId}
 
 ### Schemas
 
-**List Schemas:**
-```http
-GET /api/v2/schemas
+Schemas are listed per object type — there is no generic `/schemas` endpoint:
 
-Query Parameters:
-- entityType: string (e.g., "dna_sequence", "custom_entity")
-```
-
-**Get Schema:**
 ```http
-GET /api/v2/schemas/{schemaId}
+GET /api/v2/entity-schemas            # DNA/AA/RNA sequences, custom entities, mixtures
+GET /api/v2/entity-schemas/{schemaId}
+GET /api/v2/container-schemas         # also box-schemas, plate-schemas, location-schemas
+GET /api/v2/entry-schemas
+GET /api/v2/assay-result-schemas      # also assay-run-schemas, batch-schemas
 ```
 
 ### Registries
@@ -657,28 +656,29 @@ GET /api/v2/registries/{registryId}
 
 ### Batch Archive
 
-**Archive Multiple Entities:**
+**Archive Multiple Entities** (one endpoint per type, e.g. `dna-sequences`, `custom-entities`, `containers`):
 ```http
-POST /api/v2/{entity-type}:archive
+POST /api/v2/dna-sequences:archive
 
 Body:
 {
-  "{entity}Ids": ["id1", "id2", "id3"],
-  "reason": "Cleanup"
+  "dnaSequenceIds": ["seq_1", "seq_2", "seq_3"],
+  "reason": "Made in error"
 }
 ```
+`reason` must be one of the archive-reason enum values (e.g. "Made in error", "Retired", "Expended", "Shipped", "Contaminated", "Expired", "Missing", "Other").
 
 ### Batch Transfer
 
-**Transfer Multiple Containers:**
+**Transfer Into Multiple Containers** (async; returns a task):
 ```http
-POST /api/v2/containers:bulk-transfer
+POST /api/v2/transfers
 
 Body:
 {
   "transfers": [
-    {"containerId": "cont_1", "destinationId": "box_a"},
-    {"containerId": "cont_2", "destinationId": "box_b"}
+    {"destinationContainerId": "cont_a", "sourceContainerId": "cont_1", "transferQuantity": {"value": 10, "units": "uL"}},
+    {"destinationContainerId": "cont_b", "sourceContainerId": "cont_2", "transferQuantity": {"value": 10, "units": "uL"}}
   ]
 }
 ```

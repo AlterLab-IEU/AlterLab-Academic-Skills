@@ -1,6 +1,6 @@
 # LabArchives API Reference
 
-> **Verification status.** Confirmed against the `labarchivespy` wrapper and its examples: `users/user_access_info`, `users/user_info_via_id`, `utilities/institutional_login_urls`, and `notebooks/notebook_backup`. The `entries/*`, `notebooks/list_notebooks`, and `site_reports/*` method names below describe the documented REST surface but are **not** exercised by the wrapper and have not been independently verified here — confirm exact class/method/parameter names against your institution's LabArchives API documentation (linked from the LabArchives notebook share page) before relying on them. The notebook list is also returned inline by `user_access_info`, so a separate `list_notebooks` call may be unnecessary.
+> **Verification status (2026-09-23).** Method names below marked **verified** are used by a maintained client — `labapi` 1.2.0 (NIMH DSST, PyPI) or `labarchives-py` — against the live API: `users/user_access_info`, `users/user_info_via_id`, `users/max_file_size`, `utilities/institutional_login_urls`, `notebooks/notebook_backup`, `notebooks/create_notebook`, `notebooks/modify_notebook_info`, `tree_tools/get_tree_level`, `tree_tools/insert_node`, `tree_tools/update_node`, `tree_tools/get_entries_for_page`, `entries/add_entry`, `entries/add_attachment`, `entries/update_entry`, `entries/update_attachment`, `entries/entry_attachment`. The `site_reports/*` names are **unverified** — confirm them in your institution's LabArchives API documentation (linked from the LabArchives notebook share page) before relying on them.
 
 ## API Structure
 
@@ -20,11 +20,13 @@ https://<base_url>/api/<api_class>/<api_method>?<authentication_parameters>&<met
 
 ## Authentication
 
-All API calls require authentication parameters:
+Every call carries three signed query parameters instead of the password:
 
-- `access_key_id`: Provided by LabArchives administrator
-- `access_password`: Provided by LabArchives administrator
-- Additional user-specific credentials may be required for certain operations
+- `akid`: the access key ID provided by your LabArchives administrator
+- `expires`: expiry timestamp in milliseconds
+- `sig`: base64-encoded HMAC of `akid + <method name> + expires`, keyed by the access password (labarchives-py uses HMAC-SHA1, labapi HMAC-SHA512), URL-encoded
+
+User-scoped methods also take `uid` (from `users/user_access_info`).
 
 ## API Classes and Methods
 
@@ -38,10 +40,7 @@ Retrieve user ID and notebook access information.
 - `login_or_email` (required): User's email address or login username
 - `password` (required): User's "LA App authentication" token (not the regular login password)
 
-**Returns:** XML or JSON response containing:
-- User ID (uid)
-- List of accessible notebooks with IDs (nbid)
-- Account status and permissions
+**Returns:** XML containing the user ID (first child `<id>`) and one `<notebook>` element per accessible notebook with `<id>`, `<name>`, and `<is-default>`.
 
 **Example:**
 ```python
@@ -84,9 +83,7 @@ Download complete notebook data including entries, attachments, and metadata.
 - `json` (optional, default: false): Return data in JSON format instead of XML
 - `no_attachments` (optional, default: false): Exclude attachments from backup
 
-**Returns:**
-- When `no_attachments=false`: 7z compressed archive containing all notebook data
-- When `no_attachments=true`: XML or JSON structured data with entry content
+**Returns:** a 7-Zip archive of the notebook (entry data as XML, or JSON with `json=true`; attachment payloads omitted with `no_attachments=true`). Only the notebook owner can download a backup — other users get error 4547.
 
 **File format:**
 The returned archive includes:
@@ -112,7 +109,7 @@ with open('notebook_backup.7z', 'wb') as f:
 ```
 
 ```python
-# Metadata only backup (JSON format, no attachments)
+# Lighter backup: JSON data, no attachment payloads (still a 7z archive)
 params = {
     'uid': '12345',
     'nbid': '67890',
@@ -120,105 +117,70 @@ params = {
     'no_attachments': 'true'
 }
 response = client.make_call('notebooks', 'notebook_backup', params=params)
-import json
-notebook_data = json.loads(response.content)
+with open('notebook_67890_data.7z', 'wb') as f:
+    f.write(response.content)
 ```
 
-#### `notebooks/list_notebooks`
+#### Listing notebooks
 
-Retrieve all notebooks accessible to a user (method name may vary by API version).
+There is no separate verified list method — `users/user_access_info` already returns every notebook the user can open (see above).
 
-**Parameters:**
-- `uid` (required): User ID
+### Tree Tools API Class
 
-**Returns:** List of notebooks with:
-- Notebook ID (nbid)
-- Notebook name
-- Creation and modification dates
-- Access level (owner, editor, viewer)
-- Member count
+Notebooks are trees of folders and pages; entries live on pages.
+
+#### `tree_tools/get_tree_level`
+
+List the children of a tree node. **Parameters:** `uid`, `nbid`, `parent_tree_id` (`0` for the notebook root).
+
+#### `tree_tools/insert_node`
+
+Create a page or folder. **Parameters:** `uid`, `nbid`, `parent_tree_id`, `display_text`, `is_folder` (`true`/`false`). **Returns:** `<node><tree-id>` of the new node — the page ID (`pid`) used by entry methods.
+
+#### `tree_tools/get_entries_for_page`
+
+List a page's entries. **Parameters:** `uid`, `nbid`, `page_tree_id`.
 
 ### Entries API Class
 
-#### `entries/create_entry`
+#### `entries/add_entry` (POST)
 
-Create a new entry in a notebook.
+Add a text entry to a page.
 
-**Parameters:**
-- `uid` (required): User ID
-- `nbid` (required): Notebook ID
-- `title` (required): Entry title
-- `content` (optional): HTML-formatted entry content
-- `date` (optional): Entry date (defaults to current date)
+**Query parameters:** `uid`, `nbid`, `pid` (page tree ID), `part_type` — `text entry` (rich HTML), `plain text entry`, or `heading`
+**POST body (form):** `entry_data` — the entry content
+**Returns:** `<entry><eid>` of the new entry
 
-**Returns:** Entry ID and creation confirmation
+#### `entries/update_entry` (POST)
 
-**Example:**
-```python
-params = {
-    'uid': '12345',
-    'nbid': '67890',
-    'title': 'Experiment 2025-10-20',
-    'content': '<p>Conducted PCR amplification of target gene...</p>',
-    'date': '2025-10-20'
-}
-response = client.make_call('entries', 'create_entry', params=params)
-```
+Replace a text entry's content. **Query parameters:** `uid`, `eid`. **POST body (form):** `entry_data`.
 
-#### `entries/create_comment`
+#### `entries/add_attachment` (POST)
 
-Add a comment to an existing entry.
+Upload a file as a new attachment entry on a page.
 
-**Parameters:**
-- `uid` (required): User ID
-- `nbid` (required): Notebook ID
-- `entry_id` (required): Target entry ID
-- `comment` (required): Comment text (HTML supported)
+**Query parameters:** `uid`, `nbid`, `pid`, `filename`, `caption`, `change_description` (optional `client_ip`)
+**POST body:** the raw file bytes (not multipart form data)
+**Returns:** `<entry><eid>` of the new attachment entry
 
-**Returns:** Comment ID and timestamp
-
-#### `entries/create_part`
-
-Add a component/part to an entry (e.g., text section, table, image).
-
-**Parameters:**
-- `uid` (required): User ID
-- `nbid` (required): Notebook ID
-- `entry_id` (required): Target entry ID
-- `part_type` (required): Type of part (text, table, image, etc.)
-- `content` (required): Part content in appropriate format
-
-**Returns:** Part ID and creation confirmation
-
-#### `entries/upload_attachment`
-
-Upload a file attachment to an entry.
-
-**Parameters:**
-- `uid` (required): User ID
-- `nbid` (required): Notebook ID
-- `entry_id` (required): Target entry ID
-- `file` (required): File data (multipart/form-data)
-- `filename` (required): Original filename
-
-**Returns:** Attachment ID and upload confirmation
-
-**Example using requests library:**
 ```python
 import requests
+from urllib.parse import urlencode
 
-url = f'{api_url}/entries/upload_attachment'
-files = {'file': open('/path/to/data.csv', 'rb')}
-params = {
-    'uid': '12345',
-    'nbid': '67890',
-    'entry_id': '11111',
-    'filename': 'data.csv',
-    'access_key_id': access_key_id,
-    'access_password': access_password
-}
-response = requests.post(url, files=files, data=params)
+expires = client.get_expires_time()                 # labarchives-py signing helpers
+sig = client.get_signature('add_attachment', expires)
+query = urlencode({'uid': uid, 'nbid': nbid, 'pid': pid, 'filename': 'data.csv',
+                   'caption': 'Plate reader export', 'change_description': 'Uploaded via API'})
+url = f"{api_url}/entries/add_attachment?{query}&akid={access_key_id}&expires={expires}&sig={sig}"
+with open('data.csv', 'rb') as f:
+    response = requests.post(url, data=f.read(), timeout=120)
 ```
+
+`scripts/entry_operations.py` wraps these calls (`create`, `upload`, `batch-upload`). Use `users/max_file_size` to check the upload limit first.
+
+#### Comments
+
+Neither client implements entry comments; find the comment method in the LabArchives API documentation before scripting it.
 
 ### Site Reports API Class
 
@@ -286,42 +248,31 @@ Retrieve institutional login URLs for SSO integration.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<response>
-    <uid>12345</uid>
-    <email>researcher@university.edu</email>
+<users>
+    <id>12345</id>
+    ...
     <notebooks>
         <notebook>
-            <nbid>67890</nbid>
-            <name>Lab Notebook 2025</name>
-            <role>owner</role>
+            <id>67890</id>
+            <name>Lab Notebook 2026</name>
+            <is-default>true</is-default>
         </notebook>
     </notebooks>
-</response>
+</users>
 ```
+(Abbreviated `users/user_access_info` response: the user ID is the first child element, and notebook IDs are in `<notebook><id>`. The root element name may differ; parse by child tags.)
 
-### JSON Response Example
-
-```json
-{
-    "uid": "12345",
-    "email": "researcher@university.edu",
-    "notebooks": [
-        {
-            "nbid": "67890",
-            "name": "Lab Notebook 2025",
-            "role": "owner"
-        }
-    ]
-}
-```
+Responses are XML; JSON appears only inside notebook backups requested with `json=true`.
 
 ## Error Codes
 
-| Code | Message | Meaning | Solution |
+Failed calls return an XML body with `<error-code>` and `<error-description>` (ELN-specific codes). Codes seen by the `labapi` client include 4506, 4514, 4520, and 4533 (authentication/credential problems) and 4547 (notebook backup requested by a non-owner). The HTTP status gives the broad class:
+
+| HTTP | Message | Meaning | Solution |
 |------|---------|---------|----------|
-| 401 | Unauthorized | Invalid credentials | Verify access_key_id and access_password |
+| 401 | Unauthorized | Invalid credentials or expired signature | Verify the access key ID/password and the machine clock |
 | 403 | Forbidden | Insufficient permissions | Check user role and notebook access |
-| 404 | Not Found | Resource doesn't exist | Verify uid, nbid, or entry_id are correct |
+| 404 | Not Found | Resource doesn't exist | Verify uid, nbid, pid, or eid are correct |
 | 429 | Too Many Requests | Rate limit exceeded | Implement exponential backoff |
 | 500 | Internal Server Error | Server-side issue | Retry request or contact support |
 
