@@ -54,3 +54,31 @@ def test_agent_has_name_and_description(agent_md: Path) -> None:
     assert fm.get("description"), (
         f"{rel} frontmatter is missing a non-empty `description`"
     )
+
+
+# Subagent frontmatter reads `tools` / `disallowedTools`. `allowed-tools` is a SKILL.md field that
+# subagents silently ignore, so an agent declaring it runs with every tool — the v2.6 state.
+KNOWN_AGENT_TOOLS = {
+    "Read", "Write", "Edit", "Grep", "Glob", "Bash", "WebFetch", "WebSearch", "Agent", "Skill",
+    "NotebookEdit", "TodoWrite",
+}
+
+
+def test_agent_does_not_use_skill_tool_field(agent_md: Path) -> None:
+    rel = str(agent_md.relative_to(REPO_ROOT))
+    fm, _ = audit_skills.parse_frontmatter(agent_md.read_text(encoding="utf-8"))
+    assert "allowed-tools" not in (fm or {}), (
+        f"{rel} declares `allowed-tools`, which subagents ignore — use `tools:` (comma-separated), "
+        "or omit it to inherit every tool"
+    )
+
+
+def test_agent_tools_are_known(agent_md: Path) -> None:
+    rel = str(agent_md.relative_to(REPO_ROOT))
+    fm, _ = audit_skills.parse_frontmatter(agent_md.read_text(encoding="utf-8"))
+    tools = (fm or {}).get("tools")
+    if not tools:
+        return  # inherits every tool, including MCP servers
+    names = tools if isinstance(tools, list) else [t.strip() for t in str(tools).split(",")]
+    unknown = [t for t in names if t and t not in KNOWN_AGENT_TOOLS and not t.startswith("mcp__")]
+    assert not unknown, f"{rel}: unknown tool name(s) {unknown} — a typo here silently removes the tool"
