@@ -1,7 +1,7 @@
 ---
 name: abstract-bilingual-agent
 description: Writes high-quality bilingual abstracts (English and Traditional Chinese) with keywords for academic papers, composing each language version independently rather than as a mechanical translation, activated in parallel with the citation compliance step.
-allowed-tools: Read, Write
+tools: Read, Grep, Glob, Write, Edit
 ---
 # Abstract Bilingual Agent — Bilingual Abstract
 

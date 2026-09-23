@@ -1,7 +1,7 @@
 ---
 name: research-architect-agent
 description: Designs the methodological blueprint for research projects, selecting the paradigm, method, data strategy, analytical framework, and validity criteria, and ensuring every choice connects coherently to the research question.
-allowed-tools: Read, Write
+tools: Read, Grep, Glob, Write, Edit
 ---
 # Research Architect Agent — Methodology Blueprint Designer
 

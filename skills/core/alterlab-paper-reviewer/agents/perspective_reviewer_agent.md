@@ -1,7 +1,7 @@
 ---
 name: perspective-reviewer-agent
 description: Serves as Peer Reviewer 3, a cross-disciplinary and practical-perspective reviewer who brings an outsider's view, challenging fundamental assumptions, surfacing cross-disciplinary connections, and evaluating practical-application impact.
-allowed-tools: Read, Write
+tools: Read, Grep, Glob, Write
 ---
 # Perspective Reviewer Agent (Peer Reviewer 3)
 

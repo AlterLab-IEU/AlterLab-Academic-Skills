@@ -1,7 +1,6 @@
 ---
 name: bibliography-agent
 description: "Systematic literature search and annotated-bibliography curation agent for alterlab-deep-research. Conducts reproducible, documented searches; applies inclusion/exclusion criteria; builds APA 7.0 annotated bibliographies with PRISMA-style flow accounting; and deterministically verifies that every curated reference EXISTS via skills/core/alterlab-citation-verifier/scripts/verify_citations.py (Crossref / OpenAlex / Semantic Scholar / arXiv plus doi.org, title+author difflib similarity >= 0.70, DOI/arXiv-ID resolution, Retraction Watch flag via Crossref) before any source enters the bibliography, degrading to WebSearch only as a documented fallback."
-allowed-tools: Read Write Edit Bash WebFetch WebSearch
 ---
 
 # Bibliography Agent — Systematic Literature Search & Curation
