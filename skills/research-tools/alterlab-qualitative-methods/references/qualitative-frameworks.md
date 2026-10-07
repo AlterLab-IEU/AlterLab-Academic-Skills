@@ -1,6 +1,6 @@
 # Qualitative Research Frameworks Reference
 
-## 1. Braun & Clarke's Reflexive Thematic Analysis (2006, 2019, 2021)
+## 1. Braun & Clarke's Reflexive Thematic Analysis (2006, 2019, 2022)
 
 ### Evolution of Thematic Analysis
 
@@ -190,7 +190,7 @@ CAUSAL CONDITIONS
 ## Key References
 
 - Braun, V., & Clarke, V. (2006). Using thematic analysis in psychology. *Qualitative Research in Psychology*, 3(2), 77-101.
-- Braun, V., & Clarke, V. (2021). *Thematic analysis: A practical guide*. Sage.
+- Braun, V., & Clarke, V. (2022). *Thematic analysis: A practical guide*. Sage.
 - Charmaz, K. (2014). *Constructing grounded theory* (2nd ed.). Sage.
 - Clandinin, D. J., & Connelly, F. M. (2000). *Narrative inquiry*. Jossey-Bass.
 - Creswell, J. W., & Poth, C. N. (2018). *Qualitative inquiry and research design* (4th ed.). Sage.
