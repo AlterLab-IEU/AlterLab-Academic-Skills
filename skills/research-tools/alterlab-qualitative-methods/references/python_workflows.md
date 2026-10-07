@@ -2,6 +2,8 @@
 
 Ready-to-run Python recipes for researchers who prefer open-source tools over NVivo/Atlas.ti. These support the workflows summarized in Section 7 of `SKILL.md`: keyword-based initial coding, word-frequency/collocation analysis, and thematic-network visualization.
 
+Install the dependencies once: `pip install pandas scikit-learn networkx matplotlib`.
+
 **Basic Text Coding with Python:**
 
 ```python
@@ -67,7 +69,7 @@ print(code_freq)
 ```python
 from sklearn.feature_extraction.text import CountVectorizer
 
-# Combine all transcripts
+# Combine all transcripts (`transcripts` is the dict loaded in the first recipe)
 all_text = ' '.join(transcripts.values())
 
 # Bigram/trigram frequency (useful for identifying recurring phrases).
@@ -86,6 +88,8 @@ for phrase, count in sorted_bigrams[:20]:
 **Thematic Network Visualization:**
 
 ```python
+from pathlib import Path
+
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -119,5 +123,6 @@ nx.draw(G, pos, with_labels=True, node_color=colors, node_size=sizes,
         font_size=9, font_weight='bold', edge_color='#bdc3c7', width=2)
 plt.title("Thematic Network")
 plt.tight_layout()
+Path('figures').mkdir(exist_ok=True)
 plt.savefig('figures/thematic_network.png', dpi=300, bbox_inches='tight')
 ```

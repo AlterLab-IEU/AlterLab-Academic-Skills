@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch WebSearch Bash(python:*)
 compatibility: No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.
 metadata:
   skill-author: AlterLab
-  version: "1.1.0"
-  last_updated: "2026-09-23"
+  version: "1.1.1"
+  last_updated: "2026-10-07"
 ---
 
 # Qualitative Methods — Qualitative Research Design & Analysis Agent
