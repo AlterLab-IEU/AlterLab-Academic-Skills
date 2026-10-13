@@ -6,6 +6,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **`alterlab-scientific-schematics` 1.2.0** — optional `--image-provider atlas` (or `ALTERLAB_IMAGE_PROVIDER=atlas`) generates the diagram through Atlas Cloud while Gemini review stays on OpenRouter. OpenRouter remains the default.
+
 ## [3.0.1] — 2026-09-23
 
 A patch release so installed plugins pick up a routing fix: Claude Code refreshes a plugin only

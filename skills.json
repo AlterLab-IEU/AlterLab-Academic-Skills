@@ -1,7 +1,7 @@
 {
   "summary": {
     "version": "3.0.1",
-    "generated_at": "2026-09-23",
+    "generated_at": "2026-10-12",
     "total": 242,
     "per_domain": {
       "bioinformatics": 38,
@@ -5293,8 +5293,8 @@
       "domain": "visualization",
       "description": "Creates publication-quality scientific diagrams with Nano Banana 2 AI and smart iterative refinement, using Gemini 3.1 Pro Preview for quality review and regenerating only when quality falls below the document-type threshold. Use when the request is for a rendered technical or scientific diagram — CONSORT/PRISMA flowcharts, neural-network architectures, system/block diagrams, biological pathways, circuits, or other complex scientific visuals. For general photos, illustrations, or artwork use alterlab-generate-image; for infographics use alterlab-infographics; for editable text-based Mermaid diagrams use alterlab-mermaid. Part of the AlterLab Academic Skills suite.",
       "license": "MIT",
-      "version": "1.1.0",
-      "compatibility": "Requires an OpenRouter API key (OPENROUTER_API_KEY) and the requests library for Nano Banana 2 generation (google/gemini-3.1-flash-image) and Gemini 3.1 Pro Preview quality review (google/gemini-3.1-pro-preview); override with ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL",
+      "version": "1.2.0",
+      "compatibility": "Requires an OpenRouter API key (OPENROUTER_API_KEY) and the requests library for Nano Banana 2 generation (google/gemini-3.1-flash-image) and Gemini 3.1 Pro Preview quality review (google/gemini-3.1-pro-preview); override with ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL; the optional Atlas Cloud image provider additionally requires ATLASCLOUD_API_KEY",
       "allowed_tools": [
         "Read",
         "Write",
@@ -5303,7 +5303,7 @@
       ],
       "has_scripts": true,
       "has_evals": true,
-      "body_lines": 251,
+      "body_lines": 267,
       "references": [
         "QUICK_REFERENCE.md",
         "README.md",
