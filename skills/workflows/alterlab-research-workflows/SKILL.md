@@ -16,8 +16,8 @@ metadata:
 Seven academic jobs are too big or too judgment-sensitive for one pass of one model: checking
 every citation in a 90-reference paper, dual-screening 800 abstracts, getting reviewers who
 can't anchor on each other. This skill packages each as a **workflow** — a fixed orchestration
-of many agents with the independence and adversarial checks the task needs, and with counts,
-votes, and agreement statistics computed in code rather than estimated by a model.
+of many agents with separate passes and adversarial checks, and with counts, votes, coverage,
+and agreement statistics computed in code rather than estimated by a model.
 
 In Claude Code each workflow is a saved dynamic-workflow script shipped by the
 `alterlab-workflows` plugin. Everywhere else, follow the staged playbook for the same workflow
@@ -25,10 +25,10 @@ in `references/` — same stages, same acceptance rules, run sequentially.
 
 ## When to Use This Skill
 
-- Audit **every** reference and cited claim in a manuscript, thesis, or grant before submission
+- Audit the reference list and up to 150 cited claims of a manuscript, thesis, or grant before submission
 - Get a **peer-review panel** whose reviewers work blind to each other, with each major concern checked against the text
 - **Stress-test** a paper's headline claims against counter-evidence, citation support, and inferential logic
-- **Screen records** for a systematic or scoping review with two independent screeners and adjudication (PRISMA 2020)
+- **Screen records** for a systematic or scoping review with two separate screener agents and adjudication (PRISMA 2020)
 - Draft a **point-by-point response to reviewers** that is internally consistent and never invents results
 - Run a **mock study section** for a grant on the funder's own criteria and scale (NIH, NSF, ERC, Horizon Europe, TÜBİTAK)
 - **Map a literature**: themes, landmark works, methods, and research gaps that survive a search for existing answers
@@ -52,16 +52,16 @@ workflows in its orchestrate (`alterflow`) mode.
 
 | Command (Claude Code) | What it does | Input (`args`) | Agents, typical | Composes |
 |---|---|---|---|---|
-| `/alterlab-workflows:citation-audit` | Existence + metadata of every reference; support for every cited claim; each flag re-checked by two independent searchers before it is reported (TF/PAC/IH/PH/SH taxonomy) | path, or `{path, mailto?, out?}` | 10–40 | alterlab-citation-verifier |
-| `/alterlab-workflows:review-panel` | 4–6 blind reviewers chosen for the paper's field and design; every major concern re-read against the manuscript; editor decision + revision roadmap | path, or `{path, venue?, field?, lenses?, out?}` | 8–20 | alterlab-paper-reviewer (field analysis) |
-| `/alterlab-workflows:claim-stress-test` | 3 skeptics per headline claim (counter-evidence, citation support, inference); majority rating + calibrated rewrites | path, or `{path?, claims?, max_claims?, out?}` | 10–30 | alterlab-deep-research, alterlab-citation-verifier |
-| `/alterlab-workflows:systematic-review-screening` | Codebook → optional database searches → de-duplication → two blinded screeners per batch → third-reviewer adjudication → PRISMA 2020 flow + Cohen's κ | `{question, records?, include?, exclude?, databases?, max_per_database?, batch?, out_dir?}` | 2 per batch of 25 records, plus adjudication | alterlab-pubmed, alterlab-openalex |
-| `/alterlab-workflows:rebuttal` | Reviews split into atomic comments; one drafter per comment; a consistency pass across all drafts; response letter + change log + author action list | `{manuscript, reviews, out_dir?, tone?}` | 1 per comment + 3 | alterlab-paper-writer (revision) |
-| `/alterlab-workflows:grant-mock-panel` | Funder criteria and scale → primary, secondary, tertiary reviewer + skeptic → major weaknesses checked → score spread computed → summary statement | `{path, funder, mechanism?, out?}` | 8–20 | alterlab-research-grants, alterlab-tubitak-proposal |
-| `/alterlab-workflows:literature-map` | 4–6 search angles swept in parallel → merged in code → themes → each proposed gap searched for existing answers → field map | topic, or `{topic, seeds?, years?, out_dir?}` | 10–25 | alterlab-openalex, alterlab-pubmed, alterlab-arxiv, alterlab-citation-graph |
+| `/alterlab-workflows:citation-audit` | Existence + metadata of every reference; support for up to 150 cited claims; a flag counts only after two separate re-checks both complete without clearing it (TF/PAC/IH/PH/SH taxonomy) | path, or `{path, mailto?, out?}` | 10–40 | alterlab-citation-verifier |
+| `/alterlab-workflows:review-panel` | 4–6 blind reviewers chosen for the paper's field and design; every major concern re-read against the manuscript (unchecked ones go to the editor as unverified); editor decision + revision roadmap | path, or `{path, venue?, field?, lenses?, out?}` | 8–20 | alterlab-paper-reviewer (field analysis) |
+| `/alterlab-workflows:claim-stress-test` | 3 skeptics per headline claim (counter-evidence, citation support, inference); majority rating (or "unrated" when missing lenses could change it) + calibrated rewrites | path, or `{path?, claims?, max_claims?, out?}` | 10–30 | alterlab-deep-research, alterlab-citation-verifier |
+| `/alterlab-workflows:systematic-review-screening` | Codebook → optional database searches → de-duplication → two blinded screeners per batch → third-reviewer adjudication → PRISMA 2020 flow (unresolved records shown separately) + Cohen's κ | `{question, records?, include?, exclude?, databases?, max_per_database?, batch?, out_dir?}` | 2 per batch of 25 records, plus adjudication | alterlab-pubmed, alterlab-openalex |
+| `/alterlab-workflows:rebuttal` | Reviews split into atomic comments; one drafter per comment; a consistency pass across all drafts; response letter + change log + author action list | `{manuscript, reviews, out_dir?, tone?}` | 1 per comment + 4 | alterlab-paper-writer (revision) |
+| `/alterlab-workflows:grant-mock-panel` | Funder criteria and scale → primary, secondary, tertiary reviewer + skeptic → major weaknesses checked (unchecked ones marked unverified) → score spread computed → summary statement | `{path, funder, mechanism?, out?}` | 8–20 | alterlab-research-grants, alterlab-tubitak-proposal |
+| `/alterlab-workflows:literature-map` | 4–6 search angles swept in parallel → merged in code → themes → up to 12 proposed gaps searched for existing answers → field map | topic, or `{topic, seeds?, years?, out_dir?}` | 10–25 | alterlab-openalex, alterlab-pubmed, alterlab-arxiv, alterlab-citation-graph |
 
-Each workflow writes its deliverable to a file in the working directory (the default name is in
-its playbook) and returns a short summary plus the key numbers.
+Each workflow writes its deliverable to a file (default name in its playbook), has a separate agent read it back, and returns `status` (`complete` / `partial` / `blocked`),
+`status_reasons`, a `coverage` object (requested / dispatched / completed / failed / unresolved), and the key numbers — see `references/running-workflows.md`.
 
 ## Running a Workflow in Claude Code
 
@@ -89,17 +89,17 @@ On claude.ai, the API, or Claude Code with workflows disabled, run the same stag
 workflow's playbook — `references/<workflow>.md`. The playbooks preserve what makes each
 workflow trustworthy:
 
-- **Independence.** Where a workflow uses separate agents (screeners, reviewers, skeptics), use
-  separate subagents via the Task tool when the surface has one. Without subagents, complete each
-  independent pass fully and record its output *before* starting the next, and never revise an
-  earlier pass after reading a later one — the order-effect the separate agents exist to prevent.
+- **Separation.** Where a workflow uses separate agents (screeners, reviewers, skeptics), use
+  separate subagents via the Task tool when the surface has one; otherwise finish and record each
+  pass *before* starting the next, and never revise an earlier pass after reading a later one. Separate
+  passes of one model avoid anchoring but are not independent verification — say so in the deliverable.
 - **Code for arithmetic.** Tallies, majority votes, agreement statistics, and score spreads are
   computed with a short script (the playbooks give the formulas), not estimated.
-- **The same acceptance rules.** A citation flag stands only after two independent failed
-  attempts to clear it; a major review concern stands only after the manuscript is re-read.
+- **The same acceptance rules.** A citation flag counts only after two separate re-checks both
+  complete without clearing it; a major review concern is "validated" only after its re-read completes.
 
-Scale the sequential run down to what one conversation can hold, and tell the user what was left
-out (for example "references 1–40 of 112 audited").
+Scale the sequential run down to what one conversation can hold, and report what was left out as
+unchecked, with status `partial` (for example "references 1–40 of 112 audited").
 
 ## Choosing a Workflow
 
@@ -117,27 +117,27 @@ out (for example "references 1–40 of 112 audited").
 |---|---|
 | Evidence before verdicts | Every flag, concern, or gap carries a source (DOI/URL) and a verbatim quote, or the searches that came up empty. |
 | No fabrication | Agents report only works they retrieved; results only the authors have become `[AUTHORS: …]` placeholders. |
-| Lookup failure ≠ fabrication | A reference that could not be checked (network, rate limit) is `UNVERIFIED`, never `NOT_FOUND`. |
-| No silent caps | When a workflow bounds coverage (claims, records, gaps), it logs what was left out and says so in the report. |
+| Lookup failure ≠ fabrication | A reference that could not be checked (network, rate limit) is `UNVERIFIED`, never `NOT_FOUND`, and keeps the audit `partial`. |
+| No silent caps or failures | A capped, failed, or omitted item is counted as unresolved and listed — never as checked; the run is then `partial`, never `complete`. |
 | Human sign-off | Screening decisions, integrity flags, and review decisions are drafts for the researcher to confirm. |
 | AI disclosure | Every deliverable ends with an AI-assistance statement suitable for journal or funder policies. |
 
-Measurable checks when reviewing a workflow's output: every row in an integrity table has
-evidence; PRISMA numbers add up (identified − duplicates = screened; screened − excluded =
-sought for retrieval); the κ and agreement values match the decision files; no reference in a
-literature map lacks a DOI or URL.
+Measurable checks when reviewing a workflow's output: it opens with its status and coverage; every
+integrity-table row has evidence; PRISMA numbers add up (screened + unresolved = submitted for
+screening; screened − excluded = sought for retrieval); the κ and agreement values match the decision
+files and name the number of dual-screened records; no reference in a literature map lacks a DOI or URL.
 
 ## Edge Cases
 
-- **No reference list / no claims / no records** — the workflow stops early and says so; nothing is invented to fill the gap.
-- **Paywalled sources** — claim checks fall back to the abstract and mark `UNCHECKABLE` when that isn't enough.
-- **Very large inputs** — citation-audit caps checked claims at 150 and screening at 2,000 records per run, and logs the remainder.
+- **No reference list / no claims / no records, or a failed agent** — the workflow returns `blocked` with the reason; nothing is invented to fill the gap. A failed agent is retried once, then counted as failed — never as an empty result.
+- **Paywalled sources** — claim checks fall back to the abstract and mark `UNCHECKABLE` when that isn't enough; the audit is then `partial`.
+- **Very large inputs** — citation-audit checks at most 150 cited claims and screening at most 2,000 records per run; the rest are counted as not checked and the run is `partial`.
 - **Non-English material** — agents work in the source language; reports follow the user's language.
-- **Funder without published scoring** — the grant panel uses the funder's written criteria, notes the absence of a numeric scale, and scores on the scale it states.
+- **Funder without published scoring** — the grant panel uses the funder's written criteria, notes the absence of a numeric scale, and scores on the scale it states (`partial`: scores cannot be range-checked).
 
 ## Resources
 
-- `references/running-workflows.md` — install, arguments, permissions, cost, resume, troubleshooting
+- `references/running-workflows.md` — install, arguments, permissions, cost, status and coverage, resume, troubleshooting
 - `references/citation-audit.md` · `references/review-panel.md` · `references/claim-stress-test.md`
 - `references/systematic-review-screening.md` · `references/rebuttal.md`
 - `references/grant-mock-panel.md` · `references/literature-map.md`
