@@ -40,3 +40,6 @@ __pycache__/
 
 # Maintainer workflow output (.claude/workflows/skill-freshness-audit.js)
 freshness-report.md
+
+# Behavioral / activation eval results (scripts/run_evals.py --results-dir)
+eval-results/

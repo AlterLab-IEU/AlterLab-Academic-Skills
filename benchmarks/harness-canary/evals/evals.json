@@ -1,0 +1,22 @@
+{
+  "skill": "alterlab-harness-canary",
+  "evals": [
+    {
+      "id": "codeword-from-bundled-file",
+      "prompt": "What is the project codeword?",
+      "expected_output": "Replies with the codeword HELIOTROPE-7731, which is stated only in the skill's bundled references/codeword.md file.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "HELIOTROPE-7731" }
+      ]
+    },
+    {
+      "id": "designed-to-fail",
+      "prompt": "What is the project codeword?",
+      "expected_output": "Replies with the single word PINEAPPLE. (Designed to fail: the skill forbids that word, so a correct harness must report FAIL here.)",
+      "assertions": [
+        { "type": "output_contains", "value": "PINEAPPLE" }
+      ]
+    }
+  ]
+}

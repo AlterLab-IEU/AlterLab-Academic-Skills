@@ -27,7 +27,19 @@ Two modes:
   whole-response ``expected_output`` are still LLM-judged. The judge/target model follows the
   ``ALTERLAB_MODEL`` convention — see ``skills/core/shared/model_env.md``; the model id is
   **never** hardcoded as a call argument (only the dated default constant below). Slow and
-  environment-specific, so this is not run in CI.
+  environment-specific, so this is not run per-PR in CI.
+
+  Isolation: every call runs from a fresh temporary directory with ``--safe-mode
+  --disable-slash-commands --strict-mcp-config`` (no CLAUDE.md, plugins, skills, hooks or MCP
+  servers), so the bare arm is genuinely bare; the skilled arm gets the skill's files in
+  ``./skill/`` (never its ``evals/``) and the task fixtures in ``./fixtures/``. Auth is the
+  CLI's normal login — run it inside an authenticated Claude Code environment.
+
+  Each case ends in one outcome: PASS, FAIL, INCONCLUSIVE (answered but no settled verdict),
+  REFUSED (runner usage-policy refusal), INFRA_ERROR (CLI/auth/timeout/missing fixture), or
+  NOT_RUN (run aborted). Exit codes: 0 = passed (EVERY selected case PASS); 1 = a case
+  failed; 2 = blocked (no usable verdict at all); 3 = partial (some cases unverdicted). JSON
+  results go to ``eval-results/`` (``--results-dir``).
 
 Dependency-light by design: standard library ``json`` / ``subprocess`` plus ``jsonschema``.
 ``jsonschema`` is optional — if it is not importable the validator falls back to an
@@ -45,10 +57,13 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -94,8 +109,8 @@ def parse_shard(spec: str | None) -> tuple[int, int] | None:
 def target_dirs(skill_filter: str | None, shard: tuple[int, int] | None) -> list[Path]:
     """Skill dirs to grade after applying the name filter, then a deterministic shard.
 
-    Sharding lets a scheduled run grade a rotating subset (``--shard $((day%7))/7``) so the
-    slow CLI-graded lanes cover the whole corpus over time without grading all 210 each run.
+    Sharding splits a slow CLI-graded run into deterministic parts (``--shard 3/7``) so the
+    corpus can be graded across several sittings without grading every skill at once.
     """
     dirs = [d for d in skill_dirs() if not (skill_filter and skill_filter not in d.name)]
     if shard:
@@ -274,32 +289,166 @@ _REFUSED = f"{_NO_ANSWER} ENV-REFUSED"
 # Signatures of the CLI usage-policy refusal — printed to *stdout* with a non-zero exit.
 _REFUSAL_SIGNATURES = ("violate our Usage Policy", "unable to respond to this request")
 
+# Per-case outcomes. Only PASS and FAIL are usable verdicts; the other three say *why* a case
+# could not be graded, and none of them can make a run read as successful.
+PASS, FAIL = "PASS", "FAIL"
+INCONCLUSIVE = "INCONCLUSIVE"  # answered, but the judges could not settle a verdict (tie / NA)
+REFUSED = "REFUSED"            # the runner environment refused the prompt
+INFRA_ERROR = "INFRA_ERROR"    # CLI missing/failed/timed out, auth error, missing fixture
+NOT_RUN = "NOT_RUN"            # selected but never attempted (run aborted early)
+OUTCOMES = (PASS, FAIL, INCONCLUSIVE, REFUSED, INFRA_ERROR, NOT_RUN)
 
-def _claude(prompt: str, model: str, timeout: int, system: str | None = None) -> str:
-    """Run a one-shot prompt through the claude CLI and return stdout text.
+# --- Isolated CLI execution ---------------------------------------------------------------
+# Every behavioral / activation / judge call runs the claude CLI from a fresh temporary working
+# directory with customizations disabled, so neither arm is primed by this repository's
+# CLAUDE.md or by AlterLab plugins installed on the machine:
+#   --safe-mode               no CLAUDE.md, installed plugins, hooks, MCP servers, custom agents
+#   --disable-slash-commands  no skills at all (the skill under test arrives only through
+#                             --append-system-prompt, and only in the skilled arm)
+#   --strict-mcp-config       no MCP servers from any configuration
+#   --no-session-persistence  nothing written to the session store
+# Auth is the CLI's normal login (a Claude Code session or ANTHROPIC_API_KEY). `--bare` would be
+# stricter still, but it ignores OAuth logins and requires an API key, so it is not used.
+ISOLATION_FLAGS = ("--safe-mode", "--disable-slash-commands", "--strict-mcp-config",
+                   "--no-session-persistence")
+
+
+@dataclass
+class CallResult:
+    """One claude CLI call. ``text`` is the answer, or a _NO_ANSWER marker when there is none."""
+    text: str
+    outcome: str  # "answer" | "refused" | "infra_error"
+    error: str = ""  # redacted diagnostic when outcome != "answer"
+    duration_ms: int | None = None
+    cost_usd: float | None = None
+    usage: dict | None = None
+
+
+# Accumulates CLI usage for the current run (answer and judge calls alike). Reset per run.
+_USAGE: dict = {"calls": 0, "duration_ms": 0, "cost_usd": 0.0, "cost_reported_calls": 0}
+
+
+def _reset_usage() -> None:
+    _USAGE.update(calls=0, duration_ms=0, cost_usd=0.0, cost_reported_calls=0)
+
+
+# Diagnostics must be actionable without leaking credentials: strip anything token-shaped.
+_SECRET_PATTERNS = (
+    re.compile(r"sk-ant-[A-Za-z0-9_\-]{6,}"),
+    re.compile(r"(?i)bearer\s+[A-Za-z0-9._\-]{8,}"),
+    re.compile(r"(?i)\b(api[_-]?key|token|secret|password|authorization)\b\s*[=:]\s*\S+"),
+    re.compile(r"[A-Za-z0-9+_\-]{40,}"),
+)
+
+
+def _redact(text: str) -> str:
+    for pat in _SECRET_PATTERNS:
+        text = pat.sub("[REDACTED]", text)
+    return text
+
+
+_DIAGNOSES = (
+    (("invalid api key", "not logged in", "please run /login", "authentication", "401",
+      "oauth"),
+     "authentication failed — log in to Claude Code (`claude`, then /login); in CI, set the "
+     "ANTHROPIC_API_KEY repo secret"),
+    (("rate limit", "rate_limit", "429", "usage limit", "overloaded", "529"),
+     "rate or usage limit — wait and re-run, or lower --runs / grade fewer skills"),
+    (("credit balance", "billing"), "billing/credit problem on the account the CLI uses"),
+    (("timeout",), "the call timed out — raise --timeout or simplify the prompt"),
+    (("could not start", "no such file", "not found on path"),
+     "the claude CLI is not installed or not on PATH"),
+)
+
+
+def _diagnose(detail: str) -> str:
+    low = detail.lower()
+    for needles, hint in _DIAGNOSES:
+        if any(n in low for n in needles):
+            return hint
+    return "unrecognized CLI failure — run the printed command by hand to see the full error"
+
+
+def _parse_cli_json(stdout: str) -> dict | None:
+    """The CLI's --output-format json result object, or None if stdout is not that."""
+    for line in reversed([ln for ln in stdout.strip().splitlines() if ln.strip()]):
+        try:
+            data = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(data, dict) and ("result" in data or "is_error" in data):
+            return data
+    return None
+
+
+def _usage_summary(usage: object) -> dict | None:
+    if not isinstance(usage, dict):
+        return None
+    keys = ("input_tokens", "output_tokens", "cache_read_input_tokens",
+            "cache_creation_input_tokens")
+    return {k: usage.get(k) for k in keys if k in usage}
+
+
+def _claude_call(prompt: str, model: str, timeout: int, system: str | None = None,
+                 cwd: Path | None = None) -> CallResult:
+    """Run one prompt through the claude CLI in an isolated working directory.
 
     When ``system`` is given it is injected via ``--append-system-prompt`` — this is how the
     target skill's SKILL.md is primed into the call so we grade the *skill*, not bare Claude.
-    Errors/timeouts are returned as a ``_NO_ANSWER``-prefixed marker rather than raised, so a
-    single bad run degrades to a non-verdict instead of aborting the whole eval. A usage-policy
-    refusal is mapped to the ``_REFUSED`` subtype so it is reported distinctly downstream.
+    ``cwd`` is the arm's prepared workspace; without one the call runs in a fresh empty
+    temporary directory. Errors, timeouts and refusals are returned as structured outcomes
+    (never raised), so one bad call degrades to a non-verdict instead of aborting the run.
     """
-    cmd = ["claude", "--model", model]
+    cmd = ["claude", "--model", model, *ISOLATION_FLAGS, "--output-format", "json"]
     if system:
         cmd += ["--append-system-prompt", system]
     cmd += ["-p", prompt]
-    try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-    except subprocess.TimeoutExpired:
-        return f"{_NO_ANSWER} TIMEOUT after {timeout}s"
+    with tempfile.TemporaryDirectory(prefix="alterlab-eval-call-") as fallback_cwd:
+        run_dir = str(cwd) if cwd else fallback_cwd
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout,
+                                  cwd=run_dir)
+        except subprocess.TimeoutExpired:
+            _USAGE["calls"] += 1
+            return CallResult(f"{_NO_ANSWER} TIMEOUT after {timeout}s", "infra_error",
+                              f"timeout after {timeout}s")
+        except OSError as exc:
+            return CallResult(f"{_NO_ANSWER} could not start claude CLI", "infra_error",
+                              _redact(f"could not start claude CLI: {exc}"))
+    _USAGE["calls"] += 1
+    data = _parse_cli_json(proc.stdout)
+    if data:
+        if isinstance(data.get("duration_ms"), (int, float)):
+            _USAGE["duration_ms"] += int(data["duration_ms"])
+        if isinstance(data.get("total_cost_usd"), (int, float)):
+            _USAGE["cost_usd"] += float(data["total_cost_usd"])
+            _USAGE["cost_reported_calls"] += 1
+    meta = {
+        "duration_ms": (data or {}).get("duration_ms"),
+        "cost_usd": (data or {}).get("total_cost_usd"),
+        "usage": _usage_summary((data or {}).get("usage")),
+    }
     # The CLI prints usage-policy refusals to stdout and exits non-zero, so check both streams.
     combined = f"{proc.stdout} {proc.stderr}"
     if any(sig in combined for sig in _REFUSAL_SIGNATURES):
-        return _REFUSED
-    if proc.returncode != 0:
-        detail = (proc.stderr.strip() or proc.stdout.strip())[:300]
-        return f"{_NO_ANSWER} claude CLI exited {proc.returncode}: {detail}"
-    return proc.stdout.strip()
+        return CallResult(_REFUSED, "refused", "usage-policy refusal by the runner environment",
+                          **meta)
+    if proc.returncode != 0 or data is None or data.get("is_error"):
+        raw = str((data or {}).get("result") or "") or proc.stderr.strip() or proc.stdout.strip()
+        detail = _redact(raw)[:300] or "no output"
+        return CallResult(f"{_NO_ANSWER} claude CLI exited {proc.returncode}: {detail}",
+                          "infra_error", f"claude CLI exited {proc.returncode}: {detail}", **meta)
+    text = str(data.get("result", "")).strip()
+    if not text:
+        return CallResult(f"{_NO_ANSWER} empty response", "infra_error",
+                          "claude CLI returned an empty result", **meta)
+    return CallResult(text, "answer", **meta)
+
+
+def _claude(prompt: str, model: str, timeout: int, system: str | None = None) -> str:
+    """Text-only wrapper over ``_claude_call`` (used by the judges and the activation harness):
+    the answer, or a ``_NO_ANSWER``-prefixed marker (``_REFUSED`` for a usage-policy refusal)."""
+    return _claude_call(prompt, model, timeout, system=system).text
 
 
 def _is_answer(response: str) -> bool:
@@ -313,15 +462,24 @@ def _is_refusal(response: str) -> bool:
 
 
 # --- Fixture materialization ------------------------------------------------------------
+def missing_fixtures(eval_obj: dict, evals_dir: Path) -> list[str]:
+    """On-disk fixtures an eval names that do not exist. A case with a missing fixture is an
+    infrastructure error: it is never run without its input and graded as if complete."""
+    missing = []
+    for item in eval_obj.get("files", []) or []:
+        if isinstance(item, str) and not (evals_dir / item).resolve().exists():
+            missing.append(item)
+    return missing
+
+
 def materialize_fixtures(eval_obj: dict, evals_dir: Path, dest: Path) -> list[str]:
     """Write every eval ``files`` fixture into ``dest`` and return the materialized paths.
 
     Two fixture forms are supported (see docs/evals.schema.json):
       * a string  -> path to a fixture file, relative to the eval file's directory; copied.
       * an object  -> {"name", "content"}; the inline content is written verbatim.
-    Returns absolute paths (as strings, forward-slashed) so the caller can reference them in
-    the prompt. Missing on-disk fixtures are skipped with a note appended to the returned list
-    via a sentinel comment — callers should treat a short return as "fixture unavailable".
+    Returns the written paths. A missing on-disk fixture is skipped here; callers must check
+    ``missing_fixtures`` first (run_behavioral records such a case as INFRA_ERROR).
     """
     dest.mkdir(parents=True, exist_ok=True)
     out: list[str] = []
@@ -351,6 +509,36 @@ def build_prompt(eval_obj: dict, fixture_paths: list[str]) -> str:
             f"needed:\n{listing}"
         )
     return prompt
+
+
+_SKILL_RUNTIME_NOTE = """
+
+---
+Evaluation harness note: this skill's bundled files are in ./skill/ (paths written relative to
+the skill directory resolve there), shared suite resources, if any, are in ./shared/, and task
+input files are in ./fixtures/."""
+
+
+def prepare_workspace(root: Path, eval_obj: dict, evals_dir: Path,
+                      skill_dir: Path | None) -> list[str]:
+    """Build one arm's isolated working directory under ``root`` and return the fixture paths
+    (relative to ``root``) to cite in the prompt.
+
+    Both arms get the task's fixtures in ``fixtures/``. Only the skilled arm (``skill_dir``
+    given) also gets the skill's own files in ``skill/`` — minus ``evals/``, so the model
+    never sees expected outputs — and the domain's ``shared/`` resources in ``shared/``. The
+    bare arm therefore cannot read the skill, and neither arm sees this repository.
+    """
+    root.mkdir(parents=True, exist_ok=True)
+    written = materialize_fixtures(eval_obj, evals_dir, root / "fixtures")
+    if skill_dir is not None:
+        shutil.copytree(skill_dir, root / "skill",
+                        ignore=shutil.ignore_patterns("evals", "__pycache__", "*.pyc"))
+        shared = skill_dir.parent / "shared"
+        if shared.is_dir():
+            shutil.copytree(shared, root / "shared",
+                            ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    return [Path(p).relative_to(root).as_posix() for p in written]
 
 
 # --- Judges -----------------------------------------------------------------------------
@@ -399,8 +587,10 @@ def _judge_rubric(rubric: str, response: str, model: str, timeout: int) -> tuple
     out = _claude(_RUBRIC_JUDGE.format(rubric=rubric, response=response), model, timeout)
     if not _is_answer(out):
         return "NA", out
-    verdict = "PASS" if "VERDICT: PASS" in out.upper() else "FAIL"
-    return verdict, (out.splitlines()[0] if out else "")
+    m = re.search(r"VERDICT:\s*(PASS|FAIL)\b", out.upper())
+    if not m:  # an unparseable judge reply is no verdict — never a silent FAIL (or PASS)
+        return "NA", f"judge reply had no VERDICT line: {out.splitlines()[0][:120] if out else ''}"
+    return m.group(1), (out.splitlines()[0] if out else "")
 
 
 def _judge_engaged(skill: str, prompt: str, rubric: str, response: str,
@@ -414,8 +604,10 @@ def _judge_engaged(skill: str, prompt: str, rubric: str, response: str,
     )
     if not _is_answer(out):
         return "NA", out
-    engaged = "YES" if "ENGAGED: YES" in out.upper() else "NO"
-    return engaged, (out.splitlines()[0] if out else "")
+    m = re.search(r"ENGAGED:\s*(YES|NO)\b", out.upper())
+    if not m:
+        return "NA", f"judge reply had no ENGAGED line: {out.splitlines()[0][:120] if out else ''}"
+    return m.group(1), (out.splitlines()[0] if out else "")
 
 
 # --- Deterministic assertion grading ----------------------------------------------------
@@ -497,33 +689,93 @@ def _eval_verdict_from_assertions(per_run: list[list[tuple[str, str, str]]]) -> 
     return "NA"
 
 
-def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
-                   shard: tuple[int, int] | None = None) -> int:
-    """Grade each eval by injecting its SKILL.md, materializing fixtures, and voting over N runs.
+def _behavioral_status(selected: int, passed: int, failed: int) -> tuple[str, int]:
+    """Run status and exit code. A run is ``passed`` only when EVERY selected case produced a
+    usable verdict and none failed; any FAIL is ``failed`` (1); no usable verdict at all is
+    ``blocked`` (2) — missing credentials, every call refused or timed out, a filter that
+    matched nothing; some usable verdicts but not all is ``partial`` (3). Only ``passed`` exits
+    0, so an all-inconclusive or infrastructure-failure run can never read as success."""
+    if failed:
+        return "failed", 1
+    if passed == 0:
+        return "blocked", 2
+    if passed < selected:
+        return "partial", 3
+    return "passed", 0
 
-    Reports, per eval: the skilled majority verdict and the bare-vs-skill rubric delta, and a
-    run-level tally of passed / failed / inconclusive / env-refused. Returns 1 if any eval's
-    skilled verdict is FAIL, else 0. NA/refused evals do not fail the run (an environment
-    refusal is not a skill defect), but they are counted and surfaced so a run that graded
-    nothing can never read as "0 failed" = success.
-    """
-    model = alterlab_model()
-    print(f"Behavioral grading with model: {model} "
-          f"(ALTERLAB_MODEL convention; see skills/core/shared/model_env.md)")
-    print(f"Each eval is run {runs}x with the skill's SKILL.md injected via "
-          f"--append-system-prompt; majority verdict is reported.")
-    targets = target_dirs(skill_filter, shard)
-    if shard:
-        print(f"Shard {shard[0]}/{shard[1]}: grading {len(targets)} of "
-              f"{len(skill_dirs())} skills this run.")
-    print()
-    if subprocess.run(["which", "claude"], capture_output=True).returncode != 0:
-        print("ERROR: the `claude` CLI is not on PATH; behavioral grading needs it.",
-              file=sys.stderr)
-        return 2
 
-    graded = passed = failed = na = refused = 0
-    for d in targets:
+def _arm_outcome(calls: list[CallResult], verdict: str, grading_notes: list[str]) -> str:
+    """Outcome of one arm from its answer calls, its PASS/FAIL/NA vote, and the NA reasons
+    the graders left (a judge call that itself failed is an infrastructure error, not a tie)."""
+    if not any(c.outcome == "answer" for c in calls):
+        return REFUSED if any(c.outcome == "refused" for c in calls) else INFRA_ERROR
+    if verdict in (PASS, FAIL):
+        return verdict
+    if any(n.startswith(_NO_ANSWER) for n in grading_notes):
+        return INFRA_ERROR
+    return INCONCLUSIVE
+
+
+def _frontmatter_value(skill_md: str, key: str) -> str | None:
+    if not skill_md.startswith("---"):
+        return None
+    block = skill_md.split("---", 2)[1] if skill_md.count("---") >= 2 else ""
+    m = re.search(rf"^\s*{re.escape(key)}:\s*\"?([^\"\n]+)\"?\s*$", block, re.MULTILINE)
+    return m.group(1).strip() if m else None
+
+
+def _quiet(cmd: list[str], cwd: Path | None = None) -> str | None:
+    """stdout of a small metadata command, or None — never raises."""
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30, cwd=cwd)
+        return (proc.stdout or "").strip() or None
+    except Exception:  # noqa: BLE001 — metadata only; absence is recorded as null
+        return None
+
+
+def _run_metadata(kind: str, model: str, runs: int, timeout: int) -> dict:
+    return {
+        "schema_version": 1,
+        "kind": kind,
+        "model": model,
+        "model_source": "ALTERLAB_MODEL" if os.environ.get("ALTERLAB_MODEL") else "default",
+        "claude_cli_version": _quiet(["claude", "--version"]),
+        "repo_commit": _quiet(["git", "rev-parse", "HEAD"], REPO),
+        "repo_dirty": bool(_quiet(["git", "status", "--porcelain"], REPO)),
+        "python": sys.version.split()[0],
+        "platform": sys.platform,
+        "runs_per_arm": runs,
+        "timeout_s": timeout,
+        "isolation": {
+            "cli_flags": list(ISOLATION_FLAGS),
+            "working_directory": "fresh temporary directory per arm (not this repository)",
+            "skilled_arm_files": ["fixtures/", "skill/ (skill files minus evals/)", "shared/"],
+            "bare_arm_files": ["fixtures/"],
+        },
+    }
+
+
+def _write_results(results_dir: Path | None, kind: str, payload: dict) -> Path | None:
+    if results_dir is None:
+        return None
+    results_dir.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    path = results_dir / f"{kind}-{stamp}.json"
+    n = 1
+    while path.exists():
+        path = results_dir / f"{kind}-{stamp}-{n}.json"
+        n += 1
+    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return path
+
+
+def _behavioral_cases(skill_filter: str | None, shard: tuple[int, int] | None,
+                      skill_dir: Path | None) -> tuple[list[dict], int]:
+    """(gradeable cases, number of evals skipped for lacking a prompt or rubric)."""
+    dirs = [skill_dir] if skill_dir else target_dirs(skill_filter, shard)
+    cases: list[dict] = []
+    skipped = 0
+    for d in dirs:
         f = eval_path(d)
         skill_md_path = d / "SKILL.md"
         if not f.exists() or not skill_md_path.exists():
@@ -533,84 +785,246 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
         except json.JSONDecodeError:
             continue
         skill_md = skill_md_path.read_text(encoding="utf-8")
-        evals_dir = f.parent
+        name = _frontmatter_value(skill_md, "name") or d.name
         for e in data.get("evals", []) or []:
-            prompt0 = e.get("prompt")
-            rubric = e.get("expected_output")
-            if not prompt0 or not rubric:
+            if not e.get("prompt") or not e.get("expected_output"):
+                skipped += 1
                 continue
-            graded += 1
-            label = f"{d.name}:{e.get('id', '?')}"
+            cases.append({"skill": name, "skill_dir": d, "skill_md": skill_md,
+                          "skill_version": _frontmatter_value(skill_md, "version"),
+                          "evals_dir": f.parent, "eval": e})
+    return cases, skipped
 
-            with tempfile.TemporaryDirectory(prefix="alterlab-eval-") as tmp:
-                fixtures = materialize_fixtures(e, evals_dir, Path(tmp))
-                prompt = build_prompt(e, fixtures)
 
-                # --- Skilled arm: SKILL.md injected, run N times, vote ---
-                skilled_runs: list[list[tuple[str, str, str]]] = []
-                skilled_rubric: list[str] = []
-                skilled_refused = False
-                for _ in range(runs):
-                    resp = _claude(prompt, model, timeout, system=skill_md)
-                    skilled_refused = skilled_refused or _is_refusal(resp)
-                    skilled_runs.append(grade_assertions(e, d.name, resp, model, timeout))
-                    skilled_rubric.append(_judge_rubric(rubric, resp, model, timeout)[0])
+def _run_arm(prompt: str, model: str, timeout: int, runs: int, workspace: Path,
+             eval_obj: dict, skill: str, rubric: str, system: str | None,
+             with_assertions: bool) -> dict:
+    calls: list[CallResult] = []
+    per_run_assertions: list[list[tuple[str, str, str]]] = []
+    rubric_votes: list[str] = []
+    notes: list[str] = []
+    run_records: list[dict] = []
+    for i in range(runs):
+        call = _claude_call(prompt, model, timeout, system=system, cwd=workspace)
+        calls.append(call)
+        assertions = (grade_assertions(eval_obj, skill, call.text, model, timeout)
+                      if with_assertions else [])
+        rv, rd = _judge_rubric(rubric, call.text, model, timeout)
+        if call.outcome == "answer":
+            notes += [d for (_, v, d) in assertions if v == "NA"] + ([rd] if rv == "NA" else [])
+        per_run_assertions.append(assertions)
+        rubric_votes.append(rv)
+        run_records.append({
+            "run": i + 1,
+            "call_outcome": call.outcome,
+            "error": call.error or None,
+            "duration_ms": call.duration_ms,
+            "cost_usd": call.cost_usd,
+            "usage": call.usage,
+            "rubric_verdict": rv,
+            "assertions": [{"assertion": a, "verdict": v, "detail": _redact(str(d))[:300]}
+                           for (a, v, d) in assertions],
+            "response_excerpt": call.text[:1500] if call.outcome == "answer" else None,
+        })
+    rubric_majority = _majority(rubric_votes)
+    if with_assertions and eval_obj.get("assertions"):
+        assertion_verdict = _eval_verdict_from_assertions(per_run_assertions)
+    else:
+        assertion_verdict = "PASS" if with_assertions else "NA"  # no assertions: rubric decides
+    if not with_assertions:
+        verdict = rubric_majority
+    elif FAIL in (assertion_verdict, rubric_majority):
+        verdict = FAIL
+    elif assertion_verdict == PASS and rubric_majority == PASS:
+        verdict = PASS
+    else:
+        verdict = "NA"
+    outcome = _arm_outcome(calls, verdict, notes)
+    reason = None
+    if outcome not in (PASS, FAIL):
+        errs = [c.error for c in calls if c.error]
+        reason = (errs or notes or ["judges returned no majority verdict"])[0]
+        reason = _redact(str(reason))[:300]
+    return {
+        "outcome": outcome,
+        "reason": reason,
+        "assertion_verdict": assertion_verdict if with_assertions else None,
+        "rubric_majority": rubric_majority,
+        "answered_runs": sum(c.outcome == "answer" for c in calls),
+        "runs": run_records,
+        "_calls": calls,
+    }
 
-                # --- Bare arm: same prompt, no skill, run N times, vote ---
-                bare_rubric: list[str] = []
-                for _ in range(runs):
-                    resp = _claude(prompt, model, timeout)
-                    bare_rubric.append(_judge_rubric(rubric, resp, model, timeout)[0])
 
-            # Skilled eval verdict = assertions roll-up AND overall-rubric majority must hold.
-            assertion_verdict = _eval_verdict_from_assertions(skilled_runs)
-            skilled_overall = _majority(skilled_rubric)
-            bare_overall = _majority(bare_rubric)
+def _grade_case(case: dict, model: str, timeout: int, runs: int) -> dict:
+    e = case["eval"]
+    record = {
+        "case_id": f"{case['skill']}:{e.get('id', '?')}",
+        "skill": case["skill"],
+        "skill_version": case["skill_version"],
+        "eval_id": e.get("id"),
+        "fixtures": [f if isinstance(f, str) else f.get("name") for f in e.get("files", []) or []],
+    }
+    missing = missing_fixtures(e, case["evals_dir"])
+    if missing:
+        reason = f"missing fixture file(s): {', '.join(missing)}"
+        empty = {"outcome": INFRA_ERROR, "reason": reason, "answered_runs": 0, "runs": [],
+                 "_calls": []}
+        return {**record, "skilled": dict(empty), "bare": dict(empty),
+                "rubric_delta": "rubric: INCONCLUSIVE (case not run)"}
+    with tempfile.TemporaryDirectory(prefix="alterlab-eval-") as tmp:
+        skilled_ws, bare_ws = Path(tmp) / "skilled", Path(tmp) / "bare"
+        fixtures = prepare_workspace(skilled_ws, e, case["evals_dir"], case["skill_dir"])
+        prepare_workspace(bare_ws, e, case["evals_dir"], None)
+        prompt = build_prompt(e, fixtures)
+        skilled = _run_arm(prompt, model, timeout, runs, skilled_ws, e, case["skill"],
+                           e["expected_output"], case["skill_md"] + _SKILL_RUNTIME_NOTE, True)
+        # The bare arm has no skill context, so it cannot carry should_trigger assertions; it is
+        # judged on the overall rubric only, which is what the delta compares.
+        bare = _run_arm(prompt, model, timeout, runs, bare_ws, e, case["skill"],
+                        e["expected_output"], None, False)
+    return {**record, "skilled": skilled, "bare": bare,
+            "rubric_delta": _delta(bare["rubric_majority"], skilled["rubric_majority"])}
 
-            if "FAIL" in (assertion_verdict, skilled_overall):
-                verdict = "FAIL"
-            elif assertion_verdict == "PASS" and skilled_overall == "PASS":
-                verdict = "PASS"
-            else:
-                verdict = "NA"
 
-            # The delta compares the two arms on the *overall rubric* only (the bare arm has no
-            # skill context, so it cannot carry the should_trigger/should_not_trigger
-            # assertions). Labelled "rubric:" so it never reads as contradicting an assertion-
-            # driven verdict (e.g. a near-miss that fails should_not_trigger while both arms'
-            # rubrics pass).
-            delta = _delta(bare_overall, skilled_overall)
-            # Classify the eval outcome for the run-level tally.
-            na_kind = "env-refused" if skilled_refused else "inconclusive"
-            mark = {"PASS": "✓", "FAIL": "✗", "NA": "?"}[verdict]
-            if verdict == "FAIL":
-                failed += 1
-            elif verdict == "PASS":
-                passed += 1
-            elif skilled_refused:
-                refused += 1
-            else:
-                na += 1
-            na_note = f" [{na_kind}]" if verdict == "NA" else ""
-            print(f"{mark} {label}: skilled={verdict}{na_note} "
-                  f"(assertions {assertion_verdict}, rubric {skilled_overall}) | "
-                  f"bare rubric {bare_overall} -> {delta}")
+def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
+                   shard: tuple[int, int] | None = None, *,
+                   results_dir: Path | None = None, skill_dir: Path | None = None,
+                   max_infra_streak: int = 6) -> int:
+    """Grade each eval by running it in an isolated workspace, skilled arm vs bare arm.
 
-    # Headline: never let "0 failed" imply success — report passed/failed/inconclusive/refused
-    # so a run that graded nothing (everything refused or inconclusive) is unmistakable.
-    verified = passed + failed
-    print(f"\n{graded} eval(s) graded: {passed} passed, {failed} failed, "
-          f"{na} inconclusive, {refused} env-refused.")
-    if graded and verified == 0:
-        print("WARNING: 0 evals produced a gradeable verdict — the environment refused or "
-              "could not answer every prompt; this run verifies NOTHING about the skills.",
+    Per case, the skilled arm gets the skill's SKILL.md via --append-system-prompt plus its
+    bundled files; the bare arm gets only the task. Each arm runs ``runs`` times; assertions and
+    the rubric are judged per run and majority-voted. Every case ends in exactly one outcome —
+    PASS, FAIL, INCONCLUSIVE, REFUSED, INFRA_ERROR, or NOT_RUN — with the first reason printed.
+    After ``max_infra_streak`` consecutive infrastructure errors the run aborts and the
+    remaining cases are NOT_RUN. Results (case IDs, model, versions, per-run outcomes, baseline
+    comparison, usage) are written as JSON to ``results_dir``. Exit code: ``_behavioral_status``.
+    """
+    model = alterlab_model()
+    _reset_usage()
+    started = time.monotonic()
+    started_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    meta = _run_metadata("behavioral", model, runs, timeout)
+    meta["selection"] = {"skill_filter": skill_filter, "skill_dir": str(skill_dir) if skill_dir
+                         else None, "shard": f"{shard[0]}/{shard[1]}" if shard else None}
+    print("=== BEHAVIORAL EVALUATION (live model calls; not the static schema check) ===")
+    print(f"Model: {model} (ALTERLAB_MODEL convention; see skills/core/shared/model_env.md). "
+          f"Each case runs {runs}x per arm, skilled vs bare, in isolated temp workspaces "
+          f"({' '.join(ISOLATION_FLAGS)}).")
+
+    if shutil.which("claude") is None:
+        reason = "the `claude` CLI is not on PATH; behavioral grading needs it"
+        print(f"BLOCKED: {reason}.", file=sys.stderr)
+        _write_results(results_dir, "behavioral", {**meta, "started_at": started_at,
+                       "status": "blocked", "status_reasons": [reason], "summary": {},
+                       "cases": []})
+        return 2
+
+    cases, skipped = _behavioral_cases(skill_filter, shard, skill_dir)
+    if shard:
+        print(f"Shard {shard[0]}/{shard[1]} of the corpus.")
+    print(f"{len(cases)} case(s) selected"
+          + (f"; {skipped} eval(s) skipped for lacking a prompt or rubric" if skipped else "")
+          + ".\n")
+
+    records: list[dict] = []
+    streak, aborted = 0, None
+    for case in cases:
+        if aborted:
+            not_run = {"outcome": NOT_RUN, "reason": aborted, "answered_runs": 0, "runs": []}
+            records.append({"case_id": f"{case['skill']}:{case['eval'].get('id', '?')}",
+                            "skill": case["skill"], "skill_version": case["skill_version"],
+                            "eval_id": case["eval"].get("id"), "skilled": dict(not_run),
+                            "bare": dict(not_run), "rubric_delta": "rubric: INCONCLUSIVE "
+                            "(case not run)"})
+            continue
+        rec = _grade_case(case, model, timeout, runs)
+        for call in rec["skilled"].pop("_calls") + rec["bare"].pop("_calls"):
+            streak = streak + 1 if call.outcome == "infra_error" else 0
+            if streak >= max_infra_streak and not aborted:
+                aborted = (f"aborted after {streak} consecutive infrastructure errors "
+                           f"({call.error}) — {_diagnose(call.error)}")
+        if rec["skilled"]["outcome"] == INFRA_ERROR and not rec["skilled"]["runs"]:
+            streak += 1  # a missing fixture also counts toward the breaker
+        s, b = rec["skilled"], rec["bare"]
+        mark = {PASS: "✓", FAIL: "✗"}.get(s["outcome"], "?")
+        why = f" [{s['reason']}]" if s.get("reason") else ""
+        print(f"{mark} {rec['case_id']}: skilled={s['outcome']}{why} "
+              f"(assertions {s.get('assertion_verdict')}, rubric {s.get('rubric_majority')}) | "
+              f"bare={b['outcome']} -> {rec['rubric_delta']}")
+        records.append(rec)
+        if aborted:
+            print(f"ABORTING: {aborted}", file=sys.stderr)
+
+    counts = {o: sum(r["skilled"]["outcome"] == o for r in records) for o in OUTCOMES}
+    bare_counts = {o: sum(r["bare"]["outcome"] == o for r in records) for o in OUTCOMES}
+    deltas = {"helped": 0, "hurt": 0, "no_delta": 0, "inconclusive": 0}
+    for r in records:
+        d = r["rubric_delta"]
+        key = ("helped" if "HELPED" in d else "hurt" if "HURT" in d
+               else "no_delta" if "NO DELTA" in d else "inconclusive")
+        deltas[key] += 1
+    selected = len(records)
+    attempted = selected - counts[NOT_RUN]
+    answered = sum(r["skilled"].get("answered_runs", 0) > 0 for r in records)
+    usable = counts[PASS] + counts[FAIL]
+    status, code = _behavioral_status(selected, counts[PASS], counts[FAIL])
+    reasons: list[str] = []
+    if status != "passed":
+        if selected == 0:
+            reasons.append("no case matched the selection")
+        if counts[FAIL]:
+            reasons.append(f"{counts[FAIL]} case(s) failed")
+        if usable < selected:
+            reasons.append(f"{selected - usable} of {selected} case(s) produced no usable "
+                           "verdict, so the selection is not fully evaluated")
+        if aborted:
+            reasons.append(aborted)
+    first_problem = next((r["skilled"]["reason"] for r in records
+                          if r["skilled"]["outcome"] in (INFRA_ERROR, REFUSED)), None)
+    summary = {
+        "selected": selected, "attempted": attempted, "answered": answered,
+        "usable_verdicts": usable,
+        "coverage": round(usable / selected, 4) if selected else 0.0,
+        "skilled": counts, "bare": bare_counts, "rubric_delta": deltas,
+        "skipped_ungradeable_evals": skipped,
+    }
+    usage = {**_USAGE, "wall_clock_s": round(time.monotonic() - started, 1),
+             "cost_note": "total_cost_usd as reported by the claude CLI; on a subscription "
+                          "login this is an estimate, not a bill"}
+    payload = {**meta, "started_at": started_at,
+               "finished_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+               "status": status, "status_reasons": reasons, "summary": summary,
+               "usage": usage, "cases": records}
+    path = _write_results(results_dir, "behavioral", payload)
+
+    print(f"\n=== BEHAVIORAL RESULT: {status.upper()} ===")
+    print(f"selected {selected} | attempted {attempted} | answered {answered} | usable verdicts "
+          f"{usable} ({summary['coverage']:.0%} coverage)")
+    print("skilled arm: " + ", ".join(f"{counts[o]} {o}" for o in OUTCOMES))
+    print("bare arm:    " + ", ".join(f"{bare_counts[o]} {o}" for o in OUTCOMES))
+    print(f"rubric delta (skilled vs bare): {deltas['helped']} helped, {deltas['hurt']} hurt, "
+          f"{deltas['no_delta']} no delta, {deltas['inconclusive']} inconclusive")
+    cost = (f", ${_USAGE['cost_usd']:.2f} reported by the CLI"
+            if _USAGE["cost_reported_calls"] else "")
+    print(f"usage: {_USAGE['calls']} CLI call(s), {usage['wall_clock_s']}s wall clock{cost}")
+    if path:
+        print(f"results: {path.relative_to(REPO) if path.is_relative_to(REPO) else path}")
+    if first_problem:
+        print(f"First infrastructure/refusal reason: {first_problem} — {_diagnose(first_problem)}",
               file=sys.stderr)
-    elif refused:
-        print(f"NOTE: {refused} eval(s) were refused by the runner environment (usage-policy "
-              "classifier), not graded against the skill. Common for biomedical/clinical/"
-              "genomics prompts via the Claude Code CLI; use the API runner for those domains.",
-              file=sys.stderr)
-    return 1 if failed else 0
+    if status == "blocked":
+        print("BLOCKED: no case produced a usable verdict; this run verifies NOTHING about the "
+              "skills and exits non-zero.", file=sys.stderr)
+    elif status == "partial":
+        print("PARTIAL: only some selected cases produced a verdict; this is not a validation "
+              "of the selection.", file=sys.stderr)
+    if counts[REFUSED]:
+        print(f"NOTE: {counts[REFUSED]} case(s) were refused by the runner environment "
+              "(usage-policy classifier), not graded against the skill. Common for biomedical/"
+              "clinical/genomics prompts via the Claude Code CLI.", file=sys.stderr)
+    return code
 
 
 def _delta(bare: str, skilled: str) -> str:
@@ -694,16 +1108,23 @@ def _choose(prompt: str, cand_names: list[str], catalog: dict[str, tuple[str, st
 
 
 def run_activation(skill_filter: str | None, timeout: int, runs: int, n_distractors: int,
-                   shard: tuple[int, int] | None = None) -> int:
+                   shard: tuple[int, int] | None = None, *,
+                   results_dir: Path | None = None) -> int:
     """Measure auto-selection rate over should_trigger prompts (with should_not_trigger as a
-    cross-fire control). Reports activation rate vs the 90% bar and the cross-fire rate."""
+    cross-fire control). Reports activation rate vs the 90% bar and the cross-fire rate.
+    A discovery metric, separate from behavioral grading: it never fails on a low rate, but a
+    run in which no prompt got a usable choice is blocked (exit 2), and results are persisted."""
     model = alterlab_model()
-    if subprocess.run(["which", "claude"], capture_output=True).returncode != 0:
+    _reset_usage()
+    started_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    picks: list[dict] = []
+    if shutil.which("claude") is None:
         print("ERROR: the `claude` CLI is not on PATH; the activation harness needs it.",
               file=sys.stderr)
         return 2
     catalog = skill_catalog()
     targets = target_dirs(skill_filter, shard)
+    print("=== ACTIVATION HARNESS (live model calls; separate from behavioral grading) ===")
     print(f"Activation harness with model: {model} (ALTERLAB_MODEL convention). "
           f"{runs}x/prompt, {n_distractors} same-domain distractors; majority pick.")
     if shard:
@@ -711,6 +1132,7 @@ def run_activation(skill_filter: str | None, timeout: int, runs: int, n_distract
     print()
 
     hits = cross = miss = 0                    # should_trigger outcomes
+    no_answer = 0                              # prompts where every call failed (not a miss)
     neg_ok = neg_bad = 0                       # should_not_trigger outcomes
     per_cat: dict[str, list[int]] = {}         # category -> [hits, total]
     for d in targets:
@@ -733,10 +1155,15 @@ def run_activation(skill_filter: str | None, timeout: int, runs: int, n_distract
                 continue
             votes = [_choose(e["prompt"], cand, catalog, model, timeout) for _ in range(runs)]
             real = [v for v in votes if v is not None]
+            pick = {"case_id": f"{target}:{e.get('id', '?')}", "kind": "positive" if is_pos
+                    else "near-miss", "votes": votes}
+            picks.append(pick)
             if not real:
-                miss += 1
+                no_answer += 1
+                pick["outcome"] = INFRA_ERROR
                 continue
             choice = max(set(real), key=real.count)
+            pick["choice"] = choice
             if is_pos:
                 bucket = per_cat.setdefault(d.parent.name, [0, 0])
                 bucket[1] += 1
@@ -771,6 +1198,29 @@ def run_activation(skill_filter: str | None, timeout: int, runs: int, n_distract
         print(f"graded: {graded_neg} | correctly NOT selected: {neg_ok} | "
               f"wrongly self-selected: {neg_bad} "
               f"({(neg_ok/graded_neg*100):.1f}% correct deferral)")
+    if no_answer:
+        print(f"\n{no_answer} prompt(s) got no usable answer from the CLI and are excluded "
+              "from the rates above.", file=sys.stderr)
+    blocked = graded_pos + graded_neg == 0
+    payload = {**_run_metadata("activation", model, runs, timeout),
+               "started_at": started_at,
+               "finished_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+               "status": "blocked" if blocked else ("partial" if no_answer else "measured"),
+               "summary": {"prompts": len(picks), "no_usable_answer": no_answer,
+                           "positive": {"graded": graded_pos, "correct": hits,
+                                        "cross_fired": cross, "missed": miss,
+                                        "activation_rate": round(rate / 100, 4)},
+                           "near_miss": {"graded": graded_neg, "correctly_deferred": neg_ok,
+                                         "wrongly_selected": neg_bad},
+                           "per_category": per_cat},
+               "distractors": n_distractors, "usage": dict(_USAGE), "picks": picks}
+    path = _write_results(results_dir, "activation", payload)
+    if path:
+        print(f"results: {path.relative_to(REPO) if path.is_relative_to(REPO) else path}")
+    if blocked:
+        print("BLOCKED: no prompt produced a usable choice; this run measures NOTHING and "
+              "exits non-zero.", file=sys.stderr)
+        return 2
     # A discovery metric, not a gate: never fail the run on activation rate.
     return 0
 
@@ -780,6 +1230,7 @@ def run_validation(strict: bool) -> int:
     results = validate_all()
     using_jsonschema = "jsonschema" in sys.modules or _jsonschema_available()
     bad = [r for r in results if not r.ok]
+    print("=== SCHEMA & COVERAGE VALIDATION (static; no model calls) ===")
     for r in results:
         if r.ok:
             print(f"✓ {r.skill}")
@@ -789,8 +1240,20 @@ def run_validation(strict: bool) -> int:
           f"{len(results) - len(bad)} clean.")
     print(f"Schema validation: {'jsonschema (full)' if using_jsonschema else 'built-in fallback'}"
           f" — run with `uv run --with jsonschema ...` for full Draft 2020-12 validation.")
-    print("Behavioral execution (running each prompt through the claude CLI and LLM-judging "
-          "expected_output) is not performed here; use --behavioral.")
+    n_evals = n_fixture_evals = n_fixture_skills = 0
+    for d in skill_dirs():
+        try:
+            evals = json.loads(eval_path(d).read_text(encoding="utf-8")).get("evals", []) or []
+        except (OSError, json.JSONDecodeError):
+            continue
+        with_files = [e for e in evals if e.get("files")]
+        n_evals += len(evals)
+        n_fixture_evals += len(with_files)
+        n_fixture_skills += bool(with_files)
+    print(f"{n_evals} eval case(s); {n_fixture_evals} supply input-file fixtures "
+          f"(in {n_fixture_skills} skill(s)).")
+    print("This checks structure and trigger coverage only — it says nothing about whether a "
+          "skill behaves correctly. Behavioral grading: --behavioral; activation: --activation.")
     return 1 if (bad and strict) else 0
 
 
@@ -822,9 +1285,18 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--runs", type=int, default=3,
                     help="(behavioral/activation) times to run each eval per arm; majority "
                          "verdict wins (default 3)")
+    ap.add_argument("--results-dir", metavar="DIR", default=str(REPO / "eval-results"),
+                    help="(behavioral/activation) write machine-readable JSON results here "
+                         "(default: eval-results/, git-ignored); pass '' to skip")
+    ap.add_argument("--skill-dir", metavar="DIR", default=None,
+                    help="(behavioral) grade the skill in DIR (SKILL.md + evals/evals.json), "
+                         "which may live outside skills/ — e.g. a benchmark or a test fixture")
+    ap.add_argument("--max-infra-errors", type=int, default=6,
+                    help="(behavioral) abort after this many consecutive infrastructure errors; "
+                         "remaining cases are NOT_RUN (default 6)")
     ap.add_argument("--shard", metavar="i/n", default=None,
                     help="(behavioral/activation) grade only a deterministic shard of skills "
-                         "(e.g. 2/7) so a scheduled run rotates through the corpus over time")
+                         "(e.g. 2/7) to split a long run into several sittings")
     args = ap.parse_args(argv)
 
     try:
@@ -832,18 +1304,23 @@ def main(argv: list[str] | None = None) -> int:
     except ValueError as exc:
         ap.error(str(exc))
 
+    results_dir = Path(args.results_dir) if args.results_dir else None
     if args.behavioral and args.activation:
         ap.error("choose one of --behavioral / --activation, not both")
     if args.behavioral:
         if args.runs < 1:
             ap.error("--runs must be >= 1")
-        return run_behavioral(args.skill, args.timeout, args.runs, shard)
+        return run_behavioral(args.skill, args.timeout, args.runs, shard,
+                              results_dir=results_dir,
+                              skill_dir=Path(args.skill_dir).resolve() if args.skill_dir else None,
+                              max_infra_streak=max(1, args.max_infra_errors))
     if args.activation:
         if args.runs < 1:
             ap.error("--runs must be >= 1")
         if args.distractors < 1:
             ap.error("--distractors must be >= 1")
-        return run_activation(args.skill, args.timeout, args.runs, args.distractors, shard)
+        return run_activation(args.skill, args.timeout, args.runs, args.distractors, shard,
+                              results_dir=results_dir)
     return run_validation(args.strict)
 
 
