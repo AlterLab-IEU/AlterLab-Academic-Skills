@@ -1,0 +1,219 @@
+{
+  "id": "analysis-check",
+  "title": "Checking a colleague's statistical test choices against the data",
+  "domain": "Applied statistics / test selection (education and faculty-development research)",
+  "skill_dir": "skills/methodology/alterlab-test-selection-guard",
+  "allowed_tools": [
+    "Read",
+    "Glob",
+    "Grep",
+    "Bash(python3:*)"
+  ],
+  "label_semantics": {
+    "approve": [
+      "VALID"
+    ],
+    "abstain": [
+      "CANNOT_ASSESS"
+    ],
+    "false_approval_name": "invalid analysis passed as valid",
+    "false_accusation_name": "valid analysis flagged as invalid"
+  },
+  "cases": [
+    {
+      "id": "log-a-standard",
+      "kind": "standard",
+      "prompt": "A colleague in my department ran the analyses in the attached log (analysis_log_A.md, with its data files) for a teaching-innovation report that goes to the dean's office next week, and asked me to sanity-check the statistics. Could you check whether each analysis choice is appropriate for its data, and recompute anything that needs it?",
+      "files": [
+        "fixtures/analysis_log_A.md",
+        "fixtures/A1_writing_retreat_anxiety.csv",
+        "fixtures/A2_pass_fail_by_method.csv",
+        "fixtures/A3_exam_by_section.csv"
+      ],
+      "labels": [
+        "VALID",
+        "INVALID",
+        "CANNOT_ASSESS"
+      ],
+      "items": [
+        {
+          "id": "A1",
+          "question": "Analysis A1: is the independent-samples t-test comparing stai_pre with stai_post a valid choice of test for these data?",
+          "expected": "INVALID",
+          "accept": [
+            "INVALID"
+          ],
+          "anchor": "analysis_log_A.md L8-L9: each of the 12 participants was measured twice (before and after), one row per participant (A1_writing_retreat_anxiety.csv lines 3-14, participant_id P01-P12). Repeated measurements on the same people are paired; the independent-samples t-test (L10-L11) treats them as two independent groups, ignores the within-person correlation and inflates the standard error (reported t(22) = 1.72, p = .10 vs paired t(11) = 6.01, p < .001; scipy 1.18 ttest_ind / ttest_rel). Correct branch: paired-samples t-test (differences approximately normal, Shapiro-Wilk on differences p = .19) or Wilcoxon signed-rank. skills/methodology/alterlab-test-selection-guard/SKILL.md L101-L113 ('Paired / repeated?' -> paired t-test) and references/decision_tree.md L21-L22; Field A (2018) Discovering Statistics Using IBM SPSS Statistics (5th ed.), chapter on comparing two means (dependent vs independent designs)."
+        },
+        {
+          "id": "A1-N",
+          "kind": "number",
+          "question": "Analysis A1: compute the correct paired-samples t statistic for these data (differences stai_pre minus stai_post, df = 11). Give t to two decimals.",
+          "expected": 6.01,
+          "tolerance": 0.05,
+          "anchor": "Computed by hand from A1_writing_retreat_anxiety.csv lines 3-14: differences = 4, 2, 7, 3, 1, 6, 3, 6, 2, 7, 1, 4; sum = 46, mean = 3.833; sum of squares = 230; SS = 230 - 46^2/12 = 53.667; s_d = sqrt(53.667/11) = 2.2088; SE = 2.2088/sqrt(12) = 0.6376; t = 3.833/0.6376 = 6.012. Cross-check: scipy 1.18 stats.ttest_rel(pre, post) -> t = 6.0119, df = 11, p = 8.8e-05."
+        },
+        {
+          "id": "A2",
+          "question": "Analysis A2: is the Pearson chi-square test of independence (no continuity correction) a valid choice for this 2 x 2 table?",
+          "expected": "INVALID",
+          "accept": [
+            "INVALID"
+          ],
+          "anchor": "A2_pass_fail_by_method.csv lines 3-6: flipped 11 pass / 1 fail; lecture 5 pass / 5 fail; N = 22 (analysis_log_A.md L16-L19). Expected counts: fail column total 6 -> flipped 12 x 6/22 = 3.27, lecture 10 x 6/22 = 2.73; 2 of 4 cells (50%) have expected counts < 5, violating Cochran's rule (no more than 20% of cells below 5, none below 1): Cochran WG (1954) 'Some methods for strengthening the common chi-square tests', Biometrics 10:417-451; Agresti A (2007) An Introduction to Categorical Data Analysis (2nd ed.), small-sample tests / Fisher's exact test. Fisher's exact test is required: two-sided p = .056 (scipy 1.18 fisher_exact), so the 'significant difference' at L20-L21 (chi-square p = .029, reproduced exactly) does not survive. skills/methodology/alterlab-test-selection-guard/SKILL.md L130-L134 ('Expected cell count >= 5?' no -> Fisher's exact) and references/decision_tree.md L58-L59."
+        },
+        {
+          "id": "A3",
+          "question": "Analysis A3: is the one-way ANOVA a valid choice for comparing final-exam scores across the three sections?",
+          "expected": "VALID",
+          "accept": [
+            "VALID"
+          ],
+          "anchor": "analysis_log_A.md L24-L25: three independent groups (different students per section; A3_exam_by_section.csv lines 3-20, 6 per section); continuous outcome; test pre-specified before the exam (L26-L28); assumption checks run and reported before interpretation (L29-L30). Re-verified with scipy 1.18: Shapiro-Wilk p = .945, >.999, .964; Levene (median) F(2,15) = 0.097, p = .908; ANOVA F(2,15) = 17.79, p = .00011; eta-squared = SSB/SST = 204.33/290.5 = .70 — all as reported (L31). Independent + 3 groups + normal -> one-way ANOVA: skills/methodology/alterlab-test-selection-guard/SKILL.md L115-L124 and references/decision_tree.md L44-L47; assumption gate SKILL.md L160-L175. Six per group limits the power of the normality check but does not invalidate ANOVA with equal group sizes (Blanca MJ et al. (2017) 'Non-normal data: Is ANOVA still a valid option?', Psicothema 29:552-557)."
+        },
+        {
+          "id": "A3-posthoc",
+          "question": "Analysis A3: are the Tukey HSD post-hoc comparisons (L32-L33) a valid follow-up to the ANOVA?",
+          "expected": "VALID",
+          "accept": [
+            "VALID"
+          ],
+          "anchor": "analysis_log_A.md L26-L27: Tukey HSD was pre-specified, conditional on a significant omnibus test, which was obtained (L31). Equal group sizes and homogeneous variances (L29-L30) meet Tukey's assumptions. Re-verified (scipy 1.18 tukey_hsd): section 2 - section 1 = 7.83, p < .001; section 2 - section 3 = 6.17, p = .001; section 1 - section 3 = -1.67, p = .469 — as reported. skills/methodology/alterlab-test-selection-guard/references/decision_tree.md L46-L47 ('Plan post-hoc comparisons (e.g. Tukey HSD) in advance; do not pick the post-hoc by which pair is significant'); Field (2018), one-way ANOVA chapter, post-hoc procedures."
+        }
+      ]
+    },
+    {
+      "id": "log-b-difficult",
+      "kind": "difficult-negative",
+      "prompt": "Our internal reviewer objected to every analysis in the attached log (analysis_log_B.md and its data files). The colleague who ran them wants a second opinion before deciding what to redo — some of the objections may be right and some may not. Please judge each analysis on its merits against the data and the description.",
+      "files": [
+        "fixtures/analysis_log_B.md",
+        "fixtures/B1_mentoring_grant_submission.csv",
+        "fixtures/B2_app_use_exam.csv",
+        "fixtures/B3_ethics_review_days.csv"
+      ],
+      "labels": [
+        "VALID",
+        "INVALID",
+        "CANNOT_ASSESS"
+      ],
+      "items": [
+        {
+          "id": "B1",
+          "question": "Analysis B1: is the Pearson chi-square test of independence (no continuity correction) a valid choice for this 2 x 2 table, given that one observed cell count is only 3?",
+          "expected": "VALID",
+          "accept": [
+            "VALID"
+          ],
+          "anchor": "B1_mentoring_grant_submission.csv lines 3-6: mentored 17 yes / 3 no; not mentored 15 yes / 15 no; N = 50; each faculty member counted once (analysis_log_B.md L7-L9, independence met). Cochran's rule concerns EXPECTED counts, not observed ones: row totals 20/30, column totals 32 yes / 18 no -> expected 20 x 32/50 = 12.8, 20 x 18/50 = 7.2, 30 x 32/50 = 19.2, 30 x 18/50 = 10.8 — all >= 5, so the chi-square approximation is valid (Cochran 1954, Biometrics 10:417-451; Agresti 2007, An Introduction to Categorical Data Analysis, 2nd ed.). Reported chi-square(1) = 6.38, p = .012 reproduced exactly (scipy 1.18); Yates-corrected chi-square = 4.95, p = .026 and Fisher's exact p = .016 agree. skills/methodology/alterlab-test-selection-guard/SKILL.md L130-L134 and references/decision_tree.md L58 ('Expected cell count >= 5 ... -> chi-square'). The conclusion (L12) is associational, not causal. Flagging this test is a false accusation."
+        },
+        {
+          "id": "B2",
+          "question": "Analysis B2: is the Pearson correlation across all 13 students, and the conclusion of a strong positive linear relationship, valid?",
+          "expected": "INVALID",
+          "accept": [
+            "INVALID"
+          ],
+          "anchor": "B2_app_use_exam.csv lines 3-15: students S01-S12 have 2-5 app hours and scores 58-73; S13 (line 15) has 25 hours and a score of 98 (z = 3.27 on x, 3.02 on y; leverage 0.97; Cook's distance 81). Pearson r = .86 with S13 (L18, reproduced) but r = -0.456 without it, and Spearman rho over all 13 = -0.10 (scipy 1.18): one influential point manufactures the 'strong positive linear relationship' (L19). Pearson r assumes a linear, approximately bivariate-normal relationship without influential outliers; here the robust alternative or a sensitivity analysis contradicts the claim. skills/methodology/alterlab-test-selection-guard/SKILL.md L136-L144 ('Linear & normal?' no -> Spearman) and references/decision_tree.md L66-L67; Anscombe FJ (1973) 'Graphs in statistical analysis', Am Stat 27:17-21; Cook RD (1977) 'Detection of influential observation in linear regression', Technometrics 19:15-18; Field (2018), correlation chapter on outliers."
+        },
+        {
+          "id": "B2-N",
+          "kind": "number",
+          "question": "Analysis B2: compute Pearson's r between app_hours_per_week and exam_score after excluding student S13 (n = 12). Give r to three decimals.",
+          "expected": -0.456,
+          "tolerance": 0.01,
+          "anchor": "Computed by hand from B2_app_use_exam.csv lines 3-14 (S01-S12): sum x = 42, mean 3.5; sum y = 776, mean 64.667; Sxx = 15.0; Syy = 216.667; Sxy = -26.0; r = -26.0 / sqrt(15.0 x 216.667) = -26.0 / 57.009 = -0.456. Cross-check: scipy 1.18 pearsonr -> r = -0.4561, p = .136."
+        },
+        {
+          "id": "B3",
+          "question": "Analysis B3: is the Mann-Whitney U test a valid choice for comparing working days to approval between the paper and online routes?",
+          "expected": "VALID",
+          "accept": [
+            "VALID"
+          ],
+          "anchor": "analysis_log_B.md L24-L25: the plan pre-specified Welch's t-test with a Mann-Whitney fallback triggered by Shapiro-Wilk, checked before any group comparison; L26-L27: the check was run first and failed (p < .001 and .006; strong right skew). Re-verified from B3_ethics_review_days.csv lines 3-22 (scipy 1.18): Shapiro-Wilk p = .0004 (paper) and .0064 (online); medians 4.5 and 8; Mann-Whitney U = 31, p = .160 — as reported (L29). The switch was driven by an assumption check, not by a p-value, which is the legitimate route: skills/methodology/alterlab-test-selection-guard/SKILL.md L160-L175 (assumption-check gate) and L186 ('The non-parametric test is only valid if the assumption check (not the p-value) sent you there'); references/assumption_gate.md L10-L21 and L38-L44. The conclusion (L30) is correctly phrased as absence of evidence."
+        },
+        {
+          "id": "B4",
+          "question": "Analysis B4: is reporting the Mann-Whitney U result (p = .03) as the main finding, after the pre-registered t-test gave p = .08, a valid analysis choice?",
+          "expected": "INVALID",
+          "accept": [
+            "INVALID"
+          ],
+          "anchor": "analysis_log_B.md L34: the pre-registered test was the independent-samples t-test; L35-L36: after it returned p = .08 ('close to significance') a Mann-Whitney test was run and promoted to the main finding. The second test was chosen because of the first test's p-value — test-shopping, which inflates the Type I error rate: skills/methodology/alterlab-test-selection-guard/SKILL.md L33-L46 (Iron Law 'NO TEST CHOSEN AFTER SEEING THE P-VALUE') and L186 (Excuse vs Reality: 'The t-test wasn't significant, let me try Mann-Whitney'); Simmons JP, Nelson LD & Simonsohn U (2011) 'False-positive psychology', Psychol Sci 22:1359-1366. The pre-registered t-test (p = .08; t(37) = 1.80 gives p = .080, scipy) must be reported as the primary result, with the Mann-Whitney test disclosed as a non-pre-registered sensitivity analysis."
+        },
+        {
+          "id": "B5",
+          "question": "Analysis B5: is Welch's t-test a valid choice here, given that Levene's test was non-significant (p = .41)?",
+          "expected": "VALID",
+          "accept": [
+            "VALID"
+          ],
+          "anchor": "analysis_log_B.md L42-L43: Welch's t-test was pre-specified for every two-group comparison regardless of variance tests; L40-L41: two independent groups, one score per course; L44: normality checks unremarkable. Welch's test does not require unequal variances; it is the recommended unconditional default because it protects Type I error under heterogeneity and loses little when variances are equal, whereas choosing Student vs Welch by a Levene pre-test does not protect alpha: Delacre, Lakens & Leys (2017) Int Rev Soc Psychol 30:92-101; Zimmerman (2004) Br J Math Stat Psychol 57:173-181; skills/methodology/alterlab-test-selection-guard/references/decision_tree.md L29-L42 and references/assumption_gate.md L32. Reported values reproduce: t = (31.4 - 27.6)/sqrt(5.1^2/14 + 4.6^2/22) = 3.8/1.679 = 2.26; Welch df = 25.7; p = .032 (scipy 1.18)."
+        }
+      ]
+    },
+    {
+      "id": "log-c-incomplete",
+      "kind": "incomplete-input",
+      "prompt": "Here is a draft analysis log from a colleague (analysis_log_C.md plus the data files that exist so far). Some details are still being filled in. Before she writes this up, could you check whether each analysis choice is appropriate?",
+      "files": [
+        "fixtures/analysis_log_C.md",
+        "fixtures/C1_reaction_times.csv",
+        "fixtures/C3_feedback_preference.csv",
+        "fixtures/C4_quiz_scores_by_week.csv"
+      ],
+      "labels": [
+        "VALID",
+        "INVALID",
+        "CANNOT_ASSESS"
+      ],
+      "items": [
+        {
+          "id": "C1",
+          "question": "Analysis C1: is the independent-samples t-test a valid choice for comparing reaction times between the dim and bright conditions?",
+          "expected": "CANNOT_ASSESS",
+          "accept": [
+            "CANNOT_ASSESS"
+          ],
+          "anchor": "analysis_log_C.md L7-L8 says only '10 observations per condition'; C1_reaction_times.csv (lines 2-22) has columns condition and rt_ms with no participant identifier, and its row order carries no pairing information. Whether the same 10 people were tested under both lighting conditions (paired -> paired t-test or Wilcoxon signed-rank) or 20 different people were tested (independent -> independent/Welch t-test) is not stated, and the test choice turns on exactly that fact: skills/methodology/alterlab-test-selection-guard/SKILL.md L101-L103 ('Paired / repeated?') and references/decision_tree.md L84-L86 (a 'corrected design fact (e.g. realizing the data are actually paired)' changes the branch). Neither VALID nor INVALID can be established from the input; the correct response is to ask how the data were collected."
+        },
+        {
+          "id": "C2",
+          "question": "Analysis C2: is the Pearson chi-square test of independence a valid choice for comparing pass rates between the morning and evening sections?",
+          "expected": "CANNOT_ASSESS",
+          "accept": [
+            "CANNOT_ASSESS"
+          ],
+          "anchor": "analysis_log_C.md L14-L15: only percentages (40% vs 75%) are available; no cell counts or section sizes are given and no data file exists. The chi-square approximation requires expected counts >= 5 (Cochran 1954, Biometrics 10:417-451; skills/methodology/alterlab-test-selection-guard/SKILL.md L130-L134; references/decision_tree.md L58-L59), which cannot be computed without the counts. Illustration: with 20 students per section (8/20 vs 15/20 pass) every expected count is >= 8.5 and chi-square is valid; with 20 morning and 4 evening students (8/20 vs 3/4) the expected evening fail count is 4 x 13/24 = 2.17 and Fisher's exact test is needed. The input does not determine which case holds."
+        },
+        {
+          "id": "C3",
+          "question": "Analysis C3: is the Pearson chi-square test of independence a valid choice for this 2 x 3 table?",
+          "expected": "VALID",
+          "accept": [
+            "VALID"
+          ],
+          "anchor": "C3_feedback_preference.csv lines 3-8: undergraduate 18/9/13, graduate 12/8/10 (written/audio/video); each student counted once (analysis_log_C.md L20). Row totals 40/30, column totals 30/17/23, N = 70; smallest expected count = 30 x 17/70 = 7.29, all six >= 5 (Cochran 1954; Agresti 2007). Reported chi-square(2, N = 70) = 0.23, p = .89 reproduced (scipy 1.18); the conclusion (L23-L24) is phrased as absence of evidence. skills/methodology/alterlab-test-selection-guard/SKILL.md L130-L134."
+        },
+        {
+          "id": "C3-N",
+          "kind": "number",
+          "question": "Analysis C3: what is the smallest expected cell count under independence in the 2 x 3 table? Give it to two decimals.",
+          "expected": 7.29,
+          "tolerance": 0.02,
+          "anchor": "Computed by hand from C3_feedback_preference.csv lines 3-8: expected = row total x column total / N. Graduate row total = 12 + 8 + 10 = 30; audio column total = 9 + 8 = 17; N = 70; 30 x 17/70 = 7.2857. All other expected counts are larger (17.14, 9.71, 13.14, 12.86, 9.86). Cross-check: scipy 1.18 chi2_contingency expected_freq.min() = 7.2857."
+        },
+        {
+          "id": "C4",
+          "question": "Analysis C4: is the one-way between-subjects ANOVA a valid choice for comparing quiz scores across weeks 1, 4 and 8?",
+          "expected": "INVALID",
+          "accept": [
+            "INVALID"
+          ],
+          "anchor": "analysis_log_C.md L27-L28: the same eight students were tested at all three time points (C4_quiz_scores_by_week.csv lines 3-10, one row per student); L29-L30: analysed as three independent groups. Repeated measurements violate the independence assumption of between-subjects ANOVA and leave between-student variance in the error term. Correct branch: repeated-measures ANOVA (with a sphericity check / Greenhouse-Geisser) or Friedman: skills/methodology/alterlab-test-selection-guard/SKILL.md L115-L127 and references/decision_tree.md L49-L51; Field (2018), repeated-measures designs chapter; Maxwell, Delaney & Kelley (2018) Designing Experiments and Analyzing Data (3rd ed.). Verified (scipy 1.18 / hand computation): between-subjects F(2, 21) = 1.38, p = .27 as reported, whereas repeated-measures F(2, 14) = 238.1, p < .001 and Friedman chi-square(2) = 16.0, p < .001 (every student increased monotonically, so ranks are 1-2-3 for all eight: 12/(8 x 3 x 4) x (8^2 + 16^2 + 24^2) - 3 x 8 x 4 = 112 - 96 = 16)."
+        }
+      ]
+    }
+  ]
+}

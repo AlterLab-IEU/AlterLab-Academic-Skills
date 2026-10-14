@@ -1,0 +1,248 @@
+{
+  "id": "manuscript-review",
+  "title": "Pre-review methodological check of an observational survey manuscript",
+  "domain": "Peer review / research methods (cross-sectional survey, sleep and health psychology)",
+  "skill_dir": "skills/core/alterlab-paper-reviewer",
+  "allowed_tools": [
+    "Read",
+    "Glob",
+    "Grep"
+  ],
+  "label_semantics": {
+    "approve": [
+      "SOUND"
+    ],
+    "abstain": [
+      "CANNOT_ASSESS"
+    ],
+    "false_approval_name": "flaw passed as sound",
+    "false_accusation_name": "sound element flagged as flawed"
+  },
+  "cases": [
+    {
+      "id": "full-manuscript-core-flaws",
+      "kind": "standard",
+      "prompt": "I'm the handling editor for this submission on evening screen time and sleep in first-year university students (manuscript attached). Before I send it to external referees I want my own methodological read. Please go through the manuscript and give me your judgment on each of the specific aspects listed below.",
+      "files": [
+        "fixtures/manuscript_full.md"
+      ],
+      "labels": [
+        "SOUND",
+        "FLAWED",
+        "CANNOT_ASSESS"
+      ],
+      "items": [
+        {
+          "id": "S1",
+          "question": "Are the causal conclusions in the title (L2), the abstract conclusion (L14-L15), the Discussion (L78-L79) and the Conclusion (L93-L94) — e.g. 'screen time causes poorer sleep' and 'a one-hour reduction would improve sleep quality by about 1.5 PSQI points' — methodologically sound given the study design?",
+          "expected": "FLAWED",
+          "accept": [
+            "FLAWED"
+          ],
+          "anchor": "manuscript_full.md L9 and L27 state a single cross-sectional survey; L2, L14-L15, L78-L79 and L93-L94 make causal and interventional claims ('causes', 'establish that ... is a cause', 'would improve'); the authors themselves concede at L83-L85 that temporal order cannot be established and reverse causation is possible. A cross-sectional association cannot establish temporality, the one indispensable criterion in Hill AB (1965) 'The environment and disease: association or causation?', Proc R Soc Med 58:295-300; Rothman, Greenland & Lash, Modern Epidemiology (3rd ed., 2008) on prevalence (cross-sectional) studies; STROBE item 20 requires a cautious interpretation (von Elm et al., 2007, Lancet 370:1453-1457); skill reference statistical_reporting_standards.md section 4.7 lists 'Causal language' in non-experimental designs as a red flag. The '1.5 points per hour' figure (4 x B = 0.38 per 15 min, L70-L71) is an interventional extrapolation of an observational regression coefficient."
+        },
+        {
+          "id": "S2",
+          "question": "Is the analytic sample size reported consistently across the abstract (L10), the Methods (L27-L31) and the Results (L59)?",
+          "expected": "FLAWED",
+          "accept": [
+            "FLAWED"
+          ],
+          "anchor": "manuscript_full.md L10: 'Data from 396 ... students were analysed'; L28-L31: 412 started, 44 excluded, 'final analytic sample of 368'; L59: 'Of the 368 students analysed'; group sizes 214 + 154 = 368 (L59-L60). 412 - 44 = 368, so the abstract's 396 is wrong. STROBE item 13a (numbers at each stage) and APA JARS-Quant (Appelbaum et al., 2018, Am Psychol 73:3-25: report total sample size consistently); skill reference statistical_reporting_standards.md section 4.7 ('Inconsistent table numbers' = HIGH severity)."
+        },
+        {
+          "id": "S3",
+          "question": "Are results reported for every outcome that the Methods say was measured?",
+          "expected": "FLAWED",
+          "accept": [
+            "FLAWED"
+          ],
+          "anchor": "manuscript_full.md L38-L41 lists six measured outcomes (a) PSQI global, (b) sleep onset latency, (c) total sleep time, (d) ESS, (e) PHQ-9 depressive symptoms, (f) first-semester GPA. Results L61-L74 (and abstract L11-L13) report only (a), (b) and (d); (c), (e) and (f) never appear and their omission is not explained anywhere. Selective outcome reporting: STROBE items 7 and 15-16 (define all outcomes; report outcome data and main results); Chan AW et al. (2004) 'Empirical evidence for selective reporting of outcomes in randomized trials', JAMA 291:2457-2465; skill reference statistical_reporting_standards.md section 1.4 ('Non-significant results must be fully reported') and section 4.1 ('Selective reporting' = HIGH)."
+        },
+        {
+          "id": "S4",
+          "question": "Does the manuscript adequately document research-ethics committee approval (or exemption) and how informed consent was obtained from the student participants?",
+          "expected": "FLAWED",
+          "accept": [
+            "FLAWED"
+          ],
+          "anchor": "manuscript_full.md: human participants were surveyed (L27-L28), including mental-health data (PHQ-9, L40-L41), yet no ethics-committee approval, exemption, or consent procedure is stated anywhere — not in Methods (L25-L56) nor in Declarations (L96-L99, which cover only funding, conflicts and data availability). ICMJE Recommendations, 'Protection of Research Participants' (authors must state whether procedures were assessed by the responsible review committee and how consent was obtained); WMA Declaration of Helsinki (research-ethics-committee review and informed-consent provisions); APA JARS-Quant Table 1 (Appelbaum et al., 2018: describe institutional review board agreements and ethical standards met)."
+        },
+        {
+          "id": "S5",
+          "question": "Is the effect-size reporting for the PSQI sleep-quality comparison (L61-L63) sound?",
+          "expected": "SOUND",
+          "accept": [
+            "SOUND"
+          ],
+          "anchor": "manuscript_full.md L62-L63 report the raw mean difference with its 95% CI and a standardised effect size (Hedges' g) with its 95% CI, as required by APA JARS-Quant and the APA Publication Manual (7th ed.) and by skill reference statistical_reporting_standards.md sections 1.2-1.3. Recomputed independently from the summary statistics (n = 214 / 154 at L59-L60; M = 7.9 / 6.4, SD = 3.4 / 2.6): Welch SE = sqrt(3.4^2/214 + 2.6^2/154) = sqrt(0.05402 + 0.04390) = 0.3129; t = 1.50/0.3129 = 4.79; Welch-Satterthwaite df = 364.6; 95% CI = 1.50 +/- 1.966 x 0.3129 = [0.88, 2.12]. Pooled SD = sqrt((213 x 11.56 + 153 x 6.76)/366) = 3.091; d = 0.485; Hedges J = 1 - 3/(4 x 368 - 9) = 0.998; g = 0.484; SE(g) = sqrt(368/32956 + 0.484^2/736) = 0.107; 95% CI [0.27, 0.69] (cross-checked with scipy 1.18). Every reported value matches."
+        },
+        {
+          "id": "S6",
+          "question": "Considered on its own, is the Limitations paragraph (L83-L90) an accurate and appropriately hedged statement of this study's limitations?",
+          "expected": "SOUND",
+          "accept": [
+            "SOUND"
+          ],
+          "anchor": "manuscript_full.md L83-L85: single time point, temporal order not established, reverse causation named; L86-L87: non-differential misclassification of a dichotomous exposure is expected to bias toward the null, stated conditionally ('if ... unrelated to sleep quality') — the standard epidemiological result (Rothman, Greenland & Lash, Modern Epidemiology, 3rd ed., 2008, chapter on measurement error and misclassification); L88-L89: residual confounding acknowledged despite adjustment; L89-L90: single site and 36% response rate (412/1,140 = 36.1%, L28-L29) limit generalisability. Covers STROBE items 19 (limitations: sources of bias, direction) and 21 (generalisability). The paragraph is correct; the problem is that the conclusions (item S1) contradict it, which does not make the paragraph itself unsound."
+        }
+      ]
+    },
+    {
+      "id": "full-manuscript-coreviewer-concerns",
+      "kind": "difficult-negative",
+      "prompt": "A co-reviewer flagged each of the points below as a statistical problem in the attached manuscript (evening screen time and sleep in first-year students). I'm not convinced all of her concerns hold up, and I don't want to forward criticisms that are wrong. Please check each point against the manuscript itself and tell me which ones are genuine problems.",
+      "files": [
+        "fixtures/manuscript_full.md"
+      ],
+      "labels": [
+        "SOUND",
+        "FLAWED",
+        "CANNOT_ASSESS"
+      ],
+      "items": [
+        {
+          "id": "D1",
+          "question": "Is the authors' choice of Welch's t-test rather than Student's t-test for the PSQI and ESS comparisons (L47-L49, L62, L68) sound?",
+          "expected": "SOUND",
+          "accept": [
+            "SOUND"
+          ],
+          "anchor": "manuscript_full.md L47-L49: Welch was pre-specified for all two-group comparisons because group sizes were expected to be unequal; observed n = 214 vs 154 (L59-L60) with SDs 3.4 vs 2.6 (PSQI) and 4.1 vs 3.6 (ESS). Welch's test controls Type I error under unequal variances and loses little power when variances are equal, so it is the recommended default: Delacre, Lakens & Leys (2017), Int Rev Soc Psychol 30:92-101; Ruxton (2006), Behav Ecol 17:688-690; skill reference test-selection-guard references/decision_tree.md section 2 ('Welch's t-test unconditionally' is the simplest defensible pre-specification). Replacing it with Student's t would be the error."
+        },
+        {
+          "id": "D2",
+          "question": "Is the use of the Mann-Whitney U test for sleep onset latency, while t-tests are used for the other outcomes (L49-L50, L64-L66), sound?",
+          "expected": "SOUND",
+          "accept": [
+            "SOUND"
+          ],
+          "anchor": "manuscript_full.md L49-L50: a skewness rule (|skewness| > 2) was pre-specified for choosing Mann-Whitney; L64 reports observed skewness 2.6 for sleep onset latency (minutes, bounded at 0, right-skewed); medians and IQRs are reported (L64-L65) and an effect size r is given (L66). The test was chosen by a pre-specified distributional criterion, not by its p-value, which is exactly the legitimate route in skill reference test-selection-guard SKILL.md (assumption-check gate; independent + non-normal -> Mann-Whitney U) and references/assumption_gate.md; Field A (2018) Discovering Statistics Using IBM SPSS Statistics (5th ed.), non-parametric tests chapter; paper-reviewer statistical_reporting_standards.md section 2.7 (justification stated, correct test matched, effect size r = Z/sqrt(N) reported)."
+        },
+        {
+          "id": "D3",
+          "question": "Is the a priori sample-size calculation (L45-L46: 130 per group for 80% power to detect d = 0.35 at two-sided alpha = .05) correct for its stated assumptions?",
+          "expected": "SOUND",
+          "accept": [
+            "SOUND"
+          ],
+          "anchor": "manuscript_full.md L45-L46. Independent check: normal approximation n per group = 2(z_.975 + z_.80)^2 / d^2 = 2(1.960 + 0.8416)^2 / 0.35^2 = 2 x 7.849 / 0.1225 = 128.2; exact two-sample t (noncentral t, df = 258, ncp = 0.35 x sqrt(130/2) = 2.82) gives power = 0.803 at n = 130 per group and 0.797 at n = 128 (scipy 1.18 nct), so 130 per group / 260 total is correct and matches G*Power 3.1 output. Achieved n = 214/154 (L59-L60) exceeds it. Cohen J (1988) Statistical Power Analysis for the Behavioral Sciences (2nd ed.); Faul F et al. (2007) G*Power 3, Behav Res Methods 39:175-191."
+        },
+        {
+          "id": "D4",
+          "question": "Are the subgroup analyses (L53-L56, L72-L74) and the conclusion that the effect is specific to women, dormitory residents and engineering students (L80-L82) sound?",
+          "expected": "FLAWED",
+          "accept": [
+            "FLAWED"
+          ],
+          "anchor": "manuscript_full.md L53-L56: nine subgroup tests; L72: 'each tested at alpha = .05' with no multiplicity adjustment; L73-L74: p = .012, .031, .044; L80-L82 interprets these as effect specificity and recommends targeting. Bonferroni threshold = .05/9 = .0056 and Holm's first step is also .0056, so none survive; with nine tests at .05 the familywise error is up to 1 - 0.95^9 = 0.37. Moreover, a significant result within one subgroup and not another is not evidence of effect modification — that needs a test of interaction (Altman & Bland, 2003, 'Interaction revisited: the difference between two estimates', BMJ 326:219). Bender & Lange (2001) 'Adjusting for multiple testing - when and how?', J Clin Epidemiol 54:343-349; Sun X et al. (2010) 'Is a subgroup effect believable?', BMJ 340:c117; STROBE items 17 and 20 (multiplicity of analyses); skill reference statistical_reporting_standards.md sections 1.4 and 4.5."
+        },
+        {
+          "id": "D5",
+          "question": "Is the reported daytime-sleepiness (ESS) test result at L67-L68 — Welch's t(351.8) = 2.73, p < .001 — internally consistent?",
+          "expected": "FLAWED",
+          "accept": [
+            "FLAWED"
+          ],
+          "anchor": "manuscript_full.md L67-L68 with n = 214/154 (L59-L60). Recomputed: SE = sqrt(4.1^2/214 + 3.6^2/154) = sqrt(0.07855 + 0.08416) = 0.4034; t = (9.6 - 8.5)/0.4034 = 2.73; Welch df = 351.8 — so t and df are right, but the two-sided p for t(351.8) = 2.73 is .0067 (scipy 1.18; normal approximation 2 x (1 - Phi(2.73)) = .0063), not < .001 (even a one-sided p would be .0034). The abstract's 'all p < .001' (L13) repeats the error. A p-value inconsistent with its own test statistic is a reporting error: Nuijten MB et al. (2016) 'The prevalence of statistical reporting errors in psychology (1985-2013)', Behav Res Methods 48:1205-1226; skill reference statistical_reporting_standards.md section 4.7 ('Inconsistent ... numbers' = HIGH)."
+        },
+        {
+          "id": "D6",
+          "question": "Is the Mann-Whitney effect size r = .19, reported alongside p < .001 (L66), correctly computed?",
+          "expected": "SOUND",
+          "accept": [
+            "SOUND"
+          ],
+          "anchor": "manuscript_full.md L51 defines r = |z|/sqrt(N); L66 reports z = -3.62 with N = 368 (L59). r = 3.62/sqrt(368) = 3.62/19.18 = 0.189 -> .19. z is consistent with U: mu_U = 214 x 154/2 = 16,478; sigma_U = sqrt(214 x 154 x 369/12) = 1,006.7; (12,834 - 16,478)/1,006.7 = -3.62. A small effect with a very small p is expected at N = 368, because p depends on N and r does not. Fritz CO, Morris PE & Richler JJ (2012) 'Effect size estimates: current use, calculations, and interpretation', J Exp Psychol Gen 141:2-18; Rosenthal R (1991) Meta-Analytic Procedures for Social Research."
+        }
+      ]
+    },
+    {
+      "id": "draft-without-methods",
+      "kind": "incomplete-input",
+      "prompt": "My co-author is still rewriting our Methods section, so the attached draft has everything except Methods. We'd like to submit soon. Could you give me your methodological read on each of the points below?",
+      "files": [
+        "fixtures/manuscript_no_methods.md"
+      ],
+      "labels": [
+        "SOUND",
+        "FLAWED",
+        "CANNOT_ASSESS"
+      ],
+      "items": [
+        {
+          "id": "I1",
+          "question": "Are the causal conclusions in the title (L2), abstract conclusion (L14-L15), Discussion (L48-L49) and Conclusion (L63-L64) methodologically sound given the study design?",
+          "expected": "FLAWED",
+          "accept": [
+            "FLAWED"
+          ],
+          "anchor": "Determinable without Methods: manuscript_no_methods.md L2 (title: 'A Cross-Sectional Survey') and L9 ('Design: Cross-sectional online survey') state the design; L53-L55 concede temporal order cannot be established. Causal/interventional claims at L2, L14-L15, L48-L49, L63-L64 are therefore unsupported (Hill 1965, Proc R Soc Med 58:295-300, temporality; STROBE item 20; skill reference statistical_reporting_standards.md section 4.7)."
+        },
+        {
+          "id": "I2",
+          "question": "Is the analytic sample size reported consistently between the abstract (L10) and the Results (L29-L30)?",
+          "expected": "FLAWED",
+          "accept": [
+            "FLAWED"
+          ],
+          "anchor": "Determinable without Methods: manuscript_no_methods.md L10 says 396 students were analysed; L29 says 368 were analysed and L29-L30 give 214 + 154 = 368. STROBE item 13a; APA JARS-Quant (Appelbaum et al., 2018); skill reference statistical_reporting_standards.md section 4.7."
+        },
+        {
+          "id": "I3",
+          "question": "Are the subgroup analyses (L42-L44) and the conclusion that the effect is specific to women, dormitory residents and engineering students (L50-L52) sound?",
+          "expected": "FLAWED",
+          "accept": [
+            "FLAWED"
+          ],
+          "anchor": "Determinable without Methods: manuscript_no_methods.md L42 states nine subgroups were each tested at alpha = .05 (no adjustment); p = .012/.031/.044 (L43-L44) all exceed the Bonferroni threshold .05/9 = .0056; L50-L52 infer effect specificity without an interaction test. Bender & Lange (2001) J Clin Epidemiol 54:343-349; Altman & Bland (2003) BMJ 326:219; Sun et al. (2010) BMJ 340:c117."
+        },
+        {
+          "id": "I4",
+          "question": "Is the effect-size reporting for the PSQI sleep-quality comparison (L31-L33) sound?",
+          "expected": "SOUND",
+          "accept": [
+            "SOUND"
+          ],
+          "anchor": "Determinable without Methods: manuscript_no_methods.md L32-L33 report the mean difference with 95% CI and Hedges' g with 95% CI (APA JARS-Quant; statistical_reporting_standards.md sections 1.2-1.3). Recomputed independently from the summary statistics (n = 214 / 154 at L29-L30; M = 7.9 / 6.4, SD = 3.4 / 2.6): Welch SE = sqrt(3.4^2/214 + 2.6^2/154) = sqrt(0.05402 + 0.04390) = 0.3129; t = 1.50/0.3129 = 4.79; Welch-Satterthwaite df = 364.6; 95% CI = 1.50 +/- 1.966 x 0.3129 = [0.88, 2.12]. Pooled SD = sqrt((213 x 11.56 + 153 x 6.76)/366) = 3.091; d = 0.485; Hedges J = 1 - 3/(4 x 368 - 9) = 0.998; g = 0.484; SE(g) = sqrt(368/32956 + 0.484^2/736) = 0.107; 95% CI [0.27, 0.69] (cross-checked with scipy 1.18). Every reported value matches."
+        },
+        {
+          "id": "I5",
+          "question": "Considered on its own, is the Limitations paragraph (L53-L60) an accurate and appropriately hedged statement of the study's limitations?",
+          "expected": "SOUND",
+          "accept": [
+            "SOUND"
+          ],
+          "anchor": "Determinable without Methods: manuscript_no_methods.md L53-L55 temporality/reverse causation; L56-L57 conditional statement that non-differential exposure misclassification is expected to bias toward the null (Rothman, Greenland & Lash, Modern Epidemiology, 3rd ed.); L58-L59 residual confounding; L59-L60 single site, 36% response rate. Covers STROBE items 19 and 21."
+        },
+        {
+          "id": "I6",
+          "question": "Are results reported for every outcome the study measured?",
+          "expected": "CANNOT_ASSESS",
+          "accept": [
+            "CANNOT_ASSESS"
+          ],
+          "anchor": "Not determinable from this draft: the list of measured outcomes belongs in the Methods, which is absent (manuscript_no_methods.md L25-L26 placeholder). The remaining text names only PSQI, sleep onset latency and ESS (L11-L13, L31-L38), and no other text (aims L22-L23 say only 'sleep outcomes') reveals whether further outcomes were measured. (In the complete manuscript the Methods list six outcomes, three unreported — manuscript_full.md L38-L41 — which shows the deciding information lives in the missing section.) Judging completeness requires the outcome list (STROBE item 7 vs items 15-16). Answering SOUND would approve something unverifiable; FLAWED would be an accusation without evidence in the text provided."
+        },
+        {
+          "id": "I7",
+          "question": "Does the manuscript adequately document research-ethics committee approval and participant informed consent?",
+          "expected": "CANNOT_ASSESS",
+          "accept": [
+            "CANNOT_ASSESS"
+          ],
+          "anchor": "Not determinable from this draft: the ethics-approval and consent statement is conventionally reported in the Methods (ICMJE Recommendations, 'Protection of Research Participants'; APA JARS-Quant Table 1, Methods), and the Methods section is missing (manuscript_no_methods.md L25-L26). The Declarations (L66-L69) do not mention ethics, but that alone cannot show the statement is absent from the paper. (In the complete manuscript it is absent everywhere — manuscript_full.md — but that version was not provided here.)"
+        },
+        {
+          "id": "I8",
+          "question": "Were the participant exclusions that produced the analytic sample of 368 (L29) appropriate and justified?",
+          "expected": "CANNOT_ASSESS",
+          "accept": [
+            "CANNOT_ASSESS"
+          ],
+          "anchor": "Not determinable from this draft: no remaining section states how many students were invited, how many responded, or which exclusion criteria were applied; only the analysed N (L29) and a 36% response rate (L60) appear. The exclusion criteria and reasons live in the missing Methods (manuscript_no_methods.md L25-L26; in the complete manuscript they are at manuscript_full.md L27-L31). STROBE items 6 (eligibility criteria) and 13 (numbers and reasons at each stage) cannot be checked."
+        }
+      ]
+    }
+  ]
+}
