@@ -25,7 +25,9 @@ says what its source says — with an exact account of what was and was not chec
    `IH` (identifier resolves to a different work), `NOT_FOUND` (title search, author+year search,
    and identifier resolution all fail), or `UNVERIFIED` (the lookup itself failed). Retractions are
    flagged. A failed batch is re-run once and references a batch left out are re-sent once; a
-   reference still without a verdict is listed as unchecked, never as verified.
+   reference still without a verdict is listed as unchecked, never as verified. If the verifier
+   reports `status: partial` (exit 3), the entries listed as rejected or unsupported in its
+   `input_accounting` were not checked: record them as `UNVERIFIED`, not as a pass.
 3. **Faithfulness** — claims whose sources were not judged `NOT_FOUND`/`IH` are checked with
    `claim_faithfulness.py` or by reading the source: `SUPPORTED`, `PARTIAL`, `UNSUPPORTED`,
    `CONTRADICTED`, `UNCHECKABLE`, with a verbatim quote and, when not supported, a calibrated

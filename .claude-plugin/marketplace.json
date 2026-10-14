@@ -692,7 +692,7 @@
     {
       "name": "alterlab-workflows",
       "source": "./skills/workflows",
-      "description": "Runnable multi-agent research workflows for Claude Code (systematic-review screening, citation audit, independent review panel, claim stress-test, rebuttal, grant mock panel, literature map) plus the portable playbook skill (1 skill)",
+      "description": "Runnable multi-agent research workflows for Claude Code (systematic-review screening, citation audit, review panel, claim stress-test, rebuttal, grant mock panel, literature map) plus the portable playbook skill (1 skill)",
       "version": "3.0.1",
       "author": {
         "name": "AlterLab @ Izmir University of Economics",

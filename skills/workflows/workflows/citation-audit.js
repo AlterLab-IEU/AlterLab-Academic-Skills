@@ -28,7 +28,11 @@ const TOOLING =
   'OpenAlex, Semantic Scholar, and arXiv public APIs directly. Judge only from what those sources return, never from ' +
   'memory: the model that may have invented a citation shares its training data with you, so a plausible fabrication ' +
   'would pass a memory check. The verifier uses OPENALEX_API_KEY and S2_API_KEY from the environment when they are ' +
-  'set; keyless OpenAlex and Semantic Scholar calls share a small per-IP budget.' + CONTACT
+  'set; keyless OpenAlex and Semantic Scholar calls share a small per-IP budget. If verify_citations.py reports ' +
+  'status "partial" (exit code 3), the entries it lists under input_accounting as rejected or unsupported were not ' +
+  'checked: give those references UNVERIFIED, never VERIFIED. claim_faithfulness.py never verifies a claim: its ' +
+  'LEXICAL_MATCH_REQUIRES_REVIEW and MODEL_JUDGED_SUPPORT_REQUIRES_REVIEW labels are leads, so read the source ' +
+  'passage before judging a claim SUPPORTED.' + CONTACT
 
 // ---------------------------------------------------------------- schemas
 const EXTRACT = {
