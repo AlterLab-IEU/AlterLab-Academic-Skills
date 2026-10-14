@@ -246,8 +246,14 @@ uv run python .../claim_faithfulness.py --input pairs.json --tier llm --json
 ```
 
 - The default `heuristic` tier is lexical and deliberately abstains
-  (`unsupported`) rather than guessing `support`; it cannot see role reversals or
-  wrong numbers. The `llm` tier asks the model set by `ALTERLAB_MODEL` (see
+  (`unsupported`) rather than guessing `support`; it cannot see role reversals or a
+  changed population reliably, so its `support` carries taxonomy
+  `LEXICAL_MATCH_REQUIRES_REVIEW` — report it as "needs review", never as verified.
+  Guards make it abstain on a figure the abstract lacks, a reversed or unmatched comparison,
+  a population mismatch (people vs animals or cells; age group), and a definite or causal
+  claim against tentative or associational evidence. An llm-tier `support` is
+  `MODEL_JUDGED_SUPPORT_REQUIRES_REVIEW` — one model's reading, also not verification. The
+  script never returns VERIFIED for a claim. The `llm` tier asks the model set by `ALTERLAB_MODEL` (see
   `shared/model_env.md`) and falls back to the heuristic, flagged, if the `claude`
   CLI is unavailable.
 - It only sees the abstract (`abstract_only: true`). `unsupported` means the

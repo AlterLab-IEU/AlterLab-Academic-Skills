@@ -307,6 +307,11 @@ and returns support / contradict / unsupported, mapped to the verdict taxonomy b
 abstract is the ceiling of what it sees: a claim the abstract does not establish returns
 `unsupported` (UNVERIFIABLE / abstain, with `abstract_only: true`), NOT a false pass; a
 claim the abstract asserts the opposite of returns `contradict` (MAJOR_DISTORTION / SH).
+The script never returns VERIFIED (`counts_as_verified: false` on every result): a
+heuristic `support` is `LEXICAL_MATCH_REQUIRES_REVIEW` and an llm-tier `support` is
+`MODEL_JUDGED_SUPPORT_REQUIRES_REVIEW`. Record a claim as VERIFIED only after you have read
+the supporting passage in the cited source and it matches the claim's direction, figures,
+population, and certainty; otherwise report it as needing review.
 This is how the **SH (Semantic Hallucination)** "real paper, wrong claim" Frankenstein
 pattern is caught: the reference may pass Phase A existence (VERIFIED) yet FAIL here because
 the source does not support — or contradicts — the claim.

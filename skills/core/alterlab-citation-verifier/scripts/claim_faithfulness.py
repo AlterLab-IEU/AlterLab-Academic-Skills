@@ -28,9 +28,28 @@ mistake an abstract-level pass for full-text verification.
 Verdict vocabulary (this tool) and its mapping to the corpus claim taxonomy
 (``integrity_verification_agent.md`` Phase E / SH; see ``docs/integrity.md``):
 
-    support      -> VERIFIED            (claim consistent with abstract)
-    contradict   -> MAJOR_DISTORTION/SH (abstract asserts the opposite)
+    support (heuristic tier) -> LEXICAL_MATCH_REQUIRES_REVIEW
+                                (the words overlap and no guard fired; NOT semantic support)
+    support (llm tier)       -> MODEL_JUDGED_SUPPORT_REQUIRES_REVIEW
+                                (a model judged the abstract to support the claim; one
+                                model's reading of an abstract, not verification)
+    contradict   -> MAJOR_DISTORTION/SH (abstract appears to assert the opposite)
     unsupported  -> UNVERIFIABLE (abstain) — abstract does not establish the claim
+
+This tool NEVER emits ``VERIFIED`` and every result carries ``counts_as_verified: false``.
+It establishes, at most, that an abstract is lexically or (per one model) semantically
+consistent with a claim. Promoting a claim to VERIFIED is a separate step that needs the
+full text read by a person (or the integrity agent's Phase E check against the passage).
+Each result also states its evidence scope (``evidence_scope``: abstract | none), its method
+(``method``: lexical-heuristic | model-judgment | none), whether it needs review, and any
+fallback (``fallback_reason``), so uncertainty stays visible downstream.
+
+Four deterministic guards stop a lexical match from reaching ``support`` (it abstains
+instead): a figure in the claim that the abstract lacks; a comparison whose direction is
+reversed or cannot be established ("A outperforms B" vs "B outperforms A"); a population
+mismatch (humans vs animal or in-vitro evidence; children vs adults); and a certainty
+mismatch (a definite or causal claim against tentative or merely associational evidence).
+The same guards veto a model-judged ``support``.
 
 Usage
 -----
@@ -88,10 +107,13 @@ VERDICTS = ("support", "contradict", "unsupported")
 
 # Verdict -> corpus taxonomy mapping (see module docstring / docs/integrity.md).
 TAXONOMY_MAP = {
-    "support": "VERIFIED",
+    "support": "MODEL_JUDGED_SUPPORT_REQUIRES_REVIEW",
     "contradict": "MAJOR_DISTORTION/SH",
     "unsupported": "UNVERIFIABLE",
 }
+# The heuristic tier's ``support`` is a lexical match, not semantic support, so it carries its
+# own label. Neither support label is VERIFIED: downstream consumers must route both to review.
+HEURISTIC_SUPPORT_TAXONOMY = "LEXICAL_MATCH_REQUIRES_REVIEW"
 
 # Lightweight English stopword set for keyword extraction. Intentionally small
 # and transparent — this is a heuristic, not an NLP pipeline.
@@ -150,6 +172,11 @@ class FaithfulnessResult:
     abstract_found: bool = True
     source: str = ""  # "crossref" | "openalex" | ""
     signals: Dict[str, Any] = field(default_factory=dict)
+    evidence_scope: str = "abstract"  # "abstract" | "none" — what the verdict was based on
+    method: str = "lexical-heuristic"  # "lexical-heuristic" | "model-judgment" | "none"
+    requires_review: bool = True  # only an abstention on no evidence needs no review flag
+    counts_as_verified: bool = False  # always False: this tool cannot verify a claim
+    fallback_reason: str = ""  # why a requested tier was not used, when it was not
 
 
 # --------------------------------------------------------------------------- #
@@ -231,6 +258,160 @@ def _content_terms(text: str) -> List[str]:
     return [t for t in _tokenize(text) if t not in STOPWORDS and len(t) > 2]
 
 
+_NUMBER_RE = re.compile(r"\d[\d,]*(?:\.\d+)?")
+
+
+def _numbers(text: str) -> set:
+    """Figures in ``text``, normalized so "1,200" == "1200" and "50.0" == "50"."""
+    out = set()
+    for m in _NUMBER_RE.findall(text):
+        try:
+            out.add(f"{float(m.replace(',', '')):g}")
+        except ValueError:
+            continue
+    return out
+
+
+# Direction: comparative constructions whose two sides can swap without changing the bag of
+# words ("A outperforms B" vs "B outperforms A"). Matched by stem prefix.
+COMPARATIVE_STEMS = ("outperform", "underperform", "exceed", "surpass", "superior",
+                     "inferior", "better", "worse", "higher", "lower", "greater", "beat")
+_SENT_SPLIT = re.compile(r"(?<=[.!?;])\s+")
+_DIR_TOKEN = re.compile(r"[A-Za-z][A-Za-z0-9\-]*|\d+")
+
+
+def _dir_tokens(sentence: str) -> List[str]:
+    """Content tokens that keep single capital letters ("A", "B") as group labels."""
+    out: List[str] = []
+    for t in _DIR_TOKEN.findall(sentence):
+        if len(t) == 1 and t.isupper():
+            out.append(t.lower() + "#")  # a group label, not the article "a"
+            continue
+        low = t.lower()
+        if low == "than":
+            out.append("than#")  # anchors the compared item in "X is higher than Y"
+        elif low not in STOPWORDS and len(low) > 2:
+            out.append(low)
+    return out
+
+
+def _comparatives(text: str) -> List[Tuple[str, set, set]]:
+    """(stem, two nearest tokens left, two nearest tokens right) per comparative, by sentence."""
+    found: List[Tuple[str, set, set]] = []
+    for sent in _SENT_SPLIT.split(text):
+        toks = _dir_tokens(sent)
+        for i, tok in enumerate(toks):
+            stem = next((c for c in COMPARATIVE_STEMS if tok.startswith(c)), None)
+            if stem:
+                left = set(toks[max(0, i - 2):i]) - {"than#"}
+                after = toks[i + 1:]
+                # "A had higher retention than B": the compared item follows "than", not the
+                # measure word right after the comparative.
+                right = (set(after[after.index("than#") + 1:after.index("than#") + 3])
+                         if "than#" in after else set(after[:2]))
+                found.append((stem, left, right - {"than#"}))
+    return found
+
+
+def _direction_reason(claim: str, abstract: str) -> Optional[str]:
+    """None if the claim makes no comparison or the abstract states it the same way round."""
+    abstract_cmp = _comparatives(abstract)
+    for stem, cl, cr in _comparatives(claim):
+        same = [(al, ar) for s, al, ar in abstract_cmp if s == stem]
+        if not same:
+            return f"the claim's comparison ('{stem}…') is not stated in the abstract"
+        cl_only, cr_only = cl - cr, cr - cl
+        consistent = conflict = False
+        for al, ar in same:
+            al_only, ar_only = al - ar, ar - al
+            conflict |= bool((cl_only & ar_only) or (cr_only & al_only))
+            consistent |= bool((cl_only & al_only) or (cr_only & ar_only))
+        if conflict:
+            return (f"possible role reversal around '{stem}…': the abstract puts the claim's "
+                    "compared items on opposite sides")
+        if not consistent:
+            return f"could not establish who is compared with whom around '{stem}…'"
+    return None
+
+
+_ANIMAL = re.compile(r"\b(mouse|mice|murine|rats?|rodents?|animals?|zebrafish|porcine|pigs?|"
+                     r"canine|dogs?|primates?|monkeys?|macaques?|drosophila|yeast|bovine|"
+                     r"ovine|sheep|rabbits?)\b")
+_IN_VITRO = re.compile(r"\b(in vitro|in-vitro|cell lines?|cultured cells|organoids?)\b")
+_HUMAN = re.compile(r"\b(humans?|patients?|adults?|children|child|adolescents?|infants?|"
+                    r"participants?|women|men|people|volunteers?|elderly|students?|nurses?|"
+                    r"workers?|clinicians?)\b")
+_AGE_GROUPS = {"child": r"children|child|pediatric|paediatric",
+               "infant": r"infants?|neonates?|newborns?",
+               "adolescent": r"adolescents?|teenagers?",
+               "adult": r"adults?", "older adult": r"elderly|older adults|aged \d+ (?:and|or) over"}
+
+
+def _population_reason(claim: str, abstract: str) -> Optional[str]:
+    c, a = claim.lower(), abstract.lower()
+    if _HUMAN.search(c) and not _HUMAN.search(a) and (_ANIMAL.search(a) or _IN_VITRO.search(a)):
+        kind = "animal" if _ANIMAL.search(a) else "in-vitro"
+        return f"population mismatch: the claim concerns people, the abstract reports {kind} evidence"
+    if (_ANIMAL.search(c) or _IN_VITRO.search(c)) and _HUMAN.search(a) and not (
+            _ANIMAL.search(a) or _IN_VITRO.search(a)):
+        return "population mismatch: the claim concerns animal or in-vitro work, the abstract people"
+    c_age = {g for g, pat in _AGE_GROUPS.items() if re.search(rf"\b({pat})\b", c)}
+    a_age = {g for g, pat in _AGE_GROUPS.items() if re.search(rf"\b({pat})\b", a)}
+    if c_age and a_age and c_age.isdisjoint(a_age):
+        return (f"population mismatch: the claim concerns {', '.join(sorted(c_age))}, the "
+                f"abstract {', '.join(sorted(a_age))}")
+    return None
+
+
+_HEDGES = re.compile(r"\b(may|might|could|suggests?|suggested|suggesting|preliminary|pilot|"
+                     r"possibl[ey]|potential(?:ly)?|appears?|appeared|hypothesi[sz]ed?|likely|"
+                     r"tentative(?:ly)?|trend|exploratory|speculate|unclear)\b")
+_CAUSAL_CLAIM = re.compile(r"\b(causes?|caused|causing|leads? to|led to|results? in|resulted in|"
+                           r"reduc(?:e|es|ed)|increas(?:e|es|ed)|improv(?:e|es|ed)|prevents?|"
+                           r"prevented|protects? against|eliminates?|cures?)\b")
+_ASSOCIATION = re.compile(r"\b(associated|associations?|correlated|correlations?|correlates|"
+                          r"linked)\b")
+_CAUSAL_DESIGN = re.compile(r"\b(randomi[sz]ed|randomly assigned|trial|rct|causal|"
+                            r"mendelian randomi[sz]ation|experimental)\b")
+
+
+def _best_sentences(claim: str, abstract: str) -> List[str]:
+    """The abstract sentence(s) sharing the most content terms with the claim."""
+    terms = set(_content_terms(claim))
+    scored = [(len(terms & set(_content_terms(snt))), snt) for snt in _SENT_SPLIT.split(abstract)]
+    top = max((n for n, _ in scored), default=0)
+    return [snt for n, snt in scored if n == top and n > 0]
+
+
+def _certainty_reason(claim: str, abstract: str) -> Optional[str]:
+    best = " ".join(_best_sentences(claim, abstract)).lower()
+    c = claim.lower()
+    if not best:
+        return None
+    hedge = _HEDGES.search(best)
+    if hedge and not _HEDGES.search(c):
+        return (f"certainty mismatch: the abstract is tentative ('{hedge.group(0)}'), the "
+                "claim is stated as definite")
+    if (_CAUSAL_CLAIM.search(c) and _ASSOCIATION.search(best)
+            and not _CAUSAL_DESIGN.search(abstract.lower())):
+        return ("certainty mismatch: the claim is causal, the abstract reports an association "
+                "from a non-experimental design")
+    return None
+
+
+def _guard_reasons(claim: str, abstract: str) -> List[str]:
+    """Deterministic reasons a claim cannot be treated as supported by this abstract."""
+    reasons: List[str] = []
+    missing = sorted(_numbers(claim) - _numbers(abstract))
+    if missing:
+        reasons.append(f"the claim states {', '.join(missing)}, which the abstract does not contain")
+    for check in (_direction_reason, _population_reason, _certainty_reason):
+        why = check(claim, abstract)
+        if why:
+            reasons.append(why)
+    return reasons
+
+
 def _negation_count(text: str) -> int:
     toks = set(_tokenize(text))
     return sum(1 for n in NEGATION_TOKENS if n in toks)
@@ -249,7 +430,11 @@ def heuristic_score(claim: str, abstract: str) -> FaithfulnessResult:
     outperforms B" vs "B outperforms A") looks identical and will read as
     ``support``; it also misses numeric mismatches, scope/qualifier changes, and
     sarcasm. Use the ``llm`` tier or full-text verification when role/number
-    fidelity matters. The heuristic's job is to cheaply triage, not to adjudicate.
+    fidelity matters. The heuristic's job is to cheaply triage, not to adjudicate —
+    which is why its ``support`` is labelled LEXICAL_MATCH_REQUIRES_REVIEW, never
+    VERIFIED. One cheap numeric guard applies: a claim stating a figure the abstract
+    does not contain (claim "50 percent", abstract "5 percent") cannot reach
+    ``support``; it abstains. Unit or scale conversions ("0.5" vs "50%") also abstain.
     """
     claim_terms = set(_content_terms(claim))
     abs_terms = set(_content_terms(abstract))
@@ -280,6 +465,8 @@ def heuristic_score(claim: str, abstract: str) -> FaithfulnessResult:
             flips.append(f"{a}/{b}")
 
     neg_delta = abs(_negation_count(claim) - _negation_count(abstract))
+    missing_numbers = sorted(_numbers(claim) - _numbers(abstract))
+    guards = _guard_reasons(claim, abstract)
 
     signals = {
         "overlap": round(overlap, 3),
@@ -287,6 +474,8 @@ def heuristic_score(claim: str, abstract: str) -> FaithfulnessResult:
         "n_claim_terms": len(claim_terms),
         "antonym_flips": flips,
         "negation_delta": neg_delta,
+        "claim_numbers_missing_from_abstract": missing_numbers,
+        "guards": guards,
     }
 
     # Decision logic — deliberately conservative.
@@ -299,18 +488,21 @@ def heuristic_score(claim: str, abstract: str) -> FaithfulnessResult:
             f"{', '.join(flips)} — abstract appears to assert the opposite. "
             "Heuristic only; confirm against full text."
         )
-    elif overlap >= 0.60 and not flips and neg_delta == 0:
+    elif overlap >= 0.60 and not flips and neg_delta == 0 and not guards:
         verdict = "support"
         conf = min(0.60, 0.30 + overlap * 0.40)  # cap heuristic 'support' at 0.60
         rationale = (
             f"Strong lexical overlap ({overlap:.0%}) and no polarity conflict. "
-            "Heuristic lexical match only — NOT semantic entailment; verify key "
-            "numbers/qualifiers against full text."
+            "Heuristic lexical match only — NOT semantic entailment and NOT a "
+            "verification: confirm direction (who outperforms whom), population, "
+            "and qualifiers against the source before relying on it."
         )
     else:
         verdict = "unsupported"
         conf = 0.20 if overlap < 0.30 else 0.30
-        if overlap >= 0.60 and neg_delta != 0:
+        if overlap >= 0.60 and guards:
+            why = (f"Lexical overlap is high ({overlap:.0%}) but " + "; ".join(guards))
+        elif overlap >= 0.60 and neg_delta != 0:
             why = (
                 f"Lexical overlap is high ({overlap:.0%}) but a negation "
                 f"mismatch (delta={neg_delta}) makes naive 'support' unsafe"
@@ -328,8 +520,9 @@ def heuristic_score(claim: str, abstract: str) -> FaithfulnessResult:
             "refutation). Use the llm tier or full text to resolve."
         )
 
+    taxonomy = HEURISTIC_SUPPORT_TAXONOMY if verdict == "support" else TAXONOMY_MAP[verdict]
     return FaithfulnessResult(
-        claim=claim, doi="", verdict=verdict, taxonomy=TAXONOMY_MAP[verdict],
+        claim=claim, doi="", verdict=verdict, taxonomy=taxonomy,
         confidence=round(conf, 3), tier="heuristic", rationale=rationale,
         signals=signals,
     )
@@ -345,6 +538,12 @@ CLAIM unsupported. You can see ONLY the abstract, not the full text. If the \
 abstract does not contain enough information to establish the claim, answer \
 "unsupported" (this is non-coverage, NOT contradiction). Answer "contradict" \
 only if the abstract asserts something logically incompatible with the claim.
+Answer "support" only if the abstract establishes ALL of: the same direction of \
+any comparison (who outperforms whom), the same numbers, the same population \
+(people vs animals or cells; the same age group), and at least the claim's \
+certainty (a definite or causal claim needs definite or experimental evidence, \
+not "may", "suggests", or an association). If any of these cannot be \
+established from the abstract, answer "unsupported".
 
 Respond with a single minified JSON object and nothing else:
 {{"verdict": "support|contradict|unsupported", "confidence": 0.0-1.0, \
@@ -389,6 +588,7 @@ def llm_score(claim: str, abstract: str, timeout: int = 120) -> FaithfulnessResu
             "LLM tier requested but `claude` CLI unavailable; "
             "degraded to heuristic. " + fallback.rationale
         )
+        fallback.fallback_reason = "the `claude` CLI is unavailable"
         return fallback
 
     prompt = _LLM_PROMPT.format(claim=claim, abstract=abstract[:6000])
@@ -399,6 +599,7 @@ def llm_score(claim: str, abstract: str, timeout: int = 120) -> FaithfulnessResu
         )
     except subprocess.SubprocessError as exc:
         fallback.tier = "llm->heuristic-fallback"
+        fallback.fallback_reason = f"LLM call failed ({type(exc).__name__})"
         fallback.rationale = (
             f"LLM tier failed ({type(exc).__name__}); degraded to heuristic. "
             + fallback.rationale
@@ -408,6 +609,7 @@ def llm_score(claim: str, abstract: str, timeout: int = 120) -> FaithfulnessResu
     parsed = _extract_json_object(proc.stdout or "")
     if not parsed or parsed.get("verdict") not in VERDICTS:
         fallback.tier = "llm->heuristic-fallback"
+        fallback.fallback_reason = "LLM output was unparseable"
         fallback.rationale = (
             "LLM tier returned unparseable output; degraded to heuristic. "
             + fallback.rationale
@@ -420,13 +622,18 @@ def llm_score(claim: str, abstract: str, timeout: int = 120) -> FaithfulnessResu
     except (TypeError, ValueError):
         conf = 0.5
     conf = max(0.0, min(1.0, conf))
+    rationale = str(parsed.get("rationale", "")).strip()[:400] or "(no rationale returned)"
+    guards = _guard_reasons(claim, abstract)
+    if verdict == "support" and guards:
+        # A model's "support" never overrides a deterministic red flag.
+        verdict, conf = "unsupported", min(conf, 0.30)
+        rationale = ("Model judged support, but " + "; ".join(guards)
+                     + " — abstaining. Model rationale: " + rationale)
 
     return FaithfulnessResult(
         claim=claim, doi="", verdict=verdict, taxonomy=TAXONOMY_MAP[verdict],
-        confidence=round(conf, 3), tier="llm",
-        rationale=str(parsed.get("rationale", "")).strip()[:400]
-        or "(no rationale returned)",
-        signals={"model": alterlab_model()},
+        confidence=round(conf, 3), tier="llm", rationale=rationale,
+        signals={"model": alterlab_model(), "guards": guards}, method="model-judgment",
     )
 
 
@@ -448,6 +655,7 @@ def score_pair(
             claim=claim, doi=doi, verdict="unsupported",
             taxonomy=TAXONOMY_MAP["unsupported"], confidence=0.0,
             tier=tier, abstract_found=False, source=source,
+            evidence_scope="none", method="none",
             rationale=(
                 "No abstract available from Crossref or OpenAlex for this DOI. "
                 "Cannot assess faithfulness — treat as UNVERIFIABLE_ACCESS and "
@@ -505,16 +713,23 @@ def run_self_test() -> int:
             "Transformers reduce carbon emissions in data centers by 40 percent",
             _TOY_ABSTRACT, "unsupported",
         ),
+        # Numeric guard: strong overlap, but the claim's figure is not in the abstract.
+        (
+            "Mortality was reduced by 50 percent in the intervention group",
+            "Mortality was reduced by 5 percent in the intervention group.",
+            "unsupported",
+        ),
     ]
     ok = True
     for claim, abstract, expected in cases:
         r = score_pair(claim, "10.0000/self-test", tier="heuristic",
                        abstract_override=abstract)
-        status = "PASS" if r.verdict == expected else "FAIL"
-        if r.verdict != expected:
+        good = r.verdict == expected and r.taxonomy != "VERIFIED"
+        status = "PASS" if good else "FAIL"
+        if not good:
             ok = False
         print(f"[{status}] expected={expected:<12} got={r.verdict:<12} "
-              f"conf={r.confidence:.2f} :: {claim}")
+              f"taxonomy={r.taxonomy} conf={r.confidence:.2f} :: {claim}")
         print(f"        rationale: {r.rationale}")
     print("\nSELF-TEST:", "OK" if ok else "FAILED")
     return 0 if ok else 1

@@ -78,13 +78,29 @@ delta. Decision logic is deliberately conservative:
 | Condition | Verdict | Confidence cap |
 |-----------|---------|----------------|
 | overlap ≥ 0.30 **and** an antonym/polarity flip | `contradict` | ≤ 0.55 |
-| overlap ≥ 0.60 **and** no flip **and** no negation mismatch | `support` | ≤ 0.60 |
+| overlap ≥ 0.60 **and** no flip **and** no negation mismatch **and** no guard fires (below) | `support` (labelled `LEXICAL_MATCH_REQUIRES_REVIEW`) | ≤ 0.60 |
 | otherwise | `unsupported` (abstain) | ≤ 0.30 |
 
 The key design choice: **the heuristic is biased toward abstaining.** When it is not sure, it
 returns `unsupported` rather than a false `support`. Its `support` confidence is hard-capped at
 **0.60** precisely because lexical overlap is *not* semantic entailment — a high cap would
-imply a rigor the method does not have.
+imply a rigor the method does not have. For the same reason a heuristic `support` is labelled
+**`LEXICAL_MATCH_REQUIRES_REVIEW`**, never `VERIFIED` (see the mapping below).
+
+**Guards.** Four deterministic checks stop a lexical match from reaching `support`; the result
+abstains (`unsupported`) and lists the reasons in `signals.guards`:
+
+| Guard | Fires when | Example that now abstains |
+|-------|-----------|---------------------------|
+| Figures | a number in the claim is absent from the abstract | claim "reduced by 50 percent", abstract "5 percent" |
+| Direction | a comparison (`outperform`, `higher … than`, `superior`, …) is reversed, absent, or its sides cannot be matched | "A outperforms B" vs "B outperformed A" |
+| Population | people vs animal / in-vitro evidence, or a different age group | "in humans" vs "in mice"; "children" vs "adults" |
+| Certainty | the best-matching abstract sentence is tentative (`may`, `suggests`, `preliminary`, …) and the claim is not; or a causal claim meets an association from a non-experimental design | "reduces burnout" vs "may reduce burnout" |
+
+The guards are lexical too: they catch the common forms of these errors, not every paraphrase,
+which is why even a guard-clean `support` still requires review. The adversarial pairs they are
+tested against live in `skills/core/alterlab-citation-verifier/evals/fixtures/claim_faithfulness_adversarial.json`
+(with controls that must still reach a lexical match) and run in `tests/test_claim_faithfulness.py`.
 
 #### Tier 2 — `llm` (optional; opt-in via `--tier llm`)
 
@@ -98,17 +114,31 @@ The prompt instructs the judge that it sees **only the abstract**, that non-cove
   runtime with `ALTERLAB_MODEL`; an empty value is treated as unset.
 - **Graceful degradation.** If the `claude` CLI is absent, the call fails, or the model returns
   unparseable output, the tier **falls back to the heuristic** and relabels the result's tier as
-  `llm->heuristic-fallback` with the reason prepended to the rationale — never a silent failure
-  (closes the #1154 silent-fallback class).
+  `llm->heuristic-fallback`, with the reason in `fallback_reason` and prepended to the rationale
+  — never a silent failure (closes the #1154 silent-fallback class).
+- **A model's judgment is not verification.** A model-judged `support` is labelled
+  `MODEL_JUDGED_SUPPORT_REQUIRES_REVIEW`: it is one model reading one abstract, and the model may
+  share blind spots with whatever drafted the claim. The deterministic guards also veto it — if a
+  guard fires, the result is `unsupported` whatever the model said.
 
 ### Verdict → corpus taxonomy mapping
 
 This tool's three verdicts map onto the Phase-E **Claim Verdict Taxonomy** in
-`integrity_verification_agent.md`:
+`integrity_verification_agent.md`. **None of them is `VERIFIED`**, and every result carries
+`counts_as_verified: false`: the tool sees an abstract, not the passage that supports the claim.
+Recording a claim as `VERIFIED` is a separate step — a person (or the integrity agent's Phase E
+check) reading the cited passage in the full text.
+
+Four things are kept apart: **citation existence** and **metadata agreement** come from
+`verify_citations.py`; **lexical similarity** (heuristic tier) and **model-judged semantic
+support** (llm tier) come from this tool. Each result says which one it is (`method`:
+`lexical-heuristic` / `model-judgment` / `none`) and what it saw (`evidence_scope`:
+`abstract` / `none`).
 
 | `claim_faithfulness.py` | Corpus verdict | Severity | Meaning |
 |-------------------------|----------------|----------|---------|
-| `support` | `VERIFIED` | none | Abstract is consistent with the claim |
+| `support` (`heuristic` tier) | `LEXICAL_MATCH_REQUIRES_REVIEW` | review | The words overlap and no guard fired. Not semantic support — route to the `llm` tier or a human |
+| `support` (`llm` tier) | `MODEL_JUDGED_SUPPORT_REQUIRES_REVIEW` | review | One model judged the abstract to support the claim and no guard fired. Not verification — confirm against the full text |
 | `contradict` | `MAJOR_DISTORTION` / **SH** | SERIOUS | Abstract asserts the opposite (polarity flip) |
 | `unsupported` | `UNVERIFIABLE` (abstain) | — | Abstract does not establish the claim — **non-coverage, not refutation** |
 
@@ -150,11 +180,13 @@ oracle. A clean pass means "no integrity problem was *detected at the abstract l
    even when the full text fully supports it. `abstract_only: true` is always set so this is
    never forgotten downstream. Abstract silence is **non-coverage, not contradiction.**
 
-2. **The heuristic is bag-of-words, not entailment.** It is invariant to word order, so
-   **subject–object role reversal** ("A outperforms B" vs "B outperforms A") is invisible and
-   reads as `support`. It also misses numeric mismatches (it does not compare figures), scope
-   and qualifier changes ("in mice" vs "in humans"), hedging, and sarcasm. Use `--tier llm` or
-   full-text verification when role or number fidelity matters.
+2. **The heuristic is bag-of-words, not entailment.** Overlap is invariant to word order; the
+   guards above catch the common forms of role reversal, wrong figures, population shifts, and
+   certainty inflation, but not paraphrases they do not recognise (a reversal stated with an
+   unlisted verb, "rodent model" phrased unusually, hedging spread across sentences), nor
+   sarcasm. Unit or scale conversions ("0.5" vs "50%") abstain. That is why a heuristic
+   `support` is labelled `LEXICAL_MATCH_REQUIRES_REVIEW`, not `VERIFIED`. Use `--tier llm` and
+   then full-text reading when role, number, or population fidelity matters.
 
 3. **Crude stemming.** The antonym/polarity check uses a hand-rolled suffix stripper, not a
    lemmatizer. It catches common inflections (`increase`/`increasing`/`increased`) but will

@@ -28,7 +28,10 @@ Steps:
 4. **Claim faithfulness** — Where a sentence is tied to a citation, run
    `scripts/claim_faithfulness.py` on the (claim, DOI) pair; report `contradict` as
    SH and escalate `unsupported` claims (the abstract does not establish them) to the
-   `--tier llm` judge or full-text reading.
+   `--tier llm` judge or full-text reading. Neither kind of `support` is a verification: a
+   heuristic one (`LEXICAL_MATCH_REQUIRES_REVIEW`) is a word match and an llm-tier one
+   (`MODEL_JUDGED_SUPPORT_REQUIRES_REVIEW`) is one model's reading of the abstract. Report
+   both as "needs review"; count a claim as supported only after reading the cited passage.
 5. **Report** — A per-citation table: verdict code (`verified` / `TF` / `PAC` / `IH`
    / `PH` / `SH` / `unverified`), flags, the source that confirmed it, and the matched
    DOI/ID. Summarize how many of N citations could not be verified and why
