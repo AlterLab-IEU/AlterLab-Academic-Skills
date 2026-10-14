@@ -140,7 +140,7 @@ for identical repeated activities. See
 ### 2. Run the calculator
 
 ```bash
-uv run python skills/turkish-academia/alterlab-akademik-tesvik/scripts/tesvik_score.py \
+uv run python scripts/tesvik_score.py \
     activities.json --json
 ```
 

@@ -90,7 +90,7 @@ Use the helper to generate a valid sheet from a FASTQ directory (it pairs R1/R2,
 fills `lane`, and validates the schema before you burn compute):
 
 ```bash
-uv run python skills/bioinformatics/alterlab-nf-core-sarek/scripts/make_samplesheet.py \
+uv run python scripts/make_samplesheet.py \
     --fastq-dir ./fastq --patient PATIENT_01 --sample TUMOR_01 \
     --status 1 --sex XY --out samplesheet.csv
 ```

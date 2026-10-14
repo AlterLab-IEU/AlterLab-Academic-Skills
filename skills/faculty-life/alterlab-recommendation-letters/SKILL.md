@@ -159,7 +159,7 @@ bracketed gaps, never invented content.
 ### 2. Scaffold the letter
 
 ```bash
-uv run python skills/faculty-life/alterlab-recommendation-letters/scripts/letter_scaffold.py \
+uv run python scripts/letter_scaffold.py \
     --type tenure-external \
     --candidate "Dr. A. Yılmaz" \
     --relationship "external reviewer; known through the field since 2016" \
@@ -182,7 +182,7 @@ admission/fellowship; arms-length evaluation for external review).
 ### 4. Run the no-fabrication guard
 
 ```bash
-uv run python skills/faculty-life/alterlab-recommendation-letters/scripts/claim_guard.py \
+uv run python scripts/claim_guard.py \
     letter_draft.md --json
 ```
 

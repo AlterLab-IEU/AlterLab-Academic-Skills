@@ -186,7 +186,7 @@ You can run a quick structured self-audit of a plan-vs-actual story with the opt
 helper:
 
 ```bash
-uv run python skills/methodology/alterlab-preregistration-discipline/scripts/prereg_check.py \
+uv run python scripts/prereg_check.py \
     --plan plan.json --actual actual.json
 ```
 

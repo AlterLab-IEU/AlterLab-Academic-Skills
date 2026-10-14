@@ -157,3 +157,42 @@ def test_example_validates_against_schema(example: Path) -> None:
     instance = json.loads(example.read_text(encoding="utf-8"))
     errors = _validate(instance, schema, schema, schema_name)
     assert not errors, f"{example.name} fails {schema_name}:\n" + "\n".join(errors)
+
+
+# --------------------------------------------------------------------------- #
+# Part 3: shared/ citations resolve from the skill folder itself
+# --------------------------------------------------------------------------- #
+
+import build_bundles  # noqa: E402
+
+
+def test_per_skill_shared_copies_are_in_sync() -> None:
+    """Each `<skill>/shared/` is an exact copy of what the skill cites from skills/core/shared/.
+
+    Installs, archives and plugin installs copy only the skill folder, so the copy is what
+    makes a `shared/...` citation resolve there."""
+    drift = build_bundles.sync_shared(check=True)
+    assert not drift, (
+        "per-skill shared/ copies are stale — run `python3 scripts/build_bundles.py sync-shared`"
+        " and commit the result:\n" + "\n".join(drift)
+    )
+
+
+def test_shared_citations_resolve_inside_the_skill_folder() -> None:
+    bad = []
+    for sd in build_bundles.skill_dirs():
+        for r in build_bundles.iter_refs(sd):
+            if not r.sibling and not r.lead and r.rel.startswith("shared/"):
+                if not (sd / r.rel).is_file():
+                    bad.append(f"{sd.name}/{r.file}:{r.line}: {r.rel}")
+    assert not bad, "\n".join(bad)
+
+
+def test_no_repository_layout_paths_in_skill_markdown() -> None:
+    """`skills/<domain>/...` paths exist only in the checkout; skill markdown must use paths
+    relative to the skill folder (siblings as `../<skill>/`, plugin components as
+    `${CLAUDE_PLUGIN_ROOT}/<skill>/`)."""
+    bad = [f"{sd.parent.name}/{sd.name}/{f}:{n}: {raw}"
+           for sd in build_bundles.skill_dirs()
+           for f, n, raw in build_bundles.repo_layout_paths(sd)]
+    assert not bad, "\n".join(bad)

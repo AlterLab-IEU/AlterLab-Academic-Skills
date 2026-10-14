@@ -124,13 +124,33 @@ Part of the AlterLab Academic Skills suite.
 
 ### claude.ai custom-skill uploads
 
-The claude.ai `.zip` uploader accepts only these top-level frontmatter keys:
-`{name, description, license, allowed-tools, metadata}`. This suite ships one extra —
-`compatibility` — which is valid in the open standard and Claude Code but **not** on
-claude.ai. Do **not** add further non-whitelisted top-level keys: one unexpected key
-fails *every* skill's upload at once. `scripts/check_claudeai_compat.py --strict` (run
-in CI) catches such drift, and `scripts/check_claudeai_compat.py --package OUT` writes
-claude.ai-safe copies with `compatibility` stripped, ready to zip and upload.
+The claude.ai `.zip` uploader has been reported to accept only these top-level frontmatter
+keys: `{name, description, license, allowed-tools, metadata}` (anthropics/skills#37; not
+re-tested against the live service here). This suite ships one extra — `compatibility` —
+which is valid in the open standard and Claude Code. Do **not** add further non-whitelisted
+top-level keys: one unexpected key would fail *every* skill's upload at once.
+`scripts/check_claudeai_compat.py --strict` (run in CI) catches such drift. You never zip by
+hand: `python3 scripts/build_bundles.py release` builds the upload archives
+(`skill-<name>-<version>.zip`, `compatibility` stripped) together with the other release
+archives, and `--verify` checks them; `scripts/check_claudeai_compat.py --package OUT` writes
+the same claude.ai-target tree unzipped.
+
+### Paths inside a skill
+
+Installs and archives copy only the skill folder, so every path in a skill's Markdown is
+relative to that folder — never `skills/<domain>/…`:
+
+- own files: `scripts/foo.py`, `references/bar.md`;
+- shared handoff files: `shared/handoff_schemas.md`, then run
+  `python3 scripts/build_bundles.py sync-shared` to refresh the skill's byte-identical copy of
+  the canonical file in `skills/core/shared/` (commit the copy);
+- another skill's files: `../alterlab-other/scripts/baz.py` in `SKILL.md` and references, and
+  `${CLAUDE_PLUGIN_ROOT}/alterlab-other/scripts/baz.py` in `agents/*.md` and `commands/*.md`
+  (Claude Code fills in the plugin root; the installer and archives write it out). Either
+  form makes the other skill a dependency that the installer adds automatically.
+
+`tests/test_no_dangling_shared.py`, `tests/test_bundles.py` and `tests/test_install.py` fail
+on a path that would not resolve once installed. See `docs/portability.md` for the targets.
 
 ## Pull Request Process
 

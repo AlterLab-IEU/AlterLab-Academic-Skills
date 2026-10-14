@@ -160,7 +160,7 @@ operates on an `ImageContainer`.
 **Helper script** — build the graph and run the core statistics in one call:
 
 ```bash
-uv run python skills/bioinformatics/alterlab-squidpy-spatial/scripts/spatial_neighborhood.py \
+uv run python scripts/spatial_neighborhood.py \
     clustered.h5ad --platform xenium --cluster-key leiden --out spatial_report.json
 ```
 

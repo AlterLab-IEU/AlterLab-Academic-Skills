@@ -138,7 +138,7 @@ Detail, sample wording, and the equity checklist live in
 ### 1. Build a statement from course context
 
 ```bash
-uv run python skills/faculty-life/alterlab-syllabus-ai-policy/scripts/policy_builder.py \
+uv run python scripts/policy_builder.py \
     --course "PSY 201 Research Methods" --level undergraduate \
     --doc-standard apa \
     --integrity-code "IEU Student Disciplinary Regulation" \
@@ -162,7 +162,7 @@ never invents an integrity code, a tool capability, or a citation URL.
 ### 2. Lint a draft (yours or the generated one)
 
 ```bash
-uv run python skills/faculty-life/alterlab-syllabus-ai-policy/scripts/policy_lint.py ai_policy.md
+uv run python scripts/policy_lint.py ai_policy.md
 ```
 
 `policy_lint.py` flags the common failure modes: a vague catch-all ("use AI

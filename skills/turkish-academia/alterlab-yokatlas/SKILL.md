@@ -123,7 +123,7 @@ reference: `references/api_endpoints.md`.
 
    ```bash
    uv run --with yokatlas-py python \
-     skills/turkish-academia/alterlab-yokatlas/scripts/yokatlas_lookup.py \
+     scripts/yokatlas_lookup.py \
      search --puan-turu SAY --universite "boğaziçi" --program "bilgisayar mühendisliği" --size 20
    ```
 

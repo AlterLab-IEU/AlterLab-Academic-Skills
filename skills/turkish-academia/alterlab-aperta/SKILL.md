@@ -132,7 +132,7 @@ that file, not memory.
 Run the generator, then refine its prose with the user's specifics:
 
 ```bash
-uv run python skills/turkish-academia/alterlab-aperta/scripts/vyp_scaffold.py \
+uv run python scripts/vyp_scaffold.py \
     --project "Proje adı" --field stem --lang both \
     --data-closed --closed-reason kvkk \
     --out vyp.md

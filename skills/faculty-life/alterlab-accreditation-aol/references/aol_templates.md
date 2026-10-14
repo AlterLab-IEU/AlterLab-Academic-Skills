@@ -88,7 +88,7 @@ BUS480,M,M,M,M
 Run:
 
 ```bash
-uv run python skills/faculty-life/alterlab-accreditation-aol/scripts/aol_matrix.py \
+uv run python scripts/aol_matrix.py \
     matrix.csv --assessed-levels M,A --json
 ```
 

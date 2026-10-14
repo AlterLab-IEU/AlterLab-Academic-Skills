@@ -379,7 +379,7 @@ Maintain a constructive, professional, and collegial tone throughout the review.
 For presentations (PowerPoint, Beamer, slide decks), review rendered slide images rather than the PDF's extracted text: text extraction hides exactly the problems that matter in a talk — overflow, overlap, contrast, and font size. Convert the deck to images first, using the helper from `alterlab-scientific-slides`:
 
 ```bash
-python skills/writing-tools/alterlab-scientific-slides/scripts/pdf_to_images.py presentation.pdf review/slide --dpi 150
+python ../alterlab-scientific-slides/scripts/pdf_to_images.py presentation.pdf review/slide --dpi 150
 ```
 
 Then inspect each `review/slide-NNN.jpg` sequentially and document issues by slide number.

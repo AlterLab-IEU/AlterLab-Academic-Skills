@@ -48,7 +48,7 @@ prose — use it *after* you have the papers.
 ## Quick Start
 
 ```bash
-SCRIPT=skills/research-tools/alterlab-pdf-extract/scripts/extract_to_table.py
+SCRIPT=scripts/extract_to_table.py   # relative to this skill's directory
 
 # Heuristic backend: use 'label:question' so the question carries the words the
 # papers actually use — overlap is lexical, so a bare label like "Sample size"
@@ -100,7 +100,7 @@ specs that need an explicit question. Both combine; duplicate labels are rejecte
   when the paper is silent). With `OPENROUTER_API_KEY` set, requests go to OpenRouter;
   otherwise `OPENAI_API_KEY` is sent to `OPENAI_BASE_URL` (or the OpenAI default) — each key
   only ever goes to its own endpoint. The model ID follows the **ALTERLAB_MODEL** convention
-  (`skills/core/shared/model_env.md`): `$ALTERLAB_MODEL`, else the dated default; override
+  (`shared/model_env.md`): `$ALTERLAB_MODEL`, else the dated default; override
   per-run with `--model` (on a non-OpenRouter endpoint, pass a model ID it serves). Spot-check
   LLM answers against the PDFs before they enter a review, since a confident wrong number
   looks the same as a right one in the table.

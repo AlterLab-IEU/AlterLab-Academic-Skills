@@ -123,7 +123,7 @@ Reporting deadlines are deterministic functions of the award dates, and missing
 one can suspend payments. Use the helper instead of recalling rules from memory:
 
 ```bash
-uv run python skills/faculty-life/alterlab-grant-reporting/scripts/report_deadlines.py \
+uv run python scripts/report_deadlines.py \
     --funder nih-snap --budget-period-start 2026-09-01 --project-end 2028-08-31
 ```
 

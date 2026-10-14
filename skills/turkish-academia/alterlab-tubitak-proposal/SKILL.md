@@ -223,7 +223,7 @@ Full glossary in `references/terminology_bridge.md`.
 ### 1. Choose the variant and generate the scaffold
 
 ```bash
-uv run python skills/turkish-academia/alterlab-tubitak-proposal/scripts/scaffold_proposal.py \
+uv run python scripts/scaffold_proposal.py \
     --program 1001 \
     --title "<project title>" \
     --out proposal_scaffold.md
@@ -248,7 +248,7 @@ which new skills it builds.
 ### 3. Check the limits and structure
 
 ```bash
-uv run python skills/turkish-academia/alterlab-tubitak-proposal/scripts/scaffold_proposal.py \
+uv run python scripts/scaffold_proposal.py \
     --check proposal_scaffold.md --program 1001
 ```
 
