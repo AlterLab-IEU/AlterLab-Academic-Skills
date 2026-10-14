@@ -322,6 +322,8 @@ class CallResult:
     duration_ms: int | None = None
     cost_usd: float | None = None
     usage: dict | None = None
+    num_turns: int | None = None
+    permission_denials: int | None = None  # tool calls the permission rules refused
 
 
 # Accumulates CLI usage for the current run (answer and judge calls alike). Reset per run.
@@ -390,7 +392,7 @@ def _usage_summary(usage: object) -> dict | None:
 
 
 def _claude_call(prompt: str, model: str, timeout: int, system: str | None = None,
-                 cwd: Path | None = None) -> CallResult:
+                 cwd: Path | None = None, extra_args: list[str] | None = None) -> CallResult:
     """Run one prompt through the claude CLI in an isolated working directory.
 
     When ``system`` is given it is injected via ``--append-system-prompt`` — this is how the
@@ -398,8 +400,10 @@ def _claude_call(prompt: str, model: str, timeout: int, system: str | None = Non
     ``cwd`` is the arm's prepared workspace; without one the call runs in a fresh empty
     temporary directory. Errors, timeouts and refusals are returned as structured outcomes
     (never raised), so one bad call degrades to a non-verdict instead of aborting the run.
+    ``extra_args`` adds CLI flags such as ``--allowedTools`` (used by scripts/run_benchmark.py).
     """
-    cmd = ["claude", "--model", model, *ISOLATION_FLAGS, "--output-format", "json"]
+    cmd = ["claude", "--model", model, *ISOLATION_FLAGS, "--output-format", "json",
+           *(extra_args or [])]
     if system:
         cmd += ["--append-system-prompt", system]
     cmd += ["-p", prompt]
@@ -423,10 +427,13 @@ def _claude_call(prompt: str, model: str, timeout: int, system: str | None = Non
         if isinstance(data.get("total_cost_usd"), (int, float)):
             _USAGE["cost_usd"] += float(data["total_cost_usd"])
             _USAGE["cost_reported_calls"] += 1
+    denials = (data or {}).get("permission_denials")
     meta = {
         "duration_ms": (data or {}).get("duration_ms"),
         "cost_usd": (data or {}).get("total_cost_usd"),
         "usage": _usage_summary((data or {}).get("usage")),
+        "num_turns": (data or {}).get("num_turns"),
+        "permission_denials": len(denials) if isinstance(denials, list) else None,
     }
     # The CLI prints usage-policy refusals to stdout and exits non-zero, so check both streams.
     combined = f"{proc.stdout} {proc.stderr}"

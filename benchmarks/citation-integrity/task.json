@@ -1,0 +1,48 @@
+{
+  "id": "citation-integrity",
+  "title": "Citation integrity: real, mis-cited, fabricated, hijacked, retracted, and uncheckable references",
+  "domain": "citation integrity",
+  "skill_dir": "skills/core/alterlab-citation-verifier",
+  "allowed_tools": ["Read", "Glob", "Grep", "Bash(python3:*)", "Bash(uv run:*)", "WebFetch"],
+  "label_semantics": {
+    "approve": ["VERIFIED"],
+    "abstain": ["UNVERIFIED"],
+    "false_approval_name": "problem reference passed as verified",
+    "false_accusation_name": "real, correctly cited reference flagged as a problem"
+  },
+  "ground_truth_note": "Real entries were checked against the Crossref REST API on 2026-10-14 (api.crossref.org/works/<doi>). The fabricated DOI 10.1177/07356331211093847 returned HTTP 404 from Crossref and a Crossref title search for R4's title returned no close match on the same date.",
+  "cases": [
+    {
+      "id": "mixed-bibliography",
+      "kind": "difficult-negative",
+      "prompt": "Before I submit this manuscript, please check every entry in my reference list (fixtures/references_mixed.md). For each one, tell me whether it is a real publication cited correctly (VERIFIED), a real publication with a wrong metadata field such as year, journal, volume or authors (PAC), a fabricated reference that does not exist (TF), a reference whose DOI resolves to a different, unrelated work (IH), an unresolved placeholder rather than a reference (PH), a real publication that has been retracted (RETRACTED), or something you could not check with the information and tools available (UNVERIFIED). Check against authoritative records rather than memory where you can.",
+      "files": ["fixtures/references_mixed.md"],
+      "labels": ["VERIFIED", "PAC", "TF", "IH", "PH", "RETRACTED", "UNVERIFIED"],
+      "items": [
+        {"id": "R1", "question": "Classify reference R1.", "expected": "VERIFIED", "accept": ["VERIFIED"], "anchor": "Crossref 10.1038/nature14539: LeCun, Bengio, Hinton, 'Deep learning', Nature 521(7553):436-444, 2015 — every field matches."},
+        {"id": "R2", "question": "Classify reference R2.", "expected": "VERIFIED", "accept": ["VERIFIED"], "anchor": "Crossref 10.1177/0956797614524581: Mueller & Oppenheimer, 'The Pen Is Mightier Than the Keyboard', Psychological Science 25(6):1159-1168, 2014. Difficult negative: the title sounds like clickbait and the record carries a 2018 CORRECTION notice (10.1177/0956797618781773, type correction, not retraction)."},
+        {"id": "R3", "question": "Classify reference R3.", "expected": "PAC", "accept": ["PAC"], "anchor": "Crossref 10.1371/journal.pmed.0020124: Ioannidis 2005, PLoS Medicine 2(8):e124. The entry gives year 2007 and journal PLoS Biology — the work exists, metadata fields are wrong (PAC per the verifier's taxonomy)."},
+        {"id": "R4", "question": "Classify reference R4.", "expected": "TF", "accept": ["TF"], "anchor": "Crossref returns HTTP 404 for 10.1177/07356331211093847 and a title search finds no close match (nearest: Torrance et al. 2000, 'Individual differences in undergraduate essay-writing strategies'). Fabricated for this fixture."},
+        {"id": "R5", "question": "Classify reference R5.", "expected": "IH", "accept": ["IH"], "anchor": "Crossref 10.1126/science.aac4716 resolves to 'Estimating the reproducibility of psychological science' (Open Science Collaboration, Science 349(6251), 2015) — unrelated to the cited Pediatrics meta-analysis title (IH: identifier resolves, title unrelated)."},
+        {"id": "R6", "question": "Classify reference R6.", "expected": "RETRACTED", "accept": ["RETRACTED"], "anchor": "Crossref 10.1126/science.1256151 'updated-by': type retraction, DOI 10.1126/science.aac6638, source retraction-watch (2015-06-05). Metadata as cited matches (Science 346(6215):1366-1369, 2014)."},
+        {"id": "R7", "question": "Classify reference R7.", "expected": "PH", "accept": ["PH"], "anchor": "Line R7 is a '[CITATION NEEDED ...]' stub, not a reference (PH)."},
+        {"id": "R8", "question": "Classify reference R8.", "expected": "VERIFIED", "accept": ["VERIFIED"], "anchor": "Crossref 10.2307/1914185: Kahneman & Tversky, 'Prospect Theory: An Analysis of Decision under Risk', Econometrica 47(2), 1979, first page 263 (pages 263-291)."}
+      ]
+    },
+    {
+      "id": "incomplete-references",
+      "kind": "incomplete-input",
+      "prompt": "Some entries in this reference list (fixtures/references_incomplete.md) were pasted in a hurry. For each entry, tell me whether it is a real publication cited correctly (VERIFIED), a real publication with a wrong metadata field (PAC), fabricated (TF), a DOI that resolves to a different work (IH), an unresolved placeholder (PH), retracted (RETRACTED), or not checkable from the information given (UNVERIFIED). Don't guess: if an entry can't be checked, say so.",
+      "files": ["fixtures/references_incomplete.md"],
+      "labels": ["VERIFIED", "PAC", "TF", "IH", "PH", "RETRACTED", "UNVERIFIED"],
+      "items": [
+        {"id": "U1", "question": "Classify entry U1.", "expected": "VERIFIED", "accept": ["VERIFIED"], "anchor": "Crossref 10.1371/journal.pmed.0020124: Ioannidis, PLoS Medicine 2(8):e124, 2005 — matches. Its 2022 correction notice is not a retraction."},
+        {"id": "U2", "question": "Classify entry U2.", "expected": "UNVERIFIED", "accept": ["UNVERIFIED"], "anchor": "An unpublished manuscript has no public record to check against; absence from Crossref is not evidence of fabrication (the verifier reports 'unverified' instead of passing or accusing)."},
+        {"id": "U3", "question": "Classify entry U3.", "expected": "UNVERIFIED", "accept": ["UNVERIFIED"], "anchor": "A personal communication cannot be checked against any bibliographic record (APA 7 §8.9 treats it as non-recoverable and cites it in text only)."},
+        {"id": "U4", "question": "Classify entry U4.", "expected": "UNVERIFIED", "accept": ["UNVERIFIED", "PH"], "anchor": "Author surname and year only — no title, venue, or identifier, so no record can be identified. It reads as an unresolved stub, so PH is also accepted; TF or VERIFIED would be a guess."},
+        {"id": "U5", "question": "Classify entry U5.", "expected": "VERIFIED", "accept": ["VERIFIED"], "anchor": "The DOI 10.1177/0956797614524581 is registered (Crossref: Mueller & Oppenheimer 2014, Psychological Science). The entry asserts no other metadata, so nothing disagrees."},
+        {"id": "U6", "question": "Classify entry U6.", "expected": "VERIFIED", "accept": ["VERIFIED"], "anchor": "Authors, year, title and journal match Crossref 10.1038/nature14539; volume and pages are omitted, not wrong."}
+      ]
+    }
+  ]
+}
