@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/AlterLab-IEU/AlterLab-Academic-Skills/skills/core/shared/schemas/integrity_report.schema.json",
+  "title": "Integrity Report",
+  "description": "Handoff Schema 5. Producer: alterlab-research-pipeline/integrity_verification_agent. Consumer: alterlab-research-pipeline/pipeline_orchestrator_agent | alterlab-paper-writer/draft_writer_agent (for revision).",
+  "type": "object",
+  "required": [
+    "verdict",
+    "mode",
+    "phases",
+    "overall_issues",
+    "citation_integrity_score",
+    "fabrication_risk_score",
+    "timestamp"
+  ],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["PASS", "PASS_WITH_CONDITIONS", "FAIL"]
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["pre-review", "final-check"]
+    },
+    "phases": {
+      "type": "object",
+      "required": ["A_references", "B_citation_context", "C_data", "D_originality", "E_claims"],
+      "properties": {
+        "A_references": {
+          "type": "object",
+          "required": ["checked", "passed", "failed", "issues"],
+          "properties": {
+            "checked": { "type": "integer", "minimum": 0 },
+            "passed": { "type": "integer", "minimum": 0 },
+            "failed": { "type": "integer", "minimum": 0 },
+            "issues": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["ref_id", "issue_type", "severity", "detail"],
+                "properties": {
+                  "ref_id": { "type": "string" },
+                  "issue_type": { "type": "string" },
+                  "severity": { "$ref": "#/$defs/severity" },
+                  "detail": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "B_citation_context": {
+          "type": "object",
+          "required": ["sampled", "verified", "issues"],
+          "properties": {
+            "sampled": { "type": "integer", "minimum": 0 },
+            "verified": { "type": "integer", "minimum": 0 },
+            "issues": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["ref_id", "section", "issue"],
+                "properties": {
+                  "ref_id": { "type": "string" },
+                  "section": { "type": "string" },
+                  "issue": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "C_data": {
+          "type": "object",
+          "required": ["claims_checked", "verified", "issues"],
+          "properties": {
+            "claims_checked": { "type": "integer", "minimum": 0 },
+            "verified": { "type": "integer", "minimum": 0 },
+            "issues": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["claim", "expected", "actual", "severity"],
+                "properties": {
+                  "claim": { "type": "string" },
+                  "expected": { "type": "string" },
+                  "actual": { "type": "string" },
+                  "severity": { "$ref": "#/$defs/severity" }
+                }
+              }
+            }
+          }
+        },
+        "D_originality": {
+          "type": "object",
+          "required": ["checked", "issues"],
+          "properties": {
+            "checked": { "type": "boolean" },
+            "issues": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["type", "severity", "detail"],
+                "properties": {
+                  "type": { "type": "string" },
+                  "severity": { "$ref": "#/$defs/severity" },
+                  "detail": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "E_claims": {
+          "type": "object",
+          "required": ["checked", "verified", "distortions"],
+          "properties": {
+            "checked": { "type": "integer", "minimum": 0 },
+            "verified": { "type": "integer", "minimum": 0 },
+            "distortions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["claim", "source", "verdict", "detail"],
+                "properties": {
+                  "claim": { "type": "string" },
+                  "source": { "type": "string" },
+                  "verdict": { "type": "string" },
+                  "detail": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "overall_issues": {
+      "type": "object",
+      "required": ["SERIOUS", "MEDIUM", "MINOR"],
+      "properties": {
+        "SERIOUS": { "type": "integer", "minimum": 0 },
+        "MEDIUM": { "type": "integer", "minimum": 0 },
+        "MINOR": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "citation_integrity_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Score for citation accuracy."
+    },
+    "fabrication_risk_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "0 = no risk detected."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of verification."
+    }
+  },
+  "$defs": {
+    "severity": {
+      "type": "string",
+      "enum": ["SERIOUS", "MEDIUM", "MINOR"],
+      "description": "SERIOUS = fabricated reference/falsified data/gross distortion (blocks pipeline). MEDIUM = wrong DOI/page/misattribution (blocks pipeline). MINOR = missing co-author/formatting (advisory)."
+    }
+  }
+}

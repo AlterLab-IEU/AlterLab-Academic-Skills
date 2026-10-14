@@ -177,7 +177,7 @@ Mirrors the systematic-debugging "3 failures = wrong approach" rule:
 ```bash
 # 1. Build a tiny manifest of the claim and what was actually run (see references).
 # 2. Run the gate; non-zero exit = claim is not clear to write.
-uv run python skills/methodology/alterlab-results-transparency/scripts/reporting_gate.py claim.json
+uv run python scripts/reporting_gate.py claim.json
 ```
 
 The script is a deterministic transparency linter, not a statistics engine: it

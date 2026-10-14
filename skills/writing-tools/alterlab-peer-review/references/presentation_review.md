@@ -13,7 +13,7 @@ presentation rather than a manuscript.
 **Required Process:**
 1. Convert PDF to images using Python:
    ```bash
-   python skills/writing-tools/alterlab-scientific-slides/scripts/pdf_to_images.py presentation.pdf review/slide --dpi 150
+   python ../alterlab-scientific-slides/scripts/pdf_to_images.py presentation.pdf review/slide --dpi 150
    # Creates: review/slide-001.jpg, review/slide-002.jpg, etc.
    ```
 2. Read and inspect EACH slide image file sequentially

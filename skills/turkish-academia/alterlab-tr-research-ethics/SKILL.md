@@ -156,7 +156,7 @@ Gereken Asgari Bilgiler" (KAD-DD-13). Headline items:
 ### Lint a draft consent form
 
 ```bash
-uv run python skills/turkish-academia/alterlab-tr-research-ethics/scripts/consent_form_check.py \
+uv run python scripts/consent_form_check.py \
     path/to/olur_formu.md
 ```
 

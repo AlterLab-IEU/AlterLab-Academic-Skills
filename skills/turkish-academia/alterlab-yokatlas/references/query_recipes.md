@@ -2,8 +2,8 @@
 
 Worked invocations of `scripts/yokatlas_lookup.py`. All run keyless via
 `uv run --with yokatlas-py python …`. Paths below are abbreviated as
-`.../yokatlas_lookup.py`; the full path is
-`skills/turkish-academia/alterlab-yokatlas/scripts/yokatlas_lookup.py`.
+`.../yokatlas_lookup.py`; the full path, relative to the skill directory, is
+`scripts/yokatlas_lookup.py`.
 
 Every command prints a JSON envelope:
 

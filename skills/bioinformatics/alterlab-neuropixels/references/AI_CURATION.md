@@ -75,7 +75,7 @@ result = npa.analyze_unit_visually(
     analyzer,
     unit_id=0,
     api_client=client,
-    # Per the ALTERLAB_MODEL convention (skills/core/shared/model_env.md), never hardcode a
+    # Per the ALTERLAB_MODEL convention (shared/model_env.md), never hardcode a
     # bare model ID: read it from the environment with a dated default.
     model=os.environ.get("ALTERLAB_MODEL") or "claude-opus-5-5",  # default reviewed 2026-09-23
     task='quality_assessment'

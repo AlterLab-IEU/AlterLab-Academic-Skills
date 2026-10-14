@@ -168,7 +168,7 @@ with `--format bibtex|doi|freeform` if detection is wrong.
 ### 2. Run the verifier
 
 ```bash
-uv run python skills/core/alterlab-citation-verifier/scripts/verify_citations.py \
+uv run python scripts/verify_citations.py \
     path/to/references.bib \
     --mailto <contact-email> \
     --threshold 0.70 \
@@ -231,7 +231,7 @@ Failures are never swallowed into a pass:
 
 For each `unverified` entry, re-run with connectivity or a key if possible;
 otherwise look it up with the plugin's `crossref` / `openalex` MCP tools when they
-are available (setup: `mcp_setup.md` under `skills/core/references`), then fall back to WebSearch with
+are available (setup: `mcp_setup.md` in the alterlab-core plugin's `references/` folder), then fall back to WebSearch with
 three distinct queries (exact title in quotes; title + first author; first author +
 venue + year) and, for a DOI, open `https://doi.org/<DOI>`. If a record is found, report the verdict it supports
 and say it came from the fallback. If nothing is found, classify the entry as
@@ -249,7 +249,7 @@ Existence is half of the gate; a real paper cited for something it never said
 returns `support` / `contradict` / `unsupported`:
 
 ```bash
-uv run python skills/core/alterlab-citation-verifier/scripts/claim_faithfulness.py \
+uv run python scripts/claim_faithfulness.py \
     --claim "<the sentence as written>" --doi <doi>
 uv run python .../claim_faithfulness.py --input pairs.json --json        # batch
 uv run python .../claim_faithfulness.py --input pairs.json --tier llm --json

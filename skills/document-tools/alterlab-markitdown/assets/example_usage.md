@@ -99,7 +99,7 @@ from markitdown import MarkItDown
 from openai import OpenAI
 
 # AI descriptions for images via OpenRouter; model follows the ALTERLAB_MODEL
-# convention (see skills/core/shared/model_env.md). The "anthropic/" prefix is
+# convention (see shared/model_env.md). The "anthropic/" prefix is
 # the OpenRouter slug for the dated default.
 client = OpenAI(
     api_key=os.environ["OPENROUTER_API_KEY"],
@@ -107,7 +107,7 @@ client = OpenAI(
 )
 md = MarkItDown(
     llm_client=client,
-    llm_model="anthropic/claude-opus-5.5",  # OpenRouter slug of the ALTERLAB_MODEL default (skills/core/shared/model_env.md)
+    llm_model="anthropic/claude-opus-5.5",  # OpenRouter slug of the ALTERLAB_MODEL default (shared/model_env.md)
     llm_prompt="Describe this scientific slide, focusing on data and key findings"
 )
 
@@ -148,10 +148,10 @@ Analyze this scientific figure. Describe:
 Be technical and precise.
 """
 
-# Model via the ALTERLAB_MODEL convention (skills/core/shared/model_env.md).
+# Model via the ALTERLAB_MODEL convention (shared/model_env.md).
 md = MarkItDown(
     llm_client=client,
-    llm_model="anthropic/claude-opus-5.5",  # OpenRouter slug of the ALTERLAB_MODEL default (skills/core/shared/model_env.md)
+    llm_model="anthropic/claude-opus-5.5",  # OpenRouter slug of the ALTERLAB_MODEL default (shared/model_env.md)
     llm_prompt=scientific_prompt
 )
 
@@ -174,7 +174,7 @@ client = OpenAI(
 )
 
 # Same model (ALTERLAB_MODEL convention), different prompts per file type.
-model = "anthropic/claude-opus-5.5"  # OpenRouter slug of the ALTERLAB_MODEL default (skills/core/shared/model_env.md)
+model = "anthropic/claude-opus-5.5"  # OpenRouter slug of the ALTERLAB_MODEL default (shared/model_env.md)
 
 # Scientific papers - prompt for technical figure analysis
 scientific_md = MarkItDown(

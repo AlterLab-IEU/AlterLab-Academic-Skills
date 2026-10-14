@@ -230,5 +230,5 @@ AUTHORING CHECKLIST (see CONTRIBUTING.md → Skill Quality Standards):
 - description: third person, leads with what + "Use when", suite label LAST, <=1024 chars (this one ~840)
 - body <500 lines; reference files exist and are one level deep
 - every factual orchestration claim verified against code.claude.com docs (2026-09-23)
-- validate: uv run python scripts/check_spec.py --skill workflow-orchestration && uv run python scripts/audit_skills.py
+- validate (from the repository root): `check_spec.py --skill workflow-orchestration` and `audit_skills.py` in the repository's scripts folder
 -->

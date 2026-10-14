@@ -195,7 +195,7 @@ record for a quartile. Do **not** guess a tier; an unknown one is reported as un
 ### 3. Run the scorer
 
 ```bash
-uv run python skills/turkish-academia/alterlab-docentlik-eligibility/scripts/score_docentlik.py \
+uv run python scripts/score_docentlik.py \
     publications.json --alan sosyal --bilim-alani "İletişim Çalışmaları" --out report.json
 ```
 

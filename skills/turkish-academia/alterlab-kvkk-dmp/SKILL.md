@@ -137,7 +137,7 @@ A worked walkthrough of all six on a sample survey + health-data project is in
    skeleton you then complete and review:
 
    ```bash
-   uv run python skills/turkish-academia/alterlab-kvkk-dmp/scripts/kvkk_dmp_scaffold.py \
+   uv run python scripts/kvkk_dmp_scaffold.py \
        --title "Project title" \
        --basis explicit-consent \
        --special-category health \

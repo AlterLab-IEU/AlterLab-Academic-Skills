@@ -119,7 +119,7 @@ from markitdown import MarkItDown
 from openai import OpenAI
 
 # OpenRouter takes the dotted slug of an Anthropic model ID (claude-opus-5-5 -> anthropic/claude-opus-5.5);
-# scripts/convert_with_ai.py derives it from $ALTERLAB_MODEL (skills/core/shared/model_env.md).
+# scripts/convert_with_ai.py derives it from $ALTERLAB_MODEL (shared/model_env.md).
 model = "anthropic/claude-opus-5.5"
 
 # Initialize OpenRouter client (OpenAI-compatible API)
@@ -258,7 +258,7 @@ from markitdown import MarkItDown
 from openai import OpenAI
 
 # OpenRouter takes the dotted slug of an Anthropic model ID (claude-opus-5-5 -> anthropic/claude-opus-5.5);
-# scripts/convert_with_ai.py derives it from $ALTERLAB_MODEL (skills/core/shared/model_env.md).
+# scripts/convert_with_ai.py derives it from $ALTERLAB_MODEL (shared/model_env.md).
 model = "anthropic/claude-opus-5.5"
 
 # Use OpenRouter for access to multiple AI models
@@ -366,8 +366,8 @@ for paper in papers_dir.glob("*.pdf"):
 import os
 from openai import OpenAI
 
-# Model ID via the ALTERLAB_MODEL convention (skills/core/shared/model_env.md).
-model = "anthropic/claude-opus-5.5"  # OpenRouter slug of the ALTERLAB_MODEL default (skills/core/shared/model_env.md)
+# Model ID via the ALTERLAB_MODEL convention (shared/model_env.md).
+model = "anthropic/claude-opus-5.5"  # OpenRouter slug of the ALTERLAB_MODEL default (shared/model_env.md)
 
 client = OpenAI(
     api_key=os.environ["OPENROUTER_API_KEY"],

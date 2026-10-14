@@ -269,10 +269,10 @@ ethics-committee text and a late-disclosure letter. Replace every «…».
 ## Running the Builder
 
 ```bash
-uv run python skills/writing-tools/alterlab-ai-use-disclosure/scripts/disclosure_builder.py input.json
-uv run python skills/writing-tools/alterlab-ai-use-disclosure/scripts/disclosure_builder.py --list-venues
-uv run python skills/writing-tools/alterlab-ai-use-disclosure/scripts/disclosure_builder.py --matrix peer_review
-uv run python skills/writing-tools/alterlab-ai-use-disclosure/scripts/disclosure_builder.py --self-test
+uv run python scripts/disclosure_builder.py input.json
+uv run python scripts/disclosure_builder.py --list-venues
+uv run python scripts/disclosure_builder.py --matrix peer_review
+uv run python scripts/disclosure_builder.py --self-test
 ```
 
 Example input: a Turkish author submitting to an Elsevier journal.

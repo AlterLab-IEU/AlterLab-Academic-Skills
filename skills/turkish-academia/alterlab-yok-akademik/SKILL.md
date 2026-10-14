@@ -91,7 +91,7 @@ script does both. See [`references/turkish_names.md`](references/turkish_names.m
 the exact İ/ı, Ş/ş, Ğ/ğ, Ç/ç, Ö/ö, Ü/ü rules and matching strategy.
 
 ```bash
-uv run python skills/turkish-academia/alterlab-yok-akademik/scripts/yok_akademik.py \
+uv run python scripts/yok_akademik.py \
     search "Ayşe Yılmaz"
 ```
 

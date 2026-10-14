@@ -165,7 +165,7 @@ thesis, translated work, secondary citation) are in
    `ve ark.`/`vd.`):
 
    ```bash
-   uv run python skills/turkish-academia/alterlab-tr-academic-style/scripts/tr_apa_lint.py manuscript.md
+   uv run python scripts/tr_apa_lint.py manuscript.md
    ```
 
    It reads a `.md`/`.txt`/`.tex` file (or stdin), reports line-numbered

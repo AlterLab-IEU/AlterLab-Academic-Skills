@@ -31,22 +31,30 @@ Modes
     python3 scripts/check_claudeai_compat.py --json       # machine-readable
     python3 scripts/check_claudeai_compat.py --package OUT # write claude.ai-safe SKILL.md copies
 
-``--package`` writes, for every skill, a copy of its ``SKILL.md`` with all
-non-whitelisted top-level frontmatter keys stripped, under
-``OUT/<domain>/<skill>/SKILL.md`` (plus ``references/``/``scripts/`` copied verbatim),
-so the tree can be zipped and uploaded to claude.ai without rejection. Single-file,
-stdlib-only.
+``--package`` writes every skill as it ships in the claude.ai upload archives, under
+``OUT/<domain>/<skill>/``: the whole skill folder (references, scripts, agents, assets, the
+per-skill ``shared/`` copies, …), the repository license notices, and a ``SKILL.md`` whose
+non-whitelisted top-level frontmatter keys are stripped. It uses the same code path as the
+release archives (``scripts/build_bundles.py``, target ``claudeai``); for ready-to-upload
+zips run ``python3 scripts/build_bundles.py release``.
+
+Status of the rules: the whitelist comes from anthropics/skills#37 (Oct 2025) and has not
+been re-tested against the live claude.ai uploader by this repository. The stripping and
+the resulting frontmatter are tested (tests/test_claudeai_compat.py, tests/test_bundles.py).
+Stdlib-only.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import shutil
+import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS_DIR = REPO_ROOT / "skills"
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 # The keys the claude.ai custom-skill .zip uploader accepts (anthropics/skills#37).
 CLAUDEAI_WHITELIST = frozenset({"name", "description", "license", "allowed-tools", "metadata"})
@@ -116,6 +124,9 @@ def _strip_non_whitelisted(skill_md_text: str) -> str:
     return "\n".join(out)
 
 
+strip_non_whitelisted = _strip_non_whitelisted  # public name used by scripts/build_bundles.py
+
+
 def skill_files() -> list[Path]:
     return sorted(SKILLS_DIR.rglob("SKILL.md"))
 
@@ -136,20 +147,12 @@ def scan() -> list[dict]:
 
 
 def package(out_dir: Path) -> int:
+    """Write every skill as packaged for the claude.ai target (see module docstring)."""
+    import build_bundles  # same directory; imported lazily (it imports this module)
+
     out_dir = out_dir.resolve()
-    n = 0
-    for p in skill_files():
-        rel = p.relative_to(SKILLS_DIR)          # e.g. databases/alterlab-pubmed/SKILL.md
-        dest = out_dir / rel
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(_strip_non_whitelisted(p.read_text(encoding="utf-8")), encoding="utf-8")
-        # Copy bundled resource dirs verbatim so the packaged skill still resolves.
-        for sub in ("references", "scripts", "evals"):
-            src_sub = p.parent / sub
-            if src_sub.is_dir():
-                shutil.copytree(src_sub, dest.parent / sub, dirs_exist_ok=True)
-        n += 1
-    print(f"Wrote {n} claude.ai-safe skill(s) to {out_dir} "
+    n = build_bundles.materialize(out_dir, "claudeai", layout="domain")
+    print(f"Wrote {n} claude.ai-target skill(s) to {out_dir} "
           f"(non-whitelisted top-level keys stripped: {sorted(INTENTIONAL_EXTRA)}).")
     return 0
 

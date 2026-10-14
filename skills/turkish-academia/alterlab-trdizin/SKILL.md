@@ -109,11 +109,11 @@ Two facts to keep honest:
 
 ```bash
 # Journal status (the headline use case)
-uv run python skills/turkish-academia/alterlab-trdizin/scripts/query_trdizin.py \
+uv run python scripts/query_trdizin.py \
     journal "Bilig" --limit 3
 
 # Publication search, newest first, with facets, JSON out
-uv run python skills/turkish-academia/alterlab-trdizin/scripts/query_trdizin.py \
+uv run python scripts/query_trdizin.py \
     publication "deprem okuryazarlığı" \
     --order publicationYear-DESC --limit 20 --facets --out trdizin.json
 ```

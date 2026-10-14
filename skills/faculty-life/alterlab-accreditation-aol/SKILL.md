@@ -174,7 +174,7 @@ touched only at "Introduced") is exactly what a peer-review team flags. Check th
 matrix structurally instead of reading it by hand:
 
 ```bash
-uv run python skills/faculty-life/alterlab-accreditation-aol/scripts/aol_matrix.py \
+uv run python scripts/aol_matrix.py \
     path/to/matrix.csv --assessed-levels M,A --json
 ```
 

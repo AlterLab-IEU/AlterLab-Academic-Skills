@@ -121,7 +121,7 @@ in **[references/redcap_design.md](references/redcap_design.md)**.
 ### Lint before import
 
 ```bash
-uv run python skills/faculty-life/alterlab-redcap-cdisc/scripts/lint_data_dictionary.py \
+uv run python scripts/lint_data_dictionary.py \
     path/to/data_dictionary.csv
 ```
 
