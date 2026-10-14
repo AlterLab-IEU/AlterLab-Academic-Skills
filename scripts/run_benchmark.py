@@ -83,6 +83,8 @@ def validate_task(path: Path) -> list[str]:
         if not case.get("prompt") or not labels or not case.get("items"):
             errs.append(f"{where}: needs prompt, labels, and items")
             continue
+        if "allowed_tools" in case and not isinstance(case["allowed_tools"], list):
+            errs.append(f"{where}: allowed_tools must be a list")
         if not approve <= labels or not abstain <= labels:
             errs.append(f"{where}: approve/abstain labels must be in the case's labels")
         for f in case.get("files", []):
@@ -106,6 +108,8 @@ def validate_task(path: Path) -> list[str]:
                     errs.append(f"{where}:{iid}: expected/accept must be among the labels")
                 if item.get("expected") not in accept:
                     errs.append(f"{where}:{iid}: expected must be in accept")
+                if "truth" in item and item["truth"] not in labels:
+                    errs.append(f"{where}:{iid}: truth must be among the labels")
     return errs
 
 
@@ -209,11 +213,16 @@ def score_case(case: dict, semantics: dict, answer: dict[str, dict] | None) -> d
             tally["abstained"] += 1
             tally["unnecessary_abstention"] += 1
         elif expected in abstain:
-            # Incomplete input answered definitely. An approval here is also a false approval.
+            # Incomplete input answered definitely. ``truth`` (default: expected) says what the
+            # item really is, so a definite answer can still be typed as a false approval
+            # (approving a problem) or a false accusation (flagging a fine item).
             rec["result"] = "overconfident_on_incomplete"
             tally["overconfident_on_incomplete"] += 1
-            if label in approve:
+            truth = item.get("truth", expected)
+            if label in approve and truth not in approve:
                 tally["false_approval"] += 1
+            elif label not in approve and truth in approve:
+                tally["false_accusation"] += 1
         elif expected not in approve and label in approve:
             rec["result"] = "false_approval"
             tally["false_approval"] += 1
@@ -250,7 +259,8 @@ def run_arm(task: dict, case: dict, task_dir: Path, arm: str, model: str, timeou
         system = None
         if skill_dir is not None:
             system = (skill_dir / "SKILL.md").read_text(encoding="utf-8") + rv._SKILL_RUNTIME_NOTE
-        tools = task.get("allowed_tools") or ["Read", "Glob", "Grep"]
+        # A case may narrow the tools (e.g. an offline variant with no network access).
+        tools = case.get("allowed_tools") or task.get("allowed_tools") or ["Read", "Glob", "Grep"]
         call = rv._claude_call(prompt, model, timeout, system=system, cwd=ws,
                                extra_args=["--allowedTools", *tools])
     answer = parse_answer(call.text) if call.outcome == "answer" else None

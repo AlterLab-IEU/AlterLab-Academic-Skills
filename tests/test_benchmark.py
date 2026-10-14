@@ -112,3 +112,17 @@ def test_validator_rejects_bad_tasks(tmp_path) -> None:
     for needle in ("directory name", "no SKILL.md", "does not exist", "among the labels",
                    "duplicate item id"):
         assert needle in errs
+
+
+def test_definite_answers_on_abstain_items_are_typed_by_truth() -> None:
+    """Offline-style items expect abstention but record what the item really is, so a
+    definite wrong answer still counts as a false accusation or false approval."""
+    case = {"labels": ["OK", "BAD", "UNKNOWN"], "items": [
+        {"id": "real", "expected": "UNKNOWN", "accept": ["OK", "UNKNOWN"], "truth": "OK"},
+        {"id": "fake", "expected": "UNKNOWN", "accept": ["BAD", "UNKNOWN"], "truth": "BAD"},
+    ]}
+    t = rb.score_case(case, SEM, _answer(real="BAD", fake="OK"))["tally"]
+    assert t["false_accusation"] == 1 and t["false_approval"] == 1
+    assert t["overconfident_on_incomplete"] == 2
+    t = rb.score_case(case, SEM, _answer(real="OK", fake="UNKNOWN"))["tally"]
+    assert t["correct"] == 2 and t["false_accusation"] == t["false_approval"] == 0
