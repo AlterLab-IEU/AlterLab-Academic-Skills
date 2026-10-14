@@ -32,7 +32,8 @@ Steps:
    heuristic one (`LEXICAL_MATCH_REQUIRES_REVIEW`) is a word match and an llm-tier one
    (`MODEL_JUDGED_SUPPORT_REQUIRES_REVIEW`) is one model's reading of the abstract. Report
    both as "needs review"; count a claim as supported only after reading the cited passage.
-5. **Report** — A per-citation table: verdict code (`verified` / `TF` / `PAC` / `IH`
+5. **Report** — First the `input_accounting` counts (detected / parsed / rejected /
+   unsupported) and any PARTIAL status — a partial run is not a pass. Then a per-citation table: verdict code (`verified` / `TF` / `PAC` / `IH`
    / `PH` / `SH` / `unverified`), flags, the source that confirmed it, and the matched
    DOI/ID. Summarize how many of N citations could not be verified and why
    (`source_status`).

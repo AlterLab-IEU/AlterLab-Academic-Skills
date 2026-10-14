@@ -6,7 +6,7 @@ allowed-tools: Read Write Edit Bash(python:*) Bash WebSearch WebFetch
 compatibility: "No API key required — stdlib Python (`requests` optional) via `uv run python` against Crossref, OpenAlex, Semantic Scholar, arXiv, and the doi.org Handle API; optional OPENALEX_API_KEY / S2_API_KEY only raise rate limits; offline runs return 'unverified' verdicts"
 metadata:
   skill-author: AlterLab
-  version: "1.1.0"
+  version: "1.2.0"
   last_updated: "2026-09-23"
   depends_on: "alterlab-research-pipeline (shares the integrity taxonomy), alterlab-deep-research"
 ---
@@ -75,6 +75,9 @@ For each bibliography entry the script:
    references, including one-reference-per-line pastes), extracting title, authors,
    year, venue, DOI, and arXiv ID. A full reference that merely contains a DOI stays
    free-form, so its title and authors are kept for the Identifier Hijacking check.
+   Every detected entry ends up parsed, **rejected** (malformed — with line, key, and
+   reason) or **unsupported**; see `input_accounting`. Mixed BibTeX + free-form/DOI
+   input is handled piecewise, and a broken entry cannot swallow the ones after it.
 2. **Resolves identifiers** — looks up the cited DOI/arXiv ID directly when present,
    and asks the doi.org Handle API whether a DOI is registered with any agency.
 3. **Searches by title + first author + year** as a fallback across the sources.
@@ -148,6 +151,9 @@ evidence. When the deciding sources were rate-limited or down, the entry is
 - **UNVERIFIED** — nothing SERIOUS was found but at least one entry could not be
   checked (e.g. an offline run or rate-limited sources). This is **not** a pass —
   re-run with network access or an API key, or resolve those entries manually.
+- **PARTIAL** — at least one detected entry was rejected, unsupported, or left
+  unprocessed (`status: partial`, exit code 3). Not a pass: fix the entries listed in
+  `input_accounting` and re-run. FAIL still takes precedence.
 
 ---
 
@@ -176,6 +182,8 @@ uv run python skills/core/alterlab-citation-verifier/scripts/verify_citations.py
 - Optional: `export OPENALEX_API_KEY=…` (free key from openalex.org/settings/api)
   and/or `S2_API_KEY=…` before large bibliographies — keyless OpenAlex searches
   share a small per-IP daily budget, and the keyless Semantic Scholar pool is busy.
+- Exit codes: 0 complete, 2 bad input / nothing parseable, 3 partial (the report is
+  still written).
 
 The script uses `requests` if installed, else the Python stdlib (`urllib`), so it
 runs with no extra dependencies in a bare `uv` environment. Expect roughly 3–10 s
@@ -183,7 +191,9 @@ per entry: it spaces arXiv calls 3 s apart and backs off on rate limits.
 
 ### 3. Read the JSON and report
 
-Parse `summary.verdict` and the per-entry `verdict` codes. Present:
+Check `status` first: if it is `partial`, list `input_accounting.rejected_entries` and
+`unsupported_entries` with their line numbers and reasons before anything else. Then parse
+`summary.verdict` and the per-entry `verdict` codes. Present:
 
 1. The **headline verdict** and counts (`verdict_counts`, `severity_counts`).
 2. A **table of every non-`verified` entry** with its code, severity, and `detail`.
@@ -269,9 +279,12 @@ uv run python .../claim_faithfulness.py --input pairs.json --tier llm --json
 ```json
 {
   "tool": "alterlab-citation-verifier/verify_citations.py",
-  "version": "1.1.0",
+  "version": "1.2.0",
+  "status": "complete",
+  "warning": null,
   "summary": {
     "total": 2,
+    "input": {"detected": 2, "parsed": 2, "rejected": 0, "unsupported": 0},
     "verdict": "FAIL",
     "verdict_counts": {"verified": 1, "TF": 1, "PAC": 0, "IH": 0, "PH": 0, "SH": 0, "unverified": 0},
     "severity_counts": {"SERIOUS": 1, "MEDIUM": 0, "MINOR": 0},
@@ -299,6 +312,8 @@ the Integrity Report schema fields of the same name, so the report can feed
 
 ## Self-Check Before Reporting
 
+- Is `status` complete? A PARTIAL run (rejected or unsupported entries) is never
+  reported as a pass.
 - Did the run reach the network, and which sources answered? If entries are
   `unverified`, name the failing sources from `source_status`; do not imply a pass.
 - Are there any `RETRACTED` flags? Surface them even on otherwise-`verified` entries.
