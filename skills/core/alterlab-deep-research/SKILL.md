@@ -74,7 +74,7 @@ Activate `socratic` mode when the user's **intent** matches any of the following
 | Auditing whether the references in an existing bibliography exist or are retracted | `alterlab-citation-verifier` |
 | Pooling already-extracted effect sizes (random-effects model, forest/funnel plots, Egger's test) in Python or R | `alterlab-meta-analysis` |
 
-In Claude Code, dual-reviewer PRISMA screening of hundreds of records, a literature map, or a claim stress-test with independent agents is packaged as a workflow (`/alterlab-workflows:systematic-review-screening`, `literature-map`, `claim-stress-test`; see `alterlab-research-workflows`) — offer it before hand-building a fan-out.
+In Claude Code, dual-reviewer PRISMA screening of hundreds of records, a literature map, or a claim stress-test with separate agents is packaged as a workflow (`/alterlab-workflows:systematic-review-screening`, `literature-map`, `claim-stress-test`; see `alterlab-research-workflows`) — offer it before hand-building a fan-out.
 
 ### Quick Mode Selection Guide
 

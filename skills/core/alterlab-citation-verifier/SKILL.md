@@ -61,7 +61,7 @@ explicitly if the network or a source was unavailable.
 
 Grading source quality or predatory venues belongs to `alterlab-deep-research`
 (`source_verification_agent`). For a whole-manuscript audit in Claude Code where every
-flag should be re-checked by independent agents, offer the packaged
+flag should be re-checked by separate agents, offer the packaged
 `/alterlab-workflows:citation-audit` workflow (`alterlab-research-workflows`, roughly
 10–40 agents), which runs this skill's checks at scale.
 

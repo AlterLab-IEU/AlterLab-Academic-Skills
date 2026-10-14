@@ -26,7 +26,7 @@ Review this paper: [paste paper or provide file]
 **Output:**
 1. Automatically identifies the paper's field and methodology type
 2. Dynamically configures the specific identities and expertise of 5 reviewers
-3. 5 independent review reports (each from a different perspective)
+3. 5 separate review reports (each from a different perspective)
 4. 1 Editorial Decision Letter + Revision Roadmap
 
 ---
@@ -47,7 +47,7 @@ Review this paper: [paste paper or provide file]
 | A rubric/grade-style numeric score of a paper or thesis | `alterlab-scholar-eval` |
 | Checking that the manuscript's references exist and are not retracted | `alterlab-citation-verifier` |
 
-In Claude Code, a panel of genuinely independent reviewer agents (4–6 blind reviewers, each major concern re-read against the manuscript) is packaged as `/alterlab-workflows:review-panel` (see `alterlab-research-workflows`); offer it when the user wants independence at that scale.
+In Claude Code, a panel of separate reviewer agents (4–6 blind reviewers, each major concern re-checked against the manuscript, unchecked ones labelled unverified) is packaged as `/alterlab-workflows:review-panel` (see `alterlab-research-workflows`); offer it when the user wants separate readers at that scale. Separate agents of one model avoid anchoring on each other but are not independent verification.
 
 ### Quick Mode Selection Guide
 

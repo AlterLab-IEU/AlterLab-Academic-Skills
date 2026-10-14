@@ -133,7 +133,7 @@ See recipe P2 in `references/composition-recipes.md`.
 Several independent reviewers each apply a different lens to **one** artifact,
 then a synthesizer reconciles. `alterlab-paper-reviewer` already simulates a
 5-reviewer panel internally; use *this* pattern when you want the panelists to be
-**genuinely separate agents** (separate contexts, no cross-contamination) — e.g.
+**genuinely separate agents** (separate contexts, no cross-contamination; still one model, so their agreement is not independent verification) — e.g.
 a methodology reviewer, a domain reviewer, and a reproducibility reviewer that
 must not anchor on each other.
 

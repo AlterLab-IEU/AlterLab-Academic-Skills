@@ -214,6 +214,32 @@ deliberately, not nightly. Two ways to run it:
 - **In CI** via `workflow_dispatch` (the **behavioral** and **activation** jobs). These need
   the `ANTHROPIC_API_KEY` repo secret and stop at once with an error if it is not set.
 
+## The five-task benchmark (`scripts/run_benchmark.py`)
+
+Eval files say what a skill should do; the benchmark measures whether it does better than the
+bare model on realistic, deliberately tricky inputs. Each task in `benchmarks/<task>/task.json`
+names an existing skill and holds a standard case, a difficult-negative case (things that look
+wrong but are right, and the reverse), and an incomplete-input case (where the right answer is
+"cannot be determined"). Every item has an expected label or number and an evidence anchor
+(fixture line numbers plus the source that makes it right).
+
+Both arms answer the same prompt in isolated workspaces with the same allowed tools; the
+skilled arm also gets the skill. The model must end with a JSON block of per-item labels, and
+the harness scores it deterministically — no LLM judge. Per arm it reports correct items,
+**false approvals** (a problem passed as fine), **false accusations** (a fine item flagged),
+correct and unnecessary abstentions, overconfident answers on incomplete input, missing items,
+completion, time, turns, CLI-reported cost, and tool-permission denials.
+
+```bash
+uv run python scripts/run_benchmark.py --dry-run          # validate tasks, print prompts
+uv run python scripts/run_benchmark.py --runs 2           # all tasks, live
+uv run python scripts/run_benchmark.py --task docentlik   # one task
+```
+
+Results go to `eval-results/benchmark-<UTC>.json`; the latest reported run is summarised in
+[`benchmark-results.md`](benchmark-results.md). `tests/test_benchmark.py` validates every task
+file and unit-tests the scorer on hand-written answers; it never produces benchmark numbers.
+
 ## Worked example
 
 A complete, schema-valid eval file for a representative skill. It shows the full convention:

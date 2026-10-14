@@ -99,7 +99,7 @@ executing — run this sequence:
    the subagent count to complexity and default low** (Anthropic's rule of thumb: simple fact-finding
    ≈ 1 agent; a focused comparison ≈ 2–4; only genuinely broad work ≈ 10+). Reuse the existing
    orchestrators rather than reinventing them:
-   - a packaged job — whole-manuscript citation audit, independent review panel, claim stress-test,
+   - a packaged job — whole-manuscript citation audit, review panel, claim stress-test,
      PRISMA dual screening, response to reviewers, grant mock panel, literature map →
      **`alterlab-research-workflows`** (in Claude Code: `/alterlab-workflows:<name>`)
    - end-to-end research→publish → **`alterlab-research-pipeline`** (deep-research → paper-writer → paper-reviewer, revision loops)

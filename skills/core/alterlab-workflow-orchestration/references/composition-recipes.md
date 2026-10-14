@@ -116,8 +116,9 @@ Each returns an independent verdict + top-3 issues. Then synthesize a single
 editorial decision that explicitly notes where the three agree and disagree.
 ```
 
-Why independent agents: running all three in one context lets the first opinion
-anchor the others. For a panel that should also **debate**, escalate to an agent
+Why separate agents: running all three in one context lets the first opinion
+anchor the others. Separate contexts remove that anchoring, not the shared blind spots of one
+model — agreement among them is not independent verification, so say so in the deliverable. For a panel that should also **debate**, escalate to an agent
 team (P4). Keep each reviewer read-only (`tools: Read, Grep, Glob`) so none can
 edit the manuscript.
 
