@@ -15,7 +15,7 @@ Two scoring tiers are available:
   It is **honest about its limits** — it cannot do real entailment, so its
   default verdict is ``unsupported`` (abstain) rather than a false ``support``.
 * ``llm`` (optional): an LLM-judge tier that asks the model configured via the
-  ``ALTERLAB_MODEL`` convention (see ``skills/core/shared/model_env.md``) to
+  ``ALTERLAB_MODEL`` convention (see ``shared/model_env.md``) to
   classify support/contradict/unsupported. NEVER hardcodes a model id. Falls back
   to the heuristic verdict (clearly flagged) if the ``claude`` CLI is unavailable.
 
@@ -86,7 +86,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 # --------------------------------------------------------------------------- #
 # Model convention — default reviewed 2026-09-23; override via ALTERLAB_MODEL.  #
-# See skills/core/shared/model_env.md before changing the default.             #
+# See shared/model_env.md before changing the default.                         #
 # This is the ONLY place a model id literal may appear (rule 1 of model_env).  #
 # --------------------------------------------------------------------------- #
 DEFAULT_MODEL = "claude-opus-5-5"

@@ -25,6 +25,8 @@ uv run python "${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/verify_c
 echo "<full reference string>" | \
   uv run python "${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/verify_citations.py" -
 #   add --offline when there is no network (emits 'unverified', never a silent pass)
+#   exit 3 = partial audit (some entries rejected or unsupported — see input_accounting):
+#   the gate stays blocked until those entries are fixed and re-run
 
 # Claim faithfulness (Phase E) — single (claim, DOI) pair or batch JSON of pairs:
 uv run python "${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/claim_faithfulness.py" \

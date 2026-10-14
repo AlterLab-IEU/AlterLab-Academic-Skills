@@ -18,7 +18,7 @@ Design constraints:
   and ``S2_API_KEY`` (Semantic Scholar). Keys are sent as headers, never logged.
 - NO third-party deps required: uses ``requests`` if present, else the stdlib
   (``urllib``). Mirrors the integrity_verification_agent taxonomy exactly (see
-  ../SKILL.md and skills/core/alterlab-research-pipeline/agents/integrity_verification_agent.md).
+  ../SKILL.md and ../../alterlab-research-pipeline/agents/integrity_verification_agent.md).
 - GRACEFUL DEGRADATION: with no network, or when every source errors (rate limits,
   5xx), the entry gets an ``unverified`` verdict plus manual-verification
   instructions. It never silently passes an entry, and it never reports a Total
