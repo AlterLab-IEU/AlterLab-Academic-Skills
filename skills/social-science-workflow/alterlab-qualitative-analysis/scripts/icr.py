@@ -10,6 +10,16 @@ Input CSV: one row per UNIT, one column per CODER (header = coder names). Blank 
 
     python icr.py codings.csv
     python icr.py --demo
+
+Input checks (the CLI prints the reason on stderr and exits 2): the file must exist and be
+UTF-8; it needs a header naming at least 2 coders and at least one data row; every non-blank
+row must have exactly one cell per coder (write a missing code as an empty cell, e.g. "1,").
+Wholly blank rows are skipped.
+
+Degenerate cases (defined behaviour, not errors): Krippendorff's alpha and Cohen's kappa are
+reported as not estimable (None) when no unit has codes from 2+ coders, or when every pairable
+code falls in a single category — expected disagreement is then 0 and both coefficients are
+0/0. Reporting 1.0 there would overstate reliability.
 """
 from __future__ import annotations
 
@@ -63,7 +73,15 @@ def krippendorff_alpha_nominal(by_unit: list[list[str]]) -> float | None:
 
 
 def cohens_kappa_2(col_a: list[str], col_b: list[str]) -> float | None:
-    """Cohen's kappa for exactly two coders, nominal. Pairs with any missing are dropped."""
+    """Cohen's kappa for exactly two coders, nominal. Pairs with any missing are dropped.
+
+    Returns None when not estimable: no complete pair, or expected agreement pe == 1 (both
+    coders used one and the same category throughout, so kappa = 0/0). Raises ValueError if
+    the two columns differ in length (they must be aligned unit by unit).
+    """
+    if len(col_a) != len(col_b):
+        raise ValueError(f"coder columns must have one code per unit: got {len(col_a)} and "
+                         f"{len(col_b)} entries")
     pairs = [(a, b) for a, b in zip(col_a, col_b)
              if a not in (None, "") and b not in (None, "")]
     if not pairs:
@@ -74,7 +92,7 @@ def cohens_kappa_2(col_a: list[str], col_b: list[str]) -> float | None:
     cats = set(ca) | set(cb)
     pe = sum((ca[c] / n) * (cb[c] / n) for c in cats)
     if pe == 1.0:
-        return 1.0
+        return None  # 0/0: undefined, as for alpha above (1.0 would overstate reliability)
     return (po - pe) / (1 - pe)
 
 
@@ -109,10 +127,26 @@ def _bootstrap_ci(by_unit: list[list[str]], reps: int = 2000, seed: int = 12345)
 
 
 def _read_csv(path: str) -> tuple[list[str], list[list[str]]]:
+    """Read and shape-check the codings CSV; raise ValueError on unusable input."""
     with open(path, newline="", encoding="utf-8") as fh:
         rows = list(csv.reader(fh))
+    if not rows:
+        raise ValueError(f"{path}: the CSV is empty — expected a header row of coder names")
     header, data = rows[0], rows[1:]
-    by_unit = [[cell.strip() for cell in row] for row in data if any(c.strip() for c in row)]
+    if len(header) < 2:
+        raise ValueError(f"{path}: the header names {len(header)} coder(s); intercoder "
+                         "reliability needs at least 2 coder columns")
+    by_unit = []
+    for line_no, row in enumerate(data, start=2):
+        if not any(c.strip() for c in row):
+            continue  # wholly blank row
+        if len(row) != len(header):
+            raise ValueError(f"{path}: line {line_no} has {len(row)} cells but the header names "
+                             f"{len(header)} coders — write a missing code as an empty cell "
+                             "(e.g. '1,') instead of dropping it")
+        by_unit.append([cell.strip() for cell in row])
+    if not by_unit:
+        raise ValueError(f"{path}: no data rows — expected one row per coded unit")
     return header, by_unit
 
 
@@ -122,7 +156,12 @@ def _report(coders: list[str], by_unit: list[list[str]]) -> int:
     print(f"coders: {len(coders)} ({', '.join(coders)})   units: {len(by_unit)}")
     print(f"percent agreement (pairwise): {pa:.3f}" if pa is not None else "percent agreement: n/a")
     if alpha is None:
-        print("Krippendorff alpha (nominal): not estimable")
+        if not _pairable_units(by_unit):
+            why = "no unit has codes from at least 2 coders"
+        else:
+            why = ("every pairable code is the same category, so expected disagreement is 0 "
+                   "and alpha is 0/0; report percent agreement and the category distribution")
+        print(f"Krippendorff alpha (nominal): not estimable — {why}")
         return 0
     ci = _bootstrap_ci(by_unit)
     ci_s = f"  95% CI [{ci[0]:.3f}, {ci[1]:.3f}] (bootstrap over units)" if ci else ""
@@ -150,7 +189,10 @@ def main() -> int:
         return _report(coders, by_unit)
     if not args.csv:
         ap.error("provide a CSV path or --demo")
-    coders, by_unit = _read_csv(args.csv)
+    try:
+        coders, by_unit = _read_csv(args.csv)
+    except (OSError, UnicodeDecodeError, csv.Error, ValueError) as exc:
+        ap.error(str(exc))  # usage + message on stderr, exit 2
     return _report(coders, by_unit)
 
 
