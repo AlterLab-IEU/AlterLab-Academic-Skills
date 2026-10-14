@@ -28,13 +28,16 @@ NODE = shutil.which("node")
 pytestmark = pytest.mark.skipif(NODE is None, reason="Node.js not installed")
 
 
-def run(name: str, args: object, rules: list[dict], capture: str | None = None, mode: str = "a") -> dict:
-    """Dry-run a workflow under a scenario; return the harness output (with ``result``)."""
+def run(name: str, args: object, rules: list[dict], capture: str | None = None, mode: str = "a", script: Path | None = None) -> dict:
+    """Dry-run a workflow under a scenario; return the harness output (with ``result``).
+
+    ``script`` overrides the plugin path, for the maintainer workflow under ``.claude/workflows/``.
+    """
     scenario: dict = {"rules": rules}
     if capture:
         scenario["capture"] = capture
     proc = subprocess.run(
-        [NODE, str(DRYRUN), str(WORKFLOWS / f"{name}.js"), json.dumps(args), mode, json.dumps(scenario)],
+        [NODE, str(DRYRUN), str(script or WORKFLOWS / f"{name}.js"), json.dumps(args), mode, json.dumps(scenario)],
         capture_output=True, text=True, timeout=60, cwd=REPO_ROOT,
     )
     line = (proc.stdout.strip().splitlines() or ["{}"])[-1]
@@ -796,6 +799,122 @@ def test_literature_map_failures() -> None:
     assert blocked["status"] == "blocked" and blocked["report"] is None
 
 
+# ============================================================== skill-freshness-audit (maintainer workflow)
+SFA = "skill-freshness-audit"
+SFA_SCRIPT = REPO_ROOT / ".claude" / "workflows" / "skill-freshness-audit.js"
+SFA_ARGS = {"domains": ["databases"]}
+SFA_SKILLS = ["alterlab-pubmed", "alterlab-openalex", "alterlab-arxiv"]
+
+
+def sfa_finding(skill: str, kind: str) -> dict:
+    return {"skill": skill, "file": f"skills/databases/{skill}/SKILL.md", "kind": kind, "stale": f"{skill} v1.0",
+            "current": f"{skill} v2.0", "source": "https://pypi.org/pypi/example/json", "severity": "misleads"}
+
+
+SFA_AUDIT = {"checked": SFA_SKILLS, "findings": [sfa_finding("alterlab-pubmed", "version"), sfa_finding("alterlab-openalex", "endpoint")]}
+
+
+def sfa_rules(*extra: dict, status: str = "COMPLETE") -> list[dict]:
+    fixtures = [
+        ret("^inventory", {"domains": [{"domain": "databases", "skills": SFA_SKILLS}]}),
+        ret("^databases batch 1", SFA_AUDIT),
+        ret("^verify ", {"confirmed": True, "note": "PyPI lists 2.0 as the current release", "suggested_edit": "v1.0 -> v2.0"}),
+        confirm(status),
+    ]
+    returns = [r for r in extra if "return" in r]
+    return returns + fixtures + [r for r in extra if "return" not in r]
+
+
+def sfa(rules: list[dict], capture: str | None = None, mode: str = "a", args: object = SFA_ARGS) -> dict:
+    return run(SFA, args, rules, capture=capture, mode=mode, script=SFA_SCRIPT)
+
+
+def test_freshness_audit_baseline_is_complete() -> None:
+    res = sfa(sfa_rules())["result"]
+    assert_payload_shape(res)
+    assert res["status"] == "complete" and res["report"] == "freshness-report.md"
+    assert (res["confirmed"], res["rejected"], res["unverified"], res["unchecked"]) == (2, 0, 0, [])
+    sk, vf = res["coverage"]["skills"], res["coverage"]["verification"]
+    assert (sk["requested"], sk["completed"], sk["unresolved"]) == (3, 3, 0)
+    assert (vf["requested"], vf["completed"], vf["unresolved"]) == (2, 2, 0)
+
+
+@pytest.mark.parametrize("mode", ["a", "b", "mixed"])
+def test_freshness_audit_reaches_every_stage(mode: str) -> None:
+    """Only the inventory and audit are pinned; the verifier, writer, and read-back use fake data per mode."""
+    fixtures = [ret("^inventory", {"domains": [{"domain": "databases", "skills": SFA_SKILLS}]}), ret("^databases batch 1", SFA_AUDIT)]
+    out = sfa(fixtures, mode=mode)
+    assert out["phases"] == ["Inventory", "Audit", "Verify", "Report"]
+    assert_payload_shape(out["result"])
+
+
+@pytest.mark.parametrize("fault", ["null", "throw"])
+def test_freshness_audit_failed_verifier_is_unverified_not_rejected(fault: str) -> None:
+    out = sfa(sfa_rules(act("^verify alterlab-pubmed", fault)), capture="^(write report|verify alterlab-openalex)")
+    res = out["result"]
+    assert (res["confirmed"], res["rejected"], res["unverified"]) == (1, 0, 1), "a verifier that did not complete must not count as a rejection"
+    assert res["unverified_findings"][0]["skill"] == "alterlab-pubmed"
+    vf = res["coverage"]["verification"]
+    assert (vf["requested"], vf["dispatched"], vf["completed"], vf["failed"], vf["retried"]) == (2, 2, 1, 1, 1)
+    assert out["calls"].count("verify alterlab-pubmed: version (retry)") == 1, "retries are bounded at one"
+    assert res["status"] == "partial"
+    report = prompt_of(out, "^write report$")
+    assert "alterlab-pubmed" not in section(report, "Rejected:", "UNVERIFIED (verifier did not complete):")
+    assert "alterlab-pubmed" in section(report, "UNVERIFIED (verifier did not complete):", "Unchecked skills:")
+    assert "not independent verification" in report
+    assert prompt_of(out, "^verify alterlab-openalex").startswith("Separately verify")
+
+
+def test_freshness_audit_verifier_retry_and_rejection() -> None:
+    once = sfa(sfa_rules(act("^verify alterlab-pubmed", "throw", times=1)))["result"]
+    assert (once["confirmed"], once["unverified"], once["status"]) == (2, 0, "complete")
+    assert once["coverage"]["verification"]["retried"] == 1
+    rejected = sfa(sfa_rules(act("^verify alterlab-openalex", "set", values={"confirmed": False})))["result"]
+    assert (rejected["confirmed"], rejected["rejected"], rejected["unverified"], rejected["status"]) == (1, 1, 0, "complete")
+
+
+def test_freshness_audit_failed_or_partial_batch_is_unchecked() -> None:
+    failed = sfa(sfa_rules(act("^databases batch 1", "null")))["result"]
+    assert failed["unchecked"] == [f"databases/{s}" for s in SFA_SKILLS], "a failed audit batch is not 'audited with no findings'"
+    sk = failed["coverage"]["skills"]
+    assert (sk["dispatched"], sk["completed"], sk["failed"], sk["retried"]) == (3, 0, 3, 1)
+    assert failed["confirmed"] == 0 and failed["status"] == "partial"
+    partial = sfa(sfa_rules(act("^databases batch 1", "set", values={"checked": ["alterlab-pubmed"]})))["result"]
+    assert partial["unchecked"] == ["databases/alterlab-openalex", "databases/alterlab-arxiv"] and partial["status"] == "partial"
+    # The retry re-sends only the omitted skills; it repeats both findings and names pubmed again.
+    recovered = sfa(sfa_rules(act("^databases batch 1", "set", values={"checked": ["alterlab-pubmed"]}, times=1)))["result"]
+    assert recovered["unchecked"] == [] and recovered["status"] == "complete"
+    assert recovered["confirmed"] == 2, "a finding reported again on the retry counts once"
+    assert recovered["coverage"]["id_issues"]["duplicate"] == 2 and recovered["coverage"]["id_issues"]["unknown"] == 1
+
+
+def test_freshness_audit_ignores_findings_for_skills_not_sent() -> None:
+    res = sfa(sfa_rules(act("^databases batch 1", "unknown_id", field="findings", id_field="skill")))["result"]
+    assert res["confirmed"] == 2 and res["coverage"]["verification"]["requested"] == 2
+    assert res["coverage"]["id_issues"]["unknown"] == 1
+
+
+def test_freshness_audit_report_must_exist() -> None:
+    out = sfa(sfa_rules(act("^write report", "throw")))
+    res = out["result"]
+    assert_payload_shape(res)
+    assert res["status"] == "blocked" and res["report"] is None and res["confirmed"] == 2
+    assert "write report (retry)" in out["calls"]
+    missing = sfa(sfa_rules(act("^confirm report on disk", "set", values={"exists": False, "bytes": 0})))
+    assert missing["result"]["status"] == "blocked" and missing["result"]["report"] is None
+    assert any("not found on disk" in r for r in missing["result"]["status_reasons"])
+    assert "write report (retry)" in missing["calls"]
+
+
+def test_freshness_audit_inventory_failures() -> None:
+    out = sfa([act("^inventory", "null")])
+    assert_payload_shape(out["result"])
+    assert out["result"]["status"] == "blocked" and out["calls"] == ["inventory", "inventory (retry)"]
+    args = {"domains": ["databases", "chemistry"]}
+    res = sfa(sfa_rules(status="PARTIAL"), args=args)["result"]
+    assert res["coverage"]["inventory"]["domains_missing"] == ["chemistry"] and res["status"] == "partial"
+
+
 # ============================================================== the harness itself
 def _raw(name: str, args: object, scenario: object) -> dict:
     proc = subprocess.run(
@@ -827,7 +946,11 @@ def test_harness_skip_and_times_count_matching_calls() -> None:
 
 
 # ============================================================== all workflows
-@pytest.mark.parametrize("script", sorted(WORKFLOWS.glob("*.js")), ids=lambda p: p.stem)
+# The seven plugin workflows plus the maintainer workflow.
+ALL_SCRIPTS = [*sorted(WORKFLOWS.glob("*.js")), SFA_SCRIPT]
+
+
+@pytest.mark.parametrize("script", ALL_SCRIPTS, ids=lambda p: p.stem)
 def test_no_independence_claims_for_same_model_agents(script: Path) -> None:
     """Separate contexts of one model are not independent verification; the scripts must not say so."""
     text = script.read_text(encoding="utf-8").lower()
@@ -857,12 +980,12 @@ def test_each_playbook_documents_status_and_payload(script: Path) -> None:
     assert "## Returned payload" in text and "`partial`" in text, f"{script.stem}.md should document status and the payload"
 
 
-@pytest.mark.parametrize("script", sorted(WORKFLOWS.glob("*.js")), ids=lambda p: p.stem)
+@pytest.mark.parametrize("script", ALL_SCRIPTS, ids=lambda p: p.stem)
 def test_failed_report_always_blocks(script: Path) -> None:
     """Every workflow: when no report-writing agent succeeds, there is no report path and the run is blocked."""
     from tests.test_workflows import SAMPLE_ARGS
 
     writers = r"^(write integrity report|editor-in-chief|PRISMA report|write report|assemble letter|summary statement|write map)"
-    res = run(script.stem, SAMPLE_ARGS[script.stem], [act(writers, "throw")])["result"]
+    res = run(script.stem, SAMPLE_ARGS[script.stem], [act(writers, "throw")], script=script)["result"]
     assert_payload_shape(res)
     assert res["report"] is None and res["status"] == "blocked"
