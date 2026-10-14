@@ -115,5 +115,7 @@ INVARIANCE:   <configural|metric|scalar|strict established; ΔCFI reported>
 
 - `references/fit_and_invariance.md` — omega math, fit-index nuance, the invariance sequence, IRT notes.
 - `scripts/omega.py` — stdlib McDonald's omega from standardized loadings.
+  Needs ≥ 2 standardized loadings, each finite and within [−1, 1] (|λ| > 1 = Heywood case,
+  rejected); reverse-code negatively keyed items first — ω is the reliability of the sum as scored.
 
 Part of the AlterLab Academic Skills suite.

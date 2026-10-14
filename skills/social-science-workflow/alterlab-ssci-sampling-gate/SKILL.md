@@ -104,6 +104,10 @@ the final generalization claim against `sampling_method` + `generalization`.
 ## References
 
 - `references/sampling_and_power.md` — sizing logics, design effects, finite-population correction, reporting templates.
-- `scripts/sample_size.py` — stdlib a-priori N for two-group mean and two-proportion designs.
+- `scripts/sample_size.py` — stdlib a-priori N for two-group mean (`mean --d`), two-proportion
+  (`prop --p1 --p2`) and proportion-precision (`precision --margin --p`) designs. Inputs must be
+  finite; alpha, power, p, p1, p2 strictly in (0, 1) with power > alpha; d ≠ 0 and p1 ≠ p2 (a
+  zero effect has no finite N); margin in (0, 1) on the proportion scale (0.03 = ±3 points).
+  Invalid input exits 2.
 
 Part of the AlterLab Academic Skills suite.

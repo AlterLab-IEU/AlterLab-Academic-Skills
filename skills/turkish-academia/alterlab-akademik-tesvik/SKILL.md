@@ -133,7 +133,9 @@ k/p/r/months:
 
 Type names accept Turkish spelling with diacritics (`Yayın`, `Atıf`, `Tebliğ`);
 the script ASCII-folds them internally. `count` (default 1) multiplies the oran
-for identical repeated activities. See
+for identical repeated activities. `oran` must be a finite number ≥ 0 and `count` a
+non-negative whole number; NaN/Infinity, booleans, null and non-numeric strings are
+rejected (exit 2). See
 [`references/hesaplama.md`](references/hesaplama.md) for how to derive each
 `oran` from the table, with worked rows.
 

@@ -12,7 +12,8 @@ status: `uak_criteria.md`.
 - Başlıca yazar: `is_lead`, `lead_basis`, `has_lead`
 - Letters, notes and case reports in başlıca-yazar fields
 - Post-doctorate points and item 3
-- `other_items`: points for items 3 and above, with caps
+- `other_items`: points for items 3 and above, with caps (`points` / `post_doc_points` must be
+  finite numbers ≥ 0; NaN/Infinity literals are rejected as invalid JSON, exit 2)
 - How the modelled checks are evaluated
 - Verdicts
 - Rounding convention

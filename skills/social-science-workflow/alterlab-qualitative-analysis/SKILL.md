@@ -89,5 +89,7 @@ RESOLUTION:    how disagreements were resolved (adjudication / consensus)
 - `references/icr_and_reporting.md` — coefficient math, verified APIs, LLM-benchmarking, the reporting standard.
 - `references/reflexive_vs_codebook.md` — when a statistic applies vs. when it does not.
 - `scripts/icr.py` — stdlib nominal Krippendorff's α + bootstrap CI + Cohen's κ (no numpy / no deps).
+  CSV: a header of ≥ 2 coder names, one row per unit, exactly one cell per coder (blank =
+  missing). α and κ are reported as not estimable when every pairable code is one category.
 
 Part of the AlterLab Academic Skills suite.

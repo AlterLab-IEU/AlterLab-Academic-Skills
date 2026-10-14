@@ -22,9 +22,9 @@ GitHub "Fork" of the upstream, so the lineage is recorded here and in `THIRD_PAR
 rather than inferred from GitHub's fork graph.
 
 **Fork-time scope.** At the point of forking, **42 skill bodies were byte-identical** to their
-K-Dense counterparts. The rest had already diverged. Upstream today carries ~139 skills; the
-AlterLab suite has grown to **180 skills across 13 research domains**, with the additions and
-rewrites described below.
+K-Dense counterparts. The rest had already diverged. Upstream carried ~139 skills when this
+was last compared; as of v3.0.1 the AlterLab suite has **242 skills across 18 domains**, with the
+additions and rewrites described below.
 
 ## Why AlterLab forked
 
@@ -92,10 +92,10 @@ errors corrected.
 | | Upstream (K-Dense) | AlterLab |
 |---|---|---|
 | Repository | `K-Dense-AI/scientific-agent-skills` | `AlterLab-IEU/AlterLab-Academic-Skills` |
-| License | MIT © 2025 K-Dense Inc. | MIT © 2026 AlterLab Creative Technologies Laboratory |
+| License | MIT © 2025 K-Dense Inc. | Repository MIT © 2026 AlterLab Creative Technologies Laboratory; each skill declares its own license (202 MIT, 40 others incl. CC-BY-NC-4.0 and GPL — see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)) |
 | Audience | scientific co-scientist (wet-lab / computational) | academic faculty & research lifecycle |
-| Evals | — | executable, CI-gated, day-one for all skills |
-| Skills | ~139 | 180 across 13 domains |
+| Evals | — | an eval file for every skill (structure and trigger coverage CI-gated); behavioral grading is manual and has been run on a small benchmark only — see [`docs/evals.md`](docs/evals.md) |
+| Skills | ~139 (at last comparison) | 242 across 18 domains (v3.0.1) |
 | Languages | EN | EN + TR |
 
 ## Citing this work
