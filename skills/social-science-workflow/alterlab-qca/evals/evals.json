@@ -3,6 +3,7 @@
   "evals": [
     {
       "id": "fsqca-sufficiency",
+      "files": ["fixtures/qca_cases.csv"],
       "prompt": "I have 22 cases and want to find which combinations of conditions are sufficient for policy success using fuzzy-set QCA.",
       "expected_output": "Invokes alterlab-qca: calibrates conditions into fuzzy membership, builds a truth table, minimizes to conservative/parsimonious/intermediate solutions with consistency and coverage, and (because there is no maintained Python library) shells to R's QCA package via Rscript.",
       "assertions": [

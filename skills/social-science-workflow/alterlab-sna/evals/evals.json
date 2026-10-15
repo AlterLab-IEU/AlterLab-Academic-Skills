@@ -3,12 +3,14 @@
   "evals": [
     {
       "id": "brokerage-centrality",
+      "files": ["fixtures/coauthorship_edges.csv"],
       "prompt": "In my collaboration network, who are the brokers that connect otherwise-separate groups?",
       "expected_output": "Invokes alterlab-sna: identifies betweenness centrality as the measure that matches a brokerage claim (not degree), computes it via networkx, and reports the top brokers with the reasoning.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "betweenness" },
-        { "type": "behavior", "value": "Selects betweenness for a brokerage question and routes computation to networkx." }
+        { "type": "behavior", "value": "Selects betweenness for a brokerage question and routes computation to networkx." },
+        { "type": "output_contains", "value": "Selin" }
       ]
     },
     {
