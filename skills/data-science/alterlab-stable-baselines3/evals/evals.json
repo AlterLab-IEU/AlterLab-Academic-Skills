@@ -23,7 +23,7 @@
     {
       "id": "sac-continuous-control-callbacks",
       "prompt": "I'm doing continuous control on a custom robot reaching task. Use a sample-efficient off-policy algorithm, evaluate periodically and save the best model, and stop early once it hits a reward threshold.",
-      "expected_output": "Invokes alterlab-stable-baselines3: recommends SAC (or TD3) for sample-efficient continuous off-policy control, sets up an EvalCallback that saves the best model, and chains a StopTrainingOnRewardThreshold callback via CallbackList passed to model.learn.",
+      "expected_output": "Invokes alterlab-stable-baselines3: recommends SAC (or TD3) for sample-efficient continuous off-policy control, sets up an EvalCallback that saves the best model, and attaches a StopTrainingOnRewardThreshold callback to it via EvalCallback(callback_on_new_best=...) passed to model.learn (optionally inside a CallbackList with other callbacks such as CheckpointCallback). StopTrainingOnRewardThreshold must be the EvalCallback's child: listed as a sibling in a CallbackList it fails SB3's parent assertion.",
       "assertions": [
         {
           "type": "should_trigger",
@@ -35,7 +35,7 @@
         },
         {
           "type": "behavior",
-          "value": "Chooses an off-policy algorithm (SAC or TD3) for continuous control and wires EvalCallback plus StopTrainingOnRewardThreshold through CallbackList."
+          "value": "Chooses an off-policy algorithm (SAC or TD3) for continuous control, sets up an EvalCallback that saves the best model, and attaches StopTrainingOnRewardThreshold to that EvalCallback through callback_on_new_best (not as a separate CallbackList entry, which SB3 rejects because the stop callback needs a parent EvalCallback)."
         }
       ]
     },
