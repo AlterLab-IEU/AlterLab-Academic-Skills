@@ -11,7 +11,9 @@ it contains ``GOOD-ANSWER``. These are controlled passing/failing cases, not liv
 from __future__ import annotations
 
 import json
+import os
 import stat
+import subprocess
 import sys
 import textwrap
 from pathlib import Path
@@ -39,6 +41,10 @@ with open(os.environ["FAKE_CLAUDE_LOG"], "a", encoding="utf-8") as log:
             tools.append(a)
     log.write(json.dumps({"cwd": cwd, "flags": [a for a in argv if a.startswith("--")],
                           "tools": tools,
+                          "peek": {p: os.path.isdir(p) and bool(os.listdir(p)) for p in
+                                   __import__("base64").b64decode(
+                                       os.environ.get("FAKE_PEEK_B64", "")).decode().split("|")
+                                   if p},
                           "skilled": skilled, "files": sorted(
                               os.path.relpath(os.path.join(r, f), cwd)
                               for r, _, fs in os.walk(cwd) for f in fs)}) + "\n")
@@ -46,6 +52,9 @@ def out(text, is_error=False):
     print(json.dumps({"type": "result", "subtype": "success", "is_error": is_error,
                       "result": text, "duration_ms": 10, "total_cost_usd": 0.001,
                       "usage": {"input_tokens": 1, "output_tokens": 1}}))
+if mode == "vandal" and not prompt.startswith(("You are grading", "A user sent")):
+    with open(os.environ["FAKE_VANDAL_TARGET"], "w", encoding="utf-8") as fh:
+        fh.write("an answer arm wrote this\n")
 if mode == "authfail":
     sys.stderr.write("Invalid API key sk-ant-api03-SECRETSECRETSECRET · Please run /login\n")
     sys.exit(1)
@@ -110,10 +119,16 @@ def fake_cli(tmp_path, monkeypatch):
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     exe = bin_dir / "claude"
-    exe.write_text(FAKE_CLAUDE.replace("/usr/bin/env python3", sys.executable), encoding="utf-8")
+    # The interpreter must live outside the checkout: answer arms run in a mount namespace
+    # that hides it, and a fake whose shebang vanished there made sh fall through to the
+    # real `claude` further down PATH. So: a base interpreter, and no real CLI on PATH at all.
+    python = os.path.realpath(getattr(sys, "_base_executable", sys.executable))
+    exe.write_text(FAKE_CLAUDE.replace("/usr/bin/env python3", python), encoding="utf-8")
     exe.chmod(exe.stat().st_mode | stat.S_IEXEC)
     log = tmp_path / "calls.jsonl"
-    monkeypatch.setenv("PATH", f"{bin_dir}:{__import__('os').environ['PATH']}")
+    rest = [d for d in os.environ["PATH"].split(os.pathsep)
+            if d and not (Path(d) / "claude").exists()]
+    monkeypatch.setenv("PATH", os.pathsep.join([str(bin_dir), *rest]))
     monkeypatch.setenv("FAKE_CLAUDE_LOG", str(log))
     monkeypatch.setenv("FAKE_CLAUDE_MODE", "ok")
     return log
@@ -330,3 +345,65 @@ def test_regrade_judges_each_behavior_assertion_against_its_own_spec(fake_cli, t
     src = next((tmp_path / "results").glob("behavioral-*.json"))
     run_evals.regrade_results(src, "substance", 30, tmp_path / "rg")
     assert "must say plain answer" in seen and "GOOD-ANSWER required" in seen
+
+
+# --- answer-arm confinement ------------------------------------------------------------------
+def test_path_tool_grants_are_scoped_to_the_workspace(tmp_path) -> None:
+    ws = str(tmp_path.resolve())
+    got = run_evals._scoped_args(["--allowedTools", "Read", "Write", "Edit", "Bash(uv run:*)",
+                                  "Write(./x/**)"], ws)
+    assert got == ["--allowedTools", "Read", f"Write(//{ws.lstrip('/')}/**)",
+                   f"Edit(//{ws.lstrip('/')}/**)", "Bash(uv run:*)", "Write(./x/**)"]
+
+
+def test_arm_environment_drops_pointers_into_the_checkout(monkeypatch) -> None:
+    repo = str(run_evals.REPO.resolve())
+    monkeypatch.setenv("CLAUDE_PROJECT_DIR", repo)
+    monkeypatch.setenv("OLDPWD", repo + "/skills")
+    monkeypatch.setenv("PATH", f"{repo}/.venv/bin{os.pathsep}/usr/bin")
+    monkeypatch.setenv("UNRELATED", "/somewhere/else")
+    env = run_evals._arm_env()
+    assert "CLAUDE_PROJECT_DIR" not in env and "OLDPWD" not in env
+    assert env["PATH"] == "/usr/bin" and env["UNRELATED"] == "/somewhere/else"
+
+
+def test_tripwire_blocks_a_run_whose_arm_writes_into_the_checkout(fake_cli, tmp_path,
+                                                                  monkeypatch):
+    """With the namespace off, a 'vandal' arm writes into a watched git checkout: the run
+    must stop at that case, report an isolation breach, exit 2, and revert nothing."""
+    watched = tmp_path / "watched"
+    watched.mkdir()
+    for cmd in (["init", "-q"], ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q",
+                                  "--allow-empty", "-m", "init"]):
+        subprocess.run(["git", "-C", str(watched), *cmd], check=True)
+    target = watched / "planted.txt"
+    monkeypatch.setattr(run_evals, "_TRIPWIRE_ROOT", watched)
+    monkeypatch.setenv("FAKE_VANDAL_TARGET", str(target))
+    run_evals.configure_confinement("none")
+    try:
+        rc, res = _run(tmp_path, [_case("a"), _case("b"), _case("c")], "vandal", monkeypatch)
+    finally:
+        run_evals._CONFINE["mode"] = None
+    assert rc == 2 and res["status"] == "blocked"
+    assert res["status_reasons"][0].startswith("isolation breach")
+    assert "planted.txt" in res["status_reasons"][0]
+    assert [c["skilled"]["outcome"] for c in res["cases"][1:]] == ["NOT_RUN", "NOT_RUN"]
+    assert target.exists(), "the harness must not revert anything itself"
+
+
+def test_namespace_hides_the_checkout_from_answer_arms(fake_cli, tmp_path, monkeypatch):
+    if run_evals.configure_confinement("auto") != "namespace":
+        run_evals._CONFINE["mode"] = None
+        pytest.skip("no private mount namespace on this runner")
+    repo = str(run_evals.REPO.resolve())
+    monkeypatch.setenv("FAKE_PEEK_B64", __import__("base64").b64encode(
+        f"{repo}|{tmp_path}".encode()).decode())
+    try:
+        _run(tmp_path, [_case("a")], "ok", monkeypatch)
+    finally:
+        run_evals._CONFINE["mode"] = None
+    calls = [json.loads(x) for x in fake_cli.read_text().splitlines()]
+    answers = [c for c in calls if "--allowedTools" in c["flags"]]
+    assert answers and all(c["peek"][repo] is False for c in answers), "checkout visible to arm"
+    assert all(c["peek"][str(tmp_path)] is True for c in answers), "outside paths stay visible"
+    assert Path(repo, "scripts").is_dir(), "the harness itself still sees the checkout"

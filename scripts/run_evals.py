@@ -55,6 +55,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import json
 import os
 import re
@@ -395,6 +396,128 @@ def _usage_summary(usage: object) -> dict | None:
     return {k: usage.get(k) for k in keys if k in usage}
 
 
+# --- Answer-arm confinement ------------------------------------------------------------
+# An answer arm is granted the skill's allowed-tools (Write, Edit, Bash, ...). On 2026-10-15
+# the bare arm of an alterlab-link-health case ("close out the remaining residual broken
+# links") went looking for a repository, found this checkout, and edited 29 files in it. A
+# temporary working directory is not a sandbox. Three layers now stand between an arm and the
+# repository:
+#   1. namespace — on Linux, each CLI call runs in a private mount namespace in which this
+#      checkout and every worktree of it are covered by an empty read-only tmpfs;
+#   2. scoped grants — a bare Write/Edit/MultiEdit/NotebookEdit grant is rewritten to an
+#      absolute rule for the arm's own workspace (checked live: a bare `Write` grant wrote
+#      outside the workspace; `Write(//<workspace>/**)` allowed the inside write and denied the
+#      outside one), and environment variables that point into the checkout are dropped;
+#   3. tripwire — the checkout is fingerprinted before the run and after every case; any
+#      change aborts the run as an isolation breach, lists what changed, and reverts nothing.
+# Shell grants (Bash, Bash(python:*), Bash(uv run:*)) can still write anywhere the namespace
+# does not hide, so on a platform without it run behavioral evals in a disposable checkout.
+_PATH_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
+_CONFINE: dict = {"request": "auto", "mode": None, "hidden": [], "why": ""}
+_TRIPWIRE_ROOT = REPO
+# Deepest paths first, so a worktree inside the checkout is covered before its parent is.
+_HIDE_SCRIPT = ('n=$1; shift; i=0; while [ "$i" -lt "$n" ]; do '
+                'mount -t tmpfs -o ro,size=4k alterlab-hidden "$1" || exit 97; '
+                'shift; i=$((i+1)); done; exec "$@"')
+
+
+def _protected_paths() -> list[str]:
+    """This checkout and every worktree of its repository, deepest first."""
+    paths = {str(REPO.resolve())}
+    listing = _quiet(["git", "-C", str(REPO), "worktree", "list", "--porcelain"]) or ""
+    for line in listing.splitlines():
+        if line.startswith("worktree "):
+            wt = Path(line[len("worktree "):])
+            if wt.is_dir():
+                paths.add(str(wt.resolve()))
+    return sorted(paths, key=lambda x: (-len(Path(x).parts), x))
+
+
+def _namespace_prefix(paths: list[str]) -> list[str]:
+    root = hasattr(os, "geteuid") and os.geteuid() == 0
+    base = ["unshare", "-m"] if root else ["unshare", "-r", "-m"]
+    return [*base, "--propagation", "private", "sh", "-c", _HIDE_SCRIPT, "sh",
+            str(len(paths)), *paths]
+
+
+def configure_confinement(request: str = "auto") -> str:
+    """Pick how answer arms are confined: 'namespace' when a private mount namespace can hide
+    the checkout (probed, not assumed), else 'none'. ``request='namespace'`` makes the probe's
+    failure fatal; ``request='none'`` skips it."""
+    paths = _protected_paths()
+    _CONFINE.update(request=request, mode="none", hidden=[], why="not requested")
+    if request == "none":
+        return "none"
+    why = "not Linux" if not sys.platform.startswith("linux") else (
+        "`unshare` not found" if not shutil.which("unshare") else "")
+    if not why:
+        probe = [*_namespace_prefix(paths), "sh", "-c", 'for p in "$@"; do '
+                 '[ -z "$(ls -A "$p")" ] || exit 1; done', "sh", *paths]
+        try:
+            res = subprocess.run(probe, capture_output=True, text=True, timeout=30)
+            why = "" if res.returncode == 0 else (
+                f"mount namespace unavailable ({_redact(res.stderr.strip())[:120] or res.returncode})")
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            why = f"mount namespace probe failed ({exc})"
+    if why and request == "namespace":
+        raise SystemExit(f"--isolation namespace requested, but {why}")
+    if not why:
+        _CONFINE.update(mode="namespace", hidden=paths, why="")
+        return "namespace"
+    _CONFINE["why"] = why
+    return "none"
+
+
+def _confinement() -> dict:
+    if _CONFINE["mode"] is None:
+        configure_confinement(_CONFINE["request"])
+    return _CONFINE
+
+
+def _scoped_args(extra_args: list[str], workspace: str) -> list[str]:
+    """Rewrite bare path-tool grants to the arm's own workspace (absolute ``//`` rule)."""
+    root = "/" + str(Path(workspace).resolve()).lstrip("/")
+    return [f"{a}(/{root}/**)" if a in _PATH_TOOLS else a for a in extra_args]
+
+
+def _arm_env() -> dict:
+    """The CLI's environment minus anything that points into the checkout: PATH-like
+    variables lose those entries, any other variable naming a protected path is dropped."""
+    prot = [str(REPO.resolve()), *_CONFINE.get("hidden", [])]
+    env = {}
+    for k, v in os.environ.items():
+        if not any(pp in v for pp in prot):
+            env[k] = v
+        elif k.endswith("PATH"):
+            env[k] = os.pathsep.join(e for e in v.split(os.pathsep)
+                                     if not any(e.startswith(pp) for pp in prot))
+    return env
+
+
+def _repo_fingerprint() -> str | None:
+    """HEAD + tracked changes (content) + untracked files (size, mtime) of the checkout."""
+    root = str(_TRIPWIRE_ROOT)
+    head = _quiet(["git", "-C", root, "rev-parse", "HEAD"])
+    if head is None:
+        return None
+    diff = subprocess.run(["git", "-C", root, "diff", "HEAD", "--binary"], capture_output=True)
+    others = _quiet(["git", "-C", root, "ls-files", "--others", "--exclude-standard"]) or ""
+    h = hashlib.sha256(head.encode() + diff.stdout)
+    for rel in sorted(others.splitlines()):
+        try:
+            st = (Path(root) / rel).stat()
+            h.update(f"{rel}:{st.st_size}:{st.st_mtime_ns}".encode())
+        except OSError:
+            h.update(rel.encode())
+    return h.hexdigest()
+
+
+def _changed_paths() -> list[str]:
+    out = _quiet(["git", "-C", str(_TRIPWIRE_ROOT), "status", "--porcelain",
+                  "--untracked-files=all"]) or ""
+    return [line[3:] for line in out.splitlines()][:20]
+
+
 def _claude_call(prompt: str, model: str, timeout: int, system: str | None = None,
                  cwd: Path | None = None, extra_args: list[str] | None = None) -> CallResult:
     """Run one prompt through the claude CLI in an isolated working directory.
@@ -406,16 +529,23 @@ def _claude_call(prompt: str, model: str, timeout: int, system: str | None = Non
     (never raised), so one bad call degrades to a non-verdict instead of aborting the run.
     ``extra_args`` adds CLI flags such as ``--allowedTools`` (used by scripts/run_benchmark.py).
     """
-    cmd = ["claude", "--model", model, *ISOLATION_FLAGS, "--output-format", "json",
-           *(extra_args or [])]
-    if system:
-        cmd += ["--append-system-prompt", system]
-    cmd += ["-p", prompt]
+    conf = _confinement()
     with tempfile.TemporaryDirectory(prefix="alterlab-eval-call-") as fallback_cwd:
         run_dir = str(cwd) if cwd else fallback_cwd
+        if any(Path(run_dir).resolve().is_relative_to(h) for h in conf["hidden"]):
+            return CallResult(f"{_NO_ANSWER} workspace inside the protected checkout",
+                              "infra_error", f"workspace {run_dir} is inside a path hidden "
+                              "from answer arms; set TMPDIR outside the repository")
+        cmd = ["claude", "--model", model, *ISOLATION_FLAGS, "--output-format", "json",
+               *_scoped_args(extra_args or [], run_dir)]
+        if system:
+            cmd += ["--append-system-prompt", system]
+        cmd += ["-p", prompt]
+        if conf["mode"] == "namespace":
+            cmd = [*_namespace_prefix(conf["hidden"]), *cmd]
         try:
             proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout,
-                                  cwd=run_dir)
+                                  cwd=run_dir, env=_arm_env())
         except subprocess.TimeoutExpired:
             _USAGE["calls"] += 1
             return CallResult(f"{_NO_ANSWER} TIMEOUT after {timeout}s", "infra_error",
@@ -424,6 +554,9 @@ def _claude_call(prompt: str, model: str, timeout: int, system: str | None = Non
             return CallResult(f"{_NO_ANSWER} could not start claude CLI", "infra_error",
                               _redact(f"could not start claude CLI: {exc}"))
     _USAGE["calls"] += 1
+    if conf["mode"] == "namespace" and proc.returncode == 97 and not proc.stdout.strip():
+        return CallResult(f"{_NO_ANSWER} could not hide the checkout", "infra_error",
+                          "could not mount the namespace overlay that hides the checkout")
     data = _parse_cli_json(proc.stdout)
     if data:
         if isinstance(data.get("duration_ms"), (int, float)):
@@ -806,8 +939,13 @@ def _run_metadata(kind: str, model: str, runs: int, timeout: int) -> dict:
             "cli_flags": list(ISOLATION_FLAGS),
             "working_directory": "fresh temporary directory per arm (not this repository)",
             "skilled_arm_files": ["fixtures/", "skill/ (skill files minus evals/)", "shared/"],
-            "answer_tools": "the skill's allowed-tools frontmatter, granted to both arms; "
-                            "judges get none",
+            "answer_tools": "the skill's allowed-tools frontmatter, granted to both arms "
+                            "(Write/Edit scoped to the arm's workspace); judges get none",
+            "confinement": {"mode": _confinement()["mode"],
+                            "hidden_paths": len(_confinement()["hidden"]),
+                            "why_not_namespace": _confinement()["why"] or None,
+                            "tripwire": "checkout fingerprinted before the run and after "
+                                        "every case; a change aborts the run"},
             "bare_arm_files": ["fixtures/"],
         },
     }
@@ -1010,8 +1148,14 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
           + (f"; {skipped} eval(s) skipped for lacking a prompt or rubric" if skipped else "")
           + ".\n")
 
+    conf = _confinement()
+    if conf["mode"] != "namespace":
+        print(f"WARNING: answer arms are NOT namespace-confined ({conf['why']}). Write/Edit are "
+              "scoped to each workspace, but shell grants can reach this checkout; a tripwire "
+              "aborts the run if it changes. Prefer a disposable checkout.", file=sys.stderr)
+    fingerprint = _repo_fingerprint()
     records: list[dict] = []
-    streak, aborted = 0, None
+    streak, aborted, breach = 0, None, None
     for case in cases:
         if aborted:
             not_run = {"outcome": NOT_RUN, "reason": aborted, "answered_runs": 0, "runs": []}
@@ -1036,6 +1180,12 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
               f"(assertions {s.get('assertion_verdict')}, rubric {s.get('rubric_majority')}) | "
               f"bare={b['outcome']} -> {rec['rubric_delta']}")
         records.append(rec)
+        if fingerprint is not None and not breach and _repo_fingerprint() != fingerprint:
+            changed = ", ".join(_changed_paths()) or "(content of already-modified files)"
+            breach = (f"isolation breach: the checkout changed while {rec['case_id']} ran "
+                      f"(now modified/untracked: {changed}); nothing was reverted — inspect "
+                      "and restore it before trusting or re-running")
+            aborted = aborted or breach
         if aborted:
             print(f"ABORTING: {aborted}", file=sys.stderr)
 
@@ -1052,7 +1202,9 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
     answered = sum(r["skilled"].get("answered_runs", 0) > 0 for r in records)
     usable = counts[PASS] + counts[FAIL]
     status, code = _behavioral_status(selected, counts[PASS], counts[FAIL])
-    reasons: list[str] = []
+    if breach:
+        status, code = "blocked", 2  # a run that touched the checkout validates nothing
+    reasons: list[str] = [breach] if breach else []
     if status != "passed":
         if selected == 0:
             reasons.append("no case matched the selection")
@@ -1061,7 +1213,7 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
         if usable < selected:
             reasons.append(f"{selected - usable} of {selected} case(s) produced no usable "
                            "verdict, so the selection is not fully evaluated")
-        if aborted:
+        if aborted and aborted != breach:
             reasons.append(aborted)
     first_problem = next((r["skilled"]["reason"] for r in records
                           if r["skilled"]["outcome"] in (INFRA_ERROR, REFUSED)), None)
@@ -1096,7 +1248,9 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
     if first_problem:
         print(f"First infrastructure/refusal reason: {first_problem} — {_diagnose(first_problem)}",
               file=sys.stderr)
-    if status == "blocked":
+    if breach:
+        print(f"BLOCKED: {breach}", file=sys.stderr)
+    elif status == "blocked":
         print("BLOCKED: no case produced a usable verdict; this run verifies NOTHING about the "
               "skills and exits non-zero.", file=sys.stderr)
     elif status == "partial":
@@ -1499,6 +1653,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-infra-errors", type=int, default=6,
                     help="(behavioral) abort after this many consecutive infrastructure errors; "
                          "remaining cases are NOT_RUN (default 6)")
+    ap.add_argument("--isolation", choices=["auto", "namespace", "none"], default="auto",
+                    help="(live) how answer arms are kept away from this checkout: 'namespace' "
+                         "hides it in a private mount namespace (Linux; failure is fatal), "
+                         "'auto' uses it when available, 'none' relies on scoped grants and "
+                         "the tripwire only (default auto)")
     ap.add_argument("--regrade", metavar="RESULTS_JSON", nargs="+", default=None,
                     help="re-judge saved responses in behavioral results file(s); judge calls only")
     ap.add_argument("--calibrate-judge", action="store_true",
@@ -1529,6 +1688,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.behavioral and args.activation:
         ap.error("choose one of --behavioral / --activation, not both")
+    if args.behavioral or args.activation:
+        configure_confinement(args.isolation)
     if args.behavioral:
         if args.runs < 1:
             ap.error("--runs must be >= 1")

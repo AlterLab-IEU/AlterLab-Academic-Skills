@@ -125,6 +125,29 @@ scored FAIL. Auth is the CLI's normal
 login, so the harness runs inside an authenticated Claude Code environment with no API key.
 (`--bare` would be stricter, but it ignores OAuth logins and requires `ANTHROPIC_API_KEY`.)
 
+**A temporary directory is not a sandbox.** On 2026-10-15 the bare arm of a link-health case
+("close out the remaining residual broken links"), holding that skill's `Write Edit Bash`
+grants, found this checkout on disk and edited 29 files in it. Answer arms are now kept away
+from the repository in three layers:
+
+1. **Namespace** (`--isolation auto`, the default; `namespace` makes it mandatory). On Linux
+   each CLI call runs in a private mount namespace (`unshare -m`, or `unshare -r -m` without
+   root) in which this checkout and every worktree of it are covered by an empty read-only
+   tmpfs. The arm sees an empty directory, and a write there fails with "Read-only file system".
+2. **Scoped grants.** A bare `Write`, `Edit`, `MultiEdit` or `NotebookEdit` grant becomes an
+   absolute rule for the arm's workspace (`Write(//tmp/alterlab-eval-…/**)`). Environment
+   variables that point into the checkout are dropped, and PATH loses those entries.
+3. **Tripwire.** The checkout is fingerprinted (HEAD, tracked diff, untracked files) before
+   the run and after every case. Any change aborts the run as `blocked` with
+   `isolation breach: …`, lists the changed paths, and reverts nothing.
+
+Checked live: a real arm granted bare `Write` and `Bash`, told to write into the checkout,
+was denied by the Write tool and got "Read-only file system" from the shell. Without the
+namespace (macOS, or a runner that forbids user namespaces) shell grants such as `Bash`,
+`Bash(python:*)` or `Bash(uv run:*)` can still write anywhere. The tripwire then catches
+changes to the checkout but nothing else, so run behavioral evals in a disposable checkout or
+container. The run record's `isolation.confinement` says which mode was in effect.
+
 ### Reading a `--behavioral` run
 
 Every case ends in exactly one outcome, printed with its reason:
