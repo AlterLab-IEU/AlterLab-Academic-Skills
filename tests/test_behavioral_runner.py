@@ -31,7 +31,14 @@ prompt = argv[argv.index("-p") + 1] if "-p" in argv else ""
 skilled = "--append-system-prompt" in argv
 cwd = os.getcwd()
 with open(os.environ["FAKE_CLAUDE_LOG"], "a", encoding="utf-8") as log:
+    tools = []
+    if "--allowedTools" in argv:
+        for a in argv[argv.index("--allowedTools") + 1:]:
+            if a.startswith("-"):
+                break
+            tools.append(a)
     log.write(json.dumps({"cwd": cwd, "flags": [a for a in argv if a.startswith("--")],
+                          "tools": tools,
                           "skilled": skilled, "files": sorted(
                               os.path.relpath(os.path.join(r, f), cwd)
                               for r, _, fs in os.walk(cwd) for f in fs)}) + "\n")
@@ -66,6 +73,7 @@ SKILL_MD = textwrap.dedent("""\
     ---
     name: alterlab-controlled-fixture
     description: "Controlled test skill. Part of the AlterLab Academic Skills suite."
+    allowed-tools: Read Bash(python:*) WebFetch
     metadata:
       version: "0.0.1"
     ---
@@ -215,3 +223,17 @@ def test_redaction_strips_token_shapes() -> None:
     text = "Authorization: Bearer abcdefghijklmnop sk-ant-api03-XYZXYZXYZ api_key=hunter2"
     red = run_evals._redact(text)
     assert "abcdefghijklmnop" not in red and "XYZXYZXYZ" not in red and "hunter2" not in red
+
+
+def test_skill_allowed_tools_are_granted_to_both_answer_arms_only(fake_cli, tmp_path, monkeypatch):
+    """A skill's allowed-tools frontmatter is what Claude Code pre-approves when the skill is
+    active; both arms get it (a fair comparison), the judges get nothing."""
+    _, res = _run(tmp_path, [_case("a", files=["input.md"])], "ok", monkeypatch)
+    calls = [json.loads(line) for line in fake_cli.read_text().splitlines()]
+    answers = [c for c in calls if "fixtures/input.md" in c["files"]]
+    judges = [c for c in calls if "fixtures/input.md" not in c["files"]]
+    want = ["Read", "Bash(python:*)", "WebFetch"]
+    assert answers and all(c["tools"] == want for c in answers)
+    assert {c["skilled"] for c in answers} == {True, False}, "both arms must get the tools"
+    assert judges and all(c["tools"] == [] for c in judges), "judges must get no tools"
+    assert res["cases"][0]["allowed_tools"] == want

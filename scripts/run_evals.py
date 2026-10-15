@@ -757,6 +757,8 @@ def _run_metadata(kind: str, model: str, runs: int, timeout: int) -> dict:
             "cli_flags": list(ISOLATION_FLAGS),
             "working_directory": "fresh temporary directory per arm (not this repository)",
             "skilled_arm_files": ["fixtures/", "skill/ (skill files minus evals/)", "shared/"],
+            "answer_tools": "the skill's allowed-tools frontmatter, granted to both arms; "
+                            "judges get none",
             "bare_arm_files": ["fixtures/"],
         },
     }
@@ -799,20 +801,35 @@ def _behavioral_cases(skill_filter: str | None, shard: tuple[int, int] | None,
                 continue
             cases.append({"skill": name, "skill_dir": d, "skill_md": skill_md,
                           "skill_version": _frontmatter_value(skill_md, "version"),
+                          "allowed_tools": skill_allowed_tools(skill_md),
                           "evals_dir": f.parent, "eval": e})
     return cases, skipped
 
 
+def skill_allowed_tools(skill_md: str) -> list[str]:
+    """The tools a skill's frontmatter pre-approves (``allowed-tools: Read Bash(python:*) …``).
+
+    In Claude Code an active skill's allowed-tools run without a permission prompt, so the
+    harness grants exactly that set — to BOTH arms, so the comparison isolates the skill's
+    instructions rather than its permissions. Without it, every skill that must run a script
+    or query a live service fails by construction (the CLI's print mode denies unapproved
+    tools), and the judge scores a correct refusal to answer from memory as a FAIL.
+    """
+    raw = _frontmatter_value(skill_md, "allowed-tools") or ""
+    return [t for t in raw.split() if t]
+
+
 def _run_arm(prompt: str, model: str, timeout: int, runs: int, workspace: Path,
              eval_obj: dict, skill: str, rubric: str, system: str | None,
-             with_assertions: bool) -> dict:
+             with_assertions: bool, tools: list[str] | None = None) -> dict:
     calls: list[CallResult] = []
     per_run_assertions: list[list[tuple[str, str, str]]] = []
     rubric_votes: list[str] = []
     notes: list[str] = []
     run_records: list[dict] = []
     for i in range(runs):
-        call = _claude_call(prompt, model, timeout, system=system, cwd=workspace)
+        call = _claude_call(prompt, model, timeout, system=system, cwd=workspace,
+                            extra_args=["--allowedTools", *tools] if tools else None)
         calls.append(call)
         assertions = (grade_assertions(eval_obj, skill, call.text, model, timeout)
                       if with_assertions else [])
@@ -826,6 +843,8 @@ def _run_arm(prompt: str, model: str, timeout: int, runs: int, workspace: Path,
             "call_outcome": call.outcome,
             "error": call.error or None,
             "duration_ms": call.duration_ms,
+            "num_turns": call.num_turns,
+            "permission_denials": call.permission_denials,
             "cost_usd": call.cost_usd,
             "usage": call.usage,
             "rubric_verdict": rv,
@@ -871,6 +890,7 @@ def _grade_case(case: dict, model: str, timeout: int, runs: int) -> dict:
         "skill_version": case["skill_version"],
         "eval_id": e.get("id"),
         "fixtures": [f if isinstance(f, str) else f.get("name") for f in e.get("files", []) or []],
+        "allowed_tools": case.get("allowed_tools", []),
     }
     missing = missing_fixtures(e, case["evals_dir"])
     if missing:
@@ -885,11 +905,12 @@ def _grade_case(case: dict, model: str, timeout: int, runs: int) -> dict:
         prepare_workspace(bare_ws, e, case["evals_dir"], None)
         prompt = build_prompt(e, fixtures)
         skilled = _run_arm(prompt, model, timeout, runs, skilled_ws, e, case["skill"],
-                           e["expected_output"], case["skill_md"] + _SKILL_RUNTIME_NOTE, True)
+                           e["expected_output"], case["skill_md"] + _SKILL_RUNTIME_NOTE, True,
+                           tools=case.get("allowed_tools"))
         # The bare arm has no skill context, so it cannot carry should_trigger assertions; it is
         # judged on the overall rubric only, which is what the delta compares.
         bare = _run_arm(prompt, model, timeout, runs, bare_ws, e, case["skill"],
-                        e["expected_output"], None, False)
+                        e["expected_output"], None, False, tools=case.get("allowed_tools"))
     return {**record, "skilled": skilled, "bare": bare,
             "rubric_delta": _delta(bare["rubric_majority"], skilled["rubric_majority"])}
 

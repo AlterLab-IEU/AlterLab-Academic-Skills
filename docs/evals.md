@@ -116,7 +116,12 @@ repository, with `--safe-mode --disable-slash-commands --strict-mcp-config
 **skilled arm** gets the SKILL.md through `--append-system-prompt`, the skill's own files in
 `./skill/` (its `evals/` folder is never copied, so expected outputs stay hidden), the domain's
 `shared/` resources in `./shared/`, and the task fixtures in `./fixtures/`. The **bare arm**
-gets only `./fixtures/`. The judges run in their own empty directories. Auth is the CLI's normal
+gets only `./fixtures/`. The judges run in their own empty directories. Both arms' answer calls are granted the
+skill's `allowed-tools` frontmatter (`--allowedTools`), the set Claude Code pre-approves when
+the skill is active; the bare arm gets the same set so the comparison isolates the skill's
+instructions, and the judges get no tools. Without this, a skill that must run its script or
+query a live service fails by construction and a correct refusal to answer from memory is
+scored FAIL. Auth is the CLI's normal
 login, so the harness runs inside an authenticated Claude Code environment with no API key.
 (`--bare` would be stricter, but it ignores OAuth logins and requires `ANTHROPIC_API_KEY`.)
 
