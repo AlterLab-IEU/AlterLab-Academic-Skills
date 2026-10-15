@@ -497,6 +497,10 @@ def test_endpoint_is_recorded_so_local_runs_never_pass_as_claude(monkeypatch) ->
     assert run_evals._endpoint() == "claude-cli-login"
     monkeypatch.setenv("ANTHROPIC_BASE_URL", "http://127.0.0.1:8080/")
     assert run_evals._endpoint() == "base-url:http://127.0.0.1:8080"
+    monkeypatch.setenv("ANTHROPIC_BASE_URL", "https://api.anthropic.com")
+    assert run_evals._endpoint() == "claude-cli-login"
+    monkeypatch.setenv("ANTHROPIC_BASE_URL", "https://api.anthropic.com.evil.example")
+    assert run_evals._endpoint() == "base-url:https://api.anthropic.com.evil.example"
 
 
 def test_limit_reset_time_is_parsed() -> None:

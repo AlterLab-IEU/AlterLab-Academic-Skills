@@ -502,12 +502,16 @@ def unmet_requirements(eval_obj: dict) -> list[str]:
 
 
 def _endpoint() -> str:
-    """Which backend answers: the CLI's own login, or a base URL (e.g. a local model server)."""
+    """Which backend answers: the CLI's own login, or a base URL (e.g. a local model server).
+
+    A base URL on Anthropic's own API host (some managed environments set one) is still the
+    login's Claude endpoint; anything else — a proxy, a local server — is labelled by its URL.
+    """
     base = os.environ.get("ANTHROPIC_BASE_URL")
-    if not base:
-        return "claude-cli-login"
     from urllib.parse import urlparse
-    u = urlparse(base)
+    u = urlparse(base or "")
+    if not base or (u.scheme == "https" and u.hostname == "api.anthropic.com" and not u.port):
+        return "claude-cli-login"
     return f"base-url:{u.scheme}://{u.hostname}{':' + str(u.port) if u.port else ''}"
 
 
