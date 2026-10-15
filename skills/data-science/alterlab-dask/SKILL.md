@@ -39,6 +39,8 @@ This skill should be used when:
 | Billion-row out-of-core exploration and big-data plots on one machine, no cluster | `alterlab-vaex` |
 | Designing chunked, compressed Zarr stores and codecs (rather than computing on them) | `alterlab-zarr` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-polars`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ### Version notes
 
 Since 2025.1 the query-planning DataFrame (formerly `dask-expr`) is the only Dask DataFrame

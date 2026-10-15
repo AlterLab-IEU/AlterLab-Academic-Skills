@@ -43,6 +43,8 @@ Use this skill for:
 | Drug–drug interactions or general pharmacology with no genetic component | `alterlab-drugbank` |
 | FDA adverse-event reports, recalls, or full-text label search | `alterlab-fda` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-clinvar`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Setup and Access Essentials
 
 Only `requests` is needed. Run the helper script (or any snippet) with an

@@ -109,6 +109,8 @@ examples and `references/module_reference.md` for the full parameter table.
 | One workflow spanning many web services in Python | `alterlab-bioservices` |
 | Serious CELLxGENE Census querying beyond a one-liner | `alterlab-cellxgene` |
 | Running AlphaFold properly (complexes, confidence analysis) | `alterlab-alphafold` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-blast`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 - **Chaining several gget modules into a pipeline** → see `references/workflows.md`
   and the ready-made `scripts/` (gene_analysis, batch_sequence_analysis,
   enrichment_pipeline).

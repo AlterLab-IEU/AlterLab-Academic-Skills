@@ -37,6 +37,8 @@ protocols.io hosts versioned, citable scientific protocols (each published versi
 | Depositing a preprint or choosing a data/code repository (bioRxiv, OSF, Zenodo) | `alterlab-preprint-deposition` or `alterlab-open-science` |
 | Writing or polishing a manuscript's Methods section | `alterlab-scientific-writing` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-labarchive`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Prefer the MCP Server When It Is Connected
 
 If protocols.io tools are available in the session (connector or MCP server), use them for search, retrieval, and editing: they run on the user's own account, handle OAuth, and return live data. Fall back to the REST calls below for anything the tools do not cover, or when no connector is attached. To connect one, add `https://www.protocols.io/mcp` as a remote MCP server (or add "protocols.io" from Claude's connector directory) and sign in. Either way, cite the protocol DOI and the retrieval date when reporting protocol content.

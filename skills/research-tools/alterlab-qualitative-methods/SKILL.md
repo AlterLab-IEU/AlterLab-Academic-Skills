@@ -44,6 +44,8 @@ This skill should be used when:
 | Questionnaire items, Likert scales, or instrument validation | `alterlab-survey-design` |
 | Discourse or conversation analysis, QCA, process tracing (`alterlab-social-science-methods`); topic models or text classification (`alterlab-text-as-data`) | `alterlab-social-science-methods` / `alterlab-text-as-data` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-qualitative-analysis`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ---
 
 ## Core Capabilities

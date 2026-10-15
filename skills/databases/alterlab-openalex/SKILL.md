@@ -33,6 +33,8 @@ OpenAlex is a comprehensive open catalog of 300M+ scholarly works (the default "
 | Managing a Zotero library (items, collections, attachments) | `alterlab-pyzotero` |
 | Writing a structured literature review from the papers found | `alterlab-literature-review` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pubmed`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Quick Start
 
 ### Basic Setup

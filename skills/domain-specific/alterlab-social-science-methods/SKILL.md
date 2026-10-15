@@ -52,6 +52,8 @@ data are in hand, hand execution to the matching analysis module.
 | Thematic/grounded-theory coding or computing intercoder reliability on coded data | `alterlab-qualitative-analysis` |
 | Coordinating a whole study through the stage-gated design → inference pipeline | `alterlab-ssci-orchestrator` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-qca`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Method Families at a Glance
 
 ### Language-focused interpretive methods

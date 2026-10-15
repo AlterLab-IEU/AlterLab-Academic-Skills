@@ -38,6 +38,8 @@ Use this skill when:
 | LLM-driven hypothesis generation and testing on a tabular dataset (HypoGeniC) | `alterlab-hypogenic` |
 | Consulting-style market or industry report | `alterlab-market-research` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-deep-research`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 Denario output is AI-generated end to end: treat its ideas, code, results, and citations as drafts that a researcher must verify, and disclose the AI assistance in any resulting manuscript.
 
 ## Installation

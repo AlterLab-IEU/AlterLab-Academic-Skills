@@ -81,6 +81,8 @@ other minimums remain.
 | Finding a Turkish graduate **thesis** (tez) | `alterlab-yok-tez` |
 | An academic's official affiliation or CV (YÖK Akademik) | `alterlab-yok-akademik` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-akademik-tesvik`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ---
 
 ## Fields Covered (ÜAK 2026 Mart)

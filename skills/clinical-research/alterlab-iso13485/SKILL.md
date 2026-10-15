@@ -44,6 +44,8 @@ The output is documentation support. Certification decisions come from an accred
 | IRB/ethics applications and informed-consent documents for a device study | `alterlab-research-ethics` |
 | An individual patient's care or treatment plan | `alterlab-treatment-plans` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-fda`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Regulatory Status (checked September 2026)
 
 - **ISO 13485:2016** remains the current edition; ISO/TC 210's 2025 systematic review confirmed it without amendment. Documents written against the 2016 clauses need no edition change.

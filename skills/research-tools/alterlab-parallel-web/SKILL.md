@@ -46,6 +46,8 @@ Use the Extract API only for citation verification (confirming what a specific U
 | A consulting-style market research report (frameworks, LaTeX, 50+ pages) | `alterlab-market-research` |
 | A systematic literature review with PRISMA screening | `alterlab-literature-review` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-research-lookup`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ---
 
 ## Three Capabilities

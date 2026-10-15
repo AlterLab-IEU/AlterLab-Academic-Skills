@@ -45,6 +45,8 @@ in `references/` — same stages, same acceptance rules, run sequentially.
 | Full-text extraction, risk-of-bias, and pooling after screening | `alterlab-literature-review`, `alterlab-meta-analysis` |
 | Writing the grant itself | `alterlab-research-grants`, `alterlab-tubitak-proposal` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-citation-verifier`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 If the user doesn't know which skill fits, `alterlab-skill-finder` routes; it launches these
 workflows in its orchestrate (`alterflow`) mode.
 

@@ -32,6 +32,8 @@ Reach for this skill when you need fine-grained molecular control: custom saniti
 | Looking up a compound's structure, properties, or bioactivity by name or ID | `alterlab-pubchem` or `alterlab-chembl` |
 | Protein–ligand docking / binding-pose prediction | `alterlab-diffdock` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-datamol`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Core Capabilities
 
 RDKit exposes twelve capability areas. Each is summarized below with the single most common call; **complete, runnable recipes for every area live in `references/code_recipes.md`.**

@@ -41,6 +41,8 @@ This skill should be used when performing metabolomics research, clinical chemis
 | Computing MS/MS spectral similarity on your own spectra files | `alterlab-matchms` |
 | Drug pharmacology, targets, and interactions | `alterlab-drugbank` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pubchem`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Database Contents
 
 HMDB version 5.0 (released 2022; latest major version as of mid-2026) contains:

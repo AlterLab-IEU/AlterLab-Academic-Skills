@@ -56,6 +56,8 @@ Use this skill when:
 | Exploring a time-series file's structure and quality before any forecasting | `alterlab-eda` |
 | Tabular (non-temporal) prediction | `alterlab-scikit-learn` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-statsmodels`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 > **Note on Anomaly Detection**: TimesFM does not have built-in anomaly detection, but you can
 > use the **quantile forecasts as prediction intervals** — values outside the 80% CI (q10–q90)
 > are statistically unusual. See the `examples/anomaly-detection/` directory for a full example.

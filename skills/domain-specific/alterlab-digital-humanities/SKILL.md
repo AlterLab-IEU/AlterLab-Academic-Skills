@@ -49,6 +49,8 @@ Use this skill when you need to:
 | Converting modern PDFs/Office files to text rather than OCR of historical scans | `alterlab-markitdown` |
 | Graph algorithms at scale with no humanities source criticism (centrality, communities) | `alterlab-networkx` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-text-as-data`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Core Capabilities
 
 Each capability below gives the WHAT/WHEN and the tools to reach for. Worked examples, code, parameter tables, and tool-comparison matrices live in the references (see the index at the end).

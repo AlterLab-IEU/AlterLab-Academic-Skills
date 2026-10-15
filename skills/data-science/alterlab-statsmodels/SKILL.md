@@ -40,6 +40,8 @@ This skill should be used when:
 | Predictive machine learning with cross-validated tuning rather than coefficient inference | `alterlab-scikit-learn` |
 | Zero-shot forecasting with a pretrained foundation model instead of fitting ARIMA/ETS | `alterlab-timesfm` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-statistical-analysis`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## statsmodels 0.15 Notes
 
 statsmodels 0.15.0 (Aug 2026) is the first release since 0.14 (2023). Changes that affect everyday code:

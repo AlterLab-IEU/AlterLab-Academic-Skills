@@ -95,6 +95,8 @@ python scripts/query_imaging_data_commons.py sql "SELECT * FROM index LIMIT 5"  
 | Somatic mutations / copy number for TCGA or other cancer cohorts | `alterlab-cbioportal` |
 | Cancer mutation signatures and census genes | `alterlab-cosmic` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pydicom`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Quick Navigation
 
 **Core Sections (inline):**

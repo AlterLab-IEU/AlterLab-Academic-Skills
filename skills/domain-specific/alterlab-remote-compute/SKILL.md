@@ -42,6 +42,8 @@ Use this skill when the user wants to:
 | Local single-machine data analysis with no remote dispatch | the relevant analysis skill (`alterlab-scanpy`, `alterlab-rdkit`, …) |
 | Query a database over HTTP | the database connector skill (`alterlab-pdb`, `alterlab-uniprot`, …) |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-modal`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## The submit → poll → harvest contract
 
 Every backend implements three verbs. Keeping the payload backend-independent is what makes a

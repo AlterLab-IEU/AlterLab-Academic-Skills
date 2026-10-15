@@ -33,6 +33,8 @@ Generate and edit high-quality images using OpenRouter's image generation models
 | Plot of numeric data from a file or array (scatter, bar, line, distribution) | `alterlab-matplotlib` / `alterlab-seaborn` / `alterlab-plotly` |
 | Diagram that should stay editable, version-controlled text in a README or Markdown doc | `alterlab-mermaid` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-scientific-schematics`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Quick Start
 
 Use the `scripts/generate_image.py` script to generate or edit images:

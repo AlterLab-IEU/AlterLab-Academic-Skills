@@ -37,6 +37,8 @@ This skill should be used when:
 | How often a gene is mutated in tumor cohorts (TCGA, MSK-IMPACT) | `alterlab-cbioportal` |
 | Pharmacogenomic gene–drug dosing (CPIC/DPWG) | `alterlab-clinpgx` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-gnomad`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 **Three classification types (since 2024).** ClinVar now keeps separate aggregate
 classifications for **germline** pathogenicity (ACMG/AMP), **somatic clinical impact**
 (AMP/ASCO/CAP tiers), and **oncogenicity** (ClinGen/CGC/VICC). APIs and files expose them

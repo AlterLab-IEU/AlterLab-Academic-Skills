@@ -30,6 +30,8 @@ Pyzotero is a Python wrapper for the [Zotero API v3](https://www.zotero.org/supp
 | Checking that every bibliography entry exists / spotting hallucinated references | `alterlab-citation-verifier` |
 | Building an evidence table from a folder of PDFs | `alterlab-pdf-extract` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-research-lookup`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Authentication Setup
 
 **Required credentials** — get from https://www.zotero.org/settings/keys:

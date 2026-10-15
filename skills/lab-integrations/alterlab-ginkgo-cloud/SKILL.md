@@ -33,6 +33,8 @@ The platform also includes **EstiMate**, an AI agent that accepts human-language
 | Scripting your own multi-vendor liquid handlers (Hamilton, Tecan) | `alterlab-pylabrobot` |
 | Publishing or finding a written protocol with a DOI | `alterlab-protocolsio` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-adaptyv`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Available Protocols
 
 Prices and turnaround below are as listed on cloud.ginkgo.bio on 2026-09-23; they change, so confirm on the protocol page before quoting them.

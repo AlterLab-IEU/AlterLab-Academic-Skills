@@ -120,6 +120,8 @@ This skill should be used when:
 | Plot of measured data (scatter, bar, line, heatmap) | `alterlab-matplotlib` / `alterlab-scientific-viz` |
 | Network graph whose layout is computed from real node/edge data | `alterlab-networkx` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-mermaid`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## How to Use This Skill
 
 **Simply describe your diagram in natural language.** Nano Banana 2 generates it automatically:

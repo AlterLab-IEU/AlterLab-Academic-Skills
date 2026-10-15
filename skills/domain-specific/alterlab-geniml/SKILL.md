@@ -31,6 +31,8 @@ cells from region tokens, or BEDshift null models and BBClient caching.
 | Deep generative single-cell integration (scVI / MultiVI / PeakVI) | `alterlab-scvi-tools` |
 | Normalized coverage tracks, TSS heatmaps from BAM | `alterlab-deeptools` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-gtars`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Installation
 
 Verified against **geniml 0.8.4** (still the current release as of 2026-09; it resolves `gtars` 0.10). Install with uv (prefer `uv run --with` for one-off runs so nothing leaks into the project env):

@@ -47,6 +47,8 @@ Invoke this skill when:
 | Biomarker-stratified cohort report with GRADE-graded treatment recommendations | `alterlab-clinical-decision` |
 | General tabular ML on non-EHR data (scikit-learn pipelines) | `alterlab-scikit-learn` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-neurokit2`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Core Capabilities
 
 PyHealth operates through a modular 5-stage pipeline:

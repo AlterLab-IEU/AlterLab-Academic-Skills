@@ -32,6 +32,8 @@ Access 20+ years of global financial data: equities, options, forex, crypto, com
 | Aggregate hedge-fund leverage / SEC Form PF statistics | `alterlab-hedgefund-monitor` |
 | Fitting ARIMA/regression models to the series you downloaded | `alterlab-statsmodels` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-fred`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## API Key Setup (Required)
 
 1. Get a free key at https://www.alphavantage.co/support/#api-key (premium plans raise limits and unlock premium endpoints)

@@ -39,6 +39,8 @@ Apply this skill for:
 | Training a general vision model with no pathology-specific I/O or transforms | `alterlab-pytorch-lightning` |
 | Graph neural networks on a graph you already built | `alterlab-torch-geometric` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-histolab`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Core Capabilities
 
 PathML provides six major capability areas documented in detail within reference files:
