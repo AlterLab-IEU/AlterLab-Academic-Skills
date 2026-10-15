@@ -436,9 +436,9 @@ result = x.compute()
 # Load large dataset
 data = da.from_zarr('measurements.zarr')
 
-# Compute statistics
-mean = data.mean(axis=0)
-std = data.std(axis=0)
+# Compute statistics first (one pass); a lazy (data - data.mean(axis=0)) / ...
+# would hold every input chunk in memory until the reduction finished
+mean, std = dask.compute(data.mean(axis=0), data.std(axis=0))
 normalized = (data - mean) / std
 
 # Save normalized data

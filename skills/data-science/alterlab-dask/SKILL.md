@@ -347,17 +347,20 @@ result = ddf.groupby('category').mean(numeric_only=True).compute()
 
 ### Large-Scale Array Computation
 ```python
+import dask
 import dask.array as da
 
 # Load or create large array
 x = da.from_zarr('large_dataset.zarr')
 
-# Process in chunks
-normalized = (x - x.mean()) / x.std()
+# Pass 1: global statistics in one read (float64 accumulators for float32 data)
+mean, std = dask.compute(x.mean(dtype='float64'), x.std(dtype='float64'))
 
-# Save result
+# Pass 2: elementwise, chunk by chunk; each output chunk needs only its own input chunk
+normalized = ((x - mean) / std).astype(x.dtype)
 da.to_zarr(normalized, 'normalized.zarr')
 ```
+For data larger than memory, do not write the lazy one-liner `(x - x.mean()) / x.std()`: every output chunk then waits on a full-array reduction, so the scheduler keeps the loaded input chunks in memory until it finishes (with dask 2026.8 a 128 MB Zarr array peaked at ~133 MB that way and ~7 MB in two passes).
 
 ### Custom Parallel Workflow
 ```python
