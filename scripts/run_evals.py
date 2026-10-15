@@ -851,6 +851,9 @@ def _run_arm(prompt: str, model: str, timeout: int, runs: int, workspace: Path,
             "assertions": [{"assertion": a, "verdict": v, "detail": _redact(str(d))[:300]}
                            for (a, v, d) in assertions],
             "response_excerpt": call.text[:1500] if call.outcome == "answer" else None,
+            # Full text, so a run can be re-graded later (e.g. with a revised judge) without
+            # repeating the answer calls.
+            "response": call.text if call.outcome == "answer" else None,
         })
     rubric_majority = _majority(rubric_votes)
     if with_assertions and eval_obj.get("assertions"):
