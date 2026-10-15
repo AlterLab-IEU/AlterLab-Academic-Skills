@@ -41,6 +41,7 @@
     },
     {
       "id": "revision-coach-reviews",
+      "files": ["fixtures/reviewer_comments.md"],
       "prompt": "I just got reviewer comments back from the journal. Can you parse them into a revision roadmap and help me prioritize what to fix?",
       "expected_output": "Invokes alterlab-paper-writer in revision-coach mode: the revision_coach_agent parses the unstructured reviewer comments into a structured Revision Roadmap (classify, map to sections, prioritize), optionally producing a tracking template and a response-letter skeleton, and works standalone without prior pipeline execution.",
       "assertions": [
@@ -55,11 +56,13 @@
         {
           "type": "output_contains",
           "value": "Revision Roadmap"
-        }
+        },
+        { "type": "behavior", "value": "Flags the conflict between Reviewer 1 (adjust for section) and Reviewer 2 (drop the causal framing), and treats Reviewer 2's full randomized trial as beyond this revision rather than as a must-fix." }
       ]
     },
     {
       "id": "format-convert-citations",
+      "files": ["fixtures/manuscript_apa.md"],
       "prompt": "Convert the citations in my manuscript from APA 7 to IEEE format.",
       "expected_output": "Invokes alterlab-paper-writer in format-convert mode: the formatter_agent performs late-stage citation format conversion from APA 7 to IEEE across in-text citations and the reference list, without re-running the drafting or research phases.",
       "assertions": [
@@ -70,11 +73,13 @@
         {
           "type": "behavior",
           "value": "Runs only the formatter_agent to convert both in-text citations and the reference list from APA 7 to IEEE, without re-running literature, drafting, or peer-review phases."
-        }
+        },
+        { "type": "behavior", "value": "Numbers the references in order of first citation: Hattie & Timperley [1], Kluger & DeNisi [2], Wisniewski et al. [3], Mueller & Oppenheimer [4], and reuses [1] and [3] for the later combined citation." }
       ]
     },
     {
       "id": "abstract-only-bilingual",
+      "files": ["fixtures/paper_competency_assessment.md"],
       "prompt": "Write a structured bilingual abstract (Traditional Chinese and English) plus keywords for my completed paper on competency-based assessment.",
       "expected_output": "Invokes alterlab-paper-writer in abstract-only mode: the abstract_bilingual_agent independently composes a structured English abstract (150-300 words) and a Traditional Chinese abstract (300-500 characters) that are not mechanical translations, plus 5-7 keywords per language.",
       "assertions": [

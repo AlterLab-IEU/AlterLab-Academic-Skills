@@ -1,0 +1,11 @@
+name: Check Links
+on: [push, pull_request]
+jobs:
+  lychee:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: --accept 403 --no-progress "**/*.md"
+          fail: true

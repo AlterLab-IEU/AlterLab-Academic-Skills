@@ -1,0 +1,22 @@
+Check Links / lychee — run #412 (failed)
+lychee --accept 403 --no-progress "**/*.md"   (the repository has 214 Markdown files; this
+excerpt lists the errors from the 7 files in the attached our-docs/ snapshot, then the summary)
+
+[README.md]:
+  [ERROR] file:///home/runner/work/our-docs/our-docs/docs/setup.md | Cannot find file
+  [ERROR] file:///home/runner/work/our-docs/our-docs/docs/reference/api.md | Cannot find file
+  [ERROR] file:///home/runner/work/our-docs/our-docs/CONTRIBUTING.md | Cannot find file
+  [200]   https://docs.python.org/3/library/argparse.html | Rejected status code (this depends on your "accept" configuration): OK
+  [301]   https://pandas.pydata.org/pandas-docs/stable/user_guide/io.html | Rejected status code (this depends on your "accept" configuration): Moved Permanently
+  [ERROR] http://localhost:8080/ | Network error: Connection refused
+  [999]   https://www.linkedin.com/in/example-maintainer | Unknown status code
+[docs/guide.md]:
+  [ERROR] file:///home/runner/work/our-docs/our-docs/docs/reference/api.md | Cannot find file
+  [404]   https://github.com/old-lab-org/analysis-toolkit | Not Found
+  [200]   https://github.com/new-lab-org/analysis-toolkit | Rejected status code (this depends on your "accept" configuration): OK
+  [403]   https://doi.org/10.1177/0956797614524581 | Rejected status code (this depends on your "accept" configuration): Forbidden
+  [404]   https://scikit-learn.org/0.24/modules/cross_validation.html | Not Found
+
+🔍 2,311 Total (in 41s) ✅ 1,078 OK 🚫 1,233 Errors
+Error breakdown across all 214 files: 1,046 "Rejected status code ... OK" (2xx rejected),
+97 "Cannot find file", 61 HTTP 404, 18 HTTP 301/308, 7 network errors, 4 HTTP 999.

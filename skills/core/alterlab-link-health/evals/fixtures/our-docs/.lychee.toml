@@ -1,0 +1,4 @@
+# link-check config (draft)
+accept = [200]
+max_retries = 0
+timeout = 10

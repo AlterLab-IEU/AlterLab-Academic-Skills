@@ -3,6 +3,7 @@
   "evals": [
     {
       "id": "parallel-fan-out-citations",
+      "files": ["fixtures/chapter1.bib", "fixtures/chapter2.bib", "fixtures/chapter3.bib", "fixtures/chapter4.bib"],
       "prompt": "I have four chapter bibliographies and I want to check them all at once rather than one after another. Can you fan these out to parallel agents that each existence-check one chapter's references, then merge everything into a single report of bad citations?",
       "expected_output": "Invokes alterlab-workflow-orchestration with the parallel fan-out pattern (P1): explains dispatching one subagent per independent bibliography (each in its own context window), has each subagent run the alterlab-citation-verifier skill on a single input and return only its verdict table, then merges into one manuscript-wide report. References that parallel subagents work best when inputs are independent. Provides a copyable delegation prompt and optionally a reusable subagent definition; does not itself perform the verification.",
       "assertions": [

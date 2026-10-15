@@ -3,26 +3,31 @@
   "evals": [
     {
       "id": "full-repo-audit",
+      "files": ["fixtures/our-docs", "fixtures/lychee-ci-log.txt"],
       "prompt": "Our docs repo's lychee link-check GitHub Action is failing with over a thousand broken-link errors. Audit and repair the link health of AlterLab-IEU/our-docs and get the checker back to green.",
       "expected_output": "Invokes alterlab-link-health: dispatches the full four-tier pipeline (config hardening, intra-repo file-ref fixes, external URL substitutions, residual exclusions) per playbooks/full-audit.md, classifies each failing link by tier, and applies fixes while enforcing the Tier 3 substitution guardrail so no previously-passing link regresses.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "tier" },
-        { "type": "behavior", "value": "Runs the four-tier audit-and-repair pipeline for a lychee-based checker and reports per-tier link classifications." }
+        { "type": "behavior", "value": "Runs the four-tier audit-and-repair pipeline for a lychee-based checker and reports per-tier link classifications." },
+        { "type": "behavior", "value": "Works on the provided our-docs checkout and sorts its failing links into the four tiers: config (the CLI --accept 403 replaces lychee's default accept set, so 200s are rejected), intra-repo references (docs/setup.md, reference/ vs references/, CONTRIBUTING.md vs contributing.md), external substitutions (the moved GitHub repository, the version-pinned scikit-learn URL) and exclusions (localhost, LinkedIn)." }
       ]
     },
     {
       "id": "residual-followup",
+      "files": ["fixtures/residual-errors.txt"],
       "prompt": "The lychee link checker is down from 1208 to 67 errors after the first pass. Close out the remaining residual broken links.",
       "expected_output": "Invokes alterlab-link-health and dispatches the targeted residual followup pass (playbooks/followup-pass.md), resolving the remaining links via Tier 2/3 substitutions or Tier 4 exclusions without regressing any link that already passes.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "residual" },
-        { "type": "behavior", "value": "Handles the residual-pass scenario rather than re-running a full audit, preserving the no-regression guardrail." }
+        { "type": "behavior", "value": "Handles the residual-pass scenario rather than re-running a full audit, preserving the no-regression guardrail." },
+        { "type": "behavior", "value": "Notices that the first pass's bulk substitution broke 4 previously passing links (/docs/stable/stable/) and fixes those as regressions rather than excluding them." }
       ]
     },
     {
       "id": "dead-links-generic-checker",
+      "files": ["fixtures/docs-mlc"],
       "prompt": "Can you find and fix all the dead links and 404s in our Markdown docs? We use markdown-link-check in CI.",
       "expected_output": "Invokes alterlab-link-health: applies the same tiered methodology generalized from lychee to markdown-link-check, hardening checker config, repairing intra-repo file references, substituting dead external URLs, and excluding irreducible residuals, with the Tier 3 regression guardrail in force.",
       "assertions": [
