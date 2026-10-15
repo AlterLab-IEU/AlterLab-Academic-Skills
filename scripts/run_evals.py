@@ -336,6 +336,7 @@ class CallResult:
     usage: dict | None = None
     num_turns: int | None = None
     permission_denials: int | None = None  # tool calls the permission rules refused
+    denied_tools: list | None = None  # what was refused: "Bash: uv pip install x", ...
 
 
 # Accumulates CLI usage for the current run (answer and judge calls alike). Reset per run.
@@ -586,6 +587,16 @@ def _changed_paths() -> list[str]:
     return [line[3:] for line in out.splitlines()][:20]
 
 
+def _denial_summary(d: object) -> str:
+    """'Tool: what it tried' for one permission denial the CLI reported."""
+    if not isinstance(d, dict):
+        return _redact(str(d))[:120]
+    inp = d.get("tool_input") if isinstance(d.get("tool_input"), dict) else {}
+    what = inp.get("command") or inp.get("file_path") or inp.get("url") or inp.get("path") \
+        or json.dumps(inp, ensure_ascii=False)
+    return _redact(f"{d.get('tool_name', '?')}: {' '.join(str(what).split())}")[:120]
+
+
 def _run_contained(cmd: list[str], cwd: str, timeout: int) -> subprocess.CompletedProcess:
     """Run one CLI call in its own session and kill the whole process group when it returns
     or times out, so nothing an arm started in the background outlives the call (a leftover
@@ -681,6 +692,8 @@ def _claude_call_once(prompt: str, model: str, timeout: int, system: str | None 
         "usage": _usage_summary((data or {}).get("usage")),
         "num_turns": (data or {}).get("num_turns"),
         "permission_denials": len(denials) if isinstance(denials, list) else None,
+        "denied_tools": [_denial_summary(d) for d in denials][:20]
+        if isinstance(denials, list) else None,
     }
     # The CLI prints usage-policy refusals to stdout and exits non-zero, so check both streams.
     combined = f"{proc.stdout} {proc.stderr}"
@@ -1153,6 +1166,7 @@ def _run_arm(prompt: str, model: str, timeout: int, runs: int, workspace: Path,
             "duration_ms": call.duration_ms,
             "num_turns": call.num_turns,
             "permission_denials": call.permission_denials,
+            "denied_tools": call.denied_tools,
             "cost_usd": call.cost_usd,
             "usage": call.usage,
             "rubric_verdict": rv,

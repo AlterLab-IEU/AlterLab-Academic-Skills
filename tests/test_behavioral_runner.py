@@ -48,10 +48,15 @@ with open(os.environ["FAKE_CLAUDE_LOG"], "a", encoding="utf-8") as log:
                           "skilled": skilled, "files": sorted(
                               os.path.relpath(os.path.join(r, f), cwd)
                               for r, _, fs in os.walk(cwd) for f in fs)}) + "\n")
-def out(text, is_error=False):
+def out(text, is_error=False, denials=()):
     print(json.dumps({"type": "result", "subtype": "success", "is_error": is_error,
                       "result": text, "duration_ms": 10, "total_cost_usd": 0.001,
-                      "usage": {"input_tokens": 1, "output_tokens": 1}}))
+                      "usage": {"input_tokens": 1, "output_tokens": 1},
+                      "permission_denials": list(denials)}))
+if mode == "denied" and skilled:
+    out("GOOD-ANSWER: but the install was denied",
+        denials=[{"tool_name": "Bash", "tool_input": {"command": "uv pip install semopy"}}])
+    sys.exit(0)
 if mode == "lingering" and skilled:
     import subprocess as sp
     sp.Popen([sys.executable, "-c", "import time, pathlib\nfor i in range(600):\n"
@@ -514,3 +519,10 @@ def test_without_wait_on_limit_a_limit_is_an_infra_error(fake_cli, tmp_path, mon
     rc, res = _run(tmp_path, [_case("a")], "limit_once", monkeypatch)
     assert res["cases"][0]["skilled"]["outcome"] == "INFRA_ERROR"
     assert "session limit" in res["cases"][0]["skilled"]["reason"]
+
+
+def test_denied_tool_calls_are_recorded_by_name_and_input(fake_cli, tmp_path, monkeypatch):
+    _, res = _run(tmp_path, [_case("a")], "denied", monkeypatch)
+    run = res["cases"][0]["skilled"]["runs"][0]
+    assert run["permission_denials"] == 1
+    assert run["denied_tools"] == ["Bash: uv pip install semopy"]
