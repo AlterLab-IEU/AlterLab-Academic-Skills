@@ -2,8 +2,8 @@
 name: alterlab-plotly
 description: Builds INTERACTIVE charts with the Plotly Python library (plotly.express / graph_objects) — hover tooltips, zoom/pan, animations, rangesliders, 3D rotation, and standalone HTML/web-embeddable output. Use when a chart must be interactive or web-embedded, for dashboards (incl. Dash), exploratory data analysis, or rotatable 3D plots. For static publication figures defer to alterlab-matplotlib (or alterlab-scientific-viz for journal formatting); for static statistical charts (heatmaps, distributions) defer to alterlab-seaborn; for diagrams/schematics defer to alterlab-scientific-schematics or alterlab-mermaid. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
-compatibility: Requires the plotly Python library, version >= 6 (current 7.1 as of 2026-09) — uv pip install plotly; static image export (PNG/PDF/SVG) additionally needs kaleido >= 1 plus a Chrome/Chromium install (run plotly_get_chrome); Dash apps need dash
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
+compatibility: Requires the plotly Python library, version >= 6 (current 7.1 as of 2026-09) — no install step, run scripts as uv run --python ">=3.11" --with plotly python script.py; static image export (PNG/PDF/SVG) additionally needs kaleido >= 1 plus a Chrome/Chromium install (run plotly_get_chrome); Dash apps need dash
 metadata:
     skill-author: AlterLab
     version: "1.1.0"
@@ -35,9 +35,9 @@ Use this skill when the chart must be explored or shared interactively:
 
 ## Quick Start
 
-Install Plotly:
+Run Plotly without installing anything: uv resolves it per call, with no virtualenv (`uv pip install` fails outside one). Add `--with pandas` for DataFrames and `--with statsmodels` for OLS/LOWESS trendlines:
 ```bash
-uv pip install plotly
+uv run --python ">=3.11" --with plotly --with pandas python make_chart.py
 ```
 
 Basic usage with Plotly Express (high-level API):
@@ -166,8 +166,8 @@ fig.write_html('chart.html', include_plotlyjs='cdn')  # Smaller file
 
 **Static Images (requires kaleido >= 1 and Chrome):**
 ```bash
-uv pip install kaleido
-plotly_get_chrome    # one-time: installs a Chrome build if the machine has none
+uv run --python ">=3.11" --with plotly --with kaleido python make_chart.py
+uv run --python ">=3.11" --with plotly --with kaleido plotly_get_chrome   # one-time: installs a Chrome build if the machine has none
 ```
 
 ```python
@@ -188,7 +188,7 @@ For complete export options, see [references/export-interactivity.md](references
 import plotly.express as px
 
 # Scatter plot with trendline (trendline='ols'/'lowess' requires statsmodels:
-#   uv pip install statsmodels)
+#   add --with statsmodels to the uv run line)
 fig = px.scatter(df, x='temperature', y='yield', trendline='ols')
 
 # Heatmap from matrix
@@ -256,7 +256,7 @@ fig.update_layout(height=800, showlegend=False)
 For interactive web applications, use Dash (Plotly's web app framework):
 
 ```bash
-uv pip install dash
+uv run --python ">=3.11" --with dash python app.py
 ```
 
 ```python

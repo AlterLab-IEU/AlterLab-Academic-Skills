@@ -4,17 +4,17 @@
 
 ### Installation
 
-Static image export requires Kaleido:
+Static image export requires Kaleido; uv resolves it per call, with no install step:
 
 ```bash
-uv pip install kaleido
+uv run --python ">=3.11" --with plotly --with kaleido python make_chart.py
 ```
 
 Kaleido v1+ requires Chrome/Chromium on your system. If none is installed, run the helper that
 ships with plotly once:
 
 ```bash
-plotly_get_chrome        # add -y to skip the prompt
+uv run --python ">=3.11" --with plotly --with kaleido plotly_get_chrome        # add -y to skip the prompt
 ```
 
 Plotly 7 supports only Kaleido >= 1 (Orca and the `engine=` argument were removed).

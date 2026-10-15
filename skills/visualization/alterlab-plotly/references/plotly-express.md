@@ -2,10 +2,12 @@
 
 Plotly Express (px) is a high-level interface for creating data visualizations with minimal code (typically 1-5 lines).
 
-## Installation
+## Running
+
+No install step: uv resolves the packages per call.
 
 ```bash
-uv pip install plotly
+uv run --python ">=3.11" --with plotly --with pandas python make_chart.py
 ```
 
 ## Key Advantages
@@ -124,7 +126,7 @@ fig = px.bar(df_wide, x='fruit', y=['A', 'B'])
 ## Trendlines
 
 Add statistical trendlines to scatter plots. Requires `statsmodels`
-(`uv pip install statsmodels`) for all trendline types:
+(add `--with statsmodels` to the `uv run` line) for all trendline types:
 
 ```python
 fig = px.scatter(
