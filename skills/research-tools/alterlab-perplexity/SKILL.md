@@ -2,7 +2,7 @@
 name: alterlab-perplexity
 description: "Run AI web searches with real-time, citation-grounded answers using Perplexity Sonar models (sonar, sonar-pro, sonar-pro-search agentic search, sonar-reasoning-pro) via LiteLLM and a single OpenRouter API key. Use when searching for current information or recent scientific literature, getting answers grounded in cited web sources, verifying a claim against current evidence, or reaching information beyond the model's training cutoff. Requires an OpenRouter API key. This is the direct single-backend Perplexity tool: for automatic routing between Perplexity and other backends use alterlab-research-lookup, and for structured per-paper experimental-data extraction (sample sizes, effect sizes, quality scores) use alterlab-bgpt-search. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read WebFetch WebSearch Bash(python:*)
+allowed-tools: Read WebFetch WebSearch Bash(python:*) Bash(uv run:*)
 compatibility: An OpenRouter API key (OPENROUTER_API_KEY) is required; uses the litellm Python package and sends queries to OpenRouter/Perplexity.
 metadata:
     skill-author: AlterLab
@@ -39,11 +39,8 @@ Skip for: arithmetic/logic, code execution, or facts well within training data (
 export OPENROUTER_API_KEY='sk-or-v1-your-key-here'
 python scripts/setup_env.py --api-key sk-or-v1-your-key-here   # writes .env
 
-# 3. Install LiteLLM
-uv pip install litellm
-
-# 4. Verify
-python scripts/perplexity_search.py --check-setup
+# 3. Verify. LiteLLM needs no install step: uv resolves it per call, without a virtualenv
+uv run --python ">=3.11" --with litellm python scripts/perplexity_search.py --check-setup
 ```
 
 `--check-setup` reads the live environment, not `.env`. After `setup_env.py`, load the file with `set -a; source .env; set +a` (plain `source` does not export) or use python-dotenv, so the variable is actually in scope. Ask the user to set the key themselves rather than pasting it into the conversation. See `references/openrouter_setup.md` for full setup, security, and troubleshooting.
@@ -51,11 +48,13 @@ python scripts/perplexity_search.py --check-setup
 ## Basic usage
 
 ```bash
-python scripts/perplexity_search.py "What are the latest developments in CRISPR gene editing?"
-python scripts/perplexity_search.py "Recent CAR-T therapy clinical trials" --output results.json
-python scripts/perplexity_search.py "Compare mRNA and viral vector vaccines" --model sonar-pro-search
-python scripts/perplexity_search.py "Quantum computing for drug discovery" --verbose
+uv run --python ">=3.11" --with litellm python scripts/perplexity_search.py "What are the latest developments in CRISPR gene editing?"
+uv run --python ">=3.11" --with litellm python scripts/perplexity_search.py "Recent CAR-T therapy clinical trials" --output results.json
+uv run --python ">=3.11" --with litellm python scripts/perplexity_search.py "Compare mRNA and viral vector vaccines" --model sonar-pro-search
+uv run --python ">=3.11" --with litellm python scripts/perplexity_search.py "Quantum computing for drug discovery" --verbose
 ```
+
+Where LiteLLM is already installed, plain `python scripts/perplexity_search.py …` works the same.
 
 The CLI takes the bare model name (e.g. `sonar-pro`); the script prepends `openrouter/perplexity/` automatically.
 

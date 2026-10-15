@@ -52,6 +52,8 @@ Use the Extract API only for citation verification (confirming what a specific U
 
 ## Three Capabilities
 
+The commands below are written as `python scripts/parallel_web.py …`. Where `openai` / `parallel-web` are not installed, run each one with the uv prefix from Environment Setup below instead of installing anything.
+
 ### 1. Web Search (`search` command)
 
 Search the web via the Chat API (`base` model) and get a **synthesized summary** with cited sources.
@@ -250,11 +252,10 @@ When writing scientific documents: gather background with `search`/`research` be
 # Required: set your Parallel API key
 export PARALLEL_API_KEY="your_api_key_here"
 
-# Python packages
-uv pip install openai          # Chat API (search/research)
-uv pip install parallel-web    # Extract API v1 (>= 1.0; imports as `parallel`)
-# Or run ad hoc without a venv:
-#   uv run --with openai --with parallel-web scripts/parallel_web.py search "query"
+# Python packages: openai (Chat API: search/research) and parallel-web >= 1.0
+# (Extract API v1; imports as `parallel`). uv resolves both per call, so nothing is
+# installed and no virtualenv is needed:
+uv run --python ">=3.11" --with openai --with parallel-web python scripts/parallel_web.py search "query"
 ```
 
 Get your API key at https://platform.parallel.ai. The script sends your queries and URLs to Parallel's servers.
@@ -275,8 +276,7 @@ The script returns structured error responses rather than raising:
 
 **Common issues:**
 - `PARALLEL_API_KEY not set`: set the environment variable
-- `openai not installed`: run `uv pip install openai`
-- `parallel-web not installed`: run `uv pip install parallel-web` (only needed for extract)
+- `openai not installed` / `parallel-web not installed`: rerun the command with the `uv run --python ">=3.11" --with openai --with parallel-web python …` prefix from Environment Setup
 - `'BetaResource' object has no attribute 'extract'`: an old copy of the script is calling the Beta method removed in `parallel-web` 1.0 — use this skill's current script (`client.extract()`)
 - Rate limit exceeded: wait and retry (defaults: Chat 300 requests/min, Extract 600 requests/min)
 

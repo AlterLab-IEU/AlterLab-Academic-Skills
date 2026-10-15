@@ -224,6 +224,8 @@ At least one key is required; with only one, every query goes to that backend.
 
 ### Command-Line Usage
 
+The Parallel route imports `openai` and the Perplexity route uses `requests`. Where they are not installed, run every command below with the prefix `uv run --python ">=3.11" --with openai --with requests` (for example `uv run --python ">=3.11" --with openai --with requests python scripts/research_lookup.py "your query" -o sources/…`) instead of installing anything.
+
 ```bash
 # Auto-routed research (recommended)
 python scripts/research_lookup.py "your query" -o sources/research_YYYYMMDD_HHMMSS_<topic>.md

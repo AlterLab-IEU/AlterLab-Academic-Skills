@@ -3,7 +3,7 @@ name: alterlab-pdf-extract
 description: Free Elicit-columns analog — ingest N PDFs (or any MarkItDown-supported document) and build a per-paper evidence table with user-defined columns, one row per paper and one column per attribute/question you want pulled from every source. Use when extracting structured data across many papers into a comparison table or data-extraction sheet (sample size, methods, main finding, effect, population/intervention/outcome, limitations), screening a corpus into a spreadsheet, or pulling the same fields from a stack of PDFs into CSV/Markdown. Routes conversion through MarkItDown; offline heuristic backend by default, optional LLM backend for precise answers. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
-compatibility: markitdown >= 0.1 (uv pip install 'markitdown[all]') required for conversion; optional llm backend needs the openai client + OPENROUTER_API_KEY (or OPENAI_API_KEY with OPENAI_BASE_URL) and sends paper text to that endpoint
+compatibility: markitdown >= 0.1 required for conversion (run the script as uv run --with 'markitdown[all]' python ...); optional llm backend needs the openai client (add --with openai) + OPENROUTER_API_KEY (or OPENAI_API_KEY with OPENAI_BASE_URL) and sends paper text to that endpoint
 metadata:
     skill-author: AlterLab
     version: "1.0.1"
@@ -51,24 +51,27 @@ prose — use it *after* you have the papers.
 
 ```bash
 SCRIPT=scripts/extract_to_table.py   # relative to this skill's directory
+# uv resolves MarkItDown (and, for --backend llm, the openai client) per call, so there
+# is no install step and no virtualenv. Drop a --with flag only where that package is
+# already importable by the Python that runs the script.
 
 # Heuristic backend: use 'label:question' so the question carries the words the
 # papers actually use — overlap is lexical, so a bare label like "Sample size"
 # rarely matches "we enrolled 240 participants" (see Backends below).
-uv run python "$SCRIPT" papers/*.pdf \
+uv run --python ">=3.11" --with 'markitdown[all]' python "$SCRIPT" papers/*.pdf \
     --column "Sample size:how many participants were enrolled" \
     --column "Main finding:primary result reported" \
     --column "Limitations:study limitations weaknesses" --format md
 
 # Columns with explicit extraction questions, CSV to a file:
-uv run python "$SCRIPT" a.pdf b.pdf \
+uv run --python ">=3.11" --with 'markitdown[all]' python "$SCRIPT" a.pdf b.pdf \
     --column "n:how many participants were enrolled" \
     --column "effect:what was the main reported effect size" \
     --format csv -o evidence.csv
 
 # Precise LLM-backed extraction (needs OPENROUTER_API_KEY) — label-only columns
 # are fine here, since the model reads the paper rather than matching keywords:
-uv run python "$SCRIPT" lit/*.pdf \
+uv run --python ">=3.11" --with 'markitdown[all]' --with openai python "$SCRIPT" lit/*.pdf \
     --columns "Population" "Intervention" "Outcome" --backend llm
 ```
 
