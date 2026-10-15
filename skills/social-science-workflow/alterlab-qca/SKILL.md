@@ -2,7 +2,7 @@
 name: alterlab-qca
 description: "Runs Qualitative Comparative Analysis — crisp-set (csQCA), multi-value (mvQCA), and fuzzy-set (fsQCA) — for small-to-medium-N configurational research: calibrating raw data into set membership, building and refining a truth table, and Boolean minimization into conservative / parsimonious / intermediate solutions with consistency and coverage. Because there is no maintained Python QCA library, it shells out to R's QCA package (calibrate, truthTable, minimize) via Rscript and documents that dependency honestly rather than faking a Python API. Use when the request mentions QCA, fsQCA, csQCA, configurational or set-theoretic analysis, necessary/sufficient conditions, truth tables, or calibration of conditions. For net-effect estimation of a single treatment prefer alterlab-causal-inference; for interpretive analysis prefer alterlab-qualitative-methods. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(Rscript:*)
+allowed-tools: Read Write Bash(Rscript:*)
 compatibility: "Requires R with the QCA package (install.packages('QCA'); optionally SetMethods). NO maintained Python QCA library exists, so this skill shells to R via Rscript — declare R as a dependency. No API key. On the Anthropic API (no runtime install) document the R requirement and degrade gracefully."
 metadata:
     skill-author: AlterLab
@@ -47,6 +47,19 @@ QCA IS ABOUT COMBINATIONS AND SET RELATIONS, NOT AVERAGE MARGINAL EFFECTS. CALIB
 
 There is **no maintained Python QCA library** (the only PyPI option, `scpQCA`, is stale and
 non-standard). The field standard is Adrian Dușa's R **`QCA`** package. Shell to it via `Rscript`.
+
+**Getting R ready.** Check R with `Rscript --version` (not `which`). If `QCA` is missing,
+install it into a user library together with `admisc`. A system R often carries an old
+`admisc` that blocks current QCA ("admisc 0.34 was found, but > 0.39 is required"):
+
+```bash
+Rscript -e 'lib <- path.expand("~/R/qca-lib"); dir.create(lib, recursive = TRUE, showWarnings = FALSE); .libPaths(c(lib, .libPaths())); install.packages(c("admisc", "QCA"), lib = lib, repos = "https://cloud.r-project.org")'
+```
+
+Start every later script with `.libPaths(c(path.expand("~/R/qca-lib"), .libPaths()))`, and tell
+the user the one-time install went into `~/R/qca-lib`. Checked 2026-10-15 on R 4.3.3: QCA 3.25
+with admisc 0.41 installs and `minimize()` runs.
+
 The three verified calls:
 
 ```r
