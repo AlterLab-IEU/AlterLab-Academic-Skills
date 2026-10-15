@@ -148,6 +148,36 @@ and the cost the CLI reports. Exit codes:
 | `2` | `blocked` | no case produced a usable verdict (no CLI, no login, every call refused or timed out, or the filter matched nothing). The run verified nothing |
 | `3` | `partial` | some cases produced verdicts and none failed, but others did not — the selection is **not** fully evaluated |
 
+### Two rubric judges, and checking them
+
+Many rubrics name the skill's own vocabulary ("invokes alterlab-…", "applies the Iron Law").
+The default **literal** judge grades the rubric as written, so a correct answer that never uses
+those words can FAIL. The **substance** judge (`--judge substance`) grades what the response
+does: the decision, the numbers, the refusal or the request for missing input, the named
+sibling skill when the rubric asks for a hand-off. It ignores whether the skill's vocabulary
+appears. It still fails a wrong answer that recites the vocabulary.
+
+Before trusting either judge, run it on the hand-labelled pairs in
+[`judge_calibration.json`](judge_calibration.json). This costs judge calls only and exits `1`
+if any label is missed:
+
+```bash
+uv run python scripts/run_evals.py --calibrate-judge
+```
+
+On 2026-10-15 (`claude-opus-5-5`): literal 7/8, substance 8/8. The literal judge failed a
+correct answer that asked for the missing abstract instead of inventing one.
+
+Every run record keeps the full response text, so a finished run can be re-judged without new
+answer calls. `--regrade` writes `regrade-*.json` with every flipped verdict and the original
+verdict next to it:
+
+```bash
+uv run python scripts/run_evals.py --regrade eval-results/behavioral-<UTC>.json --judge substance
+```
+
+Report which judge produced a number.
+
 Only exit `0` may be described as "the selected cases pass", and only for the selected cases.
 A sharded or filtered run validates its shard, not the suite.
 

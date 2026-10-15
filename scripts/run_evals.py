@@ -1203,6 +1203,29 @@ def regrade_results(path: Path, judge: str, timeout: int,
     return payload
 
 
+CALIBRATION = REPO / "docs" / "judge_calibration.json"
+
+
+def calibrate_judge(judges: list[str], timeout: int) -> int:
+    """Grade the hand-labelled pairs in docs/judge_calibration.json with each judge; exit 1 if any
+    judge disagrees with a label (or returns no verdict), so an untrustworthy judge is caught
+    before it grades a sweep."""
+    pairs = json.loads(CALIBRATION.read_text(encoding="utf-8"))["pairs"]
+    model = alterlab_model()
+    bad = 0
+    for judge in judges:
+        agree = 0
+        for pr in pairs:
+            got, why = _judge_rubric(pr["rubric"], pr["response"], model, timeout, JUDGES[judge])
+            ok = got == pr["expected"]
+            agree += ok
+            if not ok:
+                print(f"  [{judge}] {pr['id']}: expected {pr['expected']}, got {got} — {why[:160]}")
+        bad += len(pairs) - agree
+        print(f"judge {judge}: {agree}/{len(pairs)} agree with the hand labels")
+    return 1 if bad else 0
+
+
 # --- Activation harness (auto-selection rate) -------------------------------------------
 # The description is the trigger surface. This harness measures the metric that matters for
 # a 210-skill suite: given a realistic request, does the model *select the right skill from
@@ -1461,6 +1484,8 @@ def main(argv: list[str] | None = None) -> int:
                          "remaining cases are NOT_RUN (default 6)")
     ap.add_argument("--regrade", metavar="RESULTS_JSON", nargs="+", default=None,
                     help="re-judge saved responses in behavioral results file(s); judge calls only")
+    ap.add_argument("--calibrate-judge", action="store_true",
+                    help="grade docs/judge_calibration.json with both judges (judge calls only)")
     ap.add_argument("--judge", choices=sorted(JUDGES), default="substance",
                     help="(regrade) judge template: substance (default) or literal (original)")
     ap.add_argument("--shard", metavar="i/n", default=None,
@@ -1474,6 +1499,8 @@ def main(argv: list[str] | None = None) -> int:
         ap.error(str(exc))
 
     results_dir = Path(args.results_dir) if args.results_dir else None
+    if args.calibrate_judge:
+        return calibrate_judge(sorted(JUDGES), args.timeout)
     if args.regrade:
         flipped = 0
         for f in args.regrade:

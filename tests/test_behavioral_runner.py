@@ -276,3 +276,24 @@ def test_regrade_records_flip_to_pass(fake_cli, tmp_path, monkeypatch):
     assert out["cases"][0]["skilled"]["outcome"] == "PASS"
     assert {"case_id": "alterlab-controlled-fixture:b", "arm": "skilled", "from": "FAIL",
             "to": "PASS"} in out["flips"]
+
+
+def test_calibrate_judge_fails_on_any_disagreement(fake_cli, tmp_path, monkeypatch, capsys):
+    """The fake judge PASSes only responses containing GOOD-ANSWER, so it agrees with the first
+    label and disagrees with the second; one disagreement must fail calibration."""
+    cal = tmp_path / "cal.json"
+    cal.write_text(json.dumps({"pairs": [
+        {"id": "good", "rubric": "r", "response": "GOOD-ANSWER", "expected": "PASS"},
+        {"id": "mislabelled", "rubric": "r", "response": "plain", "expected": "PASS"},
+    ]}), encoding="utf-8")
+    monkeypatch.setattr(run_evals, "CALIBRATION", cal)
+    assert run_evals.calibrate_judge(["literal"], timeout=30) == 1
+    out = capsys.readouterr().out
+    assert "1/2 agree" in out and "mislabelled" in out
+
+
+def test_shipped_calibration_set_is_well_formed() -> None:
+    pairs = json.loads(run_evals.CALIBRATION.read_text(encoding="utf-8"))["pairs"]
+    assert len({p["id"] for p in pairs}) == len(pairs) >= 5
+    assert {p["expected"] for p in pairs} == {"PASS", "FAIL"}
+    assert all(p["rubric"].strip() and p["response"].strip() for p in pairs)
