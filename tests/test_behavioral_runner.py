@@ -53,6 +53,10 @@ if mode == "refuse":
     print("API Error: Claude Code is unable to respond to this request, which appears to "
           "violate our Usage Policy")
     sys.exit(1)
+if "Grade SUBSTANCE" in prompt:  # the substance judge (used by --regrade)
+    out("VERDICT: PASS - substance met" if "GOOD-ANSWER" in prompt or mode == "substance_lenient"
+        else "VERDICT: FAIL - wrong")
+    sys.exit(0)
 if "You are grading a model response" in prompt:
     if mode == "judge_garbage":
         out("I am not sure.")
@@ -237,3 +241,38 @@ def test_skill_allowed_tools_are_granted_to_both_answer_arms_only(fake_cli, tmp_
     assert {c["skilled"] for c in answers} == {True, False}, "both arms must get the tools"
     assert judges and all(c["tools"] == [] for c in judges), "judges must get no tools"
     assert res["cases"][0]["allowed_tools"] == want
+
+
+def test_regrade_flips_verdicts_without_new_answer_calls(fake_cli, tmp_path, monkeypatch):
+    """A run graded FAIL by the literal judge is re-judged from its saved full responses; only
+    judge calls are made, flips are recorded, and the original verdicts are kept alongside."""
+    rc, res = _run(tmp_path, [_case("a")], "skilled_bad", monkeypatch)
+    assert rc == 1 and res["cases"][0]["skilled"]["runs"][0]["response"] == "BAD-ANSWER"
+    src = next((tmp_path / "results").glob("behavioral-*.json"))
+    before = len(fake_cli.read_text().splitlines())
+    monkeypatch.setenv("FAKE_CLAUDE_MODE", "substance_lenient")
+    out = run_evals.regrade_results(src, "substance", 30, tmp_path / "regraded")
+    calls = [json.loads(x) for x in fake_cli.read_text().splitlines()[before:]]
+    assert calls and not any(c["skilled"] for c in calls), "regrade must not re-ask the skill"
+    sk = out["cases"][0]["skilled"]
+    # the rubric now passes, but output_contains GOOD-ANSWER is recomputed on the saved text
+    assert sk["runs"][0]["rubric_verdict"] == "PASS" and sk["runs"][0]["rubric_verdict_original"] == "FAIL"
+    contains = [a for a in sk["runs"][0]["assertions"] if a["assertion"].startswith("output_contains")]
+    assert contains and contains[0]["verdict"] == "FAIL", "deterministic checks still bind"
+    assert sk["outcome"] == "FAIL" and out["kind"] == "behavioral-regrade"
+    assert list((tmp_path / "regraded").glob("regrade-*.json"))
+
+
+def test_regrade_records_flip_to_pass(fake_cli, tmp_path, monkeypatch):
+    """Literal judge FAILs every rubric (judge_garbage -> NA here would be inconclusive), so use a
+    case whose only assertion is the rubric-like behavior check."""
+    case = {"id": "b", "prompt": "Do task b.", "expected_output": "Does the substantive thing.",
+            "assertions": [{"type": "behavior", "value": "Does the substantive thing."}]}
+    rc, res = _run(tmp_path, [case], "skilled_bad", monkeypatch)
+    assert res["cases"][0]["skilled"]["outcome"] == "FAIL"
+    src = next((tmp_path / "results").glob("behavioral-*.json"))
+    monkeypatch.setenv("FAKE_CLAUDE_MODE", "substance_lenient")
+    out = run_evals.regrade_results(src, "substance", 30, None)
+    assert out["cases"][0]["skilled"]["outcome"] == "PASS"
+    assert {"case_id": "alterlab-controlled-fixture:b", "arm": "skilled", "from": "FAIL",
+            "to": "PASS"} in out["flips"]

@@ -587,11 +587,47 @@ ENGAGED: NO    (the assistant declined, deferred, or redirected to something els
 followed by one sentence of justification."""
 
 
-def _judge_rubric(rubric: str, response: str, model: str, timeout: int) -> tuple[str, str]:
+# A judge that grades what a response DOES, not whether it recites the skill's internal names.
+# Many rubrics say a response "invokes" a skill or "states the Iron Law" / "uses the
+# Excuse-vs-Reality table"; a correct answer that never names that apparatus failed them, and
+# the bare arm could never pass them — so the skill-vs-bare delta partly measured vocabulary.
+_RUBRIC_JUDGE_SUBSTANCE = """You are grading a research assistant's response against a rubric.
+
+Grade SUBSTANCE, not vocabulary:
+- The rubric may name a skill's internal apparatus (laws, named tables, checklists, phases,
+  modes, agents) or say the response "invokes" a skill. The response need not use those names
+  or announce any skill. Such a requirement is met if the response does the substantive thing
+  it stands for (for example, refuses to treat data-mined results as confirmatory).
+- Concrete content the rubric requires IS required: a correct classification or number, a
+  specific statement or section, a refusal, a caveat, or naming another skill or tool to
+  route the user to.
+- If the task depends on input the user did not provide (a file, a list, a text), asking for
+  it and saying what will be done with it is correct for the parts that depend on it.
+- Anything false, a required step skipped, or a requirement contradicted is a FAIL. Do not
+  reward length or confidence.
+
+RUBRIC:
+{rubric}
+
+RESPONSE:
+{response}
+
+Reply with a single line:
+VERDICT: PASS
+or
+VERDICT: FAIL
+followed by one sentence naming the requirement that decided it."""
+
+JUDGES = {"literal": None, "substance": _RUBRIC_JUDGE_SUBSTANCE}  # None = _RUBRIC_JUDGE
+
+
+def _judge_rubric(rubric: str, response: str, model: str, timeout: int,
+                  template: str | None = None) -> tuple[str, str]:
     """LLM-judge a response against a prose rubric. Returns ('PASS'|'FAIL'|'NA', first_line)."""
     if not _is_answer(response):
         return "NA", response
-    out = _claude(_RUBRIC_JUDGE.format(rubric=rubric, response=response), model, timeout)
+    out = _claude((template or _RUBRIC_JUDGE).format(rubric=rubric, response=response),
+                  model, timeout)
     if not _is_answer(out):
         return "NA", out
     m = re.search(r"VERDICT:\s*(PASS|FAIL)\b", out.upper())
@@ -1069,6 +1105,104 @@ def _delta(bare: str, skilled: str) -> str:
     return f"rubric: NO DELTA (both {bare})"
 
 
+def _find_eval(case: dict, meta: dict) -> dict | None:
+    sel = (meta.get("selection") or {}).get("skill_dir")
+    dirs = [Path(sel)] if sel else [d for d in skill_dirs() if d.name == case.get("skill")]
+    for d in dirs:
+        try:
+            data = json.loads(eval_path(d).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        for e in data.get("evals", []) or []:
+            if e.get("id") == case.get("eval_id"):
+                return e
+    return None
+
+
+def regrade_results(path: Path, judge: str, timeout: int,
+                    results_dir: Path | None = None) -> dict:
+    """Re-judge a behavioral results file's saved responses with another judge template.
+
+    Only judge calls are made. Rubric and ``behavior`` verdicts are re-judged, and
+    ``output_contains`` is recomputed; ``should_trigger`` / ``should_not_trigger`` verdicts are
+    kept from the original run (their judge does not grade vocabulary). Runs saved without a
+    full ``response`` (older files) are left as they were and counted as not re-graded.
+    Returns the new results payload, which records every case whose outcome flipped.
+    """
+    src = json.loads(path.read_text(encoding="utf-8"))
+    template = JUDGES[judge]
+    model = alterlab_model()
+    flips: list[dict] = []
+    not_regraded = 0
+    for case in src.get("cases", []):
+        e = _find_eval(case, src)
+        for arm in ("skilled", "bare"):
+            a = case.get(arm) or {}
+            runs = a.get("runs") or []
+            if not runs or e is None:
+                continue
+            if any(r.get("call_outcome") == "answer" and r.get("response") is None for r in runs):
+                not_regraded += 1
+                continue
+            rubric_votes, per_run, notes = [], [], []
+            for r in runs:
+                resp = r.get("response") or ""
+                answered = r.get("call_outcome") == "answer"
+                rv, rd = (_judge_rubric(e["expected_output"], resp, model, timeout, template)
+                          if answered else ("NA", r.get("error") or "no answer"))
+                r["rubric_verdict_original"] = r.get("rubric_verdict")
+                r["rubric_verdict"] = rv
+                rubric_votes.append(rv)
+                new_asserts = []
+                for item in r.get("assertions", []):
+                    label = item["assertion"]
+                    verdict = item["verdict"]
+                    if answered and label.startswith("output_contains["):
+                        needle = label[len("output_contains["):-1].strip("'\"")
+                        verdict = "PASS" if needle.lower() in resp.lower() else "FAIL"
+                    elif answered and label == "behavior":
+                        spec = next((x.get("value") for x in e.get("assertions", [])
+                                     if x.get("type") == "behavior"), "")
+                        verdict, _ = _judge_rubric(spec, resp, model, timeout, template)
+                    new_asserts.append({**item, "verdict": verdict,
+                                        "verdict_original": item["verdict"]})
+                    if verdict == "NA":
+                        notes.append(item.get("detail", ""))
+                r["assertions"] = new_asserts
+                per_run.append([(x["assertion"], x["verdict"], x.get("detail", ""))
+                                for x in new_asserts])
+            majority = _majority(rubric_votes)
+            if arm == "skilled" and e.get("assertions"):
+                av = _eval_verdict_from_assertions(per_run)
+                verdict = (FAIL if FAIL in (av, majority) else
+                           PASS if av == PASS and majority == PASS else "NA")
+            else:
+                verdict = majority
+            answered_any = any(r.get("call_outcome") == "answer" for r in runs)
+            new_outcome = (a.get("outcome") if not answered_any else
+                           verdict if verdict in (PASS, FAIL) else INCONCLUSIVE)
+            if new_outcome != a.get("outcome"):
+                flips.append({"case_id": case.get("case_id"), "arm": arm,
+                              "from": a.get("outcome"), "to": new_outcome})
+            a["outcome_original"], a["outcome"] = a.get("outcome"), new_outcome
+            a["rubric_majority"] = majority
+        case["rubric_delta"] = _delta((case.get("bare") or {}).get("rubric_majority", "NA"),
+                                      (case.get("skilled") or {}).get("rubric_majority", "NA"))
+    counts = {o: sum((c.get("skilled") or {}).get("outcome") == o for c in src.get("cases", []))
+              for o in OUTCOMES}
+    bare = {o: sum((c.get("bare") or {}).get("outcome") == o for c in src.get("cases", []))
+            for o in OUTCOMES}
+    selected = len(src.get("cases", []))
+    status, _code = _behavioral_status(selected, counts[PASS], counts[FAIL])
+    payload = {**src, "kind": "behavioral-regrade", "regraded_from": path.name,
+               "judge": judge, "status": status, "flips": flips,
+               "arms_not_regraded": not_regraded,
+               "summary": {**src.get("summary", {}), "skilled": counts, "bare": bare,
+                           "usable_verdicts": counts[PASS] + counts[FAIL]}}
+    _write_results(results_dir, "regrade", payload)
+    return payload
+
+
 # --- Activation harness (auto-selection rate) -------------------------------------------
 # The description is the trigger surface. This harness measures the metric that matters for
 # a 210-skill suite: given a realistic request, does the model *select the right skill from
@@ -1325,6 +1459,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-infra-errors", type=int, default=6,
                     help="(behavioral) abort after this many consecutive infrastructure errors; "
                          "remaining cases are NOT_RUN (default 6)")
+    ap.add_argument("--regrade", metavar="RESULTS_JSON", nargs="+", default=None,
+                    help="re-judge saved responses in behavioral results file(s); judge calls only")
+    ap.add_argument("--judge", choices=sorted(JUDGES), default="substance",
+                    help="(regrade) judge template: substance (default) or literal (original)")
     ap.add_argument("--shard", metavar="i/n", default=None,
                     help="(behavioral/activation) grade only a deterministic shard of skills "
                          "(e.g. 2/7) to split a long run into several sittings")
@@ -1336,6 +1474,15 @@ def main(argv: list[str] | None = None) -> int:
         ap.error(str(exc))
 
     results_dir = Path(args.results_dir) if args.results_dir else None
+    if args.regrade:
+        flipped = 0
+        for f in args.regrade:
+            res = regrade_results(Path(f), args.judge, args.timeout, results_dir)
+            flipped += len(res["flips"])
+            print(f"{Path(f).name}: {res['status']} | skilled {res['summary']['skilled']} | "
+                  f"{len(res['flips'])} flip(s), {res['arms_not_regraded']} arm(s) not regraded")
+        print(f"total flips: {flipped}")
+        return 0
     if args.behavioral and args.activation:
         ap.error("choose one of --behavioral / --activation, not both")
     if args.behavioral:
