@@ -3,6 +3,7 @@
   "evals": [
     {
       "id": "plotly-interactive-html-scatter",
+      "files": ["fixtures/reaction_yield.csv"],
       "prompt": "I want an interactive scatter of temperature vs. yield from my DataFrame with an OLS trendline and custom hover tooltips, exported as a standalone HTML file I can put on the lab website.",
       "expected_output": "Invokes alterlab-plotly: uses plotly.express (px.scatter with trendline='ols'), customizes the hovertemplate, and exports with fig.write_html(...), optionally include_plotlyjs='cdn' to shrink the file.",
       "assertions": [
@@ -12,7 +13,11 @@
         },
         {
           "type": "output_contains",
-          "value": "write_html"
+          "value": ["write_html", "to_html"]
+        },
+        {
+          "type": "behavior",
+          "value": "Builds the chart from the attached reaction_yield.csv (x = temperature_c, y = yield_pct, 36 runs) with sample_id, batch and run_date in the hover tooltips, rather than placeholder or demo data."
         }
       ]
     },

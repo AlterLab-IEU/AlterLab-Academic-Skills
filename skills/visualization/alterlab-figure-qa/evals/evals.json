@@ -3,30 +3,40 @@
   "evals": [
     {
       "id": "proof-before-submission",
+      "files": ["fixtures/proof"],
       "prompt": "Here's my finished figure and the data behind it. Check it's correct and print-ready before I submit to the journal.",
       "expected_output": "Invokes alterlab-figure-qa: runs the render-then-verify checklist — data fidelity against every row, label legibility floor/ceiling, bounding-box collisions, and 300-dpi/vector export — and returns a pass/fail report naming any offending elements.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "300" },
-        { "type": "behavior", "value": "Verifies an existing figure against a checklist rather than creating a new plot." }
+        { "type": "behavior", "value": "Verifies an existing figure against a checklist rather than creating a new plot." },
+        { "type": "behavior", "value": "Fails the supplied fig2_growth.png on resolution: it was exported at 150 dpi (525 x 390 px for a 3.5 in wide figure), below the 300-dpi floor." },
+        { "type": "behavior", "value": "Fails data fidelity: growth_curves.csv runs to 24 h but the x-axis is cut at 20 h (set_xlim(0, 20)), so the four 24 h measurements are not shown." },
+        { "type": "behavior", "value": "Fails the font floor: the tick labels are 4 pt at the final 3.5 in width, below a typical 5-7 pt journal minimum." }
       ]
     },
     {
       "id": "overlap-detection",
+      "files": ["fixtures/overlap"],
       "prompt": "Something looks off in my plot — I think the legend is covering a data point and a couple of axis labels are overlapping. Can you catch these?",
       "expected_output": "Invokes alterlab-figure-qa: computes text/legend/marker bounding boxes, detects collisions (legend over data, overlapping labels), and reports each with its location so it can be nudged.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "collision" }
+        { "type": "output_contains", "value": ["collision", "collid"] },
+        { "type": "behavior", "value": "Names the colliding tick labels in the supplied plot as 'Bozdağ Upper Meadow' and 'Bozdağ Lower Meadow' (the adjacent x-axis site labels)." },
+        { "type": "behavior", "value": "Finds that the upper-right legend hides the 2025 survey point for Uludağ (species richness 47)." }
       ]
     },
     {
       "id": "data-fidelity",
+      "files": ["fixtures/fidelity"],
       "prompt": "Double-check that my chart actually plots all the data — I want to be sure no series was dropped or plotted from the wrong column.",
       "expected_output": "Invokes alterlab-figure-qa for a data-fidelity check: recomputes series/point counts and axis ranges from the source data and asserts they match the drawn artists, flagging any dropped subset or wrong-column series.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Cross-checks the rendered marks against every row of the source data." }
+        { "type": "behavior", "value": "Cross-checks the rendered marks against every row of the source data." },
+        { "type": "behavior", "value": "Finds that the Drug B series is missing from the chart: the CSV labels it 'Drug B 10uM' while the script's ORDER list has 'Drug B 10 uM', so the isin() filter drops it and only 3 of the 4 treatments (18 of 24 rows) are drawn." },
+        { "type": "behavior", "value": "Finds that the plotted y-values come from the wrong column: sub.iloc[:, 2] is confluence_mean, not viability_mean, although the axis is labelled 'Cell viability (%)'." }
       ]
     },
     {

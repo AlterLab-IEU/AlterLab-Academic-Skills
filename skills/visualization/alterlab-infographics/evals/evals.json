@@ -12,11 +12,14 @@
     },
     {
       "id": "timeline-company-milestones",
+      "files": ["fixtures/lab_milestones.md"],
       "prompt": "Make me a timeline infographic of our lab's milestones from 2010 to 2025 in a corporate style for the homepage.",
       "expected_output": "Invokes alterlab-infographics in timeline mode (--type timeline --style corporate): generates a chronological infographic with date markers and event nodes via Nano Banana Pro, Gemini 3.1 Pro reviews quality and iterates only if below the document-type threshold, and outputs a versioned PNG with a review log.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "timeline" }
+        { "type": "output_contains", "value": "timeline" },
+        { "type": "output_contains", "value": "SeaTrace" },
+        { "type": "behavior", "value": "Builds the timeline from the attached lab_milestones.md (Halcyon Marine Genomics Lab, 2010 founding through the 2025 15th anniversary) instead of asking for or inventing milestones." }
       ]
     },
     {

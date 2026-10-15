@@ -29,6 +29,7 @@
     },
     {
       "id": "gi-edit-existing-photo",
+      "files": ["fixtures/portrait.png"],
       "prompt": "I have a portrait headshot (portrait.png) for my lab website. Can you edit it to add sunglasses to the person and save the result as cleaned.png?",
       "expected_output": "Invokes alterlab-generate-image in edit mode: runs generate_image.py with --input portrait.png and --output cleaned.png, choosing a model that supports editing (gemini-3.1-flash-image or flux.2-pro).",
       "assertions": [
@@ -39,6 +40,10 @@
         {
           "type": "behavior",
           "value": "Recognizes this is an image-editing request and passes the input image via --input rather than generating from scratch."
+        },
+        {
+          "type": "behavior",
+          "value": "Uses the attached portrait.png (in fixtures/) as the --input image instead of reporting it missing or asking for it."
         }
       ]
     },

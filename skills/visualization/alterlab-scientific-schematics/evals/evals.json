@@ -3,11 +3,13 @@
   "evals": [
     {
       "id": "consort-flowchart-journal",
+      "files": ["fixtures/trial_flow_counts.md"],
       "prompt": "I need a CONSORT participant flow diagram for my RCT going to a journal: 500 assessed for eligibility, 150 excluded, 350 randomized into a treatment arm (n=175) and control arm (n=175), with lost-to-follow-up and final analyzed counts.",
       "expected_output": "Invokes alterlab-scientific-schematics: generates the CONSORT flowchart with Nano Banana 2 from the detailed quantitative prompt, with Gemini 3.1 Pro Preview reviewing scientific accuracy, clarity, labels, layout, and professional appearance against the journal document-type threshold (8.5/10) and smart iteration (max 2) that stops early once met. Outputs a versioned PNG in figures/ plus a JSON review log.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Builds the diagram via Nano Banana 2 and applies the journal-tier quality threshold (8.5/10) reviewed by Gemini 3.1 Pro Preview, not a hand-drawn or text diagram." }
+        { "type": "behavior", "value": "Builds the diagram via Nano Banana 2 and applies the journal-tier quality threshold (8.5/10) reviewed by Gemini 3.1 Pro Preview, not a hand-drawn or text diagram." },
+        { "type": "behavior", "value": "Uses the counts in the attached trial_flow_counts.md instead of asking for them or inventing them: exclusions 98 / 41 / 11, lost to follow-up 9 (treatment) and 12 (control), analysed 166 and 163." }
       ]
     },
     {
