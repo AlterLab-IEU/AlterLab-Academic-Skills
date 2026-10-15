@@ -144,6 +144,12 @@ from the repository in three layers:
    each CLI call runs in a private mount namespace (`unshare -m`, or `unshare -r -m` without
    root) in which this checkout and every worktree of it are covered by an empty read-only
    tmpfs. The arm sees an empty directory, and a write there fails with "Read-only file system".
+   The arm also gets a **private temp root** that holds only its own workspace, fresh
+   `/var/tmp` and `/dev/shm`, and empty installed-plugin, skill and session-transcript folders
+   (`~/.claude/{plugins,skills,projects,todos}` for every home, and `/mnt/skills`). Arms that
+   could not find their input searched the whole disk; before this layer one bare arm reported
+   "a sibling folder (`../skilled/skill/`) containing a literature-review skill", the very skill
+   it was the baseline for, and others listed other sessions' scratch files.
 2. **Scoped grants.** A bare `Write`, `Edit`, `MultiEdit` or `NotebookEdit` grant becomes an
    absolute rule for the arm's workspace (`Write(//tmp/alterlab-eval-…/**)`). Environment
    variables that point into the checkout are dropped, and PATH loses those entries.

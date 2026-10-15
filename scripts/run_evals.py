@@ -59,6 +59,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -423,10 +424,30 @@ def _usage_summary(usage: object) -> dict | None:
 _PATH_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 _CONFINE: dict = {"request": "auto", "mode": None, "hidden": [], "why": ""}
 _TRIPWIRE_ROOT = REPO
-# Deepest paths first, so a worktree inside the checkout is covered before its parent is.
-_HIDE_SCRIPT = ('n=$1; shift; i=0; while [ "$i" -lt "$n" ]; do '
-                'mount -t tmpfs -o ro,size=4k alterlab-hidden "$1" || exit 97; '
-                'shift; i=$((i+1)); done; exec "$@"')
+# Run inside the namespace, in order: (1) cover each protected path with an empty read-only
+# tmpfs (deepest first, so a worktree inside the checkout is covered before its parent);
+# (2) give the arm a private temp root that holds only its own workspace — every other arm's
+# workspace, a skilled sibling's ./skill/ copy, and other sessions' scratch files lived there
+# and arms that search the disk found them; (3) fresh /var/tmp and /dev/shm; (4) cover
+# private state dirs (installed plugins and skills, session transcripts) with empty tmpfs.
+_HIDE_SCRIPT = (
+    'n=$1; shift; i=0; while [ "$i" -lt "$n" ]; do '
+    'mount -t tmpfs -o ro,size=4k alterlab-hidden "$1" || exit 97; shift; i=$((i+1)); done; '
+    'ws=$1; t=$2; shift 2; '
+    'if [ -n "$ws" ]; then '
+    '  mount --bind "$ws" /mnt || exit 96; mount -t tmpfs alterlab-tmp "$t" || exit 96; '
+    '  mkdir -p "$ws" && mount --bind /mnt "$ws" || exit 96; umount -l /mnt 2>/dev/null; '
+    'fi; '
+    'for d in /var/tmp /dev/shm; do [ -d "$d" ] && mount -t tmpfs alterlab-scratch "$d"; done; '
+    'm=$1; shift; i=0; while [ "$i" -lt "$m" ]; do '
+    '[ -d "$1" ] && { mount -t tmpfs alterlab-private "$1" || exit 95; }; shift; i=$((i+1)); '
+    'done; exec "$@"')
+# What an arm must not read even though it is outside the checkout: the user's installed
+# plugins and skills (this suite included — a bare arm would find the SKILL.md it is being
+# compared against) and other sessions' transcripts.
+_PRIVATE_STATE = ["~/.claude/plugins", "~/.claude/skills", "~/.claude/projects",
+                  "~/.claude/todos", "/home/*/.claude/plugins", "/home/*/.claude/skills",
+                  "/home/*/.claude/projects", "/home/*/.claude/todos", "/mnt/skills"]
 
 
 _COLLECT = {"on": False}
@@ -502,11 +523,18 @@ def _protected_paths() -> list[str]:
     return sorted(paths, key=lambda x: (-len(Path(x).parts), x))
 
 
-def _namespace_prefix(paths: list[str]) -> list[str]:
+def _namespace_prefix(paths: list[str], workspace: str = "") -> list[str]:
     root = hasattr(os, "geteuid") and os.geteuid() == 0
     base = ["unshare", "-m"] if root else ["unshare", "-r", "-m"]
+    tmp_root = str(Path(tempfile.gettempdir()).resolve())
+    ws = str(Path(workspace).resolve()) if workspace else ""
+    if ws and not Path(ws).is_relative_to(tmp_root):
+        ws = ""  # only a workspace under the temp root can be carried into the private one
+    import glob as _glob
+    private = sorted({str(Path(m).resolve()) for p in _PRIVATE_STATE
+                      for m in _glob.glob(str(Path(p).expanduser())) if Path(m).is_dir()})
     return [*base, "--propagation", "private", "sh", "-c", _HIDE_SCRIPT, "sh",
-            str(len(paths)), *paths]
+            str(len(paths)), *paths, ws, tmp_root, str(len(private)), *private]
 
 
 def configure_confinement(request: str = "auto") -> str:
@@ -520,14 +548,22 @@ def configure_confinement(request: str = "auto") -> str:
     why = "not Linux" if not sys.platform.startswith("linux") else (
         "`unshare` not found" if not shutil.which("unshare") else "")
     if not why:
-        probe = [*_namespace_prefix(paths), "sh", "-c", 'for p in "$@"; do '
-                 '[ -z "$(ls -A "$p")" ] || exit 1; done', "sh", *paths]
+        ws = tempfile.mkdtemp(prefix="alterlab-eval-probe-")
+        Path(ws, "own.txt").write_text("x")
+        top = Path(ws).name
+        probe = [*_namespace_prefix(paths, ws), "sh", "-c",
+                 'for p in "$@"; do [ -z "$(ls -A "$p")" ] || exit 1; done; '
+                 f'[ "$(ls -A {shlex.quote(tempfile.gettempdir())})" = {shlex.quote(top)} ] '
+                 f'|| exit 2; [ -f {shlex.quote(ws)}/own.txt ] || exit 3; '
+                 f'touch {shlex.quote(ws)}/w || exit 4', "sh", *paths]
         try:
             res = subprocess.run(probe, capture_output=True, text=True, timeout=30)
             why = "" if res.returncode == 0 else (
                 f"mount namespace unavailable ({_redact(res.stderr.strip())[:120] or res.returncode})")
         except (OSError, subprocess.TimeoutExpired) as exc:
             why = f"mount namespace probe failed ({exc})"
+        finally:
+            shutil.rmtree(ws, ignore_errors=True)
     if why and request == "namespace":
         raise SystemExit(f"--isolation namespace requested, but {why}")
     if not why:
@@ -664,7 +700,7 @@ def _claude_call_once(prompt: str, model: str, timeout: int, system: str | None 
             cmd += ["--append-system-prompt", system]
         cmd += ["-p", prompt]
         if conf["mode"] == "namespace":
-            cmd = [*_namespace_prefix(conf["hidden"]), *cmd]
+            cmd = [*_namespace_prefix(conf["hidden"], run_dir), *cmd]
         try:
             proc = _run_contained(cmd, run_dir, timeout)
         except subprocess.TimeoutExpired:
@@ -675,9 +711,11 @@ def _claude_call_once(prompt: str, model: str, timeout: int, system: str | None 
             return CallResult(f"{_NO_ANSWER} could not start claude CLI", "infra_error",
                               _redact(f"could not start claude CLI: {exc}"))
     _USAGE["calls"] += 1
-    if conf["mode"] == "namespace" and proc.returncode == 97 and not proc.stdout.strip():
-        return CallResult(f"{_NO_ANSWER} could not hide the checkout", "infra_error",
-                          "could not mount the namespace overlay that hides the checkout")
+    if conf["mode"] == "namespace" and proc.returncode in (95, 96, 97) \
+            and not proc.stdout.strip():
+        return CallResult(f"{_NO_ANSWER} could not set up the private view", "infra_error",
+                          f"namespace setup failed (exit {proc.returncode}): could not hide "
+                          "the checkout, the other workspaces, or private state")
     data = _parse_cli_json(proc.stdout)
     if data:
         if isinstance(data.get("duration_ms"), (int, float)):

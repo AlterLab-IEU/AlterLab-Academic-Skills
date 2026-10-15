@@ -146,6 +146,11 @@ def fake_cli(tmp_path, monkeypatch):
     rest = [d for d in os.environ["PATH"].split(os.pathsep)
             if d and not (Path(d) / "claude").exists()]
     monkeypatch.setenv("PATH", os.pathsep.join([str(bin_dir), *rest]))
+    # Arms get a private temp root holding only their own workspace. Put the workspaces in a
+    # subfolder so the fake CLI and its log (in tmp_path) stay visible to the arm.
+    ws_root = tmp_path / "ws_root"
+    ws_root.mkdir()
+    monkeypatch.setattr(__import__("tempfile"), "tempdir", str(ws_root))
     monkeypatch.setenv("FAKE_CLAUDE_LOG", str(log))
     monkeypatch.setenv("FAKE_CLAUDE_MODE", "ok")
     return log
@@ -413,8 +418,11 @@ def test_namespace_hides_the_checkout_from_answer_arms(fake_cli, tmp_path, monke
         run_evals._CONFINE["mode"] = None
         pytest.skip("no private mount namespace on this runner")
     repo = str(run_evals.REPO.resolve())
+    sibling = tmp_path / "ws_root" / "alterlab-eval-sibling" / "skilled" / "skill"
+    sibling.mkdir(parents=True)
+    (sibling / "SKILL.md").write_text("another arm's skill copy")
     monkeypatch.setenv("FAKE_PEEK_B64", __import__("base64").b64encode(
-        f"{repo}|{tmp_path}".encode()).decode())
+        f"{repo}|{tmp_path}|{sibling}".encode()).decode())
     try:
         _run(tmp_path, [_case("a")], "ok", monkeypatch)
     finally:
@@ -423,6 +431,7 @@ def test_namespace_hides_the_checkout_from_answer_arms(fake_cli, tmp_path, monke
     answers = [c for c in calls if "--allowedTools" in c["flags"]]
     assert answers and all(c["peek"][repo] is False for c in answers), "checkout visible to arm"
     assert all(c["peek"][str(tmp_path)] is True for c in answers), "outside paths stay visible"
+    assert all(c["peek"][str(sibling)] is False for c in answers), "another workspace visible"
     assert Path(repo, "scripts").is_dir(), "the harness itself still sees the checkout"
 
 
