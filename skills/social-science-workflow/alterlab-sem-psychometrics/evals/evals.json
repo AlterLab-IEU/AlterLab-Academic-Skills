@@ -14,11 +14,13 @@
     },
     {
       "id": "full-sem",
+      "files": ["fixtures/customer_survey_sem.csv", "fixtures/customer_survey_sem_codebook.md"],
       "prompt": "Fit a structural equation model where trust predicts satisfaction and satisfaction predicts loyalty, all latent.",
       "expected_output": "Invokes alterlab-sem-psychometrics: writes the measurement (=~) and structural (~) parts in semopy, fits, and reports standardized path coefficients with model fit.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Builds a latent-variable SEM with measurement and structural parts and reports fit + standardized paths." }
+        { "type": "behavior", "value": "Builds a latent-variable SEM with measurement and structural parts and reports fit + standardized paths." },
+        { "type": "behavior", "value": "Reports standardized structural paths of about .64 (trust to satisfaction) and .52 (satisfaction to loyalty) with fit indices indicating good fit." }
       ]
     },
     {
