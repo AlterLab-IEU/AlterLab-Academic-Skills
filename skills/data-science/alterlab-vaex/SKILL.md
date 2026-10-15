@@ -22,6 +22,7 @@ Vaex is effectively in minimal-maintenance mode. In the project's "Is Vaex activ
 
 - **Existing Vaex code**: keep it running in a pinned Python 3.12 environment (below), and plan a migration.
 - **New projects**: default to Polars (`alterlab-polars`) — `pl.scan_parquet(...)` plus `collect(engine="streaming")` covers most larger-than-RAM aggregation work — or Dask (`alterlab-dask`) for clusters. Recommend Vaex for new work only when its specific strengths (memory-mapped HDF5, fast binned statistics/visualization of huge tables) matter and the user accepts the environment constraints.
+- **Data already in large HDF5 files, one machine, no cluster**: this skill's job. Polars has no HDF5 reader, so open the file with `vaex.open` (memory-mapped) and run the aggregations here; mention a one-time Parquet export only as the migration path.
 
 ## When to Use This Skill
 
@@ -35,7 +36,7 @@ Use this skill when the user wants to:
 
 | Scenario | Use Instead |
 |----------|-------------|
-| New larger-than-RAM analytics project with no existing Vaex code, or Python 3.13+ / pandas 3 environments | `alterlab-polars` |
+| New larger-than-RAM analytics project with no existing Vaex code whose data is Parquet/CSV/Arrow (not HDF5), or Python 3.13+ / pandas 3 environments | `alterlab-polars` |
 | Data fits in memory and the goal is the fastest in-memory groupby/joins | `alterlab-polars` |
 | Multi-node cluster execution, task graphs, or a distributed scheduler dashboard | `alterlab-dask` |
 | Chunked N-D scientific arrays (not tables) on disk or cloud object stores | `alterlab-zarr` |

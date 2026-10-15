@@ -34,7 +34,8 @@ Use this skill when:
 
 | Scenario | Use Instead |
 |----------|-------------|
-| Fitting statistical models or running hypothesis tests on data | `alterlab-statistical-analysis` |
+| Running hypothesis tests or inferential statistical models on data (p-values, CIs, assumption checks) | `alterlab-statistical-analysis` |
+| Fitting a predictive regression/ML model to noisy data and scoring it on a held-out test set (R², RMSE, accuracy) | `alterlab-scikit-learn` |
 | Numerical multi-objective or constrained optimization (Pareto fronts, NSGA-II) | `alterlab-pymoo` |
 | Numerically simulating open quantum systems (master equations, Lindblad dynamics) | `alterlab-qutip` |
 | Unit-aware astronomy calculations (coordinates, cosmology, FITS) | `alterlab-astropy` |

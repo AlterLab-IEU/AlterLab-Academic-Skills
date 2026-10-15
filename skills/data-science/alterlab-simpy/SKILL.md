@@ -45,7 +45,7 @@ Use the SimPy skill when:
 | Scenario | Use Instead |
 |----------|-------------|
 | Agent-based models of social systems with heterogeneous agents on grids or networks (segregation, opinion dynamics, diffusion) | `alterlab-abm-mesa` |
-| Searching for Pareto-optimal designs or parameters (e.g. cost vs. waiting time) with evolutionary algorithms | `alterlab-pymoo` |
+| Searching for Pareto-optimal designs or parameters (e.g. staffing cost vs. waiting time) with evolutionary algorithms. The whole request goes there, wait-time objective included; build a SimPy evaluator only if the user asks for a simulation-based objective | `alterlab-pymoo` |
 | Fitting time-series or regression models to observed queue or throughput data | `alterlab-statsmodels` |
 | Training a reinforcement-learning agent to control a system | `alterlab-stable-baselines3` |
 

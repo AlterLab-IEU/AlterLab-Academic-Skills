@@ -37,6 +37,7 @@ Use when:
 | Full Bayesian or hierarchical modelling workflows (custom priors, NUTS diagnostics, LOO model comparison) | `alterlab-pymc` |
 | Pooling effect sizes across studies (random-effects meta-analysis, heterogeneity, funnel plots) | `alterlab-meta-analysis` |
 | Complex-sample survey data needing weights, strata, and design-based standard errors | `alterlab-survey-analysis` |
+| Predictive modelling: train/test splits, cross-validated tuning, and held-out metrics (accuracy, ROC AUC, RMSE, test R²) rather than inference | `alterlab-scikit-learn` |
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-statsmodels`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
