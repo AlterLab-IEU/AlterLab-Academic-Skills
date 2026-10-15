@@ -17,7 +17,7 @@
       "expected_output": "Invokes alterlab-meta-analysis: reports I-squared, tau-squared, and Cochran's Q, warns that a high value means the mean summarizes a distribution (prediction interval), and suggests meta-regression / subgroups.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "I" }
+        { "type": "output_contains", "value": ["I²", "I^2", "I2", "I-squared", "I squared"] }
       ]
     },
     {
