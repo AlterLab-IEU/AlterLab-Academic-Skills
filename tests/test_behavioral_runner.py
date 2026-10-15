@@ -312,3 +312,21 @@ def test_output_contains_list_passes_on_any_alternative() -> None:
     bad = {"skill": "x", "evals": [{"id": "a", "prompt": "p", "expected_output": "e",
                                     "assertions": [{"type": "output_contains", "value": []}]}]}
     assert any("non-empty strings" in e for e in run_evals._structural_errors(bad))
+
+
+def test_regrade_judges_each_behavior_assertion_against_its_own_spec(fake_cli, tmp_path,
+                                                                      monkeypatch):
+    """Two behavior assertions: the fake judge PASSes only a spec mentioning GOOD-ANSWER."""
+    case = _case("a")
+    case["assertions"] = [{"type": "behavior", "value": "must say plain answer"},
+                          {"type": "behavior", "value": "GOOD-ANSWER required"}]
+    rc, res = _run(tmp_path, [case], "ok", monkeypatch)
+    seen = []
+    real = run_evals._judge_rubric
+    def spy(rubric, response, model, timeout, template=None):
+        seen.append(rubric)
+        return real(rubric, response, model, timeout, template)
+    monkeypatch.setattr(run_evals, "_judge_rubric", spy)
+    src = next((tmp_path / "results").glob("behavioral-*.json"))
+    run_evals.regrade_results(src, "substance", 30, tmp_path / "rg")
+    assert "must say plain answer" in seen and "GOOD-ANSWER required" in seen

@@ -1169,16 +1169,18 @@ def regrade_results(path: Path, judge: str, timeout: int,
                 r["rubric_verdict"] = rv
                 rubric_votes.append(rv)
                 new_asserts = []
+                specs = iter([x.get("value") for x in e.get("assertions", [])
+                              if x.get("type") == "behavior"])
                 for item in r.get("assertions", []):
                     label = item["assertion"]
                     verdict = item["verdict"]
                     if answered and label.startswith("output_contains["):
                         needle = ast.literal_eval(label[len("output_contains["):-1])
                         verdict = "PASS" if _contains_hit(needle, resp) else "FAIL"
-                    elif answered and label == "behavior":
-                        spec = next((x.get("value") for x in e.get("assertions", [])
-                                     if x.get("type") == "behavior"), "")
-                        verdict, _ = _judge_rubric(spec, resp, model, timeout, template)
+                    elif label == "behavior":
+                        spec = next(specs, "")  # labels follow the eval's assertion order
+                        if answered:
+                            verdict, _ = _judge_rubric(spec, resp, model, timeout, template)
                     new_asserts.append({**item, "verdict": verdict,
                                         "verdict_original": item["verdict"]})
                     if verdict == "NA":
