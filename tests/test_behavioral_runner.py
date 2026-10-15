@@ -52,6 +52,12 @@ def out(text, is_error=False):
     print(json.dumps({"type": "result", "subtype": "success", "is_error": is_error,
                       "result": text, "duration_ms": 10, "total_cost_usd": 0.001,
                       "usage": {"input_tokens": 1, "output_tokens": 1}}))
+if mode == "lingering" and skilled:
+    import subprocess as sp
+    sp.Popen([sys.executable, "-c", "import time, pathlib\nfor i in range(600):\n"
+              "    pathlib.Path('bg', str(i)).parent.mkdir(exist_ok=True)\n"
+              "    pathlib.Path('bg', str(i)).write_text('x'); time.sleep(0.01)"],
+             stdout=sp.DEVNULL, stderr=sp.DEVNULL)
 if mode == "vandal" and not prompt.startswith(("You are grading", "A user sent")):
     with open(os.environ["FAKE_VANDAL_TARGET"], "w", encoding="utf-8") as fh:
         fh.write("an answer arm wrote this\n")
@@ -418,3 +424,14 @@ def test_directory_fixture_is_copied_as_a_tree(tmp_path) -> None:
     assert out == [str(tmp_path / "ws" / "repo")]
     assert (tmp_path / "ws" / "repo" / "docs" / "a.md").read_text() == "[x](b.md)\n"
     assert (tmp_path / "ws" / "repo" / ".lychee.toml").exists()
+
+
+def test_background_jobs_an_arm_leaves_behind_cannot_crash_or_outlive_the_run(fake_cli, tmp_path,
+                                                                             monkeypatch):
+    """A skilled arm starts a job that keeps writing into its workspace after the CLI exits.
+    The run must finish and persist results, and the job must be gone afterwards."""
+    rc, res = _run(tmp_path, [_case("a"), _case("b")], "lingering", monkeypatch)
+    assert res["cases"] and all(c["skilled"]["outcome"] == "PASS" for c in res["cases"])
+    left = subprocess.run(["pgrep", "-f", "for i in range\\(600\\)"], capture_output=True,
+                          text=True).stdout.split()
+    assert not left, f"background job outlived its arm: {left}"

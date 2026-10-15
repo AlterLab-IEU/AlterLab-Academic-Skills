@@ -518,6 +518,32 @@ def _changed_paths() -> list[str]:
     return [line[3:] for line in out.splitlines()][:20]
 
 
+def _run_contained(cmd: list[str], cwd: str, timeout: int) -> subprocess.CompletedProcess:
+    """Run one CLI call in its own session and kill the whole process group when it returns
+    or times out, so nothing an arm started in the background outlives the call (a leftover
+    download kept writing into a deep-research workspace and crashed its cleanup)."""
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                            cwd=cwd, env=_arm_env(), start_new_session=hasattr(os, "killpg"))
+    try:
+        out, err = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        _kill_group(proc)
+        proc.communicate()
+        raise
+    _kill_group(proc)
+    return subprocess.CompletedProcess(cmd, proc.returncode, out, err)
+
+
+def _kill_group(proc: subprocess.Popen) -> None:
+    if hasattr(os, "killpg"):
+        try:
+            os.killpg(proc.pid, 9)
+        except (ProcessLookupError, PermissionError):
+            pass
+    elif proc.poll() is None:
+        proc.kill()
+
+
 def _claude_call(prompt: str, model: str, timeout: int, system: str | None = None,
                  cwd: Path | None = None, extra_args: list[str] | None = None) -> CallResult:
     """Run one prompt through the claude CLI in an isolated working directory.
@@ -530,7 +556,8 @@ def _claude_call(prompt: str, model: str, timeout: int, system: str | None = Non
     ``extra_args`` adds CLI flags such as ``--allowedTools`` (used by scripts/run_benchmark.py).
     """
     conf = _confinement()
-    with tempfile.TemporaryDirectory(prefix="alterlab-eval-call-") as fallback_cwd:
+    with tempfile.TemporaryDirectory(prefix="alterlab-eval-call-",
+                                     ignore_cleanup_errors=True) as fallback_cwd:
         run_dir = str(cwd) if cwd else fallback_cwd
         if any(Path(run_dir).resolve().is_relative_to(h) for h in conf["hidden"]):
             return CallResult(f"{_NO_ANSWER} workspace inside the protected checkout",
@@ -544,8 +571,7 @@ def _claude_call(prompt: str, model: str, timeout: int, system: str | None = Non
         if conf["mode"] == "namespace":
             cmd = [*_namespace_prefix(conf["hidden"]), *cmd]
         try:
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout,
-                                  cwd=run_dir, env=_arm_env())
+            proc = _run_contained(cmd, run_dir, timeout)
         except subprocess.TimeoutExpired:
             _USAGE["calls"] += 1
             return CallResult(f"{_NO_ANSWER} TIMEOUT after {timeout}s", "infra_error",
@@ -1095,7 +1121,7 @@ def _grade_case(case: dict, model: str, timeout: int, runs: int) -> dict:
                  "_calls": []}
         return {**record, "skilled": dict(empty), "bare": dict(empty),
                 "rubric_delta": "rubric: INCONCLUSIVE (case not run)"}
-    with tempfile.TemporaryDirectory(prefix="alterlab-eval-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="alterlab-eval-", ignore_cleanup_errors=True) as tmp:
         skilled_ws, bare_ws = Path(tmp) / "skilled", Path(tmp) / "bare"
         fixtures = prepare_workspace(skilled_ws, e, case["evals_dir"], case["skill_dir"])
         prepare_workspace(bare_ws, e, case["evals_dir"], None)
