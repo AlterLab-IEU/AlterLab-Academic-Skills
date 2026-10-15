@@ -3,7 +3,7 @@ name: alterlab-pdf-explore
 description: Explore a single PDF in depth — parse it once, then answer questions across its sections, figures, tables, and appendices — comparing methods across sections, extracting every instance of a pattern within the document, and reading values off its charts and tables. Use when interrogating one paper or report end-to-end, pulling every occurrence of something inside a document, or reading data from a figure/table in a PDF, serving the literature-review and paper-review pipeline. To build a comparison table across MANY papers prefer alterlab-pdf-extract; to simply convert a PDF to Markdown prefer alterlab-markitdown; for reference/citation management prefer alterlab-pyzotero. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Runs under `uv run python` with PyMuPDF (`pymupdf` >= 1.24; 1.28.x current as of 2026-09; AGPL-3.0 or commercial license) and/or pdfplumber (>= 0.11; MIT); scanned pages need an OCR pass (Tesseract via PyMuPDF or `ocrmypdf`). No GPU or account required. Parses the PDF once into a section/figure/table index that later questions reuse; large scanned PDFs are slower due to OCR."
+compatibility: "Runs as `uv run --python \">=3.11\" --with pymupdf python script.py` (no install step) with PyMuPDF (`pymupdf` >= 1.24; 1.28.x current as of 2026-09; AGPL-3.0 or commercial license) and/or pdfplumber (>= 0.11; MIT); scanned pages need an OCR pass (Tesseract via PyMuPDF or `ocrmypdf`). No GPU or account required. Parses the PDF once into a section/figure/table index that later questions reuse; large scanned PDFs are slower due to OCR."
 metadata:
     skill-author: AlterLab
     version: "1.0.1"
