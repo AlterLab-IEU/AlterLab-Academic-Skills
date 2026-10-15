@@ -303,3 +303,12 @@ def test_allowed_tools_keep_spaced_patterns_whole() -> None:
     md = "---\nname: x\nallowed-tools: Read Bash(uv run:*), Bash(git clone:*) WebFetch\n---\nbody"
     assert run_evals.skill_allowed_tools(md) == ["Read", "Bash(uv run:*)", "Bash(git clone:*)",
                                                  "WebFetch"]
+
+
+def test_output_contains_list_passes_on_any_alternative() -> None:
+    assert run_evals._contains_hit(["Art. 28", "m. 28"], "KVKK m. 28/1-b uyarınca")
+    assert not run_evals._contains_hit(["Art. 28", "m. 28"], "no citation here")
+    assert run_evals._contains_hit("PRISMA", "a prisma flow")
+    bad = {"skill": "x", "evals": [{"id": "a", "prompt": "p", "expected_output": "e",
+                                    "assertions": [{"type": "output_contains", "value": []}]}]}
+    assert any("non-empty strings" in e for e in run_evals._structural_errors(bad))

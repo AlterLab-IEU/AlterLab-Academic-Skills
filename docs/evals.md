@@ -40,7 +40,7 @@ the `claude` CLI and LLM-grades each `expected_output`.
 |--------|---------|---------|
 | `should_trigger` | `true` | This skill **should** activate on the prompt. |
 | `should_not_trigger` | `true` | This skill should **not** activate (near-miss / another skill's job). |
-| `output_contains` | string | The response must contain this substring/phrase (case-insensitive by convention). |
+| `output_contains` | string, or list of strings | The response must contain this substring (case-insensitive). A list passes when any one entry occurs — use it when a correct answer may be written in Turkish or English (`["Art. 28", "m. 28", "madde 28"]`). |
 | `behavior` | string | A free-text rubric clause the behavioral LLM judge grades. |
 
 Every eval carries **exactly one** `should_trigger` *or* `should_not_trigger` assertion

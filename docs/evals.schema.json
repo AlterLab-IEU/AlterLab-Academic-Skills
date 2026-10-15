@@ -81,8 +81,8 @@
           "enum": ["should_trigger", "should_not_trigger", "output_contains", "behavior"]
         },
         "value": {
-          "description": "Boolean true for should_trigger/should_not_trigger; a string for output_contains (the required substring) and behavior (the rubric clause).",
-          "type": ["string", "boolean"]
+          "description": "Boolean true for should_trigger/should_not_trigger; for output_contains, the required substring or a list of alternatives (any one must occur, e.g. the Turkish and English form of a legal citation); a string for behavior (the rubric clause).",
+          "type": ["string", "boolean", "array"]
         }
       },
       "allOf": [
@@ -96,10 +96,21 @@
         },
         {
           "if": {
-            "properties": { "type": { "enum": ["output_contains", "behavior"] } }
+            "properties": { "type": { "const": "behavior" } }
           },
           "then": {
             "properties": { "value": { "type": "string", "minLength": 1 } }
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "output_contains" } }
+          },
+          "then": {
+            "properties": { "value": { "oneOf": [
+              { "type": "string", "minLength": 1 },
+              { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+            ] } }
           }
         }
       ]

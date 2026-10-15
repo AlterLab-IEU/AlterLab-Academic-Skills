@@ -54,6 +54,7 @@ equivalent built-in structural check, so the script runs in a bare ``uv run`` en
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import os
 import re
@@ -201,7 +202,10 @@ def _structural_errors(data: object) -> list[str]:
                 continue
             if atype in _TRIGGER_TYPES and aval is not True:
                 errs.append(f"{aw}/value: {atype} must have value true")
-            if atype in _STRING_TYPES and (not isinstance(aval, str) or not aval):
+            if atype == "output_contains" and isinstance(aval, list):
+                if not aval or not all(isinstance(x, str) and x for x in aval):
+                    errs.append(f"{aw}/value: output_contains list must hold non-empty strings")
+            elif atype in _STRING_TYPES and (not isinstance(aval, str) or not aval):
                 errs.append(f"{aw}/value: {atype} must be a non-empty string")
     return errs
 
@@ -654,6 +658,15 @@ def _judge_engaged(skill: str, prompt: str, rubric: str, response: str,
 
 
 # --- Deterministic assertion grading ----------------------------------------------------
+def _contains_hit(value: object, response: str) -> bool:
+    """``output_contains``: a string must occur in the response (case-insensitive); a list
+    passes when any one of its strings occurs — for answers that may be written in Turkish or
+    English (``["Art. 28", "m. 28", "madde 28"]``)."""
+    needles = value if isinstance(value, list) else [value]
+    low = response.lower()
+    return any(isinstance(n, str) and n and n.lower() in low for n in needles)
+
+
 def grade_assertions(eval_obj: dict, skill: str, response: str,
                      model: str, timeout: int) -> list[tuple[str, str, str]]:
     """Grade every assertion on one response. Returns (label, 'PASS'|'FAIL'|'NA', detail) list.
@@ -674,7 +687,7 @@ def grade_assertions(eval_obj: dict, skill: str, response: str,
             if not answered:
                 results.append((f"output_contains[{aval!r}]", "NA", "no answer"))
             else:
-                hit = isinstance(aval, str) and aval.lower() in response.lower()
+                hit = _contains_hit(aval, response)
                 results.append((
                     f"output_contains[{aval!r}]",
                     "PASS" if hit else "FAIL",
@@ -1160,8 +1173,8 @@ def regrade_results(path: Path, judge: str, timeout: int,
                     label = item["assertion"]
                     verdict = item["verdict"]
                     if answered and label.startswith("output_contains["):
-                        needle = label[len("output_contains["):-1].strip("'\"")
-                        verdict = "PASS" if needle.lower() in resp.lower() else "FAIL"
+                        needle = ast.literal_eval(label[len("output_contains["):-1])
+                        verdict = "PASS" if _contains_hit(needle, resp) else "FAIL"
                     elif answered and label == "behavior":
                         spec = next((x.get("value") for x in e.get("assertions", [])
                                      if x.get("type") == "behavior"), "")
