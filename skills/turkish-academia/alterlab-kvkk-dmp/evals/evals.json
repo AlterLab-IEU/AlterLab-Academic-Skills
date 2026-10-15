@@ -7,7 +7,7 @@
       "expected_output": "Invokes alterlab-kvkk-dmp. Builds a KVKK (Law 6698) data management plan covering the six decisions: lawful basis (açık rıza / explicit consent as the default under Art. 5, with Art. 6 adequate measures for the special-category health/sağlık data), the Art. 28(1)(b) anonymization exemption as the primary lever for the open dataset, Art. 7 retention/destruction at purpose-end, the Art. 13 thirty-day response window, Art. 9 cross-border status (Türkiye-only host = no Art. 9 issue), and Art. 16 VERBIS status. Notes that KVKK has no standalone research basis. May run scripts/kvkk_dmp_scaffold.py to emit a TR+EN skeleton.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": ["Art. 28", "m. 28", "md. 28", "madde 28"] },
+        { "type": "output_contains", "value": ["Art. 28", "m. 28", "m.28", "md. 28", "md.28", "madde 28"] },
         { "type": "behavior", "value": "Treats anonymization (Art. 28(1)(b)) as the compliance lever for the open dataset, states explicit consent (açık rıza) as the default basis, and flags health data as special-category under Art. 6 — without inventing a 'scientific research' lawful basis." }
       ]
     },
@@ -36,7 +36,7 @@
       "expected_output": "Invokes alterlab-kvkk-dmp. Explains Art. 16: controllers must register with VERBIS (Veri Sorumluları Sicili) before processing, but the Board exempts categories of controllers by objective criteria (e.g. employee count, annual balance sheet, activity type). Advises recording the VERBIS status (registered / exempt-by-criterion / pending) in the DMP and checking the current Board exemption criteria, without asserting a specific exemption applies.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": ["Art. 16", "m. 16", "md. 16", "madde 16"] },
+        { "type": "output_contains", "value": ["Art. 16", "m. 16", "m.16", "md. 16", "md.16", "madde 16"] },
         { "type": "behavior", "value": "Ties the duty to Art. 16 (register before processing), notes the Board's objective-criterion exemptions, and advises recording status + checking current criteria rather than asserting a specific exemption applies." }
       ]
     },

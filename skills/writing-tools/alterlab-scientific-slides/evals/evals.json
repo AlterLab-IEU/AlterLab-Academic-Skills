@@ -3,6 +3,8 @@
   "evals": [
     {
       "id": "conference-talk-deck",
+      "requires": ["env:OPENROUTER_API_KEY"],
+      "files": ["fixtures/talk_content.md"],
       "prompt": "I have a 15-minute conference talk next month on our machine-learning results. Can you build me the slide deck?",
       "expected_output": "Invokes alterlab-scientific-slides: plans a ~15-18 slide deck following the story arc (hook, context, gap, approach, results, implications, closure), allocates 40-50% of time to results, generates slides with generate_slide_image.py (attaching the previous slide for formatting consistency) and combines them via slides_to_pdf.py, applying visual-first, minimal-text design.",
       "assertions": [
