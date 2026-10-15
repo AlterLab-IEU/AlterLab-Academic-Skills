@@ -41,6 +41,7 @@
     },
     {
       "id": "custom-env-check-and-train",
+      "files": ["fixtures/inventory_env.py"],
       "prompt": "I wrote a custom Gymnasium environment for an inventory-management problem. Validate that it conforms to the API before training, then train an agent on it.",
       "expected_output": "Invokes alterlab-stable-baselines3: runs check_env(env, warn=True) from stable_baselines3.common.env_checker to validate the gymnasium.Env (reset/step signatures, spaces), then trains an SB3 agent (e.g. PPO) on the validated environment.",
       "assertions": [
@@ -55,6 +56,14 @@
         {
           "type": "behavior",
           "value": "Validates the custom environment with check_env before training and only then instantiates and trains an SB3 algorithm."
+        },
+        {
+          "type": "output_contains",
+          "value": ["int64", "float32"]
+        },
+        {
+          "type": "behavior",
+          "value": "Runs check_env on the attached InventoryEnv and reports its actual failure: reset() returns an int64 observation while the observation space is a float32 Box. Fixes _get_obs to return float32 (e.g. dtype=np.float32), re-runs check_env until it passes, and only then trains an agent suited to the Discrete(11) action space (e.g. PPO or DQN)."
         }
       ]
     },
