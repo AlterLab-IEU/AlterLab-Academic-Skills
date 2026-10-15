@@ -43,3 +43,16 @@ def test_a_second_sweep_skips_skills_already_claimed(fake_cli, tmp_path, monkeyp
     subprocess.run(args, capture_output=True, text=True, timeout=240, check=True)
     subprocess.run(args, capture_output=True, text=True, timeout=240, check=True)
     assert len(sorted(out.glob("behavioral-*.json"))) == 2, "a skill ran twice"
+
+
+def test_a_list_line_may_carry_arguments_for_that_skill_only(fake_cli, tmp_path, monkeypatch):
+    one = tbr._make_skill(tmp_path / "one", [tbr._case("a"), tbr._case("b")])
+    two = tbr._make_skill(tmp_path / "two", [tbr._case("a"), tbr._case("b")])
+    lst = tmp_path / "list.txt"
+    lst.write_text(f"{one} --case b\n{two}\n")
+    out = tmp_path / "out"
+    subprocess.run([str(REPO / "scripts" / "eval_sweep.sh"), str(lst), "2", str(out), "--runs",
+                    "1", "--timeout", "30", "--isolation", "none"],
+                   capture_output=True, text=True, timeout=240, check=True)
+    ran = sorted(len(json.loads(r.read_text())["cases"]) for r in out.glob("behavioral-*.json"))
+    assert ran == [1, 2], "the --case line runs one case; the bare line runs both"

@@ -3,7 +3,8 @@
 #
 #   scripts/eval_sweep.sh LIST PARALLEL OUTDIR [extra run_evals.py args ...]
 #
-# LIST is a file with one skill directory per line (e.g. skills/data-science/alterlab-eda).
+# LIST is a file with one skill directory per line (e.g. skills/data-science/alterlab-eda),
+# optionally followed by arguments for that skill only (e.g. `--case some-id --case other-id`).
 # Each skill gets one results JSON in OUTDIR and a log in OUTDIR/logs/<skill>.log;
 # OUTDIR/logs/_done.txt gets "<skill> exit=<code>" per skill and ALL_DONE at the end.
 # Extra arguments go to every run (default: --runs 1 --timeout 400 --wait-on-limit).
@@ -21,11 +22,11 @@ ROOT="${EVAL_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 OUT="$(mkdir -p "$OUT" && cd "$OUT" && pwd)"; LOGS="$OUT/logs"; mkdir -p "$LOGS"
 cd "$ROOT"
 run_one() {
-  d="$1"; name=$(basename "$d")
+  read -r -a words <<< "$1"; d="${words[0]}"; name=$(basename "$d")
   key=$(printf '%s' "$d" | tr -c 'A-Za-z0-9._-' '_')
   mkdir "$LOGS/.claim-$key" 2>/dev/null || return 0   # another sweep has it
   uv run --no-sync python scripts/run_evals.py --behavioral --skill-dir "$d" \
-     --results-dir "$OUT" "${EXTRA[@]}" > "$LOGS/$name.log" 2>&1
+     --results-dir "$OUT" "${EXTRA[@]}" "${words[@]:1}" > "$LOGS/$name.log" 2>&1
   echo "$name exit=$?" >> "$LOGS/_done.txt"
 }
 export -f run_one; export OUT LOGS; export EXTRA_STR="${EXTRA[*]}"
