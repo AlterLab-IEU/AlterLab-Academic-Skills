@@ -53,7 +53,7 @@ This skill should be used when:
 **This skill uses Nano Banana Pro AI to generate stunning presentation slides automatically.** There are two workflows depending on output format:
 
 - **PDF workflow (default, recommended)** — generate each slide as a complete image, then combine into a PDF. Most visually stunning; best for conference/business/general talks.
-- **PPT workflow** — generate visuals only (`--visual-only`), then build editable slides with the PPTX skill. Best for company templates and editable decks.
+- **PPT workflow** — generate visuals only (`--visual-only`), then build editable slides with Anthropic's `pptx` skill (a separate install, not part of this suite; without it, see the dependency note in `references/visual_review_workflow.md`). Best for company templates and editable decks.
 
 Full step-by-step protocol (planning, formatting-consistency rules, citation/figure-attachment handling, example commands) is in `references/nano_banana_workflows.md`.
 
