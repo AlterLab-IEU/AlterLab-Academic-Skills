@@ -1281,7 +1281,7 @@ def _grade_case(case: dict, model: str, timeout: int, runs: int) -> dict:
 def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
                    shard: tuple[int, int] | None = None, *,
                    results_dir: Path | None = None, skill_dir: Path | None = None,
-                   max_infra_streak: int = 6) -> int:
+                   max_infra_streak: int = 6, case_ids: list[str] | None = None) -> int:
     """Grade each eval by running it in an isolated workspace, skilled arm vs bare arm.
 
     Per case, the skilled arm gets the skill's SKILL.md via --append-system-prompt plus its
@@ -1289,7 +1289,8 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
     the rubric are judged per run and majority-voted. Every case ends in exactly one outcome —
     PASS, FAIL, INCONCLUSIVE, REFUSED, INFRA_ERROR, or NOT_RUN — with the first reason printed.
     After ``max_infra_streak`` consecutive infrastructure errors the run aborts and the
-    remaining cases are NOT_RUN. Results (case IDs, model, versions, per-run outcomes, baseline
+    remaining cases are NOT_RUN. ``case_ids`` keeps only the evals with those ids (an id that
+    matches nothing is an error, not a silent empty run). Results (case IDs, model, versions, per-run outcomes, baseline
     comparison, usage) are written as JSON to ``results_dir``. Exit code: ``_behavioral_status``.
     """
     model = alterlab_model()
@@ -1298,7 +1299,8 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
     started_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
     meta = _run_metadata("behavioral", model, runs, timeout)
     meta["selection"] = {"skill_filter": skill_filter, "skill_dir": str(skill_dir) if skill_dir
-                         else None, "shard": f"{shard[0]}/{shard[1]}" if shard else None}
+                         else None, "shard": f"{shard[0]}/{shard[1]}" if shard else None,
+                         "cases": sorted(case_ids) if case_ids else None}
     print("=== BEHAVIORAL EVALUATION (live model calls; not the static schema check) ===")
     if _endpoint() != "claude-cli-login":
         print(f"Endpoint: {_endpoint()} (not the claude CLI login) — these results describe "
@@ -1318,6 +1320,12 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
         return 2
 
     cases, skipped = _behavioral_cases(skill_filter, shard, skill_dir)
+    if case_ids:
+        missing = sorted(set(case_ids) - {c["eval"].get("id") for c in cases})
+        if missing:
+            print(f"ERROR: no selected eval has id {', '.join(missing)}.", file=sys.stderr)
+            return 2
+        cases = [c for c in cases if c["eval"].get("id") in set(case_ids)]
     if shard:
         print(f"Shard {shard[0]}/{shard[1]} of the corpus.")
     print(f"{len(cases)} case(s) selected"
@@ -1849,6 +1857,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--skill-dir", metavar="DIR", default=None,
                     help="(behavioral) grade the skill in DIR (SKILL.md + evals/evals.json), "
                          "which may live outside skills/ — e.g. a benchmark or a test fixture")
+    ap.add_argument("--case", metavar="ID", action="append", default=None,
+                    help="(behavioral) only run the eval with this id; repeatable. Use it to "
+                         "re-test cases whose eval changed while the skill itself did not")
     ap.add_argument("--max-infra-errors", type=int, default=6,
                     help="(behavioral) abort after this many consecutive infrastructure errors; "
                          "remaining cases are NOT_RUN (default 6)")
@@ -1904,7 +1915,8 @@ def main(argv: list[str] | None = None) -> int:
         return run_behavioral(args.skill, args.timeout, args.runs, shard,
                               results_dir=results_dir,
                               skill_dir=Path(args.skill_dir).resolve() if args.skill_dir else None,
-                              max_infra_streak=max(1, args.max_infra_errors))
+                              max_infra_streak=max(1, args.max_infra_errors),
+                              case_ids=args.case)
     if args.activation:
         if args.runs < 1:
             ap.error("--runs must be >= 1")

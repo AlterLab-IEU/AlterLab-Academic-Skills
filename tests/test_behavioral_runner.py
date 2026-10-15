@@ -535,3 +535,21 @@ def test_denied_tool_calls_are_recorded_by_name_and_input(fake_cli, tmp_path, mo
     run = res["cases"][0]["skilled"]["runs"][0]
     assert run["permission_denials"] == 1
     assert run["denied_tools"] == ["Bash: uv pip install semopy"]
+
+
+def test_case_filter_runs_only_the_named_evals(fake_cli, tmp_path, monkeypatch):
+    rc, res = _run(tmp_path, [_case("a"), _case("b"), _case("c")], "ok", monkeypatch,
+                   case_ids=["c", "a"])
+    assert rc == 0 and [c["eval_id"] for c in res["cases"]] == ["a", "c"]
+    assert res["selection"]["cases"] == ["a", "c"]
+    calls = [json.loads(x) for x in fake_cli.read_text().splitlines()]
+    answers = [c for c in calls if "--allowedTools" in c["flags"]]
+    assert len(answers) == 4, "two selected cases x two arms; the unselected case makes no call"
+
+
+def test_case_filter_naming_no_eval_is_an_error_not_an_empty_pass(fake_cli, tmp_path,
+                                                                  monkeypatch):
+    skill = _make_skill(tmp_path / "skills", [_case("a")])
+    rc = run_evals.run_behavioral(None, timeout=30, runs=1, results_dir=tmp_path / "results",
+                                  skill_dir=skill, case_ids=["zz"])
+    assert rc == 2 and not fake_cli.exists()

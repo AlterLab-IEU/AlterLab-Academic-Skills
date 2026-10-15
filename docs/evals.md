@@ -105,7 +105,13 @@ V(s).validate(json.load(open(sys.argv[1])))" \
 # Behavioral grading (slow; live model calls through the claude CLI's login). Uses the model
 # from ALTERLAB_MODEL — see skills/core/shared/model_env.md. Grade one skill at a time:
 uv run python scripts/run_evals.py --behavioral --skill alterlab-docentlik-eligibility
+# Re-test only the cases whose eval changed (the skill itself unchanged); repeatable:
+uv run python scripts/run_evals.py --behavioral --skill alterlab-trdizin --case audit-venue-list-before-dossier
 ```
+
+`--case` is for re-testing a fixed eval, not for picking favourable cases: when a skill's
+`SKILL.md` or bundled files change, every case of that skill needs a fresh run, because the
+skilled arm reads them in all of them.
 
 ### Three separate things this harness measures
 
