@@ -429,6 +429,24 @@ _HIDE_SCRIPT = ('n=$1; shift; i=0; while [ "$i" -lt "$n" ]; do '
 
 
 _COLLECT = {"on": False}
+_WAIT = {"on": False, "max_s": 6 * 3600, "sleep": time.sleep, "now": None}
+_LIMIT_RE = re.compile(r"hit your (?:session |usage |weekly )?limit[^\n]*?resets\s+"
+                       r"(\d{1,2})(?::(\d{2}))?\s*([ap]m)\s*\(UTC\)", re.I)
+
+
+def _limit_wait_seconds(text: str) -> float | None:
+    """Seconds until a usage limit the CLI reported resets ('resets 11:30am (UTC)'), plus one
+    minute; None when the text is not a limit message."""
+    m = _LIMIT_RE.search(text or "")
+    if not m:
+        return None
+    hour, minute, ampm = int(m.group(1)) % 12, int(m.group(2) or 0), m.group(3).lower()
+    hour += 12 if ampm == "pm" else 0
+    now = (_WAIT["now"] or (lambda: datetime.now(timezone.utc)))()
+    reset = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    if reset <= now:
+        reset = reset.replace(day=now.day) + __import__("datetime").timedelta(days=1)
+    return (reset - now).total_seconds() + 60
 _NET_CACHE: dict[str, str | None] = {}
 
 
@@ -596,6 +614,22 @@ def _kill_group(proc: subprocess.Popen) -> None:
 
 def _claude_call(prompt: str, model: str, timeout: int, system: str | None = None,
                  cwd: Path | None = None, extra_args: list[str] | None = None) -> CallResult:
+    """One CLI call (see _claude_call_once). With --wait-on-limit, a usage-limit refusal that
+    names its reset time is waited out and the call retried, instead of being scored."""
+    call = _claude_call_once(prompt, model, timeout, system, cwd, extra_args)
+    for _ in range(3):
+        wait = _limit_wait_seconds(call.error) if call.outcome == "infra_error" else None
+        if not (_WAIT["on"] and wait is not None and wait <= _WAIT["max_s"]):
+            break
+        print(f"USAGE LIMIT: waiting {wait / 60:.0f} min for the reset, then retrying.",
+              file=sys.stderr, flush=True)
+        _WAIT["sleep"](wait)
+        call = _claude_call_once(prompt, model, timeout, system, cwd, extra_args)
+    return call
+
+
+def _claude_call_once(prompt: str, model: str, timeout: int, system: str | None = None,
+                      cwd: Path | None = None, extra_args: list[str] | None = None) -> CallResult:
     """Run one prompt through the claude CLI in an isolated working directory.
 
     When ``system`` is given it is injected via ``--append-system-prompt`` — this is how the
@@ -1766,6 +1800,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-infra-errors", type=int, default=6,
                     help="(behavioral) abort after this many consecutive infrastructure errors; "
                          "remaining cases are NOT_RUN (default 6)")
+    ap.add_argument("--wait-on-limit", action="store_true",
+                    help="(live) when the CLI reports a usage limit with its reset time, sleep "
+                         "until the reset (at most 6 h) and retry the call instead of scoring an "
+                         "infrastructure error")
     ap.add_argument("--collect-only", action="store_true",
                     help="(behavioral) run and save the answer arms without judging them; exit 0 "
                          "when every arm answered. Grade later with --regrade.")
@@ -1791,6 +1829,7 @@ def main(argv: list[str] | None = None) -> int:
         ap.error(str(exc))
 
     results_dir = Path(args.results_dir) if args.results_dir else None
+    _WAIT["on"] = bool(args.wait_on_limit)  # also for --regrade / --calibrate-judge calls
     if args.calibrate_judge:
         return calibrate_judge(sorted(JUDGES), args.timeout)
     if args.regrade:

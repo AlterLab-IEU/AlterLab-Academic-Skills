@@ -61,6 +61,12 @@ if mode == "lingering" and skilled:
 if mode == "vandal" and not prompt.startswith(("You are grading", "A user sent")):
     with open(os.environ["FAKE_VANDAL_TARGET"], "w", encoding="utf-8") as fh:
         fh.write("an answer arm wrote this\n")
+if mode == "limit_once":
+    flag = os.path.join(os.path.dirname(os.environ["FAKE_CLAUDE_LOG"]), "limit_hit")
+    if not os.path.exists(flag):
+        open(flag, "w").close()
+        out("You've hit your session limit · resets 11:30am (UTC)", is_error=True)
+        sys.exit(1)
 if mode == "authfail":
     sys.stderr.write("Invalid API key sk-ant-api03-SECRETSECRETSECRET · Please run /login\n")
     sys.exit(1)
@@ -477,3 +483,34 @@ def test_endpoint_is_recorded_so_local_runs_never_pass_as_claude(monkeypatch) ->
     assert run_evals._endpoint() == "claude-cli-login"
     monkeypatch.setenv("ANTHROPIC_BASE_URL", "http://127.0.0.1:8080/")
     assert run_evals._endpoint() == "base-url:http://127.0.0.1:8080"
+
+
+def test_limit_reset_time_is_parsed() -> None:
+    from datetime import datetime, timezone
+    run_evals._WAIT["now"] = lambda: datetime(2026, 10, 15, 11, 10, tzinfo=timezone.utc)
+    try:
+        assert run_evals._limit_wait_seconds(
+            "You've hit your session limit · resets 11:30am (UTC)") == 21 * 60
+        assert run_evals._limit_wait_seconds("resets 1pm (UTC) — hit your limit") is None
+        assert run_evals._limit_wait_seconds(
+            "You've hit your limit · resets 2pm (UTC)") == (2 * 3600 + 50 * 60 + 60)
+        assert run_evals._limit_wait_seconds("claude CLI exited 1: other error") is None
+    finally:
+        run_evals._WAIT["now"] = None
+
+
+def test_wait_on_limit_waits_and_retries_instead_of_scoring(fake_cli, tmp_path, monkeypatch):
+    from datetime import datetime, timezone
+    slept = []
+    monkeypatch.setitem(run_evals._WAIT, "on", True)
+    monkeypatch.setitem(run_evals._WAIT, "sleep", slept.append)
+    monkeypatch.setitem(run_evals._WAIT, "now",
+                        lambda: datetime(2026, 10, 15, 11, 10, tzinfo=timezone.utc))
+    rc, res = _run(tmp_path, [_case("a")], "limit_once", monkeypatch)
+    assert slept == [21 * 60] and rc == 0 and res["cases"][0]["skilled"]["outcome"] == "PASS"
+
+
+def test_without_wait_on_limit_a_limit_is_an_infra_error(fake_cli, tmp_path, monkeypatch):
+    rc, res = _run(tmp_path, [_case("a")], "limit_once", monkeypatch)
+    assert res["cases"][0]["skilled"]["outcome"] == "INFRA_ERROR"
+    assert "session limit" in res["cases"][0]["skilled"]["reason"]
