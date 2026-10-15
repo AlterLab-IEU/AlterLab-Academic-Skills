@@ -40,7 +40,7 @@ This skill should be used when:
 |----------|-------------|
 | Computing inter-coder reliability (Krippendorff's alpha, kappa) or running a codebook-coding pipeline, including human-vs-LLM double coding | `alterlab-qualitative-analysis` |
 | A pass/fail trustworthiness and reflexivity check before writing up findings | `alterlab-ssci-reflexivity-gate` |
-| Integrating a qualitative strand with a quantitative one (convergent/sequential designs, joint displays) | `alterlab-mixed-methods` |
+| Designing or integrating a study with both a qualitative and a quantitative strand (convergent/sequential designs, joint displays), including the qualitative strand's design within it | `alterlab-mixed-methods` |
 | Questionnaire items, Likert scales, or instrument validation | `alterlab-survey-design` |
 | Discourse or conversation analysis, QCA, process tracing (`alterlab-social-science-methods`); topic models or text classification (`alterlab-text-as-data`) | `alterlab-social-science-methods` / `alterlab-text-as-data` |
 
