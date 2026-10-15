@@ -77,8 +77,9 @@ def save_base64_image(base64_data: str, output_path: str) -> None:
     if ',' in base64_data:
         base64_data = base64_data.split(',', 1)[1]
 
-    # Decode and save
+    # Decode and save; create the folder (e.g. figures/) so a paid generation is not lost
     image_data = base64.b64decode(base64_data)
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, 'wb') as f:
         f.write(image_data)
 
