@@ -2,7 +2,7 @@
 name: alterlab-abm-mesa
 description: "Builds agent-based models of social systems with Mesa 3 — the current AgentSet API (model.agents.shuffle_do('step'), auto-assigned unique_id, mandatory super().__init__(rng=...)), cell spaces (mesa.discrete_space OrthogonalMooreGrid / classic mesa.space grids), the DataCollector, batch_run parameter sweeps, and SolaraViz — for emergence, segregation, diffusion, opinion dynamics, and cooperation models. It uses the Mesa 3.x API (the old mesa.time schedulers like RandomActivation are removed) and treats the model as a generative theory to be validated, not just run. Use when the request mentions an agent-based model, Mesa, simulating interacting agents, or emergent macro behavior from micro rules. For discrete-event (queueing/process) simulation prefer alterlab-simpy; for reinforcement learning prefer alterlab-stable-baselines3. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Requires mesa>=3.4 (current 3.5.1 as of 2026-09; Mesa 4.0 is still alpha). API changed substantially from Mesa 2 — mesa.time schedulers removed; Mesa 3.5 deprecates Model(seed=) for Model(rng=). Optional SolaraViz via `uv pip install 'mesa[rec]'`. No API key; runs locally via `uv run python`. On the Anthropic API (no runtime install) declare mesa as a dependency."
 metadata:
     skill-author: AlterLab

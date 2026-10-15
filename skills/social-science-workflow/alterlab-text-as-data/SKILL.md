@@ -2,7 +2,7 @@
 name: alterlab-text-as-data
 description: "Analyzes text as social-science data — topic modeling (BERTopic with embeddings + class-based TF-IDF, LDA/NMF via scikit-learn or gensim), document embeddings (sentence-transformers), dictionary/lexicon methods, and supervised text classification — choosing the method that matches the inferential goal (discovery vs measurement vs prediction) and validating topic reliability rather than trusting one stochastic run. It uses the verified stack (BERTopic, scikit-learn, gensim CoherenceModel, spaCy, sentence-transformers) with pinned patterns. Use when the request mentions topic modeling, text as data, computational text analysis, document embeddings, dictionary/sentiment lexicons, or classifying a corpus. For training or fine-tuning transformer models prefer alterlab-transformers; for humanities close-reading corpora prefer alterlab-digital-humanities. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Requires (declare in-session, no runtime install on Anthropic API): bertopic>=0.16, scikit-learn>=1.3, gensim>=4.3, spacy>=3.7 (+ a model like en_core_web_sm), sentence-transformers>=2.2 (pip). Runs locally via `uv run python`; no API key."
 metadata:
     skill-author: AlterLab

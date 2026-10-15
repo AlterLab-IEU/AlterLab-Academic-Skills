@@ -2,7 +2,7 @@
 name: alterlab-akademik-tesvik
 description: "Computes the annual Turkish academic-incentive (akademik teşvik) score for Devlet (state) university öğretim elemanı (academic staff) from a classified activity list, applying the verified Akademik Teşvik Ödeneği Yönetmeliği (2018/11834) Faaliyet Hesaplama Tablosu headline puanları (Proje 20, Araştırma 15, Yayın 30, Patent 30, Atıf 30, Tebliğ 20, Ödül 20) with the k (author-count), p (Q1 1/Q2 0.8/Q3 0.5/Q4 0.25), and r (project-role) coefficients via türü puanı = Σ(faaliyet oranları) × headline (MADDE 8/2), then enforcing the per-type headline ceilings, the 100 cap (MADDE 8/3), and the net-30 payment gate (MADDE 10/3) in a deterministic scripts/tesvik_score.py. Use when the user wants to calculate akademik teşvik puanı, check the en az 30 (net-30) threshold, apply TABLO 4 ceilings, or estimate teşvik eligibility; keeps its coefficients separate from doçentlik scoring. For doçentlik point eligibility prefer alterlab-docentlik-eligibility. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: No API key and no network required — applies the regulation's tables offline via `uv run python`; the regulation PDF is on mevzuat.gov.tr for re-verification
 metadata:
   skill-author: AlterLab

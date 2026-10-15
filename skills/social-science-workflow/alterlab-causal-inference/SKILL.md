@@ -2,7 +2,7 @@
 name: alterlab-causal-inference
 description: "Estimates causal effects from observational and quasi-experimental data — difference-in-differences, instrumental variables, regression discontinuity, panel fixed effects, propensity-score / doubly-robust methods, and heterogeneous treatment effects (CATE) — using the verified Python stack: statsmodels and linearmodels (PanelOLS, IV2SLS), pyfixest (feols, event studies, Sun-Abraham, did2s), DoWhy (identify -> estimate -> refute), EconML (LinearDML, CausalForestDML, DRLearner), and rdrobust for RD. It names the identifying assumption before estimating and runs a refutation/robustness check after. Use when the request mentions difference-in-differences, instrumental variables, regression discontinuity, fixed effects / panel causal estimation, propensity scores, or treatment-effect estimation from non-randomized data. For choosing the design first prefer alterlab-ssci-design-gate; for plain regression or descriptive stats prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Requires (declare in-session, no runtime install on Anthropic API): statsmodels, linearmodels>=6, pyfixest>=0.29 (saturated event study; current 0.60), dowhy>=0.12, econml>=0.15, rdrobust>=1.3 (pip). Runs locally via `uv run python`; no API key."
 metadata:
     skill-author: AlterLab

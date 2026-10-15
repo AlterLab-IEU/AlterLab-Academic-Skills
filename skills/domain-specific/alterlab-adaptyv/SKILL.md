@@ -2,7 +2,7 @@
 name: alterlab-adaptyv
 description: Submits and tracks protein-testing experiments on the Adaptyv Bio Foundry cloud lab (wet-lab validation), and optimizes protein sequences before submission with computational tools (NetSolP, SoluProt, SolubleMPNN, ESM). Use when designing proteins that need wet-lab validation - binding/affinity screening, expression testing, thermostability, or fluorescence assays - or when submitting experiments to the Foundry API, browsing the target catalog, tracking experiment status, retrieving results, or pre-screening sequences for solubility/expression. Triggers on "Adaptyv", "Foundry API", "cloud lab", "biolayer interferometry / BLI", "wet-lab validation". Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: Requires an Adaptyv Bio Foundry account and an ADAPTYV_API_KEY token for experiment submission; local protein-optimization steps (ESM, etc.) run via `uv run python` without a key.
 metadata:
     skill-author: AlterLab

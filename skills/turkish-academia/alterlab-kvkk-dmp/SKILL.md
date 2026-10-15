@@ -2,7 +2,7 @@
 name: alterlab-kvkk-dmp
 description: "Produces KVKK-compliant (Law 6698, as amended by Law 7499 — published in the Official Gazette 12 Mar 2024, KVKK provisions effective 1 Jun 2024) data management plans for Turkish research, encoding the açık rıza (explicit consent) default basis, the Art. 28(1)(b) anonymization exemption as the primary compliance lever, the Art. 6 special-category regime for health/genetic/biometric data, Art. 7 deletion/destruction/anonymization at purpose-end, the Art. 13 thirty-day data-subject response window, Art. 9 cross-border adequacy-decision rules for cloud/overseas data, and Art. 16 VERBIS pre-processing registration, with a KVKK-vs-GDPR crosswalk. Use when the user needs a KVKK data management plan, to anonymize a research dataset under Turkish law, a VERBIS check, or to fix EU DMP boilerplate for Turkey; for pure GDPR/HIPAA use alterlab-research-ethics. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: No API key required — generates KVKK data management plans from primary mevzuat (Law 6698) encoded in references/; the optional scaffold runs via `uv run python` on the standard library only
 metadata:
   skill-author: AlterLab

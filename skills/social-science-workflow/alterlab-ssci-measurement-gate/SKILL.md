@@ -2,7 +2,7 @@
 name: alterlab-ssci-measurement-gate
 description: "Gates measurement quality before a scale or instrument is trusted — checks that each construct is defined and operationalized, that reliability is evidenced with McDonald omega (not Cronbach alpha alone, which assumes tau-equivalence and is only a lower bound), that reliability is not confused with validity (content, criterion, convergent/discriminant construct validity), and that measurement invariance is tested before comparing groups. Use when asking whether a scale or survey instrument is valid, reporting a Cronbach alpha, building or adopting a multi-item measure, or comparing a latent construct across groups. For designing the questionnaire items prefer alterlab-survey-design; for running the confirmatory factor analysis prefer alterlab-sem-psychometrics; to execute basic statistics prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. A discipline-enforcing measurement-quality skill; reliability/CFA execution is handed to sibling skills that run locally via `uv run python`.
 metadata:
     skill-author: AlterLab

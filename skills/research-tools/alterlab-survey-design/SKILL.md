@@ -2,7 +2,7 @@
 name: alterlab-survey-design
 description: "Comprehensive survey and instrument design assistant supporting questionnaire construction, Likert scale design, question types (open/closed/matrix), response bias mitigation, sampling strategies (probability/non-probability), pilot testing, instrument validation (Cronbach's alpha, factor analysis), online survey tools (Qualtrics, REDCap, Google Forms), interview protocol development, focus group facilitation, mixed-mode surveys, and cultural adaptation of instruments. Use when designing a survey or questionnaire, building Likert scales, planning a sampling strategy, pilot testing, validating an instrument (Cronbach's alpha, factor analysis), developing an interview protocol, improving response rates, or working in Qualtrics or REDCap. For analyzing interview/focus-group data use alterlab-qualitative-methods; for qual+quant integration alterlab-mixed-methods; for test selection/power analysis alterlab-statistical-analysis; for IRB/consent alterlab-research-ethics. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read WebFetch WebSearch Bash(python:*)
+allowed-tools: Read WebFetch WebSearch Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.
 metadata:
   skill-author: AlterLab

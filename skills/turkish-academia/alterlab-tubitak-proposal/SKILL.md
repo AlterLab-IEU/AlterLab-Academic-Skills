@@ -2,7 +2,7 @@
 name: alterlab-tubitak-proposal
 description: "Scaffolds TÜBİTAK ARDEB proposals in the directorate's own section order: 1001 against the official .doc form (TR/EN özet ≤600 words each, ÖZGÜN DEĞER, YÖNTEM, PROJE YÖNETİMİ with iş paketleri and B Planı, YAYGIN ETKİ, EK-1/EK-2; ≤25 pages), and the PBS-typed 1002-A Hızlı Destek and 3501 Kariyer Geliştirme forms with per-section word ranges. Checks program caps (1001 ≤36 months, 3,000,000 TRY; 1002-A ≤12 months, 150,000 TRY/year; 3501 ≤36 months, 1,500,000 TRY, PI ≤7 years post-PhD, doçent or below), drafts to each program's criteria (1001 panel 35/25/20/20; 3501 adds kariyer geliştirme potansiyeli) and applies TÜBİTAK's generative-AI (ÜYZ) disclosure rules; submission via PBS after ARBİS. Delegates generic grant craft to alterlab-research-grants and BİDEB fellowships to alterlab-tubitak-bideb. Use when the user wants to write a TÜBİTAK 1001, 1002-A or 3501 proposal, draft özgün değer or yaygın etki sections, or map broader-impacts framing to TÜBİTAK terms. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*) WebFetch
+allowed-tools: Read Write Edit Bash(python:*) WebFetch Bash(uv run:*)
 compatibility: No API key required — generates proposal scaffolds offline; the structure checker runs via `uv run python` on stdlib only. Program caps/forms change by call period; WebFetch the live program pages to confirm before submission.
 metadata:
   skill-author: AlterLab

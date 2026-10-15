@@ -2,7 +2,7 @@
 name: alterlab-multilevel-models
 description: "Fits and reports mixed-effects / multilevel / hierarchical models for clustered, nested, longitudinal, and repeated-measures data — random intercepts and slopes, variance components and the ICC, cross-level interactions, and GLMMs (logistic/Poisson) — using statsmodels MixedLM and bambi (Bayesian on PyMC) in Python, or the field-standard R lme4 / glmmTMB / brms via Rscript. It enforces the reporting items reviews find under-reported: full fixed + random specification, centering, variance components + ICC, estimation method, assumption checks, model comparisons, and effect sizes. Use when data are grouped/nested (students in schools, repeated measures, panel/longitudinal) and the question concerns within- vs between-cluster variation. For general single-level regression prefer alterlab-statsmodels; for panel fixed effects used for causal identification prefer alterlab-causal-inference. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Requires (declare in-session, no runtime install on Anthropic API): Python statsmodels>=0.14 (MixedLM), optionally bambi>=0.18 (Bayesian, on PyMC) — OR the field-standard R lme4>=2.0 (+ lmerTest for p-values), glmmTMB, brms, and performance (icc/r2) via Rscript. Runs locally via `uv run python` / `Rscript`; no API key."
 metadata:
     skill-author: AlterLab

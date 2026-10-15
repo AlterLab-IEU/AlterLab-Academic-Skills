@@ -2,7 +2,7 @@
 name: alterlab-aperta
 description: "Drives TÜBİTAK Açık Bilim Politikası (Open Science Policy) compliance and deposition into Aperta — TÜBİTAK ULAKBİM's national open archive at aperta.ulakbim.gov.tr — encoding its principles (İlke 1: deposit the accepted manuscript in Aperta on acceptance; İlke 2: open access at most 6 months after publication for STEM, 12 for SSH; İlke 6: document data that must stay closed, e.g. for KVKK; İlke 9: report compliance in the final report) and scaffolding the five-question TÜBİTAK Veri Yönetim Planı / VYP (data management plan) uploaded with ARDEB applications. Use when depositing to Aperta, complying with the TÜBİTAK açık bilim policy, preparing a TÜBİTAK data management plan (VYP), reporting open-access compliance in a final report, or documenting a justified data embargo. For Zenodo/Dryad/OSF and international DMPs prefer alterlab-open-science; for the KVKK lawful-basis/anonymisation plan prefer alterlab-kvkk-dmp. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*) WebFetch
+allowed-tools: Read Write Edit Bash(python:*) WebFetch Bash(uv run:*)
 compatibility: "No API key required. Guidance + scaffolding skill; uses WebFetch for live policy/repository checks and optional Python helpers via `uv run python` (stdlib-only, requests optional)."
 metadata:
   skill-author: AlterLab

@@ -2,7 +2,7 @@
 name: alterlab-tr-research-ethics
 description: "Scaffolds Turkish human-subjects etik kurul (ethics committee) applications and routes a study to the right committee. Survey, interview, focus-group, observation, or experiment studies go to a university non-interventional committee (Girişimsel Olmayan / Bilimsel Araştırma Etik Kurulu; TR Dizin rule). Drug, medical-device, stem-cell, or tissue/cell-product trials need a TİTCK-approved Klinik Araştırmalar Etik Kurulu plus a TİTCK permit; BA/BE studies a BY/BE Etik Kurulu; cosmetics their own regulation; observational drug studies the clinical committee only (no permit). Generates bilingual (TR/EN) Etik Kurul Başvuru Formu, başvuru dilekçesi, and Bilgilendirilmiş Gönüllü Olur Formu, and lints a consent draft against TİTCK's minimum-content list. Use for a Turkish etik kurul başvurusu, an onam/olur formu, which committee a study needs, or TİTCK approval questions. For non-Turkey IRB/GDPR use alterlab-research-ethics; for KVKK data plans use alterlab-kvkk-dmp. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Guidance + offline scaffolder; the consent linter (scripts/consent_form_check.py) runs locally via `uv run python` with the Python standard library only.
 metadata:
   skill-author: AlterLab

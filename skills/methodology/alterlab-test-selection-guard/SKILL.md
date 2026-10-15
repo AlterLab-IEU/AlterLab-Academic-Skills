@@ -2,7 +2,7 @@
 name: alterlab-test-selection-guard
 description: "Enforces statistical-test selection as a discipline, holding the Iron Law NO TEST CHOSEN AFTER SEEING THE P-VALUE: routes the choice through a fixed decision tree (outcome type -> groups -> paired? -> normality) terminating in named tests (t-test, Mann-Whitney U, ANOVA, Kruskal-Wallis, Wilcoxon, Friedman, chi-square, Pearson/Spearman, regression), gates interpretation behind a mandatory Shapiro-Wilk/Levene/linearity assumption check, blocks test-shopping with an Excuse-vs-Reality table and Red-Flags-STOP list, and applies a 3+-tests escalation gate forcing Bonferroni/FDR correction or an exploratory label. Use when choosing or switching a statistical test, asking which test to run, dropping a test after a non-significant result, or running many tests hunting for significance. For executing the chosen test prefer alterlab-statistical-analysis or alterlab-statsmodels; for the broader frozen-plan discipline see alterlab-preregistration-discipline. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. A discipline-enforcing guidance skill; the optional decision-tree helper runs locally via `uv run python` (standard library only).
 metadata:
     skill-author: AlterLab

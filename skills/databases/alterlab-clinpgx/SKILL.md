@@ -2,7 +2,7 @@
 name: alterlab-clinpgx
 description: Access ClinPGx pharmacogenomics data (the successor to PharmGKB) to query gene-drug interactions, CPIC/DPWG dosing guidelines, drug labels, and pharmacogene records. Use when interpreting pharmacogenes (CYP2D6, CYP2C19, TPMT, DPYD, SLCO1B1), looking up genotype-guided drug dosing, checking PGx drug-safety associations (e.g. HLA-B*57:01 and abacavir), or supporting precision medicine and clinical pharmacogenomics decisions. For star-allele definitions/frequencies see PharmVar; for germline/somatic variant pathogenicity see alterlab-clinvar. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
 compatibility: Keyless ClinPGx (PharmGKB) API for basic access (no authentication required)
 metadata:
     skill-author: AlterLab

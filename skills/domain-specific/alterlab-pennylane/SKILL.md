@@ -2,7 +2,7 @@
 name: alterlab-pennylane
 description: Trains and differentiates quantum circuits with PennyLane, a hardware-agnostic quantum machine-learning framework with automatic differentiation and PyTorch/JAX integration. Use when training quantum circuits via gradients (parameter-shift, backprop, adjoint), building hybrid quantum-classical models or quantum neural networks, or running differentiable variational algorithms (VQE, QAOA). For IBM Quantum hardware and Qiskit Runtime prefer alterlab-qiskit; for Google Quantum AI or NISQ circuits prefer alterlab-cirq; for open-system Lindblad/master-equation dynamics prefer alterlab-qutip. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: No API key required for local simulation. Runs via `uv run python`; requires the pennylane Python package. Remote hardware (IBM, IonQ, Rigetti) needs separate provider credentials.
 metadata:
     skill-author: AlterLab

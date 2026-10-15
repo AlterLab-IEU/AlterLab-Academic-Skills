@@ -2,7 +2,7 @@
 name: alterlab-ssci-sampling-gate
 description: "Gates who is sampled, how, and how many before data collection — checks that the sampling FRAME matches the target population (coverage error), that the METHOD is named (probability vs non-probability: simple random, stratified, cluster, systematic, quota, convenience, snowball), that sample SIZE follows the inference paradigm (an a-priori power analysis for hypothesis tests, a precision/margin-of-error target for estimation, or saturation/information power for qualitative studies — never a rule of thumb or collect-until-significant), and that the generalization claim matches the sample (statistical generalization only from probability samples). Use when asking how many participants are needed, planning recruitment, running or checking a power analysis, or judging whether a sample supports a population claim. For questionnaire items prefer alterlab-survey-design; for choosing the statistical test prefer alterlab-test-selection-guard. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. A discipline-enforcing sampling-and-power skill; the optional sample-size calculator runs locally via `uv run python` (standard library only).
 metadata:
     skill-author: AlterLab

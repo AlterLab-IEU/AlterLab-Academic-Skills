@@ -2,7 +2,7 @@
 name: alterlab-clinicaltrials
 description: Query ClinicalTrials.gov via its API v2 to search trials by condition, drug, location, recruitment status, or phase and retrieve trial details by NCT ID. Use when finding interventional or observational studies, checking trial status and eligibility for patient matching, or exporting clinical trial records for research. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(python3:*)
 compatibility: Keyless ClinicalTrials.gov API v2 (no authentication required)
 metadata:
     skill-author: AlterLab

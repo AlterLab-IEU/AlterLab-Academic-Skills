@@ -2,7 +2,7 @@
 name: alterlab-preregistration-discipline
 description: "Enforces pre-registration discipline with the Iron Law NO DATA ANALYSIS WITHOUT A PRE-REGISTERED ANALYSIS PLAN FIRST, a spirit-vs-letter line, an Excuse-vs-Reality rationalization table, and a Red-Flags-STOP list (HARKing, optional stopping, post-hoc covariates, outlier-dropping, test-shopping). Runs a PLAN/COLLECT/CONFIRM/EXPLORE workflow that freezes hypotheses, tests, exclusions, and stopping rules before data, then forces unplanned findings to be labeled exploratory (their p-values lose confirmatory status, per COS confirmatory/exploratory model). Orchestrates, not replaces, alterlab-open-science (OSF/AsPredicted registration), alterlab-statistical-analysis (test selection, assumptions), and alterlab-scientific-thinking (bias grading). Use when analyzing data without a frozen plan, switching the primary outcome or adding covariates after seeing results, weighing early stopping, dropping outliers post-hoc, pre-registering a study, or rationalizing deviation. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Judgment/discipline skill; the optional helper runs locally via `uv run python` (stdlib only). Defers all registration mechanics and statistics to the sibling skills it orchestrates.
 metadata:
   skill-author: AlterLab

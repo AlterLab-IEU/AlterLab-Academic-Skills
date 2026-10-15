@@ -2,7 +2,7 @@
 name: alterlab-ssci-inference-gate
 description: "Audits final inferential claims against the design, sample, and uncertainty before they are written or published — refuses causal language unless the design's identifying assumption is defended (else downgrades to associational), corrects p-value and confidence-interval misreadings (a p-value is not the probability the null is true, non-significance is not proof of no effect, a 95% CI is not a 95% probability the parameter is inside it), demands effect sizes with intervals rather than significance stars, flags uncorrected multiple comparisons and optional stopping / HARKing, and scopes generalization to the sampling frame. Use when writing or checking a results or discussion section, interpreting a p-value or confidence interval, or deciding whether a finding supports a causal or population claim. For choosing the statistical test prefer alterlab-test-selection-guard; to execute the analysis prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. A discipline-enforcing claim-audit skill; the optional claim linter runs locally via `uv run python` (standard library only).
 metadata:
     skill-author: AlterLab

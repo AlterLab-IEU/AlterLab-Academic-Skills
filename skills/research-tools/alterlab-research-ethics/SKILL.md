@@ -2,7 +2,7 @@
 name: alterlab-research-ethics
 description: "International research ethics and compliance assistant supporting IRB/ethics board applications, informed consent drafting, data management plans, Belmont Report principles, Declaration of Helsinki (2024), GDPR compliance for research, HIPAA considerations, vulnerable populations protocols, deception research, confidentiality and anonymity, research integrity (fabrication/falsification/plagiarism), conflict of interest disclosure, and dual-use research oversight. Use when preparing an IRB or ethics board application, drafting informed consent, writing a data management plan, addressing GDPR/HIPAA in research, protecting human subjects or vulnerable populations, handling animal ethics, or disclosing conflicts of interest. For Turkey-specific etik kurul use alterlab-tr-research-ethics; for KVKK data plans alterlab-kvkk-dmp; for survey wording alterlab-survey-design; for qualitative methodology alterlab-qualitative-methods. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read WebFetch WebSearch Bash(python:*)
+allowed-tools: Read WebFetch WebSearch Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.
 metadata:
   skill-author: AlterLab

@@ -2,7 +2,7 @@
 name: alterlab-syllabus-ai-policy
 description: "Drafts course-level generative-AI use policies and syllabus statements: assigns each graded task a permitted/restricted/prohibited tier (modeled on Cornell's prohibit/allow-with-attribution/encourage framework), writes the disclosure clause with current APA (2025: cite the shared chat or the tool) and MLA generative-AI citation templates, and adds assessment-integrity, accessibility, and equity language bound to the institution's own academic-integrity code. Ships scripts/policy_builder.py to emit a paste-ready statement and scripts/policy_lint.py to flag a vague or self-contradicting draft. Use when the request mentions a syllabus AI policy, a course statement on ChatGPT or generative AI, an academic-integrity clause for AI tools, an AI-disclosure rule, or per-assignment permitted/prohibited AI tiers. For full course/backward design, syllabus, or rubrics use alterlab-teaching-design; for human-subjects AI-tool ethics use alterlab-research-ethics. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*) WebFetch
+allowed-tools: Read Write Edit Bash(python:*) WebFetch Bash(uv run:*)
 compatibility: No API key or network required — emits institution-parameterized policy text from local templates via `uv run python`; WebFetch is used only to read a linked institutional academic-integrity code when the user supplies its URL
 metadata:
   skill-author: AlterLab

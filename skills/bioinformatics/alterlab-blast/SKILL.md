@@ -2,7 +2,7 @@
 name: alterlab-blast
 description: "Runs NCBI BLAST+ 2.17.0 sequence searches from the command line: makeblastdb (with -parse_seqids), blastn/blastp/blastx/tblastn with tabular -outfmt 6/7 for parsing, correct -task choice (megablast vs blastn vs blastn-short), -taxids/-negative_taxids taxonomic scoping, and -mt_mode multithreading; plus a DIAMOND blastp --ultra-sensitive path for large protein searches. Warns that -max_target_seqs is a heuristic keep-count, not a top-N best-hits filter. Use when the user wants command-line BLAST, makeblastdb, a local BLAST database, blastn/blastp/blastx/tblastn searches, or DIAMOND protein search. For the Bio.Blast web NCBIWWW API prefer alterlab-biopython; for quick one-liner database lookups prefer alterlab-gget. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*) Bash(makeblastdb:*) Bash(blastn:*) Bash(blastp:*) Bash(blastx:*) Bash(tblastn:*) Bash(blastdbcmd:*) Bash(diamond:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(makeblastdb:*) Bash(blastn:*) Bash(blastp:*) Bash(blastx:*) Bash(tblastn:*) Bash(blastdbcmd:*) Bash(diamond:*) Bash(uv run:*)
 compatibility: "Requires NCBI BLAST+ 2.17.0 binaries on PATH (conda: `bioconda::blast`; or Homebrew `blast`); no API key or account needed for local searches. DIAMOND (`bioconda::diamond`) is optional and only used for the large-protein fast path. Parsing/QC helper runs under `uv run python` with the standard library only."
 metadata:
     skill-author: AlterLab

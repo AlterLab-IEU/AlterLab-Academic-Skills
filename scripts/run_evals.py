@@ -852,7 +852,9 @@ def skill_allowed_tools(skill_md: str) -> list[str]:
     tools), and the judge scores a correct refusal to answer from memory as a FAIL.
     """
     raw = _frontmatter_value(skill_md, "allowed-tools") or ""
-    return [t for t in raw.split() if t]
+    # Split on spaces/commas outside parentheses: ``Bash(uv run:*)`` is one rule, as Claude
+    # Code reads it (checked live 2026-10-15), not ``Bash(uv`` and ``run:*)``.
+    return [t for t in re.findall(r"[^\s,(]+(?:\([^)]*\))?", raw) if t]
 
 
 def _run_arm(prompt: str, model: str, timeout: int, runs: int, workspace: Path,

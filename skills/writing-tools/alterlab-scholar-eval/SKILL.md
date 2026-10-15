@@ -2,7 +2,7 @@
 name: alterlab-scholar-eval
 description: Evaluates scholarly work with a ScholarEval-inspired eight-dimension rubric, producing structured assessment across research-quality dimensions (problem formulation, literature, methodology, data, analysis, results, writing, and citations) with quantitative 1-5 rubric scores, weighted aggregates, and actionable feedback. Use when scoring or grading a paper, thesis, or research output against rubric-style criteria, or benchmarking publication readiness across revisions. For checklist-based narrative reviewer reports prefer alterlab-peer-review; for evidence/claim quality and argument soundness use alterlab-scientific-thinking. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit
+allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No external tools, API keys, or services required — scores work from the Read/Write/Edit tools alone
 metadata:
     skill-author: AlterLab

@@ -2,7 +2,7 @@
 name: alterlab-sem-psychometrics
 description: "Fits and evaluates measurement models — confirmatory factor analysis, full structural equation models, exploratory factor analysis, item response theory, and multi-group measurement invariance — using the verified Python stack: semopy (model syntax =~ / ~ / ~~, Model.fit, inspect(std_est=True), calc_stats for CFI/TLI/RMSEA), factor_analyzer (EFA, KMO, Bartlett, ConfirmatoryFactorAnalyzer), and pingouin/girth, computing McDonald's omega from standardized loadings and judging fit against Hu & Bentler cutoffs. Use when the request mentions confirmatory factor analysis, structural equation modeling, a latent variable or construct model, factor loadings, IRT, or measurement invariance across groups. For deciding whether a scale is trustworthy at all prefer alterlab-ssci-measurement-gate; for plain regression prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Requires (declare in-session, no runtime install on Anthropic API): semopy>=2.3, factor_analyzer>=0.5 (0.5.1 is the last release and needs scikit-learn<1.8 and pandas<3 — isolate it, or run EFA in R psych), pingouin>=0.5, optionally girth (IRT) (pip). SRMR and omega are not returned by semopy — compute omega with the bundled script; IRT beyond 2PL is often better in R mirt. Runs locally via `uv run python`; no API key."
 metadata:
     skill-author: AlterLab

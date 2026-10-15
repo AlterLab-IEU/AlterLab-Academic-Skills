@@ -2,7 +2,7 @@
 name: alterlab-ssci-reflexivity-gate
 description: "Gates trustworthiness before qualitative or interpretivist claims are written — the qualitative analog of the measurement gate. Checks that researcher positionality and role are stated, that the four Lincoln & Guba trustworthiness criteria are addressed (credibility via triangulation / member-checking / prolonged engagement, transferability via thick description, dependability via an audit trail, confirmability via reflexive bracketing), and that reflexivity is evidenced rather than asserted. Fail-closed: interpretivist generalizing or causal language is refused without the corresponding warrant. Use when a study is qualitative / ethnographic / interpretivist, when reviewing trustworthiness or reflexivity, or before writing up thematic or grounded-theory findings. For quantitative measurement validity prefer alterlab-ssci-measurement-gate; for running the coding prefer alterlab-qualitative-analysis; for the final claim audit prefer alterlab-ssci-inference-gate. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "No API key required. A discipline-enforcing gate; coding execution is handed to alterlab-qualitative-analysis. Reads/writes the YAML Design Passport like the other ssci gates; the optional checklist linter runs locally via `uv run python` (standard library only)."
 metadata:
     skill-author: AlterLab

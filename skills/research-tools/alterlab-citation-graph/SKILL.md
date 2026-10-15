@@ -2,7 +2,7 @@
 name: alterlab-citation-graph
 description: "Free ResearchRabbit / Connected Papers analog — builds a citation and co-citation graph around one or more seed papers using the OpenAlex API. Walks both directions of the citation network (works the seed cites and works that cite the seed), ranks the discovered neighbourhood by co-citation strength and bibliographic coupling to surface the papers most central to a topic's literature, and exports the network as GraphML (Gephi / Cytoscape / yEd) and JSON. Use when mapping a literature landscape, finding seminal or highly co-cited papers from a seed DOI, snowballing a reference network, building a citation map / co-citation analysis, or visualizing how a research area's papers connect — no subscription needed (a free OpenAlex API key is recommended). Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: "Free OpenAlex API key recommended (OPENALEX_API_KEY or --api-key; openalex.org/settings/api) — keyless requests share a small per-IP daily budget and can hit HTTP 429. Needs network access to api.openalex.org. Stdlib-only — runs under bare `uv run python`."
 metadata:
   skill-author: AlterLab

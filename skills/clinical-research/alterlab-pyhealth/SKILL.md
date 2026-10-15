@@ -2,7 +2,7 @@
 name: alterlab-pyhealth
 description: Develops, tests, and validates clinical machine learning models with the PyHealth 2.x healthcare AI toolkit. Use when working with electronic health records (EHR), clinical prediction tasks (mortality, readmission, length of stay, drug recommendation), medical coding systems (ICD, NDC, ATC, CCS), physiological signals (EEG, ECG), healthcare datasets (MIMIC-III/IV, eICU, OMOP), or implementing deep learning models for healthcare (RETAIN, SafeDrug, GAMENet, Transformer, GAT/GCN). Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: "Self-contained — runs under `uv run python` with PyHealth >= 2.0.2 (Python 3.12-3.13) in its own environment; no API key required. MIMIC-III/IV and eICU data need the user's own PhysioNet credentialed access."
 metadata:
     skill-author: AlterLab

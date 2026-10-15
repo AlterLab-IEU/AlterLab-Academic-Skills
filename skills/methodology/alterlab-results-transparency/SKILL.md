@@ -2,7 +2,7 @@
 name: alterlab-results-transparency
 description: Enforces results-reporting transparency as a discipline gate built on the Iron Law "NO RESULTS CLAIM WITHOUT REPORTING EVERY ANALYSIS RUN" — a numbered Gate Function (IDENTIFY the claim, LIST every test actually run including the ones that did not "work", CHECK assumptions were reported, CHECK effect size with 95% CI is present, CHECK pre-registration deviations are disclosed, ONLY THEN write the sentence), plus an Excuse-vs-Reality table and Red-Flags-STOP list for selective reporting, cherry-picking, and bare p-values. Use when writing up Results, claiming a finding from a subset of analyses, reporting a p-value without an effect size or confidence interval, dropping outliers post hoc, or omitting analyses that did not pan out. Orchestrates alterlab-statistical-analysis (tests, effect sizes), alterlab-preregistration-discipline (the frozen plan), and alterlab-open-science (TOP, disclosure); it does not run the tests itself. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Judgment/discipline skill; the optional reporting-gate helper runs locally via `uv run python` (stdlib only).
 metadata:
   skill-author: AlterLab

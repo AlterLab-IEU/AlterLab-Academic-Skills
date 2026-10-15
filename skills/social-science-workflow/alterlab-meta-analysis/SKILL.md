@@ -2,7 +2,7 @@
 name: alterlab-meta-analysis
 description: "Runs quantitative meta-analysis — computes effect sizes (Hedges' g / standardized mean difference, log odds/risk ratios) with their variances, pools them under fixed-effect and random-effects models, quantifies heterogeneity (I-squared, tau-squared, Cochran's Q), draws forest and funnel plots, and tests publication bias (Egger's regression, trim-and-fill) — using statsmodels.stats.meta_analysis in Python or the field-standard R metafor via Rscript. It enforces PRISMA reporting and the random- vs fixed-effect decision. Use when pooling effect sizes across studies, running a systematic review's quantitative synthesis, or assessing heterogeneity and publication bias. For finding and screening the literature prefer alterlab-deep-research; for a single study's statistics prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Requires (declare in-session, no runtime install on Anthropic API): Python statsmodels>=0.14 (statsmodels.stats.meta_analysis) — OR the field-standard R metafor>=5.0 via Rscript (escalc/rma/forest/funnel/regtest/trimfill). Note: the PyPI PythonMeta package is stale/unmaintained — prefer statsmodels or metafor. Runs locally via `uv run python` / `Rscript`; no API key."
 metadata:
     skill-author: AlterLab

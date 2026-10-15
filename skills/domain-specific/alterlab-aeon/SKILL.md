@@ -2,7 +2,7 @@
 name: alterlab-aeon
 description: Runs time series machine learning with the aeon library — classification, regression, clustering, forecasting, anomaly detection, segmentation, and similarity search via scikit-learn compatible APIs. Use when working with temporal data, sequential patterns, or time-indexed observations (univariate or multivariate) that need specialized algorithms beyond standard ML approaches. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(uv run python:*) Bash(uv pip install:*)
+allowed-tools: Read Write Edit Bash(uv run python:*) Bash(uv pip install:*) Bash(uv run:*)
 compatibility: No API key required. Runs locally via `uv run python`; requires the aeon Python package.
 metadata:
     skill-author: AlterLab

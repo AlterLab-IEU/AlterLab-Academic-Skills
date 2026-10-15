@@ -2,7 +2,7 @@
 name: alterlab-sna
 description: "Applies social-network-analysis method discipline to relational data — degree/betweenness/closeness/eigenvector centrality and PageRank, community detection (Louvain, greedy-modularity, and — from networkx 3.7 — Leiden native in networkx; igraph/leidenalg for large graphs), and inferential network models (ERGM) — choosing the measure that matches the substantive question and the right dependence assumptions, then routing computation to the existing networkx (and igraph/R) tooling. Use when the request mentions social network analysis, centrality, key players/brokerage, community or cluster detection in a network, ERGM, or modeling ties between nodes. For general graph algorithms and plotting prefer alterlab-networkx; for graph neural networks prefer alterlab-torch-geometric. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Computation routes to networkx>=3.4 (centrality, native Louvain/greedy-modularity; native Leiden needs networkx>=3.7, current 3.7). Very large graphs -> igraph>=0.11 (PyPI `igraph`, formerly `python-igraph`; current 1.0) or leidenalg. ERGM has no mature Python package -> R statnet/ergm via an R bridge (declare it). No API key; runs locally via `uv run python`."
 metadata:
     skill-author: AlterLab

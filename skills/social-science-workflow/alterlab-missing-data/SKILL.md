@@ -2,7 +2,7 @@
 name: alterlab-missing-data
 description: "Handles missing data with principled methods — forces an explicit MCAR / MAR / MNAR mechanism statement, then applies multiple imputation by chained equations (MICE) with Rubin's-rules pooling of estimates and standard errors, or full-information maximum likelihood (FIML) where a likelihood/SEM model applies. Uses statsmodels MICE / MICEData in Python or the field-standard R mice via Rscript, and warns that single (mean/regression) imputation and scikit-learn's IterativeImputer return one completed dataset without Rubin's-rules pooling, so they understate standard errors if used as multiple imputation. Use when a dataset has missing values, when choosing an imputation strategy, or when reporting how missingness was handled. For general modeling on complete data prefer alterlab-statistical-analysis; for latent-variable models with FIML prefer alterlab-sem-psychometrics. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Requires (declare in-session, no runtime install on Anthropic API): Python statsmodels>=0.14 (statsmodels.imputation.mice), pandas; scikit-learn IterativeImputer only for single imputation (NOT Rubin pooling) — OR the field-standard R mice>=3.19 via Rscript (mice/with/pool). Runs locally via `uv run python` / `Rscript`; no API key."
 metadata:
     skill-author: AlterLab

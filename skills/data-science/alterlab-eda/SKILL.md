@@ -2,7 +2,7 @@
 name: alterlab-eda
 description: Exploratory data analysis (EDA) on a scientific data file — auto-detects the format, runs structure/quality/statistics checks, and writes a markdown EDA report with downstream recommendations. Use when asked to "explore", "analyze", "summarize", "profile", or "QC" a data file, or to understand its structure/content/quality before deciding what analysis to run. Covers tabular (.csv .tsv .xlsx .parquet), arrays (.npy .npz .hdf5 .h5 .mat .fits), sequence/genomics (.fasta .fastq .sam .bam .vcf .bed .gff .gtf .h5ad), microscopy (.tif .nd2 .czi .lif .ims .dcm .nii), spectroscopy/MS (.mzML .mzXML .mgf .fid .jdx), chemistry (.pdb .cif .mol .sdf .xyz .gro), and proteomics/metabolomics (.pepXML .mzid .mzTab). For zero-shot forecasting of a series use alterlab-timesfm; to create/configure a chunked cloud array store use alterlab-zarr. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools:
+allowed-tools: Bash(uv run:*)
     - Read
     - Write
     - Edit

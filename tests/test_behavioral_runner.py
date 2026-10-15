@@ -297,3 +297,9 @@ def test_shipped_calibration_set_is_well_formed() -> None:
     assert len({p["id"] for p in pairs}) == len(pairs) >= 5
     assert {p["expected"] for p in pairs} == {"PASS", "FAIL"}
     assert all(p["rubric"].strip() and p["response"].strip() for p in pairs)
+
+
+def test_allowed_tools_keep_spaced_patterns_whole() -> None:
+    md = "---\nname: x\nallowed-tools: Read Bash(uv run:*), Bash(git clone:*) WebFetch\n---\nbody"
+    assert run_evals.skill_allowed_tools(md) == ["Read", "Bash(uv run:*)", "Bash(git clone:*)",
+                                                 "WebFetch"]

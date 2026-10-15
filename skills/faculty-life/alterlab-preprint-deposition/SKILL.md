@@ -2,7 +2,7 @@
 name: alterlab-preprint-deposition
 description: "Drives preprint deposition across servers (arXiv, bioRxiv, medRxiv, ChemRxiv, SSRN, Research Square, OSF Preprints): picks the server by field, prepares submission metadata and arXiv categories, sets the license from each server's real option set (arXiv non-exclusive license or CC BY/BY-SA/BY-NC-SA/BY-NC-ND/CC0; bioRxiv/medRxiv CC variants or No-reuse) against funder mandates (NIH, NSF, Gates, Plan S), handles immutable versioning and preprint DOIs, checks a journal's preprint policy via the Jisc Open Policy Finder API (formerly Sherpa Romeo), and links the preprint to the published article. Reuses alterlab-arxiv and alterlab-biorxiv for metadata. Use when depositing a preprint, choosing a preprint server, preparing an arXiv, bioRxiv, or medRxiv submission, setting a preprint license, or checking journal preprint policy; for Zenodo/Dryad/Figshare data deposition prefer alterlab-open-science, for TÜBİTAK Aperta prefer alterlab-aperta. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*) WebFetch
+allowed-tools: Read Write Edit Bash(python:*) WebFetch Bash(uv run:*)
 compatibility: "No API key required for the deposition workflow itself. Optional Python helpers run via `uv run python` (stdlib-only, requests optional). The journal-policy check uses the Jisc Open Policy Finder API (successor to the Sherpa Romeo v2 API, which was switched off in 2026), which needs a free non-commercial API key sent as an x-api-key header; the bioRxiv/medRxiv preprint-to-publication check uses the keyless api.biorxiv.org content API."
 metadata:
   skill-author: AlterLab

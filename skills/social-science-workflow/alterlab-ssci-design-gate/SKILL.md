@@ -2,7 +2,7 @@
 name: alterlab-ssci-design-gate
 description: "Routes a social-science study to its research design — true experiment, quasi-experiment (difference-in-differences, instrumental variables, regression discontinuity, interrupted time series, fixed effects), observational/correlational, qualitative, or mixed — by walking the random-selection and random-assignment decisions, then PINS the identifying assumption the causal claim will rest on (parallel trends, exclusion restriction, continuity at the cutoff, selection-on-observables, or qualitative saturation logic) before any analysis begins. Use when choosing a study design, asking what design to use, framing a causal question from observational data, or deciding experiment vs quasi-experiment vs observational. For executing the analysis prefer alterlab-statistical-analysis; for qualitative design depth prefer alterlab-qualitative-methods; for choosing the statistical test downstream prefer alterlab-test-selection-guard. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. A discipline-enforcing design-routing skill; the optional decision-tree helper runs locally via `uv run python` (standard library only).
 metadata:
     skill-author: AlterLab
