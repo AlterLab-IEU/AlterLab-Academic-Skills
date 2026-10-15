@@ -278,7 +278,6 @@ Not sure? Start with `plan` — it will guide you step by step.
 "help me with my revision"              -> revision-coach
 ```
 
-
 ---
 
 ## Plan Mode: CHAPTER-BY-CHAPTER GUIDED PLANNING
