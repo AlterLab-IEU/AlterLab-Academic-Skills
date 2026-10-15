@@ -365,3 +365,12 @@ def test_release_workflow_calls_the_tested_helper() -> None:
     assert "pytest tests/test_bundles.py tests/test_install.py" in text
     assert not re.search(r"(?m)^\s*(?:\(.*)?zip -r", text), "release.yml must not zip by hand"
     assert "dist/release-manifest.json" in text
+
+
+def test_eval_fixtures_are_not_packaged() -> None:
+    """Test inputs under evals/fixtures/ stay out of every archive; evals.json still ships."""
+    import build_bundles as bb
+    assert bb._excluded(Path("evals/fixtures/onam_formu_taslak.md"))
+    assert bb._excluded(Path("alterlab-x/evals/fixtures/our-docs/README.md"))
+    assert not bb._excluded(Path("evals/evals.json"))
+    assert not bb._excluded(Path("references/fixtures.md"))

@@ -217,7 +217,12 @@ def read_version() -> str:
 def _excluded(rel: Path) -> bool:
     if rel.name in EXCLUDE_NAMES or rel.suffix in EXCLUDE_SUFFIXES:
         return True
-    return any(part in EXCLUDE_DIR_NAMES for part in rel.parts)
+    parts = rel.parts
+    # evals/fixtures/ holds test inputs (sample manuscripts, consent forms, datasets, a demo
+    # docs repo); they are not part of what a skill tells Claude to read, so they do not ship.
+    if any(a == "evals" and b == "fixtures" for a, b in zip(parts, parts[1:])):
+        return True
+    return any(part in EXCLUDE_DIR_NAMES for part in parts)
 
 
 def tree_files(root: Path) -> list[Path]:
