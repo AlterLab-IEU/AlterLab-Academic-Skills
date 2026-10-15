@@ -22,7 +22,8 @@ OUT="$(mkdir -p "$OUT" && cd "$OUT" && pwd)"; LOGS="$OUT/logs"; mkdir -p "$LOGS"
 cd "$ROOT"
 run_one() {
   d="$1"; name=$(basename "$d")
-  mkdir "$LOGS/.claim-$name" 2>/dev/null || return 0   # another sweep has it
+  key=$(printf '%s' "$d" | tr -c 'A-Za-z0-9._-' '_')
+  mkdir "$LOGS/.claim-$key" 2>/dev/null || return 0   # another sweep has it
   uv run --no-sync python scripts/run_evals.py --behavioral --skill-dir "$d" \
      --results-dir "$OUT" "${EXTRA[@]}" > "$LOGS/$name.log" 2>&1
   echo "$name exit=$?" >> "$LOGS/_done.txt"
