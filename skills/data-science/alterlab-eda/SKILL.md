@@ -2,13 +2,8 @@
 name: alterlab-eda
 description: Exploratory data analysis (EDA) on a scientific data file — auto-detects the format, runs structure/quality/statistics checks, and writes a markdown EDA report with downstream recommendations. Use when asked to "explore", "analyze", "summarize", "profile", or "QC" a data file, or to understand its structure/content/quality before deciding what analysis to run. Covers tabular (.csv .tsv .xlsx .parquet), arrays (.npy .npz .hdf5 .h5 .mat .fits), sequence/genomics (.fasta .fastq .sam .bam .vcf .bed .gff .gtf .h5ad), microscopy (.tif .nd2 .czi .lif .ims .dcm .nii), spectroscopy/MS (.mzML .mzXML .mgf .fid .jdx), chemistry (.pdb .cif .mol .sdf .xyz .gro), and proteomics/metabolomics (.pepXML .mzid .mzTab). For zero-shot forecasting of a series use alterlab-timesfm; to create/configure a chunked cloud array store use alterlab-zarr. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Bash(uv run:*)
-    - Read
-    - Write
-    - Edit
-    - Bash(uv:*)
-    - Bash(python:*)
-compatibility: No API key required. Run scripts via `uv run python` (this machine is uv-first); install format-specific parsers with `uv pip install <pkg>` on demand. Tabular analysis assumes pandas >= 2 (pandas 3 string-dtype defaults are handled).
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
+compatibility: No API key required. Run scripts with `uv run --python ">=3.11" --with pandas [--with <parser>] python ...`, which resolves the parsers per call (no install step, no virtualenv). Tabular analysis assumes pandas >= 2 (pandas 3 string-dtype defaults are handled).
 metadata:
     skill-author: AlterLab
     version: "1.0.1"
@@ -133,8 +128,10 @@ Use the `scripts/eda_analyzer.py` script OR implement custom analysis:
 
 **Option A: Use the analyzer script** (auto-detects type, loads the reference, runs format-specific analysis, writes the report)
 ```bash
-uv run python scripts/eda_analyzer.py <filepath> [output.md]
+uv run --python ">=3.11" --with pandas python scripts/eda_analyzer.py <filepath> [output.md]
+# add the parser the format needs, e.g. --with biopython (FASTA/FASTQ), --with h5py, --with pillow
 ```
+A bare `uv run python` can land on an interpreter without pandas (the analysis section then reads "Required library not installed"), and `uv pip install` fails outside a virtualenv, so always pass the `--with` flags.
 The script has built-in analyzers for tabular (`.csv`/`.tsv`), arrays (`.npy`/`.npz`/`.hdf5`), JSON, sequence (`.fasta`/`.fastq`, also gzip/bz2/xz-compressed), and basic imaging (`.tif`). For every other format it still detects the type and embeds the reference info, but you perform the data analysis yourself (Option B).
 
 **Option B: Custom analysis in the conversation**
@@ -294,11 +291,11 @@ Many scientific formats require specialized libraries:
 
 **Problem:** Import error when trying to read a file
 
-**Solution:** Install the parser with `uv pip install <pkg>` (do NOT use bare `pip` on this machine), then retry. Common requirements by category:
+**Solution:** Rerun with the parser added to the uv command, e.g. `uv run --python ">=3.11" --with nd2 python inspect.py` (no install step; do NOT use bare `pip` on this machine). Common requirements by category:
 - **Bioinformatics:** `biopython`, `pysam`, `pyBigWig`
 - **Chemistry:** `rdkit`, `mdanalysis`, `cclib`
 - **Microscopy:** `tifffile`, `nd2`, `bioio` plus a format plugin such as `bioio-czi` or `bioio-lif` (successor to the maintenance-mode `aicsimageio`), `pydicom`
-- **Spectroscopy:** `nmrglue`, `pymzml`, `pyteomics`
+- **Spectroscopy:** `nmrglue`, `pymzml`, `pyteomics` (pyteomics' mzML reader also needs `psims`, so pass `--with pyteomics --with psims --with lxml`)
 - **General:** `pandas`, `numpy`, `h5py`, `scipy`
 
 ### Unknown File Types
@@ -322,8 +319,9 @@ For very large files:
 ## Script Usage
 
 ```bash
-uv run python scripts/eda_analyzer.py data.csv                 # report -> data_eda_report.md
-uv run python scripts/eda_analyzer.py data.csv output_report.md
+uv run --python ">=3.11" --with pandas python scripts/eda_analyzer.py data.csv                    # report -> data_eda_report.md
+uv run --python ">=3.11" --with pandas python scripts/eda_analyzer.py data.csv output_report.md
+uv run --python ">=3.11" --with biopython python scripts/eda_analyzer.py reads.fastq
 ```
 
 The script auto-detects the file type (looking through a trailing `.gz`/`.bz2`/`.xz`), loads the matching reference section, runs built-in analysis where available, and writes the markdown report. For formats without a built-in analyzer, prefer custom analysis in the conversation (Option B) for domain-specific insight. Note: for `.csv`/`.tsv` the script samples the first 10,000 rows, so report dimensions/missing counts as *sampled* unless you re-run on the full file.
