@@ -63,6 +63,10 @@ if mode == "lingering" and skilled:
               "    pathlib.Path('bg', str(i)).parent.mkdir(exist_ok=True)\n"
               "    pathlib.Path('bg', str(i)).write_text('x'); time.sleep(0.01)"],
              stdout=sp.DEVNULL, stderr=sp.DEVNULL)
+if mode == "escaped" and skilled:
+    import subprocess as sp  # like Claude Code's Bash tool: the job gets a session of its own
+    sp.Popen([sys.executable, "-c", "import time\nfor i in range(9000): time.sleep(0.1)  # escaped-job"],
+             stdout=sp.DEVNULL, stderr=sp.DEVNULL, start_new_session=True)
 if mode == "vandal" and not prompt.startswith(("You are grading", "A user sent")):
     with open(os.environ["FAKE_VANDAL_TARGET"], "w", encoding="utf-8") as fh:
         fh.write("an answer arm wrote this\n")
@@ -455,6 +459,17 @@ def test_background_jobs_an_arm_leaves_behind_cannot_crash_or_outlive_the_run(fa
     left = subprocess.run(["pgrep", "-f", "for i in range\\(600\\)"], capture_output=True,
                           text=True).stdout.split()
     assert not left, f"background job outlived its arm: {left}"
+
+
+def test_a_background_job_in_its_own_session_is_killed_with_its_arm(fake_cli, tmp_path,
+                                                                     monkeypatch):
+    """Claude Code's Bash tool gives each command its own session, out of reach of the call's
+    process group; a training job left that way ran for an hour and starved later arms."""
+    rc, res = _run(tmp_path, [_case("a")], "escaped", monkeypatch)
+    assert res["cases"][0]["skilled"]["outcome"] == "PASS"
+    left = subprocess.run(["pgrep", "-f", "escaped-job"], capture_output=True,
+                          text=True).stdout.split()
+    assert not left, f"a job in its own session outlived its arm: {left}"
 
 
 # --- collect-only, requires, endpoint ---------------------------------------------------------

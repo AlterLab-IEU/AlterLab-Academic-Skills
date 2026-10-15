@@ -638,9 +638,11 @@ def _denial_summary(d: object) -> str:
 
 
 def _run_contained(cmd: list[str], cwd: str, timeout: int) -> subprocess.CompletedProcess:
-    """Run one CLI call in its own session and kill the whole process group when it returns
-    or times out, so nothing an arm started in the background outlives the call (a leftover
-    download kept writing into a deep-research workspace and crashed its cleanup)."""
+    """Run one CLI call in its own session and, when it returns or times out, kill its process
+    group and everything else it left running, so nothing an arm started in the background
+    outlives the call (a leftover download kept writing into a deep-research workspace and
+    crashed its cleanup; leftover training jobs ran for an hour and starved later arms)."""
+    _SUBREAPER["on"] = _SUBREAPER["on"] or _become_subreaper()
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                             cwd=cwd, env=_arm_env(), start_new_session=hasattr(os, "killpg"))
     try:
@@ -648,9 +650,70 @@ def _run_contained(cmd: list[str], cwd: str, timeout: int) -> subprocess.Complet
     except subprocess.TimeoutExpired:
         _kill_group(proc)
         proc.communicate()
+        _reap_leftovers()
         raise
     _kill_group(proc)
+    _reap_leftovers()
     return subprocess.CompletedProcess(cmd, proc.returncode, out, err)
+
+
+_SUBREAPER = {"on": False}
+
+
+def _become_subreaper() -> bool:
+    """Linux: make orphans of this process's descendants re-parent to it instead of init.
+
+    Claude Code's Bash tool starts each command in a session of its own, so a job an arm puts
+    in the background is out of reach of the call's process group, and is orphaned when the
+    CLI exits. As a subreaper, this process still finds it among its descendants."""
+    if not sys.platform.startswith("linux"):
+        return False
+    try:
+        import ctypes
+        return ctypes.CDLL(None, use_errno=True).prctl(36, 1, 0, 0, 0) == 0  # PR_SET_CHILD_SUBREAPER
+    except (OSError, AttributeError):
+        return False
+
+
+def _descendants(root: int) -> list[int]:
+    kids: dict[int, list[int]] = {}
+    for entry in os.listdir("/proc") if os.path.isdir("/proc") else []:
+        if not entry.isdigit():
+            continue
+        try:
+            with open(f"/proc/{entry}/stat", encoding="utf-8", errors="replace") as fh:
+                ppid = int(fh.read().rsplit(")", 1)[1].split()[1])
+        except (OSError, ValueError, IndexError):
+            continue
+        kids.setdefault(ppid, []).append(int(entry))
+    found, todo = [], list(kids.get(root, []))
+    while todo:
+        pid = todo.pop()
+        found.append(pid)
+        todo.extend(kids.get(pid, []))
+    return found
+
+
+def _reap_leftovers() -> None:
+    """Kill every process still descending from this one. Calls run one at a time, so once a
+    call has returned, all of them are what it left behind."""
+    for _ in range(5):
+        pids = _descendants(os.getpid())
+        if not pids:
+            return
+        for pid in pids:
+            try:
+                os.kill(pid, 9)
+            except (ProcessLookupError, PermissionError):
+                pass
+        time.sleep(0.2)
+        while True:  # collect the zombies that re-parented to us
+            try:
+                pid, _ = os.waitpid(-1, os.WNOHANG)
+            except ChildProcessError:
+                break
+            if pid == 0:
+                break
 
 
 def _kill_group(proc: subprocess.Popen) -> None:
