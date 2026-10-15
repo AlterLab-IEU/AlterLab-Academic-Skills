@@ -268,6 +268,9 @@ def print_usage():
 
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] in ("-h", "--help"):
+        print_usage()
+        sys.exit(0)
     if len(sys.argv) < 2:
         print_usage()
         sys.exit(1)

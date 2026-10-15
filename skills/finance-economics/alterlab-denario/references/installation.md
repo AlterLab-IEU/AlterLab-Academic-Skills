@@ -72,7 +72,7 @@ Access the GUI at `http://localhost:8501` after the container starts.
 
 After installation, verify denario is available:
 
-```python
+```bash
 # Test import
 python -c "from denario import Denario; print('Denario installed successfully')"
 ```

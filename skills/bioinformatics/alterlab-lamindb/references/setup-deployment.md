@@ -499,10 +499,14 @@ lamin init --storage s3://prod-bucket/data \
 artifacts = ln.Artifact.filter().all()
 for artifact in artifacts:
     artifact.export("/tmp/export/")
+```
 
+```bash
 # Switch to prod
 lamin connect production
+```
 
+```python
 # Import to prod
 for file in Path("/tmp/export/").glob("*"):
     ln.Artifact(str(file), key=file.name).save()
@@ -685,7 +689,9 @@ lamin migrate check
 import lamindb as ln
 import shutil
 shutil.rmtree(ln.settings.cache_dir)
+```
 
+```bash
 # Set larger cache location
 lamin cache set /larger/disk/cache
 ```
