@@ -45,6 +45,7 @@ This skill should be used when:
 |----------|-------------|
 | Writing a course's generative-AI use policy or syllabus AI statement | `alterlab-syllabus-ai-policy` |
 | Program-level assurance of learning for AACSB or ABET (outcome maps, closing the loop) | `alterlab-accreditation-aol` |
+| Supervising a graduate student's thesis or dissertation: chapter structure, proposal or defense preparation | `alterlab-thesis-supervisor` |
 | Writing an academic paper, including a SoTL paper about a course | `alterlab-paper-writer` |
 | Statistical analysis of student/grade data | `alterlab-statistical-analysis` |
 | Building a slide deck for a talk or lecture | `alterlab-scientific-slides` |
