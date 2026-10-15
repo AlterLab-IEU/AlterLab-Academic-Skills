@@ -122,7 +122,10 @@ def shipped_files() -> list[Path]:
         for pat in ("*.py", "*.sh"):
             files += root.rglob(pat)
         files += root.rglob(".mcp.json")
-    return sorted(files)
+    # evals/fixtures/ holds eval inputs (e.g. a user's plotting script); build_bundles keeps
+    # them out of every archive, so they are not shipped code.
+    return sorted(f for f in files
+                  if not any(a == "evals" and b == "fixtures" for a, b in zip(f.parts, f.parts[1:])))
 
 
 def registrable_domain(host: str) -> str:
