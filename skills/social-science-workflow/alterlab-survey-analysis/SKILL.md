@@ -43,6 +43,8 @@ YOU MUST WEIGHT (AND DECLARE STRATA + PSUs) BEFORE QUOTING ANY NUMBER FROM A COM
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-survey-design`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
+**Running the code.** In Claude Code, run analysis code in a throwaway environment instead of installing packages: `uv run --python ">=3.11" --with "svy>=0.29" --with polars python survey.py`. This needs no install approval and leaves the user's environment untouched. If `uv` or the network is unavailable, say so and hand over the script; never report results you did not compute.
+
 ## The design-object-first rule
 
 Declare **weights + strata + PSU/cluster + FPC** before any estimate:

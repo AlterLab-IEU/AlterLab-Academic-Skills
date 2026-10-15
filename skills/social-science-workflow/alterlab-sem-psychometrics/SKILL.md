@@ -43,6 +43,8 @@ A MEASUREMENT MODEL IS ONLY DONE WHEN FIT, RELIABILITY (OMEGA), AND INVARIANCE A
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-ssci-measurement-gate`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
+**Running the code.** In Claude Code, run analysis code in a throwaway environment instead of installing packages: `uv run --python ">=3.11" --with "semopy>=2.3" --with pandas python cfa.py` (add `--with girth` for IRT). This needs no install approval and leaves the user's environment untouched. If `uv` or the network is unavailable, say so and hand over the script; never report results you did not compute.
+
 ## Verified calls (pinned)
 
 **CFA / SEM — semopy (v2.3):**
@@ -81,7 +83,7 @@ factor_analyzer is unmaintained (0.5.1, Feb 2024) and breaks on current stacks: 
 raises `TypeError` (`force_all_finite`) on scikit-learn ≥ 1.8, and `ModelSpecificationParser`
 fails under pandas 3 ("assignment destination is read-only"). `calculate_kmo` /
 `calculate_bartlett_sphericity` still work. Run it in an isolated env
-(`uv pip install factor_analyzer "scikit-learn<1.8" "pandas<3"`), or do the EFA in R `psych`
+(`uv run --with factor_analyzer --with "scikit-learn<1.8" --with "pandas<3" python efa.py`), or do the EFA in R `psych`
 (`fa()`, `KMO()`, `cortest.bartlett()`, `fa.parallel()`) — say which you used.
 
 **Reliability — omega (not alpha alone):** pingouin gives `cronbach_alpha` but **no omega**, and
