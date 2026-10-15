@@ -60,6 +60,8 @@ Route adjacent requests to the correct sibling skill instead of forcing this one
 | Building a data-capture instrument / survey (Qualtrics, REDCap) or questionnaire | `alterlab-survey-design` | That owns instrument design; KVKK-DMP governs the legal-basis/retention layer over the data they collect |
 | Turkish APA-7 / TR Dizin citation style or academic-writing conventions | `alterlab-tr-academic-style` | Style, not data protection |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-research-ethics`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 If a workflow needs both a **funder VYP** (Aperta) and a **KVKK DMP** (here),
 produce the KVKK plan first and hand its lawful-basis / anonymization decision
 to `alterlab-aperta` to populate the open-science Principle-6 justification.

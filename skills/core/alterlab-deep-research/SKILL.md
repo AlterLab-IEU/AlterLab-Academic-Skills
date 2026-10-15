@@ -74,6 +74,8 @@ Activate `socratic` mode when the user's **intent** matches any of the following
 | Auditing whether the references in an existing bibliography exist or are retracted | `alterlab-citation-verifier` |
 | Pooling already-extracted effect sizes (random-effects model, forest/funnel plots, Egger's test) in Python or R | `alterlab-meta-analysis` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-paper-writer`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 In Claude Code, dual-reviewer PRISMA screening of hundreds of records, a literature map, or a claim stress-test with separate agents is packaged as a workflow (`/alterlab-workflows:systematic-review-screening`, `literature-map`, `claim-stress-test`; see `alterlab-research-workflows`) — offer it before hand-building a fan-out.
 
 ### Quick Mode Selection Guide

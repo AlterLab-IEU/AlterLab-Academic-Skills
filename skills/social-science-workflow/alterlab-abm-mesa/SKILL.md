@@ -39,6 +39,8 @@ THE MODEL IS A THEORY OF HOW MACRO EMERGES FROM MICRO. USE MESA 3 CORRECTLY, THE
 | Whether ABM is the right method at all | `alterlab-ssci-design-gate` | Design routing, upstream. |
 | System-dynamics / ODE compartment models | `alterlab-statistical-analysis` | Aggregate dynamics, not agent-level. |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-simpy`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## The Mesa 3 API (verified — do not ship Mesa 2 patterns)
 
 Mesa 3 removed `mesa.time` schedulers (`RandomActivation`, etc.). Agents auto-register into

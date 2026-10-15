@@ -39,6 +39,8 @@ THE POOLED EFFECT IS ONLY AS GOOD AS ITS HETEROGENEITY STORY AND ITS PUBLICATION
 | Fitting one regression / GLM | `alterlab-statsmodels` | Not effect-size pooling. |
 | Whether the review question/design is sound | `alterlab-ssci-design-gate` | Design routing. |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-deep-research`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Fixed-effect vs random-effects (the first decision)
 
 - **Fixed-effect** — assumes one true effect; studies differ only by sampling error. Rarely

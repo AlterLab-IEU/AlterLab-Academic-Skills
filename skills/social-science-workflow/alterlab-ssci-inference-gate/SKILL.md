@@ -51,6 +51,8 @@ down to what the study supports.
 | Reliability/validity of the measure | `alterlab-ssci-measurement-gate` | Measurement quality, a different ceiling. |
 | Prose polish of an already-sound claim | `alterlab-paper-writer` | Writing, once the claim is audited clean. |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-test-selection-guard`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## The three ceilings
 
 ### 1. Design ceiling — causal language

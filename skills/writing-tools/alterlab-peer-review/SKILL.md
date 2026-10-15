@@ -37,6 +37,8 @@ This skill should be used when:
 | Revising your own manuscript or drafting the response-to-reviewers letter | `alterlab-paper-writer` |
 | Checking that a reference list is real (fabricated or retracted citations) | `alterlab-citation-verifier` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-paper-reviewer`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Confidentiality and AI Use
 
 Manuscripts and proposals under review are confidential, and several funders and publishers restrict generative-AI use by reviewers. Before processing someone else's unpublished work, ask which venue the review is for and follow its policy:

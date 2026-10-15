@@ -49,6 +49,8 @@ Use this skill when the user wants to:
 | The user wants to run one of the packaged AlterLab workflows (citation audit, review panel, PRISMA screening, rebuttal, grant panel, literature map) | `alterlab-research-workflows` |
 | The user asks about Claude API pricing / model ids / SDK billing | the `claude-api` skill |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-research-pipeline`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 This skill is for **how to compose**; the named skills are **what to compose**.
 If a single existing skill already does the job end to end, defer to it.
 

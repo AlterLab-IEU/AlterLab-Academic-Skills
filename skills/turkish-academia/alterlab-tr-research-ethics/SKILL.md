@@ -55,6 +55,8 @@ Route adjacent requests to the correct sibling skill instead of firing here:
 | Docentlik (associate-professorship) eligibility / point math | `alterlab-docentlik-eligibility` |
 | Akademik teşvik (academic-incentive) scoring | `alterlab-akademik-tesvik` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-research-ethics`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 The boundary with `alterlab-kvkk-dmp` matters: **ethics review (this skill)** and
 **KVKK data protection (that skill)** are two separate legal tracks for the same
 study. A full project usually needs both — scaffold the etik kurul dossier here,

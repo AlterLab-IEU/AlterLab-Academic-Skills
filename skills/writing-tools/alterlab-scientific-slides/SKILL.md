@@ -46,6 +46,8 @@ This skill should be used when:
 | A single standalone technical diagram or schematic for a slide | `alterlab-scientific-schematics` |
 | Reviewing or critiquing someone else's talk deck | `alterlab-peer-review` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-latex-posters`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Slide Generation with Nano Banana Pro
 
 **This skill uses Nano Banana Pro AI to generate stunning presentation slides automatically.** There are two workflows depending on output format:

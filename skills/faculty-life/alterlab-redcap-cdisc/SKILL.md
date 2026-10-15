@@ -69,6 +69,8 @@ standards-compliant**:
 | **Finding** registered trials by condition/NCT ID on ClinicalTrials.gov | `alterlab-clinicaltrials` |
 | **ISO 13485** medical-device QMS documentation | `alterlab-iso13485` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-labarchive`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 Routing rule of thumb: **survey-design owns the questions and their measurement
 properties; this skill owns the database that captures them and its standards
 mapping.** If the user asks for both (e.g. "design a validated depression scale

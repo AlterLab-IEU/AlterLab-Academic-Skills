@@ -50,6 +50,8 @@ Use this skill when:
 | Designing and delivering a slide deck for a live talk | `alterlab-scientific-slides` |
 | Posting the paper to arXiv, bioRxiv, medRxiv, or SSRN | `alterlab-preprint-deposition` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-latex-posters`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Visual Enhancement with Scientific Schematics
 
 If a diagram or figure would aid comprehension, invoke the **alterlab-scientific-schematics** skill (diagrams/schematics) or the **alterlab-generate-image** skill (images). Figures are optional — add them only where they improve clarity.

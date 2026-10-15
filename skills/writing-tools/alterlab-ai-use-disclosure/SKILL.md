@@ -68,6 +68,8 @@ Does the EU AI Act force me to label AI-generated text or images in my publicati
 | Formatting the reference list, BibTeX or DOIs | `alterlab-citation-mgmt` | Reference management |
 | Checking whether AI-produced references actually exist | `alterlab-citation-verifier` | Existence and retraction checks |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-syllabus-ai-policy`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 If a request mixes jobs, for example *write my rebuttal and tell me how to declare the AI
 I used*, do the disclosure here and hand the rest to the sibling skill.
 

@@ -53,6 +53,8 @@ the *assumption*; it does not execute, choose the test, or write.
 | Grading evidence quality, confounders, bias upstream | `alterlab-scientific-thinking` | Study-validity judgment, not design routing. |
 | Designing the instrument/questionnaire itself | `alterlab-survey-design` | Measurement instrument, not design family. |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-statistical-analysis`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## The Design Decision Tree
 
 Walk top-down. **Each branch is decided by the data-generating process, not the desired claim.**

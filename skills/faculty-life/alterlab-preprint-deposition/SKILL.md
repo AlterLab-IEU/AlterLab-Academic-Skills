@@ -82,6 +82,8 @@ published version. Core jobs:
 | **Dead-link / 404** checks across a bibliography | `alterlab-link-health` | HTTP reachability, not preprint posting |
 | Picking a **target journal** / formatting for journal submission | `alterlab-open-science` (OA route) then the journal's own guide | This skill only checks whether a journal *permits* a preprint |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-arxiv`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 This skill answers **"how and where do I deposit this manuscript as a preprint,
 and is that compatible with my journal plans?"** It makes no claim about
 manuscript quality, novelty, or whether the work should be published.

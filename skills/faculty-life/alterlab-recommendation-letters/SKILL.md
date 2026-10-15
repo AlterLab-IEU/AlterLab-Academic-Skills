@@ -54,6 +54,8 @@ send or to vouch for on its own authority.
 | Designing a **course, rubric, or syllabus** for the student | `alterlab-teaching-design` | Course/instructional design, not a reference about the student |
 | Writing a **grant proposal** or **post-award report** | `alterlab-research-grants` / `alterlab-grant-reporting` | Funding documents, not personal references |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-academic-career`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 If the candidate is writing about *themselves*, stop and hand off to
 `alterlab-academic-career`. The two skills are deliberately disjoint.
 
