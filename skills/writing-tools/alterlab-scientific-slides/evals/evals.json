@@ -31,11 +31,13 @@
     },
     {
       "id": "validate-slide-overflow",
+      "files": ["fixtures/ml_talk.pdf"],
       "prompt": "Here's my finished talk PDF — check each slide for text overflow, overlapping elements, and fonts that are too small before I present.",
       "expected_output": "Invokes alterlab-scientific-slides visual-review workflow: converts the PDF to images with pdf_to_images.py, inspects each slide for overflow/overlap/small-font/contrast issues, and runs validate_presentation.py for slide count and font-size checks, producing an issue log.",
       "assertions": [
         {"type": "should_trigger", "value": true},
-        {"type": "behavior", "value": "Runs the slide validation/visual-review pass (pdf_to_images.py + validate_presentation.py) to flag overflow, overlap, and small fonts rather than re-authoring the deck."}
+        {"type": "behavior", "value": "Runs the slide validation/visual-review pass (pdf_to_images.py + validate_presentation.py) to flag overflow, overlap, and small fonts rather than re-authoring the deck."},
+        { "type": "behavior", "value": "Flags slide 2 for text running off the right edge and a bullet cut off at the bottom, slide 3 for a font far too small to read, and slide 4 for red text overlapping the bar chart; slide 1 is clean." }
       ]
     },
     {

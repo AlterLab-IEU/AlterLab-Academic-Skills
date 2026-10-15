@@ -91,7 +91,7 @@ If a diagram or figure would aid comprehension, invoke the **alterlab-scientific
 1. **Plan** — define talk type, duration, audience, venue. Use `alterlab-research-lookup` to gather 8-15 papers for citations and outline the narrative arc (Hook → Context → Gap → Approach → Results [40-50% of time] → Implications → Closure).
 2. **Choose implementation** — Nano Banana Pro PDF (default), PowerPoint via PPTX skill, or LaTeX Beamer (math-heavy).
 3. **Build visual-first** — every slide needs a strong visual; text is supporting (3-4 bullets, 4-6 words, 24-28pt body / 36-44pt titles). Modern palette, high contrast (7:1 preferred), 40-50% white space.
-4. **Validate visually** — convert to images with `pdf_to_images.py`, inspect for overflow/overlap/small fonts/contrast, iterate until clean. Run `validate_presentation.py --duration N` for slide-count-vs-duration, file-size, and (PPTX-only) font-size/bullet-count checks. Contrast is judged visually from the images, not by the script.
+4. **Validate visually** — convert to images with `uv run --python ">=3.11" --with pymupdf python scripts/pdf_to_images.py talk.pdf review/slide` (it needs PyMuPDF; this runs it without installing anything), Read each image, inspect for overflow/overlap/small fonts/contrast, iterate until clean. Run `validate_presentation.py --duration N` for slide-count-vs-duration, file-size, and (PPTX-only) font-size/bullet-count checks. Contrast is judged visually from the images, not by the script.
 5. **Practice** — 3-5 times with a timer (~1 slide/min), set checkpoints, never skip conclusions.
 
 ## Routing — where to look
