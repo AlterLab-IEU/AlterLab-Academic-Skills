@@ -3,7 +3,7 @@ name: alterlab-torch-geometric
 description: Graph Neural Networks with PyTorch Geometric (PyG) — node and graph classification, link prediction, GCN, GAT, and GraphSAGE layers, heterogeneous graphs, and molecular property prediction. Use when building or training GNNs for geometric deep learning on graph-structured data. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires torch and torch-geometric (current 2.8.0.post1 as of 2026-09; Python >= 3.10; release notes list PyTorch 2.9-2.12). Neighbor sampling and knn/radius graph ops additionally need the optional pyg-lib wheel. GPU optional.
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with torch --with torch_geometric python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires torch and torch-geometric (current 2.8.0.post1 as of 2026-09; Python >= 3.10; release notes list PyTorch 2.9-2.12). Neighbor sampling and knn/radius graph ops additionally need the optional pyg-lib wheel. GPU optional.
 metadata:
     skill-author: AlterLab
     version: "1.0.1"
@@ -41,9 +41,11 @@ This skill should be used when working with:
 ## Quick Start
 
 ```bash
-uv pip install torch_geometric
-# Optional compiled ops (neighbor sampling, knn/radius graphs, fps): pick TORCH/CUDA to match your install
-uv pip install pyg-lib -f https://data.pyg.org/whl/torch-${TORCH}+${CUDA}.html
+uv run --python ">=3.12" --with torch --with torch_geometric python train_gnn.py   # no install step (PyG 2.8 needs Python >= 3.10)
+# torch + PyG already importable (`python -c "import torch_geometric"`)? run with plain `python`.
+# CPU-only machine: add --index https://download.pytorch.org/whl/cpu so uv fetches CPU torch, not multi-GB CUDA wheels
+# Optional compiled ops (neighbor sampling, knn/radius graphs, fps): pick TORCH/CUDA to match your torch
+uv run --python ">=3.12" --with torch --with torch_geometric --with pyg-lib --find-links https://data.pyg.org/whl/torch-${TORCH}+${CUDA}.html python train_gnn.py
 ```
 
 PyG 2.8 folded `torch-cluster` and `torch-spline-conv` into `pyg-lib` (>= 0.7), so those two

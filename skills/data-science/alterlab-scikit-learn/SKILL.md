@@ -3,7 +3,7 @@ name: alterlab-scikit-learn
 description: Classical machine learning in Python with scikit-learn — algorithms, preprocessing, pipelines, and best-practice reference documentation. Use when working with supervised learning (classification, regression), unsupervised learning (clustering, dimensionality reduction), model evaluation, hyperparameter tuning, feature preprocessing, or building ML pipelines. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires scikit-learn >= 1.8 (current 1.9 as of 2026-09).
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "scikit-learn>=1.8" python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires scikit-learn >= 1.8 (current 1.9 as of 2026-09).
 metadata:
     skill-author: AlterLab
     version: "1.0.1"
@@ -19,14 +19,11 @@ This skill provides comprehensive guidance for machine learning tasks using scik
 ## Installation
 
 ```bash
-# Install scikit-learn using uv
-uv pip install scikit-learn
+# No install step: uv resolves the packages per call (scikit-learn >= 1.8 needs Python >= 3.11)
+uv run --python ">=3.12" --with "scikit-learn>=1.8" --with pandas python pipeline.py
 
-# Optional: Install visualization dependencies
-uv pip install matplotlib seaborn
-
-# Commonly used with
-uv pip install pandas numpy
+# Optional plotting dependencies
+uv run --python ">=3.12" --with "scikit-learn>=1.8" --with pandas --with matplotlib --with seaborn python pipeline.py
 ```
 
 ## When to Use This Skill

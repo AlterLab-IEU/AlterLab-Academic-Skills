@@ -3,7 +3,7 @@ name: alterlab-simpy
 description: Process-based discrete-event simulation in Python with SimPy — processes, queues, shared resources, and time-based events. Use when simulating systems where entities contend for shared resources over time, such as manufacturing systems, service operations, network traffic, or logistics. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires simpy 4.x (current 4.1.2 as of 2026-09; pure Python, no other dependencies).
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with simpy python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires simpy 4.x (current 4.1.2 as of 2026-09; pure Python, no other dependencies).
 metadata:
     skill-author: AlterLab
     version: "1.0.1"

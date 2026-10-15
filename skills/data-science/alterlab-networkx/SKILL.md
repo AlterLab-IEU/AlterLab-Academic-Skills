@@ -3,7 +3,7 @@ name: alterlab-networkx
 description: Creates, analyzes, and visualizes complex networks and graphs in Python with NetworkX. Use when working with network/graph data structures, analyzing relationships between entities, computing graph algorithms (shortest paths, centrality, clustering), detecting communities, generating synthetic networks, or visualizing topologies — applicable to social, biological, transportation, citation, and any pairwise-relationship networks. This is classical graph analytics, not deep learning — for training graph neural networks (GCN/message passing, node/edge/graph classification on Cora-style data) use alterlab-torch-geometric instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires networkx >= 3.4 (current 3.7 as of 2026-09; native Leiden needs 3.7).
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "networkx[default]>=3.4" python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires networkx >= 3.4 (current 3.7 as of 2026-09; native Leiden needs 3.7).
 metadata:
     skill-author: AlterLab
     version: "1.0.1"
@@ -285,9 +285,9 @@ import networkx as nx
 print(nx.__version__)
 ```
 ```bash
-# Install if needed
-uv pip install networkx
-uv pip install 'networkx[default]'   # adds numpy/scipy/pandas/matplotlib extras
+# No install step: uv resolves NetworkX per call (3.7 needs Python >= 3.12;
+# [default] adds numpy/scipy/pandas/matplotlib)
+uv run --python ">=3.12" --with 'networkx[default]>=3.4' python analysis.py
 ```
 
 ### Common Workflow Pattern

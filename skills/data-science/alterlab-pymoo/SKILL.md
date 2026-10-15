@@ -3,7 +3,7 @@ name: alterlab-pymoo
 description: Multi-objective optimization with pymoo — NSGA-II, NSGA-III, MOEA/D, Pareto-front computation, constraint handling, and standard benchmarks (ZDT, DTLZ). Use when solving multi-objective or constrained optimization problems, computing Pareto-optimal trade-offs, or tackling engineering design problems with competing objectives. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires pymoo 0.6.x (current 0.6.2 as of 2026-09).
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "pymoo>=0.6.1" python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires pymoo 0.6.x (current 0.6.2 as of 2026-09).
 metadata:
     skill-author: AlterLab
     version: "1.0.1"
@@ -102,7 +102,7 @@ Always set `seed` for reproducibility, normalize objectives when scales differ, 
 ## Install
 
 ```bash
-uv pip install pymoo
+uv run --python ">=3.12" --with "pymoo>=0.6.1" python scripts/multi_objective_example.py   # no install step
 ```
 
 Dependencies (installed automatically): NumPy, SciPy, matplotlib, autograd, cma, moocore. Docs: https://pymoo.org/ — this skill targets pymoo 0.6.x (current 0.6.2, June 2026, which restored CMA-ES under NumPy 2).

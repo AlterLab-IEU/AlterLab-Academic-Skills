@@ -3,7 +3,7 @@ name: alterlab-timesfm
 description: Forecasts time series zero-shot with Google's TimesFM foundation models — TimesFM 2.5 (200M, Apache-2.0 weights; ForecastConfig API, XReg covariates) and TimesFM 3.0 (~330M, multivariate with native past/future covariates; non-commercial weights) — producing point forecasts and quantile prediction intervals from CSV/DataFrame/array inputs, with a preflight system checker for RAM/GPU. Use when forecasting univariate or multivariate series (sales, sensors, energy, vitals, weather) without training a custom model, batch-forecasting many series, or flagging anomalies against forecast intervals. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: Apache-2.0
-compatibility: No API key required. Runs locally via `uv run python`; requires timesfm >= 2.0 for the TimesFM 2.5 API and >= 3.0 for TimesFM 3.0 (current 3.0.2 as of 2026-09; Python >= 3.10; PyTorch backend, or MLX on Apple silicon). Weights download from Hugging Face on first use (~0.9 GB for 2.5, ~1.3 GB for 3.0); TimesFM 3.0 weights are licensed for non-commercial, non-production use only. GPU optional.
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "timesfm[torch]>=2.0" --with pandas python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires timesfm >= 2.0 for the TimesFM 2.5 API and >= 3.0 for TimesFM 3.0 (current 3.0.2 as of 2026-09; Python >= 3.10; PyTorch backend, or MLX on Apple silicon). Weights download from Hugging Face on first use (~0.9 GB for 2.5, ~1.3 GB for 3.0); TimesFM 3.0 weights are licensed for non-commercial, non-production use only. GPU optional.
 metadata:
   skill-author: AlterLab
   version: "1.1.0"
@@ -140,22 +140,23 @@ python scripts/check_system.py
 
 ### Step 2: Install TimesFM
 
+No install step: run each script through uv, which resolves the extra you need per call. If `python -c "import timesfm, torch, pandas"` already works, run the scripts with plain `python` instead.
+
 ```bash
-uv pip install "timesfm[torch]"          # TimesFM 2.5 + 3.0, PyTorch backend
-uv pip install "timesfm[torch,xreg]"     # + XReg covariates for TimesFM 2.5 (adds JAX, scikit-learn)
-uv pip install "timesfm[mlx]"            # TimesFM 3.0 on Apple silicon without PyTorch
-uv pip install "timesfm[flax]"           # TimesFM 2.5 JAX/Flax backend
+uv run --python ">=3.12" --with "timesfm[torch]" --with pandas python scripts/forecast_csv.py data.csv --horizon 24   # 2.5 + 3.0, PyTorch
+uv run --python ">=3.12" --with "timesfm[torch,xreg]" python covariates.py   # + XReg covariates for 2.5 (adds JAX, scikit-learn)
+uv run --python ">=3.12" --with "timesfm[mlx]" python forecast.py            # TimesFM 3.0 on Apple silicon without PyTorch
+uv run --python ">=3.12" --with "timesfm[flax]" python forecast.py           # TimesFM 2.5 JAX/Flax backend
 ```
 
 ### Step 3: Install PyTorch for Your Hardware
 
 ```bash
-# CPU-only wheels (small download, no CUDA libraries)
-uv pip install torch --index-url https://download.pytorch.org/whl/cpu
+# CPU-only wheels (small download, no CUDA libraries): add the PyTorch CPU index
+uv run --python ">=3.12" --with "timesfm[torch]" --with pandas --index https://download.pytorch.org/whl/cpu python scripts/forecast_csv.py data.csv --horizon 24
 
-# NVIDIA GPU: take the CUDA-specific index URL from https://pytorch.org/get-started/locally/
-# Apple Silicon: the default PyPI wheel already includes MPS support
-uv pip install torch
+# NVIDIA GPU: use the CUDA-specific index URL from https://pytorch.org/get-started/locally/
+# Apple Silicon: the default PyPI wheel already includes MPS support (no --index needed)
 ```
 
 ### Step 4: Verify Installation
@@ -248,7 +249,7 @@ TimesFM 2.5 supports exogenous variables through `forecast_with_covariates()`. I
 `ValueError`). TimesFM 3.0 takes covariates directly in `predict()` (see above).
 
 ```python
-# Requires: uv pip install "timesfm[torch,xreg]"
+# Requires timesfm[torch,xreg]: run with uv run --python ">=3.12" --with "timesfm[torch,xreg]" python ...
 model.compile(timesfm.ForecastConfig(
     max_context=1024, max_horizon=256, normalize_inputs=True,
     use_continuous_quantile_head=True, fix_quantile_crossing=True,

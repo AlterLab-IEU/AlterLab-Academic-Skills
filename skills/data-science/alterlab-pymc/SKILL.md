@@ -3,7 +3,7 @@ name: alterlab-pymc
 description: Bayesian modeling and probabilistic programming with PyMC 6 and ArviZ 1.x — hierarchical models, MCMC (NUTS via PyMC, nutpie, NumPyro, or BlackJAX), variational inference, PSIS-LOO model comparison, and prior/posterior predictive checks. Use when fitting Bayesian or hierarchical models, estimating posteriors and credible intervals, diagnosing divergences, R-hat, or ESS, running probabilistic inference, or comparing models with LOO (WAIC was removed from ArviZ 1.x). Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires pymc >= 6 (current 6.3 as of 2026-09) with ArviZ >= 1.1 and PyTensor 3; nutpie optional but used by default when installed.
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "pymc[nutpie]>=6" --with "arviz[matplotlib]>=1.1" python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires pymc >= 6 (current 6.3 as of 2026-09) with ArviZ >= 1.1 and PyTensor 3; nutpie optional but used by default when installed.
 metadata:
     skill-author: AlterLab
     version: "1.1.0"
@@ -17,7 +17,8 @@ metadata:
 PyMC is a Python library for Bayesian modeling and probabilistic programming. Build, fit, validate, and compare Bayesian models using the current API (PyMC ≥ 6 with ArviZ ≥ 1.1), including hierarchical models, MCMC sampling (NUTS), variational inference, and PSIS-LOO model comparison.
 
 ```bash
-uv pip install "pymc[nutpie]" "arviz[matplotlib,h5netcdf]"   # nutpie sampler, plotting backend, NetCDF I/O
+# no install step (PyMC 6 and ArviZ 1.x need Python >= 3.12): nutpie sampler, plotting backend, NetCDF I/O
+uv run --python ">=3.12" --with "pymc[nutpie]>=6" --with "arviz[matplotlib,h5netcdf]>=1.1" python model.py
 ```
 
 PyMC 6 changed several defaults and names that most tutorials still use — read **Version notes** at the end before reusing PyMC 5 / ArviZ 0.x code.

@@ -3,7 +3,7 @@ name: alterlab-stable-baselines3
 description: Trains single-agent reinforcement learning agents with Stable-Baselines3 — PPO, SAC, DQN, TD3, DDPG, and A2C behind a scikit-learn-like API. Use for standard single-agent RL experiments, quick prototyping, well-documented algorithm implementations on Gymnasium environments, or adding callbacks and evaluation. For high-throughput parallel training, multi-agent systems, or custom vectorized environments prefer alterlab-pufferlib. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires stable-baselines3 >= 2.0 (current 2.9.0 as of 2026-09, which needs Python >= 3.10, PyTorch >= 2.8, and gymnasium >= 0.29.1,<2.0; current gymnasium 1.3).
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "stable-baselines3[extra]>=2.0" python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires stable-baselines3 >= 2.0 (current 2.9.0 as of 2026-09, which needs Python >= 3.10, PyTorch >= 2.8, and gymnasium >= 0.29.1,<2.0; current gymnasium 1.3).
 metadata:
     skill-author: AlterLab
     version: "1.0.1"
@@ -222,7 +222,7 @@ mean_reward, std_reward = evaluate_policy(
 )
 ```
 
-**Video Recording** (the wrapped env must be created with `render_mode="rgb_array"`, and `moviepy` must be installed, e.g. `uv pip install "gymnasium[other]"`):
+**Video Recording** (the wrapped env must be created with `render_mode="rgb_array"`, and `moviepy` must be importable, e.g. add `--with "gymnasium[other]"` to the uv run command):
 ```python
 from stable_baselines3.common.vec_env import VecVideoRecorder
 
@@ -301,7 +301,7 @@ model.learn(total_timesteps=10000)
 - **Memory errors**: Reduce `buffer_size` for off-policy algorithms or use fewer parallel environments
 - **Slow training**: Consider SubprocVecEnv for parallel environments
 - **Unstable training**: Try different algorithms, tune hyperparameters, or check reward scaling
-- **Import errors**: Ensure `stable_baselines3` is installed: `uv pip install "stable-baselines3[extra]"`
+- **Import errors**: Run through uv instead of installing: `uv run --python ">=3.12" --with "stable-baselines3[extra]>=2.0" python train.py`
 
 ## Resources
 
@@ -321,11 +321,14 @@ model.learn(total_timesteps=10000)
 Requires Python 3.10+ and PyTorch >= 2.8 (SB3 2.9 raised the floor from 2.3). The `[extra]` option pulls in TensorBoard, OpenCV, `ale-py` (Atari), `pygame-ce`, tqdm/rich (progress bar), and — since 2.9 — pandas and matplotlib, which are no longer core dependencies (needed for `results_plotter`/`load_results`). Atari IDs such as `"PongNoFrameskip-v4"` or `"ALE/Pong-v5"` are registered when `ale_py` is imported (`import ale_py; gym.register_envs(ale_py)`).
 
 ```bash
-# Basic installation
-uv pip install stable-baselines3
+# No install step: uv resolves SB3 (and PyTorch) per call
+uv run --python ">=3.12" --with "stable-baselines3>=2.0" python train.py
 
 # With extra dependencies (Tensorboard, Atari, etc.)
-uv pip install "stable-baselines3[extra]"
+uv run --python ">=3.12" --with "stable-baselines3[extra]>=2.0" python train.py
+
+# SB3 already importable (`python -c "import stable_baselines3"`)? run with plain `python`.
+# CPU-only machine: add --index https://download.pytorch.org/whl/cpu so uv fetches CPU torch, not multi-GB CUDA wheels
 ```
 
 Part of the AlterLab Academic Skills suite.

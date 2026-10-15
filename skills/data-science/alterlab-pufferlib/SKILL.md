@@ -3,7 +3,7 @@ name: alterlab-pufferlib
 description: Scales reinforcement learning with PufferLib — high-throughput parallel training (PuffeRL), vectorized environments, and native multi-agent systems achieving 2-10x speedups over standard implementations. Use when scaling RL to millions of steps per second, running vectorized or multi-agent setups, building custom PufferEnv tasks, or integrating game environments (Atari, Procgen, NetHack, PettingZoo). For standard single-agent algorithm implementations (PPO/SAC/DQN) or quick prototyping prefer alterlab-stable-baselines3. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires the pufferlib Python package (GPU optional for faster training). Targets PufferLib 3.0.x, still the latest PyPI release as of 2026-09 (3.0.0, June 2025); upstream's default branch is now 5.0, a from-source C/CUDA rewrite with a different API.
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "pufferlib==3.0.*" python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires the pufferlib Python package (GPU optional for faster training). Targets PufferLib 3.0.x, still the latest PyPI release as of 2026-09 (3.0.0, June 2025); upstream's default branch is now 5.0, a from-source C/CUDA rewrite with a different API.
 metadata:
     skill-author: AlterLab
     version: "1.0.1"
@@ -468,7 +468,8 @@ env = pufferlib.vector.make(
 ```bash
 # Pin the 3.0 line — the config-dict trainer API and import paths in this skill
 # target it. PyPI ships only an sdist, so a C compiler is needed to build it.
-uv pip install "pufferlib==3.0.*"
+uv run --python ">=3.12" --with "pufferlib==3.0.*" python train.py   # no install step; uv builds once and caches
+# torch already importable? run with plain `python`. CPU-only machine: add --index https://download.pytorch.org/whl/cpu (no CUDA wheels)
 ```
 
 **PufferLib 5.0 is a different product.** The upstream default branch (5.0) is a C/CUDA

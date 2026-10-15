@@ -3,7 +3,7 @@ name: alterlab-shap
 description: Model interpretability and explainability with SHAP (SHapley Additive exPlanations) — feature importance and plots (waterfall, beeswarm, bar, scatter, force, heatmap). Use when explaining ML model predictions, computing feature importance, debugging models, analyzing bias or fairness, comparing models, or implementing explainable AI across tree-based models (XGBoost, LightGBM, Random Forest), deep learning (TensorFlow, PyTorch), linear models, and any black-box model. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires shap >= 0.41 for the Explanation/`shap.plots` API (current 0.52 as of 2026-09, Python >= 3.12) plus matplotlib for plots.
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "shap>=0.41" --with matplotlib python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires shap >= 0.41 for the Explanation/`shap.plots` API (current 0.52 as of 2026-09, Python >= 3.12) plus matplotlib for plots.
 metadata:
     skill-author: AlterLab
     version: "1.0.1"
@@ -447,7 +447,7 @@ The modern API used throughout this skill — the callable `explainer(X)` return
 uv add "shap>=0.41" matplotlib
 
 # Scratch / one-off run (ephemeral env, nothing persisted):
-uv run --with "shap>=0.41" --with matplotlib python explain.py
+uv run --python ">=3.12" --with "shap>=0.41" --with matplotlib python explain.py
 ```
 
 (`uv pip install` works only inside an already-activated venv; prefer `uv add` / `uv run --with` so the dependency is recorded.)

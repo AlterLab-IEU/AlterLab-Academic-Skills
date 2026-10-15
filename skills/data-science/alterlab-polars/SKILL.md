@@ -3,7 +3,7 @@ name: alterlab-polars
 description: Fast in-memory DataFrame analytics with Polars — lazy evaluation, parallel execution, and an Apache Arrow backend for datasets that fit in RAM. Use when pandas is too slow but data still fits in memory, for 1-100GB datasets, ETL pipelines, or a faster pandas replacement. For larger-than-RAM data prefer dask or vaex. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires polars >= 1.0 (current 1.44 as of 2026-09; 2.0 is in release candidate).
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "polars>=1.0,<2" python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires polars >= 1.0 (current 1.44 as of 2026-09; 2.0 is in release candidate).
 metadata:
     skill-author: AlterLab
     version: "1.0.1"
@@ -39,7 +39,8 @@ Polars is a lightning-fast DataFrame library for Python and Rust built on Apache
 
 Pin a recent 1.x (examples here use the Polars 1.x API):
 ```bash
-uv add 'polars>=1.0,<2'
+uv run --python ">=3.12" --with 'polars>=1.0,<2' python query.py   # one-off, no install step
+uv add 'polars>=1.0,<2'                                         # inside a uv project
 ```
 
 Polars 2.0 is in release candidate (2.0.0rc2, September 2026). Its upgrade guide lists changes

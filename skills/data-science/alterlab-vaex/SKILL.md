@@ -3,7 +3,7 @@ name: alterlab-vaex
 description: Out-of-core tabular analytics with Vaex — memory-mapped HDF5/Arrow/Parquet via vaex.open, lazy virtual columns, delayed single-pass aggregations on billion-row tables, binned histograms/heatmaps, and vaex.ml transformers on one machine. Vaex is in minimal-maintenance mode (vaex-core 4.19 from Sep 2025 supports only Python 3.9–3.12 and pandas < 3), so use it to run, fix, or migrate existing Vaex code; for new larger-than-RAM work prefer Polars lazy/streaming queries (alterlab-polars) or Dask (alterlab-dask). Use when a project already depends on Vaex, when opening memory-mapped HDF5/Arrow files, batching aggregations with delay=True, or porting a Vaex pipeline to Polars. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python` in a dedicated Python 3.12 (or older) environment; requires vaex 4.19.x, which pins pandas < 3 and has no wheels for Python 3.13+. 2-D plots (`df.viz.heatmap`) also need matplotlib < 3.9.
+compatibility: No API key required. Runs locally via `uv run --python 3.12 --with "vaex==4.19.*" python script.py` (no install step) or in a dedicated Python 3.12 (or older) environment; requires vaex 4.19.x, which pins pandas < 3 and has no wheels for Python 3.13+. 2-D plots (`df.viz.heatmap`) also need matplotlib < 3.9.
 metadata:
     skill-author: AlterLab
     version: "1.1.0"
@@ -50,6 +50,8 @@ Use this skill when the user wants to:
 uv venv --python 3.12 .venv-vaex
 uv pip install --python .venv-vaex "vaex==4.19.*"
 uv pip install --python .venv-vaex "matplotlib<3.9"   # only if you need df.viz.heatmap
+uv run --python .venv-vaex python analysis.py
+# One-off alternative with no venv: uv run --python 3.12 --with "vaex==4.19.*" --with "matplotlib<3.9" python analysis.py
 ```
 
 ## Core Capabilities

@@ -3,7 +3,7 @@ name: alterlab-transformers
 description: Loads, runs, and fine-tunes pretrained models with Hugging Face Transformers v5 (PyTorch-only) — pipeline() inference for chat-model text generation, text classification, NER, zero-shot, speech recognition, image classification, object detection, and image-text-to-text VLMs; AutoModel/AutoTokenizer loading with dtype, device_map and bitsandbytes quantization; generate() decoding control; and Trainer fine-tuning with optional PEFT/LoRA. Use when running inference with a Hugging Face Hub checkpoint, fine-tuning BERT/ModernBERT/Qwen-style models on a custom labelled dataset, controlling generation (sampling, beam search, streaming, chat templates), or porting v4 code (torch_dtype, removed summarization/translation/QA pipelines, TF/Flax) to v5. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required for public models. Runs locally via `uv run python`; requires transformers >= 5.0 (current 5.17 as of 2026-09, Python >= 3.10) and PyTorch — v5 removed TensorFlow and Flax support. A Hugging Face token (HF_TOKEN) is needed only for gated/private models.
+compatibility: No API key required for public models. Runs locally via `uv run --python ">=3.12" --with "transformers>=5" --with torch python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires transformers >= 5.0 (current 5.17 as of 2026-09, Python >= 3.10) and PyTorch — v5 removed TensorFlow and Flax support. A Hugging Face token (HF_TOKEN) is needed only for gated/private models.
 metadata:
     skill-author: AlterLab
     version: "1.1.0"
@@ -40,7 +40,8 @@ Use this skill when the user wants to:
 ## Installation
 
 ```bash
-uv pip install "transformers>=5" torch accelerate datasets
+uv run --python ">=3.12" --with "transformers>=5" --with torch --with accelerate --with datasets python infer.py   # no install step
+# torch + transformers already importable (`python -c "import torch, transformers"`)? run with plain `python`. CPU-only machine: add --index https://download.pytorch.org/whl/cpu
 ```
 
 - Vision: add `pillow` and `torchvision` (the default image-processor backend; `timm` only for timm-backed models).
