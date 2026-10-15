@@ -127,7 +127,7 @@ def check_dependencies():
 
 def main():
     """Command-line interface."""
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
         print("Usage: python generate_pdf.py <markdown_file> [output_pdf] [--output PDF] [--citation-style STYLE]")
         print("\nOptions:")
         print("  --output, -o PDF          Output PDF path (same as the positional output_pdf)")
@@ -135,7 +135,7 @@ def main():
         print("  --no-toc                  Disable table of contents")
         print("  --no-numbers              Disable section numbering")
         print("  --check-deps              Check if dependencies are installed")
-        sys.exit(1)
+        sys.exit(0 if len(sys.argv) > 1 else 1)
 
     # Check dependencies mode
     if '--check-deps' in sys.argv:
