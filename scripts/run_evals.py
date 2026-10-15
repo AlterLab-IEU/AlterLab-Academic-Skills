@@ -620,7 +620,8 @@ def materialize_fixtures(eval_obj: dict, evals_dir: Path, dest: Path) -> list[st
     """Write every eval ``files`` fixture into ``dest`` and return the materialized paths.
 
     Two fixture forms are supported (see docs/evals.schema.json):
-      * a string  -> path to a fixture file, relative to the eval file's directory; copied.
+      * a string  -> path to a fixture file or directory, relative to the eval file's
+        directory; copied (a directory as a whole tree, e.g. a small repository checkout).
       * an object  -> {"name", "content"}; the inline content is written verbatim.
     Returns the written paths. A missing on-disk fixture is skipped here; callers must check
     ``missing_fixtures`` first (run_behavioral records such a case as INFRA_ERROR).
@@ -633,7 +634,10 @@ def materialize_fixtures(eval_obj: dict, evals_dir: Path, dest: Path) -> list[st
             target = dest / Path(item).name
             if not src.exists():
                 continue
-            target.write_bytes(src.read_bytes())
+            if src.is_dir():
+                shutil.copytree(src, target, symlinks=False)
+            else:
+                target.write_bytes(src.read_bytes())
             out.append(str(target))
         elif isinstance(item, dict) and item.get("name"):
             target = dest / Path(item["name"]).name

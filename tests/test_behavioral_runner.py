@@ -407,3 +407,14 @@ def test_namespace_hides_the_checkout_from_answer_arms(fake_cli, tmp_path, monke
     assert answers and all(c["peek"][repo] is False for c in answers), "checkout visible to arm"
     assert all(c["peek"][str(tmp_path)] is True for c in answers), "outside paths stay visible"
     assert Path(repo, "scripts").is_dir(), "the harness itself still sees the checkout"
+
+
+def test_directory_fixture_is_copied_as_a_tree(tmp_path) -> None:
+    evals_dir = tmp_path / "evals"
+    (evals_dir / "fixtures" / "repo" / "docs").mkdir(parents=True)
+    (evals_dir / "fixtures" / "repo" / "docs" / "a.md").write_text("[x](b.md)\n")
+    (evals_dir / "fixtures" / "repo" / ".lychee.toml").write_text("max_retries = 2\n")
+    out = run_evals.materialize_fixtures({"files": ["fixtures/repo"]}, evals_dir, tmp_path / "ws")
+    assert out == [str(tmp_path / "ws" / "repo")]
+    assert (tmp_path / "ws" / "repo" / "docs" / "a.md").read_text() == "[x](b.md)\n"
+    assert (tmp_path / "ws" / "repo" / ".lychee.toml").exists()
