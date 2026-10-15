@@ -3,6 +3,7 @@
   "evals": [
     {
       "id": "auto-route-general",
+      "requires": ["env:PARALLEL_API_KEY"],
       "prompt": "Look up current research on AI adoption in the healthcare industry — statistics, adoption rates, and recent developments. I'm not sure which search tool is best, just get me a solid cited report.",
       "expected_output": "Invokes alterlab-research-lookup, which auto-routes this general/market research query to the Parallel Chat API (core model) via research_lookup.py, returning a multi-source markdown report with inline citations, and saves the result to the project's sources/ folder per the mandatory save rule.",
       "assertions": [
@@ -12,6 +13,7 @@
     },
     {
       "id": "auto-route-academic",
+      "requires": ["env:OPENROUTER_API_KEY"],
       "prompt": "Find peer-reviewed papers on CRISPR off-target effects in clinical trials, with DOIs and citation counts. Route it to whatever backend is best for scholarly search.",
       "expected_output": "Invokes alterlab-research-lookup, which detects academic keywords (papers, peer-reviewed, DOI) and auto-routes to Perplexity sonar-pro-search in academic mode via research_lookup.py, returning 5-8 high-quality citations with DOIs and venue/citation indicators, saved to sources/ as a papers_ file.",
       "assertions": [
@@ -30,6 +32,7 @@
     },
     {
       "id": "verify-fact-current",
+      "requires": ["env:PARALLEL_API_KEY"],
       "prompt": "I need to verify a statistic for a paper: what is the current prevalence of diabetes in the US population? Get me a sourced, up-to-date number.",
       "expected_output": "Invokes alterlab-research-lookup to verify a current statistic, auto-routing the general statistical query to the Parallel Chat API (core model), returning a cited figure with source URLs, and saving the result to sources/ for reproducibility and audit-trail purposes.",
       "assertions": [

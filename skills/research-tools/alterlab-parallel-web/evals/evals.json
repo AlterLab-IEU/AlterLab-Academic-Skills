@@ -3,6 +3,7 @@
   "evals": [
     {
       "id": "web-search-current-events",
+      "requires": ["env:PARALLEL_API_KEY"],
       "prompt": "Search the web for the latest advances in quantum computing in 2025 and give me a synthesized summary with citations.",
       "expected_output": "Uses the Parallel Web Systems Chat API search capability via scripts/parallel_web.py search with the base model, returns a synthesized summary organized by themes with inline citations and a sources list, and saves the result to the sources/ folder with the -o flag following the search_YYYYMMDD_HHMMSS_<topic>.md pattern.",
       "assertions": [
@@ -13,12 +14,13 @@
     },
     {
       "id": "deep-research-market-report",
+      "requires": ["env:PARALLEL_API_KEY"],
       "prompt": "I need a comprehensive deep research report on the global EV battery market — competitive landscape, market size, and growth projections.",
       "expected_output": "Uses the Parallel Chat API research command (core model) via scripts/parallel_web.py research to produce a detailed multi-source intelligence report with citations, and saves it to sources/ with -o using the research_YYYYMMDD_HHMMSS_<topic>.md pattern. Should note the core model is the default for deep research.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "parallel_web.py research"},
-        {"type": "output_contains", "value": "core model"},
+        {"type": "output_contains", "value": ["core model", "`core` model", "--model core"]},
         {"type": "behavior", "value": "Selects the research command with the core model (the default for deep research) for a comprehensive report and saves the result to sources/ via -o."}
       ]
     },

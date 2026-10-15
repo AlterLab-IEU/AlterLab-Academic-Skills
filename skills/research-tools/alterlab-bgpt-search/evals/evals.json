@@ -12,6 +12,7 @@
     },
     {
       "id": "effect-sizes-across-studies",
+      "requires": ["env:BGPT_API_KEY"],
       "prompt": "Find me papers reporting effect sizes and sample sizes for mindfulness interventions on anxiety, so I can compare methodologies across the studies.",
       "expected_output": "Invokes alterlab-bgpt-search via the BGPT MCP server to retrieve quantitative results (effect sizes, sample sizes) and methods fields across studies, enabling cross-study methodology comparison. This is BGPT's core use case: extracting structured experimental detail abstracts do not provide.",
       "assertions": [
@@ -30,6 +31,7 @@
     },
     {
       "id": "scoping-review-deep-data",
+      "requires": ["env:BGPT_API_KEY"],
       "prompt": "I'm running a scoping review on gut microbiome and depression and I want the experimental protocols and conclusions extracted from the full text of each study, not a web summary.",
       "expected_output": "Invokes alterlab-bgpt-search and uses the BGPT MCP `search_papers` tool to gather structured data (methods, protocols, conclusions) extracted from full-text studies for a scoping review, the database's purpose-built strength.",
       "assertions": [

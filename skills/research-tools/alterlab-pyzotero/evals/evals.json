@@ -23,6 +23,7 @@
     },
     {
       "id": "export-bibtex",
+      "requires": ["env:ZOTERO_API_KEY", "env:ZOTERO_LIBRARY_ID"],
       "prompt": "Export the first 50 references from my Zotero library as BibTeX so I can drop them into my LaTeX paper.",
       "expected_output": "Uses zot.add_parameters(format='bibtex') then retrieves items (e.g., zot.top(limit=50)), returning a bibtexparser BibDatabase object whose entries can be written out. Should reference the exports capability of pyzotero for BibTeX/CSL-JSON.",
       "assertions": [

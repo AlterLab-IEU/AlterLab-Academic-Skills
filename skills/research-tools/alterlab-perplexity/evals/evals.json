@@ -3,6 +3,7 @@
   "evals": [
     {
       "id": "recent-literature-grounded",
+      "requires": ["env:OPENROUTER_API_KEY"],
       "prompt": "What does recent research from 2024-2025 say about the role of the gut microbiome in Parkinson's disease? I want grounded answers with source citations, focused on peer-reviewed studies.",
       "expected_output": "Invokes alterlab-perplexity and runs perplexity_search.py with a Perplexity Sonar model (e.g. sonar-pro) via LiteLLM/OpenRouter to get a real-time, web-grounded answer with source citations on recent peer-reviewed literature, information beyond the model's training cutoff.",
       "assertions": [
@@ -12,6 +13,7 @@
     },
     {
       "id": "current-developments-cutoff",
+      "requires": ["env:OPENROUTER_API_KEY"],
       "prompt": "I need the latest developments in large language model efficiency from the past six months, beyond what you already know. Can you search the web for current results?",
       "expected_output": "Invokes alterlab-perplexity because the user explicitly needs current information beyond the model's knowledge cutoff. Runs a web-grounded Perplexity Sonar search and returns cited, real-time results.",
       "assertions": [
@@ -30,6 +32,7 @@
     },
     {
       "id": "verify-claims-citations",
+      "requires": ["env:OPENROUTER_API_KEY"],
       "prompt": "Before I cite it, can you verify with current sources whether intermittent fasting improves HbA1c in adults with type 2 diabetes, focusing on randomized controlled trials?",
       "expected_output": "Invokes alterlab-perplexity to fact-verify a claim against current web sources, running a Perplexity Sonar search and returning grounded findings with source citations (e.g. RCT evidence on HbA1c outcomes), since verification of current evidence with citations is a primary use case.",
       "assertions": [

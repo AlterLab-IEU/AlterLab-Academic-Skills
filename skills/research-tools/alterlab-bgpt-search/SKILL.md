@@ -3,7 +3,7 @@ name: alterlab-bgpt-search
 description: Search scientific papers and retrieve structured experimental evidence extracted from full-text studies via the BGPT MCP server (`search_papers`, plus `lookup_paper` by DOI), returning 25+ fields per paper (methods, results, sample sizes, quality scores, limitations, conclusions). Use when running a literature review or evidence synthesis, or when needing experimental details (sample sizes, effect sizes, methods, quality scores) that abstracts alone do not provide. Part of the AlterLab Academic Skills suite.
 allowed-tools: Bash
 license: MIT
-compatibility: Connects to the remote BGPT MCP server (SSE or Streamable HTTP). The first 50 results are free with no API key; after that a paid BGPT key from bgpt.pro/mcp ($0.02 per result returned). Requires network access.
+compatibility: Connects to the remote BGPT MCP server (SSE or Streamable HTTP). The first 50 results are free with no API key; after that a paid BGPT key from bgpt.pro/mcp, kept in BGPT_API_KEY ($0.02 per result returned). Requires network access.
 metadata:
     skill-author: AlterLab
     version: "1.1.0"
@@ -89,7 +89,7 @@ Each result carries:
 - **Quality scores**: study quality assessments
 - **Limitations and conclusions**, with provenance back to the source sections
 
-Without an MCP client, the same search is available over plain HTTP: `POST https://bgpt.pro/api/mcp-search` with a JSON body `{"query": ..., "num_results": ..., "output_format": "evidence"}` (add `"api_key"` after the free tier).
+Without an MCP client, the same search is available over plain HTTP: `POST https://bgpt.pro/api/mcp-search` with a JSON body `{"query": ..., "num_results": ..., "output_format": "evidence"}`. After the free tier, add `"api_key"` (also a `search_papers` argument) with the value of the `BGPT_API_KEY` environment variable; ask the user to set that variable rather than paste the key into the chat. HTTP 402 means the free results are used up; 401 means the key is wrong.
 
 **Verify before pooling.** BGPT fields are machine-extracted, so check the sample sizes, effect sizes, and quality judgements you rely on against the source paper before they enter a meta-analysis or guideline table — an extraction error propagates silently into the pooled estimate. Cite the papers themselves (by DOI), not BGPT.
 
