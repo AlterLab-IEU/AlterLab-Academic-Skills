@@ -63,6 +63,11 @@
             ]
           }
         },
+        "requires": {
+          "type": "array",
+          "description": "Optional preconditions the case cannot be judged without: env:NAME (an environment variable, e.g. an API key), cmd:NAME (an executable on PATH, e.g. Rscript), net:HOST (a host reachable from the runner), mcp:NAME (an MCP server; never available under the harness's --strict-mcp-config). An unmet requirement makes the case NOT_RUN ('not runnable here'), never FAIL.",
+          "items": { "type": "string", "pattern": "^(env|cmd|net|mcp):[A-Za-z0-9_.:-]+$" }
+        },
         "assertions": {
           "type": "array",
           "description": "Machine-checkable expectations. At minimum every eval carries one should_trigger / should_not_trigger assertion declaring whether this skill should fire on the prompt.",

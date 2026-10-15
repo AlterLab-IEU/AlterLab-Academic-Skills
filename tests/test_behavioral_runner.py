@@ -435,3 +435,45 @@ def test_background_jobs_an_arm_leaves_behind_cannot_crash_or_outlive_the_run(fa
     left = subprocess.run(["pgrep", "-f", "for i in range\\(600\\)"], capture_output=True,
                           text=True).stdout.split()
     assert not left, f"background job outlived its arm: {left}"
+
+
+# --- collect-only, requires, endpoint ---------------------------------------------------------
+def test_collect_only_saves_answers_and_calls_no_judge(fake_cli, tmp_path, monkeypatch):
+    monkeypatch.setitem(run_evals._COLLECT, "on", True)
+    rc, res = _run(tmp_path, [_case("a"), _case("b")], "ok", monkeypatch)
+    assert rc == 0 and res["status"] == "collected" and res["collect_only"] is True
+    prompts = [json.loads(x) for x in fake_cli.read_text().splitlines()]
+    assert all("--allowedTools" in c["flags"] or c["skilled"] for c in prompts)
+    judge_calls = [c for c in prompts if not c["skilled"] and "--allowedTools" not in c["flags"]]
+    assert not judge_calls, "collect-only must not call a judge"
+    run = res["cases"][0]["skilled"]["runs"][0]
+    assert run["response"].startswith("GOOD-ANSWER") and run["rubric_verdict"] == "NA"
+
+
+def test_unmet_requirements_make_a_case_not_runnable_never_failed(fake_cli, tmp_path,
+                                                                  monkeypatch):
+    monkeypatch.delenv("ALTERLAB_TEST_ABSENT_KEY", raising=False)
+    monkeypatch.setenv("ALTERLAB_TEST_PRESENT_KEY", "x")
+    cases = [_case("a", requires=["env:ALTERLAB_TEST_ABSENT_KEY", "cmd:no-such-cmd-zz",
+                                  "mcp:yoktez"]),
+             _case("b", requires=["env:ALTERLAB_TEST_PRESENT_KEY"])]
+    rc, res = _run(tmp_path, cases, "ok", monkeypatch)
+    a, b = res["cases"]
+    assert a["skilled"]["outcome"] == "NOT_RUN" and len(a["requires_unmet"]) == 3
+    assert "not runnable here" in a["skilled"]["reason"]
+    assert b["skilled"]["outcome"] == "PASS"
+    assert res["summary"]["not_runnable_here"] == 1 and rc == 3  # partial, not passed
+
+
+def test_requires_entries_are_validated() -> None:
+    bad = {"skill": "x", "evals": [{"id": "a", "prompt": "p", "expected_output": "e",
+                                    "requires": ["account benchling"],
+                                    "assertions": [{"type": "should_trigger", "value": True}]}]}
+    assert any("requires" in e for e in run_evals._structural_errors(bad))
+
+
+def test_endpoint_is_recorded_so_local_runs_never_pass_as_claude(monkeypatch) -> None:
+    monkeypatch.delenv("ANTHROPIC_BASE_URL", raising=False)
+    assert run_evals._endpoint() == "claude-cli-login"
+    monkeypatch.setenv("ANTHROPIC_BASE_URL", "http://127.0.0.1:8080/")
+    assert run_evals._endpoint() == "base-url:http://127.0.0.1:8080"

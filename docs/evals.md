@@ -33,6 +33,16 @@ the `claude` CLI and LLM-grades each `expected_output`.
 - **`evals`** (required, ≥1) — the array of cases.
 - Per eval: **`id`**, **`prompt`**, **`expected_output`** are required; **`files`** and
   **`assertions`** are optional but `assertions` is effectively mandatory (see below).
+- **`files`** — the input the prompt refers to. A path may name a file or a whole directory
+  (copied as a tree, e.g. a small repository checkout), relative to the eval file's directory.
+  A prompt that says "here is my draft" must ship the draft: without it a correct answer can
+  only ask for it.
+- **`requires`** — optional preconditions the case cannot be judged without: `env:NAME` (an
+  environment variable such as an API key), `cmd:NAME` (an executable, e.g. `cmd:Rscript`),
+  `net:HOST` (a host the runner must reach), `mcp:NAME` (an MCP server — never available,
+  since answer arms run with `--strict-mcp-config`). A case whose requirement is unmet is
+  `NOT_RUN` with reason "not runnable here", never `FAIL`, and the summary counts it under
+  `not_runnable_here`.
 
 ### Assertion types
 
@@ -170,6 +180,18 @@ and the cost the CLI reports. Exit codes:
 | `1` | `failed` | at least one case failed |
 | `2` | `blocked` | no case produced a usable verdict (no CLI, no login, every call refused or timed out, or the filter matched nothing). The run verified nothing |
 | `3` | `partial` | some cases produced verdicts and none failed, but others did not — the selection is **not** fully evaluated |
+
+### Collect-only runs and other endpoints
+
+`--collect-only` runs the answer arms, saves every response in full, and calls no judge; it
+exits `0` when every arm answered. Grade the saved answers later with `--regrade` and a
+judge that passed `--calibrate-judge`. This is meant for defect sweeps: whether a prompt is
+missing its input, a tool was denied, or a script crashed does not depend on a judge.
+
+The run record's `endpoint` says who answered: `claude-cli-login`, or `base-url:<host>` when
+`ANTHROPIC_BASE_URL` points the CLI at another server (for example a local model behind
+llama-swap). Results from another endpoint describe that model, not Claude — keep them in a
+separate results directory and never mix them into Claude numbers.
 
 ### Two rubric judges, and checking them
 

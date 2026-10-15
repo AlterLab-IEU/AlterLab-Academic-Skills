@@ -150,6 +150,7 @@ _KEBAB = __import__("re").compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 _TRIGGER_TYPES = {"should_trigger", "should_not_trigger"}
 _STRING_TYPES = {"output_contains", "behavior"}
 _ASSERTION_TYPES = _TRIGGER_TYPES | _STRING_TYPES
+_REQ = __import__("re").compile(r"^(env|cmd|net|mcp):[A-Za-z0-9_.:-]+$")
 
 
 def _structural_errors(data: object) -> list[str]:
@@ -208,6 +209,12 @@ def _structural_errors(data: object) -> list[str]:
                     errs.append(f"{aw}/value: output_contains list must hold non-empty strings")
             elif atype in _STRING_TYPES and (not isinstance(aval, str) or not aval):
                 errs.append(f"{aw}/value: {atype} must be a non-empty string")
+    for i, e in enumerate(evals if isinstance(evals, list) else []):
+        req = e.get("requires") if isinstance(e, dict) else None
+        if req is not None and (not isinstance(req, list) or not all(
+                isinstance(r, str) and _REQ.match(r) for r in req)):
+            errs.append(f"evals/{i}/requires: each entry must look like env:NAME, cmd:NAME, "
+                        "net:HOST or mcp:NAME")
     return errs
 
 
@@ -419,6 +426,49 @@ _TRIPWIRE_ROOT = REPO
 _HIDE_SCRIPT = ('n=$1; shift; i=0; while [ "$i" -lt "$n" ]; do '
                 'mount -t tmpfs -o ro,size=4k alterlab-hidden "$1" || exit 97; '
                 'shift; i=$((i+1)); done; exec "$@"')
+
+
+_COLLECT = {"on": False}
+_NET_CACHE: dict[str, str | None] = {}
+
+
+def unmet_requirements(eval_obj: dict) -> list[str]:
+    """Why this case cannot be judged on this runner (empty when it can). See ``requires`` in
+    docs/evals.schema.json; a case with an unmet requirement is NOT_RUN, never FAIL."""
+    out = []
+    for req in eval_obj.get("requires", []) or []:
+        kind, _, name = str(req).partition(":")
+        if kind == "env" and not os.environ.get(name):
+            out.append(f"environment variable {name} is not set")
+        elif kind == "cmd" and shutil.which(name) is None:
+            out.append(f"`{name}` is not on PATH")
+        elif kind == "mcp":
+            out.append(f"MCP server {name} (answer arms run with --strict-mcp-config and none)")
+        elif kind == "net":
+            if name not in _NET_CACHE:
+                import urllib.error
+                import urllib.request
+                try:
+                    urllib.request.urlopen(urllib.request.Request(f"https://{name}/",
+                                                                  method="HEAD"), timeout=10)
+                    _NET_CACHE[name] = None
+                except urllib.error.HTTPError:
+                    _NET_CACHE[name] = None  # it answered; the host is reachable
+                except Exception as exc:  # noqa: BLE001 — any failure means unreachable here
+                    _NET_CACHE[name] = f"{name} is not reachable from this runner ({type(exc).__name__})"
+            if _NET_CACHE[name]:
+                out.append(_NET_CACHE[name])
+    return out
+
+
+def _endpoint() -> str:
+    """Which backend answers: the CLI's own login, or a base URL (e.g. a local model server)."""
+    base = os.environ.get("ANTHROPIC_BASE_URL")
+    if not base:
+        return "claude-cli-login"
+    from urllib.parse import urlparse
+    u = urlparse(base)
+    return f"base-url:{u.scheme}://{u.hostname}{':' + str(u.port) if u.port else ''}"
 
 
 def _protected_paths() -> list[str]:
@@ -958,6 +1008,8 @@ def _run_metadata(kind: str, model: str, runs: int, timeout: int) -> dict:
         "kind": kind,
         "model": model,
         "model_source": "ALTERLAB_MODEL" if os.environ.get("ALTERLAB_MODEL") else "default",
+        "endpoint": _endpoint(),
+        "collect_only": _COLLECT["on"],
         "claude_cli_version": _quiet(["claude", "--version"]),
         "repo_commit": _quiet(["git", "rev-parse", "HEAD"], REPO),
         "repo_dirty": bool(_quiet(["git", "status", "--porcelain"], REPO)),
@@ -1050,9 +1102,12 @@ def _run_arm(prompt: str, model: str, timeout: int, runs: int, workspace: Path,
         call = _claude_call(prompt, model, timeout, system=system, cwd=workspace,
                             extra_args=["--allowedTools", *tools] if tools else None)
         calls.append(call)
-        assertions = (grade_assertions(eval_obj, skill, call.text, model, timeout)
-                      if with_assertions else [])
-        rv, rd = _judge_rubric(rubric, call.text, model, timeout)
+        if _COLLECT["on"]:  # answers only; judge later with --regrade
+            assertions, (rv, rd) = [], ("NA", "collect-only: answer saved, not judged")
+        else:
+            assertions = (grade_assertions(eval_obj, skill, call.text, model, timeout)
+                          if with_assertions else [])
+            rv, rd = _judge_rubric(rubric, call.text, model, timeout)
         if call.outcome == "answer":
             notes += [d for (_, v, d) in assertions if v == "NA"] + ([rd] if rv == "NA" else [])
         per_run_assertions.append(assertions)
@@ -1159,6 +1214,11 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
     meta["selection"] = {"skill_filter": skill_filter, "skill_dir": str(skill_dir) if skill_dir
                          else None, "shard": f"{shard[0]}/{shard[1]}" if shard else None}
     print("=== BEHAVIORAL EVALUATION (live model calls; not the static schema check) ===")
+    if _endpoint() != "claude-cli-login":
+        print(f"Endpoint: {_endpoint()} (not the claude CLI login) — these results describe "
+              f"'{model}', not Claude; keep them apart from Claude runs.")
+    if _COLLECT["on"]:
+        print("COLLECT-ONLY: answer arms run and are saved in full; no judge is called.")
     print(f"Model: {model} (ALTERLAB_MODEL convention; see skills/core/shared/model_env.md). "
           f"Each case runs {runs}x per arm, skilled vs bare, in isolated temp workspaces "
           f"({' '.join(ISOLATION_FLAGS)}).")
@@ -1194,6 +1254,17 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
                             "eval_id": case["eval"].get("id"), "skilled": dict(not_run),
                             "bare": dict(not_run), "rubric_delta": "rubric: INCONCLUSIVE "
                             "(case not run)"})
+            continue
+        unmet = unmet_requirements(case["eval"])
+        if unmet:
+            why = "not runnable here: " + "; ".join(unmet)
+            skip = {"outcome": NOT_RUN, "reason": why, "answered_runs": 0, "runs": []}
+            records.append({"case_id": f"{case['skill']}:{case['eval'].get('id', '?')}",
+                            "skill": case["skill"], "skill_version": case["skill_version"],
+                            "eval_id": case["eval"].get("id"), "requires_unmet": unmet,
+                            "skilled": dict(skip), "bare": dict(skip),
+                            "rubric_delta": "rubric: INCONCLUSIVE (case not run)"})
+            print(f"- {records[-1]['case_id']}: NOT_RUN [{why}]")
             continue
         rec = _grade_case(case, model, timeout, runs)
         for call in rec["skilled"].pop("_calls") + rec["bare"].pop("_calls"):
@@ -1232,10 +1303,21 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
     answered = sum(r["skilled"].get("answered_runs", 0) > 0 for r in records)
     usable = counts[PASS] + counts[FAIL]
     status, code = _behavioral_status(selected, counts[PASS], counts[FAIL])
+    not_runnable = sum(bool(r.get("requires_unmet")) for r in records)
+    if _COLLECT["on"]:
+        arms = [r[a] for r in records if not r.get("requires_unmet") for a in ("skilled", "bare")]
+        got = sum(a.get("answered_runs", 0) == runs for a in arms)
+        status, code = (("collected", 0) if arms and got == len(arms) else
+                        ("partial", 3) if got else ("blocked", 2))
     if breach:
         status, code = "blocked", 2  # a run that touched the checkout validates nothing
     reasons: list[str] = [breach] if breach else []
-    if status != "passed":
+    if not_runnable:
+        reasons.append(f"{not_runnable} case(s) not runnable here (unmet `requires`)")
+    if _COLLECT["on"]:
+        reasons.append("collect-only: answers saved without judging; grade them with "
+                       "--regrade (a calibrated judge) before reading anything into them")
+    elif status != "passed":
         if selected == 0:
             reasons.append("no case matched the selection")
         if counts[FAIL]:
@@ -1253,6 +1335,7 @@ def run_behavioral(skill_filter: str | None, timeout: int, runs: int,
         "coverage": round(usable / selected, 4) if selected else 0.0,
         "skilled": counts, "bare": bare_counts, "rubric_delta": deltas,
         "skipped_ungradeable_evals": skipped,
+        "not_runnable_here": not_runnable,
     }
     usage = {**_USAGE, "wall_clock_s": round(time.monotonic() - started, 1),
              "cost_note": "total_cost_usd as reported by the claude CLI; on a subscription "
@@ -1683,6 +1766,9 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-infra-errors", type=int, default=6,
                     help="(behavioral) abort after this many consecutive infrastructure errors; "
                          "remaining cases are NOT_RUN (default 6)")
+    ap.add_argument("--collect-only", action="store_true",
+                    help="(behavioral) run and save the answer arms without judging them; exit 0 "
+                         "when every arm answered. Grade later with --regrade.")
     ap.add_argument("--isolation", choices=["auto", "namespace", "none"], default="auto",
                     help="(live) how answer arms are kept away from this checkout: 'namespace' "
                          "hides it in a private mount namespace (Linux; failure is fatal), "
@@ -1720,6 +1806,7 @@ def main(argv: list[str] | None = None) -> int:
         ap.error("choose one of --behavioral / --activation, not both")
     if args.behavioral or args.activation:
         configure_confinement(args.isolation)
+    _COLLECT["on"] = bool(args.collect_only and args.behavioral)
     if args.behavioral:
         if args.runs < 1:
             ap.error("--runs must be >= 1")
