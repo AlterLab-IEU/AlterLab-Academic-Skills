@@ -1,28 +1,33 @@
 ---
 name: alterlab-infographics
-description: "Creates professional infographics with Nano Banana Pro AI and smart iterative refinement, using Gemini 3.1 Pro for automated quality review and an optional Perplexity Sonar research phase for sourced data — supports 10 infographic types, 8 industry styles, and colorblind-safe palettes. Use when the request is for an infographic, data-story graphic, statistical poster, comparison chart, timeline, process/how-to visual, or list/social graphic that pairs a designed layout with figures. Use alterlab-scientific-schematics instead for technical flowcharts, CONSORT/PRISMA, pathways, or architecture diagrams; alterlab-generate-image for non-infographic illustrations; alterlab-matplotlib for exact plots of a dataset. Part of the AlterLab Academic Skills suite."
+description: "Creates professional infographics with no API key: Claude lays the graphic out as code (SVG, with charts computed from the numbers), renders it locally to PNG/PDF with every word and figure exact, sources statistics with web search when asked, each tied to a citation, then reviews the render itself against a document-type quality threshold and iterates — 10 infographic types, 8 industry styles, colorblind-safe palettes. Optional AI raster generation (Nano Banana Pro, Gemini review, Perplexity research via OpenRouter) with OPENROUTER_API_KEY. Use when the request is for an infographic, data-story graphic, statistical poster, comparison chart, timeline, process/how-to visual, or list/social graphic that pairs a designed layout with figures. Use alterlab-scientific-schematics instead for technical flowcharts, CONSORT/PRISMA, pathways, or architecture diagrams; alterlab-generate-image for non-infographic illustrations; alterlab-matplotlib for exact plots of a dataset. Part of the AlterLab Academic Skills suite."
 license: MIT
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
-allowed-tools: Read Write Edit Bash
-compatibility: Requires an OpenRouter API key (OPENROUTER_API_KEY) and the requests library for Nano Banana Pro generation (google/gemini-3-pro-image), Gemini 3.1 Pro quality review, and optional Perplexity sonar-pro research; models can be overridden with ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL
+    version: "1.2.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: OPENROUTER_API_KEY (the AI raster backend, --backend ai: Nano Banana Pro generation, Gemini 3.1 Pro review and Perplexity Sonar research through OpenRouter)"
+allowed-tools: Read Write Edit Bash WebSearch WebFetch
+compatibility: "No API key required. Renders locally via `uv run --python \">=3.11\" --with cairosvg --with pillow` (needs the Cairo library); research uses Claude's own web search. Optional AI backend (--backend ai): OPENROUTER_API_KEY and requests; models via ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL."
 ---
 
 # Infographics
 
 ## Overview
 
-Infographics are visual representations of information, data, or knowledge designed to present complex content quickly and clearly. **This skill uses Nano Banana Pro AI for infographic generation with Gemini 3.1 Pro quality review and Perplexity Sonar for research.**
+Infographics present information, data, or knowledge so it can be grasped quickly. **This skill
+builds them as code**: Claude lays the infographic out in SVG — charts drawn from the actual
+numbers, every label typed exactly — renders it locally, looks at the render, and iterates until
+it meets the quality threshold for its document type. No image model and no API key are needed.
 
 **How it works:**
-- (Optional) **Research phase**: Gather accurate facts and statistics using Perplexity Sonar
-- Describe your infographic in natural language
-- Nano Banana Pro generates publication-quality infographics automatically
-- **Gemini 3.1 Pro reviews quality** against document-type thresholds
-- **Smart iteration**: Only regenerates if quality is below threshold
-- Professional-ready output in minutes; no design skills required
+- (Optional) **Research phase** (`--research`): gather accurate, recent facts with web search
+  and record each with its source in `<name>_research.json`
+- Get the **design brief** for the type, style, palette and document type
+- **Draw** the infographic as SVG from the user's data and the research file
+- **Render and lint** it locally (font sizes, text overflow, grayscale preview)
+- **Claude reviews the render** against the document-type threshold
+- **Smart iteration**: revise only if the score is below threshold (max 3 iterations)
 
 **Quality Thresholds by Document Type:**
 | Document Type | Threshold | Description |
@@ -34,6 +39,11 @@ Infographics are visual representations of information, data, or knowledge desig
 | internal | 7.0/10 | Internal use |
 | draft | 6.5/10 | Working drafts |
 | default | 7.5/10 | General purpose |
+
+Review criteria, 0-2 points each (the same rubric the optional AI reviewer uses): visual hierarchy
+and layout; typography and readability; data visualization; color and accessibility; overall
+impact. Before scoring, every number, date and name is checked against the data or research
+file; a mismatch is fixed first, never traded against design points.
 
 ## When to Use This Skill
 
@@ -60,69 +70,86 @@ Use the **infographics** skill when:
 
 ## Quick Start
 
-Generate any infographic by describing it; the script handles generation, review, and iteration.
-
 ```bash
-# Generate a list infographic (default threshold 7.5/10)
-python scripts/generate_infographic.py \
-  "5 benefits of regular exercise" \
-  -o figures/exercise_benefits.png --type list
+# 1. Design brief (type guidelines, style colours, palette, threshold, criteria)
+python scripts/generate_infographic.py "5 benefits of regular exercise" \
+  -o figures/exercise_benefits.png --type list --doc-type social
 
-# Marketing (highest threshold: 8.5/10)
-python scripts/generate_infographic.py \
-  "Product features comparison" \
-  -o figures/product_comparison.png --type comparison --doc-type marketing
+# Brief WITH the research step, for numbers that must be sourced and current
+python scripts/generate_infographic.py "Global AI market size and growth projections" \
+  -o figures/ai_market.png --type statistical --style technology --palette wong \
+  --doc-type report --research
 
-# Corporate style + colorblind-safe palette
-python scripts/generate_infographic.py \
-  "Company milestones 2010-2025" \
-  -o figures/timeline.png --type timeline --style corporate
+# 2. Claude writes figures/ai_market.svg; render + lint it (versioned)
+uv run --python ">=3.11" --with cairosvg --with pillow python scripts/generate_infographic.py \
+  figures/ai_market.svg -o figures/ai_market_v1.png --doc-type report --gray
 
-# WITH RESEARCH for accurate, up-to-date data
-python scripts/generate_infographic.py \
-  "Global AI market size and growth projections" \
-  -o figures/ai_market.png --type statistical --research
+# 3. Claude Reads the PNG, scores it, and records the review (REVISE / DONE / STOP)
+python scripts/figure_tools.py score figures/ai_market_review_log.json --kind infographic \
+  --doc-type report --image figures/ai_market_v1.png --source figures/ai_market.svg \
+  --score 7.6 --critique "source line too small; 2030 projection label overlaps bar"
 ```
 
-**What happens behind the scenes:**
-1. **(Optional) Research**: Perplexity Sonar gathers accurate facts, statistics, and data
-2. **Generation 1**: Nano Banana Pro creates the initial infographic
-3. **Review 1**: **Gemini 3.1 Pro** evaluates quality against the document-type threshold
-4. **Decision**: quality >= threshold → **DONE** (early stop); below threshold → improve prompt and regenerate
-5. **Repeat** until quality meets threshold OR max iterations reached
-
-**Output**: Versioned images plus a detailed JSON review log with quality scores, critiques, and early-stop info. With `--research`, a `_research.json` file also records the gathered facts and the source URLs returned by the search model.
-
-**Check the numbers before you publish.** The image model draws every figure and label itself, so it can misspell words or alter digits even when the prompt was correct, and the review model scores design quality, not factual accuracy. Compare each statistic in the finished graphic against your data or the `_research.json` sources, and cite those sources wherever the infographic is used. If the review call fails, the script keeps the image and records `"review_skipped": true` with a null score in the log instead of inventing one.
+`python scripts/generate_infographic.py --list-options` lists every type, style and palette.
 
 ## Core Workflow
 
-1. **Pick the type** (`--type`) — one of 10 presets (statistical, timeline, process, comparison, list, geographic, hierarchical, anatomical, resume, social). Full catalog with examples in `references/type_catalog.md`.
-2. **Pick a style and (optionally) palette** — 8 industry `--style` presets, 3 colorblind-safe `--palette` presets. Tables in `references/type_catalog.md`.
-3. **Set `--doc-type`** to choose the quality threshold (see table above).
-4. **Add `--research`** when accurate sourced data matters.
-5. **Configure the API key** (`OPENROUTER_API_KEY`) and run; review the JSON log and regenerate with a more specific prompt if needed.
+1. **Collect the content.** Use the user's data and attached files verbatim (names, dates,
+   numbers, brand colours). If the content is missing, ask for it; never invent milestones,
+   statistics or quotes.
+2. **Research when numbers must be sourced** (`--research`): with web search, find 5-8 recent
+   facts from primary sources (agency or statistics-office releases, peer-reviewed papers, the
+   original report), and write `<name>_research.json` (claim, value, unit, year, source title,
+   URL, retrieval date). Where estimates disagree (market sizes often do), show the range or name
+   the source on the graphic.
+3. **Pick the type** (`--type`, 10 presets: statistical, timeline, process, comparison, list,
+   geographic, hierarchical, anatomical, resume, social), a **style** (`--style`, 8 presets), and a
+   colorblind-safe **palette** (`--palette wong|ibm|tol`); set `--doc-type` for the threshold.
+   Print the brief. Catalog with examples: `references/type_catalog.md`.
+4. **Draw it as SVG**: a viewBox for the target (1080x1080 social, 1200x1800 report page,
+   1920x1080 slide), fonts on the root, one `<text>` per line, chart marks computed from the
+   values with the value printed beside each, a source line at the bottom. Layout templates:
+   `references/infographic_types.md`; design rules: `references/design_principles.md`.
+5. **Render, review, iterate**: render `_v1`, fix every lint warning, Read the PNG and its
+   grayscale preview, check each number against the data or research file, score the five
+   criteria, and record the score; revise until `DONE` or `STOP` (3 iterations).
+6. **Deliver**: final PNG (and PDF/SVG via `python scripts/figure_tools.py render x.svg -o x.pdf`),
+   the SVG source, the research file with its sources, and the review log.
 
-## Configuration
+**Output**: versioned images, the review log (scores, critiques, early-stop reason), and, with
+`--research`, the `_research.json` source list. Cite those sources wherever the infographic is used.
 
-Set the OpenRouter API key in the environment, or in a `.env` file if `python-dotenv` is installed:
+## Optional: AI raster generation
+
+With `OPENROUTER_API_KEY` set (environment, `.env` with `python-dotenv`, or `--api-key`), add
+`--backend ai` to a description to have Nano Banana Pro (`google/gemini-3-pro-image`) generate
+the infographic, Gemini 3.1 Pro (`google/gemini-3.1-pro-preview`) score it against the same
+thresholds, and, with `--research`, Perplexity `sonar-pro` gather the facts first:
 
 ```bash
-export OPENROUTER_API_KEY='your_api_key_here'   # https://openrouter.ai/keys
+python scripts/generate_infographic.py "Global AI market size and growth projections" \
+  -o figures/ai_market.png --type statistical --research --backend ai
 ```
 
-Default models (verified on OpenRouter 2026-09-23): `google/gemini-3-pro-image` (Nano Banana Pro) for generation, `google/gemini-3.1-pro-preview` for review, and `perplexity/sonar-pro` for research. Override the first two with `ALTERLAB_IMAGE_MODEL` / `ALTERLAB_REVIEW_MODEL`.
-
-**Data & privacy:** prompts and research/infographic content are sent to a third-party API (OpenRouter) for generation and quality review. Avoid sending confidential, clinical, or unpublished material.
+Without the key `--backend ai` exits 2 and names the keyless route; it never falls back
+silently. Use it when the user asks for AI-generated artwork. The image model draws every figure
+and label itself, so it can misspell words or alter digits even when the prompt was right, and
+the review model scores design, not factual accuracy: compare each statistic with the data or the
+`_research.json` sources. Prompts and content are sent to OpenRouter, so keep confidential,
+clinical, or unpublished material out. If the review call fails the log records
+`"review_skipped": true` with a null score. Override models with `ALTERLAB_IMAGE_MODEL` /
+`ALTERLAB_REVIEW_MODEL`. Details: `references/cli_and_workflow.md`.
 
 ## Reference Index
 
 | File | Contents |
 | ---- | -------- |
-| [`references/type_catalog.md`](references/type_catalog.md) | All 10 `--type` presets with runnable examples; `--style` and `--palette` tables |
-| [`references/cli_and_workflow.md`](references/cli_and_workflow.md) | Full CLI options, smart-refinement loop + Gemini review criteria + review-log schema, `--research` integration, prompt-engineering tips, troubleshooting, cross-skill integration, checklist |
+| [`references/type_catalog.md`](references/type_catalog.md) | All 10 `--type` presets with examples; `--style` and `--palette` tables |
+| [`references/cli_and_workflow.md`](references/cli_and_workflow.md) | Full CLI options, keyless refinement loop and review-log schema, research protocol, the optional AI backend, prompt tips, troubleshooting, checklist |
 | [`references/design_principles.md`](references/design_principles.md) | Visual hierarchy, layout, typography |
 | [`references/color_palettes.md`](references/color_palettes.md) | Full palette specifications |
 | [`references/infographic_types.md`](references/infographic_types.md) | Extended layout templates for all types |
 
-Use this skill to create professional, accessible, and visually compelling infographics using Nano Banana Pro AI with intelligent Gemini 3.1 Pro quality review.
+Use this skill to create professional, accessible, and visually compelling infographics whose every number is exact and sourced: drawn as code, rendered locally, and reviewed against the venue's threshold.
+
+Part of the AlterLab Academic Skills suite.

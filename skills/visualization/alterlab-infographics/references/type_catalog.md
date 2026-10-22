@@ -2,6 +2,8 @@
 
 Each of the ten `--type` presets with its best use, key visual elements, and a runnable
 `generate_infographic.py` example. The SKILL.md body lists the types; this is the full catalog.
+Each command prints the design brief for that preset (keyless: Claude then draws the SVG and
+renders it); add `--backend ai` to generate the image with the optional OpenRouter model.
 
 ## 1. Statistical/Data-Driven (`--type statistical`)
 

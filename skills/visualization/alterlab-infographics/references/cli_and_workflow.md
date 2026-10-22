@@ -1,29 +1,33 @@
 # CLI Reference, Refinement Workflow, Configuration & Troubleshooting
 
-Full command-line options, the smart iterative-refinement loop and review criteria,
-research integration detail, configuration, prompt-engineering tips, and troubleshooting.
+Full command-line options, the keyless iterative-refinement loop and review criteria, research
+detail, the optional AI backend, prompt and layout tips, and troubleshooting.
 
-## Smart Iterative Refinement
+## Smart Iterative Refinement (keyless)
 
 ### How It Works
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  1. Generate infographic with Nano Banana Pro       │
-│                    ↓                                │
-│  2. Review quality with Gemini 3.1 Pro              │
-│                    ↓                                │
-│  3. Score >= threshold?                             │
-│       YES → DONE! (early stop)                      │
-│       NO  → Improve prompt, go to step 1            │
-│                    ↓                                │
-│  4. Repeat until quality met OR max iterations      │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  0. (--research) web search -> <name>_research.json          │
+│  1. Brief: generate_infographic.py "topic" --type ... -o X   │
+│  2. Claude writes X.svg from the data / research file        │
+│  3. Render + lint: generate_infographic.py X.svg -o X_vN.png │
+│  4. Claude Reads X_vN.png, checks every number, scores it    │
+│  5. figure_tools.py score -> DONE (>= threshold, early stop) │
+│                           -> REVISE (fix X.svg, go to 3)     │
+│                           -> STOP (3 iterations used)        │
+└──────────────────────────────────────────────────────────────┘
 ```
+
+No image model and no API key are used. The render step (cairosvg) reports the smallest label at
+print size, text that probably overflows its box, the colours used, and whether the image is blank;
+`--gray` writes a grayscale preview for the accessibility check.
 
 ### Quality Review Criteria
 
-Gemini 3.1 Pro (`google/gemini-3.1-pro-preview`, override with `ALTERLAB_REVIEW_MODEL`) evaluates each infographic on:
+The reviewer — Claude from the rendered PNG on the keyless path, Gemini 3.1 Pro
+(`google/gemini-3.1-pro-preview`, override with `ALTERLAB_REVIEW_MODEL`) on the AI path — scores:
 
 1. **Visual Hierarchy & Layout** (0-2 points) — clear hierarchy, logical reading flow, balanced composition
 2. **Typography & Readability** (0-2 points) — readable text, bold headlines, no overlapping
@@ -31,61 +35,56 @@ Gemini 3.1 Pro (`google/gemini-3.1-pro-preview`, override with `ALTERLAB_REVIEW_
 4. **Color & Accessibility** (0-2 points) — professional colors, sufficient contrast, colorblind-friendly
 5. **Overall Impact** (0-2 points) — professional appearance, free of visual bugs, achieves communication goal
 
+On the keyless path every number, date and name is first checked against the user's data or the
+research file; a mismatch is fixed before scoring, never traded against design points.
+
 ### Review Log
 
-Each generation produces a JSON review log:
+`figure_tools.py score` writes the same JSON shape the AI path writes:
 ```json
 {
+  "kind": "infographic",
   "user_prompt": "5 benefits of exercise...",
-  "infographic_type": "list",
-  "style": "healthcare",
   "doc_type": "marketing",
   "quality_threshold": 8.5,
+  "reviewer": "Claude, from the rendered image (keyless; no review model)",
   "iterations": [
     {
       "iteration": 1,
       "image_path": "figures/exercise_v1.png",
+      "source_path": "figures/exercise.svg",
       "score": 8.7,
       "needs_improvement": false,
-      "critique": "SCORE: 8.7\nSTRENGTHS:..."
+      "critique": "Clear hierarchy; icons consistent; all five benefits verbatim"
     }
   ],
   "final_score": 8.7,
   "early_stop": true,
-  "early_stop_reason": "Quality score 8.7 meets threshold 8.5"
+  "early_stop_reason": "score 8.7 meets threshold 8.5 for marketing"
 }
 ```
 
 ## Research Integration
 
-### Automatic Data Gathering (`--research`)
+### Sourcing the numbers (`--research`)
 
-When creating infographics that require accurate, up-to-date data, use the `--research` flag to automatically gather facts and statistics using **Perplexity Sonar Pro**.
+When an infographic needs accurate, up-to-date data, add `--research`. On the keyless path the
+brief then includes the research protocol, and Claude carries it out with web search before
+drawing:
 
 ```bash
-# Research and generate statistical infographic
 python scripts/generate_infographic.py \
   "Global renewable energy adoption rates by country" \
   -o figures/renewable_energy.png --type statistical --research
-
-# Research for timeline infographic
-python scripts/generate_infographic.py \
-  "History of artificial intelligence breakthroughs" \
-  -o figures/ai_history.png --type timeline --research
-
-# Research for comparison infographic
-python scripts/generate_infographic.py \
-  "Electric vehicles vs hydrogen vehicles comparison" \
-  -o figures/ev_hydrogen.png --type comparison --research
 ```
 
-### What Research Provides
-
-1. **Gathers Key Facts**: 5-8 relevant facts and statistics about the topic
-2. **Provides Context**: Background information for accurate representation
-3. **Finds Data Points**: Specific numbers, percentages, and dates
-4. **Cites Sources**: Mentions major studies or sources
-5. **Prioritizes Recency**: Focuses on 2023-2026 information
+1. **Find 5-8 key facts** with specific numbers, percentages and dates, preferring 2023-2026
+   primary sources (statistics offices, agencies, peer-reviewed papers, the original report).
+2. **Record each one** in `{name}_research.json`: claim, value, unit, year, source title, URL,
+   and the retrieval date.
+3. **Handle disagreement**: market-size and forecast figures differ between firms; show the
+   range or attribute the figure on the graphic instead of picking one silently.
+4. **Use only recorded numbers** on the infographic, with a source line naming them.
 
 ### When to Use Research
 
@@ -99,35 +98,39 @@ python scripts/generate_infographic.py \
 **Skip research for:**
 - Simple conceptual infographics
 - Internal process documentation
-- Topics where you provide all the data in the prompt
-- Speed-critical generation
-
-### Research Output
-
-When research is enabled, additional files are created:
-- `{name}_research.json` - Raw research text plus a `sources` list of `{url, title}` entries taken from the search model's citations
-- Research content is automatically incorporated into the infographic prompt
+- Topics where the user provides all the data
 
 ## Command-Line Reference
 
 ```bash
-python scripts/generate_infographic.py [OPTIONS] PROMPT
+python scripts/generate_infographic.py [OPTIONS] PROMPT_OR_SOURCE
 
 Arguments:
-  PROMPT                    Description of the infographic content
+  PROMPT_OR_SOURCE          A .svg/.tex source to render, or a description (prints the brief;
+                            with --backend ai, generates)
 
 Options:
-  -o, --output PATH         Output file path (required)
+  -o, --output PATH         Output file path (.png, .pdf or .svg)
   -t, --type TYPE           Infographic type preset
   -s, --style STYLE         Industry style preset
   -p, --palette PALETTE     Colorblind-safe palette
   -b, --background COLOR    Background color (default: white)
   --doc-type TYPE           Document type for quality threshold
-  --iterations N            Maximum refinement iterations (default: 3)
-  -r, --research            Gather facts and sources with Perplexity sonar-pro first
-  --api-key KEY             OpenRouter API key
-  -v, --verbose             Verbose output
+  --backend {code,ai}       code (default, keyless) or ai (OpenRouter, needs a key)
+  --brief                   Print the design brief and exit
+  --width-in INCHES         Printed width, for the font-size check
+  --dpi N                   PNG resolution (default 300)
+  --gray                    Also write a grayscale preview
+  --iterations N            Maximum refinement iterations for --backend ai (default: 3)
+  -r, --research            Keyless: add the web-search research protocol to the brief;
+                            ai: gather facts with Perplexity sonar-pro first
+  --api-key KEY             OpenRouter API key (--backend ai only)
+  -v, --verbose             Verbose output (--backend ai)
   --list-options            List all available options
+
+python scripts/figure_tools.py score LOG --kind infographic --doc-type T --image PNG \
+    --score S --critique TEXT [--source SVG] [--prompt TEXT]
+python scripts/figure_tools.py render SOURCE -o OUT [--width-in W] [--gray] [--transparent]
 ```
 
 ### List All Options
@@ -136,32 +139,41 @@ Options:
 python scripts/generate_infographic.py --list-options
 ```
 
-## Configuration
+## Optional AI Backend (OpenRouter)
 
-### API Key Setup
+`--backend ai` sends the description to Nano Banana Pro (`google/gemini-3-pro-image`) for
+generation and Gemini 3.1 Pro for review, regenerating until the threshold is met (max 3
+iterations); `--research` first asks Perplexity `sonar-pro` for facts and writes
+`{name}_research.json` with the cited URLs. Set the key first:
 
-Set your OpenRouter API key:
 ```bash
-export OPENROUTER_API_KEY='your_api_key_here'
+export OPENROUTER_API_KEY='your_api_key_here'   # https://openrouter.ai/keys
+python scripts/generate_infographic.py "Global AI market size" -o figures/ai_market.png \
+  --type statistical --research --backend ai
 ```
 
-Get an API key at: https://openrouter.ai/keys
+Without a key (`--api-key`, the environment, or a `.env` file) `--backend ai` exits 2 and names
+the keyless route. The image model draws every number itself and can alter digits; check each
+against the research sources.
 
 ### Data & Privacy
 
-This skill sends your prompts and research/infographic content to a third-party API (OpenRouter) for generation and quality review. Avoid sending confidential, clinical, or unpublished material. The OpenRouter API key is read from `--api-key`, the environment (`OPENROUTER_API_KEY`), or a `.env` file; the wrapper passes it to the generator through the environment rather than the command line.
+The keyless path keeps everything local except Claude's own web searches. The AI backend sends
+prompts and research/infographic content to OpenRouter for generation and review, so keep
+confidential, clinical, or unpublished material out of it. The key is passed to the generator
+through the environment rather than the command line.
 
-## Prompt Engineering Tips
+## Layout and Prompt Tips
 
 ### Be Specific About Content
 
-✓ **Good prompts** (specific, detailed):
+✓ **Good** (specific, detailed):
 ```
 "5 benefits of meditation: reduces stress, improves focus,
 better sleep, lower blood pressure, emotional balance"
 ```
 
-✗ **Avoid vague prompts**:
+✗ **Avoid vague requests**:
 ```
 "meditation infographic"
 ```
@@ -178,26 +190,29 @@ better sleep, lower blood pressure, emotional balance"
 "market is growing"
 ```
 
-### Specify Visual Elements
+### Draw charts from the values
 
-✓ **Good**:
-```
-"Timeline showing 5 milestones with icons for each event"
-```
+Compute bar lengths, donut angles and icon counts from the numbers (or render the chart panel
+with matplotlib and place it as a local image), and print each value next to its mark so the
+graphic stays exact.
 
 ## Troubleshooting
 
-**Problem**: Text in infographic is unreadable
-- **Solution**: Reduce text content; use --type to specify layout type
+**Problem**: Text in the infographic is unreadable
+- **Solution**: Cut words, raise `font-size`, and re-render; the lint reports the smallest label
+
+**Problem**: Text runs out of its box
+- **Solution**: Split it into two `<text>` lines or widen the box (the render step flags it)
 
 **Problem**: Colors clash or are inaccessible
-- **Solution**: Use `--palette wong` for colorblind-safe colors
+- **Solution**: Use `--palette wong` for data colours and check the `--gray` preview
 
-**Problem**: Quality score too low
-- **Solution**: Increase iterations with `--iterations 3`; use more specific prompt
+**Problem**: Quality score stays below threshold
+- **Solution**: Fix the specific critique items; after 3 iterations deliver the best version and
+  list what is still short rather than lowering `--doc-type`
 
-**Problem**: Wrong infographic type generated
-- **Solution**: Always specify `--type` flag for consistent results
+**Problem**: `no SVG renderer: cairosvg unavailable`
+- **Solution**: Run through `uv run --with cairosvg`; install the Cairo library if it is missing
 
 ## Integration with Other Skills
 
@@ -208,14 +223,14 @@ better sleep, lower blood pressure, emotional balance"
 
 ## Quick Reference Checklist
 
-Before generating:
-- [ ] Clear, specific content description
+Before drawing:
+- [ ] Content collected from the user (or researched and recorded with sources)
 - [ ] Infographic type selected (`--type`)
-- [ ] Style appropriate for audience (`--style`)
-- [ ] Output path specified (`-o`)
-- [ ] API key configured
+- [ ] Style appropriate for audience (`--style`) and a colorblind-safe palette
+- [ ] Document type set for the threshold (`--doc-type`)
 
-After generating:
-- [ ] Review the generated image
-- [ ] Check the review log for scores
-- [ ] Regenerate with more specific prompt if needed
+After rendering:
+- [ ] Every number and name matches the data or research file
+- [ ] No lint warnings; grayscale preview still readable
+- [ ] Review recorded with `figure_tools.py score`; final score >= threshold or gaps listed
+- [ ] PNG, vector copy, SVG source, research file and review log saved together

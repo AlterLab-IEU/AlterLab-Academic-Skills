@@ -56,13 +56,15 @@ AI_SOURCES = {  # kind -> (sibling AI script, class, constant)
     "infographic": ("generate_infographic_ai.py", "InfographicGenerator", "QUALITY_THRESHOLDS"),
     "slide": ("generate_slide_image_ai.py", "SlideImageGenerator", "QUALITY_THRESHOLD"),
 }
+# The same five 0-2 criteria the AI backends' review prompts use, so a keyless score means the
+# same thing. Before scoring, every number and label is checked against the user's data: a
+# mismatch is fixed first, never traded off against design points.
 CRITERIA = {
     "schematic": ["Scientific accuracy", "Clarity and readability", "Label quality",
                   "Layout and composition", "Professional appearance"],
-    "infographic": ["Data accuracy and sourcing", "Visual hierarchy and readability",
-                    "Typography and labels", "Layout and balance", "Accessibility (colour, contrast)"],
-    "slide": ["Message clarity", "Readability at projection size", "Visual hierarchy",
-              "Consistency with the deck", "Professional appearance"],
+    "infographic": ["Visual hierarchy and layout", "Typography and readability",
+                    "Data visualization", "Color and accessibility", "Overall impact"],
+    "slide": ["Visual impact", "Clarity", "Readability", "Composition", "Relevance"],
     "image": ["Fidelity to the request", "Composition", "Text and labels exact",
               "Technical quality (size, crispness)", "Fitness for the venue"],
 }
