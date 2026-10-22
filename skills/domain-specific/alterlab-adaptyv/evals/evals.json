@@ -39,6 +39,36 @@
       ]
     },
     {
+      "id": "validate-submission-offline",
+      "prompt": "I don't have my Adaptyv API key on this machine and I don't want a rejected submission. Validate binding_submission.json against the Foundry's rules before I send it, and tell me exactly what to fix.",
+      "files": ["fixtures/binding_submission.json"],
+      "expected_output": "Invokes alterlab-adaptyv on the keyless path (e.g. scripts/validate_submission.py) with no ADAPTYV_API_KEY: checks the affinity submission against the Foundry's own contract and reports that target_id is required for an affinity experiment but is missing, and that sequence 'mb_bad' (MKVLWAALLX1ZB) contains invalid characters (X, 1, Z, B are not among the 20 amino acids) so it must be fixed or removed; the other sequences and method 'bli' are fine. Explains target_id must come from the catalog (GET /targets, which needs the key) and that these are exactly the problems the API's 400 would list, without submitting.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "target_id" },
+        { "type": "behavior", "value": "Flags the missing target_id (required for affinity) and the invalid characters in the mb_bad sequence from an offline check, without contacting the API." }
+      ]
+    },
+    {
+      "id": "assemble-and-check-expression-package",
+      "prompt": "Help me put together an Adaptyv expression experiment for 8 enzyme variants and make sure the spec is well-formed before I set up billing — I have no account yet. Note I keep seeing errors when I add a target and a BLI method.",
+      "expected_output": "Invokes alterlab-adaptyv and assembles the experiment_spec offline with no key: experiment_type 'expression' with the 8 variants as a {label: aa_string} map, and explains that expression takes NEITHER a target_id NOR a method (those are only for the binding assays affinity/screening), which is why adding a target and bli caused errors. Validates the sequences are proper amino-acid strings and that the spec is well-formed, and describes the draft -> submit -> confirm-quote flow that will need ADAPTYV_API_KEY, without submitting or inventing results.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "expression" },
+        { "type": "behavior", "value": "Builds a valid expression spec offline and explains that expression rejects target_id and method (binding-only fields), without needing an API key." }
+      ]
+    },
+    {
+      "id": "prescreen-before-package-offline",
+      "prompt": "Before I even build the Adaptyv submission, screen these 12 candidate binder sequences locally for solubility and expression risk, drop the bad ones, and give me the cleaned {label: sequence} map ready to drop into the experiment spec. No account yet.",
+      "expected_output": "Invokes alterlab-adaptyv's keyless pre-screen: flags unpaired cysteines and aggregation-prone hydrophobic stretches, applies NetSolP/SoluProt-style solubility scoring and ESM naturalness locally (uv run python, no token), drops or down-ranks the risky sequences, and returns the cleaned {label: aa_string} map ready to paste into experiment_spec.sequences. Notes the actual Foundry submission later needs ADAPTYV_API_KEY and costs money, without submitting anything.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Runs the local solubility/expression/ESM pre-screen with no key and returns a cleaned sequence map for the spec, deferring submission to the credentialed API." }
+      ]
+    },
+    {
       "id": "near-miss-pymatgen",
       "prompt": "I'm computing the formation energy and band structure of a candidate inorganic catalyst material from its crystal structure. Can you help me set up the calculation?",
       "expected_output": "Does NOT invoke this skill; defers to alterlab-pymatgen. The request is about inorganic crystalline materials properties (formation energy, band structure), not protein design, sequence optimization, or wet-lab experiment submission on the Adaptyv platform.",

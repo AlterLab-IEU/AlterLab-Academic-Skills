@@ -1,20 +1,30 @@
 ---
 name: alterlab-adaptyv
-description: Submits and tracks protein-testing experiments on the Adaptyv Bio Foundry cloud lab (wet-lab validation), and optimizes protein sequences before submission with computational tools (NetSolP, SoluProt, SolubleMPNN, ESM). Use when designing proteins that need wet-lab validation - binding/affinity screening, expression testing, thermostability, or fluorescence assays - or when submitting experiments to the Foundry API, browsing the target catalog, tracking experiment status, retrieving results, or pre-screening sequences for solubility/expression. Triggers on "Adaptyv", "Foundry API", "cloud lab", "biolayer interferometry / BLI", "wet-lab validation". Part of the AlterLab Academic Skills suite.
+description: Prepares and validates Adaptyv Bio Foundry protein-testing submissions with no account — optimizes and pre-screens sequences locally (NetSolP/SoluProt heuristics, SolubleMPNN, ESM), assembles the experiment payload, and validates it offline against the Foundry's own type/method/sequence rules so it is ready and correct before it costs anything. Submitting to the Foundry, browsing the target catalog, tracking status and retrieving results run through the Foundry API with the user's own ADAPTYV_API_KEY (experiments cost money and take weeks). Use when designing proteins for wet-lab validation (binding/affinity, expression, thermostability, fluorescence), preparing or validating a Foundry submission, pre-screening sequences, or tracking an Adaptyv experiment. Triggers on "Adaptyv", "Foundry API", "cloud lab", "biolayer interferometry / BLI", "wet-lab validation". Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
-compatibility: Requires an Adaptyv Bio Foundry account and an ADAPTYV_API_KEY token for experiment submission; local protein-optimization steps (ESM, etc.) run via `uv run python` without a key.
+compatibility: "No API key required to optimize/pre-screen sequences locally and to assemble and validate a Foundry submission offline (scripts/validate_submission.py, stdlib-only, from the published OpenAPI contract). Optional: the user's own ADAPTYV_API_KEY to submit experiments, browse the target catalog, track status and pull results; experiments cost money and take weeks."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.2.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: ADAPTYV_API_KEY (an Adaptyv Foundry Biscuit token — adds submitting experiments, the target catalog GET /targets, status tracking and result retrieval; runs incur real cost). ADAPTYV_API_URL and ADAPTYV_ORGANIZATION_ID are optional non-secret config the SDK reads"
 ---
 
 # Adaptyv
 
-Adaptyv Bio runs the **Foundry** cloud lab: submit protein sequences and a target, the lab runs the assay, and you retrieve experimental data (binding/affinity, thermostability, expression, fluorescence). The public **Foundry API** drives the full lifecycle programmatically. Turnaround is on the order of weeks; confirm the current estimate from the per-experiment quote rather than assuming a fixed number.
+Adaptyv Bio runs the **Foundry** cloud lab: submit protein sequences and a target, the lab runs the assay, and you retrieve experimental data (binding/affinity, thermostability, expression, fluorescence). The design, sequence optimization, and a validated, ready-to-submit experiment package are produced with no account; only the submission itself and reading results use the Foundry API.
 
-> The exact request/response shapes evolve. This skill captures the API contract as published in the OpenAPI doc (v0.0.2, checked 2026-09-23) at `https://foundry-api-public.adaptyvbio.com/api/v1/openapi.json`; that spec lists `https://devs.adaptyvbio.com` as the production base URL, and both hosts serve the same `/api/v1` routes. See also `https://docs.adaptyvbio.com`.
+> The exact request/response shapes evolve. This skill captures the API contract as published in the OpenAPI doc (v0.0.2, checked 2026-10-22) at `https://foundry-api-public.adaptyvbio.com/api/v1/openapi.json`; that spec lists `https://devs.adaptyvbio.com` as the production base URL, and both hosts serve the same `/api/v1` routes. See also `https://docs.adaptyvbio.com`.
+
+## Keyless Path (default — no Foundry account)
+
+1. **Optimize and pre-screen sequences locally** (already keyless): flag unpaired cysteines and aggregation-prone hydrophobic stretches, filter with NetSolP/SoluProt-style solubility scoring, redesign with SolubleMPNN, and score naturalness with ESM — `uv run python` with no token. See `reference/protein_optimization.md`.
+2. **Assemble the experiment payload** (`experiment_spec`: `experiment_type`, `method`, `target_id`, the `{label: aa_string}` `sequences` map, `n_replicates`) from the OpenAPI contract in `reference/api_reference.md`.
+3. **Validate the submission offline** with `python3 scripts/validate_submission.py spec.json` before it ever reaches the API — it enforces the Foundry's own per-type matrix with no key: `method` (bli|spr) required for affinity/screening and rejected otherwise; `target_id` required for affinity/screening/epitope_binning and rejected otherwise; `sequences` non-empty (epitope_binning a multiple of 4, 4..28); `n_replicates` rejected for epitope_binning; and every sequence a valid amino-acid string (the 20 AAs plus ':' for multichain). This catches the exact problems the API's 400 would list, without a round trip.
+4. **Hand over submission.** Give the authenticated `POST /experiments` -> review quote -> `POST .../quote/confirm` flow; it needs the user's `ADAPTYV_API_KEY`, and the catalog `GET /targets` (to resolve a real `target_id`) is also token-gated. If the key is unset, deliver the validated package and stop — never claim an experiment was submitted or invent results.
+
+Experiments cost money and run for weeks; nothing is billed until the user confirms the quote.
 
 ## When to Use This Skill
 
@@ -143,7 +153,8 @@ Before submitting sequences, optimize them for better expression and stability:
 
 See `reference/protein_optimization.md` for detailed optimization workflows and tool usage.
 
-## API Reference
+## Scripts and API Reference
+- `scripts/validate_submission.py` — **keyless** offline validator for an experiment submission (the per-type/method/sequence contract); no token.
 For complete API documentation including all endpoints, request/response formats, and authentication details, see `reference/api_reference.md`.
 
 ## Examples
