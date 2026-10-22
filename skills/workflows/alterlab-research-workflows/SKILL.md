@@ -85,6 +85,25 @@ the expected agent count from the table above and offer a small first slice — 
 references, 100 records, three claims. See `references/running-workflows.md` for arguments,
 permissions, cost control, resuming, and troubleshooting.
 
+## Answering a Request
+
+Whether you launch the workflow, run its playbook, or first need the user's input, the reply:
+
+1. **Names the workflow** by its exact name and its command — "`grant-mock-panel`
+   (`/alterlab-workflows:grant-mock-panel`)" — in its opening lines. The user needs the name to
+   launch it, so say it even when you go on to run the playbook yourself.
+2. **States the acceptance rule and what happens to an item whose check did not complete**: a
+   citation flag with fewer than two completed re-checks is *provisional*; a record without a
+   resolved screening decision is *UNRESOLVED*; an unchecked review concern or grant weakness is
+   *unverified*. Name the categories it reports (citation-audit: the TF/PAC/IH/PH/SH taxonomy),
+   the skills it calls (the Composes column) and the next step after it (for screening:
+   `alterlab-literature-review`, then `alterlab-meta-analysis`).
+3. **Gives the cost**: the agent count and, for a large input (a whole thesis, hundreds of
+   records), a first slice. When the input is attached and fits one run (one proposal, one
+   manuscript, one decision letter), give the count in a line and run it.
+4. **Asks for the input if it is not attached** — never invents records, references, scores or
+   results — and says the run would otherwise be `blocked`.
+
 ## Running Without the Workflow Runtime
 
 On claude.ai, the API, or Claude Code with workflows disabled, run the same stages from the
@@ -112,6 +131,8 @@ unchecked, with status `partial` (for example "references 1–40 of 112 audited"
   `alterlab-literature-review` for full text and `alterlab-meta-analysis` for pooling.
 - A **grant deadline** is weeks away → `grant-mock-panel`; an early-stage idea → `literature-map`.
 - The request doesn't fit any of these → hand-design with `alterlab-workflow-orchestration`.
+- **One bibliography file or a handful of references** (DOIs resolve, titles match) → no workflow:
+  open with `alterlab-citation-verifier` per the hand-off rule, even while asking for the file.
 
 ## Quality Standards
 
