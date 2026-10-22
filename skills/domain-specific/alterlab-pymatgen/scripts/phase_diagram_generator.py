@@ -1,238 +1,247 @@
 #!/usr/bin/env python3
 """
-Phase diagram generator using Materials Project data.
+Phase-stability report for a chemical system.
 
-This script generates phase diagrams for chemical systems using data from the
-Materials Project database via pymatgen's MPRester.
+KEYLESS DEFAULT (--source optimade): queries the Materials Project OPTIMADE endpoint
+(https://optimade.materialsproject.org, no API key) for every structure whose elements are
+a subset of the chemical system, reads each structure's precomputed thermodynamics
+(``_mp_stability``: energy_above_hull, formation_energy_per_atom), lists the stable phases,
+and — with ``--analyze`` — reports a target composition's energy above hull and stability
+status (stable / metastable / unstable). This answers "is X stable?" with no credential.
+
+RICHER OPTIONAL BACKEND (--source mp): uses pymatgen's MPRester to pull full computed
+entries, build an actual convex-hull ``PhaseDiagram``, list decomposition products, compute
+chemical potentials, and write a phase-diagram plot. This needs the ``mp-api`` package and a
+free ``MP_API_KEY``; without the key the script exits non-zero and points back to the
+keyless OPTIMADE path rather than silently falling back.
 
 Usage:
-    python phase_diagram_generator.py chemical_system [options]
-
-Examples:
-    python phase_diagram_generator.py Li-Fe-O
-    python phase_diagram_generator.py Li-Fe-O --output li_fe_o_pd.png
-    python phase_diagram_generator.py Fe-O --show
-    python phase_diagram_generator.py Li-Fe-O --analyze "LiFeO2"
+    python phase_diagram_generator.py Li-Fe-O                      # keyless stability list
+    python phase_diagram_generator.py Li-Fe-O --analyze "LiFeO2"   # keyless: is it stable?
+    python phase_diagram_generator.py Li-Fe-O --source mp --analyze "LiFeO2" --output pd.png
 """
 
 import argparse
-import os
+import json
 import sys
-from pathlib import Path
+import urllib.parse
+import urllib.request
 
-try:
-    from pymatgen.core import Composition
-    from pymatgen.analysis.phase_diagram import PhaseDiagram, PDPlotter
-except ImportError:
-    print("Error: pymatgen is not installed. Install with: uv pip install pymatgen")
-    sys.exit(1)
-
-try:
-    from mp_api.client import MPRester
-except ImportError:
-    print("Error: mp-api is not installed. Install with: uv pip install mp-api")
-    sys.exit(1)
+OPTIMADE_BASE = "https://optimade.materialsproject.org/v1/structures"
+STABLE_TOL = 0.001   # eV/atom; on the convex hull
+META_TOL = 0.05      # eV/atom; "nearly stable"
 
 
-def get_api_key() -> str:
-    """Get Materials Project API key from environment."""
+def _normalize_elements(chemsys: str) -> list[str]:
+    els = [e.strip() for e in chemsys.split("-") if e.strip()]
+    if len(els) < 2:
+        print("Error: Chemical system must contain at least 2 elements (e.g. Li-Fe-O)")
+        sys.exit(1)
+    return sorted(els)
+
+
+def _optimade_reduced_formula(formula: str) -> str:
+    """OPTIMADE chemical_formula_reduced: element symbols in alphabetical order with
+    integer proportions reduced by their GCD (a count of 1 is written without a digit)."""
+    try:
+        from pymatgen.core import Composition
+    except ImportError:
+        print("Error: pymatgen is not installed. Install with: uv pip install pymatgen")
+        sys.exit(1)
+    comp = Composition(formula)
+    reduced_comp, _ = comp.get_reduced_composition_and_factor()
+    amts = reduced_comp.get_el_amt_dict()
+    parts = []
+    for el in sorted(amts):
+        n = int(round(amts[el]))
+        parts.append(el if n == 1 else f"{el}{n}")
+    return "".join(parts)
+
+
+def _fetch_optimade(filter_str: str, fields: str, cap: int = 2000) -> list[dict]:
+    """Page through an OPTIMADE query (keyless) and return the list of structure records."""
+    params = {"filter": filter_str, "response_fields": fields, "page_limit": 100}
+    url = OPTIMADE_BASE + "?" + urllib.parse.urlencode(params)
+    out: list[dict] = []
+    while url and len(out) < cap:
+        req = urllib.request.Request(url, headers={"User-Agent": "alterlab-pymatgen/1.0"})
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:  # noqa: S310 (fixed host)
+                payload = json.loads(resp.read().decode("utf-8"))
+        except Exception as exc:  # noqa: BLE001
+            print(f"Error: OPTIMADE request failed: {exc}")
+            sys.exit(1)
+        out.extend(payload.get("data", []))
+        url = (payload.get("links") or {}).get("next")
+        if isinstance(url, dict):
+            url = url.get("href")
+    return out
+
+
+def _e_above_hull(attrs: dict):
+    """Pull the GGA/GGA+U energy_above_hull (eV/atom) from _mp_stability, preferring the
+    mixed functional set, then plain gga_gga+u, then r2scan."""
+    stab = attrs.get("_mp_stability") or {}
+    for key in ("gga_gga+u_r2scan", "gga_gga+u", "r2scan"):
+        if key in stab and stab[key].get("energy_above_hull") is not None:
+            return stab[key]["energy_above_hull"], stab[key].get("formation_energy_per_atom")
+    return None, None
+
+
+def run_optimade(chemsys: str, args) -> None:
+    els = _normalize_elements(chemsys)
+    quoted = ",".join(f'"{e}"' for e in els)
+    print(f"\n{'='*60}\nPHASE STABILITY (keyless, MP OPTIMADE): {'-'.join(els)}\n{'='*60}\n")
+    print("Fetching structures from optimade.materialsproject.org (no API key)...")
+    records = _fetch_optimade(
+        f"elements HAS ONLY {quoted}",
+        "chemical_formula_reduced,_mp_stability",
+    )
+    rows = []
+    for rec in records:
+        attrs = rec.get("attributes", {})
+        eah, fe = _e_above_hull(attrs)
+        if eah is None:
+            continue
+        rows.append((rec.get("id"), attrs.get("chemical_formula_reduced"), eah, fe))
+    print(f"✓ Retrieved {len(records)} structures ({len(rows)} with thermodynamics)")
+    if not rows:
+        print(f"Error: no thermodynamics returned for {'-'.join(els)}")
+        sys.exit(1)
+
+    stable = sorted((r for r in rows if r[2] <= STABLE_TOL), key=lambda r: r[1] or "")
+    print(f"\n--- STABLE PHASES (E_above_hull <= {STABLE_TOL} eV/atom) ---")
+    seen = set()
+    for mp_id, formula, eah, fe in stable:
+        if formula in seen:
+            continue
+        seen.add(formula)
+        fe_s = f"{fe:+.4f}" if fe is not None else "   n/a"
+        print(f"  {formula:<16} {mp_id:<14} E_f = {fe_s} eV/atom")
+
+    if args.analyze:
+        target = _optimade_reduced_formula(args.analyze)
+        print(f"\n--- STABILITY ANALYSIS: {args.analyze} (OPTIMADE reduced: {target}) ---")
+        polymorphs = [r for r in rows if r[1] == target]
+        if not polymorphs:
+            print(f"No structure with reduced formula {target} in Materials Project.")
+            print("The composition may be off the known set; use --source mp for a full "
+                  "convex-hull decomposition of a hypothetical composition.")
+            return
+        best = min(polymorphs, key=lambda r: r[2])
+        mp_id, _, eah, fe = best
+        print(f"Lowest-energy polymorph: {mp_id}")
+        print(f"Energy above hull:       {eah:.4f} eV/atom")
+        if fe is not None:
+            print(f"Formation energy:        {fe:+.4f} eV/atom")
+        if eah <= STABLE_TOL:
+            print("Status:                  STABLE (on the convex hull)")
+        elif eah < META_TOL:
+            print("Status:                  METASTABLE (nearly stable)")
+        else:
+            print("Status:                  UNSTABLE")
+            print("Run with --source mp for the explicit decomposition products.")
+    print(f"\n{'='*60}\n")
+    print("Note: thermodynamics are Materials Project GGA/GGA+U values served keyless via "
+          "OPTIMADE. For convex-hull plots, decomposition products and chemical potentials, "
+          "re-run with --source mp (needs a free MP_API_KEY).")
+
+
+def run_mp(chemsys: str, args) -> None:
+    import os
+
     api_key = os.environ.get("MP_API_KEY")
     if not api_key:
-        print("Error: MP_API_KEY environment variable not set.")
-        print("Get your API key from https://next-gen.materialsproject.org/")
-        print("Then set it with: export MP_API_KEY='your_key_here'")
+        print("Error: --source mp requires a free Materials Project API key in MP_API_KEY.")
+        print("Get one at https://next-gen.materialsproject.org/ , then "
+              "export MP_API_KEY='your_key'.")
+        print("Or omit --source to use the keyless OPTIMADE stability report "
+              "(the default) instead.")
+        sys.exit(2)
+
+    try:
+        from pymatgen.core import Composition
+        from pymatgen.analysis.phase_diagram import PhaseDiagram, PDPlotter
+    except ImportError:
+        print("Error: pymatgen is not installed. Install with: uv pip install pymatgen")
         sys.exit(1)
-    return api_key
+    try:
+        from mp_api.client import MPRester
+    except ImportError:
+        print("Error: mp-api is not installed. Install with: uv pip install mp-api")
+        sys.exit(1)
 
-
-def generate_phase_diagram(chemsys: str, args):
-    """
-    Generate and analyze phase diagram for a chemical system.
-
-    Args:
-        chemsys: Chemical system (e.g., "Li-Fe-O")
-        args: Command line arguments
-    """
-    api_key = get_api_key()
-
-    print(f"\n{'='*60}")
-    print(f"PHASE DIAGRAM: {chemsys}")
-    print(f"{'='*60}\n")
-
-    # Get entries from Materials Project
+    print(f"\n{'='*60}\nPHASE DIAGRAM (MP API): {chemsys}\n{'='*60}\n")
     print("Fetching data from Materials Project...")
     with MPRester(api_key) as mpr:
         entries = mpr.get_entries_in_chemsys(chemsys)
-
     print(f"✓ Retrieved {len(entries)} entries")
-
-    if len(entries) == 0:
+    if not entries:
         print(f"Error: No entries found for chemical system {chemsys}")
         sys.exit(1)
 
-    # Build phase diagram
-    print("Building phase diagram...")
     pd = PhaseDiagram(entries)
-
-    # Get stable entries
-    stable_entries = pd.stable_entries
-    print(f"✓ Phase diagram constructed with {len(stable_entries)} stable phases")
-
-    # Print stable phases
+    print(f"✓ Phase diagram with {len(pd.stable_entries)} stable phases")
     print("\n--- STABLE PHASES ---")
-    for entry in stable_entries:
-        formula = entry.composition.reduced_formula
-        energy = entry.energy_per_atom
-        print(f"  {formula:<20} E = {energy:.4f} eV/atom")
+    for entry in pd.stable_entries:
+        print(f"  {entry.composition.reduced_formula:<20} "
+              f"E = {entry.energy_per_atom:.4f} eV/atom")
 
-    # Analyze specific composition if requested
     if args.analyze:
         print(f"\n--- STABILITY ANALYSIS: {args.analyze} ---")
-        try:
-            comp = Composition(args.analyze)
-
-            # Use the lowest-energy polymorph of this formula (the first match may be
-            # an unstable polymorph, which would misreport the composition's stability)
-            matches = [
-                entry for entry in entries
-                if entry.composition.reduced_formula == comp.reduced_formula
-            ]
-            closest_entry = min(matches, key=lambda e: e.energy_per_atom) if matches else None
-
-            if closest_entry:
-                # Calculate energy above hull
-                e_above_hull = pd.get_e_above_hull(closest_entry)
-                print(f"Energy above hull:    {e_above_hull:.4f} eV/atom")
-
-                if e_above_hull < 0.001:
-                    print("Status:               STABLE (on convex hull)")
-                    if closest_entry in pd.stable_entries:
-                        # Energy relative to the hull without this phase (<= 0)
-                        rxn_energy = pd.get_equilibrium_reaction_energy(closest_entry)
-                        print(f"Equilibrium reaction energy: {rxn_energy:.4f} eV/atom")
-                elif e_above_hull < 0.05:
-                    print("Status:               METASTABLE (nearly stable)")
-                else:
-                    print("Status:               UNSTABLE")
-
-                    # Get decomposition; for an unstable phase the decomposition
-                    # energy is its energy above hull (get_equilibrium_reaction_energy
-                    # only accepts stable entries)
-                    decomp = pd.get_decomposition(comp)
-                    print("\nDecomposes to:")
-                    for entry, fraction in decomp.items():
-                        formula = entry.composition.reduced_formula
-                        print(f"  {fraction:.3f} × {formula}")
-                    print(f"\nDecomposition energy: {e_above_hull:.4f} eV/atom")
-
+        comp = Composition(args.analyze)
+        matches = [e for e in entries
+                   if e.composition.reduced_formula == comp.reduced_formula]
+        closest = min(matches, key=lambda e: e.energy_per_atom) if matches else None
+        if closest:
+            eah = pd.get_e_above_hull(closest)
+            print(f"Energy above hull:    {eah:.4f} eV/atom")
+            if eah < STABLE_TOL:
+                print("Status:               STABLE (on convex hull)")
+            elif eah < META_TOL:
+                print("Status:               METASTABLE (nearly stable)")
             else:
-                print(f"No entry found for composition {args.analyze}")
-                print("Checking stability of hypothetical composition...")
-
-                # Analyze hypothetical composition
-                decomp = pd.get_decomposition(comp)
-                print(f"\nWould decompose to:")
-                for entry, fraction in decomp.items():
-                    formula = entry.composition.reduced_formula
-                    print(f"  {fraction:.3f} × {formula}")
-
-        except Exception as e:
-            print(f"Error analyzing composition: {e}")
-
-    # Get chemical potentials
-    if args.chemical_potentials:
-        print("\n--- CHEMICAL POTENTIALS ---")
-        if not args.analyze:
-            print("Pass --analyze <formula> to list the chemical potentials at that composition")
+                print("Status:               UNSTABLE")
+                print("\nDecomposes to:")
+                for entry, frac in pd.get_decomposition(comp).items():
+                    print(f"  {frac:.3f} × {entry.composition.reduced_formula}")
+                print(f"\nDecomposition energy: {eah:.4f} eV/atom")
         else:
-            try:
-                # {facet name: {Element: mu (eV/atom)}} for each hull facet containing the
-                # composition; get_all_chempots requires a composition argument
-                chempots = pd.get_all_chempots(Composition(args.analyze))
-                for facet, mus in list(chempots.items())[:5]:  # show first 5 facets
-                    print(f"\n{facet}:")
-                    for element, mu in mus.items():
-                        print(f"  mu({element}) = {mu:.4f} eV")
-            except Exception as e:
-                print(f"Could not calculate chemical potentials: {e}")
-
-    # Plot phase diagram
-    print("\n--- GENERATING PLOT ---")
-    plotter = PDPlotter(pd, show_unstable=args.show_unstable)
+            print(f"No entry for {args.analyze}; checking hypothetical composition...")
+            for entry, frac in pd.get_decomposition(comp).items():
+                print(f"  {frac:.3f} × {entry.composition.reduced_formula}")
 
     if args.output:
-        output_path = Path(args.output)
-        plotter.write_image(str(output_path), image_format=output_path.suffix[1:])
-        print(f"✓ Phase diagram saved to {output_path}")
-
-    if args.show:
-        print("Opening interactive plot...")
-        plotter.show()
-
+        from pathlib import Path
+        p = Path(args.output)
+        PDPlotter(pd, show_unstable=args.show_unstable).write_image(
+            str(p), image_format=p.suffix[1:])
+        print(f"✓ Phase diagram saved to {p}")
     print(f"\n{'='*60}\n")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Generate phase diagrams using Materials Project data",
+        description="Phase-stability report (keyless OPTIMADE by default; MP API optional).",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Requirements:
-  - Materials Project API key (set MP_API_KEY environment variable)
-  - mp-api package: uv pip install mp-api
-
-Examples:
-  %(prog)s Li-Fe-O
-  %(prog)s Li-Fe-O --output li_fe_o_phase_diagram.png
-  %(prog)s Fe-O --show --analyze "Fe2O3"
-  %(prog)s Li-Fe-O --analyze "LiFeO2" --show-unstable
-        """
     )
-
-    parser.add_argument(
-        "chemsys",
-        help="Chemical system (e.g., Li-Fe-O, Fe-O)"
-    )
-
-    parser.add_argument(
-        "--output", "-o",
-        help="Output file for phase diagram plot (PNG, PDF, SVG)"
-    )
-
-    parser.add_argument(
-        "--show", "-s",
-        action="store_true",
-        help="Show interactive plot"
-    )
-
-    parser.add_argument(
-        "--analyze", "-a",
-        help="Analyze stability of specific composition (e.g., LiFeO2)"
-    )
-
-    parser.add_argument(
-        "--show-unstable",
-        action="store_true",
-        help="Include unstable phases in plot"
-    )
-
-    parser.add_argument(
-        "--chemical-potentials",
-        action="store_true",
-        help="Calculate chemical potentials"
-    )
-
+    parser.add_argument("chemsys", help="Chemical system, e.g. Li-Fe-O")
+    parser.add_argument("--source", choices=["optimade", "mp"], default="optimade",
+                        help="optimade = keyless MP OPTIMADE stability (default); "
+                             "mp = full PhaseDiagram via MPRester (needs MP_API_KEY)")
+    parser.add_argument("--analyze", "-a", help="Report stability of this formula, e.g. LiFeO2")
+    parser.add_argument("--output", "-o", help="(mp only) write phase-diagram plot (PNG/PDF/SVG)")
+    parser.add_argument("--show-unstable", action="store_true",
+                        help="(mp only) include unstable phases in the plot")
     args = parser.parse_args()
 
-    # Validate chemical system format
-    elements = args.chemsys.split("-")
-    if len(elements) < 2:
-        print("Error: Chemical system must contain at least 2 elements")
-        print("Example: Li-Fe-O")
-        sys.exit(1)
-
-    # Generate phase diagram
-    generate_phase_diagram(args.chemsys, args)
+    if args.source == "mp":
+        run_mp(args.chemsys, args)
+    else:
+        if args.output or args.show_unstable:
+            print("Note: --output/--show-unstable need --source mp; the keyless OPTIMADE "
+                  "report is text-only.", file=sys.stderr)
+        run_optimade(args.chemsys, args)
 
 
 if __name__ == "__main__":

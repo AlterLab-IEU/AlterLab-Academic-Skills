@@ -1,12 +1,13 @@
 ---
 name: alterlab-pymatgen
-description: Analyzes and manipulates materials with the pymatgen toolkit — crystal structures and molecules, phase diagrams and thermodynamic stability, electronic structure (band structures, DOS), surfaces and interfaces, and Materials Project database access. Use when working with crystal structures in materials science, converting between structure formats (CIF, POSCAR, XYZ), analyzing symmetry or space groups, computing phase diagrams, querying the Materials Project API, or handling VASP, Gaussian, or Quantum ESPRESSO output. Part of the AlterLab Academic Skills suite.
+description: Analyzes and manipulates materials with the pymatgen toolkit — crystal structures and molecules, phase diagrams and thermodynamic stability, electronic structure (band structures, DOS), surfaces and interfaces, and Materials Project data access. Use when working with crystal structures in materials science, converting between structure formats (CIF, POSCAR, XYZ), analyzing symmetry or space groups, computing phase diagrams, querying Materials Project data (keyless via its OPTIMADE endpoint, or the richer MP API with a key), or handling VASP, Gaussian, or Quantum ESPRESSO output. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
-compatibility: Runs locally via `uv run python`; requires the pymatgen Python package. Materials Project database queries need a free MP_API_KEY.
+compatibility: "No API key required: pymatgen analyses local structures (CIF/POSCAR/XYZ, symmetry/space groups, slabs, VASP/Gaussian output) offline under `uv run python`, and fetches Materials Project structures and precomputed stability (energy above hull) via the keyless OPTIMADE endpoint. The richer MP API — full computed entries, convex-hull plots, decomposition products — is optional and uses a free MP_API_KEY."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    credentials: "optional: MP_API_KEY (the richer Materials Project MP API — full computed entries, convex-hull plots, decomposition, chemical potentials; structure and stability fetches work keyless via the MP OPTIMADE endpoint)"
+    version: "1.2.0"
     last_updated: "2026-09-23"
 ---
 
@@ -63,8 +64,15 @@ print(struct.get_space_group_info())
 print(f"{struct.density:.2f} g/cm³")
 ```
 
+**Keyless by default.** Everything above — reading, converting, and analysing structures
+you provide (CIF/POSCAR/XYZ), symmetry and space groups, slab generation, phase stability,
+and parsing VASP/Gaussian/QE output — is local and needs no account. To *fetch* structures
+and their stability from Materials Project without a key, use the keyless **OPTIMADE**
+endpoint (see "Materials Project access" below). Only the richer MP API (full computed
+entries and convex-hull plots) needs a key:
+
 ```bash
-export MP_API_KEY="your_api_key_here"   # for Materials Project access
+export MP_API_KEY="your_api_key_here"   # OPTIONAL — only for the richer mp-api client
 ```
 
 ## Core Capabilities (routing)
@@ -84,7 +92,13 @@ module docs in the references listed below.
    metallicity. → `analysis_modules.md`, `io_formats.md`
 6. **Surfaces & interfaces** — `SlabGenerator`, `WulffShape`, `AdsorbateSiteFinder`.
    → `analysis_modules.md`, `transformations_workflows.md`
-7. **Materials Project access** — `MPRester` search and retrieval with property filters.
+7. **Materials Project access** — **keyless default:** the MP OPTIMADE endpoint
+   (`https://optimade.materialsproject.org/v1/structures`, no API key) for structures and
+   precomputed stability (`_mp_stability`: energy above hull, formation energy); the
+   `optimade` Python client (`OptimadeClient`, with its `[http-client]` extra) or plain
+   `urllib` both work, and `optimade.adapters.Structure` converts a result to a pymatgen
+   `Structure`. **Optional:** `MPRester` (the `mp-api` client, needs `MP_API_KEY`) for the
+   full computed entries, richer property filters, and convex-hull plots.
    → `materials_project_api.md`
 8. **Computational workflow setup** — VASP input sets (`MPRelaxSet`, `MPStaticSet`,
    `MPNonSCFSet`), Gaussian, Quantum ESPRESSO. → `io_formats.md`, `transformations_workflows.md`
@@ -102,8 +116,12 @@ energy): `references/common_workflows_code.md`.
   detection). Usage: `python scripts/structure_converter.py POSCAR structure.cif`
 - **`structure_analyzer.py`**: symmetry, coordination, lattice parameters, distance
   matrix. Usage: `python scripts/structure_analyzer.py structure.cif --symmetry --neighbors`
-- **`phase_diagram_generator.py`**: phase diagrams from Materials Project, stability
-  analysis. Usage: `python scripts/phase_diagram_generator.py Li-Fe-O --analyze "LiFeO2"`
+- **`phase_diagram_generator.py`**: phase-stability report. **Keyless by default** —
+  `python scripts/phase_diagram_generator.py Li-Fe-O --analyze "LiFeO2"` pulls precomputed
+  stability from the MP OPTIMADE endpoint (no key) and reports whether the composition is
+  on the convex hull. Add `--source mp` (needs `MP_API_KEY`) for the full `PhaseDiagram`
+  with a convex-hull plot and decomposition products; without the key that path exits
+  non-zero and points back to the keyless default rather than silently switching backends.
 
 All scripts include detailed help, e.g. `python scripts/structure_converter.py --help`
 
@@ -140,7 +158,9 @@ Integrates with ASE, Phonopy, BoltzTraP, Atomate/Fireworks, AiiDA, Zeo++, and Op
 ## Troubleshooting
 
 - **Import errors**: `uv pip install "pymatgen[optional,vis]"` (there is no `[analysis]` extra)
-- **API key not found**: `export MP_API_KEY="your_key_here"`
+- **No MP_API_KEY / don't want an account**: use the keyless OPTIMADE endpoint for
+  structures and stability (`scripts/phase_diagram_generator.py` defaults to it); only the
+  `mp-api` client needs `export MP_API_KEY="your_key_here"`
 - **Structure read failures**: try explicit format, e.g. `Structure.from_file("file.txt", fmt="cif")`
 - **Symmetry analysis fails**: increase tolerance, e.g. `SpacegroupAnalyzer(struct, symprec=0.1)`
 

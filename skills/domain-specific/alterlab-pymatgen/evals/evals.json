@@ -14,11 +14,11 @@
     {
       "id": "phase-diagram-stability",
       "prompt": "Is LiFeO2 thermodynamically stable? I want to build the Li-Fe-O phase diagram from Materials Project data and get the energy above hull, and the decomposition products if it's not stable.",
-      "expected_output": "Invokes alterlab-pymatgen for phase-diagram / thermodynamic stability. Pulls entries with MPRester().get_entries_in_chemsys('Li-Fe-O'), builds PhaseDiagram, computes get_e_above_hull for the LiFeO2 entry, and if above hull calls get_decomposition to list decomposition products. Notes MP_API_KEY is needed.",
+      "expected_output": "Invokes alterlab-pymatgen for thermodynamic stability. Keyless default: fetches Li-Fe-O stability from the Materials Project OPTIMADE endpoint (https://optimade.materialsproject.org, no API key) — e.g. `scripts/phase_diagram_generator.py Li-Fe-O --analyze LiFeO2`, or a direct OPTIMADE query reading _mp_stability — and reports that LiFeO2 (OPTIMADE reduced formula FeLiO2, lowest-energy polymorph mp-757614) is on the convex hull with energy above hull ~ 0 eV/atom. May note the optional keyed MP API (MPRester + PhaseDiagram) for the full convex-hull plot and explicit decomposition products.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "hull" },
-        { "type": "behavior", "value": "Constructs a PhaseDiagram from Materials Project entries and reports energy above hull (and decomposition if metastable)." }
+        { "type": "behavior", "value": "Reports LiFeO2 is thermodynamically stable (energy above hull ~ 0 eV/atom) from keyless Materials Project stability data (OPTIMADE), rather than requiring an MP API key." }
       ]
     },
     {
@@ -43,10 +43,21 @@
     {
       "id": "mp-query-search",
       "prompt": "Query Materials Project for stable Li-Fe-O materials with a band gap between 1 and 3 eV and an energy above hull under 0.05. Then pull the structure for mp-149.",
-      "expected_output": "Invokes alterlab-pymatgen for Materials Project database access. Uses MPRester().materials.summary.search(chemsys='Li-Fe-O', energy_above_hull=(0,0.05), band_gap=(1.0,3.0)) inside a context manager, and get_structure_by_material_id('mp-149'), noting MP_API_KEY setup.",
+      "expected_output": "Invokes alterlab-pymatgen for the richer (keyed) Materials Project database access. The band-gap filter is not exposed by the keyless OPTIMADE endpoint, so this uses the mp-api client: MPRester().materials.summary.search(chemsys='Li-Fe-O', energy_above_hull=(0,0.05), band_gap=(1.0,3.0)) inside a context manager, and get_structure_by_material_id('mp-149'), noting MP_API_KEY setup (and that element + energy-above-hull filtering and the mp-149 structure are also reachable keyless via OPTIMADE).",
+      "requires": ["env:MP_API_KEY"],
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "MPRester" }
+      ]
+    },
+    {
+      "id": "optimade-stability-keyless",
+      "prompt": "Without any Materials Project API key, can you tell me from Materials Project data whether silicon (mp-149) and LiFeO2 are stable, and pull silicon's crystal structure?",
+      "expected_output": "Invokes alterlab-pymatgen via the keyless MP OPTIMADE endpoint (https://optimade.materialsproject.org/v1/structures, no API key) — the optimade client or plain urllib, or scripts/phase_diagram_generator.py which defaults to it. Fetches mp-149 (diamond-cubic silicon, space group Fd-3m) and reports its structure, and reads _mp_stability to report that both mp-149 Si (energy above hull 0) and LiFeO2 (OPTIMADE reduced formula FeLiO2, lowest-energy polymorph mp-757614, energy above hull ~ 0) are on the convex hull. Does NOT require MP_API_KEY.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "OPTIMADE" },
+        { "type": "behavior", "value": "Answers the stability question from the keyless OPTIMADE endpoint with no API key, identifies mp-149 as silicon, and reports both phases as stable (energy above hull ~ 0)." }
       ]
     },
     {

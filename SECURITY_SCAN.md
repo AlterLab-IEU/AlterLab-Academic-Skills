@@ -58,7 +58,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `kegg.jp` | Pathways | 3 |
 | `labarchives.com` | ELN | 3 |
 | `localhost` | Local (non-network) | 6 |
-| `materialsproject.org` | Materials | 1 |
+| `materialsproject.org` | Materials | 3 |
 | `metabolomicsworkbench.org` | Metabolomics | 3 |
 | `monarchinitiative.org` | Phenotypes | 3 |
 | `mygene.info` | Gene annotation | 1 |

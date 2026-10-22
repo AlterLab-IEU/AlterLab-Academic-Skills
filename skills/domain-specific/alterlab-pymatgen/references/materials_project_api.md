@@ -6,7 +6,43 @@ This reference documents how to access and use the Materials Project database th
 
 The Materials Project is a comprehensive database of computed materials properties, containing data on hundreds of thousands of inorganic crystals and molecules. The API provides programmatic access to this data through the `MPRester` client.
 
-## Installation and Setup
+## Keyless access via OPTIMADE (no API key)
+
+Before reaching for the keyed MP API, note that **structures and their precomputed
+stability are available keyless** from the Materials Project OPTIMADE endpoint,
+`https://optimade.materialsproject.org/v1/structures`. This needs no account and is the
+default route in `scripts/phase_diagram_generator.py`. Verified live 2026-10-22:
+
+```python
+# Option A: the optimade client (install with the http-client extra)
+#   uv pip install "optimade[http-client]"
+from optimade.client import OptimadeClient
+client = OptimadeClient(base_urls=["https://optimade.materialsproject.org"])
+res = client.get('elements HAS "Si" AND nelements=1')   # -> mp-149 (Si), etc.
+
+# Convert an OPTIMADE structure to a pymatgen Structure:
+from optimade.adapters import Structure as OptimadeStructure
+# pmg = OptimadeStructure(res_entry).convert("pymatgen")
+```
+
+```python
+# Option B: stdlib only — read structures + stability with urllib
+import json, urllib.parse, urllib.request
+params = {"filter": 'elements HAS ONLY "Fe","Li","O"',
+          "response_fields": "chemical_formula_reduced,_mp_stability",
+          "page_limit": 100}
+url = "https://optimade.materialsproject.org/v1/structures?" + urllib.parse.urlencode(params)
+data = json.load(urllib.request.urlopen(url, timeout=60))["data"]
+# each entry's attributes["_mp_stability"]["gga_gga+u"]["energy_above_hull"] is eV/atom
+```
+
+The OPTIMADE endpoint serves the crystal structure, `chemical_formula_reduced`, lattice,
+sites, and the Materials Project `_mp_stability` provider field (GGA/GGA+U/r2SCAN
+`energy_above_hull` and `formation_energy_per_atom`). For the **full computed entries**
+(total energies for building your own `PhaseDiagram`, richer property filters, convex-hull
+plots), use the keyed MP API below.
+
+## Installation and Setup (keyed MP API — optional)
 
 The Materials Project API client is now in a separate package:
 
