@@ -1,5 +1,8 @@
 # LLM API Configuration
 
+> This page covers the optional denario package and its LLM keys. The skill's default pipeline
+> (SKILL.md, "Keyless pipeline") needs none of them: Claude performs each stage itself.
+
 ## Overview
 
 On init, `Denario` constructs a `KeyManager` and calls `get_keys_from_env()`, which reads provider keys straight from environment variables. There is **no** model/config argument on the `Denario` constructor — keys come from the environment, and per-stage model choices are passed as method arguments (see `research_pipeline.md`).

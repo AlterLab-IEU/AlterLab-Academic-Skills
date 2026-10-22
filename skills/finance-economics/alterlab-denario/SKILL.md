@@ -1,12 +1,13 @@
 ---
 name: alterlab-denario
-description: Runs Denario (AstroPilot-AI), a multiagent AI system for scientific research assistance that automates end-to-end research workflows from a described dataset through idea, methodology, computational results, and a publication-ready LaTeX paper. Built on AG2 + LangGraph with a cmbagent analysis backend. Use when driving the Denario pipeline (Denario.get_idea/get_method/get_results/get_paper), generating research ideas from a dataset description, auto-developing methodology, executing analysis agents, or emitting a journal-formatted (APS/AAS/JHEP/ICML/NeurIPS/PASJ) LaTeX manuscript. Part of the AlterLab Academic Skills suite.
+description: Runs a Denario-style end-to-end research pipeline from a described dataset with no API key — Claude itself plays every agent (idea maker and idea critic, methodologist, analyst who writes and runs the analysis code locally, paper writer) and produces idea.md, methods.md, results with figures and a journal-formatted LaTeX paper (APS revtex or plain LaTeX; AAS/JHEP/ICML/NeurIPS/PASJ with the venue's style file). The optional denario package (AstroPilot-AI; AG2 + LangGraph + cmbagent) runs the same stages with its own LLM keys. Use when automating research from a dataset description to a paper, generating hypotheses from a dataset, developing methodology, executing analysis, turning methods and results into a journal manuscript, or driving Denario (get_idea/get_method/get_results/get_paper). Part of the AlterLab Academic Skills suite.
 license: GPL-3.0
-allowed-tools: Read WebFetch Bash(uv:*) Bash(python:*)
-compatibility: Requires the denario Python package (1.0.x; Python >=3.12,<3.14) and at least an OPENAI_API_KEY (required for the analysis/results module). GOOGLE_API_KEY (Gemini), ANTHROPIC_API_KEY (Claude), and PERPLEXITY_API_KEY (citation search) are optional. LaTeX is needed to compile the paper. Needs network access.
+allowed-tools: Read Write Edit WebFetch WebSearch Bash(uv:*) Bash(python:*) Bash(pdflatex:*) Bash(xelatex:*) Bash(bibtex:*)
+compatibility: No API key required. Claude carries out every stage and runs the analysis with local Python (`uv run --python ">=3.12" --with pandas ...`); pdflatex compiles the paper (scripts/research_project.py scaffolds and compiles it). The optional denario package (1.0.x, Python 3.12-3.13) runs the stages with its own LLM keys.
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.2.0"
+    credentials: "optional: OPENAI_API_KEY (lets the denario package run its own agents; its analysis/results module requires it), GOOGLE_API_KEY (Gemini models in the package, the default for its fast mode, check_idea and get_paper), ANTHROPIC_API_KEY (Claude models inside the package), PERPLEXITY_API_KEY (the package's citation search), SEMANTIC_SCHOLAR_KEY (faster check_idea lookups)"
     last_updated: "2026-09-23"
 ---
 
@@ -14,7 +15,12 @@ metadata:
 
 ## Overview
 
-Denario (by AstroPilot-AI) is a multiagent AI system designed to automate scientific research workflows from a described dataset through publication-ready manuscripts. It implements agents with AG2 and LangGraph, using [cmbagent](https://github.com/CMBAgents/cmbagent) as the research-analysis backend, to handle hypothesis generation, methodology development, computational analysis, and paper writing.
+This skill runs the Denario research pipeline (data description, idea, methods, analysis,
+paper) with Claude doing every agent role, so it needs no API key and no extra LLM service. The
+denario package by AstroPilot-AI automates the same stages with its own multiagent system (AG2
+and LangGraph, with [cmbagent](https://github.com/CMBAgents/cmbagent) as the analysis backend);
+use it when the user asks for the package and has its LLM keys ("Optional: the denario
+package" below).
 
 Source: https://github.com/AstroPilot-AI/Denario  |  Docs: https://denario.readthedocs.io  |  Paper: arXiv:2510.26887 (v1.0, Nov 2025).
 
@@ -42,18 +48,48 @@ Use this skill when:
 
 Denario output is AI-generated end to end: treat its ideas, code, results, and citations as drafts that a researcher must verify, and disclose the AI assistance in any resulting manuscript.
 
-## Installation
+## Keyless pipeline (default): Claude runs the agents
 
-Install with uv (recommended). Quote the extra so zsh does not glob `[app]`:
+Work in the package's project layout, so the project can later be handed to `Denario(project_dir=...)`
+unchanged. `scripts/research_project.py` creates it and compiles the paper:
 
 ```bash
-uv init
-uv add "denario[app]"
+python scripts/research_project.py init ./my_research --journal aps --data-description notes.md
+python scripts/research_project.py status ./my_research     # which stage files are still TODO
+python scripts/research_project.py compile ./my_research    # pdflatex -> paper/paper.pdf
+```
+
+| Denario stage | What you do instead | Output |
+|---------------|---------------------|--------|
+| `set_data_description()` | Record the data, units, sample sizes, file paths, tools, and hypotheses already considered | `input_files/data_description.md` |
+| `get_idea()` (idea maker + idea hater) | Propose 3-5 hypotheses that the described variables can test; critique each as the "idea hater" (novelty, feasibility with this data, confounds, what result would refute it); revise once; pick one and keep the rejected ones with reasons | `input_files/idea.md` |
+| `set_idea()` | Use the user's own hypothesis verbatim and skip generation | `input_files/idea.md` |
+| `check_idea()` | Novelty check with WebSearch and keyless OpenAlex/arXiv queries; list the closest prior work with DOIs | `idea.md`, Literature section |
+| `get_method()` / `set_method()` | Data preparation, model, tests, robustness checks, and the result that would falsify the idea | `input_files/methods.md` |
+| `get_results()` / `set_results()` | Write the analysis in `analysis/`, run it (`uv run --python ">=3.12" --with pandas --with statsmodels --with matplotlib python analysis/run.py`), save figures to `input_files/plots/`, and write the results from the actual output | `input_files/results.md`, `plots/` |
+| `get_paper(journal=...)` | Fill `paper/paper.tex` from the four files, cite only sources you retrieved, keep the AI-assistance section, and compile | `paper/paper.pdf` |
+
+Rules: each stage reads the previous file. Numbers in results.md and the paper come only from
+code you ran. When only a description exists and no data, stop after methods and say the
+results need the data. APS (`revtex4-2`) and plain LaTeX compile with a standard TeX Live; for AAS,
+JHEP, ICML, NeurIPS or PASJ, place the venue's class or style file next to `paper.tex` (the scaffold
+starts those as plain `article` and says so).
+
+## Optional: the denario package (needs LLM keys)
+
+### Installation
+
+No install step with uv (pin Python 3.12-3.13), or add it to a project. Quote the extra so zsh
+does not glob `[app]`:
+
+```bash
+uv run --python ">=3.12,<3.14" --with "denario>=1.0" python run_denario.py
+uv init && uv add "denario[app]"   # project install, with the Streamlit GUI
 ```
 
 The `[app]` extra pulls in the Streamlit GUI (DenarioApp); omit it for headless/library use. For Docker deployment or building from source, see `references/installation.md`.
 
-## LLM API Configuration
+### LLM API Configuration
 
 On init, `Denario` reads provider keys from the environment via its `KeyManager` (no config object). The relevant variables:
 
@@ -64,7 +100,7 @@ On init, `Denario` reads provider keys from the environment via its `KeyManager`
 
 Set them in the shell or a `.env` in the working directory (`KeyManager` calls `load_dotenv()` itself). Google Vertex AI is also supported as a backend; see `references/llm_configuration.md` for that and `.env`/Docker details.
 
-### Model IDs: pass current ones explicitly
+#### Model IDs: pass current ones explicitly
 
 denario 1.0.1 (the current release; the GitHub master is unchanged as of 2026-09) hard-codes defaults that providers have since retired, so choose models per call instead of relying on them:
 
@@ -84,11 +120,11 @@ den.get_method(mode="fast", llm=LLM(name="gemini-3.6-flash", max_output_tokens=8
 
 `gemini-3.6-flash` is Google's listed replacement for `gemini-2.0-flash`; Google now limits the Gemini 2.5 models to existing users, so new Google accounts should use the `LLM` object route. Check the provider model lists before a long run — IDs keep rotating. See `references/llm_configuration.md` for per-stage parameters.
 
-## Core Research Workflow
+### Core Research Workflow (package API)
 
-Denario follows a structured four-stage research pipeline:
+The package runs the same stages as API calls:
 
-### 1. Data Description
+#### 1. Data Description
 
 Define the research context by specifying available data and tools:
 
@@ -103,7 +139,7 @@ Research domain: [specify domain]
 """)
 ```
 
-### 2. Idea Generation
+#### 2. Idea Generation
 
 Generate research hypotheses from the data description:
 
@@ -117,7 +153,7 @@ This produces a research question or hypothesis based on the described data. `ge
 den.set_idea("Custom research hypothesis")
 ```
 
-### 3. Methodology Development
+#### 3. Methodology Development
 
 Develop the research methodology:
 
@@ -131,7 +167,7 @@ This creates a structured approach for investigating the hypothesis. Can also ac
 den.set_method("path/to/methodology.md")
 ```
 
-### 4. Results Generation
+#### 4. Results Generation
 
 Execute computational experiments and generate analysis:
 
@@ -145,7 +181,7 @@ This runs the methodology, performs computations, creates visualizations, and pr
 den.set_results("path/to/results.md")
 ```
 
-### 5. Paper Generation
+#### 5. Paper Generation
 
 Create a publication-ready LaTeX paper:
 
@@ -159,6 +195,8 @@ The generated paper includes proper formatting for the specified journal, integr
 
 ## Available Journals
 
+In the keyless pipeline `research_project.py init --journal aps` (revtex4-2) and `--journal none` compile with a standard TeX Live; the other venues need their own class or style file.
+
 `get_paper(journal=...)` defaults to `Journal.NONE` (plain LaTeX, unsrt bibliography). The `Journal` enum (`from denario import Journal`) supports:
 
 - `Journal.NONE` — generic LaTeX, no journal preset
@@ -169,7 +207,7 @@ The generated paper includes proper formatting for the specified journal, integr
 - `Journal.NeurIPS` — Conference on Neural Information Processing Systems
 - `Journal.PASJ` — Publications of the Astronomical Society of Japan
 
-## Launching the GUI
+### Launching the GUI (package)
 
 Run the graphical user interface:
 
@@ -179,9 +217,9 @@ denario run
 
 This launches a web-based interface for interactive research workflow management.
 
-## Common Workflows
+### Common Workflows (package)
 
-### End-to-End Research Pipeline
+#### End-to-End Research Pipeline
 
 ```python
 from denario import Denario, Journal
@@ -207,7 +245,7 @@ den.get_results(researcher_model="gpt-4.1", plan_reviewer_model="gpt-4.1", forma
 den.get_paper(journal=Journal.APS)
 ```
 
-### Hybrid Workflow (Custom + Automated)
+#### Hybrid Workflow (Custom + Automated)
 
 ```python
 # Provide custom research idea
@@ -223,7 +261,7 @@ den.get_results(researcher_model="gpt-4.1", plan_reviewer_model="gpt-4.1", forma
 den.get_paper(journal=Journal.APS)
 ```
 
-### Literature / Novelty Check
+#### Literature / Novelty Check
 
 Use `den.check_idea(mode="semantic_scholar")` (or `mode="futurehouse"`) to test whether an idea is original against existing literature before committing to method/results. See `references/examples.md`.
 
@@ -238,7 +276,7 @@ For comprehensive documentation:
 ## Troubleshooting
 
 Common issues and solutions:
-- **API key errors**: Ensure environment variables are set correctly (see `references/llm_configuration.md`)
+- **API key errors** (package only): Ensure environment variables are set correctly (see `references/llm_configuration.md`)
 - **LaTeX compilation**: Install TeX distribution or use Docker image with pre-installed LaTeX
 - **Package conflicts**: Use virtual environments or Docker for isolation
 - **Python version**: denario 1.0.x requires Python 3.12 or 3.13 (`>=3.12,<3.14`)
