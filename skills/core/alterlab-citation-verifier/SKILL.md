@@ -6,8 +6,9 @@ allowed-tools: Read Write Edit Bash(python:*) Bash WebSearch WebFetch
 compatibility: "No API key required — stdlib Python (`requests` optional) via `uv run python` against Crossref, OpenAlex, Semantic Scholar, arXiv, and the doi.org Handle API; optional OPENALEX_API_KEY / S2_API_KEY only raise rate limits; offline runs return 'unverified' verdicts"
 metadata:
   skill-author: AlterLab
-  version: "1.2.0"
-  last_updated: "2026-09-23"
+  version: "1.2.1"
+  last_updated: "2026-10-22"
+  credentials: "optional: OPENALEX_API_KEY (free key; gives OpenAlex searches their own daily budget instead of the small per-IP keyless one), S2_API_KEY or SEMANTIC_SCHOLAR_API_KEY (dedicated 1 request/s instead of the shared keyless Semantic Scholar pool)"
   depends_on: "alterlab-research-pipeline (shares the integrity taxonomy), alterlab-deep-research"
 ---
 
