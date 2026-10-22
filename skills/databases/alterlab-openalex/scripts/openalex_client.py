@@ -133,12 +133,16 @@ class OpenAlexClient:
                     retry_after = _retry_after_seconds(response)
                     if response.status_code == 429 and retry_after > BUDGET_EXHAUSTED_RETRY_AFTER_S:
                         # Daily budget spent: retrying cannot succeed before the reset.
+                        print("OpenAlex rate limit: the keyless daily budget for this IP is spent "
+                              f"(resets in {retry_after}s). Single-entity lookups still work; for "
+                              "search/list use scripts/keyless_fallback.py (Crossref, Europe PMC, "
+                              "OpenCitations) or set OPENALEX_API_KEY.", file=sys.stderr)
                         raise BudgetExhausted(
                             f"OpenAlex daily budget exhausted (resets in {retry_after}s, at "
                             "midnight UTC). Keyless list/search calls share $0.10/day per IP; "
                             "single-entity lookups (/works/doi:..., /authors/orcid:...) are free "
-                            "and still work, and Crossref (api.crossref.org/works) is a keyless "
-                            "search fallback. The optional OPENALEX_API_KEY (free at "
+                            "and still work; scripts/keyless_fallback.py covers search/list via "
+                            "Crossref, Europe PMC and OpenCitations. The optional OPENALEX_API_KEY (free at "
                             "openalex.org/settings/api) gives your own $1/day."
                         )
                     # Short throttle (e.g. >100 requests/second) or "slow down" (403)

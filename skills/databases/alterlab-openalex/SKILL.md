@@ -45,7 +45,11 @@ OpenAlex needs no credentials. Its cost model (see "Rate Limits & Cost") decides
 - **Always free, keyless**: single-entity lookups — `/works/W…`, `/works/doi:10.…`, `/works/pmid:…`, `/authors/orcid:…`, `/institutions/ror:…`, `/sources/issn:…` — and `/autocomplete/{entity}?q=`. Verified 2026-10-22: these return 200 with `x-ratelimit-cost-usd: 0` even while the shared budget is spent.
 - **Shared keyless budget**: list/filter (`$0.0001`/call), `search=` and `group_by` calls draw on $0.10/day shared by everyone on your IP. On university, VPN, or cloud networks it is often spent; such calls then return HTTP 429 with a `Retry-After` counting down to midnight UTC.
 
-When that 429 arrives, say so, then keep working keylessly: resolve known IDs/DOIs one by one through the free lookups (`batch_lookup` does this automatically), take discovery queries to Crossref (`https://api.crossref.org/works?query.bibliographic=…&filter=from-pub-date:2020-01-01&sort=is-referenced-by-count&order=desc`, keyless; post-filter titles, since its query matching is loose) and enrich the hits with free OpenAlex DOI lookups, or rerun after the reset. An optional **free API key** gives your own $1/day — get one at `openalex.org/settings/api`, export `OPENALEX_API_KEY`; the client sends it as an `Authorization: Bearer` header. `mailto=` buys nothing since the polite pool was retired (Feb 2026).
+When that 429 arrives (the client prints a note on stderr and raises `BudgetExhausted`), say so, then keep working keylessly with `scripts/keyless_fallback.py` — and name the service that answered:
+- known IDs/DOIs: free OpenAlex lookups (`batch_lookup` falls back automatically; `keyless_fallback.py enrich DOI ...`)
+- discovery: `keyless_fallback.py crossref "quantum computing" --from 2020-01-01` (Crossref; title-filtered, citation-sorted locally — an approximation of the OpenAlex ranking) or, for life sciences, `europepmc "CRISPR base editing"` (Europe PMC, `CITED desc`)
+- citation lists: `keyless_fallback.py citations 10.7717/peerj.4375` (OpenCitations Index v2; `--references` for outgoing)
+- `group_by` aggregates have no keyless equivalent: rerun after midnight UTC or with the key. An optional **free API key** gives your own $1/day — get one at `openalex.org/settings/api`, export `OPENALEX_API_KEY`; the client sends it as an `Authorization: Bearer` header. `mailto=` buys nothing since the polite pool was retired (Feb 2026).
 
 ```python
 from scripts.openalex_client import OpenAlexClient
@@ -456,6 +460,10 @@ High-level helper functions for common operations:
 - `analyze_research_output()` - Comprehensive analysis
 
 Use for common research queries with simplified interfaces.
+
+### keyless_fallback.py
+Keyless stand-ins for list/search calls when the shared budget is spent: `crossref`,
+`europepmc`, `citations` (OpenCitations), `enrich` (free OpenAlex DOI lookups).
 
 ## Troubleshooting
 

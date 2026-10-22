@@ -2,7 +2,7 @@
 
 > **Generated** — do not edit by hand. Regenerate with `python3 scripts/gen_security_scan.py`; CI fails if this file is stale (`--check`) or if the attestation is violated (`--strict`).
 
-This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **268 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
+This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **269 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
 
 ## Attestation
 
@@ -38,7 +38,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `civicdb.org` | other (review) | 2 |
 | `clinicaltrials.gov` | Clinical trials | 2 |
 | `clinpgx.org` | Pharmacogenomics | 3 |
-| `crossref.org` | Scholarly metadata | 8 |
+| `crossref.org` | Scholarly metadata | 11 |
 | `datacommons.org` | Open data | 12 |
 | `depmap.org` | Cancer dependency | 1 |
 | `dergipark.org.tr` | Turkish journals (DergiPark) | 7 |
@@ -47,7 +47,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `doi.org` | DOI resolver | 36 |
 | `drugbank.ca` | Drugs | 1 |
 | `dsmz.de` | other (review) | 4 |
-| `ebi.ac.uk` | EMBL-EBI | 15 |
+| `ebi.ac.uk` | EMBL-EBI | 16 |
 | `elixir.no` | Bioinformatics infra | 3 |
 | `ensembl.org` | Genomics | 3 |
 | `europepmc.org` | Literature (Europe PMC) | 1 |
@@ -72,9 +72,9 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `nf-co.re` | nf-core pipelines | 1 |
 | `nih.gov` | NCBI / NIH | 20 |
 | `oncokb.org` | other (review) | 1 |
-| `openalex.org` | Scholarly index | 24 |
+| `openalex.org` | Scholarly index | 25 |
 | `openarchives.org` | OAI-PMH | 2 |
-| `opencitations.net` | Open citation index | 1 |
+| `opencitations.net` | Open citation index | 2 |
 | `openrouter.ai` | LLM backend (user key) | 19 |
 | `openstreetmap.org` | other (review) | 1 |
 | `opentargets.org` | Target–disease | 1 |
