@@ -1190,13 +1190,18 @@ def _write_results(results_dir: Path | None, kind: str, payload: dict) -> Path |
         return None
     results_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    path = results_dir / f"{kind}-{stamp}.json"
-    n = 1
-    while path.exists():
-        path = results_dir / f"{kind}-{stamp}-{n}.json"
-        n += 1
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    return path
+    body = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    # Exclusive create: parallel runs (eval_sweep.sh) finishing in the same second must
+    # each get their own file; an exists-then-write check let one overwrite the other.
+    for n in range(10_000):
+        path = results_dir / (f"{kind}-{stamp}.json" if n == 0 else f"{kind}-{stamp}-{n}.json")
+        try:
+            with open(path, "x", encoding="utf-8") as fh:
+                fh.write(body)
+            return path
+        except FileExistsError:
+            continue
+    raise RuntimeError(f"could not create a unique results file in {results_dir}")
 
 
 def _behavioral_cases(skill_filter: str | None, shard: tuple[int, int] | None,

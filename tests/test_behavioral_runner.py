@@ -572,3 +572,16 @@ def test_case_filter_naming_no_eval_is_an_error_not_an_empty_pass(fake_cli, tmp_
     rc = run_evals.run_behavioral(None, timeout=30, runs=1, results_dir=tmp_path / "results",
                                   skill_dir=skill, case_ids=["zz"])
     assert rc == 2 and not fake_cli.exists()
+
+
+def test_results_written_in_the_same_second_never_overwrite_each_other(tmp_path, monkeypatch):
+    import concurrent.futures as cf
+    fixed = run_evals.datetime(2026, 10, 22, 10, 24, 44, tzinfo=run_evals.timezone.utc)
+    monkeypatch.setattr(run_evals, "datetime", type("D", (), {"now": staticmethod(lambda tz=None: fixed)}))
+    # Force the race an exists-then-write check loses: every writer is told "no file yet".
+    monkeypatch.setattr(run_evals.Path, "exists", lambda self, *a, **k: False)
+    with cf.ThreadPoolExecutor(8) as ex:
+        paths = list(ex.map(lambda i: run_evals._write_results(tmp_path, "behavioral", {"i": i}),
+                            range(16)))
+    assert len(set(paths)) == 16
+    assert sorted(json.loads(p.read_text())["i"] for p in paths) == list(range(16))
