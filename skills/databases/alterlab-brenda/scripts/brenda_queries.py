@@ -2,7 +2,14 @@
 BRENDA Database Query Utilities
 
 This module provides high-level functions for querying and analyzing
-enzyme data from the BRENDA database using the SOAP API.
+enzyme data from BRENDA. It is keyless by default: without a BRENDA login the
+calls go through BRENDA's public enzyme pages and SPARQL endpoint
+(scripts/brenda_web.py); with BRENDA_EMAIL/BRENDA_PASSWORD set they use the
+SOAP API (see brenda_client.active_backend). On the web backend,
+get_inhibitors, get_activators, get_environmental_parameters,
+find_thermophilic_homologs and search_enzymes_by_substrate read BRENDA's
+dedicated tables (INHIBITOR, Ki/IC50 VALUE, ACTIVATING COMPOUND, pH/TEMPERATURE
+OPTIMUM, ...) instead of mining Km commentary.
 
 Key features:
 - Parse BRENDA response data entries
@@ -14,7 +21,8 @@ Key features:
 - Export data in various formats
 
 Installation:
-    uv pip install zeep requests pandas
+    nothing extra for the keyless web backend (pandas optional for exports);
+    uv pip install zeep for the SOAP backend
 
 Usage:
     from scripts.brenda_queries import search_enzymes_by_substrate, compare_across_organisms
@@ -24,6 +32,7 @@ Usage:
 """
 
 import re
+import sys
 import time
 import json
 from typing import List, Dict, Any
@@ -33,45 +42,45 @@ try:
     from zeep.exceptions import Fault, TransportError  # noqa: F401  # availability probe
     ZEEP_AVAILABLE = True
 except ImportError:
-    print("Warning: zeep not installed. Install with: uv pip install zeep")
+    pass  # only the optional SOAP backend needs zeep
     ZEEP_AVAILABLE = False
 
 try:
     import requests  # noqa: F401  # availability probe for REQUESTS_AVAILABLE
     REQUESTS_AVAILABLE = True
 except ImportError:
-    print("Warning: requests not installed. Install with: uv pip install requests")
+    pass  # requests is optional; the keyless web backend uses the standard library
     REQUESTS_AVAILABLE = False
 
 try:
     import pandas as pd
     PANDAS_AVAILABLE = True
 except ImportError:
-    print("Warning: pandas not installed. Install with: uv pip install pandas")
+    pass  # pandas is optional (export_kinetic_data)
     PANDAS_AVAILABLE = False
 
 # Import the brenda_client shipped alongside this module.
 try:
-    from scripts.brenda_client import get_km_values, get_reactions, call_brenda
+    from scripts.brenda_client import get_km_values, get_reactions, call_brenda, active_backend
+    from scripts import brenda_web
     BRENDA_CLIENT_AVAILABLE = True
 except ImportError:
     try:
-        from brenda_client import get_km_values, get_reactions, call_brenda  # noqa: F401  # module-path fallback for the package-path import above
+        from brenda_client import get_km_values, get_reactions, call_brenda, active_backend  # noqa: F401  # module-path fallback for the package-path import above
+        import brenda_web
         BRENDA_CLIENT_AVAILABLE = True
     except ImportError:
-        print("Warning: brenda_client not available")
+        print("Warning: brenda_client not available", file=sys.stderr)
         BRENDA_CLIENT_AVAILABLE = False
 
 
 def validate_dependencies():
     """Validate that required dependencies are installed."""
     missing = []
-    if not ZEEP_AVAILABLE:
-        missing.append("zeep")
-    if not REQUESTS_AVAILABLE:
-        missing.append("requests")
     if not BRENDA_CLIENT_AVAILABLE:
-        missing.append("brenda_client")
+        raise ImportError("Missing required dependencies: brenda_client")
+    if active_backend() == "soap" and not ZEEP_AVAILABLE:
+        missing.append("zeep (SOAP backend)")
     if missing:
         raise ImportError(f"Missing required dependencies: {', '.join(missing)}")
 
@@ -163,9 +172,33 @@ def extract_organism_data(entry: str) -> Dict[str, Any]:
     return {}
 
 
+def _web() -> bool:
+    return BRENDA_CLIENT_AVAILABLE and active_backend() == "web"
+
+
+def _num(text: str):
+    """First number in a BRENDA cell ('65', '30 - 50', '-999' = additional info -> None)."""
+    m = re.search(r"-?\d+(?:\.\d+)?", text or "")
+    if not m or m.group(0) == "-999":
+        return None
+    return float(m.group(0))
+
+
+def _rows(ec_number: str, table: str, **kw) -> List[Dict[str, Any]]:
+    try:
+        return brenda_web.get_table(ec_number, table, **kw)[1]
+    except SystemExit:  # table absent for this EC
+        return []
+
+
 def search_enzymes_by_substrate(substrate: str, limit: int = 50) -> List[Dict[str, Any]]:
     """Search for enzymes that act on a specific substrate."""
     validate_dependencies()
+    if _web():
+        # BRENDA SPARQL: EC numbers whose reactions use the substrate (exact BRENDA name)
+        return [{'ec_number': r['ec'], 'enzyme_name': r.get('name', ''),
+                 'substrate': substrate, 'reactions': int(r.get('records', 0))}
+                for r in brenda_web.enzymes_for(substrate, 'Substrate', limit)]
 
     enzymes = []
 
@@ -312,9 +345,25 @@ def get_organisms_for_enzyme(ec_number: str) -> List[str]:
         return []
 
 
-def get_environmental_parameters(ec_number: str) -> Dict[str, Any]:
+def get_environmental_parameters(ec_number: str, organism: str = None) -> Dict[str, Any]:
     """Get environmental parameters (pH, temperature) for an enzyme."""
     validate_dependencies()
+    if _web():
+        out: Dict[str, Any] = {'ec_number': ec_number, 'organism': organism, 'source': 'BRENDA web'}
+        for key, table in (('ph_optimum', 'ph_optimum'), ('ph_range', 'ph_range'),
+                           ('temperature_optimum', 'temperature_optimum'),
+                           ('temperature_range', 'temperature_range'),
+                           ('ph_stability', 'ph_stability'),
+                           ('temperature_stability', 'temperature_stability')):
+            rows = _rows(ec_number, table, organism=organism)
+            out[key] = [{'value': next(iter(r.values())), 'organism': r.get('ORGANISM', ''),
+                         'commentary': r.get('COMMENTARY', ''), 'literature': r.get('LITERATURE', '')}
+                        for r in rows]
+        opt_t = [v for v in (_num(x['value']) for x in out['temperature_optimum']) if v is not None]
+        opt_ph = [v for v in (_num(x['value']) for x in out['ph_optimum']) if v is not None]
+        out['optimal_temperature'] = sum(opt_t) / len(opt_t) if opt_t else None
+        out['optimal_ph'] = sum(opt_ph) / len(opt_ph) if opt_ph else None
+        return out
 
     try:
         km_data = get_km_values(ec_number)
@@ -474,8 +523,20 @@ def compare_substrate_affinity(ec_number: str) -> List[Dict[str, Any]]:
 
 
 def get_inhibitors(ec_number: str) -> List[Dict[str, Any]]:
-    """Get inhibitor information for an enzyme (from commentary)."""
+    """Get inhibitor information for an enzyme (web: INHIBITOR, Ki VALUE, IC50 VALUE tables)."""
     validate_dependencies()
+    if _web():
+        out = [{'name': r.get('INHIBITOR', ''), 'organism': r.get('ORGANISM', ''),
+                'ec_number': ec_number, 'ki_mM': None, 'ic50_mM': None,
+                'commentary': r.get('COMMENTARY', ''), 'literature': r.get('LITERATURE', '')}
+               for r in _rows(ec_number, 'inhibitor')]
+        for table, field in (('ki', 'ki_mM'), ('ic50', 'ic50_mM')):
+            for r in _rows(ec_number, table):
+                out.append({'name': r.get('INHIBITOR', ''), 'organism': r.get('ORGANISM', ''),
+                            'ec_number': ec_number, 'ki_mM': None, 'ic50_mM': None,
+                            field: r.get('VALUE', ''), 'commentary': r.get('COMMENTARY', ''),
+                            'literature': r.get('LITERATURE', '')})
+        return out
 
     inhibitors = []
 
@@ -525,8 +586,13 @@ def get_inhibitors(ec_number: str) -> List[Dict[str, Any]]:
 
 
 def get_activators(ec_number: str) -> List[Dict[str, Any]]:
-    """Get activator information for an enzyme (from commentary)."""
+    """Get activator information for an enzyme (web: ACTIVATING COMPOUND table)."""
     validate_dependencies()
+    if _web():
+        return [{'name': r.get('ACTIVATING COMPOUND', ''), 'organism': r.get('ORGANISM', ''),
+                 'ec_number': ec_number, 'commentary': r.get('COMMENTARY', ''),
+                 'literature': r.get('LITERATURE', '')}
+                for r in _rows(ec_number, 'activator')]
 
     activators = []
 
@@ -576,9 +642,35 @@ def get_activators(ec_number: str) -> List[Dict[str, Any]]:
     return unique_activators
 
 
-def find_thermophilic_homologs(ec_number: str, min_temp: int = 50) -> List[Dict[str, Any]]:
-    """Find thermophilic homologs of an enzyme."""
+def find_thermophilic_homologs(ec_number: str, min_temp: int = 50,
+                               substrate: str = None) -> List[Dict[str, Any]]:
+    """Find thermophilic homologs of an enzyme (web: TEMPERATURE OPTIMUM >= min_temp, with Km)."""
     validate_dependencies()
+    if _web():
+        by_org: Dict[str, Dict[str, Any]] = {}
+        for r in _rows(ec_number, 'temperature_optimum'):
+            t_opt = _num(r.get('TEMPERATURE OPTIMUM', ''))
+            if t_opt is None or t_opt < min_temp:
+                continue
+            org = r.get('ORGANISM', '')
+            d = by_org.setdefault(org, {'organism': org, 'ec_number': ec_number,
+                                        'optimal_temperature': t_opt, 'uniprot': set(),
+                                        'literature': set(), 'km_values': []})
+            d['optimal_temperature'] = max(d['optimal_temperature'], t_opt)
+            if r.get('UNIPROT'):
+                d['uniprot'].add(r['UNIPROT'])
+            d['literature'].add(r.get('LITERATURE', ''))
+        for r in _rows(ec_number, 'km', substrate=substrate):
+            d = by_org.get(r.get('ORGANISM', ''))
+            if d is not None:
+                d['km_values'].append({'km_mM': r.get('VALUE', ''), 'substrate': r.get('SUBSTRATE', ''),
+                                       'commentary': r.get('COMMENTARY', '')})
+        out = []
+        for d in sorted(by_org.values(), key=lambda x: -x['optimal_temperature']):
+            d['uniprot'] = sorted(d['uniprot'])
+            d['literature'] = sorted(x for x in d['literature'] if x)
+            out.append(d)
+        return out
 
     thermophilic = []
 

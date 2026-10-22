@@ -4,16 +4,16 @@
     {
       "id": "km-values-by-ec",
       "prompt": "I'm building a kinetic model of alcohol dehydrogenase (EC 1.1.1.1). Pull the Km values for ethanol across organisms from BRENDA so I can compare turnover.",
-      "expected_output": "Invokes alterlab-brenda: authenticates against the BRENDA SOAP API and calls get_km_values(\"1.1.1.1\", substrate=\"ethanol\"), then parses the returned organism*/substrate*/kmValue* entries (parse_km_entry) into per-organism Km values with pH/temperature commentary.",
+      "expected_output": "Invokes alterlab-brenda without asking for a BRENDA login: reads the KM VALUE table for EC 1.1.1.1 from BRENDA's public enzyme page (scripts/brenda_web.py table 1.1.1.1 km --substrate ethanol, or get_km_values(\"1.1.1.1\", substrate=\"ethanol\") on the default web backend; the SOAP API only if a login is configured) and reports per-organism Km values for ethanol in mM (about 149 rows across ~56 organisms, e.g. Saccharomyces cerevisiae 7.75 mM, UniProt P00330, pH 8.0, 25 °C) with their pH/temperature commentary and BRENDA literature references, noting that values are per-publication and condition-dependent.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Uses the EC number 1.1.1.1 and retrieves Km kinetic values via the BRENDA SOAP API rather than a generic web search." }
+        { "type": "behavior", "value": "Uses the EC number 1.1.1.1 and retrieves Km kinetic values from BRENDA itself (its enzyme-page KM VALUE table, or the SOAP API when a login is set) rather than a generic web search." }
       ]
     },
     {
       "id": "cross-organism-comparison",
       "prompt": "Compare the kinetic properties and optimal pH/temperature of glutamine synthetase across E. coli, S. cerevisiae, and Thermus thermophilus for an enzyme-engineering project.",
-      "expected_output": "Invokes alterlab-brenda: uses compare_across_organisms with the relevant EC number plus get_environmental_parameters to report average Km, optimal pH, and temperature range per organism, drawing all data from BRENDA.",
+      "expected_output": "Invokes alterlab-brenda without asking for a BRENDA login: identifies glutamine synthetase as EC 6.3.1.2 and uses compare_across_organisms plus get_environmental_parameters(ec, organism=...) (or brenda_web.py table 6.3.1.2 km / ph_optimum / temperature_optimum --organism ...) to report Km, optimal pH, and temperature data per organism, drawing all data from BRENDA. Reports honestly where BRENDA has no entries for an organism (for example no Km rows for S. cerevisiae or Thermus thermophilus as of the 2026.1 release, while E. coli has Km values and pH optima) instead of inventing values, and points to the complementary keyless sources (UniProt kinetics comments, primary literature).",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Compares the same enzyme across multiple named organisms using BRENDA organism-specific kinetic and environmental data." }
@@ -22,7 +22,7 @@
     {
       "id": "inhibitor-lookup",
       "prompt": "What inhibitors and Ki values are reported for lactate dehydrogenase in BRENDA? I need the regulation data for a drug-target writeup.",
-      "expected_output": "Invokes alterlab-brenda: calls get_inhibitors on the EC number for lactate dehydrogenase and returns inhibitor names, inhibition type, Ki and IC50 values from BRENDA's enzyme regulation data.",
+      "expected_output": "Invokes alterlab-brenda without asking for a BRENDA login: maps lactate dehydrogenase to EC 1.1.1.27 and calls get_inhibitors (or brenda_web.py table 1.1.1.27 inhibitor / ki / ic50), returning inhibitor names (e.g. oxamate), organisms, inhibition notes from the commentary, and Ki and IC50 values in mM from BRENDA's INHIBITOR, Ki VALUE and IC50 VALUE tables, each with its BRENDA literature reference.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "Ki" }
@@ -31,7 +31,7 @@
     {
       "id": "thermophilic-homologs",
       "prompt": "I need a heat-stable version of an enzyme acting on ethanol for an industrial process. Find thermophilic homologs of EC 1.1.1.1 with optimal temperatures above 60 C.",
-      "expected_output": "Invokes alterlab-brenda: uses find_thermophilic_homologs(\"1.1.1.1\", min_temp=60) and reports candidate organisms with their optimal temperatures and Km values for industrial enzyme selection.",
+      "expected_output": "Invokes alterlab-brenda without asking for a BRENDA login: uses find_thermophilic_homologs(\"1.1.1.1\", min_temp=60, substrate=\"ethanol\") (the web backend reads BRENDA's TEMPERATURE OPTIMUM table) and reports candidate organisms with their optimal temperatures — e.g. Pyrococcus furiosus (100 °C) and Aeropyrum pernix (95 °C, Km for ethanol 13.7 mM) — plus Km values where BRENDA has them, for industrial enzyme selection.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Filters BRENDA enzyme variants by optimal temperature to surface thermostable candidates." }
@@ -40,10 +40,20 @@
     {
       "id": "enzyme-by-substrate-discovery",
       "prompt": "Which enzymes can act on 2-phenylethanol as a substrate? I want EC numbers and reaction equations to plan a biosynthetic route.",
-      "expected_output": "Invokes alterlab-brenda: discovers candidate enzymes for 2-phenylethanol via BRENDA reaction data (search_by_pattern / get_reactions), whose entries carry ecNumber, and returns EC numbers and reaction equations. (Km-based search_enzymes_by_substrate alone cannot supply EC numbers, since getKmValue responses omit ecNumber.)",
+      "expected_output": "Invokes alterlab-brenda without asking for a BRENDA login: discovers candidate enzymes for 2-phenylethanol via BRENDA reaction data — the keyless BRENDA SPARQL endpoint (brenda_web.py enzymes-for 2-phenylethanol and reactions 2-phenylethanol, or search_enzymes_by_substrate / get_reactions on the web backend) — and returns EC numbers such as 2.3.1.84 (alcohol O-acetyltransferase), 1.1.1.2 and 1.1.1.1 with reaction equations (e.g. 2-phenylethanol + NAD(+) = phenylacetaldehyde + NADH). (Km-based SOAP getKmValue responses omit ecNumber, so Km alone cannot supply EC numbers.)",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "EC" }
+      ]
+    },
+    {
+      "id": "yeast-adh-km-with-references",
+      "prompt": "I don't have a BRENDA account. Can you still pull BRENDA's Km values for ethanol for yeast (Saccharomyces cerevisiae) alcohol dehydrogenase, with the assay conditions and the literature reference for each value?",
+      "expected_output": "Invokes alterlab-brenda keyless: reads BRENDA's public enzyme page for EC 1.1.1.1 (scripts/brenda_web.py table 1.1.1.1 km --substrate ethanol --organism \"Saccharomyces cerevisiae\") and reports the S. cerevisiae Km values for ethanol in mM — e.g. 5.7 mM (20 °C, pH 9.0), 7.75 mM (UniProt P00330, 50 mM Tris-HCl pH 8.0, 25 °C), 8.56 mM (30 °C, pH 9.0) and the SDS-condition values — each with its commentary and BRENDA literature id, notes the spread across conditions, cites BRENDA (CC BY 4.0), and treats the login as unnecessary.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "mM" },
+        { "type": "behavior", "value": "Returns several Saccharomyces cerevisiae Km values for ethanol from BRENDA's KM VALUE table with their assay conditions and BRENDA literature references, without requiring a BRENDA login." }
       ]
     },
     {

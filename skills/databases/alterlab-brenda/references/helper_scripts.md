@@ -1,6 +1,22 @@
 # BRENDA — Helper Scripts Reference
 
-This skill ships three helper scripts under `scripts/`. Function inventories below.
+This skill ships these helper scripts under `scripts/`. Function inventories below.
+
+## scripts/brenda_web.py (keyless)
+
+- `fetch_page(ec)` / `parse_tables(html)`: BRENDA's public enzyme page -> {table title: rows}
+- `get_table(ec, name, substrate=None, organism=None)`: one table (aliases km, kcat, kcat_km,
+  ki, ic50, inhibitor, activator, ph_optimum, temperature_optimum, ...), filtered
+- `enzymes_for(compound, role="Substrate")`: EC numbers via the DSMZ BRENDA SPARQL endpoint
+- `reactions_for(compound, ec=None)`: reaction equations via SPARQL
+- `sparql(query)`: raw SPARQL (JSON bindings)
+
+## scripts/brenda_client.py
+
+- `active_backend()`: "web" (default, keyless) or "soap" (BRENDA_EMAIL/BRENDA_PASSWORD set,
+  or BRENDA_BACKEND=soap)
+- `get_km_values(ec, organism, substrate)`, `get_reactions(ec, organism, reaction)`: same
+  `field*value#...` entries on both backends
 
 ## scripts/brenda_queries.py
 

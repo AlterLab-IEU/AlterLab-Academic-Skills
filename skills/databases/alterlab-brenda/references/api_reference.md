@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides detailed reference information for the BRENDA (BRaunschweig ENzyme DAtabase) SOAP API and the Python client implementation. BRENDA is the world's most comprehensive enzyme information system, containing over 45,000 enzymes with millions of kinetic data points.
+This document covers the **optional** BRENDA SOAP API backend (it needs a free BRENDA login) and the Python client implementation. Nothing in the skill needs it: without a login, `scripts/brenda_web.py` reads the same tables from BRENDA's public enzyme pages and the DSMZ SPARQL endpoint (see "Keyless Quick Start" in SKILL.md). BRENDA is the world's most comprehensive enzyme information system, containing over 45,000 enzymes with millions of kinetic data points.
 
 ## SOAP API Endpoints
 
@@ -13,7 +13,7 @@ https://www.brenda-enzymes.org/soap/brenda_zeep.wsdl
 
 ### Authentication
 
-All BRENDA API calls require authentication using email and password:
+SOAP calls (optional backend) authenticate with email and password:
 
 **Parameters:**
 - `email`: Your registered BRENDA email address
