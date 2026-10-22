@@ -1,20 +1,21 @@
 ---
 name: alterlab-cosmic
-description: Access the COSMIC catalogue of somatic mutations in cancer to query somatic mutations, the Cancer Gene Census, mutational signatures, and gene fusions (authentication required). Use when curating known cancer driver genes, looking up recurrent somatic mutations in a gene, or interpreting mutational signatures for cancer research and precision oncology. Not for germline pathogenicity calls (use alterlab-clinvar) or interactive cohort visualization like OncoPrints and survival from study data (use alterlab-cbioportal). Part of the AlterLab Academic Skills suite.
+description: Work with COSMIC, the catalogue of somatic mutations in cancer — COSMIC mutational signature matrices (no login), keyless cancer-gene, hotspot, somatic-mutation-frequency and drug-resistance answers from open sources (OncoKB gene list with COSMIC CGC membership, Cancer Hotspots, cBioPortal, CIViC), and, with an optional COSMIC login, the Cancer Gene Census, mutation exports, fusions and resistance files. Use when curating known cancer driver genes, looking up recurrent somatic mutations in a gene, or interpreting mutational signatures for cancer research and precision oncology. Not for germline pathogenicity calls (use alterlab-clinvar) or interactive cohort visualization like OncoPrints and survival from study data (use alterlab-cbioportal). Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Requires a free academic COSMIC account (registration) for data downloads; commercial or clinical use needs a COSMIC licence
+compatibility: No API key or login required for the keyless path — COSMIC signature matrices plus OncoKB, Cancer Hotspots, cBioPortal and CIViC public APIs via scripts/cosmic_open.py (standard library). COSMIC product files (CGC, mutation exports, resistance, fusions) are an optional extra with a COSMIC login (free for academic use; commercial/clinical terms at cosmickb.org/licensing).
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.2.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: COSMIC_EMAIL, COSMIC_PASSWORD (a COSMIC login for the full product downloads — Cancer Gene Census, mutation exports, resistance mutations, fusions; everything else runs keyless)"
 ---
 
 # COSMIC Database
 
 ## Overview
 
-COSMIC (Catalogue of Somatic Mutations in Cancer) is the world's largest and most comprehensive database for exploring somatic mutations in human cancer. Access COSMIC's extensive collection of cancer genomics data, including millions of mutations across thousands of cancer types, curated gene lists, mutational signatures, and clinical annotations programmatically.
+COSMIC (Catalogue of Somatic Mutations in Cancer) is the world's largest and most comprehensive database for exploring somatic mutations in human cancer. Its **mutational signature matrices download without a login**; its product files (Cancer Gene Census, mutation exports, resistance mutations, fusions) and gene pages need a COSMIC login. This skill answers the common questions **keylessly** — signatures from COSMIC itself, and cancer genes, recurrent mutations, mutation frequencies and resistance evidence from open sources, each labelled with its source — and uses the COSMIC downloads when the user has a login.
 
 ## When to Use This Skill
 
@@ -39,10 +40,26 @@ This skill should be used when:
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-clinvar`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
-## Prerequisites
+## Keyless Path (default — verified live 2026-10-22)
+
+`scripts/cosmic_open.py`, standard library only:
+
+| Question | Command | Source (say it in the answer) |
+|----------|---------|-------------------------------|
+| COSMIC SBS/DBS/ID/CN/SV signature definitions | `python scripts/cosmic_open.py signatures --type SBS --genome GRCh38 -o COSMIC_v3.6_SBS_GRCh38.txt` (`--list` for all 99 matrices) | COSMIC Mutational Signatures, v3.6 — COSMIC's own data, no login |
+| Is gene X a cancer gene; oncogene or TSG? | `python scripts/cosmic_open.py genes --gene TP53` · `genes --cgc-only --csv` (581 genes: 208 ONCOGENE, 173 TSG, 29 both) | OncoKB Cancer Gene List; its `COSMIC CGC (v99)` column flags CGC membership — a snapshot, not the current CGC, and without COSMIC's tiers |
+| Recurrent (hotspot) mutations in a gene | `python scripts/cosmic_open.py hotspots BRAF` (V600: 897 tumours, V600E 833) | Cancer Hotspots (MSK; Chang et al. 2016/2018) |
+| How often is a gene mutated across cancers; top protein changes (COSMIC-style pan-cancer view; one named cohort, OncoPrints or survival → `alterlab-cbioportal`) | `python scripts/cosmic_open.py mutations TP53` (32 TCGA PanCancer Atlas studies: 3,839 of 10,443 samples, 36.8%; R175H 150, R273C 125, R248Q 121) · `--studies msk` | cBioPortal public API — cohort counts, not COSMIC sample counts |
+| Which variants confer drug resistance | `python scripts/cosmic_open.py resistance --gene EGFR` (43 accepted items) · `--profile "EGFR T790M"` (erlotinib, level A, NSCLC) | CIViC curated predictive evidence |
+| Germline / clinical significance | hand off to `alterlab-clinvar` | ClinVar |
+
+Do not present these as COSMIC counts or the current CGC: name the source, and say that the
+COSMIC product file needs a login when the user asks for COSMIC's own numbers.
+
+## Optional: COSMIC Login for Product Files
 
 ### Account Registration
-COSMIC requires authentication for data downloads:
+COSMIC product downloads need a login:
 - **Academic users**: Free access with registration at https://cancer.sanger.ac.uk/cosmic/register
 - **Commercial users**: A COSMIC commercial licence is required for commercial R&D, products/services, and patient services or clinical reporting — see https://www.cosmickb.org/licensing
 
@@ -64,9 +81,11 @@ fetch without auth. The legacy `/cosmic/file_download/...` endpoint and legacy n
 as `CosmicMutantExport.tsv.gz` or `cancer_gene_census.csv` no longer work for scripts —
 the old endpoint now redirects to the login page.
 
-### 1. Basic File Download
+### 1. Basic File Download (login)
 
-Use the `scripts/download_cosmic.py` script to download COSMIC data files:
+Use the `scripts/download_cosmic.py` script to download COSMIC data files. It reads
+`COSMIC_EMAIL` / `COSMIC_PASSWORD` (or the email argument and `--password`) and, without a
+login in a non-interactive shell, exits 2 naming those variables and the keyless script:
 
 ```python
 from scripts.download_cosmic import download_cosmic_file, get_common_file_path
@@ -83,8 +102,9 @@ download_cosmic_file(
 ### 2. Command-Line Usage
 
 ```bash
-# Download using shorthand data type (prompts for the password)
+# Download using shorthand data type (prompts for the password on a terminal)
 python scripts/download_cosmic.py user@email.com --data-type mutations
+COSMIC_EMAIL=... COSMIC_PASSWORD=... python scripts/download_cosmic.py --data-type gene_census
 
 # Download a specific archive path
 python scripts/download_cosmic.py user@email.com \
@@ -139,7 +159,7 @@ directly. See `references/cosmic_data_reference.md` for full field descriptions.
 | Copy number                   | `copy_number`          | `Cosmic_CompleteCNA_Tsv_v104_GRCh38.tar`         |
 | Gene expression               | `gene_expression`      | `Cosmic_CompleteGeneExpression_Tsv_v104_GRCh38.tar` |
 | Samples / tumour classification | `sample_info` / `classification` | `Cosmic_Sample_Tsv_…` / `Cosmic_Classification_Tsv_…` |
-| Mutational signatures         | `signatures`           | separate site — https://cancer.sanger.ac.uk/signatures/downloads/ |
+| Mutational signatures         | `signatures`           | separate site, no login — https://cancer.sanger.ac.uk/signatures/downloads/ (`cosmic_open.py signatures`) |
 
 Notes:
 - **Cancer Gene Census** is the expert-curated list of cancer genes; its role-in-cancer
@@ -147,7 +167,9 @@ Notes:
 - The old single "all coding mutations" export is now split into genome-wide and
   targeted-screen files; combine both for full coverage.
 - **Mutational signatures** (SBS, DBS, ID, CN, SV; current reference set v3.6, May 2026)
-  are downloaded from the signatures site, not through the product archives.
+  are downloaded from the signatures site without a login, not through the product
+  archives: `cosmic_open.py signatures` resolves the current file URL (e.g.
+  `.../signatures/documents/2173/COSMIC_v3.6_SBS_GRCh38.txt`, 96 contexts × SBS columns).
 - Each product page lists sha256/md5 checksums — verify large downloads.
 
 ## Working with COSMIC Data
@@ -256,7 +278,8 @@ The accepted `data_type` shortcuts are the ones in the Available Data Types tabl
 
 ## Troubleshooting
 
-### Authentication Errors
+### Authentication Errors (login path)
+- HTTP 401 from the scripted-download endpoint means the login was rejected
 - Verify email and password are correct
 - Ensure account is registered at cancer.sanger.ac.uk/cosmic
 - Check if commercial license is required for your use case

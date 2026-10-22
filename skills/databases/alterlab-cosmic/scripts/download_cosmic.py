@@ -18,7 +18,12 @@ Usage:
 
 Requirements:
     - requests library: uv pip install requests
-    - Valid COSMIC account credentials (register at cancer.sanger.ac.uk/cosmic)
+    - A COSMIC login (free academic registration at cancer.sanger.ac.uk/cosmic):
+      pass the email and --password, or set COSMIC_EMAIL / COSMIC_PASSWORD.
+      This script is the optional keyed path for the full COSMIC product files.
+      Without a login, scripts/cosmic_open.py answers keylessly: COSMIC signature
+      matrices, OncoKB gene list (with COSMIC CGC membership), Cancer Hotspots,
+      cBioPortal mutation frequencies and CIViC resistance evidence.
 
 How COSMIC scripted downloads work (current download service):
     1. GET https://cancer.sanger.ac.uk/api/mono/products/v1/downloads/scripted
@@ -237,8 +242,10 @@ Examples:
         """
     )
 
-    parser.add_argument('email', help='COSMIC account email')
-    parser.add_argument('--password', help='COSMIC account password (will prompt if not provided)')
+    parser.add_argument('email', nargs='?', default=os.environ.get('COSMIC_EMAIL'),
+                        help='COSMIC account email (default: $COSMIC_EMAIL)')
+    parser.add_argument('--password', default=os.environ.get('COSMIC_PASSWORD'),
+                        help='COSMIC account password (default: $COSMIC_PASSWORD; prompts on a terminal)')
     parser.add_argument('--filepath', help='Full archive path to download')
     parser.add_argument('--data-type',
                        choices=sorted([*PRODUCTS, 'signatures']),
@@ -259,7 +266,8 @@ Examples:
         filepath = get_common_file_path(args.data_type, args.assembly, args.version)
         if not filepath:
             if args.data_type == 'signatures':
-                print(f"Mutational signatures are downloaded from {SIGNATURES_URL}")
+                print(f"Mutational signatures need no login: {SIGNATURES_URL} "
+                      "(or: python scripts/cosmic_open.py signatures --type SBS --genome GRCh38 -o FILE)")
             else:
                 print(f"ERROR: Unknown data type: {args.data_type}")
             return 1
@@ -268,7 +276,14 @@ Examples:
         parser.print_help()
         return 1
 
-    # Get password if not provided
+    if not args.email or (not args.password and not sys.stdin.isatty()):
+        print("COSMIC product downloads need a COSMIC login: give the email and --password, or set "
+              "COSMIC_EMAIL and COSMIC_PASSWORD. Without one, use the keyless "
+              "scripts/cosmic_open.py (signatures, genes, hotspots, mutations, resistance).",
+              file=sys.stderr)
+        return 2
+
+    # Get password if not provided (interactive terminals only)
     if not args.password:
         import getpass
         args.password = getpass.getpass('COSMIC password: ')

@@ -2,7 +2,7 @@
 
 > **Generated** — do not edit by hand. Regenerate with `python3 scripts/gen_security_scan.py`; CI fails if this file is stale (`--check`) or if the attestation is violated (`--strict`).
 
-This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **265 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
+This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **266 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
 
 ## Attestation
 
@@ -31,9 +31,11 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `biorxiv.org` | Preprints / literature | 5 |
 | `brenda-enzymes.org` | Enzymes | 5 |
 | `broadinstitute.org` | Genomics | 3 |
-| `cbioportal.org` | Cancer genomics | 2 |
+| `cancerhotspots.org` | other (review) | 1 |
+| `cbioportal.org` | Cancer genomics | 3 |
 | `census.gov` | other (review) | 1 |
 | `chatgpt.com` | other (review) | 1 |
+| `civicdb.org` | other (review) | 2 |
 | `clinicaltrials.gov` | Clinical trials | 2 |
 | `clinpgx.org` | Pharmacogenomics | 3 |
 | `crossref.org` | Scholarly metadata | 8 |
@@ -69,6 +71,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `mygene.info` | Gene annotation | 1 |
 | `nf-co.re` | nf-core pipelines | 1 |
 | `nih.gov` | NCBI / NIH | 18 |
+| `oncokb.org` | other (review) | 1 |
 | `openalex.org` | Scholarly index | 24 |
 | `openarchives.org` | OAI-PMH | 2 |
 | `opencitations.net` | Open citation index | 1 |
@@ -81,7 +84,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `rcsb.org` | Protein structures | 7 |
 | `reactome.org` | Pathways | 4 |
 | `readthedocs.io` | Docs | 2 |
-| `sanger.ac.uk` | Wellcome Sanger | 5 |
+| `sanger.ac.uk` | Wellcome Sanger | 7 |
 | `scientific-writer.local` | Local (non-network) | 1 |
 | `sec.gov` | other (review) | 2 |
 | `semanticscholar.org` | Scholarly index | 4 |
@@ -100,7 +103,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `yahoo.com` | other (review) | 1 |
 | `yok.gov.tr` | YÖK | 3 |
 
-_74 distinct domains._
+_77 distinct domains._
 
 ## Method
 
