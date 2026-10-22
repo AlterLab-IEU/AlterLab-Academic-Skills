@@ -3,7 +3,7 @@
 ## Base Information
 
 **Base URL:** `https://api.openalex.org`
-**Authentication:** Optional but recommended. A free API key (from `openalex.org/settings/api`) is sent as an `Authorization: Bearer YOUR_KEY` header (preferred — keeps the key out of URLs and logs) or as `?api_key=YOUR_KEY`. The mailto "polite pool" was retired in Feb 2026; `mailto=` is ignored.
+**Authentication:** Optional — no key is needed; single-entity lookups by ID/DOI cost $0 even keyless. A free API key (from `openalex.org/settings/api`) is sent as an `Authorization: Bearer YOUR_KEY` header (preferred — keeps the key out of URLs and logs) or as `?api_key=YOUR_KEY`. The mailto "polite pool" was retired in Feb 2026; `mailto=` is ignored.
 **Rate Limits (daily cost budget + 100 requests/second ceiling, as of 2026-09):**
 - Keyless: $0.10/day, shared by everyone on your IP address
 - With a free API key: your own $1/day

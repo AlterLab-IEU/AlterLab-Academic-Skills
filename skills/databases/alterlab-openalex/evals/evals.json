@@ -41,6 +41,16 @@
       ]
     },
     {
+      "id": "doi-lookup-keyless-budget",
+      "prompt": "Our campus network keeps getting HTTP 429 from OpenAlex and I don't have an API key. Can you still get me the OpenAlex record for DOI 10.7717/peerj.4375 and DOI 10.1038/s41586-021-03819-2 — title, year, citation count, and OA status?",
+      "expected_output": "Triggers OpenAlex keyless. Explains that the 429 means the shared $0.10/day keyless budget for the IP is spent (resets at midnight UTC) but that single-entity lookups such as /works/doi:10.7717/peerj.4375 cost nothing and still answer, so no key is needed. Returns, from those lookups: 'The state of OA: a large-scale analysis of the prevalence and impact of Open Access articles' (PeerJ, 2018, oa_status gold) and 'Highly accurate protein structure prediction with AlphaFold' (Nature, 2021), each with its current cited_by_count and open_access.oa_status, and mentions the optional free OPENALEX_API_KEY only as a way to get an own daily budget.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "gold" },
+        { "type": "behavior", "value": "Retrieves both DOIs through OpenAlex single-entity (free) lookups without demanding an API key, and reports title, year, citation count and OA status for each." }
+      ]
+    },
+    {
       "id": "near-miss-pubmed",
       "prompt": "Search PubMed for randomized controlled trials on statins and cardiovascular mortality, and pull the MeSH terms and abstracts for the top hits.",
       "expected_output": "Should NOT trigger OpenAlex. This explicitly targets PubMed with biomedical-specific features (MeSH term indexing, RCT publication-type filters, abstracts from the MEDLINE corpus) served by the NCBI E-utilities / PubMed skill. OpenAlex is a general cross-disciplinary catalog without MeSH indexing. Defers to alterlab-pubmed.",
