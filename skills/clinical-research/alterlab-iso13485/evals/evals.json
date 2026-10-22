@@ -3,12 +3,15 @@
   "evals": [
     {
       "id": "gap-analysis-existing-qms",
+      "files": ["fixtures/qms_procedures"],
       "prompt": "We're a medical device startup with a handful of procedures in a folder but we don't know what we're missing for ISO 13485 certification. Can you run a gap analysis and tell us what's missing?",
       "expected_output": "Invokes alterlab-iso13485. Asks for the documentation directory and runs scripts/gap_analyzer.py --docs-dir <path> --output gap-report.json, identifies which of the 31 required procedures are present versus missing, flags missing key documents (Quality Manual, Medical Device File), calculates a compliance percentage, and returns a prioritized action plan.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "gap" },
-        { "type": "behavior", "value": "Runs/describes gap_analyzer.py, references the 31 required procedures, and produces a prioritized list of missing documentation with a compliance percentage." }
+        { "type": "behavior", "value": "Runs/describes gap_analyzer.py, references the 31 required procedures, and produces a prioritized list of missing documentation with a compliance percentage." },
+        { "type": "output_contains", "value": ["Medical Device File", "MDF", "4.2.3"] },
+        { "type": "behavior", "value": "Analyzes the attached qms_procedures folder (six files) instead of asking for the documents, and reports its real gaps: no Quality Manual (QP-001 is only the quality policy), no Medical Device File and no quality objectives; no procedures for corrective/preventive action (8.5.2/8.5.3), internal audit (8.2.4), management review (5.6), control of nonconforming product (8.3), risk management (4.1.5) or design and development (7.3); and SOP-005 complaint handling is still an unapproved draft. It counts as present only document control, control of records, purchasing with incoming inspection, training/competence and the draft complaints SOP, not the analyzer's keyword hits for design (7.3), production (7.5.1), preservation (7.5.11) or product release (8.2.6)." }
       ]
     },
     {
