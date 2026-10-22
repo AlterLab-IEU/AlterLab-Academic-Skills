@@ -4,7 +4,7 @@
     {
       "id": "local-validate-before-dispatch",
       "prompt": "Before I spend cluster hours or cloud credits, I want to run my job script on my own machine on a tiny input to make sure it works, using the same submit/poll flow I'll use on the cluster. I don't have any provider account set up yet. How?",
-      "expected_output": "Invokes alterlab-remote-compute and uses the keyless local backend of scripts/dispatch.py (the default): write a small CPU/reduced-size runner script, then `dispatch.py submit --script run_local.sh` (backend defaults to local, no account/token) to run it here and get a handle, and `dispatch.py poll --handle <h>` to read SUCCEEDED/FAILED through the same submit → poll contract, inspecting the captured stdout/stderr. Only after validation switch --backend slurm or rest for the full run.",
+      "expected_output": "Invokes alterlab-remote-compute and uses the keyless local backend of scripts/dispatch.py: write a small CPU/reduced-size runner script, then `dispatch.py submit --backend local --script run_local.sh` (no account/token) to run it here and get a handle, and `dispatch.py poll --backend local --handle <h>` to read SUCCEEDED/FAILED through the same submit → poll contract, inspecting the captured stdout/stderr. Only after validation switch --backend slurm or rest for the full run.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "local" },

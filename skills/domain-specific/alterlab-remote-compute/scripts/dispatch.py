@@ -2,9 +2,9 @@
 """Provider-agnostic remote-compute dispatcher: submit -> poll -> harvest.
 
 Stdlib-only (subprocess + urllib), so it runs anywhere Python does. No credential is needed
-for the default backend:
+for the local backend:
 
-* ``local`` (DEFAULT, keyless) — runs the job script on THIS machine and records its exit
+* ``local`` (keyless) — runs the job script on THIS machine and records its exit
   status, so you can validate the payload and the submit -> poll -> harvest flow on CPU (a
   reduced-size input) before dispatching to a cluster or cloud. No account, no network.
 * ``slurm`` — shells out to ``sbatch``/``sacct``/``scancel`` on an HPC login node (needs
@@ -14,8 +14,8 @@ for the default backend:
 
 The status vocabulary below is the common contract the AlterLab GPU model skills depend on.
 
-    python dispatch.py submit --script run_local.sh          # keyless local validation
-    python dispatch.py poll   --handle <handle>              # (backend defaults to local)
+    python dispatch.py submit --backend local --script run_local.sh   # keyless local validation
+    python dispatch.py poll   --backend local --handle <handle>
     python dispatch.py submit --backend slurm --script run.slurm
     python dispatch.py poll   --backend slurm --handle 123456
     python dispatch.py submit --backend rest --endpoint "$RUNPOD_ENDPOINT" --payload spec.json
@@ -119,8 +119,8 @@ def _rest_key() -> str:
         raise SystemExit(
             "error: set REMOTE_COMPUTE_API_KEY (or RUNPOD_API_KEY) — the REST backend "
             "refuses to run without a credential in the environment. To validate the job "
-            "with no credential first, use the keyless default backend: "
-            "`dispatch.py submit --script run_local.sh`."
+            "with no credential first, use the keyless local backend: "
+            "`dispatch.py submit --backend local --script run_local.sh`."
         )
     return key
 
@@ -158,8 +158,9 @@ def rest_poll(endpoint: str, handle: str) -> str:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("action", choices=["submit", "poll", "cancel"])
-    ap.add_argument("--backend", choices=["local", "slurm", "rest"], default="local",
-                    help="local (keyless, default) | slurm | rest")
+    ap.add_argument("--backend", choices=["local", "slurm", "rest"], required=True,
+                    help="local (keyless: runs the script here) | slurm | rest. Required, so a "
+                         "cluster script is never run on this machine by omission")
     ap.add_argument("--script", help="(local/slurm submit) path to the job script")
     ap.add_argument("--handle", help="job handle from a prior submit")
     ap.add_argument("--endpoint", help="(rest) base endpoint URL")

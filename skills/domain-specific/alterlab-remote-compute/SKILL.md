@@ -60,8 +60,8 @@ python3 run_model.py --in sample.fasta --out out/ --max-samples 2   # tiny, CPU
 SH
 
 # KEYLESS: runs here, no account, no token, no GPU.
-H=$(python scripts/dispatch.py submit --script run_local.sh)   # backend defaults to local
-python scripts/dispatch.py poll --handle "$H"                  # SUCCEEDED / FAILED
+H=$(python scripts/dispatch.py submit --backend local --script run_local.sh)
+python scripts/dispatch.py poll --backend local --handle "$H"   # SUCCEEDED / FAILED
 cat .remote-compute-local/$H/stdout.log
 ```
 
@@ -145,8 +145,8 @@ defaults to the keyless `local` backend (run `submit` with no `--backend` to val
 on this machine first):
 
 ```bash
-# Keyless local validation (default backend) — no account
-python scripts/dispatch.py submit --script run_local.sh
+# Keyless local validation (--backend local) — no account
+python scripts/dispatch.py submit --backend local --script run_local.sh
 
 # Submit a SLURM job and print the handle
 python scripts/dispatch.py submit --backend slurm --script run.slurm
