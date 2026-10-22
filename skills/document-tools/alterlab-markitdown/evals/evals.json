@@ -24,7 +24,7 @@
     {
       "id": "scanned-image-ocr",
       "prompt": "I have a scanned figure saved as a PNG with embedded text labels, plus a JPEG of a handwritten-ish chart. I need the text pulled out of these images into Markdown — does this tool do OCR?",
-      "expected_output": "Triggers alterlab-markitdown. Explains that MarkItDown's image converter handles JPEG/PNG, reads EXIF metadata (via exiftool), and produces text only through an LLM description when an llm_client/llm_model is configured; it has no local OCR engine, so tesseract alone does not help. Recommends an OCR route: an LLM client with a transcription-oriented llm_prompt, the markitdown-ocr plugin (for images inside PDF/DOCX/PPTX/XLSX), or Azure Document Intelligence.",
+      "expected_output": "Triggers alterlab-markitdown. Explains that MarkItDown's image converter handles JPEG/PNG, reads EXIF metadata (via exiftool), and produces text only through an LLM description when an llm_client/llm_model is configured; it has no local OCR engine, so tesseract alone does not help. Recommends an OCR route: an LLM client with a transcription-oriented llm_prompt, the markitdown-ocr plugin (for images inside PDF/DOCX/PPTX/XLSX), or Azure Document Intelligence — and names the keyless route that needs none of them: Claude reads the PNG and JPEG itself with Read and transcribes the labels into Markdown, marking anything illegible, with ocrmypdf (local Tesseract) for scanned PDFs.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "OCR" },
@@ -39,6 +39,17 @@
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "transcript" },
         { "type": "behavior", "value": "Describes passing the YouTube URL to MarkItDown to obtain the transcript as Markdown." }
+      ]
+    },
+    {
+      "id": "pptx-chart-descriptions-keyless",
+      "files": ["fixtures/pilot_results.pptx"],
+      "prompt": "Convert pilot_results.pptx to Markdown for my teaching-seminar notes. The results are only in the chart on slide 2, so the Markdown has to say what the chart shows. I don't have an OpenAI or OpenRouter key.",
+      "expected_output": "Triggers alterlab-markitdown on the keyless path: converts the deck with MarkItDown (no llm_client), extracts the slide-2 picture (scripts/convert_with_ai.py --backend claude, or equivalent extraction), reads the image itself and writes the description into the Markdown under slide 2. The description gives the chart type (bar chart), the y-axis (students submitting all 6 drafts, %), both arms with their n (Control n=48, Feedback app n=48) and the labelled values 12.5% and 31.3%. It keeps the slide text (title 'Writing-feedback app pilot', 'Results', the LMS-export source line, the speaker note) and does not ask for an API key.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "31.3" },
+        { "type": "behavior", "value": "Describes the chart from the image itself (bar chart; Control 12.5% vs Feedback app 31.3%, n=48 each) without an API key, instead of leaving an image placeholder or asking for a key." }
       ]
     },
     {

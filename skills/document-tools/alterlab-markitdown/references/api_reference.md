@@ -350,8 +350,8 @@ with ThreadPoolExecutor(max_workers=4) as executor:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `OPENROUTER_API_KEY` | OpenRouter API key for image descriptions | `sk-or-v1-...` |
-| `AZURE_API_KEY` | Azure Document Intelligence / Content Understanding key (else `DefaultAzureCredential`) | `key123...` |
+| `OPENROUTER_API_KEY` | Optional: OpenRouter key for in-library image descriptions (keyless: `convert_with_ai.py --backend claude`) | `sk-or-v1-...` |
+| `AZURE_API_KEY` | Optional: Azure Document Intelligence / Content Understanding key (else `DefaultAzureCredential`) | `key123...` |
 | `MARKITDOWN_DOCINTEL_ENDPOINT` | Default Document Intelligence endpoint for the CLI `-d` flag | `https://...` |
 | `MARKITDOWN_CU_ENDPOINT` | Default Content Understanding endpoint for `--use-cu` | `https://...` |
 | `EXIFTOOL_PATH` | Location of `exiftool` for image/audio metadata | `/usr/bin/exiftool` |
