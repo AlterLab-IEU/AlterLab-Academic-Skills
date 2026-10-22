@@ -441,6 +441,8 @@ See the `scripts/` directory for analysis and visualization tools:
 - `create_cohort_tables.py` - Demographics, biomarker frequency, and outcomes tables
 - `build_decision_tree.py` - TikZ flowchart generation for treatment algorithms
 - `biomarker_classifier.py` - Patient stratification algorithms by molecular subtype
-- `validate_cds_document.py` - Quality and compliance checks (HIPAA, statistical reporting standards)
+- `validate_cds_document.py` - Quality and compliance checks (HIPAA, statistical reporting standards); pass `--type cohort` or `--type recommendation`, because the default guesses the type from the words "cohort" and "recommendation" and a cohort analysis with a recommendations box gets the recommendation-report section check too
+
+Run them without an install step, e.g. `uv run --python ">=3.11" --with lifelines --with matplotlib python scripts/generate_survival_analysis.py cohort.csv --time-col pfs_months --event-col pfs_event --group-col arm --reference-group Control` (the median's 95% CI is in months; `--reference-group` sets the HR's denominator).
 
 Part of the AlterLab Academic Skills suite.

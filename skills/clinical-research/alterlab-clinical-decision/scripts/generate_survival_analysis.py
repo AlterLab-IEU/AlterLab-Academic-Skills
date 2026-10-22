@@ -19,11 +19,12 @@ import matplotlib.pyplot as plt
 from lifelines import KaplanMeierFitter
 from lifelines.statistics import logrank_test, multivariate_logrank_test
 from lifelines import CoxPHFitter
+from lifelines.utils import median_survival_times
 import argparse
 from pathlib import Path
 
 
-def load_survival_data(filepath):
+def load_survival_data(filepath, time_col='time', event_col='event', group_col='group'):
     """
     Load survival data from CSV file.
     
@@ -38,13 +39,15 @@ def load_survival_data(filepath):
         pandas.DataFrame
     """
     df = pd.read_csv(filepath)
-    
-    # Validate required columns
-    required_cols = ['patient_id', 'time', 'event', 'group']
+
+    # Validate required columns (--time-col/--event-col/--group-col name them in the CSV);
+    # they are renamed to time/event/group, the names the rest of the script uses.
+    required_cols = [time_col, event_col, group_col]
     missing = [col for col in required_cols if col not in df.columns]
     if missing:
         raise ValueError(f"Missing required columns: {missing}")
-    
+    df = df.rename(columns={time_col: 'time', event_col: 'event', group_col: 'group'})
+
     # Convert event to boolean if needed
     df['event'] = df['event'].astype(bool)
     
@@ -52,20 +55,22 @@ def load_survival_data(filepath):
 
 
 def calculate_median_survival(kmf):
-    """Calculate median survival with 95% CI."""
+    """Median survival time with its 95% CI (in time units, not survival probability).
+
+    The CI is read off the pointwise 95% band of the KM curve: the times at which its upper
+    and lower limits cross 0.5 (Brookmeyer-Crowley style). An upper limit of inf means the
+    band never drops to 0.5 within follow-up, i.e. the upper bound is not reached.
+    """
     median = kmf.median_survival_time_
-    ci = kmf.confidence_interval_survival_function_
-    
-    # Find time when survival crosses 0.5
     if median == np.inf:
         return None, None, None
-    
-    # Get CI at median
-    idx = np.argmin(np.abs(kmf.survival_function_.index - median))
-    lower_ci = ci.iloc[idx]['KM_estimate_lower_0.95']
-    upper_ci = ci.iloc[idx]['KM_estimate_upper_0.95']
-    
+    ci = median_survival_times(kmf.confidence_interval_)
+    lower_ci, upper_ci = float(ci.iloc[0, 0]), float(ci.iloc[0, 1])
     return median, lower_ci, upper_ci
+
+
+def _fmt_time(value):
+    return 'NR' if value is None or not np.isfinite(value) else f'{value:.1f}'
 
 
 def generate_kaplan_meier_plot(data, time_col='time', event_col='event', 
@@ -149,7 +154,7 @@ def generate_kaplan_meier_plot(data, time_col='time', event_col='event',
     y_pos = 0.95
     for group, (median, lower, upper) in median_survivals.items():
         if median is not None:
-            ax.text(0.98, y_pos, f'{group}: {median:.1f} months (95% CI {lower:.1f}-{upper:.1f})',
+            ax.text(0.98, y_pos, f'{group}: {median:.1f} (95% CI {_fmt_time(lower)}-{_fmt_time(upper)})',
                    transform=ax.transAxes, fontsize=9, ha='right',
                    verticalalignment='top')
         else:
@@ -253,7 +258,8 @@ def calculate_hazard_ratio(data, time_col='time', event_col='event', group_col='
     return hr, ci[0], ci[1], p_value
 
 
-def generate_report(data, output_dir, prefix='survival'):
+def generate_report(data, output_dir, prefix='survival', title='Survival Analysis by Group',
+                    xlabel='Time (months)', ylabel='Survival Probability', reference_group=None):
     """
     Generate comprehensive survival analysis report.
     
@@ -271,22 +277,27 @@ def generate_report(data, output_dir, prefix='survival'):
     kmf_models, logrank_p = generate_kaplan_meier_plot(
         data,
         output_path=output_dir / f'{prefix}_kaplan_meier.pdf',
-        title='Survival Analysis by Group'
+        title=title, xlabel=xlabel, ylabel=ylabel
     )
     
     # Number at risk table
     risk_table = generate_number_at_risk_table(data)
     risk_table.to_csv(output_dir / f'{prefix}_number_at_risk.csv')
     
-    # Calculate hazard ratio
-    hr, ci_lower, ci_upper, hr_p = calculate_hazard_ratio(data)
+    # Calculate hazard ratio (every other group vs the reference group, listed first)
+    groups = list(data['group'].unique())
+    if reference_group is not None:
+        if reference_group not in groups:
+            raise ValueError(f"--reference-group {reference_group!r} not in groups {groups}")
+        groups.remove(reference_group)
+        groups.insert(0, reference_group)
+    hr, ci_lower, ci_upper, hr_p = calculate_hazard_ratio(data, reference_group=groups[0])
     
     # Generate statistical summary
     with open(output_dir / f'{prefix}_statistics.txt', 'w') as f:
         f.write("SURVIVAL ANALYSIS STATISTICAL SUMMARY\n")
         f.write("=" * 60 + "\n\n")
         
-        groups = data['group'].unique()
         for group in groups:
             kmf = kmf_models[group]
             median = kmf.median_survival_time_
@@ -302,7 +313,8 @@ def generate_report(data, output_dir, prefix='survival'):
             f.write(f"Group: {group}\n")
             f.write(f"  N = {len(data[data['group'] == group])}\n")
             f.write(f"  Events = {data[data['group'] == group]['event'].sum()}\n")
-            f.write(f"  Median survival: {median:.1f} months\n" if median != np.inf else "  Median survival: Not reached\n")
+            m, lo, hi = calculate_median_survival(kmf)
+            f.write(f"  Median survival: {m:.1f} (95% CI {_fmt_time(lo)}-{_fmt_time(hi)})\n" if m is not None else "  Median survival: Not reached\n")
             if surv_12m is not None:
                 f.write(f"  12-month survival rate: {surv_12m*100:.1f}%\n")
             if surv_24m is not None:
@@ -317,7 +329,7 @@ def generate_report(data, output_dir, prefix='survival'):
             f.write(f"Hazard Ratio ({groups[1]} vs {groups[0]}):\n")
             f.write(f"  HR = {hr:.2f} (95% CI {ci_lower:.2f}-{ci_upper:.2f})\n")
             f.write(f"  p-value = {hr_p:.4f}\n")
-            f.write(f"  Interpretation: {groups[1]} has {((1-hr)*100):.0f}% {'reduction' if hr < 1 else 'increase'} in risk\n")
+            f.write(f"  Interpretation: {groups[1]} has a {abs(1-hr)*100:.0f}% {'lower' if hr < 1 else 'higher'} hazard than {groups[0]}\n")
     
     # Generate LaTeX table code
     with open(output_dir / f'{prefix}_latex_table.tex', 'w') as f:
@@ -331,21 +343,14 @@ def generate_report(data, output_dir, prefix='survival'):
         f.write("\\midrule\n")
         
         # Add median survival row
-        for i, group in enumerate(groups):
-            kmf = kmf_models[group]
-            median = kmf.median_survival_time_
-            if i == 0:
-                f.write(f"Median survival, months (95\\% CI) & ")
-                if median != np.inf:
-                    f.write(f"{median:.1f} & ")
-                else:
-                    f.write("NR & ")
+        f.write("Median survival (95\\% CI) & ")
+        for group in groups:
+            m, lo, hi = calculate_median_survival(kmf_models[group])
+            if m is not None:
+                f.write(f"{m:.1f} ({_fmt_time(lo)}--{_fmt_time(hi)}) & ")
             else:
-                if median != np.inf:
-                    f.write(f"{median:.1f} & ")
-                else:
-                    f.write("NR & ")
-        
+                f.write("NR & ")
+
         f.write(f"{hr:.2f} ({ci_lower:.2f}-{ci_upper:.2f}) & {hr_p:.3f} \\\\\n")
         
         # Add 12-month survival rate
@@ -388,20 +393,24 @@ def main():
                        help='Column name for event indicator')
     parser.add_argument('--group-col', type=str, default='group',
                        help='Column name for grouping variable')
+    parser.add_argument('--reference-group', type=str, default=None,
+                       help='Group the hazard ratio is relative to (default: first group in the file)')
     
     args = parser.parse_args()
     
     # Load data
     print(f"Loading data from {args.input_file}...")
-    data = load_survival_data(args.input_file)
+    data = load_survival_data(args.input_file, args.time_col, args.event_col, args.group_col)
     print(f"Loaded {len(data)} patients")
-    print(f"Groups: {data[args.group_col].value_counts().to_dict()}")
-    
+    print(f"Groups: {data['group'].value_counts().to_dict()}")
+
     # Generate analysis
     generate_report(
         data,
         output_dir=args.output,
-        prefix='survival'
+        prefix='survival',
+        title=args.title, xlabel=args.xlabel, ylabel=args.ylabel,
+        reference_group=args.reference_group
     )
 
 
@@ -412,7 +421,10 @@ if __name__ == '__main__':
 # Example usage:
 # python generate_survival_analysis.py survival_data.csv -o figures/ -t "PFS by PD-L1 Status"
 #
-# Input CSV format:
+# python generate_survival_analysis.py cohort.csv --time-col os_months --event-col os_event \
+#     --group-col tps50 --reference-group "TPS<50%"
+#
+# Input CSV format (patient_id is optional):
 # patient_id,time,event,group
 # PT001,12.3,1,PD-L1+
 # PT002,8.5,1,PD-L1-
