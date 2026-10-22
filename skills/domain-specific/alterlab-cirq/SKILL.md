@@ -3,16 +3,19 @@ name: alterlab-cirq
 description: Builds, simulates, and runs quantum circuits with Cirq, Google Quantum AI's framework for NISQ hardware, noise-aware low-level circuit design, and noise characterization. Use when targeting Google Quantum AI processors or their Quantum Virtual Machine models (Willow, Sycamore-class Rainbow/Weber), IonQ/AQT/Pasqal via Cirq plugins, designing noise-aware NISQ circuits, or running characterization experiments (randomized benchmarking, XEB). For IBM Quantum hardware and Qiskit Runtime prefer alterlab-qiskit; for gradient-trained quantum ML and hybrid quantum-classical models prefer alterlab-pennylane; for open-system Lindblad/master-equation dynamics prefer alterlab-qutip. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
-compatibility: No API key required for local simulation. Runs via `uv run python`; requires the cirq Python package. Google Quantum AI hardware access needs separate credentials.
+compatibility: "No API key required: local state-vector and density-matrix simulation, parameter sweeps, and the noisy Quantum Virtual Machine are the core and run offline under `uv run python` with the cirq package. Submitting circuits to real QPUs (Google Quantum AI, IonQ, AQT, Pasqal, Azure Quantum) is an optional extra that uses each provider's own credentials."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    credentials: "optional: IONQ_API_KEY, AQT_TOKEN, PASQAL_TOKEN, GOOGLE_CLOUD_PROJECT (submit circuits to IonQ / AQT / Pasqal / Google Quantum AI hardware respectively; local simulation and the QVM use none)"
+    version: "1.1.1"
     last_updated: "2026-09-23"
 ---
 
 # Cirq - Quantum Computing with Python
 
 Cirq is Google Quantum AI's open-source framework for designing, simulating, and running quantum circuits on quantum computers and simulators.
+
+**Keyless by default.** The core of this skill — building circuits, exact and noisy simulation (`cirq.Simulator`, `cirq.DensityMatrixSimulator`), parameter sweeps, characterization experiments, and the noisy Quantum Virtual Machine — runs entirely offline with no account or token. Real-hardware submission (the providers below) is an optional add-on that uses the provider's own credentials; when a hardware token is absent, design and validate the circuit and run it on the simulator/QVM first.
 
 ## When to Use This Skill
 
