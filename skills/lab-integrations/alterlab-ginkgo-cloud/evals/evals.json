@@ -39,6 +39,39 @@
       ]
     },
     {
+      "id": "validate-cfps-fasta-offline",
+      "prompt": "Before I pay for a Ginkgo cell-free expression run, check my constructs in cfps_constructs.fasta — are any of them too long or not valid DNA for the protocol? I don't have a Ginkgo account set up yet.",
+      "files": ["fixtures/cfps_constructs.fasta"],
+      "expected_output": "Invokes alterlab-ginkgo-cloud on the keyless path (e.g. scripts/check_cfps_input.py) with no account: checks each construct against the CFPS Validation limits (linear DNA, up to 1800 bp, ACGT/IUPAC only) and reports gene_ok_short (717 bp) as fine, gene_too_long (1875 bp) as over the 1800 bp limit, and gene_bad_chars as invalid because it contains U (an RNA base). Notes the sample count and estimated cost ($39/sample, confirm on the protocol page) and that the order is placed in the cloud.ginkgo.bio web UI, without submitting anything.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "1800" },
+        { "type": "behavior", "value": "Flags gene_too_long as over 1800 bp and gene_bad_chars for the U, passes gene_ok_short, and gives the sample count/cost, all offline without an account." }
+      ]
+    },
+    {
+      "id": "prepare-pixel-art-design-offline",
+      "prompt": "I have a 64x64 PNG of our lab logo. Without a Ginkgo account, prep it for the fluorescent pixel-art protocol: which of the 7 strains map to my colours and will it fit the plate layout?",
+      "files": [],
+      "expected_output": "Invokes alterlab-ginkgo-cloud and prepares the design offline with no account: maps the image's colours to the 7-strain fluorescent E. coli palette (sfGFP green, mRFP1 red, mKO2 orange, Venus yellow-green, mTurquoise2 cyan, Electra2 blue, mScarlet-I scarlet), notes a 64x64 image exceeds the Echo 1536 32x48-dot layout so it must be downscaled/cropped (the 6144 64x96 layout is announced), and describes uploading the result into the Design Tool. Gives price/turnaround ($25/plate, Beta) and that ordering is in the web UI, without placing an order.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "palette" },
+        { "type": "behavior", "value": "Maps colours to the 7-strain palette and checks the design against the 32x48 Echo 1536 layout offline, noting a 64x64 image does not fit as-is, without needing an account." }
+      ]
+    },
+    {
+      "id": "assemble-cfps-order-package-offline",
+      "prompt": "Put together a ready-to-order Ginkgo CFPS validation package for the three constructs in cfps_constructs.fasta at 3 replicates each: what will it cost, how many samples, and what should I drop in the Additional Details field? No account yet.",
+      "files": ["fixtures/cfps_constructs.fasta"],
+      "expected_output": "Invokes alterlab-ginkgo-cloud and assembles the order offline with no account: validates the three constructs (noting gene_too_long and gene_bad_chars must be fixed or dropped before ordering), computes the sample count (valid constructs x 3 replicates) and the estimated cost at $39/sample, and drafts Additional Details (construct notes, any special handling). States the price/turnaround are as listed and must be confirmed on the protocol page, and that the order is placed in the cloud.ginkgo.bio web UI — it does not submit.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "$39" },
+        { "type": "behavior", "value": "Validates the constructs, computes samples x replicates and cost at $39/sample, and drafts the order package offline, without placing an order." }
+      ]
+    },
+    {
       "id": "near-miss-adaptyv",
       "prompt": "I designed 40 minibinder sequences against EGFR and want them expressed and tested for binding affinity at the Adaptyv Bio Foundry. How do I submit the experiment?",
       "expected_output": "Does NOT invoke this skill; defers to alterlab-adaptyv. The user names the Adaptyv Bio Foundry and its protein binding assays, which the Adaptyv skill covers (submission, tracking, pre-submission sequence optimization); Ginkgo Cloud Lab is a different provider.",

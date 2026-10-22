@@ -1,13 +1,13 @@
 ---
 name: alterlab-ginkgo-cloud
-description: Submits and manages protocols on Ginkgo Bioworks Cloud Lab (cloud.ginkgo.bio), a web-based interface for autonomous lab execution on Reconfigurable Automation Carts (RACs), covering protocol selection, input preparation, pricing, and ordering workflows. Use when running cell-free protein expression (validation or optimization), generating fluorescent pixel art, or interacting with Ginkgo Cloud Lab services. Part of the AlterLab Academic Skills suite.
+description: Prepares and validates Ginkgo Bioworks Cloud Lab orders with no account — picks the right protocol (cell-free protein expression validation/optimization, fluorescent pixel art, and the newer catalog), validates the inputs offline (DNA length/format for CFPS, image-to-7-strain-palette mapping for pixel art), and assembles the sample counts, pricing and Additional Details into a ready-to-order package. Placing the order runs through the cloud.ginkgo.bio web interface (there is no public ordering API) with the user's own account. Use when running cell-free protein expression (validation or optimization), generating fluorescent pixel art, preparing or pricing a Ginkgo Cloud Lab order, or interacting with Ginkgo Cloud Lab services. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
-compatibility: Requires a Ginkgo Cloud Lab account (cloud.ginkgo.bio); account creation or institutional access may be needed to submit and order protocols. Ordering is through the web interface; there is no documented public API.
+compatibility: "No API key required to choose a protocol, validate its inputs offline (scripts/check_cfps_input.py for CFPS DNA) and assemble a priced, ready-to-order package. Optional: a Ginkgo Cloud Lab account (cloud.ginkgo.bio) to place the order through the web interface — there is no documented public ordering API, so submission is always done in the UI."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.2.0"
+    last_updated: "2026-10-22"
 ---
 
 # Ginkgo Cloud Lab
@@ -17,6 +17,15 @@ metadata:
 Ginkgo Cloud Lab (https://cloud.ginkgo.bio) provides remote access to Ginkgo Bioworks' autonomous lab infrastructure. Protocols are executed on Reconfigurable Automation Carts (RACs) -- modular units with robotic arms, maglev sample transport, and industrial-grade software spanning 70+ instruments.
 
 The platform also includes **EstiMate**, an AI agent that accepts human-language protocol descriptions and returns feasibility assessments and pricing for custom workflows beyond the listed protocols.
+
+## Keyless Path (default — no Ginkgo account)
+
+Ginkgo Cloud Lab has no public ordering API; orders are placed in the web UI. Everything up to that point is done with no account:
+
+1. **Choose the protocol** for the user's goal from the catalog below (go/no-go expression -> CFPS Validation; a hard-to-express or membrane protein -> CFPS Optimization; living artwork -> Fluorescent Pixel Art; anything else -> EstiMate).
+2. **Validate the inputs offline.** For cell-free expression, `python3 scripts/check_cfps_input.py constructs.fasta` checks each construct against the protocol limits (linear DNA, up to 1800 bp, ACGT/IUPAC only), flags over-length or non-DNA sequences, and prints the sample count and estimated cost. For pixel art, map the image's colours to the 7-strain fluorescent palette and confirm it fits the Echo 1536 (32x48) layout. No account is needed for any of this.
+3. **Assemble the order package** — protocol, number of samples/proteins and replicates, uploaded input files, and the free-text Additional Details — with the price and turnaround read from the catalog (confirm on the live protocol page).
+4. **Hand over the order step.** Placing and paying for the order is done by the user in the cloud.ginkgo.bio web interface; this skill does not and cannot submit it. Confirm current prices/turnaround on the protocol page before quoting, and follow the biosafety/sequence-sharing check below before any submission.
 
 ## When to Use This Skill
 
