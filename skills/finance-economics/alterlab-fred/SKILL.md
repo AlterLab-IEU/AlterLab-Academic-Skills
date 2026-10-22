@@ -1,12 +1,13 @@
 ---
 name: alterlab-fred
-description: Queries the FRED (Federal Reserve Economic Data) API for 800,000+ economic time series from 100+ sources, covering GDP, unemployment, inflation, interest rates, exchange rates, housing, and regional data. Use for macroeconomic analysis, financial research, policy studies, economic forecasting, fetching U.S. or international economic indicators by FRED series ID, and academic research requiring historical economic time series. Part of the AlterLab Academic Skills suite.
+description: Retrieves FRED (Federal Reserve Economic Data) time series with no API key — 800,000+ series from 100+ sources (GDP, unemployment, inflation, interest rates, exchange rates, housing, state data) via FRED's public CSV download, with server-side transformations, frequency aggregation, ALFRED real-time vintages and site search; an optional free FRED_API_KEY adds the JSON API (filtered search, categories, releases, tags, GeoFRED maps). Use for macroeconomic analysis, financial research, policy studies, economic forecasting, fetching U.S. or international economic indicators by FRED series ID, and academic research requiring historical economic time series. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
-compatibility: Requires a free FRED_API_KEY from a FRED account (fredaccount.stlouisfed.org) and network access to the FRED API (up to 120 requests/minute per key). Bundled scripts need requests; pandas for DataFrame examples.
+compatibility: No API key required. Series data, transformations, aggregation, ALFRED vintages and search come keyless from fred.stlouisfed.org and alfred.stlouisfed.org (scripts/fred_keyless.py, standard library only). An optional free FRED_API_KEY adds the JSON API (scripts/fred_query.py, with requests). Network access to those hosts.
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    version: "1.2.0"
+    credentials: "optional: FRED_API_KEY (adds the JSON API: filtered series search, full metadata, categories, releases, tags, sources, vintage-date lists, bulk release download and GeoFRED maps/shapes, up to 120 requests/minute)"
     last_updated: "2026-09-23"
 ---
 
@@ -16,14 +17,14 @@ metadata:
 
 Access comprehensive economic data through FRED (Federal Reserve Economic Data), a database maintained by the Federal Reserve Bank of St. Louis containing over 800,000 economic time series from over 100 sources.
 
-**Key capabilities:**
-- Query economic time series data (GDP, unemployment, inflation, interest rates)
-- Search and discover series by keywords, tags, and categories
-- Access historical data and vintage (revision) data via ALFRED
-- Retrieve release schedules and data publication dates
-- Map regional economic data with GeoFRED
-- Apply data transformations (percent change, log, etc.)
-- Bulk-download every series in a release (API v2)
+**Key capabilities (keyless):**
+- Download any series' observations as CSV, with server-side transformations (percent change, log, ...) and frequency aggregation
+- Data as first published on a given date (ALFRED vintages), to avoid look-ahead bias
+- Find series IDs by keyword and tag via FRED's site search; read title, units and frequency
+- Per-state series (e.g. state unemployment `CAUR`, `TXUR`) for regional comparisons and maps
+
+**With the optional `FRED_API_KEY`:** filtered JSON search, categories, release calendars, tags,
+sources, vintage-date lists, GeoFRED regional data and shapes, and bulk release download (API v2).
 
 ## When to Use This Skill
 
@@ -44,33 +45,48 @@ Access comprehensive economic data through FRED (Federal Reserve Economic Data),
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-alpha-vantage`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
-## API Key Setup
+## Access: keyless first
 
-**Required:** All FRED API requests require an API key.
+Start keyless; reach for the JSON API only when the user needs something the right column lists
+and has (or wants) a free key.
 
-1. Create an account at https://fredaccount.stlouisfed.org
-2. Log in and request an API key through the account portal
-3. Set as environment variable:
+| Need | Keyless route (default) | With optional `FRED_API_KEY` |
+|------|-------------------------|------------------------------|
+| Values | `fred.stlouisfed.org/graph/fredgraph.csv?id=UNRATE&cosd=2024-01-01&coed=2024-12-01` | `series/observations` |
+| Transformation | add `&transformation=pc1` (lin, chg, ch1, pch, pc1, pca, cch, cca, log) | `units=pc1` |
+| Lower frequency | add `&fq=Monthly&fam=avg` (fam: avg, sum, eop) | `frequency=m&aggregation_method=avg` |
+| As published on a date | `alfred.stlouisfed.org/graph/alfredgraph.csv?id=GDP&vintage_date=2020-01-30` | `realtime_start`/`realtime_end`, `get_vintage_dates` |
+| Find a series ID | `fred.stlouisfed.org/searchresults/?st=consumer+price+index&t=monthly` | `series/search` + filters |
+| Title, units, frequency | `fred.stlouisfed.org/series/CPIAUCSL` | `series` |
+| State map | per-state series `{ST}UR` (50 states + `DCUR`), plotted with plotly `locationmode="USA-states"` or Census cartographic boundaries | GeoFRED `series/data` + `shapes/file` |
+| Categories, releases, tags, sources | WebFetch the matching fred.stlouisfed.org pages | JSON endpoints below |
 
 ```bash
-export FRED_API_KEY="your_32_character_key_here"
+python scripts/fred_keyless.py obs GDPC1 --transformation pc1 --start 2023-01-01
+python scripts/fred_keyless.py obs DGS10 --frequency m --aggregation avg --start 2024-01-01 --csv dgs10_monthly.csv
+python scripts/fred_keyless.py obs GDP --vintage-date 2020-01-30 --start 2019-07-01   # 2019Q4 advance: 21734.266
+python scripts/fred_keyless.py search "consumer price index" --tag monthly
+python scripts/fred_keyless.py info CPIAUCSL
+python scripts/fred_keyless.py states UR --date 2026-08-01
 ```
 
-Or in Python:
-```python
-import os
-os.environ["FRED_API_KEY"] = "your_key_here"
-```
+`fred_keyless.py` needs only the standard library (`observations()`, `observations_many()`,
+`search()`, `series_info()` in Python). `pd.read_csv` also reads the CSV URLs directly. Missing
+values come back as "." or blank. Fetching several IDs in one fredgraph URL returns a zip when
+their frequencies differ, so request one ID per URL.
+
+**Optional key.** For JSON-only endpoints, a free key comes from https://fredaccount.stlouisfed.org;
+set `export FRED_API_KEY=...` and use `scripts/fred_query.py`. It raises a clear error naming the
+variable and the keyless alternative when the key is missing.
 
 ## Quick Start
 
-### Using the FREDQuery Class
+### JSON API client (optional key)
 
 ```python
 from scripts.fred_query import FREDQuery
 
-# Initialize with API key
-fred = FREDQuery(api_key="YOUR_KEY")  # or uses FRED_API_KEY env var
+fred = FREDQuery()  # reads FRED_API_KEY; without it, use scripts/fred_keyless.py
 
 # get_series returns METADATA (title, units, frequency) under "seriess".
 # For the actual data values, use get_observations (returns "observations").
@@ -286,7 +302,8 @@ Apply transformations when fetching observations:
 
 ```python
 # Get GDP percent change from year ago
-gdp_growth = fred.get_observations("GDP", units="pc1")
+gdp_growth = fred.get_observations("GDP", units="pc1")          # JSON API
+gdp_growth = observations("GDP", transformation="pc1")          # keyless (fred_keyless)
 ```
 
 ## Frequency Aggregation
@@ -310,6 +327,7 @@ monthly = fred.get_observations(
     frequency="m",
     aggregation_method="avg"
 )
+monthly = observations("DGS10", frequency="m", aggregation="avg")  # keyless: fq=Monthly&fam=avg
 ```
 
 ## Real-Time (Vintage) Data
@@ -326,6 +344,9 @@ vintage_gdp = fred.get_observations(
 
 # Get all vintage dates for a series
 vintages = fred.get_vintage_dates("GDP")
+
+# Keyless: the series as published on 2020-01-30 (ALFRED CSV, column GDP_20200130)
+first_print = observations("GDP", vintage_date="2020-01-30", start="2019-10-01")
 ```
 
 ## Common Patterns
@@ -446,19 +467,25 @@ For detailed endpoint documentation:
 
 ## Scripts
 
-### `scripts/fred_query.py`
+### `scripts/fred_keyless.py` (default, no key)
 
-Main query module with `FREDQuery` class providing:
+Standard-library client for the keyless routes in "Access: keyless first": `obs` (values,
+transformations, aggregation, `--vintage-date`, `--csv`), `search`, `info`, `states`. Run with
+plain `python`; exits non-zero with the HTTP status on an unknown series ID.
+
+### `scripts/fred_query.py` (optional key)
+
+JSON-API query module with `FREDQuery` class providing:
 - Unified interface to the v1 FRED and GeoFRED (Maps API) endpoints
 - In-memory response caching
 - Retry with backoff on 429/5xx; FRED error messages surfaced for other failures
 - Type hints and documentation
 
-The community `fredapi` package (`uv pip install fredapi`; `Fred(api_key=...).get_series("GDP")` returns a pandas Series) is a lighter alternative for plain series pulls; it has had no release since 0.5.2 (2024-05).
+The community `fredapi` package (`uv run --python ">=3.11" --with fredapi ...`; `Fred(api_key=...).get_series("GDP")` returns a pandas Series; needs the key) is a lighter alternative for plain series pulls; it has had no release since 0.5.2 (2024-05).
 
 ### `scripts/fred_examples.py`
 
-Comprehensive examples demonstrating:
+Examples; without `FRED_API_KEY` it runs the keyless ones and skips the JSON-API ones:
 - Economic indicator retrieval
 - Time series analysis
 - Release calendar monitoring
@@ -467,7 +494,7 @@ Comprehensive examples demonstrating:
 
 Run examples:
 ```bash
-uv run python scripts/fred_examples.py
+uv run --python ">=3.11" --with requests python scripts/fred_examples.py
 ```
 
 ## Additional Resources

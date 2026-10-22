@@ -1,8 +1,9 @@
 """
 FRED API Examples
 
-Demonstrates common use cases for querying FRED economic data.
-Run with: uv run python scripts/fred_examples.py
+Demonstrates common use cases for querying FRED economic data. Without FRED_API_KEY it runs
+the keyless examples (scripts/fred_keyless.py); with the key it also runs the JSON-API ones.
+Run with: uv run --python ">=3.11" --with requests python scripts/fred_examples.py
 """
 
 import os
@@ -310,6 +311,26 @@ def example_regional_data():
             print(f"  {state['region']:20} {state['value']:>6}%")
 
 
+def example_keyless():
+    """Keyless examples: CSV data, server-side transformation and aggregation, vintages, search."""
+    from fred_keyless import observations, search
+
+    print("\n" + "=" * 60)
+    print("Keyless examples (no API key)")
+    print("=" * 60)
+    print("\nReal GDP, percent change from a year ago (GDPC1, transformation=pc1):")
+    for date, value in observations("GDPC1", transformation="pc1")[-4:]:
+        print(f"  {date}: {value}")
+    print("\n10-year Treasury yield, monthly average of the daily series (DGS10):")
+    for date, value in observations("DGS10", frequency="m", aggregation="avg")[-4:]:
+        print(f"  {date}: {value}")
+    print("\nNominal GDP for 2019Q4 as first published (ALFRED vintage 2020-01-30):")
+    print(f"  {observations('GDP', start='2019-10-01', vintage_date='2020-01-30')}")
+    print("\nSearch: monthly consumer price index series:")
+    for sid, title in search("consumer price index", tag="monthly", limit=5):
+        print(f"  {sid}: {title}")
+
+
 def main():
     """Run all examples."""
     print("\n" + "=" * 60)
@@ -317,14 +338,14 @@ def main():
     print("=" * 60)
 
     # Check for API key
+    example_keyless()
+
     api_key = os.environ.get("FRED_API_KEY")
     if not api_key:
-        print("\nERROR: FRED_API_KEY environment variable not set.")
-        print("\nTo get an API key:")
-        print("  1. Create account at https://fredaccount.stlouisfed.org")
-        print("  2. Request API key from your account dashboard")
-        print("  3. Set environment variable:")
-        print("     export FRED_API_KEY='your_key_here'")
+        import sys
+        print("\nFRED_API_KEY not set: skipped the JSON-API examples (search filters, categories,"
+              " releases, tags, vintage-date lists, GeoFRED). A free key from"
+              " https://fredaccount.stlouisfed.org adds them.", file=sys.stderr)
         return
 
     try:
