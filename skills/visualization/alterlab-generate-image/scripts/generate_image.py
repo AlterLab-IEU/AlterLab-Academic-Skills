@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-Generate and edit images using OpenRouter API with various image generation models.
+OPTIONAL AI backend: generate and edit images with an image model through the OpenRouter API.
+Needs OPENROUTER_API_KEY; without it the script exits 2 and names the keyless alternatives
+(scripts/figure_tools.py render for code-drawn images, scripts/edit_image.py for edits).
 
 Supports OpenRouter image models served on the chat-completions endpoint with the
 `modalities` parameter, e.g.:
@@ -104,12 +106,6 @@ def generate_image(
     Returns:
         dict: Response from OpenRouter API
     """
-    try:
-        import requests
-    except ImportError:
-        print("Error: 'requests' library not found. Install with: pip install requests")
-        sys.exit(1)
-
     model = model or default_image_model()
 
     # API key: explicit argument, then the environment, then a .env file
@@ -117,12 +113,20 @@ def generate_image(
         api_key = os.environ.get("OPENROUTER_API_KEY") or check_env_file()
 
     if not api_key:
-        print("❌ Error: OPENROUTER_API_KEY not found!")
-        print("\nPlease create a .env file in your project directory with:")
-        print("OPENROUTER_API_KEY=your-api-key-here")
-        print("\nOr set the environment variable:")
-        print("export OPENROUTER_API_KEY=your-api-key-here")
-        print("\nGet your API key from: https://openrouter.ai/keys")
+        print("Error: generate_image.py is the optional AI image-model backend and needs "
+              "OPENROUTER_API_KEY (--api-key, the environment, or a .env file); nothing was "
+              "generated.\n"
+              "Keyless alternatives: draw the image as SVG/TikZ/matplotlib code and render it with "
+              "scripts/figure_tools.py render, or edit an existing image with "
+              "scripts/edit_image.py.\n"
+              "To use the AI backend: export OPENROUTER_API_KEY=... (keys: https://openrouter.ai/keys)",
+              file=sys.stderr)
+        sys.exit(2)
+
+    try:
+        import requests
+    except ImportError:
+        print("Error: 'requests' library not found. Install with: pip install requests")
         sys.exit(1)
 
     # Determine if this is generation or editing
