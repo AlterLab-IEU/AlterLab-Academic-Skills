@@ -39,6 +39,37 @@
       ]
     },
     {
+      "id": "local-roi-intensity-no-server",
+      "prompt": "I don't have our OMERO server reachable right now, but I have the field saved as nucleus_field.ome.tif. Measure the mean intensity of each channel inside the nucleus ROI at rows 20-40, columns 30-50, and compare it to the whole-image mean. Then show me the BlitzGateway code that would do the same against an image on the server later.",
+      "files": ["fixtures/nucleus_field.ome.tif"],
+      "expected_output": "Invokes alterlab-omero on the keyless path with no OMERO login: reads nucleus_field.ome.tif with tifffile into a NumPy array (2 channels, 64x64), slices the ROI [:, 20:40, 30:50] (400 px) and reports DAPI (channel 0) ROI mean 200 vs whole-image mean ~28.6, and GFP (channel 1) ROI mean 80 vs its lower background. Then provides the equivalent BlitzGateway code (conn.getObject('Image', id), getPrimaryPixels().getPlane(), a rectangle ROI, intensity stats) to run against the user's own server with their credentials, without claiming any server was contacted.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "200" },
+        { "type": "behavior", "value": "Computes the ROI vs whole-image means from the local OME-TIFF with tifffile (DAPI ROI 200 vs whole ~28.6, GFP ROI 80) and gives BlitzGateway code for the later server run, without contacting a server." }
+      ]
+    },
+    {
+      "id": "public-idr-browse-keyless",
+      "prompt": "Without any OMERO account, pull the channel names and pixel size for image 1884807 on the public IDR, and tell me which project and dataset it belongs to.",
+      "expected_output": "Invokes alterlab-omero and uses the public IDR OMERO over HTTP with no credentials: GET https://idr.openmicroscopy.org/api/v0/m/images/1884807/ (and/or webgateway/imgData/1884807/) returns the three channel names (CENT2, PCNT, CDK5RAP2-C), a physical pixel size around 0.0396 micrometre, and that it belongs to project idr0021-lawo-pericentriolarmaterial/experimentA. Notes IDR needs no login and that pixel data can be read from its public OME-Zarr, distinguishing this public server from the user's own private OMERO.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "idr0021" },
+        { "type": "behavior", "value": "Queries the public IDR JSON/webgateway API keyless and reports the channel names and pixel size for image 1884807 and its project, without needing an OMERO login." }
+      ]
+    },
+    {
+      "id": "review-blitzgateway-script-offline",
+      "prompt": "Review this BlitzGateway snippet before I run it against our server: it opens `conn = BlitzGateway(user, pw, host=host)`, loops `for img in conn.listProjects(): print(img.getName())`, reads a plane with `image.getPlane(0,0,0)`, and never calls conn.close(). What's wrong and how should it read, without me connecting right now?",
+      "expected_output": "Invokes alterlab-omero and reviews the code offline with no connection: BlitzGateway needs conn.connect() before use and port defaults to 4064; listProjects() yields projects, not images, so iterating it as images is wrong (use conn.getObjects('Dataset'/'Image') or walk Project->Dataset->Image); pixel planes come from image.getPrimaryPixels().getPlane(z, c, t), not image.getPlane(...); and the connection must be closed (prefer the context manager `with BlitzGateway(...) as conn:`). Gives corrected code and notes it runs only against the user's own server with their credentials.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "getPrimaryPixels" },
+        { "type": "behavior", "value": "Flags the missing connect()/close(), the listProjects-as-images misuse and the getPlane call, and corrects them, all without opening a connection." }
+      ]
+    },
+    {
       "id": "near-miss-opentrons",
       "prompt": "Write an Opentrons protocol that uses the absorbance plate reader to read a 96-well plate at 450 and 650 nm.",
       "expected_output": "Does NOT invoke this skill; defers to alterlab-opentrons. The task is liquid-handling/plate-reading automation on an Opentrons robot, not managing or analyzing microscopy image data on an OMERO server.",
