@@ -44,6 +44,17 @@
       ]
     },
     {
+      "id": "keyless-loop-no-package",
+      "prompt": "I don't have the hypogenic package installed and no LLM API key. Here is a small labelled dataset of human-written vs AI-generated texts with a train/test split. Can you still run the HypoGeniC loop — generate hypotheses from the training texts, test their accuracy on the held-out set, refine, and tell me the accuracy?",
+      "files": ["fixtures/ai_vs_human_texts.jsonl"],
+      "expected_output": "Triggers the hypogenic skill and runs the keyless in-conversation HypoGeniC loop with no package and no API key: Claude reads the labelled train split and proposes checkable keyword-rule hypotheses (e.g. formal connectors furthermore/moreover/additionally/consequently -> AI), writes a hypotheses bank JSON, and scores it on the held-out test split with scripts/score_hypotheses.py (deterministic, stdlib). It should report that the single connector hypothesis reaches 0.875 accuracy and that a refined two-hypothesis bank (adding an essay-closer/'comprehensive overview' rule) reaches 1.000 on the test split, then hand back the final bank and its held-out accuracy. May mention the hypogenic package + LLM key as the optional scaled-up alternative.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "score_hypotheses.py"},
+        {"type": "behavior", "value": "Runs the generate/score/refine loop keyless (no package, no API key), scores hypotheses on the held-out split with the deterministic scorer, and reports the held-out accuracy (the refined bank reaches 1.000 on this fixture)."}
+      ]
+    },
+    {
       "id": "near-miss-hypothesis-gen-manual",
       "prompt": "I observed that students who used our new tutoring tool scored higher on the final. Help me turn this single observation into a formal, falsifiable hypothesis with a proposed mechanism and an experiment to test it.",
       "expected_output": "Should NOT trigger the hypogenic skill. This is manual, single-observation hypothesis formulation with a mechanism and experimental design and no dataset to run automated LLM-driven testing over. It belongs to the alterlab-hypothesis-gen skill, which hypogenic's own description points to for manual formulation. Defer to alterlab-hypothesis-gen.",
