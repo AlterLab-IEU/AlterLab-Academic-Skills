@@ -70,12 +70,14 @@ polices the test; it does not execute, model, design, or write.
 | Actually running the chosen test, assumption checks, power, APA write-up | `alterlab-statistical-analysis` | This guard picks the test; that skill computes it. |
 | Fitting a specific model class (OLS/GLM/mixed/ARIMA), coefficient tables, residual diagnostics | `alterlab-statsmodels` | Programmatic model fitting, not test selection. |
 | Grading evidence quality, spotting confounders / design validity / bias (GRADE, RoB) | `alterlab-scientific-thinking` | Upstream judgment about the study, not which test. |
-| Freezing the whole analysis plan before data; HARKing, optional-stopping, frozen-covariate discipline | `alterlab-preregistration-discipline` | The plan-level discipline; this guard is the test-choice slice of it. |
+| Freezing the whole analysis plan before data; HARKing, optional-stopping, frozen-covariate discipline | `alterlab-preregistration-discipline` | The whole plan, its tests included, is that skill's job; this guard answers only a question about which test to use or whether to switch one. |
 | Reporting *every* analysis run, effect sizes + CIs, deviation disclosure in the write-up | `alterlab-results-transparency` | Reporting discipline, downstream of test choice. |
 | Choosing the study design itself (RCT vs observational vs quasi-experiment) | `alterlab-scientific-thinking` | Design selection precedes test selection. |
 | Open-science / repository / DMP / preregistration *logistics* (OSF, AsPredicted, Zenodo) | `alterlab-open-science` | Platform/workflow guidance, not test-choice logic. |
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-statistical-analysis`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+A request to freeze or pre-register the whole analysis plan has no in-scope part here, even though the plan will name its tests: hand all of it to `alterlab-preregistration-discipline` and do not add a test-selection section, decision tree, fallback or correction plan of your own. The guard applies only when the user asks which test to use, or proposes switching or adding one.
 
 ---
 
