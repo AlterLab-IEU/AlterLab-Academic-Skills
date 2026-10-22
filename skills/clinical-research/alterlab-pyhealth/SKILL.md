@@ -3,7 +3,7 @@ name: alterlab-pyhealth
 description: Develops, tests, and validates clinical machine learning models with the PyHealth 2.x healthcare AI toolkit. Use when working with electronic health records (EHR), clinical prediction tasks (mortality, readmission, length of stay, drug recommendation), medical coding systems (ICD, NDC, ATC, CCS), physiological signals (EEG, ECG), healthcare datasets (MIMIC-III/IV, eICU, OMOP), or implementing deep learning models for healthcare (RETAIN, SafeDrug, GAMENet, Transformer, GAT/GCN). Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
-compatibility: "Self-contained — runs under `uv run python` with PyHealth >= 2.0.2 (Python 3.12-3.13) in its own environment; no API key required. MIMIC-III/IV and eICU data need the user's own PhysioNet credentialed access."
+compatibility: No API key required. Runs install-free with `uv run --python 3.13 --with "pyhealth>=2.0.2,<2.1" python script.py` (PyHealth 2.0.x needs Python 3.12-3.13; see Installation for the CPU-only torch index). MIMIC-III/IV and eICU data need the user's own PhysioNet credentialed access.
 metadata:
     skill-author: AlterLab
     version: "1.2.0"
@@ -16,7 +16,7 @@ metadata:
 
 PyHealth is a Python library for healthcare AI that provides datasets, task definitions, models, trainers, and medical-code utilities for clinical machine learning. Use this skill when developing healthcare prediction models, processing clinical data, working with medical coding systems, or validating models before any clinical use.
 
-> **Version gotcha (read first).** This skill targets **PyHealth 2.x** (current release 2.0.2, Sept 2026). The 2.0 rewrite changed the API in ways most tutorials and pre-2025 snippets get wrong:
+> **Version gotcha (read first).** This skill targets **PyHealth 2.x**, verified against 2.0.2 (Sept 2026; 2.1.0 followed on 2026-10-17 and is not yet checked here). The 2.0 rewrite changed the API in ways most tutorials and pre-2025 snippets get wrong:
 > - **Tasks are classes you instantiate**, e.g. `MortalityPredictionMIMIC4()`, `DrugRecommendationMIMIC3()` — not the old snake-case `mortality_prediction_mimic4_fn` functions. Pass the instance to `dataset.set_task(task)`.
 > - **Datasets take an explicit table list.** Single-source loaders use `root=` + `tables=[...]` (`MIMIC3Dataset`, `MIMIC4EHRDataset`, `eICUDataset`, `OMOPDataset`); the multimodal `MIMIC4Dataset` uses `ehr_root=` + `ehr_tables=[...]` (plus optional `note_root`/`cxr_root`).
 > - **Models take only the `SampleDataset` plus hyperparameters**, e.g. `Transformer(dataset=samples, embedding_dim=128)`. Feature keys, label key, and mode are read from the task's `input_schema` / `output_schema`; the 1.x `feature_keys=` / `label_key=` / `mode=` arguments raise `TypeError`.
@@ -116,16 +116,24 @@ Read the reference file that matches the step you are on:
 
 ## Installation
 
+No install step: `uv run` builds a cached environment per run, so PyHealth's pins never touch
+another project.
+
 ```bash
-uv venv --python 3.13 .venv-pyhealth      # PyHealth 2.0.2 supports Python 3.12-3.13
-source .venv-pyhealth/bin/activate
-uv pip install "pyhealth>=2.0.2"
+uv run --python 3.13 --with "pyhealth>=2.0.2,<2.1" python train.py
+# CPU-only machine: take torch from the CPU index (otherwise the multi-GB CUDA wheel set is pulled)
+uv run --python 3.13 --with "pyhealth>=2.0.2,<2.1" \
+    --index https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match python train.py
 ```
+
+`--index-strategy unsafe-best-match` is needed with the CPU index: that index also carries an
+old urllib3 (1.26.13), and uv's default first-index rule then cannot satisfy PyHealth's
+`urllib3>=2.5`.
 
 **Requirements (PyHealth 2.0.2):**
 - Python **3.12 or 3.13** (`>=3.12,<3.14`) — if your default interpreter is 3.14, create the environment with `--python 3.13`.
 - PyTorch, polars, pandas, scikit-learn, and transformers are installed as pinned dependencies — keep PyHealth in its own environment so these pins don't collide with other projects.
-- A `2.1` alpha line exists on PyPI; stay on the 2.0.x releases unless you need an alpha-only feature.
+- PyHealth 2.1.0 was released on 2026-10-17. The signatures in this skill were verified against 2.0.2, hence the `<2.1` pin; check the 2.1 changelog before lifting it.
 
 ## Common Use Cases
 
