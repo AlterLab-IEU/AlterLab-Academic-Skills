@@ -1,30 +1,59 @@
-# Nano Banana Pro Script Reference and Prompt Writing
+# Script Reference and Prompt Writing
+
+## build_deck.py (keyless, default)
+
+Builds an editable 16:9 PowerPoint from a JSON deck plan with python-pptx — no image model, no key.
+
+```bash
+uv run --python ">=3.11" --with python-pptx --with pillow python scripts/build_deck.py deck.json -o talk.pptx
+soffice --headless --convert-to pdf talk.pptx     # LibreOffice export for the visual review
+```
+
+**Plan fields:** `theme` (`primary`, `accent`, `text`, `background`, `muted`, `font`, `title_pt` 36,
+`body_pt` 24, `small_pt` 14), `footer`, and `slides`, each with a `layout`:
+
+| Layout | Fields |
+|--------|--------|
+| `title` | `title`, `subtitle` (presenter, affiliation, venue) |
+| `section` | `title` |
+| `bullets` | `title`, `bullets` (3-4), optional `image` placed on the right |
+| `image` | `title`, `image`, optional `caption` |
+| `two_column` | `title`, `left`, `right`, optional `left_heading`, `right_heading` |
+| `takeaway` | `title`, `message` |
+
+Every slide also takes `notes` (speaker notes) and `citation` (small italic line above the
+footer). Image paths are relative to the plan file; a missing image fails the build unless
+`--allow-missing-images`. Warnings (printed, never auto-fixed): more than 4 bullets, a bullet over
+12 words, a title over 60 characters, body text under 18 pt.
 
 ## generate_slide_image.py
 
-Generate presentation slides or visuals using Nano Banana Pro AI.
+Keyless by default: renders a code-drawn slide visual, or prints the slide design brief.
+With `--backend ai` (needs `OPENROUTER_API_KEY`) it generates slides or visuals with Nano Banana Pro.
 
 ```bash
-# Full slide (default) - generates complete slide as image
-python scripts/generate_slide_image.py "slide description" -o output.png
+# Keyless: design brief for a full slide or a visual (no file written)
+python scripts/generate_slide_image.py "Data pipeline: collect, clean, model" -o slides/pipeline.png --visual-only
+# Keyless: render the SVG Claude drew to a 1920-px PNG
+uv run --python ">=3.11" --with cairosvg --with pillow python scripts/generate_slide_image.py slides/pipeline.svg -o slides/pipeline.png
 
-# Visual only - generates just the image/figure for embedding in PPT
-python scripts/generate_slide_image.py "visual description" -o output.png --visual-only
-
-# With reference images attached (Nano Banana Pro will see these)
-python scripts/generate_slide_image.py "Create a slide explaining this chart" -o slide.png --attach chart.png
-python scripts/generate_slide_image.py "Combine these into a comparison slide" -o compare.png --attach before.png --attach after.png
+# Optional AI backend
+python scripts/generate_slide_image.py "slide description" -o output.png --backend ai
+python scripts/generate_slide_image.py "visual description" -o output.png --visual-only --backend ai
+python scripts/generate_slide_image.py "Create a slide explaining this chart" -o slide.png --attach chart.png --backend ai
 ```
 
 **Options:**
 - `-o, --output`: Output file path (required)
-- `--attach IMAGE`: Attach image file(s) as context for generation (can use multiple times)
-- `--visual-only`: Generate just the visual/figure, not a complete slide
-- `--iterations`: Max refinement iterations (default: 2)
+- `--backend {code,ai}`: `code` (default, keyless) or `ai` (OpenRouter; exits 2 without a key)
+- `--attach IMAGE`: Reference image(s): sent to the model with `--backend ai`; listed in the keyless brief as figures to place unchanged
+- `--visual-only`: A visual for a slide rather than a complete slide
+- `--width-px`: PNG width for a rendered source (default 1920)
+- `--iterations`: Max refinement iterations for `--backend ai` (default: 2)
 - `--api-key`: OpenRouter API key (or set OPENROUTER_API_KEY env var)
 - `-v, --verbose`: Verbose output
 
-**Attaching Reference Images:**
+**Attaching Reference Images (`--backend ai`):**
 
 Use `--attach` when you want Nano Banana Pro to see existing images as context:
 - "Create a slide about this data" + attach the data chart
@@ -32,7 +61,7 @@ Use `--attach` when you want Nano Banana Pro to see existing images as context:
 - "Combine these figures into one slide" + attach multiple images
 - "Explain this diagram in a slide" + attach the diagram
 
-**Environment Setup:**
+**Environment Setup (`--backend ai` only):**
 ```bash
 export OPENROUTER_API_KEY='your_api_key_here'
 # Get key at: https://openrouter.ai/keys
@@ -90,7 +119,10 @@ python scripts/pdf_to_images.py presentation.pdf output/slide --dpi 150
 # Page range selection
 ```
 
-## Prompt Writing for Slide Generation
+## Prompt Writing for Slide Generation (optional AI backend)
+
+The same content checklist applies to a keyless deck plan: slide type, title, 3-4 key points,
+the visual, and the theme.
 
 ### Full Slide Prompts (PDF Workflow)
 

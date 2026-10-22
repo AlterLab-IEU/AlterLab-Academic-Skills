@@ -149,31 +149,47 @@ For comprehensive guidance on each type, refer to `references/talk_types_guide.m
 
 ## 5. Implementation Options
 
-### Nano Banana Pro PDF (Default - Recommended)
+### PowerPoint from a Deck Plan (Default - no API key)
 
-**Best for**: Visually stunning slides, fast creation, non-technical audiences. Generate each slide as a complete image using AI.
+**Best for**: Most conference, seminar and defense talks. Editable, consistent, and every number
+exact. Claude writes a JSON deck plan; `scripts/build_deck.py` builds the 16:9 PPTX with
+python-pptx (title, section, bullets, image, two-column and takeaway layouts, citations, speaker
+notes); LibreOffice exports it to PDF for the page-by-page visual review.
+
+```bash
+uv run --python ">=3.11" --with python-pptx --with pillow python scripts/build_deck.py deck.json -o talk.pptx
+soffice --headless --convert-to pdf talk.pptx
+uv run --python ">=3.11" --with pymupdf python scripts/pdf_to_images.py talk.pdf review/slide
+```
+
+Concept visuals are drawn as SVG and rendered with `generate_slide_image.py visual.svg -o visual.png`;
+data figures come from the user's files or matplotlib.
+
+### Nano Banana Pro PDF (optional, needs OPENROUTER_API_KEY)
+
+**Best for**: Image-designed slides when the user asks for them. Each slide is generated as a complete image by AI, so text is not editable.
 
 **Workflow:**
 1. Plan each slide (title, content, visual elements)
-2. Generate each slide with `generate_slide_image.py`
+2. Generate each slide with `generate_slide_image.py ... --backend ai`
 3. Combine into PDF with `slides_to_pdf.py`
 
 ```bash
 # Generate slides
-python scripts/generate_slide_image.py "Title: Introduction..." -o slides/01.png
-python scripts/generate_slide_image.py "Title: Methods..." -o slides/02.png
+python scripts/generate_slide_image.py "Title: Introduction..." -o slides/01.png --backend ai
+python scripts/generate_slide_image.py "Title: Methods..." -o slides/02.png --backend ai
 
 # Combine to PDF
 python scripts/slides_to_pdf.py slides/*.png -o presentation.pdf
 ```
 
-**Advantages**: Most visually impressive results, fast creation, no design skills required, consistent professional appearance. **Best for**: conference talks, business presentations, general scientific talks, pitch presentations.
+**Trade-offs**: striking visuals and fast creation, but slides are pictures (no edits), the model can garble text or numbers, and prompts plus attached figures leave the machine.
 
 ### PowerPoint via PPTX Skill
 
 **Best for**: Editable slides, custom designs, template-based workflows. See `document-skills/pptx/SKILL.md` for complete documentation.
 
-Use Nano Banana Pro with `--visual-only` to generate images, then build PPTX with text.
+For template-driven or animated decks, Anthropic's separate `pptx` skill adds editing tools; visuals come from code-drawn SVG (or, with a key, `generate_slide_image.py --visual-only --backend ai`).
 
 **Key Resources:**
 - `assets/powerpoint_design_guide.md`: Complete PowerPoint design guide
@@ -181,7 +197,7 @@ Use Nano Banana Pro with `--visual-only` to generate images, then build PPTX wit
 - PPTX skill's scripts: `rearrange.py`, `inventory.py`, `replace.py`, `thumbnail.py`
 
 **Workflow:**
-1. Generate visuals with `generate_slide_image.py --visual-only`
+1. Draw visuals as SVG and render them with `generate_slide_image.py visual.svg -o visual.png`
 2. Design HTML slides (for programmatic) or use templates
 3. Create presentation using html2pptx or template editing
 4. Add generated images and text content

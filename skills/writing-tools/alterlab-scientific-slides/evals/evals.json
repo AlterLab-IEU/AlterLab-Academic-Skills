@@ -13,9 +13,20 @@
       ]
     },
     {
+      "id": "conference-talk-deck-keyless",
+      "files": ["fixtures/talk_content.md"],
+      "prompt": "Here's the material for my 15-minute EDM 2027 talk on our dropout-prediction model. Build me an editable slide deck I can still tweak on the plane.",
+      "expected_output": "Invokes alterlab-scientific-slides on its keyless path: plans about 13-16 slides for the 15-minute slot (12 minutes of talk plus 3 of Q&A) along the story arc (hook, question, data, method, results at 40-50% of the time, fairness, take-home), writes a deck plan and builds an editable 16:9 PowerPoint with scripts/build_deck.py (python-pptx), using the presenter name A. Researcher and the numbers from talk_content.md verbatim (48,312 students, AUC 0.87 vs 0.79 baseline, 71% of dropouts caught by week 6 at a 20% flag rate, equal-opportunity gap within 2.1 points, first-generation gap 6.4 -> 1.9, external AUC 0.83), with data figures plotted from those values, speaker notes, and the take-home message. Exports to PDF (LibreOffice) and reviews the pages as images or says how to, and runs validate_presentation.py --duration 15. Does not ask for an API key.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Produces an editable deck (PowerPoint via build_deck.py / python-pptx, or Beamer) sized for a 15-minute slot with results taking the largest share, rather than AI-generated slide images." },
+        { "type": "behavior", "value": "Uses the attached numbers verbatim (AUC 0.87 vs 0.79, 71% caught at a 20% flag rate, external AUC 0.83) and the presenter name A. Researcher, without inventing other results or names." }
+      ]
+    },
+    {
       "id": "thesis-defense-slides",
       "prompt": "I'm defending my dissertation in two weeks and need a 60-minute defense presentation covering all my studies.",
-      "expected_output": "Invokes alterlab-scientific-slides in defense mode: structures a comprehensive 45-60 minute deck covering all studies, prepares for examiner questions, and can use the LaTeX Beamer defense template (beamer_template_defense.tex) or the PDF/Nano Banana Pro workflow, with timing/pacing guidance.",
+      "expected_output": "Invokes alterlab-scientific-slides in defense mode: structures a comprehensive 45-60 minute deck covering all studies, prepares for examiner questions, and can use the LaTeX Beamer defense template (beamer_template_defense.tex) or an editable PowerPoint built with build_deck.py, with timing/pacing guidance.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "behavior", "value": "Tailors structure and timing to a thesis-defense context (comprehensive coverage of all studies, Q&A prep) rather than a short conference format."}

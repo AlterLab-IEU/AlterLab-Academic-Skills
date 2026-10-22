@@ -185,7 +185,11 @@ class PresentationValidator:
     def _check_pptx_content(self, prs):
         """Check PowerPoint content for common issues."""
         small_text_slides = []
+        small_footer_slides = []
         many_bullets_slides = []
+        # Footer band (bottom 15% of the slide): citations, footers and slide numbers may be
+        # smaller than body text, but not below 12 pt.
+        footer_top = int(prs.slide_height * 0.85) if prs.slide_height else None
         
         for idx, slide in enumerate(prs.slides, start=1):
             for shape in slide.shapes:
@@ -193,12 +197,15 @@ class PresentationValidator:
                     continue
                 
                 text_frame = shape.text_frame
+                in_footer = (footer_top is not None and shape.top is not None
+                             and shape.top >= footer_top)
+                minimum = 12 if in_footer else 18
                 
                 # Check for small fonts
                 for paragraph in text_frame.paragraphs:
                     for run in paragraph.runs:
-                        if run.font.size and run.font.size.pt < 18:
-                            small_text_slides.append(idx)
+                        if run.font.size and run.font.size.pt < minimum and run.text.strip():
+                            (small_footer_slides if in_footer else small_text_slides).append(idx)
                             break
                 
                 # Check for too many bullets
@@ -211,6 +218,13 @@ class PresentationValidator:
             unique_slides = sorted(set(small_text_slides))
             self.warnings.append(
                 f"Small text (<18pt) found on slides: {unique_slides[:5]}"
+                + (" ..." if len(unique_slides) > 5 else "")
+            )
+        
+        if small_footer_slides:
+            unique_slides = sorted(set(small_footer_slides))
+            self.warnings.append(
+                f"Footer/citation text under 12pt on slides: {unique_slides[:5]}"
                 + (" ..." if len(unique_slides) > 5 else "")
             )
         
