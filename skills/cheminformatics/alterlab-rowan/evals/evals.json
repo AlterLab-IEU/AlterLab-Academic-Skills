@@ -42,6 +42,36 @@
       ]
     },
     {
+      "id": "validate-docking-payload-offline",
+      "prompt": "I don't have a Rowan API key set up yet, and I don't want to waste credits on a malformed job. Build the Rowan docking submission for my ligand CCO against a protein and validate that the call is well-formed before I ever submit it, especially the pocket argument.",
+      "expected_output": "Invokes alterlab-rowan on the keyless path with no ROWAN_API_KEY: builds the ligand as a 3D structure with rowan.Molecule.from_smiles('CCO') (a bare SMILES is rejected by the geometry workflow with ValueError, caught offline) and assembles submit_docking_workflow with pocket as two 3-vectors [[cx,cy,cz],[sx,sy,sz]] and docking_settings=rowan.VinaSettings(...). Notes that a dict pocket raises a pydantic ValidationError at construction, so the shape is validated before any network call, and that actually submitting needs the user's ROWAN_API_KEY and consumes credits. Does not claim a docking score.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "pocket" },
+        { "type": "behavior", "value": "Builds and validates the docking payload offline (3D molecule, two-3-vector pocket) and defers submission to the credited API, without inventing a score." }
+      ]
+    },
+    {
+      "id": "local-xtb-geometry-preview",
+      "prompt": "Before I spend Rowan credits optimizing acetic acid, can you give me a quick local geometry optimization as a sanity check, no account? Then show me the Rowan call I'd submit for the real NNP/DFT optimization.",
+      "expected_output": "Invokes alterlab-rowan and runs a local preview with no key: builds acetic acid from SMILES with RDKit, embeds and minimizes (MMFF) and/or optimizes with GFN2-xTB via tblite+ase, reporting the optimized energy as an approximate sanity check. Explicitly says the local MMFF/xTB result is an approximation that will differ from Rowan's NNP/DFT. Then gives the submit_basic_calculation_workflow(rowan.Molecule.from_smiles('CC(=O)O'), tasks=['optimize'], ...) call to run on Rowan with the user's ROWAN_API_KEY and a max_credits cap.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "submit_basic_calculation_workflow" },
+        { "type": "behavior", "value": "Runs a local RDKit/xTB geometry optimization as an approximate preview (labelling it as such) and provides the Rowan submission call for the real run, without needing a key for the preview." }
+      ]
+    },
+    {
+      "id": "choose-pka-method-offline",
+      "prompt": "I want to predict the pKa of phenol on Rowan but I haven't set up my key. Which pKa method should I use, and set up the call correctly depending on whether I pass a molecule or a SMILES — I keep getting an error about 3D structures.",
+      "expected_output": "Invokes alterlab-rowan and resolves the setup offline with no key: the default pKa method gxtb_wagen2026 (and aimnet2_wagen2024) is a 3D method that rejects a bare SMILES (ValueError about requiring a 3D structure), so pass rowan.Molecule.from_smiles('c1ccccc1O'); the SMILES-string methods are method='starling' or 'chemprop_nevolianis2025', which accept a plain SMILES. Assembles submit_pka_workflow accordingly and notes that submission needs ROWAN_API_KEY and reads result.strongest_acid. Explains the 3D-structure error the user hit rather than just working around it.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "starling" },
+        { "type": "behavior", "value": "Explains the 3D-method vs SMILES-method distinction (build a Molecule for gxtb/aimnet2; use starling/chemprop for a SMILES string) and sets up submit_pka_workflow correctly offline." }
+      ]
+    },
+    {
       "id": "near-miss-molecular-dynamics",
       "prompt": "I want to run a 50 ns explicit-solvent molecular dynamics trajectory of this protein-ligand complex with OpenMM and then analyze the RMSD and binding-pose stability over time.",
       "expected_output": "Does NOT invoke this skill; defers to alterlab-molecular-dynamics. The user wants a time-resolved explicit-solvent MD trajectory (OpenMM) with RMSD/stability analysis, which is the molecular-dynamics skill's job. Rowan's cloud workflows (quantum chemistry, docking, cofolding, managed protein MD) are not a local OpenMM run with MDAnalysis trajectory analysis, which is what the user asked for.",
