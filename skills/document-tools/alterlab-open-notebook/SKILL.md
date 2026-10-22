@@ -81,7 +81,7 @@ SurrealDB defaults to `root:root` and is bound to `127.0.0.1` only. Before expos
 ### Configure an AI Provider
 
 **Keyless, fully local (default).** Start from the upstream `examples/docker-compose-ollama.yml`
-instead of the plain compose file (or `examples/docker-compose-full-local.yml`, which also runs a
+instead of the plain compose file (or the upstream full-local example, `docker-compose-full-local.yml` in the same folder, which also runs a
 Speaches server for local podcast voices and transcription), set the encryption key the same way,
 then pull a chat and an embedding model:
 
@@ -235,7 +235,7 @@ answer = requests.post(f"{BASE_URL}/search/ask/simple", headers=HEADERS, json={
 `POST /api/search/ask` takes the same body and streams Server-Sent Events.
 
 ### Podcast Generation
-Generate multi-speaker podcasts (1-4 speakers) from a notebook. Profiles are referenced **by name**: an episode profile (format, models, length) and a speaker profile (voices and personas). Ollama has no text-to-speech; for keyless, local voices run a Speaches server (`examples/docker-compose-full-local.yml`) and add it as an **OpenAI Compatible** provider, or use a cloud TTS provider with its key.
+Generate multi-speaker podcasts (1-4 speakers) from a notebook. Profiles are referenced **by name**: an episode profile (format, models, length) and a speaker profile (voices and personas). Ollama has no text-to-speech; for keyless, local voices run a Speaches server (the upstream `docker-compose-full-local.yml` example) and add it as an **OpenAI Compatible** provider, or use a cloud TTS provider with its key.
 
 ```python
 episode_profile = requests.get(f"{BASE_URL}/episode-profiles", headers=HEADERS).json()[0]
