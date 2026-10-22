@@ -1,0 +1,85 @@
+% Conference poster from a finished paper (alterlab-paper-2-web), keyless: pdflatex poster.tex
+% Replace every <<...>> with the paper's own content (copied, never invented). Size: set
+% paperwidth/paperheight below (default 48 x 36 in landscape; e.g. 60in x 40in, or A0
+% 841mm x 1189mm portrait). Figures go in figures/; missing files show a framed placeholder.
+\documentclass[25pt, margin=0mm, innermargin=18mm, blockverticalspace=12mm, colspace=14mm]{tikzposter}
+\geometry{paperwidth=48in, paperheight=36in}
+% tikzposter sizes its content area at class load; recompute it for the custom paper size
+\makeatletter
+\setlength{\TP@visibletextwidth}{\textwidth}\addtolength{\TP@visibletextwidth}{-2\TP@innermargin}
+\setlength{\TP@visibletextheight}{\textheight}\addtolength{\TP@visibletextheight}{-2\TP@innermargin}
+\makeatother
+\usepackage[T1]{fontenc}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{graphicx}
+\usepackage{qrcode}
+
+% Okabe-Ito blue / vermillion; swap for the lab's brand colours
+\definecolor{brand}{HTML}{0072B2}
+\definecolor{accent}{HTML}{D55E00}
+\definecolorstyle{paper}{
+  \definecolor{colorOne}{named}{brand}\definecolor{colorTwo}{named}{white}\definecolor{colorThree}{named}{accent}
+}{
+  \colorlet{backgroundcolor}{white}\colorlet{framecolor}{white}
+  \colorlet{titlebgcolor}{colorOne}\colorlet{titlefgcolor}{white}
+  \colorlet{blocktitlebgcolor}{colorOne}\colorlet{blocktitlefgcolor}{white}
+  \colorlet{blockbodybgcolor}{white}\colorlet{blockbodyfgcolor}{black}
+}
+\usetheme{Default}\usecolorstyle{paper}\useblockstyle{Default}
+\tikzposterlatexaffectionproofoff
+
+\newcommand{\posterfig}[2]{% {file}{width as fraction of \linewidth}
+  \IfFileExists{#1}{\includegraphics[width=#2\linewidth]{#1}}%
+  {\fbox{\parbox[c][0.25\textheight][c]{#2\linewidth}{\centering\Large missing: \detokenize{#1}}}}}
+
+\title{<<PAPER TITLE>>}
+\author{<<Author One>>\textsuperscript{1}, <<Author Two>>\textsuperscript{2}}
+\institute{\textsuperscript{1}<<Affiliation One>> \quad \textsuperscript{2}<<Affiliation Two>>}
+
+\begin{document}
+\maketitle[width=0.98\paperwidth]
+% QR code and logo in the title band (top right / top left)
+\node[anchor=north east, fill=white, inner sep=6mm] at (0.5\paperwidth-25mm, 0.5\paperheight-14mm)
+  {\qrcode[height=55mm]{<<https://doi.org/10.xxxx/paper-or-project-url>>}};
+\node[anchor=north west] at (-0.5\paperwidth+25mm, 0.5\paperheight-14mm)
+  {\IfFileExists{figures/logo.png}{\includegraphics[height=55mm]{figures/logo.png}}{}};
+
+\begin{columns}
+  \column{0.30}
+  \block{Motivation}{
+    <<Two or three sentences: the problem and why it matters.>>
+    \vspace{1em}
+    \begin{itemize}
+      \item <<Gap in prior work>>
+      \item <<What this paper does>>
+    \end{itemize}
+  }
+  \block{Method}{
+    \begin{center}\posterfig{figures/method.png}{0.95}\end{center}
+    <<One-paragraph method summary in plain language.>>
+  }
+
+  \column{0.40}
+  \block{Key results}{
+    \begin{center}\posterfig{figures/results.png}{0.95}\end{center}
+    \begin{itemize}
+      \item {\color{accent}\textbf{<<number>>}} <<what it measures, vs which baseline>>
+      \item {\color{accent}\textbf{<<number>>}} <<what it measures>>
+    \end{itemize}
+  }
+
+  \column{0.30}
+  \block{Take-home}{
+    \Large <<One sentence the reader should remember.>>
+  }
+  \block{Limitations}{
+    <<Honest limitations, as stated in the paper.>>
+  }
+  \block{References}{
+    \small
+    [1] <<Reference as in the paper's bibliography.>>\\
+    Paper: <<DOI or arXiv URL>> \quad Code: <<repository URL>>
+  }
+\end{columns}
+\end{document}

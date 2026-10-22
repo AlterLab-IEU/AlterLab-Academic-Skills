@@ -1,0 +1,81 @@
+<!doctype html>
+<!-- Project page template (alterlab-paper-2-web). Replace every {{...}} with the paper's own
+     text, copied from the paper (never invent results, authors or links). Delete the sections
+     and buttons you do not need. Static HTML + CSS, no scripts: it works on GitHub Pages as is. -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{SHORT_TITLE}} - {{VENUE_YEAR}}</title>
+  <meta name="description" content="{{ONE_SENTENCE_SUMMARY}}">
+  <meta property="og:title" content="{{PAPER_TITLE}}">
+  <meta property="og:description" content="{{ONE_SENTENCE_SUMMARY}}">
+  <meta property="og:image" content="assets/teaser.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="hero">
+    <p class="venue">{{VENUE_YEAR}}</p>
+    <h1>{{PAPER_TITLE}}</h1>
+    <p class="authors">
+      <a href="{{AUTHOR1_URL}}">{{AUTHOR1}}</a><sup>1</sup>,
+      <span>{{AUTHOR2}}</span><sup>1,2</sup>
+    </p>
+    <p class="affiliations"><sup>1</sup>{{AFFILIATION1}} &middot; <sup>2</sup>{{AFFILIATION2}}</p>
+    <nav class="buttons" aria-label="Paper links">
+      <a class="button" href="{{PDF_URL}}">Paper (PDF)</a>
+      <a class="button" href="https://arxiv.org/abs/{{ARXIV_ID}}">arXiv</a>
+      <a class="button" href="{{CODE_URL}}">Code</a>
+      <a class="button" href="{{DATA_URL}}">Data</a>
+      <a class="button" href="#cite">Cite</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="tldr" aria-label="Summary">
+      <p><strong>TL;DR</strong> {{TLDR_ONE_OR_TWO_SENTENCES}}</p>
+    </section>
+
+    <figure class="teaser">
+      <img src="assets/teaser.png" alt="{{TEASER_ALT_TEXT_DESCRIBING_THE_FIGURE}}">
+      <figcaption>{{TEASER_CAPTION}}</figcaption>
+    </figure>
+
+    <section id="abstract">
+      <h2>Abstract</h2>
+      <p>{{ABSTRACT_VERBATIM}}</p>
+    </section>
+
+    <section id="method">
+      <h2>Method</h2>
+      <p>{{METHOD_IN_PLAIN_LANGUAGE}}</p>
+      <figure>
+        <img src="assets/method.png" alt="{{METHOD_FIGURE_ALT}}">
+        <figcaption>{{METHOD_FIGURE_CAPTION}}</figcaption>
+      </figure>
+    </section>
+
+    <section id="results">
+      <h2>Results</h2>
+      <ul class="highlights">
+        <li><span class="number">{{KEY_NUMBER_1}}</span> {{WHAT_IT_MEASURES_1}}</li>
+        <li><span class="number">{{KEY_NUMBER_2}}</span> {{WHAT_IT_MEASURES_2}}</li>
+        <li><span class="number">{{KEY_NUMBER_3}}</span> {{WHAT_IT_MEASURES_3}}</li>
+      </ul>
+      <figure>
+        <img src="assets/results.png" alt="{{RESULTS_FIGURE_ALT}}">
+        <figcaption>{{RESULTS_FIGURE_CAPTION}}</figcaption>
+      </figure>
+    </section>
+
+    <section id="cite">
+      <h2>Citation</h2>
+      <pre><code>{{BIBTEX_ENTRY}}</code></pre>
+    </section>
+  </main>
+
+  <footer>
+    <p>{{ACKNOWLEDGEMENTS_OR_FUNDING}} &middot; Page content: {{LICENSE}}</p>
+  </footer>
+</body>
+</html>

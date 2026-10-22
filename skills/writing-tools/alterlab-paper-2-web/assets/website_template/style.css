@@ -1,0 +1,47 @@
+/* Project page styles (alterlab-paper-2-web). Swap the two accent colours for the lab's brand. */
+:root {
+  --accent: #0072B2;          /* Okabe-Ito blue: AA contrast on white for links and buttons */
+  --accent-2: #D55E00;        /* highlight numbers */
+  --text: #1d1d1f;
+  --muted: #5f6368;
+  --bg: #ffffff;
+  --panel: #f5f7fa;
+  --max: 920px;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --text: #e8eaed; --muted: #a9b1bb; --bg: #121417; --panel: #1c2026; --accent: #56B4E9; --accent-2: #E69F00; }
+}
+* { box-sizing: border-box; }
+html { font-size: 18px; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.6;
+}
+a { color: var(--accent); }
+a:focus-visible, .button:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
+.hero { text-align: center; padding: 3.5rem 1rem 2rem; background: var(--panel); }
+.hero h1 { max-width: var(--max); margin: 0.3rem auto 1rem; font-size: 2.2rem; font-size: clamp(1.6rem, 4vw, 2.6rem); line-height: 1.2; }
+.venue { margin: 0; color: var(--accent); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.85rem; }
+.authors { margin: 0.2rem 0; font-size: 1.05rem; }
+.authors a { text-decoration: none; }
+.affiliations { margin: 0 0 1.4rem; color: var(--muted); font-size: 0.9rem; }
+.buttons { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; }
+.button {
+  display: inline-block; padding: 0.5rem 1.1rem; border-radius: 999px; background: var(--text);
+  color: var(--bg); text-decoration: none; font-weight: 600; font-size: 0.9rem;
+}
+.button:hover { background: var(--accent); color: #fff; }
+main { max-width: var(--max); margin: 0 auto; padding: 1rem 1.2rem 3rem; }
+section { margin: 2.6rem 0; }
+h2 { font-size: 1.5rem; border-bottom: 2px solid var(--panel); padding-bottom: 0.3rem; }
+.tldr { background: var(--panel); border-left: 5px solid var(--accent); padding: 0.8rem 1.1rem; border-radius: 6px; }
+figure { margin: 1.6rem 0; text-align: center; }
+figure img { max-width: 100%; height: auto; border-radius: 6px; }
+figcaption { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; text-align: left; }
+.highlights { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+.highlights li { background: var(--panel); border-radius: 8px; padding: 1rem; }
+.number { display: block; font-size: 1.8rem; font-weight: 700; color: var(--accent-2); }
+pre { background: var(--panel); padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.8rem; }
+footer { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 2rem 1rem; border-top: 1px solid var(--panel); }
+@media print { .buttons, footer { display: none; } .hero { background: none; } }
