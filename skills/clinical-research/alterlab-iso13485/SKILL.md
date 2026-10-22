@@ -74,7 +74,8 @@ See `references/quick-reference.md` for the regional summary.
 
 3. **Review results:**
    - Identify which required procedures are present vs. missing. The script checks the 26 always-applicable documented procedures (it omits the conditional "when applicable" ones — design, installation, servicing, sterilization, etc. — to avoid false-negative gaps); the full set is "31" by convention. See `references/quick-reference.md` for the full list and counting note.
-   - Identify missing key documents (Quality Manual, MDF, etc.)
+   - The script matches keywords anywhere in a file ("design", "handling", "release", "work instruction"), so open each matched file before counting a procedure as present: a quality policy saying the company "designs" products is not a design-control procedure. Note drafts that are not yet approved.
+   - Identify missing key documents (Quality Manual, MDF, etc.); these are matched on the file name and title only, since SOPs routinely cite "the Quality Manual"
    - Calculate compliance percentage (reported against the 26 procedures the script tracks)
    - Prioritize missing documentation, including any conditional procedures that apply to this manufacturer
 
