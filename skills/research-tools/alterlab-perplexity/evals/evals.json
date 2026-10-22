@@ -42,6 +42,38 @@
       ]
     },
     {
+      "id": "keyless-verify-trial-claim",
+      "prompt": "Before I cite it in a grant, check against current sources whether semaglutide reduced major adverse cardiovascular events in adults with overweight or obesity but without diabetes. I need the trial name, the hazard ratio with its confidence interval, and the citation with DOI.",
+      "expected_output": "Invokes alterlab-perplexity on its keyless path (no API key): searches with WebSearch and/or the keyless scholarly APIs, opens the primary record (NEJM article or its Europe PMC entry), and gives a grounded answer: the SELECT trial (Lincoff et al., N Engl J Med 2023, DOI 10.1056/NEJMoa2307563) — 17,604 patients aged 45+ with established cardiovascular disease and BMI 27 or higher without diabetes, semaglutide 2.4 mg weekly vs placebo; primary MACE in 6.5% vs 8.0%, hazard ratio 0.80 (95% CI 0.72 to 0.90) over a mean 39.8 months of follow-up. Every claim carries a citation; it notes the trial was funded by Novo Nordisk.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "0.80" },
+        { "type": "output_contains", "value": ["10.1056/NEJMoa2307563", "NEJMoa2307563"] },
+        { "type": "behavior", "value": "Names the SELECT trial and reports HR 0.80 (95% CI 0.72-0.90) from the opened primary source with its DOI, without asking for an API key." }
+      ]
+    },
+    {
+      "id": "keyless-current-statistic",
+      "prompt": "I'm citing the WHO Global Tuberculosis Report 2024 in a lecture. Check against WHO's own release how many people fell ill with TB in 2023 and how many died, and give me the citation and URL.",
+      "expected_output": "Invokes alterlab-perplexity on its keyless path: WebSearch finds and WebFetch opens WHO's own page (the 29 October 2024 release or the report), and the grounded answer states an estimated 10.8 million people fell ill with TB in 2023 and 1.25 million died (down from 1.32 million in 2022), with TB again the leading infectious-disease killer; it cites the WHO URL and retrieval date rather than a secondary summary.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "10.8 million" },
+        { "type": "output_contains", "value": "1.25 million" },
+        { "type": "behavior", "value": "Takes both figures from a WHO page it opened and cites that URL, with no API key." }
+      ]
+    },
+    {
+      "id": "keyless-grounded-literature-claim",
+      "prompt": "Ground this sentence before it goes in my review: 'AlphaFold 3 predicts protein-ligand complexes more accurately than docking tools.' Is that what the paper reports, on which benchmark, and what is the full citation with DOI?",
+      "expected_output": "Invokes alterlab-perplexity on its keyless path: finds the paper through a keyless scholarly API or WebSearch and opens it (Europe PMC full text PMC11168924 or the Nature page): Abramson et al. 2024, 'Accurate structure prediction of biomolecular interactions with AlphaFold 3', Nature, DOI 10.1038/s41586-024-07487-w. The paper reports 'far greater accuracy for protein-ligand interactions compared with state-of-the-art docking tools', evaluated on the PoseBusters benchmark (pocket-aligned ligand RMSD < 2 Å); the answer quotes that wording, names PoseBusters, and notes any caveat in how the comparison was set up.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "10.1038/s41586-024-07487-w" },
+        { "type": "output_contains", "value": "PoseBusters" }
+      ]
+    },
+    {
       "id": "near-miss-research-lookup",
       "prompt": "I'm not sure which search backend is best — just find me current research on CRISPR off-target effects and automatically route it to whichever backend (Parallel or Perplexity) is most appropriate.",
       "expected_output": "Does NOT invoke this skill; defers to alterlab-research-lookup. The user explicitly wants automatic backend routing between the Parallel Chat API and Perplexity, which is the research-lookup skill's job. This skill is the direct single-backend Perplexity search, not the auto-router.",
