@@ -43,6 +43,39 @@
       ]
     },
     {
+      "id": "exported-bib-tags-dupes",
+      "files": ["fixtures/my_library.bib"],
+      "prompt": "Zotero isn't installed on this server, but I exported my library with Better BibTeX (my_library.bib). List everything tagged 'machine learning', and flag any duplicate entries and any items that are missing a DOI.",
+      "expected_output": "Invokes alterlab-pyzotero on its keyless exported-file path (no API key, no running Zotero): reads my_library.bib (e.g. with scripts/zotero_export.py search --tag, dupes, missing --field doi) and reports by citation key: six entries tagged 'machine learning' — lecunDeepLearning2015, lecun2015deep, vaswaniAttentionAllYou2017, breimanRandomForests2001, hastieElementsStatisticalLearning2009, devlinBERTPretrainingDeep2019; one duplicate pair, lecunDeepLearning2015 and lecun2015deep (same DOI 10.1038/nature14539, differing only in DOI case and title capitalisation); two items without a DOI, vaswaniAttentionAllYou2017 (NeurIPS 2017) and yilmazRetrievalPracticeLarge2024 (an unpublished working paper). It explains that merging the duplicate is done in Zotero itself (Duplicate Items pane, or the local/Web API) since the export is read-only.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "lecun2015deep"},
+        {"type": "output_contains", "value": "yilmazRetrievalPracticeLarge2024"},
+        {"type": "behavior", "value": "Lists the six machine-learning entries, flags lecunDeepLearning2015 / lecun2015deep as one duplicate pair by DOI, and names the two DOI-less items, working from the exported file without asking for an API key."}
+      ]
+    },
+    {
+      "id": "csljson-recent-articles-bibtex",
+      "files": ["fixtures/my_library.json"],
+      "prompt": "Here's my Zotero library exported as CSL JSON (my_library.json). I don't have an API key. Give me a BibTeX file with only the journal articles published in 2020 or later, for my LaTeX paper.",
+      "expected_output": "Invokes alterlab-pyzotero on its keyless exported-file path: filters my_library.json to item type article-journal with year >= 2020 (e.g. scripts/zotero_export.py export --type article-journal --year-from 2020 --to bibtex -o recent.bib) and writes exactly five BibTeX entries with usable citation keys (not the Zotero item URIs): Page et al. 2021 BMJ (10.1136/bmj.n71), Ragusa et al. 2021 Environment International (10.1016/j.envint.2020.106274), Horvatits et al. 2022 eBioMedicine (10.1016/j.ebiom.2022.104147), Lincoff et al. 2023 NEJM (10.1056/NEJMoa2307563) and Abramson et al. 2024 Nature (10.1038/s41586-024-07487-w). It leaves out the 2020 NeurIPS conference paper, the 2022 book chapter and the 2024 WHO report, which are not journal articles, and the pre-2020 articles.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "10.1136/bmj.n71"},
+        {"type": "behavior", "value": "Produces a BibTeX file with exactly the five 2020+ journal articles (BMJ 2021, Environment International 2021, eBioMedicine 2022, NEJM 2023, Nature 2024) and excludes the conference paper, chapter, report and older articles, without needing an API key."}
+      ]
+    },
+    {
+      "id": "keyless-add-items-import-file",
+      "prompt": "IT won't let me create a zotero.org API key on my work laptop, and it runs Zotero 6, so there's no local API. Add these two papers to my Zotero library with full metadata: 10.1038/nature14539 and 10.1126/science.1152408.",
+      "expected_output": "Invokes alterlab-pyzotero and takes a keyless write path instead of asking for a key: either produces an importable file with the metadata fetched keyless from Crossref (e.g. scripts/zotero_export.py new-item --doi ... --to ris -o to_import.ris) and tells the user to import it with File > Import…, or points them to Zotero's Add Item by Identifier (magic-wand) button with the two DOIs. The metadata it shows is correct: LeCun, Bengio & Hinton 2015, 'Deep learning', Nature 521(7553), 436-444; Karpicke & Roediger 2008, 'The critical importance of retrieval for learning', Science 319(5865), 966-968. It notes that direct API writes would need Zotero 10+ local authorization or a Web API key.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": ["TY  - JOUR", "Add Item by Identifier", "File > Import", "File → Import"]},
+        {"type": "behavior", "value": "Adds the two items without any API key (importable RIS/CSL JSON file or Add Item by Identifier) and gives their correct metadata: Nature 521(7553) 436-444 (2015) and Science 319(5865) 966-968 (2008)."}
+      ]
+    },
+    {
       "id": "near-miss-research-lookup",
       "prompt": "Search Google Scholar and PubMed for recent papers on CRISPR off-target effects so I can find new references to add to my library later.",
       "expected_output": "This is discovering new scholarly literature in external databases (Google Scholar, PubMed), not programmatically managing an existing Zotero library. Pyzotero operates on the Zotero Web API only. Defers to the academic search skill (alterlab-research-lookup / alterlab-perplexity) for finding papers; pyzotero would be used afterward to store the chosen references.",

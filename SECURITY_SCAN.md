@@ -2,7 +2,7 @@
 
 > **Generated** — do not edit by hand. Regenerate with `python3 scripts/gen_security_scan.py`; CI fails if this file is stale (`--check`) or if the attestation is violated (`--strict`).
 
-This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **262 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
+This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **263 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
 
 ## Attestation
 
@@ -35,7 +35,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `chatgpt.com` | other (review) | 1 |
 | `clinicaltrials.gov` | Clinical trials | 2 |
 | `clinpgx.org` | Pharmacogenomics | 3 |
-| `crossref.org` | Scholarly metadata | 7 |
+| `crossref.org` | Scholarly metadata | 8 |
 | `datacommons.org` | Open data | 4 |
 | `depmap.org` | Cancer dependency | 1 |
 | `dergipark.org.tr` | Turkish journals (DergiPark) | 7 |
@@ -51,7 +51,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `fastmcp.app` | MCP infra | 1 |
 | `fda.gov` | Regulatory | 2 |
 | `figshare.com` | Research data | 1 |
-| `github.com` | Source / infra | 25 |
+| `github.com` | Source / infra | 26 |
 | `graphdrawing.org` | Standards | 1 |
 | `gtexportal.org` | Expression | 2 |
 | `hmdb.ca` | Metabolites | 5 |
