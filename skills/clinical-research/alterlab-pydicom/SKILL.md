@@ -3,7 +3,7 @@ name: alterlab-pydicom
 description: Reads, writes, and manipulates DICOM (Digital Imaging and Communications in Medicine) medical imaging files with the pydicom Python library. Use when reading/writing/modifying DICOM data, extracting pixel data from CT, MRI, X-ray, or ultrasound images, anonymizing DICOM files, working with DICOM metadata and tags, converting DICOM to other formats, handling compressed DICOM, or processing medical imaging datasets for PACS systems, radiology workflows, and healthcare imaging applications. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: No API key required. Self-contained; runs install-free with `uv run --python ">=3.11" --with "pydicom>=3.0" --with numpy python script.py`, adding codec packages (pylibjpeg-openjpeg, python-gdcm, ...) with further `--with` flags for compressed files.
 metadata:
     skill-author: AlterLab
     version: "1.1.0"
@@ -42,22 +42,20 @@ Use this skill when working with:
 
 ## Installation
 
-Targets **pydicom 3.x** (current release 3.0.2 as of 2026-09; Python >= 3.10). 3.0 reorganized the pixel APIs — see the version note below. Install pydicom and common dependencies:
+Targets **pydicom 3.x** (current release 3.0.2 as of 2026-09; Python >= 3.10). 3.0 reorganized the pixel APIs — see the version note below. No install step: `uv run` resolves the packages per run (pin the interpreter; uv's default may be an older Python that gets older releases):
 
 ```bash
-uv pip install "pydicom>=3.0"
-uv pip install pillow  # For image format conversion
-uv pip install numpy   # For pixel array manipulation
-uv pip install matplotlib  # For visualization
+uv run --python ">=3.11" --with "pydicom>=3.0" --with numpy python script.py
+#   + --with pillow       image export (PNG/JPEG)      + --with matplotlib   plots
 ```
 
-For handling compressed DICOM files, additional packages may be needed:
+For compressed DICOM, add the codec packages to the same command:
 
 ```bash
-uv pip install pylibjpeg pylibjpeg-libjpeg pylibjpeg-openjpeg  # JPEG / JPEG 2000 decode; JPEG 2000 encode
-uv pip install pylibjpeg-rle  # faster RLE encode/decode (pydicom's own RLE codec also works)
-uv pip install python-gdcm  # Alternative decoder for most compressed syntaxes
-uv pip install pyjpegls     # JPEG-LS encode/decode
+--with pylibjpeg --with pylibjpeg-libjpeg --with pylibjpeg-openjpeg  # JPEG / JPEG 2000 decode; JPEG 2000 encode
+--with pylibjpeg-rle   # faster RLE encode/decode (pydicom's own RLE codec also works)
+--with python-gdcm     # alternative decoder for most compressed syntaxes
+--with pyjpegls        # JPEG-LS encode/decode
 ```
 
 ### pydicom 3.0 API changes (important)
@@ -120,8 +118,10 @@ print(f"Rows: {ds.Rows}, Columns: {ds.Columns}")
 
 # Apply windowing for display (CT/MRI)
 if hasattr(ds, 'WindowCenter') and hasattr(ds, 'WindowWidth'):
-    from pydicom.pixels import apply_voi_lut  # pydicom 3.x location
-    windowed_image = apply_voi_lut(pixel_array, ds)
+    from pydicom.pixels import apply_modality_lut, apply_voi_lut  # pydicom 3.x location
+    # Window Center/Width are in modality units (HU for CT): rescale first
+    hu = apply_modality_lut(pixel_array, ds)          # RescaleSlope/RescaleIntercept
+    windowed_image = apply_voi_lut(hu, ds, index=0)   # index picks one of several windows
 else:
     windowed_image = pixel_array
 
@@ -179,7 +179,7 @@ image = Image.fromarray(pixel_array)
 image.save('output.png')
 ```
 
-Use the script: `python scripts/dicom_to_image.py input.dcm output.png`
+Use the script: `uv run --python ">=3.11" --with "pydicom>=3.0" --with pillow --with numpy python scripts/dicom_to_image.py input.dcm output.png`
 
 ### Modifying Metadata
 
@@ -230,15 +230,17 @@ tags_to_anonymize = [
     'OperatorsName', 'StudyDescription', 'SeriesDescription',
 ]
 
-# Remove or replace sensitive data
-for tag in tags_to_anonymize:
-    if hasattr(ds, tag):
-        if tag in ['PatientName', 'PatientID']:
-            setattr(ds, tag, 'ANONYMOUS')
-        elif tag == 'PatientBirthDate':
-            setattr(ds, tag, '19000101')
-        else:
-            delattr(ds, tag)
+# Remove or replace sensitive data at every level: ds.walk() also visits items inside
+# sequences, where IDs such as AccessionNumber are often repeated
+def scrub(dataset, elem):
+    if elem.keyword in ('PatientName', 'PatientID'):
+        dataset[elem.tag].value = 'ANONYMOUS'
+    elif elem.keyword == 'PatientBirthDate':
+        dataset[elem.tag].value = '19000101'
+    elif elem.keyword in tags_to_anonymize + ['AccessionNumber']:
+        del dataset[elem.tag]
+
+ds.walk(scrub)
 
 # Vendor private tags frequently carry identifiers
 ds.remove_private_tags()
@@ -253,7 +255,7 @@ ds.PatientIdentityRemoved = 'YES'
 ds.save_as('anonymized.dcm')
 ```
 
-Use the provided script: `python scripts/anonymize_dicom.py input.dcm output.dcm`
+Use the provided script (it walks sequences and warns when `BurnedInAnnotation` is YES): `uv run --python ">=3.11" --with "pydicom>=3.0" python scripts/anonymize_dicom.py input.dcm output.dcm`
 
 A tag list like this is a starting point, not a complete de-identification. Identifiers also hide in other date/time elements, UIDs, accession numbers, nested sequences, free-text fields, and text burned into the pixels (check `BurnedInAnnotation` and inspect ultrasound/secondary-capture images). For data leaving your institution, apply a profile based on DICOM PS3.15 Annex E (Basic Application Level Confidentiality Profile) with a dedicated tool such as `deid` (pydicom project) or `dicognito`, and have the output reviewed before release — the same standard your IRB or data use agreement will expect.
 
@@ -408,23 +410,23 @@ This skill includes utility scripts in the `scripts/` directory:
 Anonymize DICOM files by removing or replacing Protected Health Information (PHI).
 
 ```bash
-python scripts/anonymize_dicom.py input.dcm output.dcm
+uv run --python ">=3.11" --with "pydicom>=3.0" python scripts/anonymize_dicom.py input.dcm output.dcm
 ```
 
 ### dicom_to_image.py
 Convert DICOM files to common image formats (PNG, JPEG, TIFF).
 
 ```bash
-python scripts/dicom_to_image.py input.dcm output.png
-python scripts/dicom_to_image.py input.dcm output.jpg --format JPEG
+uv run --python ">=3.11" --with "pydicom>=3.0" --with pillow --with numpy python scripts/dicom_to_image.py input.dcm output.png
+uv run --python ">=3.11" --with "pydicom>=3.0" --with pillow --with numpy python scripts/dicom_to_image.py input.dcm output.jpg --format JPEG
 ```
 
 ### extract_metadata.py
 Extract and display DICOM metadata in a readable format.
 
 ```bash
-python scripts/extract_metadata.py file.dcm
-python scripts/extract_metadata.py file.dcm --output metadata.txt
+uv run --python ">=3.11" --with "pydicom>=3.0" python scripts/extract_metadata.py file.dcm
+uv run --python ">=3.11" --with "pydicom>=3.0" python scripts/extract_metadata.py file.dcm --output metadata.txt
 ```
 
 ## Reference Materials
@@ -437,13 +439,13 @@ Detailed reference information is available in the `references/` directory:
 ## Common Issues and Solutions
 
 **Issue: "Unable to decode pixel data"**
-- Solution: Install additional compression handlers: `uv pip install pylibjpeg pylibjpeg-libjpeg python-gdcm`
+- Solution: Add compression handlers to the run: `uv run --python ">=3.11" --with "pydicom>=3.0" --with pylibjpeg --with pylibjpeg-libjpeg --with pylibjpeg-openjpeg --with python-gdcm python script.py`
 
 **Issue: "AttributeError" when accessing tags**
 - Solution: Check if attribute exists with `hasattr(ds, 'AttributeName')` or use `ds.get('AttributeName', default)`
 
 **Issue: Incorrect image display (too dark/bright)**
-- Solution: Apply VOI LUT windowing: `apply_voi_lut(pixel_array, ds)` or manually adjust with `WindowCenter` and `WindowWidth`
+- Solution: Apply the modality LUT, then the VOI LUT: `apply_voi_lut(apply_modality_lut(pixel_array, ds), ds)`, or window the rescaled values manually with `WindowCenter` and `WindowWidth`. Windowing raw stored values of a CT with RescaleIntercept -1024 shifts every window by 1024 HU
 
 **Issue: Memory issues with large series**
 - Solution: Process files iteratively, use memory-mapped arrays, or downsample images
