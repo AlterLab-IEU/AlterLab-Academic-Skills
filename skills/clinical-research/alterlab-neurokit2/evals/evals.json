@@ -13,12 +13,14 @@
     },
     {
       "id": "eda-scr-decomposition",
+      "files": ["fixtures/eda_recording"],
       "prompt": "I recorded skin conductance (EDA) at 100 Hz during an emotion-induction task. I need to decompose it into tonic and phasic components and count the skin conductance responses.",
       "expected_output": "Invokes alterlab-neurokit2. Uses nk.eda_process() to decompose the signal into tonic and phasic components, detects skin conductance responses (SCR), and can compute the sympathetic nervous system index via nk.eda_sympathetic(). Frames EDA as autonomic nervous system assessment.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "phasic" },
-        { "type": "behavior", "value": "Calls nk.eda_process and references tonic/phasic decomposition and SCR detection." }
+        { "type": "behavior", "value": "Calls nk.eda_process and references tonic/phasic decomposition and SCR detection." },
+        { "type": "behavior", "value": "Processes the attached eda_emotion_task.csv (100 Hz, 180 s) itself and reports 10 SCRs in total (about 3.3 per minute) with amplitudes of roughly 0.25-1.0 uS, on a tonic level rising from about 4.6 to 5.5 uS. If it relates the SCRs to the stim column, it finds that all 6 negative pictures (code 2) and 2 of the 6 neutral pictures (code 1) are followed by an SCR within 1-4 s, and that the other 2 SCRs (near 57 s and 142 s) are non-specific." }
       ]
     },
     {
