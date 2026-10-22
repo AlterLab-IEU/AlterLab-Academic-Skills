@@ -70,7 +70,7 @@ _DOMAIN_CATEGORY = {
     "arxiv.org": "Preprints / literature", "biorxiv.org": "Preprints / literature",
     "crossref.org": "Scholarly metadata", "doi.org": "DOI resolver",
     "openalex.org": "Scholarly index", "semanticscholar.org": "Scholarly index",
-    "opencitations.net": "Open citation index",
+    "opencitations.net": "Open citation index", "europepmc.org": "Literature (Europe PMC)",
     "doaj.org": "Open-access journals", "openarchives.org": "OAI-PMH", "purl.org": "Persistent URLs",
     "figshare.com": "Research data", "datacommons.org": "Open data", "wikipedia.org": "Reference",
     # Biomedical / genomics

@@ -2,7 +2,7 @@
 
 > **Generated** — do not edit by hand. Regenerate with `python3 scripts/gen_security_scan.py`; CI fails if this file is stale (`--check`) or if the attestation is violated (`--strict`).
 
-This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **257 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
+This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **261 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
 
 ## Attestation
 
@@ -25,7 +25,8 @@ Every host the shipped skill code references, reduced to its registrable domain.
 
 | Domain | Category | Refs |
 |--------|----------|------|
-| `arxiv.org` | Preprints / literature | 12 |
+| `alphavantage.co` | other (review) | 2 |
+| `arxiv.org` | Preprints / literature | 15 |
 | `bindingdb.org` | Binding affinities | 3 |
 | `biorxiv.org` | Preprints / literature | 5 |
 | `brenda-enzymes.org` | Enzymes | 2 |
@@ -34,22 +35,23 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `chatgpt.com` | other (review) | 1 |
 | `clinicaltrials.gov` | Clinical trials | 2 |
 | `clinpgx.org` | Pharmacogenomics | 3 |
-| `crossref.org` | Scholarly metadata | 6 |
+| `crossref.org` | Scholarly metadata | 7 |
 | `datacommons.org` | Open data | 4 |
 | `depmap.org` | Cancer dependency | 1 |
 | `dergipark.org.tr` | Turkish journals (DergiPark) | 7 |
 | `doaj.org` | Open-access journals | 2 |
 | `docking.org` | Compound libraries | 4 |
-| `doi.org` | DOI resolver | 33 |
+| `doi.org` | DOI resolver | 36 |
 | `drugbank.ca` | Drugs | 1 |
-| `ebi.ac.uk` | EMBL-EBI | 12 |
+| `ebi.ac.uk` | EMBL-EBI | 13 |
 | `elixir.no` | Bioinformatics infra | 3 |
 | `ensembl.org` | Genomics | 3 |
+| `europepmc.org` | Literature (Europe PMC) | 1 |
 | `example.com` | Placeholder (docs only) | 1 |
 | `fastmcp.app` | MCP infra | 1 |
 | `fda.gov` | Regulatory | 2 |
 | `figshare.com` | Research data | 1 |
-| `github.com` | Source / infra | 23 |
+| `github.com` | Source / infra | 24 |
 | `graphdrawing.org` | Standards | 1 |
 | `gtexportal.org` | Expression | 2 |
 | `hmdb.ca` | Metabolites | 5 |
@@ -64,7 +66,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `mygene.info` | Gene annotation | 1 |
 | `nf-co.re` | nf-core pipelines | 1 |
 | `nih.gov` | NCBI / NIH | 18 |
-| `openalex.org` | Scholarly index | 23 |
+| `openalex.org` | Scholarly index | 24 |
 | `openarchives.org` | OAI-PMH | 2 |
 | `opencitations.net` | Open citation index | 1 |
 | `openrouter.ai` | LLM backend (user key) | 19 |
@@ -77,8 +79,9 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `readthedocs.io` | Docs | 2 |
 | `sanger.ac.uk` | Wellcome Sanger | 5 |
 | `scientific-writer.local` | Local (non-network) | 1 |
-| `semanticscholar.org` | Scholarly index | 3 |
-| `stlouisfed.org` | FRED economics | 3 |
+| `sec.gov` | other (review) | 2 |
+| `semanticscholar.org` | Scholarly index | 4 |
+| `stlouisfed.org` | FRED economics | 14 |
 | `store` | Placeholder (commented docs) | 1 |
 | `string-db.org` | Protein interactions | 4 |
 | `tdcommons.ai` | Therapeutics benchmarks | 1 |
@@ -88,11 +91,12 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `ulakbim.gov.tr` | ULAKBİM | 2 |
 | `uniprot.org` | Proteins | 2 |
 | `uspto.gov` | Patents | 7 |
-| `w3.org` | Standards | 2 |
+| `w3.org` | Standards | 3 |
 | `wikipedia.org` | Reference | 1 |
+| `yahoo.com` | other (review) | 1 |
 | `yok.gov.tr` | YÖK | 3 |
 
-_66 distinct domains._
+_70 distinct domains._
 
 ## Method
 

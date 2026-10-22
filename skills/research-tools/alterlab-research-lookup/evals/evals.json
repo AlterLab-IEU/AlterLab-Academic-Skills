@@ -42,6 +42,36 @@
       ]
     },
     {
+      "id": "keyless-seminal-papers",
+      "prompt": "For the introduction of my review I need the seminal peer-reviewed papers on the testing effect (retrieval practice), with DOIs and citation counts. Save the list to sources/ so I can cite from it later.",
+      "expected_output": "Invokes alterlab-research-lookup on its keyless paper-search route (no API key needed): runs research_lookup.py, which routes the academic query to the scholarly backend (Crossref, Europe PMC, arXiv, Semantic Scholar, OpenAlex), ideally with --terms phrases such as '\"testing effect\" OR \"retrieval practice\"' and the cited ordering, and saves the records to sources/papers_<timestamp>_<topic>.md. The list must include Roediger & Karpicke (2006), 'Test-enhanced learning: taking memory tests improves long-term retention', Psychological Science, DOI 10.1111/j.1467-9280.2006.01693.x, plus other influential work such as Karpicke & Roediger 2008 (Science, DOI 10.1126/science.1152408) or Roediger & Butler 2011 (Trends in Cognitive Sciences, DOI 10.1016/j.tics.2010.09.003), each with its DOI and a citation count labelled with the index it came from. Does not stop to ask for an API key.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": ["10.1111/j.1467-9280.2006.01693.x", "1467-9280.2006.01693"] },
+        { "type": "behavior", "value": "Finds the papers without any API key through the keyless scholarly backend (or keyless scholarly APIs), gives each paper a DOI and a citation count with its source index, and saves the list under sources/." }
+      ]
+    },
+    {
+      "id": "keyless-verify-statistic-web",
+      "prompt": "I'm updating a grant background section. What does the CDC's current National Diabetes Statistics Report say about how many people in the US have diabetes, and how many of them are undiagnosed? I need the exact figures with the source and data year, and keep a record of the lookup.",
+      "expected_output": "Invokes alterlab-research-lookup on its keyless web route: a general statistical question with no API key goes to WebSearch + WebFetch (the script's scholarly backend returns papers only and says so), opens the CDC National Diabetes Statistics Report page itself, and reports the figures as stated there (as of 2026-10: 40.1 million people with diagnosed or undiagnosed diabetes in 2023, 12.0% of the US population; 29.1 million diagnosed; 11.0 million adults undiagnosed, 27.6% of adults with diabetes), naming the data year and URL, and saves the lookup to sources/research_<timestamp>_<topic>.md.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": ["40.1 million", "40.1M"] },
+        { "type": "behavior", "value": "Takes the figures from the CDC report page itself (total, diagnosed and undiagnosed, with the 2023 data year), cites the URL, and saves the lookup record under sources/ without asking for an API key." }
+      ]
+    },
+    {
+      "id": "keyless-first-evidence-paper",
+      "prompt": "Assemble the key citations on microplastics found in human placenta for a perinatal epidemiology seminar. Which study first reported them, how many placentas did it examine, and in how many were particles found? Include DOIs.",
+      "expected_output": "Invokes alterlab-research-lookup: routes the scholarly query to the keyless scholarly backend (no key), saves the records to sources/papers_<timestamp>_<topic>.md, and opens the first-evidence paper before stating its findings: Ragusa et al. 2021, 'Plasticenta: First evidence of microplastics in human placenta', Environment International, DOI 10.1016/j.envint.2020.106274 — six placentas examined by Raman microspectroscopy, 12 microplastic fragments (5-10 μm) found in 4 of them. Lists further cited work with DOIs and citation counts labelled by index.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "10.1016/j.envint.2020.106274" },
+        { "type": "behavior", "value": "States from the paper (or its abstract) that the first study examined six placentas and found microplastic fragments in four of them, with the DOI, and gives the other citations with DOIs." }
+      ]
+    },
+    {
       "id": "near-miss-perplexity",
       "prompt": "Run a Perplexity sonar-pro search directly on the latest mRNA vaccine developments — I specifically want to use Perplexity, not an auto-router.",
       "expected_output": "Does NOT invoke this skill; defers to alterlab-perplexity. The user explicitly wants to call Perplexity directly via the single-backend Perplexity skill, not the dual-backend auto-routing wrapper. research-lookup is the router; direct Perplexity-only search belongs to the perplexity skill.",
