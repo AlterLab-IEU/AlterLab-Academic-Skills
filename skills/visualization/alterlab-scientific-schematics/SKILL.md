@@ -1,30 +1,31 @@
 ---
 name: alterlab-scientific-schematics
-description: Creates publication-quality scientific diagrams with Nano Banana 2 AI and smart iterative refinement, using Gemini 3.1 Pro Preview for quality review and regenerating only when quality falls below the document-type threshold. Use when the request is for a rendered technical or scientific diagram — CONSORT/PRISMA flowcharts, neural-network architectures, system/block diagrams, biological pathways, circuits, or other complex scientific visuals. For general photos, illustrations, or artwork use alterlab-generate-image; for infographics use alterlab-infographics; for editable text-based Mermaid diagrams use alterlab-mermaid. Part of the AlterLab Academic Skills suite.
+description: Creates publication-quality scientific diagrams with no API key - Claude draws the diagram as code (SVG, TikZ/PGF, schemdraw for circuits), renders it locally to PNG/PDF with exact, editable labels, then reviews the render itself against a document-type quality threshold (journal 8.5/10, poster 7.0, ...) and revises until it passes (max 2 iterations). Use when the request is for a rendered technical or scientific diagram — CONSORT/PRISMA flowcharts, neural-network architectures, system/block diagrams, biological pathways, circuits, or other complex scientific visuals. Optional AI raster generation (Nano Banana 2 with Gemini review, via OpenRouter) when OPENROUTER_API_KEY is set. For general photos, illustrations, or artwork use alterlab-generate-image; for infographics use alterlab-infographics; for editable text-based Mermaid diagrams use alterlab-mermaid. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
-compatibility: Requires an OpenRouter API key (OPENROUTER_API_KEY) and the requests library for Nano Banana 2 generation (google/gemini-3.1-flash-image) and Gemini 3.1 Pro Preview quality review (google/gemini-3.1-pro-preview); override with ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL
+compatibility: "No API key required. Renders locally: SVG via `uv run --python \">=3.11\" --with cairosvg --with pillow` (needs the Cairo library), TikZ via pdflatex/lualatex/xelatex/tectonic, circuits via schemdraw. Optional AI backend (--backend ai): OPENROUTER_API_KEY and requests; models via ALTERLAB_IMAGE_MODEL / ALTERLAB_REVIEW_MODEL."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.2.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: OPENROUTER_API_KEY (the AI raster backend, --backend ai: Nano Banana 2 generation and Gemini 3.1 Pro Preview review through OpenRouter)"
 ---
 
 # Scientific Schematics and Diagrams
 
 ## Overview
 
-Scientific schematics and diagrams transform complex concepts into clear visual representations for publication. **This skill uses Nano Banana 2 AI for diagram generation with Gemini 3.1 Pro Preview quality review.**
+Scientific schematics turn complex concepts into clear visuals for publication. **This skill draws
+them as code** — SVG by default, TikZ for LaTeX manuscripts, schemdraw for circuits — renders the
+code locally, then **reviews the rendered image itself** against a document-type threshold and
+revises until it passes. No image model and no API key are involved.
 
-**How it works:**
-- Describe your diagram in natural language
-- Nano Banana 2 generates publication-quality images automatically
-- **Gemini 3.1 Pro Preview reviews quality** against document-type thresholds
-- **Smart iteration**: Only regenerates if quality is below threshold
-- Publication-ready output in minutes
-- No coding, templates, or manual drawing required
+Why code: every label and count is exactly the text you typed (an image model redraws text and
+can change an `n=`), the figure stays editable, it exports as vector PDF/SVG for the journal,
+and unpublished content never leaves the machine.
 
-**Quality Thresholds by Document Type:**
+**Quality thresholds by document type** (Claude's review score, out of 10):
+
 | Document Type | Threshold | Description |
 |---------------|-----------|-------------|
 | journal | 8.5/10 | Nature, Science, peer-reviewed journals |
@@ -37,65 +38,8 @@ Scientific schematics and diagrams transform complex concepts into clear visual 
 | presentation | 6.5/10 | Slides, talks |
 | default | 7.5/10 | General purpose |
 
-**Simply describe what you want, and Nano Banana 2 creates it.** All diagrams are stored in the figures/ subfolder and referenced in papers/posters.
-
-## Quick Start: Generate Any Diagram
-
-Create any scientific diagram by simply describing it. Nano Banana 2 handles everything automatically with **smart iteration**:
-
-```bash
-# Generate for journal paper (highest quality threshold: 8.5/10)
-python scripts/generate_schematic.py "CONSORT participant flow diagram with 500 screened, 150 excluded, 350 randomized" -o figures/consort.png --doc-type journal
-
-# Generate for presentation (lower threshold: 6.5/10 - faster)
-python scripts/generate_schematic.py "Transformer encoder-decoder architecture showing multi-head attention" -o figures/transformer.png --doc-type presentation
-
-# Generate for poster (moderate threshold: 7.0/10)
-python scripts/generate_schematic.py "MAPK signaling pathway from EGFR to gene transcription" -o figures/mapk_pathway.png --doc-type poster
-
-# Custom max iterations (max 2)
-python scripts/generate_schematic.py "Complex circuit diagram with op-amp, resistors, and capacitors" -o figures/circuit.png --iterations 2 --doc-type journal
-```
-
-**What happens behind the scenes:**
-1. **Generation 1**: Nano Banana 2 creates initial image following scientific diagram best practices
-2. **Review 1**: **Gemini 3.1 Pro Preview** evaluates quality against document-type threshold
-3. **Decision**: If quality >= threshold → **DONE** (no more iterations needed!)
-4. **If below threshold**: Improved prompt based on critique, regenerate
-5. **Repeat**: Until quality meets threshold OR max iterations reached
-
-**Smart Iteration Benefits:**
-- ✅ Saves API calls if first generation is good enough
-- ✅ Higher quality standards for journal papers
-- ✅ Faster turnaround for presentations/posters
-- ✅ Appropriate quality for each use case
-
-**Output**: Versioned images plus a detailed review log with quality scores, critiques, and early-stop information. If the review call fails, the image is kept and the log records `"review_skipped": true` with a null score instead of inventing one.
-
-**Check the content yourself before submission.** The image model draws every label and number, so it can misspell a term or change a count (e.g. a CONSORT `n=`) even when the prompt was right, and the review model judges clarity and layout rather than checking values against your records. Compare every count, label, and arrow direction with your data and protocol before the figure goes into a manuscript.
-
-### Configuration
-
-Set your OpenRouter API key (or put `OPENROUTER_API_KEY=...` in a `.env` file if `python-dotenv` is installed):
-```bash
-export OPENROUTER_API_KEY='your_api_key_here'
-```
-
-Get an API key at: https://openrouter.ai/keys
-
-Default models (verified on OpenRouter 2026-09-23): `google/gemini-3.1-flash-image` (Nano Banana 2) for generation and `google/gemini-3.1-pro-preview` for review. Override them with `ALTERLAB_IMAGE_MODEL` / `ALTERLAB_REVIEW_MODEL`.
-
-### Data & privacy
-
-This skill's generation scripts (`scripts/generate_schematic_ai.py`) send your diagram description / prompt to a **third-party API (OpenRouter)** over the network for image generation and quality review. Your text prompts — and any details you include in them — leave your machine and are processed by an external provider. **Do not include confidential, clinical, patient-identifying, or unpublished proprietary content** in figure descriptions. Describe figures generically and add sensitive labels locally afterward if needed.
-
-### AI Generation Best Practices
-
-Good prompts are specific: name the diagram **type**, **components**, **flow/direction**,
-**labels**, and **style**. Vague prompts ("make a flowchart", "neural network") underperform.
-Scientific quality guidelines (clean background, ≥10pt labels, sans-serif, Okabe-Ito palette,
-proper spacing) are applied automatically. Good/bad prompt examples and the full guideline
-list are in `references/ai_generation_guide.md`.
+Review criteria, 0-2 points each: **scientific accuracy**, **clarity and readability**, **label
+quality**, **layout and composition**, **professional appearance**. At most 2 iterations.
 
 ## When to Use This Skill
 
@@ -122,100 +66,103 @@ This skill should be used when:
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-mermaid`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
-## How to Use This Skill
+## Workflow (keyless)
 
-**Simply describe your diagram in natural language.** Nano Banana 2 generates it automatically:
+1. **Collect the content.** List every node, arrow, label and count from the user's message and
+   attached files. Copy numbers verbatim; check that they reconcile (CONSORT arms sum to the
+   randomised total, each stage carries forward). If a required count is missing, ask for it —
+   never invent one.
+2. **Get the brief** for the venue (guidelines, threshold, criteria):
+   `python scripts/generate_schematic.py --brief --doc-type journal`
+3. **Draw it as code**, saved next to the figure (`figures/consort.svg`):
+   - **SVG** for flowcharts, block diagrams, architectures and pathways. For CONSORT start from
+     `assets/consort_template.svg` (replace every `N_*` token); building blocks and recipes for
+     PRISMA, transformers, pathways and block diagrams are in `references/README.md`.
+   - **TikZ** (standalone `.tex`) when the paper is LaTeX or labels need maths.
+   - **schemdraw** for circuits (writes SVG); matplotlib when geometry comes from data.
+   - Okabe-Ito colours plus a second cue (shape, dash, label); one `<text>` per line; font size on
+     the root; no "Figure 1" or caption inside the image.
+4. **Render and lint**, versioned:
+   ```bash
+   uv run --python ">=3.11" --with cairosvg --with pillow python scripts/generate_schematic.py \
+       figures/consort.svg -o figures/consort_v1.png --doc-type journal --width-in 7.2 --gray
+   ```
+   The output names the renderer and flags labels below 7 pt at print width, text that probably
+   overflows its box, external references and blank renders. Fix every warning before reviewing.
+5. **Review the render yourself.** Read `consort_v1.png` (and `consort_v1_gray.png`), check each
+   number and label against the source, score the five criteria, and record it:
+   ```bash
+   python scripts/figure_tools.py score figures/consort_review_log.json --kind schematic \
+       --doc-type journal --image figures/consort_v1.png --source figures/consort.svg \
+       --score 7.5 --critique "exclusion reasons overflow; arm boxes unequal heights"
+   ```
+   `REVISE` → fix the source and render `consort_v2.png`; `DONE` → deliver; `STOP` (2 iterations
+   used, still below threshold) → deliver the best version and list what is still short. Never
+   inflate a score to pass; the log is the audit trail.
+6. **Deliver**: the final PNG (300 dpi), a vector PDF/SVG
+   (`python scripts/figure_tools.py render figures/consort.svg -o figures/consort.pdf`), the
+   source file, and the review log, plus a suggested caption kept outside the image.
 
-```bash
-python scripts/generate_schematic.py "your diagram description" -o output.png
+### Output template
+
+```markdown
+**Figure:** figures/consort_v2.png (300 dpi, 7.2 in) · vector: figures/consort.pdf · source: figures/consort.svg
+**Review:** journal threshold 8.5 — v1 7.5 (overflowing exclusion reasons) → v2 9.0, DONE (figures/consort_review_log.json)
+**Checked against:** trial_flow_counts.md — 500 assessed, 150 excluded (98/41/11), 350 randomised, 175/175 …
+**Caption (for the manuscript):** CONSORT 2010 flow diagram of participant progress through the trial …
 ```
 
-**That's it!** The AI handles:
-- ✓ Layout and composition
-- ✓ Labels and annotations
-- ✓ Colors and styling
-- ✓ Quality review and refinement
-- ✓ Publication-ready output
+## Optional: AI raster generation
 
-**Works for all diagram types:**
-- Flowcharts (CONSORT, PRISMA, etc.)
-- Neural network architectures
-- Biological pathways
-- Circuit diagrams
-- System architectures
-- Block diagrams
-- Any scientific visualization
-
-**No coding, no templates, no manual drawing required.**
-
----
-
-# AI Generation Mode (Nano Banana 2 + Gemini 3.1 Pro Preview Review)
-
-The AI generation system uses **smart iteration**: Nano Banana 2 generates an image, Gemini 3.1
-Pro Preview scores it (0-10 across scientific accuracy, clarity, label quality, layout, and
-professional appearance), and the system **stops early** once the score meets the document-type
-threshold — otherwise it improves the prompt from the critique and regenerates (max 2 iterations).
-Every run writes a JSON review log with per-iteration scores, critiques, and early-stop info.
-
-The deep dive — iteration flowchart, review rubric, example review output, decision table, JSON
-log schema, the `ScientificSchematicGenerator` Python API, all command-line options, and prompt
-engineering tips — is in `references/ai_generation_guide.md`.
-
-Copy-and-adapt worked invocations for CONSORT flowcharts, transformer architectures, biological
-pathways, and system block diagrams are in `references/generation_examples.md`.
-
----
-
-## Command-Line Usage
-
-The main entry point for generating scientific schematics:
+When `OPENROUTER_API_KEY` is set (environment, `.env`, or `--api-key`), a description can be
+turned into a raster image by Nano Banana 2 (`google/gemini-3.1-flash-image`) and reviewed by
+Gemini 3.1 Pro Preview against the same thresholds:
 
 ```bash
-# Basic usage
-python scripts/generate_schematic.py "diagram description" -o output.png
-
-# Custom iterations (max 2)
-python scripts/generate_schematic.py "complex diagram" -o diagram.png --iterations 2
-
-# Verbose mode
-python scripts/generate_schematic.py "diagram" -o out.png -v
+python scripts/generate_schematic.py "CONSORT participant flow ..." -o figures/consort.png \
+    --doc-type journal --backend ai
 ```
 
-**Note:** The Nano Banana 2 AI generation system includes automatic quality review in its iterative refinement process. Each iteration is evaluated for scientific accuracy, clarity, and accessibility.
+Without the key, `--backend ai` exits with status 2 and names the keyless route; it never falls
+back silently. Use it only when the user asks for an AI-generated image. The prompt leaves the
+machine (do not include confidential, clinical or unpublished details), and the image model
+draws every label itself, so compare each count and term with the source before use. If the
+review call fails the log records `"review_skipped": true` with a null score. Models can be
+overridden with `ALTERLAB_IMAGE_MODEL` / `ALTERLAB_REVIEW_MODEL`. Details:
+`references/ai_generation_guide.md`; worked prompts: `references/generation_examples.md`.
 
 ## Best Practices Summary
 
 Design for **clarity over complexity**, consistent styling, colorblind accessibility (Okabe-Ito,
-redundant encoding), ≥7-8 pt sans-serif type, and vector output (PDF/SVG; 300+ DPI for raster).
-Integrate with LaTeX via `\includegraphics{}`, caption thoroughly, reference in text, and keep
-prompts + outputs under version control. The full design/technical/integration checklist and the
-pre-submission verification checklist are in `references/submission_checklist.md`.
+redundant encoding), ≥7-8 pt sans-serif type at print size, and vector output (PDF/SVG; 300+ DPI
+for raster). Integrate with LaTeX via `\includegraphics{}`, caption thoroughly, reference in
+text, and keep the figure source + outputs + review log under version control. The full
+design/technical/integration checklist is in `references/submission_checklist.md`.
 
 ## Troubleshooting Common Issues
 
-For fixes to AI generation problems (overlaps, poor connections), image-quality issues,
-quality-check failures, and accessibility problems (grayscale contrast, small text), see
-`references/troubleshooting.md`. Most issues resolve by making the prompt more specific or
-raising `--iterations 2`.
+Renderer missing, overflowing text, small labels, detached arrowheads, LaTeX errors, and the
+optional AI backend's setup and generation problems are covered in
+`references/troubleshooting.md` and at the end of `references/README.md`.
 
 ## Resources and References
 
 ### Detailed References
 
-Load these files for comprehensive information on specific topics:
-
-- **`references/ai_generation_guide.md`** - Smart-iteration workflow, review rubric, Python API, CLI options, prompt engineering
-- **`references/generation_examples.md`** - Worked CLI invocations (CONSORT, transformer, pathway, system diagrams)
-- **`references/troubleshooting.md`** - Fixes for generation, quality-check, and accessibility issues
-- **`references/submission_checklist.md`** - Best-practices summary and pre-submission verification checklist
+- **`references/README.md`** - Code-drawn workflow: choosing SVG/TikZ/schemdraw, SVG building blocks, CONSORT/PRISMA/transformer/pathway/block-diagram recipes, review loop
+- **`references/QUICK_REFERENCE.md`** - Commands, thresholds, print sizes, delivery checklist
 - **`references/diagram_types.md`** - Catalog of scientific diagram types with examples
 - **`references/best_practices.md`** - Publication standards and accessibility guidelines
+- **`references/submission_checklist.md`** - Pre-submission verification checklist
+- **`references/troubleshooting.md`** - Fixes for rendering, quality, accessibility, and AI-backend issues
+- **`references/ai_generation_guide.md`** - Optional AI backend: smart iteration, review rubric, Python API, CLI options
+- **`references/generation_examples.md`** - Optional AI backend: worked prompts
 
 ### External Resources
 
 **Python Libraries**
 - Schemdraw Documentation: https://schemdraw.readthedocs.io/
+- CairoSVG: https://cairosvg.org/
 - NetworkX Documentation: https://networkx.org/documentation/
 - Matplotlib Documentation: https://matplotlib.org/
 
@@ -240,24 +187,8 @@ Before submitting diagrams, run through the full checklist (visual quality, acce
 typography, publication standards, required quality verification, documentation/version control,
 and final integration) in `references/submission_checklist.md`.
 
-## Environment Setup
-
-```bash
-# Required
-export OPENROUTER_API_KEY='your_api_key_here'
-
-# Get key at: https://openrouter.ai/keys
-```
-
-## Getting Started
-
-**Simplest possible usage:**
-```bash
-python scripts/generate_schematic.py "your diagram description" -o output.png
-```
-
 ---
 
-Use this skill to create clear, accessible, publication-quality diagrams that effectively communicate complex scientific concepts. The AI-powered workflow with iterative refinement ensures diagrams meet professional standards.
+Use this skill to create clear, accessible, publication-quality diagrams that effectively communicate complex scientific concepts: drawn as code, rendered locally, and reviewed against the venue's threshold before delivery.
 
-
+Part of the AlterLab Academic Skills suite.

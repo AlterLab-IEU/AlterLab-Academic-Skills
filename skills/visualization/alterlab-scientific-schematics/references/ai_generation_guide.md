@@ -1,7 +1,11 @@
 # AI Generation Guide (Nano Banana 2 + Gemini 3.1 Pro Preview Review)
 
+> **Optional backend.** Everything in this file needs `OPENROUTER_API_KEY` and sends the
+> prompt to OpenRouter. The keyless default - Claude draws the diagram as SVG/TikZ, renders it
+> locally and reviews the render itself - is in `README.md` in this folder.
+
 Detailed reference for the smart iterative refinement workflow, the Python API, command-line
-options, and prompt engineering. The main SKILL.md covers the quick path; this file is the deep dive.
+options, and prompt engineering for the optional AI backend.
 
 ## Smart Iterative Refinement Workflow
 
@@ -135,25 +139,25 @@ for iteration in results['iterations']:
 
 ```bash
 # Basic usage (default threshold 7.5/10)
-python scripts/generate_schematic.py "diagram description" -o output.png
+python scripts/generate_schematic.py "diagram description" -o output.png --backend ai
 
 # Specify document type for appropriate quality threshold
-python scripts/generate_schematic.py "diagram" -o out.png --doc-type journal      # 8.5/10
-python scripts/generate_schematic.py "diagram" -o out.png --doc-type conference   # 8.0/10
-python scripts/generate_schematic.py "diagram" -o out.png --doc-type poster       # 7.0/10
-python scripts/generate_schematic.py "diagram" -o out.png --doc-type presentation # 6.5/10
+python scripts/generate_schematic.py "diagram" -o out.png --backend ai --doc-type journal      # 8.5/10
+python scripts/generate_schematic.py "diagram" -o out.png --backend ai --doc-type conference   # 8.0/10
+python scripts/generate_schematic.py "diagram" -o out.png --backend ai --doc-type poster       # 7.0/10
+python scripts/generate_schematic.py "diagram" -o out.png --backend ai --doc-type presentation # 6.5/10
 
 # Custom max iterations (1-2)
-python scripts/generate_schematic.py "complex diagram" -o diagram.png --iterations 2
+python scripts/generate_schematic.py "complex diagram" -o diagram.png --backend ai --iterations 2
 
 # Verbose output (see all API calls and reviews)
-python scripts/generate_schematic.py "flowchart" -o flow.png -v
+python scripts/generate_schematic.py "flowchart" -o flow.png --backend ai -v
 
 # Provide API key via flag
-python scripts/generate_schematic.py "diagram" -o out.png --api-key "sk-or-v1-..."
+python scripts/generate_schematic.py "diagram" -o out.png --backend ai --api-key "sk-or-v1-..."
 
 # Combine options
-python scripts/generate_schematic.py "neural network" -o nn.png --doc-type journal --iterations 2 -v
+python scripts/generate_schematic.py "neural network" -o nn.png --backend ai --doc-type journal --iterations 2 -v
 ```
 
 ### Prompt Engineering Tips

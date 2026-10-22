@@ -1,11 +1,15 @@
-# AI Generation Examples
+# AI Generation Examples (optional backend)
 
-Worked `generate_schematic.py` invocations for common scientific diagram types. Copy, adapt the
+> **Optional backend.** Everything in this file needs `OPENROUTER_API_KEY` and sends the
+> prompt to OpenRouter. The keyless default - Claude draws the diagram as SVG/TikZ, renders it
+> locally and reviews the render itself - is in `README.md` in this folder.
+
+Worked `generate_schematic.py --backend ai` invocations for common scientific diagram types. Copy, adapt the
 prompt text, and pick a `--doc-type` to match your target venue.
 
 ## Example 1: CONSORT Flowchart
 ```bash
-python scripts/generate_schematic.py \
+python scripts/generate_schematic.py --backend ai \
   "CONSORT participant flow diagram for randomized controlled trial. \
    Start with 'Assessed for eligibility (n=500)' at top. \
    Show 'Excluded (n=150)' with reasons: age<18 (n=80), declined (n=50), other (n=20). \
@@ -19,7 +23,7 @@ python scripts/generate_schematic.py \
 
 ## Example 2: Neural Network Architecture
 ```bash
-python scripts/generate_schematic.py \
+python scripts/generate_schematic.py --backend ai \
   "Transformer encoder-decoder architecture diagram. \
    Left side: Encoder stack with input embedding, positional encoding, \
    multi-head self-attention, add & norm, feed-forward, add & norm. \
@@ -34,7 +38,7 @@ python scripts/generate_schematic.py \
 
 ## Example 3: Biological Pathway
 ```bash
-python scripts/generate_schematic.py \
+python scripts/generate_schematic.py --backend ai \
   "MAPK signaling pathway diagram. \
    Start with EGFR receptor at cell membrane (top). \
    Arrow down to RAS (with GTP label). \
@@ -50,7 +54,7 @@ python scripts/generate_schematic.py \
 
 ## Example 4: System Architecture
 ```bash
-python scripts/generate_schematic.py \
+python scripts/generate_schematic.py --backend ai \
   "IoT system architecture block diagram. \
    Bottom layer: Sensors (temperature, humidity, motion) in green boxes. \
    Middle layer: Microcontroller (ESP32) in blue box. \

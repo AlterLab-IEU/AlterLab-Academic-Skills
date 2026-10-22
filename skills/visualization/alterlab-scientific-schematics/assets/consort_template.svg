@@ -1,0 +1,82 @@
+<!-- CONSORT 2010 two-arm flow diagram template (alterlab-scientific-schematics).
+     Replace every N_* token and reason line with the trial's own numbers, copied verbatim
+     from the user's data; delete reason lines that do not apply and move the boxes below
+     them up. One <text> per line (SVG does not wrap): keep lines under ~46 characters in
+     the 310-px boxes; the render step flags text that overflows its box.
+     Render it with scripts/generate_schematic.py as shown in SKILL.md (Workflow, step 4). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 690" width="720" height="690"
+     font-family="DejaVu Sans, Helvetica, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#333"/>
+    </marker>
+    <style>
+      .box { fill: #fff; stroke: #333; stroke-width: 1.4; }
+      .stage { fill: #E8F1FA; stroke: #0072B2; stroke-width: 1.4; }
+      .edge { stroke: #333; stroke-width: 1.4; fill: none; marker-end: url(#arrow); }
+      .lbl { font-weight: bold; fill: #0072B2; }
+    </style>
+  </defs>
+  <rect width="720" height="690" fill="#fff"/>
+
+  <!-- Enrolment -->
+  <rect class="stage" x="10" y="20" width="110" height="26" rx="4"/>
+  <text class="lbl" x="65" y="38" text-anchor="middle">Enrolment</text>
+  <rect class="box" x="230" y="20" width="260" height="40"/>
+  <text x="360" y="45" text-anchor="middle">Assessed for eligibility (n=N_ASSESSED)</text>
+  <rect class="box" x="410" y="80" width="300" height="88"/>
+  <text x="422" y="100">Excluded (n=N_EXCLUDED)</text>
+  <text x="432" y="120">• Not meeting inclusion criteria (n=N_1)</text>
+  <text x="432" y="139">• Declined to participate (n=N_2)</text>
+  <text x="432" y="158">• Other reasons (n=N_3)</text>
+  <path class="edge" d="M360,60 V196"/>
+  <path class="edge" d="M360,124 H408"/>
+  <rect class="box" x="260" y="198" width="200" height="38"/>
+  <text x="360" y="222" text-anchor="middle">Randomised (n=N_RANDOMISED)</text>
+
+  <!-- Allocation -->
+  <rect class="stage" x="10" y="258" width="110" height="26" rx="4"/>
+  <text class="lbl" x="65" y="276" text-anchor="middle">Allocation</text>
+  <path class="edge" d="M360,236 V250 H185 V292"/>
+  <path class="edge" d="M360,250 H535 V292"/>
+  <rect class="box" x="30" y="294" width="310" height="96"/>
+  <text x="42" y="314">Allocated to ARM_A (n=N_A)</text>
+  <text x="52" y="334">• Received allocated intervention (n=N_A_RX)</text>
+  <text x="52" y="353">• Did not receive it (n=N_A_NORX):</text>
+  <text x="66" y="371">REASONS_A</text>
+  <rect class="box" x="380" y="294" width="310" height="96"/>
+  <text x="392" y="314">Allocated to ARM_B (n=N_B)</text>
+  <text x="402" y="334">• Received allocated intervention (n=N_B_RX)</text>
+  <text x="402" y="353">• Did not receive it (n=N_B_NORX):</text>
+  <text x="416" y="371">REASONS_B</text>
+
+  <!-- Follow-up -->
+  <rect class="stage" x="10" y="412" width="110" height="26" rx="4"/>
+  <text class="lbl" x="65" y="430" text-anchor="middle">Follow-up</text>
+  <path class="edge" d="M185,390 V446"/>
+  <path class="edge" d="M535,390 V446"/>
+  <rect class="box" x="30" y="448" width="310" height="96"/>
+  <text x="42" y="468">Lost to follow-up (n=N_A_LOST)</text>
+  <text x="52" y="487">REASONS_A_LOST</text>
+  <text x="42" y="512">Discontinued intervention (n=N_A_DISC)</text>
+  <text x="52" y="531">REASONS_A_DISC</text>
+  <rect class="box" x="380" y="448" width="310" height="96"/>
+  <text x="392" y="468">Lost to follow-up (n=N_B_LOST)</text>
+  <text x="402" y="487">REASONS_B_LOST</text>
+  <text x="392" y="512">Discontinued intervention (n=N_B_DISC)</text>
+  <text x="402" y="531">REASONS_B_DISC</text>
+
+  <!-- Analysis -->
+  <rect class="stage" x="10" y="566" width="110" height="26" rx="4"/>
+  <text class="lbl" x="65" y="584" text-anchor="middle">Analysis</text>
+  <path class="edge" d="M185,544 V600"/>
+  <path class="edge" d="M535,544 V600"/>
+  <rect class="box" x="30" y="602" width="310" height="78"/>
+  <text x="42" y="624">Analysed (n=N_A_ANALYSED)</text>
+  <text x="52" y="646">Excluded from analysis (n=N_A_EXCL):</text>
+  <text x="66" y="665">REASONS_A_EXCL</text>
+  <rect class="box" x="380" y="602" width="310" height="78"/>
+  <text x="392" y="624">Analysed (n=N_B_ANALYSED)</text>
+  <text x="402" y="646">Excluded from analysis (n=N_B_EXCL):</text>
+  <text x="416" y="665">REASONS_B_EXCL</text>
+</svg>

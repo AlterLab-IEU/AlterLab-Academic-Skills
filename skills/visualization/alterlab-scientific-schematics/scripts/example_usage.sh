@@ -1,5 +1,6 @@
 #!/bin/bash
-# Example usage of AI-powered scientific schematic generation
+# Example usage of the OPTIONAL AI schematic backend (--backend ai).
+# The keyless default needs no key: see references/README.md.
 # 
 # Prerequisites:
 # 1. Set OPENROUTER_API_KEY environment variable
@@ -34,7 +35,7 @@ echo ""
 # Example 1: Simple flowchart
 echo "Example 1: CONSORT Flowchart"
 echo "----------------------------"
-python scripts/generate_schematic.py \
+python scripts/generate_schematic.py --backend ai \
   "CONSORT participant flow diagram. Assessed for eligibility (n=500). Excluded (n=150) with reasons: age<18 (n=80), declined (n=50), other (n=20). Randomized (n=350) into Treatment (n=175) and Control (n=175). Lost to follow-up: 15 and 10. Final analysis: 160 and 165." \
   -o figures/consort_example.png \
   --iterations 2
@@ -48,7 +49,7 @@ echo ""
 # Example 2: Neural network (shorter for demo)
 echo "Example 2: Simple Neural Network"
 echo "--------------------------------"
-python scripts/generate_schematic.py \
+python scripts/generate_schematic.py --backend ai \
   "Simple feedforward neural network diagram. Input layer with 4 nodes, hidden layer with 6 nodes, output layer with 2 nodes. Show all connections. Label layers clearly." \
   -o figures/neural_net_example.png \
   --iterations 2
@@ -60,7 +61,7 @@ echo ""
 # Example 3: Biological pathway (minimal)
 echo "Example 3: Signaling Pathway"
 echo "---------------------------"
-python scripts/generate_schematic.py \
+python scripts/generate_schematic.py --backend ai \
   "Simple signaling pathway: Receptor → Kinase A → Kinase B → Transcription Factor → Gene. Show arrows with 'activation' labels. Use different colors for each component." \
   -o figures/pathway_example.png \
   --iterations 2
