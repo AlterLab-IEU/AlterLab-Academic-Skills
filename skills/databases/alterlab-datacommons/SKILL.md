@@ -3,20 +3,21 @@ name: alterlab-datacommons
 description: Query Google Data Commons for public statistical data aggregated from global sources, resolving geographic entities and pulling time-series statistics. Use when working with demographic data, economic indicators, health statistics, or environmental data — population counts, GDP figures, unemployment rates, disease prevalence — or when resolving places to DCIDs and exploring relationships between statistical entities. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Requires a free Data Commons API key for observation/node queries (resolve works keyless); datacommons-client >= 2.1 (current 2.1.6)
+compatibility: No API key required. Statistics come keyless from the JSON API behind the datacommons.org website (undocumented; provenance kept per record) and names/Wikidata IDs resolve through the keyless v2 resolve endpoint (scripts/query_datacommons.py, standard library only). An optional DC_API_KEY unlocks the documented api.datacommons.org v2 observation/node endpoints and datacommons-client >= 2.1 (current 2.1.6).
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.2.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: DC_API_KEY (unlocks the documented api.datacommons.org v2 observation/node endpoints and the datacommons-client methods that use them; the keyless website API serves the same statistics)"
 ---
 
 # Data Commons Client
 
 ## Overview
 
-Provides comprehensive access to the Data Commons Python API v2 for querying statistical observations, exploring the knowledge graph, and resolving entity identifiers. Data Commons aggregates data from census bureaus, health organizations, environmental agencies, and other authoritative sources into a unified knowledge graph.
+Data Commons aggregates data from census bureaus, health organizations, environmental agencies, and other authoritative sources into a unified knowledge graph. This skill answers statistical questions from it **without an API key**: `scripts/query_datacommons.py` reads observations from the JSON API that the datacommons.org website itself uses, and resolves names and Wikidata IDs through the keyless v2 resolve endpoint. The documented Python client (`datacommons-client`, below) is the optional keyed path — its observation and node methods return HTTP 401 without `DC_API_KEY`.
 
-Verified against `datacommons-client` 2.1.6 (current as of 2026-09; Python ≥ 3.10). This is the V2 client (package `datacommons_client`), not the legacy `datacommons` (V1) package — the two have different APIs; do not mix them. Keyword names matter: the place-hierarchy helpers take `place_dcids`, `fetch_entity_names` takes `entity_dcids`, and `fetch_property_values` takes `properties` — passing `node_dcids` to them raises `TypeError`.
+The keyed client is verified against `datacommons-client` 2.1.6 (current as of 2026-09; Python ≥ 3.10). This is the V2 client (package `datacommons_client`), not the legacy `datacommons` (V1) package — the two have different APIs; do not mix them. Keyword names matter: the place-hierarchy helpers take `place_dcids`, `fetch_entity_names` takes `entity_dcids`, and `fetch_property_values` takes `properties` — passing `node_dcids` to them raises `TypeError`.
 
 ## When to Use This Skill
 
@@ -36,7 +37,48 @@ Verified against `datacommons-client` 2.1.6 (current as of 2026-09; Python ≥ 3
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-fred`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
-## Installation
+## Keyless Path (default)
+
+No key, no install (standard library only). Verified live 2026-10-22:
+
+```bash
+S=scripts/query_datacommons.py
+python $S resolve California Texas --type State        # {"California": ["geoId/06"], ...}
+python $S resolve --wikidata Q30 Q99                   # Q30 -> country/USA, Q99 -> geoId/06
+python $S resolve --coords 37.7749,-122.4194           # -> geoId/06, geoId/06075, geoId/0667000
+python $S observe Count_Person country/TUR --date 2020 # 83384680 (World Bank WDI)
+python $S observe Count_Person geoId/06 geoId/48 --date all --csv > pop.csv   # full series
+python $S within Median_Income_Household geoId/06 County --date 2020 --names  # all 58 counties
+python $S vars-search "unemployment rate" --place country/USA
+python $S has UnemploymentRate_Person Count_Person --entity country/USA
+```
+
+Every observation comes back as a tidy record — `variable, entity, date, value` plus the
+facet's `provenanceId`, `provenanceUrl`, `measurementMethod`, `unit` — so it loads straight
+into pandas (`pd.read_csv("pop.csv")`, then `pivot_table(index="date", columns="entity")`).
+
+| Need | Keyless endpoint (GET unless noted) |
+|------|-------------------------------------|
+| Latest / one date | `https://datacommons.org/api/observations/point?entities=…&variables=…[&date=2020]` |
+| Full time series (the client's `date="all"`) | `…/api/observations/series?entities=…&variables=…` |
+| Every child of a place in one call (the client's `containedInPlace` expression) | `…/api/observations/point/within?parentEntity=geoId/06&childType=County&variables=…&date=2020` (or `series/within`) |
+| Names, parents, descendants | `…/api/place/name?dcids=…`, `…/api/place/parent?dcid=…`, `…/api/place/descendent?dcids=…&descendentType=County` |
+| Find / check variables | `…/api/stats/stat-var-search?query=…&places=…`; POST `…/api/observation/existence` `{"entities":[…],"variables":[…]}` |
+| Name / Wikidata → DCID | POST `https://api.datacommons.org/v2/resolve` `{"nodes":[…],"property":"<-description{typeOf:State}->dcid"}` (or `<-wikidataId->dcid`) |
+
+Know the limits of this route and say so in the answer:
+- **Undocumented website API.** It serves the site's own charts (source: `github.com/datacommonsorg/website`, `server/routes/`), is not part of the documented REST API, and can change without notice. Cite the record's `provenanceUrl` and the retrieval date; robots.txt does not disallow it, but keep request rates modest.
+- **One facet per series.** The website picks the preferred source per place/variable; the keyed `observation.fetch` can return every facet (`filter_facet_domains`).
+- **Dates must match the period.** Monthly series (e.g. `UnemploymentRate_Person`, BLS) need `YYYY-MM`; `--date 2020` returns nothing for them — use `latest` or `all`.
+- **Coordinates.** v2 resolve returned no candidates for coordinates keylessly (2026-10-22), so the script falls back to the keyless US Census geocoder (GEOID → `geoId/<GEOID>`) for US points and to OpenStreetMap Nominatim → Wikidata → resolve elsewhere (≤ 1 request/s).
+
+`--backend api` forces the documented v2 API; without `DC_API_KEY` it exits with an error naming the key and the keyless default instead of answering from another source. With the key set and no `--backend`, `observe`/`within` use the v2 API.
+
+## Optional Keyed Path: `datacommons-client` (needs DC_API_KEY)
+
+The sections from here to "Working with Pandas" describe the documented Python client. Its
+`resolve` methods work keyless; `observation` and `node` methods need `DC_API_KEY` (free at
+https://apikeys.datacommons.org/). Use it when the user has a key or needs every facet.
 
 Install the Data Commons V2 client with Pandas support (extra is lowercase `pandas`):
 
@@ -278,13 +320,13 @@ response = client.observation.fetch(
 df = pd.DataFrame(response.to_observation_records().model_dump())
 ```
 
-## API Authentication
+## API Authentication (keyed path only)
 
-**For datacommons.org (default):**
-- An API key is required for observation and node queries (unauthenticated calls return
-  HTTP 401 `UNAUTHENTICATED`); name resolution currently answers without one
-- Set via environment variable: `export DC_API_KEY="your_key"`
-- Or pass when initializing: `client = DataCommonsClient(api_key="your_key")`
+**For api.datacommons.org (the documented API):**
+- Observation and node calls without a key return HTTP 401 `UNAUTHENTICATED`; name and
+  Wikidata resolution answer without one. Everything statistical is also served keyless
+  by the website API (see "Keyless Path")
+- Optional key: `export DC_API_KEY="your_key"` or `DataCommonsClient(api_key="your_key")`
 - Request keys at: https://apikeys.datacommons.org/
 
 **For custom Data Commons instances:**
@@ -319,10 +361,8 @@ Comprehensive documentation for each endpoint is available in the `references/` 
 
 ## Scripts
 
-`scripts/query_datacommons.py` — runnable helper for the Data Commons REST v2 API (needs a free key in `DC_API_KEY`):
-
-```bash
-python scripts/query_datacommons.py resolve "California" --type State
-python scripts/query_datacommons.py observe Count_Person geoId/06 --date latest
-```
+`scripts/query_datacommons.py` — keyless helper (standard library only): `resolve`
+(names, `--wikidata`, `--coords`), `observe`, `within`, `names`, `parents`, `children`,
+`vars-search`, `has`; `--csv` for tidy records; `--backend api` for the keyed v2 API.
+Examples are under "Keyless Path".
 

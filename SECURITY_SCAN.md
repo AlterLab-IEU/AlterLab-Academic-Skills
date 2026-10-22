@@ -32,11 +32,12 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `brenda-enzymes.org` | Enzymes | 2 |
 | `broadinstitute.org` | Genomics | 3 |
 | `cbioportal.org` | Cancer genomics | 2 |
+| `census.gov` | other (review) | 1 |
 | `chatgpt.com` | other (review) | 1 |
 | `clinicaltrials.gov` | Clinical trials | 2 |
 | `clinpgx.org` | Pharmacogenomics | 3 |
 | `crossref.org` | Scholarly metadata | 8 |
-| `datacommons.org` | Open data | 4 |
+| `datacommons.org` | Open data | 12 |
 | `depmap.org` | Cancer dependency | 1 |
 | `dergipark.org.tr` | Turkish journals (DergiPark) | 7 |
 | `doaj.org` | Open-access journals | 2 |
@@ -49,7 +50,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `europepmc.org` | Literature (Europe PMC) | 1 |
 | `example.com` | Placeholder (docs only) | 1 |
 | `fastmcp.app` | MCP infra | 1 |
-| `fda.gov` | Regulatory | 2 |
+| `fda.gov` | Regulatory | 3 |
 | `figshare.com` | Research data | 1 |
 | `github.com` | Source / infra | 26 |
 | `graphdrawing.org` | Standards | 1 |
@@ -70,6 +71,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `openarchives.org` | OAI-PMH | 2 |
 | `opencitations.net` | Open citation index | 1 |
 | `openrouter.ai` | LLM backend (user key) | 19 |
+| `openstreetmap.org` | other (review) | 1 |
 | `opentargets.org` | Target–disease | 1 |
 | `parallel.ai` | Research backend (user key) | 5 |
 | `pharmvar.org` | Pharmacogenomics | 3 |
@@ -96,7 +98,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `yahoo.com` | other (review) | 1 |
 | `yok.gov.tr` | YÖK | 3 |
 
-_70 distinct domains._
+_72 distinct domains._
 
 ## Method
 
