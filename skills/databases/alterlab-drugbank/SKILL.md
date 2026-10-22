@@ -1,20 +1,21 @@
 ---
 name: alterlab-drugbank
-description: Access and analyze drug information from the DrugBank database — drug properties, interactions, targets, pathways, chemical structures, and pharmacology data. Use when working with pharmaceutical data, drug discovery research, drug-drug interaction analysis, target identification, chemical similarity searches, ADMET predictions, or any task needing detailed drug and drug-target records from DrugBank. Part of the AlterLab Academic Skills suite.
+description: Analyze drug information of the kind DrugBank curates — drug properties, interactions, targets with actions, metabolizing enzymes, chemical structures, and pharmacology — keylessly from ChEMBL, openFDA labels, PubChem and KEGG, or from a DrugBank XML release when the user holds a licence. Use when working with pharmaceutical data, drug discovery research, drug-drug interaction analysis, target identification, chemical similarity searches, ADMET predictions, or any task needing detailed drug and drug-target records from DrugBank. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Requires a DrugBank account with an approved academic (CC BY-NC 4.0) or commercial license for XML downloads (academic downloads paused as of 2026-09), or a commercial API key for the Clinical API; drugbank-downloader >= 0.2 (Python >= 3.10)
+compatibility: No API key, account or licence required. Keyless default — scripts/drug_open.py (standard library; ChEMBL, openFDA labels, PubChem, KEGG DDI) and scripts/drug_similarity.py (RDKit via uv) cover identifiers, indications, mechanisms, targets, CYP enzymes, interactions and similarity. A DrugBank XML release (licensed; downloads paused since 2026-09) or the commercial Clinical API is optional, via drugbank-downloader >= 0.2.
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.2.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: DRUGBANK_USERNAME, DRUGBANK_PASSWORD (a DrugBank licence for the XML release), DRUGBANK_API_KEY (the commercial Clinical API); the keyless sources answer without them"
 ---
 
 # DrugBank Database
 
 ## Overview
 
-DrugBank is a comprehensive bioinformatics and cheminformatics database containing detailed information on drugs and drug targets. This skill enables programmatic access to DrugBank data: thousands of drug entries (FDA-approved small molecules, biotech/biologic drugs, nutraceuticals, and experimental compounds) with 200+ data fields per entry. Exact counts grow with each release — derive them from the version you download rather than quoting a fixed number (the 5.0-era figure was ~9,591 entries).
+DrugBank is a comprehensive bioinformatics and cheminformatics database containing detailed information on drugs and drug targets. Its data need an account and licence, and as of 2026-10 even its CC0 open-data files and drug pages answer HTTP 403 here — so this skill answers DrugBank-style questions **keylessly** from open sources (see "Keyless Path"), and parses DrugBank itself when the user already holds a release. DrugBank covers: thousands of drug entries (FDA-approved small molecules, biotech/biologic drugs, nutraceuticals, and experimental compounds) with 200+ data fields per entry. Exact counts grow with each release — derive them from the version you download rather than quoting a fixed number (the 5.0-era figure was ~9,591 entries).
 
 **Access status (checked 2026-09-23).** The current downloadable release is **5.1.22**
 (2026-06-27). DrugBank's releases page states that *all academic dataset downloads are
@@ -26,8 +27,23 @@ https://go.drugbank.com/releases/latest, or route the question to an open source
 under "Does NOT Trigger". Academic data are licensed CC BY-NC 4.0; commercial use and
 the Clinical API (`https://api.drugbank.com/v1/`, API-key header) need a paid license.
 
+## Keyless Path (default — verified live 2026-10-22)
+
+| Question | Command | Source to name in the answer |
+|----------|---------|------------------------------|
+| Indication, mechanism, SMILES/InChI/InChIKey/formula, Ro5, max phase | `python scripts/drug_open.py info metformin` → CHEMBL1431, C4H11N5, XZWYZXLIPXDOLR-UHFFFAOYSA-N; label indication + mechanism | ChEMBL, PubChem, openFDA label (DailyMed set id) |
+| Targets with action type; metabolizing CYPs | `python scripts/drug_open.py targets imatinib` → ABL1 (P00519), PDGFRB, KIT, BCR-ABL — all INHIBITOR; CYP3A4 major, CYP1A2/2C9/2C19/2D6 minor (label quote) | ChEMBL mechanisms (UniProt via ChEMBL targets), openFDA label |
+| Pairwise drug–drug interactions | `python scripts/drug_open.py interactions warfarin amiodarone simvastatin` → per pair: label quotes by section (e.g. "Limit the coadministered dose of simvastatin to 20 mg") + KEGG flag (CI contraindication / P precaution, mechanism such as CYP3A4) | openFDA labels, KEGG DRUG DDI (academic use) |
+| Structurally similar approved drugs + Lipinski/Veber | `uv run --python ">=3.11" scripts/drug_similarity.py celecoxib` (Morgan r2 or `--fp maccs`; 2,197 approved parents; valdecoxib 0.32 Morgan) · ChEMBL-wide neighbours: `drug_open.py similar celecoxib` | ChEMBL approved set + RDKit |
+
+Severity is not graded by these sources: grade it from the label wording (contraindicated,
+avoid, dose limit, monitor) and the KEGG CI/P flag, and say that is how it was graded. Drug
+pathways (SMPDB) and DrugBank's transporter/carrier tables have no keyless equivalent here —
+name UniProt/Reactome (`alterlab-reactome`) for pathways and say what is missing.
+
 ## When to Use This Skill
 
+- DrugBank-style drug questions answered keylessly (identity, pharmacology, targets, CYP metabolism, interactions, similarity)
 - Parsing a DrugBank XML release you have access to (drug records, targets, enzymes, transporters, pathways)
 - Drug–drug interaction extraction and polypharmacy screening from DrugBank data
 - Drug–target mapping and repurposing via shared targets or structural similarity
@@ -47,9 +63,10 @@ the Clinical API (`https://api.drugbank.com/v1/`, API-key header) need a paid li
 
 ## Core Capabilities
 
-### 1. Data Access and Authentication
+### 1. Data Access and Authentication (optional DrugBank path)
 
-Download and access DrugBank data using Python with proper authentication. The skill provides guidance on:
+The capabilities below describe DrugBank's own data model; with no release in hand, use
+the Keyless Path above for each of them. For a licensed DrugBank release, the skill provides guidance on:
 
 - Installing and configuring the `drugbank-downloader` package
 - Managing credentials securely via environment variables or config files
@@ -169,8 +186,10 @@ Perform structure-based analysis including molecular similarity searches, proper
 ## Installation Requirements
 
 ### Python Packages
+Nothing for `drug_open.py` (standard library); `drug_similarity.py` pulls RDKit through
+`uv run`. For a licensed DrugBank release:
 ```bash
-uv pip install drugbank-downloader  # Core access
+uv pip install drugbank-downloader  # DrugBank XML access (licence)
 uv pip install bioversions          # Latest version detection
 uv pip install lxml                 # XML parsing optimization
 uv pip install pandas               # Data manipulation
@@ -179,7 +198,7 @@ uv pip install networkx             # Network analysis (for interactions)
 uv pip install scikit-learn         # ML/clustering (for chemical space)
 ```
 
-### Account Setup
+### Account Setup (optional — only for DrugBank's own files)
 1. Create an account at go.drugbank.com
 2. Apply for the Academic License (free for eligible, non-commercial academic research;
    data under CC BY-NC 4.0) or obtain a commercial license

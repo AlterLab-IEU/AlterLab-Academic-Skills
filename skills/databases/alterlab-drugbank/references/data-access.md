@@ -2,8 +2,9 @@
 
 ## Authentication and Setup
 
-### Account Creation
-DrugBank requires user authentication to access data:
+### Account Creation (optional path)
+DrugBank's own files need an account and licence — the skill's keyless path
+(`scripts/drug_open.py`, `scripts/drug_similarity.py`) does not:
 1. Create account at go.drugbank.com
 2. Apply for the Academic License (free for eligible non-commercial research; data
    under CC BY-NC 4.0) — commercial use needs a paid license

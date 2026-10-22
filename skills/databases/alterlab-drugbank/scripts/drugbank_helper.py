@@ -8,6 +8,11 @@ Utility functions for common DrugBank operations including:
 - Target identification
 - Chemical property extraction
 
+This helper parses a DrugBank XML release you already hold (licensed download via
+drugbank-downloader, DRUGBANK_USERNAME / DRUGBANK_PASSWORD). It is the optional path: the
+keyless scripts drug_open.py (ChEMBL, openFDA, PubChem, KEGG) and drug_similarity.py
+(RDKit over approved ChEMBL drugs) answer the same questions without an account.
+
 Usage:
     from drugbank_helper import DrugBankHelper
 
@@ -37,8 +42,16 @@ class DrugBankHelper:
     def _get_root(self):
         """Lazy load DrugBank root element"""
         if self.root is None:
-            from drugbank_downloader import get_drugbank_root
-            self.root = get_drugbank_root()
+            try:
+                from drugbank_downloader import get_drugbank_root
+                self.root = get_drugbank_root()
+            except Exception as exc:  # missing package, credentials, licence, or paused downloads
+                raise RuntimeError(
+                    "No DrugBank XML available (" + type(exc).__name__ + ": " + str(exc)[:160] +
+                    "). Pass root= for a release you already hold, set DRUGBANK_USERNAME / "
+                    "DRUGBANK_PASSWORD for a licensed download, or use the keyless "
+                    "scripts/drug_open.py (info, targets, interactions, similar) and "
+                    "scripts/drug_similarity.py instead.") from exc
         return self.root
 
     def _get_text_safe(self, element) -> Optional[str]:

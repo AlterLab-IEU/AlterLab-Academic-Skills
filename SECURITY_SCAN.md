@@ -2,7 +2,7 @@
 
 > **Generated** — do not edit by hand. Regenerate with `python3 scripts/gen_security_scan.py`; CI fails if this file is stale (`--check`) or if the attestation is violated (`--strict`).
 
-This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **266 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
+This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **268 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
 
 ## Attestation
 
@@ -47,13 +47,13 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `doi.org` | DOI resolver | 36 |
 | `drugbank.ca` | Drugs | 1 |
 | `dsmz.de` | other (review) | 4 |
-| `ebi.ac.uk` | EMBL-EBI | 14 |
+| `ebi.ac.uk` | EMBL-EBI | 15 |
 | `elixir.no` | Bioinformatics infra | 3 |
 | `ensembl.org` | Genomics | 3 |
 | `europepmc.org` | Literature (Europe PMC) | 1 |
 | `example.com` | Placeholder (docs only) | 1 |
 | `fastmcp.app` | MCP infra | 1 |
-| `fda.gov` | Regulatory | 3 |
+| `fda.gov` | Regulatory | 4 |
 | `figshare.com` | Research data | 1 |
 | `github.com` | Source / infra | 26 |
 | `google.com` | other (review) | 2 |
@@ -62,7 +62,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `hmdb.ca` | Metabolites | 5 |
 | `jisc.ac.uk` | other (review) | 3 |
 | `jsdelivr.net` | CDN | 1 |
-| `kegg.jp` | Pathways | 3 |
+| `kegg.jp` | Pathways | 4 |
 | `labarchives.com` | ELN | 3 |
 | `localhost` | Local (non-network) | 6 |
 | `materialsproject.org` | Materials | 3 |
@@ -70,7 +70,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `monarchinitiative.org` | Phenotypes | 3 |
 | `mygene.info` | Gene annotation | 1 |
 | `nf-co.re` | nf-core pipelines | 1 |
-| `nih.gov` | NCBI / NIH | 18 |
+| `nih.gov` | NCBI / NIH | 20 |
 | `oncokb.org` | other (review) | 1 |
 | `openalex.org` | Scholarly index | 24 |
 | `openarchives.org` | OAI-PMH | 2 |

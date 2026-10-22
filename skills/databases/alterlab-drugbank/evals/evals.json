@@ -4,7 +4,7 @@
     {
       "id": "drug-drug-interactions",
       "prompt": "My patient is on warfarin, amiodarone, and simvastatin. Check all the pairwise drug-drug interactions and tell me the severity for this polypharmacy regimen.",
-      "expected_output": "Triggers the DrugBank skill. Uses the interactions reference (references/interactions.md) to extract DDIs for each drug, check the pairwise interactions across the regimen, classify by severity/mechanism, and compute an overall interaction risk score for the polypharmacy combination.",
+      "expected_output": "Triggers the DrugBank skill without asking for a DrugBank account: checks all three pairs keylessly (scripts/drug_open.py interactions warfarin amiodarone simvastatin — openFDA label text plus KEGG DDI flags, or a DrugBank XML via references/interactions.md if the user has one) and classifies each by severity and mechanism: amiodarone + warfarin (CYP2C9 inhibition, raised INR/bleeding — major; reduce warfarin dose and monitor INR), amiodarone + simvastatin (CYP3A4; myopathy/rhabdomyolysis — the simvastatin label limits the dose to 20 mg daily — major), warfarin + simvastatin (reports of bleeding/increased INR — moderate; monitor INR); gives an overall risk judgement for the regimen and says how severity was graded from the label wording and KEGG flags.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Extracts and classifies pairwise drug-drug interactions across a multi-drug regimen with severity assessment." }
@@ -13,7 +13,7 @@
     {
       "id": "drug-targets-and-pathways",
       "prompt": "What proteins does imatinib target, what's the action on each, and which CYP450 enzymes metabolize it? I'm mapping its mechanism.",
-      "expected_output": "Triggers the DrugBank skill. Uses references/targets-pathways.md to extract drug targets with their actions (inhibitor/agonist/antagonist), identify metabolizing CYP450 enzymes, and optionally map to SMPDB pathways. Cross-references UniProt for the protein records.",
+      "expected_output": "Triggers the DrugBank skill without asking for a DrugBank account: extracts imatinib's targets with their actions keylessly (scripts/drug_open.py targets imatinib — ChEMBL mechanisms: ABL1 P00519, BCR-ABL, KIT P10721 and PDGFR-beta P09619, all INHIBITOR) and the metabolizing CYP450 enzymes from the FDA label (CYP3A4 major; CYP1A2, CYP2D6, CYP2C9, CYP2C19 minor), cross-referencing UniProt accessions; notes that SMPDB pathway maps need DrugBank or a pathway resource such as Reactome.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Extracts drug targets with their actions and the CYP450 metabolizing enzymes for mechanism mapping." }
@@ -22,7 +22,7 @@
     {
       "id": "chemical-similarity-repurposing",
       "prompt": "Find me drugs structurally similar to celecoxib by Tanimoto similarity and check whether they pass Lipinski's Rule of Five — I'm scoping repurposing candidates.",
-      "expected_output": "Triggers the DrugBank skill. Uses references/chemical-analysis.md to pull SMILES, generate Morgan/MACCS fingerprints, compute Tanimoto similarity to find structurally similar drugs, and apply Lipinski's Rule of Five for drug-likeness, in support of a repurposing scope.",
+      "expected_output": "Triggers the DrugBank skill without asking for a DrugBank account: pulls celecoxib's SMILES (ChEMBL CHEMBL118) and screens approved small-molecule drugs keylessly (scripts/drug_similarity.py celecoxib — ChEMBL approved set, RDKit Morgan or MACCS fingerprints), ranking them by Tanimoto similarity (valdecoxib on top with Morgan, about 0.32) and applying Lipinski's Rule of Five (and Veber) to each candidate, in support of a repurposing scope; notes that Morgan Tanimoto values for drugs of the same class are often well below 0.5.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "Tanimoto" },
@@ -31,11 +31,22 @@
     },
     {
       "id": "drug-pharmacology-query",
+      "requires": ["env:DRUGBANK_PASSWORD"],
       "prompt": "Pull the indication, mechanism of action, and chemical identifiers (SMILES, InChI, molecular formula) for metformin from DrugBank.",
       "expected_output": "Triggers the DrugBank skill. Uses references/drug-queries.md to search by drug name and extract basic info (indication, description), pharmacology (mechanism of action, pharmacodynamics, ADME), and chemical identifiers (SMILES, InChI, molecular formula) plus external cross-references.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Queries DrugBank by drug name and extracts indication, mechanism, and chemical identifiers." }
+      ]
+    },
+    {
+      "id": "metformin-profile-keyless",
+      "prompt": "I can't download DrugBank (no licence). Give me metformin's indication, mechanism of action, and its SMILES, InChIKey and molecular formula, with the source for each.",
+      "expected_output": "Triggers the DrugBank skill on the keyless path (scripts/drug_open.py info metformin): indication from the FDA label (adjunct to diet and exercise to improve glycemic control in type 2 diabetes) and ChEMBL indications (Diabetes Mellitus, phase 4); mechanism from the label (decreases hepatic glucose production, decreases intestinal absorption, improves insulin sensitivity) with ChEMBL's listed mechanisms; identifiers CHEMBL1431 / PubChem CID 4091, formula C4H11N5, InChIKey XZWYZXLIPXDOLR-UHFFFAOYSA-N, SMILES CN(C)C(=N)N=C(N)N (or the equivalent ChEMBL canonical form). Names ChEMBL, PubChem and openFDA/DailyMed as the sources and notes that DrugBank itself needs a licence.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "XZWYZXLIPXDOLR-UHFFFAOYSA-N" },
+        { "type": "behavior", "value": "Returns metformin's indication, mechanism, SMILES, InChIKey and formula from named keyless sources without requiring a DrugBank licence." }
       ]
     },
     {
