@@ -11,17 +11,19 @@ from pathlib import Path
 from typing import List, Tuple
 
 # Required sections for all treatment plans
+# Headings may be numbered (\section) or not (\section*). Patient information may also sit in
+# the page-1 summary box the skill's document format requires (\begin{patientinfo}).
 REQUIRED_SECTIONS = [
-    r'\\section\*\{.*Patient Information',
-    r'\\section\*\{.*Diagnosis.*Assessment',
-    r'\\section\*\{.*Goals',
-    r'\\section\*\{.*Interventions',
-    r'\\section\*\{.*Timeline.*Schedule',
-    r'\\section\*\{.*Monitoring',
-    r'\\section\*\{.*Outcomes',
-    r'\\section\*\{.*Follow[- ]?up',
-    r'\\section\*\{.*Education',
-    r'\\section\*\{.*Risk.*Safety',
+    r'\\section\*?\{.*Patient Information|\\begin\{patientinfo\}',
+    r'\\section\*?\{.*Diagnosis.*Assessment',
+    r'\\section\*?\{.*Goals',
+    r'\\section\*?\{.*Interventions',
+    r'\\section\*?\{.*Timeline.*Schedule',
+    r'\\section\*?\{.*Monitoring',
+    r'\\section\*?\{.*Outcomes',
+    r'\\section\*?\{.*Follow[- ]?up',
+    r'\\section\*?\{.*Education',
+    r'\\section\*?\{.*Risk.*Safety',
 ]
 
 # Section descriptions for user-friendly output

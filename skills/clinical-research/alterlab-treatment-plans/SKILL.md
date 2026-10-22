@@ -1,7 +1,7 @@
 ---
 name: alterlab-treatment-plans
 description: Generates concise (3-4 page), focused medical treatment plans in LaTeX/PDF format across all clinical specialties — general medical treatment, rehabilitation therapy, mental health care, chronic disease management, perioperative care, and pain management — using SMART goal frameworks, evidence-based interventions with minimal citations, HIPAA compliance, and professional formatting. Use when drafting a brief, actionable patient treatment or care plan with measurable SMART goals and structured follow-up for any specialty. Part of the AlterLab Academic Skills suite.
-allowed-tools: Read Write Edit Bash
+allowed-tools: Read Write Edit Bash WebSearch WebFetch
 license: MIT
 compatibility: "Runs with Read/Write/Edit/Bash; producing PDF output requires a local LaTeX toolchain (pdflatex/xelatex). No API key required."
 metadata:
@@ -49,7 +49,7 @@ Use this skill when:
 
 ## Clinical Safety
 
-A treatment plan is a draft for the treating clinician to review, adapt, and sign — not an order. Build it only from the patient information the user provides, and mark missing items (allergies, renal function, current medications) as blanks to complete rather than guessing, because a plausible default dose or omitted interaction check can cause harm. Check every drug, dose, and monitoring interval against current labeling and guidelines the clinician can verify, cite guideline sources the user supplied or that you retrieved in this session, and never invent a citation. Include a short AI-assistance note in the document.
+A treatment plan is a draft for the treating clinician to review, adapt, and sign — not an order. Build it only from the patient information the user provides, and mark missing items (allergies, renal function, current medications) as blanks to complete rather than guessing, because a plausible default dose or omitted interaction check can cause harm. Check every drug, dose, and monitoring interval against current labeling and guidelines the clinician can verify, cite guideline sources the user supplied or that you retrieved in this session (WebSearch/WebFetch on the guideline body's own site, or PubMed), and never invent a citation. Include a short AI-assistance note in the document.
 
 ## Core Workflow
 
