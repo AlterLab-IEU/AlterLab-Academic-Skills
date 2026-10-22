@@ -26,7 +26,8 @@
     },
     {
       "id": "extract-citation-verification",
-      "prompt": "I have a specific URL for a paper and I need to verify what it actually says about its methodology before I cite it. Can you pull the content from that page?",
+      "requires": ["env:PARALLEL_API_KEY"],
+      "prompt": "I have a specific URL for a paper and I need to verify what it actually says about its methodology before I cite it: https://doi.org/10.1371/journal.pmed.0020124. Can you pull the content from that page?",
       "expected_output": "Recognizes this as citation verification, the only sanctioned use of the Extract API, and uses scripts/parallel_web.py extract with the --objective flag (e.g., 'methodology') against the known URL, saving to sources/ with the extract_YYYYMMDD_HHMMSS_<source>.md pattern. Should note extract is for verification/special cases, not general research.",
       "assertions": [
         {"type": "should_trigger", "value": true},

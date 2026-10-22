@@ -23,6 +23,7 @@
     },
     {
       "id": "force-backend",
+      "requires": ["env:PARALLEL_API_KEY"],
       "prompt": "Use the Parallel deep research backend (not Perplexity) to give me a comprehensive report on the global renewable energy market trends and projections.",
       "expected_output": "Invokes alterlab-research-lookup with a manual backend override (--force-backend parallel) to run the query against the Parallel Chat API regardless of routing heuristics, returning a comprehensive cited markdown report and saving it to sources/.",
       "assertions": [

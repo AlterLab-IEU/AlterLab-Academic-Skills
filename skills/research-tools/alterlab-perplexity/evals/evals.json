@@ -23,6 +23,7 @@
     },
     {
       "id": "model-selection-agentic",
+      "requires": ["env:OPENROUTER_API_KEY"],
       "prompt": "I want a thorough multi-step comparison of PyTorch vs TensorFlow for transformer training, pulling in recent benchmarks. Use the most advanced agentic Perplexity search for this.",
       "expected_output": "Invokes alterlab-perplexity and selects the sonar-pro-search model (the most advanced agentic, multi-step search) via the --model flag for this complex comparative query, returning a cited, web-grounded comparison.",
       "assertions": [
