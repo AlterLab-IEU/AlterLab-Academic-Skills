@@ -6,8 +6,9 @@ license: MIT
 compatibility: No API key required (an optional NCBI_API_KEY raises the PubMed E-utilities limit from 3 to 10 requests/s). Needs network access to CrossRef, doi.org, NCBI E-utilities, arXiv, and Google Scholar; the helper scripts need requests, plus scholarly for Google Scholar search
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.2"
+    last_updated: "2026-10-22"
+    credentials: "optional: NCBI_API_KEY (raises the PubMed E-utilities limit from 3 to 10 requests/s; every script works without it)"
 ---
 
 # Citation Management
