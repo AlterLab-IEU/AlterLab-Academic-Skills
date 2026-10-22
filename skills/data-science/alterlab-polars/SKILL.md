@@ -6,8 +6,9 @@ allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
 compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "polars>=1.0,<2" python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires polars >= 1.0 (current 1.44 as of 2026-09; 2.0 is in release candidate).
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.2"
+    last_updated: "2026-10-22"
+    credentials: "optional: AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY, AZURE_STORAGE_ACCOUNT_KEY, GOOGLE_APPLICATION_CREDENTIALS (only to read or write your own private S3 / Azure / GCS buckets; local files and public URLs need none)"
 ---
 
 # Polars
