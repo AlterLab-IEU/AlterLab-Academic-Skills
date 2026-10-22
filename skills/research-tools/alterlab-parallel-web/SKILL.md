@@ -1,27 +1,24 @@
 ---
 name: alterlab-parallel-web
-description: Search the web, run deep research, and extract content from known URLs via Parallel Web Systems — the Chat API (Beta, OpenAI-compatible `base`/`core` research models) for synthesized answers with inline citations and the Extract API v1 for URL content — with notes on the raw Search, Task, and Responses APIs. Use when running general web searches, current-events/market/technical lookups, broad information gathering, comprehensive research reports, or verifying a specific URL's content (requires PARALLEL_API_KEY). For scholarly paper retrieval or dual-backend academic lookup that auto-routes to Perplexity prefer alterlab-research-lookup instead. Part of the AlterLab Academic Skills suite.
-allowed-tools: Read Write Edit Bash
+description: Search the web, run multi-source deep research, and extract what a known URL actually says, saving every result with its sources to sources/. Keyless by default — Claude's WebSearch and WebFetch run the same search / research / extract workflow; Parallel Web Systems (Chat API `base`/`core` research models with inline citations, Extract API v1, plus notes on the Search, Task and Responses APIs) is an optional backend when the user asks for Parallel and sets PARALLEL_API_KEY. Use when running general web searches, current-events/market/technical lookups, broad information gathering, comprehensive research reports, or verifying a specific URL's content. For scholarly paper retrieval or dual-backend academic lookup prefer alterlab-research-lookup instead. Part of the AlterLab Academic Skills suite.
+allowed-tools: Read Write Edit Bash WebSearch WebFetch
 license: MIT
-compatibility: PARALLEL_API_KEY required. Python packages openai (Chat API) and parallel-web >= 1.0 (Extract API v1); sends queries and URLs to api.parallel.ai.
+compatibility: No API key required. search, research and extract run on Claude's WebSearch and WebFetch and save to sources/. Optional Parallel backend - PARALLEL_API_KEY plus the openai and parallel-web >= 1.0 packages (resolved per call by uv) - sends queries and URLs to api.parallel.ai.
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.2.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: PARALLEL_API_KEY (Parallel Chat API synthesized search/research reports and Extract API v1; paid, used only when the user asks for Parallel)"
 ---
 
-# Parallel Web Systems API
+# Web Search, Research and Extraction (Parallel-style)
 
 ## Overview
 
-This skill gives access to **Parallel Web Systems** APIs for web search, deep research, and content extraction. In the scientific-writing workflow it is the default tool for general web information — news, market and technical data, documentation — while scholarly paper retrieval goes to `alterlab-research-lookup`.
+This skill handles general web information in the scientific-writing workflow — news, market and technical data, documentation, policy — with three jobs: **search**, **deep research**, and **extract** (verify what a known URL says). Scholarly paper retrieval goes to `alterlab-research-lookup`.
 
-**Primary interface:** Chat API (Beta, OpenAI-compatible, `POST /v1beta/chat/completions`) for search and research.
-**Secondary interface:** Extract API v1 (`POST /v1/extract`) for URL verification and special cases.
-
-**API Documentation:** https://docs.parallel.ai
-**API Key:** https://platform.parallel.ai
-**Environment Variable:** `PARALLEL_API_KEY`
+**Default (no API key):** you do all three with WebSearch and WebFetch, following the procedures below, and save every result to `sources/`.
+**Optional backend:** [Parallel Web Systems](https://docs.parallel.ai) — Chat API (Beta, OpenAI-compatible, `POST /v1beta/chat/completions`) for synthesized search and research, Extract API v1 (`POST /v1/extract`) for URL content — through `scripts/parallel_web.py`, when the user asks for Parallel. Its key (`PARALLEL_API_KEY`, from https://platform.parallel.ai) only adds that service.
 
 ## When to Use This Skill
 
@@ -34,7 +31,7 @@ Use this skill for:
 - **Technical Information**: documentation, specifications, product details
 - **Statistical Data**: market sizes, growth rates, industry figures
 
-Use the Extract API only for citation verification (confirming what a specific URL says) and for cases where you need raw content from a known URL.
+Use extract only for citation verification (confirming what a specific URL says) and for cases where you need raw content from a known URL.
 
 ### Does NOT Trigger
 
@@ -50,9 +47,42 @@ Use the Extract API only for citation verification (confirming what a specific U
 
 ---
 
-## Three Capabilities
+## Default Path: the Three Jobs with WebSearch and WebFetch (no key)
 
-The commands below are written as `python scripts/parallel_web.py …`. Where `openai` / `parallel-web` are not installed, run each one with the uv prefix from Environment Setup below instead of installing anything.
+Check `sources/` first (`ls sources/`); if a saved result covers the question, re-read it instead of searching again.
+
+### 1. Web Search
+
+1. Write 2–4 specific queries (entity + measure + date + likely publisher) and run them with WebSearch.
+2. Open the 3–6 most authoritative results with WebFetch — official, primary and dated pages over aggregators and SEO pages. A fact seen only in a search snippet is labelled "snippet, not opened".
+3. Answer as a **synthesized summary organized by themes**, every fact with an inline citation `[n]`, then a numbered sources list (title, publisher, date, URL, retrieval date). Flag disagreements between sources instead of picking one silently.
+4. Write the result to `sources/search_YYYYMMDD_HHMMSS_<brief_topic>.md` (format below).
+
+### 2. Deep Research
+
+Same as search, scaled up for a report: plan the sub-questions first (e.g. market size, players and shares, growth projections, policy, risks); run several searches per sub-question; open 8–15 sources across publisher types (official statistics, company filings, regulators, reputable trade and news outlets, peer-reviewed reviews via `alterlab-research-lookup` when the topic has them); then write an executive summary, themed sections with specific figures (each with its source and year), implications or outlook, and a limitations note (paywalled sources you could not open, figures that conflict). Save as `sources/research_YYYYMMDD_HHMMSS_<brief_topic>.md`.
+
+### 3. URL Extraction (verification only)
+
+WebFetch the exact URL with a prompt naming what to verify (e.g. "quote the methods section verbatim", "list each corollary as written"). Follow a DOI or redirect to the publisher page. Report the passages **verbatim in quotation marks** with the section they come from, say plainly when the page does not contain the thing asked about, and save as `sources/extract_YYYYMMDD_HHMMSS_<brief_source>.md`. When a page will not load (paywall, 403, script-only), say so and try an open copy (Europe PMC, PubMed Central, the author's repository) rather than paraphrasing from memory.
+
+### Saved-file format (keyless)
+
+```markdown
+# <search|research|extract>: <question or URL>
+- Date: 2026-10-22 14:30 (UTC) · Tool: WebSearch + WebFetch (keyless)
+- Queries: "<q1>", "<q2>"
+
+## Result
+<summary / report / verbatim extract with [n] citations>
+
+## Sources
+1. <Title> — <Publisher>, <date>. <URL> (opened: yes/snippet only) — "<quoted sentence or figure>"
+```
+
+## Optional Parallel Backend: Three Commands
+
+Use these when the user asks for Parallel (or wants its synthesized reports) and `PARALLEL_API_KEY` is set. Without the key the script exits 1 before contacting anything, names the variable and the keyless alternative, and writes no `-o` file: say that the key is missing and offer the keyless path above, labelled as such. The commands below are written as `python scripts/parallel_web.py …`. Where `openai` / `parallel-web` are not installed, run each one with the uv prefix from Environment Setup below instead of installing anything.
 
 ### 1. Web Search (`search` command)
 
@@ -201,13 +231,13 @@ Save every web search, deep research, and extraction result to the project's `so
 
 ### Saving Rules
 
-| Operation | `-o` Flag Target | Filename Pattern |
+| Operation | Target (Write keyless, `-o` with Parallel) | Filename Pattern |
 |-----------|-----------------|------------------|
 | Web Search | `sources/search_<topic>.md` | `search_YYYYMMDD_HHMMSS_<brief_topic>.md` |
 | Deep Research | `sources/research_<topic>.md` | `research_YYYYMMDD_HHMMSS_<brief_topic>.md` |
 | URL Extract | `sources/extract_<source>.md` | `extract_YYYYMMDD_HHMMSS_<brief_source>.md` |
 
-Pass `-o` pointing into `sources/` on every call:
+On the keyless path, write the file with Write in the saved-file format above. With the Parallel backend, pass `-o` pointing into `sources/` on every call (a failed call writes nothing):
 
 ```bash
 # Web search
@@ -234,22 +264,24 @@ Before a new query, check whether a relevant result already exists (`ls sources/
 
 ## Routing
 
-| Task | Tool |
+| Task | Tool (keyless default · optional Parallel) |
 |------|------|
-| Web search, current events, market/technical lookup | `parallel_web.py search` (this skill) |
-| Comprehensive research report | `parallel_web.py research --model core` (this skill) |
-| Citation verification / DOI metadata from a known URL | `parallel_web.py extract` (this skill) |
-| Scholarly paper retrieval (peer-reviewed journals to cite) | `alterlab-research-lookup` (routes to Perplexity) |
+| Web search, current events, market/technical lookup | WebSearch + WebFetch · `parallel_web.py search` (this skill) |
+| Comprehensive research report | planned WebSearch/WebFetch research · `parallel_web.py research --model core` (this skill) |
+| Citation verification / DOI metadata from a known URL | WebFetch the URL · `parallel_web.py extract` (this skill) |
+| Scholarly paper retrieval (peer-reviewed journals to cite) | `alterlab-research-lookup` (keyless scholarly backend) |
 | Google Scholar / PubMed / CrossRef database search | `alterlab-citation-mgmt` |
 
 When writing scientific documents: gather background with `search`/`research` before drafting a section, verify any specific URL with `extract`, and route purely academic paper searches to `alterlab-research-lookup`. Check `sources/` first and save every result back.
 
 ---
 
-## Environment Setup
+## Environment Setup (optional Parallel backend only)
+
+The keyless path needs no setup. For the Parallel backend:
 
 ```bash
-# Required: set your Parallel API key
+# Set your Parallel API key (ask the user to set it; never paste it into chat)
 export PARALLEL_API_KEY="your_api_key_here"
 
 # Python packages: openai (Chat API: search/research) and parallel-web >= 1.0
@@ -264,18 +296,11 @@ Get your API key at https://platform.parallel.ai. The script sends your queries 
 
 ## Error Handling
 
-The script returns structured error responses rather than raising:
-
-```json
-{
-  "success": false,
-  "error": "Error description",
-  "timestamp": "2025-02-14 12:00:00"
-}
-```
+The script's classes return structured error responses rather than raising (`{"success": false, "error": ..., "timestamp": ...}`); the CLI prints the error to stderr, exits 1, and writes no `-o` file.
 
 **Common issues:**
-- `PARALLEL_API_KEY not set`: set the environment variable
+- `PARALLEL_API_KEY is not set`: the user asked for Parallel without a key — say so, and offer the keyless path (WebSearch / WebFetch) labelled as such
+- A page WebFetch cannot open (paywall, 403): say so, look for an open copy, never paraphrase it from memory
 - `openai not installed` / `parallel-web not installed`: rerun the command with the `uv run --python ">=3.11" --with openai --with parallel-web python …` prefix from Environment Setup
 - `'BetaResource' object has no attribute 'extract'`: an old copy of the script is calling the Beta method removed in `parallel-web` 1.0 — use this skill's current script (`client.extract()`)
 - Rate limit exceeded: wait and retry (defaults: Chat 300 requests/min, Extract 600 requests/min)

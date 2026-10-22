@@ -46,6 +46,37 @@
       ]
     },
     {
+      "id": "keyless-web-search-dated-facts",
+      "prompt": "Search the web for when the EU AI Act entered into force and from what date its bans on prohibited AI practices apply. Give me a cited summary I can paste into a policy brief and save the search to sources/.",
+      "expected_output": "Invokes alterlab-parallel-web on its keyless path (no API key): runs WebSearch queries, opens primary or authoritative pages with WebFetch (EUR-Lex Regulation (EU) 2024/1689, the Commission, or the AI Act implementation timeline), and returns a themed, cited summary: the AI Act (Regulation (EU) 2024/1689) entered into force on 1 August 2024; the prohibitions on unacceptable-risk AI practices (and the AI literacy duty) apply from 2 February 2025; it may add later milestones (general-purpose AI obligations from 2 August 2025, most remaining provisions from 2 August 2026). Every date carries a source, and the search is saved to sources/search_<timestamp>_<topic>.md with the queries, retrieval date and source list.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": ["1 August 2024", "August 1, 2024", "1 Aug 2024", "2024-08-01"]},
+        {"type": "output_contains", "value": ["2 February 2025", "February 2, 2025", "2 Feb 2025", "2025-02-02"]},
+        {"type": "behavior", "value": "Answers from WebSearch/WebFetch results without asking for an API key, cites a source for each date, and saves the search record under sources/."}
+      ]
+    },
+    {
+      "id": "keyless-deep-research-brief",
+      "prompt": "I need a multi-source research brief on the US CHIPS and Science Act for a policy seminar: when it was signed, how much semiconductor funding it appropriates and how that is split, and what the investment tax credit is. Cite every figure and save the report to sources/.",
+      "expected_output": "Invokes alterlab-parallel-web's deep-research job on its keyless path: plans sub-questions, runs several WebSearch queries, opens multiple sources with WebFetch (Congress.gov / public law text, Commerce/NIST CHIPS pages, reputable analyses), and writes a report with an executive summary and themed sections: signed into law on 9 August 2022 (Pub. L. 117-167); $52.7 billion appropriated for semiconductors, including $39 billion in manufacturing incentives and about $11-13.2 billion for research, development and workforce; a 25% advanced manufacturing investment tax credit; about $280 billion authorized overall. Each figure is cited, conflicting framings are flagged, and the report is saved to sources/research_<timestamp>_<topic>.md.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "52.7"},
+        {"type": "behavior", "value": "Reports the 9 August 2022 signing, the $52.7 billion appropriation with the $39 billion manufacturing-incentive share, and the 25% investment tax credit, each with a cited source, and saves the report under sources/ without needing an API key."}
+      ]
+    },
+    {
+      "id": "keyless-extract-verify-url",
+      "prompt": "Before I quote it in a lecture, check what https://doi.org/10.1371/journal.pmed.0020124 actually says: how many corollaries does the author list, and what is the exact wording of Corollary 5? Save the extract so I can cite it.",
+      "expected_output": "Invokes alterlab-parallel-web's extract job on its keyless path: WebFetch follows the DOI to the PLOS Medicine article (Ioannidis 2005, 'Why Most Published Research Findings Are False') and reports verbatim that the essay lists six corollaries, quoting Corollary 5 exactly: 'The greater the financial and other interests and prejudices in a scientific field, the less likely the research findings are to be true.' It names the section, gives the URL and retrieval date, and saves the extract to sources/extract_<timestamp>_<source>.md.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "financial and other interests and prejudices"},
+        {"type": "behavior", "value": "Quotes Corollary 5 verbatim from the fetched page, states that six corollaries are listed, and saves the extract under sources/ without asking for an API key."}
+      ]
+    },
+    {
       "id": "near-miss-research-lookup",
       "prompt": "Find me peer-reviewed academic papers on transformer attention mechanisms from the scholarly literature — I want proper journal articles to cite, not web pages.",
       "expected_output": "This is a purely academic/scholarly paper search, which the skill explicitly excludes. Defers to the research-lookup skill (alterlab-research-lookup, which routes academic queries to Perplexity sonar-pro-search) or alterlab-perplexity for scholarly paper retrieval rather than using the Parallel general web search/research commands.",
