@@ -25,8 +25,8 @@ All **242** skills are authored on the cross-platform [Agent Skills open standar
 ## By the numbers
 
 - **242/242** skills: portable-core frontmatter only (`name`/`description` required; plus the `compatibility` convention).
-- **234** bundle `references/*.md` — portable Markdown.
-- **140** bundle `scripts/*.py` — portable plain Python.
+- **235** bundle `references/*.md` — portable Markdown.
+- **141** bundle `scripts/*.py` — portable plain Python.
 - **4** bundle Claude Code `agents/` and **4** bundle `commands/` — Claude-Code/SDK-specific.
 - Domain-level Claude extras: `.mcp.json` in `core`, `databases`; `hooks/` in `core`.
 

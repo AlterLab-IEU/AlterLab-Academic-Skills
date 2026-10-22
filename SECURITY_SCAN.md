@@ -2,7 +2,7 @@
 
 > **Generated** — do not edit by hand. Regenerate with `python3 scripts/gen_security_scan.py`; CI fails if this file is stale (`--check`) or if the attestation is violated (`--strict`).
 
-This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **269 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
+This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **278 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
 
 ## Attestation
 
@@ -60,7 +60,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `graphdrawing.org` | Standards | 1 |
 | `gtexportal.org` | Expression | 2 |
 | `hmdb.ca` | Metabolites | 5 |
-| `jisc.ac.uk` | other (review) | 3 |
+| `jisc.ac.uk` | other (review) | 6 |
 | `jsdelivr.net` | CDN | 1 |
 | `kegg.jp` | Pathways | 4 |
 | `labarchives.com` | ELN | 3 |
@@ -75,7 +75,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `openalex.org` | Scholarly index | 25 |
 | `openarchives.org` | OAI-PMH | 2 |
 | `opencitations.net` | Open citation index | 2 |
-| `openrouter.ai` | LLM backend (user key) | 19 |
+| `openrouter.ai` | LLM backend (user key) | 17 |
 | `openstreetmap.org` | other (review) | 1 |
 | `opentargets.org` | Target–disease | 1 |
 | `parallel.ai` | Research backend (user key) | 5 |
@@ -98,7 +98,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `ulakbim.gov.tr` | ULAKBİM | 2 |
 | `uniprot.org` | Proteins | 2 |
 | `uspto.gov` | Patents | 12 |
-| `w3.org` | Standards | 5 |
+| `w3.org` | Standards | 9 |
 | `wikipedia.org` | Reference | 1 |
 | `yahoo.com` | other (review) | 1 |
 | `yok.gov.tr` | YÖK | 3 |
