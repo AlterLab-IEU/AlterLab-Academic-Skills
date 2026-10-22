@@ -81,10 +81,18 @@ class ResearchLookup:
     def _select_backend(self, query: str) -> str:
         """Select the best backend for a query."""
         if self.force_backend:
-            if self.force_backend == "perplexity" and self.perplexity_available:
-                return "perplexity"
-            if self.force_backend == "parallel" and self.parallel_available:
-                return "parallel"
+            # A forced backend is the user's explicit choice: refuse rather than quietly
+            # answer from the other one when its key is missing.
+            if self.force_backend == "perplexity":
+                if self.perplexity_available:
+                    return "perplexity"
+                raise ValueError("--force-backend perplexity needs OPENROUTER_API_KEY; "
+                                 "not falling back to Parallel.")
+            if self.force_backend == "parallel":
+                if self.parallel_available:
+                    return "parallel"
+                raise ValueError("--force-backend parallel needs PARALLEL_API_KEY; "
+                                 "not falling back to Perplexity.")
 
         query_lower = query.lower()
         is_academic = any(kw in query_lower for kw in self.ACADEMIC_KEYWORDS)

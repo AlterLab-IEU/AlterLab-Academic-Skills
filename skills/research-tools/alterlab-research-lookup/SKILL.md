@@ -95,6 +95,8 @@ python scripts/research_lookup.py "your query" --force-backend parallel
 python scripts/research_lookup.py "your query" --force-backend perplexity
 ```
 
+A forced backend whose key is missing exits with an error; it never answers from the other backend.
+
 ---
 
 ## Core Capabilities
