@@ -40,7 +40,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `dergipark.org.tr` | Turkish journals (DergiPark) | 7 |
 | `doaj.org` | Open-access journals | 2 |
 | `docking.org` | Compound libraries | 4 |
-| `doi.org` | DOI resolver | 28 |
+| `doi.org` | DOI resolver | 33 |
 | `drugbank.ca` | Drugs | 1 |
 | `ebi.ac.uk` | EMBL-EBI | 12 |
 | `elixir.no` | Bioinformatics infra | 3 |
@@ -64,8 +64,9 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `mygene.info` | Gene annotation | 1 |
 | `nf-co.re` | nf-core pipelines | 1 |
 | `nih.gov` | NCBI / NIH | 18 |
-| `openalex.org` | Scholarly index | 19 |
+| `openalex.org` | Scholarly index | 23 |
 | `openarchives.org` | OAI-PMH | 2 |
+| `opencitations.net` | Open citation index | 1 |
 | `openrouter.ai` | LLM backend (user key) | 19 |
 | `opentargets.org` | Target–disease | 1 |
 | `parallel.ai` | Research backend (user key) | 5 |
@@ -91,7 +92,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `wikipedia.org` | Reference | 1 |
 | `yok.gov.tr` | YÖK | 3 |
 
-_65 distinct domains._
+_66 distinct domains._
 
 ## Method
 

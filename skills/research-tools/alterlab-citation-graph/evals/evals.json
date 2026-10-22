@@ -4,7 +4,7 @@
     {
       "id": "seed-doi-map",
       "prompt": "I have one key paper, DOI 10.1038/nphys1170. Map the literature around it for me — I want to see what it cites and what cites it, as a network I can open in Gephi.",
-      "expected_output": "Invokes alterlab-citation-graph: runs build_graph.py with the seed DOI against the free OpenAlex API (using OPENALEX_API_KEY when set; keyless calls work only while the shared per-IP budget lasts), walks both directions of the citation network (the seed's referenced_works and its cited_by set), and exports a GraphML file (plus JSON) the user can open in Gephi.",
+      "expected_output": "Invokes alterlab-citation-graph: runs build_graph.py with the seed DOI with no key needed (free OpenAlex lookups, with the keyless OpenCitations index supplying citing works when the shared OpenAlex list budget is spent; OPENALEX_API_KEY optional), walks both directions of the citation network (the seed's referenced_works and its cited_by set), and exports a GraphML file (plus JSON) the user can open in Gephi.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "OpenAlex" },
@@ -13,7 +13,6 @@
     },
     {
       "id": "cocitation-seminal",
-      "requires": ["env:OPENALEX_API_KEY"],
       "files": ["fixtures/seed_paper.txt"],
       "prompt": "Starting from this seed paper, which papers are the most co-cited / central in this area? I want the seminal works in the field around my DOI, ranked.",
       "expected_output": "Invokes alterlab-citation-graph: builds the citation neighbourhood from the seed via OpenAlex and returns the co-citation ranking table (scored by shared references, shared citers, and direct seed links, tie-broken by global cited_by_count) to surface the most central / seminal works, like ResearchRabbit's similarity panel.",
@@ -25,7 +24,6 @@
     },
     {
       "id": "multi-seed-landscape",
-      "requires": ["env:OPENALEX_API_KEY"],
       "files": ["fixtures/foundational_papers.txt"],
       "prompt": "Here are three foundational papers in my topic (two DOIs and an arXiv id, arXiv:1706.03762). Build me a combined citation map across all three so I can see how the subfield connects.",
       "expected_output": "Invokes alterlab-citation-graph with multiple --seed values (DOI and arXiv forms both normalized to OpenAlex selectors), assembles one merged citation/co-citation graph across all seeds, ranks the shared neighbourhood by co-citation, and exports GraphML + JSON.",
@@ -46,10 +44,9 @@
     },
     {
       "id": "no-key-researchrabbit",
-      "requires": ["env:OPENALEX_API_KEY"],
       "files": ["fixtures/my_paper.txt"],
       "prompt": "Is there a free way to do what ResearchRabbit does — build a citation graph around a paper without paying or making an account? I just have a DOI.",
-      "expected_output": "Invokes alterlab-citation-graph, positioning itself as the free, subscription-free ResearchRabbit analog built on the open OpenAlex API, notes that a free OpenAlex account/API key is recommended (keyless requests share a small per-IP daily budget), and builds the citation/co-citation graph from the user's DOI, exporting GraphML + JSON.",
+      "expected_output": "Invokes alterlab-citation-graph, positioning itself as the free, subscription-free ResearchRabbit analog built on open citation data (OpenAlex, with OpenCitations as the keyless fallback), notes that no account or key is needed and that a free OpenAlex API key is optional, recommended only for large walks (keyless list calls share a small per-IP daily budget), and builds the citation/co-citation graph from the user's DOI, exporting GraphML + JSON.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Frames itself as the free, no-subscription ResearchRabbit alternative, is accurate that a free OpenAlex API key is recommended, and proceeds to build the graph from the DOI." },
