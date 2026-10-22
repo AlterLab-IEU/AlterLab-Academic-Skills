@@ -1,12 +1,13 @@
 ---
 name: alterlab-modal
-description: Runs Python code in the cloud with Modal — serverless containers, on-demand GPUs, and autoscaling. Use when deploying ML models, running batch processing jobs, scheduling compute-intensive tasks, or serving APIs that need GPU acceleration or dynamic scaling. Part of the AlterLab Academic Skills suite.
+description: Write, validate, and locally test Python jobs for Modal — serverless containers, on-demand GPUs, and autoscaling — then deploy them to Modal's cloud. Use when deploying ML models, running batch processing jobs, scheduling compute-intensive tasks, or serving APIs that need GPU acceleration or dynamic scaling. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
-compatibility: Requires a Modal account and `modal token` authentication. Runs via `uv run python`; cloud execution incurs Modal usage.
+compatibility: "No API key required to develop: a Modal function is decorated Python, so you write the app, validate the image/resource/GPU config, and run the function body locally on CPU (reduced size) with `function.local(...)` under `uv run python` with the modal package — no account. Deploying or running on Modal's serverless cloud (`modal run`/`modal deploy`) is an optional extra that uses `modal token new` and incurs Modal usage billing."
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
+    credentials: "optional: Modal account via `modal token new` / MODAL_TOKEN_SECRET + MODAL_IDENTITY_TOKEN (deploy and run functions on Modal's cloud); HF_TOKEN, AWS_SECRET_ACCESS_KEY (stored as Modal Secrets so a deployed function can reach private models/buckets) — local development needs none of these"
+    version: "1.1.0"
     last_updated: "2026-09-23"
 ---
 
@@ -17,6 +18,40 @@ metadata:
 Modal is a serverless platform for running Python code in the cloud with minimal configuration. Execute functions on powerful GPUs, scale automatically to thousands of containers, and pay only for compute used.
 
 Modal is particularly suited for AI/ML workloads, high-performance batch processing, scheduled jobs, GPU inference, and serverless APIs. Sign up for free at https://modal.com and receive $30/month in credits.
+
+## Keyless by default: develop and test locally first
+
+A Modal function is ordinary Python under a decorator, so the whole job can be **written and
+run locally with no Modal account or token**. Build the function body, validate the image /
+GPU / resource / schedule configuration, and run the body on this machine with
+`function.local(...)` — on CPU, on a reduced-size input — to confirm the logic works before
+spending a cent. Only `modal run` / `modal deploy` need an account (`modal token new`), and
+those are the one step that incurs billing.
+
+```python
+import modal
+
+app = modal.App("ml-job")
+image = modal.Image.debian_slim(python_version="3.12").uv_pip_install("numpy")
+
+@app.function(image=image, gpu="A100")   # config is validated now; GPU is used only in the cloud
+def summarize(values: list[float]) -> dict:
+    import statistics
+    return {"n": len(values), "mean": statistics.fmean(values)}
+
+if __name__ == "__main__":
+    # KEYLESS: runs the function body on THIS machine (CPU), no token, no billing.
+    print(summarize.local([1.0, 2.0, 3.0]))        # -> {'n': 3, 'mean': 2.0}
+    # Verified 2026-10-22: `modal` installs and .local() runs with no account.
+
+# When ready and authenticated (modal token new): `modal run script.py` (cloud) or
+# `modal deploy script.py` (persistent). Keep inputs small on the first cloud run — see
+# the cost cautions in Best Practices.
+```
+
+Keep a plain-Python core (the `summarize` body above) that you can unit-test locally, and
+let the Modal decorators add the cloud packaging on top. This way the skill delivers a
+validated, ready-to-deploy job even when the user has no Modal account yet.
 
 ## When to Use This Skill
 
@@ -39,21 +74,24 @@ Use Modal for:
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-remote-compute`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
-## Authentication and Setup
+## Authentication and Setup (only for cloud deployment)
 
-Modal requires authentication via API token.
+Installing Modal needs no account; authentication is required only to actually run or deploy
+in the cloud (`modal run` / `modal deploy`). Local development and `function.local(...)` work
+without it.
 
 ### Initial Setup
 
 ```bash
-# Install Modal (SDK 1.x; current 1.5.x as of 2026-09)
+# Install Modal (SDK 1.x; current 1.5.x as of 2026-09) — no account needed to install
 uv pip install modal
 
-# Authenticate (opens browser for login)
+# Authenticate ONLY when you want to deploy/run in the cloud (opens browser for login)
 modal token new
 ```
 
-This creates a token stored in `~/.modal.toml`. The token authenticates all Modal operations.
+This creates a token stored in `~/.modal.toml`. The token authenticates cloud Modal
+operations; it is not needed to write code or run function bodies locally.
 
 ### Verify Setup
 
