@@ -1,20 +1,90 @@
 ---
 name: alterlab-benchling
-description: Integrates the Benchling R&D platform via its REST API and SDK — access the registry (DNA, proteins), inventory, ELN entries and workflows, build Benchling Apps, and query the Benchling Data Warehouse. Use when automating Benchling lab data management, syncing sample registry or inventory records, scripting ELN entries/workflows, or running SQL against the Benchling Data Warehouse. Part of the AlterLab Academic Skills suite.
+description: Writes Benchling integration code against the official benchling-sdk — registry DNA/protein entities, inventory, ELN entries, workflow tasks, Benchling Apps, Data Warehouse SQL — and validates every create/update payload offline by building the SDK's typed models and serializing them, with no Benchling account; analyses Benchling CSV/warehouse exports locally. Running the code against a tenant is an optional step with the user's own API key or OAuth app. Use when scripting a Benchling registry import, inventory audit, ELN entry or workflow task, checking a Benchling payload or script before it touches a tenant, analysing a Benchling export, or querying the Benchling Data Warehouse. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
-compatibility: Requires a Benchling tenant with API access plus an API key or OAuth app credentials; benchling-sdk 1.x (current 1.25.0, Python >=3.9)
+allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*) Bash(uv:*)
+compatibility: "No API key required to write, validate and test the integration offline: benchling-sdk 1.x (current 1.25.0, Python >=3.9) builds and serializes its request models without a tenant, and exports are analysed locally. Optional: the user's own tenant URL plus an API key or OAuth app to run the code against their data."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.2.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: BENCHLING_API_KEY (personal API key — adds reading and writing your own tenant's registry, inventory, notebook and workflows), BENCHLING_CLIENT_SECRET (OAuth app client secret — the same for app or service integrations), BENCHLING_TENANT_URL (your tenant URL; not a secret)"
 ---
 
 # Benchling Integration
 
 ## Overview
 
-Benchling is a cloud platform for life sciences R&D. Access registry entities (DNA, proteins), inventory, electronic lab notebooks, and workflows programmatically via Python SDK and REST API.
+Benchling is a cloud platform for life sciences R&D. Its Python SDK and REST API expose registry entities (DNA, proteins), inventory, electronic lab notebooks, and workflows. This skill's core job needs no account: it writes the integration against the SDK, proves the payloads are well-formed offline, and analyses data the user has exported. Only the final run against the user's tenant uses their credentials.
+
+## Keyless Path (default — no Benchling account)
+
+1. **Write the code against the real SDK.** Install it in a throwaway env (`uv run --with "benchling-sdk>=1.25,<2" --with biopython python ...`) and check method names with `inspect.signature` rather than from memory. Verified in benchling-sdk 1.25.0 (2026-10-22): `dna_sequences.create/bulk_create/update/list`, `containers.list(ancestor_storage_id=...)` (there is no `parent_storage_id` filter), `containers.transfer_into_container` (no `containers.transfer`), `entries.create_entry`, `workflow_tasks.create`; bulk calls return a `TaskHelper` (no `wait_for_task` function).
+2. **Validate payloads offline.** Every request model serializes with `.to_dict()` — that is the exact JSON body the SDK will send, produced without a network call. The SDK does *not* check bases or ID-assignment rules client-side, so check them yourself:
+
+```python
+from Bio import SeqIO
+from benchling_sdk.models import DnaSequenceBulkCreate, NamingStrategy
+
+IUPAC_DNA = set("ACGTRYSWKMBDHVN")
+records, problems, seen = [], [], set()
+for rec in SeqIO.parse("constructs.fasta", "fasta"):
+    bases = str(rec.seq).upper()
+    if bad := sorted(set(bases) - IUPAC_DNA):          # e.g. 'U' pasted from an mRNA record
+        problems.append(f"{rec.id}: non-IUPAC DNA characters {bad}")
+    if rec.id in seen:                                   # creates two entities with one name
+        problems.append(f"{rec.id}: duplicate name")
+    seen.add(rec.id)
+    records.append(DnaSequenceBulkCreate(
+        name=rec.id, bases=bases, is_circular=True, folder_id="lib_FOLDER",
+        registry_id="src_REGISTRY", naming_strategy=NamingStrategy.NEW_IDS))
+body = [r.to_dict() for r in records]   # camelCase JSON: folderId, registryId, namingStrategy...
+```
+
+   Verified offline: a plain-string `naming_strategy="NEW_IDS"` constructs but fails at `.to_dict()` (`AttributeError: 'str' object has no attribute 'value'`); `entity_registry_id` together with `naming_strategy` serializes fine client-side and is rejected by the server, so flag it before running.
+3. **Analyse exports locally.** Inventory, registry and result exports (CSV/XLSX from the web app, or a Data Warehouse extract the user already has) are read with pandas/polars — no credentials.
+4. **Hand over the run step.** Deliver the script plus a dry-run summary (what it will create, update or archive, and where). Running it against a tenant is the user's call, with their key; writes to a production registry should go through a test folder or sandbox tenant first.
+
+## Core Capabilities
+
+### 1. Install, and Connect to Your Tenant (optional)
+
+**Python SDK Installation:**
+```bash
+# Stable release (benchling-sdk 1.x; current 1.25.0, requires Python >= 3.9)
+uv add "benchling-sdk>=1.25,<2"
+```
+The SDK follows SDK-level semver, not the API version, so check the changelog before bumping a major.
+
+**Authentication** — only for running the code against the user's own tenant. API key (scripts):
+```python
+import os
+from benchling_sdk.benchling import Benchling
+from benchling_sdk.auth.api_key_auth import ApiKeyAuth
+
+benchling = Benchling(
+    url="https://your-tenant.benchling.com",
+    auth_method=ApiKeyAuth(os.environ["BENCHLING_API_KEY"])
+)
+```
+
+OAuth Client Credentials (for apps):
+```python
+from benchling_sdk.auth.client_credentials_oauth2 import ClientCredentialsOAuth2
+
+auth_method = ClientCredentialsOAuth2(
+    client_id="your_client_id",
+    client_secret=os.environ["BENCHLING_CLIENT_SECRET"]
+)
+benchling = Benchling(url="https://your-tenant.benchling.com", auth_method=auth_method)
+```
+
+**Key Points:**
+- API keys are obtained from Profile Settings in Benchling; permissions mirror the user's UI permissions
+- Keep credentials in environment variables or a secret manager, never in code or notebooks
+- If `BENCHLING_API_KEY` is not set, stop at the validated script and dry-run summary — never fall back to another tenant or invent results
+
+For detailed authentication information including OIDC and security best practices, refer to `references/authentication.md`.
 
 ## When to Use This Skill
 
@@ -136,21 +206,7 @@ sequence = benchling.dna_sequences.create(
 you **cannot** set both `entity_registry_id` and `naming_strategy` at the same
 time (use one or the other for ID assignment).
 
-**Updating Entities:**
-```python
-from benchling_sdk.models import DnaSequenceUpdate
-from benchling_sdk.helpers.serialization_helpers import fields
-
-updated = benchling.dna_sequences.update(
-    dna_sequence_id="seq_abc123",
-    dna_sequence=DnaSequenceUpdate(
-        name="Updated Plasmid Name",
-        fields=fields({"gene_name": {"value": "mCherry"}})
-    )
-)
-```
-
-Unspecified fields remain unchanged, allowing partial updates.
+**Updating Entities:** `benchling.dna_sequences.update(dna_sequence_id="seq_abc123", dna_sequence=DnaSequenceUpdate(name=..., fields=fields({...})))`; unspecified fields remain unchanged (partial update).
 
 **Listing and Pagination:**
 ```python
@@ -193,18 +249,7 @@ container = benchling.containers.create(
 )
 ```
 
-**Managing Boxes:**
-```python
-from benchling_sdk.models import BoxCreate
-
-box = benchling.boxes.create(
-    BoxCreate(
-        name="Freezer Box A1",
-        schema_id="box_schema_abc123",
-        parent_storage_id="loc_abc123"
-    )
-)
-```
+**Managing Boxes:** `benchling.boxes.create(BoxCreate(name="Freezer Box A1", schema_id="box_schema_abc123", parent_storage_id="loc_abc123"))`.
 
 **Transferring Items:**
 
@@ -308,12 +353,6 @@ result = task.wait_for_response(
 There is no top-level `wait_for_task(benchling, task_id=...)` function in 1.x;
 the helper hangs off the returned task object.
 
-**Key Workflow Operations:**
-- Create and manage workflow tasks
-- Update task statuses and assignments
-- Execute bulk operations asynchronously
-- Monitor task progress
-
 ### 6. Events & Integration
 
 Subscribe to Benchling events (entity create/update/archive, inventory transfers,
@@ -333,55 +372,12 @@ Looker, Power BI) using warehouse credentials issued per user
 
 ## Best Practices
 
-### Error Handling
+### Error Handling, Pagination, Fields
 
-The SDK automatically retries failed requests:
-```python
-# Automatic retry for 429, 502, 503, 504 status codes
-# Up to 5 retries with exponential backoff
-# Customize retry behavior if needed
-from benchling_sdk.helpers.retry_helpers import RetryStrategy
-
-benchling = Benchling(
-    url="https://your-tenant.benchling.com",
-    auth_method=ApiKeyAuth(os.environ["BENCHLING_API_KEY"]),
-    retry_strategy=RetryStrategy(max_tries=3)
-)
-```
-
-### Pagination Efficiency
-
-Use generators for memory-efficient pagination:
-```python
-# Generator-based iteration
-for page in benchling.dna_sequences.list():
-    for sequence in page:
-        process(sequence)
-
-# Check estimated count without loading all pages
-total = benchling.dna_sequences.list().estimated_count()
-```
-
-### Schema Fields Helper
-
-Use the `fields()` helper for custom schema fields:
-```python
-# Convert dict to Fields object
-from benchling_sdk.helpers.serialization_helpers import fields
-
-custom_fields = fields({
-    "concentration": {"value": "100 ng/μL"},
-    "date_prepared": {"value": "2026-09-23"},
-    "notes": {"value": "High quality prep"}
-})
-```
-
-### Forward Compatibility
-
-The SDK handles unknown enum values and types gracefully:
-- Unknown enum values are preserved
-- Unrecognized polymorphic types return `UnknownType`
-- Allows working with newer API versions
+- The SDK retries 429/502/503/504 up to 5 times with backoff by default (`Benchling(..., retry_strategy=RetryStrategy(max_tries=3))` from `benchling_sdk.helpers.retry_helpers` changes it).
+- `list(...)` returns a lazy page iterator: `for page in it: for item in page:`; `it.estimated_count()` avoids loading every page.
+- Schema fields go through `fields({"concentration": {"value": "100 ng/μL"}})` (`benchling_sdk.helpers.serialization_helpers`).
+- Unknown enum values are preserved and unrecognized polymorphic types return `UnknownType`, so newer API versions do not break parsing.
 
 ### Security Considerations
 
@@ -401,23 +397,10 @@ all entity types), **api_endpoints.md** (REST endpoints for direct HTTP calls).
 
 For many records prefer a single `bulk_create` (returns a `TaskHelper`) over a
 per-record `create` loop — it is one async job instead of N requests. Note the
-bulk call takes `DnaSequenceBulkCreate` objects, not `DnaSequenceCreate`:
+bulk call takes `DnaSequenceBulkCreate` objects, not `DnaSequenceCreate`. Build and
+validate `records` offline with the Keyless Path snippet, fix every reported problem, then:
 ```python
-# Import multiple sequences from a FASTA file in one bulk job
-from Bio import SeqIO
-from benchling_sdk.models import DnaSequenceBulkCreate
-
-to_create = [
-    DnaSequenceBulkCreate(
-        name=record.id,
-        bases=str(record.seq),
-        is_circular=False,
-        folder_id="fld_abc123",
-    )
-    for record in SeqIO.parse("sequences.fasta", "fasta")
-]
-
-task = benchling.dna_sequences.bulk_create(to_create)
+task = benchling.dna_sequences.bulk_create(records)   # needs BENCHLING_API_KEY
 task.wait_for_response()  # blocks until the bulk job finishes
 ```
 (For a handful of records a plain `benchling.dna_sequences.create(...)` loop with
@@ -473,6 +456,9 @@ for page in benchling.dna_sequences.list(schema_id="ts_target_schema"):
 
 # Then write export_data to CSV/database as needed (e.g. csv.DictWriter).
 ```
+Without API access, the same report runs offline on a CSV/XLSX export from the
+Benchling web app: load it with pandas, filter (archived rows usually excluded), and
+state which export and date the numbers come from.
 
 ## Additional Resources
 

@@ -1,0 +1,11 @@
+Name,Barcode,Location,Schema,Contents,Concentration (ng/uL),Volume (uL),Archived
+GFP-prep-01,CT-0001,FRZ-A1,Plasmid Prep,pGFP-01,182,50,FALSE
+GFP-prep-02,CT-0002,FRZ-A1,Plasmid Prep,pGFP-01,41,45,FALSE
+GFP-prep-03,,FRZ-A1,Plasmid Prep,pGFP-02,97,30,FALSE
+RFP-prep-01,CT-0004,FRZ-A1,Plasmid Prep,pRFP-03,23,60,FALSE
+LAC-prep-01,CT-0005,FRZ-A1,Plasmid Prep,pLAC-05,250,20,FALSE
+GFP-prep-04,CT-0006,FRZ-A2,Plasmid Prep,pGFP-02,66,40,FALSE
+GFP-prep-05,CT-0007,FRZ-A1,Plasmid Prep,pGFP-02,12,25,TRUE
+LAC-prep-02,,FRZ-A2,Plasmid Prep,pLAC-05,48,35,FALSE
+RFP-prep-02,CT-0009,FRZ-A1,Plasmid Prep,pRFP-03,130,55,FALSE
+GFP-prep-06,CT-0010,FRZ-A1,Plasmid Prep,pGFP-01,35,15,FALSE
