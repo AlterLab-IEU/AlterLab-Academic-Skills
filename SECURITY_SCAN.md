@@ -2,7 +2,7 @@
 
 > **Generated** — do not edit by hand. Regenerate with `python3 scripts/gen_security_scan.py`; CI fails if this file is stale (`--check`) or if the attestation is violated (`--strict`).
 
-This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **264 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
+This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **265 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
 
 ## Attestation
 
@@ -54,6 +54,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `fda.gov` | Regulatory | 3 |
 | `figshare.com` | Research data | 1 |
 | `github.com` | Source / infra | 26 |
+| `google.com` | other (review) | 2 |
 | `graphdrawing.org` | Standards | 1 |
 | `gtexportal.org` | Expression | 2 |
 | `hmdb.ca` | Metabolites | 5 |
@@ -93,13 +94,13 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `uak.gov.tr` | ÜAK (doçentlik) | 2 |
 | `ulakbim.gov.tr` | ULAKBİM | 2 |
 | `uniprot.org` | Proteins | 2 |
-| `uspto.gov` | Patents | 7 |
+| `uspto.gov` | Patents | 12 |
 | `w3.org` | Standards | 5 |
 | `wikipedia.org` | Reference | 1 |
 | `yahoo.com` | other (review) | 1 |
 | `yok.gov.tr` | YÖK | 3 |
 
-_73 distinct domains._
+_74 distinct domains._
 
 ## Method
 

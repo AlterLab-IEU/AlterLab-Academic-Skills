@@ -2,17 +2,18 @@
 """
 USPTO Trademark API Helper
 
-Provides functions for searching and retrieving trademark data using USPTO
-Trademark Status & Document Retrieval (TSDR) API.
+Retrieves trademark status, owners, goods/services and prosecution history.
 
-Requires:
-    - requests library: uv pip install requests
-    - TSDR API key from https://account.uspto.gov/api-manager/ (a separate key
-      from the Open Data Portal key), sent in the "USPTO-API-KEY" header.
-      Limits: 60 requests/minute per key; 4/minute for PDF and ZIP downloads.
+Backends:
+    web (default without a key) - the public TSDR status page
+        (tsdr.uspto.gov/statusview/sn<serial>), parsed by uspto_public.py; no key.
+    api (default with a key)    - the TSDR API (tsdrapi.uspto.gov) with a TSDR key from
+        https://account.uspto.gov/api-manager/ (separate from the ODP key), sent in the
+        "USPTO-API-KEY" header; 60 requests/minute, 4/minute for PDF and ZIP downloads.
+        --backend api without a key exits with an error instead of using the web page.
 
 Environment variables:
-    USPTO_TSDR_API_KEY - TSDR API key (USPTO_API_KEY is accepted as a fallback)
+    USPTO_TSDR_API_KEY - optional TSDR API key (USPTO_API_KEY is accepted as a fallback)
 
 The old Trademark Assignment Search host (assignment-api.uspto.gov) no longer
 resolves (verified 2026-09); ownership changes are in the TSDR status record
@@ -22,8 +23,17 @@ and in the USPTO trademark assignment bulk data on data.uspto.gov.
 import os
 import sys
 import json
-import requests
 from typing import Dict, List, Optional, Any
+
+try:
+    import requests  # only the keyed TSDR API backend needs it
+except ImportError:  # pragma: no cover
+    requests = None
+
+try:
+    import uspto_public
+except ImportError:  # imported as scripts.trademark_client
+    from scripts import uspto_public
 
 
 class TrademarkClient:
@@ -32,16 +42,26 @@ class TrademarkClient:
     TSDR_BASE_URL = "https://tsdrapi.uspto.gov/ts/cd"
     TIMEOUT = 60
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, backend: str = "auto"):
         """
-        Initialize client with API key.
+        Initialize the client.
 
         Args:
-            api_key: TSDR API key (defaults to USPTO_TSDR_API_KEY, then USPTO_API_KEY)
+            api_key: optional TSDR API key (defaults to USPTO_TSDR_API_KEY, then USPTO_API_KEY)
+            backend: "auto" (api with a key, else the keyless web page), "web", or "api"
         """
         self.api_key = api_key or os.getenv("USPTO_TSDR_API_KEY") or os.getenv("USPTO_API_KEY")
-        if not self.api_key:
-            raise ValueError("API key required. Set USPTO_TSDR_API_KEY or pass api_key=.")
+        if backend == "api" and not self.api_key:
+            raise ValueError("The TSDR API backend needs USPTO_TSDR_API_KEY (account.uspto.gov/"
+                             "api-manager) or api_key=. Without a key use backend='web' "
+                             "(the public TSDR status page).")
+        self.backend = "api" if (backend == "api" or (backend == "auto" and self.api_key)) else "web"
+        if self.backend == "web":
+            if backend == "auto":
+                print("USPTO_TSDR_API_KEY not set: using the keyless TSDR status page "
+                      "(tsdr.uspto.gov/statusview).", file=sys.stderr)
+            self.headers = {}
+            return
 
         # TSDR reads the key from "USPTO-API-KEY"; an X-Api-Key header is ignored
         # and the request is treated as keyless (HTTP 401).
@@ -57,6 +77,8 @@ class TrademarkClient:
         Returns:
             Trademark data dictionary or None if not found
         """
+        if self.backend == "web":
+            return self._web(serial_number, registration=False)
         # casestatus = case status record; casedocs would return the document list
         url = f"{self.TSDR_BASE_URL}/casestatus/sn{serial_number}/info.json"
 
@@ -79,6 +101,8 @@ class TrademarkClient:
         Returns:
             Trademark data dictionary or None if not found
         """
+        if self.backend == "web":
+            return self._web(registration_number, registration=True)
         url = f"{self.TSDR_BASE_URL}/casestatus/rn{registration_number}/info.json"
 
         try:
@@ -89,6 +113,12 @@ class TrademarkClient:
             if e.response.status_code == 404:
                 return None
             raise
+
+    def _web(self, number: str, registration: bool) -> Optional[Dict]:
+        try:
+            return uspto_public.trademark(number, registration=registration)
+        except SystemExit:  # not found / unavailable
+            return None
 
     def get_trademark_status(self, serial_or_registration: str) -> Dict[str, Any]:
         """
@@ -114,6 +144,20 @@ class TrademarkClient:
 
         if not data:
             return {}
+
+        if self.backend == "web":
+            return {
+                'mark_text': data.get('mark_text'),
+                'status': " - ".join(x for x in (data.get('tm5_status'), data.get('status')) if x),
+                'status_date': data.get('status_date'),
+                'filing_date': data.get('filing_date'),
+                'application_number': data.get('serial_number'),
+                'registration_number': data.get('registration_number'),
+                'registration_date': data.get('registration_date'),
+                'mark_drawing_code': None,
+                'is_registered': data.get('is_registered', False),
+                'source': data.get('source'),
+            }
 
         tm = data.get('TradeMarkAppln', {})
 
@@ -146,6 +190,8 @@ class TrademarkClient:
         if not data:
             return []
 
+        if self.backend == "web":
+            return data.get('goods_and_services', [])
         tm = data.get('TradeMarkAppln', {})
         return tm.get('GoodsAndServices', [])
 
@@ -166,6 +212,8 @@ class TrademarkClient:
         if not data:
             return []
 
+        if self.backend == "web":
+            return [{'name': data.get('owner_name'), 'entity_type': data.get('owner_entity_type')}]
         tm = data.get('TradeMarkAppln', {})
         return tm.get('Owners', [])
 
@@ -186,6 +234,8 @@ class TrademarkClient:
         if not data:
             return []
 
+        if self.backend == "web":
+            return data.get('prosecution_history', [])
         tm = data.get('TradeMarkAppln', {})
         return tm.get('ProsecutionHistoryEntry', [])
 
@@ -207,8 +257,10 @@ class TrademarkClient:
         current_status = status.get('status', '').upper()
         alerts = []
 
-        # Check for problematic statuses
-        if 'ABANDON' in current_status:
+        # Check for problematic statuses (TM5 descriptors on the web backend: LIVE/... or DEAD/...)
+        if current_status.startswith('DEAD/'):
+            alerts.append('⚠️  DEAD - ' + current_status.split(' - ')[0])
+        elif 'ABANDON' in current_status:
             alerts.append('⚠️  ABANDONED - Mark is no longer active')
         elif 'CANCELLED' in current_status:
             alerts.append('⚠️  CANCELLED - Registration cancelled')
@@ -218,18 +270,59 @@ class TrademarkClient:
             alerts.append('⏸️  SUSPENDED - Examination suspended')
         elif 'PUBLISHED' in current_status:
             alerts.append('📢 PUBLISHED - In opposition period')
-        elif 'REGISTERED' in current_status:
+        elif 'REGISTERED' in current_status or current_status.startswith('LIVE/REGISTRATION'):
             alerts.append('✅ ACTIVE - Mark is registered and active')
         elif 'PENDING' in current_status:
             alerts.append('⏳ PENDING - Application under examination')
+
+        next_deadline = _next_maintenance(status.get('registration_date'))
+        if next_deadline and status.get('is_registered'):
+            alerts.append(f"📅 Next maintenance filing due {next_deadline['due']} "
+                          f"({next_deadline['filing']}; window opens {next_deadline['window_opens']}, "
+                          f"6-month grace period after)")
 
         return {
             'mark': status.get('mark_text'),
             'status': current_status,
             'status_date': status.get('status_date'),
             'alerts': alerts,
+            'next_maintenance': next_deadline,
             'needs_attention': len([a for a in alerts if '⚠️' in a]) > 0
         }
+
+
+def _next_maintenance(registration_date: Optional[str]) -> Optional[Dict[str, str]]:
+    """Next Section 8 (year 6) or Sections 8 & 9 (every 10 years) deadline after today."""
+    from datetime import date, datetime
+
+    if not registration_date:
+        return None
+    for fmt in ("%b. %d, %Y", "%b %d, %Y", "%Y-%m-%d"):
+        try:
+            reg = datetime.strptime(registration_date.replace("Sept.", "Sep."), fmt).date()
+            break
+        except ValueError:
+            continue
+    else:
+        return None
+    today = date.today()
+
+    def anniversary(years: int) -> date:
+        try:
+            return reg.replace(year=reg.year + years)
+        except ValueError:  # 29 Feb
+            return reg.replace(year=reg.year + years, day=28)
+
+    if anniversary(6) >= today:
+        due, filing = anniversary(6), "Section 8 declaration of use (between years 5 and 6)"
+    else:
+        n = 10
+        while anniversary(n) < today:
+            n += 10
+        due, filing = anniversary(n), f"Sections 8 & 9 renewal ({n}-year)"
+    return {"due": due.isoformat(), "window_opens": anniversary(
+        (6 if "Section 8 declaration" in filing else int(filing.split("(")[1].split("-")[0])) - 1
+    ).isoformat(), "filing": filing}
 
 
 def main():
@@ -263,8 +356,9 @@ Examples:
   %(prog)s --prosecution 87654321
 
 Environment:
-  Set USPTO_TSDR_API_KEY (or USPTO_API_KEY) to your TSDR key from:
-  https://account.uspto.gov/api-manager/
+  Keyless by default (the public TSDR status page). Optionally set USPTO_TSDR_API_KEY
+  (or USPTO_API_KEY) to a TSDR key from https://account.uspto.gov/api-manager/ to use
+  the TSDR API instead (--backend api).
         """
     )
 
@@ -280,11 +374,13 @@ Environment:
 
     # API key option
     parser.add_argument('--api-key', '-k', help='TSDR API key (overrides USPTO_TSDR_API_KEY)')
+    parser.add_argument('--backend', choices=['auto', 'web', 'api'], default='auto',
+                        help='auto (default): api with a key, else the keyless TSDR status page')
 
     args = parser.parse_args()
 
     try:
-        client = TrademarkClient(api_key=args.api_key)
+        client = TrademarkClient(api_key=args.api_key, backend=args.backend)
 
         if args.serial:
             result = client.get_trademark_by_serial(args.serial)

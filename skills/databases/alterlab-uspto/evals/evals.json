@@ -3,6 +3,7 @@
   "evals": [
     {
       "id": "patent-search-by-assignee-cpc",
+      "requires": ["env:USPTO_ODP_API_KEY"],
       "prompt": "Find me machine learning patents assigned to Google from 2023-2024 in the G06N classification — I want patent numbers, titles, and dates.",
       "expected_output": "Triggers the USPTO skill. Notes that the PatentsView PatentSearch API is offline since the March 2026 ODP migration and searches the ODP Patent File Wrapper instead (POST https://api.uspto.gov/api/v1/patent/applications/search, X-API-KEY) with an applicant/title query, a grantDate range filter for 2023-2024, and a cpcClassificationBag condition for G06N, returning application numbers, patent numbers, titles, and grant dates; flags that first-named applicant is not the same as current assignee.",
       "assertions": [
@@ -13,6 +14,7 @@
     },
     {
       "id": "examination-history-peds",
+      "requires": ["env:USPTO_ODP_API_KEY"],
       "prompt": "Pull the prosecution history for application 16123456 — how many non-final and final rejections, and what's the current status and pendency?",
       "expected_output": "Triggers the USPTO skill. Uses the ODP Patent File Wrapper (the successor to the retired PEDS; FileWrapperClient in scripts/peds_client.py) to call analyze_prosecution and get_status_summary on the application number — /transactions eventDataBag and /meta-data — reporting counts of CTNF (non-final) and CTFR (final) rejections, current status, filing date, and days since filing.",
       "assertions": [
@@ -24,7 +26,7 @@
     {
       "id": "trademark-status-tsdr",
       "prompt": "Check the status of trademark serial number 87654321 — is it registered, and does it need any attention?",
-      "expected_output": "Triggers the USPTO skill. Uses the TSDR API via TrademarkClient (get_trademark_status / check_trademark_health) on serial number 87654321, reporting mark text, status (e.g. REGISTERED, PENDING), filing/registration dates, and any alerts. Treats 87654321 as a trademark serial number.",
+      "expected_output": "Triggers the USPTO skill without asking for a key. Reads TSDR for serial number 87654321 — the keyless TSDR status page (uspto_public.py trademark 87654321 or TrademarkClient check_trademark_health on the web backend), or the TSDR API if a key is set — and reports mark BENTOSTACK, filed Oct. 20, 2017, registered Sep. 04, 2018 as Reg. No. 5553479 (Principal Register, class 009), status LIVE/registered with the Sections 8 & 15 declaration accepted on Jan. 28, 2025, owner Function 101, and the next maintenance deadline (Sections 8 & 9 renewal due Sep. 4, 2028, window opening Sep. 4, 2027). Treats 87654321 as a trademark serial number.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "TSDR" },
@@ -33,11 +35,42 @@
     },
     {
       "id": "patent-assignment-history",
+      "requires": ["env:USPTO_ODP_API_KEY"],
       "prompt": "Track the ownership/assignment history for patent 11234567 — who assigned it to whom and when?",
       "expected_output": "Triggers the USPTO skill. Resolves the patent to its application via the ODP Patent File Wrapper, calls GET /api/v1/patent/applications/{app}/assignment (the old assignment-api.uspto.gov host no longer resolves), and reports assignmentRecordedDate, assignors, assignees, conveyanceText, and reel/frame for each recorded transfer.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Retrieves and parses patent assignment/ownership transfer records from the ODP Patent File Wrapper assignment endpoint." }
+      ]
+    },
+    {
+      "id": "patent-search-keyless-ppubs",
+      "prompt": "I don't have any USPTO API key. Search granted US patents assigned to Google with CPC G06N that were published in 2023 or 2024 and give me the count plus the most recent ones with numbers, titles, and dates.",
+      "expected_output": "Triggers the USPTO skill keyless: searches USPTO Patent Public Search (scripts/uspto_public.py search 'google.as. AND G06N$.cpc. AND @pd>=20230101<=20241231', or --assignee google --cpc G06N --from 2023-01-01 --to 2024-12-31) and reports the hit count (about 916 grants as of 2026-10-22) with the newest results first — e.g. US 12182537 B2 'Transposing in a matrix-vector processor' (2024-12-31) — each with patent number, title, publication date, application number and CPC codes. Notes that .as. matches the assignee printed at grant (not later transfers) and that the ODP key is optional.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "G06N" },
+        { "type": "behavior", "value": "Runs a keyless USPTO Patent Public Search with assignee, CPC G06N and a 2023-2024 date range, and returns a count plus patent numbers, titles and dates without asking for an API key." }
+      ]
+    },
+    {
+      "id": "application-to-patent-keyless",
+      "prompt": "What happened to US patent application 16/123,456? Was it granted, who owns it, and how long did it take from filing to grant? I have no ODP key.",
+      "expected_output": "Triggers the USPTO skill keyless: resolves the application through USPTO Patent Public Search (scripts/uspto_public.py app 16/123,456) to US 10902286 B2, 'Learning assistance device, method of operating learning assistance device, ...', assigned to FUJIFILM Corporation (inventor Shoji Kanada), filed 2018-09-06 and granted 2021-01-26 (pre-grant publication US 2019/0095759 A1) — about 873 days, roughly 2.4 years, of pendency. Says that the office-action-by-office-action transaction list needs the optional ODP key (or the Google Patents legal-events rows, when that page loads), rather than inventing rejection counts.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "10902286" },
+        { "type": "behavior", "value": "Identifies the grant for application 16/123,456 with its owner, filing date and grant date and computes the pendency, without requiring an API key and without fabricating office-action counts." }
+      ]
+    },
+    {
+      "id": "assignment-history-keyless",
+      "prompt": "Without any USPTO API key: who has owned US 11,234,567 and are there security interests recorded against it?",
+      "expected_output": "Triggers the USPTO skill keyless. Takes the assignee at grant from USPTO Patent Public Search (uspto_public.py doc 11234567: SharkNinja Operating LLC, application 16/117,894) and the recorded assignments from the Google Patents page's Legal events (WebFetch https://patents.google.com/patent/US11234567B2/en, code AS): the inventors' assignment to SharkNinja Operating LLC (reel/frame 047902/0718, recorded 2019-01-04) and a notice of grant of security interest to Bank of America, N.A. as administrative agent (reel/frame 064600/0098, 2023-07-20). If Google Patents refuses the request (it intermittently returns 503), says so plainly, reports the at-grant assignee, and names the optional ODP assignment endpoint as the authoritative route instead of inventing transfers.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "SharkNinja" },
+        { "type": "behavior", "value": "Reports ownership from keyless sources with reel/frame for recorded assignments, or clearly states which keyless source was unavailable instead of fabricating assignment records." }
       ]
     },
     {

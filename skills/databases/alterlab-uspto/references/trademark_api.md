@@ -21,7 +21,7 @@ TSDR enables programmatic retrieval of trademark case status documents and infor
 
 ### Authentication
 
-Requires API key registration at: https://account.uspto.gov/api-manager/
+The TSDR **API** needs a key from https://account.uspto.gov/api-manager/ (optional for this skill: the public status page `https://tsdr.uspto.gov/statusview/sn<serial>` carries the same status, owner, goods/services and prosecution history keylessly — `scripts/uspto_public.py trademark <serial>`).
 
 Include the TSDR key in the request header:
 ```

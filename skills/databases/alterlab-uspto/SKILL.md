@@ -1,25 +1,29 @@
 ---
 name: alterlab-uspto
-description: Access USPTO patent and trademark data through the Open Data Portal (ODP) APIs — Patent File Wrapper search, examination history (the PEDS successor), continuity, assignments, office actions, PTAB decisions — and trademark status via TSDR. Use when searching patents or trademarks, conducting prior art searches, retrieving patent examination or assignment records, or doing intellectual property (IP) analysis. Part of the AlterLab Academic Skills suite.
+description: Access USPTO patent and trademark data — keyless full-text patent search through USPTO Patent Public Search, patent legal events and recorded assignments from Google Patents pages, and trademark status, owners, goods/services and prosecution history from TSDR status pages — with optional Open Data Portal (ODP) and TSDR API keys for Patent File Wrapper examination history, continuity, office actions and PTAB data. Use when searching patents or trademarks, conducting prior art searches, retrieving patent examination or assignment records, or doing intellectual property (IP) analysis. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Requires free keys — an ODP API key (data.uspto.gov, USPTO.gov account; X-API-KEY header) for patent data and a TSDR key (account.uspto.gov/api-manager; USPTO-API-KEY header) for trademarks. PEDS, the Assignment Search API, and the PatentsView PatentSearch API are offline as of 2026-09.
+compatibility: No API key required. Keyless — USPTO Patent Public Search (ppubs.uspto.gov, anonymous session, full-text grants and applications) and TSDR status pages (tsdr.uspto.gov/statusview) via scripts/uspto_public.py, plus Google Patents pages through WebFetch for legal events and assignments. Optional USPTO_ODP_API_KEY (Patent File Wrapper, office actions, PTAB) and USPTO_TSDR_API_KEY (TSDR API). PEDS, Assignment Search and PatentsView are offline (2026).
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.2.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: USPTO_ODP_API_KEY (ODP Patent File Wrapper transactions, continuity, office actions, PTAB, bulk-data catalog), USPTO_TSDR_API_KEY (TSDR API instead of the public status page), USPTO_API_KEY (fallback name read for either)"
 ---
 
 # USPTO Database
 
 ## Overview
 
-USPTO data for patents and trademarks: application and patent bibliographic
-search, examination (prosecution) history, continuity, assignments, office
-actions, PTAB proceedings, and trademark status (TSDR), for IP analysis and prior
-art searches. Most patent APIs now live on the **USPTO Open Data Portal (ODP)**
-at `https://api.uspto.gov`; several older services were retired in 2025–2026, so
-check the status table below before reusing older code.
+USPTO data for patents and trademarks, for IP analysis and prior art searches.
+**Without any key** the skill searches full text of US grants and applications in
+USPTO's own Patent Public Search, reads a patent's legal events (status changes,
+recorded assignments with reel/frame) from its Google Patents page, and reads a
+trademark's status, owner, goods/services and prosecution history from its TSDR
+status page. The keyed **USPTO Open Data Portal (ODP)** at `https://api.uspto.gov`
+adds the complete file-wrapper transaction list, continuity, office actions and
+PTAB data; several older services were retired in 2025–2026, so check the status
+table below before reusing older code.
 
 ## When to Use This Skill
 
@@ -43,6 +47,21 @@ check the status table below before reusing older code.
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-openalex`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
+## Keyless Routes (default — verified live 2026-10-22)
+
+| Need | Keyless route | Notes |
+|------|---------------|-------|
+| Patent / publication search (title, abstract, claims, assignee, inventor, CPC, dates) | `python scripts/uspto_public.py search 'google.as. AND G06N$.cpc. AND @pd>=20230101<=20241231'` (or `--assignee google --cpc G06N --from 2023-01-01 --to 2024-12-31`) → 916 grants | USPTO Patent Public Search backend (anonymous session); undocumented JSON, keep volumes modest. Syntax: `.ti. .ab. .clm. .as. .aanm. .in. .cpc. .pn.`, `$` truncation, `@pd`/`@ad` date ranges; `--db USPAT,US-PGPUB` |
+| One patent: bibliographic data, abstract, claims, cited US references | `python scripts/uspto_public.py doc 11234567` | assignee at grant, application number, CPC |
+| Application number → grant / pre-grant publication | `python scripts/uspto_public.py app 16/123,456` | unpublished or abandoned-before-publication applications are not in Patent Public Search |
+| Legal events: USPTO status changes (STPP/STCF), recorded assignments (AS, reel/frame), fees | WebFetch `https://patents.google.com/patent/US11234567B2/en` ("Legal events" table) | Google blocks scripted fetches; WebFetch worked on 2026-10-22 but later calls got HTTP 503 — retry, and if it stays blocked say so (do not guess events). STPP rows are status snapshots, not the full transaction list |
+| Trademark status, owner, goods/services, classes, prosecution history | `python scripts/uspto_public.py trademark 87654321` (`--registration` for a reg. no.) or `trademark_client.py --health 87654321` | parses `https://tsdr.uspto.gov/statusview/sn87654321` |
+| EP bibliographic data (EPO, linked open data) | `https://data.epo.org/linked-data/data/publication/EP/1000000/A1/-.json` | keyless; EPO OPS needs registration |
+
+Not reachable keylessly from here: the full file-wrapper transaction list of pending
+applications, office-action text/rejections, PTAB records (ODP key), and the PatentsView
+and `bulkdata.uspto.gov` hosts. Say which route produced each fact.
+
 ## USPTO API Status (verified 2026-09-23)
 
 | Need | Current service | Auth | Status |
@@ -65,7 +84,7 @@ and say so when a user asks for PatentsView-style queries.
 
 ## Quick Start
 
-### API Keys
+### Optional API Keys (keyless routes above need none)
 
 - **ODP key** (Patent File Wrapper, office actions, PTAB, petitions, bulk data):
   sign in at https://data.uspto.gov with a USPTO.gov account (required for ODP
@@ -82,20 +101,28 @@ export USPTO_TSDR_API_KEY="..."   # trademark_client.py
 
 ### Helper Scripts
 
-- **`scripts/patent_search.py`** — ODP Patent File Wrapper search (title,
-  inventor, applicant, grant-date range, patent-number lookup)
+- **`scripts/uspto_public.py`** — keyless: Patent Public Search (`search`, `doc`) and
+  TSDR status pages (`trademark`); standard library only
+- **`scripts/patent_search.py`** — patent search; keyless Patent Public Search by
+  default, ODP Patent File Wrapper with `USPTO_ODP_API_KEY` (`--backend odp` without
+  a key exits 2 naming the variable instead of answering from another source)
 - **`scripts/peds_client.py`** — ODP file-wrapper client, the PEDS successor
   (`FileWrapperClient`, alias `PEDSHelper`): status summary, transactions,
   office-action events, prosecution statistics, continuity, assignments
-- **`scripts/trademark_client.py`** — TSDR client for trademark status, owners,
-  goods/services, and prosecution history
+- **`scripts/trademark_client.py`** — trademark status, owners, goods/services,
+  prosecution history, health check with the next Section 8/9 deadline; keyless
+  TSDR status page by default, TSDR API with `USPTO_TSDR_API_KEY`
 
-The scripts were checked against the ODP OpenAPI spec and live endpoint routing
-(401/403 without a key); run them with your own key before relying on them.
+The keyed ODP/TSDR paths were checked against the ODP OpenAPI spec and live endpoint
+routing (401 without a key); run them with your own key before relying on them.
 
 ## Task 1: Searching Patents
 
-POST a JSON body to `https://api.uspto.gov/api/v1/patent/applications/search`:
+Keyless (default): `python scripts/uspto_public.py search '<query>' --limit 50` — see
+"Keyless Routes". `.as.` matches the assignee printed at grant; for later ownership
+changes read the patent's Google Patents legal events (Task 4).
+
+With an ODP key, POST a JSON body to `https://api.uspto.gov/api/v1/patent/applications/search`:
 
 ```python
 import os, requests
@@ -129,6 +156,15 @@ it; `references/usage_examples.md` (Task 1) has worked code.
 
 ## Task 2: Retrieving Patent Examination Data
 
+Keyless: resolve the application to its grant or publication (`uspto_public.py app
+16/123,456` → US 10902286 B2, filed 2018-09-06, granted 2021-01-26), then WebFetch its
+Google Patents page and read the "Legal events"
+STPP/STCF rows (e.g. "NON FINAL ACTION MAILED", "FINAL REJECTION MAILED", "NOTICE OF
+ALLOWANCE MAILED", "PATENTED CASE"). Count rejections from them only as a lower bound —
+they are status snapshots, and some actions appear only as the response that followed
+them — and compute pendency from the filing and grant dates. The full transaction list
+(event codes below) needs the ODP key:
+
 `GET https://api.uspto.gov/api/v1/patent/applications/{applicationNumberText}/transactions`
 returns `eventDataBag[]` items of `{eventCode, eventDescriptionText, eventDate}`;
 `/meta-data` returns status, dates, examiner, and art unit. `scripts/peds_client.py`
@@ -145,7 +181,17 @@ its PEDS/library sections are historical.
 
 ## Task 3: Searching and Monitoring Trademarks
 
-### Using TSDR (Trademark Status & Document Retrieval)
+### Keyless: the TSDR status page
+
+`python scripts/uspto_public.py trademark 87654321` (or `trademark_client.py --health
+87654321`) reads `https://tsdr.uspto.gov/statusview/sn87654321` — the page behind the
+TSDR web app — and returns mark, TM5 status descriptor, status text and date,
+filing/registration dates, owner, goods/services with classes and first use, and the
+prosecution history. `--health` adds alerts and the next Section 8 / Sections 8 & 9
+deadline. Verified: 87654321 = BENTOSTACK, Reg. 5553479 (2018-09-04), LIVE, Sections 8
+& 15 accepted 2025-01-28, next renewal due 2028-09-04.
+
+### Using the TSDR API (optional key)
 
 `GET https://tsdrapi.uspto.gov/ts/cd/casestatus/sn{serial}/info` (or
 `rn{registration}`) returns the ST96 XML status record; `casedocs/{caseid}/info`
@@ -163,7 +209,14 @@ ownership tracking.
 
 ## Task 4: Tracking Assignments and Ownership
 
-The Assignment Search API host (`assignment-api.uspto.gov`) is gone. For a given
+Keyless: WebFetch the patent's Google Patents page (`https://patents.google.com/patent/US11234567B2/en`)
+and read the "Legal events" rows with code **AS** — each gives the recorded date, owner
+(assignee), assignors, conveyance and reel/frame (verified: US11234567B2 → assignment
+from the inventors to SharkNinja Operating LLC, reel/frame 047902/0718; security interest
+to Bank of America, N.A., 064600/0098, 2023-07-20). Report reel/frame so the record can be
+checked at USPTO.
+
+The Assignment Search API host (`assignment-api.uspto.gov`) is gone. With an ODP key, for a given
 application, `GET https://api.uspto.gov/api/v1/patent/applications/{app}/assignment`
 returns `assignmentBag[]` with `reelAndFrameNumber`, `conveyanceText`,
 `assignmentRecordedDate`, `assignorBag`, and `assigneeBag`
@@ -174,7 +227,10 @@ questions use the assignment datasets in the ODP bulk-data catalog.
 transfer), `SECURITY AGREEMENT`, `MERGER`, `CHANGE OF NAME`, `ASSIGNMENT OF
 PARTIAL INTEREST`.
 
-## Task 5: Office Actions, Citations, and PTAB
+## Task 5: Office Actions, Citations, and PTAB (ODP key)
+
+No verified keyless route; without a key, say so and offer what the keyless routes give
+(cited US references from `uspto_public.py doc`, status events from Google Patents).
 
 - **Office actions** (text retrieval, citations from PTO-892/1449, rejections by
   statute 101/102/103/112/double patenting, and AI-extracted enriched citations)
@@ -199,8 +255,8 @@ rejections API for the grounds of rejection. `references/usage_examples.md`
 
 ## Best Practices
 
-1. **Keys**: keep ODP and TSDR keys in environment variables, never in code or
-   version control; they are different keys sent in different headers.
+1. **Keys (optional)**: keep ODP and TSDR keys in environment variables, never in code
+   or version control; they are different keys sent in different headers.
 2. **Rate limits**: TSDR allows 60 requests/minute per key (4/minute for PDF/ZIP);
    back off exponentially on HTTP 429 for every USPTO API.
 3. **Coverage**: Patent File Wrapper holds applications filed from 2001-01-01;
@@ -225,6 +281,7 @@ rejections API for the grounds of rejection. `references/usage_examples.md`
 - `references/additional_apis.md` - Office actions, citations, PTAB, litigation datasets
 
 ### Scripts
-- `scripts/patent_search.py` - ODP Patent File Wrapper search client
+- `scripts/uspto_public.py` - keyless Patent Public Search + TSDR status pages
+- `scripts/patent_search.py` - patent search (keyless by default; ODP with a key)
 - `scripts/peds_client.py` - ODP file-wrapper client (PEDS successor)
-- `scripts/trademark_client.py` - TSDR trademark client
+- `scripts/trademark_client.py` - trademark client (keyless status page; TSDR API with a key)
