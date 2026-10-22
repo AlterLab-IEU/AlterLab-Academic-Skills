@@ -160,11 +160,12 @@ User: "Review this paper"
 
 ### Checkpoint Rules
 
-1. **After Phase 0 completes**: Present Reviewer Configuration Card to user; user can adjust reviewer identities
+1. **After Phase 0 completes**: Present Reviewer Configuration Card to user; user can adjust reviewer identities. Unless the user asked to approve the panel first, continue to Phase 1 and Phase 2 in the same reply — a full review never ends at the card; the user can adjust the panel and re-run
 2. **Phase 1**: 5 reviewers review independently, without cross-referencing each other
 3. **Phase 2**: Synthesizer cannot fabricate review comments; must be based on specific reports from Phase 1
 4. **Devil's Advocate special handling**: If the Devil's Advocate finds CRITICAL issues, the Editorial Decision cannot be Accept
 5. **Phase 2.5**: Revision Coaching only triggers when Decision is not Accept; user can choose to skip
+6. **Revision Roadmap is always emitted**: a full review ends with the Editorial Decision Letter followed by a section headed `Revision Roadmap` (Priority 1 / 2 / 3 items, each traceable to a reviewer comment — `templates/editorial_decision_template.md`); guided mode ends its dialogue with the same section
 
 ---
 
@@ -318,6 +319,8 @@ Phase 2: Does not produce full Editorial Decision; enters dialogue mode instead
 6. **Cross-disciplinary challenge**: Introduce Reviewer 3's unique perspective
 7. **Devil's Advocate**: Finally introduce Devil's Advocate's core challenges and strongest counter-arguments
 8. **Wrap up**: When all key issues have been discussed, provide a structured Revision Roadmap
+
+The first reply therefore carries only step 1 — one or two strengths quoted from the paper and the most critical structural issue put as a question — plus one line saying the dialogue ends with a Revision Roadmap and that "just tell me" gives it now. Do not list the other issues in that reply.
 
 ### Dialogue Rules
 
