@@ -47,13 +47,17 @@ edgartools sends this identity as the HTTP User-Agent the SEC asks for ("Sample 
 
 ## Installation
 
+No install step: `uv run` resolves the package per run.
+
 ```bash
-uv pip install edgartools
+uv run --python ">=3.11" --with "edgartools>=5.58" python script.py
 # For AI/MCP features:
-uv pip install "edgartools[ai]"
+uv run --python ">=3.11" --with "edgartools[ai]>=5.58" python script.py
 ```
 
-API examples here are checked against edgartools 5.58.0 (current as of 2026-09). To run a one-off without a venv: `uv run --with edgartools python ...`. In 5.x, `cashflow_statement()` is a deprecated alias (removed in 6.0) — use `cash_flow_statement()`.
+Pin the interpreter: edgartools 5.x needs Python >= 3.10, and on an older default Python an
+unpinned `--with edgartools` silently resolves 4.6.3 with the old API. API examples here are
+checked against edgartools 5.58.0 (5.62.0 is current as of 2026-10). In 5.x, `cashflow_statement()` is a deprecated alias (removed in 6.0) — use `cash_flow_statement()`.
 
 ## Core Workflow
 

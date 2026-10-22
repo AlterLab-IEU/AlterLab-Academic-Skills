@@ -2,8 +2,10 @@
 
 ## Installation
 
+No install step (`uv add` needs a project); run each example with:
+
 ```bash
-uv add requests pandas matplotlib
+uv run --python ">=3.11" --with requests --with pandas --with matplotlib python example.py
 ```
 
 ## 1. Discover Available Data

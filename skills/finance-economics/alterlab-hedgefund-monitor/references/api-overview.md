@@ -87,7 +87,7 @@ Each mnemonic can have multiple subseries labeled:
 ## Installation
 
 ```bash
-uv add requests pandas
+uv run --python ">=3.11" --with requests --with pandas python script.py   # no install step
 ```
 
 No dedicated Python client exists — use `requests` directly.
