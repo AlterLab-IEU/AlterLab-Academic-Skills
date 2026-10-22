@@ -4,10 +4,10 @@
     {
       "id": "structured-experimental-data",
       "prompt": "I'm building an evidence table for a meta-analysis on CRISPR gene editing efficiency in human cells. I need the actual sample sizes, methods, and quantitative results from the papers, not just abstracts. Can you pull that?",
-      "expected_output": "Invokes alterlab-bgpt-search and runs the BGPT MCP `search_papers` tool, because the user needs structured experimental data extracted from full-text studies (sample sizes, methods, quantitative results, quality scores) rather than titles/abstracts. Returns the 25+ structured fields per paper suitable for an evidence table.",
+      "expected_output": "Invokes alterlab-bgpt-search, because the user needs structured experimental data extracted from full-text studies (sample sizes, methods, quantitative results, quality scores) rather than titles/abstracts. With no key it takes the keyless path: fulltext_evidence.py finds open-access studies in Europe PMC and downloads their full text, and the answer extracts the 25+ structured fields per paper with a provenance quote for each value (the BGPT MCP `search_papers` tool is the optional backend when the user wants BGPT or has a key). Returns records suitable for an evidence table and says which key studies have no open full text.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Routes to the BGPT MCP search_papers tool and emphasizes structured full-text experimental data (sample sizes, methods, quantitative results, quality scores) rather than abstracts." }
+        { "type": "behavior", "value": "Retrieves full text — through the keyless Europe PMC full-text path (fulltext_evidence.py) or the BGPT MCP search_papers tool — and emphasizes structured full-text experimental data (sample sizes, methods, quantitative results, quality scores) rather than abstracts." }
       ]
     },
     {
@@ -23,7 +23,7 @@
     {
       "id": "quality-scored-evidence",
       "prompt": "For a clinical guideline I need scientific papers on statin use in primary prevention that come with study quality scores and evidence grading. Can you search a database that gives me quality assessments per paper?",
-      "expected_output": "Invokes alterlab-bgpt-search because BGPT returns quality scores and study quality assessments as part of its 25+ structured fields per paper, which is exactly what the user needs for building clinical guideline evidence tables.",
+      "expected_output": "Invokes alterlab-bgpt-search because it returns per-paper study quality assessments as part of its 25+ structured fields, which is exactly what the user needs for building clinical guideline evidence tables. Keyless, it searches Europe PMC for open-access trials (fulltext_evidence.py --design rct), reads their full text, and gives each paper a named-tool quality judgement (e.g. RoB 2 domains) with the reasons quoted from the paper; it notes that paywalled landmark trials without open full text need the abstract, the user's PDF, or BGPT (whose pre-extracted quality scores are the optional backend).",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "quality" }
@@ -37,6 +37,26 @@
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Gathers full-text-extracted methods, protocols, and conclusions rather than a generic web summary." }
+      ]
+    },
+    {
+      "id": "keyless-lookup-by-doi",
+      "prompt": "Pull the structured evidence record for the trial at doi:10.1002/hsr2.73154 from its full text, not the abstract: design, how many were randomised versus analysed, the intervention dose, outcome instruments, effect sizes for each outcome, and your risk-of-bias judgement.",
+      "expected_output": "Invokes alterlab-bgpt-search on its keyless path: fulltext_evidence.py fetch resolves the DOI to PMC13598674 and downloads the open-access full text from Europe PMC, then the answer fills the evidence record from the body: Heydarifard et al. 2026, Health Science Reports, single-centre RCT (IRCT20241213064043N1) of a brief inpatient MBSR programme vs treatment-as-usual in women hospitalised with premature rupture of membranes; 57 randomised, 53 analysed (27 intervention, 26 control), 4 lost to follow-up, per-protocol analysis; 8 weekly in-person sessions of 20-25 min; MHI-28 distress subscale (anxiety, depression), FFMQ and KMSS at baseline, post-intervention and 4 weeks postpartum; repeated-measures ANOVA with time x group interactions, partial eta squared 0.63 (mindfulness), 0.20 (anxiety), 0.46 (depression) and 0.25 (marital satisfaction), all p < 0.001. Risk of bias is judged with a named tool (RoB 2) citing the unblinded participants and providers, self-report outcomes and the per-protocol analysis. Each value carries a section quote.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": ["per-protocol", "per protocol"] },
+        { "type": "behavior", "value": "Reports 57 randomised and 53 analysed (27 vs 26), the 8 weekly 20-25 minute sessions, and the time x group effect sizes (partial eta squared 0.63, 0.20, 0.46, 0.25) taken from the full text, and grounds the risk-of-bias judgement in the per-protocol analysis and lack of participant blinding." }
+      ]
+    },
+    {
+      "id": "keyless-full-text-only-facts",
+      "prompt": "I'm comparing self-help stress interventions. For the van der Zwan et al. 2015 randomized trial of physical activity, mindfulness meditation and HRV biofeedback (Applied Psychophysiology and Biofeedback), extract from the full text how many were randomised versus how many took part, whether any intervention outperformed the others, which one alone improved sleep quality, and anything about the randomisation that affects risk of bias.",
+      "expected_output": "Invokes alterlab-bgpt-search on its keyless path: finds the open-access full text (PMC4648965, DOI 10.1007/s10484-015-9293-x) through Europe PMC with fulltext_evidence.py and extracts from the body: 126 participants randomly allocated (1:1:1, stratified by gender and age) of whom 76 agreed to participate, 19 dropping out after the pre-test before the intervention; 5-week home-practice interventions; all three reduced stress, anxiety and depressive symptoms with no significant between-intervention difference; mindfulness meditation was the only intervention that improved sleep quality; randomisation happened at registration, before informed consent, and dropouts were more often not allocated to their preferred intervention, which bears on attrition bias. Every value carries a section quote.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "126" },
+        { "type": "behavior", "value": "States from the full text that 126 were randomised and 76 took part, that no intervention outperformed the others, that mindfulness meditation alone improved sleep quality, and that allocation before consent (with dropouts more often not getting their preferred arm) raises a risk-of-bias concern." }
       ]
     },
     {
