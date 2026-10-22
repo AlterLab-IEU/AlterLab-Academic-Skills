@@ -103,11 +103,22 @@ from typing import Any, Callable, Optional, Sequence
 # --------------------------------------------------------------------------- #
 
 TOOL_VERSION = "1.2.0"
-DEFAULT_MAILTO = "alterlab.ieu@gmail.com"
+# Contact email for Crossref's polite pool: opt-in (--mailto or ALTERLAB_CONTACT_EMAIL). With
+# none, requests carry no address and use the public pool; no default address is ever sent.
+DEFAULT_MAILTO = os.environ.get("ALTERLAB_CONTACT_EMAIL", "").strip()
 USER_AGENT = (
     "alterlab-citation-verifier/" + TOOL_VERSION + " (https://github.com/AlterLab-IEU/"
-    "AlterLab-Academic-Skills; mailto:{mailto})"
+    "AlterLab-Academic-Skills{contact})"
 )
+
+
+def _user_agent(mailto: str) -> str:
+    return USER_AGENT.format(contact=f"; mailto:{mailto}" if mailto else "")
+
+
+def _mailto_param(mailto: str, sep: str) -> str:
+    """``sep + 'mailto=...'`` when a contact email was given, else ''."""
+    return f"{sep}mailto={urllib.parse.quote(mailto)}" if mailto else ""
 HTTP_TIMEOUT = 15
 RETRIES = 2
 BACKOFF = 1.5
@@ -193,7 +204,7 @@ def _http_get(url: str, mailto: str, accept: str = "application/json",
     401/403, timeout) and NetworkUnavailable on a DNS/connection failure, so the
     caller can tell "offline" and "this source failed" apart from "not found".
     """
-    headers = {"User-Agent": USER_AGENT.format(mailto=mailto), "Accept": accept}
+    headers = {"User-Agent": _user_agent(mailto), "Accept": accept}
     headers.update(extra_headers or {})
     last_exc: Optional[Exception] = None
     for attempt in range(RETRIES + 1):
@@ -1277,8 +1288,7 @@ def parse_bibliography(text: str, fmt: str) -> list[Entry]:
 
 
 def crossref_by_doi(doi: str, mailto: str) -> Optional[dict]:
-    q_mailto = urllib.parse.quote(mailto)
-    url = f"https://api.crossref.org/works/{urllib.parse.quote(doi)}?mailto={q_mailto}"
+    url = f"https://api.crossref.org/works/{urllib.parse.quote(doi)}{_mailto_param(mailto, '?')}"
     data = _http_get(url, mailto)
     if not data or "message" not in data:
         return None
@@ -1294,7 +1304,7 @@ def crossref_by_title(entry: "Entry", mailto: str) -> Optional[dict]:
                                   entry.year) if x)
     url = (
         f"https://api.crossref.org/works?query.bibliographic={urllib.parse.quote(biblio)}"
-        f"&rows=5&mailto={urllib.parse.quote(mailto)}"
+        f"&rows=5{_mailto_param(mailto, '&')}"
     )
     data = _http_get(url, mailto)
     items = (data or {}).get("message", {}).get("items", []) if data else []
@@ -2038,7 +2048,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     ap.add_argument("input", help="Path to a .bib/.txt file, '-' for stdin, or inline text.")
     ap.add_argument("--format", choices=["auto", "bibtex", "doi", "freeform"], default="auto",
                     help="Input format (default auto: BibTeX, DOI/arXiv list, free-form, or a mix).")
-    ap.add_argument("--mailto", default=DEFAULT_MAILTO, help="Polite-pool contact email.")
+    ap.add_argument("--mailto", default=DEFAULT_MAILTO,
+                    help="Your contact email for Crossref's polite pool (optional; default: "
+                         "$ALTERLAB_CONTACT_EMAIL, else none is sent).")
     ap.add_argument("--threshold", type=float, default=0.70, help="Fuzzy title-match ratio (0..1).")
     ap.add_argument("--out", default=None, help="Write JSON report to this path (default stdout).")
     ap.add_argument("--offline", action="store_true", help="Skip the network; emit 'unverified' verdicts.")

@@ -6,7 +6,7 @@ allowed-tools: Read Write Edit Bash(python:*) Bash WebSearch WebFetch
 compatibility: "No API key required — stdlib Python (`requests` optional) via `uv run python` against Crossref, OpenAlex, Semantic Scholar, arXiv, and the doi.org Handle API; optional OPENALEX_API_KEY / S2_API_KEY only raise rate limits; offline runs return 'unverified' verdicts"
 metadata:
   skill-author: AlterLab
-  version: "1.2.1"
+  version: "1.2.2"
   last_updated: "2026-10-22"
   credentials: "optional: OPENALEX_API_KEY (free key; gives OpenAlex searches their own daily budget instead of the small per-IP keyless one), S2_API_KEY or SEMANTIC_SCHOLAR_API_KEY (dedicated 1 request/s instead of the shared keyless Semantic Scholar pool)"
   depends_on: "alterlab-research-pipeline (shares the integrity taxonomy), alterlab-deep-research"
@@ -179,6 +179,9 @@ uv run python scripts/verify_citations.py \
 ```
 
 - `path/to/references.bib` may also be `-` (stdin) or inline text.
+- `--mailto` is optional: the user's own contact email for Crossref's polite pool (or set
+  `ALTERLAB_CONTACT_EMAIL`). Without it no address is sent and Crossref's public pool answers.
+  Never fill in an address the user did not give.
 - `--threshold` tunes the fuzzy title-match ratio (0..1; default 0.70).
 - `--offline` skips the network and emits `unverified` verdicts deliberately.
 - Omit `--out` to print the JSON report to stdout.

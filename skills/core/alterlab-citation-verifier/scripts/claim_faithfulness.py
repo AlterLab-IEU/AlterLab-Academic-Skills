@@ -100,8 +100,10 @@ def alterlab_model() -> str:
 # Crossref routes requests that carry a mailto to its "polite" pool (higher limits).
 # OpenAlex has ignored mailto since Feb 2026, but the single-DOI lookups used here
 # are free without an API key, so no key is needed for abstract retrieval.
-CONTACT_EMAIL = os.environ.get("ALTERLAB_CONTACT_EMAIL", "alterlab.ieu@gmail.com")
-USER_AGENT = f"AlterLab-CitationVerifier/2.0 (mailto:{CONTACT_EMAIL})"
+# Opt-in contact email (ALTERLAB_CONTACT_EMAIL); with none, no address is sent.
+CONTACT_EMAIL = os.environ.get("ALTERLAB_CONTACT_EMAIL", "").strip()
+USER_AGENT = "AlterLab-CitationVerifier/2.0" + (f" (mailto:{CONTACT_EMAIL})" if CONTACT_EMAIL else "")
+_MAILTO_QS = f"?mailto={urllib.parse.quote(CONTACT_EMAIL)}" if CONTACT_EMAIL else ""
 
 VERDICTS = ("support", "contradict", "unsupported")
 
@@ -222,7 +224,7 @@ def fetch_abstract(doi: str, timeout: int = 20) -> Tuple[Optional[str], str]:
 
     # 1) Crossref
     cr = _http_get_json(
-        f"https://api.crossref.org/works/{enc}?mailto={urllib.parse.quote(CONTACT_EMAIL)}",
+        f"https://api.crossref.org/works/{enc}{_MAILTO_QS}",
         timeout=timeout,
     )
     if cr:
@@ -234,7 +236,7 @@ def fetch_abstract(doi: str, timeout: int = 20) -> Tuple[Optional[str], str]:
 
     # 2) OpenAlex (reconstruct from inverted index)
     oa = _http_get_json(
-        f"https://api.openalex.org/works/doi:{enc}?mailto={urllib.parse.quote(CONTACT_EMAIL)}",
+        f"https://api.openalex.org/works/doi:{enc}{_MAILTO_QS}",
         timeout=timeout,
     )
     if oa:
