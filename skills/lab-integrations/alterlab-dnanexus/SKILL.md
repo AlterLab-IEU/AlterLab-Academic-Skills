@@ -1,20 +1,42 @@
 ---
 name: alterlab-dnanexus
-description: Develops and runs genomics pipelines on the DNAnexus cloud platform using the dxpy Python SDK and dx CLI — build apps/applets, write dxapp.json, upload/download data, and execute jobs/workflows over FASTQ/BAM/VCF files. Use when building or running a DNAnexus app, applet, or workflow, writing dxapp.json, using dx-app-wizard or dx build, calling dxpy (find_data_objects, DXApplet.run, upload_local_file), or uploading/downloading sequencing data on DNAnexus. For LatchBio (Latch SDK @workflow/@task, LatchFile) use alterlab-latchbio instead; for Benchling LIMS use alterlab-benchling. Part of the AlterLab Academic Skills suite.
+description: Develops genomics apps, applets and workflows for the DNAnexus platform with the dxpy Python SDK and dx CLI — writes dxapp.json and entry-point code, lints the spec offline, runs entry points locally in dxpy's debug harness, and checks WDL for dxCompiler with miniwdl, all without an account; building, uploading data and running jobs on the platform is an optional step with the user's own DNAnexus login. Use when building or running a DNAnexus app, applet, or workflow, writing dxapp.json, using dx-app-wizard or dx build, calling dxpy (find_data_objects, DXApplet.run, upload_local_file), or uploading/downloading sequencing data on DNAnexus. For LatchBio (Latch SDK @workflow/@task, LatchFile) use alterlab-latchbio instead; for Benchling LIMS use alterlab-benchling. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(dx:*) Bash(dx-app-wizard:*) Bash(dx-build-app:*) Bash(uv:*) Bash(python:*)
-compatibility: Requires a DNAnexus account and the dxpy SDK/dx CLI (dxpy, current 0.415.0 as of 2026-09; Python >=3.8)
+allowed-tools: Read Write Edit Bash(dx:*) Bash(dx-app-wizard:*) Bash(dx-build-app:*) Bash(uv:*) Bash(python:*) Bash(python3:*)
+compatibility: "No API key required to write an app, lint dxapp.json (scripts/lint_dxapp.py), run its entry points locally in dxpy's debug harness and check WDL with miniwdl (dxpy 0.417.1 as of 2026-10; Python >=3.8). Optional: the user's own DNAnexus login (dx login or DX_SECURITY_CONTEXT) for dx build, uploads and jobs, which bill their org."
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.1.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: DX_SECURITY_CONTEXT (JSON holding the user's DNAnexus API token, or the session `dx login` stores — adds dx build, uploads and downloads in their projects, and running jobs, which bill their org)"
 ---
 
 # DNAnexus Integration
 
 ## Overview
 
-DNAnexus is a cloud platform for biomedical data analysis and genomics. Build and deploy apps/applets, manage data objects, run workflows, and use the dxpy Python SDK for genomics pipeline development and execution.
+DNAnexus is a cloud platform for biomedical data analysis and genomics. Build and deploy apps/applets, manage data objects, run workflows, and use the dxpy Python SDK for genomics pipeline development and execution. Writing, linting and locally testing the app needs no account; only `dx build`, data transfer and jobs touch the platform.
+
+## Keyless Path (default — no DNAnexus account)
+
+1. **Write the app** (`dxapp.json` + `src/<name>.py` or `.sh`) against dxpy 0.417.1. Keep the processing in a plain function that takes local paths, so it can be tested without the platform.
+2. **Lint the spec offline:** `python3 scripts/lint_dxapp.py my-app/` checks classes (lower case: `file`, `int`, `array:file`, ...), `interpreter` (`python3`/`bash`), the execution environment (Ubuntu 24.04 or 20.04, version `"0"`), that `runSpec.file` exists, and that `main()`'s parameters and returned keys match `inputSpec`/`outputSpec`. `dx build --dry-run` is *not* a keyless check: without a login it stops with `ResolutionError: Cannot resolve "."` (verified 2026-10-22).
+3. **Run the entry point locally in dxpy's debug harness.** With `DX_JOB_ID` unset, `dxpy.run()` calls the entry point named by `DX_TEST_FUNCTION` (default `main`) with the inputs in `./job_input.json` and writes `./job_output.json`. Platform calls (`download_dxfile`, `upload_local_file`) still need a login, so add a test entry point around the pure function:
+
+```python
+@dxpy.entry_point("local_test")          # never called on the platform
+def local_test(reads_path, min_mean_quality=30):
+    kept, total = filter_fastq(reads_path, "filtered.fastq", min_mean_quality)
+    return {"kept": kept, "total": total}
+```
+
+```bash
+echo '{"reads_path": "test.fastq", "min_mean_quality": 30}' > job_input.json
+DX_TEST_FUNCTION=local_test uv run --with dxpy python src/my-app.py   # -> job_output.json
+```
+
+4. **WDL destined for dxCompiler:** run `uv run --python ">=3.11" --with miniwdl miniwdl check workflow.wdl` first (catches undefined identifiers, type errors, missing outputs); `java -jar dxCompiler.jar compile` then needs the login.
+5. **Hand over the platform step** with the exact commands (`dx login`, `dx build`, `dx run ... --instance-type ...`), an instance type and `timeoutPolicy` chosen on purpose, and a note that jobs bill the user's org. Without a login, stop there — never claim a build, upload or job happened.
 
 ## When to Use This Skill
 
@@ -276,13 +298,13 @@ Often you'll need multiple capabilities together (e.g., app development + config
 uv pip install dxpy
 ```
 
-### Login to DNAnexus
+### Login to DNAnexus (optional — only for the platform step)
 
 ```bash
 dx login
 ```
 
-This authenticates your session and sets up access to projects and data.
+This authenticates your session and sets up access to projects and data. Non-interactive scripts can instead set `DX_SECURITY_CONTEXT='{"auth_token_type": "Bearer", "auth_token": "..."}'` from a secret store.
 
 ### Verify Installation
 
@@ -350,7 +372,9 @@ Each reference file ends with topic-specific best practices for deeper guidance.
 
 ## Resources
 
-This skill includes detailed reference documentation:
+### scripts/
+
+- **lint_dxapp.py** - offline, stdlib-only lint of an app directory (`dxapp.json` + entry-point source); exit 1 lists every problem
 
 ### references/
 

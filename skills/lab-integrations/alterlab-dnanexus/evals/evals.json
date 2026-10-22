@@ -39,6 +39,40 @@
       ]
     },
     {
+      "id": "offline-lint-dxapp",
+      "prompt": "I don't have DNAnexus credentials on this laptop yet. Check the qfilter_applet directory (dxapp.json plus src/qfilter.py) so it will dx build cleanly once I log in — list every problem and give me the fixed dxapp.json.",
+      "files": ["fixtures/qfilter_applet"],
+      "expected_output": "Invokes alterlab-dnanexus on the keyless path (e.g. scripts/lint_dxapp.py) without logging in, and reports: inputSpec 'reads' uses class 'File' (must be lower-case 'file'); runSpec.interpreter 'python2.7' is not supported (python3 or bash); Ubuntu 16.04 is not a supported release (use 24.04 or 20.04 with version '0'); inputSpec 'min_quality' does not match main()'s parameter 'min_mean_quality'; main() returns 'filtered' while outputSpec declares 'filtered_reads'. Supplies a corrected dxapp.json (and/or code) that resolves all of them, and notes dx build itself still validates on the server after dx login.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "min_mean_quality" },
+        { "type": "output_contains", "value": "python3" },
+        { "type": "behavior", "value": "Finds the class 'File' casing, the python2.7 interpreter, the Ubuntu 16.04 release, the min_quality/min_mean_quality input mismatch and the filtered/filtered_reads output mismatch, and fixes them without claiming a dx build ran." }
+      ]
+    },
+    {
+      "id": "local-debug-harness-run",
+      "prompt": "Write the core of a DNAnexus applet that keeps reads whose mean Phred+33 quality is at least 30, and before we ever upload anything, run it locally with dxpy's debug harness on reads.fastq. How many reads pass, and which ones?",
+      "files": ["fixtures/reads.fastq"],
+      "expected_output": "Invokes alterlab-dnanexus. Writes the applet with the filtering in a pure function plus a dxpy entry point, and runs it locally without a DNAnexus login via dxpy.run()'s debug harness (DX_JOB_ID unset, DX_TEST_FUNCTION naming a local test entry point, inputs from job_input.json, result in job_output.json), or runs the same pure function directly. Result: 3 of 6 reads pass — read1 (mean 40), read3 (mean 35) and read6 (mean exactly 30); read2 (2), read4 (25) and read5 (20) fail. The main entry point keeps download_dxfile/upload_local_file for the platform run, which needs dx login.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "read6" },
+        { "type": "behavior", "value": "Reports exactly 3 of 6 reads passing (read1, read3, read6, counting a mean of exactly 30 as passing) from a local run, and does not claim a DNAnexus job was run." }
+      ]
+    },
+    {
+      "id": "wdl-check-before-dxcompiler",
+      "prompt": "We plan to compile align_and_sort.wdl with dxCompiler and run it on DNAnexus. Check it locally first — will it compile? Fix whatever is wrong.",
+      "files": ["fixtures/align_and_sort.wdl"],
+      "expected_output": "Invokes alterlab-dnanexus and validates the WDL offline (miniwdl check, no DNAnexus login): the sort_bam task's command uses ~{threads}, which is not declared (miniwdl: 'Unknown identifier threads', line 36), so compilation would fail. Fix: declare `Int threads = 4` (or similar) in sort_bam's inputs and ideally a matching runtime cpu; then re-check. Notes that dxCompiler compile itself needs the user's DNAnexus login.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "threads" },
+        { "type": "behavior", "value": "Identifies the undeclared threads identifier in the sort_bam task and declares it as an input, using a local WDL check rather than the platform." }
+      ]
+    },
+    {
       "id": "near-miss-latchbio",
       "prompt": "Port my Nextflow RNA-seq pipeline onto Latch using @workflow and @task decorators with LatchFile inputs and a GPU task for the heavy step.",
       "expected_output": "Does NOT invoke this skill; defers to alterlab-latchbio. The target platform is LatchBio (Latch SDK decorators, LatchFile/LatchDir, latch register), not DNAnexus dxpy/dx CLI.",
