@@ -6,9 +6,9 @@ part that reading cannot: it saves the page text, the PDF metadata, every embedd
 image, page renders, and high-resolution crops of figure regions, so the website, poster and
 video can use the paper's real figures.
 
-    uv run --python ">=3.11" --with pymupdf python scripts/extract_assets.py paper.pdf --out assets/
+    uv run --python ">=3.11" --with pymupdf python scripts/extract_assets.py paper.pdf --out paper_assets/
     # vector figures: Read a page render, then crop the figure by page fractions (0-1)
-    uv run --python ">=3.11" --with pymupdf python scripts/extract_assets.py paper.pdf --out assets/ \\
+    uv run --python ">=3.11" --with pymupdf python scripts/extract_assets.py paper.pdf --out paper_assets/ \\
         --clip 3:0.08,0.09,0.92,0.47:fig2 --dpi 300
 
 Writes into --out: manifest.json (metadata, page count, captions found, files written),

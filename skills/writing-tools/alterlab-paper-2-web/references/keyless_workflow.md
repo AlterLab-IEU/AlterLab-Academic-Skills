@@ -10,12 +10,12 @@ lookups for links such as the arXiv page or a code repository).
    `.bib`, `figures/`).
 2. **Extract assets** from a PDF:
    ```bash
-   uv run --python ">=3.11" --with pymupdf python scripts/extract_assets.py paper.pdf --out assets/ --pages
+   uv run --python ">=3.11" --with pymupdf python scripts/extract_assets.py paper.pdf --out paper_assets/ --pages
    ```
-   `assets/manifest.json` lists metadata, figure/table captions with their page and position,
+   `paper_assets/manifest.json` lists metadata, figure/table captions with their page and position,
    embedded raster images, and page renders. Vector figures are not images: Read the page
    render, then crop each figure by page fractions —
-   `--clip 3:0.25,0.07,0.75,0.52:fig1 --dpi 300` → `assets/figures/fig1.png`. From LaTeX, copy
+   `--clip 3:0.25,0.07,0.75,0.52:fig1 --dpi 300` → `paper_assets/figures/fig1.png`. From LaTeX, copy
    the figure files directly (convert PDF figures with `pdftoppm -png -r 300`).
 3. **Write a fact sheet** (`facts.md`) before any output: exact title, authors in order with
    affiliations, venue/year, DOI/arXiv id, code/data links, the abstract verbatim, 3-5 key

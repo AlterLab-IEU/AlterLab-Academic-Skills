@@ -69,11 +69,11 @@ Every output starts from the same verified facts:
 2. **Extract figures** from a PDF (raster images, page renders, and crops of vector figures by
    page fractions):
    ```bash
-   uv run --python ">=3.11" --with pymupdf python scripts/extract_assets.py paper.pdf --out assets/ --pages
-   uv run --python ">=3.11" --with pymupdf python scripts/extract_assets.py paper.pdf --out assets/ \
+   uv run --python ">=3.11" --with pymupdf python scripts/extract_assets.py paper.pdf --out paper_assets/ --pages
+   uv run --python ">=3.11" --with pymupdf python scripts/extract_assets.py paper.pdf --out paper_assets/ \
        --clip 3:0.25,0.07,0.75,0.52:fig1 --dpi 300
    ```
-   `assets/manifest.json` lists metadata, captions (with page and position), images and renders.
+   `paper_assets/manifest.json` lists metadata, captions (with page and position), images and renders.
    From LaTeX, copy the figure files directly.
 3. **Write `facts.md`**: exact title; authors in order with affiliations; venue/year; DOI or
    arXiv id; code/data links; the abstract verbatim; 3-5 key numbers with the table or figure
