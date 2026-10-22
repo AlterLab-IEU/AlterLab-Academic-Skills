@@ -41,6 +41,38 @@
       ]
     },
     {
+      "id": "review-workflow-before-register",
+      "prompt": "A labmate wrote wf_gpu.py and says `latch register` keeps failing, but they don't want to burn a build to find out why. I don't have a Latch login on this box either. Can you tell me what's wrong with the workflow without registering it, and give me the fix?",
+      "files": ["fixtures/wf_gpu.py"],
+      "expected_output": "Invokes alterlab-latchbio and validates the workflow offline with no Latch login — importing the module runs the SDK's own type-checking. The error is that @custom_task(cpu=8, memory=32, gpu=1) raises TypeError: task() got an unexpected keyword argument 'gpu' — custom_task tunes cpu/memory/storage_gib only and takes no gpu/gpu_type. Fix: use a GPU task decorator (@small_gpu_task or @large_gpu_task, or @v100_x1_task) on the align task instead. Notes this was found at import, not by registering, and that latch register still needs Docker and a login.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "gpu" },
+        { "type": "behavior", "value": "Identifies the @custom_task(gpu=1) TypeError from a local import and replaces it with a GPU task decorator, without registering on the platform." }
+      ]
+    },
+    {
+      "id": "test-task-logic-locally",
+      "prompt": "Write a Latch task that reads a featureCounts-style counts TSV and returns the genes with at least a 4x mean increase from ctrl to treat, and before I register anything, run that logic locally on counts.tsv to show it works.",
+      "files": ["fixtures/counts.tsv"],
+      "expected_output": "Invokes alterlab-latchbio. Writes a @task with a LatchFile input and runs its logic locally without a Latch login — either by calling the undecorated function via my_task.task_function(counts=LatchFile('counts.tsv')) and reading LatchFile.local_path, or by factoring the parsing into a plain function and calling it directly. On counts.tsv the >=4x mean ctrl->treat genes are TP53 (~6.2x), MYC (~5.1x) and EGFR (~4.8x); GAPDH and ACTB are roughly flat. Notes the workflow still registers/runs on LatchBio only with the user's login.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "TP53" },
+        { "type": "behavior", "value": "Runs the task logic locally (task_function or an extracted plain function) and reports TP53, MYC and EGFR as the >=4x genes, without claiming a platform run." }
+      ]
+    },
+    {
+      "id": "inspect-nocode-ui-offline",
+      "prompt": "For my Latch RNA-seq workflow, what will the auto-generated no-code UI actually show as parameters and labels? I want to check that before I register it — no account needed.",
+      "expected_output": "Invokes alterlab-latchbio and explains that the no-code form is driven by the workflow's typed signature and docstring, inspectable offline: wf.python_interface.inputs / .outputs list the parameters and outputs Latch renders, and the docstring's __metadata__ display_name blocks (workflow-level and per-parameter) become the labels. Shows how to print them from a plain Python import with no latch login, so the UI can be reviewed before latch register.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "python_interface" },
+        { "type": "behavior", "value": "Explains that python_interface.inputs/outputs and docstring __metadata__ labels define the no-code UI and can be inspected offline before registering." }
+      ]
+    },
+    {
       "id": "near-miss-dnanexus",
       "prompt": "Build a DNAnexus applet with dxpy, define its dxapp.json, and run it on a FASTQ with dx build and applet.run.",
       "expected_output": "Does NOT invoke this skill; defers to alterlab-dnanexus. The platform is DNAnexus (dxpy SDK, dx CLI, dxapp.json, applets), not LatchBio's Latch SDK workflows.",

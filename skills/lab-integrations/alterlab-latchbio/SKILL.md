@@ -1,20 +1,32 @@
 ---
 name: alterlab-latchbio
-description: Builds and deploys bioinformatics pipelines on the LatchBio platform using the Latch SDK — author workflows with @workflow/@task decorators, handle LatchFile/LatchDir I/O, register serverless workflows, configure CPU/GPU task resources, organize data in the Latch Registry, and wrap Nextflow/Snakemake pipelines. Use when developing or deploying a Latch SDK workflow, sizing task resources, working with the Registry, or porting a Nextflow/Snakemake bioinformatics pipeline onto LatchBio. Not for DNAnexus (dxpy/dx CLI) or generic Flyte. Part of the AlterLab Academic Skills suite.
+description: Authors bioinformatics pipelines with the Latch SDK — @workflow/@task decorators, LatchFile/LatchDir I/O, CPU/GPU task sizing, the Latch Registry, and Nextflow/Snakemake wrapping — and validates them with no account, type-checking the decorators and workflow graph at import, running task functions locally on plain files, and inspecting the no-code UI metadata offline. Registering and running the workflow on LatchBio is an optional step with the user's own latch login and Docker. Use when developing a Latch SDK workflow, sizing task resources, checking a workflow before latch register, working with the Registry, or porting a Nextflow/Snakemake pipeline onto LatchBio. Not for DNAnexus (dxpy/dx CLI) or generic Flyte. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
-compatibility: Requires a LatchBio account and workspace plus the Latch SDK (`uv pip install latch`; latch 2.x, current 2.77.1, Python >=3.9); deploying workflows needs Docker running and `latch login`
+allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*) Bash(uv:*)
+compatibility: "No API key required to author and validate a workflow: the Latch SDK (latch 2.x, current 2.77.2, Python >=3.9) type-checks @workflow/@task graphs at import and runs task functions locally on plain files. Optional: the user's own latch login plus Docker to latch register and run on LatchBio (compute is billed)."
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.1.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: none as an environment variable — latch login stores a token under ~/.latch/ that adds latch register and running workflows on the user's LatchBio workspace (set LATCH_WORKSPACE to pick the workspace); Docker must be running for registration"
 ---
 
 # LatchBio Integration
 
 ## Overview
 
-Latch is a Python framework for building and deploying bioinformatics workflows as serverless pipelines. Built on Flyte, create workflows with @workflow/@task decorators, manage cloud data with LatchFile/LatchDir, configure resources, and integrate Nextflow/Snakemake pipelines.
+Latch is a Python framework for building and deploying bioinformatics workflows as serverless pipelines. Built on Flyte, create workflows with @workflow/@task decorators, manage cloud data with LatchFile/LatchDir, configure resources, and integrate Nextflow/Snakemake pipelines. Authoring and validating the workflow needs no account; only `latch register` and running it on the platform use the user's login.
+
+## Keyless Path (default — no LatchBio account)
+
+1. **Write the workflow** against the real SDK (`uv run --with latch python ...`) and confirm decorator and API names with `inspect` rather than memory. Verified in latch 2.77.2 (2026-10-22): resource decorators are `small_task`/`medium_task`/`large_task`, `small_gpu_task` (7 CPU, 30Gi, 1 GPU) / `large_gpu_task` (63 CPU, 245Gi, 1 GPU), `v100_x{1,4,8}_task`, `g6e_*_task`; `custom_task(cpu, memory, *, storage_gib=500, timeout=0)`.
+2. **Let import type-check the graph.** Decorating and composing the workflow runs Latch's/Flyte's own validation with no login. Verified offline, these fail at import (so they are caught keyless):
+   - `@custom_task(cpu=8, memory=32, gpu=1)` -> `TypeError: task() got an unexpected keyword argument 'gpu'` (custom_task has no `gpu`/`gpu_type`; a GPU comes from a GPU decorator).
+   - a `@workflow` whose body calls a task but whose signature has no return annotation -> `ValueError` while building the interface.
+   A task with an un-annotated *parameter* does **not** raise, so still require type hints yourself.
+3. **Run a task's logic locally on plain files.** `task_fn(...)` goes through Flyte's local executor and wants `latch:///` remote paths, so call the undecorated function instead: `my_task.task_function(fastq=LatchFile("local.fastq"))`. `LatchFile(p).local_path` is the local path. This exercises the real processing with no account.
+4. **Inspect the no-code UI offline.** `wf.python_interface.inputs` / `.outputs` are the parameters and outputs Latch renders as the auto-generated form, and the docstring `__metadata__` blocks are its labels — reviewable without registering.
+5. **Hand over registration.** Give the `latch init` / `latch register` commands and note they need Docker running and `latch login` (token under `~/.latch/`), and that runs bill the workspace. Without a login, stop at the validated workflow; never claim it was registered or run.
 
 ## Core Capabilities
 
@@ -54,7 +66,7 @@ The Latch platform provides four main areas of functionality:
 # Install Latch SDK (uv-first; pip install latch also works)
 uv pip install latch
 
-# Login to Latch
+# Login to Latch — only needed for register/run, not for authoring
 latch login
 
 # Initialize a new workflow (scaffolds wf/, Dockerfile, version)
@@ -64,10 +76,9 @@ latch init my-workflow
 latch register my-workflow
 ```
 
-**Prerequisites:**
-- Docker installed and running (registration builds a container locally)
-- Latch account credentials
-- Python 3.9+ (Latch SDK `requires-python >=3.9`)
+**Prerequisites for authoring/validating (keyless):** Python 3.9+ and the Latch SDK.
+**Prerequisites for register/run (optional):** Docker installed and running, and a Latch
+login (token under `~/.latch/`). Compute runs bill the workspace.
 
 ### Basic Workflow Example
 
