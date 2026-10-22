@@ -3,7 +3,7 @@ name: alterlab-neurokit2
 description: Processes and analyzes physiological biosignals with the NeuroKit2 Python toolkit — ECG, EEG, EDA, RSP, PPG, EMG, and EOG signals. Use when processing cardiovascular signals, brain activity, electrodermal responses, respiratory patterns, muscle activity, or eye movements, or when computing heart rate variability (HRV), event-related potentials, complexity measures, autonomic nervous system assessment, or multi-modal physiological signal integration for psychophysiology research. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
-compatibility: "Self-contained — runs under `uv run python` with the skill's Python package installed; no API key or account required."
+compatibility: No API key required. Self-contained; runs install-free with `uv run --python ">=3.11" --with "neurokit2>=0.2.13" python script.py` (pin the interpreter, since an older default Python cannot install neurokit2 0.2.13).
 metadata:
     skill-author: AlterLab
     version: "1.1.0"
@@ -182,8 +182,8 @@ Analyze eye movement and blink patterns. See `references/eog.md` for workflows.
 
 **Key functions:**
 ```python
-# Complete EOG processing. Blink detection defaults to method="mne" (requires
-# `uv pip install mne`); method="neurokit" avoids the MNE dependency
+# Complete EOG processing. Blink detection defaults to method="mne" (needs MNE-Python:
+# add `--with mne` to the uv run line); method="neurokit" avoids the MNE dependency
 signals, info = nk.eog_process(eog_signal, sampling_rate=500, method="neurokit")
 
 # Extract blink features: needs the cleaned signal and the blink peak indices
@@ -297,18 +297,21 @@ Most `*_analyze()` functions automatically choose the appropriate mode.
 
 ## Installation
 
+No install step: `uv run` resolves the package per run.
+
 ```bash
-uv pip install neurokit2
+uv run --python ">=3.11" --with "neurokit2>=0.2.13" python analysis.py
 ```
 
 Function signatures in this skill are verified against **neurokit2 0.2.13** (current release
-as of 2026-09; requires Python >= 3.10). If you need a reproducible env, pin it:
-`uv pip install "neurokit2==0.2.13"`. EEG helpers (`mne_*`, source localization) and the
-default EOG blink detector also need MNE-Python: `uv pip install mne`.
+as of 2026-09; requires Python >= 3.10). Pin the interpreter: uv's default may be an older
+Python on which `neurokit2>=0.2.13` cannot be installed. For a reproducible run use
+`--with "neurokit2==0.2.13"`. EEG helpers (`mne_*`, source localization) and the default EOG
+blink detector also need MNE-Python (`--with mne`); `method_phasic="cvxeda"` needs `--with cvxopt`.
 
-For development version:
+For the development version:
 ```bash
-uv pip install https://github.com/neuropsychology/NeuroKit/zipball/dev
+uv run --python ">=3.11" --with "neurokit2 @ https://github.com/neuropsychology/NeuroKit/zipball/dev" python analysis.py
 ```
 
 ## Common Workflows
