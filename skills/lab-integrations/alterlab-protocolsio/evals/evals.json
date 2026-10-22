@@ -40,6 +40,37 @@
       ]
     },
     {
+      "id": "discover-public-protocols-keyless",
+      "prompt": "I don't have a protocols.io developer token. Find me a handful of published CRISPR-Cas9 protocols on protocols.io with their DOIs so I can cite them.",
+      "expected_output": "Invokes alterlab-protocolsio on the keyless path: because the protocols.io API needs a Bearer token even for public search, it discovers published protocols through Crossref's DOI prefix 10.17504 instead — GET https://api.crossref.org/works?filter=prefix:10.17504&query.bibliographic=CRISPR+Cas9&select=DOI,title,URL (with a mailto for the polite pool), returning several real 10.17504/protocols.io.* DOIs with titles. Does not claim to have hit the protocols.io API and does not invent DOIs.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "10.17504" },
+        { "type": "behavior", "value": "Uses Crossref prefix 10.17504 to list real protocols.io DOIs keyless rather than calling the token-gated protocols.io search API." }
+      ]
+    },
+    {
+      "id": "read-public-protocol-steps-keyless",
+      "prompt": "Without any token, pull the actual steps and materials of this public protocol so I can adapt it: https://www.protocols.io/view/tree-mapping-for-leaf-collection-megantic-only-baaciaaw",
+      "expected_output": "Invokes alterlab-protocolsio on the keyless path: notes the protocols.io API needs a token even for public protocols, so it reads the public content instead — WebFetch of the page for title/authors (Sabine St-Jean, Anna Crofts; DOI 10.17504/protocols.io.baaciaaw) and, for the full step text, the public PDF at https://www.protocols.io/view/tree-mapping-for-leaf-collection-megantic-only-baaciaaw.pdf (read with Read/pdftotext). Surfaces the real steps (e.g. step 1 'Tree Selection and Scouting' during site reconnaissance, later Fulcrum record creation and aluminium tree-tag marking) and the materials (hammer and nails, numbered aluminium tree tags), citing the DOI and retrieval date.",
+      "files": [],
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": ".pdf" },
+        { "type": "behavior", "value": "Reads the public protocol's steps/materials from the web page and the /view/<slug>.pdf without a token, surfacing real step content, rather than calling the token-gated API." }
+      ]
+    },
+    {
+      "id": "draft-protocol-format-offline",
+      "prompt": "Draft a protocols.io-ready RNA extraction protocol with three ordered steps and a materials list, structured exactly how protocols.io wants it, so I can paste it into the editor or POST it later. I haven't set up a token yet.",
+      "expected_output": "Invokes alterlab-protocolsio and drafts the protocol offline in protocols.io's structure with no token: a title, description, materials_text, and ordered steps chained by guid/previous_guid (the first step's previous_guid is null, each subsequent step points at the previous guid). Explains that creating it live is POST /v3/protocols/<guid> then PUT /v4/protocols/<guid> and POST /v4/protocols/<guid>/steps, which need the user's token, and that publishing mints the DOI — but produces the ready-to-use draft now without claiming anything was created.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "previous_guid" },
+        { "type": "behavior", "value": "Produces a protocols.io-format draft (title, materials_text, guid/previous_guid-chained steps) offline and defers the actual create/publish to the token-based API." }
+      ]
+    },
+    {
       "id": "near-miss-benchling",
       "prompt": "Create a Benchling ELN entry for today's run and link the DNA sequence entity I registered earlier into the entry notes.",
       "expected_output": "Does NOT invoke this skill; defers to alterlab-benchling. The user is working in Benchling's ELN/registry (entries.create_entry, inline entity links via the benchling-sdk), not authoring or publishing a protocols.io protocol.",
