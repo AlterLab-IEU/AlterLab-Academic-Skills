@@ -8,10 +8,16 @@ Includes error handling, rate limiting, caching, and common query patterns.
 Usage:
     from fda_query import FDAQuery
 
-    fda = FDAQuery(api_key="YOUR_API_KEY")
+    fda = FDAQuery()   # keyless; reads the optional FDA_API_KEY from the environment
     results = fda.query_drug_events(drug_name="aspirin", limit=100)
+
+openFDA needs no key: keyless calls get 240 requests/min and 1,000/day per IP.
+FDA_API_KEY (free, https://open.fda.gov/apis/authentication/) only raises the
+daily cap to 120,000.
 """
 
+import os
+import sys
 import requests
 import time
 import json
@@ -92,12 +98,13 @@ class FDAQuery:
         Initialize FDA query client.
 
         Args:
-            api_key: FDA API key (optional but recommended)
+            api_key: optional FDA API key; defaults to $FDA_API_KEY, and None means
+                keyless (1,000 requests/day per IP instead of 120,000)
             use_cache: Whether to use response caching
             cache_ttl: Cache time-to-live in seconds
             rate_limit: Requests per minute limit
         """
-        self.api_key = api_key
+        self.api_key = api_key or os.environ.get("FDA_API_KEY")
         self.rate_limiter = RateLimiter(max_per_minute=rate_limit)
         self.cache = FDACache(ttl=cache_ttl) if use_cache else None
 
@@ -105,7 +112,8 @@ class FDAQuery:
         """Build full API endpoint URL."""
         return f"{self.BASE_URL}/{category}/{endpoint}.json"
 
-    def _make_request(self, url: str, params: Dict, use_cache: bool = True) -> Dict:
+    def _make_request(self, url: str, params: Dict, use_cache: bool = True,
+                      _retried: bool = False) -> Dict:
         """
         Make API request with error handling, rate limiting, and caching.
 
@@ -146,10 +154,16 @@ class FDAQuery:
             if response.status_code == 404:
                 return {"error": "No results found", "results": []}
             elif response.status_code == 429:
-                # Rate limit exceeded, wait and retry once
-                print("Rate limit exceeded. Waiting 60 seconds...")
+                if _retried:
+                    # A second 429 after a minute's wait is the daily quota, not the
+                    # per-minute limit: stop instead of retrying forever.
+                    quota = ("120,000/day for this key" if self.api_key else
+                             "1,000/day per IP keyless; the optional FDA_API_KEY raises it to 120,000")
+                    return {"error": f"openFDA rate limit (HTTP 429) persists: daily quota spent ({quota})",
+                            "results": []}
+                print("Rate limit exceeded. Waiting 60 seconds...", file=sys.stderr)
                 time.sleep(60)
-                return self._make_request(url, params, use_cache=False)
+                return self._make_request(url, params, use_cache=False, _retried=True)
             elif response.status_code == 400:
                 return {"error": f"Invalid query: {response.text}"}
             else:
@@ -409,13 +423,11 @@ class FDAQuery:
 
 def main():
     """Example usage."""
-    import os
-
-    # Get API key from environment or use None
-    api_key = os.environ.get("FDA_API_KEY")
-
-    # Initialize client
-    fda = FDAQuery(api_key=api_key)
+    # Keyless unless the optional FDA_API_KEY is set
+    fda = FDAQuery()
+    if not fda.api_key:
+        print("FDA_API_KEY not set: using keyless openFDA (1,000 requests/day per IP).",
+              file=sys.stderr)
 
     # Example 1: Query drug adverse events
     print("Querying aspirin adverse events...")

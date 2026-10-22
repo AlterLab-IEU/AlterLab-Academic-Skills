@@ -9,6 +9,7 @@ Usage:
 """
 
 import os
+import sys
 from fda_query import FDAQuery
 
 
@@ -299,9 +300,8 @@ def main():
     api_key = os.environ.get("FDA_API_KEY")
 
     if not api_key:
-        print("Warning: No FDA_API_KEY found in environment.")
-        print("You can still use the API but with lower rate limits.")
-        print("Set FDA_API_KEY environment variable for better performance.\n")
+        print("FDA_API_KEY not set: using keyless openFDA (1,000 requests/day per IP); "
+              "the optional key only raises the daily quota.\n", file=sys.stderr)
 
     # Initialize FDA query client
     fda = FDAQuery(api_key=api_key)
