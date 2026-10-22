@@ -12,7 +12,7 @@
   names them): `alterlab-databases` (PubMed, OpenAlex, arXiv skills), `alterlab-writing-tools`
   (literature review, grants), `alterlab-social-science-workflow` (meta-analysis),
   `alterlab-turkish-academia` (TÜBİTAK).
-- Network access for the scholarly APIs. Configure the core plugin
+- Network access for the scholarly APIs; no API key is needed. Optionally configure the core plugin
   (`/plugin configure alterlab-core@alterlab-academic-skills`): a free OpenAlex API key gives
   OpenAlex calls their own daily budget (export `NCBI_API_KEY` for PubMed-heavy runs) — keyless calls
   share a small per-IP budget and fail with HTTP 429 once it is spent (the verifier then reports

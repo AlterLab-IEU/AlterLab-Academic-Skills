@@ -3,11 +3,12 @@ name: alterlab-research-workflows
 description: "Runs AlterLab's packaged multi-agent academic workflows — citation audit, peer-review panel of separate reviewers, claim stress-test, PRISMA dual-screening for systematic reviews, point-by-point rebuttal, grant mock panel, and literature map. In Claude Code they run as dynamic workflows (/alterlab-workflows:<name>) with separate agent contexts, adversarial re-checks, tallies computed in code, and an explicit complete/partial/blocked status; on claude.ai, the API, or anywhere without the Workflow runtime this skill runs the same stages as a staged playbook. Use when a research task needs many separate readers or a second, adversarial opinion at scale — auditing every citation in a manuscript, dual-screening hundreds of records, simulating a review panel or study section, drafting a response to reviewers, or mapping a field before a proposal. Part of the AlterLab Academic Skills suite."
 license: MIT
 allowed-tools: Read Write Edit Bash WebFetch WebSearch Task
-compatibility: "Claude Code with dynamic workflows (paid plans or API access; v2.1.203+) runs the /alterlab-workflows:* commands; installing this plugin also installs alterlab-core, whose skills the workflows call. Other surfaces use the staged playbooks in references/. Database-backed stages use public scholarly APIs (Crossref, OpenAlex, PubMed, arXiv) and need network access."
+compatibility: "No API key required. Claude Code with dynamic workflows (paid plans or API access; v2.1.203+) runs the /alterlab-workflows:* commands; installing this plugin also installs alterlab-core, whose skills the workflows call. Other surfaces use the staged playbooks in references/. Database-backed stages use public scholarly APIs (Crossref, OpenAlex, PubMed, arXiv) and need network access."
 metadata:
   skill-author: AlterLab
-  version: "1.1.0"
-  last_updated: "2026-09-23"
+  version: "1.1.1"
+  last_updated: "2026-10-22"
+  credentials: "optional: OPENALEX_API_KEY (gives OpenAlex lookups their own daily budget instead of the small per-IP keyless one), S2_API_KEY (dedicated Semantic Scholar rate), NCBI_API_KEY (PubMed E-utilities 10 instead of 3 requests/s for PubMed-heavy runs)"
   depends_on: "alterlab-citation-verifier, alterlab-paper-reviewer, alterlab-deep-research (alterlab-core); optionally alterlab-openalex, alterlab-pubmed, alterlab-arxiv, alterlab-literature-review, alterlab-meta-analysis, alterlab-research-grants, alterlab-tubitak-proposal, alterlab-paper-writer"
 ---
 
