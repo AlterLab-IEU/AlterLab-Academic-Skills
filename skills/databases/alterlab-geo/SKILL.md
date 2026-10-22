@@ -3,11 +3,12 @@ name: alterlab-geo
 description: Access NCBI GEO (Gene Expression Omnibus) for gene expression and functional genomics data — search and download microarray and RNA-seq datasets by GSE, GSM, GPL, or GDS accession and retrieve SOFT, MINiML, and series matrix files. Use when locating public expression datasets, fetching processed expression matrices, downloading a study's supplementary files, or sourcing per-study transcriptomics data for differential-expression analysis. For raw FASTQ sequencing reads by SRA/ENA run accession use alterlab-ena; for reference tissue-expression baselines (median TPM across human tissues) use alterlab-gtex; for cancer cohort somatic mutations and copy-number use alterlab-cbioportal. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(uv:*)
-compatibility: Keyless NCBI E-utilities REST API (email required by NCBI); optional NCBI API key raises rate limits
+compatibility: No API key required. Keyless NCBI E-utilities REST API (db=gds, 3 requests/s; NCBI asks for a contact email, no account) and the GEO FTP/HTTPS download tree; an optional NCBI_API_KEY raises the limit to 10 requests/s
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.2"
+    last_updated: "2026-10-22"
+    credentials: "optional: NCBI_API_KEY (raises E-utilities from 3 to 10 requests/s)"
 ---
 
 # GEO Database
@@ -80,15 +81,16 @@ uv pip install pandas numpy scipy statsmodels scikit-learn  # analysis
 uv pip install matplotlib seaborn                           # visualization
 ```
 
-Configure NCBI E-utilities access (email is required by NCBI; an API key raises
-the rate limit from 3 to 10 requests/second):
+Configure NCBI E-utilities access. No key or account is needed: NCBI asks every
+client to identify itself with a contact email, and an optional API key only raises
+the rate limit from 3 to 10 requests/second:
 
 ```python
+import os
 from Bio import Entrez
 
-Entrez.email = "your.email@example.com"   # required
-# Optional API key — https://www.ncbi.nlm.nih.gov/account/
-Entrez.api_key = "your_api_key_here"
+Entrez.email = "your.email@example.com"   # contact email NCBI asks for (no account)
+Entrez.api_key = os.environ.get("NCBI_API_KEY")  # optional; None = keyless, 3 req/s
 ```
 
 ## Key Concepts

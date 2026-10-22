@@ -16,6 +16,7 @@ Run with uv (auto-installs the inline `requests` dependency):
 import argparse
 import json
 import os
+import sys
 
 import requests
 
@@ -58,6 +59,8 @@ def main() -> None:
     pm.add_argument("uids", help="comma-separated GEO UIDs")
 
     args = p.parse_args()
+    if not API_KEY:
+        print("NCBI_API_KEY not set: using keyless E-utilities (3 requests/s).", file=sys.stderr)
     out = search(args.term, args.retmax) if args.cmd == "search" else summary(args.uids)
     print(json.dumps(out, indent=2))
 

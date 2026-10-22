@@ -3,11 +3,12 @@ name: alterlab-clinvar
 description: Query NCBI ClinVar via the E-utilities API or FTP for the clinical significance (pathogenicity) of human germline genetic variants, searching by gene, variant, condition, or genomic position and interpreting ACMG/AMP classifications and review-status star ratings. Use when assessing whether a variant is pathogenic, likely pathogenic, VUS, likely benign, or benign, resolving conflicting interpretations, or annotating a VCF with ClinVar clinical significance. For population allele frequencies by ancestry use alterlab-gnomad; for somatic cancer mutation frequencies use alterlab-cosmic. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless NCBI E-utilities REST API; optional NCBI API key raises rate limits
+compatibility: No API key required. Keyless NCBI E-utilities REST API (db=clinvar, 3 requests/s per IP) and the public ClinVar FTP; an optional NCBI_API_KEY raises the limit to 10 requests/s
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.1.1"
+    last_updated: "2026-10-22"
+    credentials: "optional: NCBI_API_KEY (raises E-utilities from 3 to 10 requests/s)"
 ---
 
 # ClinVar Database
@@ -82,7 +83,7 @@ Always inspect the `querytranslation` field in the response: if a `[...]` tag is
 
 **Best practices:**
 - Test queries on the web interface before automating
-- Use API keys to increase rate limits from 3 to 10 requests/second
+- Keyless access allows 3 requests/second; an optional `NCBI_API_KEY` raises it to 10
 - Implement exponential backoff for rate limit errors
 - Set `Entrez.email` when using Biopython
 
