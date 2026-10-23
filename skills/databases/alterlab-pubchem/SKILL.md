@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless PubChem PUG-REST API (≤5 requests/s, ≤400/min); PubChemPy >= 1.0.5 optional for Python (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.2"
+    last_updated: "2026-10-23"
 ---
 
 # PubChem Database
@@ -34,7 +34,8 @@ This skill should be used when:
 
 | Scenario | Use Instead |
 |----------|-------------|
-| Curated potency data (IC50/Ki) for targets and medicinal-chemistry series | `alterlab-chembl` |
+| Measured binding affinities (Ki, Kd, IC50) of ligands against a protein target, e.g. by UniProt accession | `alterlab-bindingdb` |
+| Curated bioactivity across assays, medicinal-chemistry series, drug mechanisms | `alterlab-chembl` |
 | Computing descriptors or fingerprints on your own molecules locally | `alterlab-rdkit` |
 | Human metabolite concentrations, biofluids, biomarker evidence | `alterlab-hmdb` |
 | Drug pharmacology, interactions, and approval details | `alterlab-drugbank` |

@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless Ensembl REST API (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.2"
+    last_updated: "2026-10-23"
 ---
 
 # Ensembl Database
@@ -40,6 +40,7 @@ This skill should be used when:
 | Clinical significance of a variant (ClinVar) | `alterlab-clinvar` |
 | Raw reads or assemblies by ENA/SRA accession | `alterlab-ena` |
 | Quick one-liner gene lookups from a CLI | `alterlab-gget` |
+| Protein function, domains, PTMs or the curated UniProtKB entry | `alterlab-uniprot` |
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-gene-db`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
