@@ -49,3 +49,18 @@ def test_cli_exit_status_reflects_findings() -> None:
     proc = subprocess.run([sys.executable, str(REPO / "scripts" / "check_keyless.py")],
                           capture_output=True, text=True)
     assert proc.returncode in (0, 1) and "checked." in proc.stdout
+
+
+def test_a_generated_catalog_of_other_skills_is_not_this_skills_credentials(tmp_path) -> None:
+    skill = tmp_path / "skills" / "x" / "alterlab-router"
+    (skill / "evals").mkdir(parents=True)
+    (skill / "references").mkdir()
+    (skill / "SKILL.md").write_text("---\nname: alterlab-router\ndescription: Demo.\nmetadata:\n"
+                                    "    skill-author: AlterLab\n    version: \"1.0.0\"\n---\nRoutes.\n",
+                                    encoding="utf-8")
+    (skill / "references" / "skill_index.md").write_text(
+        "# Index\n\n" + check_keyless.GENERATED_MARK + " Regenerate with gen_skill_index.py.\n\n"
+        "- alterlab-x: optional ROWAN_API_KEY adds cloud jobs\n", encoding="utf-8")
+    assert check_keyless.credentials_named(skill) == set()
+    (skill / "references" / "notes.md").write_text("Set ROWAN_API_KEY.\n", encoding="utf-8")
+    assert check_keyless.credentials_named(skill) == {"ROWAN_API_KEY"}

@@ -49,6 +49,10 @@ PRECONDITION = re.compile(
 NEGATED = re.compile(r"\b(?:no|not|without|optional(?:ly)?)\b", re.I)
 
 
+# gen_skill_index.py writes this banner; such files list every skill's description, keys included.
+GENERATED_MARK = "> **Generated** — do not edit by hand."
+
+
 def skill_dirs() -> list[Path]:
     return sorted(p.parent for p in REPO.glob("skills/*/alterlab-*/SKILL.md"))
 
@@ -65,7 +69,10 @@ def credentials_named(d: Path) -> set[str]:
                 names.add(a or b)
     for md in [d / "SKILL.md", *_shipped(d, "references/*.md"), *_shipped(d, "references/**/*.md")]:
         if md.exists():
-            names |= set(NAMED.findall(md.read_text(encoding="utf-8", errors="replace")))
+            text = md.read_text(encoding="utf-8", errors="replace")
+            if GENERATED_MARK in text[:400]:
+                continue  # a generated catalog of other skills (skill-finder's index), not this skill's own
+            names |= set(NAMED.findall(text))
     ev = d / "evals" / "evals.json"
     if ev.exists():
         for e in json.loads(ev.read_text(encoding="utf-8")).get("evals", []):
