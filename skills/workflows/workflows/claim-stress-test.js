@@ -190,7 +190,8 @@ const LENSES = [
     key: 'counter-evidence',
     brief:
       'Search the literature for disconfirming, null, or failed-replication findings and for systematic reviews or meta-analyses on the ' +
-      'question (use the alterlab-openalex, alterlab-pubmed, or alterlab-deep-research skills when installed). Weigh them by the evidence ' +
+      'question (use the alterlab-openalex, alterlab-pubmed, or alterlab-deep-research skills when installed; if OpenAlex answers HTTP ' +
+      '429 without a key, search Crossref, Europe PMC or PubMed instead; a rate-limited source is not evidence of absence). Weigh them by the evidence ' +
       'hierarchy: meta-analyses and RCTs outweigh single observational studies.',
   },
   {

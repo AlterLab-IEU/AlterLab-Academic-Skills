@@ -583,6 +583,18 @@ def test_screening_failed_search_is_reported() -> None:
     assert any("capped" in r for r in capped["status_reasons"])
 
 
+def test_screening_rate_limited_database_is_not_run_not_empty() -> None:
+    """A database that answered HTTP 429 (keyless OpenAlex searches often do) is a failed search."""
+    args = {"question": "Does mindfulness training reduce burnout in nurses?", "databases": ["pubmed", "openalex"], "batch": 5}
+    search = {"database": "pubmed", "query_run": "mindfulness AND burnout", "count": 6, "total_hits": 6, "capped": False, "file": f"{SR_DIR}/records-pubmed.jsonl"}
+    limited = {"database": "openalex", "query_run": "mindfulness burnout", "count": 0, "total_hits": 0, "capped": False,
+               "file": f"{SR_DIR}/records-openalex.jsonl", "ran": False}
+    res = run(SR, args, sr_rules(ret("^search openalex", limited), ret("^search ", search), status="PARTIAL"))["result"]
+    s = res["coverage"]["searches"]
+    assert (s["requested"], s["completed"], s["failed"]) == (2, 1, 1)
+    assert s["failed_databases"] == ["openalex"] and res["status"] == "partial"
+
+
 def test_screening_respects_the_agent_cap() -> None:
     """2,000 records whose screeners never answer: retries run until the cap guard stops them, and
     every record is counted as UNRESOLVED instead of the run exceeding 1,000 agents."""
@@ -783,6 +795,16 @@ def test_literature_map_unchecked_gap_is_not_open(fault: str) -> None:
     [u] = res["unchecked_gaps"]
     assert u["theme"] == "Ethics" and "did not complete" in u["why"]
     assert res["coverage"]["gaps"]["retried"] == 1 and res["status"] == "partial"
+
+
+def test_literature_map_gap_no_database_could_search_is_unchecked() -> None:
+    """A gap whose every source was rate-limited is unchecked, never open."""
+    blocked_gap = {"open": True, "evidence": "OpenAlex HTTP 429; Crossref and Europe PMC unreachable", "searched": False}
+    res = run(LM, LM_ARGS, lm_rules(ret("^gap: Ethics", blocked_gap)))["result"]
+    assert len(res["open_gaps"]) == 1
+    [u] = res["unchecked_gaps"]
+    assert u["theme"] == "Ethics" and "no database could be searched" in u["why"]
+    assert res["status"] == "partial"
 
 
 def test_literature_map_failures() -> None:

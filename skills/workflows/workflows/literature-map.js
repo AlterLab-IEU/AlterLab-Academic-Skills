@@ -42,6 +42,15 @@ const PLAN = {
   },
 }
 
+// Keyless OpenAlex list/search calls share a small per-IP daily budget and then answer HTTP 429
+// (single-DOI lookups keep working). A rate-limited source was not searched; it is never evidence
+// that no works exist.
+const KEYLESS_SOURCES =
+  'OpenAlex searches are often rate-limited without a key (HTTP 429; single-DOI lookups still work). If a source answers 429 or ' +
+  'fails, continue with the other keyless public APIs: Crossref (api.crossref.org/works?query=...), Europe PMC ' +
+  '(www.ebi.ac.uk/europepmc/webservices/rest/search), arXiv (export.arxiv.org/api/query), and name the unavailable source. A ' +
+  'rate-limited source means not searched, never no works found.'
+
 const SWEEP = {
   type: 'object',
   required: ['key', 'count', 'top'],
@@ -91,6 +100,7 @@ const GAP = {
   required: ['open', 'evidence'],
   properties: {
     open: { type: 'boolean', description: 'false if you found work that already answers it' },
+    searched: { type: 'boolean', description: 'false when no database could actually be searched (every source rate-limited or failing)' },
     evidence: { type: 'string', description: 'the works you found (DOIs) or the searches that came up empty' },
     sharpened: { type: 'string', description: 'the question, narrowed to what is genuinely still open' },
   },
@@ -268,7 +278,7 @@ const sweeps = await pipeline(angles, async (a) => {
   const s = await withRetry(
     `Search the literature for the "${a.key}" angle of "${input.topic}" (${YEARS}). Rationale: ${a.rationale}\nQuery: ${a.query}\n` +
       'Use the alterlab-openalex skill (and alterlab-pubmed, alterlab-arxiv, or alterlab-citation-graph where they fit) when installed, or ' +
-      'the public APIs. Save up to 200 records to ' + `${OUT_DIR}/angle-${a.key}.jsonl ` +
+      'the public APIs. ' + KEYLESS_SOURCES + ' Save up to 200 records to ' + `${OUT_DIR}/angle-${a.key}.jsonl ` +
       '(title, year, doi, authors, venue, cited_by, abstract) and return the 25 most important for the topic — landmark and highly cited ' +
       'works plus the strongest recent ones — with a line on why each matters. Report only works you retrieved.',
     { schema: SWEEP, label: `sweep: ${a.key}`, phase: 'Sweep' },
@@ -333,7 +343,8 @@ const gapChecks = await pipeline(candidates, async (g) => {
   return withRetry(
     `Someone proposes this as an open research question in "${input.topic}" (theme: ${g.theme}): "${g.question}"\n` +
       'Try to show it is already answered: search for studies, reviews, and recent preprints that address it directly. Mark it open only ' +
-      'if a real search finds nothing that answers it; if it is partly answered, narrow the question to what remains open.',
+      'if a real search finds nothing that answers it; if it is partly answered, narrow the question to what remains open. ' +
+      KEYLESS_SOURCES + ' Set searched to false if no database could be searched at all.',
     { schema: GAP, effort: 'high', label: `gap: ${g.theme}`, phase: 'Gaps' },
     gapStat,
   )
@@ -345,6 +356,7 @@ const unchecked = [...notChecked.map((g) => ({ ...g, why: `beyond the ${MAX_GAPS
 candidates.forEach((g, i) => {
   const v = gapChecks[i]
   if (!v || typeof v.open !== 'boolean') unchecked.push({ ...g, why: 'the search for existing answers did not complete' })
+  else if (v.searched === false) unchecked.push({ ...g, why: 'no database could be searched (rate-limited or failing sources)' })
   else if (v.open) open.push({ ...g, ...v })
   else answered.push({ ...g, ...v })
 })

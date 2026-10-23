@@ -60,6 +60,7 @@ const SEARCH = {
     database: { type: 'string' },
     query_run: { type: 'string', description: 'the exact query string executed, for the PRISMA-S appendix' },
     count: { type: 'integer', description: 'records written to the file' },
+    ran: { type: 'boolean', description: 'false when the database could not be queried (HTTP 429 rate limit, outage); nothing was searched then' },
     total_hits: { type: 'integer', description: 'hits the database reported, before the cap' },
     capped: { type: 'boolean' },
     file: { type: 'string' },
@@ -339,13 +340,15 @@ if (!input.records) {
         `Use the matching AlterLab skill when installed (alterlab-pubmed, alterlab-openalex, alterlab-arxiv, alterlab-biorxiv, alterlab-clinicaltrials) ` +
         'or the database\'s public API. Retrieve at most ' + `${PER_DB} records, most relevant first, and write them as JSON Lines to ` +
         `${OUT_DIR}/records-${q.database.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.jsonl with fields: source, source_id, title, abstract, ` +
-        'authors, year, journal, doi, pmid. Report the exact query executed and the database\'s total hit count.',
+        'authors, year, journal, doi, pmid. Report the exact query executed and the database\'s total hit count. If the database ' +
+        'rate-limits (HTTP 429; keyless OpenAlex searches often do) or fails, set ran to false and do not substitute another ' +
+        'database or report zero hits: the search is then listed as not run.',
       { schema: SEARCH, label: `search ${q.database}`, phase: 'Search' },
       searchStat,
     )
   })
-  searches = runs.filter(Boolean)
-  const failedSearches = toRun.filter((_, i) => !runs[i]).map((q) => q.database)
+  searches = runs.filter((r) => r && r.ran !== false)
+  const failedSearches = toRun.filter((_, i) => !runs[i] || runs[i].ran === false).map((q) => q.database)
   searchStat.completed = searches.length
   searchStat.failed = searchStat.dispatched - searchStat.completed
   searchStat.unresolved = searchStat.requested - searchStat.completed

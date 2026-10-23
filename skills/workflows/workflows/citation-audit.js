@@ -457,7 +457,8 @@ const describe = (f) =>
     ? `Reference ${f.r.id}: "${refIndex.get(f.r.id).text}" was judged ${f.r.verdict} (${f.r.evidence}).`
     : `Claim ${f.r.id}: "${claimById.get(f.r.id).claim}" citing ${claimById.get(f.r.id).refs.join(', ')} was judged ${f.r.verdict} (${f.r.evidence}).`
 const strategies = [
-  'Search by exact title in Crossref and OpenAlex, then by first author plus year, then resolve any identifier directly.',
+  'Search by exact title in Crossref and OpenAlex, then by first author plus year, then resolve any identifier directly. A source ' +
+    'that answers HTTP 429 or fails was not searched: that is unavailable, never not found.',
   "Search the first author's publication list (ORCID, Google Scholar profile, institutional page) and the venue's table of contents for that year.",
 ]
 const recheck = { flags: flags.length, requested: flags.length * strategies.length, dispatched: 0, completed: 0, failed: 0, retried: 0 }
