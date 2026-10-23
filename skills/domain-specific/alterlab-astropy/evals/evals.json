@@ -9,7 +9,9 @@
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "SkyCoord"},
         {"type": "output_contains", "value": "galactic"},
-        {"type": "behavior", "value": "Transforms from the ICRS frame to the Galactic frame and reports l and b, rather than just describing the frames abstractly."}
+        {"type": "behavior", "value": "Transforms from the ICRS frame to the Galactic frame and reports l and b, rather than just describing the frames abstractly."},
+        {"type": "output_contains", "value": ["280.46", "280.47"]},
+        {"type": "output_contains", "value": ["-32.88", "-32.89", "−32.88", "−32.89"]}
       ]
     },
     {
@@ -25,23 +27,28 @@
     },
     {
       "id": "fits-header-and-stats",
+      "files": ["fixtures/observation.fits"],
       "prompt": "I have observation.fits. Open it, show me the HDU structure, pull the EXPTIME and FILTER header keywords from the image HDU, and give me the mean and median of the pixel data.",
       "expected_output": "Triggers the astropy skill. Uses astropy.io.fits.open with a context manager, calls hdul.info() for structure, reads header['EXPTIME'] and header['FILTER'], and computes mean/median of the data array. Should use astropy.io.fits.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "fits"},
         {"type": "output_contains", "value": "EXPTIME"},
-        {"type": "behavior", "value": "Opens the FITS file with a context manager, inspects HDU structure, extracts the named header keywords, and reports pixel statistics."}
+        {"type": "behavior", "value": "Opens the FITS file with a context manager, inspects HDU structure, extracts the named header keywords, and reports pixel statistics."},
+        {"type": "output_contains", "value": "SDSS-r"},
+        {"type": "behavior", "value": "Reports the shipped file's real values: an empty primary HDU plus one 'SCI' float32 image HDU of 64 x 48 pixels; EXPTIME = 300 s and FILTER = 'SDSS-r' read from the SCI header (the primary header has no EXPTIME); pixel mean about 1047.07 and median about 1002.57 (within 0.1%)."}
       ]
     },
     {
       "id": "catalog-crossmatch-arcsec",
+      "files": ["fixtures/catalog1.fits", "fixtures/catalog2.fits"],
       "prompt": "I have two FITS catalogs with RA/DEC columns. Cross-match them and keep only pairs within 1 arcsecond of each other. How many matches do I get?",
       "expected_output": "Triggers the astropy skill. Reads both catalogs with astropy.table.Table.read, builds SkyCoord objects from the RA/DEC columns, calls match_to_catalog_sky, and filters by a separation threshold of 1 arcsec to count matches. Should use astropy.coordinates matching plus astropy.table.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "match_to_catalog_sky"},
-        {"type": "behavior", "value": "Performs an on-sky catalog cross-match with an angular separation cut in arcseconds and reports the number of surviving matches."}
+        {"type": "behavior", "value": "Performs an on-sky catalog cross-match with an angular separation cut in arcseconds and reports the number of surviving matches."},
+        {"type": "behavior", "value": "Runs the match on the shipped catalog1.fits (120 sources) and catalog2.fits (130 sources) and reports 70 matched pairs within 1 arcsec (one-to-one: no catalog2 source is claimed twice)."}
       ]
     },
     {
