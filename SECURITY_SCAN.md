@@ -2,7 +2,7 @@
 
 > **Generated** — do not edit by hand. Regenerate with `python3 scripts/gen_security_scan.py`; CI fails if this file is stale (`--check`) or if the attestation is violated (`--strict`).
 
-This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **278 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
+This manifest is a static scan of the code a user actually installs or runs (`skills/**` and the `mcp-servers/**` connectors): **279 Python**, **3 shell**, and **6 `.mcp.json`** files. It exists so a cautious lab can verify the suite's posture without auditing every file by hand.
 
 ## Attestation
 
@@ -65,12 +65,13 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `kegg.jp` | Pathways | 4 |
 | `labarchives.com` | ELN | 3 |
 | `localhost` | Local (non-network) | 6 |
+| `markerdb.ca` | other (review) | 1 |
 | `materialsproject.org` | Materials | 3 |
 | `metabolomicsworkbench.org` | Metabolomics | 3 |
 | `monarchinitiative.org` | Phenotypes | 3 |
 | `mygene.info` | Gene annotation | 1 |
 | `nf-co.re` | nf-core pipelines | 1 |
-| `nih.gov` | NCBI / NIH | 20 |
+| `nih.gov` | NCBI / NIH | 21 |
 | `oncokb.org` | other (review) | 1 |
 | `openalex.org` | Scholarly index | 25 |
 | `openarchives.org` | OAI-PMH | 2 |
@@ -90,7 +91,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `semanticscholar.org` | Scholarly index | 4 |
 | `stlouisfed.org` | FRED economics | 14 |
 | `store` | Placeholder (commented docs) | 1 |
-| `string-db.org` | Protein interactions | 4 |
+| `string-db.org` | Protein interactions | 5 |
 | `tdcommons.ai` | Therapeutics benchmarks | 1 |
 | `trdizin.gov.tr` | TR Dizin index | 4 |
 | `tubitak.gov.tr` | TÜBİTAK | 5 |
@@ -103,7 +104,7 @@ Every host the shipped skill code references, reduced to its registrable domain.
 | `yahoo.com` | other (review) | 1 |
 | `yok.gov.tr` | YÖK | 3 |
 
-_77 distinct domains._
+_78 distinct domains._
 
 ## Method
 
