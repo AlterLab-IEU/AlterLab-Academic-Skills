@@ -146,10 +146,10 @@ Refer to `references/data_formats.md` for comprehensive documentation on file fo
 **Example download:**
 ```bash
 # Download latest monthly VCV XML release
-wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/ClinVarVCVRelease_00-latest.xml.gz
+curl -O https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/ClinVarVCVRelease_00-latest.xml.gz
 
 # Download VCF for GRCh38
-wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz
+curl -O https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz
 ```
 
 ### 4. Process and Analyze ClinVar Data
@@ -308,8 +308,8 @@ Contact: clinvar@ncbi.nlm.nih.gov for submission account setup.
 **Steps:**
 1. Download appropriate ClinVar VCF (match genome build: GRCh37 or GRCh38):
    ```bash
-   wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz
-   wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz.tbi
+   curl -O https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz
+   curl -O https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar.vcf.gz.tbi
    ```
 2. Annotate using bcftools:
    ```bash
@@ -344,7 +344,7 @@ Contact: clinvar@ncbi.nlm.nih.gov for submission account setup.
 **Steps:**
 1. Download monthly release for reproducibility:
    ```bash
-   wget https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/ClinVarVCVRelease_YYYY-MM.xml.gz
+   curl -O https://ftp.ncbi.nlm.nih.gov/pub/clinvar/xml/ClinVarVCVRelease_YYYY-MM.xml.gz
    # previous years' monthly files move to xml/archive/<year>/
    ```
 2. Parse XML and load into database (PostgreSQL, MySQL, MongoDB)
