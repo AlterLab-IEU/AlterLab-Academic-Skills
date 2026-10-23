@@ -12,6 +12,28 @@ defect was reproduced before it was fixed.
 
 ### Changed — behavior that can affect existing users
 
+- **Keyless-first, enforced.** Every skill does what it claims with no external API key,
+  account or licence: Claude's own tools (WebSearch, WebFetch, Read), keyless public APIs, local
+  libraries and simulators, and Claude's own reasoning instead of a second paid LLM. A credential
+  only *adds* something (the user's own account or data, a higher rate limit, a paid service the
+  user asks for by name) and is declared as `metadata.credentials: "optional: NAME (what it
+  adds)"`. 55 skills were rewritten or re-declared for this, among them perplexity, parallel-web,
+  research-lookup, bgpt-search, pyzotero, generate-image, infographics, scientific-schematics,
+  paper-2-web, fred, alpha-vantage, denario, datacommons, uspto, brenda, cosmic, drugbank,
+  pymatgen, hypogenic, modal, remote-compute and the seven lab-platform skills.
+  `scripts/check_keyless.py` and `tests/test_keyless.py` fail the suite on any regression. A
+  keyed backend that the user asks for and whose key is missing exits with a clear message; it
+  never answers silently from another backend.
+- **No maintainer email in requests.** The suite no longer sends a hard-coded contact address in
+  User-Agents or `mailto` parameters (citation verifier, MCP connectors, DergiPark, TR Dizin, YÖK
+  Akademik). A contact address is opt-in via `ALTERLAB_CONTACT_EMAIL` or `--mailto`.
+- **Hand-off rule on all 242 skills.** When a request matches a routing row, the skill names the
+  better sibling by id in its first line and stops, instead of answering anyway.
+- **Behavioral eval confinement.** Answer arms run in a private mount namespace that hides the
+  checkout and every worktree, with a private temp root holding only their own workspace, fresh
+  scratch dirs, hidden installed plugins and skills, Write/Edit scoped to the workspace, a
+  sanitised environment and a tripwire that blocks the run if the checkout changes. Background
+  jobs an arm leaves behind are killed when its call ends (the runner is a child subreaper).
 - **Behavioral evals** (`scripts/run_evals.py --behavioral`) exit `0` only when every selected
   case produced a verdict and passed; `1` failed, `2` blocked (nothing graded), `3` partial.
   The nightly CI job is gone (it graded 0 of 224 and 0 of 214 cases while showing success,
@@ -54,6 +76,17 @@ defect was reproduced before it was fixed.
 
 ### Added
 
+- Eval runner: a `requires` field (`env:`/`cmd:`/`net:`/`mcp:`; unmet cases are "not runnable
+  here", counted apart and never FAIL), `output_contains` lists of alternatives, directory
+  fixtures, `--collect-only`, `--wait-on-limit`, `--regrade`, a substance judge with
+  `--calibrate-judge` (8 hand-labelled pairs), `--case`, `denied_tools` in run records, and the
+  answering endpoint on record. `scripts/eval_sweep.sh` (parallel sweeps with claim locks; a list
+  line may carry per-skill arguments), `scripts/defect_scan.py` (missing inputs, denied tools,
+  crashed scripts, blocked hosts) and `docs/local-eval-runbook.md` (defect sweeps on a local
+  model, never reported as Claude results).
+- Eval fixtures for the cases that named input they did not ship (synthetic or clearly
+  fictional data, real checkable identifiers for live lookups), with stricter assertions naming
+  the facts an answer must find. Fixtures are excluded from every release archive.
 - `scripts/run_benchmark.py` and `benchmarks/`: a five-task live benchmark (citation
   integrity, manuscript review, systematic-review screening, analysis checking, doçentlik
   pre-screening) with synthetic fixtures, anchored expected answers, deterministic scoring of
@@ -65,6 +98,34 @@ defect was reproduced before it was fixed.
   parser tests, workflow fault injection (null, throw, missing/duplicate/unknown IDs, partial
   output, failed report), packaging and isolated-install tests, helper input-domain tests.
 - `docs/CATALOG.md` (the per-domain skill tables, moved out of the README).
+
+### Fixed — skills and scripts (found by the live sweep)
+
+- research-lookup `--force-backend parallel` quietly answered from Perplexity without the key.
+- citation-mgmt `format_bibtex.py` found no entries in a messy `.bib` (now brace-aware, dedupes
+  by key, DOI or title+year).
+- generate-image lost a paid image when the output folder did not exist; pdf-explore's p-value
+  pattern missed `P <`; plotly, seaborn, eda, neurokit2, pyhealth, geo, chembl and others
+  documented installs their `allowed-tools` blocked (now install-free `uv run --with` recipes).
+- clinical-decision's validator crashed on gene names and its survival script printed a survival
+  probability as the median's confidence interval; iso13485's gap analyser counted a quality
+  policy as the Quality Manual; pydicom's anonymiser left identifiers nested in sequences and its
+  windowing skipped the rescale; treatment-plans' style file printed "Diabetes Treatment Plan /
+  23-year-old" on every plan.
+- fda's client retried HTTP 429 forever; gene-db's batch lookup returned POLK for POLQ (alias
+  match); gtex returned 250 of 655 sQTLs (no paging); reactome overwrote a `.tsv` input with its
+  results; alphafold-db downloads failed with curl's default User-Agent; bioservices' KEGG
+  `find`/`conv` crash on today's KEGG (REST fallback documented); zinc-db decoded ZINC-22 tranche
+  letters wrongly; openalex's "MIT" example was Harvard's ID.
+- Eval errors corrected against primary sources: a rubric that tied NM_000059 to BRCA1 (it is
+  BRCA2), an ENA accession that does not exist, SB3 callback wiring that raises, a dask z-score
+  that holds the array in memory, a Levene pre-test the skill advises against, windowing applied
+  to raw stored values.
+- timesfm's `compatibility` exceeded the 500-character spec limit; remote-compute keeps
+  `--backend` required so a cluster script is never run locally by omission.
+- Eval runner: arms' background jobs outlived the run and starved later arms; parallel runs
+  finishing in the same second could overwrite each other's results file; Anthropic's own API
+  host was labelled as a non-Claude endpoint.
 
 ### Fixed — documentation
 
