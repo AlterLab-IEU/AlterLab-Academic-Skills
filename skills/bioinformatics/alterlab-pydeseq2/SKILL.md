@@ -33,6 +33,7 @@ Use this skill when:
 | Single-cell differential expression or cluster marker genes | `alterlab-scanpy` (markers) or `alterlab-scvi-tools` (model-based DE) |
 | Turning FASTQ into the count matrix (salmon/kallisto/STAR quantification, tximport) | `alterlab-rnaseq-quant` |
 | Generic regression / GLM / mixed models on non-count data | `alterlab-statsmodels` |
+| Gene regulatory network inference (which TFs drive which target genes) from expression | `alterlab-arboreto` |
 | Somatic or germline variant calling from sequencing reads | `alterlab-nf-core-sarek` |
 | Microbiome feature-table differential abundance | `alterlab-qiime2-amplicon` |
 

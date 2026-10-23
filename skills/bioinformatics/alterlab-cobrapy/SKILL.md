@@ -30,6 +30,8 @@ Use this skill when the user wants to:
 |----------|-------------|
 | Looking up a pathway or reaction annotation rather than simulating | `alterlab-kegg`, `alterlab-reactome` |
 | Enzyme kinetic parameters (kcat, Km) for a reaction | `alterlab-brenda` |
+| Differential gene expression on RNA-seq counts (which genes change between conditions) | `alterlab-pydeseq2` |
+| Gene regulatory network inference (TF→target links) from an expression matrix | `alterlab-arboreto` |
 | Graph analysis of the metabolic network (centrality, communities) rather than flux | `alterlab-networkx` |
 | Metabolomics measurements and their identification | `alterlab-metabolomics-wb`, `alterlab-hmdb` |
 | Multi-objective optimization that is not a flux-balance problem | `alterlab-pymoo` |

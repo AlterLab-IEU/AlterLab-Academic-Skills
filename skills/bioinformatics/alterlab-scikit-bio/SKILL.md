@@ -36,6 +36,7 @@ This skill should be used when the user:
 |----------|-------------|
 | Running the full amplicon pipeline (demux -> DADA2 -> taxonomy -> diversity) as QIIME 2 artifacts | `alterlab-qiime2-amplicon` |
 | Inferring a phylogeny with a substitution model (IQ-TREE/RAxML, bootstrap support) | `alterlab-phylogenetics` |
+| Publication-quality tree figures — styled rendering, colored clades, custom node styles | `alterlab-etetoolkit` |
 | General sequence record parsing, BLAST parsing, Entrez retrieval | `alterlab-biopython` |
 | Single-cell or bulk expression analysis rather than community ecology | `alterlab-scanpy` / `alterlab-pydeseq2` |
 | Generic multivariate statistics on non-compositional data | `alterlab-statistical-analysis` |
