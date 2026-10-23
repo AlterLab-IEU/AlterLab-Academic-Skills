@@ -26,6 +26,7 @@ Use this skill when the user wants to:
 
 | Scenario | Use Instead |
 |----------|-------------|
+| Georeferencing a scanned historical map (ground control points in QGIS) and overlaying it to study change over time — historical GIS for humanities research. The whole request goes there, overlay included | `alterlab-digital-humanities` |
 | Raster, satellite imagery, DEMs, spectral indices, STAC/COG, or EO machine learning | `alterlab-geomaster` |
 | Network/graph analysis of relationships with no geometry (centrality, communities) | `alterlab-networkx` |
 | Genomic interval overlaps (BED files) — "spatial" joins along a chromosome | `alterlab-gtars` |
@@ -35,11 +36,17 @@ Use this skill when the user wants to:
 
 ## Installation
 
+Run install-free — one `uv run` command, no virtualenv or `uv pip install` step (pin the
+interpreter: uv's default Python here can be 3.9). Add each optional package below with
+another `--with`:
+
 ```bash
-uv pip install geopandas   # 1.x (current 1.1.x as of 2026-09); shapely 2 + pyogrio
+uv run --python ">=3.11" --with geopandas python your_script.py   # 1.x (1.2.0 as of 2026-10); shapely 2 + pyogrio
+uv run --python ">=3.11" --with geopandas --with matplotlib --with mapclassify --with folium python map.py
 ```
 
-GeoPandas 1.x requires shapely ≥ 2 and reads/writes through **pyogrio** by default
+For a persistent environment, the `uv pip install ...` lines below work inside an activated
+virtualenv. GeoPandas 1.x requires shapely ≥ 2 and reads/writes through **pyogrio** by default
 (fiona is optional). Removed or deprecated in the 1.x line: `sjoin(op=...)` (use
 `predicate=`), `unary_union` (use `union_all()`), and the bundled `geopandas.datasets`
 files (use the `geodatasets` package).

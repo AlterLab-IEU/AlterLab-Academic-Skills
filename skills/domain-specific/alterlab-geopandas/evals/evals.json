@@ -21,11 +21,13 @@
     },
     {
       "id": "buffer-overlay",
+      "files": ["fixtures/buildings.gpkg", "fixtures/hydrology.gpkg"],
       "prompt": "I want to find all the buildings within 100 meters of a river and clip them to the floodplain polygon, working from two GeoPackage layers.",
       "expected_output": "Invokes alterlab-geopandas: reads the layers, confirms a projected CRS so the 100 m buffer is meaningful, buffers the river geometry by 100, uses a spatial predicate or gpd.overlay/clip to select intersecting buildings, and clips to the floodplain. Mentions copying geometry before modifying and validating geometries.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Uses buffer plus an overlay/clip or spatial predicate in GeoPandas, with awareness that buffer distances require a projected CRS." }
+        { "type": "behavior", "value": "Uses buffer plus an overlay/clip or spatial predicate in GeoPandas, with awareness that buffer distances require a projected CRS." },
+        { "type": "behavior", "value": "Works on the shipped files: buildings.gpkg (layer 'buildings', 64 polygons, EPSG:25832) and hydrology.gpkg (layers 'rivers' and 'floodplain', stored in EPSG:4326), reprojecting the hydrology layers to the buildings' metric CRS before the 100 m test. Reports 22 buildings within 100 m of the river and 16 of them left after clipping to the floodplain (clipped area about 2,470 m2). Buffering in EPSG:4326 degrees (which selects all 64) is a fail." }
       ]
     },
     {
@@ -58,10 +60,10 @@
     {
       "id": "near-miss-social-science-methods",
       "prompt": "I have a relational dataset of who collaborates with whom among researchers and I want to compute betweenness and eigenvector centrality and detect which actors bridge communities.",
-      "expected_output": "Does NOT invoke this skill; defers to alterlab-social-science-methods (social network analysis). The data is a non-spatial relational/social network, and the measures are SNA centralities, not geospatial geometry operations that GeoPandas handles.",
+      "expected_output": "Does NOT invoke this skill; defers to a social-network-analysis sibling — alterlab-social-science-methods (SNA design), alterlab-sna (SNA measure choice on relational data) or alterlab-networkx (computing the centralities and communities). The data is a non-spatial relational/social network, and the measures are SNA centralities, not geospatial geometry operations that GeoPandas handles.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
-        { "type": "output_contains", "value": "alterlab-social-science-methods" }
+        { "type": "output_contains", "value": ["alterlab-social-science-methods", "alterlab-sna", "alterlab-networkx"] }
       ]
     },
     {
