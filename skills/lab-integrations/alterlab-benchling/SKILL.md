@@ -43,7 +43,7 @@ body = [r.to_dict() for r in records]   # camelCase JSON: folderId, registryId, 
 
    Verified offline: a plain-string `naming_strategy="NEW_IDS"` constructs but fails at `.to_dict()` (`AttributeError: 'str' object has no attribute 'value'`); `entity_registry_id` together with `naming_strategy` serializes fine client-side and is rejected by the server, so flag it before running.
 3. **Analyse exports locally.** Inventory, registry and result exports (CSV/XLSX from the web app, or a Data Warehouse extract the user already has) are read with pandas/polars — no credentials.
-4. **Hand over the run step.** Deliver the script plus a dry-run summary (what it will create, update or archive, and where). Running it against a tenant is the user's call, with their key; writes to a production registry should go through a test folder or sandbox tenant first.
+4. **Hand over the run step.** Deliver the script plus a dry-run summary (what it will create, update or archive, and where). Show the integration code and the SDK request models you build (e.g. `DnaSequenceBulkCreate` / `DnaSequenceCreate`) as a code block in the reply, not only as a saved `.py` file — the user reads the answer, not a file left in the workspace. Running it against a tenant is the user's call, with their key; writes to a production registry should go through a test folder or sandbox tenant first.
 
 ## Core Capabilities
 
