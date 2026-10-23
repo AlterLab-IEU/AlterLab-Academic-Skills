@@ -13,11 +13,13 @@
     },
     {
       "id": "validate-bib-file",
+      "files": ["fixtures/references.bib"],
       "prompt": "Can you check my references.bib for broken DOIs, missing required fields, and duplicate entries before I submit?",
       "expected_output": "Invokes alterlab-citation-mgmt in validation mode (validate_citations.py): verifies each DOI resolves via doi.org/CrossRef, checks required fields per entry type, detects duplicates by DOI/title, and reports errors and warnings with citation keys and severities.",
       "assertions": [
         {"type": "should_trigger", "value": true},
-        {"type": "behavior", "value": "Reports DOI verification, required-field completeness, and duplicate detection as distinct validation checks rather than just reformatting the file."}
+        {"type": "behavior", "value": "Reports DOI verification, required-field completeness, and duplicate detection as distinct validation checks rather than just reformatting the file."},
+        { "type": "behavior", "value": "Flags kluger1996effects's DOI (10.1037/0033-2909.119.2.2540) as not resolving, mueller2014pen as missing its journal, and Hattie_Timperley_2007 as a duplicate of hattie2007power (same DOI)." }
       ]
     },
     {
@@ -32,11 +34,13 @@
     },
     {
       "id": "format-deduplicate-bibtex",
+      "files": ["fixtures/messy.bib"],
       "prompt": "My .bib file is a mess from mixing Zotero and manual entries — please standardize the formatting, sort by year newest-first, and strip duplicates.",
       "expected_output": "Invokes alterlab-citation-mgmt (format_bibtex.py) to standardize field order/indentation, protect title capitalization with braces, fix page-range dashes, deduplicate, and sort entries by year descending.",
       "assertions": [
         {"type": "should_trigger", "value": true},
-        {"type": "behavior", "value": "Performs BibTeX cleanup operations (standardize, deduplicate, sort) on the existing file without inventing new references."}
+        {"type": "behavior", "value": "Performs BibTeX cleanup operations (standardize, deduplicate, sort) on the existing file without inventing new references."},
+        { "type": "behavior", "value": "Merges the two Hattie & Timperley (2007) entries into one, converts the single-hyphen page ranges to en dashes (--), and orders the entries newest first (2022, 2020, 2007, 1996) without adding references that are not in the file." }
       ]
     },
     {

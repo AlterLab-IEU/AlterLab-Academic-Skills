@@ -1,5 +1,9 @@
 # FRED API Basics
 
+> The JSON API on this page needs the optional `FRED_API_KEY`. Series values, transformations,
+> aggregation, ALFRED vintages and search work without a key: see "Access: keyless first" in
+> SKILL.md and `scripts/fred_keyless.py`.
+
 ## Base URL
 
 ```

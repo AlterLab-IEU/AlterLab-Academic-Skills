@@ -47,6 +47,8 @@ Use when the request involves:
 | Raw FASTQ → expression matrix (read alignment/quantification) | `alterlab-rnaseq-quant` |
 | Diversity / ecology statistics on a feature table | `alterlab-scikit-bio` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-scanpy`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 If the user wants the *whole* pipeline ("cluster my Xenium data, then find which
 cell types are neighbors"), run the scanpy clustering step under `alterlab-scanpy`
 first, then return here for the spatial graph and enrichment.
@@ -160,7 +162,7 @@ operates on an `ImageContainer`.
 **Helper script** — build the graph and run the core statistics in one call:
 
 ```bash
-uv run python skills/bioinformatics/alterlab-squidpy-spatial/scripts/spatial_neighborhood.py \
+uv run python scripts/spatial_neighborhood.py \
     clustered.h5ad --platform xenium --cluster-key leiden --out spatial_report.json
 ```
 

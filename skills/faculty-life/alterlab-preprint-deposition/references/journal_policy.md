@@ -1,4 +1,4 @@
-# Checking a Journal's Preprint Policy (Jisc Open Policy Finder API)
+# Checking a Journal's Preprint Policy (Jisc Open Policy Finder)
 
 Before posting a preprint — especially the *accepted* version — confirm the
 intended journal **permits** preprints and on what conditions. The authoritative
@@ -9,12 +9,42 @@ journal.
 
 ## Contents
 
-- [The API](#the-api)
+- [Keyless: the public record page](#keyless-the-public-record-page)
+- [The API (optional key)](#the-api-optional-key)
 - [Reading a prearchiving policy](#reading-a-prearchiving-policy)
-- [Offline / no-key fallback](#offline--no-key-fallback)
+- [Offline fallback](#offline-fallback)
 - [What to report](#what-to-report)
 
-## The API
+## Keyless: the public record page
+
+Every journal has a public record page,
+`https://openpolicyfinder.jisc.ac.uk/publication/<id>`, readable without an account.
+`scripts/journal_policy.py` uses it by default when no key is set (`--backend web`):
+
+1. It finds the record id through the site's own journal search,
+   `https://openpolicyfinder.jisc.ac.uk/api/compliance-journal?per_page=10&current_page=1&search=<ISSN or title>`,
+   and keeps only an exact ISSN or exact (case-insensitive) title match.
+2. It reads the policy pathways embedded in the record page's data
+   (`submitted`, `accepted`, `published`, each a list of options with embargo,
+   locations, conditions, licence and copyright owner).
+
+```bash
+uv run python scripts/journal_policy.py --issn 1476-4687        # Nature
+uv run python scripts/journal_policy.py --title "Nature Methods"
+```
+
+Checked live on 2026-10-22: ISSN 1476-4687 matched *Nature* (record 4008); the
+submitted version is permitted with no embargo in a Preprint Repository (conditions:
+link to the publisher version, cite the DOI on publication), while the accepted version
+carries a 6-month embargo and is not listed for preprint repositories.
+
+The search endpoint and the page data are the site's own formats, not a documented
+API: they can change without notice. When parsing fails the script returns
+`unverified` with the record URL, so read that page (or the publisher's policy page)
+yourself rather than guessing. The data are licensed CC BY-NC-ND 4.0 — fine for
+checking your own submission, not for bulk harvesting (use the API for that).
+
+## The API (optional key)
 
 - **Endpoint:** `https://api.openpolicyfinder.jisc.ac.uk/retrieve` (object
   retrieval API). The legacy Sherpa Romeo endpoint
@@ -41,10 +71,12 @@ curl -H "x-api-key: $OPEN_POLICY_FINDER_API_KEY" \
   'https://api.openpolicyfinder.jisc.ac.uk/retrieve?item-type=publication&format=Json&limit=1&filter=%5B%5B%22issn%22%2C%22equals%22%2C%221234-5678%22%5D%5D'
 ```
 
-`scripts/journal_policy.py` wraps this: pass `--issn` or `--title` plus a key
-(`--api-key` or the `OPEN_POLICY_FINDER_API_KEY` environment variable), and it
-prints the journal's prearchiving permission, conditions, embargo, and
-locations. Without a key the API answers `{"message":"Forbidden"}`.
+`scripts/journal_policy.py` wraps this when a key is set (`--api-key` or the
+`OPEN_POLICY_FINDER_API_KEY` environment variable; `--backend auto` picks the API
+then, and `--backend api` forces it) and prints the journal's prearchiving
+permission, conditions, embargo, and locations. Without a key the API answers
+`{"message":"Forbidden"}`, so `--backend api` with no key exits 2 instead of
+silently answering from the record page.
 
 ## Reading a prearchiving policy
 
@@ -64,9 +96,10 @@ statement or a link to the published DOI), `embargo` (`amount` + `units`),
 `copyright_owner`. Human-readable labels live in the matching `*_phrases`
 arrays.
 
-## Offline / no-key fallback
+## Offline fallback
 
-If no API key is available or the network is down:
+If the script returns `unverified` or `no_match` (network down, page format changed,
+journal not in Open Policy Finder):
 
 1. WebFetch the **publisher's own** preprint/sharing policy page and quote it.
 2. State explicitly that the policy was read live (not from memory) and link the

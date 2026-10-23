@@ -299,7 +299,7 @@ npa.analyze_unit_visually(
     analyzer: SortingAnalyzer,
     unit_id: int,
     api_client: Any = None,
-    model: str = None,  # None -> resolve via ALTERLAB_MODEL (skills/core/shared/model_env.md)
+    model: str = None,  # None -> resolve via ALTERLAB_MODEL (shared/model_env.md)
     task: str = 'quality_assessment',
     custom_prompt: str = None,
 ) -> dict
@@ -319,7 +319,7 @@ npa.batch_visual_curation(
     analyzer: SortingAnalyzer,
     unit_ids: list = None,
     api_client: Any = None,
-    model: str = None,  # None -> resolve via ALTERLAB_MODEL (skills/core/shared/model_env.md)
+    model: str = None,  # None -> resolve via ALTERLAB_MODEL (shared/model_env.md)
     output_dir: str = None,
     progress_callback: callable = None,
 ) -> dict

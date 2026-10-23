@@ -2,7 +2,7 @@
 name: alterlab-akademik-tesvik
 description: "Computes the annual Turkish academic-incentive (akademik teşvik) score for Devlet (state) university öğretim elemanı (academic staff) from a classified activity list, applying the verified Akademik Teşvik Ödeneği Yönetmeliği (2018/11834) Faaliyet Hesaplama Tablosu headline puanları (Proje 20, Araştırma 15, Yayın 30, Patent 30, Atıf 30, Tebliğ 20, Ödül 20) with the k (author-count), p (Q1 1/Q2 0.8/Q3 0.5/Q4 0.25), and r (project-role) coefficients via türü puanı = Σ(faaliyet oranları) × headline (MADDE 8/2), then enforcing the per-type headline ceilings, the 100 cap (MADDE 8/3), and the net-30 payment gate (MADDE 10/3) in a deterministic scripts/tesvik_score.py. Use when the user wants to calculate akademik teşvik puanı, check the en az 30 (net-30) threshold, apply TABLO 4 ceilings, or estimate teşvik eligibility; keeps its coefficients separate from doçentlik scoring. For doçentlik point eligibility prefer alterlab-docentlik-eligibility. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: No API key and no network required — applies the regulation's tables offline via `uv run python`; the regulation PDF is on mevzuat.gov.tr for re-verification
 metadata:
   skill-author: AlterLab
@@ -61,6 +61,8 @@ Route adjacent requests to the right sibling skill:
 | Turkish APA-7 / TR Dizin manuscript formatting & öz | `alterlab-tr-academic-style` |
 | YÖK Akademik profile / official affiliation lookup | `alterlab-yok-akademik` |
 | Verifying that cited references actually exist | `alterlab-citation-verifier` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-docentlik-eligibility`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 If the user asks for the **TRY payout amount**, this skill computes the score and
 shows the formula, but does **not** quote money from a hardcoded salary
@@ -133,14 +135,16 @@ k/p/r/months:
 
 Type names accept Turkish spelling with diacritics (`Yayın`, `Atıf`, `Tebliğ`);
 the script ASCII-folds them internally. `count` (default 1) multiplies the oran
-for identical repeated activities. See
+for identical repeated activities. `oran` must be a finite number ≥ 0 and `count` a
+non-negative whole number; NaN/Infinity, booleans, null and non-numeric strings are
+rejected (exit 2). See
 [`references/hesaplama.md`](references/hesaplama.md) for how to derive each
 `oran` from the table, with worked rows.
 
 ### 2. Run the calculator
 
 ```bash
-uv run python skills/turkish-academia/alterlab-akademik-tesvik/scripts/tesvik_score.py \
+uv run python scripts/tesvik_score.py \
     activities.json --json
 ```
 

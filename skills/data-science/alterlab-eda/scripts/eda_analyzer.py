@@ -402,7 +402,7 @@ def analyze_bioinformatics(filepath, extension):
             }
 
     except ImportError as e:
-        results['error'] = f"Required library not installed (try: uv pip install biopython): {e}"
+        results['error'] = f"Required library not installed (rerun with: uv run --with biopython python ...): {e}"
     except Exception as e:
         results['error'] = f"Analysis error: {e}"
 
@@ -442,7 +442,7 @@ def analyze_imaging(filepath, extension):
                     results['page_count'] = frame_count
 
     except ImportError as e:
-        results['error'] = f"Required library not installed (try: uv pip install pillow): {e}"
+        results['error'] = f"Required library not installed (rerun with: uv run --with pillow --with numpy python ...): {e}"
     except Exception as e:
         results['error'] = f"Analysis error: {e}"
 
@@ -547,10 +547,14 @@ def generate_markdown_report(analysis, output_path=None):
 
 def main():
     """Main CLI interface."""
+    usage = ("Usage: uv run --python \">=3.11\" --with pandas python eda_analyzer.py <filepath> [output.md]\n"
+             "  filepath: Path to the data file to analyze\n"
+             "  output.md: Optional output path for markdown report")
+    if len(sys.argv) > 1 and sys.argv[1] in ("-h", "--help"):
+        print(usage)
+        sys.exit(0)
     if len(sys.argv) < 2:
-        print("Usage: uv run python eda_analyzer.py <filepath> [output.md]")
-        print("  filepath: Path to the data file to analyze")
-        print("  output.md: Optional output path for markdown report")
+        print(usage)
         sys.exit(1)
 
     filepath = sys.argv[1]

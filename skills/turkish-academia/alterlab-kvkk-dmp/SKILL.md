@@ -2,7 +2,7 @@
 name: alterlab-kvkk-dmp
 description: "Produces KVKK-compliant (Law 6698, as amended by Law 7499 — published in the Official Gazette 12 Mar 2024, KVKK provisions effective 1 Jun 2024) data management plans for Turkish research, encoding the açık rıza (explicit consent) default basis, the Art. 28(1)(b) anonymization exemption as the primary compliance lever, the Art. 6 special-category regime for health/genetic/biometric data, Art. 7 deletion/destruction/anonymization at purpose-end, the Art. 13 thirty-day data-subject response window, Art. 9 cross-border adequacy-decision rules for cloud/overseas data, and Art. 16 VERBIS pre-processing registration, with a KVKK-vs-GDPR crosswalk. Use when the user needs a KVKK data management plan, to anonymize a research dataset under Turkish law, a VERBIS check, or to fix EU DMP boilerplate for Turkey; for pure GDPR/HIPAA use alterlab-research-ethics. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: No API key required — generates KVKK data management plans from primary mevzuat (Law 6698) encoded in references/; the optional scaffold runs via `uv run python` on the standard library only
 metadata:
   skill-author: AlterLab
@@ -59,6 +59,8 @@ Route adjacent requests to the correct sibling skill instead of forcing this one
 | Building a TÜBİTAK ARDEB 1001/1002-A proposal | `alterlab-tubitak-proposal` | That skill scaffolds the proposal form; KVKK-DMP only fills the data-protection annex |
 | Building a data-capture instrument / survey (Qualtrics, REDCap) or questionnaire | `alterlab-survey-design` | That owns instrument design; KVKK-DMP governs the legal-basis/retention layer over the data they collect |
 | Turkish APA-7 / TR Dizin citation style or academic-writing conventions | `alterlab-tr-academic-style` | Style, not data protection |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-research-ethics`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 If a workflow needs both a **funder VYP** (Aperta) and a **KVKK DMP** (here),
 produce the KVKK plan first and hand its lawful-basis / anonymization decision
@@ -137,7 +139,7 @@ A worked walkthrough of all six on a sample survey + health-data project is in
    skeleton you then complete and review:
 
    ```bash
-   uv run python skills/turkish-academia/alterlab-kvkk-dmp/scripts/kvkk_dmp_scaffold.py \
+   uv run python scripts/kvkk_dmp_scaffold.py \
        --title "Project title" \
        --basis explicit-consent \
        --special-category health \

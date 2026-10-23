@@ -1,0 +1,242 @@
+{
+  "id": "screening",
+  "title": "Title/abstract screening for a systematic review of RCTs",
+  "domain": "Evidence synthesis / systematic review screening (nursing, PRISMA 2020)",
+  "skill_dir": "skills/workflows/alterlab-research-workflows",
+  "allowed_tools": [
+    "Read",
+    "Glob",
+    "Grep"
+  ],
+  "label_semantics": {
+    "approve": [
+      "INCLUDE"
+    ],
+    "abstain": [
+      "UNCLEAR"
+    ],
+    "false_approval_name": "ineligible record included",
+    "false_accusation_name": "eligible record excluded"
+  },
+  "cases": [
+    {
+      "id": "batch-a-standard",
+      "kind": "standard",
+      "prompt": "We're doing title/abstract screening for our systematic review on mindfulness interventions for burnout in registered nurses. Our screening codebook is attached (review_protocol.md). I'm acting as the second screener for batch A (records_batch_A.txt) — could you screen each record against the codebook and give me your decision for each one?",
+      "files": [
+        "fixtures/review_protocol.md",
+        "fixtures/records_batch_A.txt"
+      ],
+      "labels": [
+        "INCLUDE",
+        "EXCLUDE",
+        "UNCLEAR"
+      ],
+      "items": [
+        {
+          "id": "R01",
+          "question": "Record R01 (records_batch_A.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "INCLUDE",
+          "accept": [
+            "INCLUDE"
+          ],
+          "anchor": "records_batch_A.txt L4-L14: 96 registered nurses (C1, L8); 8 weekly MBSR sessions of formal meditation (C2, L8-L9); waitlist (C3, L10); MBI-HSS (C4, L10-L11); randomly assigned with results reported (C5, L7-L12); 2019, English journal article (C6, L6). Meets C1-C6 (review_protocol.md C1 L10-L13, C2 L14-L18, C3 L19-L20, C4 L21-L24, C5 L25-L28, C6 L29; decision definitions L32-L36)."
+        },
+        {
+          "id": "R02",
+          "question": "Record R02 (records_batch_A.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "EXCLUDE",
+          "accept": [
+            "EXCLUDE"
+          ],
+          "anchor": "records_batch_A.txt L16-L22: participants are 'internal medicine resident physicians' (L19) — physicians are explicitly not eligible under C1 (review_protocol.md L10-L13). All other criteria would be met, which is what makes the topic match misleading."
+        },
+        {
+          "id": "R03",
+          "question": "Record R03 (records_batch_A.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "EXCLUDE",
+          "accept": [
+            "EXCLUDE"
+          ],
+          "anchor": "records_batch_A.txt L24-L30: 'measured before and after the course; there was no control group' (L28-L29) — a single-group pre-post study, not eligible under C5 (review_protocol.md L25-L28; also no comparator for C3, L19-L20)."
+        },
+        {
+          "id": "R04",
+          "question": "Record R04 (records_batch_A.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "EXCLUDE",
+          "accept": [
+            "EXCLUDE"
+          ],
+          "anchor": "records_batch_A.txt L32-L39: the abstract gives the complete outcome set — perceived stress primary; anxiety, depressive symptoms, sleep secondary (L36-L37) — and states that future trials should examine whether the app 'also reduces burnout' (L39), i.e. burnout was not measured. C4 (review_protocol.md L21-L24) excludes studies measuring only stress/anxiety/depression/wellbeing."
+        },
+        {
+          "id": "R05",
+          "question": "Record R05 (records_batch_A.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "INCLUDE",
+          "accept": [
+            "INCLUDE"
+          ],
+          "anchor": "records_batch_A.txt L41-L48: cluster randomised with computer-generated sequence (C5 allows cluster RCTs, review_protocol.md L25; L44-L45); 212 registered nurses (C1, L46); six weekly MBCT-based sessions of formal meditation (C2: >= 4 sessions, MBCT named, L45-L46); usual care (C3, L46); Copenhagen Burnout Inventory with results (C4, L46-L48); 2021 English (C6, L43). Meets C1-C6."
+        },
+        {
+          "id": "R06",
+          "question": "Record R06 (records_batch_A.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "EXCLUDE",
+          "accept": [
+            "EXCLUDE"
+          ],
+          "anchor": "records_batch_A.txt L50-L55: 'Year: 2008' (L52) is outside the 2010-2025 window of C6 (review_protocol.md L29). Every other criterion is met, so only the date criterion decides."
+        }
+      ]
+    },
+    {
+      "id": "batch-b-difficult",
+      "kind": "difficult-negative",
+      "prompt": "Here is batch B for the same review (codebook attached as review_protocol.md; records in records_batch_B.txt). These came from Embase and TR Dizin, and our first screener found several of them hard to call. Please screen each record against the codebook and give me your decision for each.",
+      "files": [
+        "fixtures/review_protocol.md",
+        "fixtures/records_batch_B.txt"
+      ],
+      "labels": [
+        "INCLUDE",
+        "EXCLUDE",
+        "UNCLEAR"
+      ],
+      "items": [
+        {
+          "id": "R07",
+          "question": "Record R07 (records_batch_B.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "EXCLUDE",
+          "accept": [
+            "EXCLUDE"
+          ],
+          "anchor": "records_batch_B.txt L4-L11: 'protocol for a randomised controlled trial' (title, L5); participants 'will be randomised' and 'results are expected in 2026' (L8, L10-L11). C5 requires an RCT that reports outcome data and explicitly excludes 'protocols or trial registrations without results' (review_protocol.md L25-L28). Topic, population, intervention and outcome all match — the design criterion decides."
+        },
+        {
+          "id": "R08",
+          "question": "Record R08 (records_batch_B.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "EXCLUDE",
+          "accept": [
+            "EXCLUDE"
+          ],
+          "anchor": "records_batch_B.txt L13-L19: 'a narrative review' (title, L14); 'narratively summarise 27 studies' (L16). C5 excludes 'reviews of any kind' (review_protocol.md L28). Mention of RCTs in RNs with MBI (L16-L17) refers to the studies reviewed, not to this record's own design."
+        },
+        {
+          "id": "R09",
+          "question": "Record R09 (records_batch_B.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "EXCLUDE",
+          "accept": [
+            "EXCLUDE"
+          ],
+          "anchor": "records_batch_B.txt L21-L27: 'final-year undergraduate nursing students on hospital clinical placements' (L24), burnout via the MBI-Student Survey (L26). C1 limits the population to registered nurses and explicitly excludes nursing students (review_protocol.md L10-L13). The title's 'in nursing' (L22) makes the population look eligible."
+        },
+        {
+          "id": "R10",
+          "question": "Record R10 (records_batch_B.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "EXCLUDE",
+          "accept": [
+            "EXCLUDE"
+          ],
+          "anchor": "records_batch_B.txt L29-L36: the intervention is 'progressive muscle relaxation and guided imagery' (L33-L34), 'designed as a low-cost alternative to mindfulness training' (L32). C2 (review_protocol.md L14-L18) requires formal mindfulness meditation training and explicitly excludes progressive muscle relaxation and guided imagery programmes. The 'mind-body' title (L30) sounds similar but is outside the definition."
+        },
+        {
+          "id": "R11",
+          "question": "Record R11 (records_batch_B.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "INCLUDE",
+          "accept": [
+            "INCLUDE"
+          ],
+          "anchor": "records_batch_B.txt L38-L50 — looks marginal but meets every criterion: C1 — mixed sample of 104 RNs + 20 nursing assistants (L44-L45) = 104/124 = 83.9% RNs (>= 80%) AND RN results reported separately (L48-L50); either condition suffices (review_protocol.md L11-L12). C2 — online MBSR adaptation, eight weekly live sessions with formal sitting meditation (L45-L46); online delivery is allowed (L16). C3 — active non-mindfulness control (health-education webinars, L46-L47) is allowed (L19-L20). C4 — Oldenburg Burnout Inventory (L47), listed at L22. C5 — randomised with results (L45, L48-L50). C6 — Turkish-language journal article, 2023 (L43); Turkish is an eligible language (L29). Excluding it would be the costly screening error (skill playbook skills/workflows/alterlab-research-workflows/references/systematic-review-screening.md L22-L23 ('a record that cannot be excluded with confidence goes forward to full text') and L30 ('Unsure counts as include at this stage'); PRISMA 2020 items 5 and 8 (Page MJ et al., BMJ 2021;372:n71); Cochrane Handbook for Systematic Reviews of Interventions v6, ch. 4 (Searching for and selecting studies: be inclusive at title/abstract stage))."
+        },
+        {
+          "id": "R12",
+          "question": "Record R12 (records_batch_B.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "INCLUDE",
+          "accept": [
+            "INCLUDE"
+          ],
+          "anchor": "records_batch_B.txt L52-L60 — looks marginal but meets every criterion: 'pilot randomised controlled trial' (L53) — C5 explicitly includes pilot and feasibility RCTs that report outcome data (review_protocol.md L25-L26), and burnout outcome data are reported (L59-L60). C2 — 'brief' but four weekly sessions (meets the >= 4 threshold, L14) of formal sitting meditation and body scan (L55-L56); mindful breathing is one component, not a breathing-only programme. C4 — Copenhagen Burnout Inventory (L58); the non-significant result (L59-L60) is explicitly not a reason to exclude (L23-L24). C1 registered community nurses (L55); C3 waitlist (L57); C6 2017 English (L54)."
+        },
+        {
+          "id": "R13",
+          "question": "Record R13 (records_batch_B.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "EXCLUDE",
+          "accept": [
+            "EXCLUDE"
+          ],
+          "anchor": "records_batch_B.txt L62-L68: 'wards were allocated alternately, in order of ward number' (L65) — alternation is quasi-random allocation, which C5 explicitly excludes ('quasi-randomised allocation (e.g. alternation, ... ward order)', review_protocol.md L26-L27); the title says only 'a controlled trial' (L63). Cochrane Handbook v6 ch. 3 distinguishes quasi-randomised from randomised trials."
+        }
+      ]
+    },
+    {
+      "id": "batch-c-incomplete-export",
+      "kind": "incomplete-input",
+      "prompt": "Batch C came from our CINAHL export, and the export was messy: some records have no abstract and others are cut off mid-sentence. Please screen the records in records_batch_C.txt against our codebook (review_protocol.md) anyway — I need decisions so I can plan full-text retrieval.",
+      "files": [
+        "fixtures/review_protocol.md",
+        "fixtures/records_batch_C.txt"
+      ],
+      "labels": [
+        "INCLUDE",
+        "EXCLUDE",
+        "UNCLEAR"
+      ],
+      "items": [
+        {
+          "id": "R14",
+          "question": "Record R14 (records_batch_C.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "UNCLEAR",
+          "accept": [
+            "UNCLEAR"
+          ],
+          "anchor": "records_batch_C.txt L5-L8: title only, 'Mindfulness training and burnout among nurses: a randomised controlled trial' (L6), no abstract (L8). Nothing shows a failed criterion, but C2 (>= 4 sessions, formal meditation as the core component, review_protocol.md L14-L18) and C1 (registered nurses vs other nursing staff, L10-L13) cannot be judged, nor whether outcome data are reported (C5). Per the codebook (L34-L36) and skill playbook skills/workflows/alterlab-research-workflows/references/systematic-review-screening.md L22-L23 ('a record that cannot be excluded with confidence goes forward to full text') and L30 ('Unsure counts as include at this stage'); PRISMA 2020 items 5 and 8 (Page MJ et al., BMJ 2021;372:n71); Cochrane Handbook for Systematic Reviews of Interventions v6, ch. 4 (Searching for and selecting studies: be inclusive at title/abstract stage), it cannot be excluded with confidence and its eligibility cannot be established -> UNCLEAR. INCLUDE would assert that C1-C6 are met, which the record does not show."
+        },
+        {
+          "id": "R15",
+          "question": "Record R15 (records_batch_C.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "UNCLEAR",
+          "accept": [
+            "UNCLEAR"
+          ],
+          "anchor": "records_batch_C.txt L10-L17: C1 (120 registered nurses, L14), C2 (8 weekly MBSR sessions with formal meditation, L15-L16), C3 (waitlist, L16), C5 (RCT, L14) and C6 (2021 English, L12) are met, but the abstract is cut off at 'The primary outcome was' (L16-L17) and the title (L11) does not name burnout; the background's mention of burnout risk (L13) does not show burnout was measured with a validated instrument (C4, review_protocol.md L21-L24). The decisive criterion cannot be judged -> UNCLEAR (codebook L34-L36; skill playbook skills/workflows/alterlab-research-workflows/references/systematic-review-screening.md L22-L23 ('a record that cannot be excluded with confidence goes forward to full text') and L30 ('Unsure counts as include at this stage'); PRISMA 2020 items 5 and 8 (Page MJ et al., BMJ 2021;372:n71); Cochrane Handbook for Systematic Reviews of Interventions v6, ch. 4 (Searching for and selecting studies: be inclusive at title/abstract stage))."
+        },
+        {
+          "id": "R16",
+          "question": "Record R16 (records_batch_C.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "EXCLUDE",
+          "accept": [
+            "EXCLUDE"
+          ],
+          "anchor": "records_batch_C.txt L19-L22: although no abstract is available, the title states the population: 'burnout in nursing students' (L20). C1 explicitly excludes nursing students (review_protocol.md L12). A title alone suffices when it shows a clear failure."
+        },
+        {
+          "id": "R17",
+          "question": "Record R17 (records_batch_C.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "EXCLUDE",
+          "accept": [
+            "EXCLUDE"
+          ],
+          "anchor": "records_batch_C.txt L24-L27: the title identifies the design as 'a systematic review and meta-analysis' (L25). C5 excludes 'reviews of any kind' (review_protocol.md L28). Decidable from the title despite the missing abstract."
+        },
+        {
+          "id": "R18",
+          "question": "Record R18 (records_batch_C.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "INCLUDE",
+          "accept": [
+            "INCLUDE"
+          ],
+          "anchor": "records_batch_C.txt L29-L36: the truncation (L35-L36) removes only the end of the Results; the retained text shows registered nurses (C1, L32), eight weekly MBSR sessions of formal meditation (C2, L33), usual care (C3, L33-L34), MBI-HSS (C4, L34), randomised with outcome data reported (C5, L32-L35), 2020 English journal article (C6, L31). Every criterion is met on the information given (codebook L32)."
+        },
+        {
+          "id": "R19",
+          "question": "Record R19 (records_batch_C.txt): what is the title/abstract screening decision under the codebook criteria C1-C6?",
+          "expected": "UNCLEAR",
+          "accept": [
+            "UNCLEAR"
+          ],
+          "anchor": "records_batch_C.txt L38-L44: mixed hospital staff — 'nurses, physicians and allied health professionals' (L41-L42) — and the abstract is cut off exactly where participant numbers begin (L44). C1 (review_protocol.md L11-L12) admits a mixed sample only if RNs are >= 80% or RN results are reported separately; neither can be judged. C2-C6 look met (L39-L44). Cannot be excluded with confidence and cannot be confirmed eligible -> UNCLEAR (skill playbook skills/workflows/alterlab-research-workflows/references/systematic-review-screening.md L22-L23 ('a record that cannot be excluded with confidence goes forward to full text') and L30 ('Unsure counts as include at this stage'); PRISMA 2020 items 5 and 8 (Page MJ et al., BMJ 2021;372:n71); Cochrane Handbook for Systematic Reviews of Interventions v6, ch. 4 (Searching for and selecting studies: be inclusive at title/abstract stage))."
+        }
+      ]
+    }
+  ]
+}

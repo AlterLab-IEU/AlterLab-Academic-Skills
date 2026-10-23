@@ -41,12 +41,19 @@ INPUT is a JSON object (see ../references/scoring_rules.md for every field):
 
 Exit codes: 0 = ran (see summary.verdict) or self-test passed; 1 = self-test failed;
 2 = bad input/usage or a field/term this tool has no verified table for.
+
+Input validation (exit 2 with the reason on stderr; library functions raise ValueError):
+NaN / Infinity literals are rejected when the JSON is parsed (they are not RFC 8259 JSON),
+and other_items `points` / `post_doc_points` must be finite and >= 0. A publication with an
+invalid author count (non-integer or < 1) is still marked unscored, as documented in
+../references/scoring_rules.md, rather than rejected.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import sys
 import unicodedata
@@ -663,7 +670,16 @@ def share_factor(rule: str, kind: str, authors: int, is_lead: bool,
         >=3: başlıca yazar 0.5, others 0.5/(N-1); no başlıca yazar on the article -> 1/N.
     lead rule, notes (1e/1f/2c): the table does not say whether they are 'makale'
         (lead split) or 'Diğer yayınlarda' (equal split) -> the smaller share is used.
+
+    Raises ValueError unless rule is 'equal'/'lead', kind is 'article'/'note' and authors
+    is an integer >= 1.
     """
+    if rule not in ("equal", "lead"):
+        raise ValueError(f"share rule must be 'equal' or 'lead', got {rule!r}")
+    if kind not in ("article", "note"):
+        raise ValueError(f"publication kind must be 'article' or 'note', got {kind!r}")
+    if isinstance(authors, bool) or not isinstance(authors, int) or authors < 1:
+        raise ValueError(f"author count must be an integer >= 1, got {authors!r}")
     if authors <= 1:
         return 1.0, "single-author"
     equal = 1.0 / authors
@@ -835,9 +851,18 @@ def parse_item_code(raw: object) -> tuple[int, str]:
 
 
 def _num(value: object, what: str) -> float:
+    """A finite, non-negative point value (TABLO points are never negative)."""
     if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
-        raise ValueError(f"other_items: {what} must be a non-negative number, got {value!r}")
-    return float(value)
+        raise ValueError(f"other_items: {what} must be a finite non-negative number, "
+                         f"got {value!r}")
+    try:
+        x = float(value)
+    except OverflowError:
+        raise ValueError(f"other_items: {what} is too large, got {value!r}") from None
+    if not math.isfinite(x):
+        raise ValueError(f"other_items: {what} must be a finite non-negative number, "
+                         f"got {value!r}")
+    return x
 
 
 def score_other_items(entries: object, spec: dict, notes: list[str]) -> tuple[list[dict], float, float]:
@@ -989,6 +1014,11 @@ def manual_minimums(code: str, bilim_alani: str | None) -> list[dict]:
 
 
 def build_report(data: dict, code: str, bilim_alani: str | None) -> dict:
+    if not isinstance(data, dict):
+        raise ValueError("input must be a JSON object with a 'publications' list")
+    if code not in FIELDS:
+        raise ValueError(f"unknown alan code {code!r}; resolve it with resolve_alan() first "
+                         f"(bundled: {', '.join(FIELDS)})")
     spec = FIELDS[code]
     pubs = data.get("publications", [])
     if not isinstance(pubs, list):
@@ -1132,7 +1162,13 @@ def disclaimer(spec: dict) -> str:
 # I/O                                                                           #
 # --------------------------------------------------------------------------- #
 
+def _reject_constant(name: str) -> float:
+    """json.loads hook: NaN / Infinity / -Infinity are not JSON (RFC 8259) and carry no points."""
+    raise ValueError(f"input is not valid JSON: non-finite number literal {name!r} is not allowed")
+
+
 def load_input(arg: str) -> dict:
+    inline = False
     if arg == "-":
         raw = sys.stdin.read()
     else:
@@ -1141,9 +1177,13 @@ def load_input(arg: str) -> dict:
                 raw = fh.read()
         except OSError:
             raw = arg  # treat the argument itself as inline JSON
+            inline = True
     try:
-        data = json.loads(raw)
+        data = json.loads(raw, parse_constant=_reject_constant)
     except json.JSONDecodeError as exc:
+        if inline and not arg.lstrip().startswith(("{", "[")):
+            raise ValueError(f"no readable file {arg!r}, and the argument is not inline JSON "
+                             "either") from exc
         raise ValueError(f"input is not valid JSON: {exc}") from exc
     if not isinstance(data, dict):
         raise ValueError("input JSON must be an object with a 'publications' list")
@@ -1201,8 +1241,12 @@ def main(argv: list[str] | None = None) -> int:
 
     payload = json.dumps(report, ensure_ascii=False, indent=2)
     if args.out:
-        with open(args.out, "w", encoding="utf-8") as fh:
-            fh.write(payload + "\n")
+        try:
+            with open(args.out, "w", encoding="utf-8") as fh:
+                fh.write(payload + "\n")
+        except OSError as exc:
+            print(f"error: cannot write --out {args.out!r}: {exc}", file=sys.stderr)
+            return 2
         print(f"wrote {args.out} — {report['table']} {report['alan']}: "
               f"{report['summary']['verdict']}")
     else:

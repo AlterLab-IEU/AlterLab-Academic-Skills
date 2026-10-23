@@ -24,7 +24,7 @@ Examples:
 
 ### API Key Registration
 
-While openFDA can be used without an API key, registering for a free API key is strongly recommended for higher rate limits.
+openFDA needs no API key: every endpoint answers keyless (240 requests/min, 1,000/day per IP). A free key only raises the daily quota — worth it for bulk pulls of more than 1,000 calls a day.
 
 **Registration**: Visit https://open.fda.gov/apis/authentication/ to sign up
 

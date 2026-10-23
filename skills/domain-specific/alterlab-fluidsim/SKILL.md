@@ -2,7 +2,7 @@
 name: alterlab-fluidsim
 description: Runs computational fluid dynamics simulations with the FluidSim Python framework using pseudospectral FFT methods, with HPC support and output analysis. Use when simulating Navier-Stokes equations (2D/3D), shallow water equations, or stratified flows, or when analyzing turbulence, vortex dynamics, or geophysical flows. Part of the AlterLab Academic Skills suite.
 license: CeCILL-2.1
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Runs locally via `uv run python`; requires the fluidsim Python package.
 metadata:
     skill-author: AlterLab
@@ -31,6 +31,8 @@ dynamics, energy spectra and spatial means, parametric sweeps, or MPI runs on a 
 | Submitting the finished job script to SLURM or a cloud GPU queue | `alterlab-remote-compute` |
 | Discrete-event or queueing simulation rather than PDE-based CFD | `alterlab-simpy` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-aeon`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 **Key strengths**:
 - Multiple solvers: 2D/3D Navier-Stokes, shallow water, stratified flows
 - High performance: Pythran/Transonic compilation, MPI parallelization
@@ -41,18 +43,18 @@ dynamics, energy spectra and spatial means, parametric sweeps, or MPI runs on a 
 
 ### 1. Installation and Setup
 
-Install fluidsim using uv with appropriate feature flags:
+Run install-free with one `uv run` command — no virtualenv or `uv pip install` step. Use the
+`[fft]` extra: plain `fluidsim` lacks `fluidfft`, and the pseudospectral solvers then fail
+at `create_default_params()` with `No module named 'fluidfft'` (seen with ns2d and
+ns2d.strat). Pin the interpreter (uv's default here can be 3.9):
 
 ```bash
-# Basic installation
-uv pip install fluidsim
-
-# With FFT support (required for most solvers)
-uv pip install "fluidsim[fft]"
-
-# With MPI for parallel computing
-uv pip install "fluidsim[fft,mpi]"
+uv run --python ">=3.11" --with "fluidsim[fft]" python your_script.py
 ```
+
+For MPI runs (`mpirun -np N python script.py`) install `"fluidsim[fft,mpi]"` persistently
+inside an activated virtualenv (`uv pip install ...`); it compiles mpi4py against the
+system MPI.
 
 Set environment variables for output directories (optional):
 
@@ -362,7 +364,7 @@ t, E = data["t"], data["E"]
 
 ## Resources
 
-**Documentation**: https://fluidsim.readthedocs.io/ (verified against fluidsim 0.9.0; Python ≥ 3.11)
+**Documentation**: https://fluidsim.readthedocs.io/ (verified against fluidsim 0.9.0; the ns2d.strat `in_script` initialisation — both the `get_var("b")` and the `init_statephys_from(...)` routes — re-checked on 26.10.0, the first calendar-versioned release; Python ≥ 3.11)
 
 **Reference files**:
 - `references/installation.md`: Complete installation instructions

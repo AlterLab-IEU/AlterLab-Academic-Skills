@@ -82,10 +82,12 @@ Python scripts require:
 - `matplotlib`: Visualization
 - `pyyaml` (optional): YAML input for decision trees
 
-Install with uv (preferred) or pip:
+Run without an install step (uv resolves the packages per run; pin the interpreter, because an
+older default Python resolves older releases):
 ```bash
-uv pip install pandas numpy scipy lifelines matplotlib pyyaml
+uv run --python ">=3.11" --with lifelines --with matplotlib --with pyyaml python scripts/generate_survival_analysis.py data.csv
 ```
+(`lifelines` brings in pandas, numpy and scipy.)
 
 ## References Included
 

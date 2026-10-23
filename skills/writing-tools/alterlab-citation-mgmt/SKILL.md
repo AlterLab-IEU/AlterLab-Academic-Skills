@@ -6,8 +6,9 @@ license: MIT
 compatibility: No API key required (an optional NCBI_API_KEY raises the PubMed E-utilities limit from 3 to 10 requests/s). Needs network access to CrossRef, doi.org, NCBI E-utilities, arXiv, and Google Scholar; the helper scripts need requests, plus scholarly for Google Scholar search
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.2"
+    last_updated: "2026-10-22"
+    credentials: "optional: NCBI_API_KEY (raises the PubMed E-utilities limit from 3 to 10 requests/s; every script works without it)"
 ---
 
 # Citation Management
@@ -40,6 +41,8 @@ Use when:
 | A full systematic review — multi-database search, PRISMA screening, thematic synthesis | `alterlab-literature-review` |
 | Mapping a citation/co-citation network around seed papers | `alterlab-citation-graph` |
 | Writing manuscript prose around the references | `alterlab-scientific-writing` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-citation-verifier`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Workflow
 

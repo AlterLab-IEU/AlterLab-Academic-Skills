@@ -6,6 +6,136 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+A reliability repair: incomplete, failed, or weakly supported work can no longer appear
+successfully verified. No skills were added. Prompted by an external audit; every reported
+defect was reproduced before it was fixed.
+
+### Changed — behavior that can affect existing users
+
+- **Keyless-first, enforced.** Every skill does what it claims with no external API key,
+  account or licence: Claude's own tools (WebSearch, WebFetch, Read), keyless public APIs, local
+  libraries and simulators, and Claude's own reasoning instead of a second paid LLM. A credential
+  only *adds* something (the user's own account or data, a higher rate limit, a paid service the
+  user asks for by name) and is declared as `metadata.credentials: "optional: NAME (what it
+  adds)"`. 55 skills were rewritten or re-declared for this, among them perplexity, parallel-web,
+  research-lookup, bgpt-search, pyzotero, generate-image, infographics, scientific-schematics,
+  paper-2-web, fred, alpha-vantage, denario, datacommons, uspto, brenda, cosmic, drugbank,
+  pymatgen, hypogenic, modal, remote-compute and the seven lab-platform skills.
+  `scripts/check_keyless.py` and `tests/test_keyless.py` fail the suite on any regression. A
+  keyed backend that the user asks for and whose key is missing exits with a clear message; it
+  never answers silently from another backend.
+- **No maintainer email in requests.** The suite no longer sends a hard-coded contact address in
+  User-Agents or `mailto` parameters (citation verifier, MCP connectors, DergiPark, TR Dizin, YÖK
+  Akademik). A contact address is opt-in via `ALTERLAB_CONTACT_EMAIL` or `--mailto`.
+- **Hand-off rule on all 242 skills.** When a request matches a routing row, the skill names the
+  better sibling by id in its first line and stops, instead of answering anyway.
+- **Behavioral eval confinement.** Answer arms run in a private mount namespace that hides the
+  checkout and every worktree, with a private temp root holding only their own workspace, fresh
+  scratch dirs, hidden installed plugins and skills, Write/Edit scoped to the workspace, a
+  sanitised environment and a tripwire that blocks the run if the checkout changes. Background
+  jobs an arm leaves behind are killed when its call ends (the runner is a child subreaper).
+- **Behavioral evals** (`scripts/run_evals.py --behavioral`) exit `0` only when every selected
+  case produced a verdict and passed; `1` failed, `2` blocked (nothing graded), `3` partial.
+  The nightly CI job is gone (it graded 0 of 224 and 0 of 214 cases while showing success,
+  because its API key secret was empty); behavioral grading is manual, normally run locally in
+  Claude Code. Both arms now run in isolated temp directories with `--safe-mode
+  --disable-slash-commands --strict-mcp-config`, so this repo's CLAUDE.md and installed plugins
+  no longer prime the baseline. Results are written to `eval-results/` as JSON.
+- **`claim_faithfulness.py` never returns `VERIFIED`.** Heuristic support is
+  `LEXICAL_MATCH_REQUIRES_REVIEW`; llm-tier support is `MODEL_JUDGED_SUPPORT_REQUIRES_REVIEW`;
+  every result has `counts_as_verified: false`, `evidence_scope`, `method`, `requires_review`
+  and `fallback_reason`. Guards abstain on wrong figures, reversed or unmatched comparisons,
+  population mismatches, and tentative or associational evidence, and veto a model's support.
+- **`verify_citations.py` 1.2.0** (`alterlab-citation-verifier` 1.2.0): a new brace-aware
+  BibTeX parser (single-line entries, indented closing braces, nested and quoted values,
+  `@string`, `@type(...)`, mixed BibTeX + free-form input) with input accounting — every
+  detected entry is parsed, rejected (line, key, reason) or unsupported. A run that leaves
+  entries unprocessed is `PARTIAL` and exits `3`; it can no longer report PASS.
+- **Workflows** (`alterlab-workflows`, and the maintainer `/skill-freshness-audit`) return
+  `status: complete | partial | blocked`, `status_reasons`, and a per-stage `coverage` account
+  (requested / dispatched / completed / failed / unresolved / retried). A report path is
+  returned only after the file is read back. Meaning changes: citation-audit `claims_checked`
+  counts returned verdicts (not dispatched claims) and a flag needs two *completed* re-checks
+  to count; review-panel `major_concerns` lists validated concerns only, with unchecked ones in
+  `unverified`; screening `flow.screened` counts resolved records only, with failed ones kept
+  as `unresolved`. "Independent" wording is now "separate": same-model agents are not
+  independent verification.
+- **Packaging:** `scripts/build_bundles.py` is the single packaging path, used by
+  `install.sh`, `release.yml`, and `check_claudeai_compat.py --package`. Installs need
+  `python3` and add the skills a selected skill depends on (`--no-deps` to skip). The six
+  skills that cite shared handoff files carry byte-identical copies in `<skill>/shared/`.
+  Paths in skills are skill-relative; agents and commands use `${CLAUDE_PLUGIN_ROOT}`.
+  `alterlab-<domain>-<version>.zip` archives are skills-directory bundles, **not** claude.ai
+  uploads; upload `skill-<name>-<version>.zip` instead (frontmatter sanitized, shared files and
+  notices included, companions listed in the release notes and `release-manifest.json`).
+  Every installed or packaged skill carries `LICENSE`, `NOTICE`, and `THIRD_PARTY_NOTICES.md`.
+- **Helper scripts** (`sample_size.py`, `omega.py`, `icr.py`, `tesvik_score.py`,
+  `score_docentlik.py`) reject invalid or non-finite input with a message and exit `2`
+  instead of printing impossible numbers (e.g. `n = -1024` for `p = 1.2`) or a traceback.
+  Outputs for valid inputs are unchanged.
+
+### Added
+
+- Eval runner: a `requires` field (`env:`/`cmd:`/`net:`/`mcp:`; unmet cases are "not runnable
+  here", counted apart and never FAIL), `output_contains` lists of alternatives, directory
+  fixtures, `--collect-only`, `--wait-on-limit`, `--regrade`, a substance judge with
+  `--calibrate-judge` (8 hand-labelled pairs), `--case`, `denied_tools` in run records, and the
+  answering endpoint on record. `scripts/eval_sweep.sh` (parallel sweeps with claim locks; a list
+  line may carry per-skill arguments), `scripts/defect_scan.py` (missing inputs, denied tools,
+  crashed scripts, blocked hosts) and `docs/local-eval-runbook.md` (defect sweeps on a local
+  model, never reported as Claude results).
+- Eval fixtures for the cases that named input they did not ship (synthetic or clearly
+  fictional data, real checkable identifiers for live lookups), with stricter assertions naming
+  the facts an answer must find. Fixtures are excluded from every release archive.
+- `scripts/run_benchmark.py` and `benchmarks/`: a five-task live benchmark (citation
+  integrity, manuscript review, systematic-review screening, analysis checking, doçentlik
+  pre-screening) with synthetic fixtures, anchored expected answers, deterministic scoring of
+  false approvals, false accusations, and abstentions, and a skilled-vs-bare comparison.
+  Results: `docs/benchmark-results.md`.
+- `benchmarks/harness-canary/`: a test-only skill proving the live harness tells PASS from
+  FAIL and delivers bundled files to the skilled arm.
+- Tests: fake-CLI behavioral-runner tests, adversarial claim-faithfulness fixtures, 184 BibTeX
+  parser tests, workflow fault injection (null, throw, missing/duplicate/unknown IDs, partial
+  output, failed report), packaging and isolated-install tests, helper input-domain tests.
+- `docs/CATALOG.md` (the per-domain skill tables, moved out of the README).
+
+### Fixed — skills and scripts (found by the live sweep)
+
+- research-lookup `--force-backend parallel` quietly answered from Perplexity without the key.
+- citation-mgmt `format_bibtex.py` found no entries in a messy `.bib` (now brace-aware, dedupes
+  by key, DOI or title+year).
+- generate-image lost a paid image when the output folder did not exist; pdf-explore's p-value
+  pattern missed `P <`; plotly, seaborn, eda, neurokit2, pyhealth, geo, chembl and others
+  documented installs their `allowed-tools` blocked (now install-free `uv run --with` recipes).
+- clinical-decision's validator crashed on gene names and its survival script printed a survival
+  probability as the median's confidence interval; iso13485's gap analyser counted a quality
+  policy as the Quality Manual; pydicom's anonymiser left identifiers nested in sequences and its
+  windowing skipped the rescale; treatment-plans' style file printed "Diabetes Treatment Plan /
+  23-year-old" on every plan.
+- fda's client retried HTTP 429 forever; gene-db's batch lookup returned POLK for POLQ (alias
+  match); gtex returned 250 of 655 sQTLs (no paging); reactome overwrote a `.tsv` input with its
+  results; alphafold-db downloads failed with curl's default User-Agent; bioservices' KEGG
+  `find`/`conv` crash on today's KEGG (REST fallback documented); zinc-db decoded ZINC-22 tranche
+  letters wrongly; openalex's "MIT" example was Harvard's ID.
+- Eval errors corrected against primary sources: a rubric that tied NM_000059 to BRCA1 (it is
+  BRCA2), an ENA accession that does not exist, SB3 callback wiring that raises, a dask z-score
+  that holds the array in memory, a Levene pre-test the skill advises against, windowing applied
+  to raw stored values.
+- timesfm's `compatibility` exceeded the 500-character spec limit; remote-compute keeps
+  `--backend` required so a cluster script is never run locally by omission.
+- Eval runner: arms' background jobs outlived the run and starved later arms; parallel runs
+  finishing in the same second could overwrite each other's results file; Anthropic's own API
+  host was labelled as a non-Claude endpoint.
+
+### Fixed — documentation
+
+- README and README.tr-TR rewritten (1,151 → ~200 lines): they state what has and has not been
+  checked, drop the "instant expertise" / "expert-level" / "every reference" claims and the
+  incorrect claude.ai bundle claims, correct the citation version (2.1.0 → 3.0.1), and explain
+  the per-skill licenses (202 MIT; 40 others, including 4 non-commercial CC-BY-NC-4.0 and 7
+  GPL/LGPL). PROVENANCE.md counts (180/13 → 242/18) and the catalog site's copy are corrected.
+
+
 ## [3.0.1] — 2026-09-23
 
 A patch release so installed plugins pick up a routing fix: Claude Code refreshes a plugin only

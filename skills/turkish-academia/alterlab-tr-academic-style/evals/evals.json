@@ -3,6 +3,7 @@
   "evals": [
     {
       "id": "trdizin-bilingual-abstract",
+      "files": ["fixtures/oz_abstract_taslak.md"],
       "prompt": "Makalemi bir TR Dizin dergisine göndereceğim. Öz ve abstract bölümlerini ve anahtar kelimeleri TR Dizin kurallarına göre düzenler misin?",
       "expected_output": "Invokes alterlab-tr-academic-style in TR Dizin formatting mode: structures the Turkish öz, English abstract, and keywords (anahtar kelimeler) with the title/öz/keywords metadata block in proper Latin Turkish letters with diacritics preserved. Proposes the common house defaults (bilingual öz + abstract ~200-250 words each, 3-5 keywords each) but frames them as the JOURNAL's convention to confirm against its yazım kuralları — NOT as TR Dizin index rules; correctly scopes what TR Dizin itself mandates (a set abstract word limit, two referees from different institutions, second-language abstract only suggested, Latin script for non-Latin-alphabet articles). Flags a structured-abstract requirement where the field needs it, and reminds the user to confirm the journal's LIVE TR Dizin index status via alterlab-trdizin rather than asserting it.",
       "assertions": [

@@ -16,7 +16,7 @@ real and present in this suite:
 `alterlab-workflows` plugin (Claude Code): P1 + P4 → `/alterlab-workflows:citation-audit`,
 P3 → `/alterlab-workflows:review-panel`, P4 → `/alterlab-workflows:claim-stress-test`, and
 the dual-coder variant of P3 → `/alterlab-workflows:systematic-review-screening`. Their
-scripts (`skills/workflows/workflows/*.js`) are readable starting points when a recipe needs
+scripts (the `workflows/*.js` files of the `alterlab-workflows` plugin) are readable starting points when a recipe needs
 to become a rerunnable workflow; use the prompts below when a few subagents in one
 conversation are enough.
 
@@ -116,8 +116,9 @@ Each returns an independent verdict + top-3 issues. Then synthesize a single
 editorial decision that explicitly notes where the three agree and disagree.
 ```
 
-Why independent agents: running all three in one context lets the first opinion
-anchor the others. For a panel that should also **debate**, escalate to an agent
+Why separate agents: running all three in one context lets the first opinion
+anchor the others. Separate contexts remove that anchoring, not the shared blind spots of one
+model — agreement among them is not independent verification, so say so in the deliverable. For a panel that should also **debate**, escalate to an agent
 team (P4). Keep each reviewer read-only (`tools: Read, Grep, Glob`) so none can
 edit the manuscript.
 

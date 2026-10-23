@@ -3,11 +3,12 @@ name: alterlab-openalex
 description: Query and analyze scholarly literature using the OpenAlex API across 300M+ works, retrieving papers, authors, institutions, citations, and open access status. Use when searching academic papers, tracking citations, finding works by author or institution, analyzing research trends, discovering open access publications, or running bibliometric analysis. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: OpenAlex REST API at api.openalex.org. Keyless use draws on a $0.10/day budget shared by everyone on your IP; a free API key (openalex.org/settings/api; set OPENALEX_API_KEY) gives your own $1/day. Max 100 requests/s, per_page ≤ 100 (as of 2026-09).
+compatibility: No API key required. OpenAlex REST API at api.openalex.org — single-entity lookups (OpenAlex ID, DOI, ORCID, ROR) and autocomplete cost nothing; list/filter/search calls share a $0.10/day keyless budget per IP (HTTP 429 until midnight UTC once spent; the skill then falls back to free lookups and keyless Crossref). An optional free OPENALEX_API_KEY gives your own $1/day. Max 100 requests/s, per_page ≤ 100 (as of 2026-10).
 metadata:
     skill-author: AlterLab
-    version: "1.2.0"
-    last_updated: "2026-09-23"
+    version: "1.2.1"
+    last_updated: "2026-10-22"
+    credentials: "optional: OPENALEX_API_KEY (free; your own $1/day budget instead of the $0.10/day keyless budget shared per IP)"
 ---
 
 # OpenAlex Database
@@ -33,19 +34,27 @@ OpenAlex is a comprehensive open catalog of 300M+ scholarly works (the default "
 | Managing a Zotero library (items, collections, attachments) | `alterlab-pyzotero` |
 | Writing a structured literature review from the papers found | `alterlab-literature-review` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pubmed`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Quick Start
 
 ### Basic Setup
 
-OpenAlex runs on a daily cost budget (see "Rate Limits & Cost" below). It still answers with no credentials, but keyless calls share a $0.10/day budget with everyone on the same IP address — on university, VPN, or cloud networks that budget is often already spent, and every list or search call then returns HTTP 429 until midnight UTC. A **free API key** gives you your own $1/day — get one at `openalex.org/settings/api` and export it as `OPENALEX_API_KEY`; the client reads it and sends it as an `Authorization: Bearer` header, which keeps the key out of URLs and logs (`?api_key=` also works). The old mailto "polite pool" was retired in Feb 2026, so `mailto=` no longer buys anything.
+OpenAlex needs no credentials. Its cost model (see "Rate Limits & Cost") decides what a keyless call can do:
+
+- **Always free, keyless**: single-entity lookups — `/works/W…`, `/works/doi:10.…`, `/works/pmid:…`, `/authors/orcid:…`, `/institutions/ror:…`, `/sources/issn:…` — and `/autocomplete/{entity}?q=`. Verified 2026-10-22: these return 200 with `x-ratelimit-cost-usd: 0` even while the shared budget is spent.
+- **Shared keyless budget**: list/filter (`$0.0001`/call), `search=` and `group_by` calls draw on $0.10/day shared by everyone on your IP. On university, VPN, or cloud networks it is often spent; such calls then return HTTP 429 with a `Retry-After` counting down to midnight UTC.
+
+When that 429 arrives (the client prints a note on stderr and raises `BudgetExhausted`), say so, then keep working keylessly with `scripts/keyless_fallback.py` — and name the service that answered:
+- known IDs/DOIs: free OpenAlex lookups (`batch_lookup` falls back automatically; `keyless_fallback.py enrich DOI ...`)
+- discovery: `keyless_fallback.py crossref "quantum computing" --from 2020-01-01` (Crossref; title-filtered, citation-sorted locally — an approximation of the OpenAlex ranking) or, for life sciences, `europepmc "CRISPR base editing"` (Europe PMC, `CITED desc`)
+- citation lists: `keyless_fallback.py citations 10.7717/peerj.4375` (OpenCitations Index v2; `--references` for outgoing)
+- `group_by` aggregates have no keyless equivalent: rerun after midnight UTC or with the key. An optional **free API key** gives your own $1/day — get one at `openalex.org/settings/api`, export `OPENALEX_API_KEY`; the client sends it as an `Authorization: Bearer` header. `mailto=` buys nothing since the polite pool was retired (Feb 2026).
 
 ```python
 from scripts.openalex_client import OpenAlexClient
 
-# Recommended: export OPENALEX_API_KEY=...  (free; own $1/day budget)
-client = OpenAlexClient()                 # or OpenAlexClient(api_key="...")
-
-# With no key set, the client still works on the shared keyless budget
+client = OpenAlexClient()   # keyless; picks up the optional OPENALEX_API_KEY if set
 ```
 
 ### Installation Requirements
@@ -189,7 +198,7 @@ from scripts.query_helpers import analyze_research_output
 
 analysis = analyze_research_output(
     entity_type='institution',  # or 'author'
-    entity_name='MIT',
+    entity_name='Massachusetts Institute of Technology',  # full name: an acronym matches other names
     client=client,
     years='>2020'
 )
@@ -265,7 +274,7 @@ topics = client.group_by(
     entity_type='works',
     group_field='topics.id',
     filter_params={
-        "authorships.institutions.id": "I136199984",  # MIT
+        "authorships.institutions.id": "I63966007",  # MIT (ROR 042nb2s44); I136199984 is Harvard
         "publication_year": ">2020"
     }
 )
@@ -309,11 +318,8 @@ with open('papers.csv', 'w', newline='', encoding='utf-8') as f:
 
 ## Critical Best Practices
 
-### Use a Free API Key to Raise the Daily Allowance
-Without credentials you share a $0.10/day budget with everyone on your IP; a free API key gives you your own $1/day. Pass the key to the client:
-```bash
-export OPENALEX_API_KEY=...   # free at openalex.org/settings/api; OpenAlexClient() picks it up
-```
+### Optional: a Free API Key Raises the Daily Allowance
+Keyless list/search calls share $0.10/day per IP (single-entity lookups stay free); `export OPENALEX_API_KEY=...` (free at openalex.org/settings/api) gives your own $1/day.
 
 ### Use Two-Step Pattern for Entity Lookups
 Filter by IDs, not names — names are ambiguous ("Smith" is thousands of authors, "MIT" several institutions), so resolve the entity to its ID first:
@@ -335,7 +341,8 @@ results = client.search_works(search="topic", per_page=100)
 ### Batch Multiple IDs
 Use batch_lookup() for multiple IDs instead of individual requests:
 ```python
-# ✅ Correct - 1 request per 100 DOIs
+# ✅ Correct - 1 request per 100 DOIs (falls back to free per-ID lookups if the
+#    keyless budget is spent)
 works = client.batch_lookup('works', doi_list, 'doi')
 
 # ❌ Wrong - one request per DOI
@@ -371,8 +378,8 @@ filter_params = {
     "publication_year": "2020-2024",        # also "2023", ">2020", "<2020"
     "is_oa": "true",                        # several keys = AND
     "cited_by_count": ">100",
-    "authorships.institutions.id": "I136199984|I27837315",   # | = OR (≤100 values): MIT or Harvard
-    # "authorships.institutions.id": "I136199984+I27837315", # + = AND within one attribute (co-authored)
+    "authorships.institutions.id": "I63966007|I136199984",   # | = OR (≤100 values): MIT or Harvard
+    # "authorships.institutions.id": "I63966007+I136199984", # + = AND within one attribute (co-authored)
     "type": "!paratext",                    # ! = negation
 }
 ```
@@ -454,11 +461,15 @@ High-level helper functions for common operations:
 
 Use for common research queries with simplified interfaces.
 
+### keyless_fallback.py
+Keyless stand-ins for list/search calls when the shared budget is spent: `crossref`,
+`europepmc`, `citations` (OpenCitations), `enrich` (free OpenAlex DOI lookups).
+
 ## Troubleshooting
 
 ### Daily Limit / Throttling (429)
 If encountering 429 (Too Many Requests) errors:
-1. Add a free API key for your own $1/day instead of the shared $0.10/day keyless budget (`export OPENALEX_API_KEY=...`). A 429 whose `Retry-After` is hours long means the daily budget is spent — retrying won't help until midnight UTC, and the client raises immediately in that case
+1. A 429 whose `Retry-After` is hours long means the keyless daily budget is spent — retrying won't help until midnight UTC; the client raises `BudgetExhausted` at once. Keep going keylessly (free single-entity lookups, Crossref for discovery — see Basic Setup) or add the optional free key for your own $1/day
 2. Reduce cost: prefer single-entity and list+filter calls over `search=` (search costs more credits per call); use `select=` to keep responses cheap
 3. Client automatically backs off and retries short throttles (429/403/5xx), e.g. exceeding 100 requests/second
 4. Inspect the `x-ratelimit-remaining-usd` / `x-ratelimit-cost-usd` response headers to see remaining budget
@@ -479,8 +490,8 @@ For large queries:
 
 OpenAlex uses a daily cost budget plus a hard ceiling of 100 requests/second. Each call has a small USD cost; you get a free daily budget and pay only past it (prepaid top-ups or annual plans).
 
-- **Keyless**: $0.10/day, shared by everyone on your IP address.
-- **With a free API key** (`openalex.org/settings/api`, sent as `Authorization: Bearer <key>` or `?api_key=`): your own $1/day. Recommended. `mailto=` is ignored since the polite pool was retired (Feb 2026).
+- **Keyless**: $0.10/day, shared by everyone on your IP address; single-entity lookups cost $0 and keep working after it is spent.
+- **With the optional free API key** (`openalex.org/settings/api`, sent as `Authorization: Bearer <key>` or `?api_key=`): your own $1/day. `mailto=` is ignored since the polite pool was retired (Feb 2026).
 - **Cost per 1,000 calls** (help.openalex.org, 2026-08): single-entity lookup by ID/DOI free; list+filter $0.10; `search=` $1; `search.semantic=` $1; content (PDF) download $10. So $1 buys ~10,000 filter calls (~1M results at `per_page=100`) or ~1,000 searches — filter when you can.
 - **Query limits**: `per_page` ≤ 100; page-based paging stops at 10,000 results (use `cursor=*`); ≤ 100 OR values per filter; `sample` ≤ 10,000.
 - Check your remaining budget with `GET /rate-limit?api_key=...`.
@@ -490,8 +501,8 @@ OpenAlex uses a daily cost budget plus a hard ceiling of 100 requests/second. Ea
 ## Notes
 
 - All data is open and free; the daily budget is generous for typical research workloads.
-- A free API key is recommended for any non-trivial workflow; keyless is fine for one-off lookups.
+- Keyless covers lookups and moderate list/search use; the optional free key is worth adding for bulk jobs or busy shared networks.
 - Costs/limits apply per credential (per key, or per IP when keyless), not per request type alone — minimize `search=` and use `select=` to stretch the budget.
-- Use LitLLM with OpenRouter if LLM-based analysis is needed (don't use Perplexity API directly).
+- Summarise, cluster, or screen the retrieved records in the conversation — no second LLM API is needed.
 - Client handles pagination, retries, and backoff automatically.
 

@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless ZINC22 CartBlanche22 API and files.docking.org repository (no authentication required); zinc.docking.org / ZINC20 / ZINC15 web pages now sit behind a captcha
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.2.0"
+    last_updated: "2026-10-23"
 ---
 
 # ZINC Database
@@ -64,6 +64,9 @@ This skill should be used when:
 | Docking ligands into a protein pocket | `alterlab-diffdock` |
 | Computing descriptors, filters, or fingerprints locally | `alterlab-rdkit` |
 | Medicinal-chemistry filters (PAINS, rules of thumb) on a library | `alterlab-medchem` |
+| Experimental protein or protein–ligand structures (PDB coordinates, resolution, binding-site setup) | `alterlab-pdb` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pubchem`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Database Versions
 
@@ -121,7 +124,7 @@ curl -X GET "https://cartblanche22.docking.org/substances.txt" \
 
 Both return a task handle; open the printed UI task URL to view rows.
 
-**Response fields**: `zinc_id`, `smiles`, `sub_id`, `supplier_code`, `catalogs`, `tranche` (includes H-count, LogP, MW, phase)
+**Response fields**: `zinc_id`, `smiles`, `sub_id`, `supplier_code`, `catalogs`, `tranche` (heavy-atom count and logP bin; see Tranche System)
 
 ### 2. Search by SMILES
 
@@ -208,8 +211,8 @@ curl "https://cartblanche22.docking.org/substance/random.txt" \
 
    df = pd.read_csv('docking_library.tsv', sep='\t')
 
-   # Tranche format: H##P###M###-phase
-   # H = H-bond donors, P = LogP*10, M = MW
+   # Tranche code, e.g. H17P050: H = heavy-atom count, P/M = logP bin
+   # (P positive, M negative, x100). See "Tranche System" below.
    ```
 
 4. **Download 3D structures** for docking from the file repository (see below)
@@ -286,7 +289,7 @@ Customize API responses with the `output_fields` parameter:
 - `sub_id`: Internal substance ID
 - `supplier_code`: Vendor catalog number
 - `catalogs`: List of suppliers offering the compound
-- `tranche`: Encoded molecular properties (H-count, LogP, MW, reactivity phase)
+- `tranche`: The tranche the compound sits in (heavy-atom count × logP bin)
 
 **Example**:
 ```bash
@@ -297,35 +300,48 @@ curl -X GET "https://cartblanche22.docking.org/substances.txt" \
 
 ## Tranche System
 
-ZINC organizes compounds into "tranches" based on molecular properties:
+ZINC-22 bins molecules on two axes, **heavy-atom count** and **calculated logP**, both
+computed with RDKit (Tingle et al. 2023, *J. Chem. Inf. Model.* 63:1166, "Database Subset
+Selection Using the Tranche Browser"). A tranche name joins the two bin codes:
 
-**Format**: `H##P###M###-phase`
+| Part | Meaning | Example |
+|------|---------|---------|
+| `H##` | heavy-atom count | `H17` = 17 heavy atoms |
+| `P###` / `M###` | logP bin: `P` = positive, `M` = negative (minus), value × 100 | `P050` = logP 0.50 bin; `M100` = logP −1.00 bin |
 
-- **H##**: Number of hydrogen bond donors (00-99)
-- **P###**: LogP × 10 (e.g., P035 = LogP 3.5)
-- **M###**: Molecular weight in Daltons (e.g., M400 = 400 Da)
-- **phase**: Reactivity classification
+So `H17P050` is "17 heavy atoms, logP bin 0.50". `H` is **not** H-bond donors and `M` is
+**not** molecular weight. The ZINC-22 2D fragment subset, for example, spans H08–H16 ×
+M500–P240. ZINC15/20 used different, letter-coded tranches; do not decode those this way.
 
-**Example tranche**: `H05P035M400-0`
-- 5 H-bond donors
-- LogP = 3.5
-- MW = 400 Da
-- Reactivity phase 0
-
-Use tranche data to filter compounds by drug-likeness criteria.
+A ZINC-22 ID also carries its tranche: IDs are 16 characters, `ZINC` + two tranche
+characters + two source characters (`00` for the commercial catalogs) + an 8-character
+radix-62 serial (Tingle et al. 2023). Legacy IDs such as `ZINC000019632618` do not, so look
+them up first. For MW, H-bond donors/acceptors or TPSA, compute them from the SMILES
+(`alterlab-rdkit`) instead of reading them off the tranche.
 
 ## Downloading 3D Structures
 
-For molecular docking, 3D structures are available via file repositories:
+ZINC-22's 3D builds are served from https://files.docking.org/zinc22/ (and through Globus
+and the AWS / Oracle OCI open-data buckets), organised by tranche, in four ready-to-dock
+formats: **DB2**, **MOL2**, **SDF** and **PDBQT** (Tingle et al. 2023).
 
-**File repository**: https://files.docking.org/zinc22/
+1. Do not hand-build file paths: the tree is organised by build and tranche and has changed
+   between releases. In CartBlanche22 open **Tranches → 3D**, select tranches (or a preset
+   such as lead-like), pick the format and a download method (curl, wget, PowerShell, or an
+   S3/OCI file list) and download the generated script; it holds the exact URLs.
+2. For bulk retrieval run that script, or give its URL list to a parallel downloader
+   (`aria2c -i urls.txt -x 8 -j 4`, or `xargs -n1 -P8 wget -q < urls.txt`).
+3. For a short list of compounds, look the IDs up (`query_zinc.py id ...`) and download
+   their 3D files from the CartBlanche22 results/cart view instead of whole tranches.
 
-Structures are organized by tranches and available in multiple formats:
-- MOL2: Multi-molecule format with 3D coordinates
-- SDF: Structure-data file format
-- DB2.GZ: Compressed database format for DOCK
+| Format | Docking program | Notes |
+|--------|-----------------|-------|
+| DB2 | UCSF DOCK 3.7/3.8 | Multi-conformer, protonated, charged. DOCK 6 does not read it and Open Babel has no DB2 reader, so it cannot be converted |
+| MOL2 / SDF | DOCK 6, Glide, GOLD, RDKit-based tools | 3D coordinates as built by ZINC |
+| PDBQT | AutoDock Vina / AutoDock-GPU | Ready for Vina |
 
-Refer to ZINC documentation at https://wiki.docking.org for downloading protocols and batch access methods.
+Check protonation and stereochemistry before docking: ZINC builds them but does not
+guarantee them. Batch-access details: https://wiki.docking.org (the ZINC22 pages).
 
 ## Python Integration
 
@@ -352,23 +368,18 @@ rows = state["result"].get("zinc22") or state["result"].get("zinc20") or []
 ### Parsing tranche codes
 
 Once you have result rows (a `tranche` column, exported from the UI or read from the
-file repository), decode each code. The LogP segment can be negative (`P-005`), so the
-regex allows a leading sign:
+file repository), decode the heavy-atom and logP bins:
 
 ```python
 import re
 
-def parse_tranche(tranche_str):
-    """Parse a ZINC tranche code, e.g. 'H05P035M400-0'."""
-    match = re.match(r"H(\d+)P(-?\d+)M(\d+)-(\d+)", tranche_str)
-    if not match:
+def parse_tranche(code):
+    """'H17P050' -> {'heavy_atoms': 17, 'logp_bin': 0.5}; 'H12M100' -> logp_bin -1.0."""
+    m = re.search(r"H(\d{2})([PM])(\d{3})", code or "")
+    if not m:
         return None
-    return {
-        "h_donors": int(match.group(1)),
-        "logp": int(match.group(2)) / 10.0,
-        "mw": int(match.group(3)),
-        "phase": int(match.group(4)),
-    }
+    sign = 1 if m.group(2) == "P" else -1
+    return {"heavy_atoms": int(m.group(1)), "logp_bin": sign * int(m.group(3)) / 100.0}
 
 # df["tranche_props"] = df["tranche"].apply(parse_tranche)
 ```

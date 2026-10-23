@@ -1,9 +1,24 @@
 # Troubleshooting Common Issues
 
-Fixes for AI generation, quality, and accessibility problems. All controls are prompt-based plus the
-`--iterations` and `--doc-type` flags; there is no separate quality-check toolkit to run.
+Fixes for the keyless code-drawn path, the optional AI backend, and accessibility problems.
 
-## API and Setup Issues
+## Keyless (code-drawn) issues
+
+**Problem**: `no SVG renderer: cairosvg unavailable`
+- Run through `uv run --python ">=3.11" --with cairosvg --with pillow`; if the Cairo C library is
+  missing, install it (`brew install cairo`, `apt install libcairo2`) or librsvg (`rsvg-convert`).
+
+**Problem**: "text probably overflows its box" or labels cut off on the render
+- Split the line into two `<text>` elements or widen the box, then render `_v2`.
+
+**Problem**: smallest text below 7 pt at print width
+- Raise the root `font-size`, or design at the real width (`--width-in 3.5` for one column).
+
+**Problem**: score stays below the threshold after two iterations
+- `figure_tools.py score` answers STOP: deliver the best version and list the remaining issues;
+  do not lower `--doc-type` below the real venue to pass.
+
+## Optional AI backend: API and setup issues
 
 **Problem**: `OPENROUTER_API_KEY not found`
 - Set it: `export OPENROUTER_API_KEY='sk-or-v1-...'`, or pass `--api-key`, or put it in a `.env`
@@ -25,7 +40,7 @@ Fixes for AI generation, quality, and accessibility problems. All controls are p
   the image was kept without a score. Re-run with `-v` to see the error, then inspect the image
   yourself or re-run once the review model responds.
 
-## AI Generation Issues
+## Optional AI backend: generation issues
 
 **Problem**: Overlapping text or elements, or elements not connecting properly
 - Make the prompt more specific about layout, connection points, and spacing
@@ -38,8 +53,8 @@ Fixes for AI generation, quality, and accessibility problems. All controls are p
 
 ## Accessibility Problems
 
-The guidelines prompt already requests an Okabe-Ito palette, redundant encoding, and grayscale
-compatibility. If the result still falls short:
+Check the `--gray` preview of every render. The AI guidelines prompt also requests an Okabe-Ito
+palette, redundant encoding, and grayscale compatibility. If the result still falls short:
 
 **Problem**: Colors indistinguishable in grayscale
 - Add explicit redundant encoding to the prompt: distinct shapes, line styles, or fill patterns

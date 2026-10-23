@@ -27,10 +27,10 @@ class BibTeXFormatter:
     def parse_bibtex_file(self, filepath: str) -> List[Dict]:
         """
         Parse BibTeX file and extract entries.
-        
+
         Args:
             filepath: Path to BibTeX file
-            
+
         Returns:
             List of entry dictionaries
         """
@@ -40,41 +40,76 @@ class BibTeXFormatter:
         except Exception as e:
             print(f'Error reading file: {e}', file=sys.stderr)
             return []
-        
+        return self.parse_bibtex(content)
+
+    def parse_bibtex(self, content: str) -> List[Dict]:
+        """Brace-aware parse: single-line entries, a closing brace on the last field's line,
+        nested braces, quoted or bare values (``year = 1996``), ``@type(...)`` delimiters.
+        @comment, @preamble and @string blocks are skipped."""
         entries = []
-        
-        # Match BibTeX entries
-        pattern = r'@(\w+)\s*\{\s*([^,\s]+)\s*,(.*?)\n\}'
-        matches = re.finditer(pattern, content, re.DOTALL | re.IGNORECASE)
-        
-        for match in matches:
-            entry_type = match.group(1).lower()
-            citation_key = match.group(2).strip()
-            fields_text = match.group(3)
-            
-            # Parse fields
-            fields = OrderedDict()
-            field_pattern = r'(\w+)\s*=\s*\{([^}]*)\}|(\w+)\s*=\s*"([^"]*)"'
-            field_matches = re.finditer(field_pattern, fields_text)
-            
-            for field_match in field_matches:
-                if field_match.group(1):
-                    field_name = field_match.group(1).lower()
-                    field_value = field_match.group(2)
-                else:
-                    field_name = field_match.group(3).lower()
-                    field_value = field_match.group(4)
-                
-                fields[field_name] = field_value.strip()
-            
-            entries.append({
-                'type': entry_type,
-                'key': citation_key,
-                'fields': fields
-            })
-        
+        i, n = 0, len(content)
+        while True:
+            at = content.find('@', i)
+            if at < 0:
+                break
+            m = re.match(r'@\s*(\w+)\s*([{(])', content[at:])
+            if not m:
+                i = at + 1
+                continue
+            entry_type, opener = m.group(1).lower(), m.group(2)
+            j = k = at + m.end()
+            depth = 0
+            while k < n:
+                ch = content[k]
+                if ch == '{':
+                    depth += 1
+                elif ch == '}':
+                    if depth == 0 and opener == '{':
+                        break
+                    depth -= 1
+                elif ch == ')' and depth == 0 and opener == '(':
+                    break
+                k += 1
+            body, i = content[j:k], k + 1
+            if entry_type in ('comment', 'preamble', 'string'):
+                continue
+            key, _, rest = body.partition(',')
+            entries.append({'type': entry_type, 'key': key.strip(),
+                            'fields': self._parse_fields(rest)})
         return entries
-    
+
+    @staticmethod
+    def _parse_fields(text: str) -> 'OrderedDict[str, str]':
+        fields = OrderedDict()
+        i, n = 0, len(text)
+        while i < n:
+            m = re.compile(r'[\s,]*([A-Za-z][\w-]*)\s*=\s*').match(text, i)
+            if not m:
+                break
+            name, i = m.group(1).lower(), m.end()
+            if i < n and text[i] == '{':
+                depth, j = 0, i
+                while j < n:
+                    if text[j] == '{':
+                        depth += 1
+                    elif text[j] == '}':
+                        depth -= 1
+                        if depth == 0:
+                            break
+                    j += 1
+                value, i = text[i + 1:j], j + 1
+            elif i < n and text[i] == '"':
+                j = i + 1
+                while j < n and not (text[j] == '"' and text[j - 1] != '\\'):
+                    j += 1
+                value, i = text[i + 1:j], j + 1
+            else:
+                j = text.find(',', i)
+                j = n if j < 0 else j
+                value, i = text[i:j], j
+            fields[name] = ' '.join(value.split())
+        return fields
+
     def format_entry(self, entry: Dict) -> str:
         """
         Format a single BibTeX entry.
@@ -165,39 +200,47 @@ class BibTeXFormatter:
     
     def deduplicate_entries(self, entries: List[Dict]) -> List[Dict]:
         """
-        Remove duplicate entries based on DOI or citation key.
-        
+        Remove duplicate entries: same DOI, same citation key, or the same normalized title
+        and year (the same paper exported under two keys, often only one with a DOI). Of a
+        duplicate pair the entry with more fields is kept, at the first one's position.
+
         Args:
             entries: List of entry dictionaries
-            
+
         Returns:
             List of unique entries
         """
-        seen_dois = set()
-        seen_keys = set()
-        unique_entries = []
-        
+        def doi_of(e):
+            d = e['fields'].get('doi', '').strip().lower()
+            return re.sub(r'^(https?://(dx\.)?doi\.org/|doi:)', '', d)
+
+        def title_year(e):
+            t = re.sub(r'[^a-z0-9]', '', e['fields'].get('title', '').lower())
+            return (t, e['fields'].get('year', '').strip()) if t else None
+
+        unique: List[Dict] = []
+        index: Dict[tuple, int] = {}
         for entry in entries:
-            doi = entry['fields'].get('doi', '').strip()
-            key = entry['key']
-            
-            # Check DOI first (more reliable)
-            if doi:
-                if doi in seen_dois:
-                    print(f'Duplicate DOI found: {doi} (skipping {key})', file=sys.stderr)
-                    continue
-                seen_dois.add(doi)
-            
-            # Check citation key
-            if key in seen_keys:
-                print(f'Duplicate citation key found: {key} (skipping)', file=sys.stderr)
+            ids = [('key', entry['key'])]
+            if doi_of(entry):
+                ids.append(('doi', doi_of(entry)))
+            if title_year(entry):
+                ids.append(('title', title_year(entry)))
+            hit = next((index[i] for i in ids if i in index), None)
+            if hit is None:
+                for i in ids:
+                    index[i] = len(unique)
+                unique.append(entry)
                 continue
-            seen_keys.add(key)
-            
-            unique_entries.append(entry)
-        
-        return unique_entries
-    
+            kept = unique[hit]
+            print(f'Duplicate of {kept["key"]}: {entry["key"]} (keeping the fuller entry)',
+                  file=sys.stderr)
+            if len(entry['fields']) > len(kept['fields']):
+                unique[hit] = entry
+            for i in ids:
+                index.setdefault(i, hit)
+        return unique
+
     def sort_entries(self, entries: List[Dict], sort_by: str = 'key', descending: bool = False) -> List[Dict]:
         """
         Sort entries by specified field.

@@ -3,7 +3,7 @@ name: alterlab-vaex
 description: Out-of-core tabular analytics with Vaex — memory-mapped HDF5/Arrow/Parquet via vaex.open, lazy virtual columns, delayed single-pass aggregations on billion-row tables, binned histograms/heatmaps, and vaex.ml transformers on one machine. Vaex is in minimal-maintenance mode (vaex-core 4.19 from Sep 2025 supports only Python 3.9–3.12 and pandas < 3), so use it to run, fix, or migrate existing Vaex code; for new larger-than-RAM work prefer Polars lazy/streaming queries (alterlab-polars) or Dask (alterlab-dask). Use when a project already depends on Vaex, when opening memory-mapped HDF5/Arrow files, batching aggregations with delay=True, or porting a Vaex pipeline to Polars. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python` in a dedicated Python 3.12 (or older) environment; requires vaex 4.19.x, which pins pandas < 3 and has no wheels for Python 3.13+. 2-D plots (`df.viz.heatmap`) also need matplotlib < 3.9.
+compatibility: No API key required. Runs locally via `uv run --python 3.12 --with "vaex==4.19.*" python script.py` (no install step) or in a dedicated Python 3.12 (or older) environment; requires vaex 4.19.x, which pins pandas < 3 and has no wheels for Python 3.13+. 2-D plots (`df.viz.heatmap`) also need matplotlib < 3.9.
 metadata:
     skill-author: AlterLab
     version: "1.1.0"
@@ -22,6 +22,7 @@ Vaex is effectively in minimal-maintenance mode. In the project's "Is Vaex activ
 
 - **Existing Vaex code**: keep it running in a pinned Python 3.12 environment (below), and plan a migration.
 - **New projects**: default to Polars (`alterlab-polars`) — `pl.scan_parquet(...)` plus `collect(engine="streaming")` covers most larger-than-RAM aggregation work — or Dask (`alterlab-dask`) for clusters. Recommend Vaex for new work only when its specific strengths (memory-mapped HDF5, fast binned statistics/visualization of huge tables) matter and the user accepts the environment constraints.
+- **Data already in large HDF5 files, one machine, no cluster**: this skill's job. Polars has no HDF5 reader, so open the file with `vaex.open` (memory-mapped) and run the aggregations here; mention a one-time Parquet export only as the migration path.
 
 ## When to Use This Skill
 
@@ -35,10 +36,12 @@ Use this skill when the user wants to:
 
 | Scenario | Use Instead |
 |----------|-------------|
-| New larger-than-RAM analytics project with no existing Vaex code, or Python 3.13+ / pandas 3 environments | `alterlab-polars` |
+| New larger-than-RAM analytics project with no existing Vaex code whose data is Parquet/CSV/Arrow (not HDF5), or Python 3.13+ / pandas 3 environments | `alterlab-polars` |
 | Data fits in memory and the goal is the fastest in-memory groupby/joins | `alterlab-polars` |
 | Multi-node cluster execution, task graphs, or a distributed scheduler dashboard | `alterlab-dask` |
 | Chunked N-D scientific arrays (not tables) on disk or cloud object stores | `alterlab-zarr` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-polars`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Installation
 
@@ -47,6 +50,8 @@ Use this skill when the user wants to:
 uv venv --python 3.12 .venv-vaex
 uv pip install --python .venv-vaex "vaex==4.19.*"
 uv pip install --python .venv-vaex "matplotlib<3.9"   # only if you need df.viz.heatmap
+uv run --python .venv-vaex python analysis.py
+# One-off alternative with no venv: uv run --python 3.12 --with "vaex==4.19.*" --with "matplotlib<3.9" python analysis.py
 ```
 
 ## Core Capabilities

@@ -3,12 +3,14 @@
   "evals": [
     {
       "id": "library-search-annotation",
-      "prompt": "I have a folder of unknown MS/MS spectra in MGF and a reference spectral library in MSP. Can you score them against the library with modified cosine and give me the top matches per query to annotate the metabolites?",
-      "expected_output": "Invokes alterlab-matchms. Loads queries with load_from_mgf and the library with load_from_msp, computes similarity with calculate_scores using ModifiedCosineGreedy (which accounts for precursor m/z differences), and returns the best matches per query via scores_by_query(name=\"ModifiedCosineGreedy_score\", sort=True) for compound annotation.",
+      "files": ["fixtures/mgf_queries", "fixtures/reference_library.msp"],
+      "prompt": "I have a folder of unknown MS/MS spectra in MGF (fixtures/mgf_queries/) and a reference spectral library in MSP (fixtures/reference_library.msp). Can you score them against the library with modified cosine and give me the top matches per query to annotate the metabolites?",
+      "expected_output": "Invokes alterlab-matchms. Loads queries with load_from_mgf and the library with load_from_msp, computes similarity with calculate_scores using ModifiedCosineGreedy (which accounts for precursor m/z differences; the underlying ModifiedCosineGreedy().matrix(references, queries) is equivalent), and returns the best matches per query via scores_by_query(name=\"ModifiedCosineGreedy_score\", sort=True) for compound annotation. On the attached fixtures the top match is unknown_1 -> caffeine, unknown_2 -> tryptophan (a +14 Da methyl analog, the modified-cosine showcase), and unknown_3 -> adenosine.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "calculate_scores" },
-        { "type": "behavior", "value": "Uses calculate_scores with ModifiedCosineGreedy (or CosineGreedy) against a reference library and ranks best matches per query; does not use the removed name 'ModifiedCosine'." }
+        { "type": "output_contains", "value": ["calculate_scores", ".matrix(", "scores_by_query"] },
+        { "type": "behavior", "value": "Uses calculate_scores (or the equivalent ModifiedCosineGreedy().matrix) with ModifiedCosineGreedy (or CosineGreedy) against a reference library and ranks best matches per query; does not use the removed name 'ModifiedCosine'." },
+        { "type": "behavior", "value": "On the attached fixtures, annotates unknown_1 as caffeine, unknown_2 as tryptophan (matched despite the +14 Da precursor shift via modified cosine), and unknown_3 as adenosine." }
       ]
     },
     {
@@ -22,20 +24,25 @@
     },
     {
       "id": "cosine-similarity-two-spectra",
-      "prompt": "I have two MS/MS spectra and I just want a cosine similarity score between them with a 0.1 Da peak matching tolerance. What's the matchms way to do this?",
-      "expected_output": "Invokes alterlab-matchms. Constructs Spectrum objects (or loads them), then computes peak-based cosine similarity with CosineGreedy (or CosineHungarian) via calculate_scores, using the specified m/z matching tolerance. Explains the greedy vs Hungarian matching tradeoff.",
+      "files": ["fixtures/two_spectra.mgf"],
+      "prompt": "I have two MS/MS spectra in fixtures/two_spectra.mgf and I just want a cosine similarity score between them with a 0.1 Da peak matching tolerance. What's the matchms way to do this?",
+      "expected_output": "Invokes alterlab-matchms. Constructs or loads the two Spectrum objects, then computes peak-based cosine similarity with CosineGreedy (or CosineHungarian) at the specified 0.1 Da matching tolerance. For a single pair the matchms idiom is CosineGreedy(tolerance=0.1).pair(s1, s2) (which returns a structured score/matches value); calculate_scores is for collections of spectra, so it is not required for two spectra. Explains the greedy vs Hungarian matching tradeoff.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "cosine" }
+        { "type": "output_contains", "value": "cosine" },
+        { "type": "behavior", "value": "Computes the cosine score for the two spectra with CosineGreedy (or CosineHungarian) at a 0.1 Da tolerance, using .pair() for the single pair (calculate_scores is for collections), and explains greedy vs Hungarian matching." }
       ]
     },
     {
       "id": "derive-structure-fingerprint",
-      "prompt": "My spectra metadata only has SMILES. Can you derive the InChI and InChIKey for each spectrum and attach a Morgan fingerprint so I can compare structures alongside the spectral matches?",
-      "expected_output": "Invokes alterlab-matchms. Uses matchms metadata/annotation filters: derive_inchi_from_smiles, derive_inchikey_from_inchi, and add_fingerprint with a valid fingerprint_type such as 'morgan2' (not the invalid 'morgan'). Notes rdkit is required (it is a base matchms dependency, not a separate extra) and that this enables FingerprintSimilarity-based structural comparison.",
+      "files": ["fixtures/annotated_spectra.mgf"],
+      "prompt": "My spectra in fixtures/annotated_spectra.mgf only have SMILES in their metadata. Can you derive the InChI and InChIKey for each spectrum and attach a Morgan fingerprint so I can compare structures alongside the spectral matches?",
+      "expected_output": "Invokes alterlab-matchms. Uses matchms metadata/annotation filters: derive_inchi_from_smiles, derive_inchikey_from_inchi, and add_fingerprint with a valid fingerprint_type such as 'morgan2' (not the invalid 'morgan'). Notes rdkit is required (it is a base matchms dependency, not a separate extra) and that this enables FingerprintSimilarity-based structural comparison. On the attached spectra the derived InChIKeys include RYYVLZVUVIJVGH-UHFFFAOYSA-N (caffeine, unknown_1) and OIRDTQYFTABQOQ-UHFFFAOYSA-N (adenosine, unknown_3).",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Uses derive_inchi_from_smiles / derive_inchikey_from_inchi and add_fingerprint with a valid type ('morgan2'/'morgan1'/'morgan3'/'daylight', never bare 'morgan') to enrich spectrum metadata." }
+        { "type": "behavior", "value": "Uses derive_inchi_from_smiles / derive_inchikey_from_inchi and add_fingerprint with a valid type ('morgan2'/'morgan1'/'morgan3'/'daylight', never bare 'morgan') to enrich spectrum metadata." },
+        { "type": "output_contains", "value": ["RYYVLZVUVIJVGH", "OIRDTQYFTABQOQ"] },
+        { "type": "behavior", "value": "On the attached annotated_spectra.mgf, derives the correct InChIKeys (caffeine RYYVLZVUVIJVGH-UHFFFAOYSA-N, adenosine OIRDTQYFTABQOQ-UHFFFAOYSA-N) and attaches Morgan fingerprints." }
       ]
     },
     {

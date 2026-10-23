@@ -2,7 +2,7 @@
 name: alterlab-digital-humanities
 description: "Applies computational methods to humanities research — text mining and NLP (LDA/BERTopic topic modeling, sentiment, named entity recognition with spaCy/NLTK), corpus linguistics (concordance, collocation, keyness), digital archives (Dublin Core, TEI XML), GIS for history, network analysis, stylometry and authorship attribution, OCR (Tesseract, Kraken, Transkribus), and data visualization (Gephi, Palladio). Use when distant-reading a literary corpus, mapping historical events or trade networks, attributing disputed authorship, digitizing historical documents, or building digital scholarly editions. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Guidance-focused skill; optional NLP/OCR Python tooling (spaCy, NLTK, Tesseract) runs locally via `uv run python`.
 metadata:
   skill-author: AlterLab
@@ -48,6 +48,8 @@ Use this skill when you need to:
 | Programmatic vector GIS on modern data — spatial joins, buffers, reprojection | `alterlab-geopandas` |
 | Converting modern PDFs/Office files to text rather than OCR of historical scans | `alterlab-markitdown` |
 | Graph algorithms at scale with no humanities source criticism (centrality, communities) | `alterlab-networkx` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-text-as-data`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 

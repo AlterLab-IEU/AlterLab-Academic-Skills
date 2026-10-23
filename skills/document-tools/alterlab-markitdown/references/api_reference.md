@@ -25,7 +25,7 @@ md = MarkItDown(
 | `enable_plugins` | bool | `False` | Load converters from installed plugins (entry point group `markitdown.plugin`) |
 | `enable_builtins` | bool | `True` | Register the built-in converters |
 | `llm_client` | OpenAI client | `None` | OpenAI-compatible client for AI image descriptions (image files and PPTX pictures) |
-| `llm_model` | str | `None` | Model name for image descriptions; through OpenRouter, a dotted slug such as `anthropic/claude-opus-5.5` — the slug of the `ALTERLAB_MODEL` default; `scripts/convert_with_ai.py` derives it from `ALTERLAB_MODEL` (see skills/core/shared/model_env.md) |
+| `llm_model` | str | `None` | Model name for image descriptions; through OpenRouter, a dotted slug such as `anthropic/claude-opus-5.5` — the slug of the `ALTERLAB_MODEL` default; `scripts/convert_with_ai.py` derives it from `ALTERLAB_MODEL` (see shared/model_env.md) |
 | `llm_prompt` | str | `None` | Custom prompt for image description |
 | `docintel_endpoint` | str | `None` | Azure Document Intelligence endpoint (`docintel_credential`, `docintel_file_types`, `docintel_api_version` refine it) |
 | `cu_endpoint` | str | `None` | Azure Content Understanding endpoint (`cu_credential`, analyzer options) |
@@ -174,7 +174,7 @@ from markitdown import MarkItDown
 from openai import OpenAI
 
 # OpenRouter takes the dotted slug of an Anthropic model ID (claude-opus-5-5 -> anthropic/claude-opus-5.5);
-# scripts/convert_with_ai.py derives it from $ALTERLAB_MODEL (skills/core/shared/model_env.md).
+# scripts/convert_with_ai.py derives it from $ALTERLAB_MODEL (shared/model_env.md).
 import os
 model = "anthropic/claude-opus-5.5"
 
@@ -201,7 +201,7 @@ Popular models with vision support:
 - `anthropic/claude-opus-5.5` - **Recommended for scientific vision** (the OpenRouter slug of the `ALTERLAB_MODEL` default, `claude-opus-5-5`)
 - A current Google Gemini Pro Vision model - alternative vision backend
 
-Prefer the `ALTERLAB_MODEL` env-var convention (skills/core/shared/model_env.md) over
+Prefer the `ALTERLAB_MODEL` env-var convention (shared/model_env.md) over
 hardcoding any of these. See https://openrouter.ai/models for the complete list.
 
 ### Custom Prompts
@@ -219,7 +219,7 @@ Be precise and technical.
 
 md = MarkItDown(
     llm_client=client,
-    llm_model="anthropic/claude-opus-5.5",  # OpenRouter slug of the ALTERLAB_MODEL default (skills/core/shared/model_env.md)
+    llm_model="anthropic/claude-opus-5.5",  # OpenRouter slug of the ALTERLAB_MODEL default (shared/model_env.md)
     llm_prompt=scientific_prompt
 )
 ```
@@ -350,8 +350,8 @@ with ThreadPoolExecutor(max_workers=4) as executor:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `OPENROUTER_API_KEY` | OpenRouter API key for image descriptions | `sk-or-v1-...` |
-| `AZURE_API_KEY` | Azure Document Intelligence / Content Understanding key (else `DefaultAzureCredential`) | `key123...` |
+| `OPENROUTER_API_KEY` | Optional: OpenRouter key for in-library image descriptions (keyless: `convert_with_ai.py --backend claude`) | `sk-or-v1-...` |
+| `AZURE_API_KEY` | Optional: Azure Document Intelligence / Content Understanding key (else `DefaultAzureCredential`) | `key123...` |
 | `MARKITDOWN_DOCINTEL_ENDPOINT` | Default Document Intelligence endpoint for the CLI `-d` flag | `https://...` |
 | `MARKITDOWN_CU_ENDPOINT` | Default Content Understanding endpoint for `--use-cu` | `https://...` |
 | `EXIFTOOL_PATH` | Location of `exiftool` for image/audio metadata | `/usr/bin/exiftool` |

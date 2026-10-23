@@ -55,6 +55,7 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import os
 import re
 import sys
 import time
@@ -88,9 +89,11 @@ SEARCH_FORM = {
     "TezCheckbox": "on",
 }
 
+# Contact address for polite-pool User-Agents: opt-in via ALTERLAB_CONTACT_EMAIL; none by default.
+_CONTACT = os.environ.get("ALTERLAB_CONTACT_EMAIL", "").strip()
 USER_AGENT = (
-    "alterlab-yok-akademik/1.0.0 (AlterLab Academic Skills; "
-    "academic-profile lookup; mailto:alterlab.ieu@gmail.com)"
+    "alterlab-yok-akademik/1.0.0 (AlterLab Academic Skills; academic-profile lookup"
+    + (f"; mailto:{_CONTACT})" if _CONTACT else ")")
 )
 HTTP_TIMEOUT = 20
 RETRIES = 3

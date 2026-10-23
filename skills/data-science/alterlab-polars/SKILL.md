@@ -3,11 +3,12 @@ name: alterlab-polars
 description: Fast in-memory DataFrame analytics with Polars — lazy evaluation, parallel execution, and an Apache Arrow backend for datasets that fit in RAM. Use when pandas is too slow but data still fits in memory, for 1-100GB datasets, ETL pipelines, or a faster pandas replacement. For larger-than-RAM data prefer dask or vaex. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires polars >= 1.0 (current 1.44 as of 2026-09; 2.0 is in release candidate).
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "polars>=1.0,<2" python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires polars >= 1.0 (current 1.44 as of 2026-09; 2.0 is in release candidate).
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.2"
+    last_updated: "2026-10-22"
+    credentials: "optional: AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY, AZURE_STORAGE_ACCOUNT_KEY, GOOGLE_APPLICATION_CREDENTIALS (only to read or write your own private S3 / Azure / GCS buckets; local files and public URLs need none)"
 ---
 
 # Polars
@@ -31,13 +32,16 @@ Polars is a lightning-fast DataFrame library for Python and Rust built on Apache
 | Billion-row out-of-core exploration with memory-mapped HDF5/Arrow files and big-data plots | `alterlab-vaex` |
 | First look at an unfamiliar data file: structure, missingness, and quality report | `alterlab-eda` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-dask`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Quick Start
 
 ### Installation and Basic Usage
 
 Pin a recent 1.x (examples here use the Polars 1.x API):
 ```bash
-uv add 'polars>=1.0,<2'
+uv run --python ">=3.12" --with 'polars>=1.0,<2' python query.py   # one-off, no install step
+uv add 'polars>=1.0,<2'                                         # inside a uv project
 ```
 
 Polars 2.0 is in release candidate (2.0.0rc2, September 2026). Its upgrade guide lists changes

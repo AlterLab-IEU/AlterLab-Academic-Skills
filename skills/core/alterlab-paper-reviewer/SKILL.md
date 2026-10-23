@@ -26,7 +26,7 @@ Review this paper: [paste paper or provide file]
 **Output:**
 1. Automatically identifies the paper's field and methodology type
 2. Dynamically configures the specific identities and expertise of 5 reviewers
-3. 5 independent review reports (each from a different perspective)
+3. 5 separate review reports (each from a different perspective)
 4. 1 Editorial Decision Letter + Revision Roadmap
 
 ---
@@ -47,7 +47,9 @@ Review this paper: [paste paper or provide file]
 | A rubric/grade-style numeric score of a paper or thesis | `alterlab-scholar-eval` |
 | Checking that the manuscript's references exist and are not retracted | `alterlab-citation-verifier` |
 
-In Claude Code, a panel of genuinely independent reviewer agents (4–6 blind reviewers, each major concern re-read against the manuscript) is packaged as `/alterlab-workflows:review-panel` (see `alterlab-research-workflows`); offer it when the user wants independence at that scale.
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-paper-writer`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+In Claude Code, a panel of separate reviewer agents (4–6 blind reviewers, each major concern re-checked against the manuscript, unchecked ones labelled unverified) is packaged as `/alterlab-workflows:review-panel` (see `alterlab-research-workflows`); offer it when the user wants separate readers at that scale. Separate agents of one model avoid anchoring on each other but are not independent verification.
 
 ### Quick Mode Selection Guide
 
@@ -158,11 +160,12 @@ User: "Review this paper"
 
 ### Checkpoint Rules
 
-1. **After Phase 0 completes**: Present Reviewer Configuration Card to user; user can adjust reviewer identities
+1. **After Phase 0 completes**: Present Reviewer Configuration Card to user; user can adjust reviewer identities. Unless the user asked to approve the panel first, continue to Phase 1 and Phase 2 in the same reply — a full review never ends at the card; the user can adjust the panel and re-run
 2. **Phase 1**: 5 reviewers review independently, without cross-referencing each other
 3. **Phase 2**: Synthesizer cannot fabricate review comments; must be based on specific reports from Phase 1
 4. **Devil's Advocate special handling**: If the Devil's Advocate finds CRITICAL issues, the Editorial Decision cannot be Accept
 5. **Phase 2.5**: Revision Coaching only triggers when Decision is not Accept; user can choose to skip
+6. **Revision Roadmap is always emitted**: a full review ends with the Editorial Decision Letter followed by a section headed `Revision Roadmap` (Priority 1 / 2 / 3 items, each traceable to a reviewer comment — `templates/editorial_decision_template.md`); guided mode ends its dialogue with the same section
 
 ---
 
@@ -316,6 +319,8 @@ Phase 2: Does not produce full Editorial Decision; enters dialogue mode instead
 6. **Cross-disciplinary challenge**: Introduce Reviewer 3's unique perspective
 7. **Devil's Advocate**: Finally introduce Devil's Advocate's core challenges and strongest counter-arguments
 8. **Wrap up**: When all key issues have been discussed, provide a structured Revision Roadmap
+
+The first reply therefore carries only step 1 — one or two strengths quoted from the paper and the most critical structural issue put as a question — plus one line saying the dialogue ends with a Revision Roadmap and that "just tell me" gives it now. Do not list the other issues in that reply.
 
 ### Dialogue Rules
 

@@ -37,6 +37,8 @@ Use astropy when tasks involve:
 | Symbolic derivations of physical formulas (no data or units handling) | `alterlab-sympy` |
 | Generic time-series ML (classification, forecasting) on light curves as plain arrays | `alterlab-aeon` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-geopandas`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Quick Start
 
 ```python
@@ -199,14 +201,17 @@ Robust statistical functions including sigma clipping and outlier rejection.
 
 ## Installation
 
-```bash
-# Install astropy (8.x requires Python >= 3.11 and NumPy >= 2.0; current 8.0.x as of 2026-09)
-uv pip install astropy
+Run install-free — one `uv run` command, no virtualenv or `uv pip install` step (uv's default
+Python here can be 3.9, and astropy 8.x needs ≥ 3.11 and NumPy ≥ 2.0, so pin the interpreter):
 
-# Common optional dependencies (scipy, matplotlib, ...) or everything
-uv pip install "astropy[recommended]"
-uv pip install "astropy[all]"
+```bash
+uv run --python ">=3.11" --with astropy python your_script.py
+uv run --python ">=3.11" --with astropy python -c "from astropy.coordinates import SkyCoord; print(SkyCoord('05h23m34.5s', '-69d45m22s').galactic)"
+uv run --python ">=3.11" --with "astropy[recommended]" python your_script.py   # + scipy, matplotlib
 ```
+
+Current release 8.0.x as of 2026-10. For a persistent environment, `uv pip install astropy`
+inside an activated virtualenv works too.
 
 Astropy 8.0 notes: import cosmology classes from `astropy.cosmology` directly (the
 `astropy.cosmology.flrw` / `.core` / `.funcs` shim modules were removed), `astropy.samp`
@@ -300,9 +305,11 @@ import astropy.units as u
 cat1 = Table.read('catalog1.fits')
 cat2 = Table.read('catalog2.fits')
 
-# Create coordinate objects
-coords1 = SkyCoord(ra=cat1['RA']*u.degree, dec=cat1['DEC']*u.degree)
-coords2 = SkyCoord(ra=cat2['RA']*u.degree, dec=cat2['DEC']*u.degree)
+# Create coordinate objects. FITS catalogs usually tag RA/DEC with TUNIT='deg', so the
+# columns already carry a unit: pass unit='deg' (multiplying by u.degree gives deg**2 and
+# SkyCoord raises UnitTypeError). Check cat1.colnames for the real column names first.
+coords1 = SkyCoord(ra=cat1['RA'], dec=cat1['DEC'], unit='deg')
+coords2 = SkyCoord(ra=cat2['RA'], dec=cat2['DEC'], unit='deg')
 
 # Find matches
 idx, sep, _ = coords1.match_to_catalog_sky(coords2)

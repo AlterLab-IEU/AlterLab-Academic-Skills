@@ -7,8 +7,10 @@ Demonstrates:
 2. Manual backend override via force_backend
 3. Batch query processing
 
-The router (ResearchLookup) sends academic-keyword queries to Perplexity
-sonar-pro-search and everything else to the Parallel Chat API (core model).
+With no keys set, every query goes to the keyless scholarly backend (Crossref,
+Europe PMC, arXiv, Semantic Scholar, OpenAlex). With keys, the router (ResearchLookup)
+sends academic-keyword queries to Perplexity sonar-pro-search and everything else to
+the Parallel Chat API (core model); the preview below stubs both keys to show that.
 """
 
 import os
@@ -129,15 +131,15 @@ def example_routing_preview():
 
 
 def main():
-    """Run the routing preview; live examples require API keys."""
+    """Run the routing preview; the live examples below make network calls."""
     if not (os.getenv("PARALLEL_API_KEY") or os.getenv("OPENROUTER_API_KEY")):
-        print("Note: set PARALLEL_API_KEY and/or OPENROUTER_API_KEY to run live queries.")
-        print("Showing routing decisions only (no API calls).")
+        print("Note: no keys set, so live queries would use the keyless scholarly backend.")
+        print("Showing the keyed routing decisions only (no API calls).")
         print()
 
     example_routing_preview()
 
-    # Uncomment to run live examples (requires API keys):
+    # Uncomment to run live examples (keyless unless keys are set):
     # example_automatic_routing()
     # example_manual_override()
     # example_batch_queries()

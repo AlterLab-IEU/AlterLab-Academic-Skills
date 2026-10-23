@@ -2,13 +2,21 @@
 """
 Research Information Lookup Tool
 
-Routes research queries to the best backend:
-  - Parallel Chat API (core model): Default for all general research queries
-  - Perplexity sonar-pro-search (via OpenRouter): Academic-specific paper searches
+Routes research queries to the best backend. No API key is needed:
+  - scholarly (keyless, stdlib): Crossref, Europe PMC, arXiv, Semantic Scholar and OpenAlex
+    index records merged by DOI (scripts/scholarly_backend.py). Used for academic queries
+    when OPENROUTER_API_KEY is not set, and for every query when no key is set.
+  - Parallel Chat API (core model): general research, when PARALLEL_API_KEY is set
+  - Perplexity sonar-pro-search (via OpenRouter): academic paper searches, when
+    OPENROUTER_API_KEY is set
 
-Environment variables (at least one is required; both recommended):
-  PARALLEL_API_KEY    - Parallel Chat API (primary backend)
-  OPENROUTER_API_KEY  - Perplexity academic searches via OpenRouter (fallback)
+Optional environment variables (each only adds a paid backend):
+  PARALLEL_API_KEY    - Parallel Chat API
+  OPENROUTER_API_KEY  - Perplexity sonar-pro-search via OpenRouter
+
+General web questions (news, statistics, market data, documentation) are not answered by the
+keyless scholarly backend; the skill does those with Claude's WebSearch and WebFetch.
+A forced keyed backend whose key is missing exits non-zero; it never answers from another.
 """
 
 import os
@@ -16,9 +24,14 @@ import sys
 import json
 import re
 import time
-import requests
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import scholarly_backend  # noqa: E402  (stdlib-only sibling module)
+
+KEYLESS_HINT = ("Keyless alternatives: --force-backend scholarly (index records with DOIs), or "
+                "do the lookup with WebSearch/WebFetch as SKILL.md describes.")
 
 
 class ResearchLookup:
@@ -60,37 +73,44 @@ class ResearchLookup:
     # POST /v1beta/chat/completions endpoint of Parallel's Chat API (Beta).
     CHAT_BASE_URL = "https://api.parallel.ai/v1beta"
 
-    def __init__(self, force_backend: Optional[str] = None):
-        """Initialize the research lookup tool.
+    def __init__(self, force_backend: Optional[str] = None, limit: int = 10,
+                 rank: str = "auto", terms: Optional[str] = None):
+        """Initialize the research lookup tool. No API key is required.
 
         Args:
-            force_backend: Force a specific backend ('parallel' or 'perplexity').
-                          If None, backend is auto-selected based on query content.
+            force_backend: Force a specific backend ('scholarly', 'parallel' or 'perplexity').
+                          If None, backend is auto-selected based on query content and keys.
+            limit, rank, terms: passed to the keyless scholarly backend.
         """
         self.force_backend = force_backend
         self.parallel_available = bool(os.getenv("PARALLEL_API_KEY"))
         self.perplexity_available = bool(os.getenv("OPENROUTER_API_KEY"))
+        self.limit, self.rank, self.terms = limit, rank, terms
 
-        if not self.parallel_available and not self.perplexity_available:
-            raise ValueError(
-                "No API keys found. Set at least one of:\n"
-                "  PARALLEL_API_KEY (for Parallel Chat API - primary)\n"
-                "  OPENROUTER_API_KEY (for Perplexity academic search - fallback)"
-            )
+    def is_academic(self, query: str) -> bool:
+        query_lower = query.lower()
+        return any(kw in query_lower for kw in self.ACADEMIC_KEYWORDS)
 
     def _select_backend(self, query: str) -> str:
         """Select the best backend for a query."""
         if self.force_backend:
-            if self.force_backend == "perplexity" and self.perplexity_available:
-                return "perplexity"
-            if self.force_backend == "parallel" and self.parallel_available:
-                return "parallel"
+            # A forced backend is the user's explicit choice: refuse rather than quietly
+            # answer from another one when its key is missing.
+            if self.force_backend == "scholarly":
+                return "scholarly"
+            if self.force_backend == "perplexity":
+                if self.perplexity_available:
+                    return "perplexity"
+                raise ValueError("--force-backend perplexity needs OPENROUTER_API_KEY; "
+                                 "not falling back to another backend. " + KEYLESS_HINT)
+            if self.force_backend == "parallel":
+                if self.parallel_available:
+                    return "parallel"
+                raise ValueError("--force-backend parallel needs PARALLEL_API_KEY; "
+                                 "not falling back to another backend. " + KEYLESS_HINT)
 
-        query_lower = query.lower()
-        is_academic = any(kw in query_lower for kw in self.ACADEMIC_KEYWORDS)
-
-        if is_academic and self.perplexity_available:
-            return "perplexity"
+        if self.is_academic(query):
+            return "perplexity" if self.perplexity_available else "scholarly"
 
         if self.parallel_available:
             return "parallel"
@@ -98,7 +118,7 @@ class ResearchLookup:
         if self.perplexity_available:
             return "perplexity"
 
-        raise ValueError("No backend available. Check API keys.")
+        return "scholarly"
 
     # ------------------------------------------------------------------
     # Parallel Chat API backend
@@ -253,6 +273,8 @@ class ResearchLookup:
         }
 
         try:
+            import requests  # only this keyed backend needs it
+
             response = requests.post(
                 "https://openrouter.ai/api/v1/chat/completions",
                 headers=headers,
@@ -296,6 +318,34 @@ class ResearchLookup:
                 "backend": "perplexity",
                 "model": model,
             }
+
+    # ------------------------------------------------------------------
+    # Keyless scholarly backend
+    # ------------------------------------------------------------------
+
+    def _scholarly_lookup(self, query: str) -> Dict[str, Any]:
+        """Index records (no synthesis) from Crossref, Europe PMC, arXiv, S2, OpenAlex."""
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        res = scholarly_backend.search(query, limit=self.limit, terms=self.terms, rank=self.rank)
+        model = "keyless/" + "+".join(s for s in res["queried"] if s not in res["errors"])
+        if not res["records"]:
+            why = ("every source failed: " + "; ".join(f"{k}: {v}" for k, v in res["errors"].items())
+                   if len(res["errors"]) == len(res["queried"]) else
+                   f"no records matched \"{res['terms']}\"; rephrase or pass --terms")
+            return {"success": False, "query": query, "error": why, "timestamp": timestamp,
+                    "backend": "scholarly", "model": model}
+        sources = [{
+            "type": "source", "title": r["title"], "date": str(r["year"] or ""),
+            "url": r["url"] or (f"https://doi.org/{r['doi']}" if r["doi"] else ""),
+            "doi": r["doi"], "snippet": r["abstract"][:300], "cited_by": r["cited_by"],
+            "venue": r["venue"], "authors": r["authors"],
+        } for r in res["records"]]
+        citations = [{"type": "doi", "doi": r["doi"], "url": f"https://doi.org/{r['doi']}"}
+                     for r in res["records"] if r["doi"]]
+        return {"success": True, "query": query, "response": scholarly_backend.to_markdown(res),
+                "citations": citations, "sources": sources, "timestamp": timestamp,
+                "backend": "scholarly", "model": model, "search_terms": res["terms"],
+                "rank": res["rank"], "source_errors": res["errors"]}
 
     # ------------------------------------------------------------------
     # Shared utilities
@@ -431,16 +481,28 @@ Remember: Quality over quantity. Prioritize influential, highly-cited papers fro
     def lookup(self, query: str) -> Dict[str, Any]:
         """Perform a research lookup, routing to the best backend.
 
-        Parallel Chat API is used by default. Perplexity sonar-pro-search
-        is used only for academic-specific queries (paper searches, DOI lookups).
+        Academic queries go to Perplexity when OPENROUTER_API_KEY is set, else to the keyless
+        scholarly backend. Other queries go to Parallel (PARALLEL_API_KEY), then Perplexity,
+        then the scholarly backend, with a stderr note that web content needs WebSearch.
         """
         backend = self._select_backend(query)
         print(f"[Research] Backend: {backend} | Query: {query[:80]}...", file=sys.stderr)
 
         if backend == "parallel":
             return self._parallel_lookup(query)
-        else:
+        if backend == "perplexity":
             return self._perplexity_lookup(query)
+        if not self.force_backend:
+            if not (self.parallel_available or self.perplexity_available):
+                print("[Research] No PARALLEL_API_KEY / OPENROUTER_API_KEY set: using the keyless "
+                      "scholarly backend (Crossref, Europe PMC, arXiv, Semantic Scholar, OpenAlex).",
+                      file=sys.stderr)
+            if not self.is_academic(query):
+                print("[Research] Note: this is not a paper search. The scholarly backend returns "
+                      "papers only; for news, statistics, market data or web pages, do this "
+                      "lookup with WebSearch/WebFetch (SKILL.md, keyless web lookup).",
+                      file=sys.stderr)
+        return self._scholarly_lookup(query)
 
     def batch_lookup(self, queries: List[str], delay: float = 1.0) -> List[Dict[str, Any]]:
         """Perform multiple research lookups with delay between requests."""
@@ -467,18 +529,20 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # General research (uses Parallel Chat API, core model)
+  # Academic paper search: keyless scholarly backend (Perplexity if OPENROUTER_API_KEY is set)
+  python research_lookup.py "find papers on CRISPR off-target effects" -o sources/papers_x.md
+
+  # Exact search terms and ordering for the scholarly backend
+  python research_lookup.py "find papers" --terms '"testing effect" OR "retrieval practice"' --rank cited
+
+  # General research (Parallel Chat API when PARALLEL_API_KEY is set; without keys the
+  # scholarly backend answers with papers only -- use WebSearch/WebFetch for web content)
   python research_lookup.py "latest advances in quantum computing 2025"
 
-  # Academic paper search (auto-routes to Perplexity)
-  python research_lookup.py "find papers on CRISPR gene editing clinical trials"
-
-  # Force a specific backend
+  # Force a specific backend (a keyed one exits 1 when its key is missing)
+  python research_lookup.py "topic" --force-backend scholarly
   python research_lookup.py "topic" --force-backend parallel
   python research_lookup.py "topic" --force-backend perplexity
-
-  # Save output to file
-  python research_lookup.py "topic" -o results.txt
 
   # JSON output
   python research_lookup.py "topic" --json -o results.json
@@ -488,42 +552,34 @@ Examples:
     parser.add_argument("--batch", nargs="+", help="Run multiple queries")
     parser.add_argument(
         "--force-backend",
-        choices=["parallel", "perplexity"],
-        help="Force a specific backend (default: auto-select)",
+        choices=["scholarly", "parallel", "perplexity"],
+        help="Force a backend (default: auto-select). scholarly is keyless; parallel needs "
+             "PARALLEL_API_KEY and perplexity needs OPENROUTER_API_KEY.",
     )
+    parser.add_argument("--limit", type=int, default=10,
+                        help="scholarly backend: records to return (default 10)")
+    parser.add_argument("--rank", choices=["auto", "relevance", "cited"], default="auto",
+                        help="scholarly backend: 'cited' surfaces influential work; auto uses "
+                             "'relevance' for recent/latest/dated requests")
+    parser.add_argument("--terms", help="scholarly backend: exact search terms (quotes, OR "
+                                        "allowed) instead of the words left after routing words")
     parser.add_argument("-o", "--output", help="Write output to file")
     parser.add_argument("--json", action="store_true", help="Output as JSON")
 
     args = parser.parse_args()
 
-    output_file = None
-    if args.output:
-        output_file = open(args.output, "w", encoding="utf-8")
-
-    def write_output(text):
-        if output_file:
-            output_file.write(text + "\n")
-        else:
-            print(text)
-
-    has_parallel = bool(os.getenv("PARALLEL_API_KEY"))
-    has_perplexity = bool(os.getenv("OPENROUTER_API_KEY"))
-    if not has_parallel and not has_perplexity:
-        print("Error: No API keys found. Set at least one:", file=sys.stderr)
-        print("  export PARALLEL_API_KEY='...'    (primary - Parallel Chat API)", file=sys.stderr)
-        print("  export OPENROUTER_API_KEY='...'   (fallback - Perplexity academic)", file=sys.stderr)
-        if output_file:
-            output_file.close()
-        return 1
-
     if not args.query and not args.batch:
         parser.print_help()
-        if output_file:
-            output_file.close()
         return 1
 
+    chunks: List[str] = []
+
+    def write_output(text):
+        chunks.append(text)
+
     try:
-        research = ResearchLookup(force_backend=args.force_backend)
+        research = ResearchLookup(force_backend=args.force_backend, limit=args.limit,
+                                  rank=args.rank, terms=args.terms)
 
         if args.batch:
             print(f"Running batch research for {len(args.batch)} queries...", file=sys.stderr)
@@ -531,58 +587,68 @@ Examples:
         else:
             print(f"Researching: {args.query}", file=sys.stderr)
             results = [research.lookup(args.query)]
-
-        if args.json:
-            write_output(json.dumps(results, indent=2, ensure_ascii=False, default=str))
-            if output_file:
-                output_file.close()
-            return 0
-
-        for i, result in enumerate(results):
-            if result["success"]:
-                write_output(f"\n{'='*80}")
-                write_output(f"Query {i+1}: {result['query']}")
-                write_output(f"Timestamp: {result['timestamp']}")
-                write_output(f"Backend: {result.get('backend', 'unknown')} | Model: {result.get('model', 'unknown')}")
-                write_output(f"{'='*80}")
-                write_output(result["response"])
-
-                sources = result.get("sources", [])
-                if sources:
-                    write_output(f"\nSources ({len(sources)}):")
-                    for j, source in enumerate(sources):
-                        title = source.get("title", "Untitled")
-                        url = source.get("url", "")
-                        date = source.get("date", "")
-                        date_str = f" ({date})" if date else ""
-                        write_output(f"  [{j+1}] {title}{date_str}")
-                        if url:
-                            write_output(f"      {url}")
-
-                citations = result.get("citations", [])
-                text_citations = [c for c in citations if c.get("type") in ("doi", "url")]
-                if text_citations:
-                    write_output(f"\nAdditional References ({len(text_citations)}):")
-                    for j, citation in enumerate(text_citations):
-                        if citation.get("type") == "doi":
-                            write_output(f"  [{j+1}] DOI: {citation.get('doi', '')} - {citation.get('url', '')}")
-                        elif citation.get("type") == "url":
-                            write_output(f"  [{j+1}] {citation.get('url', '')}")
-
-                if result.get("usage"):
-                    write_output(f"\nUsage: {result['usage']}")
-            else:
-                write_output(f"\nError in query {i+1}: {result['error']}")
-
-        if output_file:
-            output_file.close()
-        return 0
-
     except Exception as e:
+        # Nothing is written to -o, so a refused or failed run never leaves a stub in sources/.
         print(f"Error: {e}", file=sys.stderr)
-        if output_file:
-            output_file.close()
         return 1
+
+    failed = [r for r in results if not r["success"]]
+    for r in failed:
+        print(f"Error ({r.get('backend', '?')}): {r['error']}", file=sys.stderr)
+
+    if args.json:
+        write_output(json.dumps(results, indent=2, ensure_ascii=False, default=str))
+    else:
+        _render_text(results, write_output)
+
+    text = "\n".join(chunks) + "\n"
+    if args.output:
+        with open(args.output, "w", encoding="utf-8") as fh:
+            fh.write(text)
+        print(f"[Research] Saved {len(results) - len(failed)}/{len(results)} result(s) to "
+              f"{args.output}", file=sys.stderr)
+    else:
+        sys.stdout.write(text)
+    return 1 if failed else 0
+
+
+def _render_text(results: List[Dict[str, Any]], write_output) -> None:
+    """Human-readable output with Sources and Additional References sections."""
+    for i, result in enumerate(results):
+        if result["success"]:
+            write_output(f"\n{'='*80}")
+            write_output(f"Query {i+1}: {result['query']}")
+            write_output(f"Timestamp: {result['timestamp']}")
+            write_output(f"Backend: {result.get('backend', 'unknown')} | Model: {result.get('model', 'unknown')}")
+            write_output(f"{'='*80}")
+            write_output(result["response"])
+
+            sources = result.get("sources", [])
+            if sources:
+                write_output(f"\nSources ({len(sources)}):")
+                for j, source in enumerate(sources):
+                    title = source.get("title", "Untitled")
+                    url = source.get("url", "")
+                    date = source.get("date", "")
+                    date_str = f" ({date})" if date else ""
+                    write_output(f"  [{j+1}] {title}{date_str}")
+                    if url:
+                        write_output(f"      {url}")
+
+            citations = result.get("citations", [])
+            text_citations = [c for c in citations if c.get("type") in ("doi", "url")]
+            if text_citations:
+                write_output(f"\nAdditional References ({len(text_citations)}):")
+                for j, citation in enumerate(text_citations):
+                    if citation.get("type") == "doi":
+                        write_output(f"  [{j+1}] DOI: {citation.get('doi', '')} - {citation.get('url', '')}")
+                    elif citation.get("type") == "url":
+                        write_output(f"  [{j+1}] {citation.get('url', '')}")
+
+            if result.get("usage"):
+                write_output(f"\nUsage: {result['usage']}")
+        else:
+            write_output(f"\nError in query {i+1}: {result['error']}")
 
 
 if __name__ == "__main__":

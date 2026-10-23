@@ -2,7 +2,7 @@
 name: alterlab-open-science
 description: "Guidance for open science practices — preregistration (OSF Registries, AsPredicted, PROSPERO, ClinicalTrials.gov), open data and FAIR principles, repository choice (Zenodo, Dryad, Figshare), open access routes (Green/Gold/Diamond), Creative Commons licensing, reproducible computational workflows (Docker, Binder, Code Ocean), registered reports, open peer review, and TOP Guidelines. Use when preregistering a study, writing the FAIR data-sharing and repository section of a grant data management plan (NSF, NIH, ERC, UKRI), choosing a data repository, navigating open access, or building reproducible analyses. For human-subjects ethics, IRB applications, informed consent, or GDPR/HIPAA compliance, defer to alterlab-research-ethics. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read WebFetch WebSearch Bash(python:*)
+allowed-tools: Read WebFetch WebSearch Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.
 metadata:
   skill-author: AlterLab
@@ -48,6 +48,8 @@ Use this skill when you need to:
 | Holding an analysis to its frozen plan once data exist (HARKing, outcome switching) | `alterlab-preregistration-discipline` |
 | Writing the grant proposal narrative, aims, or budget | `alterlab-research-grants` |
 | KVKK-compliant data management plan for research in Turkey | `alterlab-kvkk-dmp` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-research-ethics`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 

@@ -191,9 +191,9 @@ def main():
     """Example usage."""
     import sys
 
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help"):
         print("Usage: python verify_citations.py <markdown_file>")
-        sys.exit(1)
+        sys.exit(0 if len(sys.argv) > 1 else 1)
 
     filepath = sys.argv[1]
     verifier = CitationVerifier()

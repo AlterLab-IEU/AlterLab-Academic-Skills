@@ -2,7 +2,7 @@
 name: alterlab-aeon
 description: Runs time series machine learning with the aeon library — classification, regression, clustering, forecasting, anomaly detection, segmentation, and similarity search via scikit-learn compatible APIs. Use when working with temporal data, sequential patterns, or time-indexed observations (univariate or multivariate) that need specialized algorithms beyond standard ML approaches. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(uv run python:*) Bash(uv pip install:*)
+allowed-tools: Read Write Edit Bash(uv run python:*) Bash(uv pip install:*) Bash(uv run:*)
 compatibility: No API key required. Runs locally via `uv run python`; requires the aeon Python package.
 metadata:
     skill-author: AlterLab
@@ -33,16 +33,25 @@ Apply this skill when:
 |----------|-------------|
 | Zero-shot forecasting with a pretrained foundation model, no training | `alterlab-timesfm` |
 | ARIMA/SARIMAX with coefficient tables, residual diagnostics, and econometric inference | `alterlab-statsmodels` |
+| Having an LLM generate and test candidate hypotheses on a labelled dataset (e.g. which survey features predict deception) | `alterlab-hypogenic` |
 | Plain tabular features (no temporal ordering) for classification/regression | `alterlab-scikit-learn` |
 | Physiological signal processing (ECG/EEG/EDA peaks, HRV) | `alterlab-neurokit2` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-timesfm`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Installation
 
+Run install-free — one `uv run` command, no virtualenv and no `uv pip install` (which fails
+outside an activated virtualenv). Pin the interpreter: uv's default Python here can be 3.9.
+
 ```bash
-uv pip install "aeon>=1.6"     # core; Python 3.11–3.14
-uv pip install "aeon[dl]"      # + TensorFlow/Keras for the deep-learning estimators
-uv pip install stumpy          # soft dependency of MatrixProfileTransformer
+uv run --python ">=3.11" --with "aeon>=1.6" python your_script.py                  # core; Python 3.11–3.14
+uv run --python ">=3.11" --with "aeon>=1.6" --with stumpy python your_script.py    # + MatrixProfileTransformer
 ```
+
+`aeon[dl]` (the deep-learning estimators) pulls TensorFlow/Keras; add it only when a deep
+model is really needed. Inside an activated virtualenv, `uv pip install "aeon>=1.6"` gives a
+persistent install instead.
 
 Examples are verified against aeon 1.6.0 (current as of 2026-09). The 1.x line
 reorganised modules — forecasters live under `aeon.forecasting.stats`, series anomaly

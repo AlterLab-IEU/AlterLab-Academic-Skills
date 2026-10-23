@@ -1,0 +1,3 @@
+Gene of interest: ERAP2 (endoplasmic reticulum aminopeptidase 2), human.
+Context: candidate from our skeletal-muscle RNA-seq study; we want to know whether common
+variants change how ERAP2 is spliced in skeletal muscle (GTEx v10).

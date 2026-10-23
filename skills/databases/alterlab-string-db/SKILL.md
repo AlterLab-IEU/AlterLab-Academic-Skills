@@ -3,11 +3,11 @@ name: alterlab-string-db
 description: Query the STRING API for protein-protein interactions (59M proteins, 20B+ interactions across 12,500+ organisms), building interaction networks, discovering functional partners, and running GO/KEGG/Pfam enrichment on protein lists. Use when constructing a protein-protein interaction network, expanding from seed proteins to functional partners, or running PPI-based enrichment for systems biology; for curated metabolic pathway maps and reactions prefer alterlab-kegg, and for protein sequences, annotations, or accession ID mapping prefer alterlab-uniprot instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless STRING REST API (no authentication required); default API serves STRING v12.0 as of 2026-09 — pin with STRING_BASE_URL=https://version-12-0.string-db.org/api
+compatibility: Keyless STRING REST API (no authentication required); default API serves STRING v12.0 as of 2026-09 — pin with `python scripts/string_api.py --base-url https://version-12-0.string-db.org/api ...`
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.1.0"
+    last_updated: "2026-10-23"
 ---
 
 # STRING Database
@@ -44,6 +44,8 @@ Use this skill when:
 | Graph algorithms on your own network (centrality, communities) | `alterlab-networkx` |
 | Domain/family classification of the proteins | `alterlab-interpro` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-kegg`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## What This Skill Provides
 
 1. Python helper functions (`scripts/string_api.py`) for all STRING REST API
@@ -52,7 +54,23 @@ Use this skill when:
    detailed endpoint and parameter specifications.
 
 When a user requests STRING data, determine which operation is needed and use
-the appropriate function from `scripts/string_api.py`.
+the appropriate function from `scripts/string_api.py`, or its command line (stdlib only,
+retries 429/5xx with backoff):
+
+```bash
+python scripts/string_api.py map TP53 BRCA1 ATM                     # names -> STRING IDs
+python scripts/string_api.py network TP53 BRCA1 ATM --required-score 700 \
+    --base-url https://version-12-0.string-db.org/api                # pinned v12.0
+python scripts/string_api.py partners TP53 --limit 20 --required-score 700
+python scripts/string_api.py ppi-enrichment TP53 MDM2 ATM CHEK2 BRCA1
+python scripts/string_api.py enrichment TP53 MDM2 ATM CHEK2 BRCA1
+python scripts/string_api.py image TP53 MDM2 ATM -o network.png
+```
+
+Pin the version with `--base-url`, not an environment-variable prefix
+(`STRING_BASE_URL=... python ...` is not a `python` command, so the skill's
+`Bash(python:*)` grant does not cover it). From Python, assign
+`string_api.STRING_BASE_URL` before calling the functions.
 
 ## Core Workflow
 
@@ -89,9 +107,9 @@ in the references below.
 2. Prefer STRING IDs (`9606.ENSP00000269305`) over gene names.
 3. Specify `species` for networks > 10 proteins.
 4. Respect rate limits — wait ~1 second between API calls.
-5. Pin a version for reproducibility — set `STRING_BASE_URL` to a stable
-   subdomain (e.g. `https://version-12-0.string-db.org/api`) before running the
-   helpers; see `string_reference.md`.
+5. Pin a version for reproducibility — pass `--base-url` with a stable
+   subdomain (e.g. `https://version-12-0.string-db.org/api`), or set
+   `string_api.STRING_BASE_URL` in Python; see `string_reference.md`.
 6. Handle errors gracefully — check for an `"Error:"` prefix in returned strings.
 7. Match the confidence threshold to your analysis goals.
 

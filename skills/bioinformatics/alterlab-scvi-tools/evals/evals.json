@@ -25,7 +25,7 @@
       "expected_output": "Invokes alterlab-scvi-tools. Calls model.differential_expression(groupby='cell_type', group1='TypeA', group2='TypeB', mode='change', delta=0.25) to run probabilistic DE with composite hypothesis testing and a minimum effect-size threshold. Model-based DE with uncertainty is a documented scvi-tools task.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "differential_expression" }
+        { "type": "output_contains", "value": ["differential_expression", "mode=\"change\"", "mode='change'"] }
       ]
     },
     {

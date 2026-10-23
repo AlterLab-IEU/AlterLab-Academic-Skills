@@ -1,0 +1,44 @@
+SYNTHETIC FIXTURE — created for benchmarking; not a real review, study, or person.
+L2: Database export, batch C (CINAHL). For several records the database supplied no abstract, or the
+L3: abstract field was cut off at 500 characters; the records below are exactly as exported.
+L4:
+L5: R14
+L6: Title: Mindfulness training and burnout among nurses: a randomised controlled trial
+L7: Year: 2018 | Language: English | Type: journal article
+L8: Abstract: [no abstract available in this export]
+L9:
+L10: R15
+L11: Title: Mindfulness-based stress reduction for intensive care nurses: a randomised controlled trial
+L12: Year: 2021 | Language: English | Type: journal article
+L13: Abstract: Background: Intensive care nurses face high emotional demands and are at risk of burnout and
+L14: compassion fatigue. Methods: In this randomised controlled trial, 120 registered nurses from five
+L15: intensive care units were assigned to an 8-week mindfulness-based stress reduction programme (eight
+L16: weekly group sessions with formal meditation practice) or a waitlist control. The primary outcome
+L17: was [abstract truncated at 500 characters]
+L18:
+L19: R16
+L20: Title: Mindfulness-based stress reduction for burnout in nursing students: a randomized controlled trial
+L21: Year: 2022 | Language: English | Type: journal article
+L22: Abstract: [no abstract available in this export]
+L23:
+L24: R17
+L25: Title: Mindfulness-based interventions for burnout in nurses: a systematic review and meta-analysis of randomised controlled trials
+L26: Year: 2023 | Language: English | Type: journal article
+L27: Abstract: [no abstract available in this export]
+L28:
+L29: R18
+L30: Title: Mindfulness-based stress reduction versus usual care for burnout in haemodialysis nurses: a randomised controlled trial
+L31: Year: 2020 | Language: English | Type: journal article
+L32: Abstract: Methods: Registered nurses (n = 88) working in haemodialysis units were randomised to MBSR
+L33: (eight weekly 2.5-hour sessions of formal meditation practice with daily home practice) or usual
+L34: care. Burnout was assessed with the MBI-HSS at baseline and 8 weeks. Results: Emotional exhaustion
+L35: decreased more in the MBSR group (mean difference -4.1, 95% CI -6.9 to -1.3) [abstract truncated at
+L36: 500 characters]
+L37:
+L38: R19
+L39: Title: An online mindfulness programme for burnout in hospital staff: a randomised controlled trial
+L40: Year: 2022 | Language: English | Type: journal article
+L41: Abstract: Methods: Staff from clinical departments of a teaching hospital (nurses, physicians and allied
+L42: health professionals) were randomised to an 8-week online mindfulness programme (eight weekly live
+L43: sessions of guided formal meditation) or a waitlist. Burnout was measured with the Copenhagen Burnout
+L44: Inventory. Participants: of the 236 staff randomised, [abstract truncated at 500 characters]

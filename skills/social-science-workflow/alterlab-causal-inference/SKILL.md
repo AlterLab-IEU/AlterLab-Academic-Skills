@@ -2,7 +2,7 @@
 name: alterlab-causal-inference
 description: "Estimates causal effects from observational and quasi-experimental data — difference-in-differences, instrumental variables, regression discontinuity, panel fixed effects, propensity-score / doubly-robust methods, and heterogeneous treatment effects (CATE) — using the verified Python stack: statsmodels and linearmodels (PanelOLS, IV2SLS), pyfixest (feols, event studies, Sun-Abraham, did2s), DoWhy (identify -> estimate -> refute), EconML (LinearDML, CausalForestDML, DRLearner), and rdrobust for RD. It names the identifying assumption before estimating and runs a refutation/robustness check after. Use when the request mentions difference-in-differences, instrumental variables, regression discontinuity, fixed effects / panel causal estimation, propensity scores, or treatment-effect estimation from non-randomized data. For choosing the design first prefer alterlab-ssci-design-gate; for plain regression or descriptive stats prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Requires (declare in-session, no runtime install on Anthropic API): statsmodels, linearmodels>=6, pyfixest>=0.29 (saturated event study; current 0.60), dowhy>=0.12, econml>=0.15, rdrobust>=1.3 (pip). Runs locally via `uv run python`; no API key."
 metadata:
     skill-author: AlterLab
@@ -40,6 +40,10 @@ EVERY CAUSAL ESTIMATE INHERITS AN ASSUMPTION. STATE IT, ESTIMATE UNDER IT, THEN 
 | Plain OLS / descriptive or inferential stats (no causal identification) | `alterlab-statistical-analysis` / `alterlab-statsmodels` | No treatment-effect identification problem. |
 | Latent-variable / SEM / factor structure | `alterlab-sem-psychometrics` | Measurement model, not treatment effect. |
 | Auditing whether the final claim is licensed | `alterlab-ssci-inference-gate` | Claim audit, downstream. |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-ssci-design-gate`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+**Running the code.** In Claude Code, run analysis code in a throwaway environment instead of installing packages: `uv run --python ">=3.11" --with statsmodels --with "linearmodels>=6" --with pandas python analysis.py` (add `--with "pyfixest>=0.29"`, `--with "dowhy>=0.12"`, `--with "econml>=0.15"` or `--with "rdrobust>=1.3"` as the design needs). This needs no install approval and leaves the user's environment untouched. If `uv` or the network is unavailable, say so and hand over the script; never report results you did not compute.
 
 ## Estimator map (verified libraries, pinned)
 

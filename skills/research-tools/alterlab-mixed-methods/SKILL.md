@@ -2,7 +2,7 @@
 name: alterlab-mixed-methods
 description: "Mixed methods research design and integration strategies for combining qualitative and quantitative approaches. Use when planning convergent, explanatory sequential, exploratory sequential, embedded, transformative, or multiphase designs; when integrating diverse data sources through merging, connecting, or embedding; when constructing joint displays or meta-inferences; or when evaluating quality criteria specific to mixed methods research. Covers Creswell & Plano Clark frameworks, notation systems, and software tools for integration. For single-strand qualitative coding (thematic analysis, grounded theory, saturation, inter-coder reliability) use alterlab-qualitative-methods; for questionnaire/Likert/instrument-validation mechanics use alterlab-survey-design. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read WebFetch WebSearch Bash(python:*)
+allowed-tools: Read WebFetch WebSearch Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.
 metadata:
   skill-author: AlterLab
@@ -43,6 +43,8 @@ Use this skill when:
 | Questionnaire items, Likert scales, or instrument validation mechanics | `alterlab-survey-design` |
 | Test selection, assumption checks, or power analysis for the quantitative strand | `alterlab-statistical-analysis` |
 | Coordinating a whole stage-gated social-science study (design → inference gates) | `alterlab-ssci-orchestrator` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-qualitative-methods`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 

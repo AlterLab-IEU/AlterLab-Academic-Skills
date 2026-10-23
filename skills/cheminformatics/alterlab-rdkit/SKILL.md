@@ -16,7 +16,7 @@ metadata:
 
 RDKit is a comprehensive cheminformatics library providing Python APIs for molecular analysis and manipulation. This skill provides guidance for reading/writing molecular structures, calculating descriptors, fingerprinting, substructure searching, chemical reactions, 2D/3D coordinate generation, and molecular visualization. Use this skill for drug discovery, computational chemistry, and cheminformatics research tasks.
 
-**Version:** install with `uv pip install rdkit` (current release 2026.03.6 as of 2026-09; examples assume ≥ 2024.09). In 2026.03 the legacy fingerprint helpers (`AllChem.GetMorganFingerprintAsBitVect`, `rdkit.Chem.AtomPairs.Pairs.*`, `Torsions.*`) and `Atom.GetImplicitValence()` / `GetExplicitValence()` still run but log `DEPRECATION WARNING`s — use the `rdFingerprintGenerator` API and `atom.GetValence(Chem.ValenceType.IMPLICIT | EXPLICIT)` in new code.
+**Version:** run install-free with `uv run --python ">=3.11" --with rdkit python your_script.py` (uv's default Python here is 3.9, so pin the interpreter; a persistent `uv pip install rdkit` works too). Current release 2026.09.1 as of 2026-10; examples assume ≥ 2024.09. In 2026.03 the legacy fingerprint helpers (`AllChem.GetMorganFingerprintAsBitVect`, `rdkit.Chem.AtomPairs.Pairs.*`, `Torsions.*`) and `Atom.GetImplicitValence()` / `GetExplicitValence()` still run but log `DEPRECATION WARNING`s — use the `rdFingerprintGenerator` API and `atom.GetValence(Chem.ValenceType.IMPLICIT | EXPLICIT)` in new code.
 
 ## When to Use This Skill
 
@@ -31,6 +31,8 @@ Reach for this skill when you need fine-grained molecular control: custom saniti
 | Drug-likeness rule sets and PAINS / structural-alert triage of a library | `alterlab-medchem` |
 | Looking up a compound's structure, properties, or bioactivity by name or ID | `alterlab-pubchem` or `alterlab-chembl` |
 | Protein–ligand docking / binding-pose prediction | `alterlab-diffdock` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-datamol`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 

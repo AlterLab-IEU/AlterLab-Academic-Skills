@@ -45,8 +45,11 @@ class FileWrapperClient:
         self.api_key = api_key or os.getenv("USPTO_ODP_API_KEY") or os.getenv("USPTO_API_KEY")
         if not self.api_key:
             raise ValueError(
-                "ODP API key required: set USPTO_ODP_API_KEY (key from data.uspto.gov, "
-                "APIs -> Getting Started) or pass api_key=."
+                "The ODP file-wrapper endpoints need USPTO_ODP_API_KEY (data.uspto.gov, APIs -> "
+                "Getting Started) or api_key=. Keyless alternatives: the Google Patents page "
+                "(patents.google.com/patent/US<number><kind>/en, 'Legal events': USPTO status "
+                "events and recorded assignments with reel/frame) and uspto_public.py "
+                "search/doc (bibliographic data, claims) from Patent Public Search."
             )
         self.headers = {"X-API-KEY": self.api_key, "Accept": "application/json"}
         self.timeout = timeout

@@ -1,13 +1,14 @@
 ---
 name: alterlab-pdf-extract
-description: Free Elicit-columns analog — ingest N PDFs (or any MarkItDown-supported document) and build a per-paper evidence table with user-defined columns, one row per paper and one column per attribute/question you want pulled from every source. Use when extracting structured data across many papers into a comparison table or data-extraction sheet (sample size, methods, main finding, effect, population/intervention/outcome, limitations), screening a corpus into a spreadsheet, or pulling the same fields from a stack of PDFs into CSV/Markdown. Routes conversion through MarkItDown; offline heuristic backend by default, optional LLM backend for precise answers. Part of the AlterLab Academic Skills suite.
+description: Free Elicit-columns analog — ingest N PDFs (or any MarkItDown-supported document) and build a per-paper evidence table with user-defined columns, one row per paper and one column per attribute/question you want pulled from every source. Use when extracting structured data across many papers into a comparison table or data-extraction sheet (sample size, methods, main finding, effect, population/intervention/outcome, limitations), screening a corpus into a spreadsheet, or pulling the same fields from a stack of PDFs into CSV/Markdown. Keyless by default — MarkItDown conversion, an offline heuristic draft of every cell, then Claude reads each converted paper to confirm or fill the cells exactly; an LLM API batch backend is optional. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
-compatibility: markitdown >= 0.1 (uv pip install 'markitdown[all]') required for conversion; optional llm backend needs the openai client + OPENROUTER_API_KEY (or OPENAI_API_KEY with OPENAI_BASE_URL) and sends paper text to that endpoint
+compatibility: No API key required. MarkItDown >= 0.1 converts each document (run the script as uv run --with 'markitdown[all]' python ...), the offline heuristic backend drafts the cells, and Claude reads the saved Markdown (--markdown-dir) to finish them. Optional llm batch backend - the openai client (add --with openai) plus OPENROUTER_API_KEY or OPENAI_API_KEY with OPENAI_BASE_URL - sends paper text to that endpoint.
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.1.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: OPENROUTER_API_KEY or OPENAI_API_KEY (the --backend llm unattended batch mode, which sends paper text to that endpoint). Not needed for precise cells: by default Claude reads the converted Markdown itself"
 ---
 
 # PDF Extract — User-Defined Evidence Tables
@@ -45,28 +46,52 @@ prose — use it *after* you have the papers.
 | Structured experimental data for papers you do not have on disk | `alterlab-bgpt-search` |
 | Managing the PDFs and their references in a Zotero library | `alterlab-pyzotero` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-literature-review`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+## Default Workflow (no API key)
+
+The keyless path is the precise one: the script converts and drafts, and **you** read each paper.
+
+1. **Convert and draft.** Run the script with the default heuristic backend and `--markdown-dir`:
+   ```bash
+   SCRIPT=scripts/extract_to_table.py   # relative to this skill's directory
+   uv run --python ">=3.11" --with 'markitdown[all]' python "$SCRIPT" papers/*.pdf \
+       --column "Sample size:how many participants were enrolled" \
+       --column "Design:study design randomised cohort survey interview" \
+       --column "Main finding:primary result reported" \
+       --column "Limitations:study limitations weaknesses" \
+       --markdown-dir converted/ --format md -o draft_table.md
+   ```
+   uv resolves MarkItDown per call (no install step, no virtualenv). Each cell is the best keyword-matching sentence — a pointer, not an answer (it may be cut off, or empty when the paper uses other words).
+2. **Read every converted paper** (`converted/<stem>.md`, with Read). For each column, confirm or replace the draft cell with the exact value the paper states — the number enrolled *and* the number analysed when they differ, the effect estimate with its metric and CI, the design as the authors name it.
+3. **Mark silence explicitly.** When a paper does not report a column (e.g. no limitations section), write "not reported" — never infer or invent it.
+4. **Write the final table** (Markdown, or CSV for Excel) with Write: one row per paper, `Source` first, one column per attribute, and a short evidence quote or section name per cell when the user wants an audit trail. Spot-check a few numbers against the PDF pages (Read opens PDFs) when a conversion looks garbled.
+
+Checked on this skill's fixtures: the draft cell for Dlamini 2024 read "we enrolled 312 students on academic" (the sentence wraps), while the saved Markdown states "312 … 287 (92%) completed follow-up and were analysed" and "odds ratio 1.62, 95% CI 1.05 to 2.50" — the read step is what turns the draft into the right row.
+
 ## Quick Start
 
 ```bash
-SCRIPT=skills/research-tools/alterlab-pdf-extract/scripts/extract_to_table.py
+SCRIPT=scripts/extract_to_table.py   # relative to this skill's directory
+# Drop a --with flag only where that package is already importable by the Python that runs it.
 
 # Heuristic backend: use 'label:question' so the question carries the words the
 # papers actually use — overlap is lexical, so a bare label like "Sample size"
 # rarely matches "we enrolled 240 participants" (see Backends below).
-uv run python "$SCRIPT" papers/*.pdf \
+uv run --python ">=3.11" --with 'markitdown[all]' python "$SCRIPT" papers/*.pdf \
     --column "Sample size:how many participants were enrolled" \
     --column "Main finding:primary result reported" \
-    --column "Limitations:study limitations weaknesses" --format md
+    --column "Limitations:study limitations weaknesses" --format md --markdown-dir converted/
 
 # Columns with explicit extraction questions, CSV to a file:
-uv run python "$SCRIPT" a.pdf b.pdf \
+uv run --python ">=3.11" --with 'markitdown[all]' python "$SCRIPT" a.pdf b.pdf \
     --column "n:how many participants were enrolled" \
     --column "effect:what was the main reported effect size" \
     --format csv -o evidence.csv
 
-# Precise LLM-backed extraction (needs OPENROUTER_API_KEY) — label-only columns
-# are fine here, since the model reads the paper rather than matching keywords:
-uv run python "$SCRIPT" lit/*.pdf \
+# Optional unattended LLM batch extraction (OPENROUTER_API_KEY or OPENAI_API_KEY) —
+# label-only columns are fine here, since the model reads the paper:
+uv run --python ">=3.11" --with 'markitdown[all]' --with openai python "$SCRIPT" lit/*.pdf \
     --columns "Population" "Intervention" "Outcome" --backend llm
 ```
 
@@ -84,23 +109,28 @@ specs that need an explicit question. Both combine; duplicate labels are rejecte
 
 ## Backends
 
-- **heuristic** (default, offline, free): for each column, scores Markdown sentences by
+- **heuristic** (default, offline, keyless): for each column, scores Markdown sentences by
   **literal keyword overlap** with the column spec and emits the best evidence snippet.
-  Deterministic — good for a first pass, screening, and reproducible runs. Returns an empty
-  cell when no sentence shares a keyword.
+  Deterministic — good for a first pass, screening, and reproducible runs, and the draft you
+  finish by reading the papers (Default Workflow above). Returns an empty cell when no
+  sentence shares a keyword.
   **Gotcha:** matching is lexical, not semantic. A generic label like `"Sample size"`
   tokenizes to `sample`, `size` — which never appears in "we enrolled 240 participants", so
   the cell comes back empty. For the heuristic backend, phrase columns as `Label:question`
   where the question uses the **words the papers actually use** (`participants`, `enrolled`,
   `cohort`, `n=`). Quantitative questions also get a small ranking bonus for sentences
   containing digits when the question itself contains a digit or `%`. When you only have
-  generic labels, use the `llm` backend instead.
-- **llm** (optional, precise): sends the converted Markdown (first 24,000 characters) plus all
-  column questions to an OpenAI-compatible endpoint for a concise per-column answer (`N/A`
-  when the paper is silent). With `OPENROUTER_API_KEY` set, requests go to OpenRouter;
+  generic labels, rely on the read step (or, if the user wants an unattended batch and has a
+  key, the `llm` backend).
+- **llm** (optional, unattended batch): sends the converted Markdown (first 24,000 characters)
+  plus all column questions to an OpenAI-compatible endpoint for a concise per-column answer
+  (`N/A` when the paper is silent). Use it only when the user asks for it or the corpus is too
+  large to read in the conversation. Requested without a key, the script exits 2 before
+  converting anything and names the keyless alternative; it never falls back silently.
+  With `OPENROUTER_API_KEY` set, requests go to OpenRouter;
   otherwise `OPENAI_API_KEY` is sent to `OPENAI_BASE_URL` (or the OpenAI default) — each key
   only ever goes to its own endpoint. The model ID follows the **ALTERLAB_MODEL** convention
-  (`skills/core/shared/model_env.md`): `$ALTERLAB_MODEL`, else the dated default; override
+  (`shared/model_env.md`): `$ALTERLAB_MODEL`, else the dated default; override
   per-run with `--model` (on a non-OpenRouter endpoint, pass a model ID it serves). Spot-check
   LLM answers against the PDFs before they enter a review, since a confident wrong number
   looks the same as a right one in the table.
@@ -110,6 +140,7 @@ specs that need an explicit question. Both combine; duplicate labels are rejecte
 - `--format md` → GitHub-flavored Markdown table (pipes in cell text are escaped).
 - `--format csv` → CSV via `csv.DictWriter`.
 - `-o FILE` writes to disk (UTF-8); otherwise the table goes to stdout.
+- `--markdown-dir DIR` also writes each converted document as `DIR/<stem>.md` for the read step.
 
 The first column is always `Source` (the input filename); a file that fails conversion
 yields an `ERROR` row so the table stays aligned.
@@ -125,7 +156,7 @@ yields an `ERROR` row so the table stays aligned.
 ## Files
 
 - `scripts/extract_to_table.py` — the CLI. `--help` lists every flag; `--columns` /
-  `--column` define the table; `--backend`, `--format`, `--model`, `-o` control extraction
-  and output.
+  `--column` define the table; `--backend`, `--markdown-dir`, `--format`, `--model`, `-o`
+  control extraction and output.
 
 Part of the AlterLab Academic Skills suite.

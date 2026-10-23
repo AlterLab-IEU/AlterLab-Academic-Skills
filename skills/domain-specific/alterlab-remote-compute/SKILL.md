@@ -3,10 +3,11 @@ name: alterlab-remote-compute
 description: Dispatch long-running GPU/CPU jobs to remote compute with a provider-agnostic submit → poll → harvest pattern across SLURM/HPC (sbatch, squeue, sacct) and managed APIs (Modal, RunPod, GCP Batch / Vertex AI). Use when submitting a batch job to a cluster, polling job status, retrieving result artifacts from a scheduler or cloud GPU provider, or writing a portable job-submission wrapper; the foundation-model skills (alterlab-alphafold, alterlab-boltz, alterlab-rfdiffusion, and siblings) dispatch their GPU work through this pattern. For Modal-specific serverless container deployment and autoscaling prefer alterlab-modal instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Runs under `uv run python`; the portable dispatcher (`scripts/dispatch.py`) is stdlib-only. SLURM paths need `sbatch`/`squeue`/`sacct` on PATH (an HPC login node); managed backends need the provider CLI/SDK and account credentials read from environment variables (never hardcoded). No GPU is needed to submit/poll — only the remote job itself uses one."
+compatibility: "No API key required: the portable dispatcher (`scripts/dispatch.py`) is stdlib-only and its keyless `--backend local` runs your job script on this machine so you validate the payload and the submit->poll->harvest flow on CPU (reduced size) with no account. SLURM dispatch needs `sbatch`/`squeue`/`sacct` on an HPC login node (no key); managed cloud backends (RunPod, GCP) are optional and read their token from the environment, never hardcoded. No GPU is needed to submit/poll."
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
+    credentials: "optional: RUNPOD_API_KEY / REMOTE_COMPUTE_API_KEY (dispatch to a RunPod-style cloud GPU endpoint); GCP Application Default Credentials (GCP Batch / Vertex AI) — the local and SLURM backends use none"
+    version: "1.1.0"
     last_updated: "2026-09-23"
 ---
 
@@ -41,6 +42,34 @@ Use this skill when the user wants to:
 | Actually **fold a structure**, design a sequence, or run a specific model | the model's own skill (`alterlab-alphafold`, `alterlab-boltz`, `alterlab-proteinmpnn`, …) |
 | Local single-machine data analysis with no remote dispatch | the relevant analysis skill (`alterlab-scanpy`, `alterlab-rdkit`, …) |
 | Query a database over HTTP | the database connector skill (`alterlab-pdb`, `alterlab-uniprot`, …) |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-modal`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+## Keyless by default: validate locally before you dispatch
+
+Before sending a job to a cluster or a cloud GPU — which costs money and needs an account —
+run it on this machine to confirm the payload works. `scripts/dispatch.py` has a keyless
+**`local`** backend (`--backend local`; `--backend` is required on every call, there is no
+default) that executes your job script and records its status through the same
+submit → poll contract, so the dry run looks exactly like the real dispatch:
+
+```bash
+# Write a small, CPU-sized runner (reduced input) for the payload you will later scale up:
+cat > run_local.sh <<'SH'
+#!/bin/bash
+python3 run_model.py --in sample.fasta --out out/ --max-samples 2   # tiny, CPU
+SH
+
+# KEYLESS: runs here, no account, no token, no GPU.
+H=$(python scripts/dispatch.py submit --backend local --script run_local.sh)
+python scripts/dispatch.py poll --backend local --handle "$H"   # SUCCEEDED / FAILED
+cat .remote-compute-local/$H/stdout.log
+```
+
+Only once the logic is validated do you switch `--backend slurm` (an HPC login node) or
+`--backend rest` (a cloud GPU endpoint) for the full-size run. The cloud/`rest` backend
+refuses to run without a credential rather than silently using another backend. Keep the
+cost cautions below in mind on the first real dispatch.
 
 ## The submit → poll → harvest contract
 
@@ -112,9 +141,15 @@ comes from an env var. Command/SDK detail: `references/providers.md`.
 
 ### 5. Portable job wrapper
 
-`scripts/dispatch.py` is a stdlib-only CLI that runs the same job spec across backends:
+`scripts/dispatch.py` is a stdlib-only CLI that runs the same job spec across backends.
+Every call names its backend with `--backend local|slurm|rest` — it is required, so a
+cluster batch script is never run on the login node by accident; `local` is the keyless
+choice for validating a job on this machine first:
 
 ```bash
+# Keyless local validation (--backend local) — no account
+python scripts/dispatch.py submit --backend local --script run_local.sh
+
 # Submit a SLURM job and print the handle
 python scripts/dispatch.py submit --backend slurm --script run.slurm
 
@@ -126,8 +161,9 @@ python scripts/dispatch.py submit --backend rest \
   --endpoint "$RUNPOD_ENDPOINT" --payload spec.json
 ```
 
-It shells out to `sbatch`/`sacct` for SLURM and uses `urllib` for the REST backend — no
-third-party dependencies, so it runs anywhere Python does.
+It runs the script locally for the keyless `local` backend, shells out to `sbatch`/`sacct`
+for SLURM, and uses `urllib` for the REST backend — no third-party dependencies, so it runs
+anywhere Python does.
 
 ## Validation and status semantics
 
@@ -144,6 +180,7 @@ third-party dependencies, so it runs anywhere Python does.
 
 - `references/providers.md` — per-backend command/API detail (SLURM directives, RunPod
   endpoints, GCP Batch/Vertex, Modal cross-link) loaded on demand.
-- `scripts/dispatch.py` — stdlib-only `submit`/`poll`/`cancel` CLI for SLURM + generic REST.
+- `scripts/dispatch.py` — stdlib-only `submit`/`poll`/`cancel` CLI; keyless `local` backend
+  (`--backend local`) for on-machine validation, plus SLURM and generic REST (cloud) backends.
 
 Part of the AlterLab Academic Skills suite.

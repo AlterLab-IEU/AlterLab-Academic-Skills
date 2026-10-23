@@ -3,10 +3,11 @@ name: alterlab-lamindb
 description: Manage, annotate, and trace biological data with LaminDB, an open-source FAIR data framework that makes datasets queryable, versioned, and reproducible. Use when registering or querying biological datasets (scRNA-seq, spatial, flow cytometry), validating and curating data against ontologies (genes, cell types, diseases, tissues), tracking data lineage and computational workflows, building data lakehouses, or wiring integrations with Nextflow, Snakemake, W&B, or MLflow. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: "Runs under `uv run python` with `lamindb` installed (2.10.0 as of 2026-09, Python >= 3.10; `lamindb` is a meta-package over `lamindb-core[full]`). A local SQLite instance works offline after `lamin init`; `lamin login` and cloud/Postgres instances need a Lamin account and network access."
+compatibility: "No API key required: a local SQLite instance (`lamin init --storage ./db`) registers, annotates, validates against ontologies, and queries datasets with full lineage, entirely offline under `uv run python` with `lamindb` installed (2.10.0 as of 2026-09, Python >= 3.10; a meta-package over `lamindb-core[full]`). Shared cloud/Postgres instances (`lamin login`) and S3/MinIO/R2 storage backends are optional and use a Lamin account and cloud-storage keys."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    credentials: "optional: Lamin account via `lamin login` (shared cloud/Postgres instances for collaboration); AWS_SECRET_ACCESS_KEY and other S3/GCS/R2 keys (cloud-storage backends — a local SQLite instance on local storage needs none)"
+    version: "1.1.1"
     last_updated: "2026-09-23"
 ---
 
@@ -45,6 +46,8 @@ Use this skill when:
 | Pulling reference cells from the public CELLxGENE Census | `alterlab-cellxgene` |
 | A lab ELN/LIMS (Benchling) as the system of record | `alterlab-benchling` |
 | Depositing a finished dataset in a public repository with a DOI | `alterlab-open-science` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-scanpy`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 

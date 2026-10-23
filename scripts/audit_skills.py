@@ -109,6 +109,7 @@ KNOWN_METADATA_KEYS = {
     "skill-contributors",  # optional — external-contributor attribution
     "source_audit",      # optional — link-health audit provenance (generated)
     "compatibility",     # accepted nested alternative to the top-level field
+    "credentials",       # optional — keyless-first: credentials that only add something
 }
 
 

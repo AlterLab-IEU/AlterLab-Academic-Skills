@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless JASPAR REST API v1 (no authentication required); serves the JASPAR 2026 release (2,633 CORE profiles, verified 2026-09)
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.1.1"
+    last_updated: "2026-10-23"
 ---
 
 # JASPAR Database
@@ -51,10 +51,13 @@ Use JASPAR when:
 | Scenario | Use Instead |
 |----------|-------------|
 | Which traits a variant is associated with in published GWAS | `alterlab-gwas` |
+| Population allele frequency of a variant, or gene/region constraint (gnomAD) | `alterlab-gnomad` |
 | Whether a variant changes gene expression in a tissue (eQTL) | `alterlab-gtex` |
 | Fetching genomic sequence, coordinates, or VEP consequences | `alterlab-ensembl` |
 | Processing ChIP-seq/ATAC-seq coverage tracks and heatmaps | `alterlab-deeptools` |
 | Deep-learning prediction of expression/chromatin from sequence | `alterlab-borzoi` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-gwas`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 

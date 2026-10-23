@@ -27,17 +27,31 @@
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "open access" },
-        { "type": "behavior", "value": "Returns total works, open-access percentage, and top topics for the institution, resolving the institution to an ID first." }
+        { "type": "behavior", "value": "Returns total works, open-access percentage, and top topics for the institution, resolving the institution to an ID first." },
+        { "type": "output_contains", "value": ["I63966007", "042nb2s44"] }
       ]
     },
     {
       "id": "batch-doi-lookup",
+      "files": ["fixtures/reference_manager_dois.txt"],
       "prompt": "I have a list of about 40 DOIs from my reference manager. Look them all up in OpenAlex efficiently and give me their citation counts and OA status.",
-      "expected_output": "Triggers OpenAlex. Uses client.batch_lookup(entity_type='works', ids=doi_list, id_field='doi') to resolve the DOIs in a single batched OR-filter request (up to 100 per call) rather than 40 individual get_entity calls, returning cited_by_count and open_access.oa_status per work. Reflects the batch-over-loop best practice.",
+      "expected_output": "Triggers OpenAlex. Uses client.batch_lookup(entity_type='works', ids=doi_list, id_field='doi') to resolve the DOIs in a single batched OR-filter request (up to 100 per call) rather than 40 individual get_entity calls, returning cited_by_count and open_access.oa_status per work. Reflects the batch-over-loop best practice. If the shared keyless budget is spent (HTTP 429), batch_lookup itself falls back to free single-entity DOI lookups; the answer says so and still covers every DOI in fixtures/reference_manager_dois.txt.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "batch_lookup" },
-        { "type": "behavior", "value": "Uses batch_lookup for the DOI list instead of one request per DOI." }
+        { "type": "behavior", "value": "Uses batch_lookup for the DOI list instead of one request per DOI." },
+        { "type": "output_contains", "value": "diamond" },
+        { "type": "behavior", "value": "Resolves all 40 DOIs in fixtures/reference_manager_dois.txt (including the https://doi.org/ and doi: prefixed entries) and reports a citation count and OA status for each, e.g. 10.7717/peerj.4375 gold, 10.1038/s41586-021-03819-2 (AlphaFold) hybrid and 10.18637/jss.v067.i01 (lme4) diamond; an OA-status breakdown, if given, is about 11 closed, 9 green, 7 hybrid, 6 gold, 4 bronze, 3 diamond (OpenAlex, 2026-10-23)." }
+      ]
+    },
+    {
+      "id": "doi-lookup-keyless-budget",
+      "prompt": "Our campus network keeps getting HTTP 429 from OpenAlex and I don't have an API key. Can you still get me the OpenAlex record for DOI 10.7717/peerj.4375 and DOI 10.1038/s41586-021-03819-2 — title, year, citation count, and OA status?",
+      "expected_output": "Triggers OpenAlex keyless. Explains that the 429 means the shared $0.10/day keyless budget for the IP is spent (resets at midnight UTC) but that single-entity lookups such as /works/doi:10.7717/peerj.4375 cost nothing and still answer, so no key is needed. Returns, from those lookups: 'The state of OA: a large-scale analysis of the prevalence and impact of Open Access articles' (PeerJ, 2018, oa_status gold) and 'Highly accurate protein structure prediction with AlphaFold' (Nature, 2021), each with its current cited_by_count and open_access.oa_status, and mentions the optional free OPENALEX_API_KEY only as a way to get an own daily budget.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "gold" },
+        { "type": "behavior", "value": "Retrieves both DOIs through OpenAlex single-entity (free) lookups without demanding an API key, and reports title, year, citation count and OA status for each." }
       ]
     },
     {

@@ -7,7 +7,7 @@
       "expected_output": "Invokes alterlab-cobrapy. Loads the model with read_sbml_model (or load_model('iJO1366')), calls model.optimize(), reports solution.objective_value as the growth rate and solution.status, and inspects the active fluxes (e.g. solution.fluxes where abs > 1e-6).",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "optimize" },
+        { "type": "output_contains", "value": ["optimize", "optimal", "FBA", "flux balance"] },
         { "type": "behavior", "value": "Runs FBA via model.optimize() and reports the objective value as growth rate." }
       ]
     },

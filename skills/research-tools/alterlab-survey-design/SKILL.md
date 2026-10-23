@@ -2,7 +2,7 @@
 name: alterlab-survey-design
 description: "Comprehensive survey and instrument design assistant supporting questionnaire construction, Likert scale design, question types (open/closed/matrix), response bias mitigation, sampling strategies (probability/non-probability), pilot testing, instrument validation (Cronbach's alpha, factor analysis), online survey tools (Qualtrics, REDCap, Google Forms), interview protocol development, focus group facilitation, mixed-mode surveys, and cultural adaptation of instruments. Use when designing a survey or questionnaire, building Likert scales, planning a sampling strategy, pilot testing, validating an instrument (Cronbach's alpha, factor analysis), developing an interview protocol, improving response rates, or working in Qualtrics or REDCap. For analyzing interview/focus-group data use alterlab-qualitative-methods; for qual+quant integration alterlab-mixed-methods; for test selection/power analysis alterlab-statistical-analysis; for IRB/consent alterlab-research-ethics. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read WebFetch WebSearch Bash(python:*)
+allowed-tools: Read WebFetch WebSearch Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Guidance-focused skill; uses WebFetch/WebSearch and optional Python helpers via `uv run python`.
 metadata:
   skill-author: AlterLab
@@ -44,6 +44,8 @@ This skill should be used when:
 | CFA/SEM, measurement invariance, or IRT on the finished scale; a go/no-go check on whether a scale can be trusted | `alterlab-sem-psychometrics` / `alterlab-ssci-measurement-gate` |
 | Delphi panels, Q-methodology, or other specialized social-science designs | `alterlab-social-science-methods` |
 | Ethics/IRB applications, informed consent for survey research | `alterlab-research-ethics` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-survey-analysis`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 For combining the survey with a qualitative strand use `alterlab-mixed-methods`; for hypothesis-test selection and power analysis beyond the instrument itself use `alterlab-statistical-analysis`.
 

@@ -3,7 +3,7 @@ name: alterlab-dask
 description: Scales pandas/NumPy workflows beyond memory with Dask distributed computing — parallel DataFrames, arrays, delayed task graphs, and cluster execution. Use when existing pandas/NumPy code must run on larger-than-RAM data or across clusters, for parallel file processing, distributed ML, or integration with existing pandas code. For out-of-core analytics on a single machine prefer vaex; for in-memory speed prefer polars. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires dask >= 2025.1 (current 2026.8 as of 2026-09; install `dask[complete]` for DataFrames, arrays, and the distributed scheduler).
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "dask[complete]>=2025.1" python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires dask >= 2025.1 (current 2026.8 as of 2026-09; install `dask[complete]` for DataFrames, arrays, and the distributed scheduler).
 metadata:
     skill-author: AlterLab
     version: "1.0.1"
@@ -38,6 +38,8 @@ This skill should be used when:
 | Data fits in RAM and the goal is maximum single-machine DataFrame speed | `alterlab-polars` |
 | Billion-row out-of-core exploration and big-data plots on one machine, no cluster | `alterlab-vaex` |
 | Designing chunked, compressed Zarr stores and codecs (rather than computing on them) | `alterlab-zarr` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-polars`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ### Version notes
 
@@ -345,17 +347,20 @@ result = ddf.groupby('category').mean(numeric_only=True).compute()
 
 ### Large-Scale Array Computation
 ```python
+import dask
 import dask.array as da
 
 # Load or create large array
 x = da.from_zarr('large_dataset.zarr')
 
-# Process in chunks
-normalized = (x - x.mean()) / x.std()
+# Pass 1: global statistics in one read (float64 accumulators for float32 data)
+mean, std = dask.compute(x.mean(dtype='float64'), x.std(dtype='float64'))
 
-# Save result
+# Pass 2: elementwise, chunk by chunk; each output chunk needs only its own input chunk
+normalized = ((x - mean) / std).astype(x.dtype)
 da.to_zarr(normalized, 'normalized.zarr')
 ```
+For data larger than memory, do not write the lazy one-liner `(x - x.mean()) / x.std()`: every output chunk then waits on a full-array reduction, so the scheduler keeps the loaded input chunks in memory until it finishes (with dask 2026.8 a 128 MB Zarr array peaked at ~133 MB that way and ~7 MB in two passes).
 
 ### Custom Parallel Workflow
 ```python

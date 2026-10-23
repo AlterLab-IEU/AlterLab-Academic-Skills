@@ -5,7 +5,10 @@ Installation, basic graph creation, the `Data` structure, edge-index format, and
 ## Installation
 
 ```bash
-uv pip install torch_geometric
+# No install step: uv resolves torch + PyG per call. If `python -c "import torch_geometric"`
+# already works, run scripts with plain `python`; on a CPU-only machine add
+# --index https://download.pytorch.org/whl/cpu to avoid multi-GB CUDA wheels.
+uv run --python ">=3.12" --with torch --with torch_geometric python train_gnn.py
 ```
 
 PyG 2.8 (current 2.8.0.post1) needs Python >= 3.10; its release notes list PyTorch 2.9–2.12.
@@ -15,11 +18,13 @@ Optional compiled extensions — `pyg-lib` provides neighbor sampling (`Neighbor
 `torch-cluster` and `torch-spline-conv`, which are no longer used:
 ```bash
 # TORCH = your torch version (e.g. 2.12.0), CUDA = cpu | cu126 | cu128 | cu130 | cu132
-uv pip install pyg-lib -f https://data.pyg.org/whl/torch-${TORCH}+${CUDA}.html
+uv run --python ">=3.12" --with torch --with torch_geometric --with pyg-lib \
+    --find-links https://data.pyg.org/whl/torch-${TORCH}+${CUDA}.html python train_gnn.py
 
 # torch-scatter / torch-sparse are optional and only published for older torch builds
 # (up to 2.12 as of 2026-09):
-uv pip install torch-scatter torch-sparse -f https://data.pyg.org/whl/torch-${TORCH}+${CUDA}.html
+uv run --python ">=3.12" --with torch --with torch_geometric --with torch-scatter --with torch-sparse \
+    --find-links https://data.pyg.org/whl/torch-${TORCH}+${CUDA}.html python train_gnn.py
 ```
 Check what was picked up with `torch_geometric.typing.WITH_PYG_LIB` (and `WITH_TORCH_SPARSE`).
 

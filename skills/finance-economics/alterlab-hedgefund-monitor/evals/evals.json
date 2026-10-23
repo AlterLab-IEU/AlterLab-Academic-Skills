@@ -4,11 +4,11 @@
     {
       "id": "fpf-leverage-timeseries",
       "prompt": "For a systemic-risk paper I want the aggregate hedge-fund leverage ratio from SEC Form PF, as a time series since 2015. How do I get it from the OFR Hedge Fund Monitor?",
-      "expected_output": "Triggers the OFR Hedge Fund Monitor skill. Hits https://data.financialresearch.gov/hf/v1 and uses /series/timeseries with start_date=2015-01-01. Knows there is no single FPF-ALLQHF_LEVERAGERATIO_* series: aggregate leverage is published per gross-asset cohort, so it uses FPF-ALLQHF_GAVN10_LEVERAGERATIO_AVERAGE (10 largest funds) plus GAVN11TO50 / GAVN51, or a strategy-level *_LEVERAGERATIO_GAVWMEAN series. Notes no API key is required and FPF is quarterly Form PF data.",
+      "expected_output": "Triggers the OFR Hedge Fund Monitor skill. Hits https://data.financialresearch.gov/hf/v1 and uses /series/timeseries (or /series/multifull, which returns the same aggregation series plus metadata for several mnemonics) with start_date=2015-01-01. Knows there is no single FPF-ALLQHF_LEVERAGERATIO_* series: aggregate leverage is published per gross-asset cohort, so it uses FPF-ALLQHF_GAVN10_LEVERAGERATIO_AVERAGE (10 largest funds) plus GAVN11TO50 / GAVN51, or a strategy-level *_LEVERAGERATIO_GAVWMEAN series. Notes no API key is required and FPF is quarterly Form PF data.",
       "assertions": [
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "LEVERAGERATIO"},
-        {"type": "behavior", "value": "Uses /series/timeseries with a real FPF leverage mnemonic (a GAVN* cohort AVERAGE or a strategy GAVWMEAN/NAVWMEAN), not the non-existent FPF-ALLQHF_LEVERAGERATIO_GAVWMEAN; notes Form PF is the source and no API key is needed."}
+        {"type": "behavior", "value": "Uses /series/timeseries (or /series/multifull) with a real FPF leverage mnemonic (a GAVN* cohort AVERAGE or a strategy GAVWMEAN/NAVWMEAN), not the non-existent FPF-ALLQHF_LEVERAGERATIO_GAVWMEAN; notes Form PF is the source and no API key is needed."}
       ]
     },
     {

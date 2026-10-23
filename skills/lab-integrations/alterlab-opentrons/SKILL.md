@@ -37,6 +37,8 @@ This skill should be used when:
 | Protein expression/binding assays run by Adaptyv Bio's foundry | `alterlab-adaptyv` |
 | Publishing the written wet-lab protocol with a DOI | `alterlab-protocolsio` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pylabrobot`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Core Capabilities
 
 ### 1. Protocol Structure and Metadata
@@ -384,6 +386,7 @@ Full worked-example protocols for each pattern: see `references/protocol_pattern
 8. **Track liquids**: Use liquid tracking for better setup validation
 9. **Optimize tip usage**: Use `new_tip='once'` when appropriate to save tips
 10. **Control flow rates**: Adjust flow rates for viscous or volatile liquids
+11. **Show the protocol in your reply**: Include the complete protocol you write as a Python code block in the answer itself (`from opentrons import protocol_api`, the `requirements`/`metadata`, `run(protocol)`, the thermocycler `execute_profile`, etc.), not only as a saved `.py` file — the user and reviewers read the answer, and a file left in the workspace is not visible to them.
 
 ## Troubleshooting
 

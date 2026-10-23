@@ -1,0 +1,20 @@
+# SYNTHETIC FIXTURE — created for benchmarking; not real data or real persons.
+student_id,section,exam_score
+S101,section_1,68
+S102,section_1,72
+S103,section_1,75
+S104,section_1,70
+S105,section_1,74
+S106,section_1,71
+S201,section_2,78
+S202,section_2,81
+S203,section_2,76
+S204,section_2,83
+S205,section_2,79
+S206,section_2,80
+S301,section_3,73
+S302,section_3,70
+S303,section_3,76
+S304,section_3,72
+S305,section_3,75
+S306,section_3,74

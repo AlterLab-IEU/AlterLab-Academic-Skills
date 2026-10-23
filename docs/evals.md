@@ -33,6 +33,16 @@ the `claude` CLI and LLM-grades each `expected_output`.
 - **`evals`** (required, ≥1) — the array of cases.
 - Per eval: **`id`**, **`prompt`**, **`expected_output`** are required; **`files`** and
   **`assertions`** are optional but `assertions` is effectively mandatory (see below).
+- **`files`** — the input the prompt refers to. A path may name a file or a whole directory
+  (copied as a tree, e.g. a small repository checkout), relative to the eval file's directory.
+  A prompt that says "here is my draft" must ship the draft: without it a correct answer can
+  only ask for it.
+- **`requires`** — optional preconditions the case cannot be judged without: `env:NAME` (an
+  environment variable such as an API key), `cmd:NAME` (an executable, e.g. `cmd:Rscript`),
+  `net:HOST` (a host the runner must reach), `mcp:NAME` (an MCP server — never available,
+  since answer arms run with `--strict-mcp-config`). A case whose requirement is unmet is
+  `NOT_RUN` with reason "not runnable here", never `FAIL`, and the summary counts it under
+  `not_runnable_here`.
 
 ### Assertion types
 
@@ -40,7 +50,7 @@ the `claude` CLI and LLM-grades each `expected_output`.
 |--------|---------|---------|
 | `should_trigger` | `true` | This skill **should** activate on the prompt. |
 | `should_not_trigger` | `true` | This skill should **not** activate (near-miss / another skill's job). |
-| `output_contains` | string | The response must contain this substring/phrase (case-insensitive by convention). |
+| `output_contains` | string, or list of strings | The response must contain this substring (case-insensitive). A list passes when any one entry occurs — use it when a correct answer may be written in Turkish or English (`["Art. 28", "m. 28", "madde 28"]`). |
 | `behavior` | string | A free-text rubric clause the behavioral LLM judge grades. |
 
 Every eval carries **exactly one** `should_trigger` *or* `should_not_trigger` assertion
@@ -92,34 +102,176 @@ s=json.load(open('docs/evals.schema.json')); \
 V(s).validate(json.load(open(sys.argv[1])))" \
   skills/core/alterlab-deep-research/evals/evals.json
 
-# Behavioral grading (slow; needs the claude CLI). Uses the model from ALTERLAB_MODEL —
-# see skills/core/shared/model_env.md.
-uv run python scripts/run_evals.py --behavioral
+# Behavioral grading (slow; live model calls through the claude CLI's login). Uses the model
+# from ALTERLAB_MODEL — see skills/core/shared/model_env.md. Grade one skill at a time:
+uv run python scripts/run_evals.py --behavioral --skill alterlab-docentlik-eligibility
+# Re-test only the cases whose eval changed (the skill itself unchanged); repeatable:
+uv run python scripts/run_evals.py --behavioral --skill alterlab-trdizin --case audit-venue-list-before-dossier
 ```
+
+`--case` is for re-testing a fixed eval, not for picking favourable cases: when a skill's
+`SKILL.md` or bundled files change, every case of that skill needs a fresh run, because the
+skilled arm reads them in all of them.
+
+### Three separate things this harness measures
+
+| Mode | What it shows | What it does **not** show |
+|------|---------------|---------------------------|
+| default / `--strict` (static) | every skill ships a schema-valid `evals.json` with ≥3 trigger and ≥1 near-miss cases | that any skill behaves correctly — no model is called |
+| `--behavioral` (live) | per case, whether the skilled answer met its assertions and LLM-judged rubric, and how the bare model did on the same rubric | research correctness beyond what the rubric checks; the judge is the same model family |
+| `--activation` (live) | whether the model picks the right skill from its description among same-domain distractors | that the picked skill then does the task well |
+
+Keep the three apart when reporting: "242 skills have evals" is a statement about the static
+check only.
+
+### Isolation
+
+Each behavioral case runs both arms from fresh temporary directories, never from this
+repository, with `--safe-mode --disable-slash-commands --strict-mcp-config
+--no-session-persistence`: no CLAUDE.md, installed plugins, skills, hooks, or MCP servers. The
+**skilled arm** gets the SKILL.md through `--append-system-prompt`, the skill's own files in
+`./skill/` (its `evals/` folder is never copied, so expected outputs stay hidden), the domain's
+`shared/` resources in `./shared/`, and the task fixtures in `./fixtures/`. The **bare arm**
+gets only `./fixtures/`. The judges run in their own empty directories. Both arms' answer calls are granted the
+skill's `allowed-tools` frontmatter (`--allowedTools`), the set Claude Code pre-approves when
+the skill is active; the bare arm gets the same set so the comparison isolates the skill's
+instructions, and the judges get no tools. Without this, a skill that must run its script or
+query a live service fails by construction and a correct refusal to answer from memory is
+scored FAIL. Auth is the CLI's normal
+login, so the harness runs inside an authenticated Claude Code environment with no API key.
+(`--bare` would be stricter, but it ignores OAuth logins and requires `ANTHROPIC_API_KEY`.)
+
+**A temporary directory is not a sandbox.** On 2026-10-15 the bare arm of a link-health case
+("close out the remaining residual broken links"), holding that skill's `Write Edit Bash`
+grants, found this checkout on disk and edited 29 files in it. Answer arms are now kept away
+from the repository in three layers:
+
+1. **Namespace** (`--isolation auto`, the default; `namespace` makes it mandatory). On Linux
+   each CLI call runs in a private mount namespace (`unshare -m`, or `unshare -r -m` without
+   root) in which this checkout and every worktree of it are covered by an empty read-only
+   tmpfs. The arm sees an empty directory, and a write there fails with "Read-only file system".
+   The arm also gets a **private temp root** that holds only its own workspace, fresh
+   `/var/tmp` and `/dev/shm`, and empty installed-plugin, skill and session-transcript folders
+   (`~/.claude/{plugins,skills,projects,todos}` for every home, and `/mnt/skills`). Arms that
+   could not find their input searched the whole disk; before this layer one bare arm reported
+   "a sibling folder (`../skilled/skill/`) containing a literature-review skill", the very skill
+   it was the baseline for, and others listed other sessions' scratch files.
+2. **Scoped grants.** A bare `Write`, `Edit`, `MultiEdit` or `NotebookEdit` grant becomes an
+   absolute rule for the arm's workspace (`Write(//tmp/alterlab-eval-…/**)`). Environment
+   variables that point into the checkout are dropped, and PATH loses those entries.
+3. **Tripwire.** The checkout is fingerprinted (HEAD, tracked diff, untracked files) before
+   the run and after every case. Any change aborts the run as `blocked` with
+   `isolation breach: …`, lists the changed paths, and reverts nothing.
+
+Checked live: a real arm granted bare `Write` and `Bash`, told to write into the checkout,
+was denied by the Write tool and got "Read-only file system" from the shell. Without the
+namespace (macOS, or a runner that forbids user namespaces) shell grants such as `Bash`,
+`Bash(python:*)` or `Bash(uv run:*)` can still write anywhere. The tripwire then catches
+changes to the checkout but nothing else, so run behavioral evals in a disposable checkout or
+container. The run record's `isolation.confinement` says which mode was in effect.
 
 ### Reading a `--behavioral` run
 
-The summary line reports **passed / failed / inconclusive / env-refused** — not just
-"failed". Only `FAIL` makes the run exit non-zero; `NA`/refused do not (an environment
-refusal is not a skill defect). But they are counted so a run that graded *nothing* can
-never read as success — if every prompt is refused or times out you get a loud
-`WARNING: ... verifies NOTHING`.
+Every case ends in exactly one outcome, printed with its reason:
 
-**`env-refused`** means the **runner environment** declined the prompt before the skill ran.
-The `claude` *Claude Code CLI* applies a conservative dual-use usage-policy classifier that
-the raw API does not, so benign **biomedical / clinical / genomics** prompts (PubMed
-E-utilities, variant calling, clinical-statistics test selection) are frequently refused.
-Those domains therefore **cannot be self-graded on the local CLI** — run them through the
-API behavioral lane (`workflow_dispatch` with `ANTHROPIC_API_KEY`) instead. General,
-administrative, methodology, writing, and Turkish-academia skills grade fine locally.
+| Outcome | Meaning |
+|---------|---------|
+| `PASS` / `FAIL` | the usable verdicts: assertions and rubric majority agree on PASS, or any FAIL |
+| `INCONCLUSIVE` | the model answered, but the judges settled no verdict (tie, or an unparseable judge reply — which is never scored as a silent FAIL) |
+| `REFUSED` | the runner environment's usage-policy classifier refused the prompt |
+| `INFRA_ERROR` | the CLI failed, timed out, could not authenticate, a judge call failed, or a fixture file was missing (the case is never run without its input) |
+| `NOT_RUN` | the run aborted after `--max-infra-errors` (default 6) consecutive infrastructure errors |
+
+The summary reports **selected, attempted, answered, and usable verdicts**, the coverage
+(usable ÷ selected), both arms' outcome counts, the rubric delta, CLI calls, wall-clock time,
+and the cost the CLI reports. Exit codes:
+
+| Exit | Status | Meaning |
+|------|--------|---------|
+| `0` | `passed` | **every** selected case produced a verdict and passed |
+| `1` | `failed` | at least one case failed |
+| `2` | `blocked` | no case produced a usable verdict (no CLI, no login, every call refused or timed out, or the filter matched nothing). The run verified nothing |
+| `3` | `partial` | some cases produced verdicts and none failed, but others did not — the selection is **not** fully evaluated |
+
+### Collect-only runs and other endpoints
+
+`--collect-only` runs the answer arms, saves every response in full, and calls no judge; it
+exits `0` when every arm answered. Grade the saved answers later with `--regrade` and a
+judge that passed `--calibrate-judge`. This is meant for defect sweeps: whether a prompt is
+missing its input, a tool was denied, or a script crashed does not depend on a judge.
+
+The run record's `endpoint` says who answered: `claude-cli-login`, or `base-url:<host>` when
+`ANTHROPIC_BASE_URL` points the CLI at another server (for example a local model behind
+llama-swap). Results from another endpoint describe that model, not Claude — keep them in a
+separate results directory and never mix them into Claude numbers.
+
+### Two rubric judges, and checking them
+
+Many rubrics name the skill's own vocabulary ("invokes alterlab-…", "applies the Iron Law").
+The default **literal** judge grades the rubric as written, so a correct answer that never uses
+those words can FAIL. The **substance** judge (`--judge substance`) grades what the response
+does: the decision, the numbers, the refusal or the request for missing input, the named
+sibling skill when the rubric asks for a hand-off. It ignores whether the skill's vocabulary
+appears. It still fails a wrong answer that recites the vocabulary.
+
+Before trusting either judge, run it on the hand-labelled pairs in
+[`judge_calibration.json`](judge_calibration.json). This costs judge calls only and exits `1`
+if any label is missed:
+
+```bash
+uv run python scripts/run_evals.py --calibrate-judge
+```
+
+On 2026-10-15 (`claude-opus-5-5`): literal 7/8, substance 8/8. The literal judge failed a
+correct answer that asked for the missing abstract instead of inventing one.
+
+Every run record keeps the full response text, so a finished run can be re-judged without new
+answer calls. `--regrade` writes `regrade-*.json` with every flipped verdict and the original
+verdict next to it:
+
+```bash
+uv run python scripts/run_evals.py --regrade eval-results/behavioral-<UTC>.json --judge substance
+```
+
+Report which judge produced a number.
+
+Only exit `0` may be described as "the selected cases pass", and only for the selected cases.
+A sharded or filtered run validates its shard, not the suite.
+
+Every run writes a JSON results file to `eval-results/` (git-ignored; `--results-dir` to change,
+`--results-dir ''` to skip) with the model id, `claude` CLI version, repo commit and dirty flag,
+isolation flags, and per case: the case ID, skill version, fixtures, each run's outcome, error
+(redacted — token-shaped strings are stripped), assertion and rubric verdicts, response
+excerpt, duration, reported cost, and the bare arm's results. Failure diagnostics name the
+likely cause (authentication, rate limit, timeout, missing CLI) without echoing credentials.
+
+**`REFUSED`** cases: the `claude` *Claude Code CLI* applies a conservative dual-use
+usage-policy classifier that the raw API does not, so benign **biomedical / clinical /
+genomics** prompts (PubMed E-utilities, variant calling, clinical-statistics test selection)
+are sometimes refused. Those cases are reported as refused, never graded; they make a run
+`partial` or `blocked`.
 
 The per-eval **`rubric:` delta** (`SKILL HELPED` / `HURT` / `NO DELTA`) compares the two
 arms on the *overall rubric only* — the bare arm carries no `should_trigger` assertions — so
 it is labelled `rubric:` and never contradicts an assertion-driven `FAIL` verdict.
 
+### Harness self-check (`benchmarks/harness-canary/`)
+
+A test-only canary proves the live path end to end: one case passes only if the skill's
+bundled reference file reached the skilled arm, the other is designed to fail. Its expected
+result is `1 PASS, 1 FAIL`, exit `1`:
+
+```bash
+uv run python scripts/run_evals.py --behavioral --skill-dir benchmarks/harness-canary --runs 1
+```
+
+The fault paths (all-inconclusive, infrastructure failure, refusal, missing fixture, partial
+runs, redaction, isolation) are covered without a model by `tests/test_behavioral_runner.py`,
+which drives the real subprocess path against a fake `claude` executable.
+
 ### Activation harness (`--activation`)
 
-The `description` is the trigger surface, so the metric that matters for a 210-skill suite is
+The `description` is the trigger surface, so the metric that matters for a 242-skill suite is
 *auto-selection rate*: given a realistic request, does the model pick the **right** skill from
 its description when the true skill sits among plausible same-domain distractors? That is both
 the activation rate (Anthropic's bar: **90%+**) and, via wrong picks, the **cross-fire rate**.
@@ -137,16 +289,48 @@ job), not per-PR. Pair it with `scripts/confusion_matrix.py`, which statically r
 sibling pairs most at risk of cross-firing (no CLI needed) — sharpen the descriptions of the
 top-overlap pairs, then re-run `--activation` to measure the before/after.
 
-### Nightly rotating behavioral shard (`--shard i/n`)
+### Where behavioral grading runs (manual only)
 
-Grading all 210 skills behaviorally every night would be slow and costly, so the scheduled
-**behavioral-nightly** CI job grades a deterministic **1/7 shard** (`--shard $((day%7))/7`).
-Over a week the whole corpus is judged by the LLM rubric, which lets the eval claim a real
-behavioral pass-rate *over time* rather than only "coverage exists". Run a shard locally with:
+Behavioral grading is **manual** — there is no scheduled CI run. A full pass makes roughly
+12–15 model calls per eval (3 skilled + 3 bare runs, each LLM-judged), so it is run
+deliberately, not nightly. Two ways to run it:
+
+- **Locally in Claude Code** (the usual way): the `claude` CLI uses your Claude Code login, so
+  no API key is needed. Grade one skill, or split the corpus into deterministic parts:
+
+  ```bash
+  uv run python scripts/run_evals.py --behavioral --skill alterlab-docentlik-eligibility
+  uv run python scripts/run_evals.py --behavioral --shard 3/7 --runs 1   # cheaper partial pass
+  ```
+
+- **In CI** via `workflow_dispatch` (the **behavioral** and **activation** jobs). These need
+  the `ANTHROPIC_API_KEY` repo secret and stop at once with an error if it is not set.
+
+## The five-task benchmark (`scripts/run_benchmark.py`)
+
+Eval files say what a skill should do; the benchmark measures whether it does better than the
+bare model on realistic, deliberately tricky inputs. Each task in `benchmarks/<task>/task.json`
+names an existing skill and holds a standard case, a difficult-negative case (things that look
+wrong but are right, and the reverse), and an incomplete-input case (where the right answer is
+"cannot be determined"). Every item has an expected label or number and an evidence anchor
+(fixture line numbers plus the source that makes it right).
+
+Both arms answer the same prompt in isolated workspaces with the same allowed tools; the
+skilled arm also gets the skill. The model must end with a JSON block of per-item labels, and
+the harness scores it deterministically — no LLM judge. Per arm it reports correct items,
+**false approvals** (a problem passed as fine), **false accusations** (a fine item flagged),
+correct and unnecessary abstentions, overconfident answers on incomplete input, missing items,
+completion, time, turns, CLI-reported cost, and tool-permission denials.
 
 ```bash
-uv run python scripts/run_evals.py --behavioral --shard 3/7
+uv run python scripts/run_benchmark.py --dry-run          # validate tasks, print prompts
+uv run python scripts/run_benchmark.py --runs 2           # all tasks, live
+uv run python scripts/run_benchmark.py --task docentlik   # one task
 ```
+
+Results go to `eval-results/benchmark-<UTC>.json`; the latest reported run is summarised in
+[`benchmark-results.md`](benchmark-results.md). `tests/test_benchmark.py` validates every task
+file and unit-tests the scorer on hand-written answers; it never produces benchmark numbers.
 
 ## Worked example
 

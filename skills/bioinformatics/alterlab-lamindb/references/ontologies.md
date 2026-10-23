@@ -28,10 +28,12 @@ LaminDB provides access to multiple curated ontology sources:
 
 ## Installation and Import
 
-```python
+```bash
 # Install bionty (included with lamindb)
 pip install lamindb
+```
 
+```python
 # Import
 import lamindb as ln
 import bionty as bt

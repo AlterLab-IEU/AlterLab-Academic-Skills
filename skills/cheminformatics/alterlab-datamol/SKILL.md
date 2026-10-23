@@ -45,13 +45,18 @@ Use this skill when the user wants to:
 | Drug-likeness rule sets, PAINS / structural-alert and complexity filtering | `alterlab-medchem` |
 | Downloading curated ADMET/DTI benchmark datasets with scaffold or cold splits | `alterlab-pytdc` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-rdkit`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Installation and Setup
 
-Guide users to install datamol:
+No install step — run install-free with uv, pinning the interpreter (uv's default
+Python here is 3.9, but datamol needs ≥ 3.11):
 
 ```bash
-uv pip install datamol
+uv run --python ">=3.11" --with "datamol>=0.13" python your_script.py   # pulls in RDKit
 ```
+
+(A persistent `uv pip install 'datamol>=0.13'` works too.)
 
 Examples here are verified against **datamol 0.13.0** (current as of 2026-09; requires Python ≥ 3.11 and pulls in RDKit). 0.13 fixed the misspelled heterocycle descriptors: the `compute_many_descriptors` keys are now `n_aromatic_heterocycles` / `n_aliphatic_heterocycles` / `n_saturated_heterocycles` (formerly `..._heterocyles`; the old function names survive only as deprecated aliases). Pin `'datamol>=0.13'` if you depend on those keys.
 

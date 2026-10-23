@@ -30,6 +30,8 @@ This skill should be used when working with gene data including searching by gen
 | Pathway membership / enrichment for a gene list | `alterlab-reactome` |
 | Quick one-off gene lookups from a CLI across databases | `alterlab-gget` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-ensembl`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Quick Start
 
 NCBI provides two main APIs for gene data access:
@@ -83,7 +85,12 @@ For multiple genes simultaneously:
 1. Use `scripts/batch_gene_lookup.py` for efficient batch processing
 2. Provide a list of gene symbols or IDs
 3. Specify the organism for symbol-based queries
-4. The script handles rate limiting automatically (10 requests/second with API key)
+4. The script handles rate limiting automatically (10 requests/second with API key) and
+   retries HTTP 429/5xx
+5. Each symbol is matched as the official symbol (`[pref]`) first, then as an alias or
+   previous symbol (`[gene]`); the `matched_by` field says which. Report renamed genes
+   (MRE11A → MRE11, FAM175A → ABRAXAS1). A bare `[gene]` search can return the wrong
+   gene: `POLQ[gene]` ranks POLK (alias "POLQ") above POLQ (Gene ID 10721)
 
 This workflow is useful for:
 - Validating gene lists

@@ -2,7 +2,7 @@
 name: alterlab-social-science-methods
 description: "Guides advanced social science research methods — discourse analysis (Fairclough CDA, Gee), conversation analysis, quantitative content analysis, Qualitative Comparative Analysis (QCA), process tracing, archival research, participatory/community-based research (PAR, CBPR), Delphi and Q methodology, social network analysis (SNA), bibliometrics and scientometrics, systematic mapping reviews, and program/policy evaluation. Use when designing or conducting any of these studies — choosing a specialized method, building a coding scheme, establishing causal mechanisms in case studies, mapping relational or subjective data, or applying an evaluation framework. For interpretive coding (thematic analysis, grounded theory, IPA, ethnography) use alterlab-qualitative-methods; for qual+quant integration use alterlab-mixed-methods; to run QCA, SNA, or text-as-data analyses on data use alterlab-qca, alterlab-sna, or alterlab-text-as-data. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Guidance-focused skill; optional Python helpers run via `uv run python`.
 metadata:
   skill-author: AlterLab
@@ -49,8 +49,11 @@ data are in hand, hand execution to the matching analysis module.
 | Calibrating conditions and running truth-table minimization on case data (R `QCA`) | `alterlab-qca` |
 | Computing centralities, communities, or ERGMs on a relational dataset | `alterlab-sna` |
 | Topic models, dictionaries, or supervised classifiers as text measurement | `alterlab-text-as-data` |
-| Thematic/grounded-theory coding or computing intercoder reliability on coded data | `alterlab-qualitative-analysis` |
+| Thematic/grounded-theory coding of qualitative data, or computing alpha/kappa on a reliability sample the user has already double-coded and shares (designing a content-analysis coding scheme and its reliability pilot stays here) | `alterlab-qualitative-analysis` |
+| A PRISMA 2020 systematic review with meta-analysis — search, screening, effect sizes, risk of bias, GRADE (pooling effect sizes that are already extracted goes to `alterlab-meta-analysis`) | `alterlab-deep-research` |
 | Coordinating a whole study through the stage-gated design → inference pipeline | `alterlab-ssci-orchestrator` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-qca`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Method Families at a Glance
 
@@ -58,7 +61,7 @@ data are in hand, hand execution to the matching analysis module.
 
 - **Discourse analysis** examines how language constructs social reality. Two dominant traditions: **Fairclough's Critical Discourse Analysis (CDA)**, a three-dimensional framework linking text, discursive practice, and social practice; and **Gee's discourse analysis**, organized around seven building tasks of language. Both assume a constructionist epistemology.
 - **Conversation analysis (CA)** studies the sequential organization of naturally occurring talk-in-interaction (turn-taking, preference organization, repair). It is empirical and data-driven, using fine-grained Jefferson-system transcription.
-- **Quantitative content analysis** systematically codes textual/visual/audio content into categories and analyzes them statistically, prioritizing reliability (intercoder agreement) and generalizability over interpretive depth.
+- **Quantitative content analysis** systematically codes textual/visual/audio content into categories and analyzes them statistically, prioritizing reliability (intercoder agreement) and generalizability over interpretive depth. "Is my coding scheme reliable before I code everything?" is answered here: define the unit of analysis, write exhaustive and mutually exclusive categories with decision rules, train coders on material outside the sample, then have them code a random pilot subsample independently (10-20%, at least ~50 units) and compute a chance-corrected statistic per variable — Krippendorff's alpha or Cohen's kappa (>= .80 reliable, .667-.80 tentative) — never bare percent agreement. Revise and retest on fresh units until every variable passes, and only then code the full sample.
 
 Full procedures, the CDA and CA worked examples, Gee's seven tasks, the Jefferson transcription table, and the intercoder-reliability metrics table are in `references/discourse-and-conversation-analysis.md`. The CDA analytical checklist and a discourse-framework selection guide are in `references/social-science-frameworks.md`.
 

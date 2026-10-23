@@ -1,20 +1,41 @@
 ---
 name: alterlab-protocolsio
-description: Works with protocols.io through its REST API (v3 and v4 endpoints) and official MCP server — search and retrieve protocols by keyword, URI, or DOI; create private protocols, edit their metadata and steps, and publish them with a DOI; manage protocol and step discussions, workspaces, file-manager items, file uploads, experiment records, and organization exports. Use when discovering, drafting, publishing, or citing protocols.io protocols, recording protocol runs, or wiring protocols.io into lab documentation. Not for general ELN notebooks (use alterlab-benchling or alterlab-labarchive) or for driving liquid-handling robots. Part of the AlterLab Academic Skills suite.
+description: Discovers, reads, drafts and cites protocols.io protocols with no account — finds public protocols and their DOIs through Crossref (prefix 10.17504), reads a public protocol's full steps and materials from its public web page/PDF via WebFetch, and drafts new protocols in protocols.io's step/materials/GUID format offline. Searching your private content, creating, editing or publishing protocols with a DOI, run records, comments, uploads and workspaces run through the REST API (v3/v4) or official MCP server with your own token. Use when discovering, reading, drafting, publishing, or citing protocols.io protocols, recording protocol runs, or wiring protocols.io into lab documentation. Not for general ELN notebooks (use alterlab-benchling or alterlab-labarchive) or for driving liquid-handling robots. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(curl:*) Bash(python:*)
-compatibility: Requires a protocols.io access token — a CLIENT_ACCESS_TOKEN from https://www.protocols.io/developers (your own plus public content) or an OAUTH_ACCESS_TOKEN from the OAuth 2.0 flow (another user's content, with their consent). The official remote MCP server at https://www.protocols.io/mcp accepts the same tokens.
+allowed-tools: Read Write Edit WebFetch Bash(curl:*) Bash(python:*)
+compatibility: "No API key required to find public protocols (Crossref prefix 10.17504), read a public protocol's full steps/materials from its web page or /view/<uri>.pdf, and draft protocols in protocols.io format. Optional: a CLIENT_ACCESS_TOKEN (protocols.io/developers) or OAUTH_ACCESS_TOKEN, or the official MCP server, to reach the REST API for private content, creating/editing, publishing a DOI, uploads, run records and workspaces."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.2.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: CLIENT_ACCESS_TOKEN (from protocols.io/developers — adds your own private content and all write/publish operations over the REST API), OAUTH_ACCESS_TOKEN (OAuth 2.0 authorization-code flow — the same for another user's content with their consent), PROTOCOLS_IO_TOKEN (the env var the bundled examples read, holding whichever of the two you use)"
 ---
 
 # Protocols.io Integration
 
 ## Overview
 
-protocols.io hosts versioned, citable scientific protocols (each published version gets a DOI under `10.17504/protocols.io.*`), plus team workspaces, experiment run records, and a file manager. It offers two programmatic routes:
+protocols.io hosts versioned, citable scientific protocols (each published version gets a DOI under `10.17504/protocols.io.*`), plus team workspaces, experiment run records, and a file manager. The core job — discover a protocol, read it, draft a new one, cite it — needs no account. Creating, editing, publishing and any private content go through the REST API or MCP server with the user's own token.
+
+## Keyless Path (default — no token)
+
+The protocols.io API needs a Bearer token even for public content (`status_code` 1218 without one), but public protocols are fully readable other ways:
+
+1. **Discover protocols and DOIs through Crossref** — every published protocols.io version is registered under DOI prefix `10.17504`:
+   ```bash
+   curl -s "https://api.crossref.org/works?filter=prefix:10.17504\
+&query.bibliographic=CRISPR+Cas9&rows=10&select=DOI,title,URL&mailto=you@uni.edu"
+   ```
+   (Verified keyless, HTTP 200, 2026-10-22; add your email in `mailto=` for the polite pool.)
+2. **Read a public protocol's full content** from the public web, no token:
+   - `WebFetch` the protocol URL for the title, abstract and authors (the page's JSON-LD / citation meta).
+   - The **full steps and materials** are in the public PDF at `https://www.protocols.io/view/<uri-or-slug>.pdf` (verified HTTP 200 keyless) — fetch it and read it (Claude's `Read` parses PDFs), or `pdftotext -layout`. This is the reliable keyless route to step text, since the HTML page renders steps in JavaScript.
+3. **Draft a new protocol offline** in protocols.io's structure — title, description, `materials_text`, and ordered steps chained by `guid`/`previous_guid` (first step `previous_guid` null) — ready to paste into the web editor or to POST later with a token. The request-shape rules are in `references/protocols_api.md`.
+4. **Cite the version actually used** (see Citing Protocols below) from the DOI and metadata, no token.
+
+Hand the write/publish steps to the user with their token; if `PROTOCOLS_IO_TOKEN` is unset, stop at the keyless result and say so — never fabricate protocol content or a DOI.
+
+## Authenticated Routes (optional — the user's token)
 
 - **Official MCP server** — `https://www.protocols.io/mcp` (Streamable HTTP; OAuth 2.0 sign-in or a Bearer client token). It is also listed in Claude's connector directory as "protocols.io".
 - **REST API** — base `https://www.protocols.io/api`, split across versions: most endpoints are `v3`, while getting/updating protocols, protocol steps, run records, file-manager search, and organization exports use `v4`. The API reference is https://apidoc.protocols.io/.
@@ -37,11 +58,13 @@ protocols.io hosts versioned, citable scientific protocols (each published versi
 | Depositing a preprint or choosing a data/code repository (bioRxiv, OSF, Zenodo) | `alterlab-preprint-deposition` or `alterlab-open-science` |
 | Writing or polishing a manuscript's Methods section | `alterlab-scientific-writing` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-labarchive`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Prefer the MCP Server When It Is Connected
 
-If protocols.io tools are available in the session (connector or MCP server), use them for search, retrieval, and editing: they run on the user's own account, handle OAuth, and return live data. Fall back to the REST calls below for anything the tools do not cover, or when no connector is attached. To connect one, add `https://www.protocols.io/mcp` as a remote MCP server (or add "protocols.io" from Claude's connector directory) and sign in. Either way, cite the protocol DOI and the retrieval date when reporting protocol content.
+If protocols.io tools are available in the session (connector or MCP server), use them for search, retrieval, and editing: they run on the user's own account, handle OAuth, and return live data. Fall back to the keyless routes above (Crossref discovery, the public PDF) or the REST calls below when no connector is attached. To connect one, add `https://www.protocols.io/mcp` as a remote MCP server (or add "protocols.io" from Claude's connector directory) and sign in. Either way, cite the protocol DOI and the retrieval date when reporting protocol content.
 
-## Authentication
+## Authentication (for the API routes)
 
 | Token | Where it comes from | Reaches |
 |-------|---------------------|---------|

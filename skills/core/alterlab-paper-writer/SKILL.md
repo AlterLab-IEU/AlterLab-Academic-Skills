@@ -74,6 +74,8 @@ Activate `plan` mode (Socratic chapter-by-chapter guidance) when the user's **in
 | Checking that a draft's references exist and are not retracted (anti-hallucination audit) | `alterlab-citation-verifier` |
 | Turning one section's notes into polished prose without the configuration interview and agent pipeline | `alterlab-scientific-writing` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-deep-research`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 In Claude Code, a point-by-point response to reviewers (one drafting agent per comment plus a consistency pass) is packaged as `/alterlab-workflows:rebuttal` (see `alterlab-research-workflows`).
 
 ### Distinction from `alterlab-deep-research`
@@ -275,7 +277,6 @@ Not sure? Start with `plan` — it will guide you step by step.
 "parse these reviews"                    -> revision-coach
 "help me with my revision"              -> revision-coach
 ```
-
 
 ---
 

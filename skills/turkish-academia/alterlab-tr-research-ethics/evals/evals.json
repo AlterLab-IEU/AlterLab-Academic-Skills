@@ -22,11 +22,13 @@
     },
     {
       "id": "consent-form-lint",
+      "files": ["fixtures/onam_formu_taslak.md"],
       "prompt": "Here is my draft bilgilendirilmiş onam (informed consent) form for an interview study. Can you check it against the Turkish TİTCK minimum-content rules and tell me what's missing before I submit?",
       "expected_output": "Invokes alterlab-tr-research-ethics in consent-lint mode: runs scripts/consent_form_check.py over the draft to check each TİTCK minimum-content element (date/version/page numbers, plain-language purpose, procedures+duration, risks, benefits, 24-hour contact, voluntary participation, withdraw-anytime, no-coercion, confidentiality), then reports a PASS/MISSING table naming the missing elements. States explicitly that a PASS means elements are present, not that the wording satisfies the committee.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Lints the consent draft against the TİTCK minimum-content checklist and reports the specific MISSING elements by name, with the caveat that completeness is not legal sign-off." }
+        { "type": "behavior", "value": "Lints the consent draft against the TİTCK minimum-content checklist and reports the specific MISSING elements by name, with the caveat that completeness is not legal sign-off." },
+        { "type": "output_contains", "value": ["24 saat", "24-hour", "24 hour"] }
       ]
     },
     {

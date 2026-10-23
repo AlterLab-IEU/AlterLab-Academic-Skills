@@ -3,6 +3,7 @@
   "evals": [
     {
       "id": "inverse-fold-backbone",
+      "files": ["fixtures/backbone.pdb"],
       "prompt": "I have a protein backbone PDB with no meaningful sequence. Design several amino-acid sequences that should fold into this exact structure.",
       "expected_output": "Invokes alterlab-proteinmpnn: parses the backbone PDB and runs protein_mpnn_run.py to inverse-fold it into multiple candidate sequences at a low sampling temperature, ranking by the model score. Notes designs should then be validated by refolding (alterlab-alphafold).",
       "assertions": [
@@ -13,6 +14,7 @@
     },
     {
       "id": "fixed-positions",
+      "files": ["fixtures/enzyme.pdb"],
       "prompt": "Redesign my enzyme's surface but keep the three catalytic residues exactly as they are. Give me new sequences.",
       "expected_output": "Invokes alterlab-proteinmpnn with a fixed-positions specification: pins the catalytic residues and redesigns the rest, producing scored sequences.",
       "assertions": [

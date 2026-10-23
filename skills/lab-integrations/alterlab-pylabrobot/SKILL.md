@@ -33,6 +33,8 @@ PyLabRobot (PLR) is a hardware-agnostic Python SDK for lab automation. Every dev
 | Ordering protein binding/expression assays from the Adaptyv Bio foundry | `alterlab-adaptyv` |
 | Finding, writing, or publishing a human-readable protocol with a DOI | `alterlab-protocolsio` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-opentrons`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Core Capabilities
 
 | Area | What it covers | Reference |
@@ -153,7 +155,8 @@ await reader.stop()
 3. **Keep layouts in files.** Save the deck with `lh.deck.save("deck.json")` and commit it with the protocol; record the pylabrobot version.
 4. **Check labware definitions.** Verify geometry for custom or rarely used labware before trusting aspiration heights.
 5. **Start slow devices early.** Heating and incubator set points take minutes; do liquid handling while they settle.
-6. **Official docs.** https://docs.pylabrobot.org (user guide and API), https://github.com/PyLabRobot/pylabrobot, forum https://discuss.pylabrobot.org.
+6. **Show the script in your reply.** Include the complete protocol you write as a Python code block in the answer itself (the `LiquidHandler`/backend/deck setup, the awaited calls, the `finally: await lh.stop()`), not only as a saved `.py` file — the user reads the answer, and a file left in the workspace is not visible to them.
+7. **Official docs.** https://docs.pylabrobot.org (user guide and API), https://github.com/PyLabRobot/pylabrobot, forum https://discuss.pylabrobot.org.
 
 ## Troubleshooting
 

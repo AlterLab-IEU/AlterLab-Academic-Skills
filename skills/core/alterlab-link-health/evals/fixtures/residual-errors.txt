@@ -1,0 +1,22 @@
+Check Links / lychee — run #431, after the first repair pass (config fixed, file refs fixed,
+bulk URL substitutions applied). Down from 1,208 errors to 67.
+
+🔍 1,912 Total ✅ 1,845 OK 🚫 67 Errors
+
+Grouped residuals (counts) and representative lines:
+- 23 x network timeout on one slow mirror
+  [TIMEOUT] https://ftp.ebi.ac.uk/pub/databases/uniprot/current_release/knowledgebase/ | Timeout
+- 18 x 404 on version-pinned documentation URLs
+  [404] https://scikit-learn.org/0.24/modules/cross_validation.html | Not Found
+  [404] https://matplotlib.org/3.3.0/api/pyplot_summary.html | Not Found
+- 11 x local file references, singular/plural directory mix-ups introduced by the first pass
+  [ERROR] file:///.../skills/bioinformatics/alterlab-scanpy/reference/plotting.md | Cannot find file
+  (the file exists at skills/bioinformatics/alterlab-scanpy/references/plotting.md)
+- 9 x example hosts inside code samples
+  [ERROR] http://localhost:8888/lab | Network error: Connection refused
+  [ERROR] https://your-tenant.example.org/api/v2/runs | DNS error
+- 6 x 400 from API endpoints that only accept POST
+  [400] https://api.example-lab.org/v1/query | Bad Request
+
+Note: the first pass's bulk substitution `s#/docs/#/docs/stable/#` also touched 4 links that
+were already passing before it (they now 404 as /docs/stable/stable/); they are among the 18.

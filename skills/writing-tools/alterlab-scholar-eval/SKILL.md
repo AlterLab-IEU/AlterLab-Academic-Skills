@@ -2,7 +2,7 @@
 name: alterlab-scholar-eval
 description: Evaluates scholarly work with a ScholarEval-inspired eight-dimension rubric, producing structured assessment across research-quality dimensions (problem formulation, literature, methodology, data, analysis, results, writing, and citations) with quantitative 1-5 rubric scores, weighted aggregates, and actionable feedback. Use when scoring or grading a paper, thesis, or research output against rubric-style criteria, or benchmarking publication readiness across revisions. For checklist-based narrative reviewer reports prefer alterlab-peer-review; for evidence/claim quality and argument soundness use alterlab-scientific-thinking. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit
+allowed-tools: Read Write Edit Bash(python:*)
 compatibility: No external tools, API keys, or services required — scores work from the Read/Write/Edit tools alone
 metadata:
     skill-author: AlterLab
@@ -37,6 +37,8 @@ Use this skill when:
 | A simulated multi-reviewer panel with an editorial accept/revise/reject decision | `alterlab-paper-reviewer` |
 | Judging whether specific claims are supported — evidence grading, biases, confounders | `alterlab-scientific-thinking` |
 | Designing grading rubrics for a course or assignment | `alterlab-teaching-design` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-peer-review`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Evaluation Workflow
 

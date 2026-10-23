@@ -1,7 +1,7 @@
 ---
 name: alterlab-treatment-plans
 description: Generates concise (3-4 page), focused medical treatment plans in LaTeX/PDF format across all clinical specialties — general medical treatment, rehabilitation therapy, mental health care, chronic disease management, perioperative care, and pain management — using SMART goal frameworks, evidence-based interventions with minimal citations, HIPAA compliance, and professional formatting. Use when drafting a brief, actionable patient treatment or care plan with measurable SMART goals and structured follow-up for any specialty. Part of the AlterLab Academic Skills suite.
-allowed-tools: Read Write Edit Bash
+allowed-tools: Read Write Edit Bash WebSearch WebFetch
 license: MIT
 compatibility: "Runs with Read/Write/Edit/Bash; producing PDF output requires a local LaTeX toolchain (pdflatex/xelatex). No API key required."
 metadata:
@@ -45,9 +45,11 @@ Use this skill when:
 | Pharmacogenomic dosing guidance (CPIC/DPWG) for a gene–drug pair | `alterlab-clinpgx` |
 | Looking up drug properties, targets, or drug–drug interactions | `alterlab-drugbank` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-clinical-decision`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Clinical Safety
 
-A treatment plan is a draft for the treating clinician to review, adapt, and sign — not an order. Build it only from the patient information the user provides, and mark missing items (allergies, renal function, current medications) as blanks to complete rather than guessing, because a plausible default dose or omitted interaction check can cause harm. Check every drug, dose, and monitoring interval against current labeling and guidelines the clinician can verify, cite guideline sources the user supplied or that you retrieved in this session, and never invent a citation. Include a short AI-assistance note in the document.
+A treatment plan is a draft for the treating clinician to review, adapt, and sign — not an order. Build it only from the patient information the user provides, and mark missing items (allergies, renal function, current medications) as blanks to complete rather than guessing, because a plausible default dose or omitted interaction check can cause harm. Check every drug, dose, and monitoring interval against current labeling and guidelines the clinician can verify, cite guideline sources the user supplied or that you retrieved in this session (WebSearch/WebFetch on the guideline body's own site, or PubMed), and never invent a citation. Include a short AI-assistance note in the document.
 
 ## Core Workflow
 

@@ -8,8 +8,11 @@ Provides a robust client for interacting with the OpenAlex API with:
 - Cursor pagination (page-based paging stops at 10,000 results)
 - Batch operations support
 
-OpenAlex runs on a daily cost budget: keyless calls share $0.10/day per IP
-address; a free API key from openalex.org/settings/api gives your own $1/day.
+No API key is required. OpenAlex runs on a daily cost budget: keyless list,
+filter and search calls share $0.10/day per IP address, while single-entity
+lookups (/works/W..., /works/doi:..., /authors/orcid:..., ...) cost $0 and keep
+working after that budget is spent — batch_lookup() falls back to them. An
+optional free API key from openalex.org/settings/api gives your own $1/day.
 Set OPENALEX_API_KEY (or pass api_key=); the key is sent as an
 "Authorization: Bearer" header so it never appears in URLs or logs. The old
 mailto "polite pool" was retired in Feb 2026 — mailto is ignored.
@@ -18,6 +21,7 @@ per_page is capped at 100 (200 is deprecated legacy).
 
 import os
 import random
+import sys
 import time
 import requests
 from typing import Dict, List, Optional, Any
@@ -26,6 +30,16 @@ from urllib.parse import urljoin
 MAX_PER_PAGE = 100  # OpenAlex maximum; per_page=200 is deprecated and slated for removal
 MAX_OR_VALUES = 100  # values allowed in one OR (|) filter
 BUDGET_EXHAUSTED_RETRY_AFTER_S = 120  # a longer Retry-After means the daily budget is spent
+
+
+class BudgetExhausted(RuntimeError):
+    """HTTP 429 with an hours-long Retry-After: the daily budget is spent until midnight UTC."""
+
+
+# Single-entity paths that cost $0 (verified 2026-10-22), keyed by batch_lookup id_field.
+FREE_LOOKUP_PREFIX = {"openalex_id": "", "openalex": "", "ids.openalex": "", "doi": "doi:",
+                      "ids.pmid": "pmid:", "pmid": "pmid:", "orcid": "orcid:", "ror": "ror:",
+                      "issn": "issn:"}
 
 
 def _retry_after_seconds(response: requests.Response) -> int:
@@ -63,6 +77,9 @@ class OpenAlexClient:
         self.requests_per_second = requests_per_second
         self.min_delay = 1.0 / requests_per_second
         self.last_request_time = 0
+        if not self.api_key:
+            print("OPENALEX_API_KEY not set: keyless mode (list/search share $0.10/day per IP; "
+                  "single-entity lookups are free).", file=sys.stderr)
 
     def auth_headers(self) -> Dict[str, str]:
         """Return the Authorization header for direct requests (empty when keyless)."""
@@ -116,19 +133,27 @@ class OpenAlexClient:
                     retry_after = _retry_after_seconds(response)
                     if response.status_code == 429 and retry_after > BUDGET_EXHAUSTED_RETRY_AFTER_S:
                         # Daily budget spent: retrying cannot succeed before the reset.
-                        raise RuntimeError(
+                        print("OpenAlex rate limit: the keyless daily budget for this IP is spent "
+                              f"(resets in {retry_after}s). Single-entity lookups still work; for "
+                              "search/list use scripts/keyless_fallback.py (Crossref, Europe PMC, "
+                              "OpenCitations) or set OPENALEX_API_KEY.", file=sys.stderr)
+                        raise BudgetExhausted(
                             f"OpenAlex daily budget exhausted (resets in {retry_after}s, at "
-                            "midnight UTC). Keyless calls share $0.10/day per IP address; pass "
-                            "api_key= (free at openalex.org/settings/api) for your own $1/day."
+                            "midnight UTC). Keyless list/search calls share $0.10/day per IP; "
+                            "single-entity lookups (/works/doi:..., /authors/orcid:...) are free "
+                            "and still work; scripts/keyless_fallback.py covers search/list via "
+                            "Crossref, Europe PMC and OpenCitations. The optional OPENALEX_API_KEY (free at "
+                            "openalex.org/settings/api) gives your own $1/day."
                         )
                     # Short throttle (e.g. >100 requests/second) or "slow down" (403)
                     wait_time = max(2 ** attempt, retry_after)
-                    print(f"Throttled ({response.status_code}). Waiting {wait_time}s before retry...")
+                    print(f"Throttled ({response.status_code}). Waiting {wait_time}s before retry...",
+                          file=sys.stderr)
                     time.sleep(wait_time)
                 elif response.status_code >= 500:
                     # Server error
                     wait_time = 2 ** attempt
-                    print(f"Server error. Waiting {wait_time}s before retry...")
+                    print(f"Server error. Waiting {wait_time}s before retry...", file=sys.stderr)
                     time.sleep(wait_time)
                 else:
                     # Other error - don't retry
@@ -137,7 +162,7 @@ class OpenAlexClient:
             except requests.exceptions.Timeout:
                 if attempt < max_retries - 1:
                     wait_time = 2 ** attempt
-                    print(f"Request timeout. Waiting {wait_time}s before retry...")
+                    print(f"Request timeout. Waiting {wait_time}s before retry...", file=sys.stderr)
                     time.sleep(wait_time)
                 else:
                     raise
@@ -216,7 +241,9 @@ class OpenAlexClient:
             id_field: ID field name ('openalex_id', 'doi', 'orcid', etc.)
 
         Returns:
-            List of entity objects
+            List of entity objects. If the keyless daily budget is spent, the
+            remaining IDs are resolved one by one through the free single-entity
+            endpoints (IDs that do not resolve are skipped).
         """
         all_results = []
 
@@ -229,10 +256,36 @@ class OpenAlexClient:
                 'per_page': MAX_PER_PAGE
             }
 
-            response = self._make_request(f"/{entity_type}", params)
+            try:
+                response = self._make_request(f"/{entity_type}", params)
+            except BudgetExhausted:
+                if id_field not in FREE_LOOKUP_PREFIX:
+                    raise
+                print(f"Daily budget spent: resolving {len(ids) - i} IDs via free single-entity "
+                      "lookups.", file=sys.stderr)
+                return all_results + self._free_lookups(entity_type, ids[i:], id_field)
             all_results.extend(response.get('results', []))
 
         return all_results
+
+    def _free_lookups(self, entity_type: str, ids: List[str], id_field: str) -> List[Dict[str, Any]]:
+        """One $0 single-entity request per ID; unresolvable IDs (404) are skipped."""
+        prefix = FREE_LOOKUP_PREFIX[id_field]
+        out = []
+        for raw in ids:
+            value = raw.strip()
+            if id_field == "doi":
+                value = value.split("doi.org/", 1)[-1]
+            elif id_field in ("orcid", "ror"):
+                value = value.rstrip("/").rsplit("/", 1)[-1]
+            elif prefix == "":
+                value = value.rstrip("/").rsplit("/", 1)[-1]
+            try:
+                out.append(self._make_request(f"/{entity_type}/{prefix}{value}"))
+            except requests.exceptions.HTTPError as exc:
+                if exc.response is None or exc.response.status_code != 404:
+                    raise
+        return out
 
     def paginate_all(
         self,

@@ -124,6 +124,12 @@ When MCP tools are available, skills should prefer them over simulated responses
 | `python scripts/gen_marketplace.py` | Regenerate the `alterlab-academic-skills` marketplace, the 18 domain plugins, and the bundles |
 | `claude plugin validate .` | Validate the marketplace with the real Claude Code loader |
 | `node scripts/workflow_dryrun.mjs <script.js> '<args-json>'` | Dry-run a dynamic-workflow script against a mocked runtime |
+| `uv run python scripts/run_evals.py --behavioral --skill <name>` | Live skilled-vs-bare grading through the `claude` CLI's login; exit 0 only if every selected case passed (2 = blocked, 3 = partial) |
+| `scripts/eval_sweep.sh LIST N OUTDIR` | Run `--behavioral` over many skills, N at a time (one results file per skill) |
+| `python3 scripts/check_keyless.py` | Keyless-first rule: every skill does what it claims with no external API key (credentials only optional, declared in `metadata.credentials`) |
+| `uv run python scripts/defect_scan.py RESULTS_DIR` | Flag missing inputs, denied tools, crashed scripts and blocked hosts in saved results (no model) |
+| `uv run python scripts/run_benchmark.py` | Five-task live benchmark with deterministic scoring (`benchmarks/`); results in `eval-results/` |
+| `python3 scripts/build_bundles.py release --out dist --verify` | Build and verify every release archive (the only packaging path) |
 
 ---
 

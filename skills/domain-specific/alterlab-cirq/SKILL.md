@@ -2,17 +2,20 @@
 name: alterlab-cirq
 description: Builds, simulates, and runs quantum circuits with Cirq, Google Quantum AI's framework for NISQ hardware, noise-aware low-level circuit design, and noise characterization. Use when targeting Google Quantum AI processors or their Quantum Virtual Machine models (Willow, Sycamore-class Rainbow/Weber), IonQ/AQT/Pasqal via Cirq plugins, designing noise-aware NISQ circuits, or running characterization experiments (randomized benchmarking, XEB). For IBM Quantum hardware and Qiskit Runtime prefer alterlab-qiskit; for gradient-trained quantum ML and hybrid quantum-classical models prefer alterlab-pennylane; for open-system Lindblad/master-equation dynamics prefer alterlab-qutip. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
-allowed-tools: Read Write Edit Bash(python:*)
-compatibility: No API key required for local simulation. Runs via `uv run python`; requires the cirq Python package. Google Quantum AI hardware access needs separate credentials.
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
+compatibility: "No API key required: local state-vector and density-matrix simulation, parameter sweeps, and the noisy Quantum Virtual Machine are the core and run offline under `uv run python` with the cirq package. Submitting circuits to real QPUs (Google Quantum AI, IonQ, AQT, Pasqal, Azure Quantum) is an optional extra that uses each provider's own credentials."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    credentials: "optional: IONQ_API_KEY, AQT_TOKEN, PASQAL_TOKEN, GOOGLE_CLOUD_PROJECT (submit circuits to IonQ / AQT / Pasqal / Google Quantum AI hardware respectively; local simulation and the QVM use none)"
+    version: "1.1.1"
     last_updated: "2026-09-23"
 ---
 
 # Cirq - Quantum Computing with Python
 
 Cirq is Google Quantum AI's open-source framework for designing, simulating, and running quantum circuits on quantum computers and simulators.
+
+**Keyless by default.** The core of this skill — building circuits, exact and noisy simulation (`cirq.Simulator`, `cirq.DensityMatrixSimulator`), parameter sweeps, characterization experiments, and the noisy Quantum Virtual Machine — runs entirely offline with no account or token. Real-hardware submission (the providers below) is an optional add-on that uses the provider's own credentials; when a hardware token is absent, design and validate the circuit and run it on the simulator/QVM first.
 
 ## When to Use This Skill
 
@@ -29,6 +32,8 @@ Use this skill when the user wants to:
 | IBM Quantum hardware, Qiskit Runtime primitives, or Qiskit transpilation | `alterlab-qiskit` |
 | Gradient-trained quantum ML / hybrid models with autodiff | `alterlab-pennylane` |
 | Lindblad master equations, decoherence, or cavity-QED dynamics (no circuits) | `alterlab-qutip` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-qiskit`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Installation
 

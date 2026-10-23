@@ -86,7 +86,7 @@ cat("\n--- INTERMEDIATE ---\n"); print(sol_i)
 ## Graceful degradation when R is unavailable
 
 If `Rscript` or the `QCA` package is not installed, do NOT fabricate a Python fsQCA run. State the
-dependency, give the exact `install.packages("QCA")` step and the template above, and offer to (a)
+dependency, give the exact install step from SKILL.md ("Getting R ready": `admisc` and `QCA` together into a user library) and the template above, and offer to (a)
 hand-compute a small crisp-set truth table, or (b) outline the calibration so the user can run it in
 R or the QCAGUI. Never emit numbers from a non-existent Python QCA API.
 

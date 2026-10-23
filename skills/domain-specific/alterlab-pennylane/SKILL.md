@@ -2,11 +2,12 @@
 name: alterlab-pennylane
 description: Trains and differentiates quantum circuits with PennyLane, a hardware-agnostic quantum machine-learning framework with automatic differentiation and PyTorch/JAX integration. Use when training quantum circuits via gradients (parameter-shift, backprop, adjoint), building hybrid quantum-classical models or quantum neural networks, or running differentiable variational algorithms (VQE, QAOA). For IBM Quantum hardware and Qiskit Runtime prefer alterlab-qiskit; for Google Quantum AI or NISQ circuits prefer alterlab-cirq; for open-system Lindblad/master-equation dynamics prefer alterlab-qutip. Part of the AlterLab Academic Skills suite.
 license: Apache-2.0
-allowed-tools: Read Write Edit Bash(python:*)
-compatibility: No API key required for local simulation. Runs via `uv run python`; requires the pennylane Python package. Remote hardware (IBM, IonQ, Rigetti) needs separate provider credentials.
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
+compatibility: "No API key required: training and differentiating circuits on the built-in simulators (`default.qubit`, `lightning.qubit`, `default.mixed`) — gradients, hybrid models, VQE/QAOA, quantum chemistry — is the core and runs offline under `uv run python` with the pennylane package. Running the same circuit on remote QPUs (IBM, IonQ, Rigetti via plugins) is an optional extra that uses each provider's own credentials."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    credentials: "optional: QISKIT_IBM_TOKEN / saved IBM Cloud credentials, IONQ api_key, AWS credentials for Amazon Braket (run trained circuits on the respective QPUs; the simulators that do the training need none)"
+    version: "1.1.1"
     last_updated: "2026-09-23"
 ---
 
@@ -15,6 +16,8 @@ metadata:
 ## Overview
 
 PennyLane is a quantum computing library that enables training quantum computers like neural networks. It provides automatic differentiation of quantum circuits, device-independent programming, and seamless integration with classical machine learning frameworks.
+
+**Keyless by default.** The core of this skill — defining, differentiating, and training circuits on the built-in simulators (`default.qubit`, `lightning.qubit`, `default.mixed`), hybrid quantum-classical models, VQE/QAOA, and quantum chemistry — runs entirely offline with no account or token. Executing a trained circuit on a remote QPU (IBM, IonQ, Rigetti) is an optional add-on that uses the provider's own credentials; with no hardware token, develop and validate on the simulator first (PennyLane's device-agnostic design makes the later swap a one-line change).
 
 ## When to Use This Skill
 
@@ -33,15 +36,21 @@ Use this skill when the user wants to:
 | Lindblad master equations, decoherence, or cavity-QED dynamics | `alterlab-qutip` |
 | Classical deep learning with no quantum circuit | `alterlab-pytorch-lightning` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-qiskit`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Installation
 
-Install using uv (PennyLane ≥ 0.43; current 0.45.x as of 2026-09 needs Python ≥ 3.11):
+Run install-free with one `uv run` command — no virtualenv or `uv pip install` step
+(PennyLane ≥ 0.43; current 0.45.1 as of 2026-10 needs Python ≥ 3.11, and uv's default here
+can be 3.9, so pin the interpreter). The simulators, autodiff and `qml.qchem` (built-in
+differentiable Hartree-Fock, no PySCF needed for `molecular_hamiltonian`) all come with it:
 
 ```bash
-uv pip install pennylane
+uv run --python ">=3.11" --with pennylane python your_script.py
 ```
 
-For quantum hardware access, install device plugins:
+For quantum hardware access, install device plugins (persistently, inside an activated
+virtualenv, or add each with another `--with`):
 
 ```bash
 # IBM Quantum (0.45 pins qiskit<=2.3 and qiskit-ibm-runtime~=0.45 — use its own env

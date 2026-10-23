@@ -3,10 +3,11 @@ name: alterlab-geomaster
 description: Covers geospatial science across remote sensing, GIS, spatial analysis, and machine learning for earth observation — satellite imagery processing (Sentinel, Landsat, MODIS, SAR, hyperspectral), raster and DEM operations, spectral indices (NDVI/EVI/NDWI), spatial statistics, point cloud processing, network analysis, and cloud-native workflows (STAC, COG, Planetary Computer), with examples across Python, R, Julia, JavaScript, C++, Java, Go, and Rust. Use for remote sensing workflows, satellite/raster image classification, terrain/slope/hillshade analysis, spatial ML on earth-observation data, hydrological modeling, marine spatial analysis, or atmospheric science. For pure tabular vector work with no raster/EO aspect (plain GeoPandas sjoin, buffer, overlay, dissolve, choropleths) prefer the geopandas skill; for celestial-sphere astronomy coordinates (ICRS/galactic, FITS, WCS) prefer the astropy skill. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(uv:*) Bash(python:*)
-compatibility: No API key required for local geospatial work. Runs via `uv run python`; cloud-native STAC/Planetary Computer workflows need network access (and provider credentials where applicable).
+compatibility: "No API key required. Local raster/vector/DEM analysis (rasterio, GeoPandas, numpy, scikit-learn) runs offline under `uv run python`, and the default cloud routes are keyless: OpenStreetMap Nominatim/Overpass, Natural Earth, and public STAC catalogs (Element 84 Earth Search, Planetary Computer with anonymous signing). Only Google Earth Engine and private cloud-storage buckets use credentials, and those are optional."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
+    credentials: "optional: Google Earth Engine registration / GCP project (the Earth Engine Python API; keyless STAC catalogs cover the same imagery); AWS/GCS keys (private cloud-storage buckets only — public COGs read with aws_unsigned=True)"
+    version: "1.1.1"
     last_updated: "2026-09-23"
 ---
 
@@ -31,6 +32,8 @@ Use this skill when the user wants to:
 | Simulating the fluid dynamics itself (Navier-Stokes, shallow-water solvers) | `alterlab-fluidsim` |
 | Mapping historical sources or georeferencing archival maps for humanities research | `alterlab-digital-humanities` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-geopandas`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Installation
 
 Pick ONE package manager for the GDAL-backed stack. Modern pip wheels for
@@ -42,7 +45,10 @@ bundle binaries (they need a matching system/conda libgdal); PDAL and rsgislib
 likewise have no reliable pip wheels — get those via conda (Option B).
 
 ```bash
-# Option A — uv/pip env (recommended here): wheels bundle GDAL/GEOS/PROJ.
+# Option A — uv (recommended here): wheels bundle GDAL/GEOS/PROJ.
+# Install-free, one command, no virtualenv (pin the interpreter; uv's default can be 3.9):
+uv run --python ">=3.11" --with rasterio --with geopandas --with scikit-learn python classify.py
+# Persistent env instead (inside an activated virtualenv), by task.
 # rasterio/fiona cover most GDAL needs; standalone `gdal` -> use Option B.
 uv pip install rasterio fiona shapely pyproj geopandas
 uv pip install torchgeo earthengine-api
@@ -98,13 +104,18 @@ stats = joined.groupby('zone_id').agg({
 }).round(2)
 ```
 
-### Google Earth Engine Time Series
+### Google Earth Engine Time Series (optional — needs EE registration)
+
+Earth Engine requires a one-time Google Earth Engine registration and a GCP project; it is
+*not* the keyless default. For a credential-free equivalent, pull the same Sentinel-2
+imagery from a public STAC catalog (see "Keyless cloud-native data" below) and compute the
+time series with xarray/rioxarray.
 
 ```python
 import ee
 import pandas as pd
 
-ee.Initialize(project='your-project')
+ee.Initialize(project='your-project')  # optional: requires EE registration
 roi = ee.Geometry.Point([-122.4, 37.7]).buffer(10000)
 
 s2 = (ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
@@ -250,6 +261,7 @@ route = nx.shortest_path(G, orig, dest, weight='travel_time')
 ## Image Classification
 
 ```python
+import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 import rasterio
 from rasterio.features import rasterize
@@ -260,6 +272,9 @@ def classify_imagery(raster_path, training_gdf, output_path):
         image = src.read()
         profile = src.profile
         transform = src.transform
+        # Polygons must share the raster's CRS: a GeoJSON is EPSG:4326 by spec, and
+        # rasterizing it onto a UTM grid silently gives empty masks (X_train = []).
+        training_gdf = training_gdf.to_crs(src.crs)
 
     # Extract training data
     X_train, y_train = [], []
@@ -286,6 +301,47 @@ def classify_imagery(raster_path, training_gdf, output_path):
 ```
 
 ## Modern Cloud-Native Workflows
+
+### Keyless cloud-native data (the default)
+
+These routes need **no account or token** and were verified live (2026-10-22):
+
+- **Element 84 Earth Search** — a fully anonymous STAC API over the AWS Sentinel-2 / Landsat
+  Open Data; no signing step at all.
+- **Microsoft Planetary Computer** — public STAC; assets are signed with anonymous SAS
+  tokens via `planetary_computer.sign_inplace` (no key).
+- **OpenStreetMap** — Nominatim geocoding (send a descriptive `User-Agent` with a contact)
+  and Overpass for OSM feature queries.
+- **Natural Earth** — direct downloads of admin boundaries, coastlines, etc.
+
+```python
+import pystac_client
+import odc.stac
+
+# Earth Search: anonymous, no key, no signing
+catalog = pystac_client.Client.open("https://earth-search.aws.element84.com/v1")
+search = catalog.search(
+    collections=["sentinel-2-l2a"],
+    bbox=[27.0, 38.3, 27.3, 38.5],
+    datetime="2023-06-01/2023-08-31",
+    query={"eo:cloud_cover": {"lt": 20}},
+)
+items = list(search.items())[:5]
+data = odc.stac.load(items, bands=["red", "nir"], resolution=10)
+ndvi = (data.nir - data.red) / (data.nir + data.red)   # keyless end to end
+```
+
+```python
+# Nominatim geocoding — keyless; identify yourself in the User-Agent
+import requests
+r = requests.get(
+    "https://nominatim.openstreetmap.org/search",
+    params={"q": "Izmir", "format": "json", "limit": 1},
+    headers={"User-Agent": "my-research-tool/1.0 (you@example.org)"},
+    timeout=30,
+)
+hit = r.json()[0]; print(hit["lat"], hit["lon"])
+```
 
 ### STAC + Planetary Computer
 

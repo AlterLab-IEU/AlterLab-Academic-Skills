@@ -99,7 +99,7 @@ CATEGORY_BLURB = {
     "turkish-academia": "Turkish academic system workflows (YÖK, ÜAK, DergiPark, YÖK-Tez, TÜBİTAK, doçentlik)",
     "faculty-life": "Faculty research-lifecycle and academic administration (syllabus AI-policy, IRB/consent, post-award grant admin, recommendation letters, accreditation AoL)",
     "methodology": "Research methodology and rigor scaffolds (Iron Laws, rationalization tables, decision flowcharts, systematic-reasoning checklists)",
-    "workflows": "Runnable multi-agent research workflows for Claude Code (systematic-review screening, citation audit, independent review panel, claim stress-test, rebuttal, grant mock panel, literature map) plus the portable playbook skill",
+    "workflows": "Runnable multi-agent research workflows for Claude Code (systematic-review screening, citation audit, review panel, claim stress-test, rebuttal, grant mock panel, literature map) plus the portable playbook skill",
     "social-science-workflow": "Stage-gated social-science methods spine — orchestrator + 5 validity gates (design/identifying-assumption, measurement, sampling/power, reflexivity, inference) and 11 analysis modules (causal inference, complex-survey analysis, SEM/psychometrics, multilevel models, QCA, SNA, ABM, text-as-data, qualitative analysis, meta-analysis, missing data)",
 }
 
@@ -504,7 +504,6 @@ def build(version: str, verdict: str) -> dict:
         "version": version,
         "owner": {
             "name": "AlterLab @ Izmir University of Economics",
-            "email": "alterlab.ieu@gmail.com",
         },
         # `metadata` mirrors description/version for backward compatibility; the marketplace
         # schema has no `metadata.author` (the maintainer lives in `owner`).

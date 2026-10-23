@@ -118,19 +118,40 @@ Part of the AlterLab Academic Skills suite.
 - `allowed-tools` -- **space-separated** open-standard list, e.g. `Read Write Edit Bash(python:*)`
 - `metadata.skill-author` -- must be `AlterLab`
 - `metadata.version` -- quoted semver string, e.g. `"1.0.0"`
-- `compatibility` -- documents the skill's target runtime / required env & keys. **Claude-Code/SDK-only**: this is the one top-level key outside the claude.ai uploader whitelist (see below).
+- `metadata.credentials` -- only if the skill names a credential: `"optional: NAME (what it adds), ..."`. Every skill works without one (keyless-first; see Skill Quality Standards).
+- `compatibility` -- documents the skill's target runtime and environment; states the keyless path first. **Claude-Code/SDK-only**: this is the one top-level key outside the claude.ai uploader whitelist (see below).
 
 > There is **no** top-level `version:` field, and **no** `metadata.tags` or `metadata.category`. Category is derived from the folder path, not the frontmatter.
 
 ### claude.ai custom-skill uploads
 
-The claude.ai `.zip` uploader accepts only these top-level frontmatter keys:
-`{name, description, license, allowed-tools, metadata}`. This suite ships one extra —
-`compatibility` — which is valid in the open standard and Claude Code but **not** on
-claude.ai. Do **not** add further non-whitelisted top-level keys: one unexpected key
-fails *every* skill's upload at once. `scripts/check_claudeai_compat.py --strict` (run
-in CI) catches such drift, and `scripts/check_claudeai_compat.py --package OUT` writes
-claude.ai-safe copies with `compatibility` stripped, ready to zip and upload.
+The claude.ai `.zip` uploader has been reported to accept only these top-level frontmatter
+keys: `{name, description, license, allowed-tools, metadata}` (anthropics/skills#37; not
+re-tested against the live service here). This suite ships one extra — `compatibility` —
+which is valid in the open standard and Claude Code. Do **not** add further non-whitelisted
+top-level keys: one unexpected key would fail *every* skill's upload at once.
+`scripts/check_claudeai_compat.py --strict` (run in CI) catches such drift. You never zip by
+hand: `python3 scripts/build_bundles.py release` builds the upload archives
+(`skill-<name>-<version>.zip`, `compatibility` stripped) together with the other release
+archives, and `--verify` checks them; `scripts/check_claudeai_compat.py --package OUT` writes
+the same claude.ai-target tree unzipped.
+
+### Paths inside a skill
+
+Installs and archives copy only the skill folder, so every path in a skill's Markdown is
+relative to that folder — never `skills/<domain>/…`:
+
+- own files: `scripts/foo.py`, `references/bar.md`;
+- shared handoff files: `shared/handoff_schemas.md`, then run
+  `python3 scripts/build_bundles.py sync-shared` to refresh the skill's byte-identical copy of
+  the canonical file in `skills/core/shared/` (commit the copy);
+- another skill's files: `../alterlab-other/scripts/baz.py` in `SKILL.md` and references, and
+  `${CLAUDE_PLUGIN_ROOT}/alterlab-other/scripts/baz.py` in `agents/*.md` and `commands/*.md`
+  (Claude Code fills in the plugin root; the installer and archives write it out). Either
+  form makes the other skill a dependency that the installer adds automatically.
+
+`tests/test_no_dangling_shared.py`, `tests/test_bundles.py` and `tests/test_install.py` fail
+on a path that would not resolve once installed. See `docs/portability.md` for the targets.
 
 ## Pull Request Process
 
@@ -198,6 +219,7 @@ Every skill must clear this bar (enforced by `python scripts/audit_skills.py` + 
 - **Body** under ~500 lines; move long detail into `references/*.md` (loaded on demand). Cited `references/` and `scripts/` paths must exist.
 - **No fabrication**: real APIs, real citations/DOIs, no unsourced vendor benchmarks; if a script sends data to a third-party API, say so.
 - **`allowed-tools`** scoped to what the skill needs (space-separated).
+- **Keyless-first** (`python3 scripts/check_keyless.py`): the skill does what it claims with no external API key, account or licence. A credential may only add the user's own private account or data, a higher rate limit, or a paid service the user explicitly asks for; declare it as `metadata.credentials: "optional: NAME (what it adds)"`, never as a requirement in `compatibility` or `description`, and keep at least 3 `should_trigger` evals that need no `env:` key.
 - Add **`evals/evals.json`** (≥ 3 `should_trigger` + ≥ 1 near-miss `should_not_trigger`); validate with `python scripts/run_evals.py`.
 
 A copy-paste scaffold lives in [`template/`](template/).

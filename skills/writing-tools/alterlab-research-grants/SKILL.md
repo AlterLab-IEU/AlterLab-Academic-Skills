@@ -42,6 +42,8 @@ This skill should be used when:
 | The FAIR data-sharing and repository content of a data management plan | `alterlab-open-science` |
 | A recommendation or support letter for another applicant | `alterlab-recommendation-letters` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-tubitak-proposal`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Current Funder Policies (verified 2026-09; re-check before each submission)
 
 - **AI-assisted writing.** NIH will not consider applications "substantially developed by AI" (or containing sections that are) to be the applicants' original ideas; AI use detected after award can be referred to the Office of Research Integrity (NOT-OD-25-132, effective 25 Sept 2025). NSF encourages proposers to state in the project description whether and how generative AI was used and holds them responsible for accuracy, and PAPPG 24-1 Supplement 1 (NSF 26-200, effective 8 Dec 2025) extends research misconduct to acts committed with AI-based tools. So work with the PI's own aims, data, and ideas: structure, critique, tighten, and check compliance — do not generate a proposal wholesale for submission.

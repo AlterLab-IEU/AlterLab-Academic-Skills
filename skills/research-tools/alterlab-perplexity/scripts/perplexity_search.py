@@ -8,9 +8,13 @@ LiteLLM and OpenRouter. It provides real-time, grounded answers with source cita
 Usage:
     python perplexity_search.py "search query" [options]
 
-Requirements:
-    - OpenRouter API key set in OPENROUTER_API_KEY environment variable
-    - LiteLLM installed: uv pip install litellm
+This script is the OPTIONAL Perplexity backend of alterlab-perplexity, for when the user
+asks for Perplexity / a Sonar model. The skill's default, keyless path does grounded search
+with Claude's WebSearch and WebFetch plus keyless scholarly APIs.
+
+What this script needs (the skill does not):
+    - OpenRouter API key in OPENROUTER_API_KEY (checked first; exits 1 without it)
+    - LiteLLM: run via `uv run --with litellm`, or uv pip install litellm
 
 Author: Scientific Skills
 License: MIT
@@ -42,8 +46,12 @@ def check_api_key() -> Optional[str]:
     """Check if OpenRouter API key is configured."""
     api_key = os.environ.get("OPENROUTER_API_KEY")
     if not api_key:
-        print("Error: OPENROUTER_API_KEY environment variable is not set.", file=sys.stderr)
-        print("\nTo set up your API key:", file=sys.stderr)
+        print("Error: OPENROUTER_API_KEY environment variable is not set, so Perplexity cannot "
+              "run and nothing was sent.", file=sys.stderr)
+        print("\nKeyless alternative (no account needed): the skill's default path -- WebSearch +"
+              " WebFetch, plus Europe PMC / Crossref / arXiv for papers. Label that answer as not"
+              " from Perplexity.", file=sys.stderr)
+        print("\nTo use Perplexity instead:", file=sys.stderr)
         print("1. Get an API key from https://openrouter.ai/keys", file=sys.stderr)
         print("2. Set the environment variable:", file=sys.stderr)
         print("   export OPENROUTER_API_KEY='your-api-key-here'", file=sys.stderr)
@@ -264,6 +272,11 @@ Available Models:
 
     if not args.query:
         parser.error("a search query is required (or use --check-setup)")
+
+    # The key first: without it the dependency is irrelevant, and the user needs to hear
+    # that Perplexity is unavailable (and what to do instead), not "install litellm".
+    if check_api_key() is None:
+        return 1
 
     # Check dependencies
     if not check_dependencies():

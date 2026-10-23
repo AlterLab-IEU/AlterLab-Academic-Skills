@@ -2,7 +2,7 @@
 name: alterlab-qutip
 description: Simulates open quantum systems with QuTiP, the Quantum Toolbox in Python, solving Lindblad master equations (mesolve), Monte Carlo trajectories (mcsolve), and unitary dynamics (sesolve). Use when studying master-equation or Lindblad dynamics, decoherence, dissipation, quantum optics, cavity QED, or open-system time evolution. NOT for circuit-based quantum computing or hardware execution — for IBM Quantum circuits prefer alterlab-qiskit, for Google Quantum AI or NISQ circuits prefer alterlab-cirq, and for gradient-trained quantum ML prefer alterlab-pennylane. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Runs locally via `uv run python`; requires the qutip Python package.
 metadata:
     skill-author: AlterLab
@@ -31,6 +31,8 @@ Use this skill when the user wants to:
 | Cirq circuits, Google hardware / Quantum Virtual Machine, XEB/RB | `alterlab-cirq` |
 | Training variational circuits with autodiff (quantum ML, differentiable VQE) | `alterlab-pennylane` |
 | Symbolic derivation of operators or commutators without numerics | `alterlab-sympy` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-qiskit`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Installation
 

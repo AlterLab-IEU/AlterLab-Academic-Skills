@@ -12,10 +12,14 @@ LaminDB supports extensive integrations across data storage, computational workf
 
 ```python
 import lamindb as ln
+```
 
+```bash
 # Initialize with local storage
 lamin init --storage ./mydata
+```
 
+```python
 # Save artifacts to local storage
 artifact = ln.Artifact("data.csv", key="local/data.csv").save()
 
@@ -25,11 +29,13 @@ data = artifact.load()
 
 ### AWS S3
 
-```python
+```bash
 # Initialize with S3 storage
 lamin init --storage s3://my-bucket/path \
   --db postgresql://user:pwd@host:port/db
+```
 
+```python
 # Artifacts automatically sync to S3
 artifact = ln.Artifact("data.csv", key="experiments/data.csv").save()
 
@@ -41,7 +47,7 @@ data = artifact.load()  # Downloads from S3 if not cached
 
 Support for MinIO, Cloudflare R2, and other S3-compatible endpoints:
 
-```python
+```bash
 # Initialize with custom S3 endpoint
 lamin init --storage 's3://bucket?endpoint_url=http://minio.example.com:9000'
 
@@ -52,14 +58,16 @@ export AWS_SECRET_ACCESS_KEY=minioadmin
 
 ### Google Cloud Storage
 
-```python
+```bash
 # Install GCP extras
 pip install 'lamindb[gcp]'
 
 # Initialize with GCS
 lamin init --storage gs://my-bucket/path \
   --db postgresql://user:pwd@host:port/db
+```
 
+```python
 # Artifacts sync to GCS
 artifact = ln.Artifact("data.csv", key="experiments/data.csv").save()
 ```
@@ -148,7 +156,7 @@ process ANALYZE {
 
 Integrate LaminDB into Snakemake workflows:
 
-```python
+```snakemake
 # In Snakemake rule
 rule process_data:
     input:
@@ -458,10 +466,12 @@ cell_types = bt.CellType.from_values(adata.obs.cell_type)
 
 Track wet lab experiments:
 
-```python
+```bash
 # Install wetlab module
 pip install 'lamindb[wetlab]'
+```
 
+```python
 # Use wetlab registries
 import lamindb_wetlab as wetlab
 
@@ -471,10 +481,12 @@ experiment = wetlab.Experiment(name="RNA-seq batch 1").save()
 
 ### Clinical Data (OMOP)
 
-```python
+```bash
 # Install clinical module
 pip install 'lamindb[clinical]'
+```
 
+```python
 # Use OMOP common data model
 import lamindb_clinical as clinical
 
@@ -486,16 +498,22 @@ patient = clinical.Patient(patient_id="P001").save()
 
 ### Sync with Git Repositories
 
-```python
+```bash
 # Configure git sync
 export LAMINDB_SYNC_GIT_REPO=https://github.com/user/repo.git
+```
 
+```python
 # Or programmatically
 ln.settings.sync_git_repo = "https://github.com/user/repo.git"
+```
 
+```bash
 # Set development directory
 lamin settings set dev-dir .
+```
 
+```python
 # Scripts tracked with git commits
 ln.track()  # Automatically captures git commit hash
 # ... your code ...

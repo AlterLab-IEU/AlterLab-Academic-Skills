@@ -1,15 +1,19 @@
 """
-BRENDA SOAP API client.
+BRENDA client: keyless by default, SOAP API when you have a BRENDA login.
 
-Thin wrapper around the official BRENDA SOAP API (https://www.brenda-enzymes.org/)
-using the zeep SOAP client. Implements credential loading, SHA-256 password
-hashing, a singleton SOAP client, and the convenience query functions used
-throughout this skill.
+Backends (environment variable BRENDA_BACKEND):
+    auto (default) - SOAP when BRENDA_EMAIL and BRENDA_PASSWORD are set, otherwise the
+                     keyless web backend (scripts/brenda_web.py), noted once on stderr.
+    web            - BRENDA's public enzyme pages + the DSMZ SPARQL endpoint; no login.
+    soap           - the official SOAP API; fails with a clear error if the login is
+                     missing instead of answering from the web pages.
+get_km_values() and get_reactions() return the same "field*value#field*value" strings
+on both backends, so the parsers in brenda_queries work unchanged.
 
-Authentication:
-    BRENDA requires a registered account. Provide credentials via a .env file
-    (BRENDA_EMAIL / BRENDA_PASSWORD) or environment variables. The password is
-    SHA-256 hashed before being sent, per the BRENDA SOAP specification.
+SOAP authentication (optional):
+    The SOAP API needs a free BRENDA account. Provide BRENDA_EMAIL / BRENDA_PASSWORD
+    via a .env file or environment variables. The password is SHA-256 hashed before
+    being sent, per the BRENDA SOAP specification.
 
 Calling convention (brenda_zeep.wsdl):
     Every operation takes SEPARATE string arguments in WSDL order —
@@ -25,7 +29,7 @@ Usage policy:
     Data are licensed CC BY 4.0 — cite BRENDA when you use them.
 
 Installation:
-    uv pip install zeep requests
+    nothing for the keyless web backend; `uv pip install zeep` for SOAP
 
 Usage:
     from scripts.brenda_client import get_km_values, get_reactions
@@ -36,12 +40,15 @@ Usage:
 
 import hashlib
 import os
+import sys
 import time
 from pathlib import Path
 from typing import List
 
-from zeep import Client, Settings
-from zeep.transports import Transport
+try:  # brenda_web sits next to this file
+    from scripts import brenda_web
+except ImportError:  # pragma: no cover - module-path fallback
+    import brenda_web
 
 WSDL_URL = "https://www.brenda-enzymes.org/soap/brenda_zeep.wsdl"
 
@@ -80,10 +87,36 @@ def _get_credentials() -> tuple:
     password = os.environ.get("BRENDA_PASSWORD")
     if not email or not password:
         raise RuntimeError(
-            "BRENDA credentials missing. Set BRENDA_EMAIL and BRENDA_PASSWORD "
-            "in your environment or a .env file."
+            "BRENDA SOAP login missing: set BRENDA_EMAIL and BRENDA_PASSWORD (free account at "
+            "https://www.brenda-enzymes.org/register.php), or use the keyless web backend "
+            "(unset BRENDA_BACKEND or set it to 'web'; see scripts/brenda_web.py)."
         )
     return email, password
+
+
+_NOTED = False
+
+
+def active_backend() -> str:
+    """'soap' or 'web' per BRENDA_BACKEND (auto: soap only when a login is configured)."""
+    global _NOTED
+    load_env_from_file()
+    choice = os.environ.get("BRENDA_BACKEND", "auto").strip().lower() or "auto"
+    if choice not in ("auto", "soap", "web"):
+        raise RuntimeError(f"BRENDA_BACKEND must be auto, soap or web (got {choice!r})")
+    if choice == "soap":
+        _get_credentials()  # raises with the keyless alternative when missing
+        return "soap"
+    if choice == "auto":
+        has_login = (os.environ.get("BRENDA_EMAIL") or os.environ.get("BRENDA_EMIAL")) \
+            and os.environ.get("BRENDA_PASSWORD")
+        if has_login:
+            return "soap"
+    if not _NOTED:
+        print("BRENDA login not set: using the keyless web backend (public enzyme pages + "
+              "SPARQL).", file=sys.stderr)
+        _NOTED = True
+    return "web"
 
 
 def _hash_password(password: str) -> str:
@@ -91,10 +124,13 @@ def _hash_password(password: str) -> str:
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 
-def _get_client() -> Client:
+def _get_client():
     """Initialize (once) and return the singleton zeep SOAP client."""
     global _CLIENT
     if _CLIENT is None:
+        from zeep import Client, Settings  # only the SOAP backend needs zeep
+        from zeep.transports import Transport
+
         settings = Settings(strict=False, xml_huge_tree=True)
         transport = Transport(timeout=60)
         _CLIENT = Client(WSDL_URL, settings=settings, transport=transport)
@@ -114,6 +150,10 @@ def call_brenda(action: str, parameters: List[str]):
         The raw zeep response (usually a list of typed result objects).
     """
     global _last_call
+    if active_backend() != "soap":
+        raise RuntimeError(
+            f"call_brenda({action!r}) is SOAP-only and needs BRENDA_EMAIL/BRENDA_PASSWORD. "
+            "Keyless: brenda_web.get_table(ec, table) covers the same BRENDA tables.")
     email, password = _get_credentials()
     hashed = _hash_password(password)
     client = _get_client()
@@ -171,6 +211,18 @@ def get_km_values(ec_number: str, organism: str = "*", substrate: str = "*") -> 
     Returns:
         List of raw BRENDA Km data entries.
     """
+    if active_backend() == "web":
+        if ec_number in ("*", ""):
+            raise RuntimeError(
+                "The keyless web backend reads one EC page at a time. Find EC numbers for a "
+                "substrate first: brenda_web.enzymes_for(substrate) (SPARQL), then call "
+                "get_km_values(ec, substrate=...) per EC.")
+        _, rows = brenda_web.get_table(
+            ec_number, "km", substrate=None if substrate == "*" else substrate,
+            organism=None if organism == "*" else organism)
+        return [_web_entry(r, kmValue=r.get("VALUE", ""), kmValueMaximum="",
+                           substrate=r.get("SUBSTRATE", ""), ligandStructureId="")
+                for r in rows]
     # WSDL order: ecNumber, organism, kmValue, kmValueMaximum, substrate,
     # commentary, ligandStructureId, literature.
     parameters = [
@@ -197,6 +249,18 @@ def get_reactions(ec_number: str, organism: str = "*", reaction: str = "*") -> L
     Returns:
         List of raw BRENDA reaction data entries.
     """
+    if active_backend() == "web":
+        pattern = "" if reaction == "*" else reaction.strip("*")
+        if ec_number in ("*", ""):
+            if not pattern:
+                raise RuntimeError("Give an EC number or a compound pattern on the web backend.")
+            return [f"ecNumber*{r['ec']}#reaction*{r['equation']}#commentary*#literature*#organism*"
+                    for r in brenda_web.reactions_for(pattern)]
+        _, rows = brenda_web.get_table(ec_number, "substrate",
+                                       organism=None if organism == "*" else organism)
+        entries = [_web_entry(r, reaction=f"{r.get('SUBSTRATE', '')} = {r.get('PRODUCT', '')}")
+                   for r in rows]
+        return [e for e in entries if pattern.lower() in e.lower()] if pattern else entries
     parameters = [
         f"ecNumber*{ec_number}",
         f"organism*{'' if organism == '*' else organism}",
@@ -205,3 +269,11 @@ def get_reactions(ec_number: str, organism: str = "*", reaction: str = "*") -> L
         "literature*",
     ]
     return split_entries(call_brenda("getReaction", parameters))
+
+
+def _web_entry(row: dict, **fields) -> str:
+    """Render a brenda_web table row in the SOAP 'field*value#...' entry format."""
+    base = {"ecNumber": row.get("EC", ""), **fields,
+            "organism": row.get("ORGANISM", ""), "commentary": row.get("COMMENTARY", ""),
+            "literature": row.get("LITERATURE", "")}
+    return "#".join(f"{k}*{str(v).replace('#', ' ').replace('*', ' ')}" for k, v in base.items())

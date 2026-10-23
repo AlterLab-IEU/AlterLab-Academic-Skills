@@ -3,11 +3,14 @@
   "evals": [
     {
       "id": "flowchart-in-markdown",
+      "files": ["fixtures/methods-repo"],
       "prompt": "Add a diagram of our experimental decision logic to the methods README so it lives in git and renders on GitHub.",
       "expected_output": "Invokes alterlab-mermaid: expresses the decision logic as a Mermaid flowchart embedded in a Markdown file (Phase 1, the source of truth), following the mermaid style guide — accTitle/accDescr present, snake_case node IDs, no %%{init} directive, no inline style (classDef only). The text-based diagram diffs cleanly in git and renders natively on GitHub without a build step.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Produces a Mermaid flowchart inside a Markdown code block with accTitle and accDescr, not a rendered PNG or AI image." }
+        { "type": "behavior", "value": "Produces a Mermaid flowchart inside a Markdown code block with accTitle and accDescr, not a rendered PNG or AI image." },
+        { "type": "output_contains", "value": "RIN" },
+        { "type": "behavior", "value": "The flowchart encodes the decision rules in methods/README.md: the RIN >= 7 and A260/280 1.8-2.1 quality gate with at most two re-extractions before exclusion, the 20 M read-pair depth check with one top-up run, and the 70% uniquely-mapped check that sends low samples to manual review." }
       ]
     },
     {
@@ -21,19 +24,25 @@
     },
     {
       "id": "er-data-model",
+      "files": ["fixtures/schema"],
       "prompt": "Document the schema relationships between our experiments, samples, and measurements tables in a markdown doc I can version-control.",
       "expected_output": "Invokes alterlab-mermaid: represents the data model as a Mermaid ER diagram inside a Markdown file, following the mermaid style guide (accTitle/accDescr, snake_case IDs, classDef-only styling), committed as version-controllable text that is the source of truth.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "mermaid" }
+        { "type": "output_contains", "value": "mermaid" },
+        { "type": "output_contains", "value": "parent_sample_id" },
+        { "type": "behavior", "value": "The ER diagram matches schema.sql: experiments one-to-many samples via samples.experiment_id, samples one-to-many measurements via measurements.sample_id, and the samples self-reference through the nullable parent_sample_id (aliquots), rather than an assumed schema." }
       ]
     },
     {
       "id": "sequence-api-interactions",
+      "files": ["fixtures/auth-project"],
       "prompt": "I want to add a diagram of the API call sequence between our client, auth service, and database to the project documentation.",
       "expected_output": "Invokes alterlab-mermaid: chooses a sequence diagram (not a flowchart) for service interactions and API calls per the type-selection guidance, embeds it as Mermaid in the project_documentation markdown template with accTitle/accDescr and style-guide rules applied.",
       "assertions": [
-        { "type": "should_trigger", "value": true }
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "/api/v2/session" },
+        { "type": "behavior", "value": "The sequenceDiagram follows services/auth/handlers.py rather than invented endpoints: sign-in via POST /api/v2/session with the users lookup, the 423 lockout after 5 failed sign-ins, and the refresh_tokens insert; refresh via POST /api/v2/session/refresh with token rotation; and it fills the 'API call sequence' section of docs/index.md." }
       ]
     },
     {

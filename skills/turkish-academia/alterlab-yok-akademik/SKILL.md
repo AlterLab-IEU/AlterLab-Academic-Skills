@@ -56,6 +56,8 @@ Route these adjacent asks to the correct sibling skill — do **not** answer the
 | Computing **doçentlik** (associate-professorship) eligibility points from a publication list | `alterlab-docentlik-eligibility` |
 | Computing the **akademik teşvik** (academic-incentive) score | `alterlab-akademik-tesvik` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-yokatlas`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 YÖK Akademik answers **"who is this academic, officially, and where are they now?"**
 It does **not** judge research quality, compute career-progression points, or fetch
 thesis full text.
@@ -91,7 +93,7 @@ script does both. See [`references/turkish_names.md`](references/turkish_names.m
 the exact İ/ı, Ş/ş, Ğ/ğ, Ç/ç, Ö/ö, Ü/ü rules and matching strategy.
 
 ```bash
-uv run python skills/turkish-academia/alterlab-yok-akademik/scripts/yok_akademik.py \
+uv run python scripts/yok_akademik.py \
     search "Ayşe Yılmaz"
 ```
 

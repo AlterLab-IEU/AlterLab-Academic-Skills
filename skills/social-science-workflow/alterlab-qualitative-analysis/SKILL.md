@@ -2,7 +2,7 @@
 name: alterlab-qualitative-analysis
 description: "Analyzes qualitative data as a dispatched pipeline module — codebook development, thematic / framework / content analysis, and inter-coder reliability computed correctly (Krippendorff's alpha as primary via the krippendorff package or a bundled stdlib nominal calculator with bootstrap CIs; Cohen's / Fleiss' kappa via statsmodels) with 95% CIs and thresholds (alpha >= .80 reliable, .667-.80 tentative). It BRANCHES by design: coefficient-based ICR for codebook / content-analytic coding, versus consensus-and-reflexivity for reflexive thematic analysis where a statistic is not the right criterion. Supports human-vs-LLM double-coding with an alpha check against a human gold standard. Use when coding interviews or open-ended text, building a codebook, or reporting intercoder reliability. For topic modeling / embeddings / supervised text classification prefer alterlab-text-as-data; for the reflexivity gate prefer alterlab-ssci-reflexivity-gate. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Requires (declare in-session, no runtime install on Anthropic API): Python krippendorff>=0.8, statsmodels>=0.14 (Fleiss/Cohen kappa via statsmodels.stats.inter_rater), pandas. For alpha with CIs use R irrCAC / icr, or the bundled stdlib nominal calculator. Optional LLM-assisted coding uses the platform's model. Runs locally via `uv run python`; no extra API key."
 metadata:
     skill-author: AlterLab
@@ -40,6 +40,10 @@ BRANCH BY DESIGN.
 | Whether the study is trustworthy (positionality, Lincoln & Guba) | `alterlab-ssci-reflexivity-gate` | Trustworthiness gate, not the coding itself. |
 | Choosing the qualitative method (grounded theory, phenomenology) | `alterlab-qualitative-methods` | Methodology selection, upstream. |
 | Whether a scale is reliable/valid (quantitative) | `alterlab-ssci-measurement-gate` | Psychometrics, different problem. |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-text-as-data`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+**Running the code.** In Claude Code, run analysis code in a throwaway environment instead of installing packages: `python scripts/icr.py coding.csv` (stdlib, nominal codes) or `uv run --python ">=3.11" --with "krippendorff>=0.8" --with pandas python icr.py`. This needs no install approval and leaves the user's environment untouched. If `uv` or the network is unavailable, say so and hand over the script; never report results you did not compute.
 
 ## The branch (this is the core discipline)
 
@@ -89,5 +93,7 @@ RESOLUTION:    how disagreements were resolved (adjudication / consensus)
 - `references/icr_and_reporting.md` — coefficient math, verified APIs, LLM-benchmarking, the reporting standard.
 - `references/reflexive_vs_codebook.md` — when a statistic applies vs. when it does not.
 - `scripts/icr.py` — stdlib nominal Krippendorff's α + bootstrap CI + Cohen's κ (no numpy / no deps).
+  CSV: a header of ≥ 2 coder names, one row per unit, exactly one cell per coder (blank =
+  missing). α and κ are reported as not estimable when every pairable code is one category.
 
 Part of the AlterLab Academic Skills suite.

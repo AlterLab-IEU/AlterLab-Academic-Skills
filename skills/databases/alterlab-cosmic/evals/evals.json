@@ -3,6 +3,7 @@
   "evals": [
     {
       "id": "cancer-gene-census",
+      "requires": ["env:COSMIC_PASSWORD"],
       "prompt": "I want the expert-curated Cancer Gene Census from COSMIC so I can filter my variant list down to known cancer genes and split them into oncogenes vs tumor suppressors.",
       "expected_output": "Invokes alterlab-cosmic: downloads the Cancer Gene Census archive (grch38/cosmic/v104/Cosmic_CancerGeneCensus_Tsv_v104_GRCh38.tar, via get_common_file_path('gene_census') and download_cosmic_file with COSMIC credentials), extracts the TSV, and uses the role-in-cancer field to separate oncogenes from TSGs among the ~700+ curated cancer genes. Does not use the retired cancer_gene_census.csv name.",
       "assertions": [
@@ -12,6 +13,7 @@
     },
     {
       "id": "somatic-mutations-by-gene",
+      "requires": ["env:COSMIC_PASSWORD"],
       "prompt": "Download the COSMIC coding mutations file (GRCh38) and pull all the recurrent somatic TP53 mutations for my cancer cohort analysis.",
       "expected_output": "Invokes alterlab-cosmic: downloads the GRCh38 coding-mutation archive (Cosmic_GenomeScreensMutant_Tsv_v104_GRCh38.tar, optionally plus the targeted-screens file) via download_cosmic_file, reads the extracted TSV with pandas, and filters GENE_SYMBOL == 'TP53' (or uses the web Filtered download for one gene) to extract somatic mutations. Does not rely on the retired CosmicMutantExport.tsv.gz.",
       "assertions": [
@@ -22,7 +24,7 @@
     {
       "id": "mutational-signatures",
       "prompt": "I need the COSMIC SBS mutational signature definitions to run signature decomposition on my whole-genome tumor samples.",
-      "expected_output": "Invokes alterlab-cosmic: points to the COSMIC mutational signatures download site (https://cancer.sanger.ac.uk/signatures/downloads/, reference set v3.6) for the SBS/DBS/ID signature matrices matching the genome build, suitable for feeding into signature-analysis tools like SigProfiler or deconstructSigs.",
+      "expected_output": "Invokes alterlab-cosmic without asking for a COSMIC login: points to (or downloads with scripts/cosmic_open.py signatures --type SBS --genome GRCh38) the COSMIC mutational signatures reference set v3.6 from https://cancer.sanger.ac.uk/signatures/downloads/ — e.g. COSMIC_v3.6_SBS_GRCh38.txt, 96 trinucleotide contexts by SBS1, SBS2, ... columns — choosing the matrix that matches the genome build (DBS/ID files as needed), suitable for feeding into signature-analysis tools like SigProfiler or deconstructSigs.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "signature" }
@@ -30,11 +32,42 @@
     },
     {
       "id": "resistance-mutations",
+      "requires": ["env:COSMIC_PASSWORD"],
       "prompt": "Get me COSMIC's drug resistance mutation data so I can annotate which variants in my samples confer known resistance.",
       "expected_output": "Invokes alterlab-cosmic: downloads the resistance-mutations archive (Cosmic_ResistanceMutations_Tsv_v104_GRCh38.tar) via the resistance_mutations shortcut and surfaces the clinically annotated drug-resistance variants.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Downloads the COSMIC resistance mutations file specifically, not generic mutation data." }
+      ]
+    },
+    {
+      "id": "keyless-oncogene-tsg-split",
+      "prompt": "I don't have a COSMIC account. For my variant list I need to know which of these genes are established cancer genes and whether each acts as an oncogene or tumor suppressor: TP53, KRAS, BRCA2, PIK3CA, TTN.",
+      "expected_output": "Triggers alterlab-cosmic on the keyless path: explains that the COSMIC Cancer Gene Census download needs a login and uses the OncoKB Cancer Gene List instead (scripts/cosmic_open.py genes --gene ...), whose 'COSMIC CGC (v99)' column flags CGC membership: TP53 TSG, KRAS ONCOGENE, BRCA2 TSG, PIK3CA ONCOGENE — all in the CGC snapshot — while TTN is not on the list (not an established cancer gene; a frequent passenger because of its length). States that the CGC column is a v99 snapshot without COSMIC's tiers, so the current CGC needs the COSMIC login.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "TSG" },
+        { "type": "behavior", "value": "Classifies TP53 and BRCA2 as tumor suppressors and KRAS and PIK3CA as oncogenes from a named keyless source, flags TTN as not a curated cancer gene, and discloses that this is not the current COSMIC CGC." }
+      ]
+    },
+    {
+      "id": "keyless-tp53-recurrent-mutations",
+      "prompt": "Without a COSMIC login, which TP53 mutations are most recurrent across cancers, and roughly what fraction of tumours carry a TP53 mutation?",
+      "expected_output": "Triggers alterlab-cosmic on the keyless path, naming its sources instead of claiming COSMIC counts: Cancer Hotspots (scripts/cosmic_open.py hotspots TP53) lists the recurrent residues R273 (609 tumours; R273C/H), R248, R175 and others, and cBioPortal (cosmic_open.py mutations TP53, 32 TCGA PanCancer Atlas studies) gives about 37% of samples mutated (3,839 of 10,443) with R175H, R273C and R248Q as the most frequent protein changes. Notes that COSMIC's own sample counts need the COSMIC export and a login.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "R175H" },
+        { "type": "behavior", "value": "Names R175, R248 and R273 among the top TP53 hotspots and gives a pan-cancer mutated fraction near 37% with its source, without requiring a COSMIC login." }
+      ]
+    },
+    {
+      "id": "keyless-egfr-resistance",
+      "prompt": "Which EGFR mutations are documented to confer resistance to EGFR inhibitors, and to which drugs? I can't download COSMIC's resistance file.",
+      "expected_output": "Triggers alterlab-cosmic on the keyless path: queries CIViC accepted predictive evidence with significance RESISTANCE (scripts/cosmic_open.py resistance --gene EGFR) and reports, with evidence levels and sources, EGFR T790M resistance to first/second-generation inhibitors (erlotinib — level A in non-small cell lung carcinoma — gefitinib, afatinib, dacomitinib) and C797S resistance to osimertinib, plus other listed profiles such as exon 20 insertions. Says the COSMIC resistance-mutations file itself needs a COSMIC login.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "T790M" },
+        { "type": "behavior", "value": "Lists EGFR resistance variants with the drugs they resist and an evidence level or source for each, from a keyless curated source, without requiring a COSMIC login." }
       ]
     },
     {

@@ -4,7 +4,7 @@
     {
       "id": "gi-concept-illustration",
       "prompt": "I need a conceptual illustration for my immunotherapy paper — a microscopic view of cancer cells being attacked by immunotherapy agents, in a clean scientific illustration style. Can you generate it for figures/?",
-      "expected_output": "Invokes alterlab-generate-image: uses scripts/generate_image.py with the descriptive prompt and a figures/ output path, defaulting to google/gemini-3.1-flash-image (or $ALTERLAB_IMAGE_MODEL), and confirms OPENROUTER_API_KEY is set in the environment or a .env file before running.",
+      "expected_output": "Invokes alterlab-generate-image on its keyless path: draws a clean scientific-illustration-style image of cancer cells being attacked by immunotherapy agents (e.g. irregular tumour cells, T cells at contact points, Y-shaped antibodies) as SVG code, renders it locally with scripts/figure_tools.py render to a PNG in figures/ (cairosvg, no API key), looks at the render and refines it, and delivers the PNG plus the editable source, noting it is a schematic illustration rather than microscopy. Mentions that an AI image model (generate_image.py with OPENROUTER_API_KEY) is an optional alternative, without making it a precondition.",
       "assertions": [
         {
           "type": "should_trigger",
@@ -12,14 +12,14 @@
         },
         {
           "type": "behavior",
-          "value": "Treats this as general-purpose image generation (an illustration, not a technical diagram) and routes it through generate_image.py."
+          "value": "Treats this as general-purpose image generation (an illustration, not a technical diagram), keeps it in this skill, and produces the image itself: draws it as code and renders it to figures/ with figure_tools.py."
         }
       ]
     },
     {
       "id": "gi-presentation-background",
       "prompt": "Make me an abstract blue and white background with subtle molecular patterns for a title slide, professional presentation style. Save it as slides/background.png.",
-      "expected_output": "Invokes alterlab-generate-image: runs generate_image.py with the prompt and --output slides/background.png to produce a photoreal/abstract visual asset for slides.",
+      "expected_output": "Invokes alterlab-generate-image on its keyless path: generates the abstract blue-and-white molecular-pattern background procedurally (Python writing SVG, or matplotlib) at 1920x1080 for a 16:9 title slide, keeps the title area visually quiet, renders it to slides/background.png with figure_tools.py, and checks the render; no API key is needed.",
       "assertions": [
         {
           "type": "should_trigger",
@@ -29,8 +29,9 @@
     },
     {
       "id": "gi-edit-existing-photo",
+      "files": ["fixtures/portrait.png"],
       "prompt": "I have a portrait headshot (portrait.png) for my lab website. Can you edit it to add sunglasses to the person and save the result as cleaned.png?",
-      "expected_output": "Invokes alterlab-generate-image in edit mode: runs generate_image.py with --input portrait.png and --output cleaned.png, choosing a model that supports editing (gemini-3.1-flash-image or flux.2-pro).",
+      "expected_output": "Invokes alterlab-generate-image in edit mode on its keyless path: reads portrait.png to locate the eyes (about x=220 and x=291 at y=230 in the 512x512 image), draws sunglasses as SVG sized to that span, renders them with a transparent background, and runs scripts/edit_image.py --input portrait.png --output cleaned.png --overlay at those coordinates, then reads cleaned.png to check the placement. May mention that a photo-realistic AI edit (generate_image.py --input, OPENROUTER_API_KEY) is optional.",
       "assertions": [
         {
           "type": "should_trigger",
@@ -39,18 +40,43 @@
         {
           "type": "behavior",
           "value": "Recognizes this is an image-editing request and passes the input image via --input rather than generating from scratch."
+        },
+        {
+          "type": "behavior",
+          "value": "Uses the attached portrait.png (in fixtures/) as the --input image instead of reporting it missing or asking for it."
         }
       ]
     },
     {
       "id": "gi-poster-hero-photorealistic",
       "prompt": "For my conference poster I want a photorealistic hero image of a modern, well-lit laboratory with current equipment. Output it to poster/hero.png.",
-      "expected_output": "Invokes alterlab-generate-image: generates a photorealistic image via generate_image.py to poster/hero.png, noting that photoreal artwork is this skill's territory.",
+      "expected_output": "Invokes alterlab-generate-image, noting that photoreal artwork is this skill's territory and that true photorealism needs the optional AI image model: with OPENROUTER_API_KEY it runs generate_image.py with a photorealistic laboratory prompt to poster/hero.png. Without the key (the default here) it does not fake it: it offers an openly licensed real photograph of a modern lab (e.g. from Wikimedia Commons, with author, licence and URL recorded for the credit line) cropped to poster/hero.png with edit_image.py, or a clearly stylised code-drawn version, and says which one was delivered.",
       "assertions": [
         {
           "type": "should_trigger",
           "value": true
         }
+      ]
+    },
+    {
+      "id": "gi-annotate-micrograph-scale-bar",
+      "files": ["fixtures/hela_field03.png"],
+      "prompt": "hela_field03.png is a fluorescence field imaged at 0.25 µm per pixel. For the figure panel, add a 20 µm scale bar in the bottom-right corner, put an arrow pointing at the largest cell with the label 'mitotic?', and save it as hela_field03_annotated.png. Don't resample or otherwise change the pixels.",
+      "expected_output": "Invokes alterlab-generate-image in edit mode on its keyless path: reads hela_field03.png (640x480, six green cells with blue nuclei) to find the largest cell (upper right, centred near x=470, y=170), then runs scripts/edit_image.py --input hela_field03.png --output hela_field03_annotated.png with --scale-bar 20,0.25,um,br (an 80-pixel bar labelled 20 µm), an --arrow ending at that cell and a --text label 'mitotic?', with no --resize or --scale. Reads the result to confirm the bar, arrow and label are legible. No API key is involved.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Computes the scale bar as 80 pixels (20 µm divided by 0.25 µm per pixel), annotates the attached image via --input instead of generating a new one, and does not resample it." },
+        { "type": "behavior", "value": "Points the arrow at the largest cell (the one at the upper right) and labels it 'mitotic?'." }
+      ]
+    },
+    {
+      "id": "gi-ai-model-explicit",
+      "requires": ["env:OPENROUTER_API_KEY"],
+      "prompt": "I have OPENROUTER_API_KEY set. Use FLUX.2 Pro to generate a photorealistic image of a coastal research vessel at dawn for my grant website, saved to web/hero.png.",
+      "expected_output": "Invokes alterlab-generate-image on its optional AI backend because the user named the model and has a key: runs scripts/generate_image.py with a photorealistic prompt, --model black-forest-labs/flux.2-pro and --output web/hero.png, and notes that the prompt is sent to OpenRouter.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "flux.2-pro" }
       ]
     },
     {

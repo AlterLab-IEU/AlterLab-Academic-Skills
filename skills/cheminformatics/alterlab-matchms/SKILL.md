@@ -33,6 +33,8 @@ Use this skill when the user wants to:
 | Querying Metabolomics Workbench studies, RefMet names, or m/z mass searches | `alterlab-metabolomics-wb` |
 | Structure-level cheminformatics on the annotated compounds (substructure, descriptors) | `alterlab-rdkit` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pyopenms`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Core Capabilities
 
 ### 1. Importing and Exporting Mass Spectrometry Data
@@ -216,13 +218,18 @@ Consult `references/workflows.md` for detailed examples.
 
 ## Installation
 
+No install step — run install-free with uv, pinning the interpreter (uv's default
+Python here is 3.9, but matchms needs ≥ 3.10; on 3.9 uv resolves an old matchms
+without `ModifiedCosineGreedy`):
+
 ```bash
-uv pip install matchms
+uv run --python ">=3.11" --with "matchms>=0.33" python your_script.py
 ```
 
 Molecular-structure processing (SMILES/InChI/fingerprints) needs rdkit, which
 ships in the base matchms install on current versions — there is no separate
-`[chemistry]` extra. If `import rdkit` fails, `uv pip install rdkit` explicitly.
+`[chemistry]` extra. If `import rdkit` fails, add `--with rdkit`. (A persistent
+`uv pip install matchms` works too.)
 
 API notes below were verified against **matchms 0.33.x**.
 

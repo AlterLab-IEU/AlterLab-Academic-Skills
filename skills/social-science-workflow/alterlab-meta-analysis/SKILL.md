@@ -2,7 +2,7 @@
 name: alterlab-meta-analysis
 description: "Runs quantitative meta-analysis — computes effect sizes (Hedges' g / standardized mean difference, log odds/risk ratios) with their variances, pools them under fixed-effect and random-effects models, quantifies heterogeneity (I-squared, tau-squared, Cochran's Q), draws forest and funnel plots, and tests publication bias (Egger's regression, trim-and-fill) — using statsmodels.stats.meta_analysis in Python or the field-standard R metafor via Rscript. It enforces PRISMA reporting and the random- vs fixed-effect decision. Use when pooling effect sizes across studies, running a systematic review's quantitative synthesis, or assessing heterogeneity and publication bias. For finding and screening the literature prefer alterlab-deep-research; for a single study's statistics prefer alterlab-statistical-analysis. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Requires (declare in-session, no runtime install on Anthropic API): Python statsmodels>=0.14 (statsmodels.stats.meta_analysis) — OR the field-standard R metafor>=5.0 via Rscript (escalc/rma/forest/funnel/regtest/trimfill). Note: the PyPI PythonMeta package is stale/unmaintained — prefer statsmodels or metafor. Runs locally via `uv run python` / `Rscript`; no API key."
 metadata:
     skill-author: AlterLab
@@ -38,6 +38,10 @@ THE POOLED EFFECT IS ONLY AS GOOD AS ITS HETEROGENEITY STORY AND ITS PUBLICATION
 | A single study's descriptive/inferential statistics | `alterlab-statistical-analysis` | One dataset, not cross-study synthesis. |
 | Fitting one regression / GLM | `alterlab-statsmodels` | Not effect-size pooling. |
 | Whether the review question/design is sound | `alterlab-ssci-design-gate` | Design routing. |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-deep-research`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+**Running the code.** In Claude Code, run analysis code in a throwaway environment instead of installing packages: `uv run --python ">=3.11" --with "statsmodels>=0.14" --with pandas python meta.py`. This needs no install approval and leaves the user's environment untouched. If `uv` or the network is unavailable, say so and hand over the script; never report results you did not compute.
 
 ## Fixed-effect vs random-effects (the first decision)
 

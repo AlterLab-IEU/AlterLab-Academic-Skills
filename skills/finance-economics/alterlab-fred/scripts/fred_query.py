@@ -1,7 +1,10 @@
 """
-FRED API Query Module
+FRED API Query Module (optional key)
 
-Provides a unified interface to query the Federal Reserve Economic Data (FRED) API.
+Client for the FRED JSON API, which needs a free FRED_API_KEY. It adds filtered search, full
+metadata, categories, releases, tags, vintage-date lists and GeoFRED to what the keyless
+module scripts/fred_keyless.py already gives without a key (series data, transformations,
+frequency aggregation, ALFRED vintages, site search, basic metadata).
 """
 
 import os
@@ -42,7 +45,9 @@ class FREDQuery:
         self.api_key = api_key or os.environ.get("FRED_API_KEY")
         if not self.api_key:
             raise ValueError(
-                "API key required. Set FRED_API_KEY environment variable or pass api_key parameter."
+                "The FRED JSON API needs FRED_API_KEY (set the environment variable or pass "
+                "api_key). Without a key, use scripts/fred_keyless.py: series data, "
+                "transformations, frequency aggregation, ALFRED vintages and site search."
             )
 
         self.cache_ttl = cache_ttl
@@ -606,4 +611,11 @@ if __name__ == "__main__":
         gdp = fred.get_observations("GDP", limit=5, sort_order="desc")
         print(json.dumps(gdp, indent=2))
     else:
-        print("Set FRED_API_KEY environment variable to test")
+        import sys
+        from fred_keyless import observations
+
+        print("FRED_API_KEY not set: using the keyless CSV route (scripts/fred_keyless.py)",
+              file=sys.stderr)
+        print("Fetching GDP data...")
+        for date, value in observations("GDP")[-5:]:
+            print(f"{date}: {value}")

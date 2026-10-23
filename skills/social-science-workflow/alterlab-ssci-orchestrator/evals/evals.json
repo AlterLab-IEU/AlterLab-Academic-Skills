@@ -13,11 +13,13 @@
     },
     {
       "id": "run-methods-pipeline",
+      "files": ["fixtures/study_protocol.md"],
       "prompt": "Can you run a full methodology review on my study end to end and tell me at each stage whether I'm cleared to proceed?",
       "expected_output": "Invokes alterlab-ssci-orchestrator: runs the stage-gated pipeline, emitting a PASS / WARN / BLOCK verdict per gate and refusing to advance past a fail-closed BLOCK (design-gate, inference-gate).",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Produces a per-gate PASS/WARN/BLOCK verdict and holds the pipeline at a fail-closed gate until it is resolved." }
+        { "type": "behavior", "value": "Produces a per-gate PASS/WARN/BLOCK verdict and holds the pipeline at a fail-closed gate until it is resolved." },
+        { "type": "behavior", "value": "Blocks the causal claim at a fail-closed gate: a one-wave observational survey with no identifying assumption cannot support 'social media use causes loneliness', and the pipeline does not clear the study to proceed as written." }
       ]
     },
     {

@@ -196,7 +196,8 @@ xelatex treatment_plan.tex
 
 ### Custom Title Page
 
-The package automatically formats the title with a professional blue header:
+`\maketitle` prints the document's own `\title`, `\author` (used as the subtitle line) and
+`\date` in a blue box; set all three for every plan:
 
 ```latex
 \title{\textbf{Individualized Diabetes Treatment Plan}\\
@@ -278,11 +279,11 @@ Uncomment and modify in the style file:
 
 ### Header/Footer Customization
 
-Modify in the style file:
+Set the running header in the document preamble (defaults: "Treatment Plan" and empty):
 
 ```latex
-\fancyhead[L]{\color{primaryblue}\sffamily\small\textbf{Treatment Plan Title}}
-\fancyhead[R]{\color{darkgray}\sffamily\small Patient Info}
+\renewcommand{\planheadertitle}{Depression Treatment Plan}
+\renewcommand{\planheaderinfo}{De-identified patient, age 30}
 ```
 
 ## Style Package Download and Installation

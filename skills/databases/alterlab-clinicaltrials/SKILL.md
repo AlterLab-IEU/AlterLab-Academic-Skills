@@ -2,7 +2,7 @@
 name: alterlab-clinicaltrials
 description: Query ClinicalTrials.gov via its API v2 to search trials by condition, drug, location, recruitment status, or phase and retrieve trial details by NCT ID. Use when finding interventional or observational studies, checking trial status and eligibility for patient matching, or exporting clinical trial records for research. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(python3:*)
 compatibility: Keyless ClinicalTrials.gov API v2 (no authentication required)
 metadata:
     skill-author: AlterLab
@@ -35,8 +35,11 @@ This skill should be used when working with clinical trial data in scenarios suc
 |----------|-------------|
 | Published trial results, RCT papers, or meta-analysis literature | `alterlab-pubmed` |
 | FDA approvals, drug labels, adverse-event (FAERS) or recall data | `alterlab-fda` |
+| Drug mechanism of action, targets, or drug–drug interactions (pharmacology, not trials) | `alterlab-drugbank` |
 | Writing a CSR, SAE narrative, or other trial report document | `alterlab-clinical-reports` |
 | Evidence-graded treatment recommendations / decision algorithms | `alterlab-clinical-decision` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pubmed`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Quick Start
 

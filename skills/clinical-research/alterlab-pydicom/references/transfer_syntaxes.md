@@ -267,30 +267,31 @@ import them directly — `Dataset.compress()` selects an encoder for you.
 
 ## Installing Compression Handlers
 
-Different transfer syntaxes require different Python packages:
+Different transfer syntaxes require different Python packages. Add them to the run instead of
+installing them: `uv run --python ">=3.11" --with "pydicom>=3.0" --with <package> ... python script.py`.
 
 ### JPEG Baseline/Extended
 ```bash
-uv pip install pylibjpeg pylibjpeg-libjpeg
+--with pylibjpeg --with pylibjpeg-libjpeg
 # Or
-uv pip install pillow
+--with pillow
 ```
 
 ### JPEG Lossless/JPEG-LS
 ```bash
-uv pip install pylibjpeg pylibjpeg-libjpeg   # decode
+--with pylibjpeg --with pylibjpeg-libjpeg   # decode
 # Or
-uv pip install python-gdcm                   # decode
-uv pip install pyjpegls                      # JPEG-LS decode + encode
+--with python-gdcm                          # decode
+--with pyjpegls                             # JPEG-LS decode + encode
 ```
 
 ### JPEG 2000
 ```bash
-uv pip install pylibjpeg pylibjpeg-openjpeg
+--with pylibjpeg --with pylibjpeg-openjpeg
 # Or
-uv pip install python-gdcm
+--with python-gdcm
 # Or
-uv pip install pillow
+--with pillow
 ```
 
 ### RLE
@@ -298,8 +299,9 @@ No additional packages needed - built into pydicom
 
 ### Comprehensive Installation
 ```bash
-# Install all common handlers
-uv pip install pylibjpeg pylibjpeg-libjpeg pylibjpeg-openjpeg python-gdcm
+# All common handlers in one run
+uv run --python ">=3.11" --with "pydicom>=3.0" --with pylibjpeg --with pylibjpeg-libjpeg \
+    --with pylibjpeg-openjpeg --with python-gdcm python script.py
 ```
 
 ## Checking Available Decoder Plugins (pydicom 3.x)

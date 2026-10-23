@@ -18,7 +18,8 @@
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "pLDDT" },
-        { "type": "behavior", "value": "Distinguishes pLDDT (per-residue confidence) from PAE (relative domain confidence) and applies the documented thresholds." }
+        { "type": "behavior", "value": "Distinguishes pLDDT (per-residue confidence) from PAE (relative domain confidence) and applies the documented thresholds." },
+        { "type": "behavior", "value": "Reports from the fetched files (AlphaFold DB v6) that the DNA-binding domain (about residues 95-290) is very high confidence (pLDDT above 90) and the tetramerization helix (about 325-355) is confident, that the N-terminal region (about 1-93) and C-terminal tail (about 358-393) are low confidence (mean pLDDT below 50), and that PAE between the DNA-binding and tetramerization domains is high (about 20 Å), so their relative placement is not reliable." }
       ]
     },
     {

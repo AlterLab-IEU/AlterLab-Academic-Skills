@@ -37,6 +37,8 @@ This skill should be used when:
 | Spatial transcriptomics — Visium/Xenium/MERFISH neighborhood and image analysis | `alterlab-squidpy-spatial` |
 | Bulk RNA-seq differential expression from a count matrix | `alterlab-pydeseq2` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-anndata`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Quick Start
 
 ### Basic Import and Setup

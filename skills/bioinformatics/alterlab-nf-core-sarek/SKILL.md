@@ -50,6 +50,8 @@ Trigger this skill when the user wants to:
 | Spatial transcriptomics neighborhood/SVG analysis | `alterlab-squidpy-spatial` |
 | Differential **expression** stats from counts | `alterlab-pydeseq2` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pysam`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 If the user has no workflow engine and cannot install Nextflow + containers,
 do **not** refuse — fall back to the **manual GATK4 recipe** (below /
 `references/manual_gatk4.md`).
@@ -90,7 +92,7 @@ Use the helper to generate a valid sheet from a FASTQ directory (it pairs R1/R2,
 fills `lane`, and validates the schema before you burn compute):
 
 ```bash
-uv run python skills/bioinformatics/alterlab-nf-core-sarek/scripts/make_samplesheet.py \
+uv run python scripts/make_samplesheet.py \
     --fastq-dir ./fastq --patient PATIENT_01 --sample TUMOR_01 \
     --status 1 --sex XY --out samplesheet.csv
 ```

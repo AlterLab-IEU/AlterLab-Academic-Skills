@@ -44,6 +44,8 @@ The output is documentation support. Certification decisions come from an accred
 | IRB/ethics applications and informed-consent documents for a device study | `alterlab-research-ethics` |
 | An individual patient's care or treatment plan | `alterlab-treatment-plans` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-fda`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Regulatory Status (checked September 2026)
 
 - **ISO 13485:2016** remains the current edition; ISO/TC 210's 2025 systematic review confirmed it without amendment. Documents written against the 2016 clauses need no edition change.
@@ -72,7 +74,8 @@ See `references/quick-reference.md` for the regional summary.
 
 3. **Review results:**
    - Identify which required procedures are present vs. missing. The script checks the 26 always-applicable documented procedures (it omits the conditional "when applicable" ones — design, installation, servicing, sterilization, etc. — to avoid false-negative gaps); the full set is "31" by convention. See `references/quick-reference.md` for the full list and counting note.
-   - Identify missing key documents (Quality Manual, MDF, etc.)
+   - The script matches keywords anywhere in a file ("design", "handling", "release", "work instruction"), so open each matched file before counting a procedure as present: a quality policy saying the company "designs" products is not a design-control procedure. Note drafts that are not yet approved.
+   - Identify missing key documents (Quality Manual, MDF, etc.); these are matched on the file name and title only, since SOPs routinely cite "the Quality Manual"
    - Calculate compliance percentage (reported against the 26 procedures the script tracks)
    - Prioritize missing documentation, including any conditional procedures that apply to this manufacturer
 

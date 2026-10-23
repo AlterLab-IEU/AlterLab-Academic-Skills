@@ -18,18 +18,23 @@ try:
     from PIL import Image
 except ImportError as e:
     print(f"Error: Required package not installed: {e}")
-    print("Install with: pip install pydicom pillow numpy")
+    print('Run with: uv run --python ">=3.11" --with "pydicom>=3.0" --with pillow --with numpy '
+          'python dicom_to_image.py ...')
     sys.exit(1)
 
 
 def apply_windowing(pixel_array, ds):
-    """Apply VOI LUT windowing if available."""
+    """Apply the modality LUT (rescale to e.g. HU), then VOI LUT windowing if available.
+
+    Window Center/Width are defined on modality values, so windowing raw stored values of a
+    CT with RescaleIntercept -1024 would shift the window by 1024 HU.
+    """
     try:
         try:
-            from pydicom.pixels import apply_voi_lut  # pydicom >= 3.0
+            from pydicom.pixels import apply_modality_lut, apply_voi_lut  # pydicom >= 3.0
         except ImportError:
-            from pydicom.pixel_data_handlers.util import apply_voi_lut  # pydicom 2.x
-        return apply_voi_lut(pixel_array, ds)
+            from pydicom.pixel_data_handlers.util import apply_modality_lut, apply_voi_lut  # 2.x
+        return apply_voi_lut(apply_modality_lut(pixel_array, ds), ds)
     except (ImportError, AttributeError):
         return pixel_array
 

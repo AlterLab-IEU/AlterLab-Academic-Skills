@@ -1,5 +1,10 @@
 # Paper2Video: Presentation Video Generation
 
+> **Optional route.** This file documents the third-party Paper2All pipeline, which needs model
+> API keys (`OPENROUTER_API_KEY`, `OPENAI_API_KEY`) and sends paper content to the providers.
+> The default, keyless route — Claude reads the paper and builds the outputs with the bundled
+> scripts — is in `keyless_workflow.md`.
+
 ## Overview
 
 Paper2Video generates presentation videos from LaTeX sources, transforming academic papers into engaging video presentations. The system processes papers through multiple specialized modules to create professional presentation videos complete with slides, narration, and optional talking-head video.

@@ -65,6 +65,8 @@ after an award; or understanding how BİDEB support combines with an ARDEB proje
 | Whether a journal is currently in **TR Dizin** (for Tablo 1 counting) | `alterlab-trdizin` |
 | Non-TÜBİTAK funders (NSF, NIH and similar) or generic proposal craft | `alterlab-research-grants` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-tubitak-proposal`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ---
 
 ## Framework 1 — Programme Chooser
@@ -116,15 +118,15 @@ prints the gates it cannot compute as a "verify by hand" list. Its verdicts are
 
 ```bash
 # Screen a profile (JSON keys are documented in the script's docstring)
-uv run python skills/turkish-academia/alterlab-tubitak-bideb/scripts/bideb_prescreen.py \
+uv run python scripts/bideb_prescreen.py \
     screen profile.json --programs 2218,2219
 
 # Which 2026 period fits a guest arrival (2221) or an event start (2224a, 2223b)?
-uv run python skills/turkish-academia/alterlab-tubitak-bideb/scripts/bideb_prescreen.py \
+uv run python scripts/bideb_prescreen.py \
     timing --program 2224a --date 2027-03-10
 
 # Offline self-test
-uv run python skills/turkish-academia/alterlab-tubitak-bideb/scripts/bideb_prescreen.py --self-test
+uv run python scripts/bideb_prescreen.py --self-test
 ```
 
 Minimal profile for a domestic-postdoc question:

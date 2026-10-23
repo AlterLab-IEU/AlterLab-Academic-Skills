@@ -33,12 +33,14 @@
     },
     {
       "id": "multiple-treatment-contrasts",
+      "files": ["fixtures/counts.csv", "fixtures/metadata.csv"],
       "prompt": "My experiment has three treatment groups plus a control. I want to test each treatment against the control separately and count significant genes for each.",
-      "expected_output": "Invokes alterlab-pydeseq2. Fits one DeseqDataSet(design='~condition') with dds.deseq2(), then loops over treatments running DeseqStats(contrast=['condition', treatment, 'control']).summary() per group and counts results_df[padj < 0.05].",
+      "expected_output": "Invokes alterlab-pydeseq2. Fits one DeseqDataSet(design='~condition') on fixtures/counts.csv + fixtures/metadata.csv (conditions control, treatmentA, treatmentB, treatmentC) with dds.deseq2(), then loops over the three treatments running DeseqStats(contrast=['condition', treatment, 'control']).summary() per group and counts results_df[padj < 0.05]. The data has ~20 strongly differential genes per treatment, so each contrast should return roughly that many significant genes.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "contrast" },
-        { "type": "behavior", "value": "Reuses one fitted dds and runs per-treatment contrasts against control." }
+        { "type": "behavior", "value": "Reuses one fitted dds and runs per-treatment contrasts against control." },
+        { "type": "behavior", "value": "Reports a separate count of significant genes (padj < 0.05) for each of the three treatment-vs-control contrasts (treatmentA, treatmentB, treatmentC)." }
       ]
     },
     {

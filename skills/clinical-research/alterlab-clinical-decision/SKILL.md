@@ -111,6 +111,8 @@ Use this skill when you need to:
 | Searching ClinicalTrials.gov for trials or pulling a trial record by NCT ID | `alterlab-clinicaltrials` |
 | Training a machine-learning risk-prediction model on EHR data | `alterlab-pyhealth` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-treatment-plans`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Document Structure
 
 Start every CDS document with a one-page executive summary, before the table of contents or detailed sections. Readers in medical affairs and guideline panels decide from page 1 whether and how to read on, so it has to carry the key results on its own.
@@ -439,6 +441,8 @@ See the `scripts/` directory for analysis and visualization tools:
 - `create_cohort_tables.py` - Demographics, biomarker frequency, and outcomes tables
 - `build_decision_tree.py` - TikZ flowchart generation for treatment algorithms
 - `biomarker_classifier.py` - Patient stratification algorithms by molecular subtype
-- `validate_cds_document.py` - Quality and compliance checks (HIPAA, statistical reporting standards)
+- `validate_cds_document.py` - Quality and compliance checks (HIPAA, statistical reporting standards); pass `--type cohort` or `--type recommendation`, because the default guesses the type from the words "cohort" and "recommendation" and a cohort analysis with a recommendations box gets the recommendation-report section check too
+
+Run them without an install step, e.g. `uv run --python ">=3.11" --with lifelines --with matplotlib python scripts/generate_survival_analysis.py cohort.csv --time-col pfs_months --event-col pfs_event --group-col arm --reference-group Control` (the median's 95% CI is in months; `--reference-group` sets the HR's denominator).
 
 Part of the AlterLab Academic Skills suite.

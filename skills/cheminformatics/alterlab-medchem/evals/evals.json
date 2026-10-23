@@ -3,26 +3,32 @@
   "evals": [
     {
       "id": "library-triage-rules",
-      "prompt": "Triage my 5000-compound library: keep only molecules that pass Rule of Five and Veber, and drop anything with a known structural alert. Give me back the clean set.",
-      "expected_output": "Invokes alterlab-medchem: builds mc.rules.RuleFilters(rule_list=['rule_of_five','rule_of_veber']) and applies it with n_jobs=-1/progress=True, then runs mc.structural.CommonAlertsFilters to flag alerts, and combines pass-rules AND not-has-alerts into a filtered DataFrame for the clean set.",
+      "files": ["fixtures/compound_library.csv"],
+      "prompt": "Triage my compound library in compound_library.csv (SMILES in the `smiles` column): keep only molecules that pass Rule of Five and Veber, and drop anything with a known structural alert. Give me back the clean set.",
+      "expected_output": "Invokes alterlab-medchem: builds mc.rules.RuleFilters(rule_list=['rule_of_five','rule_of_veber']) and applies it with n_jobs=-1/progress=True, then runs mc.structural.CommonAlertsFilters to flag alerts, and combines pass-rules AND not-has-alerts into a filtered DataFrame for the clean set. On the attached 36-compound library this keeps 23 (e.g. aspirin, caffeine, ibuprofen, diclofenac), drops atorvastatin and sorafenib for failing Rule of Five, and drops benzylidene_rhodanine and N_phenylmaleimide for structural alerts.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Applies medchem rule filters (Ro5, Veber) and structural alerts with parallel n_jobs, then intersects the pass conditions." }
+        { "type": "behavior", "value": "Applies medchem rule filters (Ro5, Veber) and structural alerts with parallel n_jobs, then intersects the pass conditions." },
+        { "type": "behavior", "value": "On the attached compound_library.csv, the clean set keeps Rule-of-Five/Veber passers with no structural alert (e.g. aspirin, caffeine, ibuprofen) and excludes atorvastatin and sorafenib (fail Rule of Five) and the benzylidene-rhodanine and N-phenylmaleimide (structural alerts)." }
       ]
     },
     {
       "id": "pains-flagging",
-      "prompt": "Before I trust these screening hits, flag any PAINS or reactive Michael-acceptor groups so I don't chase assay artifacts.",
-      "expected_output": "Invokes alterlab-medchem: applies PAINS filtering (CommonAlertsFilters with the PAINS set, or HASALERT(\"pains\") in the query DSL) and flags reactive/Michael-acceptor motifs via the structural-alert sets (common alerts / NIBR) or the electrophilic-warhead ChemicalGroup catalogs (there is no 'michael_acceptors' group), returning per-molecule flags so the user can deprioritize likely assay-interference artifacts.",
+      "files": ["fixtures/compound_library.csv"],
+      "prompt": "Before I trust these screening hits in compound_library.csv, flag any PAINS or reactive Michael-acceptor groups so I don't chase assay artifacts.",
+      "expected_output": "Invokes alterlab-medchem: applies PAINS filtering (CommonAlertsFilters with the PAINS set, or HASALERT(\"pains\") in the query DSL) and flags reactive/Michael-acceptor motifs via the structural-alert sets (common alerts / NIBR) or the electrophilic-warhead ChemicalGroup catalogs (there is no 'michael_acceptors' group), returning per-molecule flags so the user can deprioritize likely assay-interference artifacts. On the attached library PAINS flags quercetin and the benzylidene-rhodanine, and the acrylanilide (acrylate) and N-phenylmaleimide (maleimide) are flagged as reactive electrophiles.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "PAINS" }
+        { "type": "output_contains", "value": "PAINS" },
+        { "type": "behavior", "value": "On the attached compound_library.csv, flags quercetin and the benzylidene-rhodanine as PAINS and flags the acrylanilide and N-phenylmaleimide as reactive Michael-acceptor/electrophilic motifs via the structural-alert sets, returning per-molecule flags." }
       ]
     },
     {
       "id": "lilly-nibr-lead-opt",
-      "prompt": "For lead optimization, run the NIBR filter set and Lilly demerits on my candidate list and tell me which ones exceed 100 demerits.",
-      "expected_output": "Invokes alterlab-medchem: applies mc.structural.NIBRFilters and the Lilly demerits filter (mc.functional.lilly_demerit_filter, which needs the Lilly MedChem Rules tools installed via `medchem install-lilly`) with max_demerits=100 to honor the user's threshold (noting medchem's default ceiling is 160), reporting which molecules are rejected, for stricter lead-optimization triage.",
+      "files": ["fixtures/compound_library.csv"],
+      "requires": ["cmd:iwdemerit"],
+      "prompt": "For lead optimization, run the NIBR filter set and Lilly demerits on my candidate list in compound_library.csv and tell me which ones exceed 100 demerits.",
+      "expected_output": "Invokes alterlab-medchem: applies mc.structural.NIBRFilters (on the attached library this flags quercetin, genistein, N_phenylmaleimide, stearic_acid, catechol and hydroquinone) and the Lilly demerits filter (mc.functional.lilly_demerit_filter, which needs the Lilly MedChem Rules tools installed via `medchem install-lilly`) with max_demerits=100 to honor the user's threshold (noting medchem's default ceiling is 160), reporting which molecules are rejected, for stricter lead-optimization triage.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Uses NIBRFilters plus the Lilly demerit filter (via medchem.functional.lilly_demerit_filter, flagging the external-binary requirement) and applies the 100-demerit threshold the user asked for." }
@@ -30,11 +36,13 @@
     },
     {
       "id": "complexity-and-constraints",
-      "prompt": "Filter my set to molecular weight 200-500, logP between -2 and 5, TPSA under 140, and also drop anything with high Bertz molecular complexity.",
-      "expected_output": "Invokes alterlab-medchem: enforces the MW/logP/TPSA property windows via the query DSL HASPROP (or mc.rules.in_range over computed descriptors, since medchem has no all-in-one Constraints property object) and applies the Bertz complexity filter (mc.complexity.ComplexityFilter / mc.functional.complexity_filter with complexity_metric='bertz' and a percentile limit), returning molecules that satisfy all conditions.",
+      "files": ["fixtures/compound_library.csv"],
+      "prompt": "Filter my set in compound_library.csv to molecular weight 200-500, logP between -2 and 5, TPSA under 140, and also drop anything with high Bertz molecular complexity.",
+      "expected_output": "Invokes alterlab-medchem: enforces the MW/logP/TPSA property windows via the query DSL HASPROP (or mc.rules.in_range over computed descriptors, since medchem has no all-in-one Constraints property object) and applies the Bertz complexity filter (mc.complexity.ComplexityFilter / mc.functional.complexity_filter with complexity_metric='bertz' and a percentile limit), returning molecules that satisfy all conditions. On the attached library, ibuprofen, naproxen and diclofenac fall inside the window while metformin, aspirin and caffeine are excluded for MW below 200 and atorvastatin and sorafenib for MW above 500.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Enforces the MW/logP/TPSA windows via HASPROP or in_range (NOT a fabricated Constraints(mw_range=...) object) and applies the Bertz complexity filter via ComplexityFilter/complexity_filter with complexity_metric='bertz'." }
+        { "type": "behavior", "value": "Enforces the MW/logP/TPSA windows via HASPROP or in_range (NOT a fabricated Constraints(mw_range=...) object) and applies the Bertz complexity filter via ComplexityFilter/complexity_filter with complexity_metric='bertz'." },
+        { "type": "behavior", "value": "On the attached compound_library.csv, keeps compounds inside MW 200-500 / logP -2..5 / TPSA<140 (e.g. ibuprofen, naproxen, diclofenac) and excludes metformin, aspirin and caffeine (MW below 200) and atorvastatin and sorafenib (MW above 500)." }
       ]
     },
     {

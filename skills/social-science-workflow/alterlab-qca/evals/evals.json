@@ -3,6 +3,8 @@
   "evals": [
     {
       "id": "fsqca-sufficiency",
+      "requires": ["cmd:Rscript"],
+      "files": ["fixtures/qca_cases.csv"],
       "prompt": "I have 22 cases and want to find which combinations of conditions are sufficient for policy success using fuzzy-set QCA.",
       "expected_output": "Invokes alterlab-qca: calibrates conditions into fuzzy membership, builds a truth table, minimizes to conservative/parsimonious/intermediate solutions with consistency and coverage, and (because there is no maintained Python library) shells to R's QCA package via Rscript.",
       "assertions": [
@@ -22,6 +24,7 @@
     },
     {
       "id": "necessary-sufficient",
+      "requires": ["cmd:Rscript"],
       "prompt": "Across my configurational dataset, which conditions are necessary and which combinations are sufficient for the outcome?",
       "expected_output": "Invokes alterlab-qca: tests necessity separately (superSubset) before minimizing for sufficiency, and reports set-relation fit (inclN/RoN for necessity, inclS/PRI/covS/covU for sufficiency) rather than net effects.",
       "assertions": [

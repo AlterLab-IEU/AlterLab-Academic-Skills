@@ -30,11 +30,13 @@
     },
     {
       "id": "audit-venue-list-before-dossier",
+      "files": ["fixtures/dergilerim.md"],
       "prompt": "Here are five journals I've published in. Can you check which of them are currently in TR Dizin so I know which publications count as national-indexed venues?",
       "expected_output": "Invokes alterlab-trdizin to run a journal-status check per venue via scripts/query_trdizin.py journal, returning a per-journal table of current TR Dizin status (active coverage years vs rejected) confirmed by ISSN. Reports only indexing status and explicitly does not compute career points — for doçentlik eligibility it routes to alterlab-docentlik-eligibility and for akademik teşvik scoring to alterlab-akademik-tesvik.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Produces a per-journal current-status table from the TR Dizin API and explicitly defers point/score computation to alterlab-docentlik-eligibility / alterlab-akademik-tesvik." }
+        { "type": "behavior", "value": "Produces a per-journal current-status table from the TR Dizin API and explicitly defers point/score computation to alterlab-docentlik-eligibility / alterlab-akademik-tesvik." },
+        { "type": "behavior", "value": "Reports a current TR Dizin status for each of the five listed journals, matched by ISSN or e-ISSN, without skipping any." }
       ]
     },
     {

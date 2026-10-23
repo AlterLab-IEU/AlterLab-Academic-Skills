@@ -1,0 +1,20 @@
+{
+  "name": "qfilter",
+  "title": "FASTQ mean-quality filter",
+  "dxapi": "1.0.0",
+  "version": "0.0.1",
+  "inputSpec": [
+    {"name": "reads", "class": "File", "patterns": ["*.fastq", "*.fastq.gz"]},
+    {"name": "min_quality", "class": "int", "default": 30}
+  ],
+  "outputSpec": [
+    {"name": "filtered_reads", "class": "file"}
+  ],
+  "runSpec": {
+    "interpreter": "python2.7",
+    "file": "src/qfilter.py",
+    "distribution": "Ubuntu",
+    "release": "16.04",
+    "timeoutPolicy": {"*": {"hours": 4}}
+  }
+}

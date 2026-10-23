@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless UniProt REST API at rest.uniprot.org (no authentication required); verified against UniProt release 2026_03
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.2"
+    last_updated: "2026-10-23"
 ---
 
 # UniProt Database
@@ -37,6 +37,8 @@ This skill should be used when:
 | Protein-protein interaction networks | `alterlab-string-db` |
 | Domain architecture and family classification | `alterlab-interpro` |
 | Sequence similarity search (BLAST) | `alterlab-blast` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pdb`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 
@@ -90,9 +92,12 @@ Map protein identifiers between different database systems and retrieve multiple
 2. Poll job status: `https://rest.uniprot.org/idmapping/status/{jobId}`
 3. Retrieve results: `https://rest.uniprot.org/idmapping/results/{jobId}`
 
-**Two non-obvious gotchas (both handled in `scripts/uniprot_client.py`):**
+**Non-obvious gotchas (the first two are handled in `scripts/uniprot_client.py`):**
 - The status endpoint returns `{"jobStatus":"RUNNING"}` then `{"jobStatus":"FINISHED"}` (a finished job also 303-redirects to the results URL). It does NOT return a `results`/`failedIds` key, so poll on `jobStatus == "FINISHED"`, not on the presence of `results`.
 - Results are **paginated** (default `size=25`, max `500`). The first page is only part of a large mapping; follow the `next` Link **response header** (`response.links["next"]` in `requests`) until it is gone. The same `next`-Link pagination applies to the `/uniprotkb/search` endpoint — the JSON body carries only `results`, never a `next` key.
+- **Strip version suffixes from Ensembl IDs** before submitting: `from=Ensembl` matches only unversioned IDs, so
+  `ENSG00000139618.17` finishes with no results and no error, while `ENSG00000139618` maps to P51587
+  (checked 2026-10-23). Report IDs that still map to nothing (e.g. non-coding genes such as MALAT1) as unmapped.
 
 **Supported databases for mapping:**
 - UniProtKB AC/ID

@@ -1,6 +1,6 @@
 # USPTO Usage Examples
 
-> **Status (verified 2026-09-23).** PEDS, the Assignment Search API, and the PatentsView PatentSearch API are offline (see the status table in `SKILL.md`). The examples below use the Open Data Portal (`https://api.uspto.gov`, `X-API-KEY` header, `USPTO_ODP_API_KEY`) and TSDR (`USPTO-API-KEY` header, `USPTO_TSDR_API_KEY`).
+> **Status (verified 2026-09-23).** PEDS, the Assignment Search API, and the PatentsView PatentSearch API are offline (see the status table in `SKILL.md`). The examples below use the **optional keyed** Open Data Portal (`https://api.uspto.gov`, `X-API-KEY` header, `USPTO_ODP_API_KEY`) and TSDR API (`USPTO-API-KEY` header, `USPTO_TSDR_API_KEY`). Without keys, use `scripts/uspto_public.py` (Patent Public Search, TSDR status pages) and Google Patents legal events — see "Keyless Routes" in `SKILL.md`.
 
 Worked Python examples for the helper scripts and direct API calls, grouped by
 task. For full API references see `patentsearch_api.md`, `peds_api.md`,

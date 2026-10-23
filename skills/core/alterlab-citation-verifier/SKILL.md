@@ -6,8 +6,9 @@ allowed-tools: Read Write Edit Bash(python:*) Bash WebSearch WebFetch
 compatibility: "No API key required — stdlib Python (`requests` optional) via `uv run python` against Crossref, OpenAlex, Semantic Scholar, arXiv, and the doi.org Handle API; optional OPENALEX_API_KEY / S2_API_KEY only raise rate limits; offline runs return 'unverified' verdicts"
 metadata:
   skill-author: AlterLab
-  version: "1.1.0"
-  last_updated: "2026-09-23"
+  version: "1.2.2"
+  last_updated: "2026-10-22"
+  credentials: "optional: OPENALEX_API_KEY (free key; gives OpenAlex searches their own daily budget instead of the small per-IP keyless one), S2_API_KEY or SEMANTIC_SCHOLAR_API_KEY (dedicated 1 request/s instead of the shared keyless Semantic Scholar pool)"
   depends_on: "alterlab-research-pipeline (shares the integrity taxonomy), alterlab-deep-research"
 ---
 
@@ -59,9 +60,11 @@ explicitly if the network or a source was unavailable.
 | Full pre-/post-review integrity gate (citation context, data, originality) | `alterlab-research-pipeline` |
 | Holistic peer review of a manuscript with an editorial decision | `alterlab-paper-reviewer` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-paper-writer`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 Grading source quality or predatory venues belongs to `alterlab-deep-research`
 (`source_verification_agent`). For a whole-manuscript audit in Claude Code where every
-flag should be re-checked by independent agents, offer the packaged
+flag should be re-checked by separate agents, offer the packaged
 `/alterlab-workflows:citation-audit` workflow (`alterlab-research-workflows`, roughly
 10–40 agents), which runs this skill's checks at scale.
 
@@ -75,6 +78,9 @@ For each bibliography entry the script:
    references, including one-reference-per-line pastes), extracting title, authors,
    year, venue, DOI, and arXiv ID. A full reference that merely contains a DOI stays
    free-form, so its title and authors are kept for the Identifier Hijacking check.
+   Every detected entry ends up parsed, **rejected** (malformed — with line, key, and
+   reason) or **unsupported**; see `input_accounting`. Mixed BibTeX + free-form/DOI
+   input is handled piecewise, and a broken entry cannot swallow the ones after it.
 2. **Resolves identifiers** — looks up the cited DOI/arXiv ID directly when present,
    and asks the doi.org Handle API whether a DOI is registered with any agency.
 3. **Searches by title + first author + year** as a fallback across the sources.
@@ -148,6 +154,9 @@ evidence. When the deciding sources were rate-limited or down, the entry is
 - **UNVERIFIED** — nothing SERIOUS was found but at least one entry could not be
   checked (e.g. an offline run or rate-limited sources). This is **not** a pass —
   re-run with network access or an API key, or resolve those entries manually.
+- **PARTIAL** — at least one detected entry was rejected, unsupported, or left
+  unprocessed (`status: partial`, exit code 3). Not a pass: fix the entries listed in
+  `input_accounting` and re-run. FAIL still takes precedence.
 
 ---
 
@@ -162,7 +171,7 @@ with `--format bibtex|doi|freeform` if detection is wrong.
 ### 2. Run the verifier
 
 ```bash
-uv run python skills/core/alterlab-citation-verifier/scripts/verify_citations.py \
+uv run python scripts/verify_citations.py \
     path/to/references.bib \
     --mailto <contact-email> \
     --threshold 0.70 \
@@ -170,12 +179,17 @@ uv run python skills/core/alterlab-citation-verifier/scripts/verify_citations.py
 ```
 
 - `path/to/references.bib` may also be `-` (stdin) or inline text.
+- `--mailto` is optional: the user's own contact email for Crossref's polite pool (or set
+  `ALTERLAB_CONTACT_EMAIL`). Without it no address is sent and Crossref's public pool answers.
+  Never fill in an address the user did not give.
 - `--threshold` tunes the fuzzy title-match ratio (0..1; default 0.70).
 - `--offline` skips the network and emits `unverified` verdicts deliberately.
 - Omit `--out` to print the JSON report to stdout.
 - Optional: `export OPENALEX_API_KEY=…` (free key from openalex.org/settings/api)
   and/or `S2_API_KEY=…` before large bibliographies — keyless OpenAlex searches
   share a small per-IP daily budget, and the keyless Semantic Scholar pool is busy.
+- Exit codes: 0 complete, 2 bad input / nothing parseable, 3 partial (the report is
+  still written).
 
 The script uses `requests` if installed, else the Python stdlib (`urllib`), so it
 runs with no extra dependencies in a bare `uv` environment. Expect roughly 3–10 s
@@ -183,7 +197,9 @@ per entry: it spaces arXiv calls 3 s apart and backs off on rate limits.
 
 ### 3. Read the JSON and report
 
-Parse `summary.verdict` and the per-entry `verdict` codes. Present:
+Check `status` first: if it is `partial`, list `input_accounting.rejected_entries` and
+`unsupported_entries` with their line numbers and reasons before anything else. Then parse
+`summary.verdict` and the per-entry `verdict` codes. Present:
 
 1. The **headline verdict** and counts (`verdict_counts`, `severity_counts`).
 2. A **table of every non-`verified` entry** with its code, severity, and `detail`.
@@ -221,7 +237,7 @@ Failures are never swallowed into a pass:
 
 For each `unverified` entry, re-run with connectivity or a key if possible;
 otherwise look it up with the plugin's `crossref` / `openalex` MCP tools when they
-are available (setup: `mcp_setup.md` under `skills/core/references`), then fall back to WebSearch with
+are available (setup: `mcp_setup.md` in the alterlab-core plugin's `references/` folder), then fall back to WebSearch with
 three distinct queries (exact title in quotes; title + first author; first author +
 venue + year) and, for a DOI, open `https://doi.org/<DOI>`. If a record is found, report the verdict it supports
 and say it came from the fallback. If nothing is found, classify the entry as
@@ -239,15 +255,21 @@ Existence is half of the gate; a real paper cited for something it never said
 returns `support` / `contradict` / `unsupported`:
 
 ```bash
-uv run python skills/core/alterlab-citation-verifier/scripts/claim_faithfulness.py \
+uv run python scripts/claim_faithfulness.py \
     --claim "<the sentence as written>" --doi <doi>
 uv run python .../claim_faithfulness.py --input pairs.json --json        # batch
 uv run python .../claim_faithfulness.py --input pairs.json --tier llm --json
 ```
 
 - The default `heuristic` tier is lexical and deliberately abstains
-  (`unsupported`) rather than guessing `support`; it cannot see role reversals or
-  wrong numbers. The `llm` tier asks the model set by `ALTERLAB_MODEL` (see
+  (`unsupported`) rather than guessing `support`; it cannot see role reversals or a
+  changed population reliably, so its `support` carries taxonomy
+  `LEXICAL_MATCH_REQUIRES_REVIEW` — report it as "needs review", never as verified.
+  Guards make it abstain on a figure the abstract lacks, a reversed or unmatched comparison,
+  a population mismatch (people vs animals or cells; age group), and a definite or causal
+  claim against tentative or associational evidence. An llm-tier `support` is
+  `MODEL_JUDGED_SUPPORT_REQUIRES_REVIEW` — one model's reading, also not verification. The
+  script never returns VERIFIED for a claim. The `llm` tier asks the model set by `ALTERLAB_MODEL` (see
   `shared/model_env.md`) and falls back to the heuristic, flagged, if the `claude`
   CLI is unavailable.
 - It only sees the abstract (`abstract_only: true`). `unsupported` means the
@@ -263,9 +285,12 @@ uv run python .../claim_faithfulness.py --input pairs.json --tier llm --json
 ```json
 {
   "tool": "alterlab-citation-verifier/verify_citations.py",
-  "version": "1.1.0",
+  "version": "1.2.0",
+  "status": "complete",
+  "warning": null,
   "summary": {
     "total": 2,
+    "input": {"detected": 2, "parsed": 2, "rejected": 0, "unsupported": 0},
     "verdict": "FAIL",
     "verdict_counts": {"verified": 1, "TF": 1, "PAC": 0, "IH": 0, "PH": 0, "SH": 0, "unverified": 0},
     "severity_counts": {"SERIOUS": 1, "MEDIUM": 0, "MINOR": 0},
@@ -293,6 +318,8 @@ the Integrity Report schema fields of the same name, so the report can feed
 
 ## Self-Check Before Reporting
 
+- Is `status` complete? A PARTIAL run (rejected or unsupported entries) is never
+  reported as a pass.
 - Did the run reach the network, and which sources answered? If entries are
   `unverified`, name the failing sources from `source_status`; do not imply a pass.
 - Are there any `RETRACTED` flags? Surface them even on otherwise-`verified` entries.

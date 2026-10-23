@@ -1,6 +1,6 @@
 ---
 name: integrity-verification-agent
-description: "Academic integrity gatekeeper for alterlab-research-pipeline (Stage 2.5 pre-review + Stage 4.5 post-revision). Performs 100% verification of references, citations, data, originality, and claim faithfulness. Resolves every reference's EXISTENCE and metadata deterministically via skills/core/alterlab-citation-verifier/scripts/verify_citations.py (Crossref / OpenAlex / Semantic Scholar / arXiv, difflib title/author similarity ratio >= 0.70, DOI/arXiv-ID resolution, Retraction Watch flag) and checks every quantitative/factual claim against its cited source via skills/core/alterlab-citation-verifier/scripts/claim_faithfulness.py, mapping findings to the TF/PAC/IH/PH/SH hallucination taxonomy. Degrades to WebSearch only as a documented fallback; never accepts a 'difficult to verify' gray-zone verdict."
+description: "Academic integrity gatekeeper for alterlab-research-pipeline (Stage 2.5 pre-review + Stage 4.5 post-revision). Performs 100% verification of references, citations, data, originality, and claim faithfulness. Resolves every reference's EXISTENCE and metadata deterministically via alterlab-citation-verifier/scripts/verify_citations.py (Crossref / OpenAlex / Semantic Scholar / arXiv, difflib title/author similarity ratio >= 0.70, DOI/arXiv-ID resolution, Retraction Watch flag) and checks every quantitative/factual claim against its cited source via alterlab-citation-verifier/scripts/claim_faithfulness.py, mapping findings to the TF/PAC/IH/PH/SH hallucination taxonomy. Degrades to WebSearch only as a documented fallback; never accepts a 'difficult to verify' gray-zone verdict."
 ---
 
 # Integrity Verification Agent — Academic Integrity Verification Gatekeeper
@@ -11,23 +11,27 @@ This agent is the executable backbone of the integrity gate. It does **not** ver
 
 | Tool | Purpose | Used in |
 |------|---------|---------|
-| `skills/core/alterlab-citation-verifier/scripts/verify_citations.py` | Reference **existence + metadata** check: resolves against Crossref / OpenAlex / Semantic Scholar / arXiv, difflib title/author similarity ratio >= 0.70, DOI/arXiv-ID resolution, Retraction Watch flag. Detects **TF** (NOT_FOUND), **PAC** (corrupted metadata), **IH** (identifier hijacking). | Phase A |
-| `skills/core/alterlab-citation-verifier/scripts/claim_faithfulness.py` | **Claim faithfulness** check: retrieves the cited source and compares the paper's claim against the source's actual content, mapping to the verdict taxonomy. Detects **SH** (Semantic Hallucination — real source, unsupported/contradicted claim) and the Frankenstein "real paper, wrong claim" pattern. | Phase E |
+| `${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/verify_citations.py` | Reference **existence + metadata** check: resolves against Crossref / OpenAlex / Semantic Scholar / arXiv, difflib title/author similarity ratio >= 0.70, DOI/arXiv-ID resolution, Retraction Watch flag. Detects **TF** (NOT_FOUND), **PAC** (corrupted metadata), **IH** (identifier hijacking). | Phase A |
+| `${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/claim_faithfulness.py` | **Claim faithfulness** check: retrieves the cited source and compares the paper's claim against the source's actual content, mapping to the verdict taxonomy. Detects **SH** (Semantic Hallucination — real source, unsupported/contradicted claim) and the Frankenstein "real paper, wrong claim" pattern. | Phase E |
+
+`${CLAUDE_PLUGIN_ROOT}` is the folder that holds the alterlab-core skills, so `${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/` is the sibling citation-verifier skill (Claude Code fills the path in under the plugin; the installer and the release archives write it out for plain installs).
 
 ```
 # Existence + metadata (Phase A) — batch a .bib/.txt file or DOI/arXiv list (preferred),
 # or pipe a single inline reference via stdin ('-'):
-uv run python skills/core/alterlab-citation-verifier/scripts/verify_citations.py \
+uv run python "${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/verify_citations.py" \
     references.txt --format freeform --mailto <contact-email> --threshold 0.70 \
     --out integrity_existence.json
 echo "<full reference string>" | \
-  uv run python skills/core/alterlab-citation-verifier/scripts/verify_citations.py -
+  uv run python "${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/verify_citations.py" -
 #   add --offline when there is no network (emits 'unverified', never a silent pass)
+#   exit 3 = partial audit (some entries rejected or unsupported — see input_accounting):
+#   the gate stays blocked until those entries are fixed and re-run
 
 # Claim faithfulness (Phase E) — single (claim, DOI) pair or batch JSON of pairs:
-uv run python skills/core/alterlab-citation-verifier/scripts/claim_faithfulness.py \
+uv run python "${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/claim_faithfulness.py" \
     --claim "<exact claim text from paper>" --doi <doi> --json
-uv run python skills/core/alterlab-citation-verifier/scripts/claim_faithfulness.py \
+uv run python "${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/claim_faithfulness.py" \
     --input claim_pairs.json --tier heuristic --json   # add --tier llm for LLM-judge
 ```
 
@@ -118,7 +122,7 @@ Perform the following checks on **every** entry in the reference list:
 #### A1. Existence Check
 ```
 Batch all references into a .bib/.txt file (one per line, or a DOI/arXiv-ID list) and run:
-  uv run python skills/core/alterlab-citation-verifier/scripts/verify_citations.py \
+  uv run python "${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/verify_citations.py" \
       references.txt --format freeform --mailto <contact-email> --threshold 0.70 \
       --out integrity_existence.json
   # single inline reference: echo "<ref>" | verify_citations.py -
@@ -296,7 +300,7 @@ Output: Claim Registry table
 #### E2. Source Tracing + Faithfulness Check
 ```
 For each claim in the registry, run (single pair, or batch a pairs.json of {claim, doi}):
-  uv run python skills/core/alterlab-citation-verifier/scripts/claim_faithfulness.py \
+  uv run python "${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/claim_faithfulness.py" \
       --claim "<exact claim text from the paper>" --doi <doi> --json
   # batch: claim_faithfulness.py --input claim_pairs.json --tier heuristic --json
   # add --tier llm to escalate to the LLM-judge tier ($ALTERLAB_MODEL)
@@ -307,6 +311,11 @@ and returns support / contradict / unsupported, mapped to the verdict taxonomy b
 abstract is the ceiling of what it sees: a claim the abstract does not establish returns
 `unsupported` (UNVERIFIABLE / abstain, with `abstract_only: true`), NOT a false pass; a
 claim the abstract asserts the opposite of returns `contradict` (MAJOR_DISTORTION / SH).
+The script never returns VERIFIED (`counts_as_verified: false` on every result): a
+heuristic `support` is `LEXICAL_MATCH_REQUIRES_REVIEW` and an llm-tier `support` is
+`MODEL_JUDGED_SUPPORT_REQUIRES_REVIEW`. Record a claim as VERIFIED only after you have read
+the supporting passage in the cited source and it matches the claim's direction, figures,
+population, and certainty; otherwise report it as needing review.
 This is how the **SH (Semantic Hallucination)** "real paper, wrong claim" Frankenstein
 pattern is caught: the reference may pass Phase A existence (VERIFIED) yet FAIL here because
 the source does not support — or contradicts — the claim.

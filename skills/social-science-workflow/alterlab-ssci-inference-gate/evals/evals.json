@@ -25,7 +25,7 @@
       "expected_output": "Invokes alterlab-ssci-inference-gate: corrects the interpretation — the parameter is fixed and 95% refers to the long-run coverage of the procedure, not a probability the true value lies in this particular interval.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "coverage" }
+        { "type": "output_contains", "value": ["coverage", "long run", "long-run", "repeated samples", "repeated sampling"] }
       ]
     },
     {

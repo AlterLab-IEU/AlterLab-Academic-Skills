@@ -3,17 +3,19 @@
   "evals": [
     {
       "id": "consort-flowchart-journal",
+      "files": ["fixtures/trial_flow_counts.md"],
       "prompt": "I need a CONSORT participant flow diagram for my RCT going to a journal: 500 assessed for eligibility, 150 excluded, 350 randomized into a treatment arm (n=175) and control arm (n=175), with lost-to-follow-up and final analyzed counts.",
-      "expected_output": "Invokes alterlab-scientific-schematics: generates the CONSORT flowchart with Nano Banana 2 from the detailed quantitative prompt, with Gemini 3.1 Pro Preview reviewing scientific accuracy, clarity, labels, layout, and professional appearance against the journal document-type threshold (8.5/10) and smart iteration (max 2) that stops early once met. Outputs a versioned PNG in figures/ plus a JSON review log.",
+      "expected_output": "Invokes alterlab-scientific-schematics on its keyless path: draws the CONSORT 2010 flowchart as code (SVG, e.g. from assets/consort_template.svg, or TikZ) with every count copied from trial_flow_counts.md, renders it locally (generate_schematic.py / figure_tools.py, cairosvg) to a versioned PNG in figures/ plus a vector PDF/SVG, then reviews the render itself on scientific accuracy, clarity, labels, layout, and professional appearance against the journal document-type threshold (8.5/10), revising at most twice and recording scores in a JSON review log. No API key is asked for.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Builds the diagram via Nano Banana 2 and applies the journal-tier quality threshold (8.5/10) reviewed by Gemini 3.1 Pro Preview, not a hand-drawn or text diagram." }
+        { "type": "behavior", "value": "Builds the diagram as rendered code (SVG or TikZ to PNG/PDF) and applies the journal-tier quality threshold (8.5/10) in a review of the rendered image, not an ASCII or text-only diagram." },
+        { "type": "behavior", "value": "Uses the counts in the attached trial_flow_counts.md instead of asking for them or inventing them: exclusions 98 / 41 / 11, lost to follow-up 9 (treatment) and 12 (control), analysed 166 and 163." }
       ]
     },
     {
       "id": "transformer-architecture",
       "prompt": "Create a transformer encoder-decoder architecture diagram for my conference paper, showing the encoder stack on the left, decoder stack on the right, multi-head self-attention, masked attention, and the cross-attention connection between them.",
-      "expected_output": "Invokes alterlab-scientific-schematics: generates a neural-network architecture schematic with Nano Banana 2 using a layout-specific prompt (encoder left, decoder right, cross-attention link), reviewed by Gemini 3.1 Pro Preview against the conference threshold (8.0/10) with smart iteration up to 2. Output is a versioned PNG and review log.",
+      "expected_output": "Invokes alterlab-scientific-schematics on its keyless path: draws the transformer architecture as SVG or TikZ with the requested layout (encoder stack left, decoder stack right, N x frames, multi-head self-attention, masked self-attention in the decoder, and the encoder-to-decoder cross-attention connection), renders it locally, and reviews the render against the conference threshold (8.0/10) with up to 2 iterations. Output is a versioned PNG, a vector copy, the source, and a review log; no API key is needed.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "architecture" }
@@ -22,7 +24,7 @@
     {
       "id": "biological-pathway-poster",
       "prompt": "Draw the MAPK signaling pathway from the EGFR receptor through RAS, RAF, MEK, ERK to nuclear gene transcription, with each arrow labeled as phosphorylation or activation, for an academic poster.",
-      "expected_output": "Invokes alterlab-scientific-schematics: generates a biological pathway diagram with Nano Banana 2 from the cascade description with labeled activation/phosphorylation arrows, reviewed by Gemini 3.1 Pro Preview against the poster threshold (7.0/10) with early stopping when met, output as a versioned PNG plus review log.",
+      "expected_output": "Invokes alterlab-scientific-schematics on its keyless path: draws the EGFR -> RAS -> RAF -> MEK -> ERK -> nuclear transcription cascade as SVG or TikZ with every arrow labelled as phosphorylation or activation, renders it locally at poster size, and reviews the render against the poster threshold (7.0/10), stopping once met; output is a versioned PNG plus vector copy and review log.",
       "assertions": [
         { "type": "should_trigger", "value": true }
       ]
@@ -30,15 +32,26 @@
     {
       "id": "iot-block-diagram",
       "prompt": "I want a block diagram of an IoT system: sensors feeding a microcontroller, then a WiFi module to a cloud server and a mobile app, with the connections labeled by protocol (I2C, UART, WiFi, HTTPS).",
-      "expected_output": "Invokes alterlab-scientific-schematics: generates a system/block architecture diagram with Nano Banana 2 showing the layered data flow and protocol-labeled connections, reviewed by Gemini 3.1 Pro Preview against the document-type threshold with smart iteration. Output is a versioned PNG and review log.",
+      "expected_output": "Invokes alterlab-scientific-schematics on its keyless path: draws a layered block diagram as SVG (sensors -> microcontroller -> WiFi module -> cloud server -> mobile app) with each connection labelled by its protocol (I2C, UART, WiFi, HTTPS), renders it locally, and reviews the render against the document-type threshold with up to 2 iterations. Output is a versioned PNG, vector copy, and review log.",
       "assertions": [
         { "type": "should_trigger", "value": true }
       ]
     },
     {
+      "id": "ai-backend-explicit",
+      "requires": ["env:OPENROUTER_API_KEY"],
+      "prompt": "I have an OpenRouter key set up. Generate the MAPK pathway figure for my poster with the Nano Banana image model rather than drawing it by hand: EGFR to RAS, RAF, MEK, ERK, then nuclear gene transcription.",
+      "expected_output": "Invokes alterlab-scientific-schematics on its optional AI backend because the user asked for the image model by name: runs scripts/generate_schematic.py with the cascade description, -o to a figures/ PNG, --doc-type poster and --backend ai (Nano Banana 2 generation, Gemini 3.1 Pro Preview review against the 7.0/10 poster threshold, max 2 iterations, review log written). Warns that the prompt goes to OpenRouter and that the model draws the labels itself, so each protein name and arrow must be checked on the result.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "--backend ai" },
+        { "type": "behavior", "value": "Uses the AI backend explicitly (--backend ai) with the poster document type, and tells the user to check the generated labels against the pathway." }
+      ]
+    },
+    {
       "id": "near-miss-mermaid",
       "prompt": "Add a flowchart of our experiment decision logic to the README as version-controllable text that renders on GitHub and diffs cleanly in git.",
-      "expected_output": "Does NOT invoke this skill; defers to alterlab-mermaid. The user explicitly wants a text-based, git-diffable diagram that renders on GitHub, not an AI-rendered PNG — the skill's own description routes text-based Mermaid diagrams to alterlab-mermaid.",
+      "expected_output": "Does NOT invoke this skill; defers to alterlab-mermaid. The user explicitly wants a text-based, git-diffable diagram that renders on GitHub, not a rendered PNG — the skill's own description routes text-based Mermaid diagrams to alterlab-mermaid.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
         { "type": "output_contains", "value": "alterlab-mermaid" }

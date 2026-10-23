@@ -3,7 +3,7 @@
 Before submitting diagrams, verify each item.
 
 ## Visual Quality
-- [ ] High-quality image format (PNG from AI generation)
+- [ ] Vector PDF/SVG plus a 300-dpi PNG (code-drawn), or a high-resolution PNG (AI backend)
 - [ ] No overlapping elements (visually confirm in the output)
 - [ ] Adequate spacing between all components
 - [ ] Clean, professional alignment

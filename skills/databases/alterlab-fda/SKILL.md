@@ -3,11 +3,12 @@ name: alterlab-fda
 description: Query the openFDA API for drugs, medical devices, adverse event reports, recalls, regulatory submissions (510k, PMA), and substance identification (UNII). Use when searching FDA safety data, pharmacovigilance and adverse-event signals, device clearances, drug labels, or recall records for regulatory data analysis and safety research. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Keyless openFDA REST API; optional API key raises rate limits
+compatibility: No API key required. Keyless openFDA REST API (240 requests/min and 1,000 requests/day per IP); an optional FDA_API_KEY raises the daily cap to 120,000
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.2"
+    last_updated: "2026-10-22"
+    credentials: "optional: FDA_API_KEY (raises openFDA from 1,000 to 120,000 requests/day)"
 ---
 
 # FDA Database Access
@@ -46,6 +47,8 @@ This skill should be used when working with:
 | Compound bioactivity and mechanism data | `alterlab-chembl` |
 | Pharmacogenomic dosing guidance (CPIC/DPWG) | `alterlab-clinpgx` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-clinicaltrials`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Quick Start
 
 ### 1. Basic Setup
@@ -54,8 +57,9 @@ This skill should be used when working with:
 # Run from the skill's scripts/ dir, or add it to sys.path first.
 from fda_query import FDAQuery
 
-# API key is optional (works keyless); pass it or set FDA_API_KEY.
-fda = FDAQuery(api_key="YOUR_API_KEY")
+# Keyless by default (1,000 requests/day per IP). FDAQuery() also picks up an
+# optional FDA_API_KEY from the environment, which raises the cap to 120,000/day.
+fda = FDAQuery()
 
 # Query drug adverse events
 events = fda.query_drug_events("aspirin", limit=100)
@@ -69,9 +73,9 @@ recalls = fda.query("device", "enforcement",
                    limit=50)
 ```
 
-### 2. API Key Setup
+### 2. Optional API Key (quota only)
 
-While the API works without a key, registering provides higher rate limits:
+Every endpoint answers without a key; a free key only raises the daily quota:
 - **Without key**: 240 requests/min, 1,000/day
 - **With key**: 240 requests/min, 120,000/day
 
@@ -251,8 +255,9 @@ best practices live in `references/query_patterns.md`.
 Essentials to keep in mind:
 - Use **specific field searches** (`patient.drug.medicinalproduct:aspirin`), not
   bare wildcards.
-- `FDAQuery` handles rate limiting (240/min, 120,000/day with key) and caching
-  automatically.
+- `FDAQuery` handles rate limiting (240/min; 1,000/day keyless, 120,000/day with a key)
+  and caching automatically; a second HTTP 429 in a row returns an error instead of
+  waiting forever, since a spent keyless daily quota resets only the next day.
 - `skip` is capped at 25,000 (`query_all` stops there); page deeper via the
   `search_after` cursor in the `Link` response header, narrower date-range searches,
   or the bulk downloads. `meta.last_updated` tells you how fresh each endpoint is —
@@ -310,7 +315,7 @@ python scripts/fda_examples.py
 ### Common Issues
 
 **Issue**: Rate limit exceeded
-- **Solution**: Use API key, implement delays, or reduce request frequency
+- **Solution**: Slow down (240/min), cache, and narrow queries with `count=` aggregations; if the keyless 1,000/day quota is spent, wait for the reset or set the optional `FDA_API_KEY`
 
 **Issue**: No results found
 - **Solution**: Try broader search terms, check spelling, use wildcards

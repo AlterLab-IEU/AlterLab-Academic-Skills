@@ -3,7 +3,7 @@ name: alterlab-scikit-survival
 description: Survival analysis and time-to-event modeling in Python with scikit-survival. Use when working with censored survival data, fitting Cox models, Random Survival Forests, Gradient Boosting models, or Survival SVMs, evaluating predictions with concordance index or Brier score, handling competing risks, or implementing any time-to-event workflow. Part of the AlterLab Academic Skills suite.
 license: GPL-3.0
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires scikit-survival >= 0.28 (current as of 2026-09), which needs scikit-learn >= 1.9.
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "scikit-survival>=0.28" python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires scikit-survival >= 0.28 (current as of 2026-09), which needs scikit-learn >= 1.9.
 metadata:
     skill-author: AlterLab
     version: "1.1.0"
@@ -39,6 +39,8 @@ Use this skill when:
 | Binary outcome at a fixed follow-up with no censoring (logistic regression, odds ratios) | `alterlab-statsmodels` |
 | Standard regression or classification with no time-to-event outcome | `alterlab-scikit-learn` |
 | Writing a clinical decision-support report or biomarker-stratified cohort document with survival curves and hazard ratios | `alterlab-clinical-decision` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-statsmodels`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 scikit-survival is prediction-oriented: `CoxPHSurvivalAnalysis` returns coefficients but no standard errors, confidence intervals, or p-values. When hazard ratios need inferential reporting, use lifelines' `CoxPHFitter` or statsmodels' `PHReg` (`statsmodels.duration.hazard_regression`).
 

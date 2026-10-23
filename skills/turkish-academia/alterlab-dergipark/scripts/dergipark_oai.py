@@ -41,6 +41,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 import xml.etree.ElementTree as ET
@@ -49,9 +50,11 @@ from typing import Any, Iterator, Optional
 OAI_BASE = "https://dergipark.org.tr/api/public/oai/"
 IDENTIFIER_PREFIX = "oai:dergipark.org.tr:article/"
 VALID_PREFIXES = ("oai_dc", "oai_etdms", "oai_marc", "oai_mods")
+# Contact address for polite-pool User-Agents: opt-in via ALTERLAB_CONTACT_EMAIL; none by default.
+_CONTACT = os.environ.get("ALTERLAB_CONTACT_EMAIL", "").strip()
 USER_AGENT = (
-    "alterlab-dergipark/1.0.0 (https://github.com/AlterLab-IEU/"
-    "AlterLab-Academic-Skills; mailto:alterlab.ieu@gmail.com)"
+    "alterlab-dergipark/1.0.0 (https://github.com/AlterLab-IEU/AlterLab-Academic-Skills"
+    + (f"; mailto:{_CONTACT})" if _CONTACT else ")")
 )
 HTTP_TIMEOUT = 30
 RETRIES = 2

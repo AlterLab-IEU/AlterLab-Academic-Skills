@@ -3,7 +3,7 @@ name: alterlab-sympy
 description: Symbolic mathematics in Python with SymPy — solve equations algebraically, perform calculus (derivatives, integrals, limits), manipulate algebraic expressions, work with symbolic matrices, and generate executable code from formulas. Use when exact symbolic results are needed rather than numerical approximations, or for physics, number-theory, and geometry computations involving variables and parameters. Part of the AlterLab Academic Skills suite.
 license: BSD-3-Clause
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires sympy (current 1.14.0 as of 2026-09).
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with sympy python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires sympy (current 1.14.0 as of 2026-09).
 metadata:
     skill-author: AlterLab
     version: "1.0.1"
@@ -34,10 +34,13 @@ Use this skill when:
 
 | Scenario | Use Instead |
 |----------|-------------|
-| Fitting statistical models or running hypothesis tests on data | `alterlab-statistical-analysis` |
+| Running hypothesis tests or inferential statistical models on data (p-values, CIs, assumption checks) | `alterlab-statistical-analysis` |
+| Fitting a predictive regression/ML model to noisy data and scoring it on a held-out test set (R², RMSE, accuracy) | `alterlab-scikit-learn` |
 | Numerical multi-objective or constrained optimization (Pareto fronts, NSGA-II) | `alterlab-pymoo` |
 | Numerically simulating open quantum systems (master equations, Lindblad dynamics) | `alterlab-qutip` |
 | Unit-aware astronomy calculations (coordinates, cosmology, FITS) | `alterlab-astropy` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-statistical-analysis`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 

@@ -55,6 +55,8 @@ Route adjacent requests to the correct sibling skill:
 | Turkish etik kurul (*ethics-committee*) application or KVKK data plan | `alterlab-tr-research-ethics` / `alterlab-kvkk-dmp` |
 | Verify that cited references actually exist (hallucination check) | `alterlab-citation-verifier` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-citation-mgmt`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 This skill owns **how Turkish text and citations are formatted**, not whether
 the underlying journal/index/claim is real.
 
@@ -165,7 +167,7 @@ thesis, translated work, secondary citation) are in
    `ve ark.`/`vd.`):
 
    ```bash
-   uv run python skills/turkish-academia/alterlab-tr-academic-style/scripts/tr_apa_lint.py manuscript.md
+   uv run python scripts/tr_apa_lint.py manuscript.md
    ```
 
    It reads a `.md`/`.txt`/`.tex` file (or stdin), reports line-numbered

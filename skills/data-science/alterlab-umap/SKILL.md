@@ -3,7 +3,7 @@ name: alterlab-umap
 description: Nonlinear dimensionality reduction with UMAP — fast manifold learning for 2D/3D visualization, clustering preprocessing (e.g., HDBSCAN), and supervised or parametric UMAP. Use when projecting high-dimensional data to low dimensions for visualization, embedding generation, or as a preprocessing step before clustering. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires umap-learn 0.5.x (current 0.5.12 as of 2026-09, which needs scikit-learn >= 1.6). Parametric UMAP additionally needs TensorFlow.
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "umap-learn>=0.5,<0.6" python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires umap-learn 0.5.x (current 0.5.12 as of 2026-09, which needs scikit-learn >= 1.6). Parametric UMAP additionally needs TensorFlow.
 metadata:
     skill-author: AlterLab
     version: "1.0.1"
@@ -31,13 +31,16 @@ Use this skill when the user wants to:
 | Single-cell workflows (`sc.pp.neighbors` → `sc.tl.umap` on AnnData) | `alterlab-scanpy` |
 | Linear reduction (PCA/TruncatedSVD) or general ML pipelines and model selection | `alterlab-scikit-learn` |
 | Topic modeling of documents with BERTopic (which uses UMAP internally) as a measurement design | `alterlab-text-as-data` |
+| Profiling a dataset before modeling: structure, summary statistics, missing values, feature distributions, a data-quality report | `alterlab-eda` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-scanpy`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Quick Start
 
 ### Installation
 
 ```bash
-uv pip install "umap-learn>=0.5,<0.6"   # examples target the 0.5.x API
+uv run --python ">=3.12" --with "umap-learn>=0.5,<0.6" python embed.py   # no install step; examples target the 0.5.x API
 ```
 
 ### Basic Usage
@@ -359,7 +362,7 @@ Parametric UMAP replaces direct embedding optimization with a learned neural net
 
 **Installation:**
 ```bash
-uv pip install "umap-learn[parametric_umap]"
+uv run --python ">=3.12" --with "umap-learn[parametric_umap]" python embed.py
 # Requires TensorFlow 2.x; import as `from umap.parametric_umap import ParametricUMAP`
 # (also re-exported as `umap.ParametricUMAP`)
 ```

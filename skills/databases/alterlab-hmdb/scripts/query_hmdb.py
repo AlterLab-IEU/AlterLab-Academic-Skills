@@ -75,9 +75,8 @@ def main():
         if exc.code in (403, 429):
             print(
                 "hmdb.ca is blocking scripted access (Cloudflare challenge / rate limit). "
-                "Use the bulk downloads at https://www.hmdb.ca/downloads, or map the accession "
-                "via PubChem: https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/xref/RegistryID/"
-                f"{normalize_id(args.hmdb_id)}/cids/JSON",
+                "Get the same record keylessly from PubChem + MarkerDB with: "
+                f"python scripts/hmdb_open.py record {normalize_id(args.hmdb_id)}",
                 file=sys.stderr,
             )
         return 1

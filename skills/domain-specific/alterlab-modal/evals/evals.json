@@ -42,6 +42,16 @@
       ]
     },
     {
+      "id": "local-test-before-deploy",
+      "prompt": "I'm writing a Modal function that preprocesses a dataset, but I don't have a Modal account set up yet and don't want to burn credits. Can I validate and run the function logic locally first, then deploy later?",
+      "expected_output": "Activates the Modal skill and shows the keyless local path: structure the work as a plain Python body under @app.function(), run it on this machine with function.local(...) (no Modal token, no billing) on a small/CPU input to validate the logic and the image/resource config, and only run `modal run` / `modal deploy` once a Modal account is set up with `modal token new`. Emphasizes that local development and function.local() need no account.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": ".local("},
+        {"type": "behavior", "value": "Explains that the function body runs locally with function.local() and no Modal account/token, deferring `modal token new` and deployment to when the user is ready."}
+      ]
+    },
+    {
       "id": "near-miss-local-torch",
       "prompt": "On my own Mac Studio I just want to train a small PyTorch model locally with the data already on disk, set the random seed, and pin my dependencies in a uv environment for reproducibility. No cloud, no deployment.",
       "expected_output": "Should NOT activate the Modal skill. This is local-only PyTorch training with no cloud deployment, GPU provisioning, autoscaling, or serverless endpoint, so it is ordinary local training (alterlab-pytorch-lightning if the user wants structured training loops) rather than Modal. The response should not push the work to Modal's cloud.",

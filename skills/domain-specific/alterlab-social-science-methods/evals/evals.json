@@ -49,10 +49,10 @@
     {
       "id": "near-miss-digital-humanities",
       "prompt": "I have a corpus of 5,000 political speeches and I want to run LDA topic modeling and a BERTopic comparison to trace how rhetorical themes evolve over decades.",
-      "expected_output": "Does NOT invoke this skill; defers to alterlab-digital-humanities. Computational topic modeling (LDA/BERTopic) and distant reading of a large text corpus are digital-humanities text-mining methods, not the configurational, comparative, or interpretive social-science methods (QCA, process tracing, CDA, Delphi) this skill covers.",
+      "expected_output": "Does NOT invoke this skill; defers to a computational-text sibling — alterlab-digital-humanities (distant reading of a large corpus) or alterlab-text-as-data (LDA/BERTopic topic models as social-science text measurement, which this skill's own routing table names). Computational topic modeling of a large text corpus is not the configurational, comparative, or interpretive social-science methods (QCA, process tracing, CDA, Delphi) this skill covers.",
       "assertions": [
         { "type": "should_not_trigger", "value": true },
-        { "type": "output_contains", "value": "alterlab-digital-humanities" }
+        { "type": "output_contains", "value": ["alterlab-digital-humanities", "alterlab-text-as-data"] }
       ]
     },
     {

@@ -1,6 +1,6 @@
 ---
 name: bibliography-agent
-description: "Systematic literature search and annotated-bibliography curation agent for alterlab-deep-research. Conducts reproducible, documented searches; applies inclusion/exclusion criteria; builds APA 7.0 annotated bibliographies with PRISMA-style flow accounting; and deterministically verifies that every curated reference EXISTS via skills/core/alterlab-citation-verifier/scripts/verify_citations.py (Crossref / OpenAlex / Semantic Scholar / arXiv plus doi.org, title+author difflib similarity >= 0.70, DOI/arXiv-ID resolution, Retraction Watch flag via Crossref) before any source enters the bibliography, degrading to WebSearch only as a documented fallback."
+description: "Systematic literature search and annotated-bibliography curation agent for alterlab-deep-research. Conducts reproducible, documented searches; applies inclusion/exclusion criteria; builds APA 7.0 annotated bibliographies with PRISMA-style flow accounting; and deterministically verifies that every curated reference EXISTS via alterlab-citation-verifier/scripts/verify_citations.py (Crossref / OpenAlex / Semantic Scholar / arXiv plus doi.org, title+author difflib similarity >= 0.70, DOI/arXiv-ID resolution, Retraction Watch flag via Crossref) before any source enters the bibliography, degrading to WebSearch only as a documented fallback."
 ---
 
 # Bibliography Agent — Systematic Literature Search & Curation
@@ -57,17 +57,19 @@ DOCUMENT TYPES: [journal articles, reports, grey literature, etc.]
 
 Before a screened-in source is written into the annotated bibliography, confirm it **actually exists** with the checker. Fabricated-but-plausible references are the dominant failure mode of AI-assisted literature search.
 
+`${CLAUDE_PLUGIN_ROOT}` is the folder that holds the alterlab-core skills, so `${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/` is the sibling citation-verifier skill (Claude Code fills the path in under the plugin; the installer and the release archives write it out for plain installs).
+
 ```
 Batch-verify all screened-in candidates by writing them to a .bib or .txt file (BibTeX,
 one reference per line, or a DOI/arXiv-ID list — the format is auto-detected) and running:
 
-  uv run python skills/core/alterlab-citation-verifier/scripts/verify_citations.py \
+  uv run python "${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/verify_citations.py" \
       candidates.txt --mailto <contact-email> --threshold 0.70 \
       --out bibliography_verification.json
 
   # or pipe a single inline reference via stdin:
   echo "<full APA 7.0 reference string>" | \
-    uv run python skills/core/alterlab-citation-verifier/scripts/verify_citations.py -
+    uv run python "${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/verify_citations.py" -
 
 The verifier resolves each reference against Crossref / OpenAlex / Semantic Scholar /
 arXiv (plus doi.org for DOI registration), matches title + authors (difflib similarity

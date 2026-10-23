@@ -2,7 +2,7 @@
 name: alterlab-blast
 description: "Runs NCBI BLAST+ 2.17.0 sequence searches from the command line: makeblastdb (with -parse_seqids), blastn/blastp/blastx/tblastn with tabular -outfmt 6/7 for parsing, correct -task choice (megablast vs blastn vs blastn-short), -taxids/-negative_taxids taxonomic scoping, and -mt_mode multithreading; plus a DIAMOND blastp --ultra-sensitive path for large protein searches. Warns that -max_target_seqs is a heuristic keep-count, not a top-N best-hits filter. Use when the user wants command-line BLAST, makeblastdb, a local BLAST database, blastn/blastp/blastx/tblastn searches, or DIAMOND protein search. For the Bio.Blast web NCBIWWW API prefer alterlab-biopython; for quick one-liner database lookups prefer alterlab-gget. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*) Bash(makeblastdb:*) Bash(blastn:*) Bash(blastp:*) Bash(blastx:*) Bash(tblastn:*) Bash(blastdbcmd:*) Bash(diamond:*)
+allowed-tools: Read Write Edit Bash(python:*) Bash(makeblastdb:*) Bash(blastn:*) Bash(blastp:*) Bash(blastx:*) Bash(tblastn:*) Bash(blastdbcmd:*) Bash(diamond:*) Bash(uv run:*)
 compatibility: "Requires NCBI BLAST+ 2.17.0 binaries on PATH (conda: `bioconda::blast`; or Homebrew `blast`); no API key or account needed for local searches. DIAMOND (`bioconda::diamond`) is optional and only used for the large-protein fast path. Parsing/QC helper runs under `uv run python` with the standard library only."
 metadata:
     skill-author: AlterLab
@@ -49,6 +49,8 @@ Route adjacent requests to the right sibling skill instead of forcing BLAST+:
 | Transcript-level RNA-seq quantification (salmon/kallisto) | `alterlab-rnaseq-quant` |
 | 16S/ITS amplicon classification (QIIME 2) | `alterlab-qiime2-amplicon` |
 | Protein **structure** prediction / embeddings (ESM, AlphaFold) | `alterlab-esm` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-biopython`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 If the user explicitly says "web BLAST", "NCBIWWW", or "without installing
 anything", they want `alterlab-biopython`, not this skill.

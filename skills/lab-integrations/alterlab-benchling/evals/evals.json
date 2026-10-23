@@ -3,12 +3,13 @@
   "evals": [
     {
       "id": "register-dna-sequences-sdk",
-      "prompt": "I have a FASTA file of 40 plasmid constructs I need to load into our Benchling registry. Write a script that creates each as a circular DNA sequence in folder fld_abc123 and registers it.",
-      "expected_output": "Invokes alterlab-benchling. Uses the benchling-sdk Python client (Benchling + ApiKeyAuth) and benchling.dna_sequences.create with DnaSequenceCreate (bases, is_circular=True, folder_id), parsing the FASTA with Bio.SeqIO, and registers entities by setting registry_id plus a naming_strategy given as the NamingStrategy enum (NamingStrategy.NEW_IDS or NamingStrategy.IDS_FROM_NAMES), not a bare string. Should not pass both entity_registry_id and naming_strategy together.",
+      "files": ["fixtures/plasmid_constructs.fasta"],
+      "prompt": "I have a FASTA file of 40 plasmid constructs (plasmid_constructs.fasta) I need to load into our Benchling registry. Write a script that creates each as a circular DNA sequence in folder fld_abc123 and registers it.",
+      "expected_output": "Invokes alterlab-benchling. Uses the benchling-sdk Python client (Benchling + ApiKeyAuth), parsing the FASTA with Bio.SeqIO; for a 40-sequence load it builds the request models and registers them — ideally one dna_sequences.bulk_create job with DnaSequenceBulkCreate items (the skill's documented path for many sequences), or dna_sequences.create with DnaSequenceCreate per item — each with bases, is_circular=True, folder_id, and registry_id plus a naming_strategy given as the NamingStrategy enum (NamingStrategy.NEW_IDS or NamingStrategy.IDS_FROM_NAMES), not a bare string. Should not pass both entity_registry_id and naming_strategy together.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "DnaSequenceCreate" },
-        { "type": "behavior", "value": "Uses benchling.dna_sequences.create and registers by setting registry_id with a naming_strategy; does not combine entity_registry_id with naming_strategy in the same create call." }
+        { "type": "output_contains", "value": ["DnaSequenceBulkCreate", "DnaSequenceCreate", "bulk_create"] },
+        { "type": "behavior", "value": "Uses benchling.dna_sequences.bulk_create (or .create) and registers by setting registry_id with a naming_strategy; does not combine entity_registry_id with naming_strategy in the same create call." }
       ]
     },
     {
@@ -36,6 +37,42 @@
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Creates an ELN entry and a workflow task via the benchling-sdk entries and workflow_tasks services." }
+      ]
+    },
+    {
+      "id": "offline-validate-bulk-payload",
+      "prompt": "Before anything touches our Benchling tenant, build the bulk-create payload for the constructs in constructs.fasta (circular, folder lib_K9t2Qx, registered into registry src_7Hc1Ld with new registry IDs) and validate it offline. Show me the exact JSON body for the first construct and tell me which records would cause trouble.",
+      "files": ["fixtures/constructs.fasta"],
+      "expected_output": "Invokes alterlab-benchling on the keyless path, with no Benchling account or API key: builds DnaSequenceBulkCreate models (benchling-sdk) from the five FASTA records with is_circular=True, folder_id='lib_K9t2Qx', registry_id='src_7Hc1Ld' and naming_strategy=NamingStrategy.NEW_IDS (the enum, not a string), and serializes them offline with .to_dict(). Shows the first body for pGFP-01 with camelCase keys (name, bases, isCircular: true, folderId, registryId, namingStrategy: NEW_IDS). Flags pRFP-03 because its bases contain U (an RNA base, not valid in a DNA sequence) and the second pGFP-02 record as a duplicate name, so three of the five records are clean. Ends with the bulk_create call to run later with the user's own BENCHLING_API_KEY, without claiming anything was created.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "pRFP-03" },
+        { "type": "output_contains", "value": "namingStrategy" },
+        { "type": "behavior", "value": "Flags pRFP-03 for containing U and the repeated pGFP-02 name, shows the serialized camelCase body for pGFP-01, and does not claim any entity was created in a tenant." }
+      ]
+    },
+    {
+      "id": "review-script-before-tenant-run",
+      "prompt": "A postdoc wrote register_plasmids.py for our Benchling tenant. Before I give it our API key, review it against the current benchling-sdk and tell me every line that will fail or misbehave, with the corrected call.",
+      "files": ["fixtures/register_plasmids.py"],
+      "expected_output": "Invokes alterlab-benchling and reviews the script offline against benchling-sdk 1.x without running it on a tenant: (1) naming_strategy='NEW_IDS' must be NamingStrategy.NEW_IDS — a plain string fails when the request is serialized; (2) entity_registry_id and naming_strategy are set together, which is not allowed — use one; (3) benchling.containers.transfer does not exist — moving a tube is containers.update(...) with a new parent_storage_id (or transfer_into_container to move contents); (4) containers.list has no parent_storage_id filter — use ancestor_storage_id; (5) there is no wait_for_task helper — bulk_create returns a TaskHelper, call task.wait_for_response(). Gives the corrected code.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "ancestor_storage_id" },
+        { "type": "output_contains", "value": "wait_for_response" },
+        { "type": "behavior", "value": "Identifies all five defects (string naming_strategy, entity_registry_id together with naming_strategy, nonexistent containers.transfer, parent_storage_id list filter, nonexistent wait_for_task) and supplies corrected calls." }
+      ]
+    },
+    {
+      "id": "offline-inventory-export-report",
+      "prompt": "I exported our Benchling inventory to containers_export.csv. Which non-archived tubes in box FRZ-A1 are below 50 ng/uL or have no barcode, and how many micrograms of pGFP-01 DNA do we hold in non-archived tubes? Then give me the SDK script that would pull the same report live next time.",
+      "files": ["fixtures/containers_export.csv"],
+      "expected_output": "Invokes alterlab-benchling and answers from the exported CSV offline, with no Benchling account. In FRZ-A1, excluding the archived GFP-prep-05: below 50 ng/uL are GFP-prep-02 (41), RFP-prep-01 (23) and GFP-prep-06 (35); GFP-prep-03 has no barcode (LAC-prep-02 also lacks one but is in FRZ-A2). pGFP-01 in non-archived tubes: 182x50 + 41x45 + 35x15 ng = 11,470 ng = 11.47 ug in 110 uL. Then provides a live version using benchling.containers.list(ancestor_storage_id=...) iterated page by page, noting it runs only with the user's own BENCHLING_API_KEY.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "GFP-prep-03" },
+        { "type": "output_contains", "value": ["11.47", "11,470", "11470"] },
+        { "type": "behavior", "value": "Lists GFP-prep-02, RFP-prep-01 and GFP-prep-06 as below 50 ng/uL and GFP-prep-03 as missing a barcode, excludes the archived GFP-prep-05, and reports about 11.47 ug of pGFP-01." }
       ]
     },
     {

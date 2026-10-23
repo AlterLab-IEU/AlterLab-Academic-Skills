@@ -12,11 +12,13 @@
     },
     {
       "id": "net30-threshold-check-turkish",
+      "files": ["fixtures/faaliyetler_2026.md"],
       "prompt": "Devlet üniversitesinde öğretim üyesiyim. Bu yıl sadece iki Q3 makalem ve birkaç atıfım var. Akademik teşvik puanımı hesaplar mısın, en az 30 barajını geçiyor muyum?",
       "expected_output": "Invokes alterlab-akademik-tesvik in net-30 threshold-check mode: scores the iki Q3 makale (p=0.5) plus the atıflar via scripts/tesvik_score.py, computing türü puanı = Σ(oran) x headline, applies the per-type headline ceilings (MADDE 8/3), and reports whether the final score reaches the en az 30 (net-30) gate from MADDE 10/3. If the score is below 30, states clearly that no incentive (teşvik ödeneği) is payable this year despite the activity, in line with the regulation.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Recognises the Turkish request, computes the score, and gives a clear pass/fail verdict against the net-30 (en az 30) payment threshold." }
+        { "type": "behavior", "value": "Recognises the Turkish request, computes the score, and gives a clear pass/fail verdict against the net-30 (en az 30) payment threshold." },
+        { "type": "output_contains", "value": ["22.2", "22,2"] }
       ]
     },
     {

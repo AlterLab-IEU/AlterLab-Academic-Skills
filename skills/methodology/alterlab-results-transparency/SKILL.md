@@ -2,7 +2,7 @@
 name: alterlab-results-transparency
 description: Enforces results-reporting transparency as a discipline gate built on the Iron Law "NO RESULTS CLAIM WITHOUT REPORTING EVERY ANALYSIS RUN" — a numbered Gate Function (IDENTIFY the claim, LIST every test actually run including the ones that did not "work", CHECK assumptions were reported, CHECK effect size with 95% CI is present, CHECK pre-registration deviations are disclosed, ONLY THEN write the sentence), plus an Excuse-vs-Reality table and Red-Flags-STOP list for selective reporting, cherry-picking, and bare p-values. Use when writing up Results, claiming a finding from a subset of analyses, reporting a p-value without an effect size or confidence interval, dropping outliers post hoc, or omitting analyses that did not pan out. Orchestrates alterlab-statistical-analysis (tests, effect sizes), alterlab-preregistration-discipline (the frozen plan), and alterlab-open-science (TOP, disclosure); it does not run the tests itself. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: No API key required. Judgment/discipline skill; the optional reporting-gate helper runs locally via `uv run python` (stdlib only).
 metadata:
   skill-author: AlterLab
@@ -77,6 +77,8 @@ move from computing numbers to claiming findings.
 | Section-by-section peer review and an accept/revise/reject verdict | `alterlab-paper-reviewer` |
 | Drafting the full IMRaD manuscript from a finished synthesis | `alterlab-paper-writer` |
 | Writing the grant's final/technical report narrative | `alterlab-grant-reporting` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-statistical-analysis`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ---
 
@@ -177,7 +179,7 @@ Mirrors the systematic-debugging "3 failures = wrong approach" rule:
 ```bash
 # 1. Build a tiny manifest of the claim and what was actually run (see references).
 # 2. Run the gate; non-zero exit = claim is not clear to write.
-uv run python skills/methodology/alterlab-results-transparency/scripts/reporting_gate.py claim.json
+uv run python scripts/reporting_gate.py claim.json
 ```
 
 The script is a deterministic transparency linter, not a statistics engine: it

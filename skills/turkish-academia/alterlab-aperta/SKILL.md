@@ -2,7 +2,7 @@
 name: alterlab-aperta
 description: "Drives TÜBİTAK Açık Bilim Politikası (Open Science Policy) compliance and deposition into Aperta — TÜBİTAK ULAKBİM's national open archive at aperta.ulakbim.gov.tr — encoding its principles (İlke 1: deposit the accepted manuscript in Aperta on acceptance; İlke 2: open access at most 6 months after publication for STEM, 12 for SSH; İlke 6: document data that must stay closed, e.g. for KVKK; İlke 9: report compliance in the final report) and scaffolding the five-question TÜBİTAK Veri Yönetim Planı / VYP (data management plan) uploaded with ARDEB applications. Use when depositing to Aperta, complying with the TÜBİTAK açık bilim policy, preparing a TÜBİTAK data management plan (VYP), reporting open-access compliance in a final report, or documenting a justified data embargo. For Zenodo/Dryad/OSF and international DMPs prefer alterlab-open-science; for the KVKK lawful-basis/anonymisation plan prefer alterlab-kvkk-dmp. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Write Edit Bash(python:*) WebFetch
+allowed-tools: Read Write Edit Bash(python:*) WebFetch Bash(uv run:*)
 compatibility: "No API key required. Guidance + scaffolding skill; uses WebFetch for live policy/repository checks and optional Python helpers via `uv run python` (stdlib-only, requests optional)."
 metadata:
   skill-author: AlterLab
@@ -58,6 +58,8 @@ correct sibling:
 | Writing the TÜBİTAK **sonuç raporu / ara rapor** narrative itself (progress, deliverables) — this skill writes only the open-science/data-deposition compliance statement, not the report body | (out of scope — narrative report writing) |
 | Checking a journal's **TR Dizin** indexing status before submitting | `alterlab-trdizin` |
 | Depositing a graduate **thesis** to YÖK Ulusal Tez Merkezi | `alterlab-yok-tez` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-open-science`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 The line: this skill answers **"what must I deposit/embargo/justify to satisfy
 TÜBİTAK's open-science policy, and how do I do it in Aperta?"** It does not write
@@ -132,7 +134,7 @@ that file, not memory.
 Run the generator, then refine its prose with the user's specifics:
 
 ```bash
-uv run python skills/turkish-academia/alterlab-aperta/scripts/vyp_scaffold.py \
+uv run python scripts/vyp_scaffold.py \
     --project "Proje adı" --field stem --lang both \
     --data-closed --closed-reason kvkk \
     --out vyp.md

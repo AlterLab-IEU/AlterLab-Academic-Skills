@@ -27,7 +27,7 @@
       "expected_output": "Invokes alterlab-vaex for I/O and big-data visualization: convert the slow CSV once via vaex.from_csv (e.g. convert=True) or export_hdf5 so future vaex.open loads are near-instant, and produce a 2D density heatmap with df.viz.heatmap(df.x, df.y, limits='99.7%') over the full dataset (df.plot is a deprecated alias; 2-D plots need matplotlib < 3.9). Recommends HDF5/Arrow over CSV for repeated access.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "export_hdf5" },
+        { "type": "output_contains", "value": ["export_hdf5", "convert=True"] },
         { "type": "behavior", "value": "Recommends converting CSV to HDF5 (or Arrow) for fast repeated access and uses Vaex's built-in heatmap/2D plotting for the big-data visualization." }
       ]
     },

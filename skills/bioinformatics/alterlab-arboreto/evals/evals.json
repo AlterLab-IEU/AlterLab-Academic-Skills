@@ -13,6 +13,7 @@
     },
     {
       "id": "tf-restricted-genie3",
+      "files": ["fixtures/expression.tsv", "fixtures/tfs.txt"],
       "prompt": "I have a human TF list in tfs.txt and a single-cell count matrix. I want to restrict regulators to those TFs and compare GRNBoost2 against the GENIE3 random-forest method to validate my network.",
       "expected_output": "Invokes alterlab-arboreto. Loads TF names with load_tf_names, passes tf_names to both grnboost2 and genie3 from arboreto.algo, explains GRNBoost2 (gradient boosting, fast, default) vs GENIE3 (Random Forest, classic, for comparison/validation), and sets a seed for each run.",
       "assertions": [

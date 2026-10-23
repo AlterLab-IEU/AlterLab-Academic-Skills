@@ -1,20 +1,42 @@
 ---
 name: alterlab-omero
-description: Manages microscopy image data on an OMERO server via the OMERO Python API (BlitzGateway) — access images, retrieve datasets, read pixel data, manage ROIs and annotations, and batch-process. Use when connecting to an OMERO server, pulling microscopy images or datasets, analyzing pixels, managing ROIs/annotations, or running high-content screening and microscopy workflows. Part of the AlterLab Academic Skills suite.
+description: Works with microscopy image data via the OMERO Python API (BlitzGateway) — writes and validates the integration code, analyses local OME-TIFF/microscopy pixels, ROIs and channels with tifffile offline, and browses or pulls from public OMERO servers (the IDR JSON API, webgateway and OME-Zarr) with no credentials. Connecting to the user's own OMERO server to read, write or batch-process their images is an optional step with their host, port and login. Use when writing OMERO/BlitzGateway code, analysing microscopy pixels or ROIs, pulling images or datasets, managing annotations, or running high-content screening and microscopy workflows. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read Write Edit Bash(uv:*) Bash(python:*)
-compatibility: Requires a reachable OMERO server (host, port, credentials) and omero-py (current 5.23.0; Python >=3.10) with the ZeroC Ice 3.6 Python bindings installed first
+allowed-tools: Read Write Edit Bash(uv:*) Bash(python:*) Bash(curl:*)
+compatibility: "No API key required to write the BlitzGateway integration, analyse local microscopy images with tifffile, and browse/pull public OMERO data (IDR JSON API + webgateway + OME-Zarr). Optional: the user's own OMERO server host/port and login for omero-py (current 5.23.0; Python >=3.10, needs the ZeroC Ice 3.6 bindings) to reach their private images."
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.1.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: OMERO_USER, OMERO_PASSWORD, OMERO_HOST, OMERO_PORT (the user's own OMERO server login — adds reading, writing and batch-processing images on their private tenant; the public IDR server needs none)"
 ---
 
 # OMERO Integration
 
 ## Overview
 
-OMERO is an open-source platform for managing, visualizing, and analyzing microscopy images and metadata. Access images via Python API, retrieve datasets, analyze pixels, manage ROIs and annotations, for high-content screening and microscopy workflows.
+OMERO is an open-source platform for managing, visualizing, and analyzing microscopy images and metadata. This skill's core job needs no credentials: it writes and checks the BlitzGateway integration code, analyses microscopy pixels/ROIs/channels from local files, and reads public OMERO data over HTTP. Only reaching the user's own private server uses their login.
+
+## Keyless Path (default — no OMERO account)
+
+1. **Write and check the BlitzGateway integration.** Author the code against omero-py's documented API (hierarchy `Project -> Dataset -> Image`, screening `Screen -> Plate -> Well -> WellSample -> Image`; `conn.getObject`, `image.getPrimaryPixels().getPlane(z, c, t)` -> NumPy, ROI shapes, `omero.gateway.BlitzGateway` as a context manager). omero-py pins `zeroc-ice>=3.6.5,<3.7`, whose wheels are scarce, so verify method names from the docs rather than assuming an import works.
+2. **Analyse microscopy images locally.** OME-TIFF and most vendor formats read with `tifffile` (or Bio-Formats via `bioio`/`python-bioformats`) into a NumPy array with no server — compute per-channel intensity statistics, extract an ROI by coordinates and measure it, inspect dimensions and channel names. This is the same pixel analysis the BlitzGateway code will do on the server, proven on a local file first:
+
+```python
+import numpy as np, tifffile
+arr = tifffile.imread("field.ome.tif")          # e.g. (c, y, x)
+roi = arr[:, 20:40, 30:50]                        # a rectangular ROI by coordinates
+for c in range(arr.shape[0]):
+    print(f"channel {c}: whole mean {arr[c].mean():.1f}, ROI mean {roi[c].mean():.1f}")
+```
+
+3. **Browse and pull public OMERO data keyless.** The public Image Data Resource (IDR, `idr.openmicroscopy.org`) serves its OMERO over HTTP with no login (verified 2026-10-22):
+   - JSON API `https://idr.openmicroscopy.org/api/v0/m/{projects,datasets,images,plates,rois}/` and `.../images/<id>/` return the hierarchy, pixel sizes and channel names.
+   - `webgateway/imgData/<id>/` and `webgateway/render_thumbnail/<id>/` give image metadata and a thumbnail.
+   - Pixel data for IDR images is read from their public **OME-Zarr** over HTTPS with `zarr`/`fsspec` — no server session.
+4. **Hand over the private-server step.** Give the `BlitzGateway(user, password, host=..., port=4064)` code and the install note (prebuilt ZeroC Ice 3.6 wheel first, then `omero-py`); it runs only against the user's own server with their login. If `OMERO_USER`/`OMERO_PASSWORD` are not set, stop at the validated code and the local/public analysis — never invent server contents.
+
+Microscopy data can be unpublished or regulated; follow your institution's data-handling rules before exporting pixels or metadata off a private server.
 
 ## When to Use This Skill
 
@@ -36,6 +58,9 @@ This skill should be used when:
 | Tiling or preprocessing whole-slide images from local files | `alterlab-histolab` |
 | End-to-end computational pathology models (segmentation, graphs, training) | `alterlab-pathml` |
 | Reading or anonymizing clinical DICOM files | `alterlab-pydicom` |
+| Writing a protocol to drive a liquid-handling robot or its onboard plate reader (Opentrons; Hamilton/Tecan) | `alterlab-opentrons` or `alterlab-pylabrobot` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-imaging-data-commons`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 
@@ -142,7 +167,7 @@ uv pip install omero-py
 **Requirements (omero-py 5.23.x, current as of 2026-09):**
 - Python 3.10+ and NumPy 2
 - ZeroC Ice: omero-py pins `zeroc-ice>=3.6.5,<3.7`. PyPI only has 3.6.5 wheels for Python 2.7/3.7, so without a prebuilt wheel pip tries to compile Ice from source; Ice 3.7/3.8 are not supported. See https://omero.readthedocs.io/en/stable/developers/Python.html for the wheel list.
-- Access to an OMERO server (host, port, credentials); set `OMERODIR` if you use the `omero` CLI
+- Access to an OMERO server (host, port, credentials) is needed only to reach a private server; the keyless path above covers code authoring, local analysis and public IDR data. Set `OMERODIR` if you use the `omero` CLI
 
 ## Quick Start
 

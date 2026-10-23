@@ -1,13 +1,14 @@
 ---
 name: alterlab-markitdown
-description: Converts files and Office documents to clean, LLM-friendly Markdown with Microsoft MarkItDown (markitdown CLI, Python API, and markitdown-mcp server), supporting PDF, DOCX, PPTX, XLSX/XLS, images (EXIF metadata, LLM descriptions), audio (transcription), HTML, CSV, JSON, XML, ZIP archives, EPUB e-books, Outlook MSG, Jupyter notebooks, and YouTube transcript URLs, with OCR through the markitdown-ocr plugin or Azure Document Intelligence. Use when converting a document, PDF, slide deck, spreadsheet, scanned image, audio file, web page, or e-book into Markdown text for ingestion or LLM processing, extracting text from scans via OCR, transcribing audio, or batch-converting mixed file formats to token-efficient Markdown. Part of the AlterLab Academic Skills suite.
+description: Converts files and Office documents to clean, LLM-friendly Markdown with Microsoft MarkItDown (markitdown CLI, Python API, and markitdown-mcp server), supporting PDF, DOCX, PPTX, XLSX/XLS, images (EXIF metadata, descriptions), audio (transcription), HTML, CSV, JSON, XML, ZIP archives, EPUB e-books, Outlook MSG, Jupyter notebooks, and YouTube transcript URLs. No API key needed — embedded images are extracted for Claude to describe and transcribe itself; an OpenRouter/OpenAI vision model, the markitdown-ocr plugin, or Azure Document Intelligence are optional. Use when converting a document, PDF, slide deck, spreadsheet, scanned image, audio file, web page, or e-book into Markdown text for ingestion or LLM processing, extracting text from scans via OCR, transcribing audio, or batch-converting mixed file formats to token-efficient Markdown. Part of the AlterLab Academic Skills suite.
 allowed-tools: Read Write Edit Bash
 license: MIT
-compatibility: "markitdown >= 0.1.8 (Python 3.10-3.14; uv pip install 'markitdown[all]'); format extras gate support (pdf, docx, pptx, audio, etc.); AI image descriptions and the markitdown-ocr plugin need an OpenAI-compatible LLM client and key (OPENAI_API_KEY or OPENROUTER_API_KEY); Azure Document Intelligence / Content Understanding need an Azure endpoint."
+compatibility: "No API key required: conversion is local, and Claude describes extracted images itself. markitdown >= 0.1.8 (Python 3.10-3.14; uv pip install 'markitdown[all]'); format extras gate support (pdf, docx, pptx, audio, etc.). Optional: an OpenAI-compatible key for in-library image descriptions or the markitdown-ocr plugin, an Azure endpoint for Document Intelligence."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.2.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: OPENROUTER_API_KEY or OPENAI_API_KEY (MarkItDown writes image descriptions / markitdown-ocr text itself through a vision model instead of Claude doing it from the extracted images), AZURE_API_KEY (Azure Document Intelligence / Content Understanding; DefaultAzureCredential also works)"
 ---
 
 # MarkItDown - File to Markdown Conversion
@@ -22,7 +23,7 @@ Use this skill when the user wants to:
 - Convert a PDF, Word, PowerPoint, Excel, EPUB, HTML, or Outlook file into Markdown for an LLM prompt, RAG index, or text analysis
 - Batch-convert a folder of mixed document formats
 - Get a YouTube transcript or audio transcription as Markdown
-- Add LLM-written image descriptions, or OCR text from scans and embedded images
+- Describe the images in a document, or pull the text out of scans and embedded images (keyless: Claude reads them)
 - Expose file conversion to an agent through the `markitdown-mcp` server
 
 ### Does NOT Trigger
@@ -33,6 +34,8 @@ Use this skill when the user wants to:
 | Answering questions across the sections, figures, and tables of one PDF | `alterlab-pdf-explore` |
 | Building a one-row-per-paper evidence table from many PDFs | `alterlab-pdf-extract` |
 | Managing references, DOIs, or BibTeX libraries | `alterlab-pyzotero` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-open-notebook`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Supported Formats
 
@@ -109,9 +112,26 @@ with open("document.pdf", "rb") as f:
 
 ## Advanced Features
 
-### 1. AI-Enhanced Image Descriptions
+### 1. Image Descriptions
 
-Use an LLM via OpenRouter to describe images (built-in support covers image files and pictures inside PPTX):
+**Keyless (default).** MarkItDown converts the text without any model; the images are pulled
+out so Claude can look at them with Read and write the descriptions itself:
+
+```bash
+uv run --python ">=3.10" --with 'markitdown[pptx,docx,pdf]' --with pymupdf python scripts/convert_with_ai.py \
+    slides.pptx slides.md --prompt-type data_viz
+```
+
+With no `OPENROUTER_API_KEY` this writes `slides.md`, the images to `slides_images/`
+(`slide02_img01.png`, …; PDF images need PyMuPDF), and `slides_images.json` (slide or page
+of each image plus the description prompt). Read every listed image, describe it with that
+prompt (chart type, axes, every labelled value, the pattern), and insert the description
+under the matching slide or page in `slides.md`. Report numbers only as they appear in the
+image. `--backend claude` forces this path.
+
+**Optional: a vision model inside MarkItDown** (needs `OPENROUTER_API_KEY` or an OpenAI key;
+`--backend openrouter` exits 2 without it rather than skipping the descriptions). Built-in
+support covers image files and pictures inside PPTX:
 
 ```python
 import os
@@ -119,7 +139,7 @@ from markitdown import MarkItDown
 from openai import OpenAI
 
 # OpenRouter takes the dotted slug of an Anthropic model ID (claude-opus-5-5 -> anthropic/claude-opus-5.5);
-# scripts/convert_with_ai.py derives it from $ALTERLAB_MODEL (skills/core/shared/model_env.md).
+# scripts/convert_with_ai.py derives it from $ALTERLAB_MODEL (shared/model_env.md).
 model = "anthropic/claude-opus-5.5"
 
 # Initialize OpenRouter client (OpenAI-compatible API)
@@ -140,7 +160,10 @@ print(result.markdown)
 
 ### 2. OCR for Scans and Embedded Images
 
-MarkItDown has no local OCR engine; the converters read existing text layers. Two supported routes add OCR:
+MarkItDown has no local OCR engine; the converters read existing text layers. Keyless routes:
+Claude reads a scanned page or image directly with Read and transcribes it (label by label,
+marking anything illegible as `[illegible]`), and `ocrmypdf` adds a local Tesseract text layer
+to scanned PDFs. Two optional, keyed routes add OCR inside MarkItDown:
 
 - **`markitdown-ocr` plugin** (Microsoft, 0.1.x): LLM-vision OCR for images inside PDF, DOCX, PPTX, and XLSX, with full-page OCR for scanned PDFs. It reuses the same `llm_client` / `llm_model` as image descriptions; without a client it silently falls back to the normal converters.
 
@@ -250,7 +273,10 @@ result = MarkItDown().convert("data.xlsx")
 print(result.markdown)  # one Markdown table per sheet
 ```
 
-### 3. Convert PowerPoint with AI Descriptions
+### 3. Convert PowerPoint with Image Descriptions
+
+Keyless: `python scripts/convert_with_ai.py presentation.pptx presentation.md --backend claude`,
+then describe the staged images yourself (Advanced Features §1). With an OpenRouter key:
 
 ```python
 import os
@@ -258,7 +284,7 @@ from markitdown import MarkItDown
 from openai import OpenAI
 
 # OpenRouter takes the dotted slug of an Anthropic model ID (claude-opus-5-5 -> anthropic/claude-opus-5.5);
-# scripts/convert_with_ai.py derives it from $ALTERLAB_MODEL (skills/core/shared/model_env.md).
+# scripts/convert_with_ai.py derives it from $ALTERLAB_MODEL (shared/model_env.md).
 model = "anthropic/claude-opus-5.5"
 
 # Use OpenRouter for access to multiple AI models
@@ -304,7 +330,7 @@ docker run --rm -i markitdown:latest < ~/document.pdf > output.md
 
 - **Simple documents**: Use basic `MarkItDown()`
 - **Complex layouts or scanned PDFs**: Azure Document Intelligence, or the `markitdown-ocr` plugin
-- **Visual content**: Enable AI image descriptions
+- **Visual content**: Stage the images with `convert_with_ai.py` and describe them (keyless), or enable a vision model with a key
 - **Untrusted inputs**: Use `convert_local()` or `convert_stream()` rather than `convert()`
 
 ### 2. Handle Errors Gracefully
@@ -366,8 +392,8 @@ for paper in papers_dir.glob("*.pdf"):
 import os
 from openai import OpenAI
 
-# Model ID via the ALTERLAB_MODEL convention (skills/core/shared/model_env.md).
-model = "anthropic/claude-opus-5.5"  # OpenRouter slug of the ALTERLAB_MODEL default (skills/core/shared/model_env.md)
+# Model ID via the ALTERLAB_MODEL convention (shared/model_env.md).
+model = "anthropic/claude-opus-5.5"  # OpenRouter slug of the ALTERLAB_MODEL default (shared/model_env.md)
 
 client = OpenAI(
     api_key=os.environ["OPENROUTER_API_KEY"],
@@ -409,20 +435,20 @@ MarkItDown reads files and fetches URLs with the privileges of the current proce
 - **PDF files**: Large PDFs take time; there is no page-range option, so split very large files first if needed
 - **Reuse one `MarkItDown()` instance** across files; creating it loads the file-type detector
 - **Audio transcription**: Sends the audio to Google's Web Speech API via the `speech_recognition` package (network required, slow for long files); don't use it on confidential research recordings such as participant interviews unless your ethics approval allows third-party processing
-- **AI image descriptions / OCR plugin**: One API call per image (costs and rate limits apply)
+- **Optional vision-model descriptions / OCR plugin**: One API call per image (costs and rate limits apply); the keyless route costs nothing
 
 ## Next Steps
 
 - See `references/api_reference.md` for complete API documentation, custom converters, and plugins
 - Check `references/file_formats.md` for format-specific details
 - Review `scripts/batch_convert.py` for automation examples
-- Explore `scripts/convert_with_ai.py` for AI-enhanced conversions
+- Explore `scripts/convert_with_ai.py` for conversions with image descriptions (keyless or via OpenRouter)
 
 ## Resources
 
 - **MarkItDown GitHub**: https://github.com/microsoft/markitdown
 - **PyPI**: https://pypi.org/project/markitdown/ (also `markitdown-ocr`, `markitdown-mcp`)
-- **OpenRouter**: https://openrouter.ai (for AI-enhanced conversions)
+- **OpenRouter** (optional): https://openrouter.ai (vision-model descriptions inside MarkItDown)
 - **OpenRouter API Keys**: https://openrouter.ai/keys
 - **OpenRouter Models**: https://openrouter.ai/models
 - **Plugin Development**: See `packages/markitdown-sample-plugin` in the MarkItDown repository

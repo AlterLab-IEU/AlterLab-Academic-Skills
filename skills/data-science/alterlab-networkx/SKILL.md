@@ -3,7 +3,7 @@ name: alterlab-networkx
 description: Creates, analyzes, and visualizes complex networks and graphs in Python with NetworkX. Use when working with network/graph data structures, analyzing relationships between entities, computing graph algorithms (shortest paths, centrality, clustering), detecting communities, generating synthetic networks, or visualizing topologies — applicable to social, biological, transportation, citation, and any pairwise-relationship networks. This is classical graph analytics, not deep learning — for training graph neural networks (GCN/message passing, node/edge/graph classification on Cora-style data) use alterlab-torch-geometric instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires networkx >= 3.4 (current 3.7 as of 2026-09; native Leiden needs 3.7).
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "networkx[default]>=3.4" python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires networkx >= 3.4 (current 3.7 as of 2026-09; native Leiden needs 3.7).
 metadata:
     skill-author: AlterLab
     version: "1.0.1"
@@ -35,6 +35,8 @@ Invoke this skill when tasks involve:
 | Training graph neural networks (GCN/GAT, message passing, node classification on Cora-style data) | `alterlab-torch-geometric` |
 | Choosing and defending social-network measures or fitting ERGMs for a social-science study | `alterlab-sna` |
 | Building a citation / co-citation network around seed papers from OpenAlex | `alterlab-citation-graph` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-torch-geometric`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 
@@ -283,9 +285,9 @@ import networkx as nx
 print(nx.__version__)
 ```
 ```bash
-# Install if needed
-uv pip install networkx
-uv pip install 'networkx[default]'   # adds numpy/scipy/pandas/matplotlib extras
+# No install step: uv resolves NetworkX per call (3.7 needs Python >= 3.12;
+# [default] adds numpy/scipy/pandas/matplotlib)
+uv run --python ">=3.12" --with 'networkx[default]>=3.4' python analysis.py
 ```
 
 ### Common Workflow Pattern

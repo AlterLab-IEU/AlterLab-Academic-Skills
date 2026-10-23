@@ -14,7 +14,7 @@ from typing import Dict, List, Optional
 try:
     import requests
 except ImportError:
-    print("Error: requests is not installed. Install it with: pip install requests")
+    print("Error: requests is not installed. Run install-free: uv run --with requests python scripts/bioactivity_query.py ...")
     sys.exit(1)
 
 

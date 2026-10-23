@@ -4,7 +4,7 @@
     {
       "id": "population-timeseries",
       "prompt": "Pull the full population time series for California and Texas from Data Commons so I can plot how they've grown since 2000.",
-      "expected_output": "Triggers the Data Commons skill. Resolves the place names to DCIDs (geoId/06 for California, geoId/48 for Texas) via client.resolve.fetch_dcids_by_name, then queries client.observation.fetch with variable_dcids=['Count_Person'] and date='all', and converts the response to a Pandas DataFrame (via client.observations_dataframe or response.to_observation_records().model_dump(), then pivot on date) for plotting. Uses the datacommons-client Python API v2.",
+      "expected_output": "Triggers the Data Commons skill without asking for an API key. Resolves the place names to DCIDs (geoId/06 for California, geoId/48 for Texas) via the keyless v2 resolve endpoint (scripts/query_datacommons.py resolve, or client.resolve.fetch_dcids_by_name), then pulls Count_Person with date='all' — the keyless website series endpoint (query_datacommons.py observe Count_Person geoId/06 geoId/48 --date all --csv) or, with a DC_API_KEY, client.observation.fetch(date='all') — and loads the tidy records into a Pandas DataFrame pivoted on date for plotting, covering at least 2000 onward (2020: California 39,527,808 per the Census PEP facet) and citing the provenance (USCensusPEP).",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "Count_Person" },
@@ -15,17 +15,17 @@
     {
       "id": "county-hierarchy-income",
       "prompt": "I need median household income for every county in California in 2020 from Data Commons. Get them all in one go rather than county by county.",
-      "expected_output": "Triggers Data Commons. Uses a containedInPlace relation expression (entity_expression='geoId/06<-containedInPlace+{typeOf:County}') in client.observation.fetch with the median household income statistical variable (Median_Income_Household) for date='2020', returning all counties in a single hierarchy query. Reflects the best practice of querying all children at once.",
+      "expected_output": "Triggers Data Commons without asking for an API key. Fetches Median_Income_Household for date='2020' for every county of California in a single hierarchy query — the keyless website point/within endpoint (query_datacommons.py within Median_Income_Household geoId/06 County --date 2020, the equivalent of the relation expression geoId/06<-containedInPlace+{typeOf:County}) or, with a DC_API_KEY, client.observation.fetch(entity_expression='geoId/06<-containedInPlace+{typeOf:County}') — returning all 58 counties (e.g. Alameda County geoId/06001: 104,888 USD, ACS 5-year) rather than looping county by county.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "containedInPlace" },
-        { "type": "behavior", "value": "Uses an entity relation expression to fetch all counties of the state in one hierarchy query rather than looping per county." }
+        { "type": "behavior", "value": "Fetches all counties of the state in one hierarchy query (the keyless point/within endpoint, or an entity relation expression with containedInPlace) rather than looping per county." }
       ]
     },
     {
       "id": "resolve-coordinates",
       "prompt": "I have a GPS coordinate (37.7749, -122.4194) and a couple of Wikidata IDs (Q30, Q99). What Data Commons entities do they map to?",
-      "expected_output": "Triggers Data Commons. Uses the resolve endpoint: client.resolve.fetch_dcid_by_coordinates(latitude='37.7749', longitude='-122.4194') for the GPS point and client.resolve.fetch_dcids_by_wikidata_id(wikidata_ids=['Q30','Q99']) for the Wikidata IDs, reading the DCIDs from each ResolveResponse (to_dict()['entities'][i]['candidates'] or to_flat_dict()). Demonstrates entity identification rather than statistical retrieval.",
+      "expected_output": "Triggers Data Commons without asking for an API key. Uses the keyless v2 resolve endpoint: <-wikidataId->dcid maps Q30 to country/USA and Q99 to geoId/06 (California); for the GPS point it tries <-geoCoordinate->dcid (fetch_dcid_by_coordinates) and, when that returns no candidates, falls back to a keyless geocoder (US Census geocoder GEOIDs -> geoId/06, geoId/06075 San Francisco County, geoId/0667000 San Francisco city). Demonstrates entity identification rather than statistical retrieval, and says which route produced each DCID.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "DCID" },
@@ -35,11 +35,21 @@
     {
       "id": "unemployment-rate",
       "prompt": "What is the latest unemployment rate for the United States according to Data Commons, and can you also check what statistical variables are even available for the country?",
-      "expected_output": "Triggers Data Commons. Resolves country/USA, calls client.observation.fetch with variable_dcids=['UnemploymentRate_Person'] and date='latest', and uses client.observation.fetch_available_statistical_variables(entity_dcids=['country/USA']) to enumerate queryable variables. Notes that datacommons.org requires a DC_API_KEY env var.",
+      "expected_output": "Triggers Data Commons. Resolves country/USA, calls client.observation.fetch with variable_dcids=['UnemploymentRate_Person'] and date='latest', and uses client.observation.fetch_available_statistical_variables(entity_dcids=['country/USA']) to enumerate queryable variables. Works keyless through the datacommons.org website API (observe UnemploymentRate_Person country/USA; vars-search / has for the variable check), reports the value with its YYYY-MM date and the BLS (BLS_CPS) provenance, and mentions DC_API_KEY only as the optional route to the documented v2 API.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "UnemploymentRate_Person" },
         { "type": "behavior", "value": "Checks available statistical variables for the entity and queries the latest observation for the unemployment rate." }
+      ]
+    },
+    {
+      "id": "turkey-population-2020-provenance",
+      "prompt": "According to Data Commons, what was Turkey's population in 2020, and which original source does that number come from? I don't have a Data Commons API key.",
+      "expected_output": "Triggers Data Commons and works keyless: resolves Turkey to country/TUR, queries Count_Person for date 2020 through the datacommons.org website API (scripts/query_datacommons.py observe Count_Person country/TUR --date 2020), and reports 83,384,680 for 2020 with its provenance — the World Bank World Development Indicators (provenanceId dc/base/WorldDevelopmentIndicators) — noting that the keyless route is the website's undocumented API and that a DC_API_KEY is optional.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "83" },
+        { "type": "behavior", "value": "Reports Turkey's 2020 population as about 83.4 million (83,384,680) and attributes it to the World Bank World Development Indicators, without requiring an API key." }
       ]
     },
     {

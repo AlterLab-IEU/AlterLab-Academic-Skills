@@ -1,0 +1,55 @@
+SYNTHETIC FIXTURE — created for benchmarking; not a real review, study, or person.
+L2: Database export, batch A (MEDLINE). Each record: ID, title, year, language, abstract.
+L3:
+L4: R01
+L5: Title: Mindfulness-based stress reduction for burnout in intensive care nurses: a randomised controlled trial
+L6: Year: 2019 | Language: English | Type: journal article
+L7: Abstract: Background: Burnout is common among intensive care unit (ICU) nurses. Methods: We randomly
+L8: assigned 96 registered nurses from four ICUs to an 8-week MBSR programme (eight weekly 2.5-hour group
+L9: sessions of formal meditation practice, body scan and mindful movement, plus daily home practice) or to
+L10: a waitlist control. Burnout was measured with the Maslach Burnout Inventory-Human Services Survey
+L11: (MBI-HSS) at baseline, 8 weeks and 3 months. Results: At 8 weeks, emotional exhaustion was lower in the
+L12: MBSR group than in the waitlist group (adjusted mean difference -5.2 points, 95% CI -8.1 to -2.3);
+L13: depersonalisation and personal accomplishment did not differ. Conclusions: MBSR reduced emotional
+L14: exhaustion in ICU nurses.
+L15:
+L16: R02
+L17: Title: Effect of an eight-week mindfulness programme on burnout among internal medicine residents: a randomised trial
+L18: Year: 2020 | Language: English | Type: journal article
+L19: Abstract: Sixty-four internal medicine resident physicians were randomised to an 8-week MBSR-based
+L20: course (eight weekly 2-hour sessions with formal meditation) or a waitlist. Burnout was measured with
+L21: the Maslach Burnout Inventory. Emotional exhaustion fell more in the intervention arm (mean difference
+L22: -4.4, 95% CI -7.6 to -1.2). Mindfulness training is a feasible way to reduce burnout in residency.
+L23:
+L24: R03
+L25: Title: A mindfulness-based stress reduction course for oncology nurses: a pre-post evaluation
+L26: Year: 2018 | Language: English | Type: journal article
+L27: Abstract: Thirty-eight registered nurses on two oncology wards completed an 8-week MBSR course (eight
+L28: weekly sessions of formal meditation practice). Burnout (MBI-HSS) was measured before and after the
+L29: course; there was no control group. Emotional exhaustion decreased from 27.1 to 21.4 (p = .002).
+L30: Controlled trials are now needed.
+L31:
+L32: R04
+L33: Title: App-delivered mindfulness meditation for psychological distress in hospital nurses: a randomised controlled trial
+L34: Year: 2022 | Language: English | Type: journal article
+L35: Abstract: We randomised 140 registered nurses to an 8-week mindfulness app (eight weekly modules and
+L36: 10-15 minutes of guided formal meditation daily) or a waitlist. The primary outcome was perceived
+L37: stress (PSS-10); secondary outcomes were anxiety (GAD-7), depressive symptoms (PHQ-9) and sleep quality.
+L38: Perceived stress was lower in the app group at 8 weeks (mean difference -3.0, 95% CI -4.6 to -1.4).
+L39: Future trials should examine whether the app also reduces burnout.
+L40:
+L41: R05
+L42: Title: Mindfulness-based cognitive therapy for burnout in ward nurses: a cluster randomised controlled trial
+L43: Year: 2021 | Language: English | Type: journal article
+L44: Abstract: Twelve medical and surgical wards in three hospitals were randomly allocated (computer-generated
+L45: sequence) to a 6-week MBCT-based group programme (six weekly 2-hour sessions of formal meditation and
+L46: cognitive exercises) or to usual care; 212 registered nurses took part. Burnout was measured with the
+L47: Copenhagen Burnout Inventory at baseline and 6 months. Personal burnout was lower in MBCT wards at 6
+L48: months (difference -6.8, 95% CI -11.0 to -2.6); work-related burnout showed a smaller difference.
+L49:
+L50: R06
+L51: Title: Mindfulness-based stress reduction and burnout in hospital nurses: a randomised controlled trial
+L52: Year: 2008 | Language: English | Type: journal article
+L53: Abstract: Eighty registered nurses were randomised to an 8-week MBSR programme (eight weekly sessions of
+L54: formal meditation) or a waitlist. Burnout (MBI-HSS) was measured at baseline and 8 weeks. Emotional
+L55: exhaustion decreased more in the MBSR group (mean difference -3.9, 95% CI -6.8 to -1.0).

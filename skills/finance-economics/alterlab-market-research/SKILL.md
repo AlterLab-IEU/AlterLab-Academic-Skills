@@ -50,6 +50,8 @@ This skill should be used when:
 | A standalone infographic or one-page data story | `alterlab-infographics` |
 | A grant proposal's significance/market section for NSF/NIH-style funders | `alterlab-research-grants` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-deep-research`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Data Integrity (read before writing)
 
 Every market size, CAGR, share, price, or forecast in the report must come from a source you retrieved and cite (analyst report, industry association, government statistics, company filing), with its year and geography. When no source supports a number, say so and show the estimate you built instead — label it as an estimate, give the assumptions and arithmetic (see the TAM/SAM/SOM templates in `references/data_analysis_patterns.md`), and never present it as a sourced figure. Where sources disagree, report the range and which source says what. The numbers in this skill's templates and examples are placeholders, not market data; do not carry them into a report.

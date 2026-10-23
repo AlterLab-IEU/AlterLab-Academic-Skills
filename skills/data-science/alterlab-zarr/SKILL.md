@@ -3,7 +3,7 @@ name: alterlab-zarr
 description: Chunked, compressed N-dimensional arrays for cloud storage with Zarr — parallel I/O, S3/GCS integration, and NumPy/Dask/Xarray compatibility. Use when storing or reading large N-D scientific arrays, streaming chunked data to/from cloud object stores, or building large-scale scientific computing pipelines. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*) Bash(uv:*)
-compatibility: No API key required. Runs locally via `uv run python`; requires zarr >= 3 (current 3.4 as of 2026-09; zarr >= 3.2 needs Python >= 3.12 and NumPy >= 2). Cloud credentials only needed for S3/GCS object stores.
+compatibility: No API key required. Runs locally via `uv run --python ">=3.12" --with "zarr>=3" python script.py` (no install step; the interpreter pin matters because an older default Python resolves older releases); requires zarr >= 3 (current 3.4 as of 2026-09; zarr >= 3.2 needs Python >= 3.12 and NumPy >= 2). Cloud credentials only needed for S3/GCS object stores.
 metadata:
     skill-author: AlterLab
     version: "1.1.0"
@@ -33,19 +33,21 @@ Use this skill when the user wants to:
 | Single-cell AnnData objects stored as `.h5ad` or AnnData-on-zarr | `alterlab-anndata` |
 | Tabular analytics on large CSV/Parquet files | `alterlab-polars` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-dask`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Quick Start
 
 ### Installation
 
 ```bash
-uv pip install zarr
+uv run --python ">=3.12" --with "zarr>=3" python store.py   # no install step
 ```
 
 Zarr v3 (`zarr>=3`); zarr 3.2+ requires Python 3.12+ and NumPy 2 (the 3.1.x line still supports
 Python 3.11). For cloud storage support, install the matching fsspec backend:
 ```bash
-uv pip install s3fs   # For S3
-uv pip install gcsfs  # For Google Cloud Storage
+uv run --python ">=3.12" --with "zarr>=3" --with s3fs python store.py    # For S3
+uv run --python ">=3.12" --with "zarr>=3" --with gcsfs python store.py   # For Google Cloud Storage
 ```
 
 ### Basic Array Creation

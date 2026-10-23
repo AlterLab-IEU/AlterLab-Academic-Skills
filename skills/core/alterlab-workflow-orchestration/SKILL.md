@@ -49,6 +49,8 @@ Use this skill when the user wants to:
 | The user wants to run one of the packaged AlterLab workflows (citation audit, review panel, PRISMA screening, rebuttal, grant panel, literature map) | `alterlab-research-workflows` |
 | The user asks about Claude API pricing / model ids / SDK billing | the `claude-api` skill |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-research-pipeline`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 This skill is for **how to compose**; the named skills are **what to compose**.
 If a single existing skill already does the job end to end, defer to it.
 
@@ -133,7 +135,7 @@ See recipe P2 in `references/composition-recipes.md`.
 Several independent reviewers each apply a different lens to **one** artifact,
 then a synthesizer reconciles. `alterlab-paper-reviewer` already simulates a
 5-reviewer panel internally; use *this* pattern when you want the panelists to be
-**genuinely separate agents** (separate contexts, no cross-contamination) — e.g.
+**genuinely separate agents** (separate contexts, no cross-contamination; still one model, so their agreement is not independent verification) — e.g.
 a methodology reviewer, a domain reviewer, and a reproducibility reviewer that
 must not anchor on each other.
 
@@ -230,5 +232,5 @@ AUTHORING CHECKLIST (see CONTRIBUTING.md → Skill Quality Standards):
 - description: third person, leads with what + "Use when", suite label LAST, <=1024 chars (this one ~840)
 - body <500 lines; reference files exist and are one level deep
 - every factual orchestration claim verified against code.claude.com docs (2026-09-23)
-- validate: uv run python scripts/check_spec.py --skill workflow-orchestration && uv run python scripts/audit_skills.py
+- validate (from the repository root): `check_spec.py --skill workflow-orchestration` and `audit_skills.py` in the repository's scripts folder
 -->

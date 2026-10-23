@@ -69,10 +69,14 @@ print(bt.__version__)
 2. Sign up for a free account
 3. Navigate to account settings to generate an API key
 
-### Logging In
+### Logging In (optional)
+
+Login is **not** required for a local instance. `lamin init` creates and uses a local
+SQLite instance offline with no account. Log in only when you want to connect to a hosted
+instance, share instances with collaborators, or manage instances on lamin.ai.
 
 ```bash
-# Login with API key
+# Optional — only for shared/hosted instances
 lamin login
 
 # You'll be prompted to enter your API key
@@ -83,7 +87,9 @@ lamin login
 
 **Data Privacy:** LaminDB authentication only collects basic metadata (email, user information). Your actual data remains private and is not sent to LaminDB servers.
 
-**Local vs Cloud:** Authentication is required even for local-only usage to enable collaboration features and instance management.
+**Local vs Cloud:** A purely local SQLite instance on local storage works fully offline with
+no login. Authentication (a free Lamin account) is optional and only enables collaboration
+features, hosted/Postgres instances, and cloud-instance management.
 
 ## Instance Initialization
 
@@ -499,10 +505,14 @@ lamin init --storage s3://prod-bucket/data \
 artifacts = ln.Artifact.filter().all()
 for artifact in artifacts:
     artifact.export("/tmp/export/")
+```
 
+```bash
 # Switch to prod
 lamin connect production
+```
 
+```python
 # Import to prod
 for file in Path("/tmp/export/").glob("*"):
     ln.Artifact(str(file), key=file.name).save()
@@ -685,7 +695,9 @@ lamin migrate check
 import lamindb as ln
 import shutil
 shutil.rmtree(ln.settings.cache_dir)
+```
 
+```bash
 # Set larger cache location
 lamin cache set /larger/disk/cache
 ```

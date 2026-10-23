@@ -2,7 +2,7 @@
 name: alterlab-text-as-data
 description: "Analyzes text as social-science data — topic modeling (BERTopic with embeddings + class-based TF-IDF, LDA/NMF via scikit-learn or gensim), document embeddings (sentence-transformers), dictionary/lexicon methods, and supervised text classification — choosing the method that matches the inferential goal (discovery vs measurement vs prediction) and validating topic reliability rather than trusting one stochastic run. It uses the verified stack (BERTopic, scikit-learn, gensim CoherenceModel, spaCy, sentence-transformers) with pinned patterns. Use when the request mentions topic modeling, text as data, computational text analysis, document embeddings, dictionary/sentiment lexicons, or classifying a corpus. For training or fine-tuning transformer models prefer alterlab-transformers; for humanities close-reading corpora prefer alterlab-digital-humanities. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Requires (declare in-session, no runtime install on Anthropic API): bertopic>=0.16, scikit-learn>=1.3, gensim>=4.3, spacy>=3.7 (+ a model like en_core_web_sm), sentence-transformers>=2.2 (pip). Runs locally via `uv run python`; no API key."
 metadata:
     skill-author: AlterLab
@@ -39,6 +39,10 @@ PICK BY GOAL: DISCOVERY vs MEASUREMENT vs PREDICTION. THEN VALIDATE THE TOPICS �
 | Humanities close-reading / annotation of texts | `alterlab-digital-humanities` | Interpretive, not quantitative text-as-data. |
 | Whether a text method fits the question at all | `alterlab-ssci-design-gate` | Design routing, upstream. |
 | Plain tabular statistics | `alterlab-statistical-analysis` | No text. |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-transformers`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+**Running the code.** In Claude Code, run analysis code in a throwaway environment instead of installing packages: `uv run --python ">=3.11" --with "bertopic>=0.16" --with "sentence-transformers>=2.2" python topics.py`. This needs no install approval and leaves the user's environment untouched. If `uv` or the network is unavailable, say so and hand over the script; never report results you did not compute.
 
 ## Method by goal (verified stack, pinned)
 

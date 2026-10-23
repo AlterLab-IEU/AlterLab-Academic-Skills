@@ -169,7 +169,8 @@ esearch -db clinvar -query '"breast cancer"[Disease/Phenotype]' | \
 - **With API Key:** 10 requests/second
 - Large datasets: Use `usehistory=y` to avoid repeated queries
 
-### API Key Setup
+### Optional API Key (raises the limit to 10 requests/second)
+Not needed for any query in this skill; it only lifts the rate limit.
 1. Register for NCBI account at https://www.ncbi.nlm.nih.gov/account/
 2. Generate API key in account settings
 3. Add `&api_key=<YOUR_KEY>` to all requests

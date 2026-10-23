@@ -2,7 +2,7 @@
 name: alterlab-biorxiv
 description: Search the bioRxiv preprint server and retrieve paper metadata or download PDFs via its API. Use when finding life sciences preprints by keywords, authors, DOI, date ranges, or categories, or when conducting a biology literature review of not-yet-peer-reviewed work. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
 compatibility: Keyless bioRxiv API (no authentication required)
 metadata:
     skill-author: AlterLab
@@ -47,6 +47,8 @@ Use this skill when:
 | Citation counts or cross-publisher bibliometrics for preprints | `alterlab-openalex` |
 | Depositing your own preprint (server choice, license, versioning) | `alterlab-preprint-deposition` |
 | Multi-database systematic review with PRISMA screening | `alterlab-literature-review` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pubmed`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Running the script
 

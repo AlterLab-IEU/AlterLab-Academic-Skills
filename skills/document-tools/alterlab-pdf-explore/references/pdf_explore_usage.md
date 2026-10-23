@@ -17,8 +17,12 @@ Deeper detail for `alterlab-pdf-explore`. Versions below were checked on PyPI in
   text layer to the whole file once with `ocrmypdf scan.pdf searchable.pdf`, then parse normally.
   Cache the OCR result; do not re-OCR for every question.
 
+No install step: uv resolves the parsers per call, with no virtualenv (`uv pip install` fails
+outside one). Save the helper below as a script and run it with:
+
 ```bash
-uv pip install "pymupdf>=1.24" "pdfplumber>=0.11"   # current: 1.28.x and 0.11.x
+uv run --python ">=3.11" --with "pymupdf>=1.24" python explore.py paper.pdf          # current: 1.28.x
+uv run --python ">=3.11" --with "pdfplumber>=0.11" python your_table_script.py     # current: 0.11.x
 ```
 
 ## Parse once: section index + extract-every-instance
@@ -68,7 +72,7 @@ def find_all(index, pattern):
 
 
 index = build_index("paper.pdf")
-p_values = find_all(index, r"\bp\s*[<=>]\s*0?\.\d+")
+p_values = find_all(index, r"\b[pP]\s*[<=>≤]\s*0?\.\d+")   # 'P < 0.001' too
 sample_sizes = find_all(index, r"\b[nN]\s*=\s*\d[\d,]*")
 ```
 
@@ -88,8 +92,9 @@ carry a **page + section** citation so it is verifiable.
 
 For "find all X", scan the full parsed text (not just the first match) and return a located
 list — page, section, surrounding context — for each hit. Common patterns: p-values, sample
-sizes (n=…), effect sizes/CIs, gene/protein mentions, dataset identifiers. Report the total count
-and say which pages were OCR'd, since OCR errors ("0.O5", "p<O.001") hide matches.
+sizes (n=…), effect sizes/CIs, gene/protein mentions, dataset identifiers. Values in a table's
+`p` column carry no "p =" prefix, so read every table's cells as well as the running text. Report
+the total count and say which pages were OCR'd, since OCR errors ("0.O5", "p<O.001") hide matches.
 
 ## Reading figures and tables
 

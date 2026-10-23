@@ -1,13 +1,14 @@
 ---
 name: alterlab-open-notebook
-description: Runs and scripts Open Notebook, a self-hosted open-source alternative to Google NotebookLM with a full REST API, for AI-powered research and document analysis. Use when organizing research materials into notebooks, ingesting diverse content sources (PDFs, videos, audio, web pages, Office documents), generating AI-powered notes and summaries, creating multi-speaker podcasts from research, chatting with documents using context-aware AI, searching across materials with full-text and vector search, or running custom content transformations. Supports 18+ AI providers including OpenAI, Anthropic, Google, Ollama, LM Studio, Groq, and Mistral, with data kept on your own infrastructure through self-hosting. For a one-shot file-to-Markdown conversion (no notebook, chat, or search), use alterlab-markitdown instead. Part of the AlterLab Academic Skills suite.
+description: Runs and scripts Open Notebook, a self-hosted open-source alternative to Google NotebookLM with a full REST API, for AI-powered research and document analysis. Use when organizing research materials into notebooks, ingesting diverse content sources (PDFs, videos, audio, web pages, Office documents), generating AI-powered notes and summaries, creating multi-speaker podcasts from research, chatting with documents using context-aware AI, searching across materials with full-text and vector search, or running custom content transformations. Runs keyless on local models (Ollama or LM Studio; a local Speaches server for podcast voices), with OpenAI, Anthropic, Google, Groq, Mistral and other cloud providers as optional extras, and data kept on your own infrastructure through self-hosting. For a one-shot file-to-Markdown conversion (no notebook, chat, or search), use alterlab-markitdown instead. Part of the AlterLab Academic Skills suite.
 license: MIT
 allowed-tools: Read Write Edit Bash(python:*)
-compatibility: "Requires a self-hosted Open Notebook 1.x instance (Docker Compose; UI on :8502, REST API on :5055) plus an AI provider API key (OpenAI/Anthropic/Google/Groq/Mistral/...) or a local Ollama/LM Studio server. OPEN_NOTEBOOK_ENCRYPTION_KEY is required; OPEN_NOTEBOOK_PASSWORD is optional (enables Bearer auth on the API)."
+compatibility: "No API key required: a self-hosted Open Notebook 1.x instance (Docker Compose; UI on :8502, REST API on :5055) runs on a local Ollama or LM Studio server; cloud provider keys are optional. OPEN_NOTEBOOK_ENCRYPTION_KEY is a random string you generate for your own instance (not an account); OPEN_NOTEBOOK_PASSWORD is optional (Bearer auth on your API)."
 metadata:
     skill-author: AlterLab
-    version: "1.1.0"
-    last_updated: "2026-09-23"
+    version: "1.2.0"
+    last_updated: "2026-10-22"
+    credentials: "optional: OPENAI_API_KEY, ANTHROPIC_API_KEY, GOOGLE_API_KEY, GROQ_API_KEY, MISTRAL_API_KEY (a cloud model provider instead of local Ollama/LM Studio), ELEVENLABS_API_KEY (cloud podcast voices instead of a local Speaches server), OPEN_NOTEBOOK_PASSWORD (Bearer auth on your own instance's API), SURREAL_PASSWORD (your own SurrealDB login)"
 ---
 
 # Open Notebook
@@ -46,12 +47,14 @@ Use this skill when the user wants to:
 | Managing references, DOIs, or BibTeX in a Zotero library | `alterlab-pyzotero` |
 | Systematic searching and screening of new literature | `alterlab-literature-review` |
 
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-markitdown`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
 ## Quick Start
 
 ### Prerequisites
 
 - Docker with Docker Compose v2 (OrbStack or Docker Desktop both work; `docker compose` must be available)
-- API key for at least one AI provider (or local Ollama / LM Studio for free local inference)
+- A model provider: a local Ollama or LM Studio server (no key, no cost, nothing leaves the machine), or optionally a cloud provider key
 
 ### Installation
 
@@ -75,9 +78,21 @@ Access the application (allow 15-20 seconds for startup):
 
 SurrealDB defaults to `root:root` and is bound to `127.0.0.1` only. Before exposing the instance beyond your machine, set `SURREAL_USER` / `SURREAL_PASSWORD` in a `.env` file next to the compose file, set `OPEN_NOTEBOOK_PASSWORD`, and put the UI/API behind HTTPS.
 
-### Configure AI Provider
+### Configure an AI Provider
 
-In the UI, open **Models**, choose a provider, click **+ Add Configuration**, paste the key, **Test** the connection, **Sync Models**, then use **Auto-Assign Defaults** under *Default Model Assignments*.
+**Keyless, fully local (default).** Start from the upstream `examples/docker-compose-ollama.yml`
+instead of the plain compose file (or the upstream full-local example, `docker-compose-full-local.yml` in the same folder, which also runs a
+Speaches server for local podcast voices and transcription), set the encryption key the same way,
+then pull a chat and an embedding model:
+
+```bash
+docker compose exec ollama ollama pull qwen3            # ~5 GB; llama3.2 (~2 GB) on small machines
+docker compose exec ollama ollama pull nomic-embed-text # embeddings for vector search / Ask
+```
+
+In the UI, open **Models**, choose **Ollama**, leave **API Key** empty, set **Base URL** to
+`http://ollama:11434` (the compose service name, not `localhost`), **Test**, **Sync Models**, then
+**Auto-Assign Defaults**. A cloud provider is the same dialog with its key pasted in.
 
 Or configure via the REST API:
 
@@ -89,12 +104,16 @@ BASE_URL = "http://localhost:5055/api"
 # Only needed when OPEN_NOTEBOOK_PASSWORD is set on the server
 HEADERS = {"Authorization": f"Bearer {os.environ['OPEN_NOTEBOOK_PASSWORD']}"} if os.environ.get("OPEN_NOTEBOOK_PASSWORD") else {}
 
-# Add a credential for an AI provider (stored encrypted with OPEN_NOTEBOOK_ENCRYPTION_KEY)
+# Keyless: register the local Ollama server (api_key is optional and omitted)
 credential = requests.post(f"{BASE_URL}/credentials", headers=HEADERS, json={
-    "provider": "openai",
-    "name": "My OpenAI Key",
-    "api_key": os.environ["OPENAI_API_KEY"],
+    "provider": "ollama",
+    "name": "Local Ollama",
+    "base_url": "http://ollama:11434",
 }).json()
+# Optional cloud provider instead (key stored encrypted with OPEN_NOTEBOOK_ENCRYPTION_KEY):
+# credential = requests.post(f"{BASE_URL}/credentials", headers=HEADERS, json={
+#     "provider": "openai", "name": "My OpenAI Key", "api_key": os.environ["OPENAI_API_KEY"],
+# }).json()
 
 # Discover the provider's models: {"credential_id", "provider", "discovered": [{name, provider, model_type}, ...]}
 discovered = requests.post(
@@ -216,7 +235,7 @@ answer = requests.post(f"{BASE_URL}/search/ask/simple", headers=HEADERS, json={
 `POST /api/search/ask` takes the same body and streams Server-Sent Events.
 
 ### Podcast Generation
-Generate multi-speaker podcasts (1-4 speakers) from a notebook. Profiles are referenced **by name**: an episode profile (format, models, length) and a speaker profile (voices and personas).
+Generate multi-speaker podcasts (1-4 speakers) from a notebook. Profiles are referenced **by name**: an episode profile (format, models, length) and a speaker profile (voices and personas). Ollama has no text-to-speech; for keyless, local voices run a Speaches server (the upstream `docker-compose-full-local.yml` example) and add it as an **OpenAI Compatible** provider, or use a cloud TTS provider with its key.
 
 ```python
 episode_profile = requests.get(f"{BASE_URL}/episode-profiles", headers=HEADERS).json()[0]
@@ -285,7 +304,7 @@ Key configuration variables for Docker deployment:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `OPEN_NOTEBOOK_ENCRYPTION_KEY` | **Required.** Encrypts stored provider credentials; keep it stable (changing or losing it makes saved credentials unreadable) | None |
+| `OPEN_NOTEBOOK_ENCRYPTION_KEY` | **Required.** A random string you generate (`openssl rand -hex 32`), not an account key; encrypts stored provider credentials. Keep it stable (changing or losing it makes saved credentials unreadable) | None |
 | `OPEN_NOTEBOOK_PASSWORD` | Optional password; when set, API calls need `Authorization: Bearer <password>` | None |
 | `SURREAL_URL` | SurrealDB connection URL | `ws://surrealdb:8000/rpc` |
 | `SURREAL_USER` / `SURREAL_PASSWORD` | SurrealDB credentials (override via `.env` before exposing the instance) | `root` / `root` |
@@ -322,7 +341,7 @@ Open Notebook uses a modern stack:
 ## Important Notes
 
 - Open Notebook is deployed with Docker (a from-source setup exists for development)
-- At least one AI provider must be configured for AI features; vector search and Ask also need an embedding model
+- At least one model provider must be configured for AI features (a local Ollama/LM Studio server needs no key); vector search and Ask also need an embedding model
 - For free local inference without API costs, use Ollama or LM Studio
 - The `OPEN_NOTEBOOK_ENCRYPTION_KEY` must be set before first launch and kept consistent across restarts
 - Data lives in the bind-mounted `notebook_data/` and `surreal_data/` folders; back them up

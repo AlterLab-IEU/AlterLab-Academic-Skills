@@ -7,7 +7,7 @@ This script provides convenient command-line access to common Reactome operation
 Usage:
     python reactome_query.py version
     python reactome_query.py query <pathway_id>
-    python reactome_query.py analyze <gene_list_file>
+    python reactome_query.py analyze <gene_list_file | '#'-headed expression TSV>
     python reactome_query.py search <term>
     python reactome_query.py entities <pathway_id>
 
@@ -15,16 +15,49 @@ Examples:
     python reactome_query.py version
     python reactome_query.py query R-HSA-69278
     python reactome_query.py analyze genes.txt
+    python reactome_query.py analyze expression.tsv   # '#Gene<TAB>sample1<TAB>...' header
     python reactome_query.py search "cell cycle"
     python reactome_query.py entities R-HSA-69278
 """
 
+import os
 import sys
 import json
+import time
 import requests
 from typing import List, Dict
 
 TIMEOUT = 120  # seconds; analysis of long gene lists can take a while
+# reactome.org sits behind Cloudflare and intermittently answers 520-526 (e.g. 522 and 525
+# on 2026-10-23); retry those and 429/5xx with exponential backoff.
+RETRY_STATUS = {429, 500, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526}
+_real_get, _real_post = requests.get, requests.post
+
+
+def _with_retry(fn, *args, retries: int = 4, **kwargs):
+    for attempt in range(retries + 1):
+        try:
+            response = fn(*args, **kwargs)
+        except (requests.ConnectionError, requests.Timeout):
+            if attempt == retries:
+                raise
+        else:
+            if response.status_code not in RETRY_STATUS or attempt == retries:
+                return response
+        time.sleep(2 ** attempt)
+
+
+class _RetryingRequests:
+    """Drop-in for the two requests calls this script makes."""
+    HTTPError = requests.HTTPError
+
+    @staticmethod
+    def get(*args, **kwargs):
+        return _with_retry(_real_get, *args, **kwargs)
+
+    @staticmethod
+    def post(*args, **kwargs):
+        return _with_retry(_real_post, *args, **kwargs)
 
 
 class ReactomeClient:
@@ -36,13 +69,13 @@ class ReactomeClient:
 
     def get_version(self) -> str:
         """Get Reactome database version"""
-        response = requests.get(f"{self.CONTENT_BASE}/data/database/version", timeout=TIMEOUT)
+        response = _RetryingRequests.get(f"{self.CONTENT_BASE}/data/database/version", timeout=TIMEOUT)
         response.raise_for_status()
         return response.text.strip()
 
     def query_pathway(self, pathway_id: str) -> Dict:
         """Query pathway information by ID"""
-        response = requests.get(f"{self.CONTENT_BASE}/data/query/{pathway_id}", timeout=TIMEOUT)
+        response = _RetryingRequests.get(f"{self.CONTENT_BASE}/data/query/{pathway_id}", timeout=TIMEOUT)
         response.raise_for_status()
         return response.json()
 
@@ -52,7 +85,7 @@ class ReactomeClient:
         Uses /data/participants/{id}/... — the older /data/event/{id}/...
         form returns 404 on the current Content Service.
         """
-        response = requests.get(
+        response = _RetryingRequests.get(
             f"{self.CONTENT_BASE}/data/participants/{pathway_id}/participatingPhysicalEntities",
             timeout=TIMEOUT,
         )
@@ -65,7 +98,7 @@ class ReactomeClient:
         Returns a flattened list of result entries. /search lives outside
         /data; the legacy /data/query?name=... form returns 404.
         """
-        response = requests.get(
+        response = _RetryingRequests.get(
             f"{self.CONTENT_BASE}/search/query",
             params={"query": term, "types": "Pathway"},
             timeout=TIMEOUT,
@@ -80,7 +113,7 @@ class ReactomeClient:
     def analyze_genes(self, gene_list: List[str]) -> Dict:
         """Perform pathway enrichment analysis on gene list"""
         data = "\n".join(gene_list)
-        response = requests.post(
+        response = _RetryingRequests.post(
             f"{self.ANALYSIS_BASE}/identifiers/",
             headers={"Content-Type": "text/plain"},
             data=data,
@@ -91,7 +124,7 @@ class ReactomeClient:
 
     def get_analysis_by_token(self, token: str) -> Dict:
         """Retrieve analysis results by token"""
-        response = requests.get(f"{self.ANALYSIS_BASE}/token/{token}", timeout=TIMEOUT)
+        response = _RetryingRequests.get(f"{self.ANALYSIS_BASE}/token/{token}", timeout=TIMEOUT)
         response.raise_for_status()
         return response.json()
 
@@ -214,7 +247,12 @@ def command_analyze(gene_file: str):
         print(f"Error: File '{gene_file}' not found")
         sys.exit(1)
 
-    print(f"Analyzing {len(genes)} genes...")
+    expression = bool(genes) and genes[0].startswith("#") and "\t" in genes[0]
+    if expression:
+        print(f"Expression analysis: {len(genes) - 1} identifiers x "
+              f"{len(genes[0].split(chr(9))) - 1} columns")
+    else:
+        print(f"Analyzing {len(genes)} genes...")
 
     try:
         result = client.analyze_genes(genes)
@@ -224,6 +262,10 @@ def command_analyze(gene_file: str):
         print(f"\nAnalysis Type: {summary['type']}")
         print(f"Token: {summary['token']} (valid for 7 days)")
         print(f"Species: {summary.get('species', 'N/A')}")
+        if result.get("expression"):
+            print(f"Expression columns: {', '.join(result['expression'].get('columnNames', []))}")
+        print(f"Identifiers not found: {result.get('identifiersNotFound', 0)} "
+              f"(list: {client.ANALYSIS_BASE}/token/{summary['token']}/notFound/)")
 
         # Display pathways
         pathways = result.get('pathways', [])
@@ -242,6 +284,8 @@ def command_analyze(gene_file: str):
             print(f"   Found: {entities['found']}/{entities['total']} entities")
             print(f"   p-value: {entities['pValue']:.6e}")
             print(f"   FDR: {entities['fdr']:.6e}")
+            if entities.get("exp"):
+                print(f"   Mean expression per column: {[round(x, 3) for x in entities['exp']]}")
 
         # Generate browser URL for top pathway
         if pathways:
@@ -252,7 +296,8 @@ def command_analyze(gene_file: str):
             print(url)
 
         # Save full results
-        output_file = gene_file.replace('.txt', '_results.json')
+        # never overwrite the input (the old .replace('.txt', ...) did so for .tsv files)
+        output_file = os.path.splitext(gene_file)[0] + "_results.json"
         with open(output_file, 'w') as f:
             json.dump(result, f, indent=2)
         print(f"\nFull results saved to: {output_file}")
@@ -268,6 +313,9 @@ def print_usage():
 
 
 def main():
+    if len(sys.argv) > 1 and sys.argv[1] in ("-h", "--help"):
+        print_usage()
+        sys.exit(0)
     if len(sys.argv) < 2:
         print_usage()
         sys.exit(1)

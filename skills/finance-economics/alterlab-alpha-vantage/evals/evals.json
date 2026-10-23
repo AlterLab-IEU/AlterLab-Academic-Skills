@@ -4,12 +4,12 @@
     {
       "id": "daily-ohlcv-and-rsi",
       "prompt": "I'm building a momentum study. Pull the daily OHLCV for AAPL over the last 20+ years and compute the 14-day RSI on the close. What endpoints do I hit?",
-      "expected_output": "Triggers Alpha Vantage. Uses the TIME_SERIES_DAILY function with outputsize=full for two decades of OHLCV, noting that outputsize=full requires a premium key (free keys get compact = the last 100 points), and the RSI technical-indicator endpoint with interval=daily, time_period=14, series_type=close. Reads the 'Time Series (Daily)' object from the JSON and reminds the user to set ALPHAVANTAGE_API_KEY.",
+      "expected_output": "Triggers the skill. Keyless default: the Yahoo chart endpoint (v8/finance/chart/AAPL with period1 at or before 2000 and interval=1d, via scripts/market_data.py prices), disclosed as unofficial, with the 14-day Wilder RSI computed locally on the split- and dividend-adjusted close (AAPL split 2:1 in 2000 and 2005, 7:1 in 2014, 4:1 in 2020, which would corrupt an unadjusted series). Alpha Vantage route, if the user has a key: TIME_SERIES_DAILY(_ADJUSTED) with outputsize=full, noting that outputsize=full requires a premium key (free keys get compact = the last 100 points), and the RSI endpoint with interval=daily, time_period=14, series_type=close, reading 'Time Series (Daily)' and ALPHAVANTAGE_API_KEY.",
       "assertions": [
         {"type": "should_trigger", "value": true},
-        {"type": "output_contains", "value": "TIME_SERIES_DAILY"},
+        {"type": "output_contains", "value": ["TIME_SERIES_DAILY", "v8/finance/chart", "market_data.py prices"]},
         {"type": "output_contains", "value": "RSI"},
-        {"type": "behavior", "value": "Specifies outputsize=full for the 20+ year request while flagging that it is premium-only, and parameterizes RSI with time_period=14 and series_type=close."}
+        {"type": "behavior", "value": "Gets the 20+ year daily history either keylessly (Yahoo chart from 2000 or earlier, disclosed as unofficial) or by specifying outputsize=full on Alpha Vantage while flagging that it is premium-only, uses split- and dividend-adjusted closes (or says why that matters for AAPL's splits), and parameterizes RSI with 14 periods on the close (time_period=14 and series_type=close on Alpha Vantage, or Wilder's 14-day RSI computed locally)."}
       ]
     },
     {
@@ -53,6 +53,36 @@
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": "NEWS_SENTIMENT"},
         {"type": "behavior", "value": "Points to the NEWS_SENTIMENT endpoint and filters by ticker (TSLA)."}
+      ]
+    },
+    {
+      "id": "keyless-aapl-splits-rsi",
+      "prompt": "I have no API keys at all. For a momentum study, get AAPL's daily prices since 2000, list its stock splits, and compute the 14-day RSI on split- and dividend-adjusted closes. What was the RSI on the last trading day of 2025?",
+      "expected_output": "Triggers the skill and runs the keyless route: daily prices from the Yahoo chart endpoint (v8/finance/chart/AAPL, period1 = 2000-01-01, events=div,split; scripts/market_data.py prices/rsi), disclosed as an unofficial source. Lists the four splits since 2000: 2000-06-21 2:1, 2005-02-28 2:1, 2014-06-09 7:1 and 2020-08-31 4:1. Computes Wilder's 14-day RSI on adjclose and reports about 45.7 for 2025-12-31 (45.69; about 45.6 on the split-adjusted close without dividends), i.e. neutral momentum, close about $271.9.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": ["45.7", "45.69", "45.6"]},
+        {"type": "behavior", "value": "Fetches AAPL daily data without any API key, names all four splits since 2000 (2000-06-21 2:1, 2005-02-28 2:1, 2014-06-09 7:1, 2020-08-31 4:1), computes a 14-day Wilder RSI on adjusted closes and reports about 45.7 for 2025-12-31, and discloses that Yahoo's chart endpoint is unofficial."}
+      ]
+    },
+    {
+      "id": "keyless-msft-fundamentals-sec",
+      "prompt": "No Alpha Vantage key here. For a corporate-finance teaching case, give me Microsoft's revenue, net income and diluted EPS for its last three fiscal years, plus a P/E based on the latest close.",
+      "expected_output": "Triggers the skill and uses SEC EDGAR XBRL company facts keylessly (data.sec.gov companyfacts for CIK 0000789019 with a contact User-Agent; scripts/market_data.py fundamentals MSFT): FY2024 (ended 2024-06-30) revenue $245,122M, net income $88,136M, diluted EPS $11.80; FY2025 $281,724M, $101,832M, $13.64; FY2026 (ended 2026-06-30) $331,839M, $133,749M, $17.95, citing the 10-K accession. P/E = latest close (Yahoo chart, dated) / $17.95 FY2026 diluted EPS, or a TTM EPS from the 10-Qs, saying which.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": ["331,839", "331.8", "331839"]},
+        {"type": "behavior", "value": "Gets Microsoft's figures from SEC EDGAR without an API key and reports FY2024-FY2026 revenue ($245.1B, $281.7B, $331.8B), net income ($88.1B, $101.8B, $133.7B) and diluted EPS ($11.80, $13.64, $17.95), then computes P/E from a dated latest close and states which EPS it used."}
+      ]
+    },
+    {
+      "id": "keyless-wti-cpi-monthly",
+      "prompt": "Without any API key, get monthly WTI crude oil prices and the U.S. CPI from January 2015 to December 2024 so I can regress headline inflation on energy prices.",
+      "expected_output": "Triggers the skill and pulls both series keylessly from FRED's public CSV: WTI as the monthly average of DCOILWTICO (fq=Monthly&fam=avg) or MCOILWTICO, and CPIAUCSL (or year-over-year inflation via transformation=pc1). Flags the April 2020 collapse: monthly average $16.55, with the daily print at -$36.98 on 2020-04-20, which a log transform cannot take. Suggests regressing inflation (percent change), not CPI levels, on oil-price changes.",
+      "assertions": [
+        {"type": "should_trigger", "value": true},
+        {"type": "output_contains", "value": "16.55"},
+        {"type": "behavior", "value": "Retrieves WTI (DCOILWTICO monthly average or MCOILWTICO) and CPIAUCSL for 2015-2024 without an API key, reports the April 2020 monthly WTI average of $16.55 and the negative daily price (-$36.98 on 2020-04-20), and recommends a regression on inflation rates or price changes rather than levels."}
       ]
     },
     {

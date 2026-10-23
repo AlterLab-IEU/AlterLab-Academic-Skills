@@ -1,0 +1,21 @@
+{
+  "_about": "Adversarial (claim, abstract) pairs for scripts/claim_faithfulness.py. Synthetic sentences written for regression testing; not quotations from real papers. 'must_not_support' cases are the failure modes an external review found (each previously returned support -> VERIFIED at 0.6); 'controls' must still reach a lexical match so the guards cannot pass by abstaining on everything.",
+  "must_not_support": [
+    {"id": "role-reversal", "claim": "Treatment A outperforms treatment B in overall survival.", "abstract": "In this randomized trial, treatment B outperformed treatment A in overall survival at five years."},
+    {"id": "role-reversal-than", "claim": "Group A had higher retention than group B.", "abstract": "Group B had higher retention than group A across all cohorts."},
+    {"id": "number-mismatch", "claim": "Mortality was reduced by 50 percent in the intervention group.", "abstract": "Mortality was reduced by 5 percent in the intervention group."},
+    {"id": "humans-vs-mice", "claim": "Drug X reduces tumour growth in humans.", "abstract": "Drug X reduces tumour growth in mice bearing xenografts."},
+    {"id": "humans-vs-in-vitro", "claim": "Compound Y kills cancer cells in patients.", "abstract": "Compound Y kills cancer cells in vitro in three cell lines."},
+    {"id": "children-vs-adults", "claim": "The vaccine prevents severe influenza in children.", "abstract": "The vaccine prevents severe influenza in adults aged 18 to 64."},
+    {"id": "definite-vs-tentative", "claim": "Mindfulness training reduces burnout among nurses.", "abstract": "Preliminary results suggest mindfulness training may reduce burnout among nurses."},
+    {"id": "causal-vs-association", "claim": "Coffee consumption reduces depression risk in adults.", "abstract": "In a cross-sectional survey, coffee consumption was associated with lower depression risk in adults."},
+    {"id": "comparison-not-in-abstract", "claim": "Method A outperforms method B on image segmentation.", "abstract": "We compare method A and method B on image segmentation benchmarks."},
+    {"id": "explicit-negation", "claim": "Drug X reduces mortality in adults.", "abstract": "Drug X did not reduce mortality in adults."}
+  ],
+  "controls": [
+    {"id": "consistent-direction", "claim": "Treatment A outperforms treatment B in overall survival.", "abstract": "In this randomized trial, treatment A outperformed treatment B in overall survival at five years."},
+    {"id": "matching-figures", "claim": "Mortality fell by 1,200 deaths in the cohort.", "abstract": "In the cohort, mortality fell by 1200 deaths."},
+    {"id": "same-population", "claim": "Drug X reduces tumour growth in mice.", "abstract": "Drug X reduces tumour growth in mice bearing xenografts."},
+    {"id": "transformer", "claim": "Transformers outperform recurrent networks on machine translation", "abstract": "We introduce the Transformer, a model architecture based solely on attention mechanisms, dispensing with recurrence entirely. Experiments on machine translation tasks show these models outperform recurrent networks in quality while being more parallelizable and requiring less time to train."}
+  ]
+}

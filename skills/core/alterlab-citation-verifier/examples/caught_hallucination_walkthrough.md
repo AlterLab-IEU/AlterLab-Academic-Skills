@@ -50,7 +50,7 @@ becomes "so the citation must be fine."
 
 ```
 $ echo "Mueller, P. A., & Oppenheimer, D. M. (2014). The pen is mightier than the keyboard: Advantages of longhand over laptop note taking. Psychological Science, 25(6), 1159-1168. https://doi.org/10.1177/0956797614524581" \
-  | uv run python skills/core/alterlab-citation-verifier/scripts/verify_citations.py -
+  | uv run python scripts/verify_citations.py -
 
 # Summary of the JSON entry:
   verdict:        verified   (severity NONE)
@@ -76,7 +76,7 @@ The verifier now compares the **claim** against what the source actually says. T
 heuristic tier runs first:
 
 ```
-$ uv run python skills/core/alterlab-citation-verifier/scripts/claim_faithfulness.py \
+$ uv run python scripts/claim_faithfulness.py \
     --claim "Randomized controlled trials have shown that smartphone note-taking apps improve undergraduate exam scores by 31% compared to handwriting" \
     --doi 10.1177/0956797614524581
 
@@ -93,7 +93,7 @@ the same retrieved abstract (the output below is illustrative; the rationale wor
 by run):
 
 ```
-$ uv run python skills/core/alterlab-citation-verifier/scripts/claim_faithfulness.py \
+$ uv run python scripts/claim_faithfulness.py \
     --claim "Randomized controlled trials have shown that smartphone note-taking apps improve undergraduate exam scores by 31% compared to handwriting" \
     --doi 10.1177/0956797614524581 --tier llm
 

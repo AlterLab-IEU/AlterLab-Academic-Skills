@@ -3,6 +3,8 @@
   "evals": [
     {
       "id": "submit-binding-experiment",
+      "files": ["fixtures/minibinders_24.fasta"],
+      "requires": ["env:ADAPTYV_API_KEY"],
       "prompt": "I have 24 designed mini-binder sequences and I want to send them to Adaptyv to measure binding affinity against my target by biolayer interferometry. Can you set up the experiment submission?",
       "expected_output": "Invokes alterlab-adaptyv: builds the API submission (POST /experiments with a Bearer ADAPTYV_API_KEY), sets experiment_spec.experiment_type to affinity (or screening) with method bli and a catalog target_id from GET /targets, passes the sequences as a {label: amino-acid string} map, creates the draft, submits it, and has the user review and confirm the quote before the run; returns the experiment_id for tracking. Notes that binding is measured by biolayer interferometry and that turnaround (several weeks) should be read from the quote.",
       "assertions": [
@@ -13,15 +15,18 @@
     },
     {
       "id": "optimize-sequence-expression",
-      "prompt": "Before I spend money sending these proteins to the wet lab, I want to filter and redesign them for better solubility and expression. Several have unpaired cysteines and look aggregation-prone.",
-      "expected_output": "Invokes alterlab-adaptyv's protein sequence optimization workflow: flags unpaired cysteines and excessive hydrophobic regions, runs initial solubility filtering with NetSolP/SoluProt, redesigns sequences for solubility with SolubleMPNN, scores likelihood with ESM, and quantifies hydrophobic exposure (pSAE) before any submission.",
+      "files": ["fixtures/optimize_candidates.fasta"],
+      "prompt": "Before I spend money sending these proteins to the wet lab, I want to filter and redesign the attached candidates (optimize_candidates.fasta) for better solubility and expression. Several have unpaired cysteines and look aggregation-prone.",
+      "expected_output": "Invokes alterlab-adaptyv's protein sequence optimization workflow on the attached candidates (keyless, local): flags unpaired cysteines and excessive hydrophobic regions, runs initial solubility filtering with NetSolP/SoluProt, redesigns sequences for solubility with SolubleMPNN, scores likelihood with ESM, and quantifies hydrophobic exposure (pSAE) before any submission. In the fixture, binder_a (one cysteine) and binder_b (three cysteines) have odd/unpaired cysteine counts and binder_c carries an ~18-residue hydrophobic run, while binder_d/binder_e/binder_f are clean.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Recommends solubility/expression optimization tools (NetSolP, SoluProt, SolubleMPNN, ESM) and addresses unpaired cysteines / hydrophobic aggregation before wet-lab submission." }
+        { "type": "behavior", "value": "Recommends solubility/expression optimization tools (NetSolP, SoluProt, SolubleMPNN, ESM) and addresses unpaired cysteines / hydrophobic aggregation before wet-lab submission." },
+        { "type": "behavior", "value": "On the attached fixture, flags binder_a and binder_b (odd/unpaired cysteine counts) and binder_c (long hydrophobic run) as the risky sequences, not the clean ones." }
       ]
     },
     {
       "id": "track-and-download-results",
+      "requires": ["env:ADAPTYV_API_KEY"],
       "prompt": "I submitted an experiment to Adaptyv three weeks ago and have the experiment ID. How do I check whether it's done and pull the thermostability results?",
       "expected_output": "Invokes alterlab-adaptyv: queries the Adaptyv API by experiment_id to check status, and once complete downloads/retrieves the result payload. Treats status 'done' (or results_status 'partial'/'all') as the signal to fetch GET /experiments/{id}/results, handles the thermostability (Tm) assay output, and notes that turnaround is several weeks.",
       "assertions": [
@@ -31,11 +36,45 @@
     },
     {
       "id": "batch-enzyme-activity",
-      "prompt": "I have a library of enzyme variants and need to submit them in batch for activity assays through the Adaptyv platform, then webhook me when each finishes.",
+      "files": ["fixtures/enzyme_variants.fasta"],
+      "requires": ["env:ADAPTYV_API_KEY"],
+      "prompt": "I have a library of enzyme variants (enzyme_variants.fasta) and need to submit them in batch for activity assays through the Adaptyv platform, then webhook me when each finishes.",
       "expected_output": "Invokes alterlab-adaptyv: batches the variant library into experiment submissions with experiment_type enzyme_activity (no target_id or method), sets the webhook_url for completion callbacks, and tracks the returned experiment IDs. References the batch-processing examples and API auth.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "behavior", "value": "Submits a batch of sequences for enzyme activity assays and configures a webhook callback for completion." }
+      ]
+    },
+    {
+      "id": "validate-submission-offline",
+      "prompt": "I don't have my Adaptyv API key on this machine and I don't want a rejected submission. Validate binding_submission.json against the Foundry's rules before I send it, and tell me exactly what to fix.",
+      "files": ["fixtures/binding_submission.json"],
+      "expected_output": "Invokes alterlab-adaptyv on the keyless path (e.g. scripts/validate_submission.py) with no ADAPTYV_API_KEY: checks the affinity submission against the Foundry's own contract and reports that target_id is required for an affinity experiment but is missing, and that sequence 'mb_bad' (MKVLWAALLX1ZB) contains invalid characters (X, 1, Z, B are not among the 20 amino acids) so it must be fixed or removed; the other sequences and method 'bli' are fine. Explains target_id must come from the catalog (GET /targets, which needs the key) and that these are exactly the problems the API's 400 would list, without submitting.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "target_id" },
+        { "type": "behavior", "value": "Flags the missing target_id (required for affinity) and the invalid characters in the mb_bad sequence from an offline check, without contacting the API." }
+      ]
+    },
+    {
+      "id": "assemble-and-check-expression-package",
+      "prompt": "Help me put together an Adaptyv expression experiment for 8 enzyme variants and make sure the spec is well-formed before I set up billing — I have no account yet. Note I keep seeing errors when I add a target and a BLI method.",
+      "expected_output": "Invokes alterlab-adaptyv and assembles the experiment_spec offline with no key: experiment_type 'expression' with the 8 variants as a {label: aa_string} map, and explains that expression takes NEITHER a target_id NOR a method (those are only for the binding assays affinity/screening), which is why adding a target and bli caused errors. Validates the sequences are proper amino-acid strings and that the spec is well-formed, and describes the draft -> submit -> confirm-quote flow that will need ADAPTYV_API_KEY, without submitting or inventing results.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "output_contains", "value": "expression" },
+        { "type": "behavior", "value": "Builds a valid expression spec offline and explains that expression rejects target_id and method (binding-only fields), without needing an API key." }
+      ]
+    },
+    {
+      "id": "prescreen-before-package-offline",
+      "files": ["fixtures/prescreen_12.fasta"],
+      "prompt": "Before I even build the Adaptyv submission, screen these 12 candidate binder sequences (prescreen_12.fasta) locally for solubility and expression risk, drop the bad ones, and give me the cleaned {label: sequence} map ready to drop into the experiment spec. No account yet.",
+      "expected_output": "Invokes alterlab-adaptyv's keyless pre-screen on the attached 12 candidates: flags unpaired cysteines and aggregation-prone hydrophobic stretches, applies NetSolP/SoluProt-style solubility scoring and ESM naturalness locally (uv run python, no token), drops or down-ranks the risky sequences, and returns the cleaned {label: aa_string} map ready to paste into experiment_spec.sequences. In the fixture cand_02, cand_05, cand_09 and cand_11 carry odd/unpaired cysteine counts. Notes the actual Foundry submission later needs ADAPTYV_API_KEY and costs money, without submitting anything.",
+      "assertions": [
+        { "type": "should_trigger", "value": true },
+        { "type": "behavior", "value": "Runs the local solubility/expression/ESM pre-screen with no key and returns a cleaned sequence map for the spec, deferring submission to the credentialed API." },
+        { "type": "behavior", "value": "Drops or down-ranks the unpaired-cysteine candidates (cand_02, cand_05, cand_09, cand_11) rather than keeping all 12." }
       ]
     },
     {

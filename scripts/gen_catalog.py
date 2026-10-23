@@ -154,7 +154,8 @@ def build_record(skill_md: Path) -> dict:
 
     name = _clean(fm.get("name")) or skill_dir.name
     allowed_raw = _clean(fm.get("allowed-tools"))
-    allowed_tools = allowed_raw.split() if allowed_raw else []
+    # one token per rule; a rule's parentheses may hold spaces (``Bash(uv run:*)``)
+    allowed_tools = re.findall(r"[^\s,(]+(?:\([^)]*\))?", allowed_raw) if allowed_raw else []
 
     return {
         "name": name,

@@ -2,7 +2,7 @@
 name: alterlab-multilevel-models
 description: "Fits and reports mixed-effects / multilevel / hierarchical models for clustered, nested, longitudinal, and repeated-measures data — random intercepts and slopes, variance components and the ICC, cross-level interactions, and GLMMs (logistic/Poisson) — using statsmodels MixedLM and bambi (Bayesian on PyMC) in Python, or the field-standard R lme4 / glmmTMB / brms via Rscript. It enforces the reporting items reviews find under-reported: full fixed + random specification, centering, variance components + ICC, estimation method, assumption checks, model comparisons, and effect sizes. Use when data are grouped/nested (students in schools, repeated measures, panel/longitudinal) and the question concerns within- vs between-cluster variation. For general single-level regression prefer alterlab-statsmodels; for panel fixed effects used for causal identification prefer alterlab-causal-inference. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Requires (declare in-session, no runtime install on Anthropic API): Python statsmodels>=0.14 (MixedLM), optionally bambi>=0.18 (Bayesian, on PyMC) — OR the field-standard R lme4>=2.0 (+ lmerTest for p-values), glmmTMB, brms, and performance (icc/r2) via Rscript. Runs locally via `uv run python` / `Rscript`; no API key."
 metadata:
     skill-author: AlterLab
@@ -39,6 +39,10 @@ STATE THE FULL FIXED + RANDOM STRUCTURE, THE ICC, THE ESTIMATION, THE CHECKS.
 | Panel fixed effects for **causal** identification (DiD/within) | `alterlab-causal-inference` | FE-for-identification, not variance partitioning. |
 | Latent variables / SEM / factor structure | `alterlab-sem-psychometrics` | Measurement model. |
 | Whether the design/question even needs multilevel | `alterlab-ssci-design-gate` | Design routing. |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-statsmodels`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+**Running the code.** In Claude Code, run analysis code in a throwaway environment instead of installing packages: `uv run --python ">=3.11" --with "statsmodels>=0.14" --with pandas python mlm.py`. This needs no install approval and leaves the user's environment untouched. If `uv` or the network is unavailable, say so and hand over the script; never report results you did not compute.
 
 ## Structure ≠ question
 

@@ -2,7 +2,7 @@
 name: alterlab-survey-analysis
 description: "Analyzes complex-sample survey data with design-based inference — declares a survey design (weights, strata, PSUs/clusters, FPC) before estimating means, totals, proportions, ratios, and quantiles, computes design-adjusted standard errors via Taylor linearization or replicate weights (BRR, Jackknife, Bootstrap), calibrates with post-stratification / raking / GREG, and fits design-adjusted GLMs (linear, logistic, Poisson). Uses svy in Python (the maintained successor to the now-archived samplics) or the field-standard R survey + srvyr via Rscript. Use when analyzing GSS/ANES/ESS/DHS/Eurobarometer or any weighted/stratified/clustered survey, when a dataset ships survey weights, or when someone quotes unweighted percentages from a complex survey. For questionnaire and sampling-plan DESIGN prefer alterlab-survey-design; for the sampling-adequacy gate prefer alterlab-ssci-sampling-gate; for causal identification prefer alterlab-causal-inference. Part of the AlterLab Academic Skills suite."
 license: MIT
-allowed-tools: Read Bash(python:*)
+allowed-tools: Read Bash(python:*) Bash(uv run:*)
 compatibility: "Requires (declare in-session, no runtime install on Anthropic API): Python svy>=0.29 (samplics' maintained successor; beta, takes a polars DataFrame — pin the version) + polars; samplics 0.6 is archived (FutureWarning on import) and is for legacy code only — OR the field-standard R survey>=4.5 + srvyr>=1.3 via Rscript (GitHub-only csSampling + brms for Bayesian design-based models). Runs locally via `uv run python` / `Rscript`; no API key."
 metadata:
     skill-author: AlterLab
@@ -40,6 +40,10 @@ YOU MUST WEIGHT (AND DECLARE STRATA + PSUs) BEFORE QUOTING ANY NUMBER FROM A COM
 | Whether the sample size / frame is adequate | `alterlab-ssci-sampling-gate` | Sampling-adequacy gate, upstream. |
 | Causal identification (DiD/IV/RDD) | `alterlab-causal-inference` | Design-based *survey* SEs ≠ causal identification. |
 | Plain unweighted descriptive/inferential stats | `alterlab-statistical-analysis` | No survey design to honor. |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-survey-design`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
+
+**Running the code.** In Claude Code, run analysis code in a throwaway environment instead of installing packages: `uv run --python ">=3.11" --with "svy>=0.29" --with polars python survey.py`. This needs no install approval and leaves the user's environment untouched. If `uv` or the network is unavailable, say so and hand over the script; never report results you did not compute.
 
 ## The design-object-first rule
 

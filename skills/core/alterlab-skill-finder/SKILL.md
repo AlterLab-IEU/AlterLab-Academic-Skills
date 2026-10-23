@@ -99,7 +99,7 @@ executing — run this sequence:
    the subagent count to complexity and default low** (Anthropic's rule of thumb: simple fact-finding
    ≈ 1 agent; a focused comparison ≈ 2–4; only genuinely broad work ≈ 10+). Reuse the existing
    orchestrators rather than reinventing them:
-   - a packaged job — whole-manuscript citation audit, independent review panel, claim stress-test,
+   - a packaged job — whole-manuscript citation audit, review panel, claim stress-test,
      PRISMA dual screening, response to reviewers, grant mock panel, literature map →
      **`alterlab-research-workflows`** (in Claude Code: `/alterlab-workflows:<name>`)
    - end-to-end research→publish → **`alterlab-research-pipeline`** (deep-research → paper-writer → paper-reviewer, revision loops)
@@ -142,6 +142,8 @@ The one rule: **questions before execution.** A short clarify step beats a wrong
 | Research-rigor gates (pre-registration, test choice, transparency) | **methodology** | `alterlab-test-selection-guard`, `alterlab-preregistration-discipline` |
 | Design/run a whole **social-science study** (survey, qualitative, causal, multilevel, meta, missing data) | **social-science-workflow** | `alterlab-ssci-orchestrator` (+ 16 gates & modules) |
 | Run a packaged **multi-agent job** — citation audit, review panel, PRISMA screening, rebuttal, grant mock panel, literature map, claim stress-test | **workflows** | `alterlab-research-workflows` (`/alterlab-workflows:<name>`) |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-deep-research`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 Full per-domain listing of every skill with a one-liner: `references/skill_index.md`.
 

@@ -47,11 +47,13 @@ This skill should be used when:
 
 | Scenario | Use Instead |
 |----------|-------------|
-| A single quick lookup (one gene, one structure, one enrichment) | `alterlab-gget` |
+| A single quick lookup of gene/transcript info, a sequence, or an enrichment list | `alterlab-gget` |
 | Parsing sequence/structure files or scripting Entrez directly | `alterlab-biopython` |
 | Local BLAST+ / `makeblastdb` / DIAMOND on your own database | `alterlab-blast` |
 | Deep work in one database (full KEGG, UniProt, or ChEMBL feature set) | `alterlab-kegg`, `alterlab-uniprot`, `alterlab-chembl` |
 | Cheminformatics on the retrieved structures (descriptors, fingerprints) | `alterlab-rdkit` |
+
+**Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-gget`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
 ## Core Capabilities
 
@@ -142,6 +144,21 @@ compound_info = k.get("cpd:C11222")  # Includes ChEBI links
 mapping = k.conv("chebi", "compound")
 mapping["cpd:C11222"]   # -> 'chebi:5292'  (Geldanamycin)
 ```
+
+> **Known breakage (bioservices ≤ 1.16, verified 2026-10):** `KEGG().find(...)` and
+> `KEGG().conv(...)` currently raise `AttributeError: 'HTTPResponseError' object has no
+> attribute 'split'`. Before searching, bioservices validates the database name against the
+> KEGG organism list, but `https://rest.kegg.jp/list/organism` now returns **HTTP 400**, and
+> the library chokes on the error object. Until it is fixed, call the KEGG REST endpoints
+> directly (they work):
+> ```python
+> import requests
+> hits = requests.get("https://rest.kegg.jp/find/compound/Geldanamycin").text
+> # -> "C11222\tGeldanamycin\nC15823\tProgeldanamycin"
+> chebi = requests.get("https://rest.kegg.jp/conv/chebi/cpd:C11222").text
+> # -> "cpd:C11222\tchebi:5292"
+> ```
+> This hits `rest.kegg.jp` only (no organism-list call), so it sidesteps the HTTP 400.
 
 **Common workflow:**
 1. Search compound by name in KEGG
@@ -252,6 +269,9 @@ for row in annotations["results"][:5]:
 raising `limit` (values above 100 raise a `TypeError`).
 
 ### 7. Protein-Protein Interactions
+
+Querying PPI partners from STRING or IntAct is this skill's job — even for a single protein.
+It is not a "quick lookup" to hand to `alterlab-gget`; `gget` has no STRING/IntAct PPI route.
 
 PSICQUIC and BioGRID were removed from bioservices in 1.14. Use the STRING service (or
 `IntactComplex` for curated complexes):
