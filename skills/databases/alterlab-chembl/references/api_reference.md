@@ -13,9 +13,7 @@ The ChEMBL database contains:
 
 ## Python Client Installation
 
-```bash
-uv pip install chembl_webresource_client
-```
+No install step — run through uv: `uv run --with chembl_webresource_client python script.py`.
 
 ## Key Resources and Endpoints
 
