@@ -504,7 +504,6 @@ def build(version: str, verdict: str) -> dict:
         "version": version,
         "owner": {
             "name": "AlterLab @ Izmir University of Economics",
-            "email": "alterlab.ieu@gmail.com",
         },
         # `metadata` mirrors description/version for backward compatibility; the marketplace
         # schema has no `metadata.author` (the maintainer lives in `owner`).

@@ -63,8 +63,8 @@ Given one or more `(claim, DOI)` pairs, it:
    flags so no downstream consumer can mistake an abstract-level pass for full-text proof.
 
 It is **standard-library only** (`urllib`/`json`/`re`) — no `requests`, no third-party deps —
-so it runs under `uv run python` with no extra installs. The polite-pool contact defaults to
-`alterlab.ieu@gmail.com` and is override-able via `ALTERLAB_CONTACT_EMAIL`.
+so it runs under `uv run python` with no extra installs. A polite-pool contact address is
+opt-in (`--mailto` or `ALTERLAB_CONTACT_EMAIL`); with neither, no address is sent.
 
 ### The two scoring tiers
 
