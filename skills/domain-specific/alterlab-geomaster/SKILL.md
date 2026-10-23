@@ -45,7 +45,10 @@ bundle binaries (they need a matching system/conda libgdal); PDAL and rsgislib
 likewise have no reliable pip wheels — get those via conda (Option B).
 
 ```bash
-# Option A — uv/pip env (recommended here): wheels bundle GDAL/GEOS/PROJ.
+# Option A — uv (recommended here): wheels bundle GDAL/GEOS/PROJ.
+# Install-free, one command, no virtualenv (pin the interpreter; uv's default can be 3.9):
+uv run --python ">=3.11" --with rasterio --with geopandas --with scikit-learn python classify.py
+# Persistent env instead (inside an activated virtualenv), by task.
 # rasterio/fiona cover most GDAL needs; standalone `gdal` -> use Option B.
 uv pip install rasterio fiona shapely pyproj geopandas
 uv pip install torchgeo earthengine-api
@@ -258,6 +261,7 @@ route = nx.shortest_path(G, orig, dest, weight='travel_time')
 ## Image Classification
 
 ```python
+import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 import rasterio
 from rasterio.features import rasterize
@@ -268,6 +272,9 @@ def classify_imagery(raster_path, training_gdf, output_path):
         image = src.read()
         profile = src.profile
         transform = src.transform
+        # Polygons must share the raster's CRS: a GeoJSON is EPSG:4326 by spec, and
+        # rasterizing it onto a UTM grid silently gives empty masks (X_train = []).
+        training_gdf = training_gdf.to_crs(src.crs)
 
     # Extract training data
     X_train, y_train = [], []
