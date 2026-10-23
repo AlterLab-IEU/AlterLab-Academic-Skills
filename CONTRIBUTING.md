@@ -118,7 +118,8 @@ Part of the AlterLab Academic Skills suite.
 - `allowed-tools` -- **space-separated** open-standard list, e.g. `Read Write Edit Bash(python:*)`
 - `metadata.skill-author` -- must be `AlterLab`
 - `metadata.version` -- quoted semver string, e.g. `"1.0.0"`
-- `compatibility` -- documents the skill's target runtime / required env & keys. **Claude-Code/SDK-only**: this is the one top-level key outside the claude.ai uploader whitelist (see below).
+- `metadata.credentials` -- only if the skill names a credential: `"optional: NAME (what it adds), ..."`. Every skill works without one (keyless-first; see Skill Quality Standards).
+- `compatibility` -- documents the skill's target runtime and environment; states the keyless path first. **Claude-Code/SDK-only**: this is the one top-level key outside the claude.ai uploader whitelist (see below).
 
 > There is **no** top-level `version:` field, and **no** `metadata.tags` or `metadata.category`. Category is derived from the folder path, not the frontmatter.
 
@@ -218,6 +219,7 @@ Every skill must clear this bar (enforced by `python scripts/audit_skills.py` + 
 - **Body** under ~500 lines; move long detail into `references/*.md` (loaded on demand). Cited `references/` and `scripts/` paths must exist.
 - **No fabrication**: real APIs, real citations/DOIs, no unsourced vendor benchmarks; if a script sends data to a third-party API, say so.
 - **`allowed-tools`** scoped to what the skill needs (space-separated).
+- **Keyless-first** (`python3 scripts/check_keyless.py`): the skill does what it claims with no external API key, account or licence. A credential may only add the user's own private account or data, a higher rate limit, or a paid service the user explicitly asks for; declare it as `metadata.credentials: "optional: NAME (what it adds)"`, never as a requirement in `compatibility` or `description`, and keep at least 3 `should_trigger` evals that need no `env:` key.
 - Add **`evals/evals.json`** (≥ 3 `should_trigger` + ≥ 1 near-miss `should_not_trigger`); validate with `python scripts/run_evals.py`.
 
 A copy-paste scaffold lives in [`template/`](template/).
