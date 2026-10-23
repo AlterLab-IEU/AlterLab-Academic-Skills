@@ -36,7 +36,7 @@
         {"type": "output_contains", "value": "EXPTIME"},
         {"type": "behavior", "value": "Opens the FITS file with a context manager, inspects HDU structure, extracts the named header keywords, and reports pixel statistics."},
         {"type": "output_contains", "value": "SDSS-r"},
-        {"type": "behavior", "value": "Reports the shipped file's real values: an empty primary HDU plus one 'SCI' float32 image HDU of 64 x 48 pixels; EXPTIME = 300 s and FILTER = 'SDSS-r' read from the SCI header (the primary header has no EXPTIME); pixel mean about 1047.07 and median about 1002.57 (within 0.1%)."}
+        {"type": "behavior", "value": "Reports the shipped file's real values: an empty primary HDU plus one 'SCI' float32 image HDU of 64 x 48 pixels (NAXIS1 = 64, NAXIS2 = 48; numpy shape (48, 64)); EXPTIME = 300 s and FILTER = 'SDSS-r' read from the SCI header (the primary header has no EXPTIME); pixel mean about 1047.07 and median about 1002.57 (within 0.1%)."}
       ]
     },
     {

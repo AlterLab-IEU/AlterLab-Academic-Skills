@@ -40,7 +40,7 @@
         {"type": "should_trigger", "value": true},
         {"type": "output_contains", "value": ["randomforest", "random forest", "random-forest"]},
         {"type": "behavior", "value": "Trains a RandomForestClassifier on rasterized training polygons and writes a classified raster, a supervised remote-sensing classification workflow."},
-        {"type": "behavior", "value": "Runs on the shipped scene.tif (4-band uint16, 100 x 80 px, EPSG:32633) and training_polygons.geojson (6 polygons, class/class_id = water 1, vegetation 2, urban 3, stored in EPSG:4326), reprojecting the polygons to the raster CRS before rasterizing, and writes a single-band classified raster on the same 100 x 80 EPSG:32633 grid. If it reports class totals they are about water 2,744, vegetation 4,266 and urban 990 pixels (the classes separate cleanly)."}
+        {"type": "behavior", "value": "Runs on the shipped scene.tif (4-band uint16, width 100 x height 80 px, 10 m, EPSG:32633) and training_polygons.geojson (6 polygons, class/class_id = water 1, vegetation 2, urban 3, stored in EPSG:4326), reprojecting the polygons to the raster CRS before rasterizing, and writes a single-band classified raster on the same 100 x 80 EPSG:32633 grid (same transform). If it reports class totals they are about water 2,744, vegetation 4,266 and urban 990 pixels (the classes separate cleanly)."}
       ]
     },
     {
