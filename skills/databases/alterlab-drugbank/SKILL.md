@@ -2,7 +2,7 @@
 name: alterlab-drugbank
 description: Analyze drug information of the kind DrugBank curates — drug properties, interactions, targets with actions, metabolizing enzymes, chemical structures, and pharmacology — keylessly from ChEMBL, openFDA labels, PubChem and KEGG, or from a DrugBank XML release when the user holds a licence. Use when working with pharmaceutical data, drug discovery research, drug-drug interaction analysis, target identification, chemical similarity searches, ADMET predictions, or any task needing detailed drug and drug-target records from DrugBank. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv:*)
 compatibility: No API key, account or licence required. Keyless default — scripts/drug_open.py (standard library; ChEMBL, openFDA labels, PubChem, KEGG DDI) and scripts/drug_similarity.py (RDKit via uv) cover identifiers, indications, mechanisms, targets, CYP enzymes, interactions and similarity. A DrugBank XML release (licensed; downloads paused since 2026-09) or the commercial Clinical API is optional, via drugbank-downloader >= 0.2.
 metadata:
     skill-author: AlterLab
@@ -58,6 +58,7 @@ name UniProt/Reactome (`alterlab-reactome`) for pathways and say what is missing
 | Genotype-guided dosing / pharmacogene–drug pairs (CPIC, DPWG) | `alterlab-clinpgx` |
 | KEGG DRUG entries, drug–pathway maps, KEGG drug–drug interactions | `alterlab-kegg` |
 | Compound identifiers and properties by name/CID/SMILES | `alterlab-pubchem` |
+| Clinical trial records — recruiting status, eligibility criteria, NCT IDs (ClinicalTrials.gov) | `alterlab-clinicaltrials` |
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-fda`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
@@ -187,15 +188,12 @@ Perform structure-based analysis including molecular similarity searches, proper
 
 ### Python Packages
 Nothing for `drug_open.py` (standard library); `drug_similarity.py` pulls RDKit through
-`uv run`. For a licensed DrugBank release:
+`uv run`. For a licensed DrugBank release, run your parsing script install-free (add only
+the extras it imports):
 ```bash
-uv pip install drugbank-downloader  # DrugBank XML access (licence)
-uv pip install bioversions          # Latest version detection
-uv pip install lxml                 # XML parsing optimization
-uv pip install pandas               # Data manipulation
-uv pip install rdkit                # Chemical informatics (for similarity)
-uv pip install networkx             # Network analysis (for interactions)
-uv pip install scikit-learn         # ML/clustering (for chemical space)
+uv run --python ">=3.11" --with drugbank-downloader --with lxml --with pandas python my_drugbank.py
+#   extras: --with bioversions (latest version), --with rdkit (similarity),
+#           --with networkx (interaction networks), --with scikit-learn (chemical space)
 ```
 
 ### Account Setup (optional — only for DrugBank's own files)
