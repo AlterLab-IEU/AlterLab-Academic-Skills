@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless GTEx Portal REST API v2 (no authentication required); datasets gtex_v10 (GENCODE v39) and gtex_v8 (GENCODE v26)
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.1.0"
+    last_updated: "2026-10-23"
 ---
 
 # GTEx Database
@@ -224,19 +224,29 @@ tissues = get_tissues()
 import requests
 
 def query_sqtl(gene_id, tissue_id=None, dataset_id="gtex_v10"):
-    """Query significant sQTLs for a gene."""
+    """Query ALL significant sQTLs for a gene (pages through the results)."""
     url = "https://gtexportal.org/api/v2/association/singleTissueSqtl"
-    params = {
-        "gencodeId": gene_id,
-        "datasetId": dataset_id,
-        "itemsPerPage": 250
-    }
+    params = {"gencodeId": gene_id, "datasetId": dataset_id, "itemsPerPage": 1000}
     if tissue_id:
         params["tissueSiteDetailId"] = tissue_id
 
-    response = requests.get(url, params=params)
-    return response.json()
+    rows, page = [], 0
+    while True:
+        params["page"] = page
+        data = requests.get(url, params=params, timeout=60).json()
+        rows.extend(data.get("data", []))
+        pages = data.get("paging_info", {}).get("numberOfPages", 1)
+        page += 1
+        if page >= pages:
+            return rows
 ```
+
+One page is not the answer: ERAP2 (`ENSG00000164308.17`) in `Muscle_Skeletal` has **655**
+significant variant–intron pairs in gtex_v10 (`paging_info.totalNumberOfItems`), and a single
+default-size page returns only 250 of them (checked 2026-10-23). Each row's `phenotypeId` is
+the intron cluster (`chr5:96900189:96901506:clu_46540_+:ENSG00000164308.17`); report how many
+distinct introns the variants act on, not just the top variant. Or run
+`python scripts/query_gtex.py sqtl ERAP2 --tissue Muscle_Skeletal`.
 
 ## Query Workflows
 
