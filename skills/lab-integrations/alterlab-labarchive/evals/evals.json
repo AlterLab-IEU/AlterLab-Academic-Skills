@@ -34,7 +34,7 @@
       "expected_output": "Invokes alterlab-labarchive. Uses the site_reports API (e.g. detailed_usage_report with start_date/end_date) to generate the institutional usage/activity report, noting it is an Enterprise feature.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "usage report" }
+        { "type": "output_contains", "value": ["usage report", "usage_report", "detailed_usage_report"] }
       ]
     },
     {
