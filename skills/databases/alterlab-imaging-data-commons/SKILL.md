@@ -2,11 +2,11 @@
 name: alterlab-imaging-data-commons
 description: Query and download public cancer imaging data from the NCI Imaging Data Commons (IDC) using the idc-index Python package, filtering by metadata, visualizing in-browser, and checking licenses, with no authentication required. Use when obtaining large-scale radiology (CT, MR, PET) or digital pathology DICOM datasets for AI/ML training or cancer imaging research. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
-compatibility: Requires the idc-index Python package >= 0.12.5 (current 0.12.5 as of 2026-09; IDC data release v24; earlier 0.12.x pin pandas <= 2.2.4); keyless IDC data access (no authentication required)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
+compatibility: Runs install-free with `uv run --with "idc-index>=0.13.4" python script.py` (idc-index 0.13.4 = IDC data release v25, 2026-10-20; releases up to 0.12.4 pin pandas <= 2.2.4); keyless IDC data access (no authentication required)
 metadata:
-    version: "1.5.2"
-    last_updated: "2026-09-23"
+    version: "1.6.0"
+    last_updated: "2026-10-23"
     skill-author: AlterLab
     skill-source: https://github.com/ImagingDataCommons/idc-claude-skill
 ---
@@ -17,24 +17,28 @@ metadata:
 
 Use the `idc-index` Python package to query and download public cancer imaging data from the National Cancer Institute Imaging Data Commons (IDC). No authentication required for data access.
 
-**Current IDC Data Version: v24** (always verify with `IDCClient().get_idc_version()`)
+**Current IDC Data Version: v25** (idc-index 0.13.4, released 2026-10-20; always verify with `IDCClient().get_idc_version()`)
 
 **Primary tool:** `idc-index` ([GitHub](https://github.com/imagingdatacommons/idc-index))
 
-**Check the installed package version first.** Every IDC data release ships as a new `idc-index` version, so an old install silently queries stale data; and releases up to 0.12.4 pin `pandas<=2.2.4`, which conflicts with pandas 3 (0.12.5 relaxed this to `pandas<4`).
+**Run it install-free.** `uv run --with "idc-index>=0.13.4" python your_script.py` (or `... python -c "..."`) resolves
+idc-index into uv's cache for that run: no `pip install`, nothing added to another
+environment, and always at least the version below. Every IDC data release ships as a new
+`idc-index` version, so an old install silently queries stale data; releases up to 0.12.4
+also pin `pandas<=2.2.4`, which conflicts with pandas 3 (0.12.5 relaxed this to `pandas<4`).
+If you run in an existing environment instead, check the installed version first:
 
 ```python
 from importlib.metadata import version as _v
 from packaging.version import Version
 
-REQUIRED_VERSION = "0.12.5"  # keep in sync with the compatibility field of this file
+REQUIRED_VERSION = "0.13.4"  # keep in sync with the compatibility field of this file
 installed = _v("idc-index")
 
 # Compare as versions, not strings ("0.9.0" < "0.11.0" is False as a string).
 if Version(installed) < Version(REQUIRED_VERSION):
     print(f"idc-index {installed} is older than {REQUIRED_VERSION}; upgrade with:")
-    print("    uv pip install --upgrade idc-index   # or: pip install --upgrade idc-index")
-    print("Then restart Python to load the new version.")
+    print('    run with: uv run --with "idc-index>=0.13.4" python your_script.py')
 else:
     print(f"idc-index {installed} meets requirement ({REQUIRED_VERSION})")
 ```
@@ -45,7 +49,7 @@ else:
 from idc_index import IDCClient
 client = IDCClient()
 
-# Verify IDC data version (should be "v24")
+# Verify IDC data version ("v25" as of 2026-10)
 print(f"IDC data version: {client.get_idc_version()}")
 
 # Get collection count and total series
@@ -70,12 +74,12 @@ print(stats)
 
 ## Scripts
 
-`scripts/query_imaging_data_commons.py` — CLI wrapper over the `idc-index` package (JSON to stdout; `uv pip install --upgrade idc-index`):
+`scripts/query_imaging_data_commons.py` — CLI wrapper over the `idc-index` package (JSON to stdout), run install-free:
 
 ```bash
-python scripts/query_imaging_data_commons.py version                 # IDC data version
-python scripts/query_imaging_data_commons.py collections --limit 50   # collections + counts
-python scripts/query_imaging_data_commons.py sql "SELECT * FROM index LIMIT 5"   # raw SQL
+uv run --with "idc-index>=0.13.4" python scripts/query_imaging_data_commons.py version          # IDC data version
+uv run --with "idc-index>=0.13.4" python scripts/query_imaging_data_commons.py collections --limit 50
+uv run --with "idc-index>=0.13.4" python scripts/query_imaging_data_commons.py sql "SELECT * FROM index LIMIT 5"
 ```
 
 ## When to Use This Skill
@@ -94,6 +98,8 @@ python scripts/query_imaging_data_commons.py sql "SELECT * FROM index LIMIT 5"  
 | Whole-slide image tiling and tissue detection on local slides | `alterlab-histolab` |
 | Somatic mutations / copy number for TCGA or other cancer cohorts | `alterlab-cbioportal` |
 | Cancer mutation signatures and census genes | `alterlab-cosmic` |
+| Clinical significance / pathogenicity classification of a variant | `alterlab-clinvar` |
+| Population statistics: incidence or mortality rates by state, county or country | `alterlab-datacommons` |
 
 **Hand-off rule.** When the request matches a row above, open your answer by naming that skill by its exact id (for example `alterlab-pydicom`) and saying in one line why it fits better, then stop applying this skill's procedure. Name it even when you also need to ask for missing input. If only part of the request is out of scope, name the skill for that part and do only the in-scope part. A brief general pointer is fine; the named skill does the work.
 
@@ -244,25 +250,25 @@ See `references/dicomweb_guide.md` for endpoint URLs, code examples, supported o
 
 ## Installation and Setup
 
-**Required (for basic access):**
+**Required (for basic access)** — no install step; run each script through uv:
 ```bash
-uv pip install --upgrade idc-index   # or: pip install --upgrade idc-index
+uv run --with "idc-index>=0.13.4" python build_dataset.py
+# add analysis packages the same way:
+uv run --with "idc-index>=0.13.4" --with pydicom --with numpy python analyse.py
 ```
 
-**Important:** New IDC data release will always trigger a new version of `idc-index`. Always use `--upgrade` flag while installing, unless an older version is needed for reproducibility.
+**Important:** every IDC data release ships as a new `idc-index` version. The `>=` floor
+keeps runs current; pin an exact version (`--with "idc-index==0.13.4"`) only when you need
+to reproduce a past data release.
 
-IDC data version v24 is current as of 2026-09. Verify your version at the start of a session:
+IDC data version v25 is current as of 2026-10-20. Verify your version at the start of a session:
 ```python
-print(client.get_idc_version())  # "v24"
+print(client.get_idc_version())  # "v25"
 ```
-If you see an older version, upgrade with: `uv pip install --upgrade idc-index`
 
-**Tested with:** idc-index 0.12.5 with pandas 3.0 (IDC data version v24); reference files were written against 0.12.3 — same data release.
-
-**Optional (for data analysis):**
-```bash
-uv pip install pandas numpy pydicom
-```
+**Tested with:** idc-index 0.13.4 (IDC data version v25) on 2026-10-23: `sql_query` on
+`collection_id = 'nlst'` (194,327 CT CHEST series, ~10.5 TB) and `download_from_selection` of
+one series. Reference files were written against 0.12.3 (v24); their SQL is unchanged.
 
 ## Core Capabilities
 
@@ -359,7 +365,7 @@ See `references/use_cases.md` for complete end-to-end workflow examples includin
 
 ## Best Practices
 
-- **Verify IDC version before generating responses** - Always call `client.get_idc_version()` at the start of a session to confirm you're using the expected data version (currently v24). If using an older version, recommend `uv pip install --upgrade idc-index`
+- **Verify IDC version before generating responses** - Always call `client.get_idc_version()` at the start of a session to confirm you're using the expected data version (currently v25). If it is older, run through `uv run --with "idc-index>=0.13.4" python`
 - **Check licenses before use** - Always query the `license_short_name` field and respect licensing terms (CC BY vs CC BY-NC)
 - **Generate citations for attribution** - Use `citations_from_selection()` to get properly formatted citations from `source_DOI` values; include these in publications
 - **Start with small queries** - Use `LIMIT` clause when exploring to avoid long downloads and understand data structure
@@ -374,12 +380,12 @@ See `references/use_cases.md` for complete end-to-end workflow examples includin
 ## Troubleshooting
 
 **Issue: `ModuleNotFoundError: No module named 'idc_index'`**
-- **Cause:** idc-index package not installed
-- **Solution:** Install with `uv pip install --upgrade idc-index`
+- **Cause:** idc-index package not installed in the interpreter you ran
+- **Solution:** Run through uv instead: `uv run --with "idc-index>=0.13.4" python script.py`
 
 **Issue: dependency resolver refuses idc-index next to pandas 3**
 - **Cause:** idc-index ≤ 0.12.4 pins `pandas<=2.2.4`
-- **Solution:** Upgrade to idc-index ≥ 0.12.5
+- **Solution:** Use idc-index ≥ 0.12.5 (the `uv run --with "idc-index>=0.13.4"` route does)
 
 **Issue: Download fails with connection timeout**
 - **Cause:** Network instability or large download size
