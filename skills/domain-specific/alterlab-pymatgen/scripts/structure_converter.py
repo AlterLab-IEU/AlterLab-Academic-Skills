@@ -25,7 +25,7 @@ from typing import List
 try:
     from pymatgen.core import Structure
 except ImportError:
-    print("Error: pymatgen is not installed. Install with: uv pip install pymatgen")
+    print("Error: pymatgen is not installed. Run install-free: uv run --python \">=3.11\" --with pymatgen python " + sys.argv[0] + " ...")
     sys.exit(1)
 
 

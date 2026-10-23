@@ -33,11 +33,13 @@
     },
     {
       "id": "slab-generation-surface",
+      "files": ["fixtures/Pt_bulk.cif"],
       "prompt": "I need (1,1,1) slabs of my bulk crystal with at least 10 angstrom of slab and 10 angstrom of vacuum, centered, so I can run surface calculations. Generate them.",
       "expected_output": "Invokes alterlab-pymatgen for surface / slab generation. Uses SlabGenerator(struct, miller_index=(1,1,1), min_slab_size=10.0, min_vacuum_size=10.0, center_slab=True), calls get_slabs(), and writes each slab to a CIF file. May proceed to MPRelaxSet for the slab calculation inputs.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "SlabGenerator" }
+        { "type": "output_contains", "value": "SlabGenerator" },
+        { "type": "behavior", "value": "Generates the slabs from the shipped Pt_bulk.cif (fcc Pt, Fm-3m, conventional 4-atom cell, a = 3.924 A) and reports that the (1,1,1) cut gives a single unique termination (SlabGenerator returns one non-polar slab), with the slab written out to a file." }
       ]
     },
     {

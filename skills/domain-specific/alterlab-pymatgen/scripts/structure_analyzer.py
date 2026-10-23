@@ -28,7 +28,7 @@ try:
     from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
     from pymatgen.analysis.local_env import CrystalNN
 except ImportError:
-    print("Error: pymatgen is not installed. Install with: uv pip install pymatgen")
+    print("Error: pymatgen is not installed. Run install-free: uv run --python \">=3.11\" --with pymatgen python " + sys.argv[0] + " ...")
     sys.exit(1)
 
 
@@ -258,7 +258,7 @@ def main():
                     yaml.dump(results, f, default_flow_style=False)
                 print(f"\n✓ Analysis exported to {output_file}")
             except ImportError:
-                print("Error: PyYAML is not installed. Install with: uv pip install pyyaml")
+                print("Error: PyYAML is not installed. Add it to the run: uv run --python \">=3.11\" --with pymatgen --with pyyaml python " + sys.argv[0] + " ...")
 
 
 if __name__ == "__main__":

@@ -47,12 +47,19 @@ Use when:
 
 ## Quick Start
 
+Run install-free — one `uv run` command, no virtualenv and no `uv pip install` (which fails
+outside an activated virtualenv). pymatgen needs Python >= 3.11 and uv's default here can be
+3.9, so pin the interpreter. The bundled scripts run the same way:
+
 ```bash
-uv pip install pymatgen                # core (Python >= 3.11)
-uv pip install pymatgen mp-api         # + Materials Project API access
-uv pip install "pymatgen[optional]"    # extra analysis deps (phonopy, seekpath, ase, ...)
-uv pip install "pymatgen[vis]"         # VTK structure visualization
+uv run --python ">=3.11" --with pymatgen python your_script.py
+uv run --python ">=3.11" --with pymatgen python scripts/phase_diagram_generator.py Li-Fe-O --analyze LiFeO2   # keyless
+uv run --python ">=3.11" --with pymatgen --with mp-api python your_script.py    # + optional MP API client
 ```
+
+Add a single analysis dependency with another `--with` (`--with phonopy`, `--with seekpath`,
+`--with ase`) rather than the `pymatgen[optional]` extra, which now pulls matgl and a full
+PyTorch/CUDA stack. Inside an activated virtualenv `uv pip install pymatgen` works too.
 
 ```python
 from pymatgen.core import Structure, Lattice
@@ -112,6 +119,10 @@ energy): `references/common_workflows_code.md`.
 
 ### Scripts (`scripts/`)
 
+The scripts import pymatgen, so run each as `uv run --python ">=3.11" --with pymatgen python
+scripts/<name>.py ...` (bare `python scripts/...`, as written below, works only where
+pymatgen is already installed).
+
 - **`structure_converter.py`**: convert between structure file formats (batch + auto
   detection). Usage: `python scripts/structure_converter.py POSCAR structure.cif`
 - **`structure_analyzer.py`**: symmetry, coordination, lattice parameters, distance
@@ -157,7 +168,7 @@ Integrates with ASE, Phonopy, BoltzTraP, Atomate/Fireworks, AiiDA, Zeo++, and Op
 
 ## Troubleshooting
 
-- **Import errors**: `uv pip install "pymatgen[optional,vis]"` (there is no `[analysis]` extra)
+- **Import errors**: add the missing package to the run, e.g. `uv run --python ">=3.11" --with pymatgen --with phonopy python ...` (there is no `[analysis]` extra; `[optional]` pulls PyTorch/CUDA via matgl)
 - **No MP_API_KEY / don't want an account**: use the keyless OPTIMADE endpoint for
   structures and stability (`scripts/phase_diagram_generator.py` defaults to it); only the
   `mp-api` client needs `export MP_API_KEY="your_key_here"`

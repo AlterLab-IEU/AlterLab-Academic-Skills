@@ -46,7 +46,7 @@ def _optimade_reduced_formula(formula: str) -> str:
     try:
         from pymatgen.core import Composition
     except ImportError:
-        print("Error: pymatgen is not installed. Install with: uv pip install pymatgen")
+        print("Error: pymatgen is not installed. Run install-free: uv run --python \">=3.11\" --with pymatgen python " + sys.argv[0] + " ...")
         sys.exit(1)
     comp = Composition(formula)
     reduced_comp, _ = comp.get_reduced_composition_and_factor()
@@ -163,12 +163,12 @@ def run_mp(chemsys: str, args) -> None:
         from pymatgen.core import Composition
         from pymatgen.analysis.phase_diagram import PhaseDiagram, PDPlotter
     except ImportError:
-        print("Error: pymatgen is not installed. Install with: uv pip install pymatgen")
+        print("Error: pymatgen is not installed. Run install-free: uv run --python \">=3.11\" --with pymatgen python " + sys.argv[0] + " ...")
         sys.exit(1)
     try:
         from mp_api.client import MPRester
     except ImportError:
-        print("Error: mp-api is not installed. Install with: uv pip install mp-api")
+        print("Error: mp-api is not installed. Run install-free: uv run --python \">=3.11\" --with pymatgen --with mp-api python " + sys.argv[0] + " ...")
         sys.exit(1)
 
     print(f"\n{'='*60}\nPHASE DIAGRAM (MP API): {chemsys}\n{'='*60}\n")
