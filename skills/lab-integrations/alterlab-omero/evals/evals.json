@@ -3,6 +3,7 @@
   "evals": [
     {
       "id": "connect-and-list-datasets",
+      "requires": ["env:OMERO_HOST", "env:OMERO_USER", "env:OMERO_PASSWORD"],
       "prompt": "Connect to our OMERO server and list all my projects and the datasets under each one.",
       "expected_output": "Invokes alterlab-omero. Connects with BlitzGateway(username, password, host, port) (ideally as a context manager), calls conn.connect(), navigates the Project -> Dataset hierarchy with listProjects / listChildren, and closes the connection.",
       "assertions": [
