@@ -2,12 +2,12 @@
 name: alterlab-pdb
 description: Access the RCSB Protein Data Bank (PDB) for EXPERIMENTALLY determined 3D structures (X-ray, cryo-EM, NMR) of proteins and nucleic acids — searching by text, sequence, or structure similarity and downloading coordinates in PDB/mmCIF format with metadata. Use when retrieving a structure by PDB ID, running sequence or structure similarity searches, or obtaining experimental coordinates for structural biology and drug discovery; for AI-PREDICTED structures of proteins lacking experimental data prefer alterlab-alphafold-db, and for protein sequences, annotations, or accession ID mapping prefer alterlab-uniprot instead. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
 compatibility: Keyless RCSB PDB Search API v2, Data API (REST v1 + GraphQL), and file downloads (no authentication required); Python examples use rcsb-api >= 1.7 (current 1.7.3 as of 2026-09)
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.2"
+    last_updated: "2026-10-23"
 ---
 
 # PDB Database
@@ -290,12 +290,15 @@ for pdb_id, info in results.items():
 
 ## Python Package Installation
 
-Install the official RCSB PDB Python API client (`rcsb-api`, current major version
-1.x; examples here target `>=1.7`):
+Use the official RCSB PDB Python API client (`rcsb-api`, current major version
+1.x; examples here target `>=1.7`) without an install step — uv resolves it for the run:
 
 ```bash
-uv pip install "rcsb-api>=1.7"
+uv run --with "rcsb-api>=1.7" python search.py
 ```
+
+(Checked 2026-10-23: resolves to rcsb-api 1.7.3; a `SeqSimilarityQuery` for the KRAS4B
+G-domain at identity 0.9 / e-value 0.1 returned 814 entries, the same as the raw Search API.)
 
 The `rcsb-api` package provides unified access to both Search and Data APIs through
 the `rcsbapi.search` and `rcsbapi.data` modules. (The older `rcsbsearchapi` package
