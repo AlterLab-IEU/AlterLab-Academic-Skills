@@ -74,11 +74,13 @@ GEO organizes data hierarchically using different accession types:
 
 ## Installation and Setup
 
+No install step: run Python through `uv run`, which resolves the packages for that run
+(this skill's tools allow `uv`, not a bare `python`):
+
 ```bash
-uv pip install GEOparse        # primary GEO access (recommended)
-uv pip install biopython       # E-utilities / programmatic NCBI access
-uv pip install pandas numpy scipy statsmodels scikit-learn  # analysis
-uv pip install matplotlib seaborn                           # visualization
+uv run --python ">=3.11" --with GEOparse python get_series.py      # GEOparse (pulls pandas, numpy)
+uv run --python ">=3.11" --with GEOparse --with biopython --with scipy --with statsmodels python analysis.py
+#   add --with scikit-learn / --with matplotlib / --with seaborn as the script needs them
 ```
 
 Configure NCBI E-utilities access. No key or account is needed: NCBI asks every
