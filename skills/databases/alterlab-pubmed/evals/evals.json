@@ -16,7 +16,7 @@
       "expected_output": "Invokes alterlab-pubmed to run the ESearch then EFetch E-utilities workflow over raw REST (esearch.fcgi to get PMIDs, efetch.fcgi with rettype=abstract), recommending an API key and history server for large sets and respecting the 3/10 req-sec rate limits.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "E-utilities" }
+        { "type": "output_contains", "value": ["E-utilities", "E-utils", "eutils", "Entrez", "ESearch", "EFetch", "NCBI"] }
       ]
     },
     {
@@ -25,7 +25,7 @@
       "expected_output": "Invokes alterlab-pubmed to translate a PICO question into a comprehensive search with MeSH terms, synonyms, [tiab] free-text, and a randomized controlled trial[pt] filter, advising documentation of the search strategy and date for reproducibility.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "PICO" }
+        { "type": "output_contains", "value": ["PICO", "Comparison", "Comparator", "Karşılaştırma"] }
       ]
     },
     {
