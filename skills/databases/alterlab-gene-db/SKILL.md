@@ -85,7 +85,12 @@ For multiple genes simultaneously:
 1. Use `scripts/batch_gene_lookup.py` for efficient batch processing
 2. Provide a list of gene symbols or IDs
 3. Specify the organism for symbol-based queries
-4. The script handles rate limiting automatically (10 requests/second with API key)
+4. The script handles rate limiting automatically (10 requests/second with API key) and
+   retries HTTP 429/5xx
+5. Each symbol is matched as the official symbol (`[pref]`) first, then as an alias or
+   previous symbol (`[gene]`); the `matched_by` field says which. Report renamed genes
+   (MRE11A → MRE11, FAM175A → ABRAXAS1). A bare `[gene]` search can return the wrong
+   gene: `POLQ[gene]` ranks POLK (alias "POLQ") above POLQ (Gene ID 10721)
 
 This workflow is useful for:
 - Validating gene lists

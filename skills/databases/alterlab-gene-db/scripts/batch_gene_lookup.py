@@ -10,6 +10,7 @@ import argparse
 import json
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from typing import Optional, List, Dict, Any
@@ -37,18 +38,40 @@ def read_gene_list(filepath: str) -> List[str]:
         sys.exit(1)
 
 
+def _get_json(url: str, attempts: int = 4) -> Dict[str, Any]:
+    """GET a JSON URL, retrying HTTP 429/5xx (NCBI throttles shared IPs even below 3 req/s)."""
+    for attempt in range(attempts):
+        try:
+            with urllib.request.urlopen(url, timeout=30) as response:
+                return json.loads(response.read().decode())
+        except urllib.error.HTTPError as e:
+            if e.code not in (429, 500, 502, 503, 504) or attempt == attempts - 1:
+                raise
+            retry_after = (e.headers.get('Retry-After') or '').strip()
+            time.sleep(min(float(retry_after), 30.0) if retry_after.isdigit() else 2 ** attempt)
+    raise RuntimeError("unreachable")
+
+
 def batch_esearch(queries: List[str], organism: Optional[str] = None,
-                  api_key: Optional[str] = None) -> Dict[str, str]:
+                  api_key: Optional[str] = None,
+                  match_types: Optional[Dict[str, str]] = None) -> Dict[str, str]:
     """
     Search for multiple gene symbols and return their IDs.
+
+    Each symbol is tried as the official (preferred) symbol first ([pref]); only if that
+    finds nothing is it tried as any symbol, alias or previous symbol ([gene]). A bare
+    [gene] search can rank another gene first: POLQ[gene] returns POLK (an alias "POLQ")
+    before POLQ itself.
 
     Args:
         queries: List of gene symbols
         organism: Optional organism filter
         api_key: Optional NCBI API key
+        match_types: Optional dict filled with symbol -> 'official symbol' or
+            'alias/previous symbol'
 
     Returns:
-        Dictionary mapping gene symbol to Gene ID (or 'NOT_FOUND')
+        Dictionary mapping gene symbol to Gene ID (or 'NOT_FOUND' / 'ERROR')
     """
     base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
     results = {}
@@ -57,38 +80,41 @@ def batch_esearch(queries: List[str], organism: Optional[str] = None,
     delay = 0.1 if api_key else 0.34  # 10 req/sec with key, 3 req/sec without
 
     for query in queries:
-        # Build search term
-        search_term = f"{query}[gene]"
-        if organism:
-            search_term += f" AND {organism}[organism]"
+        results[query] = 'NOT_FOUND'
+        for tag, how in (('pref', 'official symbol'), ('gene', 'alias/previous symbol')):
+            search_term = f"{query}[{tag}]"
+            if organism:
+                search_term += f" AND {organism}[organism]"
 
-        params = {
-            'db': 'gene',
-            'term': search_term,
-            'retmax': 1,
-            'retmode': 'json'
-        }
+            params = {
+                'db': 'gene',
+                'term': search_term,
+                'retmax': 1,
+                'retmode': 'json'
+            }
 
-        if api_key:
-            params['api_key'] = api_key
+            if api_key:
+                params['api_key'] = api_key
 
-        url = f"{base_url}esearch.fcgi?{urllib.parse.urlencode(params)}"
+            url = f"{base_url}esearch.fcgi?{urllib.parse.urlencode(params)}"
 
-        try:
-            with urllib.request.urlopen(url) as response:
-                data = json.loads(response.read().decode())
-
-            if 'esearchresult' in data and 'idlist' in data['esearchresult']:
-                id_list = data['esearchresult']['idlist']
-                results[query] = id_list[0] if id_list else 'NOT_FOUND'
-            else:
+            try:
+                data = _get_json(url)
+            except Exception as e:
+                print(f"Error searching for {query}: {e}", file=sys.stderr)
                 results[query] = 'ERROR'
-
-        except Exception as e:
-            print(f"Error searching for {query}: {e}", file=sys.stderr)
-            results[query] = 'ERROR'
-
-        time.sleep(delay)
+                break
+            finally:
+                time.sleep(delay)
+            id_list = data.get('esearchresult', {}).get('idlist')
+            if id_list is None:
+                results[query] = 'ERROR'
+                break
+            if id_list:
+                results[query] = id_list[0]
+                if match_types is not None:
+                    match_types[query] = how
+                break
 
     return results
 
@@ -128,8 +154,7 @@ def batch_esummary(gene_ids: List[str], api_key: Optional[str] = None,
         url = f"{base_url}esummary.fcgi?{urllib.parse.urlencode(params)}"
 
         try:
-            with urllib.request.urlopen(url) as response:
-                data = json.loads(response.read().decode())
+            data = _get_json(url)
 
             if 'result' in data:
                 for gene_id in chunk:
@@ -194,7 +219,9 @@ def batch_lookup_by_symbols(gene_symbols: List[str], organism: str,
     """
     # First, search for IDs
     print(f"Searching for {len(gene_symbols)} gene symbols...", file=sys.stderr)
-    symbol_to_id = batch_esearch(gene_symbols, organism=organism, api_key=api_key)
+    match_types: Dict[str, str] = {}
+    symbol_to_id = batch_esearch(gene_symbols, organism=organism, api_key=api_key,
+                                 match_types=match_types)
 
     # Filter to valid IDs
     valid_ids = [id for id in symbol_to_id.values() if id not in ['NOT_FOUND', 'ERROR']]
@@ -225,6 +252,7 @@ def batch_lookup_by_symbols(gene_symbols: List[str], organism: str,
             gene = summaries[gene_id]
             results.append({
                 'query_symbol': symbol,
+                'matched_by': match_types.get(symbol, 'N/A'),
                 'gene_id': gene_id,
                 'symbol': gene.get('name', 'N/A'),
                 'description': gene.get('description', 'N/A'),
