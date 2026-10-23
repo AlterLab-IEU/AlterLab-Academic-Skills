@@ -188,9 +188,7 @@ PubChemPy is a Python wrapper that simplifies PUG-REST API access.
 
 ### Installation
 
-```bash
-pip install pubchempy
-```
+No install step — run through uv: `uv run --with 'pubchempy>=1.0.5' python script.py`.
 
 ### Key Classes
 

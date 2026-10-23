@@ -2,11 +2,11 @@
 name: alterlab-pubchem
 description: Query PubChem via the PUG-REST API and PubChemPy across 119M+ compounds, searching by name, CID, or SMILES and retrieving molecular properties, bioactivity, and similarity/substructure matches. Use when looking up a chemical compound, converting names/SMILES to CIDs, fetching physicochemical properties, or running cheminformatics structure searches. Part of the AlterLab Academic Skills suite.
 license: MIT
-allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
+allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*) Bash(uv run:*)
 compatibility: Keyless PubChem PUG-REST API (≤5 requests/s, ≤400/min); PubChemPy >= 1.0.5 optional for Python (no authentication required)
 metadata:
     skill-author: AlterLab
-    version: "1.0.2"
+    version: "1.1.0"
     last_updated: "2026-10-23"
 ---
 
@@ -79,11 +79,17 @@ for rate limits and error handling.
 
 ## Installation Requirements
 
+No install step: run Python through uv, which resolves the packages for that run
+(1.0.5 = current SMILES property names; checked 2026-10-23):
+
 ```bash
-uv pip install 'pubchempy>=1.0.5'  # Python-based access (1.0.5 = current SMILES property names)
-uv pip install requests            # direct API / bioactivity queries
-uv pip install pandas              # optional, for data analysis
+uv run --with 'pubchempy>=1.0.5' python props.py                       # PubChemPy access
+uv run --with 'pubchempy>=1.0.5' python scripts/compound_search.py ...  # helper script
+uv run --with requests python scripts/bioactivity_query.py ...          # direct API / bioassays
+uv run --with 'pubchempy>=1.0.5' --with pandas python analysis.py       # optional pandas
 ```
+
+Plain `curl` against PUG-REST needs nothing (`.../compound/name/aspirin/property/MolecularWeight,XLogP,TPSA,HBondDonorCount,HBondAcceptorCount/JSON`).
 
 **SMILES property naming (PubChem changed this in 2025):** the PUG-REST `CanonicalSMILES`
 and `IsomericSMILES` properties are deprecated. Use `SMILES` (full SMILES with
