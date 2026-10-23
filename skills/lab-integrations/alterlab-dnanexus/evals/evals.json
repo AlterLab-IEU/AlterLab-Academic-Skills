@@ -13,6 +13,8 @@
     },
     {
       "id": "upload-run-download",
+      "files": ["fixtures/sample.fastq"],
+      "requires": ["env:DX_SECURITY_CONTEXT"],
       "prompt": "Upload sample.fastq to my DNAnexus project, run applet-xxxx on it, wait for it to finish, and download the aligned BAM.",
       "expected_output": "Invokes alterlab-dnanexus. Uses dxpy.upload_local_file, dxpy.DXApplet(...).run with dxpy.dxlink inputs, job.wait_on_done(), then dxpy.download_dxfile to retrieve the output BAM via the $dnanexus_link.",
       "assertions": [
@@ -22,6 +24,7 @@
     },
     {
       "id": "batch-find-data-objects",
+      "requires": ["env:DX_SECURITY_CONTEXT"],
       "prompt": "Find every BAM file from experiment exp001 in my DNAnexus project and launch the variant-calling applet on each one in parallel.",
       "expected_output": "Invokes alterlab-dnanexus. Uses dxpy.find_data_objects (classname='file', name pattern, properties={'experiment': 'exp001'}) to discover files and launches parallel jobs via applet.run, collecting jobs and waiting on each.",
       "assertions": [
