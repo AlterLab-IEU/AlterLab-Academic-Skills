@@ -49,11 +49,14 @@ Use this skill when the user wants to:
 
 ## Installation and Setup
 
-Guide users to install datamol:
+No install step — run install-free with uv, pinning the interpreter (uv's default
+Python here is 3.9, but datamol needs ≥ 3.11):
 
 ```bash
-uv pip install datamol
+uv run --python ">=3.11" --with "datamol>=0.13" python your_script.py   # pulls in RDKit
 ```
+
+(A persistent `uv pip install 'datamol>=0.13'` works too.)
 
 Examples here are verified against **datamol 0.13.0** (current as of 2026-09; requires Python ≥ 3.11 and pulls in RDKit). 0.13 fixed the misspelled heterocycle descriptors: the `compute_many_descriptors` keys are now `n_aromatic_heterocycles` / `n_aliphatic_heterocycles` / `n_saturated_heterocycles` (formerly `..._heterocyles`; the old function names survive only as deprecated aliases). Pin `'datamol>=0.13'` if you depend on those keys.
 

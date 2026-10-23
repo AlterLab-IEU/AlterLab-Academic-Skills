@@ -16,7 +16,7 @@ metadata:
 
 RDKit is a comprehensive cheminformatics library providing Python APIs for molecular analysis and manipulation. This skill provides guidance for reading/writing molecular structures, calculating descriptors, fingerprinting, substructure searching, chemical reactions, 2D/3D coordinate generation, and molecular visualization. Use this skill for drug discovery, computational chemistry, and cheminformatics research tasks.
 
-**Version:** install with `uv pip install rdkit` (current release 2026.03.6 as of 2026-09; examples assume ≥ 2024.09). In 2026.03 the legacy fingerprint helpers (`AllChem.GetMorganFingerprintAsBitVect`, `rdkit.Chem.AtomPairs.Pairs.*`, `Torsions.*`) and `Atom.GetImplicitValence()` / `GetExplicitValence()` still run but log `DEPRECATION WARNING`s — use the `rdFingerprintGenerator` API and `atom.GetValence(Chem.ValenceType.IMPLICIT | EXPLICIT)` in new code.
+**Version:** run install-free with `uv run --python ">=3.11" --with rdkit python your_script.py` (uv's default Python here is 3.9, so pin the interpreter; a persistent `uv pip install rdkit` works too). Current release 2026.09.1 as of 2026-10; examples assume ≥ 2024.09. In 2026.03 the legacy fingerprint helpers (`AllChem.GetMorganFingerprintAsBitVect`, `rdkit.Chem.AtomPairs.Pairs.*`, `Torsions.*`) and `Atom.GetImplicitValence()` / `GetExplicitValence()` still run but log `DEPRECATION WARNING`s — use the `rdFingerprintGenerator` API and `atom.GetValence(Chem.ValenceType.IMPLICIT | EXPLICIT)` in new code.
 
 ## When to Use This Skill
 

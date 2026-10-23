@@ -49,8 +49,10 @@ This skill should be used when:
 
 ## Core Workflow
 
-Run under `uv run python` from the skill directory (so `scripts/` is importable),
-or add the `scripts/` dir to `sys.path`. Set `PRIMEKG_DATA_PATH` to your `kg.csv`.
+Run install-free from the skill directory (so `scripts/` is importable), pinning the
+interpreter since uv's default here is 3.9: `uv run --python ">=3.11" --with pandas
+python your_analysis.py` — or add the `scripts/` dir to `sys.path`. Set
+`PRIMEKG_DATA_PATH` to your `kg.csv`.
 
 ### 1. Search for Entities
 

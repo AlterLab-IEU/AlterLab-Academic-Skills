@@ -41,9 +41,13 @@ This skill should be used when:
 
 ## Installation
 
+No install step — run install-free with uv (it resolves medchem, rdkit and datamol into an ephemeral environment on first use):
+
 ```bash
-uv pip install medchem    # PyPI; pulls rdkit + datamol
+uv run --python ">=3.11" --with medchem python your_script.py   # pulls rdkit + datamol
 ```
+
+Pin the interpreter: uv's default Python here is 3.9, but medchem needs ≥ 3.11. (If you prefer a persistent environment, `uv pip install medchem` works too.)
 
 Two features need extra native deps that PyPI cannot provide:
 - **Lilly demerits** (`lilly_demerit_filter`) shells out to the compiled Lilly MedChem Rules tools. Since medchem 2.1, `medchem install-lilly` downloads the checksum-pinned upstream release (2.1.0) and builds it next to the active Python — it needs `make`, a C++ compiler, and zlib (plus Ruby for the regression tests, or pass `--no-test`), and native Windows is unsupported (use WSL). The old conda-forge `lilly-medchem-rules` 1.0.1 build is obsolete. Without the tools, the call raises `ImportError`. 2.1 also changed the default Lilly atom-count limits (soft 25 / hard 40 / minimum 7; previously 30 / 50 / 1).
@@ -272,9 +276,9 @@ Complete catalog of available rules, filters, and alerts with descriptions, thre
 ### scripts/filter_molecules.py
 Batch filtering CLI. Supports CSV/TSV, SDF, and plain-SMILES `.txt` input, configurable filter combinations, and a summary report.
 
-**Usage:**
+**Usage** (install-free; pin the interpreter so medchem resolves):
 ```bash
-uv run python scripts/filter_molecules.py input.csv \
+uv run --python ">=3.11" --with medchem python scripts/filter_molecules.py input.csv \
     --rules rule_of_five,rule_of_cns --nibr --output filtered.csv
 ```
 Flags are individual switches (`--nibr`, `--common-alerts`, `--lilly`, `--pains`), not `--alerts <name>`. `--lilly` needs the Lilly tools (`medchem install-lilly`).

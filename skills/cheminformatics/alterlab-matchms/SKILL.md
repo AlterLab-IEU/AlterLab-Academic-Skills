@@ -218,13 +218,18 @@ Consult `references/workflows.md` for detailed examples.
 
 ## Installation
 
+No install step — run install-free with uv, pinning the interpreter (uv's default
+Python here is 3.9, but matchms needs ≥ 3.10; on 3.9 uv resolves an old matchms
+without `ModifiedCosineGreedy`):
+
 ```bash
-uv pip install matchms
+uv run --python ">=3.11" --with "matchms>=0.33" python your_script.py
 ```
 
 Molecular-structure processing (SMILES/InChI/fingerprints) needs rdkit, which
 ships in the base matchms install on current versions — there is no separate
-`[chemistry]` extra. If `import rdkit` fails, `uv pip install rdkit` explicitly.
+`[chemistry]` extra. If `import rdkit` fails, add `--with rdkit`. (A persistent
+`uv pip install matchms` works too.)
 
 API notes below were verified against **matchms 0.33.x**.
 
