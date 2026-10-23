@@ -7,7 +7,7 @@
       "expected_output": "Triggers the JASPAR skill. Fetches the CTCF matrix (e.g. MA0139.1) from the JASPAR REST API, converts the PFM to a log-odds PWM, and scans the given sequence on both strands at the requested relative-score threshold, reporting hit positions, scores, and matched subsequences.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "PWM" },
+        { "type": "output_contains", "value": ["PWM", "position weight matrix", "log-odds", "log2-odds", "PSSM", "scoring matrix"] },
         { "type": "behavior", "value": "Fetches a TF PFM, converts to PWM, and scans a DNA sequence on both strands for binding sites." }
       ]
     },

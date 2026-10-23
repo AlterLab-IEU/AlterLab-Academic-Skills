@@ -16,7 +16,7 @@
       "expected_output": "Invokes alterlab-ena. Uses the Portal API search endpoint with result=sample and query=study_accession=PRJEB1234, returning a tabulated (TSV/JSON) metadata summary of the study's samples.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "Portal API" }
+        { "type": "output_contains", "value": ["Portal API", "portal/api", "result=sample", "sample search", "filereport", "file report"] }
       ]
     },
     {

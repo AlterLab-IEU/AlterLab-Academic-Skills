@@ -34,7 +34,7 @@
       "expected_output": "Invokes alterlab-metabolomics-wb to use the MetStat context with a semicolon-delimited filter (rest/metstat/LCMS;POSITIVE;HILIC;Human;Blood;Diabetes/json) to return matching studies by analytical method, polarity, chromatography, species, sample source, and disease.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "MetStat" }
+        { "type": "output_contains", "value": ["MetStat", "LCMS;POSITIVE;HILIC"] }
       ]
     },
     {

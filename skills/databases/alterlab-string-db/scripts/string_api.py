@@ -11,16 +11,41 @@ STRING provides protein-protein interaction data from over 40 sources covering
 5000+ genomes with ~59.3 million proteins and 20+ billion interactions.
 """
 
+import argparse
+import json
 import os
+import sys
+import time
 import urllib.request
 import urllib.parse
 import urllib.error
 from typing import List, Union
 
 
-# Default to the current API. For reproducible research, pin a version by setting
-# STRING_BASE_URL, e.g. "https://version-12-0.string-db.org/api", before import.
+# Default to the current API. For reproducible research, pin a version: on the command line
+# with --base-url https://version-12-0.string-db.org/api, or from Python by assigning
+# string_api.STRING_BASE_URL (the functions read it at call time). The STRING_BASE_URL
+# environment variable is still honoured as the default.
 STRING_BASE_URL = os.environ.get("STRING_BASE_URL", "https://string-db.org/api")
+USER_AGENT = "alterlab-string-db/1.1 (AlterLab Academic Skills)"
+RETRY_STATUS = {429, 500, 502, 503, 504}
+
+
+def _open(url: str, data: bytes = None, retries: int = 4, timeout: int = 120):
+    """urlopen with a timeout, a User-Agent and exponential backoff on 429/5xx."""
+    req = urllib.request.Request(url, data=data, headers={"User-Agent": USER_AGENT})
+    for attempt in range(retries + 1):
+        try:
+            return urllib.request.urlopen(req, timeout=timeout)
+        except urllib.error.HTTPError as e:
+            if e.code not in RETRY_STATUS or attempt == retries:
+                raise
+            wait = e.headers.get("Retry-After")
+            time.sleep(float(wait) if wait and wait.isdigit() else 2 ** attempt)
+        except urllib.error.URLError:
+            if attempt == retries:
+                raise
+            time.sleep(2 ** attempt)
 
 
 def string_map_ids(identifiers: Union[str, List[str]],
@@ -65,7 +90,7 @@ def string_map_ids(identifiers: Union[str, List[str]],
     data = urllib.parse.urlencode(params).encode('utf-8')
 
     try:
-        with urllib.request.urlopen(url, data=data) as response:
+        with _open(url, data=data) as response:
             return response.read().decode('utf-8')
     except urllib.error.HTTPError as e:
         return f"Error: {e.code} - {e.reason}"
@@ -102,7 +127,7 @@ def string_network(identifiers: Union[str, List[str]],
         network = string_network('TP53', add_nodes=5, required_score=700)
     """
     if isinstance(identifiers, list):
-        identifiers_str = '%0d'.join(identifiers)
+        identifiers_str = '\r'.join(identifiers)
     else:
         identifiers_str = identifiers
 
@@ -118,7 +143,7 @@ def string_network(identifiers: Union[str, List[str]],
     url = f"{STRING_BASE_URL}/tsv/network?" + urllib.parse.urlencode(params)
 
     try:
-        with urllib.request.urlopen(url) as response:
+        with _open(url) as response:
             return response.read().decode('utf-8')
     except urllib.error.HTTPError as e:
         return f"Error: {e.code} - {e.reason}"
@@ -151,7 +176,7 @@ def string_network_image(identifiers: Union[str, List[str]],
             f.write(img_data)
     """
     if isinstance(identifiers, list):
-        identifiers_str = '%0d'.join(identifiers)
+        identifiers_str = '\r'.join(identifiers)
     else:
         identifiers_str = identifiers
 
@@ -167,7 +192,7 @@ def string_network_image(identifiers: Union[str, List[str]],
     url = f"{STRING_BASE_URL}/image/network?" + urllib.parse.urlencode(params)
 
     try:
-        with urllib.request.urlopen(url) as response:
+        with _open(url) as response:
             return response.read()
     except urllib.error.HTTPError as e:
         return f"Error: {e.code} - {e.reason}".encode()
@@ -196,7 +221,7 @@ def string_interaction_partners(identifiers: Union[str, List[str]],
         partners = string_interaction_partners('TP53', limit=20, required_score=700)
     """
     if isinstance(identifiers, list):
-        identifiers_str = '%0d'.join(identifiers)
+        identifiers_str = '\r'.join(identifiers)
     else:
         identifiers_str = identifiers
 
@@ -211,7 +236,7 @@ def string_interaction_partners(identifiers: Union[str, List[str]],
     url = f"{STRING_BASE_URL}/tsv/interaction_partners?" + urllib.parse.urlencode(params)
 
     try:
-        with urllib.request.urlopen(url) as response:
+        with _open(url) as response:
             return response.read().decode('utf-8')
     except urllib.error.HTTPError as e:
         return f"Error: {e.code} - {e.reason}"
@@ -237,7 +262,7 @@ def string_enrichment(identifiers: Union[str, List[str]],
         enrichment = string_enrichment(proteins, species=9606)
     """
     if isinstance(identifiers, list):
-        identifiers_str = '%0d'.join(identifiers)
+        identifiers_str = '\r'.join(identifiers)
     else:
         identifiers_str = identifiers
 
@@ -250,7 +275,7 @@ def string_enrichment(identifiers: Union[str, List[str]],
     url = f"{STRING_BASE_URL}/tsv/enrichment?" + urllib.parse.urlencode(params)
 
     try:
-        with urllib.request.urlopen(url) as response:
+        with _open(url) as response:
             return response.read().decode('utf-8')
     except urllib.error.HTTPError as e:
         return f"Error: {e.code} - {e.reason}"
@@ -278,7 +303,7 @@ def string_ppi_enrichment(identifiers: Union[str, List[str]],
         ppi_result = string_ppi_enrichment(proteins)
     """
     if isinstance(identifiers, list):
-        identifiers_str = '%0d'.join(identifiers)
+        identifiers_str = '\r'.join(identifiers)
     else:
         identifiers_str = identifiers
 
@@ -292,7 +317,7 @@ def string_ppi_enrichment(identifiers: Union[str, List[str]],
     url = f"{STRING_BASE_URL}/json/ppi_enrichment?" + urllib.parse.urlencode(params)
 
     try:
-        with urllib.request.urlopen(url) as response:
+        with _open(url) as response:
             return response.read().decode('utf-8')
     except urllib.error.HTTPError as e:
         return f"Error: {e.code} - {e.reason}"
@@ -317,7 +342,7 @@ def string_homology(identifiers: Union[str, List[str]],
         homology = string_homology(['TP53', 'TP63', 'TP73'])
     """
     if isinstance(identifiers, list):
-        identifiers_str = '%0d'.join(identifiers)
+        identifiers_str = '\r'.join(identifiers)
     else:
         identifiers_str = identifiers
 
@@ -330,7 +355,7 @@ def string_homology(identifiers: Union[str, List[str]],
     url = f"{STRING_BASE_URL}/tsv/homology?" + urllib.parse.urlencode(params)
 
     try:
-        with urllib.request.urlopen(url) as response:
+        with _open(url) as response:
             return response.read().decode('utf-8')
     except urllib.error.HTTPError as e:
         return f"Error: {e.code} - {e.reason}"
@@ -349,23 +374,71 @@ def string_version() -> str:
     url = f"{STRING_BASE_URL}/tsv/version"
 
     try:
-        with urllib.request.urlopen(url) as response:
+        with _open(url) as response:
             return response.read().decode('utf-8')
     except urllib.error.HTTPError as e:
         return f"Error: {e.code} - {e.reason}"
 
 
+def main(argv=None) -> int:
+    """Command-line entry point (pin the STRING version with --base-url)."""
+    ops = {
+        "map": "string_map_ids", "network": "string_network", "image": "string_network_image",
+        "partners": "string_interaction_partners", "enrichment": "string_enrichment",
+        "ppi-enrichment": "string_ppi_enrichment", "homology": "string_homology",
+        "version": "string_version",
+    }
+    ap = argparse.ArgumentParser(description="Query the STRING REST API (no key needed).")
+    ap.add_argument("op", choices=sorted(ops), help="operation to run")
+    ap.add_argument("identifiers", nargs="*", help="gene names or STRING IDs (9606.ENSP...)")
+    ap.add_argument("--base-url", default=None,
+                    help="API base, e.g. https://version-12-0.string-db.org/api (pins v12.0)")
+    ap.add_argument("--species", type=int, default=9606, help="NCBI taxon ID (default 9606)")
+    ap.add_argument("--required-score", type=int, default=None,
+                    help="0-1000: 400 medium (default), 700 high, 900 highest")
+    ap.add_argument("--limit", type=int, default=None, help="partners per protein / map hits")
+    ap.add_argument("--network-type", choices=["functional", "physical"], default=None)
+    ap.add_argument("--add-nodes", type=int, default=None, help="network/image: extra nodes")
+    ap.add_argument("-o", "--out", default=None, help="image: PNG path (default network.png)")
+    a = ap.parse_args(argv)
+    global STRING_BASE_URL
+    if a.base_url:
+        STRING_BASE_URL = a.base_url.rstrip("/")
+    if a.op != "version" and not a.identifiers:
+        ap.error(f"{a.op} needs at least one identifier")
+    kw = {}
+    if a.op != "version":
+        kw["species"] = a.species
+    if a.required_score is not None and a.op in {"network", "image", "partners", "ppi-enrichment"}:
+        kw["required_score"] = a.required_score
+    if a.limit is not None and a.op in {"map", "partners"}:
+        kw["limit"] = a.limit
+    if a.network_type and a.op == "network":
+        kw["network_type"] = a.network_type
+    if a.add_nodes is not None and a.op in {"network", "image"}:
+        kw["add_nodes"] = a.add_nodes
+    fn = globals()[ops[a.op]]
+    ids = a.identifiers if len(a.identifiers) > 1 else (a.identifiers[0] if a.identifiers else None)
+    try:
+        result = fn(**kw) if a.op == "version" else fn(ids, **kw)
+    except urllib.error.URLError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    if a.op == "image":
+        if isinstance(result, bytes) and result.startswith(b"Error:"):
+            print(result.decode(), file=sys.stderr)
+            return 1
+        path = a.out or "network.png"
+        with open(path, "wb") as fh:
+            fh.write(result)
+        print(json.dumps({"image": path, "bytes": len(result), "base_url": STRING_BASE_URL}))
+        return 0
+    if isinstance(result, str) and result.startswith("Error:"):
+        print(result, file=sys.stderr)
+        return 1
+    sys.stdout.write(result if result.endswith("\n") else result + "\n")
+    return 0
+
+
 if __name__ == "__main__":
-    # Example usage
-    print("STRING Version:")
-    print(string_version())
-    print()
-
-    print("Mapping protein names to STRING IDs:")
-    mapping = string_map_ids(['TP53', 'BRCA1'], species=9606)
-    print(mapping)
-    print()
-
-    print("Getting interaction network:")
-    network = string_network('TP53', species=9606, add_nodes=3)
-    print(network[:500] + "...")
+    sys.exit(main())

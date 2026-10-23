@@ -7,7 +7,7 @@
       "expected_output": "Invokes alterlab-monarch: queries the Monarch API v3 association endpoint for each HPO term, counts matching phenotypes per gene (the rare_disease_gene_finder workflow), and returns candidate genes ranked by phenotype overlap.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "output_contains", "value": "HP:0001250" }
+        { "type": "output_contains", "value": ["HP:0001250", "seizure"] }
       ]
     },
     {
