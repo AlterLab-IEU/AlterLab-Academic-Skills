@@ -165,12 +165,13 @@ https://api.openalex.org/works?filter=authorships.author.id:A5023888391
 
 ### Find Works by Institution (Two-Step)
 ```bash
-# Step 1: Get institution ID
-https://api.openalex.org/institutions?search=MIT
-# Returns: "id": "https://openalex.org/I136199984"
+# Step 1: Get institution ID (search the full name; an acronym such as "MIT" also matches other names)
+https://api.openalex.org/institutions?search=Massachusetts%20Institute%20of%20Technology
+# or the free single-entity lookup by ROR: https://api.openalex.org/institutions/ror:042nb2s44
+# Returns: "id": "https://openalex.org/I63966007"   (I136199984 is Harvard University)
 
 # Step 2: Get their works
-https://api.openalex.org/works?filter=authorships.institutions.id:I136199984
+https://api.openalex.org/works?filter=authorships.institutions.id:I63966007
 ```
 
 ### Highly Cited Recent Papers

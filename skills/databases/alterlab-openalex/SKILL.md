@@ -198,7 +198,7 @@ from scripts.query_helpers import analyze_research_output
 
 analysis = analyze_research_output(
     entity_type='institution',  # or 'author'
-    entity_name='MIT',
+    entity_name='Massachusetts Institute of Technology',  # full name: an acronym matches other names
     client=client,
     years='>2020'
 )
@@ -274,7 +274,7 @@ topics = client.group_by(
     entity_type='works',
     group_field='topics.id',
     filter_params={
-        "authorships.institutions.id": "I136199984",  # MIT
+        "authorships.institutions.id": "I63966007",  # MIT (ROR 042nb2s44); I136199984 is Harvard
         "publication_year": ">2020"
     }
 )
@@ -378,8 +378,8 @@ filter_params = {
     "publication_year": "2020-2024",        # also "2023", ">2020", "<2020"
     "is_oa": "true",                        # several keys = AND
     "cited_by_count": ">100",
-    "authorships.institutions.id": "I136199984|I27837315",   # | = OR (≤100 values): MIT or Harvard
-    # "authorships.institutions.id": "I136199984+I27837315", # + = AND within one attribute (co-authored)
+    "authorships.institutions.id": "I63966007|I136199984",   # | = OR (≤100 values): MIT or Harvard
+    # "authorships.institutions.id": "I63966007+I136199984", # + = AND within one attribute (co-authored)
     "type": "!paratext",                    # ! = negation
 }
 ```
