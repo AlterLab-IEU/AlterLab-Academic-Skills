@@ -33,6 +33,7 @@ Apply this skill when:
 |----------|-------------|
 | Zero-shot forecasting with a pretrained foundation model, no training | `alterlab-timesfm` |
 | ARIMA/SARIMAX with coefficient tables, residual diagnostics, and econometric inference | `alterlab-statsmodels` |
+| Having an LLM generate and test candidate hypotheses on a labelled dataset (e.g. which survey features predict deception) | `alterlab-hypogenic` |
 | Plain tabular features (no temporal ordering) for classification/regression | `alterlab-scikit-learn` |
 | Physiological signal processing (ECG/EEG/EDA peaks, HRV) | `alterlab-neurokit2` |
 
@@ -40,11 +41,17 @@ Apply this skill when:
 
 ## Installation
 
+Run install-free — one `uv run` command, no virtualenv and no `uv pip install` (which fails
+outside an activated virtualenv). Pin the interpreter: uv's default Python here can be 3.9.
+
 ```bash
-uv pip install "aeon>=1.6"     # core; Python 3.11–3.14
-uv pip install "aeon[dl]"      # + TensorFlow/Keras for the deep-learning estimators
-uv pip install stumpy          # soft dependency of MatrixProfileTransformer
+uv run --python ">=3.11" --with "aeon>=1.6" python your_script.py                  # core; Python 3.11–3.14
+uv run --python ">=3.11" --with "aeon>=1.6" --with stumpy python your_script.py    # + MatrixProfileTransformer
 ```
+
+`aeon[dl]` (the deep-learning estimators) pulls TensorFlow/Keras; add it only when a deep
+model is really needed. Inside an activated virtualenv, `uv pip install "aeon>=1.6"` gives a
+persistent install instead.
 
 Examples are verified against aeon 1.6.0 (current as of 2026-09). The 1.x line
 reorganised modules — forecasters live under `aeon.forecasting.stats`, series anomaly
