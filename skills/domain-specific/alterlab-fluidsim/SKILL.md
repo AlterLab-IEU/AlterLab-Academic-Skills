@@ -43,18 +43,18 @@ dynamics, energy spectra and spatial means, parametric sweeps, or MPI runs on a 
 
 ### 1. Installation and Setup
 
-Install fluidsim using uv with appropriate feature flags:
+Run install-free with one `uv run` command — no virtualenv or `uv pip install` step. Use the
+`[fft]` extra: plain `fluidsim` lacks `fluidfft`, and the pseudospectral solvers then fail
+at `create_default_params()` with `No module named 'fluidfft'` (seen with ns2d and
+ns2d.strat). Pin the interpreter (uv's default here can be 3.9):
 
 ```bash
-# Basic installation
-uv pip install fluidsim
-
-# With FFT support (required for most solvers)
-uv pip install "fluidsim[fft]"
-
-# With MPI for parallel computing
-uv pip install "fluidsim[fft,mpi]"
+uv run --python ">=3.11" --with "fluidsim[fft]" python your_script.py
 ```
+
+For MPI runs (`mpirun -np N python script.py`) install `"fluidsim[fft,mpi]"` persistently
+inside an activated virtualenv (`uv pip install ...`); it compiles mpi4py against the
+system MPI.
 
 Set environment variables for output directories (optional):
 
@@ -364,7 +364,7 @@ t, E = data["t"], data["E"]
 
 ## Resources
 
-**Documentation**: https://fluidsim.readthedocs.io/ (verified against fluidsim 0.9.0; Python ≥ 3.11)
+**Documentation**: https://fluidsim.readthedocs.io/ (verified against fluidsim 0.9.0; the ns2d.strat `in_script` initialisation — both the `get_var("b")` and the `init_statephys_from(...)` routes — re-checked on 26.10.0, the first calendar-versioned release; Python ≥ 3.11)
 
 **Reference files**:
 - `references/installation.md`: Complete installation instructions

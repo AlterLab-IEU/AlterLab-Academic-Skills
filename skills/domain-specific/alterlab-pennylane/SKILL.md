@@ -40,13 +40,17 @@ Use this skill when the user wants to:
 
 ## Installation
 
-Install using uv (PennyLane ≥ 0.43; current 0.45.x as of 2026-09 needs Python ≥ 3.11):
+Run install-free with one `uv run` command — no virtualenv or `uv pip install` step
+(PennyLane ≥ 0.43; current 0.45.1 as of 2026-10 needs Python ≥ 3.11, and uv's default here
+can be 3.9, so pin the interpreter). The simulators, autodiff and `qml.qchem` (built-in
+differentiable Hartree-Fock, no PySCF needed for `molecular_hamiltonian`) all come with it:
 
 ```bash
-uv pip install pennylane
+uv run --python ">=3.11" --with pennylane python your_script.py
 ```
 
-For quantum hardware access, install device plugins:
+For quantum hardware access, install device plugins (persistently, inside an activated
+virtualenv, or add each with another `--with`):
 
 ```bash
 # IBM Quantum (0.45 pins qiskit<=2.3 and qiskit-ibm-runtime~=0.45 — use its own env
