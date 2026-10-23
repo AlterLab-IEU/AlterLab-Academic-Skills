@@ -386,6 +386,7 @@ Full worked-example protocols for each pattern: see `references/protocol_pattern
 8. **Track liquids**: Use liquid tracking for better setup validation
 9. **Optimize tip usage**: Use `new_tip='once'` when appropriate to save tips
 10. **Control flow rates**: Adjust flow rates for viscous or volatile liquids
+11. **Show the protocol in your reply**: Include the complete protocol you write as a Python code block in the answer itself (`from opentrons import protocol_api`, the `requirements`/`metadata`, `run(protocol)`, the thermocycler `execute_profile`, etc.), not only as a saved `.py` file — the user and reviewers read the answer, and a file left in the workspace is not visible to them.
 
 ## Troubleshooting
 
