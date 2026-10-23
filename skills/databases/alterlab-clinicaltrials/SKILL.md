@@ -35,6 +35,7 @@ This skill should be used when working with clinical trial data in scenarios suc
 |----------|-------------|
 | Published trial results, RCT papers, or meta-analysis literature | `alterlab-pubmed` |
 | FDA approvals, drug labels, adverse-event (FAERS) or recall data | `alterlab-fda` |
+| Drug mechanism of action, targets, or drug–drug interactions (pharmacology, not trials) | `alterlab-drugbank` |
 | Writing a CSR, SAE narrative, or other trial report document | `alterlab-clinical-reports` |
 | Evidence-graded treatment recommendations / decision algorithms | `alterlab-clinical-decision` |
 
