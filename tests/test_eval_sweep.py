@@ -14,7 +14,7 @@ from test_behavioral_runner import fake_cli  # noqa: E402,F401  (fixture)
 REPO = Path(__file__).resolve().parents[1]
 
 
-def test_sweep_runs_each_listed_skill_and_marks_completion(fake_cli, tmp_path, monkeypatch):
+def test_sweep_runs_each_listed_skill_and_marks_completion(fake_cli, tmp_path, monkeypatch):  # noqa: F811 (pytest fixture)
     skills = []
     for name in ("one", "two"):
         root = tmp_path / name
@@ -33,7 +33,7 @@ def test_sweep_runs_each_listed_skill_and_marks_completion(fake_cli, tmp_path, m
     assert all(json.loads(r.read_text())["status"] == "passed" for r in results)
 
 
-def test_a_second_sweep_skips_skills_already_claimed(fake_cli, tmp_path, monkeypatch):
+def test_a_second_sweep_skips_skills_already_claimed(fake_cli, tmp_path, monkeypatch):  # noqa: F811 (pytest fixture)
     skills = [tbr._make_skill(tmp_path / n, [tbr._case("a")]) for n in ("one", "two")]
     lst = tmp_path / "list.txt"
     lst.write_text("\n".join(str(s) for s in skills) + "\n")
@@ -45,7 +45,7 @@ def test_a_second_sweep_skips_skills_already_claimed(fake_cli, tmp_path, monkeyp
     assert len(sorted(out.glob("behavioral-*.json"))) == 2, "a skill ran twice"
 
 
-def test_a_list_line_may_carry_arguments_for_that_skill_only(fake_cli, tmp_path, monkeypatch):
+def test_a_list_line_may_carry_arguments_for_that_skill_only(fake_cli, tmp_path, monkeypatch):  # noqa: F811 (pytest fixture)
     one = tbr._make_skill(tmp_path / "one", [tbr._case("a"), tbr._case("b")])
     two = tbr._make_skill(tmp_path / "two", [tbr._case("a"), tbr._case("b")])
     lst = tmp_path / "list.txt"

@@ -245,7 +245,7 @@ def trademark(number: str, registration: bool = False) -> dict:
     p = _Text()
     p.feed(b.decode("utf-8", "replace"))
     lines = p.lines
-    if not any(l.startswith("US Serial Number") for l in lines):
+    if not any(ln.startswith("US Serial Number") for ln in lines):
         raise SystemExit(f"No trademark found at {url}")
     rec: dict = {"source": url}
     for i, line in enumerate(lines[:-1]):

@@ -300,7 +300,6 @@ def generate_report(data, output_dir, prefix='survival', title='Survival Analysi
         
         for group in groups:
             kmf = kmf_models[group]
-            median = kmf.median_survival_time_
             
             # Calculate survival rates at common time points
             try:

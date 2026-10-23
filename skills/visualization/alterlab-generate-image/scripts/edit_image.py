@@ -175,9 +175,9 @@ def apply(im: Image.Image, op: str, value: str, log: list) -> Image.Image:
         draw = ImageDraw.Draw(im, "RGBA")
         font = _font(size)
         draw.text((x, y), text, fill=colour, font=font, anchor=anchor)
-        l, t_, r, b = draw.textbbox((x, y), text, font=font, anchor=anchor)
-        if l < 0 or t_ < 0 or r > im.width or b > im.height:
-            log.append({"warning": f"text {text[:40]!r} runs off the image (box {l:.0f},{t_:.0f},"
+        left, t_, r, b = draw.textbbox((x, y), text, font=font, anchor=anchor)
+        if left < 0 or t_ < 0 or r > im.width or b > im.height:
+            log.append({"warning": f"text {text[:40]!r} runs off the image (box {left:.0f},{t_:.0f},"
                                    f"{r:.0f},{b:.0f}; image {im.width}x{im.height})"})
     elif op == "scale_bar":
         parts = [p.strip() for p in value.split(",")]
