@@ -4,11 +4,11 @@
     {
       "id": "search-protocols-by-keyword",
       "prompt": "Search protocols.io for public CRISPR protocols and pull back the title and DOI for the top 10 results.",
-      "expected_output": "Invokes alterlab-protocolsio (or the connected protocols.io MCP tools). Calls GET https://www.protocols.io/api/v3/protocols with filter=public, key=CRISPR, and page_size=10 using the Bearer access token, checks the JSON status_code (0 = success), and prints each item's title and DOI (turning the dx.doi.org/ prefix into https://doi.org/).",
+      "expected_output": "Invokes alterlab-protocolsio. On the keyless default path it discovers public CRISPR protocols and their DOIs through Crossref filtered to the protocols.io DOI prefix 10.17504 (GET https://api.crossref.org/works?filter=prefix:10.17504&query.bibliographic=CRISPR&rows=10&select=DOI,title,URL), returning each result's title and a https://doi.org/ link. If protocols.io MCP tools or a CLIENT_ACCESS_TOKEN/PROTOCOLS_IO_TOKEN are available it may instead call GET /api/v3/protocols with filter=public, key=CRISPR, page_size=10 and a Bearer token (checking status_code 0), but it does not require a token, since the protocols.io API returns status_code 1218 without one.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "protocols.io" },
-        { "type": "behavior", "value": "Calls GET /protocols on the v3 API with a Bearer token and a keyword filter." }
+        { "type": "behavior", "value": "Returns public CRISPR protocol titles and DOIs, using the keyless Crossref route (DOI prefix 10.17504) when no token is present, or the protocols.io v3 API / MCP tools when one is." }
       ]
     },
     {
