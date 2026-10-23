@@ -13,11 +13,14 @@
     },
     {
       "id": "regulatory-variant-impact",
+      "files": ["fixtures/gwas_snp_ref_alt.fa"],
       "prompt": "I have a non-coding GWAS SNP. Does the alternate allele disrupt or create a transcription factor binding site? Here are the ref and alt sequences with ±20 bp flanking context.",
       "expected_output": "Triggers the JASPAR skill. Builds ref and alt sequences centered on the variant, scans both with the relevant TF PWMs (variant_tfbs_impact), and reports which TF motifs are gained or disrupted by comparing max ref vs alt scores. Provides flanking context of at least motif_length-1 bp.",
       "assertions": [
         { "type": "should_trigger", "value": true },
-        { "type": "behavior", "value": "Compares ref vs alt sequence PWM scores to determine whether a variant disrupts or creates a TF binding motif." }
+        { "type": "behavior", "value": "Compares ref vs alt sequence PWM scores to determine whether a variant disrupts or creates a TF binding motif." },
+        { "type": "output_contains", "value": ["CEBP", "C/EBP"] },
+        { "type": "behavior", "value": "Scans the two sequences from the attached FASTA and reports that the T allele creates or strengthens a C/EBP-family site (TTGCTCAAT, beginning at the T allele), rather than asking for the sequences." }
       ]
     },
     {

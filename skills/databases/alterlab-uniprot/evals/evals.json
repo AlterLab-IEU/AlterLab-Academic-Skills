@@ -23,12 +23,15 @@
     },
     {
       "id": "id-mapping",
+      "files": ["fixtures/ensembl_gene_ids.txt"],
       "prompt": "I have a list of Ensembl gene IDs and I need their corresponding UniProtKB accessions. Map them using UniProt's ID mapping service.",
       "expected_output": "Invokes alterlab-uniprot. Runs the three-step ID mapping workflow against rest.uniprot.org/idmapping: submit the job (run), poll status, then fetch results, mapping the Ensembl IDs to UniProtKB accessions.",
       "assertions": [
         { "type": "should_trigger", "value": true },
         { "type": "output_contains", "value": "ID mapping" },
-        { "type": "behavior", "value": "Uses the submit/poll-status/fetch-results idmapping workflow to convert between identifier types." }
+        { "type": "behavior", "value": "Uses the submit/poll-status/fetch-results idmapping workflow to convert between identifier types." },
+        { "type": "output_contains", "value": "P51587" },
+        { "type": "behavior", "value": "Maps the eight IDs in the attached file, giving the reviewed accessions P04637 (TP53), P38398 (BRCA1), P51587 (BRCA2, from the versioned ENSG00000139618.17), P00533 (EGFR), P60484 (PTEN), P14635 (CCNB1) and Q03135 (CAV1), and reports ENSG00000251562 (MALAT1, a non-coding gene) as unmapped instead of inventing an accession." }
       ]
     },
     {

@@ -6,8 +6,8 @@ allowed-tools: Read WebFetch Bash(curl:*) Bash(python:*)
 compatibility: Keyless UniProt REST API at rest.uniprot.org (no authentication required); verified against UniProt release 2026_03
 metadata:
     skill-author: AlterLab
-    version: "1.0.1"
-    last_updated: "2026-09-23"
+    version: "1.0.2"
+    last_updated: "2026-10-23"
 ---
 
 # UniProt Database
@@ -92,9 +92,12 @@ Map protein identifiers between different database systems and retrieve multiple
 2. Poll job status: `https://rest.uniprot.org/idmapping/status/{jobId}`
 3. Retrieve results: `https://rest.uniprot.org/idmapping/results/{jobId}`
 
-**Two non-obvious gotchas (both handled in `scripts/uniprot_client.py`):**
+**Non-obvious gotchas (the first two are handled in `scripts/uniprot_client.py`):**
 - The status endpoint returns `{"jobStatus":"RUNNING"}` then `{"jobStatus":"FINISHED"}` (a finished job also 303-redirects to the results URL). It does NOT return a `results`/`failedIds` key, so poll on `jobStatus == "FINISHED"`, not on the presence of `results`.
 - Results are **paginated** (default `size=25`, max `500`). The first page is only part of a large mapping; follow the `next` Link **response header** (`response.links["next"]` in `requests`) until it is gone. The same `next`-Link pagination applies to the `/uniprotkb/search` endpoint — the JSON body carries only `results`, never a `next` key.
+- **Strip version suffixes from Ensembl IDs** before submitting: `from=Ensembl` matches only unversioned IDs, so
+  `ENSG00000139618.17` finishes with no results and no error, while `ENSG00000139618` maps to P51587
+  (checked 2026-10-23). Report IDs that still map to nothing (e.g. non-coding genes such as MALAT1) as unmapped.
 
 **Supported databases for mapping:**
 - UniProtKB AC/ID
