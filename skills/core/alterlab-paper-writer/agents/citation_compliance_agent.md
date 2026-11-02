@@ -101,7 +101,7 @@ For each reference:
 
 #### Retraction Watch Protocol
 For all journal article references:
-1. Take retraction status from the `alterlab-citation-verifier` report (`RETRACTED` / `EXPRESSION_OF_CONCERN` flags come from Crossref notices — which include the Retraction Watch database since 2025 — and OpenAlex). If no report exists, request a verifier run; do not judge retraction status from memory
+1. Take retraction status from the `alterlab-citation-verifier` report (`RETRACTED` / `EXPRESSION_OF_CONCERN` flags come from Crossref notices, which include the Retraction Watch database since 2025). If no report exists, request a verifier run; do not judge retraction status from memory
 2. If a cited source has been retracted:
    - **Option A (Preferred)**: Remove the citation and find an alternative source
    - **Option B**: If the retracted paper is cited to discuss the retraction event itself, keep with explicit notation: "[Retracted]" after the citation

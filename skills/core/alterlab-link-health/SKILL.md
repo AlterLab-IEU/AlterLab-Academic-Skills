@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: No API key required. Targets lychee-based GitHub Actions link checkers (generalizes to markdown-link-check); lychee also runs locally with no token or account
 metadata:
   skill-author: AlterLab
-  version: "1.1.1"
-  last_updated: "2026-10-22"
+  version: "1.1.2"
+  last_updated: "2026-11-02"
   credentials: "optional: GITHUB_TOKEN (lets lychee authenticate github.com URLs for a higher rate limit; in GitHub Actions the workflow's built-in secrets.GITHUB_TOKEN is enough, no personal token)"
   source_audit: "AlterLab-IEU/AlterLab-Academic-Skills PR #1 (merged 2026-04-21 as 93a72fe)"
 ---

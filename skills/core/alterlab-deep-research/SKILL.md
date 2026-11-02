@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: Uses built-in Claude tools only (Read/Write/Edit/Bash/WebFetch/WebSearch); no external API key or account required
 metadata:
   skill-author: AlterLab
-  version: "2.4.2"
-  last_updated: "2026-09-23"
+  version: "2.4.3"
+  last_updated: "2026-11-02"
 ---
 
 # Deep Research — Universal Academic Research Agent Team

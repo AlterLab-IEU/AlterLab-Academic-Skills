@@ -1,6 +1,6 @@
 ---
 name: bibliography-agent
-description: "Systematic literature search and annotated-bibliography curation agent for alterlab-deep-research. Conducts reproducible, documented searches; applies inclusion/exclusion criteria; builds APA 7.0 annotated bibliographies with PRISMA-style flow accounting; and deterministically verifies that every curated reference EXISTS via alterlab-citation-verifier/scripts/verify_citations.py (Crossref / OpenAlex / Semantic Scholar / arXiv plus doi.org, title+author difflib similarity >= 0.70, DOI/arXiv-ID resolution, Retraction Watch flag via Crossref) before any source enters the bibliography, degrading to WebSearch only as a documented fallback."
+description: "Systematic literature search and annotated-bibliography curation agent for alterlab-deep-research. Conducts reproducible, documented searches; applies inclusion/exclusion criteria; builds APA 7.0 annotated bibliographies with PRISMA-style flow accounting; and deterministically verifies that every curated reference EXISTS via alterlab-citation-verifier/scripts/verify_citations.py (Crossref / Semantic Scholar / arXiv plus doi.org, title+author difflib similarity >= 0.70, DOI/arXiv-ID resolution, Retraction Watch flag via Crossref) before any source enters the bibliography, degrading to WebSearch only as a documented fallback."
 ---
 
 # Bibliography Agent — Systematic Literature Search & Curation
@@ -71,10 +71,10 @@ one reference per line, or a DOI/arXiv-ID list — the format is auto-detected) 
   echo "<full APA 7.0 reference string>" | \
     uv run python "${CLAUDE_PLUGIN_ROOT}/alterlab-citation-verifier/scripts/verify_citations.py" -
 
-The verifier resolves each reference against Crossref / OpenAlex / Semantic Scholar /
-arXiv (plus doi.org for DOI registration), matches title + authors (difflib similarity
+The verifier resolves each reference against Crossref / Semantic Scholar / arXiv
+(plus doi.org for DOI registration), matches title + authors (difflib similarity
 >= 0.70), resolves any DOI/arXiv ID, and flags retractions (Crossref notices, including
-Retraction Watch data, and OpenAlex). Each entry's JSON `verdict` maps to:
+Retraction Watch data). Each entry's JSON `verdict` maps to:
 
   - verified    -> admit; record the matched canonical record + source DB
   - PAC         -> real paper, corrupted metadata -> correct the metadata to the canonical
@@ -88,7 +88,7 @@ Retraction Watch data, and OpenAlex). Each entry's JSON `verdict` maps to:
 ```
 
 **Fallback (documented, not silent):** for `unverified` entries, re-run with network
-access or an `OPENALEX_API_KEY`, or else use `WebSearch` with three distinct queries
+access (or later, once Semantic Scholar's shared keyless rate limit has cleared), or else use `WebSearch` with three distinct queries
 (exact title; title + first author; author + venue + year) plus a DOI lookup. A
 reference that neither the script nor the fallback can positively confirm is reported
 as `UNVERIFIABLE` and is **not** admitted. Record in the search log which path (script

@@ -6,8 +6,8 @@ allowed-tools: Read Write Edit Bash WebFetch WebSearch
 compatibility: Orchestrates alterlab-deep-research, alterlab-paper-writer, and alterlab-paper-reviewer; uses built-in Claude tools only; no external API key or account required
 metadata:
   skill-author: AlterLab
-  version: "2.7.1"
-  last_updated: "2026-09-23"
+  version: "2.7.2"
+  last_updated: "2026-11-02"
   depends_on: "alterlab-deep-research, alterlab-paper-writer, alterlab-paper-reviewer"
 ---
 

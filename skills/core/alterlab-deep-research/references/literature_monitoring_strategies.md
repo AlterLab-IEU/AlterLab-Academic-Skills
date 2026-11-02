@@ -103,7 +103,7 @@ RSS (Really Simple Syndication) allows you to subscribe to content updates from 
 
 ### Monitoring Workflow
 
-1. **Baseline check**: Run the cited bibliography through `alterlab-citation-verifier` (`scripts/verify_citations.py`), which flags every entry that Crossref (publisher or Retraction Watch notices) or OpenAlex marks as retracted — faster and more complete than searching titles one by one
+1. **Baseline check**: Run the cited bibliography through `alterlab-citation-verifier` (`scripts/verify_citations.py`), which flags every entry that Crossref marks as retracted (publisher notices or Retraction Watch data) — faster and more complete than searching titles one by one
 2. **Ongoing monitoring**: Subscribe to the Retraction Watch blog RSS feed for news and context
 3. **Periodic re-check**: Every 3-6 months, re-run the baseline check for cited sources
 
