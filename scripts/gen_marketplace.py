@@ -190,38 +190,10 @@ def _agent_files(skill_dir: Path) -> list[str]:
 # `userConfig` options, or Claude Code has nothing to prompt for and the MCP servers start with
 # unresolved credentials. Every key a `.mcp.json` references must have a spec here (checked in
 # `_user_config`). Strings default to "" so leaving an optional value blank substitutes cleanly.
-USER_CONFIG_SPEC: dict[str, dict] = {
-    "openalex_api_key": {
-        "type": "string",
-        "title": "OpenAlex API key (recommended)",
-        "description": (
-            "Free key from https://openalex.org/settings/api. OpenAlex meters usage per day "
-            "(since February 2026); keyless requests share a small per-IP budget and fail with "
-            "HTTP 429 once it is spent."
-        ),
-        "sensitive": True,
-        "default": "",
-    },
-    "zotero_library_id": {
-        "type": "string",
-        "title": "Zotero library ID (optional)",
-        "description": "Numeric user or group library ID, shown at https://www.zotero.org/settings/keys",
-        "default": "",
-    },
-    "zotero_library_type": {
-        "type": "string",
-        "title": "Zotero library type",
-        "description": "Either 'user' (personal library) or 'group'.",
-        "default": "user",
-    },
-    "zotero_api_key": {
-        "type": "string",
-        "title": "Zotero API key (optional)",
-        "description": "Read access key from https://www.zotero.org/settings/keys",
-        "sensitive": True,
-        "default": "",
-    },
-}
+# Empty since 4.0.0: the bundled MCP servers (crossref only) need no login, so no plugin prompts
+# for a credential. A server that needs one would add its spec here, and must stay optional
+# (keyless-first, see scripts/check_keyless.py).
+USER_CONFIG_SPEC: dict[str, dict] = {}
 
 _USER_CONFIG_RE = re.compile(r"\$\{user_config\.([A-Za-z_][A-Za-z0-9_]*)\}")
 

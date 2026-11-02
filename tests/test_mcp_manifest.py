@@ -6,7 +6,7 @@ Every `.mcp.json` shipped in the repo must:
   3. Have every server name documented in references/mcp_setup.md.
 
 And, the other direction: the core/databases plugins are meant to bundle the same
-three academic servers, so we assert the expected set is present and that the two
+keyless academic server set, so we assert the expected set is present and that the two
 manifests stay in sync.
 """
 
@@ -22,8 +22,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS_DIR = REPO_ROOT / "skills"
 MCP_SETUP_DOC = SKILLS_DIR / "core" / "references" / "mcp_setup.md"
 
-# The academic servers these plugins are contracted to bundle (ws-12b).
-EXPECTED_SERVERS = {"openalex", "crossref", "zotero"}
+# The academic servers these plugins are contracted to bundle (ws-12b). Only keyless servers:
+# the login-only ones were dropped in 4.0.0 (the suite must work without a third-party account).
+EXPECTED_SERVERS = {"crossref"}
 
 
 def _mcp_manifests() -> list[Path]:

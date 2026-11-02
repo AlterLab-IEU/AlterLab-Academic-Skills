@@ -1,32 +1,11 @@
 {
   "mcpServers": {
-    "openalex": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "openalex-mcp@0.1.8"
-      ],
-      "env": {
-        "OPENALEX_BEARER_TOKEN": "${user_config.openalex_api_key}"
-      }
-    },
     "crossref": {
       "command": "npx",
       "args": [
         "-y",
         "@botanicastudios/crossref-mcp@0.0.5"
       ]
-    },
-    "zotero": {
-      "command": "uvx",
-      "args": [
-        "zotero-mcp@0.3.1"
-      ],
-      "env": {
-        "ZOTERO_LIBRARY_ID": "${user_config.zotero_library_id}",
-        "ZOTERO_LIBRARY_TYPE": "${user_config.zotero_library_type}",
-        "ZOTERO_API_KEY": "${user_config.zotero_api_key}"
-      }
     }
   }
 }
